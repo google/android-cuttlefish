@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
-
-#include <memory>
-
-#include "host/commands/cvd/instance_manager.h"
-#include "host/commands/cvd/server_command/server_handler.h"
-#include "host/commands/cvd/server_command/subprocess_waiter.h"
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdDisplayCommandHandler(
-    InstanceManager& instance_manager, SubprocessWaiter& subprocess_waiter);
+enum MetricsExitCodes : int {
+  kSuccess=0,
+  kMetricsError=1,
+  kInvalidHostConfiguration=2,
+};
 
 }  // namespace cuttlefish
