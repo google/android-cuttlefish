@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
-#include <memory>
-
-#include "host/commands/cvd/server_command/server_handler.h"
+#include <string>
+#include <vector>
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewCvdResetCommandHandler();
+std::vector<std::string> GetCreatedFileListFromInotifyFd(int fd);
+std::vector<std::string> GetFileListFromInotifyFd(int fd, uint32_t mask);
 
 }  // namespace cuttlefish
