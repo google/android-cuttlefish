@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
 #include <memory>
@@ -22,7 +23,7 @@
 
 namespace cuttlefish {
 
-std::unique_ptr<CvdServerHandler> NewSerialPreset(
+std::unique_ptr<CvdServerHandler> NewCvdCmdlistHandler(
     CommandSequenceExecutor& executor);
 
 }  // namespace cuttlefish
