@@ -3,7 +3,7 @@
 **This is an experimental folder with just basic stuff to get everyone going.**
 
 To get started
-  - create a folder with your binary files, say 'android',
+  - create a folder with your binary files, currently scripts expect 'android/master',
   - to this folder copy or link the following files:
     - android_system_disk_syslinux.img
     - kernel

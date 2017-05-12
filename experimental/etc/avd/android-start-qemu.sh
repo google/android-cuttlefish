@@ -26,19 +26,19 @@ if [ ! -e ${IMAGE_DIR}/data.img ]; then
 fi
 
 qemu-system-x86_64 \
-  -kernel ${IMAGE_DIR}/kernel \
-  -initrd ${IMAGE_DIR}/gce_ramdisk.img \
-  -serial tcp::4000,server \
-  -serial tcp::4001,server \
-  -nographic \
-  -hda ${IMAGE_DIR}/android_system_disk_syslinux.img \
   -smp 4 \
   -m 2048 \
   -enable-kvm \
+  -nographic \
+  -serial tcp::4000,server \
+  -serial tcp::4001,server \
   -netdev type=tap,id=net0,ifname=android0,script=${SCRIPT_DIR}/android-ifup,downscript=${SCRIPT_DIR}/android-ifdown \
   -device e1000,netdev=net0 \
+  -kernel ${IMAGE_DIR}/kernel \
+  -initrd ${IMAGE_DIR}/gce_ramdisk.img \
+  -hda ${IMAGE_DIR}/android_system_disk_syslinux.img \
   -drive file=${IMAGE_DIR}/ramdisk.img,index=0,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/system.img,index=1,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/userdata.img,index=2,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/data.img,index=3,if=virtio,media=disk \
-  -append "root=/dev/sda1 init=/gce_init console=ttyS0 init=/init androidboot.hardware=gce_x86 androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 QEMU"
+  -append "console=ttyS0 androidboot.hardware=gce_x86 androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 QEMU"
