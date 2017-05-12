@@ -18,6 +18,7 @@ fi
 [ ! -e ${IMAGE_DIR}/kernel ] && die "Need kernel."
 [ ! -e ${IMAGE_DIR}/gce_ramdisk.img ] && die "Need GCE ramdisk."
 [ ! -e ${IMAGE_DIR}/system.img ] && die "Need system.img."
+[ ! -e ${IMAGE_DIR}/cache.img ] && die "Need cache.img."
 [ ! -e ${IMAGE_DIR}/userdata.img ] && die "Need userdata.img."
 
 if [ ! -e ${IMAGE_DIR}/data.img ]; then
@@ -36,9 +37,8 @@ qemu-system-x86_64 \
   -device e1000,netdev=net0 \
   -kernel ${IMAGE_DIR}/kernel \
   -initrd ${IMAGE_DIR}/gce_ramdisk.img \
-  -hda ${IMAGE_DIR}/android_system_disk_syslinux.img \
   -drive file=${IMAGE_DIR}/ramdisk.img,index=0,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/system.img,index=1,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/userdata.img,index=2,if=virtio,media=disk \
-  -drive file=${IMAGE_DIR}/data.img,index=3,if=virtio,media=disk \
+  -drive file=${IMAGE_DIR}/cache.img,index=3,if=virtio,media=disk \
   -append "console=ttyS0 androidboot.hardware=gce_x86 androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 QEMU"

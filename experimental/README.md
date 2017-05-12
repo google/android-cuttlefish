@@ -5,12 +5,12 @@
 To get started
   - create a folder with your binary files, currently scripts expect 'android/master',
   - to this folder copy or link the following files:
-    - android_system_disk_syslinux.img
     - kernel
     - gce_ramdisk.img
     - ramdisk.img
     - system.img
     - userdata.img
+    - cache.img
 
 Use the 'start' script as a super-user. This tool will configure bridge and
 start qemu for you in a screen:
