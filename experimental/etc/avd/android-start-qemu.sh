@@ -44,8 +44,8 @@ qemu-system-x86_64 \
   -m 2048 \
   -enable-kvm \
   -nographic \
-  -serial unix:android-${INSTANCE_NUMBER}-kernel \
-  -serial unix:android-${INSTANCE_NUMBER}-logcat \
+  -serial unix:var/avd/android-${INSTANCE_NUMBER}-kernel \
+  -serial unix:var/avd/android-${INSTANCE_NUMBER}-logcat \
   -netdev type=tap,id=net0,ifname=android${INSTANCE_NUMBER},script=${SCRIPT_DIR}/android-ifup,downscript=${SCRIPT_DIR}/android-ifdown \
   -device e1000,netdev=net0,mac=${MACADDR} \
   -kernel ${IMAGE_DIR}/kernel \
