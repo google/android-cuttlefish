@@ -17,16 +17,16 @@ defbce on
 mousetrack on
 
 # default windows
-screen -t Metadata    1 sh -c "( etc/avd/android-metadata-server.sh )"
-screen -t Kernel1Log  2 sh -c "( netcat -l -U android-1-kernel )"
-screen -t Android1Log 3 sh -c "( netcat -l -U android-1-logcat )"
-screen -t Kernel2Log  4 sh -c "( netcat -l -U android-2-kernel )"
-screen -t Android2Log 5 sh -c "( netcat -l -U android-2-logcat )"
-screen -t Kernel3Log  6 sh -c "( netcat -l -U android-3-kernel )"
-screen -t Android3Log 7 sh -c "( netcat -l -U android-3-logcat )"
-screen -t QEmu        8 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/master 1 )"
-screen -t QEmu        9 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/l 2 )"
-screen -t QEmu       10 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/k 3 )"
+screen -t Metadata      1 sh -c "( etc/avd/android-metadata-server.sh )"
+screen -t Master-kernel 2 sh -c "( netcat -l -U android-1-kernel )"
+screen -t Master-logcat 3 sh -c "( netcat -l -U android-1-logcat )"
+screen -t L-kernel      4 sh -c "( netcat -l -U android-2-kernel )"
+screen -t L-logcat      5 sh -c "( netcat -l -U android-2-logcat )"
+screen -t K-kernel      6 sh -c "( netcat -l -U android-3-kernel )"
+screen -t K-logcat      7 sh -c "( netcat -l -U android-3-logcat )"
+screen -t Master-QEmu   8 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/master 1 )"
+screen -t L-QEmu        9 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/l 2 )"
+screen -t K-QEmu       10 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/k 3 )"
 select 3
 bind c screen 1 # window numbering starts at 1 not 0
 bind 0 select 10
