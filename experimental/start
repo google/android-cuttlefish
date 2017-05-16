@@ -25,7 +25,7 @@ screen -t L-logcat      5 sh -c "( netcat -l -U var/avd/android-2-logcat )"
 screen -t K-kernel      6 sh -c "( netcat -l -U var/avd/android-3-kernel )"
 screen -t K-logcat      7 sh -c "( netcat -l -U var/avd/android-3-logcat )"
 screen -t Master-QEmu   8 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/master 1 )"
-screen -t L-QEmu        9 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/l 2 )"
+screen -t L-QEmu        9 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/m 2 )"
 screen -t K-QEmu       10 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/k 3 )"
 select 3
 bind c screen 1 # window numbering starts at 1 not 0

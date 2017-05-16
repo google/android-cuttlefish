@@ -27,11 +27,15 @@ MACADDR=$(printf '00:41:56:44:%02X:%02X\n' $(( INSTANCE_NUMBER / 10 )) $(( INSTA
 [ ! -e ${IMAGE_DIR}/kernel ] && die "Need kernel."
 [ ! -e ${IMAGE_DIR}/gce_ramdisk.img ] && die "Need GCE ramdisk."
 [ ! -e ${IMAGE_DIR}/system.img ] && die "Need system.img."
+[ ! -e ${IMAGE_DIR}/userdata.img ] && die "Need system.img."
 
-if [ ! -e ${IMAGE_DIR}/data-${INSTANCE_NUMBER}.img ]; then
-  truncate -s 2G ${IMAGE_DIR}/data-${INSTANCE_NUMBER}.img
-fi
-mkfs.ext4 -F ${IMAGE_DIR}/data-${INSTANCE_NUMBER}.img
+DATA_IMG=${IMAGE_DIR}/data-${INSTANCE_NUMBER}.img
+
+rm -f ${DATA_IMG}
+cp --reflink=auto ${IMAGE_DIR}/userdata.img ${DATA_IMG}
+truncate -s 10G ${DATA_IMG}
+e2fsck -fy ${DATA_IMG}
+resize2fs ${DATA_IMG}
 
 if [ ! -e ${IMAGE_DIR}/cache-${INSTANCE_NUMBER}.img ]; then
   truncate -s 2G ${IMAGE_DIR}/cache-${INSTANCE_NUMBER}.img

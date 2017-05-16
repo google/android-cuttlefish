@@ -10,7 +10,6 @@ To get started
     - ramdisk.img
     - system.img
     - userdata.img
-    - cache.img
 
 Use the 'start' script as a super-user. This tool will configure bridge and
 start qemu for you in a screen:
