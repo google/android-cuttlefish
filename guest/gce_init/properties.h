@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef GCE_INIT_PROPERTIES_H_
-#define GCE_INIT_PROPERTIES_H_
+#ifndef GUEST_GCE_INIT_PROPERTIES_H_
+#define GUEST_GCE_INIT_PROPERTIES_H_
 
 #include <map>
 #include <string>
@@ -39,4 +38,4 @@ bool LoadPropertyFile(
 
 }  // namespace avd
 
-#endif  // GCE_INIT_PROPERTIES_H_
+#endif  // GUEST_GCE_INIT_PROPERTIES_H_

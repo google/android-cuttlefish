@@ -12,5 +12,8 @@ cc_library(
     deps = [
         "//common/auto_resources",
     ],
+    linkopts = [
+        "-lz",
+    ],
     visibility = [ "//visibility:public" ],
 )

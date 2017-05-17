@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <api_level_fixes.h>
-
 #define GCE_INIT_DEBUG 0
 #define LOWER_SYSTEM_MOUNT_POINT "/var/system_lower"
 #define UPPER_SYSTEM_MOUNT_POINT "/var/system_upper"
 
 #include <map>
+#include <memory>
+#include <sstream>
+#include <string>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,40 +34,26 @@
 #include <sys/mount.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "gce_fs.h"
-
-#include <cutils/properties.h>
 #include <zlib.h>
-#include <api_level_fixes.h>
-#include <AutoResources.h>
-#include <DisplayProperties.h>
-#include <GceMetadataAttributes.h>
-#include <GetPartitionNum.h>
-#include <GceResourceLocation.h>
-#include <InitialMetadataReader.h>
-#include <MetadataQuery.h>
-#include <UnpackRamdisk.h>
-#include <SharedFD.h>
 
-#include <gce_network/logging.h>
-#include <gce_network/namespace_aware_executor.h>
-#include <gce_network/netlink_client.h>
-#include <gce_network/network_interface_manager.h>
-#include <gce_network/network_namespace_manager.h>
-#include <gce_network/sys_client.h>
 
-#include "environment_setup.h"
-#include "properties.h"
+#include "common/fs/gce_fs.h"
+#include "common/fs/shared_fd.h"
+#include "common/metadata/gce_metadata_attributes.h"
+#include "common/metadata/display_properties.h"
+#include "common/metadata/get_partition_num.h"
+#include "common/metadata/initial_metadata_reader.h"
+#include "common/metadata/metadata_query.h"
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
-#define INIT_PROPERTIES 1
-// We need this to make shared libraries work on K.
-#define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
-#include <sys/_system_properties.h>
-#endif
-
-#include <private/android_filesystem_config.h>
-#include <namespace_constants.h>
+#include "guest/gce_init/environment_setup.h"
+#include "guest/gce_init/properties.h"
+#include "guest/gce_network/logging.h"
+#include "guest/gce_network/namespace_aware_executor.h"
+#include "guest/gce_network/netlink_client.h"
+#include "guest/gce_network/network_interface_manager.h"
+#include "guest/gce_network/network_namespace_manager.h"
+#include "guest/gce_network/sys_client.h"
+#include "guest/ramdisk/unpack_ramdisk.h"
 
 #if defined(__LP64__)
 #define LIBRARY_PATH_SYSTEM "/system/lib64/hw/"
@@ -82,8 +69,9 @@
     "/target/system/lib/hw/hwcomposer.gce_x86%s.so"
 #endif
 
+#define OUTER_INTERFACE_CONFIG_DIR "/var/run"
+
 using avd::InitialMetadataReader;
-using avd::UniquePtr;
 using avd::EnvironmentSetup;
 using avd::kCloneNewNet;
 using avd::NamespaceAwareExecutor;
@@ -155,7 +143,7 @@ class Container {
 
   // Initializes minimum environment needed to launch basic commands.
   // This section should eventually be deleted as we progress with containers.
-  bool InitializeMinEnvironment(AutoFreeBuffer* error);
+  bool InitializeMinEnvironment(std::stringstream* error);
 
   // Managers require a minimum working environment to be created.
   const char* CreateManagers();
@@ -181,12 +169,12 @@ class Container {
       const char* version,
       const char* name_pattern);
 
-  UniquePtr<SysClient> sys_client_;
-  UniquePtr<NetlinkClient> nl_client_;
-  UniquePtr<NetworkNamespaceManager> ns_manager_;
-  UniquePtr<NetworkInterfaceManager> if_manager_;
-  UniquePtr<NamespaceAwareExecutor> executor_;
-  UniquePtr<EnvironmentSetup> setup_;
+  std::unique_ptr<SysClient> sys_client_;
+  std::unique_ptr<NetlinkClient> nl_client_;
+  std::unique_ptr<NetworkNamespaceManager> ns_manager_;
+  std::unique_ptr<NetworkInterfaceManager> if_manager_;
+  std::unique_ptr<NamespaceAwareExecutor> executor_;
+  std::unique_ptr<EnvironmentSetup> setup_;
   InitialMetadataReader* reader_;
   std::string android_version_;
   DeviceType device_type_;
@@ -442,32 +430,32 @@ class BootPartitionMounter {
   const char* const multiboot_location_ = "/boot";
 };
 
-bool Init(Container* container, AutoFreeBuffer* error) {
+bool Init(Container* container, std::stringstream* error) {
   if (!container->InitializeMinEnvironment(error)) {
     return false;
   }
 
   const char* res = container->CreateManagers();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   res = container->InitializeNamespaces();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   res = container->PivotToNamespace(NetworkNamespaceManager::kOuterNs);
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   res = container->ConfigureNetworkCommon();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
@@ -478,25 +466,25 @@ bool Init(Container* container, AutoFreeBuffer* error) {
 
   res = container->FetchMetadata();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   res = container->PivotToNamespace(NetworkNamespaceManager::kAndroidNs);
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   res = container->InitTargetFilesystem();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   res = container->ApplyCustomization();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
@@ -504,7 +492,7 @@ bool Init(Container* container, AutoFreeBuffer* error) {
 
   res = container->CleanUp();
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
@@ -512,24 +500,24 @@ bool Init(Container* container, AutoFreeBuffer* error) {
   int rval = TEMP_FAILURE_RETRY(execl("/init", "/init", NULL));
   if (rval == -1) {
     KLOG_ERROR(LOG_TAG, "execl failed: %d (%s)\n", errno, strerror(errno));
-    error->SetToString("Could not exec init.");
+    *error << "Could not exec init.";
     return false;
   }
 
-  error->SetToString("exec finished unexpectedly.");
+  *error << "exec finished unexpectedly.";
   return false;
 }
 
-bool Container::InitializeMinEnvironment(AutoFreeBuffer* error) {
+bool Container::InitializeMinEnvironment(std::stringstream* error) {
   // Set up some initial enviromnent stuff that we need for reliable shared
   // libraries.
   if (!MountFilesystem("proc", NULL, 0, "/proc", 0)) {
-    error->SetToString("Could not mount initial /proc.");
+    *error << "Could not mount initial /proc.";
     return false;
   }
 
   if (!MountFilesystem("sysfs", NULL, 0, "/sys", 0)) {
-    error->SetToString("Could not mount initial /sys.");
+    *error << "Could not mount initial /sys.";
     return false;
   }
 
@@ -546,14 +534,14 @@ bool Container::InitializeMinEnvironment(AutoFreeBuffer* error) {
   const char* res;
   res = MountTmpFs("/dev", "mode=0755");
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
   // Set up tmpfs partitions for /var
   res = MountTmpFs("/var", "mode=0755");
   if (res) {
-    error->SetToString(res);
+    *error << res;
     return false;
   }
 
@@ -562,13 +550,13 @@ bool Container::InitializeMinEnvironment(AutoFreeBuffer* error) {
     if (!CreateDeviceNode(
         simple_char_devices[i].path, S_IFCHR | simple_char_devices[i].mode,
         simple_char_devices[i].major, simple_char_devices[i].minor)) {
-      error->PrintF("Could not create %s", simple_char_devices[i].path);
+      *error << "Could not create " << simple_char_devices[i].path;
       return false;
     }
   }
 
   if (!CreateBlockDeviceNodes()) {
-    error->SetToString("Could not create block device nodes.");
+    *error << "Could not create block device nodes.";
     return false;
   }
 
@@ -582,34 +570,28 @@ bool Container::InitializeMinEnvironment(AutoFreeBuffer* error) {
     BootPartitionMounter boot_mounter(is_nested_vm_);
 
     if (!boot_mounter.IsSuccess()) {
-      error->SetToString("Could not mount multiboot /boot partition.");
+      *error << "Could not mount multiboot /boot partition.";
       return false;
     }
 
     // Mount the default system partition so we can issue a DHCP request.
     if (!MountSystemPartition(
         "/boot/targets/default/partitions", "/system", is_nested_vm_)) {
-      error->SetToString("Could not mount multiboot /system partition.");
+      *error << "Could not mount multiboot /system partition.";
       return false;
     }
   }
 
   if (setenv("LD_LIBRARY_PATH", LIBRARY_PATH_SYSTEM ":" LIBRARY_PATH_VENDOR,
              1) == -1) {
-    error->SetToString("Failed to set LD_LIBRARY_PATH.");
+    *error << "Failed to set LD_LIBRARY_PATH.";
     return false;
   }
 
   if (gce_fs_mkdirs("/data", 0755) != 0) {
-    error->SetToString("Could not create /data folder.");
+    *error << "Could not create /data folder.";
     return false;
   }
-
-  // Required by KK bionic, which would crash if properties were not initialized
-  // at boot time.
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
-  __system_property_area_init();
-#endif
 
   return true;
 }
@@ -856,7 +838,7 @@ const char* Container::SelectVersion(
     return NULL;
   }
 
-  KLOG_NOTICE(LOG_TAG, "Switching %s to %s variant\n", name, version);
+  KLOG_WARNING(LOG_TAG, "Switching %s to %s variant\n", name, version);
   return Bind(selected_version, default_version);
 }
 
@@ -1036,7 +1018,8 @@ const char* Container::ApplyCustomization() {
 }
 
 const char* Container::CleanUp() {
-  chdir("/target");
+  if (chdir("/target"))
+    return "Could not chdir to /target.";
 
   // New filesystem does not have critical folders initialized.
   // Only bind-mount them here for the sake of mount_handler.
@@ -1059,7 +1042,8 @@ const char* Container::CleanUp() {
   // If we don't do it, we won't be able to re-mount root.
   if (mount(".", "/", NULL, MS_MOVE, NULL))
     return "Could not move /.";
-  chroot(".");
+  if (chroot("."))
+    return "Could not chroot to '.'.";
 
   // Do not execute anything here any more.
   // Environment is empty and must be initialized by android's init process.
@@ -1079,20 +1063,20 @@ const char* Container::PivotToNamespace(const char* name) {
 }
 
 int main() {
-  klog_set_level(KLOG_INFO_LEVEL);
   Container container;
-  AutoFreeBuffer reason;
+  std::stringstream reason;
 
   if (!Init(&container, &reason)) {
-    KLOG_ERROR(LOG_TAG, "VIRTUAL_DEVICE_BOOT_FAILED : %s\n", reason.data());
+    KLOG_ERROR(
+        LOG_TAG, "VIRTUAL_DEVICE_BOOT_FAILED : %s\n", reason.str().data());
     // There's no way of telling whether the problem happened before or after
     // /dev/kmsg became available. It's best to print out the log back to
     // console.
-    printf("VIRTUAL_DEVICE_BOOT_FAILED : %s\n", reason.data());
+    printf("VIRTUAL_DEVICE_BOOT_FAILED : %s\n", reason.str().data());
 
     // If for some reason, however, Init completes, launch an emergency shell to
     // allow diagnosing what happened.
-    system(kEmergencyShell);
+    if (system(kEmergencyShell)) printf("Could not start emergency shell.\n");
     pause();
   }
 }

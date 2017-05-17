@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_INIT_ENVIRONMENT_SETUP_H_
-#define GCE_INIT_ENVIRONMENT_SETUP_H_
+#ifndef GUEST_GCE_INIT_ENVIRONMENT_SETUP_H_
+#define GUEST_GCE_INIT_ENVIRONMENT_SETUP_H_
 
 #include <string>
 
-#include <gce_network/dhcp_server.h>
-#include <gce_network/logging.h>
-#include <gce_network/metadata_proxy.h>
-#include <gce_network/namespace_aware_executor.h>
-#include <gce_network/network_interface_manager.h>
-#include <gce_network/network_namespace_manager.h>
-#include <gce_network/sys_client.h>
+#include "guest/gce_network/dhcp_server.h"
+#include "guest/gce_network/logging.h"
+#include "guest/gce_network/metadata_proxy.h"
+#include "guest/gce_network/namespace_aware_executor.h"
+#include "guest/gce_network/network_interface_manager.h"
+#include "guest/gce_network/network_namespace_manager.h"
+#include "guest/gce_network/sys_client.h"
 
 namespace avd {
 
@@ -74,4 +74,4 @@ class EnvironmentSetup {
 
 }  // namespace avd
 
-#endif  // GCE_INIT_ENVIRONMENT_SETUP_H_
+#endif  // GUEST_GCE_INIT_ENVIRONMENT_SETUP_H_

@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "environment_setup.h"
+#include "guest/gce_init/environment_setup.h"
+
+#include <functional>
+#include <memory>
 
 namespace avd {
 namespace {
 
 // We need a network namespace aware iw. Use the backport on branches before N.
-#if GCE_PLATFORM_SDK_BEFORE(N)
-#define IW_EXECUTABLE "iw-gce"
-#else
 #define IW_EXECUTABLE "iw"
-#endif
 
 // Name of the metadata proxy socket name.
 const char kProxySocketName[] = "gce_metadata";
@@ -92,11 +91,7 @@ const char* kOuterNsCommandsCommon[] = {
   // L: no bonjour
   // d: show debug output
   // p: persist configuration
-#if GCE_PLATFORM_SDK_BEFORE(N)
-  "dhcpcd -ALdp -c /sbin/gce_init_dhcp_hook host_eth0",
-#else
   "dhcpcd-6.8.2 -ALdp -c /sbin/gce_init_dhcp_hook host_eth0",
-#endif
 
   // Fix the interface mtu
   "( . /var/run/eth0.dhcp.env ; ifconfig host_eth0 mtu ${new_interface_mtu})",
@@ -158,23 +153,26 @@ const char* kOuterNsCommandsPortFwd[] = {
 void EnvironmentSetup::CreateMetadataProxy() {
   executor_->Execute(
       NetworkNamespaceManager::kOuterNs,
-      ::avd::Callback<bool()>(
-          &MetadataProxy::Start,
-          MetadataProxy::New(sys_client_, ns_manager_), kProxySocketName));
+      [this]() -> int32_t {
+        MetadataProxy::New(sys_client_, ns_manager_)->Start(kProxySocketName);
+        return 0;
+      });
 }
 
 void EnvironmentSetup::CreateDhcpServer(
     const std::string& namespace_name, const DhcpServer::Options& options) {
   executor_->Execute(
       namespace_name,
-      ::avd::Callback<bool()>(
-          &DhcpServer::Start, DhcpServer::New(), options));
+      [options]() -> int32_t {
+        DhcpServer::New()->Start(options);
+        return 0;
+      });
 }
 
 bool EnvironmentSetup::ConfigureNetworkCommon() {
   // Rename host eth0 interface to avoid name conflicts.
   // Put the interface in 'outer' namespace.
-  UniquePtr<NetworkInterface> iface(if_manager_->Open("eth0"));
+  std::unique_ptr<NetworkInterface> iface(if_manager_->Open("eth0"));
   iface->set_name("host_eth0").set_network_namespace(
       NetworkNamespaceManager::kOuterNs);
   if_manager_->ApplyChanges(*iface);

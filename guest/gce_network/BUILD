@@ -1,3 +1,5 @@
+load("//common/config/BUILD.link_type");
+
 cc_library(
     name = "gce_network_lib",
     visibility = ["//visibility:public"],
@@ -28,10 +30,17 @@ cc_library(
     copts = [
         "-I/usr/include/jsoncpp",
     ],
-    linkopts = [
-        "-ljsoncpp",
-        "-lcurl",
-    ],
+    linkopts = select({
+        "//link_type:force_static": [
+            "-static",
+            "-static-libgcc",
+            "-Wl,-Bstatic -ljsoncpp",
+        ],
+        "//conditions:default": [
+            "-ljsoncpp",
+            "-lcurl",
+        ],
+    }),
     deps = [
         "//common/auto_resources",
         "//common/fs",

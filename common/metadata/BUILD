@@ -45,6 +45,39 @@ cc_library(
 )
 
 cc_library(
+    name = "initial_metadata_reader-static",
+    visibility = [ "//visibility:public" ],
+    srcs = [
+        "display_properties.cpp",
+        "display_properties.h",
+        "initial_metadata_reader.h",
+        "initial_metadata_reader_impl.cpp",
+        "initial_metadata_reader_impl.h",
+        "metadata_query.cpp",
+        "metadata_query.h",
+    ],
+    hdrs = [
+        "display_properties.h",
+        "initial_metadata_reader.h",
+        "metadata_query.h",
+    ],
+    copts = [
+        "-I/usr/include/jsoncpp",
+    ],
+    linkopts = [
+        "-Wl,-Bstatic -ljsoncpp",
+    ],
+    linkstatic = 1,
+    deps = [
+        "@glog_repo//:glog",
+        ":constants",
+        "//common/auto_resources",
+        "//common/fs",
+    ],
+)
+
+
+cc_library(
     name = "partitions",
     visibility = [ "//visibility:public" ],
     srcs = [
