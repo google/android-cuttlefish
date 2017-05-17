@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "netlink_client.h"
+#include "guest/gce_network/netlink_client.h"
 
 #include <linux/rtnetlink.h>
 
@@ -21,8 +21,9 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <memory>
 
-#include "sys_client_mock.h"
+#include "guest/gce_network/sys_client_mock.h"
 
 using ::testing::ElementsAreArray;
 using ::testing::MatchResultListener;
@@ -321,7 +322,7 @@ TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
   EXPECT_THAT(request, RequestHeaderIs(
       kMsgLength,  // Expected size of message.
       RTM_NEWLINK,  // Results from creane_new_iface=true in CreateRequest.
-      NLM_F_CREATE | NLM_F_EXCL | NLM_F_REQUEST,  // Ditto.
+      NLM_F_ACK | NLM_F_CREATE | NLM_F_EXCL | NLM_F_REQUEST,  // Ditto.
       0u));
 }
 
@@ -336,7 +337,7 @@ TEST_F(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
   EXPECT_THAT(request, RequestHeaderIs(
       kMsgLength,  // Expected size of message.
       RTM_SETLINK,  // Results from creane_new_iface=true in CreateRequest.
-      NLM_F_REQUEST,  // Ditto.
+      NLM_F_REQUEST | NLM_F_ACK,  // Ditto.
       0u));
 }
 
@@ -346,18 +347,21 @@ TEST_F(NetlinkClientTest, SequenceNumbers) {
       sizeof(nlmsghdr) + sizeof(nlattr) + sizeof(int32_t);
 
   request->AddInt32(0, 0);
-  EXPECT_THAT(request,
-              RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST, 0u));
+  EXPECT_THAT(
+      request,
+      RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, 0u));
 
   request.reset(nl_client_->CreateRequest(false));
   request->AddInt32(0, 0);
-  EXPECT_THAT(request,
-              RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST, 1u));
+  EXPECT_THAT(
+      request,
+      RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, 1u));
 
   request.reset(nl_client_->CreateRequest(false));
   request->AddInt32(0, 0);
-  EXPECT_THAT(request,
-              RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST, 2u));
+  EXPECT_THAT(
+      request,
+      RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, 2u));
 }
 
 }  // namespace avd

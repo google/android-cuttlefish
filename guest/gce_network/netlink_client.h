@@ -13,16 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_NETWORK_NETLINK_CLIENT_H_
-#define GCE_NETWORK_NETLINK_CLIENT_H_
+#ifndef GUEST_GCE_NETWORK_NETLINK_CLIENT_H_
+#define GUEST_GCE_NETWORK_NETLINK_CLIENT_H_
 
 #include <stddef.h>
 
 #include <string>
 
-#include "jb_compat.h"
-#include "logging.h"
-#include "sys_client.h"
+#include "guest/gce_network/logging.h"
+#include "guest/gce_network/sys_client.h"
 
 namespace avd {
 
@@ -98,4 +97,4 @@ class NetlinkClient {
 
 }  // namespace avd
 
-#endif  // GCE_NETWORK_NETLINK_CLIENT_H_
+#endif  // GUEST_GCE_NETWORK_NETLINK_CLIENT_H_

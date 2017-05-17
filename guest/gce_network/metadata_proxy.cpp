@@ -15,29 +15,28 @@
  */
 #define LOG_TAG "GceMetadataProxy"
 
-#include "metadata_proxy.h"
+#include "guest/gce_network/metadata_proxy.h"
 
 #include <dlfcn.h>
-#include <list>
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <list>
+
 #include <curl/curl.h>
-#include <cutils/klog.h>
 #include <json/json.h>
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include <AutoResources.h>
-#include <GceMetadataAttributes.h>
-#include <GceResourceLocation.h>
-#include <Pthread.h>
-#include <SharedFD.h>
-#include <SharedSelect.h>
-#include <Thunkers.h>
+#include "common/auto_resources/auto_resources.h"
+#include "common/fs/shared_fd.h"
+#include "common/fs/shared_select.h"
+#include "common/metadata/gce_resource_location.h"
+#include "common/threads/pthread.h"
+#include "common/threads/thunkers.h"
 
 
 namespace avd {
@@ -268,8 +267,6 @@ class MetadataProxyImpl : public MetadataProxy {
     AutoFreeBuffer new_metadata;
     int backoff_time_ms = 1000;
 
-    KLOG_INFO(LOG_TAG, "%s: fetcher starting on pid %d tid %d\n", __FUNCTION__,
-              (int)getpid(), (int)gettid());
     while (true) {
       // Read update from metadata server.
       Json::Value new_root;
@@ -425,8 +422,8 @@ class MetadataProxyImpl : public MetadataProxy {
     json_testing_attributes_ = Json::objectValue;
     for (Json::ValueIterator iter = update.begin();
          iter != update.end(); iter++) {
-      if (iter->isString()) {
-        json_testing_attributes_[iter.memberName()] = iter->asString();
+      if ((*iter).isString()) {
+        json_testing_attributes_[iter.memberName()] = (*iter).asString();
       }
     }
 
@@ -519,7 +516,10 @@ class MetadataProxyImpl : public MetadataProxy {
     while (true) {
       SysClient::ProcessHandle* h = client_->Clone(
           "gce.meta.proxy",
-          ::avd::Callback<int()>(&MetadataProxyImpl::StartProxy, this, socket_name), 0);
+          [this, socket_name]() -> int32_t {
+            StartProxy(socket_name);
+            return 0;
+          }, 0);
       h->WaitResult();
 
       // Wait a bit so we done flood with forks
@@ -547,7 +547,7 @@ class MetadataProxyImpl : public MetadataProxy {
 
     // Start listening for metadata updates.
     SharedFD server_sock = SharedFD::SocketLocalServer(
-        socket_name.c_str(), ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
+        socket_name.c_str(), true, SOCK_STREAM, 0666);
 
     if (!server_sock->IsOpen()) {
       KLOG_ERROR(LOG_TAG, "Failed to start local server %s: %d (%s).\n",

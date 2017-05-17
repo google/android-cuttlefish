@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_NETWORK_SYS_CLIENT_MOCK_H_
-#define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_NETWORK_SYS_CLIENT_MOCK_H_
+#ifndef GUEST_GCE_NETWORK_SYS_CLIENT_MOCK_H_
+#define GUEST_GCE_NETWORK_SYS_CLIENT_MOCK_H_
 
 #include <cstdint>
 
 #include <gmock/gmock.h>
 
-#include "sys_client.h"
+#include "guest/gce_network/sys_client.h"
 
 namespace avd {
 namespace test {
@@ -28,7 +28,7 @@ namespace test {
 class MockSysClient : public SysClient {
  public:
   MOCK_METHOD3(Clone, ProcessHandle*(
-      const std::string&, const ::avd::Callback<int32_t()>&, int32_t));
+      const std::string&, const std::function<int32_t()>&, int32_t));
   MOCK_METHOD2(SetNs, int32_t(int32_t, int32_t));
   MOCK_METHOD1(Unshare, int32_t(int32_t));
   MOCK_METHOD1(POpen, ProcessPipe*(const std::string&));
@@ -46,4 +46,4 @@ class MockSysClient : public SysClient {
 }  // namespace test
 }  // namespace avd
 
-#endif  // DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_NETWORK_SYS_CLIENT_MOCK_H_
+#endif  // GUEST_GCE_NETWORK_SYS_CLIENT_MOCK_H_

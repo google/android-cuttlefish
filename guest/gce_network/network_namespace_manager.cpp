@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "api_level_fixes.h"
-#include "network_namespace_manager.h"
+#include "guest/gce_network/network_namespace_manager.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -22,15 +21,15 @@
 #include <linux/sockios.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
-#include <AutoResources.h>
-#include <gce_fs.h>
-
-#include "callback.h"
-#include "jb_compat.h"
+#include "common/auto_resources/auto_resources.h"
+#include "common/fs/gce_fs.h"
+#include "guest/gce_network/logging.h"
 
 namespace avd {
 namespace {
@@ -149,9 +148,9 @@ bool NetworkNamespaceManagerImpl::CreateNetworkNamespace(
   // be the owner of the network namespace.
   SysClient::ProcessHandle* handle = sys_client_->Clone(
       std::string("gce.ns.") + ns_name,
-      ::avd::Callback<int()>(&NetworkNamespaceManagerImpl::NetworkNamespaceProcess,
-                      this, is_paranoid),
-      new_namespace ? kNamespaceTypes : kCloneNewNS);
+      [this, is_paranoid]() -> int32_t {
+        return NetworkNamespaceProcess(is_paranoid);
+      }, new_namespace ? kNamespaceTypes : kCloneNewNS);
 
   // Bind the namespace so that processes can later switch between the
   // namespaces. Some processes (like remoter) may require this to change their
@@ -164,7 +163,10 @@ bool NetworkNamespaceManagerImpl::CreateNetworkNamespace(
                         handle->Pid(), kNamespaces[index]);
     glob_ns_file.PrintF("/var/run/netns/%s.%s",
                         ns_name.c_str(), kNamespaces[index]);
-    symlink(proc_ns_file.data(), glob_ns_file.data());
+    if (symlink(proc_ns_file.data(), glob_ns_file.data()) < 0) {
+      KLOG_ERROR(LOG_TAG, "Could not symlink %s -> %s: %s\n",
+                 proc_ns_file.data(), glob_ns_file.data(), strerror(errno));
+    }
   }
 
   KLOG_INFO(LOG_TAG, "Initialized network namespace %s\n", ns_name.c_str());
@@ -183,7 +185,11 @@ bool NetworkNamespaceManagerImpl::CreateNetworkNamespace(
   }
 
   proc_ns_file.PrintF("%d", handle->Pid());
-  write(pid_fd, proc_ns_file.data(), proc_ns_file.size());
+  int written = write(pid_fd, proc_ns_file.data(), proc_ns_file.size());
+  if (written != static_cast<int>(proc_ns_file.size())) {
+    KLOG_ERROR(LOG_TAG, "Could not write file %s: %s\n",
+               glob_ns_file.data(), strerror(errno));
+  }
   close(pid_fd);
 
   return true;

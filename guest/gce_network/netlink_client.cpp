@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "netlink_client.h"
+#include "guest/gce_network/netlink_client.h"
 
 #include <errno.h>
 #include <linux/netlink.h>
@@ -21,6 +21,7 @@
 #include <linux/sockios.h>
 #include <net/if.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 

@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_NETWORK_SYS_CLIENT_H_
-#define GCE_NETWORK_SYS_CLIENT_H_
+#ifndef GUEST_GCE_NETWORK_SYS_CLIENT_H_
+#define GUEST_GCE_NETWORK_SYS_CLIENT_H_
 
 #include <linux/sched.h>
 #include <stdint.h>
 #include <sys/socket.h>
 
+#include <functional>
 #include <string>
 
-#include "callback.h"
-#include "logging.h"
+#include "guest/gce_network/logging.h"
 
 
 namespace avd {
@@ -112,7 +112,7 @@ class SysClient {
   // Caller is responsible for proper disposal of ProcessHandle* argument.
   virtual ProcessHandle* Clone(
       const std::string& name,
-      const ::avd::Callback<int32_t()>& call,
+      const std::function<int32_t()>& call,
       int32_t clone_flags) = 0;
 
   // Wrapper around setns() call.
@@ -158,4 +158,4 @@ class SysClient {
 
 }  // namespace avd
 
-#endif  // GCE_NETWORK_SYS_CLIENT_H_
+#endif  // GUEST_GCE_NETWORK_SYS_CLIENT_H_

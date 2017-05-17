@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <api_level_fixes.h>
-#include <UniquePtr.h>
+#include <memory>
 
-#include "logging.h"
-#include "namespace_aware_executor.h"
-#include "netlink_client.h"
-#include "network_interface_manager.h"
-#include "network_namespace_manager.h"
-#include "sys_client.h"
+#include "guest/gce_network/logging.h"
+#include "guest/gce_network/namespace_aware_executor.h"
+#include "guest/gce_network/netlink_client.h"
+#include "guest/gce_network/network_interface_manager.h"
+#include "guest/gce_network/network_namespace_manager.h"
+#include "guest/gce_network/sys_client.h"
 
-using avd::UniquePtr;
 using avd::NamespaceAwareExecutor;
 using avd::NetlinkClient;
 using avd::NetworkInterfaceManager;
@@ -50,21 +48,21 @@ int main(int argc, char** argv) {
 #endif
   klog_set_level(KLOG_INFO_LEVEL);
 
-  UniquePtr<SysClient> sys_client(SysClient::New());
+  std::unique_ptr<SysClient> sys_client(SysClient::New());
   if (!sys_client.get()) return 1;
 
-  UniquePtr<NetlinkClient> nl_client(NetlinkClient::New(sys_client.get()));
+  std::unique_ptr<NetlinkClient> nl_client(NetlinkClient::New(sys_client.get()));
   if (!nl_client.get()) return 1;
 
-  UniquePtr<NetworkNamespaceManager> ns_manager(
+  std::unique_ptr<NetworkNamespaceManager> ns_manager(
       NetworkNamespaceManager::New(sys_client.get()));
   if (!ns_manager.get()) return 1;
 
-  UniquePtr<NetworkInterfaceManager> if_manager(
+  std::unique_ptr<NetworkInterfaceManager> if_manager(
       NetworkInterfaceManager::New(nl_client.get(), ns_manager.get()));
   if (!if_manager.get()) return 1;
 
-  UniquePtr<NamespaceAwareExecutor> executor(
+  std::unique_ptr<NamespaceAwareExecutor> executor(
       NamespaceAwareExecutor::New(ns_manager.get(), sys_client.get()));
   if (!executor.get()) return 1;
 

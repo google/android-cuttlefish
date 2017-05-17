@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_NETWORK_GCE_NETWORK_H_
-#define GCE_NETWORK_GCE_NETWORK_H_
+#ifndef GUEST_GCE_NETWORK_NAMESPACE_AWARE_EXECUTOR_H_
+#define GUEST_GCE_NETWORK_NAMESPACE_AWARE_EXECUTOR_H_
 
+#include <functional>
 #include <string>
 
-#include "logging.h"
-#include "network_namespace_manager.h"
-#include "sys_client.h"
+#include "guest/gce_network/logging.h"
+#include "guest/gce_network/network_namespace_manager.h"
+#include "guest/gce_network/sys_client.h"
 
 namespace avd {
 
@@ -47,7 +48,7 @@ class NamespaceAwareExecutor {
   // pointer (to keep it running) or wait for its completion and fetch result.
   SysClient::ProcessHandle* Execute(
       const std::string& network_namespace,
-      ::avd::Callback<bool()> callback);
+      std::function<bool()> callback);
 
   // Validate parameters and create new instance of NamespaceAwareExecutor class.
   // Returns NULL if any of the supplied parameters is NULL.
@@ -65,7 +66,7 @@ class NamespaceAwareExecutor {
   // Returns 0 on success.
   // Called from separate process. Do not call directly
   int32_t InternalExecute(const std::string& network_namespace,
-                          const ::avd::Callback<bool()>& callback);
+                          const std::function<bool()>& callback);
 
   bool InternalInteractiveExecute(const char** commands);
   bool InternalNonInteractiveExecute(const char** commands);
@@ -82,5 +83,4 @@ class NamespaceAwareExecutor {
 
 }  // namespace avd
 
-#endif  // GCE_NETWORK_GCE_NETWORK_H_
-
+#endif  // GUEST_GCE_NETWORK_NAMESPACE_AWARE_EXECUTOR_H_

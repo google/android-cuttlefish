@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_NETWORK_LOGGING_H_
-#define GCE_NETWORK_LOGGING_H_
+#ifndef GUEST_GCE_NETWORK_LOGGING_H_
+#define GUEST_GCE_NETWORK_LOGGING_H_
 
 #ifndef LOG_TAG
 #define LOG_TAG "GceInit"
 #endif
 
-extern "C" {
-#include "cutils/klog.h"
+#include <stdio.h>
+#define KLOG_DEBUG(tag, fmt...) printf("D: " tag ": " fmt)
+#define KLOG_INFO(tag, fmt...) printf("I: " tag ": " fmt)
+#define KLOG_WARNING(tag, fmt...) printf("W: " tag ": " fmt)
+#define KLOG_ERROR(tag, fmt...) printf("E: " tag ": " fmt)
 
-// Fix for older cutils/klog.h file, which does not export the relevant value.
-#ifndef KLOG_NOTICE_LEVEL
-#define KLOG_ERROR_LEVEL   3
-#define KLOG_WARNING_LEVEL 4
-#define KLOG_NOTICE_LEVEL  5
-#define KLOG_INFO_LEVEL    6
-#define KLOG_DEBUG_LEVEL   7
-#endif
-}
-
-#endif  // GCE_NETWORK_LOGGING_H_
+#endif  // GUEST_GCE_NETWORK_LOGGING_H_

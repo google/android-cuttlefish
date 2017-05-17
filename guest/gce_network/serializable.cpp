@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "serializable.h"
+#include "guest/gce_network/serializable.h"
 
 #include <arpa/inet.h>
 
-#include "logging.h"
+#include "guest/gce_network/logging.h"
 
 namespace avd {
 
