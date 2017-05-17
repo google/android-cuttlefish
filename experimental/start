@@ -20,14 +20,14 @@ mousetrack on
 screen -t Metadata      1 sh -c "( etc/avd/android-metadata-server.sh )"
 screen -t Master-kernel 2 sh -c "( netcat -l -U var/avd/android-1-kernel )"
 screen -t Master-logcat 3 sh -c "( netcat -l -U var/avd/android-1-logcat )"
-screen -t L-kernel      4 sh -c "( netcat -l -U var/avd/android-2-kernel )"
-screen -t L-logcat      5 sh -c "( netcat -l -U var/avd/android-2-logcat )"
-screen -t K-kernel      6 sh -c "( netcat -l -U var/avd/android-3-kernel )"
-screen -t K-logcat      7 sh -c "( netcat -l -U var/avd/android-3-logcat )"
+# screen -t L-kernel      4 sh -c "( netcat -l -U var/avd/android-2-kernel )"
+# screen -t L-logcat      5 sh -c "( netcat -l -U var/avd/android-2-logcat )"
+# screen -t K-kernel      6 sh -c "( netcat -l -U var/avd/android-3-kernel )"
+# screen -t K-logcat      7 sh -c "( netcat -l -U var/avd/android-3-logcat )"
 screen -t Master-QEmu   8 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/master 1 )"
-screen -t L-QEmu        9 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/m 2 )"
-screen -t K-QEmu       10 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/k 3 )"
-select 3
+# screen -t L-QEmu        9 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/m 2 )"
+# screen -t K-QEmu       10 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/k 3 )"
+select 2
 bind c screen 1 # window numbering starts at 1 not 0
 bind 0 select 10
 

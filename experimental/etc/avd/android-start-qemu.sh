@@ -58,4 +58,4 @@ qemu-system-x86_64 \
   -drive file=${IMAGE_DIR}/system.img,index=1,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/data-${INSTANCE_NUMBER}.img,index=2,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/cache-${INSTANCE_NUMBER}.img,index=3,if=virtio,media=disk \
-  -append "console=ttyS0 androidboot.hardware=gce_x86 androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 QEMU"
+  -append "console=ttyS0 androidboot.hardware=gce_x86 androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 AVD_NESTED_VM"
