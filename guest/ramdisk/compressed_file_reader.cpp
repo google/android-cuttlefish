@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <CompressedFileReader.h>
+#include "guest/ramdisk/compressed_file_reader.h"
 
 #include <stdio.h>
 #include <stdlib.h>

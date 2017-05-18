@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <api_level_fixes.h>
-#include <UnpackRamdisk.h>
+#include "guest/ramdisk/unpack_ramdisk.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,7 +31,7 @@
 #include <zlib.h>
 
 #include <AutoResources.h>
-#include <CompressedFileReader.h>
+#include "guest/ramdisk/compressed_file_reader.h"
 
 static const int IGNORE_CHECK_TAG = 0x070701;
 static const int USE_CHECK_TAG = 0x07070;

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_COMPRESSED_FILE_READER_H_
-#define GCE_COMPRESSED_FILE_READER_H_
+#ifndef GUEST_RAMDISK_COMPRESSED_FILE_READER_H_
+#define GUEST_RAMDISK_COMPRESSED_FILE_READER_H_
 
 #include <AutoResources.h>
 #include <zlib.h>
@@ -74,4 +74,4 @@ class CompressedFileReader {
   gzFile in_;
 };
 
-#endif  // GCE_COMPRESSED_FILE_READER_H_
+#endif  // GUEST_RAMDISK_COMPRESSED_FILE_READER_H_

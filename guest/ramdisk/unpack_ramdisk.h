@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_UNPACK_RAMDISK_H_
-#define GCE_UNPACK_RAMDISK_H_
+#ifndef GUEST_RAMDISK_UNPACK_RAMDISK_H_
+#define GUEST_RAMDISK_UNPACK_RAMDISK_H_
 
 void UnpackRamdisk(const char* in_path, const char* out_path);
 
-#endif  // GCE_UNPACK_RAMDISK_H_
+#endif  // GUEST_RAMDISK_UNPACK_RAMDISK_H_
