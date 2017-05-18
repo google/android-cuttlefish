@@ -17,7 +17,7 @@ cc_test(
     ],
     deps = [
         ":auto_resources",
-        "@gtest_archive//:gtest_main",
+        "@gtest_repo//:gtest_main",
     ],
 )
 
