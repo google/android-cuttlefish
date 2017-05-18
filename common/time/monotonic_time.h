@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_MONOTONIC_TIME
-#define GCE_MONOTONIC_TIME
+#ifndef COMMON_TIME_MONOTONIC_TIME_H_
+#define COMMON_TIME_MONOTONIC_TIME_H_
 
 #include <stdint.h>
-#include <api_level_fixes.h>
+#include <time.h>
 
 namespace avd {
 namespace time {
@@ -283,4 +283,4 @@ static inline int64_t get_monotonic_usecs() {
   return avd::time::Microseconds(
       avd::time::MonotonicTimePoint::Now().SinceEpoch()).count();
 }
-#endif  // GCE_MONOTONIC_TIME
+#endif  // COMMON_TIME_MONOTONIC_TIME_H_

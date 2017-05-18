@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "common/time/monotonic_time.h"
 
 #include <gtest/gtest.h>
-#include <MonotonicTime.h>
 #include <algorithm>
 
 using avd::time::TimeDifference;
