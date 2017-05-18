@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Pthread.h>
+#include "common/threads/pthread.h"
 
-#include <cutils/log.h>
+#include <glog/logging.h>
 
-#include <AutoResources.h>
-#include <MonotonicTime.h>
-#include <Thunkers.h>
+#include "common/thread/thunkers.h"
+#include "common/time/monotonic_time.h"
 
 using avd::ConditionVariable;
 using avd::Mutex;

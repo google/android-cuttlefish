@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_PTHREAD
-#define GCE_PTHREAD
+#ifndef COMMON_THREADS_PTHREAD_H_
+#define COMMON_THREADS_PTHREAD_H_
 
 // Concurreny classess for Cloud Android projects.
 //
@@ -30,9 +30,7 @@
 
 #include <stdint.h>
 #include <pthread.h>
-#include <api_level_fixes.h>
-
-#include <MonotonicTime.h>
+#include "common/time/monotonic_time.h"
 
 #if !defined(DISALLOW_COPY_AND_ASSIGN)
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -79,15 +77,11 @@ class Mutex {
 class ConditionVariable {
  public:
   explicit ConditionVariable(Mutex* mutex) : mutex_(mutex) {
-#if GCE_PLATFORM_SDK_BEFORE(L)
-    pthread_cond_init(&cond_, NULL);
-#else
     pthread_condattr_t attr;
     pthread_condattr_init(&attr);
     pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
     pthread_cond_init(&cond_, &attr);
     pthread_condattr_destroy(&attr);
-#endif
   }
 
   ~ConditionVariable() {
@@ -109,11 +103,7 @@ class ConditionVariable {
   int WaitUntil(const avd::time::MonotonicTimePoint& tp) {
     struct timespec ts;
     tp.ToTimespec(&ts);
-#if GCE_PLATFORM_SDK_BEFORE(L)
-    return pthread_cond_timedwait_monotonic_np(&cond_, mutex_->GetMutex(), &ts);
-#else
     return pthread_cond_timedwait(&cond_, mutex_->GetMutex(), &ts);
-#endif
   }
 
  protected:
@@ -178,4 +168,4 @@ class ScopedThread {
 
 }  // namespace avd
 
-#endif
+#endif  // COMMON_THREADS_PTHREAD_H_
