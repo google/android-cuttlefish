@@ -186,7 +186,7 @@ Once the builds are complete in both the VMs, its time to measure interrupt late
    On the other machine (i.e. in our case the one with vmid 7) run **int_lat**
 
 ```bash
-   $ sudo ~/ivshmem/tests/Interrupts/build/int_lat_initiator 100000 5
+   $ sudo ~/ivshmem/tests/Interrupts/build/int_lat 100000 5
 
    Average latency measured is 169427 cycles
 
