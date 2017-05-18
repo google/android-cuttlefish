@@ -16,8 +16,11 @@
 #ifndef GUEST_RAMDISK_COMPRESSED_FILE_READER_H_
 #define GUEST_RAMDISK_COMPRESSED_FILE_READER_H_
 
-#include <AutoResources.h>
+#include <cstddef>
+#include <cstdint>
 #include <zlib.h>
+
+#include "common/auto_resources/auto_resources.h"
 
 // Reads a compressed file.
 class CompressedFileReader {

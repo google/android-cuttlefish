@@ -30,11 +30,15 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#include <AutoResources.h>
+#include "common/auto_resources/auto_resources.h"
 #include "guest/ramdisk/compressed_file_reader.h"
 
 static const int IGNORE_CHECK_TAG = 0x070701;
 static const int USE_CHECK_TAG = 0x07070;
+
+#define PRIo64 "lo"
+#define PRId64 "ld"
+#define PRIx64 "lx"
 
 /**
  * Description of a Ramdisk field which is a 0 filled fixed-width hexadecimal

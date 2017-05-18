@@ -140,7 +140,8 @@ uint64_t CompressedFileReader::Copy(
       printf("%s: partial %s: write failed %s:%d (%s)\n",
              __FUNCTION__, path, __FILE__, __LINE__, strerror(errno));
       should_write = false;
-    } else if (should_write && (num_written != num_read)) {
+    } else if (
+        should_write && (static_cast<uint64_t>(num_written) != num_read)) {
       printf("%s: partial %s: write of %d, wanted %zu %s:%d (%s)\n",
              __FUNCTION__, path, num_written, num_read,
              __FILE__, __LINE__, strerror(errno));

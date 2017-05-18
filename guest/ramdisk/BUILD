@@ -9,5 +9,8 @@ cc_library(
     hdrs = [
         "unpack_ramdisk.h",
     ],
+    deps = [
+        "//common/auto_resources",
+    ],
     visibility = [ "//visibility:public" ],
 )
