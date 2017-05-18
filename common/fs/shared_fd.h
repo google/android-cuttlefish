@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DEVICE_GOOGLE_GCE_INCLUDE_SHARED_FD_H_
-#define DEVICE_GOOGLE_GCE_INCLUDE_SHARED_FD_H_
+#ifndef COMMON_FS_SHARED_FD_H_
+#define COMMON_FS_SHARED_FD_H_
 
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
@@ -26,14 +26,14 @@
 #include <sys/uio.h>
 #include <sys/un.h>
 
+#include <memory>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <cutils/sockets.h>
-#include <AutoResources.h>
-#include "SharedPtr.h"
+#include "common/auto_resources/auto_resources.h"
 
 /**
  * Classes to to enable safe access to files.
@@ -104,23 +104,23 @@ class FileInstance;
 class SharedFD {
  public:
   inline SharedFD();
-  SharedFD(const shared_ptr<FileInstance>& in) : value_(in) { }
+  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) { }
   // Reference the listener as a FileInstance to make this FD type agnostic.
-  static inline SharedFD Accept(const FileInstance& listener,
+  static SharedFD Accept(const FileInstance& listener,
                                 struct sockaddr* addr, socklen_t* addrlen);
-  static inline SharedFD Accept(const FileInstance& listener);
-  static inline SharedFD GetControlSocket(const char* name);
+  static SharedFD Accept(const FileInstance& listener);
+  static SharedFD GetControlSocket(const char* name);
   // Returns false on failure, true on success.
-  static inline SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
-  static inline bool Pipe(SharedFD* fd0, SharedFD* fd1);
-  static inline SharedFD Event();
-  static inline bool SocketPair(int domain, int type, int protocol, SharedFD* fd0, SharedFD* fd1);
-  static inline SharedFD Socket(int domain, int socket_type, int protocol);
-  static inline SharedFD SocketInAddrAnyServer(int in_port, int in_type);
-  static inline SharedFD SocketLocalClient(const char* name, int namespace_id,
-                                           int in_type);
-  static inline SharedFD SocketLocalServer(const char* name, int namespace_id,
-                                           int in_type);
+  static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
+  static bool Pipe(SharedFD* fd0, SharedFD* fd1);
+  static SharedFD Event();
+  static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0, SharedFD* fd1);
+  static SharedFD Socket(int domain, int socket_type, int protocol);
+  static SharedFD SocketInAddrAnyServer(int in_port, int in_type);
+  static SharedFD SocketLocalClient(
+      const char* name, bool is_abstract, int in_type);
+  static SharedFD SocketLocalServer(
+      const char* name, bool is_abstract, int in_type, mode_t mode);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
 
@@ -148,7 +148,7 @@ class SharedFD {
     return value_ >= rhs.value_;
   }
 
-  avd::shared_ptr<FileInstance> operator->() const {
+  std::shared_ptr<FileInstance> operator->() const {
     return value_;
   }
 
@@ -161,7 +161,7 @@ class SharedFD {
   }
 
  private:
-  avd::shared_ptr<FileInstance> value_;
+  std::shared_ptr<FileInstance> value_;
 };
 
 /**
@@ -186,8 +186,8 @@ class FileInstance {
   }
 
   // This can't be a singleton because our shared_ptr's aren't thread safe.
-  static shared_ptr<FileInstance> ClosedInstance() {
-    return shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
+  static std::shared_ptr<FileInstance> ClosedInstance() {
+    return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
   }
 
   int Bind(const struct sockaddr *addr, socklen_t addrlen) {
@@ -350,7 +350,16 @@ class FileInstance {
   const char* StrError() const {
     errno = 0;
     FileInstance* s = const_cast<FileInstance*>(this);
-    strerror_r(errno_, s->strerror_buf_, sizeof(strerror_buf_));
+    char* out = strerror_r(errno_, s->strerror_buf_, sizeof(strerror_buf_));
+
+    // From man page:
+    //  strerror_r() returns a pointer to a string containing the error message.
+    //  This may be either a pointer to a string that the function stores in
+    //  buf, or a pointer to some (immutable) static string (in which case buf
+    //  is unused).
+    if (out != s->strerror_buf_) {
+      strncpy(out, s->strerror_buf_, sizeof(strerror_buf_));
+    }
     return strerror_buf_;
   }
 
@@ -393,97 +402,6 @@ class FileInstance {
 
 SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) { }
 
-SharedFD SharedFD::Accept(const FileInstance& listener,
-                struct sockaddr* addr, socklen_t *addrlen) {
-  return SharedFD(shared_ptr<FileInstance>(listener.Accept(addr, addrlen)));
 }
 
-SharedFD SharedFD::Accept(const FileInstance& listener) {
-  return SharedFD::Accept(listener, NULL, NULL);
-}
-
-SharedFD SharedFD::GetControlSocket(const char* name) {
-  int fd = android_get_control_socket(name);
-  return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-}
-
-bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
-  int fds[2];
-  int rval = pipe(fds);
-  if (rval != -1) {
-    (*fd0) = shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
-    return true;
-  }
-  return false;
-}
-
-SharedFD SharedFD::Event() {
-  return shared_ptr<FileInstance>(new FileInstance(eventfd(0, 0), errno));
-}
-
-inline bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0, SharedFD* fd1){
-  int fds[2];
-  int rval = socketpair(domain, type, protocol, fds);
-  if(rval != -1) {
-    (*fd0) = shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
-    (*fd1) = shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
-    return true;
-  }
-  return false;
-}
-
-SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
-  if (fd == -1) {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
-SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
-  int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
-  if (fd == -1) {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
-SharedFD SharedFD::SocketInAddrAnyServer(int in_port, int in_type) {
-  errno = 0;
-  int fd = socket_inaddr_any_server(in_port, in_type);
-  if (fd == -1) {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
-SharedFD SharedFD::SocketLocalClient(const char* name, int namespace_id,
-                                     int in_type) {
-  errno = 0;
-  int fd = socket_local_client(name, namespace_id, in_type);
-  if (fd == -1) {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
-SharedFD SharedFD::SocketLocalServer(const char* name, int namespace_id,
-                                     int in_type) {
-  errno = 0;
-  int fd = socket_local_server(name, namespace_id, in_type);
-  if (fd == -1) {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
-
-}
-
-#endif  // DEVICE_GOOGLE_GCE_INCLUDE_SHARED_FD_H_
+#endif  // COMMON_FS_SHARED_FD_H_

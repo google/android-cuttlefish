@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DEVICE_GOOGLE_GCE_INCLUDE_SHARED_SELECT_H_
-#define DEVICE_GOOGLE_GCE_INCLUDE_SHARED_SELECT_H_
+#ifndef COMMON_FS_SHARED_SELECT_H_
+#define COMMON_FS_SHARED_SELECT_H_
 
 #include <set>
-#include <SharedFD.h>
+
+#include "common/fs/shared_fd.h"
 
 namespace avd {
 /**
@@ -77,4 +78,4 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
 
 }  // namespace avd
 
-#endif  // DEVICE_GOOGLE_GCE_INCLUDE_SHARED_SELECT_H_
+#endif  // COMMON_FS_SHARED_SELECT_H_

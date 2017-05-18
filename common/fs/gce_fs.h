@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_CUTILS_FS_H_
-#define GCE_CUTILS_FS_H_
+#ifndef COMMON_FS_GCE_FS_H_
+#define COMMON_FS_GCE_FS_H_
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -27,7 +27,7 @@
 #ifndef GCE_TEMP_FAILURE_RETRY
 /* Used to retry syscalls that can return EINTR. */
 #define GCE_TEMP_FAILURE_RETRY(exp) ({         \
-    typeof (exp) _rc;                      \
+    decltype (exp) _rc;                      \
     do {                                   \
         _rc = (exp);                       \
     } while (_rc == -1 && errno == EINTR); \
@@ -57,4 +57,4 @@ extern int gce_fs_mkdirs(const char* path, mode_t mode);
 }
 #endif
 
-#endif
+#endif  // COMMON_FS_GCE_FS_H_
