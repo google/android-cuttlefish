@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef AUTO_RESOURCES_SERVICE_H_
-#define AUTO_RESOURCES_SERVICE_H_
+#ifndef COMMON_AUTO_RESOURCES_AUTO_RESOURCES_H_
+#define COMMON_AUTO_RESOURCES_AUTO_RESOURCES_H_
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -220,4 +220,4 @@ class AutoUMask {
  private:
   mode_t prev_umask;
 };
-#endif
+#endif  // COMMON_AUTO_RESOURCES_AUTO_RESOURCES_H_

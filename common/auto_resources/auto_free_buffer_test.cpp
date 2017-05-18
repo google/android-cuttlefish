@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "AutoResources.h"
+#include "common/auto_resources/auto_resources.h"
 
 #include <stdio.h>
 
