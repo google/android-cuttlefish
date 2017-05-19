@@ -194,3 +194,20 @@ Once the builds are complete in both the VMs, its time to measure interrupt late
 
 Note that the latency numbers will only be reported once both **int_lat_initiator** and **int_lat** completes.
 
+For details on the latency test please see:
+[here](https://docs.google.com/a/google.com/document/d/1NEaqH4gg5dPMxYYwduR4YF8TOV4HeQ-MEfcFGnBDH3k/edit?usp=sharing)
+
+Briefly speaking, the test is based on measuring the TSC (Time stamp counter)
+and calculating the round trip times. If you suspect the TSCs of the processors
+in your machine are out of sync, then please use the **taskset** command to
+pin the qemu processes to particular CPUs.
+
+For e.g. Pinning a process with pid 42 to processor 10 could be done as follows:
+
+```bash
+   $ taskset -p 10 42
+```
+
+In our case we need to find out the pids of the two qemu processes and the cpus
+to tie them to.
+
