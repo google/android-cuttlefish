@@ -122,7 +122,15 @@ class MonotonicTimePoint {
   static MonotonicTimePoint Now() {
     struct timespec ts;
 #ifdef CLOCK_MONOTONIC_RAW
-    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    // WARNING:
+    // While we do have CLOCK_MONOTONIC_RAW, we can't depend on it until:
+    // - ALL places relying on MonotonicTimePoint are fixed,
+    // - pthread supports pthread_timewait_monotonic.
+    //
+    // This is currently observable as a LEGITIMATE problem while running
+    // pthread_test. DO NOT revert this to CLOCK_MONOTONIC_RAW until test
+    // passes.
+    clock_gettime(CLOCK_MONOTONIC, &ts);
 #else
     clock_gettime(CLOCK_MONOTONIC, &ts);
 #endif

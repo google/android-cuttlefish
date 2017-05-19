@@ -31,7 +31,20 @@ static const int FINISHED = 100;
 static void SleepUntil(const MonotonicTimePoint& in) {
   struct timespec ts;
   in.ToTimespec(&ts);
+#ifdef CLOCK_MONOTONIC_RAW
+  // WARNING:
+  // While we do have CLOCK_MONOTONIC_RAW, we can't depend on it until:
+  // - ALL places relying on MonotonicTimePoint are fixed,
+  // - pthread supports pthread_timewait_monotonic.
+  // - CLOCK_MONOTONIC_RAW is re-enabled in monotonic_time.h.
+  //
+  // This is currently observable as a LEGITIMATE problem while running
+  // this test. DO NOT revert this to CLOCK_MONOTONIC_RAW until this is
+  // fixed everywhere AND this test passes.
   clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+#else
+  clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+#endif
 }
 
 class MutexTest {
@@ -45,8 +58,10 @@ class MutexTest {
       ScopedThread thread_b(
           MutexTestThunker<void*()>::call<&MutexTest::SlowThread>, this);
     }
-    printf("MutexTest: completed at stage %d (%s)\n",
-           stage_, (stage_ == FINISHED) ? "PASSED" : "FAILED");
+    LOG(INFO) << "MutexTest: completed at stage "
+              << stage_
+              << ", result: "
+              << ((stage_ == FINISHED) ? "PASSED" : "FAILED");
   }
 
 protected:
@@ -55,7 +70,7 @@ protected:
 
   void* FastThread() {
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(busy_ != NULL);
+    LOG_IF(FATAL, busy_ != NULL);
     busy_ = "FastThread";
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     stage_ = 1;
@@ -63,9 +78,9 @@ protected:
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(10));
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(busy_ != NULL);
+    LOG_IF(FATAL, busy_ != NULL);
     busy_ = "FastThread";
-    LOG_ALWAYS_FATAL_IF(stage_ != 2);
+    LOG_IF(FATAL, stage_ != 2);
     stage_ = FINISHED;
     busy_ = NULL;
     mutex_.Unlock();
@@ -75,9 +90,9 @@ protected:
   void* SlowThread() {
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(50));
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(busy_ != NULL);
+    LOG_IF(FATAL, busy_ != NULL);
     busy_ = "SlowThread";
-    LOG_ALWAYS_FATAL_IF(stage_ != 1);
+    LOG_IF(FATAL, stage_ != 1);
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     stage_ = 2;
     busy_ = NULL;
@@ -103,8 +118,10 @@ class NotifyOneTest {
       ScopedThread thread_w2(
           Thunker<void*()>::call<&NotifyOneTest::WaitThread>, this);
     }
-    printf("NotifyOneTest: completed, signalled %d (%s)\n",
-           signalled_, (signalled_ == 2) ? "PASSED" : "FAILED");
+    LOG(INFO) << "NotifyOneTest: completed, signalled "
+              << signalled_
+              << ", result: "
+              << ((signalled_ == 2) ? "PASSED" : "FAILED");
   }
 
 protected:
@@ -118,12 +135,12 @@ protected:
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(signalled_ != 1);
+    LOG_IF(FATAL, signalled_ != 1);
     cond_.NotifyOne();
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(signalled_ != 2);
+    LOG_IF(FATAL, signalled_ != 2);
     mutex_.Unlock();
     return NULL;
   }
@@ -169,7 +186,7 @@ protected:
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(signalled_ != 2);
+    LOG_IF(FATAL, signalled_ != 2);
     mutex_.Unlock();
     return NULL;
   }
@@ -210,7 +227,7 @@ protected:
   void* SignalThread() {
     SleepUntil(start_ + Milliseconds(200));
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(stage_ != 2);
+    LOG_IF(FATAL, stage_ != 2);
     cond_.NotifyOne();
     stage_ = 3;
     mutex_.Unlock();
@@ -219,17 +236,17 @@ protected:
 
   void* WaitThread() {
     mutex_.Lock();
-    LOG_ALWAYS_FATAL_IF(stage_ != 0);
+    LOG_IF(FATAL, stage_ != 0);
     stage_ = 1;
     cond_.WaitUntil(start_ + Milliseconds(50));
     MonotonicTimePoint current(MonotonicTimePoint::Now());
-    LOG_ALWAYS_FATAL_IF(Milliseconds(current - start_).count() < 50);
-    LOG_ALWAYS_FATAL_IF(Milliseconds(current - start_).count() > 100);
+    LOG_IF(FATAL, Milliseconds(current - start_).count() < 50);
+    LOG_IF(FATAL, Milliseconds(current - start_).count() > 100);
     stage_ = 2;
     cond_.WaitUntil(start_ + Milliseconds(1000));
     current = MonotonicTimePoint::Now();
-    LOG_ALWAYS_FATAL_IF(Milliseconds(current - start_).count() > 500);
-    LOG_ALWAYS_FATAL_IF(stage_ != 3);
+    LOG_IF(FATAL, Milliseconds(current - start_).count() > 500);
+    LOG_IF(FATAL, stage_ != 3);
     stage_ = FINISHED;
     mutex_.Unlock();
     return NULL;
@@ -241,7 +258,9 @@ protected:
   MonotonicTimePoint start_;
 };
 
-int main() {
+int main(int argc, char** argv) {
+  ::google::InitGoogleLogging(argv[0]);
+  ::google::LogToStderr();
   MutexTest mt;
   mt.Run();
   NotifyOneTest nt1;
