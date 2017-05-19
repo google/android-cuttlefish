@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_RESOURCE_LOCATION_H_
-#define GCE_RESOURCE_LOCATION_H_
+#include "common/metadata/gce_resource_location.h"
 
-class GceResourceLocation {
- public:
-  static const char* const kInitialMetadataPath;
-  static const char* const kInitialFstabPath;
-  static const char* const kDevicePersonalitiesPath;
-};
+// Location of the file containing initial metadata.
+// Contains device configuration acquired from metadata server in json format.
+const char* const GceResourceLocation::kInitialMetadataPath =
+    "/initial.metadata";
 
-#endif  // GCE_RESOURCE_LOCATION_H_
+// Location of the fstab file.
+const char* const GceResourceLocation::kInitialFstabPath = "/fstab.gce_x86";
+
+// Location of the folder containing device personality files.
+const char* const GceResourceLocation::kDevicePersonalitiesPath =
+    "/system/etc/device_personalities";
+

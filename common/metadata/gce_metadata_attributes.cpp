@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "GceMetadataAttributes.h"
+#include "common/metadata/gce_metadata_attributes.h"
 
 const char* const GceMetadataAttributes::kTestingPath = "testing/attributes/";
 

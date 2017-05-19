@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_METADATA_ATTRIBUTES_H_
-#define GCE_METADATA_ATTRIBUTES_H_
+#ifndef COMMON_METADATA_GCE_METADATA_ATTRIBUTES_H_
+#define COMMON_METADATA_GCE_METADATA_ATTRIBUTES_H_
 
 // Constant string declarations for GCE metadata attributes used by the Remoter.
 class GceMetadataAttributes {
@@ -92,4 +92,4 @@ public:
   static const char* const kScreenshotsDirectoryProjectPath;
 };
 
-#endif
+#endif  // COMMON_METADATA_GCE_METADATA_ATTRIBUTES_H_
