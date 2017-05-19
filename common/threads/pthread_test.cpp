@@ -17,7 +17,7 @@
 
 #include <glog/logging.h>
 
-#include "common/thread/thunkers.h"
+#include "common/threads/thunkers.h"
 #include "common/time/monotonic_time.h"
 
 using avd::ConditionVariable;

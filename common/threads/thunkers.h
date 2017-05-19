@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_THUNKERS
-#define GCE_THUNKERS
+#ifndef COMMON_THREADS_THUNKERS_H_
+#define COMMON_THREADS_THUNKERS_H_
 
 template <typename HalType, typename Impl, typename F> struct ThunkerBase;
 
@@ -160,4 +160,4 @@ struct ThunkerBase<HalType, Impl, R(T1, T2, T3, T4, T5, T6, T7, T8)> {
         t1, t2, t3, t4, t5, t6, t7, t8);
   }
 };
-#endif  // GCE_THUNKERS
+#endif  // COMMON_THREADS_THUNKERS_H_

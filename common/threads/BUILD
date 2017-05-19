@@ -4,6 +4,7 @@ cc_library(
     ],
     hdrs = [
         "pthread.h",
+        "thunkers.h",
     ],
     deps = [
         "//common/time",
