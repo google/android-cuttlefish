@@ -1,10 +1,14 @@
 cc_library(
     name = "glog",
     srcs = [
+        ":generate_config_h",
+        ":generate_glog_logging_h",
+        ":generate_glog_raw_logging_h",
+        ":generate_glog_stl_logging_h",
+        ":generate_glog_vlog_is_on_h",
         "src/base/commandlineflags.h",
         "src/base/googleinit.h",
         "src/base/mutex.h",
-        "src/config.h",
         "src/demangle.cc",
         "src/demangle.h",
         "src/logging.cc",
@@ -26,11 +30,11 @@ cc_library(
         "src/glog/vlog_is_on.h",
     ],
     copts = [
+        "-I$(GENDIR)/external/glog_repo/src",
         "-Wno-sign-compare",
     ],
-    includes = ["./src"],
-    linkopts = ["-lpthread"],
-    visibility = ["//visibility:public"],
+    linkopts = [ "-lpthread" ],
+    visibility = [ "//visibility:public" ],
     deps = [
         "//external:gflags",
     ],

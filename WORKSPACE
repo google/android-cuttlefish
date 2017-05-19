@@ -22,10 +22,11 @@ bind(
 
 #### Google Flags
 
-git_repository(
+new_git_repository(
     name = "gflags_repo",
     remote = "https://github.com/gflags/gflags.git",
-    tag = "v2.2.0",
+    tag = "v2.1.2",
+    build_file = "//external:gflags.BUILD",
 )
 
 bind(
@@ -38,7 +39,7 @@ bind(
 new_git_repository(
     name = "glog_repo",
     remote = "https://github.com/google/glog.git",
-    tag = "v0.3.5",
+    tag = "v0.3.4",
     build_file = "//external:glog.BUILD",
 )
 
