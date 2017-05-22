@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_NETWORK_NETWORK_INTERFACE_H_
-#define GCE_NETWORK_NETWORK_INTERFACE_H_
+#ifndef GUEST_GCE_NETWORK_NETWORK_INTERFACE_H_
+#define GUEST_GCE_NETWORK_NETWORK_INTERFACE_H_
 
 #include <string>
 
@@ -77,4 +77,4 @@ class NetworkInterface {
 
 }  // namespace avd
 
-#endif  // GCE_NETWORK_NETWORK_INTERFACE_H_
+#endif  // GUEST_GCE_NETWORK_NETWORK_INTERFACE_H_

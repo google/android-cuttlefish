@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_NETWORK_DHCP_SERVER_H_
-#define GCE_NETWORK_DHCP_SERVER_H_
+#ifndef GUEST_GCE_NETWORK_DHCP_SERVER_H_
+#define GUEST_GCE_NETWORK_DHCP_SERVER_H_
 
 #include <string>
-
-#include "jb_compat.h"
 
 namespace avd {
 
@@ -111,4 +109,4 @@ class DhcpServer {
 };
 }  // namespace avd
 
-#endif  // GCE_NETWORK_DHCP_SERVER_H_
+#endif  // GUEST_GCE_NETWORK_DHCP_SERVER_H_

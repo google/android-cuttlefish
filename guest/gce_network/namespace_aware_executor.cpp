@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <api_level_fixes.h>
-
-#include "namespace_aware_executor.h"
+#include "guest/gce_network/namespace_aware_executor.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -23,6 +21,9 @@
 #include <string.h>
 #include <sys/mount.h>
 #include <unistd.h>
+
+#include <functional>
+#include <memory>
 
 namespace avd {
 
@@ -56,7 +57,7 @@ bool NamespaceAwareExecutor::InternalNonInteractiveExecute(const char** commands
   for (size_t cmd_index = 0; commands[cmd_index]; ++cmd_index) {
     // Non-interactive: simply fire command and monitor output.
     KLOG_INFO(LOG_TAG, "# %s\n", commands[cmd_index]);
-    UniquePtr<SysClient::ProcessPipe> pipe(
+    std::unique_ptr<SysClient::ProcessPipe> pipe(
         sys_client_->POpen(commands[cmd_index]));
     const char* output = NULL;
     while ((output = pipe->GetOutputLine()) != NULL) {
@@ -81,7 +82,7 @@ bool NamespaceAwareExecutor::InternalInteractiveExecute(const char** commands) {
 
 int32_t NamespaceAwareExecutor::InternalExecute(
     const std::string& network_namespace,
-    const ::avd::Callback<bool()>& callback) {
+    const std::function<bool()>& callback) {
   if (!ns_manager_->SwitchNamespace(network_namespace)) {
     KLOG_ERROR(LOG_TAG, "%s: Failed to set current namespace to %s.\n",
                __FUNCTION__, network_namespace.c_str());
@@ -96,28 +97,28 @@ bool NamespaceAwareExecutor::Execute(
     const std::string& namespace_name,
     bool is_interactive,
     const char** commands) {
-  ::avd::Callback<int32_t()> callback(
-      &NamespaceAwareExecutor::InternalExecute, this, namespace_name,
-      ::avd::Callback<bool()>(
-          is_interactive ?
-              &NamespaceAwareExecutor::InternalInteractiveExecute :
-              &NamespaceAwareExecutor::InternalNonInteractiveExecute,
-          this, commands));
-  UniquePtr<SysClient::ProcessHandle> handle(
-      sys_client_->Clone(std::string("gce.ex.") + namespace_name,
-                         callback, kCloneNewNS));
+  std::function<bool()> callback = [this, is_interactive, commands]() -> bool {
+    return is_interactive ?
+        InternalInteractiveExecute(commands) :
+        InternalNonInteractiveExecute(commands);
+  };
 
+  std::unique_ptr<SysClient::ProcessHandle> handle(
+      Execute(namespace_name, callback));
   return handle->WaitResult() == 0;
 }
 
 SysClient::ProcessHandle* NamespaceAwareExecutor::Execute(
     const std::string& namespace_name,
-    ::avd::Callback<bool()> callback) {
-  ::avd::Callback<int32_t()> internal_callback(
-      &NamespaceAwareExecutor::InternalExecute, this, namespace_name, callback);
+    std::function<bool()> callback) {
+  std::function<int32_t()> internal_callback(
+      [this, namespace_name, callback]() -> int32_t {
+        return InternalExecute(namespace_name, callback);
+      });
 
-  return sys_client_->Clone(std::string("gce.ex.") + namespace_name,
-                            internal_callback, kCloneNewNS);
+  return sys_client_->Clone(
+      std::string("gce.ex.") + namespace_name,
+      internal_callback, kCloneNewNS);
 }
 
 

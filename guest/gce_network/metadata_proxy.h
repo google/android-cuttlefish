@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef METADATA_PROXY_H_
-#define METADATA_PROXY_H_
+#ifndef GUEST_GCE_NETWORK_METADATA_PROXY_H_
+#define GUEST_GCE_NETWORK_METADATA_PROXY_H_
 
 #include <string>
 
-#include "jb_compat.h"
-#include "network_namespace_manager.h"
-#include "sys_client.h"
+#include "guest/gce_network/network_namespace_manager.h"
+#include "guest/gce_network/sys_client.h"
 
 namespace avd {
 
@@ -44,4 +43,4 @@ class MetadataProxy {
 
 }  // namespace avd
 
-#endif  // METADATA_PROXY_H_
+#endif  // GUEST_GCE_NETWORK_METADATA_PROXY_H_

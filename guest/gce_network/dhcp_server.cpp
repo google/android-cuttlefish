@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dhcp_server.h"
+#include "guest/gce_network/dhcp_server.h"
 
 #include <arpa/inet.h>
 #include <linux/net.h>
 #include <linux/socket.h>
+#include <string.h>
 #include <sys/socket.h>
 
 #include <cerrno>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include <gce_fs.h>
-#include <UniquePtr.h>
-#include <SharedFD.h>
-
-#include "dhcp_message.h"
-#include "logging.h"
-
-using avd::SharedFD;
+#include "common/fs/shared_fd.h"
+#include "guest/gce_network/dhcp_message.h"
+#include "guest/gce_network/logging.h"
 
 namespace avd {
 namespace {
@@ -326,7 +323,7 @@ DhcpMessage* DhcpServerImpl::BuildResponse(DhcpMessage* request) {
     return NULL;
   }
 
-  UniquePtr<DhcpMessage> response(DhcpMessage::New());
+  std::unique_ptr<DhcpMessage> response(DhcpMessage::New());
   response->InitializeFrom(*request);
   response->SetMessageType(type);
   response->SetServerIpAddress(server_ip_address_);
@@ -389,13 +386,13 @@ bool DhcpServerImpl::Start(const DhcpServer::Options& options) {
 
   while (ReceiveDHCPMessage(&message)) {
     // De-serialize the DHCP request message.
-    UniquePtr<DhcpMessage> request(DhcpMessage::New());
+    std::unique_ptr<DhcpMessage> request(DhcpMessage::New());
     if (!request->Deserialize(message)) {
       continue;
     }
 
     // Build a DHCP response based on the request.
-    UniquePtr<DhcpMessage> response(BuildResponse(request.get()));
+    std::unique_ptr<DhcpMessage> response(BuildResponse(request.get()));
     if (!response.get()) {
       continue;
     }

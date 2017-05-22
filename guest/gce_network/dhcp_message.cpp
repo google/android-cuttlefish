@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "dhcp_message.h"
-
-#include "logging.h"
+#include "guest/gce_network/dhcp_message.h"
+#include "guest/gce_network/logging.h"
 
 namespace avd {
 namespace {

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "network_interface_manager.h"
+#include "guest/gce_network/network_interface_manager.h"
 
 #include <arpa/inet.h>
 #include <linux/if_link.h>
-#include <UniquePtr.h>
 
-#include "network_interface.h"
-#include "network_namespace_manager.h"
+#include <memory>
+
+#include "guest/gce_network/network_interface.h"
+#include "guest/gce_network/network_namespace_manager.h"
 
 namespace avd {
 
@@ -143,7 +144,7 @@ bool NetworkInterfaceManager::CreateVethPair(
   //   ],
   // ]
   //
-  UniquePtr<NetlinkRequest> request(nl_client_->CreateRequest(true));
+  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(true));
 
   if (!request.get()) return false;
   if (!BuildRequest(request.get(), veth1)) return false;
@@ -161,7 +162,7 @@ bool NetworkInterfaceManager::CreateVethPair(
 }
 
 bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {
-  UniquePtr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
   if (!BuildRequest(request.get(), iface)) return false;
   return nl_client_->Send(request.get());
 }

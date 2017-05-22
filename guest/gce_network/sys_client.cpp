@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "sys_client.h"
+#include "guest/gce_network/sys_client.h"
 
 #include <stdlib.h>
 #include <sched.h>
@@ -24,10 +24,6 @@
 #include <sys/syscall.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-#include <UniquePtr.h>
-
-#include "AutoResources.h"
 
 namespace avd {
 namespace {
@@ -59,7 +55,7 @@ class SysClientImpl : public SysClient {
   // Wrapper around clone() call.
   virtual ProcessHandle* Clone(
       const std::string& name,
-      const ::avd::Callback<int32_t()>& call, int32_t clone_flags);
+      const std::function<int32_t()>& call, int32_t clone_flags);
 
   // Wrapper around setns() call.
   virtual int32_t SetNs(int32_t fd, int32_t clone_flags);
@@ -86,7 +82,7 @@ class ProcessHandleImpl : public SysClient::ProcessHandle {
  public:
   ProcessHandleImpl(
       const std::string& name,
-      const ::avd::Callback<int32_t()>& function, int32_t flags);
+      const std::function<int32_t()>& function, int32_t flags);
   virtual ~ProcessHandleImpl();
 
   virtual int32_t WaitResult();
@@ -101,7 +97,7 @@ class ProcessHandleImpl : public SysClient::ProcessHandle {
 
   pid_t pid_;
   std::string name_;
-  const ::avd::Callback<int32_t()> function_;
+  const std::function<int32_t()> function_;
   int32_t clone_flags_;
 };
 
@@ -116,13 +112,13 @@ class ProcessPipeImpl : public SysClient::ProcessPipe {
 
  private:
   FILE* pipe_;
-  AutoFreeBuffer output_line_buffer_;
+  char output_line_buffer_[512];
   int32_t return_code_;
 };
 
 ProcessHandleImpl::ProcessHandleImpl(
     const std::string& name,
-    const ::avd::Callback<int32_t()>& function, int32_t clone_flags)
+    const std::function<int32_t()>& function, int32_t clone_flags)
     : pid_(0),
       name_(name),
       function_(function),
@@ -163,10 +159,7 @@ int32_t ProcessHandleImpl::WaitResult() {
 
 ProcessPipeImpl::ProcessPipeImpl(const std::string& command)
   : pipe_(popen((command + " 2>&1").c_str(), "r")),
-    output_line_buffer_(512),
-    return_code_(0) {
-  output_line_buffer_.Resize(512);
-}
+    return_code_(0) {}
 
 ProcessPipeImpl::~ProcessPipeImpl() {
   if (pipe_) pclose(pipe_);
@@ -175,9 +168,8 @@ ProcessPipeImpl::~ProcessPipeImpl() {
 const char* ProcessPipeImpl::GetOutputLine() {
   if (!pipe_) return NULL;
 
-  output_line_buffer_.data()[0] = '\0';
-  return fgets(output_line_buffer_.data(),
-               output_line_buffer_.reserve_size(), pipe_);
+  output_line_buffer_[0] = '\0';
+  return fgets(output_line_buffer_, sizeof(output_line_buffer_), pipe_);
 }
 
 int32_t ProcessPipeImpl::GetReturnCode() {
@@ -195,7 +187,7 @@ bool ProcessPipeImpl::IsCompleted() {
 
 SysClient::ProcessHandle* SysClientImpl::Clone(
     const std::string& name,
-    const ::avd::Callback<int32_t()>& function, int32_t clone_flags) {
+    const std::function<int32_t()>& function, int32_t clone_flags) {
   ProcessHandleImpl* handle = new ProcessHandleImpl(
       name, function, clone_flags);
 

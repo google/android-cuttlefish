@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DHCP_MESSAGE_H_
-#define DHCP_MESSAGE_H_
+#ifndef GUEST_GCE_NETWORK_DHCP_MESSAGE_H_
+#define GUEST_GCE_NETWORK_DHCP_MESSAGE_H_
 
 #include <arpa/inet.h>
 
 #include <cstdint>
 #include <vector>
 
-#include "serializable.h"
+#include "guest/gce_network/serializable.h"
 
 namespace avd {
 
@@ -118,4 +118,4 @@ class DhcpMessage : public Serializable {
 
 }  // namespace avd
 
-#endif  // DHCP_MESSAGE_H_
+#endif  // GUEST_GCE_NETWORK_DHCP_MESSAGE_H_

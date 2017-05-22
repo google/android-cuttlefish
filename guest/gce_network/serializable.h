@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef SERIALIZABLE_H_
-#define SERIALIZABLE_H_
+#ifndef GUEST_GCE_NETWORK_SERIALIZABLE_H_
+#define GUEST_GCE_NETWORK_SERIALIZABLE_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -71,4 +72,4 @@ class Serializable {
 
 }  // namespace avd
 
-#endif  // SERIALIZABLE_H_
+#endif  // GUEST_GCE_NETWORK_SERIALIZABLE_H_
