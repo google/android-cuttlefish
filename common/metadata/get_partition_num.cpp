@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <GetPartitionNum.h>
+#include "common/metadata/get_partition_num.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +21,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <AutoResources.h>
+#include "common/auto_resources/auto_resources.h"
 
 namespace {
 const char kDefaultPartitionsPath[] = "/partitions";

@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <InitialMetadataReaderImpl.h>
+#include "common/metadata/initial_metadata_reader_impl.h"
 
 #include <errno.h>
 #include <stdio.h>
-#include <cutils/log.h>
-#include <json/json.h>
 #include <iostream>
 #include <fstream>
 #include <map>
 #include <string>
 
-#include "GceMetadataAttributes.h"
-#include "GceResourceLocation.h"
+#include <glog/logging.h>
+#include <json/json.h>
+
+#include "common/metadata/gce_metadata_attributes.h"
+#include "common/metadata/gce_resource_location.h"
 
 namespace avd {
 
@@ -56,7 +57,7 @@ bool InitialMetadataReaderImpl::Init(const char* config_path) {
   std::ifstream ifs(config_path);
 
   if (!ifs.good()) {
-    ALOGE("%s: Couldn't open initial metadata file.", __FUNCTION__);
+    LOG(ERROR) << "Couldn't open initial metadata file.";
     return false;
   }
   // Skip over the headers.
