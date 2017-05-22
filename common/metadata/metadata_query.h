@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_METADATA_QUERY_H_
-#define GCE_METADATA_QUERY_H_
+#ifndef COMMON_METADATA_METADATA_QUERY_H_
+#define COMMON_METADATA_METADATA_QUERY_H_
+
+#include "common/auto_resources/auto_resources.h"
 
 static const int kMaxMetadataResponseBufferSize = 65536;
-
-class AutoCloseFileDescriptor;
-class AutoFreeBuffer;
 
 class MetadataQuery {
  public:
@@ -32,4 +31,4 @@ class MetadataQuery {
   static MetadataQuery* New();
 };
 
-#endif  // GCE_METADATA_QUERY_H_
+#endif  // COMMON_METADATA_METADATA_QUERY_H_

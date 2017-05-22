@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "InitialMetadataReaderImpl.h"
-#include "GceMetadataAttributes.h"
+#include "common/metadata/initial_metadata_reader_impl.h"
+#include "common/metadata/gce_metadata_attributes.h"
 
 #include <json/json.h>
 

@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 // Google Compute Engine (GCE) Camera HAL - Initial metadata reader.
-#ifndef DEVICE_GOOGLE_GCE_LIBS_INITIAL_METADATA_READER_H_
-#define DEVICE_GOOGLE_GCE_LIBS_INITIAL_METADATA_READER_H_
-
-#include <UniquePtr.h>
+#ifndef COMMON_METADATA_INITIAL_METADATA_READER_H_
+#define COMMON_METADATA_INITIAL_METADATA_READER_H_
 
 namespace avd {
 
@@ -38,9 +36,10 @@ class InitialMetadataReader {
  protected:
   InitialMetadataReader() {}
   virtual ~InitialMetadataReader() {}
-  DISALLOW_COPY_AND_ASSIGN(InitialMetadataReader);
+  InitialMetadataReader(const InitialMetadataReader&);
+  InitialMetadataReader& operator= (const InitialMetadataReader&);
 };
 
 }
 
-#endif
+#endif  // COMMON_METADATA_INITIAL_METADATA_READER_H_

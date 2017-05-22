@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef LIBS_GCEMETADATA_INITIALMETADATAREADERIMPL_H_
-#define LIBS_GCEMETADATA_INITIALMETADATAREADERIMPL_H_
+#ifndef COMMON_METADATA_INITIAL_METADATA_READER_IMPL_H_
+#define COMMON_METADATA_INITIAL_METADATA_READER_IMPL_H_
 
 #include <map>
 #include <string>
 
-#include <DisplayProperties.h>
-#include <InitialMetadataReader.h>
+#include "common/metadata/display_properties.h"
+#include "common/metadata/initial_metadata_reader.h"
 
 namespace avd {
 
@@ -43,9 +43,8 @@ class InitialMetadataReaderImpl : public InitialMetadataReader {
   MetadataReaderValueMap values_;
   std::string instance_hostname_;
   DisplayProperties display_;
-  DISALLOW_COPY_AND_ASSIGN(InitialMetadataReaderImpl);
 };
 
 }  // namespace avd
 
-#endif  // LIBS_GCEMETADATA_INITIALMETADATAREADERIMPL_H_
+#endif  // COMMON_METADATA_INITIAL_METADATA_READER_IMPL_H_

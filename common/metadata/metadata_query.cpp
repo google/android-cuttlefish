@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "MetadataQuery"
+#include "common/fs/shared_fd.h"
 
-#include <SharedFD.h>
-#include <cutils/log.h>
-#include <cutils/klog.h>
+#include <glog/logging.h>
 
-#include "MetadataQuery.h"
+#include "common/metadata/metadata_query.h"
 
 namespace {
 class MetadataQueryImpl : public MetadataQuery {
@@ -32,10 +30,10 @@ class MetadataQueryImpl : public MetadataQuery {
   bool QueryServer(AutoFreeBuffer* buffer) {
     if (!client_->IsOpen()) {
       client_ = avd::SharedFD::SocketLocalClient(
-          "gce_metadata", ANDROID_SOCKET_NAMESPACE_ABSTRACT, SOCK_STREAM);
+          "gce_metadata", true, SOCK_STREAM);
 
       if (!client_->IsOpen()) {
-        ALOGE("Could not connect to metadata proxy.");
+        LOG(ERROR) << "Couldn't connect to metadata proxy.";
         return false;
       }
     }
@@ -44,7 +42,7 @@ class MetadataQueryImpl : public MetadataQuery {
     client_->Read(&length, sizeof(length));
 
     if ((length < 0) || (length > (1 << 20))) {
-      ALOGE("Invalid metadata length: %d", length);
+      LOG(ERROR) << "Invalid metadata length: " << length;
       client_->Close();
       return false;
     }

@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Camera HAL - Initial metadata reader.
-#ifndef DEVICE_GOOGLE_GCE_HEADLESS_DISPLAY_PROPERTIES_H_
-#define DEVICE_GOOGLE_GCE_HEADLESS_DISPLAY_PROPERTIES_H_
+#ifndef COMMON_METADATA_DISPLAY_PROPERTIES_H_
+#define COMMON_METADATA_DISPLAY_PROPERTIES_H_
 
-#include <AutoResources.h>
+#include "common/auto_resources/auto_resources.h"
 
 namespace avd {
 
@@ -57,4 +56,4 @@ class DisplayProperties {
 };
 
 }  // namespace avd
-#endif  // DEVICE_GOOGLE_GCE_HEADLESS_DISPLAY_PROPERTIES_H_
+#endif  // COMMON_METADATA_DISPLAY_PROPERTIES_H_
