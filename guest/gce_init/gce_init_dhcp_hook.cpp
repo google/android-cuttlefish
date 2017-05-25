@@ -22,8 +22,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
-#include <AutoResources.h>
-#include <namespace_constants.h>
+#include "common/auto_resources/auto_resources.h"
 
 //TODO(ghartman): Make this an alias of /init to save on disk space.
 //  But watch out for the lack of make support for symlinking in JB-MR1.
@@ -64,7 +63,7 @@ void save_environment(const char* output) {
 int main() {
   const char* reason = getenv("reason");
   if (reason && !strcmp(reason, "BOUND")) {
-    save_environment(OUTER_INTERFACE_CONFIG_PATH);
+    save_environment("/var/run/eth0.dhcp.env");
   }
   return 0;
 }

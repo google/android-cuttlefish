@@ -31,6 +31,9 @@ cc_binary(
     srcs = [
         "gce_init_dhcp_hook.cpp",
     ],
+    deps = [
+        "//common/auto_resources",
+    ],
     linkopts = select({
         "//:link_static": [
             "-Wl,-Bstatic",
@@ -42,7 +45,6 @@ cc_binary(
         "//conditions:default": 0,
     }),
 )
-
 
 cc_test(
     name = "properties_test",
