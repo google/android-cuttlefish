@@ -25,18 +25,13 @@ cc_library(
         "serializable.h",
         "sys_client.h",
     ],
-    copts = [
-        "-I/usr/include/jsoncpp",
-    ],
+    copts = [],
     linkopts = select({
         "//:link_static": [
             "-static",
             "-static-libgcc",
-            "-Wl,-Bstatic -ljsoncpp",
         ],
         "//conditions:default": [
-            "-ljsoncpp",
-            "-lcurl",
         ],
     }),
     deps = [
