@@ -8,22 +8,17 @@ cc_binary(
         "properties.h",
     ],
     deps = [
-        "//common/auto_resources",
-        "//common/metadata:initial_metadata_reader-static",
-        "//common/metadata:partitions",
+        "@cuttlefish//common/libs/auto_resources",
+        "@cuttlefish//common/libs/metadata:initial_metadata_reader-static",
+        "@cuttlefish//common/libs/metadata:partitions",
         "//guest/gce_network:gce_network_lib",
         "//guest/ramdisk:ramdisk_lib",
     ],
-    linkopts = select({
-        "//:link_static": [
-            "-Wl,-Bstatic",
-        ],
-        "//conditions:default": [],
-    }),
-    linkstatic = select({
-        "//:link_static": 1,
-        "//conditions:default": 0,
-    }),
+    linkopts = [
+        "-Wl,-Bstatic",
+        "-static-libgcc",
+    ],
+    linkstatic = 1,
 )
 
 cc_binary(
@@ -32,18 +27,9 @@ cc_binary(
         "gce_init_dhcp_hook.cpp",
     ],
     deps = [
-        "//common/auto_resources",
+        "@cuttlefish//common/libs/auto_resources",
     ],
-    linkopts = select({
-        "//:link_static": [
-            "-Wl,-Bstatic",
-        ],
-        "//conditions:default": [],
-    }),
-    linkstatic = select({
-        "//:link_static": 1,
-        "//conditions:default": 0,
-    }),
+    linkstatic = 1,
 )
 
 cc_test(
@@ -54,7 +40,7 @@ cc_test(
         "properties_test.cpp",
     ],
     deps = [
-        "//common/auto_resources",
+        "@cuttlefish//common/libs/auto_resources",
         "@gtest_repo//:gtest_main",
     ],
 )

@@ -16,7 +16,7 @@
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "properties.h"
+#include "guest/gce_init/properties.h"
 
 namespace avd {
 namespace {

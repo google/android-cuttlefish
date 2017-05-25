@@ -29,9 +29,9 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include "common/auto_resources/auto_resources.h"
-#include "common/fs/shared_fd.h"
-#include "common/fs/shared_select.h"
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 
 
 namespace avd {

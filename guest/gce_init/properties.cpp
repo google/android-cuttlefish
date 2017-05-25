@@ -17,7 +17,7 @@
 
 #include <ctype.h>
 
-#include "common/auto_resources/auto_resources.h"
+#include "common/libs/auto_resources/auto_resources.h"
 
 namespace avd {
 

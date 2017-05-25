@@ -22,7 +22,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
-#include "common/auto_resources/auto_resources.h"
+#include "common/libs/auto_resources/auto_resources.h"
 
 //TODO(ghartman): Make this an alias of /init to save on disk space.
 //  But watch out for the lack of make support for symlinking in JB-MR1.

@@ -35,10 +35,10 @@ cc_library(
         ],
     }),
     deps = [
-        "//common/auto_resources",
-        "//common/fs",
-        "//common/metadata:constants",
-        "//common/threads",
+        "@cuttlefish//common/libs/auto_resources",
+        "@cuttlefish//common/libs/fs",
+        "@cuttlefish//common/libs/metadata:constants",
+        "@cuttlefish//common/libs/threads",
         "@glog_repo//:glog",
     ],
 )

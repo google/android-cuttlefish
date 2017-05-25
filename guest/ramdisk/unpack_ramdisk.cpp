@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <zlib.h>
 
-#include "common/auto_resources/auto_resources.h"
+#include "common/libs/auto_resources/auto_resources.h"
 #include "guest/ramdisk/compressed_file_reader.h"
 
 static const int IGNORE_CHECK_TAG = 0x070701;
