@@ -1,5 +1,3 @@
-load("//common/config/link_type.bzl");
-
 cc_binary(
     name = "gce_init",
     srcs = [
@@ -16,11 +14,35 @@ cc_binary(
         "//guest/gce_network:gce_network_lib",
         "//guest/ramdisk:ramdisk_lib",
     ],
-    linkopts = [
-        "-Wl,-Bstatic",
-    ],
-    linkstatic = 1,
+    linkopts = select({
+        "//:link_static": [
+            "-Wl,-Bstatic",
+        ],
+        "//conditions:default": [],
+    }),
+    linkstatic = select({
+        "//:link_static": 1,
+        "//conditions:default": 0,
+    }),
 )
+
+cc_binary(
+    name = "gce_init_dhcp_hook",
+    srcs = [
+        "gce_init_dhcp_hook.cpp",
+    ],
+    linkopts = select({
+        "//:link_static": [
+            "-Wl,-Bstatic",
+        ],
+        "//conditions:default": [],
+    }),
+    linkstatic = select({
+        "//:link_static": 1,
+        "//conditions:default": 0,
+    }),
+)
+
 
 cc_test(
     name = "properties_test",

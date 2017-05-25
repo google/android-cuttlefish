@@ -1,5 +1,3 @@
-load("//common/config/BUILD.link_type");
-
 cc_library(
     name = "gce_network_lib",
     visibility = ["//visibility:public"],
@@ -31,7 +29,7 @@ cc_library(
         "-I/usr/include/jsoncpp",
     ],
     linkopts = select({
-        "//link_type:force_static": [
+        "//:link_static": [
             "-static",
             "-static-libgcc",
             "-Wl,-Bstatic -ljsoncpp",
