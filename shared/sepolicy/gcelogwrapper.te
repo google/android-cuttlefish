@@ -1,0 +1,21 @@
+# The gcelogwrapper command run by init.
+type gcelogwrapper, domain;
+type gcelogwrapper_exec, exec_type, file_type;
+
+init_daemon_domain(gcelogwrapper)
+
+allow gcelogwrapper bluetooth_prop:property_service set;
+allow gcelogwrapper device:dir { add_name write };
+allow gcelogwrapper device:lnk_file create;
+allow gcelogwrapper devpts:chr_file { getattr ioctl open read write };
+allow gcelogwrapper gcelogwrapper_tmpfs:file { create getattr ioctl open rename setattr unlink };
+allow gcelogwrapper init:unix_stream_socket connectto;
+allow gcelogwrapper kmsg_device:chr_file { open write };
+allow gcelogwrapper port:tcp_socket { name_bind name_connect node_bind read };
+allow gcelogwrapper property_socket:sock_file write;
+allow gcelogwrapper self:capability { chown dac_override net_bind_service setgid };
+allow gcelogwrapper self:tcp_socket { bind connect create getattr getopt listen read setopt write };
+allow gcelogwrapper self:udp_socket create;
+allow gcelogwrapper shell_exec:file execute;
+allow gcelogwrapper system_file:file execute_no_trans;
+allow gcelogwrapper tmpfs:dir { add_name create remove_name setattr write };

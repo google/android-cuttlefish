@@ -1,0 +1,3 @@
+allow surfaceflinger device:file { ioctl open write };
+allow surfaceflinger self:process execmem;
+allow surfaceflinger socket_device:sock_file write;

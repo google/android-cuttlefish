@@ -1,0 +1,5 @@
+/system/bin/gcelogwrapper u:object_r:gcelogwrapper_exec:s0
+/system/bin/gce_shutdown  u:object_r:gce_shutdown_exec:s0
+/system/bin/remoter       u:object_r:remoter_exec:s0
+/system/vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
+/system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.vsoc      u:object_r:hal_dumpstate_impl_exec:s0

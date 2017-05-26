@@ -1,0 +1,6 @@
+type gce_shutdown, domain;
+type gce_shutdown_exec, exec_type, file_type;
+
+init_daemon_domain(gce_shutdown)
+
+set_prop(gce_shutdown, powerctl_prop)
