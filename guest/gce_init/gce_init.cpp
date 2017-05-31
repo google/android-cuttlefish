@@ -37,13 +37,13 @@
 #include <zlib.h>
 
 
-#include "common/fs/gce_fs.h"
-#include "common/fs/shared_fd.h"
-#include "common/metadata/gce_metadata_attributes.h"
-#include "common/metadata/display_properties.h"
-#include "common/metadata/get_partition_num.h"
-#include "common/metadata/initial_metadata_reader.h"
-#include "common/metadata/metadata_query.h"
+#include "common/libs/fs/gce_fs.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/metadata/gce_metadata_attributes.h"
+#include "common/libs/metadata/display_properties.h"
+#include "common/libs/metadata/get_partition_num.h"
+#include "common/libs/metadata/initial_metadata_reader.h"
+#include "common/libs/metadata/metadata_query.h"
 
 #include "guest/gce_init/environment_setup.h"
 #include "guest/gce_init/properties.h"

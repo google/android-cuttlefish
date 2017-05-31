@@ -48,3 +48,9 @@ bind(
     actual = "@glog_repo//:glog",
 )
 
+##### Cuttlefish Common
+
+local_repository(
+    name = "cuttlefish",
+    path = "external/cuttlefish_common",
+)

@@ -27,8 +27,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "common/auto_resources/auto_resources.h"
-#include "common/fs/gce_fs.h"
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/fs/gce_fs.h"
 #include "guest/gce_network/logging.h"
 
 namespace avd {

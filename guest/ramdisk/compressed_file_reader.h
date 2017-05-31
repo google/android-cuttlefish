@@ -20,7 +20,7 @@
 #include <cstdint>
 #include <zlib.h>
 
-#include "common/auto_resources/auto_resources.h"
+#include "common/libs/auto_resources/auto_resources.h"
 
 // Reads a compressed file.
 class CompressedFileReader {

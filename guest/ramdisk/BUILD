@@ -10,7 +10,7 @@ cc_library(
         "unpack_ramdisk.h",
     ],
     deps = [
-        "//common/auto_resources",
+        "@cuttlefish//common/libs/auto_resources",
     ],
     linkopts = [
         "-lz",

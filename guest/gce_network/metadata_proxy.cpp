@@ -29,9 +29,9 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include "common/auto_resources/auto_resources.h"
-#include "common/fs/shared_fd.h"
-#include "common/fs/shared_select.h"
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 
 
 namespace avd {
@@ -44,7 +44,10 @@ class MetadataProxyImpl : public MetadataProxy {
   MetadataProxyImpl(
       SysClient* client, NetworkNamespaceManager* ns_manager)
       : client_(client),
-        ns_manager_(ns_manager) {}
+        ns_manager_(ns_manager) {
+    initial_metadata_.PrintF("{}");
+    metadata_.PrintF("{}");
+  }
 
   ~MetadataProxyImpl() {}
 
@@ -56,7 +59,6 @@ class MetadataProxyImpl : public MetadataProxy {
     // Do we have anything to send?
     // If not, we probably failed to fetch update from metadata server.
     if (length == 0) return true;
-
     if ((client->Send(&length, sizeof(length), MSG_NOSIGNAL) < 0) ||
         (client->Send(metadata.data(), length, MSG_NOSIGNAL) < 0)) {
       KLOG_WARNING(LOG_TAG, "Dropping metadata client: write error %d (%s)\n",

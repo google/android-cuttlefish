@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "common/fs/shared_fd.h"
+#include "common/libs/fs/shared_fd.h"
 #include "guest/gce_network/dhcp_message.h"
 #include "guest/gce_network/logging.h"
 
