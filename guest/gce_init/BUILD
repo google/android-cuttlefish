@@ -1,5 +1,6 @@
 cc_binary(
     name = "gce_init",
+    visibility = ["//visibility:public"],
     srcs = [
         "environment_setup.cpp",
         "environment_setup.h",
@@ -23,6 +24,7 @@ cc_binary(
 
 cc_binary(
     name = "gce_init_dhcp_hook",
+    visibility = ["//visibility:public"],
     srcs = [
         "gce_init_dhcp_hook.cpp",
     ],
