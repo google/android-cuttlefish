@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mount.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <functional>
@@ -63,9 +64,13 @@ bool NamespaceAwareExecutor::InternalNonInteractiveExecute(const char** commands
     while ((output = pipe->GetOutputLine()) != NULL) {
       KLOG_INFO(LOG_TAG, "--- %s", output);
     }
-    if (pipe->GetReturnCode() != 0) {
+    int rc = pipe->GetReturnCode();
+    if (WIFEXITED(rc)) {
       KLOG_INFO(LOG_TAG, ">>> Command exited with return code %d.\n",
-                pipe->GetReturnCode());
+                WEXITSTATUS(rc));
+    } else if (WIFSIGNALED(rc)) {
+      KLOG_INFO(LOG_TAG, ">>> Command terminated due to signal %d\n",
+                WTERMSIG(rc));
     }
   }
   return true;
