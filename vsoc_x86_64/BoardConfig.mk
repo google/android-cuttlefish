@@ -18,7 +18,7 @@
 # x86_64  target for Cuttlefish
 #
 
-$(call inherit-product, device/google/cuttlefish/shared/BoardConfig.mk)
+-include device/google/cuttlefish/shared/BoardConfig.mk
 
 TARGET_ARCH := x86_64
 TARGET_ARCH_VARIANT := silvermont

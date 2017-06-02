@@ -18,7 +18,7 @@
 # x86 target for Cuttlefish
 #
 
-$(call inherit-product, device/google/cuttlefish/shared/BoardConfig.mk)
+-include device/google/cuttlefish/shared/BoardConfig.mk
 
 TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
