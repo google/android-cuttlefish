@@ -17,8 +17,6 @@
 
 #include <arpa/inet.h>
 
-#include "guest/gce_network/logging.h"
-
 namespace avd {
 
 bool Serializable::ConsumeInt(

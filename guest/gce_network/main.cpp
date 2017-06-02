@@ -15,7 +15,8 @@
  */
 #include <memory>
 
-#include "guest/gce_network/logging.h"
+#include <glog/logging.h>
+
 #include "guest/gce_network/namespace_aware_executor.h"
 #include "guest/gce_network/netlink_client.h"
 #include "guest/gce_network/network_interface_manager.h"
@@ -43,10 +44,8 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-#if GCE_PLATFORM_SDK_BEFORE(J_MR2)
-  klog_init();
-#endif
-  klog_set_level(KLOG_INFO_LEVEL);
+  google::InitGoogleLogging();
+  google::LogToStderr();
 
   std::unique_ptr<SysClient> sys_client(SysClient::New());
   if (!sys_client.get()) return 1;
@@ -69,7 +68,7 @@ int main(int argc, char** argv) {
   std::string command(argv[1]);
   if (command == "nsexec") {
     if (argc < 3) {
-      KLOG_ERROR(LOG_TAG, "nsexec: too few parameters.\n");
+      LOG(ERROR) << "nsexec: too few parameters.";
       return 1;
     }
 
@@ -90,7 +89,7 @@ int main(int argc, char** argv) {
     }
   } else {
     // No help yet.
-    KLOG_ERROR(LOG_TAG, "unknown command: %s", argv[2]);
+    LOG(ERROR) << "unknown command: " << argv[2];
     return 1;
   }
 

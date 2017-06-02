@@ -18,7 +18,6 @@
 
 #include <string>
 
-#include "guest/gce_network/logging.h"
 #include "guest/gce_network/netlink_client.h"
 #include "guest/gce_network/network_interface.h"
 #include "guest/gce_network/network_namespace_manager.h"

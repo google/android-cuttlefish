@@ -20,6 +20,8 @@
 
 #include <memory>
 
+#include <glog/logging.h>
+
 #include "guest/gce_network/network_interface.h"
 #include "guest/gce_network/network_namespace_manager.h"
 
@@ -91,12 +93,12 @@ const char kVethLinkKind[] = "veth";
 NetworkInterfaceManager *NetworkInterfaceManager::New(
     NetlinkClient* nl_client, NetworkNamespaceManager* namespace_manager) {
   if (nl_client == NULL) {
-    KLOG_ERROR(LOG_TAG, "%s: NetlinkClient is NULL!\n", __FUNCTION__);
+    LOG(ERROR) << "NetlinkClient is NULL!";
     return NULL;
   }
 
   if (namespace_manager == NULL) {
-    KLOG_ERROR(LOG_TAG, "%s: NetworkNamespaceManager is NULL!\n", __FUNCTION__);
+    LOG(ERROR) << "NetworkNamespaceManager is NULL!";
     return NULL;
   }
 
@@ -111,8 +113,7 @@ NetworkInterfaceManager::NetworkInterfaceManager(
 NetworkInterface* NetworkInterfaceManager::Open(const std::string& if_name) {
   const int32_t index = nl_client_->NameToIndex(if_name);
   if (index < 0) {
-    KLOG_ERROR(LOG_TAG, "%s:%d: Failed to get interface (%s) index.\n",
-               __FILE__, __LINE__, if_name.c_str());
+    LOG(ERROR) << "Failed to get interface (" << if_name << ") index.";
     return NULL;
   }
 

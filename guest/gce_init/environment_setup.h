@@ -19,7 +19,6 @@
 #include <string>
 
 #include "guest/gce_network/dhcp_server.h"
-#include "guest/gce_network/logging.h"
 #include "guest/gce_network/metadata_proxy.h"
 #include "guest/gce_network/namespace_aware_executor.h"
 #include "guest/gce_network/network_interface_manager.h"

@@ -23,9 +23,6 @@
 #include <functional>
 #include <string>
 
-#include "guest/gce_network/logging.h"
-
-
 namespace avd {
 
 // CLONE flags, taken from linux/sched.h.

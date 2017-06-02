@@ -19,7 +19,6 @@
 #include <functional>
 #include <string>
 
-#include "guest/gce_network/logging.h"
 #include "guest/gce_network/network_namespace_manager.h"
 #include "guest/gce_network/sys_client.h"
 

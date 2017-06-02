@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "GceMetadataProxy"
-
 #include "guest/gce_network/metadata_proxy.h"
 
 #include <dlfcn.h>
@@ -28,6 +26,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+
+#include <glog/logging.h>
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/fs/shared_fd.h"
@@ -61,8 +61,8 @@ class MetadataProxyImpl : public MetadataProxy {
     if (length == 0) return true;
     if ((client->Send(&length, sizeof(length), MSG_NOSIGNAL) < 0) ||
         (client->Send(metadata.data(), length, MSG_NOSIGNAL) < 0)) {
-      KLOG_WARNING(LOG_TAG, "Dropping metadata client: write error %d (%s)\n",
-                   errno, strerror(errno));
+      LOG(WARNING) << "Dropping metadata client: write error "
+                   << strerror(errno);
       return false;
     }
     return true;
@@ -72,8 +72,8 @@ class MetadataProxyImpl : public MetadataProxy {
   int StartProxy(const std::string& socket_name) {
     SharedFD server_sock = CreateServerSocket(socket_name);
 
-    KLOG_INFO(LOG_TAG, "Starting metadata proxy service. Listening on @%s.\n",
-              socket_name.c_str());
+    LOG(INFO) << "Starting metadata proxy service. Listening on @"
+              << socket_name;
 
     while(true) {
       // Wait for signal from either server socket (that new client has
@@ -96,7 +96,7 @@ class MetadataProxyImpl : public MetadataProxy {
       for (std::list<SharedFD>::iterator client = clients_.begin();
            client != clients_.end();) {
         if (wait_set.IsSet(*client)) {
-          KLOG_INFO(LOG_TAG, "Metadata proxy client disconnected.\n");
+          LOG(INFO) << "Metadata proxy client disconnected.";
           client = clients_.erase(client);
         } else {
           ++client;
@@ -142,8 +142,7 @@ class MetadataProxyImpl : public MetadataProxy {
     if (client_->SetNs(
         ns_manager_->GetNamespaceDescriptor(
             NetworkNamespaceManager::kAndroidNs), kCloneNewNet) < 0) {
-      KLOG_ERROR(LOG_TAG, "%s: Failed to switch namespace: %s\n",
-                 __FUNCTION__, strerror(errno));
+      LOG(ERROR) << "Failed to switch namespace: " << strerror(errno);
       return SharedFD();
     }
 
@@ -152,8 +151,8 @@ class MetadataProxyImpl : public MetadataProxy {
         socket_name.c_str(), true, SOCK_STREAM, 0666);
 
     if (!server_sock->IsOpen()) {
-      KLOG_ERROR(LOG_TAG, "Failed to start local server %s: %d (%s).\n",
-                 socket_name.c_str(), errno, strerror(errno));
+      LOG(ERROR) << "Failed to start local server "
+                 << socket_name << ": " << strerror(errno);
       return SharedFD();
     }
 
@@ -170,11 +169,11 @@ class MetadataProxyImpl : public MetadataProxy {
     SharedFD client_sock = SharedFD::Accept(*server_sock);
 
     if (!client_sock->IsOpen()) {
-      KLOG_WARNING(LOG_TAG, "Metadata proxy failed to connect new client.\n");
+      LOG(WARNING) << "Metadata proxy failed to connect new client.";
       return;
     }
 
-    KLOG_INFO(LOG_TAG, "Accepted new metadata proxy client.\n");
+    LOG(INFO) << "Accepted new metadata proxy client.";
 
     // Append client to all clients, if we could successfully send initial
     // update.

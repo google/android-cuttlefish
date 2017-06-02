@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include "guest/gce_network/dhcp_message.h"
-#include "guest/gce_network/logging.h"
+
+#include <glog/logging.h>
 
 namespace avd {
 namespace {
@@ -392,20 +393,17 @@ bool DhcpMessageImpl::DeserializeOptions(
     if (option_id == kDhcpOptionIdPad) continue;
 
     uint8_t option_length = data[offset++];
-    KLOG_DEBUG(LOG_TAG, "%s: DHCP Option %d, size %d\n",
-               __FUNCTION__, option_id, option_length);
+    VLOG(2) << "DHCP Option " << option_id << ", size " << option_length;
 
     if (option_id == kDhcpOptionMessageType && option_length == 1) {
       if (!ConsumeInt(data, &offset, &command_, 1)) {
-        KLOG_ERROR(LOG_TAG, "%s: Could not read DHCP request type.\n",
-                   __FUNCTION__);
+        LOG(ERROR) << "Could not read DHCP request type.";
         return false;
       }
     } else {
       if (!SkipBytes(data, &offset, option_length)) {
-        KLOG_ERROR(LOG_TAG, "%s: Malformed DHCP option %d at %zu/%zu. "
-                   "Ignoring request.\n",
-                   __FUNCTION__, option_id, offset, data.size());
+        LOG(ERROR) << "Malformed DHCP option " << option_id
+                   << " at " << offset << "/" << data.size();
         return false;
       }
     }

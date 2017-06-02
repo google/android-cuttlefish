@@ -26,6 +26,8 @@
 #include <functional>
 #include <memory>
 
+#include <glog/logging.h>
+
 namespace avd {
 
 NamespaceAwareExecutor::NamespaceAwareExecutor(
@@ -48,7 +50,7 @@ void NamespaceAwareExecutor::SetEnvForChildProcess() {
   }
 
   if (setenv("PATH", path, 1) == -1) {
-    KLOG_WARNING(LOG_TAG, "Failed to set PATH.");
+    LOG(WARNING) << "Failed to set PATH.";
   }
 }
 
@@ -57,20 +59,18 @@ bool NamespaceAwareExecutor::InternalNonInteractiveExecute(const char** commands
 
   for (size_t cmd_index = 0; commands[cmd_index]; ++cmd_index) {
     // Non-interactive: simply fire command and monitor output.
-    KLOG_INFO(LOG_TAG, "# %s\n", commands[cmd_index]);
+    LOG(INFO) << "# " << commands[cmd_index];
     std::unique_ptr<SysClient::ProcessPipe> pipe(
         sys_client_->POpen(commands[cmd_index]));
     const char* output = NULL;
     while ((output = pipe->GetOutputLine()) != NULL) {
-      KLOG_INFO(LOG_TAG, "--- %s", output);
+      LOG(INFO) << "--- " << output;
     }
     int rc = pipe->GetReturnCode();
     if (WIFEXITED(rc)) {
-      KLOG_INFO(LOG_TAG, ">>> Command exited with return code %d.\n",
-                WEXITSTATUS(rc));
+      LOG(WARNING) << ">>> Command exited with return code " << WEXITSTATUS(rc);
     } else if (WIFSIGNALED(rc)) {
-      KLOG_INFO(LOG_TAG, ">>> Command terminated due to signal %d\n",
-                WTERMSIG(rc));
+      LOG(WARNING) << ">>> Command terminated due to signal " << WTERMSIG(rc);
     }
   }
   return true;
@@ -89,8 +89,7 @@ int32_t NamespaceAwareExecutor::InternalExecute(
     const std::string& network_namespace,
     const std::function<bool()>& callback) {
   if (!ns_manager_->SwitchNamespace(network_namespace)) {
-    KLOG_ERROR(LOG_TAG, "%s: Failed to set current namespace to %s.\n",
-               __FUNCTION__, network_namespace.c_str());
+    LOG(ERROR) << "Failed to set current namespace to " << network_namespace;
     return 1;
   }
 

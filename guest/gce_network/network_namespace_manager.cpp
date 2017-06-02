@@ -27,9 +27,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <glog/logging.h>
+
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/fs/gce_fs.h"
-#include "guest/gce_network/logging.h"
 
 namespace avd {
 namespace {
@@ -101,8 +102,8 @@ bool NetworkNamespaceManagerImpl::CreateNamespaceRootFolder() {
   // Create root folder for network namespaces.
   if (gce_fs_mkdirs(
       kNetNsFolder, S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)) {
-    KLOG_ERROR(LOG_TAG, "%s: gs_fs_prepare_dir(%s) failed %s:%d (%s)\n",
-               __FUNCTION__, kNetNsFolder, __FILE__, __LINE__, strerror(errno));
+    LOG(ERROR) << "gs_fs_prepare_dir(" << kNetNsFolder << ") failed "
+               << ": " << strerror(errno);
     return false;
   }
 
@@ -113,14 +114,12 @@ int NetworkNamespaceManagerImpl::NetworkNamespaceProcess(bool is_paranoid) {
   // Replace current /sys fs with the one describing current network namespace.
   // This is required for namespace-oblivious tools (like dhcpcd) to work.
   if (sys_client_->Umount("/sys", MNT_DETACH) < 0) {
-    KLOG_ERROR(LOG_TAG, "%s: Failed to detach /sys: %s.\n",
-               __FUNCTION__, strerror(errno));
+    LOG(ERROR) << "Failed to detach /sys: " << ": " << strerror(errno);
     return 1;
   }
 
   if (sys_client_->Mount("none", "/sys", "sysfs", 0) < 0) {
-    KLOG_ERROR(LOG_TAG, "%s: Failed to re-attach /sys: %s.\n",
-               __FUNCTION__, strerror(errno));
+    LOG(ERROR) << "Failed to re-attach /sys: " << ": " << strerror(errno);
     return 1;
   }
 
@@ -128,12 +127,11 @@ int NetworkNamespaceManagerImpl::NetworkNamespaceProcess(bool is_paranoid) {
     int netsocketfd = sys_client_->Socket(AF_INET, SOCK_DGRAM, 0);
     if (netsocketfd > 0) {
       if (sys_client_->IoCtl(netsocketfd, kSIOCSParanoid, NULL) < 0) {
-        KLOG_ERROR(LOG_TAG, "%s: could not enable paranoid network: %d (%s)",
-                   __FUNCTION__, errno, strerror(errno));
+        LOG(ERROR) << "could not enable paranoid network: "
+                   << ": " << strerror(errno);
       }
     } else {
-      KLOG_ERROR(LOG_TAG, "%s: could not create socket: %d (%s)", __FUNCTION__,
-                 errno, strerror(errno));
+      LOG(ERROR) << "could not create socket: " << ": " << strerror(errno);
     }
   }
   // Live forever.
@@ -164,12 +162,13 @@ bool NetworkNamespaceManagerImpl::CreateNetworkNamespace(
     glob_ns_file.PrintF("/var/run/netns/%s.%s",
                         ns_name.c_str(), kNamespaces[index]);
     if (symlink(proc_ns_file.data(), glob_ns_file.data()) < 0) {
-      KLOG_ERROR(LOG_TAG, "Could not symlink %s -> %s: %s\n",
-                 proc_ns_file.data(), glob_ns_file.data(), strerror(errno));
+      LOG(ERROR) << "Could not symlink " << proc_ns_file.data()
+                 << " -> " << glob_ns_file.data()
+                 << ": " << strerror(errno);
     }
   }
 
-  KLOG_INFO(LOG_TAG, "Initialized network namespace %s\n", ns_name.c_str());
+  LOG(INFO) << "Initialized network namespace " << ns_name;
 
   // Some tools require a pid as opposed to fd to make changes to network
   // namespaces, such as reparenting.
@@ -178,17 +177,16 @@ bool NetworkNamespaceManagerImpl::CreateNetworkNamespace(
   int pid_fd = TEMP_FAILURE_RETRY(
       open(glob_ns_file.data(), O_RDWR | O_CREAT | O_EXCL, 0));
   if (pid_fd < 0) {
-    KLOG_ERROR(LOG_TAG, "%s: open(%s) failed %s:%d (%s)\n",
-               __FUNCTION__, glob_ns_file.data(), __FILE__, __LINE__,
-               strerror(errno));
+    LOG(ERROR) << "open(" << glob_ns_file.data() << "failed: "
+               << strerror(errno);
     return false;
   }
 
   proc_ns_file.PrintF("%d", handle->Pid());
   int written = write(pid_fd, proc_ns_file.data(), proc_ns_file.size());
   if (written != static_cast<int>(proc_ns_file.size())) {
-    KLOG_ERROR(LOG_TAG, "Could not write file %s: %s\n",
-               glob_ns_file.data(), strerror(errno));
+    LOG(ERROR) << "Could not write file " << glob_ns_file.data()
+               << ": " << strerror(errno);
   }
   close(pid_fd);
 
@@ -201,8 +199,8 @@ int32_t NetworkNamespaceManagerImpl::GetNamespaceDescriptor(
 
   int netns = TEMP_FAILURE_RETRY(open(ns_path.c_str(), O_RDONLY));
   if (netns == -1) {
-    KLOG_ERROR(LOG_TAG, "%s: Failed to open netns (%s) (%s).\n",
-               __FUNCTION__, ns_name.c_str(), strerror(errno));
+    LOG(ERROR) << "Failed to open netns (" << ns_name << "): "
+               << strerror(errno);
     return -1;
   }
 
@@ -219,14 +217,14 @@ bool NetworkNamespaceManagerImpl::SwitchNamespace(const std::string& ns_name) {
 
     int netns = TEMP_FAILURE_RETRY(open(ns_path.c_str(), O_RDONLY));
     if (netns == -1) {
-      KLOG_ERROR(LOG_TAG, "%s: Failed to open netns (%s) (%s).\n",
-                 __FUNCTION__, ns_name.c_str(), strerror(errno));
+      LOG(ERROR) << "Failed to open netns (" << ns_name << "): "
+                 << strerror(errno);
       return false;
     }
 
     if (sys_client_->SetNs(netns, 0) != 0) {
-      KLOG_ERROR(LOG_TAG, "Could not change network namespace to %s: %s\n",
-                 ns_name.c_str(), strerror(errno));
+      LOG(ERROR) << "Could not change network namespace to " << ns_name
+                 << ": " << strerror(errno);
       return false;
     }
     close(netns);

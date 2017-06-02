@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+#include <glog/logging.h>
+
 namespace avd {
 namespace {
 // Representation of Network link request. Used to supply kernel with
@@ -145,8 +147,7 @@ void NetlinkRequestImpl::PushList(uint16_t type) {
 
 void NetlinkRequestImpl::PopList() {
   if (lists_.empty()) {
-    KLOG_ERROR(LOG_TAG, "%s:%d: List pop with no lists left on stack.\n",
-               __FILE__, __LINE__);
+    LOG(ERROR) << "List pop with no lists left on stack.";
     return;
   }
 
@@ -199,15 +200,14 @@ NetlinkClientImpl::~NetlinkClientImpl() {
 int32_t NetlinkClientImpl::NameToIndex(const std::string& name) {
   ifreq ifr;
   if (name.length() >= sizeof(ifr.ifr_name)) {
-    KLOG_ERROR(LOG_TAG, "%s:%d: Interface name '%s' too long.\n",
-               __FILE__, __LINE__, name.c_str());
+    LOG(ERROR) << "Interface name '" << name << "' too long.";
     return -1;
   }
 
   strcpy(ifr.ifr_name, name.c_str());
   if (sys_client_->IoCtl(network_fd_, SIOCGIFINDEX, &ifr) < 0) {
-    KLOG_WARNING(LOG_TAG, "%s:%d: Could not get index of '%s': %d(%s).\n",
-                 __FILE__, __LINE__, name.c_str(), errno, strerror(errno));
+    LOG(ERROR) << "Could not get index of '" << name << "': "
+               << ": " << strerror(errno);
     return -1;
   }
 
@@ -233,20 +233,20 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
 
   int result = recvmsg(netlink_fd_, &msg, 0);
   if (result  < 0) {
-    KLOG_ERROR(LOG_TAG, "Netlink error: %s.\n", strerror(errno));
+    LOG(ERROR) << "Netlink error: " << strerror(errno);
     return false;
   }
 
   len = (uint32_t)result;
-  KLOG_INFO(LOG_TAG, "Received netlink response (%d bytes).\n", len);
+  LOG(INFO) << "Received netlink response (" << len << " bytes)";
 
   for (nh = (struct nlmsghdr*)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
     if (nh->nlmsg_seq != seq_no) {
       // This really shouldn't happen. If we see this, it means somebody is
       // issuing netlink requests using the same socket as us, and ignoring
       // responses.
-      KLOG_WARNING(LOG_TAG, "Sequence number mismatch: %u != %u.\n",
-                   nh->nlmsg_seq, seq_no);
+      LOG(WARNING) << "Sequence number mismatch: "
+                   << nh->nlmsg_seq << " != " << seq_no;
       continue;
     }
 
@@ -262,15 +262,15 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
     if (nh->nlmsg_type == NLMSG_ERROR) {
       nlmsgerr* err = reinterpret_cast<nlmsgerr*>(nh + 1);
       if (err->error < 0) {
-        KLOG_ERROR(LOG_TAG, "Failed to complete netlink request: %s.\n",
-                   strerror(err->error));
+        LOG(ERROR) << "Failed to complete netlink request: "
+                   << ": " << strerror(errno);
         return false;
       }
       return true;
     }
   }
 
-  KLOG_ERROR(LOG_TAG, "No response from netlink.\n");
+  LOG(ERROR) << "No response from netlink.";
   return false;
 }
 
@@ -291,8 +291,8 @@ bool NetlinkClientImpl::Send(NetlinkRequest* message) {
   msg.msg_iovlen = sizeof(netlink_iov) / sizeof(iovec);
 
   if (sys_client_->SendMsg(netlink_fd_, &msg, 0) < 0) {
-    KLOG_ERROR(LOG_TAG, "%s:%d: Failed to send netlink message: %s.\n",
-               __FILE__, __LINE__, strerror(errno));
+    LOG(ERROR) << "Failed to send netlink message: "
+               << ": " << strerror(errno);
 
     return false;
   }

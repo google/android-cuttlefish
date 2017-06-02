@@ -15,7 +15,6 @@ cc_library(
     hdrs = [
         "dhcp_message.h",
         "dhcp_server.h",
-        "logging.h",
         "metadata_proxy.h",
         "namespace_aware_executor.h",
         "netlink_client.h",
