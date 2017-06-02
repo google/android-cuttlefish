@@ -20,7 +20,6 @@ on early-init
 
 
 on fs
-    start gce_sshd
     mount_all /fstab.gce_x86
     mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
 
@@ -80,12 +79,6 @@ on boot
     # Compass.
     stop akmd
 
-
-service gce_sshd /system/bin/gcelogwrapper -k /system/bin/gce_init_sshd
-    class main
-    disabled
-    seclabel u:r:su:s0
-    oneshot
 
 service remoter /system/bin/gcelogwrapper /system/bin/remoter
     seclabel u:r:su:s0

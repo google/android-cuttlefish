@@ -50,7 +50,6 @@ PRODUCT_PACKAGES += \
     gce_fs_monitor \
     gce_init \
     gce_init_dhcp_hook \
-    gce_init_sshd \
     gce_log_message \
     gce_mount_handler \
     gce_network \
@@ -62,8 +61,6 @@ PRODUCT_PACKAGES += \
     vnc_server \
     vnc_server-testing \
     simulated_hostapd.conf \
-    sshd_config_gce \
-    start-gce-ssh \
     wpa_supplicant.vsoc.conf \
 
 #
@@ -80,8 +77,6 @@ PRODUCT_PACKAGES += \
     resize2fs \
     scp \
     sleep \
-    ssh-keygen \
-    sshd \
     tcpdump \
     wpa_supplicant \
     wificond \
