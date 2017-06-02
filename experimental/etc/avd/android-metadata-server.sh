@@ -33,7 +33,7 @@ function ctrl_c() {
   dnsmasq \
     -x /var/run/dnsmasq-android.pid \
     --interface=abr0 --except-interface=lo --bind-interfaces \
-    -F 192.168.99.10,192.168.99.13 \
+    -F 192.168.99.10,192.168.99.10 \
     --dhcp-option-force 1,255.255.255.255 \
     --dhcp-option-force 121,192.168.99.1/32,0.0.0.0,0.0.0.0/0,192.168.99.1
 
