@@ -12,6 +12,7 @@ cc_binary(
         "@cuttlefish//common/libs/auto_resources",
         "@cuttlefish//common/libs/metadata:initial_metadata_reader-static",
         "@cuttlefish//common/libs/metadata:partitions",
+        "@glog_repo//:glog",
         "//guest/gce_network:gce_network_lib",
         "//guest/ramdisk:ramdisk_lib",
     ],

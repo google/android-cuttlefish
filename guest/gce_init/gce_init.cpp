@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <zlib.h>
 
+#include <glog/logging.h>
 
 #include "common/libs/fs/gce_fs.h"
 #include "common/libs/fs/shared_fd.h"
@@ -47,7 +48,6 @@
 
 #include "guest/gce_init/environment_setup.h"
 #include "guest/gce_init/properties.h"
-#include "guest/gce_network/logging.h"
 #include "guest/gce_network/namespace_aware_executor.h"
 #include "guest/gce_network/netlink_client.h"
 #include "guest/gce_network/network_interface_manager.h"
@@ -190,12 +190,12 @@ static const char* MountTmpFs(const char* mount_point, const char* size) {
     if (mount("tmpfs", mount_point, "tmpfs", MS_NOSUID, size) == 0) {
       return NULL;
     } else {
-      KLOG_ERROR(LOG_TAG, "Could not mount tmpfs at %s: %d (%s)",
-                 mount_point, errno, strerror(errno));
+      LOG(ERROR) << "Could not mount tmpfs at " << mount_point
+                 << ": " << strerror(errno);
     }
   } else {
-    KLOG_ERROR(LOG_TAG, "Could not prepare dir %s: %d (%s)",
-               mount_point, errno, strerror(errno));
+    LOG(ERROR) << "Could not prepare dir " << mount_point
+               << ": " << strerror(errno);
   }
 
   return "tmpfs mount failed.";
@@ -207,7 +207,7 @@ bool CreateDeviceNode(const char* name, int flags, int major, int minor) {
   int rval = TEMP_FAILURE_RETRY(mknod(name, flags, dev));
   umask(old_mask);
   if (rval == -1) {
-    KLOG_ERROR(LOG_TAG, "mknod failed for %s: (%s)\n", name, strerror(errno));
+    LOG(ERROR) << "mknod failed for " << name << ": " << strerror(errno);
     return false;
   }
   return true;
@@ -218,14 +218,13 @@ bool CreateBlockDeviceNodes() {
   char line[160];
   char device[160];
   if (!f) {
-    KLOG_ERROR(LOG_TAG, "open of /proc/partitions failed: (%s)\n",
-               strerror(errno));
+    LOG(ERROR) << "open of /proc/partitions failed: " << strerror(errno);
     return false;
   }
 
   if (gce_fs_prepare_dir(kDevBlockDir, 0700, 0, 0) == -1) {
-    KLOG_INFO(LOG_TAG, "gs_fs_prepare_dir(%s) failed: (%s)\n",
-              kDevBlockDir, strerror(errno));
+    LOG(INFO) << "gs_fs_prepare_dir(" << kDevBlockDir << ") failed: "
+              << strerror(errno);
     return false;
   }
 
@@ -253,8 +252,8 @@ bool MountFilesystem(
     unsigned long mount_flags = MS_RDONLY | MS_NODEV) {
   AutoFreeBuffer temp_dev;
   if (gce_fs_prepare_dir(dir, 0700, 0, 0) == -1) {
-    KLOG_ERROR(LOG_TAG, "gs_fs_prepare_dir(%s) failed: %s\n",
-               dir, strerror(errno));
+    LOG(ERROR) << "gs_fs_prepare_dir(" << dir << ") failed: "
+               << strerror(errno);
     return false;
   }
   if (disk && *disk) {
@@ -266,7 +265,8 @@ bool MountFilesystem(
   }
   if (TEMP_FAILURE_RETRY(
           mount(temp_dev.data(), dir, fs, mount_flags, NULL)) == -1) {
-    KLOG_ERROR(LOG_TAG, "mount of %s failed: %s\n", dir, strerror(errno));
+    LOG(ERROR) << "mount of " << dir << " failed: "
+               << strerror(errno);
     return false;
   }
   return true;
@@ -277,14 +277,14 @@ bool MountFilesystem(
 static bool CopyFile(const char* in_path, const char* out_path) {
   AutoCloseFILE in(fopen(in_path, "rb"));
   if (in.IsError()) {
-    KLOG_ERROR(LOG_TAG, "unable to open input file %s: %s\n",
-               in_path, strerror(errno));
+    LOG(ERROR) << "unable to open input file " << in_path
+               << ": " << strerror(errno);
     return false;
   }
   AutoCloseFILE out(fopen(out_path, "wb"));
   if (out.IsError()) {
-    KLOG_ERROR(LOG_TAG, "unable to open output file %s: %s\n",
-               out_path, strerror(errno));
+    LOG(ERROR) << "unable to open output file " << out_path
+               << ": " << strerror(errno);
     return false;
   }
   if (!out.CopyFrom(in)) {
@@ -304,15 +304,15 @@ bool IsNestedVM() {
   // is essentially 32 * PAGE_SIZE (~256K). I don't think we'll get that far any
   // time soon.
   if (!cmdlinefd->IsOpen()) {
-    KLOG_WARNING(LOG_TAG, "Unable to read /proc/cmdline: %s\n",
-                 cmdlinefd->StrError());
+    LOG(WARNING) << "Unable to read /proc/cmdline: "
+                 << cmdlinefd->StrError();
     return false;
   }
 
   // 16k + 1 padding zero.
   cmdline.Resize(16384 + 1);
   cmdlinefd->Read(cmdline.data(), cmdline.size());
-  KLOG_WARNING(LOG_TAG, "%s\n", cmdline.data());
+  LOG(WARNING) << cmdline.data();
   return (strstr(cmdline.data(), kNestedVMParameter) != NULL);
 }
 
@@ -322,8 +322,8 @@ static bool MountSystemPartition(
   int result = TEMP_FAILURE_RETRY(mkdir(mount_point, 0777));
   umask(save);
   if ((result == -1) && (errno != EEXIST)) {
-    KLOG_ERROR(LOG_TAG, "skipping %s: mkdir failed: %s\n",
-               mount_point, strerror(errno));
+    LOG(ERROR) << "skipping " << mount_point << ": mkdir failed: "
+               << strerror(errno);
     return false;
   }
 
@@ -335,15 +335,15 @@ static bool MountSystemPartition(
     boot_device = kMultibootDevice;
     system_partition_num = GetPartitionNum("system", partitions_path);
     if (system_partition_num == -1) {
-      KLOG_ERROR(LOG_TAG, "unable to find system partition\n");
+      LOG(ERROR) << "unable to find system partition";
       return false;
     }
   }
 
   if (!MountFilesystem(
       "ext4", boot_device, system_partition_num, mount_point)) {
-    KLOG_ERROR(LOG_TAG, "unable to mount system partition %s%ld\n",
-               boot_device, system_partition_num);
+    LOG(ERROR) << "unable to mount system partition "
+               << boot_device << system_partition_num;
     return false;
   }
 
@@ -367,20 +367,20 @@ static bool MountSystemOverlay(
   const char* system_overlay_device = reader.GetValueForKey(
       GceMetadataAttributes::kSystemOverlayDeviceKey);
   if (!system_overlay_device) {
-    KLOG_INFO(LOG_TAG, "No system overlay device.\n");
+    LOG(INFO) << "No system overlay device.";
     return false;
   }
   if (!MountFilesystem("ext4", system_overlay_device, 0,
                        UPPER_SYSTEM_MOUNT_POINT)) {
-    KLOG_INFO(LOG_TAG, "Could not mount overlay device %s.\n",
-              system_overlay_device);
+    LOG(INFO) << "Could not mount overlay device "
+              << system_overlay_device;
     return false;
   }
   if (!MountSystemPartition(
       kDefaultPartitionsPath, LOWER_SYSTEM_MOUNT_POINT, is_nested_vm)) {
-    KLOG_INFO(LOG_TAG, "Could not mount %s from %s at %s.\n",
-              kMultibootDevice, kDefaultPartitionsPath,
-              LOWER_SYSTEM_MOUNT_POINT);
+    LOG(INFO) << "Could not mount " << kMultibootDevice
+              << " from " << kDefaultPartitionsPath
+              << " at " << LOWER_SYSTEM_MOUNT_POINT;
     return false;
   }
   gce_fs_prepare_dir("/target/system", 0700, 0, 0);
@@ -392,12 +392,12 @@ static bool MountSystemOverlay(
   if (mount(remount_hint, "/target/system", "overlay", MS_RDONLY | MS_NODEV,
             "lowerdir=" UPPER_SYSTEM_MOUNT_POINT "/data:"
                         LOWER_SYSTEM_MOUNT_POINT) == -1) {
-    KLOG_ERROR(LOG_TAG, "Overlay mount failed, falling back to base system: %s\n",
-               strerror(errno));
+    LOG(ERROR) << "Overlay mount failed, falling back to base system: "
+               << strerror(errno);
     return false;
   }
   if (gce_fs_prepare_dir("/target/system_rw", 0700, 0, 0) == -1) {
-    KLOG_ERROR(LOG_TAG, "Failed to create /system_rw. adb remount will fail\n");
+    LOG(ERROR) << "Failed to create /system_rw. adb remount will fail";
   }
   return true;
 }
@@ -459,11 +459,6 @@ bool Init(Container* container, std::stringstream* error) {
     return false;
   }
 
-  // Remove our copy of /init to allow decompressing the target init process.
-  if (TEMP_FAILURE_RETRY(rename("/init", "/gce-init")) == -1) {
-    KLOG_ERROR(LOG_TAG, "Failed to move /init: %s\n", strerror(errno));
-  }
-
   res = container->FetchMetadata();
   if (res) {
     *error << res;
@@ -488,7 +483,7 @@ bool Init(Container* container, std::stringstream* error) {
     return false;
   }
 
-  KLOG_INFO(LOG_TAG, "Pivoting to Android Init\n");
+  LOG(INFO) << "Pivoting to Android Init";
 
   res = container->CleanUp();
   if (res) {
@@ -499,7 +494,7 @@ bool Init(Container* container, std::stringstream* error) {
   // Chain to the Android init process.
   int rval = TEMP_FAILURE_RETRY(execl("/init", "/init", NULL));
   if (rval == -1) {
-    KLOG_ERROR(LOG_TAG, "execl failed: %d (%s)\n", errno, strerror(errno));
+    LOG(ERROR) << "execl failed: " << strerror(errno);
     *error << "Could not exec init.";
     return false;
   }
@@ -629,8 +624,8 @@ const char* Container::ConfigureNetworkCommon() {
   // Allow the scripts started by DHCP to update the MTU.
   if (gce_fs_mkdirs(OUTER_INTERFACE_CONFIG_DIR,
                     S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1) {
-    KLOG_ERROR(LOG_TAG, "Unable to create %s: %s\n", OUTER_INTERFACE_CONFIG_DIR,
-               strerror(errno));
+    LOG(ERROR) << "Unable to create " << OUTER_INTERFACE_CONFIG_DIR
+               << ": " << strerror(errno);
     return "Could not create host interface env folder.";
   }
 
@@ -647,7 +642,7 @@ const char* Container::ConfigureNetworkCommon() {
 }
 
 const char* Container::ConfigureNetworkMobile() {
-  KLOG_INFO(LOG_TAG, "Configuring mobile network\n");
+  LOG(INFO) << "Configuring mobile network";
   if (!setup_->ConfigureNetworkMobile())
     return "Failed to configure mobile network.";
 
@@ -663,18 +658,18 @@ const char* Container::FetchMetadata() {
   if (sys_client_->SetNs(
       ns_manager_->GetNamespaceDescriptor(
           NetworkNamespaceManager::kAndroidNs), kCloneNewNet) < 0) {
-    KLOG_ERROR(LOG_TAG, "Failed to switch namespace: %s\n", strerror(errno));
+    LOG(ERROR) << "Failed to switch namespace: " << strerror(errno);
     return "Could not switch namespace to initiate metadata connection.";
   }
 
   // Wait for initial metadata.
   // It may not be instantly available; keep looping until it pops up.
   MetadataQuery* query = MetadataQuery::New();
-  KLOG_INFO(LOG_TAG, "Waiting for initial metadata...\n");
+  LOG(INFO) << "Waiting for initial metadata...";
   while (!query->QueryServer(&buffer)) {
     usleep(100 * 1000);
   }
-  KLOG_INFO(LOG_TAG, "Metadata ready.\n");
+  LOG(INFO) << "Metadata ready.";
   delete query;
 
   reader_ = InitialMetadataReader::getInstance();
@@ -682,7 +677,7 @@ const char* Container::FetchMetadata() {
   if (sys_client_->SetNs(
       ns_manager_->GetNamespaceDescriptor(
           NetworkNamespaceManager::kOuterNs), kCloneNewNet) < 0) {
-    KLOG_ERROR(LOG_TAG, "Failed to switch namespace: %s\n", strerror(errno));
+    LOG(ERROR) << "Failed to switch namespace: " << strerror(errno);
     return "Could not switch namespace after initiating metadata connection.";
   }
 
@@ -694,7 +689,7 @@ const char* Container::FetchMetadata() {
     android_version_ = "default";
   }
 
-  KLOG_INFO(LOG_TAG, "Booting android_version=%s\n", android_version_.c_str());
+  LOG(INFO) << "Booting android_version=" << android_version_.c_str();
 
   return NULL;
 }
@@ -810,8 +805,8 @@ const char* Container::SelectVersion(
 
   struct stat sb;
   if (stat(default_version, &sb) < 0) {
-    KLOG_WARNING(AVD_WARN, "Ignoring %s variant setting %s: not applicable.\n",
-                 name, version);
+    LOG(WARNING) << "Ignoring " << name << " variant setting " << version
+                 << ": not applicable.";
     return NULL;
   }
 
@@ -825,51 +820,52 @@ const char* Container::SelectVersion(
     snprintf(&selected_version[0], sizeof(selected_version),
              pattern, "-deprecated");
   } else {
-    KLOG_WARNING(AVD_WARN, "Variant %s not valid for %s. Using default.\n",
-                 version, name);
+    LOG(WARNING) << "Variant " << version << " not valid for " << name
+                 << ". Using default.";
     return NULL;
   }
 
   // So, user specified a different variant of module, but this variant is
   // not explicitly specified.
   if (stat(selected_version, &sb) < 0) {
-    KLOG_WARNING(AVD_WARN, "Ignoring %s variant setting %s: not available.\n",
-                 name, version);
+    LOG(WARNING) << "Ignoring " << name << " variant setting " << version
+                 << ": not available.";
     return NULL;
   }
 
-  KLOG_WARNING(LOG_TAG, "Switching %s to %s variant\n", name, version);
+  LOG(WARNING) << "Switching " << name << " to " << version << " variant";
   return Bind(selected_version, default_version);
 }
 
 const char* Container::Bind(const char* source, const char* target) {
   struct stat sb, tb;
   if (stat(source, &sb) < 0) {
-    KLOG_ERROR(LOG_TAG, "Could not stat bind file %s: %s\n",
-               source, strerror(errno));
+    LOG(ERROR) << "Could not stat bind file " << source
+               << ": " << strerror(errno);
     return "Could not find bind source.";
   }
 
   if (stat(target, &tb) < 0) {
-    KLOG_ERROR(LOG_TAG, "Could not bind-mount to target %s: %s.\n",
-               target, strerror(errno));
+    LOG(ERROR) << "Could not bind-mount to target " << target
+               << ": " << strerror(errno);
     return "Could not find bind target.";
   }
 
   // Create file / folder to which we will bind-mount source file / folder.
   if (S_ISDIR(sb.st_mode) != S_ISDIR(tb.st_mode)) {
-    KLOG_ERROR(LOG_TAG, "Could not bind-mount %s to %s: types do not match "
-               "(%d != %d).\n", source, target, sb.st_mode, tb.st_mode);
+    LOG(ERROR) << "Could not bind-mount " << source << " to " << target
+               << ": types do not match ("
+               << sb.st_mode << " != " << tb.st_mode << ")";
     return "Could not match source and target bind types.";
   }
 
   if (mount(source, target, NULL, MS_BIND, NULL) < 0) {
-    KLOG_ERROR(LOG_TAG, "Could not bind %s to %s: %s\n",
-               source, target, strerror(errno));
+    LOG(ERROR) << "Could not bind " << source << " to " << target
+               << ": " << strerror(errno);
     return "Could not bind item.";
   }
 
-  KLOG_INFO(LOG_TAG, "Bound %s -> %s\n", source, target);
+  LOG(INFO) << "Bound " << source << " -> " << target;
 
   return NULL;
 }
@@ -885,23 +881,21 @@ const char* Container::ApplyCustomInit() {
       kCustomInitFileName, O_CREAT|O_TRUNC|O_WRONLY, 0650));
 
   if (init_fd.IsError()) {
-    KLOG_ERROR(LOG_TAG, "Could not create custom init file %s: %d (%s).\n",
-               kCustomInitFileName, errno, strerror(errno));
+    LOG(ERROR) << "Could not create custom init file " << kCustomInitFileName
+               << ": " << strerror(errno);
   } else {
     size_t sz = strlen(custom_init_file);
     ssize_t written = TEMP_FAILURE_RETRY(write(init_fd, custom_init_file, sz));
 
     if (written == -1) {
-      KLOG_WARNING(LOG_TAG,
-                   "Warning: write failed on %s\n",
-                   kCustomInitFileName);
+      LOG(WARNING) << "Warning: write failed on " << kCustomInitFileName;
     } else if (static_cast<size_t>(written) != sz) {
-      KLOG_WARNING(LOG_TAG,
-                   "Warning: short write to %s, wanted %zu, got %zu (%s)\n",
-                   kCustomInitFileName, sz, written, strerror(errno));
+      LOG(WARNING) << "Warning: short write to " << kCustomInitFileName
+                   << ", wanted " << sz << ", got " << written
+                   << ": " << strerror(errno);
     } else {
-      KLOG_INFO(LOG_TAG, "Custom init file created. Wrote %zu bytes to %s.\n",
-                written, kCustomInitFileName);
+      LOG(INFO) << "Custom init file created. Wrote " << written
+                << " bytes to " << kCustomInitFileName;
     }
   }
   return NULL;
@@ -913,11 +907,10 @@ const char* Container::ApplyMetadataProperties() {
       GceMetadataAttributes::kDisplayConfigurationKey);
   display.Parse(metadata_value);
   if (!metadata_value) {
-    KLOG_ERROR(LOG_TAG,
-               "No display configuration specified. Using defaults.\n");
+    LOG(ERROR) << "No display configuration specified. Using defaults.";
   } else if (display.IsDefault()) {
-    KLOG_ERROR(LOG_TAG, "Bad display value ignored (%s). Using default.\n",
-               metadata_value);
+    LOG(ERROR) << "Bad display value ignored " << metadata_value
+               << ". Using default.";
   }
   AutoFreeBuffer metadata_properties;
   metadata_properties.PrintF(
@@ -930,21 +923,20 @@ const char* Container::ApplyMetadataProperties() {
       kMetadataPropertiesFileName, O_CREAT|O_TRUNC|O_WRONLY, 0650));
 
   if (init_fd.IsError()) {
-    KLOG_ERROR(LOG_TAG,
-               "Could not create metadata properties file %s: %d (%s).\n",
-               kMetadataPropertiesFileName, errno, strerror(errno));
+    LOG(ERROR) << "Could not create metadata properties file "
+               << kMetadataPropertiesFileName
+               << ": " << strerror(errno);
   } else {
     ssize_t written = TEMP_FAILURE_RETRY(write(
         init_fd, metadata_properties.data(), metadata_properties.size()));
     if (static_cast<size_t>(written) != metadata_properties.size()) {
-      KLOG_WARNING(LOG_TAG,
-                   "Warning: short write to %s, wanted %zu, got %zu (%s)\n",
-                   kMetadataPropertiesFileName, metadata_properties.size(),
-                   written, strerror(errno));
+      LOG(WARNING) << "Warning: short write to " << kMetadataPropertiesFileName
+                   << ", wanted " << metadata_properties.size()
+                   << ", got " << written
+                   << ": " << strerror(errno);
     } else {
-      KLOG_INFO(LOG_TAG,
-                "Metadata properties created. Wrote %zu bytes to %s.\n",
-                written, kMetadataPropertiesFileName);
+      LOG(INFO) << "Metadata properties created. Wrote " << written
+                << " bytes to " << kMetadataPropertiesFileName;
     }
   }
   return NULL;
@@ -989,9 +981,9 @@ const char* Container::ApplyCustomization() {
   // We can't link this code in here because it depends on libext4_utils, and
   // we can't have shared library dependencies in /init.
   if (!is_nested_vm_) {
-    KLOG_INFO(LOG_TAG, "Launching mount handler...\n");
+    LOG(INFO) << "Launching mount handler...";
     if (TEMP_FAILURE_RETRY(system("/system/bin/gce_mount_handler")) == -1) {
-      KLOG_ERROR(LOG_TAG, "gce_mount_handler failed: %s\n", strerror(errno));
+      LOG(ERROR) << "gce_mount_handler failed: " << strerror(errno);
       return "Could not start gce_mount_handler.";
     }
   } else {
@@ -1066,17 +1058,17 @@ int main() {
   Container container;
   std::stringstream reason;
 
-  if (!Init(&container, &reason)) {
-    KLOG_ERROR(
-        LOG_TAG, "VIRTUAL_DEVICE_BOOT_FAILED : %s\n", reason.str().data());
-    // There's no way of telling whether the problem happened before or after
-    // /dev/kmsg became available. It's best to print out the log back to
-    // console.
-    printf("VIRTUAL_DEVICE_BOOT_FAILED : %s\n", reason.str().data());
+  google::InitGoogleLogging("Cuttlefish");
+  google::LogToStderr();
 
+  LOG(INFO) << "Booting Cuttlefish.";
+
+  if (!Init(&container, &reason)) {
+    LOG(ERROR) << "VIRTUAL_DEVICE_BOOT_FAILED: " << reason.str().data();
     // If for some reason, however, Init completes, launch an emergency shell to
     // allow diagnosing what happened.
-    if (system(kEmergencyShell)) printf("Could not start emergency shell.\n");
+    if (system(kEmergencyShell))
+      LOG(ERROR) << "Could not start emergency shell.";
     pause();
   }
 }

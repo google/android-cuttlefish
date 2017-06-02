@@ -16,6 +16,7 @@
 #include "guest/gce_init/properties.h"
 
 #include <ctype.h>
+#include <glog/logging.h>
 
 #include "common/libs/auto_resources/auto_resources.h"
 
@@ -81,8 +82,9 @@ bool LoadPropertyFile(
     char* value;
 
     if (!PropertyLineToKeyValuePair(&line[0], &key, &value)) {
-      printf("Failed to process file %s, line %d:\n"
-             "Invalid property declaration: %s\n", name, line_number, line);
+      LOG(ERROR) << "Failed to process file " << name
+                 << ", line: " << line_number
+                 << ": Invalid property declaration: " << line;
       return false;
     }
 
