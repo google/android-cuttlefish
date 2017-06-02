@@ -1,5 +1,5 @@
 cc_binary(
-    name = "gce_init",
+    name = "init",
     visibility = ["//visibility:public"],
     srcs = [
         "environment_setup.cpp",

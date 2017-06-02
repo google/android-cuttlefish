@@ -73,7 +73,7 @@ def _ramdisk_create(ctx):
   ctx.action(
       outputs = [ ramdisk_file ],
       inputs = temp_outs,
-      command = "( cd %s; find . -type f | cpio -H newc -L -o | gzip -9v - ) > %s" %
+      command = "( cd %s; find . | cpio -H newc -o | gzip -9v - ) > %s" %
           ( ramdisk_file.path + RAMDISK_GEN_SUFFIX, ramdisk_file.path ),
       mnemonic = "CPIO",
       progress_message = "Creating ramdisk " + ramdisk_file.path,
