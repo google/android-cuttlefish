@@ -25,6 +25,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <memory>
+
+#include <glog/logging.h>
+
 namespace avd {
 namespace {
 
@@ -110,8 +114,12 @@ class ProcessPipeImpl : public SysClient::ProcessPipe {
   virtual int32_t GetReturnCode();
   virtual bool IsCompleted();
 
+  virtual FILE* CustomShellPOpen(const std::string& command);
+
  private:
   FILE* pipe_;
+  std::unique_ptr<ProcessHandleImpl> handle_;
+
   char output_line_buffer_[512];
   int32_t return_code_;
 };
@@ -158,11 +166,39 @@ int32_t ProcessHandleImpl::WaitResult() {
 }
 
 ProcessPipeImpl::ProcessPipeImpl(const std::string& command)
-  : pipe_(popen((command + " 2>&1").c_str(), "r")),
-    return_code_(0) {}
+  : return_code_(0) {
+  pipe_ = CustomShellPOpen(command + " 2>&1");
+}
+
+// We need to replace regular popen call, because android hosts its shell
+// in a different directory than everyone else.
+FILE* ProcessPipeImpl::CustomShellPOpen(const std::string& command) {
+  int pipes[2];
+
+  if (pipe(pipes) != 0) {
+    LOG(ERROR) << "Could not create pipe: " << strerror(errno);
+    return NULL;
+  }
+
+  handle_.reset(new ProcessHandleImpl(
+      "exec", [pipes, command](){
+        close(pipes[0]);
+        dup2(pipes[1], 1);
+        dup2(pipes[1], 2);
+        close(pipes[1]);
+        execl("/system/bin/sh", "sh", "-c", command.c_str());
+        exit(0);
+        return 0;
+      }, SIGCHLD));
+  handle_->Start();
+
+  close(pipes[1]);
+  return fdopen(pipes[0], "r");
+}
 
 ProcessPipeImpl::~ProcessPipeImpl() {
-  if (pipe_) pclose(pipe_);
+  handle_.reset();
+  if (pipe_) fclose(pipe_);
 }
 
 const char* ProcessPipeImpl::GetOutputLine() {
@@ -174,7 +210,8 @@ const char* ProcessPipeImpl::GetOutputLine() {
 
 int32_t ProcessPipeImpl::GetReturnCode() {
   if (pipe_) {
-    return_code_ = pclose(pipe_);
+    return_code_ = handle_->WaitResult();
+    fclose(pipe_);
     pipe_ = NULL;
   }
   return return_code_;
@@ -214,6 +251,8 @@ SysClient::ProcessPipe* SysClientImpl::POpen(const std::string& command) {
 }
 
 int32_t SysClientImpl::System(const std::string& command) {
+  LOG(WARNING) << "*** Command " << command
+               << " will likely fail to find the shell. ***";
   return system(command.c_str());
 }
 

@@ -78,8 +78,8 @@ const char* kOuterNsCommandsCommon[] = {
   // Executables in the ramdisk are only runnable by root and it's group.
   // dhcpcd insists on running as a different user, so chmod the script to
   // make it execuable.
-  "chmod 0555 /sbin",
-  "chmod 0555 /sbin/gce_init_dhcp_hook",
+  "chmod 0555 /",
+  "chmod 0555 /bin/gce_init_dhcp_hook",
   "touch /var/run/eth0.dhcp.env",
   "chown dhcp /var/run/eth0.dhcp.env",
   "chmod 0644 /var/run/eth0.dhcp.env",
@@ -91,7 +91,7 @@ const char* kOuterNsCommandsCommon[] = {
   // L: no bonjour
   // d: show debug output
   // p: persist configuration
-  "dhcpcd-6.8.2 -ALdp -c /sbin/gce_init_dhcp_hook host_eth0",
+  "dhcpcd-6.8.2 -ALdp -c /bin/gce_init_dhcp_hook host_eth0",
 
   // Fix the interface mtu
   "( . /var/run/eth0.dhcp.env ; ifconfig host_eth0 mtu ${new_interface_mtu})",

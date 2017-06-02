@@ -56,17 +56,19 @@
 #include "guest/ramdisk/unpack_ramdisk.h"
 
 #if defined(__LP64__)
-#define LIBRARY_PATH_SYSTEM "/system/lib64/hw/"
+#define LIBRARY_PATH_SYSTEM "/system/lib64/"
+#define LIBRARY_PATH_HARDWARE "/system/lib64/hw/"
 #define LIBRARY_PATH_VENDOR "/vendor/lib64/hw/"
-#define TARGET_LIB_PATH_RIL "/target/system/lib64/libgce_x86-ril%s.so"
+#define TARGET_LIB_PATH_RIL "/target/system/lib64/libvsoc-ril%s.so"
 #define TARGET_LIB_PATH_HW_COMPOSER \
-    "/target/system/lib64/hw/hwcomposer.gce_x86%s.so"
+    "/target/system/lib64/hw/hwcomposer.vsoc%s.so"
 #else
-#define LIBRARY_PATH_SYSTEM "/system/lib/hw/"
+#define LIBRARY_PATH_SYSTEM "/system/lib/"
+#define LIBRARY_PATH_HARDWARE "/system/lib/hw/"
 #define LIBRARY_PATH_VENDOR "/vendor/lib/hw/"
-#define TARGET_LIB_PATH_RIL "/target/system/lib/libgce_x86-ril%s.so"
+#define TARGET_LIB_PATH_RIL "/target/system/lib/libvsoc-ril%s.so"
 #define TARGET_LIB_PATH_HW_COMPOSER \
-    "/target/system/lib/hw/hwcomposer.gce_x86%s.so"
+    "/target/system/lib/hw/hwcomposer.vsoc%s.so"
 #endif
 
 #define OUTER_INTERFACE_CONFIG_DIR "/var/run"
@@ -577,7 +579,9 @@ bool Container::InitializeMinEnvironment(std::stringstream* error) {
     }
   }
 
-  if (setenv("LD_LIBRARY_PATH", LIBRARY_PATH_SYSTEM ":" LIBRARY_PATH_VENDOR,
+  if (setenv("LD_LIBRARY_PATH",
+             LIBRARY_PATH_SYSTEM ":" LIBRARY_PATH_HARDWARE
+             ":" LIBRARY_PATH_VENDOR,
              1) == -1) {
     *error << "Failed to set LD_LIBRARY_PATH.";
     return false;
@@ -1060,6 +1064,7 @@ int main() {
 
   google::InitGoogleLogging("Cuttlefish");
   google::LogToStderr();
+  google::InstallFailureSignalHandler();
 
   LOG(INFO) << "Booting Cuttlefish.";
 

@@ -216,9 +216,9 @@ bool DhcpServerImpl::CreateSocket() {
 
   // Bind socket to specific interface.
   if (socket_->SetSockOpt(
-          SOL_SOCKET, SO_BINDTODEVICE, bind_device_.c_str(),
-          bind_device_.length()) == -1) {
-    LOG(ERROR) << "Failed to bind socket to device " << bind_device_.c_str()
+          SOL_SOCKET, SO_BINDTODEVICE, bind_device_.data(),
+          bind_device_.length() + 1) == -1) {
+    LOG(ERROR) << "Failed to bind socket to device " << bind_device_
                << ": " << socket_->StrError();
     return false;
   }
