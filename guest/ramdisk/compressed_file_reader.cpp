@@ -25,6 +25,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <glog/logging.h>
+
 // We don't want an STL dependecy here, so just define this:
 template <typename T> T min(T a, T b) {
   return (a < b) ? a : b;
@@ -37,15 +39,12 @@ CompressedFileReader::CompressedFileReader(const char* path) :
     pos_(0),
     in_(NULL) {
   if (fd_.IsError()) {
-    printf("%s: open(%s) failed %s:%d (%s)\n",
-               __FUNCTION__, path, __FILE__, __LINE__,
-               strerror(errno));
+    LOG(ERROR) << "open(" << path << ") failed: " << strerror(errno);
     return;
   }
   in_ = gzdopen(fd_, "rb");
   if (!in_) {
-    printf("%s: gzdopen(%s) failed %s:%d (%s)\n", __FUNCTION__, path, __FILE__,
-           __LINE__, strerror(errno));
+    LOG(ERROR) << "gzdopen(" << path << " failed: " << strerror(errno);
     return;
   }
 }
@@ -137,14 +136,12 @@ uint64_t CompressedFileReader::Copy(
     total_read += num_read;
     length -= num_read;
     if (num_written == -1) {
-      printf("%s: partial %s: write failed %s:%d (%s)\n",
-             __FUNCTION__, path, __FILE__, __LINE__, strerror(errno));
+      LOG(ERROR) << "partial " << path << ": write failed: " << strerror(errno);
       should_write = false;
     } else if (
         should_write && (static_cast<uint64_t>(num_written) != num_read)) {
-      printf("%s: partial %s: write of %d, wanted %zu %s:%d (%s)\n",
-             __FUNCTION__, path, num_written, num_read,
-             __FILE__, __LINE__, strerror(errno));
+      LOG(ERROR) << "partial " << path << ": write of " << num_written
+                 << ", wanted " << num_read << ": " << strerror(errno);
       should_write = false;
     }
   }

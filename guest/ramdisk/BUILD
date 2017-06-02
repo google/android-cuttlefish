@@ -11,6 +11,7 @@ cc_library(
     ],
     deps = [
         "@cuttlefish//common/libs/auto_resources",
+        "@glog_repo//:glog",
     ],
     linkopts = [
         "-lz",
