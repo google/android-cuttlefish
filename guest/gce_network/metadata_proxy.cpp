@@ -139,6 +139,7 @@ class MetadataProxyImpl : public MetadataProxy {
       // closed their end.
       SharedFDSet wait_set;
       wait_set.Set(server_sock);
+      LOG(ERROR) << "IS OPEN = " << server_sock->IsOpen();
       for (std::list<SharedFD>::iterator client = clients_.begin();
            client != clients_.end(); ++client) {
         wait_set.Set(*client);
