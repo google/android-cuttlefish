@@ -1,0 +1,3 @@
+allow netd gcelogwrapper:fd use;
+allow netd gcelogwrapper:tcp_socket { getopt read setopt write };
+allow netd self:capability sys_module;

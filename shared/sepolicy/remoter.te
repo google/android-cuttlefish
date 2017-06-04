@@ -1,0 +1,6 @@
+type remoter, domain;
+type remoter_exec, exec_type, file_type;
+
+init_daemon_domain(remoter)
+
+set_prop(remoter, powerctl_prop)

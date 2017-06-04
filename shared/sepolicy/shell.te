@@ -1,0 +1,2 @@
+allow shell kernel:fd use;
+allow shell serial_device:chr_file { getattr ioctl read write };

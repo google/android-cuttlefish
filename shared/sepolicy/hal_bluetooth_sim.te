@@ -1,0 +1,6 @@
+type hal_bluetooth_sim, domain;
+type hal_bluetooth_sim_exec, exec_type, file_type;
+
+hal_server_domain(hal_bluetooth_sim, hal_bluetooth)
+
+init_daemon_domain(hal_bluetooth_sim)

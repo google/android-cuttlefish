@@ -1,0 +1,5 @@
+#allow init kernel:security setcheckreqprot;
+allow init serial_device:chr_file { ioctl write };
+allow init socket_device:sock_file { create setattr };
+allow init su:process { noatsecure rlimitinh siginh transition };
+allow init sysfs:dir { add_name create write };

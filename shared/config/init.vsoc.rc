@@ -1,0 +1,125 @@
+import /init.metadata.rc
+import /metadata_properties.rc
+
+on early-init
+#    loglevel 8
+    symlink /sdcard /storage/sdcard0
+    symlink /profile /.profile
+    chmod 0555 /profile
+    mkdir /var/run 0755 root root
+    mkdir /var/run/media 0755 media root
+    mkdir /var/run/system 0755 system root
+    mkdir /dev/gce 0750
+    chown system system /dev/gce
+    write /dev/userspace_framebuffer 0
+    chown system system /dev/userspace_framebuffer
+    chmod 0660 /dev/userspace_framebuffer
+    write /dev/framebuffer_control 0
+    chown system system /dev/framebuffer_control
+    chmod 0660 /dev/framebuffer_control
+
+
+on fs
+    mount_all /fstab.gce_x86
+    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
+
+    # TODO(ender): Find better way to talk to serial port.
+    chmod 622 /dev/kmsg
+
+
+    # for GCE camera HAL
+    mkdir /var/media 0770 audio media
+
+    chmod 0755 /system/etc/wifi
+    chmod 0644 /system/etc/wifi/wpa_supplicant.conf
+
+    chmod 0755 /sys/kernel/debug
+    chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/group
+    chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/ps
+    chmod 0664 /sys/kernel/debug/ieee80211/phy0/rc/fixed_rate_idx
+    chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/group
+    chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/ps
+    chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
+
+    chmod 0755 /system/bin/dhcpcd_wlan0
+
+    setprop ro.com.google.locationfeatures 1
+
+
+on post-fs-data
+    mkdir /data/dalvik-cache 0771 root root
+    mkdir /data/dalvik-cache/x86 0771 root system
+    start gce_fs_monitor
+    start seriallogging
+
+
+on early-boot
+    start remoter
+    start vnc_server
+
+
+on boot
+    chmod 0660 /dev/cpuctl
+
+    mkdir /data/misc/wifi 0770 system wifi
+    mkdir /data/misc/wifi/sockets 0770 system wifi
+
+    setprop ro.build.product android-gce
+    setprop ro.product.device light-snack
+    setprop ro.hardware.virtual_device 1
+    setprop log.tag.CheckinService VERBOSE
+    setprop log.tag.CheckinTask VERBOSE
+    # SetupWizard is distressed by the lack of WiFi
+    setprop ro.setupwizard.mode DISABLED
+
+    setprop wifi.interface wlan0
+    setprop wlan.driver.status ok
+
+    # TODO(ender): Re-enable these
+    # Compass.
+    stop akmd
+
+
+service remoter /system/bin/gcelogwrapper /system/bin/remoter
+    seclabel u:r:su:s0
+    oneshot
+
+
+service vnc_server /system/bin/gcelogwrapper /system/bin/vnc_server
+    oneshot
+
+
+service logtop3 /system/bin/gcelogwrapper /system/bin/top -m 3 -d 10
+    class main
+    disabled
+    seclabel u:r:su:s0
+    oneshot
+
+
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/ttyS1 *:V
+    class main
+    user root
+    disabled
+
+
+service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
+    -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -g@android:wpa_wlan0
+    socket wpa_wlan0 dgram 660 wifi wifi
+    group system wifi inet
+    disabled
+    oneshot
+
+
+service gce_fs_monitor /system/bin/gcelogwrapper -k /system/bin/gce_fs_monitor
+    class late_start
+    disabled
+    seclabel u:r:su:s0
+    oneshot
+
+
+service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
+    class main
+    disabled
+    oneshot
+    keycodes 30 48
+

@@ -1,0 +1,6 @@
+type hal_dumpstate_impl, domain;
+type hal_dumpstate_impl_exec, exec_type, file_type;
+
+hal_server_domain(hal_dumpstate_impl, hal_dumpstate)
+
+init_daemon_domain(hal_dumpstate_impl)

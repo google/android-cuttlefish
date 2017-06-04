@@ -1,0 +1,1 @@
+allow adbd kernel:fd use;

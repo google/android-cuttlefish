@@ -1,0 +1,2 @@
+allow logd device:dir { open read };
+allow logd serial_device:chr_file { append getattr open };
