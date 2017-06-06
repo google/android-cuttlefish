@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <cstddef>
 #include <errno.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -163,16 +164,30 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
 }
 
 static void MakeAddress(
-    const char* name, bool abstract, struct sockaddr_un* dest) {
+    const char* name, bool abstract, struct sockaddr_un* dest,
+    socklen_t* len) {
   memset(dest, 0, sizeof(*dest));
   dest->sun_family = AF_UNIX;
   // sun_path is NOT expected to be nul-terminated.
   // See man 7 unix.
+  size_t namelen;
   if (abstract) {
-    strncpy(dest->sun_path + 1, name, sizeof(dest->sun_path) - 1);
+    // ANDROID_SOCKET_NAMESPACE_ABSTRACT
+    namelen = strlen(name);
+    CHECK_LE(namelen, sizeof(dest->sun_path) - 1)
+        << "MakeAddress failed. Name=" << name << " is longer than allowed.";
+    dest->sun_path[0] = 0;
+    memcpy(dest->sun_path + 1, name, namelen);
   } else {
-    strncpy(dest->sun_path, name, sizeof(dest->sun_path));
+    // ANDROID_SOCKET_NAMESPACE_RESERVED
+    // ANDROID_SOCKET_NAMESPACE_FILESYSTEM
+    // TODO(pinghao): Distinguish between them?
+    namelen = strlen(name);
+    CHECK_LE(namelen, sizeof(dest->sun_path))
+        << "MakeAddress failed. Name=" << name << " is longer than allowed.";
+    strncpy(dest->sun_path, name, strlen(name));
   }
+  *len = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
 }
 
 SharedFD SharedFD::SocketSeqPacketServer(const char* name, mode_t mode) {
@@ -280,12 +295,13 @@ SharedFD SharedFD::SocketInAddrAnyServer(int in_port, int in_type) {
 SharedFD SharedFD::SocketLocalClient(
     const char* name, bool abstract, int in_type) {
   struct sockaddr_un addr;
-  MakeAddress(name, abstract, &addr);
+  socklen_t addrlen;
+  MakeAddress(name, abstract, &addr, &addrlen);
   SharedFD rval = SharedFD::Socket(PF_UNIX, in_type, 0);
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect((struct sockaddr *) &addr, sizeof(addr)) == -1) {
+  if (rval->Connect((struct sockaddr *) &addr, addrlen) == -1) {
     LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
     return SharedFD(std::shared_ptr<FileInstance>(
         new FileInstance(-1, rval->GetErrno())));
@@ -300,7 +316,8 @@ SharedFD SharedFD::SocketLocalServer(
   if (!abstract) (void)unlink(name);
 
   struct sockaddr_un addr;
-  MakeAddress(name, abstract, &addr);
+  socklen_t addrlen;
+  MakeAddress(name, abstract, &addr, &addrlen);
   SharedFD rval = SharedFD::Socket(PF_UNIX, in_type, 0);
   if (!rval->IsOpen()) {
     return rval;
@@ -312,7 +329,7 @@ SharedFD SharedFD::SocketLocalServer(
     return SharedFD(std::shared_ptr<FileInstance>(
         new FileInstance(-1, rval->GetErrno())));
   }
-  if (rval->Bind((struct sockaddr *) &addr, sizeof(addr)) == -1) {
+  if (rval->Bind((struct sockaddr *) &addr, addrlen) == -1) {
     LOG(ERROR) << "Bind failed; name=" << name << ": " << rval->StrError();
     return SharedFD(std::shared_ptr<FileInstance>(
         new FileInstance(-1, rval->GetErrno())));
