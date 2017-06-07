@@ -83,6 +83,9 @@ bool InitialMetadataReaderImpl::Init(const char* config_path) {
     StoreValues(source, &values_);
     instance_hostname_ = ValueToString(
         root.get("instance", empty).get("hostname", Json::stringValue));
+  } else {
+    LOG(ERROR) << "Failed to parse metadata: "
+               << reader.getFormattedErrorMessages();
   }
   display_.Parse(GetValueForKey(
       GceMetadataAttributes::kDisplayConfigurationKey));
