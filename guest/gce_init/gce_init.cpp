@@ -995,7 +995,7 @@ const char* Container::ApplyCustomization() {
     // shortly. Make sure that while using nested virtualization we do launch
     // gce_mount_handler, too.
     avd::SharedFD file(avd::SharedFD::Open(
-        "/target/fstab.gce_x86", O_RDWR | O_CREAT, 0640));
+        "/target/fstab.vsoc", O_RDWR | O_CREAT, 0640));
     const char fstab_data[] =
         "/dev/block/vdc /data ext4 nodev,noatime,nosuid,errors=panic wait\n";
     const char fstab_cache[] =

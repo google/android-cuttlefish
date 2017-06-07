@@ -36,6 +36,64 @@
 
 namespace avd {
 namespace {
+
+const char kMetadataString[] =
+    "{"
+    "   \"project\": {"
+    "       \"attributes\": {"
+    "           \"virtual_device_zone\": \"us-central2-b\""
+    "       }"
+    "   },"
+    "   \"instance\": {"
+    "       \"hostname\": \"aosp_cf_x86.internal\","
+    "       \"attributes\": {"
+    "           \"cfg_sta_display_resolution\": \"800x1280x16x213\","
+    "           \"cfg_sta_persistent_data_device\": \"default\","
+    "           \"cfg_sta_ephemeral_cache_size_mb\": \"512\","
+    "           \"cfg_sta_initial_locale\": \"en_US\","
+    "           \"camera_front\": \"1,768,1024,checker-sliding\","
+    "           \"camera_back\": \"1,768,1024,checker-fixed\","
+    "           \"gps_coordinates\": \"37.421577,-122.083579,0,0,0,10\","
+    "           \"power_battery_capacity\": \"90\""
+    "       }"
+    "   }"
+    "}";
+
+bool SaveInitialMetadata(const AutoFreeBuffer& content) {
+  AutoCloseFileDescriptor fd(
+      open("/initial.metadata",
+           O_CREAT|O_TRUNC|O_WRONLY, 0600));
+  char headers[] = "\r\n";
+  size_t headers_size = strlen(headers);
+
+  if (fd.IsError()) {
+    LOG(ERROR) << "Failed to create initial metadata file ("
+               << strerror(errno) << ").";
+    return false;
+  }
+
+  if (TEMP_FAILURE_RETRY(write(fd, headers, headers_size))
+      != static_cast<int>(headers_size)) {
+    LOG(ERROR) << "Failed to write " << headers_size << " bytes to initial metadata file: "
+              << errno << "(" << strerror(errno) << ").";
+    return false;
+  }
+
+  if (TEMP_FAILURE_RETRY(write(fd, content.data(), content.size()))
+      != static_cast<int>(content.size())) {
+    LOG(ERROR) << "Failed to write " << content.size() << " bytes to initial metadata file: "
+               << errno << "(" << strerror(errno) << ").";
+    return false;
+  }
+
+  LOG(INFO) << "Successfully stored " << content.size() << " bytes in initial.metadata file.";
+
+  fd.close();
+  // So that any HAL instances can read the initial config.
+  chmod("/initial.metadata", 0644);
+  return true;
+}
+
 // Implementation of MetadataProxy interface.
 // Starts a background threads polling the GCE Metadata Server for updates.
 // Notifies all connected clients about metadata updates.
@@ -45,8 +103,8 @@ class MetadataProxyImpl : public MetadataProxy {
       SysClient* client, NetworkNamespaceManager* ns_manager)
       : client_(client),
         ns_manager_(ns_manager) {
-    initial_metadata_.PrintF("{}");
-    metadata_.PrintF("{}");
+    initial_metadata_.PrintF(kMetadataString);
+    metadata_.PrintF(kMetadataString);
   }
 
   ~MetadataProxyImpl() {}
@@ -113,6 +171,7 @@ class MetadataProxyImpl : public MetadataProxy {
   // - initial metadata (first update ever),
   // - current metadata (may be same as initial metadata).
   bool Start(const std::string& socket_name) {
+    SaveInitialMetadata(initial_metadata_);
     // getpid() and gettid() return 1 on this thread, so fork to get the process
     // into a saner state. Use this thread to monitor the child and restart it.
     while (true) {

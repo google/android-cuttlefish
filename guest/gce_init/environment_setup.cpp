@@ -78,6 +78,8 @@ const char* kOuterNsCommandsCommon[] = {
   // Executables in the ramdisk are only runnable by root and it's group.
   // dhcpcd insists on running as a different user, so chmod the script to
   // make it execuable.
+  "chmod 0555 /bin/*",
+  "cp /bin/* /var",
   "chmod 0555 /",
   "chmod 0555 /bin/gce_init_dhcp_hook",
   "touch /var/run/eth0.dhcp.env",
