@@ -20,7 +20,7 @@ on early-init
 
 
 on fs
-    mount_all /fstab.gce_x86
+    mount_all /fstab.${ro.hardware}
     mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
 
     # TODO(ender): Find better way to talk to serial port.
