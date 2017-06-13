@@ -42,24 +42,6 @@ cc_library(
     ],
 )
 
-cc_binary(
-    name = "meta_test",
-    visibility = ["//visibility:public"],
-    srcs = [
-        "test.cpp",
-    ],
-    deps = [
-        "@cuttlefish//common/libs/fs",
-        "@glog_repo//:glog",
-    ],
-    linkstatic = 1,
-    linkopts = [
-        "-static",
-        "-static-libgcc",
-    ],
-)
-
-
 cc_test(
     name = "netlink_client_test",
     srcs = [

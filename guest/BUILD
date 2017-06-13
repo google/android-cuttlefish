@@ -20,7 +20,6 @@ ramdisk_files(
 ramdisk_files(
     name = "ramdisk_bin_files",
     srcs = [
-        "//guest/gce_network:meta_test",
         "//guest/gce_init:gce_init_dhcp_hook",
     ],
     out = "/bin",

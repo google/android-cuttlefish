@@ -1006,12 +1006,9 @@ const char* Container::ApplyCustomization() {
 
     avd::SharedFD ts_empty(
         avd::SharedFD::Open("/target/ts_snap.txt", O_RDWR | O_CREAT, 0444));
-
-    avd::SharedFD initial_metadata(
-        avd::SharedFD::Open(
-            "/target/initial.metadata", O_RDWR | O_CREAT, 0444));
-    initial_metadata->Write("{}\n", 3);
   }
+
+  CopyFile("/initial.metadata", "/target/initial.metadata");
 
   return NULL;
 }
