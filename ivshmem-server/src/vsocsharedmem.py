@@ -1,0 +1,77 @@
+'''
+ VSOC Shared Memory backed by POSIX shared memory.
+ Also creates the initial vSOC layout.
+'''
+
+import linuxfd
+import mmap
+import os
+import posix_ipc
+import struct
+
+class VSOCSharedMemory():
+  def __init__(self, size, name='ivshmem'):
+    self.shm_size = size << 20
+    self.posix_shm = None
+    self.create_posix_shm(size, name)
+    self.num_vectors = 0
+
+  def create_posix_shm(self, size, name='ivshmem'):
+    self.posix_shm = posix_ipc.SharedMemory(name,
+                                            flags=os.O_CREAT,
+                                            size=self.shm_size)
+
+  def create_layout(self, layout):
+    offset = 0
+    shmmap = mmap.mmap(self.posix_shm.fd, 0)
+    header_struct = struct.Struct('HHIII')
+    header_struct.pack_into(shmmap, offset,
+                            int(layout['vsoc_shm_layout_descriptor']['major_version']),
+                            int(layout['vsoc_shm_layout_descriptor']['minor_version']),
+                            shmmap.size(),
+                            int(layout['vsoc_shm_layout_descriptor']['region_count']),
+                            int(layout['vsoc_shm_layout_descriptor']['vsoc_region_desc_offset'])
+                            )
+    region_descriptor_offset = int(layout['vsoc_shm_layout_descriptor']['vsoc_region_desc_offset'])
+    offset += region_descriptor_offset
+
+    vsoc_device_struct = struct.Struct('HHIIIIIII16s')
+
+    for region in layout['vsoc_device_regions']:
+      self.num_vectors += 1
+
+      region['guest_to_host_signal_table']['eventfds'] = []
+      region['guest_to_host_signal_table']['eventfds'].append(
+            linuxfd.eventfd(initval=0,
+                            semaphore=False,
+                            nonBlocking=False,
+                            closeOnExec=True))
+
+      region['host_to_guest_signal_table']['eventfds'] = []
+      region['host_to_guest_signal_table']['eventfds'].append(
+            linuxfd.eventfd(initval=0,
+                            semaphore=False,
+                            nonBlocking=True,
+                            closeOnExec=True))
+
+      vsoc_device_struct.\
+      pack_into(shmmap, offset,
+                int(region['current_version']),
+                int(region['min_compatible_version']),
+                int(region['region_begin_offset']),
+                int(region['region_end_offset']),
+                int(region['offset_of_region_data']),
+                int(region['guest_to_host_signal_table']['num_nodes']),
+                int(region['guest_to_host_signal_table']['offset']),
+                int(region['host_to_guest_signal_table']['num_nodes']),
+                int(region['host_to_guest_signal_table']['offset']),
+                bytes(region['device_name'], encoding='utf-8')
+                )
+      offset += vsoc_device_struct.size
+
+    # We need atleast one vector to start QEMU.
+    # TODO: Perhaps throw an exception here and bail out early.
+    if self.num_vectors == 0:
+      self.num_vectors = 1
+
+
