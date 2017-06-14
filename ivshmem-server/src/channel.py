@@ -41,14 +41,13 @@ def send_msg_8(sock, data):
   sock.sendmsg([bytes(struct.pack('q', data))])
 
 def send_ctrl_msg(sock, fd, quad_data):
-  print(sock, fd)
   sock.sendmsg([bytes(struct.pack('q', quad_data))],
                [(socket.SOL_SOCKET, socket.SCM_RIGHTS,
                  bytes(struct.pack('i', fd)))])
 
 
 def send_msg_utf8(sock, data):
-  sock.sendall(bytes(data, encoding='utf-8'))
+  sock.sendall(bytes(data, encoding='ascii'))
 
 
 def recv_msg(sock, expected_length):
@@ -57,6 +56,6 @@ def recv_msg(sock, expected_length):
   while received < expected_length:
     part = sock.recv(expected_length - received)
     received += len(part)
-    chunks.append(part.decode(encoding='utf-8'))
+    chunks.append(part.decode(encoding='ascii'))
   data = ''.join(chunks)
   return data

@@ -107,9 +107,6 @@ def setup_arg_parser():
       raise argparse.ArgumentTypeError('should be >= 1 but we have %r' % size)
     return size
   parser = argparse.ArgumentParser()
-  parser.add_argument('-B', '--background', action='store_true',
-                      default=False,
-                      help='Run as a Background process, default=False')
   parser.add_argument('-N', '--name', type=str, default='ivshmem',
                       help='Name of the POSIX shared memory segment')
   parser.add_argument('-S', '--size', type=unsigned_integer, default=4,
@@ -135,7 +132,11 @@ def main():
     ivshmem_server = IVServer(args, layout_json)
     ivshmem_server.serve()
   else:
+    #
     # wait for server to complete initialization
+    # the initializing process will also write the
+    # number of vectors as a part of signaling us.
+    #
     num_vectors = efd['efd'].read()
     qemu_args = []
     qemu_args.append(layout_json['qemu']['path'])

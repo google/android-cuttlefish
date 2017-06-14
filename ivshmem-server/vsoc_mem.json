@@ -18,8 +18,6 @@
 
   "vsoc_shm_layout_descriptor" : {
     "comment": "The top level layout descriptor",
-    "major_version" : "0",
-    "minor_version" : "1",
     "size": "<populated by querying the shm region size at runtime>",
     "region_count" : "3",
     "vsoc_region_desc_offset" : "128"

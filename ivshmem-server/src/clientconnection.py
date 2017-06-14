@@ -25,6 +25,8 @@ class ClientConnection():
     #   Server -> Number of nodes. (In 0xAABBCCDD format)
     #   For each node
     #      Server -> Offset of lockaddress
+    #   Server -> <Send cmsg with guest_to_host eventfd>
+    #   Server -> <Send cmsg with host_to_guest eventfd>
     #   Server -> <Send cmsg with shmfd>
     #
 
@@ -74,6 +76,15 @@ class ClientConnection():
     node_count = int(device_region['host_to_guest_signal_table']['num_nodes'])
     print('server sending node count %s ' % ('0x%08x' % node_count))
     channel.send_msg_utf8(self.client_socket, '0x%08x' % node_count)
+
+    print('sending guest to host eventfd to client:')
+    print(device_region['eventfds']['guest_to_host'])
+    eventfd = device_region['eventfds']['guest_to_host']
+    channel.send_ctrl_msg(self.client_socket, eventfd.fileno(), 0)
+
+    print('sending host to guest eventfd to client:')
+    eventfd = device_region['eventfds']['host_to_guest']
+    channel.send_ctrl_msg(self.client_socket, eventfd.fileno(), 0)
 
     print('server sending shm fd %d' % self.shmfd)
     channel.send_ctrl_msg(self.client_socket, self.shmfd, 0)

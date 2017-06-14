@@ -6,11 +6,14 @@ import os
 
 
 def recv_fd(conn):
-  msg, ancdata, flags, addr = conn.recvmsg(1, socket.CMSG_LEN(struct.calcsize('i')))
+
+  msg, ancdata, flags, addr = conn.recvmsg(struct.calcsize('q'),
+                                           socket.CMSG_SPACE(struct.calcsize('i')))
   cmsg_level, cmsg_type, cmsg_data = ancdata[0]
   fda = array.array('I')
   fda.frombytes(cmsg_data)
   return fda[0]
+
 
 def startclient(client_name, socket_path):
   conn = channel.connect_to_channel(socket_path)
@@ -38,17 +41,20 @@ def startclient(client_name, socket_path):
   for node in range(int(node_count, base=16)):
      print('TODO: client waiting for lock offsets for node %d' % node)
 
+  print('client waiting for guest_to_host eventfd')
+  fd = recv_fd(conn)
+  print('guest_to_host eventfd %d' % fd)
+
+  print('client waiting for host_to_guest eventfd')
+  fd = recv_fd(conn)
+  print('host_to_guest eventfd %d' % fd)
+
   print('client waiting for shm descriptor')
   fd = recv_fd(conn)
+
+  #size is in [6]th position of tuple
   print('shm size is %d MB' % (os.fstat(fd)[6] >> 20))
 
-  #print('client waiting for eventfds (one per node in the region)')
-
-  #eventfds=[]
-  #for count in range(int(region_count)):
-  #  eventfds.append(recv_fd(conn))
-  #print(eventfds)
-  print('client waiting for lock offsets (one per node)')
 
 if __name__ == '__main__':
   startclient('HWCOMPOSER', '/tmp/ivshmem_socket_client')
