@@ -11,8 +11,6 @@
 
   "version" : "1",
   "comment" : "The first page should be reserved for top level headers and region descriptors only",
-  "hostvmid" : "0",
-  "guestvmid" : "1",
   "size" : "4194304",
   "region_count" : "3",
 
