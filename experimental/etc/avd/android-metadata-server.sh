@@ -15,7 +15,6 @@ function ctrl_c() {
   rm /var/run/dnsmasq-android.pid
   echo "Cleaning up..."
   iptables -D POSTROUTING -t mangle -p udp --dport bootpc -s 192.168.99.0/24 -j CHECKSUM --checksum-fill
-  iptables -t nat -D PREROUTING --src 192.168.99.0/24 --dst 169.254.169.254 -p tcp --dport 80 -j REDIRECT --to-destination 192.168.99.1:16925
   iptables -t nat -D POSTROUTING -s 192.168.99.0/24 -j MASQUERADE
   sysctl -w net.ipv4.ip_forward=0
 
@@ -41,7 +40,6 @@ function ctrl_c() {
   echo "Configuring IP rules..."
 
   iptables -t nat -A POSTROUTING -s 192.168.99.0/24 -j MASQUERADE
-  iptables -t nat -A PREROUTING --src 192.168.99.0/24 --dst 169.254.169.254 -p tcp --dport 80 -j DNAT --to-destination 192.168.99.1:16925
 
   # This is required for DNSMASQ to work. DNSMASQ does not fill in packet
   # checksum, and neither does kernel, unless explicitly asked.
@@ -52,4 +50,5 @@ function ctrl_c() {
   sysctl -w net.ipv4.ip_forward=1
 }
 
-python ${SCRIPT_DIR}/pseudo_metadataserver.py 192.168.99.1 16925 ${SCRIPT_DIR}/metadata.json
+# Wait for ^C.
+sleep infinity
