@@ -26,3 +26,15 @@ add_lunch_combo aosp_cf_x86_64_tablet-userdebug
 add_lunch_combo aosp_cf_x86_64_tablet_3g-userdebug
 add_lunch_combo aosp_cf_x86_64_tv-userdebug
 add_lunch_combo aosp_cf_x86_64_wear-userdebug
+add_lunch_combo cf_x86_auto-userdebug
+add_lunch_combo cf_x86_phone-userdebug
+add_lunch_combo cf_x86_tablet-userdebug
+add_lunch_combo cf_x86_tablet_3g-userdebug
+add_lunch_combo cf_x86_tv-userdebug
+add_lunch_combo cf_x86_wear-userdebug
+add_lunch_combo cf_x86_64_auto-userdebug
+add_lunch_combo cf_x86_64_phone-userdebug
+add_lunch_combo cf_x86_64_tablet-userdebug
+add_lunch_combo cf_x86_64_tablet_3g-userdebug
+add_lunch_combo cf_x86_64_tv-userdebug
+add_lunch_combo cf_x86_64_wear-userdebug
