@@ -48,8 +48,10 @@ qemu-system-x86_64 \
   -m 2048 \
   -enable-kvm \
   -nographic \
-  -serial unix:var/avd/android-${INSTANCE_NUMBER}-kernel \
-  -serial unix:var/avd/android-${INSTANCE_NUMBER}-logcat \
+  -chardev socket,nowait,server,host=127.0.0.1,port=$((10000 + ${INSTANCE_NUMBER})),ipv4,nodelay,id=serial_kernel \
+  -device isa-serial,chardev=serial_kernel \
+  -chardev socket,nowait,server,host=127.0.0.1,port=$((10100 + ${INSTANCE_NUMBER})),ipv4,nodelay,id=serial_logcat \
+  -device virtserialport,chardev=serial_logcat \
   -netdev type=tap,id=net0,ifname=android${INSTANCE_NUMBER},script=${SCRIPT_DIR}/android-ifup,downscript=${SCRIPT_DIR}/android-ifdown \
   -device e1000,netdev=net0,mac=${MACADDR} \
   -kernel ${IMAGE_DIR}/kernel \

@@ -18,9 +18,9 @@ mousetrack on
 
 # default windows
 screen -t Metadata      1 sh -c "( etc/avd/android-metadata-server.sh )"
-screen -t Master-kernel 2 sh -c "( netcat -l -U var/avd/android-1-kernel )"
-screen -t Master-logcat 3 sh -c "( netcat -l -U var/avd/android-1-logcat )"
-screen -t Master-QEmu   8 sh -c "( echo 'Waiting for metadata...' ; etc/avd/android-start-qemu.sh android/master 1; read )"
+screen -t Master-kernel 2 etc/avd/logstream-attach.sh 10001
+screen -t Master-logcat 3 etc/avd/logstream-attach.sh -crlf 10101
+screen -t Master-QEmu   8 sh -c "( etc/avd/android-start-qemu.sh android/master 1; read )"
 select 2
 bind c screen 1 # window numbering starts at 1 not 0
 bind 0 select 10
