@@ -107,15 +107,47 @@ def setup_arg_parser():
       raise argparse.ArgumentTypeError('should be >= 1 but we have %r' % size)
     return size
   parser = argparse.ArgumentParser()
+  parser.add_argument('-c', '--cpu', type=unsigned_integer, default=2,
+                      help='Number of cpus to use in the guest')
+  parser.add_argument('-C', '--client', type=str,
+                      default='/tmp/ivshmem_socket_client')
+  parser.add_argument('-i', '--image_dir', type=str, required=True,
+                      help='Path to the directory of image files for the guest')
+  parser.add_argument('-s', '--script_dir', type=str, required=True,
+                      help='Path to a directory of scripts')
+  parser.add_argument('-I', '--instance_number', type=unsigned_integer,
+                      default=1,
+                      help='Instance number for this device')
+  parser.add_argument('-L', '--layoutfile', type=str, required=True)
+  parser.add_argument('-M', '--memory', type=unsigned_integer, default=2048,
+                      help='Size of the non-shared guest RAM in MiB')
   parser.add_argument('-N', '--name', type=str, default='ivshmem',
                       help='Name of the POSIX shared memory segment')
-  parser.add_argument('-S', '--size', type=unsigned_integer, default=4,
-                      help='Size of shared memory region in MiB, default=4MiB')
   parser.add_argument('-P', '--path', type=str, default='/tmp/ivshmem_socket',
                       help='Path to UNIX Domain Socket, default=/tmp/ivshmem_socket')
-  parser.add_argument('-C', '--client', type=str, default='/tmp/ivshmem_socket_client')
-  parser.add_argument('-L', '--layoutfile', type=str, required=True)
+  parser.add_argument('-S', '--size', type=unsigned_integer, default=4,
+                      help='Size of shared memory region in MiB, default=4MiB')
   return parser
+
+
+def make_telnet_chardev(args, tcp_base, name):
+  return 'socket,nowait,server,host=127.0.0.1,port=%d,ipv4,nodelay,id=%s' % (
+      tcp_base + args.instance_number, name)
+
+
+def make_network_netdev(name, args):
+  return ','.join((
+      'type=tap',
+      'id=%s' % name,
+      'ifname=android%d' % args.instance_number,
+      'script=%s/android-ifup' % args.script_dir,
+      'downscript=%s/android-ifdown' % args.script_dir))
+
+
+def make_network_device(name, instance_number):
+  mac_addr = '00:41:56:44:%02X:%02X' % (
+      instance_number / 10, instance_number % 10)
+  return 'e1000,netdev=%s,mac=%s' % (name, mac_addr)
 
 
 def main():
@@ -139,15 +171,50 @@ def main():
     #
     num_vectors = efd['efd'].read()
     qemu_args = []
-    qemu_args.append(layout_json['qemu']['path'])
-    qemu_args.append(layout_json['qemu']['memory'])
-    qemu_args.append(layout_json['qemu']['kvm'])
-    qemu_args.append(layout_json['qemu']['drive'])
-    qemu_args.append(layout_json['qemu']['chardev'])
-    qemu_args.append(layout_json['qemu']['device']+',vectors=' + \
-                     str(num_vectors))
-    qemu_args.append(layout_json['qemu']['net'])
-    subprocess.Popen(' '.join(qemu_args), shell=True)
+    qemu_args.append(layout_json['guest']['vmm_path'])
+    qemu_args += ('-smp', '%d' % args.cpu)
+    qemu_args += ('-m', '%d' % args.memory)
+    qemu_args.append('-enable-kvm')
+    qemu_args.append('-nographic')
+    # Serial port setup
+    qemu_args += (
+        '-chardev', make_telnet_chardev(args, 10000, 'serial_kernel'),
+        '-device', 'isa-serial,chardev=serial_kernel')
+    qemu_args += (
+        '-chardev', make_telnet_chardev(args, 10100, 'serial_logcat'),
+        '-device', 'virtserialport,chardev=serial_logcat')
+    # network setup
+    qemu_args += (
+        '-netdev', make_network_netdev('net0', args),
+        '-device', make_network_device('net0', args.instance_number)
+    )
+    # Configure image files
+    launchable = True
+    # Use %% to protect the path. The index will be set outside the loop,
+    # the path will be set inside.
+    DRIVE_VALUE = 'file=%%s,index=%d,format=raw,if=virtio,media=disk'
+    for flag, template, path in (
+        ('-kernel', '%s', 'kernel'),
+        ('-initrd', '%s', 'gce_ramdisk.img'),
+        ('-drive', DRIVE_VALUE % 0, 'ramdisk.img'),
+        ('-drive', DRIVE_VALUE % 1, 'system.img'),
+        ('-drive', DRIVE_VALUE % 2, 'data-%d.img' % args.instance_number),
+        ('-drive', DRIVE_VALUE % 3, 'cache-%d.img' % args.instance_number)):
+      full_path = os.path.join(args.image_dir, path)
+      if not os.path.isfile(full_path):
+        print('Missing required image file %s' % full_path)
+        launchable = False
+      qemu_args += (flag, template % full_path)
+    # TODO(romitd): Should path and id be configured per-instance?
+    qemu_args += ('-chardev', 'socket,path=%s,id=ivsocket' % (args.path))
+    qemu_args += (
+        '-device', ('ivshmem-doorbell,chardev=ivsocket,vectors=%d' %
+        num_vectors))
+    qemu_args += ('-append', ' '.join(layout_json['guest']['kernel_command_line']))
+    if not launchable:
+      print('Refusing to launch due to errors')
+      sys.exit(2)
+    subprocess.Popen(qemu_args)
 
 def check_version():
   if sys.version_info.major != 3:
@@ -156,4 +223,3 @@ def check_version():
 if __name__ == '__main__':
   check_version()
   main()
-
