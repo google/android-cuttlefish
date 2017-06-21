@@ -30,9 +30,6 @@ on fs
     # for GCE camera HAL
     mkdir /var/media 0770 audio media
 
-    chmod 0755 /system/etc/wifi
-    chmod 0644 /system/etc/wifi/wpa_supplicant.conf
-
     chmod 0755 /sys/kernel/debug
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/group
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/ps
