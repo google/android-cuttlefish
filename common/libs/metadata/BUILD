@@ -37,9 +37,9 @@ cc_library(
         "-ljsoncpp",
     ],
     deps = [
-        "@glog_repo//:glog",
         ":constants",
         "//common/libs/auto_resources",
+        "//common/libs/glog:cuttlefish_logging",
         "//common/libs/fs",
     ],
 )

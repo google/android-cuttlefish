@@ -21,7 +21,7 @@ cc_test(
     deps = [
         ":threads",
         "//common/libs/time",
-        "@glog_repo//:glog",
+        "//common/libs/glog:cuttlefish_logging",
     ],
 )
 

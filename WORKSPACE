@@ -47,3 +47,11 @@ bind(
     name = "gtest_main",
     actual = "@gtest_repo//:gtest_gmock",
 )
+
+new_local_repository(
+    name = "kernel",
+    path = "../cuttlefish_kernel",
+    build_file = "//external:kernel.BUILD",
+)
+
+

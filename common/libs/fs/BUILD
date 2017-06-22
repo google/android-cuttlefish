@@ -15,6 +15,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//common/libs/auto_resources",
+        "//common/libs/glog:cuttlefish_logging",
     ],
 )
 

@@ -22,9 +22,9 @@
 #include <map>
 #include <string>
 
-#include <glog/logging.h>
 #include <json/json.h>
 
+#include "common/libs/glog/logging.h"
 #include "common/libs/metadata/gce_metadata_attributes.h"
 #include "common/libs/metadata/gce_resource_location.h"
 
