@@ -1,12 +1,17 @@
 {
-  "qemu": {
-    "path": "/mnt/build_bin/qemu/bin/debug/native/x86_64-softmmu/qemu-system-x86_64",
-    "memory" : "-m 2048",
-    "kvm" : "-enable-kvm",
-    "drive": "-drive if=virtio,cache=none,file=/mnt/build_bin/qemu/bin/debug/native/vm0.qcow2",
-    "chardev": "-chardev socket,path=/tmp/ivshmem_socket,id=ivsocket",
-    "device" : "-device ivshmem,chardev=ivsocket,size=4,msi=off",
-    "net" : "-net user,hostfwd=tcp::10022-:22 -net nic"
+  "guest": {
+    "vmm_path": "/usr/bin/qemu-system-x86_64",
+    "kernel_command_line" : [
+	    "loop.max_part=7",
+	    "console=ttyS0",
+	    "androidboot.console=ttyS0",
+	    "androidboot.hardware=vsoc",
+	    "security=selinux",
+	    "androidboot.selinux=permissive",
+	    "enforcing=0",
+	    "audit=0",
+	    "AVD_NESTED_VM"
+    ]
   },
 
   "version" : "1",

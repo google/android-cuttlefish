@@ -22,32 +22,39 @@ prototype):
   to the qemu VM along with event fds.
 
 * For the client, speak the ad-hoc client protocol (subject to change)
-  and pass the region information, shm fd, lock offsets (TODO).
+  and pass the region information, shm fd and events fds.
 
 TODO: Fault-tolerance.
 
 
 Running:
 
-0. Check the vsoc_mem.json file and verify the path for qemu.
-   Also, currently qemu is only running using one CPU.
+1. Install the qemu packages
 
-1. virtualenv -p python3 .env
+    ```
+    cp /google/data/ro/users/gh/ghartman/goobuntu-backports/install_qemu.sh /tmp
+    bash /tmp/install_qemu.sh
+    ```
 
-2. source .env/bin/activate
+1. Set up python3
 
-3. pip install -r requirements.txt
+    ```
+    sudo apt-get install python-virtualenv python3-dev
+    virtualenv -p python3 .env
+    source .env/bin/activate
+    pip install -r requirements.txt
+    ```
 
-4. python src/ivserver.py -L vsoc_mem.json
+1. python src/ivserver.py -L vsoc_mem.json
 
-5. This should start the QEMU VM.
+This should start the QEMU VM.
 
-6. For testing the ivhsmem-server to host-client
-   python src/test_client.py
-   Logs are mostly on so please don't be perturbed by it.
+For testing the ivhsmem-server to host-client
+python src/test_client.py
+Logs are mostly on so please don't be perturbed by it.
 
-4. send a SIGTERM/SIGKILL to the python process to terminate/kill the server
-   It doesn't clear the UNIX domain sockets on this event. This will be fixed.
-   You can remove them by `rm -rf /tmp/ivshmem*`
+send a SIGTERM/SIGKILL to the python process to terminate/kill the server
+It doesn't clear the UNIX domain sockets on this event. This will be fixed.
+You can remove them by `rm -rf /tmp/ivshmem*`
 
-5. `deactivate` to come out of the virtualenv created environment.
+`deactivate` to come out of the virtualenv created environment.
