@@ -32,69 +32,58 @@
      "current_version" : "1",
      "min_compatible_version" : "1",
      "region_begin_offset" : "4096",
-     "region_end_offset" : "16383",
-     "offset_of_region_data" : "512",
+     "region_end_offset" : "16384",
 
      "guest_to_host_signal_table" : {
        "comment" : "",
-       "num_nodes" : "2",
-       "offset" : "64"
-      },
+       "num_nodes_lg2" : "2"
+     },
 
      "host_to_guest_signal_table" : {
        "comment" : "",
-       "num_nodes" : "2",
-       "offset" : "256"
-      },
+       "num_nodes_lg2" : "2"
+     },
 
-     "device_name" : "HWComposer"
+     "device_name" : "hwcomposer"
    },
 
    {
      "comment" : "Sensors",
      "current_version" : "1",
      "min_compatible_version" : "1",
-     "region_begin_offset" : "18432",
-     "region_end_offset" : "30720",
-     "offset_of_region_data" : "512",
+     "region_begin_offset" : "16384",
+     "region_end_offset" : "32768",
 
      "guest_to_host_signal_table" : {
-       "comment" : "sizeof each node is based on common/libs/shm_compatible/loch.h",
-       "num_nodes" : "1",
-       "offset" : "64"
+       "comment" : "each node is the size of a unit32_t. See vsoc_shm.h line 81",
+       "num_nodes_lg2" : "1"
      },
 
      "host_to_guest_signal_table" : {
        "comment" : "",
-       "num_nodes" : "1",
-       "offset" : "256"
+       "num_nodes_lg2" : "1"
      },
 
-     "device_name" : "Sensors"
+     "device_name" : "sensors"
    },
-
-
    {
     "comment" : "Misc",
     "current_version" : "1",
     "min_compatible_version" : "1",
     "region_begin_offset" : "32768",
-    "region_end_offset" : "35840",
-    "offset_of_region_data" : "512",
+    "region_end_offset" : "36864",
 
     "guest_to_host_signal_table" : {
       "comment" : "",
-      "num_nodes" : "1",
-      "offset" : "64"
+      "num_nodes_lg2" : "1"
     },
 
     "host_to_guest_signal_table" : {
       "comment" : "",
-      "num_nodes" : "1",
-      "offset" : "256"
+      "num_nodes_lg2" : "1"
     },
 
-    "device_name" : "Misc"
+    "device_name" : "misc"
    }
   ]
 }

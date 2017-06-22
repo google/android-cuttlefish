@@ -21,7 +21,7 @@ class VSOCSharedMemory():
                                             flags=os.O_CREAT,
                                             size=self.shm_size)
 
-  def create_layout(self, layout, major_version=0, minor_version=1):
+  def create_layout(self, layout, major_version=1, minor_version=0):
     offset = 0
     shmmap = mmap.mmap(self.posix_shm.fd, 0)
 
@@ -49,7 +49,7 @@ class VSOCSharedMemory():
                                          ['vsoc_region_desc_offset'])
     offset += region_descriptor_offset
 
-    vsoc_device_struct = struct.Struct('HHIIIIIII16s')
+    vsoc_device_struct = struct.Struct('HHIIIIIIIII16s')
 
     for region in layout['vsoc_device_regions']:
       self.num_vectors += 1
@@ -66,18 +66,31 @@ class VSOCSharedMemory():
                         semaphore=False,
                         nonBlocking=False,
                         closeOnExec=True)
-
+      # Calculate the offsets
+      # Compensate for the fixed bits of the region header
+      current_offset = 56
+      region['guest_to_host_signal_table']['offset'] = current_offset
+      current_offset += 4 * (1 << int(region['guest_to_host_signal_table']['num_nodes_lg2']))
+      region['guest_to_host_signal_table']['node_alloc_hint_offset'] = current_offset
+      current_offset += 4
+      region['host_to_guest_signal_table']['offset'] = current_offset
+      current_offset += 4 * (1 << int(region['host_to_guest_signal_table']['num_nodes_lg2']))
+      region['host_to_guest_signal_table']['node_alloc_hint_offset'] = current_offset
+      current_offset += 4
+      region['offset_of_region_data'] = current_offset
       vsoc_device_struct. \
         pack_into(shmmap, offset,
                   int(region['current_version']),
                   int(region['min_compatible_version']),
                   int(region['region_begin_offset']),
                   int(region['region_end_offset']),
-                  int(region['offset_of_region_data']),
-                  int(region['guest_to_host_signal_table']['num_nodes']),
-                  int(region['guest_to_host_signal_table']['offset']),
-                  int(region['host_to_guest_signal_table']['num_nodes']),
-                  int(region['host_to_guest_signal_table']['offset']),
+                  region['offset_of_region_data'],
+                  int(region['guest_to_host_signal_table']['num_nodes_lg2']),
+                  region['guest_to_host_signal_table']['offset'],
+                  region['guest_to_host_signal_table']['node_alloc_hint_offset'],
+                  int(region['host_to_guest_signal_table']['num_nodes_lg2']),
+                  region['host_to_guest_signal_table']['offset'],
+                  region['host_to_guest_signal_table']['node_alloc_hint_offset'],
                   bytes(region['device_name'], encoding='ascii')
                 )
       offset += vsoc_device_struct.size
@@ -86,5 +99,3 @@ class VSOCSharedMemory():
     # TODO: Perhaps throw an exception here and bail out early.
     if self.num_vectors == 0:
       self.num_vectors = 1
-
-
