@@ -21,6 +21,7 @@
 
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -279,9 +280,9 @@ class FileInstance {
 
   void Identify(const char* identity);
 
-  int Ioctl(int request) {
+  int Ioctl(int request, void* val = nullptr) {
     errno = 0;
-    int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request));
+    int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
     errno_ = errno;
     return rval;
   }
@@ -305,6 +306,20 @@ class FileInstance {
   off_t LSeek(off_t offset, int whence) {
     errno = 0;
     off_t rval = TEMP_FAILURE_RETRY(lseek(fd_, offset, whence));
+    errno_ = errno;
+    return rval;
+  }
+
+  void * Mmap(void* addr, size_t length, int prot, int flags, off_t offset) {
+    errno = 0;
+    void * rval = mmap(addr, length, prot, flags, fd_, offset);
+    errno_ = errno;
+    return rval;
+  }
+
+  ssize_t Pread(void* buf, size_t count, off_t offset) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
     errno_ = errno;
     return rval;
   }
@@ -435,7 +450,7 @@ class FileInstance {
     //  buf, or a pointer to some (immutable) static string (in which case buf
     //  is unused).
     if (out != s->strerror_buf_) {
-      strncpy(out, s->strerror_buf_, sizeof(strerror_buf_));
+      strncpy(s->strerror_buf_, out, sizeof(strerror_buf_));
     }
     return strerror_buf_;
   }
