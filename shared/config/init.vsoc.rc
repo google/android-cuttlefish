@@ -93,7 +93,7 @@ service logtop3 /system/bin/gcelogwrapper /system/bin/top -m 3 -d 10
     oneshot
 
 
-service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/ttyS1 *:V
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/vport0p1 *:V
     class main
     user root
     disabled
