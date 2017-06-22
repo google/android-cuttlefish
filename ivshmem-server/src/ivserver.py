@@ -181,6 +181,7 @@ def main():
         '-chardev', make_telnet_chardev(args, 10000, 'serial_kernel'),
         '-device', 'isa-serial,chardev=serial_kernel')
     qemu_args += (
+        '-device', 'virtio-serial',
         '-chardev', make_telnet_chardev(args, 10100, 'serial_logcat'),
         '-device', 'virtserialport,chardev=serial_logcat')
     # network setup
