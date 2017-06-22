@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-$(call inherit-product-if-exists, vendor/google/products/generic_no_telephony.mk)
-
 ifeq (,$(CUTTLEFISH_KERNEL))
 CUTTLEFISH_KERNEL := device/google/cuttlefish_kernel/3.18-x86_64/kernel
 endif
