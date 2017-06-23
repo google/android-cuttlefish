@@ -1,4 +1,4 @@
-load("//guest:ramdisk.bzl", "ramdisk_files", "ramdisk_create")
+load("//tools:ramdisk.bzl", "ramdisk_files", "ramdisk_create")
 
 ramdisk_create(
     name = "gce_ramdisk",
