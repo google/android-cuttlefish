@@ -1,0 +1,89 @@
+{
+  "guest": {
+    "vmm_path": "/usr/bin/qemu-system-x86_64",
+    "kernel_command_line" : [
+	    "loop.max_part=7",
+	    "console=ttyS0",
+	    "androidboot.console=ttyS0",
+	    "androidboot.hardware=vsoc",
+	    "security=selinux",
+	    "androidboot.selinux=permissive",
+	    "enforcing=0",
+	    "audit=0",
+	    "AVD_NESTED_VM"
+    ]
+  },
+
+  "version" : "1",
+  "comment" : "The first page should be reserved for top level headers and region descriptors only",
+  "size" : "4194304",
+  "region_count" : "3",
+
+  "vsoc_shm_layout_descriptor" : {
+    "comment": "The top level layout descriptor",
+    "size": "<populated by querying the shm region size at runtime>",
+    "region_count" : "3",
+    "vsoc_region_desc_offset" : "128"
+  },
+
+  "vsoc_device_regions" : [
+   {
+     "comment" : "HWComposer",
+     "current_version" : "1",
+     "min_compatible_version" : "1",
+     "region_begin_offset" : "4096",
+     "region_end_offset" : "16384",
+
+     "guest_to_host_signal_table" : {
+       "comment" : "",
+       "num_nodes_lg2" : "2"
+     },
+
+     "host_to_guest_signal_table" : {
+       "comment" : "",
+       "num_nodes_lg2" : "2"
+     },
+
+     "device_name" : "hwcomposer"
+   },
+
+   {
+     "comment" : "Sensors",
+     "current_version" : "1",
+     "min_compatible_version" : "1",
+     "region_begin_offset" : "16384",
+     "region_end_offset" : "32768",
+
+     "guest_to_host_signal_table" : {
+       "comment" : "each node is the size of a unit32_t. See vsoc_shm.h line 81",
+       "num_nodes_lg2" : "1"
+     },
+
+     "host_to_guest_signal_table" : {
+       "comment" : "",
+       "num_nodes_lg2" : "1"
+     },
+
+     "device_name" : "sensors"
+   },
+   {
+    "comment" : "Misc",
+    "current_version" : "1",
+    "min_compatible_version" : "1",
+    "region_begin_offset" : "32768",
+    "region_end_offset" : "36864",
+
+    "guest_to_host_signal_table" : {
+      "comment" : "",
+      "num_nodes_lg2" : "1"
+    },
+
+    "host_to_guest_signal_table" : {
+      "comment" : "",
+      "num_nodes_lg2" : "1"
+    },
+
+    "device_name" : "misc"
+   }
+  ]
+}
