@@ -48,6 +48,7 @@ qemu-system-x86_64 \
   -m 2048 \
   -enable-kvm \
   -nographic \
+  -device virtio-serial \
   -chardev socket,nowait,server,host=127.0.0.1,port=$((10000 + ${INSTANCE_NUMBER})),ipv4,nodelay,id=serial_kernel \
   -device isa-serial,chardev=serial_kernel \
   -chardev socket,nowait,server,host=127.0.0.1,port=$((10100 + ${INSTANCE_NUMBER})),ipv4,nodelay,id=serial_logcat \
