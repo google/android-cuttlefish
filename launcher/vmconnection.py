@@ -2,8 +2,9 @@
   VMConnection related.
 '''
 
-import channel
 import linuxfd
+
+from . import channel
 
 class VMConnection():
   def __init__(self, layout_json, posix_shm, vm_socket, vector_count, hostid,
