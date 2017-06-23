@@ -150,7 +150,13 @@ def make_network_device(name, instance_number):
   return 'e1000,netdev=%s,mac=%s' % (name, mac_addr)
 
 
+def check_version():
+  if sys.version_info.major != 3:
+    raise errors.VersionException
+
+
 def main():
+  check_version()
   parser = setup_arg_parser()
   args = parser.parse_args()
   layout_json = json.loads(open(args.layoutfile).read())
@@ -217,10 +223,6 @@ def main():
       sys.exit(2)
     subprocess.Popen(qemu_args)
 
-def check_version():
-  if sys.version_info.major != 3:
-    raise errors.VersionException
 
 if __name__ == '__main__':
-  check_version()
   main()
