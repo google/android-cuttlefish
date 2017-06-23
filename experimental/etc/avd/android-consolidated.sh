@@ -4,7 +4,7 @@ pushd "$(dirname "$0")" > /dev/null 2>&1
 SCRIPT_DIR="$(pwd)"
 cd ../../..
 TOP_DIR="$(pwd)"
-popd /dev/null 2>&1
+popd
 
 if [ "$EUID" -ne 0 ]; then
   echo "Please run with super-user privileges."
