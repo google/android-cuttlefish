@@ -16,15 +16,12 @@ class ClientConnection():
     #   ivshmem_client <--> ivshmem_server handshake.
     #
     #   Client -> 'GET PROTOCOL_VER'
-    #   Server -> 'PROTOCOL_VER 0'
+    #   Server -> '0x000000000'
     #   Client -> INFORM REGION_NAME_LEN: 0x0000000a
     #   Client -> GET REGION: HW_COMPOSER
     #   Server -> 0xffffffff(If region name not found)
     #   Server -> 0xAABBC000 (region start offset)
     #   Server -> 0xAABBC0000 (region end offset)
-    #   Server -> Number of nodes. (In 0xAABBCCDD format)
-    #   For each node
-    #      Server -> Offset of lockaddress
     #   Server -> <Send cmsg with guest_to_host eventfd>
     #   Server -> <Send cmsg with host_to_guest eventfd>
     #   Server -> <Send cmsg with shmfd>
@@ -50,7 +47,7 @@ class ClientConnection():
     for vsoc_device_region in self.layout_json['vsoc_device_regions']:
       # TODO:
       # read from the shared memory.
-      if vsoc_device_region['comment'].upper() == msg:
+      if vsoc_device_region['device_name'] == msg:
         print('found region for %s' % msg)
         found_region = True
         device_region = vsoc_device_region
@@ -73,10 +70,6 @@ class ClientConnection():
       # Raise a suitable Exception.
       return
 
-    node_count = int(device_region['host_to_guest_signal_table']['num_nodes'])
-    print('server sending node count %s ' % ('0x%08x' % node_count))
-    channel.send_msg_utf8(self.client_socket, '0x%08x' % node_count)
-
     print('sending guest to host eventfd to client:')
     print(device_region['eventfds']['guest_to_host'])
     eventfd = device_region['eventfds']['guest_to_host']
@@ -90,4 +83,3 @@ class ClientConnection():
     channel.send_ctrl_msg(self.client_socket, self.shmfd, 0)
     print('server closing connection')
     self.client_socket.close()
-
