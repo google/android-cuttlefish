@@ -1,9 +1,9 @@
 import array
-import channel
 import struct
 import socket
 import os
 
+from . import channel
 
 def recv_fd(conn):
 
