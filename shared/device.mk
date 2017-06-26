@@ -197,6 +197,7 @@ PRODUCT_PACKAGES += \
     hwcomposer.vsoc \
     hwcomposer.vsoc-testing \
     hwcomposer.vsoc-deprecated \
+    hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl
 
 #
