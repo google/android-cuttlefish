@@ -5,8 +5,9 @@ py_library(
     srcs = [
         "channel.py",
         "clientconnection.py",
-        "errors.py",
+        "guest_definition.py",
         "ivserver.py",
+        "libvirt_client.py",
         "vmconnection.py",
         "vsocsharedmem.py",
     ],
