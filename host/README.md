@@ -52,11 +52,6 @@
     sudo service libvirt-bin restart
     ```
 
-* Make sure to start the `abr0` android bridge using
-  `experimental/etc/avd/android-metadata-server.sh` script.
-
-  TODO(ender): remove this and make this script part of init.
-
 ### I'm seeing `permission denied` errors
 
 libvirt is not executing virtual machines on behalf of the calling user.
