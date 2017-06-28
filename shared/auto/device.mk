@@ -14,4 +14,5 @@
 # limitations under the License.
 #
 
+$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
