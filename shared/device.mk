@@ -42,6 +42,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.media.treble_omx=false
 
 #
+# Packages for various cuttlefish-specific tests
+#
+PRODUCT_PACKAGES += \
+    vsoc_guest_region_e2e_test \
+    vsoc_guest_region_posthost_e2e_test
+
+#
 # Packages for various GCE-specific utilities
 #
 PRODUCT_PACKAGES += \
