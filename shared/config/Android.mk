@@ -34,7 +34,7 @@ endif
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
-$(LOCAL_BUILT_MODULE):
+$(LOCAL_BUILT_MODULE): device/google/cuttlefish/shared/config/gen_wpa_supplicant_conf.sh
 	$(hide) echo "Generating $@"
 	$(hide) mkdir -p $(dir $@)
 	$(hide) device/google/cuttlefish/shared/config/gen_wpa_supplicant_conf.sh \
