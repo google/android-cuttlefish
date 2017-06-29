@@ -13,6 +13,7 @@ import glog
 # #define FIONBIO 0x5421
 _FIONBIO = 0x5421
 
+
 def start_listener(path):
     uds = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     uds.bind(path)
@@ -39,7 +40,8 @@ def handle_new_connection(uds, nonblocking=True):
         try:
             fcntl.ioctl(sock.fileno(), _FIONBIO, struct.pack('L', 1))
         except OSError as exc:
-            glog.exception('Exception caught while trying to make client nonblocking: ', exc)
+            glog.exception(
+                'Exception caught while trying to make client nonblocking: ', exc)
     return sock
 
 
