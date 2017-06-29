@@ -17,6 +17,7 @@ on early-init
     write /dev/framebuffer_control 0
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
+    start vsoc_guest_region_e2e_test
 
 
 on fs
@@ -77,10 +78,13 @@ on boot
     stop akmd
 
 
-service remoter /system/bin/gcelogwrapper /system/bin/remoter
+service vsoc_guest_region_e2e_test /system/bin/vsoc_guest_region_e2e_test
     seclabel u:r:su:s0
     oneshot
 
+service remoter /system/bin/gcelogwrapper /system/bin/remoter
+    seclabel u:r:su:s0
+    oneshot
 
 service vnc_server /system/bin/gcelogwrapper /system/bin/vnc_server
     oneshot
