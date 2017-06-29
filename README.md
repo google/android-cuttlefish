@@ -14,7 +14,7 @@
     * argparse
     * eventfd
     * glog
-    * linuxfd
+    * linuxfd-python
     * libvirt
     * posix_ipc
     * pylint (development purposes only)
@@ -24,6 +24,11 @@
   * Group is created automatically when installing `libvirt-bin` package.
   * Users may need to log out after their membership has been updated; optionally
     you can use `newgrp` to switch currently active group to `libvirtd`.
+
+    ```sh
+    sudo usermod -a -G libvirtd $(whoami)
+    ```
+
   * Once configured, users should be able to execute
 
     ```sh
