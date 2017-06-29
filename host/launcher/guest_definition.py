@@ -241,20 +241,30 @@ class GuestDefinition(object):
             ET.SubElement(node, 'cmdline').text = self._cmdline
 
 
-    def _build_device_serial_port(self):
+    def _build_device_serial_port(self, interactive):
         """Configure serial ports for guest.
 
         More useful information can be found here:
         https://libvirt.org/formatdomain.html#elementCharSerial
+
+        Args:
+          interactive True, if serial port should be served as interactive
+                      over Unix Domain Socket.
         """
         index = self._num_ttys_interfaces
         self._num_ttys_interfaces += 1
         path = '/tmp/%s-ttyS%d.log' % (self.get_instance_name(), index)
         tty = ET.Element('serial')
-        tty.set('type', 'file')
         src = ET.SubElement(tty, 'source')
         src.set('path', path)
-        src.set('append', 'no')
+        if interactive:
+            tty.set('type', 'unix')
+            src.set('mode', 'bind')
+            glog.info('Interactive serial port set up. To access the interactive console run:')
+            glog.info('$ sudo socat file:$(tty),raw,echo=0 %s' % path)
+        else:
+            tty.set('type', 'file')
+            src.set('append', 'no')
         ET.SubElement(tty, 'target').set('port', str(index))
         glog.info('Serial port %d will send data to %s', index, path)
         return tty
@@ -359,7 +369,7 @@ class GuestDefinition(object):
         dev = ET.SubElement(tree, 'devices')
         if self._vmm_path:
             ET.SubElement(dev, 'emulator').text = self._vmm_path
-        dev.append(self._build_device_serial_port())
+        dev.append(self._build_device_serial_port(True))
         dev.append(self._build_device_virtio_channel())
         dev.append(self._build_device_disk_node(self._part_ramdisk, 'ramdisk', 'vda'))
         dev.append(self._build_device_disk_node(self._part_system, 'system', 'vdb'))
