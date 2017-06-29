@@ -48,6 +48,23 @@ const uint32_t version = 0;
 }
 
 static const std::size_t Base_size = 1;
+static const std::size_t PixelFormatRegister_size = 4;
+static const std::size_t PixelFormatMaskRegister_size = 8;
+
+namespace constant_values {
+  static const uint32_t VSOC_PIXEL_FORMAT_UNINITIALIZED = 0;
+  static const uint32_t VSOC_PIXEL_FORMAT_BLOB = 1;
+
+  static const uint32_t VSOC_PIXEL_FORMAT_RGB_565 = 8;
+  static const uint32_t VSOC_PIXEL_FORMAT_YV12 = 9;
+  static const uint32_t VSOC_PIXEL_FORMAT_YCbCr_420_888 = 10;
+
+  static const uint32_t VSOC_PIXEL_FORMAT_RGB_888 = 16;
+
+  static const uint32_t VSOC_PIXEL_FORMAT_RGBA_8888 = 24;
+  static const uint32_t VSOC_PIXEL_FORMAT_RGBX_8888 = 25;
+  static const uint32_t VSOC_PIXEL_FORMAT_BGRA_8888 = 26;
+}  // constant_values
 }  // multi_region
 
 // Versioning information for e2e_test_region.h

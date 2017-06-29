@@ -3,6 +3,7 @@ cc_library(
     hdrs = [
         "base.h",
         "e2e_test_region.h",
+        "graphics.h",
         "version.h",
     ],
     visibility = ["//visibility:public"],

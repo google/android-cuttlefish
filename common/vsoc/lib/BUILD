@@ -1,3 +1,15 @@
+cc_test(
+    name = "vsoc_graphics_test",
+    srcs = [
+        "graphics_test.cpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/vsoc/shm",
+        "@gtest_repo//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "vsoc_common",
     srcs = [
@@ -5,12 +17,14 @@ cc_library(
         "region_common.cpp",
     ],
     hdrs = [
+        "graphics_common.h",
         "region.h",
     ],
     copts = ["-Wno-unused-private-field"],
     visibility = ["//visibility:public"],
     deps = [
         "//common/libs/fs",
+        "//common/vsoc/shm",
         "@kernel//:uapi",
     ],
 )
