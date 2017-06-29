@@ -90,6 +90,8 @@ if [ ! -e ${IMAGE_DIR}/cache-${INSTANCE_NUMBER}.img ]; then
 fi
 mkfs.ext4 -F ${IMAGE_DIR}/cache-${INSTANCE_NUMBER}.img
 
+rm /var/run/shm/ivshmem
+
 "${TOP_DIR}/ivshmem-server/ivshmem_server.sh" \
   --layoutfile="${TOP_DIR}/ivshmem-server/vsoc_mem.json" \
   --image_dir="${IMAGE_DIR}" \
