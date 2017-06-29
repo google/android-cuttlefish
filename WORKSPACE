@@ -54,3 +54,11 @@ local_repository(
     name = "cuttlefish",
     path = "external/cuttlefish_common",
 )
+
+##### Cuttlefish kernel
+
+new_local_repository(
+    name = "kernel",
+    path = "external/cuttlefish_kernel",
+    build_file = "//external:kernel.BUILD",
+)
