@@ -108,7 +108,7 @@ const char kMultibootDevice[] = "/dev/block/sda";
 const int kMultibootPartition = 1;
 const char kDefaultPartitionsPath[] = "/target/partitions";
 
-const char kNestedVMParameter[] = "AVD_NESTED_VM";
+const char kCuttlefishParameter[] = "CUTTLEFISH";
 
 #define AVD_WARN "AVD WARNING"
 
@@ -139,7 +139,7 @@ class Container {
 
   Container()
       : device_type_(kDeviceTypeUnknown),
-        is_nested_vm_(false) {}
+        is_cuttlefish_(false) {}
 
   ~Container() {}
 
@@ -180,7 +180,7 @@ class Container {
   InitialMetadataReader* reader_;
   std::string android_version_;
   DeviceType device_type_;
-  bool is_nested_vm_;
+  bool is_cuttlefish_;
 
   Container(const Container&);
   Container& operator= (const Container&);
@@ -295,7 +295,7 @@ static bool CopyFile(const char* in_path, const char* out_path) {
   return true;
 }
 
-bool IsNestedVM() {
+bool IsCuttlefish() {
   AutoFreeBuffer cmdline;
   avd::SharedFD cmdlinefd = avd::SharedFD::Open("/proc/cmdline", O_RDONLY, 0);
 
@@ -315,11 +315,11 @@ bool IsNestedVM() {
   cmdline.Resize(16384 + 1);
   cmdlinefd->Read(cmdline.data(), cmdline.size());
   LOG(WARNING) << cmdline.data();
-  return (strstr(cmdline.data(), kNestedVMParameter) != NULL);
+  return (strstr(cmdline.data(), kCuttlefishParameter) != NULL);
 }
 
 static bool MountSystemPartition(
-    const char* partitions_path, const char* mount_point, bool is_nested_vm) {
+    const char* partitions_path, const char* mount_point, bool is_cuttlefish) {
   mode_t save = umask(0);
   int result = TEMP_FAILURE_RETRY(mkdir(mount_point, 0777));
   umask(save);
@@ -329,11 +329,11 @@ static bool MountSystemPartition(
     return false;
   }
 
-  // Fixed fallback values, used with nested virtualization.
+  // Fixed fallback values, used with cuttlefish.
   const char* boot_device = "/dev/block/vdb";
   long system_partition_num = 0;
 
-  if (!is_nested_vm) {
+  if (!is_cuttlefish) {
     boot_device = kMultibootDevice;
     system_partition_num = GetPartitionNum("system", partitions_path);
     if (system_partition_num == -1) {
@@ -365,7 +365,7 @@ static bool MountSystemPartition(
 // remount. In addition, we create a directory to allow adb to construct a
 // writable overlay that will be bound to /system.
 static bool MountSystemOverlay(
-    const InitialMetadataReader& reader, bool is_nested_vm) {
+    const InitialMetadataReader& reader, bool is_cuttlefish) {
   const char* system_overlay_device = reader.GetValueForKey(
       GceMetadataAttributes::kSystemOverlayDeviceKey);
   if (!system_overlay_device) {
@@ -379,7 +379,7 @@ static bool MountSystemOverlay(
     return false;
   }
   if (!MountSystemPartition(
-      kDefaultPartitionsPath, LOWER_SYSTEM_MOUNT_POINT, is_nested_vm)) {
+      kDefaultPartitionsPath, LOWER_SYSTEM_MOUNT_POINT, is_cuttlefish)) {
     LOG(INFO) << "Could not mount " << kMultibootDevice
               << " from " << kDefaultPartitionsPath
               << " at " << LOWER_SYSTEM_MOUNT_POINT;
@@ -406,10 +406,10 @@ static bool MountSystemOverlay(
 
 class BootPartitionMounter {
  public:
-  BootPartitionMounter(bool is_nested_vm)
-      : is_nested_vm_(is_nested_vm),
+  BootPartitionMounter(bool is_cuttlefish)
+      : is_cuttlefish_(is_cuttlefish),
         is_mounted_(false) {
-    if (!is_nested_vm_) {
+    if (!is_cuttlefish_) {
       // All mounts of disk partitions must be read-only.
       is_mounted_ = MountFilesystem(
           "ext4", kMultibootDevice, kMultibootPartition, multiboot_location_);
@@ -417,17 +417,17 @@ class BootPartitionMounter {
   }
 
   ~BootPartitionMounter() {
-    if (!is_nested_vm_ && is_mounted_) {
+    if (!is_cuttlefish_ && is_mounted_) {
       umount2(multiboot_location_, MNT_FORCE);
     }
   }
 
   bool IsSuccess() const {
-    return is_mounted_ || is_nested_vm_;
+    return is_mounted_ || is_cuttlefish_;
   }
 
  private:
-  bool is_nested_vm_;
+  bool is_cuttlefish_;
   bool is_mounted_;
   const char* const multiboot_location_ = "/boot";
 };
@@ -557,14 +557,14 @@ bool Container::InitializeMinEnvironment(std::stringstream* error) {
     return false;
   }
 
-  is_nested_vm_ = IsNestedVM();
+  is_cuttlefish_ = IsCuttlefish();
 
   // Mount the boot partition so we can get access the configuration and
   // ramdisks there.
   // Unmount this when we're done so that this doesn't interefere with mount
   // namespaces later.
   {
-    BootPartitionMounter boot_mounter(is_nested_vm_);
+    BootPartitionMounter boot_mounter(is_cuttlefish_);
 
     if (!boot_mounter.IsSuccess()) {
       *error << "Could not mount multiboot /boot partition.";
@@ -573,7 +573,7 @@ bool Container::InitializeMinEnvironment(std::stringstream* error) {
 
     // Mount the default system partition so we can issue a DHCP request.
     if (!MountSystemPartition(
-        "/boot/targets/default/partitions", "/system", is_nested_vm_)) {
+        "/boot/targets/default/partitions", "/system", is_cuttlefish_)) {
       *error << "Could not mount multiboot /system partition.";
       return false;
     }
@@ -637,7 +637,7 @@ const char* Container::ConfigureNetworkCommon() {
     return "Failed to configure common network.";
   }
 
-  if (is_nested_vm_) {
+  if (is_cuttlefish_) {
     if (!setup_->ConfigurePortForwarding())
       return "Failed to configure port forwarding.";
   }
@@ -732,13 +732,13 @@ const char* Container::InitTargetFilesystem() {
   if (res) return res;
 
   {
-    BootPartitionMounter boot_mounter(is_nested_vm_);
+    BootPartitionMounter boot_mounter(is_cuttlefish_);
 
     if (!boot_mounter.IsSuccess()) {
       return "Could not mount multiboot /boot partition.";
     }
 
-    if (!is_nested_vm_) {
+    if (!is_cuttlefish_) {
       // Unpack the RAM disk here because gce_mount_hander needs the fstab template
       AutoFreeBuffer ramdisk_path;
       ramdisk_path.PrintF(
@@ -755,9 +755,9 @@ const char* Container::InitTargetFilesystem() {
     }
   }
 
-  if (!MountSystemOverlay(*reader_, is_nested_vm_) &&
+  if (!MountSystemOverlay(*reader_, is_cuttlefish_) &&
       !MountSystemPartition(
-          kDefaultPartitionsPath, "/target/system", is_nested_vm_))
+          kDefaultPartitionsPath, "/target/system", is_cuttlefish_))
     return "Unable to mount /target/system.";
 
 
@@ -984,7 +984,7 @@ const char* Container::ApplyCustomization() {
   // can cause libc crashes on KitKat.
   // We can't link this code in here because it depends on libext4_utils, and
   // we can't have shared library dependencies in /init.
-  if (!is_nested_vm_) {
+  if (!is_cuttlefish_) {
     LOG(INFO) << "Launching mount handler...";
     if (TEMP_FAILURE_RETRY(system("/system/bin/gce_mount_handler")) == -1) {
       LOG(ERROR) << "gce_mount_handler failed: " << strerror(errno);
@@ -992,7 +992,7 @@ const char* Container::ApplyCustomization() {
     }
   } else {
     // TODO(ender): we should be able to merge gce_mount_handler with gce_init
-    // shortly. Make sure that while using nested virtualization we do launch
+    // shortly. Make sure that while booting cuttlefish we do launch
     // gce_mount_handler, too.
     avd::SharedFD file(avd::SharedFD::Open(
         "/target/fstab.vsoc", O_RDWR | O_CREAT, 0640));

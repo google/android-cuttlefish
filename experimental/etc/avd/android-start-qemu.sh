@@ -61,4 +61,4 @@ qemu-system-x86_64 \
   -drive file=${IMAGE_DIR}/system.img,index=1,format=raw,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/data-${INSTANCE_NUMBER}.img,index=2,format=raw,if=virtio,media=disk \
   -drive file=${IMAGE_DIR}/cache-${INSTANCE_NUMBER}.img,index=3,format=raw,if=virtio,media=disk \
-  -append "quiet console=ttyS0 androidboot.hardware=vsoc androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 audit=0 AVD_NESTED_VM"
+  -append "quiet console=ttyS0 androidboot.hardware=vsoc androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 audit=0 CUTTLEFISH"

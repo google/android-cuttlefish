@@ -8,9 +8,6 @@
      The qemu binary is:
      **qemu/bin/native/debug/x86_64-softmmu/qemu-system-x86_64**
  * VNC client (I have used Remmina bundled with Goobuntu).
- * GCloud config setup to project <b> google.com:cloud-android-nested-vms </b>
-      - This is because the QEMU images are stored in Google Cloud Storage.
-      - To list the active project:
 
 ```bash
         $ gcloud config list
@@ -18,12 +15,7 @@
 
 
 
-To set the active project
-
-```bash
-        $ gcloud config set project google.com:cloud-android-nested-vms
-```
-
+Set the active project
 
 ### Download images
 
