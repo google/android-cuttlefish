@@ -45,5 +45,6 @@ cc_test(
     deps = [
         "@cuttlefish//common/libs/auto_resources",
         "@gtest_repo//:gtest_main",
+        "@glog_repo//:glog",
     ],
 )
