@@ -9,9 +9,6 @@
 
 namespace ivserver {
 
-//
-// TODO(romitd): Make it a singleton.
-//
 class VSoCSharedMemory final {
  public:
   VSoCSharedMemory(const uint32_t &size_mib, const std::string &name,

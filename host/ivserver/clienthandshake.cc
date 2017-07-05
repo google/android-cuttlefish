@@ -6,8 +6,11 @@
 #include <glog/logging.h>
 
 namespace ivserver {
-
-#define LOG_TAG "ivserver::ClientHandshake"
+namespace {
+// The protocol between host-clients and the ivserver could change.
+// Clients should verify what version they are talking to during the handshake.
+const uint32_t kHostClientProtocolVersion = 0;
+}  // anonymous namespace
 
 ClientHandshake::ClientHandshake(const VSoCSharedMemory &shared_mem,
                                  const int client_listener_socket)

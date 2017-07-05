@@ -17,8 +17,6 @@
 #include "host/ivserver/layout.h"
 #include "host/ivserver/socketutils.h"
 
-#define LOG_TAG "ivserver::VSoCSharedMemory"
-
 namespace ivserver {
 namespace {
 const uint16_t kLayoutVersionMajor = 1;

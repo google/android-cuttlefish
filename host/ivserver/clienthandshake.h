@@ -8,18 +8,9 @@
 
 namespace ivserver {
 
-//
 // TODO(romitd): Refactor ClientHandshake and QemuHandshake into a base
 // class. Have derived classes with handshake specific logic.
-//
 
-//
-// The protocol between host-clients and the ivserver could change.
-// Clients should verify what version they are talking to during the handshake.
-//
-const uint32_t kHostClientProtocolVersion = 0;
-
-//
 // Handles a host-client connection & handshake.
 // This class encapsulates the host-client to server communication over UNIX
 // domain socket. i.e. client sends a string identifying the name of the
