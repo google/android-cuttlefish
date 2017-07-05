@@ -16,7 +16,7 @@ namespace ivserver {
 // where QEMU_SRC is assumed to point to the path of QEMU source code.
 // Alternatively, please point your browser to the following URL:
 // https://github.com/qemu/qemu/blob/master/docs/specs/ivshmem-spec.txt
-class QemuHandshake {
+class QemuHandshake final {
  public:
   QemuHandshake(const QemuHandshake &) = delete;
   QemuHandshake(const VSoCSharedMemory &shared_mem,
@@ -34,15 +34,9 @@ class QemuHandshake {
   //
   bool PerformHandshake(void);
 
-  //
-  // Returns true if the object has been initialized successfully.
-  //
-  inline bool HasInitialized() const { return has_initialized_; }
-
  private:
   const VSoCSharedMemory &shared_mem_;
   int qemu_socket_ = -1;
-  bool has_initialized_ = false;
 };
 
 }  // namespace ivserver

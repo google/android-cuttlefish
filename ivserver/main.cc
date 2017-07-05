@@ -47,11 +47,6 @@ int main(int argc, char **argv) {
 
   Json::Value json_root = LoadLayoutFile(FLAGS_layout);
   ivserver::IVServer ivserver(*ivserver_options, json_root);
-  if (!ivserver.HasInitialized()) {
-    LOG(FATAL) << "ivserver initialization failed.";
-    return 1;
-  }
-
   ivserver.Serve();
 
   LOG(FATAL) << "ivserver failed in Serve().";

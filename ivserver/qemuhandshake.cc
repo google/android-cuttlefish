@@ -1,10 +1,8 @@
 #include "host/ivserver/qemuhandshake.h"
-#include "host/ivserver/socketutils.h"
 
 #include <glog/logging.h>
-#include <tuple>
 
-#define LOG_TAG "ivserver::QemuHandshake"
+#include "host/ivserver/socketutils.h"
 
 namespace ivserver {
 namespace {
@@ -18,12 +16,9 @@ QemuHandshake::QemuHandshake(const VSoCSharedMemory &shared_mem,
                              const int qemu_listener_socket)
     : shared_mem_{shared_mem} {
   qemu_socket_ = handle_new_connection(qemu_listener_socket);
-  if (qemu_socket_ == -1) {
-    LOG(FATAL) << "couldn't get a new socket for QEMU Connection.";
-    return;
-  }
-
-  has_initialized_ = true;
+  // TODO(romitd): are we sure we want to crash here?
+  LOG_IF(FATAL, qemu_socket_ == -1)
+      << "couldn't get a new socket for QEMU Connection.";
 }
 
 /*
