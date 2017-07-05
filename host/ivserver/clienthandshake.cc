@@ -6,8 +6,11 @@
 #include <glog/logging.h>
 
 namespace ivserver {
-
-#define LOG_TAG "ivserver::ClientHandshake"
+namespace {
+// The protocol between host-clients and the ivserver could change.
+// Clients should verify what version they are talking to during the handshake.
+const uint32_t kHostClientProtocolVersion = 0;
+}  // anonymous namespace
 
 ClientHandshake::ClientHandshake(const VSoCSharedMemory &shared_mem,
                                  const int client_listener_socket)
@@ -50,7 +53,7 @@ bool ClientHandshake::PerformHandshake() {
   int guest_to_host_efd = -1;
   int host_to_guest_efd = -1;
 
-  rval = shared_mem_.GetEventFDpairForRegion(*region_name, &guest_to_host_efd,
+  rval = shared_mem_.GetEventFdPairForRegion(*region_name, &guest_to_host_efd,
                                              &host_to_guest_efd);
   // Region not found.
   if (!rval) {
