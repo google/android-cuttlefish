@@ -50,7 +50,7 @@ bool ClientHandshake::PerformHandshake() {
   int guest_to_host_efd = -1;
   int host_to_guest_efd = -1;
 
-  rval = shared_mem_.GetEventFDpairForRegion(*region_name, &guest_to_host_efd,
+  rval = shared_mem_.GetEventFdPairForRegion(*region_name, &guest_to_host_efd,
                                              &host_to_guest_efd);
   // Region not found.
   if (!rval) {

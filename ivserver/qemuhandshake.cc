@@ -7,10 +7,13 @@
 #define LOG_TAG "ivserver::QemuHandshake"
 
 namespace ivserver {
+namespace {
+// QEMU expects version 0 of the QEMU <--> ivserver protocol.
+const uint64_t kQemuIvshMemProtocolVersion = 0;
+const uint64_t kQemuVMId = 1;
+}  // anonymous namespace
 
-//
 // TODO(romitd): We might need to disallow more than one handshakes.
-//
 QemuHandshake::QemuHandshake(const VSoCSharedMemory &shared_mem,
                              const int qemu_listener_socket)
     : shared_mem_{shared_mem} {
@@ -48,23 +51,8 @@ bool QemuHandshake::PerformHandshake(void) {
     return false;
   }
 
-  for (const auto &eventfd_data : shared_mem_.GetEventFDData()) {
-    int g_to_h_efd = std::get<1>(eventfd_data);
-    rval = send_msg(qemu_socket_, g_to_h_efd, 0);
-    if (rval == -1) {
-      LOG(ERROR) << "failed to send a guest to host eventfd.";
-      return false;
-    }
-  }
-
-  for (const auto &eventfd_data : shared_mem_.GetEventFDData()) {
-    int h_to_g_efd = std::get<2>(eventfd_data);
-    rval = send_msg(qemu_socket_, h_to_g_efd, 1);
-    if (rval == -1) {
-      LOG(ERROR) << "failed to send a host to guest eventfd.";
-      return false;
-    }
-  }
+  // TODO(romitd): how to recover if some clients failed? should we retry?
+  shared_mem_.BroadcastQemuSocket(qemu_socket_);
 
   return true;
 }

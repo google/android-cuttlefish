@@ -1,6 +1,6 @@
 #include "host/ivserver/vsocsharedmem.h"
-#include "host/ivserver/layout.h"
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,46 +14,38 @@
 
 #include <glog/logging.h>
 
+#include "host/ivserver/layout.h"
+#include "host/ivserver/socketutils.h"
+
 #define LOG_TAG "ivserver::VSoCSharedMemory"
 
 namespace ivserver {
+namespace {
+const uint16_t kLayoutVersionMajor = 1;
+const uint16_t kLayoutVersionMinor = 0;
+}  // anonymous namespace
 
 VSoCSharedMemory::VSoCSharedMemory(const uint32_t &size_mib,
                                    const std::string &name,
                                    const Json::Value &json_root)
     : size_{size_mib << 20}, json_root_{json_root} {
   shmfd_ = shm_open(name.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  LOG_IF(FATAL, shmfd_ == -1)
+      << "Error in creating shared_memory file: " << strerror(errno);
 
-  if (shmfd_ == -1) {
-    LOG(FATAL) << "Error in creating shared_memory file. Please remove "
-                  " existing file and retry.";
-    return;
-  }
+  int trunc_res = ftruncate(shmfd_, size_);
+  LOG_IF(FATAL, trunc_res == -1)
+      << "Error in sizing up the shared memory file: " << strerror(errno);
 
-  if (ftruncate(shmfd_, size_) == -1) {
-    LOG(FATAL) << "Error in sizing up the shared memory file.";
-    close(shmfd_);
-    shmfd_ = -1;
-    return;
-  }
-
-  if (!CreateLayout()) {
-    close(shmfd_);
-    shmfd_ = -1;
-    return;
-  }
-
-  initialized_ = true;
+  CreateLayout();
 }
 
-bool VSoCSharedMemory::CreateLayout() {
+void VSoCSharedMemory::CreateLayout() {
   uint32_t offset = 0;
   void *mmap_addr =
       mmap(0, size_, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd_, 0);
-  if (mmap_addr == MAP_FAILED) {
-    LOG(FATAL) << "Error in mmap.";
-    return false;
-  }
+  LOG_IF(FATAL, mmap_addr == MAP_FAILED)
+      << "Error mmaping file: " << strerror(errno);
 
   vsoc_shm_layout_descriptor layout_descriptor;
   memset(&layout_descriptor, 0, sizeof(layout_descriptor));
@@ -62,10 +54,8 @@ bool VSoCSharedMemory::CreateLayout() {
   layout_descriptor.minor_version = kLayoutVersionMinor;
   layout_descriptor.size = size_;
 
-  //
   // TODO(romitd): error checking and sanity.
   // TODO(romitd): Refactor
-  //
   layout_descriptor.region_count =
       json_root_["vsoc_shm_layout_descriptor"]["region_count"].asUInt();
 
@@ -83,9 +73,6 @@ bool VSoCSharedMemory::CreateLayout() {
     vsoc_device_region device_region;
     memset(&device_region, sizeof(vsoc_device_region), 0);
 
-    //
-    // First populate the ones from JSON.
-    //
     device_region.current_version = region["current_version"].asUInt();
     device_region.min_compatible_version =
         region["min_compatible_version"].asUInt();
@@ -102,9 +89,6 @@ bool VSoCSharedMemory::CreateLayout() {
     strncpy(device_region.device_name, region["device_name"].asCString(),
             sizeof(device_region.device_name) - 1);
 
-    //
-    // Now populate the derivatives.
-    //
     device_region.guest_to_host_signal_table.offset =
         sizeof(vsoc_device_region);
 
@@ -130,52 +114,44 @@ bool VSoCSharedMemory::CreateLayout() {
         reinterpret_cast<char *>(mmap_addr) + offset) = device_region;
     offset += sizeof(vsoc_device_region);
 
-    //
     // Create one pair of eventfds for this region. Note that the guest to host
     // eventfd is non-blocking, whereas the host to guest eventfd is blocking.
     // This is in anticipation of blocking semantics for the host side locks.
-    //
     int g_to_h_efd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if (g_to_h_efd == -1) {
-      LOG(FATAL) << "Failed to create eventfd (guest to host).";
-      return false;  // Probably superfluous.
-    }
-
+    LOG_IF(FATAL, g_to_h_efd == -1)
+        << "Failed to create eventfd (guest to host): " << strerror(errno);
     int h_to_g_efd = eventfd(0, EFD_CLOEXEC);
-    if (h_to_g_efd == -1) {
-      LOG(FATAL) << "Failed to create eventfd (host to guest).";
-      return false;  // Probably superfluous.
-    }
+    LOG_IF(FATAL, h_to_g_efd == -1)
+        << "Failed to create eventfd (host to guest): " << strerror(errno);
 
-    //
-    // Store the eventfd data for the client queries.
-    //
-    eventfd_data_.push_back(std::make_tuple(region["device_name"].asString(),
-                                            g_to_h_efd, h_to_g_efd));
+    eventfd_data_.emplace(region["device_name"].asString(),
+                          std::pair<int, int>{g_to_h_efd, h_to_g_efd});
   }
 
   munmap(mmap_addr, size_);
+}
 
+bool VSoCSharedMemory::GetEventFdPairForRegion(const std::string &region_name,
+                                               int *guest_to_host,
+                                               int *host_to_guest) const {
+  auto it = eventfd_data_.find(region_name);
+  if (it == eventfd_data_.end()) return false;
+
+  *guest_to_host = it->second.first;
+  *host_to_guest = it->second.second;
   return true;
 }
 
-bool VSoCSharedMemory::GetEventFDpairForRegion(const std::string &region_name,
-                                               int *guest_to_host,
-                                               int *host_to_guest) const {
-  auto it =
-      find_if(eventfd_data_.begin(), eventfd_data_.end(),
-              [&region_name](const std::tuple<std::string, int, int> &param) {
-                return region_name == std::get<0>(param);
-              });
-  if (it == eventfd_data_.end()) {
-    *guest_to_host = -1;
-    *host_to_guest = -1;
-    return false;
+void VSoCSharedMemory::BroadcastQemuSocket(int socket) const {
+  for (const auto it : eventfd_data_) {
+    int result;
+    result = send_msg(socket, it.second.first, 0);
+    LOG_IF(ERROR, result == -1) << "Failed to send QEmu socket to " << it.first
+                                << " host: " << strerror(errno);
+    result = send_msg(socket, it.second.second, 0);
+    LOG_IF(ERROR, result == -1) << "Failed to send QEmu socket to " << it.first
+                                << " guest: " << strerror(errno);
   }
-
-  *guest_to_host = std::get<1>(*it);
-  *host_to_guest = std::get<2>(*it);
-  return true;
 }
 
 }  // namespace ivserver
