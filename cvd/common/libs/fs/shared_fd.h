@@ -22,11 +22,11 @@
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/socket.h>
 #include <sys/select.h>
-#include <sys/time.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 
@@ -67,11 +67,11 @@ class FileInstance;
  * calls.
  */
 struct InbandMessageHeader {
-  void*         msg_name;
-  socklen_t     msg_namelen;
+  void* msg_name;
+  socklen_t msg_namelen;
   struct iovec* msg_iov;
-  size_t        msg_iovlen;
-  int           msg_flags;
+  size_t msg_iovlen;
+  int msg_flags;
 
   void Convert(struct msghdr* dest) const {
     dest->msg_name = msg_name;
@@ -128,10 +128,10 @@ struct InbandMessageHeader {
 class SharedFD {
  public:
   inline SharedFD();
-  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) { }
+  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
   // Reference the listener as a FileInstance to make this FD type agnostic.
-  static SharedFD Accept(const FileInstance& listener,
-                                struct sockaddr* addr, socklen_t* addrlen);
+  static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
+                         socklen_t* addrlen);
   static SharedFD Accept(const FileInstance& listener);
   static SharedFD Dup(int unmanaged_fd);
   static SharedFD GetControlSocket(const char* name);
@@ -139,51 +139,34 @@ class SharedFD {
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event();
-  static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0, SharedFD* fd1);
+  static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
+                         SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketInAddrAnyServer(int in_port, int in_type);
-  static SharedFD SocketLocalClient(
-      const char* name, bool is_abstract, int in_type);
-  static SharedFD SocketLocalServer(
-      const char* name, bool is_abstract, int in_type, mode_t mode);
+  static SharedFD SocketLocalClient(const char* name, bool is_abstract,
+                                    int in_type);
+  static SharedFD SocketLocalServer(const char* name, bool is_abstract,
+                                    int in_type, mode_t mode);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
 
-  bool operator==(const SharedFD& rhs) const {
-    return value_ == rhs.value_;
-  }
+  bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
 
-  bool operator!=(const SharedFD& rhs) const {
-    return value_ != rhs.value_;
-  }
+  bool operator!=(const SharedFD& rhs) const { return value_ != rhs.value_; }
 
-  bool operator<(const SharedFD& rhs) const {
-    return value_ < rhs.value_;
-  }
+  bool operator<(const SharedFD& rhs) const { return value_ < rhs.value_; }
 
-  bool operator<=(const SharedFD& rhs) const {
-    return value_ <= rhs.value_;
-  }
+  bool operator<=(const SharedFD& rhs) const { return value_ <= rhs.value_; }
 
-  bool operator>(const SharedFD& rhs) const {
-    return value_ > rhs.value_;
-  }
+  bool operator>(const SharedFD& rhs) const { return value_ > rhs.value_; }
 
-  bool operator>=(const SharedFD& rhs) const {
-    return value_ >= rhs.value_;
-  }
+  bool operator>=(const SharedFD& rhs) const { return value_ >= rhs.value_; }
 
-  std::shared_ptr<FileInstance> operator->() const {
-    return value_;
-  }
+  std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const avd::FileInstance& operator*() const {
-    return *value_;
-  }
+  const avd::FileInstance& operator*() const { return *value_; }
 
-  avd::FileInstance& operator*() {
-    return *value_;
-  }
+  avd::FileInstance& operator*() { return *value_; }
 
  private:
   std::shared_ptr<FileInstance> value_;
@@ -205,24 +188,23 @@ class SharedFD {
 class FileInstance {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
+
  public:
-  virtual ~FileInstance() {
-    Close();
-  }
+  virtual ~FileInstance() { Close(); }
 
   // This can't be a singleton because our shared_ptr's aren't thread safe.
   static std::shared_ptr<FileInstance> ClosedInstance() {
     return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
   }
 
-  int Bind(const struct sockaddr *addr, socklen_t addrlen) {
+  int Bind(const struct sockaddr* addr, socklen_t addrlen) {
     errno = 0;
     int rval = bind(fd_, addr, addrlen);
     errno_ = errno;
     return rval;
   }
 
-  int Connect(const struct sockaddr *addr, socklen_t addrlen) {
+  int Connect(const struct sockaddr* addr, socklen_t addrlen) {
     errno = 0;
     int rval = connect(fd_, addr, addrlen);
     errno_ = errno;
@@ -265,9 +247,7 @@ class FileInstance {
     return rval;
   }
 
-  int GetErrno() const {
-    return errno_;
-  }
+  int GetErrno() const { return errno_; }
 
   int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
     errno = 0;
@@ -287,9 +267,7 @@ class FileInstance {
     return rval;
   }
 
-  bool IsOpen() const {
-    return fd_ != -1;
-  }
+  bool IsOpen() const { return fd_ != -1; }
 
   // in probably isn't modified, but the API spec doesn't have const.
   bool IsSet(fd_set* in) const;
@@ -310,9 +288,9 @@ class FileInstance {
     return rval;
   }
 
-  void * Mmap(void* addr, size_t length, int prot, int flags, off_t offset) {
+  void* Mmap(void* addr, size_t length, int prot, int flags, off_t offset) {
     errno = 0;
-    void * rval = mmap(addr, length, prot, flags, fd_, offset);
+    void* rval = mmap(addr, length, prot, flags, fd_, offset);
     errno_ = errno;
     return rval;
   }
@@ -334,8 +312,8 @@ class FileInstance {
   ssize_t RecvFrom(void* buf, size_t len, int flags, struct sockaddr* src_addr,
                    socklen_t* addr_len) {
     errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(recvfrom(fd_, buf, len, flags, src_addr,
-                                               addr_len));
+    ssize_t rval =
+        TEMP_FAILURE_RETRY(recvfrom(fd_, buf, len, flags, src_addr, addr_len));
     errno_ = errno;
     return rval;
   }
@@ -347,9 +325,9 @@ class FileInstance {
     return rval;
   }
 
-  template <size_t SZ> ssize_t RecvMsgAndFDs(
-      const struct InbandMessageHeader& msg_in, int flags,
-      SharedFD (*new_fds)[SZ]) {
+  template <size_t SZ>
+  ssize_t RecvMsgAndFDs(const struct InbandMessageHeader& msg_in, int flags,
+                        SharedFD (*new_fds)[SZ]) {
     // We need to make some modifications to land the fds. Make it clear
     // that there are no updates to the msg being passed in during this call.
     struct msghdr msg;
@@ -358,13 +336,13 @@ class FileInstance {
       char buffer[CMSG_SPACE(SZ * sizeof(int))];
       struct cmsghdr this_aligns_buffer;
     } u;
-    msg.msg_control    = u.buffer;
+    msg.msg_control = u.buffer;
     msg.msg_controllen = sizeof(u.buffer);
 
     cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_len   = CMSG_LEN(SZ * sizeof(int));
+    cmsg->cmsg_len = CMSG_LEN(SZ * sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type  = SCM_RIGHTS;
+    cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
     for (int i = 0; i < SZ; ++i) {
       fd_array[i] = -1;
@@ -398,22 +376,22 @@ class FileInstance {
     return rval;
   }
 
-  template <size_t SZ> ssize_t SendMsgAndFDs(
-      const struct InbandMessageHeader& msg_in, int flags,
-      const SharedFD (&fds)[SZ]) {
+  template <size_t SZ>
+  ssize_t SendMsgAndFDs(const struct InbandMessageHeader& msg_in, int flags,
+                        const SharedFD (&fds)[SZ]) {
     struct msghdr msg;
     msg_in.Convert(&msg);
     union {
       char buffer[CMSG_SPACE(SZ * sizeof(int))];
       struct cmsghdr this_aligns_buffer;
     } u;
-    msg.msg_control    = u.buffer;
+    msg.msg_control = u.buffer;
     msg.msg_controllen = sizeof(u.buffer);
 
     cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_len   = CMSG_LEN(SZ * sizeof(int));
+    cmsg->cmsg_len = CMSG_LEN(SZ * sizeof(int));
     cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type  = SCM_RIGHTS;
+    cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
     for (int i = 0; i < SZ; ++i) {
       fd_array[i] = fds[i]->fd_;
@@ -421,18 +399,18 @@ class FileInstance {
     return SendMsg(&msg, flags);
   }
 
-  ssize_t SendTo(const void *buf, size_t len, int flags,
-                 const struct sockaddr *dest_addr, socklen_t addrlen) {
+  ssize_t SendTo(const void* buf, size_t len, int flags,
+                 const struct sockaddr* dest_addr, socklen_t addrlen) {
     errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(sendto(
-        fd_, buf, len, flags, dest_addr, addrlen));
+    ssize_t rval =
+        TEMP_FAILURE_RETRY(sendto(fd_, buf, len, flags, dest_addr, addrlen));
     errno_ = errno;
     return rval;
   }
 
   void Set(fd_set* dest, int* max_index) const;
 
-  int SetSockOpt(int level, int optname, const void *optval, socklen_t optlen) {
+  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen) {
     errno = 0;
     int rval = setsockopt(fd_, level, optname, optval, optlen);
     errno_ = errno;
@@ -455,6 +433,13 @@ class FileInstance {
     return strerror_buf_;
   }
 
+  ssize_t Truncate(off_t length) {
+    errno = 0;
+    ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
+    errno_ = errno;
+    return rval;
+  }
+
   ssize_t Write(const void* buf, size_t count) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
@@ -474,7 +459,7 @@ class FileInstance {
     identity_.PrintF("fd=%d @%p", fd, this);
   }
 
-  FileInstance* Accept(struct sockaddr* addr, socklen_t *addrlen) const {
+  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const {
     int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
     if (fd == -1) {
       return new FileInstance(fd, errno);
@@ -492,8 +477,8 @@ class FileInstance {
 /* Methods that need both a fully defined SharedFD and a fully defined
    FileInstance. */
 
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) { }
+SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}
+}  // namespace avd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
