@@ -11,8 +11,6 @@ cc_binary(
             "options.cc",
             "socketutils.h",
             "socketutils.cc",
-            "utils.h",
-            "utils.cc",
             "qemuhandshake.h",
             "qemuhandshake.cc",
             "vsocsharedmem.h",
@@ -26,6 +24,7 @@ cc_binary(
             "-ljsoncpp",
     ],
     deps = [
+        "@gflags_repo//:gflags",
         "@glog_repo//:glog",
     ],
 )
