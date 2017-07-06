@@ -7,34 +7,34 @@
 #include <memory>
 #include <string>
 
+#include "common/libs/fs/shared_fd.h"
+
 namespace ivserver {
 
-class VSoCSharedMemory final {
+class VSoCSharedMemory {
  public:
-  VSoCSharedMemory(const uint32_t &size_mib, const std::string &name,
-                   const Json::Value &json_root);
-  VSoCSharedMemory(const VSoCSharedMemory &) = delete;
+  // Max name length of a memory region.
+  // TODO(ender): set this value from trusted source.
+  static constexpr int32_t kMaxRegionNameLength = 16;
 
-  ~VSoCSharedMemory() {
-    if (shmfd_ != -1) {
-      close(shmfd_);
-    }
-  }
+  VSoCSharedMemory() = default;
+  virtual ~VSoCSharedMemory() = default;
 
-  bool GetEventFdPairForRegion(const std::string &region_name,
-                               int *guest_to_host, int *host_to_guest) const;
+  static std::unique_ptr<VSoCSharedMemory> New(const uint32_t size_mib,
+                                               const std::string &name,
+                                               const Json::Value &json_root);
 
-  inline int GetSharedMemoryFileDescriptor() const { return shmfd_; }
+  virtual bool GetEventFdPairForRegion(const std::string &region_name,
+                               avd::SharedFD *guest_to_host,
+                               avd::SharedFD *host_to_guest) const = 0;
 
-  void BroadcastQemuSocket(int qemu_socket) const;
+  virtual const avd::SharedFD &shared_mem_fd() const = 0;
+
+  virtual void BroadcastQemuSocket(const avd::SharedFD &qemu_socket) const = 0;
 
  private:
-  void CreateLayout();
-
-  const uint32_t size_;
-  const Json::Value &json_root_;
-  int shmfd_ = -1;
-  std::map<std::string, std::pair<int, int>> eventfd_data_;
+  VSoCSharedMemory(const VSoCSharedMemory &) = delete;
+  VSoCSharedMemory& operator=(const VSoCSharedMemory& other) = delete;
 };
 
 }  // namespace ivserver
