@@ -25,6 +25,6 @@ cc_library(
     deps = [
         "//common/libs/fs",
         "//common/vsoc/shm",
-        "@kernel//:uapi",
+        "@cuttlefish_kernel//:uapi",
     ],
 )
