@@ -14,7 +14,7 @@
 
 #include <glog/logging.h>
 
-#include "host/ivserver/layout.h"
+#include "uapi/vsoc_shm.h"
 
 namespace ivserver {
 namespace {
@@ -117,26 +117,28 @@ void VSoCSharedMemoryImpl::CreateLayout() {
     strncpy(device_region.device_name, device_name.c_str(),
             sizeof(device_region.device_name) - 1);
 
-    device_region.guest_to_host_signal_table.offset =
+    device_region.guest_to_host_signal_table.offset_to_signal_table =
         sizeof(vsoc_device_region);
 
-    device_region.guest_to_host_signal_table.node_alloc_hint_offset =
-        device_region.guest_to_host_signal_table.offset +
+    device_region.guest_to_host_signal_table.interrupt_signalled_offset =
+        device_region.guest_to_host_signal_table.offset_to_signal_table +
         (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
             sizeof(int32_t);
 
-    device_region.host_to_guest_signal_table.offset =
-        device_region.guest_to_host_signal_table.node_alloc_hint_offset +
-        sizeof(device_region.guest_to_host_signal_table.node_alloc_hint_offset);
+    device_region.host_to_guest_signal_table.offset_to_signal_table =
+        device_region.guest_to_host_signal_table.interrupt_signalled_offset +
+        sizeof(device_region.guest_to_host_signal_table
+                   .interrupt_signalled_offset);
 
-    device_region.host_to_guest_signal_table.node_alloc_hint_offset =
+    device_region.host_to_guest_signal_table.interrupt_signalled_offset =
         (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
             sizeof(int32_t) +
-        device_region.host_to_guest_signal_table.offset;
+        device_region.host_to_guest_signal_table.offset_to_signal_table;
 
     device_region.offset_of_region_data =
-        device_region.host_to_guest_signal_table.node_alloc_hint_offset +
-        sizeof(device_region.host_to_guest_signal_table.node_alloc_hint_offset);
+        device_region.host_to_guest_signal_table.interrupt_signalled_offset +
+        sizeof(device_region.host_to_guest_signal_table
+                   .interrupt_signalled_offset);
 
     *reinterpret_cast<vsoc_device_region *>(
         reinterpret_cast<char *>(mmap_addr) + offset) = device_region;
