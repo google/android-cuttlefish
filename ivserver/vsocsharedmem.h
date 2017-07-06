@@ -2,20 +2,25 @@
 
 #include <inttypes.h>
 #include <json/json.h>
-#include <unistd.h>
 #include <map>
 #include <memory>
 #include <string>
 
 #include "common/libs/fs/shared_fd.h"
+#include "uapi/vsoc_shm.h"
 
 namespace ivserver {
 
 class VSoCSharedMemory {
  public:
+  // Region describes a VSoCSharedMem region.
+  struct Region {
+    avd::SharedFD host_fd;
+    avd::SharedFD guest_fd;
+  };
+
   // Max name length of a memory region.
-  // TODO(ender): set this value from trusted source.
-  static constexpr int32_t kMaxRegionNameLength = 16;
+  static constexpr int32_t kMaxRegionNameLength = sizeof(vsoc_device_name);
 
   VSoCSharedMemory() = default;
   virtual ~VSoCSharedMemory() = default;
@@ -25,16 +30,15 @@ class VSoCSharedMemory {
                                                const Json::Value &json_root);
 
   virtual bool GetEventFdPairForRegion(const std::string &region_name,
-                               avd::SharedFD *guest_to_host,
-                               avd::SharedFD *host_to_guest) const = 0;
+                                       avd::SharedFD *guest_to_host,
+                                       avd::SharedFD *host_to_guest) const = 0;
 
-  virtual const avd::SharedFD &shared_mem_fd() const = 0;
-
-  virtual void BroadcastQemuSocket(const avd::SharedFD &qemu_socket) const = 0;
+  virtual const avd::SharedFD &SharedMemFD() const = 0;
+  virtual const std::map<std::string, Region> &Regions() const = 0;
 
  private:
   VSoCSharedMemory(const VSoCSharedMemory &) = delete;
-  VSoCSharedMemory& operator=(const VSoCSharedMemory& other) = delete;
+  VSoCSharedMemory &operator=(const VSoCSharedMemory &other) = delete;
 };
 
 }  // namespace ivserver

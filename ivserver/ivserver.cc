@@ -53,15 +53,10 @@ void IVServer::HandleNewClientConnection() {
 }
 
 void IVServer::HandleNewQemuConnection() {
-  std::unique_ptr<QemuClient> res =
-      QemuClient::New(vsoc_shmem_->shared_mem_fd(),
-                      avd::SharedFD::Accept(*qemu_channel_, nullptr, nullptr));
+  std::unique_ptr<QemuClient> res = QemuClient::New(
+      *vsoc_shmem_, avd::SharedFD::Accept(*qemu_channel_, nullptr, nullptr));
 
-  if (res) {
-    // TODO(romitd): how to recover if some clients failed? should we retry?
-    // Why are we doing this?
-    vsoc_shmem_->BroadcastQemuSocket(res->client_socket());
-  } else {
+  if (!res) {
     LOG(WARNING) << "Could not accept new QEmu client.";
   }
 }
