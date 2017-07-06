@@ -30,9 +30,9 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
                                avd::SharedFD *guest_to_host,
                                avd::SharedFD *host_to_guest) const override;
 
-  const avd::SharedFD &shared_mem_fd() const override;
+  const avd::SharedFD &SharedMemFD() const override;
 
-  void BroadcastQemuSocket(const avd::SharedFD &qemu_socket) const override;
+  const std::map<std::string, Region> &Regions() const override;
 
  private:
   void CreateLayout();
@@ -40,10 +40,10 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
   const uint32_t size_;
   const Json::Value &json_root_;
   avd::SharedFD shared_mem_fd_;
-  std::map<std::string, std::pair<avd::SharedFD, avd::SharedFD>> eventfd_data_;
+  std::map<std::string, Region> eventfd_data_;
 
   VSoCSharedMemoryImpl(const VSoCSharedMemoryImpl &) = delete;
-  VSoCSharedMemoryImpl& operator=(const VSoCSharedMemoryImpl& other) = delete;
+  VSoCSharedMemoryImpl &operator=(const VSoCSharedMemoryImpl &other) = delete;
 };
 
 VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(const uint32_t size_mib,
@@ -63,8 +63,13 @@ VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(const uint32_t size_mib,
   CreateLayout();
 }
 
-const avd::SharedFD &VSoCSharedMemoryImpl::shared_mem_fd() const {
+const avd::SharedFD &VSoCSharedMemoryImpl::SharedMemFD() const {
   return shared_mem_fd_;
+}
+
+const std::map<std::string, VSoCSharedMemory::Region>
+    &VSoCSharedMemoryImpl::Regions() const {
+  return eventfd_data_;
 }
 
 void VSoCSharedMemoryImpl::CreateLayout() {
@@ -147,19 +152,17 @@ void VSoCSharedMemoryImpl::CreateLayout() {
     // Create one pair of eventfds for this region. Note that the guest to host
     // eventfd is non-blocking, whereas the host to guest eventfd is blocking.
     // This is in anticipation of blocking semantics for the host side locks.
-    avd::SharedFD host_efd(avd::SharedFD::Event());
+    avd::SharedFD host_efd(avd::SharedFD::Event(0, EFD_NONBLOCK));
     LOG_IF(FATAL, !host_efd->IsOpen())
         << "Failed to create host eventfd for " << device_name << ": "
         << host_efd->StrError();
 
-    avd::SharedFD guest_efd(avd::SharedFD::Event());
+    avd::SharedFD guest_efd(avd::SharedFD::Event(0, EFD_NONBLOCK));
     LOG_IF(FATAL, !guest_efd->IsOpen())
         << "Failed to create guest eventfd for " << device_name << ": "
         << guest_efd->StrError();
 
-    eventfd_data_.emplace(
-        region["device_name"].asString(),
-        std::pair<avd::SharedFD, avd::SharedFD>{host_efd, guest_efd});
+    eventfd_data_.emplace(device_name, Region{host_efd, guest_efd});
   }
 
   munmap(mmap_addr, size_);
@@ -171,41 +174,17 @@ bool VSoCSharedMemoryImpl::GetEventFdPairForRegion(
   auto it = eventfd_data_.find(region_name);
   if (it == eventfd_data_.end()) return false;
 
-  *guest_to_host = it->second.first;
-  *host_to_guest = it->second.second;
+  *guest_to_host = it->second.host_fd;
+  *host_to_guest = it->second.guest_fd;
   return true;
-}
-
-void VSoCSharedMemoryImpl::BroadcastQemuSocket(const avd::SharedFD &qemu_fd) const {
-  uint64_t control_data = 0;
-  struct iovec vec {
-    &control_data, sizeof(control_data)
-  };
-  avd::InbandMessageHeader hdr{nullptr, 0, &vec, sizeof(vec), 0};
-
-  avd::SharedFD fds[] = {qemu_fd};
-  // TODO(ghartman, romitd): how should we recover from these?
-  for (const auto it : eventfd_data_) {
-    int result;
-    result = it.second.first->SendMsgAndFDs(hdr, 0, fds);
-    if (result == -1) {
-      LOG(ERROR) << "failed to send QEmu FD to " << it.first
-                 << " Host: " << it.second.first->StrError();
-    }
-
-    result = it.second.second->SendMsgAndFDs(hdr, 0, fds);
-    if (result == -1) {
-      LOG(ERROR) << "failed to send QEmu FD to " << it.first
-                 << " Guest: " << it.second.second->StrError();
-    }
-  }
 }
 
 }  // anonymous namespace
 
 std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
-    const uint32_t size_mb, const std::string& name, const Json::Value& root) {
-  return std::unique_ptr<VSoCSharedMemory>(new VSoCSharedMemoryImpl(size_mb, name, root));
+    const uint32_t size_mb, const std::string &name, const Json::Value &root) {
+  return std::unique_ptr<VSoCSharedMemory>(
+      new VSoCSharedMemoryImpl(size_mb, name, root));
 }
 
 }  // namespace ivserver

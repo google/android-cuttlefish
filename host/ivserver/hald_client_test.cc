@@ -11,11 +11,11 @@
 #include "host/ivserver/hald_client.h"
 #include "host/ivserver/vsocsharedmem_mock.h"
 
-using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::SetArgPointee;
+using ::testing::_;
 
 namespace ivserver {
 namespace test {
@@ -24,14 +24,16 @@ class HaldClientTest : public ::testing::Test {
  public:
   void SetUp() override {
     std::string socket_location;
-    ASSERT_TRUE(GetTempLocation(&socket_location)) << "Could not create temp file";
+    ASSERT_TRUE(GetTempLocation(&socket_location))
+        << "Could not create temp file";
     LOG(INFO) << "Temp file location: " << socket_location;
 
     hald_server_socket_ = avd::SharedFD::SocketLocalServer(
         socket_location.c_str(), false, SOCK_STREAM, 0666);
-    test_socket_ =
-        avd::SharedFD::SocketLocalClient(socket_location.c_str(), false, SOCK_STREAM);
-    hald_socket_ = avd::SharedFD::Accept(*hald_server_socket_, nullptr, nullptr);
+    test_socket_ = avd::SharedFD::SocketLocalClient(socket_location.c_str(),
+                                                    false, SOCK_STREAM);
+    hald_socket_ =
+        avd::SharedFD::Accept(*hald_server_socket_, nullptr, nullptr);
 
     EXPECT_TRUE(hald_server_socket_->IsOpen());
     EXPECT_TRUE(test_socket_->IsOpen());
@@ -71,24 +73,25 @@ class HaldClientTest : public ::testing::Test {
 };
 
 TEST_F(HaldClientTest, HandshakeTerminatedByHald) {
-  std::thread thread([this]() {
-    auto client(HaldClient::New(vsoc_, hald_socket_));
-    EXPECT_FALSE(client)
-        << "Handshake should not complete when client terminates early.";
-  });
+  std::thread thread(
+      [this]() {
+        auto client(HaldClient::New(vsoc_, hald_socket_));
+        EXPECT_FALSE(client)
+            << "Handshake should not complete when client terminates early.";
+      });
 
   test_socket_->Close();
   thread.join();
 }
 
 TEST_F(HaldClientTest, HandshakeTerminatedByInvalidRegionSize) {
-  uint16_t sizes[] = { 0, VSoCSharedMemory::kMaxRegionNameLength + 1, 0xffff };
+  uint16_t sizes[] = {0, VSoCSharedMemory::kMaxRegionNameLength + 1, 0xffff};
 
   for (uint16_t size : sizes) {
     std::thread thread([this, size]() {
-    auto client(HaldClient::New(vsoc_,hald_socket_));
-    EXPECT_FALSE(client) << "Handle should not be created when size is "
-                         << size;
+      auto client(HaldClient::New(vsoc_, hald_socket_));
+      EXPECT_FALSE(client) << "Handle should not be created when size is "
+                           << size;
     });
 
     int32_t proto_version;
@@ -104,28 +107,28 @@ TEST_F(HaldClientTest, HandshakeTerminatedByInvalidRegionSize) {
 TEST_F(HaldClientTest, FullSaneHandshake) {
   std::string temp;
   ASSERT_TRUE(GetTempLocation(&temp));
-  avd::SharedFD host_fd(avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
+  avd::SharedFD host_fd(
+      avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
   EXPECT_TRUE(host_fd->IsOpen());
 
   ASSERT_TRUE(GetTempLocation(&temp));
-  avd::SharedFD guest_fd(avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
+  avd::SharedFD guest_fd(
+      avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
   EXPECT_TRUE(guest_fd->IsOpen());
 
   ASSERT_TRUE(GetTempLocation(&temp));
-  avd::SharedFD shmem_fd(avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
+  avd::SharedFD shmem_fd(
+      avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
   EXPECT_TRUE(shmem_fd->IsOpen());
 
   const std::string test_location("testing");
   EXPECT_CALL(vsoc_, GetEventFdPairForRegion(test_location, _, _))
-      .WillOnce(DoAll(
-        SetArgPointee<1>(host_fd),
-        SetArgPointee<2>(guest_fd),
-        Return(true)));
-  EXPECT_CALL(vsoc_, shared_mem_fd())
-      .WillOnce(ReturnRef(shmem_fd));
+      .WillOnce(DoAll(SetArgPointee<1>(host_fd), SetArgPointee<2>(guest_fd),
+                      Return(true)));
+  EXPECT_CALL(vsoc_, SharedMemFD()).WillOnce(ReturnRef(shmem_fd));
 
   std::thread thread([this]() {
-    auto client(HaldClient::New(vsoc_,hald_socket_));
+    auto client(HaldClient::New(vsoc_, hald_socket_));
     EXPECT_TRUE(client);
   });
 
@@ -135,7 +138,8 @@ TEST_F(HaldClientTest, FullSaneHandshake) {
       test_socket_->Recv(&proto_version, sizeof(proto_version), MSG_NOSIGNAL));
 
   uint16_t size = test_location.size();
-  EXPECT_EQ(sizeof(size), test_socket_->Send(&size, sizeof(size), MSG_NOSIGNAL));
+  EXPECT_EQ(sizeof(size),
+            test_socket_->Send(&size, sizeof(size), MSG_NOSIGNAL));
   EXPECT_EQ(size, test_socket_->Send(test_location.data(), size, MSG_NOSIGNAL));
 
   // TODO(ender): delete this once no longer necessary. Currently, absence of
@@ -154,7 +158,6 @@ TEST_F(HaldClientTest, FullSaneHandshake) {
 
   thread.join();
 }
-
 
 }  // namespace test
 }  // namespace ivserver
