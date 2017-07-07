@@ -1,4 +1,18 @@
 {
+  "guest": {
+    "vmm_path": "/usr/bin/qemu-system-x86_64",
+    "kernel_command_line" : [
+	    "loop.max_part=7",
+	    "console=ttyS0",
+	    "androidboot.console=ttyS0",
+	    "androidboot.hardware=vsoc",
+	    "security=selinux",
+	    "androidboot.selinux=permissive",
+	    "enforcing=0",
+	    "audit=0",
+	    "CUTTLEFISH"
+    ]
+  },
   "vsoc_shm_layout_descriptor" : {
     "comment": "The top level layout descriptor",
     "major_version" : 0,
