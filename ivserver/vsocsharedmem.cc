@@ -50,6 +50,11 @@ VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(const uint32_t size_mib,
                                            const std::string &name,
                                            const Json::Value &json_root)
     : size_{size_mib << 20}, json_root_{json_root} {
+  // TODO(ender): Lock the file after creation and check lock status upon second
+  // execution attempt instead of throwing an error.
+  LOG_IF(WARNING, unlink(name.c_str()) == 0)
+      << "Removed existing instance of " << name
+      << ". We currently don't know if another instance of daemon is running";
   shared_mem_fd_ = avd::SharedFD::Open(name.c_str(), O_RDWR | O_CREAT | O_EXCL,
                                        S_IRUSR | S_IWUSR);
   LOG_IF(FATAL, !shared_mem_fd_->IsOpen())

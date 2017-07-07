@@ -38,6 +38,7 @@ Json::Value LoadLayoutFile(const std::string &file) {
 }  // anonymous namespace
 
 int main(int argc, char **argv) {
+  google::InstallFailureSignalHandler();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   std::unique_ptr<ivserver::IVServerOptions> ivserver_options(
@@ -48,8 +49,5 @@ int main(int argc, char **argv) {
   Json::Value json_root = LoadLayoutFile(FLAGS_layout);
   ivserver::IVServer ivserver(*ivserver_options, json_root);
   ivserver.Serve();
-
   LOG(FATAL) << "ivserver failed in Serve().";
-
-  return 1;
 }
