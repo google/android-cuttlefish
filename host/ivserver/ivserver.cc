@@ -19,9 +19,9 @@ IVServer::IVServer(const IVServerOptions &options, const Json::Value &json_root)
           options.qemu_socket_path.c_str(), false, SOCK_STREAM, 0666)),
       client_channel_(avd::SharedFD::SocketLocalServer(
           options.client_socket_path.c_str(), false, SOCK_STREAM, 0666)) {
-  LOG_IF(FATAL, qemu_channel_->IsOpen())
+  LOG_IF(FATAL, !qemu_channel_->IsOpen())
       << "Could not create QEmu channel: " << qemu_channel_->StrError();
-  LOG_IF(FATAL, client_channel_->IsOpen())
+  LOG_IF(FATAL, !client_channel_->IsOpen())
       << "Could not create Client channel: " << client_channel_->StrError();
 }
 
