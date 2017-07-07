@@ -14,13 +14,20 @@ namespace ivserver {
 IVServer::IVServer(const IVServerOptions &options, const Json::Value &json_root)
     : json_root_{json_root},
       vsoc_shmem_(VSoCSharedMemory::New(options.shm_size_mib,
-                                        options.shm_file_path, json_root_)),
-      qemu_channel_(avd::SharedFD::SocketLocalServer(
-          options.qemu_socket_path.c_str(), false, SOCK_STREAM, 0666)),
-      client_channel_(avd::SharedFD::SocketLocalServer(
-          options.client_socket_path.c_str(), false, SOCK_STREAM, 0666)) {
+                                        options.shm_file_path, json_root_)) {
+  LOG_IF(WARNING, unlink(options.qemu_socket_path.c_str()) == 0)
+      << "Removed existing unix socket: " << options.qemu_socket_path
+      << ". We can't confirm yet whether another instance is running.";
+  qemu_channel_ = avd::SharedFD::SocketLocalServer(
+      options.qemu_socket_path.c_str(), false, SOCK_STREAM, 0666);
   LOG_IF(FATAL, !qemu_channel_->IsOpen())
       << "Could not create QEmu channel: " << qemu_channel_->StrError();
+
+  LOG_IF(WARNING, unlink(options.client_socket_path.c_str()) == 0)
+      << "Removed existing unix socket: " << options.client_socket_path
+      << ". We can't confirm yet whether another instance is running.";
+  client_channel_ = avd::SharedFD::SocketLocalServer(
+      options.client_socket_path.c_str(), false, SOCK_STREAM, 0666);
   LOG_IF(FATAL, !client_channel_->IsOpen())
       << "Could not create Client channel: " << client_channel_->StrError();
 }
