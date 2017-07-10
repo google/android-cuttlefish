@@ -93,8 +93,7 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 
   // TODO(romitd): error checking and sanity.
   // TODO(romitd): Refactor
-  layout_descriptor.region_count =
-      json_root_["vsoc_shm_layout_descriptor"]["region_count"].asUInt();
+  layout_descriptor.region_count = json_root_["vsoc_device_regions"].size();
 
   layout_descriptor.vsoc_region_desc_offset =
       json_root_["vsoc_shm_layout_descriptor"]["vsoc_region_desc_offset"]
