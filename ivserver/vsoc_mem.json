@@ -14,29 +14,24 @@
     ]
   },
   "vsoc_shm_layout_descriptor" : {
-    "comment": "The top level layout descriptor",
-    "major_version" : 0,
-    "minor_version" : 1,
-    "size": "<populated by querying the shm region size at runtime>",
-    "region_count" : 3,
+    "__comment": "The top level layout descriptor",
     "vsoc_region_desc_offset" : 128
   },
 
   "vsoc_device_regions" : [
    {
-     "comment" : "HWComposer related",
+     "__comment" : "HWComposer related",
      "current_version" : 1,
      "min_compatible_version" : 1,
      "region_begin_offset" : 4096,
      "region_end_offset" : 16384,
 
      "guest_to_host_signal_table" : {
-       "comment" : "",
+       "__comment" : "sizeof each node is based on common/libs/shm_compatible/loch.h",
        "num_nodes_lg2" : 2
       },
 
      "host_to_guest_signal_table" : {
-       "comment" : "",
        "num_nodes_lg2" : 2
       },
 
@@ -44,19 +39,17 @@
    },
 
    {
-     "comment" : "Sensors related",
+     "__comment" : "Sensors related",
      "current_version" : 1,
      "min_compatible_version" : 1,
      "region_begin_offset" : 20480,
      "region_end_offset" : 32768,
 
      "guest_to_host_signal_table" : {
-       "comment" : "sizeof each node is based on common/libs/shm_compatible/loch.h",
        "num_nodes_lg2" : 1
      },
 
      "host_to_guest_signal_table" : {
-       "comment" : "",
        "num_nodes_lg2" : 1
      },
 
@@ -64,23 +57,55 @@
    },
 
    {
-    "comment" : "Misc",
+    "__comment" : "Misc",
     "current_version" : 1,
     "min_compatible_version" : 1,
     "region_begin_offset" : 40960,
     "region_end_offset" : 65536,
 
     "guest_to_host_signal_table" : {
-      "comment" : "",
       "num_nodes_lg2" : 1
     },
 
     "host_to_guest_signal_table" : {
-      "comment" : "",
       "num_nodes_lg2" : 1
     },
 
     "device_name" : "misc"
+   },
+
+   {
+    "__comment" : "Sanity testing",
+    "device_name" : "e2e_primary",
+    "current_version" : 1,
+    "min_compatible_version" : 1,
+    "region_begin_offset" : 65536,
+    "region_end_offset" : 81920,
+
+    "guest_to_host_signal_table" : {
+      "num_nodes_lg2" : 1
+    },
+
+    "host_to_guest_signal_table" : {
+      "num_nodes_lg2" : 1
+    }
+   },
+
+   {
+    "__comment" : "Sanity testing",
+    "device_name" : "e2e_secondary",
+    "current_version" : 1,
+    "min_compatible_version" : 1,
+    "region_begin_offset" : 81920,
+    "region_end_offset" : 98304,
+
+    "guest_to_host_signal_table" : {
+      "num_nodes_lg2" : 1
+    },
+
+    "host_to_guest_signal_table" : {
+      "num_nodes_lg2" : 1
+    }
    }
   ]
 }
