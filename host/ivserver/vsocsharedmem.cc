@@ -23,6 +23,16 @@ const uint16_t kLayoutVersionMinor = 0;
 
 class VSoCSharedMemoryImpl : public VSoCSharedMemory {
  public:
+  // Keeping the structure public for testability of RegionAllocation
+  struct RegionOffset {
+    size_t start_offset;
+    size_t end_offset;
+  };
+
+  // Marked as static for testability of RegionAllocation
+  static std::unique_ptr<std::vector<RegionOffset>> RegionAllocation(
+      const size_t shm_size, const std::vector<size_t> &region_size);
+
   VSoCSharedMemoryImpl(const uint32_t size_mib, const std::string &name,
                        const Json::Value &json_root);
 
@@ -77,6 +87,51 @@ const std::map<std::string, VSoCSharedMemory::Region>
   return eventfd_data_;
 }
 
+std::unique_ptr<std::vector<VSoCSharedMemoryImpl::RegionOffset>>
+VSoCSharedMemoryImpl::RegionAllocation(const size_t shm_size,
+                                       const std::vector<size_t> &region_size) {
+  auto region_offset =
+      std::unique_ptr<std::vector<RegionOffset>>{new std::vector<RegionOffset>};
+
+  LOG_IF(FATAL, !region_offset) << "Error in memory allocation.";
+
+  const long pagesize = sysconf(_SC_PAGESIZE);
+
+  // Region size should be non-zero & a multiple of pagesize.
+  std::all_of(region_size.begin(), region_size.end(), [&pagesize](size_t size) {
+    if (size && ((size & (pagesize - 1)) == 0)) {
+      return true;
+    } else if (size == 0) {
+      LOG(FATAL) << "region size is 0";
+    } else {
+      LOG(FATAL) << "region size " << size << " is not a multiple of pagesize "
+                 << pagesize;
+    }
+  });
+
+  // First page is reserved for region descriptors.
+  // TODO(romitd): Support allocation when descriptors don't fit in page 0.
+  //  In other words when there are many region descriptors and they don't
+  //  fit in page 0.
+  const size_t total_region_size =
+      std::accumulate(region_size.begin(), region_size.end(), 0);
+  if (total_region_size > (shm_size - pagesize)) {
+    LOG(FATAL) << "Shared memory size " << shm_size
+               << " is smaller than total memory requested "
+               << total_region_size;
+  }
+
+  size_t current_offset = pagesize;
+
+  for (const auto &size : region_size) {
+    RegionOffset offset{current_offset, current_offset + size};
+    current_offset += size;
+    (*region_offset).push_back(offset);
+  }
+
+  return region_offset;
+}
+
 void VSoCSharedMemoryImpl::CreateLayout() {
   uint32_t offset = 0;
   void *mmap_addr =
@@ -84,8 +139,7 @@ void VSoCSharedMemoryImpl::CreateLayout() {
   LOG_IF(FATAL, mmap_addr == MAP_FAILED)
       << "Error mmaping file: " << strerror(errno);
 
-  vsoc_shm_layout_descriptor layout_descriptor;
-  memset(&layout_descriptor, 0, sizeof(layout_descriptor));
+  vsoc_shm_layout_descriptor layout_descriptor{};
 
   layout_descriptor.major_version = kLayoutVersionMajor;
   layout_descriptor.minor_version = kLayoutVersionMinor;
@@ -102,19 +156,30 @@ void VSoCSharedMemoryImpl::CreateLayout() {
   *reinterpret_cast<vsoc_shm_layout_descriptor *>(
       reinterpret_cast<char *>(mmap_addr) + offset) = layout_descriptor;
 
+  // Gather the region sizes for allocating the start and end offsets.
+  std::vector<size_t> region_size;
+  for (const auto &region : json_root_["vsoc_device_regions"]) {
+    region_size.push_back(region["region_size"].asUInt());
+  }
+
+  auto region_offsets = RegionAllocation(size_, region_size);
+
   // Move to the region_descriptor area.
   offset += layout_descriptor.vsoc_region_desc_offset;
 
+  uint16_t region_idx = 0;
+
   for (const auto &region : json_root_["vsoc_device_regions"]) {
-    vsoc_device_region device_region;
-    memset(&device_region, sizeof(vsoc_device_region), 0);
+    vsoc_device_region device_region{};
 
     device_region.current_version = region["current_version"].asUInt();
     device_region.min_compatible_version =
         region["min_compatible_version"].asUInt();
 
-    device_region.region_begin_offset = region["region_begin_offset"].asUInt();
-    device_region.region_end_offset = region["region_end_offset"].asUInt();
+    device_region.region_begin_offset =
+        (*region_offsets)[region_idx].start_offset;
+    device_region.region_end_offset = (*region_offsets)[region_idx].end_offset;
+    ++region_idx;
 
     device_region.guest_to_host_signal_table.num_nodes_lg2 =
         region["guest_to_host_signal_table"]["num_nodes_lg2"].asUInt();
