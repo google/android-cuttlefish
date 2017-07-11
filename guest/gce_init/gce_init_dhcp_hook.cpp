@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <stdio.h>
-#include <stdlib.h>
 #include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include "common/libs/auto_resources/auto_resources.h"
 
-//TODO(ghartman): Make this an alias of /init to save on disk space.
+// TODO(ghartman): Make this an alias of /init to save on disk space.
 //  But watch out for the lack of make support for symlinking in JB-MR1.
 
 void save_environment(const char* output) {

@@ -31,15 +31,9 @@ const char* kAndroidNsCommandsCommon[] = {
     "ifconfig wlan0 mtu 1460", "ifconfig wlan_ap mtu 1460",
     IW_EXECUTABLE " dev wlan0 set bitrates legacy-2.4 48 54",
     IW_EXECUTABLE " dev wlan_ap set bitrates legacy-2.4 48 54",
-    "ifconfig internal0 up mtu 1460", "ifconfig internal0 192.168.255.2",
 
     // Reparent the phy/wlan interface to outer namespace.
     IW_EXECUTABLE " phy phy0 set netns $(</var/run/netns/outer.process)",
-
-    // Enable static route to metadata server through internal interface.
-    // This allows us to connect to metadata server when android enters
-    // airplane mode, or all network interfaces are down.
-    "ip route add 169.254.169.254/32 via 192.168.255.1 dev internal0",
 
     NULL};
 
@@ -48,24 +42,19 @@ const char* kAndroidNsCommandsMobile[] = {
     "ip route add default via 192.168.1.1 dev rmnet0", NULL};
 
 const char* kAndroidNsCommandsPortFwd[] = {
-    "iptables -t nat -A PREROUTING -p tcp -i internal0 "
+    // Do not set IP address on interface ADB. One should be assigned to it
+    // automatically.
+    "ifconfig adb up",
+
+    "iptables -t nat -A PREROUTING -p tcp -i adb "
     "--dport 6444 -j DNAT --to-destination 127.0.0.1:6444",
     "iptables -A FORWARD -p tcp -d 127.0.0.1 "
     "--dport 6444 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT",
-    "iptables -t nat -A PREROUTING -p tcp -i internal0 "
-    "--dport 5555 -j DNAT --to-destination 127.0.0.01:5555",
-    "iptables -A FORWARD -p tcp -d 127.0.0.1 "
-    "--dport 5555 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT",
     NULL};
 
 const char* kOuterNsCommandsCommon[] = {
     // Start loopback interface.
     "ifconfig lo 127.0.0.1",
-
-    // Bring up and configure android1 interface.
-    // This enables communication with avd services when android enters
-    // airplane mode.
-    "ifconfig android1 up mtu 1460", "ifconfig android1 192.168.255.1",
 
     // Executables in the ramdisk are only runnable by root and it's group.
     // dhcpcd insists on running as a different user, so chmod the script to
@@ -96,14 +85,6 @@ const char* kOuterNsCommandsCommon[] = {
     "-o host_eth0 -j MASQUERADE",
     "iptables -t nat -A POSTROUTING -s 192.168.2.0/24 "
     "-o host_eth0 -j MASQUERADE",
-    "iptables -t nat -A POSTROUTING -s 192.168.255.0/24 "
-    "-o host_eth0 -j MASQUERADE",
-
-    // SSH port forwarding.
-    "iptables -t nat -A PREROUTING -p tcp -i host_eth0 "
-    "--dport 22 -j DNAT --to-destination 192.168.255.2:22",
-    "iptables -A FORWARD -p tcp -d 192.168.255.2 "
-    "--dport 22 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT",
 
     // Enable masquerading.
     "iptables -t nat -A POSTROUTING -j MASQUERADE",
@@ -116,17 +97,7 @@ const char* kOuterNsCommandsMobile[] = {
     // Two steps required, otherwise ifconfig complains about link not ready.
     "ifconfig android0 up mtu 1460", "ifconfig android0 192.168.1.1", NULL};
 
-const char* kOuterNsCommandsPortFwd[] = {
-    // VNC & ADB port forwarding.
-    "iptables -t nat -A PREROUTING -p tcp -i host_eth0 "
-    "--dport 6444 -j DNAT --to-destination 192.168.255.2:6444",
-    "iptables -A FORWARD -p tcp -d 192.168.255.2 "
-    "--dport 6444 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT",
-    "iptables -t nat -A PREROUTING -p tcp -i host_eth0 "
-    "--dport 5555 -j DNAT --to-destination 192.168.255.2:5555",
-    "iptables -A FORWARD -p tcp -d 192.168.255.2 "
-    "--dport 5555 -m state --state NEW,ESTABLISHED,RELATED -j ACCEPT",
-    NULL};
+const char* kOuterNsCommandsPortFwd[] = {NULL};
 
 }  // namespace
 
@@ -153,6 +124,10 @@ bool EnvironmentSetup::ConfigureNetworkCommon() {
       .set_network_namespace(NetworkNamespaceManager::kOuterNs);
   if_manager_->ApplyChanges(*iface);
 
+  iface.reset(if_manager_->Open("eth1"));
+  iface->set_name("adb");
+  if_manager_->ApplyChanges(*iface);
+
   // WLAN0 uses the MAC address recognized by Android as fake.
   // We control this interface - and to make it explicit - give it a name
   // indicating its purpose.
@@ -167,15 +142,6 @@ bool EnvironmentSetup::ConfigureNetworkCommon() {
   iface.reset(if_manager_->Open("wlan1"));
   iface->set_name("wlan0");
   if_manager_->ApplyChanges(*iface);
-
-  // Create veth pair that will be used by AVD services internally.
-  if_manager_->CreateVethPair(
-      NetworkInterface()
-          .set_name("internal0")
-          .set_network_namespace(NetworkNamespaceManager::kAndroidNs),
-      NetworkInterface()
-          .set_name("android1")
-          .set_network_namespace(NetworkNamespaceManager::kOuterNs));
 
   executor_->Execute(NetworkNamespaceManager::kAndroidNs, false,
                      kAndroidNsCommandsCommon);

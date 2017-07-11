@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 #include "guest/gce_init/properties.h"
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace avd {
 namespace {
@@ -104,7 +104,6 @@ TEST(PropertiesTest, FailsAtInvalidArgument) {
   EXPECT_FALSE(PropertyLineToKeyValuePair(line2, &key, &value));
   EXPECT_EQ(NULL, key);
   EXPECT_EQ(NULL, value);
-
 }
 
 // These are the cases I am uncertain about.

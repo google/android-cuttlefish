@@ -22,8 +22,7 @@
 
 namespace avd {
 
-bool PropertyLineToKeyValuePair(
-    char* line, char** out_key, char** out_value) {
+bool PropertyLineToKeyValuePair(char* line, char** out_key, char** out_value) {
   int length = strlen(line);
   *out_key = NULL;
   *out_value = NULL;
@@ -70,8 +69,8 @@ bool PropertyLineToKeyValuePair(
   return true;
 }
 
-bool LoadPropertyFile(
-    const char* name, std::map<std::string, std::string>* properties) {
+bool LoadPropertyFile(const char* name,
+                      std::map<std::string, std::string>* properties) {
   AutoCloseFILE f(fopen(name, "r"));
   if (!f) return false;
 

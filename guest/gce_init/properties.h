@@ -27,14 +27,13 @@ namespace avd {
 //
 // Returns true, if line was successfully parsed.
 // Key and Value can be NULL if line is empty or a comment.
-bool PropertyLineToKeyValuePair(
-    char* line, char** out_key, char** out_value);
+bool PropertyLineToKeyValuePair(char* line, char** out_key, char** out_value);
 
 // Load property file |name| and process its contents.
 // Store result in |properties| map.
 // Returns true, if property file was successfully loaded.
-bool LoadPropertyFile(
-    const char* name, std::map<std::string, std::string>* properties);
+bool LoadPropertyFile(const char* name,
+                      std::map<std::string, std::string>* properties);
 
 }  // namespace avd
 

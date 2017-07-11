@@ -29,11 +29,9 @@ namespace avd {
 
 class EnvironmentSetup {
  public:
-  EnvironmentSetup(
-      NamespaceAwareExecutor* executor,
-      NetworkNamespaceManager* ns_manager,
-      NetworkInterfaceManager* if_manager,
-      SysClient* sys_client)
+  EnvironmentSetup(NamespaceAwareExecutor* executor,
+                   NetworkNamespaceManager* ns_manager,
+                   NetworkInterfaceManager* if_manager, SysClient* sys_client)
       : executor_(executor),
         ns_manager_(ns_manager),
         if_manager_(if_manager),
@@ -51,9 +49,8 @@ class EnvironmentSetup {
   // Create new, simple DHCP server.
   // DHCP server will use supplied |options| to identify interface used to
   // supply configuration to its clients.
-  void CreateDhcpServer(
-      const std::string& namespace_name,
-      const DhcpServer::Options& options);
+  void CreateDhcpServer(const std::string& namespace_name,
+                        const DhcpServer::Options& options);
 
   // Create metadata proxy.
   // Metadata proxy fetches metadata updates from GCE metadata server and serves
@@ -68,7 +65,7 @@ class EnvironmentSetup {
   SysClient* sys_client_;
 
   EnvironmentSetup(const EnvironmentSetup&);
-  EnvironmentSetup& operator= (const EnvironmentSetup&);
+  EnvironmentSetup& operator=(const EnvironmentSetup&);
 };
 
 }  // namespace avd
