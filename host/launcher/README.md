@@ -1,60 +1,93 @@
+# Host-side binaries for Android Virtual Device
+
+## Launcher package
+
 This is the prototype ivshmem-server implementation.
 
-We are breaking from the general philosophy of ivshmem-server  inter-vm
-communication.
+We are breaking from the general philosophy of ivshmem-server inter-vm
+communication. In this prototype there is no concept of inter-vm communication;
+guests can only talk to daemons running on host.
 
-In this prototype there is no concept of inter-vm communication. The server
-itself is meant to run on the L1 Guest (or L0 even). We will call this domain
-as 'host-side'. The following functions are envisoned (at least in the
-prototype):
+### Requirements
 
-* Create the shm window, listen for qemu VM connection (and subsequent
-  disconnection). Note that the server can only accomodate one qemu VM
-  connection at a time.
+* Cuttlefish requires the following packages to be installed on your system:
+  * binaries
+    * python3
+    * pip3
+    * libvirt-bin
+    * libvirt-dev
+    * qemu-2.8 or newer
+  * python packages (to be installed with pip):
+    * argparse
+    * glog
+    * libvirt-python
+    * pylint (development purposes only)
 
-* Parse a JSON file describing memory layout and other information. Use
-  this information to initialize the shared memory.
+* Users running cuttlefish must be a member of a relevant group enabling them to
+  use `virsh` tool, eg. `libvirtd`.
+  * Group is created automatically when installing `libvirt-bin` package.
+  * Users may need to log out after their membership has been updated; optionally
+    you can use `newgrp` to switch currently active group to `libvirtd`.
 
-* Create two UNIX Domain sockets. One to communicate with QEMU and the other
-  to communicate with host clients.
-
-* For QEMU, speak the ivshmem protocol, i.e. pass a vmid, pass the shm fd
-  to the qemu VM along with event fds.
-
-* For the client, speak the ad-hoc client protocol (subject to change)
-  and pass the region information, shm fd and events fds.
-
-TODO: Fault-tolerance.
-
-
-Running:
-
-1. Install the qemu packages
-
-    ```
-    cp /google/data/ro/users/gh/ghartman/goobuntu-backports/install_qemu.sh /tmp
-    bash /tmp/install_qemu.sh
+    ```sh
+    sudo usermod -a -G libvirtd $(whoami)
     ```
 
-1. Set up python3
+  * Once configured, users should be able to execute
 
+    ```sh
+    $ virsh -c qemu:///system net-list --all
+     Name                 State      Autostart     Persistent
+    ----------------------------------------------------------
+     [...]
     ```
-    sudo apt-get install python-virtualenv python3-dev
-    virtualenv -p python3 .env
-    source .env/bin/activate
-    pip install -r requirements.txt
+
+  * You will need to update your configuration `/etc/libvirt/qemu.conf` to disable
+    dynamic permission management for image files. Uncomment and modify relevant
+    config line:
+
+    ```sh
+    dynamic_ownership = 1
+    user = "libvirt-qemu"
+    group = "kvm"
+    # Apparmor would stop us from creating files in /tmp.
+    # TODO(ender): find out a better way to manage these permissions.
+    security_driver = "none"
     ```
 
-1. python src/ivserver.py -L vsoc_mem.json
+    and restart `libvirt-bin` service:
 
-This should start the QEMU VM.
+    ```sh
+    sudo service libvirt-bin restart
+    ```
 
-For testing the ivhsmem-server to host-client
-python src/test_client.py
-Logs are mostly on so please don't be perturbed by it.
+### I'm seeing `permission denied` errors
 
-send a SIGTERM/SIGKILL to the python process to terminate/kill the server
-It doesn't clear the UNIX domain sockets on this event. This will be fixed.
-You can remove them by `rm -rf /tmp/ivshmem*`
+libvirt is not executing virtual machines on behalf of the calling user.
+Instead, it calls its own privileged process to configure VM on user's behalf.
+If you're seeing `permission denied` errors chances are that the QEmu does
+not have access to relevant files _OR folders_.
 
-`deactivate` to come out of the virtualenv created environment.
+To work with this problem, it's best to copy (not _link_!) all files QEmu would
+need to a separate folder (placed eg. under `/tmp` or `/run`), and give that
+folder proper permissions.
+
+```sh
+➜ ls -l /run/cf
+total 1569216
+drwxr-x---  2 libvirt-qemu eng          180 Jun 28 14:27 .
+drwxr-xr-x 45 root         root        2080 Jun 28 14:27 ..
+-rwxr-x---  1 root         root  2147483648 Jun 28 14:27 cache.img
+-rwxr-x---  1 root         root 10737418240 Jun 28 14:27 data.img
+-rwxr-x---  1 root         root      825340 Jun 28 14:27 gce_ramdisk.img
+-rwxr-x---  1 root         root     6065728 Jun 28 14:27 kernel
+-rwxr-x---  1 root         root     2083099 Jun 28 14:27 ramdisk.img
+-rwxr-x---  1 root         root  3221225472 Jun 28 14:27 system.img
+```
+
+**Note**: the `/run/cf` folder's owner is `libvirt-qemu:eng`. This allows QEmu
+to access images - and me to poke in the folder.
+
+Now don't worry about the `root` ownership. Libvirt manages permissions dynamically.
+You may want to give yourself write permissions to these files during development,
+though.
