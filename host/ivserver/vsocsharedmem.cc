@@ -25,13 +25,13 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
  public:
   // Keeping the structure public for testability of RegionAllocation
   struct RegionOffset {
-    size_t start_offset;
-    size_t end_offset;
+    uint32_t start_offset;
+    uint32_t end_offset;
   };
 
   // Marked as static for testability of RegionAllocation
   static std::unique_ptr<std::vector<RegionOffset>> RegionAllocation(
-      const size_t shm_size, const std::vector<size_t> &region_size);
+      const uint32_t shm_size, const std::vector<uint32_t> &region_size);
 
   VSoCSharedMemoryImpl(const uint32_t size_mib, const std::string &name,
                        const Json::Value &json_root);
@@ -54,7 +54,31 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
 
   VSoCSharedMemoryImpl(const VSoCSharedMemoryImpl &) = delete;
   VSoCSharedMemoryImpl &operator=(const VSoCSharedMemoryImpl &other) = delete;
+  class RegionAllocator {
+   public:
+    explicit RegionAllocator(uint32_t max_size, uint32_t offset = 0)
+        : max_size_{max_size}, offset_{offset} {}
+    uint32_t Allocate(uint32_t size);
+    uint32_t AllocateRest();
+
+   private:
+    uint32_t max_size_;
+    uint32_t offset_;
+  };
 };
+
+uint32_t VSoCSharedMemoryImpl::RegionAllocator::Allocate(uint32_t size) {
+  if ((size + offset_) > max_size_) {
+    LOG(FATAL) << "offset allocation will overflow memory region";
+  }
+
+  offset_ += size;
+  return (offset_ - size);
+}
+
+uint32_t VSoCSharedMemoryImpl::RegionAllocator::AllocateRest() {
+  return Allocate(max_size_ - offset_);
+}
 
 VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(const uint32_t size_mib,
                                            const std::string &name,
@@ -88,8 +112,8 @@ const std::map<std::string, VSoCSharedMemory::Region>
 }
 
 std::unique_ptr<std::vector<VSoCSharedMemoryImpl::RegionOffset>>
-VSoCSharedMemoryImpl::RegionAllocation(const size_t shm_size,
-                                       const std::vector<size_t> &region_size) {
+VSoCSharedMemoryImpl::RegionAllocation(
+    const uint32_t shm_size, const std::vector<uint32_t> &region_size) {
   auto region_offset =
       std::unique_ptr<std::vector<RegionOffset>>{new std::vector<RegionOffset>};
 
@@ -113,7 +137,7 @@ VSoCSharedMemoryImpl::RegionAllocation(const size_t shm_size,
   // TODO(romitd): Support allocation when descriptors don't fit in page 0.
   //  In other words when there are many region descriptors and they don't
   //  fit in page 0.
-  const size_t total_region_size =
+  const uint32_t total_region_size =
       std::accumulate(region_size.begin(), region_size.end(), 0);
   if (total_region_size > (shm_size - pagesize)) {
     LOG(FATAL) << "Shared memory size " << shm_size
@@ -121,7 +145,7 @@ VSoCSharedMemoryImpl::RegionAllocation(const size_t shm_size,
                << total_region_size;
   }
 
-  size_t current_offset = pagesize;
+  uint32_t current_offset = pagesize;
 
   for (const auto &size : region_size) {
     RegionOffset offset{current_offset, current_offset + size};
@@ -157,7 +181,7 @@ void VSoCSharedMemoryImpl::CreateLayout() {
       reinterpret_cast<char *>(mmap_addr) + offset) = layout_descriptor;
 
   // Gather the region sizes for allocating the start and end offsets.
-  std::vector<size_t> region_size;
+  std::vector<uint32_t> region_size;
   for (const auto &region : json_root_["vsoc_device_regions"]) {
     region_size.push_back(region["region_size"].asUInt());
   }
@@ -191,28 +215,29 @@ void VSoCSharedMemoryImpl::CreateLayout() {
     strncpy(device_region.device_name, device_name.c_str(),
             sizeof(device_region.device_name) - 1);
 
+    RegionAllocator allocator(region["region_size"].asUInt());
+
+    // guest to host signal table starts at the beginning of the region.
+    // Note that the offset could be different in future versions.
     device_region.guest_to_host_signal_table.offset_to_signal_table =
-        sizeof(vsoc_device_region);
-
+        allocator.Allocate(
+            (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
+            sizeof(uint32_t));
     device_region.guest_to_host_signal_table.interrupt_signalled_offset =
-        device_region.guest_to_host_signal_table.offset_to_signal_table +
-        (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
-            sizeof(int32_t);
+        allocator.Allocate(sizeof(uint32_t));
 
+    // host to guest signal table starts immediately after guest to host signal
+    // table & its interrupt signal area.
     device_region.host_to_guest_signal_table.offset_to_signal_table =
-        device_region.guest_to_host_signal_table.interrupt_signalled_offset +
-        sizeof(device_region.guest_to_host_signal_table
-                   .interrupt_signalled_offset);
-
+        allocator.Allocate(
+            (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
+            sizeof(uint32_t));
     device_region.host_to_guest_signal_table.interrupt_signalled_offset =
-        (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
-            sizeof(int32_t) +
-        device_region.host_to_guest_signal_table.offset_to_signal_table;
+        allocator.Allocate(sizeof(uint32_t));
 
-    device_region.offset_of_region_data =
-        device_region.host_to_guest_signal_table.interrupt_signalled_offset +
-        sizeof(device_region.host_to_guest_signal_table
-                   .interrupt_signalled_offset);
+    // The offset of region_data starts immediately after host to guest
+    // signal table & its interrupt signal area.
+    device_region.offset_of_region_data = allocator.AllocateRest();
 
     *reinterpret_cast<vsoc_device_region *>(
         reinterpret_cast<char *>(mmap_addr) + offset) = device_region;
