@@ -61,16 +61,14 @@ bool vsoc::OpenableRegion::Open(const char* region_name) {
   return true;
 }
 
-#if LATER
-void vsoc::Region::SignalFutex(std::atomic<uint32_t>* lock_addr) {
-  SignalFutexCommon(lock_addr, region_desc_.guest_to_host_signal_table);
+void vsoc::OpenableRegion::InterruptPeer() {
+  region_fd_->Ioctl(VSOC_MAYBE_SEND_INTERRUPT_TO_HOST, 0);
 }
 
-void vsoc::Region::SendInterruptToPeer() {
-  TEMP_FAILURE_RETRY(ioctl(region_fd_, VSOC_SEND_INTERRUPT_TO_HOST, 0));
+void vsoc::OpenableRegion::InterruptSelf() {
+  region_fd_->Ioctl(VSOC_SELF_INTERRUPT, 0);
 }
 
-void vsoc::Region::WaitForIncomingInterrupt() {
-  TEMP_FAILURE_RETRY(ioctl(region_fd_, VSOC_WAIT_FOR_INCOMING_INTERRUPT, 0));
+void vsoc::OpenableRegion::WaitForInterrupt() {
+  region_fd_->Ioctl(VSOC_WAIT_FOR_INCOMING_INTERRUPT, 0);
 }
-#endif

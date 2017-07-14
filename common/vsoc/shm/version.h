@@ -50,6 +50,7 @@ const uint32_t version = 0;
 static const std::size_t Base_size = 1;
 static const std::size_t PixelFormatRegister_size = 4;
 static const std::size_t PixelFormatMaskRegister_size = 8;
+static const std::size_t Sides_size = 4;
 
 namespace constant_values {
 static const uint32_t VSOC_PIXEL_FORMAT_UNINITIALIZED = 0;

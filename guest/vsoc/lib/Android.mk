@@ -22,14 +22,16 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
     guest_region.cpp
 
-LOCAL_C_INCLUDES := \
+LOCAL_C_INCLUDES += \
     device/google/cuttlefish_common \
-    device/google/cuttlefish_kernel
+    device/google/cuttlefish_kernel \
+    system/core/base/include
 
 LOCAL_SHARED_LIBRARIES := \
     libcuttlefish_fs \
     libvsoc_common \
-    libbase
+    libbase \
+    liblog
 
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)
