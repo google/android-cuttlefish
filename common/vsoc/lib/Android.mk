@@ -20,6 +20,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
     e2e_test_region.cpp \
+    lock_common.cpp \
     region_common.cpp
 
 LOCAL_C_INCLUDES := \

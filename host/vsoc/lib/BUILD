@@ -1,6 +1,7 @@
 cc_library(
     name = "vsoc_lib",
     srcs = [
+        "host_lock.cpp",
         "host_region.cpp",
     ],
     hdrs = [

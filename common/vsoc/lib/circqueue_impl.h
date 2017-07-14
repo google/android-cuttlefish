@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-// For _mm_pause()
-#include <immintrin.h>
 #include "common/vsoc/lib/region.h"
 #include "common/vsoc/shm/circqueue.h"
 
@@ -32,18 +30,6 @@ uintptr_t align(uintptr_t index) {
 namespace vsoc {
 class RegionBase;
 namespace layout {
-
-template <uint32_t SizeLog2>
-void CircularQueueBase<SizeLog2>::Lock() {
-  while (lock_.exchange(1)) {
-    _mm_pause();
-  }
-}
-
-template <uint32_t SizeLog2>
-void CircularQueueBase<SizeLog2>::Unlock() {
-  lock_ = 0;
-}
 
 template <uint32_t SizeLog2>
 void CircularQueueBase<SizeLog2>::CopyInRange(const char* buffer_in,
@@ -83,9 +69,9 @@ void CircularQueueBase<SizeLog2>::WaitForDataLocked(RegionBase* r) {
     if (r_released_ != o_w_pub) {
       return;
     }
-    Unlock();
+    lock_.Unlock();
     r->WaitForSignal(&w_pub_, o_w_pub);
-    Lock();
+    lock_.Lock();
   }
 }
 
@@ -106,9 +92,9 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionBase* r,
     }
     // If we can't write at the moment wait for a reader to release
     // some bytes.
-    Unlock();
+    lock_.Unlock();
     r->WaitForSignal(&r_released_, o_r_release);
-    Lock();
+    lock_.Lock();
   }
   t->end_idx = t->start_idx + bytes;
   return t->end_idx - t->start_idx;
@@ -117,7 +103,7 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionBase* r,
 template <uint32_t SizeLog2>
 intptr_t CircularByteQueue<SizeLog2>::Read(RegionBase* r, char* buffer_out,
                                            size_t max_size) {
-  this->Lock();
+  this->lock_.Lock();
   this->WaitForDataLocked();
   Range t;
   t.start_idx = this->r_released_;
@@ -129,7 +115,7 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionBase* r, char* buffer_out,
   }
   CopyOutRange(t, buffer_out, max_size);
   this->r_released_ = t.end_idx;
-  this->Unlock();
+  this->lock_.Unlock();
   r->SendSignal(layout::Sides::Both, &this->r_released_);
   return t->end_idx - t->start_idx;
 }
@@ -139,17 +125,17 @@ intptr_t CircularByteQueue<SizeLog2>::Write(RegionBase* r,
                                             const char* buffer_in,
                                             size_t bytes) {
   Range range;
-  this->Lock();
+  this->lock_.Lock();
   intptr_t rval = WriteReserveLocked(r, bytes, &range);
   if (rval < 0) {
-    this->Unlock();
+    this->lock_.Unlock();
     return rval;
   }
   this->CopyInRange(buffer_in, range);
   // We can't publish until all of the previous write allocations where
   // published.
   this->w_pub_ = range.end_idx;
-  this->Unlock();
+  this->lock_.Unlock();
   r->SendSignal(layout::Sides::Both, &this->w_pub_);
   return bytes;
 }
@@ -164,12 +150,12 @@ template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionBase* r,
                                                             char* buffer_out,
                                                             size_t max_size) {
-  this->Lock();
+  this->lock_.Lock();
   this->WaitForDataLocked();
   uint32_t packet_size = *reinterpret_cast<uint32_t*>(
       this->buffer_ + (this->r_released_ & (this->BufferSize - 1)));
   if (packet_size > max_size) {
-    this->Unlock();
+    this->lock_.Unlock();
     return -ENOSPC;
   }
   Range t;
@@ -177,7 +163,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionBase* r,
   t.end_idx = t.start_idx + this->packet_size;
   CopyOutRange(t, buffer_out);
   this->r_released_ += this->CalculateBufferedSize(packet_size);
-  this->Unlock();
+  this->lock_.Unlock();
   r->SendSignal(layout::Sides::Both, &this->r_released_);
   return packet_size;
 }
@@ -190,10 +176,10 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
   }
   Range range;
   size_t buffered_size = this->CalculateBufferedSize(bytes);
-  this->Lock();
+  this->lock_.Lock();
   intptr_t rval = this->WriteReserveLocked(r, buffered_size, &range);
   if (rval < 0) {
-    this->Unlock();
+    this->lock_.Unlock();
     return rval;
   }
   Range header = range;
@@ -203,7 +189,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
   this->CopyInRange(&bytes, header);
   this->CopyInRange(buffer_in, payload);
   this->w_pub_ = range.end_idx;
-  this->Unlock();
+  this->lock_.Unlock();
   r->SendSignal(layout::Sides::Both, &this->w_pub_);
   return bytes;
 }

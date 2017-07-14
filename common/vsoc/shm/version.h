@@ -64,9 +64,14 @@ static const std::size_t Base_size = 1;
 static const std::size_t CircularQueueBase64k_size = 65548;
 static const std::size_t CircularByteQueue64k_size = 65548;
 static const std::size_t CircularPacketQueue64k_size = 65548;
+static const std::size_t GuestLock_size = 40;
+static const std::size_t GuestAndHostLock_size = 40;
+static const std::size_t HostLock_size = 40;
 static const std::size_t PixelFormatRegister_size = 4;
 static const std::size_t PixelFormatMaskRegister_size = 8;
 static const std::size_t Sides_size = 4;
+static const std::size_t SpinLock_size = 4;
+static const std::size_t WaitingLockBase_size = 40;
 
 namespace constant_values {
 static const uint32_t VSOC_PIXEL_FORMAT_UNINITIALIZED = 0;
