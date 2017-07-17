@@ -20,9 +20,9 @@
 #include <type_traits>
 #include "common/vsoc/shm/version.h"
 
-#define ASSERT_SHM_COMPATIBLE(T,R)                                      \
-  static_assert(sizeof(T) == vsoc::layout::version_info::R::T##_size,   \
-                "size changed, update the version");                    \
+#define ASSERT_SHM_COMPATIBLE(T, R)                                   \
+  static_assert(sizeof(T) == vsoc::layout::version_info::R::T##_size, \
+                "size changed, update the version");                  \
   static_assert(std::is_trivial<T>(), "Class uses features that are unsafe")
 
 #define ASSERT_SHM_CONSTANT_VALUE(T, R)                                 \
@@ -36,5 +36,5 @@ class Base {
 };
 ASSERT_SHM_COMPATIBLE(Base, multi_region);
 
-}  // layout
-}  // vsoc
+}  // namespace layout
+}  // namespace vsoc

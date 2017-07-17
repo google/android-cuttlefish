@@ -18,10 +18,10 @@
 
 // Object that represents a region on the Host
 
-#include <atomic>
-#include <cstdint>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <atomic>
+#include <cstdint>
 
 #include "common/libs/fs/shared_fd.h"
 #include "uapi/vsoc_shm.h"
@@ -54,18 +54,19 @@ class RegionBase {
  protected:
   RegionBase() {}
 
-  template <typename T> T* region_offset_to_pointer(uint32_t offset) {
-    return reinterpret_cast<T*> (
-        reinterpret_cast<uintptr_t>(region_base_) +
-        offset - region_desc_.region_begin_offset);
+  template <typename T>
+  T* region_offset_to_pointer(uint32_t offset) {
+    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(region_base_) +
+                                offset - region_desc_.region_begin_offset);
   }
 
-  template <typename T> uint32_t pointer_to_region_offset(T* ptr) {
+  template <typename T>
+  uint32_t pointer_to_region_offset(T* ptr) {
     return reinterpret_cast<uintptr_t>(ptr) - region_desc_.region_begin_offset;
   }
 
   vsoc_device_region region_desc_{};
-  void *region_base_{};
+  void* region_base_{};
 };
 
-}  // vsoc
+}  // namespace vsoc

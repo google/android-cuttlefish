@@ -20,10 +20,10 @@
 
 #include "common/vsoc/lib/region.h"
 
-#include <atomic>
-#include <cstdint>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <atomic>
+#include <cstdint>
 
 #include "common/libs/fs/shared_fd.h"
 #include "uapi/vsoc_shm.h"
@@ -43,8 +43,7 @@ class OpenableRegion : public RegionBase {
  protected:
   OpenableRegion() {}
 
-  bool Open(const char* name,
-            const char* domain = nullptr);
+  bool Open(const char* name, const char* domain = nullptr);
 
   avd::SharedFD incoming_interrupt_fd_;
   avd::SharedFD outgoing_interrupt_fd_;
@@ -63,9 +62,8 @@ class TypedRegion : public OpenableRegion {
  public:
   /* Returns a pointer to the region with a type that matches the layout */
   Layout* data() {
-    return reinterpret_cast<Layout*>(
-        reinterpret_cast<uintptr_t>(region_base_) +
-        region_desc_.offset_of_region_data);
+    return reinterpret_cast<Layout*>(reinterpret_cast<uintptr_t>(region_base_) +
+                                     region_desc_.offset_of_region_data);
   }
 
   TypedRegion() {}
@@ -75,4 +73,4 @@ class TypedRegion : public OpenableRegion {
   }
 };
 
-}  // vsoc
+}  // namespace vsoc
