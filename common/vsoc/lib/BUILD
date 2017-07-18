@@ -1,4 +1,17 @@
 cc_test(
+    name = "circqueue_test",
+    srcs = [
+        "circqueue_test.cpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":vsoc_common",
+        "//common/vsoc/shm",
+        "@gtest_repo//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "vsoc_graphics_test",
     srcs = [
         "graphics_test.cpp",
@@ -17,6 +30,8 @@ cc_library(
         "region_common.cpp",
     ],
     hdrs = [
+        "circqueue_impl.h",
+        "compat.h",
         "graphics_common.h",
         "region.h",
     ],

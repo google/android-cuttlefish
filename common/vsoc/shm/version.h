@@ -16,13 +16,25 @@
  * limitations under the License.
  */
 
-// Version information for the vsoc layouts. This protects multiple things:
+// Version information for structures that are present in VSoC shared memory
+// windows. The proper use of this file will:
 //
-//   It ensures that the guest and host builds agree on the sizes of the shared
-//   structures.
+//   * ensure that the guest and host builds agree on the sizes of the shared
+//     structures.
 //
-//   It provides a single version code for the entire vsoc layout, assuming
-//   that reviewers excercise some care.
+//   * provides a single version code for the entire vsoc layout, assuming
+//     that reviewers excercise some care.
+//
+//
+//  Use:
+//
+//    Every new class / structure in the shm folder needs to add a size
+//    entry here, #include the base.h file, and add a ASSERT_SHM_COMPATIBLE
+//    instantiation just below the class definition,
+//
+//    For templatized classes / structs the author should choose a fixed size,
+//    create a using alias, and instantiate the checks on the alias.
+//    See CircularByteQueue64k for an example of this usage.
 //
 //   Note to reviewers:
 //
@@ -32,7 +44,8 @@
 //     However, the version must increment for any change in the value of a
 //     constant.
 //
-//     #ifdef, etc is absolutely forbidden
+//     #ifdef, etc is absolutely forbidden in this file and highly discouraged
+//     in the other vsoc/shm files.
 
 namespace vsoc {
 namespace layout {
@@ -48,6 +61,9 @@ const uint32_t version = 0;
 }  // namespace
 
 static const std::size_t Base_size = 1;
+static const std::size_t CircularQueueBase64k_size = 65548;
+static const std::size_t CircularByteQueue64k_size = 65548;
+static const std::size_t CircularPacketQueue64k_size = 65548;
 static const std::size_t PixelFormatRegister_size = 4;
 static const std::size_t PixelFormatMaskRegister_size = 8;
 static const std::size_t Sides_size = 4;
