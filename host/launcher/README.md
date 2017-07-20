@@ -61,6 +61,56 @@ guests can only talk to daemons running on host.
     sudo service libvirt-bin restart
     ```
 
+### What files should i populate (and where)?
+
+Create a directory to host your files. This directory will need to be accessible
+not only by you, but by libvirt, too, and libvirt will likely update ownership
+of your files. My recommendation is to use either `/srv/cf` or `/run/cf` folder.
+
+```
+mkdir /srv/cf
+sudo chown -R libvirt-qemu:root /srv/cf
+sudo setfacl -m u:${USER}:rwx /srv/cf
+sudo chmod 0770 /srv/cf
+```
+
+If you've done the above right, you should be able to create files there, even
+if you're not working on behalf of libvirt-qemu user or root group.
+
+You will need to copy (or link) the following files from your build directory:
+
+  * system.img
+  * ramdisk.img
+  * kernel
+
+This artifact needs to be built and copied from this repo:
+
+  * gce_ramdisk.img
+
+    build: `bazel build //guest:gce_ramdisk`, copy or link file from workspace
+    root's bazel-bin folder.
+
+These files need to be manually created:
+
+  * data.img and
+  * cache.img
+
+    ```
+    truncate -s 10G data.img
+    mkfs.ext4 data.img
+    truncate -s 2G cache.img
+    mkfs.ext4 cache.img
+    ```
+
+After you're done linking/copying/creating files, set posix acls on these files
+so that you don't lose access to them:
+
+```
+setfacl -m u:${USER}:rw /srv/cf/*
+```
+
+Done.
+
 ### I'm seeing `permission denied` errors
 
 libvirt is not executing virtual machines on behalf of the calling user.
@@ -73,7 +123,7 @@ need to a separate folder (placed eg. under `/tmp` or `/run`), and give that
 folder proper permissions.
 
 ```sh
-➜ ls -l /run/cf
+➜ ls -l /srv/cf
 total 1569216
 drwxr-x---  2 libvirt-qemu eng          180 Jun 28 14:27 .
 drwxr-xr-x 45 root         root        2080 Jun 28 14:27 ..
@@ -85,9 +135,7 @@ drwxr-xr-x 45 root         root        2080 Jun 28 14:27 ..
 -rwxr-x---  1 root         root  3221225472 Jun 28 14:27 system.img
 ```
 
-**Note**: the `/run/cf` folder's owner is `libvirt-qemu:eng`. This allows QEmu
+**Note**: the `/run/cf` folder's owner is `libvirt-qemu`. This allows QEmu
 to access images - and me to poke in the folder.
 
 Now don't worry about the `root` ownership. Libvirt manages permissions dynamically.
-You may want to give yourself write permissions to these files during development,
-though.
