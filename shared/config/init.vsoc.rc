@@ -117,6 +117,10 @@ service gce_fs_monitor /system/bin/gcelogwrapper -k /system/bin/gce_fs_monitor
     seclabel u:r:su:s0
     oneshot
 
+service usbforward /system/vendor/bin/usbforward /dev/vport0p2
+    seclabel u:r:su:s0
+    class late_start
+    user root
 
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     class main

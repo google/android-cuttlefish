@@ -66,6 +66,7 @@ PRODUCT_PACKAGES += \
     vnc_server \
     vnc_server-testing \
     simulated_hostapd.conf \
+    usbforward \
     wpa_supplicant.vsoc.conf \
 
 #
