@@ -22,7 +22,6 @@ class GuestDefinition(object):
         self._net_mobile_bridge = None
         self._iv_vectors = None
         self._iv_socket_path = None
-        self._iv_socket_path = None
         self._part_cache = None
         self._part_data = None
         self._part_ramdisk = None
@@ -241,6 +240,24 @@ class GuestDefinition(object):
             ET.SubElement(node, 'cmdline').text = self._cmdline
 
 
+    def _append_source(self, elem, stype, spath):
+        """Append source type to specified element.
+
+        Args:
+          elem Target element that will receive new source,
+          stype Source type (currently supported: file, unix),
+          spath Source path.
+        """
+        elem.set('type', stype)
+        src = ET.SubElement(elem, 'source')
+        if stype == 'file':
+            src.set('append', 'no')
+            src.set('path', spath)
+        elif stype == 'unix':
+            src.set('mode', 'bind')
+            src.set('path', spath)
+
+
     def _build_device_serial_port(self, interactive):
         """Configure serial ports for guest.
 
@@ -255,35 +272,32 @@ class GuestDefinition(object):
         self._num_ttys_interfaces += 1
         path = '/tmp/%s-ttyS%d.log' % (self.get_instance_name(), index)
         tty = ET.Element('serial')
-        src = ET.SubElement(tty, 'source')
-        src.set('path', path)
         if interactive:
-            tty.set('type', 'unix')
-            src.set('mode', 'bind')
+            self._append_source(tty, 'unix', path)
             glog.info('Interactive serial port set up. To access the interactive console run:')
             glog.info('$ sudo socat file:$(tty),raw,echo=0 %s' % path)
         else:
-            tty.set('type', 'file')
-            src.set('append', 'no')
+            self._append_source(tty, 'file', path)
         ET.SubElement(tty, 'target').set('port', str(index))
         glog.info('Serial port %d will send data to %s', index, path)
         return tty
 
 
-    def _build_device_virtio_channel(self):
+    def _build_device_virtio_channel(self, purpose, stype):
         """Build fast paravirtualized virtio channel.
 
         More useful information can be found here:
         https://libvirt.org/formatdomain.html#elementCharSerial
+
+        Args:
+          purpose Human understandable purpose of this channel ('console', 'logcat', ...)
+          stype Type of this channel (see _append_source).
         """
-        index = self._num_virtio_channels
         self._num_virtio_channels += 1
-        path = '/tmp/%s-vport0p%d.log' % (self.get_instance_name(), index)
+        index = self._num_virtio_channels
+        path = '/tmp/%s-%d-%s.log' % (self.get_instance_name(), index, purpose)
         vio = ET.Element('channel')
-        vio.set('type', 'file')
-        src = ET.SubElement(vio, 'source')
-        src.set('path', path)
-        src.set('append', 'no')
+        self._append_source(vio, stype, path)
         tgt = ET.SubElement(vio, 'target')
         tgt.set('type', 'virtio')
         tgt.set('name', 'vport0p%d' % index)
@@ -370,7 +384,8 @@ class GuestDefinition(object):
         if self._vmm_path:
             ET.SubElement(dev, 'emulator').text = self._vmm_path
         dev.append(self._build_device_serial_port(True))
-        dev.append(self._build_device_virtio_channel())
+        dev.append(self._build_device_virtio_channel('logcat', 'file'))
+        dev.append(self._build_device_virtio_channel('usb', 'unix'))
         dev.append(self._build_device_disk_node(self._part_ramdisk, 'ramdisk', 'vda'))
         dev.append(self._build_device_disk_node(self._part_system, 'system', 'vdb'))
         dev.append(self._build_device_disk_node(self._part_data, 'data', 'vdc'))
