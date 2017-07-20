@@ -24,6 +24,7 @@
 #include <cstdint>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/glog/logging.h"
 #include "uapi/vsoc_shm.h"
 
 namespace vsoc {
@@ -56,13 +57,23 @@ class RegionBase {
 
   template <typename T>
   T* region_offset_to_pointer(uint32_t offset) {
+    if (offset > region_size()) {
+      LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
+                 << region_base_;
+    }
     return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(region_base_) +
-                                offset - region_desc_.region_begin_offset);
+                                offset);
   }
 
   template <typename T>
   uint32_t pointer_to_region_offset(T* ptr) {
-    return reinterpret_cast<uintptr_t>(ptr) - region_desc_.region_begin_offset;
+    uint32_t rval = reinterpret_cast<uintptr_t>(ptr) -
+                    reinterpret_cast<uintptr_t>(region_base_);
+    if (rval > region_size()) {
+      LOG(FATAL) << __FUNCTION__ << ": " << ptr << " not in region @"
+                 << region_base_;
+    }
+    return rval;
   }
 
   vsoc_device_region region_desc_{};
