@@ -134,6 +134,14 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.app_widgets.xml:system/etc/permissions/android.software.app_widgets.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:system/etc/bluetooth/controller_properties.json \
 
+
+#
+#USB Specific
+#
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/init.hardware.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
+    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.usb.rc
+
 #
 # Device personality files
 #
