@@ -48,6 +48,9 @@ class Device {
   uint8_t dev_subclass;
   uint8_t dev_protocol;
 
+  // Speed indicates device speed (see libusb_speed).
+  uint8_t speed;
+
   // ConfigurationsCount and ConfigurationNumber describe total number of device
   // configurations and currently activated device configuration.
   size_t configurations_count;
@@ -55,6 +58,9 @@ class Device {
 
   // Interfaces returns a collection of device interfaces.
   std::vector<Interface> interfaces;
+
+  // Attach request handler.
+  std::function<bool()> handle_attach;
 
   // Device request dispatcher.
   std::function<bool(const CmdRequest& request,

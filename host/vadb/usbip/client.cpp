@@ -206,7 +206,7 @@ bool Client::HandleImportOp() {
   // Find requested device.
   if (ParseBusID(req, &dn)) {
     device = pool_.GetDevice(dn);
-    if (!device) {
+    if (!device || !device->handle_attach()) {
       op.status = 1;
       LOG(ERROR) << "Import failed; No device registered on bus " << req;
     }
