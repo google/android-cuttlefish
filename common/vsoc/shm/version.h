@@ -79,6 +79,8 @@ static const std::size_t E2EPrimaryTestRegion_size = 72;
 static const std::size_t E2ESecondaryTestRegion_size = 72;
 static const std::size_t E2ETestRegionBase_size = 72;
 static const std::size_t E2ETestStageRegister_size = 4;
+static const std::size_t E2EManagerTestRegion_size = 16;
+static const std::size_t E2EManagedTestRegion_size = 4;
 }  // namespace e2e_test
 
 }  // namespace version_info

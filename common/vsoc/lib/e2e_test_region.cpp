@@ -33,6 +33,10 @@ const char E2ESecondaryTestRegion::guest_pattern[
 const char E2ESecondaryTestRegion::host_pattern[
     E2EMemoryFill::kOwnedFieldSize] = "secondary host e2e string";
 
+const char* E2EManagedTestRegion::region_name = "e2e_managed";
+
+const char* E2EManagerTestRegion::region_name = "e2e_manager";
+
 }  // e2e_test
 }  // layout
 }  // vsoc

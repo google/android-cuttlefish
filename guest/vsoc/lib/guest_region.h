@@ -30,9 +30,18 @@
 
 namespace vsoc {
 
+enum {
+  // Means an unrecoverable error ocurred, aborting is usually the best handling
+  // strategy in this case.
+  VSOC_PERM_ERROR = -2,
+  // Means that the permission could not be created because someone else
+  // reserved the memory first. Find another area of memory and try again.
+  VSOC_PERM_OWNED = -1,
+};
+
 /**
  * Accessor class for VSoC regions designed for use from processes on the
- * host. This mainly affects the implementatio of Open.
+ * host. This mainly affects the implementation of Open.
  *
  * Subclass to use this or use TypedRegion with a suitable Layout.
  */
@@ -57,7 +66,11 @@ class OpenableRegion : public RegionBase {
  protected:
   OpenableRegion() {}
   bool Open(const char* region_name);
-
+  int CreateFdScopedPermission(const char* managed_region_name,
+                               uint32_t* owner_ptr,
+                               uint32_t owned_val,
+                               vsoc_reg_off_t begin_offset,
+                               vsoc_reg_off_t end_offset);
   avd::SharedFD region_fd_;
 };
 
@@ -80,6 +93,44 @@ class TypedRegion : public OpenableRegion {
   TypedRegion() {}
 
   bool Open() { return OpenableRegion::Open(Layout::region_name); }
+};
+
+/**
+ * Adds methods to create file descriptor scoped permissions. Just like
+ * TypedRegion it can be directly constructed or subclassed.
+ *
+ * The Layout type must (in addition to requirements for TypedRegion) also
+ * provide a nested type for the layout of the managed region.
+ */
+template <typename Layout>
+class ManagerRegion : public TypedRegion<Layout> {
+ public:
+  ManagerRegion() = default;
+  /**
+   * Creates a fd scoped permission on the managed region.
+   *
+   * The managed_region_fd is in/out parameter that can be a not yet open file
+   * descriptor. If the fd is not open yet it will open the managed region
+   * device and then create the permission. If the function returns EBUSY
+   * (meaning that we lost the race to acquire the memory) the same fd can (and
+   * is expected to) be used in a subsequent call to create a permission on
+   * another memory location.
+   *
+   * On success returns an open fd with the requested permission asociated to
+   * it. If another thread/process acquired ownership of *owner_ptr before this
+   * one returns VSOC_PERM_OWNED. Returns VSOC_PERM_ERROR otherwise.
+   */
+  int CreateFdScopedPermission(uint32_t* owner_ptr,
+                               uint32_t owned_val,
+                               vsoc_reg_off_t begin_offset,
+                               vsoc_reg_off_t end_offset) {
+    return OpenableRegion::CreateFdScopedPermission(
+        Layout::ManagedRegion::region_name,
+        owner_ptr,
+        owned_val,
+        begin_offset,
+        end_offset);
+  }
 };
 
 }  // namespace vsoc

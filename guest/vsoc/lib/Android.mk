@@ -28,6 +28,7 @@ LOCAL_C_INCLUDES += \
     system/core/base/include
 
 LOCAL_SHARED_LIBRARIES := \
+    libcuttlefish_auto_resources \
     libcuttlefish_fs \
     libvsoc_common \
     libbase \

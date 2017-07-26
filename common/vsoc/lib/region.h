@@ -133,7 +133,7 @@ class RegionBase {
   RegionBase() {}
 
   template <typename T>
-  T* region_offset_to_pointer(uint32_t offset) {
+  T* region_offset_to_pointer(vsoc_reg_off_t offset) {
     if (offset > region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
                  << region_base_;
@@ -143,8 +143,8 @@ class RegionBase {
   }
 
   template <typename T>
-  uint32_t pointer_to_region_offset(T* ptr) {
-    uint32_t rval = reinterpret_cast<uintptr_t>(ptr) -
+  vsoc_reg_off_t pointer_to_region_offset(T* ptr) {
+    vsoc_reg_off_t rval = reinterpret_cast<uintptr_t>(ptr) -
                     reinterpret_cast<uintptr_t>(region_base_);
     if (rval > region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << ptr << " not in region @"
