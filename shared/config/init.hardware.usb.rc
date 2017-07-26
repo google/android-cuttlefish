@@ -48,7 +48,7 @@ on boot
     setprop sys.usb.ffs.max_read 524288
     setprop sys.usb.mtp.device_type 3
     setprop sys.usb.configfs 1
-    setprop sys.usb.controller "a800000.dwc3"
+    setprop sys.usb.controller "dummy_udc.0"
     write /sys/module/libcomposite/parameters/disable_l1_for_hs "y"
 
 on property:sys.usb.ffs.mtp.ready=1 && property:sys.usb.config=mtp && property:sys.usb.configfs=1
