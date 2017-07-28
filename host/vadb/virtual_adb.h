@@ -59,6 +59,13 @@ class VirtualADB {
                                   const std::vector<uint8_t>& data_out,
                                   std::vector<uint8_t>* data_in);
 
+  // Execute data request on remote device.
+  bool HandleDeviceDataRequest(uint8_t bus_id, uint8_t dev_id, uint8_t endpoint,
+                               bool is_host_to_device, uint32_t deadline,
+                               uint32_t length,
+                               const std::vector<uint8_t>& data_out,
+                               std::vector<uint8_t>* data_in);
+
   std::string path_;
   avd::SharedFD fd_;
   usbip::DevicePool pool_;
