@@ -48,8 +48,11 @@ class USBServer final {
   // Handle CmdAttach request.
   void HandleAttach();
 
-  // Handle CmdExecute request.
-  void HandleExecute();
+  // Handle CmdControlTransfer request.
+  void HandleControlTransfer();
+
+  // Handle CmdDataTransfer request.
+  void HandleDataTransfer();
 
   avd::SharedFD fd_;
   std::map<uint16_t, libusb_device*> devices_;

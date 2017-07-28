@@ -161,8 +161,8 @@ void USBServer::HandleAttach() {
   fd_->Write(&status, sizeof(status));
 }
 
-void USBServer::HandleExecute() {
-  ExecuteRequest req;
+void USBServer::HandleControlTransfer() {
+  ControlTransfer req;
   // If disconnected prematurely, don't send response.
   if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
 
@@ -182,7 +182,8 @@ void USBServer::HandleExecute() {
       attached_devices_.find(MakeDeviceKey(req.bus_id, req.dev_id));
 
   if (handle_iter != attached_devices_.end()) {
-    // Now that we read the whole request we are good to check if device's
+    // Now that we read the whole request and we have a previously attached
+    // device, execute control transfer.
     len = libusb_control_transfer(handle_iter->second, req.type, req.cmd,
                                   req.value, req.index, data.data(), req.length,
                                   req.timeout);
@@ -196,6 +197,64 @@ void USBServer::HandleExecute() {
   fd_->Write(&status, sizeof(status));
 
   if (!status && !req_out) {
+    fd_->Write(&len, sizeof(len));
+    if (len > 0) {
+      fd_->Write(data.data(), len);
+    }
+  }
+}
+
+void USBServer::HandleDataTransfer() {
+  DataTransfer req;
+  // If disconnected prematurely, don't send response.
+  if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
+
+  std::vector<uint8_t> data;
+  data.resize(req.length);
+
+  if (req.is_host_to_device && req.length) {
+    // If disconnected prematurely, don't send response.
+    if (fd_->Read(data.data(), req.length) != req.length) return;
+  }
+
+  int32_t status = 1;
+  int32_t len = 0;
+  auto handle_iter =
+      attached_devices_.find(MakeDeviceKey(req.bus_id, req.dev_id));
+
+  if (handle_iter != attached_devices_.end()) {
+    // Now that we read the whole request and we know device was previously
+    // attached we are good to execute data transfer.
+
+    // Claim and release default interface for the duration of a transfer.
+    libusb_claim_interface(handle_iter->second, 0);
+
+    int ret_len = 0;
+    ALOGI("Requesting %d bytes of data from EP %d with TO %d", req.length,
+          req.endpoint_id, req.timeout);
+
+    // TODO(ender): Remove the timeout modification below when read requests
+    // finally complete.
+    // As of now, USB driver seems to be blocking on read requests.
+    auto err = libusb_bulk_transfer(
+        handle_iter->second,
+        req.endpoint_id |
+            (req.is_host_to_device ? LIBUSB_ENDPOINT_OUT : LIBUSB_ENDPOINT_IN),
+        data.data(), req.length, &ret_len, req.timeout + 1000);
+    libusb_release_interface(handle_iter->second, 0);
+
+    status = (err != 0);
+    if (status) {
+      ALOGE("USB request failed %d, %d", err, errno);
+    } else {
+      ALOGI("Bulk transfer request result: %d / %d", err, ret_len);
+      len = ret_len;
+    }
+  }
+
+  fd_->Write(&status, sizeof(status));
+
+  if (!status && !req.is_host_to_device) {
     fd_->Write(&len, sizeof(len));
     if (len > 0) {
       fd_->Write(data.data(), len);
@@ -228,8 +287,12 @@ void USBServer::Serve() {
         case CmdAttach:
           HandleAttach();
 
-        case CmdExecute:
-          HandleExecute();
+        case CmdControlTransfer:
+          HandleControlTransfer();
+          break;
+
+        case CmdDataTransfer:
+          HandleDataTransfer();
           break;
 
         default:
