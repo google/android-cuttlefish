@@ -17,7 +17,6 @@ on early-init
     write /dev/framebuffer_control 0
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
-    start vsoc_guest_region_e2e_test
 
 
 on fs
@@ -42,6 +41,7 @@ on fs
     chmod 0755 /system/bin/dhcpcd_wlan0
 
     setprop ro.com.google.locationfeatures 1
+    start vsoc_guest_region_e2e_test
 
 
 on post-fs-data
@@ -78,7 +78,7 @@ on boot
     stop akmd
 
 
-service vsoc_guest_region_e2e_test /system/bin/vsoc_guest_region_e2e_test
+service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
     seclabel u:r:su:s0
     oneshot
 
