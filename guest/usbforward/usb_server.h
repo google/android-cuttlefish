@@ -32,11 +32,9 @@
 //     server.Serve();
 class USBServer final {
  public:
-  USBServer(const avd::SharedFD& fd) : fd_{fd} {}
-  ~USBServer();
-
-  // Populate list of USB devices.
-  bool Init();
+  USBServer(const avd::SharedFD& fd)
+      : fd_{fd}, handle_(nullptr, libusb_close) {}
+  ~USBServer() = default;
 
   // Serve incoming USB requests.
   void Serve();
@@ -55,8 +53,8 @@ class USBServer final {
   void HandleDataTransfer();
 
   avd::SharedFD fd_;
-  std::map<uint16_t, libusb_device*> devices_;
-  std::map<uint16_t, libusb_device_handle*> attached_devices_;
+  std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)>
+      handle_;
 
   USBServer(const USBServer& other) = delete;
   USBServer& operator=(const USBServer& other) = delete;
