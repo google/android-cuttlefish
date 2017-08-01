@@ -116,8 +116,7 @@ bool FileInstance::IsSet(fd_set* in) const {
 
 #if ENABLE_GCE_SHARED_FD_LOGGING
 void FileInstance::Log(const char* message) {
-  static int log_fd = open("/dev/null", O_WRONLY | O_APPEND | O_CREAT, 0666);
-  write(log_fd, message, strlen(message));
+  LOG(INFO) << message;
 }
 #else
 void FileInstance::Log(const char*) {}
