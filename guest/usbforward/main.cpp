@@ -17,6 +17,7 @@
 
 #include <cutils/log.h>
 #include <stdio.h>
+#include <libusb/libusb.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "guest/usbforward/usb_server.h"
@@ -27,17 +28,22 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  avd::SharedFD fd =
-      avd::SharedFD::Open(argv[1], O_RDWR | O_NOCTTY);
+  avd::SharedFD fd = avd::SharedFD::Open(argv[1], O_RDWR | O_NOCTTY);
   if (!fd->IsOpen()) {
     ALOGE("Could not open %s: %s", argv[1], fd->StrError());
     return 1;
   }
 
-  USBServer server(fd);
-  if (server.Init()) {
-    server.Serve();
+  auto res = libusb_init(nullptr);
+  if (res != 0) {
+    ALOGE("Could not initialize libusb: %d / %d", res, errno);
+    return 1;
   }
+
+  USBServer server(fd);
+  server.Serve();
   ALOGE("Terminated.");
+
+  libusb_exit(nullptr);
   return 1;
 }
