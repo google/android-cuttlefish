@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  USBServer server(fd);
+  usb_forward::USBServer server(fd);
   server.Serve();
   ALOGE("Terminated.");
 

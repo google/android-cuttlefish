@@ -17,11 +17,16 @@
 
 #include <stdint.h>
 
+namespace usb_forward {
+
 // Commands that can be executed over serial port.
 // Use magic value to avoid accidental interpretation of commonly seen numbers.
-enum : uint32_t {
+enum Command : uint32_t {
   // Get device list.
+  // Request format:
+  // - RequestHeader{}
   // Response format:
+  // - ResponseHeader{}
   // - int32_t(num_devices)
   // - num_devices times:
   //   - DeviceInfo{}
@@ -31,18 +36,20 @@ enum : uint32_t {
 
   // Attach specified device.
   // Request format:
-  // - AttachRequest{}
+  // - RequestHeader{}
+  // - AttachRequestHeader{}
   // Response format:
-  // - status (0 = success).
+  // - ResponseHeader{}
   CmdAttach,
 
   // Execute command on attached USB device.
   // Request format:
+  // - RequestHeader{}
   // - ControlTransfer{}
   // - if transfer direction is host -> device
   //   - uint8_t[ControlTransfer.length] data
   // Response format:
-  // - int32_t(status)
+  // - ResponseHeader{}
   // - if transfer direction is device -> host
   //   - int32_t(actual length)
   //   - uint8_t[actual length] bytes
@@ -50,15 +57,35 @@ enum : uint32_t {
 
   // Execute transfer on attached USB device.
   // Request format:
+  // - RequestHeader{}
   // - DataTransfer{}
   // - if transfer direction is host -> device
   //   - uint8_t[DataTransfer.length] data
   // Response format:
-  // - int32_t(status)
+  // - ResponseHeader{}
   // - if transfer direction is host -> device
   //   - int32_t(actual length)
   //   - int32_t[actual length] bytes
   CmdDataTransfer,
+};
+
+// Status represents command execution result, using USB/IP compatible values.
+enum Status : uint32_t {
+  // StatusSuccess indicates successful command execution.
+  StatusSuccess = 0,
+
+  // StatusFailure indicates error during command execution.
+  StatusFailure = 1
+};
+
+struct RequestHeader {
+  Command command;
+  uint32_t tag;
+};
+
+struct ResponseHeader {
+  Status status;
+  uint32_t tag;
 };
 
 // DeviceInfo describes individual USB device that was found attached to the
@@ -110,6 +137,8 @@ struct DataTransfer {
   uint8_t dev_id;
   uint8_t endpoint_id;
   uint8_t is_host_to_device;
-  uint32_t length;
+  int32_t length;
   uint32_t timeout;
 } __attribute__((packed));
+
+}  // namespace usb_forward

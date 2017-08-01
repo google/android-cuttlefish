@@ -18,7 +18,8 @@ LOCAL_MODULE := usbforward
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
     main.cpp \
-    usb_server.cpp
+    usb_server.cpp \
+    transport_request.cpp
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
