@@ -52,6 +52,8 @@ class OpenableRegion : public RegionBase {
 
   // Interrupt our peer, causing it to scan the outgoing_signal_table
   virtual void InterruptPeer() {
+    *region_offset_to_pointer<std::atomic<uint32_t>>(
+        outgoing_signal_table()->interrupt_signalled_offset) = 1;
     uint64_t one = 1;
     outgoing_interrupt_fd_->Write(&one, sizeof(one));
   }
