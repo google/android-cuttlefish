@@ -19,7 +19,7 @@
 namespace ivserver {
 namespace {
 
-static_assert(CURRENT_VSOC_LAYOUT_MAJOR_VERSION == 1,
+static_assert(CURRENT_VSOC_LAYOUT_MAJOR_VERSION == 2,
               "Region layout code must be updated");
 
 class VSoCSharedMemoryImpl : public VSoCSharedMemory {
