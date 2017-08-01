@@ -44,11 +44,20 @@ void VirtualADB::RegisterDevice(const DeviceInfo& dev,
     return HandleAttach(bus_id, dev_id);
   };
 
-  d->handle_request = [this, bus_id, dev_id](
-                          const usbip::CmdRequest& r,
-                          const std::vector<uint8_t>& in,
-                          std::vector<uint8_t>* out) -> bool {
+  d->handle_control_transfer = [this, bus_id, dev_id](
+                                   const usbip::CmdRequest& r,
+                                   const std::vector<uint8_t>& in,
+                                   std::vector<uint8_t>* out) -> bool {
     return HandleDeviceControlRequest(bus_id, dev_id, r, in, out);
+  };
+
+  d->handle_data_transfer = [this, bus_id, dev_id](
+                                uint8_t endpoint, bool is_host_to_device,
+                                uint32_t deadline, uint32_t length,
+                                const std::vector<uint8_t>& in,
+                                std::vector<uint8_t>* out) -> bool {
+    return HandleDeviceDataRequest(bus_id, dev_id, endpoint, is_host_to_device,
+                                   deadline, length, in, out);
   };
 
   pool_.AddDevice(usbip::DevicePool::BusDevNumber{bus_id, dev_id},
@@ -104,15 +113,16 @@ bool VirtualADB::Init() {
 bool VirtualADB::HandleDeviceControlRequest(
     uint8_t bus_id, uint8_t dev_id, const usbip::CmdRequest& r,
     const std::vector<uint8_t>& data_out, std::vector<uint8_t>* data_in) {
-  LOG(INFO) << "Executing command on " << int(bus_id) << "-" << int(dev_id);
+  LOG(INFO) << "Executing control command on " << int(bus_id) << "-"
+            << int(dev_id);
 
-  uint32_t cmd = CmdExecute;
+  uint32_t cmd = CmdControlTransfer;
   if (fd_->Write(&cmd, sizeof(cmd)) != sizeof(cmd)) {
     LOG(ERROR) << "Could not contact USB Forwarder: " << fd_->StrError();
     return false;
   }
 
-  ExecuteRequest rq;
+  ControlTransfer rq;
 
   rq.bus_id = bus_id;
   rq.dev_id = dev_id;
@@ -145,6 +155,71 @@ bool VirtualADB::HandleDeviceControlRequest(
 
   if (status == 0) {
     if (rq.type & 0x80) {
+      int32_t len;
+      if (fd_->Read(&len, sizeof(len)) != sizeof(len)) {
+        LOG(ERROR) << "Short read: " << fd_->StrError();
+        return false;
+      }
+
+      LOG(INFO) << "Reading payload (" << len << " bytes)";
+
+      if (len > 0) {
+        data_in->resize(len);
+        if (fd_->Read(data_in->data(), len) != len) {
+          LOG(ERROR) << "Short read: " << fd_->StrError();
+          return false;
+        }
+      }
+    }
+  }
+
+  LOG(INFO) << "Command execution completed with status: " << status;
+  return true;
+}
+
+bool VirtualADB::HandleDeviceDataRequest(uint8_t bus_id, uint8_t dev_id,
+                                         uint8_t endpoint,
+                                         bool is_host_to_device,
+                                         uint32_t deadline, uint32_t length,
+                                         const std::vector<uint8_t>& data_out,
+                                         std::vector<uint8_t>* data_in) {
+  LOG(INFO) << "Executing " << (is_host_to_device ? "write" : "read")
+            << " data transfer on " << int(bus_id) << "-" << int(dev_id);
+
+  uint32_t cmd = CmdDataTransfer;
+  if (fd_->Write(&cmd, sizeof(cmd)) != sizeof(cmd)) {
+    LOG(ERROR) << "Could not contact USB Forwarder: " << fd_->StrError();
+    return false;
+  }
+
+  DataTransfer rq;
+  rq.bus_id = bus_id;
+  rq.dev_id = dev_id;
+  rq.endpoint_id = endpoint;
+  rq.is_host_to_device = is_host_to_device;
+  rq.length = length;
+  rq.timeout = deadline;
+
+  if (fd_->Write(&rq, sizeof(rq)) != sizeof(rq)) {
+    LOG(ERROR) << "Short write: " << fd_->StrError();
+    return false;
+  }
+
+  if (rq.is_host_to_device && length > 0) {
+    if (fd_->Write(data_out.data(), length) != length) {
+      LOG(ERROR) << "Short write: " << fd_->StrError();
+      return false;
+    }
+  }
+
+  int32_t status;
+  if (fd_->Read(&status, sizeof(status)) != sizeof(status)) {
+    LOG(ERROR) << "Short read: " << fd_->StrError();
+    return false;
+  }
+
+  if (status == 0) {
+    if (!rq.is_host_to_device) {
       int32_t len;
       if (fd_->Read(&len, sizeof(len)) != sizeof(len)) {
         LOG(ERROR) << "Short read: " << fd_->StrError();

@@ -62,11 +62,18 @@ class Device {
   // Attach request handler.
   std::function<bool()> handle_attach;
 
-  // Device request dispatcher.
+  // Device control request dispatcher.
   std::function<bool(const CmdRequest& request,
                      const std::vector<uint8_t>& data_in,
                      std::vector<uint8_t>* data_out)>
-      handle_request;
+      handle_control_transfer;
+
+  // Device  data request dispatcher.
+  std::function<bool(uint8_t endpoint, bool is_host_to_device,
+                     uint32_t deadline, uint32_t length,
+                     const std::vector<uint8_t>& data_in,
+                     std::vector<uint8_t>* data_out)>
+      handle_data_transfer;
 };
 
 }  // namespace usbip
