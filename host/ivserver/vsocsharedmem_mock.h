@@ -12,7 +12,7 @@ class VSoCSharedMemoryMock : public VSoCSharedMemory {
                      bool(const std::string&, avd::SharedFD*, avd::SharedFD*));
   MOCK_CONST_METHOD0(SharedMemFD, const avd::SharedFD&());
   MOCK_CONST_METHOD0(Regions,
-                     const std::map<std::string, VSoCSharedMemory::Region>&());
+                     const std::vector<VSoCSharedMemory::Region>&());
 };
 }  // namespace test
 }  // namespace ivserver

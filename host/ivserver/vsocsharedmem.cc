@@ -43,7 +43,7 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
 
   const avd::SharedFD &SharedMemFD() const override;
 
-  const std::map<std::string, Region> &Regions() const override;
+  const std::vector<Region> &Regions() const override;
 
  private:
   void CreateLayout();
@@ -51,7 +51,8 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
   const uint32_t size_;
   const Json::Value &json_root_;
   avd::SharedFD shared_mem_fd_;
-  std::map<std::string, Region> eventfd_data_;
+  std::map<std::string, size_t> region_name_to_index_;
+  std::vector<Region> region_data_;
 
   VSoCSharedMemoryImpl(const VSoCSharedMemoryImpl &) = delete;
   VSoCSharedMemoryImpl &operator=(const VSoCSharedMemoryImpl &other) = delete;
@@ -107,9 +108,9 @@ const avd::SharedFD &VSoCSharedMemoryImpl::SharedMemFD() const {
   return shared_mem_fd_;
 }
 
-const std::map<std::string, VSoCSharedMemory::Region>
+const std::vector<VSoCSharedMemory::Region>
     &VSoCSharedMemoryImpl::Regions() const {
-  return eventfd_data_;
+  return region_data_;
 }
 
 std::unique_ptr<std::vector<VSoCSharedMemoryImpl::RegionOffset>>
@@ -256,8 +257,8 @@ void VSoCSharedMemoryImpl::CreateLayout() {
     LOG_IF(FATAL, !guest_efd->IsOpen())
         << "Failed to create guest eventfd for " << device_name << ": "
         << guest_efd->StrError();
-
-    eventfd_data_.emplace(device_name, Region{host_efd, guest_efd});
+    region_name_to_index_[device_name] = region_data_.size();
+    region_data_.push_back(Region{device_name, host_efd, guest_efd});
   }
 
   munmap(mmap_addr, size_);
@@ -266,11 +267,11 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 bool VSoCSharedMemoryImpl::GetEventFdPairForRegion(
     const std::string &region_name, avd::SharedFD *guest_to_host,
     avd::SharedFD *host_to_guest) const {
-  auto it = eventfd_data_.find(region_name);
-  if (it == eventfd_data_.end()) return false;
+  auto it = region_name_to_index_.find(region_name);
+  if (it == region_name_to_index_.end()) return false;
 
-  *guest_to_host = it->second.host_fd;
-  *host_to_guest = it->second.guest_fd;
+  *guest_to_host = region_data_[it->second].host_fd;
+  *host_to_guest = region_data_[it->second].guest_fd;
   return true;
 }
 

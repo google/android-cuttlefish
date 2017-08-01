@@ -15,6 +15,7 @@ class VSoCSharedMemory {
  public:
   // Region describes a VSoCSharedMem region.
   struct Region {
+    std::string name;
     avd::SharedFD host_fd;
     avd::SharedFD guest_fd;
   };
@@ -34,7 +35,7 @@ class VSoCSharedMemory {
                                        avd::SharedFD *host_to_guest) const = 0;
 
   virtual const avd::SharedFD &SharedMemFD() const = 0;
-  virtual const std::map<std::string, Region> &Regions() const = 0;
+  virtual const std::vector<Region> &Regions() const = 0;
 
  private:
   VSoCSharedMemory(const VSoCSharedMemory &) = delete;
