@@ -27,16 +27,3 @@ cc_binary(
         "@gtest_repo//:gtest",
     ],
 )
-
-cc_binary(
-    name = "host_region_postguest_e2e_test",
-    srcs = [
-        "host_region_postguest_e2e_test.cpp",
-    ],
-    deps = [
-        ":vsoc_lib",
-        "//common/vsoc/shm",
-        "@glog_repo//:glog",
-        "@gtest_repo//:gtest",
-    ],
-)
