@@ -165,8 +165,10 @@ class ManagedRegionTest {
         begin_offset,
         end_offset);
     EXPECT_TRUE(perm_fd >= 0);
+    fd_scoped_permission perm;
+    ASSERT_TRUE(ioctl(perm_fd, VSOC_GET_FD_SCOPED_PERMISSION, &perm) == 0);
     void* mapped_ptr = mmap(NULL,
-                            end_offset - begin_offset,
+                            perm.end_offset - perm.begin_offset,
                             PROT_WRITE | PROT_READ,
                             MAP_SHARED,
                             perm_fd,
