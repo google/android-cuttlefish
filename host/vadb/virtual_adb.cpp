@@ -15,12 +15,18 @@
  */
 #include <algorithm>
 #include <memory>
+#include "common/libs/fs/shared_select.h"
+#include "host/vadb/usb_cmd_attach.h"
+#include "host/vadb/usb_cmd_control_transfer.h"
+#include "host/vadb/usb_cmd_data_transfer.h"
+#include "host/vadb/usb_cmd_device_list.h"
 #include "host/vadb/virtual_adb.h"
 
 namespace vadb {
 
-void VirtualADB::RegisterDevice(const DeviceInfo& dev,
-                                const std::vector<InterfaceInfo>& ifaces) {
+void VirtualADB::RegisterDevice(
+    const usb_forward::DeviceInfo& dev,
+    const std::vector<usb_forward::InterfaceInfo>& ifaces) {
   auto d = std::unique_ptr<usbip::Device>(new usbip::Device);
   d->vendor_id = dev.vendor_id;
   d->product_id = dev.product_id;
@@ -44,20 +50,23 @@ void VirtualADB::RegisterDevice(const DeviceInfo& dev,
     return HandleAttach(bus_id, dev_id);
   };
 
-  d->handle_control_transfer = [this, bus_id, dev_id](
-                                   const usbip::CmdRequest& r,
-                                   const std::vector<uint8_t>& in,
-                                   std::vector<uint8_t>* out) -> bool {
-    return HandleDeviceControlRequest(bus_id, dev_id, r, in, out);
+  d->handle_control_transfer =
+      [this, bus_id, dev_id](
+          const usbip::CmdRequest& r, uint32_t deadline,
+          std::vector<uint8_t> data,
+          usbip::Device::AsyncTransferReadyCB callback) -> bool {
+    return HandleDeviceControlRequest(bus_id, dev_id, r, deadline,
+                                      std::move(data), std::move(callback));
   };
 
-  d->handle_data_transfer = [this, bus_id, dev_id](
-                                uint8_t endpoint, bool is_host_to_device,
-                                uint32_t deadline, uint32_t length,
-                                const std::vector<uint8_t>& in,
-                                std::vector<uint8_t>* out) -> bool {
+  d->handle_data_transfer =
+      [this, bus_id, dev_id](
+          uint8_t endpoint, bool is_host_to_device, uint32_t deadline,
+          std::vector<uint8_t> data,
+          usbip::Device::AsyncTransferReadyCB callback) -> bool {
     return HandleDeviceDataRequest(bus_id, dev_id, endpoint, is_host_to_device,
-                                   deadline, length, in, out);
+                                   deadline, std::move(data),
+                                   std::move(callback));
   };
 
   pool_.AddDevice(usbip::DevicePool::BusDevNumber{bus_id, dev_id},
@@ -65,39 +74,84 @@ void VirtualADB::RegisterDevice(const DeviceInfo& dev,
 }
 
 bool VirtualADB::PopulateRemoteDevices() {
-  uint32_t cmd = CmdDeviceList;
-  if (fd_->Write(&cmd, sizeof(cmd)) != sizeof(cmd)) {
+  return ExecuteCommand(std::unique_ptr<USBCommand>(new USBCmdDeviceList(
+      [this](const usb_forward::DeviceInfo& info,
+             const std::vector<usb_forward::InterfaceInfo>& ifaces) {
+        RegisterDevice(info, ifaces);
+      })));
+}
+
+bool VirtualADB::HandleDeviceControlRequest(
+    uint8_t bus_id, uint8_t dev_id, const usbip::CmdRequest& r,
+    uint32_t timeout, std::vector<uint8_t> data,
+    usbip::Device::AsyncTransferReadyCB callback) {
+  return ExecuteCommand(std::unique_ptr<USBCommand>(new USBCmdControlTransfer(
+      bus_id, dev_id, r.type, r.cmd, r.value, r.index, timeout, std::move(data),
+      std::move(callback))));
+}
+
+bool VirtualADB::HandleDeviceDataRequest(
+    uint8_t bus_id, uint8_t dev_id, uint8_t endpoint, bool is_host_to_device,
+    uint32_t deadline, std::vector<uint8_t> data,
+    usbip::Device::AsyncTransferReadyCB callback) {
+  return ExecuteCommand(std::unique_ptr<USBCommand>(
+      new USBCmdDataTransfer(bus_id, dev_id, endpoint, is_host_to_device,
+                             deadline, std::move(data), std::move(callback))));
+}
+
+bool VirtualADB::HandleAttach(uint8_t bus_id, uint8_t dev_id) {
+  return ExecuteCommand(
+      std::unique_ptr<USBCommand>(new USBCmdAttach(bus_id, dev_id)));
+}
+
+bool VirtualADB::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
+  std::lock_guard<std::mutex> guard(commands_mutex_);
+
+  uint32_t this_tag = tag_;
+  tag_++;
+  usb_forward::RequestHeader hdr{cmd->Command(), this_tag};
+  if (fd_->Write(&hdr, sizeof(hdr)) != sizeof(hdr)) {
     LOG(ERROR) << "Could not contact USB Forwarder: " << fd_->StrError();
     return false;
   }
 
-  int32_t count;
-  if (fd_->Read(&count, sizeof(count)) != sizeof(count)) {
-    LOG(ERROR) << "Short read: " << fd_->StrError();
-    return 1;
-  }
+  if (!cmd->OnRequest(fd_)) return false;
 
-  while (count-- > 0) {
-    DeviceInfo dev;
-    std::vector<InterfaceInfo> ifaces;
-
-    if (fd_->Read(&dev, sizeof(dev)) != sizeof(dev)) {
-      LOG(ERROR) << "Short read: " << fd_->StrError();
-      return 1;
-    }
-
-    ifaces.resize(dev.num_interfaces);
-    if (fd_->Read(ifaces.data(), ifaces.size() * sizeof(InterfaceInfo)) !=
-        ifaces.size() * sizeof(InterfaceInfo)) {
-      LOG(ERROR) << "Short read: " << fd_->StrError();
-      return 1;
-    }
-
-    LOG(INFO) << "Found remote device 0x" << std::hex << dev.vendor_id << ":"
-              << dev.product_id;
-    RegisterDevice(dev, ifaces);
-  }
+  commands_[this_tag] = std::move(cmd);
   return true;
+}
+
+void VirtualADB::ReceiveThread() {
+  avd::SharedFDSet rset;
+  while (true) {
+    rset.Zero();
+    rset.Set(fd_);
+    auto res = avd::Select(&rset, nullptr, nullptr, nullptr);
+    if (res <= 0) continue;
+
+    if (rset.IsSet(fd_)) {
+      usb_forward::ResponseHeader rhdr;
+      if (fd_->Read(&rhdr, sizeof(rhdr)) != sizeof(rhdr)) {
+        LOG(ERROR) << "Could not read from USB Forwarder: " << fd_->StrError();
+        // TODO(ender): this is likely an indication that the remote end has
+        // rebooted. We should probably just fail all USB/IP commands here.
+        continue;
+      }
+
+      std::lock_guard<std::mutex> lock(commands_mutex_);
+      auto iter = commands_.find(rhdr.tag);
+      if (iter == commands_.end()) {
+        LOG(ERROR)
+            << "Response does not match any of the previously queued commands!";
+        // TODO(ender): Doesn't make much sense to continue. We should just
+        // reset stream here by closing and re-opening connection.
+        continue;
+      }
+
+      iter->second->OnResponse(rhdr.status == usb_forward::StatusSuccess, fd_);
+      commands_.erase(iter);
+    }
+  }
 }
 
 bool VirtualADB::Init() {
@@ -107,167 +161,9 @@ bool VirtualADB::Init() {
     return false;
   }
 
+  receive_thread_.reset(new std::thread([this]() { ReceiveThread(); }));
+
   return PopulateRemoteDevices();
-}
-
-bool VirtualADB::HandleDeviceControlRequest(
-    uint8_t bus_id, uint8_t dev_id, const usbip::CmdRequest& r,
-    const std::vector<uint8_t>& data_out, std::vector<uint8_t>* data_in) {
-  LOG(INFO) << "Executing control command on " << int(bus_id) << "-"
-            << int(dev_id);
-
-  uint32_t cmd = CmdControlTransfer;
-  if (fd_->Write(&cmd, sizeof(cmd)) != sizeof(cmd)) {
-    LOG(ERROR) << "Could not contact USB Forwarder: " << fd_->StrError();
-    return false;
-  }
-
-  ControlTransfer rq;
-
-  rq.bus_id = bus_id;
-  rq.dev_id = dev_id;
-  rq.type = r.type;
-  rq.cmd = r.cmd;
-  rq.value = r.value;
-  rq.index = r.index;
-  rq.length = r.length;
-  rq.timeout = 0;
-
-  if (fd_->Write(&rq, sizeof(rq)) != sizeof(rq)) {
-    LOG(ERROR) << "Short write: " << fd_->StrError();
-    return false;
-  }
-
-  if ((rq.type & 0x80) == 0) {
-    if (r.length > 0) {
-      if (fd_->Write(data_out.data(), r.length) != r.length) {
-        LOG(ERROR) << "Short write: " << fd_->StrError();
-        return false;
-      }
-    }
-  }
-
-  int32_t status;
-  if (fd_->Read(&status, sizeof(status)) != sizeof(status)) {
-    LOG(ERROR) << "Short read: " << fd_->StrError();
-    return false;
-  }
-
-  if (status == 0) {
-    if (rq.type & 0x80) {
-      int32_t len;
-      if (fd_->Read(&len, sizeof(len)) != sizeof(len)) {
-        LOG(ERROR) << "Short read: " << fd_->StrError();
-        return false;
-      }
-
-      LOG(INFO) << "Reading payload (" << len << " bytes)";
-
-      if (len > 0) {
-        data_in->resize(len);
-        if (fd_->Read(data_in->data(), len) != len) {
-          LOG(ERROR) << "Short read: " << fd_->StrError();
-          return false;
-        }
-      }
-    }
-  }
-
-  LOG(INFO) << "Command execution completed with status: " << status;
-  return true;
-}
-
-bool VirtualADB::HandleDeviceDataRequest(uint8_t bus_id, uint8_t dev_id,
-                                         uint8_t endpoint,
-                                         bool is_host_to_device,
-                                         uint32_t deadline, uint32_t length,
-                                         const std::vector<uint8_t>& data_out,
-                                         std::vector<uint8_t>* data_in) {
-  LOG(INFO) << "Executing " << (is_host_to_device ? "write" : "read")
-            << " data transfer on " << int(bus_id) << "-" << int(dev_id);
-
-  uint32_t cmd = CmdDataTransfer;
-  if (fd_->Write(&cmd, sizeof(cmd)) != sizeof(cmd)) {
-    LOG(ERROR) << "Could not contact USB Forwarder: " << fd_->StrError();
-    return false;
-  }
-
-  DataTransfer rq;
-  rq.bus_id = bus_id;
-  rq.dev_id = dev_id;
-  rq.endpoint_id = endpoint;
-  rq.is_host_to_device = is_host_to_device;
-  rq.length = length;
-  rq.timeout = deadline;
-
-  if (fd_->Write(&rq, sizeof(rq)) != sizeof(rq)) {
-    LOG(ERROR) << "Short write: " << fd_->StrError();
-    return false;
-  }
-
-  if (rq.is_host_to_device && length > 0) {
-    if (fd_->Write(data_out.data(), length) != length) {
-      LOG(ERROR) << "Short write: " << fd_->StrError();
-      return false;
-    }
-  }
-
-  int32_t status;
-  if (fd_->Read(&status, sizeof(status)) != sizeof(status)) {
-    LOG(ERROR) << "Short read: " << fd_->StrError();
-    return false;
-  }
-
-  if (status == 0) {
-    if (!rq.is_host_to_device) {
-      int32_t len;
-      if (fd_->Read(&len, sizeof(len)) != sizeof(len)) {
-        LOG(ERROR) << "Short read: " << fd_->StrError();
-        return false;
-      }
-
-      LOG(INFO) << "Reading payload (" << len << " bytes)";
-
-      if (len > 0) {
-        data_in->resize(len);
-        if (fd_->Read(data_in->data(), len) != len) {
-          LOG(ERROR) << "Short read: " << fd_->StrError();
-          return false;
-        }
-      }
-    }
-  }
-
-  LOG(INFO) << "Command execution completed with status: " << status;
-  return true;
-}
-
-bool VirtualADB::HandleAttach(uint8_t bus_id, uint8_t dev_id) {
-  LOG(INFO) << "Attaching device " << int(bus_id) << "-" << int(dev_id);
-
-  uint32_t cmd = CmdAttach;
-  if (fd_->Write(&cmd, sizeof(cmd)) != sizeof(cmd)) {
-    LOG(ERROR) << "Could not contact USB Forwarder: " << fd_->StrError();
-    return false;
-  }
-
-  AttachRequest rq;
-  rq.bus_id = bus_id;
-  rq.dev_id = dev_id;
-
-  if (fd_->Write(&rq, sizeof(rq)) != sizeof(rq)) {
-    LOG(ERROR) << "Short write: " << fd_->StrError();
-    return false;
-  }
-
-  int32_t status;
-  if (fd_->Read(&status, sizeof(status)) != sizeof(status)) {
-    LOG(ERROR) << "Short read: " << fd_->StrError();
-    return false;
-  }
-
-  LOG(INFO) << "Attach result: " << status;
-  return status == 0;
 }
 
 const usbip::DevicePool& VirtualADB::Pool() const { return pool_; }

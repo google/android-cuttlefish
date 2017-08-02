@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "common/libs/fs/shared_fd.h"
-#include "host/vadb/usbip/server.h"
-#include "host/vadb/virtual_adb.h"
+#include "guest/usbforward/protocol.h"
+#include "host/vadb/usb_cmd_attach.h"
 
-DEFINE_string(socket, "", "Socket to use to talk to USBForwarder.");
-
-int main(int argc, char* argv[]) {
-  google::InitGoogleLogging(argv[0]);
-  google::ParseCommandLineFlags(&argc, &argv, true);
-
-  vadb::VirtualADB adb(FLAGS_socket);
-  CHECK(adb.Init());
-
-  vadb::usbip::Server s(adb.Pool());
-  CHECK(s.Init()) << "Could not start server";
-  s.Serve();
+namespace vadb {
+bool USBCmdAttach::OnRequest(const avd::SharedFD& fd) {
+  if (fd->Write(&req_, sizeof(req_)) != sizeof(req_)) {
+    LOG(ERROR) << "Short write: " << fd->StrError();
+    return false;
+  }
+  return true;
 }
+
+bool USBCmdAttach::OnResponse(bool is_success, const avd::SharedFD& data) {
+  if (!is_success) return false;
+  LOG(INFO) << "Attach successful.";
+  return true;
+}
+
+USBCmdAttach::USBCmdAttach(uint8_t bus_id, uint8_t dev_id) {
+  req_.bus_id = bus_id;
+  req_.dev_id = dev_id;
+}
+}  // namespace vadb

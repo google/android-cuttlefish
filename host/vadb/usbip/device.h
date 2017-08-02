@@ -30,6 +30,13 @@ namespace usbip {
 // available for import.
 class Device {
  public:
+  // AsyncTransferReadyCB specifies a signature of a function that will be
+  // called upon transfer completion (whether successful or failed). Parameters
+  // supplied to the function are:
+  // - operation status, indicated by boolean flag (true = success),
+  // - vector containing transferred data (and actual size).
+  using AsyncTransferReadyCB = std::function<void(bool, std::vector<uint8_t>)>;
+
   // Interface provides minimal description of device's interface.
   struct Interface {
     uint8_t iface_class;
@@ -63,16 +70,14 @@ class Device {
   std::function<bool()> handle_attach;
 
   // Device control request dispatcher.
-  std::function<bool(const CmdRequest& request,
-                     const std::vector<uint8_t>& data_in,
-                     std::vector<uint8_t>* data_out)>
+  std::function<bool(const CmdRequest& request, uint32_t deadline,
+                     std::vector<uint8_t> data, AsyncTransferReadyCB callback)>
       handle_control_transfer;
 
   // Device  data request dispatcher.
   std::function<bool(uint8_t endpoint, bool is_host_to_device,
-                     uint32_t deadline, uint32_t length,
-                     const std::vector<uint8_t>& data_in,
-                     std::vector<uint8_t>* data_out)>
+                     uint32_t deadline, std::vector<uint8_t> data,
+                     AsyncTransferReadyCB callback)>
       handle_data_transfer;
 };
 

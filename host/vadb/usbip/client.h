@@ -60,6 +60,11 @@ class Client final {
   // Returns false, if connection should be dropped.
   bool HandleSubmitCmd(const CmdHeader& hdr);
 
+  // HandleAsyncDataReady is called asynchronously once previously submitted
+  // data transfer (control or bulk) has completed (or failed).
+  void HandleAsyncDataReady(uint32_t seq_num, bool is_success,
+                            bool is_host_to_device, std::vector<uint8_t> data);
+
   // Unlink previously submitted message from device queue.
   // Returns false, if connection should be dropped.
   bool HandleUnlinkCmd(const CmdHeader& hdr);
