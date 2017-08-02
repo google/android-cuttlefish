@@ -45,8 +45,6 @@ constexpr int kMaxVersion = 0x111;  // 1.1?.1?
 // Returns true, if message was sent successfully.
 template <typename T>
 bool SendUSBIPMsg(const avd::SharedFD& fd, T data) {
-  VLOG(2) << "Sending " << sizeof(T) << " bytes...";
-  VLOG(1) << data;
   internal::HostToNet(&data);
   return fd->Send(&data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
 }
@@ -60,7 +58,6 @@ bool RecvUSBIPMsg(const avd::SharedFD& fd, T* data) {
   bool res = fd->Recv(data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
   if (res) {
     internal::NetToHost(data);
-    VLOG(1) << *data;
   }
   return res;
 }

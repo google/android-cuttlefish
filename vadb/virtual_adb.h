@@ -15,9 +15,13 @@
  */
 #pragma once
 
+#include <mutex>
 #include <string>
+#include <thread>
+
 #include "common/libs/fs/shared_fd.h"
 #include "guest/usbforward/protocol.h"
+#include "host/vadb/usb_cmd.h"
 #include "host/vadb/usbip/device.h"
 #include "host/vadb/usbip/device_pool.h"
 #include "host/vadb/usbip/messages.h"
@@ -47,28 +51,45 @@ class VirtualADB {
   bool PopulateRemoteDevices();
 
   // Register new device in a device pool.
-  void RegisterDevice(const DeviceInfo& dev,
-                      const std::vector<InterfaceInfo>& ifaces);
+  void RegisterDevice(const usb_forward::DeviceInfo& dev,
+                      const std::vector<usb_forward::InterfaceInfo>& ifaces);
 
   // Request attach remote USB device.
   bool HandleAttach(uint8_t bus_id, uint8_t dev_id);
 
   // Execute control request on remote device.
   bool HandleDeviceControlRequest(uint8_t bus_id, uint8_t dev_id,
-                                  const usbip::CmdRequest& r,
-                                  const std::vector<uint8_t>& data_out,
-                                  std::vector<uint8_t>* data_in);
+                                  const usbip::CmdRequest& r, uint32_t deadline,
+                                  std::vector<uint8_t> data,
+                                  usbip::Device::AsyncTransferReadyCB callback);
 
   // Execute data request on remote device.
   bool HandleDeviceDataRequest(uint8_t bus_id, uint8_t dev_id, uint8_t endpoint,
                                bool is_host_to_device, uint32_t deadline,
-                               uint32_t length,
-                               const std::vector<uint8_t>& data_out,
-                               std::vector<uint8_t>* data_in);
+                               std::vector<uint8_t> data,
+                               usbip::Device::AsyncTransferReadyCB callback);
+
+  // ExecuteCommand creates command header and executes supplied USBCommand.
+  // If execution was successful, command will be stored internally until
+  // response arrives.
+  bool ExecuteCommand(std::unique_ptr<USBCommand> cmd);
+
+  // ReceiveThread manages incoming data:
+  // - reads response header,
+  // - find previously executed command whose tag matches tag found in header,
+  // - executes OnResponse() and
+  // - disposes of that command.
+  void ReceiveThread();
 
   std::string path_;
   avd::SharedFD fd_;
   usbip::DevicePool pool_;
+
+  std::unique_ptr<std::thread> receive_thread_;
+
+  std::mutex commands_mutex_;
+  uint32_t tag_ = 0;
+  std::map<uint32_t, std::unique_ptr<USBCommand>> commands_;
 
   VirtualADB(const VirtualADB& other) = delete;
   VirtualADB& operator=(const VirtualADB& other) = delete;
