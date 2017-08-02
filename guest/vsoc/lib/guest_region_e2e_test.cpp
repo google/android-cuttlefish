@@ -31,6 +31,17 @@ using vsoc::layout::e2e_test::E2ESecondaryTestRegion;
 using vsoc::layout::e2e_test::E2EManagedTestRegion;
 using vsoc::layout::e2e_test::E2EManagerTestRegion;
 
+static inline void disable_tombstones() {
+  // We don't want a tombstone, and we're already in the child, so we modify the
+  // behavior of LOG(ABORT) to print the well known message and do an
+  // error-based exit.
+  android::base::SetAborter([](const char*){
+      fputs(DEATH_TEST_MESSAGE, stderr);
+      fflush(stderr);
+      exit(2);
+    });
+}
+
 /**
  * The string functions have problems with volatile pointers, so
  * this function casts them away.
@@ -73,14 +84,7 @@ class RegionTest {
   }
 
   void DeathTestGuestRegion()  {
-    // We don't want a tombstone, and we're already in the child.
-    // region, so we modify the behavior of LOG(ABORT) to print the
-    // well known message and do an error-based exit.
-    android::base::SetAborter([](const char*){
-        fputs(DEATH_TEST_MESSAGE, stderr);
-        fflush(stderr);
-        exit(2);
-      });
+    disable_tombstones();
     // region.Open should never return.
     EXPECT_FALSE(region.Open());
   }
@@ -142,8 +146,9 @@ TEST(RegionTest, SecondaryRegionHostWritesVisible) {
 class ManagedRegionTest {
  public:
   void testManagedRegionFailMap() {
-    // Map is protected in ManagedRegion, so this need to be tested at low level
     vsoc::TypedRegion<E2EManagedTestRegion> managed_region;
+    disable_tombstones();
+    // managed_region.Open should never return.
     EXPECT_FALSE(managed_region.Open());
   }
 
@@ -212,7 +217,9 @@ class ManagedRegionTest {
 
 TEST(ManagedRegionTest, ManagedRegionFailMap) {
   ManagedRegionTest test;
-  test.testManagedRegionFailMap();
+  EXPECT_EXIT(test.testManagedRegionFailMap(),
+              testing::ExitedWithCode(2),
+              ".*" DEATH_TEST_MESSAGE ".*");
 }
 
 TEST(ManagedRegionTest, ManagedRegionMap) {
