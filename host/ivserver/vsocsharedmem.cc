@@ -192,6 +192,8 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 
   // Move to the region_descriptor area.
   offset += layout_descriptor.vsoc_region_desc_offset;
+  vsoc_device_region * shm_regions = reinterpret_cast<vsoc_device_region*>(
+        reinterpret_cast<char *>(mmap_addr) + offset);
 
   uint16_t region_idx = 0;
 
@@ -259,6 +261,28 @@ void VSoCSharedMemoryImpl::CreateLayout() {
         << guest_efd->StrError();
     region_name_to_index_[device_name] = region_data_.size();
     region_data_.push_back(Region{device_name, host_efd, guest_efd});
+  }
+
+  // Set up managed regions
+  for (const auto &region : json_root_["vsoc_device_regions"]) {
+    if (region.isMember("managed_by")) {
+      const std::string &device_name = region["device_name"].asString();
+      const std::string &owner_name = region.get("managed_by", "").asString();
+      LOG_IF(FATAL, region_name_to_index_.count(owner_name) == 0)
+          << "Unknown owner region (" << owner_name << ") for region "
+          << device_name;
+      uint32_t owner_idx = region_name_to_index_[owner_name];
+      LOG_IF(FATAL, owner_idx == VSOC_REGION_WHOLE)
+          << "Region '" << device_name << "' has owner " << owner_name
+          << " with index " << owner_idx
+          << " which is the default value for regions without an owner. Choose "
+             "a different region to be at index "
+          << owner_idx
+          << ", make sure the chosen region is NOT the owner of any other "
+             "region";
+      size_t region_idx = region_name_to_index_[device_name];
+      shm_regions[region_idx].managed_by = owner_idx;
+    }
   }
 
   munmap(mmap_addr, size_);
