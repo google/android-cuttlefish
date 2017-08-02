@@ -108,6 +108,7 @@ int vsoc::OpenableRegion::CreateFdScopedPermission(
   int retval = region_fd_->Ioctl(VSOC_CREATE_FD_SCOPED_PERMISSION, &perm);
   if (retval) {
     int errno_ = errno;
+    close(managed_region_fd);
     if (errno != EBUSY) {
         LOG(FATAL) << "Unable to create fd scoped permission (" <<
           strerror(errno) << ")";
