@@ -15,8 +15,6 @@
  */
 #pragma once
 
-#define LOG_TAG "UsbForward"
-
 #include <map>
 #include <memory>
 #include <string>
@@ -64,6 +62,7 @@ class USBServer final {
   std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)>
       handle_;
 
+  avd::ScopedThread libusb_thread_;
   avd::Mutex write_mutex_;
   avd::SharedFD fd_;
 

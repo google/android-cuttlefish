@@ -60,7 +60,7 @@ class TransportRequest final {
   libusb_device_handle* handle_;
   CallbackType callback_;
   bool is_control_;
-  libusb_transfer transfer_;
+  std::unique_ptr<libusb_transfer, void(*)(libusb_transfer*)> transfer_;
   std::unique_ptr<uint8_t[]> buffer_;
 
   TransportRequest(const TransportRequest& other) = delete;

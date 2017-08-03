@@ -32,6 +32,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog
 
+LOCAL_CFLAGS += -DLOG_TAG=\"UsbForward\"
+
 LOCAL_MULTILIB := first
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_EXECUTABLE)

@@ -23,7 +23,10 @@ namespace usb_forward {
 TransportRequest::TransportRequest(libusb_device_handle* handle,
                                    CallbackType callback,
                                    const ControlTransfer& transfer)
-    : handle_(handle), callback_(std::move(callback)), is_control_(true) {
+    : handle_{handle},
+      callback_{std::move(callback)},
+      is_control_{true},
+      transfer_{libusb_alloc_transfer(0), libusb_free_transfer} {
   // NOTE: libusb places setup structure as part of user data!
   buffer_.reset(new uint8_t[transfer.length + LIBUSB_CONTROL_SETUP_SIZE]);
 
@@ -35,25 +38,24 @@ TransportRequest::TransportRequest(libusb_device_handle* handle,
   // NOTE: despite libusb requires user to allocate buffer large enough to
   // accommodate SETUP structure and actual data, it requires user to provide
   // only data length here, while setup length is added internally.
-  if (handle_) {
-    libusb_fill_control_transfer(&transfer_, handle_, buffer_.get(),
+    libusb_fill_control_transfer(transfer_.get(), handle_, buffer_.get(),
                                  OnTransferComplete, this, transfer.timeout);
-  }
 }
 
 TransportRequest::TransportRequest(libusb_device_handle* handle,
                                    CallbackType callback,
                                    const DataTransfer& transfer)
-    : handle_(handle), callback_(std::move(callback)), is_control_(false) {
+    : handle_{handle},
+      callback_{std::move(callback)},
+      is_control_{false},
+      transfer_{libusb_alloc_transfer(0), libusb_free_transfer} {
   buffer_.reset(new uint8_t[transfer.length]);
-  if (handle_) {
-    libusb_fill_bulk_transfer(&transfer_, handle_,
-                              transfer.endpoint_id | (transfer.is_host_to_device
-                                                          ? LIBUSB_ENDPOINT_OUT
-                                                          : LIBUSB_ENDPOINT_IN),
-                              buffer_.get(), transfer.length,
-                              OnTransferComplete, this, transfer.timeout);
-  }
+  libusb_fill_bulk_transfer(
+      transfer_.get(), handle_,
+      transfer.endpoint_id | (transfer.is_host_to_device ? LIBUSB_ENDPOINT_OUT
+                                                         : LIBUSB_ENDPOINT_IN),
+      buffer_.get(), transfer.length, OnTransferComplete, this,
+      transfer.timeout);
 }
 
 uint8_t* TransportRequest::Buffer() {
@@ -66,7 +68,7 @@ uint8_t* TransportRequest::Buffer() {
 
 bool TransportRequest::Submit() {
   if (handle_) {
-    auto err = libusb_submit_transfer(&transfer_);
+    auto err = libusb_submit_transfer(transfer_.get());
     if (err != 0) {
       ALOGE("libusb transfer failed: %d", err);
     }

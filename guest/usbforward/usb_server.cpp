@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#undef NDEBUG
+// #undef NDEBUG
 
 #include "guest/usbforward/usb_server.h"
 
@@ -107,10 +107,18 @@ bool GetDeviceInfo(DeviceInfo* info, std::vector<InterfaceInfo>* ifaces) {
   libusb_free_config_descriptor(conf);
   return true;
 }
+
+void* ProcessLibUSBRequests(void* discard) {
+  while (true) {
+    libusb_handle_events_completed(nullptr, nullptr);
+  }
+}
 }  // anonymous namespace
 
 USBServer::USBServer(const avd::SharedFD& fd)
-    : handle_{nullptr, libusb_close}, fd_{fd} {}
+    : handle_{nullptr, libusb_close},
+      libusb_thread_(&ProcessLibUSBRequests, nullptr),
+      fd_{fd} {}
 
 void USBServer::HandleDeviceList(uint32_t tag) {
   // Iterate all devices and send structure for every found device.
@@ -166,7 +174,18 @@ void USBServer::HandleControlTransfer(uint32_t tag) {
 
   if (!is_data_in && req.length) {
     // If disconnected prematurely, don't send response.
-    if (fd_->Read(treq->Buffer(), req.length) != int(req.length)) return;
+    int32_t got = 0;
+    while (got < req.length) {
+      auto read = fd_->Read(&treq->Buffer()[got], req.length - got);
+      if (fd_->GetErrno() != 0) {
+        ALOGE("Failed to read from client: %s", fd_->StrError());
+        return;
+      } else if (read == 0) {
+        ALOGE("Failed to read from client: short read");
+        return;
+      }
+      got += read;
+    }
   }
 
   // At this point we store transport request internally until it completes.
@@ -198,7 +217,18 @@ void USBServer::HandleDataTransfer(uint32_t tag) {
 
   if (!is_data_in && req.length) {
     // If disconnected prematurely, don't send response.
-    if (fd_->Read(treq->Buffer(), req.length) != req.length) return;
+    int32_t got = 0;
+    while (got < req.length) {
+      auto read = fd_->Read(&treq->Buffer()[got], req.length - got);
+      if (fd_->GetErrno() != 0) {
+        ALOGE("Failed to read from client: %s", fd_->StrError());
+        return;
+      } else if (read == 0) {
+        ALOGE("Failed to read from client: short read");
+        return;
+      }
+      got += read;
+    }
   }
 
   // At this point we store transport request internally until it completes.
@@ -225,7 +255,16 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
     if (actual_length > 0) {
       // NOTE: don't use buffer_ here directly, as libusb uses first few bytes
       // to store control data there.
-      fd_->Write(buffer, actual_length);
+      int32_t sent = 0;
+      while (sent < actual_length) {
+        int packet_size = fd_->Write(&buffer[sent], actual_length - sent);
+        sent += packet_size;
+        ALOGI("Sending response, %d / %d bytes sent", sent, actual_length);
+        if (fd_->GetErrno() != 0) {
+          ALOGE("Send failed: %s", fd_->StrError());
+          return;
+        }
+      }
     }
   }
 
@@ -246,7 +285,7 @@ void USBServer::Serve() {
 
     if (rset.IsSet(fd_)) {
       RequestHeader req;
-      if (fd_->Read(&req, sizeof(req)) < int(sizeof(req))) {
+      if (fd_->Read(&req, sizeof(req)) != sizeof(req)) {
         // There's nobody on the other side.
         sleep(3);
         continue;
@@ -254,26 +293,28 @@ void USBServer::Serve() {
 
       switch (req.command) {
         case CmdDeviceList:
-          ALOGV("Processing DeviceList command");
+          ALOGV("Processing DeviceList command, tag=%d", req.tag);
           HandleDeviceList(req.tag);
           break;
 
         case CmdAttach:
-          ALOGV("Processing Attach command");
+          ALOGV("Processing Attach command, tag=%d", req.tag);
           HandleAttach(req.tag);
+          break;
 
         case CmdControlTransfer:
-          ALOGV("Processing ControlTransfer command");
+          ALOGV("Processing ControlTransfer command, tag=%d", req.tag);
           HandleControlTransfer(req.tag);
           break;
 
         case CmdDataTransfer:
-          ALOGV("Processing DataTransfer command");
+          ALOGV("Processing DataTransfer command, tag=%d", req.tag);
           HandleDataTransfer(req.tag);
           break;
 
         default:
-          ALOGE("Discarding unknown command %08x", req.command);
+          ALOGE("Discarding unknown command %08x, tag=%d", req.command,
+                req.tag);
       }
     }
   }
