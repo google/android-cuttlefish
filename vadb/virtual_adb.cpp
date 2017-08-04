@@ -163,7 +163,19 @@ bool VirtualADB::Init() {
 
   receive_thread_.reset(new std::thread([this]() { ReceiveThread(); }));
 
-  return PopulateRemoteDevices();
+  while (true) {
+    PopulateRemoteDevices();
+    if (pool_.Size() > 0) break;
+    // Wait for remote to be ready.
+    sleep(1);
+  }
+
+  // Attach devices immediately.
+  for (const auto& dev : pool_) {
+    dev.second->handle_attach();
+  }
+
+  return true;
 }
 
 const usbip::DevicePool& VirtualADB::Pool() const { return pool_; }

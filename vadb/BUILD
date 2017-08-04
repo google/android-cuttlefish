@@ -11,8 +11,13 @@ cc_binary(
         "usb_cmd_data_transfer.h",
         "usb_cmd_device_list.cpp",
         "usb_cmd_device_list.h",
+        "vhci_instrument.cpp",
+        "vhci_instrument.h",
         "virtual_adb.cpp",
         "virtual_adb.h",
+    ],
+    linkopts = [
+        "-ludev",
     ],
     deps = [
         "@cuttlefish//common/libs/fs",

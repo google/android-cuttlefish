@@ -104,6 +104,7 @@ void Server::HandleIncomingConnection() {
   }
 
   clients_.emplace_back(device_pool_, client);
+  clients_.back().SetAttached(init_attached_state_);
 }
 }  // namespace usbip
 }  // namespace vadb

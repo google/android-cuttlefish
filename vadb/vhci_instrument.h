@@ -13,23 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include "host/vadb/usbip/device_pool.h"
+#include <memory>
+#include <string>
+#include <thread>
 
-#include <glog/logging.h>
+#include <libudev.h>
 
 namespace vadb {
-namespace usbip {
+class VHCIInstrument {
+ public:
+  VHCIInstrument();
+  virtual ~VHCIInstrument() = default;
 
-void DevicePool::AddDevice(BusDevNumber bdn, std::unique_ptr<Device> device) {
-  devices_[bdn] = std::move(device);
-}
+  bool Init();
 
-Device* DevicePool::GetDevice(BusDevNumber bus_id) const {
-  auto iter = devices_.find(bus_id);
-  if (iter == devices_.end()) return nullptr;
-  return iter->second.get();
-}
+  bool Attach();
+  void AttachThread();
+  bool FindFreePort();
 
-}  // namespace usbip
+ private:
+  std::unique_ptr<udev, void(*)(udev*)> udev_;
+  std::unique_ptr<udev_device, void(*)(udev_device*)> vhci_device_;
+  std::unique_ptr<std::thread> attach_thread_;
+  std::string syspath_;
+  int port_;
+
+  VHCIInstrument(const VHCIInstrument& other) = delete;
+  VHCIInstrument& operator=(const VHCIInstrument& other) = delete;
+};
 }  // namespace vadb
