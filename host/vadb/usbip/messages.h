@@ -32,14 +32,6 @@ template <typename T>
 void NetToHost(T* data);
 }  // namespace internal
 
-// This is the range of USB/IP versions in which we should be safe to operate.
-// USB/IP expects (and the expectation is strong) that the version reported by
-// server is *same* as version reported by client, so we have to mock this for
-// every client.
-// TODO(ender): find if this is documented anywhere.
-constexpr int kMinVersion = 0x100;  // 1.0.0
-constexpr int kMaxVersion = 0x111;  // 1.1?.1?
-
 // Send message to USB/IP client.
 // Accept data by value and modify it to match net endian locally.
 // Returns true, if message was sent successfully.
@@ -60,83 +52,6 @@ bool RecvUSBIPMsg(const avd::SharedFD& fd, T* data) {
   }
   return res;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// OPERATIONS
-////////////////////////////////////////////////////////////////////////////////
-
-// Operation numbers. Operations are valid only when USB device is detached.
-enum Operation : uint16_t {
-  // Request import (~attach) USB device. Request data format:
-  // - OpReqRepBusId - describing BUS ID.
-  kUsbIpOpReqImport = 0x8003,
-
-  // Import (~attach) response. Response format:
-  // - OpRepDeviceInfo - USBIP device descriptor.
-  kUsbIpOpRepImport = 3,
-
-  // Request list available devices. No request data.
-  kUsbIpOpReqDevList = 0x8005,
-
-  // Device list response. Response format:
-  // - OpRepDeviceListInfo - specifies number of device list reports that follow
-  //   (n),
-  // - n * OpRepDeviceInfo - USBIP device descriptor, including # interfaces
-  //   (m),
-  // - m * OpRepInterfaceInfo - for every OpRepDeviceInfo, list of interfaces.
-  kUsbIpOpRepDevList = 5,
-};
-
-// Header precedes all OPERATION requests and responses.
-// Header does NOT precede COMMAND requests and responses.
-struct OpHeader {
-  uint16_t version;   // BCD. Server must obey client, not the other way around.
-  Operation command;  // Request or response type.
-  uint32_t status;    // Status; 0 = ok, 1 = error.
-};
-
-// OPERATION request/response body is essentially several structures glued
-// together. Because half of these messages are nested arrays of arbitrary
-// lengths each, we can't define a single structure explaining full request or
-// response body. Instead we will define components that, when combined,
-// constitute this body.
-//
-// OpReqRepBusId functions both as a device info field and request body.
-using OpReqRepBusId = char[32];
-
-// OpRepDeviceListInfo is a header preceding an array of OpRepDeviceInfo devices
-// offered by this server.
-struct OpRepDeviceListInfo {
-  uint32_t num_exported_devices;
-} __attribute__((packed));
-
-// OpRepDeviceInfo is used both as a partial response to OpReqDeviceList and
-// OpReqImport. Depending on operation type it may or may not be followed by an
-// array of OpRepInterfaceInfo interfaces this device exports.
-struct OpRepDeviceInfo {
-  char usb_path[256];
-  OpReqRepBusId bus_id;
-  uint32_t bus_num;
-  uint32_t dev_num;
-  uint32_t speed;
-  uint16_t id_vendor;
-  uint16_t id_product;
-  uint16_t bcd_device;
-  uint8_t device_class;
-  uint8_t device_subclass;
-  uint8_t device_protocol;
-  uint8_t configuration_value;
-  uint8_t num_configurations;
-  uint8_t num_interfaces;
-} __attribute__((packed));
-
-// OpRepInterfaceInfo lists interface details of a particular USB device.
-struct OpRepInterfaceInfo {
-  uint8_t iface_class;
-  uint8_t iface_subclass;
-  uint8_t iface_protocol;
-  uint8_t reserved;
-} __attribute__((packed));
 
 ////////////////////////////////////////////////////////////////////////////////
 // COMMANDS
@@ -210,11 +125,6 @@ struct CmdRepUnlink {
 } __attribute__((packed));
 
 // Diagnostics.
-std::ostream& operator<<(std::ostream& out, Operation op);
-std::ostream& operator<<(std::ostream& out, const OpHeader& header);
-std::ostream& operator<<(std::ostream& out, const OpRepDeviceInfo& data);
-std::ostream& operator<<(std::ostream& out, const OpRepDeviceListInfo& list);
-std::ostream& operator<<(std::ostream& out, const OpRepInterfaceInfo& i);
 std::ostream& operator<<(std::ostream& out, const CmdHeader& header);
 std::ostream& operator<<(std::ostream& out, const CmdReqSubmit& data);
 std::ostream& operator<<(std::ostream& out, const CmdRepSubmit& data);
