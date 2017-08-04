@@ -21,11 +21,13 @@
 #include <fstream>
 #include <sstream>
 #include <glog/logging.h>
+#include "common/libs/fs/shared_select.h"
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/vadb/vhci_instrument.h"
 
 namespace vadb {
+namespace usbip {
 namespace {
 // Device ID is specified as a concatenated pair of BUS and DEVICE id.
 // Since we only export one device and our server doesn't care much about
@@ -54,6 +56,8 @@ VHCIInstrument::VHCIInstrument(const std::string& name)
       name_(name) {}
 
 bool VHCIInstrument::Init() {
+  wake_event_ = avd::SharedFD::Event(0, 0);
+
   udev_.reset(udev_new());
   CHECK(udev_) << "Could not create libudev context.";
 
@@ -107,12 +111,34 @@ bool VHCIInstrument::FindFreePort() {
   return false;
 }
 
+void VHCIInstrument::TriggerAttach() {
+  uint64_t count = 1;
+  wake_event_->Write(&count, sizeof(count));
+}
+
 void VHCIInstrument::AttachThread() {
+  avd::SharedFDSet rset;
+  // If we're attempting connection, make sure to re-try every second until
+  // we're successful.
+  timeval period = {1, 0};
+  // Trigger attach upon start.
+  bool want_attach = true;
+
   while (true) {
-    sleep(3);
+    rset.Zero();
+    rset.Set(wake_event_);
+    // Wait until poked.
+    if (0 != avd::Select(&rset, nullptr, nullptr,
+                         (want_attach ? &period : nullptr))) {
+      uint64_t ignore;
+      wake_event_->Read(&ignore, sizeof(ignore));
+      LOG(INFO) << "Attach triggered.";
+      want_attach = true;
+    }
+
+    // Make an attempt to re-attach. If successful, clear pending attach flag.
     if (Attach()) {
-      LOG(INFO) << "Attach successful.";
-      break;
+      want_attach = false;
     }
   }
 }
@@ -140,4 +166,5 @@ bool VHCIInstrument::Attach() {
   return attach.rdstate() == std::ios_base::goodbit;
 }
 
+}  // namespace usbip
 }  // namespace vadb

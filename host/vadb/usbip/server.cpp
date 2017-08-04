@@ -32,9 +32,9 @@ static constexpr int kServerPort = 3240;
 }  // namespace
 
 Server::Server(const std::string &name, const DevicePool &devices)
-    : name_(name), device_pool_(devices) {}
+    : name_{name}, device_pool_{devices}, vhci_{name} {}
 
-bool Server::Init() { return CreateServerSocket(); }
+bool Server::Init() { return CreateServerSocket() && vhci_.Init(); }
 
 // Open new listening server socket.
 // Returns false, if listening socket could not be created.
@@ -68,6 +68,7 @@ void Server::Serve() {
         // If client conversation failed, hang up.
         if (!iter->HandleIncomingMessage()) {
           iter = clients_.erase(iter);
+          vhci_.TriggerAttach();
           continue;
         }
       }
