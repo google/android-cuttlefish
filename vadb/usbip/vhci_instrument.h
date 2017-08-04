@@ -21,15 +21,33 @@
 
 #include <libudev.h>
 
+#include "common/libs/fs/shared_fd.h"
+
 namespace vadb {
+namespace usbip {
+// VHCIInstrument class configures VHCI-HCD on local kernel.
 class VHCIInstrument {
  public:
   VHCIInstrument(const std::string& name);
   virtual ~VHCIInstrument() = default;
 
+  // Init opens vhci-hcd driver and allocates port to which remote USB device
+  // will be attached.
+  // Returns false, if vhci-hcd driver could not be opened, or if no free port
+  // was found.
   bool Init();
 
+  // TriggerAttach tells underlying thread to make attempt to re-attach USB
+  // device.
+  void TriggerAttach();
+
+ private:
+  // Attach makes an attempt to configure VHCI to enable virtual USB device.
+  // Returns true, if configuration attempt was successful.
   bool Attach();
+
+  // AttachThread is a background thread that responds to configuration
+  // requests.
   void AttachThread();
   bool FindFreePort();
 
@@ -39,9 +57,11 @@ class VHCIInstrument {
   std::string name_;
   std::unique_ptr<std::thread> attach_thread_;
   std::string syspath_;
+  avd::SharedFD wake_event_;
   int port_;
 
   VHCIInstrument(const VHCIInstrument& other) = delete;
   VHCIInstrument& operator=(const VHCIInstrument& other) = delete;
 };
+}  // namespace usbip
 }  // namespace vadb
