@@ -16,6 +16,7 @@
 #pragma once
 
 #include <list>
+#include <string>
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/vadb/usbip/device_pool.h"
@@ -26,7 +27,7 @@ namespace usbip {
 
 class Server final {
  public:
-  Server(const DevicePool& device_pool);
+  Server(const std::string& name, const DevicePool& device_pool);
   ~Server() = default;
 
   // Initialize this instance of Server.
@@ -53,6 +54,7 @@ class Server final {
   // New clients will be appended to clients_ list.
   void HandleIncomingConnection();
 
+std::string name_;
   avd::SharedFD server_;
   std::list<Client> clients_;
   const DevicePool& device_pool_;

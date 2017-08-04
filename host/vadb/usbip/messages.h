@@ -54,7 +54,6 @@ bool SendUSBIPMsg(const avd::SharedFD& fd, T data) {
 // Returns true, if message was received successfully.
 template <typename T>
 bool RecvUSBIPMsg(const avd::SharedFD& fd, T* data) {
-  VLOG(2) << "Reading " << sizeof(T) << " bytes...";
   bool res = fd->Recv(data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
   if (res) {
     internal::NetToHost(data);

@@ -31,7 +31,8 @@ namespace {
 static constexpr int kServerPort = 3240;
 }  // namespace
 
-Server::Server(const DevicePool &devices) : device_pool_(devices) {}
+Server::Server(const std::string &name, const DevicePool &devices)
+    : name_(name), device_pool_(devices) {}
 
 bool Server::Init() { return CreateServerSocket(); }
 
@@ -39,32 +40,13 @@ bool Server::Init() { return CreateServerSocket(); }
 // Returns false, if listening socket could not be created.
 bool Server::CreateServerSocket() {
   LOG(INFO) << "Starting server socket on port " << kServerPort;
-  server_ = SharedFD::Socket(PF_INET6, SOCK_STREAM, 0);
+
+  // TODO(ender): would it work if we used PACKET instead?
+  server_ = SharedFD::SocketLocalServer(name_.c_str(), true, SOCK_STREAM, 0700);
   if (!server_->IsOpen()) {
     LOG(ERROR) << "Could not create socket: " << server_->StrError();
     return false;
   }
-
-  int n = 1;
-  if (server_->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
-    LOG(ERROR) << "SetSockOpt failed " << server_->StrError();
-    return false;
-  }
-
-  struct sockaddr_in6 addr = {
-      AF_INET6, htons(kServerPort), 0, in6addr_loopback, 0,
-  };
-
-  if (server_->Bind((struct sockaddr *)&addr, sizeof(addr)) == -1) {
-    LOG(ERROR) << "Could not bind socket: " << server_->StrError();
-    return false;
-  }
-
-  if (server_->Listen(1) == -1) {
-    LOG(ERROR) << "Could not start listening: " << server_->StrError();
-    return false;
-  }
-
   return true;
 }
 

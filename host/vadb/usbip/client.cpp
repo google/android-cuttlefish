@@ -298,12 +298,19 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
   if (device) {
     // Read data to be sent to device, if specified.
     if (is_host_to_device && payload_length) {
-      auto read = fd_->Recv(payload.data(), payload.size(), MSG_NOSIGNAL);
-      if (read != payload.size()) {
-        LOG(ERROR) << "Short read while receiving payload; want="
-                   << payload.size() << ", got=" << read
-                   << ", err: " << fd_->StrError();
-        return false;
+      int32_t got = 0;
+      // Make sure we read everything.
+      while (got < payload.size()) {
+        auto read =
+            fd_->Recv(&payload[got], payload.size() - got, MSG_NOSIGNAL);
+        if (fd_->GetErrno() != 0) {
+          LOG(ERROR) << "Client disconnected: " << fd_->StrError();
+          return false;
+        } else if (!read) {
+          LOG(ERROR) << "Short read; client likely disconnected.";
+          return false;
+        }
+        got += read;
       }
     }
 
