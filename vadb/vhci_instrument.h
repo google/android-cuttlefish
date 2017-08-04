@@ -24,7 +24,7 @@
 namespace vadb {
 class VHCIInstrument {
  public:
-  VHCIInstrument();
+  VHCIInstrument(const std::string& name);
   virtual ~VHCIInstrument() = default;
 
   bool Init();
@@ -36,6 +36,7 @@ class VHCIInstrument {
  private:
   std::unique_ptr<udev, void(*)(udev*)> udev_;
   std::unique_ptr<udev_device, void(*)(udev_device*)> vhci_device_;
+  std::string name_;
   std::unique_ptr<std::thread> attach_thread_;
   std::string syspath_;
   int port_;

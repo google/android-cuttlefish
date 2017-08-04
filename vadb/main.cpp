@@ -24,6 +24,7 @@
 #include "host/vadb/virtual_adb.h"
 
 DEFINE_string(socket, "", "Socket to use to talk to USBForwarder.");
+DEFINE_string(usbip_socket_name, "android", "Name of the USB/IP socket.");
 
 int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
@@ -32,10 +33,10 @@ int main(int argc, char* argv[]) {
   vadb::VirtualADB adb(FLAGS_socket);
   CHECK(adb.Init());
 
-  vadb::VHCIInstrument vhci;
+  vadb::VHCIInstrument vhci(FLAGS_usbip_socket_name);
   CHECK(vhci.Init());
 
-  vadb::usbip::Server s(adb.Pool());
+  vadb::usbip::Server s(FLAGS_usbip_socket_name, adb.Pool());
   s.SetClientsAttachedByDefault(true);
   CHECK(s.Init()) << "Could not start server";
   s.Serve();
