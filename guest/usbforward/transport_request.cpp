@@ -20,10 +20,10 @@
 
 namespace usb_forward {
 
-TransportRequest::TransportRequest(libusb_device_handle* handle,
+TransportRequest::TransportRequest(std::shared_ptr<libusb_device_handle> handle,
                                    CallbackType callback,
                                    const ControlTransfer& transfer)
-    : handle_{handle},
+    : handle_{std::move(handle)},
       callback_{std::move(callback)},
       is_control_{true},
       transfer_{libusb_alloc_transfer(0), libusb_free_transfer} {
@@ -38,20 +38,20 @@ TransportRequest::TransportRequest(libusb_device_handle* handle,
   // NOTE: despite libusb requires user to allocate buffer large enough to
   // accommodate SETUP structure and actual data, it requires user to provide
   // only data length here, while setup length is added internally.
-    libusb_fill_control_transfer(transfer_.get(), handle_, buffer_.get(),
-                                 OnTransferComplete, this, transfer.timeout);
+  libusb_fill_control_transfer(transfer_.get(), handle_.get(), buffer_.get(),
+                               OnTransferComplete, this, transfer.timeout);
 }
 
-TransportRequest::TransportRequest(libusb_device_handle* handle,
+TransportRequest::TransportRequest(std::shared_ptr<libusb_device_handle> handle,
                                    CallbackType callback,
                                    const DataTransfer& transfer)
-    : handle_{handle},
+    : handle_{std::move(handle)},
       callback_{std::move(callback)},
       is_control_{false},
       transfer_{libusb_alloc_transfer(0), libusb_free_transfer} {
   buffer_.reset(new uint8_t[transfer.length]);
   libusb_fill_bulk_transfer(
-      transfer_.get(), handle_,
+      transfer_.get(), handle_.get(),
       transfer.endpoint_id | (transfer.is_host_to_device ? LIBUSB_ENDPOINT_OUT
                                                          : LIBUSB_ENDPOINT_IN),
       buffer_.get(), transfer.length, OnTransferComplete, this,

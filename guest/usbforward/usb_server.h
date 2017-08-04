@@ -42,6 +42,11 @@ class USBServer final {
   void Serve();
 
  private:
+  // HandleDeviceEvent opens and closes Android Gadget device, whenever it
+  // appears / disappears.
+  static int HandleDeviceEvent(libusb_context*, libusb_device*,
+                                libusb_hotplug_event event, void* self_raw);
+
   // Handle CmdDeviceList request.
   void HandleDeviceList(uint32_t tag);
 
@@ -59,8 +64,7 @@ class USBServer final {
   void OnTransferComplete(uint32_t tag, bool is_data_in, bool is_success,
                           const uint8_t* buffer, int32_t actual_length);
 
-  std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)>
-      handle_;
+  std::shared_ptr<libusb_device_handle> handle_;
 
   avd::ScopedThread libusb_thread_;
   avd::Mutex write_mutex_;

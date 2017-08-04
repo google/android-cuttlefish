@@ -37,10 +37,10 @@ class TransportRequest final {
   // - actual length transferred.
   using CallbackType = std::function<void(bool, const uint8_t*, int32_t)>;
 
-  TransportRequest(libusb_device_handle* device, CallbackType callback,
-                   const ControlTransfer& transfer);
-  TransportRequest(libusb_device_handle* device, CallbackType callback,
-                   const DataTransfer& transfer);
+  TransportRequest(std::shared_ptr<libusb_device_handle> device,
+                   CallbackType callback, const ControlTransfer& transfer);
+  TransportRequest(std::shared_ptr<libusb_device_handle> device,
+                   CallbackType callback, const DataTransfer& transfer);
   ~TransportRequest() = default;
 
   uint8_t* Buffer();
@@ -57,10 +57,10 @@ class TransportRequest final {
   static void OnTransferComplete(libusb_transfer* req);
 
  private:
-  libusb_device_handle* handle_;
+  std::shared_ptr<libusb_device_handle> handle_;
   CallbackType callback_;
   bool is_control_;
-  std::unique_ptr<libusb_transfer, void(*)(libusb_transfer*)> transfer_;
+  std::unique_ptr<libusb_transfer, void (*)(libusb_transfer*)> transfer_;
   std::unique_ptr<uint8_t[]> buffer_;
 
   TransportRequest(const TransportRequest& other) = delete;

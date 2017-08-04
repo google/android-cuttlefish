@@ -38,9 +38,8 @@ constexpr uint16_t kExportedProductID = 0x4ee7;
 constexpr uint8_t kDefaultBusID = 1;
 constexpr uint8_t kDefaultDevID = 1;
 
-std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)>
-GetDevice() {
-  std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)> res(
+std::shared_ptr<libusb_device_handle> GetDevice() {
+  std::shared_ptr<libusb_device_handle> res(
       libusb_open_device_with_vid_pid(nullptr, kExportedVendorID,
                                       kExportedProductID),
       [](libusb_device_handle* h) {
@@ -165,7 +164,7 @@ void USBServer::HandleControlTransfer(uint32_t tag) {
       ((req.type & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN);
 
   std::unique_ptr<TransportRequest> treq(new TransportRequest(
-      handle_.get(),
+      handle_,
       [this, is_data_in, tag](bool is_success, const uint8_t* data,
                               int32_t length) {
         OnTransferComplete(tag, is_data_in, is_success, data, length);
@@ -208,7 +207,7 @@ void USBServer::HandleDataTransfer(uint32_t tag) {
   bool is_data_in = !req.is_host_to_device;
 
   std::unique_ptr<TransportRequest> treq(new TransportRequest(
-      handle_.get(),
+      handle_,
       [this, is_data_in, tag](bool is_success, const uint8_t* data,
                               int32_t length) {
         OnTransferComplete(tag, is_data_in, is_success, data, length);
@@ -274,7 +273,30 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
   }
 }
 
+int USBServer::HandleDeviceEvent(libusb_context*, libusb_device*,
+                                 libusb_hotplug_event event, void* self_raw) {
+  auto self = reinterpret_cast<USBServer*>(self_raw);
+  switch (event) {
+    case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
+      self->handle_ = GetDevice();
+      break;
+    case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
+      self->handle_.reset();
+      break;
+  }
+  return 0;
+}
+
 void USBServer::Serve() {
+  // Need to check if device is still there before we execute anything.
+  libusb_hotplug_callback_handle handle;
+  libusb_hotplug_register_callback(
+      nullptr,
+      libusb_hotplug_event(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
+                           LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
+      libusb_hotplug_flag(0), kExportedVendorID, kExportedProductID,
+      LIBUSB_HOTPLUG_MATCH_ANY, &USBServer::HandleDeviceEvent, this, &handle);
+
   avd::SharedFDSet rset;
   while (true) {
     rset.Zero();
