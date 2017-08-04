@@ -63,11 +63,6 @@ void NetToHost(uint16_t* t) {
 }
 
 template <>
-void NetToHost(Operation* t) {
-  *t = static_cast<Operation>(ntohs(*t));
-}
-
-template <>
 void NetToHost(CmdHeader* t) {
   NetToHost(&t->command);
   NetToHost(&t->seq_num);
@@ -85,16 +80,6 @@ void NetToHost(CmdReqSubmit* t) {
   NetToHost(&t->number_of_packets);
   NetToHost(&t->deadline_interval);
 }
-
-template <>
-void NetToHost(OpHeader* t) {
-  NetToHost(&t->version);
-  NetToHost(&t->command);
-  NetToHost(&t->status);
-}
-
-template <>
-void NetToHost(OpReqRepBusId* t) {}
 
 template <>
 void NetToHost(CmdReqUnlink* t) {
@@ -122,11 +107,6 @@ void HostToNet(uint16_t* t) {
 }
 
 template <>
-void HostToNet(Operation* t) {
-  *t = static_cast<Operation>(htons(*t));
-}
-
-template <>
 void HostToNet(CmdHeader* t) {
   HostToNet(&t->command);
   HostToNet(&t->seq_num);
@@ -146,61 +126,11 @@ void HostToNet(CmdRepSubmit* t) {
 }
 
 template <>
-void HostToNet(OpHeader* t) {
-  HostToNet(&t->version);
-  HostToNet(&t->command);
-  HostToNet(&t->status);
-}
-
-template <>
-void HostToNet(OpRepDeviceListInfo* t) {
-  HostToNet(&t->num_exported_devices);
-}
-
-template <>
-void HostToNet(OpRepDeviceInfo* t) {
-  HostToNet(&t->bus_num);
-  HostToNet(&t->dev_num);
-  HostToNet(&t->speed);
-
-  // Note: The following should not be rotated when exporting host USB devices.
-  // We only rotate these here because we are using native endian everywhere.
-  HostToNet(&t->id_vendor);
-  HostToNet(&t->id_product);
-  HostToNet(&t->bcd_device);
-}
-
-template <>
 void HostToNet(CmdRepUnlink* t) {
   HostToNet(&t->status);
 }
 
-template <>
-void HostToNet(OpRepInterfaceInfo* t) {}
-
 }  // namespace internal
-
-// Output and diagnostic functionality.
-std::ostream& operator<<(std::ostream& out, Operation op) {
-  switch (op) {
-    case kUsbIpOpReqDevList:
-      out << "OpReqDevList";
-      break;
-    case kUsbIpOpRepDevList:
-      out << "OpRepDevList";
-      break;
-    case kUsbIpOpReqImport:
-      out << "OpReqImport";
-      break;
-    case kUsbIpOpRepImport:
-      out << "OpRepImport";
-      break;
-    default:
-      out << "UNKNOWN (" << int(op) << ")";
-      break;
-  }
-  return out;
-}
 
 std::ostream& operator<<(std::ostream& out, const CmdHeader& header) {
   out << "CmdHeader\n";
@@ -255,47 +185,6 @@ std::ostream& operator<<(std::ostream& out, const CmdReqUnlink& unlink) {
 std::ostream& operator<<(std::ostream& out, const CmdRepUnlink& unlink) {
   out << "CmdRepUnlink\n";
   out << "\t\tstatus:\t" << unlink.status << '\n';
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const OpHeader& header) {
-  out << "OpHeader\n";
-  out << "\t\tvrsn:\t" << std::hex << header.version << '\n';
-  out << "\t\tcmd:\t" << header.command << '\n';
-  out << "\t\tstatus:\t" << header.status << std::dec << '\n';
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const OpRepDeviceInfo& import) {
-  out << "OpRepDeviceInfo\n";
-  out << "\t\tsysfs:\t" << import.usb_path << '\n';
-  out << "\t\tbusid:\t" << import.bus_id << '\n';
-  out << "\t\tbus#:\t" << import.bus_num << '\n';
-  out << "\t\tdev#:\t" << import.dev_num << '\n';
-  out << "\t\tspeed:\t" << import.speed << '\n';
-  out << "\t\tvendor:\t" << std::hex << import.id_vendor << std::dec << '\n';
-  out << "\t\tprodct:\t" << std::hex << import.id_product << std::dec << '\n';
-  out << "\t\trel:\t" << std::hex << import.bcd_device << std::dec << '\n';
-  out << "\t\tcls:\t" << int(import.device_class) << '\n';
-  out << "\t\tsubcls:\t" << int(import.device_subclass) << '\n';
-  out << "\t\tproto:\t" << int(import.device_protocol) << '\n';
-  out << "\t\tcfg#:\t" << int(import.configuration_value) << '\n';
-  out << "\t\tcfgs#:\t" << int(import.num_configurations) << '\n';
-  out << "\t\tifs#:\t" << int(import.num_interfaces) << '\n';
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const OpRepDeviceListInfo& list) {
-  out << "OpRepDeviceListInfo\n";
-  out << "\t\tcount:\t" << list.num_exported_devices << '\n';
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const OpRepInterfaceInfo& i) {
-  out << "OpRepDevListIface\n";
-  out << "\t\tcls:\t" << int(i.iface_class) << '\n';
-  out << "\t\tsubcls:\t" << int(i.iface_subclass) << '\n';
-  out << "\t\tproto:\t" << int(i.iface_protocol) << '\n';
   return out;
 }
 

@@ -37,32 +37,9 @@ class Client final {
   // that this instance should no longer be used.
   bool HandleIncomingMessage();
 
-  // SetAttached instructs the client to skip the introduction and go
-  // directly to execution phase.
-  // This means we won't be executing USB/IP operations (that are only part of
-  // the tool) and go directly to USB/IP commands (which are sent by the
-  // kernel).
-  void SetAttached(bool is_attached) { attached_ = is_attached; }
-
   const avd::SharedFD& fd() const { return fd_; }
 
  private:
-  // Process messages that are valid only while client is detached.
-  // Returns false, if conversation was unsuccessful.
-  bool HandleOperation();
-
-  // Process messages that are valid only while client is attached.
-  // Returns false, if connection should be dropped.
-  bool HandleCommand();
-
-  // List remote USB devices.
-  // Returns false, if connection should be dropped.
-  bool HandleListOp();
-
-  // Attach virtual USB devices to remote host.
-  // Returns false, if connection should be dropped.
-  bool HandleImportOp();
-
   // Execute command on USB device.
   // Returns false, if connection should be dropped.
   bool HandleSubmitCmd(const CmdHeader& hdr);
@@ -78,10 +55,6 @@ class Client final {
 
   const DevicePool& pool_;
   avd::SharedFD fd_;
-
-  // True, if client requested USB device attach.
-  bool attached_ = false;
-  uint16_t proto_version_ = 0;
 
   Client(const Client&) = delete;
   Client& operator=(const Client&) = delete;
