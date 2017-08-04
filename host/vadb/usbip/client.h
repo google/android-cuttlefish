@@ -37,6 +37,13 @@ class Client final {
   // that this instance should no longer be used.
   bool HandleIncomingMessage();
 
+  // SetAttached instructs the client to skip the introduction and go
+  // directly to execution phase.
+  // This means we won't be executing USB/IP operations (that are only part of
+  // the tool) and go directly to USB/IP commands (which are sent by the
+  // kernel).
+  void SetAttached(bool is_attached) { attached_ = is_attached; }
+
   const avd::SharedFD& fd() const { return fd_; }
 
  private:

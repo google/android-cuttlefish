@@ -63,10 +63,20 @@ bool USBCmdDataTransfer::OnResponse(bool is_success, const avd::SharedFD& fd) {
 
     if (len > 0) {
       data_.resize(len);
-      if (fd->Read(data_.data(), len) != len) {
-        LOG(ERROR) << "Short read: " << fd->StrError();
-        callback_(false, std::move(data_));
-        return false;
+      int32_t got = 0;
+      // Virtio sends data in 32k packets. We may have to do a few reads.
+      while (got < len) {
+        auto packetsize = fd->Read(&data_[got], len - got);
+        got += packetsize;
+
+        if (fd->GetErrno() != 0) {
+          // This could, technically, also be a disconnect.
+          LOG(ERROR) << "Read failed: " << fd->StrError();
+          return false;
+        } else if (packetsize == 0) {
+          LOG(ERROR) << "Short read; remote end disconnected.";
+          return false;
+        }
       }
     }
   }

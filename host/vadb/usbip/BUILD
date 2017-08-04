@@ -23,6 +23,9 @@ cc_library(
         "@gflags_repo//:gflags",
         "@glog_repo//:glog",
     ],
+    linkopts = [
+        "-ludev",
+    ],
     visibility = [ "//visibility:public" ]
 )
 
