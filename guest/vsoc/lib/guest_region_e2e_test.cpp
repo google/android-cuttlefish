@@ -56,7 +56,38 @@ class RegionTest {
  public:
   vsoc::TypedRegion<Layout> region;
 
-  void TestGuestRegion()  {
+  void CheckPeerStrings() {
+    ASSERT_TRUE(region.Open());
+    size_t num_data = Layout::NumFillRecords(region.region_data_size());
+    EXPECT_LE(2, num_data);
+    Layout* r = region.data();
+    for (size_t i = 0; i < num_data; ++i) {
+      EXPECT_STREQ(Layout::host_pattern,
+                   make_nonvolatile(r->data[i].host_writable));
+    }
+  }
+
+  bool HasIncomingInterruptFromPeer() {
+    return region.HasIncomingInterrupt();
+  }
+
+  void DeathTestGuestRegion()  {
+    disable_tombstones();
+    // region.Open should never return.
+    EXPECT_FALSE(region.Open());
+  }
+
+  void SendInterruptToPeer() {
+    EXPECT_TRUE(region.Open());
+    region.InterruptPeer();
+  }
+
+  void WaitForInterruptFromPeer() {
+    ASSERT_TRUE(region.Open());
+    region.WaitForInterrupt();
+  }
+
+  void WriteStrings()  {
     ASSERT_TRUE(region.Open());
     size_t num_data = Layout::NumFillRecords(region.region_data_size());
     EXPECT_LE(2, num_data);
@@ -71,38 +102,43 @@ class RegionTest {
                    make_nonvolatile(r->data[i].guest_writable));
     }
   }
-
-  void CheckHostStrings() {
-    ASSERT_TRUE(region.Open());
-    size_t num_data = Layout::NumFillRecords(region.region_data_size());
-    EXPECT_LE(2, num_data);
-    Layout* r = region.data();
-    for (size_t i = 0; i < num_data; ++i) {
-      EXPECT_STREQ(Layout::host_pattern,
-                   make_nonvolatile(r->data[i].host_writable));
-    }
-  }
-
-  void DeathTestGuestRegion()  {
-    disable_tombstones();
-    // region.Open should never return.
-    EXPECT_FALSE(region.Open());
-  }
-
-  void WaitForHostInterrupt() {
-    ASSERT_TRUE(region.Open());
-    region.WaitForInterrupt();
-  }
 };
 
-TEST(RegionTest, PrimaryRegionWritable) {
-  RegionTest<E2EPrimaryTestRegion> test;
-  test.TestGuestRegion();
-}
+// Here is a summary of the two regions interrupt and write test:
+// 1. Write our strings to the first region
+// 2. Ensure that our peer hasn't signalled the second region. That would
+//    indicate that it didn't wait for our interrupt.
+// 3. Send the interrupt on the first region
+// 4. Wait for our peer's interrupt on the first region
+// 5. Confirm that we can see our peer's writes in the first region
+// 6. Initialize our strings in the second region
+// 7. Send an interrupt on the second region to our peer
+// 8. Wait for our peer's interrupt on the second region
+// 9. Confirm that we can see our peer's writes in the second region
+// 10. Confirm that no interrupt is pending in the first region
+// 11. Confirm that no interrupt is pending in the second region
 
-TEST(RegionTest, SecondaryRegionWritable) {
-  RegionTest<E2ESecondaryTestRegion> test;
-  test.TestGuestRegion();
+TEST(RegionTest, PeerTests) {
+  RegionTest<E2EPrimaryTestRegion> primary;
+  RegionTest<E2ESecondaryTestRegion> secondary;
+  ASSERT_TRUE(primary.region.Open());
+  ASSERT_TRUE(secondary.region.Open());
+  LOG(INFO) << "Regions are open";
+  primary.WriteStrings();
+  EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
+  primary.SendInterruptToPeer();
+  LOG(INFO) << "Waiting for first interrupt from peer";
+  primary.WaitForInterruptFromPeer();
+  LOG(INFO) << "First interrupt received";
+  primary.CheckPeerStrings();
+  secondary.WriteStrings();
+  secondary.SendInterruptToPeer();
+  LOG(INFO) << "Waiting for second interrupt from peer";
+  secondary.WaitForInterruptFromPeer();
+  LOG(INFO) << "Second interrupt received";
+  secondary.CheckPeerStrings();
+  EXPECT_FALSE(primary.HasIncomingInterruptFromPeer());
+  EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
 }
 
 /**
@@ -115,32 +151,12 @@ struct UnfindableRegion : public E2EPrimaryTestRegion {
 const char* UnfindableRegion::region_name = "e2e_must_not_exist";
 
 TEST(RegionTest, MissingRegionDeathTest) {
-  RegionTest<UnfindableRegion> region;
+  RegionTest<UnfindableRegion> test;
   // EXPECT_DEATH creates a child for the test, so we do it out here.
   // DeathTestGuestRegion will actually do the deadly call after ensuring
   // that we don't create an unwanted tombstone.
-  EXPECT_EXIT(region.DeathTestGuestRegion(), testing::ExitedWithCode(2),
+  EXPECT_EXIT(test.DeathTestGuestRegion(), testing::ExitedWithCode(2),
               ".*" DEATH_TEST_MESSAGE ".*");
-}
-
-TEST(RegionTest, TestPrimaryHostInterrupt) {
-  RegionTest<E2EPrimaryTestRegion> test;
-  test.WaitForHostInterrupt();
-}
-
-TEST(RegionTest, PrimaryRegionHostWritesVisisble) {
-  RegionTest<E2EPrimaryTestRegion> test;
-  test.CheckHostStrings();
-}
-
-TEST(RegionTest, TestSecondaryHostInterrupt) {
-  RegionTest<E2ESecondaryTestRegion> test;
-  test.WaitForHostInterrupt();
-}
-
-TEST(RegionTest, SecondaryRegionHostWritesVisible) {
-  RegionTest<E2ESecondaryTestRegion> test;
-  test.CheckHostStrings();
 }
 
 class ManagedRegionTest {

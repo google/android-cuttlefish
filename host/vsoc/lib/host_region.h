@@ -26,6 +26,7 @@
 #include <cstdint>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "uapi/vsoc_shm.h"
 
 namespace vsoc {
@@ -52,22 +53,57 @@ class OpenableRegion : public RegionBase {
 
   // Interrupt our peer, causing it to scan the outgoing_signal_table
   virtual void InterruptPeer() {
-    *region_offset_to_pointer<std::atomic<uint32_t>>(
-        outgoing_signal_table()->interrupt_signalled_offset) = 1;
-    uint64_t one = 1;
-    outgoing_interrupt_fd_->Write(&one, sizeof(one));
+    if (!region_offset_to_pointer<std::atomic<uint32_t>>(
+            outgoing_signal_table()->interrupt_signalled_offset)->exchange(1)) {
+      uint64_t one = 1;
+      ssize_t rval = outgoing_interrupt_fd_->Write(&one, sizeof(one));
+      if (rval != sizeof(one)) {
+        LOG(FATAL) << __FUNCTION__ << ": rval (" << rval << ") != sizeof(one))";
+      }
+    }
   }
 
   // Wake the local signal table scanner. Primarily used during shutdown
   virtual void InterruptSelf() {
     uint64_t one = 1;
-    incoming_interrupt_fd_->Write(&one, sizeof(one));
+    ssize_t rval = incoming_interrupt_fd_->Write(&one, sizeof(one));
+    if (rval != sizeof(one)) {
+      LOG(FATAL) << __FUNCTION__ << ": rval (" << rval << ") != sizeof(one))";
+    }
   }
 
   // Wait for an interrupt from our peer
   virtual void WaitForInterrupt() {
-    uint64_t missed{};
-    incoming_interrupt_fd_->Read(&missed, sizeof(missed));
+    while (1) {
+      if (region_offset_to_pointer<std::atomic<uint32_t>>(
+              incoming_signal_table()->interrupt_signalled_offset)->exchange(0)) {
+        // The eventfd isn't cleared by design. This is a optimization: if
+        // an interrupt is pending we avoid the sleep, lowering the latency.
+        // It does mean that we do some extra work the next time that we go
+        // to sleep. However, an extra delay in sleeping is preferable to a
+        // delay in waking.
+        return;
+      }
+      // Check then act isn't a problem here: the other side does
+      // the following things in exactly this order:
+      //   1. exchanges 1 with interrupt_signalled
+      //   2. if interrupt_signalled was 0 it increments the eventfd
+      // eventfd increments are persistent, so if interrupt_signalled was set
+      // back to 1 while we are going to sleep the sleep will return
+      // immediately.
+      uint64_t missed{};
+      avd::SharedFDSet readset;
+      readset.Set(incoming_interrupt_fd_);
+      avd::Select(&readset, NULL, NULL, NULL);
+      ssize_t rval = incoming_interrupt_fd_->Read(&missed, sizeof(missed));
+      if (rval != sizeof(missed)) {
+        LOG(FATAL) << __FUNCTION__ << ": rval (" << rval <<
+            ") != sizeof(missed))";
+      }
+      if (!missed) {
+        LOG(FATAL) << __FUNCTION__ << ": woke with 0 interrupts";
+      }
+    }
   }
 
  protected:
