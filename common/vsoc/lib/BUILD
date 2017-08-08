@@ -47,9 +47,11 @@ cc_library(
     hdrs = [
         "circqueue_impl.h",
         "compat.h",
+        "e2e_test_region_view.h",
         "graphics_common.h",
         "region.h",
         "single_sided_signal.h",
+        "typed_region_view.h",
     ],
     copts = ["-Wno-unused-private-field"],
     visibility = ["//visibility:public"],
