@@ -27,6 +27,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/glog/logging.h"
+#include "common/vsoc/lib/region_control.h"
 #include "common/vsoc/shm/base.h"
 #include "uapi/vsoc_shm.h"
 
@@ -34,6 +35,12 @@ namespace vsoc {
 
 class RegionView;
 
+/**
+ * Represents a task that is tied to a RegionView.
+ *
+ * This is currently used for the task that forwards futexes across the
+ * shared memory window.
+ */
 class RegionWorker {
  public:
   explicit RegionWorker(RegionView* region);
@@ -47,49 +54,37 @@ class RegionWorker {
 };
 
 /**
- * Base class to access a region in VSoC shared memory.
- * This class holds the methods that do not depend on the type to simplify
- * the template expansions.
- *
- * This should not be directly instantiated. While technically concrete
- * a resonable implementation needs additional methods:
- *
- *   * Knowledge of the region's layout (see RegionSingleton)
- *   * Guest or host-specific code to gain access to the region
+ * Base class to access a mapped region in VSoC shared memory.
+ * This class holds the methods that depends on the region's memory having an
+ * address. The RegionControl class holds the methods that can be invoked
+ * without mapping the region.
  */
 class RegionView {
  public:
   virtual ~RegionView();
 
-  // Returns the size of the entire region, including the signal tables.
-  uint32_t region_size() const {
-    return region_desc_.region_end_offset - region_desc_.region_begin_offset;
-  }
-
-  // Returns the size of the region that is usable for region-specific data.
-  uint32_t region_data_size() const {
-    return region_size() - region_desc_.offset_of_region_data;
-  }
+  bool Open(const char* region_name, const char* domain = nullptr);
 
   // Returns a pointer to the table that will be scanned for signals
-  virtual vsoc_signal_table_layout* incoming_signal_table() = 0;
+  const vsoc_signal_table_layout& incoming_signal_table();
 
   // Returns a pointer to the table that will be used to post signals
-  virtual vsoc_signal_table_layout* outgoing_signal_table() = 0;
+  const vsoc_signal_table_layout& outgoing_signal_table();
 
-  virtual bool HasIncomingInterrupt() {
+  // Returns true iff an interrupt is queued in the signal table
+  bool HasIncomingInterrupt() {
     return *region_offset_to_pointer<std::atomic<uint32_t>>(
-        incoming_signal_table()->interrupt_signalled_offset);
+        incoming_signal_table().interrupt_signalled_offset);
   }
 
-  // Interrupt our peer, causing it to scan the outgoing_signal_table
-  virtual void InterruptPeer() = 0;
+  // Wake any threads waiting for an interrupt. This is generally used during
+  // shutdown.
+  void InterruptSelf() { control_->InterruptSelf(); }
 
-  // Wake the local signal table scanner. Primarily used during shutdown
-  virtual void InterruptSelf() = 0;
-
-  // Wait for an interrupt from our peer
-  virtual void WaitForInterrupt() = 0;
+  // Interrupt our peer if an interrupt is not already on the way.
+  // Returns true if the interrupt was sent, false if an interrupt was already
+  // pending.
+  bool MaybeInterruptPeer();
 
   // Scan in the incoming signal table, issuing futex calls for any posted
   // signals and then reposting them to the peer if they were round-trip
@@ -117,6 +112,10 @@ class RegionView {
   //               memory.
   void SendSignalToPeer(uint32_t* signal_addr, bool round_trip);
 
+  // Waits until an interrupt appears on this region, then clears the
+  // interrupted flag and returns.
+  void WaitForInterrupt();
+
   // This implements the following:
   // if (*signal_addr == last_observed_value)
   //   wait_for_signal_at(signal_addr);
@@ -135,11 +134,9 @@ class RegionView {
   std::unique_ptr<RegionWorker> StartWorker();
 
  protected:
-  RegionView() {}
-
   template <typename T>
   T* region_offset_to_pointer(vsoc_reg_off_t offset) {
-    if (offset > region_size()) {
+    if (offset > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
                  << region_base_;
     }
@@ -148,17 +145,31 @@ class RegionView {
   }
 
   template <typename T>
+  const T& region_offset_to_reference(vsoc_reg_off_t offset) const {
+    if (offset > control_->region_size()) {
+      LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
+                 << region_base_;
+    }
+    return *reinterpret_cast<const T*>(
+        reinterpret_cast<uintptr_t>(region_base_) + offset);
+  }
+
+  // Calculates an offset based on a pointer in the region. Crashes if the
+  // pointer isn't in the region.
+  // This is mostly for the RegionView's internal plumbing. Use TypedRegionView
+  // and RegionLayout to avoid this in most cases.
+  template <typename T>
   vsoc_reg_off_t pointer_to_region_offset(T* ptr) {
     vsoc_reg_off_t rval = reinterpret_cast<uintptr_t>(ptr) -
-                    reinterpret_cast<uintptr_t>(region_base_);
-    if (rval > region_size()) {
+                          reinterpret_cast<uintptr_t>(region_base_);
+    if (rval > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << ptr << " not in region @"
                  << region_base_;
     }
     return rval;
   }
 
-  vsoc_device_region region_desc_{};
+  std::shared_ptr<RegionControl> control_;
   void* region_base_{};
 };
 

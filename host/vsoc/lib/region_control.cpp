@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/vsoc/lib/host_region.h"
+#include "common/vsoc/lib/region_view.h"
 
 #define LOG_TAG "vsoc: region_host"
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include <sstream>
@@ -32,29 +32,114 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 
 using avd::SharedFD;
 
 namespace {
+class HostRegionControl : public vsoc::RegionControl {
+ public:
+  HostRegionControl(const char* region_name,
+                    const SharedFD& incoming_interrupt_fd,
+                    const SharedFD& outgoing_interrupt_fd,
+                    const SharedFD& shared_memory_fd)
+      : region_name_{region_name},
+        incoming_interrupt_fd_{incoming_interrupt_fd},
+        outgoing_interrupt_fd_{outgoing_interrupt_fd},
+        shared_memory_fd_{shared_memory_fd} {}
+
+  int CreateFdScopedPermission(const char* managed_region_name,
+                               vsoc_reg_off_t owner_offset, uint32_t owned_val,
+                               vsoc_reg_off_t begin_offset,
+                               vsoc_reg_off_t end_offset) override {
+    return -1;
+  }
+
+  bool InitializeRegion();
+
+  virtual bool InterruptPeer() override {
+    uint64_t one = 1;
+    ssize_t rval = outgoing_interrupt_fd_->Write(&one, sizeof(one));
+    if (rval != sizeof(one)) {
+      LOG(FATAL) << __FUNCTION__ << ": rval (" << rval << ") != sizeof(one))";
+      return false;
+    }
+    return true;
+  }
+
+  // Wake the local signal table scanner. Primarily used during shutdown
+  virtual void InterruptSelf() override {
+    uint64_t one = 1;
+    ssize_t rval = incoming_interrupt_fd_->Write(&one, sizeof(one));
+    if (rval != sizeof(one)) {
+      LOG(FATAL) << __FUNCTION__ << ": rval (" << rval << ") != sizeof(one))";
+    }
+  }
+
+  virtual void WaitForInterrupt() override {
+    // Check then act isn't a problem here: the other side does
+    // the following things in exactly this order:
+    //   1. exchanges 1 with interrupt_signalled
+    //   2. if interrupt_signalled was 0 it increments the eventfd
+    // eventfd increments are persistent, so if interrupt_signalled was set
+    // back to 1 while we are going to sleep the sleep will return
+    // immediately.
+    uint64_t missed{};
+    avd::SharedFDSet readset;
+    readset.Set(incoming_interrupt_fd_);
+    avd::Select(&readset, NULL, NULL, NULL);
+    ssize_t rval = incoming_interrupt_fd_->Read(&missed, sizeof(missed));
+    if (rval != sizeof(missed)) {
+      LOG(FATAL) << __FUNCTION__ << ": rval (" << rval
+                 << ") != sizeof(missed))";
+    }
+    if (!missed) {
+      LOG(FATAL) << __FUNCTION__ << ": woke with 0 interrupts";
+    }
+  }
+
+  virtual void* Map() override {
+    if (region_base_) {
+      return region_base_;
+    }
+    // Now actually map the region
+    region_base_ =
+        shared_memory_fd_->Mmap(0, region_size(), PROT_READ | PROT_WRITE,
+                                MAP_SHARED, region_desc_.region_begin_offset);
+    if (region_base_ == MAP_FAILED) {
+      LOG(FATAL) << "mmap failed for offset "
+                 << region_desc_.region_begin_offset << " ("
+                 << shared_memory_fd_->StrError() << ")";
+      region_base_ = nullptr;
+    }
+    return region_base_;
+  }
+
+ protected:
+  const char* region_name_{};
+  avd::SharedFD incoming_interrupt_fd_;
+  avd::SharedFD outgoing_interrupt_fd_;
+  avd::SharedFD shared_memory_fd_;
+};
+
 // Default path to the ivshmem_server socket. This can vary when we're
 // launching multiple AVDs.
 const char DEFAULT_DOMAIN[] = "/tmp/ivshmem_socket_client";
 
 constexpr int kMaxSupportedProtocolVersion = 0;
 
-bool InitializeRegion(const SharedFD& fd, const char* region_name,
-                      vsoc_device_region* dest) {
-  size_t region_name_len = strlen(region_name);
+bool HostRegionControl::InitializeRegion() {
+  size_t region_name_len = strlen(region_name_);
   if (region_name_len >= sizeof(vsoc_device_name)) {
     LOG(FATAL) << "Region name length (" << region_name_len << ") not < "
                << sizeof(vsoc_device_name);
     return false;
   }
   vsoc_shm_layout_descriptor layout;
-  ssize_t rval = fd->Pread(&layout, sizeof(layout), 0);
+  ssize_t rval = shared_memory_fd_->Pread(&layout, sizeof(layout), 0);
   if (rval != sizeof(layout)) {
     LOG(FATAL) << "Unable to read layout, rval=" << rval << " ("
-               << fd->StrError() << ")";
+               << shared_memory_fd_->StrError() << ")";
     return false;
   }
   if (layout.major_version != CURRENT_VSOC_LAYOUT_MAJOR_VERSION) {
@@ -64,15 +149,16 @@ bool InitializeRegion(const SharedFD& fd, const char* region_name,
   std::vector<vsoc_device_region> descriptors;
   descriptors.resize(layout.region_count);
   ssize_t wanted = sizeof(vsoc_device_region) * layout.region_count;
-  rval = fd->Pread(descriptors.data(), wanted, layout.vsoc_region_desc_offset);
+  rval = shared_memory_fd_->Pread(descriptors.data(), wanted,
+                                  layout.vsoc_region_desc_offset);
   if (rval != wanted) {
     LOG(FATAL) << "Unable to read region descriptors, rval=" << rval << " ("
-               << fd->StrError() << ")";
+               << shared_memory_fd_->StrError() << ")";
     return false;
   }
   for (const auto& desc : descriptors) {
-    if (!strcmp(region_name, desc.device_name)) {
-      *dest = desc;
+    if (!strcmp(region_name_, desc.device_name)) {
+      region_desc_ = desc;
       return true;
     }
   }
@@ -81,13 +167,14 @@ bool InitializeRegion(const SharedFD& fd, const char* region_name,
   for (const auto& desc : descriptors) {
     buf << " " << desc.device_name;
   }
-  LOG(FATAL) << "Region name of " << region_name
+  LOG(FATAL) << "Region name of " << region_name_
              << " not found among:" << buf.str();
   return false;
 }
 }  // namespace
 
-bool vsoc::OpenableRegionView::Open(const char* region_name, const char* domain) {
+std::shared_ptr<vsoc::RegionControl> vsoc::RegionControl::Open(
+    const char* region_name, const char* domain) {
   AutoFreeBuffer msg;
 
   if (!domain) {
@@ -98,7 +185,7 @@ bool vsoc::OpenableRegionView::Open(const char* region_name, const char* domain)
   if (!region_server->IsOpen()) {
     LOG(FATAL) << "Could not contact ivshmem_server ("
                << region_server->StrError() << ")";
-    return false;
+    return nullptr;
   }
 
   // Check server protocol version.
@@ -108,13 +195,13 @@ bool vsoc::OpenableRegionView::Open(const char* region_name, const char* domain)
   if (bytes != sizeof(protocol_version)) {
     LOG(FATAL) << "Failed to recv protocol version; res=" << bytes << " ("
                << region_server->StrError() << ")";
-    return false;
+    return nullptr;
   }
 
   if (protocol_version > kMaxSupportedProtocolVersion) {
     LOG(FATAL) << "Unsupported protocol version " << protocol_version
                << "; max supported version is " << kMaxSupportedProtocolVersion;
-    return false;
+    return nullptr;
   }
 
   // Send requested region.
@@ -123,14 +210,14 @@ bool vsoc::OpenableRegionView::Open(const char* region_name, const char* domain)
   if (bytes != sizeof(size)) {
     LOG(FATAL) << "Failed to send region name length; res=" << bytes << " ("
                << region_server->StrError() << ")";
-    return false;
+    return nullptr;
   }
 
   bytes = region_server->Send(region_name, size, MSG_NOSIGNAL);
   if (bytes != size) {
     LOG(FATAL) << "Failed to send region name; res=" << bytes << " ("
                << region_server->StrError() << ")";
-    return false;
+    return nullptr;
   }
 
   // Receive control sockets.
@@ -146,25 +233,17 @@ bool vsoc::OpenableRegionView::Open(const char* region_name, const char* domain)
   if (bytes != sizeof(control_data)) {
     LOG(FATAL) << "Failed to complete handshake; res=" << bytes << " ("
                << region_server->StrError() << ")";
-    return false;
+    return nullptr;
   }
-  incoming_interrupt_fd_ = fds[0];
-  outgoing_interrupt_fd_ = fds[1];
-  SharedFD shared_memory_fd = fds[2];
-
+  HostRegionControl* rval =
+      new HostRegionControl(region_name, fds[0], fds[1], fds[2]);
+  if (!rval) {
+    return nullptr;
+  }
   // Search for the region header
-  if (!InitializeRegion(shared_memory_fd, region_name, &region_desc_)) {
+  if (!rval->InitializeRegion()) {
     // We already logged, so we can just bail out.
-    return false;
+    return nullptr;
   }
-  // Now actually map the region
-  region_base_ =
-      shared_memory_fd->Mmap(0, region_size(), PROT_READ | PROT_WRITE,
-                             MAP_SHARED, region_desc_.region_begin_offset);
-  if (region_base_ == MAP_FAILED) {
-    LOG(FATAL) << "mmap failed for offset " << region_desc_.region_begin_offset
-               << " (" << shared_memory_fd->StrError() << ")";
-    return false;
-  }
-  return true;
+  return std::shared_ptr<RegionControl>(rval);
 }

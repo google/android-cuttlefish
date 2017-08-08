@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "common/vsoc/lib/region.h"
+#include "common/vsoc/lib/region_view.h"
 #include "common/vsoc/shm/circqueue.h"
 
 namespace {

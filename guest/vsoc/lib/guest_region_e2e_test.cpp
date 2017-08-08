@@ -63,9 +63,9 @@ void DeathTestView(View *r) {
 // 11. Confirm that no interrupt is pending in the second region
 
 template <typename View>
-void SetHostStrings(View* in) {
+void SetGuestStrings(View* in) {
   size_t num_data = in->string_size();
-  EXPECT_LE(2, num_data);
+  EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
     EXPECT_TRUE(!in->guest_string(i)[0] ||
                 !strcmp(in->guest_string(i), View::Layout::guest_pattern));
@@ -83,27 +83,33 @@ void CheckPeerStrings(View* in) {
   }
 }
 
-TEST(RegionTest, PeerTests) {
+TEST(RegionTest, BasicPeerTests) {
   vsoc::E2EPrimaryRegionView primary;
   vsoc::E2ESecondaryRegionView secondary;
   ASSERT_TRUE(primary.Open());
   ASSERT_TRUE(secondary.Open());
   LOG(INFO) << "Regions are open";
-  SetHostStrings(&primary);
-  EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
-  primary.SendInterruptToPeer();
-  LOG(INFO) << "Waiting for first interrupt from peer";
-  primary.WaitForInterruptFromPeer();
+  SetGuestStrings(&primary);
+  LOG(INFO) << "Primary guest strings are set";
+  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  LOG(INFO) << "Verified no early second interrupt";
+  EXPECT_TRUE(primary.MaybeInterruptPeer());
+  LOG(INFO) << "Interrupt sent. Waiting for first interrupt from peer";
+  primary.WaitForInterrupt();
   LOG(INFO) << "First interrupt received";
   CheckPeerStrings(&primary);
-  SetHostStrings(&secondary);
-  secondary.SendInterruptToPeer();
-  LOG(INFO) << "Waiting for second interrupt from peer";
-  secondary.WaitForInterruptFromPeer();
+  LOG(INFO) << "Verified peer's primary strings";
+  SetGuestStrings(&secondary);
+  LOG(INFO) << "Secondary guest strings are set";
+  EXPECT_TRUE(secondary.MaybeInterruptPeer());
+  LOG(INFO) << "Second interrupt sent";
+  secondary.WaitForInterrupt();
   LOG(INFO) << "Second interrupt received";
   CheckPeerStrings(&secondary);
-  EXPECT_FALSE(primary.HasIncomingInterruptFromPeer());
-  EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
+  LOG(INFO) << "Verified peer's secondary strings";
+  EXPECT_FALSE(primary.HasIncomingInterrupt());
+  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  LOG(INFO) << "PASS: BasicPeerTests";
 }
 
 TEST(RegionTest, MissingRegionDeathTest) {

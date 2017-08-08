@@ -16,7 +16,7 @@
  */
 
 #include "common/vsoc/lib/typed_region_view.h"
-#include "common/vsoc/shm/e2e_test_region.h"
+#include "common/vsoc/shm/e2e_test_region_layout.h"
 
 namespace vsoc {
 template <typename Layout>
@@ -41,7 +41,7 @@ class E2ERegionView : public vsoc::TypedRegionView<Layout> {
   }
 
   size_t string_size() const {
-    return Layout::NumFillRecords(this->region_data_size());
+    return Layout::NumFillRecords(this->control_->region_data_size());
   }
 
   void guest_status(vsoc::layout::e2e_test::E2ETestStage stage) {
@@ -51,12 +51,6 @@ class E2ERegionView : public vsoc::TypedRegionView<Layout> {
   void host_status(vsoc::layout::e2e_test::E2ETestStage stage) {
     this->data()->host_status.set_value(stage);
   }
-
-  bool HasIncomingInterruptFromPeer() { return this->HasIncomingInterrupt(); }
-
-  void SendInterruptToPeer() { this->InterruptPeer(); }
-
-  void WaitForInterruptFromPeer() { this->WaitForInterrupt(); }
 
  protected:
   /**

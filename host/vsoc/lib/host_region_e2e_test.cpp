@@ -20,7 +20,6 @@
 
 #include <gtest/gtest.h>
 #include "common/vsoc/lib/e2e_test_region_view.h"
-#include "host/vsoc/lib/host_region.h"
 
 // Here is a summary of the two regions interrupt and write test:
 // 1. Write our strings to the first region
@@ -59,25 +58,25 @@ void CheckPeerStrings(View* in) {
 
 TEST(RegionTest, PeerTests) {
   vsoc::E2EPrimaryRegionView primary;
-  vsoc::E2ESecondaryRegionView secondary;
   ASSERT_TRUE(primary.Open());
+  vsoc::E2ESecondaryRegionView secondary;
   ASSERT_TRUE(secondary.Open());
   LOG(INFO) << "Regions are open";
   SetHostStrings(&primary);
-  EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
-  primary.SendInterruptToPeer();
+  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  EXPECT_TRUE(primary.MaybeInterruptPeer());
   LOG(INFO) << "Waiting for first interrupt from peer";
-  primary.WaitForInterruptFromPeer();
+  primary.WaitForInterrupt();
   LOG(INFO) << "First interrupt received";
   CheckPeerStrings(&primary);
   SetHostStrings(&secondary);
-  secondary.SendInterruptToPeer();
+  EXPECT_TRUE(secondary.MaybeInterruptPeer());
   LOG(INFO) << "Waiting for second interrupt from peer";
-  secondary.WaitForInterruptFromPeer();
+  secondary.WaitForInterrupt();
   LOG(INFO) << "Second interrupt received";
   CheckPeerStrings(&secondary);
-  EXPECT_FALSE(primary.HasIncomingInterruptFromPeer());
-  EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
+  EXPECT_FALSE(primary.HasIncomingInterrupt());
+  EXPECT_FALSE(secondary.HasIncomingInterrupt());
 }
 
 TEST(RegionTest, MissingRegionCausesDeath) {

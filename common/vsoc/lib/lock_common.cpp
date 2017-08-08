@@ -17,7 +17,7 @@
 
 #include "common/libs/glog/logging.h"
 #include "common/vsoc/lib/compat.h"
-#include "common/vsoc/lib/region.h"
+#include "common/vsoc/lib/region_view.h"
 
 #include <stdlib.h>
 
@@ -45,7 +45,8 @@ namespace vsoc {
  * This is a generic synchronization primitive that provides space for the
  * owner of the lock to write platform-specific information.
  */
-bool vsoc::layout::WaitingLockBase::TryLock(uint32_t tid, uint32_t* expected_out) {
+bool vsoc::layout::WaitingLockBase::TryLock(uint32_t tid,
+                                            uint32_t* expected_out) {
   uint32_t masked_tid = tid & OwnerMask;
   uint32_t expected = LockFree;
   while (1) {

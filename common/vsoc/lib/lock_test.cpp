@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-#include "common/vsoc/lib/region.h"
+#include "common/vsoc/lib/region_view.h"
 
 #ifdef ANDROID
 using MyLock = vsoc::layout::GuestLock;
