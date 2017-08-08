@@ -87,7 +87,7 @@ bool InitializeRegion(const SharedFD& fd, const char* region_name,
 }
 }  // namespace
 
-bool vsoc::OpenableRegion::Open(const char* region_name, const char* domain) {
+bool vsoc::OpenableRegionView::Open(const char* region_name, const char* domain) {
   AutoFreeBuffer msg;
 
   if (!domain) {

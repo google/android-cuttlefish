@@ -32,16 +32,16 @@
 
 namespace vsoc {
 
-class RegionBase;
+class RegionView;
 
 class RegionWorker {
  public:
-  explicit RegionWorker(RegionBase* region);
+  explicit RegionWorker(RegionView* region);
   ~RegionWorker();
   void Work();
 
  protected:
-  RegionBase* region_;
+  RegionView* region_;
   std::thread thread_;
   volatile bool stopping_{};
 };
@@ -57,9 +57,9 @@ class RegionWorker {
  *   * Knowledge of the region's layout (see RegionSingleton)
  *   * Guest or host-specific code to gain access to the region
  */
-class RegionBase {
+class RegionView {
  public:
-  virtual ~RegionBase();
+  virtual ~RegionView();
 
   // Returns the size of the entire region, including the signal tables.
   uint32_t region_size() const {
@@ -135,7 +135,7 @@ class RegionBase {
   std::unique_ptr<RegionWorker> StartWorker();
 
  protected:
-  RegionBase() {}
+  RegionView() {}
 
   template <typename T>
   T* region_offset_to_pointer(vsoc_reg_off_t offset) {

@@ -21,21 +21,24 @@ namespace vsoc {
 namespace layout {
 namespace e2e_test {
 
-const char* E2EPrimaryTestRegion::region_name = "e2e_primary";
-const char E2EPrimaryTestRegion::guest_pattern[E2EMemoryFill::kOwnedFieldSize] =
-    "primary guest e2e string";
-const char E2EPrimaryTestRegion::host_pattern[E2EMemoryFill::kOwnedFieldSize] =
-    "primary host e2e string";
+const char* E2EPrimaryTestRegionLayout::region_name = "e2e_primary";
+const char
+    E2EPrimaryTestRegionLayout::guest_pattern[E2EMemoryFill::kOwnedFieldSize] =
+        "primary guest e2e string";
+const char
+    E2EPrimaryTestRegionLayout::host_pattern[E2EMemoryFill::kOwnedFieldSize] =
+        "primary host e2e string";
 
-const char* E2ESecondaryTestRegion::region_name = "e2e_secondary";
-const char E2ESecondaryTestRegion::guest_pattern[
-    E2EMemoryFill::kOwnedFieldSize] = "secondary guest e2e string";
-const char E2ESecondaryTestRegion::host_pattern[
-    E2EMemoryFill::kOwnedFieldSize] = "secondary host e2e string";
+const char* E2ESecondaryTestRegionLayout::region_name = "e2e_secondary";
+const char E2ESecondaryTestRegionLayout::guest_pattern
+    [E2EMemoryFill::kOwnedFieldSize] = "secondary guest e2e string";
+const char
+    E2ESecondaryTestRegionLayout::host_pattern[E2EMemoryFill::kOwnedFieldSize] =
+        "secondary host e2e string";
 
-const char* E2EManagedTestRegion::region_name = "e2e_managed";
+const char* E2EManagedTestRegionLayout::region_name = "e2e_managed";
 
-const char* E2EManagerTestRegion::region_name = "e2e_manager";
+const char* E2EManagerTestRegionLayout::region_name = "e2e_manager";
 
 }  // e2e_test
 }  // layout

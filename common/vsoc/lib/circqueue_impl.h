@@ -28,7 +28,7 @@ uintptr_t align(uintptr_t index) {
 }  // namespace
 
 namespace vsoc {
-class RegionBase;
+class RegionView;
 namespace layout {
 
 template <uint32_t SizeLog2>
@@ -62,7 +62,7 @@ void CircularQueueBase<SizeLog2>::CopyOutRange(const Range& t,
 }
 
 template <uint32_t SizeLog2>
-void CircularQueueBase<SizeLog2>::WaitForDataLocked(RegionBase* r) {
+void CircularQueueBase<SizeLog2>::WaitForDataLocked(RegionView* r) {
   while (1) {
     uint32_t o_w_pub = w_pub_;
     // We don't have data. Wait until some appears and try again
@@ -76,7 +76,7 @@ void CircularQueueBase<SizeLog2>::WaitForDataLocked(RegionBase* r) {
 }
 
 template <uint32_t SizeLog2>
-intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionBase* r,
+intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionView* r,
                                                          size_t bytes,
                                                          Range* t) {
   // Can't write more than the buffer will hold
@@ -101,7 +101,7 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionBase* r,
 }
 
 template <uint32_t SizeLog2>
-intptr_t CircularByteQueue<SizeLog2>::Read(RegionBase* r, char* buffer_out,
+intptr_t CircularByteQueue<SizeLog2>::Read(RegionView* r, char* buffer_out,
                                            size_t max_size) {
   this->lock_.Lock();
   this->WaitForDataLocked();
@@ -121,7 +121,7 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionBase* r, char* buffer_out,
 }
 
 template <uint32_t SizeLog2>
-intptr_t CircularByteQueue<SizeLog2>::Write(RegionBase* r,
+intptr_t CircularByteQueue<SizeLog2>::Write(RegionView* r,
                                             const char* buffer_in,
                                             size_t bytes) {
   Range range;
@@ -147,7 +147,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::CalculateBufferedSize(
 }
 
 template <uint32_t SizeLog2, uint32_t MaxPacketSize>
-intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionBase* r,
+intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionView* r,
                                                             char* buffer_out,
                                                             size_t max_size) {
   this->lock_.Lock();
@@ -170,7 +170,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionBase* r,
 
 template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
-    RegionBase* r, const char* buffer_in, uint32_t bytes) {
+    RegionView* r, const char* buffer_in, uint32_t bytes) {
   if (bytes > MaxPacketSize) {
     return -ENOSPC;
   }

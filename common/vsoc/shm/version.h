@@ -69,6 +69,7 @@ static const std::size_t GuestAndHostLock_size = 40;
 static const std::size_t HostLock_size = 40;
 static const std::size_t PixelFormatRegister_size = 4;
 static const std::size_t PixelFormatMaskRegister_size = 8;
+static const std::size_t RegionLayout_size = 1;
 static const std::size_t Sides_size = 4;
 static const std::size_t SpinLock_size = 4;
 static const std::size_t WaitingLockBase_size = 40;
@@ -96,12 +97,12 @@ namespace {
 const uint32_t version = 0;
 }
 static const std::size_t E2EMemoryFill_size = 64;
-static const std::size_t E2EPrimaryTestRegion_size = 72;
-static const std::size_t E2ESecondaryTestRegion_size = 72;
-static const std::size_t E2ETestRegionBase_size = 72;
+static const std::size_t E2EPrimaryTestRegionLayout_size = 72;
+static const std::size_t E2ESecondaryTestRegionLayout_size = 72;
+static const std::size_t E2ETestRegionLayout_size = 72;
 static const std::size_t E2ETestStageRegister_size = 4;
-static const std::size_t E2EManagerTestRegion_size = 16;
-static const std::size_t E2EManagedTestRegion_size = 4;
+static const std::size_t E2EManagerTestRegionLayout_size = 16;
+static const std::size_t E2EManagedTestRegionLayout_size = 4;
 }  // namespace e2e_test
 
 }  // namespace version_info

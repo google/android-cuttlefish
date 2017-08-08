@@ -114,7 +114,7 @@ layout::Sides vsoc::layout::WaitingLockBase::UnlockCommon(uint32_t tid) {
   return rval;
 }
 
-void layout::GuestAndHostLock::Lock(RegionBase* region) {
+void layout::GuestAndHostLock::Lock(RegionView* region) {
   uint32_t* uaddr = reinterpret_cast<uint32_t*>(&lock_uint32_);
   uint32_t expected;
   uint32_t tid = gettid();
@@ -126,7 +126,7 @@ void layout::GuestAndHostLock::Lock(RegionBase* region) {
   }
 }
 
-void layout::GuestAndHostLock::Unlock(RegionBase* region) {
+void layout::GuestAndHostLock::Unlock(RegionView* region) {
   uint32_t* uaddr = reinterpret_cast<uint32_t*>(&lock_uint32_);
   region->SendSignal(UnlockCommon(gettid()), uaddr);
 }

@@ -24,8 +24,8 @@
 
 #include <gtest/gtest.h>
 
-using vsoc::layout::e2e_test::E2EPrimaryTestRegion;
-using vsoc::layout::e2e_test::E2ESecondaryTestRegion;
+using vsoc::layout::e2e_test::E2EPrimaryTestRegionLayout;
+using vsoc::layout::e2e_test::E2ESecondaryTestRegionLayout;
 
 /**
  * The string functions have problems with volatile pointers, so
@@ -39,7 +39,7 @@ T* make_nonvolatile(volatile T* in) {
 template <typename Layout>
 class RegionTest {
  public:
-  vsoc::TypedRegion<Layout> region;
+  vsoc::TypedRegionView<Layout> region;
 
   void CheckPeerStrings() {
     size_t num_data = Layout::NumFillRecords(region.region_data_size());
@@ -93,8 +93,8 @@ class RegionTest {
 // 11. Confirm that no interrupt is pending in the second region
 
 TEST(RegionTest, PeerTests) {
-  RegionTest<E2EPrimaryTestRegion> primary;
-  RegionTest<E2ESecondaryTestRegion> secondary;
+  RegionTest<E2EPrimaryTestRegionLayout> primary;
+  RegionTest<E2ESecondaryTestRegionLayout> secondary;
   ASSERT_TRUE(primary.region.Open());
   ASSERT_TRUE(secondary.region.Open());
   LOG(INFO) << "Regions are open";
@@ -118,14 +118,14 @@ TEST(RegionTest, PeerTests) {
 /**
  * Defines an end-to-end region with a name that should never be configured.
  */
-struct UnfindableRegion : public E2EPrimaryTestRegion {
+struct UnfindableRegionLayout : public E2EPrimaryTestRegionLayout {
   static const char* region_name;
 };
 
-const char* UnfindableRegion::region_name = "e2e_must_not_exist";
+const char* UnfindableRegionLayout::region_name = "e2e_must_not_exist";
 
 TEST(RegionTest, MissingRegionCausesDeath) {
-  RegionTest<UnfindableRegion> test;
+  RegionTest<UnfindableRegionLayout> test;
   EXPECT_DEATH(test.region.Open(), ".*");
 }
 
@@ -133,9 +133,9 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    vsoc::TypedRegion<E2EPrimaryTestRegion> region;
+    vsoc::TypedRegionView<E2EPrimaryTestRegionLayout> region;
     region.Open();
-    E2EPrimaryTestRegion* r = region.data();
+    E2EPrimaryTestRegionLayout* r = region.data();
     r->host_status.set_value(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
   }
   return rval;
