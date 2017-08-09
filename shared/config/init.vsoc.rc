@@ -41,10 +41,10 @@ on fs
     chmod 0755 /system/bin/dhcpcd_wlan0
 
     setprop ro.com.google.locationfeatures 1
-    start vsoc_guest_region_e2e_test
 
 
 on post-fs-data
+    start vsoc_guest_region_e2e_test
     mkdir /data/dalvik-cache 0771 root root
     mkdir /data/dalvik-cache/x86 0771 root system
     start gce_fs_monitor
