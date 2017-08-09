@@ -106,7 +106,7 @@ def _py_bundle(ctx):
           "echo 'uudecode >$PYOUT <<\"EOF\"';" +
           "uuencode {1} -;" +
           "echo 'EOF';" +
-          "echo 'python3 $PYOUT \"$@\"') > {0}").format(
+          "echo 'python $PYOUT \"$@\"') > {0}").format(
               out_file.path, zip_file.path, ctx.attr.main))
 
   #
