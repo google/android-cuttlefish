@@ -15,13 +15,16 @@
  */
 #pragma once
 
-#define LOG_TAG "UsbForward"
-
 #include <map>
+#include <memory>
 #include <string>
 #include <libusb/libusb.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/threads/pthread.h"
+#include "guest/usbforward/transport_request.h"
+
+namespace usb_forward {
 
 // USBServer exposes access to USB devices over pipe (virtio channel etc).
 // Usage:
@@ -32,30 +35,46 @@
 //     server.Serve();
 class USBServer final {
  public:
-  USBServer(const avd::SharedFD& fd)
-      : fd_{fd}, handle_(nullptr, libusb_close) {}
+  USBServer(const avd::SharedFD& fd);
   ~USBServer() = default;
 
   // Serve incoming USB requests.
   void Serve();
 
  private:
+  // HandleDeviceEvent opens and closes Android Gadget device, whenever it
+  // appears / disappears.
+  static int HandleDeviceEvent(libusb_context*, libusb_device*,
+                                libusb_hotplug_event event, void* self_raw);
+
   // Handle CmdDeviceList request.
-  void HandleDeviceList();
+  void HandleDeviceList(uint32_t tag);
 
   // Handle CmdAttach request.
-  void HandleAttach();
+  void HandleAttach(uint32_t tag);
 
   // Handle CmdControlTransfer request.
-  void HandleControlTransfer();
+  void HandleControlTransfer(uint32_t tag);
 
   // Handle CmdDataTransfer request.
-  void HandleDataTransfer();
+  void HandleDataTransfer(uint32_t tag);
 
+  // OnAsyncDataTransferComplete handles end of asynchronous data transfer cycle
+  // and sends response back to caller.
+  void OnTransferComplete(uint32_t tag, bool is_data_in, bool is_success,
+                          const uint8_t* buffer, int32_t actual_length);
+
+  std::shared_ptr<libusb_device_handle> handle_;
+
+  avd::ScopedThread libusb_thread_;
+  avd::Mutex write_mutex_;
   avd::SharedFD fd_;
-  std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)>
-      handle_;
+
+  avd::Mutex requests_mutex_;
+  std::map<uint32_t, std::unique_ptr<TransportRequest>> requests_in_flight_;
 
   USBServer(const USBServer& other) = delete;
   USBServer& operator=(const USBServer& other) = delete;
 };
+
+}  // namespace usb_forward
