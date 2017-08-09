@@ -24,7 +24,7 @@
 #include "common/libs/fs/shared_select.h"
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/vadb/vhci_instrument.h"
+#include "host/vadb/usbip/vhci_instrument.h"
 
 namespace vadb {
 namespace usbip {
