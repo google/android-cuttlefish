@@ -48,8 +48,9 @@ class ManagerRegionView : public TypedRegionView<Layout> {
   int CreateFdScopedPermission(uint32_t* owner_ptr, uint32_t owned_val,
                                vsoc_reg_off_t begin_offset,
                                vsoc_reg_off_t end_offset) {
-    return OpenableRegionView::CreateFdScopedPermission(
-        Layout::ManagedRegion::region_name, owner_ptr, owned_val, begin_offset,
+    return this->control_->CreateFdScopedPermission(
+        Layout::ManagedRegion::region_name,
+        this->pointer_to_region_offset(owner_ptr), owned_val, begin_offset,
         end_offset);
   }
 };

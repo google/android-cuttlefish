@@ -15,7 +15,7 @@
  */
 
 // Define some of the string constants associated with the region layout.
-#include "common/vsoc/shm/e2e_test_region.h"
+#include "common/vsoc/shm/e2e_test_region_layout.h"
 
 namespace vsoc {
 namespace layout {
