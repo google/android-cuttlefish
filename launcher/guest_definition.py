@@ -2,9 +2,9 @@
 """
 # pylint: disable=too-many-instance-attributes,no-self-use
 
+import logging
 import os
 from xml.etree import ElementTree as ET
-import glog
 
 class GuestDefinition(object):
     """Guest resource requirements definition.
@@ -13,6 +13,7 @@ class GuestDefinition(object):
         lvc LibVirtClient instance.
     """
     def __init__(self, lvc):
+        self._log = logging.getLogger()
         self._cmdline = None
         self._initrd = None
         self._instance_name = None
@@ -49,7 +50,7 @@ class GuestDefinition(object):
             inst_id Numerical instance ID, starting at 1.
         """
         if inst_id < 1 or inst_id > 255:
-            glog.error('Ignoring invalid instance id requested: %d.', inst_id)
+            self._log.error('Ignoring invalid instance id requested: %d.', inst_id)
             return
         self._instance_id = inst_id
         self._instance_name = None
@@ -70,8 +71,8 @@ class GuestDefinition(object):
         """
         max_cpus = self._lvc.get_max_vcpus()
         if cpus < 0 or cpus > max_cpus:
-            glog.error('Ignoring invalid number of vcpus requested (%d); ' +
-                       'max is %d.', cpus, max_cpus)
+            self._log.error('Ignoring invalid number of vcpus requested (%d); ' +
+                            'max is %d.', cpus, max_cpus)
             return
         self._vcpus = cpus
 
@@ -83,7 +84,7 @@ class GuestDefinition(object):
             memory_mb Total amount of memory allocated for the guest in MB.
         """
         if memory_mb < 0:
-            glog.error('Ignoring invalid amount of memory requested (%d).', memory_mb)
+            self._log.error('Ignoring invalid amount of memory requested (%d).', memory_mb)
             return
         self._memory_mb = memory_mb
 
@@ -95,7 +96,7 @@ class GuestDefinition(object):
             kernel Path to vmlinuz file.
         """
         if not kernel:
-            glog.error('Kernel path must be specified.')
+            self._log.error('Kernel path must be specified.')
             return
         self._kernel = kernel
 
@@ -107,7 +108,7 @@ class GuestDefinition(object):
             initrd Path to initrd.img file.
         """
         if not initrd:
-            glog.error('Initial ramdisk path must be specified.')
+            self._log.error('Initial ramdisk path must be specified.')
             return
         self._initrd = initrd
 
@@ -128,7 +129,7 @@ class GuestDefinition(object):
             path Cuttlefish built 'ramdisk.img' path.
         """
         if path is not None and not os.path.exists(path):
-            glog.warning("Cuttlefish ramdisk.img not found at %s", path)
+            self._log.warning("Cuttlefish ramdisk.img not found at %s", path)
         self._part_ramdisk = path
 
 
@@ -139,7 +140,7 @@ class GuestDefinition(object):
             path Cuttlefish built 'system.img' path.
         """
         if path is not None and not os.path.exists(path):
-            glog.warning("Cuttlefish system.img not found at %s", path)
+            self._log.warning("Cuttlefish system.img not found at %s", path)
         self._part_system = path
 
 
@@ -150,7 +151,7 @@ class GuestDefinition(object):
             path Cuttlefish built 'data.img' path.
         """
         if path is not None and not os.path.exists(path):
-            glog.warning("Cuttlefish data.img not found at %s", path)
+            self._log.warning("Cuttlefish data.img not found at %s", path)
         self._part_data = path
 
 
@@ -161,7 +162,7 @@ class GuestDefinition(object):
             path Cuttlefish built 'cache.img' path.
         """
         if path is not None and not os.path.exists(path):
-            glog.warning("Cuttlefish cache.img not found at %s", path)
+            self._log.warning("Cuttlefish cache.img not found at %s", path)
         self._part_cache = path
 
 
@@ -193,7 +194,7 @@ class GuestDefinition(object):
             num Number of vectors (non-negative).
         """
         if num < 0:
-            glog.error('Invalid number of iv shared memory vectors: %d', num)
+            self._log.error('Invalid number of iv shared memory vectors: %d', num)
             return
         self._iv_vectors = num
 
@@ -274,12 +275,12 @@ class GuestDefinition(object):
         tty = ET.Element('serial')
         if interactive:
             self._append_source(tty, 'unix', path)
-            glog.info('Interactive serial port set up. To access the interactive console run:')
-            glog.info('$ sudo socat file:$(tty),raw,echo=0 %s' % path)
+            self._log.info('Interactive serial port set up. To access the interactive console run:')
+            self._log.info('$ sudo socat file:$(tty),raw,echo=0 %s' % path)
         else:
             self._append_source(tty, 'file', path)
         ET.SubElement(tty, 'target').set('port', str(index))
-        glog.info('Serial port %d will send data to %s', index, path)
+        self._log.info('Serial port %d will send data to %s', index, path)
         return tty
 
 
@@ -306,7 +307,7 @@ class GuestDefinition(object):
         adr.set('controller', '0')
         adr.set('bus', '0')
         adr.set('port', str(index))
-        glog.info('Virtio channel %d will send data to %s', index, path)
+        self._log.info('Virtio channel %d will send data to %s', index, path)
         return vio
 
 
@@ -328,9 +329,8 @@ class GuestDefinition(object):
             bus = 'virtio'
 
         if path is None:
-            glog.fatal('No file specified for %s; (%s) %s is not available.',
-                       name, bus, target_dev)
-            return None
+            raise Exception('No file specified for %s; (%s) %s is not available.',
+                            name, bus, target_dev)
 
         disk = ET.Element('disk')
         disk.set('type', 'file')
