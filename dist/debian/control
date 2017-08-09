@@ -1,0 +1,25 @@
+Source: cuttlefish-common
+Maintainer: Cloud Android Team <cloud-android-team@google.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends:
+ bazel (>= 0.5.0),
+ debhelper (>= 9),
+ libgflags-dev,
+ libgoogle-glog-dev,
+ libudev-dev,
+ libvirt-dev,
+ python-libvirt
+
+Package: cuttlefish-common
+Architecture: amd64
+Depends:
+ libc6,
+ libstdc++6,
+ libudev1,
+ libvirt-bin,
+ qemu (>= 2.8.0)
+Description: Cuttlefish Android Virtual Device companion packages.
+ Contains set of tools and binaries required to boot up and manage
+ Cuttlefish Android Virtual Device.

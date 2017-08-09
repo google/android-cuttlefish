@@ -1,0 +1,43 @@
+#!/usr/bin/make -f
+
+# Start build by executing:
+# $ debuild --no-tgz-check -us -uc
+
+# Uncomment this line out to make installation process more chatty.
+# Keep it on until we know there's no outstanding problems with installation.
+# export DH_VERBOSE=1
+
+DESTDIR=$(CURDIR)/debian/cuttlefish-common
+
+# Clear LD_PRELOAD to prevent libfakeroot from affecting bazel info output.
+BAZEL=LD_PRELOAD= bazel
+BAZEL_BIN=$(shell $(BAZEL) info bazel-bin)
+BAZEL_SRC=$(shell $(BAZEL) info workspace)
+
+build:
+	dh $@
+	@$(BAZEL) test //...:all
+	@$(BAZEL) build //host/ivserver
+	@$(BAZEL) build //host/launcher
+	@$(BAZEL) build //host/vadb
+	@$(BAZEL) build //guest:gce_ramdisk
+
+binary:
+	@dh_testroot
+	@dh_prep
+	@dh_installdirs
+	# Install IVServer
+	@cp $(BAZEL_BIN)/host/ivserver/ivserver $(DESTDIR)/usr/lib/cuttlefish-common/bin
+	@cp $(BAZEL_SRC)/host/ivserver/README.md $(DESTDIR)/usr/share/doc/cuttlefish-common/ivserver.md
+	# Install Launcher
+	@cp $(BAZEL_BIN)/host/launcher/launcher $(DESTDIR)/usr/lib/cuttlefish-common/bin
+	@cp $(BAZEL_SRC)/host/launcher/README.md $(DESTDIR)/usr/share/doc/cuttlefish-common/launcher.md
+	# Install Virtual ADB
+	@cp $(BAZEL_BIN)/host/vadb/vadb $(DESTDIR)/usr/lib/cuttlefish-common/bin
+	@cp $(BAZEL_SRC)/host/vadb/README.md $(DESTDIR)/usr/share/doc/cuttlefish-common/vadb.md
+	# Install shared ramdisk
+	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(DESTDIR)/usr/share/cuttlefish-common
+	dh $@
+
+%:
+	dh $@

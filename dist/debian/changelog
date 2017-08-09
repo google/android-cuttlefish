@@ -1,0 +1,5 @@
+cuttlefish-common (0.1-1) UNRELEASED; urgency=medium
+
+  * Initial release. (Closes: #64528814)
+
+ -- Tomasz Wiszkowski <ender@google.com>  Wed, 09 Aug 2017 11:42:48 -0700

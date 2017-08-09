@@ -1,3 +1,13 @@
 bazel-*
 experimental/android
 .*
+*.log
+
+/cuttlefish-common_*.*
+/cuttlefish-common_*.*
+/cuttlefish-common_*.*
+/cuttlefish-common_*.*
+
+/dist/debian/cuttlefish-common/
+/dist/debian/*.substvars
+/dist/debian/files

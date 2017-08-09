@@ -6,8 +6,15 @@ cc_binary(
   copts = [
     "-I/usr/include/jsoncpp",
   ],
+  # TODO(ender): find a better way to manage dependencies across
+  # incompatible systems, like our obsolete Goobuntu vs modern Debian distros.
+  # The following libraries must be linked statically
+  # to avoid problems with missing (obsolete) library versions on newer systems.
+  linkstatic = 1,
   linkopts = [
+    "-Wl,-Bstatic",
     "-ljsoncpp",
+    "-static-libgcc",
   ],
   deps = [
     ":ivserver_lib",
@@ -33,10 +40,6 @@ cc_library(
   copts = [
     "-I/usr/include/jsoncpp",
   ],
-  linkopts = [
-    "-lrt",
-    "-ljsoncpp",
-  ],
   hdrs = [
     "hald_client.h",
     "ivserver.h",
@@ -60,6 +63,9 @@ cc_test(
   ],
   copts = [
     "-I/usr/include/jsoncpp",
+  ],
+  linkopts = [
+    "-ljsoncpp",
   ],
   deps = [
     ":ivserver_lib",
