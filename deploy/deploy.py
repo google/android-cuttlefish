@@ -59,26 +59,49 @@ def setup_logger():
 
 
 def execute_remote(server, command):
-    """Execute supplied command on a remote server."""
-    LOG.info('Executing remote command: %s', command)
-    cmd = os.popen('ssh ${USER}@%s %s -- %s' % (server, SSH_ARGS, command))
-    cmd_out = [line for line in cmd.xreadlines()]
+    """Execute supplied command on a remote server.
+
+    Args:
+        command Command to be executed on remote server.
+    Returns:
+        Command output split by lines. Each item is a separate line.
+    """
+    cmd_text = 'ssh ${USER}@%s %s -- \'%s\'' % (server, SSH_ARGS, command)
+    LOG.info('Executing remote command: %s', cmd_text)
+    cmd = os.popen(cmd_text)
+    cmd_out = [line.strip() for line in cmd.xreadlines()]
     if cmd.close():
-        raise Exception('Could not execute: %s:\n\t%s',
-                        command,
+        raise Exception('Could not execute: ', command,
                         '\n\t'.join(cmd_out))
+    return cmd_out
 
 
 def execute(command):
-    """Execute supplied command. Raise exception if execution failed."""
+    """Execute supplied command. Raise exception if execution failed.
+
+    Args:
+        command Command to be executed on local host.
+    """
     cmd = os.popen(command)
     LOG.info('Executing: %s', command)
     cmd_out = [line for line in cmd.xreadlines()]
     if cmd.close():
-        raise Exception('Could not execute: %s:\n\t%s',
-                        command,
+        raise Exception('Could not execute: ', command,
                         '\n\t'.join(cmd_out))
 
+
+def check_remote(server, test):
+    """Evaluate expression.
+
+    Args:
+        test Expression / command to be evaluated.
+
+    Returns:
+        True, if expression is truthy, or False, if not.
+    """
+    out = execute_remote(server, '%s; echo $?' % test)
+    # Feel free to crash here if we didn't get *any* result.
+    return out[-1] == '0'
 
 
 def main():
@@ -98,17 +121,24 @@ def main():
         if args.system_build != 'latest':
             build_selector = '--bid=' + args.system_build
 
-        if not os.path.exists(temp_image):
-            execute('/google/data/ro/projects/android/fetch_artifact '
-                    '%s --branch=%s --target=%s '
-                    '\'cf_x86_phone-img-*\' \'%s\'' %
-                    (build_selector, args.system_branch, args.system_target, temp_image))
+        if not os.path.exists('system.img'):
+            if not os.path.exists(temp_image):
+                execute('/google/data/ro/projects/android/fetch_artifact '
+                        '%s --branch=%s --target=%s '
+                        '\'cf_x86_phone-img-*\' \'%s\'' %
+                        (build_selector, args.system_branch, args.system_target, temp_image))
+            execute('unzip -u \'%s\' system.img' % temp_image)
 
-        execute('/google/data/ro/projects/android/fetch_artifact '
-                '--latest --branch=%s --target=%s '
-                'bzImage kernel' %
-                (args.kernel_branch, args.kernel_target))
-        execute('unzip -u \'%s\' system.img boot.img' % temp_image)
+        if not os.path.exists('kernel'):
+            execute('/google/data/ro/projects/android/fetch_artifact '
+                    '--latest --branch=%s --target=%s '
+                    'bzImage kernel' %
+                    (args.kernel_branch, args.kernel_target))
+
+        if not os.path.exists('ramdisk.img'):
+            execute('/google/data/ro/projects/android/fetch_artifact '
+                    '%s --branch=%s --target=%s ramdisk.img' %
+                    (build_selector, args.system_branch, args.system_target))
 
         execute_remote(args.instance, 'sudo mkdir -p %s' % target_dir)
 
@@ -124,8 +154,15 @@ def main():
         execute_remote(args.instance, 'sudo usermod -a -G libvirt ${USER}')
 
         # Copy files to remote server location.
-        execute('scp %s kernel system.img boot.img ${USER}@%s:%s' %
-                (SSH_ARGS, args.instance, target_dir))
+        upload_list = [
+            'kernel',
+            'ramdisk.img',
+            'system.img'
+        ]
+        for file_name in upload_list:
+            if not check_remote(args.instance, 'test -f %s/%s' % (target_dir, file_name)):
+                execute('scp %s %s ${USER}@%s:%s' %
+                        (SSH_ARGS, file_name, args.instance, target_dir))
         execute_remote(args.instance, 'setfacl -m u:${USER}:rw %s/*' % target_dir)
         execute_remote(args.instance, 'setfacl -m u:libvirt-qemu:rw %s/*' % target_dir)
 
@@ -134,9 +171,9 @@ def main():
     finally:
         if not args.keep:
             os.unlink(temp_image)
-        os.unlink('boot.img')
-        os.unlink('kernel')
-        os.unlink('system.img')
+            os.unlink('boot.img')
+            os.unlink('kernel')
+            os.unlink('system.img')
 
 
 if __name__ == '__main__':
