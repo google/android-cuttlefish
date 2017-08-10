@@ -19,6 +19,7 @@ Depends:
  libstdc++6,
  libudev1,
  libvirt-bin,
+ python-libvirt,
  qemu (>= 2.8.0)
 Description: Cuttlefish Android Virtual Device companion packages.
  Contains set of tools and binaries required to boot up and manage
