@@ -99,9 +99,9 @@ int GuestRegionControl::CreateFdScopedPermission(
   if (retval) {
     int errno_ = errno;
     close(managed_region_fd);
-    if (errno != EBUSY) {
-      LOG(FATAL) << "Unable to create fd scoped permission (" << strerror(errno)
-                 << ")";
+    if (errno_ != EBUSY) {
+      LOG(FATAL) << "Unable to create fd scoped permission ("
+                 << strerror(errno_) << ")";
     }
     return -errno_;
   }
