@@ -14,6 +14,11 @@ BAZEL=LD_PRELOAD= bazel
 BAZEL_BIN=$(shell $(BAZEL) info bazel-bin)
 BAZEL_SRC=$(shell $(BAZEL) info workspace)
 
+BINDIR=$(DESTDIR)/usr/bin
+CFBINDIR=$(DESTDIR)/usr/lib/cuttlefish-common/bin
+CFDATDIR=$(DESTDIR)/usr/share/cuttlefish-common
+CFDOCDIR=$(DESTDIR)/usr/share/doc/cuttlefish-common
+
 build:
 	dh $@
 	@$(BAZEL) test //...:all
@@ -27,16 +32,18 @@ binary:
 	@dh_prep
 	@dh_installdirs
 	# Install IVServer
-	@cp $(BAZEL_BIN)/host/ivserver/ivserver $(DESTDIR)/usr/lib/cuttlefish-common/bin
-	@cp $(BAZEL_SRC)/host/ivserver/README.md $(DESTDIR)/usr/share/doc/cuttlefish-common/ivserver.md
+	@cp $(BAZEL_BIN)/host/ivserver/ivserver $(CFBINDIR)
+	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR)/ivserver.md
+	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR)
 	# Install Launcher
-	@cp $(BAZEL_BIN)/host/launcher/launcher $(DESTDIR)/usr/lib/cuttlefish-common/bin
-	@cp $(BAZEL_SRC)/host/launcher/README.md $(DESTDIR)/usr/share/doc/cuttlefish-common/launcher.md
+	@cp $(BAZEL_BIN)/host/launcher/launcher $(CFBINDIR)
+	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR)/launcher.md
+	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR)
 	# Install Virtual ADB
-	@cp $(BAZEL_BIN)/host/vadb/vadb $(DESTDIR)/usr/lib/cuttlefish-common/bin
-	@cp $(BAZEL_SRC)/host/vadb/README.md $(DESTDIR)/usr/share/doc/cuttlefish-common/vadb.md
+	@cp $(BAZEL_BIN)/host/vadb/vadb $(CFBINDIR)
+	@cp $(BAZEL_SRC)/host/vadb/README.md $(CFDOCDIR)/vadb.md
 	# Install shared ramdisk
-	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(DESTDIR)/usr/share/cuttlefish-common
+	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR)
 	dh $@
 
 %:
