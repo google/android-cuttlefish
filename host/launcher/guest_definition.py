@@ -93,11 +93,8 @@ class GuestDefinition(object):
         """Specify kernel path.
 
         Args:
-            kernel Path to vmlinuz file.
+            kernel FilePartition object pointing to vmlinuz file.
         """
-        if not kernel:
-            self._log.error('Kernel path must be specified.')
-            return
         self._kernel = kernel
 
 
@@ -105,11 +102,8 @@ class GuestDefinition(object):
         """Specify initrd path.
 
         Args:
-            initrd Path to initrd.img file.
+            initrd FilePartition object pointing to initrd.img file.
         """
-        if not initrd:
-            self._log.error('Initial ramdisk path must be specified.')
-            return
         self._initrd = initrd
 
 
@@ -122,48 +116,44 @@ class GuestDefinition(object):
         self._cmdline = cmdline
 
 
-    def set_cf_ramdisk_path(self, path):
+    def set_cf_ramdisk(self, ramdisk):
         """Specify cuttlefish ramdisk path.
 
         Args:
-            path Cuttlefish built 'ramdisk.img' path.
+            ramdisk Cuttlefish built 'ramdisk.img' FilePartition object.
         """
-        if path is not None and not os.path.exists(path):
-            self._log.warning("Cuttlefish ramdisk.img not found at %s", path)
-        self._part_ramdisk = path
+        self._part_ramdisk = ramdisk
 
 
-    def set_cf_system_path(self, path):
-        """Specify cuttlefish system path.
+    def set_cf_system_partition(self, system):
+        """Specify cuttlefish system partition.
 
         Args:
-            path Cuttlefish built 'system.img' path.
+            system Cuttlefish built 'system.img' FilePartition object.
+                   This partition will be mounted under /system on
+                   Android device.
         """
-        if path is not None and not os.path.exists(path):
-            self._log.warning("Cuttlefish system.img not found at %s", path)
-        self._part_system = path
+        self._part_system = system
 
 
-    def set_cf_data_path(self, path):
-        """Specify cuttlefish data path.
+    def set_cf_data_partition(self, data):
+        """Specify cuttlefish data partition.
 
         Args:
-            path Cuttlefish built 'data.img' path.
+            data Data FilePartition object. This partition will be
+                 mounted under /data on Android device.
         """
-        if path is not None and not os.path.exists(path):
-            self._log.warning("Cuttlefish data.img not found at %s", path)
-        self._part_data = path
+        self._part_data = data
 
 
-    def set_cf_cache_path(self, path):
-        """Specify cuttlefish cache path.
+    def set_cf_cache_partition(self, cache):
+        """Specify cuttlefish cache partition.
 
         Args:
-            path Cuttlefish built 'cache.img' path.
+            cache Cache FilePartition object. This partition will be
+                  mounted under /cache on Android device.
         """
-        if path is not None and not os.path.exists(path):
-            self._log.warning("Cuttlefish cache.img not found at %s", path)
-        self._part_cache = path
+        self._part_cache = cache
 
 
     def set_net_mobile_bridge(self, bridge):
@@ -235,8 +225,8 @@ class GuestDefinition(object):
         desc.set('machine', 'pc')
         desc.text = 'hvm'
 
-        ET.SubElement(node, 'kernel').text = self._kernel
-        ET.SubElement(node, 'initrd').text = self._initrd
+        ET.SubElement(node, 'kernel').text = self._kernel.name()
+        ET.SubElement(node, 'initrd').text = self._initrd.name()
         if self._cmdline is not None:
             ET.SubElement(node, 'cmdline').text = self._cmdline
 
@@ -387,10 +377,10 @@ class GuestDefinition(object):
         dev.append(self._build_device_serial_port(True))
         dev.append(self._build_device_virtio_channel('logcat', 'file'))
         dev.append(self._build_device_virtio_channel('usb', 'unix'))
-        dev.append(self._build_device_disk_node(self._part_ramdisk, 'ramdisk', 'vda'))
-        dev.append(self._build_device_disk_node(self._part_system, 'system', 'vdb'))
-        dev.append(self._build_device_disk_node(self._part_data, 'data', 'vdc'))
-        dev.append(self._build_device_disk_node(self._part_cache, 'cache', 'vdd'))
+        dev.append(self._build_device_disk_node(self._part_ramdisk.name(), 'ramdisk', 'vda'))
+        dev.append(self._build_device_disk_node(self._part_system.name(), 'system', 'vdb'))
+        dev.append(self._build_device_disk_node(self._part_data.name(), 'data', 'vdc'))
+        dev.append(self._build_device_disk_node(self._part_cache.name(), 'cache', 'vdd'))
         dev.append(self._build_device_net_node('amobile', self._net_mobile_bridge))
         dev.append(self._configure_rng())
 
