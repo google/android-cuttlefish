@@ -41,7 +41,8 @@ class _SshExecBackend(object):
         Returns:
             None
         """
-        proc = Popen(['scp'].append(SSH_ARGS).append([source, '%s:%s' % (self._server, target)]),
+        LOG.info('Transferring file %s -> %s' % (source, target))
+        proc = Popen(['scp'] + SSH_ARGS + [source, '%s:%s' % (self._server, target)],
                      stdin=PIPE, stdout=PIPE, close_fds=True)
         result = proc.wait()
         if result != 0:
@@ -74,6 +75,7 @@ class _LocalExecBackend(object):
         Returns:
             None
         """
+        LOG.info('Copying file %s -> %s' % (source, target))
         proc = Popen(['cp', source, target], stdin=PIPE, stdout=PIPE, close_fds=True)
         result = proc.wait()
         if result != 0:
