@@ -20,7 +20,8 @@ class FilePartition(object):
 
     def _initialize_filesystem(self):
         self._log.info('Initializing %s', self.file.name)
-        cmd = os.popen("/sbin/mkfs.ext4 -F %s" % (self.file.name))
+        cmd = os.popen('setfacl -m u:libvirt-qemu:rw ' + self.file.name)
+        cmd = os.popen('/sbin/mkfs.ext4 -F %s' % (self.file.name))
         out = [l for l in cmd.xreadlines()]
         if cmd.close() is not None:
             raise Exception('Could not initialize filesystem:\n\t%s' %
