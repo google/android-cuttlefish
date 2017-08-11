@@ -19,6 +19,7 @@ Depends:
  libstdc++6,
  libudev1,
  libvirt-bin,
+ linux-image-extra-virtual,
  python-libvirt,
  qemu (>= 2.8.0),
  socat
