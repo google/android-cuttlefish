@@ -24,6 +24,10 @@ class ConfigAction(object):
         """Configure remote instance."""
         try:
             ssh_tgt = Target.for_remote_host(args.instance)
+            # Configure current user to allow them to use libvirt.
+            ssh_tgt.execute('sudo usermod -a -G libvirt ${USER}')
+            ssh_tgt.execute('newgrp libvirt')
+
             # Give user and libvirt access rights to specified folder.
             # Remote directory appears as 'no access rights' except for included
             # users.
@@ -32,14 +36,12 @@ class ConfigAction(object):
             ssh_tgt.execute('sudo setfacl -m g:libvirt:rwx %s' % args.instance_folder)
             ssh_tgt.execute('sudo setfacl -m u:libvirt-qemu:rwx %s' % args.instance_folder)
 
-            # Configure current user to allow them to use libvirt.
-            ssh_tgt.execute('sudo usermod -a -G libvirt ${USER}')
-
             # Configure libvirt to allow qemu to connect to our sockets.
             ssh_tgt.execute('sudo sed -i\'\' \''
                             's/[#\\s]*security_driver = ".*"\\s*$/security_driver = "none"/g'
                             '\' /etc/libvirt/qemu.conf')
             ssh_tgt.execute('sudo service libvirtd restart')
+            ssh_tgt.execute('virsh net-create /usr/share/cuttlefish-common/network-abr0.xml')
 
         finally:
             pass

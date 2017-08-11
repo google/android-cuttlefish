@@ -17,15 +17,15 @@ class DeployAction(object):
         parser.add_argument('--system_build', type=str, required=False,
                             default='latest',
                             help='Build number to fetch from Android Build server.')
-        parser.add_argument('--configure', action='store_true',
-                            default=False,
-                            help='Configure remote server for cuttlefish.')
         parser.add_argument('--system_branch', type=str, required=False,
                             default='git_oc-gce-dev',
                             help='Android Build branch providing system images.')
         parser.add_argument('--system_target', type=str, required=False,
                             default='cf_x86_phone-userdebug',
                             help='Android Build target providing system images.')
+        parser.add_argument('--kernel_build', type=str, required=False,
+                            default='latest',
+                            help='Build number to fetch from Android Build server.')
         parser.add_argument('--kernel_branch', type=str, required=False,
                             default='kernel-n-dev-android-gce-3.18-x86_64',
                             help='Android Build branch providing kernel images.')
@@ -43,6 +43,14 @@ class DeployAction(object):
         parser.add_argument('--instance_folder', type=str, required=False,
                             default='/srv/cf',
                             help='Folder on the remote machine where images should be deployed.')
+        parser.add_argument('--force_update', type=str, required=False,
+                            help='Comma separated list of artifacts to force update.')
+
+
+    def _to_build_id(self, selector):
+        if selector == 'latest':
+            return '--latest'
+        return '--bid='+selector
 
 
     def execute(self, args):
@@ -57,9 +65,9 @@ class DeployAction(object):
             loc_tgt = Target.for_localhost()
             ssh_tgt = Target.for_remote_host(args.instance)
 
-            build_selector = '--latest'
-            if args.system_build != 'latest':
-                build_selector = '--bid=' + args.system_build
+            system_build = self._to_build_id(args.system_build)
+            kernel_build = self._to_build_id(args.kernel_build)
+            force_update = args.force_update.split(',')
 
             if not os.path.exists('system.img'):
                 if not os.path.exists(temp_image):
@@ -67,22 +75,21 @@ class DeployAction(object):
                         '/google/data/ro/projects/android/fetch_artifact '
                         '%s --branch=%s --target=%s '
                         '\'cf_x86_phone-img-*\' \'%s\'' %
-                        (build_selector, args.system_branch, args.system_target, temp_image))
+                        (system_build, args.system_branch, args.system_target, temp_image))
                 loc_tgt.execute('unzip -u \'%s\' system.img' % temp_image)
-
-            if not os.path.exists('kernel'):
-                loc_tgt.execute(
-                    '/google/data/ro/projects/android/fetch_artifact '
-                    '--latest --branch=%s --target=%s '
-                    'bzImage kernel' %
-                    (args.kernel_branch, args.kernel_target))
 
             if not os.path.exists('ramdisk.img'):
                 loc_tgt.execute(
                     '/google/data/ro/projects/android/fetch_artifact '
                     '%s --branch=%s --target=%s ramdisk.img' %
-                    (build_selector, args.system_branch, args.system_target))
+                    (system_build, args.system_branch, args.system_target))
 
+            if not os.path.exists('kernel'):
+                loc_tgt.execute(
+                    '/google/data/ro/projects/android/fetch_artifact '
+                    '%s --branch=%s --target=%s '
+                    'bzImage kernel' %
+                    (kernel_build, args.kernel_branch, args.kernel_target))
 
             # Give user and libvirt access rights to specified folder.
             # Remote directory appears as 'no access rights' except for included
@@ -99,10 +106,16 @@ class DeployAction(object):
                 'system.img'
             ]
             for file_name in upload_list:
-                out = ssh_tgt.execute('test -f %s/%s; echo $?' % (target_dir, file_name))
-                if out[0] == '1':
+                update = file_name in force_update
+
+                if not update:
+                    out = ssh_tgt.execute('test -f %s/%s; echo $?' % (target_dir, file_name))
+                    update = out[0] == '1'
+
+                if update:
                     ssh_tgt.copy(file_name, target_dir)
 
+            ssh_tgt.execute('cp /usr/share/cuttlefish-common/gce_ramdisk.img %s' % target_dir)
             ssh_tgt.execute('setfacl -m g:libvirt:rw %s/*' % target_dir)
             ssh_tgt.execute('setfacl -m u:libvirt-qemu:rw %s/*' % target_dir)
 
