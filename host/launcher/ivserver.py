@@ -77,7 +77,7 @@ def main():
         guest.set_cf_system_partition(
             FilePartition.from_existing_file(os.path.join(args.image_dir, 'system.img')))
         guest.set_cf_data_partition(FilePartition.create_temp('cuttlefish-data', 512))
-        guest.set_cf_cache_partition(FilePartition.create_temp('cache-cache', 512))
+        guest.set_cf_cache_partition(FilePartition.create_temp('cuttlefish-cache', 512))
 
         guest.set_net_mobile_bridge('abr0')
 
