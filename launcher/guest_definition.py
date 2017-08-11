@@ -430,7 +430,10 @@ class GuestDefinition(object):
         if libvirt.getVersion() > 1003003:
             backend.text = '/dev/urandom'
         else:
-            backend.text = '/dev/hwrng'
+            self._log.warning('Your libvirt version cannot use /dev/urandom as entropy source.')
+            self._log.warning('Unless your /dev/random can supply enough entropy, cuttlefish may '
+                              'not work properly.')
+            backend.text = '/dev/random'
         return rng
 
 
