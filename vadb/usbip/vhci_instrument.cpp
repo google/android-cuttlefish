@@ -18,9 +18,9 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
+#include <glog/logging.h>
 #include <fstream>
 #include <sstream>
-#include <glog/logging.h>
 #include "common/libs/fs/shared_select.h"
 
 #include "common/libs/fs/shared_fd.h"
@@ -42,6 +42,13 @@ constexpr uint32_t kDefaultDeviceSpeed = 2;
 constexpr char kVHCISubsystem[] = "platform";
 constexpr char kVHCIDevType[] = "vhci_hcd";
 
+// Control messages.
+// Attach tells thread to attach remote device.
+// Detach tells thread to detach remote device.
+using ControlMsgType = uint8_t;
+constexpr ControlMsgType kControlAttach = 'A';
+constexpr ControlMsgType kControlDetach = 'D';
+
 // Port status values deducted from /sys/devices/platform/vhci_hcd/status
 enum {
   // kVHCIPortFree indicates the port is not currently in use.
@@ -55,15 +62,18 @@ VHCIInstrument::VHCIInstrument(const std::string& name)
                    [](udev_device* device) { udev_device_unref(device); }),
       name_(name) {}
 
+VHCIInstrument::~VHCIInstrument() {
+  if (sys_fd_ > 0) close(sys_fd_);
+}
+
 bool VHCIInstrument::Init() {
-  wake_event_ = avd::SharedFD::Event(0, 0);
+  avd::SharedFD::Pipe(&control_read_end_, &control_write_end_);
 
   udev_.reset(udev_new());
   CHECK(udev_) << "Could not create libudev context.";
 
-  vhci_device_.reset(udev_device_new_from_subsystem_sysname(udev_.get(),
-                                                            kVHCISubsystem,
-                                                            kVHCIDevType));
+  vhci_device_.reset(udev_device_new_from_subsystem_sysname(
+      udev_.get(), kVHCISubsystem, kVHCIDevType));
   if (!vhci_device_) {
     LOG(ERROR) << "VHCI not available. Is the driver loaded?";
     LOG(ERROR) << "Try: sudo modprobe vhci_hcd";
@@ -80,8 +90,7 @@ bool VHCIInstrument::Init() {
     return false;
   }
 
-  attach_thread_.reset(new std::thread([this]() {
-    AttachThread(); }));
+  attach_thread_.reset(new std::thread([this]() { AttachThread(); }));
   return true;
 }
 
@@ -112,8 +121,11 @@ bool VHCIInstrument::FindFreePort() {
 }
 
 void VHCIInstrument::TriggerAttach() {
-  uint64_t count = 1;
-  wake_event_->Write(&count, sizeof(count));
+  control_write_end_->Write(&kControlAttach, sizeof(kControlAttach));
+}
+
+void VHCIInstrument::TriggerDetach() {
+  control_write_end_->Write(&kControlDetach, sizeof(kControlDetach));
 }
 
 void VHCIInstrument::AttachThread() {
@@ -123,42 +135,73 @@ void VHCIInstrument::AttachThread() {
   timeval period = {1, 0};
   // Trigger attach upon start.
   bool want_attach = true;
+  // Indicate running operation on start.
+  bool is_pending = true;
 
   while (true) {
     rset.Zero();
-    rset.Set(wake_event_);
+    rset.Set(control_read_end_);
     // Wait until poked.
     if (0 != avd::Select(&rset, nullptr, nullptr,
-                         (want_attach ? &period : nullptr))) {
-      uint64_t ignore;
-      wake_event_->Read(&ignore, sizeof(ignore));
-      LOG(INFO) << "Attach triggered.";
-      want_attach = true;
+                         (is_pending ? &period : nullptr))) {
+      ControlMsgType request_type;
+      control_read_end_->Read(&request_type, sizeof(request_type));
+      is_pending = true;
+      want_attach = request_type == kControlAttach;
+      LOG(INFO) << (want_attach ? "Attach" : "Detach") << " triggered.";
     }
 
     // Make an attempt to re-attach. If successful, clear pending attach flag.
-    if (Attach()) {
-      want_attach = false;
-    } else {
-      LOG(WARNING) << "Attach failed.";
-      sleep(1);
+    if (is_pending) {
+      if (want_attach && Attach()) {
+        is_pending = false;
+      } else if (!want_attach && Detach()) {
+        is_pending = false;
+      } else {
+        LOG(INFO) << (want_attach ? "Attach" : "Detach") << " unsuccessful. "
+                  << "Will re-try.";
+        sleep(1);
+      }
     }
   }
+}
+
+bool VHCIInstrument::Detach() {
+  // sys_fd_ is the descriptor we supplied to the system to allow it to talk to
+  // (remote) USB device. By closing this descriptor we effectively force close
+  // connection to remote USB device.
+  if (sys_fd_ > 0) {
+    close(sys_fd_);
+    sys_fd_ = -1;
+  }
+
+  std::stringstream result;
+  result << port_;
+  std::ofstream detach(syspath_ + "/detach");
+
+  if (!detach.is_open()) {
+    LOG(WARNING) << "Could not open VHCI detach file.";
+    return false;
+  }
+  detach << result.str();
+  return detach.rdstate() == std::ios_base::goodbit;
 }
 
 bool VHCIInstrument::Attach() {
   avd::SharedFD socket =
       avd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
   if (!socket->IsOpen()) return false;
-  int dup_fd = socket->UNMANAGED_Dup();
+  sys_fd_ = socket->UNMANAGED_Dup();
 
   std::stringstream result;
-  result << port_ << ' ' << dup_fd << ' ' << kDefaultDeviceID << ' ' <<
-         kDefaultDeviceSpeed;
+  result << port_ << ' ' << sys_fd_ << ' ' << kDefaultDeviceID << ' '
+         << kDefaultDeviceSpeed;
   std::ofstream attach(syspath_ + "/attach");
 
   if (!attach.is_open()) {
     LOG(WARNING) << "Could not open VHCI attach file.";
+    close(sys_fd_);
+    sys_fd_ = -1;
     return false;
   }
   attach << result.str();
@@ -168,7 +211,12 @@ bool VHCIInstrument::Attach() {
   // Kernel 4.10 is having problems communicating with USB/IP server if the
   // socket is closed after it's passed to kernel. It is a clear indication that
   // the kernel requires the socket to be kept open.
-  return attach.rdstate() == std::ios_base::goodbit;
+  bool success = attach.rdstate() == std::ios_base::goodbit;
+  if (!success) {
+    close(sys_fd_);
+    sys_fd_ = -1;
+  }
+  return success;
 }
 
 }  // namespace usbip

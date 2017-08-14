@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
   google::InstallFailureSignalHandler();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  vadb::VirtualADBServer adb(FLAGS_usbsocket);
+  vadb::VirtualADBServer adb(FLAGS_usbsocket, FLAGS_usbipsocket);
   CHECK(adb.Init());
   vadb::usbip::Server usbip_server(FLAGS_usbipsocket, adb.Pool());
   CHECK(usbip_server.Init()) << "Could not start usb/ip server";
