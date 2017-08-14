@@ -153,6 +153,14 @@ void USBServer::HandleAttach(uint32_t tag) {
   fd_->Write(&rsp, sizeof(rsp));
 }
 
+void USBServer::HandleHeartbeat(uint32_t tag) {
+  auto handle = GetDevice();
+
+  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  ResponseHeader rsp{handle ? StatusSuccess : StatusFailure, tag};
+  fd_->Write(&rsp, sizeof(rsp));
+}
+
 void USBServer::HandleControlTransfer(uint32_t tag) {
   ControlTransfer req;
   // If disconnected prematurely, don't send response.
@@ -332,6 +340,11 @@ void USBServer::Serve() {
         case CmdDataTransfer:
           ALOGV("Processing DataTransfer command, tag=%d", req.tag);
           HandleDataTransfer(req.tag);
+          break;
+
+        case CmdHeartbeat:
+          ALOGV("Processing Heartbeat command, tag=%d", req.tag);
+          HandleHeartbeat(req.tag);
           break;
 
         default:
