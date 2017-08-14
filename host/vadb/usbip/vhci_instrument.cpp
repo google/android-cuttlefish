@@ -139,6 +139,9 @@ void VHCIInstrument::AttachThread() {
     // Make an attempt to re-attach. If successful, clear pending attach flag.
     if (Attach()) {
       want_attach = false;
+    } else {
+      LOG(WARNING) << "Attach failed.";
+      sleep(1);
     }
   }
 }
@@ -147,9 +150,7 @@ bool VHCIInstrument::Attach() {
   avd::SharedFD socket =
       avd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
   if (!socket->IsOpen()) return false;
-
   int dup_fd = socket->UNMANAGED_Dup();
-
 
   std::stringstream result;
   result << port_ << ' ' << dup_fd << ' ' << kDefaultDeviceID << ' ' <<
@@ -162,7 +163,11 @@ bool VHCIInstrument::Attach() {
   }
   attach << result.str();
 
-  close(dup_fd);
+  // It is unclear whether duplicate FD should remain open or not. There are
+  // cases supporting both assumptions, likely related to kernel version.
+  // Kernel 4.10 is having problems communicating with USB/IP server if the
+  // socket is closed after it's passed to kernel. It is a clear indication that
+  // the kernel requires the socket to be kept open.
   return attach.rdstate() == std::ios_base::goodbit;
 }
 

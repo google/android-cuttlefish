@@ -19,6 +19,7 @@
 
 namespace vadb {
 bool USBCmdDeviceList::OnRequest(const avd::SharedFD& data) {
+  LOG(INFO) << "Requesting device list from Cuttlefish...";
   // No action required.
   return true;
 }
@@ -32,6 +33,8 @@ bool USBCmdDeviceList::OnResponse(bool is_success, const avd::SharedFD& fd) {
     LOG(ERROR) << "Short read: " << fd->StrError();
     return false;
   }
+
+  LOG(INFO) << "Device list completed with " << count << " devices.";
 
   while (count-- > 0) {
     usb_forward::DeviceInfo dev;
@@ -55,6 +58,7 @@ bool USBCmdDeviceList::OnResponse(bool is_success, const avd::SharedFD& fd) {
 
     on_device_discovered_(dev, ifaces);
   }
+
   return true;
 }
 }  // namespace vadb

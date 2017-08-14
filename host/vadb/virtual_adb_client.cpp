@@ -70,7 +70,7 @@ void VirtualADBClient::RegisterDevice(
   };
 
   pool_->AddDevice(usbip::DevicePool::BusDevNumber{bus_id, dev_id},
-                  std::move(d));
+                   std::move(d));
 
   // Attach this device.
   HandleAttach(bus_id, dev_id);

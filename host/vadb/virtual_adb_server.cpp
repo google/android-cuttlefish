@@ -22,7 +22,7 @@ bool VirtualADBServer::Init() {
   LOG(INFO) << "Starting server socket: " << name_;
 
   server_ =
-      avd::SharedFD::SocketLocalServer(name_.c_str(), true, SOCK_STREAM, 0700);
+      avd::SharedFD::SocketLocalServer(name_.c_str(), false, SOCK_STREAM, 0666);
   if (!server_->IsOpen()) {
     LOG(ERROR) << "Could not create socket: " << server_->StrError();
     return false;
