@@ -20,11 +20,11 @@
 #include "host/vadb/usb_cmd_control_transfer.h"
 #include "host/vadb/usb_cmd_data_transfer.h"
 #include "host/vadb/usb_cmd_device_list.h"
-#include "host/vadb/virtual_adb.h"
+#include "host/vadb/virtual_adb_client.h"
 
 namespace vadb {
 
-void VirtualADB::RegisterDevice(
+void VirtualADBClient::RegisterDevice(
     const usb_forward::DeviceInfo& dev,
     const std::vector<usb_forward::InterfaceInfo>& ifaces) {
   auto d = std::unique_ptr<usbip::Device>(new usbip::Device);
@@ -69,11 +69,14 @@ void VirtualADB::RegisterDevice(
                                    std::move(callback));
   };
 
-  pool_.AddDevice(usbip::DevicePool::BusDevNumber{bus_id, dev_id},
+  pool_->AddDevice(usbip::DevicePool::BusDevNumber{bus_id, dev_id},
                   std::move(d));
+
+  // Attach this device.
+  HandleAttach(bus_id, dev_id);
 }
 
-bool VirtualADB::PopulateRemoteDevices() {
+bool VirtualADBClient::PopulateRemoteDevices() {
   return ExecuteCommand(std::unique_ptr<USBCommand>(new USBCmdDeviceList(
       [this](const usb_forward::DeviceInfo& info,
              const std::vector<usb_forward::InterfaceInfo>& ifaces) {
@@ -81,7 +84,7 @@ bool VirtualADB::PopulateRemoteDevices() {
       })));
 }
 
-bool VirtualADB::HandleDeviceControlRequest(
+bool VirtualADBClient::HandleDeviceControlRequest(
     uint8_t bus_id, uint8_t dev_id, const usbip::CmdRequest& r,
     uint32_t timeout, std::vector<uint8_t> data,
     usbip::Device::AsyncTransferReadyCB callback) {
@@ -90,7 +93,7 @@ bool VirtualADB::HandleDeviceControlRequest(
       std::move(callback))));
 }
 
-bool VirtualADB::HandleDeviceDataRequest(
+bool VirtualADBClient::HandleDeviceDataRequest(
     uint8_t bus_id, uint8_t dev_id, uint8_t endpoint, bool is_host_to_device,
     uint32_t deadline, std::vector<uint8_t> data,
     usbip::Device::AsyncTransferReadyCB callback) {
@@ -99,14 +102,12 @@ bool VirtualADB::HandleDeviceDataRequest(
                              deadline, std::move(data), std::move(callback))));
 }
 
-bool VirtualADB::HandleAttach(uint8_t bus_id, uint8_t dev_id) {
+bool VirtualADBClient::HandleAttach(uint8_t bus_id, uint8_t dev_id) {
   return ExecuteCommand(
       std::unique_ptr<USBCommand>(new USBCmdAttach(bus_id, dev_id)));
 }
 
-bool VirtualADB::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
-  std::lock_guard<std::mutex> guard(commands_mutex_);
-
+bool VirtualADBClient::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
   uint32_t this_tag = tag_;
   tag_++;
   usb_forward::RequestHeader hdr{cmd->Command(), this_tag};
@@ -121,63 +122,39 @@ bool VirtualADB::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
   return true;
 }
 
-void VirtualADB::ReceiveThread() {
-  avd::SharedFDSet rset;
-  while (true) {
-    rset.Zero();
-    rset.Set(fd_);
-    auto res = avd::Select(&rset, nullptr, nullptr, nullptr);
-    if (res <= 0) continue;
-
-    if (rset.IsSet(fd_)) {
-      usb_forward::ResponseHeader rhdr;
-      if (fd_->Read(&rhdr, sizeof(rhdr)) != sizeof(rhdr)) {
-        LOG(ERROR) << "Could not read from USB Forwarder: " << fd_->StrError();
-        // TODO(ender): this is likely an indication that the remote end has
-        // rebooted. We should probably just fail all USB/IP commands here.
-        continue;
-      }
-
-      std::lock_guard<std::mutex> lock(commands_mutex_);
-      auto iter = commands_.find(rhdr.tag);
-      if (iter == commands_.end()) {
-        LOG(ERROR)
-            << "Response does not match any of the previously queued commands!";
-        // TODO(ender): Doesn't make much sense to continue. We should just
-        // reset stream here by closing and re-opening connection.
-        continue;
-      }
-
-      iter->second->OnResponse(rhdr.status == usb_forward::StatusSuccess, fd_);
-      commands_.erase(iter);
-    }
-  }
+// BeforeSelect is Called right before Select() to populate interesting
+// SharedFDs.
+void VirtualADBClient::BeforeSelect(avd::SharedFDSet* fd_read) const {
+  fd_read->Set(fd_);
 }
 
-bool VirtualADB::Init() {
-  fd_ = avd::SharedFD::SocketLocalClient(path_.c_str(), false, SOCK_STREAM);
-  if (!fd_->IsOpen()) {
-    LOG(ERROR) << "Could not open " << path_ << ": " << fd_->StrError();
-    return false;
-  }
+// AfterSelect is Called right after Select() to detect and respond to changes
+// on affected SharedFDs.
+// Return value indicates whether this client is still valid.
+bool VirtualADBClient::AfterSelect(const avd::SharedFDSet& fd_read) {
+  if (fd_read.IsSet(fd_)) {
+    usb_forward::ResponseHeader rhdr;
+    if (fd_->Read(&rhdr, sizeof(rhdr)) != sizeof(rhdr)) {
+      LOG(ERROR) << "Could not read from USB Forwarder: " << fd_->StrError();
+      // TODO(ender): it is very likely the connection has been dropped by QEmu.
+      // Should we cancel all pending commands now?
+      return false;
+    }
 
-  receive_thread_.reset(new std::thread([this]() { ReceiveThread(); }));
+    auto iter = commands_.find(rhdr.tag);
+    if (iter == commands_.end()) {
+      LOG(ERROR)
+          << "Response does not match any of the previously queued commands!";
+      // TODO(ender): This looks like a protocol error. What should happen now?
+      // Should we cancel all pending commands now?
+      return false;
+    }
 
-  while (true) {
-    PopulateRemoteDevices();
-    if (pool_.Size() > 0) break;
-    // Wait for remote to be ready.
-    sleep(1);
-  }
-
-  // Attach devices immediately.
-  for (const auto& dev : pool_) {
-    dev.second->handle_attach();
+    iter->second->OnResponse(rhdr.status == usb_forward::StatusSuccess, fd_);
+    commands_.erase(iter);
   }
 
   return true;
 }
-
-const usbip::DevicePool& VirtualADB::Pool() const { return pool_; }
 
 }  // namespace vadb
