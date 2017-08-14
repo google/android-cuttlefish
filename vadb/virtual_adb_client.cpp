@@ -20,9 +20,19 @@
 #include "host/vadb/usb_cmd_control_transfer.h"
 #include "host/vadb/usb_cmd_data_transfer.h"
 #include "host/vadb/usb_cmd_device_list.h"
+#include "host/vadb/usb_cmd_heartbeat.h"
 #include "host/vadb/virtual_adb_client.h"
 
 namespace vadb {
+namespace {
+constexpr int kHeartbeatTimeoutSeconds = 3;
+}  // namespace
+
+VirtualADBClient::VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd)
+    : pool_(pool), fd_(fd) {
+  timer_ = avd::SharedFD::TimerFD(CLOCK_MONOTONIC, 0);
+  SendHeartbeat();
+}
 
 void VirtualADBClient::RegisterDevice(
     const usb_forward::DeviceInfo& dev,
@@ -107,6 +117,53 @@ bool VirtualADBClient::HandleAttach(uint8_t bus_id, uint8_t dev_id) {
       std::unique_ptr<USBCommand>(new USBCmdAttach(bus_id, dev_id)));
 }
 
+bool VirtualADBClient::SendHeartbeat() {
+  VLOG(1) << "Sending heartbeat...";
+  struct itimerspec spec{};
+  spec.it_value.tv_sec = kHeartbeatTimeoutSeconds;
+  timer_->TimerSet(0, &spec, nullptr);
+
+  heartbeat_tag_ = tag_;
+
+  return ExecuteCommand(std::unique_ptr<USBCommand>(
+      new USBCmdHeartbeat([this](bool success) { HandleHeartbeat(success); })));
+}
+
+void VirtualADBClient::HandleHeartbeat(bool is_ready) {
+  VLOG(1) << "Remote server status: " << is_ready;
+  if (is_ready && !is_remote_server_ready_) {
+    LOG(INFO) << "Remote server is now ready.";
+    PopulateRemoteDevices();
+  } else if (is_remote_server_ready_ && !is_ready) {
+    LOG(WARNING) << "Remote server connection lost.";
+    // It makes perfect sense to cancel all outstanding USB requests, as device
+    // is not going to answer any of these anyway.
+    for (const auto& pair : commands_) {
+      pair.second->OnResponse(false, fd_);
+    }
+    commands_.clear();
+  }
+  is_remote_server_ready_ = is_ready;
+}
+
+bool VirtualADBClient::HandleHeartbeatTimeout() {
+  uint64_t timer_result;
+  timer_->Read(&timer_result, sizeof(timer_result));
+
+  auto iter = commands_.find(heartbeat_tag_);
+  if (iter != commands_.end()) {
+    // Make sure to erase the value from list of commands prior to running
+    // callback. Particularly important for heartbeat, which cancels all
+    // outstanding USB commands (including self, if found), if device goes
+    // away (eg. reboots).
+    auto command = std::move(iter->second);
+    commands_.erase(iter);
+    command->OnResponse(false, fd_);
+  }
+
+  return SendHeartbeat();
+}
+
 bool VirtualADBClient::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
   uint32_t this_tag = tag_;
   tag_++;
@@ -126,12 +183,16 @@ bool VirtualADBClient::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
 // SharedFDs.
 void VirtualADBClient::BeforeSelect(avd::SharedFDSet* fd_read) const {
   fd_read->Set(fd_);
+  fd_read->Set(timer_);
 }
 
 // AfterSelect is Called right after Select() to detect and respond to changes
 // on affected SharedFDs.
 // Return value indicates whether this client is still valid.
 bool VirtualADBClient::AfterSelect(const avd::SharedFDSet& fd_read) {
+  if (fd_read.IsSet(timer_)) {
+    HandleHeartbeatTimeout();
+  }
   if (fd_read.IsSet(fd_)) {
     usb_forward::ResponseHeader rhdr;
     if (fd_->Read(&rhdr, sizeof(rhdr)) != sizeof(rhdr)) {
@@ -143,15 +204,18 @@ bool VirtualADBClient::AfterSelect(const avd::SharedFDSet& fd_read) {
 
     auto iter = commands_.find(rhdr.tag);
     if (iter == commands_.end()) {
-      LOG(ERROR)
-          << "Response does not match any of the previously queued commands!";
-      // TODO(ender): This looks like a protocol error. What should happen now?
-      // Should we cancel all pending commands now?
-      return false;
+      // This is likely a late heartbeat response, but could very well be any of
+      // the remaining commands.
+      LOG(INFO) << "Received response for discarded tag " << rhdr.tag;
+    } else {
+      // Make sure to erase the value from list of commands prior to running
+      // callback. Particularly important for heartbeat, which cancels all
+      // outstanding USB commands (including self, if found), if device goes
+      // away (eg. reboots).
+      auto command = std::move(iter->second);
+      commands_.erase(iter);
+      command->OnResponse(rhdr.status == usb_forward::StatusSuccess, fd_);
     }
-
-    iter->second->OnResponse(rhdr.status == usb_forward::StatusSuccess, fd_);
-    commands_.erase(iter);
   }
 
   return true;
