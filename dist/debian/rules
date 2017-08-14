@@ -24,7 +24,6 @@ build:
 	@$(BAZEL) test //...:all
 	@$(BAZEL) build //host/ivserver
 	@$(BAZEL) build //host/launcher
-	@$(BAZEL) build //host/vadb
 	@$(BAZEL) build //guest:gce_ramdisk
 
 binary:
@@ -39,9 +38,6 @@ binary:
 	@cp $(BAZEL_BIN)/host/launcher/launcher $(CFBINDIR)
 	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR)/launcher.md
 	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR)
-	# Install Virtual ADB
-	@cp $(BAZEL_BIN)/host/vadb/vadb $(CFBINDIR)
-	@cp $(BAZEL_SRC)/host/vadb/README.md $(CFDOCDIR)/vadb.md
 	# Install shared ramdisk
 	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR)
 	dh $@
