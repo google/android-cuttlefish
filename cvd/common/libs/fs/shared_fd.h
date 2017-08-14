@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/timerfd.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 
@@ -149,6 +150,7 @@ class SharedFD {
                                     int in_type, mode_t mode);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
+  static SharedFD TimerFD(int clock, int flags);
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
 
@@ -431,6 +433,21 @@ class FileInstance {
       strncpy(s->strerror_buf_, out, sizeof(strerror_buf_));
     }
     return strerror_buf_;
+  }
+
+  int TimerGet(struct itimerspec* curr_value) {
+    errno = 0;
+    int rval = timerfd_gettime(fd_, curr_value);
+    errno_ = errno;
+    return rval;
+  }
+
+  int TimerSet(int flags, const struct itimerspec* new_value,
+                   struct itimerspec* old_value) {
+    errno = 0;
+    int rval = timerfd_settime(fd_, flags, new_value, old_value);
+    errno_ = errno;
+    return rval;
   }
 
   ssize_t Truncate(off_t length) {

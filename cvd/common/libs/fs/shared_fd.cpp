@@ -192,6 +192,15 @@ SharedFD SharedFD::SocketSeqPacketClient(const char* name) {
   return SocketLocalClient(name, false, SOCK_SEQPACKET);
 }
 
+SharedFD SharedFD::TimerFD(int clock, int flags) {
+  int fd = timerfd_create(clock, flags);
+  if (fd == -1) {
+    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
+  } else {
+    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  }
+}
+
 SharedFD SharedFD::Accept(const FileInstance& listener, struct sockaddr* addr,
                           socklen_t* addrlen) {
   return SharedFD(
