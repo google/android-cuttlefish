@@ -59,7 +59,6 @@ void VirtualADBServer::HandleIncomingConnection() {
   }
 
   clients_.emplace_back(&pool_, client);
-  clients_.back().PopulateRemoteDevices();
 }
 
 }  // namespace vadb
