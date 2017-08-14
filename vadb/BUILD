@@ -11,8 +11,10 @@ cc_binary(
         "usb_cmd_data_transfer.h",
         "usb_cmd_device_list.cpp",
         "usb_cmd_device_list.h",
-        "virtual_adb.cpp",
-        "virtual_adb.h",
+        "virtual_adb_client.cpp",
+        "virtual_adb_client.h",
+        "virtual_adb_server.cpp",
+        "virtual_adb_server.h",
     ],
     linkopts = [
         "-ludev",
