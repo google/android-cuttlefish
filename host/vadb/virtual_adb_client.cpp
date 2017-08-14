@@ -28,8 +28,10 @@ namespace {
 constexpr int kHeartbeatTimeoutSeconds = 3;
 }  // namespace
 
-VirtualADBClient::VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd)
-    : pool_(pool), fd_(fd) {
+VirtualADBClient::VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd,
+                                   const std::string& usbip_socket_name)
+    : pool_{pool}, fd_{fd}, vhci_{usbip_socket_name} {
+  CHECK(vhci_.Init());
   timer_ = avd::SharedFD::TimerFD(CLOCK_MONOTONIC, 0);
   SendHeartbeat();
 }
@@ -119,7 +121,7 @@ bool VirtualADBClient::HandleAttach(uint8_t bus_id, uint8_t dev_id) {
 
 bool VirtualADBClient::SendHeartbeat() {
   VLOG(1) << "Sending heartbeat...";
-  struct itimerspec spec{};
+  struct itimerspec spec {};
   spec.it_value.tv_sec = kHeartbeatTimeoutSeconds;
   timer_->TimerSet(0, &spec, nullptr);
 
@@ -134,7 +136,9 @@ void VirtualADBClient::HandleHeartbeat(bool is_ready) {
   if (is_ready && !is_remote_server_ready_) {
     LOG(INFO) << "Remote server is now ready.";
     PopulateRemoteDevices();
+    vhci_.TriggerAttach();
   } else if (is_remote_server_ready_ && !is_ready) {
+    vhci_.TriggerDetach();
     LOG(WARNING) << "Remote server connection lost.";
     // It makes perfect sense to cancel all outstanding USB requests, as device
     // is not going to answer any of these anyway.

@@ -21,7 +21,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/vadb/usbip/client.h"
 #include "host/vadb/usbip/device_pool.h"
-#include "host/vadb/usbip/vhci_instrument.h"
 
 namespace vadb {
 namespace usbip {
@@ -57,7 +56,6 @@ class Server final {
   std::list<Client> clients_;
 
   const DevicePool& device_pool_;
-  VHCIInstrument vhci_;
 
   Server(const Server&) = delete;
   Server& operator=(const Server&) = delete;

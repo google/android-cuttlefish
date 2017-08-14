@@ -25,9 +25,9 @@ using avd::SharedFD;
 namespace vadb {
 namespace usbip {
 Server::Server(const std::string& name, const DevicePool& devices)
-    : name_{name}, device_pool_{devices}, vhci_{name} {}
+    : name_{name}, device_pool_{devices} {}
 
-bool Server::Init() { return CreateServerSocket() && vhci_.Init(); }
+bool Server::Init() { return CreateServerSocket(); }
 
 // Open new listening server socket.
 // Returns false, if listening socket could not be created.
@@ -54,7 +54,6 @@ void Server::AfterSelect(const avd::SharedFDSet& fd_read) {
     if (!iter->AfterSelect(fd_read)) {
       // If client conversation failed, hang up.
       iter = clients_.erase(iter);
-      vhci_.TriggerAttach();
       continue;
     }
     ++iter;
