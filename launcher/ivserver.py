@@ -38,7 +38,9 @@ def setup_arg_parser():
     parser.add_argument('-M', '--memory', type=unsigned_integer, default=2048,
                         help='Size of the non-shared guest RAM in MiB')
     parser.add_argument('-P', '--path', type=str, default='/tmp/ivshmem_socket_qemu',
-                        help='Location of the QEmu socket, default=/tmp/ivshmem_socket_qemu')
+                        help='Location of the QEmu IVSharedMem socket.')
+    parser.add_argument('-U', '--usbsocket_path', type=str, default='/tmp/vusb_socket_qemu',
+                        help='Location of the QEmu VirtualUSB server.')
     return parser
 
 
@@ -83,6 +85,7 @@ def main():
 
         guest.set_ivshmem_vectors(len(layout_json['vsoc_device_regions']))
         guest.set_ivshmem_socket_path(args.path)
+        guest.set_vusb_socket_path(args.usbsocket_path)
 
         guest.set_vmm_path(layout_json['guest']['vmm_path'])
 
