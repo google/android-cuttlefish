@@ -22,24 +22,23 @@ CFDOCDIR=$(DESTDIR)/usr/share/doc/cuttlefish-common
 build:
 	dh $@
 	@$(BAZEL) test //...:all
-	@$(BAZEL) build //host/ivserver
-	@$(BAZEL) build //host/launcher
+	@$(BAZEL) build //host/launcher:cf
 	@$(BAZEL) build //guest:gce_ramdisk
 
 binary:
 	@dh_testroot
 	@dh_prep
 	@dh_installdirs
-	# Install IVServer
-	@cp $(BAZEL_BIN)/host/ivserver/ivserver $(CFBINDIR)
-	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR)/ivserver.md
-	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR)
-	# Install Launcher
-	@cp $(BAZEL_BIN)/host/launcher/launcher $(CFBINDIR)
-	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR)/launcher.md
-	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR)
-	# Install shared ramdisk
+	# Install launcher.
+	@cp $(BAZEL_BIN)/host/launcher/cf $(BINDIR)
+	# Install support files.
 	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR)
+	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR)
+	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR)
+	# Install Documentation.
+	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR)/ivserver.md
+	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR)/launcher.md
+	# Complete building debian package.
 	dh $@
 
 %:

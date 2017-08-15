@@ -19,9 +19,9 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/launcher/file_partition.h"
+#include "host/config/file_partition.h"
 
-namespace launcher {
+namespace config {
 namespace {
 constexpr char kTempFileSuffix[] = ".img";
 
@@ -106,4 +106,4 @@ std::unique_ptr<FilePartition> FilePartition::CreateTemporaryFile(
   return std::unique_ptr<FilePartition>(new FilePartition(path, true));
 }
 
-}  // namespace launcher
+}  // namespace config

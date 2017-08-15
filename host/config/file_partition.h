@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 
-namespace launcher {
+namespace config {
 // FilePartition class manages partition image files.
 // Partition image files can be reused or created on demand. Temporary images
 // are deleted when corresponding instances of FilePartition object are
@@ -55,4 +55,4 @@ class FilePartition {
   FilePartition& operator=(const FilePartition&) = delete;
 };
 
-}  // namespace launcher
+}  // namespace config

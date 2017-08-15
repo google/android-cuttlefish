@@ -18,14 +18,14 @@
 #include <sstream>
 
 #include <glog/logging.h>
-#include "host/launcher/guest_config.h"
+#include "host/config/guest_config.h"
 
 // This class represents libvirt guest configuration.
 // A lot of useful information about the document created here can be found on
 // these websites:
 // - https://libvirt.org/formatdomain.html
 // - https://wiki.libvirt.org/page/Virtio
-namespace launcher {
+namespace config {
 namespace {
 // This trivial no-op helper function serves purpose of making libxml2 happy.
 // Apparently, *most* (not all!) string literals in libxml2 have to be of
@@ -291,4 +291,4 @@ std::string GuestConfig::Build() const {
   return out;
 }
 
-}  // namespace launcher
+}  // namespace config

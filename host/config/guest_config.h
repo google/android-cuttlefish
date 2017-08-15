@@ -18,7 +18,7 @@
 #include <libxml/tree.h>
 #include <memory>
 
-namespace launcher {
+namespace config {
 // GuestConfig builds XML document describing target VM.
 // Documents built by GuestConfig can be directly used by libvirt to instantiate
 // new virtual machine.
@@ -153,4 +153,4 @@ class GuestConfig {
   GuestConfig& operator=(const GuestConfig&) = delete;
 };
 
-}  // namespace launcher
+}  // namespace config
