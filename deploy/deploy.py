@@ -67,7 +67,9 @@ class DeployAction(object):
 
             system_build = self._to_build_id(args.system_build)
             kernel_build = self._to_build_id(args.kernel_build)
-            force_update = args.force_update.split(',')
+            force_update = []
+            if args.force_update:
+                force_update = args.force_update.split(',')
 
             if not os.path.exists('system.img'):
                 if not os.path.exists(temp_image):
