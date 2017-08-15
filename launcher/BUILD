@@ -1,40 +1,29 @@
-load("//tools:py_bundle.bzl", "py_bundle")
-
-py_library(
-    name = "ivserver_lib",
+cc_binary(
+    name = "cf",
     srcs = [
-        "file_partition.py",
-        "guest_definition.py",
-        "ivserver.py",
-        "libvirt_client.py",
-    ],
-    srcs_version = "PY2AND3",
-)
-
-py_bundle(
-    name = "launcher",
-    srcs = [":ivserver_lib"],
-    main = "host.launcher.ivserver",
-)
-
-cc_library(
-    name = "guest_lib",
-    srcs = [
-        "file_partition.cpp",
-        "file_partition.h",
-        "guest_config.cpp",
-        "guest_config.h",
-    ],
-    hdrs = [
-        "guest_config.h",
+        "main.cc",
     ],
     copts = [
+        "-I/usr/include/jsoncpp",
         "-I/usr/include/libxml2",
     ],
+    linkopts = [
+        # TODO(ender): find a better way to manage dependencies across
+        # incompatible systems, like our obsolete Goobuntu vs modern Debian distros.
+        # The following libraries must be linked statically
+        # to avoid problems with missing (obsolete) library versions on newer systems.
+        "-l:libjsoncpp.a",
+        "-ludev",
+        "-lxml2",
+        "-lvirt",
+    ],
     deps = [
-        "@cuttlefish//common/libs/fs",
+        "//host/config:config_lib",
+        "//host/ivserver:ivserver_lib",
+        "//host/vadb:vadb_lib",
+        "@gflags_repo//:gflags",
         "@glog_repo//:glog",
     ],
-    visibility = [ "//visibility:public" ],
 )
+
 

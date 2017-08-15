@@ -11,25 +11,27 @@
 #include <libvirt/libvirt.h>
 
 #include "common/libs/fs/shared_select.h"
+#include "host/config/file_partition.h"
+#include "host/config/guest_config.h"
 #include "host/ivserver/ivserver.h"
 #include "host/ivserver/options.h"
-#include "host/launcher/file_partition.h"
-#include "host/launcher/guest_config.h"
 #include "host/vadb/usbip/server.h"
 #include "host/vadb/virtual_adb_server.h"
 
 DEFINE_int32(instance, 1, "Instance number. Must be unique.");
 DEFINE_int32(cpus, 4, "Virtual CPU count.");
-DEFINE_int32(memory_mb, 1024, "Total amount of memory available for guest, MB.");
-
-DEFINE_string(layout, "", "Location of the vsoc_mem.json file.");
+DEFINE_int32(memory_mb, 1024,
+             "Total amount of memory available for guest, MB.");
+DEFINE_string(layout, "/usr/share/cuttlefish-common/vsoc_mem.json",
+              "Location of the vsoc_mem.json file.");
 DEFINE_string(mempath, "/dev/shm/ivshmem",
               "Target location for the shmem file.");
 DEFINE_int32(shmsize, 4, "Size of the shared memory region in megabytes.");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 DEFINE_string(system_image_dir, "", "Location of the system partition images.");
-DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
+DEFINE_string(initrd, "/usr/share/cuttlefish-common/gce_ramdisk.img",
+              "Location of cuttlefish initrd file.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
@@ -133,16 +135,20 @@ int main(int argc, char** argv) {
 
   // Each of these calls is free to fail and terminate launch if file does not
   // exist or could not be created.
-  auto ramdisk_partition = launcher::FilePartition::ReuseExistingFile(
+  auto ramdisk_partition = config::FilePartition::ReuseExistingFile(
       FLAGS_system_image_dir + "/ramdisk.img");
-  auto system_partition = launcher::FilePartition::ReuseExistingFile(
+  auto system_partition = config::FilePartition::ReuseExistingFile(
       FLAGS_system_image_dir + "/system.img");
+  // TODO(ender): Use fixed data and cache files for now. These files will
+  // remain in temporary location until manually deleted. Revert to
+  // CreateTemporaryFile once we have a proper failure and kill signal handlers
+  // installed.
   auto data_partition =
-      launcher::FilePartition::CreateTemporaryFile("/tmp/cf-data", 512);
+      config::FilePartition::CreateNewFile("/tmp/cf-data.img", 512);
   auto cache_partition =
-      launcher::FilePartition::CreateTemporaryFile("/tmp/cf-cache", 512);
-  auto kernel_image = launcher::FilePartition::ReuseExistingFile(FLAGS_kernel);
-  auto initrd_image = launcher::FilePartition::ReuseExistingFile(FLAGS_initrd);
+      config::FilePartition::CreateNewFile("/tmp/cf-cache.img", 512);
+  auto kernel_image = config::FilePartition::ReuseExistingFile(FLAGS_kernel);
+  auto initrd_image = config::FilePartition::ReuseExistingFile(FLAGS_initrd);
 
   std::stringstream cmdline;
   for (const auto& value : json_root["guest"]["kernel_command_line"]) {
@@ -163,7 +169,7 @@ int main(int argc, char** argv) {
     LOG(WARNING) << "This may affect performance of your virtual instance.";
   }
 
-  launcher::GuestConfig cfg;
+  config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
       .SetVCPUs(FLAGS_cpus)
       .SetMemoryMB(FLAGS_memory_mb)
@@ -194,9 +200,9 @@ int main(int argc, char** argv) {
 
   sleep(1);
 
-  auto domain = virDomainCreateXML(libvirt_connection, xml.c_str(),
-                                   VIR_DOMAIN_START_PAUSED |
-                                   VIR_DOMAIN_START_AUTODESTROY);
+  auto domain = virDomainCreateXML(
+      libvirt_connection, xml.c_str(),
+      VIR_DOMAIN_START_PAUSED | VIR_DOMAIN_START_AUTODESTROY);
   CHECK(domain) << "Could not create libvirt domain.";
 
   CHECK(virDomainResume(domain) == 0) << "Could not start domain.";
