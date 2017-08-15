@@ -5,6 +5,7 @@ cc_binary(
     ],
     copts = [
         "-I/usr/include/jsoncpp",
+        "-I/usr/include/libxml2",
     ],
     linkopts = [
         # TODO(ender): find a better way to manage dependencies across
@@ -13,9 +14,12 @@ cc_binary(
         # to avoid problems with missing (obsolete) library versions on newer systems.
         "-l:libjsoncpp.a",
         "-ludev",
+        "-lxml2",
+        "-lvirt",
     ],
     deps = [
         ":ivserver_lib",
+        "//host/launcher:guest_lib",
         "//host/vadb:vadb_lib",
         "@gflags_repo//:gflags",
         "@glog_repo//:glog",
