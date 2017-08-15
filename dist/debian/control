@@ -15,6 +15,7 @@ Build-Depends:
 Package: cuttlefish-common
 Architecture: amd64
 Depends:
+ adb,
  libc6,
  libstdc++6,
  libudev1,
