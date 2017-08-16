@@ -59,11 +59,14 @@ class DeployAction(object):
         # Allow system to fail here with an exception.
         os.chdir(args.tmpdir)
         target_dir = '%s/%s' % (args.instance_folder, args.system_build)
-        temp_image = '%s-%s.img' % (args.system_target, args.system_build)
+        temp_image = '%s-%s.zip' % (args.system_target, args.system_build)
 
         try:
             loc_tgt = Target.for_localhost()
             ssh_tgt = Target.for_remote_host(args.instance)
+
+            # Install UNZIP if not found.
+            ssh_tgt.execute('[ -x /usr/bin/unzip ] || sudo apt install unzip')
 
             system_build = self._to_build_id(args.system_build)
             kernel_build = self._to_build_id(args.kernel_build)
@@ -71,14 +74,12 @@ class DeployAction(object):
             if args.force_update:
                 force_update = args.force_update.split(',')
 
-            if not os.path.exists('system.img'):
-                if not os.path.exists(temp_image):
-                    loc_tgt.execute(
-                        '/google/data/ro/projects/android/fetch_artifact '
-                        '%s --branch=%s --target=%s '
-                        '\'cf_x86_phone-img-*\' \'%s\'' %
-                        (system_build, args.system_branch, args.system_target, temp_image))
-                loc_tgt.execute('unzip -u \'%s\' system.img' % temp_image)
+            if not os.path.exists(temp_image):
+                loc_tgt.execute(
+                    '/google/data/ro/projects/android/fetch_artifact '
+                    '%s --branch=%s --target=%s '
+                    '\'cf_x86_phone-img-*\' \'%s\'' %
+                    (system_build, args.system_branch, args.system_target, temp_image))
 
             if not os.path.exists('ramdisk.img'):
                 loc_tgt.execute(
@@ -105,7 +106,7 @@ class DeployAction(object):
             upload_list = [
                 'kernel',
                 'ramdisk.img',
-                'system.img'
+                temp_image
             ]
             for file_name in upload_list:
                 update = file_name in force_update
@@ -117,13 +118,14 @@ class DeployAction(object):
                 if update:
                     ssh_tgt.copy(file_name, target_dir)
 
-            ssh_tgt.execute('cp /usr/share/cuttlefish-common/gce_ramdisk.img %s' % target_dir)
+            ssh_tgt.execute('cp /usr/share/cuttlefish-common/gce_ramdisk.img ' + target_dir)
+            ssh_tgt.execute('unzip -p \'%s/%s\' system.img > %s/system.img' %
+                            (target_dir, temp_image, target_dir))
             ssh_tgt.execute('setfacl -m g:libvirt:rw %s/*' % target_dir)
             ssh_tgt.execute('setfacl -m u:libvirt-qemu:rw %s/*' % target_dir)
 
         finally:
             if not args.keep:
                 os.unlink(temp_image)
-                os.unlink('boot.img')
+                os.unlink('ramdisk.img')
                 os.unlink('kernel')
-                os.unlink('system.img')
