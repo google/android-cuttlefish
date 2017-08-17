@@ -8,7 +8,7 @@
 	    "androidboot.hardware=vsoc",
 	    "security=selinux",
 	    "androidboot.selinux=permissive",
-	    "androidboot.serialno=CUTTLEFISHAVD_01",
+	    "androidboot.serialno=435554544c4501",
 	    "enforcing=0",
 	    "audit=0",
 	    "CUTTLEFISH"
