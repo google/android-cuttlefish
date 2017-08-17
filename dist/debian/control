@@ -10,7 +10,8 @@ Build-Depends:
  libgoogle-glog-dev,
  libudev-dev,
  libvirt-dev,
- libxml2-dev
+ libxml2-dev,
+ libjsoncpp-dev
 
 Package: cuttlefish-common
 Architecture: amd64
