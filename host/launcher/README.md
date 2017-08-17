@@ -102,6 +102,8 @@ To start cuttlefish, assuming you executed all the above:
 gce$ sudo modprobe vhci-hcd
 gce$ sudo cf -system_image_dir /srv/cf/latest/ \
         -kernel /srv/cf/latest/kernel \
+        -data_image /srv/cf/latest/data.img \
+        -cache_image /srv/cf/latest/cache.img \
         --logtostderr
 ```
 
