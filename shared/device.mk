@@ -60,7 +60,6 @@ PRODUCT_PACKAGES += \
     gce_network \
     gce_network.config \
     gce_shutdown \
-    gcelogwrapper \
     GceService \
     remoter \
     vnc_server \

@@ -84,18 +84,11 @@ service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
     seclabel u:r:su:s0
     oneshot
 
-service remoter /system/bin/gcelogwrapper /system/bin/remoter
+service remoter /system/bin/remoter
     seclabel u:r:su:s0
     oneshot
 
-service vnc_server /system/bin/gcelogwrapper /system/bin/vnc_server
-    oneshot
-
-
-service logtop3 /system/bin/gcelogwrapper /system/bin/top -m 3 -d 10
-    class main
-    disabled
-    seclabel u:r:su:s0
+service vnc_server /system/bin/vnc_server
     oneshot
 
 
@@ -113,7 +106,7 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     oneshot
 
 
-service gce_fs_monitor /system/bin/gcelogwrapper -k /system/bin/gce_fs_monitor
+service gce_fs_monitor /system/bin/gce_fs_monitor
     class late_start
     disabled
     seclabel u:r:su:s0
