@@ -59,7 +59,6 @@ PRODUCT_PACKAGES += \
     gce_mount_handler \
     gce_network \
     gce_network.config \
-    gce_shutdown \
     GceService \
     vnc_server \
     vnc_server-testing \
