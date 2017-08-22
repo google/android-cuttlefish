@@ -1,0 +1,4 @@
+type vnc_server, domain;
+type vnc_server_exec, exec_type, file_type;
+
+init_daemon_domain(vnc_server)
