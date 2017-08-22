@@ -80,7 +80,6 @@ on boot
 
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
-    seclabel u:r:su:s0
     oneshot
 
 service vnc_server /vendor/bin/vnc_server
@@ -104,11 +103,9 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
 service gce_fs_monitor /system/bin/gce_fs_monitor
     class late_start
     disabled
-    seclabel u:r:su:s0
     oneshot
 
-service usbforward /system/vendor/bin/usbforward /dev/vport0p2
-    seclabel u:r:su:s0
+service usbforward /vendor/bin/usbforward /dev/vport0p2
     class late_start
     user root
 

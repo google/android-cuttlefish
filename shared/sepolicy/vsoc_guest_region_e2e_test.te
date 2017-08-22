@@ -1,0 +1,4 @@
+type vsoc_guest_region_e2e_test, domain;
+type vsoc_guest_region_e2e_test_exec, exec_type, file_type;
+
+init_daemon_domain(vsoc_guest_region_e2e_test)
