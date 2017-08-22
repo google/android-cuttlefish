@@ -54,7 +54,6 @@ on post-fs-data
 
 
 on early-boot
-    start remoter
     start vnc_server
 
 
@@ -81,10 +80,6 @@ on boot
 
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
-    seclabel u:r:su:s0
-    oneshot
-
-service remoter /system/bin/remoter
     seclabel u:r:su:s0
     oneshot
 

@@ -61,7 +61,6 @@ PRODUCT_PACKAGES += \
     gce_network.config \
     gce_shutdown \
     GceService \
-    remoter \
     vnc_server \
     vnc_server-testing \
     simulated_hostapd.conf \
