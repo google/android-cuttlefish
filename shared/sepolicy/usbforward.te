@@ -2,3 +2,15 @@ type usbforward, domain;
 type usbforward_exec, exec_type, file_type;
 
 init_daemon_domain(usbforward)
+
+# Virtual serial device I/O
+allow usbforward virtual_serial_device:chr_file rw_file_perms;
+
+# USB I/O
+allow usbforward usb_device:dir r_dir_perms;
+allow usbforward usb_device:chr_file rw_file_perms;
+
+# /sys/bus/usb/devices, /sys/devices/platform/dummy_hcd.0/usb1/1-1/busnum
+r_dir_file(usbforward, sysfs_usb_priv)
+
+allow usbforward self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
