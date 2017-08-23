@@ -100,7 +100,7 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     oneshot
 
 
-service gce_fs_monitor /system/bin/gce_fs_monitor
+service gce_fs_monitor /vendor/bin/gce_fs_monitor
     class late_start
     disabled
     oneshot
