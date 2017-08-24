@@ -14,9 +14,12 @@ on early-init
     write /dev/userspace_framebuffer 0
     chown system system /dev/userspace_framebuffer
     chmod 0660 /dev/userspace_framebuffer
+    restorecon /dev/userspace_framebuffer
     write /dev/framebuffer_control 0
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
+    restorecon /dev/framebuffer_control
+    restorecon /initial.metadata
 
     mount debugfs debugfs /sys/kernel/debug
     chmod 0755 /sys/kernel/debug

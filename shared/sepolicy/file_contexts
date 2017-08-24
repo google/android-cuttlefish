@@ -1,7 +1,13 @@
 ##########################
 # Devices
 #
+/dev/framebuffer_control           u:object_r:fb_ctl_file:s0
+/dev/userspace_framebuffer         u:object_r:userspace_fb_file:s0
 /dev/vport[0-9]p[0-9]*             u:object_r:virtual_serial_device:s0
+
+#############################
+# Root files
+/initial\.metadata                 u:object_r:initial_metadata_file:s0
 
 #############################
 # Vendor files

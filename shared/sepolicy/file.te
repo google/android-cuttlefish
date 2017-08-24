@@ -1,0 +1,4 @@
+# File types
+type fb_ctl_file, file_type;
+type initial_metadata_file, file_type;
+type userspace_fb_file, file_type;
