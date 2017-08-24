@@ -2,3 +2,6 @@ type gce_fs_monitor, domain;
 type gce_fs_monitor_exec, exec_type, file_type;
 
 init_daemon_domain(gce_fs_monitor)
+
+# Write to kernel log (/dev/kmsg)
+allow gce_fs_monitor kmsg_device:chr_file w_file_perms;
