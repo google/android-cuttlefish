@@ -10,6 +10,12 @@
 /initial\.metadata                 u:object_r:initial_metadata_file:s0
 
 #############################
+# sysfs files
+#
+/sys/bus/usb(/.*)?                             u:object_r:sysfs_usb_priv:s0
+/sys/devices/platform/dummy_hcd\.[0-9](/.*)?   u:object_r:sysfs_usb_priv:s0
+
+#############################
 # Vendor files
 #
 /system/vendor/bin/gce_fs_monitor  u:object_r:gce_fs_monitor_exec:s0
