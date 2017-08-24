@@ -1,0 +1,2 @@
+# Device types
+type virtual_serial_device, dev_type;

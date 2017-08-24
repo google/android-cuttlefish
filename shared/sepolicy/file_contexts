@@ -1,3 +1,11 @@
+##########################
+# Devices
+#
+/dev/vport[0-9]p[0-9]*             u:object_r:virtual_serial_device:s0
+
+#############################
+# Vendor files
+#
 /system/vendor/bin/gce_fs_monitor  u:object_r:gce_fs_monitor_exec:s0
 /system/vendor/bin/usbforward  u:object_r:usbforward_exec:s0
 /system/vendor/bin/vnc_server  u:object_r:vnc_server_exec:s0
