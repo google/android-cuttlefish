@@ -1,0 +1,29 @@
+# GceService app
+type gceservice, domain;
+app_domain(gceservice)
+
+# Use system services exposed as part of Android framework public API
+allow gceservice app_api_service:service_manager find;
+
+# Export Binder service called "gce". Needed to make "dumpsys gce" work.
+add_service(gceservice, gce_service)
+
+# Read and write /data/data subdirectory (for its app-private persistent data).
+allow gceservice app_data_file:dir create_dir_perms;
+allow gceservice app_data_file:{ file lnk_file } create_file_perms;
+
+# Write to kernel log (/dev/kmsg)
+allow gceservice kmsg_device:chr_file w_file_perms;
+allow gceservice kmsg_device:chr_file getattr;
+
+# Read tombstone snapshot file
+allow gceservice tombstone_snapshot_file:file r_file_perms;
+# List tombstone files
+allow gceservice tombstone_data_file:dir r_dir_perms;
+allow gceservice tombstone_data_file:file getattr;
+
+# Communicate with GCE Metadata Proxy over Unix domain sockets
+# The proxy process uses the default label ("kernel") because it is
+# started before Android init and thus before SELinux rule are applied.
+# TODO(b/65049764): Update once GCE metadata proxy is moved outside of the emulator or gets labelled
+allow gceservice kernel:unix_stream_socket connectto;
