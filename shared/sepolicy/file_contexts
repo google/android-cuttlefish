@@ -12,6 +12,7 @@
 #############################
 # Root files
 /initial\.metadata                 u:object_r:initial_metadata_file:s0
+/ts_snap\.txt                      u:object_r:tombstone_snapshot_file:s0
 
 #############################
 # sysfs files
