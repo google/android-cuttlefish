@@ -26,7 +26,7 @@ DEFINE_string(layout, "/usr/share/cuttlefish-common/vsoc_mem.json",
               "Location of the vsoc_mem.json file.");
 DEFINE_string(mempath, "/dev/shm/ivshmem",
               "Target location for the shmem file.");
-DEFINE_int32(shmsize, 4, "Size of the shared memory region in megabytes.");
+DEFINE_int32(shmsize, 0, "(ignored)");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
@@ -105,8 +105,7 @@ class IVServerManager {
  public:
   IVServerManager(const Json::Value& json_root)
       : server_(ivserver::IVServerOptions(FLAGS_layout, FLAGS_mempath,
-                                          FLAGS_qemusocket, FLAGS_clientsocket,
-                                          FLAGS_shmsize),
+                                          FLAGS_qemusocket, FLAGS_clientsocket),
                 json_root) {}
 
   ~IVServerManager() = default;

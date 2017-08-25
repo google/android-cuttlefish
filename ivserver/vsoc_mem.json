@@ -1,31 +1,25 @@
 {
   "guest": {
-    "vmm_path": "/usr/bin/qemu-system-x86_64",
     "kernel_command_line" : [
-	    "loop.max_part=7",
-	    "console=ttyS0",
-	    "androidboot.console=ttyS0",
-	    "androidboot.hardware=vsoc",
-	    "security=selinux",
-	    "androidboot.selinux=permissive",
-	    "androidboot.serialno=CUTTLEFISHAVD01",
-	    "enforcing=0",
-	    "audit=0",
-	    "CUTTLEFISH"
+           "loop.max_part=7",
+           "console=ttyS0",
+           "androidboot.console=ttyS0",
+           "androidboot.hardware=vsoc",
+           "security=selinux",
+           "androidboot.selinux=permissive",
+           "androidboot.serialno=CUTTLEFISHAVD01",
+           "enforcing=0",
+           "audit=0",
+           "CUTTLEFISH"
     ]
   },
-
-  "vsoc_shm_layout_descriptor" : {
-    "__comment": "The top level layout descriptor",
-    "vsoc_region_desc_offset" : 128
-  },
-
   "vsoc_device_regions" : [
    {
+     "device_name" : "hwcomposer",
      "__comment" : "HWComposer related",
      "current_version" : 1,
      "min_compatible_version" : 1,
-     "region_size": 16384,
+     "region_size" : 16384,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm_compatible/loch.h",
@@ -34,16 +28,15 @@
 
      "host_to_guest_signal_table" : {
        "num_nodes_lg2" : 2
-      },
-
-     "device_name" : "hwcomposer"
+      }
    },
 
    {
+     "device_name" : "gralloc_manager",
      "__comment" : "Manages allocation of gralloc buffers",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size": 40960,
+     "region_size" : 40960,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm/lock.h",
@@ -52,16 +45,16 @@
 
      "host_to_guest_signal_table" : {
        "num_nodes_lg2" : 2
-      },
-
-     "device_name" : "gralloc_manager"
+      }
    },
 
    {
+     "device_name" : "gralloc_memory",
      "__comment" : "Holds the gralloc buffers",
+     "managed_by" : "gralloc_manager",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size": 419430400,
+     "region_size" : 419430400,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm/lock.h",
@@ -70,65 +63,13 @@
 
      "host_to_guest_signal_table" : {
        "num_nodes_lg2" : 0
-      },
-
-     "device_name" : "gralloc_memory",
-     "managed_by" : "gralloc_manager"
+      }
    },
 
-   {
-     "__comment" : "Sensors related",
-     "current_version" : 1,
-     "min_compatible_version" : 1,
-     "region_size" : 8192,
-
-     "guest_to_host_signal_table" : {
-       "num_nodes_lg2" : 1
-     },
-
-     "host_to_guest_signal_table" : {
-       "num_nodes_lg2" : 1
-     },
-
-     "device_name" : "sensors"
-   },
 
    {
-    "__comment" : "Misc",
-    "current_version" : 1,
-    "min_compatible_version" : 1,
-    "region_size" : 4096,
-
-    "guest_to_host_signal_table" : {
-      "num_nodes_lg2" : 1
-    },
-
-    "host_to_guest_signal_table" : {
-      "num_nodes_lg2" : 1
-    },
-
-    "device_name" : "misc"
-   },
-
-   {
-    "__comment" : "Sanity testing",
     "device_name" : "e2e_primary",
-    "current_version" : 1,
-    "min_compatible_version" : 1,
-    "region_size" : 16384,
-
-    "guest_to_host_signal_table" : {
-      "num_nodes_lg2" : 1
-    },
-
-    "host_to_guest_signal_table" : {
-      "num_nodes_lg2" : 1
-    }
-   },
-
-   {
     "__comment" : "Sanity testing",
-    "device_name" : "e2e_secondary",
     "current_version" : 1,
     "min_compatible_version" : 1,
     "region_size" : 16384,
@@ -143,8 +84,24 @@
    },
 
    {
-    "__comment" : "Sanity testing of managed regions",
+    "device_name" : "e2e_secondary",
+    "__comment" : "Sanity testing",
+    "current_version" : 1,
+    "min_compatible_version" : 1,
+    "region_size" : 16384,
+
+    "guest_to_host_signal_table" : {
+      "num_nodes_lg2" : 1
+    },
+
+    "host_to_guest_signal_table" : {
+      "num_nodes_lg2" : 1
+    }
+   },
+
+   {
     "device_name" : "e2e_manager",
+    "__comment" : "Sanity testing of managed regions",
     "current_version" : 1,
     "min_compatible_version" : 1,
     "region_size" : 4096,
@@ -159,8 +116,8 @@
    },
 
    {
-    "__comment" : "Sanity testing of managed regions",
     "device_name" : "e2e_managed",
+    "__comment" : "Sanity testing of managed regions",
     "current_version" : 1,
     "min_compatible_version" : 1,
     "region_size" : 16384,

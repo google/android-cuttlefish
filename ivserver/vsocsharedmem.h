@@ -30,7 +30,7 @@ class VSoCSharedMemory {
  public:
   // Region describes a VSoCSharedMem region.
   struct Region {
-    std::string name;
+    vsoc_device_region values{};
     avd::SharedFD host_fd;
     avd::SharedFD guest_fd;
   };
@@ -41,8 +41,7 @@ class VSoCSharedMemory {
   VSoCSharedMemory() = default;
   virtual ~VSoCSharedMemory() = default;
 
-  static std::unique_ptr<VSoCSharedMemory> New(const uint32_t size_mib,
-                                               const std::string &name,
+  static std::unique_ptr<VSoCSharedMemory> New(const std::string &name,
                                                const Json::Value &json_root);
 
   virtual bool GetEventFdPairForRegion(const std::string &region_name,
