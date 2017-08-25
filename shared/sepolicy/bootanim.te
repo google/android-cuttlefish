@@ -1,2 +1,5 @@
+# TODO(b/65049764): Update this once the FD owner process is relabelled. This is probably one of the
+# processes whch is started before Android init.
 allow bootanim kernel:fd use;
+
 allow bootanim self:process execmem;
