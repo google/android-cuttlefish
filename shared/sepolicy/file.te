@@ -1,7 +1,9 @@
 # File types
 type fb_ctl_file, file_type;
 type initial_metadata_file, file_type;
+type sensors_hal_socket, file_type;
 # USB related portion of sysfs requiring privileged access, as opposed to sysfs_usb which is
 type sysfs_usb_priv, sysfs_type, file_type;
 type tombstone_snapshot_file, file_type;
 type userspace_fb_file, file_type;
+type var_run_system_file, file_type;

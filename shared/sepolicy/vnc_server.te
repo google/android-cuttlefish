@@ -16,3 +16,10 @@ allow vnc_server uhid_device:chr_file rw_file_perms;
 # Framebuffer I/O
 allow vnc_server fb_ctl_file:file rw_file_perms;
 allow vnc_server userspace_fb_file:file rw_file_perms;
+
+# TODO(b/65062047): Remove these rules (incl. the two file type definitions) once vnc_server is gone
+# I/O with system_server via sensors_hal_socket Unix domain socket. Needed for orientation changes.
+unix_socket_connect(vnc_server, sensors_hal, system_server)
+# For some reason vnc_server attempts a search of /var/run/system directory instead of going
+# straight for opening the sensors_hal_socket
+allow vnc_server var_run_system_file:dir search;

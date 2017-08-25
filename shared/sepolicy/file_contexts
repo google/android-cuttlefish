@@ -15,6 +15,10 @@
 /ts_snap\.txt                      u:object_r:tombstone_snapshot_file:s0
 
 #############################
+# var files
+/var/run/system(/.*)?              u:object_r:var_run_system_file:s0
+
+#############################
 # sysfs files
 #
 /sys/bus/usb(/.*)?                             u:object_r:sysfs_usb_priv:s0
