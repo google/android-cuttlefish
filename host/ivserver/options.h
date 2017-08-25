@@ -37,8 +37,7 @@ struct IVServerOptions final {
   IVServerOptions(const std::string &mem_layout_conf,
                   const std::string &shm_file_path,
                   const std::string &qemu_socket_path,
-                  const std::string &client_socket_path,
-                  const uint32_t shm_size_mib);
+                  const std::string &client_socket_path);
 
   //
   // We still need a friend here
@@ -50,7 +49,6 @@ struct IVServerOptions final {
   const std::string shm_file_path;
   const std::string qemu_socket_path;
   const std::string client_socket_path;
-  const uint32_t shm_size_mib;
 };
 
 }  // namespace ivserver

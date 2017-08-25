@@ -81,7 +81,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   for (const auto region_data : shmem.Regions()) {
     if (!SendSocketInfo(QemuFDMsg::kHostSideHald, region_data.host_fd)) {
       LOG(ERROR) << "Failed to send Host Side FD for region "
-                 << region_data.name << ": " << client_socket_->StrError();
+                 << region_data.values.device_name << ": " << client_socket_->StrError();
       return false;
     }
   }
@@ -95,7 +95,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   for (const auto region_data : shmem.Regions()) {
     if (!SendSocketInfo(QemuFDMsg::kGuestSideHal, region_data.guest_fd)) {
       LOG(ERROR) << "Failed to send Guest Side FD for region "
-                 << region_data.name << ": " << client_socket_->StrError();
+                 << region_data.values.device_name << ": " << client_socket_->StrError();
       return false;
     }
   }
