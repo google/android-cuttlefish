@@ -14,6 +14,6 @@ allow kernel tmpfs:dir search;
 allow kernel rootfs:chr_file write;
 
 # kdevtmpfs accesses devices before ueventd runs restorecon and relabels devices
-allow kernel device:chr_file { create setattr };
-allow kernel device:dir { create write add_name };
+allow kernel device:chr_file { create setattr getattr unlink };
+allow kernel device:dir create_dir_perms;
 allow kernel self:capability mknod;
