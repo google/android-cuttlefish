@@ -38,6 +38,7 @@ binary:
 	# Install Documentation.
 	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR)/ivserver.md
 	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR)/launcher.md
+	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(BINDIR)
 	# Complete building debian package.
 	dh $@
 
