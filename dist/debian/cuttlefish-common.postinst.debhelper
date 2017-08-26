@@ -1,0 +1,8 @@
+# Automatically added by dh_installinit
+if [ -x "/etc/init.d/cuttlefish-common" ] || [ -e "/etc/init/cuttlefish-common.conf" ]; then
+	if [ ! -e "/etc/init/cuttlefish-common.conf" ]; then
+		update-rc.d cuttlefish-common defaults >/dev/null
+	fi
+	invoke-rc.d cuttlefish-common start || exit $?
+fi
+# End automatically added section

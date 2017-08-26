@@ -1,0 +1,76 @@
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides: cuttlefish-common
+# Required-Start: $remote_fs libvirtd
+# Required-Stop: $remote_fs libvirtd
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Set up initial cuttlefish environment
+# Description: This script sets up the initial cuttlefist environment,
+#              optionally booting a default cuttlefish release.
+### END INIT INFO
+#
+# Copyright (C) 2017 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Make sure calls to this script get redirected to systemctl when
+# using systemd
+. /lib/lsb/init-functions
+
+start() {
+    /sbin/modprobe vhci_hcd
+    chgrp libvirt /sys/devices/platform/vhci_hcd/attach
+    chmod g+w /sys/devices/platform/vhci_hcd/attach
+    /usr/bin/virsh net-create /usr/share/cuttlefish-common/network-abr0.xml
+}
+
+stop() {
+    /usr/bin/virsh net-destroy abr0
+}
+
+usage() {
+  echo $0: start\|stop
+}
+
+if test $# != 1; then
+    usage
+fi
+case "$1" in
+    --help)
+        usage 0
+        ;;
+    start|stop)
+        "$1"
+        ;;
+    restart)
+        stop && start
+        ;;
+    condrestart|try-restart)
+        stop && start
+        ;;
+    reload|force-reload)
+        # Nothing to do; we reread configuration on each invocation
+        ;;
+    status)
+        rh_status
+        ;;
+    shutdown)
+        stop
+        ;;
+    *)
+        usage
+        ;;
+esac
+exit $RETVAL

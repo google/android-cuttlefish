@@ -1,5 +1,5 @@
 <network>
-  <name>Android Bridge</name>
+  <name>abr0</name>
   <forward mode='nat'>
     <nat>
       <port start='1024' end='65535'/>
