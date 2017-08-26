@@ -1,18 +1,4 @@
 {
-  "guest": {
-    "kernel_command_line" : [
-           "loop.max_part=7",
-           "console=ttyS0",
-           "androidboot.console=ttyS0",
-           "androidboot.hardware=vsoc",
-           "security=selinux",
-           "androidboot.selinux=permissive",
-           "androidboot.serialno=CUTTLEFISHAVD01",
-           "enforcing=0",
-           "audit=0",
-           "CUTTLEFISH"
-    ]
-  },
   "vsoc_device_regions" : [
    {
      "device_name" : "hwcomposer",
