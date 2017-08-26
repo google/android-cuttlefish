@@ -23,6 +23,7 @@ build:
 	dh $@
 	@$(BAZEL) test //...:all
 	@$(BAZEL) build //host/launcher:cf
+	@$(BAZEL) build //host/vadb:adbshell
 	@$(BAZEL) build //guest:gce_ramdisk
 
 binary:
@@ -31,6 +32,7 @@ binary:
 	@dh_installdirs
 	# Install launcher.
 	@cp $(BAZEL_BIN)/host/launcher/cf $(BINDIR)
+	@cp $(BAZEL_BIN)/host/vadb/adbshell $(BINDIR)
 	# Install support files.
 	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR)
 	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR)

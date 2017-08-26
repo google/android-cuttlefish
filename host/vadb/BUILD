@@ -1,3 +1,10 @@
+cc_binary(
+    name = "adbshell",
+    srcs = [
+        "adbshell.c",
+    ],
+)
+
 cc_library(
     name = "vadb_lib",
     srcs = [
