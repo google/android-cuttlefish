@@ -18,6 +18,7 @@ Package: cuttlefish-common
 Architecture: amd64
 Depends:
  adb,
+ libarchive-tools,
  libc6,
  libstdc++6,
  libudev1,
