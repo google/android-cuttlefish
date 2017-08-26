@@ -4,6 +4,28 @@ set -e
 
 case "$1" in
     (configure)
+    if [ ! -f /etc/libvirt/qemu.conf.cuttlefish-common ]; then
+      cp /etc/libvirt/qemu.conf /etc/libvirt/qemu.conf.cuttlefish-common
+    fi
+    echo "security_driver = \"none\"" >> /etc/libvirt/qemu.conf
+    echo "dynamic_ownership = 0" >> /etc/libvirt/qemu.conf
+    invoke-rc.d libvirtd restart
+
+    # Add libvirt to any existing instance-* accounts
+    for i in 1; do
+      vsoc_account="vsoc-$(printf %02d "${i}")"
+      useradd -m "${vsoc_account}" || true
+      usermod -aG libvirt,kvm,plugdev "${vsoc_account}"
+      avd_account="avd-$(printf %02d "${i}")"
+      useradd -m "${avd_account}" || true
+      usermod -aG libvirt,plugdev -s /usr/bin/adbshell "${avd_account}"
+    done
+
+    # Now add it to any accounts that are created in the future
+    cat > /etc/default/instance_configs.cfg.template <<EOF
+[Accounts]
+groups = ubuntu,adm,dialout,cdrom,floppy,audio,dip,video,plugdev,netdev,lxd,libvirt-qemu
+EOF
 
     add-shell /usr/bin/adbshell
 
