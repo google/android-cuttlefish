@@ -261,7 +261,8 @@ std::string GuestConfig::Build() const {
       {"-chardev", concat("socket,path=", ivshmem_socket_path_, ",id=ivsocket"),
        "-device",
        concat("ivshmem-doorbell,chardev=ivsocket,vectors=",
-              ivshmem_vector_count_)});
+              ivshmem_vector_count_),
+       "-cpu", "host"});
 
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 
