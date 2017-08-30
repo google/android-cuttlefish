@@ -18,14 +18,17 @@ Package: cuttlefish-common
 Architecture: amd64
 Depends:
  adb,
- libarchive-tools,
+ libarchive-tools | bsdtar,
  libc6,
  libstdc++6,
  libudev1,
  libvirt-bin,
  libxml2,
  linux-image-extra-virtual,
- qemu (>= 2.8.0),
+ qemu-kvm (>= 2.8.0),
+ qemu-system-common (>= 2.8.0),
+ qemu-system-x86 (>= 2.8.0),
+ qemu-utils (>= 2.8.0),
  socat
 Description: Cuttlefish Android Virtual Device companion packages.
  Contains set of tools and binaries required to boot up and manage
