@@ -7,17 +7,19 @@
 # Keep it on until we know there's no outstanding problems with installation.
 # export DH_VERBOSE=1
 
-DESTDIR=$(CURDIR)/debian/cuttlefish-common
+DESTDIR_COMMON=$(CURDIR)/debian/cuttlefish-common
+DESTDIR_CLOUD=$(CURDIR)/debian/cuttlefish-cloud
 
 # Clear LD_PRELOAD to prevent libfakeroot from affecting bazel info output.
 BAZEL=LD_PRELOAD= bazel
 BAZEL_BIN=$(shell $(BAZEL) info bazel-bin)
 BAZEL_SRC=$(shell $(BAZEL) info workspace)
 
-BINDIR=$(DESTDIR)/usr/bin
-CFBINDIR=$(DESTDIR)/usr/lib/cuttlefish-common/bin
-CFDATDIR=$(DESTDIR)/usr/share/cuttlefish-common
-CFDOCDIR=$(DESTDIR)/usr/share/doc/cuttlefish-common
+BINDIR_COMMON=$(DESTDIR_COMMON)/usr/bin
+BINDIR_CLOUD=$(DESTDIR_CLOUD)/usr/bin
+CFBINDIR_COMMON=$(DESTDIR_COMMON)/usr/lib/cuttlefish-common/bin
+CFDATDIR_COMMON=$(DESTDIR_COMMON)/usr/share/cuttlefish-common
+CFDOCDIR_COMMON=$(DESTDIR_COMMON)/usr/share/doc/cuttlefish-common
 
 build:
 	dh $@
@@ -31,17 +33,17 @@ binary:
 	@dh_prep
 	@dh_installdirs
 	# Install launcher.
-	@cp $(BAZEL_BIN)/host/launcher/cf $(BINDIR)
-	@cp $(BAZEL_BIN)/host/vadb/adbshell $(BINDIR)
+	@cp $(BAZEL_BIN)/host/launcher/cf $(BINDIR_COMMON)
+	@cp $(BAZEL_BIN)/host/vadb/adbshell $(BINDIR_CLOUD)
 	# Install support files.
-	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR)
-	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR)
-	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR)
+	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR_COMMON)
+	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR_COMMON)
+	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR_COMMON)
 	# Install Documentation.
-	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR)/ivserver.md
-	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR)/launcher.md
-	@cp $(BAZEL_SRC)/host/deploy/install_zip.sh $(BINDIR)
-	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(BINDIR)
+	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR_COMMON)/ivserver.md
+	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR_COMMON)/launcher.md
+	@cp $(BAZEL_SRC)/host/deploy/install_zip.sh $(BINDIR_COMMON)
+	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(BINDIR_COMMON)
 	# Complete building debian package.
 	dh $@
 

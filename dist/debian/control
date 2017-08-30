@@ -30,6 +30,15 @@ Depends:
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
  socat
-Description: Cuttlefish Android Virtual Device companion packages.
+Description: Cuttlefish Android Virtual Device companion package.
  Contains set of tools and binaries required to boot up and manage
- Cuttlefish Android Virtual Device.
+ Cuttlefish Android Virtual Device that are used in all deployments.
+
+Package: cuttlefish-cloud
+Architecture: amd64
+Depends:
+ adb,
+ cuttlefish-common,
+ libc6
+Description: Configuration and utilities for Android cuttlefish devices
+ running in the cloud. Not intended for non-cloud deployments.
