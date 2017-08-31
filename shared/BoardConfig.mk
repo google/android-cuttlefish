@@ -45,7 +45,20 @@ BOARD_USERDATAIMAGE_PARTITION_SIZE := 1073741824
 BOARD_CACHEIMAGE_PARTITION_SIZE := 67108864
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
-BOARD_KERNEL_CMDLINE := loop.max_part=7 console=ttyS0 androidboot.console=ttyS0 androidboot.hardware=vsoc security=selinux androidboot.selinux=permissive androidboot.serialno=CUTTLEFISHAVD01 enforcing=0 audit=1 CUTTLEFISH
+BOARD_KERNEL_CMDLINE := loop.max_part=7
+BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS0
+BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc CUTTLEFISH
+BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+
+# TODO(b/65266349) Figure out why this is needed
+BOARD_KERNEL_CMDLINE += security=selinux
+
+# TODO(b/65254639) Use different serial numbers
+BOARD_KERNEL_CMDLINE += androidboot.serialno=CUTTLEFISHAVD01
+
+# TOOD(b/65254717) This needs to go away
+BOARD_KERNEL_CMDLINE += CUTTLEFISH
 
 # Minimum size of the final bootable disk image: 10G
 # GCE will pad disk images out to 10G. Our disk images should be at least as
