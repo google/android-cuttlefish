@@ -10,17 +10,21 @@ usage() {
 
 case $# in
   1)
-    mkdir -p "$1"
-    bsdtar -x -C "$1" -f -
-    unpack_boot_image.py --boot_img "$1/boot.img" --dest "$1"
+    source=-
+    destdir="$1"
     ;;
   2)
-    mkdir -p "$2"
-    bsdtar -x -C "$2" -f "$1"
-    unpack_boot_image.py --boot_img "$2/boot.img" --dest "$2"
+    source="$1"
+    destdir="$2"
     ;;
   *)
     usage
     exit 2
     ;;
 esac
+mkdir -p "${destdir}"
+bsdtar -x -C "${destdir}" -f "${source}"
+unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
+for i in cache.img cmdline kernel ramdisk.img system.img userdata.img; do
+  sudo chgrp libvirt-qemu "${destdir}/${i}"
+done

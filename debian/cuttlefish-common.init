@@ -27,17 +27,25 @@
 
 # Make sure calls to this script get redirected to systemctl when
 # using systemd
+
 . /lib/lsb/init-functions
 
-USB_FILES=(
-  /sys/devices/platform/vhci_hcd/attach
-  /sys/devices/platform/vhci_hcd/detach
-  )
-
 start() {
-    /sbin/modprobe vhci_hcd
-    chgrp libvirt "${USB_FILES[@]}"
-    chmod g+w "${USB_FILES[@]}"
+    /sbin/modprobe vhci-hcd
+    # This has to be expressed in very basic shell syntax, so we can't
+    # use the typical array idiom.
+    for i in /sys/devices/platform/vhci_hcd/attach \
+      /sys/devices/platform/vhci_hcd/detach; do
+      if [ -f $i ]; then
+        USB_FILES="${USB_FILES} ${i}"
+      fi
+    done
+    if [ -n "${USB_FILES}" ]; then
+      chgrp libvirt ${USB_FILES}
+      chmod g+w ${USB_FILES}
+    else
+      log_warning_msg "USB controller not found. adb may not be available"
+    fi
     /usr/bin/virsh net-create /usr/share/cuttlefish-common/network-abr0.xml
 }
 

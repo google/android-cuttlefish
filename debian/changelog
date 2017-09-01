@@ -1,3 +1,9 @@
+cuttlefish-common (0.2) UNRELEASED; urgency=medium
+
+  * Improvements to packaging and depoloyment scripts
+
+ -- Greg Hartman <ghartman@google.com>  Fri, 01 Sep 2017 17:45:00 -0700
+
 cuttlefish-common (0.1) UNRELEASED; urgency=medium
 
   * Initial release. (Closes: #64528814)
