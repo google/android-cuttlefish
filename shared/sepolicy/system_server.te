@@ -3,7 +3,3 @@
 allow system_server var_run_system_file:dir w_dir_perms;
 type_transition system_server var_run_system_file:sock_file sensors_hal_socket;
 allow system_server sensors_hal_socket:sock_file { create setattr };
-
-# Create executable memory. Needed for current implementation of OpenGL.
-# TODO(b/65201432): Stop creating new executable memory once OpenGL implementation is changed
-allow system_server self:process execmem;
