@@ -1,4 +1,4 @@
-cuttlefish-common (0.1-1) UNRELEASED; urgency=medium
+cuttlefish-common (0.1) UNRELEASED; urgency=medium
 
   * Initial release. (Closes: #64528814)
 
