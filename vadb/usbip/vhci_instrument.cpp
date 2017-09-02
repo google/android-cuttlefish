@@ -38,7 +38,18 @@ namespace {
 // This can be set to something else and should still work, as long as
 // numbers are valid in USB sense.
 constexpr uint32_t kDefaultDeviceID = (1 << 16) | 1;
-constexpr uint32_t kDefaultDeviceSpeed = 2;
+
+// Request Highspeed configuration. Superspeed isn't supported by vhci.
+// Supported configurations are:
+//  4 -> wireless
+//  3 -> highspeed
+//  2 -> full speed
+//  1 -> low speed
+//  Please refer to the Kernel source tree in the following locations:
+//     include/uapi/linux/usb/ch9.h
+//     drivers/usb/usbip/vhci_sysfs.c
+constexpr uint32_t kDefaultDeviceSpeed = 3;
+
 // Subsystem and device type where VHCI driver is located.
 // These values can usually be found after loading vhci-hcd module here:
 // /sys/devices/platform/vhci_hcd/modalias
@@ -141,8 +152,8 @@ void VHCIInstrument::AttachThread() {
   timeval period = {1, 0};
   // Trigger attach upon start.
   bool want_attach = true;
-  // Indicate running operation on start.
-  bool is_pending = true;
+  // Operation is pending on read.
+  bool is_pending = false;
 
   while (true) {
     rset.Zero();
