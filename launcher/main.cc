@@ -18,9 +18,19 @@
 #include "host/vadb/usbip/server.h"
 #include "host/vadb/virtual_adb_server.h"
 
+namespace {
+std::string StringFromEnv(const char *varname, std::string defval) {
+  const char* const valstr = getenv(varname);
+  if (!valstr) {
+    return defval;
+  }
+  return valstr;
+}
+}  // namespace
+
 DEFINE_int32(instance, 1, "Instance number. Must be unique.");
-DEFINE_int32(cpus, 4, "Virtual CPU count.");
-DEFINE_int32(memory_mb, 1024,
+DEFINE_int32(cpus, 2, "Virtual CPU count.");
+DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 DEFINE_string(layout, "/usr/share/cuttlefish-common/vsoc_mem.json",
               "Location of the vsoc_mem.json file.");
@@ -30,9 +40,11 @@ DEFINE_int32(shmsize, 0, "(ignored)");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
-DEFINE_string(kernel_command_line, "", "Location of a text file with the kernel command line.");
+DEFINE_string(kernel_command_line, "",
+              "Location of a text file with the kernel command line.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
-DEFINE_string(system_image_dir, "", "Location of the system partition images.");
+DEFINE_string(system_image_dir, StringFromEnv("HOME", "."),
+              "Location of the system partition images.");
 DEFINE_string(initrd, "/usr/share/cuttlefish-common/gce_ramdisk.img",
               "Location of cuttlefish initrd file.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
@@ -131,6 +143,30 @@ int main(int argc, char** argv) {
   google::InstallFailureSignalHandler();
   google::ParseCommandLineFlags(&argc, &argv, true);
 
+  // Log all messages with level WARNING and above to stderr.
+  google::SetStderrLogging(google::GLOG_WARNING);
+
+  LOG_IF(FATAL, FLAGS_system_image_dir.empty())
+      << "--system_image_dir must be specified.";
+
+  // If user did not specify location of either of these files, expect them to
+  // be placed in --system_image_dir location.
+  if (FLAGS_cache_image.empty()) {
+    FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
+  }
+
+  if (FLAGS_data_image.empty()) {
+    FLAGS_data_image = FLAGS_system_image_dir + "/userdata.img";
+  }
+
+  if (FLAGS_kernel.empty()) {
+    FLAGS_kernel = FLAGS_system_image_dir + "/kernel";
+  }
+
+  if (FLAGS_kernel_command_line.empty()) {
+    FLAGS_kernel_command_line = FLAGS_system_image_dir + "/cmdline";
+  }
+
   CHECK(virInitialize() == 0) << "Could not initialize libvirt.";
 
   Json::Value json_root = LoadLayoutFile(FLAGS_layout);
@@ -146,9 +182,6 @@ int main(int argc, char** argv) {
   auto cache_partition =  config::FilePartition::ReuseExistingFile(
       FLAGS_cache_image);
 
-  if (!FLAGS_kernel_command_line.size()) {
-    LOG(FATAL) << "--kernel_command_line is required";
-  }
   std::ifstream t(FLAGS_kernel_command_line);
   if (!t) {
     LOG(FATAL) << "Unable to open " << FLAGS_kernel_command_line;
