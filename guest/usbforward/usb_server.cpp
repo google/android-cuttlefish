@@ -43,8 +43,11 @@ std::shared_ptr<libusb_device_handle> GetDevice() {
       libusb_open_device_with_vid_pid(nullptr, kExportedVendorID,
                                       kExportedProductID),
       [](libusb_device_handle* h) {
-        libusb_release_interface(h, 0);
-        libusb_close(h);
+        // Apparently, deleter is called even on an uninitialized shared_ptr.
+        if (h != nullptr) {
+          libusb_release_interface(h, 0);
+          libusb_close(h);
+        }
       });
 
   if (res) libusb_claim_interface(res.get(), 0);
