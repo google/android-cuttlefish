@@ -39,15 +39,15 @@ DEFINE_string(mempath, "/dev/shm/ivshmem",
 DEFINE_int32(shmsize, 0, "(ignored)");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
-DEFINE_string(cache_image, "", "Location of the cache partition image.");
-DEFINE_string(kernel_command_line, "",
-              "Location of a text file with the kernel command line.");
-DEFINE_string(data_image, "", "Location of the data partition image.");
+
 DEFINE_string(system_image_dir, StringFromEnv("HOME", "."),
               "Location of the system partition images.");
-DEFINE_string(initrd, "/usr/share/cuttlefish-common/gce_ramdisk.img",
-              "Location of cuttlefish initrd file.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
+DEFINE_string(kernel_command_line, "",
+              "Location of a text file with the kernel command line.");
+DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
+DEFINE_string(data_image, "", "Location of the data partition image.");
+DEFINE_string(cache_image, "", "Location of the cache partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
 
@@ -151,14 +151,6 @@ int main(int argc, char** argv) {
 
   // If user did not specify location of either of these files, expect them to
   // be placed in --system_image_dir location.
-  if (FLAGS_cache_image.empty()) {
-    FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
-  }
-
-  if (FLAGS_data_image.empty()) {
-    FLAGS_data_image = FLAGS_system_image_dir + "/userdata.img";
-  }
-
   if (FLAGS_kernel.empty()) {
     FLAGS_kernel = FLAGS_system_image_dir + "/kernel";
   }
@@ -167,14 +159,24 @@ int main(int argc, char** argv) {
     FLAGS_kernel_command_line = FLAGS_system_image_dir + "/cmdline";
   }
 
+  if (FLAGS_initrd.empty()) {
+    FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
+  }
+
+  if (FLAGS_cache_image.empty()) {
+    FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
+  }
+
+  if (FLAGS_data_image.empty()) {
+    FLAGS_data_image = FLAGS_system_image_dir + "/userdata.img";
+  }
+
   CHECK(virInitialize() == 0) << "Could not initialize libvirt.";
 
   Json::Value json_root = LoadLayoutFile(FLAGS_layout);
 
   // Each of these calls is free to fail and terminate launch if file does not
   // exist or could not be created.
-  auto ramdisk_partition = config::FilePartition::ReuseExistingFile(
-      FLAGS_system_image_dir + "/ramdisk.img");
   auto system_partition = config::FilePartition::ReuseExistingFile(
       FLAGS_system_image_dir + "/system.img");
   auto data_partition = config::FilePartition::ReuseExistingFile(
@@ -221,7 +223,6 @@ int main(int argc, char** argv) {
       .SetKernelArgs(cmdline)
       .SetIVShMemSocketPath(FLAGS_qemusocket)
       .SetIVShMemVectorCount(json_root["vsoc_device_regions"].size())
-      .SetRamdiskPartitionPath(ramdisk_partition->GetName())
       .SetSystemPartitionPath(system_partition->GetName())
       .SetCachePartitionPath(cache_partition->GetName())
       .SetDataPartitionPath(data_partition->GetName())
