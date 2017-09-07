@@ -63,12 +63,6 @@ class GuestConfig {
     return *this;
   }
 
-  // Set Android ramdisk image path.
-  GuestConfig& SetRamdiskPartitionPath(const std::string& path) {
-    ramdisk_partition_path_ = path;
-    return *this;
-  }
-
   // Set Android system partition image path.
   GuestConfig& SetSystemPartitionPath(const std::string& path) {
     system_partition_path_ = path;
@@ -136,7 +130,6 @@ class GuestConfig {
   std::string kernel_args_;
   std::string initrd_name_;
 
-  std::string ramdisk_partition_path_;
   std::string system_partition_path_;
   std::string cache_partition_path_;
   std::string data_partition_path_;

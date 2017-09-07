@@ -273,10 +273,9 @@ std::string GuestConfig::Build() const {
   ConfigureVirtioChannel(devices, 2, DeviceSourceType::kUnixSocketClient,
                          GetUSBSocketName());
 
-  ConfigureDisk(devices, "vda", ramdisk_partition_path_);
-  ConfigureDisk(devices, "vdb", system_partition_path_);
-  ConfigureDisk(devices, "vdc", data_partition_path_);
-  ConfigureDisk(devices, "vdd", cache_partition_path_);
+  ConfigureDisk(devices, "vda", system_partition_path_);
+  ConfigureDisk(devices, "vdb", data_partition_path_);
+  ConfigureDisk(devices, "vdc", cache_partition_path_);
 
   ConfigureNIC(devices, concat("amobile", id_), mobile_bridge_name_, id_, 1);
   ConfigureHWRNG(devices, entropy_source_);
