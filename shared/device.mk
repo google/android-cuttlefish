@@ -138,8 +138,7 @@ PRODUCT_COPY_FILES += \
 #USB Specific
 #
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/init.hardware.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
-    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.usb.rc
+    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
 
 #
 # Device personality files
