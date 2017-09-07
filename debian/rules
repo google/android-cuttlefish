@@ -43,8 +43,7 @@ binary:
 	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR_COMMON)/ivserver.md
 	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR_COMMON)/launcher.md
 	@cp $(BAZEL_SRC)/host/deploy/install_zip.sh $(BINDIR_COMMON)
-	@cp $(BAZEL_SRC)/host/deploy/start_cf.py $(BINDIR_COMMON)
-	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(BINDIR_COMMON)
+	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(CFBINDIR_COMMON)
 	# Complete building debian package.
 	dh $@
 
