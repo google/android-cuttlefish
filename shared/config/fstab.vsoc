@@ -1,0 +1,4 @@
+/dev/block/vda /system ext4 noatime,ro,errors=panic wait
+/dev/block/vdb /data ext4 nodev,noatime,nosuid,errors=panic wait
+/dev/block/vdc /cache ext4 nodev,noatime,nosuid,errors=panic wait
+
