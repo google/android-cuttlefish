@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,34 +27,73 @@ class NetworkInterface {
   explicit NetworkInterface(size_t if_index)
       : if_index_(if_index) {}
 
-  NetworkInterface()
-      : if_index_(0) {}
-
-  virtual ~NetworkInterface() {}
+  NetworkInterface() = default;
+  ~NetworkInterface() = default;
 
   // Get network interface index.
-  size_t index() const {
+  size_t Index() const {
     return if_index_;
   }
 
   // Set name of the network interface.
-  virtual NetworkInterface& set_name(const std::string& new_name) {
+  NetworkInterface& SetName(const std::string& new_name) {
     name_ = new_name;
     return *this;
   }
 
   // Get name of the network interface.
   // Returns name, if previously set.
-  virtual const std::string& name() const {
+  const std::string& Name() const {
     return name_;
+  }
+
+  // Set operational state of the network interface (ie. whether interface is
+  // up).
+  NetworkInterface& SetOperational(bool is_operational) {
+    is_operational_ = is_operational;
+    return *this;
+  }
+
+  // Get operational state of the interface. Value of 'true' indicates interface
+  // should be 'up'.
+  bool IsOperational() const {
+    return is_operational_;
+  }
+
+  // Set IPv4 address of the network interface.
+  NetworkInterface& SetAddress(const std::string& address) {
+    ip_address_ = address;
+    return *this;
+  }
+
+  // Get IPv4 address of the network interface.
+  const std::string& Address() const {
+    return ip_address_;
+  }
+
+  // Set IPv4 broadcast address of the network interface.
+  NetworkInterface& SetBroadcastAddress(const std::string& address) {
+    bc_address_ = address;
+    return *this;
+  }
+
+  // Get IPv4 broadcast address of the network interface.
+  const std::string& BroadcastAddress() const {
+    return bc_address_;
   }
 
  private:
   // Index of the network interface in the system table. 0 indicates new
   // interface.
-  size_t if_index_;
+  size_t if_index_ = 0;
   // Name of the interface, e.g. "eth0".
   std::string name_;
+  // Operational status, i.e. whether interface is up.
+  bool is_operational_ = false;
+  // IPv4 address of this interface.
+  std::string ip_address_;
+  // IPv4 broadcast address of this interface.
+  std::string bc_address_;
 
   NetworkInterface(const NetworkInterface&);
   NetworkInterface& operator= (const NetworkInterface&);

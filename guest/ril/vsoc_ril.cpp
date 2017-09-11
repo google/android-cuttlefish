@@ -26,6 +26,10 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/net/netlink_client.h"
+#include "common/libs/net/network_interface.h"
+#include "common/libs/net/network_interface_manager.h"
+
 #define GCE_RIL_VERSION_STRING "Android VSoC RIL 1.0"
 
 /* Modem Technology bits */
@@ -94,6 +98,70 @@ struct DataCall {
   std::string other_properties_;
 };
 
+static std::string gSimPIN = "0000";
+static const std::string gSimPUK = "11223344";
+static int gSimPINAttempts = 0;
+static const int gSimPINAttemptsMax = 3;
+static SIM_Status gSimStatus = SIM_NOT_READY;
+
+// InitNetworkInterface ensures that interface 'eth0' is properly named as
+// 'rmnet0' and put down. Connection is not established until explicit data call
+// request from framework.
+void InitNetworkInterface() {
+  std::unique_ptr<avd::NetlinkClient> nl(avd::NetlinkClient::New());
+  std::unique_ptr<avd::NetworkInterfaceManager> nm(
+      avd::NetworkInterfaceManager::New(nl.get()));
+  std::unique_ptr<avd::NetworkInterface> ni(nm->Open("eth0"));
+
+  if (ni) {
+    ni->SetOperational(false);
+    // Interface must be down before it can be renamed.
+    bool res = nm->ApplyChanges(*ni);
+    if (!res) ALOGE("Could not disable network interface.");
+    ni->SetName("rmnet0");
+    res = nm->ApplyChanges(*ni);
+    if (!res) ALOGE("Could not rename network interface.");
+  }
+}
+
+// SetUpNetworkInterface configures IP and Broadcast addresses on a RIL
+// controlled network interface.
+// This call returns true, if operation was successful.
+bool SetUpNetworkInterface(const char* ipaddr, const char* bcaddr) {
+  std::unique_ptr<avd::NetlinkClient> nl(avd::NetlinkClient::New());
+  std::unique_ptr<avd::NetworkInterfaceManager> nm(
+      avd::NetworkInterfaceManager::New(nl.get()));
+  std::unique_ptr<avd::NetworkInterface> ni(nm->Open("rmnet0"));
+
+  if (ni) {
+    ni->SetAddress(ipaddr);
+    ni->SetBroadcastAddress(bcaddr);
+    ni->SetOperational(true);
+    bool res = nm->ApplyChanges(*ni);
+    if (!res) ALOGE("Could not configure rmnet0");
+    return res;
+  }
+  return false;
+}
+
+// TearDownNetworkInterface disables network interface.
+// This call returns true, if operation was successful.
+bool TearDownNetworkInterface() {
+  std::unique_ptr<avd::NetlinkClient> nl(avd::NetlinkClient::New());
+  std::unique_ptr<avd::NetworkInterfaceManager> nm(
+      avd::NetworkInterfaceManager::New(nl.get()));
+  std::unique_ptr<avd::NetworkInterface> ni(nm->Open("rmnet0"));
+
+  if (ni) {
+    ni->SetOperational(false);
+    bool res = nm->ApplyChanges(*ni);
+    if (!res) ALOGE("Could not disable rmnet0");
+    return res;
+  }
+  return false;
+}
+
+
 static int gNextDataCallId = 8;
 static std::map<int, DataCall> gDataCalls;
 static bool gRilConnected = false;
@@ -132,11 +200,10 @@ static int request_or_send_data_calllist(RIL_Token *t) {
         break;
     }
 
-    // TODO(ender): Should we configure aliases maybe?
     responses[index].ifname = (char*)"rmnet0";
-    responses[index].addresses = (char*)"192.168.1.10/24";
+    responses[index].addresses = (char*)"192.168.99.10/24";
     responses[index].dnses = (char*)"8.8.8.8";
-    responses[index].gateways = (char*)"192.168.1.1";
+    responses[index].gateways = (char*)"192.168.99.1";
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
   }
@@ -260,6 +327,11 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   if (fields > 7) {
     if (details[7]) call.other_properties_ = details[7];
   }
+
+  if (gDataCalls.empty()) {
+    SetUpNetworkInterface("192.168.99.10", "192.168.99.255");
+  }
+
   gDataCalls[gNextDataCallId] = call;
   gNextDataCallId++;
 
@@ -280,6 +352,10 @@ static void request_teardown_data_call(void* data, size_t datalen, RIL_Token t) 
 
   gDataCalls.erase(call_id);
   gRilConnected = (gDataCalls.size() > 0);
+
+  if (!gRilConnected) {
+    TearDownNetworkInterface();
+  }
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
@@ -295,13 +371,17 @@ static void set_radio_state(RIL_RadioState new_state) {
     if (new_state == RADIO_STATE_ON) {
       gce_ril_env->OnUnsolicitedResponse(
           RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
+      gSimStatus = SIM_NOT_READY;
       pollSIMState(NULL);
     } else {
       // Drop connections.
       gDataCalls.clear();
-      on_data_calllist_changed(NULL);
+      TearDownNetworkInterface();
+      gSimStatus = SIM_ABSENT;
+      pollSIMState(NULL);
     }
 
+    gRilConnected = (gDataCalls.size() > 0);
     gce_ril_env->OnUnsolicitedResponse(
         RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED, NULL, 0);
   }
@@ -1757,12 +1837,6 @@ static void request_SIM_IO(void *data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
 }
 
-static std::string gSimPIN = "0000";
-static const std::string gSimPUK = "11223344";
-static int gSimPINAttempts = 0;
-static const int gSimPINAttemptsMax = 3;
-static SIM_Status gSimStatus = SIM_NOT_READY;
-
 static void request_enter_sim_pin(void* data, size_t datalen, RIL_Token t) {
   const char** pin_aid = (const char**)data;
 
@@ -1837,7 +1911,10 @@ static void pollSIMState(void *param) {
 
     case SIM_NOT_READY:
       // Transition directly to READY. Set default network operator.
-      gSimStatus = SIM_READY;
+      if (gRadioPowerState == RADIO_STATE_ON) {
+        gSimStatus = SIM_READY;
+      }
+
       gCurrentNetworkOperator = "310260";
 
       gce_ril_env->RequestTimedCallback(
@@ -2349,6 +2426,8 @@ const RIL_RadioFunctions *RIL_Init(
     const struct RIL_Env *env, int argc, char **argv) {
   time(&gce_ril_start_time);
   gce_ril_env = env;
+
+  InitNetworkInterface();
 
   init_modem_supported_network_types();
   init_modem_technologies();
