@@ -29,6 +29,28 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "libvsoc_framebuffer",
+    srcs = [
+        "common/vsoc/framebuffer/fb_bcast_region.cpp",
+        "common/vsoc/lib/fb_bcast_layout.cpp",
+    ],
+    hdrs = [
+        "common/vsoc/framebuffer/fb_bcast_region.h",
+    ],
+    copts = ["-Wno-unused-private-field"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:vsoc_lib",
+    ],
+)
+
+cc_binary(
+    name = "test_framebuffer",
+    srcs = ["common/vsoc/framebuffer/test_fb.cpp"],
+    deps = ["//:libvsoc_framebuffer"],
+)
+
 cc_test(
     name = "circqueue_test",
     srcs = [

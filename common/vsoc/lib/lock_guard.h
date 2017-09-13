@@ -16,11 +16,34 @@
  * limitations under the License.
  */
 
+#include "common/vsoc/lib/region_view.h"
+
 namespace vsoc {
 
 /*
  * Implements std::lock_guard like functionality for the vsoc locks.
  */
+
+template <typename Lock, typename Region = void>
+class GuestAndHostLockGuard {
+ public:
+  explicit GuestAndHostLockGuard(Lock* lock, Region* region = nullptr)
+      : lock_(lock), region_(region) {
+    lock_->Lock(region_);
+  }
+
+  ~GuestAndHostLockGuard() {
+    lock_->Unlock(region_);
+  }
+
+  GuestAndHostLockGuard(const GuestAndHostLockGuard<Lock, Region>&) = delete;
+  GuestAndHostLockGuard<Lock, Region>& operator=(
+      const GuestAndHostLockGuard<Lock, Region>&) = delete;
+
+ private:
+  Lock* lock_;
+  Region* region_;
+};
 
 template <typename Lock>
 class LockGuard {
