@@ -54,16 +54,13 @@ PRODUCT_PACKAGES += \
     dhcpcd_wlan0 \
     gce_fs_monitor \
     gce_init \
-    gce_init_dhcp_hook \
     gce_log_message \
     gce_mount_handler \
-    gce_network \
-    gce_network.config \
-    GceService \
-    vnc_server \
-    vnc_server-testing \
     simulated_hostapd.conf \
     usbforward \
+    vnc_server \
+    vnc_server-testing \
+    VSoCService \
     wpa_supplicant.vsoc.conf \
 
 #
