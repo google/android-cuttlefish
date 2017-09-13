@@ -41,12 +41,11 @@ public class GceService extends Service {
     private static final int NETWORK_OR_BOOT_TIMEOUT = 30;
 
     private final JobExecutor mExecutor = new JobExecutor();
-    private final MetadataClient mMetadataClient = new MetadataClient();
     private final ConnectivityChecker mConnChecker = new ConnectivityChecker(this);
     private final LocationServicesManager mLocationServices = new LocationServicesManager(this);
     private final PackageVerifierManager mPackageVerifier = new PackageVerifierManager(this);
     private final PackageVerificationConsentEnforcer mConsentEnforcer = new PackageVerificationConsentEnforcer(this);
-    private final BootReporter mBootReporter = new BootReporter(mMetadataClient);
+    private final BootReporter mBootReporter = new BootReporter();
     private final GceBroadcastReceiver mBroadcastReceiver = new GceBroadcastReceiver();
     private final BluetoothChecker mBluetoothChecker = new BluetoothChecker();
     private final TombstoneChecker mTombstoneChecker = new TombstoneChecker();
@@ -66,24 +65,24 @@ public class GceService extends Service {
             mBootReporter.reportBootStarted();
             registerBroadcastReceivers();
 
-            mWifiManager = new GceWifiManager(this, mExecutor, mMetadataClient);
+            mWifiManager = new GceWifiManager(this, mExecutor);
 
-            mExecutor.schedule(mMetadataClient);
             mExecutor.schedule(mLocationServices);
             mExecutor.schedule(mPackageVerifier);
             mExecutor.schedule(mConsentEnforcer);
-            mExecutor.schedule(mWifiManager, mMetadataClient.getMetadataReady());
+            mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
-            mExecutor.schedule(mTombstoneChecker);
+            // TODO(ender): TombstoneChecker is disabled, because we no longer have the code that
+            // produces /ts_snap.txt file. We need to rethink how TombstoneChecker should work.
+            // mExecutor.schedule(mTombstoneChecker);
 
             mExecutor.schedule(mBootReporter,
-                    mMetadataClient.getMetadataReady(),
                     mLocationServices.getLocationServicesReady(),
                     mPackageVerifier.getPackageVerifierReady(),
                     mConnChecker.getConnected(),
                     mWifiManager.getInitialWifiStateChangeReady(),
-                    mBluetoothChecker.getEnabled(),
-                    mTombstoneChecker.getTombstoneResult()
+                    mBluetoothChecker.getEnabled()
+                    // mTombstoneChecker.getTombstoneResult()
                     );
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception caught", e);
@@ -149,7 +148,6 @@ public class GceService extends Service {
         }
         pw.println("");
         pw.println("Current system service state:");
-        pw.println("  Metadata ready: " + mMetadataClient.getMetadataReady().isDone());
         pw.println("  Location service ready: "
             + mLocationServices.getLocationServicesReady().isDone());
         pw.println("  Package verifier ready: "
@@ -160,8 +158,6 @@ public class GceService extends Service {
         pw.println("  Tombstone dropped (on boot): "
             + !mTombstoneChecker.getTombstoneResult().isDone());
         pw.println("");
-        pw.println("Current metadata (last fetch " + mMetadataClient.getLastFetchTime() + "):");
-        pw.println(mMetadataClient.getJsonMetadata());
     }
 
     private final class BinderService extends Binder {

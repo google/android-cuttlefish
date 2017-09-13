@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.List;
  * This class sends messages to kernel log (and serial console) directly by
  * writing to /dev/kmsg.
  */
-public class BootReporter extends JobBase implements MetadataClient.OnAttributeUpdateListener {
+public class BootReporter extends JobBase {
     private static final String LOG_TAG = "GceBootReporter";
     private static final int KLOG_NOTICE = 5;
     private static final String KLOG_OUTPUT = "/dev/kmsg";
@@ -41,20 +41,14 @@ public class BootReporter extends JobBase implements MetadataClient.OnAttributeU
     private static final String VIRTUAL_DEVICE_BOOT_PENDING = "VIRTUAL_DEVICE_BOOT_PENDING";
     private static final String VIRTUAL_DEVICE_BOOT_COMPLETED = "VIRTUAL_DEVICE_BOOT_COMPLETED";
     private static final String VIRTUAL_DEVICE_BOOT_FAILED = "VIRTUAL_DEVICE_BOOT_FAILED";
-    private static final String METADATA_CUSTOM_BOOT_MSG = "custom_boot_completed";
     private FileOutputStream mKmsgStream = null;
     private PrintWriter mKmsgWriter = null;
-    private MetadataClient mMetadataClient = null;
-    private String mCustomBootCompletedMessage = null;
     private List<String> mMessageList = new ArrayList<String>();
 
 
     /** Constructor. */
-    public BootReporter(MetadataClient metadataClient) {
+    public BootReporter() {
         super(LOG_TAG);
-
-        mMetadataClient = metadataClient;
-        mMetadataClient.addOnAttributeUpdateListener(METADATA_CUSTOM_BOOT_MSG, this);
 
         try {
             mKmsgStream = new FileOutputStream(KLOG_OUTPUT);
@@ -96,11 +90,6 @@ public class BootReporter extends JobBase implements MetadataClient.OnAttributeU
      */
     @Override
     public int execute() {
-        String customBootMsg = null;
-        synchronized(this) {
-            customBootMsg = mCustomBootCompletedMessage;
-        }
-
         // We suspect that something is throttling our messages and preventing
         // the following message from being logged to bugreport.
         // The log is present in logcat log (that we collect independently), yet
@@ -115,11 +104,6 @@ public class BootReporter extends JobBase implements MetadataClient.OnAttributeU
         } catch (InterruptedException e) {}
 
         reportMessage(VIRTUAL_DEVICE_BOOT_COMPLETED);
-
-        if (customBootMsg != null) {
-            reportMessage(customBootMsg);
-        }
-
         return 0;
     }
 
@@ -136,24 +120,6 @@ public class BootReporter extends JobBase implements MetadataClient.OnAttributeU
 
     public void reportBootStarted() {
         reportMessage(VIRTUAL_DEVICE_BOOT_STARTED);
-    }
-
-    /** Listen for updates to Metadata attributes.
-     *
-     * We are interested here in the value read from initial metadata file.
-     * Attribute values are still reported asynchronously and are accessible
-     * after the initial metadata file has been processed.
-     *
-     * OnAttributeUpdateListener interface method.
-     */
-    @Override
-    public synchronized void onAttributeUpdate(MetadataAttribute attribute) {
-        mCustomBootCompletedMessage = attribute.getInitialValue();
-        if (mCustomBootCompletedMessage != null) {
-            Log.i(LOG_TAG, "Custom boot completed message: " + mCustomBootCompletedMessage);
-        } else {
-            Log.i(LOG_TAG, "Custom boot completed message not set in initial metadata.");
-        }
     }
 
     /** Get the list of reported messages so far.
