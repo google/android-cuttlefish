@@ -8,7 +8,24 @@
      "region_size" : 16384,
 
      "guest_to_host_signal_table" : {
-       "__comment" : "sizeof each node is based on common/libs/shm_compatible/loch.h",
+       "__comment" : "sizeof each node is based on common/libs/shm_compatible/lock.h",
+       "num_nodes_lg2" : 2
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 2
+      }
+   },
+
+   {
+     "device_name" : "fb_broadcast",
+     "__comment" : "Broadcasts new frames",
+     "current_version" : 0,
+     "min_compatible_version" : 0,
+     "region_size": 4096,
+
+     "guest_to_host_signal_table" : {
+       "__comment" : "sizeof each node is based on common/libs/shm_compatible/lock.h",
        "num_nodes_lg2" : 2
       },
 
