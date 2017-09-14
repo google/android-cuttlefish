@@ -26,7 +26,6 @@ build:
 	@$(BAZEL) test //...:all
 	@$(BAZEL) build //host/launcher:cf
 	@$(BAZEL) build //host/vadb:adbshell
-	@$(BAZEL) build //guest:gce_ramdisk
 
 binary:
 	@dh_testroot
@@ -36,7 +35,6 @@ binary:
 	@cp $(BAZEL_BIN)/host/launcher/cf $(BINDIR_COMMON)
 	@cp $(BAZEL_BIN)/host/vadb/adbshell $(BINDIR_CLOUD)
 	# Install support files.
-	@cp $(BAZEL_BIN)/guest/gce_ramdisk.img $(CFDATDIR_COMMON)
 	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR_COMMON)
 	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR_COMMON)
 	# Install Documentation.
