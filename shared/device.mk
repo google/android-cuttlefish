@@ -53,13 +53,8 @@ PRODUCT_PACKAGES += \
     audiotop \
     dhcpcd_wlan0 \
     gce_fs_monitor \
-    gce_init \
-    gce_log_message \
-    gce_mount_handler \
-    simulated_hostapd.conf \
     usbforward \
     vnc_server \
-    vnc_server-testing \
     VSoCService \
     wpa_supplicant.vsoc.conf \
 
@@ -70,11 +65,9 @@ PRODUCT_PACKAGES += \
     dhcpcd-6.8.2 \
     dhcpcd-6.8.2.conf \
     e2fsck \
-    hostapd \
     ip \
     network \
     perf \
-    resize2fs \
     scp \
     sleep \
     tcpdump \
