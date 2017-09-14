@@ -55,13 +55,15 @@ std::shared_ptr<libusb_device_handle> GetDevice() {
   return res;
 }
 
-bool GetDeviceInfo(DeviceInfo* info, std::vector<InterfaceInfo>* ifaces) {
-  auto handle = GetDevice();
-  if (!handle) return false;
+}  // anonymous namespace
+
+bool USBServer::GetDeviceInfo(
+    DeviceInfo* info, std::vector<InterfaceInfo>* ifaces) {
+  if (!handle_) return false;
 
   // This function does not modify the reference count of the returned device,
   // so do not feel compelled to unreference it when you are done.
-  libusb_device* dev = libusb_get_device(handle.get());
+  libusb_device* dev = libusb_get_device(handle_.get());
 
   libusb_device_descriptor desc;
   libusb_config_descriptor* conf;
@@ -110,17 +112,10 @@ bool GetDeviceInfo(DeviceInfo* info, std::vector<InterfaceInfo>* ifaces) {
   return true;
 }
 
-void* ProcessLibUSBRequests(void* discard) {
-  while (true) {
-    libusb_handle_events_completed(nullptr, nullptr);
-  }
-}
-}  // anonymous namespace
-
 USBServer::USBServer(const avd::SharedFD& fd)
-    : handle_{nullptr, libusb_close},
-      libusb_thread_(&ProcessLibUSBRequests, nullptr),
-      fd_{fd} {}
+    : fd_{fd},
+      device_event_fd_{avd::SharedFD::Event(0, 0)},
+      thread_event_fd_{avd::SharedFD::Event(0, 0)} {}
 
 void USBServer::HandleDeviceList(uint32_t tag) {
   // Iterate all devices and send structure for every found device.
@@ -145,8 +140,6 @@ void USBServer::HandleDeviceList(uint32_t tag) {
 }
 
 void USBServer::HandleAttach(uint32_t tag) {
-  handle_ = GetDevice();
-
   // We read the request, but it no longer plays any significant role here.
   AttachRequest req;
   if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
@@ -157,10 +150,8 @@ void USBServer::HandleAttach(uint32_t tag) {
 }
 
 void USBServer::HandleHeartbeat(uint32_t tag) {
-  auto handle = GetDevice();
-
   avd::LockGuard<avd::Mutex> lock(write_mutex_);
-  ResponseHeader rsp{handle ? StatusSuccess : StatusFailure, tag};
+  ResponseHeader rsp{handle_ ? StatusSuccess : StatusFailure, tag};
   fd_->Write(&rsp, sizeof(rsp));
 }
 
@@ -287,32 +278,85 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
 int USBServer::HandleDeviceEvent(libusb_context*, libusb_device*,
                                  libusb_hotplug_event event, void* self_raw) {
   auto self = reinterpret_cast<USBServer*>(self_raw);
-  switch (event) {
-    case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
-      self->handle_ = GetDevice();
-      break;
-    case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
-      self->handle_.reset();
-      break;
-  }
+  int64_t dummy = 1;
+  self->device_event_fd_->Write(&dummy, sizeof(dummy));
   return 0;
 }
 
-void USBServer::Serve() {
-  // Need to check if device is still there before we execute anything.
-  libusb_hotplug_callback_handle handle;
-  libusb_hotplug_register_callback(
-      nullptr,
-      libusb_hotplug_event(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
-                           LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
-      libusb_hotplug_flag(0), kExportedVendorID, kExportedProductID,
-      LIBUSB_HOTPLUG_MATCH_ANY, &USBServer::HandleDeviceEvent, this, &handle);
+void* USBServer::ProcessLibUSBRequests(void* self_raw) {
+  USBServer* self = reinterpret_cast<USBServer*>(self_raw);
+  ALOGI("Starting hotplug thread.");
 
   avd::SharedFDSet rset;
   while (true) {
+    // Do not wait if there's no event.
+    timeval select_timeout{0, 0};
+    rset.Zero();
+    rset.Set(self->thread_event_fd_);
+    int ret = avd::Select(&rset, nullptr, nullptr, &select_timeout);
+    if (ret > 0) break;
+
+    timeval libusb_timeout{1, 0};
+    libusb_handle_events_timeout_completed(nullptr, &libusb_timeout, nullptr);
+  }
+
+  int64_t dummy;
+  self->thread_event_fd_->Read(&dummy, sizeof(dummy));
+  ALOGI("Shutting down hotplug thread.");
+  return nullptr;
+}
+
+void USBServer::InitLibUSB() {
+  if (libusb_init(nullptr) != 0) return;
+  libusb_hotplug_register_callback(
+      nullptr,
+      libusb_hotplug_event(LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
+      libusb_hotplug_flag(0), kExportedVendorID, kExportedProductID,
+      LIBUSB_HOTPLUG_MATCH_ANY, &USBServer::HandleDeviceEvent, this,
+      &hotplug_handle_);
+  handle_ = GetDevice();
+  libusb_thread_.reset(new avd::ScopedThread(&ProcessLibUSBRequests, this));
+}
+
+void USBServer::ExitLibUSB() {
+  if (!libusb_thread_) return;
+  libusb_hotplug_deregister_callback(nullptr, hotplug_handle_);
+  int64_t dummy = 1;
+  thread_event_fd_->Write(&dummy, sizeof(dummy));
+  libusb_thread_.reset();
+  handle_.reset();
+  libusb_exit(nullptr);
+}
+
+void USBServer::Serve() {
+  avd::SharedFDSet rset;
+  while (true) {
+    timeval retry_timeout{1, 0};
+    timeval* select_timeout = nullptr;
+    if (!handle_) {
+      select_timeout = &retry_timeout;
+    }
+
     rset.Zero();
     rset.Set(fd_);
-    int ret = avd::Select(&rset, nullptr, nullptr, nullptr);
+    rset.Set(device_event_fd_);
+    int ret = avd::Select(&rset, nullptr, nullptr, select_timeout);
+
+    // device_event_fd_ is reset each time libusb notices device has re-appeared
+    // or is gone. In both cases, the existing handle is no longer valid.
+    if (rset.IsSet(device_event_fd_)) {
+      int64_t dummy;
+      device_event_fd_->Read(&dummy, sizeof(dummy));
+      handle_.reset();
+    }
+
+    if (!handle_) {
+      ExitLibUSB();
+      InitLibUSB();
+      if (handle_) {
+        ALOGI("Device present.");
+      }
+    }
 
     if (ret < 0) continue;
 

@@ -67,11 +67,26 @@ class USBServer final {
   void OnTransferComplete(uint32_t tag, bool is_data_in, bool is_success,
                           const uint8_t* buffer, int32_t actual_length);
 
-  std::shared_ptr<libusb_device_handle> handle_;
+  // Initialize, Configure and start libusb.
+  void InitLibUSB();
 
-  avd::ScopedThread libusb_thread_;
+  // Stop, Deconfigure and Clean up libusb.
+  void ExitLibUSB();
+
+  // Extract device info, if device is available.
+  bool GetDeviceInfo(DeviceInfo* info, std::vector<InterfaceInfo>* ifaces);
+
+  // Handle asynchronous libusb events.
+  static void* ProcessLibUSBRequests(void* self_ptr);
+
+  std::shared_ptr<libusb_device_handle> handle_;
+  libusb_hotplug_callback_handle hotplug_handle_;
+
+  std::unique_ptr<avd::ScopedThread> libusb_thread_;
   avd::Mutex write_mutex_;
   avd::SharedFD fd_;
+  avd::SharedFD device_event_fd_;
+  avd::SharedFD thread_event_fd_;
 
   avd::Mutex requests_mutex_;
   std::map<uint32_t, std::unique_ptr<TransportRequest>> requests_in_flight_;
