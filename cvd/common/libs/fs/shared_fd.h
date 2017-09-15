@@ -19,6 +19,7 @@
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
+#include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -140,6 +141,7 @@ class SharedFD {
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
+  static SharedFD Epoll(int flags = 0);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
@@ -224,6 +226,22 @@ class FileInstance {
   int UNMANAGED_Dup() {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(dup(fd_));
+    errno_ = errno;
+    return rval;
+  }
+
+  int EpollCtl(int op, avd::SharedFD new_fd, struct epoll_event* event) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(
+        epoll_ctl(fd_, op, new_fd->fd_, event));
+    errno_ = errno;
+    return rval;
+  }
+
+  int EpollWait(struct epoll_event* events, int maxevents, int timeout) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(
+        epoll_wait(fd_, events, maxevents, timeout));
     errno_ = errno;
     return rval;
   }
