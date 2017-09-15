@@ -66,10 +66,8 @@ class VHCIInstrument {
   std::string syspath_;
   avd::SharedFD control_write_end_;
   avd::SharedFD control_read_end_;
+  avd::SharedFD vhci_socket_;
   int port_;
-  // Raw FD used by system to access remote USB device.
-  // This FD must remain valid until no longer needed.
-  int sys_fd_ = -1;
 
   VHCIInstrument(const VHCIInstrument& other) = delete;
   VHCIInstrument& operator=(const VHCIInstrument& other) = delete;
