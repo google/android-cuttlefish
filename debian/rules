@@ -22,7 +22,6 @@ CFDATDIR_COMMON=$(DESTDIR_COMMON)/usr/share/cuttlefish-common
 CFDOCDIR_COMMON=$(DESTDIR_COMMON)/usr/share/doc/cuttlefish-common
 
 build:
-	dh $@
 	@$(BAZEL) test //...:all
 	@$(BAZEL) build //host/launcher:cf
 	@$(BAZEL) build //host/vadb:adbshell
@@ -43,7 +42,14 @@ binary:
 	@cp $(BAZEL_SRC)/host/deploy/install_zip.sh $(BINDIR_COMMON)
 	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(CFBINDIR_COMMON)
 	# Complete building debian package.
-	dh $@
+	@dh_installchangelogs
+	@dh_compress
+	@dh_fixperms
+	@dh_installdeb
+	@dh_installinit
+	@dh_gencontrol
+	@dh_md5sums
+	@dh_builddeb
 
 %:
 	dh $@
