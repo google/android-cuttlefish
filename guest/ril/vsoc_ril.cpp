@@ -104,26 +104,6 @@ static int gSimPINAttempts = 0;
 static const int gSimPINAttemptsMax = 3;
 static SIM_Status gSimStatus = SIM_NOT_READY;
 
-// InitNetworkInterface ensures that interface 'eth0' is properly named as
-// 'rmnet0' and put down. Connection is not established until explicit data call
-// request from framework.
-void InitNetworkInterface() {
-  std::unique_ptr<avd::NetlinkClient> nl(avd::NetlinkClient::New());
-  std::unique_ptr<avd::NetworkInterfaceManager> nm(
-      avd::NetworkInterfaceManager::New(nl.get()));
-  std::unique_ptr<avd::NetworkInterface> ni(nm->Open("eth0"));
-
-  if (ni) {
-    ni->SetOperational(false);
-    // Interface must be down before it can be renamed.
-    bool res = nm->ApplyChanges(*ni);
-    if (!res) ALOGE("Could not disable network interface.");
-    ni->SetName("rmnet0");
-    res = nm->ApplyChanges(*ni);
-    if (!res) ALOGE("Could not rename network interface.");
-  }
-}
-
 // SetUpNetworkInterface configures IP and Broadcast addresses on a RIL
 // controlled network interface.
 // This call returns true, if operation was successful.
@@ -2427,7 +2407,7 @@ const RIL_RadioFunctions *RIL_Init(
   time(&gce_ril_start_time);
   gce_ril_env = env;
 
-  InitNetworkInterface();
+  TearDownNetworkInterface();
 
   init_modem_supported_network_types();
   init_modem_technologies();
