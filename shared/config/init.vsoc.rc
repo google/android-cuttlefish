@@ -1,6 +1,3 @@
-import /init.metadata.rc
-import /metadata_properties.rc
-
 on early-init
 #    loglevel 8
     symlink /sdcard /storage/sdcard0
@@ -19,20 +16,18 @@ on early-init
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
     restorecon /dev/framebuffer_control
-    restorecon /initial.metadata
-    restorecon /ts_snap.txt
 
     mount debugfs debugfs /sys/kernel/debug
     chmod 0755 /sys/kernel/debug
-    setprop service.adb.tcp.port 5555
+
 
 on fs
     mount_all /fstab.${ro.hardware}
-    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
+    wait /vendor/etc/selinux/nonplat_mac_permissions.xml
+    restorecon_recursive /vendor
 
     # TODO(ender): Find better way to talk to serial port.
     chmod 622 /dev/kmsg
-
 
     # for GCE camera HAL
     mkdir /var/media 0770 audio media
@@ -45,7 +40,6 @@ on fs
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
 
     chmod 0755 /system/bin/dhcpcd_wlan0
-
     setprop ro.com.google.locationfeatures 1
 
 
@@ -53,6 +47,7 @@ on post-fs-data
     start vsoc_guest_region_e2e_test
     mkdir /data/dalvik-cache 0771 root root
     mkdir /data/dalvik-cache/x86 0771 root system
+    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
     start gce_fs_monitor
     start seriallogging
 
@@ -86,6 +81,7 @@ on boot
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
     oneshot
 
+
 service vnc_server /vendor/bin/vnc_server
     oneshot
 
@@ -109,9 +105,11 @@ service gce_fs_monitor /vendor/bin/gce_fs_monitor
     disabled
     oneshot
 
+
 service usbforward /vendor/bin/usbforward /dev/vport0p2
     class late_start
     user root
+
 
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     class main

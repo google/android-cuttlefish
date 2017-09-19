@@ -18,6 +18,12 @@
 # Common BoardConfig for all supported architectures.
 #
 
+# Build a separate vendor.img partition
+BOARD_USES_VENDORIMAGE := true
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_VENDORIMAGE_PARTITION_SIZE := 67108864  # 64MB
+TARGET_COPY_OUT_VENDOR := vendor
+
 TARGET_NO_RECOVERY := true
 BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
