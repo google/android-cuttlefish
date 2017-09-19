@@ -48,6 +48,7 @@ DEFINE_string(kernel_command_line, "",
 DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
+DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
 
@@ -171,6 +172,10 @@ int main(int argc, char** argv) {
     FLAGS_data_image = FLAGS_system_image_dir + "/userdata.img";
   }
 
+  if (FLAGS_vendor_image.empty()) {
+    FLAGS_vendor_image = FLAGS_system_image_dir + "/vendor.img";
+  }
+
   CHECK(virInitialize() == 0) << "Could not initialize libvirt.";
 
   Json::Value json_root = LoadLayoutFile(FLAGS_layout);
@@ -183,6 +188,8 @@ int main(int argc, char** argv) {
       FLAGS_data_image);
   auto cache_partition =  config::FilePartition::ReuseExistingFile(
       FLAGS_cache_image);
+  auto vendor_partition =  config::FilePartition::ReuseExistingFile(
+      FLAGS_vendor_image);
 
   std::ifstream t(FLAGS_kernel_command_line);
   if (!t) {
@@ -226,6 +233,7 @@ int main(int argc, char** argv) {
       .SetSystemPartitionPath(system_partition->GetName())
       .SetCachePartitionPath(cache_partition->GetName())
       .SetDataPartitionPath(data_partition->GetName())
+      .SetVendorPartitionPath(vendor_partition->GetName())
       .SetMobileBridgeName("abr0")
       .SetEntropySource(entropy_source)
       .SetEmulator(json_root["guest"]["vmm_path"].asString());
