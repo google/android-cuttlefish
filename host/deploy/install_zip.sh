@@ -27,8 +27,8 @@ mkdir -p "${destdir}"
 bsdtar -x -C "${destdir}" -f "${source}"
 
 /usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
-for i in cache.img cmdline kernel ramdisk.img system.img userdata.img; do
+for i in cache.img cmdline kernel ramdisk.img system.img userdata.img vendor.img; do
   # Use setfacl so that libvirt does not lose access to this file if user
   # does anything to this file at any point.
-  sudo setfacl -m g:libvirt-qemu:rw "${destdir}/${i}"
+  [ -f "${destdir}/${i}" ] && sudo setfacl -m g:libvirt-qemu:rw "${destdir}/${i}"
 done
