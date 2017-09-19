@@ -40,7 +40,6 @@ on fs
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
 
     chmod 0755 /system/bin/dhcpcd_wlan0
-    setprop ro.com.google.locationfeatures 1
 
 
 on post-fs-data
@@ -58,20 +57,8 @@ on early-boot
 
 on boot
     chmod 0660 /dev/cpuctl
-
     mkdir /data/misc/wifi 0770 system wifi
     mkdir /data/misc/wifi/sockets 0770 system wifi
-
-    setprop ro.build.product android-gce
-    setprop ro.product.device light-snack
-    setprop ro.hardware.virtual_device 1
-    setprop log.tag.CheckinService VERBOSE
-    setprop log.tag.CheckinTask VERBOSE
-    # SetupWizard is distressed by the lack of WiFi
-    setprop ro.setupwizard.mode DISABLED
-
-    setprop wifi.interface wlan0
-    setprop wlan.driver.status ok
 
     # TODO(ender): Re-enable these
     # Compass.

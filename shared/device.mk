@@ -23,17 +23,25 @@ PRODUCT_COPY_FILES += $(CUTTLEFISH_KERNEL):kernel
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
-
 PRODUCT_PROPERTY_OVERRIDES += \
     debug.hwui.swap_with_damage=0 \
     ro.adb.qemud=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
+    ro.com.google.locationfeatures=1 \
     ro.debuggable=1 \
+    ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
     ro.opengles.version=131072 \
     ro.ril.gprsclass=10 \
-    ro.ril.hsxpa=1
+    ro.ril.hsxpa=1 \
+    ro.setupwizard.mode=DISABLED \
+    wifi.interface=wlan0 \
+
+# Below is a list of properties we probably should get rid of.
+PRODUCT_PROPERTY_OVERRIDES += \
+    wlan.driver.status=ok
+
 
 # Default OMX service to non-Treble
 PRODUCT_PROPERTY_OVERRIDES += \
