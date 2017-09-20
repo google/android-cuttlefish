@@ -51,8 +51,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Packages for various cuttlefish-specific tests
 #
 PRODUCT_PACKAGES += \
-    vsoc_guest_region_e2e_test \
-    vsoc_guest_region_posthost_e2e_test
+    vsoc_guest_region_e2e_test
 
 #
 # Packages for various GCE-specific utilities
@@ -133,16 +132,11 @@ PRODUCT_COPY_FILES += \
 
 
 #
-#USB Specific
+# USB Specific
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
 
-#
-# Device personality files
-#
-PRODUCT_COPY_FILES += \
-    device/google/gce/config/device_personalities/default.json:system/etc/device_personalities/default.json
 
 #
 # Files for the VNC server
@@ -206,8 +200,6 @@ PRODUCT_COPY_FILES += \
 #
 PRODUCT_PACKAGES += \
     hwcomposer.vsoc \
-    hwcomposer.vsoc-testing \
-    hwcomposer.vsoc-deprecated \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl
 
