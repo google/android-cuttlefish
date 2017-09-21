@@ -18,7 +18,7 @@
 #include <memory>
 #include <stdint.h>
 
-#include "guest/usbforward/protocol.h"
+#include "guest/commands/usbforward/protocol.h"
 #include "host/vadb/usb_cmd.h"
 #include "host/vadb/usbip/device.h"
 
