@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/usbforward/transport_request.h"
+#include "guest/commands/usbforward/transport_request.h"
 
 #include <cutils/log.h>
 

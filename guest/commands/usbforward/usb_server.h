@@ -22,7 +22,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/threads/pthread.h"
-#include "guest/usbforward/transport_request.h"
+#include "guest/commands/usbforward/transport_request.h"
 
 namespace usb_forward {
 

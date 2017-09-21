@@ -18,7 +18,7 @@
 #include <libusb/libusb.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "guest/usbforward/usb_server.h"
+#include "guest/commands/usbforward/usb_server.h"
 
 int main(int argc, char* argv[]) {
   if (argc == 1) {

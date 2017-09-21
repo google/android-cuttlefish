@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 #include <libusb/libusb.h>
-#include "guest/usbforward/protocol.h"
+#include "guest/commands/usbforward/protocol.h"
 
 namespace usb_forward {
 
