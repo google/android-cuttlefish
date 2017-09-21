@@ -16,7 +16,7 @@
 #pragma once
 
 #include "common/libs/fs/shared_fd.h"
-#include "guest/usbforward/protocol.h"
+#include "guest/commands/usbforward/protocol.h"
 
 namespace vadb {
 // USBCommand is an abstraction of a proxied USB command.
