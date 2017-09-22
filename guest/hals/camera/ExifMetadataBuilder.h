@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include <AutoResources.h>
+#include "common/libs/auto_resources/auto_resources.h"
 
 namespace android {
 class ExifStructure;

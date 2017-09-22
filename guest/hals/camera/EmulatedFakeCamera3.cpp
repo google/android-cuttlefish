@@ -105,7 +105,7 @@ EmulatedFakeCamera3::~EmulatedFakeCamera3() {
     }
 }
 
-status_t EmulatedFakeCamera3::Initialize(const avd::personality::Camera& params) {
+status_t EmulatedFakeCamera3::Initialize(const avd::CameraDefinition& params) {
     ALOGV("%s: E", __FUNCTION__);
     status_t res;
 
@@ -1086,7 +1086,7 @@ bool EmulatedFakeCamera3::hasCapability(AvailableCapabilities cap) {
 }
 
 status_t EmulatedFakeCamera3::constructStaticInfo(
-    const avd::personality::Camera& params) {
+    const avd::CameraDefinition& params) {
 
     CameraMetadata info;
     Vector<int32_t> availableCharacteristicsKeys;

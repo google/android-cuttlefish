@@ -53,7 +53,7 @@ public:
 
 public:
     /* Initializes EmulatedFakeCamera2 instance. */
-    status_t Initialize(const avd::personality::Camera& props);
+    status_t Initialize(const avd::CameraDefinition& props);
 
     /****************************************************************************
      * Camera Module API and generic hardware device API implementation

@@ -322,7 +322,7 @@ bool Sensor::threadLoop() {
                     i, b.streamId, b.width, b.height, b.format, b.stride,
                     b.buffer, b.img);
             switch(b.format) {
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
                 case HAL_PIXEL_FORMAT_RAW16:
                     captureRaw(b.img, gain, b.stride);
                     break;

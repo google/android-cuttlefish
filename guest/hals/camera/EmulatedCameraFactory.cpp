@@ -23,6 +23,7 @@
 #define LOG_TAG "EmulatedCamera_Factory"
 #include <cutils/log.h>
 #include <cutils/properties.h>
+#include "guest/libs/platform_support/api_level_fixes.h"
 #include "EmulatedFakeCamera.h"
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
@@ -45,15 +46,13 @@ EmulatedCameraFactory& EmulatedCameraFactory::Instance() {
 }
 
 EmulatedCameraFactory::EmulatedCameraFactory()
-        :
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-          mCallbacks(NULL),
+        : mCallbacks(NULL)
 #endif
-          mGceDevicePersonality(avd::GceDevicePersonality::getInstance(
-              avd::InitialMetadataReader::getInstance()))
 {
-    const std::vector<avd::personality::Camera>& cameras =
-        mGceDevicePersonality->cameras();
+    mCameraConfiguration.Init();
+    const std::vector<avd::CameraDefinition>& cameras =
+        mCameraConfiguration.cameras();
     for (size_t camera_index = 0;
          camera_index < cameras.size();
          ++camera_index) {
@@ -85,25 +84,25 @@ EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(size_t cameraId
         return mEmulatedCameras[cameraId];
     }
 
-    const avd::personality::Camera& definition = mCameraDefinitions[cameraId];
+    const avd::CameraDefinition& definition = mCameraDefinitions[cameraId];
     bool is_back_facing =
-            (definition.orientation == avd::personality::Camera::kBack);
+            (definition.orientation == avd::CameraDefinition::kBack);
 
     EmulatedBaseCamera* camera;
     /* Create, and initialize the fake camera */
     switch (definition.hal_version) {
-        case avd::personality::Camera::kHalV1:
+        case avd::CameraDefinition::kHalV1:
             camera = new EmulatedFakeCamera(cameraId, is_back_facing,
                                             &HAL_MODULE_INFO_SYM.common);
             break;
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-        case avd::personality::Camera::kHalV2:
+        case avd::CameraDefinition::kHalV2:
             camera = new EmulatedFakeCamera2(cameraId, is_back_facing,
                                              &HAL_MODULE_INFO_SYM.common);
             break;
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(L_MR1)
-        case avd::personality::Camera::kHalV3:
+        case avd::CameraDefinition::kHalV3:
             camera = new EmulatedFakeCamera3(cameraId, is_back_facing,
                                         &HAL_MODULE_INFO_SYM.common);
             break;
@@ -294,7 +293,7 @@ void EmulatedCameraFactory::onStatusChanged(int cameraId, int newStatus) {
 
 /* Entry point for camera HAL API. */
 struct hw_module_methods_t EmulatedCameraFactory::mCameraModuleMethods = {
-    open: EmulatedCameraFactory::device_open
+    VSOC_STATIC_INITIALIZER(open) EmulatedCameraFactory::device_open
 };
 
 }; /* namespace android */

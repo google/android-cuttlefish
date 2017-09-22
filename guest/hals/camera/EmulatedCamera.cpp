@@ -108,7 +108,7 @@ EmulatedCamera::~EmulatedCamera()
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera::Initialize(const avd::personality::Camera&)
+status_t EmulatedCamera::Initialize(const avd::CameraDefinition&)
 {
     /* Preview formats supported by this HAL. */
     char preview_formats[1024];

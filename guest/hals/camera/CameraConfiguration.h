@@ -13,31 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_DEVICE_PERSONALITY_IMPL_H_
-#define GCE_DEVICE_PERSONALITY_IMPL_H_
+#ifndef GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_
+#define GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_
 
-#include <GceDevicePersonality.h>
-#include <InitialMetadataReader.h>
-#include <UniquePtr.h>
+#include <vector>
 
 namespace avd {
+
+// Camera properties and features.
+struct CameraDefinition {
+  // Camera facing direction.
+  enum Orientation {
+    kFront,
+    kBack
+  };
+
+  // Camera recognized HAL versions.
+  enum HalVersion {
+    kHalV1,
+    kHalV2,
+    kHalV3
+  };
+
+  struct Resolution {
+    int width;
+    int height;
+  };
+
+  Orientation orientation;
+  HalVersion hal_version;
+  std::vector<Resolution> resolutions;
+};
+
 class CameraConfiguration {
  public:
-  CameraConfiguration(InitialMetadataReader* reader)
-      : reader_(reader) {}
-
+  CameraConfiguration() {}
   ~CameraConfiguration() {}
 
-  const std::vector<personality::Camera>& cameras() const {
+  const std::vector<CameraDefinition>& cameras() const {
     return cameras_;
   }
 
-  void Init();
+  bool Init();
 
  private:
-  std::vector<personality::Camera> cameras_;
+  std::vector<CameraDefinition> cameras_;
 };
 
 }  // namespace avd
 
-#endif  // GCE_DEVICE_PERSONALITY_IMPL_H_
+#endif  // GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_

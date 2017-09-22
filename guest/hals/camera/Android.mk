@@ -18,10 +18,12 @@ include $(CLEAR_VARS)
 
 # Emulator camera module########################################################
 
-emulator_camera_cflags := -fno-short-enums $(GCE_VERSION_CFLAGS)
+emulator_camera_module_relative_path := hw
+emulator_camera_cflags := -fno-short-enums $(VSOC_VERSION_CFLAGS)
 emulator_camera_cflags += -Wno-unused-parameter -Wno-missing-field-initializers
 emulator_camera_clang_flags := -Wno-c++11-narrowing
 emulator_camera_shared_libraries := \
+    libbase \
     libbinder \
     liblog \
     libutils \
@@ -30,9 +32,11 @@ emulator_camera_shared_libraries := \
     libui \
     libdl \
     libjpeg \
-    libjsoncpp \
     libcamera_metadata \
     libhardware
+
+emulator_camera_static_libraries := \
+    libjsoncpp
 
 emulator_camera_c_includes := \
     device/google/cuttlefish_common \
@@ -53,7 +57,7 @@ emulator_camera_src := \
 		CallbackNotifier.cpp \
 		JpegCompressor.cpp
 emulated_camera2_src := \
-	GceEmulatedCameraHotplugThread.cpp \
+	VSoCEmulatedCameraHotplugThread.cpp \
 	EmulatedCamera2.cpp \
 		EmulatedFakeCamera2.cpp \
 		fake-pipeline2/Scene.cpp \
@@ -79,11 +83,13 @@ else
 emulator_camera_c_includes += external/jpeg
 endif
 
+LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
 LOCAL_MULTILIB := first
 LOCAL_CFLAGS := ${emulator_camera_cflags}
 LOCAL_CLANG_CFLAGS += ${emulator_camera_clang_flags}
 
 LOCAL_SHARED_LIBRARIES := ${emulator_camera_shared_libraries}
+LOCAL_STATIC_LIBRARIES := ${emulator_camera_static_libraries}
 LOCAL_C_INCLUDES += ${emulator_camera_c_includes}
 LOCAL_SRC_FILES := ${emulator_camera_src} ${emulator_camera_ext_src} \
 	$(if $(enable_emulated_camera2),$(emulated_camera2_src),) \
@@ -99,15 +105,18 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
+jpeg_module_relative_path := hw
 jpeg_cflags := -fno-short-enums
 jpeg_cflags += -Wno-unused-parameter
 jpeg_clang_flags += -Wno-c++11-narrowing
 jpeg_shared_libraries := \
+    libbase \
     libcutils \
     liblog \
     libskia \
     libjpeg \
-    libandroid_runtime
+    libandroid_runtime \
+    libcuttlefish_auto_resources
 jpeg_static_libraries := libyuv_static
 jpeg_c_includes := \
     device/google/cuttlefish_common \
@@ -127,6 +136,7 @@ else
 jpeg_c_includes += external/jpeg
 endif
 
+LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
 LOCAL_MULTILIB := first
 LOCAL_CFLAGS += ${jpeg_cflags}
 LOCAL_CLANG_CFLAGS += ${jpeg_clangflags}
