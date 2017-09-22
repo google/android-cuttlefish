@@ -63,12 +63,6 @@ BOARD_SYSLOADER_MAX_SIZE := 7340032
 # TODO(san): See if we can get rid of this.
 BOARD_FLASH_BLOCK_SIZE := 512
 
-# master has breaking changes in dlfcn.h, but the platform SDK hasn't been
-# bumped. Restore the line below when it is.
-GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=26
-# GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
-STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
-
 WITH_DEXPREOPT := true
 
 USE_OPENGL_RENDERER := true
@@ -88,16 +82,31 @@ WIFI_DRIVER_FW_PATH_AP      := "/dev/null"
 
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy
 
-GCE_STLPORT_INCLUDES :=
-GCE_STLPORT_LIBS :=
-GCE_STLPORT_STATIC_LIBS :=
+# master has breaking changes in dlfcn.h, but the platform SDK hasn't been
+# bumped. Restore the line below when it is.
+# VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=26
+VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
+VSOC_STLPORT_INCLUDES :=
+VSOC_STLPORT_LIBS :=
+VSOC_STLPORT_STATIC_LIBS :=
+VSOC_TEST_INCLUDES := external/googletest/googlemock/include external/googletest/googletest/include
+VSOC_TEST_LIBRARIES := libgmock_main_host libgtest_host libgmock_host
+VSOC_LIBCXX_STATIC := libc++_static
+VSOC_PROTOBUF_SHARED_LIB := libprotobuf-cpp-full
 
-GCE_TEST_INCLUDES := external/googletest/googlemock/include external/googletest/googletest/include
-GCE_TEST_LIBRARIES := libgmock_main_host libgtest_host libgmock_host
+# TODO(ender): Remove all these once we stop depending on GCE code.
+GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
+GCE_STLPORT_INCLUDES := $(VSOC_STLPORT_INCLUDES)
+GCE_STLPORT_LIBS := $(VSOC_STLPORT_LIBS)
+GCE_STLPORT_STATIC_LIBS := $(VSOC_STLPORT_STATIC_LIBS)
+GCE_TEST_INCLUDES := $(VSOC_TEST_INCLUDES)
+GCE_TEST_LIBRARIES := $(VSOC_TEST_LIBRARIES)
+GCE_LIBCXX_STATIC := $(VSOC_LIBCXX_STATIC)
+GCE_PROTOBUF_SHARED_LIB := $(VSOC_PROTOBUF_SHARED_LIB)
+# TODO(ender): up till here.
 
-GCE_LIBCXX_STATIC := libc++_static
+STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
-GCE_PROTOBUF_SHARED_LIB := libprotobuf-cpp-full
 INIT_BOOTCHART := true
 
 DEVICE_MANIFEST_FILE := device/google/cuttlefish/shared/config/manifest.xml

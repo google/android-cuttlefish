@@ -99,6 +99,7 @@ PRODUCT_AAPT_PREF_CONFIG := xhdpi
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    device/google/cuttlefish/shared/config/camera_v1.json:vendor/etc/config/camera.json \
     device/google/cuttlefish/shared/config/init.vsoc.rc:root/init.vsoc.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:system/etc/media_codecs.xml \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:system/etc/media_codecs_performance.xml \
