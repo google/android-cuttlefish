@@ -24,7 +24,7 @@
  */
 
 #include "EmulatedCameraFactory.h"
-#include "api_level_fixes.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 /*
  * Required HAL header.
@@ -32,9 +32,9 @@
 camera_module_t HAL_MODULE_INFO_SYM = {
     common: {
          tag:                HARDWARE_MODULE_TAG,
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
          module_api_version: CAMERA_MODULE_API_VERSION_2_3,
-#elif GCE_PLATFORM_SDK_AFTER(J_MR2)
+#elif VSOC_PLATFORM_SDK_AFTER(J_MR2)
          module_api_version: CAMERA_MODULE_API_VERSION_2_2,
 #else
          module_api_version: CAMERA_MODULE_API_VERSION_2_0,
@@ -49,11 +49,11 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     },
     get_number_of_cameras:  android::EmulatedCameraFactory::get_number_of_cameras,
     get_camera_info:        android::EmulatedCameraFactory::get_camera_info,
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     set_callbacks:          android::EmulatedCameraFactory::set_callbacks,
     get_vendor_tag_ops:     android::EmulatedCameraFactory::get_vendor_tag_ops,
 #endif
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
     open_legacy:            android::EmulatedCameraFactory::open_legacy
 #endif
 };

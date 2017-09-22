@@ -17,12 +17,12 @@
 #ifndef HW_EMULATOR_CAMERA_EMULATED_CAMERA_FACTORY_H
 #define HW_EMULATOR_CAMERA_EMULATED_CAMERA_FACTORY_H
 
-#include <api_level_fixes.h>
 #include <utils/RefBase.h>
 
-#include <GceDevicePersonality.h>
 #include <utils/Vector.h>
 #include <Pthread.h>
+#include "guest/libs/platform_support/api_level_fixes.h"
+#include "CameraConfiguration.h"
 #include "EmulatedBaseCamera.h"
 
 namespace android {

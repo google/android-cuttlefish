@@ -19,8 +19,8 @@
 
 #include <hardware/camera_common.h>
 #include <utils/Errors.h>
-#include <api_level_fixes.h>
-#include <GceDevicePersonality.h>
+#include "guest/libs/platform_support/api_level_fixes.h"
+#include "CameraConfiguration.h"
 #include "ImageMetadata.h"
 
 namespace android {

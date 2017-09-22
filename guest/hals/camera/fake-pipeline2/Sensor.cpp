@@ -30,9 +30,8 @@
 #include "Sensor.h"
 #include <cmath>
 #include <cstdlib>
-#include "api_level_fixes.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 #include "system/camera_metadata.h"
-
 
 namespace android {
 

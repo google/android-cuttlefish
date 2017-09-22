@@ -25,12 +25,12 @@
 #include <cutils/properties.h>
 #include "EmulatedFakeCamera.h"
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 #include "EmulatedFakeCamera2.h"
 #include "EmulatedCameraHotplugThread.h"
 #endif
 
-#if GCE_PLATFORM_SDK_AFTER(L_MR1)
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
 #include "EmulatedFakeCamera3.h"
 #endif
 
@@ -46,7 +46,7 @@ EmulatedCameraFactory& EmulatedCameraFactory::Instance() {
 
 EmulatedCameraFactory::EmulatedCameraFactory()
         :
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
           mCallbacks(NULL),
 #endif
           mGceDevicePersonality(avd::GceDevicePersonality::getInstance(
@@ -64,7 +64,7 @@ EmulatedCameraFactory::EmulatedCameraFactory()
 
     ALOGV("%d cameras are being emulated.", getEmulatedCameraNum());
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     /* Create hotplug thread */
     {
         mHotplugThread = new EmulatedCameraHotplugThread(getEmulatedCameraNum());
@@ -96,13 +96,13 @@ EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(size_t cameraId
             camera = new EmulatedFakeCamera(cameraId, is_back_facing,
                                             &HAL_MODULE_INFO_SYM.common);
             break;
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
         case avd::personality::Camera::kHalV2:
             camera = new EmulatedFakeCamera2(cameraId, is_back_facing,
                                              &HAL_MODULE_INFO_SYM.common);
             break;
 #endif
-#if GCE_PLATFORM_SDK_AFTER(L_MR1)
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
         case avd::personality::Camera::kHalV3:
             camera = new EmulatedFakeCamera3(cameraId, is_back_facing,
                                         &HAL_MODULE_INFO_SYM.common);
@@ -139,7 +139,7 @@ EmulatedCameraFactory::~EmulatedCameraFactory()
         }
     }
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     if (mHotplugThread != NULL) {
         mHotplugThread->requestExit();
         mHotplugThread->join();
@@ -177,7 +177,7 @@ int EmulatedCameraFactory::getCameraInfo(int camera_id, struct camera_info* info
     return camera->getCameraInfo(info);
 }
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 int EmulatedCameraFactory::setCallbacks(
         const camera_module_callbacks_t *callbacks)
 {
@@ -232,7 +232,7 @@ int EmulatedCameraFactory::get_camera_info(int camera_id,
     return EmulatedCameraFactory::Instance().getCameraInfo(camera_id, info);
 }
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 int EmulatedCameraFactory::set_callbacks(
         const camera_module_callbacks_t *callbacks)
 {
@@ -268,7 +268,7 @@ void EmulatedCameraFactory::onStatusChanged(int cameraId, int newStatus) {
      * Send the callback first to framework, THEN close the camera.
      */
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     if (newStatus == cam->getHotplugStatus()) {
         ALOGW("%s: Ignoring transition to the same status", __FUNCTION__);
         return;

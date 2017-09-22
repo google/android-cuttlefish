@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ include $(CLEAR_VARS)
 
 # Emulator camera module########################################################
 
-emulator_camera_module_relative_path := hw
 emulator_camera_cflags := -fno-short-enums $(GCE_VERSION_CFLAGS)
 emulator_camera_cflags += -Wno-unused-parameter -Wno-missing-field-initializers
 emulator_camera_clang_flags := -Wno-c++11-narrowing
@@ -31,28 +30,17 @@ emulator_camera_shared_libraries := \
     libui \
     libdl \
     libjpeg \
+    libjsoncpp \
     libcamera_metadata \
-    libhardware \
-    libgcecutils
-
-emulator_camera_static_libraries := \
-	libgcemetadata \
-	libbase_gce \
-	$(GCE_STLPORT_STATIC_LIBS)
-
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -le 22; echo $$?))
-emulator_camera_shared_libraries += libjsoncpp
-else
-emulator_camera_static_libraries += libjsoncpp
-endif
+    libhardware
 
 emulator_camera_c_includes := \
-	frameworks/native/include/media/hardware \
-	$(call include-path-for, camera) \
-	$(LOCAL_PATH)/../include \
-	$(GCE_STLPORT_INCLUDES) \
+    device/google/cuttlefish_common \
+    frameworks/native/include/media/hardware \
+    $(call include-path-for, camera) \
 
 emulator_camera_src := \
+	CameraConfiguration.cpp \
 	EmulatedCameraHal.cpp \
 	EmulatedCameraFactory.cpp \
 	EmulatedBaseCamera.cpp \
@@ -91,17 +79,11 @@ else
 emulator_camera_c_includes += external/jpeg
 endif
 
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
-else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
-endif
 LOCAL_MULTILIB := first
 LOCAL_CFLAGS := ${emulator_camera_cflags}
 LOCAL_CLANG_CFLAGS += ${emulator_camera_clang_flags}
 
 LOCAL_SHARED_LIBRARIES := ${emulator_camera_shared_libraries}
-LOCAL_STATIC_LIBRARIES := ${emulator_camera_static_libraries}
 LOCAL_C_INCLUDES += ${emulator_camera_c_includes}
 LOCAL_SRC_FILES := ${emulator_camera_src} ${emulator_camera_ext_src} \
 	$(if $(enable_emulated_camera2),$(emulated_camera2_src),) \
@@ -117,7 +99,6 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-jpeg_module_relative_path := hw
 jpeg_cflags := -fno-short-enums
 jpeg_cflags += -Wno-unused-parameter
 jpeg_clang_flags += -Wno-c++11-narrowing
@@ -127,15 +108,16 @@ jpeg_shared_libraries := \
     libskia \
     libjpeg \
     libandroid_runtime
-jpeg_static_libraries := libgcecutils $(GCE_STLPORT_STATIC_LIBS) libyuv_static
-jpeg_c_includes := external/libyuv/files/include \
-                   external/skia/include/core/ \
-                   frameworks/base/core/jni/android/graphics \
-                   frameworks/native/include \
-                   $(LOCAL_PATH)/../include \
-                   $(GCE_STLPORT_INCLUDES)
-jpeg_src := JpegStub.cpp \
-            ExifMetadataBuilder.cpp
+jpeg_static_libraries := libyuv_static
+jpeg_c_includes := \
+    device/google/cuttlefish_common \
+    external/libyuv/files/include \
+    external/skia/include/core/ \
+    frameworks/base/core/jni/android/graphics \
+    frameworks/native/include
+jpeg_src := \
+    JpegStub.cpp \
+    ExifMetadataBuilder.cpp
 
 # JPEG stub - goldfish build####################################################
 
@@ -145,11 +127,6 @@ else
 jpeg_c_includes += external/jpeg
 endif
 
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
-else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
-endif
 LOCAL_MULTILIB := first
 LOCAL_CFLAGS += ${jpeg_cflags}
 LOCAL_CLANG_CFLAGS += ${jpeg_clangflags}
