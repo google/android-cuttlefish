@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,16 @@
  * android_location_GpsLocationProvider.cpp
  */
 
-#include <api_level_fixes.h>
 #include <errno.h>
-#include <cstdint>
 #include <pthread.h>
+#include <stdint.h>
 
-#include "gps_thread.h"
 #include <cutils/log.h>
 #include <cutils/sockets.h>
 #include <hardware/gps.h>
+
+#include "guest/hals/gps/gps_thread.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 static GpsState _gps_state;
 
@@ -50,7 +51,6 @@ static void gps_state_cleanup(GpsState* s) {
   s->fd = -1;
   s->init = 0;
 }
-
 
 static int gce_gps_init(GpsCallbacks* callbacks) {
   D("%s: called", __FUNCTION__);
@@ -96,8 +96,7 @@ static int gce_gps_init(GpsCallbacks* callbacks) {
     }
   }
 
-  if (_gps_state.fd < 0)
-    return -1;
+  if (_gps_state.fd < 0) return -1;
   return 0;
 
 Fail:
@@ -105,13 +104,10 @@ Fail:
   return -1;
 }
 
-
 static void gce_gps_cleanup() {
   D("%s: called", __FUNCTION__);
-  if (_gps_state.init)
-    gps_state_cleanup(&_gps_state);
+  if (_gps_state.init) gps_state_cleanup(&_gps_state);
 }
-
 
 static int gce_gps_start() {
   if (!_gps_state.init) {
@@ -119,21 +115,20 @@ static int gce_gps_start() {
     return -1;
   }
 
-  char  cmd = CMD_START;
-  int   ret;
+  char cmd = CMD_START;
+  int ret;
   do {
     ret = write(_gps_state.control[0], &cmd, 1);
   } while (ret < 0 && errno == EINTR);
 
   if (ret != 1) {
-    D("%s: could not send CMD_START command: ret=%d: %s",
-      __FUNCTION__, ret, strerror(errno));
+    D("%s: could not send CMD_START command: ret=%d: %s", __FUNCTION__, ret,
+      strerror(errno));
     return -1;
   }
 
   return 0;
 }
-
 
 static int gce_gps_stop() {
   D("%s: called", __FUNCTION__);
@@ -150,13 +145,12 @@ static int gce_gps_stop() {
   } while (ret < 0 && errno == EINTR);
 
   if (ret != 1) {
-    ALOGE("%s: could not send CMD_STOP command: ret=%d: %s",
-          __FUNCTION__, ret, strerror(errno));
+    ALOGE("%s: could not send CMD_STOP command: ret=%d: %s", __FUNCTION__, ret,
+          strerror(errno));
     return -1;
   }
   return 0;
 }
-
 
 static int gce_gps_inject_time(GpsUtcTime /*time*/, int64_t /*time_ref*/,
                                int /*uncertainty*/) {
@@ -169,7 +163,6 @@ static int gce_gps_inject_time(GpsUtcTime /*time*/, int64_t /*time_ref*/,
   return 0;
 }
 
-
 static int gce_gps_inject_location(double /*latitude*/, double /*longitude*/,
                                    float /*accuracy*/) {
   D("%s: called", __FUNCTION__);
@@ -181,16 +174,13 @@ static int gce_gps_inject_location(double /*latitude*/, double /*longitude*/,
   return 0;
 }
 
-
 static void gce_gps_delete_aiding_data(GpsAidingData /*flags*/) {
   D("%s: called", __FUNCTION__);
   if (!_gps_state.init) {
     ALOGE("%s: called with uninitialized gps_state!", __FUNCTION__);
     return;
   }
-
 }
-
 
 static int gce_gps_set_position_mode(GpsPositionMode mode,
                                      GpsPositionRecurrence recurrence,
@@ -202,14 +192,14 @@ static int gce_gps_set_position_mode(GpsPositionMode mode,
     ALOGE("%s: called with uninitialized gps_state!", __FUNCTION__);
     return -1;
   }
-  ALOGE("%s(mode=%d, recurrence=%d, min_interval=%" PRIu32 ", "
+  ALOGE("%s(mode=%d, recurrence=%d, min_interval=%" PRIu32
+        ", "
         "preferred_accuracy=%" PRIu32 ", preferred_time=%" PRIu32
         ") unimplemented",
-    __FUNCTION__, mode, recurrence, min_interval, preferred_accuracy,
-      preferred_time);
+        __FUNCTION__, mode, recurrence, min_interval, preferred_accuracy,
+        preferred_time);
   return 0;
 }
-
 
 static const void* gce_gps_get_extension(const char* name) {
   D("%s: called", __FUNCTION__);
@@ -219,53 +209,48 @@ static const void* gce_gps_get_extension(const char* name) {
   return NULL;
 }
 
-
 static const GpsInterface gceGpsInterface = {
-  sizeof(GpsInterface),
-  gce_gps_init,
-  gce_gps_start,
-  gce_gps_stop,
-  gce_gps_cleanup,
-  gce_gps_inject_time,
-  gce_gps_inject_location,
-  gce_gps_delete_aiding_data,
-  gce_gps_set_position_mode,
-  gce_gps_get_extension,
+    sizeof(GpsInterface),
+    gce_gps_init,
+    gce_gps_start,
+    gce_gps_stop,
+    gce_gps_cleanup,
+    gce_gps_inject_time,
+    gce_gps_inject_location,
+    gce_gps_delete_aiding_data,
+    gce_gps_set_position_mode,
+    gce_gps_get_extension,
 };
-
 
 const GpsInterface* gps_get_gps_interface(struct gps_device_t* /*dev*/) {
   return &gceGpsInterface;
 }
 
-
 static int open_gps(const struct hw_module_t* module, char const* /*name*/,
                     struct hw_device_t** device) {
   struct gps_device_t* dev =
-      (struct gps_device_t*) malloc(sizeof(struct gps_device_t));
+      (struct gps_device_t*)malloc(sizeof(struct gps_device_t));
   LOG_FATAL_IF(!dev, "%s: malloc returned NULL.", __FUNCTION__);
   memset(dev, 0, sizeof(*dev));
 
   dev->common.tag = HARDWARE_DEVICE_TAG;
   dev->common.version = 0;
-  dev->common.module = (struct hw_module_t*) module;
+  dev->common.module = (struct hw_module_t*)module;
   dev->get_gps_interface = gps_get_gps_interface;
 
-  *device = (struct hw_device_t*) dev;
+  *device = (struct hw_device_t*)dev;
   return 0;
 }
 
-
 static struct hw_module_methods_t gps_module_methods = {
-  GCE_STATIC_INITIALIZER(open) open_gps
-};
+    VSOC_STATIC_INITIALIZER(open) open_gps};
 
 struct hw_module_t HAL_MODULE_INFO_SYM = {
-  GCE_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-  GCE_STATIC_INITIALIZER(version_major) 1,
-  GCE_STATIC_INITIALIZER(version_minor) 0,
-  GCE_STATIC_INITIALIZER(id) GPS_HARDWARE_MODULE_ID,
-  GCE_STATIC_INITIALIZER(name) "GCE GPS Module",
-  GCE_STATIC_INITIALIZER(author) "The Android Open Source Project",
-  GCE_STATIC_INITIALIZER(methods) &gps_module_methods,
+    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
+    VSOC_STATIC_INITIALIZER(version_major) 1,
+    VSOC_STATIC_INITIALIZER(version_minor) 0,
+    VSOC_STATIC_INITIALIZER(id) GPS_HARDWARE_MODULE_ID,
+    VSOC_STATIC_INITIALIZER(name) "GCE GPS Module",
+    VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
+    VSOC_STATIC_INITIALIZER(methods) & gps_module_methods,
 };
