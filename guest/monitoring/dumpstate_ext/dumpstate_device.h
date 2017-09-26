@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ANDROID_HARDWARE_DUMPSTATE_V1_0_DUMPSTATEDEVICE_H
-#define ANDROID_HARDWARE_DUMPSTATE_V1_0_DUMPSTATEDEVICE_H
+#pragma once
 
 #include <android/hardware/dumpstate/1.0/IDumpstateDevice.h>
 #include <hidl/MQDescriptor.h>
@@ -26,13 +25,13 @@ namespace dumpstate {
 namespace V1_0 {
 namespace implementation {
 
+using ::android::hardware::Return;
+using ::android::hardware::Void;
 using ::android::hardware::dumpstate::V1_0::IDumpstateDevice;
 using ::android::hardware::hidl_array;
 using ::android::hardware::hidl_handle;
 using ::android::hardware::hidl_string;
 using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-using ::android::hardware::Void;
 using ::android::sp;
 
 struct DumpstateDevice : public IDumpstateDevice {
@@ -45,5 +44,3 @@ struct DumpstateDevice : public IDumpstateDevice {
 }  // namespace dumpstate
 }  // namespace hardware
 }  // namespace android
-
-#endif  // ANDROID_HARDWARE_DUMPSTATE_V1_0_DUMPSTATEDEVICE_H

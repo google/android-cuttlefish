@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
-    device/google/gce/include \
+    device/google/cuttlefish_common \
     frameworks/native/cmds/dumpstate
-
-LOCAL_CFLAGS := $(GCE_VERSION_CFLAGS)
-
+LOCAL_CFLAGS := $(VSOC_VERSION_CFLAGS) -DLOG_TAG=\"VSoC-dumpstate\"
 LOCAL_SRC_FILES := dumpstate.cpp
-
-LOCAL_MODULE := libdumpstate.$(VIRTUAL_HARDWARE_TYPE)
-
+LOCAL_MODULE := libdumpstate.vsoc
 LOCAL_MODULE_TAGS := optional
-
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -36,9 +33,9 @@ LOCAL_MODULE := android.hardware.dumpstate@1.0-service.cuttlefish
 LOCAL_INIT_RC := android.hardware.dumpstate@1.0-service.cuttlefish.rc
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_SRC_FILES := \
-    DumpstateDevice.cpp \
+    dumpstate_device.cpp \
     service.cpp
-
+LOCAL_CFLAGS := $(VSOC_VERSION_CFLAGS) -DLOG_TAG=\"VSoC-dumpstate\"
 LOCAL_SHARED_LIBRARIES := \
     android.hardware.dumpstate@1.0 \
     libbase \
@@ -49,9 +46,11 @@ LOCAL_SHARED_LIBRARIES := \
     libhwbinder \
     liblog \
     libutils
+LOCAL_C_INCLUDES := \
+    device/google/cuttlefish_common \
+    frameworks/native/cmds/dumpstate
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_VENDOR_MODULE := true
-
 include $(BUILD_EXECUTABLE)

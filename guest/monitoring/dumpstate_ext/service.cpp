@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.dumpstate@1.0-service.cuttlefish"
-
 #include <hidl/HidlSupport.h>
 #include <hidl/HidlTransportSupport.h>
 
-#include "DumpstateDevice.h"
+#include "guest/monitoring/dumpstate_ext/dumpstate_device.h"
 
+using ::android::OK;
 using ::android::hardware::configureRpcThreadpool;
 using ::android::hardware::dumpstate::V1_0::IDumpstateDevice;
 using ::android::hardware::dumpstate::V1_0::implementation::DumpstateDevice;
 using ::android::hardware::joinRpcThreadpool;
-using ::android::OK;
 using ::android::sp;
 
 int main() {
   sp<IDumpstateDevice> dumpstate = new DumpstateDevice;
-  //This method MUST be called before interacting with any HIDL interfaces.
+  // This method MUST be called before interacting with any HIDL interfaces.
   configureRpcThreadpool(1, true);
   if (dumpstate->registerAsService() != OK) {
     ALOGE("Could not register service.");

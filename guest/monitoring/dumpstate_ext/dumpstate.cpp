@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <api_level_fixes.h>
+#include "guest/libs/platform_support/api_level_fixes.h"
 
-#if GCE_PLATFORM_SDK_BEFORE(N)
+#if VSOC_PLATFORM_SDK_BEFORE(N)
 extern "C" {
 #endif
 #include <dumpstate.h>
-#if GCE_PLATFORM_SDK_BEFORE(N)
+#if VSOC_PLATFORM_SDK_BEFORE(N)
 }
 #endif
 
-void dumpstate_board()
-{
-#if GCE_PLATFORM_SDK_AFTER(N_MR1)
-    Dumpstate& ds = Dumpstate::GetInstance();
-
-    ds.DumpFile("GCE INITIAL METADATA", "/initial.metadata");
-#else
-    dump_file("GCE INITIAL METADATA", "/initial.metadata");
-#endif
-};
+void dumpstate_board() { Dumpstate& ds = Dumpstate::GetInstance(); };

@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#define LOG_TAG "dumpstate"
+#include "guest/monitoring/dumpstate_ext/dumpstate_device.h"
 
 #include <log/log.h>
-#include "DumpstateDevice.h"
-#include "DumpstateUtil.h"
+#include <DumpstateUtil.h>
 
 using android::os::dumpstate::DumpFileToFd;
 
@@ -51,4 +49,3 @@ Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
 }  // namespace dumpstate
 }  // namespace hardware
 }  // namespace android
-
