@@ -4,12 +4,13 @@ cc_library(
     ],
     hdrs = [
         "pthread.h",
+        "thread_annotations.h",
         "thunkers.h",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         "//common/libs/time",
     ],
-    visibility = [ "//visibility:public" ],
 )
 
 cc_test(
@@ -17,11 +18,10 @@ cc_test(
     srcs = [
         "pthread_test.cpp",
     ],
-    linkopts = [ "-lpthread" ],
+    linkopts = ["-lpthread"],
     deps = [
         ":threads",
-        "//common/libs/time",
         "//common/libs/glog:cuttlefish_logging",
+        "//common/libs/time",
     ],
 )
-
