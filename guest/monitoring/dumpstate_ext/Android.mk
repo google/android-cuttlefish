@@ -17,14 +17,16 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := \
-    device/google/cuttlefish_common \
-    frameworks/native/cmds/dumpstate
+    device/google/cuttlefish_common
 LOCAL_CFLAGS := $(VSOC_VERSION_CFLAGS) -DLOG_TAG=\"VSoC-dumpstate\"
 LOCAL_SRC_FILES := dumpstate.cpp
 LOCAL_MODULE := libdumpstate.vsoc
 LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := \
     libbase \
+    libdumpstateaidl \
+    libdumpstateutil \
+    libz
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
