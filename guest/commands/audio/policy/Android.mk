@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# GCE Audio Policy HAL
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -30,16 +29,17 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils
 
 LOCAL_SRC_FILES := \
-    gce_audio_policy_hal.cpp
+    vsoc_audio_policy_hal.cpp
 
 LOCAL_C_INCLUDES := \
-    $(GCE_STLPORT_INCLUDES) \
+    device/google/cuttlefish_common \
+    $(VSOC_STLPORT_INCLUDES) \
     frameworks/native/include/media/hardware \
     $(call include-path-for, audio)
 
-LOCAL_CFLAGS := -Wall
+LOCAL_CFLAGS := -Wall -DLOG_TAG=\"VSoC-AudioPolicy\"
 
-LOCAL_MODULE := audio_policy.$(VIRTUAL_HARDWARE_TYPE)
+LOCAL_MODULE := audio_policy.vsoc
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)

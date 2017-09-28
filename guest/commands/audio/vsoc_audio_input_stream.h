@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio HAL - Audio In Stream HAL Interface.
-#ifndef DEVICE_GOOGLE_GCE_AUDIO_GCE_AUDIO_INPUT_STREAM_H_
-#define DEVICE_GOOGLE_GCE_AUDIO_GCE_AUDIO_INPUT_STREAM_H_
+#pragma once
 
-#include "audio_hal.h"
-#include <SimulatedBuffer.h>
+#include <memory>
+
+#include "guest/commands/audio/audio_hal.h"
+#include "guest/commands/audio/simulated_buffer.h"
+#include "guest/commands/audio/vsoc_audio_message.h"
 
 namespace avd {
 
@@ -156,7 +157,7 @@ class GceAudioInputStream : public audio_stream_in {
  private:
   GceAudioInputStream(avd::GceAudio* dev, audio_devices_t devices,
                       const audio_config& config);
-  avd::UniquePtr<SimulatedInputBuffer> buffer_model_;
+  std::unique_ptr<SimulatedInputBuffer> buffer_model_;
   avd::GceAudio *dev_;
   audio_config config_;
   float gain_;
@@ -166,4 +167,3 @@ class GceAudioInputStream : public audio_stream_in {
 };
 
 }
-#endif

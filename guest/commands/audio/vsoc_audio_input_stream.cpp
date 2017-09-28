@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio HAL - Audio In Stream HAL Interface.
-
-#include <api_level_fixes.h>
-
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstdint>
@@ -26,13 +21,12 @@ extern "C"{
 #include <cutils/str_parms.h>
 }
 
-#include <api_level_fixes.h>
-
-#include "audio_hal.h"
-#include "gce_audio.h"
-#include "gce_audio_input_stream.h"
-#include "AutoResources.h"
-#include <Thunkers.h>
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/threads/thunkers.h"
+#include "guest/commands/audio/audio_hal.h"
+#include "guest/commands/audio/vsoc_audio.h"
+#include "guest/commands/audio/vsoc_audio_input_stream.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace avd {
 
@@ -138,7 +132,7 @@ int GceAudioInputStream::SetFormat(audio_format_t format) {
 
 int GceAudioInputStream::Dump(int fd) const {
   D("GceAudioInputStream::%s", __FUNCTION__);
-  GCE_FDPRINTF(
+  VSOC_FDPRINTF(
       fd,
       "\tInputSteam Dump:\n"
       "\t\tsample rate: %u\n"

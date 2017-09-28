@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio HAL - Audio Out Stream HAL Interface.
-#include <gce_audio_message.h>
+#include "guest/commands/audio/vsoc_audio_message.h"
 
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory>
 
 #include <cutils/sockets.h>
 extern "C"{
 #include <cutils/str_parms.h>
 }
 
-#include <api_level_fixes.h>
-
-#include "audio_hal.h"
-#include "gce_audio.h"
-#include "gce_audio_output_stream.h"
-#include <remoter_framework_pkt.h>
-#include <AutoResources.h>
-#include <MonotonicTime.h>
-#include <Thunkers.h>
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/threads/thunkers.h"
+#include "common/libs/time/monotonic_time.h"
+#include "guest/commands/audio/audio_hal.h"
+#include "guest/commands/audio/vsoc_audio.h"
+#include "guest/commands/audio/vsoc_audio_output_stream.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
+#include "guest/libs/remoter/remoter_framework_pkt.h"
 
 #if defined(AUDIO_DEVICE_API_VERSION_3_0)
 static inline size_t GceAudioFrameSize(const audio_stream_out* s) {
@@ -74,7 +72,7 @@ GceAudioOutputStream::GceAudioOutputStream(GceAudio* dev) :
 
 int GceAudioOutputStream::Dump(int fd) const {
   D("GceAudioOutputStream::%s", __FUNCTION__);
-  GCE_FDPRINTF(
+  VSOC_FDPRINTF(
       fd,
       "\tout_dump:\n"
       "\t\tsample rate: %u\n"
@@ -107,7 +105,7 @@ struct StrParmsDestroyer {
   }
 };
 
-typedef avd::UniquePtr<str_parms, StrParmsDestroyer> StrParmsPtr;
+typedef std::unique_ptr<str_parms, StrParmsDestroyer> StrParmsPtr;
 }
 
 int GceAudioOutputStream::SetParameters(const char* kv_pairs) {
@@ -275,14 +273,14 @@ int GceAudioOutputStream::Open(
   D("GceAudioOutputStream::%s", __FUNCTION__);
   *stream_out = NULL;
   // Deleted by Close(); UniquePtr holds until end of Open().
-  avd::UniquePtr<GceAudioOutputStream> out(
+  std::unique_ptr<GceAudioOutputStream> out(
       new GceAudioOutputStream(dev));
   out->message_header_.stream_number = stream_number;
   out->message_header_.format = config->format;
   out->message_header_.channel_mask = config->channel_mask;
   out->message_header_.frame_rate = config->sample_rate;
   out->frame_count_ =
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
       config->frame_count;
 #else
       0;

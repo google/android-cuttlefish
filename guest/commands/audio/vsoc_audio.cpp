@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio HAL - Audio HAL Interface.
-#include "audio_hal.h"
+#include "guest/commands/audio/audio_hal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,16 +24,15 @@ extern "C" {
 #include <cutils/str_parms.h>
 }
 
-#include <api_level_fixes.h>
-#include <AutoResources.h>
-#include <Pthread.h>
-#include <remoter_framework_pkt.h>
-#include <SharedSelect.h>
-#include <Thunkers.h>
-
-#include "gce_audio.h"
-#include "gce_audio_input_stream.h"
-#include "gce_audio_output_stream.h"
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/fs/shared_select.h"
+#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/thunkers.h"
+#include "guest/commands/audio/vsoc_audio.h"
+#include "guest/commands/audio/vsoc_audio_input_stream.h"
+#include "guest/commands/audio/vsoc_audio_output_stream.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
+#include "guest/libs/remoter/remoter_framework_pkt.h"
 
 using avd::LockGuard;
 using avd::Mutex;
@@ -202,7 +200,7 @@ void GceAudio::CloseOutputStream(audio_stream_out *stream) {
 
 int GceAudio::Dump(int fd) const {
   LockGuard<Mutex> guard(lock_);
-  GCE_FDPRINTF(
+  VSOC_FDPRINTF(
       fd,
       "\nadev_dump:\n"
       "\tmic_mute: %s\n"

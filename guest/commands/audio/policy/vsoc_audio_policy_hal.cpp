@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio Policy HAL - Main File.
 #include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -24,7 +23,7 @@
 #include <system/audio_policy.h>
 #include <hardware/audio_policy.h>
 
-#include "gce_audio_policy_hal.h"
+#include "guest/commands/audio/policy/vsoc_audio_policy_hal.h"
 
 namespace avd {
 

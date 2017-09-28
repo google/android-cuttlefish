@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio HAL - Audio HAL Interface.
-#ifndef DEVICE_GOOGLE_GCE_AUDIO_GCE_AUDIO_H_
-#define DEVICE_GOOGLE_GCE_AUDIO_GCE_AUDIO_H_
+#pragma once
 
-#include <api_level_fixes.h>
 #include <list>
 #include <map>
-#include <Pthread.h>
-#include <SharedFD.h>
-#include <UniquePtr.h>
-#include <gce_audio_message.h>
 
-#include "audio_hal.h"
-#include "gce_audio_input_stream.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/threads/pthread.h"
+#include "guest/commands/audio/audio_hal.h"
+#include "guest/commands/audio/vsoc_audio_input_stream.h"
+#include "guest/commands/audio/vsoc_audio_message.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace avd {
 
@@ -321,4 +318,3 @@ class GceAudio : public audio_hw_device {
 
 }
 
-#endif

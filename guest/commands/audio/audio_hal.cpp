@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Audio HAL - Main File.
-#include "audio_hal.h"
-#include "gce_audio.h"
+#include "guest/commands/audio/vsoc_audio.h"
 
+#include "guest/commands/audio/audio_hal.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
-  open: avd::GceAudio::Open,
+  VSOC_STATIC_INITIALIZER(open) avd::GceAudio::Open,
 };
 
 
 audio_module HAL_MODULE_INFO_SYM = {
-  common: {
-    tag: HARDWARE_MODULE_TAG,
-    module_api_version: AUDIO_MODULE_API_VERSION_0_1,
-    hal_api_version: HARDWARE_HAL_API_VERSION,
-    id: AUDIO_HARDWARE_MODULE_ID,
-    name: "GCE Audio HW HAL",
-    author: "The Android Open Source Project",
-    methods: &hal_module_methods,
+  VSOC_STATIC_INITIALIZER(common) {
+    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
+    VSOC_STATIC_INITIALIZER(module_api_version) AUDIO_MODULE_API_VERSION_0_1,
+    VSOC_STATIC_INITIALIZER(hal_api_version) HARDWARE_HAL_API_VERSION,
+    VSOC_STATIC_INITIALIZER(id) AUDIO_HARDWARE_MODULE_ID,
+    VSOC_STATIC_INITIALIZER(name) "GCE Audio HW HAL",
+    VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
+    VSOC_STATIC_INITIALIZER(methods) &hal_module_methods,
   },
 };

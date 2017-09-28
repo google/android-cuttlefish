@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DEVICE_GOOGLE_GCE_INCLUDE_AUDIO_MESSAGE_H_
-#define DEVICE_GOOGLE_GCE_INCLUDE_AUDIO_MESSAGE_H_
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -84,4 +83,3 @@ struct gce_audio_message {
     time_presented.tv_nsec = 0;
   }
 };
-#endif  // DEVICE_GOOGLE_GCE_INCLUDE_AUDIO_MESSAGE_H_

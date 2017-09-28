@@ -16,13 +16,9 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-    remoter_framework_pkt.cpp
-LOCAL_MODULE := libcuttlefish_remoter_framework
+    monotonic_time.cpp
+LOCAL_MODULE := libcuttlefish_time
 LOCAL_MODULE_TAGS := optional
-LOCAL_SHARED_LIBRARIES := \
-    libcutils \
-    liblog \
-    libcuttlefish_fs
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common
 LOCAL_CFLAGS := $(VSOC_VERSION_CFLAGS)

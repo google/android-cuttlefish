@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,37 +27,38 @@ LOCAL_MULTILIB := first
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libcutils \
-    libgcecutils
+    libcuttlefish_auto_resources \
+    libcuttlefish_fs
 
 LOCAL_SRC_FILES := \
     audio_hal.cpp \
-    gce_audio.cpp \
-    gce_audio_input_stream.cpp \
-    gce_audio_output_stream.cpp
+    vsoc_audio.cpp \
+    vsoc_audio_input_stream.cpp \
+    vsoc_audio_output_stream.cpp \
+    vsoc_audio_message.cpp
 
 LOCAL_C_INCLUDES := \
-    device/google/gce/include \
-    $(GCE_STLPORT_INCLUDES) \
+    device/google/cuttlefish_common \
+    $(VSOC_STLPORT_INCLUDES) \
     frameworks/native/include/media/hardware \
     $(call include-path-for, audio)
 
 LOCAL_STATIC_LIBRARIES := \
-    libgcemetadata \
     libcutils \
-    $(GCE_STLPORT_STATIC_LIBS)
+    libcuttlefish_remoter_framework \
+    libcuttlefish_time
+    $(VSOC_STLPORT_STATIC_LIBS)
 
 LOCAL_CFLAGS := \
     -Wall -Werror -Wno-parentheses -Wno-missing-field-initializers \
-    $(GCE_VERSION_CFLAGS)
+    -DLOG_TAG=\"VSoC-Audio\" \
+    $(VSOC_VERSION_CFLAGS)
 
 # Work-around for the non-standard language feautures used in
 # system/media/audio/include/system/audio.h
 LOCAL_CLANG_CFLAGS := -Wno-gnu-designator
 
-LOCAL_MODULE := audio.primary.$(VIRTUAL_HARDWARE_TYPE)
+LOCAL_MODULE := audio.primary.vsoc
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)
-
-# Enable below to use a custom audio_policy HAL.
-# include $(call all-makefiles-under,$(LOCAL_PATH))
