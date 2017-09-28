@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Sensors HAL - Sensors HAL Interface
-
-#include <api_level_fixes.h>
 #include <cstdint>
 
 #include <cutils/properties.h>
@@ -27,12 +24,12 @@
 
 #include <algorithm>
 
-#include <SharedSelect.h>
-#include <Thunkers.h>
-#include <gce_sensors_message.h>
-#include <remoter_framework_pkt.h>
-#include "gce_sensors.h"
-#include "sensors_hal.h"
+#include "common/libs/fs/shared_select.h"
+#include "common/libs/threads/thunkers.h"
+#include "guest/hals/sensors/sensors_hal.h"
+#include "guest/hals/sensors/vsoc_sensors.h"
+#include "guest/hals/sensors/vsoc_sensors_message.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 using avd::LockGuard;
 using avd::Mutex;
@@ -111,7 +108,7 @@ int GceSensors::Open(const struct hw_module_t* module, const char* name,
     GceSensors* rval = new GceSensors;
 
     rval->common.tag = HARDWARE_DEVICE_TAG;
-    rval->common.version = GCE_SENSOR_DEVICE_VERSION;
+    rval->common.version = VSOC_SENSOR_DEVICE_VERSION;
     rval->common.module = (struct hw_module_t*)module;
     rval->common.close = HWDeviceThunker<int()>::call<&GceSensors::Close>;
     rval->poll =
@@ -119,14 +116,14 @@ int GceSensors::Open(const struct hw_module_t* module, const char* name,
     rval->activate = SensorsThunker<int(int, int)>::call<&GceSensors::Activate>;
     rval->setDelay =
         SensorsThunker<int(int, int64_t)>::call<&GceSensors::SetDelay>;
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
     rval->batch = SensorsThunker1<int(int, int, int64_t,
                                       int64_t)>::call<&GceSensors::Batch>;
 #endif
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
     rval->flush = SensorsThunker1<int(int)>::call<&GceSensors::Flush>;
 #endif
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
     rval->inject_sensor_data = SensorsThunker1<int(
         const sensors_event_t*)>::call<&GceSensors::InjectSensorData>;
 #endif
@@ -254,6 +251,7 @@ int GceSensors::Poll(sensors_event_t* data, int count_unsafe) {
 
 void *GceSensors::Receiver() {
   // Initialize the server.
+  /*
   sensor_listener_socket_ = avd::SharedFD::SocketSeqPacketServer(
       gce_sensors_message::kSensorsHALSocketName, 0777);
   if (!sensor_listener_socket_->IsOpen()) {
@@ -261,6 +259,7 @@ void *GceSensors::Receiver() {
           __FUNCTION__, sensor_listener_socket_->StrError());
     return NULL;
   }
+  */
   D("GceSensors::%s: Listening for sensor connections at %s", __FUNCTION__,
     gce_sensors_message::kSensorsHALSocketName);
   // Announce that we are ready for the remoter to connect.
@@ -280,7 +279,7 @@ void *GceSensors::Receiver() {
       fds.Set(*it);
     }
     fds.Set(control_receiver_socket_);
-    fds.Set(sensor_listener_socket_);
+    // fds.Set(sensor_listener_socket_);
     int res = avd::Select(&fds, NULL, NULL, NULL);
     if (res == -1) {
       ALOGE("%s: select returned %d and failed %d -> %s", __FUNCTION__, res,
@@ -289,9 +288,9 @@ void *GceSensors::Receiver() {
     } else if (res == 0) {
       ALOGE("%s: select timed out", __FUNCTION__);
       break;
-    } else if (fds.IsSet(sensor_listener_socket_)) {
-      connected.push_back(avd::SharedFD::Accept(*sensor_listener_socket_));
-      ALOGI("GceSensors::%s: new client connected", __FUNCTION__);
+    // } else if (fds.IsSet(sensor_listener_socket_)) {
+    //   connected.push_back(avd::SharedFD::Accept(*sensor_listener_socket_));
+    //   ALOGI("GceSensors::%s: new client connected", __FUNCTION__);
     } else if (fds.IsSet(control_receiver_socket_)) {
       // We received a control message.
       SensorControlMessage msg;
@@ -305,6 +304,7 @@ void *GceSensors::Receiver() {
       }
       if (msg.message_type == SENSOR_STATE_UPDATE) {
         // Forward the update to the remoter.
+        /*
         remoter_request_packet packet;
         remoter_request_packet_init(&packet, kRemoterSensorState, 0);
         {
@@ -337,6 +337,7 @@ void *GceSensors::Receiver() {
                   __FUNCTION__, fd->StrError());
           }
         }
+        */
       }
       if (msg.message_type == THREAD_STOP) {
         D("Received terminate control message.");
@@ -411,6 +412,7 @@ void *GceSensors::Receiver() {
 }
 
 bool GceSensors::NotifyRemoter() {
+  /*
   remoter_request_packet packet;
   remoter_request_packet_init(&packet, kRemoterHALReady, 0);
   packet.send_response = 0;
@@ -431,6 +433,7 @@ bool GceSensors::NotifyRemoter() {
     return false;
   }
   D("GceSensors::%s: Notify remoter ready Succeeded.", __FUNCTION__);
+  */
   return true;
 }
 

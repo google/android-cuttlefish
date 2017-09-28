@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Sensors HAL - Sensors HAL State
-#ifndef DEVICE_GOOGLE_GCE_SENSORS_SENSORS_H
-#define DEVICE_GOOGLE_GCE_SENSORS_SENSORS_H
+#pragma once
 
-#include <api_level_fixes.h>
-#include "MonotonicTime.h"
-#include "sensors_hal.h"
+#include "common/libs/time/monotonic_time.h"
+#include "guest/hals/sensors/sensors_hal.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace avd {
 
@@ -89,7 +87,7 @@ const char kVendor[] = "Google";
 // Version of the hardware part + driver. The value of this field
 // must increase when the driver is updated in a way that
 // changes the output of the sensor.
-const int kVersion = GCE_SENSOR_DEVICE_VERSION;
+const int kVersion = VSOC_SENSOR_DEVICE_VERSION;
 // Number of events reserved for this sensor in batch mode FIFO.
 // If it has its own FIFO, the size of that FIFO.
 const uint32_t kFifoReservedEventCount = 15;
@@ -174,7 +172,7 @@ const float kRelativeHumidityPower = 1.0f;
 
 // Type of this sensor, represented as a string.
 
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_2)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_2)
 const char kAccelerometerStringType[] = SENSOR_STRING_TYPE_ACCELEROMETER;
 const char kGyroscopeStringType[] = SENSOR_STRING_TYPE_GYROSCOPE;
 const char kLightStringType[] = SENSOR_STRING_TYPE_LIGHT;
@@ -196,7 +194,7 @@ const char kDeviceTempStringType[] = "";
 const char kRelativeHumidityStringType[] = "";
 #endif
 
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
 const uint32_t kAccelerometerReportingMode = SENSOR_FLAG_CONTINUOUS_MODE;
 const uint32_t kGyroscopeReportingMode = SENSOR_FLAG_CONTINUOUS_MODE;
 const uint32_t kLightReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
@@ -231,4 +229,3 @@ const bool kRelativeHumidityIsWakeup = false;
 }  // namespace sensors_constants
 }  // namespace avd
 
-#endif

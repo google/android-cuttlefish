@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Sensors HAL - Sensors HAL Interface
-#ifndef DEVICE_GOOGLE_GCE_SENSORS_GCE_SENSORS_H
-#define DEVICE_GOOGLE_GCE_SENSORS_GCE_SENSORS_H
+#pragma once
 
 #include <vector>
 
-#include <Pthread.h>
-#include <SharedFD.h>
-
-#include "remoter_framework_pkt.h"
-
-#include "sensors_hal.h"
-#include "sensors.h"
+#include "common/libs/threads/pthread.h"
+#include "common/libs/fs/shared_fd.h"
+#include "guest/hals/sensors/sensors.h"
+#include "guest/hals/sensors/sensors_hal.h"
 
 namespace avd {
 
@@ -40,7 +35,7 @@ typedef struct {
   uint8_t sensor_handle;
 } SensorControlMessage;
 
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
 // Last updated to HAL 1.4
 // Version history:
 //   Before jb, jb-mr1 SENSORS_DEVICE_API_VERSION_0_1 (no version in sensors.h)
@@ -117,7 +112,7 @@ class GceSensors : public sensors_poll_device_1 {
   // an error.
   int Poll(sensors_event_t* data, int count);
 
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
   // Sets a sensor’s parameters, including sampling frequency and maximum
   // report latency. This function can be called while the sensor is
   // activated, in which case it must not cause any sensor measurements to
@@ -138,7 +133,7 @@ class GceSensors : public sensors_poll_device_1 {
   }
 #endif
 
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
   // Adds a META_DATA_FLUSH_COMPLETE event (sensors_event_meta_data_t)
   // to the end of the "batch mode" FIFO for the specified sensor and flushes
   // the FIFO.
@@ -158,7 +153,7 @@ class GceSensors : public sensors_poll_device_1 {
   }
 #endif
 
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
   // Inject a single sensor sample to be to this device.
   // data points to the sensor event to be injected
   // @return 0 on success
@@ -244,4 +239,3 @@ class GceSensors : public sensors_poll_device_1 {
 
 } //namespace avd
 
-#endif

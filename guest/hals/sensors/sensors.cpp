@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Sensors HAL - Sensors HAL State
+#include "guest/hals/sensors/vsoc_sensors.h"
 
 #include <limits>
 
-#include "sensors.h"
+#include "guest/hals/sensors/sensors.h"
 
 namespace avd {
 namespace {
 const avd::time::Milliseconds kDefaultSamplingRate(200);
 
-#if !GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
+#if !VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
 namespace {
 const int SENSOR_FLAG_WAKE_UP = 0;
 }
@@ -65,15 +65,15 @@ SensorInfo::SensorInfo(const char* name, const char* vendor, int version,
   this->resolution = resolution;
   this->power = power;
   this->minDelay = min_delay;
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
   this->fifoReservedEventCount = fifo_reserved_event_count;
   this->fifoMaxEventCount = fifo_max_event_count;
 #endif
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_2)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_2)
   this->stringType = string_type;
   this->requiredPermission = required_permission;
 #endif
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
   this->maxDelay = max_delay;
   this->flags = reporting_mode;
 #endif

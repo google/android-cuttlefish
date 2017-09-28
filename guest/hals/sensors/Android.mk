@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,31 +27,31 @@ LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := \
-    $(GCE_STLPORT_LIBS) \
+    $(VSOC_STLPORT_LIBS) \
+    libcuttlefish_fs \
+    libcuttlefish_auto_resources \
     liblog \
-    libcutils \
-    libgcecutils
+    libcutils
 
 LOCAL_SRC_FILES := \
     sensors_hal.cpp \
-    gce_sensors.cpp \
+    vsoc_sensors.cpp \
     sensors.cpp
 
-LOCAL_CFLAGS := -DLOG_TAG=\"GceSensors\" \
-    $(GCE_VERSION_CFLAGS) \
+LOCAL_CFLAGS := -DLOG_TAG=\"VSoC-Sensors\" \
+    $(VSOC_VERSION_CFLAGS) \
     -Werror -Wall -Wno-missing-field-initializers -Wno-unused-parameter
 
 LOCAL_C_INCLUDES := \
-    $(GCE_STLPORT_INCLUDES) \
-    device/google/gce/include \
+    $(VSOC_STLPORT_INCLUDES) \
+    device/google/cuttlefish_common \
     system/extras
 
 LOCAL_STATIC_LIBRARIES := \
-    libgcemetadata \
     libcutils \
-    $(GCE_STLPORT_STATIC_LIBS)
+    $(VSOC_STLPORT_STATIC_LIBS)
 
-LOCAL_MODULE := sensors.$(VIRTUAL_HARDWARE_TYPE)
+LOCAL_MODULE := sensors.vsoc
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)

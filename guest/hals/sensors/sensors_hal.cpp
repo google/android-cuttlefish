@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Google Compute Engine (GCE) Sensors HAL - Main File
-#include <api_level_fixes.h>
+#include "guest/hals/sensors/sensors_hal.h"
 
-#include "sensors_hal.h"
-#include "gce_sensors.h"
+#include "guest/hals/sensors/vsoc_sensors.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
-	GCE_STATIC_INITIALIZER(open) avd::GceSensors::Open,
+  VSOC_STATIC_INITIALIZER(open) avd::GceSensors::Open,
 };
 
 sensors_module_t HAL_MODULE_INFO_SYM = {
-    GCE_STATIC_INITIALIZER(common) {
-        GCE_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-        GCE_STATIC_INITIALIZER(module_api_version) 1,
-        GCE_STATIC_INITIALIZER(hal_api_version) 0,
-        GCE_STATIC_INITIALIZER(id) SENSORS_HARDWARE_MODULE_ID,
-        GCE_STATIC_INITIALIZER(name) "Android-GCE SENSORS Module",
-        GCE_STATIC_INITIALIZER(author) "Google",
-        GCE_STATIC_INITIALIZER(methods) &hal_module_methods,
-    },
-    GCE_STATIC_INITIALIZER(get_sensors_list) avd::GceSensors::GetSensorsList,
-#if GCE_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
-    GCE_STATIC_INITIALIZER(set_operation_mode) avd::GceSensors::SetOperationMode,
+  VSOC_STATIC_INITIALIZER(common){
+    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
+    VSOC_STATIC_INITIALIZER(module_api_version) 1,
+    VSOC_STATIC_INITIALIZER(hal_api_version) 0,
+    VSOC_STATIC_INITIALIZER(id) SENSORS_HARDWARE_MODULE_ID,
+    VSOC_STATIC_INITIALIZER(name) "Android-GCE SENSORS Module",
+    VSOC_STATIC_INITIALIZER(author) "Google",
+    VSOC_STATIC_INITIALIZER(methods) & hal_module_methods,
+  },
+  VSOC_STATIC_INITIALIZER(get_sensors_list) avd::GceSensors::GetSensorsList,
+#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
+  VSOC_STATIC_INITIALIZER(set_operation_mode) avd::GceSensors::SetOperationMode,
 #endif
 };
