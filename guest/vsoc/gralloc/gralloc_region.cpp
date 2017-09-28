@@ -108,17 +108,18 @@ int GrallocRegion::AllocateBuffer(size_t size, uint32_t* begin_offset) {
       ALOGE(
           "Out of memory in gralloc_manager (total: %d, used: %d, "
           "requested: %d)",
-          control_->region_size(),
-          pointer_to_region_offset(&data()->buffers_table[idx]),
-          sizeof(data()->buffers_table[idx]));
+          static_cast<int>(control_->region_size()),
+          static_cast<int>(
+              pointer_to_region_offset(&data()->buffers_table[idx])),
+          static_cast<int>(sizeof(data()->buffers_table[idx])));
       return -ENOMEM;
     }
     if (total_buffer_memory_ - data()->allocated_buffer_memory < size) {
       ALOGE(
           "Out of memory in gralloc_memory (total: %d, used: %d, requested: %d)",
-          total_buffer_memory_,
-          data()->allocated_buffer_memory,
-          size);
+          static_cast<int>(total_buffer_memory_),
+          static_cast<int>(data()->allocated_buffer_memory),
+          static_cast<int>(size));
       return -ENOMEM;
     }
     // Initialize the buffer entry and acquire ownership
