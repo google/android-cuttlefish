@@ -3,9 +3,9 @@
 
 #include "vnc_utils.h"
 
-#include <mutex>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
+#include <mutex>
 
 #include <unistd.h>
 
@@ -18,9 +18,7 @@ class ServerSocket;
 // Send is thread safe in this regard, Recv is not.
 class ClientSocket {
  public:
-  ClientSocket(ClientSocket&& other) : fd_{other.fd_} {
-    other.fd_ = -1;
-  }
+  ClientSocket(ClientSocket&& other) : fd_{other.fd_} { other.fd_ = -1; }
 
   ClientSocket& operator=(ClientSocket&& other) {
     if (fd_ >= 0) {
@@ -49,9 +47,7 @@ class ClientSocket {
     return Send(data, N);
   }
 
-  bool closed() const {
-    return other_side_closed_;
-  }
+  bool closed() const { return other_side_closed_; }
 
  private:
   friend ServerSocket;

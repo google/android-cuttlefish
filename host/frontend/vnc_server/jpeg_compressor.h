@@ -3,9 +3,9 @@
 
 #include "vnc_utils.h"
 
-#include <memory>
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
+#include <memory>
 
 namespace avd {
 namespace vnc {
@@ -26,9 +26,7 @@ class JpegCompressor {
   void UpdateBuffer(std::uint8_t* compression_buffer,
                     unsigned long compression_buffer_size);
   struct Freer {
-    void operator()(void* p) const {
-      std::free(p);
-    }
+    void operator()(void* p) const { std::free(p); }
   };
 
   std::unique_ptr<std::uint8_t, Freer> buffer_;

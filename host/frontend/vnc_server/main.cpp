@@ -1,7 +1,7 @@
 #include "vnc_server.h"
 
-#include <string>
 #include <algorithm>
+#include <string>
 
 namespace {
 constexpr int kVncServerPort = 6444;
@@ -18,4 +18,3 @@ int main(int argc, char* argv[]) {
   avd::vnc::VncServer vnc_server(kVncServerPort, HasAggressiveFlag(argc, argv));
   vnc_server.MainLoop();
 }
-

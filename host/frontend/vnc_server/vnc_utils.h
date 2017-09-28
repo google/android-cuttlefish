@@ -3,10 +3,10 @@
 
 #include <GceFrameBuffer.h>
 
-#include <vector>
 #include <array>
-#include <utility>
 #include <cstdint>
+#include <utility>
+#include <vector>
 
 #undef D
 #ifdef GCE_VNC_DEBUG
@@ -25,13 +25,9 @@ class StripeSeqNumber {
  public:
   StripeSeqNumber() = default;
   explicit StripeSeqNumber(std::uint64_t t) : t_{t} {}
-  bool operator<(const StripeSeqNumber& other) const {
-    return t_ < other.t_;
-  }
+  bool operator<(const StripeSeqNumber& other) const { return t_ < other.t_; }
 
-  bool operator<=(const StripeSeqNumber& other) const {
-    return t_ <= other.t_;
-  }
+  bool operator<=(const StripeSeqNumber& other) const { return t_ <= other.t_; }
 
  private:
   std::uint64_t t_{};
@@ -58,14 +54,10 @@ struct Stripe {
   ScreenOrientation orientation{};
 };
 
-inline constexpr int BytesPerPixel() {
-  return sizeof(GceFrameBuffer::Pixel);
-}
+inline constexpr int BytesPerPixel() { return sizeof(GceFrameBuffer::Pixel); }
 
 // The width of the screen regardless of orientation. Does not change.
-inline int ActualScreenWidth() {
-  return GceFrameBuffer::getInstance().x_res();
-}
+inline int ActualScreenWidth() { return GceFrameBuffer::getInstance().x_res(); }
 
 // The height of the screen regardless of orientation. Does not change.
 inline int ActualScreenHeight() {

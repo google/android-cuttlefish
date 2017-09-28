@@ -4,8 +4,8 @@
 #include "VirtualInputDevice.h"
 #include "vnc_utils.h"
 
-#include <linux/input.h>
 #include <android-base/thread_annotations.h>
+#include <linux/input.h>
 
 #include <mutex>
 

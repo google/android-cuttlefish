@@ -5,10 +5,10 @@
 
 #include <android-base/thread_annotations.h>
 
-#include <unordered_map>
-#include <mutex>
 #include <condition_variable>
 #include <memory>
+#include <mutex>
+#include <unordered_map>
 
 namespace avd {
 namespace vnc {
@@ -37,9 +37,7 @@ class BlackBoard {
         : bb_{bb}, conn_{conn} {
       bb->Register(conn);
     }
-    ~Registerer() {
-      bb_->Unregister(conn_);
-    }
+    ~Registerer() { bb_->Unregister(conn_); }
     Registerer(const Registerer&) = delete;
     Registerer& operator=(const Registerer&) = delete;
 

@@ -1,12 +1,12 @@
 #include "vnc_client_connection.h"
-#include "vnc_utils.h"
-#include "tcp_socket.h"
 #include "keysyms.h"
+#include "tcp_socket.h"
+#include "vnc_utils.h"
 
-#include "InitialMetadataReader.h"
 #include <GceFrameBuffer.h>
 #include <gce_sensors_message.h>
 #include <sensors.h>
+#include "InitialMetadataReader.h"
 
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -29,9 +29,9 @@
 #include <cutils/log.h>
 
 using avd::vnc::Message;
-using avd::vnc::VncClientConnection;
 using avd::vnc::Stripe;
 using avd::vnc::StripePtrVec;
+using avd::vnc::VncClientConnection;
 
 namespace {
 class BigEndianChecker {
@@ -40,9 +40,7 @@ class BigEndianChecker {
     uint32_t u = 1;
     is_big_endian_ = *reinterpret_cast<const char*>(&u) == 0;
   }
-  bool operator()() const {
-    return is_big_endian_;
-  }
+  bool operator()() const { return is_big_endian_; }
 
  private:
   bool is_big_endian_{};
@@ -142,7 +140,7 @@ std::uint32_t GreenVal(std::uint32_t pixel) {
   return (pixel >> GceFrameBuffer::kGreenShift) &
          ((0x1 << GceFrameBuffer::kGreenBits) - 1);
 }
-}
+}  // namespace
 namespace avd {
 namespace vnc {
 bool operator==(const VncClientConnection::FrameBufferUpdateRequest& lhs,
@@ -156,7 +154,7 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
   return !(lhs == rhs);
 }
 }  // namespace vnc
-}  // namespace avd  // namespace
+}  // namespace avd
 
 VncClientConnection::VncClientConnection(ClientSocket client,
                                          VirtualInputs* virtual_inputs,

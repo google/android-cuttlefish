@@ -101,6 +101,4 @@ void SimulatedHWComposer::MakeStripes() {
   }
 }
 
-int SimulatedHWComposer::NumberOfStripes() {
-  return kNumStripes;
-}
+int SimulatedHWComposer::NumberOfStripes() { return kNumStripes; }

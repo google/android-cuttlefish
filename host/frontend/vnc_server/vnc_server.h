@@ -9,8 +9,8 @@
 #include "vnc_client_connection.h"
 #include "vnc_utils.h"
 
-#include <thread>
 #include <string>
+#include <thread>
 #include <utility>
 
 namespace avd {

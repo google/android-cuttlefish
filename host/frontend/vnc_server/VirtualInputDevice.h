@@ -23,20 +23,22 @@
 namespace avd {
 // Base virtual input device class which contains a bunch of boiler-plate code.
 class VirtualInputDevice {
-public:
+ public:
   VirtualInputDevice(const char* name, uint16_t bus_type, uint16_t vendor,
                      uint16_t product, uint16_t version);
   virtual ~VirtualInputDevice();
 
-protected:
+ protected:
   bool Init(uint32_t* events, int num_events, uint32_t* keys, int num_keys,
             uint32_t* abs, int num_abs, uint32_t* props, int num_props);
 
   bool EmitEvent(uint16_t type, uint16_t code, uint32_t value);
 
-  struct uinput_user_dev* uinput_user_dev() { return &uinput_user_dev_; }
+  struct uinput_user_dev* uinput_user_dev() {
+    return &uinput_user_dev_;
+  }
 
-private:
+ private:
   bool EnableEventBits(uint32_t* events, int num_elements);
   bool EnableKeyBits(uint32_t* keys, int num_elements);
   bool EnableAbsBits(uint32_t* abs, int num_elements);
@@ -50,13 +52,13 @@ private:
 
 // Virtual touch-pad.
 class VirtualTouchPad : public VirtualInputDevice {
-public:
+ public:
   VirtualTouchPad(const char* name, int x_res, int y_res);
   virtual ~VirtualTouchPad() {}
 
   void HandlePointerEvent(bool touch_down, int x, int y);
 
-private:
+ private:
   static uint32_t Senabled_events_[];
   static uint32_t Senabled_keys_[];
   static uint32_t Senabled_abs_[];
@@ -68,30 +70,29 @@ private:
 
 // Virtual button.
 class VirtualButton : public VirtualInputDevice {
-public:
+ public:
   VirtualButton(const char* name, uint32_t input_keycode);
   virtual ~VirtualButton() {}
 
   void HandleButtonPressEvent(bool button_down);
 
-private:
+ private:
   static uint32_t Senabled_events_[];
   uint32_t input_keycode_;
 };
 
 // Virtual keyboard.
 class VirtualKeyboard : public VirtualInputDevice {
-public:
+ public:
   VirtualKeyboard(const char* name);
   virtual ~VirtualKeyboard() {}
 
   void GenerateKeyPressEvent(int code, bool down);
 
-private:
+ private:
   static uint32_t Senabled_events_[];
   std::map<uint32_t, uint32_t> keymapping_;
 };
 
 }  // namespace avd
 #endif
-
