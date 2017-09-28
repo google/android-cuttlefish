@@ -1,9 +1,8 @@
 #ifndef DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_BLACKBOARD_H_
 #define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_BLACKBOARD_H_
 
+#include "common/libs/threads/thread_annotations.h"
 #include "vnc_utils.h"
-
-#include <android-base/thread_annotations.h>
 
 #include <condition_variable>
 #include <memory>

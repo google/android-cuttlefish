@@ -1,12 +1,8 @@
 #include "vnc_client_connection.h"
 #include "keysyms.h"
+#include "mocks.h"
 #include "tcp_socket.h"
 #include "vnc_utils.h"
-
-#include <GceFrameBuffer.h>
-#include <gce_sensors_message.h>
-#include <sensors.h>
-#include "InitialMetadataReader.h"
 
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -25,8 +21,8 @@
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
-#define LOG_TAG "GceVNCServer"
-#include <cutils/log.h>
+#define LOG_TAG "VSoCVNCServer"
+#include <glog/logging.h>
 
 using avd::vnc::Message;
 using avd::vnc::Stripe;
@@ -102,7 +98,9 @@ Message CreateMessage(Ts... vals) {
 }
 
 std::string HostName() {
-  return avd::InitialMetadataReader::getInstance()->GetInstanceHostname();
+  // Localhost is good enough for local development and to connect through ssh
+  // tunneling, for something else this probably needs to change.
+  return "localhost";
 }
 
 std::uint16_t uint16_tAt(const void* p) {
@@ -178,24 +176,29 @@ VncClientConnection::~VncClientConnection() {
 }
 
 void VncClientConnection::StartSession() {
+  LOG(INFO) << "Starting session";
   SetupProtocol();
+  LOG(INFO) << "Protocol set up";
   if (client_.closed()) {
     return;
   }
   SetupSecurityType();
+  LOG(INFO) << "Security type set";
   if (client_.closed()) {
     return;
   }
   GetClientInit();
+  LOG(INFO) << "Gotten client init";
   if (client_.closed()) {
     return;
   }
   SendServerInit();
+  LOG(INFO) << "Sent server init";
   if (client_.closed()) {
     return;
   }
   NormalSession();
-  ALOGI("vnc session terminated");
+  LOG(INFO) << "vnc session terminated";
 }
 
 bool VncClientConnection::closed() {
@@ -211,8 +214,8 @@ void VncClientConnection::SetupProtocol() {
   if (std::memcmp(&client_protocol[0], kRFBVersion,
                   std::min(kVersionLen, client_protocol.size())) != 0) {
     client_protocol.push_back('\0');
-    ALOGE("vnc client wants a different protocol: %s",
-          reinterpret_cast<const char*>(&client_protocol[0]));
+    LOG(ERROR) << "vnc client wants a different protocol: "
+               << reinterpret_cast<const char*>(&client_protocol[0]);
   }
 }
 
@@ -226,8 +229,8 @@ void VncClientConnection::SetupSecurityType() {
     return;
   }
   if (client_security.front() != kNoneSecurity) {
-    ALOGE("vnc client is asking for security type %d",
-          static_cast<int>(client_security.front()));
+    LOG(ERROR) << "vnc client is asking for security type "
+               << static_cast<int>(client_security.front());
   }
   static constexpr std::uint8_t kZero[4] = {};
   client_.Send(kZero);
@@ -282,8 +285,8 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
                     static_cast<std::uint8_t>((sz >> 7) & 0xFF));
   } else {
     if (jpeg_size > kJpegSizeThreeByteMax) {
-      LOG_FATAL("jpeg size is too big: %d must be under %zu", jpeg_size,
-                kJpegSizeThreeByteMax);
+      LOG(FATAL) << "jpeg size is too big: " << jpeg_size << " must be under "
+                 << kJpegSizeThreeByteMax;
     }
     const auto sz = static_cast<std::uint32_t>(jpeg_size);
     AppendToMessage(frame_buffer_update,
@@ -301,7 +304,7 @@ void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
   auto init_size = fbu.size();
   fbu.insert(fbu.end(), stripe.raw_data.begin(), stripe.raw_data.end());
   for (size_t i = init_size; i < fbu.size(); i += sizeof(Pixel)) {
-    ALOG_ASSERT((i + sizeof(Pixel)) < fbu.size());
+    CHECK((i + sizeof(Pixel)) < fbu.size());
     Pixel raw_pixel{};
     std::memcpy(&raw_pixel, &fbu[i], sizeof raw_pixel);
     auto red = RedVal(raw_pixel);
@@ -317,7 +320,7 @@ void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
       std::swap(p[0], p[3]);
       std::swap(p[1], p[2]);
     }
-    ALOG_ASSERT(i + sizeof pixel <= fbu.size());
+    CHECK(i + sizeof pixel <= fbu.size());
     std::memcpy(&fbu[i], &pixel, sizeof pixel);
   }
 }
@@ -372,14 +375,18 @@ void VncClientConnection::FrameBufferUpdateRequestHandler(bool aggressive) {
     if (closed()) {
       break;
     }
-    LOG_ALWAYS_FATAL_IF(stripes.empty(), "Got 0 stripes");
+    if (stripes.empty()) {
+      LOG(FATAL) << "Got 0 stripes";
+    }
     {
       // lock here so a portrait frame can't be sent after a landscape
       // DesktopSize update, or vice versa.
       std::lock_guard<std::mutex> guard(m_);
-      D("Sending update in %s mode",
-        current_orientation_ == ScreenOrientation::Portrait ? "portrait"
-                                                            : "landscape");
+      DLOG(INFO) << "Sending update in "
+                 << (current_orientation_ == ScreenOrientation::Portrait
+                         ? "portrait"
+                         : "landscape")
+                 << " mode";
       client_.Send(MakeFrameBufferUpdate(stripes));
     }
     if (aggressive) {
@@ -436,7 +443,7 @@ void VncClientConnection::HandleSetEncodings() {
   }
   for (size_t i = 0; i < encodings.size(); i += sizeof(int32_t)) {
     auto enc = int32_tAt(&encodings[i]);
-    D("client requesting encoding: %d\n", enc);
+    DLOG(INFO) << "client requesting encoding: " << enc;
     if (enc == kTightEncoding) {
       // This is a deviation from the spec which says that if a jpeg quality
       // level is not specified, tight encoding won't use jpeg.
@@ -444,7 +451,7 @@ void VncClientConnection::HandleSetEncodings() {
       use_jpeg_compression_ = true;
     }
     if (kJpegMinQualityEncoding <= enc && enc <= kJpegMaxQualityEncoding) {
-      D("jpeg compression level: %d", enc);
+      DLOG(INFO) << "jpeg compression level: " << enc;
       bb_->set_jpeg_quality_level(enc);
     }
     if (enc == kDesktopSizeEncoding) {
@@ -490,40 +497,41 @@ void VncClientConnection::HandlePointerEvent() {
 }
 
 void VncClientConnection::UpdateAccelerometer(float x, float y, float z) {
-  // Discard the event if we don't have a connection to the HAL.
-  if (!sensor_event_hal_->IsOpen()) {
-    ALOGE("sensor event client not open");
-    return;
-  }
-  timespec current_time{};
-  clock_gettime(CLOCK_MONOTONIC, &current_time);
-  // Construct the sensor message.
-  gce_sensors_message message{};
-  message.version = sizeof message;
-  message.sensor = avd::sensors_constants::kAccelerometerHandle;
-  message.type = SENSOR_TYPE_ACCELEROMETER;
-  message.timestamp = current_time.tv_sec * static_cast<int64_t>(1000000000) +
-                      current_time.tv_nsec;
-  message.data[0] = x;
-  message.data[1] = y;
-  message.data[2] = z;
+  // // Discard the event if we don't have a connection to the HAL.
+  // if (!sensor_event_hal_->IsOpen()) {
+  //   LOG(ERROR) << "sensor event client not open";
+  //   return;
+  // }
+  // timespec current_time{};
+  // clock_gettime(CLOCK_MONOTONIC, &current_time);
+  // // Construct the sensor message.
+  // gce_sensors_message message{};
+  // message.version = sizeof message;
+  // message.sensor = avd::sensors_constants::kAccelerometerHandle;
+  // message.type = SENSOR_TYPE_ACCELEROMETER;
+  // message.timestamp = current_time.tv_sec * static_cast<int64_t>(1000000000)
+  // +
+  //                     current_time.tv_nsec;
+  // message.data[0] = x;
+  // message.data[1] = y;
+  // message.data[2] = z;
 
-  std::array<iovec, 1> msg_iov{};
-  msg_iov[0].iov_base = &message;
-  msg_iov[0].iov_len = sizeof(sensors_event_t);
+  // std::array<iovec, 1> msg_iov{};
+  // msg_iov[0].iov_base = &message;
+  // msg_iov[0].iov_len = sizeof(sensors_event_t);
 
-  msghdr msg;
-  msg.msg_name = nullptr;
-  msg.msg_namelen = 0;
-  msg.msg_iov = msg_iov.data();
-  msg.msg_iovlen = msg_iov.size();
-  msg.msg_control = nullptr;
-  msg.msg_controllen = 0;
-  msg.msg_flags = 0;
-  if (sensor_event_hal_->SendMsg(&msg, 0) == -1) {
-    ALOGE("%s: Could not send sensor data. (%s).", __FUNCTION__,
-          sensor_event_hal_->StrError());
-  }
+  // msghdr msg;
+  // msg.msg_name = nullptr;
+  // msg.msg_namelen = 0;
+  // msg.msg_iov = msg_iov.data();
+  // msg.msg_iovlen = msg_iov.size();
+  // msg.msg_control = nullptr;
+  // msg.msg_controllen = 0;
+  // msg.msg_flags = 0;
+  // if (sensor_event_hal_->SendMsg(&msg, 0) == -1) {
+  //   LOG(ERROR) << __FUNCTION__ << ": Could not send sensor data. (%s)." <<
+  //         sensor_event_hal_->StrError();
+  // }
 }
 
 VncClientConnection::Coordinates VncClientConnection::CoordinatesForOrientation(
@@ -587,12 +595,12 @@ bool VncClientConnection::RotateIfIsRotationCommand(std::uint32_t key) {
   switch (key) {
     case avd::xk::Right:
     case avd::xk::F12:
-      D("switching to portrait");
+      DLOG(INFO) << "switching to portrait";
       SetScreenOrientation(ScreenOrientation::Portrait);
       break;
     case avd::xk::Left:
     case avd::xk::F11:
-      D("switching to landscape");
+      DLOG(INFO) << "switching to landscape";
       SetScreenOrientation(ScreenOrientation::Landscape);
       break;
     default:
@@ -660,7 +668,7 @@ void VncClientConnection::NormalSession() {
       return;
     }
     auto msg_type = msg.front();
-    D("Received message type %d\n", static_cast<int>(msg_type));
+    DLOG(INFO) << "Received message type " << msg_type;
 
     switch (msg_type) {
       case kSetPixelFormatMessage:
@@ -688,7 +696,8 @@ void VncClientConnection::NormalSession() {
         break;
 
       default:
-        ALOGW("message type not handled: %d", static_cast<int>(msg_type));
+        LOG(WARNING) << "message type not handled: "
+                     << static_cast<int>(msg_type);
         break;
     }
   }

@@ -6,8 +6,8 @@
 #include "virtual_inputs.h"
 #include "vnc_utils.h"
 
-#include <SharedFD.h>
-#include <android-base/thread_annotations.h>
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/threads/thread_annotations.h"
 
 #include <cstdint>
 #include <memory>

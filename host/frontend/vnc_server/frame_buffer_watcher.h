@@ -2,6 +2,7 @@
 #define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_FRAME_BUFFER_WATCHER_H_
 
 #include "blackboard.h"
+#include "common/libs/threads/thread_annotations.h"
 #include "jpeg_compressor.h"
 #include "simulated_hw_composer.h"
 

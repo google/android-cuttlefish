@@ -1,4 +1,5 @@
 #include "vnc_server.h"
+#include <glog/logging.h>
 #include "blackboard.h"
 #include "frame_buffer_watcher.h"
 #include "jpeg_compressor.h"
@@ -14,7 +15,9 @@ VncServer::VncServer(int port, bool aggressive)
 
 void VncServer::MainLoop() {
   while (true) {
+    LOG(INFO) << "Awaiting connections";
     auto connection = server_.Accept();
+    LOG(INFO) << "Accepted a client connection";
     StartClient(std::move(connection));
   }
 }

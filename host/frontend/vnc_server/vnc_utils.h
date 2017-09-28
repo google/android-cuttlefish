@@ -1,19 +1,12 @@
 #ifndef DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_VNC_UTILS_H_
 #define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_VNC_UTILS_H_
 
-#include <GceFrameBuffer.h>
-
 #include <array>
 #include <cstdint>
 #include <utility>
 #include <vector>
 
-#undef D
-#ifdef GCE_VNC_DEBUG
-#define D(...) ALOGD(__VA_ARGS__)
-#else
-#define D(...) ((void)0)
-#endif
+#include "common/vsoc/framebuffer/fb_bcast_region.h"
 
 namespace avd {
 namespace vnc {
@@ -54,14 +47,24 @@ struct Stripe {
   ScreenOrientation orientation{};
 };
 
-inline constexpr int BytesPerPixel() { return sizeof(GceFrameBuffer::Pixel); }
+inline int BytesPerPixel() {
+  return vsoc::framebuffer::FBBroadcastRegion::GetInstance()
+      ->display_properties()
+      .bytes_per_pixel();
+}
 
 // The width of the screen regardless of orientation. Does not change.
-inline int ActualScreenWidth() { return GceFrameBuffer::getInstance().x_res(); }
+inline int ActualScreenWidth() {
+  return vsoc::framebuffer::FBBroadcastRegion::GetInstance()
+      ->display_properties()
+      .x_res();
+}
 
 // The height of the screen regardless of orientation. Does not change.
 inline int ActualScreenHeight() {
-  return GceFrameBuffer::getInstance().y_res();
+  return vsoc::framebuffer::FBBroadcastRegion::GetInstance()
+      ->display_properties()
+      .y_res();
 }
 
 inline int ScreenSizeInBytes() {

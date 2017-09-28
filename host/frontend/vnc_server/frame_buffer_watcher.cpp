@@ -1,5 +1,4 @@
 #include "frame_buffer_watcher.h"
-#include <ThreadSafeQueue.hpp>
 #include "vnc_utils.h"
 
 #include <algorithm>
@@ -12,7 +11,7 @@
 #include <utility>
 
 #define LOG_TAG "GceVNCServer"
-#include <cutils/log.h>
+#include <glog/logging.h>
 
 using avd::vnc::FrameBufferWatcher;
 
@@ -46,8 +45,9 @@ bool FrameBufferWatcher::closed() const {
 }
 
 avd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
-  LOG_ALWAYS_FATAL_IF(stripe.orientation == ScreenOrientation::Landscape,
-                      "Rotating a landscape stripe, this is a mistake");
+  if (stripe.orientation == ScreenOrientation::Landscape) {
+    LOG(FATAL) << "Rotating a landscape stripe, this is a mistake";
+  }
   auto w = stripe.width;
   auto h = stripe.height;
   const auto& raw = stripe.raw_data;
@@ -56,8 +56,8 @@ avd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
     for (std::uint16_t j = 0; j < h; ++j) {
       auto to = (i * h + j) * BytesPerPixel();
       auto from = (w - (i + 1) + w * j) * BytesPerPixel();
-      ALOG_ASSERT(from < raw.size());
-      ALOG_ASSERT(to < rotated.size());
+      CHECK(from < raw.size());
+      CHECK(to < rotated.size());
       std::memcpy(&rotated[to], &raw[from], BytesPerPixel());
     }
   }
@@ -77,7 +77,7 @@ avd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
     ScreenOrientation orientation, const SeqNumberVec& seq_numbers) const {
   std::lock_guard<std::mutex> guard(stripes_lock_);
   const auto& stripes = Stripes(orientation);
-  ALOG_ASSERT(seq_numbers.size() == stripes.size());
+  CHECK(seq_numbers.size() == stripes.size());
   StripePtrVec new_stripes;
   auto seq_number_it = seq_numbers.begin();
   std::copy_if(stripes.begin(), stripes.end(), std::back_inserter(new_stripes),

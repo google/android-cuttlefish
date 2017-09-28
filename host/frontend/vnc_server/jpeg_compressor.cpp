@@ -5,7 +5,7 @@
 #include <stdio.h>  // stdio.h must appear before jpeglib.h
 
 #define LOG_TAG "GceVNCServer"
-#include <cutils/log.h>
+#include <glog/logging.h>
 
 using avd::vnc::JpegCompressor;
 
@@ -55,11 +55,8 @@ avd::vnc::Message JpegCompressor::Compress(const Message& frame,
 
 void JpegCompressor::UpdateBuffer(std::uint8_t* compression_buffer,
                                   unsigned long compression_buffer_size) {
-  if (buffer_capacity_ < compression_buffer_size) {
-    ALOG_ASSERT(buffer_ != compression_buffer);
+  if (buffer_.get() != compression_buffer) {
     buffer_capacity_ = compression_buffer_size;
     buffer_.reset(compression_buffer);
-  } else {
-    ALOG_ASSERT(buffer_ == compression_buffer);
   }
 }

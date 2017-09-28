@@ -1,6 +1,8 @@
 #ifndef DEVICE_GOOGLE_GCE_KEYSYMS_H_
 #define DEVICE_GOOGLE_GCE_KEYSYMS_H_
 
+#include <cstdint>
+
 namespace avd {
 namespace xk {
 
