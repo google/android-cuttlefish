@@ -30,7 +30,7 @@ cc_library(
     ],
     deps = [
         "@cuttlefish//common/libs/fs",
-        "@cuttlefish//guest/commands/usbforward:protocol",
+        "@cuttlefish//common/libs/usbforward:protocol",
         "@gflags_repo//:gflags",
         "@glog_repo//:glog",
         "//host/vadb/usbip:usbip_lib",
