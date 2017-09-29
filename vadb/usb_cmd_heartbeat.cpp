@@ -15,7 +15,7 @@
  */
 #include <glog/logging.h>
 
-#include "guest/commands/usbforward/protocol.h"
+#include "common/libs/usbforward/protocol.h"
 #include "host/vadb/usb_cmd_heartbeat.h"
 
 namespace vadb {
