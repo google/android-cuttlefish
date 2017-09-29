@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef REMOTER_FRAMEWORK_PACKET_H_
-#define REMOTER_FRAMEWORK_PACKET_H_
+#pragma once
 
 #include <stdlib.h>
 
 #include <cutils/sockets.h>
 #include <cutils/log.h>
 
-#include <SharedFD.h>
+#include "common/libs/fs/shared_fd.h"
 
 // #define DEBUG_CONNECTIONS
 
@@ -283,4 +282,3 @@ static inline int remoter_do_single_request(
   return 0;
 }
 
-#endif
