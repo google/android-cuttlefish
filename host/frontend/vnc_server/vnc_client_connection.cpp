@@ -1,8 +1,20 @@
-#include "vnc_client_connection.h"
-#include "keysyms.h"
-#include "mocks.h"
-#include "tcp_socket.h"
-#include "vnc_utils.h"
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "host/frontend/vnc_server/vnc_client_connection.h"
 
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -18,11 +30,11 @@
 #include <utility>
 #include <vector>
 
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
-#define LOG_TAG "VSoCVNCServer"
 #include <glog/logging.h>
+#include "host/frontend/vnc_server/keysyms.h"
+#include "host/frontend/vnc_server/mocks.h"
+#include "host/frontend/vnc_server/tcp_socket.h"
+#include "host/frontend/vnc_server/vnc_utils.h"
 
 using avd::vnc::Message;
 using avd::vnc::Stripe;
