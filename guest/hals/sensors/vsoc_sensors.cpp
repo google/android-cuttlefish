@@ -30,6 +30,7 @@
 #include "guest/hals/sensors/vsoc_sensors.h"
 #include "guest/hals/sensors/vsoc_sensors_message.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
+#include "guest/libs/remoter/remoter_framework_pkt.h"
 
 using avd::LockGuard;
 using avd::Mutex;
@@ -251,7 +252,6 @@ int GceSensors::Poll(sensors_event_t* data, int count_unsafe) {
 
 void *GceSensors::Receiver() {
   // Initialize the server.
-  /*
   sensor_listener_socket_ = avd::SharedFD::SocketSeqPacketServer(
       gce_sensors_message::kSensorsHALSocketName, 0777);
   if (!sensor_listener_socket_->IsOpen()) {
@@ -259,7 +259,6 @@ void *GceSensors::Receiver() {
           __FUNCTION__, sensor_listener_socket_->StrError());
     return NULL;
   }
-  */
   D("GceSensors::%s: Listening for sensor connections at %s", __FUNCTION__,
     gce_sensors_message::kSensorsHALSocketName);
   // Announce that we are ready for the remoter to connect.
@@ -288,9 +287,9 @@ void *GceSensors::Receiver() {
     } else if (res == 0) {
       ALOGE("%s: select timed out", __FUNCTION__);
       break;
-    // } else if (fds.IsSet(sensor_listener_socket_)) {
-    //   connected.push_back(avd::SharedFD::Accept(*sensor_listener_socket_));
-    //   ALOGI("GceSensors::%s: new client connected", __FUNCTION__);
+    } else if (fds.IsSet(sensor_listener_socket_)) {
+      connected.push_back(avd::SharedFD::Accept(*sensor_listener_socket_));
+      ALOGI("GceSensors::%s: new client connected", __FUNCTION__);
     } else if (fds.IsSet(control_receiver_socket_)) {
       // We received a control message.
       SensorControlMessage msg;
@@ -304,7 +303,6 @@ void *GceSensors::Receiver() {
       }
       if (msg.message_type == SENSOR_STATE_UPDATE) {
         // Forward the update to the remoter.
-        /*
         remoter_request_packet packet;
         remoter_request_packet_init(&packet, kRemoterSensorState, 0);
         {
@@ -337,7 +335,6 @@ void *GceSensors::Receiver() {
                   __FUNCTION__, fd->StrError());
           }
         }
-        */
       }
       if (msg.message_type == THREAD_STOP) {
         D("Received terminate control message.");
@@ -412,7 +409,6 @@ void *GceSensors::Receiver() {
 }
 
 bool GceSensors::NotifyRemoter() {
-  /*
   remoter_request_packet packet;
   remoter_request_packet_init(&packet, kRemoterHALReady, 0);
   packet.send_response = 0;
@@ -433,7 +429,6 @@ bool GceSensors::NotifyRemoter() {
     return false;
   }
   D("GceSensors::%s: Notify remoter ready Succeeded.", __FUNCTION__);
-  */
   return true;
 }
 

@@ -34,9 +34,10 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils
 
 LOCAL_SRC_FILES := \
+    sensors.cpp \
     sensors_hal.cpp \
     vsoc_sensors.cpp \
-    sensors.cpp
+    vsoc_sensors_message.cpp
 
 LOCAL_CFLAGS := -DLOG_TAG=\"VSoC-Sensors\" \
     $(VSOC_VERSION_CFLAGS) \
@@ -49,6 +50,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_STATIC_LIBRARIES := \
     libcutils \
+    libcuttlefish_remoter_framework \
     $(VSOC_STLPORT_STATIC_LIBS)
 
 LOCAL_MODULE := sensors.vsoc
