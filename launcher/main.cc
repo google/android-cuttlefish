@@ -19,7 +19,7 @@
 #include "host/vadb/virtual_adb_server.h"
 
 namespace {
-std::string StringFromEnv(const char *varname, std::string defval) {
+std::string StringFromEnv(const char* varname, std::string defval) {
   const char* const valstr = getenv(varname);
   if (!valstr) {
     return defval;
@@ -40,7 +40,8 @@ DEFINE_int32(shmsize, 0, "(ignored)");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 
-DEFINE_string(system_image_dir, StringFromEnv("HOME", "."),
+DEFINE_string(system_image_dir,
+              StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
               "Location of the system partition images.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 DEFINE_string(kernel_command_line, "",
@@ -184,12 +185,12 @@ int main(int argc, char** argv) {
   // exist or could not be created.
   auto system_partition = config::FilePartition::ReuseExistingFile(
       FLAGS_system_image_dir + "/system.img");
-  auto data_partition = config::FilePartition::ReuseExistingFile(
-      FLAGS_data_image);
-  auto cache_partition =  config::FilePartition::ReuseExistingFile(
-      FLAGS_cache_image);
-  auto vendor_partition =  config::FilePartition::ReuseExistingFile(
-      FLAGS_vendor_image);
+  auto data_partition =
+      config::FilePartition::ReuseExistingFile(FLAGS_data_image);
+  auto cache_partition =
+      config::FilePartition::ReuseExistingFile(FLAGS_cache_image);
+  auto vendor_partition =
+      config::FilePartition::ReuseExistingFile(FLAGS_vendor_image);
 
   std::ifstream t(FLAGS_kernel_command_line);
   if (!t) {
@@ -204,7 +205,7 @@ int main(int argc, char** argv) {
   cmdline.reserve(commandline_size);
   t.seekg(0, std::ios::beg);
   cmdline.assign((std::istreambuf_iterator<char>(t)),
-             std::istreambuf_iterator<char>());
+                 std::istreambuf_iterator<char>());
   t.close();
 
   unsigned long libvirt_version;
