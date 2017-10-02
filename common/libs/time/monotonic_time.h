@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CUTTLEFISH_COMMON_COMMON_LIBS_TIME_MONOTONIC_TIME_H_
-#define CUTTLEFISH_COMMON_COMMON_LIBS_TIME_MONOTONIC_TIME_H_
+#pragma once
 
 #include <stdint.h>
 #include <time.h>
@@ -291,4 +290,3 @@ static inline int64_t get_monotonic_usecs() {
   return avd::time::Microseconds(
       avd::time::MonotonicTimePoint::Now().SinceEpoch()).count();
 }
-#endif  // CUTTLEFISH_COMMON_COMMON_LIBS_TIME_MONOTONIC_TIME_H_
