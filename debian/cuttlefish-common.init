@@ -50,7 +50,7 @@ start() {
 }
 
 stop() {
-    /usr/bin/virsh net-destroy abr0
+    /usr/bin/virsh net-destroy abr0 || true
 }
 
 usage() {
