@@ -42,6 +42,10 @@ LOCAL_SHARED_LIBRARIES := \
     libvsoc
 
 LOCAL_VENDOR_MODULE := true
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
