@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 namespace vsoc {
-#ifndef ANDROID
+#ifdef CUTTLEFISH_HOST
 // Things that are missing on the host
 uint32_t gettid();
 #endif

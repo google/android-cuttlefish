@@ -19,11 +19,7 @@
 #include <mutex>
 #include <thread>
 
-#include <gflags/gflags.h>
-
-DEFINE_string(input_socket, "/tmp/android-cuttlefish-1-input",
-              "The name of unix socket where the monkey server is listening "
-              "for input commands");
+extern std::string FLAGS_input_socket;
 
 using avd::vnc::VirtualInputs;
 

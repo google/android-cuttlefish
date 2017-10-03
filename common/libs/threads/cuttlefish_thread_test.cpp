@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 
-#include "common/libs/glog/logging.h"
+#include <android-base/logging.h>
 #include "common/libs/threads/thunkers.h"
 #include "common/libs/time/monotonic_time.h"
 
@@ -69,7 +69,7 @@ protected:
 
   void* FastThread() {
     mutex_.Lock();
-    LOG_IF(FATAL, busy_ != NULL);
+    CHECK(busy_ == NULL);
     busy_ = "FastThread";
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     stage_ = 1;
@@ -77,9 +77,9 @@ protected:
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(10));
     mutex_.Lock();
-    LOG_IF(FATAL, busy_ != NULL);
+    CHECK(busy_ == NULL);
     busy_ = "FastThread";
-    LOG_IF(FATAL, stage_ != 2);
+    CHECK(stage_ == 2);
     stage_ = FINISHED;
     busy_ = NULL;
     mutex_.Unlock();
@@ -89,9 +89,9 @@ protected:
   void* SlowThread() {
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(50));
     mutex_.Lock();
-    LOG_IF(FATAL, busy_ != NULL);
+    CHECK(busy_== NULL);
     busy_ = "SlowThread";
-    LOG_IF(FATAL, stage_ != 1);
+    CHECK(stage_ == 1);
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     stage_ = 2;
     busy_ = NULL;
@@ -134,12 +134,12 @@ protected:
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
-    LOG_IF(FATAL, signalled_ != 1);
+    CHECK(signalled_== 1);
     cond_.NotifyOne();
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
-    LOG_IF(FATAL, signalled_ != 2);
+    CHECK(signalled_ == 2);
     mutex_.Unlock();
     return NULL;
   }
@@ -185,7 +185,7 @@ protected:
     mutex_.Unlock();
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
-    LOG_IF(FATAL, signalled_ != 2);
+    CHECK(signalled_ == 2);
     mutex_.Unlock();
     return NULL;
   }
@@ -226,7 +226,7 @@ protected:
   void* SignalThread() {
     SleepUntil(start_ + Milliseconds(200));
     mutex_.Lock();
-    LOG_IF(FATAL, stage_ != 2);
+    CHECK(stage_ == 2);
     cond_.NotifyOne();
     stage_ = 3;
     mutex_.Unlock();
@@ -235,17 +235,17 @@ protected:
 
   void* WaitThread() {
     mutex_.Lock();
-    LOG_IF(FATAL, stage_ != 0);
+    CHECK(stage_ == 0);
     stage_ = 1;
     cond_.WaitUntil(start_ + Milliseconds(50));
     MonotonicTimePoint current(MonotonicTimePoint::Now());
-    LOG_IF(FATAL, Milliseconds(current - start_).count() < 50);
-    LOG_IF(FATAL, Milliseconds(current - start_).count() > 100);
+    CHECK(Milliseconds(current - start_).count() >= 50);
+    CHECK(Milliseconds(current - start_).count() <= 100);
     stage_ = 2;
     cond_.WaitUntil(start_ + Milliseconds(1000));
     current = MonotonicTimePoint::Now();
-    LOG_IF(FATAL, Milliseconds(current - start_).count() > 500);
-    LOG_IF(FATAL, stage_ != 3);
+    CHECK(Milliseconds(current - start_).count() <= 500);
+    CHECK(stage_ == 3);
     stage_ = FINISHED;
     mutex_.Unlock();
     return NULL;
@@ -257,9 +257,8 @@ protected:
   MonotonicTimePoint start_;
 };
 
-int main(int argc, char** argv) {
-  ::google::InitGoogleLogging(argv[0]);
-  ::google::LogToStderr();
+int main(int, char**argv) {
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
   MutexTest mt;
   mt.Run();
   NotifyOneTest nt1;

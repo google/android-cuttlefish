@@ -15,24 +15,127 @@
 
 subdirs = [
     "common",
+    "host",
 ]
 
 cc_library_headers {
-  name: "cuttlefish_common_headers",
-  export_include_dirs: ["."],
-  host_supported: true,
+    name: "cuttlefish_common_headers",
+    export_include_dirs: ["."],
+    host_supported: true,
+}
+
+// TODO(b/67435044) Update the include paths and remove this
+cc_library_headers {
+    name: "cuttlefish_glog",
+    export_include_dirs: ["common/libs"],
+    host_supported: true,
 }
 
 cc_defaults {
-  name: "cuttlefish_host",
-  gnu_extensions: false,
-  header_libs: ["cuttlefish_common_headers"],
-  // Build only 64 bit Intel Linux host executables
-  device_supported: false,
-  compile_multilib: "64",
-  target: {
-    darwin: {
-      enabled: false,
+    name: "cuttlefish_host",
+    gnu_extensions: false,
+    header_libs: [
+        "cuttlefish_common_headers",
+        "cuttlefish_kernel_headers",
+    ],
+    // Build only 64 bit Intel Linux host executables
+    device_supported: false,
+    compile_multilib: "64",
+    target: {
+        linux: {
+            host_ldlibs: ["-lrt"],
+            cflags: ["-DCUTTLEFISH_HOST"],
+        },
+        darwin: {
+            enabled: false,
+        },
     },
-  },
+}
+
+cc_library_host_static {
+    name: "vsoc_lib",
+    srcs: [
+        "common/vsoc/lib/compat.cpp",
+        "common/vsoc/lib/e2e_test_region_layout.cpp",
+        "common/vsoc/lib/fb_bcast_layout.cpp",
+        "common/vsoc/lib/gralloc_layout.cpp",
+        "common/vsoc/lib/lock_common.cpp",
+        "common/vsoc/lib/region_view.cpp",
+        "host/vsoc/lib/host_lock.cpp",
+        "host/vsoc/lib/region_control.cpp",
+        "host/vsoc/lib/region_view.cpp",
+    ],
+    header_libs: ["cuttlefish_glog"],
+    static_libs: [
+        "libcuttlefish_fs",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_library_host_static {
+    name: "libvsoc_gralloc",
+    srcs: [
+        "host/vsoc/gralloc/gralloc_buffer_region.cpp",
+    ],
+    header_libs: ["cuttlefish_glog"],
+    static_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "circqueue_test",
+    srcs: [
+        "common/vsoc/lib/circqueue_test.cpp",
+    ],
+    static_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "lock_test",
+    srcs: [
+        "common/vsoc/lib/lock_test.cpp",
+    ],
+    static_libs: [
+        "vsoc_lib",
+        "libgtest_host",
+        "libbase",
+        "cuttlefish_auto_resources",
+        "libcuttlefish_fs",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "vsoc_graphics_test",
+    srcs: [
+        "common/vsoc/lib/graphics_test.cpp",
+    ],
+    static_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_binary_host {
+    name: "host_region_e2e_test",
+    srcs: [
+        "host/vsoc/lib/host_region_e2e_test.cpp",
+    ],
+    static_libs: [
+        "vsoc_lib",
+        "libgtest_host",
+        "libbase",
+        "cuttlefish_auto_resources",
+        "libcuttlefish_fs",
+    ],
+    defaults: ["cuttlefish_host"],
 }

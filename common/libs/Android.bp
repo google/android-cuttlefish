@@ -15,4 +15,7 @@
 
 subdirs = [
     "auto_resources",
+    "fs",
+    "threads",
+    "time",
 ]

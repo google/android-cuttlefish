@@ -14,21 +14,20 @@
 // limitations under the License.
 
 cc_library_host_static {
-    name: "cuttlefish_auto_resources",
+    name: "cuttlefish_time",
     srcs: [
-        "auto_resources.cpp",
+        "monotonic_time.cpp",
     ],
     defaults: ["cuttlefish_host"],
 }
 
 cc_test_host {
-    name: "auto_free_buffer_test",
+    name: "monotonic_time_test",
     srcs: [
-        "auto_free_buffer_test.cpp",
+        "monotonic_time_test.cpp",
     ],
     static_libs: [
-        "cuttlefish_auto_resources",
-        "libgmock",
+        "cuttlefish_time",
     ],
     defaults: ["cuttlefish_host"],
 }

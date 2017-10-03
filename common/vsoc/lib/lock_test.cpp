@@ -22,10 +22,10 @@
 
 #include "common/vsoc/lib/region_view.h"
 
-#ifdef ANDROID
-using MyLock = vsoc::layout::GuestLock;
-#else
+#ifdef CUTTLEFISH_HOST
 using MyLock = vsoc::layout::HostLock;
+#else
+using MyLock = vsoc::layout::GuestLock;
 #endif
 
 class SimpleLocker {

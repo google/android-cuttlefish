@@ -14,21 +14,14 @@
 // limitations under the License.
 
 cc_library_host_static {
-    name: "cuttlefish_auto_resources",
+    name: "libcuttlefish_fs",
     srcs: [
-        "auto_resources.cpp",
-    ],
-    defaults: ["cuttlefish_host"],
-}
-
-cc_test_host {
-    name: "auto_free_buffer_test",
-    srcs: [
-        "auto_free_buffer_test.cpp",
+        "gce_fs.cpp",
+        "shared_fd.cpp",
     ],
     static_libs: [
         "cuttlefish_auto_resources",
-        "libgmock",
+        "libbase",
     ],
     defaults: ["cuttlefish_host"],
 }

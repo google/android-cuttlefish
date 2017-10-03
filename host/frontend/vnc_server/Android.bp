@@ -13,22 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
-    name: "cuttlefish_auto_resources",
+cc_binary_host {
+    name: "vnc_server",
     srcs: [
-        "auto_resources.cpp",
+        "blackboard.cpp",
+        "frame_buffer_watcher.cpp",
+        "jpeg_compressor.cpp",
+        "main.cpp",
+        "simulated_hw_composer.cpp",
+        "tcp_socket.cpp",
+        "virtual_inputs.cpp",
+        "virtual_input_device.cpp",
+        "vnc_client_connection.cpp",
+        "vnc_server.cpp",
     ],
-    defaults: ["cuttlefish_host"],
-}
-
-cc_test_host {
-    name: "auto_free_buffer_test",
-    srcs: [
-        "auto_free_buffer_test.cpp",
+    header_libs: [
+        "cuttlefish_glog",
     ],
     static_libs: [
+        "libjpeg",
+        "libvsoc_framebuffer",
+        "libvsoc_gralloc",
+        "libcuttlefish_fs",
+        "vsoc_lib",
         "cuttlefish_auto_resources",
-        "libgmock",
+        "libbase",
     ],
     defaults: ["cuttlefish_host"],
 }

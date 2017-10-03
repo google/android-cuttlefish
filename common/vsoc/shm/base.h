@@ -51,12 +51,12 @@ struct Sides : public Base {
   static const uint32_t Guest = 1;
   static const uint32_t Host = 2;
   static const uint32_t Both = 3;
-#ifdef ANDROID
-  static const uint32_t OurSide = Guest;
-  static const uint32_t Peer = Host;
-#else
+#ifdef CUTTLEFISH_HOST
   static const uint32_t OurSide = Host;
   static const uint32_t Peer = Guest;
+#else
+  static const uint32_t OurSide = Guest;
+  static const uint32_t Peer = Host;
 #endif
 
   uint32_t value_;

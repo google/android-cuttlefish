@@ -21,7 +21,7 @@
 
 namespace vsoc {
 
-#ifndef ANDROID
+#ifdef CUTTLEFISH_HOST
 uint32_t gettid() {
   thread_local uint32_t tid = syscall(SYS_gettid);
   return tid;

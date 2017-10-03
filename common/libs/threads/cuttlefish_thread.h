@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -13,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef CUTTLEFISH_COMMON_COMMON_LIBS_THREADS_PTHREAD_H_
-#define CUTTLEFISH_COMMON_COMMON_LIBS_THREADS_PTHREAD_H_
 
 // Concurreny classess for Cloud Android projects.
 //
@@ -168,5 +167,3 @@ class ScopedThread {
 };
 
 }  // namespace avd
-
-#endif  // CUTTLEFISH_COMMON_COMMON_LIBS_THREADS_PTHREAD_H_
