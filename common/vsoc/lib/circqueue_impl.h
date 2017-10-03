@@ -35,13 +35,13 @@ template <uint32_t SizeLog2>
 void CircularQueueBase<SizeLog2>::CopyInRange(const char* buffer_in,
                                               const Range& t) {
   size_t bytes = t.end_idx - t.start_idx;
-  uint32_t index = t->start_idx & (BufferSize - 1);
+  uint32_t index = t.start_idx & (BufferSize - 1);
   if (index + bytes < BufferSize) {
     memcpy(buffer_ + index, buffer_in, bytes);
   } else {
     size_t part1_size = BufferSize - index;
     size_t part2_size = bytes - part1_size;
-    mempcy(buffer_ + index, buffer_in, part1_size);
+    memcpy(buffer_ + index, buffer_in, part1_size);
     memcpy(buffer_, buffer_in + part1_size, part2_size);
   }
 }
@@ -104,7 +104,7 @@ template <uint32_t SizeLog2>
 intptr_t CircularByteQueue<SizeLog2>::Read(RegionView* r, char* buffer_out,
                                            size_t max_size) {
   this->lock_.Lock();
-  this->WaitForDataLocked();
+  this->WaitForDataLocked(r);
   Range t;
   t.start_idx = this->r_released_;
   t.end_idx = this->w_pub_;
@@ -113,7 +113,7 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionView* r, char* buffer_out,
   if ((t.end_idx - t.start_idx) > max_size) {
     t.end_idx = t.start_idx + max_size;
   }
-  CopyOutRange(t, buffer_out, max_size);
+  this->CopyOutRange(t, buffer_out, max_size);
   this->r_released_ = t.end_idx;
   this->lock_.Unlock();
   r->SendSignal(layout::Sides::Both, &this->r_released_);
@@ -151,7 +151,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionView* r,
                                                             char* buffer_out,
                                                             size_t max_size) {
   this->lock_.Lock();
-  this->WaitForDataLocked();
+  this->WaitForDataLocked(r);
   uint32_t packet_size = *reinterpret_cast<uint32_t*>(
       this->buffer_ + (this->r_released_ & (this->BufferSize - 1)));
   if (packet_size > max_size) {
@@ -160,11 +160,13 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionView* r,
   }
   Range t;
   t.start_idx = this->r_released_ + sizeof(uint32_t);
-  t.end_idx = t.start_idx + this->packet_size;
-  CopyOutRange(t, buffer_out);
+  t.end_idx = t.start_idx + packet_size;
+  this->CopyOutRange(t, buffer_out);
   this->r_released_ += this->CalculateBufferedSize(packet_size);
   this->lock_.Unlock();
-  r->SendSignal(layout::Sides::Both, &this->r_released_);
+  layout::Sides side;
+  side.value_ = layout::Sides::Both;
+  r->SendSignal(side, &this->r_released_);
   return packet_size;
 }
 
@@ -186,11 +188,13 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
   header.end_idx = header.start_idx + sizeof(uint32_t);
   Range payload{range.start_idx + sizeof(uint32_t),
                 range.start_idx + sizeof(uint32_t) + bytes};
-  this->CopyInRange(&bytes, header);
+  this->CopyInRange(reinterpret_cast<const char*>(&bytes), header);
   this->CopyInRange(buffer_in, payload);
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
-  r->SendSignal(layout::Sides::Both, &this->w_pub_);
+  layout::Sides side;
+  side.value_ = layout::Sides::Both;
+  r->SendSignal(side, &this->w_pub_);
   return bytes;
 }
 
