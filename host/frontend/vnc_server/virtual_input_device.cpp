@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "RemoterVirtualInput"
+#include "host/frontend/vnc_server/virtual_input_device.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -25,11 +25,11 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
 #include <vector>
 
 #include <glog/logging.h>
-#include "VirtualInputDevice.h"
-#include "keysyms.h"
+#include "host/frontend/vnc_server/keysyms.h"
 
 namespace avd {
 
