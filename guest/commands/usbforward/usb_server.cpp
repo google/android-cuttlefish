@@ -23,7 +23,7 @@
 #include <cutils/log.h>
 #include <libusb/libusb.h>
 #include "common/libs/fs/shared_select.h"
-#include "guest/commands/usbforward/protocol.h"
+#include "common/libs/usbforward/protocol.h"
 #include "guest/commands/usbforward/transport_request.h"
 
 namespace usb_forward {
