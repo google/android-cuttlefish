@@ -113,11 +113,13 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionView* r, char* buffer_out,
   if ((t.end_idx - t.start_idx) > max_size) {
     t.end_idx = t.start_idx + max_size;
   }
-  this->CopyOutRange(t, buffer_out, max_size);
+  this->CopyOutRange(t, buffer_out);
   this->r_released_ = t.end_idx;
   this->lock_.Unlock();
-  r->SendSignal(layout::Sides::Both, &this->r_released_);
-  return t->end_idx - t->start_idx;
+  layout::Sides side;
+  side.value_ = layout::Sides::Both;
+  r->SendSignal(side, &this->r_released_);
+  return t.end_idx - t.start_idx;
 }
 
 template <uint32_t SizeLog2>
@@ -126,7 +128,7 @@ intptr_t CircularByteQueue<SizeLog2>::Write(RegionView* r,
                                             size_t bytes) {
   Range range;
   this->lock_.Lock();
-  intptr_t rval = WriteReserveLocked(r, bytes, &range);
+  intptr_t rval = this->WriteReserveLocked(r, bytes, &range);
   if (rval < 0) {
     this->lock_.Unlock();
     return rval;
@@ -136,7 +138,9 @@ intptr_t CircularByteQueue<SizeLog2>::Write(RegionView* r,
   // published.
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
-  r->SendSignal(layout::Sides::Both, &this->w_pub_);
+  layout::Sides side;
+  side.value_ = layout::Sides::Both;
+  r->SendSignal(side, &this->w_pub_);
   return bytes;
 }
 
