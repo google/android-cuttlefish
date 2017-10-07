@@ -80,6 +80,9 @@ class CircularQueueBase : public Base {
    */
   intptr_t WriteReserveLocked(RegionView* r, size_t bytes, Range* t);
 
+  // Note: Both of these fields may hold values larger than the buffer size,
+  // they should be interpreted modulo the buffer size. This fact along with the
+  // buffer size being a power of two greatly simplyfies the index calculations.
   // Advances when a reader has finished with buffer space
   uint32_t r_released_;
   // Advances when buffer space is filled and ready for a reader
