@@ -76,9 +76,13 @@ class CircularQueueBase : public Base {
    * Indexes pointing to the reserved space will be placed in range.
    * On success this returns bytes.
    * On failure a negative errno indicates the problem. -ENOSPC indicates that
-   * bytes > the queue size
+   * bytes > the queue size, -EWOULDBLOCK indicates that the call would block
+   * waiting for space but was requested non bloking.
    */
-  intptr_t WriteReserveLocked(RegionView* r, size_t bytes, Range* t);
+  intptr_t WriteReserveLocked(RegionView* r,
+                              size_t bytes,
+                              Range* t,
+                              bool non_blocking);
 
   // Note: Both of these fields may hold values larger than the buffer size,
   // they should be interpreted modulo the buffer size. This fact along with the
@@ -108,10 +112,17 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
    */
   intptr_t Read(RegionView* r, char* buffer_out, std::size_t max_size);
   /**
-   * Write all of the given bytes into the queue. On success the return value
-   * will match bytes. On failure a negative errno is returned.
+   * Write all of the given bytes into the queue. If non_blocking isn't set the
+   * call may block until there is enough available space in the queue. On
+   * success the return value will match bytes. On failure a negative errno is
+   * returned. -ENOSPC: If the queue size is smaller than the number of bytes to
+   * write. -EWOULDBLOCK: If non_blocking is true and there is not enough free
+   * space.
    */
-  intptr_t Write(RegionView* r, const char* buffer_in, std::size_t bytes);
+  intptr_t Write(RegionView* r,
+                 const char* buffer_in,
+                 std::size_t bytes,
+                 bool non_blocking = false);
 
  protected:
   using Range = typename CircularQueueBase<SizeLog2>::Range;
@@ -138,8 +149,13 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    * Writes [buffer_in, buffer_in + bytes) to the queue.
    * If the number of bytes to be written exceeds the size of the queue
    * -ENOSPC will be returned.
+   * If non_blocking is true and there is not enogh free space on the queue to
+   * write all the data -EWOULDBLOCK will be returned.
    */
-  intptr_t Write(RegionView* r, const char* buffer_in, uint32_t bytes);
+  intptr_t Write(RegionView* r,
+                 const char* buffer_in,
+                 uint32_t bytes,
+                 bool non_blocking = false);
 
  protected:
   static_assert(CircularQueueBase<SizeLog2>::BufferSize >= MaxPacketSize,
