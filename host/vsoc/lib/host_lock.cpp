@@ -15,6 +15,8 @@
  */
 #include "common/vsoc/shm/lock.h"
 
+#include "sys/types.h"
+
 #include "common/vsoc/lib/compat.h"
 #include "common/vsoc/lib/single_sided_signal.h"
 
