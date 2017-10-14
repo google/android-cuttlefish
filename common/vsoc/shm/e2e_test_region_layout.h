@@ -120,6 +120,9 @@ class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
   // The number of test stages that have completed on the host
   // Later guest tests will wait on this
   E2ETestStageRegister host_status;
+  // These fields are used to test the signaling mechanism.
+  uint32_t host_to_guest_signal;
+  uint32_t guest_to_host_signal;
   // There rest of the region will be filled by guest_host_strings.
   // We actually use more than one of these, but we can't know how many
   // until we examine the region.

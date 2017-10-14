@@ -59,8 +59,9 @@ void DeathTestView(View *r) {
 // 7. Send an interrupt on the second region to our peer
 // 8. Wait for our peer's interrupt on the second region
 // 9. Confirm that we can see our peer's writes in the second region
-// 10. Confirm that no interrupt is pending in the first region
-// 11. Confirm that no interrupt is pending in the second region
+// 10. Repeat the process for signaling.
+// 11. Confirm that no interrupt is pending in the first region
+// 12. Confirm that no interrupt is pending in the second region
 
 template <typename View>
 void SetGuestStrings(View* in) {
@@ -107,6 +108,33 @@ TEST(RegionTest, BasicPeerTests) {
   LOG(INFO) << "Second interrupt received";
   CheckPeerStrings(&secondary);
   LOG(INFO) << "Verified peer's secondary strings";
+
+  // Test signals
+  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  LOG(INFO) << "Verified no early second signal";
+  vsoc::layout::Sides side;
+  side.value_ = vsoc::layout::Sides::Peer;
+  primary.SendSignal(side, &primary.data()->guest_to_host_signal);
+  LOG(INFO) << "Signal sent. Waiting for first signal from peer";
+  primary.WaitForInterrupt();
+  int count = 0; // counts the number of signals received.
+  primary.ProcessSignalsFromPeer([&primary, &count](uint32_t* uaddr){
+      ++count;
+      EXPECT_TRUE(uaddr == &primary.data()->host_to_guest_signal);
+    });
+  EXPECT_TRUE(count == 1);
+  LOG(INFO) << "Signal received on primary region";
+  secondary.SendSignal(side, &secondary.data()->guest_to_host_signal);
+  LOG(INFO) << "Signal sent. Waiting for second signal from peer";
+  secondary.WaitForInterrupt();
+  count = 0;
+  secondary.ProcessSignalsFromPeer([&secondary, &count](uint32_t* uaddr){
+      ++count;
+      EXPECT_TRUE(uaddr == &secondary.data()->host_to_guest_signal);
+    });
+  EXPECT_TRUE(count == 1);
+  LOG(INFO) << "Signal received on secondary region";
+
   EXPECT_FALSE(primary.HasIncomingInterrupt());
   EXPECT_FALSE(secondary.HasIncomingInterrupt());
   LOG(INFO) << "PASS: BasicPeerTests";
