@@ -17,6 +17,7 @@ cc_library(
         "common/vsoc/lib/lock_guard.h",
         "common/vsoc/lib/region_control.h",
         "common/vsoc/lib/region_view.h",
+        "common/vsoc/lib/region_signaling_interface.h",
         "common/vsoc/lib/single_sided_signal.h",
         "common/vsoc/lib/typed_region_view.h",
     ],
