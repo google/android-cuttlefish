@@ -37,6 +37,7 @@ LOCAL_C_INCLUDES := bionic device/google/cuttlefish_common
 LOCAL_MODULE:= libvsoc-ril
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
+LOCAL_CFLAGS += $(VSOC_VERSION_CFLAGS)
 
 include $(BUILD_SHARED_LIBRARY)
 
