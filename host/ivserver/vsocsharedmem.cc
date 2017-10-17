@@ -306,6 +306,12 @@ std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
     }
   }
 
+  if (name_to_region_idx.count(VSOC_INPUT_REGION_DEVICE_NAME) == 0) {
+    LOG(INFO) << "No input region specified (name = "
+                 << VSOC_INPUT_REGION_DEVICE_NAME
+                 << "): VSoC input unavailable";
+  }
+
   // Pass 2: Resolve the managed_by_references
   for (const auto &it : managed_by_references) {
     if (!name_to_region_idx.count(it.second)) {
