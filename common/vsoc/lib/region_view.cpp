@@ -16,7 +16,17 @@ using vsoc::layout::Sides;
 vsoc::RegionWorker::RegionWorker(RegionView* region)
     : region_(region), thread_(&vsoc::RegionWorker::Work, this) {}
 
-void vsoc::RegionWorker::Work() { region_->ProcessSignalsFromPeer(&stopping_); }
+void vsoc::RegionWorker::Work() {
+  while (!stopping_) {
+    region_->WaitForInterrupt();
+    if (stopping_) {
+      return;
+    }
+    region_->ProcessSignalsFromPeer([](uint32_t* uaddr){
+        syscall(SYS_futex, uaddr, FUTEX_WAKE, -1, nullptr, nullptr, 0);
+      });
+  }
+}
 
 vsoc::RegionWorker::~RegionWorker() {
   stopping_ = true;
@@ -61,27 +71,22 @@ void vsoc::RegionView::WaitForInterrupt() {
   }
 }
 
-void vsoc::RegionView::ProcessSignalsFromPeer(volatile bool* stopping) {
+void vsoc::RegionView::ProcessSignalsFromPeer(
+    std::function<void(uint32_t*)> signal_handler) {
   const vsoc_signal_table_layout& table = incoming_signal_table();
   const size_t num_offsets = (1 << table.num_nodes_lg2);
   std::atomic<uint32_t>* offsets =
       region_offset_to_pointer<std::atomic<uint32_t>>(
           table.futex_uaddr_table_offset);
-  while (!*stopping) {
-    control_->WaitForInterrupt();
-    if (*stopping) {
-      return;
-    }
-    for (size_t i = 0; i < num_offsets; ++i) {
-      uint32_t offset = offsets[i].exchange(0);
-      if (offset) {
-        bool round_trip = offset & UADDR_OFFSET_ROUND_TRIP_FLAG;
-        uint32_t* uaddr =
-            region_offset_to_pointer<uint32_t>(offset & UADDR_OFFSET_MASK);
-        syscall(SYS_futex, uaddr, FUTEX_WAKE, -1, nullptr, nullptr, 0);
-        if (round_trip) {
-          SendSignalToPeer(uaddr, false);
-        }
+  for (size_t i = 0; i < num_offsets; ++i) {
+    uint32_t offset = offsets[i].exchange(0);
+    if (offset) {
+      bool round_trip = offset & UADDR_OFFSET_ROUND_TRIP_FLAG;
+      uint32_t* uaddr =
+        region_offset_to_pointer<uint32_t>(offset & UADDR_OFFSET_MASK);
+      signal_handler(uaddr);
+      if (round_trip) {
+        SendSignalToPeer(uaddr, false);
       }
     }
   }
@@ -124,7 +129,7 @@ void vsoc::RegionView::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
     uint32_t expected = 0;
     if (offsets[hash].compare_exchange_strong(expected, offset)) {
       // We stored the offset. Send the interrupt.
-      control_->InterruptPeer();
+      this->MaybeInterruptPeer();
       break;
     }
     // We didn't store, but the value was already in the table with our flag.

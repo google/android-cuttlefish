@@ -116,15 +116,15 @@ static const std::size_t FBBroadcastLayout_size = 56;
 // Changes to these structures will affect only the e2e_test_region
 namespace e2e_test {
 namespace {
-const uint32_t version = 0;
+const uint32_t version = 1;
 }
 static const std::size_t E2EManagerTestRegionLayout_size = 16;
 static const std::size_t E2EMemoryFill_size = 64;
-static const std::size_t E2EPrimaryTestRegionLayout_size = 72;
-static const std::size_t E2ESecondaryTestRegionLayout_size = 72;
-static const std::size_t E2ETestRegionLayout_size = 72;
+static const std::size_t E2EPrimaryTestRegionLayout_size = 80;
+static const std::size_t E2ESecondaryTestRegionLayout_size = 80;
+static const std::size_t E2ETestRegionLayout_size = 80;
 static const std::size_t E2ETestStageRegister_size = 4;
-static const std::size_t E2EUnfindableRegionLayout_size = 72;
+static const std::size_t E2EUnfindableRegionLayout_size = 80;
 static const std::size_t E2EManagedTestRegionLayout_size = 4;
 }  // namespace e2e_test
 
