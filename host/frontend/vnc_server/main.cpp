@@ -14,57 +14,20 @@
  * limitations under the License.
  */
 
-#include <getopt.h>
 #include <algorithm>
 #include <string>
 
+#include <gflags/gflags.h>
+
 #include "host/frontend/vnc_server/vnc_server.h"
 
-bool FLAGS_agressive = false;
-bool FLAGS_debug = false;
-std::string FLAGS_input_socket("/tmp/android-cuttlefish-1-input");
-
-bool FLAGS_port = 6444;
-
-static struct option opts[] = {
-  {"agressive", no_argument, NULL, 'a'},
-  {"debug", no_argument, NULL, 'd'},
-  {"input_socket", required_argument, NULL, 'i'},
-  {"port", required_argument, NULL, 'p'},
-  {0, 0, 0, 0}
-};
+DEFINE_bool(agressive, false, "Whether to use agressive server");
+DEFINE_int32(port, 6444, "Port where to listen for connections");
 
 int main(int argc, char* argv[]) {
   using ::android::base::ERROR;
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  long port = -1;
-  char *endp = NULL;
-  bool error = false;
-  char c;
-  while ((c = getopt_long(argc, argv, "", opts, nullptr)) != -1) {
-    switch(c) {
-      case 'a':
-        FLAGS_agressive = true;
-        break;
-      case 'd':
-        FLAGS_debug = true;
-        break;
-      case 'i':
-        FLAGS_input_socket = optarg;
-        break;
-      case 'p':
-        port = strtol(optarg, &endp, 10);
-        if (*endp || (port <= 0) || (port > 65536)) {
-          LOG(ERROR) << "Port must be an integer > 0 and < 65536";
-          error = true;
-        }
-        FLAGS_port = port;
-        break;
-    }
-  }
-  if (error) {
-    exit(2);
-  }
+  ::gflags::ParseCommandLineFlags(&argc, &argv, true);
   avd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
   vnc_server.MainLoop();
 }
