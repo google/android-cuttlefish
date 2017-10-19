@@ -1,0 +1,37 @@
+cc_library_host_static {
+    name: "ivserver_lib",
+    srcs: [
+        "hald_client.cc",
+        "ivserver.cc",
+        "options.cc",
+        "qemu_client.cc",
+        "vsocsharedmem.cc",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    static_libs: [
+        "libjsoncpp",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_test_host {
+    name: "hald_client_test",
+    srcs: [
+        "hald_client_test.cc",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    static_libs: [
+        "ivserver_lib",
+        "libjsoncpp",
+        "libcuttlefish_fs",
+        "libbase",
+        "libgmock",
+        "cuttlefish_auto_resources",
+    ],
+    defaults: ["cuttlefish_host"],
+}

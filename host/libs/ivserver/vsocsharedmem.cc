@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/ivserver/vsocsharedmem.h"
+#include "host/libs/ivserver/vsocsharedmem.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -304,12 +304,6 @@ std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
       managed_by_references[device_name] =
           json_region[g_managed_by_tag].asString();
     }
-  }
-
-  if (name_to_region_idx.count(VSOC_INPUT_REGION_DEVICE_NAME) == 0) {
-    LOG(INFO) << "No input region specified (name = "
-                 << VSOC_INPUT_REGION_DEVICE_NAME
-                 << "): VSoC input unavailable";
   }
 
   // Pass 2: Resolve the managed_by_references

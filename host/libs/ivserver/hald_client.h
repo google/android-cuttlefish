@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/ivserver/vsocsharedmem.h"
+#include "host/libs/ivserver/vsocsharedmem.h"
 
 namespace ivserver {
 

@@ -17,7 +17,7 @@
 
 #include <gmock/gmock.h>
 
-#include "host/ivserver/vsocsharedmem.h"
+#include "host/libs/ivserver/vsocsharedmem.h"
 
 namespace ivserver {
 namespace test {
