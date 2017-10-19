@@ -30,6 +30,7 @@
 #include <utility>
 #include <vector>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"
@@ -40,6 +41,12 @@ using avd::vnc::Message;
 using avd::vnc::Stripe;
 using avd::vnc::StripePtrVec;
 using avd::vnc::VncClientConnection;
+
+DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
+
+#define DLOG(LEVEL)                                 \
+  if (FLAGS_debug_client) LOG(LEVEL)
+
 
 namespace {
 class BigEndianChecker {

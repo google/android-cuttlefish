@@ -19,17 +19,7 @@
 #include <android-base/logging.h>
 
 #if defined(CUTTLEFISH_HOST)
-
-// Host code came to rely on extensions that were not present in Android
-// logging.
-
-extern bool FLAGS_debug;
-
-#define DLOG(LEVEL)                                 \
-  if (FLAGS_debug) LOG(LEVEL)
-
 using ::android::base::INFO;
-
 #endif  // CUTTLEFISH_HOST
 #else  // DEBIAN_HOST (by elimination)
 #include <glog/logging.h>
