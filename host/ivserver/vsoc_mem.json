@@ -1,6 +1,23 @@
 {
   "vsoc_device_regions" : [
    {
+     "device_name" : "vsoc_input",
+     "__comment" : "Send input events to the guest",
+     "current_version" : 1,
+     "min_compatible_version" : 1,
+     "region_size" : 4096,
+
+     "guest_to_host_signal_table" : {
+       "__comment" : "sizeof each node is based on common/libs/shm_compatible/lock.h",
+       "num_nodes_lg2" : 0
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 0
+      }
+   },
+
+   {
      "device_name" : "hwcomposer",
      "__comment" : "HWComposer related",
      "current_version" : 1,
