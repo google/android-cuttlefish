@@ -18,7 +18,7 @@
 #include <map>
 #include <string>
 
-#include "host/vadb/usbip/device.h"
+#include "host/libs/usbip/device.h"
 
 namespace vadb {
 namespace usbip {

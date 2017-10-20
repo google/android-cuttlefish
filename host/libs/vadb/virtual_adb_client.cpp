@@ -15,13 +15,19 @@
  */
 #include <algorithm>
 #include <memory>
+#include <gflags/gflags.h>
+
 #include "common/libs/fs/shared_select.h"
-#include "host/vadb/usb_cmd_attach.h"
-#include "host/vadb/usb_cmd_control_transfer.h"
-#include "host/vadb/usb_cmd_data_transfer.h"
-#include "host/vadb/usb_cmd_device_list.h"
-#include "host/vadb/usb_cmd_heartbeat.h"
-#include "host/vadb/virtual_adb_client.h"
+#include "host/libs/vadb/usb_cmd_attach.h"
+#include "host/libs/vadb/usb_cmd_control_transfer.h"
+#include "host/libs/vadb/usb_cmd_data_transfer.h"
+#include "host/libs/vadb/usb_cmd_device_list.h"
+#include "host/libs/vadb/usb_cmd_heartbeat.h"
+#include "host/libs/vadb/virtual_adb_client.h"
+
+DEFINE_bool(debug_adb_client, false, "Turn on verbose logging in the virtual_adb_client.cpp");
+
+#define VLOG(X) if (FLAGS_debug_adb_client) LOG(VERBOSE)
 
 namespace vadb {
 namespace {

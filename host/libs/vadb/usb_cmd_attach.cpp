@@ -16,7 +16,7 @@
 #include <glog/logging.h>
 
 #include "common/libs/usbforward/protocol.h"
-#include "host/vadb/usb_cmd_attach.h"
+#include "host/libs/vadb/usb_cmd_attach.h"
 
 namespace vadb {
 bool USBCmdAttach::OnRequest(const avd::SharedFD& fd) {
