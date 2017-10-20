@@ -486,6 +486,7 @@ struct CallState {
 };
 
 static int gLastActiveCallIndex = 1;
+static int gMicrophoneMute = 0;
 static std::map<int, CallState> gActiveCalls;
 
 static void request_get_current_calls(void *data, size_t datalen, RIL_Token t) {
@@ -576,6 +577,16 @@ static void request_dial(void *data, size_t datalen, RIL_Token t) {
   // success or failure is ignored by the upper layer here.
   // it will call GET_CURRENT_CALLS and determine success that way
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+}
+
+void request_set_mute(void* data, size_t datalen, RIL_Token t) {
+  gMicrophoneMute = ((int*)data)[0] != 0;
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+}
+
+void request_get_mute(RIL_Token t) {
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &gMicrophoneMute,
+                                 sizeof(gMicrophoneMute));
 }
 
 // TODO(ender): this should be a class member. Move where it belongs.
@@ -2240,6 +2251,12 @@ static void gce_ril_on_request(
       break;
     case RIL_REQUEST_ANSWER:
       request_answer_incoming(t);
+      break;
+    case RIL_REQUEST_SET_MUTE:
+      request_set_mute(data, datalen, t);
+      break;
+    case RIL_REQUEST_GET_MUTE:
+      request_get_mute(t);
       break;
     case RIL_REQUEST_CONFERENCE:
       request_combine_multiparty_call(data, datalen, t);
