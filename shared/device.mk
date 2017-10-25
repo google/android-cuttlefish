@@ -286,3 +286,5 @@ PRODUCT_PACKAGES += \
 # TODO vibrator HAL
 # TODO thermal
 
+PRODUCT_PACKAGES += \
+    vsoc_mem_json
