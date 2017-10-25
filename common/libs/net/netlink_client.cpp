@@ -55,6 +55,10 @@ class NetlinkRequestImpl : public NetlinkRequest {
     header_->nlmsg_seq = seq_no;
   }
 
+  void* AppendRaw(const void* data, size_t length) {
+    return request_.AppendRaw(data, length);
+  }
+
  private:
   class RequestBuffer {
    public:
@@ -67,8 +71,7 @@ class NetlinkRequestImpl : public NetlinkRequest {
       delete[] buffer_;
     }
 
-    // Append data to buffer. If |data| is NULL, erase |length| bytes instead.
-    void Append(const void* data, size_t length) {
+    void* AppendRaw(const void* data, size_t length) {
       // Replace old buffer with new one. This is not thread safe (and does not
       // have to be).
       if (length > (buffer_length_ - current_)) {
@@ -80,21 +83,17 @@ class NetlinkRequestImpl : public NetlinkRequest {
         buffer_ = new_buffer;
       }
 
+      uint8_t* out = &buffer_[current_];
+
       if (data) {
-        memcpy(&buffer_[current_], data, length);
+        memcpy(out, data, length);
       } else {
-        memset(&buffer_[current_], 0, length);
+        memset(out, 0, length);
       }
       // Pad with zeroes until buffer size is aligned.
-      memset(&buffer_[current_ + length], 0, RTA_ALIGN(length) - length);
+      memset(&out[length], 0, RTA_ALIGN(length) - length);
       current_ += RTA_ALIGN(length);
-    }
-
-    template <typename T>
-    T* AppendAs(const T* data) {
-      T* target = static_cast<T*>(static_cast<void*>(&buffer_[current_]));
-      Append(data, sizeof(T));
-      return target;
+      return out;
     }
 
     size_t Length() {
@@ -116,16 +115,16 @@ class NetlinkRequestImpl : public NetlinkRequest {
 
 nlattr* NetlinkRequestImpl::AppendTag(
     uint16_t type, const void* data, uint16_t data_length) {
-  nlattr* attr = request_.AppendAs<nlattr>(NULL);
+  nlattr* attr = Reserve<nlattr>();
   attr->nla_type = type;
   attr->nla_len = RTA_LENGTH(data_length);
-  request_.Append(data, data_length);
+  AppendRaw(data, data_length);
   return attr;
 }
 
 NetlinkRequestImpl::NetlinkRequestImpl(
     int32_t command, int32_t flags)
-    : header_(request_.AppendAs<nlmsghdr>(NULL)) {
+    : header_(Reserve<nlmsghdr>()) {
   header_->nlmsg_flags = flags;
   header_->nlmsg_type = command;
 }
@@ -143,7 +142,7 @@ void NetlinkRequestImpl::AddInt8(uint16_t type, int8_t value) {
 }
 
 void NetlinkRequestImpl::AddIfInfo(int32_t if_index, bool operational) {
-  ifinfomsg* if_info = request_.AppendAs<ifinfomsg>(NULL);
+  ifinfomsg* if_info = Reserve<ifinfomsg>();
   if_info->ifi_family = AF_UNSPEC;
   if_info->ifi_index = if_index;
   if_info->ifi_flags = operational ? IFF_UP : 0;
@@ -151,7 +150,7 @@ void NetlinkRequestImpl::AddIfInfo(int32_t if_index, bool operational) {
 }
 
 void NetlinkRequestImpl::AddAddrInfo(int32_t if_index) {
-  ifaddrmsg* ad_info = request_.AppendAs<ifaddrmsg>(NULL);
+  ifaddrmsg* ad_info = Reserve<ifaddrmsg>();
   ad_info->ifa_family = AF_INET;
   ad_info->ifa_prefixlen = 24;
   ad_info->ifa_flags = IFA_F_PERMANENT | IFA_F_SECONDARY;
