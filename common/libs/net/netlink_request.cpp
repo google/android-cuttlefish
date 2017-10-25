@@ -139,10 +139,11 @@ NetlinkRequestImpl::NetlinkRequestImpl(
     : header_(Reserve<nlmsghdr>()) {
   header_->nlmsg_flags = flags;
   header_->nlmsg_type = command;
+  header_->nlmsg_pid = getpid();
 }
 
 void NetlinkRequestImpl::AddString(uint16_t type, const std::string& value) {
-  AppendTag(type, value.c_str(), value.length());
+  AppendTag(type, value.c_str(), value.length() + 1);
 }
 
 void NetlinkRequestImpl::AddInt32(uint16_t type, int32_t value) {

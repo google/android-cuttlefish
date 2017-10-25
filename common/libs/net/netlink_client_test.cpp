@@ -126,7 +126,8 @@ TEST_F(NetlinkClientTest, BasicStringNode) {
   constexpr char kLongString[] = "long string";
 
   struct {
-    const uint16_t attr_length = 0xf;  // 11 bytes of text + 4 bytes of header.
+    // 11 bytes of text + padding 0 + 4 bytes of header.
+    const uint16_t attr_length = 0x10;
     const uint16_t attr_type = kDummyTag;
     char text[sizeof(kLongString)];  // sizeof includes padding 0.
   } expected;
@@ -136,26 +137,6 @@ TEST_F(NetlinkClientTest, BasicStringNode) {
   auto request =
       avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->AddString(kDummyTag, kLongString);
-  EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
-}
-
-TEST_F(NetlinkClientTest, NoForcedStringPadding) {
-  // Strings with length being a multiple of four should not get additional zero
-  // padding.
-  constexpr uint16_t kDummyTag = 0xfce2;
-  constexpr char kShortString[] = "four";  // Keep 4 bytes
-
-  struct {
-    const uint16_t attr_length = 0x8;  // 4 bytes of text + 4 bytes of header.
-    const uint16_t attr_type = kDummyTag;
-    char text[4];
-  } expected;
-
-  memcpy(&expected.text, kShortString, sizeof(expected.text));
-
-  auto request =
-      avd::NetlinkRequest::New(RTM_SETLINK, 0);
-  request->AddString(kDummyTag, kShortString);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
