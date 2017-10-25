@@ -304,34 +304,12 @@ bool NetlinkClientImpl::OpenNetlink() {
 }  // namespace
 
 std::unique_ptr<NetlinkRequest> NetlinkRequest::New(
-    NetlinkRequest::RequestType type) {
-  int target_type = 0;
-  int target_flags = 0;
-
-  switch (type) {
-    case RequestType::NewLink:
-      target_type = RTM_NEWLINK;
-      target_flags = NLM_F_CREATE | NLM_F_EXCL;
-      break;
-
-    case RequestType::SetLink:
-      target_type = RTM_NEWLINK;
-      break;
-
-    case RequestType::AddAddress:
-      target_type = RTM_NEWADDR;
-      target_flags = NLM_F_CREATE | NLM_F_EXCL;
-      break;
-
-    case RequestType::DelAddress:
-      target_type = RTM_DELADDR;
-      break;
-  }
-
-  target_flags |= NLM_F_ACK | NLM_F_REQUEST;
+    int type, int flags) {
+  // Ensure we receive response.
+  flags |= NLM_F_ACK | NLM_F_REQUEST;
 
   return std::unique_ptr<NetlinkRequest>(new NetlinkRequestImpl(
-      target_type, target_flags));
+      type, flags));
 }
 
 NetlinkClient* NetlinkClient::New() {

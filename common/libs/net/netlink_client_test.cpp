@@ -114,10 +114,6 @@ MATCHER_P4(RequestHeaderIs, length, type, flags, seq,
 
   return true;
 }
-
-constexpr int kNetlinkSocket = 1;
-constexpr int kNetworkSocket = 2;
-
 }  // namespace
 
 class NetlinkClientTest : public ::testing::Test {
@@ -137,7 +133,8 @@ TEST_F(NetlinkClientTest, BasicStringNode) {
 
   memcpy(&expected.text, kLongString, sizeof(kLongString));
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->AddString(kDummyTag, kLongString);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -156,7 +153,8 @@ TEST_F(NetlinkClientTest, NoForcedStringPadding) {
 
   memcpy(&expected.text, kShortString, sizeof(expected.text));
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->AddString(kDummyTag, kShortString);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -172,7 +170,8 @@ TEST_F(NetlinkClientTest, BasicIntNode) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->AddInt32(kDummyTag, kValue);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -191,7 +190,8 @@ TEST_F(NetlinkClientTest, SingleList) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->PushList(kListTag);
   request->AddInt32(kDummyTag, kValue);
   request->PopList();
@@ -216,7 +216,8 @@ TEST_F(NetlinkClientTest, NestedList) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->PushList(kList1Tag);
   request->PushList(kList2Tag);
   request->AddInt32(kDummyTag, kValue);
@@ -248,7 +249,8 @@ TEST_F(NetlinkClientTest, ListSequence) {
     const uint32_t attr2_value = kValue2;
   } expected;
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->PushList(kList1Tag);
   request->AddInt32(kDummy1Tag, kValue1);
   request->PopList();
@@ -281,7 +283,8 @@ TEST_F(NetlinkClientTest, ComplexList) {
     const uint32_t attr2_value = kValue2;
   } expected;
 
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   request->PushList(kList1Tag);
   request->PushList(kList2Tag);
   request->AddInt32(kDummy1Tag, kValue1);
@@ -293,7 +296,8 @@ TEST_F(NetlinkClientTest, ComplexList) {
 }
 
 TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(true));
+  auto request =
+      avd::NetlinkRequest::New(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
   constexpr char kValue[] = "random string";
   request->AddString(0, kValue);  // Have something to work with.
 
@@ -308,7 +312,8 @@ TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
 }
 
 TEST_F(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
+  auto request =
+      avd::NetlinkRequest::New(RTM_SETLINK, 0);
   constexpr char kValue[] = "random string";
   request->AddString(0, kValue);  // Have something to work with.
 
@@ -320,29 +325,6 @@ TEST_F(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
       RTM_SETLINK,  // Results from creane_new_iface=true in CreateRequest.
       NLM_F_REQUEST | NLM_F_ACK,  // Ditto.
       0u));
-}
-
-TEST_F(NetlinkClientTest, SequenceNumbers) {
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
-  constexpr size_t kMsgLength =
-      sizeof(nlmsghdr) + sizeof(nlattr) + sizeof(int32_t);
-
-  request->AddInt32(0, 0);
-  EXPECT_THAT(
-      request,
-      RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, 0u));
-
-  request.reset(nl_client_->CreateRequest(false));
-  request->AddInt32(0, 0);
-  EXPECT_THAT(
-      request,
-      RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, 1u));
-
-  request.reset(nl_client_->CreateRequest(false));
-  request->AddInt32(0, 0);
-  EXPECT_THAT(
-      request,
-      RequestHeaderIs(kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, 2u));
 }
 
 }  // namespace avd

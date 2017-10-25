@@ -27,13 +27,6 @@ namespace avd {
 // changed, and how.
 class NetlinkRequest {
  public:
-  enum class RequestType {
-    NewLink,
-    SetLink,
-    AddAddress,
-    DelAddress
-  };
-
   NetlinkRequest() {}
   virtual ~NetlinkRequest() {}
 
@@ -81,7 +74,7 @@ class NetlinkRequest {
 
   // Create new Netlink Request structure.
   // When |create| is true, the request will inject a new instance of |type|.
-  static std::unique_ptr<NetlinkRequest> New(NetlinkRequest::RequestType type);
+  static std::unique_ptr<NetlinkRequest> New(int type, int flags);
 
  private:
   NetlinkRequest(const NetlinkRequest&);
