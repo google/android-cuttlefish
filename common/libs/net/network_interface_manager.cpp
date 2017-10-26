@@ -29,24 +29,24 @@
 
 namespace avd {
 namespace {
-std::unique_ptr<NetlinkRequest> BuildLinkRequest(
+NetlinkRequest BuildLinkRequest(
     const NetworkInterface& interface) {
-  auto request = NetlinkRequest::New(RTM_SETLINK, 0);
-  request->AddIfInfo(interface.Index(), interface.IsOperational());
+  NetlinkRequest request(RTM_SETLINK, 0);
+  request.AddIfInfo(interface.Index(), interface.IsOperational());
   if (!interface.Name().empty()) {
-    request->AddString(IFLA_IFNAME, interface.Name());
+    request.AddString(IFLA_IFNAME, interface.Name());
   }
 
   return request;
 }
 
-std::unique_ptr<NetlinkRequest> BuildAddrRequest(
+NetlinkRequest BuildAddrRequest(
     const NetworkInterface& interface) {
-  auto request = NetlinkRequest::New(RTM_NEWADDR, 0);
-  request->AddAddrInfo(interface.Index());
-  request->AddInt32(IFA_LOCAL, inet_addr(interface.Address().c_str()));
-  request->AddInt32(IFA_ADDRESS, inet_addr(interface.Address().c_str()));
-  request->AddInt32(IFA_BROADCAST,
+  NetlinkRequest request(RTM_NEWADDR, 0);
+  request.AddAddrInfo(interface.Index());
+  request.AddInt32(IFA_LOCAL, inet_addr(interface.Address().c_str()));
+  request.AddInt32(IFA_ADDRESS, inet_addr(interface.Address().c_str()));
+  request.AddInt32(IFA_BROADCAST,
                     inet_addr(interface.BroadcastAddress().c_str()));
 
   return request;
@@ -90,14 +90,10 @@ std::unique_ptr<NetworkInterface> NetworkInterfaceManager::Open(
 }
 
 bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {
-  auto request = BuildLinkRequest(iface);
-  if (!nl_client_->Send(request.get())) return false;
-
+  if (!nl_client_->Send(BuildLinkRequest(iface))) return false;
   // Terminate immediately if interface is down.
   if (!iface.IsOperational()) return true;
-
-  request = BuildAddrRequest(iface);
-  return nl_client_->Send(request.get());
+  return nl_client_->Send(BuildAddrRequest(iface));
 }
 
 }  // namespace avd

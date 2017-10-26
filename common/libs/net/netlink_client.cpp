@@ -33,7 +33,7 @@ class NetlinkClientImpl : public NetlinkClient {
   NetlinkClientImpl() = default;
   virtual ~NetlinkClientImpl() = default;
 
-  virtual bool Send(NetlinkRequest* message);
+  virtual bool Send(const NetlinkRequest& message);
 
   // Initialize NetlinkClient instance.
   // Open netlink channel and initialize interface list.
@@ -47,7 +47,6 @@ class NetlinkClientImpl : public NetlinkClient {
 
   SharedFD netlink_fd_;
   sockaddr_nl address_;
-  int seq_no_ = 0;
 };
 
 bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
@@ -102,13 +101,11 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   return false;
 }
 
-bool NetlinkClientImpl::Send(NetlinkRequest* message) {
-  message->SetSeqNo(seq_no_++);
-
+bool NetlinkClientImpl::Send(const NetlinkRequest& message) {
   struct sockaddr_nl netlink_addr;
   struct iovec netlink_iov = {
-    message->RequestData(),
-    message->RequestLength()
+    message.RequestData(),
+    message.RequestLength()
   };
   struct msghdr msg;
   memset(&msg, 0, sizeof(msg));
@@ -126,7 +123,7 @@ bool NetlinkClientImpl::Send(NetlinkRequest* message) {
     return false;
   }
 
-  return CheckResponse(message->SeqNo());
+  return CheckResponse(message.SeqNo());
 }
 
 bool NetlinkClientImpl::OpenNetlink(int type) {

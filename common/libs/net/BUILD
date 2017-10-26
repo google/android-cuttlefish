@@ -21,9 +21,9 @@ cc_library(
 )
 
 cc_test(
-    name = "netlink_client_test",
+    name = "netlink_request_test",
     size = "small",
-    srcs = ["netlink_client_test.cpp"],
+    srcs = ["netlink_request_test.cpp"],
     deps = [
         ":net",
         "//common/libs/glog:cuttlefish_logging",
