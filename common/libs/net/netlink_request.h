@@ -72,8 +72,13 @@ class NetlinkRequest {
   virtual uint32_t SeqNo() = 0;
 
   // Append raw data to buffer.
-  // If |data| is NULL, erase |length| bytes instead.
+  // data must not be null.
+  // Returns pointer to copied location.
   virtual void* AppendRaw(const void* data, size_t length) = 0;
+
+  // Reserve |length| number of bytes in the buffer.
+  // Returns pointer to reserved location.
+  virtual void* ReserveRaw(size_t length) = 0;
 
   // Append specialized data.
   template <typename T> T* Append(const T& data) {
@@ -82,7 +87,7 @@ class NetlinkRequest {
 
   // Reserve specialized data.
   template <typename T> T* Reserve() {
-    return static_cast<T*>(AppendRaw(nullptr, sizeof(T)));
+    return static_cast<T*>(ReserveRaw(sizeof(T)));
   }
 
   // Create new Netlink Request structure.

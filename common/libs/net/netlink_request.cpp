@@ -33,24 +33,28 @@ class NetlinkRequestImpl : public NetlinkRequest {
  public:
   NetlinkRequestImpl(int32_t command, int32_t flags);
 
-  virtual void AddString(uint16_t type, const std::string& value);
-  virtual void AddInt32(uint16_t type, int32_t value);
-  virtual void AddInt8(uint16_t type, int8_t value);
-  virtual void AddAddrInfo(int32_t if_index);
-  virtual void AddIfInfo(int32_t if_index, bool operational);
-  virtual void PushList(uint16_t type);
-  virtual void PopList();
-  virtual void* RequestData();
-  virtual size_t RequestLength();
-  virtual uint32_t SeqNo() {
+  virtual void AddString(uint16_t type, const std::string& value) override;
+  virtual void AddInt32(uint16_t type, int32_t value) override;
+  virtual void AddInt8(uint16_t type, int8_t value) override;
+  virtual void AddAddrInfo(int32_t if_index) override;
+  virtual void AddIfInfo(int32_t if_index, bool operational) override;
+  virtual void PushList(uint16_t type) override;
+  virtual void PopList() override;
+  virtual void* RequestData() override;
+  virtual size_t RequestLength() override;
+  virtual uint32_t SeqNo() override {
     return header_->nlmsg_seq;
   }
-  virtual void SetSeqNo(uint32_t seq_no) {
+  virtual void SetSeqNo(uint32_t seq_no) override {
     header_->nlmsg_seq = seq_no;
   }
 
-  void* AppendRaw(const void* data, size_t length) {
+  void* AppendRaw(const void* data, size_t length) override {
     return request_.AppendRaw(data, length);
+  }
+
+  void* ReserveRaw(size_t length) override {
+    return request_.ReserveRaw(length);
   }
 
  private:
@@ -65,26 +69,40 @@ class NetlinkRequestImpl : public NetlinkRequest {
       delete[] buffer_;
     }
 
-    void* AppendRaw(const void* data, size_t length) {
+    void Resize(size_t new_length) {
       // Replace old buffer with new one. This is not thread safe (and does not
       // have to be).
-      if (length > (buffer_length_ - current_)) {
-        uint8_t* new_buffer = new uint8_t[buffer_length_ * 2];
-        memcpy(new_buffer, buffer_, buffer_length_);
-        delete[] buffer_;
+      new_length = RTA_ALIGN(new_length);
+      uint8_t* new_buffer = new uint8_t[new_length];
 
-        buffer_length_ *= 2;
-        buffer_ = new_buffer;
+      memcpy(new_buffer, buffer_, std::min(new_length, buffer_length_));
+      delete[] buffer_;
+
+      buffer_length_ = new_length;
+      buffer_ = new_buffer;
+    }
+
+    void* ReserveRaw(size_t length) {
+      // reserve new buffer with a bit of extra space, if needed.
+      if (length > (buffer_length_ - current_)) {
+        Resize(buffer_length_ + length + 64);
+      }
+
+      length = RTA_ALIGN(length);
+      uint8_t* out = &buffer_[current_];
+      memset(out, 0, length);
+      current_ += length;
+      return out;
+    }
+
+    void* AppendRaw(const void* data, size_t length) {
+      // reserve new buffer with a bit of extra space, if needed.
+      if (length > (buffer_length_ - current_)) {
+        Resize(buffer_length_ + length + 64);
       }
 
       uint8_t* out = &buffer_[current_];
-
-      if (data) {
-        memcpy(out, data, length);
-      } else {
-        memset(out, 0, length);
-      }
-      // Pad with zeroes until buffer size is aligned.
+      memcpy(out, data, length);
       memset(&out[length], 0, RTA_ALIGN(length) - length);
       current_ += RTA_ALIGN(length);
       return out;
