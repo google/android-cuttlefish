@@ -20,6 +20,8 @@
 #include <linux/if_link.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
+#include <net/if.h>
+
 #include <memory>
 
 #include "common/libs/glog/logging.h"
@@ -51,28 +53,40 @@ std::unique_ptr<NetlinkRequest> BuildAddrRequest(
 }
 }  // namespace
 
-NetworkInterfaceManager *NetworkInterfaceManager::New(
-    NetlinkClient* nl_client) {
-  if (nl_client == NULL) {
-    LOG(ERROR) << "NetlinkClient is NULL!";
-    return NULL;
+std::unique_ptr<NetworkInterfaceManager> NetworkInterfaceManager::New(
+    NetlinkClientFactory* nl_factory) {
+  std::unique_ptr<NetworkInterfaceManager> mgr;
+
+  if (nl_factory == NULL) {
+    nl_factory = NetlinkClientFactory::Default();
   }
 
-  return new NetworkInterfaceManager(nl_client);
+  auto client = nl_factory->New(NETLINK_ROUTE);
+  if (client) {
+    mgr.reset(new NetworkInterfaceManager(std::move(client)));
+  }
+
+  return mgr;
 }
 
 NetworkInterfaceManager::NetworkInterfaceManager(
-    NetlinkClient* nl_client)
-    : nl_client_(nl_client) {}
+    std::unique_ptr<NetlinkClient> nl_client)
+    : nl_client_(std::move(nl_client)) {}
 
-NetworkInterface* NetworkInterfaceManager::Open(const std::string& if_name) {
-  const int32_t index = nl_client_->NameToIndex(if_name);
+std::unique_ptr<NetworkInterface> NetworkInterfaceManager::Open(
+    const std::string& if_name) {
+  std::unique_ptr<NetworkInterface> iface;
+  // NOTE: do not replace this code with an IOCTL call.
+  // On SELinux enabled Androids, RILD is not permitted to execute an IOCTL
+  // and this call will fail.
+  const int32_t index = if_nametoindex(if_name.c_str());
   if (index < 0) {
     LOG(ERROR) << "Failed to get interface (" << if_name << ") index.";
-    return NULL;
+    return iface;
   }
 
-  return new NetworkInterface(index);
+  iface.reset(new NetworkInterface(index));
+  return iface;
 }
 
 bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {

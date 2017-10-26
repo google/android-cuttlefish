@@ -16,6 +16,7 @@
 #ifndef COMMON_LIBS_NET_NETWORK_INTERFACE_MANAGER_H_
 #define COMMON_LIBS_NET_NETWORK_INTERFACE_MANAGER_H_
 
+#include <memory>
 #include <string>
 
 #include "common/libs/net/netlink_client.h"
@@ -38,7 +39,7 @@ class NetworkInterfaceManager {
   // Open existing network interface.
   //
   // NOTE: this method does not fill in any NetworkInterface details yet.
-  NetworkInterface* Open(const std::string& if_name);
+  std::unique_ptr<NetworkInterface> Open(const std::string& if_name);
 
   // Apply changes made to existing network interface.
   // This method cannot be used to instantiate new network interfaces.
@@ -50,16 +51,16 @@ class NetworkInterfaceManager {
                       const NetworkInterface& second);
 
   // Creates new NetworkInterfaceManager.
-  // Returns NULL if parameters are invalid.
-  static NetworkInterfaceManager* New(NetlinkClient* nl_client);
+  static std::unique_ptr<NetworkInterfaceManager> New(
+      NetlinkClientFactory* factory);
 
  private:
-  NetworkInterfaceManager(NetlinkClient* nl_client);
+  NetworkInterfaceManager(std::unique_ptr<NetlinkClient> nl_client);
 
   // Build (partial) netlink request.
   bool BuildRequest(NetlinkRequest* request, const NetworkInterface& interface);
 
-  NetlinkClient* nl_client_;
+  std::unique_ptr<NetlinkClient> nl_client_;
 
   NetworkInterfaceManager(const NetworkInterfaceManager&);
   NetworkInterfaceManager& operator= (const NetworkInterfaceManager&);
