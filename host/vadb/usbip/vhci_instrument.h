@@ -19,8 +19,6 @@
 #include <string>
 #include <thread>
 
-#include <libudev.h>
-
 #include "common/libs/fs/shared_fd.h"
 
 namespace vadb {
@@ -59,8 +57,6 @@ class VHCIInstrument {
   bool FindFreePort();
 
  private:
-  std::unique_ptr<udev, void(*)(udev*)> udev_;
-  std::unique_ptr<udev_device, void(*)(udev_device*)> vhci_device_;
   std::string name_;
   std::unique_ptr<std::thread> attach_thread_;
   std::string syspath_;
