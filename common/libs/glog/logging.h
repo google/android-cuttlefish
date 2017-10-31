@@ -19,6 +19,7 @@
 #include <android-base/logging.h>
 
 #if defined(CUTTLEFISH_HOST)
+using ::android::base::VERBOSE;
 using ::android::base::INFO;
 using ::android::base::WARNING;
 using ::android::base::FATAL;

@@ -1,0 +1,17 @@
+cc_library_host_static {
+    name: "libcuttlefish_host_config",
+    srcs: [
+        "file_partition.cpp",
+        "guest_config.cpp",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    static_libs: [
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
+        "libxml2",
+    ],
+    defaults: ["cuttlefish_host"],
+}
