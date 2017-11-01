@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -8,15 +9,14 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include <libvirt/libvirt.h>
 
 #include "common/libs/fs/shared_select.h"
-#include "host/config/file_partition.h"
-#include "host/config/guest_config.h"
-#include "host/ivserver/ivserver.h"
-#include "host/ivserver/options.h"
-#include "host/vadb/usbip/server.h"
-#include "host/vadb/virtual_adb_server.h"
+#include "host/libs/config/file_partition.h"
+#include "host/libs/config/guest_config.h"
+#include "host/libs/ivserver/ivserver.h"
+#include "host/libs/ivserver/options.h"
+#include "host/libs/usbip/server.h"
+#include "host/libs/vadb/virtual_adb_server.h"
 
 namespace {
 std::string StringFromEnv(const char* varname, std::string defval) {
@@ -29,10 +29,16 @@ std::string StringFromEnv(const char* varname, std::string defval) {
 }  // namespace
 
 DEFINE_int32(instance, 1, "Instance number. Must be unique.");
+DEFINE_string(mobile_interface, "abr0",
+              "Network interface to use for mobile networking");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
+DEFINE_string(launch_command, "virsh create /dev/fd/0",
+              "Command to start an instance");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-DEFINE_string(layout, "/usr/share/cuttlefish-common/vsoc_mem.json",
+DEFINE_string(layout,
+              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+              "/config/vsoc_mem.json",
               "Location of the vsoc_mem.json file.");
 DEFINE_string(mempath, "/dev/shm/ivshmem",
               "Target location for the shmem file.");
@@ -52,10 +58,9 @@ DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
+DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 
 namespace {
-constexpr char kLibVirtQemuTarget[] = "qemu:///system";
-
 Json::Value LoadLayoutFile(const std::string& file) {
   char real_file_path[PATH_MAX];
   if (realpath(file.c_str(), real_file_path) == nullptr) {
@@ -141,12 +146,8 @@ class IVServerManager {
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
-  google::InstallFailureSignalHandler();
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
-
-  // Log all messages with level WARNING and above to stderr.
-  google::SetStderrLogging(google::GLOG_WARNING);
 
   LOG_IF(FATAL, FLAGS_system_image_dir.empty())
       << "--system_image_dir must be specified.";
@@ -177,8 +178,6 @@ int main(int argc, char** argv) {
     FLAGS_vendor_image = FLAGS_system_image_dir + "/vendor.img";
   }
 
-  CHECK(virInitialize() == 0) << "Could not initialize libvirt.";
-
   Json::Value json_root = LoadLayoutFile(FLAGS_layout);
 
   // Each of these calls is free to fail and terminate launch if file does not
@@ -208,19 +207,7 @@ int main(int argc, char** argv) {
                  std::istreambuf_iterator<char>());
   t.close();
 
-  unsigned long libvirt_version;
-  CHECK(virGetVersion(&libvirt_version, nullptr, nullptr) == 0)
-      << "Could not query libvirt.";
-
   std::string entropy_source = "/dev/urandom";
-  // There seems to be no macro turning major/minor/patch to a number, but
-  // headers explain this as major * 1'000'000 + minor * 1'000 + patch.
-  if (libvirt_version <= 1003003) {
-    entropy_source = "/dev/random";
-    LOG(WARNING) << "Your system supplies old version of libvirt, that is "
-                 << "not able to use /dev/urandom as entropy source.";
-    LOG(WARNING) << "This may affect performance of your virtual instance.";
-  }
 
   config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
@@ -235,29 +222,32 @@ int main(int argc, char** argv) {
       .SetCachePartitionPath(cache_partition->GetName())
       .SetDataPartitionPath(data_partition->GetName())
       .SetVendorPartitionPath(vendor_partition->GetName())
-      .SetMobileBridgeName("abr0")
-      .SetEntropySource(entropy_source)
-      .SetEmulator(json_root["guest"]["vmm_path"].asString());
+      .SetMobileBridgeName(FLAGS_mobile_interface)
+      .SetEntropySource(entropy_source);
 
   std::string xml = cfg.Build();
-  VLOG(1) << "Using XML:\n" << xml;
+  if (FLAGS_log_xml) {
+    LOG(INFO) << "Using XML:\n" << xml;
+  }
 
-  auto libvirt_connection = virConnectOpen(kLibVirtQemuTarget);
-  CHECK(libvirt_connection)
-      << "Could not connect to libvirt backend: " << kLibVirtQemuTarget;
-
-  VirtualUSBManager vadb(cfg.GetUSBSocketName());
+  VirtualUSBManager vadb(cfg.GetUSBV1SocketName());
   vadb.Start();
   IVServerManager ivshmem(json_root);
   ivshmem.Start();
 
   sleep(1);
 
-  auto domain = virDomainCreateXML(
-      libvirt_connection, xml.c_str(),
-      VIR_DOMAIN_START_PAUSED | VIR_DOMAIN_START_AUTODESTROY);
-  CHECK(domain) << "Could not create libvirt domain.";
-
-  CHECK(virDomainResume(domain) == 0) << "Could not start domain.";
+  FILE* launch = popen(FLAGS_launch_command.c_str(), "w");
+  if (!launch) {
+    LOG(FATAL) << "Unable to execute " << FLAGS_launch_command;
+  }
+  int rval = fputs(xml.c_str(), launch);
+  if (rval == EOF) {
+    LOG(FATAL) << "Launch command exited while accepting XML";
+  }
+  int exit_code = pclose(launch);
+  if (exit_code) {
+    LOG(FATAL) << "Launch command exited with status " << exit_code;
+  }
   pause();
 }

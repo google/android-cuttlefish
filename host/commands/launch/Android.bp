@@ -1,0 +1,25 @@
+cc_binary_host {
+    name: "launch_cuttlefish",
+    srcs: [
+        "main.cc",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libivserver",
+	"libvadb",
+	"libusbip",
+	"libgflags",
+	"libbase",
+	"libxml2",
+	"libjsoncpp",
+	"libcuttlefish_fs",
+	"cuttlefish_auto_resources",
+    ],
+    shared_libs: [
+	"libicuuc",
+    ],
+    defaults: ["cuttlefish_host"],
+}
