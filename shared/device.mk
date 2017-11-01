@@ -15,7 +15,7 @@
 #
 
 ifeq (,$(CUTTLEFISH_KERNEL))
-CUTTLEFISH_KERNEL := device/google/cuttlefish_kernel/3.18-x86_64/kernel
+CUTTLEFISH_KERNEL := device/google/cuttlefish_kernel/4.4-x86_64/kernel
 endif
 
 PRODUCT_COPY_FILES += $(CUTTLEFISH_KERNEL):kernel
