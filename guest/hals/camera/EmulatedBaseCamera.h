@@ -104,6 +104,12 @@ class EmulatedBaseCamera {
      */
     virtual status_t getImageMetadata(struct ImageMetadata* meta) = 0;
 
+    /* Set torch mode.
+     * This method is called in response to camera_module_t::set_torch_mode
+     * callback.
+     */
+    virtual status_t setTorchMode(bool enabled);
+
     /****************************************************************************
      * Data members
      ***************************************************************************/

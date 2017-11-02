@@ -85,6 +85,10 @@ camera_device_status_t EmulatedBaseCamera::getHotplugStatus() {
 }
 #endif
 
+status_t EmulatedBaseCamera::setTorchMode(bool /* enabled */) {
+    ALOGE("%s: not supported", __FUNCTION__);
+    return INVALID_OPERATION;
+}
 
 
 } /* namespace android */

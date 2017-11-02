@@ -95,6 +95,8 @@ public:
     void getVendorTagOps(vendor_tag_ops_t* ops);
 #endif
 
+    int setTorchMode(const char* camera_id, bool enabled);
+
     /****************************************************************************
      * Camera HAL API callbacks.
      ***************************************************************************/
@@ -117,6 +119,8 @@ public:
     /* camera_module_t::open_legacy callback entry point */
     static int open_legacy(const struct hw_module_t* module, const char* id,
             uint32_t halVersion, struct hw_device_t** device);
+
+    static int set_torch_mode(const char* camera_id, bool enabled);
 
 private:
     /* hw_module_methods_t::open callback entry point. */
@@ -143,6 +147,8 @@ public:
     }
 
     void onStatusChanged(int cameraId, int newStatus);
+
+    void onTorchModeStatusChanged(int cameraId, int newStatus);
 
     /****************************************************************************
      * Private API
