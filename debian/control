@@ -12,7 +12,11 @@ Build-Depends:
  libudev-dev,
  libvirt-dev,
  libxml2-dev,
- libjsoncpp-dev
+ libjsoncpp-dev,
+ cdbs,
+ debhelper,
+ dh-buildinfo,
+ config-package-dev (>= 4.5~)
 
 Package: cuttlefish-common
 Architecture: amd64
@@ -39,6 +43,9 @@ Architecture: amd64
 Depends:
  adb,
  cuttlefish-common,
- libc6
+ libc6,
+ ${misc:Depends}
+Provides: ${diverted-files}
+Conflicts: ${diverted-files}
 Description: Configuration and utilities for Android cuttlefish devices
  running in the cloud. Not intended for non-cloud deployments.

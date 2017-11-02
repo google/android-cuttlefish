@@ -2,31 +2,25 @@
 
 set -e
 
+# Number of AVD accounts to create. 8 may be the limit imposed by the
+# VHCI HCD driver used for adb connections
+num_avd_accounts=8
+
+# avd accounts only invoke adb, so limit their access via groups
+avd_acount_groups=libvirt,plugdev
+
 case "$1" in
     (configure)
     add-shell /usr/bin/adbshell
 
-    if [ ! -f /etc/libvirt/qemu.conf.cuttlefish-common ]; then
-      cp /etc/libvirt/qemu.conf /etc/libvirt/qemu.conf.cuttlefish-common
-    fi
-    echo "security_driver = \"none\"" >> /etc/libvirt/qemu.conf
-    echo "dynamic_ownership = 0" >> /etc/libvirt/qemu.conf
-    invoke-rc.d libvirtd restart
-
-    # Add libvirt to any existing instance-* accounts
-    for i in 1; do
-      vsoc_account="vsoc-$(printf %02d "${i}")"
-      useradd -m "${vsoc_account}" || true
-      usermod -aG libvirt,kvm,plugdev "${vsoc_account}"
+    for i in $(seq "${num_avd_accounts}" ); do
       avd_account="avd-$(printf %02d "${i}")"
-      useradd -m "${avd_account}" || true
-      usermod -aG libvirt,plugdev -s /usr/bin/adbshell "${avd_account}"
+      # Skip account setup if an account is already configured
+      grep ^"${avd_account}": /etc/passwd > /dev/null 2>&1 ||
+        useradd -m "${avd_account}" \
+          -G "${avd_account_groups}" -s /usr/bin/adbshell
     done
-
-    # Now add it to any accounts that are created in the future
-    cat > /etc/default/instance_configs.cfg.template <<EOF
-[Accounts]
-groups = ubuntu,adm,dialout,cdrom,floppy,audio,dip,video,plugdev,netdev,lxd,libvirt-qemu
-EOF
     ;;
 esac
+
+#DEBHELPER#

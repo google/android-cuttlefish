@@ -264,6 +264,13 @@ std::string GuestConfig::Build() const {
               ivshmem_vector_count_),
        "-cpu", "host"});
 
+  auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
+  xmlNewProp(seclabel, xc("type"), xc("none"));
+  xmlNewProp(seclabel, xc("model"), xc("apparmor"));
+  seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
+  xmlNewProp(seclabel, xc("type"), xc("none"));
+  xmlNewProp(seclabel, xc("model"), xc("dac"));
+
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 
   ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketServer,

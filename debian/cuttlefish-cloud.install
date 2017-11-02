@@ -1,0 +1,2 @@
+host/deb_files/* /
+bazel-bin/host/vadb/adbshell /usr/bin/

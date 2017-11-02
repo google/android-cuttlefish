@@ -25,20 +25,6 @@ namespace config {
 namespace {
 constexpr char kTempFileSuffix[] = ".img";
 
-void UpdateACLs(const std::string& path) {
-  std::string command;
-
-  command = "setfacl -m u:libvirt-qemu:rw '" + path + "'";
-  CHECK(system(command.c_str()) == 0)
-      << "Could not set ACLs for partition image " << path << ": "
-      << strerror(errno);
-
-  command = "setfacl -m u:$(whoami):rw '" + path + "'";
-  CHECK(system(command.c_str()) == 0)
-      << "Could not set ACLs for partition image " << path << ": "
-      << strerror(errno);
-}
-
 void Initialize(const std::string& path) {
   std::string command = "/sbin/mkfs.ext4 -F '" + path + "' &>/dev/null";
   CHECK(system(command.c_str()) == 0)
@@ -61,11 +47,6 @@ FilePartition::~FilePartition() {
 
 std::unique_ptr<FilePartition> FilePartition::ReuseExistingFile(
     const std::string& path) {
-  avd::SharedFD fd(avd::SharedFD::Open(path.c_str(), O_RDWR));
-  CHECK(fd->IsOpen()) << "Could not open file: " << path << ": "
-                      << fd->StrError();
-
-  UpdateACLs(path);
   return std::unique_ptr<FilePartition>(new FilePartition(path, false));
 }
 
@@ -79,7 +60,6 @@ std::unique_ptr<FilePartition> FilePartition::CreateNewFile(
         << "Could not truncate file " << path << ": " << fd->StrError();
   }
 
-  UpdateACLs(path);
   Initialize(path);
   return std::unique_ptr<FilePartition>(new FilePartition(path, false));
 }
@@ -101,7 +81,6 @@ std::unique_ptr<FilePartition> FilePartition::CreateTemporaryFile(
     close(raw_fd);
   }
 
-  UpdateACLs(path);
   Initialize(path);
   return std::unique_ptr<FilePartition>(new FilePartition(path, true));
 }

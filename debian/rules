@@ -7,6 +7,10 @@
 # Keep it on until we know there's no outstanding problems with installation.
 # export DH_VERBOSE=1
 
+DEB_DISPLACE_EXTENSION = .cuttlefish
+DEB_DISPLACE_FILES_cuttlefish-cloud += \
+        /etc/default/instance_configs.cfg.template.cuttlefish
+
 DESTDIR_COMMON=$(CURDIR)/debian/cuttlefish-common
 DESTDIR_CLOUD=$(CURDIR)/debian/cuttlefish-cloud
 
@@ -26,30 +30,5 @@ build:
 	@$(BAZEL) build //host/launcher:cf
 	@$(BAZEL) build //host/vadb:adbshell
 
-binary:
-	@dh_testroot
-	@dh_prep
-	@dh_installdirs
-	# Install launcher.
-	@cp $(BAZEL_BIN)/host/launcher/cf $(BINDIR_COMMON)
-	@cp $(BAZEL_BIN)/host/vadb/adbshell $(BINDIR_CLOUD)
-	# Install support files.
-	@cp $(BAZEL_SRC)/host/ivserver/vsoc_mem.json $(CFDATDIR_COMMON)
-	@cp $(BAZEL_SRC)/host/launcher/network-abr0.xml $(CFDATDIR_COMMON)
-	# Install Documentation.
-	@cp $(BAZEL_SRC)/host/ivserver/README.md $(CFDOCDIR_COMMON)/ivserver.md
-	@cp $(BAZEL_SRC)/host/launcher/README.md $(CFDOCDIR_COMMON)/launcher.md
-	@cp $(BAZEL_SRC)/host/deploy/install_zip.sh $(BINDIR_COMMON)
-	@cp $(BAZEL_SRC)/host/deploy/unpack_boot_image.py $(CFBINDIR_COMMON)
-	# Complete building debian package.
-	@dh_installchangelogs
-	@dh_compress
-	@dh_fixperms
-	@dh_installdeb
-	@dh_installinit
-	@dh_gencontrol
-	@dh_md5sums
-	@dh_builddeb
-
-%:
-	dh $@
+include /usr/share/cdbs/1/rules/debhelper.mk
+include /usr/share/cdbs/1/rules/config-package.mk
