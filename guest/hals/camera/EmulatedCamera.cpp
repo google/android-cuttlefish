@@ -23,6 +23,8 @@
  * API.
  */
 
+#include "guest/libs/platform_support/api_level_fixes.h"
+
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_Camera"
 #include <cutils/log.h>
@@ -285,6 +287,12 @@ status_t EmulatedCamera::getCameraInfo(struct camera_info* info)
     } else {
         info->orientation = 0;
     }
+
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+    info->resource_cost = 50;
+    info->conflicting_devices = NULL;
+    info->conflicting_devices_length = 0;
+#endif
 
     return EmulatedBaseCamera::getCameraInfo(info);
 }
