@@ -69,7 +69,7 @@ enum class DeviceSourceType {
 // This section configures name, basic resource allocation and response to
 // events.
 void ConfigureVM(xmlNode* root, const std::string& instance_name, int cpus,
-                 int mem_mb) {
+                 int mem_mb, const std::string& uuid) {
   xmlNewChild(root, nullptr, xc("name"), xc(instance_name.c_str()));
 
   // TODO(ender): should this all be 'restart'?
@@ -78,6 +78,9 @@ void ConfigureVM(xmlNode* root, const std::string& instance_name, int cpus,
   xmlNewChild(root, nullptr, xc("on_crash"), xc("restart"));
   xmlNewChild(root, nullptr, xc("vcpu"), xc(concat(cpus).c_str()));
   xmlNewChild(root, nullptr, xc("memory"), xc(concat(mem_mb << 10).c_str()));
+  if (uuid.size()) {
+    xmlNewChild(root, nullptr, xc("uuid"), xc(uuid.c_str()));
+  }
 }
 
 // Configure VM features.
@@ -253,7 +256,7 @@ std::string GuestConfig::Build() const {
   xmlDocSetRootElement(xml.get(), root);
   xmlNewProp(root, xc("type"), xc("kvm"));
 
-  ConfigureVM(root, instance_name, vcpus_, memory_mb_);
+  ConfigureVM(root, instance_name, vcpus_, memory_mb_, uuid_);
   ConfigureVMFeatures(root, {"acpi", "apic", "hap"});
   ConfigureOperatingSystem(root, kernel_name_, initrd_name_, kernel_args_);
   ConfigureQEmuSpecificOptions(
@@ -264,12 +267,16 @@ std::string GuestConfig::Build() const {
               ivshmem_vector_count_),
        "-cpu", "host"});
 
-  auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
-  xmlNewProp(seclabel, xc("type"), xc("none"));
-  xmlNewProp(seclabel, xc("model"), xc("apparmor"));
-  seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
-  xmlNewProp(seclabel, xc("type"), xc("none"));
-  xmlNewProp(seclabel, xc("model"), xc("dac"));
+  if (disable_app_armor_security_) {
+    auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
+    xmlNewProp(seclabel, xc("type"), xc("none"));
+    xmlNewProp(seclabel, xc("model"), xc("apparmor"));
+  }
+  if (disable_dac_security_) {
+    auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
+    xmlNewProp(seclabel, xc("type"), xc("none"));
+    xmlNewProp(seclabel, xc("model"), xc("dac"));
+  }
 
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 

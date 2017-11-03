@@ -28,30 +28,36 @@ std::string StringFromEnv(const char* varname, std::string defval) {
 }
 }  // namespace
 
-DEFINE_int32(instance, 1, "Instance number. Must be unique.");
-DEFINE_int32(cpus, 2, "Virtual CPU count.");
-DEFINE_int32(memory_mb, 2048,
-             "Total amount of memory available for guest, MB.");
-DEFINE_string(layout, "/usr/share/cuttlefish-common/vsoc_mem.json",
-              "Location of the vsoc_mem.json file.");
-DEFINE_string(mempath, "/dev/shm/ivshmem",
-              "Target location for the shmem file.");
-DEFINE_int32(shmsize, 0, "(ignored)");
-DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
+DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
-
-DEFINE_string(system_image_dir,
-              StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
-              "Location of the system partition images.");
+DEFINE_int32(cpus, 2, "Virtual CPU count.");
+DEFINE_string(data_image, "", "Location of the data partition image.");
+DEFINE_bool(disable_app_armor_security, false,
+            "Disable AppArmor security in libvirt. For debug only.");
+DEFINE_bool(disable_dac_security, false,
+            "Disable DAC security in libvirt. For debug only.");
+DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
+DEFINE_int32(instance, 1, "Instance number. Must be unique.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 DEFINE_string(kernel_command_line, "",
               "Location of a text file with the kernel command line.");
-DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
-DEFINE_string(data_image, "", "Location of the data partition image.");
-DEFINE_string(cache_image, "", "Location of the cache partition image.");
+DEFINE_string(extra_kernel_command_line, "",
+              "Additional flags to put on the kernel command line");
+DEFINE_string(layout, "/usr/share/cuttlefish-common/vsoc_mem.json",
+              "Location of the vsoc_mem.json file.");
+DEFINE_int32(memory_mb, 2048,
+             "Total amount of memory available for guest, MB.");
+DEFINE_string(mempath, "/dev/shm/ivshmem",
+              "Target location for the shmem file.");
+DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
+DEFINE_int32(shmsize, 0, "(ignored)");
+DEFINE_string(system_image_dir,
+              StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
+              "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
+DEFINE_string(uuid, "", "UUID to use for the device. Random if not specified");
 
 namespace {
 constexpr char kLibVirtQemuTarget[] = "qemu:///system";
@@ -207,7 +213,7 @@ int main(int argc, char** argv) {
   cmdline.assign((std::istreambuf_iterator<char>(t)),
                  std::istreambuf_iterator<char>());
   t.close();
-
+  cmdline += FLAGS_extra_kernel_command_line;
   unsigned long libvirt_version;
   CHECK(virGetVersion(&libvirt_version, nullptr, nullptr) == 0)
       << "Could not query libvirt.";
@@ -237,7 +243,10 @@ int main(int argc, char** argv) {
       .SetVendorPartitionPath(vendor_partition->GetName())
       .SetMobileBridgeName("abr0")
       .SetEntropySource(entropy_source)
-      .SetEmulator(json_root["guest"]["vmm_path"].asString());
+      .SetEmulator(json_root["guest"]["vmm_path"].asString())
+      .SetDisableDACSecurity(FLAGS_disable_dac_security)
+      .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
+      .SetUUID(FLAGS_uuid);
 
   std::string xml = cfg.Build();
   VLOG(1) << "Using XML:\n" << xml;
