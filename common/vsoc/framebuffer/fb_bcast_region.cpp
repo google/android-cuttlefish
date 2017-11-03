@@ -39,8 +39,7 @@ FBBroadcastRegion* FBBroadcastRegion::GetInstance() {
 void FBBroadcastRegion::BroadcastNewFrame(uint32_t seq_num,
                                           vsoc_reg_off_t frame_offset) {
   {
-    GuestAndHostLockGuard<GuestAndHostLock, FBBroadcastRegion> lock_guard(
-        &data()->bcast_lock, this);
+    auto lock_guard(make_lock_guard(&data()->bcast_lock));
     data()->seq_num = seq_num;
     data()->frame_offset = frame_offset;
   }
@@ -67,8 +66,7 @@ vsoc_reg_off_t FBBroadcastRegion::WaitForNewFrameSince(uint32_t* last_seq_num) {
   }
 
   {
-    GuestAndHostLockGuard<GuestAndHostLock, FBBroadcastRegion> lock_guard(
-        &data()->bcast_lock, this);
+    auto lock_guard(make_lock_guard(&data()->bcast_lock));
     *last_seq_num = data()->seq_num;
     return data()->frame_offset;
   }

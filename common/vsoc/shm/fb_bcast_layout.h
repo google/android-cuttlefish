@@ -30,8 +30,8 @@ namespace framebuffer {
 struct FBBroadcastLayout : public RegionLayout {
   static const char* region_name;
   // Display properties
-  uint16_t x_res;
-  uint16_t y_res;
+  uint32_t x_res;
+  uint32_t y_res;
   uint16_t dpi;
   uint16_t refresh_rate_hz;
 
@@ -41,8 +41,7 @@ struct FBBroadcastLayout : public RegionLayout {
   vsoc_reg_off_t frame_offset;
   // Protects access to the frame offset and sequential number.
   // See the region implementation for more details.
-  // TODO(jemoreira): Turn into a HostLock.
-  GuestAndHostLock bcast_lock;
+  SpinLock bcast_lock;
 };
 ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, framebuffer);
 

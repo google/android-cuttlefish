@@ -16,45 +16,79 @@
  * limitations under the License.
  */
 
-#include "common/vsoc/lib/region_view.h"
-
 namespace vsoc {
+
+class RegionView;
+
+namespace layout {
+class GuestAndHostLock;
+};
 
 /*
  * Implements std::lock_guard like functionality for the vsoc locks.
  */
-
-template <typename Lock, typename Region = void>
-class GuestAndHostLockGuard {
- public:
-  explicit GuestAndHostLockGuard(Lock* lock, Region* region = nullptr)
-      : lock_(lock), region_(region) {
-    lock_->Lock(region_);
-  }
-
-  ~GuestAndHostLockGuard() { lock_->Unlock(region_); }
-
-  GuestAndHostLockGuard(const GuestAndHostLockGuard<Lock, Region>&) = delete;
-  GuestAndHostLockGuard<Lock, Region>& operator=(
-      const GuestAndHostLockGuard<Lock, Region>&) = delete;
-
- private:
-  Lock* lock_;
-  Region* region_;
-};
 
 template <typename Lock>
 class LockGuard {
  public:
   explicit LockGuard(Lock* lock) : lock_(lock) { lock_->Lock(); }
 
-  ~LockGuard() { lock_->Unlock(); }
+  LockGuard(LockGuard<Lock>&& o) noexcept {
+    lock_ = o.lock_;
+    o.lock_ = nullptr;
+  }
 
   LockGuard(const LockGuard<Lock>&) = delete;
   LockGuard<Lock>& operator=(const LockGuard<Lock>&) = delete;
 
+  ~LockGuard() {
+    if (lock_) {
+      lock_->Unlock();
+    }
+  }
+
  private:
   Lock* lock_;
 };
+
+template <>
+class LockGuard<::vsoc::layout::GuestAndHostLock> {
+  using Lock = ::vsoc::layout::GuestAndHostLock;
+
+ public:
+  LockGuard(Lock* lock, RegionView* region) : lock_(lock), region_(region) {
+    lock_->Lock(region_);
+  }
+
+  LockGuard(LockGuard<Lock>&& o) noexcept {
+    lock_ = o.lock_;
+    o.lock_ = nullptr;
+    region_ = o.region_;
+    o.region_ = nullptr;
+  }
+
+  LockGuard(const LockGuard<Lock>&) = delete;
+  LockGuard<Lock>& operator=(const LockGuard<Lock>&) = delete;
+
+  ~LockGuard() {
+    if (lock_) {
+      lock_->Unlock(region_);
+    }
+  }
+
+ private:
+  Lock* lock_;
+  RegionView* region_;
+};
+
+template <typename T>
+LockGuard<T> make_lock_guard(T* lock) {
+  return LockGuard<T>(lock);
+}
+
+LockGuard<::vsoc::layout::GuestAndHostLock> make_lock_guard(
+    ::vsoc::layout::GuestAndHostLock* l, RegionView* v) {
+  return LockGuard<::vsoc::layout::GuestAndHostLock>(l, v);
+}
 
 }  // namespace vsoc

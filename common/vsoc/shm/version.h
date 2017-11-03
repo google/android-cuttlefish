@@ -107,9 +107,9 @@ static const std::size_t GrallocBufferLayout_size = 1;
 // Changes to these structures will affect only the framebuffer broadcast region
 namespace framebuffer {
 namespace {
-const uint32_t version = 0;
+const uint32_t version = 1;
 }
-static const std::size_t FBBroadcastLayout_size = 56;
+static const std::size_t FBBroadcastLayout_size = 24;
 }  // namespace framebuffer
 
 // Versioning information for e2e_test_region.h
