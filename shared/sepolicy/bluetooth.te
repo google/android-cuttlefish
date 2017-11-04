@@ -1,1 +1,0 @@
-allow bluetooth devpts:chr_file open;

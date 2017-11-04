@@ -1,0 +1,2 @@
+# Binder service types
+type gce_service,               service_manager_type;

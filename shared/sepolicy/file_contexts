@@ -1,5 +1,35 @@
-/system/bin/gcelogwrapper u:object_r:gcelogwrapper_exec:s0
-/system/bin/gce_shutdown  u:object_r:gce_shutdown_exec:s0
-/system/bin/remoter       u:object_r:remoter_exec:s0
-/system/vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
-/system/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.vsoc      u:object_r:hal_dumpstate_impl_exec:s0
+##########################
+# Devices
+#
+/dev/e2e_managed                   u:object_r:region_e2e_test_device:s0
+/dev/e2e_manager                   u:object_r:region_e2e_test_device:s0
+/dev/e2e_primary                   u:object_r:region_e2e_test_device:s0
+/dev/e2e_secondary                 u:object_r:region_e2e_test_device:s0
+/dev/framebuffer_control           u:object_r:fb_ctl_file:s0
+/dev/userspace_framebuffer         u:object_r:userspace_fb_file:s0
+/dev/vport[0-9]p[0-9]*             u:object_r:virtual_serial_device:s0
+
+#############################
+# Root files
+/initial\.metadata                 u:object_r:initial_metadata_file:s0
+/ts_snap\.txt                      u:object_r:tombstone_snapshot_file:s0
+
+#############################
+# var files
+/var/run/system(/.*)?              u:object_r:var_run_system_file:s0
+
+#############################
+# sysfs files
+#
+/sys/bus/usb(/.*)?                             u:object_r:sysfs_usb_priv:s0
+/sys/devices/platform/dummy_hcd\.[0-9](/.*)?   u:object_r:sysfs_usb_priv:s0
+
+#############################
+# Vendor files
+#
+/vendor/bin/gce_fs_monitor  u:object_r:gce_fs_monitor_exec:s0
+/vendor/bin/usbforward  u:object_r:usbforward_exec:s0
+/vendor/bin/vnc_server  u:object_r:vnc_server_exec:s0
+/vendor/bin/vsoc_guest_region_e2e_test  u:object_r:vsoc_guest_region_e2e_test_exec:s0
+/vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
+/vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish      u:object_r:hal_dumpstate_impl_exec:s0
