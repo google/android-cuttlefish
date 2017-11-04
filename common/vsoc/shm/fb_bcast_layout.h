@@ -16,8 +16,8 @@
  */
 
 #include "common/vsoc/shm/base.h"
-#include "common/vsoc/shm/version.h"
 #include "common/vsoc/shm/lock.h"
+#include "common/vsoc/shm/version.h"
 #include "uapi/vsoc_shm.h"
 
 // Memory layout for the hwcomposer and hwcomposer broadcast regions
@@ -46,7 +46,7 @@ struct FBBroadcastLayout : public RegionLayout {
 };
 ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, framebuffer);
 
-} // namespace hwcomposer
+}  // namespace framebuffer
 
-} // namespace layout
-} // namespace vsoc
+}  // namespace layout
+}  // namespace vsoc

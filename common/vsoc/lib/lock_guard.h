@@ -32,9 +32,7 @@ class GuestAndHostLockGuard {
     lock_->Lock(region_);
   }
 
-  ~GuestAndHostLockGuard() {
-    lock_->Unlock(region_);
-  }
+  ~GuestAndHostLockGuard() { lock_->Unlock(region_); }
 
   GuestAndHostLockGuard(const GuestAndHostLockGuard<Lock, Region>&) = delete;
   GuestAndHostLockGuard<Lock, Region>& operator=(
@@ -48,13 +46,9 @@ class GuestAndHostLockGuard {
 template <typename Lock>
 class LockGuard {
  public:
-  explicit LockGuard(Lock* lock) : lock_(lock) {
-    lock_->Lock();
-  }
+  explicit LockGuard(Lock* lock) : lock_(lock) { lock_->Lock(); }
 
-  ~LockGuard() {
-    lock_->Unlock();
-  }
+  ~LockGuard() { lock_->Unlock(); }
 
   LockGuard(const LockGuard<Lock>&) = delete;
   LockGuard<Lock>& operator=(const LockGuard<Lock>&) = delete;
@@ -63,4 +57,4 @@ class LockGuard {
   Lock* lock_;
 };
 
-} // namespace vsoc
+}  // namespace vsoc
