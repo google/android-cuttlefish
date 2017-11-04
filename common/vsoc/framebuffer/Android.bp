@@ -16,7 +16,7 @@
 cc_library_host_static {
     name: "libvsoc_framebuffer",
     srcs: [
-        "fb_bcast_region.cpp",
+        "fb_bcast_region_view.cpp",
     ],
     static_libs: [
         "vsoc_lib",

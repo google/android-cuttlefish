@@ -1,3 +1,5 @@
+#pragma once
+
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -13,24 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "fb_bcast_region_view.h"
-#include <stdio.h>
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+/* Host-specific values associated with RegionControl. */
 
-int main() {
-  uint32_t frame_num = 0;
-  vsoc_reg_off_t offset = 0;
-  FBBroadcastRegionView region;
-  if (!region.Open()) {
-    fprintf(stderr, "Error opening region\n");
-    return 1;
-  }
-
-  while (1) {
-    offset = region.WaitForNewFrameSince(&frame_num);
-    printf("Signaled frame_num = %d, offset = 0x%x\n", frame_num, offset);
-  }
-
-  return 0;
-}
+namespace vsoc {
+const char* const DEFAULT_DOMAIN{"/tmp/ivshmem_socket_client"};
+}  // namespace vsoc

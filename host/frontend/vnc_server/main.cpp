@@ -19,15 +19,22 @@
 
 #include <gflags/gflags.h>
 
+#include "host/vsoc/lib/region_control.h"
 #include "host/frontend/vnc_server/vnc_server.h"
+#include "host/frontend/vnc_server/vnc_utils.h"
+#include "common/libs/glog/logging.h"
 
 DEFINE_bool(agressive, false, "Whether to use agressive server");
 DEFINE_int32(port, 6444, "Port where to listen for connections");
+DEFINE_string(vsoc_domain, vsoc::DEFAULT_DOMAIN, "Client socket path");
 
 int main(int argc, char* argv[]) {
   using ::android::base::ERROR;
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
+  if (!avd::vnc::GetFBBroadcastRegionView()->Open(FLAGS_vsoc_domain.c_str())) {
+    LOG(FATAL) << "Unable to open FBBroadcastRegion";
+  }
   avd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
   vnc_server.MainLoop();
 }

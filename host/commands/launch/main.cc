@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +33,7 @@
 #include "host/libs/ivserver/options.h"
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
+#include "host/vsoc/lib/region_control.h"
 
 namespace {
 std::string StringFromEnv(const char* varname, std::string defval) {
@@ -44,7 +61,6 @@ DEFINE_string(mempath, "/dev/shm/ivshmem",
               "Target location for the shmem file.");
 DEFINE_int32(shmsize, 0, "(ignored)");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
-DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 
 DEFINE_string(system_image_dir,
               StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
@@ -58,6 +74,7 @@ DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
+DEFINE_string(vsoc_domain, vsoc::DEFAULT_DOMAIN, "Client socket path");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 
 namespace {
@@ -125,7 +142,7 @@ class IVServerManager {
  public:
   IVServerManager(const Json::Value& json_root)
       : server_(ivserver::IVServerOptions(FLAGS_layout, FLAGS_mempath,
-                                          FLAGS_qemusocket, FLAGS_clientsocket),
+                                          FLAGS_qemusocket, FLAGS_vsoc_domain),
                 json_root) {}
 
   ~IVServerManager() = default;

@@ -14,29 +14,19 @@
  * limitations under the License.
  */
 
-#include "common/vsoc/framebuffer/fb_bcast_region.h"
+#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 
 #include "common/libs/glog/logging.h"
 #include "common/vsoc/lib/lock_guard.h"
 
-using vsoc::framebuffer::FBBroadcastRegion;
-using vsoc::layout::GuestAndHostLock;
-
-FBBroadcastRegion* FBBroadcastRegion::GetInstance() {
-  static FBBroadcastRegion region;
-  if (!region.is_open_) {
-    LOG(FATAL) << "Unable to open framebuffer broadcast region";
-    return nullptr;
-  }
-  return &region;
-}
+using vsoc::framebuffer::FBBroadcastRegionView;
 
 // We can use a locking protocol because we decided that the streamer should
 // have more priority than the hwcomposer, so it's OK to block the hwcomposer
 // waiting for the streamer to complete, while the streamer will only block on
 // the hwcomposer when it's ran out of work to do and needs to get more from the
 // hwcomposer.
-void FBBroadcastRegion::BroadcastNewFrame(uint32_t seq_num,
+void FBBroadcastRegionView::BroadcastNewFrame(uint32_t seq_num,
                                           vsoc_reg_off_t frame_offset) {
   {
     auto lock_guard(make_lock_guard(&data()->bcast_lock));
@@ -52,7 +42,7 @@ void FBBroadcastRegion::BroadcastNewFrame(uint32_t seq_num,
   SendSignal(side, &data()->seq_num);
 }
 
-vsoc_reg_off_t FBBroadcastRegion::WaitForNewFrameSince(uint32_t* last_seq_num) {
+vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(uint32_t* last_seq_num) {
   static std::unique_ptr<RegionWorker> worker = StartWorker();
   // It's ok to read seq_num here without holding the lock because the lock will
   // be acquired immediately after so we'll block if necessary to wait for the
@@ -70,10 +60,4 @@ vsoc_reg_off_t FBBroadcastRegion::WaitForNewFrameSince(uint32_t* last_seq_num) {
     *last_seq_num = data()->seq_num;
     return data()->frame_offset;
   }
-}
-
-FBBroadcastRegion::FBBroadcastRegion() : properties_(this) {
-  // Open here since the constructor in the singleton is thread safe.
-  // TODO(jemoreira): Get the domain from somewhere
-  is_open_ = Open(nullptr);
 }
