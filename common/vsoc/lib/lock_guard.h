@@ -16,13 +16,11 @@
  * limitations under the License.
  */
 
+#include "common/vsoc/shm/lock.h"
+
 namespace vsoc {
 
 class RegionView;
-
-namespace layout {
-class GuestAndHostLock;
-};
 
 /*
  * Implements std::lock_guard like functionality for the vsoc locks.
@@ -80,15 +78,5 @@ class LockGuard<::vsoc::layout::GuestAndHostLock> {
   Lock* lock_;
   RegionView* region_;
 };
-
-template <typename T>
-LockGuard<T> make_lock_guard(T* lock) {
-  return LockGuard<T>(lock);
-}
-
-LockGuard<::vsoc::layout::GuestAndHostLock> make_lock_guard(
-    ::vsoc::layout::GuestAndHostLock* l, RegionView* v) {
-  return LockGuard<::vsoc::layout::GuestAndHostLock>(l, v);
-}
 
 }  // namespace vsoc

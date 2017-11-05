@@ -28,8 +28,9 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/glog/logging.h"
-#include "common/vsoc/lib/region_signaling_interface.h"
+#include "common/vsoc/lib/lock_guard.h"
 #include "common/vsoc/lib/region_control.h"
+#include "common/vsoc/lib/region_signaling_interface.h"
 #include "common/vsoc/shm/base.h"
 #include "uapi/vsoc_shm.h"
 
@@ -142,6 +143,20 @@ class RegionView : public RegionSignalingInterface {
   LayoutType* GetLayoutPointer() {
     return this->region_offset_to_pointer<LayoutType>(
         control_->region_desc().offset_of_region_data);
+  }
+
+  // Helper functions for lock guards. This approach has two advantages:
+  //
+  //   o Callers don't have to be refactored when lock types change
+  //   o The region pointer can be provided automatically
+  template <typename T>
+  LockGuard<T> make_lock_guard(T* lock) {
+    return LockGuard<T>(lock);
+  }
+
+  LockGuard<::vsoc::layout::GuestAndHostLock> make_lock_guard(
+      ::vsoc::layout::GuestAndHostLock* l) {
+    return LockGuard<::vsoc::layout::GuestAndHostLock>(l, this);
   }
 
  protected:
