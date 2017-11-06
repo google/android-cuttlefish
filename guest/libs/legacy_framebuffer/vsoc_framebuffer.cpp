@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <api_level_fixes.h>
+#include <guest/libs/platform_support/api_level_fixes.h>
+
+#define LOG_TAG "VSoCFrameBuffer"
+
+#include "vsoc_framebuffer.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -28,50 +32,62 @@
 
 #include <utils/String8.h>
 
-#define LOG_TAG "GceFrameBuffer"
+#include <common/vsoc/framebuffer/fb_bcast_region_view.h>
 #include <cutils/log.h>
 #include <system/graphics.h>
-#include "GceMetadataAttributes.h"
-#include "InitialMetadataReader.h"
 
-#include "GceFrameBuffer.h"
-
-
-const char* const GceFrameBuffer::kFrameBufferPath =
+const char* const VSoCFrameBuffer::kFrameBufferPath =
     "/dev/userspace_framebuffer";
 
 
-const GceFrameBuffer & GceFrameBuffer::getInstance() {
-  static GceFrameBuffer instance;
+static vsoc::framebuffer::FBBroadcastRegionView* GetFBBroadcastRegionView() {
+  static vsoc::framebuffer::FBBroadcastRegionView instance;
+  return &instance;
+}
+
+const VSoCFrameBuffer & VSoCFrameBuffer::getInstance() {
+  static VSoCFrameBuffer instance;
   instance.Configure();
   return instance;
 }
 
 
-GceFrameBuffer::GceFrameBuffer()
-    : line_length_(-1) { }
+VSoCFrameBuffer::VSoCFrameBuffer()
+  : fb_region_view_(GetFBBroadcastRegionView()), line_length_(-1) { }
 
 
-void GceFrameBuffer::Configure() {
-  const char* metadata_value =
-      avd::InitialMetadataReader::getInstance()->GetValueForKey(
-          GceMetadataAttributes::kDisplayConfigurationKey);
-  display_properties_.Parse(metadata_value);
-  line_length_ = align(
-      display_properties_.GetXRes() * (
-          display_properties_.GetBitsPerPixel() / 8));
+void VSoCFrameBuffer::Configure() {
+  if (!fb_region_view_->Open()) {
+    SLOGE("Failed to open broadcaster region");
+  }
+  line_length_ = align(x_res() * sizeof(Pixel));
 }
 
 
-bool GceFrameBuffer::OpenFrameBuffer(int* frame_buffer_fd) {
+int VSoCFrameBuffer::dpi() const {
+  return fb_region_view_->dpi();
+}
+
+
+int VSoCFrameBuffer::x_res() const {
+  return fb_region_view_->x_res();
+}
+
+
+int VSoCFrameBuffer::y_res() const {
+  return fb_region_view_->y_res();
+}
+
+
+bool VSoCFrameBuffer::OpenFrameBuffer(int* frame_buffer_fd) {
   int fb_fd;
-  if ((fb_fd = open(GceFrameBuffer::kFrameBufferPath, O_RDWR)) < 0) {
+  if ((fb_fd = open(VSoCFrameBuffer::kFrameBufferPath, O_RDWR)) < 0) {
     SLOGE("Failed to open '%s' (%s)",
-          GceFrameBuffer::kFrameBufferPath, strerror(errno));
+          VSoCFrameBuffer::kFrameBufferPath, strerror(errno));
     return false;
   }
 
-  const GceFrameBuffer& config = GceFrameBuffer::getInstance();
+  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
 
   if (ftruncate(fb_fd, config.total_buffer_size()) < 0) {
     SLOGE("Failed to truncate framebuffer (%s)", strerror(errno));
@@ -83,12 +99,12 @@ bool GceFrameBuffer::OpenFrameBuffer(int* frame_buffer_fd) {
 }
 
 
-bool GceFrameBuffer::OpenAndMapFrameBuffer(void** fb_memory,
-                                                  int* frame_buffer_fd) {
+bool VSoCFrameBuffer::OpenAndMapFrameBuffer(void** fb_memory,
+					    int* frame_buffer_fd) {
   int fb_fd;
-  if (!GceFrameBuffer::OpenFrameBuffer(&fb_fd)) { return false; }
+  if (!VSoCFrameBuffer::OpenFrameBuffer(&fb_fd)) { return false; }
 
-  size_t fb_size = GceFrameBuffer::getInstance().total_buffer_size();
+  size_t fb_size = VSoCFrameBuffer::getInstance().total_buffer_size();
 
   void* mmap_res = mmap(0, fb_size, PROT_READ, MAP_SHARED, fb_fd, 0);
   if (mmap_res == MAP_FAILED) {
@@ -104,15 +120,15 @@ bool GceFrameBuffer::OpenAndMapFrameBuffer(void** fb_memory,
   return true;
 }
 
-bool GceFrameBuffer::UnmapAndCloseFrameBuffer(void* fb_memory,
+bool VSoCFrameBuffer::UnmapAndCloseFrameBuffer(void* fb_memory,
                                                     int frame_buffer_fd) {
-  size_t fb_size = GceFrameBuffer::getInstance().total_buffer_size();
+  size_t fb_size = VSoCFrameBuffer::getInstance().total_buffer_size();
   return munmap(fb_memory, fb_size) == 0 && close(frame_buffer_fd) == 0;
 }
 
 
-int GceFrameBuffer::hal_format() const {
-  switch(display_properties_.GetBitsPerPixel()) {
+int VSoCFrameBuffer::hal_format() const {
+  switch(bits_per_pixel()) {
     case 32:
       if (kRedShift) {
         return HAL_PIXEL_FORMAT_BGRA_8888;
@@ -146,14 +162,14 @@ const char* pixel_format_to_string(int format) {
     case HAL_PIXEL_FORMAT_YCbCr_422_I:
       return "YCbCr_422_I";
 
-#if GCE_PLATFORM_SDK_AFTER(J)
+#if VSOC_PLATFORM_SDK_AFTER(J)
     // First supported on JBMR1 (API 17)
     case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
       return "IMPLEMENTATION_DEFINED";
     case HAL_PIXEL_FORMAT_BLOB:
       return "BLOB";
 #endif
-#if GCE_PLATFORM_SDK_AFTER(J_MR1)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR1)
     // First supported on JBMR2 (API 18)
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
       return "YCbCr_420_888";
@@ -162,7 +178,7 @@ const char* pixel_format_to_string(int format) {
     case HAL_PIXEL_FORMAT_Y16:
       return "Y16";
 #endif
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
     // Support was added in L (API 21)
     case HAL_PIXEL_FORMAT_RAW_OPAQUE:
       return "RAW_OPAQUE";
@@ -172,7 +188,7 @@ const char* pixel_format_to_string(int format) {
     case HAL_PIXEL_FORMAT_RAW10:
       return "RAW10";
 #endif
-#if GCE_PLATFORM_SDK_AFTER(L_MR1)
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
     case HAL_PIXEL_FORMAT_YCbCr_444_888:
       return "YCbCr_444_888";
     case HAL_PIXEL_FORMAT_YCbCr_422_888:
@@ -186,20 +202,20 @@ const char* pixel_format_to_string(int format) {
 #endif
 
     // Formats that have been removed
-#if GCE_PLATFORM_SDK_BEFORE(K)
+#if VSOC_PLATFORM_SDK_BEFORE(K)
     // Support was dropped on K (API 19)
     case HAL_PIXEL_FORMAT_RGBA_5551:
       return "RGBA_5551";
     case HAL_PIXEL_FORMAT_RGBA_4444:
       return "RGBA_4444";
 #endif
-#if GCE_PLATFORM_SDK_BEFORE(L)
+#if VSOC_PLATFORM_SDK_BEFORE(L)
     // Renamed to RAW_16 in L. Both were present for L, but it was completely
     // removed in M.
     case HAL_PIXEL_FORMAT_RAW_SENSOR:
       return "RAW_SENSOR";
 #endif
-#if GCE_PLATFORM_SDK_AFTER(J_MR2) && GCE_PLATFORM_SDK_BEFORE(M)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2) && VSOC_PLATFORM_SDK_BEFORE(M)
     // Supported K, L, and LMR1. Not supported on JBMR0, JBMR1, JBMR2, and M
     case HAL_PIXEL_FORMAT_sRGB_X_8888:
       return "sRGB_X_8888";

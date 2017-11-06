@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -13,9 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_REGION_REGISTRY_H_
-#define GCE_REGION_REGISTRY_H_
-
 struct private_handle_t;
 
 /**
@@ -30,5 +28,3 @@ void* reference_region(
  * memory iff the reference count reaches 0.
  */
 int unreference_region(const char* op, const private_handle_t* hnd);
-
-#endif  // GCE_REGION_REGISTRY_H_

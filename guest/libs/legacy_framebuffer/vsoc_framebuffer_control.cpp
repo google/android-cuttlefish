@@ -27,12 +27,12 @@
 
 #include <utils/String8.h>
 
-#define LOG_TAG "GceFrameBufferControl"
+#define LOG_TAG "VSoCFrameBufferControl"
 #include <cutils/log.h>
 #include <system/graphics.h>
 
-#include "GceFrameBufferControl.h"
-#include "gralloc_gce_priv.h"
+#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 
 enum { NOT_YET = 0, IN_PROGRESS, DONE };
 
@@ -54,11 +54,11 @@ struct FrameBufferControl {
 // fetch the value, don't modify it (or with 0)
 #define ATOMICALLY_GET(x) __sync_or_and_fetch(&(x), 0)
 
-const char* const GceFrameBufferControl::kFrameBufferControlPath =
+const char* const VSoCFrameBufferControl::kFrameBufferControlPath =
     "/dev/framebuffer_control";
 
-GceFrameBufferControl& GceFrameBufferControl::getInstance() {
-  static GceFrameBufferControl instance;
+VSoCFrameBufferControl& VSoCFrameBufferControl::getInstance() {
+  static VSoCFrameBufferControl instance;
   // If not initialized before and fails to initialize now
   if (!instance.Initialize()) {
     LOG_ALWAYS_FATAL(
@@ -69,7 +69,7 @@ GceFrameBufferControl& GceFrameBufferControl::getInstance() {
   return instance;
 }
 
-uint32_t GceFrameBufferControl::GetAndSetNextAvailableBufferBit(uint32_t filter) {
+uint32_t VSoCFrameBufferControl::GetAndSetNextAvailableBufferBit(uint32_t filter) {
   if (pthread_mutex_lock(&control_memory_->mutex)) {
     ALOGE("Failed to acquire lock on framebuffer control mutex (%s) - %s",
           strerror(errno), __FUNCTION__);
@@ -93,7 +93,7 @@ uint32_t GceFrameBufferControl::GetAndSetNextAvailableBufferBit(uint32_t filter)
   return bit;
 }
 
-int GceFrameBufferControl::UnsetBufferBits(uint32_t bits) {
+int VSoCFrameBufferControl::UnsetBufferBits(uint32_t bits) {
   if (pthread_mutex_lock(&control_memory_->mutex)) {
     ALOGE("Failed to acquire lock on framebuffer control mutex (%s) - %s",
           strerror(errno), __FUNCTION__);
@@ -106,7 +106,7 @@ int GceFrameBufferControl::UnsetBufferBits(uint32_t bits) {
   return 0;
 }
 
-GceFrameBufferControl::GceFrameBufferControl()
+VSoCFrameBufferControl::VSoCFrameBufferControl()
     : control_fd_(-1), control_memory_(NULL) {}
 
 namespace {
@@ -116,16 +116,16 @@ bool MapFrameBufferControl(FrameBufferControl** control_memory_ptr,
   size_t control_size = sizeof(FrameBufferControl);
   mode_t fb_mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
   int control_fd;
-  if ((control_fd = open(GceFrameBufferControl::kFrameBufferControlPath, O_RDWR,
+  if ((control_fd = open(VSoCFrameBufferControl::kFrameBufferControlPath, O_RDWR,
                          fb_mode)) < 0) {
     ALOGE("Failed to open framebuffer control at %s (%s)",
-          GceFrameBufferControl::kFrameBufferControlPath, strerror(errno));
+          VSoCFrameBufferControl::kFrameBufferControlPath, strerror(errno));
     return false;
   }
 
   if (ftruncate(control_fd, sizeof(FrameBufferControl)) < 0) {
     ALOGE("Failed to truncate framebuffer control at %s (%s)",
-          GceFrameBufferControl::kFrameBufferControlPath, strerror(errno));
+          VSoCFrameBufferControl::kFrameBufferControlPath, strerror(errno));
     return false;
   }
 
@@ -153,7 +153,7 @@ void UnmapFrameBufferControl(FrameBufferControl** control_memory_ptr,
 }
 }
 
-bool GceFrameBufferControl::Initialize() {
+bool VSoCFrameBufferControl::Initialize() {
   if (control_fd_ >= 0) {
     return true;
   }
@@ -226,12 +226,12 @@ bool GceFrameBufferControl::Initialize() {
   return true;
 }
 
-int GceFrameBufferControl::GetCurrentYOffset() const {
+int VSoCFrameBufferControl::GetCurrentYOffset() const {
   if (!control_memory_) return -1;
   return control_memory_->yoffset;
 }
 
-int GceFrameBufferControl::WaitForFrameBufferChangeSince(
+int VSoCFrameBufferControl::WaitForFrameBufferChangeSince(
     uint32_t previous_fb_seq,
     int* yoffset_p,
     uint32_t* fb_seq_p,
@@ -262,12 +262,12 @@ int GceFrameBufferControl::WaitForFrameBufferChangeSince(
   return retval;
 }
 
-int GceFrameBufferControl::WaitForFrameBufferChange(int* yoffset_p) {
+int VSoCFrameBufferControl::WaitForFrameBufferChange(int* yoffset_p) {
   return WaitForFrameBufferChangeSince(
       control_memory_->seq_num, yoffset_p, NULL, NULL);
 }
 
-int GceFrameBufferControl::BroadcastFrameBufferChanged(int yoffset) {
+int VSoCFrameBufferControl::BroadcastFrameBufferChanged(int yoffset) {
   return BroadcastFrameBufferChanged(yoffset, NULL);
 }
 
@@ -277,7 +277,7 @@ static inline uint32_t seq_inc(uint32_t num) {
   return num? num: 1;
 }
 
-int GceFrameBufferControl::BroadcastFrameBufferChanged(
+int VSoCFrameBufferControl::BroadcastFrameBufferChanged(
     int yoffset, const CompositionStats* stats) {
   if (pthread_mutex_lock(&control_memory_->mutex)) {
     ALOGE("Failed to acquire lock on framebuffer control mutex (%s)",

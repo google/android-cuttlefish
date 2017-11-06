@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -13,10 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_FRAME_BUFFER_H_
-#define GCE_FRAME_BUFFER_H_
 
-#include <DisplayProperties.h>
 #include <UniquePtr.h>
 #include <pthread.h>
 #include <sys/mman.h>
@@ -25,29 +23,33 @@
 struct private_handle_t;
 struct remoter_request_packet;
 
+namespace vsoc {
+namespace framebuffer {
+class FBBroadcastRegionView;
+}
+}
+
 inline size_t roundUpToPageSize(size_t x) {
   return (x + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1);
 }
 
-class GceFrameBuffer {
+class VSoCFrameBuffer {
 public:
-  static const GceFrameBuffer& getInstance();
+  static const VSoCFrameBuffer& getInstance();
 
   static int align(int input, int alignment = kAlignment) {
     return (input + alignment - 1) & -alignment;
   }
 
   int bits_per_pixel() const {
-    return display_properties_.GetBitsPerPixel();
+    return kBitsPerPixel;
   }
 
   size_t bufferSize() const {
-    return line_length_ * display_properties_.GetYRes();
+    return line_length_ * y_res();
   }
 
-  int dpi() const {
-    return display_properties_.GetDpi();
-  }
+  int dpi() const;
 
   int hal_format() const;
 
@@ -55,19 +57,15 @@ public:
 
   int total_buffer_size() const {
     return roundUpToPageSize(line_length_ * y_res_virtual() +
-                             GceFrameBuffer::kSwiftShaderPadding);
+                             VSoCFrameBuffer::kSwiftShaderPadding);
   }
 
-  int x_res() const {
-    return display_properties_.GetXRes();
-  }
+  int x_res() const;
 
-  int y_res() const {
-    return display_properties_.GetYRes();
-  }
+  int y_res() const;
 
   int y_res_virtual() const {
-    return display_properties_.GetYRes() * kNumBuffers;
+    return y_res() * kNumBuffers;
   }
 
   static const int kAlignment = 8;
@@ -99,16 +97,14 @@ public:
   static bool UnmapAndCloseFrameBuffer(void* fb_memory, int frame_buffer_fd);
 
 private:
-  GceFrameBuffer();
+  VSoCFrameBuffer();
   void Configure();
 
-  avd::DisplayProperties display_properties_;
+  vsoc::framebuffer::FBBroadcastRegionView* fb_region_view_;
   static const int kBitsPerPixel = sizeof(Pixel) * CHAR_BIT;
   // Length of a scan-line in bytes.
   int line_length_;
-  DISALLOW_COPY_AND_ASSIGN(GceFrameBuffer);
+  DISALLOW_COPY_AND_ASSIGN(VSoCFrameBuffer);
 };
 
 const char* pixel_format_to_string(int format);
-
-#endif

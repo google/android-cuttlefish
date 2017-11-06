@@ -24,7 +24,7 @@
 #include <sys/types.h>
 
 #include <cutils/hashmap.h>
-#define LOG_TAG "GceGrallocRegionRegistry"
+#define LOG_TAG "VSoCGrallocRegionRegistry"
 #include <cutils/log.h>
 #include <cutils/atomic.h>
 
@@ -34,7 +34,7 @@
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 
-#include "gralloc_gce_priv.h"
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 
 // TODO(ghartman): Make the configurable through a property
 static const bool g_log_refs = false;

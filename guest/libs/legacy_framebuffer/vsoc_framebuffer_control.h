@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -13,21 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GCE_FRAME_BUFFER_CONTROL_H_
-#define GCE_FRAME_BUFFER_CONTROL_H_
-
-#include <MonotonicTime.h>
-// For DISALLOW_COPY_AND_ASSIGN
-#include <UniquePtr.h>
+#include <common/libs/time/monotonic_time.h>
 
 struct FrameBufferControl;
 
 struct CompositionStats {
-  avd::time::MonotonicTimePoint prepare_start;
-  avd::time::MonotonicTimePoint prepare_end;
-  avd::time::MonotonicTimePoint set_start;
-  avd::time::MonotonicTimePoint set_end;
-  avd::time::MonotonicTimePoint last_vsync;
+  cvd::time::MonotonicTimePoint prepare_start;
+  cvd::time::MonotonicTimePoint prepare_end;
+  cvd::time::MonotonicTimePoint set_start;
+  cvd::time::MonotonicTimePoint set_end;
+  cvd::time::MonotonicTimePoint last_vsync;
   // There may be more than one call to prepare, the timestamps are with regards to the last one (the one that precedes the set call)
   int num_prepare_calls;
   int num_layers;
@@ -35,9 +31,9 @@ struct CompositionStats {
   int num_hwc_layers;
 };
 
-class GceFrameBufferControl {
+class VSoCFrameBufferControl {
  public:
-  static GceFrameBufferControl& getInstance();
+  static VSoCFrameBufferControl& getInstance();
 
   static const char* const kFrameBufferControlPath;
 
@@ -74,7 +70,7 @@ class GceFrameBufferControl {
   int BroadcastFrameBufferChanged(int yoffset, const CompositionStats* stats);
 
  private:
-  GceFrameBufferControl();
+  VSoCFrameBufferControl();
 
   // Map the control structure to memory and initialize its contents.
   bool Initialize();
@@ -84,7 +80,9 @@ class GceFrameBufferControl {
   // Pointer to the mapped frame buffer control.
   FrameBufferControl* control_memory_;
 
-  DISALLOW_COPY_AND_ASSIGN(GceFrameBufferControl);
+  // Disallow copy and assign
+  VSoCFrameBufferControl(const VSoCFrameBufferControl&) {}
+  VSoCFrameBufferControl& operator=(const VSoCFrameBufferControl&) {
+    return *this;
+  }
 };
-
-#endif
