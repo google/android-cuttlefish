@@ -22,9 +22,9 @@ endif
 
 # Use a custom libnl on releases before N
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -lt 24; echo $$?))
-EXTERNAL_GCE_LIBNL_INCLUDE := external/gce/libnl/include
+EXTERNAL_VSOC_LIBNL_INCLUDE := external/gce/libnl/include
 else
-EXTERNAL_GCE_LIBNL_INCLUDE :=
+EXTERNAL_VSOC_LIBNL_INCLUDE :=
 endif
 
 
@@ -40,7 +40,7 @@ WPA_SUPPL_DIR_INCLUDE = $(WPA_SUPPL_DIR)/src \
 	$(WPA_SUPPL_DIR)/src/utils \
 	$(WPA_SUPPL_DIR)/src/wps \
 	$(WPA_SUPPL_DIR)/wpa_supplicant \
-	$(EXTERNAL_GCE_LIBNL_INCLUDE)
+	$(EXTERNAL_VSOC_LIBNL_INCLUDE)
 
 WPA_SUPPL_DIR_INCLUDE += external/libnl/include
 
@@ -64,12 +64,12 @@ LOCAL_MODULE := lib_driver_cmd_simulated
 LOCAL_SHARED_LIBRARIES := libc libcutils
 
 LOCAL_CFLAGS := $(L_CFLAGS) \
-    $(GCE_VERSION_CFLAGS)
+    $(VSOC_VERSION_CFLAGS)
 
 LOCAL_SRC_FILES := $(WPA_SRC_FILE)
 
 LOCAL_C_INCLUDES := \
-  device/google/gce/include \
+  device/google/cuttlefish_common \
   $(WPA_SUPPL_DIR_INCLUDE)\
 
 include $(BUILD_STATIC_LIBRARY)

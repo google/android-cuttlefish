@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -13,10 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef DEVICE_GOOGLE_GCE_WPA_SUPPLICANT_8_H_
-#define DEVICE_GOOGLE_GCE_WPA_SUPPLICANT_8_H_
-
-#include <api_level_fixes.h>
+#include <guest/libs/platform_support/api_level_fixes.h>
 
 #include <memory.h>
 #include <stddef.h>
@@ -27,13 +25,13 @@
 #include "linux_ioctl.h"
 #include "wpa_supplicant_i.h"
 
-#define LOG_TAG "GceWpaSupplicant8Driver"
+#define LOG_TAG "VSoCWpaSupplicant8Driver"
 
 #include "cutils/log.h"
 
-#define GCE_WPA_SUPPLICANT_DEBUG 0
+#define VSOC_WPA_SUPPLICANT_DEBUG 0
 
-#if GCE_WPA_SUPPLICANT_DEBUG
+#if VSOC_WPA_SUPPLICANT_DEBUG
 #  define D(...) ALOGD(__VA_ARGS__)
 #else
 #  define D(...) ((void)0)
@@ -46,7 +44,7 @@ typedef struct android_wifi_priv_cmd {
   int total_len;
 } android_wifi_priv_cmd;
 
-#if GCE_PLATFORM_SDK_BEFORE(K)
+#if VSOC_PLATFORM_SDK_BEFORE(K)
 
 #include "driver.h"
 
@@ -106,6 +104,4 @@ struct wpa_driver_nl80211_data {
   // More internal data follows.
 };
 
-#endif  // GCE_PLATFORM_SDK_AFTER(J)
-
-#endif  // DEVICE_GOOGLE_GCE_WPA_SUPPLICANT_8_H_
+#endif  // VSOC_PLATFORM_SDK_AFTER(J)

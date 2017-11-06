@@ -23,12 +23,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if GCE_PLATFORM_SDK_AFTER(L_MR1)
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
 // Android M exposes headers more directly.
 #include <netinet/in.h>
 #include <linux/if.h>
 #include "driver_nl80211.h"
-#elif GCE_PLATFORM_SDK_AFTER(J_MR2)
+#elif VSOC_PLATFORM_SDK_AFTER(J_MR2)
 // Android versions K and L put structures in hardware_legacy
 #include "hardware_legacy/driver_nl80211.h"
 #else
