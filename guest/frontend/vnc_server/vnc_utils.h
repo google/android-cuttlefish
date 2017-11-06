@@ -1,7 +1,21 @@
-#ifndef DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_VNC_UTILS_H_
-#define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_VNC_UTILS_H_
+#pragma once
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include <GceFrameBuffer.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
 
 #include <vector>
 #include <array>
@@ -9,13 +23,13 @@
 #include <cstdint>
 
 #undef D
-#ifdef GCE_VNC_DEBUG
+#ifdef VSOC_VNC_DEBUG
 #define D(...) ALOGD(__VA_ARGS__)
 #else
 #define D(...) ((void)0)
 #endif
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 // TODO(haining) when the hwcomposer gives a sequence number type, use that
@@ -59,17 +73,17 @@ struct Stripe {
 };
 
 inline constexpr int BytesPerPixel() {
-  return sizeof(GceFrameBuffer::Pixel);
+  return sizeof(VSoCFrameBuffer::Pixel);
 }
 
 // The width of the screen regardless of orientation. Does not change.
 inline int ActualScreenWidth() {
-  return GceFrameBuffer::getInstance().x_res();
+  return VSoCFrameBuffer::getInstance().x_res();
 }
 
 // The height of the screen regardless of orientation. Does not change.
 inline int ActualScreenHeight() {
-  return GceFrameBuffer::getInstance().y_res();
+  return VSoCFrameBuffer::getInstance().y_res();
 }
 
 inline int ScreenSizeInBytes() {
@@ -77,6 +91,4 @@ inline int ScreenSizeInBytes() {
 }
 
 }  // namespace vnc
-}  // namespace avd
-
-#endif
+}  // namespace cvd

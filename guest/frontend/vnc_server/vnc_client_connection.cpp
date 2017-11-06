@@ -1,12 +1,25 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "vnc_client_connection.h"
 #include "vnc_utils.h"
 #include "tcp_socket.h"
 #include "keysyms.h"
 
-#include "InitialMetadataReader.h"
-#include <GceFrameBuffer.h>
-#include <gce_sensors_message.h>
-#include <sensors.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
 
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -25,13 +38,14 @@
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
-#define LOG_TAG "GceVNCServer"
+#define LOG_TAG ""
 #include <cutils/log.h>
+#include <cutils/sockets.h>
 
-using avd::vnc::Message;
-using avd::vnc::VncClientConnection;
-using avd::vnc::Stripe;
-using avd::vnc::StripePtrVec;
+using cvd::vnc::Message;
+using cvd::vnc::VncClientConnection;
+using cvd::vnc::Stripe;
+using cvd::vnc::StripePtrVec;
 
 namespace {
 class BigEndianChecker {
@@ -104,7 +118,7 @@ Message CreateMessage(Ts... vals) {
 }
 
 std::string HostName() {
-  return avd::InitialMetadataReader::getInstance()->GetInstanceHostname();
+  return "Cuttlefish";
 }
 
 std::uint16_t uint16_tAt(const void* p) {
@@ -129,21 +143,21 @@ std::int32_t int32_tAt(const void* p) {
 }
 
 std::uint32_t RedVal(std::uint32_t pixel) {
-  return (pixel >> GceFrameBuffer::kRedShift) &
-         ((0x1 << GceFrameBuffer::kRedBits) - 1);
+  return (pixel >> VSoCFrameBuffer::kRedShift) &
+         ((0x1 << VSoCFrameBuffer::kRedBits) - 1);
 }
 
 std::uint32_t BlueVal(std::uint32_t pixel) {
-  return (pixel >> GceFrameBuffer::kBlueShift) &
-         ((0x1 << GceFrameBuffer::kBlueBits) - 1);
+  return (pixel >> VSoCFrameBuffer::kBlueShift) &
+         ((0x1 << VSoCFrameBuffer::kBlueBits) - 1);
 }
 
 std::uint32_t GreenVal(std::uint32_t pixel) {
-  return (pixel >> GceFrameBuffer::kGreenShift) &
-         ((0x1 << GceFrameBuffer::kGreenBits) - 1);
+  return (pixel >> VSoCFrameBuffer::kGreenShift) &
+         ((0x1 << VSoCFrameBuffer::kGreenBits) - 1);
 }
 }
-namespace avd {
+namespace cvd {
 namespace vnc {
 bool operator==(const VncClientConnection::FrameBufferUpdateRequest& lhs,
                 const VncClientConnection::FrameBufferUpdateRequest& rhs) {
@@ -156,14 +170,12 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
   return !(lhs == rhs);
 }
 }  // namespace vnc
-}  // namespace avd  // namespace
+}  // namespace cvd  // namespace
 
 VncClientConnection::VncClientConnection(ClientSocket client,
                                          VirtualInputs* virtual_inputs,
                                          BlackBoard* bb, bool aggressive)
     : client_{std::move(client)},
-      sensor_event_hal_{avd::SharedFD::SocketSeqPacketClient(
-          gce_sensors_message::kSensorsHALSocketName)},
       virtual_inputs_{virtual_inputs},
       bb_{bb} {
   frame_buffer_request_handler_tid_ = std::thread(
@@ -297,7 +309,7 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
 
 void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
                                           const Stripe& stripe) const {
-  using Pixel = GceFrameBuffer::Pixel;
+  using Pixel = VSoCFrameBuffer::Pixel;
   auto& fbu = *frame_buffer_update;
   AppendRawStripeHeader(&fbu, stripe);
   auto init_size = fbu.size();
@@ -492,40 +504,7 @@ void VncClientConnection::HandlePointerEvent() {
 }
 
 void VncClientConnection::UpdateAccelerometer(float x, float y, float z) {
-  // Discard the event if we don't have a connection to the HAL.
-  if (!sensor_event_hal_->IsOpen()) {
-    ALOGE("sensor event client not open");
-    return;
-  }
-  timespec current_time{};
-  clock_gettime(CLOCK_MONOTONIC, &current_time);
-  // Construct the sensor message.
-  gce_sensors_message message{};
-  message.version = sizeof message;
-  message.sensor = avd::sensors_constants::kAccelerometerHandle;
-  message.type = SENSOR_TYPE_ACCELEROMETER;
-  message.timestamp = current_time.tv_sec * static_cast<int64_t>(1000000000) +
-                      current_time.tv_nsec;
-  message.data[0] = x;
-  message.data[1] = y;
-  message.data[2] = z;
-
-  std::array<iovec, 1> msg_iov{};
-  msg_iov[0].iov_base = &message;
-  msg_iov[0].iov_len = sizeof(sensors_event_t);
-
-  msghdr msg;
-  msg.msg_name = nullptr;
-  msg.msg_namelen = 0;
-  msg.msg_iov = msg_iov.data();
-  msg.msg_iovlen = msg_iov.size();
-  msg.msg_control = nullptr;
-  msg.msg_controllen = 0;
-  msg.msg_flags = 0;
-  if (sensor_event_hal_->SendMsg(&msg, 0) == -1) {
-    ALOGE("%s: Could not send sensor data. (%s).", __FUNCTION__,
-          sensor_event_hal_->StrError());
-  }
+  // TODO(jemoreira): Implement when vsoc sensor hal is updated
 }
 
 VncClientConnection::Coordinates VncClientConnection::CoordinatesForOrientation(
@@ -587,13 +566,13 @@ bool VncClientConnection::RotateIfIsRotationCommand(std::uint32_t key) {
     return false;
   }
   switch (key) {
-    case avd::xk::Right:
-    case avd::xk::F12:
+    case cvd::xk::Right:
+    case cvd::xk::F12:
       D("switching to portrait");
       SetScreenOrientation(ScreenOrientation::Portrait);
       break;
-    case avd::xk::Left:
-    case avd::xk::F11:
+    case cvd::xk::Left:
+    case cvd::xk::F11:
       D("switching to landscape");
       SetScreenOrientation(ScreenOrientation::Landscape);
       break;
@@ -612,18 +591,18 @@ void VncClientConnection::HandleKeyEvent() {
   auto key = uint32_tAt(&msg[3]);
   bool key_down = msg[0];
   switch (key) {
-    case avd::xk::ControlLeft:
-    case avd::xk::ControlRight:
+    case cvd::xk::ControlLeft:
+    case cvd::xk::ControlRight:
       control_key_down_ = key_down;
       break;
-    case avd::xk::MetaLeft:
-    case avd::xk::MetaRight:
+    case cvd::xk::MetaLeft:
+    case cvd::xk::MetaRight:
       meta_key_down_ = key_down;
       break;
-    case avd::xk::F5:
-      key = avd::xk::Menu;
+    case cvd::xk::F5:
+      key = cvd::xk::Menu;
       break;
-    case avd::xk::F7:
+    case cvd::xk::F7:
       virtual_inputs_->PressPowerButton(key_down);
       return;
     default:

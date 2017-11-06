@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2014 The Android Open Source Project
  *
@@ -14,13 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef VIRTUAL_INPUT_DEVICE_H_
-#define VIRTUAL_INPUT_DEVICE_H_
-
 #include <linux/uinput.h>
 #include <map>
 
-namespace avd {
+namespace cvd {
 // Base virtual input device class which contains a bunch of boiler-plate code.
 class VirtualInputDevice {
 public:
@@ -92,6 +90,4 @@ private:
   std::map<uint32_t, uint32_t> keymapping_;
 };
 
-}  // namespace avd
-#endif
-
+}  // namespace cvd

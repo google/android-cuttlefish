@@ -41,7 +41,7 @@
 // VirtualButton Support
 //////////////////////////
 
-namespace avd {
+namespace cvd {
 uint32_t VirtualButton::Senabled_events_[] = {EV_KEY};
 
 VirtualButton::VirtualButton(const char* name, uint32_t input_keycode)
@@ -425,4 +425,4 @@ bool VirtualInputDevice::FinalizeDeviceCreation() {
   return true;
 }
 
-}  // namespace avd
+}  // namespace cvd

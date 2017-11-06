@@ -1,11 +1,25 @@
-#ifndef DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_SIMULATED_HW_COMPOSER_H_
-#define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_SIMULATED_HW_COMPOSER_H_
+#pragma once
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include "blackboard.h"
 
-#include <GceFrameBuffer.h>
-#include <GceFrameBufferControl.h>
-#include <ThreadSafeQueue.hpp>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
+#include <common/libs/thread_safe_queue/thread_safe_queue.h>
 
 #include <mutex>
 #include <thread>
@@ -15,7 +29,7 @@
 #include <random>
 #endif
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 class SimulatedHWComposer {
  public:
@@ -44,7 +58,7 @@ class SimulatedHWComposer {
   constexpr static std::size_t kMaxQueueElements = 64;
   bool closed_ GUARDED_BY(m_){};
   std::mutex m_;
-  GceFrameBufferControl& control_;
+  VSoCFrameBufferControl& control_;
   BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;
@@ -52,6 +66,4 @@ class SimulatedHWComposer {
   int frame_buffer_fd_{};
 };
 }  // namespace vnc
-}  // namespace avd
-
-#endif
+}  // namespace cvd

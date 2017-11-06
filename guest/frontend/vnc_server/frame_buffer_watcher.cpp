@@ -1,6 +1,22 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "vnc_utils.h"
 #include "frame_buffer_watcher.h"
-#include <ThreadSafeQueue.hpp>
+#include <common/libs/thread_safe_queue/thread_safe_queue.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -11,10 +27,10 @@
 #include <thread>
 #include <utility>
 
-#define LOG_TAG "GceVNCServer"
+#define LOG_TAG ""
 #include <cutils/log.h>
 
-using avd::vnc::FrameBufferWatcher;
+using cvd::vnc::FrameBufferWatcher;
 
 FrameBufferWatcher::FrameBufferWatcher(BlackBoard* bb)
     : bb_{bb}, hwcomposer{bb_} {
@@ -45,7 +61,7 @@ bool FrameBufferWatcher::closed() const {
   return closed_;
 }
 
-avd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
+cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
   LOG_ALWAYS_FATAL_IF(stripe.orientation == ScreenOrientation::Landscape,
                       "Rotating a landscape stripe, this is a mistake");
   auto w = stripe.width;
@@ -73,7 +89,7 @@ bool FrameBufferWatcher::StripeIsDifferentFromPrevious(
   return Stripes(stripe.orientation)[stripe.index]->raw_data != stripe.raw_data;
 }
 
-avd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
+cvd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
     ScreenOrientation orientation, const SeqNumberVec& seq_numbers) const {
   std::lock_guard<std::mutex> guard(stripes_lock_);
   const auto& stripes = Stripes(orientation);
@@ -87,12 +103,12 @@ avd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
   return new_stripes;
 }
 
-avd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
+cvd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
     ScreenOrientation orientation) {
   return stripes_[static_cast<int>(orientation)];
 }
 
-const avd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
+const cvd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
     ScreenOrientation orientation) const {
   return stripes_[static_cast<int>(orientation)];
 }

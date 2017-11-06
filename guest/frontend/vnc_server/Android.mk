@@ -28,13 +28,9 @@ else
 endif
 
 LOCAL_C_INCLUDES := \
-    device/google/gce/sensors \
-    device/google/gce/include \
+    device/google/cuttlefish_common \
     external/libjpeg-turbo \
     external/jsoncpp/include
-
-include device/google/gce/libs/base/libbase.mk
-LOCAL_C_INCLUDES += $(GCE_LIBBASE_INCLUDE_DIR)
 
 LOCAL_MODULE := vnc_server
 LOCAL_VENDOR_MODULE := true
@@ -52,38 +48,27 @@ LOCAL_SRC_FILES := \
 	vnc_server.cpp \
 
 LOCAL_CFLAGS := \
-	$(GCE_VERSION_CFLAGS) \
+	$(VSOC_VERSION_CFLAGS) \
 	-std=gnu++11 \
 	-Wall -Werror \
 	-Wno-error-unused -Wno-error=unused-parameter \
-	-Wno-attributes \
-	-DGCE_32_BIT_GRAPHICS
+	-Wno-attributes
 
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 18; echo $$?))
 LOCAL_CFLAGS += -Wno-error=implicit-exception-spec-mismatch
-endif
 
-LOCAL_SHARED_LIBRARIES := $(LIBJPEG_TURBO_NAME)
-LOCAL_STATIC_LIBRARIES := libcutils liblog
-LOCAL_CLANG := true
+LOCAL_SHARED_LIBRARIES := \
+    $(LIBJPEG_TURBO_NAME) \
+    libbase \
+    liblog \
+    libutils \
+    libcutils \
+    libcuttlefish_auto_resources \
+    libcuttlefish_fs \
+    libvsoc \
+    libvsocframebuffer
 
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -le 22; echo $$?)) #lmp-mr1 and down
-  LOCAL_STATIC_LIBRARIES += \
-    libgceframebuffer_cxx \
-    libgcemetadata_cxx \
-    libjsoncpp_cxx \
-    libgcecutils_cxx \
-
-  include external/libcxx/libcxx.mk
-else
-  LOCAL_STATIC_LIBRARIES += \
-    libgcemetadata \
-    libjsoncpp \
-
-  LOCAL_SHARED_LIBRARIES += \
-    libgceframebuffer \
-    libgcecutils \
-
-endif
+LOCAL_STATIC_LIBRARIES := \
+    liblog \
+    libjsoncpp
 
 include $(BUILD_EXECUTABLE)

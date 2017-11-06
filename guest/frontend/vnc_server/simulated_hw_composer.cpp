@@ -1,17 +1,33 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "simulated_hw_composer.h"
 
-using avd::vnc::SimulatedHWComposer;
+using cvd::vnc::SimulatedHWComposer;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
 #ifdef FUZZ_TEST_VNC
       engine_{std::random_device{}()},
 #endif
-      control_{GceFrameBufferControl::getInstance()},
+      control_{VSoCFrameBufferControl::getInstance()},
       bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements) {
   void* p{};
-  GceFrameBuffer::OpenAndMapFrameBuffer(&p, &frame_buffer_fd_);
+  VSoCFrameBuffer::OpenAndMapFrameBuffer(&p, &frame_buffer_fd_);
   frame_buffer_memory_ = static_cast<char*>(p);
   stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
 }
@@ -19,11 +35,11 @@ SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
 SimulatedHWComposer::~SimulatedHWComposer() {
   close();
   stripe_maker_.join();
-  GceFrameBuffer::UnmapAndCloseFrameBuffer(frame_buffer_memory_,
+  VSoCFrameBuffer::UnmapAndCloseFrameBuffer(frame_buffer_memory_,
                                            frame_buffer_fd_);
 }
 
-avd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
+cvd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
   auto s = stripes_.Pop();
 #ifdef FUZZ_TEST_VNC
   if (random_(engine_)) {
