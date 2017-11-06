@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -14,26 +15,21 @@
  * limitations under the License.
  */
 
-#ifndef GCE_HWCOMPOSER_HWCOMPOSER_COMMON_H
-#define GCE_HWCOMPOSER_HWCOMPOSER_COMMON_H
-
-#include <api_level_fixes.h>
+#include <guest/libs/platform_support/api_level_fixes.h>
 
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
 
-#if GCE_PLATFORM_SDK_BEFORE(J_MR1)
-typedef hwc_composer_device_t gce_hwc_device;
-typedef hwc_layer_t gce_hwc_layer;
+#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
+typedef hwc_composer_device_t vsoc_hwc_device;
+typedef hwc_layer_t vsoc_hwc_layer;
 #define IS_TARGET_FRAMEBUFFER(x) false
 #define IS_PRIMARY_DISPLAY(x) true
-#define GCE_HWC_DEVICE_API_VERSION HWC_DEVICE_API_VERSION_0_3
+#define VSOC_HWC_DEVICE_API_VERSION HWC_DEVICE_API_VERSION_0_3
 #else
-typedef hwc_composer_device_1_t gce_hwc_device;
-typedef hwc_layer_1_t gce_hwc_layer;
+typedef hwc_composer_device_1_t vsoc_hwc_device;
+typedef hwc_layer_1_t vsoc_hwc_layer;
 #define IS_TARGET_FRAMEBUFFER(x) ((x) == HWC_FRAMEBUFFER_TARGET)
 #define IS_PRIMARY_DISPLAY(x) ((x) == HWC_DISPLAY_PRIMARY)
-#define GCE_HWC_DEVICE_API_VERSION HWC_DEVICE_API_VERSION_1_1
-#endif
-
+#define VSOC_HWC_DEVICE_API_VERSION HWC_DEVICE_API_VERSION_1_1
 #endif

@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -14,13 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef GCE_OLD_HWCOMPOSER_GCE_COMPOSER_H
-#define GCE_OLD_HWCOMPOSER_GCE_COMPOSER_H
-
 #include <hardware/gralloc.h>
 #include "hwcomposer_common.h"
 
-namespace avd {
+namespace cvd {
 
 typedef int (*FbBroadcaster)(int);
 
@@ -31,10 +29,10 @@ class BaseComposer {
 
   // Sets the composition type of each layer and returns the number of layers
   // to be composited by the hwcomposer.
-  int PrepareLayers(size_t num_layers, gce_hwc_layer* layers);
+  int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
   // Returns the yoffset that was broadcasted or a negative number if there was
   // an error.
-  int SetLayers(size_t num_layers, gce_hwc_layer* layers);
+  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
   // Returns yoffset of the handle or negative on error.
   int PostFrameBuffer(buffer_handle_t handle);
   // Changes the broadcaster, gives the ability to report more than just the
@@ -50,6 +48,4 @@ class BaseComposer {
   FbBroadcaster fb_broadcaster_;
 };
 
-}  // namespace avd
-
-#endif
+}  // namespace cvd

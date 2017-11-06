@@ -34,13 +34,13 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 
-#include <api_level_fixes.h>
+#include <guest/libs/platform_support/api_level_fixes.h>
 
-#include "GceFrameBuffer.h"
-#include "GceFrameBufferControl.h"
-#include "RegionRegistry.h"
-#include "gralloc_gce_priv.h"
-#include "AutoResources.h"
+#include "guest/libs/legacy_framebuffer/vsoc_framebuffer.h"
+#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
+#include "guest/libs/legacy_framebuffer/RegionRegistry.h"
+#include "gralloc_vsoc_priv.h"
+#include "common/libs/auto_resources/auto_resources.h"
 
 /*****************************************************************************/
 
@@ -59,9 +59,9 @@ static int gralloc_alloc_buffer(
   // a gralloc buffer in this format.
   ALOG_ASSERT(format != HAL_PIXEL_FORMAT_RGB_888);
   if (format == HAL_PIXEL_FORMAT_YV12) {
-    bytes_per_line = GceFrameBuffer::align(bytes_per_pixel * w, 16);
+    bytes_per_line = VSoCFrameBuffer::align(bytes_per_pixel * w, 16);
   } else {
-    bytes_per_line = GceFrameBuffer::align(bytes_per_pixel * w);
+    bytes_per_line = VSoCFrameBuffer::align(bytes_per_pixel * w);
   }
   size = roundUpToPageSize(size + formatToBytesPerFrame(format, w, h));
   size += PAGE_SIZE;
@@ -108,9 +108,9 @@ static int ensure_framebuffer_allocated(private_module_t* m) {
 }
 
 static int gralloc_free_framebuffer(private_handle_t const * hnd) {
-    static const GceFrameBuffer& config = GceFrameBuffer::getInstance();
-    static GceFrameBufferControl& fb_control =
-        GceFrameBufferControl::getInstance();
+    static const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
+    static VSoCFrameBufferControl& fb_control =
+        VSoCFrameBufferControl::getInstance();
 
     // free this buffer
     const size_t bufferSize = config.line_length() * config.y_res();
@@ -123,16 +123,16 @@ static int gralloc_alloc_framebuffer(alloc_device_t* dev,
                                      buffer_handle_t* pHandle,
                                      int* pStrideInPixels,
                                      uint32_t buffer_mask) {
-  static const GceFrameBuffer& config = GceFrameBuffer::getInstance();
-  static GceFrameBufferControl& fb_control =
-      GceFrameBufferControl::getInstance();
+  static const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
+  static VSoCFrameBufferControl& fb_control =
+      VSoCFrameBufferControl::getInstance();
 
   private_module_t* m = reinterpret_cast<private_module_t*>(
       dev->common.module);
 
   ensure_framebuffer_allocated(m);
 
-  const uint32_t numBuffers = GceFrameBuffer::kNumBuffers;
+  const uint32_t numBuffers = VSoCFrameBuffer::kNumBuffers;
   const size_t bufferSize = config.bufferSize();
 
   // Paranoia: Force the mask to be valid
@@ -170,16 +170,16 @@ static int gralloc_alloc_framebuffer(alloc_device_t* dev,
 static int gralloc_alloc_sf_framebuffer(alloc_device_t* dev,
                                         buffer_handle_t* pHandle,
                                         int* pStrideInPixels) {
-  uint32_t mask = (1LU << GceFrameBuffer::kNumSfBuffers) - 1LU;
+  uint32_t mask = (1LU << VSoCFrameBuffer::kNumSfBuffers) - 1LU;
   // Skip the first buffers since those are for HWC usage
-  mask <<= GceFrameBuffer::kNumHwcBuffers;
+  mask <<= VSoCFrameBuffer::kNumHwcBuffers;
   return gralloc_alloc_framebuffer(dev, pHandle, pStrideInPixels, mask);
 }
 
 static int gralloc_alloc_hwc_framebuffer(alloc_device_t* dev,
                                          buffer_handle_t* pHandle) {
   // Use the first kNumHwcBuffers for hwcomposer
-  uint32_t mask = (1LU << GceFrameBuffer::kNumHwcBuffers) - 1LU;
+  uint32_t mask = (1LU << VSoCFrameBuffer::kNumHwcBuffers) - 1LU;
   return gralloc_alloc_framebuffer(dev, pHandle, NULL, mask);
 }
 
@@ -270,35 +270,35 @@ static int gralloc_device_open(
 /*****************************************************************************/
 
 static struct hw_module_methods_t gralloc_module_methods = {
-  GCE_STATIC_INITIALIZER(open) gralloc_device_open
+  VSOC_STATIC_INITIALIZER(open) gralloc_device_open
 };
 
 struct private_module_t HAL_MODULE_INFO_SYM = {
-  GCE_STATIC_INITIALIZER(base) {
-    GCE_STATIC_INITIALIZER(common) {
-      GCE_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
+  VSOC_STATIC_INITIALIZER(base) {
+    VSOC_STATIC_INITIALIZER(common) {
+      VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
-      GCE_STATIC_INITIALIZER(version_major) GRALLOC_MODULE_API_VERSION_0_2,
+      VSOC_STATIC_INITIALIZER(version_major) GRALLOC_MODULE_API_VERSION_0_2,
 #else
-      GCE_STATIC_INITIALIZER(version_major) 1,
+      VSOC_STATIC_INITIALIZER(version_major) 1,
 #endif
-      GCE_STATIC_INITIALIZER(version_minor) 0,
-      GCE_STATIC_INITIALIZER(id) GRALLOC_HARDWARE_MODULE_ID,
-      GCE_STATIC_INITIALIZER(name) "GCE X86 Graphics Memory Allocator Module",
-      GCE_STATIC_INITIALIZER(author) "The Android Open Source Project",
-      GCE_STATIC_INITIALIZER(methods) &gralloc_module_methods,
-      GCE_STATIC_INITIALIZER(dso) NULL,
-      GCE_STATIC_INITIALIZER(reserved) {0},
+      VSOC_STATIC_INITIALIZER(version_minor) 0,
+      VSOC_STATIC_INITIALIZER(id) GRALLOC_HARDWARE_MODULE_ID,
+      VSOC_STATIC_INITIALIZER(name) "VSOC X86 Graphics Memory Allocator Module",
+      VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
+      VSOC_STATIC_INITIALIZER(methods) &gralloc_module_methods,
+      VSOC_STATIC_INITIALIZER(dso) NULL,
+      VSOC_STATIC_INITIALIZER(reserved) {0},
     },
-    GCE_STATIC_INITIALIZER(registerBuffer) gralloc_register_buffer,
-    GCE_STATIC_INITIALIZER(unregisterBuffer) gralloc_unregister_buffer,
-    GCE_STATIC_INITIALIZER(lock) gralloc_lock,
-    GCE_STATIC_INITIALIZER(unlock) gralloc_unlock,
+    VSOC_STATIC_INITIALIZER(registerBuffer) gralloc_register_buffer,
+    VSOC_STATIC_INITIALIZER(unregisterBuffer) gralloc_unregister_buffer,
+    VSOC_STATIC_INITIALIZER(lock) gralloc_lock,
+    VSOC_STATIC_INITIALIZER(unlock) gralloc_unlock,
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
-    GCE_STATIC_INITIALIZER(perform) NULL,
-    GCE_STATIC_INITIALIZER(lock_ycbcr) gralloc_lock_ycbcr,
+    VSOC_STATIC_INITIALIZER(perform) NULL,
+    VSOC_STATIC_INITIALIZER(lock_ycbcr) gralloc_lock_ycbcr,
 #endif
   },
-  GCE_STATIC_INITIALIZER(framebuffer) 0,
-  GCE_STATIC_INITIALIZER(lock) PTHREAD_MUTEX_INITIALIZER,
+  VSOC_STATIC_INITIALIZER(framebuffer) 0,
+  VSOC_STATIC_INITIALIZER(lock) PTHREAD_MUTEX_INITIALIZER,
 };

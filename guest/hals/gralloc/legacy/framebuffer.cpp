@@ -39,12 +39,13 @@
 #include <linux/fb.h>
 #endif
 
-#include "gralloc_gce_priv.h"
+#include "gralloc_vsoc_priv.h"
 
-#include <GceFrameBuffer.h>
-#include <GceFrameBufferControl.h>
-#include <RegionRegistry.h>
-#include "AutoResources.h"
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
+#include <guest/libs/legacy_framebuffer/RegionRegistry.h>
+#include "common/libs/auto_resources/auto_resources.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 
 /*****************************************************************************/
 
@@ -80,7 +81,7 @@ static int fb_post(struct framebuffer_device_t* dev __unused, buffer_handle_t bu
   const int yoffset = YOffsetFromHandle(buffer);
   if (yoffset >= 0) {
     int retval =
-        GceFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
+        VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
             yoffset);
     if (retval) ALOGI("Failed to post framebuffer");
 
@@ -92,17 +93,17 @@ static int fb_post(struct framebuffer_device_t* dev __unused, buffer_handle_t bu
 /*****************************************************************************/
 
 int initUserspaceFrameBuffer(struct private_module_t* module) {
-  avd::LockGuard<pthread_mutex_t> guard(module->lock);
+  cvd::LockGuard<pthread_mutex_t> guard(module->lock);
   if (module->framebuffer) {
     return 0;
   }
 
   int fd;
-  if (!GceFrameBuffer::OpenFrameBuffer(&fd)) {
+  if (!VSoCFrameBuffer::OpenFrameBuffer(&fd)) {
     return -errno;
   }
 
-  const GceFrameBuffer& config = GceFrameBuffer::getInstance();
+  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
 
   /*
    * map the framebuffer
@@ -153,7 +154,7 @@ int fb_device_open(
 
     status = initUserspaceFrameBuffer(m);
 
-    const GceFrameBuffer& config = GceFrameBuffer::getInstance();
+    const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
 
     if (status >= 0) {
       int stride = config.line_length() / (config.bits_per_pixel() / 8);

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "gce_composer.h"
+#include "vsoc_composer.h"
 #include <stdio.h>
 
 // This executable is only intended to perform simple tests on the hwcomposer
@@ -21,9 +21,9 @@
 // (via scp) when needed to test specific scenarios that are hard to reproduce
 // in the normal operation of the device.
 
-class HWC_Tester : public avd::GceComposer {
+class HWC_Tester : public cvd::VSoCComposer {
  public:
-  HWC_Tester() : avd::GceComposer(int64_t(0), int32_t(16000000)) {}
+  HWC_Tester() : cvd::VSoCComposer(int64_t(0), int32_t(16000000)) {}
   int RunTest() {
     // Allocate two buffers (1x1 and 800x1280)
     buffer_handle_t src_handle;
@@ -54,7 +54,7 @@ class HWC_Tester : public avd::GceComposer {
       return -1;
     }
     // Create a mock layer requesting a sinple copy of the pixels so that DoCopy gets called
-    gce_hwc_layer src_layer;
+    vsoc_hwc_layer src_layer;
     src_layer.compositionType = HWC_OVERLAY;
     src_layer.hints = 0;
     src_layer.flags = 0;

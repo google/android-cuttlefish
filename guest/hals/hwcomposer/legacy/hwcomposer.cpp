@@ -19,10 +19,10 @@
 // JB-MR1 to N : 1.1
 // N-MR1 to ... : We report 1.1 but SurfaceFlinger has the option to use an
 // adapter to treat our 1.1 hwcomposer as a 2.0. If SF stops using that adapter
-// to support 1.1 implementations it can be copied into gce from
+// to support 1.1 implementations it can be copied into cuttlefish from
 // frameworks/native/services/surfaceflinger/DisplayHardware/HWC2On1Adapter.*
 
-#include <api_level_fixes.h>
+#include <guest/libs/platform_support/api_level_fixes.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -49,13 +49,13 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 
-#include <GceFrameBuffer.h>
-#include <GceFrameBufferControl.h>
-#include <gralloc_gce_priv.h>
-#include <remoter_framework_pkt.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
+#include <guest/hals/gralloc/legacy/gralloc_vsoc_priv.h>
+#include <guest/libs/remoter/remoter_framework_pkt.h>
 #include <sync/sync.h>
 
-#include "gce_composer.h"
+#include "vsoc_composer.h"
 #include "geometry_utils.h"
 #include "hwcomposer_common.h"
 #include "base_composer.h"
@@ -63,20 +63,20 @@
 
 
 #ifdef USE_OLD_HWCOMPOSER
-typedef avd::BaseComposer InnerComposerType;
+typedef cvd::BaseComposer InnerComposerType;
 #else
-typedef avd::GceComposer InnerComposerType;
+typedef cvd::VSoCComposer InnerComposerType;
 #endif
 
 
 #ifdef GATHER_STATS
-typedef avd::StatsKeepingComposer<InnerComposerType> ComposerType;
+typedef cvd::StatsKeepingComposer<InnerComposerType> ComposerType;
 #else
 typedef InnerComposerType ComposerType;
 #endif
 
-struct gce_hwc_composer_device_1_t {
-  gce_hwc_device base;
+struct vsoc_hwc_composer_device_1_t {
+  vsoc_hwc_device base;
   const hwc_procs_t* procs;
   pthread_t vsync_thread;
   int64_t vsync_base_timestamp;
@@ -84,7 +84,7 @@ struct gce_hwc_composer_device_1_t {
   ComposerType* composer;
 };
 
-static void dump_layer(gce_hwc_layer const* l) {
+static void dump_layer(vsoc_hwc_layer const* l) {
   ALOGI(
       "\ttype=%d, flags=%08x, handle=%p, tr=%02x, blend=%04x, "
       "{%d,%d,%d,%d}, {%d,%d,%d,%d}",
@@ -94,10 +94,10 @@ static void dump_layer(gce_hwc_layer const* l) {
       l->displayFrame.right, l->displayFrame.bottom);
 }
 
-#if GCE_PLATFORM_SDK_BEFORE(J_MR1)
-static int gce_hwc_prepare(gce_hwc_device* dev, hwc_layer_list_t* list) {
+#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
+static int vsoc_hwc_prepare(vsoc_hwc_device* dev, hwc_layer_list_t* list) {
 #else
-static int gce_hwc_prepare(gce_hwc_device* dev, size_t numDisplays,
+static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
                            hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
@@ -106,28 +106,28 @@ static int gce_hwc_prepare(gce_hwc_device* dev, size_t numDisplays,
   if (!list) return 0;
 #endif
   int composited_layers_count =
-      reinterpret_cast<gce_hwc_composer_device_1_t*>(dev)
+      reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)
           ->composer->PrepareLayers(list->numHwLayers, &list->hwLayers[0]);
   return 0;
 }
 
-#if GCE_PLATFORM_SDK_BEFORE(J_MR1)
-int gce_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
+#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
+int vsoc_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
                 hwc_surface_t sur, hwc_layer_list_t* list) {
-  reinterpret_cast<gce_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
+  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
       list->numHwLayers, &list->hwLayers[0]);
   return 0;
 }
 #else
-static int gce_hwc_set(gce_hwc_device* dev, size_t numDisplays,
+static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
                        hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
   hwc_display_contents_1_t* contents = displays[HWC_DISPLAY_PRIMARY];
   if (!contents) return 0;
 
-  gce_hwc_layer* layers = &contents->hwLayers[0];
-  reinterpret_cast<gce_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
+  vsoc_hwc_layer* layers = &contents->hwLayers[0];
+  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
       contents->numHwLayers, layers);
 
   int closedFds = 0;
@@ -149,16 +149,16 @@ static int gce_hwc_set(gce_hwc_device* dev, size_t numDisplays,
 }
 #endif
 
-static void gce_hwc_register_procs(gce_hwc_device* dev,
+static void vsoc_hwc_register_procs(vsoc_hwc_device* dev,
                                    const hwc_procs_t* procs) {
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)dev;
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)dev;
   pdev->procs = procs;
 }
 
-static int gce_hwc_query(gce_hwc_device* dev, int what, int* value) {
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)dev;
+static int vsoc_hwc_query(vsoc_hwc_device* dev, int what, int* value) {
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)dev;
 
   switch (what) {
     case HWC_BACKGROUND_LAYER_SUPPORTED:
@@ -176,14 +176,14 @@ static int gce_hwc_query(gce_hwc_device* dev, int what, int* value) {
   return 0;
 }
 
-static int gce_hwc_event_control(
-#if GCE_PLATFORM_SDK_BEFORE(J_MR1)
-    gce_hwc_device* dev, int event, int /*enabled*/) {
+static int vsoc_hwc_event_control(
+#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
+    vsoc_hwc_device* dev, int event, int /*enabled*/) {
 #else
-    gce_hwc_device* dev, int /*dpy*/, int event, int /*enabled*/) {
+    vsoc_hwc_device* dev, int /*dpy*/, int event, int /*enabled*/) {
 #endif
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)dev;
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)dev;
 
   if (event == HWC_EVENT_VSYNC) {
     return 0;
@@ -192,8 +192,8 @@ static int gce_hwc_event_control(
 }
 
 static void* hwc_vsync_thread(void* data) {
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)data;
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)data;
   setpriority(PRIO_PROCESS, 0, HAL_PRIORITY_URGENT_DISPLAY);
 
   int64_t base_timestamp = pdev->vsync_base_timestamp;
@@ -234,22 +234,22 @@ static void* hwc_vsync_thread(void* data) {
   return NULL;
 }
 
-static int gce_hwc_blank(gce_hwc_device* dev, int disp, int /*blank*/) {
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)dev;
+static int vsoc_hwc_blank(vsoc_hwc_device* dev, int disp, int /*blank*/) {
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)dev;
   if (!IS_PRIMARY_DISPLAY(disp)) return -EINVAL;
   return 0;
 }
 
-static void gce_hwc_dump(gce_hwc_device* dev, char* buff, int buff_len) {
-  reinterpret_cast<gce_hwc_composer_device_1_t*>(dev)->composer->Dump(buff,
+static void vsoc_hwc_dump(vsoc_hwc_device* dev, char* buff, int buff_len) {
+  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->Dump(buff,
                                                                       buff_len);
 }
 
-static int gce_hwc_get_display_configs(gce_hwc_device* dev, int disp,
+static int vsoc_hwc_get_display_configs(vsoc_hwc_device* dev, int disp,
                                        uint32_t* configs, size_t* numConfigs) {
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)dev;
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)dev;
 
   if (*numConfigs == 0) return 0;
 
@@ -262,10 +262,10 @@ static int gce_hwc_get_display_configs(gce_hwc_device* dev, int disp,
   return -EINVAL;
 }
 
-#if GCE_PLATFORM_SDK_AFTER(J)
-static int32_t gce_hwc_attribute(struct gce_hwc_composer_device_1_t* pdev,
+#if VSOC_PLATFORM_SDK_AFTER(J)
+static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
                                  const uint32_t attribute) {
-  const GceFrameBuffer& config = GceFrameBuffer::getInstance();
+  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
       return pdev->vsync_period_ns;
@@ -285,12 +285,12 @@ static int32_t gce_hwc_attribute(struct gce_hwc_composer_device_1_t* pdev,
   }
 }
 
-static int gce_hwc_get_display_attributes(gce_hwc_device* dev, int disp,
+static int vsoc_hwc_get_display_attributes(vsoc_hwc_device* dev, int disp,
                                           uint32_t config __unused,
                                           const uint32_t* attributes,
                                           int32_t* values) {
-  struct gce_hwc_composer_device_1_t* pdev =
-      (struct gce_hwc_composer_device_1_t*)dev;
+  struct vsoc_hwc_composer_device_1_t* pdev =
+      (struct vsoc_hwc_composer_device_1_t*)dev;
 
   if (!IS_PRIMARY_DISPLAY(disp)) {
     ALOGE("unknown display type %u", disp);
@@ -298,17 +298,17 @@ static int gce_hwc_get_display_attributes(gce_hwc_device* dev, int disp,
   }
 
   for (int i = 0; attributes[i] != HWC_DISPLAY_NO_ATTRIBUTE; i++) {
-    values[i] = gce_hwc_attribute(pdev, attributes[i]);
+    values[i] = vsoc_hwc_attribute(pdev, attributes[i]);
   }
 
   return 0;
 }
 #endif
 
-static int gce_hwc_close(hw_device_t* device) {
-  struct gce_hwc_composer_device_1_t* dev =
-      (struct gce_hwc_composer_device_1_t*)device;
-  ALOGE("gce_hwc_close");
+static int vsoc_hwc_close(hw_device_t* device) {
+  struct vsoc_hwc_composer_device_1_t* dev =
+      (struct vsoc_hwc_composer_device_1_t*)device;
+  ALOGE("vsoc_hwc_close");
   pthread_kill(dev->vsync_thread, SIGTERM);
   pthread_join(dev->vsync_thread, NULL);
   delete dev->composer;
@@ -316,7 +316,7 @@ static int gce_hwc_close(hw_device_t* device) {
   return 0;
 }
 
-static int gce_hwc_open(const struct hw_module_t* module, const char* name,
+static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
                         struct hw_device_t** device) {
   ALOGI("%s", __FUNCTION__);
   if (strcmp(name, HWC_HARDWARE_COMPOSER)) {
@@ -324,7 +324,7 @@ static int gce_hwc_open(const struct hw_module_t* module, const char* name,
     return -EINVAL;
   }
 
-  gce_hwc_composer_device_1_t* dev  = new gce_hwc_composer_device_1_t();
+  vsoc_hwc_composer_device_1_t* dev  = new vsoc_hwc_composer_device_1_t();
   if (!dev) {
     ALOGE("%s failed to allocate dev", __FUNCTION__);
     return -ENOMEM;
@@ -341,23 +341,23 @@ static int gce_hwc_open(const struct hw_module_t* module, const char* name,
   dev->vsync_base_timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
 
   dev->base.common.tag = HARDWARE_DEVICE_TAG;
-  dev->base.common.version = GCE_HWC_DEVICE_API_VERSION;
+  dev->base.common.version = VSOC_HWC_DEVICE_API_VERSION;
   dev->base.common.module = const_cast<hw_module_t*>(module);
-  dev->base.common.close = gce_hwc_close;
+  dev->base.common.close = vsoc_hwc_close;
 
-  dev->base.prepare = gce_hwc_prepare;
-  dev->base.set = gce_hwc_set;
-  dev->base.query = gce_hwc_query;
-  dev->base.registerProcs = gce_hwc_register_procs;
-  dev->base.dump = gce_hwc_dump;
-#if GCE_PLATFORM_SDK_BEFORE(J_MR1)
-  static hwc_methods_t hwc_methods = {gce_hwc_event_control};
+  dev->base.prepare = vsoc_hwc_prepare;
+  dev->base.set = vsoc_hwc_set;
+  dev->base.query = vsoc_hwc_query;
+  dev->base.registerProcs = vsoc_hwc_register_procs;
+  dev->base.dump = vsoc_hwc_dump;
+#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
+  static hwc_methods_t hwc_methods = {vsoc_hwc_event_control};
   dev->base.methods = &hwc_methods;
 #else
-  dev->base.blank = gce_hwc_blank;
-  dev->base.eventControl = gce_hwc_event_control;
-  dev->base.getDisplayConfigs = gce_hwc_get_display_configs;
-  dev->base.getDisplayAttributes = gce_hwc_get_display_attributes;
+  dev->base.blank = vsoc_hwc_blank;
+  dev->base.eventControl = vsoc_hwc_event_control;
+  dev->base.getDisplayConfigs = vsoc_hwc_get_display_configs;
+  dev->base.getDisplayAttributes = vsoc_hwc_get_display_attributes;
 #endif
   dev->composer =
       new ComposerType(dev->vsync_base_timestamp, dev->vsync_period_ns);
@@ -374,16 +374,16 @@ static int gce_hwc_open(const struct hw_module_t* module, const char* name,
   return ret;
 }
 
-static struct hw_module_methods_t gce_hwc_module_methods = {
-    gce_hwc_open,
+static struct hw_module_methods_t vsoc_hwc_module_methods = {
+    vsoc_hwc_open,
 };
 
 hwc_module_t HAL_MODULE_INFO_SYM = {{HARDWARE_MODULE_TAG,
                                      HWC_MODULE_API_VERSION_0_1,
                                      HARDWARE_HAL_API_VERSION,
                                      HWC_HARDWARE_MODULE_ID,
-                                     "GCE hwcomposer module",
+                                     "VSOC hwcomposer module",
                                      "Google",
-                                     &gce_hwc_module_methods,
+                                     &vsoc_hwc_module_methods,
                                      NULL,
                                      {0}}};

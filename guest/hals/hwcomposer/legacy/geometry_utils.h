@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -14,15 +15,10 @@
  * limitations under the License.
  */
 
-#ifndef GCE_HWCOMPOSER_GEOMETRY_UTILS_H
-#define GCE_HWCOMPOSER_GEOMETRY_UTILS_H
-
 #include "hwcomposer_common.h"
 
-namespace avd {
+namespace cvd {
 
-bool LayersOverlap(const gce_hwc_layer& layer1, const gce_hwc_layer& layer2);
+bool LayersOverlap(const vsoc_hwc_layer& layer1, const vsoc_hwc_layer& layer2);
 
-}  // namespace avd
-
-#endif
+}  // namespace cvd

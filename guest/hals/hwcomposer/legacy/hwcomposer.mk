@@ -17,38 +17,33 @@ LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := \
-    libgceframebuffer \
+    libvsocframebuffer \
+    libbase \
     liblog \
     libcutils \
     libutils \
     libsync \
     libhardware \
     libjpeg \
-    $(GCE_STLPORT_LIBS)
+    $(VSOC_STLPORT_LIBS)
 
 LOCAL_STATIC_LIBRARIES := \
-    libgcemetadata \
     libyuv_static
 
 LOCAL_SRC_FILES := \
     geometry_utils.cpp \
     hwcomposer.cpp \
-    gce_composer.cpp \
+    vsoc_composer.cpp \
     stats_keeper.cpp \
     base_composer.cpp
 
 LOCAL_CFLAGS += \
-    -DLOG_TAG=\"hwcomposer\" \
+    -DLOG_TAG=\"hwcomposer_legacy\" \
     -DGATHER_STATS \
-    $(GCE_VERSION_CFLAGS)
+    $(VSOC_VERSION_CFLAGS)
 
 LOCAL_C_INCLUDES := \
-    device/google/gce/hwcomposer \
-    device/google/gce/include \
+    device/google/cuttlefish_common \
     external/libyuv/files/include \
     bionic \
-    $(GCE_STLPORT_INCLUDES)
-
-include device/google/gce/libs/base/libbase.mk
-LOCAL_SHARED_LIBRARIES += $(GCE_LIBBASE_LIB_NAME)
-LOCAL_C_INCLUDES += $(GCE_LIBBASE_INCLUDE_DIR)
+    $(VSOC_STLPORT_INCLUDES)

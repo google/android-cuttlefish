@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <utility>
 
-namespace avd {
+namespace cvd {
 
-bool LayersOverlap(const gce_hwc_layer& layer1, const gce_hwc_layer& layer2) {
+bool LayersOverlap(const vsoc_hwc_layer& layer1, const vsoc_hwc_layer& layer2) {
   int left1 = layer1.displayFrame.left;
   int right1 = layer1.displayFrame.right;
   int top1 = layer1.displayFrame.top;
@@ -37,4 +37,4 @@ bool LayersOverlap(const gce_hwc_layer& layer1, const gce_hwc_layer& layer2) {
   return overlap_x && overlap_y;
 }
 
-}  // namespace avd
+}  // namespace cvd

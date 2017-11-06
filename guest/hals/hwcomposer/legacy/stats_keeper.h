@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -14,26 +15,23 @@
  * limitations under the License.
  */
 
-#ifndef GCE_HWCOMPOSER_STATS_H_
-#define GCE_HWCOMPOSER_STATS_H_
-
-#include <GceFrameBufferControl.h>
-#include <MonotonicTime.h>
-#include <Pthread.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
+#include <common/libs/time/monotonic_time.h>
+#include <common/libs/threads/cuttlefish_thread.h>
 #include <android-base/thread_annotations.h>
 #include <deque>
 #include <set>
 
 #include "hwcomposer_common.h"
 
-namespace avd {
+namespace cvd {
 
 class CompositionData {
  public:
-  CompositionData(avd::time::MonotonicTimePoint time_point,
+  CompositionData(cvd::time::MonotonicTimePoint time_point,
                   int num_prepares, int num_layers, int num_hwcomposited_layers,
-                  avd::time::Nanoseconds prepare_time,
-                  avd::time::Nanoseconds set_calls_time)
+                  cvd::time::Nanoseconds prepare_time,
+                  cvd::time::Nanoseconds set_calls_time)
       : time_point_(time_point),
         num_prepare_calls_(num_prepares),
         num_layers_(num_layers),
@@ -41,7 +39,7 @@ class CompositionData {
         prepare_time_(prepare_time),
         set_calls_time_(set_calls_time) {}
 
-  avd::time::MonotonicTimePoint time_point() const {
+  cvd::time::MonotonicTimePoint time_point() const {
     return time_point_;
   }
 
@@ -51,28 +49,28 @@ class CompositionData {
 
   int num_hwcomposited_layers() const { return num_hwcomposited_layers_; }
 
-  avd::time::Nanoseconds prepare_time() const {
+  cvd::time::Nanoseconds prepare_time() const {
     return prepare_time_;
   }
 
-  avd::time::Nanoseconds set_calls_time() const {
+  cvd::time::Nanoseconds set_calls_time() const {
     return set_calls_time_;
   }
 
  private:
-  avd::time::MonotonicTimePoint time_point_;
+  cvd::time::MonotonicTimePoint time_point_;
   int num_prepare_calls_;
   int num_layers_;
   int num_hwcomposited_layers_;
-  avd::time::Nanoseconds prepare_time_;
-  avd::time::Nanoseconds set_calls_time_;
+  cvd::time::Nanoseconds prepare_time_;
+  cvd::time::Nanoseconds set_calls_time_;
 };
 
 class StatsKeeper {
  public:
   // The timespan parameter indicates for how long we keep stats about the past
   // compositions.
-  StatsKeeper(avd::time::TimeDifference timespan,
+  StatsKeeper(cvd::time::TimeDifference timespan,
               int64_t vsync_base,
               int32_t vsync_period);
   StatsKeeper();
@@ -96,7 +94,7 @@ class StatsKeeper {
 
  private:
 
-  avd::time::TimeDifference period_length_;
+  cvd::time::TimeDifference period_length_;
 
   // Base and period of the VSYNC signal, allows to accurately calculate the
   // time of the last vsync broadcast.
@@ -115,15 +113,15 @@ class StatsKeeper {
   int num_hwcomposited_layers_ GUARDED_BY(mutex_);
   int num_prepare_calls_ GUARDED_BY(mutex_);
   int num_set_calls_ GUARDED_BY(mutex_);
-  avd::time::Nanoseconds prepare_call_total_time_ GUARDED_BY(mutex_);
-  avd::time::Nanoseconds set_call_total_time_ GUARDED_BY(mutex_);
+  cvd::time::Nanoseconds prepare_call_total_time_ GUARDED_BY(mutex_);
+  cvd::time::Nanoseconds set_call_total_time_ GUARDED_BY(mutex_);
   // These are kept in multisets to be able to calculate mins and maxs of
   // changing sets of (not necessarily different) values.
   std::multiset<int> prepare_calls_per_set_calls_ GUARDED_BY(mutex_);
   std::multiset<int> layers_per_compositions_ GUARDED_BY(mutex_);
-  std::multiset<avd::time::Nanoseconds> prepare_call_times_
+  std::multiset<cvd::time::Nanoseconds> prepare_call_times_
       GUARDED_BY(mutex_);
-  std::multiset<avd::time::Nanoseconds> set_call_times_
+  std::multiset<cvd::time::Nanoseconds> set_call_times_
       GUARDED_BY(mutex_);
   std::multiset<int64_t> set_call_times_per_hwcomposited_layer_ns_
       GUARDED_BY(mutex_);
@@ -139,7 +137,7 @@ class StatsKeeper {
   int64_t total_invisible_area GUARDED_BY(mutex_);
 
   // Controls access to data from past compositions.
-  mutable avd::Mutex mutex_;
+  mutable cvd::Mutex mutex_;
 };
 
 template <class Composer>
@@ -148,7 +146,7 @@ class StatsKeepingComposer {
   // Keep stats from the last 10 seconds.
   StatsKeepingComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
       : composer_(vsync_base_timestamp, vsync_period_ns),
-        stats_keeper_(avd::time::TimeDifference(avd::time::Seconds(10), 1),
+        stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
                       vsync_base_timestamp,
                       vsync_period_ns) {
     // Don't let the composer broadcast by itself, allow it to return to collect
@@ -157,19 +155,19 @@ class StatsKeepingComposer {
   }
   ~StatsKeepingComposer() {}
 
-  int PrepareLayers(size_t num_layers, gce_hwc_layer* layers) {
+  int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     stats_keeper_.RecordPrepareStart(num_layers);
     int num_hwc_layers = composer_.PrepareLayers(num_layers, layers);
     stats_keeper_.RecordPrepareEnd(num_hwc_layers);
     return num_hwc_layers;
   }
 
-  int SetLayers(size_t num_layers, gce_hwc_layer* layers) {
+  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     stats_keeper_.RecordSetStart();
     int yoffset = composer_.SetLayers(num_layers, layers);
     stats_keeper_.RecordSetEnd();
     if (yoffset >= 0) {
-      GceFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
+      VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
           yoffset, &stats_keeper_.last_composition_stats());
     } else {
       ALOGE("%s: Error on SetLayers(), yoffset: %d", __FUNCTION__, yoffset);
@@ -186,6 +184,4 @@ class StatsKeepingComposer {
   Composer composer_;
 };
 
-}  // namespace avd
-
-#endif
+}  // namespace cvd

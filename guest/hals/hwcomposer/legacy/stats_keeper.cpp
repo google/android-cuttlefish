@@ -24,15 +24,15 @@
 #include "geometry_utils.h"
 #include "stats_keeper.h"
 
-using avd::time::TimeDifference;
-using avd::time::Nanoseconds;
-using avd::time::Microseconds;
-using avd::time::Seconds;
-using avd::time::MonotonicTimePoint;
-using avd::Mutex;
-using avd::LockGuard;
+using cvd::time::TimeDifference;
+using cvd::time::Nanoseconds;
+using cvd::time::Microseconds;
+using cvd::time::Seconds;
+using cvd::time::MonotonicTimePoint;
+using cvd::Mutex;
+using cvd::LockGuard;
 
-namespace avd {
+namespace cvd {
 
 namespace {
 
@@ -224,4 +224,4 @@ void StatsKeeper::SynchronizedDump(char* buffer,
 #undef bprintf
 }
 
-}  // namespace avd
+}  // namespace cvd

@@ -31,10 +31,10 @@
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 
-#include "RegionRegistry.h"
+#include "guest/libs/legacy_framebuffer/RegionRegistry.h"
 
-#include "gralloc_gce_priv.h"
-#include "remoter_framework_pkt.h"
+#include "gralloc_vsoc_priv.h"
+#include "guest/libs/remoter/remoter_framework_pkt.h"
 
 #define DEBUG_REFERENCES 1
 #define DEBUG_MAX_LOCK_LEVEL 20

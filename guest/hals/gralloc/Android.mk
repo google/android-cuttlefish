@@ -14,6 +14,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# Include the legacy gralloc
+# TODO(jemoreira): Make it configurable with a BoardConfig variable.
+include $(LOCAL_PATH)/legacy/Android.mk
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := gralloc.vsoc-future

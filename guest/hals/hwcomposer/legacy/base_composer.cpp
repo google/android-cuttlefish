@@ -17,15 +17,15 @@
 #include "base_composer.h"
 
 #include <cutils/log.h>
-#include "GceFrameBufferControl.h"
-#include "gralloc_gce_priv.h"
+#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
+#include "guest/hals/gralloc//legacy/gralloc_vsoc_priv.h"
 
-namespace avd {
+namespace cvd {
 
 namespace {
 
 int BroadcastFrameBufferChanged (int yoffset) {
-  return GceFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
+  return VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
       yoffset);
 }
 
@@ -66,7 +66,7 @@ int BaseComposer::PostFrameBuffer(buffer_handle_t buffer) {
   return yoffset;
 }
 
-int BaseComposer::PrepareLayers(size_t num_layers, gce_hwc_layer* layers) {
+int BaseComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   // find unsupported overlays
   for (size_t i = 0; i < num_layers; i++) {
     if (IS_TARGET_FRAMEBUFFER(layers[i].compositionType)) {
@@ -77,7 +77,7 @@ int BaseComposer::PrepareLayers(size_t num_layers, gce_hwc_layer* layers) {
   return 0;
 }
 
-int BaseComposer::SetLayers(size_t num_layers, gce_hwc_layer* layers) {
+int BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   for (size_t idx = 0; idx < num_layers; idx++) {
     if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
       return PostFrameBuffer(layers[idx].handle);
@@ -86,4 +86,4 @@ int BaseComposer::SetLayers(size_t num_layers, gce_hwc_layer* layers) {
   return -1;
 }
 
-}  // namespace avd
+}  // namespace cvd

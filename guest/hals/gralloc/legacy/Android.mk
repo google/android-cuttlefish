@@ -12,47 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Temporary, should be removed once vsoc hals are in usable state
+
 LOCAL_PATH := $(call my-dir)
 
-GCE_GRALLOC_COMMON_SRC_FILES := \
+VSOC_GRALLOC_COMMON_SRC_FILES := \
     gralloc.cpp \
     framebuffer.cpp \
     mapper.cpp
 
-GCE_GRALLOC_COMMON_CFLAGS:= \
-    -DLOG_TAG=\"gralloc_gce_x86\" \
+VSOC_GRALLOC_COMMON_CFLAGS:= \
+    -DLOG_TAG=\"gralloc_vsoc_legacy\" \
     -Wno-missing-field-initializers \
     -Wall -Werror \
-    $(GCE_VERSION_CFLAGS)
+    $(VSOC_VERSION_CFLAGS)
 
-GCE_GRALLOC_COMMON_C_INCLUDES := \
-    device/google/gce/include
+include $(CLEAR_VARS)
+LOCAL_MODULE := gralloc.vsoc
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_MODULE_TAGS := optional
 
-GCE_GRALLOC_COMMON_SHARED_LIBRARIES := \
+LOCAL_SRC_FILES := $(VSOC_GRALLOC_COMMON_SRC_FILES)
+
+LOCAL_CFLAGS := $(VSOC_GRALLOC_COMMON_CFLAGS)
+LOCAL_C_INCLUDES := device/google/cuttlefish_common
+LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
     libcutils \
-    libgceframebuffer
+    libvsocframebuffer
 
-GCE_GRALLOC_COMMON_STATIC_LIBRARIES := \
-    libgcemetadata
-
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := gralloc.gce_x86
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := hw
-else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-endif
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := $(GCE_GRALLOC_COMMON_SRC_FILES)
-
-LOCAL_CFLAGS := $(GCE_GRALLOC_COMMON_CFLAGS)
-LOCAL_C_INCLUDES := $(GCE_GRALLOC_COMMON_C_INCLUDES)
-LOCAL_SHARED_LIBRARIES := $(GCE_GRALLOC_COMMON_SHARED_LIBRARIES)
-LOCAL_STATIC_LIBRARIES := $(GCE_GRALLOC_COMMON_STATIC_LIBRARIES)
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)
 

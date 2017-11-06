@@ -21,55 +21,50 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
 LOCAL_CFLAGS += -DUSE_OLD_HWCOMPOSER
-LOCAL_MODULE := hwcomposer.gce_x86-deprecated
+LOCAL_MODULE := hwcomposer.vsoc-deprecated
 include $(BUILD_SHARED_LIBRARY)
 
 # New hwcomposer, performs software composition
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
-LOCAL_MODULE := hwcomposer.gce_x86
+LOCAL_MODULE := hwcomposer.vsoc
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)
 
 # An executable to run some tests
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := hwc_tests.gce_x86
+LOCAL_MODULE := hwc_tests.vsoc
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := \
-    libgceframebuffer \
+    libvsocframebuffer \
     liblog \
+    libbase \
     libcutils \
     libutils \
     libsync \
     libhardware \
     libjpeg \
-    $(GCE_STLPORT_LIBS)
+    $(VSOC_STLPORT_LIBS)
 
 LOCAL_STATIC_LIBRARIES := \
-    libgcemetadata \
     libyuv_static
 
 LOCAL_SRC_FILES := \
     hwc_tests.cpp \
-    gce_composer.cpp \
+    vsoc_composer.cpp \
     base_composer.cpp \
     geometry_utils.cpp
 
 
 LOCAL_CFLAGS += \
     -DLOG_TAG=\"hwc_tests\" \
-    $(GCE_VERSION_CFLAGS)
+    $(VSOC_VERSION_CFLAGS)
 
 LOCAL_C_INCLUDES := \
-    device/google/gce/hwcomposer \
-    device/google/gce/include \
+    device/google/cuttlefish_common \
     bionic \
-    $(GCE_STLPORT_INCLUDES)
-
-include device/google/gce/libs/base/libbase.mk
-LOCAL_SHARED_LIBRARIES += $(GCE_LIBBASE_LIB_NAME)
-LOCAL_C_INCLUDES += $(GCE_LIBBASE_INCLUDE_DIR)
+    $(VSOC_STLPORT_INCLUDES)
 
 include $(BUILD_EXECUTABLE)

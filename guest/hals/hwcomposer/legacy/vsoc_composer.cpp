@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "gce_composer.h"
-#include <GceFrameBuffer.h>
-#include <GceFrameBufferControl.h>
+#include "vsoc_composer.h"
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
 #include <cutils/log.h>
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
@@ -34,7 +34,7 @@ namespace cvd {
 namespace {
 
 // Ensures that the layer does not include any inconsistencies
-int SanityCheckLayer(const gce_hwc_layer& layer) {
+int SanityCheckLayer(const vsoc_hwc_layer& layer) {
   // Check displayFrame
   if (layer.displayFrame.left > layer.displayFrame.right ||
       layer.displayFrame.top > layer.displayFrame.bottom) {
@@ -86,7 +86,7 @@ int SanityCheckLayer(const gce_hwc_layer& layer) {
   return 0;
 }
 
-bool LayerNeedsScaling(const gce_hwc_layer& layer) {
+bool LayerNeedsScaling(const vsoc_hwc_layer& layer) {
   int from_w = layer.sourceCrop.right - layer.sourceCrop.left;
   int from_h = layer.sourceCrop.bottom - layer.sourceCrop.top;
   int to_w = layer.displayFrame.right - layer.displayFrame.left;
@@ -100,11 +100,11 @@ bool LayerNeedsScaling(const gce_hwc_layer& layer) {
   return needs_rot ? rot_scale : not_rot_scale;
 }
 
-bool LayerNeedsBlending(const gce_hwc_layer& layer) {
+bool LayerNeedsBlending(const vsoc_hwc_layer& layer) {
   return layer.blending != HWC_BLENDING_NONE;
 }
 
-bool LayerNeedsAttenuation(const gce_hwc_layer& layer) {
+bool LayerNeedsAttenuation(const vsoc_hwc_layer& layer) {
   return layer.blending == HWC_BLENDING_COVERAGE;
 }
 
@@ -156,7 +156,7 @@ bool IsFormatSupported(uint32_t format) {
   return GetConverter(format) != NULL;
 }
 
-bool CanCompositeLayer(const gce_hwc_layer& layer) {
+bool CanCompositeLayer(const vsoc_hwc_layer& layer) {
   if (layer.handle == NULL) {
     ALOGW("%s received a layer with a null handler", __FUNCTION__);
     return false;
@@ -227,9 +227,9 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   uint8_t* src_y = src.buffer;
   int stride_y = stride_in_pixels;
   uint8_t* src_v = src_y + stride_y * src.height;
-  int stride_v = GceFrameBuffer::align(stride_y / 2, 16);
+  int stride_v = VSoCFrameBuffer::align(stride_y / 2, 16);
   uint8_t* src_u = src_v + stride_v * src.height / 2;
-  int stride_u = GceFrameBuffer::align(stride_y / 2, 16);
+  int stride_u = VSoCFrameBuffer::align(stride_y / 2, 16);
 
   // Adjust for crop
   src_y += src.crop_y * stride_y + src.crop_x;
@@ -350,8 +350,8 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
 // - the one provided by surfaceflinger if it is doing any GLES composition
 // - the next hwc-only framebuffer otherwise
 // Takes care of rotating the hwc-only framebuffers
-buffer_handle_t GceComposer::FindFrameBuffer(int num_layers,
-                                             gce_hwc_layer* layers) {
+buffer_handle_t VSoCComposer::FindFrameBuffer(int num_layers,
+                                             vsoc_hwc_layer* layers) {
   buffer_handle_t* fb_handle = NULL;
   bool use_hwc_fb = true;
   // The framebuffer target is usually the last layer in the list, so iterate in
@@ -374,7 +374,7 @@ buffer_handle_t GceComposer::FindFrameBuffer(int num_layers,
   return *fb_handle;
 }
 
-void GceComposer::CompositeLayer(gce_hwc_layer* src_layer,
+void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
                                  buffer_handle_t dst_handle) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
@@ -465,7 +465,7 @@ void GceComposer::CompositeLayer(gce_hwc_layer* src_layer,
         // these sizes are taken from the displayFrame rectangle which is always
         // smaller than the framebuffer, the framebuffer in turn has aligned
         // stride and these buffers are the size of the framebuffer.
-        GceFrameBuffer::align(
+        VSoCFrameBuffer::align(
             x_res * formatToBytesPerPixel(dst_priv_handle->format), 16));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
@@ -487,7 +487,7 @@ void GceComposer::CompositeLayer(gce_hwc_layer* src_layer,
       // Make width and height match the crop sizes on the source
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
-      int dst_stride = GceFrameBuffer::align(
+      int dst_stride = VSoCFrameBuffer::align(
           src_width * formatToBytesPerPixel(dst_priv_handle->format), 16);
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
@@ -587,12 +587,12 @@ void GceComposer::CompositeLayer(gce_hwc_layer* src_layer,
   gralloc_module_->unlock(gralloc_module_, dst_priv_handle);
 }
 
-/* static */ const int GceComposer::kNumTmpBufferPieces = 2;
+/* static */ const int VSoCComposer::kNumTmpBufferPieces = 2;
 
-GceComposer::GceComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
+VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
     : BaseComposer(vsync_base_timestamp, vsync_period_ns),
       tmp_buffer_(kNumTmpBufferPieces *
-                  GceFrameBuffer::getInstance().bufferSize()),
+                  VSoCFrameBuffer::getInstance().bufferSize()),
       next_hwc_framebuffer_(0) {
   hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                 reinterpret_cast<const hw_module_t**>(&gralloc_module_));
@@ -600,7 +600,7 @@ GceComposer::GceComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
       reinterpret_cast<const hw_module_t*>(gralloc_module_),
       GRALLOC_HARDWARE_GPU0,
       reinterpret_cast<hw_device_t**>(&gralloc_dev_));
-  for (int i = 0; i < GceFrameBuffer::kNumHwcBuffers; ++i) {
+  for (int i = 0; i < VSoCFrameBuffer::kNumHwcBuffers; ++i) {
     buffer_handle_t tmp;
     gralloc_dev_->alloc_hwc_framebuffer(
         reinterpret_cast<alloc_device_t*>(gralloc_dev_), &tmp);
@@ -608,7 +608,7 @@ GceComposer::GceComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
   }
 }
 
-GceComposer::~GceComposer() {
+VSoCComposer::~VSoCComposer() {
   // Free the hwc fb handles
   for (int idx = 0; idx < hwc_framebuffers_.size(); ++idx) {
     gralloc_dev_->device.free(reinterpret_cast<alloc_device_t*>(gralloc_dev_),
@@ -619,7 +619,7 @@ GceComposer::~GceComposer() {
   gralloc_dev_->device.common.close(reinterpret_cast<hw_device_t*>(gralloc_dev_));
 }
 
-int GceComposer::PrepareLayers(size_t num_layers, gce_hwc_layer* layers) {
+int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   int composited_layers_count = 0;
 
   // Loop over layers in inverse order of z-index
@@ -661,7 +661,7 @@ int GceComposer::PrepareLayers(size_t num_layers, gce_hwc_layer* layers) {
   return composited_layers_count;
 }
 
-int GceComposer::SetLayers(size_t num_layers, gce_hwc_layer* layers) {
+int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   int targetFbs = 0;
   buffer_handle_t fb_handle = FindFrameBuffer(num_layers, layers);
   if (!fb_handle) {
@@ -691,12 +691,12 @@ int GceComposer::SetLayers(size_t num_layers, gce_hwc_layer* layers) {
   return PostFrameBuffer(fb_handle);
 }
 
-uint8_t* GceComposer::RotateTmpBuffer(unsigned int order) {
+uint8_t* VSoCComposer::RotateTmpBuffer(unsigned int order) {
   return &tmp_buffer_[(order % kNumTmpBufferPieces) * tmp_buffer_.size() /
                       kNumTmpBufferPieces];
 }
 
-uint8_t* GceComposer::GetSpecialTmpBuffer(size_t needed_size) {
+uint8_t* VSoCComposer::GetSpecialTmpBuffer(size_t needed_size) {
   special_tmp_buffer_.resize(needed_size);
   return &special_tmp_buffer_[0];
 }
