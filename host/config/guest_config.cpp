@@ -214,7 +214,7 @@ void ConfigureNIC(xmlNode* devices, const std::string& name,
                     .c_str()));
 
   auto mdl = xmlNewChild(nic, nullptr, xc("model"), nullptr);
-  xmlNewProp(mdl, xc("type"), xc("e1000"));
+  xmlNewProp(mdl, xc("type"), xc("virtio"));
 
   auto tgt = xmlNewChild(nic, nullptr, xc("target"), nullptr);
   xmlNewProp(tgt, xc("dev"), xc(name.c_str()));
