@@ -7,7 +7,7 @@ set -e
 num_avd_accounts=8
 
 # avd accounts only invoke adb, so limit their access via groups
-avd_acount_groups=libvirt,plugdev
+avd_account_groups=libvirt,plugdev
 
 case "$1" in
     (configure)
