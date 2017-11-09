@@ -37,7 +37,8 @@ LOCAL_CFLAGS := \
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog \
-    libvsoc_framebuffer
+    libvsoc_framebuffer \
+    libvsoc
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
 LOCAL_MODULE_RELATIVE_PATH := hw

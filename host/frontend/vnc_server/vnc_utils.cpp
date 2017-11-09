@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "fb_bcast_region_view.h"
-#include <stdio.h>
+
+#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 
 using vsoc::framebuffer::FBBroadcastRegionView;
 
-int main() {
-  uint32_t frame_num = 0;
-  vsoc_reg_off_t offset = 0;
-  FBBroadcastRegionView region;
-  if (!region.Open()) {
-    fprintf(stderr, "Error opening region\n");
-    return 1;
-  }
+namespace avd {
+namespace vnc {
 
-  while (1) {
-    offset = region.WaitForNewFrameSince(&frame_num);
-    printf("Signaled frame_num = %d, offset = 0x%x\n", frame_num, offset);
-  }
-
-  return 0;
+FBBroadcastRegionView* GetFBBroadcastRegionView() {
+  static FBBroadcastRegionView instance;
+  return &instance;
 }
+
+}  // namespace vnc
+}  // namespace avd

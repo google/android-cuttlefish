@@ -26,6 +26,7 @@ cc_binary_host {
         "virtual_input_device.cpp",
         "vnc_client_connection.cpp",
         "vnc_server.cpp",
+        "vnc_utils.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",

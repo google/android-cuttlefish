@@ -2,11 +2,13 @@ cc_binary_host {
     name: "launch_cuttlefish",
     srcs: [
         "main.cc",
+	"fb_bcast_region_handler.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     static_libs: [
+        "vsoc_lib",
         "libcuttlefish_host_config",
         "libivserver",
 	"libvadb",

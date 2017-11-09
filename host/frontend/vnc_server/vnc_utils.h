@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/vsoc/framebuffer/fb_bcast_region.h"
+#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 
 namespace avd {
 namespace vnc {
@@ -62,24 +62,20 @@ struct Stripe {
   ScreenOrientation orientation{};
 };
 
+vsoc::framebuffer::FBBroadcastRegionView* GetFBBroadcastRegionView();
+
 inline int BytesPerPixel() {
-  return vsoc::framebuffer::FBBroadcastRegion::GetInstance()
-      ->display_properties()
-      .bytes_per_pixel();
+  return GetFBBroadcastRegionView()->bytes_per_pixel();
 }
 
 // The width of the screen regardless of orientation. Does not change.
 inline int ActualScreenWidth() {
-  return vsoc::framebuffer::FBBroadcastRegion::GetInstance()
-      ->display_properties()
-      .x_res();
+  return GetFBBroadcastRegionView()->x_res();
 }
 
 // The height of the screen regardless of orientation. Does not change.
 inline int ActualScreenHeight() {
-  return vsoc::framebuffer::FBBroadcastRegion::GetInstance()
-      ->display_properties()
-      .y_res();
+  return GetFBBroadcastRegionView()->y_res();
 }
 
 inline int ScreenSizeInBytes() {

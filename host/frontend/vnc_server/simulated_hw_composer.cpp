@@ -28,10 +28,9 @@ SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
 #ifdef FUZZ_TEST_VNC
       engine_{std::random_device{}()},
 #endif
-      fb_region_{vsoc::framebuffer::FBBroadcastRegion::GetInstance()},
       bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements) {
-  stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
+        stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
 }
 
 SimulatedHWComposer::~SimulatedHWComposer() {
@@ -78,7 +77,7 @@ void SimulatedHWComposer::MakeStripes() {
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
     vsoc_reg_off_t buffer_offset =
-        fb_region_->WaitForNewFrameSince(&previous_seq_num);
+        GetFBBroadcastRegionView()->WaitForNewFrameSince(&previous_seq_num);
 
     const auto* frame_start =
         GrallocBufferRegion::GetInstance()->OffsetToBufferPtr(buffer_offset);
