@@ -1,2 +1,2 @@
 host/deb_files/* /
-bazel-bin/host/vadb/adbshell /usr/bin/
+host/commands/adbshell/adbshell /usr/bin/

@@ -30,6 +30,27 @@
 
 . /lib/lsb/init-functions
 
+num_cvd_accounts=8
+
+create_mobile_interface() {
+  printf '<network>\n'
+  printf '  <name>cvd-mobile-%02d</name>\n' $1
+  printf "  <forward mode='nat'>\n"
+  printf "    <nat>\n"
+  printf "      <port start='1024' end='65535'/>\n"
+  printf "    </nat>\n"
+  printf "  </forward>\n"
+  printf "  <bridge name='cvd-mobile-%02d' stp='on' delay='0'/>\n" $1
+  printf "  <ip address='192.168.99.%d' netmask='255.255.255.252'>\n" \
+    $(($1 * 4 - 3))
+  printf "    <dhcp>\n"
+  printf "      <range start='192.168.99.%d' end='192.168.99.%d'/>\n" \
+    $(($1 * 4 - 2)) $(($1 * 4 - 2))
+  printf "    </dhcp>\n"
+  printf "  </ip>\n"
+  printf "</network>\n"
+}
+
 start() {
     /sbin/modprobe vhci-hcd
     # This has to be expressed in very basic shell syntax, so we can't
@@ -46,11 +67,15 @@ start() {
     else
       log_warning_msg "USB controller not found. adb may not be available"
     fi
-    /usr/bin/virsh net-create /usr/share/cuttlefish-common/network-abr0.xml
+    for i in $(seq ${num_cvd_accounts}); do
+      create_mobile_interface $i | /usr/bin/virsh net-create /dev/fd/0
+    done
 }
 
 stop() {
-    /usr/bin/virsh net-destroy abr0 || true
+    for i in $(seq ${num_cvd_accounts}); do
+      /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $i)"
+    done
 }
 
 usage() {

@@ -26,9 +26,7 @@ CFDATDIR_COMMON=$(DESTDIR_COMMON)/usr/share/cuttlefish-common
 CFDOCDIR_COMMON=$(DESTDIR_COMMON)/usr/share/doc/cuttlefish-common
 
 build:
-	@$(BAZEL) test //...:all
-	@$(BAZEL) build //host/launcher:cf
-	@$(BAZEL) build //host/vadb:adbshell
+	make -C host/commands/adbshell
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/config-package.mk

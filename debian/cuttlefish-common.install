@@ -1,5 +1,2 @@
-bazel-bin/host/launcher/cf /usr/bin/
-host/ivserver/vsoc_mem.json /usr/share/cuttlefish-common/
-host/launcher/network-abr0.xml /usr/share/cuttlefish-common/
 host/deploy/install_zip.sh /usr/bin/
 host/deploy/unpack_boot_image.py /usr/lib/cuttlefish-common/bin/
