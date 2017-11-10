@@ -212,7 +212,7 @@ void ConfigureNIC(xmlNode* devices, const std::string& name,
 
   auto mac = xmlNewChild(nic, nullptr, xc("mac"), nullptr);
   xmlNewProp(mac, xc("address"),
-             xc(concat("00:41:56:44:", std::setfill('0'), std::hex,
+             xc(concat("00:43:56:44:", std::setfill('0'), std::hex,
                        std::setw(2), guest_id, ':', std::setw(2), nic_id)
                     .c_str()));
 
