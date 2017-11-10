@@ -1,2 +1,0 @@
-test --client_env=CC=/usr/bin/clang-3.8 --color=yes --test_output all
-build --client_env=CC=/usr/bin/clang-3.8 --color=yes

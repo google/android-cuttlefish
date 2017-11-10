@@ -1,6 +1,0 @@
-[submodule "external/cuttlefish_common"]
-	path = external/cuttlefish_common
-	url = sso://googleplex-android/device/google/cuttlefish_common
-[submodule "external/cuttlefish_kernel"]
-	path = external/cuttlefish_kernel
-	url = sso://googleplex-android/device/google/cuttlefish_kernel
