@@ -73,7 +73,7 @@ service vnc_server /vendor/bin/vnc_server
     oneshot
 
 
-service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/vport0p1 *:V
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
     class main
     user root
     disabled
@@ -93,7 +93,7 @@ service gce_fs_monitor /vendor/bin/gce_fs_monitor
     oneshot
 
 
-service usbforward /vendor/bin/usbforward /dev/vport0p2
+service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
     class late_start
     user root
 
