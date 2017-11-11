@@ -30,7 +30,7 @@
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
 namespace {
-using avd::SharedFDSet;
+using cvd::SharedFDSet;
 
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
@@ -53,7 +53,7 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
 }
 }  // namespace
 
-namespace avd {
+namespace cvd {
 
 bool FileInstance::CopyFrom(FileInstance& in) {
   AutoFreeBuffer buffer;
@@ -361,4 +361,4 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
   return rval;
 }
 
-}  // namespace avd
+}  // namespace cvd

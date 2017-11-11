@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <mutex>
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 class ServerSocket;
@@ -56,9 +56,9 @@ class ClientSocket {
 
  private:
   friend ServerSocket;
-  explicit ClientSocket(avd::SharedFD fd) : fd_(fd) {}
+  explicit ClientSocket(cvd::SharedFD fd) : fd_(fd) {}
 
-  avd::SharedFD fd_;
+  cvd::SharedFD fd_;
   bool other_side_closed_{};
   std::mutex send_lock_;
 };
@@ -73,8 +73,8 @@ class ServerSocket {
   ClientSocket Accept();
 
  private:
-  avd::SharedFD fd_;
+  cvd::SharedFD fd_;
 };
 
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

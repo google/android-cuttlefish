@@ -60,7 +60,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace avd {
+namespace cvd {
 
 class FileInstance;
 
@@ -168,9 +168,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const avd::FileInstance& operator*() const { return *value_; }
+  const cvd::FileInstance& operator*() const { return *value_; }
 
-  avd::FileInstance& operator*() { return *value_; }
+  cvd::FileInstance& operator*() { return *value_; }
 
  private:
   std::shared_ptr<FileInstance> value_;
@@ -230,7 +230,7 @@ class FileInstance {
     return rval;
   }
 
-  int EpollCtl(int op, avd::SharedFD new_fd, struct epoll_event* event) {
+  int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(
         epoll_ctl(fd_, op, new_fd->fd_, event));
@@ -514,6 +514,6 @@ class FileInstance {
 
 SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace avd
+}  // namespace cvd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
