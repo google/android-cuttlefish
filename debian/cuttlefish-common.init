@@ -32,23 +32,31 @@
 
 num_cvd_accounts=8
 
-create_mobile_interface() {
+create_interface() {
   printf '<network>\n'
-  printf '  <name>cvd-mobile-%02d</name>\n' $1
+  printf '  <name>cvd-%s-%02d</name>\n' "$2" $1
   printf "  <forward mode='nat'>\n"
   printf "    <nat>\n"
   printf "      <port start='1024' end='65535'/>\n"
   printf "    </nat>\n"
   printf "  </forward>\n"
-  printf "  <bridge name='cvd-mobile-%02d' stp='on' delay='0'/>\n" $1
-  printf "  <ip address='192.168.99.%d' netmask='255.255.255.252'>\n" \
-    $(($1 * 4 - 3))
+  printf "  <bridge name='cvd-%s-%02d' stp='on' delay='0'/>\n" "$2" $1
+  printf "  <ip address='%s.%d' netmask='255.255.255.252'>\n" \
+    "$3" $(($1 * 4 - 3))
   printf "    <dhcp>\n"
-  printf "      <range start='192.168.99.%d' end='192.168.99.%d'/>\n" \
-    $(($1 * 4 - 2)) $(($1 * 4 - 2))
+  printf "      <range start='%s.%d' end='%s.%d'/>\n" \
+    "$3" $(($1 * 4 - 2)) "$3" $(($1 * 4 - 2))
   printf "    </dhcp>\n"
   printf "  </ip>\n"
   printf "</network>\n"
+}
+
+create_mobile_interface() {
+  create_interface "$1" mobile 192.168.99
+}
+
+create_wifi_interface() {
+  create_interface "$1" wifi 192.168.98
 }
 
 start() {
@@ -69,12 +77,14 @@ start() {
     fi
     for i in $(seq ${num_cvd_accounts}); do
       create_mobile_interface $i | /usr/bin/virsh net-create /dev/fd/0
+      create_wifi_interface $i | /usr/bin/virsh net-create /dev/fd/0
     done
 }
 
 stop() {
     for i in $(seq ${num_cvd_accounts}); do
       /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $i)"
+      /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $i)"
     done
 }
 
