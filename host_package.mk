@@ -14,7 +14,7 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
-    launch_cuttlefish \
+    launch_cvd \
 
 cvd_host_tests := \
     auto_free_buffer_test \
