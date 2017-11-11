@@ -60,9 +60,6 @@ BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 # TODO(b/65266349) Figure out why this is needed
 BOARD_KERNEL_CMDLINE += security=selinux
 
-# TODO(b/65254639) Use different serial numbers
-BOARD_KERNEL_CMDLINE += androidboot.serialno=CUTTLEFISHAVD01
-
 # TOOD(b/65254717) This needs to go away
 BOARD_KERNEL_CMDLINE += CUTTLEFISH
 
