@@ -50,8 +50,8 @@ class SimulatedBufferBase {
   SimulatedBufferBase(
       int32_t items_per_second,
       int64_t simulated_item_capacity,
-      avd::time::MonotonicTimePointFactory* clock =
-        avd::time::MonotonicTimePointFactory::GetInstance()) :
+      cvd::time::MonotonicTimePointFactory* clock =
+        cvd::time::MonotonicTimePointFactory::GetInstance()) :
     clock_(clock),
     current_item_num_(0),
     base_item_num_(0),
@@ -67,7 +67,7 @@ class SimulatedBufferBase {
     return current_item_num_;
   }
 
-  const avd::time::MonotonicTimePoint GetLastUpdatedTime() const {
+  const cvd::time::MonotonicTimePoint GetLastUpdatedTime() const {
     return current_time_;
   }
 
@@ -75,7 +75,7 @@ class SimulatedBufferBase {
   // different sleep calls.
   // Sleep is best-effort. The code assumes that the acutal sleep time may be
   // greater or less than the time requested.
-  virtual void SleepUntilTime(const avd::time::MonotonicTimePoint& in) {
+  virtual void SleepUntilTime(const cvd::time::MonotonicTimePoint& in) {
     struct timespec ts;
     in.ToTimespec(&ts);
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
@@ -96,7 +96,7 @@ class SimulatedBufferBase {
     if (initialize_) {
       Init();
     }
-    avd::time::MonotonicTimePoint now;
+    cvd::time::MonotonicTimePoint now;
     clock_->FetchCurrentTime(&now);
     // We can't call FetchCurrentTime() in the constuctor because a subclass may
     // want to override it, so we initialze the times to 0. If we detect this
@@ -113,13 +113,13 @@ class SimulatedBufferBase {
     // is immune to overflow.
     // However, this does assume that kNanosecondsPerSecond * items_per_second_
     // fits in an int64.
-    avd::time::Seconds seconds(now - base_time_);
+    cvd::time::Seconds seconds(now - base_time_);
     base_time_ += seconds;
     base_item_num_ += seconds.count() * items_per_second_;
     current_time_ = now;
     current_item_num_ =
-        avd::time::Nanoseconds(now - base_time_).count() *
-        items_per_second_ / avd::time::kNanosecondsPerSecond +
+        cvd::time::Nanoseconds(now - base_time_).count() *
+        items_per_second_ / cvd::time::kNanosecondsPerSecond +
         base_item_num_;
   }
 
@@ -133,13 +133,13 @@ class SimulatedBufferBase {
 
   // Calculate the TimePoint that corresponds to an item.
   // Caution: This may not return a correct time for items in the past.
-  avd::time::MonotonicTimePoint CalculateItemTime(int64_t item) {
+  cvd::time::MonotonicTimePoint CalculateItemTime(int64_t item) {
     int64_t seconds = (item - base_item_num_) / items_per_second_;
     int64_t new_base_item_num = base_item_num_ + seconds * items_per_second_;
-    return base_time_ + avd::time::Seconds(seconds) +
-      avd::time::Nanoseconds(divide_and_round_up(
+    return base_time_ + cvd::time::Seconds(seconds) +
+      cvd::time::Nanoseconds(divide_and_round_up(
           (item - new_base_item_num) *
-          avd::time::kNanosecondsPerSecond,
+          cvd::time::kNanosecondsPerSecond,
           items_per_second_));
   }
 
@@ -149,7 +149,7 @@ class SimulatedBufferBase {
     if (paused_) {
       SetPaused(false);
     }
-    avd::time::MonotonicTimePoint desired_time =
+    cvd::time::MonotonicTimePoint desired_time =
         CalculateItemTime(item);
     while (1) {
       Update();
@@ -162,12 +162,12 @@ class SimulatedBufferBase {
 
  protected:
   // Source of the timepoints.
-  avd::time::MonotonicTimePointFactory* clock_;
+  cvd::time::MonotonicTimePointFactory* clock_;
   // Time when the other values in the structure were updated.
-  avd::time::MonotonicTimePoint current_time_;
+  cvd::time::MonotonicTimePoint current_time_;
   // Most recent time when there was no round-off error between the clock and
   // items.
-  avd::time::MonotonicTimePoint base_time_;
+  cvd::time::MonotonicTimePoint base_time_;
   // Number of the current item.
   int64_t current_item_num_;
   // Most recent item number where there was no round-off error between the
@@ -190,8 +190,8 @@ class SimulatedOutputBuffer : public SimulatedBufferBase {
   SimulatedOutputBuffer(
       int64_t item_rate,
       int64_t simulated_item_capacity,
-      avd::time::MonotonicTimePointFactory* clock =
-        avd::time::MonotonicTimePointFactory::GetInstance()) :
+      cvd::time::MonotonicTimePointFactory* clock =
+        cvd::time::MonotonicTimePointFactory::GetInstance()) :
       SimulatedBufferBase(item_rate, simulated_item_capacity, clock) {
     output_buffer_item_num_ = current_item_num_;
   }
@@ -231,7 +231,7 @@ class SimulatedOutputBuffer : public SimulatedBufferBase {
     return output_buffer_item_num_;
   }
 
-  avd::time::MonotonicTimePoint GetNextOutputBufferItemTime() {
+  cvd::time::MonotonicTimePoint GetNextOutputBufferItemTime() {
     Update();
     return CalculateItemTime(output_buffer_item_num_);
   }
@@ -257,8 +257,8 @@ class SimulatedInputBuffer : public SimulatedBufferBase {
   SimulatedInputBuffer(
       int64_t item_rate,
       int64_t simulated_item_capacity,
-      avd::time::MonotonicTimePointFactory* clock =
-        avd::time::MonotonicTimePointFactory::GetInstance()) :
+      cvd::time::MonotonicTimePointFactory* clock =
+        cvd::time::MonotonicTimePointFactory::GetInstance()) :
       SimulatedBufferBase(item_rate, simulated_item_capacity, clock) {
     input_buffer_item_num_ = current_item_num_;
     lost_input_items_ = 0;

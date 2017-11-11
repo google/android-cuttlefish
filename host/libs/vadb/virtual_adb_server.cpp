@@ -22,7 +22,7 @@ bool VirtualADBServer::Init() {
   LOG(INFO) << "Starting server socket: " << name_;
 
   server_ =
-      avd::SharedFD::SocketLocalServer(name_.c_str(), false, SOCK_STREAM, 0666);
+      cvd::SharedFD::SocketLocalServer(name_.c_str(), false, SOCK_STREAM, 0666);
   if (!server_->IsOpen()) {
     LOG(ERROR) << "Could not create socket: " << server_->StrError();
     return false;
@@ -30,12 +30,12 @@ bool VirtualADBServer::Init() {
   return true;
 }
 
-void VirtualADBServer::BeforeSelect(avd::SharedFDSet* fd_read) const {
+void VirtualADBServer::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(server_);
   for (const auto& client : clients_) client.BeforeSelect(fd_read);
 }
 
-void VirtualADBServer::AfterSelect(const avd::SharedFDSet& fd_read) {
+void VirtualADBServer::AfterSelect(const cvd::SharedFDSet& fd_read) {
   if (fd_read.IsSet(server_)) HandleIncomingConnection();
 
   for (auto iter = clients_.begin(); iter != clients_.end();) {
@@ -52,7 +52,7 @@ void VirtualADBServer::AfterSelect(const avd::SharedFDSet& fd_read) {
 // Typically we will have no more than one QEmu connection, but the nature
 // of server requires proper handling nonetheless.
 void VirtualADBServer::HandleIncomingConnection() {
-  avd::SharedFD client = avd::SharedFD::Accept(*server_, nullptr, nullptr);
+  cvd::SharedFD client = cvd::SharedFD::Accept(*server_, nullptr, nullptr);
   if (!client->IsOpen()) {
     LOG(ERROR) << "Client connection failed: " << client->StrError();
     return;

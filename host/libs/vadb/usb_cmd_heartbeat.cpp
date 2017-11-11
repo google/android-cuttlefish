@@ -19,9 +19,9 @@
 #include "host/libs/vadb/usb_cmd_heartbeat.h"
 
 namespace vadb {
-bool USBCmdHeartbeat::OnRequest(const avd::SharedFD& fd) { return true; }
+bool USBCmdHeartbeat::OnRequest(const cvd::SharedFD& fd) { return true; }
 
-bool USBCmdHeartbeat::OnResponse(bool is_success, const avd::SharedFD& data) {
+bool USBCmdHeartbeat::OnResponse(bool is_success, const cvd::SharedFD& data) {
   callback_(is_success);
   return true;
 }

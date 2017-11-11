@@ -31,7 +31,7 @@ USBCmdDataTransfer::USBCmdDataTransfer(
   req_.timeout = deadline;
 }
 
-bool USBCmdDataTransfer::OnRequest(const avd::SharedFD& fd) {
+bool USBCmdDataTransfer::OnRequest(const cvd::SharedFD& fd) {
   if (fd->Write(&req_, sizeof(req_)) != sizeof(req_)) {
     LOG(ERROR) << "Short write: " << fd->StrError();
     return false;
@@ -47,7 +47,7 @@ bool USBCmdDataTransfer::OnRequest(const avd::SharedFD& fd) {
   return true;
 }
 
-bool USBCmdDataTransfer::OnResponse(bool is_success, const avd::SharedFD& fd) {
+bool USBCmdDataTransfer::OnResponse(bool is_success, const cvd::SharedFD& fd) {
   if (!is_success) {
     callback_(false, std::move(data_));
     return true;

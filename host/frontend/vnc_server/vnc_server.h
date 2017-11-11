@@ -28,7 +28,7 @@
 #include "host/frontend/vnc_server/vnc_client_connection.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 class VncServer {
@@ -53,4 +53,4 @@ class VncServer {
 };
 
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

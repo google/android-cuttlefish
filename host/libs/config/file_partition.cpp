@@ -63,7 +63,7 @@ FilePartition::~FilePartition() {
 
 std::unique_ptr<FilePartition> FilePartition::ReuseExistingFile(
     const std::string& path) {
-  avd::SharedFD fd(avd::SharedFD::Open(path.c_str(), O_RDWR));
+  cvd::SharedFD fd(cvd::SharedFD::Open(path.c_str(), O_RDWR));
   CHECK(fd->IsOpen()) << "Could not open file: " << path << ": "
                       << fd->StrError();
 
@@ -74,7 +74,7 @@ std::unique_ptr<FilePartition> FilePartition::ReuseExistingFile(
 std::unique_ptr<FilePartition> FilePartition::CreateNewFile(
     const std::string& path, int size_mb) {
   {
-    avd::SharedFD fd(avd::SharedFD::Open(path.c_str(), O_CREAT | O_RDWR, 0600));
+    cvd::SharedFD fd(cvd::SharedFD::Open(path.c_str(), O_CREAT | O_RDWR, 0600));
     CHECK(fd->IsOpen()) << "Could not open file: " << path << ": "
                         << fd->StrError();
     CHECK(fd->Truncate(size_mb << 20) == 0)

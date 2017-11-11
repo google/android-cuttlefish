@@ -29,10 +29,10 @@ DEFINE_bool(debug_blackboard, false,
 #define DLOG(LEVEL)                                 \
   if (FLAGS_debug_blackboard) LOG(LEVEL)
 
-using avd::vnc::BlackBoard;
-using avd::vnc::Stripe;
+using cvd::vnc::BlackBoard;
+using cvd::vnc::Stripe;
 
-avd::vnc::SeqNumberVec avd::vnc::MakeSeqNumberVec() {
+cvd::vnc::SeqNumberVec cvd::vnc::MakeSeqNumberVec() {
   return SeqNumberVec(FrameBufferWatcher::StripesPerFrame());
 }
 
@@ -75,7 +75,7 @@ bool BlackBoard::NoNewStripesFor(const SeqNumberVec& seq_nums) const {
   return true;
 }
 
-avd::vnc::StripePtrVec BlackBoard::WaitForSenderWork(
+cvd::vnc::StripePtrVec BlackBoard::WaitForSenderWork(
     const VncClientConnection* conn) {
   std::unique_lock<std::mutex> guard(m_);
   auto& state = GetStateForClient(conn);
@@ -139,7 +139,7 @@ void BlackBoard::StopWaiting(const VncClientConnection* conn) {
 }
 
 void BlackBoard::set_frame_buffer_watcher(
-    avd::vnc::FrameBufferWatcher* frame_buffer_watcher) {
+    cvd::vnc::FrameBufferWatcher* frame_buffer_watcher) {
   std::lock_guard<std::mutex> guard(m_);
   frame_buffer_watcher_ = frame_buffer_watcher;
 }

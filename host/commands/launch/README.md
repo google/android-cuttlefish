@@ -111,7 +111,7 @@ Shortly after, you should be able to execute `adb devices` and see your device
 listed. If device is reported as `????????`, or as:
 
 ```log
-CUTTLEFISHAVD_01	no permissions (verify udev rules); see [http://developer.android.com/tools/device.html]
+CUTTLEFISHCVD01 no permissions (verify udev rules); see [http://developer.android.com/tools/device.html]
 ```
 
 you may have to re-start adb as root (we don't have udev rules updating virtual

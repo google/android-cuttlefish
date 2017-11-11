@@ -20,7 +20,7 @@
 #include <map>
 #include <string>
 
-namespace avd {
+namespace cvd {
 
 // Base virtual input device class which contains a bunch of boiler-plate code.
 class VirtualInputDevice {
@@ -75,4 +75,4 @@ class VirtualKeyboard : public VirtualInputDevice {
   std::map<uint32_t, std::string> keymapping_;
 };
 
-}  // namespace avd
+}  // namespace cvd

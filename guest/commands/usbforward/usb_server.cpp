@@ -112,10 +112,10 @@ bool USBServer::GetDeviceInfo(
   return true;
 }
 
-USBServer::USBServer(const avd::SharedFD& fd)
+USBServer::USBServer(const cvd::SharedFD& fd)
     : fd_{fd},
-      device_event_fd_{avd::SharedFD::Event(0, 0)},
-      thread_event_fd_{avd::SharedFD::Event(0, 0)} {}
+      device_event_fd_{cvd::SharedFD::Event(0, 0)},
+      thread_event_fd_{cvd::SharedFD::Event(0, 0)} {}
 
 void USBServer::HandleDeviceList(uint32_t tag) {
   // Iterate all devices and send structure for every found device.
@@ -124,7 +124,7 @@ void USBServer::HandleDeviceList(uint32_t tag) {
   std::vector<InterfaceInfo> ifaces;
   bool found = GetDeviceInfo(&info, &ifaces);
 
-  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  cvd::LockGuard<cvd::Mutex> lock(write_mutex_);
   ResponseHeader rsp{StatusSuccess, tag};
   fd_->Write(&rsp, sizeof(rsp));
   if (found) {
@@ -144,13 +144,13 @@ void USBServer::HandleAttach(uint32_t tag) {
   AttachRequest req;
   if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
 
-  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  cvd::LockGuard<cvd::Mutex> lock(write_mutex_);
   ResponseHeader rsp{handle_ ? StatusSuccess : StatusFailure, tag};
   fd_->Write(&rsp, sizeof(rsp));
 }
 
 void USBServer::HandleHeartbeat(uint32_t tag) {
-  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  cvd::LockGuard<cvd::Mutex> lock(write_mutex_);
   ResponseHeader rsp{handle_ ? StatusSuccess : StatusFailure, tag};
   fd_->Write(&rsp, sizeof(rsp));
 }
@@ -192,7 +192,7 @@ void USBServer::HandleControlTransfer(uint32_t tag) {
   // At this point we store transport request internally until it completes.
   TransportRequest* treq_ptr = treq.get();
   {
-    avd::LockGuard<avd::Mutex> lock(requests_mutex_);
+    cvd::LockGuard<cvd::Mutex> lock(requests_mutex_);
     requests_in_flight_[tag] = std::move(treq);
   }
 
@@ -235,7 +235,7 @@ void USBServer::HandleDataTransfer(uint32_t tag) {
   // At this point we store transport request internally until it completes.
   TransportRequest* treq_ptr = treq.get();
   {
-    avd::LockGuard<avd::Mutex> lock(requests_mutex_);
+    cvd::LockGuard<cvd::Mutex> lock(requests_mutex_);
     requests_in_flight_[tag] = std::move(treq);
   }
 
@@ -249,7 +249,7 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
                                    int32_t actual_length) {
   ResponseHeader rsp{is_success ? StatusSuccess : StatusFailure, tag};
 
-  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  cvd::LockGuard<cvd::Mutex> lock(write_mutex_);
   fd_->Write(&rsp, sizeof(rsp));
   if (is_success && is_data_in) {
     fd_->Write(&actual_length, sizeof(actual_length));
@@ -270,7 +270,7 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
   }
 
   {
-    avd::LockGuard<avd::Mutex> lock(requests_mutex_);
+    cvd::LockGuard<cvd::Mutex> lock(requests_mutex_);
     requests_in_flight_.erase(tag);
   }
 }
@@ -287,13 +287,13 @@ void* USBServer::ProcessLibUSBRequests(void* self_raw) {
   USBServer* self = reinterpret_cast<USBServer*>(self_raw);
   ALOGI("Starting hotplug thread.");
 
-  avd::SharedFDSet rset;
+  cvd::SharedFDSet rset;
   while (true) {
     // Do not wait if there's no event.
     timeval select_timeout{0, 0};
     rset.Zero();
     rset.Set(self->thread_event_fd_);
-    int ret = avd::Select(&rset, nullptr, nullptr, &select_timeout);
+    int ret = cvd::Select(&rset, nullptr, nullptr, &select_timeout);
     if (ret > 0) break;
 
     timeval libusb_timeout{1, 0};
@@ -315,7 +315,7 @@ void USBServer::InitLibUSB() {
       LIBUSB_HOTPLUG_MATCH_ANY, &USBServer::HandleDeviceEvent, this,
       &hotplug_handle_);
   handle_ = GetDevice();
-  libusb_thread_.reset(new avd::ScopedThread(&ProcessLibUSBRequests, this));
+  libusb_thread_.reset(new cvd::ScopedThread(&ProcessLibUSBRequests, this));
 }
 
 void USBServer::ExitLibUSB() {
@@ -329,7 +329,7 @@ void USBServer::ExitLibUSB() {
 }
 
 void USBServer::Serve() {
-  avd::SharedFDSet rset;
+  cvd::SharedFDSet rset;
   while (true) {
     timeval retry_timeout{1, 0};
     timeval* select_timeout = nullptr;
@@ -340,7 +340,7 @@ void USBServer::Serve() {
     rset.Zero();
     rset.Set(fd_);
     rset.Set(device_event_fd_);
-    int ret = avd::Select(&rset, nullptr, nullptr, select_timeout);
+    int ret = cvd::Select(&rset, nullptr, nullptr, select_timeout);
 
     // device_event_fd_ is reset each time libusb notices device has re-appeared
     // or is gone. In both cases, the existing handle is no longer valid.

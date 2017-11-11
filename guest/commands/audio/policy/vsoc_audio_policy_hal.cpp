@@ -25,7 +25,7 @@
 
 #include "guest/commands/audio/policy/vsoc_audio_policy_hal.h"
 
-namespace avd {
+namespace cvd {
 
 int GceAudioPolicy::Create(
     const audio_policy_device* device,
@@ -139,7 +139,7 @@ int GceAudioPolicy::Open(
 }
 
 static hw_module_methods_t gce_audio_policy_module_methods = {
-  .open = &avd::GceAudioPolicy::Open,
+  .open = &cvd::GceAudioPolicy::Open,
 };
 
 

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  avd::SharedFD fd = avd::SharedFD::Open(argv[1], O_RDWR | O_NOCTTY);
+  cvd::SharedFD fd = cvd::SharedFD::Open(argv[1], O_RDWR | O_NOCTTY);
   if (!fd->IsOpen()) {
     ALOGE("Could not open %s: %s", argv[1], fd->StrError());
     return 1;

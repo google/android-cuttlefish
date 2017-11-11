@@ -29,13 +29,13 @@ namespace usb_forward {
 // USBServer exposes access to USB devices over pipe (virtio channel etc).
 // Usage:
 //
-//     avd::SharedFD pipe = avd::SharedFD::Open(pipe_path, O_RDWR);
+//     cvd::SharedFD pipe = cvd::SharedFD::Open(pipe_path, O_RDWR);
 //     USBServer server(pipe);
 //     CHECK(server.Init());
 //     server.Serve();
 class USBServer final {
  public:
-  USBServer(const avd::SharedFD& fd);
+  USBServer(const cvd::SharedFD& fd);
   ~USBServer() = default;
 
   // Serve incoming USB requests.
@@ -82,13 +82,13 @@ class USBServer final {
   std::shared_ptr<libusb_device_handle> handle_;
   libusb_hotplug_callback_handle hotplug_handle_;
 
-  std::unique_ptr<avd::ScopedThread> libusb_thread_;
-  avd::Mutex write_mutex_;
-  avd::SharedFD fd_;
-  avd::SharedFD device_event_fd_;
-  avd::SharedFD thread_event_fd_;
+  std::unique_ptr<cvd::ScopedThread> libusb_thread_;
+  cvd::Mutex write_mutex_;
+  cvd::SharedFD fd_;
+  cvd::SharedFD device_event_fd_;
+  cvd::SharedFD thread_event_fd_;
 
-  avd::Mutex requests_mutex_;
+  cvd::Mutex requests_mutex_;
   std::map<uint32_t, std::unique_ptr<TransportRequest>> requests_in_flight_;
 
   USBServer(const USBServer& other) = delete;

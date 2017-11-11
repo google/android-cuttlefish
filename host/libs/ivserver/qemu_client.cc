@@ -20,7 +20,7 @@
 namespace ivserver {
 
 std::unique_ptr<QemuClient> QemuClient::New(const VSoCSharedMemory& shmem,
-                                            const avd::SharedFD& socket) {
+                                            const cvd::SharedFD& socket) {
   std::unique_ptr<QemuClient> res;
   if (!socket->IsOpen()) {
     LOG(WARNING) << "Invalid socket passed to QemuClient: "
@@ -37,7 +37,7 @@ std::unique_ptr<QemuClient> QemuClient::New(const VSoCSharedMemory& shmem,
   return res;
 }
 
-QemuClient::QemuClient(avd::SharedFD socket) : client_socket_(socket) {}
+QemuClient::QemuClient(cvd::SharedFD socket) : client_socket_(socket) {}
 
 // Once the QemuClient object is constructed, invoking the following
 // method will perform the actual handshake with a QEMU instance.
@@ -105,12 +105,12 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
 }
 
 bool QemuClient::SendSocketInfo(QemuFDMsg message,
-                                const avd::SharedFD& socket) {
+                                const cvd::SharedFD& socket) {
   struct iovec vec {
     &message, sizeof(message)
   };
-  avd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
-  avd::SharedFD fds[] = {socket};
+  cvd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
+  cvd::SharedFD fds[] = {socket};
   int rval = client_socket_->SendMsgAndFDs(hdr, 0, fds);
   if (rval == -1) {
     LOG(ERROR) << "failed to send shared_mem_fd: "

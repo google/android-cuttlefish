@@ -31,9 +31,9 @@ int main(int argc, char* argv[]) {
   using ::android::base::ERROR;
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  if (!avd::vnc::GetFBBroadcastRegionView()->Open()) {
+  if (!cvd::vnc::GetFBBroadcastRegionView()->Open()) {
     LOG(FATAL) << "Unable to open FBBroadcastRegion";
   }
-  avd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
+  cvd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
   vnc_server.MainLoop();
 }

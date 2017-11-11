@@ -35,7 +35,7 @@ namespace vadb {
 // remote USB devices possible with help of USB/IP protocol.
 class VirtualADBClient {
  public:
-  VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd,
+  VirtualADBClient(usbip::DevicePool* pool, cvd::SharedFD fd,
                    const std::string& usbip_socket_name);
 
   virtual ~VirtualADBClient() = default;
@@ -45,12 +45,12 @@ class VirtualADBClient {
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
-  void BeforeSelect(avd::SharedFDSet* fd_read) const;
+  void BeforeSelect(cvd::SharedFDSet* fd_read) const;
 
   // AfterSelect is Called right after Select() to detect and respond to changes
   // on affected SharedFDs.
   // Return value indicates whether this client is still valid.
-  bool AfterSelect(const avd::SharedFDSet& fd_read);
+  bool AfterSelect(const cvd::SharedFDSet& fd_read);
 
  private:
   // Register new device in a device pool.
@@ -90,8 +90,8 @@ class VirtualADBClient {
   bool ExecuteCommand(std::unique_ptr<USBCommand> cmd);
 
   usbip::DevicePool* pool_;
-  avd::SharedFD fd_;
-  avd::SharedFD timer_;
+  cvd::SharedFD fd_;
+  cvd::SharedFD timer_;
   usbip::VHCIInstrument vhci_;
   bool is_remote_server_ready_ = false;
 

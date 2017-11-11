@@ -30,9 +30,9 @@ namespace ivserver {
 class QemuClient final {
  public:
   static std::unique_ptr<QemuClient> New(const VSoCSharedMemory &shmem,
-                                         const avd::SharedFD &connection);
+                                         const cvd::SharedFD &connection);
 
-  avd::SharedFD client_socket() const { return client_socket_; }
+  cvd::SharedFD client_socket() const { return client_socket_; }
 
  private:
   enum QemuConstants : int64_t {
@@ -60,17 +60,17 @@ class QemuClient final {
     kGuestSideHal = QemuConstants::kGuestID,
   };
 
-  avd::SharedFD client_socket_;
+  cvd::SharedFD client_socket_;
 
   // Initialize new instance of QemuClient.
-  QemuClient(avd::SharedFD qemu_listener_socket);
+  QemuClient(cvd::SharedFD qemu_listener_socket);
 
   // Once the QemuClient object is constructed, invoking the following
   // method will perform the actual handshake with a QEMU instance.
   bool PerformHandshake(const VSoCSharedMemory &shmem_fd);
 
   // Send socket data to Qemu.
-  bool SendSocketInfo(QemuFDMsg message, const avd::SharedFD &socket);
+  bool SendSocketInfo(QemuFDMsg message, const cvd::SharedFD &socket);
 
   QemuClient(const QemuClient &) = delete;
   QemuClient &operator=(const QemuClient &) = delete;

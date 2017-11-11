@@ -43,12 +43,12 @@ class HaldClientTest : public ::testing::Test {
         << "Could not create temp file";
     LOG(INFO) << "Temp file location: " << socket_location;
 
-    hald_server_socket_ = avd::SharedFD::SocketLocalServer(
+    hald_server_socket_ = cvd::SharedFD::SocketLocalServer(
         socket_location.c_str(), false, SOCK_STREAM, 0666);
-    test_socket_ = avd::SharedFD::SocketLocalClient(socket_location.c_str(),
+    test_socket_ = cvd::SharedFD::SocketLocalClient(socket_location.c_str(),
                                                     false, SOCK_STREAM);
     hald_socket_ =
-        avd::SharedFD::Accept(*hald_server_socket_, nullptr, nullptr);
+        cvd::SharedFD::Accept(*hald_server_socket_, nullptr, nullptr);
 
     EXPECT_TRUE(hald_server_socket_->IsOpen());
     EXPECT_TRUE(test_socket_->IsOpen());
@@ -79,9 +79,9 @@ class HaldClientTest : public ::testing::Test {
  protected:
   ::testing::NiceMock<VSoCSharedMemoryMock> vsoc_;
 
-  avd::SharedFD hald_server_socket_;
-  avd::SharedFD hald_socket_;
-  avd::SharedFD test_socket_;
+  cvd::SharedFD hald_server_socket_;
+  cvd::SharedFD hald_socket_;
+  cvd::SharedFD test_socket_;
 
  private:
   std::vector<std::string> cleanup_files_;
@@ -122,18 +122,18 @@ TEST_F(HaldClientTest, HandshakeTerminatedByInvalidRegionSize) {
 TEST_F(HaldClientTest, FullSaneHandshake) {
   std::string temp;
   ASSERT_TRUE(GetTempLocation(&temp));
-  avd::SharedFD host_fd(
-      avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
+  cvd::SharedFD host_fd(
+      cvd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
   EXPECT_TRUE(host_fd->IsOpen());
 
   ASSERT_TRUE(GetTempLocation(&temp));
-  avd::SharedFD guest_fd(
-      avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
+  cvd::SharedFD guest_fd(
+      cvd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
   EXPECT_TRUE(guest_fd->IsOpen());
 
   ASSERT_TRUE(GetTempLocation(&temp));
-  avd::SharedFD shmem_fd(
-      avd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
+  cvd::SharedFD shmem_fd(
+      cvd::SharedFD::Open(temp.c_str(), O_CREAT | O_RDWR, 0666));
   EXPECT_TRUE(shmem_fd->IsOpen());
 
   const std::string test_location("testing");
@@ -163,8 +163,8 @@ TEST_F(HaldClientTest, FullSaneHandshake) {
   struct iovec vec {
     &control_data, sizeof(control_data)
   };
-  avd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
-  avd::SharedFD fds[3];
+  cvd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
+  cvd::SharedFD fds[3];
 
   EXPECT_GT(test_socket_->RecvMsgAndFDs<3>(hdr, MSG_NOSIGNAL, &fds), 0);
   EXPECT_TRUE(fds[0]->IsOpen());

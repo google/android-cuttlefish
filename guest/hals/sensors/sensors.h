@@ -19,7 +19,7 @@
 #include "guest/hals/sensors/sensors_hal.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-namespace avd {
+namespace cvd {
 
 // Stores static information about a sensor.
 // Must be completely compatible with sensor_t (i.e. no additional
@@ -72,12 +72,12 @@ class SensorState {
   // The deadline at which we should report the next sensor event
   // to the framework in order to meet our frequency constraints.
   // For disabled sensors, should be 'infinity'.
-  avd::time::MonotonicTimePoint deadline_;
+  cvd::time::MonotonicTimePoint deadline_;
   // Delay time between consecutive sensor samples, in ns.
-  avd::time::Nanoseconds sampling_period_;
+  cvd::time::Nanoseconds sampling_period_;
 
   // Time 'infinity'.
-  static const avd::time::MonotonicTimePoint kInfinity;
+  static const cvd::time::MonotonicTimePoint kInfinity;
 };
 
 namespace sensors_constants {
@@ -227,5 +227,5 @@ const bool kDeviceTempIsWakeup = false;
 const bool kRelativeHumidityIsWakeup = false;
 
 }  // namespace sensors_constants
-}  // namespace avd
+}  // namespace cvd
 

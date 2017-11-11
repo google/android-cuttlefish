@@ -28,7 +28,7 @@ extern "C"{
 #include "guest/commands/audio/vsoc_audio_input_stream.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-namespace avd {
+namespace cvd {
 
 namespace {
 template <typename F> struct Thunker :
@@ -54,7 +54,7 @@ static inline size_t GceAudioFrameSize(audio_stream_in* s) {
 #endif
 
 GceAudioInputStream::GceAudioInputStream(
-    avd::GceAudio* dev, audio_devices_t devices, const audio_config& config)
+    cvd::GceAudio* dev, audio_devices_t devices, const audio_config& config)
     : audio_stream_in(),
       dev_(dev),
       config_(config),

@@ -24,11 +24,11 @@
 namespace vadb {
 namespace usbip {
 
-void Client::BeforeSelect(avd::SharedFDSet* fd_read) const {
+void Client::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(fd_);
 }
 
-bool Client::AfterSelect(const avd::SharedFDSet& fd_read) {
+bool Client::AfterSelect(const cvd::SharedFDSet& fd_read) {
   if (fd_read.IsSet(fd_)) return HandleIncomingMessage();
   return true;
 }

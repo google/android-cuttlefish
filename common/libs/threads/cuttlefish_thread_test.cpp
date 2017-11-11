@@ -19,11 +19,11 @@
 #include "common/libs/threads/thunkers.h"
 #include "common/libs/time/monotonic_time.h"
 
-using avd::ConditionVariable;
-using avd::Mutex;
-using avd::ScopedThread;
-using avd::time::MonotonicTimePoint;
-using avd::time::Milliseconds;
+using cvd::ConditionVariable;
+using cvd::Mutex;
+using cvd::ScopedThread;
+using cvd::time::MonotonicTimePoint;
+using cvd::time::Milliseconds;
 
 static const int FINISHED = 100;
 

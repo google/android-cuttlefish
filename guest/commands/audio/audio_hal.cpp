@@ -19,7 +19,7 @@
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
-  VSOC_STATIC_INITIALIZER(open) avd::GceAudio::Open,
+  VSOC_STATIC_INITIALIZER(open) cvd::GceAudio::Open,
 };
 
 

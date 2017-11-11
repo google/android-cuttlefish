@@ -121,13 +121,13 @@ class VirtualUSBManager {
  private:
   void Thread() {
     for (;;) {
-      avd::SharedFDSet fd_read;
+      cvd::SharedFDSet fd_read;
       fd_read.Zero();
 
       adb_.BeforeSelect(&fd_read);
       usbip_.BeforeSelect(&fd_read);
 
-      int ret = avd::Select(&fd_read, nullptr, nullptr, nullptr);
+      int ret = cvd::Select(&fd_read, nullptr, nullptr, nullptr);
       if (ret <= 0) continue;
 
       adb_.AfterSelect(fd_read);

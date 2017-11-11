@@ -37,7 +37,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 
-using avd::SharedFD;
+using cvd::SharedFD;
 
 DEFINE_int32(instance, 1, "Instance number. Must be unique.");
 DEFINE_string(vsoc_run_dir, "/var/run/cvd-",
@@ -95,9 +95,9 @@ class HostRegionControl : public vsoc::RegionControl {
     // back to 1 while we are going to sleep the sleep will return
     // immediately.
     uint64_t missed{};
-    avd::SharedFDSet readset;
+    cvd::SharedFDSet readset;
     readset.Set(incoming_interrupt_fd_);
-    avd::Select(&readset, NULL, NULL, NULL);
+    cvd::Select(&readset, NULL, NULL, NULL);
     ssize_t rval = incoming_interrupt_fd_->Read(&missed, sizeof(missed));
     if (rval != sizeof(missed)) {
       LOG(FATAL) << __FUNCTION__ << ": rval (" << rval
@@ -127,13 +127,13 @@ class HostRegionControl : public vsoc::RegionControl {
 
  protected:
   const char* region_name_{};
-  avd::SharedFD incoming_interrupt_fd_;
-  avd::SharedFD outgoing_interrupt_fd_;
-  avd::SharedFD shared_memory_fd_;
+  cvd::SharedFD incoming_interrupt_fd_;
+  cvd::SharedFD outgoing_interrupt_fd_;
+  cvd::SharedFD shared_memory_fd_;
 };
 
 // Default path to the ivshmem_server socket. This can vary when we're
-// launching multiple AVDs.
+// launching multiple CVDs.
 constexpr int kMaxSupportedProtocolVersion = 0;
 
 bool HostRegionControl::InitializeRegion() {
@@ -242,7 +242,7 @@ std::shared_ptr<vsoc::RegionControl> vsoc::RegionControl::Open(
   struct iovec iov {
     &control_data, sizeof(control_data)
   };
-  avd::InbandMessageHeader hdr{};
+  cvd::InbandMessageHeader hdr{};
   hdr.msg_iov = &iov;
   hdr.msg_iovlen = 1;
   SharedFD fds[3];

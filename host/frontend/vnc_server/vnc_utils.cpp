@@ -18,7 +18,7 @@
 
 using vsoc::framebuffer::FBBroadcastRegionView;
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 FBBroadcastRegionView* GetFBBroadcastRegionView() {
@@ -27,4 +27,4 @@ FBBroadcastRegionView* GetFBBroadcastRegionView() {
 }
 
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

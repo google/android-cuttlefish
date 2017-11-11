@@ -33,11 +33,11 @@ class USBCmdHeartbeat : public USBCommand {
 
   // Send request body to the server.
   // Return false, if communication failed.
-  bool OnRequest(const avd::SharedFD& data) override;
+  bool OnRequest(const cvd::SharedFD& data) override;
 
   // Receive response data from the server.
   // Return false, if communication failed.
-  bool OnResponse(bool is_success, const avd::SharedFD& data) override;
+  bool OnResponse(bool is_success, const cvd::SharedFD& data) override;
 
  private:
   HeartbeatResultCB callback_;

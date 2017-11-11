@@ -31,8 +31,8 @@ class VSoCSharedMemory {
   // Region describes a VSoCSharedMem region.
   struct Region {
     vsoc_device_region values{};
-    avd::SharedFD host_fd;
-    avd::SharedFD guest_fd;
+    cvd::SharedFD host_fd;
+    cvd::SharedFD guest_fd;
   };
 
   // Max name length of a memory region.
@@ -45,10 +45,10 @@ class VSoCSharedMemory {
                                                const Json::Value &json_root);
 
   virtual bool GetEventFdPairForRegion(const std::string &region_name,
-                                       avd::SharedFD *guest_to_host,
-                                       avd::SharedFD *host_to_guest) const = 0;
+                                       cvd::SharedFD *guest_to_host,
+                                       cvd::SharedFD *host_to_guest) const = 0;
 
-  virtual const avd::SharedFD &SharedMemFD() const = 0;
+  virtual const cvd::SharedFD &SharedMemFD() const = 0;
   virtual const std::vector<Region> &Regions() const = 0;
 
  private:

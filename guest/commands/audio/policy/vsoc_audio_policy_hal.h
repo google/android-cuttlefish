@@ -31,7 +31,7 @@
 #  define D(...) ((void)0)
 #endif
 
-namespace avd {
+namespace cvd {
 
 struct gce_audio_policy {
   audio_policy policy;

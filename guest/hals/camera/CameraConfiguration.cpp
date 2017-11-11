@@ -24,7 +24,7 @@
 #include <json/reader.h>
 #include <stdlib.h>
 
-namespace avd {
+namespace cvd {
 namespace {
 ////////////////////// Device Personality keys //////////////////////
 //
@@ -300,6 +300,6 @@ bool CameraConfiguration::Init() {
   return ConfigureCameras(root, &cameras_);
 }
 
-}  // namespace avd
+}  // namespace cvd
 
 

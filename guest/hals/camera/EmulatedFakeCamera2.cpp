@@ -113,7 +113,7 @@ EmulatedFakeCamera2::~EmulatedFakeCamera2() {
  * Public API overrides
  ***************************************************************************/
 
-status_t EmulatedFakeCamera2::Initialize(const avd::CameraDefinition& params) {
+status_t EmulatedFakeCamera2::Initialize(const cvd::CameraDefinition& params) {
     status_t res;
 
     for (size_t index = 0; index < params.resolutions.size(); ++index) {
@@ -146,7 +146,7 @@ status_t EmulatedFakeCamera2::Initialize(const avd::CameraDefinition& params) {
               kAvailableRawSizes + arraysize(kAvailableRawSizes),
               std::back_inserter(mAvailableRawSizes));
 
-    if (params.orientation == avd::CameraDefinition::kFront) {
+    if (params.orientation == cvd::CameraDefinition::kFront) {
       std::copy(kAvailableProcessedSizesFront,
                 kAvailableProcessedSizesFront +
                 arraysize(kAvailableProcessedSizesFront),

@@ -21,7 +21,7 @@
 #include "host/frontend/vnc_server/jpeg_compressor.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using avd::vnc::JpegCompressor;
+using cvd::vnc::JpegCompressor;
 
 namespace {
 void InitCinfo(jpeg_compress_struct* cinfo, jpeg_error_mgr* err,
@@ -31,7 +31,7 @@ void InitCinfo(jpeg_compress_struct* cinfo, jpeg_error_mgr* err,
 
   cinfo->image_width = width;
   cinfo->image_height = height;
-  cinfo->input_components = avd::vnc::BytesPerPixel();
+  cinfo->input_components = cvd::vnc::BytesPerPixel();
   cinfo->in_color_space = JCS_EXT_RGBX;
 
   jpeg_set_defaults(cinfo);
@@ -39,7 +39,7 @@ void InitCinfo(jpeg_compress_struct* cinfo, jpeg_error_mgr* err,
 }
 }  // namespace
 
-avd::vnc::Message JpegCompressor::Compress(const Message& frame,
+cvd::vnc::Message JpegCompressor::Compress(const Message& frame,
                                            int jpeg_quality, std::uint16_t x,
                                            std::uint16_t y, std::uint16_t width,
                                            std::uint16_t height,

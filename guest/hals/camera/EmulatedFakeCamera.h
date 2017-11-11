@@ -46,7 +46,7 @@ public:
 
 public:
     /* Initializes EmulatedFakeCamera instance. */
-     status_t Initialize(const avd::CameraDefinition& params);
+     status_t Initialize(const cvd::CameraDefinition& params);
 
     /****************************************************************************
      * EmulatedCamera abstract API implementation.

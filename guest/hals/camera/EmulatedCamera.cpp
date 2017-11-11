@@ -110,7 +110,7 @@ EmulatedCamera::~EmulatedCamera()
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera::Initialize(const avd::CameraDefinition&)
+status_t EmulatedCamera::Initialize(const cvd::CameraDefinition&)
 {
     /* Preview formats supported by this HAL. */
     char preview_formats[1024];

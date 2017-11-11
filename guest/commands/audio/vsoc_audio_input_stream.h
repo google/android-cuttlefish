@@ -21,7 +21,7 @@
 #include "guest/commands/audio/simulated_buffer.h"
 #include "guest/commands/audio/vsoc_audio_message.h"
 
-namespace avd {
+namespace cvd {
 
 namespace {
 static const int IN_BUFFER_BYTES = 4096;
@@ -155,10 +155,10 @@ class GceAudioInputStream : public audio_stream_in {
   }
 
  private:
-  GceAudioInputStream(avd::GceAudio* dev, audio_devices_t devices,
+  GceAudioInputStream(cvd::GceAudio* dev, audio_devices_t devices,
                       const audio_config& config);
   std::unique_ptr<SimulatedInputBuffer> buffer_model_;
-  avd::GceAudio *dev_;
+  cvd::GceAudio *dev_;
   audio_config config_;
   float gain_;
   audio_devices_t device_;

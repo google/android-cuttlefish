@@ -23,7 +23,7 @@
 DEFINE_string(input_socket, "/tmp/android-cuttlefish-1-input",
               "The name of unix socket where the monkey server is listening "
               "for input commands");
-using avd::vnc::VirtualInputs;
+using cvd::vnc::VirtualInputs;
 
 VirtualInputs::VirtualInputs()
     : virtual_keyboard_(
@@ -33,13 +33,13 @@ VirtualInputs::VirtualInputs()
       virtual_power_button_("KEYCODE_POWER", [this](std::string cmd) {
         return SendMonkeyComand(cmd);
       }) {
-  monkey_socket_ = avd::SharedFD::SocketLocalClient(FLAGS_input_socket.c_str(),
+  monkey_socket_ = cvd::SharedFD::SocketLocalClient(FLAGS_input_socket.c_str(),
                                                     false, SOCK_STREAM);
   if (!monkey_socket_->IsOpen()) {
     // Monkey is known to die on the second conection, so let's wait a litttle
     // bit and try again.
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    monkey_socket_ = avd::SharedFD::SocketLocalClient(
+    monkey_socket_ = cvd::SharedFD::SocketLocalClient(
         FLAGS_input_socket.c_str(), false, SOCK_STREAM);
     if (!monkey_socket_->IsOpen()) {
       LOG(FATAL) << "Unable to connect to the mokey server";

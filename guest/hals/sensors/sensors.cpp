@@ -19,9 +19,9 @@
 
 #include "guest/hals/sensors/sensors.h"
 
-namespace avd {
+namespace cvd {
 namespace {
-const avd::time::Milliseconds kDefaultSamplingRate(200);
+const cvd::time::Milliseconds kDefaultSamplingRate(200);
 
 #if !VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
 namespace {
@@ -37,8 +37,8 @@ timespec infinity() {
 }
 }  // namespace
 
-const avd::time::MonotonicTimePoint SensorState::kInfinity =
-    avd::time::MonotonicTimePoint(infinity());
+const cvd::time::MonotonicTimePoint SensorState::kInfinity =
+    cvd::time::MonotonicTimePoint(infinity());
 
 SensorState::SensorState(SensorInfo info)
     : enabled_(false),
@@ -195,4 +195,4 @@ SensorInfo RelativeHumiditySensor() {
                     flags);
 }
 
-}  // namespace avd
+}  // namespace cvd

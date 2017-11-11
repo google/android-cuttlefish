@@ -15,8 +15,8 @@
  */
 #include "guest/libs/remoter/remoter_framework_pkt.h"
 
-void remoter_connect(avd::SharedFD* dest) {
-  *dest = avd::SharedFD::SocketLocalClient(
+void remoter_connect(cvd::SharedFD* dest) {
+  *dest = cvd::SharedFD::SocketLocalClient(
       "remoter", ANDROID_SOCKET_NAMESPACE_RESERVED, SOCK_STREAM);
   if ((*dest)->IsOpen()) {
     ALOGE("Failed to connect to remoter (%s)", (*dest)->StrError());
