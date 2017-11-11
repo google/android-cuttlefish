@@ -18,6 +18,8 @@
 
 /* Host-specific values associated with RegionControl. */
 
+#include <string>
+
 namespace vsoc {
-const char* const DEFAULT_DOMAIN{"/tmp/ivshmem_socket_client"};
+std::string GetShmClientSocketPath();
 }  // namespace vsoc

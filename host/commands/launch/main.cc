@@ -46,7 +46,6 @@ std::string StringFromEnv(const char* varname, std::string defval) {
 }  // namespace
 
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
-DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_bool(disable_app_armor_security, false,
@@ -55,8 +54,8 @@ DEFINE_bool(disable_dac_security, false,
             "Disable DAC security in libvirt. For debug only.");
 DEFINE_string(extra_kernel_command_line, "",
               "Additional flags to put on the kernel command line");
+DECLARE_int32(instance);
 DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
-DEFINE_int32(instance, 1, "Instance number. Must be unique.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 DEFINE_string(kernel_command_line, "",
               "Location of a text file with the kernel command line.");
@@ -81,7 +80,6 @@ DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
 DEFINE_string(uuid, "", "UUID to use for the device. Random if not specified");
-DEFINE_string(vsoc_domain, vsoc::DEFAULT_DOMAIN, "Client socket path");
 
 namespace {
 Json::Value LoadLayoutFile(const std::string& file) {
@@ -148,7 +146,8 @@ class IVServerManager {
  public:
   IVServerManager(const Json::Value& json_root)
       : server_(ivserver::IVServerOptions(FLAGS_layout, FLAGS_mempath,
-                                          FLAGS_qemusocket, FLAGS_vsoc_domain),
+                                          FLAGS_qemusocket,
+                                          vsoc::GetShmClientSocketPath()),
                 json_root) {}
 
   ~IVServerManager() = default;
@@ -250,8 +249,7 @@ int main(int argc, char** argv) {
       .SetDisableDACSecurity(FLAGS_disable_dac_security)
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
       .SetUUID(FLAGS_uuid);
-  cfg.SetUSBV1SocketName(std::string("/tmp/") + cfg.GetInstanceName() +
-                         "-usb");
+  cfg.SetUSBV1SocketName(std::string("/tmp/") + cfg.GetInstanceName() + "-usb");
 
   std::string xml = cfg.Build();
   if (FLAGS_log_xml) {

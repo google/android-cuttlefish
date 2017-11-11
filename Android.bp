@@ -69,6 +69,7 @@ cc_library_host_static {
     static_libs: [
         "libcuttlefish_fs",
         "libbase",
+	"libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
@@ -136,6 +137,7 @@ cc_binary_host {
         "libbase",
         "cuttlefish_auto_resources",
         "libcuttlefish_fs",
+	"libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
