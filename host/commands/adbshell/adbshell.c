@@ -21,11 +21,44 @@
 #include <string.h>
 #include <unistd.h>
 
+// Many of our users interact with CVDs via ssh. They expect to be able to
+// get an Android shell (as opposed to the host shell) with a single command.
+//
+// Our goals are to:
+//
+//   * Allow the user to select which CVD to connect to
+//
+//   * Avoid modifications to the host-side sshd and the protocol
+//
+// We accomplish this by using specialized accounts: vsoc-## and cvd-## and
+// specific Android serial numbers:
+//
+//    The vsoc-01 account provides a host-side shell that controls the first CVD
+//    The cvd-01 account is connected to the Andorid shell of the first CVD
+//    The first CVD has a serial number of CUTTLEFISHCVD01
+//
+// The code in the commands/launch directory also follows these conventions by
+// default.
+//
+const char SERIAL_NUMBER_PREFIX[] = "CUTTLEFISHCVD";
+const char USER_PREFIX[] = "cvd-";
+
 int main(int argc, char* argv[]) {
+  char* user = getenv("USER");
+  const char* instance = "01";
+  if (user && !memcmp(user, USER_PREFIX, sizeof(USER_PREFIX) - 1)) {
+    instance = user + sizeof(USER_PREFIX) - 1;
+  }
   char** new_argv = malloc((argc + 5) * sizeof(char*));
   new_argv[0] = "/usr/bin/adb";
   new_argv[1] = "-s";
-  new_argv[2] = "CUTTLEFISHAVD01";
+  size_t sz = strlen(SERIAL_NUMBER_PREFIX) + strlen(instance) + 1;
+  new_argv[2] = malloc(sz);
+  if (!new_argv[2]) {
+    fprintf(stderr, "Unable to allocate %zu bytes for instance name\n", sz);
+    exit(2);
+  }
+  snprintf(new_argv[2], sz, "%s%s", SERIAL_NUMBER_PREFIX, instance);
   new_argv[3] = "shell";
   new_argv[4] = "/system/bin/sh";
 
