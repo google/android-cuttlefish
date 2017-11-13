@@ -1,5 +1,5 @@
 cc_binary_host {
-    name: "launch_cuttlefish",
+    name: "launch_cvd",
     srcs: [
         "main.cc",
 	"fb_bcast_region_handler.cc",
