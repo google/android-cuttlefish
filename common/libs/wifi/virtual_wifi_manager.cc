@@ -22,6 +22,16 @@
 #include "host/commands/wifid/mac80211.h"
 
 namespace avd {
+namespace {
+// We don't care about byte ordering as much as we do about having all bytes
+// there. Byte order does not match, we want to use it as a key in our map.
+// Note: we accept const void here, because we will also process data coming
+// from netlink (which is untyped).
+uint64_t MACToKey(const void* macaddr) {
+  auto typed = reinterpret_cast<const uint16_t*>(macaddr);
+  return (1ull * typed[0] << 32) | (typed[1] << 16) | typed[2];
+}
+}  // namespace
 
 // Register for asynchronous notifications from MAC80211.
 // Our callback will receive data for each next frame transmitted over any
@@ -63,14 +73,40 @@ VirtualWIFIManager::~VirtualWIFIManager() {
 }
 
 void VirtualWIFIManager::HandleNlResponse(nl_msg* m) {
-  LOG(INFO) << "Netlink response received." << m;
+  auto hdr = nlmsg_hdr(m);
+  auto gen = static_cast<genlmsghdr*>(nlmsg_data(hdr));
+
+  // Ignore Generic Netlink messages coming from other sources.
+  if (hdr->nlmsg_type != nl_->FamilyMAC80211()) return;
+  // Ignore Generic Netlink messages that don't contain MAC80211 frames.
+  if (gen->cmd != HWSIM_CMD_FRAME) return;
+
+  struct nlattr* attrs[HWSIM_ATTR_MAX + 1];
+  if (genlmsg_parse(hdr, 0, attrs, HWSIM_ATTR_MAX, nullptr)) return;
+
+  // Get virtual wlan key from mac address.
+  auto mac = attrs[HWSIM_ATTR_ADDR_TRANSMITTER];
+  if (!mac) return;
+  auto key = MACToKey(nla_data(mac));
+
+  // Redirect packet to VirtualWIFI, if that's indeed one of ours.
+  // Sadly, we don't have any other way of telling.
+  std::shared_ptr<VirtualWIFI> wifi;
+  {
+    std::lock_guard<std::mutex> lock(radios_mutex_);
+    auto radio = radios_.find(key);
+    if (radio == radios_.end()) return;
+    wifi = radio->second.lock();
+  }
+
+  LOG(INFO) << "Found packet from " << wifi->Name();
 }
 
 // Create new MAC80211_HWSIM radio.
 // This can be called after Init completes.
 std::shared_ptr<VirtualWIFI> VirtualWIFIManager::CreateRadio(
-    const std::string& name) {
-  std::shared_ptr<VirtualWIFI> wifi(new VirtualWIFI(nl_, name));
+    const std::string& name, const std::string& address) {
+  std::shared_ptr<VirtualWIFI> wifi(new VirtualWIFI(nl_, name, address));
 
   if (!wifi->Init()) {
     wifi.reset();
@@ -78,7 +114,7 @@ std::shared_ptr<VirtualWIFI> VirtualWIFIManager::CreateRadio(
   }
 
   std::lock_guard<std::mutex> lock(radios_mutex_);
-  radios_[wifi->HwSimNumber()] = wifi;
+  radios_[MACToKey(wifi->MacAddr())] = wifi;
   return wifi;
 }
 
