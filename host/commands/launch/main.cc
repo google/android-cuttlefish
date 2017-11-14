@@ -244,6 +244,7 @@ int main(int argc, char** argv) {
       .SetDataPartitionPath(data_partition->GetName())
       .SetVendorPartitionPath(vendor_partition->GetName())
       .SetMobileBridgeName(FLAGS_mobile_interface)
+      .SetEntropySource(entropy_source)
       .SetDisableDACSecurity(FLAGS_disable_dac_security)
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
       .SetUUID(FLAGS_uuid);
