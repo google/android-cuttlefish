@@ -12,6 +12,7 @@ cc_library_host_static {
         "cuttlefish_auto_resources",
         "libbase",
         "libxml2",
+	"libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
