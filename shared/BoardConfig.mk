@@ -52,7 +52,7 @@ BOARD_CACHEIMAGE_PARTITION_SIZE := 67108864
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
 BOARD_KERNEL_CMDLINE := loop.max_part=7
-BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS0
+BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS1
 BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc
 BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
