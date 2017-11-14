@@ -21,5 +21,7 @@
 #include <string>
 
 namespace vsoc {
+std::string GetPerInstanceDefault(const char* prefix);
+std::string GetPerInstancePath(const std::string& basename);
 std::string GetShmClientSocketPath();
 }  // namespace vsoc

@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include <glog/logging.h>
+#include "host/vsoc/lib/region_control.h"
 #include "host/libs/config/guest_config.h"
 
 // This class represents libvirt guest configuration.
@@ -276,10 +277,10 @@ std::string GuestConfig::Build() const {
 
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 
-  ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketServer,
-                      concat("/tmp/", instance_name, "-serial"));
+  ConfigureSerialPort(devices, 0, DeviceSourceType::kFile,
+                      vsoc::GetPerInstancePath("console"));
   ConfigureVirtioChannel(devices, 1, "cf-logcat", DeviceSourceType::kFile,
-                         concat("/tmp/", instance_name, "-logcat"));
+                         vsoc::GetPerInstancePath("logcat"));
   ConfigureVirtioChannel(devices, 2, "cf-gadget-usb-v1",
                          DeviceSourceType::kUnixSocketClient,
                          GetUSBV1SocketName());

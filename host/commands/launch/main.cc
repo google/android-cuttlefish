@@ -46,6 +46,9 @@ std::string StringFromEnv(const char* varname, std::string defval) {
 }
 }  // namespace
 
+using vsoc::GetPerInstanceDefault;
+using vsoc::GetPerInstancePath;
+
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
@@ -69,12 +72,16 @@ DEFINE_string(layout,
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-DEFINE_string(mempath, "/dev/shm/ivshmem",
+std::string g_default_mempath{vsoc::GetPerInstanceDefault("/var/run/shm/cvd-")};
+DEFINE_string(mempath, g_default_mempath.c_str(),
               "Target location for the shmem file.");
-DEFINE_string(mobile_interface, "abr0",
+std::string g_default_mobile_interface{GetPerInstanceDefault("cvd-mobile-")};
+DEFINE_string(mobile_interface, g_default_mobile_interface.c_str(),
               "Network interface to use for mobile networking");
-DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
-DEFINE_string(serial_number_prefix, "CUTTLEFISHCVD",
+std::string g_default_qemusocket = GetPerInstancePath("ivshmem_socket_qemu");
+DEFINE_string(qemusocket, g_default_qemusocket.c_str(), "QEmu socket path");
+std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
+DEFINE_string(serial_number, g_default_serial_number.c_str(),
               "Serial number to use for the device");
 DEFINE_string(system_image_dir,
               StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
@@ -82,7 +89,10 @@ DEFINE_string(system_image_dir,
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
-DEFINE_string(uuid, "", "UUID to use for the device. Random if not specified");
+std::string g_default_uuid{GetPerInstanceDefault(
+    "699acfc4-c8c4-11e7-882b-5065f31dc1")};
+DEFINE_string(uuid, g_default_uuid.c_str(),
+              "UUID to use for the device. Random if not specified");
 
 namespace {
 Json::Value LoadLayoutFile(const std::string& file) {
@@ -223,7 +233,7 @@ int main(int argc, char** argv) {
   }
   cmdline << t.rdbuf();
   t.close();
-  cmdline << " androidboot.serialno=" << FLAGS_serial_number_prefix << std::setw(2) << std::setfill('0') << FLAGS_instance;
+  cmdline << " androidboot.serialno=" << FLAGS_serial_number;
   if (FLAGS_extra_kernel_command_line.size()) {
     cmdline << " " << FLAGS_extra_kernel_command_line;
   }
@@ -247,7 +257,7 @@ int main(int argc, char** argv) {
       .SetDisableDACSecurity(FLAGS_disable_dac_security)
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
       .SetUUID(FLAGS_uuid);
-  cfg.SetUSBV1SocketName(std::string("/tmp/") + cfg.GetInstanceName() + "-usb");
+  cfg.SetUSBV1SocketName(vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-usb"));
 
   std::string xml = cfg.Build();
   if (FLAGS_log_xml) {

@@ -39,11 +39,21 @@
 
 using avd::SharedFD;
 
-DEFINE_int32(instance, 1, "Instance number. Must be unique.");
-DEFINE_string(vsoc_run_dir, "/var/run/cvd-",
-              "Path to the directory holding vsoc resources");
-DEFINE_string(vsoc_shm_client_sock, "ivshmem_socket_client",
-              "Name of the VSoC client socket");
+const char vsoc_user_prefix[] = "vsoc-";
+
+int GetDefaultInstance() {
+  char* user = getenv("USER");
+  if (user && !memcmp(user, vsoc_user_prefix, sizeof(vsoc_user_prefix) - 1)) {
+    int temp = atoi(user + sizeof(vsoc_user_prefix) - 1);
+    if (temp > 0) {
+      return temp;
+    }
+  }
+  return 1;
+}
+
+DEFINE_int32(instance, GetDefaultInstance(),
+             "Instance number. Must be unique.");
 
 namespace {
 
@@ -181,11 +191,22 @@ bool HostRegionControl::InitializeRegion() {
 }
 }  // namespace
 
-std::string vsoc::GetShmClientSocketPath() {
+std::string vsoc::GetPerInstanceDefault(const char* prefix) {
   std::ostringstream stream;
-  stream << FLAGS_vsoc_run_dir << std::setfill('0') << std::setw(2)
-         << FLAGS_instance << "/" << FLAGS_vsoc_shm_client_sock;
+  stream << prefix << std::setfill('0') << std::setw(2)
+         << GetDefaultInstance();
   return stream.str();
+}
+
+std::string vsoc::GetPerInstancePath(const std::string& basename) {
+  std::ostringstream stream;
+  stream << vsoc::GetPerInstanceDefault("/var/run/cvd-") <<
+      "/" << basename;
+  return stream.str();
+}
+
+std::string vsoc::GetShmClientSocketPath() {
+  return vsoc::GetPerInstancePath("ivshmem_socket_client");
 }
 
 std::shared_ptr<vsoc::RegionControl> vsoc::RegionControl::Open(
