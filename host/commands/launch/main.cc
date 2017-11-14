@@ -31,6 +31,7 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_select.h"
+#include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/file_partition.h"
 #include "host/libs/config/guest_config.h"
 #include "host/libs/ivserver/ivserver.h"
@@ -308,6 +309,9 @@ int main(int argc, char** argv) {
   ivshmem.Start();
 
   sleep(1);
+
+  // Initialize the regions that require it before the VM starts.
+  PreLaunchInitializers::Initialize();
 
   FILE* launch = popen(FLAGS_launch_command.c_str(), "w");
   if (!launch) {
