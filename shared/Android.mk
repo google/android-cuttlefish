@@ -16,4 +16,3 @@
 
 LOCAL_PATH:= $(call my-dir)
 include $(call all-makefiles-under,$(LOCAL_PATH))
-$(call dist-for-goals, droidcore, $(CUTTLEFISH_KERNEL):kernel)

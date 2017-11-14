@@ -53,15 +53,12 @@ BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
 BOARD_KERNEL_CMDLINE := loop.max_part=7
 BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS0
-BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc CUTTLEFISH
+BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc
 BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
 
 # TODO(b/65266349) Figure out why this is needed
 BOARD_KERNEL_CMDLINE += security=selinux
-
-# TOOD(b/65254717) This needs to go away
-BOARD_KERNEL_CMDLINE += CUTTLEFISH
 
 # Minimum size of the final bootable disk image: 10G
 # GCE will pad disk images out to 10G. Our disk images should be at least as
