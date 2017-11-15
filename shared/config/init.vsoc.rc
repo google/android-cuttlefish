@@ -21,6 +21,12 @@ on early-init
     chmod 0755 /sys/kernel/debug
 
 
+on init
+    chown system root /dev/fb_broadcast
+    chmod 0660 /dev/fb_broadcast
+    restorecon /dev/fb_broadcast
+
+
 on fs
     mount_all /fstab.${ro.hardware}
     wait /vendor/etc/selinux/nonplat_mac_permissions.xml
