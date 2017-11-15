@@ -8,7 +8,7 @@
 # export DH_VERBOSE=1
 
 DEB_DISPLACE_EXTENSION = .cuttlefish
-DEB_DISPLACE_FILES_cuttlefish-cloud += \
+DEB_DISPLACE_FILES_cuttlefish-integration += \
         /etc/default/instance_configs.cfg.template.cuttlefish
 
 build:

@@ -1,5 +1,5 @@
 Source: cuttlefish-common
-Maintainer: Cloud Android Team <cloud-android-team@google.com>
+Maintainer: Cuttlefish Team <https://android-review.googlesource.com/#/c/platform/device/google/cuttlefish>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
@@ -37,7 +37,7 @@ Description: Cuttlefish Android Virtual Device companion package.
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.
 
-Package: cuttlefish-cloud
+Package: cuttlefish-integration
 Architecture: amd64
 Depends:
  adb,
@@ -47,4 +47,4 @@ Depends:
 Provides: ${diverted-files}
 Conflicts: ${diverted-files}
 Description: Configuration and utilities for Android cuttlefish devices
- running in the cloud. Not intended for non-cloud deployments.
+ running on Google Compute Engine. Not intended for use on developer machines.

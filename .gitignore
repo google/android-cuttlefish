@@ -10,7 +10,7 @@ experimental/android
 /cuttlefish-common_*.*
 /cuttlefish-common_*.*
 
-/debian/cuttlefish-cloud/
+/debian/cuttlefish-integration/
 /debian/cuttlefish-common/
 /debian/*.substvars
 /debian/files
