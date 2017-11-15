@@ -36,7 +36,7 @@
   <bool name="config_showNavigationBar">true</bool>
   <dimen name="config_viewConfigurationTouchSlop">12dp</dimen>
 
-  <!-- Cloud Android uses mac80211-hwsim, which does not support Preferred
+  <!-- cuttlefish uses mac80211-hwsim, which does not support Preferred
   Network Offload feature. We disable the use of this feature here. -->
   <bool translatable="false" name="config_wifi_background_scan_support">false</bool>
 
