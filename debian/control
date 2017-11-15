@@ -4,7 +4,6 @@ Section: misc
 Priority: optional
 Standards-Version: 3.9.2
 Build-Depends:
- bazel (>= 0.5.3),
  clang-3.8,
  debhelper (>= 9),
  libgflags-dev,

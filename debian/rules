@@ -11,20 +11,6 @@ DEB_DISPLACE_EXTENSION = .cuttlefish
 DEB_DISPLACE_FILES_cuttlefish-cloud += \
         /etc/default/instance_configs.cfg.template.cuttlefish
 
-DESTDIR_COMMON=$(CURDIR)/debian/cuttlefish-common
-DESTDIR_CLOUD=$(CURDIR)/debian/cuttlefish-cloud
-
-# Clear LD_PRELOAD to prevent libfakeroot from affecting bazel info output.
-BAZEL=LD_PRELOAD= bazel
-BAZEL_BIN=$(shell $(BAZEL) info bazel-bin)
-BAZEL_SRC=$(shell $(BAZEL) info workspace)
-
-BINDIR_COMMON=$(DESTDIR_COMMON)/usr/bin
-BINDIR_CLOUD=$(DESTDIR_CLOUD)/usr/bin
-CFBINDIR_COMMON=$(DESTDIR_COMMON)/usr/lib/cuttlefish-common/bin
-CFDATDIR_COMMON=$(DESTDIR_COMMON)/usr/share/cuttlefish-common
-CFDOCDIR_COMMON=$(DESTDIR_COMMON)/usr/share/doc/cuttlefish-common
-
 build:
 	make -C host/commands/adbshell
 
