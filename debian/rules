@@ -27,6 +27,7 @@ CFDOCDIR_COMMON=$(DESTDIR_COMMON)/usr/share/doc/cuttlefish-common
 
 build:
 	make -C host/commands/adbshell
+	make -C host/commands/wifirouter
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/config-package.mk
