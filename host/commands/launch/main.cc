@@ -36,6 +36,7 @@
 #include "host/libs/config/guest_config.h"
 #include "host/libs/ivserver/ivserver.h"
 #include "host/libs/ivserver/options.h"
+#include "host/libs/monitor/kernel_log_server.h"
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
 #include "host/vsoc/lib/region_control.h"
@@ -97,6 +98,9 @@ std::string g_default_uuid{
     GetPerInstanceDefault("699acfc4-c8c4-11e7-882b-5065f31dc1")};
 DEFINE_string(uuid, g_default_uuid.c_str(),
               "UUID to use for the device. Random if not specified");
+DEFINE_bool(deprecated_boot_completed, true, "Log boot completed message to"
+            "host kernel. This is only used during transition of our clients."
+            "Will be deprecated soon.");
 
 namespace {
 Json::Value LoadLayoutFile(const std::string& file) {
@@ -180,6 +184,43 @@ class IVServerManager {
 
   IVServerManager(const IVServerManager&) = delete;
   IVServerManager& operator=(const IVServerManager&) = delete;
+};
+
+// KernelLogMonitor receives and monitors kernel log for Cuttlefish.
+class KernelLogMonitor {
+ public:
+  KernelLogMonitor(const std::string& socket_name,
+                   const std::string& log_name,
+                   bool deprecated_boot_completed)
+      : klog_{socket_name, log_name, deprecated_boot_completed} {}
+
+  ~KernelLogMonitor() = default;
+
+  void Start() {
+    CHECK(klog_.Init()) << "Could not initialize kernel log server";
+    thread_.reset(new std::thread([this]() { Thread(); }));
+  }
+
+ private:
+  void Thread() {
+    for (;;) {
+      cvd::SharedFDSet fd_read;
+      fd_read.Zero();
+
+      klog_.BeforeSelect(&fd_read);
+
+      int ret = cvd::Select(&fd_read, nullptr, nullptr, nullptr);
+      if (ret <= 0) continue;
+
+      klog_.AfterSelect(fd_read);
+    }
+  }
+
+  monitor::KernelLogServer klog_;
+  std::unique_ptr<std::thread> thread_;
+
+  KernelLogMonitor(const KernelLogMonitor&) = delete;
+  KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
 };
 
 }  // anonymous namespace
@@ -297,6 +338,8 @@ int main(int argc, char** argv) {
       .SetUUID(FLAGS_uuid);
   cfg.SetUSBV1SocketName(
       vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-usb"));
+  cfg.SetKernelLogSocketName(
+      vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-kernel-log"));
 
   std::string xml = cfg.Build();
   if (FLAGS_log_xml) {
@@ -307,6 +350,10 @@ int main(int argc, char** argv) {
   vadb.Start();
   IVServerManager ivshmem(json_root);
   ivshmem.Start();
+  KernelLogMonitor kmon(cfg.GetKernelLogSocketName(),
+                        vsoc::GetPerInstancePath("kernel.log"),
+                        FLAGS_deprecated_boot_completed);
+  kmon.Start();
 
   sleep(1);
 

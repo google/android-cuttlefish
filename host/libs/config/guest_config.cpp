@@ -282,8 +282,8 @@ std::string GuestConfig::Build() const {
 
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 
-  ConfigureSerialPort(devices, 0, DeviceSourceType::kFile,
-                      vsoc::GetPerInstancePath("kernel.log"));
+  ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketClient,
+                      GetKernelLogSocketName());
   ConfigureSerialPort(devices, 1, DeviceSourceType::kUnixSocketServer,
                       vsoc::GetPerInstancePath("console"));
   ConfigureVirtioChannel(devices, 1, "cf-logcat", DeviceSourceType::kFile,

@@ -15,6 +15,7 @@
 
 subdirs = [
     "config",
+    "monitor",
     "ivserver",
     "vadb",
     "usbip",
