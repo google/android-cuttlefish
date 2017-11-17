@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <cerrno>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <set>
@@ -88,10 +89,10 @@ int CreateWifiRouterServerSocket() {
 
   sockaddr_un addr{};
   addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path + 1, FLAGS_socket_name.c_str(),
-          sizeof(addr.sun_path) - 2);
-
-  auto res = bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
+  auto len = std::min(sizeof(addr.sun_path) - 2, FLAGS_socket_name.size());
+  strncpy(&addr.sun_path[1], FLAGS_socket_name.c_str(), len);
+  len += offsetof(sockaddr_un, sun_path) + 1;  // include heading \0 byte.
+  auto res = bind(fd, reinterpret_cast<sockaddr*>(&addr), len);
   LOG_IF(FATAL, res < 0) << "Could not bind unix socket: " << strerror(-res);
   listen(fd, 4);
   return fd;
