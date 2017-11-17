@@ -15,7 +15,9 @@ Build-Depends:
  cdbs,
  debhelper,
  dh-buildinfo,
- config-package-dev (>= 4.5~)
+ config-package-dev (>= 4.5~),
+ libnl-3-dev,
+ libnl-genl-3-dev
 
 Package: cuttlefish-common
 Architecture: amd64
