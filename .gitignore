@@ -1,17 +1,12 @@
-bazel-*
-experimental/android
 .*
+*.o
 *.deb
 *.log
 *.pyc
 
-/cuttlefish-common_*.*
-/cuttlefish-common_*.*
-/cuttlefish-common_*.*
-/cuttlefish-common_*.*
-
-/debian/cuttlefish-integration/
-/debian/cuttlefish-common/
+/debian/cuttlefish-*/
 /debian/*.substvars
 /debian/files
 /debian/*.debhelper
+adbshell
+wifirouter
