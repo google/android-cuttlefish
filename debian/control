@@ -25,6 +25,7 @@ Depends:
  adb,
  libarchive-tools | bsdtar,
  libc6,
+ libgoogle-glog0v5,
  libstdc++6,
  libudev1,
  libvirt-bin,
