@@ -25,7 +25,7 @@ CXXFLAGS+=$(shell pkg-config --cflags libgflags)
 LDFLAGS+=$(shell pkg-config --libs libnl-3.0)
 LDFLAGS+=$(shell pkg-config --libs libnl-genl-3.0)
 LDFLAGS+=$(shell pkg-config --libs libglog)
-LDFLAGS+=$(shell pkg-config --libs libgflags)
+LDFLAGS+=$(shell pkg-config --libs libgflags) -lgflags
 
 $(BINARY): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
