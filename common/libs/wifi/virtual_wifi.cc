@@ -153,7 +153,8 @@ int GetWiphyInterface(Netlink* nl, uint32_t wiphy_index) {
 
 // Set WLAN interface name.
 // Uses Netlink Route to alter interface attributes (currently: name).
-bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name) {
+bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name,
+                      const uint8_t* address) {
   Cmd msg;
 
   ifinfomsg ifm{};
@@ -162,7 +163,8 @@ bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name) {
   if (!nlmsg_put(msg.Msg(), NL_AUTO_PID, NL_AUTO_SEQ, RTM_SETLINK, 0,
                  NLM_F_REQUEST) ||
       nlmsg_append(msg.Msg(), &ifm, sizeof(ifm), 0) ||
-      nla_put_string(msg.Msg(), IFLA_IFNAME, name.c_str())) {
+      nla_put_string(msg.Msg(), IFLA_IFNAME, name.c_str()) ||
+      nla_put(msg.Msg(), IFLA_ADDRESS, MAX_ADDR_LEN, address)) {
     LOG(ERROR) << "Could not create interface update.";
     return false;
   }
@@ -196,6 +198,13 @@ VirtualWIFI::~VirtualWIFI() {
 }
 
 bool VirtualWIFI::Init() {
+  if (sscanf(addr_.c_str(), "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx",
+             &mac_addr_[0], &mac_addr_[1], &mac_addr_[2], &mac_addr_[3],
+             &mac_addr_[4], &mac_addr_[5]) != 6) {
+    LOG(ERROR) << "Malformed MAC address: " << addr_;
+    return false;
+  }
+
   std::string phy = name_ + "phy";
   // Each WLAN device consists of two sides:
   // - WIPHY is the "radio" side,
@@ -225,7 +234,7 @@ bool VirtualWIFI::Init() {
   }
 
   // 4. Apply requested interface name.
-  if (!SetWLANInterface(nl_, iface_number_, name_)) {
+  if (!SetWLANInterface(nl_, iface_number_, name_, &mac_addr_[0])) {
     return false;
   }
 
