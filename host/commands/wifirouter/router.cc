@@ -174,17 +174,27 @@ void HandleClientMessage(int client, ClientsTable* clients,
     return;
   }
 
-  // Accept message, but ignore it.
-  if (msg->nlmsg_type != kWifiRouterType) return;
+  int result = -EINVAL;
 
-  nlattr* attrs[WIFIROUTER_ATTR_MAX];
-  if (!nlmsg_parse(msg.get(), 0, attrs, WIFIROUTER_ATTR_MAX - 1, nullptr)) {
-    RemoveClient(client, clients, targets);
-    return;
+  // Accept message, but ignore it.
+  if (msg->nlmsg_type == kWifiRouterType) {
+    nlattr* attrs[WIFIROUTER_ATTR_MAX];
+    if (nlmsg_parse(msg.get(), 0, attrs, WIFIROUTER_ATTR_MAX - 1, nullptr)) {
+      if (attrs[WIFIROUTER_ATTR_MAC] != nullptr) {
+        targets->emplace(GetMacHash(nla_data(attrs[WIFIROUTER_ATTR_MAC])),
+                         client);
+        result = 0;
+      }
+    }
   }
 
-  if (attrs[WIFIROUTER_ATTR_MAC] != nullptr) {
-    targets->emplace(GetMacHash(nla_data(attrs[WIFIROUTER_ATTR_MAC])), client);
+  std::unique_ptr<nl_msg, void (*)(nl_msg*)> rsp(nlmsg_inherit(msg.get()),
+                                                 nlmsg_free);
+  nlmsgerr err{result};
+  nla_put(rsp.get(), NLMSG_ERROR, sizeof(err), &err);
+  auto hdr = nlmsg_hdr(rsp.get());
+  if (write(client, hdr, hdr->nlmsg_len) != hdr->nlmsg_len) {
+    RemoveClient(client, clients, targets);
   }
 }
 
