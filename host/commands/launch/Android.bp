@@ -19,6 +19,7 @@ cc_binary_host {
 	"libjsoncpp",
 	"libcuttlefish_fs",
 	"cuttlefish_auto_resources",
+	"libmonitor",
     ],
     shared_libs: [
 	"libicuuc",
