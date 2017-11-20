@@ -97,7 +97,7 @@ std::string g_default_uuid{
     GetPerInstanceDefault("699acfc4-c8c4-11e7-882b-5065f31dc1")};
 DEFINE_string(uuid, g_default_uuid.c_str(),
               "UUID to use for the device. Random if not specified");
-DEFINE_bool(deprecated_boot_completed, true, "Log boot completed message to"
+DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             "host kernel. This is only used during transition of our clients."
             "Will be deprecated soon.");
 
