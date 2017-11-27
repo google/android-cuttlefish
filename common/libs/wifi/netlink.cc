@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/wifid/netlink.h"
+#include "common/libs/wifi/netlink.h"
 
 #include <glog/logging.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/family.h>
 
-namespace avd {
+namespace cvd {
 namespace {
 constexpr char kWifiSimFamilyName[] = "MAC80211_HWSIM";
 constexpr char kNl80211FamilyName[] = "nl80211";
 }  // namespace
 
-Netlink::Netlink() : genl_(NETLINK_GENERIC), rtnl_(NETLINK_ROUTE) {}
+Netlink::Netlink(const std::string& wifirouter_socket)
+    : genl_(NETLINK_GENERIC), rtnl_(NETLINK_ROUTE), wrcl_(wifirouter_socket) {}
 
 bool Netlink::Init() {
   if (!genl_.Init()) {
@@ -35,6 +36,11 @@ bool Netlink::Init() {
 
   if (!rtnl_.Init()) {
     LOG(ERROR) << "Could not open Netlink Route.";
+    return false;
+  }
+
+  if (!wrcl_.Init()) {
+    LOG(ERROR) << "Could not connect to Wifi Router.";
     return false;
   }
 
@@ -68,19 +74,22 @@ void Netlink::HandleNetlinkMessages() {
   fd_set nlfds;
   int genl_fd = nl_socket_get_fd(GeNL().Sock());
   int rtnl_fd = nl_socket_get_fd(RtNL().Sock());
-  int max_fd = std::max(genl_fd, rtnl_fd) + 1;
+  int wrcl_fd = wrcl_.Sock();
 
+  int max_fd = std::max({genl_fd, rtnl_fd, wrcl_fd}) + 1;
   while (true) {
     FD_ZERO(&nlfds);
     FD_SET(genl_fd, &nlfds);
     FD_SET(rtnl_fd, &nlfds);
+    FD_SET(wrcl_fd, &nlfds);
 
     int res = select(max_fd, &nlfds, nullptr, nullptr, nullptr);
     if (res <= 0) continue;
 
     if (FD_ISSET(genl_fd, &nlfds)) nl_recvmsgs_default(GeNL().Sock());
     if (FD_ISSET(rtnl_fd, &nlfds)) nl_recvmsgs_default(RtNL().Sock());
+    if (FD_ISSET(wrcl_fd, &nlfds)) wrcl_.HandleResponses();
   }
 }
 
-}  // namespace avd
+}  // namespace cvd

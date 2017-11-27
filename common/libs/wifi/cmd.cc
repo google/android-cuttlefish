@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/wifid/cmd.h"
+#include "common/libs/wifi/cmd.h"
 
-namespace avd {
+namespace cvd {
 
 Cmd::Cmd() : msg_(nlmsg_alloc()) {}
 
@@ -60,4 +60,4 @@ const std::vector<nl_msg*> Cmd::Responses() const {
   return responses_;
 }
 
-}  // namespace avd
+}  // namespace cvd

@@ -19,13 +19,14 @@
 #include <thread>
 
 #include <netlink/genl/genl.h>
-#include "host/commands/wifid/nl_client.h"
+#include "common/libs/wifi/nl_client.h"
+#include "common/libs/wifi/wr_client.h"
 
-namespace avd {
+namespace cvd {
 // Netlink provides access to relevant netlink backends and resources.
 class Netlink {
  public:
-  Netlink();
+  Netlink(const std::string& wifirouter_socket);
   ~Netlink() = default;
 
   // Initialize instance of Netlink Factory.
@@ -36,6 +37,8 @@ class Netlink {
 
   // Getter for NETLINK_ROUTE NlClient instance.
   NlClient& RtNL() { return rtnl_; }
+
+  WRClient& WRCL() { return wrcl_; }
 
   // Access Family ID for MAC80211 (WIFI Simulator).
   int FamilyMAC80211() const { return mac80211_hwsim_family_; }
@@ -51,8 +54,10 @@ class Netlink {
 
   NlClient genl_;
   NlClient rtnl_;
+  WRClient wrcl_;
 
   int mac80211_hwsim_family_ = 0;
+  int router_family_ = 0;
   int nl80211_family_ = 0;
 
   std::unique_ptr<std::thread> netlink_thread_;
@@ -61,4 +66,4 @@ class Netlink {
   Netlink& operator=(const Netlink&) = delete;
 };
 
-}  // namespace avd
+}  // namespace cvd

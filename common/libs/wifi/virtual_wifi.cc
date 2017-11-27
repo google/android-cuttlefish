@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/wifid/virtual_wifi.h"
+#include "common/libs/wifi/virtual_wifi.h"
 
 #include <fstream>
 
@@ -22,10 +22,11 @@
 #include <linux/nl80211.h>
 #include <netlink/genl/ctrl.h>
 
-#include "host/commands/wifid/cmd.h"
-#include "host/commands/wifid/mac80211.h"
+#include "common/libs/wifi/cmd.h"
+#include "common/libs/wifi/mac80211.h"
+#include "common/libs/wifi/router.h"
 
-namespace avd {
+namespace cvd {
 namespace {
 // Create new HWSIM Radio.
 // Returns newly created HWSIM radio number, or negative errno code.
@@ -185,6 +186,34 @@ bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name,
   LOG(ERROR) << "Unknown or no response from netlink.";
   return -1;
 }
+
+bool RegisterForRouterNotifications(Netlink* nl, uint8_t* mac_addr) {
+  Cmd msg;
+
+  if (!genlmsg_put(msg.Msg(), NL_AUTO_PID, NL_AUTO_SEQ, 0, 0,
+                   NLM_F_REQUEST, WIFIROUTER_CMD_REGISTER, 0) ||
+      nla_put(msg.Msg(), WIFIROUTER_ATTR_MAC, MAX_ADDR_LEN, mac_addr)) {
+    LOG(ERROR) << "Could not create wifirouter register message.";
+    return false;
+  }
+
+  nl->WRCL().Send(&msg);
+
+  // Responses() pauses until netlink responds to previously sent message.
+  for (auto* r : msg.Responses()) {
+    auto hdr = nlmsg_hdr(r);
+    if (hdr->nlmsg_type == NLMSG_ERROR) {
+      nlmsgerr* err = static_cast<nlmsgerr*>(nlmsg_data(hdr));
+      LOG_IF(ERROR, err->error < 0) << "Failed to register with wifi router: "
+                                    << strerror(err->error);
+      return err->error == 0;
+    }
+  }
+
+  LOG(ERROR) << "Unknown or no response from wifi router.";
+  return -1;
+}
+
 }  // namespace
 
 VirtualWIFI::~VirtualWIFI() {
@@ -198,9 +227,13 @@ VirtualWIFI::~VirtualWIFI() {
 }
 
 bool VirtualWIFI::Init() {
-  if (sscanf(addr_.c_str(), "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx",
+  // Dummy variable is used with sscanf to determine mac address is well formed
+  // (that is: there's no trailing string content).
+  char dummy;
+
+  if (sscanf(addr_.c_str(), "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx%c",
              &mac_addr_[0], &mac_addr_[1], &mac_addr_[2], &mac_addr_[3],
-             &mac_addr_[4], &mac_addr_[5]) != 6) {
+             &mac_addr_[4], &mac_addr_[5], &dummy) != 6) {
     LOG(ERROR) << "Malformed MAC address: " << addr_;
     return false;
   }
@@ -213,6 +246,7 @@ bool VirtualWIFI::Init() {
   // interface properties. Each radio can have more than one WLAN.
 
   // 1. Create new MAC80211 HWSIM radio.
+  LOG(INFO) << "Creating virtual radio: " << phy;
   hwsim_number_ = CreateHWSIM(nl_, phy);
   if (hwsim_number_ <= 0) {
     LOG(ERROR) << "Could not create HWSIM: " << strerror(-hwsim_number_);
@@ -220,6 +254,7 @@ bool VirtualWIFI::Init() {
   }
 
   // 2. Acquire the WIPHY radio number created with HWSIM radio.
+  LOG(INFO) << "Querying WIPHY number for: " << phy;
   wiphy_number_ = GetWIPHYIndex(phy);
   if (wiphy_number_ <= 0) {
     LOG(ERROR) << "Could not create WIPHY.";
@@ -227,6 +262,7 @@ bool VirtualWIFI::Init() {
   }
 
   // 3. Query interface index.
+  LOG(INFO) << "Querying WIFI number for: " << wiphy_number_;
   iface_number_ = GetWiphyInterface(nl_, wiphy_number_);
   if (iface_number_ <= 0) {
     LOG(ERROR) << "Could not query interface details.";
@@ -234,11 +270,20 @@ bool VirtualWIFI::Init() {
   }
 
   // 4. Apply requested interface name.
+  LOG(INFO) << "Updating interface name to: " << name_;
   if (!SetWLANInterface(nl_, iface_number_, name_, &mac_addr_[0])) {
+    LOG(ERROR) << "Could not update wlan interface name.";
+    return false;
+  }
+
+  // 5. Register with wifi router.
+  LOG(INFO) << "Registering for notifications for: " << addr_;
+  if (!RegisterForRouterNotifications(nl_, mac_addr_)) {
+    LOG(ERROR) << "Could not register with wifi router.";
     return false;
   }
 
   return true;
 }
 
-}  // namespace avd
+}  // namespace cvd

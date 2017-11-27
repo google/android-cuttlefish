@@ -22,7 +22,7 @@
 
 #include <netlink/msg.h>
 
-namespace avd {
+namespace cvd {
 constexpr int kWifiSimVersion = 1;
 
 class Cmd {
@@ -55,4 +55,4 @@ class Cmd {
   Cmd& operator=(const Cmd&) = delete;
 };
 
-}  // namespace avd
+}  // namespace cvd

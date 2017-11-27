@@ -21,9 +21,9 @@
 #include <netinet/in.h>
 #include <linux/netdevice.h>
 
-#include "host/commands/wifid/netlink.h"
+#include "common/libs/wifi/netlink.h"
 
-namespace avd {
+namespace cvd {
 
 // VirtualWIFI is an abstraction of an (individual) virtual WLAN device.
 // A virtual WLAN is a composition of the three elements:
@@ -77,4 +77,4 @@ class VirtualWIFI {
   VirtualWIFI& operator=(const VirtualWIFI&) = delete;
 };
 
-}  // namespace avd
+}  // namespace cvd
