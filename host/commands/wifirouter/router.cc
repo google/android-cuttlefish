@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "host/commands/wifirouter/router.h"
+
 #include <cerrno>
 #include <cstddef>
 #include <map>
@@ -33,6 +35,7 @@ DEFINE_string(socket_name, "cvd-wifirouter",
               "Name of the unix-domain socket providing access for routing. "
               "Socket will be created in abstract namespace.");
 
+namespace cvd {
 namespace {
 using MacHash = uint64_t;
 using MacToClientsTable = std::multimap<MacHash, int>;
@@ -47,13 +50,6 @@ constexpr int HWSIM_ATTR_MAX = 19;
 constexpr char kWifiSimFamilyName[] = "MAC80211_HWSIM";
 const int kMaxSupportedPacketSize = getpagesize();
 constexpr uint16_t kWifiRouterType = ('W' << 8 | 'R');
-
-enum {
-  WIFIROUTER_ATTR_MAC,
-
-  // Keep this last.
-  WIFIROUTER_ATTR_MAX
-};
 
 // Get hash for mac address serialized to 6 bytes of data starting at specified
 // location.
@@ -104,6 +100,7 @@ void AcceptNewClient(int server_fd, ClientsTable* clients) {
   auto client = accept(server_fd, nullptr, nullptr);
   LOG_IF(ERROR, client < 0) << "Could not accept client: " << strerror(errno);
   if (client > 0) clients->insert(client);
+  LOG(INFO) << "Client " << client << " added.";
 }
 
 // Disconnect and remove client from list of registered clients and recipients
@@ -119,6 +116,7 @@ void RemoveClient(int client, ClientsTable* clients,
       ++iter;
     }
   }
+  LOG(INFO) << "Client " << client << " removed.";
 }
 
 // Read MAC80211HWSIM packet, find the originating MAC address and redirect it
@@ -140,18 +138,26 @@ void RouteWIFIPacket(nl_sock* nl, int simfamily, ClientsTable* clients,
   // Discard messages that originate from anything else than MAC80211_HWSIM.
   if (msg->nlmsg_type != simfamily) return;
 
+  std::unique_ptr<nl_msg, void (*)(nl_msg*)> rep(
+      nlmsg_alloc(), [](nl_msg* m) { nlmsg_free(m); });
+  const auto hdr = nlmsg_put(rep.get(), 0, 0, WIFIROUTER_CMD_NOTIFY, 0, 0);
+
   // Note, this is generic netlink message, and uses different parsing
   // technique.
   nlattr* attrs[HWSIM_ATTR_MAX + 1];
   if (genlmsg_parse(msg.get(), 0, attrs, HWSIM_ATTR_MAX, nullptr)) return;
 
   std::set<int> pending_removals;
-  if (attrs[HWSIM_ATTR_ADDR_TRANSMITTER] != nullptr) {
+  auto addr = attrs[HWSIM_ATTR_ADDR_TRANSMITTER];
+  if (addr != nullptr) {
+    nla_put(rep.get(), WIFIROUTER_ATTR_MAC, nla_len(addr), nla_data(addr));
+    nla_put(rep.get(), WIFIROUTER_ATTR_PACKET, len, buf);
+
     auto key = GetMacHash(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
     VLOG(2) << "Received netlink packet from " << std::hex << key;
     for (auto it = targets->find(key); it != targets->end() && it->first == key;
          ++it) {
-      auto num_written = write(it->second, buf, len);
+      auto num_written = write(it->second, rep.get(), hdr->nlmsg_len);
       if (num_written != len) pending_removals.insert(it->second);
     }
 
@@ -161,17 +167,16 @@ void RouteWIFIPacket(nl_sock* nl, int simfamily, ClientsTable* clients,
   }
 }
 
-void HandleClientMessage(int client, ClientsTable* clients,
+bool HandleClientMessage(int client, ClientsTable* clients,
                          MacToClientsTable* targets) {
   std::unique_ptr<nlmsghdr, void (*)(nlmsghdr*)> msg(
       reinterpret_cast<nlmsghdr*>(malloc(kMaxSupportedPacketSize)),
       [](nlmsghdr* h) { free(h); });
-  auto size = read(client, msg.get(), kMaxSupportedPacketSize);
+  auto size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
 
   // Invalid message or no data -> client invalid or disconnected.
   if (size == 0 || size != msg->nlmsg_len || size < sizeof(nlmsghdr)) {
-    RemoveClient(client, clients, targets);
-    return;
+    return false;
   }
 
   int result = -EINVAL;
@@ -193,9 +198,10 @@ void HandleClientMessage(int client, ClientsTable* clients,
   nlmsgerr err{result};
   nla_put(rsp.get(), NLMSG_ERROR, sizeof(err), &err);
   auto hdr = nlmsg_hdr(rsp.get());
-  if (write(client, hdr, hdr->nlmsg_len) != hdr->nlmsg_len) {
-    RemoveClient(client, clients, targets);
+  if (send(client, hdr, hdr->nlmsg_len, MSG_NOSIGNAL) != hdr->nlmsg_len) {
+    return false;
   }
+  return true;
 }
 
 // Process incoming requests from netlink, server or clients.
@@ -222,17 +228,27 @@ void ServerLoop(int server_fd, nl_sock* netlink_sock, int family) {
     if (FD_ISSET(server_fd, &reads)) AcceptNewClient(server_fd, &clients);
     if (FD_ISSET(netlink_fd, &reads))
       RouteWIFIPacket(netlink_sock, family, &clients, &targets);
-    for (int client : clients) {
-      if (FD_ISSET(client, &reads)) {
-        HandleClientMessage(client, &clients, &targets);
+
+    // Process any client messages left. Drop any client that is no longer
+    // talking with us.
+    for (auto client = clients.begin(); client != clients.end();) {
+      auto cfd = *client++;
+      // Is our client sending us data?
+      if (FD_ISSET(cfd, &reads)) {
+        if (!HandleClientMessage(cfd, &clients, &targets)) {
+          // Client should be disconnected.
+          RemoveClient(cfd, &clients, &targets);
+        }
       }
     }
   }
 }
 
 }  // namespace
+}  // namespace cvd
 
 int main(int argc, char* argv[]) {
+  using namespace cvd;
   google::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
