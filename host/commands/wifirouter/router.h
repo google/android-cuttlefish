@@ -34,6 +34,9 @@ enum {
 
 // Attributes recognized by WIFIRouter netlink family.
 enum {
+  // Don't use attribute 0 to avoid parsing malformed message.
+  WIFIROUTER_ATTR_UNSPEC,
+
   // MAC address representing interface from which the packet originated.
   WIFIROUTER_ATTR_MAC,
 

@@ -49,7 +49,6 @@ constexpr int HWSIM_ATTR_MAX = 19;
 // Name of the WIFI SIM Netlink Family.
 constexpr char kWifiSimFamilyName[] = "MAC80211_HWSIM";
 const int kMaxSupportedPacketSize = getpagesize();
-constexpr uint16_t kWifiRouterType = ('W' << 8 | 'R');
 
 // Get hash for mac address serialized to 6 bytes of data starting at specified
 // location.
@@ -140,7 +139,7 @@ void RouteWIFIPacket(nl_sock* nl, int simfamily, ClientsTable* clients,
 
   std::unique_ptr<nl_msg, void (*)(nl_msg*)> rep(
       nlmsg_alloc(), [](nl_msg* m) { nlmsg_free(m); });
-  const auto hdr = nlmsg_put(rep.get(), 0, 0, WIFIROUTER_CMD_NOTIFY, 0, 0);
+  genlmsg_put(rep.get(), 0, 0, 0, 0, 0, WIFIROUTER_CMD_NOTIFY, 0);
 
   // Note, this is generic netlink message, and uses different parsing
   // technique.
@@ -152,13 +151,15 @@ void RouteWIFIPacket(nl_sock* nl, int simfamily, ClientsTable* clients,
   if (addr != nullptr) {
     nla_put(rep.get(), WIFIROUTER_ATTR_MAC, nla_len(addr), nla_data(addr));
     nla_put(rep.get(), WIFIROUTER_ATTR_PACKET, len, buf);
+    auto hdr = nlmsg_hdr(rep.get());
 
     auto key = GetMacHash(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
     VLOG(2) << "Received netlink packet from " << std::hex << key;
     for (auto it = targets->find(key); it != targets->end() && it->first == key;
          ++it) {
-      auto num_written = write(it->second, rep.get(), hdr->nlmsg_len);
-      if (num_written != len) pending_removals.insert(it->second);
+      auto num_written =
+          send(it->second, hdr, hdr->nlmsg_len, MSG_NOSIGNAL);
+      if (num_written != hdr->nlmsg_len) pending_removals.insert(it->second);
     }
 
     for (auto client : pending_removals) {
@@ -180,23 +181,30 @@ bool HandleClientMessage(int client, ClientsTable* clients,
   }
 
   int result = -EINVAL;
+  genlmsghdr* ghdr = reinterpret_cast<genlmsghdr*>(nlmsg_data(msg.get()));
 
-  // Accept message, but ignore it.
-  if (msg->nlmsg_type == kWifiRouterType) {
-    nlattr* attrs[WIFIROUTER_ATTR_MAX];
-    if (nlmsg_parse(msg.get(), 0, attrs, WIFIROUTER_ATTR_MAX - 1, nullptr)) {
-      if (attrs[WIFIROUTER_ATTR_MAC] != nullptr) {
-        targets->emplace(GetMacHash(nla_data(attrs[WIFIROUTER_ATTR_MAC])),
-                         client);
-        result = 0;
+  switch (ghdr->cmd) {
+    case WIFIROUTER_CMD_REGISTER:
+      // Register client to receive notifications for specified MAC address.
+      nlattr* attrs[WIFIROUTER_ATTR_MAX];
+      if (!nlmsg_parse(msg.get(), sizeof(genlmsghdr), attrs,
+                       WIFIROUTER_ATTR_MAX - 1, nullptr)) {
+        if (attrs[WIFIROUTER_ATTR_MAC] != nullptr) {
+          targets->emplace(GetMacHash(nla_data(attrs[WIFIROUTER_ATTR_MAC])),
+                           client);
+          result = 0;
+        }
       }
-    }
+      break;
+
+    default:
+      break;
   }
 
-  std::unique_ptr<nl_msg, void (*)(nl_msg*)> rsp(nlmsg_inherit(msg.get()),
-                                                 nlmsg_free);
-  nlmsgerr err{result};
-  nla_put(rsp.get(), NLMSG_ERROR, sizeof(err), &err);
+  nlmsgerr err{.error = result};
+  std::unique_ptr<nl_msg, void (*)(nl_msg*)> rsp(nlmsg_alloc(), nlmsg_free);
+  nlmsg_put(rsp.get(), msg->nlmsg_pid, msg->nlmsg_seq, NLMSG_ERROR, 0, 0);
+  nlmsg_append(rsp.get(), &err, sizeof(err), 0);
   auto hdr = nlmsg_hdr(rsp.get());
   if (send(client, hdr, hdr->nlmsg_len, MSG_NOSIGNAL) != hdr->nlmsg_len) {
     return false;
