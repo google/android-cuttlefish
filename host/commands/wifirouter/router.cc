@@ -71,8 +71,10 @@ void RegisterForHWSimNotifications(nl_sock* sock, int family) {
               HWSIM_CMD_REGISTER, 0);
   nl_send_auto(sock, msg.get());
   auto res = nl_wait_for_ack(sock);
-  LOG_IF(FATAL, res < 0) << "Could not register for notifications: "
-                         << nl_geterror(res);
+  if (res < 0) {
+    LOG(ERROR) << "Could not register for notifications: " << nl_geterror(res);
+    exit(1);
+  }
 }
 
 // Create and configure WIFI Router server socket.
@@ -80,7 +82,10 @@ void RegisterForHWSimNotifications(nl_sock* sock, int family) {
 // the function will terminate execution of the program.
 int CreateWifiRouterServerSocket() {
   auto fd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
-  LOG_IF(FATAL, fd <= 0) << "Could not create unix socket: " << strerror(-fd);
+  if (fd <= 0) {
+    LOG(ERROR) << "Could not create unix socket: " << strerror(-fd);
+    exit(1);
+  }
 
   sockaddr_un addr{};
   addr.sun_family = AF_UNIX;
@@ -88,7 +93,12 @@ int CreateWifiRouterServerSocket() {
   strncpy(&addr.sun_path[1], FLAGS_socket_name.c_str(), len);
   len += offsetof(sockaddr_un, sun_path) + 1;  // include heading \0 byte.
   auto res = bind(fd, reinterpret_cast<sockaddr*>(&addr), len);
-  LOG_IF(FATAL, res < 0) << "Could not bind unix socket: " << strerror(-res);
+
+  if (res < 0) {
+    LOG(ERROR) << "Could not bind unix socket: " << strerror(-res);
+    exit(1);
+  }
+
   listen(fd, 4);
   return fd;
 }
@@ -97,8 +107,12 @@ int CreateWifiRouterServerSocket() {
 // clients table.
 void AcceptNewClient(int server_fd, ClientsTable* clients) {
   auto client = accept(server_fd, nullptr, nullptr);
-  LOG_IF(ERROR, client < 0) << "Could not accept client: " << strerror(errno);
-  if (client > 0) clients->insert(client);
+  if (client < 0) {
+    LOG(ERROR) << "Could not accept client: " << strerror(errno);
+    return;
+  }
+
+  clients->insert(client);
   LOG(INFO) << "Client " << client << " added.";
 }
 
@@ -154,12 +168,14 @@ void RouteWIFIPacket(nl_sock* nl, int simfamily, ClientsTable* clients,
     auto hdr = nlmsg_hdr(rep.get());
 
     auto key = GetMacHash(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
-    VLOG(2) << "Received netlink packet from " << std::hex << key;
+    LOG(INFO) << "Received netlink packet from " << std::hex << key;
     for (auto it = targets->find(key); it != targets->end() && it->first == key;
          ++it) {
       auto num_written =
           send(it->second, hdr, hdr->nlmsg_len, MSG_NOSIGNAL);
-      if (num_written != hdr->nlmsg_len) pending_removals.insert(it->second);
+      if (num_written != static_cast<int64_t>(hdr->nlmsg_len)) {
+        pending_removals.insert(it->second);
+      }
     }
 
     for (auto client : pending_removals) {
@@ -168,12 +184,11 @@ void RouteWIFIPacket(nl_sock* nl, int simfamily, ClientsTable* clients,
   }
 }
 
-bool HandleClientMessage(int client, ClientsTable* clients,
-                         MacToClientsTable* targets) {
+bool HandleClientMessage(int client, MacToClientsTable* targets) {
   std::unique_ptr<nlmsghdr, void (*)(nlmsghdr*)> msg(
       reinterpret_cast<nlmsghdr*>(malloc(kMaxSupportedPacketSize)),
       [](nlmsghdr* h) { free(h); });
-  auto size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
+  int64_t size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
 
   // Invalid message or no data -> client invalid or disconnected.
   if (size == 0 || size != msg->nlmsg_len || size < sizeof(nlmsghdr)) {
@@ -206,7 +221,8 @@ bool HandleClientMessage(int client, ClientsTable* clients,
   nlmsg_put(rsp.get(), msg->nlmsg_pid, msg->nlmsg_seq, NLMSG_ERROR, 0, 0);
   nlmsg_append(rsp.get(), &err, sizeof(err), 0);
   auto hdr = nlmsg_hdr(rsp.get());
-  if (send(client, hdr, hdr->nlmsg_len, MSG_NOSIGNAL) != hdr->nlmsg_len) {
+  if (send(client, hdr, hdr->nlmsg_len, MSG_NOSIGNAL) !=
+      static_cast<int64_t>(hdr->nlmsg_len)) {
     return false;
   }
   return true;
@@ -243,7 +259,7 @@ void ServerLoop(int server_fd, nl_sock* netlink_sock, int family) {
       auto cfd = *client++;
       // Is our client sending us data?
       if (FD_ISSET(cfd, &reads)) {
-        if (!HandleClientMessage(cfd, &clients, &targets)) {
+        if (!HandleClientMessage(cfd, &targets)) {
           // Client should be disconnected.
           RemoveClient(cfd, &clients, &targets);
         }
@@ -258,20 +274,27 @@ void ServerLoop(int server_fd, nl_sock* netlink_sock, int family) {
 int main(int argc, char* argv[]) {
   using namespace cvd;
   google::ParseCommandLineFlags(&argc, &argv, true);
+#if !defined(ANDROID)
+  // We should check for legitimate google logging here.
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
+#endif
 
   std::unique_ptr<nl_sock, void (*)(nl_sock*)> sock(nl_socket_alloc(),
                                                     nl_socket_free);
 
   auto res = nl_connect(sock.get(), NETLINK_GENERIC);
-  LOG_IF(FATAL, res < 0) << "Could not connect to netlink generic: "
-                         << nl_geterror(res);
+  if (res < 0) {
+    LOG(ERROR) << "Could not connect to netlink generic: " << nl_geterror(res);
+    exit(1);
+  }
 
   auto mac80211_family = genl_ctrl_resolve(sock.get(), kWifiSimFamilyName);
-  LOG_IF(FATAL, mac80211_family <= 0)
-      << "Could not find MAC80211 HWSIM. Please make sure module "
-      << "'mac80211_hwsim' is loaded on your system.";
+  if (mac80211_family <= 0) {
+    LOG(ERROR) << "Could not find MAC80211 HWSIM. Please make sure module "
+               << "'mac80211_hwsim' is loaded on your system.";
+    exit(1);
+  }
 
   RegisterForHWSimNotifications(sock.get(), mac80211_family);
   auto server_fd = CreateWifiRouterServerSocket();
