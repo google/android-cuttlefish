@@ -15,6 +15,7 @@
 
 subdirs = [
     "common",
+    "guest",
     "host",
 ]
 
