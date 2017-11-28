@@ -15,29 +15,27 @@
  * limitations under the License.
  */
 
-#include "VirtualInputDevice.h"
 #include "vnc_utils.h"
 
-#include <linux/input.h>
-#include <android-base/thread_annotations.h>
-
+#include <map>
 #include <mutex>
+
+#include "common/vsoc/lib/input_events_region_view.h"
 
 namespace cvd {
 namespace vnc {
 
 class VirtualInputs {
  public:
+  VirtualInputs();
+
   void GenerateKeyPressEvent(int code, bool down);
   void PressPowerButton(bool down);
   void HandlePointerEvent(bool touch_down, int x, int y);
 
  private:
-  std::mutex m_;
-  VirtualKeyboard virtual_keyboard_ GUARDED_BY(m_){"remote-keyboard"};
-  VirtualTouchPad virtual_touch_pad_ GUARDED_BY(m_){
-      "remote-touchpad", ActualScreenWidth(), ActualScreenHeight()};
-  VirtualButton virtual_power_button_ GUARDED_BY(m_){"remote-power", KEY_POWER};
+  vsoc::input_events::InputEventsRegionView input_events_region_view_;
+  std::map<uint32_t, uint32_t> keymapping_;
 };
 
 }  // namespace vnc
