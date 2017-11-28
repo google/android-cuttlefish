@@ -1,16 +1,13 @@
-cc_library_static {
-    name: "libcuttlefish_wifi",
+cc_binary {
+    name: "wificlient",
     host_supported: true,
-
     srcs: [
-        "netlink.cc",
-        "nl_client.cc",
-        "cmd.cc",
-        "virtual_wifi.cc",
-        "wr_client.cc",
+        "main.cc",
     ],
     static_libs: [
         "libbase",
+        "libgflags",
+        "libcuttlefish_wifi",
         "libnl",
     ],
     header_libs: [
