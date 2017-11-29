@@ -30,11 +30,17 @@ int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   std::unique_ptr<cvd::Netlink> nl(new cvd::Netlink(FLAGS_wifirouter_socket));
-  LOG_IF(FATAL, !nl->Init());
+  if (!nl->Init()) {
+    LOG(ERROR) << "Could not initialize netlink.";
+    exit(1);
+  }
 
   std::unique_ptr<cvd::VirtualWIFI> radio(
       new cvd::VirtualWIFI(nl.get(), FLAGS_iface, FLAGS_macaddr));
-  LOG_IF(FATAL, !radio->Init());
+  if (!radio->Init()) {
+    LOG(ERROR) << "Could not create radio.";
+    exit(1);
+  }
 
   pause();
 }
