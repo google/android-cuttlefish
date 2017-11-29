@@ -56,6 +56,7 @@ BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS1
 BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc
 BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
 BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
 
 # TODO(b/65266349) Figure out why this is needed
 BOARD_KERNEL_CMDLINE += security=selinux

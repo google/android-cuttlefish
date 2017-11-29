@@ -104,6 +104,15 @@ service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
     user root
 
 
+service wifirouter /vendor/bin/wifirouter
+    class main
+    user root
+
+
+service wificlient /vendor/bin/wificlient -iface=wlan0 -macaddr=00:43:56:44:01:02
+    class late_start
+    user root
+
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     class main
     disabled

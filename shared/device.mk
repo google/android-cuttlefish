@@ -59,6 +59,8 @@ PRODUCT_PACKAGES += \
     usbforward \
     vnc_server \
     VSoCService \
+    wifirouter \
+    wificlient \
     wpa_supplicant.vsoc.conf \
 
 #
