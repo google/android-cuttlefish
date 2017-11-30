@@ -86,6 +86,27 @@
       }
    },
 
+   {
+     "device_name" : "wifi_exchange",
+     "__comment" : [
+       "WIFI exchange buffer for primary wireless network interface.",
+       "Must be able to accomodate at least one pagesize long packet each direction",
+       "Region size = 2 * CircularPacketQueue64k_size + 1024 bytes for control structures."
+     ],
+     "managed_by" : "wificlient",
+     "current_version" : 0,
+     "min_compatible_version" : 0,
+     "region_size" : 132096,
+
+     "guest_to_host_signal_table" : {
+       "num_nodes_lg2" : 2
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 2
+      }
+   },
+
 
    {
     "device_name" : "e2e_primary",

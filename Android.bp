@@ -62,6 +62,7 @@ cc_library_host_static {
         "common/vsoc/lib/gralloc_layout.cpp",
         "common/vsoc/lib/lock_common.cpp",
         "common/vsoc/lib/region_view.cpp",
+        "common/vsoc/lib/wifi_exchange_layout.cpp",
         "host/vsoc/lib/host_lock.cpp",
         "host/vsoc/lib/region_control.cpp",
         "host/vsoc/lib/region_view.cpp",
@@ -70,7 +71,7 @@ cc_library_host_static {
     static_libs: [
         "libcuttlefish_fs",
         "libbase",
-	"libgflags",
+        "libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
@@ -138,7 +139,7 @@ cc_binary_host {
         "libbase",
         "cuttlefish_auto_resources",
         "libcuttlefish_fs",
-	"libgflags",
+        "libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }

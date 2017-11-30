@@ -20,10 +20,29 @@
 #include <type_traits>
 #include "common/vsoc/shm/version.h"
 
+// ShmTypeValidator provides meaningful information about the type size
+// mismatch in compilation error messages, eg.
+//
+// error:
+//    static_assert failed "Class size changed, update the version"
+//    static_assert(Current == Expected,
+// note: in instantiation of template class
+//    'ShmTypeValidator<vsoc::layout::myclass::ClassName, 1232, 1240>'
+//    requested here ASSERT_SHM_COMPATIBLE(ClassName, myclass);
+//
+template<typename Type, size_t Current, size_t Expected>
+struct ShmTypeValidator {
+    static_assert(Current == Expected,
+                  "Class size changed, update the version");
+    static_assert(std::is_trivial<Type>(),
+                  "Class uses features that are unsafe");
+    static constexpr bool valid = (Current == Expected);
+};
+
 #define ASSERT_SHM_COMPATIBLE(T, R)                                   \
-  static_assert(sizeof(T) == vsoc::layout::version_info::R::T##_size, \
-                "size changed, update the version");                  \
-  static_assert(std::is_trivial<T>(), "Class uses features that are unsafe")
+  static_assert(                                                      \
+      ShmTypeValidator<T, sizeof(T), vsoc::layout::version_info::R::T##_size> \
+      ::valid, "Compilation error. Please fix above errors and retry.")
 
 #define ASSERT_SHM_CONSTANT_VALUE(T, R)                                 \
   static_assert(T == vsoc::layout::version_info::R::constant_values::T, \
