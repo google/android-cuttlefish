@@ -14,10 +14,6 @@
 
 LOCAL_PATH := $(call my-dir)
 
-# Include the legacy hwcomposer
-# TODO(jemoreira): make this configurable through BoardConfig variables
-include $(LOCAL_PATH)/legacy/Android.mk
-
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := hwcomposer.vsoc-future
@@ -50,10 +46,11 @@ else
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 endif
 
-
 LOCAL_VENDOR_MODULE := true
 # See b/67109557
 ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
 LOCAL_MULTILIB := first
 endif
 include $(BUILD_SHARED_LIBRARY)
+
+include $(call first-makefiles-under,$(LOCAL_PATH))

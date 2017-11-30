@@ -22,6 +22,12 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
 LOCAL_CFLAGS += -DUSE_OLD_HWCOMPOSER
 LOCAL_MODULE := hwcomposer.vsoc-deprecated
+
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # New hwcomposer, performs software composition
@@ -29,6 +35,12 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
 LOCAL_MODULE := hwcomposer.vsoc
 LOCAL_VENDOR_MODULE := true
+
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # An executable to run some tests

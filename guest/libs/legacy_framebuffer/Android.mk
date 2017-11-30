@@ -52,4 +52,9 @@ LOCAL_SHARED_LIBRARIES := \
     libvsoc_framebuffer \
     $(VSOC_STLPORT_LIBS)
 
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
+
 include $(BUILD_SHARED_LIBRARY)
