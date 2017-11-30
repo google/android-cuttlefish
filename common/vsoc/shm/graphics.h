@@ -142,7 +142,7 @@ namespace layout {
 
 // VSoC memory layout for a register that accepts a single pixel format.
 // The value is volatile to ensure that the compiler does not eliminate stores.
-struct PixelFormatRegister : public Base {
+struct PixelFormatRegister {
   volatile PixelFormat value_;
 };
 ASSERT_SHM_COMPATIBLE(PixelFormatRegister, multi_region);
@@ -150,7 +150,7 @@ ASSERT_SHM_COMPATIBLE(PixelFormatRegister, multi_region);
 // Register layout for a mask giving different PixelFormats. Reserve enough
 // space to allow for future expansion. For example, we may well end with
 // a 12 bit per channel format in the future.
-struct PixelFormatMaskRegister : public Base {
+struct PixelFormatMaskRegister {
   volatile uint64_t value_;
 
   bool HasValue(PixelFormat in) {

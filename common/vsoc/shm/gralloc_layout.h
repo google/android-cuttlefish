@@ -28,7 +28,7 @@ namespace layout {
 
 namespace gralloc {
 
-struct BufferEntry : public Base {
+struct BufferEntry {
   uint32_t owned_by;
   vsoc_reg_off_t buffer_begin;
   vsoc_reg_off_t buffer_end;

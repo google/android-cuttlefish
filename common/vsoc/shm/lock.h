@@ -54,7 +54,7 @@ namespace layout {
  * This lock should never be used when the amount of work in the critical
  * section cannot be bounded.
  */
-class SpinLock : public Base {
+class SpinLock {
  public:
   /**
    * Acquire the spinlock on the queue. This will effectively block all
@@ -82,7 +82,7 @@ ASSERT_SHM_COMPATIBLE(SpinLock, multi_region);
  * This is a generic synchronization primitive that provides space for the
  * owner of the lock to write platform-specific information.
  */
-class WaitingLockBase : public Base {
+class WaitingLockBase {
  protected:
   // Common code to handle locking
   // Must be called with the kernel's thread id
