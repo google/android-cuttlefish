@@ -119,7 +119,10 @@ constexpr uint32_t version = 0;
 }  // namespace
 constexpr size_t WifiExchangeLayout_size =
     65548 + // sizeof(CircularPacketQueue<16, 8192>) - forward
-    65548;  // sizeof(CircularPacketQueue<16, 8192>) - reverse
+    65548 + // sizeof(CircularPacketQueue<16, 8192>) - reverse
+    4 +     // Lock config_lock_
+    2 +     // bool config_ready_ (and even address alignment)
+    6;      // uint8_t[6] MAC address.
 }  // namespace wifi
 
 
