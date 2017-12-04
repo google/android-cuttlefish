@@ -18,6 +18,7 @@
 #include <glog/logging.h>
 
 #include "common/libs/wifi/netlink.h"
+#include "common/libs/wifi/packet_switch.h"
 #include "common/libs/wifi/virtual_wifi.h"
 
 DEFINE_string(router, "cvd-wifirouter", "Path to WIFI Router Unix socket.");
@@ -35,12 +36,20 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
+  cvd::PacketSwitch pktswitch(nl.get());
+  if (!pktswitch.Init()) {
+    LOG(ERROR) << "Could not initialize packet switch.";
+    exit(1);
+  }
+
   std::unique_ptr<cvd::VirtualWIFI> radio(
       new cvd::VirtualWIFI(nl.get(), FLAGS_iface, FLAGS_macaddr));
   if (!radio->Init()) {
     LOG(ERROR) << "Could not create radio.";
     exit(1);
   }
+
+  pktswitch.Start();
 
   pause();
 }

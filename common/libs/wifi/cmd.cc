@@ -19,6 +19,8 @@ namespace cvd {
 
 Cmd::Cmd() : msg_(nlmsg_alloc()) {}
 
+Cmd::Cmd(nlmsghdr* h) : msg_(nlmsg_convert(h)) {}
+
 Cmd::~Cmd() {
   for (auto& msg : responses_) {
     nlmsg_free(msg);
