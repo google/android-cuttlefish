@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
+cc_library {
     name: "libcuttlefish_fs",
     srcs: [
         "gce_fs.cpp",
@@ -22,6 +22,7 @@ cc_library_host_static {
     static_libs: [
         "cuttlefish_auto_resources",
         "libbase",
+        "liblog",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_common"],
 }

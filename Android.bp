@@ -33,6 +33,32 @@ cc_library_headers {
 }
 
 cc_defaults {
+    name: "cuttlefish_common",
+    gnu_extensions: false,
+    header_libs: [
+        "cuttlefish_common_headers",
+        "cuttlefish_kernel_headers",
+    ],
+    host_supported: true,
+    device_supported: true,
+    target: {
+        linux: {
+            host_ldlibs: ["-lrt"],
+            cflags: ["-DCUTTLEFISH_HOST"],
+        },
+        darwin: {
+            enabled: false,
+        },
+        android: {
+            enabled: true,
+        },
+        windows: {
+            enabled: false,
+        },
+    },
+}
+
+cc_defaults {
     name: "cuttlefish_host",
     gnu_extensions: false,
     header_libs: [
@@ -53,7 +79,7 @@ cc_defaults {
     },
 }
 
-cc_library_host_static {
+cc_library {
     name: "vsoc_lib",
     srcs: [
         "common/vsoc/lib/compat.cpp",
@@ -64,17 +90,34 @@ cc_library_host_static {
         "common/vsoc/lib/region_view.cpp",
         "common/vsoc/lib/wifi_exchange_layout.cpp",
         "common/vsoc/lib/wifi_exchange_view.cpp",
-        "host/vsoc/lib/host_lock.cpp",
-        "host/vsoc/lib/region_control.cpp",
-        "host/vsoc/lib/region_view.cpp",
     ],
-    header_libs: ["cuttlefish_glog"],
+    header_libs: [
+        "cuttlefish_glog"
+    ],
     static_libs: [
         "libcuttlefish_fs",
         "libbase",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host"],
+    target: {
+        linux: {
+            host_ldlibs: ["-lrt"],
+            cflags: ["-DCUTTLEFISH_HOST"],
+            srcs: [
+                "host/vsoc/lib/host_lock.cpp",
+                "host/vsoc/lib/region_control.cpp",
+                "host/vsoc/lib/region_view.cpp",
+            ],
+        },
+        android: {
+            srcs: [
+                "guest/vsoc/lib/guest_lock.cpp",
+                "guest/vsoc/lib/region_control.cpp",
+                "guest/vsoc/lib/region_view.cpp",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_common"],
 }
 
 cc_library_host_static {
