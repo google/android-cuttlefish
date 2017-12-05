@@ -364,11 +364,11 @@ class FileInstance {
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       fd_array[i] = -1;
     }
     ssize_t rval = RecvMsg(&msg, flags);
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       (*new_fds)[i] =
           std::shared_ptr<FileInstance>(new FileInstance(fd_array[i], errno));
     }
