@@ -22,7 +22,8 @@
 
 namespace vsoc {
 std::string GetPerInstanceDefault(const char* prefix);
-std::string GetPerInstanceDir();
-std::string GetPerInstancePath(const std::string& basename);
-std::string GetShmClientSocketPath();
+std::string GetDefaultPerInstanceDir();
+std::string GetDefaultPerInstancePath(const std::string& basename);
+std::string GetDefaultShmClientSocketPath();
+std::string GetDomain();
 }  // namespace vsoc

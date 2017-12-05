@@ -41,8 +41,12 @@ class RegionControl {
     region_base_ = nullptr;
   }
 
+#if defined(CUTTLEFISH_HOST)
   static std::shared_ptr<RegionControl> Open(const char* region_name,
-                                             const char* domain = nullptr);
+                                             const char* domain);
+#else
+  static std::shared_ptr<RegionControl> Open(const char* region_name);
+#endif
 
   const vsoc_device_region& region_desc() const { return region_desc_; }
 

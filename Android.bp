@@ -80,7 +80,7 @@ cc_defaults {
 }
 
 cc_defaults {
-    name: "cuttlefish_intel_only",
+    name: "cuttlefish_native_isa",
     target : {
         android_arm: {
             enabled: false,
@@ -107,7 +107,6 @@ cc_library {
         "libcuttlefish_fs",
         "cuttlefish_auto_resources",
         "libbase",
-        "libgflags",
     ],
     shared_libs: [
         "liblog",
@@ -130,7 +129,7 @@ cc_library {
             ],
         },
     },
-    defaults: ["cuttlefish_common", "cuttlefish_intel_only"],
+    defaults: ["cuttlefish_common", "cuttlefish_native_isa"],
 }
 
 cc_library_host_static {
@@ -155,6 +154,14 @@ cc_test_host {
         "vsoc_lib",
         "libbase",
     ],
+    target : {
+        linux_x86_64: {
+            static_libs: [
+                "libcuttlefish_host_config",
+        	"libgflags",
+            ],
+        },
+    },
     defaults: ["cuttlefish_host"],
 }
 
@@ -196,6 +203,7 @@ cc_binary_host {
         "libbase",
         "cuttlefish_auto_resources",
         "libcuttlefish_fs",
+        "libcuttlefish_host_config",
         "libgflags",
     ],
     defaults: ["cuttlefish_host"],

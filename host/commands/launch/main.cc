@@ -34,12 +34,12 @@
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/file_partition.h"
 #include "host/libs/config/guest_config.h"
+#include "host/libs/config/host_config.h"
 #include "host/libs/ivserver/ivserver.h"
 #include "host/libs/ivserver/options.h"
 #include "host/libs/monitor/kernel_log_server.h"
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
-#include "host/vsoc/lib/region_control.h"
 
 namespace {
 std::string StringFromEnv(const char* varname, std::string defval) {
@@ -52,7 +52,7 @@ std::string StringFromEnv(const char* varname, std::string defval) {
 }  // namespace
 
 using vsoc::GetPerInstanceDefault;
-using vsoc::GetPerInstancePath;
+using vsoc::GetDefaultPerInstancePath;
 
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
@@ -77,13 +77,13 @@ DEFINE_string(layout,
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-std::string g_default_mempath{vsoc::GetPerInstanceDefault("/var/run/shm/cvd-")};
+std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
 DEFINE_string(mempath, g_default_mempath.c_str(),
               "Target location for the shmem file.");
 std::string g_default_mobile_interface{GetPerInstanceDefault("cvd-mobile-")};
 DEFINE_string(mobile_interface, g_default_mobile_interface.c_str(),
               "Network interface to use for mobile networking");
-std::string g_default_qemusocket = GetPerInstancePath("ivshmem_socket_qemu");
+std::string g_default_qemusocket = GetDefaultPerInstancePath("ivshmem_socket_qemu");
 DEFINE_string(qemusocket, g_default_qemusocket.c_str(), "QEmu socket path");
 std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
 DEFINE_string(serial_number, g_default_serial_number.c_str(),
@@ -168,7 +168,7 @@ class IVServerManager {
   IVServerManager(const Json::Value& json_root)
       : server_(ivserver::IVServerOptions(FLAGS_layout, FLAGS_mempath,
                                           FLAGS_qemusocket,
-                                          vsoc::GetShmClientSocketPath()),
+                                          vsoc::GetDomain()),
                 json_root) {}
 
   ~IVServerManager() = default;
@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
   LOG_IF(FATAL, FLAGS_system_image_dir.empty())
       << "--system_image_dir must be specified.";
 
-  std::string per_instance_dir = vsoc::GetPerInstanceDir();
+  std::string per_instance_dir = vsoc::GetDefaultPerInstanceDir();
   struct stat unused;
   if ((stat(per_instance_dir.c_str(), &unused) == -1) && (errno == ENOENT)) {
     LOG(INFO) << "Setting up " << per_instance_dir;
@@ -337,9 +337,9 @@ int main(int argc, char** argv) {
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
       .SetUUID(FLAGS_uuid);
   cfg.SetUSBV1SocketName(
-      vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-usb"));
+      GetDefaultPerInstancePath(cfg.GetInstanceName() + "-usb"));
   cfg.SetKernelLogSocketName(
-      vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-kernel-log"));
+      GetDefaultPerInstancePath(cfg.GetInstanceName() + "-kernel-log"));
 
   std::string xml = cfg.Build();
   if (FLAGS_log_xml) {
@@ -352,7 +352,7 @@ int main(int argc, char** argv) {
   IVServerManager ivshmem(json_root);
   ivshmem.Start();
   KernelLogMonitor kmon(cfg.GetKernelLogSocketName(),
-                        vsoc::GetPerInstancePath("kernel.log"),
+                        GetDefaultPerInstancePath("kernel.log"),
                         FLAGS_deprecated_boot_completed);
   kmon.Start();
 

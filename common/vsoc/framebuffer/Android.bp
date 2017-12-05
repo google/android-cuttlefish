@@ -30,6 +30,7 @@ cc_binary_host {
     name: "test_framebuffer",
     srcs: ["test_fb.cpp"],
     static_libs: [
+        "libcuttlefish_host_config",
         "libvsoc_framebuffer",
         "vsoc_lib",
         "libbase",

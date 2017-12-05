@@ -22,7 +22,7 @@
 #include "common/libs/glog/logging.h"
 #include "host/frontend/vnc_server/vnc_server.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/vsoc/lib/region_control.h"
+#include "host/libs/config/host_config.h"
 
 DEFINE_bool(agressive, false, "Whether to use agressive server");
 DEFINE_int32(port, 6444, "Port where to listen for connections");
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
   using ::android::base::ERROR;
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  if (!cvd::vnc::GetFBBroadcastRegionView()->Open()) {
+  if (!cvd::vnc::GetFBBroadcastRegionView()->Open(vsoc::GetDomain().c_str())) {
     LOG(FATAL) << "Unable to open FBBroadcastRegion";
   }
   cvd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);

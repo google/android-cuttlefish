@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "fb_bcast_region_view.h"
+#include "host/libs/config/host_config.h"
 #include <stdio.h>
 
 using vsoc::framebuffer::FBBroadcastRegionView;
@@ -22,7 +23,12 @@ int main() {
   uint32_t frame_num = 0;
   vsoc_reg_off_t offset = 0;
   FBBroadcastRegionView region;
-  if (!region.Open()) {
+#if defined(CUTTLEFISH_HOST)
+  auto rval = region.Open(vsoc::GetDomain().c_str());
+#else
+  auto rval = region.Open();
+#endif
+  if (!rval) {
     fprintf(stderr, "Error opening region\n");
     return 1;
   }
