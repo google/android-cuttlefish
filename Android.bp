@@ -86,6 +86,7 @@ cc_library_shared {
         "common/vsoc/lib/compat.cpp",
         "common/vsoc/lib/e2e_test_region_layout.cpp",
         "common/vsoc/lib/fb_bcast_layout.cpp",
+        "common/vsoc/lib/fb_bcast_region_view.cpp",
         "common/vsoc/lib/gralloc_layout.cpp",
         "common/vsoc/lib/lock_common.cpp",
         "common/vsoc/lib/region_view.cpp",
@@ -141,6 +142,26 @@ cc_test_host {
         "libbase",
     ],
     defaults: ["cuttlefish_host_only"],
+}
+
+cc_test {
+    name: "vsoc_fb_bcast_region_view_test",
+    srcs: [
+        "common/vsoc/lib/fb_bcast_region_view_test.cpp",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    target : {
+        linux_x86_64: {
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libgflags",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
 }
 
 cc_test_host {

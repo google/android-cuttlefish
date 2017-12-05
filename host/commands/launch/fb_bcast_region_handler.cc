@@ -16,7 +16,8 @@
 
 #include <glog/logging.h>
 #include <gflags/gflags.h>
-#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
+
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/host_config.h"
 

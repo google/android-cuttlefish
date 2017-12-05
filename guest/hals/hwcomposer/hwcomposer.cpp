@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-#include <common/vsoc/framebuffer/fb_bcast_region_view.h>
-#include <guest/hals/gralloc/gralloc_vsoc_priv.h>
-#include <hardware/hwcomposer.h>
-#include <hardware/hwcomposer_defs.h>
-#include <log/log.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
+#include <hardware/hwcomposer.h>
+#include <hardware/hwcomposer_defs.h>
+#include <log/log.h>
+
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "guest/hals/gralloc/gralloc_vsoc_priv.h"
 
 // This file contains just a skeleton hwcomposer, the first step in the
 // multisided vsoc hwcomposer for cuttlefish.
