@@ -27,12 +27,10 @@ LOCAL_SHARED_LIBRARIES := \
   libutils \
   libril \
   libcuttlefish_fs \
-  libcuttlefish_auto_resources \
+  cuttlefish_net \
+  cuttlefish_auto_resources \
   libnetutils \
   libbase
-
-LOCAL_STATIC_LIBRARIES := \
-  libcuttlefish_net
 
 LOCAL_C_INCLUDES := bionic device/google/cuttlefish_common
 LOCAL_MODULE:= libvsoc-ril

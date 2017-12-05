@@ -1,32 +1,19 @@
 cc_binary {
     name: "wificlient",
-    host_supported: true,
-    vendor: true,
     srcs: [
         "main.cc",
     ],
-    static_libs: [
+    shared_libs: [
         "libbase",
         "libcuttlefish_wifi",
-        "libgflags",
         "liblog",
         "libnl",
     ],
-    header_libs: [
-        "cuttlefish_common_headers",
-        "cuttlefish_glog",
-        "cuttlefish_kernel_headers",
+    static_libs: [
+        "libgflags",
     ],
-    compile_multilib: "64",
-    target: {
-        linux: {
-            host_ldlibs: ["-lrt"],
-            cflags: ["-DCUTTLEFISH_HOST"],
-        },
-        darwin: {
-            enabled: false,
-        },
-        android_x86: {
-        },
-    },
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
 }

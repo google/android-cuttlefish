@@ -26,7 +26,7 @@ LOCAL_C_INCLUDES := \
     device/google/cuttlefish_kernel
 
 LOCAL_SHARED_LIBRARIES := \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
     libusb \
     libbase \

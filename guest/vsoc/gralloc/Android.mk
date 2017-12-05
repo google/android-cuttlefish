@@ -36,10 +36,10 @@ LOCAL_CFLAGS := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
     liblog \
-    libvsoc
+    vsoc_lib
 
 LOCAL_VENDOR_MODULE := true
 

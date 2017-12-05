@@ -116,7 +116,7 @@ jpeg_shared_libraries := \
     libskia \
     libjpeg \
     libandroid_runtime \
-    libcuttlefish_auto_resources
+    cuttlefish_auto_resources
 jpeg_static_libraries := libyuv_static
 jpeg_c_includes := \
     device/google/cuttlefish_common \

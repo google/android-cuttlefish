@@ -2,27 +2,27 @@ cc_binary_host {
     name: "launch_cvd",
     srcs: [
         "main.cc",
-	"fb_bcast_region_handler.cc",
+        "fb_bcast_region_handler.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
-    static_libs: [
+    shared_libs: [
         "vsoc_lib",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libicuuc",
+        "libbase",
+    ],
+    static_libs: [
         "libcuttlefish_host_config",
         "libivserver",
-	"libvadb",
-	"libusbip",
-	"libgflags",
-	"libbase",
-	"libxml2",
-	"libjsoncpp",
-	"libcuttlefish_fs",
-	"cuttlefish_auto_resources",
-	"libmonitor",
+        "libvadb",
+        "libusbip",
+        "libgflags",
+        "libxml2",
+        "libjsoncpp",
+        "libmonitor",
     ],
-    shared_libs: [
-	"libicuuc",
-    ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_only"],
 }

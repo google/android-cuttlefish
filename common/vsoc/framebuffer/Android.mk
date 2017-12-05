@@ -36,10 +36,10 @@ LOCAL_CFLAGS := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
     liblog \
-    libvsoc
+    vsoc_lib
 
 LOCAL_VENDOR_MODULE := true
 # See b/67109557
@@ -68,10 +68,10 @@ LOCAL_CFLAGS := \
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
     liblog \
-    libvsoc \
+    vsoc_lib \
     libvsoc_framebuffer
 
 LOCAL_VENDOR_MODULE := true

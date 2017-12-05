@@ -37,10 +37,10 @@ LOCAL_CFLAGS := \
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     libcutils \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
     liblog \
-    libvsoc \
+    vsoc_lib \
     libvsoc_gralloc
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))

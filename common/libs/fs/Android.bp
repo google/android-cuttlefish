@@ -13,16 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library {
+cc_library_shared {
     name: "libcuttlefish_fs",
     srcs: [
         "gce_fs.cpp",
         "shared_fd.cpp",
     ],
-    static_libs: [
+    shared_libs: [
         "cuttlefish_auto_resources",
         "libbase",
         "liblog",
     ],
-    defaults: ["cuttlefish_common"],
+    defaults: ["cuttlefish_host_and_guest"],
 }

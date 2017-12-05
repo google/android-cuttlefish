@@ -18,9 +18,9 @@ cc_test_host {
     srcs: [
         "cuttlefish_thread_test.cpp",
     ],
-    static_libs: [
+    shared_libs: [
         "cuttlefish_time",
         "libbase",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_only"],
 }

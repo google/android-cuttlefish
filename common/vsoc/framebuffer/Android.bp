@@ -18,12 +18,12 @@ cc_library_host_static {
     srcs: [
         "fb_bcast_region_view.cpp",
     ],
-    static_libs: [
+    shared_libs: [
         "vsoc_lib",
         "libbase",
         "cuttlefish_auto_resources",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_only"],
 }
 
 cc_binary_host {
@@ -32,11 +32,13 @@ cc_binary_host {
     static_libs: [
         "libcuttlefish_host_config",
         "libvsoc_framebuffer",
+        "libgflags",
+    ],
+    shared_libs: [
         "vsoc_lib",
         "libbase",
         "cuttlefish_auto_resources",
         "libcuttlefish_fs",
-	"libgflags",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_only"],
 }

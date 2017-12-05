@@ -29,7 +29,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SHARED_LIBRARIES := \
     $(VSOC_STLPORT_LIBS) \
     libcuttlefish_fs \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     liblog \
     libcutils
 
