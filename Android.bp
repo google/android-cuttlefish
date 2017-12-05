@@ -79,6 +79,15 @@ cc_defaults {
     },
 }
 
+cc_defaults {
+    name: "cuttlefish_intel_only",
+    target : {
+        android_arm: {
+            enabled: false,
+        },
+    },
+}
+
 cc_library {
     name: "vsoc_lib",
     srcs: [
@@ -96,8 +105,12 @@ cc_library {
     ],
     static_libs: [
         "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
         "libbase",
         "libgflags",
+    ],
+    shared_libs: [
+        "liblog",
     ],
     target: {
         linux: {
@@ -117,7 +130,7 @@ cc_library {
             ],
         },
     },
-    defaults: ["cuttlefish_common"],
+    defaults: ["cuttlefish_common", "cuttlefish_intel_only"],
 }
 
 cc_library_host_static {
