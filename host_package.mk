@@ -15,6 +15,7 @@ tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
     launch_cvd \
+    wificlient \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -26,6 +27,12 @@ cvd_host_tests := \
     vsoc_graphics_test \
 
 cvd_host_shared_libraries := \
+    libbase \
+    vsoc_lib \
+    libcuttlefish_fs \
+    cuttlefish_auto_resources \
+    liblog \
+    libnl \
     libc++ \
     libicuuc-host \
 
