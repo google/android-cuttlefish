@@ -73,14 +73,14 @@ class WifiRouter {
   bool HandleClientMessage(int client);
   void RemoveClient(int client);
 
-  std::unique_ptr<nl_sock, void(*)(nl_sock*)> sock_;
+  std::unique_ptr<nl_sock, void (*)(nl_sock*)> sock_;
   int server_fd_ = 0;
   int mac80211_family_ = 0;
   ClientsTable registered_clients_;
   MacToClientsTable registered_addresses_;
 };
 
-MacHash WifiRouter::GetMacHash(const void* macaddr) {
+WifiRouter::MacHash WifiRouter::GetMacHash(const void* macaddr) {
   const uint8_t* t = reinterpret_cast<const uint8_t*>(macaddr);
 
   // This is guaranteed to be unique. Address here is assigned at creation time
@@ -213,7 +213,7 @@ void WifiRouter::RouteWIFIPacket() {
   std::set<int> pending_removals;
   auto addr = attrs[HWSIM_ATTR_ADDR_TRANSMITTER];
   if (addr != nullptr) {
-    nla_put(rep.get(), WIFIROUTER_ATTR_MAC, nla_len(addr), nla_data(addr));
+    nla_put_u32(rep.get(), WIFIROUTER_ATTR_HWSIM_ID, GetMacHash(nla_data(addr)));
     nla_put(rep.get(), WIFIROUTER_ATTR_PACKET, len, buf);
     auto hdr = nlmsg_hdr(rep.get());
 
@@ -221,8 +221,7 @@ void WifiRouter::RouteWIFIPacket() {
     LOG(INFO) << "Received netlink packet from " << std::hex << key;
     for (auto it = registered_addresses_.find(key);
          it != registered_addresses_.end() && it->first == key; ++it) {
-      auto num_written =
-          send(it->second, hdr, hdr->nlmsg_len, MSG_NOSIGNAL);
+      auto num_written = send(it->second, hdr, hdr->nlmsg_len, MSG_NOSIGNAL);
       if (num_written != static_cast<int64_t>(hdr->nlmsg_len)) {
         pending_removals.insert(it->second);
       }
@@ -252,11 +251,11 @@ bool WifiRouter::HandleClientMessage(int client) {
       nlattr* attrs[WIFIROUTER_ATTR_MAX];
       if (!nlmsg_parse(msg.get(), sizeof(genlmsghdr), attrs,
                        WIFIROUTER_ATTR_MAX - 1, nullptr)) {
-        if (attrs[WIFIROUTER_ATTR_MAC] != nullptr) {
-          LOG(INFO) << "Registering new client to receive data for " <<
-                    GetMacHash(nla_data(attrs[WIFIROUTER_ATTR_MAC]));
+        if (attrs[WIFIROUTER_ATTR_HWSIM_ID] != nullptr) {
+          LOG(INFO) << "Registering new client to receive data for "
+                    << nla_get_u32(attrs[WIFIROUTER_ATTR_HWSIM_ID]);
           registered_addresses_.emplace(
-              GetMacHash(nla_data(attrs[WIFIROUTER_ATTR_MAC])), client);
+              nla_get_u32(attrs[WIFIROUTER_ATTR_HWSIM_ID]), client);
           // This is unfortunate, but it is a bug in mac80211_hwsim stack.
           // Apparently, the imperfect medium will not receive notifications for
           // newly created wifi interfaces. How about that...
@@ -284,7 +283,6 @@ bool WifiRouter::HandleClientMessage(int client) {
 
 // Process incoming requests from netlink, server or clients.
 void WifiRouter::ServerLoop() {
-
   while (true) {
     auto max_fd = 0;
     fd_set reads{};
