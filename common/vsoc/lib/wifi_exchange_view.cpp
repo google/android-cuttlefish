@@ -20,17 +20,17 @@
 namespace vsoc {
 namespace wifi {
 
-bool WifiExchangeView::Send(const void* buffer, size_t length) {
+intptr_t WifiExchangeView::Send(const void* buffer, intptr_t length) {
 #ifdef CUTTLEFISH_HOST
   return data()->guest_ingress.Write(this, static_cast<const char*>(buffer),
-                                     length) == length;
+                                     length);
 #else
   return data()->guest_egress.Write(this, static_cast<const char*>(buffer),
-                                    length) == length;
+                                    length);
 #endif
 }
 
-intptr_t WifiExchangeView::Recv(void* buffer, size_t max_length) {
+intptr_t WifiExchangeView::Recv(void* buffer, intptr_t max_length) {
 #ifdef CUTTLEFISH_HOST
   return data()->guest_egress.Read(this, static_cast<char*>(buffer),
                                    max_length);
