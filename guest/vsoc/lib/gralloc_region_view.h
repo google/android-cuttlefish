@@ -23,7 +23,7 @@
 namespace vsoc {
 namespace gralloc {
 
-class GrallocRegion : public vsoc::ManagerRegionView<
+class GrallocRegionView : public vsoc::ManagerRegionView<
                           vsoc::layout::gralloc::GrallocManagerLayout> {
  public:
   // Allocates a gralloc buffer of (at least) the specified size. Returns a file
@@ -33,11 +33,11 @@ class GrallocRegion : public vsoc::ManagerRegionView<
   // TODO(jemoreira): Include debug info like stride, width, height, etc
   int AllocateBuffer(size_t size, uint32_t* begin_offset = nullptr);
 
-  static GrallocRegion* GetInstance();
+  static GrallocRegionView* GetInstance();
  protected:
-  GrallocRegion();
-  GrallocRegion(const GrallocRegion&);
-  GrallocRegion& operator=(const GrallocRegion&);
+  GrallocRegionView();
+  GrallocRegionView(const GrallocRegionView&) = delete;
+  GrallocRegionView & operator=(const GrallocRegionView&) = delete;
 
   bool Open();
 

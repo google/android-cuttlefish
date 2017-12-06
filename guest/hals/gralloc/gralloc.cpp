@@ -267,7 +267,7 @@ static int gralloc_device_open(
     dev->device.alloc   = gralloc_alloc;
     dev->device.free    = gralloc_free;
 
-    dev->gralloc_region = vsoc::gralloc::GrallocRegion::GetInstance();
+    dev->gralloc_region = vsoc::gralloc::GrallocRegionView::GetInstance();
     if (!dev->gralloc_region) {
       LOG_FATAL("Unable to instantiate the gralloc region");
       free(dev);

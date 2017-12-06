@@ -18,10 +18,11 @@
 
 #include "common/vsoc/lib/typed_region_view.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/vsoc/gralloc/gralloc_buffer_region.h"
+#include "host/libs/config/host_config.h"
+#include "host/vsoc/lib/gralloc_buffer_region_view.h"
 
 using cvd::vnc::SimulatedHWComposer;
-using vsoc::gralloc::GrallocBufferRegion;
+using vsoc::gralloc::GrallocBufferRegionView;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
@@ -30,7 +31,7 @@ SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
 #endif
       bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements) {
-        stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
+  stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
 }
 
 SimulatedHWComposer::~SimulatedHWComposer() {
@@ -80,7 +81,8 @@ void SimulatedHWComposer::MakeStripes() {
         GetFBBroadcastRegionView()->WaitForNewFrameSince(&previous_seq_num);
 
     const auto* frame_start =
-        GrallocBufferRegion::GetInstance()->OffsetToBufferPtr(buffer_offset);
+        GrallocBufferRegionView::GetInstance(vsoc::GetDomain().c_str())
+            ->OffsetToBufferPtr(buffer_offset);
     raw_screen.assign(frame_start, frame_start + ScreenSizeInBytes());
 
     for (int i = 0; i < kNumStripes; ++i) {

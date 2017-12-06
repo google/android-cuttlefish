@@ -40,8 +40,7 @@ LOCAL_SHARED_LIBRARIES := \
     cuttlefish_auto_resources \
     libcuttlefish_fs \
     liblog \
-    vsoc_lib \
-    libvsoc_gralloc
+    vsoc_lib
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
 LOCAL_MODULE_RELATIVE_PATH := hw
