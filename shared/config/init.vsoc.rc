@@ -21,6 +21,12 @@ on early-init
     chmod 0755 /sys/kernel/debug
 
 
+on init
+    chown system root /dev/fb_broadcast
+    chmod 0660 /dev/fb_broadcast
+    restorecon /dev/fb_broadcast
+
+
 on fs
     mount_all /fstab.${ro.hardware}
     wait /vendor/etc/selinux/nonplat_mac_permissions.xml
@@ -73,7 +79,7 @@ service vnc_server /vendor/bin/vnc_server
     oneshot
 
 
-service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/vport0p1 *:V
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
     class main
     user root
     disabled
@@ -93,10 +99,19 @@ service gce_fs_monitor /vendor/bin/gce_fs_monitor
     oneshot
 
 
-service usbforward /vendor/bin/usbforward /dev/vport0p2
+service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
     class late_start
     user root
 
+
+service wifirouter /vendor/bin/wifirouter
+    class main
+    user root
+
+
+service wificlient /vendor/bin/wificlient -iface=wlan0 -macaddr=00:43:56:44:01:02
+    class late_start
+    user root
 
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     class main

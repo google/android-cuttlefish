@@ -14,11 +14,7 @@
 # limitations under the License.
 #
 
-ifeq (,$(CUTTLEFISH_KERNEL))
-CUTTLEFISH_KERNEL := device/google/cuttlefish_kernel/4.4-x86_64/kernel
-endif
-
-PRODUCT_COPY_FILES += $(CUTTLEFISH_KERNEL):kernel
+PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
@@ -63,6 +59,8 @@ PRODUCT_PACKAGES += \
     usbforward \
     vnc_server \
     VSoCService \
+    wifirouter \
+    wificlient \
     wpa_supplicant.vsoc.conf \
 
 #
