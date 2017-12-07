@@ -42,7 +42,7 @@ class PacketSwitch {
   std::mutex op_mutex_;
   // Started is referenced by all threads created by PacketSwitch to determine
   // whether to carry on working, or terminate.
-  bool started_;
+  bool started_ = false;
 
   std::unique_ptr<std::thread> shm_xchg_;
   vsoc::wifi::WifiExchangeView shm_wifi_;
