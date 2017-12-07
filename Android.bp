@@ -40,13 +40,12 @@ cc_defaults {
         "cuttlefish_kernel_headers",
     ],
     target: {
-        linux: {
+        linux_glibc: {
             host_ldlibs: ["-lrt"],
             cflags: ["-DCUTTLEFISH_HOST"],
         },
         // We don't need 32 bit host-side builds
-        // TODO(ghartman): linux_glibc on master
-        linux_x86: {
+        linux_glibc_x86: {
             enabled: false,
         },
         // We don't need Darwin host-side builds
@@ -101,8 +100,7 @@ cc_library_shared {
         "liblog",
     ],
     target: {
-        //TODO(ghartman): linux_glibc on master
-        linux: {
+        linux_glibc: {
             srcs: [
                 "host/vsoc/lib/gralloc_buffer_region_view.cpp",
                 "host/vsoc/lib/host_lock.cpp",
@@ -144,7 +142,7 @@ cc_test {
         "libbase",
     ],
     target : {
-        linux_x86_64: {
+        linux_glibc_x86_64: {
             static_libs: [
                 "libcuttlefish_host_config",
                 "libgflags",
