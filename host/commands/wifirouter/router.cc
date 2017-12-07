@@ -37,10 +37,6 @@ DEFINE_string(socket_name, "cvd-wifirouter",
 
 namespace cvd {
 namespace {
-using MacHash = uint64_t;
-using MacToClientsTable = std::multimap<MacHash, int>;
-using ClientsTable = std::set<int>;
-
 // Copied out of mac80211_hwsim.h header.
 constexpr int HWSIM_CMD_REGISTER = 1;
 constexpr int HWSIM_ATTR_ADDR_TRANSMITTER = 2;
