@@ -20,7 +20,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace avd {
 /**
  * The SharedFD version of fdset for the Select call.
  *
@@ -76,6 +76,6 @@ class SharedFDSet {
 int Select(SharedFDSet* read_set, SharedFDSet* write_set,
            SharedFDSet* error_set, struct timeval* timeout);
 
-}  // namespace cvd
+}  // namespace avd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_SELECT_H_
