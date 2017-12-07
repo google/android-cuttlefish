@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// TODO: We can't use std::shared_ptr on the older guests due to HALs.
-
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
-#include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/timerfd.h>
 #include <sys/uio.h>
 #include <sys/un.h>
 
@@ -60,29 +54,9 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cvd {
+namespace avd {
 
 class FileInstance;
-
-/**
- * Describes the fields in msghdr that are honored by the *MsgAndFDs
- * calls.
- */
-struct InbandMessageHeader {
-  void* msg_name;
-  socklen_t msg_namelen;
-  struct iovec* msg_iov;
-  size_t msg_iovlen;
-  int msg_flags;
-
-  void Convert(struct msghdr* dest) const {
-    dest->msg_name = msg_name;
-    dest->msg_namelen = msg_namelen;
-    dest->msg_iov = msg_iov;
-    dest->msg_iovlen = msg_iovlen;
-    dest->msg_flags = msg_flags;
-  }
-};
 
 /**
  * Counted reference to a FileInstance.
@@ -130,47 +104,61 @@ struct InbandMessageHeader {
 class SharedFD {
  public:
   inline SharedFD();
-  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
+  SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) { }
   // Reference the listener as a FileInstance to make this FD type agnostic.
-  static SharedFD Accept(const FileInstance& listener, struct sockaddr* addr,
-                         socklen_t* addrlen);
+  static SharedFD Accept(const FileInstance& listener,
+                                struct sockaddr* addr, socklen_t* addrlen);
   static SharedFD Accept(const FileInstance& listener);
-  static SharedFD Dup(int unmanaged_fd);
   static SharedFD GetControlSocket(const char* name);
   // Returns false on failure, true on success.
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
-  static SharedFD Event(int initval = 0, int flags = 0);
-  static SharedFD Epoll(int flags = 0);
-  static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
-                         SharedFD* fd1);
+  static SharedFD Event();
+  static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0, SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
-  static SharedFD SocketLocalClient(const char* name, bool is_abstract,
-                                    int in_type);
-  static SharedFD SocketLocalServer(const char* name, bool is_abstract,
-                                    int in_type, mode_t mode);
-  static SharedFD SocketLocalServer(int port, int type);
+  static SharedFD SocketInAddrAnyServer(int in_port, int in_type);
+  static SharedFD SocketLocalClient(
+      const char* name, bool is_abstract, int in_type);
+  static SharedFD SocketLocalServer(
+      const char* name, bool is_abstract, int in_type, mode_t mode);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
-  static SharedFD TimerFD(int clock, int flags);
 
-  bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
+  bool operator==(const SharedFD& rhs) const {
+    return value_ == rhs.value_;
+  }
 
-  bool operator!=(const SharedFD& rhs) const { return value_ != rhs.value_; }
+  bool operator!=(const SharedFD& rhs) const {
+    return value_ != rhs.value_;
+  }
 
-  bool operator<(const SharedFD& rhs) const { return value_ < rhs.value_; }
+  bool operator<(const SharedFD& rhs) const {
+    return value_ < rhs.value_;
+  }
 
-  bool operator<=(const SharedFD& rhs) const { return value_ <= rhs.value_; }
+  bool operator<=(const SharedFD& rhs) const {
+    return value_ <= rhs.value_;
+  }
 
-  bool operator>(const SharedFD& rhs) const { return value_ > rhs.value_; }
+  bool operator>(const SharedFD& rhs) const {
+    return value_ > rhs.value_;
+  }
 
-  bool operator>=(const SharedFD& rhs) const { return value_ >= rhs.value_; }
+  bool operator>=(const SharedFD& rhs) const {
+    return value_ >= rhs.value_;
+  }
 
-  std::shared_ptr<FileInstance> operator->() const { return value_; }
+  std::shared_ptr<FileInstance> operator->() const {
+    return value_;
+  }
 
-  const cvd::FileInstance& operator*() const { return *value_; }
+  const avd::FileInstance& operator*() const {
+    return *value_;
+  }
 
-  cvd::FileInstance& operator*() { return *value_; }
+  avd::FileInstance& operator*() {
+    return *value_;
+  }
 
  private:
   std::shared_ptr<FileInstance> value_;
@@ -192,23 +180,24 @@ class SharedFD {
 class FileInstance {
   // Give SharedFD access to the aliasing constructor.
   friend class SharedFD;
-
  public:
-  virtual ~FileInstance() { Close(); }
+  virtual ~FileInstance() {
+    Close();
+  }
 
   // This can't be a singleton because our shared_ptr's aren't thread safe.
   static std::shared_ptr<FileInstance> ClosedInstance() {
     return std::shared_ptr<FileInstance>(new FileInstance(-1, EBADF));
   }
 
-  int Bind(const struct sockaddr* addr, socklen_t addrlen) {
+  int Bind(const struct sockaddr *addr, socklen_t addrlen) {
     errno = 0;
     int rval = bind(fd_, addr, addrlen);
     errno_ = errno;
     return rval;
   }
 
-  int Connect(const struct sockaddr* addr, socklen_t addrlen) {
+  int Connect(const struct sockaddr *addr, socklen_t addrlen) {
     errno = 0;
     int rval = connect(fd_, addr, addrlen);
     errno_ = errno;
@@ -226,22 +215,6 @@ class FileInstance {
   int UNMANAGED_Dup() {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(dup(fd_));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(
-        epoll_ctl(fd_, op, new_fd->fd_, event));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EpollWait(struct epoll_event* events, int maxevents, int timeout) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(
-        epoll_wait(fd_, events, maxevents, timeout));
     errno_ = errno;
     return rval;
   }
@@ -267,7 +240,9 @@ class FileInstance {
     return rval;
   }
 
-  int GetErrno() const { return errno_; }
+  int GetErrno() const {
+    return errno_;
+  }
 
   int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
     errno = 0;
@@ -280,14 +255,16 @@ class FileInstance {
 
   void Identify(const char* identity);
 
-  int Ioctl(int request, void* val = nullptr) {
+  int Ioctl(int request) {
     errno = 0;
-    int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request, val));
+    int rval = TEMP_FAILURE_RETRY(ioctl(fd_, request));
     errno_ = errno;
     return rval;
   }
 
-  bool IsOpen() const { return fd_ != -1; }
+  bool IsOpen() const {
+    return fd_ != -1;
+  }
 
   // in probably isn't modified, but the API spec doesn't have const.
   bool IsSet(fd_set* in) const;
@@ -308,20 +285,6 @@ class FileInstance {
     return rval;
   }
 
-  void* Mmap(void* addr, size_t length, int prot, int flags, off_t offset) {
-    errno = 0;
-    void* rval = mmap(addr, length, prot, flags, fd_, offset);
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Pread(void* buf, size_t count, off_t offset) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
-    errno_ = errno;
-    return rval;
-  }
-
   ssize_t Recv(void* buf, size_t len, int flags) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
@@ -332,8 +295,8 @@ class FileInstance {
   ssize_t RecvFrom(void* buf, size_t len, int flags, struct sockaddr* src_addr,
                    socklen_t* addr_len) {
     errno = 0;
-    ssize_t rval =
-        TEMP_FAILURE_RETRY(recvfrom(fd_, buf, len, flags, src_addr, addr_len));
+    ssize_t rval = TEMP_FAILURE_RETRY(recvfrom(fd_, buf, len, flags, src_addr,
+                                               addr_len));
     errno_ = errno;
     return rval;
   }
@@ -342,36 +305,6 @@ class FileInstance {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
     errno_ = errno;
-    return rval;
-  }
-
-  template <size_t SZ>
-  ssize_t RecvMsgAndFDs(const struct InbandMessageHeader& msg_in, int flags,
-                        SharedFD (*new_fds)[SZ]) {
-    // We need to make some modifications to land the fds. Make it clear
-    // that there are no updates to the msg being passed in during this call.
-    struct msghdr msg;
-    msg_in.Convert(&msg);
-    union {
-      char buffer[CMSG_SPACE(SZ * sizeof(int))];
-      struct cmsghdr this_aligns_buffer;
-    } u;
-    msg.msg_control = u.buffer;
-    msg.msg_controllen = sizeof(u.buffer);
-
-    cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_len = CMSG_LEN(SZ * sizeof(int));
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type = SCM_RIGHTS;
-    int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (size_t i = 0; i < SZ; ++i) {
-      fd_array[i] = -1;
-    }
-    ssize_t rval = RecvMsg(&msg, flags);
-    for (size_t i = 0; i < SZ; ++i) {
-      (*new_fds)[i] =
-          std::shared_ptr<FileInstance>(new FileInstance(fd_array[i], errno));
-    }
     return rval;
   }
 
@@ -396,41 +329,18 @@ class FileInstance {
     return rval;
   }
 
-  template <size_t SZ>
-  ssize_t SendMsgAndFDs(const struct InbandMessageHeader& msg_in, int flags,
-                        const SharedFD (&fds)[SZ]) {
-    struct msghdr msg;
-    msg_in.Convert(&msg);
-    union {
-      char buffer[CMSG_SPACE(SZ * sizeof(int))];
-      struct cmsghdr this_aligns_buffer;
-    } u;
-    msg.msg_control = u.buffer;
-    msg.msg_controllen = sizeof(u.buffer);
-
-    cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_len = CMSG_LEN(SZ * sizeof(int));
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type = SCM_RIGHTS;
-    int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (int i = 0; i < SZ; ++i) {
-      fd_array[i] = fds[i]->fd_;
-    }
-    return SendMsg(&msg, flags);
-  }
-
-  ssize_t SendTo(const void* buf, size_t len, int flags,
-                 const struct sockaddr* dest_addr, socklen_t addrlen) {
+  ssize_t SendTo(const void *buf, size_t len, int flags,
+                 const struct sockaddr *dest_addr, socklen_t addrlen) {
     errno = 0;
-    ssize_t rval =
-        TEMP_FAILURE_RETRY(sendto(fd_, buf, len, flags, dest_addr, addrlen));
+    ssize_t rval = TEMP_FAILURE_RETRY(sendto(
+        fd_, buf, len, flags, dest_addr, addrlen));
     errno_ = errno;
     return rval;
   }
 
   void Set(fd_set* dest, int* max_index) const;
 
-  int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen) {
+  int SetSockOpt(int level, int optname, const void *optval, socklen_t optlen) {
     errno = 0;
     int rval = setsockopt(fd_, level, optname, optval, optlen);
     errno_ = errno;
@@ -448,31 +358,9 @@ class FileInstance {
     //  buf, or a pointer to some (immutable) static string (in which case buf
     //  is unused).
     if (out != s->strerror_buf_) {
-      strncpy(s->strerror_buf_, out, sizeof(strerror_buf_));
+      strncpy(out, s->strerror_buf_, sizeof(strerror_buf_));
     }
     return strerror_buf_;
-  }
-
-  int TimerGet(struct itimerspec* curr_value) {
-    errno = 0;
-    int rval = timerfd_gettime(fd_, curr_value);
-    errno_ = errno;
-    return rval;
-  }
-
-  int TimerSet(int flags, const struct itimerspec* new_value,
-                   struct itimerspec* old_value) {
-    errno = 0;
-    int rval = timerfd_settime(fd_, flags, new_value, old_value);
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Truncate(off_t length) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
-    errno_ = errno;
-    return rval;
   }
 
   ssize_t Write(const void* buf, size_t count) {
@@ -494,7 +382,7 @@ class FileInstance {
     identity_.PrintF("fd=%d @%p", fd, this);
   }
 
-  FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const {
+  FileInstance* Accept(struct sockaddr* addr, socklen_t *addrlen) const {
     int fd = TEMP_FAILURE_RETRY(accept(fd_, addr, addrlen));
     if (fd == -1) {
       return new FileInstance(fd, errno);
@@ -512,8 +400,8 @@ class FileInstance {
 /* Methods that need both a fully defined SharedFD and a fully defined
    FileInstance. */
 
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
+SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) { }
 
-}  // namespace cvd
+}
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
