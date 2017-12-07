@@ -38,7 +38,7 @@ enum {
   WIFIROUTER_ATTR_UNSPEC,
 
   // MAC address representing interface from which the packet originated.
-  WIFIROUTER_ATTR_MAC,
+  WIFIROUTER_ATTR_HWSIM_ID,
 
   // MAC80211_HWSIM packet content.
   WIFIROUTER_ATTR_PACKET,
@@ -48,4 +48,3 @@ enum {
 };
 
 }  // namespace cvd
-
