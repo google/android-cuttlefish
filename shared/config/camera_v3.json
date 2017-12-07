@@ -1,0 +1,52 @@
+{
+  "__readme": [
+    "Basic Camera HAL v3 configuration."
+  ],
+
+  "camera_definitions": [
+    {
+      "orientation": "back",
+      "hal_version": "3",
+      "resolutions": [
+        {
+          "width": "1600",
+          "height": "1200"
+        },
+        {
+          "width": "1280",
+          "height": "720"
+        },
+        {
+          "width": "640",
+          "height": "480"
+        },
+        {
+          "width": "320",
+          "height": "240"
+        }
+      ]
+    },
+    {
+      "orientation": "front",
+      "hal_version": "3",
+      "resolutions": [
+        {
+          "width": "1024",
+          "height": "768"
+        },
+        {
+          "width": "800",
+          "height": "600"
+        },
+        {
+          "width": "640",
+          "height": "480"
+        },
+        {
+          "width": "320",
+          "height": "240"
+        }
+      ]
+    }
+  ]
+}

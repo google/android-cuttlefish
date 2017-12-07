@@ -1,0 +1,19 @@
+# kernel domain is used for all processes started before Android init installs SELinux policy.
+# Normally, no processes should be in this domain because clumping multiple processes into a single
+# SELinux domain overprivileges each of those processes.
+
+# TODO(b/65049764): Get rid of the hostapd instance started before Android init
+net_domain(kernel)
+allow kernel self:capability net_admin;
+allow kernel self:netlink_socket create_socket_perms_no_ioctl;
+allow kernel tmpfs:dir search;
+
+# TODO(b/65049764): Get rid of GCE proxy and similar daemons started before Android init
+# gce.meta.proxy and gce.ex.outer write to /dev/console which for some reason does not appear
+# labelled as console_device although it is labeled as such on the filesystem.
+allow kernel rootfs:chr_file write;
+
+# kdevtmpfs accesses devices before ueventd runs restorecon and relabels devices
+allow kernel device:chr_file { create setattr getattr unlink };
+allow kernel device:dir create_dir_perms;
+allow kernel self:capability mknod;

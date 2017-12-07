@@ -14,30 +14,40 @@
 # limitations under the License.
 #
 
-ifeq (,$(CUTTLEFISH_KERNEL))
-CUTTLEFISH_KERNEL := device/google/cuttlefish_kernel/3.18-x86_64/kernel
-endif
-
-PRODUCT_COPY_FILES += $(CUTTLEFISH_KERNEL):kernel
+PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
-
 PRODUCT_PROPERTY_OVERRIDES += \
     debug.hwui.swap_with_damage=0 \
     ro.adb.qemud=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
+    ro.com.google.locationfeatures=1 \
     ro.debuggable=1 \
+    ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
     ro.opengles.version=131072 \
     ro.ril.gprsclass=10 \
-    ro.ril.hsxpa=1
+    ro.ril.hsxpa=1 \
+    ro.setupwizard.mode=DISABLED \
+    wifi.interface=wlan0 \
+
+# Below is a list of properties we probably should get rid of.
+PRODUCT_PROPERTY_OVERRIDES += \
+    wlan.driver.status=ok
+
 
 # Default OMX service to non-Treble
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.media.treble_omx=false
+
+#
+# Packages for various cuttlefish-specific tests
+#
+PRODUCT_PACKAGES += \
+    vsoc_guest_region_e2e_test
 
 #
 # Packages for various GCE-specific utilities
@@ -46,19 +56,11 @@ PRODUCT_PACKAGES += \
     audiotop \
     dhcpcd_wlan0 \
     gce_fs_monitor \
-    gce_init \
-    gce_init_dhcp_hook \
-    gce_log_message \
-    gce_mount_handler \
-    gce_network \
-    gce_network.config \
-    gce_shutdown \
-    gcelogwrapper \
-    GceService \
-    remoter \
+    usbforward \
     vnc_server \
-    vnc_server-testing \
-    simulated_hostapd.conf \
+    VSoCService \
+    wifirouter \
+    wificlient \
     wpa_supplicant.vsoc.conf \
 
 #
@@ -68,11 +70,9 @@ PRODUCT_PACKAGES += \
     dhcpcd-6.8.2 \
     dhcpcd-6.8.2.conf \
     e2fsck \
-    hostapd \
     ip \
     network \
     perf \
-    resize2fs \
     scp \
     sleep \
     tcpdump \
@@ -97,11 +97,13 @@ PRODUCT_AAPT_PREF_CONFIG := xhdpi
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    device/google/cuttlefish/shared/config/camera_v1.json:vendor/etc/config/camera.json \
     device/google/cuttlefish/shared/config/init.vsoc.rc:root/init.vsoc.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:system/etc/media_codecs.xml \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:system/etc/media_codecs_performance.xml \
     device/google/cuttlefish/shared/config/media_profiles.xml:system/etc/media_profiles.xml \
     device/google/cuttlefish/shared/config/profile.root:root/profile \
+    device/google/cuttlefish/shared/config/fstab.vsoc:root/fstab.vsoc \
     frameworks/av/media/libeffects/data/audio_effects.conf:system/etc/audio_effects.conf \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
@@ -113,7 +115,9 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:system/etc/permissions/android.hardware.bluetooth.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.xml \
+    frameworks/native/data/etc/android.hardware.camera.full.xml:system/etc/permissions/android.hardware.camera.full.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml \
+    frameworks/native/data/etc/android.hardware.camera.raw.xml:system/etc/permissions/android.hardware.camera.raw.xml \
     frameworks/native/data/etc/android.hardware.ethernet.xml:system/etc/permissions/android.hardware.ethernet.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
@@ -127,11 +131,13 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.app_widgets.xml:system/etc/permissions/android.software.app_widgets.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:system/etc/bluetooth/controller_properties.json \
 
+
 #
-# Device personality files
+# USB Specific
 #
 PRODUCT_COPY_FILES += \
-    device/google/gce/config/device_personalities/default.json:system/etc/device_personalities/default.json
+    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
+
 
 #
 # Files for the VNC server
@@ -195,8 +201,6 @@ PRODUCT_COPY_FILES += \
 #
 PRODUCT_PACKAGES += \
     hwcomposer.vsoc \
-    hwcomposer.vsoc-testing \
-    hwcomposer.vsoc-deprecated \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl
 
@@ -234,7 +238,7 @@ PRODUCT_PACKAGES += \
 # Dumpstate HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.dumpstate@1.0-service.vsoc
+    android.hardware.dumpstate@1.0-service.cuttlefish
 
 #
 # Camera
@@ -282,3 +286,5 @@ PRODUCT_PACKAGES += \
 # TODO vibrator HAL
 # TODO thermal
 
+PRODUCT_PACKAGES += \
+    vsoc_mem_json

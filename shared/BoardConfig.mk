@@ -18,6 +18,12 @@
 # Common BoardConfig for all supported architectures.
 #
 
+# Build a separate vendor.img partition
+BOARD_USES_VENDORIMAGE := true
+BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_VENDORIMAGE_PARTITION_SIZE := 67108864  # 64MB
+TARGET_COPY_OUT_VENDOR := vendor
+
 TARGET_NO_RECOVERY := true
 BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
@@ -45,7 +51,15 @@ BOARD_USERDATAIMAGE_PARTITION_SIZE := 1073741824
 BOARD_CACHEIMAGE_PARTITION_SIZE := 67108864
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
-BOARD_KERNEL_CMDLINE := console=ttyS0 init=/init androidboot.hardware=vsoc androidboot.console=ttyS0 security=selinux androidboot.selinux=permissive enforcing=0 loop.max_part=7 audit=0
+BOARD_KERNEL_CMDLINE := loop.max_part=7
+BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS1
+BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc
+BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
+BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
+BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
+
+# TODO(b/65266349) Figure out why this is needed
+BOARD_KERNEL_CMDLINE += security=selinux
 
 # Minimum size of the final bootable disk image: 10G
 # GCE will pad disk images out to 10G. Our disk images should be at least as
@@ -56,12 +70,6 @@ BOARD_BOOTIMAGE_MAX_SIZE := 8388608
 BOARD_SYSLOADER_MAX_SIZE := 7340032
 # TODO(san): See if we can get rid of this.
 BOARD_FLASH_BLOCK_SIZE := 512
-
-# master has breaking changes in dlfcn.h, but the platform SDK hasn't been
-# bumped. Restore the line below when it is.
-GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=26
-# GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
-STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
 WITH_DEXPREOPT := true
 
@@ -82,16 +90,31 @@ WIFI_DRIVER_FW_PATH_AP      := "/dev/null"
 
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy
 
-GCE_STLPORT_INCLUDES :=
-GCE_STLPORT_LIBS :=
-GCE_STLPORT_STATIC_LIBS :=
+# master has breaking changes in dlfcn.h, but the platform SDK hasn't been
+# bumped. Restore the line below when it is.
+# VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=26
+VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
+VSOC_STLPORT_INCLUDES :=
+VSOC_STLPORT_LIBS :=
+VSOC_STLPORT_STATIC_LIBS :=
+VSOC_TEST_INCLUDES := external/googletest/googlemock/include external/googletest/googletest/include
+VSOC_TEST_LIBRARIES := libgmock_main_host libgtest_host libgmock_host
+VSOC_LIBCXX_STATIC := libc++_static
+VSOC_PROTOBUF_SHARED_LIB := libprotobuf-cpp-full
 
-GCE_TEST_INCLUDES := external/googletest/googlemock/include external/googletest/googletest/include
-GCE_TEST_LIBRARIES := libgmock_main_host libgtest_host libgmock_host
+# TODO(ender): Remove all these once we stop depending on GCE code.
+GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
+GCE_STLPORT_INCLUDES := $(VSOC_STLPORT_INCLUDES)
+GCE_STLPORT_LIBS := $(VSOC_STLPORT_LIBS)
+GCE_STLPORT_STATIC_LIBS := $(VSOC_STLPORT_STATIC_LIBS)
+GCE_TEST_INCLUDES := $(VSOC_TEST_INCLUDES)
+GCE_TEST_LIBRARIES := $(VSOC_TEST_LIBRARIES)
+GCE_LIBCXX_STATIC := $(VSOC_LIBCXX_STATIC)
+GCE_PROTOBUF_SHARED_LIB := $(VSOC_PROTOBUF_SHARED_LIB)
+# TODO(ender): up till here.
 
-GCE_LIBCXX_STATIC := libc++_static
+STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
-GCE_PROTOBUF_SHARED_LIB := libprotobuf-cpp-full
 INIT_BOOTCHART := true
 
 DEVICE_MANIFEST_FILE := device/google/cuttlefish/shared/config/manifest.xml

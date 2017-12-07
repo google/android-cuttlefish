@@ -21,14 +21,11 @@ $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 PRODUCT_CHARACTERISTICS := tablet,nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    dhcp.rmnet0.dns1=8.8.8.8 \
-    dhcp.rmnet0.gateway=192.168.1.1 \
-    dhcp.rmnet0.ipaddress=192.168.1.10 \
     gsm.sim.operator.alpha=Android \
     gsm.sim.operator.iso-country=us \
     gsm.sim.operator.numeric=310260 \
     keyguard.no_require_sim=true \
-    rild.libpath=/system/lib/libvsoc-ril.so \
+    rild.libpath=/vendor/lib/libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=310260 \
     ro.com.android.dataroaming=true \
@@ -42,8 +39,6 @@ PRODUCT_PACKAGES += \
     Telecom \
     TeleService \
     libvsoc-ril \
-    libvsoc-ril-deprecated \
-    libvsoc-ril-testing \
     rild \
 
 PRODUCT_COPY_FILES += \

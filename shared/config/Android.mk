@@ -22,15 +22,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := wpa_supplicant.vsoc.conf
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)/wifi
+LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/wifi
 LOCAL_MODULE_STEM := wpa_supplicant.conf
-
-ifeq ($(TARGET_TRANSLATE_2ND_ARCH),true)
-# We don't need secondary binary if secondary arch is translated
-ifneq (1,$(words $(LOCAL_MODULE_TARGET_ARCH)))
 LOCAL_MULTILIB := first
-endif
-endif
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
@@ -40,4 +34,3 @@ $(LOCAL_BUILT_MODULE): device/google/cuttlefish/shared/config/gen_wpa_supplicant
 	$(hide) device/google/cuttlefish/shared/config/gen_wpa_supplicant_conf.sh \
 	    "${TARGET_PRODUCT}" "${PRODUCT_MODEL}" "${PLATFORM_SDK_VERSION}" \
 	    > $@
-

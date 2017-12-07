@@ -1,5 +1,9 @@
-#allow init kernel:security setcheckreqprot;
-allow init serial_device:chr_file { ioctl write };
-allow init socket_device:sock_file { create setattr };
-allow init su:process { noatsecure rlimitinh siginh transition };
-allow init sysfs:dir { add_name create write };
+# /dev/tty* I/O. Needed for /dev/ttyS0
+allow init serial_device:chr_file rw_file_perms;
+
+# Write to /configfs files. Needed only for /config/usb_gadget subtree.
+allow init configfs:file w_file_perms;
+allow init configfs:lnk_file create;
+
+# Add loadable modules. Needed for usbfunc:diag, usbfunc:diag, usbfunc:gsi, usbfunc:qdss modules.
+allow init kernel:system module_request;

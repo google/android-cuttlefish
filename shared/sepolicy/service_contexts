@@ -1,0 +1,2 @@
+# Binder service mappings
+gce                                       u:object_r:gce_service:s0
