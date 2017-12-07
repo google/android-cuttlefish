@@ -17,6 +17,7 @@
 
 #include <libxml/tree.h>
 #include <memory>
+#include <string>
 
 namespace config {
 // GuestConfig builds XML document describing target VM.
