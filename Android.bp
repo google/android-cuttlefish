@@ -63,6 +63,9 @@ cc_defaults {
         android_arm: {
             enabled: false,
         },
+        android_arm64: {
+            enabled: false,
+        },
     },
 }
 
