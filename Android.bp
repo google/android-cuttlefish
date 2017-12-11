@@ -21,6 +21,7 @@ subdirs = [
 
 cc_library_headers {
     name: "cuttlefish_common_headers",
+    vendor: true,
     export_include_dirs: ["."],
     host_supported: true,
 }
@@ -28,6 +29,7 @@ cc_library_headers {
 // TODO(b/67435044) Update the include paths and remove this
 cc_library_headers {
     name: "cuttlefish_glog",
+    vendor: true,
     export_include_dirs: ["common/libs"],
     host_supported: true,
 }
