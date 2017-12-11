@@ -1,6 +1,3 @@
-import /init.metadata.rc
-import /metadata_properties.rc
-
 on early-init
 #    loglevel 8
     symlink /sdcard /storage/sdcard0
@@ -14,23 +11,33 @@ on early-init
     write /dev/userspace_framebuffer 0
     chown system system /dev/userspace_framebuffer
     chmod 0660 /dev/userspace_framebuffer
+    restorecon /dev/userspace_framebuffer
     write /dev/framebuffer_control 0
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
+    restorecon /dev/framebuffer_control
+
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+
+
+on init
+    chown system root /dev/fb_broadcast
+    chmod 0660 /dev/fb_broadcast
+    restorecon /dev/fb_broadcast
 
 
 on fs
     mount_all /fstab.${ro.hardware}
-    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
+    wait /vendor/etc/selinux/nonplat_mac_permissions.xml
+    restorecon_recursive /vendor
 
     # TODO(ender): Find better way to talk to serial port.
     chmod 622 /dev/kmsg
 
-
     # for GCE camera HAL
     mkdir /var/media 0770 audio media
 
-    chmod 0755 /sys/kernel/debug
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/group
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/ps
     chmod 0664 /sys/kernel/debug/ieee80211/phy0/rc/fixed_rate_idx
@@ -40,60 +47,39 @@ on fs
 
     chmod 0755 /system/bin/dhcpcd_wlan0
 
-    setprop ro.com.google.locationfeatures 1
-
 
 on post-fs-data
+    start vsoc_guest_region_e2e_test
     mkdir /data/dalvik-cache 0771 root root
     mkdir /data/dalvik-cache/x86 0771 root system
+    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
     start gce_fs_monitor
     start seriallogging
 
 
 on early-boot
-    start remoter
     start vnc_server
 
 
 on boot
     chmod 0660 /dev/cpuctl
-
     mkdir /data/misc/wifi 0770 system wifi
     mkdir /data/misc/wifi/sockets 0770 system wifi
-
-    setprop ro.build.product android-gce
-    setprop ro.product.device light-snack
-    setprop ro.hardware.virtual_device 1
-    setprop log.tag.CheckinService VERBOSE
-    setprop log.tag.CheckinTask VERBOSE
-    # SetupWizard is distressed by the lack of WiFi
-    setprop ro.setupwizard.mode DISABLED
-
-    setprop wifi.interface wlan0
-    setprop wlan.driver.status ok
 
     # TODO(ender): Re-enable these
     # Compass.
     stop akmd
 
 
-service remoter /system/bin/gcelogwrapper /system/bin/remoter
-    seclabel u:r:su:s0
+service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
     oneshot
 
 
-service vnc_server /system/bin/gcelogwrapper /system/bin/vnc_server
+service vnc_server /vendor/bin/vnc_server
     oneshot
 
 
-service logtop3 /system/bin/gcelogwrapper /system/bin/top -m 3 -d 10
-    class main
-    disabled
-    seclabel u:r:su:s0
-    oneshot
-
-
-service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/vport0p1 *:V
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
     class main
     user root
     disabled
@@ -107,12 +93,25 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     oneshot
 
 
-service gce_fs_monitor /system/bin/gcelogwrapper -k /system/bin/gce_fs_monitor
+service gce_fs_monitor /vendor/bin/gce_fs_monitor
     class late_start
     disabled
-    seclabel u:r:su:s0
     oneshot
 
+
+service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
+    class late_start
+    user root
+
+
+service wifirouter /vendor/bin/wifirouter
+    class main
+    user root
+
+
+service wificlient /vendor/bin/wificlient -iface=wlan0 -macaddr=00:43:56:44:01:02
+    class late_start
+    user root
 
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     class main

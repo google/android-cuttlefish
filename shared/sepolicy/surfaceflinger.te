@@ -1,3 +1,9 @@
-allow surfaceflinger device:file { ioctl open write };
 allow surfaceflinger self:process execmem;
-allow surfaceflinger socket_device:sock_file write;
+
+# Read GCE initial metadata file
+allow surfaceflinger initial_metadata_file:file r_file_perms;
+
+# Interact with the userspace framebuffer
+# TODO(b/64158954): Remove/update these rules once gralloc impl changes
+allow surfaceflinger fb_ctl_file:file rw_file_perms;
+allow surfaceflinger userspace_fb_file:file rw_file_perms;

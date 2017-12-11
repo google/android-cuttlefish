@@ -1,0 +1,25 @@
+type usbforward, domain;
+type usbforward_exec, exec_type, file_type;
+
+init_daemon_domain(usbforward)
+
+# Virtual serial device I/O
+allow usbforward virtual_serial_device:chr_file rw_file_perms;
+
+# USB I/O
+allow usbforward usb_device:dir r_dir_perms;
+allow usbforward usb_device:chr_file rw_file_perms;
+
+# /sys/bus/usb/devices, /sys/devices/platform/dummy_hcd.0/usb1/1-1/busnum
+r_dir_file(usbforward, sysfs_usb_priv)
+# Read /sys/devices/platform/dummy_hcd.0/usb1/1-1/speed. Although this file is labelled
+# sysfs_usb_priv, during adb root and adb unroot usbforward sees the file as sysfs.
+# It is acceptable to give usbforward this wide access because usbforward is not a stock Android
+# domain and it does not run Android apps. Thus, the laxer access restrictions of this domain
+# do not impact how compatible the resulting Android emulator appears to system services and apps.
+allow usbforward sysfs:file r_file_perms;
+
+# Do not audit attempts to read /dev directory. This access does not appear to be necessary.
+dontaudit usbforward device:dir r_dir_perms;
+
+allow usbforward self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
