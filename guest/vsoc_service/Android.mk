@@ -21,5 +21,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, java)
 LOCAL_PACKAGE_NAME := VSoCService
 LOCAL_PROGUARD_FLAGS := -include build/core/proguard.flags
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_PACKAGE)
