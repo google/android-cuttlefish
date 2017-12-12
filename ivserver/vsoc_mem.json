@@ -7,8 +7,8 @@
 	    "androidboot.console=ttyS0",
 	    "androidboot.hardware=vsoc",
 	    "security=selinux",
-      "androidboot.selinux=permissive",
-      "androidboot.serialno=CUTTLEFISHAVD_01",
+	    "androidboot.selinux=permissive",
+	    "androidboot.serialno=CUTTLEFISHAVD_01",
 	    "enforcing=0",
 	    "audit=0",
 	    "CUTTLEFISH"
@@ -95,6 +95,39 @@
     "current_version" : 1,
     "min_compatible_version" : 1,
     "region_size" : 16384,
+
+    "guest_to_host_signal_table" : {
+      "num_nodes_lg2" : 1
+    },
+
+    "host_to_guest_signal_table" : {
+      "num_nodes_lg2" : 1
+    }
+   },
+
+   {
+    "__comment" : "Sanity testing of managed regions",
+    "device_name" : "e2e_manager",
+    "current_version" : 1,
+    "min_compatible_version" : 1,
+    "region_size" : 4096,
+
+    "guest_to_host_signal_table" : {
+      "num_nodes_lg2" : 1
+    },
+
+    "host_to_guest_signal_table" : {
+      "num_nodes_lg2" : 1
+    }
+   },
+
+   {
+    "__comment" : "Sanity testing of managed regions",
+    "device_name" : "e2e_managed",
+    "current_version" : 1,
+    "min_compatible_version" : 1,
+    "region_size" : 16384,
+    "managed_by" : "e2e_manager",
 
     "guest_to_host_signal_table" : {
       "num_nodes_lg2" : 1
