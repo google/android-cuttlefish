@@ -16,6 +16,7 @@
 #include "common/libs/net/network_interface_manager.h"
 
 #include <arpa/inet.h>
+#include <linux/if_addr.h>
 #include <linux/if_link.h>
 #include <memory>
 
@@ -23,68 +24,29 @@
 #include "common/libs/net/network_interface.h"
 
 namespace avd {
-
-// VETH and IF constants, taken from linux/veth.h and linux/if_link.h
-// To break direct dependency from linux headers, which conflict with bionic
-// headers, we keep a copy of these values here.
-// Names have been modified to avoid potential conflict with future Android
-// releases.
-enum {
-  kVEth_Info_Unspec,
-  kVEth_Info_Peer,
-};
-
-enum {
-  kIFLA_Unspec,
-  kIFLA_Address,
-  kIFLA_Broadcast,
-  kIFLA_IfName,
-  kIFLA_MTU,
-  kIFLA_Link,
-  kIFLA_QDisc,
-  kIFLA_Stats,
-  kIFLA_Cost,
-  kIFLA_Priority,
-  kIFLA_Master,
-  kIFLA_Wireless,
-  kIFLA_ProtInfo,
-  kIFLA_TxQLen,
-  kIFLA_Map,
-  kIFLA_Weight,
-  kIFLA_OperState,
-  kIFLA_LinkMode,
-  kIFLA_LinkInfo,
-  kIFLA_NetNsPID,
-  kIFLA_IfAlias,
-  kIFLA_NumVF,
-  kIFLA_VFInfoList,
-  kIFLA_Stats64,
-  kIFLA_VfPorts,
-  kIFLA_PortSelf,
-  kIFLA_AFSpec,
-  kIFLA_Group,
-  kIFLA_NetNsFD,
-  kIFLA_ExtMask,
-  kIFLA_Promiscuity,
-  kIFLA_NumTxQueues,
-  kIFLA_NumRxQueues,
-  kIFLA_Carrier,
-  kIFLA_PhysPortId,
-  kIFLA_CarrierChanges,
-};
-
-enum {
-  kIFLA_Info_Unspec,
-  kIFLA_Info_Kind,
-  kIFLA_Info_Data,
-  kIFLA_Info_XStats,
-  kIFLA_Info_SlaveKind,
-  kIFLA_Info_SlaveData,
-};
-
 namespace {
-// Virtual interface kind. Used to create new VETH pairs.
-const char kVethLinkKind[] = "veth";
+std::unique_ptr<NetlinkRequest> BuildLinkRequest(
+    const NetworkInterface& interface) {
+  auto request = NetlinkRequest::New(NetlinkRequest::RequestType::SetLink);
+  request->AddIfInfo(interface.Index(), interface.IsOperational());
+  if (!interface.Name().empty()) {
+    request->AddString(IFLA_IFNAME, interface.Name());
+  }
+
+  return request;
+}
+
+std::unique_ptr<NetlinkRequest> BuildAddrRequest(
+    const NetworkInterface& interface) {
+  auto request = NetlinkRequest::New(NetlinkRequest::RequestType::AddAddress);
+  request->AddAddrInfo(interface.Index());
+  request->AddInt32(IFA_LOCAL, inet_addr(interface.Address().c_str()));
+  request->AddInt32(IFA_ADDRESS, inet_addr(interface.Address().c_str()));
+  request->AddInt32(IFA_BROADCAST,
+                    inet_addr(interface.BroadcastAddress().c_str()));
+
+  return request;
+}
 }  // namespace
 
 NetworkInterfaceManager *NetworkInterfaceManager::New(
@@ -111,66 +73,15 @@ NetworkInterface* NetworkInterfaceManager::Open(const std::string& if_name) {
   return new NetworkInterface(index);
 }
 
-bool NetworkInterfaceManager::CreateVethPair(
-    const NetworkInterface& veth1, const NetworkInterface& veth2) {
-  // The IFLA structure is not linear and can carry multiple embedded chunks.
-  // This is the case when we create a new link.
-  // IFLA_LINKINFO contains a substructure describing the link.
-  // Each IFLA tag has associated data length. In order to provide the length of
-  // the structure, we build substructures directly inside the buffer, and later
-  // update the length.
-  // Structure looks like this:
-  //
-  // RTM_NEWLINK[
-  //   [ ... interface 1 details ... ]
-  //   IFLA_LINKINFO[
-  //     length,
-  //     IFLA_INFO_KIND[length, "veth"],
-  //     IFLA_INFO_DATA[
-  //       length,
-  //       VETH_INFO_PEER[
-  //         length,
-  //         [ ... interface 2 details ... ]
-  //       ],
-  //     ],
-  //   ],
-  // ]
-  //
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(true));
-
-  if (!request.get()) return false;
-  if (!BuildRequest(request.get(), veth1)) return false;
-  request->PushList(kIFLA_LinkInfo);
-  request->AddString(kIFLA_Info_Kind, kVethLinkKind);
-  request->PushList(kIFLA_Info_Data);
-  request->PushList(kVEth_Info_Peer);
-  if (!BuildRequest(request.get(), veth2)) return false;
-
-  request->PopList();  // kVEth_Info_Peer
-  request->PopList();  // kIFLA_Info_Data
-  request->PopList();  // kIFLA_LinkInfo
-
-  return nl_client_->Send(request.get());
-}
-
 bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {
-  std::unique_ptr<NetlinkRequest> request(nl_client_->CreateRequest(false));
-  if (!BuildRequest(request.get(), iface)) return false;
+  auto request = BuildLinkRequest(iface);
+  if (!nl_client_->Send(request.get())) return false;
+
+  // Terminate immediately if interface is down.
+  if (!iface.IsOperational()) return true;
+
+  request = BuildAddrRequest(iface);
   return nl_client_->Send(request.get());
-}
-
-// private
-bool NetworkInterfaceManager::BuildRequest(
-    NetlinkRequest* request, const NetworkInterface& interface) {
-  request->AddIfInfo(interface.index());
-
-  // The following changes are idempotent, e.g. changing interface name to
-  // itself is essentially a no-op.
-  if (!interface.name().empty()) {
-    request->AddString(kIFLA_IfName, interface.name());
-  }
-
-  return true;
 }
 
 }  // namespace avd

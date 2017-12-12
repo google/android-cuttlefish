@@ -17,6 +17,7 @@
 #define COMMON_LIBS_NET_NETLINK_CLIENT_H_
 
 #include <stddef.h>
+#include <memory>
 #include <string>
 
 namespace avd {
@@ -26,6 +27,13 @@ namespace avd {
 // changed, and how.
 class NetlinkRequest {
  public:
+  enum class RequestType {
+    NewLink,
+    SetLink,
+    AddAddress,
+    DelAddress
+  };
+
   NetlinkRequest() {}
   virtual ~NetlinkRequest() {}
 
@@ -37,10 +45,18 @@ class NetlinkRequest {
   // Returns true, if successful.
   virtual void AddInt32(uint16_t type, int32_t value) = 0;
 
+  // Add an IFLA tag followed by int8.
+  // Returns true, if successful.
+  virtual void AddInt8(uint16_t type, int8_t value) = 0;
+
   // Add an interface info structure.
   // Parameter |if_index| specifies particular interface index to which the
   // attributes following the IfInfo apply.
-  virtual void AddIfInfo(int32_t if_index) = 0;
+  virtual void AddIfInfo(int32_t if_index, bool is_operational) = 0;
+
+  // Add an address info to a specific interface.
+  // This method assumes the prefix length for address info is 24.
+  virtual void AddAddrInfo(int32_t if_index) = 0;
 
   // Creates new list.
   // List mimmic recursive structures in a flat, contiuous representation.
@@ -57,8 +73,15 @@ class NetlinkRequest {
   // Request length.
   virtual size_t RequestLength() = 0;
 
+  // Set Sequence Number.
+  virtual void SetSeqNo(uint32_t seq_no) = 0;
+
   // Request Sequence Number.
   virtual uint32_t SeqNo() = 0;
+
+  // Create new Netlink Request structure.
+  // When |create| is true, the request will inject a new instance of |type|.
+  static std::unique_ptr<NetlinkRequest> New(NetlinkRequest::RequestType type);
 
  private:
   NetlinkRequest(const NetlinkRequest&);
@@ -74,11 +97,6 @@ class NetlinkClient {
   // Get interface index.
   // Returns 0 if interface does not exist.
   virtual int32_t NameToIndex(const std::string& name) = 0;
-
-  // Create new Netlink Request structure.
-  // When |create_new_interface| is true, the request will create a new,
-  // not previously existing interface.
-  virtual NetlinkRequest* CreateRequest(bool create_new_interface) = 0;
 
   // Send netlink message to kernel.
   virtual bool Send(NetlinkRequest* message) = 0;

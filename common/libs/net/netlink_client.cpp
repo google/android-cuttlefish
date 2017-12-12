@@ -37,17 +37,22 @@ namespace {
 // information about which interface needs to be changed, and how.
 class NetlinkRequestImpl : public NetlinkRequest {
  public:
-  NetlinkRequestImpl(int32_t command, int32_t seq_no, int32_t flags);
+  NetlinkRequestImpl(int32_t command, int32_t flags);
 
   virtual void AddString(uint16_t type, const std::string& value);
   virtual void AddInt32(uint16_t type, int32_t value);
-  virtual void AddIfInfo(int32_t if_index);
+  virtual void AddInt8(uint16_t type, int8_t value);
+  virtual void AddAddrInfo(int32_t if_index);
+  virtual void AddIfInfo(int32_t if_index, bool operational);
   virtual void PushList(uint16_t type);
   virtual void PopList();
   virtual void* RequestData();
   virtual size_t RequestLength();
   virtual uint32_t SeqNo() {
     return header_->nlmsg_seq;
+  }
+  virtual void SetSeqNo(uint32_t seq_no) {
+    header_->nlmsg_seq = seq_no;
   }
 
  private:
@@ -119,11 +124,10 @@ nlattr* NetlinkRequestImpl::AppendTag(
 }
 
 NetlinkRequestImpl::NetlinkRequestImpl(
-    int32_t command, int32_t seq_no, int32_t flags)
+    int32_t command, int32_t flags)
     : header_(request_.AppendAs<nlmsghdr>(NULL)) {
-  header_->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK | flags;
+  header_->nlmsg_flags = flags;
   header_->nlmsg_type = command;
-  header_->nlmsg_seq = seq_no;
 }
 
 void NetlinkRequestImpl::AddString(uint16_t type, const std::string& value) {
@@ -134,10 +138,25 @@ void NetlinkRequestImpl::AddInt32(uint16_t type, int32_t value) {
   AppendTag(type, &value, sizeof(value));
 }
 
-void NetlinkRequestImpl::AddIfInfo(int32_t if_index) {
+void NetlinkRequestImpl::AddInt8(uint16_t type, int8_t value) {
+  AppendTag(type, &value, sizeof(value));
+}
+
+void NetlinkRequestImpl::AddIfInfo(int32_t if_index, bool operational) {
   ifinfomsg* if_info = request_.AppendAs<ifinfomsg>(NULL);
   if_info->ifi_family = AF_UNSPEC;
   if_info->ifi_index = if_index;
+  if_info->ifi_flags = operational ? IFF_UP : 0;
+  if_info->ifi_change = IFF_UP;
+}
+
+void NetlinkRequestImpl::AddAddrInfo(int32_t if_index) {
+  ifaddrmsg* ad_info = request_.AppendAs<ifaddrmsg>(NULL);
+  ad_info->ifa_family = AF_INET;
+  ad_info->ifa_prefixlen = 24;
+  ad_info->ifa_flags = IFA_F_PERMANENT | IFA_F_SECONDARY;
+  ad_info->ifa_scope = 0;
+  ad_info->ifa_index = if_index;
 }
 
 void NetlinkRequestImpl::PushList(uint16_t type) {
@@ -176,7 +195,6 @@ class NetlinkClientImpl : public NetlinkClient {
 
   virtual int32_t NameToIndex(const std::string& name);
   virtual bool Send(NetlinkRequest* message);
-  virtual NetlinkRequest* CreateRequest(bool create_new_iface);
 
   // Initialize NetlinkClient instance.
   // Open netlink channel and initialize interface list.
@@ -206,15 +224,6 @@ int32_t NetlinkClientImpl::NameToIndex(const std::string& name) {
   }
 
   return ifr.ifr_ifindex;
-}
-
-NetlinkRequest* NetlinkClientImpl::CreateRequest(bool create_new_iface) {
-  if (create_new_iface) {
-    return new NetlinkRequestImpl(
-        RTM_NEWLINK, seq_no_++, NLM_F_CREATE | NLM_F_EXCL);
-  } else {
-    return new NetlinkRequestImpl(RTM_SETLINK, seq_no_++, 0);
-  }
 }
 
 bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
@@ -269,6 +278,8 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
 }
 
 bool NetlinkClientImpl::Send(NetlinkRequest* message) {
+  message->SetSeqNo(seq_no_++);
+
   struct sockaddr_nl netlink_addr;
   struct iovec netlink_iov = {
     message->RequestData(),
@@ -301,6 +312,37 @@ bool NetlinkClientImpl::OpenNetlink() {
   return true;
 }
 }  // namespace
+
+std::unique_ptr<NetlinkRequest> NetlinkRequest::New(
+    NetlinkRequest::RequestType type) {
+  int target_type = 0;
+  int target_flags = 0;
+
+  switch (type) {
+    case RequestType::NewLink:
+      target_type = RTM_NEWLINK;
+      target_flags = NLM_F_CREATE | NLM_F_EXCL;
+      break;
+
+    case RequestType::SetLink:
+      target_type = RTM_NEWLINK;
+      break;
+
+    case RequestType::AddAddress:
+      target_type = RTM_NEWADDR;
+      target_flags = NLM_F_CREATE | NLM_F_EXCL;
+      break;
+
+    case RequestType::DelAddress:
+      target_type = RTM_DELADDR;
+      break;
+  }
+
+  target_flags |= NLM_F_ACK | NLM_F_REQUEST;
+
+  return std::unique_ptr<NetlinkRequest>(new NetlinkRequestImpl(
+      target_type, target_flags));
+}
 
 NetlinkClient* NetlinkClient::New() {
   NetlinkClientImpl* client = new NetlinkClientImpl();
