@@ -39,7 +39,7 @@ Summary of the changes applied by config stage:
 * add current user to `libvirt` group,
 * create `cuttlefish` image repository under `/srv/cf` (or a different location
   specified using flags)
-* set up `Android Bridge` that will be used to enable networking on Cuttlefish
+* set up `abr0` that will be used to enable networking on Cuttlefish
   instances.
 * grants `libvirt-qemu` user access to `/srv/cf` (or a different, user-specified
   location, that will later be hosting cuttlefish system images)
