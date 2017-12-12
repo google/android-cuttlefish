@@ -35,6 +35,8 @@ inline size_t roundUpToPageSize(size_t x) {
 class VSoCFrameBuffer {
 public:
   static const VSoCFrameBuffer& getInstance();
+  VSoCFrameBuffer(const VSoCFrameBuffer&) = delete;
+  VSoCFrameBuffer& operator=(const VSoCFrameBuffer&) = delete;
 
   static int align(int input, int alignment = kAlignment) {
     return (input + alignment - 1) & -alignment;
@@ -103,7 +105,6 @@ private:
   static const int kBitsPerPixel = sizeof(Pixel) * CHAR_BIT;
   // Length of a scan-line in bytes.
   int line_length_;
-  DISALLOW_COPY_AND_ASSIGN(VSoCFrameBuffer);
 };
 
 const char* pixel_format_to_string(int format);
