@@ -78,7 +78,8 @@ void CircularQueueBase<SizeLog2>::WaitForDataLocked(RegionView* r) {
 template <uint32_t SizeLog2>
 intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionView* r,
                                                          size_t bytes,
-                                                         Range* t) {
+                                                         Range* t,
+                                                         bool non_blocking) {
   // Can't write more than the buffer will hold
   if (bytes > BufferSize) {
     return -ENOSPC;
@@ -89,6 +90,9 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(RegionView* r,
     size_t available = BufferSize - t->start_idx + o_r_release;
     if (available >= bytes) {
       break;
+    }
+    if (non_blocking) {
+      return -EWOULDBLOCK;
     }
     // If we can't write at the moment wait for a reader to release
     // some bytes.
@@ -125,10 +129,11 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionView* r, char* buffer_out,
 template <uint32_t SizeLog2>
 intptr_t CircularByteQueue<SizeLog2>::Write(RegionView* r,
                                             const char* buffer_in,
-                                            size_t bytes) {
+                                            size_t bytes,
+                                            bool non_blocking) {
   Range range;
   this->lock_.Lock();
-  intptr_t rval = this->WriteReserveLocked(r, bytes, &range);
+  intptr_t rval = this->WriteReserveLocked(r, bytes, &range, non_blocking);
   if (rval < 0) {
     this->lock_.Unlock();
     return rval;
@@ -176,14 +181,18 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionView* r,
 
 template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
-    RegionView* r, const char* buffer_in, uint32_t bytes) {
+    RegionView* r,
+    const char* buffer_in,
+    uint32_t bytes,
+    bool non_blocking) {
   if (bytes > MaxPacketSize) {
     return -ENOSPC;
   }
   Range range;
   size_t buffered_size = this->CalculateBufferedSize(bytes);
   this->lock_.Lock();
-  intptr_t rval = this->WriteReserveLocked(r, buffered_size, &range);
+  intptr_t rval =
+      this->WriteReserveLocked(r, buffered_size, &range, non_blocking);
   if (rval < 0) {
     this->lock_.Unlock();
     return rval;
