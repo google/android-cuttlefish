@@ -17,7 +17,6 @@
 
 #include "common/vsoc/lib/typed_region_view.h"
 #include "common/vsoc/shm/gralloc_layout.h"
-#include "uapi/vsoc_shm.h"
 
 #include <string>
 
@@ -32,14 +31,14 @@ namespace gralloc {
 // (which gets all other information from the guest side hwcomposer) and by the
 // VNC server (which uses only the frame buffer and gets the information it
 // needs from the framebuffer region).
-class GrallocBufferRegion
+class GrallocBufferRegionView
     : vsoc::TypedRegionView<vsoc::layout::gralloc::GrallocBufferLayout> {
  public:
-  static GrallocBufferRegion* GetInstance();
+  static GrallocBufferRegionView* GetInstance(const char* domain);
 
   uint8_t* OffsetToBufferPtr(vsoc_reg_off_t offset);
  protected:
-  GrallocBufferRegion(char* domain);
+  GrallocBufferRegionView(const char* domain);
   bool is_open_{};
 };
 

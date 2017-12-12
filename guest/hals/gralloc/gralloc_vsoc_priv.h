@@ -16,13 +16,14 @@
  */
 
 #include <cutils/native_handle.h>
-#include <guest/vsoc/gralloc/gralloc_region.h>
 #include <hardware/gralloc.h>
 #include <log/log.h>
 
+#include "guest/vsoc/lib/gralloc_region_view.h"
+
 struct vsoc_alloc_device_t {
   alloc_device_t device;
-  vsoc::gralloc::GrallocRegion* gralloc_region;
+  vsoc::gralloc::GrallocRegionView* gralloc_region;
 };
 
 struct vsoc_gralloc_module_t {

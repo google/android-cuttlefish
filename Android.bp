@@ -98,11 +98,13 @@ cc_library_shared {
         "libcuttlefish_fs",
         "cuttlefish_auto_resources",
         "libbase",
+        "liblog",
     ],
     target: {
         //TODO(ghartman): linux_glibc on master
         linux: {
             srcs: [
+                "host/vsoc/lib/gralloc_buffer_region_view.cpp",
                 "host/vsoc/lib/host_lock.cpp",
                 "host/vsoc/lib/region_control.cpp",
                 "host/vsoc/lib/region_view.cpp",
@@ -110,6 +112,7 @@ cc_library_shared {
         },
         android: {
             srcs: [
+                "guest/vsoc/lib/gralloc_region_view.cpp",
                 "guest/vsoc/lib/guest_lock.cpp",
                 "guest/vsoc/lib/region_control.cpp",
                 "guest/vsoc/lib/region_view.cpp",
@@ -117,19 +120,6 @@ cc_library_shared {
         },
     },
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
-}
-
-cc_library_host_static {
-    name: "libvsoc_gralloc",
-    srcs: [
-        "host/vsoc/gralloc/gralloc_buffer_region.cpp",
-    ],
-    header_libs: ["cuttlefish_glog"],
-    shared_libs: [
-        "vsoc_lib",
-        "libbase",
-    ],
-    defaults: ["cuttlefish_host_only"],
 }
 
 cc_test_host {

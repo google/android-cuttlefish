@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "gralloc_region.h"
+#include "guest/vsoc/lib/gralloc_region_view.h"
 
 #include <atomic>
 #include <common/vsoc/lib/lock_guard.h>
@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <uapi/vsoc_shm.h>
 
-using vsoc::gralloc::GrallocRegion;
+using vsoc::gralloc::GrallocRegionView;
 using vsoc::layout::gralloc::BufferEntry;
 using vsoc::layout::gralloc::GrallocBufferLayout;
 using vsoc::layout::gralloc::GrallocManagerLayout;
@@ -40,14 +40,14 @@ inline uint32_t gralloc_owned_value() {
 
 }  // namespace
 
-GrallocRegion::GrallocRegion() {
+GrallocRegionView::GrallocRegionView() {
   // The construction in the singleton is thread safe, so we call Open here to
   // make sure it opens thread safe too. The singleton will return null if the
   // region failed to open.
   Open();
 }
 
-bool GrallocRegion::Open() {
+bool GrallocRegionView::Open() {
   if (is_open_) {
     return true;
   }
@@ -71,7 +71,7 @@ bool GrallocRegion::Open() {
   return true;
 }
 
-int GrallocRegion::AllocateBuffer(size_t size, uint32_t* begin_offset) {
+int GrallocRegionView::AllocateBuffer(size_t size, uint32_t* begin_offset) {
   size = gralloc_align<size_t>(size);
   // Cache the value of buffer_count in shared memory.
   uint32_t buffer_count_local = 0;
@@ -156,8 +156,8 @@ int GrallocRegion::AllocateBuffer(size_t size, uint32_t* begin_offset) {
 // The C++03 standard does not guarantee this singleton implemention to be
 // thread safe, however magic statics are part of the gcc compiler since
 // version 4.3.
-GrallocRegion* GrallocRegion::GetInstance() {
-  static GrallocRegion singleton;
+GrallocRegionView* GrallocRegionView::GetInstance() {
+  static GrallocRegionView singleton;
   if (!singleton.is_open_) {
     return NULL;
   }

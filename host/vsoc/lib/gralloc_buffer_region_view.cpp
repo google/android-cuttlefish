@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-#include "host/vsoc/gralloc/gralloc_buffer_region.h"
+#include "host/vsoc/lib/gralloc_buffer_region_view.h"
+
+#include <mutex>
 #include "glog/logging.h"
 
-using vsoc::gralloc::GrallocBufferRegion;
+using vsoc::gralloc::GrallocBufferRegionView;
 
 // static
-GrallocBufferRegion* GrallocBufferRegion::GetInstance() {
-  // TODO(jemoreira): Get the domain from somewhere
-  static GrallocBufferRegion instance(nullptr);
-  if (!instance.is_open_)
-    return nullptr;
-  return &instance;
+GrallocBufferRegionView* GrallocBufferRegionView::GetInstance(const char* domain) {
+  static std::mutex mutex;
+  static std::map<std::string, GrallocBufferRegionView*> gralloc_regions;
+
+  std::lock_guard<std::mutex> guard(mutex);
+  if (!gralloc_regions.count(domain)) {
+    gralloc_regions[domain] = new GrallocBufferRegionView(domain);
+  }
+  return gralloc_regions[domain];
 }
 
-uint8_t* GrallocBufferRegion::OffsetToBufferPtr(vsoc_reg_off_t offset) {
+uint8_t* GrallocBufferRegionView::OffsetToBufferPtr(vsoc_reg_off_t offset) {
   if (offset <= control_->region_desc().offset_of_region_data ||
       offset >= control_->region_size()) {
     LOG(FATAL)
@@ -39,6 +44,6 @@ uint8_t* GrallocBufferRegion::OffsetToBufferPtr(vsoc_reg_off_t offset) {
   return region_offset_to_pointer<uint8_t>(offset);
 }
 
-GrallocBufferRegion::GrallocBufferRegion(char* domain) {
+GrallocBufferRegionView::GrallocBufferRegionView(const char* domain) {
   is_open_ = Open(domain);
 }
