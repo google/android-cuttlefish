@@ -58,18 +58,18 @@ bool vsoc::OpenableRegion::Open(const char* region_name) {
     LOG(FATAL) << "mmap failed (" << region_fd_->StrError() << ")";
     return false;
   }
-#if LATER
-  try_allocate_idx_ = region_offset_to_pointer<std::atomic<uint32_t>>(
-      region_desc_.guest_to_host_signal_table.node_alloc_hint_offset);
-  std::thread signal_receiver(&Region::ProcessIncomingFutexSignals, this,
-                              region_desc_.host_to_guest_signal_table);
-  signal_receiver.detach();
-#endif
   return true;
 }
 
 void vsoc::OpenableRegion::InterruptPeer() {
-  region_fd_->Ioctl(VSOC_MAYBE_SEND_INTERRUPT_TO_HOST, 0);
+  // TOOD: move the atomic exchange from the kernel to save the system
+  // call in cases were we don't want to post an interrupt.
+  // This has the added advantage of lining the code up with
+  // HostRegion::InterruptPeer()
+  if ((region_fd_->Ioctl(VSOC_MAYBE_SEND_INTERRUPT_TO_HOST, 0) == -1) &&
+      (errno != EBUSY)) {
+    LOG(INFO) << __FUNCTION__ << ": ioctl failed (" << strerror(errno) << ")";
+  }
 }
 
 void vsoc::OpenableRegion::InterruptSelf() {

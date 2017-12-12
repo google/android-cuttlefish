@@ -77,6 +77,11 @@ class RegionBase {
   // Returns a pointer to the table that will be used to post signals
   virtual vsoc_signal_table_layout* outgoing_signal_table() = 0;
 
+  virtual bool HasIncomingInterrupt() {
+    return *region_offset_to_pointer<std::atomic<uint32_t>>(
+        incoming_signal_table()->interrupt_signalled_offset);
+  }
+
   // Interrupt our peer, causing it to scan the outgoing_signal_table
   virtual void InterruptPeer() = 0;
 
