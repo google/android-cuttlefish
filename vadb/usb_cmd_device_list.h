@@ -17,7 +17,7 @@
 
 #include <functional>
 #include <vector>
-#include "guest/commands/usbforward/protocol.h"
+#include "common/libs/usbforward/protocol.h"
 #include "host/vadb/usb_cmd.h"
 
 namespace vadb {
