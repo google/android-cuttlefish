@@ -37,7 +37,6 @@ int main(int argc, char* argv[]) {
   CHECK(vhci.Init());
 
   vadb::usbip::Server s(FLAGS_usbip_socket_name, adb.Pool());
-  s.SetClientsAttachedByDefault(true);
   CHECK(s.Init()) << "Could not start server";
   s.Serve();
 }
