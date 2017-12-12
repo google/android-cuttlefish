@@ -22,9 +22,13 @@ case $# in
     exit 2
     ;;
 esac
+
 mkdir -p "${destdir}"
 bsdtar -x -C "${destdir}" -f "${source}"
-unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
+
+/usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
 for i in cache.img cmdline kernel ramdisk.img system.img userdata.img; do
-  sudo chgrp libvirt-qemu "${destdir}/${i}"
+  # Use setfacl so that libvirt does not lose access to this file if user
+  # does anything to this file at any point.
+  sudo setfacl -m g:libvirt-qemu:rw "${destdir}/${i}"
 done
