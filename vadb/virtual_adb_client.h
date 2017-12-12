@@ -34,8 +34,7 @@ namespace vadb {
 // remote USB devices possible with help of USB/IP protocol.
 class VirtualADBClient {
  public:
-  VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd)
-      : pool_(pool), fd_(fd) {}
+  VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd);
 
   virtual ~VirtualADBClient() = default;
 
@@ -71,6 +70,18 @@ class VirtualADBClient {
                                std::vector<uint8_t> data,
                                usbip::Device::AsyncTransferReadyCB callback);
 
+  // Send new heartbeat request and arm the heartbeat timer.
+  bool SendHeartbeat();
+
+  // Heartbeat handler receives response to heartbeat request.
+  // Supplied argument indicates, whether remote server is ready to export USB
+  // gadget.
+  void HandleHeartbeat(bool is_ready);
+
+  // Heartbeat timeout detects situation where heartbeat did not receive
+  // matching response. This could be a direct result of device reset.
+  bool HandleHeartbeatTimeout();
+
   // ExecuteCommand creates command header and executes supplied USBCommand.
   // If execution was successful, command will be stored internally until
   // response arrives.
@@ -78,8 +89,13 @@ class VirtualADBClient {
 
   usbip::DevicePool* pool_;
   avd::SharedFD fd_;
+  avd::SharedFD timer_;
+  bool is_remote_server_ready_ = false;
 
   uint32_t tag_ = 0;
+  // Assign an 'invalid' tag as previously sent heartbeat command. This will
+  // prevent heartbeat timeout handler from finding a command if none was sent.
+  uint32_t heartbeat_tag_ = ~0;
   std::map<uint32_t, std::unique_ptr<USBCommand>> commands_;
 
   VirtualADBClient(const VirtualADBClient& other) = delete;
