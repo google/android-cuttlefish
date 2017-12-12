@@ -23,5 +23,6 @@ cc_library(
         "@gflags_repo//:gflags",
         "@glog_repo//:glog",
     ],
+    visibility = [ "//visibility:public" ]
 )
 
