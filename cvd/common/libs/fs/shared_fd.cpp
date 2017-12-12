@@ -30,7 +30,7 @@
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
 namespace {
-using cvd::SharedFDSet;
+using avd::SharedFDSet;
 
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
@@ -39,13 +39,17 @@ void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   }
 }
 
-void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
+void CheckMarked(fd_set* in_out_mask, fd_set* error_mask,
+    SharedFDSet* in_out_set, SharedFDSet* error_set) {
   if (!in_out_set) {
     return;
   }
   SharedFDSet save;
   save.swap(in_out_set);
   for (SharedFDSet::iterator it = save.begin(); it != save.end(); ++it) {
+    if (error_set && (*it)->IsSet(error_mask)) {
+      error_set->Set(*it);
+    }
     if ((*it)->IsSet(in_out_mask)) {
       in_out_set->Set(*it);
     }
@@ -53,7 +57,7 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
 }
 }  // namespace
 
-namespace cvd {
+namespace avd {
 
 bool FileInstance::CopyFrom(FileInstance& in) {
   AutoFreeBuffer buffer;
@@ -112,10 +116,11 @@ bool FileInstance::IsSet(fd_set* in) const {
 
 #if ENABLE_GCE_SHARED_FD_LOGGING
 void FileInstance::Log(const char* message) {
-  LOG(INFO) << message;
+  static int log_fd = open("/dev/null", O_WRONLY|O_APPEND|O_CREAT, 0666);
+  write(log_fd, message, strlen(message));
 }
 #else
-void FileInstance::Log(const char*) {}
+void FileInstance::Log(const char*) { }
 #endif
 
 void FileInstance::Set(fd_set* dest, int* max_index) const {
@@ -127,6 +132,7 @@ void FileInstance::Set(fd_set* dest, int* max_index) const {
   }
   FD_SET(fd_, dest);
 }
+
 
 int Select(SharedFDSet* read_set, SharedFDSet* write_set,
            SharedFDSet* error_set, struct timeval* timeout) {
@@ -143,21 +149,20 @@ int Select(SharedFDSet* read_set, SharedFDSet* write_set,
   }
   fd_set errorfds;
   FD_ZERO(&errorfds);
-  if (error_set) {
-    MarkAll(*error_set, &errorfds, &max_index);
-  }
-
-  int rval = TEMP_FAILURE_RETRY(
-      select(max_index, &readfds, &writefds, &errorfds, timeout));
+  int rval = TEMP_FAILURE_RETRY(select(
+      max_index, &readfds, &writefds, &errorfds, timeout));
   FileInstance::Log("select\n");
-  CheckMarked(&readfds, read_set);
-  CheckMarked(&writefds, write_set);
-  CheckMarked(&errorfds, error_set);
+  if (error_set) {
+    error_set->Zero();
+  }
+  CheckMarked(&readfds, &errorfds, read_set, error_set);
+  CheckMarked(&writefds, &errorfds, write_set, error_set);
   return rval;
 }
 
-static void MakeAddress(const char* name, bool abstract,
-                        struct sockaddr_un* dest, socklen_t* len) {
+static void MakeAddress(
+    const char* name, bool abstract, struct sockaddr_un* dest,
+    socklen_t* len) {
   memset(dest, 0, sizeof(*dest));
   dest->sun_family = AF_UNIX;
   // sun_path is NOT expected to be nul-terminated.
@@ -190,19 +195,9 @@ SharedFD SharedFD::SocketSeqPacketClient(const char* name) {
   return SocketLocalClient(name, false, SOCK_SEQPACKET);
 }
 
-SharedFD SharedFD::TimerFD(int clock, int flags) {
-  int fd = timerfd_create(clock, flags);
-  if (fd == -1) {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
-SharedFD SharedFD::Accept(const FileInstance& listener, struct sockaddr* addr,
-                          socklen_t* addrlen) {
-  return SharedFD(
-      std::shared_ptr<FileInstance>(listener.Accept(addr, addrlen)));
+SharedFD SharedFD::Accept(const FileInstance& listener,
+                struct sockaddr* addr, socklen_t *addrlen) {
+  return SharedFD(std::shared_ptr<FileInstance>(listener.Accept(addr, addrlen)));
 }
 
 SharedFD SharedFD::Accept(const FileInstance& listener) {
@@ -225,21 +220,14 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   return false;
 }
 
-SharedFD SharedFD::Event(int initval, int flags) {
-  return std::shared_ptr<FileInstance>(
-      new FileInstance(eventfd(initval, flags), errno));
+SharedFD SharedFD::Event() {
+  return std::shared_ptr<FileInstance>(new FileInstance(eventfd(0, 0), errno));
 }
 
-SharedFD SharedFD::Epoll(int flags) {
-  return std::shared_ptr<FileInstance>(
-      new FileInstance(epoll_create1(flags), errno));
-}
-
-inline bool SharedFD::SocketPair(int domain, int type, int protocol,
-                                 SharedFD* fd0, SharedFD* fd1) {
+inline bool SharedFD::SocketPair(int domain, int type, int protocol, SharedFD* fd0, SharedFD* fd1){
   int fds[2];
   int rval = socketpair(domain, type, protocol, fds);
-  if (rval != -1) {
+  if(rval != -1) {
     (*fd0) = std::shared_ptr<FileInstance>(new FileInstance(fds[0], errno));
     (*fd1) = std::shared_ptr<FileInstance>(new FileInstance(fds[1], errno));
     return true;
@@ -265,8 +253,49 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   }
 }
 
-SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
-                                     int in_type) {
+SharedFD SharedFD::SocketInAddrAnyServer(int in_port, int in_type) {
+  errno = 0;
+
+  // TODO(ender): this code is very similar to SocketSeqPacketServer
+  struct sockaddr_in6 addr = {
+    AF_INET6,  // sin6_family
+    htons(in_port),  // sin6_port
+    0,  // sin6_flowinfo
+    in6addr_any,  // sin6_addr
+    0,  // sin6_scope_id
+  };
+
+  SharedFD rval = SharedFD::Socket(PF_INET6, in_type, 0);
+  if (!rval->IsOpen()) {
+    return rval;
+  }
+
+  int n = 1;
+  if (rval->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
+    LOG(ERROR) << "SetSockOpt failed " << rval->StrError();
+    return SharedFD(std::shared_ptr<FileInstance>(
+        new FileInstance(-1, rval->GetErrno())));
+  }
+  if (rval->Bind((struct sockaddr *) &addr, sizeof(addr)) == -1) {
+    LOG(ERROR) << "Bind failed; port=" << in_port << ": " << rval->StrError();
+    return SharedFD(std::shared_ptr<FileInstance>(
+        new FileInstance(-1, rval->GetErrno())));
+  }
+
+  if (in_type == SOCK_STREAM) {
+    // Follows the default from socket_local_server
+    if (rval->Listen(1) == -1) {
+      LOG(ERROR) << "Listen failed: " << rval->StrError();
+      return SharedFD(std::shared_ptr<FileInstance>(
+          new FileInstance(-1, rval->GetErrno())));
+    }
+  }
+
+  return rval;
+}
+
+SharedFD SharedFD::SocketLocalClient(
+    const char* name, bool abstract, int in_type) {
   struct sockaddr_un addr;
   socklen_t addrlen;
   MakeAddress(name, abstract, &addr, &addrlen);
@@ -274,47 +303,16 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect((struct sockaddr*)&addr, addrlen) == -1) {
+  if (rval->Connect((struct sockaddr *) &addr, addrlen) == -1) {
     LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
-    return SharedFD(
-        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
+    return SharedFD(std::shared_ptr<FileInstance>(
+        new FileInstance(-1, rval->GetErrno())));
   }
   return rval;
 }
 
-SharedFD SharedFD::SocketLocalServer(int port, int type) {
-  struct sockaddr_in addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
-  if(!rval->IsOpen()) {
-    return rval;
-  }
-  int n = 1;
-  if (rval->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
-    LOG(ERROR) << "SetSockOpt failed " << rval->StrError();
-    return SharedFD(
-        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
-  }
-  if(rval->Bind((struct sockaddr *) &addr, sizeof(addr)) < 0) {
-    LOG(ERROR) << "Bind failed " << rval->StrError();
-    return SharedFD(
-        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
-  }
-  if (type == SOCK_STREAM) {
-    if (rval->Listen(4) < 0) {
-      LOG(ERROR) << "Listen failed " << rval->StrError();
-      return SharedFD(std::shared_ptr<FileInstance>(
-          new FileInstance(-1, rval->GetErrno())));
-    }
-  }
-  return rval;
-}
-
-SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
-                                     int in_type, mode_t mode) {
+SharedFD SharedFD::SocketLocalServer(
+    const char* name, bool abstract, int in_type, mode_t mode) {
   // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
   // See man 7 unix for more details.
   if (!abstract) (void)unlink(name);
@@ -330,13 +328,13 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
   int n = 1;
   if (rval->SetSockOpt(SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1) {
     LOG(ERROR) << "SetSockOpt failed " << rval->StrError();
-    return SharedFD(
-        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
+    return SharedFD(std::shared_ptr<FileInstance>(
+        new FileInstance(-1, rval->GetErrno())));
   }
-  if (rval->Bind((struct sockaddr*)&addr, addrlen) == -1) {
+  if (rval->Bind((struct sockaddr *) &addr, addrlen) == -1) {
     LOG(ERROR) << "Bind failed; name=" << name << ": " << rval->StrError();
-    return SharedFD(
-        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
+    return SharedFD(std::shared_ptr<FileInstance>(
+        new FileInstance(-1, rval->GetErrno())));
   }
 
   /* Only the bottom bits are really the socket type; there are flags too. */
@@ -361,4 +359,4 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
   return rval;
 }
 
-}  // namespace cvd
+}  // namespace avd
