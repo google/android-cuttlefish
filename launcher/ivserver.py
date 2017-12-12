@@ -90,7 +90,6 @@ class IVServer(object):
     def handle_new_client_connection(self, listenersocket):
         client_socket = channel.handle_new_connection(listenersocket,
                                                       nonblocking=False)
-        print(client_socket)
         self.client_connection = \
             clientconnection.ClientConnection(client_socket,
                                               self.shmobject.posix_shm.fd,
@@ -100,7 +99,6 @@ class IVServer(object):
 
     def handle_new_vm_connection(self, listenersocket):
         vm_socket = channel.handle_new_connection(listenersocket)
-        print(vm_socket)
         self.vm_connection = vmconnection.VMConnection(self.layout_json,
                                                        self.shmobject.posix_shm,
                                                        vm_socket,
@@ -124,8 +122,6 @@ def setup_arg_parser():
                         default='/tmp/ivshmem_socket_client')
     parser.add_argument('-i', '--image_dir', type=str, required=True,
                         help='Path to the directory of image files for the guest')
-    parser.add_argument('-s', '--script_dir', type=str, required=True,
-                        help='Path to a directory of scripts')
     parser.add_argument('-I', '--instance_number', type=unsigned_integer,
                         default=1,
                         help='Instance number for this device')
