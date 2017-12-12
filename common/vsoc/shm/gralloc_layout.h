@@ -19,7 +19,6 @@
 #include "common/vsoc/shm/graphics.h"
 #include "common/vsoc/shm/lock.h"
 #include "common/vsoc/shm/version.h"
-#include "uapi/vsoc_shm.h"
 
 // Memory layout for the gralloc manager region.
 
@@ -30,8 +29,8 @@ namespace gralloc {
 
 struct BufferEntry {
   uint32_t owned_by;
-  vsoc_reg_off_t buffer_begin;
-  vsoc_reg_off_t buffer_end;
+  uint32_t buffer_begin;
+  uint32_t buffer_end;
 
   PixelFormatRegister pixel_format;
   uint32_t stride;

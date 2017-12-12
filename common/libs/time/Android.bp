@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
+cc_library_shared {
     name: "cuttlefish_time",
     srcs: [
         "monotonic_time.cpp",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
 cc_test_host {
@@ -26,8 +26,8 @@ cc_test_host {
     srcs: [
         "monotonic_time_test.cpp",
     ],
-    static_libs: [
+    shared_libs: [
         "cuttlefish_time",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_only"],
 }

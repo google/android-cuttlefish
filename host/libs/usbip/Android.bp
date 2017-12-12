@@ -10,11 +10,13 @@ cc_library_host_static {
     header_libs: [
         "cuttlefish_glog",
     ],
-    static_libs: [
-	"libcuttlefish_fs",
-	"cuttlefish_auto_resources",
-	"libbase",
-	"libgflags",
+    shared_libs: [
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
     ],
-    defaults: ["cuttlefish_host"],
+    static_libs: [
+        "libgflags",
+    ],
+    defaults: ["cuttlefish_host_only"],
 }

@@ -27,8 +27,9 @@ LOCAL_MULTILIB := first
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libcutils \
-    libcuttlefish_auto_resources \
-    libcuttlefish_fs
+    cuttlefish_auto_resources \
+    libcuttlefish_fs \
+    cuttlefish_time
 
 LOCAL_SRC_FILES := \
     audio_hal.cpp \
@@ -46,7 +47,6 @@ LOCAL_C_INCLUDES := \
 LOCAL_STATIC_LIBRARIES := \
     libcutils \
     libcuttlefish_remoter_framework \
-    libcuttlefish_time
     $(VSOC_STLPORT_STATIC_LIBS)
 
 LOCAL_CFLAGS := \

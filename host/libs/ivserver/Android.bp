@@ -10,11 +10,13 @@ cc_library_host_static {
     header_libs: [
         "cuttlefish_glog",
     ],
-    static_libs: [
-        "libjsoncpp",
+    shared_libs: [
         "libbase",
     ],
-    defaults: ["cuttlefish_host"],
+    static_libs: [
+        "libjsoncpp",
+    ],
+    defaults: ["cuttlefish_host_only"],
 }
 
 cc_test_host {
@@ -25,13 +27,15 @@ cc_test_host {
     header_libs: [
         "cuttlefish_glog",
     ],
+    shared_libs: [
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
+    ],
     static_libs: [
         "libivserver",
         "libjsoncpp",
-        "libcuttlefish_fs",
-        "libbase",
         "libgmock",
-        "cuttlefish_auto_resources",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_host_only"],
 }

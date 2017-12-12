@@ -16,6 +16,7 @@
 subdirs = [
     "auto_resources",
     "fs",
+    "net",
     "threads",
     "time",
     "wifi",

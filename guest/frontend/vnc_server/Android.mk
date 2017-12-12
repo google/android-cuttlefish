@@ -62,9 +62,9 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
     libcutils \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
-    libvsoc \
+    vsoc_lib \
     libvsocframebuffer
 
 LOCAL_STATIC_LIBRARIES := \

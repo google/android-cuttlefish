@@ -1,6 +1,5 @@
-cc_library_static {
+cc_library_shared {
     name: "libcuttlefish_wifi",
-    host_supported: true,
 
     srcs: [
         "netlink.cc",
@@ -9,26 +8,13 @@ cc_library_static {
         "virtual_wifi.cc",
         "wr_client.cc",
     ],
-    static_libs: [
+    shared_libs: [
+        "vsoc_lib",
         "libbase",
         "libnl",
-        "vsoc_lib",
     ],
     header_libs: [
-        "cuttlefish_common_headers",
         "cuttlefish_glog",
-        "cuttlefish_kernel_headers",
     ],
-    compile_multilib: "64",
-    target: {
-        linux: {
-            host_ldlibs: ["-lrt"],
-            cflags: ["-DCUTTLEFISH_HOST"],
-        },
-        darwin: {
-            enabled: false,
-        },
-        android_x86: {
-        },
-    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
 }

@@ -18,7 +18,6 @@
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/lock.h"
 #include "common/vsoc/shm/version.h"
-#include "uapi/vsoc_shm.h"
 
 // Memory layout for the hwcomposer and hwcomposer broadcast regions
 
@@ -38,7 +37,7 @@ struct FBBroadcastLayout : public RegionLayout {
   // The frame sequential number
   uint32_t seq_num;
   // The offset in the gralloc buffer region of the current frame buffer.
-  vsoc_reg_off_t frame_offset;
+  uint32_t frame_offset;
   // Protects access to the frame offset and sequential number.
   // See the region implementation for more details.
   SpinLock bcast_lock;

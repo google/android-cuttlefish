@@ -46,10 +46,9 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
     libcutils \
-    libcuttlefish_auto_resources \
+    cuttlefish_auto_resources \
     libcuttlefish_fs \
-    libvsoc \
-    libvsoc_framebuffer \
+    vsoc_lib \
     $(VSOC_STLPORT_LIBS)
 
 # See b/67109557
