@@ -16,4 +16,6 @@
 subdirs = [
     "config",
     "ivserver",
+    "vadb",
+    "usbip",
 ]

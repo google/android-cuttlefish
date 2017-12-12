@@ -1,0 +1,22 @@
+cc_library_host_static {
+    name: "libvadb",
+    srcs: [
+        "usb_cmd_attach.cpp",
+        "usb_cmd_control_transfer.cpp",
+        "usb_cmd_data_transfer.cpp",
+        "usb_cmd_device_list.cpp",
+        "usb_cmd_heartbeat.cpp",
+        "virtual_adb_client.cpp",
+        "virtual_adb_server.cpp",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    static_libs: [
+	"libcuttlefish_fs",
+	"cuttlefish_auto_resources",
+	"libbase",
+	"libgflags",
+    ],
+    defaults: ["cuttlefish_host"],
+}

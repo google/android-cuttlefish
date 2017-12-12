@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "host/vadb/usbip/device_pool.h"
-
 #include <glog/logging.h>
 
+#include "common/libs/usbforward/protocol.h"
+#include "host/libs/vadb/usb_cmd_heartbeat.h"
+
 namespace vadb {
-namespace usbip {
+bool USBCmdHeartbeat::OnRequest(const avd::SharedFD& fd) { return true; }
 
-void DevicePool::AddDevice(BusDevNumber bdn, std::unique_ptr<Device> device) {
-  devices_[bdn] = std::move(device);
+bool USBCmdHeartbeat::OnResponse(bool is_success, const avd::SharedFD& data) {
+  callback_(is_success);
+  return true;
 }
 
-Device* DevicePool::GetDevice(BusDevNumber bus_id) const {
-  auto iter = devices_.find(bus_id);
-  if (iter == devices_.end()) return nullptr;
-  return iter->second.get();
-}
-
-}  // namespace usbip
+USBCmdHeartbeat::USBCmdHeartbeat(USBCmdHeartbeat::HeartbeatResultCB callback)
+    : callback_(callback) {}
 }  // namespace vadb

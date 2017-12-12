@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/vadb/usbip/client.h"
+#include "host/libs/usbip/client.h"
 
 #include <glog/logging.h>
 #include <iostream>
 
-#include "host/vadb/usbip/device.h"
-#include "host/vadb/usbip/messages.h"
+#include "host/libs/usbip/device.h"
+#include "host/libs/usbip/messages.h"
 
 namespace vadb {
 namespace usbip {

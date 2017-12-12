@@ -15,7 +15,7 @@
  */
 #include <glog/logging.h>
 
-#include "host/vadb/usb_cmd_device_list.h"
+#include "host/libs/vadb/usb_cmd_device_list.h"
 
 namespace vadb {
 bool USBCmdDeviceList::OnRequest(const avd::SharedFD& data) {

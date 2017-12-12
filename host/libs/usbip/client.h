@@ -17,8 +17,8 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
-#include "host/vadb/usbip/device_pool.h"
-#include "host/vadb/usbip/messages.h"
+#include "host/libs/usbip/device_pool.h"
+#include "host/libs/usbip/messages.h"
 
 namespace vadb {
 namespace usbip {

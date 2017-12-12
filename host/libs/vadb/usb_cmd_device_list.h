@@ -15,29 +15,28 @@
  */
 #pragma once
 
-#include <memory>
-
-#include <stdint.h>
-
+#include <functional>
+#include <vector>
 #include "common/libs/usbforward/protocol.h"
-#include "host/vadb/usb_cmd.h"
-#include "host/vadb/usbip/device.h"
+#include "host/libs/vadb/usb_cmd.h"
 
 namespace vadb {
-// Execute control transfer.
-class USBCmdControlTransfer : public USBCommand {
+// Request device list from remote host.
+class USBCmdDeviceList : public USBCommand {
  public:
-  USBCmdControlTransfer(uint8_t bus_id, uint8_t dev_id, uint8_t type,
-                        uint8_t request, uint16_t value, uint16_t index,
-                        uint32_t timeout, std::vector<uint8_t> data,
-                        usbip::Device::AsyncTransferReadyCB callback);
+  // DeviceDiscoveredCB is a callback function invoked for every new discovered
+  // device.
+  using DeviceDiscoveredCB =
+      std::function<void(const usb_forward::DeviceInfo&,
+                         const std::vector<usb_forward::InterfaceInfo>&)>;
 
-  ~USBCmdControlTransfer() override = default;
+  USBCmdDeviceList(DeviceDiscoveredCB cb)
+      : on_device_discovered_(std::move(cb)) {}
+
+  ~USBCmdDeviceList() override = default;
 
   // Return usbforward command this instance is executing.
-  usb_forward::Command Command() override {
-    return usb_forward::CmdControlTransfer;
-  }
+  usb_forward::Command Command() override { return usb_forward::CmdDeviceList; }
 
   // Send request body to the server.
   // Return false, if communication failed.
@@ -48,11 +47,8 @@ class USBCmdControlTransfer : public USBCommand {
   bool OnResponse(bool is_success, const avd::SharedFD& data) override;
 
  private:
-  usb_forward::ControlTransfer req_;
-  std::vector<uint8_t> data_;
-  usbip::Device::AsyncTransferReadyCB callback_;
-
-  USBCmdControlTransfer(const USBCmdControlTransfer& other) = delete;
-  USBCmdControlTransfer& operator=(const USBCmdControlTransfer& other) = delete;
+  DeviceDiscoveredCB on_device_discovered_;
+  USBCmdDeviceList(const USBCmdDeviceList& other) = delete;
+  USBCmdDeviceList& operator=(const USBCmdDeviceList& other) = delete;
 };
 }  // namespace vadb

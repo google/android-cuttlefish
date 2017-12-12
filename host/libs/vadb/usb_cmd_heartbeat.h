@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "host/vadb/usb_cmd.h"
+#include "host/libs/vadb/usb_cmd.h"
 
 namespace vadb {
 // Request remote device attach (~open).
