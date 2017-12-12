@@ -3,8 +3,9 @@
 # pylint: disable=too-many-instance-attributes,no-self-use
 
 import logging
-import os
 from xml.etree import ElementTree as ET
+
+import libvirt
 
 class GuestDefinition(object):
     """Guest resource requirements definition.
@@ -424,7 +425,12 @@ class GuestDefinition(object):
         rate.set('bytes', '1234')
         backend = ET.SubElement(rng, 'backend')
         backend.set('model', 'random')
-        backend.text='/dev/random'
+
+        # Libvirt pre 1.3.4 could not use urandom as entropy source.
+        if libvirt.getVersion() > 1003003:
+            backend.text = '/dev/urandom'
+        else:
+            backend.text = '/dev/hwrng'
         return rng
 
 

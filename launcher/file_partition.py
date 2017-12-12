@@ -83,7 +83,7 @@ class FilePartition(object):
         Returns:
             new FilePartition instance.
         """
-        tmpfile = tempfile.NamedTemporaryFile(prefix=filename + '-', suffix='.img', delete=True)
+        tmpfile = tempfile.NamedTemporaryFile(prefix=filename + '-', suffix='.img')
         tmpfile.truncate(size_mb << 20)
         out = FilePartition(tmpfile)
         out._initialize_filesystem()
