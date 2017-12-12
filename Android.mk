@@ -13,5 +13,5 @@
 # limitations under the License.
 ifneq ($(filter vsoc_x86 vsoc_x86_64, $(TARGET_DEVICE)),)
 LOCAL_PATH:= $(call my-dir)
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(shell find $(LOCAL_PATH)/*/ -name "Android.mk")
 endif
