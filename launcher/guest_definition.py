@@ -24,6 +24,7 @@ class GuestDefinition(object):
         self._net_mobile_bridge = None
         self._iv_vectors = None
         self._iv_socket_path = None
+        self._vusb_socket_path = None
         self._part_cache = None
         self._part_data = None
         self._part_ramdisk = None
@@ -199,6 +200,15 @@ class GuestDefinition(object):
         self._iv_socket_path = path
 
 
+    def set_vusb_socket_path(self, path):
+        """Specify path to unix socket managed by VirtualUSB daemon.
+
+        Args:
+            path Path to unix domain socket.
+        """
+        self._vusb_socket_path = path
+
+
     def _configure_vm(self, tree):
         """Create basic guest details.
 
@@ -240,12 +250,17 @@ class GuestDefinition(object):
           stype Source type (currently supported: file, unix),
           spath Source path.
         """
-        elem.set('type', stype)
         src = ET.SubElement(elem, 'source')
         if stype == 'file':
+            elem.set('type', 'file')
             src.set('path', spath)
         elif stype == 'unix':
+            elem.set('type', 'unix')
             src.set('mode', 'bind')
+            src.set('path', spath)
+        elif stype == 'unix-client':
+            elem.set('type', 'unix')
+            src.set('mode', 'connect')
             src.set('path', spath)
 
 
@@ -274,7 +289,7 @@ class GuestDefinition(object):
         return tty
 
 
-    def _build_device_virtio_channel(self, purpose, stype):
+    def _build_device_virtio_channel(self, purpose, stype, path=None):
         """Build fast paravirtualized virtio channel.
 
         More useful information can be found here:
@@ -286,7 +301,9 @@ class GuestDefinition(object):
         """
         self._num_virtio_channels += 1
         index = self._num_virtio_channels
-        path = '/tmp/%s-%d-%s.log' % (self.get_instance_name(), index, purpose)
+        if not path:
+            path = '/tmp/%s-%d-%s.log' % (self.get_instance_name(), index, purpose)
+
         vio = ET.Element('channel')
         self._append_source(vio, stype, path)
         tgt = ET.SubElement(vio, 'target')
@@ -376,7 +393,7 @@ class GuestDefinition(object):
             ET.SubElement(dev, 'emulator').text = self._vmm_path
         dev.append(self._build_device_serial_port(True))
         dev.append(self._build_device_virtio_channel('logcat', 'file'))
-        dev.append(self._build_device_virtio_channel('usb', 'unix'))
+        dev.append(self._build_device_virtio_channel('usb', 'unix-client', self._vusb_socket_path))
         dev.append(self._build_device_disk_node(self._part_ramdisk.name(), 'ramdisk', 'vda'))
         dev.append(self._build_device_disk_node(self._part_system.name(), 'system', 'vdb'))
         dev.append(self._build_device_disk_node(self._part_data.name(), 'data', 'vdc'))

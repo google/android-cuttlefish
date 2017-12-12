@@ -2,6 +2,23 @@ cc_binary(
     name = "vadb",
     srcs = [
         "main.cpp",
+    ],
+    linkopts = [
+        "-ludev",
+    ],
+    deps = [
+        ":vadb_lib",
+        "@cuttlefish//common/libs/fs",
+        "@cuttlefish//guest/usbforward:protocol",
+        "@gflags_repo//:gflags",
+        "@glog_repo//:glog",
+        "//host/vadb/usbip:usbip_lib",
+    ],
+)
+
+cc_library(
+    name = "vadb_lib",
+    srcs = [
         "usb_cmd.h",
         "usb_cmd_attach.cpp",
         "usb_cmd_attach.h",
@@ -16,6 +33,7 @@ cc_binary(
         "virtual_adb_server.cpp",
         "virtual_adb_server.h",
     ],
+    visibility = ["//visibility:public"],
     linkopts = [
         "-ludev",
     ],
@@ -27,3 +45,4 @@ cc_binary(
         "//host/vadb/usbip:usbip_lib",
     ],
 )
+
