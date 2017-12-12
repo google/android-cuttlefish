@@ -18,8 +18,13 @@
 #include <sstream>
 
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 #include "host/vsoc/lib/region_control.h"
 #include "host/libs/config/guest_config.h"
+
+std::string g_default_libvirt_domain{vsoc::GetPerInstanceDefault("cvd-")};
+DEFINE_string(libvirt_domain, g_default_libvirt_domain.c_str(),
+              "Domain name to use with libvirt");
 
 // This class represents libvirt guest configuration.
 // A lot of useful information about the document created here can be found on
@@ -241,7 +246,7 @@ void ConfigureHWRNG(xmlNode* devices, const std::string& entsrc) {
 }  // namespace
 
 std::string GuestConfig::GetInstanceName() const {
-  return concat("android-cuttlefish-", id_);
+  return FLAGS_libvirt_domain;
 }
 
 std::string GuestConfig::Build() const {
@@ -277,7 +282,7 @@ std::string GuestConfig::Build() const {
 
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 
-  ConfigureSerialPort(devices, 0, DeviceSourceType::kFile,
+  ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketServer,
                       vsoc::GetPerInstancePath("console"));
   ConfigureVirtioChannel(devices, 1, "cf-logcat", DeviceSourceType::kFile,
                          vsoc::GetPerInstancePath("logcat"));
