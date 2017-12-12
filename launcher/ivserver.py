@@ -11,6 +11,7 @@ import signal
 import sys
 from .libvirt_client import LibVirtClient
 from .guest_definition import GuestDefinition
+from .file_partition import FilePartition
 
 LOG_FORMAT="%(levelname)1.1s %(asctime)s %(process)d %(filename)s:%(lineno)d] %(message)s"
 
@@ -42,7 +43,11 @@ def setup_arg_parser():
 
 
 def main():
-    logging.basicConfig(format=LOG_FORMAT)
+    stdout_handler = logging.StreamHandler(sys.stderr)
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format=LOG_FORMAT,
+        handlers=[stdout_handler])
     log = logging.getLogger()
 
     try:
@@ -62,13 +67,18 @@ def main():
         guest.set_memory_mb(args.memory)
         guest.set_instance_id(args.instance_number)
         guest.set_cmdline(' '.join(layout_json['guest']['kernel_command_line']))
-        guest.set_kernel(os.path.join(args.image_dir, 'kernel'))
-        guest.set_initrd(os.path.join(args.image_dir, 'gce_ramdisk.img'))
 
-        guest.set_cf_ramdisk_path(os.path.join(args.image_dir, 'ramdisk.img'))
-        guest.set_cf_system_path(os.path.join(args.image_dir, 'system.img'))
-        guest.set_cf_data_path(os.path.join(args.image_dir, 'data.img'))
-        guest.set_cf_cache_path(os.path.join(args.image_dir, 'cache.img'))
+        guest.set_kernel(
+            FilePartition.from_existing_file(os.path.join(args.image_dir, 'kernel')))
+        guest.set_initrd(
+            FilePartition.from_existing_file(os.path.join(args.image_dir, 'gce_ramdisk.img')))
+        guest.set_cf_ramdisk(
+            FilePartition.from_existing_file(os.path.join(args.image_dir, 'ramdisk.img')))
+        guest.set_cf_system_partition(
+            FilePartition.from_existing_file(os.path.join(args.image_dir, 'system.img')))
+        guest.set_cf_data_partition(FilePartition.create_temp('cuttlefish-data', 512))
+        guest.set_cf_cache_partition(FilePartition.create_temp('cache-cache', 512))
+
         guest.set_net_mobile_bridge('abr0')
 
         guest.set_ivshmem_vectors(len(layout_json['vsoc_device_regions']))
