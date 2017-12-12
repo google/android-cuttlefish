@@ -30,30 +30,30 @@
  * Required HAL header.
  */
 camera_module_t HAL_MODULE_INFO_SYM = {
-    common: {
-         tag:                HARDWARE_MODULE_TAG,
+  VSOC_STATIC_INITIALIZER(common) {
+         VSOC_STATIC_INITIALIZER(tag)                HARDWARE_MODULE_TAG,
 #if VSOC_PLATFORM_SDK_AFTER(K)
-         module_api_version: CAMERA_MODULE_API_VERSION_2_3,
+         VSOC_STATIC_INITIALIZER(module_api_version) CAMERA_MODULE_API_VERSION_2_3,
 #elif VSOC_PLATFORM_SDK_AFTER(J_MR2)
-         module_api_version: CAMERA_MODULE_API_VERSION_2_2,
+         VSOC_STATIC_INITIALIZER(module_api_version) CAMERA_MODULE_API_VERSION_2_2,
 #else
-         module_api_version: CAMERA_MODULE_API_VERSION_2_0,
+         VSOC_STATIC_INITIALIZER(module_api_version) CAMERA_MODULE_API_VERSION_2_0,
 #endif
-         hal_api_version:    HARDWARE_HAL_API_VERSION,
-         id:                 CAMERA_HARDWARE_MODULE_ID,
-         name:               "Emulated Camera Module",
-         author:             "The Android Open Source Project",
-         methods:            &android::EmulatedCameraFactory::mCameraModuleMethods,
-         dso:                NULL,
-         reserved:           {0},
+         VSOC_STATIC_INITIALIZER(hal_api_version)    HARDWARE_HAL_API_VERSION,
+         VSOC_STATIC_INITIALIZER(id)                 CAMERA_HARDWARE_MODULE_ID,
+         VSOC_STATIC_INITIALIZER(name)               "Emulated Camera Module",
+         VSOC_STATIC_INITIALIZER(author)             "The Android Open Source Project",
+         VSOC_STATIC_INITIALIZER(methods)            &android::EmulatedCameraFactory::mCameraModuleMethods,
+         VSOC_STATIC_INITIALIZER(dso)                NULL,
+         VSOC_STATIC_INITIALIZER(reserved)           {0},
     },
-    get_number_of_cameras:  android::EmulatedCameraFactory::get_number_of_cameras,
-    get_camera_info:        android::EmulatedCameraFactory::get_camera_info,
+    VSOC_STATIC_INITIALIZER(get_number_of_cameras)  android::EmulatedCameraFactory::get_number_of_cameras,
+    VSOC_STATIC_INITIALIZER(get_camera_info)        android::EmulatedCameraFactory::get_camera_info,
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-    set_callbacks:          android::EmulatedCameraFactory::set_callbacks,
-    get_vendor_tag_ops:     android::EmulatedCameraFactory::get_vendor_tag_ops,
+    VSOC_STATIC_INITIALIZER(set_callbacks)          android::EmulatedCameraFactory::set_callbacks,
+    VSOC_STATIC_INITIALIZER(get_vendor_tag_ops)     android::EmulatedCameraFactory::get_vendor_tag_ops,
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(K)
-    open_legacy:            android::EmulatedCameraFactory::open_legacy
+    VSOC_STATIC_INITIALIZER(open_legacy)            android::EmulatedCameraFactory::open_legacy
 #endif
 };

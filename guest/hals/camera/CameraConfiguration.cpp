@@ -99,12 +99,12 @@ const char* const kCameraDefinitionResolutionHeightKey = "height";
 // Convert string value to camera orientation.
 bool ValueToCameraOrientation(
     const std::string& value,
-    personality::Camera::Orientation* orientation) {
+    CameraDefinition::Orientation* orientation) {
   if (value == "back") {
-    *orientation = personality::Camera::kBack;
+    *orientation = CameraDefinition::kBack;
     return true;
   } else if (value == "front") {
-    *orientation = personality::Camera::kFront;
+    *orientation = CameraDefinition::kFront;
     return true;
   }
   ALOGE("%s: Invalid camera orientation: %s.",
@@ -115,7 +115,7 @@ bool ValueToCameraOrientation(
 // Convert string value to camera HAL version.
 bool ValueToCameraHalVersion(
     const std::string& value,
-    personality::Camera::HalVersion* hal_version) {
+    CameraDefinition::HalVersion* hal_version) {
   int temp;
   char* endptr;
 
@@ -128,15 +128,15 @@ bool ValueToCameraHalVersion(
 
   switch (temp) {
     case 1:
-      *hal_version = personality::Camera::kHalV1;
+      *hal_version = CameraDefinition::kHalV1;
       break;
 
     case 2:
-      *hal_version = personality::Camera::kHalV2;
+      *hal_version = CameraDefinition::kHalV2;
       break;
 
     case 3:
-      *hal_version = personality::Camera::kHalV3;
+      *hal_version = CameraDefinition::kHalV3;
       break;
 
     default:
@@ -150,7 +150,7 @@ bool ValueToCameraHalVersion(
 
 bool ValueToCameraResolution(
     const std::string& width, const std::string& height,
-    personality::Camera::Resolution* resolution) {
+    CameraDefinition::Resolution* resolution) {
   char* endptr;
 
   resolution->width = strtol(width.c_str(), &endptr, 10);
@@ -190,7 +190,7 @@ bool ValueToCameraResolution(
 // Returns true, if definitions were sane.
 bool ConfigureCameras(
     const Json::Value& value,
-    std::vector<personality::Camera>* cameras) {
+    std::vector<CameraDefinition>* cameras) {
   if (!value.isObject()) {
     ALOGE("%s: Configuration root is not an object", __FUNCTION__);
     return false;
@@ -200,8 +200,8 @@ bool ConfigureCameras(
   for (Json::ValueConstIterator iter = value[kCameraDefinitionsKey].begin();
        iter != value[kCameraDefinitionsKey].end();
        ++iter) {
-    cameras->push_back(personality::Camera());
-    personality::Camera& camera = cameras->back();
+    cameras->push_back(CameraDefinition());
+    CameraDefinition& camera = cameras->back();
 
     if (!iter->isObject()) {
       ALOGE("%s: Camera definition is not an object", __FUNCTION__);
@@ -265,8 +265,8 @@ bool ConfigureCameras(
         return false;
       }
 
-      camera.resolutions.push_back(personality::Camera::Resolution());
-      personality::Camera::Resolution& resolution = camera.resolutions.back();
+      camera.resolutions.push_back(CameraDefinition::Resolution());
+      CameraDefinition::Resolution& resolution = camera.resolutions.back();
 
       if (!ValueToCameraResolution(
           (*json_res_iter)[kCameraDefinitionResolutionWidthKey].asString(),
@@ -283,17 +283,17 @@ bool CameraConfiguration::Init() {
   cameras_.clear();
   std::string config;
   if (!android::base::ReadFileToString(
-      kConfigurationFileLocation, &personality)) {
+      kConfigurationFileLocation, &config)) {
     ALOGE("%s: Could not open configuration file: %s",
-          __FUNCTION__, path.c_str());
+          __FUNCTION__, kConfigurationFileLocation);
     return false;
   }
 
-  Json::Reader personality_reader;
+  Json::Reader config_reader;
   Json::Value root;
-  if (!personality_reader.parse(config, root)) {
-    ALOGE("Could not parse configuration file: %s", __FUNCTION__,
-          personality_reader.getFormattedErrorMessages().c_str());
+  if (!config_reader.parse(config, root)) {
+    ALOGE("Could not parse configuration file: %s",
+          config_reader.getFormattedErrorMessages().c_str());
     return false;
   }
 

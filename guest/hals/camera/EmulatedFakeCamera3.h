@@ -58,7 +58,7 @@ public:
 
 public:
 
-    virtual status_t Initialize(const avd::personality::Camera& params);
+    virtual status_t Initialize(const avd::CameraDefinition& params);
 
     /****************************************************************************
      * Camera module API and generic hardware device API implementation
@@ -106,7 +106,7 @@ private:
     /**
      * Build the static info metadata buffer for this device
      */
-    status_t constructStaticInfo(const avd::personality::Camera& params);
+    status_t constructStaticInfo(const avd::CameraDefinition& params);
 
     /**
      * Run the fake 3A algorithms as needed. May override/modify settings

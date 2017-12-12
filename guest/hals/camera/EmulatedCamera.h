@@ -72,7 +72,7 @@ public:
 
 public:
     /** Override of base class method */
-    virtual status_t Initialize(const avd::personality::Camera& properties);
+    virtual status_t Initialize(const avd::CameraDefinition& properties);
 
     /* Next frame is available in the camera device.
      * This is a notification callback that is invoked by the camera device when

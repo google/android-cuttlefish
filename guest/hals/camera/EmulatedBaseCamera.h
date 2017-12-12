@@ -53,7 +53,7 @@ class EmulatedBaseCamera {
      * Return:
      *  NO_ERROR on success, or an appropriate error status on failure.
      */
-    virtual status_t Initialize(const avd::personality::Camera& params) = 0;
+    virtual status_t Initialize(const avd::CameraDefinition& params) = 0;
 
     /****************************************************************************
      * Camera API implementation
@@ -80,7 +80,7 @@ class EmulatedBaseCamera {
      */
     virtual status_t unplugCamera();
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     virtual camera_device_status_t getHotplugStatus();
 #endif
 

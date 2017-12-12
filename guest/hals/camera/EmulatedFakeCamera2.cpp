@@ -20,7 +20,6 @@
  */
 
 #include <algorithm>
-#include <AutoResources.h>
 #include <cstdint>
 #include <iterator>
 
@@ -28,6 +27,7 @@
 #define LOG_TAG "EmulatedCamera_FakeCamera2"
 #include <utils/Log.h>
 
+#include "common/libs/auto_resources/auto_resources.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 #include "EmulatedFakeCamera2.h"
 #include "EmulatedCameraFactory.h"
@@ -113,7 +113,7 @@ EmulatedFakeCamera2::~EmulatedFakeCamera2() {
  * Public API overrides
  ***************************************************************************/
 
-status_t EmulatedFakeCamera2::Initialize(const avd::personality::Camera& params) {
+status_t EmulatedFakeCamera2::Initialize(const avd::CameraDefinition& params) {
     status_t res;
 
     for (size_t index = 0; index < params.resolutions.size(); ++index) {
@@ -146,7 +146,7 @@ status_t EmulatedFakeCamera2::Initialize(const avd::personality::Camera& params)
               kAvailableRawSizes + arraysize(kAvailableRawSizes),
               std::back_inserter(mAvailableRawSizes));
 
-    if (params.orientation == avd::personality::Camera::kFront) {
+    if (params.orientation == avd::CameraDefinition::kFront) {
       std::copy(kAvailableProcessedSizesFront,
                 kAvailableProcessedSizesFront +
                 arraysize(kAvailableProcessedSizesFront),

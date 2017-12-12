@@ -47,7 +47,7 @@ EmulatedFakeCamera::~EmulatedFakeCamera()
  * Public API overrides
  ***************************************************************************/
 
-status_t EmulatedFakeCamera::Initialize(const avd::personality::Camera& params)
+status_t EmulatedFakeCamera::Initialize(const avd::CameraDefinition& params)
 {
     status_t res = mFakeCameraDevice.Initialize();
     if (res != NO_ERROR) {
