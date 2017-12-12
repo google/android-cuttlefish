@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/commands/wifid/nl_client.h"
+#include "common/libs/wifi/nl_client.h"
 
 #include <glog/logging.h>
 
-namespace avd {
+namespace cvd {
 
 NlClient::NlClient(int nl_type)
     : nl_type_(nl_type),
@@ -92,4 +92,4 @@ void NlClient::SetDefaultHandler(std::function<void(nl_msg*)> cb) {
 
 nl_sock* NlClient::Sock() const { return sock_.get(); }
 
-}  // namespace avd
+}  // namespace cvd

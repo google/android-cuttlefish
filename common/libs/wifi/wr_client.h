@@ -19,48 +19,50 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
 
-#include <netlink/genl/genl.h>
+#include <netlink/msg.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/wifi/cmd.h"
 
 namespace cvd {
 
-class NlClient {
+class WRClient {
  public:
-  NlClient(int nl_type);
-  ~NlClient() = default;
+  WRClient(const std::string& socket_address);
+  ~WRClient() = default;
 
-  // Init this client: set up callback & open socket.
+  // Init this client: open socket to wifi router.
   bool Init();
 
-  // Get netlink socket used for sending and receiving messages.
-  nl_sock* Sock() const;
+  // Get wifirouter socket used for sending and receiving messages.
+  int Sock() const;
 
-  // Send message to netlink. Supplied callback will be invoked when response is
-  // received.
+  // Send message to wifi router.
   void Send(Cmd* msg);
+
+  // Handle incoming responses from wifi router.
+  void HandleResponses();
 
   // Set callback receiving all asynchronous messages and responses that do not
   // have any proper recipient.
-  // This is useful in situations, where netlink sends asynchronous event
-  // notifications, such as new MAC80211 HWSIM frame.
   void SetDefaultHandler(std::function<void(nl_msg*)> cb);
 
  private:
   // Receive & dispatch netlink response.
-  int OnResponse(nl_msg* msg);
 
-  int nl_type_;
-
-  std::unique_ptr<nl_cb, void (*)(nl_cb*)> callback_;
-  std::unique_ptr<nl_sock, void (*)(nl_sock*)> sock_;
+  std::string address_;
+  int socket_ = 0;
   std::mutex in_flight_mutex_;
+  // Do not use 0 as a sequence number. 0 is reserved for asynchronous
+  // notifications.
+  int in_flight_last_seq_ = 1;
   std::map<uint32_t, Cmd*> in_flight_;
   std::function<void(nl_msg*)> default_handler_;
 
-  NlClient(const NlClient&) = delete;
-  NlClient& operator=(const NlClient&) = delete;
+  WRClient(const WRClient&) = delete;
+  WRClient& operator=(const WRClient&) = delete;
 };
 
 }  // namespace cvd
