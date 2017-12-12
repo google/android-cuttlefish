@@ -56,7 +56,7 @@ typedef enum {
 
 static const struct RIL_Env* gce_ril_env;
 
-static const struct timeval TIMEVAL_SIMPOLL = {1,0};
+static const struct timeval TIMEVAL_SIMPOLL = {3,0};
 
 static time_t gce_ril_start_time;
 
@@ -345,19 +345,18 @@ static void set_radio_state(RIL_RadioState new_state) {
 
     old_state = gRadioPowerState;
     gRadioPowerState = new_state;
+    gSimStatus = SIM_NOT_READY;
 
     ALOGV("RIL_RadioState change %d to %d", old_state, new_state);
 
     if (new_state == RADIO_STATE_ON) {
       gce_ril_env->OnUnsolicitedResponse(
           RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
-      gSimStatus = SIM_NOT_READY;
       pollSIMState(NULL);
     } else {
       // Drop connections.
       gDataCalls.clear();
       TearDownNetworkInterface();
-      gSimStatus = SIM_ABSENT;
       pollSIMState(NULL);
     }
 
@@ -1885,30 +1884,27 @@ static void pollSIMState(void *param) {
     case SIM_NETWORK_PERSONALIZATION:
     default:
       ALOGV("SIM Absent or Locked");
-      gce_ril_env->OnUnsolicitedResponse(
-          RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
-      return;
+      break;
 
     case SIM_NOT_READY:
       // Transition directly to READY. Set default network operator.
       if (gRadioPowerState == RADIO_STATE_ON) {
         gSimStatus = SIM_READY;
+        gCurrentNetworkOperator = "310260";
       }
-
-      gCurrentNetworkOperator = "310260";
 
       gce_ril_env->RequestTimedCallback(
           pollSIMState, NULL, &TIMEVAL_SIMPOLL);
-      return;
+      break;
 
     case SIM_READY:
       ALOGV("SIM Ready. Notifying network state changed.");
-      gce_ril_env->OnUnsolicitedResponse(
-          RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
-      gce_ril_env->OnUnsolicitedResponse (
-          RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED, NULL, 0);
-      return;
+      break;
   }
+  gce_ril_env->OnUnsolicitedResponse(
+      RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
+  gce_ril_env->OnUnsolicitedResponse (
+      RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED, NULL, 0);
 }
 
 std::map<SIM_Status, RIL_AppStatus> gRilAppStatus;
