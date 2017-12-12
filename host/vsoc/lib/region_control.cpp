@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/vsoc/lib/region_view.h"
 #include "host/vsoc/lib/region_control.h"
+#include "common/vsoc/lib/region_view.h"
 
 #define LOG_TAG "vsoc: region_host"
 
@@ -26,10 +26,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <iomanip>
 #include <sstream>
 #include <thread>
 #include <vector>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
@@ -37,7 +39,14 @@
 
 using avd::SharedFD;
 
+DEFINE_int32(instance, 1, "Instance number. Must be unique.");
+DEFINE_string(vsoc_run_dir, "/var/run/cvd-",
+              "Path to the directory holding vsoc resources");
+DEFINE_string(vsoc_shm_client_sock, "ivshmem_socket_client",
+              "Name of the VSoC client socket");
+
 namespace {
+
 class HostRegionControl : public vsoc::RegionControl {
  public:
   HostRegionControl(const char* region_name,
@@ -172,12 +181,21 @@ bool HostRegionControl::InitializeRegion() {
 }
 }  // namespace
 
+std::string vsoc::GetShmClientSocketPath() {
+  std::ostringstream stream;
+  stream << FLAGS_vsoc_run_dir << std::setfill('0') << std::setw(2)
+         << FLAGS_instance << "/" << FLAGS_vsoc_shm_client_sock;
+  return stream.str();
+}
+
 std::shared_ptr<vsoc::RegionControl> vsoc::RegionControl::Open(
     const char* region_name, const char* domain) {
   AutoFreeBuffer msg;
+  std::string owned_domain;
 
   if (!domain) {
-    domain = DEFAULT_DOMAIN;
+    owned_domain = GetShmClientSocketPath();
+    domain = owned_domain.c_str();
   }
   SharedFD region_server =
       SharedFD::SocketLocalClient(domain, false, SOCK_STREAM);

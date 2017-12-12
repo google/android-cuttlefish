@@ -24,11 +24,7 @@ namespace ivserver {
 const uint16_t kIVServerMajorVersion = 1;
 const uint16_t kIVServerMinorVersion = 0;
 const uint32_t kIVServerDefaultShmSizeInMiB = 4;
-const std::string kIVServerDefaultShmFile = "ivshmem";
 const std::string kIVServerDefaultLayoutFile = "vsoc_mem.json";
-const std::string kIVServerDefaultQemuSocketPath = "/tmp/ivshmem_socket";
-const std::string kIVServerDefaultClientSocketPath =
-    "/tmp/ivshmem_client_socket";
 
 //
 // structure that contains the various options to start the server.
