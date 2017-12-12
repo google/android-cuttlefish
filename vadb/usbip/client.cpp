@@ -294,11 +294,18 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
   std::vector<uint8_t> payload_out;
   int payload_length = req.transfer_buffer_length;
 
+  bool is_host_to_device = cmd.direction == kUsbIpDirectionOut;
+  // Control requests are quite easy to detect; if setup is all '0's, then we're
+  // doing a data transfer, otherwise it's a control transfer.
+  // We only check for cmd and type fields here, as combination 0/0 of these
+  // fields is already invalid (cmd == GET_STATUS, type = WRITE).
+  bool is_control_request = !(req.setup.cmd == 0 && req.setup.type == 0);
+
   // Find requested device and execute command.
   auto device = pool_.GetDevice({cmd.bus_num, cmd.dev_num});
   if (device) {
-    // Read DATA_IN, if specified.
-    if (cmd.direction == kUsbIpDirectionOut && payload_length) {
+    // Read data to be sent to device, if specified.
+    if (is_host_to_device && payload_length) {
       LOG(INFO) << "Reading payload (" << payload_length << " bytes).";
       payload_in.resize(payload_length);
       auto read = fd_->Recv(payload_in.data(), payload_in.size(), MSG_NOSIGNAL);
@@ -310,18 +317,20 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
       }
     }
 
-    // Indicate execution result. Status is 0 when everything is OK.
-    rep.status = !device->handle_request(req.setup, payload_in, &payload_out);
-
-    // Trim / expand output payload length. Client will expect this number of
-    // bytes and may just freeze trying to read what it just requested.
-    if (cmd.direction == kUsbIpDirectionIn) {
-      // Erase output payload buffer if status is not OK.
-      payload_out.resize(rep.status ? 0 : payload_length);
+    // If setup structure of request is initialized then we need to execute
+    // control transfer. Otherwise, this is a plain data exchange.
+    if (is_control_request) {
+      rep.status =
+          !device->handle_control_transfer(req.setup, payload_in, &payload_out);
+    } else {
+      rep.status = !device->handle_data_transfer(
+          cmd.endpoint, is_host_to_device, req.deadline_interval,
+          payload_length, payload_in, &payload_out);
     }
   }
 
-  rep.actual_length = payload_out.size();
+  rep.actual_length =
+      is_host_to_device ? payload_in.size() : payload_out.size();
 
   // Data out.
   if (!SendUSBIPMsg(fd_, rephdr)) {
