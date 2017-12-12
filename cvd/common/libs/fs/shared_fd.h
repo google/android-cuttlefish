@@ -147,7 +147,6 @@ class SharedFD {
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
-  static SharedFD SocketLocalClient(int port, int type);
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
@@ -223,7 +222,6 @@ class FileInstance {
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
   bool CopyFrom(FileInstance& in);
-  bool CopyFrom(FileInstance& in, size_t length);
 
   int UNMANAGED_Dup() {
     errno = 0;
@@ -234,14 +232,16 @@ class FileInstance {
 
   int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
     errno = 0;
-    int rval = TEMP_FAILURE_RETRY(epoll_ctl(fd_, op, new_fd->fd_, event));
+    int rval = TEMP_FAILURE_RETRY(
+        epoll_ctl(fd_, op, new_fd->fd_, event));
     errno_ = errno;
     return rval;
   }
 
   int EpollWait(struct epoll_event* events, int maxevents, int timeout) {
     errno = 0;
-    int rval = TEMP_FAILURE_RETRY(epoll_wait(fd_, events, maxevents, timeout));
+    int rval = TEMP_FAILURE_RETRY(
+        epoll_wait(fd_, events, maxevents, timeout));
     errno_ = errno;
     return rval;
   }
@@ -413,17 +413,10 @@ class FileInstance {
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (size_t i = 0; i < SZ; ++i) {
+    for (int i = 0; i < SZ; ++i) {
       fd_array[i] = fds[i]->fd_;
     }
     return SendMsg(&msg, flags);
-  }
-
-  int Shutdown(int how) {
-    errno = 0;
-    int rval = shutdown(fd_, how);
-    errno_ = errno;
-    return rval;
   }
 
   ssize_t SendTo(const void* buf, size_t len, int flags,
@@ -468,7 +461,7 @@ class FileInstance {
   }
 
   int TimerSet(int flags, const struct itimerspec* new_value,
-               struct itimerspec* old_value) {
+                   struct itimerspec* old_value) {
     errno = 0;
     int rval = timerfd_settime(fd_, flags, new_value, old_value);
     errno_ = errno;

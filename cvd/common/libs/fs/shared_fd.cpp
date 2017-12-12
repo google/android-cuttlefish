@@ -22,7 +22,6 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <algorithm>
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/glog/logging.h"
@@ -72,23 +71,6 @@ bool FileInstance::CopyFrom(FileInstance& in) {
         // The caller will have to log an appropriate message.
         return false;
       }
-    }
-  }
-  return true;
-}
-
-bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
-  AutoFreeBuffer buffer;
-  buffer.Resize(8192);
-  while (length > 0) {
-    ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
-    length -= num_read;
-    if (num_read <= 0) {
-      return false;
-    }
-    if (Write(buffer.data(), num_read) != num_read) {
-      // The caller will have to log an appropriate message.
-      return false;
     }
   }
   return true;
@@ -292,24 +274,8 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
-    return SharedFD(
-        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
-  }
-  return rval;
-}
-
-SharedFD SharedFD::SocketLocalClient(int port, int type) {
-  sockaddr_in addr{};
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
-  if (!rval->IsOpen()) {
-    return rval;
-  }
-  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
-                    sizeof addr) < 0) {
+  if (rval->Connect((struct sockaddr*)&addr, addrlen) == -1) {
+    LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
@@ -332,7 +298,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
-  if(rval->Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+  if(rval->Bind((struct sockaddr *) &addr, sizeof(addr)) < 0) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
@@ -367,7 +333,7 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
-  if (rval->Bind(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
+  if (rval->Bind((struct sockaddr*)&addr, addrlen) == -1) {
     LOG(ERROR) << "Bind failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));

@@ -16,17 +16,16 @@
  * limitations under the License.
  */
 
-#include "common/libs/fs/shared_fd.h"
+#include "host/frontend/vnc_server/vnc_utils.h"
 
 #include <unistd.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
-#include <vector>
 
 namespace cvd {
-using Message = std::vector<std::uint8_t>;
+namespace vnc {
 
 class ServerSocket;
 
@@ -41,15 +40,10 @@ class ClientSocket {
     return *this;
   }
 
-  ClientSocket(int port);
-
   ClientSocket(const ClientSocket&) = delete;
   ClientSocket& operator=(const ClientSocket&) = delete;
 
   Message Recv(std::size_t length);
-  // RecvAny will receive whatever is available.
-  // An empty message returned indicates error or close.
-  Message RecvAny(size_t length);
   ssize_t Send(const std::uint8_t* data, std::size_t size);
   ssize_t Send(const Message& message);
 
@@ -58,7 +52,7 @@ class ClientSocket {
     return Send(data, N);
   }
 
-  bool closed() const;
+  bool closed() const { return other_side_closed_; }
 
  private:
   friend ServerSocket;
@@ -66,7 +60,6 @@ class ClientSocket {
 
   cvd::SharedFD fd_;
   bool other_side_closed_{};
-  mutable std::mutex closed_lock_;
   std::mutex send_lock_;
 };
 
@@ -83,4 +76,5 @@ class ServerSocket {
   cvd::SharedFD fd_;
 };
 
+}  // namespace vnc
 }  // namespace cvd
