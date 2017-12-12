@@ -330,7 +330,6 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
     return -ENOMEM;
   }
 
-  // TODO(ghartman): Read metadata here
   int refreshRate = 60;
   dev->vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
