@@ -27,6 +27,7 @@ QemuClient::QemuClient(avd::SharedFD socket) : client_socket_(socket) {}
 // Once the QemuClient object is constructed, invoking the following
 // method will perform the actual handshake with a QEMU instance.
 bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
+  LOG(INFO) << "New QEmu client connected.";
   // 1. The protocol version number, currently zero.  The client should
   //    close the connection on receipt of versions it can't handle.
   int64_t msg = QemuConstants::kIvshMemProtocolVersion;
@@ -85,6 +86,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
     }
   }
 
+  LOG(INFO) << "QEmu handshake completed.";
   return true;
 }
 
