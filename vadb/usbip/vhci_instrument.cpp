@@ -48,6 +48,7 @@ constexpr char kVHCIDevType[] = "vhci_hcd";
 using ControlMsgType = uint8_t;
 constexpr ControlMsgType kControlAttach = 'A';
 constexpr ControlMsgType kControlDetach = 'D';
+constexpr ControlMsgType kControlExit = 'E';
 
 // Port status values deducted from /sys/devices/platform/vhci_hcd/status
 enum {
@@ -63,6 +64,8 @@ VHCIInstrument::VHCIInstrument(const std::string& name)
       name_(name) {}
 
 VHCIInstrument::~VHCIInstrument() {
+  control_write_end_->Write(&kControlExit, sizeof(kControlExit));
+  attach_thread_->join();
   if (sys_fd_ > 0) close(sys_fd_);
 }
 
