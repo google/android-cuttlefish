@@ -35,11 +35,11 @@ namespace vsoc {
  * Accessor class for VSoC regions designed for use from processes on the
  * host. This mainly affects the implementatio of Open.
  *
- * Subclass to use this or use TypedRegion with a suitable Layout.
+ * Subclass to use this or use TypedRegionView with a suitable Layout.
  */
-class OpenableRegion : public RegionBase {
+class OpenableRegionView : public RegionView {
  public:
-  virtual ~OpenableRegion() {}
+  virtual ~OpenableRegionView() {}
 
   // Returns a pointer to the table that will be scanned for signals
   virtual vsoc_signal_table_layout* incoming_signal_table() {
@@ -107,7 +107,7 @@ class OpenableRegion : public RegionBase {
   }
 
  protected:
-  OpenableRegion() {}
+  OpenableRegionView() {}
 
   bool Open(const char* name, const char* domain = nullptr);
 
@@ -124,7 +124,7 @@ class OpenableRegion : public RegionBase {
  * and should have a constant string region name.
  */
 template <typename Layout>
-class TypedRegion : public OpenableRegion {
+class TypedRegionView : public OpenableRegionView {
  public:
   /* Returns a pointer to the region with a type that matches the layout */
   Layout* data() {
@@ -132,10 +132,10 @@ class TypedRegion : public OpenableRegion {
                                      region_desc_.offset_of_region_data);
   }
 
-  TypedRegion() {}
+  TypedRegionView() {}
 
   bool Open(const char* domain = nullptr) {
-    return OpenableRegion::Open(Layout::region_name, domain);
+    return OpenableRegionView::Open(Layout::region_name, domain);
   }
 };
 

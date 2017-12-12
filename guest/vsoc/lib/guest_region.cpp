@@ -39,7 +39,7 @@ std::string device_path_from_name(const char* region_name) {
 
 }
 
-bool vsoc::OpenableRegion::Open(const char* region_name) {
+bool vsoc::OpenableRegionView::Open(const char* region_name) {
   std::string path = device_path_from_name(region_name);
   region_fd_ = SharedFD::Open(path.c_str(), O_RDWR);
   if (!region_fd_->IsOpen()) {
@@ -61,7 +61,7 @@ bool vsoc::OpenableRegion::Open(const char* region_name) {
   return true;
 }
 
-void vsoc::OpenableRegion::InterruptPeer() {
+void vsoc::OpenableRegionView::InterruptPeer() {
   // TOOD: move the atomic exchange from the kernel to save the system
   // call in cases were we don't want to post an interrupt.
   // This has the added advantage of lining the code up with
@@ -72,15 +72,15 @@ void vsoc::OpenableRegion::InterruptPeer() {
   }
 }
 
-void vsoc::OpenableRegion::InterruptSelf() {
+void vsoc::OpenableRegionView::InterruptSelf() {
   region_fd_->Ioctl(VSOC_SELF_INTERRUPT, 0);
 }
 
-void vsoc::OpenableRegion::WaitForInterrupt() {
+void vsoc::OpenableRegionView::WaitForInterrupt() {
   region_fd_->Ioctl(VSOC_WAIT_FOR_INCOMING_INTERRUPT, 0);
 }
 
-int vsoc::OpenableRegion::CreateFdScopedPermission(
+int vsoc::OpenableRegionView::CreateFdScopedPermission(
     const char* managed_region_name,
     uint32_t* owner_ptr,
     uint32_t owned_value,

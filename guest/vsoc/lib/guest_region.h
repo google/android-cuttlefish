@@ -34,11 +34,11 @@ namespace vsoc {
  * Accessor class for VSoC regions designed for use from processes on the
  * host. This mainly affects the implementation of Open.
  *
- * Subclass to use this or use TypedRegion with a suitable Layout.
+ * Subclass to use this or use TypedRegionView with a suitable Layout.
  */
-class OpenableRegion : public RegionBase {
+class OpenableRegionView : public RegionView {
  public:
-  virtual ~OpenableRegion() {}
+  virtual ~OpenableRegionView() {}
 
   // Returns a pointer to the table that will be scanned for signals
   virtual vsoc_signal_table_layout* incoming_signal_table() override {
@@ -55,7 +55,7 @@ class OpenableRegion : public RegionBase {
   virtual void WaitForInterrupt() override;
 
  protected:
-  OpenableRegion() {}
+  OpenableRegionView() {}
   bool Open(const char* region_name);
   int CreateFdScopedPermission(const char* managed_region_name,
                                uint32_t* owner_ptr,
@@ -74,29 +74,29 @@ class OpenableRegion : public RegionBase {
  * and should have a constant string region name.
  */
 template <typename Layout>
-class TypedRegion : public OpenableRegion {
+class TypedRegionView : public OpenableRegionView {
  public:
   /* Returns a pointer to the region with a type that matches the layout */
   Layout* data() {
     return reinterpret_cast<Layout*>(reinterpret_cast<uintptr_t>(region_base_) +
                                      region_desc_.offset_of_region_data);
   }
-  TypedRegion() {}
+  TypedRegionView() {}
 
-  bool Open() { return OpenableRegion::Open(Layout::region_name); }
+  bool Open() { return OpenableRegionView::Open(Layout::region_name); }
 };
 
 /**
  * Adds methods to create file descriptor scoped permissions. Just like
- * TypedRegion it can be directly constructed or subclassed.
+ * TypedRegionView it can be directly constructed or subclassed.
  *
- * The Layout type must (in addition to requirements for TypedRegion) also
+ * The Layout type must (in addition to requirements for TypedRegionView) also
  * provide a nested type for the layout of the managed region.
  */
 template <typename Layout>
-class ManagerRegion : public TypedRegion<Layout> {
+class ManagerRegionView : public TypedRegionView<Layout> {
  public:
-  ManagerRegion() = default;
+  ManagerRegionView() = default;
   /**
    * Creates a fd scoped permission on the managed region.
    *
@@ -115,7 +115,7 @@ class ManagerRegion : public TypedRegion<Layout> {
                                uint32_t owned_val,
                                vsoc_reg_off_t begin_offset,
                                vsoc_reg_off_t end_offset) {
-    return OpenableRegion::CreateFdScopedPermission(
+    return OpenableRegionView::CreateFdScopedPermission(
         Layout::ManagedRegion::region_name,
         owner_ptr,
         owned_val,

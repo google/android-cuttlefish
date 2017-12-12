@@ -13,7 +13,7 @@ const uint32_t UADDR_OFFSET_ROUND_TRIP_FLAG = 1;
 
 using vsoc::layout::Sides;
 
-vsoc::RegionWorker::RegionWorker(RegionBase* region)
+vsoc::RegionWorker::RegionWorker(RegionView* region)
     : region_(region), thread_(&vsoc::RegionWorker::Work, this) {}
 
 void vsoc::RegionWorker::Work() { region_->ProcessSignalsFromPeer(&stopping_); }
@@ -24,13 +24,13 @@ vsoc::RegionWorker::~RegionWorker() {
   thread_.join();
 }
 
-vsoc::RegionBase::~RegionBase() {
+vsoc::RegionView::~RegionView() {
   if (region_base_ && (region_base_ != MAP_FAILED)) {
     munmap(region_base_, region_size());
   }
 }
 
-void vsoc::RegionBase::ProcessSignalsFromPeer(volatile bool* stopping) {
+void vsoc::RegionView::ProcessSignalsFromPeer(volatile bool* stopping) {
   vsoc_signal_table_layout* table = incoming_signal_table();
   const size_t num_offsets = (1 << table->num_nodes_lg2);
   std::atomic<uint32_t>* offsets =
@@ -56,7 +56,7 @@ void vsoc::RegionBase::ProcessSignalsFromPeer(volatile bool* stopping) {
   }
 }
 
-void vsoc::RegionBase::SendSignal(Sides sides_to_signal, uint32_t* uaddr) {
+void vsoc::RegionView::SendSignal(Sides sides_to_signal, uint32_t* uaddr) {
   if (sides_to_signal.value_ & Sides::Peer) {
     // If we should also be signalling our side set the round trip flag on
     // the futex signal.
@@ -72,7 +72,7 @@ void vsoc::RegionBase::SendSignal(Sides sides_to_signal, uint32_t* uaddr) {
   }
 }
 
-void vsoc::RegionBase::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
+void vsoc::RegionView::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
   vsoc_signal_table_layout* table = outgoing_signal_table();
   std::atomic<uint32_t>* offsets =
       region_offset_to_pointer<std::atomic<uint32_t>>(
@@ -129,10 +129,10 @@ void vsoc::RegionBase::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
   }
 }
 
-std::unique_ptr<vsoc::RegionWorker> vsoc::RegionBase::StartWorker() {
+std::unique_ptr<vsoc::RegionWorker> vsoc::RegionView::StartWorker() {
   return std::unique_ptr<vsoc::RegionWorker>(new vsoc::RegionWorker(this));
 }
 
-void vsoc::RegionBase::WaitForSignal(uint32_t* uaddr, uint32_t expected_value) {
+void vsoc::RegionView::WaitForSignal(uint32_t* uaddr, uint32_t expected_value) {
   syscall(SYS_futex, uaddr, FUTEX_WAIT, expected_value, nullptr, nullptr, 0);
 }

@@ -25,16 +25,16 @@
 #include "common/vsoc/shm/lock.h"
 
 namespace vsoc {
-class RegionBase;
+class RegionView;
 namespace layout {
 
 /**
  * Base classes for all spinlock protected circular queues.
- * This class should be embedded in the per-reion data structure that is used
+ * This class should be embedded in the per-region data structure that is used
  * as the parameter to TypedRegion.
  */
 template <uint32_t SizeLog2>
-class CircularQueueBase {
+class CircularQueueBase : public Base {
   CircularQueueBase() = delete;
   CircularQueueBase(const CircularQueueBase&) = delete;
   CircularQueueBase& operator=(const CircularQueueBase&) = delete;
@@ -68,7 +68,7 @@ class CircularQueueBase {
    * called Lock() before invoking this. The caller must call Unlock()
    * after this returns.
    */
-  void WaitForDataLocked(RegionBase* r);
+  void WaitForDataLocked(RegionView* r);
 
   /**
    * Reserve space in the queue for writing. The caller must have called Lock()
@@ -78,7 +78,7 @@ class CircularQueueBase {
    * On failure a negative errno indicates the problem. -ENOSPC indicates that
    * bytes > the queue size
    */
-  intptr_t WriteReserveLocked(RegionBase* r, size_t bytes, Range* t);
+  intptr_t WriteReserveLocked(RegionView* r, size_t bytes, Range* t);
 
   // Advances when a reader has finished with buffer space
   uint32_t r_released_;
@@ -103,12 +103,12 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
   /**
    * Read at most max_size bytes from the qeueue, placing them in buffer_out
    */
-  intptr_t Read(RegionBase* r, char* buffer_out, std::size_t max_size);
+  intptr_t Read(RegionView* r, char* buffer_out, std::size_t max_size);
   /**
    * Write all of the given bytes into the queue. On success the return value
    * will match bytes. On failure a negative errno is returned.
    */
-  intptr_t Write(RegionBase* r, const char* buffer_in, std::size_t bytes);
+  intptr_t Write(RegionView* r, const char* buffer_in, std::size_t bytes);
 
  protected:
   using Range = typename CircularQueueBase<SizeLog2>::Range;
@@ -129,14 +129,14 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    * If max_size indicates that buffer_out cannot hold the entire packet
    * this function will return -ENOSPC.
    */
-  intptr_t Read(RegionBase* r, char* buffer_out, std::size_t max_size);
+  intptr_t Read(RegionView* r, char* buffer_out, std::size_t max_size);
 
   /**
    * Writes [buffer_in, buffer_in + bytes) to the queue.
    * If the number of bytes to be written exceeds the size of the queue
    * -ENOSPC will be returned.
    */
-  intptr_t Write(RegionBase* r, const char* buffer_in, uint32_t bytes);
+  intptr_t Write(RegionView* r, const char* buffer_in, uint32_t bytes);
 
  protected:
   static_assert(CircularQueueBase<SizeLog2>::BufferSize >= MaxPacketSize,

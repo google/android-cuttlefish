@@ -144,7 +144,7 @@ ASSERT_SHM_COMPATIBLE(PixelFormatRegister, multi_region);
 // Register layout for a mask giving different PixelFormats. Reserve enough
 // space to allow for future expansion. For example, we may well end with
 // a 12 bit per channel format in the future.
-struct PixelFormatMaskRegister {
+struct PixelFormatMaskRegister : public Base {
   volatile uint64_t value_;
 
   bool HasValue(PixelFormat in) {

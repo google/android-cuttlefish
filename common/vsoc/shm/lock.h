@@ -45,7 +45,7 @@ static_assert(sizeof(std::atomic<uint32_t>) == 4, "std::atomic size mismatch");
 
 namespace vsoc {
 
-class RegionBase;
+class RegionView;
 
 namespace layout {
 
@@ -186,8 +186,8 @@ ASSERT_SHM_COMPATIBLE(HostLock, multi_region);
  */
 class GuestAndHostLock : public WaitingLockBase {
  public:
-  void Lock(RegionBase*);
-  void Unlock(RegionBase*);
+  void Lock(RegionView*);
+  void Unlock(RegionView*);
 };
 ASSERT_SHM_COMPATIBLE(GuestAndHostLock, multi_region);
 

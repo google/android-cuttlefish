@@ -26,10 +26,10 @@
 
 #define DEATH_TEST_MESSAGE "abort converted to exit of 2 during death test"
 
-using vsoc::layout::e2e_test::E2EPrimaryTestRegion;
-using vsoc::layout::e2e_test::E2ESecondaryTestRegion;
-using vsoc::layout::e2e_test::E2EManagedTestRegion;
-using vsoc::layout::e2e_test::E2EManagerTestRegion;
+using vsoc::layout::e2e_test::E2EPrimaryTestRegionLayout;
+using vsoc::layout::e2e_test::E2ESecondaryTestRegionLayout;
+using vsoc::layout::e2e_test::E2EManagedTestRegionLayout;
+using vsoc::layout::e2e_test::E2EManagerTestRegionLayout;
 
 static inline void disable_tombstones() {
   // We don't want a tombstone, and we're already in the child, so we modify the
@@ -54,7 +54,7 @@ T* make_nonvolatile(volatile T* in) {
 template <typename Layout>
 class RegionTest {
  public:
-  vsoc::TypedRegion<Layout> region;
+  vsoc::TypedRegionView<Layout> region;
 
   void CheckPeerStrings() {
     ASSERT_TRUE(region.Open());
@@ -119,8 +119,8 @@ class RegionTest {
 // 11. Confirm that no interrupt is pending in the second region
 
 TEST(RegionTest, PeerTests) {
-  RegionTest<E2EPrimaryTestRegion> primary;
-  RegionTest<E2ESecondaryTestRegion> secondary;
+  RegionTest<E2EPrimaryTestRegionLayout> primary;
+  RegionTest<E2ESecondaryTestRegionLayout> secondary;
   ASSERT_TRUE(primary.region.Open());
   ASSERT_TRUE(secondary.region.Open());
   LOG(INFO) << "Regions are open";
@@ -144,14 +144,14 @@ TEST(RegionTest, PeerTests) {
 /**
  * Defines an end-to-end region with a name that should never be configured.
  */
-struct UnfindableRegion : public E2EPrimaryTestRegion {
+struct UnfindableRegionView : public E2EPrimaryTestRegionLayout {
   static const char* region_name;
 };
 
-const char* UnfindableRegion::region_name = "e2e_must_not_exist";
+const char* UnfindableRegionView::region_name = "e2e_must_not_exist";
 
 TEST(RegionTest, MissingRegionDeathTest) {
-  RegionTest<UnfindableRegion> test;
+  RegionTest<UnfindableRegionView> test;
   // EXPECT_DEATH creates a child for the test, so we do it out here.
   // DeathTestGuestRegion will actually do the deadly call after ensuring
   // that we don't create an unwanted tombstone.
@@ -162,7 +162,7 @@ TEST(RegionTest, MissingRegionDeathTest) {
 class ManagedRegionTest {
  public:
   void testManagedRegionFailMap() {
-    vsoc::TypedRegion<E2EManagedTestRegion> managed_region;
+    vsoc::TypedRegionView<E2EManagedTestRegionLayout> managed_region;
     disable_tombstones();
     // managed_region.Open should never return.
     EXPECT_FALSE(managed_region.Open());
@@ -230,7 +230,7 @@ class ManagedRegionTest {
   ManagedRegionTest() {}
 
  private:
-  vsoc::ManagerRegion<E2EManagerTestRegion> manager_region_;
+  vsoc::ManagerRegionView<E2EManagerTestRegionLayout> manager_region_;
 };
 
 TEST(ManagedRegionTest, ManagedRegionFailMap) {
@@ -250,9 +250,9 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    vsoc::TypedRegion<E2EPrimaryTestRegion> region;
+    vsoc::TypedRegionView<E2EPrimaryTestRegionLayout> region;
     region.Open();
-    E2EPrimaryTestRegion* r = region.data();
+    E2EPrimaryTestRegionLayout* r = region.data();
     r->guest_status.set_value(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
     LOG(INFO) << "stage_1_guest_region_e2e_tests PASSED";
   }
