@@ -1,0 +1,206 @@
+//
+// Copyright (C) 2017 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+subdirs = [
+    "common",
+    "guest",
+    "host",
+]
+
+cc_library_headers {
+    name: "cuttlefish_common_headers",
+    vendor: true,
+    export_include_dirs: ["."],
+    host_supported: true,
+}
+
+// TODO(b/67435044) Update the include paths and remove this
+cc_library_headers {
+    name: "cuttlefish_glog",
+    vendor: true,
+    export_include_dirs: ["common/libs"],
+    host_supported: true,
+}
+
+cc_defaults {
+    name: "cuttlefish_base",
+    gnu_extensions: false,
+    header_libs: [
+        "cuttlefish_common_headers",
+        "cuttlefish_kernel_headers",
+    ],
+    target: {
+        linux_glibc: {
+            host_ldlibs: ["-lrt"],
+            cflags: ["-DCUTTLEFISH_HOST"],
+        },
+        // We don't need 32 bit host-side builds
+        linux_glibc_x86: {
+            enabled: false,
+        },
+        // We don't need Darwin host-side builds
+        darwin: {
+            enabled: false,
+        },
+    },
+    vendor: true,
+}
+
+// ARM code should not touch the VSoC window on an x86 CPU.
+cc_defaults {
+    name: "cuttlefish_native_isa",
+    target: {
+        android_arm: {
+            enabled: false,
+        },
+        android_arm64: {
+            enabled: false,
+        },
+    },
+}
+
+cc_defaults {
+    name: "cuttlefish_host_only",
+    device_supported: false,
+    host_supported: true,
+    defaults: ["cuttlefish_base"],
+}
+
+cc_defaults {
+    name: "cuttlefish_host_and_guest",
+    host_supported: true,
+    defaults: ["cuttlefish_base"],
+}
+
+cc_library_shared {
+    name: "vsoc_lib",
+    srcs: [
+        "common/vsoc/lib/compat.cpp",
+        "common/vsoc/lib/e2e_test_region_layout.cpp",
+        "common/vsoc/lib/fb_bcast_layout.cpp",
+        "common/vsoc/lib/fb_bcast_region_view.cpp",
+        "common/vsoc/lib/gralloc_layout.cpp",
+        "common/vsoc/lib/lock_common.cpp",
+        "common/vsoc/lib/region_view.cpp",
+        "common/vsoc/lib/wifi_exchange_layout.cpp",
+        "common/vsoc/lib/wifi_exchange_view.cpp",
+    ],
+    header_libs: ["cuttlefish_glog"],
+    shared_libs: [
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
+        "liblog",
+    ],
+    target: {
+        linux_glibc: {
+            srcs: [
+                "host/vsoc/lib/gralloc_buffer_region_view.cpp",
+                "host/vsoc/lib/host_lock.cpp",
+                "host/vsoc/lib/region_control.cpp",
+                "host/vsoc/lib/region_view.cpp",
+            ],
+        },
+        android: {
+            srcs: [
+                "guest/vsoc/lib/gralloc_region_view.cpp",
+                "guest/vsoc/lib/guest_lock.cpp",
+                "guest/vsoc/lib/region_control.cpp",
+                "guest/vsoc/lib/region_view.cpp",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+}
+
+cc_test_host {
+    name: "circqueue_test",
+    srcs: [
+        "common/vsoc/lib/circqueue_test.cpp",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
+
+cc_test {
+    name: "vsoc_fb_bcast_region_view_test",
+    srcs: [
+        "common/vsoc/lib/fb_bcast_region_view_test.cpp",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    target : {
+        linux_glibc_x86_64: {
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libgflags",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+}
+
+cc_test_host {
+    name: "lock_test",
+    srcs: [
+        "common/vsoc/lib/lock_test.cpp",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
+    ],
+    static_libs: [
+        "libgtest_host",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
+
+cc_test_host {
+    name: "vsoc_graphics_test",
+    srcs: [
+        "common/vsoc/lib/graphics_test.cpp",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libbase",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
+
+cc_binary_host {
+    name: "host_region_e2e_test",
+    srcs: [
+        "host/vsoc/lib/host_region_e2e_test.cpp",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgtest_host",
+        "libgflags",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}

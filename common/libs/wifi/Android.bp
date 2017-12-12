@@ -1,0 +1,20 @@
+cc_library_shared {
+    name: "libcuttlefish_wifi",
+
+    srcs: [
+        "netlink.cc",
+        "nl_client.cc",
+        "cmd.cc",
+        "virtual_wifi.cc",
+        "wr_client.cc",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libbase",
+        "libnl",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+}

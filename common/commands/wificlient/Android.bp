@@ -1,0 +1,19 @@
+cc_binary {
+    name: "wificlient",
+    srcs: [
+        "main.cc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_wifi",
+        "liblog",
+        "libnl",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+}
