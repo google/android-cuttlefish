@@ -117,6 +117,12 @@ class Target(object):
         return Target(_SshExecBackend(server))
 
 
+    def execute_no_wait(self, command):
+        """Execute operation that may never return, such as subshell."""
+        LOG.info('Executing: %s', command)
+        self.backend.shell().stdin.write(command)
+
+
     def execute(self, command):
         """Execute supplied command on remote server.
 
