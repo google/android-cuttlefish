@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,35 +21,20 @@
 #include <UniquePtr.h>
 
 namespace avd {
-class GceDevicePersonalityImpl : public GceDevicePersonality {
+class CameraConfiguration {
  public:
-  GceDevicePersonalityImpl(InitialMetadataReader* reader)
+  CameraConfiguration(InitialMetadataReader* reader)
       : reader_(reader) {}
 
-  ~GceDevicePersonalityImpl() {}
+  ~CameraConfiguration() {}
 
-  virtual const std::vector<personality::Camera>& cameras() {
+  const std::vector<personality::Camera>& cameras() const {
     return cameras_;
   }
 
   void Init();
 
  private:
-  // Clear all properties.
-  void Reset();
-
-  // Initialize from supplied JSON object.
-  bool InitFromJsonObject(const std::string& json_object);
-
-  // Initialize from supplied device name.
-  // Will attempt to find configuration for this device in device personalities
-  // path.
-  bool InitFromPersonalityName(const std::string& device_name);
-
-  // Fallback to old settings. If not present, initialize with sane defaults.
-  bool InitFromLegacySettings();
-
-  InitialMetadataReader* reader_;
   std::vector<personality::Camera> cameras_;
 };
 

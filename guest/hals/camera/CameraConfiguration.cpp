@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "GceDevicePersonalityImpl.h"
+#include "CameraConfiguration.h"
 
-#define LOG_TAG "GceDevicePersonality"
+#define LOG_TAG "CameraConfiguration"
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
 #include <cutils/log.h>
 #include <json/json.h>
 #include <json/reader.h>
-#include <GceMetadataAttributes.h>
-#include <GceResourceLocation.h>
 #include <stdlib.h>
 
 namespace avd {
@@ -65,6 +63,10 @@ namespace {
 //   }
 // ]
 //
+
+// Location of the camera configuration files.
+const char* const kConfigurationFileLocation = "/vendor/etc/config/camera.json";
+
 //
 // Array of camera definitions for all cameras available on the device (array).
 // Top Level Key.
@@ -190,7 +192,7 @@ bool ConfigureCameras(
     const Json::Value& value,
     std::vector<personality::Camera>* cameras) {
   if (!value.isObject()) {
-    ALOGE("%s: Personality root is not an object", __FUNCTION__);
+    ALOGE("%s: Configuration root is not an object", __FUNCTION__);
     return false;
   }
 
@@ -275,135 +277,27 @@ bool ConfigureCameras(
 
   return true;
 }
-
-bool ConfigureCameraFromLegacySetting(
-    const std::string& setting,
-    personality::Camera* camera) {
-  std::stringstream prop_reader(setting);
-  std::string hal_version;
-  if (!std::getline(prop_reader, hal_version, ',')) return false;
-  if (!ValueToCameraHalVersion(hal_version, &camera->hal_version)) return false;
-
-  std::string width, height;
-  if (!std::getline(prop_reader, width, ',')) return false;
-  if (!std::getline(prop_reader, height, ',')) return false;
-
-  camera->resolutions.push_back(personality::Camera::Resolution());
-  if (!ValueToCameraResolution(width, height,
-                               &camera->resolutions.back())) return false;
-
-  // Final component: style. Ignore.
-
-  return true;
-}
-
-bool ConfigureCamerasFromLegacySettings(
-    InitialMetadataReader* reader,
-    std::vector<personality::Camera>* cameras) {
-  const char* value = reader->GetValueForKey(
-      GceMetadataAttributes::kFrontCameraConfigKey);
-  if (value) {
-    personality::Camera camera;
-    camera.orientation = personality::Camera::kFront;
-    if (ConfigureCameraFromLegacySetting(value, &camera)) {
-      cameras->push_back(camera);
-    }
-  }
-
-  value = reader->GetValueForKey(
-      GceMetadataAttributes::kBackCameraConfigKey);
-  if (value) {
-    personality::Camera camera;
-    camera.orientation = personality::Camera::kFront;
-    if (ConfigureCameraFromLegacySetting(value, &camera)) {
-      cameras->push_back(camera);
-    }
-  }
-
-  return true;
-}
-
 }  // namespace
 
-void GceDevicePersonalityImpl::Init() {
-  // Try parsing user supplied JSON.
-  Reset();
-  const char* personality = reader_->GetValueForKey(
-      GceMetadataAttributes::kDevicePersonalityDefinitionKey);
-  if (personality && InitFromJsonObject(personality)) {
-    return;
-  }
-
-  // Try parsing file selected by User.
-  Reset();
-  personality = reader_->GetValueForKey(
-      GceMetadataAttributes::kDevicePersonalityNameKey);
-  if (personality && InitFromPersonalityName(personality)) {
-    return;
-  }
-
-  // Fallback: Init from default file.
-  Reset();
-  if (InitFromPersonalityName("default")) {
-    return;
-  }
-
-  ALOGE("%s: Could not initialize device personality from any source.",
-        __FUNCTION__);
-
-  Reset();
-  InitFromLegacySettings();
-}
-
-void GceDevicePersonalityImpl::Reset() {
+bool CameraConfiguration::Init() {
   cameras_.clear();
-}
+  std::string config;
+  if (!android::base::ReadFileToString(
+      kConfigurationFileLocation, &personality)) {
+    ALOGE("%s: Could not open configuration file: %s",
+          __FUNCTION__, path.c_str());
+    return false;
+  }
 
-bool GceDevicePersonalityImpl::InitFromJsonObject(
-    const std::string& json_object) {
   Json::Reader personality_reader;
   Json::Value root;
-  if (!personality_reader.parse(json_object, root)) {
-    ALOGE("%s: Could not parse personality: %s", __FUNCTION__,
+  if (!personality_reader.parse(config, root)) {
+    ALOGE("Could not parse configuration file: %s", __FUNCTION__,
           personality_reader.getFormattedErrorMessages().c_str());
     return false;
   }
 
   return ConfigureCameras(root, &cameras_);
-}
-
-bool GceDevicePersonalityImpl::InitFromPersonalityName(
-    const std::string& personality_name) {
-  std::string path(GceResourceLocation::kDevicePersonalitiesPath);
-  path += "/";
-  path += personality_name;
-  path += ".json";
-
-  std::string personality;
-  if (!android::base::ReadFileToString(path, &personality)) {
-    ALOGE("%s: Could not open personality file: %s",
-          __FUNCTION__, path.c_str());
-    return false;
-  }
-
-  ALOGI("%s: Parsing personality file: %s",
-        __FUNCTION__, personality_name.c_str());
-
-  return InitFromJsonObject(personality);
-}
-
-bool GceDevicePersonalityImpl::InitFromLegacySettings() {
-  return ConfigureCamerasFromLegacySettings(reader_, &cameras_);
-}
-
-GceDevicePersonality* GceDevicePersonality::getInstance(
-    InitialMetadataReader* reader) {
-  static GceDevicePersonalityImpl* instance;
-  if (!instance) {
-    instance = new GceDevicePersonalityImpl(reader);
-    instance->Init();
-  }
-  return instance;
 }
 
 }  // namespace avd

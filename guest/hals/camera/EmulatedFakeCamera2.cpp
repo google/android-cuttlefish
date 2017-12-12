@@ -20,7 +20,6 @@
  */
 
 #include <algorithm>
-#include <api_level_fixes.h>
 #include <AutoResources.h>
 #include <cstdint>
 #include <iterator>
@@ -29,6 +28,7 @@
 #define LOG_TAG "EmulatedCamera_FakeCamera2"
 #include <utils/Log.h>
 
+#include "guest/libs/platform_support/api_level_fixes.h"
 #include "EmulatedFakeCamera2.h"
 #include "EmulatedCameraFactory.h"
 #include "GrallocModule.h"
@@ -44,7 +44,7 @@ const int64_t MSEC = USEC * 1000LL;
 const int64_t SEC = MSEC * 1000LL;
 
 const uint32_t EmulatedFakeCamera2::kAvailableFormats[] = {
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
         HAL_PIXEL_FORMAT_RAW16,
 #endif
         HAL_PIXEL_FORMAT_BLOB,
@@ -426,7 +426,7 @@ int EmulatedFakeCamera2::allocateStream(
     const uint32_t *availableSizes;
     size_t availableSizeCount;
     switch (format) {
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
         case HAL_PIXEL_FORMAT_RAW16:
             availableSizes = &mAvailableRawSizes.front();
             availableSizeCount = mAvailableRawSizes.size();
@@ -460,7 +460,7 @@ int EmulatedFakeCamera2::allocateStream(
     }
 
     switch (format) {
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
         case HAL_PIXEL_FORMAT_RAW16:
             if (mRawStreamCount >= kMaxRawStreamCount) {
                 ALOGE("%s: Cannot allocate another raw stream (%d already allocated)",
@@ -568,7 +568,7 @@ int EmulatedFakeCamera2::releaseStream(uint32_t stream_id) {
     }
 
     switch(mStreams.valueAt(streamIndex).format) {
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
         case HAL_PIXEL_FORMAT_RAW16:
             mRawStreamCount--;
             break;
@@ -1653,7 +1653,7 @@ status_t EmulatedFakeCamera2::ControlThread::processRequest(camera_metadata_t *r
     // disable all 3A
     if (mControlMode == ANDROID_CONTROL_MODE_OFF) {
         mEffectMode =   ANDROID_CONTROL_EFFECT_MODE_OFF;
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
         mSceneMode =    ANDROID_CONTROL_SCENE_MODE_DISABLED;
 #else
         mSceneMode =    ANDROID_CONTROL_SCENE_MODE_UNSUPPORTED;
@@ -1678,7 +1678,7 @@ status_t EmulatedFakeCamera2::ControlThread::processRequest(camera_metadata_t *r
     res = find_camera_metadata_entry(request,
             ANDROID_CONTROL_SCENE_MODE,
             &mode);
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
     mSceneMode = READ_IF_OK(res, mode.data.u8[0],
                              ANDROID_CONTROL_SCENE_MODE_DISABLED);
 #else
@@ -2294,7 +2294,7 @@ status_t EmulatedFakeCamera2::constructStaticInfo(
     // android.control
 
     static const uint8_t availableSceneModes[] = {
-#if GCE_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(K)
             ANDROID_CONTROL_SCENE_MODE_DISABLED
 #else
             ANDROID_CONTROL_SCENE_MODE_UNSUPPORTED

@@ -79,7 +79,7 @@ status_t EmulatedBaseCamera::unplugCamera() {
     return INVALID_OPERATION;
 }
 
-#if GCE_PLATFORM_SDK_AFTER(J_MR2)
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 camera_device_status_t EmulatedBaseCamera::getHotplugStatus() {
     return CAMERA_DEVICE_STATUS_PRESENT;
 }
