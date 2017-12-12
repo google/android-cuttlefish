@@ -21,6 +21,7 @@ subdirs = [
 
 cc_library_headers {
     name: "cuttlefish_common_headers",
+    vendor: true,
     export_include_dirs: ["."],
     host_supported: true,
 }
@@ -28,6 +29,7 @@ cc_library_headers {
 // TODO(b/67435044) Update the include paths and remove this
 cc_library_headers {
     name: "cuttlefish_glog",
+    vendor: true,
     export_include_dirs: ["common/libs"],
     host_supported: true,
 }
@@ -45,7 +47,6 @@ cc_defaults {
             cflags: ["-DCUTTLEFISH_HOST"],
         },
         // We don't need 32 bit host-side builds
-        // TODO(ghartman): linux_glibc on master
         linux_x86: {
             enabled: false,
         },
@@ -104,7 +105,6 @@ cc_library_shared {
         "liblog",
     ],
     target: {
-        //TODO(ghartman): linux_glibc on master
         linux: {
             srcs: [
                 "host/vsoc/lib/gralloc_buffer_region_view.cpp",

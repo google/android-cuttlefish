@@ -108,12 +108,23 @@ include $(CLEAR_VARS)
 jpeg_module_relative_path := hw
 jpeg_cflags := -fno-short-enums
 jpeg_cflags += -Wno-unused-parameter
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -lt 27 ; echo $$?))
+GCE_HWUI_LIB:=libskia
+GCE_HWUI_INCLUDE:=external/skia/include/core
+else ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -eq 27 -a $(PLATFORM_PREVIEW_SDK_VERSION) -eq 0; echo $$?))
+GCE_HWUI_LIB:=libskia
+GCE_HWUI_INCLUDE:=external/skia/include/core
+else
+GCE_HWUI_LIB:=libhwui
+GCE_HWUI_INCLUDE:=
+endif
+
 jpeg_clang_flags += -Wno-c++11-narrowing
 jpeg_shared_libraries := \
     libbase \
     libcutils \
     liblog \
-    libskia \
+    $(GCE_HWUI_LIB) \
     libjpeg \
     libandroid_runtime \
     cuttlefish_auto_resources
@@ -121,7 +132,7 @@ jpeg_static_libraries := libyuv_static
 jpeg_c_includes := \
     device/google/cuttlefish_common \
     external/libyuv/files/include \
-    external/skia/include/core/ \
+    $(GCE_HWUI_INCLUDE) \
     frameworks/base/core/jni/android/graphics \
     frameworks/native/include
 jpeg_src := \
