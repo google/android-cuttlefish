@@ -10,6 +10,8 @@ cc_library(
         "messages.h",
         "server.cpp",
         "server.h",
+        "vhci_instrument.cpp",
+        "vhci_instrument.h",
     ],
     hdrs = [
         "client.h",

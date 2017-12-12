@@ -20,7 +20,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/vadb/usbip/server.h"
-#include "host/vadb/vhci_instrument.h"
 #include "host/vadb/virtual_adb.h"
 
 DEFINE_string(socket, "", "Socket to use to talk to USBForwarder.");
@@ -32,9 +31,6 @@ int main(int argc, char* argv[]) {
 
   vadb::VirtualADB adb(FLAGS_socket);
   CHECK(adb.Init());
-
-  vadb::VHCIInstrument vhci(FLAGS_usbip_socket_name);
-  CHECK(vhci.Init());
 
   vadb::usbip::Server s(FLAGS_usbip_socket_name, adb.Pool());
   CHECK(s.Init()) << "Could not start server";

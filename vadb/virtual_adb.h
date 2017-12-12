@@ -25,7 +25,6 @@
 #include "host/vadb/usbip/device.h"
 #include "host/vadb/usbip/device_pool.h"
 #include "host/vadb/usbip/messages.h"
-#include "host/vadb/vhci_instrument.h"
 
 namespace vadb {
 // VirtualADB is a companion class for USBForwarder, running on Cuttlefish.
