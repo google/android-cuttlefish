@@ -24,13 +24,16 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
-    device/google/cuttlefish_kernel
+    device/google/cuttlefish_kernel \
+    system/core/base/include
 
 LOCAL_EXPORT_C_INCLUDES_DIR := \
     device/google/cuttlefish_common  \
     device/google/cuttlefish_kernel
 
-LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_SHARED_LIBRARIES := \
+    libbase \
+    liblog
 
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)

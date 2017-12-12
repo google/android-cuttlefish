@@ -40,6 +40,20 @@ class OpenableRegion : public RegionBase {
  public:
   virtual ~OpenableRegion() {}
 
+  // Returns a pointer to the table that will be scanned for signals
+  virtual vsoc_signal_table_layout* incoming_signal_table() override {
+    return &region_desc_.host_to_guest_signal_table;
+  }
+
+  // Returns a pointer to the table that will be used to post signals
+  virtual vsoc_signal_table_layout* outgoing_signal_table() override {
+    return &region_desc_.guest_to_host_signal_table;
+  }
+
+  virtual void InterruptPeer() override;
+  virtual void InterruptSelf() override;
+  virtual void WaitForInterrupt() override;
+
  protected:
   OpenableRegion() {}
   bool Open(const char* region_name);
@@ -63,7 +77,6 @@ class TypedRegion : public OpenableRegion {
     return reinterpret_cast<Layout*>(reinterpret_cast<uintptr_t>(region_base_) +
                                      region_desc_.offset_of_region_data);
   }
-
   TypedRegion() {}
 
   bool Open() { return OpenableRegion::Open(Layout::region_name); }

@@ -40,6 +40,34 @@ class OpenableRegion : public RegionBase {
  public:
   virtual ~OpenableRegion() {}
 
+  // Returns a pointer to the table that will be scanned for signals
+  virtual vsoc_signal_table_layout* incoming_signal_table() {
+    return &region_desc_.guest_to_host_signal_table;
+  }
+
+  // Returns a pointer to the table that will be used to post signals
+  virtual vsoc_signal_table_layout* outgoing_signal_table() {
+    return &region_desc_.host_to_guest_signal_table;
+  }
+
+  // Interrupt our peer, causing it to scan the outgoing_signal_table
+  virtual void InterruptPeer() {
+    uint64_t one = 1;
+    outgoing_interrupt_fd_->Write(&one, sizeof(one));
+  }
+
+  // Wake the local signal table scanner. Primarily used during shutdown
+  virtual void InterruptSelf() {
+    uint64_t one = 1;
+    incoming_interrupt_fd_->Write(&one, sizeof(one));
+  }
+
+  // Wait for an interrupt from our peer
+  virtual void WaitForInterrupt() {
+    uint64_t missed{};
+    incoming_interrupt_fd_->Read(&missed, sizeof(missed));
+  }
+
  protected:
   OpenableRegion() {}
 

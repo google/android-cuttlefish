@@ -31,6 +31,30 @@
 
 namespace vsoc {
 namespace layout {
+/**
+ * Memory is shared between Guest and Host kernels. In some cases we need
+ * flag to indicate which side we're on. In those cases we'll use this
+ * simple structure.
+ *
+ * These are carefully formatted to make Guest and Host a bitfield.
+ */
+struct Sides {
+  static const uint32_t NoSides = 0;
+  static const uint32_t Guest = 1;
+  static const uint32_t Host = 2;
+  static const uint32_t Both = 3;
+#ifdef ANDROID
+  static const uint32_t OurSide = Guest;
+  static const uint32_t Peer = Host;
+#else
+  static const uint32_t OurSide = Host;
+  static const uint32_t Peer = Guest;
+#endif
+
+  uint32_t value_;
+};
+ASSERT_SHM_COMPATIBLE(Sides, multi_region);
+
 class Base {
  public:
 };
