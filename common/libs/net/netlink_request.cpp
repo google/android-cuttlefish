@@ -27,105 +27,32 @@
 
 namespace avd {
 namespace {
-// Representation of Network link request. Used to supply kernel with
-// information about which interface needs to be changed, and how.
-class NetlinkRequestImpl : public NetlinkRequest {
- public:
-  NetlinkRequestImpl(int32_t command, int32_t flags);
+uint32_t kRequestSequenceNumber = 0;
+}  // namespace
 
-  virtual void AddString(uint16_t type, const std::string& value) override;
-  virtual void AddInt32(uint16_t type, int32_t value) override;
-  virtual void AddInt8(uint16_t type, int8_t value) override;
-  virtual void AddAddrInfo(int32_t if_index) override;
-  virtual void AddIfInfo(int32_t if_index, bool operational) override;
-  virtual void PushList(uint16_t type) override;
-  virtual void PopList() override;
-  virtual void* RequestData() override;
-  virtual size_t RequestLength() override;
-  virtual uint32_t SeqNo() override {
-    return header_->nlmsg_seq;
-  }
-  virtual void SetSeqNo(uint32_t seq_no) override {
-    header_->nlmsg_seq = seq_no;
+uint32_t NetlinkRequest::SeqNo() const {
+  return header_->nlmsg_seq;
+}
+
+void* NetlinkRequest::AppendRaw(const void* data, size_t length) {
+  void* out = request_.end();
+
+  request_.Append(data, length);
+  int pad = RTA_ALIGN(length) - length;
+  if (pad > 0) {
+    request_.Resize(request_.size() + pad);
   }
 
-  void* AppendRaw(const void* data, size_t length) override {
-    return request_.AppendRaw(data, length);
-  }
+  return out;
+}
 
-  void* ReserveRaw(size_t length) override {
-    return request_.ReserveRaw(length);
-  }
+void* NetlinkRequest::ReserveRaw(size_t length) {
+  void* out = request_.end();
+  request_.Resize(request_.size() + RTA_ALIGN(length));
+  return out;
+}
 
- private:
-  class RequestBuffer {
-   public:
-    RequestBuffer()
-        : current_(0),
-          buffer_length_(512),
-          buffer_(new uint8_t[buffer_length_]) {}
-
-    ~RequestBuffer() {
-      delete[] buffer_;
-    }
-
-    void Resize(size_t new_length) {
-      // Replace old buffer with new one. This is not thread safe (and does not
-      // have to be).
-      new_length = RTA_ALIGN(new_length);
-      uint8_t* new_buffer = new uint8_t[new_length];
-
-      memcpy(new_buffer, buffer_, std::min(new_length, buffer_length_));
-      delete[] buffer_;
-
-      buffer_length_ = new_length;
-      buffer_ = new_buffer;
-    }
-
-    void* ReserveRaw(size_t length) {
-      // reserve new buffer with a bit of extra space, if needed.
-      if (length > (buffer_length_ - current_)) {
-        Resize(buffer_length_ + length + 64);
-      }
-
-      length = RTA_ALIGN(length);
-      uint8_t* out = &buffer_[current_];
-      memset(out, 0, length);
-      current_ += length;
-      return out;
-    }
-
-    void* AppendRaw(const void* data, size_t length) {
-      // reserve new buffer with a bit of extra space, if needed.
-      if (length > (buffer_length_ - current_)) {
-        Resize(buffer_length_ + length + 64);
-      }
-
-      uint8_t* out = &buffer_[current_];
-      memcpy(out, data, length);
-      memset(&out[length], 0, RTA_ALIGN(length) - length);
-      current_ += RTA_ALIGN(length);
-      return out;
-    }
-
-    size_t Length() {
-      return current_;
-    }
-
-   private:
-    size_t   current_;
-    size_t   buffer_length_;
-    uint8_t* buffer_;
-  };
-
-  nlattr* AppendTag(uint16_t type, const void* data, uint16_t length);
-
-  std::vector<std::pair<nlattr*, int32_t> > lists_;
-  RequestBuffer request_;
-  nlmsghdr* header_;
-};
-
-nlattr* NetlinkRequestImpl::AppendTag(
+nlattr* NetlinkRequest::AppendTag(
     uint16_t type, const void* data, uint16_t data_length) {
   nlattr* attr = Reserve<nlattr>();
   attr->nla_type = type;
@@ -134,27 +61,36 @@ nlattr* NetlinkRequestImpl::AppendTag(
   return attr;
 }
 
-NetlinkRequestImpl::NetlinkRequestImpl(
-    int32_t command, int32_t flags)
-    : header_(Reserve<nlmsghdr>()) {
+NetlinkRequest::NetlinkRequest(int32_t command, int32_t flags)
+    : request_(512),
+      header_(Reserve<nlmsghdr>()) {
+  flags |= NLM_F_ACK | NLM_F_REQUEST;
   header_->nlmsg_flags = flags;
   header_->nlmsg_type = command;
   header_->nlmsg_pid = getpid();
+  header_->nlmsg_seq = kRequestSequenceNumber++;
 }
 
-void NetlinkRequestImpl::AddString(uint16_t type, const std::string& value) {
+NetlinkRequest::NetlinkRequest(NetlinkRequest&& other) {
+  using std::swap;
+  swap(lists_, other.lists_);
+  swap(header_, other.header_);
+  request_.Swap(other.request_);
+}
+
+void NetlinkRequest::AddString(uint16_t type, const std::string& value) {
   AppendTag(type, value.c_str(), value.length() + 1);
 }
 
-void NetlinkRequestImpl::AddInt32(uint16_t type, int32_t value) {
+void NetlinkRequest::AddInt32(uint16_t type, int32_t value) {
   AppendTag(type, &value, sizeof(value));
 }
 
-void NetlinkRequestImpl::AddInt8(uint16_t type, int8_t value) {
+void NetlinkRequest::AddInt8(uint16_t type, int8_t value) {
   AppendTag(type, &value, sizeof(value));
 }
 
-void NetlinkRequestImpl::AddIfInfo(int32_t if_index, bool operational) {
+void NetlinkRequest::AddIfInfo(int32_t if_index, bool operational) {
   ifinfomsg* if_info = Reserve<ifinfomsg>();
   if_info->ifi_family = AF_UNSPEC;
   if_info->ifi_index = if_index;
@@ -162,7 +98,7 @@ void NetlinkRequestImpl::AddIfInfo(int32_t if_index, bool operational) {
   if_info->ifi_change = IFF_UP;
 }
 
-void NetlinkRequestImpl::AddAddrInfo(int32_t if_index) {
+void NetlinkRequest::AddAddrInfo(int32_t if_index) {
   ifaddrmsg* ad_info = Reserve<ifaddrmsg>();
   ad_info->ifa_family = AF_INET;
   ad_info->ifa_prefixlen = 24;
@@ -171,13 +107,13 @@ void NetlinkRequestImpl::AddAddrInfo(int32_t if_index) {
   ad_info->ifa_index = if_index;
 }
 
-void NetlinkRequestImpl::PushList(uint16_t type) {
-  int length = request_.Length();
+void NetlinkRequest::PushList(uint16_t type) {
+  int length = request_.size();
   nlattr* list = AppendTag(type, NULL, 0);
   lists_.push_back(std::make_pair(list, length));
 }
 
-void NetlinkRequestImpl::PopList() {
+void NetlinkRequest::PopList() {
   if (lists_.empty()) {
     LOG(ERROR) << "List pop with no lists left on stack.";
     return;
@@ -185,27 +121,17 @@ void NetlinkRequestImpl::PopList() {
 
   std::pair<nlattr*, int> list = lists_.back();
   lists_.pop_back();
-  list.first->nla_len = request_.Length() - list.second;
+  list.first->nla_len = request_.size() - list.second;
 }
 
-void* NetlinkRequestImpl::RequestData() {
+void* NetlinkRequest::RequestData() const {
   // Update request length before reporting raw data.
-  header_->nlmsg_len = request_.Length();
+  header_->nlmsg_len = request_.size();
   return header_;
 }
 
-size_t NetlinkRequestImpl::RequestLength() {
-  return request_.Length();
-}
-}  // namespace
-
-std::unique_ptr<NetlinkRequest> NetlinkRequest::New(
-    int type, int flags) {
-  // Ensure we receive response.
-  flags |= NLM_F_ACK | NLM_F_REQUEST;
-
-  return std::unique_ptr<NetlinkRequest>(new NetlinkRequestImpl(
-      type, flags));
+size_t NetlinkRequest::RequestLength() const {
+  return request_.size();
 }
 
 }  // namespace avd

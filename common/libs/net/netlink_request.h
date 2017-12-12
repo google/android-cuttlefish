@@ -16,9 +16,14 @@
 #ifndef COMMON_LIBS_NET_NETLINK_REQUEST_H_
 #define COMMON_LIBS_NET_NETLINK_REQUEST_H_
 
+#include <linux/netlink.h>
 #include <stddef.h>
+
 #include <memory>
 #include <string>
+#include <vector>
+
+#include "common/libs/auto_resources/auto_resources.h"
 
 namespace avd {
 // Abstraction of Network link request.
@@ -26,59 +31,61 @@ namespace avd {
 // changed, and how.
 class NetlinkRequest {
  public:
-  NetlinkRequest() {}
-  virtual ~NetlinkRequest() {}
+  // Create new Netlink Request structure.
+  // Parameter |type| specifies netlink request type (eg. RTM_NEWLINK), while
+  // |flags| are netlink and request specific flags (eg. NLM_F_DUMP).
+  NetlinkRequest(int type, int flags);
+  NetlinkRequest(NetlinkRequest&& other);
+
+  ~NetlinkRequest() = default;
 
   // Add an IFLA tag followed by a string.
   // Returns true, if successful.
-  virtual void AddString(uint16_t type, const std::string& value) = 0;
+  void AddString(uint16_t type, const std::string& value);
 
   // Add an IFLA tag followed by int32.
   // Returns true, if successful.
-  virtual void AddInt32(uint16_t type, int32_t value) = 0;
+  void AddInt32(uint16_t type, int32_t value);
 
   // Add an IFLA tag followed by int8.
   // Returns true, if successful.
-  virtual void AddInt8(uint16_t type, int8_t value) = 0;
+  void AddInt8(uint16_t type, int8_t value);
 
   // Add an interface info structure.
   // Parameter |if_index| specifies particular interface index to which the
   // attributes following the IfInfo apply.
-  virtual void AddIfInfo(int32_t if_index, bool is_operational) = 0;
+  void AddIfInfo(int32_t if_index, bool is_operational);
 
   // Add an address info to a specific interface.
   // This method assumes the prefix length for address info is 24.
-  virtual void AddAddrInfo(int32_t if_index) = 0;
+  void AddAddrInfo(int32_t if_index);
 
   // Creates new list.
   // List mimmic recursive structures in a flat, contiuous representation.
   // Each call to PushList() should have a corresponding call to PopList
   // indicating end of sub-attribute list.
-  virtual void PushList(uint16_t type) = 0;
+  void PushList(uint16_t type);
 
   // Indicates end of previously declared list.
-  virtual void PopList() = 0;
+  void PopList();
 
   // Request data.
-  virtual void* RequestData() = 0;
+  void* RequestData() const;
 
   // Request length.
-  virtual size_t RequestLength() = 0;
-
-  // Set Sequence Number.
-  virtual void SetSeqNo(uint32_t seq_no) = 0;
+  size_t RequestLength() const;
 
   // Request Sequence Number.
-  virtual uint32_t SeqNo() = 0;
+  uint32_t SeqNo() const;
 
   // Append raw data to buffer.
   // data must not be null.
   // Returns pointer to copied location.
-  virtual void* AppendRaw(const void* data, size_t length) = 0;
+  void* AppendRaw(const void* data, size_t length);
 
   // Reserve |length| number of bytes in the buffer.
   // Returns pointer to reserved location.
-  virtual void* ReserveRaw(size_t length) = 0;
+  void* ReserveRaw(size_t length);
 
   // Append specialized data.
   template <typename T> T* Append(const T& data) {
@@ -90,14 +97,15 @@ class NetlinkRequest {
     return static_cast<T*>(ReserveRaw(sizeof(T)));
   }
 
-  // Create new Netlink Request structure.
-  // Parameter |type| specifies netlink request type (eg. RTM_NEWLINK), while
-  // |flags| are netlink and request specific flags (eg. NLM_F_DUMP).
-  static std::unique_ptr<NetlinkRequest> New(int type, int flags);
-
  private:
-  NetlinkRequest(const NetlinkRequest&);
-  NetlinkRequest& operator= (const NetlinkRequest&);
+  nlattr* AppendTag(uint16_t type, const void* data, uint16_t length);
+
+  std::vector<std::pair<nlattr*, int32_t>> lists_;
+  AutoFreeBuffer request_;
+  nlmsghdr* header_;
+
+  NetlinkRequest(const NetlinkRequest&) = delete;
+  NetlinkRequest& operator= (const NetlinkRequest&) = delete;
 };
 }  // namespace avd
 #endif  // COMMON_LIBS_NET_NETLINK_REQUEST_H_

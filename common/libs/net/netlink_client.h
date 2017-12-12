@@ -30,7 +30,7 @@ class NetlinkClient {
   virtual ~NetlinkClient() {}
 
   // Send netlink message to kernel.
-  virtual bool Send(NetlinkRequest* message) = 0;
+  virtual bool Send(const NetlinkRequest& message) = 0;
 
  private:
   NetlinkClient(const NetlinkClient&);
