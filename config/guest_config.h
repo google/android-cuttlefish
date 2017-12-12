@@ -75,9 +75,15 @@ class GuestConfig {
     return *this;
   }
 
-  // Set Android cache partition image path.
+  // Set Android data partition image path.
   GuestConfig& SetDataPartitionPath(const std::string& path) {
     data_partition_path_ = path;
+    return *this;
+  }
+
+  // Set Android vendor partition image path.
+  GuestConfig& SetVendorPartitionPath(const std::string& path) {
+    vendor_partition_path_ = path;
     return *this;
   }
 
@@ -133,6 +139,7 @@ class GuestConfig {
   std::string system_partition_path_;
   std::string cache_partition_path_;
   std::string data_partition_path_;
+  std::string vendor_partition_path_;
 
   std::string ivshmem_socket_path_;
   int ivshmem_vector_count_;

@@ -276,6 +276,7 @@ std::string GuestConfig::Build() const {
   ConfigureDisk(devices, "vda", system_partition_path_);
   ConfigureDisk(devices, "vdb", data_partition_path_);
   ConfigureDisk(devices, "vdc", cache_partition_path_);
+  ConfigureDisk(devices, "vdd", vendor_partition_path_);
 
   ConfigureNIC(devices, concat("amobile", id_), mobile_bridge_name_, id_, 1);
   ConfigureHWRNG(devices, entropy_source_);
