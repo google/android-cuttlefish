@@ -21,6 +21,7 @@ subdirs = [
 
 cc_library_headers {
     name: "cuttlefish_common_headers",
+    vendor: true,
     export_include_dirs: ["."],
     host_supported: true,
 }
@@ -28,6 +29,7 @@ cc_library_headers {
 // TODO(b/67435044) Update the include paths and remove this
 cc_library_headers {
     name: "cuttlefish_glog",
+    vendor: true,
     export_include_dirs: ["common/libs"],
     host_supported: true,
 }
@@ -40,13 +42,12 @@ cc_defaults {
         "cuttlefish_kernel_headers",
     ],
     target: {
-        linux: {
+        linux_glibc: {
             host_ldlibs: ["-lrt"],
             cflags: ["-DCUTTLEFISH_HOST"],
         },
         // We don't need 32 bit host-side builds
-        // TODO(ghartman): linux_glibc on master
-        linux_x86: {
+        linux_glibc_x86: {
             enabled: false,
         },
         // We don't need Darwin host-side builds
@@ -62,6 +63,9 @@ cc_defaults {
     name: "cuttlefish_native_isa",
     target: {
         android_arm: {
+            enabled: false,
+        },
+        android_arm64: {
             enabled: false,
         },
     },
@@ -101,8 +105,7 @@ cc_library_shared {
         "liblog",
     ],
     target: {
-        //TODO(ghartman): linux_glibc on master
-        linux: {
+        linux_glibc: {
             srcs: [
                 "host/vsoc/lib/gralloc_buffer_region_view.cpp",
                 "host/vsoc/lib/host_lock.cpp",
@@ -144,7 +147,7 @@ cc_test {
         "libbase",
     ],
     target : {
-        linux_x86_64: {
+        linux_glibc_x86_64: {
             static_libs: [
                 "libcuttlefish_host_config",
                 "libgflags",
