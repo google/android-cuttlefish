@@ -92,7 +92,6 @@ DEFINE_string(system_image_dir,
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
-DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
 std::string g_default_uuid{
     GetPerInstanceDefault("699acfc4-c8c4-11e7-882b-5065f31dc1")};
 DEFINE_string(uuid, g_default_uuid.c_str(),
@@ -119,9 +118,10 @@ Json::Value LoadLayoutFile(const std::string& file) {
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
  public:
-  VirtualUSBManager(const std::string& usbsocket)
-      : adb_{usbsocket, FLAGS_usbipsocket},
-        usbip_{FLAGS_usbipsocket, adb_.Pool()} {}
+  VirtualUSBManager(const std::string& usbsocket,
+                    const std::string& android_usbipsocket)
+      : adb_{usbsocket, android_usbipsocket},
+        usbip_{android_usbipsocket, adb_.Pool()} {}
 
   ~VirtualUSBManager() = default;
 
@@ -303,7 +303,8 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Using XML:\n" << xml;
   }
 
-  VirtualUSBManager vadb(cfg.GetUSBV1SocketName());
+  VirtualUSBManager vadb(cfg.GetUSBV1SocketName(),
+                         GetPerInstanceDefault("android_usbip"));
   vadb.Start();
   IVServerManager ivshmem(json_root);
   ivshmem.Start();
