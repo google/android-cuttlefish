@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Manage WIFI state according to Metadata Server reported desired state.
+ * Manage WIFI state.
  */
-public class GceWifiManager extends JobBase implements MetadataClient.OnAttributeUpdateListener {
+public class GceWifiManager extends JobBase {
     private static final String LOG_TAG = "GceWifiManager";
-    /* Metadata attribute controlling WLAN state. */
-    private static final String METADATA_INSTANCE_ATTRIBUTE_WIFI = "cfg_sta_wlan_state";
-    private static final String METADATA_INSTANCE_ATTRIBUTE_WIFI_ENABLED = "ENABLED";
     /* Timeout after which another attempt to re-connect wifi will be made. */
     private static final int WIFI_RECONNECTION_TIMEOUT_S = 3;
     /* Maximum number of retries before giving up and marking WIFI as inoperable. */
@@ -57,27 +54,20 @@ public class GceWifiManager extends JobBase implements MetadataClient.OnAttribut
     private final Context mContext;
     private final WifiManager mWifiManager;
     private final ConnectivityManager mConnManager;
-    private final MetadataClient mMetadataClient;
 
     private ConfigureWifi mConfigureWifiJob = new ConfigureWifi();
     private SetWifiState mSetInitialWifiStateJob = new SetWifiState();
-    private SetWifiState mSetRuntimeWifiStateJob = null;
-
-    private String mInitialWifiState = null;
 
 
     /** Constructor.
     */
-    public GceWifiManager(Context context, JobExecutor executor, MetadataClient client) {
+    public GceWifiManager(Context context, JobExecutor executor) {
         super(LOG_TAG);
 
         mContext = context;
         mWifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
         mConnManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         mJobExecutor = executor;
-        mMetadataClient = client;
-        mMetadataClient.addOnAttributeUpdateListener(
-                METADATA_INSTANCE_ATTRIBUTE_WIFI, this);
     }
 
 
@@ -89,18 +79,10 @@ public class GceWifiManager extends JobBase implements MetadataClient.OnAttribut
     }
 
 
-    private WifiState getWifiStateFromMetadata(String value) {
-        if (value == null) {
-            if (isMobileNetworkAvailable()) {
-                return WifiState.DISABLED;
-            } else {
-                return WifiState.ENABLED;
-            }
-        } else if (value.equals(METADATA_INSTANCE_ATTRIBUTE_WIFI_ENABLED)) {
-            return WifiState.ENABLED;
-        } else {
-            return WifiState.DISABLED;
-        }
+    private WifiState getExpectedWifiState() {
+        // TODO(ender): we will probably want to define this differently once virtual WIFI is
+        // available again.
+        return WifiState.DISABLED;
     }
 
 
@@ -108,15 +90,14 @@ public class GceWifiManager extends JobBase implements MetadataClient.OnAttribut
     */
     @Override
     public synchronized int execute() {
-        // At this point, mInitialWifiState may be null, which is acceptable.
-        WifiState initialState = getWifiStateFromMetadata(mInitialWifiState);
+        WifiState initialState = getExpectedWifiState();
         mSetInitialWifiStateJob.setState(initialState);
 
         // Only configure wifi if expected state is ENABLED.
         // Configuring wifi *requires* wpa_supplicant to be up.
         // This means that in order to configure wifi, we have to enable it first.
         if (initialState == WifiState.ENABLED) {
-            mJobExecutor.schedule(mConfigureWifiJob, mMetadataClient.getMetadataReady());
+            mJobExecutor.schedule(mConfigureWifiJob);
             mJobExecutor.schedule(mSetInitialWifiStateJob, mConfigureWifiJob.getWifiConfigured());
         } else {
             // If initial state is DISABLED, there's no need to wait for Wifi configuration to
@@ -134,37 +115,7 @@ public class GceWifiManager extends JobBase implements MetadataClient.OnAttribut
     }
 
 
-    /* MetadataClient.OnInstanceAttributeUpdateListener Interface method.
-     * Called by MetadataClient when Metadata Server reports value change
-     * for specific key.
-     */
-    @Override
-    public synchronized void onAttributeUpdate(MetadataAttribute attribute) {
-        WifiState runtimeState = getWifiStateFromMetadata(attribute.getValue());
-
-        mInitialWifiState = attribute.getInitialValue();
-
-        if (mSetRuntimeWifiStateJob != null) {
-            mSetRuntimeWifiStateJob.cancel();
-        }
-
-        mSetRuntimeWifiStateJob = new SetWifiState();
-        mSetRuntimeWifiStateJob.setState(runtimeState);
-
-        // In case we never configured WIFI in the first place (initial state == DISABLED)
-        // configure it now.
-        if (!mConfigureWifiJob.getWifiConfigured().isDone())
-            mJobExecutor.schedule(mConfigureWifiJob);
-
-        mJobExecutor.schedule(mSetRuntimeWifiStateJob,
-                mConfigureWifiJob.getWifiConfigured(), mSetInitialWifiStateJob.getWifiReady());
-    }
-
-
     public GceFuture<Boolean> getInitialWifiStateChangeReady() {
-        // NOTE: this variable is initialized at construction time:
-        // a call to addOnAttributeUpdateListener() triggers immediate callback from
-        // MetadataClient with initial & actual MetadataAttribute value.
         return mSetInitialWifiStateJob.getWifiReady();
     }
 
