@@ -21,7 +21,9 @@
 #define s8 int8_t
 #define u8 uint8_t
 #define BIT(x) (1 << (x))
+#ifndef __packed
 #define __packed __attribute__((packed))
+#endif
 
 #include <uapi/mac80211_hwsim.h>
 

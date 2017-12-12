@@ -15,6 +15,7 @@
 //
 cc_binary {
     name: "wifirouter",
+    vendor: true,
     srcs: ["router.cc"],
     static_libs: [
         "libbase",

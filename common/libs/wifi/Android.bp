@@ -14,7 +14,19 @@ cc_library_static {
         "libnl",
     ],
     header_libs: [
+        "cuttlefish_common_headers",
         "cuttlefish_glog",
+        "cuttlefish_kernel_headers",
     ],
-    defaults: ["cuttlefish_host"],
+    target: {
+        linux: {
+            host_ldlibs: ["-lrt"],
+            cflags: ["-DCUTTLEFISH_HOST"],
+        },
+        darwin: {
+            enabled: false,
+        },
+        android_x86: {
+        },
+    },
 }

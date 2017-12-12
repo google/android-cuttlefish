@@ -177,8 +177,10 @@ bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name,
     auto hdr = nlmsg_hdr(r);
     if (hdr->nlmsg_type == NLMSG_ERROR) {
       nlmsgerr* err = static_cast<nlmsgerr*>(nlmsg_data(hdr));
-      LOG_IF(ERROR, err->error < 0) << "Failed to update iface " << iface_index
-                                    << ": " << strerror(-err->error);
+      if (err->error < 0) {
+        LOG(ERROR) << "Failed to update iface " << iface_index
+                   << ": " << strerror(-err->error);
+      }
       return err->error == 0;
     }
   }
@@ -204,8 +206,10 @@ bool RegisterForRouterNotifications(Netlink* nl, uint8_t* mac_addr) {
     auto hdr = nlmsg_hdr(r);
     if (hdr->nlmsg_type == NLMSG_ERROR) {
       nlmsgerr* err = static_cast<nlmsgerr*>(nlmsg_data(hdr));
-      LOG_IF(ERROR, err->error < 0) << "Failed to register with wifi router: "
-                                    << strerror(err->error);
+      if (err->error < 0) {
+        LOG(ERROR) << "Failed to register with wifi router: "
+                   << strerror(err->error);
+      }
       return err->error == 0;
     }
   }
@@ -220,7 +224,9 @@ VirtualWIFI::~VirtualWIFI() {
   LOG(INFO) << "Deleting virtual wifi: " << hwsim_number_;
   if (hwsim_number_ > 0) {
     auto res = DeleteHWSIM(nl_, hwsim_number_);
-    LOG_IF(ERROR, res < 0) << "Could not delete radio: " << strerror(-res);
+    if (res < 0) {
+      LOG(ERROR) << "Could not delete radio: " << strerror(-res);
+    }
     hwsim_number_ = 0;
   }
   LOG(INFO) << "Done.";
