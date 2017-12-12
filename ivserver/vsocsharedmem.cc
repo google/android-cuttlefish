@@ -219,7 +219,7 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 
     // guest to host signal table starts at the beginning of the region.
     // Note that the offset could be different in future versions.
-    device_region.guest_to_host_signal_table.offset_to_signal_table =
+    device_region.guest_to_host_signal_table.futex_uaddr_table_offset =
         allocator.Allocate(
             (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
             sizeof(uint32_t));
@@ -228,7 +228,7 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 
     // host to guest signal table starts immediately after guest to host signal
     // table & its interrupt signal area.
-    device_region.host_to_guest_signal_table.offset_to_signal_table =
+    device_region.host_to_guest_signal_table.futex_uaddr_table_offset =
         allocator.Allocate(
             (1 << device_region.guest_to_host_signal_table.num_nodes_lg2) *
             sizeof(uint32_t));
