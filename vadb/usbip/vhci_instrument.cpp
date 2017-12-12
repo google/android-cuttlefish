@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+#include <string.h>
+
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -199,10 +202,12 @@ bool VHCIInstrument::Attach() {
   std::stringstream result;
   result << port_ << ' ' << sys_fd_ << ' ' << kDefaultDeviceID << ' '
          << kDefaultDeviceSpeed;
-  std::ofstream attach(syspath_ + "/attach");
+  std::string path = syspath_ + "/attach";
+  std::ofstream attach(path);
 
   if (!attach.is_open()) {
-    LOG(WARNING) << "Could not open VHCI attach file.";
+    LOG(WARNING) << "Could not open VHCI attach file " << path << " ("
+                 << strerror(errno) << ")";
     close(sys_fd_);
     sys_fd_ = -1;
     return false;
