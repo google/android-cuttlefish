@@ -36,11 +36,11 @@ class Server final {
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
-  void BeforeSelect(avd::SharedFDSet* fd_read) const;
+  void BeforeSelect(cvd::SharedFDSet* fd_read) const;
 
   // AfterSelect is Called right after Select() to detect and respond to changes
   // on affected SharedFDs.
-  void AfterSelect(const avd::SharedFDSet& fd_read);
+  void AfterSelect(const cvd::SharedFDSet& fd_read);
 
  private:
   // Create USBIP server socket.
@@ -52,7 +52,7 @@ class Server final {
   void HandleIncomingConnection();
 
   std::string name_;
-  avd::SharedFD server_;
+  cvd::SharedFD server_;
   std::list<Client> clients_;
 
   const DevicePool& device_pool_;

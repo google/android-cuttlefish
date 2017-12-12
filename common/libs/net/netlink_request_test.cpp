@@ -28,7 +28,7 @@ using ::testing::ElementsAreArray;
 using ::testing::MatchResultListener;
 using ::testing::Return;
 
-namespace avd {
+namespace cvd {
 namespace {
 extern "C" void klog_write(int /* level */, const char* /* format */, ...) {}
 
@@ -138,7 +138,7 @@ TEST_F(NetlinkClientTest, BasicStringNode) {
 
   memcpy(&expected.text, kLongString, sizeof(kLongString));
 
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.AddString(kDummyTag, kLongString);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -154,7 +154,7 @@ TEST_F(NetlinkClientTest, BasicIntNode) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.AddInt32(kDummyTag, kValue);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -173,7 +173,7 @@ TEST_F(NetlinkClientTest, SingleList) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kListTag);
   request.AddInt32(kDummyTag, kValue);
   request.PopList();
@@ -198,7 +198,7 @@ TEST_F(NetlinkClientTest, NestedList) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
   request.AddInt32(kDummyTag, kValue);
@@ -230,7 +230,7 @@ TEST_F(NetlinkClientTest, ListSequence) {
     const uint32_t attr2_value = kValue2;
   } expected;
 
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.AddInt32(kDummy1Tag, kValue1);
   request.PopList();
@@ -263,7 +263,7 @@ TEST_F(NetlinkClientTest, ComplexList) {
     const uint32_t attr2_value = kValue2;
   } expected;
 
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
   request.AddInt32(kDummy1Tag, kValue1);
@@ -275,7 +275,7 @@ TEST_F(NetlinkClientTest, ComplexList) {
 }
 
 TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
-  avd::NetlinkRequest request(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
+  cvd::NetlinkRequest request(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
   constexpr char kValue[] = "random string";
   request.AddString(0, kValue);  // Have something to work with.
 
@@ -289,7 +289,7 @@ TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
       NLM_F_ACK | NLM_F_CREATE | NLM_F_EXCL | NLM_F_REQUEST,
       base_seq));
 
-  avd::NetlinkRequest request2(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
+  cvd::NetlinkRequest request2(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
   request2.AddString(0, kValue);  // Have something to work with.
   EXPECT_THAT(request2, RequestHeaderIs(
       kMsgLength,
@@ -299,7 +299,7 @@ TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
 }
 
 TEST_F(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
-  avd::NetlinkRequest request(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
   constexpr char kValue[] = "random string";
   request.AddString(0, kValue);  // Have something to work with.
 
@@ -310,10 +310,10 @@ TEST_F(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
   EXPECT_THAT(request, RequestHeaderIs(
       kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, base_seq));
 
-  avd::NetlinkRequest request2(RTM_SETLINK, 0);
+  cvd::NetlinkRequest request2(RTM_SETLINK, 0);
   request2.AddString(0, kValue);  // Have something to work with.
   EXPECT_THAT(request2, RequestHeaderIs(
       kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, base_seq + 1));
 }
 
-}  // namespace avd
+}  // namespace cvd

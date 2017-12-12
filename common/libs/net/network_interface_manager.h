@@ -22,7 +22,7 @@
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/network_interface.h"
 
-namespace avd {
+namespace cvd {
 
 // Network interface manager class.
 // - Provides access for existing network interfaces,
@@ -66,6 +66,6 @@ class NetworkInterfaceManager {
   NetworkInterfaceManager& operator= (const NetworkInterfaceManager&);
 };
 
-}  // namespace avd
+}  // namespace cvd
 
 #endif  // COMMON_LIBS_NET_NETWORK_INTERFACE_MANAGER_H_

@@ -41,11 +41,11 @@ class VirtualADBServer {
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
-  void BeforeSelect(avd::SharedFDSet* fd_read) const;
+  void BeforeSelect(cvd::SharedFDSet* fd_read) const;
 
   // AfterSelect is Called right after Select() to detect and respond to changes
   // on affected SharedFDs.
-  void AfterSelect(const avd::SharedFDSet& fd_read);
+  void AfterSelect(const cvd::SharedFDSet& fd_read);
 
  private:
   void HandleIncomingConnection();
@@ -53,7 +53,7 @@ class VirtualADBServer {
   usbip::DevicePool pool_;
   std::string name_;
   std::string usbip_name_;
-  avd::SharedFD server_;
+  cvd::SharedFD server_;
   std::list<VirtualADBClient> clients_;
 
   VirtualADBServer(const VirtualADBServer&) = delete;

@@ -23,7 +23,7 @@
 
 #include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 // TODO(haining) when the hwcomposer gives a sequence number type, use that
@@ -83,4 +83,4 @@ inline int ScreenSizeInBytes() {
 }
 
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

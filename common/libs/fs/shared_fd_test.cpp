@@ -23,8 +23,8 @@
 
 #include <string>
 
-using avd::InbandMessageHeader;
-using avd::SharedFD;
+using cvd::InbandMessageHeader;
+using cvd::SharedFD;
 
 char hello[] = "Hello, world!";
 char pipe_message[] = "Testing the pipe";

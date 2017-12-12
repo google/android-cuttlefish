@@ -24,7 +24,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/glog/logging.h"
 
-namespace avd {
+namespace cvd {
 namespace {
 // NetlinkClient implementation.
 // Talks to libnetlink to apply network changes.
@@ -163,4 +163,4 @@ NetlinkClientFactory* NetlinkClientFactory::Default() {
   return &factory;
 }
 
-}  // namespace avd
+}  // namespace cvd

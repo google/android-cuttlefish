@@ -51,7 +51,7 @@ EmulatedCameraFactory::EmulatedCameraFactory()
 #endif
 {
     mCameraConfiguration.Init();
-    const std::vector<avd::CameraDefinition>& cameras =
+    const std::vector<cvd::CameraDefinition>& cameras =
         mCameraConfiguration.cameras();
     for (size_t camera_index = 0;
          camera_index < cameras.size();
@@ -73,7 +73,7 @@ EmulatedCameraFactory::EmulatedCameraFactory()
 }
 
 EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(size_t cameraId) {
-    ::avd::LockGuard< ::avd::Mutex > lock(mEmulatedCamerasMutex);
+    ::cvd::LockGuard< ::cvd::Mutex > lock(mEmulatedCamerasMutex);
 
     if (cameraId >= getEmulatedCameraNum()) {
         ALOGE("%s: Invalid camera ID: %d", __FUNCTION__, cameraId);
@@ -84,25 +84,25 @@ EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(size_t cameraId
         return mEmulatedCameras[cameraId];
     }
 
-    const avd::CameraDefinition& definition = mCameraDefinitions[cameraId];
+    const cvd::CameraDefinition& definition = mCameraDefinitions[cameraId];
     bool is_back_facing =
-            (definition.orientation == avd::CameraDefinition::kBack);
+            (definition.orientation == cvd::CameraDefinition::kBack);
 
     EmulatedBaseCamera* camera;
     /* Create, and initialize the fake camera */
     switch (definition.hal_version) {
-        case avd::CameraDefinition::kHalV1:
+        case cvd::CameraDefinition::kHalV1:
             camera = new EmulatedFakeCamera(cameraId, is_back_facing,
                                             &HAL_MODULE_INFO_SYM.common);
             break;
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-        case avd::CameraDefinition::kHalV2:
+        case cvd::CameraDefinition::kHalV2:
             camera = new EmulatedFakeCamera2(cameraId, is_back_facing,
                                              &HAL_MODULE_INFO_SYM.common);
             break;
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(L_MR1)
-        case avd::CameraDefinition::kHalV3:
+        case cvd::CameraDefinition::kHalV3:
             camera = new EmulatedFakeCamera3(cameraId, is_back_facing,
                                         &HAL_MODULE_INFO_SYM.common);
             break;

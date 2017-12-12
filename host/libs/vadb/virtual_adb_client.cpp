@@ -34,11 +34,11 @@ namespace {
 constexpr int kHeartbeatTimeoutSeconds = 3;
 }  // namespace
 
-VirtualADBClient::VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd,
+VirtualADBClient::VirtualADBClient(usbip::DevicePool* pool, cvd::SharedFD fd,
                                    const std::string& usbip_socket_name)
     : pool_{pool}, fd_{fd}, vhci_{usbip_socket_name} {
   CHECK(vhci_.Init());
-  timer_ = avd::SharedFD::TimerFD(CLOCK_MONOTONIC, 0);
+  timer_ = cvd::SharedFD::TimerFD(CLOCK_MONOTONIC, 0);
   SendHeartbeat();
 }
 
@@ -191,7 +191,7 @@ bool VirtualADBClient::ExecuteCommand(std::unique_ptr<USBCommand> cmd) {
 
 // BeforeSelect is Called right before Select() to populate interesting
 // SharedFDs.
-void VirtualADBClient::BeforeSelect(avd::SharedFDSet* fd_read) const {
+void VirtualADBClient::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(fd_);
   fd_read->Set(timer_);
 }
@@ -199,7 +199,7 @@ void VirtualADBClient::BeforeSelect(avd::SharedFDSet* fd_read) const {
 // AfterSelect is Called right after Select() to detect and respond to changes
 // on affected SharedFDs.
 // Return value indicates whether this client is still valid.
-bool VirtualADBClient::AfterSelect(const avd::SharedFDSet& fd_read) {
+bool VirtualADBClient::AfterSelect(const cvd::SharedFDSet& fd_read) {
   if (fd_read.IsSet(timer_)) {
     HandleHeartbeatTimeout();
   }

@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace avd {
+namespace cvd {
 
 // Abstraction of network interfaces.
 // This interface provides means to modify network interface parameters.
@@ -99,6 +99,6 @@ class NetworkInterface {
   NetworkInterface& operator= (const NetworkInterface&);
 };
 
-}  // namespace avd
+}  // namespace cvd
 
 #endif  // GUEST_GCE_NETWORK_NETWORK_INTERFACE_H_

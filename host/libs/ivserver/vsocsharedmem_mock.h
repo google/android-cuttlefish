@@ -24,8 +24,8 @@ namespace test {
 class VSoCSharedMemoryMock : public VSoCSharedMemory {
  public:
   MOCK_CONST_METHOD3(GetEventFdPairForRegion,
-                     bool(const std::string&, avd::SharedFD*, avd::SharedFD*));
-  MOCK_CONST_METHOD0(SharedMemFD, const avd::SharedFD&());
+                     bool(const std::string&, cvd::SharedFD*, cvd::SharedFD*));
+  MOCK_CONST_METHOD0(SharedMemFD, const cvd::SharedFD&());
   MOCK_CONST_METHOD0(Regions,
                      const std::vector<VSoCSharedMemory::Region>&());
 };

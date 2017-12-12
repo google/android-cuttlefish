@@ -27,7 +27,7 @@
 #include "common/libs/glog/logging.h"
 #include "common/libs/net/network_interface.h"
 
-namespace avd {
+namespace cvd {
 namespace {
 NetlinkRequest BuildLinkRequest(
     const NetworkInterface& interface) {
@@ -96,5 +96,5 @@ bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {
   return nl_client_->Send(BuildAddrRequest(iface));
 }
 
-}  // namespace avd
+}  // namespace cvd
 

@@ -41,8 +41,8 @@ class IVServer final {
 
   const Json::Value &json_root_;
   std::unique_ptr<VSoCSharedMemory> vsoc_shmem_;
-  avd::SharedFD qemu_channel_;
-  avd::SharedFD client_channel_;
+  cvd::SharedFD qemu_channel_;
+  cvd::SharedFD client_channel_;
 };
 
 }  // namespace ivserver

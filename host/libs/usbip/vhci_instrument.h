@@ -60,9 +60,9 @@ class VHCIInstrument {
   std::string name_;
   std::unique_ptr<std::thread> attach_thread_;
   std::string syspath_;
-  avd::SharedFD control_write_end_;
-  avd::SharedFD control_read_end_;
-  avd::SharedFD vhci_socket_;
+  cvd::SharedFD control_write_end_;
+  cvd::SharedFD control_read_end_;
+  cvd::SharedFD vhci_socket_;
   int port_;
 
   VHCIInstrument(const VHCIInstrument& other) = delete;

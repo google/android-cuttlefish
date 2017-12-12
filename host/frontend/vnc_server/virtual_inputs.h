@@ -25,7 +25,7 @@
 #include "host/frontend/vnc_server/virtual_input_device.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 class VirtualInputs {
@@ -38,7 +38,7 @@ class VirtualInputs {
   void HandlePointerEvent(bool touch_down, int x, int y);
 
  private:
-  avd::SharedFD monkey_socket_;
+  cvd::SharedFD monkey_socket_;
   bool SendMonkeyComand(std::string cmd);
   std::mutex m_;
   VirtualKeyboard virtual_keyboard_ GUARDED_BY(m_);
@@ -47,4 +47,4 @@ class VirtualInputs {
 };
 
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

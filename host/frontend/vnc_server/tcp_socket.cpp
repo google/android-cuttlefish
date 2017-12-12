@@ -24,10 +24,10 @@
 
 #include <glog/logging.h>
 
-using avd::SharedFD;
-using avd::vnc::ClientSocket;
-using avd::vnc::Message;
-using avd::vnc::ServerSocket;
+using cvd::SharedFD;
+using cvd::vnc::ClientSocket;
+using cvd::vnc::Message;
+using cvd::vnc::ServerSocket;
 
 Message ClientSocket::Recv(size_t length) {
   Message buf(length);

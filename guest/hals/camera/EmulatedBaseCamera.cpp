@@ -70,7 +70,7 @@ status_t EmulatedBaseCamera::getCameraInfo(struct camera_info* info)
     // The CAMERA_MODULE_API_VERSION is above 2 on all of the supported
     // branches.
     //
-    // The AVD supports both CAMERA_DEVICE_API_VERSION_1_0 and
+    // The CVD supports both CAMERA_DEVICE_API_VERSION_1_0 and
     // CAMERA_DEVICE_API_VERSION_3_0.
     //
     // By the spec, the framework should not look at this field on

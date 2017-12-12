@@ -20,7 +20,7 @@
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/vsoc/gralloc/gralloc_buffer_region.h"
 
-using avd::vnc::SimulatedHWComposer;
+using cvd::vnc::SimulatedHWComposer;
 using vsoc::gralloc::GrallocBufferRegion;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
@@ -38,7 +38,7 @@ SimulatedHWComposer::~SimulatedHWComposer() {
   stripe_maker_.join();
 }
 
-avd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
+cvd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
   auto s = stripes_.Pop();
 #ifdef FUZZ_TEST_VNC
   if (random_(engine_)) {

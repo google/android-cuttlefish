@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include <algorithm>
 
-using avd::time::TimeDifference;
+using cvd::time::TimeDifference;
 
 class MonotonicTimeTest : public ::testing::Test {
  public:

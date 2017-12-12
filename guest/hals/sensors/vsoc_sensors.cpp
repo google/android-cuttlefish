@@ -32,13 +32,13 @@
 #include "guest/libs/platform_support/api_level_fixes.h"
 #include "guest/libs/remoter/remoter_framework_pkt.h"
 
-using avd::LockGuard;
-using avd::Mutex;
-using avd::time::Milliseconds;
-using avd::time::MonotonicTimePoint;
-using avd::time::Nanoseconds;
+using cvd::LockGuard;
+using cvd::Mutex;
+using cvd::time::Milliseconds;
+using cvd::time::MonotonicTimePoint;
+using cvd::time::Nanoseconds;
 
-namespace avd {
+namespace cvd {
 
 namespace {
 template <typename F>
@@ -68,7 +68,7 @@ GceSensors::GceSensors()
   if (control_sender_socket_->IsOpen() || control_receiver_socket_->IsOpen()) {
     ALOGE("%s: Receiver control FDs are opened", __FUNCTION__);
   }
-  if (!avd::SharedFD::Pipe(&control_receiver_socket_,
+  if (!cvd::SharedFD::Pipe(&control_receiver_socket_,
                            &control_sender_socket_)) {
     ALOGE("%s: Unable to create thread control FDs: %d -> %s", __FUNCTION__,
           errno, strerror(errno));
@@ -252,7 +252,7 @@ int GceSensors::Poll(sensors_event_t* data, int count_unsafe) {
 
 void *GceSensors::Receiver() {
   // Initialize the server.
-  sensor_listener_socket_ = avd::SharedFD::SocketSeqPacketServer(
+  sensor_listener_socket_ = cvd::SharedFD::SocketSeqPacketServer(
       gce_sensors_message::kSensorsHALSocketName, 0777);
   if (!sensor_listener_socket_->IsOpen()) {
     ALOGE("GceSensors::%s: Could not listen for sensor connections. (%s).",
@@ -268,18 +268,18 @@ void *GceSensors::Receiver() {
     ALOGI("Notified remoter that HAL is ready.");
   }
 
-  typedef std::vector<avd::SharedFD> FDVec;
+  typedef std::vector<cvd::SharedFD> FDVec;
   FDVec connected;
   // Listen for incoming sensor data and control messages
   // from the HAL.
   while (true) {
-    avd::SharedFDSet fds;
+    cvd::SharedFDSet fds;
     for (FDVec::iterator it = connected.begin(); it != connected.end(); ++it) {
       fds.Set(*it);
     }
     fds.Set(control_receiver_socket_);
     // fds.Set(sensor_listener_socket_);
-    int res = avd::Select(&fds, NULL, NULL, NULL);
+    int res = cvd::Select(&fds, NULL, NULL, NULL);
     if (res == -1) {
       ALOGE("%s: select returned %d and failed %d -> %s", __FUNCTION__, res,
             errno, strerror(errno));
@@ -288,7 +288,7 @@ void *GceSensors::Receiver() {
       ALOGE("%s: select timed out", __FUNCTION__);
       break;
     } else if (fds.IsSet(sensor_listener_socket_)) {
-      connected.push_back(avd::SharedFD::Accept(*sensor_listener_socket_));
+      connected.push_back(cvd::SharedFD::Accept(*sensor_listener_socket_));
       ALOGI("GceSensors::%s: new client connected", __FUNCTION__);
     } else if (fds.IsSet(control_receiver_socket_)) {
       // We received a control message.
@@ -329,7 +329,7 @@ void *GceSensors::Receiver() {
 
         for (FDVec::iterator it = connected.begin(); it != connected.end();
              ++it) {
-          avd::SharedFD &fd = *it;
+          cvd::SharedFD &fd = *it;
           if (fd->SendMsg(&msg, 0) == -1) {
             ALOGE("GceSensors::%s. Could not send sensor state (%s).",
                   __FUNCTION__, fd->StrError());
@@ -343,7 +343,7 @@ void *GceSensors::Receiver() {
     } else {
       for (FDVec::iterator it = connected.begin(); it != connected.end();
            ++it) {
-        avd::SharedFD &fd = *it;
+        cvd::SharedFD &fd = *it;
         if (fds.IsSet(fd)) {
           // We received a sensor update from remoter.
           sensors_event_t event;
@@ -524,4 +524,4 @@ int GceSensors::RegisterSensors() {
   return total_sensor_count_;
 }
 
-}  // namespace avd
+}  // namespace cvd

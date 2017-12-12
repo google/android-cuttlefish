@@ -34,10 +34,10 @@ extern "C" {
 #include "guest/libs/platform_support/api_level_fixes.h"
 #include "guest/libs/remoter/remoter_framework_pkt.h"
 
-using avd::LockGuard;
-using avd::Mutex;
+using cvd::LockGuard;
+using cvd::Mutex;
 
-namespace avd {
+namespace cvd {
 
 namespace {
 template <typename F> struct HWDeviceThunker :
@@ -64,8 +64,8 @@ int GceAudio::Close() {
     }
   }
   // Make certain that the listener thread wakes up
-  avd::SharedFD temp_client =
-      avd::SharedFD::SocketSeqPacketClient(
+  cvd::SharedFD temp_client =
+      cvd::SharedFD::SocketSeqPacketClient(
           gce_audio_message::kAudioHALSocketName);
   uint64_t dummy_val = 1;
   terminate_listener_thread_event_->Write(&dummy_val, sizeof dummy_val);
@@ -74,7 +74,7 @@ int GceAudio::Close() {
   return 0;
 }
 
-avd::SharedFD GceAudio::GetAudioFd() {
+cvd::SharedFD GceAudio::GetAudioFd() {
   LockGuard<Mutex> guard(lock_);
   return audio_data_socket_;
 }
@@ -224,7 +224,7 @@ int GceAudio::Dump(int fd) const {
 }
 
 ssize_t GceAudio::SendMsg(const msghdr& msg, int flags) {
-  avd::SharedFD fd = GetAudioFd();
+  cvd::SharedFD fd = GetAudioFd();
   if (!fd->IsOpen()) {
     return 0;
   }
@@ -285,7 +285,7 @@ int GceAudio::SetMode(audio_mode_t mode) {
 
 void* GceAudio::Listener() {
   // TODO(ghartman): Consider tightening the mode on this later.
-  audio_listener_socket_ = avd::SharedFD::SocketSeqPacketServer(
+  audio_listener_socket_ = cvd::SharedFD::SocketSeqPacketServer(
       gce_audio_message::kAudioHALSocketName, 0777);
   if (!audio_listener_socket_->IsOpen()) {
     ALOGE("GceAudio::%s: Could not listen for audio connections. (%s).",
@@ -318,10 +318,10 @@ void* GceAudio::Listener() {
     // Poll for new connections or the terminatation event.
     // The listener is non-blocking. We send to at most one client. If a new
     // client comes in disconnect the old one.
-    avd::SharedFDSet fd_set;
+    cvd::SharedFDSet fd_set;
     fd_set.Set(audio_listener_socket_);
     fd_set.Set(terminate_listener_thread_event_);
-    if (avd::Select(&fd_set, NULL, NULL, NULL) <= 0) {
+    if (cvd::Select(&fd_set, NULL, NULL, NULL) <= 0) {
       // There's no timeout, so 0 shouldn't happen.
       ALOGE("GceAudio::%s: Error using shared Select", __FUNCTION__);
       break;
@@ -331,7 +331,7 @@ void* GceAudio::Listener() {
     }
     LOG_FATAL_IF(fd_set.IsSet(audio_listener_socket_),
                  "No error in Select() but nothing ready to read");
-    avd::SharedFD fd = avd::SharedFD::Accept(
+    cvd::SharedFD fd = cvd::SharedFD::Accept(
         *audio_listener_socket_);
     if (!fd->IsOpen()) {
       continue;

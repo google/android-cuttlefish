@@ -91,10 +91,10 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
                        const std::string &path);
 
   bool GetEventFdPairForRegion(const std::string &region_name,
-                               avd::SharedFD *guest_to_host,
-                               avd::SharedFD *host_to_guest) const override;
+                               cvd::SharedFD *guest_to_host,
+                               cvd::SharedFD *host_to_guest) const override;
 
-  const avd::SharedFD &SharedMemFD() const override;
+  const cvd::SharedFD &SharedMemFD() const override;
 
   const std::vector<Region> &Regions() const override;
 
@@ -102,7 +102,7 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
   void CreateLayout();
 
   const vsoc_shm_layout_descriptor &header_;
-  avd::SharedFD shared_mem_fd_;
+  cvd::SharedFD shared_mem_fd_;
   const std::map<std::string, size_t> region_name_to_index_;
   const std::vector<Region> region_data_;
 
@@ -122,7 +122,7 @@ VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(
   LOG_IF(WARNING, unlink(path.c_str()) == 0)
       << "Removed existing instance of " << path
       << ". We currently don't know if another instance of daemon is running";
-  shared_mem_fd_ = avd::SharedFD::Open(path.c_str(), O_RDWR | O_CREAT | O_EXCL,
+  shared_mem_fd_ = cvd::SharedFD::Open(path.c_str(), O_RDWR | O_CREAT | O_EXCL,
                                        S_IRUSR | S_IWUSR);
   LOG_IF(FATAL, !shared_mem_fd_->IsOpen())
       << "Error in creating shared_memory file: " << shared_mem_fd_->StrError();
@@ -134,7 +134,7 @@ VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(
   CreateLayout();
 }
 
-const avd::SharedFD &VSoCSharedMemoryImpl::SharedMemFD() const {
+const cvd::SharedFD &VSoCSharedMemoryImpl::SharedMemFD() const {
   return shared_mem_fd_;
 }
 
@@ -159,8 +159,8 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 }
 
 bool VSoCSharedMemoryImpl::GetEventFdPairForRegion(
-    const std::string &region_name, avd::SharedFD *guest_to_host,
-    avd::SharedFD *host_to_guest) const {
+    const std::string &region_name, cvd::SharedFD *guest_to_host,
+    cvd::SharedFD *host_to_guest) const {
   auto it = region_name_to_index_.find(region_name);
   if (it == region_name_to_index_.end()) return false;
 
@@ -274,13 +274,13 @@ std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
     // Create one pair of eventfds for this region. Note that the guest to host
     // eventfd is non-blocking, whereas the host to guest eventfd is blocking.
     // This is in anticipation of blocking semantics for the host side locks.
-    region->host_fd = avd::SharedFD::Event(0, EFD_NONBLOCK);
+    region->host_fd = cvd::SharedFD::Event(0, EFD_NONBLOCK);
     if (!region->host_fd->IsOpen()) {
       failed = true;
       LOG(ERROR) << "Failed to create host eventfd for " << device_name << ": "
                  << region->host_fd->StrError();
     }
-    region->guest_fd = avd::SharedFD::Event(0, EFD_NONBLOCK);
+    region->guest_fd = cvd::SharedFD::Event(0, EFD_NONBLOCK);
     if (!region->guest_fd->IsOpen()) {
       failed = true;
       LOG(ERROR) << "Failed to create guest eventfd for " << device_name << ": "

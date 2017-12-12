@@ -28,7 +28,7 @@
 #include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 #include "host/frontend/vnc_server/blackboard.h"
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 class SimulatedHWComposer {
  public:
@@ -62,4 +62,4 @@ class SimulatedHWComposer {
   std::thread stripe_maker_;
 };
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

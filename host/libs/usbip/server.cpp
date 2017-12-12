@@ -20,7 +20,7 @@
 #include <netinet/in.h>
 #include "common/libs/fs/shared_select.h"
 
-using avd::SharedFD;
+using cvd::SharedFD;
 
 namespace vadb {
 namespace usbip {
@@ -42,12 +42,12 @@ bool Server::CreateServerSocket() {
   return true;
 }
 
-void Server::BeforeSelect(avd::SharedFDSet* fd_read) const {
+void Server::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(server_);
   for (const auto& client : clients_) client.BeforeSelect(fd_read);
 }
 
-void Server::AfterSelect(const avd::SharedFDSet& fd_read) {
+void Server::AfterSelect(const cvd::SharedFDSet& fd_read) {
   if (fd_read.IsSet(server_)) HandleIncomingConnection();
 
   for (auto iter = clients_.begin(); iter != clients_.end();) {

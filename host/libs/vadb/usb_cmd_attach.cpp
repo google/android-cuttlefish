@@ -19,7 +19,7 @@
 #include "host/libs/vadb/usb_cmd_attach.h"
 
 namespace vadb {
-bool USBCmdAttach::OnRequest(const avd::SharedFD& fd) {
+bool USBCmdAttach::OnRequest(const cvd::SharedFD& fd) {
   if (fd->Write(&req_, sizeof(req_)) != sizeof(req_)) {
     LOG(ERROR) << "Short write: " << fd->StrError();
     return false;
@@ -27,7 +27,7 @@ bool USBCmdAttach::OnRequest(const avd::SharedFD& fd) {
   return true;
 }
 
-bool USBCmdAttach::OnResponse(bool is_success, const avd::SharedFD& data) {
+bool USBCmdAttach::OnResponse(bool is_success, const cvd::SharedFD& data) {
   if (!is_success) return false;
   LOG(INFO) << "Attach successful.";
   return true;

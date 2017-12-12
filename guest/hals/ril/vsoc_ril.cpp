@@ -165,7 +165,7 @@ const char g_ril_interface[] = "rmnet0";
 // TearDownNetworkInterface disables network interface.
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
-  auto nm(avd::NetworkInterfaceManager::New(nullptr));
+  auto nm(cvd::NetworkInterfaceManager::New(nullptr));
   auto ni(nm->Open("rmnet0"));
 
   if (ni) {
@@ -1030,7 +1030,7 @@ static void request_get_radio_capability(RIL_Token t) {
   rc.session = 1;
   rc.phase = RC_PHASE_CONFIGURED;
   rc.rat = RAF_HSPAP;
-  strncpy(rc.logicalModemUuid, "com.google.avdgce1.modem", MAX_UUID_LENGTH);
+  strncpy(rc.logicalModemUuid, "com.google.cvdgce1.modem", MAX_UUID_LENGTH);
   rc.status = RC_STATUS_SUCCESS;
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &rc, sizeof(rc));
 }
@@ -1157,7 +1157,7 @@ static void request_registration_state(int request, void* /*data*/,
 }
 
 static void request_baseband_version(RIL_Token t) {
-  const char* response_str = "AVD_R1.0.0";
+  const char* response_str = "CVD_R1.0.0";
 
   ALOGV("Requested phone baseband version.");
 
@@ -1340,8 +1340,8 @@ static void request_hardware_config(RIL_Token t) {
 
   ALOGV("Requesting hardware configuration.");
 
-  strncpy(hw_cfg[0].uuid, "com.google.avdgce1.modem", sizeof(hw_cfg[0].uuid));
-  strncpy(hw_cfg[1].uuid, "com.google.avdgce1.sim", sizeof(hw_cfg[1].uuid));
+  strncpy(hw_cfg[0].uuid, "com.google.cvdgce1.modem", sizeof(hw_cfg[0].uuid));
+  strncpy(hw_cfg[1].uuid, "com.google.cvdgce1.sim", sizeof(hw_cfg[1].uuid));
 
   int technologies = 0;  // = unknown.
   std::map<RIL_PreferredNetworkType, int>::iterator iter =

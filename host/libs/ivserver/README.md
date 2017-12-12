@@ -1,6 +1,6 @@
 ## Overview
 
-This is the native ivshmem-server implementation catering to the GCE AVD
+This is the native ivshmem-server implementation catering to the GCE CVD
 vSoC project.
 
 We are breaking from the general philosophy of ivshmem-server inter-vm

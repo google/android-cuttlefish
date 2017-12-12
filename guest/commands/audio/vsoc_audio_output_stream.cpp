@@ -49,7 +49,7 @@ static inline size_t GceAudioFrameSize(audio_stream_out* s) {
 }
 #endif
 
-namespace avd {
+namespace cvd {
 
 const size_t GceAudioOutputStream::kOutBufferSize;
 const size_t GceAudioOutputStream::kOutLatency;
@@ -91,7 +91,7 @@ int GceAudioOutputStream::Dump(int fd) const {
 }
 
 int GceAudioOutputStream::GetNextWriteTimestamp(int64_t* nstime) const {
-  *nstime = avd::time::Nanoseconds(
+  *nstime = cvd::time::Nanoseconds(
       buffer_->GetNextOutputBufferItemTime().SinceEpoch()).count();
   return 0;
 }
@@ -346,4 +346,4 @@ int GceAudioOutputStream::Open(
   return 0;
 }
 
-}  // namespace avd
+}  // namespace cvd

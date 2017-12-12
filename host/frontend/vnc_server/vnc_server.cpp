@@ -25,7 +25,7 @@
 #include "host/frontend/vnc_server/vnc_client_connection.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using avd::vnc::VncServer;
+using cvd::vnc::VncServer;
 
 VncServer::VncServer(int port, bool aggressive)
     : server_(port), frame_buffer_watcher_{&bb_}, aggressive_{aggressive} {}

@@ -66,7 +66,7 @@ public:
      ***************************************************************************/
 
 public:
-    virtual status_t Initialize(const avd::CameraDefinition& props);
+    virtual status_t Initialize(const cvd::CameraDefinition& props);
 
     /****************************************************************************
      * Camera module API and generic hardware device API implementation

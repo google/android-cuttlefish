@@ -24,7 +24,7 @@ import android.util.Log;
 /**
  * Forces pacakge verification to be off on N and N-MR1 by adjusting package_verifier_user_consent.
  *
- * This is needed because AVDs don't have a touch screen, and the consent
+ * This is needed because CVDs don't have a touch screen, and the consent
  * dialog will block apk installs.
  *
  * Possible values for consent seem to be:

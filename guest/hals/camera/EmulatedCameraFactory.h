@@ -171,7 +171,7 @@ private:
     Vector<EmulatedBaseCamera*>  mEmulatedCameras;
 
     /* Guards access to mEmulatedCameras. */
-    avd::Mutex mEmulatedCamerasMutex;
+    cvd::Mutex mEmulatedCamerasMutex;
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     /* Camera callbacks (for status changing) */
@@ -182,8 +182,8 @@ private:
 #endif
 
     /* Back- and front camera properties accessed from cloud metadata server. */
-    avd::CameraConfiguration mCameraConfiguration;
-    Vector<avd::CameraDefinition> mCameraDefinitions;
+    cvd::CameraConfiguration mCameraConfiguration;
+    Vector<cvd::CameraDefinition> mCameraDefinitions;
 
 public:
     /* Contains device open entry point, as required by HAL API. */

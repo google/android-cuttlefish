@@ -31,7 +31,7 @@
 #include <glog/logging.h>
 #include "host/frontend/vnc_server/keysyms.h"
 
-namespace avd {
+namespace cvd {
 
 //////////////////////////
 // VirtualButton Support
@@ -281,4 +281,4 @@ void VirtualTouchPad::HandlePointerEvent(bool touch_down, int x, int y) {
               std::to_string(y) + "\n");
 }
 
-}  // namespace avd
+}  // namespace cvd

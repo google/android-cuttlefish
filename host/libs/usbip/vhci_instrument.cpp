@@ -86,7 +86,7 @@ VHCIInstrument::~VHCIInstrument() {
 }
 
 bool VHCIInstrument::Init() {
-  avd::SharedFD::Pipe(&control_read_end_, &control_write_end_);
+  cvd::SharedFD::Pipe(&control_read_end_, &control_write_end_);
 
   struct stat buf;
   for (const auto* path : kVHCIPlatformPaths) {
@@ -149,7 +149,7 @@ void VHCIInstrument::TriggerDetach() {
 }
 
 void VHCIInstrument::AttachThread() {
-  avd::SharedFD epoll = avd::SharedFD::Epoll();
+  cvd::SharedFD epoll = cvd::SharedFD::Epoll();
   // Trigger attach upon start.
   bool want_attach = true;
   // Operation is pending on read.
@@ -180,7 +180,7 @@ void VHCIInstrument::AttachThread() {
           LOG(INFO) << (want_attach ? "Attach" : "Detach") << " triggered.";
           break;
         case kVHCIEvent:
-          vhci_socket_ = avd::SharedFD();
+          vhci_socket_ = cvd::SharedFD();
           // Only re-establish VHCI if it was already established before.
           is_pending = want_attach;
           // Do not immediately fall into attach cycle. It will likely complete
@@ -220,7 +220,7 @@ bool VHCIInstrument::Detach() {
 bool VHCIInstrument::Attach() {
   if (!vhci_socket_->IsOpen()) {
     vhci_socket_ =
-        avd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
+        cvd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
     if (!vhci_socket_->IsOpen()) return false;
   }
 

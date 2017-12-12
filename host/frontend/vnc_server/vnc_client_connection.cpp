@@ -37,10 +37,10 @@
 #include "host/frontend/vnc_server/tcp_socket.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using avd::vnc::Message;
-using avd::vnc::Stripe;
-using avd::vnc::StripePtrVec;
-using avd::vnc::VncClientConnection;
+using cvd::vnc::Message;
+using cvd::vnc::Stripe;
+using cvd::vnc::StripePtrVec;
+using cvd::vnc::VncClientConnection;
 
 DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
 
@@ -158,7 +158,7 @@ std::uint32_t GreenVal(std::uint32_t pixel) {
          ((0x1 << GceFrameBuffer::kGreenBits) - 1);
 }
 }  // namespace
-namespace avd {
+namespace cvd {
 namespace vnc {
 bool operator==(const VncClientConnection::FrameBufferUpdateRequest& lhs,
                 const VncClientConnection::FrameBufferUpdateRequest& rhs) {
@@ -171,13 +171,13 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
   return !(lhs == rhs);
 }
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd
 
 VncClientConnection::VncClientConnection(ClientSocket client,
                                          VirtualInputs* virtual_inputs,
                                          BlackBoard* bb, bool aggressive)
     : client_{std::move(client)},
-      sensor_event_hal_{avd::SharedFD::SocketSeqPacketClient(
+      sensor_event_hal_{cvd::SharedFD::SocketSeqPacketClient(
           gce_sensors_message::kSensorsHALSocketName)},
       virtual_inputs_{virtual_inputs},
       bb_{bb} {
@@ -526,7 +526,7 @@ void VncClientConnection::UpdateAccelerometer(float x, float y, float z) {
   // // Construct the sensor message.
   // gce_sensors_message message{};
   // message.version = sizeof message;
-  // message.sensor = avd::sensors_constants::kAccelerometerHandle;
+  // message.sensor = cvd::sensors_constants::kAccelerometerHandle;
   // message.type = SENSOR_TYPE_ACCELEROMETER;
   // message.timestamp = current_time.tv_sec * static_cast<int64_t>(1000000000)
   // +
@@ -612,13 +612,13 @@ bool VncClientConnection::RotateIfIsRotationCommand(std::uint32_t key) {
     return false;
   }
   switch (key) {
-    case avd::xk::Right:
-    case avd::xk::F12:
+    case cvd::xk::Right:
+    case cvd::xk::F12:
       DLOG(INFO) << "switching to portrait";
       SetScreenOrientation(ScreenOrientation::Portrait);
       break;
-    case avd::xk::Left:
-    case avd::xk::F11:
+    case cvd::xk::Left:
+    case cvd::xk::F11:
       DLOG(INFO) << "switching to landscape";
       SetScreenOrientation(ScreenOrientation::Landscape);
       break;
@@ -637,18 +637,18 @@ void VncClientConnection::HandleKeyEvent() {
   auto key = uint32_tAt(&msg[3]);
   bool key_down = msg[0];
   switch (key) {
-    case avd::xk::ControlLeft:
-    case avd::xk::ControlRight:
+    case cvd::xk::ControlLeft:
+    case cvd::xk::ControlRight:
       control_key_down_ = key_down;
       break;
-    case avd::xk::MetaLeft:
-    case avd::xk::MetaRight:
+    case cvd::xk::MetaLeft:
+    case cvd::xk::MetaRight:
       meta_key_down_ = key_down;
       break;
-    case avd::xk::F5:
-      key = avd::xk::Menu;
+    case cvd::xk::F5:
+      key = cvd::xk::Menu;
       break;
-    case avd::xk::F7:
+    case cvd::xk::F7:
       virtual_inputs_->PressPowerButton(key_down);
       return;
     default:

@@ -21,7 +21,7 @@
 #include "guest/commands/audio/simulated_buffer.h"
 #include "guest/commands/audio/vsoc_audio_message.h"
 
-namespace avd {
+namespace cvd {
 
 // Defines static callback functions for the audio_stream and audio_stream_out
 // interfaces in  libhardware/include/hardware/audio.h
@@ -295,14 +295,14 @@ class GceAudioOutputStream : public audio_stream_out {
       /*const*/ str_parms* query, str_parms* reply, const char* key, int value);
 
 
-  explicit GceAudioOutputStream(avd::GceAudio*);
+  explicit GceAudioOutputStream(cvd::GceAudio*);
 
   static const size_t kOutBufferSize = 3840;
   static const size_t kOutLatency = 2;
 
   gce_audio_message message_header_;
   std::unique_ptr<SimulatedOutputBuffer> buffer_;
-  avd::GceAudio *dev_;
+  cvd::GceAudio *dev_;
   audio_devices_t device_;
   size_t frame_size_;
   size_t frame_count_;

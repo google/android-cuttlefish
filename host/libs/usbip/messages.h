@@ -36,7 +36,7 @@ void NetToHost(T* data);
 // Accept data by value and modify it to match net endian locally.
 // Returns true, if message was sent successfully.
 template <typename T>
-bool SendUSBIPMsg(const avd::SharedFD& fd, T data) {
+bool SendUSBIPMsg(const cvd::SharedFD& fd, T data) {
   internal::HostToNet(&data);
   return fd->Send(&data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
 }
@@ -45,7 +45,7 @@ bool SendUSBIPMsg(const avd::SharedFD& fd, T data) {
 // After message is received, it's updated to match host endian.
 // Returns true, if message was received successfully.
 template <typename T>
-bool RecvUSBIPMsg(const avd::SharedFD& fd, T* data) {
+bool RecvUSBIPMsg(const cvd::SharedFD& fd, T* data) {
   bool res = fd->Recv(data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
   if (res) {
     internal::NetToHost(data);

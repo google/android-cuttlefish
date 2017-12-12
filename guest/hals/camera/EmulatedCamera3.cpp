@@ -65,7 +65,7 @@ EmulatedCamera3::~EmulatedCamera3() {
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera3::Initialize(const avd::CameraDefinition& params) {
+status_t EmulatedCamera3::Initialize(const cvd::CameraDefinition& params) {
     ALOGV("%s", __FUNCTION__);
 
     mStatus = STATUS_CLOSED;

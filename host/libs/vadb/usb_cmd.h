@@ -47,13 +47,13 @@ class USBCommand {
   // (other than RequestHeader) should be sent.
   // Returns false, if communication with remote host failed (and should be
   // terminated).
-  virtual bool OnRequest(const avd::SharedFD& data) = 0;
+  virtual bool OnRequest(const cvd::SharedFD& data) = 0;
 
   // OnResponse is called whenever additional data relevant to this command
   // (other than ResponseHeader) should be received.
   // Returns false, if communication with remote host failed (and should be
   // terminated).
-  virtual bool OnResponse(bool is_success, const avd::SharedFD& data) = 0;
+  virtual bool OnResponse(bool is_success, const cvd::SharedFD& data) = 0;
 
  private:
   USBCommand(const USBCommand& other) = delete;

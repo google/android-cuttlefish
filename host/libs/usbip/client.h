@@ -28,19 +28,19 @@ namespace usbip {
 // connection at the time.
 class Client final {
  public:
-  Client(const DevicePool& pool, const avd::SharedFD& fd)
+  Client(const DevicePool& pool, const cvd::SharedFD& fd)
       : pool_(pool), fd_(fd) {}
 
   ~Client() {}
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
-  void BeforeSelect(avd::SharedFDSet* fd_read) const;
+  void BeforeSelect(cvd::SharedFDSet* fd_read) const;
 
   // AfterSelect is Called right after Select() to detect and respond to changes
   // on affected SharedFDs.
   // Return value indicates whether this client is still valid.
-  bool AfterSelect(const avd::SharedFDSet& fd_read);
+  bool AfterSelect(const cvd::SharedFDSet& fd_read);
 
  private:
   // Respond to message from remote client.
@@ -62,7 +62,7 @@ class Client final {
   bool HandleUnlinkCmd(const CmdHeader& hdr);
 
   const DevicePool& pool_;
-  avd::SharedFD fd_;
+  cvd::SharedFD fd_;
 
   Client(const Client&) = delete;
   Client& operator=(const Client&) = delete;

@@ -28,13 +28,13 @@ namespace ivserver {
 class HaldClient final {
  public:
   static std::unique_ptr<HaldClient> New(const VSoCSharedMemory &shared_mem,
-                                         const avd::SharedFD &client_fd);
+                                         const cvd::SharedFD &client_fd);
 
  private:
-  avd::SharedFD client_socket_;
+  cvd::SharedFD client_socket_;
 
   // Initialize new instance of HAL Client.
-  HaldClient(const avd::SharedFD &client_fd);
+  HaldClient(const cvd::SharedFD &client_fd);
 
   // Perform handshake with HAL Client.
   // If the region is not found approprate status (-1) is sent.

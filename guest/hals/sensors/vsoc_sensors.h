@@ -22,7 +22,7 @@
 #include "guest/hals/sensors/sensors.h"
 #include "guest/hals/sensors/sensors_hal.h"
 
-namespace avd {
+namespace cvd {
 
 // Used for sending control messages to the receiver thread.
 // The sensor_handle field may be left unused if it is not needed.
@@ -177,7 +177,7 @@ class GceSensors : public sensors_poll_device_1 {
   // contiguous up to the number of supported sensors.
   SensorStateVector sensor_states_;
   // Keep track of the time when the thread in Poll() is scheduled to wake.
-  avd::time::MonotonicTimePoint current_deadline_;
+  cvd::time::MonotonicTimePoint current_deadline_;
 
   // Ordered set of sensor values.
   // TODO(ghartman): Simulate FIFO overflow.
@@ -185,18 +185,18 @@ class GceSensors : public sensors_poll_device_1 {
   // Thread to handle new connections.
   pthread_t receiver_thread_;
   // Socket to receive sensor events on.
-  avd::SharedFD sensor_listener_socket_;
+  cvd::SharedFD sensor_listener_socket_;
   // Socket for listener thread to receive control messages.
-  avd::SharedFD control_receiver_socket_;
+  cvd::SharedFD control_receiver_socket_;
   // Socket to send control messages to listener thread.
-  avd::SharedFD control_sender_socket_;
+  cvd::SharedFD control_sender_socket_;
 
   // Lock to protect shared state, including
   // sensor_states_ and next_deadline_.
   // Associated with deadline_change_ condition variable.
-  avd::Mutex sensor_state_lock_;
+  cvd::Mutex sensor_state_lock_;
   // Condition variable to signal changes in the deadline.
-  avd::ConditionVariable deadline_change_;
+  cvd::ConditionVariable deadline_change_;
 
   // When events are arriving from a client, we report only
   // when they arrive, rather than at a fixed cycle. After not
@@ -204,7 +204,7 @@ class GceSensors : public sensors_poll_device_1 {
   // and a given time period, we will give up and resume
   // sending mock events.
   const static int kInjectedEventWaitPeriods;
-  const static avd::time::Nanoseconds kInjectedEventWaitTime;
+  const static cvd::time::Nanoseconds kInjectedEventWaitTime;
 
   /**
    ** UTILITY FUNCTIONS
@@ -222,7 +222,7 @@ class GceSensors : public sensors_poll_device_1 {
   // This should be called anytime the next deadline may have changed.
   // Can only be called while holding sensor_state_lock_.
   // Returns true if the deadline has changed.
-  avd::time::MonotonicTimePoint UpdateDeadline();
+  cvd::time::MonotonicTimePoint UpdateDeadline();
 
   // Sends an update for the sensor with the given handle to the remoter.
   // Update will be enqueued for receiver, not send immediately.
@@ -237,5 +237,5 @@ class GceSensors : public sensors_poll_device_1 {
 
 };
 
-} //namespace avd
+} //namespace cvd
 

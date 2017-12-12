@@ -19,7 +19,7 @@
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
-  VSOC_STATIC_INITIALIZER(open) avd::GceSensors::Open,
+  VSOC_STATIC_INITIALIZER(open) cvd::GceSensors::Open,
 };
 
 sensors_module_t HAL_MODULE_INFO_SYM = {
@@ -32,8 +32,8 @@ sensors_module_t HAL_MODULE_INFO_SYM = {
     VSOC_STATIC_INITIALIZER(author) "Google",
     VSOC_STATIC_INITIALIZER(methods) & hal_module_methods,
   },
-  VSOC_STATIC_INITIALIZER(get_sensors_list) avd::GceSensors::GetSensorsList,
+  VSOC_STATIC_INITIALIZER(get_sensors_list) cvd::GceSensors::GetSensorsList,
 #if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
-  VSOC_STATIC_INITIALIZER(set_operation_mode) avd::GceSensors::SetOperationMode,
+  VSOC_STATIC_INITIALIZER(set_operation_mode) cvd::GceSensors::SetOperationMode,
 #endif
 };

@@ -28,7 +28,7 @@
 #include <glog/logging.h>
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using avd::vnc::FrameBufferWatcher;
+using cvd::vnc::FrameBufferWatcher;
 
 FrameBufferWatcher::FrameBufferWatcher(BlackBoard* bb)
     : bb_{bb}, hwcomposer{bb_} {
@@ -59,7 +59,7 @@ bool FrameBufferWatcher::closed() const {
   return closed_;
 }
 
-avd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
+cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
   if (stripe.orientation == ScreenOrientation::Landscape) {
     LOG(FATAL) << "Rotating a landscape stripe, this is a mistake";
   }
@@ -88,7 +88,7 @@ bool FrameBufferWatcher::StripeIsDifferentFromPrevious(
   return Stripes(stripe.orientation)[stripe.index]->raw_data != stripe.raw_data;
 }
 
-avd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
+cvd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
     ScreenOrientation orientation, const SeqNumberVec& seq_numbers) const {
   std::lock_guard<std::mutex> guard(stripes_lock_);
   const auto& stripes = Stripes(orientation);
@@ -102,12 +102,12 @@ avd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
   return new_stripes;
 }
 
-avd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
+cvd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
     ScreenOrientation orientation) {
   return stripes_[static_cast<int>(orientation)];
 }
 
-const avd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
+const cvd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
     ScreenOrientation orientation) const {
   return stripes_[static_cast<int>(orientation)];
 }

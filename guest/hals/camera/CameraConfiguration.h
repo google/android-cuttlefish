@@ -18,7 +18,7 @@
 
 #include <vector>
 
-namespace avd {
+namespace cvd {
 
 // Camera properties and features.
 struct CameraDefinition {
@@ -60,6 +60,6 @@ class CameraConfiguration {
   std::vector<CameraDefinition> cameras_;
 };
 
-}  // namespace avd
+}  // namespace cvd
 
 #endif  // GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_

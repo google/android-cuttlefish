@@ -25,7 +25,7 @@
 #include "guest/commands/audio/vsoc_audio_message.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-namespace avd {
+namespace cvd {
 
 class GceAudioInputStream;
 class GceAudioOutputStream;
@@ -42,13 +42,13 @@ class GceAudio : public audio_hw_device {
 
   // Returns true if the microphone is muted. Used by input streams.
   bool IsMicrophoneMuted() {
-    avd::LockGuard<avd::Mutex> guard(lock_);
+    cvd::LockGuard<cvd::Mutex> guard(lock_);
     return mic_muted_;
   }
 
   // Retrieves the SharedFD of the process accepting audio data.
   // Returns a non-open fd if no process is listening (the normal case).
-  avd::SharedFD GetAudioFd();
+  cvd::SharedFD GetAudioFd();
 
   // Send a message to the connected streamer.
   // Returns:
@@ -273,16 +273,16 @@ class GceAudio : public audio_hw_device {
   // Thread to handle new connections.
   pthread_t listener_thread_;
   // Event to indicate that the listener thread should terminate.
-  avd::SharedFD terminate_listener_thread_event_;
+  cvd::SharedFD terminate_listener_thread_event_;
   // The listener socket, which is polled for new connections.
   // TODO(ghartman): Consider using a thread.
-  avd::SharedFD audio_listener_socket_;
+  cvd::SharedFD audio_listener_socket_;
   // Lock to protect the data below.
-  mutable avd::Mutex lock_;
+  mutable cvd::Mutex lock_;
   // The data socket for the current streamer. Typically -1.
   // The behavior of the HAL should not be affected by the presence or absence
   // of the streamer.
-  avd::SharedFD audio_data_socket_;
+  cvd::SharedFD audio_data_socket_;
   // State that is managed at the device level.
   float voice_volume_;
   float master_volume_;
@@ -307,7 +307,7 @@ class GceAudio : public audio_hw_device {
 
   GceAudio() :
       audio_hw_device(),
-      terminate_listener_thread_event_(avd::SharedFD::Event()),
+      terminate_listener_thread_event_(cvd::SharedFD::Event()),
       voice_volume_(0.0),
       master_volume_(0.0),
       master_muted_(false),

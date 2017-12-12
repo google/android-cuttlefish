@@ -30,7 +30,7 @@
 #include "host/frontend/vnc_server/virtual_inputs.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-namespace avd {
+namespace cvd {
 namespace vnc {
 
 class VncClientConnection {
@@ -137,7 +137,7 @@ class VncClientConnection {
 
   mutable std::mutex m_;
   ClientSocket client_;
-  avd::SharedFD sensor_event_hal_;
+  cvd::SharedFD sensor_event_hal_;
   bool control_key_down_ = false;
   bool meta_key_down_ = false;
   VirtualInputs* virtual_inputs_{};
@@ -168,4 +168,4 @@ class VncClientConnection {
 };
 
 }  // namespace vnc
-}  // namespace avd
+}  // namespace cvd

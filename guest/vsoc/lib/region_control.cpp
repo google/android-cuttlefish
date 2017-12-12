@@ -29,7 +29,7 @@
 #include <android-base/logging.h>
 #include <uapi/vsoc_shm.h>
 
-using avd::SharedFD;
+using cvd::SharedFD;
 
 namespace {
 class GuestRegionControl : public vsoc::RegionControl {
@@ -49,7 +49,7 @@ class GuestRegionControl : public vsoc::RegionControl {
                                vsoc_reg_off_t owner_offset, uint32_t owned_val,
                                vsoc_reg_off_t begin_offset,
                                vsoc_reg_off_t end_offset) override;
-  avd::SharedFD region_fd_;
+  cvd::SharedFD region_fd_;
 };
 
 std::string device_path_from_name(const char* region_name) {

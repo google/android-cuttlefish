@@ -27,7 +27,7 @@ const uint32_t kHaldClientProtocolVersion = 0;
 }  // anonymous namespace
 
 std::unique_ptr<HaldClient> HaldClient::New(const VSoCSharedMemory& shmem,
-                                            const avd::SharedFD& clientfd) {
+                                            const cvd::SharedFD& clientfd) {
   std::unique_ptr<HaldClient> res;
 
   if (!clientfd->IsOpen()) {
@@ -45,7 +45,7 @@ std::unique_ptr<HaldClient> HaldClient::New(const VSoCSharedMemory& shmem,
   return res;
 }
 
-HaldClient::HaldClient(const avd::SharedFD& client_socket)
+HaldClient::HaldClient(const cvd::SharedFD& client_socket)
     : client_socket_(client_socket) {}
 
 bool HaldClient::PerformHandshake(const VSoCSharedMemory& shared_mem) {
@@ -85,8 +85,8 @@ bool HaldClient::PerformHandshake(const VSoCSharedMemory& shared_mem) {
   LOG(INFO) << "New HALD requesting region: " << region_name;
 
   // Send Host, Guest and SharedMemory FDs associated with this region.
-  avd::SharedFD guest_to_host_efd;
-  avd::SharedFD host_to_guest_efd;
+  cvd::SharedFD guest_to_host_efd;
+  cvd::SharedFD host_to_guest_efd;
 
   if (!shared_mem.GetEventFdPairForRegion(region_name, &guest_to_host_efd,
                                           &host_to_guest_efd)) {
@@ -112,8 +112,8 @@ bool HaldClient::PerformHandshake(const VSoCSharedMemory& shared_mem) {
   struct iovec vec {
     &control_data, sizeof(control_data)
   };
-  avd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
-  avd::SharedFD fds[3] = {guest_to_host_efd, host_to_guest_efd,
+  cvd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
+  cvd::SharedFD fds[3] = {guest_to_host_efd, host_to_guest_efd,
                           shared_mem.SharedMemFD()};
   rval = client_socket_->SendMsgAndFDs<3>(hdr, MSG_NOSIGNAL, fds);
   if (rval == -1) {

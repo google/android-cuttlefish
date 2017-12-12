@@ -76,7 +76,7 @@ EmulatedCamera2::~EmulatedCamera2() {
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera2::Initialize(const avd::CameraDefinition& props) {
+status_t EmulatedCamera2::Initialize(const cvd::CameraDefinition& props) {
     return NO_ERROR;
 }
 

@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <time.h>
 
-namespace avd {
+namespace cvd {
 namespace time {
 
 static const int64_t kNanosecondsPerSecond = 1000000000;
@@ -279,7 +279,7 @@ class Nanoseconds : public TimeDifference {
 };
 
 }  // namespace time
-}  // namespace avd
+}  // namespace cvd
 
 /**
  * Legacy support for microseconds. Use MonotonicTimePoint in new code.
@@ -287,6 +287,6 @@ class Nanoseconds : public TimeDifference {
 static const int64_t kSecsToUsecs = static_cast<int64_t>(1000) * 1000;
 
 static inline int64_t get_monotonic_usecs() {
-  return avd::time::Microseconds(
-      avd::time::MonotonicTimePoint::Now().SinceEpoch()).count();
+  return cvd::time::Microseconds(
+      cvd::time::MonotonicTimePoint::Now().SinceEpoch()).count();
 }
