@@ -1,0 +1,22 @@
+cc_library_host_static {
+    name: "libusbip",
+    srcs: [
+        "client.cpp",
+        "device_pool.cpp",
+        "messages.cpp",
+        "server.cpp",
+        "vhci_instrument.cpp",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    shared_libs: [
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libbase",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
