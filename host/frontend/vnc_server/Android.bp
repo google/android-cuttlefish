@@ -40,7 +40,6 @@ cc_binary_host {
     static_libs: [
         "libcuttlefish_host_config",
         "libjpeg",
-        "libvsoc_framebuffer",
         "libvsoc_gralloc",
         "libgflags",
     ],

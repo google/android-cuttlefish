@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 
 #include "common/libs/glog/logging.h"
 #include "common/vsoc/lib/lock_guard.h"

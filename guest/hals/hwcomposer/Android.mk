@@ -37,7 +37,6 @@ LOCAL_CFLAGS := \
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog \
-    libvsoc_framebuffer \
     vsoc_lib
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))

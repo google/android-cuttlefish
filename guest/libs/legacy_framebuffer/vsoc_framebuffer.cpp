@@ -31,10 +31,10 @@
 #include <unistd.h>
 
 #include <utils/String8.h>
-
-#include <common/vsoc/framebuffer/fb_bcast_region_view.h>
 #include <cutils/log.h>
 #include <system/graphics.h>
+
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 
 const char* const VSoCFrameBuffer::kFrameBufferPath =
     "/dev/userspace_framebuffer";

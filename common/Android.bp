@@ -16,5 +16,4 @@
 subdirs = [
     "commands",
     "libs",
-    "vsoc",
 ]

@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 
 namespace cvd {
 namespace vnc {

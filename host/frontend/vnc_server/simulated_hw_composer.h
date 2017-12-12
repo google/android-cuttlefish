@@ -25,7 +25,7 @@
 
 #include "common/libs/thread_safe_queue/thread_safe_queue.h"
 #include "common/libs/threads/thread_annotations.h"
-#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 #include "host/frontend/vnc_server/blackboard.h"
 
 namespace cvd {
