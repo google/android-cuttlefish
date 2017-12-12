@@ -19,7 +19,6 @@
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
-#include <sys/epoll.h>
 #include <sys/eventfd.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -60,7 +59,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cvd {
+namespace avd {
 
 class FileInstance;
 
@@ -141,15 +140,14 @@ class SharedFD {
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
-  static SharedFD Epoll(int flags = 0);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
+  static SharedFD SocketInAddrAnyServer(int in_port, int in_type);
   static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
-  static SharedFD SocketLocalServer(int port, int type);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
   static SharedFD TimerFD(int clock, int flags);
@@ -168,9 +166,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const cvd::FileInstance& operator*() const { return *value_; }
+  const avd::FileInstance& operator*() const { return *value_; }
 
-  cvd::FileInstance& operator*() { return *value_; }
+  avd::FileInstance& operator*() { return *value_; }
 
  private:
   std::shared_ptr<FileInstance> value_;
@@ -226,22 +224,6 @@ class FileInstance {
   int UNMANAGED_Dup() {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(dup(fd_));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(
-        epoll_ctl(fd_, op, new_fd->fd_, event));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EpollWait(struct epoll_event* events, int maxevents, int timeout) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(
-        epoll_wait(fd_, events, maxevents, timeout));
     errno_ = errno;
     return rval;
   }
@@ -364,11 +346,11 @@ class FileInstance {
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (size_t i = 0; i < SZ; ++i) {
+    for (int i = 0; i < SZ; ++i) {
       fd_array[i] = -1;
     }
     ssize_t rval = RecvMsg(&msg, flags);
-    for (size_t i = 0; i < SZ; ++i) {
+    for (int i = 0; i < SZ; ++i) {
       (*new_fds)[i] =
           std::shared_ptr<FileInstance>(new FileInstance(fd_array[i], errno));
     }
@@ -514,6 +496,6 @@ class FileInstance {
 
 SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace cvd
+}  // namespace avd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
