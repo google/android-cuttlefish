@@ -3,7 +3,7 @@
 ## Build instructions
 
 ```shell
-bazel build //host/vnc_server/:vnc_server
+bazel build host/frontend/vnc_server/:vnc_server
 ```
 
 ### Requirements
