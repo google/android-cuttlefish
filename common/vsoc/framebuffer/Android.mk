@@ -21,7 +21,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
     ../../../common/vsoc/lib/fb_bcast_layout.cpp \
-    fb_bcast_region.cpp
+    fb_bcast_region_view.cpp
 
 LOCAL_C_INCLUDES += \
     device/google/cuttlefish_common/common/vsoc/framebuffer \

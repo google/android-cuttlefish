@@ -41,8 +41,7 @@ class TypedRegionView : public RegionView {
 
   /* Returns a pointer to the region with a type that matches the layout */
   LayoutType* data() {
-    return this->region_offset_to_pointer<LayoutType>(
-        control_->region_desc().offset_of_region_data);
+    return this->GetLayoutPointer<LayoutType>();
   }
 
   const LayoutType& data() const {

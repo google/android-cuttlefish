@@ -25,7 +25,7 @@
 
 #include "common/libs/thread_safe_queue/thread_safe_queue.h"
 #include "common/libs/threads/thread_annotations.h"
-#include "common/vsoc/framebuffer/fb_bcast_region.h"
+#include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 #include "host/frontend/vnc_server/blackboard.h"
 
 namespace avd {
@@ -57,7 +57,6 @@ class SimulatedHWComposer {
   constexpr static std::size_t kMaxQueueElements = 64;
   bool closed_ GUARDED_BY(m_){};
   std::mutex m_;
-  vsoc::framebuffer::FBBroadcastRegion* fb_region_;
   BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;

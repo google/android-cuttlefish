@@ -136,6 +136,14 @@ class RegionView : public RegionSignalingInterface {
   // must store the returned unique_ptr as a class member.
   std::unique_ptr<RegionWorker> StartWorker();
 
+  // Returns a pointer to the start of region data that is cast to the given
+  // type.  Initializers that run in the launcher use this to get a typed view of the region. Most other cases should be handled via TypedRegionView.
+  template <typename LayoutType>
+  LayoutType* GetLayoutPointer() {
+    return this->region_offset_to_pointer<LayoutType>(
+        control_->region_desc().offset_of_region_data);
+  }
+
  protected:
   template <typename T>
   T* region_offset_to_pointer(vsoc_reg_off_t offset) {

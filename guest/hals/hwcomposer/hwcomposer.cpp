@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <common/vsoc/framebuffer/fb_bcast_region.h>
+#include <common/vsoc/framebuffer/fb_bcast_region_view.h>
 #include <guest/hals/gralloc/gralloc_vsoc_priv.h>
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
@@ -26,7 +26,14 @@
 // This file contains just a skeleton hwcomposer, the first step in the
 // multisided vsoc hwcomposer for cuttlefish.
 
-using vsoc::framebuffer::FBBroadcastRegion;
+using vsoc::framebuffer::FBBroadcastRegionView;
+
+// TODO(jemoreira): FBBroadcastRegionView may belong in the HWC region
+
+FBBroadcastRegionView* GetFBBroadcastRegionView() {
+  static FBBroadcastRegionView instance;
+  return &instance;
+}
 
 namespace {
 
@@ -89,7 +96,7 @@ struct vsoc_hwc_device {
   pthread_t vsync_thread;
   int64_t vsync_base_timestamp;
   int32_t vsync_period_ns;
-  FBBroadcastRegion* fb_broadcast;
+  FBBroadcastRegionView* fb_broadcast;
   uint32_t frame_num;
 };
 
@@ -250,15 +257,15 @@ int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/,
 int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
-      return 1000000000/pdev->fb_broadcast->display_properties().refresh_rate_hz();
+      return 1000000000/pdev->fb_broadcast->refresh_rate_hz();
     case HWC_DISPLAY_WIDTH:
-      return pdev->fb_broadcast->display_properties().x_res();
+      return pdev->fb_broadcast->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return pdev->fb_broadcast->display_properties().y_res();
+      return pdev->fb_broadcast->y_res();
     case HWC_DISPLAY_DPI_X:
     case HWC_DISPLAY_DPI_Y:
       // The number of pixels per thousand inches
-      return pdev->fb_broadcast->display_properties().dpi() * 1000;
+      return pdev->fb_broadcast->dpi() * 1000;
     case HWC_DISPLAY_COLOR_TRANSFORM:
       // TODO(jemoreira): Add the other color transformations
       return HAL_COLOR_TRANSFORM_IDENTITY;
@@ -336,8 +343,8 @@ int hwc_open(const struct hw_module_t* module, const char* name,
   dev->base.getDisplayConfigs = hwc_getDisplayConfigs;
   dev->base.getDisplayAttributes = hwc_getDisplayAttributes;
 
-  dev->fb_broadcast = FBBroadcastRegion::GetInstance();
-  if (!dev->fb_broadcast) {
+  dev->fb_broadcast = GetFBBroadcastRegionView();
+  if (!dev->fb_broadcast->Open()) {
     ALOGE("Unable to open framebuffer broadcaster (%s)", __FUNCTION__);
     delete dev;
     return -1;

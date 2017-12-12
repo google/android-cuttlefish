@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/vsoc/lib/region_view.h"
+#include "host/vsoc/lib/region_control.h"
 
 #define LOG_TAG "vsoc: region_host"
 
@@ -124,8 +125,6 @@ class HostRegionControl : public vsoc::RegionControl {
 
 // Default path to the ivshmem_server socket. This can vary when we're
 // launching multiple AVDs.
-const char DEFAULT_DOMAIN[] = "/tmp/ivshmem_socket_client";
-
 constexpr int kMaxSupportedProtocolVersion = 0;
 
 bool HostRegionControl::InitializeRegion() {
