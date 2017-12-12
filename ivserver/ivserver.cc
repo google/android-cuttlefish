@@ -28,8 +28,7 @@ namespace ivserver {
 
 IVServer::IVServer(const IVServerOptions &options, const Json::Value &json_root)
     : json_root_{json_root},
-      vsoc_shmem_(VSoCSharedMemory::New(options.shm_size_mib,
-                                        options.shm_file_path, json_root_)) {
+      vsoc_shmem_(VSoCSharedMemory::New(options.shm_file_path, json_root_)) {
   LOG_IF(WARNING, unlink(options.qemu_socket_path.c_str()) == 0)
       << "Removed existing unix socket: " << options.qemu_socket_path
       << ". We can't confirm yet whether another instance is running.";
