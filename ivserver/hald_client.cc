@@ -99,7 +99,7 @@ bool HaldClient::PerformHandshake(const VSoCSharedMemory& shared_mem) {
   };
   avd::InbandMessageHeader hdr{nullptr, 0, &vec, 1, 0};
   avd::SharedFD fds[3] = {guest_to_host_efd, host_to_guest_efd,
-                          shared_mem.shared_mem_fd()};
+                          shared_mem.SharedMemFD()};
   rval = client_socket_->SendMsgAndFDs<3>(hdr, MSG_NOSIGNAL, fds);
   if (rval == -1) {
     LOG(ERROR) << "failed to send Host FD: " << client_socket_->StrError();
