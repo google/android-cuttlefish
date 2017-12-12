@@ -339,31 +339,34 @@ static void request_teardown_data_call(void* data, size_t datalen, RIL_Token t) 
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void set_radio_state(RIL_RadioState new_state) {
-  if (gRadioPowerState != new_state) {
-    RIL_RadioState old_state;
+static void set_radio_state(RIL_RadioState new_state, RIL_Token t) {
+  // From header:
+  // Toggle radio on and off (for "airplane" mode)
+  // If the radio is is turned off/on the radio modem subsystem
+  // is expected return to an initialized state. For instance,
+  // any voice and data calls will be terminated and all associated
+  // lists emptied.
+  gDataCalls.clear();
 
-    old_state = gRadioPowerState;
-    gRadioPowerState = new_state;
-    gSimStatus = SIM_NOT_READY;
+  RIL_RadioState old_state;
 
-    ALOGV("RIL_RadioState change %d to %d", old_state, new_state);
+  old_state = gRadioPowerState;
+  gRadioPowerState = new_state;
+  gSimStatus = SIM_NOT_READY;
+  ALOGV("RIL_RadioState change %d to %d", old_state, new_state);
 
-    if (new_state == RADIO_STATE_ON) {
-      gce_ril_env->OnUnsolicitedResponse(
-          RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
-      pollSIMState(NULL);
-    } else {
-      // Drop connections.
-      gDataCalls.clear();
-      TearDownNetworkInterface();
-      pollSIMState(NULL);
-    }
-
-    gRilConnected = (gDataCalls.size() > 0);
-    gce_ril_env->OnUnsolicitedResponse(
-        RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED, NULL, 0);
+  if (new_state == RADIO_STATE_OFF) {
+    TearDownNetworkInterface();
   }
+
+  if (t != NULL) {
+    gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  }
+
+  gce_ril_env->OnUnsolicitedResponse(
+      RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED, NULL, 0);
+
+  pollSIMState(NULL);
 }
 
 // returns 1 if on, 0 if off, and -1 on error
@@ -377,21 +380,7 @@ static char is_radio_on() {
 
 static void request_radio_power(void *data, size_t datalen, RIL_Token t) {
   int on = ((int *) data)[0];
-
-  RIL_RadioState state = gRadioPowerState;
-
-  gDataCalls.clear();
-  on_data_calllist_changed(NULL);
-
-  if (on == 0 && state != RADIO_STATE_OFF) {
-    ALOGV("Changing radio power state to off");
-    set_radio_state(RADIO_STATE_OFF);
-  } else if (on != 0 && state == RADIO_STATE_OFF) {
-    ALOGV("Changing radio power state to on");
-    set_radio_state(RADIO_STATE_ON);
-  }
-
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  set_radio_state(on ? RADIO_STATE_ON : RADIO_STATE_OFF, t);
 }
 
 
@@ -998,7 +987,7 @@ static void request_get_radio_capability(RIL_Token t) {
   rc.session = 1;
   rc.phase = RC_PHASE_CONFIGURED;
   rc.rat = RAF_HSPAP;
-  strncpy(rc.logicalModemUuid, "com.google.avdgce1", MAX_UUID_LENGTH);
+  strncpy(rc.logicalModemUuid, "com.google.avdgce1.modem", MAX_UUID_LENGTH);
   rc.status = RC_STATUS_SUCCESS;
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &rc, sizeof(rc));
 }
@@ -1293,15 +1282,17 @@ static const int gMaxConcurrentDataCalls = 4;
 static const int gMaxConcurrentStandbyConnections = 4;
 
 static void request_hardware_config(RIL_Token t) {
-  RIL_HardwareConfig hw_cfg;
+  RIL_HardwareConfig hw_cfg[2];
 
   ALOGV("Requesting hardware configuration.");
 
-  hw_cfg.type = RIL_HARDWARE_CONFIG_MODEM;
-  strncpy(hw_cfg.uuid,
-          "fa6324e3-6f44-486c-ac11-53360a6f063f",  // random, generated.
-          sizeof(hw_cfg.uuid));
-  hw_cfg.state = RIL_HARDWARE_CONFIG_STATE_ENABLED;
+  strncpy(hw_cfg[0].uuid,
+          "com.google.avdgce1.modem",
+          sizeof(hw_cfg[0].uuid));
+  strncpy(hw_cfg[1].uuid,
+          "com.google.avdgce1.sim",
+          sizeof(hw_cfg[1].uuid));
+
 
   int technologies = 0;  // = unknown.
   std::map<RIL_PreferredNetworkType, int>::iterator
@@ -1310,11 +1301,19 @@ static void request_hardware_config(RIL_Token t) {
     technologies = iter->second;
   }
 
-  hw_cfg.cfg.modem.rilModel = 0;
-  hw_cfg.cfg.modem.rat = technologies;
-  hw_cfg.cfg.modem.maxVoice = gMaxConcurrentVoiceCalls;
-  hw_cfg.cfg.modem.maxData = gMaxConcurrentDataCalls;
-  hw_cfg.cfg.modem.maxStandby = gMaxConcurrentStandbyConnections;
+  hw_cfg[0].type = RIL_HARDWARE_CONFIG_MODEM;
+  hw_cfg[0].state = RIL_HARDWARE_CONFIG_STATE_ENABLED;
+  hw_cfg[0].cfg.modem.rilModel = 0;
+  hw_cfg[0].cfg.modem.rat = technologies;
+  hw_cfg[0].cfg.modem.maxVoice = gMaxConcurrentVoiceCalls;
+  hw_cfg[0].cfg.modem.maxData = gMaxConcurrentDataCalls;
+  hw_cfg[0].cfg.modem.maxStandby = gMaxConcurrentStandbyConnections;
+
+  hw_cfg[1].type = RIL_HARDWARE_CONFIG_SIM;
+  hw_cfg[1].state = RIL_HARDWARE_CONFIG_STATE_ENABLED;
+  memcpy(hw_cfg[1].cfg.sim.modemUuid, hw_cfg[0].uuid,
+         sizeof(hw_cfg[1].cfg.sim.modemUuid));
+
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &hw_cfg, sizeof(hw_cfg));
 }
 
@@ -1900,10 +1899,13 @@ static void pollSIMState(void *param) {
       ALOGV("SIM Ready. Notifying network state changed.");
       break;
   }
-  gce_ril_env->OnUnsolicitedResponse(
-      RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
-  gce_ril_env->OnUnsolicitedResponse (
-      RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED, NULL, 0);
+
+  if (gRadioPowerState == RADIO_STATE_OFF) {
+    gce_ril_env->OnUnsolicitedResponse(
+        RIL_UNSOL_RESPONSE_SIM_STATUS_CHANGED, NULL, 0);
+    gce_ril_env->OnUnsolicitedResponse (
+        RIL_UNSOL_RESPONSE_VOICE_NETWORK_STATE_CHANGED, NULL, 0);
+  }
 }
 
 std::map<SIM_Status, RIL_AppStatus> gRilAppStatus;
@@ -2409,8 +2411,6 @@ const RIL_RadioFunctions *RIL_Init(
   init_virtual_network();
   init_sim_file_system();
   init_sim_status();
-
-  set_radio_state(RADIO_STATE_ON);
 
   return &ril_callbacks;
 }
