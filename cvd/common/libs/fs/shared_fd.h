@@ -60,7 +60,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace avd {
+namespace cvd {
 
 class FileInstance;
 
@@ -145,11 +145,11 @@ class SharedFD {
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
-  static SharedFD SocketInAddrAnyServer(int in_port, int in_type);
   static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
+  static SharedFD SocketLocalServer(int port, int type);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
   static SharedFD TimerFD(int clock, int flags);
@@ -168,9 +168,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const avd::FileInstance& operator*() const { return *value_; }
+  const cvd::FileInstance& operator*() const { return *value_; }
 
-  avd::FileInstance& operator*() { return *value_; }
+  cvd::FileInstance& operator*() { return *value_; }
 
  private:
   std::shared_ptr<FileInstance> value_;
@@ -230,7 +230,7 @@ class FileInstance {
     return rval;
   }
 
-  int EpollCtl(int op, avd::SharedFD new_fd, struct epoll_event* event) {
+  int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(
         epoll_ctl(fd_, op, new_fd->fd_, event));
@@ -364,11 +364,11 @@ class FileInstance {
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       fd_array[i] = -1;
     }
     ssize_t rval = RecvMsg(&msg, flags);
-    for (int i = 0; i < SZ; ++i) {
+    for (size_t i = 0; i < SZ; ++i) {
       (*new_fds)[i] =
           std::shared_ptr<FileInstance>(new FileInstance(fd_array[i], errno));
     }
@@ -514,6 +514,6 @@ class FileInstance {
 
 SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace avd
+}  // namespace cvd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
