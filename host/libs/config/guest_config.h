@@ -143,6 +143,15 @@ class GuestConfig {
     return *this;
   }
 
+  std::string GetKernelLogSocketName() const {
+    return kernel_log_socket_name_;
+  }
+
+  GuestConfig& SetKernelLogSocketName( const std::string& source) {
+    kernel_log_socket_name_ = source;
+    return *this;
+  }
+
   // Build document as formatted XML string.
   std::string Build() const;
 
@@ -160,6 +169,7 @@ class GuestConfig {
   std::string data_partition_path_;
   std::string vendor_partition_path_;
   std::string usb_v1_socket_name_;
+  std::string kernel_log_socket_name_;
 
   std::string ivshmem_socket_path_;
   int ivshmem_vector_count_;
