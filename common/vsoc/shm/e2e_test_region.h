@@ -139,6 +139,19 @@ struct E2ESecondaryTestRegion : public E2ETestRegionBase {
 };
 ASSERT_SHM_COMPATIBLE(E2ESecondaryTestRegion, e2e_test);
 
+struct E2EManagedTestRegion {
+  static const char* region_name;
+  uint32_t val; // Not needed, here only to avoid an empty struct.
+};
+ASSERT_SHM_COMPATIBLE(E2EManagedTestRegion, e2e_test);
+
+struct E2EManagerTestRegion {
+  static const char* region_name;
+  typedef E2EManagedTestRegion ManagedRegion;
+  uint32_t data[4]; // We don't need more than 4 for the tests
+};
+ASSERT_SHM_COMPATIBLE(E2EManagerTestRegion, e2e_test);
+
 }  // e2e_test
 }  // layout
 }  // vsoc

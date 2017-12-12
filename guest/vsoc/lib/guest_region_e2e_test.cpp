@@ -28,6 +28,8 @@
 
 using vsoc::layout::e2e_test::E2EPrimaryTestRegion;
 using vsoc::layout::e2e_test::E2ESecondaryTestRegion;
+using vsoc::layout::e2e_test::E2EManagedTestRegion;
+using vsoc::layout::e2e_test::E2EManagerTestRegion;
 
 /**
  * The string functions have problems with volatile pointers, so
@@ -135,6 +137,87 @@ TEST(RegionTest, TestSecondaryHostInterrupt) {
 TEST(RegionTest, SecondaryRegionHostWritesVisible) {
   RegionTest<E2ESecondaryTestRegion> test;
   test.CheckHostStrings();
+}
+
+class ManagedRegionTest {
+ public:
+  void testManagedRegionFailMap() {
+    // Map is protected in ManagedRegion, so this need to be tested at low level
+    vsoc::TypedRegion<E2EManagedTestRegion> managed_region;
+    EXPECT_FALSE(managed_region.Open());
+  }
+
+  void testManagedRegionMap() {
+    EXPECT_TRUE(manager_region_.Open());
+
+    // Maps correctly with permission
+    const uint32_t owned_value = 65,
+        begin_offset = 4096,
+        end_offset = 8192;
+    int perm_fd = manager_region_.CreateFdScopedPermission(
+        &manager_region_.data()->data[0],
+        owned_value,
+        begin_offset,
+        end_offset);
+    EXPECT_TRUE(perm_fd >= 0);
+    void* mapped_ptr = mmap(NULL,
+                            end_offset - begin_offset,
+                            PROT_WRITE | PROT_READ,
+                            MAP_SHARED,
+                            perm_fd,
+                            0);
+    EXPECT_FALSE(mapped_ptr == MAP_FAILED);
+
+    // Owned value gets written
+    EXPECT_TRUE(manager_region_.data()->data[0] == owned_value);
+
+    // Data written to the mapped memory stays there after unmap
+    std::string str = "managed by e2e_manager";
+    strcpy(reinterpret_cast<char*>(mapped_ptr), str.c_str());
+    EXPECT_TRUE(munmap(mapped_ptr, end_offset - begin_offset) == 0);
+    mapped_ptr = mmap(NULL,
+                      end_offset - begin_offset,
+                      PROT_WRITE | PROT_READ,
+                      MAP_SHARED,
+                      perm_fd,
+                      0);
+    EXPECT_FALSE(mapped_ptr == MAP_FAILED);
+    EXPECT_TRUE(strcmp(reinterpret_cast<char*>(mapped_ptr), str.c_str()) == 0);
+
+    // Create permission elsewhere in the region, map same offset and length,
+    // ensure data isn't there
+    EXPECT_TRUE(munmap(mapped_ptr, end_offset - begin_offset) == 0);
+    close(perm_fd);
+    EXPECT_TRUE(manager_region_.data()->data[0] == 0);
+    perm_fd = manager_region_.CreateFdScopedPermission(
+        &manager_region_.data()->data[1],
+        owned_value,
+        begin_offset + 4096,
+        end_offset + 4096);
+    EXPECT_TRUE(perm_fd >= 0);
+    mapped_ptr = mmap(NULL,
+                      end_offset - begin_offset,
+                      PROT_WRITE | PROT_READ,
+                      MAP_SHARED,
+                      perm_fd,
+                      0);
+    EXPECT_FALSE(mapped_ptr == MAP_FAILED);
+    EXPECT_FALSE(strcmp(reinterpret_cast<char*>(mapped_ptr), str.c_str()) == 0);
+  }
+  ManagedRegionTest() {}
+
+ private:
+  vsoc::ManagerRegion<E2EManagerTestRegion> manager_region_;
+};
+
+TEST(ManagedRegionTest, ManagedRegionFailMap) {
+  ManagedRegionTest test;
+  test.testManagedRegionFailMap();
+}
+
+TEST(ManagedRegionTest, ManagedRegionMap) {
+  ManagedRegionTest test;
+  test.testManagedRegionMap();
 }
 
 int main(int argc, char** argv) {

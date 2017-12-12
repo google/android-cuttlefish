@@ -31,9 +31,16 @@
 
 using avd::SharedFD;
 
+namespace {
+
+std::string device_path_from_name(const char* region_name) {
+  return std::string("/dev/") + region_name;
+}
+
+}
+
 bool vsoc::OpenableRegion::Open(const char* region_name) {
-  std::string path("/dev/");
-  path += region_name;
+  std::string path = device_path_from_name(region_name);
   region_fd_ = SharedFD::Open(path.c_str(), O_RDWR);
   if (!region_fd_->IsOpen()) {
     LOG(FATAL) << "Unable to open region " << region_name << " ("
@@ -71,4 +78,43 @@ void vsoc::OpenableRegion::InterruptSelf() {
 
 void vsoc::OpenableRegion::WaitForInterrupt() {
   region_fd_->Ioctl(VSOC_WAIT_FOR_INCOMING_INTERRUPT, 0);
+}
+
+int vsoc::OpenableRegion::CreateFdScopedPermission(
+    const char* managed_region_name,
+    uint32_t* owner_ptr,
+    uint32_t owned_value,
+    vsoc_reg_off_t begin_offset,
+    vsoc_reg_off_t end_offset) {
+  if (!region_fd_->IsOpen()) {
+    LOG(FATAL) << "Can't create permission before opening controller region";
+    return VSOC_PERM_ERROR;
+  }
+  int managed_region_fd =
+      open(device_path_from_name(managed_region_name).c_str(), O_RDWR);
+  if (managed_region_fd < 0) {
+    LOG(FATAL) << "Can't open managed region: " << managed_region_name;
+    return VSOC_PERM_ERROR;
+  }
+
+  fd_scoped_permission_arg perm;
+  perm.perm.begin_offset = begin_offset;
+  perm.perm.end_offset = end_offset;
+  perm.perm.owned_value = owned_value;
+  perm.perm.owner_offset = pointer_to_region_offset(owner_ptr);
+  perm.managed_region_fd = managed_region_fd;
+  LOG(INFO) << "owner offset: " << perm.perm.owner_offset;
+  int retval = region_fd_->Ioctl(VSOC_CREATE_FD_SCOPED_PERMISSION, &perm);
+  if (retval) {
+    retval = errno;
+    close(managed_region_fd);
+    if (retval == EBUSY) {
+      return VSOC_PERM_OWNED;
+    } else {
+      LOG(FATAL) << "Unable to create fd scoped permission (" <<
+          strerror(retval) << ")";
+      return VSOC_PERM_ERROR;
+    }
+  }
+  return managed_region_fd;
 }
