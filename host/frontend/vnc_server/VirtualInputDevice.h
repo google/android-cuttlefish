@@ -17,81 +17,63 @@
 #ifndef VIRTUAL_INPUT_DEVICE_H_
 #define VIRTUAL_INPUT_DEVICE_H_
 
-#include <linux/uinput.h>
+#include <functional>
 #include <map>
+#include <string>
 
 namespace avd {
+
 // Base virtual input device class which contains a bunch of boiler-plate code.
 class VirtualInputDevice {
  public:
-  VirtualInputDevice(const char* name, uint16_t bus_type, uint16_t vendor,
-                     uint16_t product, uint16_t version);
-  virtual ~VirtualInputDevice();
+  VirtualInputDevice(std::function<bool(std::string)> cmd_sender)
+      : send_command_(cmd_sender) {}
 
  protected:
-  bool Init(uint32_t* events, int num_events, uint32_t* keys, int num_keys,
-            uint32_t* abs, int num_abs, uint32_t* props, int num_props);
-
-  bool EmitEvent(uint16_t type, uint16_t code, uint32_t value);
-
-  struct uinput_user_dev* uinput_user_dev() {
-    return &uinput_user_dev_;
-  }
+  bool SendCommand(std::string cmd) { return send_command_(cmd); }
 
  private:
-  bool EnableEventBits(uint32_t* events, int num_elements);
-  bool EnableKeyBits(uint32_t* keys, int num_elements);
-  bool EnableAbsBits(uint32_t* abs, int num_elements);
-  bool EnablePropBits(uint32_t* props, int num_elements);
-  bool DoIoctls(int request, uint32_t* list, int num_elements);
-  bool FinalizeDeviceCreation();
-
-  int fd_;
-  struct uinput_user_dev uinput_user_dev_;
+  std::function<bool(std::string)> send_command_;
 };
 
 // Virtual touch-pad.
 class VirtualTouchPad : public VirtualInputDevice {
  public:
-  VirtualTouchPad(const char* name, int x_res, int y_res);
-  virtual ~VirtualTouchPad() {}
+  VirtualTouchPad(std::function<bool(std::string)> cmd_sender)
+      : VirtualInputDevice(cmd_sender) {}
 
   void HandlePointerEvent(bool touch_down, int x, int y);
 
  private:
-  static uint32_t Senabled_events_[];
-  static uint32_t Senabled_keys_[];
-  static uint32_t Senabled_abs_[];
-  static uint32_t Senabled_props_[];
-
-  int x_res_;
-  int y_res_;
+  std::string GetCommand(bool touch_down, int x, int y);
+  bool prev_touch_ = false;
+  int prev_x_ = -1;
+  int prev_y_ = -1;
 };
 
 // Virtual button.
 class VirtualButton : public VirtualInputDevice {
  public:
-  VirtualButton(const char* name, uint32_t input_keycode);
-  virtual ~VirtualButton() {}
+  VirtualButton(std::string input_keycode,
+                std::function<bool(std::string)> cmd_sender)
+      : VirtualInputDevice(cmd_sender), input_keycode_(input_keycode) {}
 
   void HandleButtonPressEvent(bool button_down);
 
  private:
-  static uint32_t Senabled_events_[];
-  uint32_t input_keycode_;
+  std::string input_keycode_;
 };
 
 // Virtual keyboard.
 class VirtualKeyboard : public VirtualInputDevice {
  public:
-  VirtualKeyboard(const char* name);
+  VirtualKeyboard(std::function<bool(std::string)> cmd_sender);
   virtual ~VirtualKeyboard() {}
 
   void GenerateKeyPressEvent(int code, bool down);
 
  private:
-  static uint32_t Senabled_events_[];
-  std::map<uint32_t, uint32_t> keymapping_;
+  std::map<uint32_t, std::string> keymapping_;
 };
 
 }  // namespace avd

@@ -3,18 +3,13 @@
 #include <algorithm>
 #include <string>
 
-namespace {
-constexpr int kVncServerPort = 6444;
-
-// TODO(haining) use gflags when available
-bool HasAggressiveFlag(int argc, char* argv[]) {
-  const std::string kAggressive = "--aggressive";
-  auto end = argv + argc;
-  return std::find(argv, end, kAggressive) != end;
-}
-}  // namespace
+DEFINE_bool(agressive, false, "Whether to use agressive server");
+DEFINE_int32(port, 6444, "Port where to listen for connections");
 
 int main(int argc, char* argv[]) {
-  avd::vnc::VncServer vnc_server(kVncServerPort, HasAggressiveFlag(argc, argv));
+  google::InitGoogleLogging(argv[0]);
+  google::InstallFailureSignalHandler();
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  avd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
   vnc_server.MainLoop();
 }

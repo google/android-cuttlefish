@@ -1,26 +1,26 @@
 #include "simulated_hw_composer.h"
 
+#include "common/vsoc/lib/typed_region_view.h"
+#include "host/vsoc/gralloc/gralloc_buffer_region.h"
+#include "vnc_utils.h"
+
 using avd::vnc::SimulatedHWComposer;
+using vsoc::gralloc::GrallocBufferRegion;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
 #ifdef FUZZ_TEST_VNC
       engine_{std::random_device{}()},
 #endif
-      control_{GceFrameBufferControl::getInstance()},
+      fb_region_{vsoc::framebuffer::FBBroadcastRegion::GetInstance()},
       bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements) {
-  void* p{};
-  GceFrameBuffer::OpenAndMapFrameBuffer(&p, &frame_buffer_fd_);
-  frame_buffer_memory_ = static_cast<char*>(p);
   stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
 }
 
 SimulatedHWComposer::~SimulatedHWComposer() {
   close();
   stripe_maker_.join();
-  GceFrameBuffer::UnmapAndCloseFrameBuffer(frame_buffer_memory_,
-                                           frame_buffer_fd_);
 }
 
 avd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
@@ -61,12 +61,11 @@ void SimulatedHWComposer::MakeStripes() {
   std::uint64_t stripe_seq_num = 1;
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
-    int y_offset{};
-    control_.WaitForFrameBufferChangeSince(previous_seq_num, &y_offset,
-                                           &previous_seq_num, nullptr);
+    vsoc_reg_off_t buffer_offset =
+        fb_region_->WaitForNewFrameSince(&previous_seq_num);
 
     const auto* frame_start =
-        frame_buffer_memory_ + y_offset * ActualScreenWidth() * BytesPerPixel();
+        GrallocBufferRegion::GetInstance()->OffsetToBufferPtr(buffer_offset);
     raw_screen.assign(frame_start, frame_start + ScreenSizeInBytes());
 
     for (int i = 0; i < kNumStripes; ++i) {

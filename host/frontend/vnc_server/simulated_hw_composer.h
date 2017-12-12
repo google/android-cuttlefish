@@ -1,11 +1,10 @@
-#ifndef DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_SIMULATED_HW_COMPOSER_H_
-#define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_SIMULATED_HW_COMPOSER_H_
+#pragma once
 
 #include "blackboard.h"
 
-#include <GceFrameBuffer.h>
-#include <GceFrameBufferControl.h>
-#include <ThreadSafeQueue.hpp>
+#include "common/libs/thread_safe_queue/thread_safe_queue.h"
+#include "common/libs/threads/thread_annotations.h"
+#include "common/vsoc/framebuffer/fb_bcast_region.h"
 
 #include <mutex>
 #include <thread>
@@ -44,14 +43,10 @@ class SimulatedHWComposer {
   constexpr static std::size_t kMaxQueueElements = 64;
   bool closed_ GUARDED_BY(m_){};
   std::mutex m_;
-  GceFrameBufferControl& control_;
+  vsoc::framebuffer::FBBroadcastRegion* fb_region_;
   BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;
-  char* frame_buffer_memory_{};
-  int frame_buffer_fd_{};
 };
 }  // namespace vnc
 }  // namespace avd
-
-#endif
