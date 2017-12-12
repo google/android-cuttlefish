@@ -198,10 +198,13 @@ std::string vsoc::GetPerInstanceDefault(const char* prefix) {
   return stream.str();
 }
 
+std::string vsoc::GetPerInstanceDir() {
+  return vsoc::GetPerInstanceDefault("/var/run/cvd-");
+}
+
 std::string vsoc::GetPerInstancePath(const std::string& basename) {
   std::ostringstream stream;
-  stream << vsoc::GetPerInstanceDefault("/var/run/cvd-") <<
-      "/" << basename;
+  stream << GetPerInstanceDir() << "/" << basename;
   return stream.str();
 }
 

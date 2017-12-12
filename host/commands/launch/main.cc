@@ -17,6 +17,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <fstream>
@@ -89,8 +92,8 @@ DEFINE_string(system_image_dir,
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
 DEFINE_string(usbipsocket, "android_usbip", "Name of the USB/IP socket.");
-std::string g_default_uuid{GetPerInstanceDefault(
-    "699acfc4-c8c4-11e7-882b-5065f31dc1")};
+std::string g_default_uuid{
+    GetPerInstanceDefault("699acfc4-c8c4-11e7-882b-5065f31dc1")};
 DEFINE_string(uuid, g_default_uuid.c_str(),
               "UUID to use for the device. Random if not specified");
 
@@ -180,12 +183,45 @@ class IVServerManager {
 
 }  // anonymous namespace
 
+void subprocess(const char* const* command) {
+  pid_t pid = fork();
+  if (!pid) {
+    int rval = execv(command[0], const_cast<char* const*>(command));
+    // No need for an if: if exec worked it wouldn't have returned
+    LOG(ERROR) << "exec of " << command[0] << " failed (" << strerror(errno)
+               << ")";
+    exit(rval);
+  }
+  if (pid == -1) {
+    LOG(ERROR) << "fork of " << command[0] << " failed (" << strerror(errno)
+               << ")";
+  } else {
+    waitpid(pid, 0, 0);
+  }
+}
+
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   LOG_IF(FATAL, FLAGS_system_image_dir.empty())
       << "--system_image_dir must be specified.";
+
+  std::string per_instance_dir = vsoc::GetPerInstanceDir();
+  struct stat unused;
+  if ((stat(per_instance_dir.c_str(), &unused) == -1) && (errno == ENOENT)) {
+    LOG(INFO) << "Setting up " << per_instance_dir;
+    const char* mkdir_command[]{
+        "/usr/bin/sudo",          "/bin/mkdir", "-m", "0775",
+        per_instance_dir.c_str(), NULL};
+    subprocess(mkdir_command);
+    std::string owner_group{getenv("USER")};
+    owner_group += ":libvirt-qemu";
+    const char* chown_command[]{"/usr/bin/sudo", "/bin/chown",
+                                owner_group.c_str(), per_instance_dir.c_str(),
+                                NULL};
+    subprocess(chown_command);
+  }
 
   // If user did not specify location of either of these files, expect them to
   // be placed in --system_image_dir location.
@@ -258,7 +294,8 @@ int main(int argc, char** argv) {
       .SetDisableDACSecurity(FLAGS_disable_dac_security)
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
       .SetUUID(FLAGS_uuid);
-  cfg.SetUSBV1SocketName(vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-usb"));
+  cfg.SetUSBV1SocketName(
+      vsoc::GetPerInstancePath(cfg.GetInstanceName() + "-usb"));
 
   std::string xml = cfg.Build();
   if (FLAGS_log_xml) {
