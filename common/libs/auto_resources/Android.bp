@@ -13,12 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
+cc_library_static {
     name: "cuttlefish_auto_resources",
     srcs: [
         "auto_resources.cpp",
     ],
-    defaults: ["cuttlefish_host"],
+    defaults: ["cuttlefish_common"],
 }
 
 cc_test_host {
