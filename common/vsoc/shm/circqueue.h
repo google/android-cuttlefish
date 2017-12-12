@@ -25,7 +25,7 @@
 #include "common/vsoc/shm/lock.h"
 
 namespace vsoc {
-class RegionView;
+class RegionSignalingInterface;
 namespace layout {
 
 /**
@@ -68,7 +68,7 @@ class CircularQueueBase : public Base {
    * called Lock() before invoking this. The caller must call Unlock()
    * after this returns.
    */
-  void WaitForDataLocked(RegionView* r);
+  void WaitForDataLocked(RegionSignalingInterface* r);
 
   /**
    * Reserve space in the queue for writing. The caller must have called Lock()
@@ -79,7 +79,7 @@ class CircularQueueBase : public Base {
    * bytes > the queue size, -EWOULDBLOCK indicates that the call would block
    * waiting for space but was requested non bloking.
    */
-  intptr_t WriteReserveLocked(RegionView* r,
+  intptr_t WriteReserveLocked(RegionSignalingInterface* r,
                               size_t bytes,
                               Range* t,
                               bool non_blocking);
@@ -110,7 +110,7 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
   /**
    * Read at most max_size bytes from the qeueue, placing them in buffer_out
    */
-  intptr_t Read(RegionView* r, char* buffer_out, std::size_t max_size);
+  intptr_t Read(RegionSignalingInterface* r, char* buffer_out, std::size_t max_size);
   /**
    * Write all of the given bytes into the queue. If non_blocking isn't set the
    * call may block until there is enough available space in the queue. On
@@ -119,7 +119,7 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
    * write. -EWOULDBLOCK: If non_blocking is true and there is not enough free
    * space.
    */
-  intptr_t Write(RegionView* r,
+  intptr_t Write(RegionSignalingInterface* r,
                  const char* buffer_in,
                  std::size_t bytes,
                  bool non_blocking = false);
@@ -143,7 +143,7 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    * If max_size indicates that buffer_out cannot hold the entire packet
    * this function will return -ENOSPC.
    */
-  intptr_t Read(RegionView* r, char* buffer_out, std::size_t max_size);
+  intptr_t Read(RegionSignalingInterface* r, char* buffer_out, std::size_t max_size);
 
   /**
    * Writes [buffer_in, buffer_in + bytes) to the queue.
@@ -152,7 +152,7 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    * If non_blocking is true and there is not enogh free space on the queue to
    * write all the data -EWOULDBLOCK will be returned.
    */
-  intptr_t Write(RegionView* r,
+  intptr_t Write(RegionSignalingInterface* r,
                  const char* buffer_in,
                  uint32_t bytes,
                  bool non_blocking = false);

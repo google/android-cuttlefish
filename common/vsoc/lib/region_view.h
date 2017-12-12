@@ -28,6 +28,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/glog/logging.h"
+#include "common/vsoc/lib/region_signaling_interface.h"
 #include "common/vsoc/lib/region_control.h"
 #include "common/vsoc/shm/base.h"
 #include "uapi/vsoc_shm.h"
@@ -60,7 +61,7 @@ class RegionWorker {
  * address. The RegionControl class holds the methods that can be invoked
  * without mapping the region.
  */
-class RegionView {
+class RegionView : public RegionSignalingInterface {
  public:
   virtual ~RegionView();
 
