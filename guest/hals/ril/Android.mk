@@ -28,6 +28,7 @@ LOCAL_SHARED_LIBRARIES := \
   libril \
   libcuttlefish_fs \
   libcuttlefish_auto_resources \
+  libnetutils \
   libbase
 
 LOCAL_STATIC_LIBRARIES := \
