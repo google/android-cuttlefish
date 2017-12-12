@@ -23,11 +23,6 @@ class IVServer final {
   //
   void Serve();
 
-  //
-  // Returns true if object has been successfully initialized.
-  //
-  bool HasInitialized() const { return initialized_; }
-
  private:
   bool HandleNewClientConnection();
   bool HandleNewQemuConnection();
@@ -36,7 +31,6 @@ class IVServer final {
   VSoCSharedMemory vsoc_shmem_;
   int qemu_listener_fd_ = -1;
   int client_listener_fd_ = -1;
-  bool initialized_ = false;
 };
 
 }  // namespace ivserver

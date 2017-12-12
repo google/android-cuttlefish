@@ -8,20 +8,18 @@
 
 #include <glog/logging.h>
 
-#define LOG_TAG "ivserver::IVServer"
-
 namespace ivserver {
 
 IVServer::IVServer(const IVServerOptions &options, const Json::Value &json_root)
     : json_root_{json_root},
       vsoc_shmem_(options.shm_size_mib, options.shm_file_path, json_root_) {
   qemu_listener_fd_ = start_listener_socket(options.qemu_socket_path);
-  if (qemu_listener_fd_ == -1) return;
+  LOG_IF(FATAL, client_listener_fd_ == -1)
+      << "Could not create qemu socket: " << strerror(errno);
 
   client_listener_fd_ = start_listener_socket(options.client_socket_path);
-  if (client_listener_fd_ == -1) return;
-
-  initialized_ = true;
+  LOG_IF(FATAL, client_listener_fd_ == -1)
+      << "Could not create client socket: " << strerror(errno);
 }
 
 void IVServer::Serve() {
@@ -56,7 +54,6 @@ void IVServer::Serve() {
   }
 
   LOG(FATAL) << "Control reached out of event loop";
-  return;  // This should never happen;
 }
 
 bool IVServer::HandleNewClientConnection() {
