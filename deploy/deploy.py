@@ -118,7 +118,6 @@ class DeployAction(object):
                 if update:
                     ssh_tgt.copy(file_name, target_dir)
 
-            ssh_tgt.execute('cp /usr/share/cuttlefish-common/gce_ramdisk.img ' + target_dir)
             ssh_tgt.execute('unzip -p \'%s/%s\' system.img > %s/system.img' %
                             (target_dir, temp_image, target_dir))
             ssh_tgt.execute('setfacl -m g:libvirt:rw %s/*' % target_dir)
