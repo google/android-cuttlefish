@@ -18,8 +18,9 @@
 
 namespace ivserver {
 namespace {
-const uint16_t kLayoutVersionMajor = 1;
-const uint16_t kLayoutVersionMinor = 0;
+
+static_assert(CURRENT_VSOC_LAYOUT_MAJOR_VERSION == 1,
+              "Region layout code must be updated");
 
 class VSoCSharedMemoryImpl : public VSoCSharedMemory {
  public:
@@ -165,8 +166,8 @@ void VSoCSharedMemoryImpl::CreateLayout() {
 
   vsoc_shm_layout_descriptor layout_descriptor{};
 
-  layout_descriptor.major_version = kLayoutVersionMajor;
-  layout_descriptor.minor_version = kLayoutVersionMinor;
+  layout_descriptor.major_version = CURRENT_VSOC_LAYOUT_MAJOR_VERSION;
+  layout_descriptor.minor_version = CURRENT_VSOC_LAYOUT_MINOR_VERSION;
   layout_descriptor.size = size_;
 
   // TODO(romitd): error checking and sanity.
