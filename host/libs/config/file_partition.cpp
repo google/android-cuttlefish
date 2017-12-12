@@ -16,10 +16,12 @@
 #include <errno.h>
 #include <limits.h>
 
+#include <sstream>
+
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/config/file_partition.h"
+#include "host/libs/config/file_partition.h"
 
 namespace config {
 namespace {

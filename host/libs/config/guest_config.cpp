@@ -18,7 +18,7 @@
 #include <sstream>
 
 #include <glog/logging.h>
-#include "host/config/guest_config.h"
+#include "host/libs/config/guest_config.h"
 
 // This class represents libvirt guest configuration.
 // A lot of useful information about the document created here can be found on
@@ -181,20 +181,31 @@ void ConfigureDisk(xmlNode* devices, const std::string& name,
 
 // Configure virtio channel.
 // This section adds <channel> elements to <devices> node.
-void ConfigureVirtioChannel(xmlNode* devices, int port, DeviceSourceType type,
-                            const std::string& path) {
+// This version allows the guest device name to be an arbitrary string
+void ConfigureVirtioChannel(xmlNode* devices, const char* guest_dev_name,
+                            int port,
+                            DeviceSourceType type, const std::string& path) {
   auto vch = xmlNewChild(devices, nullptr, xc("channel"), nullptr);
   ConfigureDeviceSource(vch, type, path);
 
   auto tgt = xmlNewChild(vch, nullptr, xc("target"), nullptr);
   xmlNewProp(tgt, xc("type"), xc("virtio"));
-  xmlNewProp(tgt, xc("name"), xc(concat("vport0p", port).c_str()));
+  xmlNewProp(tgt, xc("name"), xc(guest_dev_name));
 
   auto adr = xmlNewChild(vch, nullptr, xc("address"), nullptr);
   xmlNewProp(adr, xc("type"), xc("virtio-serial"));
   xmlNewProp(adr, xc("controller"), xc("0"));
   xmlNewProp(adr, xc("bus"), xc("0"));
   xmlNewProp(adr, xc("port"), xc(concat(port).c_str()));
+}
+
+// Configure virtio channel.
+// This section adds <channel> elements to <devices> node.
+// This version creates a generic guest device name from a port number
+void ConfigureVirtioChannel(xmlNode* devices, int port, DeviceSourceType type,
+                            const std::string& path) {
+  std::string guest_dev_name(concat("vport0p", port));
+  ConfigureVirtioChannel(devices, guest_dev_name.c_str(), port, type, path);
 }
 
 // Configure network interface.
@@ -240,10 +251,6 @@ std::string GuestConfig::GetInstanceName() const {
   return concat("android-cuttlefish-", id_);
 }
 
-std::string GuestConfig::GetUSBSocketName() const {
-  return concat("/tmp/", GetInstanceName(), "-usb");
-}
-
 std::string GuestConfig::Build() const {
   std::string instance_name = GetInstanceName();
 
@@ -270,8 +277,10 @@ std::string GuestConfig::Build() const {
                       concat("/tmp/", instance_name, "-serial"));
   ConfigureVirtioChannel(devices, 1, DeviceSourceType::kFile,
                          concat("/tmp/", instance_name, "-logcat"));
-  ConfigureVirtioChannel(devices, 2, DeviceSourceType::kUnixSocketClient,
-                         GetUSBSocketName());
+  if (usb_v1_socket_name_.size()) {
+    ConfigureVirtioChannel(devices, "vsoc_usb_v1", 2, DeviceSourceType::kUnixSocketClient,
+                           usb_v1_socket_name_);
+  }
 
   ConfigureDisk(devices, "vda", system_partition_path_);
   ConfigureDisk(devices, "vdb", data_partition_path_);
@@ -280,8 +289,6 @@ std::string GuestConfig::Build() const {
 
   ConfigureNIC(devices, concat("amobile", id_), mobile_bridge_name_, id_, 1);
   ConfigureHWRNG(devices, entropy_source_);
-
-  xmlNewChild(devices, nullptr, xc("emulator"), xc(emulator_.c_str()));
 
   xmlChar* tgt;
   int tgt_len;

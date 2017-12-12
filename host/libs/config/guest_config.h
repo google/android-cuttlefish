@@ -111,18 +111,19 @@ class GuestConfig {
     return *this;
   }
 
-  // Set emulator that will be used to start vm, eg. /usr/bin/qemu
-  GuestConfig& SetEmulator(const std::string& emulator) {
-    emulator_ = emulator;
-    return *this;
-  }
-
   // GetInstanceName returns name of this newly created instance.
   std::string GetInstanceName() const;
 
   // GetUSBSocketName returns name of the USB socket that will be used to
-  // forward access to USB gadget.
-  std::string GetUSBSocketName() const;
+  // forward access to USB gadget. This is for V1 of the USB bus.
+  std::string GetUSBV1SocketName() const {
+    return usb_v1_socket_name_;
+  }
+
+  GuestConfig& SetUSBV1SocketName(const std::string& source) {
+    usb_v1_socket_name_ = source;
+    return *this;
+  }
 
   // Build document as formatted XML string.
   std::string Build() const;
@@ -140,14 +141,13 @@ class GuestConfig {
   std::string cache_partition_path_;
   std::string data_partition_path_;
   std::string vendor_partition_path_;
+  std::string usb_v1_socket_name_;
 
   std::string ivshmem_socket_path_;
   int ivshmem_vector_count_;
 
   std::string mobile_bridge_name_;
   std::string entropy_source_;
-
-  std::string emulator_;
 
   GuestConfig(const GuestConfig&) = delete;
   GuestConfig& operator=(const GuestConfig&) = delete;
