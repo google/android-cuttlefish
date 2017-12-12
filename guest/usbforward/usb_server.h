@@ -59,6 +59,9 @@ class USBServer final {
   // Handle CmdDataTransfer request.
   void HandleDataTransfer(uint32_t tag);
 
+  // Handle CmdHeartbeat request.
+  void HandleHeartbeat(uint32_t tag);
+
   // OnAsyncDataTransferComplete handles end of asynchronous data transfer cycle
   // and sends response back to caller.
   void OnTransferComplete(uint32_t tag, bool is_data_in, bool is_success,

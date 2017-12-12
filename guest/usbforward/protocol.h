@@ -67,6 +67,15 @@ enum Command : uint32_t {
   //   - int32_t(actual length)
   //   - int32_t[actual length] bytes
   CmdDataTransfer,
+
+  // Heartbeat is used to detect whether device is alive.
+  // This is a trivial request/response mechanism.
+  // Response status indicates whether server is ready.
+  // Request format:
+  // - RequestHeader{}
+  // Response format:
+  // - ResponseHeader{}
+  CmdHeartbeat,
 };
 
 // Status represents command execution result, using USB/IP compatible values.
