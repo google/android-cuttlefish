@@ -45,27 +45,27 @@ namespace {
 // of the regions bumping the version number if they used the fields in their
 // definition.
 const uint32_t version = 0;
-}
+}  // namespace
 
 static const std::size_t Base_size = 1;
 static const std::size_t PixelFormatRegister_size = 4;
 static const std::size_t PixelFormatMaskRegister_size = 8;
 
 namespace constant_values {
-  static const uint32_t VSOC_PIXEL_FORMAT_UNINITIALIZED = 0;
-  static const uint32_t VSOC_PIXEL_FORMAT_BLOB = 1;
+static const uint32_t VSOC_PIXEL_FORMAT_UNINITIALIZED = 0;
+static const uint32_t VSOC_PIXEL_FORMAT_BLOB = 1;
 
-  static const uint32_t VSOC_PIXEL_FORMAT_RGB_565 = 8;
-  static const uint32_t VSOC_PIXEL_FORMAT_YV12 = 9;
-  static const uint32_t VSOC_PIXEL_FORMAT_YCbCr_420_888 = 10;
+static const uint32_t VSOC_PIXEL_FORMAT_RGB_565 = 8;
+static const uint32_t VSOC_PIXEL_FORMAT_YV12 = 9;
+static const uint32_t VSOC_PIXEL_FORMAT_YCbCr_420_888 = 10;
 
-  static const uint32_t VSOC_PIXEL_FORMAT_RGB_888 = 16;
+static const uint32_t VSOC_PIXEL_FORMAT_RGB_888 = 16;
 
-  static const uint32_t VSOC_PIXEL_FORMAT_RGBA_8888 = 24;
-  static const uint32_t VSOC_PIXEL_FORMAT_RGBX_8888 = 25;
-  static const uint32_t VSOC_PIXEL_FORMAT_BGRA_8888 = 26;
-}  // constant_values
-}  // multi_region
+static const uint32_t VSOC_PIXEL_FORMAT_RGBA_8888 = 24;
+static const uint32_t VSOC_PIXEL_FORMAT_RGBX_8888 = 25;
+static const uint32_t VSOC_PIXEL_FORMAT_BGRA_8888 = 26;
+}  // namespace constant_values
+}  // namespace multi_region
 
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region
@@ -78,8 +78,8 @@ static const std::size_t E2EPrimaryTestRegion_size = 72;
 static const std::size_t E2ESecondaryTestRegion_size = 72;
 static const std::size_t E2ETestRegionBase_size = 72;
 static const std::size_t E2ETestStageRegister_size = 4;
-}  // e2e_test_region
+}  // namespace e2e_test
 
-}  // version_info
-}  // layout
-}  // vsoc
+}  // namespace version_info
+}  // namespace layout
+}  // namespace vsoc

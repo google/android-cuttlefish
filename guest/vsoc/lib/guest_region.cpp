@@ -15,13 +15,13 @@
  */
 #include "guest/vsoc/lib/guest_region.h"
 
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <string>
 #include <thread>
@@ -32,21 +32,21 @@
 using avd::SharedFD;
 
 bool vsoc::OpenableRegion::Open(const char* region_name) {
-      std::string path("/dev/");
-      path += region_name;
-      region_fd_ = SharedFD::Open(path.c_str(), O_RDWR);
-      if (!region_fd_->IsOpen()) {
-        LOG(FATAL) << "Unable to open region " << region_name << " (" <<
-                   region_fd_->StrError() << ")";
-        return false;
-  }
-  if (region_fd_->Ioctl(VSOC_DESCRIBE_REGION, &region_desc_)) {
-    LOG(FATAL) << "Unable to obtain region descriptor (" <<
-               region_fd_->StrError() << ")";
+  std::string path("/dev/");
+  path += region_name;
+  region_fd_ = SharedFD::Open(path.c_str(), O_RDWR);
+  if (!region_fd_->IsOpen()) {
+    LOG(FATAL) << "Unable to open region " << region_name << " ("
+               << region_fd_->StrError() << ")";
     return false;
   }
-  region_base_ = region_fd_->Mmap(0, region_size(),
-                      PROT_READ|PROT_WRITE, MAP_SHARED, 0);
+  if (region_fd_->Ioctl(VSOC_DESCRIBE_REGION, &region_desc_)) {
+    LOG(FATAL) << "Unable to obtain region descriptor ("
+               << region_fd_->StrError() << ")";
+    return false;
+  }
+  region_base_ =
+      region_fd_->Mmap(0, region_size(), PROT_READ | PROT_WRITE, MAP_SHARED, 0);
   if (region_base_ == MAP_FAILED) {
     LOG(FATAL) << "mmap failed (" << region_fd_->StrError() << ")";
     return false;

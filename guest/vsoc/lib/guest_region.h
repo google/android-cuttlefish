@@ -20,10 +20,10 @@
 
 #include "common/vsoc/lib/region.h"
 
-#include <atomic>
-#include <cstdint>
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <atomic>
+#include <cstdint>
 
 #include "common/libs/fs/shared_fd.h"
 #include "uapi/vsoc_shm.h"
@@ -60,16 +60,13 @@ class TypedRegion : public OpenableRegion {
  public:
   /* Returns a pointer to the region with a type that matches the layout */
   Layout* data() {
-    return reinterpret_cast<Layout*>(
-        reinterpret_cast<uintptr_t>(region_base_) +
-        region_desc_.offset_of_region_data);
+    return reinterpret_cast<Layout*>(reinterpret_cast<uintptr_t>(region_base_) +
+                                     region_desc_.offset_of_region_data);
   }
 
   TypedRegion() {}
 
-  bool Open() {
-    return OpenableRegion::Open(Layout::region_name);
-  }
+  bool Open() { return OpenableRegion::Open(Layout::region_name); }
 };
 
-}  // vsoc
+}  // namespace vsoc
