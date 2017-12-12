@@ -14,6 +14,7 @@ cc_library(
         "common/vsoc/lib/compat.h",
         "common/vsoc/lib/e2e_test_region_view.h",
         "common/vsoc/lib/graphics_common.h",
+        "common/vsoc/lib/lock_guard.h",
         "common/vsoc/lib/region_control.h",
         "common/vsoc/lib/region_view.h",
         "common/vsoc/lib/single_sided_signal.h",

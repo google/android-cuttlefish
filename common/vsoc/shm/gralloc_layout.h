@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-// Base macros for all layout structures.
-
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/graphics.h"
 #include "common/vsoc/shm/lock.h"
@@ -40,6 +38,10 @@ struct BufferEntry : public Base {
   uint32_t width;
   uint32_t height;
 
+  // A size of 28 is causing different layouts when GrallocManagerLayout is
+  // compiled in host and guest sides
+  uint32_t padding;
+
   uint32_t buffer_size() {
     return buffer_end - buffer_begin;
   }
@@ -59,7 +61,7 @@ struct GrallocManagerLayout : public RegionLayout {
   uint32_t buffer_count;
   // Make sure this isn't the first field
   GuestLock new_buffer_lock;
-  // Needs to be last entry
+  // Needs to be last field
   BufferEntry buffers_table[1];
 };
 ASSERT_SHM_COMPATIBLE(GrallocManagerLayout, gralloc);
