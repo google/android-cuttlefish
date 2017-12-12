@@ -33,20 +33,13 @@ namespace vsoc {
 namespace layout {
 
 /**
- * Base class that should be used for all shared memory objects
- */
-class Base {
-};
-ASSERT_SHM_COMPATIBLE(Base, multi_region);
-
-/**
  * Memory is shared between Guest and Host kernels. In some cases we need
  * flag to indicate which side we're on. In those cases we'll use this
  * simple structure.
  *
  * These are carefully formatted to make Guest and Host a bitfield.
  */
-struct Sides : public Base {
+struct Sides {
   static const uint32_t NoSides = 0;
   static const uint32_t Guest = 1;
   static const uint32_t Host = 2;
@@ -66,7 +59,7 @@ ASSERT_SHM_COMPATIBLE(Sides, multi_region);
 /**
  * Base class for all region layout structures.
  */
-class RegionLayout : public Base {
+class RegionLayout {
 };
 ASSERT_SHM_COMPATIBLE(RegionLayout, multi_region);
 

@@ -34,7 +34,7 @@ namespace layout {
  * as the parameter to TypedRegion.
  */
 template <uint32_t SizeLog2>
-class CircularQueueBase : public Base {
+class CircularQueueBase {
   CircularQueueBase() = delete;
   CircularQueueBase(const CircularQueueBase&) = delete;
   CircularQueueBase& operator=(const CircularQueueBase&) = delete;

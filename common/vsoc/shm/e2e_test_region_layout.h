@@ -56,7 +56,7 @@ enum E2ETestStage {
  * Structure that grants permission to write in the region to either the guest
  * or the host. This size of these fields is arbitrary.
  */
-struct E2EMemoryFill : public ::vsoc::layout::Base {
+struct E2EMemoryFill {
   static const std::size_t kOwnedFieldSize = 32;
 
   // The compiler must not attempt to optimize away reads and writes to the
@@ -70,10 +70,6 @@ ASSERT_SHM_COMPATIBLE(E2EMemoryFill, e2e_test);
 /**
  * Structure that grants permission to write in the region to either the guest
  * or the host. This size of these fields is arbitrary.
- *
- * Note normally this would inherit from vsoc::layout::Base. However, it appears
- * as the first member of the E2E layout structure, and that combination
- * disables clang EBO and changes the structure size.
  */
 class E2ETestStageRegister {
  public:
