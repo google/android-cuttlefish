@@ -47,6 +47,8 @@
 //     #ifdef, etc is absolutely forbidden in this file and highly discouraged
 //     in the other vsoc/shm files.
 
+#include <cstdint>
+
 namespace vsoc {
 namespace layout {
 namespace version_info {
@@ -89,6 +91,17 @@ static const uint32_t VSOC_PIXEL_FORMAT_RGBX_8888 = 25;
 static const uint32_t VSOC_PIXEL_FORMAT_BGRA_8888 = 26;
 }  // namespace constant_values
 }  // namespace multi_region
+
+// Versioning information for gralloc.h
+// Changes to these structures will affect only the gralloc region
+namespace gralloc {
+namespace {
+const uint32_t version = 0;
+}
+static const std::size_t BufferEntry_size = 28;
+static const std::size_t GrallocManagerLayout_size = 76;
+static const std::size_t GrallocBufferLayout_size = 1;
+}  // namespace gralloc
 
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region
