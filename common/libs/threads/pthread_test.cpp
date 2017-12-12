@@ -15,8 +15,7 @@
  */
 #include "common/libs/threads/pthread.h"
 
-#include <glog/logging.h>
-
+#include "common/libs/glog/logging.h"
 #include "common/libs/threads/thunkers.h"
 #include "common/libs/time/monotonic_time.h"
 

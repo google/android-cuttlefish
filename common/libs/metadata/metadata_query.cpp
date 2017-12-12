@@ -15,8 +15,7 @@
  */
 #include "common/libs/fs/shared_fd.h"
 
-#include <glog/logging.h>
-
+#include "common/libs/glog/logging.h"
 #include "common/libs/metadata/metadata_query.h"
 
 namespace {
