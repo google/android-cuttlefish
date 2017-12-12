@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  vadb::VirtualADBServer adb(FLAGS_socket);
+  vadb::VirtualADBServer adb(FLAGS_socket, FLAGS_usbip_socket_name);
   CHECK(adb.Init());
 
   vadb::usbip::Server s(FLAGS_usbip_socket_name, adb.Pool());

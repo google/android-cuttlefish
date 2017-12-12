@@ -58,7 +58,7 @@ void VirtualADBServer::HandleIncomingConnection() {
     return;
   }
 
-  clients_.emplace_back(&pool_, client);
+  clients_.emplace_back(&pool_, client, usbip_name_);
 }
 
 }  // namespace vadb

@@ -29,7 +29,7 @@ namespace usbip {
 class VHCIInstrument {
  public:
   VHCIInstrument(const std::string& name);
-  virtual ~VHCIInstrument() = default;
+  virtual ~VHCIInstrument();
 
   // Init opens vhci-hcd driver and allocates port to which remote USB device
   // will be attached.
@@ -41,10 +41,17 @@ class VHCIInstrument {
   // device.
   void TriggerAttach();
 
+  // TriggerDetach tells underlying thread to disconnect remote USB device.
+  void TriggerDetach();
+
  private:
   // Attach makes an attempt to configure VHCI to enable virtual USB device.
   // Returns true, if configuration attempt was successful.
   bool Attach();
+
+  // Detach disconnects virtual USB device.
+  // Returns true, if attempt was successful.
+  bool Detach();
 
   // AttachThread is a background thread that responds to configuration
   // requests.
@@ -57,8 +64,12 @@ class VHCIInstrument {
   std::string name_;
   std::unique_ptr<std::thread> attach_thread_;
   std::string syspath_;
-  avd::SharedFD wake_event_;
+  avd::SharedFD control_write_end_;
+  avd::SharedFD control_read_end_;
   int port_;
+  // Raw FD used by system to access remote USB device.
+  // This FD must remain valid until no longer needed.
+  int sys_fd_ = -1;
 
   VHCIInstrument(const VHCIInstrument& other) = delete;
   VHCIInstrument& operator=(const VHCIInstrument& other) = delete;

@@ -24,6 +24,7 @@
 #include "host/vadb/usbip/device.h"
 #include "host/vadb/usbip/device_pool.h"
 #include "host/vadb/usbip/messages.h"
+#include "host/vadb/usbip/vhci_instrument.h"
 
 namespace vadb {
 // VirtualADBClient is a companion class for USBForwarder, running on
@@ -34,7 +35,8 @@ namespace vadb {
 // remote USB devices possible with help of USB/IP protocol.
 class VirtualADBClient {
  public:
-  VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd);
+  VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd,
+                   const std::string& usbip_socket_name);
 
   virtual ~VirtualADBClient() = default;
 
@@ -90,6 +92,7 @@ class VirtualADBClient {
   usbip::DevicePool* pool_;
   avd::SharedFD fd_;
   avd::SharedFD timer_;
+  usbip::VHCIInstrument vhci_;
   bool is_remote_server_ready_ = false;
 
   uint32_t tag_ = 0;
