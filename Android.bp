@@ -63,6 +63,7 @@ cc_library_host_static {
         "common/vsoc/lib/lock_common.cpp",
         "common/vsoc/lib/region_view.cpp",
         "common/vsoc/lib/wifi_exchange_layout.cpp",
+        "common/vsoc/lib/wifi_exchange_view.cpp",
         "host/vsoc/lib/host_lock.cpp",
         "host/vsoc/lib/region_control.cpp",
         "host/vsoc/lib/region_view.cpp",

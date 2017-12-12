@@ -17,6 +17,7 @@ cc_binary {
         "cuttlefish_glog",
         "cuttlefish_kernel_headers",
     ],
+    compile_multilib: "64",
     target: {
         linux: {
             host_ldlibs: ["-lrt"],

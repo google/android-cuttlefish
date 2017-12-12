@@ -12,12 +12,14 @@ cc_library_static {
     static_libs: [
         "libbase",
         "libnl",
+        "vsoc_lib",
     ],
     header_libs: [
         "cuttlefish_common_headers",
         "cuttlefish_glog",
         "cuttlefish_kernel_headers",
     ],
+    compile_multilib: "64",
     target: {
         linux: {
             host_ldlibs: ["-lrt"],
