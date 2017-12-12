@@ -47,10 +47,11 @@ enum {
 };
 }  // anonymous namespace
 
-VHCIInstrument::VHCIInstrument()
+VHCIInstrument::VHCIInstrument(const std::string& name)
     : udev_(nullptr, [](udev* u) { udev_unref(u); }),
       vhci_device_(nullptr,
-                   [](udev_device* device) { udev_device_unref(device); }) {}
+                   [](udev_device* device) { udev_device_unref(device); }),
+      name_(name) {}
 
 bool VHCIInstrument::Init() {
   udev_.reset(udev_new());
@@ -117,37 +118,15 @@ void VHCIInstrument::AttachThread() {
 }
 
 bool VHCIInstrument::Attach() {
-  struct addrinfo hints {};
-  std::unique_ptr<addrinfo, void (*)(addrinfo*)> addr(nullptr, freeaddrinfo);
-  hints.ai_family = AF_INET6;
-  hints.ai_socktype = SOCK_STREAM;
+  avd::SharedFD socket =
+      avd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
+  if (!socket->IsOpen()) return false;
 
-  {
-    struct addrinfo* addr_raw;
-    auto gaierr = getaddrinfo("::1", "3240", &hints, &addr_raw);
-    if (gaierr != 0) {
-      LOG(ERROR) << "getaddrinfo() failed: " << gai_strerror(gaierr);
-      return false;
-    }
-    addr.reset(addr_raw);
-  }
+  int dup_fd = socket->UNMANAGED_Dup();
 
-  // Hypothetically we could just use something else, here, too.
-  // We use RAW sockets, because we need to pass RAW socket number to USB/IP.
-  // Using avd::SharedFD would give no benefit - and would actually require me
-  // to acquire a duplicate anyway.
-  int connection =
-      socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
-  if (connection < 0) return false;
-
-  if (connect(connection, addr->ai_addr, addr->ai_addrlen) < 0) {
-    LOG(ERROR) << "Could not connect: " << strerror(errno);
-    close(connection);
-    return false;
-  }
 
   std::stringstream result;
-  result << port_ << ' ' << connection << ' ' << kDefaultDeviceID << ' ' <<
+  result << port_ << ' ' << dup_fd << ' ' << kDefaultDeviceID << ' ' <<
          kDefaultDeviceSpeed;
   std::ofstream attach(syspath_ + "/attach");
 
@@ -155,10 +134,9 @@ bool VHCIInstrument::Attach() {
     LOG(WARNING) << "Could not open VHCI attach file.";
     return false;
   }
-
-  LOG(INFO) << "Attaching USB/IP device using: " << result.str();
   attach << result.str();
 
+  close(dup_fd);
   return attach.rdstate() == std::ios_base::goodbit;
 }
 
