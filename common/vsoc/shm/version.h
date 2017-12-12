@@ -103,6 +103,15 @@ static const std::size_t GrallocManagerLayout_size = 80;
 static const std::size_t GrallocBufferLayout_size = 1;
 }  // namespace gralloc
 
+// Versioning information for fb_bcast_layout.h
+// Changes to these structures will affect only the framebuffer broadcast region
+namespace framebuffer {
+namespace {
+const uint32_t version = 0;
+}
+static const std::size_t FBBroadcastLayout_size = 56;
+}  // namespace framebuffer
+
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region
 namespace e2e_test {

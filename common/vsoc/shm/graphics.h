@@ -51,6 +51,12 @@ struct PixelFormatBuilder {
   static const uint32_t value = ((BYTES - 1) << PixelFormatConst::SubformatSize) | SUB_FORMAT;
 };
 
+template <uint32_t FORMAT>
+struct PixelFormatProperties {
+  // No static asserts since all int32_t values are (technically) valid pixel formats?
+  static const uint32_t bytes_per_pixel = (FORMAT >> PixelFormatConst::SubformatSize) + 1;
+};
+
 // Contains all of the pixel formats currently supported by this VSoC. The
 // enumeration serves multiple purposes:
 //
