@@ -89,7 +89,6 @@ def main():
         log.info('Creating virtual instance...')
         dom = lvc.create_instance(guest.to_xml())
         log.info('VM ready.')
-        dom.resume()
         try:
             signal.pause()
         except KeyboardInterrupt:
