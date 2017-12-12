@@ -30,15 +30,6 @@
 
 namespace vsoc {
 
-enum {
-  // Means an unrecoverable error ocurred, aborting is usually the best handling
-  // strategy in this case.
-  VSOC_PERM_ERROR = -2,
-  // Means that the permission could not be created because someone else
-  // reserved the memory first. Find another area of memory and try again.
-  VSOC_PERM_OWNED = -1,
-};
-
 /**
  * Accessor class for VSoC regions designed for use from processes on the
  * host. This mainly affects the implementation of Open.
@@ -118,7 +109,7 @@ class ManagerRegion : public TypedRegion<Layout> {
    *
    * On success returns an open fd with the requested permission asociated to
    * it. If another thread/process acquired ownership of *owner_ptr before this
-   * one returns VSOC_PERM_OWNED. Returns VSOC_PERM_ERROR otherwise.
+   * one returns -EBUSY, returns a different negative number otherwise.
    */
   int CreateFdScopedPermission(uint32_t* owner_ptr,
                                uint32_t owned_val,

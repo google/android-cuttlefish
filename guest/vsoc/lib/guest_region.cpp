@@ -88,13 +88,14 @@ int vsoc::OpenableRegion::CreateFdScopedPermission(
     vsoc_reg_off_t end_offset) {
   if (!region_fd_->IsOpen()) {
     LOG(FATAL) << "Can't create permission before opening controller region";
-    return VSOC_PERM_ERROR;
+    return -EINVAL;
   }
   int managed_region_fd =
       open(device_path_from_name(managed_region_name).c_str(), O_RDWR);
   if (managed_region_fd < 0) {
+    int errno_ = errno;
     LOG(FATAL) << "Can't open managed region: " << managed_region_name;
-    return VSOC_PERM_ERROR;
+    return -errno_;
   }
 
   fd_scoped_permission_arg perm;
@@ -106,15 +107,12 @@ int vsoc::OpenableRegion::CreateFdScopedPermission(
   LOG(INFO) << "owner offset: " << perm.perm.owner_offset;
   int retval = region_fd_->Ioctl(VSOC_CREATE_FD_SCOPED_PERMISSION, &perm);
   if (retval) {
-    retval = errno;
-    close(managed_region_fd);
-    if (retval == EBUSY) {
-      return VSOC_PERM_OWNED;
-    } else {
-      LOG(FATAL) << "Unable to create fd scoped permission (" <<
-          strerror(retval) << ")";
-      return VSOC_PERM_ERROR;
+    int errno_ = errno;
+    if (errno != EBUSY) {
+        LOG(FATAL) << "Unable to create fd scoped permission (" <<
+          strerror(errno) << ")";
     }
+    return -errno_;
   }
   return managed_region_fd;
 }
