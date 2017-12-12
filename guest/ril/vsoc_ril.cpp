@@ -499,8 +499,7 @@ static void request_get_current_calls(void *data, size_t datalen, RIL_Token t) {
     pp_calls[i] = &(p_calls[i]);
   }
 
-  // TODO(ender): This should be built from calls requested via RequestDial
-  // and calls simulated via metadata or command line.
+  // TODO(ender): This should be built from calls requested via RequestDial.
   for (std::map<int, CallState>::iterator iter = gActiveCalls.begin();
        iter != gActiveCalls.end(); ++iter, ++p_calls) {
     p_calls->state = iter->second.state;
