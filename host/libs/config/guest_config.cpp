@@ -184,31 +184,20 @@ void ConfigureDisk(xmlNode* devices, const std::string& name,
 
 // Configure virtio channel.
 // This section adds <channel> elements to <devices> node.
-// This version allows the guest device name to be an arbitrary string
-void ConfigureVirtioChannel(xmlNode* devices, const char* guest_dev_name,
-                            int port,
+void ConfigureVirtioChannel(xmlNode* devices, int port, const std::string& name,
                             DeviceSourceType type, const std::string& path) {
   auto vch = xmlNewChild(devices, nullptr, xc("channel"), nullptr);
   ConfigureDeviceSource(vch, type, path);
 
   auto tgt = xmlNewChild(vch, nullptr, xc("target"), nullptr);
   xmlNewProp(tgt, xc("type"), xc("virtio"));
-  xmlNewProp(tgt, xc("name"), xc(guest_dev_name));
+  xmlNewProp(tgt, xc("name"), xc(name.c_str()));
 
   auto adr = xmlNewChild(vch, nullptr, xc("address"), nullptr);
   xmlNewProp(adr, xc("type"), xc("virtio-serial"));
   xmlNewProp(adr, xc("controller"), xc("0"));
   xmlNewProp(adr, xc("bus"), xc("0"));
   xmlNewProp(adr, xc("port"), xc(concat(port).c_str()));
-}
-
-// Configure virtio channel.
-// This section adds <channel> elements to <devices> node.
-// This version creates a generic guest device name from a port number
-void ConfigureVirtioChannel(xmlNode* devices, int port, DeviceSourceType type,
-                            const std::string& path) {
-  std::string guest_dev_name(concat("vport0p", port));
-  ConfigureVirtioChannel(devices, guest_dev_name.c_str(), port, type, path);
 }
 
 // Configure network interface.
@@ -289,12 +278,11 @@ std::string GuestConfig::Build() const {
 
   ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketServer,
                       concat("/tmp/", instance_name, "-serial"));
-  ConfigureVirtioChannel(devices, 1, DeviceSourceType::kFile,
+  ConfigureVirtioChannel(devices, 1, "cf-logcat", DeviceSourceType::kFile,
                          concat("/tmp/", instance_name, "-logcat"));
-  if (usb_v1_socket_name_.size()) {
-    ConfigureVirtioChannel(devices, "vsoc_usb_v1", 2, DeviceSourceType::kUnixSocketClient,
-                           usb_v1_socket_name_);
-  }
+  ConfigureVirtioChannel(devices, 2, "cf-gadget-usb-v1",
+                         DeviceSourceType::kUnixSocketClient,
+                         GetUSBV1SocketName());
 
   ConfigureDisk(devices, "vda", system_partition_path_);
   ConfigureDisk(devices, "vdb", data_partition_path_);
