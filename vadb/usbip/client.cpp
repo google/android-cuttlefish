@@ -279,20 +279,12 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
     return false;
   }
 
-  // Response template.
-  // - in header, host doesn't care about anything else except for command type
-  //   and sequence number.
-  // - in body, report status == !OK unless we completed everything
-  //   successfully.
-  CmdHeader rephdr{};
-  rephdr.command = kUsbIpCmdRepSubmit;
-  rephdr.seq_num = cmd.seq_num;
-  CmdRepSubmit rep{};
-  rep.status = 1;
+  uint32_t seq_num = cmd.seq_num;
 
-  std::vector<uint8_t> payload_in;
-  std::vector<uint8_t> payload_out;
+  // Reserve buffer for data in or out.
+  std::vector<uint8_t> payload;
   int payload_length = req.transfer_buffer_length;
+  payload.resize(payload_length);
 
   bool is_host_to_device = cmd.direction == kUsbIpDirectionOut;
   // Control requests are quite easy to detect; if setup is all '0's, then we're
@@ -306,12 +298,10 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
   if (device) {
     // Read data to be sent to device, if specified.
     if (is_host_to_device && payload_length) {
-      LOG(INFO) << "Reading payload (" << payload_length << " bytes).";
-      payload_in.resize(payload_length);
-      auto read = fd_->Recv(payload_in.data(), payload_in.size(), MSG_NOSIGNAL);
-      if (read != payload_in.size()) {
+      auto read = fd_->Recv(payload.data(), payload.size(), MSG_NOSIGNAL);
+      if (read != payload.size()) {
         LOG(ERROR) << "Short read while receiving payload; want="
-                   << payload_in.size() << ", got=" << read
+                   << payload.size() << ", got=" << read
                    << ", err: " << fd_->StrError();
         return false;
       }
@@ -319,39 +309,68 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
 
     // If setup structure of request is initialized then we need to execute
     // control transfer. Otherwise, this is a plain data exchange.
+    bool send_success = false;
     if (is_control_request) {
-      rep.status =
-          !device->handle_control_transfer(req.setup, payload_in, &payload_out);
+      send_success = device->handle_control_transfer(
+          req.setup, req.deadline_interval, std::move(payload),
+          [this, seq_num, is_host_to_device](bool is_success,
+                                             std::vector<uint8_t> data) {
+            HandleAsyncDataReady(seq_num, is_success, is_host_to_device,
+                                 std::move(data));
+          });
     } else {
-      rep.status = !device->handle_data_transfer(
+      send_success = device->handle_data_transfer(
           cmd.endpoint, is_host_to_device, req.deadline_interval,
-          payload_length, payload_in, &payload_out);
+          std::move(payload),
+          [this, seq_num, is_host_to_device](bool is_success,
+                                             std::vector<uint8_t> data) {
+            HandleAsyncDataReady(seq_num, is_success, is_host_to_device,
+                                 std::move(data));
+          });
+    }
+
+    // Simply fail if couldn't execute command.
+    if (!send_success) {
+      HandleAsyncDataReady(seq_num, false, is_host_to_device,
+                           std::vector<uint8_t>());
     }
   }
+  return true;
+}
 
-  rep.actual_length =
-      is_host_to_device ? payload_in.size() : payload_out.size();
+void Client::HandleAsyncDataReady(uint32_t seq_num, bool is_success,
+                                  bool is_host_to_device,
+                                  std::vector<uint8_t> data) {
+  // Response template.
+  // - in header, host doesn't care about anything else except for command type
+  //   and sequence number.
+  // - in body, report status == !OK unless we completed everything
+  //   successfully.
+  CmdHeader rephdr{};
+  rephdr.command = kUsbIpCmdRepSubmit;
+  rephdr.seq_num = seq_num;
+
+  CmdRepSubmit rep{};
+  rep.status = is_success ? 0 : 1;
+  rep.actual_length = data.size();
 
   // Data out.
   if (!SendUSBIPMsg(fd_, rephdr)) {
     LOG(ERROR) << "Failed to send response header: " << fd_->StrError();
-    return false;
+    return;
   }
 
   if (!SendUSBIPMsg(fd_, rep)) {
     LOG(ERROR) << "Failed to send response body: " << fd_->StrError();
-    return false;
+    return;
   }
 
-  if (payload_out.size()) {
-    if (fd_->Send(payload_out.data(), payload_out.size(), MSG_NOSIGNAL) !=
-        payload_out.size()) {
+  if (!is_host_to_device && data.size() > 0) {
+    if (fd_->Send(data.data(), data.size(), MSG_NOSIGNAL) != data.size()) {
       LOG(ERROR) << "Failed to send response payload: " << fd_->StrError();
-      return false;
+      return;
     }
   }
-
-  return true;
 }
 
 // Handle incoming UNLINK COMMAND.
