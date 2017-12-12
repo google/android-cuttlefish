@@ -29,6 +29,8 @@ DEFINE_string(mempath, "/dev/shm/ivshmem",
 DEFINE_int32(shmsize, 4, "Size of the shared memory region in megabytes.");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
+DEFINE_string(cache_image, "", "Location of the cache partition image.");
+DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_string(system_image_dir, "", "Location of the system partition images.");
 DEFINE_string(initrd, "/usr/share/cuttlefish-common/gce_ramdisk.img",
               "Location of cuttlefish initrd file.");
@@ -139,16 +141,10 @@ int main(int argc, char** argv) {
       FLAGS_system_image_dir + "/ramdisk.img");
   auto system_partition = config::FilePartition::ReuseExistingFile(
       FLAGS_system_image_dir + "/system.img");
-  // TODO(ender): Use fixed data and cache files for now. These files will
-  // remain in temporary location until manually deleted. Revert to
-  // CreateTemporaryFile once we have a proper failure and kill signal handlers
-  // installed.
-  auto data_partition =
-      config::FilePartition::CreateNewFile("/tmp/cf-data.img", 512);
-  auto cache_partition =
-      config::FilePartition::CreateNewFile("/tmp/cf-cache.img", 512);
-  auto kernel_image = config::FilePartition::ReuseExistingFile(FLAGS_kernel);
-  auto initrd_image = config::FilePartition::ReuseExistingFile(FLAGS_initrd);
+  auto data_partition = config::FilePartition::ReuseExistingFile(
+      FLAGS_data_image);
+  auto cache_partition =  config::FilePartition::ReuseExistingFile(
+      FLAGS_cache_image);
 
   std::stringstream cmdline;
   for (const auto& value : json_root["guest"]["kernel_command_line"]) {
@@ -173,8 +169,8 @@ int main(int argc, char** argv) {
   cfg.SetID(FLAGS_instance)
       .SetVCPUs(FLAGS_cpus)
       .SetMemoryMB(FLAGS_memory_mb)
-      .SetKernelName(kernel_image->GetName())
-      .SetInitRDName(initrd_image->GetName())
+      .SetKernelName(FLAGS_kernel)
+      .SetInitRDName(FLAGS_initrd)
       .SetKernelArgs(cmdline.str())
       .SetIVShMemSocketPath(FLAGS_qemusocket)
       .SetIVShMemVectorCount(json_root["vsoc_device_regions"].size())
