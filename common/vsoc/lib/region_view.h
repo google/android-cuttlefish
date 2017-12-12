@@ -23,6 +23,7 @@
 #include <atomic>
 #include <cstdint>
 
+#include <functional>
 #include <thread>
 
 #include "common/libs/fs/shared_fd.h"
@@ -90,10 +91,11 @@ class RegionView {
   // signals and then reposting them to the peer if they were round-trip
   // signals.
   //
-  //   stopping: Set to true when it is time for the thread to exit.
-  //             This must be volatile because stopping will be changed
-  //             while the thread is running.
-  void ProcessSignalsFromPeer(volatile bool* stopping);
+  //   signal_handler: An action to perform on every offset signalled by our
+  //   peer, usually a FUTEX_WAKE call, but can be customized for other
+  //   purposes.
+  void ProcessSignalsFromPeer(
+      std::function<void(uint32_t*)> signal_handler);
 
   // Post a signal to the guest, the host, or both.
   // See futex(2) FUTEX_WAKE for details.
