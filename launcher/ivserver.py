@@ -5,12 +5,14 @@
 
 import argparse
 import json
+import logging
 import os
 import signal
 import sys
-import glog
 from .libvirt_client import LibVirtClient
 from .guest_definition import GuestDefinition
+
+LOG_FORMAT="%(levelname)1.1s %(asctime)s %(process)d %(filename)s:%(lineno)d] %(message)s"
 
 def setup_arg_parser():
     def unsigned_integer(size):
@@ -39,16 +41,11 @@ def setup_arg_parser():
     return parser
 
 
-def check_version():
-    if sys.version_info.major != 3:
-        glog.fatal('This program requires python3 to work.')
-        sys.exit(1)
-
-
 def main():
-    glog.setLevel(glog.INFO)
+    logging.basicConfig(format=LOG_FORMAT)
+    log = logging.getLogger()
+
     try:
-        check_version()
         parser = setup_arg_parser()
         args = parser.parse_args()
 
@@ -57,7 +54,7 @@ def main():
         layout_json = json.loads(open(args.layoutfile).read())
 
         if 'movbe' not in lvc.get_cpu_features():
-            glog.warning('host CPU may not support movbe instruction')
+            log.warning('host CPU may not support movbe instruction')
 
         guest = GuestDefinition(lvc)
 
@@ -79,19 +76,19 @@ def main():
 
         guest.set_vmm_path(layout_json['guest']['vmm_path'])
 
-        glog.info('Creating virtual instance...')
+        log.info('Creating virtual instance...')
         dom = lvc.create_instance(guest.to_xml())
-        glog.info('VM ready.')
+        log.info('VM ready.')
         dom.resume()
         try:
             signal.pause()
         except KeyboardInterrupt:
-            glog.info('Stopping IVShMem server')
+            log.info('Stopping IVShMem server')
             dom.destroy()
 
 
     except Exception as exception:
-        glog.exception('Could not start VM: %s', exception)
+        log.exception('Could not start VM: %s', exception)
 
 
 if __name__ == '__main__':

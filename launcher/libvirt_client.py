@@ -7,8 +7,8 @@ libvirt's preferred method of delivery of larger object is, sadly, xml (rather t
 # pylint: disable=no-self-use
 
 from xml.etree import ElementTree
-import glog
 import libvirt
+import logging
 
 class LibVirtClient(object):
     """Client of the libvirt library.
@@ -20,13 +20,14 @@ class LibVirtClient(object):
             raise Exception('Could not open libvirt channel. Did you install libvirt package?')
 
         self.capabilities = None
+        self._log = logging.getLogger()
 
         # Parse host capabilities. Confirm our CPU is capable of executing movbe instruction
         # which allows further compatibility with atom cpus.
         self.host_capabilities = ElementTree.fromstring(self.lvch.getCapabilities())
-        glog.info('Starting cuttlefish on %s', self.get_hostname())
-        glog.info('Max number of virtual CPUs: %d', self.get_max_vcpus())
-        glog.info('Supported virtualization type: %s', self.get_virtualization_type())
+        self._log.info('Starting cuttlefish on %s', self.get_hostname())
+        self._log.info('Max number of virtual CPUs: %d', self.get_max_vcpus())
+        self._log.info('Supported virtualization type: %s', self.get_virtualization_type())
 
 
     def get_hostname(self):
@@ -91,7 +92,7 @@ class LibVirtClient(object):
             if self.capabilities is None:
                 features = self.host_capabilities.findall('./host/cpu/feature')
                 if features is None:
-                    glog.warning('no \'host.cpu.feature\' nodes reported by libvirt.')
+                    self._log.warning('no \'host.cpu.feature\' nodes reported by libvirt.')
                     return caps
 
                 for feature in features:
@@ -103,7 +104,7 @@ class LibVirtClient(object):
             self.capabilities = caps
 
 
-    def build_instance_name(self, instance_number: int):
+    def build_instance_name(self, instance_number):
         """Convert instance number to an instance id (or domain).
 
         Args:
