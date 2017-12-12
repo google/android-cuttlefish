@@ -2,7 +2,7 @@
   ClientConnection related.
 '''
 
-import channel
+from . import channel
 
 class ClientConnection():
   def __init__(self, client_socket, shmfd, layout_json, protocol_version=0):

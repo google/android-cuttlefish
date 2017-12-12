@@ -1,19 +1,18 @@
 '''
   ivshmem server main
 '''
-
 import argparse
-import clientconnection
-import channel
-import errors
 import json
 import linuxfd
 import os
 import select
 import subprocess
 import sys
-import vmconnection
-import vsocsharedmem
+from . import clientconnection
+from . import channel
+from . import errors
+from . import vmconnection
+from . import vsocsharedmem
 
 #
 # eventfd for synchronizing ivshmemserver initialization and QEMU launch.

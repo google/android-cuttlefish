@@ -1,12 +1,4 @@
-py_binary(
-    name = "launcher",
-    data = ["vsoc_mem.json"],
-    srcs = ["ivserver.py"],
-    main = "ivserver.py",
-    default_python_version = "PY3",
-    srcs_version = "PY3",
-    deps = [":ivserver_lib"],
-)
+load("//tools:py_bundle.bzl", "py_bundle")
 
 py_library(
     name = "ivserver_lib",
@@ -21,3 +13,8 @@ py_library(
     srcs_version = "PY2AND3",
 )
 
+py_bundle(
+    name = "launcher",
+    srcs = [":ivserver_lib"],
+    main = "host.launcher.ivserver",
+)
