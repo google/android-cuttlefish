@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-// Concurreny classess for Cloud Android projects.
+// Concurreny classess for cuttlefish.
 //
 // These more or less mimic the interface of the C++ classes:
 //   Mutex is similar to std::mutex

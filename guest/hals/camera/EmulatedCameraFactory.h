@@ -181,7 +181,7 @@ private:
     sp<EmulatedCameraHotplugThread> mHotplugThread;
 #endif
 
-    /* Back- and front camera properties accessed from cloud metadata server. */
+    /* Back- and front camera properties accessed from the vsoc device. */
     cvd::CameraConfiguration mCameraConfiguration;
     Vector<cvd::CameraDefinition> mCameraDefinitions;
 

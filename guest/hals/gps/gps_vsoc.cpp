@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* This implements a GPS hardware HAL library for the Android on Google Cloud.
+
+/* This implements a GPS hardware HAL library for cuttlefish.
  * A produced shared library is placed in /system/lib/hw/gps.gce.so, and
  * loaded by hardware/libhardware/hardware.c code which is called from
  * android_location_GpsLocationProvider.cpp
