@@ -207,6 +207,11 @@ SharedFD SharedFD::Accept(const FileInstance& listener) {
   return SharedFD::Accept(listener, NULL, NULL);
 }
 
+SharedFD SharedFD::Dup(int unmanaged_fd) {
+  int fd = dup(unmanaged_fd);
+  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
+}
+
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
   int rval = pipe(fds);

@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// TODO: We can't use std::shared_ptr on the older guests due to HALs.
+
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
 
@@ -57,6 +60,26 @@
 namespace avd {
 
 class FileInstance;
+
+/**
+ * Describes the fields in msghdr that are honored by the *MsgAndFDs
+ * calls.
+ */
+struct InbandMessageHeader {
+  void*         msg_name;
+  socklen_t     msg_namelen;
+  struct iovec* msg_iov;
+  size_t        msg_iovlen;
+  int           msg_flags;
+
+  void Convert(struct msghdr* dest) const {
+    dest->msg_name = msg_name;
+    dest->msg_namelen = msg_namelen;
+    dest->msg_iov = msg_iov;
+    dest->msg_iovlen = msg_iovlen;
+    dest->msg_flags = msg_flags;
+  }
+};
 
 /**
  * Counted reference to a FileInstance.
@@ -109,6 +132,7 @@ class SharedFD {
   static SharedFD Accept(const FileInstance& listener,
                                 struct sockaddr* addr, socklen_t* addrlen);
   static SharedFD Accept(const FileInstance& listener);
+  static SharedFD Dup(int unmanaged_fd);
   static SharedFD GetControlSocket(const char* name);
   // Returns false on failure, true on success.
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
@@ -308,6 +332,36 @@ class FileInstance {
     return rval;
   }
 
+  template <size_t SZ> ssize_t RecvMsgAndFDs(
+      const struct InbandMessageHeader& msg_in, int flags,
+      SharedFD (*new_fds)[SZ]) {
+    // We need to make some modifications to land the fds. Make it clear
+    // that there are no updates to the msg being passed in during this call.
+    struct msghdr msg;
+    msg_in.Convert(&msg);
+    union {
+      char buffer[CMSG_SPACE(SZ * sizeof(int))];
+      struct cmsghdr this_aligns_buffer;
+    } u;
+    msg.msg_control    = u.buffer;
+    msg.msg_controllen = sizeof(u.buffer);
+
+    cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
+    cmsg->cmsg_len   = CMSG_LEN(SZ * sizeof(int));
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type  = SCM_RIGHTS;
+    int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
+    for (int i = 0; i < SZ; ++i) {
+      fd_array[i] = -1;
+    }
+    ssize_t rval = RecvMsg(&msg, flags);
+    for (int i = 0; i < SZ; ++i) {
+      (*new_fds)[i] =
+          std::shared_ptr<FileInstance>(new FileInstance(fd_array[i], errno));
+    }
+    return rval;
+  }
+
   ssize_t Read(void* buf, size_t count) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(read(fd_, buf, count));
@@ -327,6 +381,29 @@ class FileInstance {
     ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
     errno_ = errno;
     return rval;
+  }
+
+  template <size_t SZ> ssize_t SendMsgAndFDs(
+      const struct InbandMessageHeader& msg_in, int flags,
+      const SharedFD (&fds)[SZ]) {
+    struct msghdr msg;
+    msg_in.Convert(&msg);
+    union {
+      char buffer[CMSG_SPACE(SZ * sizeof(int))];
+      struct cmsghdr this_aligns_buffer;
+    } u;
+    msg.msg_control    = u.buffer;
+    msg.msg_controllen = sizeof(u.buffer);
+
+    cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
+    cmsg->cmsg_len   = CMSG_LEN(SZ * sizeof(int));
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type  = SCM_RIGHTS;
+    int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
+    for (int i = 0; i < SZ; ++i) {
+      fd_array[i] = fds[i]->fd_;
+    }
+    return SendMsg(&msg, flags);
   }
 
   ssize_t SendTo(const void *buf, size_t len, int flags,
