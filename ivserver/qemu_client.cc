@@ -63,10 +63,10 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   //    vector 0,..,N-1, in order.  If the client is configured for fewer
   //    vectors, it closes the extra file descriptors.  If it is configured
   //    for more, the extra vectors remain unconnected.
-  for (const auto region_pair : shmem.Regions()) {
-    if (!SendSocketInfo(QemuFDMsg::kHostSideHald, region_pair.second.host_fd)) {
+  for (const auto region_data : shmem.Regions()) {
+    if (!SendSocketInfo(QemuFDMsg::kHostSideHald, region_data.host_fd)) {
       LOG(ERROR) << "Failed to send Host Side FD for region "
-                 << region_pair.first << ": " << client_socket_->StrError();
+                 << region_data.name << ": " << client_socket_->StrError();
       return false;
     }
   }
@@ -77,11 +77,11 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   //    order.  If the client is configured for fewer vectors, it closes
   //    the extra file descriptors.  If it is configured for more, the
   //    extra vectors remain unconnected.
-  for (const auto region_pair : shmem.Regions()) {
+  for (const auto region_data : shmem.Regions()) {
     if (!SendSocketInfo(QemuFDMsg::kGuestSideHal,
-                        region_pair.second.guest_fd)) {
+                        region_data.guest_fd)) {
       LOG(ERROR) << "Failed to send Guest Side FD for region "
-                 << region_pair.first << ": " << client_socket_->StrError();
+                 << region_data.name << ": " << client_socket_->StrError();
       return false;
     }
   }
