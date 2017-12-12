@@ -18,4 +18,5 @@ subdirs = [
     "fs",
     "threads",
     "time",
+    "wifi",
 ]
