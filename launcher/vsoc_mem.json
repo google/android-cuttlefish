@@ -15,32 +15,52 @@
   },
 
   "version" : "1",
-  "comment" : "The first page should be reserved for top level headers and region descriptors only",
+  "__comment" : "The first page should be reserved for top level headers and region descriptors only",
   "size" : "4194304",
-  "region_count" : "3",
+  "region_count" : "4",
 
   "vsoc_shm_layout_descriptor" : {
-    "comment": "The top level layout descriptor",
+    "__comment": "The top level layout descriptor",
     "size": "<populated by querying the shm region size at runtime>",
-    "region_count" : "3",
+    "region_count" : "4",
     "vsoc_region_desc_offset" : "128"
   },
 
   "vsoc_device_regions" : [
    {
-     "comment" : "HWComposer",
+     "__comment" : "Primary end to end test region",
      "current_version" : "1",
      "min_compatible_version" : "1",
      "region_begin_offset" : "4096",
-     "region_end_offset" : "16384",
+     "region_end_offset" : "8192",
 
      "guest_to_host_signal_table" : {
-       "comment" : "",
+       "__comment" : "",
        "num_nodes_lg2" : "2"
      },
 
      "host_to_guest_signal_table" : {
-       "comment" : "",
+       "__comment" : "",
+       "num_nodes_lg2" : "2"
+     },
+
+     "device_name" : "e2e_primary"
+   },
+
+   {
+     "__comment" : "HWComposer",
+     "current_version" : "1",
+     "min_compatible_version" : "1",
+     "region_begin_offset" : "8192",
+     "region_end_offset" : "16384",
+
+     "guest_to_host_signal_table" : {
+       "__comment" : "",
+       "num_nodes_lg2" : "2"
+     },
+
+     "host_to_guest_signal_table" : {
+       "__comment" : "",
        "num_nodes_lg2" : "2"
      },
 
@@ -48,42 +68,42 @@
    },
 
    {
-     "comment" : "Sensors",
+     "__comment" : "Sensors",
      "current_version" : "1",
      "min_compatible_version" : "1",
      "region_begin_offset" : "16384",
      "region_end_offset" : "32768",
 
      "guest_to_host_signal_table" : {
-       "comment" : "each node is the size of a unit32_t. See vsoc_shm.h line 81",
+       "__comment" : "each node is the size of a unit32_t. See vsoc_shm.h line 81",
        "num_nodes_lg2" : "1"
      },
 
      "host_to_guest_signal_table" : {
-       "comment" : "",
+       "__comment" : "",
        "num_nodes_lg2" : "1"
      },
 
      "device_name" : "sensors"
    },
    {
-    "comment" : "Misc",
+    "__comment" : "e2e_secondary",
     "current_version" : "1",
     "min_compatible_version" : "1",
     "region_begin_offset" : "32768",
     "region_end_offset" : "36864",
 
     "guest_to_host_signal_table" : {
-      "comment" : "",
+      "__comment" : "",
       "num_nodes_lg2" : "1"
     },
 
     "host_to_guest_signal_table" : {
-      "comment" : "",
+      "__comment" : "",
       "num_nodes_lg2" : "1"
     },
 
-    "device_name" : "misc"
+    "device_name" : "e2e_secondary"
    }
   ]
 }
