@@ -1,0 +1,30 @@
+TODO(romitd): Have appropriate factory methods.
+
+clienthandshake.cc: TODO(romitd): Refactor.
+
+clienthandshake.cc: TODO(romitd): move this to a separate thread.
+
+clienthandshake.h: TODO(romitd): Refactor ClientHandshake and QemuHandshake
+into a base class.
+
+layout.h: TODO(romitd): We need to include the vsoc_shm.h file directly.
+
+qemuhandshake.cc: TODO(romitd): We might need to disallow more than one
+handshakes.
+
+qemuhandshake.cc: TODO(romitd): Refactor.
+
+qemuhandshake.cc: TODO(romitd): Move Handshake logic to a separate thread.
+
+qemuhandshake.h: TODO(romitd): Refactor ClientHandshake and QemuHandshake into
+a base class.
+
+README.md:TODO(romitd):
+
+utils.cc: TODO(romitd): Handle errors and use SharedFD, SharedSelect.
+
+vsocsharedmem.cc:  TODO(romitd): error checking and sanity.
+vsocsharedmem.cc:  TODO(romitd): Refactor
+vsocsharedmem.h:   TODO(romitd): Make it a singleton.
+
+main.cc: TODO(romitd): Have an option to daemonize on launch.
