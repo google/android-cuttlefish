@@ -64,6 +64,12 @@ constexpr ControlMsgType kControlAttach = 'A';
 constexpr ControlMsgType kControlDetach = 'D';
 constexpr ControlMsgType kControlExit = 'E';
 
+// Used with EPOLL as epoll_data to determine event type.
+enum EpollEventType {
+  kControlEvent,
+  kVHCIEvent,
+};
+
 // Port status values deducted from /sys/devices/platform/vhci_hcd/status
 enum {
   // kVHCIPortFree indicates the port is not currently in use.
@@ -80,7 +86,6 @@ VHCIInstrument::VHCIInstrument(const std::string& name)
 VHCIInstrument::~VHCIInstrument() {
   control_write_end_->Write(&kControlExit, sizeof(kControlExit));
   attach_thread_->join();
-  if (sys_fd_ > 0) close(sys_fd_);
 }
 
 bool VHCIInstrument::Init() {
@@ -146,26 +151,44 @@ void VHCIInstrument::TriggerDetach() {
 }
 
 void VHCIInstrument::AttachThread() {
-  avd::SharedFDSet rset;
-  // If we're attempting connection, make sure to re-try every second until
-  // we're successful.
-  timeval period = {1, 0};
+  avd::SharedFD epoll = avd::SharedFD::Epoll();
   // Trigger attach upon start.
   bool want_attach = true;
   // Operation is pending on read.
   bool is_pending = false;
 
+  epoll_event control_event;
+  control_event.events = EPOLLIN;
+  control_event.data.u64 = kControlEvent;
+  epoll_event vhci_event;
+  vhci_event.events = EPOLLRDHUP | EPOLLONESHOT;
+  vhci_event.data.u64 = kVHCIEvent;
+
+  epoll->EpollCtl(EPOLL_CTL_ADD, control_read_end_, &control_event);
   while (true) {
-    rset.Zero();
-    rset.Set(control_read_end_);
-    // Wait until poked.
-    if (0 != avd::Select(&rset, nullptr, nullptr,
-                         (is_pending ? &period : nullptr))) {
-      ControlMsgType request_type;
-      control_read_end_->Read(&request_type, sizeof(request_type));
-      is_pending = true;
-      want_attach = request_type == kControlAttach;
-      LOG(INFO) << (want_attach ? "Attach" : "Detach") << " triggered.";
+    if (vhci_socket_->IsOpen()) {
+      epoll->EpollCtl(EPOLL_CTL_ADD, vhci_socket_, &vhci_event);
+    }
+
+    epoll_event found_event{};
+    ControlMsgType request_type;
+
+    if (epoll->EpollWait(&found_event, 1, 1000)) {
+      switch (found_event.data.u64) {
+        case kControlEvent:
+          control_read_end_->Read(&request_type, sizeof(request_type));
+          is_pending = true;
+          want_attach = request_type == kControlAttach;
+          LOG(INFO) << (want_attach ? "Attach" : "Detach") << " triggered.";
+          break;
+        case kVHCIEvent:
+          vhci_socket_ = avd::SharedFD();
+          // Only re-establish VHCI if it was already established before.
+          is_pending = want_attach;
+          // Do not immediately fall into attach cycle. It will likely complete
+          // before VHCI finishes deregistering this callback.
+          continue;
+      }
     }
 
     // Make an attempt to re-attach. If successful, clear pending attach flag.
@@ -184,14 +207,6 @@ void VHCIInstrument::AttachThread() {
 }
 
 bool VHCIInstrument::Detach() {
-  // sys_fd_ is the descriptor we supplied to the system to allow it to talk to
-  // (remote) USB device. By closing this descriptor we effectively force close
-  // connection to remote USB device.
-  if (sys_fd_ > 0) {
-    close(sys_fd_);
-    sys_fd_ = -1;
-  }
-
   std::stringstream result;
   result << port_;
   std::ofstream detach(syspath_ + "/detach");
@@ -205,36 +220,41 @@ bool VHCIInstrument::Detach() {
 }
 
 bool VHCIInstrument::Attach() {
-  avd::SharedFD socket =
-      avd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
-  if (!socket->IsOpen()) return false;
-  sys_fd_ = socket->UNMANAGED_Dup();
-
-  std::stringstream result;
-  result << port_ << ' ' << sys_fd_ << ' ' << kDefaultDeviceID << ' '
-         << kDefaultDeviceSpeed;
-  std::string path = syspath_ + "/attach";
-  std::ofstream attach(path);
-
-  if (!attach.is_open()) {
-    LOG(WARNING) << "Could not open VHCI attach file " << path << " ("
-                 << strerror(errno) << ")";
-    close(sys_fd_);
-    sys_fd_ = -1;
-    return false;
+  if (!vhci_socket_->IsOpen()) {
+    vhci_socket_ =
+        avd::SharedFD::SocketLocalClient(name_.c_str(), true, SOCK_STREAM);
+    if (!vhci_socket_->IsOpen()) return false;
   }
-  attach << result.str();
 
-  // It is unclear whether duplicate FD should remain open or not. There are
-  // cases supporting both assumptions, likely related to kernel version.
-  // Kernel 4.10 is having problems communicating with USB/IP server if the
-  // socket is closed after it's passed to kernel. It is a clear indication that
-  // the kernel requires the socket to be kept open.
-  bool success = attach.rdstate() == std::ios_base::goodbit;
-  if (!success) {
-    close(sys_fd_);
-    sys_fd_ = -1;
+  int sys_fd = vhci_socket_->UNMANAGED_Dup();
+  bool success = false;
+
+  {
+    std::stringstream result;
+    result << port_ << ' ' << sys_fd << ' ' << kDefaultDeviceID << ' '
+           << kDefaultDeviceSpeed;
+    std::string path = syspath_ + "/attach";
+    std::ofstream attach(path);
+
+    if (!attach.is_open()) {
+      LOG(WARNING) << "Could not open VHCI attach file " << path << " ("
+                   << strerror(errno) << ")";
+      close(sys_fd);
+      return false;
+    }
+    attach << result.str();
+
+    // It is unclear whether duplicate FD should remain open or not. There are
+    // cases supporting both assumptions, likely related to kernel version.
+    // Kernel 4.10 is having problems communicating with USB/IP server if the
+    // socket is closed after it's passed to kernel. It is a clear indication that
+    // the kernel requires the socket to be kept open.
+    success = attach.rdstate() == std::ios_base::goodbit;
+    // Make sure everything was written and flushed. This happens when we close
+    // the ofstream attach.
   }
+
+  close(sys_fd);
   return success;
 }
 
