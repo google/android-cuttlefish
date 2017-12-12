@@ -374,6 +374,7 @@ class GuestDefinition(object):
         ET.SubElement(net, 'target').set('dev', '%s%d' % (local_node, self._instance_id))
         return net
 
+
     def _configure_devices(self, tree):
         """Configure guest devices.
 
@@ -391,6 +392,19 @@ class GuestDefinition(object):
         dev.append(self._build_device_disk_node(self._part_data, 'data', 'vdc'))
         dev.append(self._build_device_disk_node(self._part_cache, 'cache', 'vdd'))
         dev.append(self._build_device_net_node('amobile', self._net_mobile_bridge))
+        dev.append(self._configure_rng())
+
+
+    def _configure_features(self, features, tree):
+        """Configure top-level features.
+
+        Args:
+            features List of strings of features to turn on.
+            tree Top level 'domain' element of the XML tree.
+        """
+        node = ET.SubElement(tree, 'features')
+        for feature in features:
+          ET.SubElement(node, feature)
 
 
     def _configure_ivshmem(self, tree):
@@ -410,6 +424,21 @@ class GuestDefinition(object):
             )
 
 
+    def _configure_rng(self):
+        """Returns a node with the device definition for the rng.
+
+        """
+        rng = ET.Element('rng')
+        rng.set('model', 'virtio')
+        rate = ET.SubElement(rng, 'rate')
+        rate.set('period', '2000')
+        rate.set('bytes', '1234')
+        backend = ET.SubElement(rng, 'backend')
+        backend.set('model', 'random')
+        backend.text='/dev/random'
+        return rng
+
+
     def to_xml(self):
         """Build XML document describing guest properties.
 
@@ -424,6 +453,10 @@ class GuestDefinition(object):
         tree.set('xmlns:qemu', 'http://libvirt.org/schemas/domain/qemu/1.0')
 
         self._configure_vm(tree)
+        self._configure_features([
+            'acpi',
+            'apic',
+            'hap'], tree)
         self._configure_kernel(tree)
         self._configure_devices(tree)
         self._configure_ivshmem(tree)
