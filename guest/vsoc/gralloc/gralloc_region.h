@@ -39,7 +39,7 @@ class GrallocRegion : public vsoc::ManagerRegionView<
   GrallocRegion(const GrallocRegion&);
   GrallocRegion& operator=(const GrallocRegion&);
 
-  bool Open(const char* domain = nullptr);
+  bool Open();
 
   vsoc_reg_off_t offset_of_buffer_memory_{};
   uint32_t total_buffer_memory_{};

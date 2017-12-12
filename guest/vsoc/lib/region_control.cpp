@@ -122,7 +122,7 @@ void* GuestRegionControl::Map() {
 // domain is here to ensure that this method has the same signature as the
 // method on host regions.
 std::shared_ptr<vsoc::RegionControl> vsoc::RegionControl::Open(
-    const char* region_name, const char* /*domain*/) {
+    const char* region_name) {
   std::string path = device_path_from_name(region_name);
   SharedFD fd = SharedFD::Open(path.c_str(), O_RDWR);
   if (!fd->IsOpen()) {

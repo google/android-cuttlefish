@@ -47,7 +47,7 @@ GrallocRegion::GrallocRegion() {
   Open();
 }
 
-bool GrallocRegion::Open(const char* domain) {
+bool GrallocRegion::Open() {
   if (is_open_) {
     return true;
   }
@@ -56,7 +56,7 @@ bool GrallocRegion::Open(const char* domain) {
   }
   std::shared_ptr<vsoc::RegionControl> managed_region =
       vsoc::RegionControl::Open(
-          GrallocManagerLayout::ManagedRegion::region_name, domain);
+          GrallocManagerLayout::ManagedRegion::region_name);
   if (!managed_region) {
     LOG_FATAL("Unable to open managed region");
     return false;

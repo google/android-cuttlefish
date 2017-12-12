@@ -40,6 +40,7 @@ vsoc::RegionView::~RegionView() {
   region_base_ = nullptr;
 }
 
+#if defined(CUTTLEFISH_HOST)
 bool vsoc::RegionView::Open(const char* name, const char* domain) {
   control_ = vsoc::RegionControl::Open(name, domain);
   if (!control_) {
@@ -48,6 +49,16 @@ bool vsoc::RegionView::Open(const char* name, const char* domain) {
   region_base_ = control_->Map();
   return region_base_ != nullptr;
 }
+#else
+bool vsoc::RegionView::Open(const char* name) {
+  control_ = vsoc::RegionControl::Open(name);
+  if (!control_) {
+    return false;
+  }
+  region_base_ = control_->Map();
+  return region_base_ != nullptr;
+}
+#endif
 
 // Interrupt our peer, causing it to scan the outgoing_signal_table
 bool vsoc::RegionView::MaybeInterruptPeer() {

@@ -49,9 +49,15 @@ class TypedRegionView : public RegionView {
         control_->region_desc().offset_of_region_data);
   }
 
-  bool Open(const char* domain = nullptr) {
+#if defined(CUTTLEFISH_HOST)
+  bool Open(const char* domain) {
     return RegionView::Open(LayoutType::region_name, domain);
   }
+#else
+  bool Open() {
+    return RegionView::Open(LayoutType::region_name);
+  }
+#endif
 };
 
 }  // namespace vsoc

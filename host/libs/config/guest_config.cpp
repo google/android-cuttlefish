@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+#include "host/libs/config/guest_config.h"
 #include <iomanip>
 #include <sstream>
 
 #include <glog/logging.h>
 #include <gflags/gflags.h>
-#include "host/vsoc/lib/region_control.h"
-#include "host/libs/config/guest_config.h"
+#include "host/libs/config/host_config.h"
 
 std::string g_default_libvirt_domain{vsoc::GetPerInstanceDefault("cvd-")};
 DEFINE_string(libvirt_domain, g_default_libvirt_domain.c_str(),
@@ -285,9 +285,9 @@ std::string GuestConfig::Build() const {
   ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketClient,
                       GetKernelLogSocketName());
   ConfigureSerialPort(devices, 1, DeviceSourceType::kUnixSocketServer,
-                      vsoc::GetPerInstancePath("console"));
+                      vsoc::GetDefaultPerInstancePath("console"));
   ConfigureVirtioChannel(devices, 1, "cf-logcat", DeviceSourceType::kFile,
-                         vsoc::GetPerInstancePath("logcat"));
+                         vsoc::GetDefaultPerInstancePath("logcat"));
   ConfigureVirtioChannel(devices, 2, "cf-gadget-usb-v1",
                          DeviceSourceType::kUnixSocketClient,
                          GetUSBV1SocketName());

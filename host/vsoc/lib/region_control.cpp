@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/vsoc/lib/region_control.h"
 #include "common/vsoc/lib/region_view.h"
 
 #define LOG_TAG "vsoc: region_host"
@@ -31,29 +30,12 @@
 #include <thread>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 
 using cvd::SharedFD;
-
-const char vsoc_user_prefix[] = "vsoc-";
-
-int GetDefaultInstance() {
-  char* user = getenv("USER");
-  if (user && !memcmp(user, vsoc_user_prefix, sizeof(vsoc_user_prefix) - 1)) {
-    int temp = atoi(user + sizeof(vsoc_user_prefix) - 1);
-    if (temp > 0) {
-      return temp;
-    }
-  }
-  return 1;
-}
-
-DEFINE_int32(instance, GetDefaultInstance(),
-             "Instance number. Must be unique.");
 
 namespace {
 
@@ -191,36 +173,10 @@ bool HostRegionControl::InitializeRegion() {
 }
 }  // namespace
 
-std::string vsoc::GetPerInstanceDefault(const char* prefix) {
-  std::ostringstream stream;
-  stream << prefix << std::setfill('0') << std::setw(2)
-         << GetDefaultInstance();
-  return stream.str();
-}
-
-std::string vsoc::GetPerInstanceDir() {
-  return vsoc::GetPerInstanceDefault("/var/run/cvd-");
-}
-
-std::string vsoc::GetPerInstancePath(const std::string& basename) {
-  std::ostringstream stream;
-  stream << GetPerInstanceDir() << "/" << basename;
-  return stream.str();
-}
-
-std::string vsoc::GetShmClientSocketPath() {
-  return vsoc::GetPerInstancePath("ivshmem_socket_client");
-}
-
 std::shared_ptr<vsoc::RegionControl> vsoc::RegionControl::Open(
     const char* region_name, const char* domain) {
   AutoFreeBuffer msg;
-  std::string owned_domain;
 
-  if (!domain) {
-    owned_domain = GetShmClientSocketPath();
-    domain = owned_domain.c_str();
-  }
   SharedFD region_server =
       SharedFD::SocketLocalClient(domain, false, SOCK_STREAM);
   if (!region_server->IsOpen()) {

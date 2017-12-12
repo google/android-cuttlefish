@@ -3,6 +3,7 @@ cc_library_host_static {
     srcs: [
         "file_partition.cpp",
         "guest_config.cpp",
+        "host_config.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",

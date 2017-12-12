@@ -66,7 +66,11 @@ class RegionView : public RegionSignalingInterface {
  public:
   virtual ~RegionView();
 
-  bool Open(const char* region_name, const char* domain = nullptr);
+#if defined(CUTTLEFISH_HOST)
+  bool Open(const char* region_name, const char* domain);
+#else
+  bool Open(const char* region_name);
+#endif
 
   // Returns a pointer to the table that will be scanned for signals
   const vsoc_signal_table_layout& incoming_signal_table();

@@ -18,6 +18,7 @@
 #include <gflags/gflags.h>
 #include "common/vsoc/framebuffer/fb_bcast_region_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
+#include "host/libs/config/host_config.h"
 
 DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
@@ -25,7 +26,7 @@ DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
 
 void InitializeFBBroadcastRegion() {
   vsoc::framebuffer::FBBroadcastRegionView region;
-  if (!region.Open()) {
+  if (!region.Open(vsoc::GetDomain().c_str())) {
     LOG(INFO) << "Framebuffer region was not found";
     return;
   }

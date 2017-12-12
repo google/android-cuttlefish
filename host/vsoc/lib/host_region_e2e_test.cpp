@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "common/vsoc/lib/e2e_test_region_view.h"
+#include "host/libs/config/host_config.h"
 
 // Here is a summary of the two regions interrupt and write test:
 // 1. Write our strings to the first region
@@ -59,9 +60,9 @@ void CheckPeerStrings(View* in) {
 
 TEST(RegionTest, PeerTests) {
   vsoc::E2EPrimaryRegionView primary;
-  ASSERT_TRUE(primary.Open());
+  ASSERT_TRUE(primary.Open(vsoc::GetDomain().c_str()));
   vsoc::E2ESecondaryRegionView secondary;
-  ASSERT_TRUE(secondary.Open());
+  ASSERT_TRUE(secondary.Open(vsoc::GetDomain().c_str()));
   LOG(INFO) << "Regions are open";
   SetHostStrings(&primary);
   EXPECT_FALSE(secondary.HasIncomingInterrupt());
@@ -109,7 +110,7 @@ TEST(RegionTest, PeerTests) {
 
 TEST(RegionTest, MissingRegionCausesDeath) {
   vsoc::E2EUnfindableRegionView test;
-  EXPECT_DEATH(test.Open(), ".*");
+  EXPECT_DEATH(test.Open(vsoc::GetDomain().c_str()), ".*");
 }
 
 int main(int argc, char** argv) {
@@ -117,7 +118,7 @@ int main(int argc, char** argv) {
   int rval = RUN_ALL_TESTS();
   if (!rval) {
     vsoc::E2EPrimaryRegionView region;
-    region.Open();
+    region.Open(vsoc::GetDomain().c_str());
     region.host_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
   }
   return rval;

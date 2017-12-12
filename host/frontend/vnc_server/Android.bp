@@ -32,6 +32,7 @@ cc_binary_host {
         "cuttlefish_glog",
     ],
     static_libs: [
+        "libcuttlefish_host_config",
         "libjpeg",
         "libvsoc_framebuffer",
         "libvsoc_gralloc",
