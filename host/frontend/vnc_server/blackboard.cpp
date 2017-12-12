@@ -1,7 +1,7 @@
 #include "blackboard.h"
-#include "frame_buffer_watcher.h"
-#include <utility>
 #include <algorithm>
+#include <utility>
+#include "frame_buffer_watcher.h"
 
 #define LOG_TAG "GceVNCServer"
 #include <cutils/log.h>

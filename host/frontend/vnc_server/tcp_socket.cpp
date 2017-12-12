@@ -6,8 +6,8 @@
 #include <cutils/log.h>
 
 using avd::vnc::ClientSocket;
-using avd::vnc::ServerSocket;
 using avd::vnc::Message;
+using avd::vnc::ServerSocket;
 
 Message ClientSocket::Recv(size_t length) {
   Message buf(length);

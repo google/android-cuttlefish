@@ -1,10 +1,10 @@
+#include "vnc_server.h"
 #include "blackboard.h"
 #include "frame_buffer_watcher.h"
 #include "jpeg_compressor.h"
 #include "tcp_socket.h"
 #include "virtual_inputs.h"
 #include "vnc_client_connection.h"
-#include "vnc_server.h"
 #include "vnc_utils.h"
 
 using avd::vnc::VncServer;

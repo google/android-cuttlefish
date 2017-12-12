@@ -2,12 +2,12 @@
 #define DEVICE_GOOGLE_GCE_GCE_UTILS_GCE_VNC_SERVER_VNC_CLIENT_CONNECTION_H_
 
 #include "blackboard.h"
+#include "tcp_socket.h"
 #include "virtual_inputs.h"
 #include "vnc_utils.h"
-#include "tcp_socket.h"
 
-#include <android-base/thread_annotations.h>
 #include <SharedFD.h>
+#include <android-base/thread_annotations.h>
 
 #include <cstdint>
 #include <memory>

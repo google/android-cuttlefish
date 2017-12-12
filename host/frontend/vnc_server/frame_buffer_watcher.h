@@ -5,11 +5,11 @@
 #include "jpeg_compressor.h"
 #include "simulated_hw_composer.h"
 
-#include <vector>
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace avd {
 namespace vnc {

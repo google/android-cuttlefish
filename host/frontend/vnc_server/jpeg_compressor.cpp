@@ -1,8 +1,8 @@
 #include "jpeg_compressor.h"
 #include "vnc_utils.h"
 
-#include <stdio.h>  // stdio.h must appear before jpeglib.h
 #include <jpeglib.h>
+#include <stdio.h>  // stdio.h must appear before jpeglib.h
 
 #define LOG_TAG "GceVNCServer"
 #include <cutils/log.h>

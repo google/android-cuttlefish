@@ -1,6 +1,6 @@
-#include "vnc_utils.h"
 #include "frame_buffer_watcher.h"
 #include <ThreadSafeQueue.hpp>
+#include "vnc_utils.h"
 
 #include <algorithm>
 #include <cstdint>
