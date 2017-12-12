@@ -32,7 +32,8 @@ class VirtualWIFIManager {
   bool Init();
 
   // Create new VirtualWIFI instance with the specified name.
-  std::shared_ptr<VirtualWIFI> CreateRadio(const std::string& name);
+  std::shared_ptr<VirtualWIFI> CreateRadio(const std::string& name,
+                                           const std::string& address);
 
  private:
   // Enables asynchronous notifications from MAC80211 about recently sent wifi
@@ -46,8 +47,8 @@ class VirtualWIFIManager {
 
   Netlink* const nl_;
 
-  // Map VirtualWIFI's Radio ID to VirtualWIFI instance.
-  std::map<int, std::weak_ptr<VirtualWIFI>> radios_;
+  // Map VirtualWIFI's MAC address to VirtualWIFI instance.
+  std::map<uint64_t, std::weak_ptr<VirtualWIFI>> radios_;
   std::mutex radios_mutex_;
 
   VirtualWIFIManager(const VirtualWIFIManager&) = delete;

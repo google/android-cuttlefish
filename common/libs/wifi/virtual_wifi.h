@@ -18,6 +18,9 @@
 #include <memory>
 #include <string>
 
+#include <netinet/in.h>
+#include <linux/netdevice.h>
+
 #include "host/commands/wifid/netlink.h"
 
 namespace avd {
@@ -38,10 +41,12 @@ namespace avd {
 // at any given time.
 class VirtualWIFI {
  public:
-  VirtualWIFI(Netlink* nl, const std::string& name) : nl_(nl), name_(name) {}
+  VirtualWIFI(Netlink* nl, const std::string& name, const std::string& macaddr)
+      : nl_(nl), name_(name), addr_(macaddr) {}
   ~VirtualWIFI();
 
-  int HwSimNumber() const { return hwsim_number_; }
+  const uint8_t* MacAddr() const { return &mac_addr_[0]; }
+  const std::string& Name() const { return name_; }
 
   bool Init();
 
@@ -49,7 +54,22 @@ class VirtualWIFI {
   Netlink* nl_;
   std::string name_;
 
+  // MAC address associated with primary WLAN interface.
+  // This is the only way to identify origin of the packets.
+  // Sadly, if MAC Address is altered manually at runtime, we
+  // will stop working.
+  std::string addr_;
+
+  // NOTE: this has to be MAX_ADDR_LEN, even if we occupy fewer bytes.
+  // Netlink requires this to be full length.
+  uint8_t mac_addr_[MAX_ADDR_LEN];
+
+  // HWSIM number is required to identify HWSIM device that we want destroyed
+  // when we no longer need it.
   int hwsim_number_ = 0;
+
+  // WIPHY and WIFI interface numbers. Useful for local operations, such as
+  // renaming interface.
   int wiphy_number_ = 0;
   int iface_number_ = 0;
 
