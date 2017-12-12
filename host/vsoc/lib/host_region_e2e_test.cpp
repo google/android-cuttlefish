@@ -55,6 +55,11 @@ class RegionTest {
                    make_nonvolatile(r->data[i].host_writable));
     }
   }
+
+  void SendInterruptToGuest() {
+    EXPECT_TRUE(region.Open());
+    region.InterruptPeer();
+  }
 };
 
 TEST(RegionTest, PrimaryRegionWritable) {
@@ -62,9 +67,19 @@ TEST(RegionTest, PrimaryRegionWritable) {
   test.TestHostRegion();
 }
 
+TEST(RegionTest, PrimaryRegionInterrupt) {
+  RegionTest<E2EPrimaryTestRegion> test;
+  test.SendInterruptToGuest();
+}
+
 TEST(RegionTest, SecondaryRegionWritable) {
   RegionTest<E2ESecondaryTestRegion> test;
   test.TestHostRegion();
+}
+
+TEST(RegionTest, SecondarRegionInterrupt) {
+  RegionTest<E2ESecondaryTestRegion> test;
+  test.SendInterruptToGuest();
 }
 
 /**

@@ -59,6 +59,17 @@ class RegionTest {
     }
   }
 
+  void CheckHostStrings() {
+    ASSERT_TRUE(region.Open());
+    size_t num_data = Layout::NumFillRecords(region.region_data_size());
+    EXPECT_LE(2, num_data);
+    Layout* r = region.data();
+    for (size_t i = 0; i < num_data; ++i) {
+      EXPECT_STREQ(Layout::host_pattern,
+                   make_nonvolatile(r->data[i].host_writable));
+    }
+  }
+
   void DeathTestGuestRegion()  {
     // We don't want a tombstone, and we're already in the child.
     // region, so we modify the behavior of LOG(ABORT) to print the
@@ -70,6 +81,11 @@ class RegionTest {
       });
     // region.Open should never return.
     EXPECT_FALSE(region.Open());
+  }
+
+  void WaitForHostInterrupt() {
+    ASSERT_TRUE(region.Open());
+    region.WaitForInterrupt();
   }
 };
 
@@ -99,6 +115,26 @@ TEST(RegionTest, MissingRegionDeathTest) {
   // that we don't create an unwanted tombstone.
   EXPECT_EXIT(region.DeathTestGuestRegion(), testing::ExitedWithCode(2),
               ".*" DEATH_TEST_MESSAGE ".*");
+}
+
+TEST(RegionTest, TestPrimaryHostInterrupt) {
+  RegionTest<E2EPrimaryTestRegion> test;
+  test.WaitForHostInterrupt();
+}
+
+TEST(RegionTest, PrimaryRegionHostWritesVisisble) {
+  RegionTest<E2EPrimaryTestRegion> test;
+  test.CheckHostStrings();
+}
+
+TEST(RegionTest, TestSecondaryHostInterrupt) {
+  RegionTest<E2ESecondaryTestRegion> test;
+  test.WaitForHostInterrupt();
+}
+
+TEST(RegionTest, SecondaryRegionHostWritesVisible) {
+  RegionTest<E2ESecondaryTestRegion> test;
+  test.CheckHostStrings();
 }
 
 int main(int argc, char** argv) {
