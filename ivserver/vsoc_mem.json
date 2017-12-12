@@ -13,6 +13,7 @@
 	    "CUTTLEFISH"
     ]
   },
+
   "vsoc_shm_layout_descriptor" : {
     "__comment": "The top level layout descriptor",
     "vsoc_region_desc_offset" : 128
@@ -23,8 +24,7 @@
      "__comment" : "HWComposer related",
      "current_version" : 1,
      "min_compatible_version" : 1,
-     "region_begin_offset" : 4096,
-     "region_end_offset" : 16384,
+     "region_size": 16384,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm_compatible/loch.h",
@@ -42,8 +42,7 @@
      "__comment" : "Sensors related",
      "current_version" : 1,
      "min_compatible_version" : 1,
-     "region_begin_offset" : 20480,
-     "region_end_offset" : 32768,
+     "region_size" : 8192,
 
      "guest_to_host_signal_table" : {
        "num_nodes_lg2" : 1
@@ -60,8 +59,7 @@
     "__comment" : "Misc",
     "current_version" : 1,
     "min_compatible_version" : 1,
-    "region_begin_offset" : 40960,
-    "region_end_offset" : 65536,
+    "region_size" : 4096,
 
     "guest_to_host_signal_table" : {
       "num_nodes_lg2" : 1
@@ -79,8 +77,7 @@
     "device_name" : "e2e_primary",
     "current_version" : 1,
     "min_compatible_version" : 1,
-    "region_begin_offset" : 65536,
-    "region_end_offset" : 81920,
+    "region_size" : 16384,
 
     "guest_to_host_signal_table" : {
       "num_nodes_lg2" : 1
@@ -96,8 +93,7 @@
     "device_name" : "e2e_secondary",
     "current_version" : 1,
     "min_compatible_version" : 1,
-    "region_begin_offset" : 81920,
-    "region_end_offset" : 98304,
+    "region_size" : 16384,
 
     "guest_to_host_signal_table" : {
       "num_nodes_lg2" : 1
