@@ -23,7 +23,6 @@ cc_library(
     "hald_client.h",
     "ivserver.cc",
     "ivserver.h",
-    "layout.h",
     "options.cc",
     "options.h",
     "qemu_client.cc",
@@ -47,6 +46,7 @@ cc_library(
   ],
   deps = [
     "@cuttlefish//common/libs/fs",
+    "@cuttlefish_kernel//:uapi",
     "@gflags_repo//:gflags",
     "@glog_repo//:glog",
   ]
