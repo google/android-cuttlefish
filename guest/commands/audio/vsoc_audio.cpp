@@ -26,7 +26,7 @@ extern "C" {
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/fs/shared_select.h"
-#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/threads/thunkers.h"
 #include "guest/commands/audio/vsoc_audio.h"
 #include "guest/commands/audio/vsoc_audio_input_stream.h"

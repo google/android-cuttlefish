@@ -21,7 +21,7 @@
 #include <libusb/libusb.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 #include "guest/commands/usbforward/transport_request.h"
 
 namespace usb_forward {

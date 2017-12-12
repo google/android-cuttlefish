@@ -13,22 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
-    name: "cuttlefish_auto_resources",
-    srcs: [
-        "auto_resources.cpp",
-    ],
-    defaults: ["cuttlefish_host"],
-}
-
-cc_test_host {
-    name: "auto_free_buffer_test",
-    srcs: [
-        "auto_free_buffer_test.cpp",
-    ],
-    static_libs: [
-        "cuttlefish_auto_resources",
-        "libgmock",
-    ],
-    defaults: ["cuttlefish_host"],
-}
+subdirs = [
+    "vnc_server",
+]

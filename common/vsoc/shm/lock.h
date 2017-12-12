@@ -136,7 +136,7 @@ ASSERT_SHM_COMPATIBLE(WaitingLockBase, multi_region);
  */
 class GuestLock : public WaitingLockBase {
  public:
-#ifdef ANDROID
+#ifndef CUTTLEFISH_HOST
   void Lock();
   void Unlock();
 #endif
@@ -153,7 +153,7 @@ ASSERT_SHM_COMPATIBLE(GuestLock, multi_region);
  */
 class HostLock : public WaitingLockBase {
  public:
-#ifndef ANDROID
+#ifdef CUTTLEFISH_HOST
   void Lock();
   void Unlock();
 #endif

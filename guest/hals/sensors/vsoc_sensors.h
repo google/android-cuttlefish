@@ -17,7 +17,7 @@
 
 #include <vector>
 
-#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/fs/shared_fd.h"
 #include "guest/hals/sensors/sensors.h"
 #include "guest/hals/sensors/sensors_hal.h"

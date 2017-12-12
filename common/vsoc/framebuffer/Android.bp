@@ -14,21 +14,27 @@
 // limitations under the License.
 
 cc_library_host_static {
-    name: "cuttlefish_auto_resources",
+    name: "libvsoc_framebuffer",
     srcs: [
-        "auto_resources.cpp",
+        "fb_bcast_region.cpp",
+    ],
+    static_libs: [
+        "vsoc_lib",
+        "libbase",
+        "cuttlefish_auto_resources",
     ],
     defaults: ["cuttlefish_host"],
 }
 
-cc_test_host {
-    name: "auto_free_buffer_test",
-    srcs: [
-        "auto_free_buffer_test.cpp",
-    ],
+cc_binary_host {
+    name: "test_framebuffer",
+    srcs: ["test_fb.cpp"],
     static_libs: [
+        "libvsoc_framebuffer",
+        "vsoc_lib",
+        "libbase",
         "cuttlefish_auto_resources",
-        "libgmock",
+        "libcuttlefish_fs",
     ],
     defaults: ["cuttlefish_host"],
 }

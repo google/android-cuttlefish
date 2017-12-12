@@ -20,7 +20,7 @@
 #include <utils/RefBase.h>
 
 #include <utils/Vector.h>
-#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 #include "CameraConfiguration.h"
 #include "EmulatedBaseCamera.h"

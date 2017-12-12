@@ -19,7 +19,7 @@
 #include <map>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/threads/pthread.h"
+#include "common/libs/threads/cuttlefish_thread.h"
 #include "guest/commands/audio/audio_hal.h"
 #include "guest/commands/audio/vsoc_audio_input_stream.h"
 #include "guest/commands/audio/vsoc_audio_message.h"
