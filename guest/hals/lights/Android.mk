@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,10 +25,11 @@ endif
 LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
 
+LOCAL_C_INCLUDES := device/google/cuttlefish_common
 LOCAL_SHARED_LIBRARIES := liblog libcutils
-LOCAL_SRC_FILES := lights_gce.c
-LOCAL_MODULE := lights.$(VIRTUAL_HARDWARE_TYPE)
-LOCAL_CFLAGS += -DLIGHT_BACKLIGHT
+LOCAL_SRC_FILES := lights_vsoc.c
+LOCAL_MODULE := lights.vsoc
+LOCAL_CFLAGS += -DLIGHT_BACKLIGHT -DLOG_TAG=\"VSoC-lights\" $(VSOC_VERSION_CFLAGS)
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)
 
