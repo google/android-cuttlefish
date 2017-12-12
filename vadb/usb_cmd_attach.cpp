@@ -15,7 +15,7 @@
  */
 #include <glog/logging.h>
 
-#include "guest/usbforward/protocol.h"
+#include "guest/commands/usbforward/protocol.h"
 #include "host/vadb/usb_cmd_attach.h"
 
 namespace vadb {
