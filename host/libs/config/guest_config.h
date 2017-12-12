@@ -111,6 +111,24 @@ class GuestConfig {
     return *this;
   }
 
+  // Flags to disable the AppArmor security features of libvirt
+  GuestConfig& SetDisableAppArmorSecurity(bool value) {
+    disable_app_armor_security_ = value;
+    return *this;
+  }
+
+  // Flags to disable the DAC security features of libvirt
+  GuestConfig& SetDisableDACSecurity(bool value) {
+    disable_dac_security_ = value;
+    return *this;
+  }
+
+  // The UUID that libvirt uses to identify the instance
+  GuestConfig& SetUUID(const std::string& uuid) {
+    uuid_ = uuid;
+    return *this;
+  }
+
   // GetInstanceName returns name of this newly created instance.
   std::string GetInstanceName() const;
 
@@ -148,6 +166,10 @@ class GuestConfig {
 
   std::string mobile_bridge_name_;
   std::string entropy_source_;
+
+  std::string uuid_;
+  bool disable_dac_security_;
+  bool disable_app_armor_security_;
 
   GuestConfig(const GuestConfig&) = delete;
   GuestConfig& operator=(const GuestConfig&) = delete;
