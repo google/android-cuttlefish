@@ -26,6 +26,7 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     libdumpstateaidl \
     libdumpstateutil \
+    libziparchive \
     libz
 include $(BUILD_STATIC_LIBRARY)
 
