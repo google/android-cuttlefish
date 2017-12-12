@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include <UniquePtr.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <climits>
