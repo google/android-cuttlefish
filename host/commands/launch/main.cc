@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <fstream>
+#include <iomanip>
 #include <memory>
 #include <sstream>
 
@@ -73,6 +74,8 @@ DEFINE_string(mempath, "/dev/shm/ivshmem",
 DEFINE_string(mobile_interface, "abr0",
               "Network interface to use for mobile networking");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
+DEFINE_string(serial_number_prefix, "CUTTLEFISHCVD",
+              "Serial number to use for the device");
 DEFINE_string(system_image_dir,
               StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
               "Location of the system partition images.");
@@ -213,22 +216,17 @@ int main(int argc, char** argv) {
   auto vendor_partition =
       config::FilePartition::ReuseExistingFile(FLAGS_vendor_image);
 
+  std::ostringstream cmdline;
   std::ifstream t(FLAGS_kernel_command_line);
   if (!t) {
     LOG(FATAL) << "Unable to open " << FLAGS_kernel_command_line;
   }
-  t.seekg(0, std::ios::end);
-  size_t commandline_size = t.tellg();
-  if (commandline_size < 1) {
-    LOG(FATAL) << "no command line data found at " << FLAGS_kernel_command_line;
-  }
-  std::string cmdline;
-  cmdline.reserve(commandline_size);
-  t.seekg(0, std::ios::beg);
-  cmdline.assign((std::istreambuf_iterator<char>(t)),
-                 std::istreambuf_iterator<char>());
+  cmdline << t.rdbuf();
   t.close();
-  cmdline += FLAGS_extra_kernel_command_line;
+  cmdline << " androidboot.serialno=" << FLAGS_serial_number_prefix << std::setw(2) << std::setfill('0') << FLAGS_instance;
+  if (FLAGS_extra_kernel_command_line.size()) {
+    cmdline << " " << FLAGS_extra_kernel_command_line;
+  }
 
   std::string entropy_source = "/dev/urandom";
 
@@ -238,7 +236,7 @@ int main(int argc, char** argv) {
       .SetMemoryMB(FLAGS_memory_mb)
       .SetKernelName(FLAGS_kernel)
       .SetInitRDName(FLAGS_initrd)
-      .SetKernelArgs(cmdline)
+      .SetKernelArgs(cmdline.str())
       .SetIVShMemSocketPath(FLAGS_qemusocket)
       .SetIVShMemVectorCount(json_root["vsoc_device_regions"].size())
       .SetSystemPartitionPath(system_partition->GetName())
