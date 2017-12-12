@@ -5,6 +5,7 @@ cc_library(
         "circqueue.h",
         "e2e_test_region.h",
         "graphics.h",
+        "lock.h",
         "version.h",
     ],
     visibility = ["//visibility:public"],

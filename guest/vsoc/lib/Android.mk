@@ -20,6 +20,7 @@ LOCAL_MODULE := libvsoc
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
+    guest_lock.cpp \
     guest_region.cpp
 
 LOCAL_C_INCLUDES += \

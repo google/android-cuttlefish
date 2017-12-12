@@ -12,6 +12,19 @@ cc_test(
 )
 
 cc_test(
+    name = "lock_test",
+    srcs = [
+        "lock_test.cpp",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//common/vsoc/shm",
+        "//host/vsoc/lib:vsoc_lib",
+        "@gtest_repo//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "vsoc_graphics_test",
     srcs = [
         "graphics_test.cpp",
@@ -26,7 +39,9 @@ cc_test(
 cc_library(
     name = "vsoc_common",
     srcs = [
+        "compat.cpp",
         "e2e_test_region.cpp",
+        "lock_common.cpp",
         "region_common.cpp",
     ],
     hdrs = [
@@ -34,6 +49,7 @@ cc_library(
         "compat.h",
         "graphics_common.h",
         "region.h",
+        "single_sided_signal.h",
     ],
     copts = ["-Wno-unused-private-field"],
     visibility = ["//visibility:public"],

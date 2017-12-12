@@ -22,6 +22,7 @@
 #include <cstdint>
 
 #include "common/vsoc/shm/base.h"
+#include "common/vsoc/shm/lock.h"
 
 namespace vsoc {
 class RegionBase;
@@ -50,17 +51,6 @@ class CircularQueueBase {
     uint32_t end_idx;
   };
   static const uintptr_t BufferSize = (1 << SizeLog2);
-
-  /**
-   * Acquire the spinlock on the queue. This will effectively block all
-   * readers and writers.
-   */
-  void Lock();
-
-  /**
-   * Release the spinlock.
-   */
-  void Unlock();
 
   /**
    * Copy bytes from buffer_in into the part of the queue specified by Range.
@@ -95,7 +85,7 @@ class CircularQueueBase {
   // Advances when buffer space is filled and ready for a reader
   uint32_t w_pub_;
   // Spinlock that protects the region. 0 means unlocked
-  std::atomic<uint32_t> lock_;
+  SpinLock lock_;
   // The actual memory in the buffer
   char buffer_[BufferSize];
 };
