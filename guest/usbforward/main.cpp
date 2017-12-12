@@ -32,12 +32,6 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  auto res = libusb_init(nullptr);
-  if (res != 0) {
-    ALOGE("Could not initialize libusb: %d / %d", res, errno);
-    return 1;
-  }
-
   usb_forward::USBServer server(fd);
   server.Serve();
   ALOGE("Terminated.");
