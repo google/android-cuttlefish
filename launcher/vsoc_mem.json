@@ -10,7 +10,7 @@
 	    "androidboot.selinux=permissive",
 	    "enforcing=0",
 	    "audit=0",
-	    "AVD_NESTED_VM"
+	    "CUTTLEFISH"
     ]
   },
 
