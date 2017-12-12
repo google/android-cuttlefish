@@ -38,15 +38,27 @@ enum : uint32_t {
 
   // Execute command on attached USB device.
   // Request format:
-  // - ExecuteRequest{}
+  // - ControlTransfer{}
   // - if transfer direction is host -> device
-  //   - uint8_t[ExecuteRequest.length]
+  //   - uint8_t[ControlTransfer.length] data
   // Response format:
   // - int32_t(status)
   // - if transfer direction is device -> host
   //   - int32_t(actual length)
   //   - uint8_t[actual length] bytes
-  CmdExecute
+  CmdControlTransfer,
+
+  // Execute transfer on attached USB device.
+  // Request format:
+  // - DataTransfer{}
+  // - if transfer direction is host -> device
+  //   - uint8_t[DataTransfer.length] data
+  // Response format:
+  // - int32_t(status)
+  // - if transfer direction is host -> device
+  //   - int32_t(actual length)
+  //   - int32_t[actual length] bytes
+  CmdDataTransfer,
 };
 
 // DeviceInfo describes individual USB device that was found attached to the
@@ -80,8 +92,8 @@ struct AttachRequest {
   uint8_t dev_id;
 } __attribute__((packed));
 
-// ExecuteRequest specifies target bus and device along with USB request.
-struct ExecuteRequest {
+// ControlTransfer specifies target bus and device along with USB request.
+struct ControlTransfer {
   uint8_t bus_id;
   uint8_t dev_id;
   uint8_t type;
@@ -89,5 +101,15 @@ struct ExecuteRequest {
   uint16_t value;
   uint16_t index;
   uint16_t length;
+  uint32_t timeout;
+} __attribute__((packed));
+
+// DataTransfer is used to exchange data between host and device.
+struct DataTransfer {
+  uint8_t bus_id;
+  uint8_t dev_id;
+  uint8_t endpoint_id;
+  uint8_t is_host_to_device;
+  uint32_t length;
   uint32_t timeout;
 } __attribute__((packed));
