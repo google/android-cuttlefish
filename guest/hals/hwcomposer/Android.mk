@@ -14,6 +14,10 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# Include the legacy hwcomposer
+# TODO(jemoreira): make this configurable through BoardConfig variables
+include $(LOCAL_PATH)/legacy/Android.mk
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := hwcomposer.vsoc-future
