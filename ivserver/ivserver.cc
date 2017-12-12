@@ -1,77 +1,69 @@
 #include "host/ivserver/ivserver.h"
-#include "host/ivserver/clienthandshake.h"
-#include "host/ivserver/qemuhandshake.h"
-#include "host/ivserver/socketutils.h"
 
 #include <sys/select.h>
 #include <algorithm>
 
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_select.h"
+#include "host/ivserver/hald_client.h"
+#include "host/ivserver/qemu_client.h"
+
 namespace ivserver {
 
 IVServer::IVServer(const IVServerOptions &options, const Json::Value &json_root)
     : json_root_{json_root},
-      vsoc_shmem_(options.shm_size_mib, options.shm_file_path, json_root_) {
-  qemu_listener_fd_ = start_listener_socket(options.qemu_socket_path);
-  LOG_IF(FATAL, client_listener_fd_ == -1)
-      << "Could not create qemu socket: " << strerror(errno);
-
-  client_listener_fd_ = start_listener_socket(options.client_socket_path);
-  LOG_IF(FATAL, client_listener_fd_ == -1)
-      << "Could not create client socket: " << strerror(errno);
+      vsoc_shmem_(VSoCSharedMemory::New(options.shm_size_mib,
+                                        options.shm_file_path, json_root_)),
+      qemu_channel_(avd::SharedFD::SocketLocalServer(
+          options.qemu_socket_path.c_str(), false, SOCK_STREAM, 0666)),
+      client_channel_(avd::SharedFD::SocketLocalServer(
+          options.client_socket_path.c_str(), false, SOCK_STREAM, 0666)) {
+  LOG_IF(FATAL, qemu_channel_->IsOpen())
+      << "Could not create QEmu channel: " << qemu_channel_->StrError();
+  LOG_IF(FATAL, client_channel_->IsOpen())
+      << "Could not create Client channel: " << client_channel_->StrError();
 }
 
 void IVServer::Serve() {
   while (true) {
-    fd_set readfdset;
-    int retval;
+    avd::SharedFDSet rset;
+    rset.Set(qemu_channel_);
+    rset.Set(client_channel_);
+    avd::Select(&rset, nullptr, nullptr, nullptr);
 
-    FD_ZERO(&readfdset);
-    FD_SET(qemu_listener_fd_, &readfdset);
-    FD_SET(client_listener_fd_, &readfdset);
-
-    retval = select(std::max(qemu_listener_fd_, client_listener_fd_) + 1,
-                    &readfdset, NULL, NULL, NULL);
-    if (retval == -1) {
-      LOG(ERROR) << "select failed";
-      return;
+    if (rset.IsSet(qemu_channel_)) {
+      HandleNewQemuConnection();
     }
 
-    if (FD_ISSET(qemu_listener_fd_, &readfdset)) {
-      if (!HandleNewQemuConnection()) {
-        LOG(ERROR) << "Unable to handle new QEMU connection";
-        return;
-      }
-    } else if (FD_ISSET(client_listener_fd_, &readfdset)) {
-      if (!HandleNewClientConnection()) {
-        LOG(ERROR) << "Unable to handle new client connection";
-        return;
-      }
-    } else {
-      LOG(WARNING) << "select returned with invalid file-descriptor set";
+    if (rset.IsSet(client_channel_)) {
+      HandleNewClientConnection();
     }
   }
 
   LOG(FATAL) << "Control reached out of event loop";
 }
 
-bool IVServer::HandleNewClientConnection() {
-  ClientHandshake client_handshake(vsoc_shmem_, client_listener_fd_);
-  if (!client_handshake.HasInitialized()) {
-    return false;
+void IVServer::HandleNewClientConnection() {
+  std::unique_ptr<HaldClient> res = HaldClient::New(
+      *vsoc_shmem_, avd::SharedFD::Accept(*client_channel_, nullptr, nullptr));
+  if (!res) {
+    LOG(WARNING) << "Rejecting unsuccessful HALD connection.";
   }
-
-  return client_handshake.PerformHandshake();
 }
 
-bool IVServer::HandleNewQemuConnection() {
-  QemuHandshake qemu_handshake(vsoc_shmem_, qemu_listener_fd_);
-  if (!qemu_handshake.HasInitialized()) {
-    return false;
-  }
+void IVServer::HandleNewQemuConnection() {
+  std::unique_ptr<QemuClient> res =
+      QemuClient::New(vsoc_shmem_->shared_mem_fd(),
+                      avd::SharedFD::Accept(*qemu_channel_, nullptr, nullptr));
 
-  return qemu_handshake.PerformHandshake();
+  if (res) {
+    // TODO(romitd): how to recover if some clients failed? should we retry?
+    // Why are we doing this?
+    vsoc_shmem_->BroadcastQemuSocket(res->client_socket());
+  } else {
+    LOG(WARNING) << "Could not accept new QEmu client.";
+  }
 }
 
 }  // namespace ivserver
