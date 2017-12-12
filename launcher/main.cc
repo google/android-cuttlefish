@@ -30,6 +30,7 @@ DEFINE_int32(shmsize, 0, "(ignored)");
 DEFINE_string(qemusocket, "/tmp/ivshmem_socket_qemu", "QEmu socket path");
 DEFINE_string(clientsocket, "/tmp/ivshmem_socket_client", "Client socket path");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
+DEFINE_string(kernel_command_line, "", "Location of a text file with the kernel command line.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_string(system_image_dir, "", "Location of the system partition images.");
 DEFINE_string(initrd, "/usr/share/cuttlefish-common/gce_ramdisk.img",
@@ -145,10 +146,24 @@ int main(int argc, char** argv) {
   auto cache_partition =  config::FilePartition::ReuseExistingFile(
       FLAGS_cache_image);
 
-  std::stringstream cmdline;
-  for (const auto& value : json_root["guest"]["kernel_command_line"]) {
-    cmdline << value.asString() << ' ';
+  if (!FLAGS_kernel_command_line.size()) {
+    LOG(FATAL) << "--kernel_command_line is required";
   }
+  std::ifstream t(FLAGS_kernel_command_line);
+  if (!t) {
+    LOG(FATAL) << "Unable to open " << FLAGS_kernel_command_line;
+  }
+  t.seekg(0, std::ios::end);
+  size_t commandline_size = t.tellg();
+  if (commandline_size < 1) {
+    LOG(FATAL) << "no command line data found at " << FLAGS_kernel_command_line;
+  }
+  std::string cmdline;
+  cmdline.reserve(commandline_size);
+  t.seekg(0, std::ios::beg);
+  cmdline.assign((std::istreambuf_iterator<char>(t)),
+             std::istreambuf_iterator<char>());
+  t.close();
 
   unsigned long libvirt_version;
   CHECK(virGetVersion(&libvirt_version, nullptr, nullptr) == 0)
@@ -170,7 +185,7 @@ int main(int argc, char** argv) {
       .SetMemoryMB(FLAGS_memory_mb)
       .SetKernelName(FLAGS_kernel)
       .SetInitRDName(FLAGS_initrd)
-      .SetKernelArgs(cmdline.str())
+      .SetKernelArgs(cmdline)
       .SetIVShMemSocketPath(FLAGS_qemusocket)
       .SetIVShMemVectorCount(json_root["vsoc_device_regions"].size())
       .SetRamdiskPartitionPath(ramdisk_partition->GetName())
