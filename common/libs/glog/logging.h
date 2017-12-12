@@ -20,6 +20,11 @@
 
 #if defined(CUTTLEFISH_HOST)
 using ::android::base::INFO;
+using ::android::base::WARNING;
+using ::android::base::FATAL;
+
+#define LOG_IF(LEVEL, CONDITION) if (CONDITION) LOG(LEVEL)
+
 #endif  // CUTTLEFISH_HOST
 #else  // DEBIAN_HOST (by elimination)
 #include <glog/logging.h>

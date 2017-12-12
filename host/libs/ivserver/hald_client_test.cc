@@ -23,8 +23,8 @@
 #include <gtest/gtest.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/ivserver/hald_client.h"
-#include "host/ivserver/vsocsharedmem_mock.h"
+#include "host/libs/ivserver/hald_client.h"
+#include "host/libs/ivserver/vsocsharedmem_mock.h"
 
 using ::testing::DoAll;
 using ::testing::Return;
