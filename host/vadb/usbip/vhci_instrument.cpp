@@ -51,10 +51,10 @@ constexpr uint32_t kDefaultDeviceID = (1 << 16) | 1;
 constexpr uint32_t kDefaultDeviceSpeed = 3;
 
 // Subsystem and device type where VHCI driver is located.
-// These values can usually be found after loading vhci-hcd module here:
-// /sys/devices/platform/vhci_hcd/modalias
-constexpr char kVHCISubsystem[] = "platform";
-constexpr char kVHCIDevType[] = "vhci_hcd";
+const char* const kVHCIPlatformPaths[] = {
+  "/sys/devices/platform/vhci_hcd",
+  "/sys/devices/platform/vhci_hcd.1",
+};
 
 // Control messages.
 // Attach tells thread to attach remote device.
@@ -78,10 +78,7 @@ enum {
 }  // anonymous namespace
 
 VHCIInstrument::VHCIInstrument(const std::string& name)
-    : udev_(nullptr, [](udev* u) { udev_unref(u); }),
-      vhci_device_(nullptr,
-                   [](udev_device* device) { udev_device_unref(device); }),
-      name_(name) {}
+    : name_(name) {}
 
 VHCIInstrument::~VHCIInstrument() {
   control_write_end_->Write(&kControlExit, sizeof(kControlExit));
@@ -91,19 +88,20 @@ VHCIInstrument::~VHCIInstrument() {
 bool VHCIInstrument::Init() {
   avd::SharedFD::Pipe(&control_read_end_, &control_write_end_);
 
-  udev_.reset(udev_new());
-  CHECK(udev_) << "Could not create libudev context.";
+  struct stat buf;
+  for (const auto* path : kVHCIPlatformPaths) {
+    if (stat(path, &buf) == 0) {
+      syspath_ = path;
+      break;
+    }
+  }
 
-  vhci_device_.reset(udev_device_new_from_subsystem_sysname(
-      udev_.get(), kVHCISubsystem, kVHCIDevType));
-  if (!vhci_device_) {
+  if (syspath_.empty()) {
     LOG(ERROR) << "VHCI not available. Is the driver loaded?";
     LOG(ERROR) << "Try: sudo modprobe vhci_hcd";
     LOG(ERROR) << "The driver is part of linux-image-extra-`uname -r` package";
     return false;
   }
-
-  syspath_ = udev_device_get_syspath(vhci_device_.get());
 
   if (!FindFreePort()) {
     LOG(ERROR) << "It appears all your VHCI ports are currently occupied.";
