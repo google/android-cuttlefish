@@ -37,6 +37,13 @@ class Server final {
   // exchange.
   void Serve();
 
+  // StartAttachedByDefault tells clients to skip introduction and query phase
+  // and go directly to command execution phase. This is particularly useful if
+  // we want to make the stack automatic.
+  void SetClientsAttachedByDefault(bool is_attached) {
+    init_attached_state_ = is_attached;
+  }
+
  private:
   // Create USBIP server socket.
   // Returns true, if socket was successfully created.
@@ -49,6 +56,7 @@ class Server final {
   avd::SharedFD server_;
   std::list<Client> clients_;
   const DevicePool& device_pool_;
+  bool init_attached_state_ = false;
 
   Server(const Server&) = delete;
   Server& operator=(const Server&) = delete;
