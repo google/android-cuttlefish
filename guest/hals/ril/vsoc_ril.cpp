@@ -236,11 +236,12 @@ static void request_datacall_fail_cause(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &fail, sizeof(fail));
 };
 
-static void on_data_calllist_changed(void* param) {
+static void on_data_calllist_changed(void* /*param*/) {
   request_or_send_data_calllist(NULL);
 }
 
-static void request_data_calllist(void* data, size_t datalen, RIL_Token t) {
+static void request_data_calllist(void* /*data*/, size_t /*datalen*/,
+                                  RIL_Token t) {
   request_or_send_data_calllist(&t);
 }
 
@@ -328,7 +329,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   gRilConnected = (gDataCalls.size() > 0);
 }
 
-static void request_teardown_data_call(void* data, size_t datalen,
+static void request_teardown_data_call(void* data, size_t /*datalen*/,
                                        RIL_Token t) {
   char** data_strs = (char**)data;
   int call_id = atoi(data_strs[0]);
@@ -384,12 +385,12 @@ static char is_radio_on() {
   return state == RADIO_STATE_ON;
 }
 
-static void request_radio_power(void* data, size_t datalen, RIL_Token t) {
+static void request_radio_power(void* data, size_t /*datalen*/, RIL_Token t) {
   int on = ((int*)data)[0];
   set_radio_state(on ? RADIO_STATE_ON : RADIO_STATE_OFF, t);
 }
 
-static void send_call_state_changed(void* param) {
+static void send_call_state_changed(void* /*param*/) {
   gce_ril_env->OnUnsolicitedResponse(RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED,
                                      NULL, 0);
 }
@@ -468,7 +469,8 @@ static int gLastActiveCallIndex = 1;
 static int gMicrophoneMute = 0;
 static std::map<int, CallState> gActiveCalls;
 
-static void request_get_current_calls(void* data, size_t datalen, RIL_Token t) {
+static void request_get_current_calls(void* /*data*/, size_t /*datalen*/,
+                                      RIL_Token t) {
   const int countCalls = gActiveCalls.size();
 
   RIL_Call** pp_calls = (RIL_Call**)alloca(countCalls * sizeof(RIL_Call*));
@@ -509,7 +511,7 @@ static void request_get_current_calls(void* data, size_t datalen, RIL_Token t) {
   ALOGV("Get Current calls: %d calls found.\n", countCalls);
 }
 
-static void simulate_pending_calls_answered(void* ignore) {
+static void simulate_pending_calls_answered(void* /*ignore*/) {
   ALOGV("Simulating outgoing call answered.");
   // This also resumes held calls.
   for (std::map<int, CallState>::iterator iter = gActiveCalls.begin();
@@ -524,7 +526,7 @@ static void simulate_pending_calls_answered(void* ignore) {
                                      NULL, 0);
 }
 
-static void request_dial(void* data, size_t datalen, RIL_Token t) {
+static void request_dial(void* data, size_t /*datalen*/, RIL_Token t) {
   RIL_Dial* p_dial = (RIL_Dial*)data;
 
   ALOGV("Dialing %s, number presentation is %s.", p_dial->address,
@@ -558,7 +560,7 @@ static void request_dial(void* data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-void request_set_mute(void* data, size_t datalen, RIL_Token t) {
+void request_set_mute(void* data, size_t /*datalen*/, RIL_Token t) {
   gMicrophoneMute = ((int*)data)[0] != 0;
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
@@ -579,7 +581,8 @@ struct SmsMessage {
 static int gNextMessageId = 1;
 static std::map<int, SmsMessage> gMessagesOnSimCard;
 
-static void request_write_sms_to_sim(void* data, size_t datalen, RIL_Token t) {
+static void request_write_sms_to_sim(void* data, size_t /*datalen*/,
+                                     RIL_Token t) {
   RIL_SMS_WriteArgs* p_args = (RIL_SMS_WriteArgs*)data;
 
   SmsMessage message;
@@ -598,7 +601,8 @@ static void request_write_sms_to_sim(void* data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &index, sizeof(index));
 }
 
-static void request_delete_sms_on_sim(void* data, size_t datalen, RIL_Token t) {
+static void request_delete_sms_on_sim(void* data, size_t /*datalen*/,
+                                      RIL_Token t) {
   int index = *(int*)data;
 
   ALOGV("Delete SMS message %d", index);
@@ -612,7 +616,7 @@ static void request_delete_sms_on_sim(void* data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_hangup(void* data, size_t datalen, RIL_Token t) {
+static void request_hangup(void* data, size_t /*datalen*/, RIL_Token t) {
   int* p_line = (int*)data;
 
   ALOGV("Hanging up call %d.", *p_line);
@@ -627,7 +631,8 @@ static void request_hangup(void* data, size_t datalen, RIL_Token t) {
   }
 }
 
-static void request_hangup_waiting(void* data, size_t datalen, RIL_Token t) {
+static void request_hangup_waiting(void* /*data*/, size_t /*datalen*/,
+                                   RIL_Token t) {
   ALOGV("Hanging up background/held calls.");
   for (std::map<int, CallState>::iterator iter = gActiveCalls.begin();
        iter != gActiveCalls.end();) {
@@ -697,13 +702,13 @@ static void request_answer_incoming(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_combine_multiparty_call(void* data, size_t datalen,
+static void request_combine_multiparty_call(void* /*data*/, size_t /*datalen*/,
                                             RIL_Token t) {
   ALOGW("Conference calls are not supported.");
   gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
 }
 
-static void request_split_multiparty_call(void* data, size_t datalen,
+static void request_split_multiparty_call(void* /*data*/, size_t /*datalen*/,
                                           RIL_Token t) {
   ALOGW("Conference calls are not supported.");
   gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
@@ -728,7 +733,7 @@ static void request_udub_on_incoming_calls(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_send_dtmf(void* data, size_t datalen, RIL_Token t) {
+static void request_send_dtmf(void* data, size_t /*datalen*/, RIL_Token t) {
   char c = ((char*)data)[0];
   ALOGV("Sending DTMF digit '%c'", c);
 
@@ -765,7 +770,8 @@ static int gCDMASignalStrength = kCDMASignalStrengthMax;
 static int gEVDOSignalStrength = kEVDOSignalStrengthMax;
 static int gLTESignalStrength = kLTESignalStrengthMax;
 
-static void request_signal_strength(void* data, size_t datalen, RIL_Token t) {
+static void request_signal_strength(void* /*data*/, size_t /*datalen*/,
+                                    RIL_Token t) {
   // TODO(ender): possible to support newer APIs here.
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
   RIL_SignalStrength_v10 strength;
@@ -1006,8 +1012,9 @@ static void request_set_radio_capability(void* data, size_t datalen,
 }
 #endif
 
-static void request_set_preferred_network_type(int request, void* data,
-                                               size_t datalen, RIL_Token t) {
+static void request_set_preferred_network_type(int /*request*/, void* data,
+                                               size_t /*datalen*/,
+                                               RIL_Token t) {
   RIL_PreferredNetworkType desired_type = *(RIL_PreferredNetworkType*)(data);
 
   // TODO(ender): telephony still believes this phone is GSM only.
@@ -1043,8 +1050,9 @@ static void request_set_preferred_network_type(int request, void* data,
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_get_preferred_network_type(int request, void* data,
-                                               size_t datalen, RIL_Token t) {
+static void request_get_preferred_network_type(int /*request*/, void* /*data*/,
+                                               size_t /*datalen*/,
+                                               RIL_Token t) {
   gce_ril_env->OnRequestComplete(
       t, RIL_E_SUCCESS,
       const_cast<RIL_PreferredNetworkType*>(&gModemDefaultType),
@@ -1069,8 +1077,8 @@ static const char kCdmaMobileDeviceNumber[] = "5551234567";
 static const char kCdmaSID[] = "123";
 static const char kCdmaNID[] = "65535";  // special: indicates free roaming.
 
-static void request_registration_state(int request, void* data, size_t datalen,
-                                       RIL_Token t) {
+static void request_registration_state(int request, void* /*data*/,
+                                       size_t /*datalen*/, RIL_Token t) {
   char** responseStr = NULL;
   int numElements = 0;
 
@@ -1139,6 +1147,8 @@ static bool isCDMA() {
     case PREF_NET_TYPE_LTE_CMDA_EVDO_GSM_WCDMA:
     case PREF_NET_TYPE_GSM_WCDMA_CDMA_EVDO_AUTO:
       return true;
+    default:
+      break;
   }
 
   ALOGE("INVALID MODEM TYPE: %d", gModemCurrentType);
@@ -1164,6 +1174,8 @@ static bool isGSM() {
     case PREF_NET_TYPE_LTE_CDMA_EVDO:
     case PREF_NET_TYPE_LTE_CMDA_EVDO_GSM_WCDMA:
       return false;
+    default:
+      break;
   }
 
   ALOGE("INVALID MODEM TYPE: %d", gModemCurrentType);
@@ -1190,8 +1202,8 @@ static void request_get_imei_sv(RIL_Token t) {
                                  strlen(gIdentityGsmImeiSv));
 }
 
-static void request_device_identity(int request, void* data, size_t datalen,
-                                    RIL_Token t) {
+static void request_device_identity(int /*request*/, void* /*data*/,
+                                    size_t /*datalen*/, RIL_Token t) {
   char* response[4] = {NULL};
 
   ALOGV("Requesting device identity...");
@@ -1217,8 +1229,10 @@ static bool gCdmaHasSim = true;
 static RIL_CdmaSubscriptionSource gCdmaSubscriptionType =
     CDMA_SUBSCRIPTION_SOURCE_RUIM_SIM;
 
-static void request_cdma_get_subscription_source(int request, void* data,
-                                                 size_t datalen, RIL_Token t) {
+static void request_cdma_get_subscription_source(int /*request*/,
+                                                 void* /*data*/,
+                                                 size_t /*datalen*/,
+                                                 RIL_Token t) {
   ALOGV("Requesting CDMA Subscription source.");
 
   if (!isCDMA()) {
@@ -1231,8 +1245,9 @@ static void request_cdma_get_subscription_source(int request, void* data,
                                  sizeof(gCdmaSubscriptionType));
 }
 
-static void request_cdma_set_subscription_source(int request, void* data,
-                                                 size_t datalen, RIL_Token t) {
+static void request_cdma_set_subscription_source(int /*request*/, void* data,
+                                                 size_t /*datalen*/,
+                                                 RIL_Token t) {
   ALOGV("Setting CDMA Subscription source.");
 
   if (!isCDMA()) {
@@ -1259,8 +1274,8 @@ static void request_cdma_set_subscription_source(int request, void* data,
                                      sizeof(gCdmaSubscriptionType));
 }
 
-static void request_cdma_subscription(int request, void* data, size_t datalen,
-                                      RIL_Token t) {
+static void request_cdma_subscription(int /*request*/, void* /*data*/,
+                                      size_t /*datalen*/, RIL_Token t) {
   ALOGV("Requesting CDMA Subscription.");
 
   if (!isCDMA()) {
@@ -1319,8 +1334,9 @@ static void request_hardware_config(RIL_Token t) {
 // 0 = Home network only, 1 = preferred networks only, 2 = all networks.
 static int gCdmaRoamingPreference = 2;
 
-static void request_cdma_get_roaming_preference(int request, void* data,
-                                                size_t datalen, RIL_Token t) {
+static void request_cdma_get_roaming_preference(int /*request*/, void* /*data*/,
+                                                size_t /*datalen*/,
+                                                RIL_Token t) {
   if (!isCDMA()) {
     // No such radio.
     gce_ril_env->OnRequestComplete(t, RIL_E_RADIO_NOT_AVAILABLE, NULL, 0);
@@ -1333,8 +1349,9 @@ static void request_cdma_get_roaming_preference(int request, void* data,
                                  sizeof(gCdmaRoamingPreference));
 }
 
-static void request_cdma_set_roaming_preference(int request, void* data,
-                                                size_t datalen, RIL_Token t) {
+static void request_cdma_set_roaming_preference(int /*request*/, void* data,
+                                                size_t /*datalen*/,
+                                                RIL_Token t) {
   if (!isCDMA()) {
     // No such radio.
     gce_ril_env->OnRequestComplete(t, RIL_E_RADIO_NOT_AVAILABLE, NULL, 0);
@@ -1355,7 +1372,7 @@ static void request_cdma_set_roaming_preference(int request, void* data,
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_send_ussd(void* data, size_t datalen, RIL_Token t) {
+static void request_send_ussd(void* /*data*/, size_t /*datalen*/, RIL_Token t) {
   ALOGV("Sending USSD code is currently not supported");
   // TODO(ender): support this feature
   gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
@@ -1367,7 +1384,7 @@ static void request_cancel_ussd(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
 }
 
-static void request_exit_emergency_mode(void* data, size_t datalen,
+static void request_exit_emergency_mode(void* /*data*/, size_t /*datalen*/,
                                         RIL_Token t) {
   ALOGV("Exiting emergency callback mode.");
 
@@ -1384,7 +1401,7 @@ static int gce_ril_on_supports(int requestCode) {
   return 1;
 }
 
-static void gce_ril_on_cancel(RIL_Token t) {
+static void gce_ril_on_cancel(RIL_Token /*t*/) {
   ALOGE("Cancel operation not implemented");
 }
 
@@ -1401,7 +1418,7 @@ static int s_cid = 0;
 
 std::vector<RIL_NeighboringCell> gGSMNeighboringCells;
 
-static void request_get_neighboring_cell_ids(void* data, size_t datalen,
+static void request_get_neighboring_cell_ids(void* /*data*/, size_t /*datalen*/,
                                              RIL_Token t) {
   ALOGV("Requesting GSM neighboring cell ids");
 
@@ -1423,7 +1440,7 @@ static void request_get_neighboring_cell_ids(void* data, size_t datalen,
 }
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR1)
-static void request_get_cell_info_list(void* data, size_t datalen,
+static void request_get_cell_info_list(void* /*data*/, size_t /*datalen*/,
                                        RIL_Token t) {
   struct timespec now;
   uint64_t curTime;
@@ -1499,14 +1516,15 @@ static void init_virtual_network() {
 
 static OperatorSelectionMethod gOperatorSelectionMethod = kOperatorDeregistered;
 
-static void request_query_network_selection_mode(void* data, size_t datalen,
+static void request_query_network_selection_mode(void* /*data*/,
+                                                 size_t /*datalen*/,
                                                  RIL_Token t) {
   ALOGV("Query operator selection mode (%d)", gOperatorSelectionMethod);
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &gOperatorSelectionMethod,
                                  sizeof(gOperatorSelectionMethod));
 }
 
-static void request_operator(void* data, size_t datalen, RIL_Token t) {
+static void request_operator(void* /*data*/, size_t /*datalen*/, RIL_Token t) {
   std::map<std::string, NetworkOperator>::iterator iter =
       gNetworkOperators.find(gCurrentNetworkOperator);
 
@@ -1524,7 +1542,7 @@ static void request_operator(void* data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, response, sizeof(response));
 }
 
-static void request_query_available_networks(void* data, size_t datalen,
+static void request_query_available_networks(void* /*data*/, size_t /*datalen*/,
                                              RIL_Token t) {
   const char** available_networks =
       new const char*[gNetworkOperators.size() * 4];
@@ -1562,7 +1580,7 @@ static void request_set_automatic_network_selection(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_set_manual_network_selection(void* data, size_t datalen,
+static void request_set_manual_network_selection(void* data, size_t /*datalen*/,
                                                  RIL_Token t) {
   char* mccmnc = (char*)data;
 
@@ -1585,7 +1603,7 @@ static void request_set_manual_network_selection(void* data, size_t datalen,
 static const char kDefaultSMSC[] = "00";
 static int gNextSmsMessageId = 1;
 
-static void request_cdma_send_SMS(void* data, RIL_Token t) {
+static void request_cdma_send_SMS(void* /*data*/, RIL_Token t) {
   RIL_SMS_Response response = {0, 0, 0};
   // RIL_CDMA_SMS_Message* rcsm = (RIL_CDMA_SMS_Message*) data;
 
@@ -1624,7 +1642,7 @@ static void request_send_SMS(void* data, RIL_Token t) {
 }
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR1)
-static void request_set_cell_info_list_rate(void* data, size_t datalen,
+static void request_set_cell_info_list_rate(void* data, size_t /*datalen*/,
                                             RIL_Token t) {
   // For now we'll save the rate but no RIL_UNSOL_CELL_INFO_LIST messages
   // will be sent.
@@ -1634,9 +1652,9 @@ static void request_set_cell_info_list_rate(void* data, size_t datalen,
 }
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-static void request_ims_send_SMS(void* data, size_t datalen, RIL_Token t) {
+static void request_ims_send_SMS(void* data, size_t /*datalen*/, RIL_Token t) {
   RIL_IMS_SMS_Message* args = (RIL_IMS_SMS_Message*)data;
-  RIL_SMS_Response response = {0};
+  RIL_SMS_Response response{};
 
   ALOGV("Send IMS SMS Message");
 
@@ -1656,7 +1674,8 @@ static void request_ims_send_SMS(void* data, size_t datalen, RIL_Token t) {
 }
 #endif
 
-static void request_SMS_acknowledge(void* data, size_t datalen, RIL_Token t) {
+static void request_SMS_acknowledge(void* data, size_t /*datalen*/,
+                                    RIL_Token t) {
   int* ack = (int*)data;
 
   // TODO(ender): we should retain "incoming" sms for later reception.
@@ -1783,7 +1802,7 @@ static void init_sim_file_system() {
       SimFileResponse(144, 0, "00000013");
 }
 
-static void request_SIM_IO(void* data, size_t datalen, RIL_Token t) {
+static void request_SIM_IO(void* data, size_t /*datalen*/, RIL_Token t) {
   const RIL_SIM_IO_v6& args = *(RIL_SIM_IO_v6*)data;
   RIL_SIM_IO_Response sr = {0, 0, 0};
 
@@ -1810,7 +1829,7 @@ static void request_SIM_IO(void* data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
 }
 
-static void request_enter_sim_pin(void* data, size_t datalen, RIL_Token t) {
+static void request_enter_sim_pin(void* data, size_t /*datalen*/, RIL_Token t) {
   const char** pin_aid = (const char**)data;
 
   ALOGV("Entering PIN: %s / %s", pin_aid[0], pin_aid[1]);
@@ -1864,7 +1883,7 @@ static void request_enter_sim_pin(void* data, size_t datalen, RIL_Token t) {
 /**
  * No longer POLL.
  */
-static void pollSIMState(void* param) {
+static void pollSIMState(void* /*param*/) {
   // TODO(ender): check radio state?
 
   ALOGV("Polling SIM Status.");
@@ -2055,7 +2074,8 @@ struct SimSession {
 static int gNextSimSessionId = 1;
 static std::map<int, SimSession> gSimSessions;
 
-static void request_sim_open_channel(void* data, size_t datalen, RIL_Token t) {
+static void request_sim_open_channel(void* data, size_t /*datalen*/,
+                                     RIL_Token t) {
   char* aid = (char*)data;
   SimSession session;
 
@@ -2071,7 +2091,8 @@ static void request_sim_open_channel(void* data, size_t datalen, RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &response, sizeof(response));
 }
 
-static void request_sim_close_channel(void* data, size_t datalen, RIL_Token t) {
+static void request_sim_close_channel(void* data, size_t /*datalen*/,
+                                      RIL_Token t) {
   int session = *(int*)(data);
 
   ALOGV("Closing SIM session %d", session);
@@ -2085,7 +2106,7 @@ static void request_sim_close_channel(void* data, size_t datalen, RIL_Token t) {
 }
 
 #if VSOC_PLATFORM_SDK_AFTER(K)
-static void request_sim_apdu(void* data, size_t datalen, RIL_Token t) {
+static void request_sim_apdu(void* data, size_t /*datalen*/, RIL_Token t) {
   RIL_SIM_APDU* apdu = (RIL_SIM_APDU*)data;
 
   ALOGV("Requesting APDU: Session %d CLA %d INST %d Params: %d %d %d, data %s",
@@ -2093,7 +2114,7 @@ static void request_sim_apdu(void* data, size_t datalen, RIL_Token t) {
         apdu->p3, apdu->data);
 
   if (gSimSessions.find(apdu->sessionid) != gSimSessions.end()) {
-    RIL_SIM_IO_Response sr = {0};
+    RIL_SIM_IO_Response sr{};
 
     // Fallback / default behavior.
     sr.sw1 = 144;
@@ -2112,7 +2133,7 @@ static void request_sim_apdu(void* data, size_t datalen, RIL_Token t) {
 // 2 = lock is neither available nor enabled
 static const int kFacilityLockAllDisabled = 0;
 
-static void request_facility_lock(void* data, size_t datalen, RIL_Token t) {
+static void request_facility_lock(void* data, size_t /*datalen*/, RIL_Token t) {
   char** data_vec = (char**)data;
 
   int data_vec_len = atoi(data_vec[1]);
@@ -2147,7 +2168,8 @@ static void request_international_subscriber_id_number(RIL_Token t) {
 
 static bool gScreenIsOn = true;
 
-static void request_set_screen_state(void* data, size_t datalen, RIL_Token t) {
+static void request_set_screen_state(void* data, size_t /*datalen*/,
+                                     RIL_Token t) {
   gScreenIsOn = *(int*)data ? true : false;
   ALOGV("Screen is %s", gScreenIsOn ? "on" : "off");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2156,7 +2178,7 @@ static void request_set_screen_state(void* data, size_t datalen, RIL_Token t) {
 // Unsure which section this belongs in.
 
 static int gModemTtyMode = 1;  // 0 = off, 1 = full, 2 = HCO, 3 = VCO.
-static void request_set_tty_mode(void* data, size_t datalen, RIL_Token t) {
+static void request_set_tty_mode(void* data, size_t /*datalen*/, RIL_Token t) {
   int new_tty_mode = *(int*)(data);
   ALOGV("Switching modem TTY mode %d -> %d", gModemTtyMode, new_tty_mode);
 
@@ -2455,8 +2477,8 @@ static const RIL_RadioFunctions ril_callbacks = {
 
 extern "C" {
 
-const RIL_RadioFunctions* RIL_Init(const struct RIL_Env* env, int argc,
-                                   char** argv) {
+const RIL_RadioFunctions* RIL_Init(const struct RIL_Env* env, int /*argc*/,
+                                   char** /*argv*/) {
   time(&gce_ril_start_time);
   gce_ril_env = env;
 
