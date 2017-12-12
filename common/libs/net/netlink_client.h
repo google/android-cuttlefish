@@ -37,7 +37,7 @@ class NetlinkClient {
   virtual bool Send(NetlinkRequest* message) = 0;
 
   // Create default instance of NetlinkClient.
-  static NetlinkClient* New();
+  static std::unique_ptr<NetlinkClient> New();
 
  private:
   NetlinkClient(const NetlinkClient&);

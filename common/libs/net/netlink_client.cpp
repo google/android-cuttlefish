@@ -45,8 +45,8 @@ class NetlinkClientImpl : public NetlinkClient {
   bool CheckResponse(uint32_t seq_no);
 
   SharedFD netlink_fd_;
-  SharedFD network_fd_;
-  int seq_no_;
+  sockaddr_nl address_;
+  int seq_no_ = 0;
 };
 
 int32_t NetlinkClientImpl::NameToIndex(const std::string& name) {
@@ -96,7 +96,8 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
       nlmsgerr* err = reinterpret_cast<nlmsgerr*>(nh + 1);
       if (err->error < 0) {
         LOG(ERROR) << "Failed to complete netlink request: "
-                   << ": " << strerror(errno);
+                   << "Netlink error: " << err->error
+                   << ", errno: " << strerror(errno);
         return false;
       }
       return true;
@@ -119,15 +120,14 @@ bool NetlinkClientImpl::Send(NetlinkRequest* message) {
   memset(&msg, 0, sizeof(msg));
   memset(&netlink_addr, 0, sizeof(netlink_addr));
 
-  netlink_addr.nl_family = AF_NETLINK;
-  msg.msg_name = &netlink_addr;
-  msg.msg_namelen = sizeof(netlink_addr);
+  msg.msg_name = &address_;
+  msg.msg_namelen = sizeof(address_);
   msg.msg_iov = &netlink_iov;
   msg.msg_iovlen = sizeof(netlink_iov) / sizeof(iovec);
 
   if (netlink_fd_->SendMsg(&msg, 0) < 0) {
     LOG(ERROR) << "Failed to send netlink message: "
-               << ": " << strerror(errno);
+               << strerror(errno);
 
     return false;
   }
@@ -137,18 +137,25 @@ bool NetlinkClientImpl::Send(NetlinkRequest* message) {
 
 bool NetlinkClientImpl::OpenNetlink() {
   netlink_fd_ = SharedFD::Socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-  network_fd_ = SharedFD::Socket(AF_UNIX, SOCK_DGRAM, 0);
-  seq_no_ = 0;
+  if (!netlink_fd_->IsOpen()) return false;
+
+  address_.nl_family = AF_NETLINK;
+  address_.nl_groups = 0;
+
+  netlink_fd_->Bind((struct sockaddr*)&address_, sizeof(address_));
+
   return true;
 }
 }  // namespace
 
-NetlinkClient* NetlinkClient::New() {
-  NetlinkClientImpl* client = new NetlinkClientImpl();
+std::unique_ptr<NetlinkClient> NetlinkClient::New() {
+  auto client_raw = new NetlinkClientImpl();
+  // Use RVO when possible.
+  std::unique_ptr<NetlinkClient> client(client_raw);
 
-  if (!client->OpenNetlink()) {
-    delete client;
-    client = NULL;
+  if (!client_raw->OpenNetlink()) {
+    // Note: deletes client_raw.
+    client.reset();
   }
   return client;
 }
