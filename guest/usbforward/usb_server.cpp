@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define NDEBUG
+// #undef NDEBUG
 
 #include "guest/usbforward/usb_server.h"
 
@@ -24,7 +24,9 @@
 #include <libusb/libusb.h>
 #include "common/libs/fs/shared_select.h"
 #include "guest/usbforward/protocol.h"
+#include "guest/usbforward/transport_request.h"
 
+namespace usb_forward {
 namespace {
 // USBServer exports device kExportedVendorID:kExportedProductID to the server.
 // We will not support exporting multiple USB devices as there's no practical
@@ -36,9 +38,8 @@ constexpr uint16_t kExportedProductID = 0x4ee7;
 constexpr uint8_t kDefaultBusID = 1;
 constexpr uint8_t kDefaultDevID = 1;
 
-std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)>
-GetDevice() {
-  std::unique_ptr<libusb_device_handle, void (*)(libusb_device_handle*)> res(
+std::shared_ptr<libusb_device_handle> GetDevice() {
+  std::shared_ptr<libusb_device_handle> res(
       libusb_open_device_with_vid_pid(nullptr, kExportedVendorID,
                                       kExportedProductID),
       [](libusb_device_handle* h) {
@@ -105,14 +106,30 @@ bool GetDeviceInfo(DeviceInfo* info, std::vector<InterfaceInfo>* ifaces) {
   libusb_free_config_descriptor(conf);
   return true;
 }
+
+void* ProcessLibUSBRequests(void* discard) {
+  while (true) {
+    libusb_handle_events_completed(nullptr, nullptr);
+  }
+}
 }  // anonymous namespace
 
-void USBServer::HandleDeviceList() {
+USBServer::USBServer(const avd::SharedFD& fd)
+    : handle_{nullptr, libusb_close},
+      libusb_thread_(&ProcessLibUSBRequests, nullptr),
+      fd_{fd} {}
+
+void USBServer::HandleDeviceList(uint32_t tag) {
   // Iterate all devices and send structure for every found device.
   // Write header: number of devices.
   DeviceInfo info;
   std::vector<InterfaceInfo> ifaces;
-  if (GetDeviceInfo(&info, &ifaces)) {
+  bool found = GetDeviceInfo(&info, &ifaces);
+
+  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  ResponseHeader rsp{StatusSuccess, tag};
+  fd_->Write(&rsp, sizeof(rsp));
+  if (found) {
     uint32_t cnt = 1;
     fd_->Write(&cnt, sizeof(cnt));
     fd_->Write(&info, sizeof(info));
@@ -124,110 +141,162 @@ void USBServer::HandleDeviceList() {
   }
 }
 
-void USBServer::HandleAttach() {
+void USBServer::HandleAttach(uint32_t tag) {
   handle_ = GetDevice();
-  uint32_t status = !handle_;
-  fd_->Write(&status, sizeof(status));
+
+  // We read the request, but it no longer plays any significant role here.
+  AttachRequest req;
+  if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
+
+  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  ResponseHeader rsp{handle_ ? StatusSuccess : StatusFailure, tag};
+  fd_->Write(&rsp, sizeof(rsp));
 }
 
-void USBServer::HandleControlTransfer() {
+void USBServer::HandleControlTransfer(uint32_t tag) {
   ControlTransfer req;
   // If disconnected prematurely, don't send response.
   if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
 
-  std::vector<uint8_t> data;
-  data.resize(req.length);
+  // Technically speaking this isn't endpoint, but names, masks, values and
+  // meaning here is exactly same.
+  bool is_data_in =
+      ((req.type & LIBUSB_ENDPOINT_DIR_MASK) == LIBUSB_ENDPOINT_IN);
 
-  bool req_out = ((req.type & 0x80) == 0);
+  std::unique_ptr<TransportRequest> treq(new TransportRequest(
+      handle_,
+      [this, is_data_in, tag](bool is_success, const uint8_t* data,
+                              int32_t length) {
+        OnTransferComplete(tag, is_data_in, is_success, data, length);
+      },
+      req));
 
-  if (req_out && req.length) {
+  if (!is_data_in && req.length) {
     // If disconnected prematurely, don't send response.
-    if (fd_->Read(data.data(), req.length) != req.length) return;
+    int32_t got = 0;
+    while (got < req.length) {
+      auto read = fd_->Read(&treq->Buffer()[got], req.length - got);
+      if (fd_->GetErrno() != 0) {
+        ALOGE("Failed to read from client: %s", fd_->StrError());
+        return;
+      } else if (read == 0) {
+        ALOGE("Failed to read from client: short read");
+        return;
+      }
+      got += read;
+    }
   }
 
-  int32_t status = 1;
-  int32_t len = 0;
-
-  if (handle_) {
-    // Now that we read the whole request and we have a previously attached
-    // device, execute control transfer.
-    len = libusb_control_transfer(handle_.get(), req.type, req.cmd, req.value,
-                                  req.index, data.data(), req.length,
-                                  req.timeout);
-
-    status = (len < 0);
-    if (status) {
-      ALOGE("USB request failed %d", len);
-    }
-  } else {
-    ALOGE("USB Device not attached.");
+  // At this point we store transport request internally until it completes.
+  TransportRequest* treq_ptr = treq.get();
+  {
+    avd::LockGuard<avd::Mutex> lock(requests_mutex_);
+    requests_in_flight_[tag] = std::move(treq);
   }
 
-  fd_->Write(&status, sizeof(status));
-  if (!status && !req_out) {
-    fd_->Write(&len, sizeof(len));
-    if (len > 0) {
-      fd_->Write(data.data(), len);
-    }
+  if (!treq_ptr->Submit()) {
+    OnTransferComplete(tag, is_data_in, false, nullptr, 0);
   }
 }
 
-void USBServer::HandleDataTransfer() {
+void USBServer::HandleDataTransfer(uint32_t tag) {
   DataTransfer req;
   // If disconnected prematurely, don't send response.
   if (fd_->Read(&req, sizeof(req)) != sizeof(req)) return;
 
-  std::vector<uint8_t> data;
-  data.resize(req.length);
+  bool is_data_in = !req.is_host_to_device;
 
-  if (req.is_host_to_device && req.length) {
+  std::unique_ptr<TransportRequest> treq(new TransportRequest(
+      handle_,
+      [this, is_data_in, tag](bool is_success, const uint8_t* data,
+                              int32_t length) {
+        OnTransferComplete(tag, is_data_in, is_success, data, length);
+      },
+      req));
+
+  if (!is_data_in && req.length) {
     // If disconnected prematurely, don't send response.
-    if (fd_->Read(data.data(), req.length) != req.length) return;
+    int32_t got = 0;
+    while (got < req.length) {
+      auto read = fd_->Read(&treq->Buffer()[got], req.length - got);
+      if (fd_->GetErrno() != 0) {
+        ALOGE("Failed to read from client: %s", fd_->StrError());
+        return;
+      } else if (read == 0) {
+        ALOGE("Failed to read from client: short read");
+        return;
+      }
+      got += read;
+    }
   }
 
-  int32_t status = 1;
-  int32_t len = 0;
-
-  if (handle_) {
-    // Now that we read the whole request and we know device was previously
-    // attached we are good to execute data transfer.
-
-    int ret_len = 0;
-    ALOGV("Requesting %d bytes of data %s EP %d with TO %d", req.length,
-          (req.is_host_to_device ? "to" : "from"), req.endpoint_id,
-          req.timeout);
-
-    // TODO(ender): Remove the timeout modification below and make the
-    // communication fully asynchronous. As of now, USB driver seems to be
-    // blocking on read requests, because there's multiple requests being
-    // executed, and some of them are blocking by design. Sequential nature of
-    // this server makes it currently impossible to handle streaming requests
-    // while blocking requests wait patiently for response.
-    auto err = libusb_bulk_transfer(
-        handle_.get(),
-        req.endpoint_id |
-            (req.is_host_to_device ? LIBUSB_ENDPOINT_OUT : LIBUSB_ENDPOINT_IN),
-        data.data(), req.length, &ret_len, req.timeout + 100);
-    status = (err != 0);
-    len = ret_len;
-    if (status) {
-      ALOGV("USB request failed %d, %d", err, errno);
-    }
-  } else {
-    ALOGE("USB Device not attached.");
+  // At this point we store transport request internally until it completes.
+  TransportRequest* treq_ptr = treq.get();
+  {
+    avd::LockGuard<avd::Mutex> lock(requests_mutex_);
+    requests_in_flight_[tag] = std::move(treq);
   }
 
-  fd_->Write(&status, sizeof(status));
-
-  if (!status && !req.is_host_to_device) {
-    fd_->Write(&len, sizeof(len));
-    if (len > 0) {
-      fd_->Write(data.data(), len);
-    }
+  if (!treq_ptr->Submit()) {
+    OnTransferComplete(tag, is_data_in, false, nullptr, 0);
   }
 }
 
+void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
+                                   bool is_success, const uint8_t* buffer,
+                                   int32_t actual_length) {
+  ResponseHeader rsp{is_success ? StatusSuccess : StatusFailure, tag};
+
+  avd::LockGuard<avd::Mutex> lock(write_mutex_);
+  fd_->Write(&rsp, sizeof(rsp));
+  if (is_success && is_data_in) {
+    fd_->Write(&actual_length, sizeof(actual_length));
+    if (actual_length > 0) {
+      // NOTE: don't use buffer_ here directly, as libusb uses first few bytes
+      // to store control data there.
+      int32_t sent = 0;
+      while (sent < actual_length) {
+        int packet_size = fd_->Write(&buffer[sent], actual_length - sent);
+        sent += packet_size;
+        ALOGI("Sending response, %d / %d bytes sent", sent, actual_length);
+        if (fd_->GetErrno() != 0) {
+          ALOGE("Send failed: %s", fd_->StrError());
+          return;
+        }
+      }
+    }
+  }
+
+  {
+    avd::LockGuard<avd::Mutex> lock(requests_mutex_);
+    requests_in_flight_.erase(tag);
+  }
+}
+
+int USBServer::HandleDeviceEvent(libusb_context*, libusb_device*,
+                                 libusb_hotplug_event event, void* self_raw) {
+  auto self = reinterpret_cast<USBServer*>(self_raw);
+  switch (event) {
+    case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED:
+      self->handle_ = GetDevice();
+      break;
+    case LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT:
+      self->handle_.reset();
+      break;
+  }
+  return 0;
+}
+
 void USBServer::Serve() {
+  // Need to check if device is still there before we execute anything.
+  libusb_hotplug_callback_handle handle;
+  libusb_hotplug_register_callback(
+      nullptr,
+      libusb_hotplug_event(LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
+                           LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT),
+      libusb_hotplug_flag(0), kExportedVendorID, kExportedProductID,
+      LIBUSB_HOTPLUG_MATCH_ANY, &USBServer::HandleDeviceEvent, this, &handle);
+
   avd::SharedFDSet rset;
   while (true) {
     rset.Zero();
@@ -237,38 +306,40 @@ void USBServer::Serve() {
     if (ret < 0) continue;
 
     if (rset.IsSet(fd_)) {
-      uint32_t cmd;
-      char data;
-      if (fd_->Read(&cmd, sizeof(cmd)) < int(sizeof(cmd))) {
-        ALOGE("Could not read data from input stream: %s", fd_->StrError());
+      RequestHeader req;
+      if (fd_->Read(&req, sizeof(req)) != sizeof(req)) {
         // There's nobody on the other side.
         sleep(3);
         continue;
       }
 
-      switch (cmd) {
+      switch (req.command) {
         case CmdDeviceList:
-          ALOGV("Processing DeviceList command");
-          HandleDeviceList();
+          ALOGV("Processing DeviceList command, tag=%d", req.tag);
+          HandleDeviceList(req.tag);
           break;
 
         case CmdAttach:
-          ALOGV("Processing Attach command");
-          HandleAttach();
+          ALOGV("Processing Attach command, tag=%d", req.tag);
+          HandleAttach(req.tag);
+          break;
 
         case CmdControlTransfer:
-          ALOGV("Processing ControlTransfer command");
-          HandleControlTransfer();
+          ALOGV("Processing ControlTransfer command, tag=%d", req.tag);
+          HandleControlTransfer(req.tag);
           break;
 
         case CmdDataTransfer:
-          ALOGV("Processing DataTransfer command");
-          HandleDataTransfer();
+          ALOGV("Processing DataTransfer command, tag=%d", req.tag);
+          HandleDataTransfer(req.tag);
           break;
 
         default:
-          ALOGE("Discarding unknown command %08x", cmd);
+          ALOGE("Discarding unknown command %08x, tag=%d", req.command,
+                req.tag);
       }
     }
   }
 }
+
+}  // namespace usb_forward
