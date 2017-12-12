@@ -266,7 +266,7 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
       while (sent < actual_length) {
         int packet_size = fd_->Write(&buffer[sent], actual_length - sent);
         sent += packet_size;
-        ALOGI("Sending response, %d / %d bytes sent", sent, actual_length);
+        ALOGV("Sending response, %d / %d bytes sent", sent, actual_length);
         if (fd_->GetErrno() != 0) {
           ALOGE("Send failed: %s", fd_->StrError());
           return;
