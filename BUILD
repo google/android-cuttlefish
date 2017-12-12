@@ -51,6 +51,22 @@ cc_binary(
     deps = ["//:libvsoc_framebuffer"],
 )
 
+cc_library(
+    name = "libvsoc_gralloc",
+    srcs = [
+        "common/vsoc/lib/gralloc_layout.cpp",
+        "host/vsoc/gralloc/gralloc_buffer_region.cpp",
+    ],
+    hdrs = [
+        "host/vsoc/gralloc/gralloc_buffer_region.h",
+    ],
+    copts = ["-Wno-unused-private-field"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:vsoc_lib",
+    ],
+)
+
 cc_test(
     name = "circqueue_test",
     srcs = [
