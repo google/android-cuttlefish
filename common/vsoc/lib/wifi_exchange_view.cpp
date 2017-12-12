@@ -15,6 +15,8 @@
  */
 #include "common/vsoc/lib/wifi_exchange_view.h"
 
+#include "common/vsoc/lib/circqueue_impl.h"
+
 namespace vsoc {
 namespace wifi {
 
