@@ -14,7 +14,7 @@
 ** limitations under the License.
 */
 
-#include "guest/ril/vsoc_ril.h"
+#include "guest/hals/ril/vsoc_ril.h"
 
 #include <string.h>
 #include <time.h>
