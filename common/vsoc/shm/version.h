@@ -112,6 +112,17 @@ const uint32_t version = 1;
 static const std::size_t FBBroadcastLayout_size = 24;
 }  // namespace framebuffer
 
+// Versioning information for wifi_layout.h
+namespace wifi {
+namespace {
+constexpr uint32_t version = 0;
+}  // namespace
+constexpr size_t WifiExchangeLayout_size =
+    65548 + // sizeof(CircularPacketQueue<16, 8192>) - forward
+    65548;  // sizeof(CircularPacketQueue<16, 8192>) - reverse
+}  // namespace wifi
+
+
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region
 namespace e2e_test {
