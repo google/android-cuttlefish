@@ -20,6 +20,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
     netlink_client.cpp \
+    netlink_request.cpp \
     network_interface_manager.cpp
 
 LOCAL_C_INCLUDES := \

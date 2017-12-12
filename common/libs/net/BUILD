@@ -2,9 +2,11 @@ cc_library(
     name = "net",
     srcs = [
         "netlink_client.cpp",
-        "network_interface_manager.cpp",
         "netlink_client.h",
+        "netlink_request.cpp",
+        "netlink_request.h",
         "network_interface.h",
+        "network_interface_manager.cpp",
         "network_interface_manager.h",
     ],
     hdrs = [
@@ -12,10 +14,10 @@ cc_library(
         "network_interface.h",
         "network_interface_manager.h",
     ],
-    deps = [
-        "//common/libs/fs"
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//common/libs/fs",
+    ],
 )
 
 cc_test(
@@ -28,4 +30,3 @@ cc_test(
         "@gtest_repo//:gtest_main",
     ],
 )
-
