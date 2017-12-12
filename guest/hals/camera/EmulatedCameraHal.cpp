@@ -32,7 +32,9 @@
 camera_module_t HAL_MODULE_INFO_SYM = {
   VSOC_STATIC_INITIALIZER(common) {
          VSOC_STATIC_INITIALIZER(tag)                HARDWARE_MODULE_TAG,
-#if VSOC_PLATFORM_SDK_AFTER(K)
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+         VSOC_STATIC_INITIALIZER(module_api_version) CAMERA_MODULE_API_VERSION_2_4,
+#elif VSOC_PLATFORM_SDK_AFTER(K)
          VSOC_STATIC_INITIALIZER(module_api_version) CAMERA_MODULE_API_VERSION_2_3,
 #elif VSOC_PLATFORM_SDK_AFTER(J_MR2)
          VSOC_STATIC_INITIALIZER(module_api_version) CAMERA_MODULE_API_VERSION_2_2,
@@ -54,6 +56,9 @@ camera_module_t HAL_MODULE_INFO_SYM = {
     VSOC_STATIC_INITIALIZER(get_vendor_tag_ops)     android::EmulatedCameraFactory::get_vendor_tag_ops,
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(K)
-    VSOC_STATIC_INITIALIZER(open_legacy)            android::EmulatedCameraFactory::open_legacy
+    VSOC_STATIC_INITIALIZER(open_legacy)            android::EmulatedCameraFactory::open_legacy,
+#endif
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+    set_torch_mode:         android::EmulatedCameraFactory::set_torch_mode,
 #endif
 };

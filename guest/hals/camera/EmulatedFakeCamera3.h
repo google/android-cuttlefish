@@ -71,6 +71,8 @@ public:
 
     virtual status_t getCameraInfo(struct camera_info *info);
 
+    virtual status_t setTorchMode(bool enabled);
+
     /****************************************************************************
      * EmulatedCamera3 abstract API implementation
      ***************************************************************************/

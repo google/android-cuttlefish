@@ -194,6 +194,15 @@ void EmulatedCameraFactory::getVendorTagOps(vendor_tag_ops_t* ops) {
 }
 #endif
 
+int EmulatedCameraFactory::setTorchMode(const char* camera_id, bool enabled) {
+    ALOGV("%s: camera_id = %s, enabled =%d", __FUNCTION__, camera_id, enabled);
+
+    EmulatedBaseCamera* camera = getOrCreateFakeCamera(atoi(camera_id));
+    if (camera == NULL) return -EINVAL;
+
+    return camera->setTorchMode(enabled);
+}
+
 /****************************************************************************
  * Camera HAL API callbacks.
  ***************************************************************************/
@@ -250,6 +259,10 @@ int EmulatedCameraFactory::open_legacy(const struct hw_module_t* module,
     return -ENOSYS;
 }
 
+int EmulatedCameraFactory::set_torch_mode(const char* camera_id, bool enabled) {
+    return EmulatedCameraFactory::Instance().setTorchMode(camera_id, enabled);
+}
+
 /********************************************************************************
  * Internal API
  *******************************************************************************/
@@ -282,6 +295,24 @@ void EmulatedCameraFactory::onStatusChanged(int cameraId, int newStatus) {
         cam->unplugCamera();
     } else if (newStatus == CAMERA_DEVICE_STATUS_PRESENT) {
         cam->plugCamera();
+    }
+#endif
+
+}
+
+void EmulatedCameraFactory::onTorchModeStatusChanged(int cameraId, int newStatus) {
+    EmulatedBaseCamera *cam = getOrCreateFakeCamera(cameraId);
+    if (!cam) {
+        ALOGE("%s: Invalid camera ID %d", __FUNCTION__, cameraId);
+        return;
+    }
+
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+    const camera_module_callbacks_t* cb = mCallbacks;
+    if (cb != NULL && cb->torch_mode_status_change != NULL) {
+        char id[10];
+        sprintf(id, "%d", cameraId);
+        cb->torch_mode_status_change(cb, id, newStatus);
     }
 #endif
 

@@ -209,7 +209,24 @@ status_t EmulatedFakeCamera3::closeCamera() {
 status_t EmulatedFakeCamera3::getCameraInfo(struct camera_info *info) {
     info->facing = mFacingBack ? CAMERA_FACING_BACK : CAMERA_FACING_FRONT;
     info->orientation = EmulatedCameraFactory::Instance().getFakeCameraOrientation();
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+    info->resource_cost = 100;
+    info->conflicting_devices = NULL;
+    info->conflicting_devices_length = 0;
+#endif
     return EmulatedCamera3::getCameraInfo(info);
+}
+
+status_t EmulatedFakeCamera3::setTorchMode(bool enabled) {
+    if (!mFacingBack) {
+        ALOGE("%s: Front camera does not have flash unit", __FUNCTION__);
+        return INVALID_OPERATION;
+    }
+    EmulatedCameraFactory::Instance().onTorchModeStatusChanged(
+        mCameraID, enabled ?
+        TORCH_MODE_STATUS_AVAILABLE_ON :
+        TORCH_MODE_STATUS_AVAILABLE_OFF);
+    return NO_ERROR;
 }
 
 /**
