@@ -7,25 +7,15 @@
 
 namespace ivserver {
 
-//
 // TODO(romitd): Refactor ClientHandshake and QemuHandshake into a base
 // class. Have derived classes with handshake specific logic.
-//
 
-//
-// QEMU expects version 0 of the QEMU <--> ivserver protocol.
-//
-const uint64_t kQemuIvshMemProtocolVersion = 0;
-const uint64_t kQemuVMId = 1;
-
-//
 // Handles an ivserver to QEMU connection & handshake.
 // This is loosely based on the spec found under
 // $(QEMU_SRC)/docs/specs/ivshmem-spec.txt
 // where QEMU_SRC is assumed to point to the path of QEMU source code.
 // Alternatively, please point your browser to the following URL:
 // https://github.com/qemu/qemu/blob/master/docs/specs/ivshmem-spec.txt
-//
 class QemuHandshake {
  public:
   QemuHandshake(const QemuHandshake &) = delete;
