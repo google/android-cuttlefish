@@ -23,6 +23,16 @@
 
 namespace vadb {
 namespace usbip {
+
+void Client::BeforeSelect(avd::SharedFDSet* fd_read) const {
+  fd_read->Set(fd_);
+}
+
+bool Client::AfterSelect(const avd::SharedFDSet& fd_read) {
+  if (fd_read.IsSet(fd_)) return HandleIncomingMessage();
+  return true;
+}
+
 // Handle incoming COMMAND.
 //
 // Read next CMD from client channel.
@@ -37,18 +47,15 @@ bool Client::HandleIncomingMessage() {
   // And the protocol, again.
   switch (hdr.command) {
     case kUsbIpCmdReqSubmit:
-      HandleSubmitCmd(hdr);
-      break;
+      return HandleSubmitCmd(hdr);
 
     case kUsbIpCmdReqUnlink:
-      HandleUnlinkCmd(hdr);
-      break;
+      return HandleUnlinkCmd(hdr);
 
     default:
       LOG(ERROR) << "Unsupported command requested: " << hdr.command;
       return false;
   }
-  return true;
 }
 
 // Handle incoming SUBMIT COMMAND.

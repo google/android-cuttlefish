@@ -16,6 +16,7 @@
 #pragma once
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "host/vadb/usbip/device_pool.h"
 #include "host/vadb/usbip/messages.h"
 
@@ -32,14 +33,21 @@ class Client final {
 
   ~Client() {}
 
+  // BeforeSelect is Called right before Select() to populate interesting
+  // SharedFDs.
+  void BeforeSelect(avd::SharedFDSet* fd_read) const;
+
+  // AfterSelect is Called right after Select() to detect and respond to changes
+  // on affected SharedFDs.
+  // Return value indicates whether this client is still valid.
+  bool AfterSelect(const avd::SharedFDSet& fd_read);
+
+ private:
   // Respond to message from remote client.
   // Returns false, if client violated protocol or disconnected, indicating,
   // that this instance should no longer be used.
   bool HandleIncomingMessage();
 
-  const avd::SharedFD& fd() const { return fd_; }
-
- private:
   // Execute command on USB device.
   // Returns false, if connection should be dropped.
   bool HandleSubmitCmd(const CmdHeader& hdr);

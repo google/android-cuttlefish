@@ -14,27 +14,15 @@
  * limitations under the License.
  */
 
-#include "host/vadb/usbip/server.h"
-
-#include <glog/logging.h>
-#include <netinet/in.h>
-#include "common/libs/fs/shared_select.h"
-
-using avd::SharedFD;
+#include "host/vadb/virtual_adb_server.h"
 
 namespace vadb {
-namespace usbip {
-Server::Server(const std::string& name, const DevicePool& devices)
-    : name_{name}, device_pool_{devices}, vhci_{name} {}
 
-bool Server::Init() { return CreateServerSocket() && vhci_.Init(); }
-
-// Open new listening server socket.
-// Returns false, if listening socket could not be created.
-bool Server::CreateServerSocket() {
+bool VirtualADBServer::Init() {
   LOG(INFO) << "Starting server socket: " << name_;
 
-  server_ = SharedFD::SocketLocalServer(name_.c_str(), true, SOCK_STREAM, 0700);
+  server_ =
+      avd::SharedFD::SocketLocalServer(name_.c_str(), true, SOCK_STREAM, 0700);
   if (!server_->IsOpen()) {
     LOG(ERROR) << "Could not create socket: " << server_->StrError();
     return false;
@@ -42,34 +30,36 @@ bool Server::CreateServerSocket() {
   return true;
 }
 
-void Server::BeforeSelect(avd::SharedFDSet* fd_read) const {
+void VirtualADBServer::BeforeSelect(avd::SharedFDSet* fd_read) const {
   fd_read->Set(server_);
   for (const auto& client : clients_) client.BeforeSelect(fd_read);
 }
 
-void Server::AfterSelect(const avd::SharedFDSet& fd_read) {
+void VirtualADBServer::AfterSelect(const avd::SharedFDSet& fd_read) {
   if (fd_read.IsSet(server_)) HandleIncomingConnection();
 
   for (auto iter = clients_.begin(); iter != clients_.end();) {
     if (!iter->AfterSelect(fd_read)) {
       // If client conversation failed, hang up.
       iter = clients_.erase(iter);
-      vhci_.TriggerAttach();
       continue;
     }
     ++iter;
   }
 }
 
-// Accept new USB/IP connection. Add it to client pool.
-void Server::HandleIncomingConnection() {
-  SharedFD client = SharedFD::Accept(*server_, nullptr, nullptr);
+// Accept new QEmu connection. Add it to client pool.
+// Typically we will have no more than one QEmu connection, but the nature
+// of server requires proper handling nonetheless.
+void VirtualADBServer::HandleIncomingConnection() {
+  avd::SharedFD client = avd::SharedFD::Accept(*server_, nullptr, nullptr);
   if (!client->IsOpen()) {
     LOG(ERROR) << "Client connection failed: " << client->StrError();
     return;
   }
 
-  clients_.emplace_back(device_pool_, client);
+  clients_.emplace_back(&pool_, client);
+  clients_.back().PopulateRemoteDevices();
 }
-}  // namespace usbip
+
 }  // namespace vadb

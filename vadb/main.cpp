@@ -19,8 +19,9 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "host/vadb/usbip/server.h"
-#include "host/vadb/virtual_adb.h"
+#include "host/vadb/virtual_adb_server.h"
 
 DEFINE_string(socket, "", "Socket to use to talk to USBForwarder.");
 DEFINE_string(usbip_socket_name, "android", "Name of the USB/IP socket.");
@@ -29,10 +30,23 @@ int main(int argc, char* argv[]) {
   google::InitGoogleLogging(argv[0]);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  vadb::VirtualADB adb(FLAGS_socket);
+  vadb::VirtualADBServer adb(FLAGS_socket);
   CHECK(adb.Init());
 
   vadb::usbip::Server s(FLAGS_usbip_socket_name, adb.Pool());
   CHECK(s.Init()) << "Could not start server";
-  s.Serve();
+
+  for (;;) {
+    avd::SharedFDSet fd_read;
+    fd_read.Zero();
+
+    adb.BeforeSelect(&fd_read);
+    s.BeforeSelect(&fd_read);
+
+    int ret = avd::Select(&fd_read, nullptr, nullptr, nullptr);
+    if (ret <= 0) continue;
+
+    adb.AfterSelect(fd_read);
+    s.AfterSelect(fd_read);
+  }
 }

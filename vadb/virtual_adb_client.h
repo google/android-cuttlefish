@@ -15,11 +15,10 @@
  */
 #pragma once
 
-#include <mutex>
 #include <string>
-#include <thread>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 #include "guest/usbforward/protocol.h"
 #include "host/vadb/usb_cmd.h"
 #include "host/vadb/usbip/device.h"
@@ -27,29 +26,32 @@
 #include "host/vadb/usbip/messages.h"
 
 namespace vadb {
-// VirtualADB is a companion class for USBForwarder, running on Cuttlefish.
-// VirtualADB collects list of available USB devices from Cuttlefish and makes
-// them available to USB/IP.
+// VirtualADBClient is a companion class for USBForwarder, running on
+// Cuttlefish. VirtualADBClient collects list of available USB devices from
+// Cuttlefish and makes them available to USB/IP.
 //
 // Purpose of this class is to connect to USBForwarder and make access to
 // remote USB devices possible with help of USB/IP protocol.
-class VirtualADB {
+class VirtualADBClient {
  public:
-  VirtualADB(const std::string& path) : path_(path) {}
-  virtual ~VirtualADB() = default;
+  VirtualADBClient(usbip::DevicePool* pool, avd::SharedFD fd)
+      : pool_(pool), fd_(fd) {}
 
-  // Initialize this instance of VirtualADB:
-  // Connect to remote server and collect list of available USB devices.
-  // Returns false, if connection was unsuccessful.
-  bool Init();
+  virtual ~VirtualADBClient() = default;
 
-  // Pool of USB devices available to export.
-  const usbip::DevicePool& Pool() const;
-
- private:
   // Query remote server; populate available USB devices.
   bool PopulateRemoteDevices();
 
+  // BeforeSelect is Called right before Select() to populate interesting
+  // SharedFDs.
+  void BeforeSelect(avd::SharedFDSet* fd_read) const;
+
+  // AfterSelect is Called right after Select() to detect and respond to changes
+  // on affected SharedFDs.
+  // Return value indicates whether this client is still valid.
+  bool AfterSelect(const avd::SharedFDSet& fd_read);
+
+ private:
   // Register new device in a device pool.
   void RegisterDevice(const usb_forward::DeviceInfo& dev,
                       const std::vector<usb_forward::InterfaceInfo>& ifaces);
@@ -74,25 +76,14 @@ class VirtualADB {
   // response arrives.
   bool ExecuteCommand(std::unique_ptr<USBCommand> cmd);
 
-  // ReceiveThread manages incoming data:
-  // - reads response header,
-  // - find previously executed command whose tag matches tag found in header,
-  // - executes OnResponse() and
-  // - disposes of that command.
-  void ReceiveThread();
-
-  std::string path_;
+  usbip::DevicePool* pool_;
   avd::SharedFD fd_;
-  usbip::DevicePool pool_;
 
-  std::unique_ptr<std::thread> receive_thread_;
-
-  std::mutex commands_mutex_;
   uint32_t tag_ = 0;
   std::map<uint32_t, std::unique_ptr<USBCommand>> commands_;
 
-  VirtualADB(const VirtualADB& other) = delete;
-  VirtualADB& operator=(const VirtualADB& other) = delete;
-};  // namespace vadbclassVirtualADB
+  VirtualADBClient(const VirtualADBClient& other) = delete;
+  VirtualADBClient& operator=(const VirtualADBClient& other) = delete;
+};
 
 }  // namespace vadb
