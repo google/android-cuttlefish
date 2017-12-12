@@ -18,11 +18,11 @@
 
 // Object that represents a region on the Host
 
-#ifdef ANDROID
-#include "guest/vsoc/lib/guest_region.h"
-#else
-#include "host/vsoc/lib/host_region.h"
-#endif
+#include "common/vsoc/lib/region_view.h"
+
+#include <map>
+#include <mutex>
+#include <string>
 
 namespace vsoc {
 
@@ -35,27 +35,23 @@ namespace vsoc {
  * and should have a constant string region name.
  */
 template <typename LayoutType>
-class TypedRegionView : public OpenableRegionView {
+class TypedRegionView : public RegionView {
  public:
   using Layout = LayoutType;
 
   /* Returns a pointer to the region with a type that matches the layout */
   LayoutType* data() {
-    return reinterpret_cast<LayoutType*>(
-        reinterpret_cast<uintptr_t>(region_base_) +
-        region_desc_.offset_of_region_data);
+    return this->region_offset_to_pointer<LayoutType>(
+        control_->region_desc().offset_of_region_data);
   }
 
   const LayoutType& data() const {
-    return *reinterpret_cast<const LayoutType*>(
-        reinterpret_cast<uintptr_t>(region_base_) +
-        region_desc_.offset_of_region_data);
+    return this->region_offset_to_reference<LayoutType>(
+        control_->region_desc().offset_of_region_data);
   }
 
-  TypedRegionView() {}
-
   bool Open(const char* domain = nullptr) {
-    return OpenableRegionView::Open(LayoutType::region_name, domain);
+    return RegionView::Open(LayoutType::region_name, domain);
   }
 };
 

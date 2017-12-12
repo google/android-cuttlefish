@@ -1,4 +1,4 @@
-#include "common/vsoc/lib/region.h"
+#include "common/vsoc/lib/region_view.h"
 
 #include <linux/futex.h>
 #include <sys/mman.h>
@@ -25,19 +25,50 @@ vsoc::RegionWorker::~RegionWorker() {
 }
 
 vsoc::RegionView::~RegionView() {
-  if (region_base_ && (region_base_ != MAP_FAILED)) {
-    munmap(region_base_, region_size());
+  // region_base_ is borrowed here. It's owned by control_, which is
+  // responsible for unmapping the memory
+  region_base_ = nullptr;
+}
+
+bool vsoc::RegionView::Open(const char* name, const char* domain) {
+  control_ = vsoc::RegionControl::Open(name, domain);
+  if (!control_) {
+    return false;
+  }
+  region_base_ = control_->Map();
+  return region_base_ != nullptr;
+}
+
+// Interrupt our peer, causing it to scan the outgoing_signal_table
+bool vsoc::RegionView::MaybeInterruptPeer() {
+  if (region_offset_to_pointer<std::atomic<uint32_t>>(
+          outgoing_signal_table().interrupt_signalled_offset)
+          ->exchange(1)) {
+    return false;
+  }
+  return control_->InterruptPeer();
+}
+
+// Wait for an interrupt from our peer
+void vsoc::RegionView::WaitForInterrupt() {
+  while (1) {
+    if (region_offset_to_pointer<std::atomic<uint32_t>>(
+            incoming_signal_table().interrupt_signalled_offset)
+            ->exchange(0)) {
+      return;
+    }
+    control_->WaitForInterrupt();
   }
 }
 
 void vsoc::RegionView::ProcessSignalsFromPeer(volatile bool* stopping) {
-  vsoc_signal_table_layout* table = incoming_signal_table();
-  const size_t num_offsets = (1 << table->num_nodes_lg2);
+  const vsoc_signal_table_layout& table = incoming_signal_table();
+  const size_t num_offsets = (1 << table.num_nodes_lg2);
   std::atomic<uint32_t>* offsets =
       region_offset_to_pointer<std::atomic<uint32_t>>(
-          table->futex_uaddr_table_offset);
+          table.futex_uaddr_table_offset);
   while (!*stopping) {
-    WaitForInterrupt();
+    control_->WaitForInterrupt();
     if (*stopping) {
       return;
     }
@@ -73,12 +104,12 @@ void vsoc::RegionView::SendSignal(Sides sides_to_signal, uint32_t* uaddr) {
 }
 
 void vsoc::RegionView::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
-  vsoc_signal_table_layout* table = outgoing_signal_table();
+  const vsoc_signal_table_layout& table = outgoing_signal_table();
   std::atomic<uint32_t>* offsets =
       region_offset_to_pointer<std::atomic<uint32_t>>(
-          table->futex_uaddr_table_offset);
+          table.futex_uaddr_table_offset);
   // maximum index in the node that can hold an offset;
-  const size_t max_index = (1 << table->num_nodes_lg2) - 1;
+  const size_t max_index = (1 << table.num_nodes_lg2) - 1;
   uint32_t offset = pointer_to_region_offset(uaddr);
   if (offset & ~UADDR_OFFSET_MASK) {
     LOG(FATAL) << "uaddr offset is not naturally aligned " << uaddr;
@@ -93,7 +124,7 @@ void vsoc::RegionView::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
     uint32_t expected = 0;
     if (offsets[hash].compare_exchange_strong(expected, offset)) {
       // We stored the offset. Send the interrupt.
-      InterruptPeer();
+      control_->InterruptPeer();
       break;
     }
     // We didn't store, but the value was already in the table with our flag.

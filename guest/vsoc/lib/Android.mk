@@ -15,23 +15,29 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-
 LOCAL_MODULE := libvsoc
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
+    ../../../common/vsoc/lib/e2e_test_region_layout.cpp \
+    ../../../common/vsoc/lib/lock_common.cpp \
+    ../../../common/vsoc/lib/region_view.cpp \
     guest_lock.cpp \
-    guest_region.cpp
+    region_control.cpp \
+    region_view.cpp
 
-LOCAL_C_INCLUDES += \
+LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
     device/google/cuttlefish_kernel \
     system/core/base/include
 
+LOCAL_EXPORT_C_INCLUDES_DIR := \
+    device/google/cuttlefish_common  \
+    device/google/cuttlefish_kernel
+
 LOCAL_SHARED_LIBRARIES := \
     libcuttlefish_auto_resources \
     libcuttlefish_fs \
-    libvsoc_common \
     libbase \
     liblog
 
@@ -54,7 +60,6 @@ LOCAL_STATIC_LIBRARIES := \
 
 LOCAL_SHARED_LIBRARIES := \
     libvsoc \
-    libvsoc_common \
     libcuttlefish_auto_resources \
     libcuttlefish_fs \
     libbase
