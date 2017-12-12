@@ -210,20 +210,10 @@ class NetlinkClientImpl : public NetlinkClient {
 };
 
 int32_t NetlinkClientImpl::NameToIndex(const std::string& name) {
-  ifreq ifr;
-  if (name.length() >= sizeof(ifr.ifr_name)) {
-    LOG(ERROR) << "Interface name '" << name << "' too long.";
-    return -1;
-  }
-
-  strcpy(ifr.ifr_name, name.c_str());
-  if (network_fd_->Ioctl(SIOCGIFINDEX, &ifr) < 0) {
-    LOG(ERROR) << "Could not get index of '" << name << "': "
-               << ": " << strerror(errno);
-    return -1;
-  }
-
-  return ifr.ifr_ifindex;
+  // NOTE: do not replace this code with an IOCTL call.
+  // On SELinux enabled Androids, RILD is not permitted to execute an IOCTL
+  // and this call will fail.
+  return if_nametoindex(name.c_str());
 }
 
 bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
