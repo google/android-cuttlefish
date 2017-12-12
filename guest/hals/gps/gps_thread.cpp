@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "gps_thread.h"
+#include "guest/hals/gps/gps_thread.h"
 
 #include <errno.h>
-#include <pthread.h>
 #include <fcntl.h>
-#include <sys/epoll.h>
 #include <math.h>
+#include <pthread.h>
+#include <sys/epoll.h>
 #include <time.h>
 
 #include <cutils/log.h>
@@ -53,15 +53,14 @@ static void reader_call_callback(GpsDataReader* r) {
   }
   if (r->fix.flags & GPS_LOCATION_HAS_ALTITUDE)
     D(" - altitude = %g", r->fix.altitude);
-  if (r->fix.flags & GPS_LOCATION_HAS_SPEED)
-    D(" - speed = %g", r->fix.speed);
+  if (r->fix.flags & GPS_LOCATION_HAS_SPEED) D(" - speed = %g", r->fix.speed);
   if (r->fix.flags & GPS_LOCATION_HAS_BEARING)
     D(" - bearing = %g", r->fix.bearing);
   if (r->fix.flags & GPS_LOCATION_HAS_ACCURACY)
     D(" - accuracy = %g", r->fix.accuracy);
   long long utc_secs = r->fix.timestamp / 1000;
-  struct tm   utc;
-  gmtime_r( (time_t*) &utc_secs, &utc );
+  struct tm utc;
+  gmtime_r((time_t*)&utc_secs, &utc);
   D(" - time = %s", asctime(&utc));
 #endif
 
@@ -69,14 +68,13 @@ static void reader_call_callback(GpsDataReader* r) {
   r->callback(&r->fix);
 }
 
-
 // Parses data received so far and calls reader_call_callback().
 static void reader_parse_message(GpsDataReader* r) {
   D("Received: '%s'", r->buffer);
 
-  int num_read = sscanf(r->buffer, "%lf,%lf,%lf,%f,%f,%f",
-         &r->fix.longitude, &r->fix.latitude, &r->fix.altitude,
-         &r->fix.bearing, &r->fix.speed, &r->fix.accuracy);
+  int num_read = sscanf(r->buffer, "%lf,%lf,%lf,%f,%f,%f", &r->fix.longitude,
+                        &r->fix.latitude, &r->fix.altitude, &r->fix.bearing,
+                        &r->fix.speed, &r->fix.accuracy);
   if (num_read != 6) {
     ALOGE("Couldn't find 6 values from the received message %s.", r->buffer);
     return;
@@ -85,13 +83,12 @@ static void reader_parse_message(GpsDataReader* r) {
   reader_call_callback(r);
 }
 
-
 // Accepts a newly received string & calls reader_parse_message if '\n' is seen.
-static void reader_accept_string(GpsDataReader* r,
-                                 char* const str, const int len) {
+static void reader_accept_string(GpsDataReader* r, char* const str,
+                                 const int len) {
   int index;
   for (index = 0; index < len; index++) {
-    if (r->index >= (int)sizeof(r->buffer)-1) {
+    if (r->index >= (int)sizeof(r->buffer) - 1) {
       if (str[index] == '\n') {
         ALOGW("Message longer than buffer; new byte (%d) skipped.", str[index]);
         r->index = 0;
@@ -106,7 +103,6 @@ static void reader_accept_string(GpsDataReader* r,
     }
   }
 }
-
 
 // GPS state threads which communicates with control and data sockets.
 void gps_state_thread(void* arg) {
@@ -141,7 +137,7 @@ void gps_state_thread(void* arg) {
     }
 
     for (event_index = 0; event_index < nevents; event_index++) {
-      if ((events[event_index].events & (EPOLLERR|EPOLLHUP)) != 0) {
+      if ((events[event_index].events & (EPOLLERR | EPOLLHUP)) != 0) {
         ALOGE("EPOLLERR or EPOLLHUP after epoll_wait() !?");
         goto Exit;
       }
@@ -181,8 +177,7 @@ void gps_state_thread(void* arg) {
           for (;;) {
             ret = read(fd, buff, sizeof(buff));
             if (ret < 0) {
-              if (errno == EINTR)
-                continue;
+              if (errno == EINTR) continue;
               if (errno != EWOULDBLOCK)
                 ALOGE("error while reading from gps daemon socket: %s:",
                       strerror(errno));
