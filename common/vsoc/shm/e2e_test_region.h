@@ -67,7 +67,6 @@ struct E2EMemoryFill : public ::vsoc::layout::Base {
 };
 ASSERT_SHM_COMPATIBLE(E2EMemoryFill, e2e_test);
 
-
 /**
  * Structure that grants permission to write in the region to either the guest
  * or the host. This size of these fields is arbitrary.
@@ -83,9 +82,7 @@ class E2ETestStageRegister {
     return rval;
   }
 
-  void set_value(E2ETestStage new_value) {
-    value_ = new_value;
-  }
+  void set_value(E2ETestStage new_value) { value_ = new_value; }
 
  protected:
   // The compiler must not attempt to optimize away reads and writes to the
@@ -114,8 +111,8 @@ class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
     // 1 + ... An array of size 1 is allocated in the E2ETestRegion.
     // TODO(ghartman): AddressSanitizer may find this sort of thing to be
     // alarming.
-    return 1 + (region_size - sizeof(E2ETestRegionLayout)) /
-        sizeof(E2EMemoryFill);
+    return 1 +
+           (region_size - sizeof(E2ETestRegionLayout)) / sizeof(E2EMemoryFill);
   }
   // The number of test stages that have completed on the guest
   // Later host tests will wait on this
@@ -144,19 +141,27 @@ struct E2ESecondaryTestRegionLayout : public E2ETestRegionLayout {
 };
 ASSERT_SHM_COMPATIBLE(E2ESecondaryTestRegionLayout, e2e_test);
 
+/**
+ * Defines an end-to-end region with a name that should never be configured.
+ */
+struct E2EUnfindableRegionLayout : public E2ETestRegionLayout {
+  static const char* region_name;
+};
+ASSERT_SHM_COMPATIBLE(E2EUnfindableRegionLayout, e2e_test);
+
 struct E2EManagedTestRegionLayout : public RegionLayout {
   static const char* region_name;
-  uint32_t val; // Not needed, here only to avoid an empty struct.
+  uint32_t val;  // Not needed, here only to avoid an empty struct.
 };
 ASSERT_SHM_COMPATIBLE(E2EManagedTestRegionLayout, e2e_test);
 
 struct E2EManagerTestRegionLayout : public RegionLayout {
   static const char* region_name;
   typedef E2EManagedTestRegionLayout ManagedRegion;
-  uint32_t data[4]; // We don't need more than 4 for the tests
+  uint32_t data[4];  // We don't need more than 4 for the tests
 };
 ASSERT_SHM_COMPATIBLE(E2EManagerTestRegionLayout, e2e_test);
 
-}  // e2e_test
-}  // layout
-}  // vsoc
+}  // namespace e2e_test
+}  // namespace layout
+}  // namespace vsoc

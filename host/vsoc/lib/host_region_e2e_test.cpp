@@ -18,65 +18,9 @@
  * End-to-end test to ensure that mapping of vsoc regions works on the host.
  */
 
-#include "host/vsoc/lib/host_region.h"
-
-#include "common/vsoc/shm/e2e_test_region.h"
-
 #include <gtest/gtest.h>
-
-using vsoc::layout::e2e_test::E2EPrimaryTestRegionLayout;
-using vsoc::layout::e2e_test::E2ESecondaryTestRegionLayout;
-
-/**
- * The string functions have problems with volatile pointers, so
- * this function casts them away.
- */
-template <typename T>
-T* make_nonvolatile(volatile T* in) {
-  return (T*)in;
-}
-
-template <typename Layout>
-class RegionTest {
- public:
-  vsoc::TypedRegionView<Layout> region;
-
-  void CheckPeerStrings() {
-    size_t num_data = Layout::NumFillRecords(region.region_data_size());
-    EXPECT_LE(2, num_data);
-    Layout* r = region.data();
-    for (size_t i = 0; i < num_data; ++i) {
-      EXPECT_STREQ(Layout::guest_pattern,
-                   make_nonvolatile(r->data[i].guest_writable));
-    }
-  }
-
-  bool HasIncomingInterruptFromPeer() {
-    return region.HasIncomingInterrupt();
-  }
-
-  void SendInterruptToPeer() {
-    region.InterruptPeer();
-  }
-
-  void WaitForInterruptFromPeer() {
-    region.WaitForInterrupt();
-  }
-
-  void WriteStrings() {
-    size_t num_data = Layout::NumFillRecords(region.region_data_size());
-    EXPECT_LE(2, num_data);
-    Layout* r = region.data();
-    for (size_t i = 0; i < num_data; ++i) {
-      EXPECT_TRUE(!r->data[i].host_writable[0] ||
-                  !strcmp(make_nonvolatile(r->data[i].host_writable),
-                          Layout::host_pattern));
-      strcpy(make_nonvolatile(r->data[i].host_writable), Layout::host_pattern);
-      EXPECT_STREQ(Layout::host_pattern,
-                   make_nonvolatile(r->data[i].host_writable));
-    }
-  }
-};
+#include "common/vsoc/lib/e2e_test_region_view.h"
+#include "host/vsoc/lib/host_region.h"
 
 // Here is a summary of the two regions interrupt and write test:
 // 1. Write our strings to the first region
@@ -92,51 +36,62 @@ class RegionTest {
 // 10. Confirm that no interrupt is pending in the first region
 // 11. Confirm that no interrupt is pending in the second region
 
+template <typename View>
+void SetHostStrings(View* in) {
+  size_t num_data = in->string_size();
+  EXPECT_LE(2, num_data);
+  for (size_t i = 0; i < num_data; ++i) {
+    EXPECT_TRUE(!in->host_string(i)[0] ||
+                !strcmp(in->host_string(i), View::Layout::host_pattern));
+    in->set_host_string(i, View::Layout::host_pattern);
+    EXPECT_STREQ(in->host_string(i), View::Layout::host_pattern);
+  }
+}
+
+template <typename View>
+void CheckPeerStrings(View* in) {
+  size_t num_data = in->string_size();
+  EXPECT_LE(2, num_data);
+  for (size_t i = 0; i < num_data; ++i) {
+    EXPECT_STREQ(View::Layout::guest_pattern, in->guest_string(i));
+  }
+}
+
 TEST(RegionTest, PeerTests) {
-  RegionTest<E2EPrimaryTestRegionLayout> primary;
-  RegionTest<E2ESecondaryTestRegionLayout> secondary;
-  ASSERT_TRUE(primary.region.Open());
-  ASSERT_TRUE(secondary.region.Open());
+  vsoc::E2EPrimaryRegionView primary;
+  vsoc::E2ESecondaryRegionView secondary;
+  ASSERT_TRUE(primary.Open());
+  ASSERT_TRUE(secondary.Open());
   LOG(INFO) << "Regions are open";
-  primary.WriteStrings();
+  SetHostStrings(&primary);
   EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
   primary.SendInterruptToPeer();
   LOG(INFO) << "Waiting for first interrupt from peer";
   primary.WaitForInterruptFromPeer();
   LOG(INFO) << "First interrupt received";
-  primary.CheckPeerStrings();
-  secondary.WriteStrings();
+  CheckPeerStrings(&primary);
+  SetHostStrings(&secondary);
   secondary.SendInterruptToPeer();
   LOG(INFO) << "Waiting for second interrupt from peer";
   secondary.WaitForInterruptFromPeer();
   LOG(INFO) << "Second interrupt received";
-  secondary.CheckPeerStrings();
+  CheckPeerStrings(&secondary);
   EXPECT_FALSE(primary.HasIncomingInterruptFromPeer());
   EXPECT_FALSE(secondary.HasIncomingInterruptFromPeer());
 }
 
-/**
- * Defines an end-to-end region with a name that should never be configured.
- */
-struct UnfindableRegionLayout : public E2EPrimaryTestRegionLayout {
-  static const char* region_name;
-};
-
-const char* UnfindableRegionLayout::region_name = "e2e_must_not_exist";
-
 TEST(RegionTest, MissingRegionCausesDeath) {
-  RegionTest<UnfindableRegionLayout> test;
-  EXPECT_DEATH(test.region.Open(), ".*");
+  vsoc::E2EUnfindableRegionView test;
+  EXPECT_DEATH(test.Open(), ".*");
 }
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    vsoc::TypedRegionView<E2EPrimaryTestRegionLayout> region;
+    vsoc::E2EPrimaryRegionView region;
     region.Open();
-    E2EPrimaryTestRegionLayout* r = region.data();
-    r->host_status.set_value(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
+    region.host_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
   }
   return rval;
 }

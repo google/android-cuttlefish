@@ -36,10 +36,12 @@ const char
     E2ESecondaryTestRegionLayout::host_pattern[E2EMemoryFill::kOwnedFieldSize] =
         "secondary host e2e string";
 
+const char* E2EUnfindableRegionLayout::region_name = "e2e_must_not_exist";
+
 const char* E2EManagedTestRegionLayout::region_name = "e2e_managed";
 
 const char* E2EManagerTestRegionLayout::region_name = "e2e_manager";
 
-}  // e2e_test
-}  // layout
-}  // vsoc
+}  // namespace e2e_test
+}  // namespace layout
+}  // namespace vsoc

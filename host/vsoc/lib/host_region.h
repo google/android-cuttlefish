@@ -54,7 +54,8 @@ class OpenableRegionView : public RegionView {
   // Interrupt our peer, causing it to scan the outgoing_signal_table
   virtual void InterruptPeer() {
     if (!region_offset_to_pointer<std::atomic<uint32_t>>(
-            outgoing_signal_table()->interrupt_signalled_offset)->exchange(1)) {
+             outgoing_signal_table()->interrupt_signalled_offset)
+             ->exchange(1)) {
       uint64_t one = 1;
       ssize_t rval = outgoing_interrupt_fd_->Write(&one, sizeof(one));
       if (rval != sizeof(one)) {
@@ -76,7 +77,8 @@ class OpenableRegionView : public RegionView {
   virtual void WaitForInterrupt() {
     while (1) {
       if (region_offset_to_pointer<std::atomic<uint32_t>>(
-              incoming_signal_table()->interrupt_signalled_offset)->exchange(0)) {
+              incoming_signal_table()->interrupt_signalled_offset)
+              ->exchange(0)) {
         // The eventfd isn't cleared by design. This is a optimization: if
         // an interrupt is pending we avoid the sleep, lowering the latency.
         // It does mean that we do some extra work the next time that we go
@@ -97,8 +99,8 @@ class OpenableRegionView : public RegionView {
       avd::Select(&readset, NULL, NULL, NULL);
       ssize_t rval = incoming_interrupt_fd_->Read(&missed, sizeof(missed));
       if (rval != sizeof(missed)) {
-        LOG(FATAL) << __FUNCTION__ << ": rval (" << rval <<
-            ") != sizeof(missed))";
+        LOG(FATAL) << __FUNCTION__ << ": rval (" << rval
+                   << ") != sizeof(missed))";
       }
       if (!missed) {
         LOG(FATAL) << __FUNCTION__ << ": woke with 0 interrupts";
@@ -114,29 +116,4 @@ class OpenableRegionView : public RegionView {
   avd::SharedFD incoming_interrupt_fd_;
   avd::SharedFD outgoing_interrupt_fd_;
 };
-
-/**
- * This class adds methods that depend on the Region's type.
- * This may be directly constructed. However, it may be more effective to
- * subclass it, adding region-specific methods.
- *
- * Layout should be VSoC shared memory compatible, defined in common/vsoc/shm,
- * and should have a constant string region name.
- */
-template <typename Layout>
-class TypedRegionView : public OpenableRegionView {
- public:
-  /* Returns a pointer to the region with a type that matches the layout */
-  Layout* data() {
-    return reinterpret_cast<Layout*>(reinterpret_cast<uintptr_t>(region_base_) +
-                                     region_desc_.offset_of_region_data);
-  }
-
-  TypedRegionView() {}
-
-  bool Open(const char* domain = nullptr) {
-    return OpenableRegionView::Open(Layout::region_name, domain);
-  }
-};
-
 }  // namespace vsoc

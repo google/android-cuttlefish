@@ -56,72 +56,12 @@ class OpenableRegionView : public RegionView {
 
  protected:
   OpenableRegionView() {}
-  bool Open(const char* region_name);
+  bool Open(const char* region_name, const char* domain);
   int CreateFdScopedPermission(const char* managed_region_name,
-                               uint32_t* owner_ptr,
-                               uint32_t owned_val,
+                               uint32_t* owner_ptr, uint32_t owned_val,
                                vsoc_reg_off_t begin_offset,
                                vsoc_reg_off_t end_offset);
   avd::SharedFD region_fd_;
-};
-
-/**
- * This class adds methods that depend on the Region's type.
- * This may be directly constructed. However, it may be more effective to
- * subclass it, adding region-specific methods.
- *
- * Layout should be VSoC shared memory compatible, defined in common/vsoc/shm,
- * and should have a constant string region name.
- */
-template <typename Layout>
-class TypedRegionView : public OpenableRegionView {
- public:
-  /* Returns a pointer to the region with a type that matches the layout */
-  Layout* data() {
-    return reinterpret_cast<Layout*>(reinterpret_cast<uintptr_t>(region_base_) +
-                                     region_desc_.offset_of_region_data);
-  }
-  TypedRegionView() {}
-
-  bool Open() { return OpenableRegionView::Open(Layout::region_name); }
-};
-
-/**
- * Adds methods to create file descriptor scoped permissions. Just like
- * TypedRegionView it can be directly constructed or subclassed.
- *
- * The Layout type must (in addition to requirements for TypedRegionView) also
- * provide a nested type for the layout of the managed region.
- */
-template <typename Layout>
-class ManagerRegionView : public TypedRegionView<Layout> {
- public:
-  ManagerRegionView() = default;
-  /**
-   * Creates a fd scoped permission on the managed region.
-   *
-   * The managed_region_fd is in/out parameter that can be a not yet open file
-   * descriptor. If the fd is not open yet it will open the managed region
-   * device and then create the permission. If the function returns EBUSY
-   * (meaning that we lost the race to acquire the memory) the same fd can (and
-   * is expected to) be used in a subsequent call to create a permission on
-   * another memory location.
-   *
-   * On success returns an open fd with the requested permission asociated to
-   * it. If another thread/process acquired ownership of *owner_ptr before this
-   * one returns -EBUSY, returns a different negative number otherwise.
-   */
-  int CreateFdScopedPermission(uint32_t* owner_ptr,
-                               uint32_t owned_val,
-                               vsoc_reg_off_t begin_offset,
-                               vsoc_reg_off_t end_offset) {
-    return OpenableRegionView::CreateFdScopedPermission(
-        Layout::ManagedRegion::region_name,
-        owner_ptr,
-        owned_val,
-        begin_offset,
-        end_offset);
-  }
 };
 
 }  // namespace vsoc

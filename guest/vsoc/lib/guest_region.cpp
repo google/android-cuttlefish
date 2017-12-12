@@ -37,9 +37,12 @@ std::string device_path_from_name(const char* region_name) {
   return std::string("/dev/") + region_name;
 }
 
-}
+}  // namespace
 
-bool vsoc::OpenableRegionView::Open(const char* region_name) {
+// domain is here to ensure that this method has the same signature as the
+// method on host regions.
+bool vsoc::OpenableRegionView::Open(const char* region_name,
+                                    const char* /*domain*/) {
   std::string path = device_path_from_name(region_name);
   region_fd_ = SharedFD::Open(path.c_str(), O_RDWR);
   if (!region_fd_->IsOpen()) {
@@ -81,11 +84,8 @@ void vsoc::OpenableRegionView::WaitForInterrupt() {
 }
 
 int vsoc::OpenableRegionView::CreateFdScopedPermission(
-    const char* managed_region_name,
-    uint32_t* owner_ptr,
-    uint32_t owned_value,
-    vsoc_reg_off_t begin_offset,
-    vsoc_reg_off_t end_offset) {
+    const char* managed_region_name, uint32_t* owner_ptr, uint32_t owned_value,
+    vsoc_reg_off_t begin_offset, vsoc_reg_off_t end_offset) {
   if (!region_fd_->IsOpen()) {
     LOG(FATAL) << "Can't create permission before opening controller region";
     return -EINVAL;
@@ -110,8 +110,8 @@ int vsoc::OpenableRegionView::CreateFdScopedPermission(
     int errno_ = errno;
     close(managed_region_fd);
     if (errno != EBUSY) {
-        LOG(FATAL) << "Unable to create fd scoped permission (" <<
-          strerror(errno) << ")";
+      LOG(FATAL) << "Unable to create fd scoped permission (" << strerror(errno)
+                 << ")";
     }
     return -errno_;
   }
