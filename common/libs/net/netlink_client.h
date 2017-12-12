@@ -72,6 +72,20 @@ class NetlinkRequest {
   // Request Sequence Number.
   virtual uint32_t SeqNo() = 0;
 
+  // Append raw data to buffer.
+  // If |data| is NULL, erase |length| bytes instead.
+  virtual void* AppendRaw(const void* data, size_t length) = 0;
+
+  // Append specialized data.
+  template <typename T> T* Append(const T& data) {
+    return static_cast<T*>(AppendRaw(&data, sizeof(T)));
+  }
+
+  // Reserve specialized data.
+  template <typename T> T* Reserve() {
+    return static_cast<T*>(AppendRaw(nullptr, sizeof(T)));
+  }
+
   // Create new Netlink Request structure.
   // When |create| is true, the request will inject a new instance of |type|.
   static std::unique_ptr<NetlinkRequest> New(int type, int flags);
