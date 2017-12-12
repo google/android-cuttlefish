@@ -242,7 +242,6 @@ class GuestDefinition(object):
         elem.set('type', stype)
         src = ET.SubElement(elem, 'source')
         if stype == 'file':
-            src.set('append', 'no')
             src.set('path', spath)
         elif stype == 'unix':
             src.set('mode', 'bind')
