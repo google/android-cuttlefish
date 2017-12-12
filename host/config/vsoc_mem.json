@@ -93,10 +93,9 @@
        "Must be able to accomodate at least one pagesize long packet each direction",
        "Region size = 2 * CircularPacketQueue64k_size + 1024 bytes for control structures."
      ],
-     "managed_by" : "wificlient",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size" : 132096,
+     "region_size" : 139264,
 
      "guest_to_host_signal_table" : {
        "num_nodes_lg2" : 2
