@@ -38,7 +38,7 @@ DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 DEFINE_string(layout,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-              "/config/vsoc_mem.json",
+                  "/config/vsoc_mem.json",
               "Location of the vsoc_mem.json file.");
 DEFINE_string(mempath, "/dev/shm/ivshmem",
               "Target location for the shmem file.");
@@ -224,6 +224,8 @@ int main(int argc, char** argv) {
       .SetVendorPartitionPath(vendor_partition->GetName())
       .SetMobileBridgeName(FLAGS_mobile_interface)
       .SetEntropySource(entropy_source);
+  cfg.SetUSBV1SocketName(std::string("/tmp/") + cfg.GetInstanceName() +
+                         "-usb");
 
   std::string xml = cfg.Build();
   if (FLAGS_log_xml) {
