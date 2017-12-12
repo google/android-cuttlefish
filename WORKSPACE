@@ -49,9 +49,9 @@ bind(
 )
 
 new_local_repository(
-    name = "kernel",
+    name = "cuttlefish_kernel",
     path = "../cuttlefish_kernel",
-    build_file = "//external:kernel.BUILD",
+    build_file = "//external:cuttlefish_kernel.BUILD",
 )
 
 
