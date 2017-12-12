@@ -43,5 +43,10 @@ LOCAL_SHARED_LIBRARIES := \
     libvsocframebuffer
 
 LOCAL_VENDOR_MODULE := true
-include $(BUILD_SHARED_LIBRARY)
 
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
+
+include $(BUILD_SHARED_LIBRARY)
