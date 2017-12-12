@@ -145,11 +145,11 @@ class SharedFD {
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
-  static SharedFD SocketInAddrAnyServer(int in_port, int in_type);
   static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
+  static SharedFD SocketLocalServer(int port, int type);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
   static SharedFD TimerFD(int clock, int flags);
