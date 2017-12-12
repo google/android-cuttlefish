@@ -18,6 +18,8 @@
 #include <arpa/inet.h>
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
+#include <linux/netlink.h>
+#include <linux/rtnetlink.h>
 #include <memory>
 
 #include "common/libs/glog/logging.h"
@@ -27,7 +29,7 @@ namespace avd {
 namespace {
 std::unique_ptr<NetlinkRequest> BuildLinkRequest(
     const NetworkInterface& interface) {
-  auto request = NetlinkRequest::New(NetlinkRequest::RequestType::SetLink);
+  auto request = NetlinkRequest::New(RTM_SETLINK, 0);
   request->AddIfInfo(interface.Index(), interface.IsOperational());
   if (!interface.Name().empty()) {
     request->AddString(IFLA_IFNAME, interface.Name());
@@ -38,7 +40,7 @@ std::unique_ptr<NetlinkRequest> BuildLinkRequest(
 
 std::unique_ptr<NetlinkRequest> BuildAddrRequest(
     const NetworkInterface& interface) {
-  auto request = NetlinkRequest::New(NetlinkRequest::RequestType::AddAddress);
+  auto request = NetlinkRequest::New(RTM_NEWADDR, 0);
   request->AddAddrInfo(interface.Index());
   request->AddInt32(IFA_LOCAL, inet_addr(interface.Address().c_str()));
   request->AddInt32(IFA_ADDRESS, inet_addr(interface.Address().c_str()));
