@@ -165,10 +165,8 @@ const char g_ril_interface[] = "rmnet0";
 // TearDownNetworkInterface disables network interface.
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
-  std::unique_ptr<avd::NetlinkClient> nl(avd::NetlinkClient::New());
-  std::unique_ptr<avd::NetworkInterfaceManager> nm(
-      avd::NetworkInterfaceManager::New(nl.get()));
-  std::unique_ptr<avd::NetworkInterface> ni(nm->Open(g_ril_interface));
+  auto nm(avd::NetworkInterfaceManager::New(nullptr));
+  auto ni(nm->Open("rmnet0"));
 
   if (ni) {
     ni->SetOperational(false);

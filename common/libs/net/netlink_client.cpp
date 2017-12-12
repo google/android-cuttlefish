@@ -33,13 +33,14 @@ class NetlinkClientImpl : public NetlinkClient {
   NetlinkClientImpl() = default;
   virtual ~NetlinkClientImpl() = default;
 
-  virtual int32_t NameToIndex(const std::string& name);
   virtual bool Send(NetlinkRequest* message);
 
   // Initialize NetlinkClient instance.
   // Open netlink channel and initialize interface list.
+  // Parameter |type| specifies which netlink target to address, eg.
+  // NETLINK_ROUTE.
   // Returns true, if initialization was successful.
-  bool OpenNetlink();
+  bool OpenNetlink(int type);
 
  private:
   bool CheckResponse(uint32_t seq_no);
@@ -48,13 +49,6 @@ class NetlinkClientImpl : public NetlinkClient {
   sockaddr_nl address_;
   int seq_no_ = 0;
 };
-
-int32_t NetlinkClientImpl::NameToIndex(const std::string& name) {
-  // NOTE: do not replace this code with an IOCTL call.
-  // On SELinux enabled Androids, RILD is not permitted to execute an IOCTL
-  // and this call will fail.
-  return if_nametoindex(name.c_str());
-}
 
 bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
   uint32_t len;
@@ -135,8 +129,8 @@ bool NetlinkClientImpl::Send(NetlinkRequest* message) {
   return CheckResponse(message->SeqNo());
 }
 
-bool NetlinkClientImpl::OpenNetlink() {
-  netlink_fd_ = SharedFD::Socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+bool NetlinkClientImpl::OpenNetlink(int type) {
+  netlink_fd_ = SharedFD::Socket(AF_NETLINK, SOCK_RAW, type);
   if (!netlink_fd_->IsOpen()) return false;
 
   address_.nl_family = AF_NETLINK;
@@ -146,18 +140,30 @@ bool NetlinkClientImpl::OpenNetlink() {
 
   return true;
 }
+
+class NetlinkClientFactoryImpl : public NetlinkClientFactory {
+ public:
+  NetlinkClientFactoryImpl() = default;
+  ~NetlinkClientFactoryImpl() override = default;
+
+  std::unique_ptr<NetlinkClient> New(int type) override {
+    auto client_raw = new NetlinkClientImpl();
+    // Use RVO when possible.
+    std::unique_ptr<NetlinkClient> client(client_raw);
+
+    if (!client_raw->OpenNetlink(type)) {
+      // Note: deletes client_raw.
+      client.reset();
+    }
+    return client;
+  }
+};
+
 }  // namespace
 
-std::unique_ptr<NetlinkClient> NetlinkClient::New() {
-  auto client_raw = new NetlinkClientImpl();
-  // Use RVO when possible.
-  std::unique_ptr<NetlinkClient> client(client_raw);
-
-  if (!client_raw->OpenNetlink()) {
-    // Note: deletes client_raw.
-    client.reset();
-  }
-  return client;
+NetlinkClientFactory* NetlinkClientFactory::Default() {
+  static NetlinkClientFactory &factory = *new NetlinkClientFactoryImpl();
+  return &factory;
 }
 
 }  // namespace avd

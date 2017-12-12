@@ -29,19 +29,25 @@ class NetlinkClient {
   NetlinkClient() {}
   virtual ~NetlinkClient() {}
 
-  // Get interface index.
-  // Returns 0 if interface does not exist.
-  virtual int32_t NameToIndex(const std::string& name) = 0;
-
   // Send netlink message to kernel.
   virtual bool Send(NetlinkRequest* message) = 0;
-
-  // Create default instance of NetlinkClient.
-  static std::unique_ptr<NetlinkClient> New();
 
  private:
   NetlinkClient(const NetlinkClient&);
   NetlinkClient& operator= (const NetlinkClient&);
+};
+
+class NetlinkClientFactory {
+ public:
+  // Create new NetlinkClient instance of a specified type.
+  // type can be any of the NETLINK_* types (eg. NETLINK_ROUTE).
+  virtual std::unique_ptr<NetlinkClient> New(int type) = 0;
+
+  static NetlinkClientFactory* Default();
+
+ protected:
+  NetlinkClientFactory() = default;
+  virtual ~NetlinkClientFactory() = default;
 };
 
 }  // namespace avd
