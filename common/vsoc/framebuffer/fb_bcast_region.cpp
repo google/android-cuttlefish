@@ -61,7 +61,7 @@ vsoc_reg_off_t FBBroadcastRegion::WaitForNewFrameSince(uint32_t* last_seq_num) {
   // Also, the call to WaitForSignal receives a pointer to seq_num (so the
   // compiler should not optimize it out) and includes a memory barrier
   // (FUTEX_WAIT).
-  while(data()->seq_num == *last_seq_num) {
+  while (data()->seq_num == *last_seq_num) {
     // Don't hold the lock when waiting for a signal, will deadlock.
     WaitForSignal(&data()->seq_num, *last_seq_num);
   }
