@@ -1,0 +1,22 @@
+cc_library {
+    name: "libcuttlefish_wifi",
+    host_supported: true,
+
+    srcs: [
+        "netlink.cc",
+        "nl_client.cc",
+        "cmd.cc",
+        "virtual_wifi.cc",
+        "virtual_wifi_manager.cc",
+    ],
+    static_libs: [
+        "libbase",
+        "libnl",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+
