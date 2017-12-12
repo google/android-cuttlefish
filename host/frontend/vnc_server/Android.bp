@@ -38,6 +38,7 @@ cc_binary_host {
         "vsoc_lib",
         "cuttlefish_auto_resources",
         "libbase",
+	"libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }

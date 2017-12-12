@@ -15,12 +15,14 @@
  */
 
 #include "host/frontend/vnc_server/virtual_inputs.h"
+#include <gflags/gflags.h>
 
 #include <mutex>
 #include <thread>
 
-extern std::string FLAGS_input_socket;
-
+DEFINE_string(input_socket, "/tmp/android-cuttlefish-1-input",
+              "The name of unix socket where the monkey server is listening "
+              "for input commands");
 using avd::vnc::VirtualInputs;
 
 VirtualInputs::VirtualInputs()

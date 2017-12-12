@@ -19,8 +19,15 @@
 #include <algorithm>
 #include <utility>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include "host/frontend/vnc_server/frame_buffer_watcher.h"
+
+DEFINE_bool(debug_blackboard, false,
+            "Turn on detailed logging for the blackboard");
+
+#define DLOG(LEVEL)                                 \
+  if (FLAGS_debug_blackboard) LOG(LEVEL)
 
 using avd::vnc::BlackBoard;
 using avd::vnc::Stripe;
