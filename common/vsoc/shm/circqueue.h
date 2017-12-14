@@ -87,9 +87,9 @@ class CircularQueueBase {
   // they should be interpreted modulo the buffer size. This fact along with the
   // buffer size being a power of two greatly simplyfies the index calculations.
   // Advances when a reader has finished with buffer space
-  uint32_t r_released_;
+  std::atomic<uint32_t> r_released_;
   // Advances when buffer space is filled and ready for a reader
-  uint32_t w_pub_;
+  std::atomic<uint32_t> w_pub_;
   // Spinlock that protects the region. 0 means unlocked
   SpinLock lock_;
   // The actual memory in the buffer
