@@ -229,6 +229,11 @@ PRODUCT_PACKAGES += \
     power.vsoc \
     android.hardware.power@1.0-impl
 
+#
+# USB
+PRODUCT_PACKAGES += \
+    android.hardware.usb@1.0-service
+
 # TODO vibrator HAL
 # TODO thermal
 
