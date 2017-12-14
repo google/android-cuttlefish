@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 #include "common/libs/wifi/packet_switch.h"
+
+#include "common/libs/wifi/mac80211.h"
 #include "common/libs/wifi/router.h"
 
 #ifdef CUTTLEFISH_HOST
@@ -25,11 +27,17 @@ namespace cvd {
 PacketSwitch::~PacketSwitch() { Stop(); }
 
 bool PacketSwitch::Init() {
+  bool res;
 #ifdef CUTTLEFISH_HOST
-  return shm_wifi_.Open(vsoc::GetDomain().c_str());
+  res = shm_wifi_.Open(vsoc::GetDomain().c_str());
 #else
-  return shm_wifi_.Open();
+  res = shm_wifi_.Open();
 #endif
+
+  if (res) {
+    worker_ = shm_wifi_.StartWorker();
+  }
+  return res;
 }
 
 void PacketSwitch::Start() {
@@ -48,9 +56,14 @@ void PacketSwitch::Start() {
       auto hdr = reinterpret_cast<nlmsghdr*>(msg.get());
       std::unique_ptr<nl_msg, void (*)(nl_msg*)> nlm(nullptr, nlmsg_free);
 
-      int item = 0;
       while (started_) {
+#ifdef CUTTLEFISH_HOST
+      LOG(INFO) << "Awaiting packet.";
+#endif
         auto len = shm_wifi_.Recv(msg.get(), maxlen);
+#ifdef CUTTLEFISH_HOST
+      LOG(INFO) << "Received packet.";
+#endif
         nlm.reset(nlmsg_convert(hdr));
         ProcessPacket(nlm.get(), true);
       }
@@ -72,35 +85,22 @@ void PacketSwitch::ProcessPacket(nl_msg* m, bool is_incoming) {
   auto genhdr = reinterpret_cast<genlmsghdr*>(nlmsg_data(header));
 
   if (genhdr->cmd == WIFIROUTER_CMD_NOTIFY) {
-    // This attribute is mandatory: it contains MAC80211_HWSIM frame.
-    auto packet =
-        nlmsg_find_attr(header, sizeof(*genhdr), WIFIROUTER_ATTR_PACKET);
-    if (!packet) return;
-
     // If origin is not local (= not set from local WIFI), then forward it to
     // local WIFI.
     if (is_incoming) {
+#ifdef CUTTLEFISH_HOST
+      LOG(INFO) << "Forwarding packet.";
+#endif
       // Need to update MAC80211_HWSIM WIFI family before injecting packet.
       // Different kernels may have different family numbers allocated.
-      auto frame = reinterpret_cast<nlmsghdr*>(nla_data(packet));
-      frame->nlmsg_type = nl_->FamilyMAC80211();
-      frame->nlmsg_pid = 0;
-      frame->nlmsg_seq = 0;
-      frame->nlmsg_flags = NLM_F_REQUEST;
-      Cmd local(frame);
-
-      nl_->GeNL().Send(&local);
-
-      for (auto* r : local.Responses()) {
-        auto hdr = nlmsg_hdr(r);
-        if (hdr->nlmsg_type == NLMSG_ERROR) {
-          nlmsgerr* err = static_cast<nlmsgerr*>(nlmsg_data(hdr));
-          if (err->error < 0) {
-            LOG(ERROR) << "Could not send WIFI message: "
-                       << strerror(-err->error);
-          }
-        }
-      }
+      header->nlmsg_type = nl_->FamilyMAC80211();
+      header->nlmsg_pid = 0;
+      header->nlmsg_seq = 0;
+      header->nlmsg_flags = NLM_F_REQUEST;
+      genhdr->cmd = WIFIROUTER_CMD_SEND;
+      Cmd c(m);
+      nl_->WRCL().Send(&c);
+      c.WaitComplete();
     } else {
       shm_wifi_.Send(header, header->nlmsg_len);
     }
