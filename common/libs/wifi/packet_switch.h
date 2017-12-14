@@ -45,6 +45,7 @@ class PacketSwitch {
   bool started_ = false;
 
   std::unique_ptr<std::thread> shm_xchg_;
+  std::unique_ptr<vsoc::RegionWorker> worker_;
   vsoc::wifi::WifiExchangeView shm_wifi_;
 
   PacketSwitch(const PacketSwitch&) = delete;

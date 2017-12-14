@@ -29,6 +29,7 @@ class Cmd {
  public:
   Cmd();
   explicit Cmd(nlmsghdr* h);
+  explicit Cmd(nl_msg* h);
   ~Cmd();
 
   // Cmd() creates netlink request to be sent to kernel.
@@ -44,6 +45,9 @@ class Cmd {
   // - false, if more data is expected, or
   // - true, if processing is complete and instance can be disposed of.
   bool OnResponse(nl_msg* msg);
+
+  // Wait until message processing is complete.
+  void WaitComplete() const;
 
  private:
   nl_msg* msg_;

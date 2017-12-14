@@ -189,12 +189,13 @@ bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name,
   return -1;
 }
 
-bool RegisterForRouterNotifications(Netlink* nl, int hwsim_id) {
+bool RegisterForRouterNotifications(Netlink* nl, int hwsim_id, uint8_t* addr) {
   Cmd msg;
 
   if (!genlmsg_put(msg.Msg(), NL_AUTO_PID, NL_AUTO_SEQ, 0, 0,
                    NLM_F_REQUEST, WIFIROUTER_CMD_REGISTER, 0) ||
-      nla_put_u32(msg.Msg(), WIFIROUTER_ATTR_HWSIM_ID, hwsim_id)) {
+      nla_put_u32(msg.Msg(), WIFIROUTER_ATTR_HWSIM_ID, hwsim_id) ||
+      nla_put(msg.Msg(), WIFIROUTER_ATTR_HWSIM_ADDR, ETH_ALEN, addr)) {
     LOG(ERROR) << "Could not create wifirouter register message.";
     return false;
   }
@@ -277,14 +278,14 @@ bool VirtualWIFI::Init() {
 
   // 4. Apply requested interface name.
   LOG(INFO) << "Updating interface name to: " << name_;
-  if (!SetWLANInterface(nl_, iface_number_, name_, &mac_addr_[0])) {
+  if (!SetWLANInterface(nl_, iface_number_, name_, mac_addr_)) {
     LOG(ERROR) << "Could not update wlan interface name.";
     return false;
   }
 
   // 5. Register with wifi router.
   LOG(INFO) << "Registering for notifications for: " << addr_;
-  if (!RegisterForRouterNotifications(nl_, hwsim_number_)) {
+  if (!RegisterForRouterNotifications(nl_, hwsim_number_, mac_addr_)) {
     LOG(ERROR) << "Could not register with wifi router.";
     return false;
   }
