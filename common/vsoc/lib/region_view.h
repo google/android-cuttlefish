@@ -100,8 +100,7 @@ class RegionView : public RegionSignalingInterface {
   //   signal_handler: An action to perform on every offset signalled by our
   //   peer, usually a FUTEX_WAKE call, but can be customized for other
   //   purposes.
-  void ProcessSignalsFromPeer(
-      std::function<void(uint32_t*)> signal_handler);
+  void ProcessSignalsFromPeer(std::function<void(uint32_t*)> signal_handler);
 
   // Post a signal to the guest, the host, or both.
   // See futex(2) FUTEX_WAKE for details.
@@ -142,7 +141,8 @@ class RegionView : public RegionSignalingInterface {
   std::unique_ptr<RegionWorker> StartWorker();
 
   // Returns a pointer to the start of region data that is cast to the given
-  // type.  Initializers that run in the launcher use this to get a typed view of the region. Most other cases should be handled via TypedRegionView.
+  // type.  Initializers that run in the launcher use this to get a typed view
+  // of the region. Most other cases should be handled via TypedRegionView.
   template <typename LayoutType>
   LayoutType* GetLayoutPointer() {
     return this->region_offset_to_pointer<LayoutType>(
