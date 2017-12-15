@@ -148,7 +148,7 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    * Writes [buffer_in, buffer_in + bytes) to the queue.
    * If the number of bytes to be written exceeds the size of the queue
    * -ENOSPC will be returned.
-   * If non_blocking is true and there is not enogh free space on the queue to
+   * If non_blocking is true and there is not enough free space on the queue to
    * write all the data -EWOULDBLOCK will be returned.
    */
   intptr_t Write(RegionSignalingInterface* r, const char* buffer_in,

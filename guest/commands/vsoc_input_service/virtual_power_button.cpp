@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -15,28 +14,20 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+#include "virtual_power_button.h"
 
-#include <map>
-#include <mutex>
+namespace vsoc_input_service {
 
-#include "common/vsoc/lib/input_events_region_view.h"
+VirtualPowerButton::VirtualPowerButton()
+    : VirtualDeviceBase("VSoC power button", 0x6007) {}
 
-namespace cvd {
-namespace vnc {
+const std::vector<const uint32_t>& VirtualPowerButton::GetEventTypes() const {
+  static const std::vector<const uint32_t> evt_types{EV_KEY};
+  return evt_types;
+}
+const std::vector<const uint32_t>& VirtualPowerButton::GetKeys() const {
+  static const std::vector<const uint32_t> keys{KEY_POWER};
+  return keys;
+}
 
-class VirtualInputs {
- public:
-  VirtualInputs();
-
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
-
- private:
-  vsoc::input_events::InputEventsRegionView input_events_region_view_;
-  std::map<uint32_t, uint32_t> keymapping_;
-};
-
-}  // namespace vnc
-}  // namespace cvd
+}  // namespace vsoc_input_service

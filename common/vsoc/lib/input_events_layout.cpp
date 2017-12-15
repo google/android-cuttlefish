@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -15,28 +14,16 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+// Define some of the string constants associated with the region layout.
+#include "common/vsoc/shm/input_events_layout.h"
 
-#include <map>
-#include <mutex>
+namespace vsoc {
+namespace layout {
 
-#include "common/vsoc/lib/input_events_region_view.h"
+namespace input_events {
 
-namespace cvd {
-namespace vnc {
+const char* InputEventsLayout::region_name = "input_events";
 
-class VirtualInputs {
- public:
-  VirtualInputs();
-
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
-
- private:
-  vsoc::input_events::InputEventsRegionView input_events_region_view_;
-  std::map<uint32_t, uint32_t> keymapping_;
-};
-
-}  // namespace vnc
-}  // namespace cvd
+}  // namespace input_events
+}  // namespace layout
+}  // namespace vsoc

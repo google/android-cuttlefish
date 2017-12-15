@@ -29,6 +29,7 @@ endif
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
+    device/google/cuttlefish_kernel \
     external/libjpeg-turbo \
     external/jsoncpp/include
 
@@ -36,23 +37,22 @@ LOCAL_MODULE := vnc_server
 LOCAL_VENDOR_MODULE := true
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
-	blackboard.cpp \
-	frame_buffer_watcher.cpp \
-	jpeg_compressor.cpp \
-	main.cpp \
-	simulated_hw_composer.cpp \
-	tcp_socket.cpp \
-	VirtualInputDevice.cpp \
-	virtual_inputs.cpp \
-	vnc_client_connection.cpp \
-	vnc_server.cpp \
+    blackboard.cpp \
+    frame_buffer_watcher.cpp \
+    jpeg_compressor.cpp \
+    main.cpp \
+    simulated_hw_composer.cpp \
+    tcp_socket.cpp \
+    virtual_inputs.cpp \
+    vnc_client_connection.cpp \
+    vnc_server.cpp \
 
 LOCAL_CFLAGS := \
-	$(VSOC_VERSION_CFLAGS) \
-	-std=gnu++11 \
-	-Wall -Werror \
-	-Wno-error-unused -Wno-error=unused-parameter \
-	-Wno-attributes
+    $(VSOC_VERSION_CFLAGS) \
+    -std=gnu++11 \
+    -Wall -Werror \
+    -Wno-error-unused -Wno-error=unused-parameter \
+    -Wno-attributes
 
 LOCAL_CFLAGS += -Wno-error=implicit-exception-spec-mismatch
 
