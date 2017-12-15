@@ -139,12 +139,9 @@ bool SetUpNetworkInterface(const char* interface_name) {
     return false;
   }
   // do_dhcp doesn't really write to this
-  if (do_dhcp(const_cast<char*>(interface_name))) {
-    ALOGE("%s disabled because DHCP failed", interface_name);
-    return false;
-  }
-  struct in_addr ipaddr, gateway, dns1;
-  uint32_t prefix_length, unused;
+  // Failures are ignored here because interface setup won't work on master
+  struct in_addr ipaddr{}, gateway{}, dns1{};
+  uint32_t prefix_length{}, unused;
   get_dhcp_info(&ipaddr.s_addr, &gateway.s_addr, &prefix_length, &dns1.s_addr,
                 &unused, &unused, &unused);
   snprintf(g_address_prefix, sizeof(g_address_prefix), "%s/%d",
