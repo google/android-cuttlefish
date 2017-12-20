@@ -355,10 +355,11 @@ bool WifiRouter::HandleClientMessage(int client) {
   std::unique_ptr<nlmsghdr, void (*)(nlmsghdr*)> msg(
       reinterpret_cast<nlmsghdr*>(malloc(kMaxSupportedPacketSize)),
       [](nlmsghdr* h) { free(h); });
-  int64_t size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
+  ssize_t size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
 
   // Invalid message or no data -> client invalid or disconnected.
-  if (size == 0 || size != msg->nlmsg_len || size < sizeof(nlmsghdr)) {
+  if (size == 0 || size != static_cast<ssize_t>(msg->nlmsg_len) ||
+      size < static_cast<ssize_t>(sizeof(nlmsghdr))) {
     return false;
   }
 

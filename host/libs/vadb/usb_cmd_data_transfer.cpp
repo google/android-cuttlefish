@@ -38,7 +38,8 @@ bool USBCmdDataTransfer::OnRequest(const cvd::SharedFD& fd) {
   }
 
   if (req_.is_host_to_device && data_.size() > 0) {
-    if (fd->Write(data_.data(), data_.size()) != data_.size()) {
+    if (static_cast<size_t>(fd->Write(data_.data(), data_.size())) !=
+        data_.size()) {
       LOG(ERROR) << "Short write: " << fd->StrError();
       return false;
     }

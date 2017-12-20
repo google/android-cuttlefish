@@ -27,7 +27,7 @@ bool USBCmdAttach::OnRequest(const cvd::SharedFD& fd) {
   return true;
 }
 
-bool USBCmdAttach::OnResponse(bool is_success, const cvd::SharedFD& data) {
+bool USBCmdAttach::OnResponse(bool is_success, const cvd::SharedFD& /*data*/) {
   if (!is_success) return false;
   LOG(INFO) << "Attach successful.";
   return true;

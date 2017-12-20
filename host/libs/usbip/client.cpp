@@ -15,6 +15,8 @@
  */
 #include "host/libs/usbip/client.h"
 
+#include <arpa/inet.h>
+
 #include <glog/logging.h>
 #include <iostream>
 
@@ -23,6 +25,103 @@
 
 namespace vadb {
 namespace usbip {
+
+// NetToHost and HostToNet are used to reduce risk of copy/paste errors and to
+// provide uniform method of converting messages between different endian types.
+namespace {
+
+uint32_t NetToHost(uint32_t t) { return ntohl(t); }
+
+Command NetToHost(Command t) { return static_cast<Command>(ntohl(t)); }
+
+Direction NetToHost(Direction t) { return static_cast<Direction>(ntohl(t)); }
+
+uint32_t NetToHost(uint16_t t) { return ntohs(t); }
+
+CmdHeader NetToHost(const CmdHeader& t) {
+  CmdHeader rval = t;
+  rval.command = NetToHost(t.command);
+  rval.seq_num = NetToHost(t.seq_num);
+  rval.bus_num = NetToHost(t.bus_num);
+  rval.dev_num = NetToHost(t.dev_num);
+  rval.direction = NetToHost(t.direction);
+  rval.endpoint = NetToHost(t.endpoint);
+  return rval;
+}
+
+CmdReqSubmit NetToHost(const CmdReqSubmit& t) {
+  CmdReqSubmit rval = t;
+  rval.transfer_flags = NetToHost(t.transfer_flags);
+  rval.transfer_buffer_length = NetToHost(t.transfer_buffer_length);
+  rval.start_frame = NetToHost(t.start_frame);
+  rval.number_of_packets = NetToHost(t.number_of_packets);
+  rval.deadline_interval = NetToHost(t.deadline_interval);
+  return rval;
+}
+
+CmdReqUnlink NetToHost(const CmdReqUnlink& t) {
+  CmdReqUnlink rval = t;
+  rval.seq_num = NetToHost(t.seq_num);
+  return rval;
+}
+
+uint32_t HostToNet(uint32_t t) { return htonl(t); }
+
+Command HostToNet(const Command t) { return static_cast<Command>(htonl(t)); }
+
+Direction HostToNet(Direction t) { return static_cast<Direction>(htonl(t)); }
+
+uint16_t HostToNet(uint16_t t) { return htons(t); }
+
+CmdHeader HostToNet(const CmdHeader& t) {
+  CmdHeader rval = t;
+  rval.command = HostToNet(t.command);
+  rval.seq_num = HostToNet(t.seq_num);
+  rval.bus_num = HostToNet(t.bus_num);
+  rval.dev_num = HostToNet(t.dev_num);
+  rval.direction = HostToNet(t.direction);
+  rval.endpoint = HostToNet(t.endpoint);
+  return rval;
+}
+
+CmdRepSubmit HostToNet(const CmdRepSubmit& t) {
+  CmdRepSubmit rval = t;
+  rval.status = HostToNet(t.status);
+  rval.actual_length = HostToNet(t.actual_length);
+  rval.start_frame = HostToNet(t.start_frame);
+  rval.number_of_packets = HostToNet(t.number_of_packets);
+  rval.error_count = HostToNet(t.error_count);
+  return rval;
+}
+
+CmdRepUnlink HostToNet(const CmdRepUnlink& t) {
+  CmdRepUnlink rval = t;
+  rval.status = HostToNet(t.status);
+  return rval;
+}
+
+// Converts data to network order and sends it to the USB/IP client.
+// Returns true, if message was sent successfully.
+template <typename T>
+bool SendUSBIPMsg(const cvd::SharedFD& fd, const T& data) {
+  T net = HostToNet(data);
+  return fd->Send(&net, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
+}
+
+// Receive message from USB/IP client.
+// After message is received, it's updated to match host endian.
+// Returns true, if message was received successfully.
+template <typename T>
+bool RecvUSBIPMsg(const cvd::SharedFD& fd, T* data) {
+  T net;
+  bool res = fd->Recv(&net, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
+  if (res) {
+    *data = NetToHost(net);
+  }
+  return res;
+}
+
+}  // namespace
 
 void Client::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(fd_);
@@ -88,7 +187,7 @@ bool Client::HandleSubmitCmd(const CmdHeader& cmd) {
   if (device) {
     // Read data to be sent to device, if specified.
     if (is_host_to_device && payload_length) {
-      int32_t got = 0;
+      size_t got = 0;
       // Make sure we read everything.
       while (got < payload.size()) {
         auto read =
@@ -163,7 +262,8 @@ void Client::HandleAsyncDataReady(uint32_t seq_num, bool is_success,
   }
 
   if (!is_host_to_device && data.size() > 0) {
-    if (fd_->Send(data.data(), data.size(), MSG_NOSIGNAL) != data.size()) {
+    if (static_cast<size_t>(
+            fd_->Send(data.data(), data.size(), MSG_NOSIGNAL)) != data.size()) {
       LOG(ERROR) << "Failed to send response payload: " << fd_->StrError();
       return;
     }

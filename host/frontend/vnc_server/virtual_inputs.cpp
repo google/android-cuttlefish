@@ -58,7 +58,8 @@ VirtualInputs::~VirtualInputs() {
 }
 
 bool VirtualInputs::SendMonkeyComand(std::string cmd) {
-  return monkey_socket_->Send(cmd.c_str(), cmd.size(), 0) == cmd.size();
+  return static_cast<size_t>(
+             monkey_socket_->Send(cmd.c_str(), cmd.size(), 0)) == cmd.size();
   // TODO(jemoreira): If monkey is going to be used for a long time it may be
   // useful to check the response to this commands.
 }
