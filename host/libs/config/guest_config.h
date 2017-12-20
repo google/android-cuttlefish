@@ -135,20 +135,16 @@ class GuestConfig {
 
   // GetUSBSocketName returns name of the USB socket that will be used to
   // forward access to USB gadget. This is for V1 of the USB bus.
-  std::string GetUSBV1SocketName() const {
-    return usb_v1_socket_name_;
-  }
+  std::string GetUSBV1SocketName() const { return usb_v1_socket_name_; }
 
   GuestConfig& SetUSBV1SocketName(const std::string& source) {
     usb_v1_socket_name_ = source;
     return *this;
   }
 
-  std::string GetKernelLogSocketName() const {
-    return kernel_log_socket_name_;
-  }
+  std::string GetKernelLogSocketName() const { return kernel_log_socket_name_; }
 
-  GuestConfig& SetKernelLogSocketName( const std::string& source) {
+  GuestConfig& SetKernelLogSocketName(const std::string& source) {
     kernel_log_socket_name_ = source;
     return *this;
   }

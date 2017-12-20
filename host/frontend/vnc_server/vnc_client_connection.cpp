@@ -44,9 +44,8 @@ using cvd::vnc::VncClientConnection;
 
 DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
 
-#define DLOG(LEVEL)                                 \
+#define DLOG(LEVEL) \
   if (FLAGS_debug_client) LOG(LEVEL)
-
 
 namespace {
 class BigEndianChecker {
