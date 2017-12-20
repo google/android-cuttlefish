@@ -23,7 +23,7 @@
 #include <system/audio_policy.h>
 #include <hardware/audio_policy.h>
 
-#include "guest/commands/audio/policy/vsoc_audio_policy_hal.h"
+#include "guest/hals/audio/policy/vsoc_audio_policy_hal.h"
 
 namespace cvd {
 
