@@ -15,7 +15,6 @@
 //
 cc_binary {
     name: "wifirouter",
-    vendor: true,
     srcs: ["router.cc"],
     static_libs: [
         "libbase",
@@ -29,5 +28,6 @@ cc_binary {
         "cuttlefish_common_headers",
         "cuttlefish_glog",
     ],
+    defaults: ["cuttlefish_base"],
 }
 

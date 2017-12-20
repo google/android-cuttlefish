@@ -24,34 +24,6 @@
 // https://www.kernel.org/doc/Documentation/usb/usbip_protocol.txt
 namespace vadb {
 namespace usbip {
-namespace internal {
-// Rotate endianness of the data to match protocol.
-template <typename T>
-void HostToNet(T* data);
-template <typename T>
-void NetToHost(T* data);
-}  // namespace internal
-
-// Send message to USB/IP client.
-// Accept data by value and modify it to match net endian locally.
-// Returns true, if message was sent successfully.
-template <typename T>
-bool SendUSBIPMsg(const cvd::SharedFD& fd, T data) {
-  internal::HostToNet(&data);
-  return fd->Send(&data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
-}
-
-// Receive message from USB/IP client.
-// After message is received, it's updated to match host endian.
-// Returns true, if message was received successfully.
-template <typename T>
-bool RecvUSBIPMsg(const cvd::SharedFD& fd, T* data) {
-  bool res = fd->Recv(data, sizeof(T), MSG_NOSIGNAL) == sizeof(T);
-  if (res) {
-    internal::NetToHost(data);
-  }
-  return res;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // COMMANDS

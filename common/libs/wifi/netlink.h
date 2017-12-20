@@ -57,7 +57,9 @@ class Netlink {
   WRClient wrcl_;
 
   int mac80211_hwsim_family_ = 0;
+#if 0
   int router_family_ = 0;
+#endif
   int nl80211_family_ = 0;
 
   std::unique_ptr<std::thread> netlink_thread_;

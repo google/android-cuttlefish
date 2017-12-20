@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <libxml/tree.h>
 #include <memory>
 #include <string>
 

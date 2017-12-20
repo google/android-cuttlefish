@@ -18,7 +18,7 @@
 #include "host/libs/vadb/usb_cmd_device_list.h"
 
 namespace vadb {
-bool USBCmdDeviceList::OnRequest(const cvd::SharedFD& data) {
+bool USBCmdDeviceList::OnRequest(const cvd::SharedFD& /*data*/) {
   LOG(INFO) << "Requesting device list from Cuttlefish...";
   // No action required.
   return true;
@@ -46,8 +46,9 @@ bool USBCmdDeviceList::OnResponse(bool is_success, const cvd::SharedFD& fd) {
     }
 
     ifaces.resize(dev.num_interfaces);
-    if (fd->Read(ifaces.data(),
-                 ifaces.size() * sizeof(usb_forward::InterfaceInfo)) !=
+    if (static_cast<size_t>(
+            fd->Read(ifaces.data(),
+                     ifaces.size() * sizeof(usb_forward::InterfaceInfo))) !=
         ifaces.size() * sizeof(usb_forward::InterfaceInfo)) {
       LOG(ERROR) << "Short read: " << fd->StrError();
       return false;
