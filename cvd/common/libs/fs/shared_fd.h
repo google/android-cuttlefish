@@ -411,7 +411,7 @@ class FileInstance {
     cmsg->cmsg_level = SOL_SOCKET;
     cmsg->cmsg_type = SCM_RIGHTS;
     int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (size_t i = 0; i < SZ; ++i) {
+    for (int i = 0; i < SZ; ++i) {
       fd_array[i] = fds[i]->fd_;
     }
     return SendMsg(&msg, flags);
