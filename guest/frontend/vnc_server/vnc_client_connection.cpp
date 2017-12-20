@@ -15,9 +15,9 @@
  */
 
 #include "vnc_client_connection.h"
-#include "vnc_utils.h"
-#include "tcp_socket.h"
 #include "keysyms.h"
+#include "tcp_socket.h"
+#include "vnc_utils.h"
 
 #include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
 
@@ -43,9 +43,9 @@
 #include <cutils/sockets.h>
 
 using cvd::vnc::Message;
-using cvd::vnc::VncClientConnection;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
+using cvd::vnc::VncClientConnection;
 
 namespace {
 class BigEndianChecker {
@@ -54,9 +54,7 @@ class BigEndianChecker {
     uint32_t u = 1;
     is_big_endian_ = *reinterpret_cast<const char*>(&u) == 0;
   }
-  bool operator()() const {
-    return is_big_endian_;
-  }
+  bool operator()() const { return is_big_endian_; }
 
  private:
   bool is_big_endian_{};
@@ -117,9 +115,7 @@ Message CreateMessage(Ts... vals) {
   return m;
 }
 
-std::string HostName() {
-  return "Cuttlefish";
-}
+std::string HostName() { return "Cuttlefish"; }
 
 std::uint16_t uint16_tAt(const void* p) {
   std::uint16_t u{};
@@ -156,7 +152,7 @@ std::uint32_t GreenVal(std::uint32_t pixel) {
   return (pixel >> VSoCFrameBuffer::kGreenShift) &
          ((0x1 << VSoCFrameBuffer::kGreenBits) - 1);
 }
-}
+}  // namespace
 namespace cvd {
 namespace vnc {
 bool operator==(const VncClientConnection::FrameBufferUpdateRequest& lhs,
@@ -170,14 +166,12 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
   return !(lhs == rhs);
 }
 }  // namespace vnc
-}  // namespace cvd  // namespace
+}  // namespace cvd
 
 VncClientConnection::VncClientConnection(ClientSocket client,
                                          VirtualInputs* virtual_inputs,
                                          BlackBoard* bb, bool aggressive)
-    : client_{std::move(client)},
-      virtual_inputs_{virtual_inputs},
-      bb_{bb} {
+    : client_{std::move(client)}, virtual_inputs_{virtual_inputs}, bb_{bb} {
   frame_buffer_request_handler_tid_ = std::thread(
       &VncClientConnection::FrameBufferUpdateRequestHandler, this, aggressive);
 }
