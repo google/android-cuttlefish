@@ -232,16 +232,14 @@ class FileInstance {
 
   int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
     errno = 0;
-    int rval = TEMP_FAILURE_RETRY(
-        epoll_ctl(fd_, op, new_fd->fd_, event));
+    int rval = TEMP_FAILURE_RETRY(epoll_ctl(fd_, op, new_fd->fd_, event));
     errno_ = errno;
     return rval;
   }
 
   int EpollWait(struct epoll_event* events, int maxevents, int timeout) {
     errno = 0;
-    int rval = TEMP_FAILURE_RETRY(
-        epoll_wait(fd_, events, maxevents, timeout));
+    int rval = TEMP_FAILURE_RETRY(epoll_wait(fd_, events, maxevents, timeout));
     errno_ = errno;
     return rval;
   }
@@ -461,7 +459,7 @@ class FileInstance {
   }
 
   int TimerSet(int flags, const struct itimerspec* new_value,
-                   struct itimerspec* old_value) {
+               struct itimerspec* old_value) {
     errno = 0;
     int rval = timerfd_settime(fd_, flags, new_value, old_value);
     errno_ = errno;
