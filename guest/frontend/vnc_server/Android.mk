@@ -51,10 +51,7 @@ LOCAL_CFLAGS := \
 	$(VSOC_VERSION_CFLAGS) \
 	-std=gnu++11 \
 	-Wall -Werror \
-	-Wno-error-unused -Wno-error=unused-parameter \
 	-Wno-attributes
-
-LOCAL_CFLAGS += -Wno-error=implicit-exception-spec-mismatch
 
 LOCAL_SHARED_LIBRARIES := \
     $(LIBJPEG_TURBO_NAME) \

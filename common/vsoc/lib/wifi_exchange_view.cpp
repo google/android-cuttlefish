@@ -23,10 +23,10 @@ namespace wifi {
 bool WifiExchangeView::Send(const void* buffer, size_t length) {
 #ifdef CUTTLEFISH_HOST
   return data()->guest_ingress.Write(this, static_cast<const char*>(buffer),
-                                     length) == length;
+                                     length) == static_cast<int>(length);
 #else
   return data()->guest_egress.Write(this, static_cast<const char*>(buffer),
-                                    length) == length;
+                                    length) == static_cast<int>(length);
 #endif
 }
 

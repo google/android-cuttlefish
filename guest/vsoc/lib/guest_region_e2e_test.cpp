@@ -78,7 +78,7 @@ void SetGuestStrings(View* in) {
 template <typename View>
 void CheckPeerStrings(View* in) {
   size_t num_data = in->string_size();
-  EXPECT_LE(2, num_data);
+  EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
     EXPECT_STREQ(View::Layout::host_pattern, in->host_string(i));
   }
