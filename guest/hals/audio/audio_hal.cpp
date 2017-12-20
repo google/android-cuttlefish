@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "guest/commands/audio/vsoc_audio.h"
+#include "guest/hals/audio/vsoc_audio.h"
 
-#include "guest/commands/audio/audio_hal.h"
+#include "guest/hals/audio/audio_hal.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
