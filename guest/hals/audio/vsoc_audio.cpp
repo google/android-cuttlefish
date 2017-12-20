@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "guest/commands/audio/audio_hal.h"
+#include "guest/hals/audio/audio_hal.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,9 +28,9 @@ extern "C" {
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/threads/thunkers.h"
-#include "guest/commands/audio/vsoc_audio.h"
-#include "guest/commands/audio/vsoc_audio_input_stream.h"
-#include "guest/commands/audio/vsoc_audio_output_stream.h"
+#include "guest/hals/audio/vsoc_audio.h"
+#include "guest/hals/audio/vsoc_audio_input_stream.h"
+#include "guest/hals/audio/vsoc_audio_output_stream.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 #include "guest/libs/remoter/remoter_framework_pkt.h"
 
