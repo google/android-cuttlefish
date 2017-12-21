@@ -2,6 +2,12 @@ LOCAL_PATH := $(call my-dir)
 
 cvd_host_package_tar := $(HOST_OUT)/cvd-host_package.tar.gz
 
+.PHONY: hosttar
+hosttar: $(cvd_host_package_tar)
+
+.PHONY: cf_local_image
+cf_local_image: bootimage cacheimage hosttar systemimage userdataimage vendorimage
+
 ifeq ($(HOST_OS),linux)
 CVD_TAR_FORMAT := --format=gnu
 endif
