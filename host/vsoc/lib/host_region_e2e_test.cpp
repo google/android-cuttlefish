@@ -40,7 +40,7 @@
 template <typename View>
 void SetHostStrings(View* in) {
   size_t num_data = in->string_size();
-  EXPECT_LE(2, num_data);
+  EXPECT_LE(static_cast<size_t>(2), num_data);
   for (size_t i = 0; i < num_data; ++i) {
     EXPECT_TRUE(!in->host_string(i)[0] ||
                 !strcmp(in->host_string(i), View::Layout::host_pattern));
@@ -52,7 +52,7 @@ void SetHostStrings(View* in) {
 template <typename View>
 void CheckPeerStrings(View* in) {
   size_t num_data = in->string_size();
-  EXPECT_LE(2, num_data);
+  EXPECT_LE(static_cast<size_t>(2), num_data);
   for (size_t i = 0; i < num_data; ++i) {
     EXPECT_STREQ(View::Layout::guest_pattern, in->guest_string(i));
   }

@@ -60,7 +60,7 @@ void PacketSwitch::Start() {
 #ifdef CUTTLEFISH_HOST
       LOG(INFO) << "Awaiting packet.";
 #endif
-        auto len = shm_wifi_.Recv(msg.get(), maxlen);
+      shm_wifi_.Recv(msg.get(), maxlen);
 #ifdef CUTTLEFISH_HOST
       LOG(INFO) << "Received packet.";
 #endif

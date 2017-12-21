@@ -69,8 +69,8 @@ cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
   Message rotated(raw.size(), 0xAA);
   for (std::uint16_t i = 0; i < w; ++i) {
     for (std::uint16_t j = 0; j < h; ++j) {
-      auto to = (i * h + j) * BytesPerPixel();
-      auto from = (w - (i + 1) + w * j) * BytesPerPixel();
+      size_t to = (i * h + j) * BytesPerPixel();
+      size_t from = (w - (i + 1) + w * j) * BytesPerPixel();
       CHECK(from < raw.size());
       CHECK(to < rotated.size());
       std::memcpy(&rotated[to], &raw[from], BytesPerPixel());
