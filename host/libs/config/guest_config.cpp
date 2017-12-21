@@ -18,8 +18,8 @@
 #include <iomanip>
 #include <sstream>
 
-#include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 #include "host/libs/config/host_config.h"
 
 std::string g_default_libvirt_domain{vsoc::GetPerInstanceDefault("cvd-")};
