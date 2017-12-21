@@ -47,20 +47,20 @@ namespace cvd {
 // Copied out of mac80211_hwsim.h header.
 constexpr int HWSIM_CMD_REGISTER = 1;
 constexpr int HWSIM_CMD_FRAME = 2;
-constexpr int HWSIM_CMD_TX_INFO_FRAME = 3;
+constexpr int HWSIM_CMD_TX_INFO_FRAME __unused = 3;
 
-constexpr int HWSIM_TX_CTL_REQ_TX_STATUS = 1;
-constexpr int HWSIM_TX_CTL_NO_ACK = 2;
-constexpr int HWSIM_TX_STAT_ACK = 4;
+constexpr int HWSIM_TX_CTL_REQ_TX_STATUS __unused = 1;
+constexpr int HWSIM_TX_CTL_NO_ACK __unused = 2;
+constexpr int HWSIM_TX_STAT_ACK __unused = 4;
 
 constexpr int HWSIM_ATTR_ADDR_RECEIVER = 1;
 constexpr int HWSIM_ATTR_ADDR_TRANSMITTER = 2;
 constexpr int HWSIM_ATTR_FRAME = 3;
-constexpr int HWSIM_ATTR_FLAGS = 4;
+constexpr int HWSIM_ATTR_FLAGS __unused = 4;
 constexpr int HWSIM_ATTR_RX_RATE = 5;
 constexpr int HWSIM_ATTR_SIGNAL = 6;
-constexpr int HWSIM_ATTR_TX_INFO = 7;
-constexpr int HWSIM_ATTR_COOKIE = 8;
+constexpr int HWSIM_ATTR_TX_INFO __unused = 7;
+constexpr int HWSIM_ATTR_COOKIE __unused = 8;
 constexpr int HWSIM_ATTR_MAX = 19;
 
 // Name of the WIFI SIM Netlink Family.

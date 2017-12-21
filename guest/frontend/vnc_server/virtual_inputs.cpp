@@ -221,7 +221,7 @@ namespace {
 
 VirtualInputs::VirtualInputs() {
   bool open = input_events_region_view_.Open();
-  LOG_FATAL_IF(!open, "Failed to open Input events region view");
+  LOG_ALWAYS_FATAL_IF(!open, "Failed to open Input events region view");
   AddKeyMappings(&keymapping_);
 }
 
