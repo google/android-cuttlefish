@@ -116,20 +116,18 @@ layout::Sides vsoc::layout::WaitingLockBase::UnlockCommon(uint32_t tid) {
 }
 
 void layout::GuestAndHostLock::Lock(RegionView* region) {
-  uint32_t* uaddr = reinterpret_cast<uint32_t*>(&lock_uint32_);
   uint32_t expected;
   uint32_t tid = gettid();
   while (1) {
     if (TryLock(tid, &expected)) {
       return;
     }
-    region->WaitForSignal(uaddr, expected);
+    region->WaitForSignal(&lock_uint32_, expected);
   }
 }
 
 void layout::GuestAndHostLock::Unlock(RegionView* region) {
-  uint32_t* uaddr = reinterpret_cast<uint32_t*>(&lock_uint32_);
-  region->SendSignal(UnlockCommon(gettid()), uaddr);
+  region->SendSignal(UnlockCommon(gettid()), &lock_uint32_);
 }
 
 }  // namespace vsoc

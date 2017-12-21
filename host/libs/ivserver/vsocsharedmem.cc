@@ -289,7 +289,7 @@ std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
     region->values.region_begin_offset = shm_file.Allocate(
         region->values.region_end_offset, device_name.c_str(), &failed);
     shm_file.PadTo(RegionAllocator::PageSize(), &failed);
-    region->values.region_end_offset += region->values.region_begin_offset;
+    region->values.region_end_offset = shm_file.GetOffset();
     if (sizeof(region->values.device_name) - device_name.size() < 1) {
       LOG(ERROR) << device_name << " is too long for a region name";
       failed = true;

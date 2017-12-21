@@ -101,7 +101,7 @@ class RegionView : public RegionSignalingInterface {
   //   peer, usually a FUTEX_WAKE call, but can be customized for other
   //   purposes.
   void ProcessSignalsFromPeer(
-      std::function<void(uint32_t*)> signal_handler);
+      std::function<void(std::atomic<uint32_t>*)> signal_handler);
 
   // Post a signal to the guest, the host, or both.
   // See futex(2) FUTEX_WAKE for details.
@@ -109,7 +109,8 @@ class RegionView : public RegionSignalingInterface {
   //   sides_to_signal: controls where the signal is sent
   //
   //   signal_addr: the memory location to signal. Must be within the region.
-  void SendSignal(layout::Sides sides_to_signal, uint32_t* signal_addr);
+  void SendSignal(layout::Sides sides_to_signal,
+                  std::atomic<uint32_t>* signal_addr);
 
   // Post a signal to our peer for a specific memeory location.
   // See futex(2) FUTEX_WAKE for details.
@@ -118,7 +119,7 @@ class RegionView : public RegionSignalingInterface {
   //
   //   round_trip: true if there may be waiters on both sides of the shared
   //               memory.
-  void SendSignalToPeer(uint32_t* signal_addr, bool round_trip);
+  void SendSignalToPeer(std::atomic<uint32_t>* signal_addr, bool round_trip);
 
   // Waits until an interrupt appears on this region, then clears the
   // interrupted flag and returns.
@@ -135,14 +136,16 @@ class RegionView : public RegionSignalingInterface {
   //   signal_addr: the memory that will be signaled. Must be within the region.
   //
   //   last_observed_value: the value that motivated the calling code to wait.
-  void WaitForSignal(uint32_t* signal_addr, uint32_t last_observed_value);
+  void WaitForSignal(std::atomic<uint32_t>* signal_addr,
+                     uint32_t last_observed_value);
 
   // Starts the signal table scanner. This must be invoked by subclasses, which
   // must store the returned unique_ptr as a class member.
   std::unique_ptr<RegionWorker> StartWorker();
 
   // Returns a pointer to the start of region data that is cast to the given
-  // type.  Initializers that run in the launcher use this to get a typed view of the region. Most other cases should be handled via TypedRegionView.
+  // type.  Initializers that run in the launcher use this to get a typed view
+  // of the region. Most other cases should be handled via TypedRegionView.
   template <typename LayoutType>
   LayoutType* GetLayoutPointer() {
     return this->region_offset_to_pointer<LayoutType>(

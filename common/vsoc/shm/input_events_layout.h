@@ -16,35 +16,28 @@
  */
 
 #include "common/vsoc/shm/base.h"
-#include "common/vsoc/shm/lock.h"
+#include "common/vsoc/shm/circqueue.h"
 #include "common/vsoc/shm/version.h"
 
-// Memory layout for the hwcomposer and hwcomposer broadcast regions
+// Memory layout for region carrying input events from host to guest
 
 namespace vsoc {
 namespace layout {
 
-namespace framebuffer {
+namespace input_events {
 
-struct FBBroadcastLayout : public RegionLayout {
+struct InputEventsLayout : public RegionLayout {
   static const char* region_name;
-  // Display properties
-  uint32_t x_res;
-  uint32_t y_res;
-  uint16_t dpi;
-  uint16_t refresh_rate_hz;
-
-  // The frame sequential number
-  std::atomic<uint32_t> seq_num;
-  // The offset in the gralloc buffer region of the current frame buffer.
-  uint32_t frame_offset;
-  // Protects access to the frame offset and sequential number.
-  // See the region implementation for more details.
-  SpinLock bcast_lock;
+  // Event queues for the different input devices supported. Both the power
+  // button and the keyboard need only generate 2 input events for every
+  // 'hardware' event, so 16 bytes are enough, however when the touchscreen has
+  // multitouch enabled the number of generated events is significantly higher.
+  CircularPacketQueue<10, 256> touch_screen_queue;
+  CircularPacketQueue<10, 16> keyboard_queue;
+  CircularPacketQueue<10, 16> power_button_queue;
 };
-ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, framebuffer);
+ASSERT_SHM_COMPATIBLE(InputEventsLayout, input_events);
 
-}  // namespace framebuffer
-
+}  // namespace input_events
 }  // namespace layout
 }  // namespace vsoc

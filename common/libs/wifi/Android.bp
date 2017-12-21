@@ -1,10 +1,11 @@
-cc_library_shared {
+cc_library_static {
     name: "libcuttlefish_wifi",
 
     srcs: [
+        "cmd.cc",
         "netlink.cc",
         "nl_client.cc",
-        "cmd.cc",
+        "packet_switch.cc",
         "virtual_wifi.cc",
         "wr_client.cc",
     ],
@@ -16,5 +17,13 @@ cc_library_shared {
     header_libs: [
         "cuttlefish_glog",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+    target: {
+        linux_glibc: {
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libgflags",
+            ],
+        }
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
 }

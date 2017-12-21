@@ -27,7 +27,7 @@ namespace vsoc {
  */
 class RegionSignalingInterface {
  public:
-  virtual ~RegionSignalingInterface() {};
+  virtual ~RegionSignalingInterface(){};
 
   // Post a signal to the guest, the host, or both.
   // See futex(2) FUTEX_WAKE for details.
@@ -35,7 +35,8 @@ class RegionSignalingInterface {
   //   sides_to_signal: controls where the signal is sent
   //
   //   signal_addr: the memory location to signal. Must be within the region.
-  virtual void SendSignal(layout::Sides sides_to_signal, uint32_t* signal_addr) = 0;
+  virtual void SendSignal(layout::Sides sides_to_signal,
+                          std::atomic<uint32_t>* signal_addr) = 0;
 
   // This implements the following:
   // if (*signal_addr == last_observed_value)
@@ -48,7 +49,8 @@ class RegionSignalingInterface {
   //   signal_addr: the memory that will be signaled. Must be within the region.
   //
   //   last_observed_value: the value that motivated the calling code to wait.
-  virtual void WaitForSignal(uint32_t* signal_addr, uint32_t last_observed_value) = 0;
+  virtual void WaitForSignal(std::atomic<uint32_t>* signal_addr,
+                             uint32_t last_observed_value) = 0;
 };
 
 }  // namespace vsoc

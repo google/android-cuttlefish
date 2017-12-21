@@ -15,28 +15,23 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+#include <memory>
 
-#include <map>
-#include <mutex>
+#include "virtual_keyboard.h"
+#include "virtual_power_button.h"
+#include "virtual_touchscreen.h"
 
-#include "common/vsoc/lib/input_events_region_view.h"
+namespace vsoc_input_service {
 
-namespace cvd {
-namespace vnc {
-
-class VirtualInputs {
+class VSoCInputService {
  public:
-  VirtualInputs();
-
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
+  bool SetUpDevices();
+  bool ProcessEvents();
 
  private:
-  vsoc::input_events::InputEventsRegionView input_events_region_view_;
-  std::map<uint32_t, uint32_t> keymapping_;
+  std::shared_ptr<VirtualPowerButton> virtual_power_button_;
+  std::shared_ptr<VirtualKeyboard> virtual_keyboard_;
+  std::shared_ptr<VirtualTouchScreen> virtual_touchscreen_;
 };
 
-}  // namespace vnc
-}  // namespace cvd
+}  // namespace vsoc_input_service

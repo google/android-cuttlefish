@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -15,28 +14,18 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+#include "log/log.h"
 
-#include <map>
-#include <mutex>
+#include "vsoc_input_service.h"
 
-#include "common/vsoc/lib/input_events_region_view.h"
+int main(int /* arg */, char* /* argv */[]) {
+  vsoc_input_service::VSoCInputService service;
+  if (!service.SetUpDevices()) {
+    return -1;
+  }
 
-namespace cvd {
-namespace vnc {
-
-class VirtualInputs {
- public:
-  VirtualInputs();
-
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
-
- private:
-  vsoc::input_events::InputEventsRegionView input_events_region_view_;
-  std::map<uint32_t, uint32_t> keymapping_;
-};
-
-}  // namespace vnc
-}  // namespace cvd
+  if (!service.ProcessEvents()) {
+    return -2;
+  }
+  return 0;
+}

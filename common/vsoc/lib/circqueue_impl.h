@@ -38,7 +38,7 @@ void CircularQueueBase<SizeLog2>::CopyInRange(const char* buffer_in,
                                               const Range& t) {
   size_t bytes = t.end_idx - t.start_idx;
   uint32_t index = t.start_idx & (BufferSize - 1);
-  if (index + bytes < BufferSize) {
+  if (index + bytes <= BufferSize) {
     memcpy(buffer_ + index, buffer_in, bytes);
   } else {
     size_t part1_size = BufferSize - index;
@@ -86,10 +86,13 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(
     return -ENOSPC;
   }
   while (true) {
-    t->start_idx = w_pub_;
+    uint32_t o_w_pub = w_pub_;
     uint32_t o_r_release = r_released_;
-    size_t available = BufferSize - t->start_idx + o_r_release;
+    uint32_t bytes_in_use = o_w_pub - o_r_release;
+    size_t available = BufferSize - bytes_in_use;
     if (available >= bytes) {
+      t->start_idx = o_w_pub;
+      t->end_idx = o_w_pub + bytes;
       break;
     }
     if (non_blocking) {
@@ -101,7 +104,6 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(
     r->WaitForSignal(&r_released_, o_r_release);
     lock_.Lock();
   }
-  t->end_idx = t->start_idx + bytes;
   return t->end_idx - t->start_idx;
 }
 
