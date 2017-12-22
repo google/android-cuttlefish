@@ -107,15 +107,17 @@ static SIM_Status gSimStatus = SIM_NOT_READY;
 // SetUpNetworkInterface configures IP and Broadcast addresses on a RIL
 // controlled network interface.
 // This call returns true, if operation was successful.
-bool SetUpNetworkInterface(const char* ipaddr, const char* bcaddr) {
-  std::unique_ptr<avd::NetlinkClient> nl(avd::NetlinkClient::New());
-  std::unique_ptr<avd::NetworkInterfaceManager> nm(
-      avd::NetworkInterfaceManager::New(nl.get()));
-  std::unique_ptr<avd::NetworkInterface> ni(nm->Open("rmnet0"));
+bool SetUpNetworkInterface(const char* ipaddr, int prefixlen, const char* bcaddr) {
+  auto factory = cvd::NetlinkClientFactory::Default();
+  std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
+  std::unique_ptr<cvd::NetworkInterfaceManager> nm(
+      cvd::NetworkInterfaceManager::New(factory));
+  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0"));
 
   if (ni) {
     ni->SetAddress(ipaddr);
     ni->SetBroadcastAddress(bcaddr);
+    ni->SetPrefixLength(prefixlen);
     ni->SetOperational(true);
     bool res = nm->ApplyChanges(*ni);
     if (!res) ALOGE("Could not configure rmnet0");
@@ -182,9 +184,9 @@ static int request_or_send_data_calllist(RIL_Token* t) {
     }
 
     responses[index].ifname = (char*)"rmnet0";
-    responses[index].addresses = (char*)"192.168.99.10/24";
+    responses[index].addresses = (char*)"192.168.99.2/30";
     responses[index].dnses = (char*)"8.8.8.8";
-    responses[index].gateways = (char*)"192.168.1.1";
+    responses[index].gateways = (char*)"192.168.99.1";
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
@@ -313,7 +315,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (gDataCalls.empty()) {
-    SetUpNetworkInterface("192.168.99.10", "192.168.99.255");
+    SetUpNetworkInterface("192.168.99.2", 30, "192.168.99.3");
   }
 
   gDataCalls[gNextDataCallId] = call;
