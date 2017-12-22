@@ -8,10 +8,6 @@ on early-init
     mkdir /var/run/system 0755 system root
     mkdir /dev/gce 0750
     chown system system /dev/gce
-    write /dev/userspace_framebuffer 0
-    chown system system /dev/userspace_framebuffer
-    chmod 0660 /dev/userspace_framebuffer
-    restorecon /dev/userspace_framebuffer
     write /dev/framebuffer_control 0
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
@@ -34,6 +30,9 @@ on init
     chown audioserver root /dev/audio_data
     chmod 0660 /dev/audio_data
     restorecon /dev/audio_data
+    chown system root /dev/framebuffer
+    chmod 0660 /dev/framebuffer
+    restorecon /dev/framebuffer
 
 
 on fs
@@ -132,4 +131,3 @@ service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     disabled
     oneshot
     keycodes 30 48
-
