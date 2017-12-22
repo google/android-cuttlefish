@@ -57,8 +57,7 @@ class NetlinkRequest {
   void AddIfInfo(int32_t if_index, bool is_operational);
 
   // Add an address info to a specific interface.
-  // This method assumes the prefix length for address info is 24.
-  void AddAddrInfo(int32_t if_index);
+  void AddAddrInfo(int32_t if_index, int prefix_len = 24);
 
   // Creates new list.
   // List mimmic recursive structures in a flat, contiuous representation.
