@@ -5,13 +5,10 @@ init_daemon_domain(vnc_server)
 
 # Access to netd and network over TCP/UDP sockets
 net_domain(vnc_server)
-allow vnc_server self:capability { net_raw dac_override };
+allow vnc_server self:capability net_raw;
 
 # Read GCE initial metadata file
 allow vnc_server initial_metadata_file:file r_file_perms;
-
-# I/O with /dev/uinput
-allow vnc_server uhid_device:chr_file rw_file_perms;
 
 # Framebuffer I/O
 allow vnc_server fb_ctl_file:file rw_file_perms;

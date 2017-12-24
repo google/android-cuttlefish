@@ -62,6 +62,7 @@ PRODUCT_PACKAGES += \
     wifirouter \
     wificlient \
     wpa_supplicant.vsoc.conf \
+    vsoc_input_service
 
 #
 # Packages for AOSP-available stuff we use from the framework
