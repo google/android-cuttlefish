@@ -38,6 +38,7 @@ class CircularQueueBase {
   CircularQueueBase() = delete;
   CircularQueueBase(const CircularQueueBase&) = delete;
   CircularQueueBase& operator=(const CircularQueueBase&) = delete;
+
  protected:
   /**
    * Specifies a part of the queue. Note, the given indexes must be masked
@@ -79,18 +80,16 @@ class CircularQueueBase {
    * bytes > the queue size, -EWOULDBLOCK indicates that the call would block
    * waiting for space but was requested non bloking.
    */
-  intptr_t WriteReserveLocked(RegionSignalingInterface* r,
-                              size_t bytes,
-                              Range* t,
-                              bool non_blocking);
+  intptr_t WriteReserveLocked(RegionSignalingInterface* r, size_t bytes,
+                              Range* t, bool non_blocking);
 
   // Note: Both of these fields may hold values larger than the buffer size,
   // they should be interpreted modulo the buffer size. This fact along with the
   // buffer size being a power of two greatly simplyfies the index calculations.
   // Advances when a reader has finished with buffer space
-  uint32_t r_released_;
+  std::atomic<uint32_t> r_released_;
   // Advances when buffer space is filled and ready for a reader
-  uint32_t w_pub_;
+  std::atomic<uint32_t> w_pub_;
   // Spinlock that protects the region. 0 means unlocked
   SpinLock lock_;
   // The actual memory in the buffer
@@ -110,7 +109,8 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
   /**
    * Read at most max_size bytes from the qeueue, placing them in buffer_out
    */
-  intptr_t Read(RegionSignalingInterface* r, char* buffer_out, std::size_t max_size);
+  intptr_t Read(RegionSignalingInterface* r, char* buffer_out,
+                std::size_t max_size);
   /**
    * Write all of the given bytes into the queue. If non_blocking isn't set the
    * call may block until there is enough available space in the queue. On
@@ -119,10 +119,8 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
    * write. -EWOULDBLOCK: If non_blocking is true and there is not enough free
    * space.
    */
-  intptr_t Write(RegionSignalingInterface* r,
-                 const char* buffer_in,
-                 std::size_t bytes,
-                 bool non_blocking = false);
+  intptr_t Write(RegionSignalingInterface* r, const char* buffer_in,
+                 std::size_t bytes, bool non_blocking = false);
 
  protected:
   using Range = typename CircularQueueBase<SizeLog2>::Range;
@@ -143,19 +141,18 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    * If max_size indicates that buffer_out cannot hold the entire packet
    * this function will return -ENOSPC.
    */
-  intptr_t Read(RegionSignalingInterface* r, char* buffer_out, std::size_t max_size);
+  intptr_t Read(RegionSignalingInterface* r, char* buffer_out,
+                std::size_t max_size);
 
   /**
    * Writes [buffer_in, buffer_in + bytes) to the queue.
    * If the number of bytes to be written exceeds the size of the queue
    * -ENOSPC will be returned.
-   * If non_blocking is true and there is not enogh free space on the queue to
+   * If non_blocking is true and there is not enough free space on the queue to
    * write all the data -EWOULDBLOCK will be returned.
    */
-  intptr_t Write(RegionSignalingInterface* r,
-                 const char* buffer_in,
-                 uint32_t bytes,
-                 bool non_blocking = false);
+  intptr_t Write(RegionSignalingInterface* r, const char* buffer_in,
+                 uint32_t bytes, bool non_blocking = false);
 
  protected:
   static_assert(CircularQueueBase<SizeLog2>::BufferSize >= MaxPacketSize,

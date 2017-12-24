@@ -27,11 +27,11 @@ class WifiExchangeView
  public:
   // Send netlink packet to peer.
   // returns true, if operation was successful.
-  bool Send(const void* buffer, size_t length);
+  intptr_t Send(const void* buffer, intptr_t length);
 
   // Receive netlink packet from peer.
   // Returns number of bytes read, or negative value, if failed.
-  intptr_t Recv(void* buffer, size_t max_length);
+  intptr_t Recv(void* buffer, intptr_t max_length);
 
   // Set guest MAC address.
   void SetGuestMACAddress(const uint8_t* mac_address);

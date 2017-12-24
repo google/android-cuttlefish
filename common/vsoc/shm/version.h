@@ -103,6 +103,17 @@ static const std::size_t GrallocManagerLayout_size = 80;
 static const std::size_t GrallocBufferLayout_size = 1;
 }  // namespace gralloc
 
+// Versioning information for input_events_layout.h
+// Changes to these structures will affect only the input_events region
+namespace input_events {
+namespace {
+const uint32_t version = 0;
+}
+// Three circular queues, each with a 1024 bytes buffer, a 32 bits spinlock and
+// two 32 bits inetgers
+static const std::size_t InputEventsLayout_size = 3 * (1024 + 3 * 4);
+}  // namespace input_events
+
 // Versioning information for fb_bcast_layout.h
 // Changes to these structures will affect only the framebuffer broadcast region
 namespace framebuffer {

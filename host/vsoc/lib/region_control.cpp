@@ -50,10 +50,11 @@ class HostRegionControl : public vsoc::RegionControl {
         outgoing_interrupt_fd_{outgoing_interrupt_fd},
         shared_memory_fd_{shared_memory_fd} {}
 
-  int CreateFdScopedPermission(const char* managed_region_name,
-                               vsoc_reg_off_t owner_offset, uint32_t owned_val,
-                               vsoc_reg_off_t begin_offset,
-                               vsoc_reg_off_t end_offset) override {
+  int CreateFdScopedPermission(const char* /*managed_region_name*/,
+                               vsoc_reg_off_t /*owner_offset*/,
+                               uint32_t /*owned_val*/,
+                               vsoc_reg_off_t /*begin_offset*/,
+                               vsoc_reg_off_t /*end_offset*/) override {
     return -1;
   }
 

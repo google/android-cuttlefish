@@ -26,11 +26,11 @@
 #include "host/libs/ivserver/hald_client.h"
 #include "host/libs/ivserver/vsocsharedmem_mock.h"
 
+using ::testing::_;
 using ::testing::DoAll;
 using ::testing::Return;
 using ::testing::ReturnRef;
 using ::testing::SetArgPointee;
-using ::testing::_;
 
 namespace ivserver {
 namespace test {
@@ -111,8 +111,8 @@ TEST_F(HaldClientTest, HandshakeTerminatedByInvalidRegionSize) {
 
     int32_t proto_version;
     EXPECT_EQ(sizeof(proto_version),
-              test_socket_->Recv(&proto_version, sizeof(proto_version),
-                                 MSG_NOSIGNAL));
+              static_cast<size_t>(test_socket_->Recv(
+                  &proto_version, sizeof(proto_version), MSG_NOSIGNAL)));
 
     test_socket_->Send(&size, sizeof(size), MSG_NOSIGNAL);
     thread.join();
@@ -148,14 +148,15 @@ TEST_F(HaldClientTest, FullSaneHandshake) {
   });
 
   int32_t proto_version;
-  EXPECT_EQ(
-      sizeof(proto_version),
-      test_socket_->Recv(&proto_version, sizeof(proto_version), MSG_NOSIGNAL));
+  EXPECT_EQ(sizeof(proto_version),
+            static_cast<size_t>(test_socket_->Recv(
+                &proto_version, sizeof(proto_version), MSG_NOSIGNAL)));
 
   uint16_t size = test_location.size();
-  EXPECT_EQ(sizeof(size),
-            test_socket_->Send(&size, sizeof(size), MSG_NOSIGNAL));
-  EXPECT_EQ(size, test_socket_->Send(test_location.data(), size, MSG_NOSIGNAL));
+  EXPECT_EQ(sizeof(size), static_cast<size_t>(test_socket_->Send(
+                              &size, sizeof(size), MSG_NOSIGNAL)));
+  EXPECT_EQ(size, static_cast<size_t>(test_socket_->Send(test_location.data(),
+                                                         size, MSG_NOSIGNAL)));
 
   // TODO(ender): delete this once no longer necessary. Currently, absence of
   // payload makes RecvMsgAndFDs hang forever.

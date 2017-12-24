@@ -19,6 +19,13 @@ namespace cvd {
 
 Cmd::Cmd() : msg_(nlmsg_alloc()) {}
 
+Cmd::Cmd(nlmsghdr* h) : msg_(nlmsg_convert(h)) {}
+
+Cmd::Cmd(nl_msg* h) {
+  nlmsg_get(h);
+  msg_ = h;
+}
+
 Cmd::~Cmd() {
   for (auto& msg : responses_) {
     nlmsg_free(msg);
@@ -55,9 +62,13 @@ bool Cmd::OnResponse(nl_msg* msg) {
 }
 
 const std::vector<nl_msg*> Cmd::Responses() const {
+  WaitComplete();
+  return responses_;
+}
+
+void Cmd::WaitComplete() const {
   std::unique_lock<std::mutex> lock(ready_mutex_);
   ready_signal_.wait(lock, [this]() { return responses_.size() > 0; });
-  return responses_;
 }
 
 }  // namespace cvd

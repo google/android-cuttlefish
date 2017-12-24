@@ -42,7 +42,7 @@ static inline void disable_tombstones() {
 }
 
 template <typename View>
-void DeathTestView(View *r) {
+void DeathTestView(View* r) {
   disable_tombstones();
   // region.Open should never return.
   EXPECT_FALSE(r->Open());
@@ -78,7 +78,7 @@ void SetGuestStrings(View* in) {
 template <typename View>
 void CheckPeerStrings(View* in) {
   size_t num_data = in->string_size();
-  EXPECT_LE(2, num_data);
+  EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
     EXPECT_STREQ(View::Layout::host_pattern, in->host_string(i));
   }
@@ -117,21 +117,23 @@ TEST(RegionTest, BasicPeerTests) {
   primary.SendSignal(side, &primary.data()->guest_to_host_signal);
   LOG(INFO) << "Signal sent. Waiting for first signal from peer";
   primary.WaitForInterrupt();
-  int count = 0; // counts the number of signals received.
-  primary.ProcessSignalsFromPeer([&primary, &count](uint32_t* uaddr){
-      ++count;
-      EXPECT_TRUE(uaddr == &primary.data()->host_to_guest_signal);
-    });
+  int count = 0;  // counts the number of signals received.
+  primary.ProcessSignalsFromPeer(
+      [&primary, &count](std::atomic<uint32_t>* uaddr) {
+        ++count;
+        EXPECT_TRUE(uaddr == &primary.data()->host_to_guest_signal);
+      });
   EXPECT_TRUE(count == 1);
   LOG(INFO) << "Signal received on primary region";
   secondary.SendSignal(side, &secondary.data()->guest_to_host_signal);
   LOG(INFO) << "Signal sent. Waiting for second signal from peer";
   secondary.WaitForInterrupt();
   count = 0;
-  secondary.ProcessSignalsFromPeer([&secondary, &count](uint32_t* uaddr){
-      ++count;
-      EXPECT_TRUE(uaddr == &secondary.data()->host_to_guest_signal);
-    });
+  secondary.ProcessSignalsFromPeer(
+      [&secondary, &count](std::atomic<uint32_t>* uaddr) {
+        ++count;
+        EXPECT_TRUE(uaddr == &secondary.data()->host_to_guest_signal);
+      });
   EXPECT_TRUE(count == 1);
   LOG(INFO) << "Signal received on secondary region";
 
@@ -207,8 +209,7 @@ class ManagedRegionTest {
 
 TEST(ManagedRegionTest, ManagedRegionFailMap) {
   ManagedRegionTest test;
-  EXPECT_EXIT(test.testManagedRegionFailMap(),
-              testing::ExitedWithCode(2),
+  EXPECT_EXIT(test.testManagedRegionFailMap(), testing::ExitedWithCode(2),
               ".*" DEATH_TEST_MESSAGE ".*");
 }
 

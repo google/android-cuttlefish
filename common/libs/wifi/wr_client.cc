@@ -71,7 +71,7 @@ void WRClient::HandleResponses() {
   }
 
   auto hdr = reinterpret_cast<nlmsghdr*>(buf.get());
-  if (size != hdr->nlmsg_len) {
+  if (static_cast<uint32_t>(size) != hdr->nlmsg_len) {
     LOG(FATAL) << "Malformed message from WIFI Router.";
     return;
   }

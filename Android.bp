@@ -55,6 +55,7 @@ cc_defaults {
             enabled: false,
         },
     },
+    cflags: ["-Werror", "-Wall"],
     vendor: true,
 }
 
@@ -92,6 +93,8 @@ cc_library_shared {
         "common/vsoc/lib/fb_bcast_layout.cpp",
         "common/vsoc/lib/fb_bcast_region_view.cpp",
         "common/vsoc/lib/gralloc_layout.cpp",
+        "common/vsoc/lib/input_events_layout.cpp",
+        "common/vsoc/lib/input_events_region_view.cpp",
         "common/vsoc/lib/lock_common.cpp",
         "common/vsoc/lib/region_view.cpp",
         "common/vsoc/lib/wifi_exchange_layout.cpp",

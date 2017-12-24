@@ -44,9 +44,8 @@ using cvd::vnc::VncClientConnection;
 
 DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
 
-#define DLOG(LEVEL)                                 \
+#define DLOG(LEVEL) \
   if (FLAGS_debug_client) LOG(LEVEL)
-
 
 namespace {
 class BigEndianChecker {
@@ -515,7 +514,8 @@ void VncClientConnection::HandlePointerEvent() {
   virtual_inputs_->HandlePointerEvent(button_mask, x_pos, y_pos);
 }
 
-void VncClientConnection::UpdateAccelerometer(float x, float y, float z) {
+void VncClientConnection::UpdateAccelerometer(float /*x*/, float /*y*/,
+                                              float /*z*/) {
   // // Discard the event if we don't have a connection to the HAL.
   // if (!sensor_event_hal_->IsOpen()) {
   //   LOG(ERROR) << "sensor event client not open";

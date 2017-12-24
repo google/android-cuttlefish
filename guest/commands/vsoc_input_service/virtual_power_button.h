@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -13,7 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "guest/commands/audio/vsoc_audio_message.h"
 
-const char* gce_audio_message::kAudioHALSocketName =
-    "/var/run/media/audio_hal_socket";
+#include "virtual_device_base.h"
+
+namespace vsoc_input_service {
+
+class VirtualPowerButton : public VirtualDeviceBase {
+ public:
+  VirtualPowerButton();
+
+ protected:
+  const std::vector<const uint32_t>& GetEventTypes() const override;
+  const std::vector<const uint32_t>& GetKeys() const override;
+};
+
+}  // namespace vsoc_input_service
