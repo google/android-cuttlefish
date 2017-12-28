@@ -16,22 +16,11 @@
 
 #include "host/vsoc/lib/gralloc_buffer_region_view.h"
 
+#include <memory>
 #include <mutex>
 #include "glog/logging.h"
 
 using vsoc::gralloc::GrallocBufferRegionView;
-
-// static
-GrallocBufferRegionView* GrallocBufferRegionView::GetInstance(const char* domain) {
-  static std::mutex mutex;
-  static std::map<std::string, GrallocBufferRegionView*> gralloc_regions;
-
-  std::lock_guard<std::mutex> guard(mutex);
-  if (!gralloc_regions.count(domain)) {
-    gralloc_regions[domain] = new GrallocBufferRegionView(domain);
-  }
-  return gralloc_regions[domain];
-}
 
 uint8_t* GrallocBufferRegionView::OffsetToBufferPtr(vsoc_reg_off_t offset) {
   if (offset <= control_->region_desc().offset_of_region_data ||
@@ -44,6 +33,11 @@ uint8_t* GrallocBufferRegionView::OffsetToBufferPtr(vsoc_reg_off_t offset) {
   return region_offset_to_pointer<uint8_t>(offset);
 }
 
-GrallocBufferRegionView::GrallocBufferRegionView(const char* domain) {
-  is_open_ = Open(domain);
+std::shared_ptr<GrallocBufferRegionView> GrallocBufferRegionView::GetInstance(
+    const char* domain) {
+  return RegionView::GetInstanceImpl<GrallocBufferRegionView>(
+      [](std::shared_ptr<GrallocBufferRegionView> region, const char* domain) {
+        return region->Open(domain);
+      },
+      domain);
 }

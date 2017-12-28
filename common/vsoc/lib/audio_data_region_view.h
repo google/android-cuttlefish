@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+
 #include <android-base/macros.h>
 
 #include "common/vsoc/lib/typed_region_view.h"
@@ -26,15 +28,16 @@ namespace audio_data {
 class AudioDataRegionView
     : public vsoc::TypedRegionView<vsoc::layout::audio_data::AudioDataLayout> {
 public:
+    AudioDataRegionView() = default;
     AudioDataRegionView(const AudioDataRegionView &) = delete;
     AudioDataRegionView &operator=(const AudioDataRegionView &) = delete;
 
-    static AudioDataRegionView *GetInstance();
-
-private:
-    AudioDataRegionView() = default;
+#if defined(CUTTLEFISH_HOST)
+    static std::shared_ptr<AudioDataRegionView> GetInstance(const char *domain);
+#else
+    static std::shared_ptr<AudioDataRegionView> GetInstance();
+#endif
 };
 
 }  // namespace audio_data
 }  // namespace vsoc
-

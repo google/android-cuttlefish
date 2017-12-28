@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+
 #include "common/vsoc/lib/typed_region_view.h"
 #include "common/vsoc/shm/fb_bcast_layout.h"
 #include "common/vsoc/shm/graphics.h"
@@ -23,23 +25,18 @@
 namespace vsoc {
 namespace framebuffer {
 
-class FBBroadcastRegionView : public vsoc::TypedRegionView<
-                              vsoc::layout::framebuffer::FBBroadcastLayout> {
+class FBBroadcastRegionView
+    : public vsoc::TypedRegionView<
+          vsoc::layout::framebuffer::FBBroadcastLayout> {
  public:
   // Screen width in pixels
-  int x_res() const {
-    return data().x_res;
-  }
+  int x_res() const { return data().x_res; }
 
   // Screen height in pixels
-  int y_res() const {
-    return data().y_res;
-  }
+  int y_res() const { return data().y_res; }
 
   // Dots per inch
-  int dpi() const {
-    return data().dpi;
-  }
+  int dpi() const { return data().dpi; }
 
   // Refresh rate in Hertz
   int refresh_rate_hz() const {
@@ -47,9 +44,7 @@ class FBBroadcastRegionView : public vsoc::TypedRegionView<
     return kFbRefreshRateHz;
   }
 
-  uint32_t pixel_format() const {
-    return kFbPixelFormat;
-  }
+  uint32_t pixel_format() const { return kFbPixelFormat; }
 
   uint32_t bytes_per_pixel() const {
     return vsoc::PixelFormatProperties<kFbPixelFormat>::bytes_per_pixel;
@@ -67,9 +62,15 @@ class FBBroadcastRegionView : public vsoc::TypedRegionView<
   // the new sequential number in *last_seq_num.
   vsoc_reg_off_t WaitForNewFrameSince(uint32_t* last_seq_num);
 
+#if defined(CUTTLEFISH_HOST)
+  static std::shared_ptr<FBBroadcastRegionView> GetInstance(const char* domain);
+#else
+  static std::shared_ptr<FBBroadcastRegionView> GetInstance();
+#endif
+
  private:
   static constexpr uint32_t kFbPixelFormat = vsoc::VSOC_PIXEL_FORMAT_RGBA_8888;
   static constexpr int kFbRefreshRateHz = 60;
 };
-} // namespace framebuffer
-} // namespace vsoc
+}  // namespace framebuffer
+}  // namespace vsoc

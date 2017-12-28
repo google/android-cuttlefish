@@ -34,13 +34,15 @@ namespace gralloc {
 class GrallocBufferRegionView
     : vsoc::TypedRegionView<vsoc::layout::gralloc::GrallocBufferLayout> {
  public:
-  static GrallocBufferRegionView* GetInstance(const char* domain);
+  GrallocBufferRegionView() = default;
+  GrallocBufferRegionView(const GrallocBufferRegionView&) = delete;
+  GrallocBufferRegionView& operator=(const GrallocBufferRegionView&) = delete;
 
   uint8_t* OffsetToBufferPtr(vsoc_reg_off_t offset);
- protected:
-  GrallocBufferRegionView(const char* domain);
-  bool is_open_{};
+
+  static std::shared_ptr<GrallocBufferRegionView> GetInstance(
+      const char* domain);
 };
 
-}
-}
+}  // namespace gralloc
+}  // namespace vsoc

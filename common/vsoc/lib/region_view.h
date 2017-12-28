@@ -24,6 +24,7 @@
 #include <cstdint>
 
 #include <functional>
+#include <map>
 #include <thread>
 
 #include "common/libs/fs/shared_fd.h"
@@ -201,6 +202,49 @@ class RegionView : public RegionSignalingInterface {
     }
     return rval;
   }
+
+  // Implementation of the region singletons. This method cannot be called
+  // directly, but rather from static function in the concrete region views
+  // classes.
+  template <typename R>
+#if defined(CUTTLEFISH_HOST)
+  static std::shared_ptr<R> GetInstanceImpl(
+      std::function<bool(std::shared_ptr<R>, const char*)> initializer,
+      const char* domain) {
+    static std::mutex mtx;
+    static std::map<std::string, std::shared_ptr<R>> instances;
+    if (!domain) {
+      return nullptr;
+    }
+    std::lock_guard<std::mutex> lock(mtx);
+    // Get a reference to the actual shared pointer that's stored in the map, if
+    // there wasn't one it will be default constructed pointing to nullptr.
+    std::shared_ptr<R>& instance = instances[domain];
+    if (!instance) {
+      // Update the referenced pointer with the address of the newly created
+      // region view.
+      instance.reset(new R());
+      if (!initializer(instance, domain)) {
+        instance.reset();
+      }
+    }
+    return instance;
+  }
+#else
+  static std::shared_ptr<R> GetInstanceImpl(
+      std::function<bool(std::shared_ptr<R>)> initializer) {
+    static std::mutex mtx;
+    static std::shared_ptr<R> instance;
+    std::lock_guard<std::mutex> lock(mtx);
+    if (!instance) {
+      instance.reset(new R());
+      if (!initializer(instance)) {
+        instance.reset();
+      }
+    }
+    return instance;
+  }
+#endif
 
   std::shared_ptr<RegionControl> control_;
   void* region_base_{};

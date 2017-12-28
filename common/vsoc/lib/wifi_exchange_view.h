@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include <memory>
+
 #include "common/vsoc/lib/typed_region_view.h"
 #include "common/vsoc/shm/wifi_exchange_layout.h"
 #include "uapi/vsoc_shm.h"
@@ -39,6 +41,12 @@ class WifiExchangeView
 
   void SetConfigReady();
   void WaitConfigReady();
+
+#if defined(CUTTLEFISH_HOST)
+  static std::shared_ptr<WifiExchangeView> GetInstance(const char* domain);
+#else
+  static std::shared_ptr<WifiExchangeView> GetInstance();
+#endif
 };
 
 }  // namespace wifi
