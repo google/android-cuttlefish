@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include <glog/logging.h>
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 
 #include "common/vsoc/lib/fb_bcast_region_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
@@ -26,12 +26,14 @@ DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
 DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
 
 void InitializeFBBroadcastRegion() {
-  vsoc::framebuffer::FBBroadcastRegionView region;
-  if (!region.Open(vsoc::GetDomain().c_str())) {
+  std::shared_ptr<vsoc::framebuffer::FBBroadcastRegionView> region =
+      vsoc::framebuffer::FBBroadcastRegionView::GetInstance(
+          vsoc::GetDomain().c_str());
+  if (!region) {
     LOG(INFO) << "Framebuffer region was not found";
     return;
   }
-  auto dest = region.data();
+  auto dest = region->data();
   dest->x_res = FLAGS_x_res;
   dest->y_res = FLAGS_y_res;
   dest->dpi = FLAGS_dpi;

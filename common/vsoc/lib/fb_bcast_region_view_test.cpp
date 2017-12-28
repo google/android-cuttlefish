@@ -22,19 +22,19 @@ using vsoc::framebuffer::FBBroadcastRegionView;
 int main() {
   uint32_t frame_num = 0;
   vsoc_reg_off_t offset = 0;
-  FBBroadcastRegionView region;
+
 #if defined(CUTTLEFISH_HOST)
-  auto rval = region.Open(vsoc::GetDomain().c_str());
+  auto region = FBBroadcastRegionView::GetInstance(vsoc::GetDomain().c_str());
 #else
-  auto rval = region.Open();
+  auto region = FBBroadcastRegionView::GetInstance();
 #endif
-  if (!rval) {
+  if (!region) {
     fprintf(stderr, "Error opening region\n");
     return 1;
   }
 
   while (1) {
-    offset = region.WaitForNewFrameSince(&frame_num);
+    offset = region->WaitForNewFrameSince(&frame_num);
     printf("Signaled frame_num = %d, offset = 0x%x\n", frame_num, offset);
   }
 

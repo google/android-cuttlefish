@@ -215,7 +215,7 @@ int GceAudio::Dump(int fd) const {
 
 ssize_t GceAudio::SendMsg(const msghdr& msg, int /* flags */) {
     intptr_t res = audio_data_rv_->data()->audio_queue.Writev(
-            audio_data_rv_,
+            audio_data_rv_.get(),
             msg.msg_iov,
             msg.msg_iovlen,
             true /* non_blocking */);
@@ -294,7 +294,6 @@ int GceAudio::Open(const hw_module_t* module, const char* name,
   GceAudio* rval = new GceAudio;
 
   rval->audio_data_rv_ = AudioDataRegionView::GetInstance();
-  rval->audio_data_rv_->Open();
   rval->audio_worker_ = rval->audio_data_rv_->StartWorker();
 
   rval->common.tag = HARDWARE_DEVICE_TAG;

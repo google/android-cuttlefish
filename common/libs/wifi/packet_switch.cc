@@ -27,17 +27,18 @@ namespace cvd {
 PacketSwitch::~PacketSwitch() { Stop(); }
 
 bool PacketSwitch::Init() {
-  bool res;
 #ifdef CUTTLEFISH_HOST
-  res = shm_wifi_.Open(vsoc::GetDomain().c_str());
+  shm_wifi_ =
+      vsoc::wifi::WifiExchangeView::GetInstance(vsoc::GetDomain().c_str());
 #else
-  res = shm_wifi_.Open();
+  shm_wifi_ = vsoc::wifi::WifiExchangeView::GetInstance();
 #endif
 
-  if (res) {
-    worker_ = shm_wifi_.StartWorker();
+  if (shm_wifi_) {
+    worker_ = shm_wifi_->StartWorker();
+    return true;
   }
-  return res;
+  return false;
 }
 
 void PacketSwitch::Start() {
@@ -60,7 +61,7 @@ void PacketSwitch::Start() {
 #ifdef CUTTLEFISH_HOST
       LOG(INFO) << "Awaiting packet.";
 #endif
-      shm_wifi_.Recv(msg.get(), maxlen);
+        shm_wifi_->Recv(msg.get(), maxlen);
 #ifdef CUTTLEFISH_HOST
       LOG(INFO) << "Received packet.";
 #endif
@@ -102,7 +103,7 @@ void PacketSwitch::ProcessPacket(nl_msg* m, bool is_incoming) {
       nl_->WRCL().Send(&c);
       c.WaitComplete();
     } else {
-      shm_wifi_.Send(header, header->nlmsg_len);
+      shm_wifi_->Send(header, header->nlmsg_len);
     }
   }
 }

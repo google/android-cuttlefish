@@ -92,6 +92,7 @@ cc_library_shared {
         "common/vsoc/lib/audio_data_layout.cpp",
         "common/vsoc/lib/audio_data_region_view.cpp",
         "common/vsoc/lib/e2e_test_region_layout.cpp",
+        "common/vsoc/lib/e2e_test_region_view.cpp",
         "common/vsoc/lib/fb_bcast_layout.cpp",
         "common/vsoc/lib/fb_bcast_region_view.cpp",
         "common/vsoc/lib/gralloc_layout.cpp",

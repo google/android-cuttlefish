@@ -162,7 +162,7 @@ void InitializeRilRegion() {
     return;
   }
 
-  vsoc::ril::RilRegionView* region =
+  auto region =
       vsoc::ril::RilRegionView::GetInstance(vsoc::GetDomain().c_str());
 
   if (!region) {

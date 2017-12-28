@@ -48,5 +48,21 @@ void WifiExchangeView::GetGuestMACAddress(uint8_t* mac_address) {
   memcpy(mac_address, data()->mac_address, ETH_ALEN);
 }
 
+#if defined(CUTTLEFISH_HOST)
+std::shared_ptr<WifiExchangeView> WifiExchangeView::GetInstance(
+    const char* domain) {
+  return RegionView::GetInstanceImpl<WifiExchangeView>(
+      [](std::shared_ptr<WifiExchangeView> region, const char* domain) {
+        return region->Open(domain);
+      },
+      domain);
+}
+#else
+std::shared_ptr<WifiExchangeView> WifiExchangeView::GetInstance() {
+  return RegionView::GetInstanceImpl<WifiExchangeView>(
+      std::mem_fn(&WifiExchangeView::Open));
+}
+#endif
+
 }  // namespace wifi
 }  // namespace vsoc

@@ -49,6 +49,7 @@ class TypedRegionView : public RegionView {
         control_->region_desc().offset_of_region_data);
   }
 
+ protected:
 #if defined(CUTTLEFISH_HOST)
   bool Open(const char* domain) {
     return RegionView::Open(LayoutType::region_name, domain);

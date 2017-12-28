@@ -62,7 +62,8 @@ struct Stripe {
   ScreenOrientation orientation{};
 };
 
-vsoc::framebuffer::FBBroadcastRegionView* GetFBBroadcastRegionView();
+std::shared_ptr<vsoc::framebuffer::FBBroadcastRegionView>
+GetFBBroadcastRegionView();
 
 inline int BytesPerPixel() {
   return GetFBBroadcastRegionView()->bytes_per_pixel();
