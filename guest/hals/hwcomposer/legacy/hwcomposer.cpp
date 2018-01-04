@@ -49,25 +49,23 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 
+#include <guest/hals/gralloc/legacy/gralloc_vsoc_priv.h>
 #include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
 #include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <guest/hals/gralloc/legacy/gralloc_vsoc_priv.h>
 #include <guest/libs/remoter/remoter_framework_pkt.h>
 #include <sync/sync.h>
 
-#include "vsoc_composer.h"
+#include "base_composer.h"
 #include "geometry_utils.h"
 #include "hwcomposer_common.h"
-#include "base_composer.h"
 #include "stats_keeper.h"
-
+#include "vsoc_composer.h"
 
 #ifdef USE_OLD_HWCOMPOSER
 typedef cvd::BaseComposer InnerComposerType;
 #else
 typedef cvd::VSoCComposer InnerComposerType;
 #endif
-
 
 #ifdef GATHER_STATS
 typedef cvd::StatsKeepingComposer<InnerComposerType> ComposerType;
@@ -98,7 +96,7 @@ static void dump_layer(vsoc_hwc_layer const* l) {
 static int vsoc_hwc_prepare(vsoc_hwc_device* dev, hwc_layer_list_t* list) {
 #else
 static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
-                           hwc_display_contents_1_t** displays) {
+                            hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
   hwc_display_contents_1_t* list = displays[HWC_DISPLAY_PRIMARY];
@@ -113,14 +111,14 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
 int vsoc_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
-                hwc_surface_t sur, hwc_layer_list_t* list) {
+                 hwc_surface_t sur, hwc_layer_list_t* list) {
   reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
       list->numHwLayers, &list->hwLayers[0]);
   return 0;
 }
 #else
 static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
-                       hwc_display_contents_1_t** displays) {
+                        hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
   hwc_display_contents_1_t* contents = displays[HWC_DISPLAY_PRIMARY];
@@ -150,7 +148,7 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
 #endif
 
 static void vsoc_hwc_register_procs(vsoc_hwc_device* dev,
-                                   const hwc_procs_t* procs) {
+                                    const hwc_procs_t* procs) {
   struct vsoc_hwc_composer_device_1_t* pdev =
       (struct vsoc_hwc_composer_device_1_t*)dev;
   pdev->procs = procs;
@@ -215,7 +213,7 @@ static void* hwc_vsync_thread(void* data) {
     rt.tv_sec = timestamp / 1e9;
     rt.tv_nsec = timestamp % static_cast<int32_t>(1e9);
     int err = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &rt, NULL);
-    if ( err == -1) {
+    if (err == -1) {
       ALOGE("error in vsync thread: %s", strerror(errno));
       if (errno == EINTR) {
         continue;
@@ -242,12 +240,12 @@ static int vsoc_hwc_blank(vsoc_hwc_device* dev, int disp, int /*blank*/) {
 }
 
 static void vsoc_hwc_dump(vsoc_hwc_device* dev, char* buff, int buff_len) {
-  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->Dump(buff,
-                                                                      buff_len);
+  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->Dump(
+      buff, buff_len);
 }
 
 static int vsoc_hwc_get_display_configs(vsoc_hwc_device* dev, int disp,
-                                       uint32_t* configs, size_t* numConfigs) {
+                                        uint32_t* configs, size_t* numConfigs) {
   struct vsoc_hwc_composer_device_1_t* pdev =
       (struct vsoc_hwc_composer_device_1_t*)dev;
 
@@ -264,7 +262,7 @@ static int vsoc_hwc_get_display_configs(vsoc_hwc_device* dev, int disp,
 
 #if VSOC_PLATFORM_SDK_AFTER(J)
 static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
-                                 const uint32_t attribute) {
+                                  const uint32_t attribute) {
   const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
@@ -286,9 +284,9 @@ static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
 }
 
 static int vsoc_hwc_get_display_attributes(vsoc_hwc_device* dev, int disp,
-                                          uint32_t config __unused,
-                                          const uint32_t* attributes,
-                                          int32_t* values) {
+                                           uint32_t config __unused,
+                                           const uint32_t* attributes,
+                                           int32_t* values) {
   struct vsoc_hwc_composer_device_1_t* pdev =
       (struct vsoc_hwc_composer_device_1_t*)dev;
 
@@ -317,14 +315,14 @@ static int vsoc_hwc_close(hw_device_t* device) {
 }
 
 static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
-                        struct hw_device_t** device) {
+                         struct hw_device_t** device) {
   ALOGI("%s", __FUNCTION__);
   if (strcmp(name, HWC_HARDWARE_COMPOSER)) {
     ALOGE("%s called with bad name %s", __FUNCTION__, name);
     return -EINVAL;
   }
 
-  vsoc_hwc_composer_device_1_t* dev  = new vsoc_hwc_composer_device_1_t();
+  vsoc_hwc_composer_device_1_t* dev = new vsoc_hwc_composer_device_1_t();
   if (!dev) {
     ALOGE("%s failed to allocate dev", __FUNCTION__);
     return -ENOMEM;

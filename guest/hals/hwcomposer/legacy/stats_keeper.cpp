@@ -24,13 +24,13 @@
 #include "geometry_utils.h"
 #include "stats_keeper.h"
 
-using cvd::time::TimeDifference;
-using cvd::time::Nanoseconds;
-using cvd::time::Microseconds;
-using cvd::time::Seconds;
-using cvd::time::MonotonicTimePoint;
-using cvd::Mutex;
 using cvd::LockGuard;
+using cvd::Mutex;
+using cvd::time::Microseconds;
+using cvd::time::MonotonicTimePoint;
+using cvd::time::Nanoseconds;
+using cvd::time::Seconds;
+using cvd::time::TimeDifference;
 
 namespace cvd {
 
@@ -53,8 +53,7 @@ const T& MultisetMax(const std::multiset<T>& mset) {
 
 }  // namespace
 
-StatsKeeper::StatsKeeper(TimeDifference timespan,
-                         int64_t vsync_base,
+StatsKeeper::StatsKeeper(TimeDifference timespan, int64_t vsync_base,
                          int32_t vsync_period)
     : period_length_(timespan, 1),
       num_layers_(0),
@@ -77,13 +76,14 @@ void StatsKeeper::RecordPrepareStart(int num_layers) {
   last_composition_stats_.num_prepare_calls++;
   num_prepare_calls_++;
   last_composition_stats_.prepare_start = MonotonicTimePoint::Now();
-  // Calculate the (expected) time of last VSYNC event. We can only make a guess about it because
-  // the vsync thread could run late or surfaceflinger could run late and call prepare from a
-  // previous vsync cycle.
+  // Calculate the (expected) time of last VSYNC event. We can only make a guess
+  // about it because the vsync thread could run late or surfaceflinger could
+  // run late and call prepare from a previous vsync cycle.
   int64_t last_vsync =
       Nanoseconds(last_composition_stats_.set_start.SinceEpoch()).count();
   last_vsync -= (last_vsync - vsync_base_) % vsync_period_;
-  last_composition_stats_.last_vsync = MonotonicTimePoint() + Nanoseconds(last_vsync);
+  last_composition_stats_.last_vsync =
+      MonotonicTimePoint() + Nanoseconds(last_vsync);
 }
 
 void StatsKeeper::RecordPrepareEnd(int num_hwcomposited_layers) {
@@ -129,10 +129,12 @@ void StatsKeeper::RecordSetEnd() {
                                       last_composition_stats_.prepare_start);
   Nanoseconds last_set_call_total_time_(last_composition_stats_.set_end -
                                         last_composition_stats_.set_start);
-  raw_composition_data_.push_back(CompositionData(
-      last_composition_stats_.set_end, last_composition_stats_.num_prepare_calls,
-      last_composition_stats_.num_layers, last_composition_stats_.num_hwc_layers, last_prepare_call_time_,
-      last_set_call_total_time_));
+  raw_composition_data_.push_back(
+      CompositionData(last_composition_stats_.set_end,
+                      last_composition_stats_.num_prepare_calls,
+                      last_composition_stats_.num_layers,
+                      last_composition_stats_.num_hwc_layers,
+                      last_prepare_call_time_, last_set_call_total_time_));
 
   const CompositionData& back = raw_composition_data_.back();
 
@@ -144,21 +146,22 @@ void StatsKeeper::RecordSetEnd() {
       Nanoseconds(prepare_call_total_time_ + last_prepare_call_time_);
   set_call_total_time_ =
       Nanoseconds(set_call_total_time_ + last_set_call_total_time_);
-  prepare_calls_per_set_calls_.insert(last_composition_stats_.num_prepare_calls);
+  prepare_calls_per_set_calls_.insert(
+      last_composition_stats_.num_prepare_calls);
   layers_per_compositions_.insert(last_composition_stats_.num_layers);
   prepare_call_times_.insert(last_prepare_call_time_);
   set_call_times_.insert(last_set_call_total_time_);
   if (last_composition_stats_.num_hwc_layers != 0) {
     set_call_times_per_hwcomposited_layer_ns_.insert(
-        last_set_call_total_time_.count() / last_composition_stats_.num_hwc_layers);
+        last_set_call_total_time_.count() /
+        last_composition_stats_.num_hwc_layers);
   }
 
   // Reset the counter
   last_composition_stats_.num_prepare_calls = 0;
 }
 
-void StatsKeeper::SynchronizedDump(char* buffer,
-                                            int buffer_size) const {
+void StatsKeeper::SynchronizedDump(char* buffer, int buffer_size) const {
   LockGuard<Mutex> lock(mutex_);
   int chars_written = 0;
 // Make sure there is enough space to write the next line
@@ -172,7 +175,8 @@ void StatsKeeper::SynchronizedDump(char* buffer,
       "HWComposer stats from the %lld seconds just before the last call to "
       "set() (which happended %lld seconds ago):\n",
       Seconds(period_length_).count(),
-      Seconds(MonotonicTimePoint::Now() - last_composition_stats_.set_end).count());
+      Seconds(MonotonicTimePoint::Now() - last_composition_stats_.set_end)
+          .count());
   bprintf("  Layer count: %d\n", num_layers_);
 
   if (num_layers_ == 0 || num_prepare_calls_ == 0 || num_set_calls_ == 0) {
