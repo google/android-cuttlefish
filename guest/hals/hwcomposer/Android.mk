@@ -31,7 +31,6 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_CFLAGS := \
     -DLOG_TAG=\"hwcomposer_vsoc\" \
-    -Wno-missing-field-initializers \
     -Wall -Werror
 
 LOCAL_SHARED_LIBRARIES := \

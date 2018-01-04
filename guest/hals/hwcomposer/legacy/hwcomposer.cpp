@@ -82,16 +82,6 @@ struct vsoc_hwc_composer_device_1_t {
   ComposerType* composer;
 };
 
-static void dump_layer(vsoc_hwc_layer const* l) {
-  ALOGI(
-      "\ttype=%d, flags=%08x, handle=%p, tr=%02x, blend=%04x, "
-      "{%d,%d,%d,%d}, {%d,%d,%d,%d}",
-      l->compositionType, l->flags, l->handle, l->transform, l->blending,
-      l->sourceCrop.left, l->sourceCrop.top, l->sourceCrop.right,
-      l->sourceCrop.bottom, l->displayFrame.left, l->displayFrame.top,
-      l->displayFrame.right, l->displayFrame.bottom);
-}
-
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
 static int vsoc_hwc_prepare(vsoc_hwc_device* dev, hwc_layer_list_t* list) {
 #else
@@ -103,9 +93,8 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 
   if (!list) return 0;
 #endif
-  int composited_layers_count =
-      reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)
-          ->composer->PrepareLayers(list->numHwLayers, &list->hwLayers[0]);
+  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->PrepareLayers(
+      list->numHwLayers, &list->hwLayers[0]);
   return 0;
 }
 
@@ -137,7 +126,7 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
     }
   }
   if (closedFds) {
-    ALOGI("Saw %d layers, closed=%d", contents->numHwLayers, closedFds);
+    ALOGI("Saw %zu layers, closed=%d", contents->numHwLayers, closedFds);
   }
 
   // TODO(ghartman): This should be set before returning. On the next set it
@@ -176,12 +165,10 @@ static int vsoc_hwc_query(vsoc_hwc_device* dev, int what, int* value) {
 
 static int vsoc_hwc_event_control(
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
-    vsoc_hwc_device* dev, int event, int /*enabled*/) {
+    vsoc_hwc_device* /*dev*/, int event, int /*enabled*/) {
 #else
-    vsoc_hwc_device* dev, int /*dpy*/, int event, int /*enabled*/) {
+    vsoc_hwc_device* /*dev*/, int /*dpy*/, int event, int /*enabled*/) {
 #endif
-  struct vsoc_hwc_composer_device_1_t* pdev =
-      (struct vsoc_hwc_composer_device_1_t*)dev;
 
   if (event == HWC_EVENT_VSYNC) {
     return 0;
@@ -232,9 +219,7 @@ static void* hwc_vsync_thread(void* data) {
   return NULL;
 }
 
-static int vsoc_hwc_blank(vsoc_hwc_device* dev, int disp, int /*blank*/) {
-  struct vsoc_hwc_composer_device_1_t* pdev =
-      (struct vsoc_hwc_composer_device_1_t*)dev;
+static int vsoc_hwc_blank(vsoc_hwc_device* /*dev*/, int disp, int /*blank*/) {
   if (!IS_PRIMARY_DISPLAY(disp)) return -EINVAL;
   return 0;
 }
@@ -244,11 +229,8 @@ static void vsoc_hwc_dump(vsoc_hwc_device* dev, char* buff, int buff_len) {
       buff, buff_len);
 }
 
-static int vsoc_hwc_get_display_configs(vsoc_hwc_device* dev, int disp,
+static int vsoc_hwc_get_display_configs(vsoc_hwc_device* /*dev*/, int disp,
                                         uint32_t* configs, size_t* numConfigs) {
-  struct vsoc_hwc_composer_device_1_t* pdev =
-      (struct vsoc_hwc_composer_device_1_t*)dev;
-
   if (*numConfigs == 0) return 0;
 
   if (IS_PRIMARY_DISPLAY(disp)) {
