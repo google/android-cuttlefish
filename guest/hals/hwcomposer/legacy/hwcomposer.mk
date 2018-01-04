@@ -38,9 +38,9 @@ LOCAL_SRC_FILES := \
     base_composer.cpp
 
 LOCAL_CFLAGS += \
-    -DLOG_TAG=\"hwcomposer_legacy\" \
     -DGATHER_STATS \
-    $(VSOC_VERSION_CFLAGS)
+    $(VSOC_VERSION_CFLAGS) \
+    -Wall -Werror
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \

@@ -598,9 +598,9 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
 
 VSoCComposer::~VSoCComposer() {
   // Free the hwc fb handles
-  for (int idx = 0; idx < hwc_framebuffers_.size(); ++idx) {
+  for (auto buffer : hwc_framebuffers_) {
     gralloc_dev_->device.free(reinterpret_cast<alloc_device_t*>(gralloc_dev_),
-                              hwc_framebuffers_[idx]);
+                              buffer);
   }
 
   // close devices
@@ -668,14 +668,14 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     } else if (layers[idx].compositionType == HWC_OVERLAY &&
                !(layers[idx].flags & HWC_SKIP_LAYER)) {
       if (SanityCheckLayer(layers[idx])) {
-        ALOGE("Layer (%d) failed sanity check", idx);
+        ALOGE("Layer (%zu) failed sanity check", idx);
         return -EINVAL;
       }
       CompositeLayer(&layers[idx], fb_handle);
     }
   }
   if (targetFbs != 1) {
-    ALOGW("Saw %d layers, posted=%d", num_layers, targetFbs);
+    ALOGW("Saw %zu layers, posted=%d", num_layers, targetFbs);
   }
   return PostFrameBuffer(fb_handle);
 }
