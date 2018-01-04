@@ -16,9 +16,9 @@
  */
 
 #include <hardware/gralloc.h>
+#include "base_composer.h"
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 #include "hwcomposer_common.h"
-#include "base_composer.h"
 
 #include <vector>
 

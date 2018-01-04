@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <common/libs/time/monotonic_time.h>
-#include <common/libs/threads/cuttlefish_thread.h>
 #include <android-base/thread_annotations.h>
+#include <common/libs/threads/cuttlefish_thread.h>
+#include <common/libs/time/monotonic_time.h>
+#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
 #include <deque>
 #include <set>
 
@@ -28,8 +28,8 @@ namespace cvd {
 
 class CompositionData {
  public:
-  CompositionData(cvd::time::MonotonicTimePoint time_point,
-                  int num_prepares, int num_layers, int num_hwcomposited_layers,
+  CompositionData(cvd::time::MonotonicTimePoint time_point, int num_prepares,
+                  int num_layers, int num_hwcomposited_layers,
                   cvd::time::Nanoseconds prepare_time,
                   cvd::time::Nanoseconds set_calls_time)
       : time_point_(time_point),
@@ -39,9 +39,7 @@ class CompositionData {
         prepare_time_(prepare_time),
         set_calls_time_(set_calls_time) {}
 
-  cvd::time::MonotonicTimePoint time_point() const {
-    return time_point_;
-  }
+  cvd::time::MonotonicTimePoint time_point() const { return time_point_; }
 
   int num_prepare_calls() const { return num_prepare_calls_; }
 
@@ -49,13 +47,9 @@ class CompositionData {
 
   int num_hwcomposited_layers() const { return num_hwcomposited_layers_; }
 
-  cvd::time::Nanoseconds prepare_time() const {
-    return prepare_time_;
-  }
+  cvd::time::Nanoseconds prepare_time() const { return prepare_time_; }
 
-  cvd::time::Nanoseconds set_calls_time() const {
-    return set_calls_time_;
-  }
+  cvd::time::Nanoseconds set_calls_time() const { return set_calls_time_; }
 
  private:
   cvd::time::MonotonicTimePoint time_point_;
@@ -70,8 +64,7 @@ class StatsKeeper {
  public:
   // The timespan parameter indicates for how long we keep stats about the past
   // compositions.
-  StatsKeeper(cvd::time::TimeDifference timespan,
-              int64_t vsync_base,
+  StatsKeeper(cvd::time::TimeDifference timespan, int64_t vsync_base,
               int32_t vsync_period);
   StatsKeeper();
   ~StatsKeeper();
@@ -85,7 +78,9 @@ class StatsKeeper {
   void RecordSetStart();
   void RecordSetEnd() EXCLUDES(mutex_);
 
-  const CompositionStats& last_composition_stats() { return last_composition_stats_; }
+  const CompositionStats& last_composition_stats() {
+    return last_composition_stats_;
+  }
 
   // Calls to this function are synchronized with calls to 'RecordSetEnd' with a
   // mutex. The other Record* functions do not need such synchronization because
@@ -93,7 +88,6 @@ class StatsKeeper {
   void SynchronizedDump(char* buffer, int buffer_size) const EXCLUDES(mutex_);
 
  private:
-
   cvd::time::TimeDifference period_length_;
 
   // Base and period of the VSYNC signal, allows to accurately calculate the
@@ -119,10 +113,8 @@ class StatsKeeper {
   // changing sets of (not necessarily different) values.
   std::multiset<int> prepare_calls_per_set_calls_ GUARDED_BY(mutex_);
   std::multiset<int> layers_per_compositions_ GUARDED_BY(mutex_);
-  std::multiset<cvd::time::Nanoseconds> prepare_call_times_
-      GUARDED_BY(mutex_);
-  std::multiset<cvd::time::Nanoseconds> set_call_times_
-      GUARDED_BY(mutex_);
+  std::multiset<cvd::time::Nanoseconds> prepare_call_times_ GUARDED_BY(mutex_);
+  std::multiset<cvd::time::Nanoseconds> set_call_times_ GUARDED_BY(mutex_);
   std::multiset<int64_t> set_call_times_per_hwcomposited_layer_ns_
       GUARDED_BY(mutex_);
 
@@ -147,8 +139,7 @@ class StatsKeepingComposer {
   StatsKeepingComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
       : composer_(vsync_base_timestamp, vsync_period_ns),
         stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
-                      vsync_base_timestamp,
-                      vsync_period_ns) {
+                      vsync_base_timestamp, vsync_period_ns) {
     // Don't let the composer broadcast by itself, allow it to return to collect
     // the timings and broadcast then.
     composer_.ReplaceFbBroadcaster(NULL);
