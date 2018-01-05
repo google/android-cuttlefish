@@ -19,9 +19,9 @@
 
 #include <hardware/camera_common.h>
 #include <utils/Errors.h>
-#include "guest/libs/platform_support/api_level_fixes.h"
 #include "CameraConfiguration.h"
 #include "ImageMetadata.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace android {
 
@@ -36,96 +36,92 @@ namespace android {
  */
 
 class EmulatedBaseCamera {
-  public:
-    EmulatedBaseCamera(int cameraId,
-            uint32_t cameraVersion,
-            struct hw_device_t* device,
-            struct hw_module_t* module);
+ public:
+  EmulatedBaseCamera(int cameraId, uint32_t cameraVersion,
+                     struct hw_device_t* device, struct hw_module_t* module);
 
-    virtual ~EmulatedBaseCamera();
+  virtual ~EmulatedBaseCamera();
 
-    /****************************************************************************
-     * Public API
-     ***************************************************************************/
+  /****************************************************************************
+   * Public API
+   ***************************************************************************/
 
-  public:
-    /* Initializes EmulatedCamera instance.
-     * Return:
-     *  NO_ERROR on success, or an appropriate error status on failure.
-     */
-    virtual status_t Initialize(const cvd::CameraDefinition& params) = 0;
+ public:
+  /* Initializes EmulatedCamera instance.
+   * Return:
+   *  NO_ERROR on success, or an appropriate error status on failure.
+   */
+  virtual status_t Initialize(const cvd::CameraDefinition& params) = 0;
 
-    /****************************************************************************
-     * Camera API implementation
-     ***************************************************************************/
+  /****************************************************************************
+   * Camera API implementation
+   ***************************************************************************/
 
-  public:
-    /* Creates connection to the emulated camera device.
-     * This method is called in response to hw_module_methods_t::open callback.
-     * NOTE: When this method is called the object is locked.
-     * Note that failures in this method are reported as negative EXXX statuses.
-     */
-    virtual status_t connectCamera(hw_device_t** device) = 0;
+ public:
+  /* Creates connection to the emulated camera device.
+   * This method is called in response to hw_module_methods_t::open callback.
+   * NOTE: When this method is called the object is locked.
+   * Note that failures in this method are reported as negative EXXX statuses.
+   */
+  virtual status_t connectCamera(hw_device_t** device) = 0;
 
+  /* Plug the connection for the emulated camera. Until it's plugged in
+   * calls to connectCamera should fail with -ENODEV.
+   */
+  virtual status_t plugCamera();
 
-    /* Plug the connection for the emulated camera. Until it's plugged in
-     * calls to connectCamera should fail with -ENODEV.
-     */
-    virtual status_t plugCamera();
-
-    /* Unplug the connection from underneath the emulated camera.
-     * This is similar to closing the camera, except that
-     * all function calls into the camera device will return
-     * -EPIPE errors until the camera is reopened.
-     */
-    virtual status_t unplugCamera();
+  /* Unplug the connection from underneath the emulated camera.
+   * This is similar to closing the camera, except that
+   * all function calls into the camera device will return
+   * -EPIPE errors until the camera is reopened.
+   */
+  virtual status_t unplugCamera();
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-    virtual camera_device_status_t getHotplugStatus();
+  virtual camera_device_status_t getHotplugStatus();
 #endif
 
-    /* Closes connection to the emulated camera.
-     * This method is called in response to camera_device::close callback.
-     * NOTE: When this method is called the object is locked.
-     * Note that failures in this method are reported as negative EXXX statuses.
-     */
-    virtual status_t closeCamera() = 0;
+  /* Closes connection to the emulated camera.
+   * This method is called in response to camera_device::close callback.
+   * NOTE: When this method is called the object is locked.
+   * Note that failures in this method are reported as negative EXXX statuses.
+   */
+  virtual status_t closeCamera() = 0;
 
-    /* Gets camera information.
-     * This method is called in response to camera_module_t::get_camera_info
-     * callback.
-     * NOTE: When this method is called the object is locked.
-     * Note that failures in this method are reported as negative EXXX statuses.
-     */
-    virtual status_t getCameraInfo(struct camera_info* info) = 0;
+  /* Gets camera information.
+   * This method is called in response to camera_module_t::get_camera_info
+   * callback.
+   * NOTE: When this method is called the object is locked.
+   * Note that failures in this method are reported as negative EXXX statuses.
+   */
+  virtual status_t getCameraInfo(struct camera_info* info) = 0;
 
-    /* Gets image metadata.
-     * This method is called to collect metadata for (currently) taken picture.
-     */
-    virtual status_t getImageMetadata(struct ImageMetadata* meta) = 0;
+  /* Gets image metadata.
+   * This method is called to collect metadata for (currently) taken picture.
+   */
+  virtual status_t getImageMetadata(struct ImageMetadata* meta) = 0;
 
-    /* Set torch mode.
-     * This method is called in response to camera_module_t::set_torch_mode
-     * callback.
-     */
-    virtual status_t setTorchMode(bool enabled);
+  /* Set torch mode.
+   * This method is called in response to camera_module_t::set_torch_mode
+   * callback.
+   */
+  virtual status_t setTorchMode(bool enabled);
 
-    /****************************************************************************
-     * Data members
-     ***************************************************************************/
+  /****************************************************************************
+   * Data members
+   ***************************************************************************/
 
-  protected:
-    /* Fixed camera information for camera2 devices. Must be valid to access if
-     * mCameraDeviceVersion is >= HARDWARE_DEVICE_API_VERSION(2,0)  */
-    camera_metadata_t *mCameraInfo;
+ protected:
+  /* Fixed camera information for camera2 devices. Must be valid to access if
+   * mCameraDeviceVersion is >= HARDWARE_DEVICE_API_VERSION(2,0)  */
+  camera_metadata_t* mCameraInfo;
 
-    /* Zero-based ID assigned to this camera. */
-    int mCameraID;
+  /* Zero-based ID assigned to this camera. */
+  int mCameraID;
 
-  private:
-
-    /* Version of the camera device HAL implemented by this camera */
-    int mCameraDeviceVersion;
+ private:
+  /* Version of the camera device HAL implemented by this camera */
+  int mCameraDeviceVersion;
 };
 
 } /* namespace android */

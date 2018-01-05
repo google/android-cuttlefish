@@ -75,173 +75,170 @@
 #ifndef HW_EMULATOR_CAMERA2_SENSOR_H
 #define HW_EMULATOR_CAMERA2_SENSOR_H
 
-#include "utils/Thread.h"
 #include "utils/Mutex.h"
+#include "utils/Thread.h"
 #include "utils/Timers.h"
 
-#include "Scene.h"
 #include "Base.h"
+#include "Scene.h"
 
 namespace android {
 
 class EmulatedFakeCamera2;
 
-class Sensor: private Thread, public virtual RefBase {
-  public:
+class Sensor : private Thread, public virtual RefBase {
+ public:
+  // width: Width of pixel array
+  // height: Height of pixel array
+  Sensor(uint32_t width, uint32_t height);
+  ~Sensor();
 
-    // width: Width of pixel array
-    // height: Height of pixel array
-    Sensor(uint32_t width, uint32_t height);
-    ~Sensor();
+  /*
+   * Power control
+   */
 
-    /*
-     * Power control
-     */
+  status_t startUp();
+  status_t shutDown();
 
-    status_t startUp();
-    status_t shutDown();
+  /*
+   * Access to scene
+   */
+  Scene &getScene();
 
-    /*
-     * Access to scene
-     */
-    Scene &getScene();
+  /*
+   * Controls that can be updated every frame
+   */
 
-    /*
-     * Controls that can be updated every frame
-     */
+  void setExposureTime(uint64_t ns);
+  void setFrameDuration(uint64_t ns);
+  void setSensitivity(uint32_t gain);
+  // Buffer must be at least stride*height*2 bytes in size
+  void setDestinationBuffers(Buffers *buffers);
+  // To simplify tracking sensor's current frame
+  void setFrameNumber(uint32_t frameNumber);
 
-    void setExposureTime(uint64_t ns);
-    void setFrameDuration(uint64_t ns);
-    void setSensitivity(uint32_t gain);
-    // Buffer must be at least stride*height*2 bytes in size
-    void setDestinationBuffers(Buffers *buffers);
-    // To simplify tracking sensor's current frame
-    void setFrameNumber(uint32_t frameNumber);
+  /*
+   * Controls that cause reconfiguration delay
+   */
 
-    /*
-     * Controls that cause reconfiguration delay
-     */
+  void setBinning(int horizontalFactor, int verticalFactor);
 
-    void setBinning(int horizontalFactor, int verticalFactor);
+  /*
+   * Synchronizing with sensor operation (vertical sync)
+   */
 
-    /*
-     * Synchronizing with sensor operation (vertical sync)
-     */
+  // Wait until the sensor outputs its next vertical sync signal, meaning it
+  // is starting readout of its latest frame of data. Returns true if vertical
+  // sync is signaled, false if the wait timed out.
+  bool waitForVSync(nsecs_t reltime);
 
-    // Wait until the sensor outputs its next vertical sync signal, meaning it
-    // is starting readout of its latest frame of data. Returns true if vertical
-    // sync is signaled, false if the wait timed out.
-    bool waitForVSync(nsecs_t reltime);
+  // Wait until a new frame has been read out, and then return the time
+  // capture started.  May return immediately if a new frame has been pushed
+  // since the last wait for a new frame. Returns true if new frame is
+  // returned, false if timed out.
+  bool waitForNewFrame(nsecs_t reltime, nsecs_t *captureTime);
 
-    // Wait until a new frame has been read out, and then return the time
-    // capture started.  May return immediately if a new frame has been pushed
-    // since the last wait for a new frame. Returns true if new frame is
-    // returned, false if timed out.
-    bool waitForNewFrame(nsecs_t reltime,
-            nsecs_t *captureTime);
-
-    /*
-     * Interrupt event servicing from the sensor. Only triggers for sensor
-     * cycles that have valid buffers to write to.
-     */
-    struct SensorListener {
-        enum Event {
-            EXPOSURE_START, // Start of exposure
-        };
-
-        virtual void onSensorEvent(uint32_t frameNumber, Event e,
-                nsecs_t timestamp) = 0;
-        virtual ~SensorListener();
+  /*
+   * Interrupt event servicing from the sensor. Only triggers for sensor
+   * cycles that have valid buffers to write to.
+   */
+  struct SensorListener {
+    enum Event {
+      EXPOSURE_START,  // Start of exposure
     };
 
-    void setSensorListener(SensorListener *listener);
+    virtual void onSensorEvent(uint32_t frameNumber, Event e,
+                               nsecs_t timestamp) = 0;
+    virtual ~SensorListener();
+  };
 
-    /**
-     * Static sensor characteristics
-     */
-    const uint32_t mResolution[2];
-    const uint32_t mActiveArray[4];
+  void setSensorListener(SensorListener *listener);
 
-    static const nsecs_t kExposureTimeRange[2];
-    static const nsecs_t kFrameDurationRange[2];
-    static const nsecs_t kMinVerticalBlank;
+  /**
+   * Static sensor characteristics
+   */
+  const uint32_t mResolution[2];
+  const uint32_t mActiveArray[4];
 
-    static const uint8_t kColorFilterArrangement;
+  static const nsecs_t kExposureTimeRange[2];
+  static const nsecs_t kFrameDurationRange[2];
+  static const nsecs_t kMinVerticalBlank;
 
-    // Output image data characteristics
-    static const uint32_t kMaxRawValue;
-    static const uint32_t kBlackLevel;
-    // Sensor sensitivity, approximate
+  static const uint8_t kColorFilterArrangement;
 
-    static const float kSaturationVoltage;
-    static const uint32_t kSaturationElectrons;
-    static const float kVoltsPerLuxSecond;
-    static const float kElectronsPerLuxSecond;
+  // Output image data characteristics
+  static const uint32_t kMaxRawValue;
+  static const uint32_t kBlackLevel;
+  // Sensor sensitivity, approximate
 
-    static const float kBaseGainFactor;
+  static const float kSaturationVoltage;
+  static const uint32_t kSaturationElectrons;
+  static const float kVoltsPerLuxSecond;
+  static const float kElectronsPerLuxSecond;
 
-    static const float kReadNoiseStddevBeforeGain; // In electrons
-    static const float kReadNoiseStddevAfterGain;  // In raw digital units
-    static const float kReadNoiseVarBeforeGain;
-    static const float kReadNoiseVarAfterGain;
+  static const float kBaseGainFactor;
 
-    // While each row has to read out, reset, and then expose, the (reset +
-    // expose) sequence can be overlapped by other row readouts, so the final
-    // minimum frame duration is purely a function of row readout time, at least
-    // if there's a reasonable number of rows.
-    const nsecs_t mRowReadoutTime;
+  static const float kReadNoiseStddevBeforeGain;  // In electrons
+  static const float kReadNoiseStddevAfterGain;   // In raw digital units
+  static const float kReadNoiseVarBeforeGain;
+  static const float kReadNoiseVarAfterGain;
 
-    static const int32_t kSensitivityRange[2];
-    static const uint32_t kDefaultSensitivity;
+  // While each row has to read out, reset, and then expose, the (reset +
+  // expose) sequence can be overlapped by other row readouts, so the final
+  // minimum frame duration is purely a function of row readout time, at least
+  // if there's a reasonable number of rows.
+  const nsecs_t mRowReadoutTime;
 
-  private:
-    Mutex mControlMutex; // Lock before accessing control parameters
-    // Start of control parameters
-    Condition mVSync;
-    bool      mGotVSync;
-    uint64_t  mExposureTime;
-    uint64_t  mFrameDuration;
-    uint32_t  mGainFactor;
-    Buffers  *mNextBuffers;
-    uint32_t  mFrameNumber;
+  static const int32_t kSensitivityRange[2];
+  static const uint32_t kDefaultSensitivity;
 
-    // End of control parameters
+ private:
+  Mutex mControlMutex;  // Lock before accessing control parameters
+  // Start of control parameters
+  Condition mVSync;
+  bool mGotVSync;
+  uint64_t mExposureTime;
+  uint64_t mFrameDuration;
+  uint32_t mGainFactor;
+  Buffers *mNextBuffers;
+  uint32_t mFrameNumber;
 
-    Mutex mReadoutMutex; // Lock before accessing readout variables
-    // Start of readout variables
-    Condition mReadoutAvailable;
-    Condition mReadoutComplete;
-    Buffers  *mCapturedBuffers;
-    nsecs_t   mCaptureTime;
-    SensorListener *mListener;
-    // End of readout variables
+  // End of control parameters
 
-    // Time of sensor startup, used for simulation zero-time point
-    nsecs_t mStartupTime;
+  Mutex mReadoutMutex;  // Lock before accessing readout variables
+  // Start of readout variables
+  Condition mReadoutAvailable;
+  Condition mReadoutComplete;
+  Buffers *mCapturedBuffers;
+  nsecs_t mCaptureTime;
+  SensorListener *mListener;
+  // End of readout variables
 
-    /**
-     * Inherited Thread virtual overrides, and members only used by the
-     * processing thread
-     */
-  private:
-    virtual status_t readyToRun();
+  // Time of sensor startup, used for simulation zero-time point
+  nsecs_t mStartupTime;
 
-    virtual bool threadLoop();
+  /**
+   * Inherited Thread virtual overrides, and members only used by the
+   * processing thread
+   */
+ private:
+  virtual status_t readyToRun();
 
-    nsecs_t mNextCaptureTime;
-    Buffers *mNextCapturedBuffers;
+  virtual bool threadLoop();
 
-    Scene mScene;
+  nsecs_t mNextCaptureTime;
+  Buffers *mNextCapturedBuffers;
 
-    void captureRaw(uint8_t *img, uint32_t gain, uint32_t stride);
-    void captureRGBA(uint8_t *img, uint32_t gain, uint32_t stride);
-    void captureRGB(uint8_t *img, uint32_t gain, uint32_t stride);
-    void captureNV21(uint8_t *img, uint32_t gain, uint32_t stride);
-    void captureDepth(uint8_t *img, uint32_t gain, uint32_t stride);
-    void captureDepthCloud(uint8_t *img);
+  Scene mScene;
 
+  void captureRaw(uint8_t *img, uint32_t gain, uint32_t stride);
+  void captureRGBA(uint8_t *img, uint32_t gain, uint32_t stride);
+  void captureRGB(uint8_t *img, uint32_t gain, uint32_t stride);
+  void captureNV21(uint8_t *img, uint32_t gain, uint32_t stride);
+  void captureDepth(uint8_t *img, uint32_t gain, uint32_t stride);
+  void captureDepthCloud(uint8_t *img);
 };
 
-}
+}  // namespace android
 
-#endif // HW_EMULATOR_CAMERA2_SENSOR_H
+#endif  // HW_EMULATOR_CAMERA2_SENSOR_H

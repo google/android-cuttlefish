@@ -22,73 +22,71 @@
  * converter between YV21, and JPEG formats.
  */
 
-#include "JpegStub.h"
 #include <utils/threads.h>
+#include "JpegStub.h"
 
 namespace android {
 
 /* Encapsulates a converter between YV12, and JPEG formats.
  */
-class NV21JpegCompressor
-{
-public:
-    /* Constructs JpegCompressor instance. */
-    NV21JpegCompressor();
-    /* Destructs JpegCompressor instance. */
-    ~NV21JpegCompressor();
+class NV21JpegCompressor {
+ public:
+  /* Constructs JpegCompressor instance. */
+  NV21JpegCompressor();
+  /* Destructs JpegCompressor instance. */
+  ~NV21JpegCompressor();
 
-    /****************************************************************************
-     * Public API
-     ***************************************************************************/
+  /****************************************************************************
+   * Public API
+   ***************************************************************************/
 
-public:
-    /* Compresses raw NV21 image into a JPEG.
-     * The compressed image will be saved in mStream member of this class. Use
-     * getCompressedSize method to obtain buffer size of the compressed image,
-     * and getCompressedImage to copy out the compressed image.
-     * Param:
-     *  image - Raw NV21 image.
-     *  metadata - Image metadata (dimensions, location etc).
-     *  quality - JPEG quality.
-     * Return:
-     *  NO_ERROR on success, or an appropriate error status.
-     *
-     */
-    status_t compressRawImage(const void* image,
-                              const ImageMetadata* metadata,
-                              int quality);
+ public:
+  /* Compresses raw NV21 image into a JPEG.
+   * The compressed image will be saved in mStream member of this class. Use
+   * getCompressedSize method to obtain buffer size of the compressed image,
+   * and getCompressedImage to copy out the compressed image.
+   * Param:
+   *  image - Raw NV21 image.
+   *  metadata - Image metadata (dimensions, location etc).
+   *  quality - JPEG quality.
+   * Return:
+   *  NO_ERROR on success, or an appropriate error status.
+   *
+   */
+  status_t compressRawImage(const void* image, const ImageMetadata* metadata,
+                            int quality);
 
-    /* Get size of the compressed JPEG buffer.
-     * This method must be called only after a successful completion of
-     * compressRawImage call.
-     * Return:
-     *  Size of the compressed JPEG buffer.
-     */
-    size_t getCompressedSize();
+  /* Get size of the compressed JPEG buffer.
+   * This method must be called only after a successful completion of
+   * compressRawImage call.
+   * Return:
+   *  Size of the compressed JPEG buffer.
+   */
+  size_t getCompressedSize();
 
-    /* Copies out compressed JPEG buffer.
-     * This method must be called only after a successful completion of
-     * compressRawImage call.
-     * Param:
-     *  buff - Buffer where to copy the JPEG. Must be large enough to contain the
-     *      entire image.
-     */
-    void getCompressedImage(void* buff);
+  /* Copies out compressed JPEG buffer.
+   * This method must be called only after a successful completion of
+   * compressRawImage call.
+   * Param:
+   *  buff - Buffer where to copy the JPEG. Must be large enough to contain the
+   *      entire image.
+   */
+  void getCompressedImage(void* buff);
 
-    /****************************************************************************
-     * Class data
-     ***************************************************************************/
+  /****************************************************************************
+   * Class data
+   ***************************************************************************/
 
-protected:
-    /* Strides for Y (the first element), and UV (the second one) panes. */
-    int                     mStrides[2];
+ protected:
+  /* Strides for Y (the first element), and UV (the second one) panes. */
+  int mStrides[2];
 
-private:
-    // library handle to dlopen
-    static void* mDl;
-    JpegStub mStub;
+ private:
+  // library handle to dlopen
+  static void* mDl;
+  JpegStub mStub;
 };
 
 }; /* namespace android */
 
-#endif  /* HW_EMULATOR_CAMERA_JPEG_COMPRESSOR_H */
+#endif /* HW_EMULATOR_CAMERA_JPEG_COMPRESSOR_H */

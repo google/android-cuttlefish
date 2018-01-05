@@ -30,44 +30,43 @@ namespace android {
 /* Encapsulates functionality of an emulated camera connected to the host.
  */
 class EmulatedQemuCamera : public EmulatedCamera {
-public:
-    /* Constructs EmulatedQemuCamera instance. */
-    EmulatedQemuCamera(int cameraId, struct hw_module_t* module);
+ public:
+  /* Constructs EmulatedQemuCamera instance. */
+  EmulatedQemuCamera(int cameraId, struct hw_module_t* module);
 
-    /* Destructs EmulatedQemuCamera instance. */
-    ~EmulatedQemuCamera();
+  /* Destructs EmulatedQemuCamera instance. */
+  ~EmulatedQemuCamera();
 
-    /***************************************************************************
-     * EmulatedCamera virtual overrides.
-     **************************************************************************/
+  /***************************************************************************
+   * EmulatedCamera virtual overrides.
+   **************************************************************************/
 
-public:
-    /* Initializes EmulatedQemuCamera instance. */
-     status_t Initialize(const char* device_name,
-                         const char* frame_dims,
-                         const char* facing_dir);
+ public:
+  /* Initializes EmulatedQemuCamera instance. */
+  status_t Initialize(const char* device_name, const char* frame_dims,
+                      const char* facing_dir);
 
-    /***************************************************************************
-     * EmulatedCamera abstract API implementation.
-     **************************************************************************/
+  /***************************************************************************
+   * EmulatedCamera abstract API implementation.
+   **************************************************************************/
 
-protected:
-    /* Gets emulated camera device ised by this instance of the emulated camera.
-     */
-    EmulatedCameraDevice* getCameraDevice();
+ protected:
+  /* Gets emulated camera device ised by this instance of the emulated camera.
+   */
+  EmulatedCameraDevice* getCameraDevice();
 
-    /***************************************************************************
-     * Data memebers.
-     **************************************************************************/
+  /***************************************************************************
+   * Data memebers.
+   **************************************************************************/
 
-protected:
-    /* Contained qemu camera device object. */
-    EmulatedQemuCameraDevice    mQemuCameraDevice;
+ protected:
+  /* Contained qemu camera device object. */
+  EmulatedQemuCameraDevice mQemuCameraDevice;
 
-    /* Supported frame dimensions reported by the camera device. */
-    String8                     mFrameDims;
+  /* Supported frame dimensions reported by the camera device. */
+  String8 mFrameDims;
 };
 
 }; /* namespace android */
 
-#endif  /* HW_EMULATOR_CAMERA_EMULATED_QEMU_CAMERA_H */
+#endif /* HW_EMULATOR_CAMERA_EMULATED_QEMU_CAMERA_H */
