@@ -43,7 +43,7 @@ enum ExifTagId {
 };
 
 const char kExifCharArrayAscii[8] = "ASCII";
-const char kExifCharArrayUnicode[8] = "UNICODE";
+// const char kExifCharArrayUnicode[8] = "UNICODE";
 
 // Structure of an individual EXIF tag.
 struct ExifTagInfo {
@@ -59,7 +59,7 @@ class ExifTag {
   virtual ~ExifTag() {}
   virtual size_t DataSize() { return 0; }
   virtual void AppendTag(ExifTagInfo* info, size_t data_offset) = 0;
-  virtual void AppendData(uint8_t* target) {}
+  virtual void AppendData(uint8_t* /*target*/) {}
 };
 
 // EXIF structure.
@@ -147,7 +147,7 @@ class ExifUInt8Tag : public ExifTag {
  public:
   ExifUInt8Tag(uint16_t tag, size_t value) : mTag(tag), mValue(value) {}
 
-  void AppendTag(ExifTagInfo* info, size_t data_offset) {
+  void AppendTag(ExifTagInfo* info, size_t /*data_offset*/) {
     info->tag = mTag;
     info->type = ExifUInt8;
     info->count = 1;
@@ -164,7 +164,7 @@ class ExifUInt32Tag : public ExifTag {
  public:
   ExifUInt32Tag(uint16_t tag, size_t value) : mTag(tag), mValue(value) {}
 
-  void AppendTag(ExifTagInfo* info, size_t data_offset) {
+  void AppendTag(ExifTagInfo* info, size_t /*data_offset*/) {
     info->tag = mTag;
     info->type = ExifUInt32;
     info->count = 1;

@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,8 +20,11 @@ include $(CLEAR_VARS)
 
 emulator_camera_module_relative_path := hw
 emulator_camera_cflags := -fno-short-enums $(VSOC_VERSION_CFLAGS)
-emulator_camera_cflags += -Wno-unused-parameter -Wno-missing-field-initializers
-emulator_camera_clang_flags := -Wno-c++11-narrowing
+emulator_camera_cflags += \
+    -std=gnu++11 \
+    -Wall \
+    -Werror
+
 emulator_camera_shared_libraries := \
     libbase \
     libbinder \
@@ -35,8 +38,11 @@ emulator_camera_shared_libraries := \
     libcamera_metadata \
     libhardware
 
-emulator_camera_static_libraries := \
-    libjsoncpp
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -le 22; echo $$?))
+emulator_camera_shared_libraries += libjsoncpp
+else
+emulator_camera_static_libraries += libjsoncpp
+endif
 
 emulator_camera_c_includes := \
     device/google/cuttlefish_common \
@@ -83,7 +89,11 @@ else
 emulator_camera_c_includes += external/jpeg
 endif
 
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
 LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
+else
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
+endif
 LOCAL_MULTILIB := first
 LOCAL_CFLAGS := ${emulator_camera_cflags}
 LOCAL_CLANG_CFLAGS += ${emulator_camera_clang_flags}
@@ -106,8 +116,11 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 
 jpeg_module_relative_path := hw
-jpeg_cflags := -fno-short-enums
-jpeg_cflags += -Wno-unused-parameter
+jpeg_cflags := \
+    -fno-short-enums \
+    -Wall \
+    -Werror
+
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -lt 27 ; echo $$?))
 GCE_HWUI_LIB:=libskia
 GCE_HWUI_INCLUDE:=external/skia/include/core
@@ -119,9 +132,7 @@ GCE_HWUI_LIB:=libhwui
 GCE_HWUI_INCLUDE:=
 endif
 
-jpeg_clang_flags += -Wno-c++11-narrowing
 jpeg_shared_libraries := \
-    libbase \
     libcutils \
     liblog \
     $(GCE_HWUI_LIB) \
@@ -147,7 +158,11 @@ else
 jpeg_c_includes += external/jpeg
 endif
 
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
 LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
+else
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
+endif
 LOCAL_MULTILIB := first
 LOCAL_CFLAGS += ${jpeg_cflags}
 LOCAL_CLANG_CFLAGS += ${jpeg_clangflags}

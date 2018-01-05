@@ -23,6 +23,7 @@
 #define LOG_TAG "EmulatedCamera_Preview"
 #include "PreviewWindow.h"
 #include <cutils/log.h>
+#include <hardware/camera.h>
 #include "EmulatedCameraDevice.h"
 #include "GrallocModule.h"
 
@@ -93,7 +94,8 @@ void PreviewWindow::stopPreview() {
  * Public API
  ***************************************************************************/
 
-void PreviewWindow::onNextFrameAvailable(const void* frame, nsecs_t timestamp,
+void PreviewWindow::onNextFrameAvailable(const void* /*frame*/,
+                                         nsecs_t timestamp,
                                          EmulatedCameraDevice* camera_dev) {
   int res;
   Mutex::Autolock locker(&mObjectLock);

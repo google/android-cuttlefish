@@ -389,7 +389,6 @@ int EmulatedFakeCamera2::allocateStream(
   if (format != HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED) {
     unsigned int numFormats = sizeof(kAvailableFormats) / sizeof(uint32_t);
     unsigned int formatIdx = 0;
-    unsigned int sizeOffsetIdx = 0;
     for (; formatIdx < numFormats; formatIdx++) {
       if (format == (int)kAvailableFormats[formatIdx]) break;
     }
@@ -490,7 +489,7 @@ int EmulatedFakeCamera2::allocateStream(
 
 int EmulatedFakeCamera2::registerStreamBuffers(uint32_t stream_id,
                                                int num_buffers,
-                                               buffer_handle_t *buffers) {
+                                               buffer_handle_t * /*buffers*/) {
   Mutex::Autolock l(mMutex);
 
   if (!mStatusPresent) {
@@ -1382,7 +1381,6 @@ bool EmulatedFakeCamera2::ReadoutThread::threadLoop() {
 
 void EmulatedFakeCamera2::ReadoutThread::onJpegDone(
     const StreamBuffer &jpegBuffer, bool success) {
-  status_t res;
   if (!success) {
     ALOGE("%s: Error queueing compressed image buffer %p", __FUNCTION__,
           jpegBuffer.buffer);
@@ -1396,7 +1394,7 @@ void EmulatedFakeCamera2::ReadoutThread::onJpegDone(
 
   GrallocModule::getInstance().unlock(*(jpegBuffer.buffer));
   const Stream &s = mParent->getStreamInfo(jpegBuffer.streamId);
-  res = s.ops->enqueue_buffer(s.ops, mJpegTimestamp, jpegBuffer.buffer);
+  s.ops->enqueue_buffer(s.ops, mJpegTimestamp, jpegBuffer.buffer);
 }
 
 void EmulatedFakeCamera2::ReadoutThread::onJpegInputDone(
@@ -1755,8 +1753,6 @@ bool EmulatedFakeCamera2::ControlThread::threadLoop() {
     mLockAfterPassiveScan = false;
   }
 
-  uint8_t oldAfState = afState;
-
   if (afTriggered) {
     afState = processAfTrigger(afMode, afState);
   }
@@ -1990,7 +1986,7 @@ int EmulatedFakeCamera2::ControlThread::maybeStartAeScan(uint8_t aeMode,
   return aeState;
 }
 
-int EmulatedFakeCamera2::ControlThread::updateAeScan(uint8_t aeMode,
+int EmulatedFakeCamera2::ControlThread::updateAeScan(uint8_t /*aeMode*/,
                                                      bool aeLock,
                                                      uint8_t aeState,
                                                      nsecs_t *maxSleep) {
@@ -2052,7 +2048,7 @@ status_t EmulatedFakeCamera2::constructStaticInfo(camera_metadata_t **info,
   const float minFocusDistance = mFacingBack ? 1.0 / 0.05 : 0.0;
   ADD_OR_SIZE(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE, &minFocusDistance, 1);
   // 5 m hyperfocal distance for back camera, infinity (fixed focus) for front
-  const float hyperFocalDistance = mFacingBack ? 1.0 / 5.0 : 0.0;
+  // const float hyperFocalDistance = mFacingBack ? 1.0 / 5.0 : 0.0;
   ADD_OR_SIZE(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE, &minFocusDistance, 1);
 
   static const float focalLength = 3.30f;  // mm
@@ -2577,7 +2573,6 @@ status_t EmulatedFakeCamera2::addOrSize(camera_metadata_t *request,
                                         size_t *dataCount, uint32_t tag,
                                         const void *entryData,
                                         size_t entryDataCount) {
-  status_t res;
   if (!sizeRequest) {
     return add_camera_metadata_entry(request, tag, entryData, entryDataCount);
   } else {
@@ -2603,7 +2598,7 @@ bool EmulatedFakeCamera2::isStreamInUse(uint32_t id) {
   return false;
 }
 
-bool EmulatedFakeCamera2::isReprocessStreamInUse(uint32_t id) {
+bool EmulatedFakeCamera2::isReprocessStreamInUse(uint32_t /*id*/) {
   // TODO: implement
   return false;
 }

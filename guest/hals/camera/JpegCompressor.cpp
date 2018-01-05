@@ -46,10 +46,10 @@ typedef size_t (*GetCompressedSizeFunc)(JpegStub* stub);
 
 NV21JpegCompressor::NV21JpegCompressor() {
   if (mDl == NULL) {
-    mDl = dlopen("/vendor/lib/hw/camera.gce_x86.jpeg.so", RTLD_NOW);
+    mDl = dlopen("/vendor/lib/hw/camera.vsoc.jpeg.so", RTLD_NOW);
   }
   if (mDl == NULL) {
-    mDl = dlopen("/system/lib/hw/camera.gce_x86.jpeg.so", RTLD_NOW);
+    mDl = dlopen("/system/lib/hw/camera.vsoc.jpeg.so", RTLD_NOW);
   }
   assert(mDl != NULL);
 

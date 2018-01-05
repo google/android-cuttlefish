@@ -59,7 +59,7 @@ EmulatedCameraFactory::EmulatedCameraFactory()
     mEmulatedCameras.push(NULL);
   }
 
-  ALOGV("%d cameras are being emulated.", getEmulatedCameraNum());
+  ALOGV("%zu cameras are being emulated.", getEmulatedCameraNum());
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
   /* Create hotplug thread */
@@ -75,7 +75,7 @@ EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(
   ::cvd::LockGuard< ::cvd::Mutex> lock(mEmulatedCamerasMutex);
 
   if (cameraId >= getEmulatedCameraNum()) {
-    ALOGE("%s: Invalid camera ID: %d", __FUNCTION__, cameraId);
+    ALOGE("%s: Invalid camera ID: %zu", __FUNCTION__, cameraId);
     return NULL;
   }
 
@@ -112,12 +112,12 @@ EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(
       return NULL;
   }
 
-  ALOGI("%s: Camera device %d hal version is %d", __FUNCTION__, cameraId,
+  ALOGI("%s: Camera device %zu hal version is %d", __FUNCTION__, cameraId,
         definition.hal_version);
   int res = camera->Initialize(definition);
 
   if (res != NO_ERROR) {
-    ALOGE("%s: Unable to intialize camera %d: %s (%d)", __FUNCTION__, cameraId,
+    ALOGE("%s: Unable to intialize camera %zu: %s (%d)", __FUNCTION__, cameraId,
           strerror(-res), res);
     delete camera;
     return NULL;
@@ -244,9 +244,10 @@ void EmulatedCameraFactory::get_vendor_tag_ops(vendor_tag_ops_t* ops) {
 }
 #endif
 
-int EmulatedCameraFactory::open_legacy(const struct hw_module_t* module,
-                                       const char* id, uint32_t halVersion,
-                                       struct hw_device_t** device) {
+int EmulatedCameraFactory::open_legacy(const struct hw_module_t* /*module*/,
+                                       const char* /*id*/,
+                                       uint32_t /*halVersion*/,
+                                       struct hw_device_t** /*device*/) {
   // Not supporting legacy open
   return -ENOSYS;
 }

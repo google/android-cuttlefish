@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 namespace android {
 
 EmulatedCameraHotplugThread::EmulatedCameraHotplugThread(
-    size_t totalCameraCount)
+    size_t /*totalCameraCount*/)
     : Thread(/*canCallJava*/ false) {}
 
 EmulatedCameraHotplugThread::~EmulatedCameraHotplugThread() {}
@@ -51,33 +51,37 @@ bool EmulatedCameraHotplugThread::threadLoop() {
   return false;
 }
 
-String8 EmulatedCameraHotplugThread::getFilePath(int cameraId) const {
+String8 EmulatedCameraHotplugThread::getFilePath(int /*cameraId*/) const {
   return String8();
 }
 
-bool EmulatedCameraHotplugThread::createFileIfNotExists(int cameraId) const {
+bool EmulatedCameraHotplugThread::createFileIfNotExists(
+    int /*cameraId*/) const {
   return true;
 }
 
-int EmulatedCameraHotplugThread::getCameraId(String8 filePath) const {
+int EmulatedCameraHotplugThread::getCameraId(String8 /*filePath*/) const {
   // Not used anywhere.
   return NAME_NOT_FOUND;
 }
 
-int EmulatedCameraHotplugThread::getCameraId(int wd) const {
+int EmulatedCameraHotplugThread::getCameraId(int /*wd*/) const {
   // Not used anywhere.
   return NAME_NOT_FOUND;
 }
 
-SubscriberInfo* EmulatedCameraHotplugThread::getSubscriberInfo(int cameraId) {
+SubscriberInfo* EmulatedCameraHotplugThread::getSubscriberInfo(
+    int /*cameraId*/) {
   // Not used anywhere.
   return NULL;
 }
 
-bool EmulatedCameraHotplugThread::addWatch(int cameraId) { return true; }
+bool EmulatedCameraHotplugThread::addWatch(int /*cameraId*/) { return true; }
 
-bool EmulatedCameraHotplugThread::removeWatch(int cameraId) { return true; }
+bool EmulatedCameraHotplugThread::removeWatch(int /*cameraId*/) { return true; }
 
-int EmulatedCameraHotplugThread::readFile(String8 filePath) const { return 1; }
+int EmulatedCameraHotplugThread::readFile(String8 /*filePath*/) const {
+  return 1;
+}
 
 }  // namespace android

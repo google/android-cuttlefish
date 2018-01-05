@@ -59,7 +59,6 @@ class EmulatedCameraHotplugThread : public Thread {
 
   bool createFileIfNotExists(int cameraId) const;
 
-  int mInotifyFd;
   Vector<int> mSubscribedCameraIds;
   Vector<SubscriberInfo> mSubscribers;
 
