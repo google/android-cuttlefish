@@ -125,6 +125,25 @@
 
 
    {
+     "device_name" : "ril",
+     "__comment" : [
+       "Holds initialization values for the ril hal."
+     ],
+     "current_version" : 0,
+     "min_compatible_version" : 0,
+     "region_size" : 4096,
+
+     "guest_to_host_signal_table" : {
+       "num_nodes_lg2" : 2
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 2
+      }
+   },
+
+
+   {
     "device_name" : "e2e_primary",
     "__comment" : "Sanity testing",
     "current_version" : 1,

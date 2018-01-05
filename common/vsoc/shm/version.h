@@ -136,6 +136,14 @@ constexpr size_t WifiExchangeLayout_size =
     6;      // uint8_t[6] MAC address.
 }  // namespace wifi
 
+// Versioning information for ril_layout.h
+namespace ril {
+namespace {
+const uint32_t version = 1;
+}
+static const std::size_t RilLayout_size = 68;
+}  // namespace ril
+
 
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region
