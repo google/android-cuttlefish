@@ -27,40 +27,40 @@
 
 namespace android {
 
-/* Encapsulates functionality of an advanced fake camera based on real host camera data.
+/* Encapsulates functionality of an advanced fake camera based on real host
+ * camera data.
  */
 class EmulatedQemuCamera2 : public EmulatedCamera2 {
-public:
-    /* Constructs EmulatedFakeCamera instance. */
-    EmulatedQemuCamera2(int cameraId, bool facingBack, struct hw_module_t* module);
+ public:
+  /* Constructs EmulatedFakeCamera instance. */
+  EmulatedQemuCamera2(int cameraId, bool facingBack,
+                      struct hw_module_t* module);
 
-    /* Destructs EmulatedFakeCamera instance. */
-    ~EmulatedQemuCamera2();
+  /* Destructs EmulatedFakeCamera instance. */
+  ~EmulatedQemuCamera2();
 
-    /****************************************************************************
-     * EmulatedCamera2 virtual overrides.
-     ***************************************************************************/
+  /****************************************************************************
+   * EmulatedCamera2 virtual overrides.
+   ***************************************************************************/
 
-public:
-    /* Initializes EmulatedQemuCamera2 instance. */
-     status_t Initialize();
+ public:
+  /* Initializes EmulatedQemuCamera2 instance. */
+  status_t Initialize();
 
-    /****************************************************************************
-     * EmulatedCamera abstract API implementation.
-     ***************************************************************************/
+  /****************************************************************************
+   * EmulatedCamera abstract API implementation.
+   ***************************************************************************/
 
-protected:
+ protected:
+  /****************************************************************************
+   * Data memebers.
+   ***************************************************************************/
 
-    /****************************************************************************
-     * Data memebers.
-     ***************************************************************************/
-
-protected:
-    /* Facing back (true) or front (false) switch. */
-    bool                        mFacingBack;
-
+ protected:
+  /* Facing back (true) or front (false) switch. */
+  bool mFacingBack;
 };
 
 }; /* namespace android */
 
-#endif  /* HW_EMULATOR_CAMERA_EMULATED_QEMU_CAMERA2_H */
+#endif /* HW_EMULATOR_CAMERA_EMULATED_QEMU_CAMERA2_H */

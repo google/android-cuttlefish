@@ -32,90 +32,90 @@ class EmulatedQemuCamera;
 /* Encapsulates an emulated camera device connected to the host.
  */
 class EmulatedQemuCameraDevice : public EmulatedCameraDevice {
-public:
-    /* Constructs EmulatedQemuCameraDevice instance. */
-    explicit EmulatedQemuCameraDevice(EmulatedQemuCamera* camera_hal);
+ public:
+  /* Constructs EmulatedQemuCameraDevice instance. */
+  explicit EmulatedQemuCameraDevice(EmulatedQemuCamera* camera_hal);
 
-    /* Destructs EmulatedQemuCameraDevice instance. */
-    ~EmulatedQemuCameraDevice();
+  /* Destructs EmulatedQemuCameraDevice instance. */
+  ~EmulatedQemuCameraDevice();
 
-    /***************************************************************************
-     * Public API
-     **************************************************************************/
+  /***************************************************************************
+   * Public API
+   **************************************************************************/
 
-public:
-    /* Initializes EmulatedQemuCameraDevice instance.
-     * Param:
-     *  device_name - Name of the camera device connected to the host. The name
-     *      that is used here must have been reported by the 'factory' camera
-     *      service when it listed camera devices connected to the host.
-     * Return:
-     *  NO_ERROR on success, or an appropriate error status.
-     */
-    status_t Initialize(const char* device_name);
+ public:
+  /* Initializes EmulatedQemuCameraDevice instance.
+   * Param:
+   *  device_name - Name of the camera device connected to the host. The name
+   *      that is used here must have been reported by the 'factory' camera
+   *      service when it listed camera devices connected to the host.
+   * Return:
+   *  NO_ERROR on success, or an appropriate error status.
+   */
+  status_t Initialize(const char* device_name);
 
-    /***************************************************************************
-     * Emulated camera device abstract interface implementation.
-     * See declarations of these methods in EmulatedCameraDevice class for
-     * information on each of these methods.
-     **************************************************************************/
+  /***************************************************************************
+   * Emulated camera device abstract interface implementation.
+   * See declarations of these methods in EmulatedCameraDevice class for
+   * information on each of these methods.
+   **************************************************************************/
 
-public:
-    /* Connects to the camera device. */
-    status_t connectDevice();
+ public:
+  /* Connects to the camera device. */
+  status_t connectDevice();
 
-    /* Disconnects from the camera device. */
-    status_t disconnectDevice();
+  /* Disconnects from the camera device. */
+  status_t disconnectDevice();
 
-    /* Starts capturing frames from the camera device. */
-    status_t startDevice(int width, int height, uint32_t pix_fmt, int fps);
+  /* Starts capturing frames from the camera device. */
+  status_t startDevice(int width, int height, uint32_t pix_fmt, int fps);
 
-    /* Stops capturing frames from the camera device. */
-    status_t stopDevice();
+  /* Stops capturing frames from the camera device. */
+  status_t stopDevice();
 
-    /***************************************************************************
-     * EmulatedCameraDevice virtual overrides
-     * See declarations of these methods in EmulatedCameraDevice class for
-     * information on each of these methods.
-     **************************************************************************/
+  /***************************************************************************
+   * EmulatedCameraDevice virtual overrides
+   * See declarations of these methods in EmulatedCameraDevice class for
+   * information on each of these methods.
+   **************************************************************************/
 
-public:
-    /* Gets current preview fame into provided buffer.
-     * We override this method in order to provide preview frames cached in this
-     * object.
-     */
-    status_t getCurrentPreviewFrame(void* buffer);
+ public:
+  /* Gets current preview fame into provided buffer.
+   * We override this method in order to provide preview frames cached in this
+   * object.
+   */
+  status_t getCurrentPreviewFrame(void* buffer);
 
-    /***************************************************************************
-     * Worker thread management overrides.
-     * See declarations of these methods in EmulatedCameraDevice class for
-     * information on each of these methods.
-     **************************************************************************/
+  /***************************************************************************
+   * Worker thread management overrides.
+   * See declarations of these methods in EmulatedCameraDevice class for
+   * information on each of these methods.
+   **************************************************************************/
 
-protected:
-    /* Implementation of the worker thread routine. */
-    bool inWorkerThread();
+ protected:
+  /* Implementation of the worker thread routine. */
+  bool inWorkerThread();
 
-    /***************************************************************************
-     * Qemu camera device data members
-     **************************************************************************/
+  /***************************************************************************
+   * Qemu camera device data members
+   **************************************************************************/
 
-private:
-    /* Qemu client that is used to communicate with the 'emulated camera'
-     * service, created for this instance in the emulator. */
-    CameraQemuClient    mQemuClient;
+ private:
+  /* Qemu client that is used to communicate with the 'emulated camera'
+   * service, created for this instance in the emulator. */
+  CameraQemuClient mQemuClient;
 
-    /* Name of the camera device connected to the host. */
-    String8             mDeviceName;
+  /* Name of the camera device connected to the host. */
+  String8 mDeviceName;
 
-    /* Current preview framebuffer. */
-    uint32_t*           mPreviewFrame;
+  /* Current preview framebuffer. */
+  uint32_t* mPreviewFrame;
 
-    /* Emulated FPS (frames per second).
-     * We will emulate 50 FPS. */
-    static const int    mEmulatedFPS = 50;
+  /* Emulated FPS (frames per second).
+   * We will emulate 50 FPS. */
+  static const int mEmulatedFPS = 50;
 };
 
 }; /* namespace android */
 
-#endif  /* HW_EMULATOR_CAMERA_EMULATED_QEMU_CAMERA_DEVICE_H */
+#endif /* HW_EMULATOR_CAMERA_EMULATED_QEMU_CAMERA_DEVICE_H */

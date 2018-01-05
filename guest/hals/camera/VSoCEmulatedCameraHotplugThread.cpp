@@ -17,78 +17,67 @@
 #define LOG_TAG "EmulatedCamera_HotplugThread"
 #include <cutils/log.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
-#include "EmulatedCameraHotplugThread.h"
 #include "EmulatedCameraFactory.h"
+#include "EmulatedCameraHotplugThread.h"
 
 #define SubscriberInfo EmulatedCameraHotplugThread::SubscriberInfo
 
 namespace android {
 
 EmulatedCameraHotplugThread::EmulatedCameraHotplugThread(
-    size_t totalCameraCount) :
-        Thread(/*canCallJava*/false) {}
+    size_t totalCameraCount)
+    : Thread(/*canCallJava*/ false) {}
 
 EmulatedCameraHotplugThread::~EmulatedCameraHotplugThread() {}
 
 status_t EmulatedCameraHotplugThread::requestExitAndWait() {
-    ALOGE("%s: Not implemented. Use requestExit + join instead",
-          __FUNCTION__);
-    return INVALID_OPERATION;
+  ALOGE("%s: Not implemented. Use requestExit + join instead", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 void EmulatedCameraHotplugThread::requestExit() {
-    ALOGV("%s: Requesting thread exit", __FUNCTION__);
-    mRunning = false;
+  ALOGV("%s: Requesting thread exit", __FUNCTION__);
+  mRunning = false;
 }
 
-status_t EmulatedCameraHotplugThread::readyToRun() {
-    return OK;
-}
+status_t EmulatedCameraHotplugThread::readyToRun() { return OK; }
 
 bool EmulatedCameraHotplugThread::threadLoop() {
-    // Thread is irrelevant right now; hoplug is not supported.
-    return false;
+  // Thread is irrelevant right now; hoplug is not supported.
+  return false;
 }
 
 String8 EmulatedCameraHotplugThread::getFilePath(int cameraId) const {
-    return String8();
+  return String8();
 }
 
-bool EmulatedCameraHotplugThread::createFileIfNotExists(int cameraId) const
-{
-    return true;
+bool EmulatedCameraHotplugThread::createFileIfNotExists(int cameraId) const {
+  return true;
 }
 
 int EmulatedCameraHotplugThread::getCameraId(String8 filePath) const {
-    // Not used anywhere.
-    return NAME_NOT_FOUND;
+  // Not used anywhere.
+  return NAME_NOT_FOUND;
 }
 
 int EmulatedCameraHotplugThread::getCameraId(int wd) const {
-    // Not used anywhere.
-    return NAME_NOT_FOUND;
+  // Not used anywhere.
+  return NAME_NOT_FOUND;
 }
 
-SubscriberInfo* EmulatedCameraHotplugThread::getSubscriberInfo(int cameraId)
-{
-    // Not used anywhere.
-    return NULL;
+SubscriberInfo* EmulatedCameraHotplugThread::getSubscriberInfo(int cameraId) {
+  // Not used anywhere.
+  return NULL;
 }
 
-bool EmulatedCameraHotplugThread::addWatch(int cameraId) {
-    return true;
-}
+bool EmulatedCameraHotplugThread::addWatch(int cameraId) { return true; }
 
-bool EmulatedCameraHotplugThread::removeWatch(int cameraId) {
-    return true;
-}
+bool EmulatedCameraHotplugThread::removeWatch(int cameraId) { return true; }
 
-int EmulatedCameraHotplugThread::readFile(String8 filePath) const {
-    return 1;
-}
+int EmulatedCameraHotplugThread::readFile(String8 filePath) const { return 1; }
 
-} //namespace android
+}  // namespace android

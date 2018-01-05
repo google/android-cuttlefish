@@ -32,87 +32,81 @@
 
 namespace android {
 
-EmulatedBaseCamera::EmulatedBaseCamera(int cameraId,
-        uint32_t cameraVersion,
-        struct hw_device_t* device,
-        struct hw_module_t* module)
-        : mCameraInfo(NULL),
-          mCameraID(cameraId),
-          mCameraDeviceVersion(cameraVersion)
-{
-    /*
-     * Initialize camera_device descriptor for this object.
-     */
+EmulatedBaseCamera::EmulatedBaseCamera(int cameraId, uint32_t cameraVersion,
+                                       struct hw_device_t* device,
+                                       struct hw_module_t* module)
+    : mCameraInfo(NULL),
+      mCameraID(cameraId),
+      mCameraDeviceVersion(cameraVersion) {
+  /*
+   * Initialize camera_device descriptor for this object.
+   */
 
-    /* Common header */
-    device->tag = HARDWARE_DEVICE_TAG;
-    device->version = cameraVersion;
-    device->module = module;
-    device->close = NULL; // Must be filled in by child implementation
+  /* Common header */
+  device->tag = HARDWARE_DEVICE_TAG;
+  device->version = cameraVersion;
+  device->module = module;
+  device->close = NULL;  // Must be filled in by child implementation
 }
 
-EmulatedBaseCamera::~EmulatedBaseCamera()
-{
-}
+EmulatedBaseCamera::~EmulatedBaseCamera() {}
 
-status_t EmulatedBaseCamera::getCameraInfo(struct camera_info* info)
-{
-    ALOGV("%s", __FUNCTION__);
+status_t EmulatedBaseCamera::getCameraInfo(struct camera_info* info) {
+  ALOGV("%s", __FUNCTION__);
 
-    info->device_version = mCameraDeviceVersion;
+  info->device_version = mCameraDeviceVersion;
 #if VSOC_PLATFORM_SDK_BEFORE(O)
-    // static_camera_characteristics should be initialized if and only if two
-    // conditions hold:
-    //    CAMERA_MODULE_API_VERSION_2_0 or higher
-    //    CAMERA_DEVICE_API_VERSION_2_0 or higher
-    // See android/hardware/libhardware/include/hardware/camera_common.h
-    //
-    // The CAMERA_MODULE_API_VERSION is above 2 on all of the supported
-    // branches.
-    //
-    // The CVD supports both CAMERA_DEVICE_API_VERSION_1_0 and
-    // CAMERA_DEVICE_API_VERSION_3_0.
-    //
-    // By the spec, the framework should not look at this field on
-    // CAMERA_DEVICE_API_VERSION_1_0. However, the framework
-    // referenced them unconditionally in the M, N, and N-MR1 branches.
-    // See b/67841929 for evidence.
-    //
-    // We have to support those branches, so make initialization uconditional.
-    // However, keep the 0xcafef00d fake initiziation on O and later to ensure
-    // that we'll catch future framework changes that violate the spec.
-    info->static_camera_characteristics = mCameraInfo;
+  // static_camera_characteristics should be initialized if and only if two
+  // conditions hold:
+  //    CAMERA_MODULE_API_VERSION_2_0 or higher
+  //    CAMERA_DEVICE_API_VERSION_2_0 or higher
+  // See android/hardware/libhardware/include/hardware/camera_common.h
+  //
+  // The CAMERA_MODULE_API_VERSION is above 2 on all of the supported
+  // branches.
+  //
+  // The CVD supports both CAMERA_DEVICE_API_VERSION_1_0 and
+  // CAMERA_DEVICE_API_VERSION_3_0.
+  //
+  // By the spec, the framework should not look at this field on
+  // CAMERA_DEVICE_API_VERSION_1_0. However, the framework
+  // referenced them unconditionally in the M, N, and N-MR1 branches.
+  // See b/67841929 for evidence.
+  //
+  // We have to support those branches, so make initialization uconditional.
+  // However, keep the 0xcafef00d fake initiziation on O and later to ensure
+  // that we'll catch future framework changes that violate the spec.
+  info->static_camera_characteristics = mCameraInfo;
 #else
-    if (mCameraDeviceVersion >= HARDWARE_DEVICE_API_VERSION(2, 0)) {
-        info->static_camera_characteristics = mCameraInfo;
-    } else {
-        info->static_camera_characteristics = (camera_metadata_t*)0xcafef00d;
-    }
+  if (mCameraDeviceVersion >= HARDWARE_DEVICE_API_VERSION(2, 0)) {
+    info->static_camera_characteristics = mCameraInfo;
+  } else {
+    info->static_camera_characteristics = (camera_metadata_t*)0xcafef00d;
+  }
 #endif
 
-    return NO_ERROR;
+  return NO_ERROR;
 }
 
 status_t EmulatedBaseCamera::plugCamera() {
-    ALOGE("%s: not supported", __FUNCTION__);
-    return INVALID_OPERATION;
+  ALOGE("%s: not supported", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 status_t EmulatedBaseCamera::unplugCamera() {
-    ALOGE("%s: not supported", __FUNCTION__);
-    return INVALID_OPERATION;
+  ALOGE("%s: not supported", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 camera_device_status_t EmulatedBaseCamera::getHotplugStatus() {
-    return CAMERA_DEVICE_STATUS_PRESENT;
+  return CAMERA_DEVICE_STATUS_PRESENT;
 }
 #endif
 
 status_t EmulatedBaseCamera::setTorchMode(bool /* enabled */) {
-    ALOGE("%s: not supported", __FUNCTION__);
-    return INVALID_OPERATION;
+  ALOGE("%s: not supported", __FUNCTION__);
+  return INVALID_OPERATION;
 }
-
 
 } /* namespace android */

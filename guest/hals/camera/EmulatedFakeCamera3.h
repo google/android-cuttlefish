@@ -23,14 +23,14 @@
  * interace.
  */
 
-#include "EmulatedCamera3.h"
-#include "fake-pipeline2/Base.h"
-#include "fake-pipeline2/Sensor.h"
-#include "fake-pipeline2/JpegCompressor.h"
 #include <camera/CameraMetadata.h>
-#include <utils/SortedVector.h>
 #include <utils/List.h>
 #include <utils/Mutex.h>
+#include <utils/SortedVector.h>
+#include "EmulatedCamera3.h"
+#include "fake-pipeline2/Base.h"
+#include "fake-pipeline2/JpegCompressor.h"
+#include "fake-pipeline2/Sensor.h"
 
 namespace android {
 
@@ -44,251 +44,244 @@ namespace android {
  * response to hw_module_methods_t::open, and camera_device::close callbacks.
  */
 class EmulatedFakeCamera3 : public EmulatedCamera3,
-        private Sensor::SensorListener {
-public:
+                            private Sensor::SensorListener {
+ public:
+  EmulatedFakeCamera3(int cameraId, bool facingBack,
+                      struct hw_module_t *module);
 
-    EmulatedFakeCamera3(int cameraId, bool facingBack,
-            struct hw_module_t* module);
+  virtual ~EmulatedFakeCamera3();
 
-    virtual ~EmulatedFakeCamera3();
+  /****************************************************************************
+   * EmulatedCamera3 virtual overrides
+   ***************************************************************************/
 
-    /****************************************************************************
-     * EmulatedCamera3 virtual overrides
-     ***************************************************************************/
+ public:
+  virtual status_t Initialize(const cvd::CameraDefinition &params);
 
-public:
+  /****************************************************************************
+   * Camera module API and generic hardware device API implementation
+   ***************************************************************************/
 
-    virtual status_t Initialize(const cvd::CameraDefinition& params);
+ public:
+  virtual status_t connectCamera(hw_device_t **device);
 
-    /****************************************************************************
-     * Camera module API and generic hardware device API implementation
-     ***************************************************************************/
+  virtual status_t closeCamera();
 
-public:
-    virtual status_t connectCamera(hw_device_t** device);
+  virtual status_t getCameraInfo(struct camera_info *info);
 
-    virtual status_t closeCamera();
+  virtual status_t setTorchMode(bool enabled);
 
-    virtual status_t getCameraInfo(struct camera_info *info);
+  /****************************************************************************
+   * EmulatedCamera3 abstract API implementation
+   ***************************************************************************/
 
-    virtual status_t setTorchMode(bool enabled);
+ protected:
+  virtual status_t configureStreams(camera3_stream_configuration *streamList);
 
-    /****************************************************************************
-     * EmulatedCamera3 abstract API implementation
-     ***************************************************************************/
+  virtual status_t registerStreamBuffers(
+      const camera3_stream_buffer_set *bufferSet);
 
-protected:
+  virtual const camera_metadata_t *constructDefaultRequestSettings(int type);
 
-    virtual status_t configureStreams(
-        camera3_stream_configuration *streamList);
+  virtual status_t processCaptureRequest(camera3_capture_request *request);
 
-    virtual status_t registerStreamBuffers(
-        const camera3_stream_buffer_set *bufferSet) ;
+  virtual status_t flush();
 
-    virtual const camera_metadata_t* constructDefaultRequestSettings(
-        int type);
+  /** Debug methods */
 
-    virtual status_t processCaptureRequest(camera3_capture_request *request);
+  virtual void dump(int fd);
 
-    virtual status_t flush();
+ private:
+  /**
+   * Get the requested capability set for this camera
+   */
+  status_t getCameraCapabilities();
 
-    /** Debug methods */
+  bool hasCapability(AvailableCapabilities cap);
 
-    virtual void dump(int fd);
+  /**
+   * Build the static info metadata buffer for this device
+   */
+  status_t constructStaticInfo(const cvd::CameraDefinition &params);
 
-private:
+  /**
+   * Run the fake 3A algorithms as needed. May override/modify settings
+   * values.
+   */
+  status_t process3A(CameraMetadata &settings);
 
-    /**
-     * Get the requested capability set for this camera
-     */
-    status_t getCameraCapabilities();
+  status_t doFakeAE(CameraMetadata &settings);
+  status_t doFakeAF(CameraMetadata &settings);
+  status_t doFakeAWB(CameraMetadata &settings);
+  void update3A(CameraMetadata &settings);
 
-    bool hasCapability(AvailableCapabilities cap);
+  /** Signal from readout thread that it doesn't have anything to do */
+  void signalReadoutIdle();
 
-    /**
-     * Build the static info metadata buffer for this device
-     */
-    status_t constructStaticInfo(const cvd::CameraDefinition& params);
+  /** Handle interrupt events from the sensor */
+  void onSensorEvent(uint32_t frameNumber, Event e, nsecs_t timestamp);
 
-    /**
-     * Run the fake 3A algorithms as needed. May override/modify settings
-     * values.
-     */
-    status_t process3A(CameraMetadata &settings);
+  /****************************************************************************
+   * Static configuration information
+   ***************************************************************************/
+ private:
+  static const uint32_t kMaxRawStreamCount = 1;
+  static const uint32_t kMaxProcessedStreamCount = 3;
+  static const uint32_t kMaxJpegStreamCount = 1;
+  static const uint32_t kMaxReprocessStreamCount = 2;
+  static const uint32_t kMaxBufferCount = 4;
+  // We need a positive stream ID to distinguish external buffers from
+  // sensor-generated buffers which use a nonpositive ID. Otherwise, HAL3 has
+  // no concept of a stream id.
+  static const uint32_t kGenericStreamId = 1;
+  static const int32_t kAvailableFormats[];
 
-    status_t doFakeAE(CameraMetadata &settings);
-    status_t doFakeAF(CameraMetadata &settings);
-    status_t doFakeAWB(CameraMetadata &settings);
-    void     update3A(CameraMetadata &settings);
+  static const int64_t kSyncWaitTimeout = 10000000;   // 10 ms
+  static const int32_t kMaxSyncTimeoutCount = 1000;   // 1000 kSyncWaitTimeouts
+  static const uint32_t kFenceTimeoutMs = 2000;       // 2 s
+  static const nsecs_t kJpegTimeoutNs = 5000000000l;  // 5 s
 
-    /** Signal from readout thread that it doesn't have anything to do */
-    void     signalReadoutIdle();
+  /****************************************************************************
+   * Data members.
+   ***************************************************************************/
 
-    /** Handle interrupt events from the sensor */
-    void     onSensorEvent(uint32_t frameNumber, Event e, nsecs_t timestamp);
+  /* HAL interface serialization lock. */
+  Mutex mLock;
 
-    /****************************************************************************
-     * Static configuration information
-     ***************************************************************************/
-private:
-    static const uint32_t kMaxRawStreamCount = 1;
-    static const uint32_t kMaxProcessedStreamCount = 3;
-    static const uint32_t kMaxJpegStreamCount = 1;
-    static const uint32_t kMaxReprocessStreamCount = 2;
-    static const uint32_t kMaxBufferCount = 4;
-    // We need a positive stream ID to distinguish external buffers from
-    // sensor-generated buffers which use a nonpositive ID. Otherwise, HAL3 has
-    // no concept of a stream id.
-    static const uint32_t kGenericStreamId = 1;
-    static const int32_t  kAvailableFormats[];
+  /* Facing back (true) or front (false) switch. */
+  bool mFacingBack;
+  int32_t mSensorWidth;
+  int32_t mSensorHeight;
 
-    static const int64_t  kSyncWaitTimeout     = 10000000; // 10 ms
-    static const int32_t  kMaxSyncTimeoutCount = 1000; // 1000 kSyncWaitTimeouts
-    static const uint32_t kFenceTimeoutMs      = 2000; // 2 s
-    static const nsecs_t  kJpegTimeoutNs       = 5000000000l; // 5 s
+  SortedVector<AvailableCapabilities> mCapabilities;
 
-    /****************************************************************************
-     * Data members.
-     ***************************************************************************/
+  /**
+   * Cache for default templates. Once one is requested, the pointer must be
+   * valid at least until close() is called on the device
+   */
+  camera_metadata_t *mDefaultTemplates[CAMERA3_TEMPLATE_COUNT];
 
-    /* HAL interface serialization lock. */
-    Mutex              mLock;
+  /**
+   * Private stream information, stored in camera3_stream_t->priv.
+   */
+  struct PrivateStreamInfo {
+    bool alive;
+  };
 
-    /* Facing back (true) or front (false) switch. */
-    bool               mFacingBack;
-    int32_t            mSensorWidth;
-    int32_t            mSensorHeight;
+  // Shortcut to the input stream
+  camera3_stream_t *mInputStream;
 
-    SortedVector<AvailableCapabilities> mCapabilities;
+  typedef List<camera3_stream_t *> StreamList;
+  typedef List<camera3_stream_t *>::iterator StreamIterator;
+  typedef Vector<camera3_stream_buffer> HalBufferVector;
 
-    /**
-     * Cache for default templates. Once one is requested, the pointer must be
-     * valid at least until close() is called on the device
-     */
-    camera_metadata_t *mDefaultTemplates[CAMERA3_TEMPLATE_COUNT];
+  // All streams, including input stream
+  StreamList mStreams;
 
-    /**
-     * Private stream information, stored in camera3_stream_t->priv.
-     */
-    struct PrivateStreamInfo {
-        bool alive;
+  // Cached settings from latest submitted request
+  CameraMetadata mPrevSettings;
+
+  /** Fake hardware interfaces */
+  sp<Sensor> mSensor;
+  sp<JpegCompressor> mJpegCompressor;
+  friend class JpegCompressor;
+
+  /** Processing thread for sending out results */
+
+  class ReadoutThread : public Thread, private JpegCompressor::JpegListener {
+   public:
+    ReadoutThread(EmulatedFakeCamera3 *parent);
+    ~ReadoutThread();
+
+    struct Request {
+      uint32_t frameNumber;
+      CameraMetadata settings;
+      HalBufferVector *buffers;
+      Buffers *sensorBuffers;
     };
 
-    // Shortcut to the input stream
-    camera3_stream_t*  mInputStream;
+    /**
+     * Interface to parent class
+     */
 
-    typedef List<camera3_stream_t*>           StreamList;
-    typedef List<camera3_stream_t*>::iterator StreamIterator;
-    typedef Vector<camera3_stream_buffer>     HalBufferVector;
+    // Place request in the in-flight queue to wait for sensor capture
+    void queueCaptureRequest(const Request &r);
 
-    // All streams, including input stream
-    StreamList         mStreams;
+    // Test if the readout thread is idle (no in-flight requests, not
+    // currently reading out anything
+    bool isIdle();
 
-    // Cached settings from latest submitted request
-    CameraMetadata     mPrevSettings;
+    // Wait until isIdle is true
+    status_t waitForReadout();
 
-    /** Fake hardware interfaces */
-    sp<Sensor>         mSensor;
-    sp<JpegCompressor> mJpegCompressor;
-    friend class       JpegCompressor;
+   private:
+    static const nsecs_t kWaitPerLoop = 10000000L;  // 10 ms
+    static const nsecs_t kMaxWaitLoops = 1000;
+    static const size_t kMaxQueueSize = 2;
 
-    /** Processing thread for sending out results */
+    EmulatedFakeCamera3 *mParent;
+    Mutex mLock;
 
-    class ReadoutThread : public Thread, private JpegCompressor::JpegListener {
-      public:
-        ReadoutThread(EmulatedFakeCamera3 *parent);
-        ~ReadoutThread();
+    List<Request> mInFlightQueue;
+    Condition mInFlightSignal;
+    bool mThreadActive;
 
-        struct Request {
-            uint32_t         frameNumber;
-            CameraMetadata   settings;
-            HalBufferVector *buffers;
-            Buffers         *sensorBuffers;
-        };
+    virtual bool threadLoop();
 
-        /**
-         * Interface to parent class
-         */
+    // Only accessed by threadLoop
 
-        // Place request in the in-flight queue to wait for sensor capture
-        void     queueCaptureRequest(const Request &r);
+    Request mCurrentRequest;
 
-        // Test if the readout thread is idle (no in-flight requests, not
-        // currently reading out anything
-        bool     isIdle();
+    // Jpeg completion callbacks
 
-        // Wait until isIdle is true
-        status_t waitForReadout();
+    Mutex mJpegLock;
+    bool mJpegWaiting;
+    camera3_stream_buffer mJpegHalBuffer;
+    uint32_t mJpegFrameNumber;
+    virtual void onJpegDone(const StreamBuffer &jpegBuffer, bool success);
+    virtual void onJpegInputDone(const StreamBuffer &inputBuffer);
+  };
 
-      private:
-        static const nsecs_t kWaitPerLoop  = 10000000L; // 10 ms
-        static const nsecs_t kMaxWaitLoops = 1000;
-        static const size_t  kMaxQueueSize = 2;
+  sp<ReadoutThread> mReadoutThread;
 
-        EmulatedFakeCamera3 *mParent;
-        Mutex mLock;
+  /** Fake 3A constants */
 
-        List<Request> mInFlightQueue;
-        Condition     mInFlightSignal;
-        bool          mThreadActive;
+  static const nsecs_t kNormalExposureTime;
+  static const nsecs_t kFacePriorityExposureTime;
+  static const int kNormalSensitivity;
+  static const int kFacePrioritySensitivity;
+  // Rate of converging AE to new target value, as fraction of difference
+  // between current and target value.
+  static const float kExposureTrackRate;
+  // Minimum duration for precapture state. May be longer if slow to converge
+  // to target exposure
+  static const int kPrecaptureMinFrames;
+  // How often to restart AE 'scanning'
+  static const int kStableAeMaxFrames;
+  // Maximum stop below 'normal' exposure time that we'll wander to while
+  // pretending to converge AE. In powers of 2. (-2 == 1/4 as bright)
+  static const float kExposureWanderMin;
+  // Maximum stop above 'normal' exposure time that we'll wander to while
+  // pretending to converge AE. In powers of 2. (2 == 4x as bright)
+  static const float kExposureWanderMax;
 
-        virtual bool threadLoop();
+  /** Fake 3A state */
 
-        // Only accessed by threadLoop
+  uint8_t mControlMode;
+  bool mFacePriority;
+  uint8_t mAeState;
+  uint8_t mAfState;
+  uint8_t mAwbState;
+  uint8_t mAeMode;
+  uint8_t mAfMode;
+  uint8_t mAwbMode;
 
-        Request mCurrentRequest;
-
-        // Jpeg completion callbacks
-
-        Mutex                 mJpegLock;
-        bool                  mJpegWaiting;
-        camera3_stream_buffer mJpegHalBuffer;
-        uint32_t              mJpegFrameNumber;
-        virtual void onJpegDone(const StreamBuffer &jpegBuffer, bool success);
-        virtual void onJpegInputDone(const StreamBuffer &inputBuffer);
-    };
-
-    sp<ReadoutThread> mReadoutThread;
-
-    /** Fake 3A constants */
-
-    static const nsecs_t kNormalExposureTime;
-    static const nsecs_t kFacePriorityExposureTime;
-    static const int     kNormalSensitivity;
-    static const int     kFacePrioritySensitivity;
-    // Rate of converging AE to new target value, as fraction of difference between
-    // current and target value.
-    static const float   kExposureTrackRate;
-    // Minimum duration for precapture state. May be longer if slow to converge
-    // to target exposure
-    static const int     kPrecaptureMinFrames;
-    // How often to restart AE 'scanning'
-    static const int     kStableAeMaxFrames;
-    // Maximum stop below 'normal' exposure time that we'll wander to while
-    // pretending to converge AE. In powers of 2. (-2 == 1/4 as bright)
-    static const float   kExposureWanderMin;
-    // Maximum stop above 'normal' exposure time that we'll wander to while
-    // pretending to converge AE. In powers of 2. (2 == 4x as bright)
-    static const float   kExposureWanderMax;
-
-    /** Fake 3A state */
-
-    uint8_t mControlMode;
-    bool    mFacePriority;
-    uint8_t mAeState;
-    uint8_t mAfState;
-    uint8_t mAwbState;
-    uint8_t mAeMode;
-    uint8_t mAfMode;
-    uint8_t mAwbMode;
-
-    int     mAeCounter;
-    nsecs_t mAeCurrentExposureTime;
-    nsecs_t mAeTargetExposureTime;
-    int     mAeCurrentSensitivity;
-
+  int mAeCounter;
+  nsecs_t mAeCurrentExposureTime;
+  nsecs_t mAeTargetExposureTime;
+  int mAeCurrentSensitivity;
 };
 
-} // namespace android
+}  // namespace android
 
-#endif // HW_EMULATOR_CAMERA_EMULATED_CAMERA3_H
+#endif  // HW_EMULATOR_CAMERA_EMULATED_CAMERA3_H
