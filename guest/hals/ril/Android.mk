@@ -27,9 +27,12 @@ LOCAL_SHARED_LIBRARIES := \
   libcuttlefish_fs \
   cuttlefish_net \
   cuttlefish_auto_resources \
-  libbase
+  libbase \
+  vsoc_lib
 
-LOCAL_C_INCLUDES := device/google/cuttlefish_common
+LOCAL_C_INCLUDES := \
+    device/google/cuttlefish_common \
+    device/google/cuttlefish_kernel
 
 LOCAL_CFLAGS += \
   -Wall \
@@ -40,5 +43,9 @@ LOCAL_MODULE:= libvsoc-ril
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 
-include $(BUILD_SHARED_LIBRARY)
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
 
+include $(BUILD_SHARED_LIBRARY)
