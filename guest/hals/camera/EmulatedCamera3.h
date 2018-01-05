@@ -97,7 +97,7 @@ class EmulatedCamera3 : public camera3_device, public EmulatedBaseCamera {
 
   virtual status_t getCameraInfo(struct camera_info *info);
 
-  virtual status_t getImageMetadata(struct ImageMetadata *meta) {
+  virtual status_t getImageMetadata(struct ImageMetadata * /*meta*/) {
     // TODO(ender): fill in Image metadata structure.
     return ENOSYS;
   }

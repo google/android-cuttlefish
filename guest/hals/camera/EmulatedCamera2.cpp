@@ -71,7 +71,7 @@ EmulatedCamera2::~EmulatedCamera2() {}
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera2::Initialize(const cvd::CameraDefinition &props) {
+status_t EmulatedCamera2::Initialize(const cvd::CameraDefinition & /*props*/) {
   return NO_ERROR;
 }
 
@@ -106,66 +106,74 @@ int EmulatedCamera2::getInProgressCount() { return INVALID_OPERATION; }
 int EmulatedCamera2::flushCapturesInProgress() { return INVALID_OPERATION; }
 
 /** Construct a default request for a given use case */
-int EmulatedCamera2::constructDefaultRequest(int request_template,
-                                             camera_metadata_t **request) {
+int EmulatedCamera2::constructDefaultRequest(int /*request_template*/,
+                                             camera_metadata_t ** /*request*/) {
   return INVALID_OPERATION;
 }
 
 /** Output stream creation and management */
 
-int EmulatedCamera2::allocateStream(uint32_t width, uint32_t height, int format,
-                                    const camera2_stream_ops_t *stream_ops,
-                                    uint32_t *stream_id,
-                                    uint32_t *format_actual, uint32_t *usage,
-                                    uint32_t *max_buffers) {
+int EmulatedCamera2::allocateStream(uint32_t /*width*/, uint32_t /*height*/,
+                                    int /*format*/,
+                                    const camera2_stream_ops_t * /*stream_ops*/,
+                                    uint32_t * /*stream_id*/,
+                                    uint32_t * /*format_actual*/,
+                                    uint32_t * /*usage*/,
+                                    uint32_t * /*max_buffers*/) {
   return INVALID_OPERATION;
 }
 
-int EmulatedCamera2::registerStreamBuffers(uint32_t stream_id, int num_buffers,
-                                           buffer_handle_t *buffers) {
+int EmulatedCamera2::registerStreamBuffers(uint32_t /*stream_id*/,
+                                           int /*num_buffers*/,
+                                           buffer_handle_t * /*buffers*/) {
   return INVALID_OPERATION;
 }
 
-int EmulatedCamera2::releaseStream(uint32_t stream_id) {
+int EmulatedCamera2::releaseStream(uint32_t /*stream_id*/) {
   return INVALID_OPERATION;
 }
 
 /** Reprocessing input stream management */
 
 int EmulatedCamera2::allocateReprocessStream(
-    uint32_t width, uint32_t height, uint32_t format,
-    const camera2_stream_in_ops_t *reprocess_stream_ops, uint32_t *stream_id,
-    uint32_t *consumer_usage, uint32_t *max_buffers) {
+    uint32_t /*width*/, uint32_t /*height*/, uint32_t /*format*/,
+    const camera2_stream_in_ops_t * /*reprocess_stream_ops*/,
+    uint32_t * /*stream_id*/, uint32_t * /*consumer_usage*/,
+    uint32_t * /*max_buffers*/) {
   return INVALID_OPERATION;
 }
 
 int EmulatedCamera2::allocateReprocessStreamFromStream(
-    uint32_t output_stream_id,
-    const camera2_stream_in_ops_t *reprocess_stream_ops, uint32_t *stream_id) {
+    uint32_t /*output_stream_id*/,
+    const camera2_stream_in_ops_t * /*reprocess_stream_ops*/,
+    uint32_t * /*stream_id*/) {
   return INVALID_OPERATION;
 }
 
-int EmulatedCamera2::releaseReprocessStream(uint32_t stream_id) {
+int EmulatedCamera2::releaseReprocessStream(uint32_t /*stream_id*/) {
   return INVALID_OPERATION;
 }
 
 /** 3A triggering */
 
-int EmulatedCamera2::triggerAction(uint32_t trigger_id, int ext1, int ext2) {
+int EmulatedCamera2::triggerAction(uint32_t /*trigger_id*/, int /*ext1*/,
+                                   int /*ext2*/) {
   return INVALID_OPERATION;
 }
 
 /** Custom tag query methods */
 
-const char *EmulatedCamera2::getVendorSectionName(uint32_t tag) { return NULL; }
+const char *EmulatedCamera2::getVendorSectionName(uint32_t /*tag*/) {
+  return NULL;
+}
 
-const char *EmulatedCamera2::getVendorTagName(uint32_t tag) { return NULL; }
+const char *EmulatedCamera2::getVendorTagName(uint32_t /*tag*/) { return NULL; }
 
-int EmulatedCamera2::getVendorTagType(uint32_t tag) { return -1; }
+int EmulatedCamera2::getVendorTagType(uint32_t /*tag*/) { return -1; }
 
 /** Debug methods */
 
-int EmulatedCamera2::dump(int fd) { return INVALID_OPERATION; }
+int EmulatedCamera2::dump(int /*fd*/) { return INVALID_OPERATION; }
 
 /****************************************************************************
  * Private API.
@@ -286,6 +294,16 @@ int EmulatedCamera2::set_notify_callback(const camera2_device_t *d,
   return NO_ERROR;
 }
 
+int EmulatedCamera2::get_instance_metadata(
+    const struct camera2_device *d, camera_metadata **instance_metadata) {
+  EmulatedCamera2 *ec = getInstance(d);
+  if (!ec) {
+    return INVALID_OPERATION;
+  }
+  *instance_metadata = ec->mCameraInfo;
+  return NO_ERROR;
+}
+
 int EmulatedCamera2::get_metadata_vendor_tag_ops(const camera2_device_t *d,
                                                  vendor_tag_query_ops_t **ops) {
   EmulatedCamera2 *ec = getInstance(d);
@@ -354,6 +372,10 @@ camera2_device_ops_t EmulatedCamera2::sDeviceOps = {
     EmulatedCamera2::trigger_action,
     EmulatedCamera2::set_notify_callback,
     EmulatedCamera2::get_metadata_vendor_tag_ops,
-    EmulatedCamera2::dump};
+    EmulatedCamera2::dump,
+#ifdef CAMERA_DEVICE_API_VERSION_2_1
+    EmulatedCamera2::get_instance_metadata,
+#endif
+};
 
 }; /* namespace android */
