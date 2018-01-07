@@ -15,9 +15,9 @@
  */
 
 #include "vsoc_composer.h"
+#include <cutils/log.h>
 #include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
 #include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <cutils/log.h>
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
 #include <libyuv.h>
@@ -41,11 +41,8 @@ int SanityCheckLayer(const vsoc_hwc_layer& layer) {
     ALOGE(
         "%s: Malformed rectangle (displayFrame): [left = %d, right = %d, top = "
         "%d, bottom = %d]",
-        __FUNCTION__,
-        layer.displayFrame.left,
-        layer.displayFrame.right,
-        layer.displayFrame.top,
-        layer.displayFrame.bottom);
+        __FUNCTION__, layer.displayFrame.left, layer.displayFrame.right,
+        layer.displayFrame.top, layer.displayFrame.bottom);
     return -EINVAL;
   }
   // Check sourceCrop
@@ -54,11 +51,8 @@ int SanityCheckLayer(const vsoc_hwc_layer& layer) {
     ALOGE(
         "%s: Malformed rectangle (sourceCrop): [left = %d, right = %d, top = "
         "%d, bottom = %d]",
-        __FUNCTION__,
-        layer.sourceCrop.left,
-        layer.sourceCrop.right,
-        layer.sourceCrop.top,
-        layer.sourceCrop.bottom);
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom);
     return -EINVAL;
   }
   const private_handle_t* p_handle =
@@ -74,12 +68,8 @@ int SanityCheckLayer(const vsoc_hwc_layer& layer) {
         "%s: Invalid sourceCrop for buffer handle: sourceCrop = [left = %d, "
         "right = %d, top = %d, bottom = %d], handle = [width = %d, height = "
         "%d]",
-        __FUNCTION__,
-        layer.sourceCrop.left,
-        layer.sourceCrop.right,
-        layer.sourceCrop.top,
-        layer.sourceCrop.bottom,
-        p_handle->x_res,
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom, p_handle->x_res,
         p_handle->y_res);
     return -EINVAL;
   }
@@ -152,9 +142,7 @@ ConverterFunction GetConverter(uint32_t format) {
 }
 
 // Whether we support a given format
-bool IsFormatSupported(uint32_t format) {
-  return GetConverter(format) != NULL;
-}
+bool IsFormatSupported(uint32_t format) { return GetConverter(format) != NULL; }
 
 bool CanCompositeLayer(const vsoc_hwc_layer& layer) {
   if (layer.handle == NULL) {
@@ -351,7 +339,7 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
 // - the next hwc-only framebuffer otherwise
 // Takes care of rotating the hwc-only framebuffers
 buffer_handle_t VSoCComposer::FindFrameBuffer(int num_layers,
-                                             vsoc_hwc_layer* layers) {
+                                              vsoc_hwc_layer* layers) {
   buffer_handle_t* fb_handle = NULL;
   bool use_hwc_fb = true;
   // The framebuffer target is usually the last layer in the list, so iterate in
@@ -375,7 +363,7 @@ buffer_handle_t VSoCComposer::FindFrameBuffer(int num_layers,
 }
 
 void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
-                                 buffer_handle_t dst_handle) {
+                                  buffer_handle_t dst_handle) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
@@ -589,7 +577,8 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
 
 /* static */ const int VSoCComposer::kNumTmpBufferPieces = 2;
 
-VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
+VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
+                           int32_t vsync_period_ns)
     : BaseComposer(vsync_base_timestamp, vsync_period_ns),
       tmp_buffer_(kNumTmpBufferPieces *
                   VSoCFrameBuffer::getInstance().bufferSize()),
@@ -598,8 +587,7 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns
                 reinterpret_cast<const hw_module_t**>(&gralloc_module_));
   gralloc_module_->common.methods->open(
       reinterpret_cast<const hw_module_t*>(gralloc_module_),
-      GRALLOC_HARDWARE_GPU0,
-      reinterpret_cast<hw_device_t**>(&gralloc_dev_));
+      GRALLOC_HARDWARE_GPU0, reinterpret_cast<hw_device_t**>(&gralloc_dev_));
   for (int i = 0; i < VSoCFrameBuffer::kNumHwcBuffers; ++i) {
     buffer_handle_t tmp;
     gralloc_dev_->alloc_hwc_framebuffer(
@@ -610,13 +598,14 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns
 
 VSoCComposer::~VSoCComposer() {
   // Free the hwc fb handles
-  for (int idx = 0; idx < hwc_framebuffers_.size(); ++idx) {
+  for (auto buffer : hwc_framebuffers_) {
     gralloc_dev_->device.free(reinterpret_cast<alloc_device_t*>(gralloc_dev_),
-                              hwc_framebuffers_[idx]);
+                              buffer);
   }
 
   // close devices
-  gralloc_dev_->device.common.close(reinterpret_cast<hw_device_t*>(gralloc_dev_));
+  gralloc_dev_->device.common.close(
+      reinterpret_cast<hw_device_t*>(gralloc_dev_));
 }
 
 int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
@@ -679,14 +668,14 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     } else if (layers[idx].compositionType == HWC_OVERLAY &&
                !(layers[idx].flags & HWC_SKIP_LAYER)) {
       if (SanityCheckLayer(layers[idx])) {
-        ALOGE("Layer (%d) failed sanity check", idx);
+        ALOGE("Layer (%zu) failed sanity check", idx);
         return -EINVAL;
       }
       CompositeLayer(&layers[idx], fb_handle);
     }
   }
   if (targetFbs != 1) {
-    ALOGW("Saw %d layers, posted=%d", num_layers, targetFbs);
+    ALOGW("Saw %zu layers, posted=%d", num_layers, targetFbs);
   }
   return PostFrameBuffer(fb_handle);
 }
