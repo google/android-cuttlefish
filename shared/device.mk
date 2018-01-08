@@ -195,6 +195,9 @@ PRODUCT_COPY_FILES += \
     external/libvncserver/webclients/novnc/vnc_auto.html:system/etc/novnc/vnc_auto.html \
     external/libvncserver/webclients/novnc/vnc.html:system/etc/novnc/vnc.html
 
+# Product full Treble requirements
+PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
+
 # Packages for HAL implementations
 
 #
