@@ -211,7 +211,8 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     sensors.vsoc \
-    android.hardware.sensors@1.0-impl
+    android.hardware.sensors@1.0-impl \
+    android.hardware.sensors@1.0-service
 
 #
 # Lights
