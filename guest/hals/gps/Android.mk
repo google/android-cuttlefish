@@ -31,6 +31,9 @@ LOCAL_SRC_FILES := gps_vsoc.cpp gps_thread.cpp
 LOCAL_MODULE := gps.vsoc
 LOCAL_C_INCLUDES := device/google/cuttlefish_common
 
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 LOCAL_CFLAGS := \
     -Wall -Werror -Wno-missing-field-initializers \
     -DLOG_TAG=\"VSoCGPS\" \
