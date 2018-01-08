@@ -260,7 +260,8 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     gps.vsoc \
-    android.hardware.gnss@1.0-impl
+    android.hardware.gnss@1.0-impl \
+    android.hardware.gnss@1.0-service
 
 #
 # Sensors
