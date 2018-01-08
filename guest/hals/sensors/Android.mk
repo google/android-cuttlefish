@@ -33,6 +33,9 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     libcutils
 
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 LOCAL_SRC_FILES := \
     sensors.cpp \
     sensors_hal.cpp \

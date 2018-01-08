@@ -61,6 +61,7 @@ endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := lib_driver_cmd_simulated
+LOCAL_VENDOR_MODULE := true
 LOCAL_SHARED_LIBRARIES := libc libcutils
 
 LOCAL_CFLAGS := $(L_CFLAGS) \

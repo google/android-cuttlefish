@@ -31,6 +31,9 @@ LOCAL_SHARED_LIBRARIES := \
     libcuttlefish_fs \
     cuttlefish_time
 
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 LOCAL_SRC_FILES := \
     audio_hal.cpp \
     vsoc_audio.cpp \
