@@ -16,6 +16,8 @@
 
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
+PRODUCT_SHIPPING_API_LEVEL := 26
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
@@ -138,10 +140,6 @@ PRODUCT_COPY_FILES += \
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
-
-
-# Product full Treble requirements
-PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
 
 # Packages for HAL implementations
 
