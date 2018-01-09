@@ -31,7 +31,6 @@ emulator_camera_shared_libraries := \
     liblog \
     libutils \
     libcutils \
-    libcamera_client \
     libui \
     libdl \
     libjpeg \
@@ -43,6 +42,8 @@ emulator_camera_shared_libraries += libjsoncpp
 else
 emulator_camera_static_libraries += libjsoncpp
 endif
+
+emulator_camera_static_libraries += android.hardware.camera.common@1.0-helper
 
 emulator_camera_c_includes := \
     device/google/cuttlefish_common \
