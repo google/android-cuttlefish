@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include <cutils/log.h>
 #include <cutils/sockets.h>

@@ -25,6 +25,9 @@ LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
     device/google/cuttlefish_kernel
 
+LOCAL_HEADER_LIBRARIES := \
+    libcutils_headers
+
 LOCAL_SHARED_LIBRARIES := \
     cuttlefish_auto_resources \
     libcuttlefish_fs \
