@@ -17,21 +17,27 @@
 #ifndef JPEGSTUB_H_
 #define JPEGSTUB_H_
 
-#include "ImageMetadata.h"
+#include <stddef.h>
+
+struct _ExifData;
+typedef _ExifData ExifData;
 
 extern "C" {
 
 struct JpegStub {
-  void* mInternalEncoder;
-  void* mInternalStream;
-  void* mExifBuilder;
+    void* mCompressor;
 };
 
-void JpegStub_init(JpegStub* stub, int* strides);
+void JpegStub_init(JpegStub* stub);
 void JpegStub_cleanup(JpegStub* stub);
-int JpegStub_compress(JpegStub* stub, const void* image, int quality,
-                      const ImageMetadata* metadata);
+int JpegStub_compress(JpegStub* stub,
+                      const void* image,
+                      int width,
+                      int height,
+                      int quality,
+                      ExifData* exifData);
 void JpegStub_getCompressedImage(JpegStub* stub, void* buff);
 size_t JpegStub_getCompressedSize(JpegStub* stub);
+
 };
-#endif  // JPEGSTUB_H_
+#endif // JPEGSTUB_H_

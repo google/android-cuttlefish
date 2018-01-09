@@ -53,8 +53,8 @@ class NV21JpegCompressor {
    *  NO_ERROR on success, or an appropriate error status.
    *
    */
-  status_t compressRawImage(const void* image, const ImageMetadata* metadata,
-                            int quality);
+  status_t compressRawImage(const void* image, ExifData* exifData,
+                            int quality, int width, int height);
 
   /* Get size of the compressed JPEG buffer.
    * This method must be called only after a successful completion of

@@ -77,11 +77,6 @@ class EmulatedCamera2 : public camera2_device, public EmulatedBaseCamera {
 
   virtual status_t getCameraInfo(struct camera_info *info) = 0;
 
-  virtual status_t getImageMetadata(struct ImageMetadata * /*meta*/) {
-    // TODO(ender): fill in Image metadata structure.
-    return ENOSYS;
-  }
-
   /****************************************************************************
    * Camera API implementation.
    * These methods are called from the camera API callback routines.

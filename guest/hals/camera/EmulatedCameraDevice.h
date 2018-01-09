@@ -31,7 +31,10 @@
 #include <utils/threads.h>
 #include "Converters.h"
 #include "EmulatedCameraCommon.h"
-#include "ImageMetadata.h"
+
+#include <CameraParameters.h>
+
+using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
 
 namespace android {
 
@@ -260,7 +263,7 @@ class EmulatedCameraDevice {
    * Return:
    *  Filled in ImageMetadata structure (in/out parameter).
    */
-  status_t getImageMetadata(struct ::ImageMetadata* meta);
+  const CameraParameters* getCameraParameters();
 
   /*
    * State checkers.
