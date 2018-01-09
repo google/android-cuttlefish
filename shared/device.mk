@@ -195,6 +195,9 @@ PRODUCT_COPY_FILES += \
     external/libvncserver/webclients/novnc/vnc_auto.html:system/etc/novnc/vnc_auto.html \
     external/libvncserver/webclients/novnc/vnc.html:system/etc/novnc/vnc.html
 
+# Product full Treble requirements
+PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
+
 # Packages for HAL implementations
 
 #
@@ -203,7 +206,8 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     hwcomposer.vsoc \
     hwcomposer-stats \
-    android.hardware.graphics.composer@2.1-impl
+    android.hardware.graphics.composer@2.1-impl \
+    android.hardware.graphics.composer@2.1-service
 
 #
 # Gralloc HAL
@@ -227,13 +231,15 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     audio.primary.vsoc \
     android.hardware.audio@2.0-impl \
-    android.hardware.audio.effect@2.0-impl
+    android.hardware.audio.effect@2.0-impl \
+    android.hardware.audio@2.0-service
 
 #
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.0-impl
+    android.hardware.drm@1.0-impl \
+    android.hardware.drm@1.0-service
 
 #
 # Dumpstate HAL
@@ -255,34 +261,39 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     gps.vsoc \
-    android.hardware.gnss@1.0-impl
+    android.hardware.gnss@1.0-impl \
+    android.hardware.gnss@1.0-service
 
 #
 # Sensors
 #
 PRODUCT_PACKAGES += \
     sensors.vsoc \
-    android.hardware.sensors@1.0-impl
+    android.hardware.sensors@1.0-impl \
+    android.hardware.sensors@1.0-service
 
 #
 # Lights
 #
 PRODUCT_PACKAGES += \
     lights.vsoc \
-    android.hardware.light@2.0-impl
+    android.hardware.light@2.0-impl \
+    android.hardware.light@2.0-service
 
 #
 # Keymaster HAL
 #
 PRODUCT_PACKAGES += \
-     android.hardware.keymaster@3.0-impl
+     android.hardware.keymaster@3.0-impl \
+     android.hardware.keymaster@3.0-service
 
 #
 # Power HAL
 #
 PRODUCT_PACKAGES += \
     power.vsoc \
-    android.hardware.power@1.0-impl
+    android.hardware.power@1.0-impl \
+    android.hardware.power@1.0-service
 
 #
 # USB
