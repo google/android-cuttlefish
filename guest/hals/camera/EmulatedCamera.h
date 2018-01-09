@@ -26,11 +26,14 @@
  * defined by camera_device_ops_t API.
  */
 
-#include <camera/CameraParameters.h>
+#include <CameraParameters.h>
 #include "CallbackNotifier.h"
 #include "EmulatedBaseCamera.h"
 #include "EmulatedCameraDevice.h"
 #include "PreviewWindow.h"
+
+using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
+using ::android::hardware::camera::common::V1_0::helper::Size;
 
 namespace android {
 
