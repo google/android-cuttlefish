@@ -36,9 +36,7 @@ class ExifMetadataBuilder {
   void SetLensFocalLength(double length);
   void Build();
 
-  const AutoFreeBuffer& Buffer() {
-    return mData;
-  }
+  const AutoFreeBuffer& Buffer() { return mData; }
 
  private:
   ExifStructure* mImageIfd;
@@ -49,7 +47,7 @@ class ExifMetadataBuilder {
   AutoFreeBuffer mData;
 
   ExifMetadataBuilder(const ExifMetadataBuilder&);
-  ExifMetadataBuilder& operator= (const ExifMetadataBuilder&);
+  ExifMetadataBuilder& operator=(const ExifMetadataBuilder&);
 };
 
 }  // namespace android

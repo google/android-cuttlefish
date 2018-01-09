@@ -29,6 +29,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 endif
 LOCAL_MULTILIB := first
 
+LOCAL_HEADER_LIBRARIES := libhardware_headers libutils_headers
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_SRC_FILES := power.c
 LOCAL_MODULE := power.vsoc

@@ -25,53 +25,50 @@
  * Refer to FAKE_HOTPLUG_FILE in EmulatedCameraHotplugThread.cpp
  */
 
-#include "EmulatedCamera2.h"
 #include <utils/String8.h>
 #include <utils/Vector.h>
+#include "EmulatedCamera2.h"
 
 namespace android {
 class EmulatedCameraHotplugThread : public Thread {
-  public:
-    EmulatedCameraHotplugThread(size_t totalCameraCount);
-    ~EmulatedCameraHotplugThread();
+ public:
+  EmulatedCameraHotplugThread(size_t totalCameraCount);
+  ~EmulatedCameraHotplugThread();
 
-    virtual void requestExit();
-    virtual status_t requestExitAndWait();
+  virtual void requestExit();
+  virtual status_t requestExitAndWait();
 
-  private:
+ private:
+  virtual status_t readyToRun();
+  virtual bool threadLoop();
 
+  struct SubscriberInfo {
+    int CameraID;
+    int WatchID;
+  };
 
-    virtual status_t readyToRun();
-    virtual bool threadLoop();
+  bool addWatch(int cameraId);
+  bool removeWatch(int cameraId);
+  SubscriberInfo* getSubscriberInfo(int cameraId);
 
-    struct SubscriberInfo {
-        int CameraID;
-        int WatchID;
-    };
+  int getCameraId(String8 filePath) const;
+  int getCameraId(int wd) const;
 
-    bool addWatch(int cameraId);
-    bool removeWatch(int cameraId);
-    SubscriberInfo* getSubscriberInfo(int cameraId);
+  String8 getFilePath(int cameraId) const;
+  int readFile(String8 filePath) const;
 
-    int getCameraId(String8 filePath) const;
-    int getCameraId(int wd) const;
+  bool createFileIfNotExists(int cameraId) const;
 
-    String8 getFilePath(int cameraId) const;
-    int readFile(String8 filePath) const;
+  Vector<int> mSubscribedCameraIds;
+  Vector<SubscriberInfo> mSubscribers;
 
-    bool createFileIfNotExists(int cameraId) const;
+  // variables above are unguarded:
+  // -- accessed in thread loop or in constructor only
 
-    int mInotifyFd;
-    Vector<int> mSubscribedCameraIds;
-    Vector<SubscriberInfo> mSubscribers;
+  Mutex mMutex;
 
-    // variables above are unguarded:
-    // -- accessed in thread loop or in constructor only
-
-    Mutex mMutex;
-
-    bool mRunning;          // guarding only when it's important
+  bool mRunning;  // guarding only when it's important
 };
-} // namespace android
+}  // namespace android
 
 #endif
