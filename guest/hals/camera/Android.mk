@@ -94,7 +94,9 @@ LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
 else
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
 endif
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
 LOCAL_MULTILIB := first
+endif
 LOCAL_CFLAGS := ${emulator_camera_cflags}
 LOCAL_CLANG_CFLAGS += ${emulator_camera_clang_flags}
 
@@ -163,7 +165,9 @@ LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
 else
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
 endif
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
 LOCAL_MULTILIB := first
+endif
 LOCAL_CFLAGS += ${jpeg_cflags}
 LOCAL_CLANG_CFLAGS += ${jpeg_clangflags}
 
