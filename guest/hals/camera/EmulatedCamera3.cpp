@@ -38,24 +38,18 @@ namespace android {
  *      instance in camera factory's array.
  *  module - Emulated camera HAL module descriptor.
  */
-EmulatedCamera3::EmulatedCamera3(int cameraId,
-        struct hw_module_t* module):
-        EmulatedBaseCamera(cameraId,
-                CAMERA_DEVICE_API_VERSION_3_3,
-                &common,
-                module),
-        mStatus(STATUS_ERROR)
-{
-    common.close = EmulatedCamera3::close;
-    ops = &sDeviceOps;
+EmulatedCamera3::EmulatedCamera3(int cameraId, struct hw_module_t* module)
+    : EmulatedBaseCamera(cameraId, CAMERA_DEVICE_API_VERSION_3_3, &common,
+                         module),
+      mStatus(STATUS_ERROR) {
+  common.close = EmulatedCamera3::close;
+  ops = &sDeviceOps;
 
-    mCallbackOps = NULL;
-
+  mCallbackOps = NULL;
 }
 
 /* Destructs EmulatedCamera3 instance. */
-EmulatedCamera3::~EmulatedCamera3() {
-}
+EmulatedCamera3::~EmulatedCamera3() {}
 
 /****************************************************************************
  * Abstract API
@@ -65,11 +59,11 @@ EmulatedCamera3::~EmulatedCamera3() {
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera3::Initialize(const cvd::CameraDefinition& params) {
-    ALOGV("%s", __FUNCTION__);
+status_t EmulatedCamera3::Initialize(const cvd::CameraDefinition& /*params*/) {
+  ALOGV("%s", __FUNCTION__);
 
-    mStatus = STATUS_CLOSED;
-    return NO_ERROR;
+  mStatus = STATUS_CLOSED;
+  return NO_ERROR;
 }
 
 /****************************************************************************
@@ -77,27 +71,26 @@ status_t EmulatedCamera3::Initialize(const cvd::CameraDefinition& params) {
  ***************************************************************************/
 
 status_t EmulatedCamera3::connectCamera(hw_device_t** device) {
-    ALOGV("%s", __FUNCTION__);
-    if (device == NULL) return BAD_VALUE;
+  ALOGV("%s", __FUNCTION__);
+  if (device == NULL) return BAD_VALUE;
 
-    if (mStatus != STATUS_CLOSED) {
-        ALOGE("%s: Trying to open a camera in state %d!",
-                __FUNCTION__, mStatus);
-        return INVALID_OPERATION;
-    }
+  if (mStatus != STATUS_CLOSED) {
+    ALOGE("%s: Trying to open a camera in state %d!", __FUNCTION__, mStatus);
+    return INVALID_OPERATION;
+  }
 
-    *device = &common;
-    mStatus = STATUS_OPEN;
-    return NO_ERROR;
+  *device = &common;
+  mStatus = STATUS_OPEN;
+  return NO_ERROR;
 }
 
 status_t EmulatedCamera3::closeCamera() {
-    mStatus = STATUS_CLOSED;
-    return NO_ERROR;
+  mStatus = STATUS_CLOSED;
+  return NO_ERROR;
 }
 
 status_t EmulatedCamera3::getCameraInfo(struct camera_info* info) {
-    return EmulatedBaseCamera::getCameraInfo(info);
+  return EmulatedBaseCamera::getCameraInfo(info);
 }
 
 /****************************************************************************
@@ -106,71 +99,70 @@ status_t EmulatedCamera3::getCameraInfo(struct camera_info* info) {
  ***************************************************************************/
 
 status_t EmulatedCamera3::initializeDevice(
-        const camera3_callback_ops *callbackOps) {
-    if (callbackOps == NULL) {
-        ALOGE("%s: NULL callback ops provided to HAL!",
-                __FUNCTION__);
-        return BAD_VALUE;
-    }
+    const camera3_callback_ops* callbackOps) {
+  if (callbackOps == NULL) {
+    ALOGE("%s: NULL callback ops provided to HAL!", __FUNCTION__);
+    return BAD_VALUE;
+  }
 
-    if (mStatus != STATUS_OPEN) {
-        ALOGE("%s: Trying to initialize a camera in state %d!",
-                __FUNCTION__, mStatus);
-        return INVALID_OPERATION;
-    }
+  if (mStatus != STATUS_OPEN) {
+    ALOGE("%s: Trying to initialize a camera in state %d!", __FUNCTION__,
+          mStatus);
+    return INVALID_OPERATION;
+  }
 
-    mCallbackOps = callbackOps;
-    mStatus = STATUS_READY;
+  mCallbackOps = callbackOps;
+  mStatus = STATUS_READY;
 
-    return NO_ERROR;
+  return NO_ERROR;
 }
 
 status_t EmulatedCamera3::configureStreams(
-        camera3_stream_configuration *streamList) {
-    ALOGE("%s: Not implemented", __FUNCTION__);
-    return INVALID_OPERATION;
+    camera3_stream_configuration* /*streamList*/) {
+  ALOGE("%s: Not implemented", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 status_t EmulatedCamera3::registerStreamBuffers(
-        const camera3_stream_buffer_set *bufferSet) {
-    ALOGE("%s: Not implemented", __FUNCTION__);
-    return INVALID_OPERATION;
+    const camera3_stream_buffer_set* /*bufferSet*/) {
+  ALOGE("%s: Not implemented", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 const camera_metadata_t* EmulatedCamera3::constructDefaultRequestSettings(
-        int type) {
-    ALOGE("%s: Not implemented", __FUNCTION__);
-    return NULL;
+    int /*type*/) {
+  ALOGE("%s: Not implemented", __FUNCTION__);
+  return NULL;
 }
 
 status_t EmulatedCamera3::processCaptureRequest(
-        camera3_capture_request *request) {
-    ALOGE("%s: Not implemented", __FUNCTION__);
-    return INVALID_OPERATION;
+    camera3_capture_request* /*request*/) {
+  ALOGE("%s: Not implemented", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 status_t EmulatedCamera3::flush() {
-    ALOGE("%s: Not implemented", __FUNCTION__);
-    return INVALID_OPERATION;
+  ALOGE("%s: Not implemented", __FUNCTION__);
+  return INVALID_OPERATION;
 }
 
 /** Debug methods */
 
-void EmulatedCamera3::dump(int fd) {
-    ALOGE("%s: Not implemented", __FUNCTION__);
-    return;
+void EmulatedCamera3::dump(int /*fd*/) {
+  ALOGE("%s: Not implemented", __FUNCTION__);
+  return;
 }
 
 /****************************************************************************
  * Protected API. Callbacks to the framework.
  ***************************************************************************/
 
-void EmulatedCamera3::sendCaptureResult(camera3_capture_result_t *result) {
-    mCallbackOps->process_capture_result(mCallbackOps, result);
+void EmulatedCamera3::sendCaptureResult(camera3_capture_result_t* result) {
+  mCallbackOps->process_capture_result(mCallbackOps, result);
 }
 
-void EmulatedCamera3::sendNotify(camera3_notify_msg_t *msg) {
-    mCallbackOps->notify(mCallbackOps, msg);
+void EmulatedCamera3::sendNotify(camera3_notify_msg_t* msg) {
+  mCallbackOps->notify(mCallbackOps, msg);
 }
 
 /****************************************************************************
@@ -185,62 +177,61 @@ void EmulatedCamera3::sendNotify(camera3_notify_msg_t *msg) {
  * 'camera_device3' parameter, or set a member value in the same.
  ***************************************************************************/
 
-EmulatedCamera3* getInstance(const camera3_device_t *d) {
-    const EmulatedCamera3* cec = static_cast<const EmulatedCamera3*>(d);
-    return const_cast<EmulatedCamera3*>(cec);
+EmulatedCamera3* getInstance(const camera3_device_t* d) {
+  const EmulatedCamera3* cec = static_cast<const EmulatedCamera3*>(d);
+  return const_cast<EmulatedCamera3*>(cec);
 }
 
-int EmulatedCamera3::initialize(const struct camera3_device *d,
-        const camera3_callback_ops_t *callback_ops) {
-    EmulatedCamera3* ec = getInstance(d);
-    return ec->initializeDevice(callback_ops);
+int EmulatedCamera3::initialize(const struct camera3_device* d,
+                                const camera3_callback_ops_t* callback_ops) {
+  EmulatedCamera3* ec = getInstance(d);
+  return ec->initializeDevice(callback_ops);
 }
 
-int EmulatedCamera3::configure_streams(const struct camera3_device *d,
-        camera3_stream_configuration_t *stream_list) {
-    EmulatedCamera3* ec = getInstance(d);
-    return ec->configureStreams(stream_list);
+int EmulatedCamera3::configure_streams(
+    const struct camera3_device* d,
+    camera3_stream_configuration_t* stream_list) {
+  EmulatedCamera3* ec = getInstance(d);
+  return ec->configureStreams(stream_list);
 }
 
 int EmulatedCamera3::register_stream_buffers(
-        const struct camera3_device *d,
-        const camera3_stream_buffer_set_t *buffer_set) {
-    EmulatedCamera3* ec = getInstance(d);
-    return ec->registerStreamBuffers(buffer_set);
+    const struct camera3_device* d,
+    const camera3_stream_buffer_set_t* buffer_set) {
+  EmulatedCamera3* ec = getInstance(d);
+  return ec->registerStreamBuffers(buffer_set);
 }
 
 int EmulatedCamera3::process_capture_request(
-        const struct camera3_device *d,
-        camera3_capture_request_t *request) {
-    EmulatedCamera3* ec = getInstance(d);
-    return ec->processCaptureRequest(request);
+    const struct camera3_device* d, camera3_capture_request_t* request) {
+  EmulatedCamera3* ec = getInstance(d);
+  return ec->processCaptureRequest(request);
 }
 
 const camera_metadata_t* EmulatedCamera3::construct_default_request_settings(
-        const camera3_device_t *d, int type) {
-    EmulatedCamera3* ec = getInstance(d);
-    return ec->constructDefaultRequestSettings(type);
+    const camera3_device_t* d, int type) {
+  EmulatedCamera3* ec = getInstance(d);
+  return ec->constructDefaultRequestSettings(type);
 }
 
-void EmulatedCamera3::dump(const camera3_device_t *d, int fd) {
-    EmulatedCamera3* ec = getInstance(d);
-    ec->dump(fd);
+void EmulatedCamera3::dump(const camera3_device_t* d, int fd) {
+  EmulatedCamera3* ec = getInstance(d);
+  ec->dump(fd);
 }
 
-int EmulatedCamera3::flush(const camera3_device_t *d) {
-    EmulatedCamera3* ec = getInstance(d);
-    return ec->flush();
+int EmulatedCamera3::flush(const camera3_device_t* d) {
+  EmulatedCamera3* ec = getInstance(d);
+  return ec->flush();
 }
 
 int EmulatedCamera3::close(struct hw_device_t* device) {
-    EmulatedCamera3* ec =
-            static_cast<EmulatedCamera3*>(
-                reinterpret_cast<camera3_device_t*>(device) );
-    if (ec == NULL) {
-        ALOGE("%s: Unexpected NULL camera3 device", __FUNCTION__);
-        return BAD_VALUE;
-    }
-    return ec->closeCamera();
+  EmulatedCamera3* ec = static_cast<EmulatedCamera3*>(
+      reinterpret_cast<camera3_device_t*>(device));
+  if (ec == NULL) {
+    ALOGE("%s: Unexpected NULL camera3 device", __FUNCTION__);
+    return BAD_VALUE;
+  }
+  return ec->closeCamera();
 }
 
 camera3_device_ops_t EmulatedCamera3::sDeviceOps = {
@@ -251,8 +242,8 @@ camera3_device_ops_t EmulatedCamera3::sDeviceOps = {
     EmulatedCamera3::process_capture_request,
     /* DEPRECATED: get_metadata_vendor_tag_ops */ nullptr,
     EmulatedCamera3::dump,
-    EmulatedCamera3::flush
-};
+    EmulatedCamera3::flush,
+    {0}};
 
 const char* EmulatedCamera3::sAvailableCapabilitiesStrings[NUM_CAPABILITIES] = {
     "BACKWARD_COMPATIBLE",
@@ -265,7 +256,6 @@ const char* EmulatedCamera3::sAvailableCapabilitiesStrings[NUM_CAPABILITIES] = {
     "YUV_REPROCESSING",
     "DEPTH_OUTPUT",
     "CONSTRAINED_HIGH_SPEED_VIDEO",
-    "FULL_LEVEL"
-};
+    "FULL_LEVEL"};
 
 }; /* namespace android */

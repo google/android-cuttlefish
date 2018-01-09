@@ -33,42 +33,42 @@ namespace android {
  * instance that emulates a fake camera device.
  */
 class EmulatedFakeCamera : public EmulatedCamera {
-public:
-    /* Constructs EmulatedFakeCamera instance. */
-    EmulatedFakeCamera(int cameraId, bool facingBack, struct hw_module_t* module);
+ public:
+  /* Constructs EmulatedFakeCamera instance. */
+  EmulatedFakeCamera(int cameraId, bool facingBack, struct hw_module_t* module);
 
-    /* Destructs EmulatedFakeCamera instance. */
-    ~EmulatedFakeCamera();
+  /* Destructs EmulatedFakeCamera instance. */
+  ~EmulatedFakeCamera();
 
-    /****************************************************************************
-     * EmulatedCamera virtual overrides.
-     ***************************************************************************/
+  /****************************************************************************
+   * EmulatedCamera virtual overrides.
+   ***************************************************************************/
 
-public:
-    /* Initializes EmulatedFakeCamera instance. */
-     status_t Initialize(const cvd::CameraDefinition& params);
+ public:
+  /* Initializes EmulatedFakeCamera instance. */
+  status_t Initialize(const cvd::CameraDefinition& params);
 
-    /****************************************************************************
-     * EmulatedCamera abstract API implementation.
-     ***************************************************************************/
+  /****************************************************************************
+   * EmulatedCamera abstract API implementation.
+   ***************************************************************************/
 
-protected:
-    /* Gets emulated camera device ised by this instance of the emulated camera.
-     */
-    EmulatedCameraDevice* getCameraDevice();
+ protected:
+  /* Gets emulated camera device ised by this instance of the emulated camera.
+   */
+  EmulatedCameraDevice* getCameraDevice();
 
-    /****************************************************************************
-     * Data memebers.
-     ***************************************************************************/
+  /****************************************************************************
+   * Data memebers.
+   ***************************************************************************/
 
-protected:
-    /* Facing back (true) or front (false) switch. */
-    bool                        mFacingBack;
+ protected:
+  /* Facing back (true) or front (false) switch. */
+  bool mFacingBack;
 
-    /* Contained fake camera device object. */
-    EmulatedFakeCameraDevice    mFakeCameraDevice;
+  /* Contained fake camera device object. */
+  EmulatedFakeCameraDevice mFakeCameraDevice;
 };
 
 }; /* namespace android */
 
-#endif  /* HW_EMULATOR_CAMERA_EMULATED_FAKE_CAMERA_H */
+#endif /* HW_EMULATOR_CAMERA_EMULATED_FAKE_CAMERA_H */

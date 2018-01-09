@@ -25,10 +25,6 @@
 #include "linux_ioctl.h"
 #include "wpa_supplicant_i.h"
 
-#define LOG_TAG "VSoCWpaSupplicant8Driver"
-
-#include "cutils/log.h"
-
 #define VSOC_WPA_SUPPLICANT_DEBUG 0
 
 #if VSOC_WPA_SUPPLICANT_DEBUG

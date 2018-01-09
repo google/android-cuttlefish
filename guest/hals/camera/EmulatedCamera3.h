@@ -25,9 +25,9 @@
  * for all camera API calls that defined by camera3_device_ops_t API.
  */
 
+#include "EmulatedBaseCamera.h"
 #include "hardware/camera3.h"
 #include "system/camera_metadata.h"
-#include "EmulatedBaseCamera.h"
 
 namespace android {
 
@@ -41,168 +41,161 @@ namespace android {
  * response to hw_module_methods_t::open, and camera_device::close callbacks.
  */
 class EmulatedCamera3 : public camera3_device, public EmulatedBaseCamera {
-public:
-    /* Constructs EmulatedCamera3 instance.
-     * Param:
-     *  cameraId - Zero based camera identifier, which is an index of the camera
-     *      instance in camera factory's array.
-     *  module - Emulated camera HAL module descriptor.
-     */
-    EmulatedCamera3(int cameraId,
-            struct hw_module_t* module);
+ public:
+  /* Constructs EmulatedCamera3 instance.
+   * Param:
+   *  cameraId - Zero based camera identifier, which is an index of the camera
+   *      instance in camera factory's array.
+   *  module - Emulated camera HAL module descriptor.
+   */
+  EmulatedCamera3(int cameraId, struct hw_module_t *module);
 
-    /* Destructs EmulatedCamera2 instance. */
-    virtual ~EmulatedCamera3();
+  /* Destructs EmulatedCamera2 instance. */
+  virtual ~EmulatedCamera3();
 
-    /* List of all defined capabilities plus useful HW levels */
-    enum AvailableCapabilities {
-        BACKWARD_COMPATIBLE,
-        MANUAL_SENSOR,
-        MANUAL_POST_PROCESSING,
-        RAW,
-        PRIVATE_REPROCESSING,
-        READ_SENSOR_SETTINGS,
-        BURST_CAPTURE,
-        YUV_REPROCESSING,
-        DEPTH_OUTPUT,
-        CONSTRAINED_HIGH_SPEED_VIDEO,
-        // Levels
-        FULL_LEVEL,
+  /* List of all defined capabilities plus useful HW levels */
+  enum AvailableCapabilities {
+    BACKWARD_COMPATIBLE,
+    MANUAL_SENSOR,
+    MANUAL_POST_PROCESSING,
+    RAW,
+    PRIVATE_REPROCESSING,
+    READ_SENSOR_SETTINGS,
+    BURST_CAPTURE,
+    YUV_REPROCESSING,
+    DEPTH_OUTPUT,
+    CONSTRAINED_HIGH_SPEED_VIDEO,
+    // Levels
+    FULL_LEVEL,
 
-        NUM_CAPABILITIES
-    };
+    NUM_CAPABILITIES
+  };
 
-    // Char strings for above enum, with size NUM_CAPABILITIES
-    static const char *sAvailableCapabilitiesStrings[];
+  // Char strings for above enum, with size NUM_CAPABILITIES
+  static const char *sAvailableCapabilitiesStrings[];
 
-    /****************************************************************************
-     * Abstract API
-     ***************************************************************************/
+  /****************************************************************************
+   * Abstract API
+   ***************************************************************************/
 
-public:
+ public:
+  /****************************************************************************
+   * Public API
+   ***************************************************************************/
 
-    /****************************************************************************
-     * Public API
-     ***************************************************************************/
+ public:
+  virtual status_t Initialize(const cvd::CameraDefinition &params);
 
-public:
-    virtual status_t Initialize(const cvd::CameraDefinition& params);
+  /****************************************************************************
+   * Camera module API and generic hardware device API implementation
+   ***************************************************************************/
 
-    /****************************************************************************
-     * Camera module API and generic hardware device API implementation
-     ***************************************************************************/
+ public:
+  virtual status_t connectCamera(hw_device_t **device);
 
-public:
-    virtual status_t connectCamera(hw_device_t** device);
+  virtual status_t closeCamera();
 
-    virtual status_t closeCamera();
+  virtual status_t getCameraInfo(struct camera_info *info);
 
-    virtual status_t getCameraInfo(struct camera_info* info);
+  virtual status_t getImageMetadata(struct ImageMetadata * /*meta*/) {
+    // TODO(ender): fill in Image metadata structure.
+    return ENOSYS;
+  }
 
-    virtual status_t getImageMetadata(struct ImageMetadata* meta) {
-        // TODO(ender): fill in Image metadata structure.
-        return ENOSYS;
-    }
+  /****************************************************************************
+   * Camera API implementation.
+   * These methods are called from the camera API callback routines.
+   ***************************************************************************/
 
-    /****************************************************************************
-     * Camera API implementation.
-     * These methods are called from the camera API callback routines.
-     ***************************************************************************/
+ protected:
+  virtual status_t initializeDevice(const camera3_callback_ops *callbackOps);
 
-protected:
+  virtual status_t configureStreams(camera3_stream_configuration *streamList);
 
-    virtual status_t initializeDevice(
-        const camera3_callback_ops *callbackOps);
+  virtual status_t registerStreamBuffers(
+      const camera3_stream_buffer_set *bufferSet);
 
-    virtual status_t configureStreams(
-        camera3_stream_configuration *streamList);
+  virtual const camera_metadata_t *constructDefaultRequestSettings(int type);
 
-    virtual status_t registerStreamBuffers(
-        const camera3_stream_buffer_set *bufferSet) ;
+  virtual status_t processCaptureRequest(camera3_capture_request *request);
 
-    virtual const camera_metadata_t* constructDefaultRequestSettings(
-        int type);
+  virtual status_t flush();
 
-    virtual status_t processCaptureRequest(camera3_capture_request *request);
+  /** Debug methods */
 
-    virtual status_t flush();
+  virtual void dump(int fd);
 
-    /** Debug methods */
+  /****************************************************************************
+   * Camera API callbacks as defined by camera3_device_ops structure.  See
+   * hardware/libhardware/include/hardware/camera3.h for information on each
+   * of these callbacks. Implemented in this class, these callbacks simply
+   * dispatch the call into an instance of EmulatedCamera3 class defined in
+   * the 'camera_device3' parameter.
+   ***************************************************************************/
 
-    virtual void dump(int fd);
+ private:
+  /** Startup */
+  static int initialize(const struct camera3_device *,
+                        const camera3_callback_ops_t *callback_ops);
 
-    /****************************************************************************
-     * Camera API callbacks as defined by camera3_device_ops structure.  See
-     * hardware/libhardware/include/hardware/camera3.h for information on each
-     * of these callbacks. Implemented in this class, these callbacks simply
-     * dispatch the call into an instance of EmulatedCamera3 class defined in
-     * the 'camera_device3' parameter.
-     ***************************************************************************/
+  /** Stream configuration and buffer registration */
 
-private:
+  static int configure_streams(const struct camera3_device *,
+                               camera3_stream_configuration_t *stream_list);
 
-    /** Startup */
-    static int initialize(const struct camera3_device *,
-            const camera3_callback_ops_t *callback_ops);
+  static int register_stream_buffers(
+      const struct camera3_device *,
+      const camera3_stream_buffer_set_t *buffer_set);
 
-    /** Stream configuration and buffer registration */
+  /** Template request settings provision */
 
-    static int configure_streams(const struct camera3_device *,
-            camera3_stream_configuration_t *stream_list);
+  static const camera_metadata_t *construct_default_request_settings(
+      const struct camera3_device *, int type);
 
-    static int register_stream_buffers(const struct camera3_device *,
-            const camera3_stream_buffer_set_t *buffer_set);
+  /** Submission of capture requests to HAL */
 
-    /** Template request settings provision */
+  static int process_capture_request(const struct camera3_device *,
+                                     camera3_capture_request_t *request);
 
-    static const camera_metadata_t* construct_default_request_settings(
-            const struct camera3_device *, int type);
+  static void dump(const camera3_device_t *, int fd);
 
-    /** Submission of capture requests to HAL */
+  static int flush(const camera3_device_t *);
 
-    static int process_capture_request(const struct camera3_device *,
-            camera3_capture_request_t *request);
+  /** For hw_device_t ops */
+  static int close(struct hw_device_t *device);
 
-    static void dump(const camera3_device_t *, int fd);
+  /****************************************************************************
+   * Data members shared with implementations
+   ***************************************************************************/
+ protected:
+  enum {
+    // State at construction time, and after a device operation error
+    STATUS_ERROR = 0,
+    // State after startup-time init and after device instance close
+    STATUS_CLOSED,
+    // State after being opened, before device instance init
+    STATUS_OPEN,
+    // State after device instance initialization
+    STATUS_READY,
+    // State while actively capturing data
+    STATUS_ACTIVE
+  } mStatus;
 
-    static int flush(const camera3_device_t *);
+  /**
+   * Callbacks back to the framework
+   */
 
-    /** For hw_device_t ops */
-    static int close(struct hw_device_t* device);
+  void sendCaptureResult(camera3_capture_result_t *result);
+  void sendNotify(camera3_notify_msg_t *msg);
 
-    /****************************************************************************
-     * Data members shared with implementations
-     ***************************************************************************/
-  protected:
-
-    enum {
-        // State at construction time, and after a device operation error
-        STATUS_ERROR = 0,
-        // State after startup-time init and after device instance close
-        STATUS_CLOSED,
-        // State after being opened, before device instance init
-        STATUS_OPEN,
-        // State after device instance initialization
-        STATUS_READY,
-        // State while actively capturing data
-        STATUS_ACTIVE
-    } mStatus;
-
-    /**
-     * Callbacks back to the framework
-     */
-
-    void sendCaptureResult(camera3_capture_result_t *result);
-    void sendNotify(camera3_notify_msg_t *msg);
-
-    /****************************************************************************
-     * Data members
-     ***************************************************************************/
-  private:
-    static camera3_device_ops_t   sDeviceOps;
-    const camera3_callback_ops_t *mCallbackOps;
+  /****************************************************************************
+   * Data members
+   ***************************************************************************/
+ private:
+  static camera3_device_ops_t sDeviceOps;
+  const camera3_callback_ops_t *mCallbackOps;
 };
 
 }; /* namespace android */
 
-#endif  /* HW_EMULATOR_CAMERA_EMULATED_CAMERA3_H */
+#endif /* HW_EMULATOR_CAMERA_EMULATED_CAMERA3_H */

@@ -4,22 +4,22 @@
 #define LOG_TAG "ExifMetadataBuilder"
 #include <cutils/log.h>
 
-#include <cmath>
 #include <stdlib.h>
+#include <cmath>
 
 namespace android {
 // All supported EXIF data types.
 enum ExifDataType {
-  ExifUInt8     = 1,
-  ExifString    = 2,
-  ExifUInt16    = 3,
-  ExifUInt32    = 4,
-  ExifRational  = 5,
+  ExifUInt8 = 1,
+  ExifString = 2,
+  ExifUInt16 = 3,
+  ExifUInt32 = 4,
+  ExifRational = 5,
   ExifUndefined = 7,
-  ExifSInt16    = 8,
-  ExifSInt32    = 9,
-  ExifFloat     = 11,
-  ExifDouble    = 12,
+  ExifSInt16 = 8,
+  ExifSInt32 = 9,
+  ExifFloat = 11,
+  ExifDouble = 12,
 };
 
 enum ExifTagId {
@@ -43,7 +43,7 @@ enum ExifTagId {
 };
 
 const char kExifCharArrayAscii[8] = "ASCII";
-const char kExifCharArrayUnicode[8] = "UNICODE";
+// const char kExifCharArrayUnicode[8] = "UNICODE";
 
 // Structure of an individual EXIF tag.
 struct ExifTagInfo {
@@ -59,7 +59,7 @@ class ExifTag {
   virtual ~ExifTag() {}
   virtual size_t DataSize() { return 0; }
   virtual void AppendTag(ExifTagInfo* info, size_t data_offset) = 0;
-  virtual void AppendData(uint8_t* target) {}
+  virtual void AppendData(uint8_t* /*target*/) {}
 };
 
 // EXIF structure.
@@ -84,9 +84,9 @@ class ExifStructure {
     // - uint16_t: mTags.size();
     // - ExifTagInfo[mTags.size()]
     // - uint32_t: next_structure_available ? self_offset + Size() : NULL
-    return sizeof(uint16_t)                       // mTags.size()
-           + mTags.size() * sizeof(ExifTagInfo)   // [tags]
-           + sizeof(uint32_t);                    // next offset
+    return sizeof(uint16_t)                      // mTags.size()
+           + mTags.size() * sizeof(ExifTagInfo)  // [tags]
+           + sizeof(uint32_t);                   // next offset
   }
 
   size_t DataSize() {
@@ -97,14 +97,10 @@ class ExifStructure {
     return data_size;
   }
 
-  size_t Size() {
-    return TagSize() + DataSize();
-  }
+  size_t Size() { return TagSize() + DataSize(); }
 
-  uint32_t Build(
-      uint8_t* buffer,
-      const uint32_t self_offset,
-      const bool next_structure_available) {
+  uint32_t Build(uint8_t* buffer, const uint32_t self_offset,
+                 const bool next_structure_available) {
     // Write number of items.
     uint16_t num_elements = mTags.size();
     memcpy(buffer, &num_elements, sizeof(num_elements));
@@ -138,14 +134,11 @@ class ExifStructure {
     return offset;
   }
 
-  void PushTag(ExifTag* tag) {
-    mTags.push_back(tag);
-  }
+  void PushTag(ExifTag* tag) { mTags.push_back(tag); }
 
  private:
   TagMap mTags;
 };
-
 
 // EXIF tags.
 namespace {
@@ -154,7 +147,7 @@ class ExifUInt8Tag : public ExifTag {
  public:
   ExifUInt8Tag(uint16_t tag, size_t value) : mTag(tag), mValue(value) {}
 
-  void AppendTag(ExifTagInfo* info, size_t data_offset) {
+  void AppendTag(ExifTagInfo* info, size_t /*data_offset*/) {
     info->tag = mTag;
     info->type = ExifUInt8;
     info->count = 1;
@@ -171,7 +164,7 @@ class ExifUInt32Tag : public ExifTag {
  public:
   ExifUInt32Tag(uint16_t tag, size_t value) : mTag(tag), mValue(value) {}
 
-  void AppendTag(ExifTagInfo* info, size_t data_offset) {
+  void AppendTag(ExifTagInfo* info, size_t /*data_offset*/) {
     info->tag = mTag;
     info->type = ExifUInt32;
     info->count = 1;
@@ -187,9 +180,7 @@ class ExifUInt32Tag : public ExifTag {
 class ExifCharArrayTag : public ExifTag {
  public:
   ExifCharArrayTag(uint16_t tag, const char (&type)[8], const std::string& str)
-      : mTag(tag),
-        mType(type),
-        mString(str) {}
+      : mTag(tag), mType(type), mString(str) {}
 
   void AppendTag(ExifTagInfo* info, size_t data_offset) {
     info->tag = mTag;
@@ -198,9 +189,7 @@ class ExifCharArrayTag : public ExifTag {
     info->value = data_offset;
   }
 
-  size_t DataSize() {
-    return sizeof(mType) + mString.size();
-  }
+  size_t DataSize() { return sizeof(mType) + mString.size(); }
 
   void AppendData(uint8_t* data) {
     memcpy(data, mType, sizeof(mType));
@@ -218,13 +207,9 @@ class ExifCharArrayTag : public ExifTag {
 class ExifPointerTag : public ExifTag {
  public:
   ExifPointerTag(uint16_t tag, void* data, int size)
-      : mTag(tag),
-        mData(data),
-        mSize(size) {}
+      : mTag(tag), mData(data), mSize(size) {}
 
-  ~ExifPointerTag() {
-    free(mData);
-  }
+  ~ExifPointerTag() { free(mData); }
 
   void AppendTag(ExifTagInfo* info, size_t data_offset) {
     info->tag = mTag;
@@ -233,13 +218,9 @@ class ExifPointerTag : public ExifTag {
     info->value = data_offset;
   }
 
-  size_t DataSize() {
-    return mSize;
-  }
+  size_t DataSize() { return mSize; }
 
-  void AppendData(uint8_t* data) {
-    memcpy(data, mData, mSize);
-  }
+  void AppendData(uint8_t* data) { memcpy(data, mData, mSize); }
 
  private:
   uint16_t mTag;
@@ -251,8 +232,7 @@ class ExifPointerTag : public ExifTag {
 class ExifStringTag : public ExifTag {
  public:
   ExifStringTag(uint16_t tag, const std::string& str)
-      : mTag(tag),
-        mString(str) {}
+      : mTag(tag), mString(str) {}
 
   void AppendTag(ExifTagInfo* info, size_t data_offset) {
     info->tag = mTag;
@@ -266,9 +246,7 @@ class ExifStringTag : public ExifTag {
     return mString.size() + 1;
   }
 
-  void AppendData(uint8_t* data) {
-    memcpy(data, mString.data(), DataSize());
-  }
+  void AppendData(uint8_t* data) { memcpy(data, mString.data(), DataSize()); }
 
  private:
   uint16_t mTag;
@@ -278,13 +256,9 @@ class ExifStringTag : public ExifTag {
 // SubIFD: sub-tags.
 class ExifSubIfdTag : public ExifTag {
  public:
-  ExifSubIfdTag(uint16_t tag)
-      : mTag(tag),
-        mSubStructure(new ExifStructure) {}
+  ExifSubIfdTag(uint16_t tag) : mTag(tag), mSubStructure(new ExifStructure) {}
 
-  ~ExifSubIfdTag() {
-    delete mSubStructure;
-  }
+  ~ExifSubIfdTag() { delete mSubStructure; }
 
   void AppendTag(ExifTagInfo* info, size_t data_offset) {
     info->tag = mTag;
@@ -294,17 +268,13 @@ class ExifSubIfdTag : public ExifTag {
     mDataOffset = data_offset;
   }
 
-  size_t DataSize() {
-    return mSubStructure->Size();
-  }
+  size_t DataSize() { return mSubStructure->Size(); }
 
   void AppendData(uint8_t* data) {
     mSubStructure->Build(data, mDataOffset, false);
   }
 
-  ExifStructure* GetSubStructure() {
-    return mSubStructure;
-  }
+  ExifStructure* GetSubStructure() { return mSubStructure; }
 
  private:
   uint16_t mTag;
@@ -315,26 +285,23 @@ class ExifSubIfdTag : public ExifTag {
 // Unsigned rational tag.
 class ExifURationalTag : public ExifTag {
  public:
-  ExifURationalTag(uint16_t tag, double value)
-      : mTag(tag),
-        mCount(1) {
-    DoubleToRational(value,
-                     &mRationals[0].mNumerator, &mRationals[0].mDenominator);
+  ExifURationalTag(uint16_t tag, double value) : mTag(tag), mCount(1) {
+    DoubleToRational(value, &mRationals[0].mNumerator,
+                     &mRationals[0].mDenominator);
   }
 
   ExifURationalTag(uint16_t tag, double value1, double value2, double value3)
-      : mTag(tag),
-        mCount(3) {
-    DoubleToRational(value1,
-                     &mRationals[0].mNumerator, &mRationals[0].mDenominator);
-    DoubleToRational(value2,
-                     &mRationals[1].mNumerator, &mRationals[1].mDenominator);
-    DoubleToRational(value3,
-                     &mRationals[2].mNumerator, &mRationals[2].mDenominator);
+      : mTag(tag), mCount(3) {
+    DoubleToRational(value1, &mRationals[0].mNumerator,
+                     &mRationals[0].mDenominator);
+    DoubleToRational(value2, &mRationals[1].mNumerator,
+                     &mRationals[1].mDenominator);
+    DoubleToRational(value3, &mRationals[2].mNumerator,
+                     &mRationals[2].mDenominator);
   }
 
-  void DoubleToRational(double value,
-                        int32_t* numerator, int32_t* denominator) {
+  void DoubleToRational(double value, int32_t* numerator,
+                        int32_t* denominator) {
     int sign = 1;
     if (value < 0) {
       sign = -sign;
@@ -360,13 +327,9 @@ class ExifURationalTag : public ExifTag {
     info->value = data_offset;
   }
 
-  size_t DataSize() {
-    return sizeof(mRationals[0]) * mCount;
-  }
+  size_t DataSize() { return sizeof(mRationals[0]) * mCount; }
 
-  void AppendData(uint8_t* data) {
-    memcpy(data, &mRationals[0], DataSize());
-  }
+  void AppendData(uint8_t* data) { memcpy(data, &mRationals[0], DataSize()); }
 
  private:
   static const int kMaxSupportedRationals = 3;
@@ -380,7 +343,7 @@ class ExifURationalTag : public ExifTag {
 
 std::string ToAsciiDate(time_t time) {
   struct tm loc;
-  char res[12]; // YYYY:MM:DD\0\0
+  char res[12];  // YYYY:MM:DD\0\0
   localtime_r(&time, &loc);
   strftime(res, sizeof(res), "%Y:%m:%d", &loc);
   return res;
@@ -388,7 +351,7 @@ std::string ToAsciiDate(time_t time) {
 
 std::string ToAsciiTime(time_t time) {
   struct tm loc;
-  char res[10]; // HH:MM:SS\0\0
+  char res[10];  // HH:MM:SS\0\0
   localtime_r(&time, &loc);
   strftime(res, sizeof(res), "%H:%M:%S", &loc);
   return res;
@@ -397,8 +360,7 @@ std::string ToAsciiTime(time_t time) {
 }  // namespace
 
 ExifMetadataBuilder::ExifMetadataBuilder()
-    : mImageIfd(new ExifStructure),
-      mThumbnailIfd(new ExifStructure) {
+    : mImageIfd(new ExifStructure), mThumbnailIfd(new ExifStructure) {
   // Mandatory tag: camera details.
   ExifSubIfdTag* sub_ifd = new ExifSubIfdTag(kExifTagCameraSubIFD);
   // Pass ownership to mImageIfd.
@@ -454,8 +416,8 @@ void ExifMetadataBuilder::SetGpsLatitude(double latitude) {
   int minutes = latitude;
   latitude = (latitude - minutes) * 60.;
   double seconds = latitude;
-  mGpsSubIfd->PushTag(new ExifURationalTag(kExifTagGpsLatitude,
-                                           degrees, minutes, seconds));
+  mGpsSubIfd->PushTag(
+      new ExifURationalTag(kExifTagGpsLatitude, degrees, minutes, seconds));
 }
 
 void ExifMetadataBuilder::SetGpsLongitude(double longitude) {
@@ -469,8 +431,8 @@ void ExifMetadataBuilder::SetGpsLongitude(double longitude) {
   int32_t minutes = longitude;
   longitude = (longitude - minutes) * 60.;
   double seconds = longitude;
-  mGpsSubIfd->PushTag(new ExifURationalTag(kExifTagGpsLongitude,
-                                           degrees, minutes, seconds));
+  mGpsSubIfd->PushTag(
+      new ExifURationalTag(kExifTagGpsLongitude, degrees, minutes, seconds));
 }
 
 void ExifMetadataBuilder::SetGpsAltitude(double altitude) {
@@ -479,8 +441,8 @@ void ExifMetadataBuilder::SetGpsAltitude(double altitude) {
 }
 
 void ExifMetadataBuilder::SetGpsProcessingMethod(const std::string& method) {
-  mGpsSubIfd->PushTag(new ExifCharArrayTag(
-      kExifTagGpsProcessingMethod, kExifCharArrayAscii, method));
+  mGpsSubIfd->PushTag(new ExifCharArrayTag(kExifTagGpsProcessingMethod,
+                                           kExifCharArrayAscii, method));
 }
 
 void ExifMetadataBuilder::SetGpsDateTime(time_t timestamp) {
@@ -489,10 +451,9 @@ void ExifMetadataBuilder::SetGpsDateTime(time_t timestamp) {
   timestamp /= 60;
   int32_t minutes = (timestamp % 60);
   timestamp /= 60;
-  mGpsSubIfd->PushTag(new ExifURationalTag(
-      kExifTagGpsTimestamp, timestamp % 24, minutes, seconds));
-  mGpsSubIfd->PushTag(new ExifStringTag(
-      kExifTagGpsDatestamp, date));
+  mGpsSubIfd->PushTag(new ExifURationalTag(kExifTagGpsTimestamp, timestamp % 24,
+                                           minutes, seconds));
+  mGpsSubIfd->PushTag(new ExifStringTag(kExifTagGpsDatestamp, date));
 }
 
 void ExifMetadataBuilder::SetLensFocalLength(double length) {
@@ -502,22 +463,26 @@ void ExifMetadataBuilder::SetLensFocalLength(double length) {
 
 void ExifMetadataBuilder::Build() {
   const uint8_t exif_header[] = {
-    'E', 'x', 'i', 'f', 0, 0,  // EXIF header.
+      'E', 'x', 'i', 'f', 0, 0,  // EXIF header.
   };
 
   const uint8_t tiff_header[] = {
-    'I', 'I', 0x2a, 0x00,      // TIFF Little endian header.
+      'I', 'I', 0x2a, 0x00,  // TIFF Little endian header.
   };
 
   // EXIF data should be exactly this much.
   size_t exif_size = sizeof(exif_header) + sizeof(tiff_header) +
-      sizeof(uint32_t) + // Offset of the following descriptors.
-      mImageIfd->Size() + mThumbnailIfd->Size();
+                     sizeof(uint32_t) +  // Offset of the following descriptors.
+                     mImageIfd->Size() + mThumbnailIfd->Size();
 
   const uint8_t marker[] = {
-    0xff, 0xd8, 0xff, 0xe1,          // EXIF marker.
-    uint8_t((exif_size + 2) >> 8),   // Data length (including the length field)
-    uint8_t((exif_size + 2) & 0xff),
+      0xff,
+      0xd8,
+      0xff,
+      0xe1,  // EXIF marker.
+      uint8_t((exif_size + 2) >>
+              8),  // Data length (including the length field)
+      uint8_t((exif_size + 2) & 0xff),
   };
 
   // Reserve data for our exif info.

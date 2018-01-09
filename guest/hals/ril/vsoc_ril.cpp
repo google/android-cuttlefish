@@ -17,15 +17,9 @@
 #include "guest/hals/ril/vsoc_ril.h"
 
 #include <cutils/properties.h>
-#include <netutils/ifc.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 
 #include <map>
 #include <set>
@@ -110,57 +104,27 @@ static int gSimPINAttempts = 0;
 static const int gSimPINAttemptsMax = 3;
 static SIM_Status gSimStatus = SIM_NOT_READY;
 
-namespace {
-// Holds the address and prefix from the latest DHCP query.
-char g_address_prefix[80];
-
-// Holds the dotted decimal IP address of the gateway from the latest DHCP
-// query.
-char g_gateway[80];
-
-// Holds the IP address of the DNS server.
-char g_dns1[80];
-};  // namespace
-
-// Oddly "part of the VNDK" doesn't translate into "has a header."
-extern "C" {
-int do_dhcp(char* iface);
-void get_dhcp_info(uint32_t* ipaddr, uint32_t* gateway, uint32_t* prefixLength,
-                   uint32_t* dns1, uint32_t* dns2, uint32_t* server,
-                   uint32_t* lease);
-};
-
 // SetUpNetworkInterface configures IP and Broadcast addresses on a RIL
-// controlled network interface by using dhcp code that is part of the VNDK.
+// controlled network interface.
 // This call returns true, if operation was successful.
-bool SetUpNetworkInterface(const char* interface_name) {
-  if (ifc_init()) {
-    ALOGE("%s disabled because ifc_init failed", interface_name);
-    return false;
-  }
-  // do_dhcp doesn't really write to this
-  if (do_dhcp(const_cast<char*>(interface_name))) {
-    ALOGE("%s disabled because DHCP failed", interface_name);
-    return false;
-  }
-  struct in_addr ipaddr, gateway, dns1;
-  uint32_t prefix_length, unused;
-  get_dhcp_info(&ipaddr.s_addr, &gateway.s_addr, &prefix_length, &dns1.s_addr,
-                &unused, &unused, &unused);
-  snprintf(g_address_prefix, sizeof(g_address_prefix), "%s/%d",
-           inet_ntoa(ipaddr), prefix_length);
-  // snprintf always null terminates, strncpy doesn't
-  snprintf(g_gateway, sizeof(g_gateway), "%s", inet_ntoa(gateway));
-  snprintf(g_dns1, sizeof(g_dns1), "%s", inet_ntoa(dns1));
-  return true;
-}
+bool SetUpNetworkInterface(const char* ipaddr, int prefixlen, const char* bcaddr) {
+  auto factory = cvd::NetlinkClientFactory::Default();
+  std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
+  std::unique_ptr<cvd::NetworkInterfaceManager> nm(
+      cvd::NetworkInterfaceManager::New(factory));
+  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0"));
 
-namespace {
-// This gets cast to a char* because some of the interfaces are lazy about
-// const. Declaring it this way ensures that we'll crash if someone tries to
-// write to the interface name.
-const char g_ril_interface[] = "rmnet0";
-};  // namespace
+  if (ni) {
+    ni->SetAddress(ipaddr);
+    ni->SetBroadcastAddress(bcaddr);
+    ni->SetPrefixLength(prefixlen);
+    ni->SetOperational(true);
+    bool res = nm->ApplyChanges(*ni);
+    if (!res) ALOGE("Could not configure rmnet0");
+    return res;
+  }
+  return false;
+}
 
 // TearDownNetworkInterface disables network interface.
 // This call returns true, if operation was successful.
@@ -171,7 +135,7 @@ bool TearDownNetworkInterface() {
   if (ni) {
     ni->SetOperational(false);
     bool res = nm->ApplyChanges(*ni);
-    if (!res) ALOGE("Could not disable %s", g_ril_interface);
+    if (!res) ALOGE("Could not disable rmnet0");
     return res;
   }
   return false;
@@ -219,10 +183,10 @@ static int request_or_send_data_calllist(RIL_Token* t) {
         break;
     }
 
-    responses[index].ifname = const_cast<char*>(g_ril_interface);
-    responses[index].addresses = g_address_prefix;
-    responses[index].dnses = g_dns1;
-    responses[index].gateways = g_gateway;
+    responses[index].ifname = (char*)"rmnet0";
+    responses[index].addresses = (char*)"192.168.99.2/30";
+    responses[index].dnses = (char*)"8.8.8.8";
+    responses[index].gateways = (char*)"192.168.99.1";
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
@@ -351,7 +315,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (gDataCalls.empty()) {
-    SetUpNetworkInterface(g_ril_interface);
+    SetUpNetworkInterface("192.168.99.2", 30, "192.168.99.3");
   }
 
   gDataCalls[gNextDataCallId] = call;

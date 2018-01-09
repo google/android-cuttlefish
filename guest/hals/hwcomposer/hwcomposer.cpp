@@ -15,8 +15,8 @@
  */
 
 #include <pthread.h>
-#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
@@ -47,11 +47,8 @@ int SanityCheckLayer(const hwc_layer_1& layer) {
     ALOGE(
         "%s: Malformed rectangle (displayFrame): [left = %d, right = %d, top = "
         "%d, bottom = %d]",
-        __FUNCTION__,
-        layer.displayFrame.left,
-        layer.displayFrame.right,
-        layer.displayFrame.top,
-        layer.displayFrame.bottom);
+        __FUNCTION__, layer.displayFrame.left, layer.displayFrame.right,
+        layer.displayFrame.top, layer.displayFrame.bottom);
     return -EINVAL;
   }
   // Check sourceCrop
@@ -60,11 +57,8 @@ int SanityCheckLayer(const hwc_layer_1& layer) {
     ALOGE(
         "%s: Malformed rectangle (sourceCrop): [left = %d, right = %d, top = "
         "%d, bottom = %d]",
-        __FUNCTION__,
-        layer.sourceCrop.left,
-        layer.sourceCrop.right,
-        layer.sourceCrop.top,
-        layer.sourceCrop.bottom);
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom);
     return -EINVAL;
   }
   const vsoc_buffer_handle_t* p_handle =
@@ -80,12 +74,8 @@ int SanityCheckLayer(const hwc_layer_1& layer) {
         "%s: Invalid sourceCrop for buffer handle: sourceCrop = [left = %d, "
         "right = %d, top = %d, bottom = %d], handle = [width = %d, height = "
         "%d]",
-        __FUNCTION__,
-        layer.sourceCrop.left,
-        layer.sourceCrop.right,
-        layer.sourceCrop.top,
-        layer.sourceCrop.bottom,
-        p_handle->x_res,
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom, p_handle->x_res,
         p_handle->y_res);
     return -EINVAL;
   }
@@ -125,7 +115,7 @@ void* vsync_thread(void* arg) {
     rt.tv_sec = timestamp / 1e9;
     rt.tv_nsec = timestamp % static_cast<int32_t>(1e9);
     int err = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &rt, NULL);
-    if ( err == -1) {
+    if (err == -1) {
       ALOGE("error in vsync thread: %s", strerror(errno));
       if (errno == EINTR) {
         continue;
@@ -144,8 +134,7 @@ void* vsync_thread(void* arg) {
   return NULL;
 }
 
-int hwc_prepare(struct hwc_composer_device_1* /*dev*/,
-                size_t numDisplays,
+int hwc_prepare(struct hwc_composer_device_1* /*dev*/, size_t numDisplays,
                 hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
   hwc_display_contents_1_t* list = displays[HWC_DISPLAY_PRIMARY];
@@ -161,8 +150,7 @@ int hwc_prepare(struct hwc_composer_device_1* /*dev*/,
   return 0;
 }
 
-int hwc_set(struct hwc_composer_device_1* dev,
-            size_t numDisplays,
+int hwc_set(struct hwc_composer_device_1* dev, size_t numDisplays,
             hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
   hwc_display_contents_1_t* list = displays[HWC_DISPLAY_PRIMARY];
@@ -194,9 +182,7 @@ int hwc_set(struct hwc_composer_device_1* dev,
   return 0;
 }
 
-int hwc_eventControl(struct hwc_composer_device_1* /*dev*/,
-                     int disp,
-                     int event,
+int hwc_eventControl(struct hwc_composer_device_1* /*dev*/, int disp, int event,
                      int /*enabled*/) {
   if (event == HWC_EVENT_VSYNC || disp != HWC_DISPLAY_PRIMARY) {
     return 0;
@@ -238,13 +224,11 @@ void hwc_registerProcs(struct hwc_composer_device_1* dev,
   reinterpret_cast<vsoc_hwc_device*>(dev)->procs = procs;
 }
 
-void hwc_dump(struct hwc_composer_device_1* /*dev*/,
-              char* /*buff*/, int /*buff_len*/) {}
+void hwc_dump(struct hwc_composer_device_1* /*dev*/, char* /*buff*/,
+              int /*buff_len*/) {}
 
-int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/,
-                          int disp,
-                          uint32_t* configs,
-                          size_t* numConfigs) {
+int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/, int disp,
+                          uint32_t* configs, size_t* numConfigs) {
   if (*numConfigs == 0) return 0;
 
   if (disp == HWC_DISPLAY_PRIMARY) {
@@ -259,7 +243,7 @@ int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/,
 int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
-      return 1000000000/pdev->fb_broadcast->refresh_rate_hz();
+      return 1000000000 / pdev->fb_broadcast->refresh_rate_hz();
     case HWC_DISPLAY_WIDTH:
       return pdev->fb_broadcast->x_res();
     case HWC_DISPLAY_HEIGHT:
@@ -277,10 +261,8 @@ int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
   }
 }
 
-int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev,
-                             int disp,
-                             uint32_t /*config*/,
-                             const uint32_t* attributes,
+int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
+                             uint32_t /*config*/, const uint32_t* attributes,
                              int32_t* values) {
   vsoc_hwc_device* pdev = reinterpret_cast<vsoc_hwc_device*>(dev);
 
@@ -323,9 +305,7 @@ int hwc_open(const struct hw_module_t* module, const char* name,
   dev->vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
   if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
-    ALOGE("%s:%d error in clock_gettime: %s",
-          __FILE__,
-          __LINE__,
+    ALOGE("%s:%d error in clock_gettime: %s", __FILE__, __LINE__,
           strerror(errno));
   }
   dev->vsync_base_timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
@@ -363,9 +343,9 @@ int hwc_open(const struct hw_module_t* module, const char* name,
   return -ret;
 }
 
-struct hw_module_methods_t hwc_module_methods = { hwc_open };
+struct hw_module_methods_t hwc_module_methods = {hwc_open};
 
-} // namespace
+}  // namespace
 
 hwc_module_t HAL_MODULE_INFO_SYM = {{HARDWARE_MODULE_TAG,
                                      HWC_MODULE_API_VERSION_0_1,

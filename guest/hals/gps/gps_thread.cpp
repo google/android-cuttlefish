@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <sys/epoll.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <cutils/log.h>
 #include <cutils/sockets.h>

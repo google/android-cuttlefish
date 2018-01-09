@@ -97,9 +97,8 @@ const char* const kCameraDefinitionResolutionWidthKey = "width";
 const char* const kCameraDefinitionResolutionHeightKey = "height";
 
 // Convert string value to camera orientation.
-bool ValueToCameraOrientation(
-    const std::string& value,
-    CameraDefinition::Orientation* orientation) {
+bool ValueToCameraOrientation(const std::string& value,
+                              CameraDefinition::Orientation* orientation) {
   if (value == "back") {
     *orientation = CameraDefinition::kBack;
     return true;
@@ -107,15 +106,13 @@ bool ValueToCameraOrientation(
     *orientation = CameraDefinition::kFront;
     return true;
   }
-  ALOGE("%s: Invalid camera orientation: %s.",
-        __FUNCTION__, value.c_str());
+  ALOGE("%s: Invalid camera orientation: %s.", __FUNCTION__, value.c_str());
   return false;
 }
 
 // Convert string value to camera HAL version.
-bool ValueToCameraHalVersion(
-    const std::string& value,
-    CameraDefinition::HalVersion* hal_version) {
+bool ValueToCameraHalVersion(const std::string& value,
+                             CameraDefinition::HalVersion* hal_version) {
   int temp;
   char* endptr;
 
@@ -148,9 +145,9 @@ bool ValueToCameraHalVersion(
   return true;
 }
 
-bool ValueToCameraResolution(
-    const std::string& width, const std::string& height,
-    CameraDefinition::Resolution* resolution) {
+bool ValueToCameraResolution(const std::string& width,
+                             const std::string& height,
+                             CameraDefinition::Resolution* resolution) {
   char* endptr;
 
   resolution->width = strtol(width.c_str(), &endptr, 10);
@@ -176,10 +173,11 @@ bool ValueToCameraResolution(
 
   // Validate width and height divisible by 8.
   if ((resolution->width & 7) != 0 || (resolution->height & 7) != 0) {
-    ALOGE("%s: Invalid camera resolution: width and height must be "
-          "divisible by 8, got %dx%d (%dx%d).", __FUNCTION__,
-          resolution->width, resolution->height,
-          resolution->width & 7, resolution->height & 7);
+    ALOGE(
+        "%s: Invalid camera resolution: width and height must be "
+        "divisible by 8, got %dx%d (%dx%d).",
+        __FUNCTION__, resolution->width, resolution->height,
+        resolution->width & 7, resolution->height & 7);
     return false;
   }
 
@@ -188,9 +186,8 @@ bool ValueToCameraResolution(
 
 // Process camera definitions.
 // Returns true, if definitions were sane.
-bool ConfigureCameras(
-    const Json::Value& value,
-    std::vector<CameraDefinition>* cameras) {
+bool ConfigureCameras(const Json::Value& value,
+                      std::vector<CameraDefinition>* cameras) {
   if (!value.isObject()) {
     ALOGE("%s: Configuration root is not an object", __FUNCTION__);
     return false;
@@ -198,8 +195,7 @@ bool ConfigureCameras(
 
   if (!value.isMember(kCameraDefinitionsKey)) return true;
   for (Json::ValueConstIterator iter = value[kCameraDefinitionsKey].begin();
-       iter != value[kCameraDefinitionsKey].end();
-       ++iter) {
+       iter != value[kCameraDefinitionsKey].end(); ++iter) {
     cameras->push_back(CameraDefinition());
     CameraDefinition& camera = cameras->back();
 
@@ -210,30 +206,32 @@ bool ConfigureCameras(
 
     // Camera without orientation -> invalid setting.
     if (!iter->isMember(kCameraDefinitionOrientationKey)) {
-      ALOGE("%s: Invalid camera definition: key %s is missing.",
-            __FUNCTION__, kCameraDefinitionOrientationKey);
+      ALOGE("%s: Invalid camera definition: key %s is missing.", __FUNCTION__,
+            kCameraDefinitionOrientationKey);
       return false;
     }
 
     if (!ValueToCameraOrientation(
-        (*iter)[kCameraDefinitionOrientationKey].asString(),
-        &camera.orientation)) return false;
+            (*iter)[kCameraDefinitionOrientationKey].asString(),
+            &camera.orientation))
+      return false;
 
     // Camera without HAL version -> invalid setting.
     if (!(*iter).isMember(kCameraDefinitionHalVersionKey)) {
-      ALOGE("%s: Invalid camera definition: key %s is missing.",
-            __FUNCTION__, kCameraDefinitionHalVersionKey);
+      ALOGE("%s: Invalid camera definition: key %s is missing.", __FUNCTION__,
+            kCameraDefinitionHalVersionKey);
       return false;
     }
 
     if (!ValueToCameraHalVersion(
-        (*iter)[kCameraDefinitionHalVersionKey].asString(),
-        &camera.hal_version)) return false;
+            (*iter)[kCameraDefinitionHalVersionKey].asString(),
+            &camera.hal_version))
+      return false;
 
     // Camera without resolutions -> invalid setting.
     if (!iter->isMember(kCameraDefinitionResolutionsKey)) {
-      ALOGE("%s: Invalid camera definition: key %s is missing.",
-            __FUNCTION__, kCameraDefinitionResolutionsKey);
+      ALOGE("%s: Invalid camera definition: key %s is missing.", __FUNCTION__,
+            kCameraDefinitionResolutionsKey);
       return false;
     }
 
@@ -249,8 +247,7 @@ bool ConfigureCameras(
 
     // Process all resolutions.
     for (Json::ValueConstIterator json_res_iter = json_resolutions.begin();
-         json_res_iter != json_resolutions.end();
-         ++json_res_iter) {
+         json_res_iter != json_resolutions.end(); ++json_res_iter) {
       // Check presence of width and height keys.
       if (!json_res_iter->isObject()) {
         ALOGE("%s: Camera resolution item is not an object", __FUNCTION__);
@@ -258,10 +255,10 @@ bool ConfigureCameras(
       }
       if (!json_res_iter->isMember(kCameraDefinitionResolutionWidthKey) ||
           !json_res_iter->isMember(kCameraDefinitionResolutionHeightKey)) {
-        ALOGE("%s: Invalid camera resolution: keys %s and %s are both required.",
-              __FUNCTION__,
-              kCameraDefinitionResolutionWidthKey,
-              kCameraDefinitionResolutionHeightKey);
+        ALOGE(
+            "%s: Invalid camera resolution: keys %s and %s are both required.",
+            __FUNCTION__, kCameraDefinitionResolutionWidthKey,
+            kCameraDefinitionResolutionHeightKey);
         return false;
       }
 
@@ -269,9 +266,10 @@ bool ConfigureCameras(
       CameraDefinition::Resolution& resolution = camera.resolutions.back();
 
       if (!ValueToCameraResolution(
-          (*json_res_iter)[kCameraDefinitionResolutionWidthKey].asString(),
-          (*json_res_iter)[kCameraDefinitionResolutionHeightKey].asString(),
-          &resolution)) return false;
+              (*json_res_iter)[kCameraDefinitionResolutionWidthKey].asString(),
+              (*json_res_iter)[kCameraDefinitionResolutionHeightKey].asString(),
+              &resolution))
+        return false;
     }
   }
 
@@ -282,10 +280,9 @@ bool ConfigureCameras(
 bool CameraConfiguration::Init() {
   cameras_.clear();
   std::string config;
-  if (!android::base::ReadFileToString(
-      kConfigurationFileLocation, &config)) {
-    ALOGE("%s: Could not open configuration file: %s",
-          __FUNCTION__, kConfigurationFileLocation);
+  if (!android::base::ReadFileToString(kConfigurationFileLocation, &config)) {
+    ALOGE("%s: Could not open configuration file: %s", __FUNCTION__,
+          kConfigurationFileLocation);
     return false;
   }
 
@@ -301,5 +298,3 @@ bool CameraConfiguration::Init() {
 }
 
 }  // namespace cvd
-
-

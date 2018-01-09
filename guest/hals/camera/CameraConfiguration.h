@@ -16,6 +16,9 @@
 #ifndef GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_
 #define GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_
 
+#undef max
+#undef min
+#include <algorithm>
 #include <vector>
 
 namespace cvd {
@@ -23,17 +26,10 @@ namespace cvd {
 // Camera properties and features.
 struct CameraDefinition {
   // Camera facing direction.
-  enum Orientation {
-    kFront,
-    kBack
-  };
+  enum Orientation { kFront, kBack };
 
   // Camera recognized HAL versions.
-  enum HalVersion {
-    kHalV1,
-    kHalV2,
-    kHalV3
-  };
+  enum HalVersion { kHalV1, kHalV2, kHalV3 };
 
   struct Resolution {
     int width;
@@ -50,9 +46,7 @@ class CameraConfiguration {
   CameraConfiguration() {}
   ~CameraConfiguration() {}
 
-  const std::vector<CameraDefinition>& cameras() const {
-    return cameras_;
-  }
+  const std::vector<CameraDefinition>& cameras() const { return cameras_; }
 
   bool Init();
 

@@ -23,12 +23,12 @@
 #define LOG_TAG "EmulatedCamera_Factory"
 #include <cutils/log.h>
 #include <cutils/properties.h>
-#include "guest/libs/platform_support/api_level_fixes.h"
 #include "EmulatedFakeCamera.h"
+#include "guest/libs/platform_support/api_level_fixes.h"
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-#include "EmulatedFakeCamera2.h"
 #include "EmulatedCameraHotplugThread.h"
+#include "EmulatedFakeCamera2.h"
 #endif
 
 #if VSOC_PLATFORM_SDK_AFTER(L_MR1)
@@ -41,108 +41,106 @@ extern camera_module_t HAL_MODULE_INFO_SYM;
 
 namespace android {
 EmulatedCameraFactory& EmulatedCameraFactory::Instance() {
-    static EmulatedCameraFactory* factory = new EmulatedCameraFactory;
-    return *factory;
+  static EmulatedCameraFactory* factory = new EmulatedCameraFactory;
+  return *factory;
 }
 
 EmulatedCameraFactory::EmulatedCameraFactory()
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-        : mCallbacks(NULL)
+    : mCallbacks(NULL)
 #endif
 {
-    mCameraConfiguration.Init();
-    const std::vector<cvd::CameraDefinition>& cameras =
-        mCameraConfiguration.cameras();
-    for (size_t camera_index = 0;
-         camera_index < cameras.size();
-         ++camera_index) {
-        mCameraDefinitions.push(cameras[camera_index]);
-        /* Reserve a spot for camera, but don't create just yet. */
-        mEmulatedCameras.push(NULL);
-    }
+  mCameraConfiguration.Init();
+  const std::vector<cvd::CameraDefinition>& cameras =
+      mCameraConfiguration.cameras();
+  for (size_t camera_index = 0; camera_index < cameras.size(); ++camera_index) {
+    mCameraDefinitions.push(cameras[camera_index]);
+    /* Reserve a spot for camera, but don't create just yet. */
+    mEmulatedCameras.push(NULL);
+  }
 
-    ALOGV("%d cameras are being emulated.", getEmulatedCameraNum());
+  ALOGV("%zu cameras are being emulated.", getEmulatedCameraNum());
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-    /* Create hotplug thread */
-    {
-        mHotplugThread = new EmulatedCameraHotplugThread(getEmulatedCameraNum());
-        mHotplugThread->run("EmulatedCameraHotplugThread");
-    }
+  /* Create hotplug thread */
+  {
+    mHotplugThread = new EmulatedCameraHotplugThread(getEmulatedCameraNum());
+    mHotplugThread->run("EmulatedCameraHotplugThread");
+  }
 #endif
 }
 
-EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(size_t cameraId) {
-    ::cvd::LockGuard< ::cvd::Mutex > lock(mEmulatedCamerasMutex);
+EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(
+    size_t cameraId) {
+  ::cvd::LockGuard< ::cvd::Mutex> lock(mEmulatedCamerasMutex);
 
-    if (cameraId >= getEmulatedCameraNum()) {
-        ALOGE("%s: Invalid camera ID: %d", __FUNCTION__, cameraId);
-        return NULL;
-    }
+  if (cameraId >= getEmulatedCameraNum()) {
+    ALOGE("%s: Invalid camera ID: %zu", __FUNCTION__, cameraId);
+    return NULL;
+  }
 
-    if (mEmulatedCameras[cameraId] != NULL) {
-        return mEmulatedCameras[cameraId];
-    }
+  if (mEmulatedCameras[cameraId] != NULL) {
+    return mEmulatedCameras[cameraId];
+  }
 
-    const cvd::CameraDefinition& definition = mCameraDefinitions[cameraId];
-    bool is_back_facing =
-            (definition.orientation == cvd::CameraDefinition::kBack);
+  const cvd::CameraDefinition& definition = mCameraDefinitions[cameraId];
+  bool is_back_facing =
+      (definition.orientation == cvd::CameraDefinition::kBack);
 
-    EmulatedBaseCamera* camera;
-    /* Create, and initialize the fake camera */
-    switch (definition.hal_version) {
-        case cvd::CameraDefinition::kHalV1:
-            camera = new EmulatedFakeCamera(cameraId, is_back_facing,
-                                            &HAL_MODULE_INFO_SYM.common);
-            break;
+  EmulatedBaseCamera* camera;
+  /* Create, and initialize the fake camera */
+  switch (definition.hal_version) {
+    case cvd::CameraDefinition::kHalV1:
+      camera = new EmulatedFakeCamera(cameraId, is_back_facing,
+                                      &HAL_MODULE_INFO_SYM.common);
+      break;
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-        case cvd::CameraDefinition::kHalV2:
-            camera = new EmulatedFakeCamera2(cameraId, is_back_facing,
-                                             &HAL_MODULE_INFO_SYM.common);
-            break;
+    case cvd::CameraDefinition::kHalV2:
+      camera = new EmulatedFakeCamera2(cameraId, is_back_facing,
+                                       &HAL_MODULE_INFO_SYM.common);
+      break;
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(L_MR1)
-        case cvd::CameraDefinition::kHalV3:
-            camera = new EmulatedFakeCamera3(cameraId, is_back_facing,
-                                        &HAL_MODULE_INFO_SYM.common);
-            break;
+    case cvd::CameraDefinition::kHalV3:
+      camera = new EmulatedFakeCamera3(cameraId, is_back_facing,
+                                       &HAL_MODULE_INFO_SYM.common);
+      break;
 #endif
-        default:
-            ALOGE("%s: Unsupported camera hal version requested: %d",
-                  __FUNCTION__, definition.hal_version);
-            return NULL;
-    }
+    default:
+      ALOGE("%s: Unsupported camera hal version requested: %d", __FUNCTION__,
+            definition.hal_version);
+      return NULL;
+  }
 
-    ALOGI("%s: Camera device %d hal version is %d", __FUNCTION__,
-          cameraId, definition.hal_version);
-    int res = camera->Initialize(definition);
+  ALOGI("%s: Camera device %zu hal version is %d", __FUNCTION__, cameraId,
+        definition.hal_version);
+  int res = camera->Initialize(definition);
 
-    if (res != NO_ERROR) {
-        ALOGE("%s: Unable to intialize camera %d: %s (%d)",
-              __FUNCTION__, cameraId, strerror(-res), res);
-        delete camera;
-        return NULL;
-    }
+  if (res != NO_ERROR) {
+    ALOGE("%s: Unable to intialize camera %zu: %s (%d)", __FUNCTION__, cameraId,
+          strerror(-res), res);
+    delete camera;
+    return NULL;
+  }
 
-    ALOGI("%s: Inserting camera", __FUNCTION__);
-    mEmulatedCameras.replaceAt(camera, cameraId);
-    ALOGI("%s: Done", __FUNCTION__);
-    return camera;
+  ALOGI("%s: Inserting camera", __FUNCTION__);
+  mEmulatedCameras.replaceAt(camera, cameraId);
+  ALOGI("%s: Done", __FUNCTION__);
+  return camera;
 }
 
-EmulatedCameraFactory::~EmulatedCameraFactory()
-{
-    for (size_t n = 0; n < mEmulatedCameras.size(); n++) {
-        if (mEmulatedCameras[n] != NULL) {
-            delete mEmulatedCameras[n];
-        }
+EmulatedCameraFactory::~EmulatedCameraFactory() {
+  for (size_t n = 0; n < mEmulatedCameras.size(); n++) {
+    if (mEmulatedCameras[n] != NULL) {
+      delete mEmulatedCameras[n];
     }
+  }
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-    if (mHotplugThread != NULL) {
-        mHotplugThread->requestExit();
-        mHotplugThread->join();
-    }
+  if (mHotplugThread != NULL) {
+    mHotplugThread->requestExit();
+    mHotplugThread->join();
+  }
 #endif
 }
 
@@ -154,53 +152,52 @@ EmulatedCameraFactory::~EmulatedCameraFactory()
  *
  ***************************************************************************/
 
-int EmulatedCameraFactory::cameraDeviceOpen(int camera_id, hw_device_t** device)
-{
-    ALOGV("%s: id = %d", __FUNCTION__, camera_id);
+int EmulatedCameraFactory::cameraDeviceOpen(int camera_id,
+                                            hw_device_t** device) {
+  ALOGV("%s: id = %d", __FUNCTION__, camera_id);
 
-    *device = NULL;
+  *device = NULL;
 
-    EmulatedBaseCamera* camera = getOrCreateFakeCamera(camera_id);
-    if (camera == NULL) return -EINVAL;
+  EmulatedBaseCamera* camera = getOrCreateFakeCamera(camera_id);
+  if (camera == NULL) return -EINVAL;
 
-    return camera->connectCamera(device);
+  return camera->connectCamera(device);
 }
 
-int EmulatedCameraFactory::getCameraInfo(int camera_id, struct camera_info* info)
-{
-    ALOGV("%s: id = %d", __FUNCTION__, camera_id);
+int EmulatedCameraFactory::getCameraInfo(int camera_id,
+                                         struct camera_info* info) {
+  ALOGV("%s: id = %d", __FUNCTION__, camera_id);
 
-    EmulatedBaseCamera* camera = getOrCreateFakeCamera(camera_id);
-    if (camera == NULL) return -EINVAL;
+  EmulatedBaseCamera* camera = getOrCreateFakeCamera(camera_id);
+  if (camera == NULL) return -EINVAL;
 
-    return camera->getCameraInfo(info);
+  return camera->getCameraInfo(info);
 }
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 int EmulatedCameraFactory::setCallbacks(
-        const camera_module_callbacks_t *callbacks)
-{
-    ALOGV("%s: callbacks = %p", __FUNCTION__, callbacks);
+    const camera_module_callbacks_t* callbacks) {
+  ALOGV("%s: callbacks = %p", __FUNCTION__, callbacks);
 
-    mCallbacks = callbacks;
+  mCallbacks = callbacks;
 
-    return OK;
+  return OK;
 }
 
 void EmulatedCameraFactory::getVendorTagOps(vendor_tag_ops_t* ops) {
-    ALOGV("%s: ops = %p", __FUNCTION__, ops);
+  ALOGV("%s: ops = %p", __FUNCTION__, ops);
 
-    // No vendor tags defined for emulator yet, so not touching ops
+  // No vendor tags defined for emulator yet, so not touching ops
 }
 #endif
 
 int EmulatedCameraFactory::setTorchMode(const char* camera_id, bool enabled) {
-    ALOGV("%s: camera_id = %s, enabled =%d", __FUNCTION__, camera_id, enabled);
+  ALOGV("%s: camera_id = %s, enabled =%d", __FUNCTION__, camera_id, enabled);
 
-    EmulatedBaseCamera* camera = getOrCreateFakeCamera(atoi(camera_id));
-    if (camera == NULL) return -EINVAL;
+  EmulatedBaseCamera* camera = getOrCreateFakeCamera(atoi(camera_id));
+  if (camera == NULL) return -EINVAL;
 
-    return camera->setTorchMode(enabled);
+  return camera->setTorchMode(enabled);
 }
 
 /****************************************************************************
@@ -208,59 +205,55 @@ int EmulatedCameraFactory::setTorchMode(const char* camera_id, bool enabled) {
  ***************************************************************************/
 
 int EmulatedCameraFactory::device_open(const hw_module_t* module,
-                                       const char* name,
-                                       hw_device_t** device)
-{
-    /*
-     * Simply verify the parameters, and dispatch the call inside the
-     * EmulatedCameraFactory instance.
-     */
+                                       const char* name, hw_device_t** device) {
+  /*
+   * Simply verify the parameters, and dispatch the call inside the
+   * EmulatedCameraFactory instance.
+   */
 
-    if (module != &HAL_MODULE_INFO_SYM.common) {
-        ALOGE("%s: Invalid module %p expected %p",
-             __FUNCTION__, module, &HAL_MODULE_INFO_SYM.common);
-        return -EINVAL;
-    }
-    if (name == NULL) {
-        ALOGE("%s: NULL name is not expected here", __FUNCTION__);
-        return -EINVAL;
-    }
+  if (module != &HAL_MODULE_INFO_SYM.common) {
+    ALOGE("%s: Invalid module %p expected %p", __FUNCTION__, module,
+          &HAL_MODULE_INFO_SYM.common);
+    return -EINVAL;
+  }
+  if (name == NULL) {
+    ALOGE("%s: NULL name is not expected here", __FUNCTION__);
+    return -EINVAL;
+  }
 
-    return EmulatedCameraFactory::Instance().cameraDeviceOpen(atoi(name), device);
+  return EmulatedCameraFactory::Instance().cameraDeviceOpen(atoi(name), device);
 }
 
-int EmulatedCameraFactory::get_number_of_cameras(void)
-{
-    return EmulatedCameraFactory::Instance().getEmulatedCameraNum();
+int EmulatedCameraFactory::get_number_of_cameras(void) {
+  return EmulatedCameraFactory::Instance().getEmulatedCameraNum();
 }
 
 int EmulatedCameraFactory::get_camera_info(int camera_id,
-                                           struct camera_info* info)
-{
-    return EmulatedCameraFactory::Instance().getCameraInfo(camera_id, info);
+                                           struct camera_info* info) {
+  return EmulatedCameraFactory::Instance().getCameraInfo(camera_id, info);
 }
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 int EmulatedCameraFactory::set_callbacks(
-        const camera_module_callbacks_t *callbacks)
-{
-    return EmulatedCameraFactory::Instance().setCallbacks(callbacks);
+    const camera_module_callbacks_t* callbacks) {
+  return EmulatedCameraFactory::Instance().setCallbacks(callbacks);
 }
 
-void EmulatedCameraFactory::get_vendor_tag_ops(vendor_tag_ops_t* ops)
-{
-    EmulatedCameraFactory::Instance().getVendorTagOps(ops);
+void EmulatedCameraFactory::get_vendor_tag_ops(vendor_tag_ops_t* ops) {
+  EmulatedCameraFactory::Instance().getVendorTagOps(ops);
 }
 #endif
 
-int EmulatedCameraFactory::open_legacy(const struct hw_module_t* module,
-        const char* id, uint32_t halVersion, struct hw_device_t** device) {
-    // Not supporting legacy open
-    return -ENOSYS;
+int EmulatedCameraFactory::open_legacy(const struct hw_module_t* /*module*/,
+                                       const char* /*id*/,
+                                       uint32_t /*halVersion*/,
+                                       struct hw_device_t** /*device*/) {
+  // Not supporting legacy open
+  return -ENOSYS;
 }
 
 int EmulatedCameraFactory::set_torch_mode(const char* camera_id, bool enabled) {
-    return EmulatedCameraFactory::Instance().setTorchMode(camera_id, enabled);
+  return EmulatedCameraFactory::Instance().setTorchMode(camera_id, enabled);
 }
 
 /********************************************************************************
@@ -268,54 +261,52 @@ int EmulatedCameraFactory::set_torch_mode(const char* camera_id, bool enabled) {
  *******************************************************************************/
 
 void EmulatedCameraFactory::onStatusChanged(int cameraId, int newStatus) {
+  EmulatedBaseCamera* cam = getOrCreateFakeCamera(cameraId);
+  if (!cam) {
+    ALOGE("%s: Invalid camera ID %d", __FUNCTION__, cameraId);
+    return;
+  }
 
-    EmulatedBaseCamera *cam = getOrCreateFakeCamera(cameraId);
-    if (!cam) {
-        ALOGE("%s: Invalid camera ID %d", __FUNCTION__, cameraId);
-        return;
-    }
-
-    /**
-     * (Order is important)
-     * Send the callback first to framework, THEN close the camera.
-     */
+  /**
+   * (Order is important)
+   * Send the callback first to framework, THEN close the camera.
+   */
 
 #if VSOC_PLATFORM_SDK_AFTER(J_MR2)
-    if (newStatus == cam->getHotplugStatus()) {
-        ALOGW("%s: Ignoring transition to the same status", __FUNCTION__);
-        return;
-    }
+  if (newStatus == cam->getHotplugStatus()) {
+    ALOGW("%s: Ignoring transition to the same status", __FUNCTION__);
+    return;
+  }
 
-    const camera_module_callbacks_t* cb = mCallbacks;
-    if (cb != NULL && cb->camera_device_status_change != NULL) {
-        cb->camera_device_status_change(cb, cameraId, newStatus);
-    }
+  const camera_module_callbacks_t* cb = mCallbacks;
+  if (cb != NULL && cb->camera_device_status_change != NULL) {
+    cb->camera_device_status_change(cb, cameraId, newStatus);
+  }
 
-    if (newStatus == CAMERA_DEVICE_STATUS_NOT_PRESENT) {
-        cam->unplugCamera();
-    } else if (newStatus == CAMERA_DEVICE_STATUS_PRESENT) {
-        cam->plugCamera();
-    }
+  if (newStatus == CAMERA_DEVICE_STATUS_NOT_PRESENT) {
+    cam->unplugCamera();
+  } else if (newStatus == CAMERA_DEVICE_STATUS_PRESENT) {
+    cam->plugCamera();
+  }
 #endif
-
 }
 
-void EmulatedCameraFactory::onTorchModeStatusChanged(int cameraId, int newStatus) {
-    EmulatedBaseCamera *cam = getOrCreateFakeCamera(cameraId);
-    if (!cam) {
-        ALOGE("%s: Invalid camera ID %d", __FUNCTION__, cameraId);
-        return;
-    }
+void EmulatedCameraFactory::onTorchModeStatusChanged(int cameraId,
+                                                     int newStatus) {
+  EmulatedBaseCamera* cam = getOrCreateFakeCamera(cameraId);
+  if (!cam) {
+    ALOGE("%s: Invalid camera ID %d", __FUNCTION__, cameraId);
+    return;
+  }
 
 #if VSOC_PLATFORM_SDK_AFTER(L_MR1)
-    const camera_module_callbacks_t* cb = mCallbacks;
-    if (cb != NULL && cb->torch_mode_status_change != NULL) {
-        char id[10];
-        sprintf(id, "%d", cameraId);
-        cb->torch_mode_status_change(cb, id, newStatus);
-    }
+  const camera_module_callbacks_t* cb = mCallbacks;
+  if (cb != NULL && cb->torch_mode_status_change != NULL) {
+    char id[10];
+    sprintf(id, "%d", cameraId);
+    cb->torch_mode_status_change(cb, id, newStatus);
+  }
 #endif
-
 }
 
 /********************************************************************************
@@ -324,7 +315,6 @@ void EmulatedCameraFactory::onTorchModeStatusChanged(int cameraId, int newStatus
 
 /* Entry point for camera HAL API. */
 struct hw_module_methods_t EmulatedCameraFactory::mCameraModuleMethods = {
-    VSOC_STATIC_INITIALIZER(open) EmulatedCameraFactory::device_open
-};
+    VSOC_STATIC_INITIALIZER(open) EmulatedCameraFactory::device_open};
 
 }; /* namespace android */
