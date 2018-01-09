@@ -51,6 +51,8 @@ std::string StringFromEnv(const char* varname, std::string defval) {
 }
 }  // namespace
 
+#define VIRSH_OPTIONS_PLACEHOLDER "<virsh_options>"
+
 using vsoc::GetPerInstanceDefault;
 using vsoc::GetDefaultPerInstancePath;
 
@@ -68,8 +70,11 @@ DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 DEFINE_string(kernel_command_line, "",
               "Location of a text file with the kernel command line.");
-DEFINE_string(launch_command, "virsh create /dev/fd/0",
-              "Command to start an instance");
+DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
+DEFINE_string(launch_command,
+              "virsh " VIRSH_OPTIONS_PLACEHOLDER " create /dev/fd/0",
+              "Command to start an instance. If <virsh_options> is present it "
+              "will be replaced by options to the virsh command");
 DEFINE_string(layout,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
                   "/config/vsoc_mem.json",
@@ -102,6 +107,11 @@ DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             "Will be deprecated soon.");
 
 namespace {
+
+std::string GetVirshOptions() {
+  return std::string("-c ").append(FLAGS_hypervisor_uri);
+}
+
 Json::Value LoadLayoutFile(const std::string& file) {
   char real_file_path[PATH_MAX];
   if (realpath(file.c_str(), real_file_path) == nullptr) {
@@ -361,9 +371,16 @@ int main(int argc, char** argv) {
   // Initialize the regions that require it before the VM starts.
   PreLaunchInitializers::Initialize();
 
-  FILE* launch = popen(FLAGS_launch_command.c_str(), "w");
+  std::string launch_command = FLAGS_launch_command;
+  auto pos = launch_command.find(VIRSH_OPTIONS_PLACEHOLDER);
+  if (pos != std::string::npos) {
+    launch_command.replace(
+        pos, sizeof(VIRSH_OPTIONS_PLACEHOLDER) - 1, GetVirshOptions());
+  }
+
+  FILE* launch = popen(launch_command.c_str(), "w");
   if (!launch) {
-    LOG(FATAL) << "Unable to execute " << FLAGS_launch_command;
+    LOG(FATAL) << "Unable to execute " << launch_command;
   }
   int rval = fputs(xml.c_str(), launch);
   if (rval == EOF) {
