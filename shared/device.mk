@@ -209,6 +209,12 @@ PRODUCT_PACKAGES += \
     android.hardware.gnss@1.0-service
 
 #
+# Health
+#
+PRODUCT_PACKAGES += \
+    android.hardware.health@2.0-service
+
+#
 # Sensors
 #
 PRODUCT_PACKAGES += \
