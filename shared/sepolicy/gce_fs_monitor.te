@@ -1,5 +1,5 @@
 type gce_fs_monitor, domain;
-type gce_fs_monitor_exec, exec_type, file_type;
+type gce_fs_monitor_exec, exec_type, vendor_file_type, file_type;
 
 init_daemon_domain(gce_fs_monitor)
 
