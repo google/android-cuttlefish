@@ -31,7 +31,9 @@
 #  define D(...) ((void)0)
 #endif
 
-namespace cvd {
+#define LOG_TAG "GceAudioPolicy"
+
+namespace avd {
 
 struct gce_audio_policy {
   audio_policy policy;
@@ -241,4 +243,3 @@ class GceAudioPolicy {
 };
 
 }
-
