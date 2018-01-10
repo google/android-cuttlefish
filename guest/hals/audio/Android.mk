@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,8 +40,7 @@ LOCAL_SRC_FILES := \
     audio_hal.cpp \
     vsoc_audio.cpp \
     vsoc_audio_input_stream.cpp \
-    vsoc_audio_output_stream.cpp \
-    vsoc_audio_message.cpp
+    vsoc_audio_output_stream.cpp
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
@@ -56,13 +55,9 @@ LOCAL_STATIC_LIBRARIES := \
     $(VSOC_STLPORT_STATIC_LIBS)
 
 LOCAL_CFLAGS := \
-    -Wall -Werror -Wno-parentheses -Wno-missing-field-initializers \
-    -DLOG_TAG=\"VSoC-Audio\" \
+    -Wall -Werror \
     $(VSOC_VERSION_CFLAGS)
 
-# Work-around for the non-standard language feautures used in
-# system/media/audio/include/system/audio.h
-LOCAL_CLANG_CFLAGS := -Wno-gnu-designator
 
 LOCAL_MODULE := audio.primary.vsoc
 LOCAL_VENDOR_MODULE := true
