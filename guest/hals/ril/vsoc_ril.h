@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2006 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef GUEST_RIL_VSOC_RIL_H_
-#define GUEST_RIL_VSOC_RIL_H_
+#pragma once
 
 #define RIL_SHLIB
 
 #define LOG_TAG "VSoCRil"
 
-#include <stdlib.h>
-#include <stdint.h>
 #include <cutils/log.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <sys/time.h>
 #include <telephony/ril.h>
 #include <telephony/ril_cdma_sms.h>
-#include <sys/time.h>
-
-#endif  // GUEST_RIL_VSOC_RIL_H_
