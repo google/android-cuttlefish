@@ -135,7 +135,7 @@
         <version>2.0</version>
         <interface>
             <name>IHealth</name>
-            <instance>backup</instance>
+            <instance>default</instance>
         </interface>
     </hal>
     <hal format="hidl">
