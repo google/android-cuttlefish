@@ -28,6 +28,9 @@ on init
     chown system root /dev/input_events
     chmod 0660 /dev/input_events
     restorecon /dev/input_events
+    chown radio root /dev/ril
+    chmod 0660 /dev/ril
+    restorecon /dev/ril
 
 
 on fs
