@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2016 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# RIL (Radio Interface Layer) and basic modem emulator for GCE.
 
 LOCAL_PATH:= $(call my-dir)
 
@@ -31,11 +29,16 @@ LOCAL_SHARED_LIBRARIES := \
   cuttlefish_auto_resources \
   libbase
 
-LOCAL_C_INCLUDES := bionic device/google/cuttlefish_common
+LOCAL_C_INCLUDES := device/google/cuttlefish_common
+
+LOCAL_CFLAGS += \
+  -Wall \
+  -Werror \
+  $(VSOC_VERSION_CFLAGS)
+
 LOCAL_MODULE:= libvsoc-ril
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
-LOCAL_CFLAGS += $(VSOC_VERSION_CFLAGS)
 
 include $(BUILD_SHARED_LIBRARY)
 
