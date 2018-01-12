@@ -41,6 +41,9 @@ LOCAL_C_INCLUDES := ${vsocframebuffer_common_c_includes} \
 LOCAL_STATIC_LIBRARIES := \
     libjsoncpp
 
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog \

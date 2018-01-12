@@ -36,6 +36,10 @@ LOCAL_SRC_FILES := $(VSOC_GRALLOC_COMMON_SRC_FILES)
 
 LOCAL_CFLAGS := $(VSOC_GRALLOC_COMMON_CFLAGS)
 LOCAL_C_INCLUDES := device/google/cuttlefish_common
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 LOCAL_SHARED_LIBRARIES := \
     liblog \
     libutils \
