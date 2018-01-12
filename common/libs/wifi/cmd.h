@@ -28,6 +28,7 @@ constexpr int kWifiSimVersion = 1;
 class Cmd {
  public:
   Cmd();
+  explicit Cmd(nlmsghdr* h);
   ~Cmd();
 
   // Cmd() creates netlink request to be sent to kernel.
