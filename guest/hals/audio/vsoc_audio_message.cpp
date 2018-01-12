@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "guest/commands/audio/vsoc_audio_message.h"
+#include "guest/hals/audio/vsoc_audio_message.h"
 
 const char* gce_audio_message::kAudioHALSocketName =
     "/var/run/media/audio_hal_socket";
