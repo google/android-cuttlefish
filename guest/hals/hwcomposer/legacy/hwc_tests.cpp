@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "vsoc_composer.h"
 #include <stdio.h>
+#include "vsoc_composer.h"
 
 // This executable is only intended to perform simple tests on the hwcomposer
 // functionality. It should not be part of the images, but rather be included
@@ -28,32 +28,25 @@ class HWC_Tester : public cvd::VSoCComposer {
     // Allocate two buffers (1x1 and 800x1280)
     buffer_handle_t src_handle;
     int src_stride;
-    int res = gralloc_dev_->device.alloc(&gralloc_dev_->device,
-                                         1,
-                                         1,
-                                         HAL_PIXEL_FORMAT_RGBA_8888,
-                                         GRALLOC_USAGE_SW_READ_OFTEN,
-                                         &src_handle,
-                                         &src_stride);
+    int res = gralloc_dev_->device.alloc(
+        &gralloc_dev_->device, 1, 1, HAL_PIXEL_FORMAT_RGBA_8888,
+        GRALLOC_USAGE_SW_READ_OFTEN, &src_handle, &src_stride);
     if (res) {
       fprintf(stderr, "Error allocating source buffer, see logs for details\n");
       return -1;
     }
     buffer_handle_t dst_handle;
     int dst_stride;
-    res = gralloc_dev_->device.alloc(&gralloc_dev_->device,
-                                     800,
-                                     1280,
-                                     HAL_PIXEL_FORMAT_RGBA_8888,
-                                     GRALLOC_USAGE_SW_WRITE_OFTEN,
-                                     &dst_handle,
-                                     &dst_stride);
+    res = gralloc_dev_->device.alloc(
+        &gralloc_dev_->device, 800, 1280, HAL_PIXEL_FORMAT_RGBA_8888,
+        GRALLOC_USAGE_SW_WRITE_OFTEN, &dst_handle, &dst_stride);
     if (res) {
       fprintf(stderr,
               "Error allocating destination buffer, see logs for details\n");
       return -1;
     }
-    // Create a mock layer requesting a sinple copy of the pixels so that DoCopy gets called
+    // Create a mock layer requesting a sinple copy of the pixels so that DoCopy
+    // gets called
     vsoc_hwc_layer src_layer;
     src_layer.compositionType = HWC_OVERLAY;
     src_layer.hints = 0;

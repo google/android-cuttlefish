@@ -41,9 +41,11 @@ class BaseComposer {
   // broadcast at all.
   FbBroadcaster ReplaceFbBroadcaster(FbBroadcaster);
   void Dump(char* buff, int buff_len);
+
  protected:
   int64_t vsync_base_timestamp_;
   int32_t vsync_period_ns_;
+
  private:
   FbBroadcaster fb_broadcaster_;
 };
