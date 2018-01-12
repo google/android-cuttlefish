@@ -16,6 +16,9 @@
 #ifndef GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_
 #define GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_
 
+#undef max
+#undef min
+#include <algorithm>
 #include <vector>
 
 namespace cvd {

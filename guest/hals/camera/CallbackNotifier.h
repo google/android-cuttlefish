@@ -22,7 +22,10 @@
  * via set_callbacks, enable_msg_type, and disable_msg_type camera HAL API.
  */
 
+#include <hardware/camera.h>
 #include <utils/List.h>
+#include <utils/Mutex.h>
+#include <utils/Timers.h>
 
 namespace android {
 

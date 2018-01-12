@@ -180,7 +180,7 @@ bool Sensor::waitForVSync(nsecs_t reltime) {
 
 bool Sensor::waitForNewFrame(nsecs_t reltime, nsecs_t *captureTime) {
   Mutex::Autolock lock(mReadoutMutex);
-  uint8_t *ret;
+
   if (mCapturedBuffers == NULL) {
     int res;
     res = mReadoutAvailable.waitRelative(mReadoutMutex, reltime);
@@ -259,8 +259,6 @@ bool Sensor::threadLoop() {
   // time on that.
   nsecs_t simulatedTime = startRealTime;
   nsecs_t frameEndRealTime = startRealTime + frameDuration;
-  nsecs_t frameReadoutEndRealTime =
-      startRealTime + mRowReadoutTime * mResolution[1];
 
   if (mNextCapturedBuffers != NULL) {
     ALOGVV("Sensor starting readout");
@@ -376,7 +374,7 @@ bool Sensor::threadLoop() {
       ret = nanosleep(&t, &t);
     } while (ret != 0);
   }
-  nsecs_t endRealTime = systemTime();
+  nsecs_t endRealTime __unused = systemTime();
   ALOGVV("Frame cycle took %d ms, target %d ms",
          (int)((endRealTime - startRealTime) / 1000000),
          (int)(frameDuration / 1000000));
@@ -562,7 +560,7 @@ void Sensor::captureDepth(uint8_t *img, uint32_t gain, uint32_t stride) {
   ALOGVV("Depth sensor image captured");
 }
 
-void Sensor::captureDepthCloud(uint8_t *img) {
+void Sensor::captureDepthCloud(uint8_t * /*img*/) {
 #if defined HAL_DATASPACE_DEPTH
   android_depth_points *cloud = reinterpret_cast<android_depth_points *>(img);
 

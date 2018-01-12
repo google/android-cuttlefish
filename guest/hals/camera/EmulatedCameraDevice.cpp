@@ -28,6 +28,7 @@
 #include "EmulatedCameraDevice.h"
 #include <cutils/log.h>
 #include <sys/select.h>
+#include <algorithm>
 #include <cmath>
 #include "EmulatedCamera.h"
 
@@ -376,7 +377,7 @@ EmulatedCameraDevice::WorkerThread::Select(int fd, int timeout) {
 
   mCameraDevice->simulateAutoFocus();
 
-  const int fd_num = (fd >= 0) ? max(fd, mControlFD) + 1 : mControlFD + 1;
+  const int fd_num = (fd >= 0) ? std::max(fd, mControlFD) + 1 : mControlFD + 1;
   FD_ZERO(fds);
   FD_SET(mControlFD, fds);
   if (fd >= 0) {

@@ -77,7 +77,7 @@ class EmulatedCamera2 : public camera2_device, public EmulatedBaseCamera {
 
   virtual status_t getCameraInfo(struct camera_info *info) = 0;
 
-  virtual status_t getImageMetadata(struct ImageMetadata *meta) {
+  virtual status_t getImageMetadata(struct ImageMetadata * /*meta*/) {
     // TODO(ender): fill in Image metadata structure.
     return ENOSYS;
   }
@@ -157,6 +157,9 @@ class EmulatedCamera2 : public camera2_device, public EmulatedBaseCamera {
 
   /** In-progress request management */
   static int get_in_progress_count(const camera2_device_t *);
+
+  static int get_instance_metadata(const struct camera2_device *,
+                                   camera_metadata **);
 
   static int flush_captures_in_progress(const camera2_device_t *);
 

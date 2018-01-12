@@ -78,7 +78,7 @@ class EmulatedFakeCameraDevice : public EmulatedCameraDevice {
   status_t stopDevice();
 
   /* Gets current preview fame into provided buffer. */
-  status_t getPreviewFrame(void* buffer) { return OK; }
+  status_t getPreviewFrame(void* /*buffer*/) { return OK; }
 
   /***************************************************************************
    * Worker thread management overrides.

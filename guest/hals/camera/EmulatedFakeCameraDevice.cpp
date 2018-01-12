@@ -306,8 +306,8 @@ void EmulatedFakeCameraDevice::drawCheckerboard() {
 
 void EmulatedFakeCameraDevice::drawSquare(int x, int y, int size,
                                           const YUVPixel* color) {
-  const int square_xstop = min(mFrameWidth, x + size);
-  const int square_ystop = min(mFrameHeight, y + size);
+  const int square_xstop = std::min(mFrameWidth, x + size);
+  const int square_ystop = std::min(mFrameHeight, y + size);
   uint8_t* Y_pos = mCurrentFrame + y * mFrameWidth + x;
 
   YUVPixel adjustedColor = *color;

@@ -24,6 +24,9 @@
 #include "EmulatedFakeCamera.h"
 #include <cutils/log.h>
 #include <cutils/properties.h>
+#undef min
+#undef max
+#include <algorithm>
 #include <sstream>
 #include <string>
 #include "EmulatedCameraFactory.h"
