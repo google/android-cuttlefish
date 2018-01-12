@@ -59,7 +59,7 @@ EmulatedCamera3::~EmulatedCamera3() {}
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera3::Initialize(const cvd::CameraDefinition& params) {
+status_t EmulatedCamera3::Initialize(const cvd::CameraDefinition& /*params*/) {
   ALOGV("%s", __FUNCTION__);
 
   mStatus = STATUS_CLOSED;
@@ -118,25 +118,25 @@ status_t EmulatedCamera3::initializeDevice(
 }
 
 status_t EmulatedCamera3::configureStreams(
-    camera3_stream_configuration* streamList) {
+    camera3_stream_configuration* /*streamList*/) {
   ALOGE("%s: Not implemented", __FUNCTION__);
   return INVALID_OPERATION;
 }
 
 status_t EmulatedCamera3::registerStreamBuffers(
-    const camera3_stream_buffer_set* bufferSet) {
+    const camera3_stream_buffer_set* /*bufferSet*/) {
   ALOGE("%s: Not implemented", __FUNCTION__);
   return INVALID_OPERATION;
 }
 
 const camera_metadata_t* EmulatedCamera3::constructDefaultRequestSettings(
-    int type) {
+    int /*type*/) {
   ALOGE("%s: Not implemented", __FUNCTION__);
   return NULL;
 }
 
 status_t EmulatedCamera3::processCaptureRequest(
-    camera3_capture_request* request) {
+    camera3_capture_request* /*request*/) {
   ALOGE("%s: Not implemented", __FUNCTION__);
   return INVALID_OPERATION;
 }
@@ -148,7 +148,7 @@ status_t EmulatedCamera3::flush() {
 
 /** Debug methods */
 
-void EmulatedCamera3::dump(int fd) {
+void EmulatedCamera3::dump(int /*fd*/) {
   ALOGE("%s: Not implemented", __FUNCTION__);
   return;
 }
@@ -242,7 +242,8 @@ camera3_device_ops_t EmulatedCamera3::sDeviceOps = {
     EmulatedCamera3::process_capture_request,
     /* DEPRECATED: get_metadata_vendor_tag_ops */ nullptr,
     EmulatedCamera3::dump,
-    EmulatedCamera3::flush};
+    EmulatedCamera3::flush,
+    {0}};
 
 const char* EmulatedCamera3::sAvailableCapabilitiesStrings[NUM_CAPABILITIES] = {
     "BACKWARD_COMPATIBLE",

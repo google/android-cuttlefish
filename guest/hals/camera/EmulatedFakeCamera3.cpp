@@ -52,7 +52,7 @@ namespace android {
 
 const int64_t USEC = 1000LL;
 const int64_t MSEC = USEC * 1000LL;
-const int64_t SEC = MSEC * 1000LL;
+// const int64_t SEC = MSEC * 1000LL;
 
 const int32_t EmulatedFakeCamera3::kAvailableFormats[] = {
     HAL_PIXEL_FORMAT_RAW16, HAL_PIXEL_FORMAT_BLOB, HAL_PIXEL_FORMAT_RGBA_8888,
@@ -363,7 +363,7 @@ status_t EmulatedFakeCamera3::configureStreams(
 }
 
 status_t EmulatedFakeCamera3::registerStreamBuffers(
-    const camera3_stream_buffer_set *bufferSet) {
+    const camera3_stream_buffer_set * /*bufferSet*/) {
   ALOGV("%s: E", __FUNCTION__);
   Mutex::Autolock l(mLock);
 
@@ -1006,7 +1006,7 @@ status_t EmulatedFakeCamera3::flush() {
 
 /** Debug methods */
 
-void EmulatedFakeCamera3::dump(int fd) {}
+void EmulatedFakeCamera3::dump(int /*fd*/) {}
 
 /**
  * Private methods
@@ -1078,7 +1078,6 @@ status_t EmulatedFakeCamera3::constructStaticInfo(
   Vector<int32_t> availableCharacteristicsKeys;
   status_t res;
 
-  char *param_end;
   int32_t width = 0, height = 0;
 
   /* TODO(ender): this currently supports only maximum resolution. */
@@ -1583,9 +1582,9 @@ status_t EmulatedFakeCamera3::constructStaticInfo(
   }
 
   static const uint8_t availableSceneModes[] = {
-      hasCapability(BACKWARD_COMPATIBLE)
-          ? ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY
-          : ANDROID_CONTROL_SCENE_MODE_DISABLED};
+    static_cast<uint8_t>(hasCapability(BACKWARD_COMPATIBLE)
+                         ? ANDROID_CONTROL_SCENE_MODE_FACE_PRIORITY
+                         : ANDROID_CONTROL_SCENE_MODE_DISABLED)};
   ADD_STATIC_ENTRY(ANDROID_CONTROL_AVAILABLE_SCENE_MODES, availableSceneModes,
                    sizeof(availableSceneModes));
 
@@ -1914,8 +1913,6 @@ status_t EmulatedFakeCamera3::process3A(CameraMetadata &settings) {
    */
   status_t res;
 
-  bool facePriority = false;
-
   camera_metadata_entry e;
 
   e = settings.find(ANDROID_CONTROL_MODE);
@@ -2068,7 +2065,7 @@ status_t EmulatedFakeCamera3::doFakeAE(CameraMetadata &settings) {
         mAeCurrentExposureTime +=
             (mAeTargetExposureTime - mAeCurrentExposureTime) *
             kExposureTrackRate;
-        if (abs(mAeTargetExposureTime - mAeCurrentExposureTime) <
+        if (llabs(mAeTargetExposureTime - mAeCurrentExposureTime) <
             mAeTargetExposureTime / 10) {
           // Close enough
           mAeState = ANDROID_CONTROL_AE_STATE_CONVERGED;
@@ -2656,7 +2653,7 @@ void EmulatedFakeCamera3::ReadoutThread::onJpegDone(
 }
 
 void EmulatedFakeCamera3::ReadoutThread::onJpegInputDone(
-    const StreamBuffer &inputBuffer) {
+    const StreamBuffer & /*inputBuffer*/) {
   // Should never get here, since the input buffer has to be returned
   // by end of processCaptureRequest
   ALOGE("%s: Unexpected input buffer from JPEG compressor!", __FUNCTION__);

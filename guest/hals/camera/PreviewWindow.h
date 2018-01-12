@@ -17,6 +17,11 @@
 #ifndef HW_EMULATOR_CAMERA_PREVIEW_WINDOW_H
 #define HW_EMULATOR_CAMERA_PREVIEW_WINDOW_H
 
+#include <hardware/camera.h>
+#include <utils/Errors.h>
+#include <utils/Mutex.h>
+#include <utils/Timers.h>
+
 /*
  * Contains declaration of a class PreviewWindow that encapsulates functionality
  * of a preview window set via set_preview_window camera HAL API.

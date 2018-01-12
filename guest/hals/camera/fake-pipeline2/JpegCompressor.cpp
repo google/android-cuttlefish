@@ -121,7 +121,7 @@ status_t JpegCompressor::compress() {
   // Find source and target buffers. Assumes only one buffer matches
   // each condition!
   ALOGV("%s: Compressing start", __FUNCTION__);
-  bool foundJpeg = false, mFoundAux = false;
+  bool mFoundAux = false;
   for (size_t i = 0; i < mBuffers->size(); i++) {
     const StreamBuffer &b = (*mBuffers)[i];
     if (b.format == HAL_PIXEL_FORMAT_BLOB) {
@@ -238,7 +238,6 @@ bool JpegCompressor::checkError(const char *msg) {
 }
 
 void JpegCompressor::cleanUp() {
-  status_t res;
   jpeg_destroy_compress(&mCInfo);
   Mutex::Autolock lock(mBusyMutex);
 
@@ -272,7 +271,7 @@ void JpegCompressor::jpegInitDestination(j_compress_ptr cinfo) {
   dest->free_in_buffer = kMaxJpegSize;
 }
 
-boolean JpegCompressor::jpegEmptyOutputBuffer(j_compress_ptr cinfo) {
+boolean JpegCompressor::jpegEmptyOutputBuffer(j_compress_ptr /*cinfo*/) {
   ALOGE("%s: JPEG destination buffer overflow!", __FUNCTION__);
   return true;
 }
