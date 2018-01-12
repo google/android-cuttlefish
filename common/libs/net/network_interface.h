@@ -47,6 +47,10 @@ class NetworkInterface {
     return name_;
   }
 
+  int PrefixLength() const {
+    return prefix_len_;
+  }
+
   // Set operational state of the network interface (ie. whether interface is
   // up).
   NetworkInterface& SetOperational(bool is_operational) {
@@ -77,6 +81,12 @@ class NetworkInterface {
     return *this;
   }
 
+  // Set IPv4 prefix length
+  NetworkInterface& SetPrefixLength(int len) {
+    prefix_len_ = len;
+    return *this;
+  }
+
   // Get IPv4 broadcast address of the network interface.
   const std::string& BroadcastAddress() const {
     return bc_address_;
@@ -94,6 +104,8 @@ class NetworkInterface {
   std::string ip_address_;
   // IPv4 broadcast address of this interface.
   std::string bc_address_;
+  // IPv4 prefix (aka netmask. 0 means use the default)
+  int prefix_len_ = 24;
 
   NetworkInterface(const NetworkInterface&);
   NetworkInterface& operator= (const NetworkInterface&);

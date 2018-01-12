@@ -43,9 +43,10 @@ NetlinkRequest BuildLinkRequest(
 NetlinkRequest BuildAddrRequest(
     const NetworkInterface& interface) {
   NetlinkRequest request(RTM_NEWADDR, 0);
-  request.AddAddrInfo(interface.Index());
-  request.AddInt32(IFA_LOCAL, inet_addr(interface.Address().c_str()));
-  request.AddInt32(IFA_ADDRESS, inet_addr(interface.Address().c_str()));
+  request.AddAddrInfo(interface.Index(), interface.PrefixLength());
+  in_addr_t address{inet_addr(interface.Address().c_str())};
+  request.AddInt32(IFA_LOCAL, address);
+  request.AddInt32(IFA_ADDRESS, address);
   request.AddInt32(IFA_BROADCAST,
                     inet_addr(interface.BroadcastAddress().c_str()));
 
@@ -97,4 +98,3 @@ bool NetworkInterfaceManager::ApplyChanges(const NetworkInterface& iface) {
 }
 
 }  // namespace cvd
-
