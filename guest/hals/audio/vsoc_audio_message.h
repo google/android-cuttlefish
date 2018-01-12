@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,21 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+
+#include "guest/libs/platform_support/api_level_fixes.h"
+
+#pragma GCC diagnostic push
+#pragma  GCC diagnostic ignored "-Wparentheses"
+#if VSOC_PLATFORM_SDK_AFTER(K)
+#pragma  GCC diagnostic ignored "-Wgnu-designator"
+#endif
 #include <system/audio.h>
+#pragma GCC diagnostic pop
+
+//TODO(b/71777986) Use a shared memory window instead
+#define AUDIO_HAL_SOCKET_NAME "/var/run/media/audio_hal_socket"
 
 struct gce_audio_message {
-  static const char* kAudioHALSocketName;
   static const size_t kMaxAudioFrameLen = 65536;
   enum message_t {
     UNKNOWN = 0,
