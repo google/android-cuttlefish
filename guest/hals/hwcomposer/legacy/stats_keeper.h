@@ -137,9 +137,9 @@ class StatsKeepingComposer {
  public:
   // Keep stats from the last 10 seconds.
   StatsKeepingComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
-      : composer_(vsync_base_timestamp, vsync_period_ns),
-        stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
-                      vsync_base_timestamp, vsync_period_ns) {
+      : stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
+                      vsync_base_timestamp, vsync_period_ns),
+        composer_(vsync_base_timestamp, vsync_period_ns) {
     // Don't let the composer broadcast by itself, allow it to return to collect
     // the timings and broadcast then.
     composer_.ReplaceFbBroadcaster(NULL);
