@@ -22,7 +22,7 @@ void vsoc::RegionWorker::Work() {
     if (stopping_) {
       return;
     }
-    region_->ProcessSignalsFromPeer([](uint32_t* uaddr) {
+    region_->ProcessSignalsFromPeer([](std::atomic<uint32_t>* uaddr) {
       syscall(SYS_futex, uaddr, FUTEX_WAKE, -1, nullptr, nullptr, 0);
     });
   }
@@ -83,7 +83,7 @@ void vsoc::RegionView::WaitForInterrupt() {
 }
 
 void vsoc::RegionView::ProcessSignalsFromPeer(
-    std::function<void(uint32_t*)> signal_handler) {
+    std::function<void(std::atomic<uint32_t>*)> signal_handler) {
   const vsoc_signal_table_layout& table = incoming_signal_table();
   const size_t num_offsets = (1 << table.num_nodes_lg2);
   std::atomic<uint32_t>* offsets =
@@ -93,8 +93,9 @@ void vsoc::RegionView::ProcessSignalsFromPeer(
     uint32_t offset = offsets[i].exchange(0);
     if (offset) {
       bool round_trip = offset & UADDR_OFFSET_ROUND_TRIP_FLAG;
-      uint32_t* uaddr =
-          region_offset_to_pointer<uint32_t>(offset & UADDR_OFFSET_MASK);
+      std::atomic<uint32_t>* uaddr =
+          region_offset_to_pointer<std::atomic<uint32_t>>(offset &
+                                                          UADDR_OFFSET_MASK);
       signal_handler(uaddr);
       if (round_trip) {
         SendSignalToPeer(uaddr, false);
@@ -103,12 +104,13 @@ void vsoc::RegionView::ProcessSignalsFromPeer(
   }
 }
 
-void vsoc::RegionView::SendSignal(Sides sides_to_signal, uint32_t* uaddr) {
+void vsoc::RegionView::SendSignal(Sides sides_to_signal,
+                                  std::atomic<uint32_t>* uaddr) {
   if (sides_to_signal.value_ & Sides::Peer) {
     // If we should also be signalling our side set the round trip flag on
     // the futex signal.
     bool round_trip = sides_to_signal.value_ & Sides::OurSide;
-    SendSignalToPeer(reinterpret_cast<uint32_t*>(uaddr), round_trip);
+    SendSignalToPeer(uaddr, round_trip);
     // Return without signaling our waiters to give the other side a chance
     // to run.
     return;
@@ -119,7 +121,8 @@ void vsoc::RegionView::SendSignal(Sides sides_to_signal, uint32_t* uaddr) {
   }
 }
 
-void vsoc::RegionView::SendSignalToPeer(uint32_t* uaddr, bool round_trip) {
+void vsoc::RegionView::SendSignalToPeer(std::atomic<uint32_t>* uaddr,
+                                        bool round_trip) {
   const vsoc_signal_table_layout& table = outgoing_signal_table();
   std::atomic<uint32_t>* offsets =
       region_offset_to_pointer<std::atomic<uint32_t>>(
@@ -180,6 +183,7 @@ std::unique_ptr<vsoc::RegionWorker> vsoc::RegionView::StartWorker() {
   return std::unique_ptr<vsoc::RegionWorker>(new vsoc::RegionWorker(this));
 }
 
-void vsoc::RegionView::WaitForSignal(uint32_t* uaddr, uint32_t expected_value) {
+void vsoc::RegionView::WaitForSignal(std::atomic<uint32_t>* uaddr,
+                                     uint32_t expected_value) {
   syscall(SYS_futex, uaddr, FUTEX_WAIT, expected_value, nullptr, nullptr, 0);
 }

@@ -35,7 +35,7 @@ struct FBBroadcastLayout : public RegionLayout {
   uint16_t refresh_rate_hz;
 
   // The frame sequential number
-  uint32_t seq_num;
+  std::atomic<uint32_t> seq_num;
   // The offset in the gralloc buffer region of the current frame buffer.
   uint32_t frame_offset;
   // Protects access to the frame offset and sequential number.

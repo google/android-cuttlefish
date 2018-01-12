@@ -36,7 +36,7 @@ class RegionSignalingInterface {
   //
   //   signal_addr: the memory location to signal. Must be within the region.
   virtual void SendSignal(layout::Sides sides_to_signal,
-                          uint32_t* signal_addr) = 0;
+                          std::atomic<uint32_t>* signal_addr) = 0;
 
   // This implements the following:
   // if (*signal_addr == last_observed_value)
@@ -49,7 +49,7 @@ class RegionSignalingInterface {
   //   signal_addr: the memory that will be signaled. Must be within the region.
   //
   //   last_observed_value: the value that motivated the calling code to wait.
-  virtual void WaitForSignal(uint32_t* signal_addr,
+  virtual void WaitForSignal(std::atomic<uint32_t>* signal_addr,
                              uint32_t last_observed_value) = 0;
 };
 
