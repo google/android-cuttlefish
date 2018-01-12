@@ -246,10 +246,8 @@ void EmulatedCameraDevice::commonStopDevice() {
   }
 }
 
-status_t EmulatedCameraDevice::getImageMetadata(struct ImageMetadata* meta) {
-  meta->mWidth = mFrameWidth;
-  meta->mHeight = mFrameHeight;
-  return mCameraHAL->getImageMetadata(meta);
+const CameraParameters* EmulatedCameraDevice::getCameraParameters() {
+  return mCameraHAL->getCameraParameters();
 }
 
 /****************************************************************************

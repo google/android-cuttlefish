@@ -121,7 +121,7 @@ class EmulatedCamera : public camera_device, public EmulatedBaseCamera {
   virtual status_t getCameraInfo(struct camera_info* info);
 
   /** Override of base class method */
-  virtual status_t getImageMetadata(struct ImageMetadata* meta);
+  virtual const CameraParameters* getCameraParameters() override;
 
   /****************************************************************************
    * Camera API implementation.

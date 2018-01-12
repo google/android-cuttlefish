@@ -28,6 +28,7 @@ emulator_camera_cflags += \
 emulator_camera_shared_libraries := \
     libbase \
     libbinder \
+    libexif \
     liblog \
     libutils \
     libcutils \
@@ -43,7 +44,9 @@ else
 emulator_camera_static_libraries += libjsoncpp
 endif
 
-emulator_camera_static_libraries += android.hardware.camera.common@1.0-helper
+emulator_camera_static_libraries += \
+    android.hardware.camera.common@1.0-helper \
+    libyuv
 
 emulator_camera_c_includes := \
     device/google/cuttlefish_common \
@@ -59,6 +62,8 @@ emulator_camera_src := \
 		EmulatedCameraDevice.cpp \
 		EmulatedFakeCamera.cpp \
 		EmulatedFakeCameraDevice.cpp \
+		Exif.cpp \
+		Thumbnail.cpp \
 		Converters.cpp \
 		PreviewWindow.cpp \
 		CallbackNotifier.cpp \
@@ -82,7 +87,7 @@ emulated_camera2_stub_src := \
 enable_emulated_camera3 = $(shell test $(PLATFORM_SDK_VERSION) -ge 23 && echo yes)
 enable_emulated_camera2 = $(shell test $(PLATFORM_SDK_VERSION) -ge 19 && echo yes)
 
-# Emulated camera - goldfish / vbox_x86 build###################################
+# Emulated camera - cuttlefish / vbox_x86 build###################################
 #
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?))
 emulator_camera_c_includes += external/libjpeg-turbo
@@ -124,56 +129,38 @@ jpeg_cflags := \
     -Wall \
     -Werror
 
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -lt 27 ; echo $$?))
-GCE_HWUI_LIB:=libskia
-GCE_HWUI_INCLUDE:=external/skia/include/core
-else ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -eq 27 -a $(PLATFORM_PREVIEW_SDK_VERSION) -eq 0; echo $$?))
-GCE_HWUI_LIB:=libskia
-GCE_HWUI_INCLUDE:=external/skia/include/core
-else
-GCE_HWUI_LIB:=libhwui
-GCE_HWUI_INCLUDE:=
-endif
-
 jpeg_shared_libraries := \
     libcutils \
+    libexif \
     liblog \
-    $(GCE_HWUI_LIB) \
     libjpeg \
-    libandroid_runtime \
-    cuttlefish_auto_resources
-jpeg_static_libraries := libyuv_static
-jpeg_c_includes := \
-    device/google/cuttlefish_common \
-    external/libyuv/files/include \
-    $(GCE_HWUI_INCLUDE) \
-    frameworks/base/core/jni/android/graphics \
-    frameworks/native/include
-jpeg_src := \
-    JpegStub.cpp \
-    ExifMetadataBuilder.cpp
 
-# JPEG stub - goldfish build####################################################
-
+jpeg_c_includes := external/libexif \
+                   frameworks/native/include
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 24; echo $$?))
 jpeg_c_includes += external/libjpeg-turbo
 else
 jpeg_c_includes += external/jpeg
 endif
 
-ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := ${emulator_camera_module_relative_path}
-else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/${emulator_camera_module_relative_path}
-endif
+jpeg_src := \
+    Compressor.cpp \
+    JpegStub.cpp \
+
+# JPEG stub - cuttlefish build####################################################
+
 ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
 LOCAL_MULTILIB := first
 endif
+
+LOCAL_C_INCLUDES += ${jpeg_c_includes}
+LOCAL_SRC_FILES := ${jpeg_src}
+
+LOCAL_MODULE_RELATIVE_PATH := ${jpeg_module_relative_path}
 LOCAL_CFLAGS += ${jpeg_cflags}
-LOCAL_CLANG_CFLAGS += ${jpeg_clangflags}
 
 LOCAL_SHARED_LIBRARIES := ${jpeg_shared_libraries}
-LOCAL_STATIC_LIBRARIES := ${jpeg_static_libraries}
+
 LOCAL_C_INCLUDES += ${jpeg_c_includes}
 LOCAL_SRC_FILES := ${jpeg_src}
 
@@ -182,4 +169,3 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)
-

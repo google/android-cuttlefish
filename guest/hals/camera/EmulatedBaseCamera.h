@@ -20,8 +20,10 @@
 #include <hardware/camera_common.h>
 #include <utils/Errors.h>
 #include "CameraConfiguration.h"
-#include "ImageMetadata.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
+#include <CameraParameters.h>
+
+using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
 
 namespace android {
 
@@ -96,10 +98,12 @@ class EmulatedBaseCamera {
    */
   virtual status_t getCameraInfo(struct camera_info* info) = 0;
 
-  /* Gets image metadata.
+  /* Gets camera parameters.
    * This method is called to collect metadata for (currently) taken picture.
    */
-  virtual status_t getImageMetadata(struct ImageMetadata* meta) = 0;
+  virtual const CameraParameters* getCameraParameters() {
+      return NULL;
+  }
 
   /* Set torch mode.
    * This method is called in response to camera_module_t::set_torch_mode
