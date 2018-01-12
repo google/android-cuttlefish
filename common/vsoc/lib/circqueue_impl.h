@@ -38,7 +38,7 @@ void CircularQueueBase<SizeLog2>::CopyInRange(const char* buffer_in,
                                               const Range& t) {
   size_t bytes = t.end_idx - t.start_idx;
   uint32_t index = t.start_idx & (BufferSize - 1);
-  if (index + bytes < BufferSize) {
+  if (index + bytes <= BufferSize) {
     memcpy(buffer_ + index, buffer_in, bytes);
   } else {
     size_t part1_size = BufferSize - index;
