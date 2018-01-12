@@ -23,9 +23,9 @@ extern "C"{
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/threads/thunkers.h"
-#include "guest/commands/audio/audio_hal.h"
-#include "guest/commands/audio/vsoc_audio.h"
-#include "guest/commands/audio/vsoc_audio_input_stream.h"
+#include "guest/hals/audio/audio_hal.h"
+#include "guest/hals/audio/vsoc_audio.h"
+#include "guest/hals/audio/vsoc_audio_input_stream.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace cvd {
