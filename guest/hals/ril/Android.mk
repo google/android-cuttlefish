@@ -28,7 +28,7 @@ LOCAL_SHARED_LIBRARIES := \
   libril \
   libcuttlefish_fs \
   cuttlefish_net \
-  libcuttlefish_auto_resources \
+  cuttlefish_auto_resources \
   libbase
 
 LOCAL_C_INCLUDES := bionic device/google/cuttlefish_common
