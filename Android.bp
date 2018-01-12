@@ -55,6 +55,7 @@ cc_defaults {
             enabled: false,
         },
     },
+    cflags: ["-Werror", "-Wall"],
     vendor: true,
 }
 

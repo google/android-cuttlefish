@@ -198,7 +198,6 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
   }
   Range header = range;
   header.end_idx = header.start_idx + sizeof(uint32_t);
-  uint32_t sizeof_uint32_t = sizeof(uint32_t);
   Range payload{
       static_cast<uint32_t>(range.start_idx + sizeof(uint32_t)),
       static_cast<uint32_t>(range.start_idx + sizeof(uint32_t) + bytes)};

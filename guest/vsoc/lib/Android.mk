@@ -23,7 +23,7 @@ LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
     device/google/cuttlefish_kernel
 
-LOCAL_CFLAGS += -DGTEST_OS_LINUX_ANDROID -DGTEST_HAS_STD_STRING
+LOCAL_CFLAGS += -DGTEST_OS_LINUX_ANDROID -DGTEST_HAS_STD_STRING -Werror -Wall
 
 LOCAL_STATIC_LIBRARIES := \
     libgtest

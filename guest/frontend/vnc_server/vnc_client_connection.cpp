@@ -497,7 +497,8 @@ void VncClientConnection::HandlePointerEvent() {
   virtual_inputs_->HandlePointerEvent(button_mask, x_pos, y_pos);
 }
 
-void VncClientConnection::UpdateAccelerometer(float x, float y, float z) {
+void VncClientConnection::UpdateAccelerometer(float /*x*/, float /*y*/,
+                                              float /*z*/) {
   // TODO(jemoreira): Implement when vsoc sensor hal is updated
 }
 
