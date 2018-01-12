@@ -2,4 +2,3 @@
 # Create /var/run/system directory and sensors_hal_socket socket in the directory.
 allow system_server var_run_system_file:dir w_dir_perms;
 type_transition system_server var_run_system_file:sock_file sensors_hal_socket;
-allow system_server sensors_hal_socket:sock_file { create setattr };

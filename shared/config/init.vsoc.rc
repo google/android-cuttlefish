@@ -25,6 +25,9 @@ on init
     chown system root /dev/fb_broadcast
     chmod 0660 /dev/fb_broadcast
     restorecon /dev/fb_broadcast
+    chown system root /dev/input_events
+    chmod 0660 /dev/input_events
+    restorecon /dev/input_events
 
 
 on fs
@@ -58,6 +61,7 @@ on post-fs-data
 
 
 on early-boot
+    start vsoc_input_service
     start vnc_server
 
 
@@ -72,6 +76,12 @@ on boot
 
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
+    user root
+    group shell
+    oneshot
+
+
+service vsoc_input_service /vendor/bin/vsoc_input_service
     oneshot
 
 
