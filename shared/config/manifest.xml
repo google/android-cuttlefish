@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device">
+<manifest version="1.0" type="device" target-level="3">
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
@@ -90,6 +90,15 @@
         <version>1.0</version>
         <interface>
             <name>IDumpstateDevice</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.gatekeeper</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IGatekeeper</name>
             <instance>default</instance>
         </interface>
     </hal>

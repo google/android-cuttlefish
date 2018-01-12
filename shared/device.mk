@@ -258,6 +258,14 @@ PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-service
 
 #
+# Gatekeeper
+#
+PRODUCT_PACKAGES += \
+    gatekeeper.vsoc \
+    android.hardware.gatekeeper@1.0-impl \
+    android.hardware.gatekeeper@1.0-service
+
+#
 # GPS
 #
 PRODUCT_PACKAGES += \
