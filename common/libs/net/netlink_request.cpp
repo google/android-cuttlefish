@@ -98,10 +98,10 @@ void NetlinkRequest::AddIfInfo(int32_t if_index, bool operational) {
   if_info->ifi_change = IFF_UP;
 }
 
-void NetlinkRequest::AddAddrInfo(int32_t if_index) {
+void NetlinkRequest::AddAddrInfo(int32_t if_index, int prefix_len) {
   ifaddrmsg* ad_info = Reserve<ifaddrmsg>();
   ad_info->ifa_family = AF_INET;
-  ad_info->ifa_prefixlen = 24;
+  ad_info->ifa_prefixlen = prefix_len;
   ad_info->ifa_flags = IFA_F_PERMANENT | IFA_F_SECONDARY;
   ad_info->ifa_scope = 0;
   ad_info->ifa_index = if_index;
