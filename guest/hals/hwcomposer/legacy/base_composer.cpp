@@ -17,21 +17,22 @@
 #include "base_composer.h"
 
 #include <cutils/log.h>
-#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
 #include "guest/hals/gralloc//legacy/gralloc_vsoc_priv.h"
+#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
 
 namespace cvd {
 
 namespace {
 
-int BroadcastFrameBufferChanged (int yoffset) {
+int BroadcastFrameBufferChanged(int yoffset) {
   return VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
       yoffset);
 }
 
-}
+}  // namespace
 
-BaseComposer::BaseComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
+BaseComposer::BaseComposer(int64_t vsync_base_timestamp,
+                           int32_t vsync_period_ns)
     : fb_broadcaster_(BroadcastFrameBufferChanged),
       vsync_base_timestamp_(vsync_base_timestamp),
       vsync_period_ns_(vsync_period_ns) {
@@ -42,8 +43,7 @@ BaseComposer::BaseComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns
 
 BaseComposer::~BaseComposer() {}
 
-FbBroadcaster BaseComposer::ReplaceFbBroadcaster(
-    FbBroadcaster fb_broadcaster) {
+FbBroadcaster BaseComposer::ReplaceFbBroadcaster(FbBroadcaster fb_broadcaster) {
   FbBroadcaster tmp = fb_broadcaster_;
   fb_broadcaster_ = fb_broadcaster;
   return tmp;
@@ -51,13 +51,12 @@ FbBroadcaster BaseComposer::ReplaceFbBroadcaster(
 
 void BaseComposer::Dump(char* buff __unused, int buff_len __unused) {}
 
-
 int BaseComposer::PostFrameBuffer(buffer_handle_t buffer) {
   const int yoffset = YOffsetFromHandle(buffer);
   // If the broadcaster is NULL or could not get a good yoffset just ignore it.
   if (fb_broadcaster_ && yoffset >= 0) {
     int retval = fb_broadcaster_(yoffset);
-    if (retval){
+    if (retval) {
       ALOGI("Failed to post framebuffer");
       return -1;
     }
