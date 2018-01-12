@@ -338,10 +338,9 @@ void WifiRouter::RouteWIFIPacket() {
     nla_put(rep.get(), WIFIROUTER_ATTR_PACKET, len, buf);
     auto hdr = nlmsg_hdr(rep.get());
 
-    auto key = GetMacHash(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
-    LOG(INFO) << "Received netlink packet from " << std::hex << key;
-    for (auto it = targets->find(key); it != targets->end() && it->first == key;
-         ++it) {
+    auto key = GetRadioID(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
+    for (auto it = registered_addresses_.find(key);
+         it != registered_addresses_.end() && it->first == key; ++it) {
       auto num_written = send(it->second, hdr, hdr->nlmsg_len, MSG_NOSIGNAL);
       if (num_written != static_cast<int64_t>(hdr->nlmsg_len)) {
         pending_removals.insert(it->second);
