@@ -33,9 +33,9 @@ int BroadcastFrameBufferChanged(int yoffset) {
 
 BaseComposer::BaseComposer(int64_t vsync_base_timestamp,
                            int32_t vsync_period_ns)
-    : fb_broadcaster_(BroadcastFrameBufferChanged),
-      vsync_base_timestamp_(vsync_base_timestamp),
-      vsync_period_ns_(vsync_period_ns) {
+    : vsync_base_timestamp_(vsync_base_timestamp),
+      vsync_period_ns_(vsync_period_ns),
+      fb_broadcaster_(BroadcastFrameBufferChanged) {
   const gralloc_module_t* gralloc_module;
   hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                 reinterpret_cast<const hw_module_t**>(&gralloc_module));

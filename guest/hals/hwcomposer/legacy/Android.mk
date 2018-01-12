@@ -20,7 +20,7 @@ LOCAL_PATH := $(call my-dir)
 # Old hwcomposer, relies on GLES composition
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
-LOCAL_CFLAGS += -DUSE_OLD_HWCOMPOSER
+LOCAL_CFLAGS += -DUSE_OLD_HWCOMPOSER -Wall -Werror
 LOCAL_MODULE := hwcomposer.vsoc-deprecated
 
 # See b/67109557
@@ -71,8 +71,8 @@ LOCAL_SRC_FILES := \
 
 
 LOCAL_CFLAGS += \
-    -DLOG_TAG=\"hwc_tests\" \
-    $(VSOC_VERSION_CFLAGS)
+    $(VSOC_VERSION_CFLAGS) \
+    -Wall -Werror
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
