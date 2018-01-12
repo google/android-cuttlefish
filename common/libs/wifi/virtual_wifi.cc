@@ -189,12 +189,12 @@ bool SetWLANInterface(Netlink* nl, int iface_index, const std::string& name,
   return -1;
 }
 
-bool RegisterForRouterNotifications(Netlink* nl, uint8_t* mac_addr) {
+bool RegisterForRouterNotifications(Netlink* nl, int hwsim_id) {
   Cmd msg;
 
   if (!genlmsg_put(msg.Msg(), NL_AUTO_PID, NL_AUTO_SEQ, 0, 0,
                    NLM_F_REQUEST, WIFIROUTER_CMD_REGISTER, 0) ||
-      nla_put(msg.Msg(), WIFIROUTER_ATTR_MAC, MAX_ADDR_LEN, mac_addr)) {
+      nla_put_u32(msg.Msg(), WIFIROUTER_ATTR_HWSIM_ID, hwsim_id)) {
     LOG(ERROR) << "Could not create wifirouter register message.";
     return false;
   }
@@ -284,7 +284,7 @@ bool VirtualWIFI::Init() {
 
   // 5. Register with wifi router.
   LOG(INFO) << "Registering for notifications for: " << addr_;
-  if (!RegisterForRouterNotifications(nl_, mac_addr_)) {
+  if (!RegisterForRouterNotifications(nl_, hwsim_number_)) {
     LOG(ERROR) << "Could not register with wifi router.";
     return false;
   }
