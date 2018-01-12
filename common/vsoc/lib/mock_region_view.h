@@ -54,12 +54,13 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
   };
 
   virtual void SendSignal(vsoc::layout::Sides /* sides_to_signal */,
-                          uint32_t* uaddr) {
+                          std::atomic<uint32_t>* uaddr) {
     syscall(SYS_futex, reinterpret_cast<int32_t*>(uaddr), FUTEX_WAKE, -1,
             nullptr, nullptr, 0);
   }
 
-  virtual void WaitForSignal(uint32_t* uaddr, uint32_t expected_value) {
+  virtual void WaitForSignal(std::atomic<uint32_t>* uaddr,
+                             uint32_t expected_value) {
     {
       std::lock_guard<std::mutex> guard(mutex_);
       if (tid_to_addr_.find(std::this_thread::get_id()) != tid_to_addr_.end()) {
@@ -107,7 +108,7 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
   void* region_base_{};
   std::mutex mutex_;
   std::condition_variable map_changed_;
-  std::unordered_map<std::thread::id, uint32_t*> tid_to_addr_;
+  std::unordered_map<std::thread::id, std::atomic<uint32_t>*> tid_to_addr_;
 };
 
 template <typename Layout>

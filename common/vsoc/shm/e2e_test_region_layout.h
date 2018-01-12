@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <atomic>
 #include <cstdint>
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/version.h"
@@ -117,8 +118,8 @@ class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
   // Later guest tests will wait on this
   E2ETestStageRegister host_status;
   // These fields are used to test the signaling mechanism.
-  uint32_t host_to_guest_signal;
-  uint32_t guest_to_host_signal;
+  std::atomic<uint32_t> host_to_guest_signal;
+  std::atomic<uint32_t> guest_to_host_signal;
   // There rest of the region will be filled by guest_host_strings.
   // We actually use more than one of these, but we can't know how many
   // until we examine the region.
