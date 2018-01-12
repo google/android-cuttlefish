@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -15,18 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "common/vsoc/shm/ril_layout.h"
 
-// Handles initialization of regions that require it strictly before the virtual
-// machine is started.
-// To add initializers for more regions declare here, implement in its own
-// source file and call from PreLaunchInitializers::Initialize().
-void InitializeFBBroadcastRegion();
-void InitializeRilRegion();
+namespace vsoc {
+namespace layout {
+namespace ril {
 
-class PreLaunchInitializers {
- public:
-  static void Initialize() {
-    InitializeFBBroadcastRegion();
-    InitializeRilRegion();
-  }
-};
+const char* RilLayout::region_name = "ril";
+}
+}  // namespace layout
+}  // namespace vsoc

@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -16,17 +15,27 @@
  * limitations under the License.
  */
 
-// Handles initialization of regions that require it strictly before the virtual
-// machine is started.
-// To add initializers for more regions declare here, implement in its own
-// source file and call from PreLaunchInitializers::Initialize().
-void InitializeFBBroadcastRegion();
-void InitializeRilRegion();
+#include <netinet/in.h>
 
-class PreLaunchInitializers {
- public:
-  static void Initialize() {
-    InitializeFBBroadcastRegion();
-    InitializeRilRegion();
-  }
+#include "common/vsoc/shm/base.h"
+#include "common/vsoc/shm/version.h"
+
+// Memory layout for the ril hal region
+
+namespace vsoc {
+namespace layout {
+namespace ril {
+
+struct RilLayout : public RegionLayout {
+  static const char* region_name;
+
+  char ipaddr[16]; // xxx.xxx.xxx.xxx\0 = 16 bytes
+  char gateway[16];
+  char dns[16];
+  char broadcast[16];
+  uint32_t prefixlen;
 };
+ASSERT_SHM_COMPATIBLE(RilLayout, ril);
+}  // namespace ril
+}  // namespace layout
+}  // namespace vsoc
