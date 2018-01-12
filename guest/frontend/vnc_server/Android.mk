@@ -66,7 +66,6 @@ LOCAL_SHARED_LIBRARIES := \
     libvsocframebuffer
 
 LOCAL_STATIC_LIBRARIES := \
-    liblog \
     libjsoncpp
 
 include $(BUILD_EXECUTABLE)
