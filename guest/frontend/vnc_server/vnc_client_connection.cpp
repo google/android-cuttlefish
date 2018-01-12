@@ -373,7 +373,6 @@ Message VncClientConnection::MakeFrameBufferUpdate(
 
 void VncClientConnection::FrameBufferUpdateRequestHandler(bool aggressive) {
   BlackBoard::Registerer reg(bb_, this);
-  const StripeSeqNumber kBeginningOfTime{};
 
   while (!closed()) {
     auto stripes = bb_->WaitForSenderWork(this);
