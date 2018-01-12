@@ -37,7 +37,7 @@ namespace cvd {
 // VirtualButton Support
 //////////////////////////
 
-void VirtualButton::HandleButtonPressEvent(bool button_down) {
+void VirtualButton::HandleButtonPressEvent(bool /*button_down*/) {
   SendCommand(std::string("key ") + "down " + input_keycode_ + "\n");
 }
 

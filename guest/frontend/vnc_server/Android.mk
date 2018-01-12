@@ -54,8 +54,6 @@ LOCAL_CFLAGS := \
     -Wno-error-unused -Wno-error=unused-parameter \
     -Wno-attributes
 
-LOCAL_CFLAGS += -Wno-error=implicit-exception-spec-mismatch
-
 LOCAL_SHARED_LIBRARIES := \
     $(LIBJPEG_TURBO_NAME) \
     libbase \

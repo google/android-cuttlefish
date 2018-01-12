@@ -338,9 +338,10 @@ void WifiRouter::RouteWIFIPacket() {
     nla_put(rep.get(), WIFIROUTER_ATTR_PACKET, len, buf);
     auto hdr = nlmsg_hdr(rep.get());
 
-    auto key = GetRadioID(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
-    for (auto it = registered_addresses_.find(key);
-         it != registered_addresses_.end() && it->first == key; ++it) {
+    auto key = GetMacHash(nla_data(attrs[HWSIM_ATTR_ADDR_TRANSMITTER]));
+    LOG(INFO) << "Received netlink packet from " << std::hex << key;
+    for (auto it = targets->find(key); it != targets->end() && it->first == key;
+         ++it) {
       auto num_written = send(it->second, hdr, hdr->nlmsg_len, MSG_NOSIGNAL);
       if (num_written != static_cast<int64_t>(hdr->nlmsg_len)) {
         pending_removals.insert(it->second);
@@ -355,10 +356,11 @@ bool WifiRouter::HandleClientMessage(int client) {
   std::unique_ptr<nlmsghdr, void (*)(nlmsghdr*)> msg(
       reinterpret_cast<nlmsghdr*>(malloc(kMaxSupportedPacketSize)),
       [](nlmsghdr* h) { free(h); });
-  int64_t size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
+  ssize_t size = recv(client, msg.get(), kMaxSupportedPacketSize, 0);
 
   // Invalid message or no data -> client invalid or disconnected.
-  if (size == 0 || size != msg->nlmsg_len || size < sizeof(nlmsghdr)) {
+  if (size == 0 || size != static_cast<ssize_t>(msg->nlmsg_len) ||
+      size < static_cast<ssize_t>(sizeof(nlmsghdr))) {
     return false;
   }
 
