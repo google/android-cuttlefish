@@ -45,11 +45,13 @@ void PacketSwitch::Start() {
   shm_xchg_.reset(new std::thread([this] {
       size_t maxlen = getpagesize();
       std::unique_ptr<uint8_t[]> msg(new uint8_t[maxlen]);
+      auto hdr = reinterpret_cast<nlmsghdr*>(msg.get());
+      std::unique_ptr<nl_msg, void (*)(nl_msg*)> nlm(nullptr, nlmsg_free);
+
+      int item = 0;
       while (started_) {
-        // TODO(ender): how to trigger (periodic?) exit from this call?
         auto len = shm_wifi_.Recv(msg.get(), maxlen);
-        std::unique_ptr<nl_msg, void (*)(nl_msg*)> nlm(
-            nlmsg_convert(reinterpret_cast<nlmsghdr*>(msg.get())), nlmsg_free);
+        nlm.reset(nlmsg_convert(hdr));
         ProcessPacket(nlm.get(), true);
       }
     }));
@@ -100,7 +102,7 @@ void PacketSwitch::ProcessPacket(nl_msg* m, bool is_incoming) {
         }
       }
     } else {
-      shm_wifi_.Send(&header, header->nlmsg_len);
+      shm_wifi_.Send(header, header->nlmsg_len);
     }
   }
 }
