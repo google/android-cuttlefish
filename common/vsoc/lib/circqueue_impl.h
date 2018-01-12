@@ -18,8 +18,8 @@
 
 #include <string.h>
 
-#include "common/vsoc/shm/circqueue.h"
 #include "common/vsoc/lib/region_signaling_interface.h"
+#include "common/vsoc/shm/circqueue.h"
 
 namespace {
 // Increases the given index until it is naturally aligned for T.
@@ -80,10 +80,7 @@ void CircularQueueBase<SizeLog2>::WaitForDataLocked(
 
 template <uint32_t SizeLog2>
 intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(
-    RegionSignalingInterface* r,
-    size_t bytes,
-    Range* t,
-                                                         bool non_blocking) {
+    RegionSignalingInterface* r, size_t bytes, Range* t, bool non_blocking) {
   // Can't write more than the buffer will hold
   if (bytes > BufferSize) {
     return -ENOSPC;
@@ -109,8 +106,8 @@ intptr_t CircularQueueBase<SizeLog2>::WriteReserveLocked(
 }
 
 template <uint32_t SizeLog2>
-intptr_t CircularByteQueue<SizeLog2>::Read(RegionSignalingInterface* r, char* buffer_out,
-                                           size_t max_size) {
+intptr_t CircularByteQueue<SizeLog2>::Read(RegionSignalingInterface* r,
+                                           char* buffer_out, size_t max_size) {
   this->lock_.Lock();
   this->WaitForDataLocked(r);
   Range t;
@@ -131,11 +128,9 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionSignalingInterface* r, char* bu
 }
 
 template <uint32_t SizeLog2>
-intptr_t CircularByteQueue<SizeLog2>::Write(
-    RegionSignalingInterface* r,
-    const char* buffer_in,
-    size_t bytes,
-    bool non_blocking) {
+intptr_t CircularByteQueue<SizeLog2>::Write(RegionSignalingInterface* r,
+                                            const char* buffer_in, size_t bytes,
+                                            bool non_blocking) {
   Range range;
   this->lock_.Lock();
   intptr_t rval = this->WriteReserveLocked(r, bytes, &range, non_blocking);
@@ -161,9 +156,8 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::CalculateBufferedSize(
 }
 
 template <uint32_t SizeLog2, uint32_t MaxPacketSize>
-intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionSignalingInterface* r,
-                                                            char* buffer_out,
-                                                            size_t max_size) {
+intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(
+    RegionSignalingInterface* r, char* buffer_out, size_t max_size) {
   this->lock_.Lock();
   this->WaitForDataLocked(r);
   uint32_t packet_size = *reinterpret_cast<uint32_t*>(
@@ -186,9 +180,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(RegionSignalingInter
 
 template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
-    RegionSignalingInterface* r,
-    const char* buffer_in,
-    uint32_t bytes,
+    RegionSignalingInterface* r, const char* buffer_in, uint32_t bytes,
     bool non_blocking) {
   if (bytes > MaxPacketSize) {
     return -ENOSPC;
@@ -205,9 +197,9 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
   Range header = range;
   header.end_idx = header.start_idx + sizeof(uint32_t);
   uint32_t sizeof_uint32_t = sizeof(uint32_t);
-  Range payload{static_cast<uint32_t>(range.start_idx + sizeof(uint32_t)),
-                static_cast<uint32_t>(
-                    range.start_idx + sizeof(uint32_t) + bytes)};
+  Range payload{
+      static_cast<uint32_t>(range.start_idx + sizeof(uint32_t)),
+      static_cast<uint32_t>(range.start_idx + sizeof(uint32_t) + bytes)};
   this->CopyInRange(reinterpret_cast<const char*>(&bytes), header);
   this->CopyInRange(buffer_in, payload);
   this->w_pub_ = range.end_idx;
