@@ -5,7 +5,9 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_wifi",
+        "vsoc_lib",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
         "liblog",
         "libnl",
     ],
@@ -15,5 +17,18 @@ cc_binary {
     header_libs: [
         "cuttlefish_glog",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+    target: {
+        linux: {
+            static_libs: [
+                "libcuttlefish_wifi",
+                "libcuttlefish_host_config",
+            ],
+        },
+        android: {
+            static_libs: [
+                "libcuttlefish_wifi",
+            ],
+        }
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
 }
