@@ -22,9 +22,9 @@ void vsoc::RegionWorker::Work() {
     if (stopping_) {
       return;
     }
-    region_->ProcessSignalsFromPeer([](uint32_t* uaddr){
-        syscall(SYS_futex, uaddr, FUTEX_WAKE, -1, nullptr, nullptr, 0);
-      });
+    region_->ProcessSignalsFromPeer([](uint32_t* uaddr) {
+      syscall(SYS_futex, uaddr, FUTEX_WAKE, -1, nullptr, nullptr, 0);
+    });
   }
 }
 
@@ -94,7 +94,7 @@ void vsoc::RegionView::ProcessSignalsFromPeer(
     if (offset) {
       bool round_trip = offset & UADDR_OFFSET_ROUND_TRIP_FLAG;
       uint32_t* uaddr =
-        region_offset_to_pointer<uint32_t>(offset & UADDR_OFFSET_MASK);
+          region_offset_to_pointer<uint32_t>(offset & UADDR_OFFSET_MASK);
       signal_handler(uaddr);
       if (round_trip) {
         SendSignalToPeer(uaddr, false);

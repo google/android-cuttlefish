@@ -40,7 +40,7 @@ namespace test {
 template <typename Layout>
 class MockRegionView : public vsoc::RegionSignalingInterface {
  public:
-  explicit MockRegionView() {};
+  explicit MockRegionView(){};
   virtual ~MockRegionView() {
     if (region_base_) {
       free(region_base_);
@@ -83,15 +83,15 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
 
   // Check wait status on a specificy thread
   bool IsBlocking(std::thread::id tid) {
-    while(1) {
+    while (1) {
       std::unique_lock<std::mutex> lock(mutex_);
       if (tid_to_addr_.find(tid) != tid_to_addr_.end()) {
         return true;
       }
       // Allow some time as tid map might not be updated yet
-      while(tid_to_addr_.find(tid) == tid_to_addr_.end()) {
-        if (map_changed_.wait_for(
-              lock, std::chrono::seconds(kWaitTimeoutInSec)) ==
+      while (tid_to_addr_.find(tid) == tid_to_addr_.end()) {
+        if (map_changed_.wait_for(lock,
+                                  std::chrono::seconds(kWaitTimeoutInSec)) ==
             std::cv_status::timeout) {
           return false;
         }
@@ -104,7 +104,7 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
   // Timeout to avoid a race on checking if a thread is blocked
   static constexpr int kWaitTimeoutInSec = 5;
 
-  void *region_base_{};
+  void* region_base_{};
   std::mutex mutex_;
   std::condition_variable map_changed_;
   std::unordered_map<std::thread::id, uint32_t*> tid_to_addr_;
@@ -112,7 +112,6 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
 
 template <typename Layout>
 constexpr int MockRegionView<Layout>::kWaitTimeoutInSec;
-
 
 }  // namespace test
 }  // namespace vsoc
