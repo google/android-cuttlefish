@@ -22,34 +22,26 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_QemuCamera2"
+#include "EmulatedQemuCamera2.h"
 #include <cutils/log.h>
 #include <cutils/properties.h>
-#include "EmulatedQemuCamera2.h"
 #include "EmulatedCameraFactory.h"
 
 namespace android {
 
-EmulatedQemuCamera2::EmulatedQemuCamera2(int cameraId,
-        bool facingBack,
-        struct hw_module_t* module)
-        : EmulatedCamera2(cameraId,module),
-          mFacingBack(facingBack)
-{
-    ALOGD("Constructing emulated qemu camera 2 facing %s",
-            facingBack ? "back" : "front");
+EmulatedQemuCamera2::EmulatedQemuCamera2(int cameraId, bool facingBack,
+                                         struct hw_module_t* module)
+    : EmulatedCamera2(cameraId, module), mFacingBack(facingBack) {
+  ALOGD("Constructing emulated qemu camera 2 facing %s",
+        facingBack ? "back" : "front");
 }
 
-EmulatedQemuCamera2::~EmulatedQemuCamera2()
-{
-}
+EmulatedQemuCamera2::~EmulatedQemuCamera2() {}
 
 /****************************************************************************
  * Public API overrides
  ***************************************************************************/
 
-status_t EmulatedQemuCamera2::Initialize()
-{
-    return NO_ERROR;
-}
+status_t EmulatedQemuCamera2::Initialize() { return NO_ERROR; }
 
-};  /* namespace android */
+}; /* namespace android */

@@ -22,9 +22,9 @@
 extern "C" {
 
 struct JpegStub {
-    void* mInternalEncoder;
-    void* mInternalStream;
-    void* mExifBuilder;
+  void* mInternalEncoder;
+  void* mInternalStream;
+  void* mExifBuilder;
 };
 
 void JpegStub_init(JpegStub* stub, int* strides);
@@ -33,6 +33,5 @@ int JpegStub_compress(JpegStub* stub, const void* image, int quality,
                       const ImageMetadata* metadata);
 void JpegStub_getCompressedImage(JpegStub* stub, void* buff);
 size_t JpegStub_getCompressedSize(JpegStub* stub);
-
 };
-#endif // JPEGSTUB_H_
+#endif  // JPEGSTUB_H_

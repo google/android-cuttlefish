@@ -21,8 +21,8 @@
  * Contains common declarations that are used across the camera emulation.
  */
 
-#include <linux/videodev2.h>
 #include <hardware/camera.h>
+#include <linux/videodev2.h>
 
 /* A helper class that tracks a routine execution.
  * Basically, it dumps an enry message in its constructor, and an exit message
@@ -30,21 +30,18 @@
  * of this class at the beginning of the tracked routines / methods.
  */
 class HWERoutineTracker {
-public:
-    /* Constructor that prints an "entry" trace message. */
-    explicit HWERoutineTracker(const char* name)
-            : mName(name) {
-        ALOGV("Entering %s", mName);
-    }
+ public:
+  /* Constructor that prints an "entry" trace message. */
+  explicit HWERoutineTracker(const char* name) : mName(name) {
+    ALOGV("Entering %s", mName);
+  }
 
-    /* Destructor that prints a "leave" trace message. */
-    ~HWERoutineTracker() {
-        ALOGV("Leaving %s", mName);
-    }
+  /* Destructor that prints a "leave" trace message. */
+  ~HWERoutineTracker() { ALOGV("Leaving %s", mName); }
 
-private:
-    /* Stores the routine name. */
-    const char* mName;
+ private:
+  /* Stores the routine name. */
+  const char* mName;
 };
 
 /* Logs an execution of a routine / method. */
@@ -54,7 +51,7 @@ private:
  * min / max macros
  */
 
-#define min(a,b)    (((a) < (b)) ? (a) : (b))
-#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define max(a, b) (((a) > (b)) ? (a) : (b))
 
-#endif  /* HW_EMULATOR_CAMERA_EMULATED_CAMERA_COMMON_H */
+#endif /* HW_EMULATOR_CAMERA_EMULATED_CAMERA_COMMON_H */
