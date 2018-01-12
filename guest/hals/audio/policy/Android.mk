@@ -37,7 +37,7 @@ LOCAL_C_INCLUDES := \
     frameworks/native/include/media/hardware \
     $(call include-path-for, audio)
 
-LOCAL_CFLAGS := -Wall -DLOG_TAG=\"VSoC-AudioPolicy\"
+LOCAL_CFLAGS := -Wall -Werror
 
 LOCAL_MODULE := audio_policy.vsoc
 LOCAL_VENDOR_MODULE := true

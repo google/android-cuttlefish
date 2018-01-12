@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,5 +28,15 @@
 #include <cutils/log.h>
 
 #include <hardware/hardware.h>
+
+#include "guest/libs/platform_support/api_level_fixes.h"
+
+#pragma GCC diagnostic push
+#pragma  GCC diagnostic ignored "-Wparentheses"
+#if VSOC_PLATFORM_SDK_AFTER(K)
+#pragma  GCC diagnostic ignored "-Wgnu-designator"
+#endif
 #include <system/audio.h>
+#pragma GCC diagnostic pop
+
 #include <hardware/audio.h>
