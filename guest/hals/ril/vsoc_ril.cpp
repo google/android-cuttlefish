@@ -29,9 +29,10 @@
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
+#include "common/vsoc/lib/ril_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-#define GCE_RIL_VERSION_STRING "Android VSoC RIL 1.0"
+#define VSOC_RIL_VERSION_STRING "Android VSoC RIL 1.0"
 
 /* Modem Technology bits */
 #define MDM_GSM 0x01
@@ -107,7 +108,8 @@ static SIM_Status gSimStatus = SIM_NOT_READY;
 // SetUpNetworkInterface configures IP and Broadcast addresses on a RIL
 // controlled network interface.
 // This call returns true, if operation was successful.
-bool SetUpNetworkInterface(const char* ipaddr, int prefixlen, const char* bcaddr) {
+bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
+                           const char* bcaddr) {
   auto factory = cvd::NetlinkClientFactory::Default();
   std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
   std::unique_ptr<cvd::NetworkInterfaceManager> nm(
@@ -183,10 +185,13 @@ static int request_or_send_data_calllist(RIL_Token* t) {
         break;
     }
 
+    auto ril_region_view = vsoc::ril::RilRegionView::GetInstance();
+
     responses[index].ifname = (char*)"rmnet0";
-    responses[index].addresses = (char*)"192.168.99.2/30";
-    responses[index].dnses = (char*)"8.8.8.8";
-    responses[index].gateways = (char*)"192.168.99.1";
+    responses[index].addresses =
+      const_cast<char*>(ril_region_view->address_and_prefix_length());
+    responses[index].dnses = (char*)ril_region_view->data()->dns;
+    responses[index].gateways = (char*)ril_region_view->data()->gateway;
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
@@ -236,19 +241,12 @@ static void request_datacall_fail_cause(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &fail, sizeof(fail));
 };
 
-static void on_data_calllist_changed(void* /*param*/) {
-  request_or_send_data_calllist(NULL);
-}
-
 static void request_data_calllist(void* /*data*/, size_t /*datalen*/,
                                   RIL_Token t) {
   request_or_send_data_calllist(&t);
 }
 
 static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
-  const char* apn;
-  char* cmd;
-  int err;
   char** details = static_cast<char**>(data);
   const size_t fields = datalen / sizeof(details[0]);
 
@@ -303,7 +301,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (call.connection_type_ != DataCall::kConnTypeIPv4) {
-    ALOGE("Non-IPv4 connections are not supported by GCE RIL.");
+    ALOGE("Non-IPv4 connections are not supported by VSOC RIL.");
     gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
     return;
   }
@@ -315,7 +313,10 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (gDataCalls.empty()) {
-    SetUpNetworkInterface("192.168.99.2", 30, "192.168.99.3");
+    auto ril_region_view = vsoc::ril::RilRegionView::GetInstance();
+    SetUpNetworkInterface(ril_region_view->data()->ipaddr,
+                          ril_region_view->data()->prefixlen,
+                          ril_region_view->data()->broadcast);
   }
 
   gDataCalls[gNextDataCallId] = call;
@@ -355,12 +356,9 @@ static void set_radio_state(RIL_RadioState new_state, RIL_Token t) {
   // lists emptied.
   gDataCalls.clear();
 
-  RIL_RadioState old_state;
-
-  old_state = gRadioPowerState;
-  gRadioPowerState = new_state;
   gSimStatus = SIM_NOT_READY;
-  ALOGV("RIL_RadioState change %d to %d", old_state, new_state);
+  ALOGV("RIL_RadioState change %d to %d", gRadioPowerState, new_state);
+  gRadioPowerState = new_state;
 
   if (new_state == RADIO_STATE_OFF) {
     TearDownNetworkInterface();
@@ -377,22 +375,9 @@ static void set_radio_state(RIL_RadioState new_state, RIL_Token t) {
 }
 
 // returns 1 if on, 0 if off, and -1 on error
-static char is_radio_on() {
-  RIL_RadioState state;
-
-  state = gRadioPowerState;
-
-  return state == RADIO_STATE_ON;
-}
-
 static void request_radio_power(void* data, size_t /*datalen*/, RIL_Token t) {
   int on = ((int*)data)[0];
   set_radio_state(on ? RADIO_STATE_ON : RADIO_STATE_OFF, t);
-}
-
-static void send_call_state_changed(void* /*param*/) {
-  gce_ril_env->OnUnsolicitedResponse(RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED,
-                                     NULL, 0);
 }
 
 // TODO(ender): this should be a class member. Move where it belongs.
@@ -919,7 +904,6 @@ static void init_modem_technologies() {
 static const RIL_PreferredNetworkType gModemDefaultType =
     PREF_NET_TYPE_LTE_GSM_WCDMA;
 static RIL_PreferredNetworkType gModemCurrentType = gModemDefaultType;
-static RIL_RadioTechnology gModemTechnology = RADIO_TECH_LTE;
 static RIL_RadioTechnology gModemVoiceTechnology = RADIO_TECH_LTE;
 
 // Report technology change.
@@ -1406,8 +1390,8 @@ static void gce_ril_on_cancel(RIL_Token /*t*/) {
 }
 
 static const char* gce_ril_get_version(void) {
-  ALOGV("Reporting GCE version " GCE_RIL_VERSION_STRING);
-  return GCE_RIL_VERSION_STRING;
+  ALOGV("Reporting VSOC version " VSOC_RIL_VERSION_STRING);
+  return VSOC_RIL_VERSION_STRING;
 }
 
 static int s_cell_info_rate_ms = INT_MAX;
@@ -1625,10 +1609,6 @@ static void request_send_SMS(void* data, RIL_Token t) {
   // SMSC is an address of SMS center or NULL for default.
   const char* smsc = ((const char**)data)[0];
   if (smsc == NULL) smsc = &kDefaultSMSC[0];
-
-  // PDU in hex-encoded string.
-  const char* pdu = ((const char**)data)[1];
-  int pdu_length = strlen(pdu) / 2;
 
   response.messageRef = gNextSmsMessageId++;
   response.ackPDU = NULL;
@@ -2136,9 +2116,6 @@ static const int kFacilityLockAllDisabled = 0;
 static void request_facility_lock(void* data, size_t /*datalen*/, RIL_Token t) {
   char** data_vec = (char**)data;
 
-  int data_vec_len = atoi(data_vec[1]);
-  char* result_vec;
-
   // TODO(ender): implement this; essentially: AT+CLCK
   // See http://www.activexperts.com/sms-component/at/commands/?at=%2BCLCK
   // and
@@ -2213,8 +2190,6 @@ static void request_ims_registration_state(RIL_Token t) {
 
 static void gce_ril_on_request(int request, void* data, size_t datalen,
                                RIL_Token t) {
-  int err;
-
   // Ignore all requests except RIL_REQUEST_GET_SIM_STATUS
   // when RADIO_STATE_UNAVAILABLE.
   if (gRadioPowerState == RADIO_STATE_UNAVAILABLE &&
@@ -2469,10 +2444,10 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
   }
 }
 
-#define GCE_RIL_VERSION 6
+#define VSOC_RIL_VERSION 6
 
 static const RIL_RadioFunctions ril_callbacks = {
-    GCE_RIL_VERSION,     gce_ril_on_request, gce_ril_current_state,
+    VSOC_RIL_VERSION,     gce_ril_on_request, gce_ril_current_state,
     gce_ril_on_supports, gce_ril_on_cancel,  gce_ril_get_version};
 
 extern "C" {

@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -16,17 +15,22 @@
  * limitations under the License.
  */
 
-// Handles initialization of regions that require it strictly before the virtual
-// machine is started.
-// To add initializers for more regions declare here, implement in its own
-// source file and call from PreLaunchInitializers::Initialize().
-void InitializeFBBroadcastRegion();
-void InitializeRilRegion();
+#include "common/vsoc/lib/typed_region_view.h"
+#include "common/vsoc/shm/ril_layout.h"
 
-class PreLaunchInitializers {
+namespace vsoc {
+namespace ril {
+class RilRegionView
+    : public vsoc::TypedRegionView<vsoc::layout::ril::RilLayout> {
  public:
-  static void Initialize() {
-    InitializeFBBroadcastRegion();
-    InitializeRilRegion();
-  }
+#if defined(CUTTLEFISH_HOST)
+  static RilRegionView* GetInstance(const char* domain = nullptr);
+#else
+  static RilRegionView* GetInstance();
+#endif
+
+  // returns a string with '<ip>/<prefix_len>' like this: 192.168.99.2/30
+  const char* address_and_prefix_length() const;
 };
+}  // namespace ril
+}  // namespace vsoc

@@ -3,6 +3,7 @@ cc_binary_host {
     srcs: [
         "main.cc",
         "fb_bcast_region_handler.cc",
+        "ril_region_handler.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
