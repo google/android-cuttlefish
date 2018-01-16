@@ -1,0 +1,11 @@
+#
+# This profile is for the domain whose UUID matches this file.
+#
+
+#include <tunables/global>
+
+profile libvirt-699acfc4-c8c4-11e7-882b-5065f31dc108 {
+  #include <abstractions/libvirt-qemu>
+  #include <libvirt/libvirt-699acfc4-c8c4-11e7-882b-5065f31dc108.files>
+  /run/cvd-08/** rw,
+}
