@@ -17,7 +17,7 @@
  */
 
 #include <cerrno>
-#include <string.h>
+#include <cstring>
 
 #include "common/vsoc/lib/region_signaling_interface.h"
 #include "common/vsoc/shm/circqueue.h"
@@ -40,12 +40,12 @@ void CircularQueueBase<SizeLog2>::CopyInRange(const char* buffer_in,
   size_t bytes = t.end_idx - t.start_idx;
   uint32_t index = t.start_idx & (BufferSize - 1);
   if (index + bytes <= BufferSize) {
-    memcpy(buffer_ + index, buffer_in, bytes);
+    std::memcpy(buffer_ + index, buffer_in, bytes);
   } else {
     size_t part1_size = BufferSize - index;
     size_t part2_size = bytes - part1_size;
-    memcpy(buffer_ + index, buffer_in, part1_size);
-    memcpy(buffer_, buffer_in + part1_size, part2_size);
+    std::memcpy(buffer_ + index, buffer_in, part1_size);
+    std::memcpy(buffer_, buffer_in + part1_size, part2_size);
   }
 }
 
@@ -55,12 +55,12 @@ void CircularQueueBase<SizeLog2>::CopyOutRange(const Range& t,
   uint32_t index = t.start_idx & (BufferSize - 1);
   size_t total_size = t.end_idx - t.start_idx;
   if (index + total_size <= BufferSize) {
-    memcpy(buffer_out, buffer_ + index, total_size);
+    std::memcpy(buffer_out, buffer_ + index, total_size);
   } else {
     uint32_t part1_size = BufferSize - index;
     uint32_t part2_size = total_size - part1_size;
-    memcpy(buffer_out, buffer_ + index, part1_size);
-    memcpy(buffer_out + part1_size, buffer_, part2_size);
+    std::memcpy(buffer_out, buffer_ + index, part1_size);
+    std::memcpy(buffer_out + part1_size, buffer_, part2_size);
   }
 }
 
