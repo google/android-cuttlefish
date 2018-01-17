@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <cerrno>
 #include <string.h>
 
 #include "common/vsoc/lib/region_signaling_interface.h"
