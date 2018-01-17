@@ -22,13 +22,11 @@
 #include "common/vsoc/lib/region_signaling_interface.h"
 #include "common/vsoc/shm/circqueue.h"
 
-namespace {
 // Increases the given index until it is naturally aligned for T.
 template <typename T>
 uintptr_t align(uintptr_t index) {
   return (index + sizeof(T) - 1) & ~(sizeof(T) - 1);
 }
-}  // namespace
 
 namespace vsoc {
 class RegionSignalingInterface;
