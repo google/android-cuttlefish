@@ -110,7 +110,7 @@ namespace {
 const uint32_t version = 0;
 }
 // Three circular queues, each with a 1024 bytes buffer, a 32 bits spinlock and
-// two 32 bits inetgers
+// two 32 bits integers.
 static const std::size_t InputEventsLayout_size = 3 * (1024 + 3 * 4);
 }  // namespace input_events
 
@@ -160,6 +160,17 @@ static const std::size_t E2ETestStageRegister_size = 4;
 static const std::size_t E2EUnfindableRegionLayout_size = 80;
 static const std::size_t E2EManagedTestRegionLayout_size = 4;
 }  // namespace e2e_test
+
+// Versioning information for audio_data_layout.h
+// Changes to these structures will affect only the audio_data region
+namespace audio_data {
+namespace {
+const uint32_t version = 0;
+}
+// One circular queue of with a 16KB buffer, a 32 bits spinlock and
+// two 32 bits integers.
+static const std::size_t AudioDataLayout_size = 16384 + 3 * 4;
+}  // namespace audio_data
 
 }  // namespace version_info
 }  // namespace layout
