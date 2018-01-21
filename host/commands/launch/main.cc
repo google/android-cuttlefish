@@ -59,6 +59,12 @@ using vsoc::GetDefaultPerInstancePath;
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
+DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
+            " Either 'use_existing', 'create_if_missing', or 'always_create'.");
+DEFINE_int32(blank_data_image_mb, 0,
+             "The size of the blank data image to generate, MB.");
+DEFINE_string(blank_data_image_fmt, "ext4",
+              "The fs format for the blank data image. Used with mkfs.");
 DEFINE_bool(disable_app_armor_security, false,
             "Disable AppArmor security in libvirt. For debug only.");
 DEFINE_bool(disable_dac_security, false,
@@ -103,10 +109,13 @@ std::string g_default_uuid{
 DEFINE_string(uuid, g_default_uuid.c_str(),
               "UUID to use for the device. Random if not specified");
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
-            "host kernel. This is only used during transition of our clients."
-            "Will be deprecated soon.");
+            " host kernel. This is only used during transition of our clients."
+            " Will be deprecated soon.");
 
 namespace {
+const std::string kDataPolicyUseExisting = "use_existing";
+const std::string kDataPolicyCreateIfMissing = "create_if_missing";
+const std::string kDataPolicyAlwaysCreate = "always_create";
 
 std::string GetVirshOptions() {
   return std::string("-c ").append(FLAGS_hypervisor_uri);
@@ -233,8 +242,6 @@ class KernelLogMonitor {
   KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
 };
 
-}  // anonymous namespace
-
 void subprocess(const char* const* command) {
   pid_t pid = fork();
   if (!pid) {
@@ -251,6 +258,29 @@ void subprocess(const char* const* command) {
     waitpid(pid, 0, 0);
   }
 }
+
+void CreateBlankImage(
+    const std::string& image, int image_mb, const std::string& image_fmt) {
+  LOG(INFO) << "Creating " << image;
+  std::string of = "of=";
+  of += image;
+  std::string count = "count=";
+  count += std::to_string(image_mb);
+  const char* dd_command[]{
+    "/bin/dd", "if=/dev/zero", of.c_str(), "bs=1M", count.c_str(), NULL};
+  subprocess(dd_command);
+  const char* mkfs_command[]{
+    "/usr/bin/sudo", "/sbin/mkfs", "-t", image_fmt.c_str(), image.c_str(), NULL};
+  subprocess(mkfs_command);
+}
+
+void RemoveFile(const std::string& file) {
+  LOG(INFO) << "Removing " << file;
+  const char* rm_command[]{
+    "/usr/bin/sudo", "/bin/rm", "-f", file.c_str(), NULL};
+  subprocess(rm_command);
+}
+}  // anonymous namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -291,6 +321,38 @@ int main(int argc, char** argv) {
 
   if (FLAGS_cache_image.empty()) {
     FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
+  }
+
+  if (FLAGS_data_policy == kDataPolicyCreateIfMissing) {
+    FLAGS_data_image = FLAGS_system_image_dir + "/userdata_blank.img";
+    if (FLAGS_blank_data_image_mb <= 0) {
+      LOG(FATAL) << "You should use -blank_data_image_mb with -data_policy="
+                 << kDataPolicyCreateIfMissing;
+    }
+    // Create a blank data image if the image doesn't exist yet
+    if ((stat(FLAGS_data_image.c_str(), &unused) == -1) && (errno == ENOENT)) {
+      CreateBlankImage(
+          FLAGS_data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
+    } else {
+      LOG(INFO) << FLAGS_data_image << " exists. Not creating it.";
+    }
+  } else if (FLAGS_data_policy == kDataPolicyAlwaysCreate) {
+    FLAGS_data_image = FLAGS_system_image_dir + "/userdata_blank.img";
+    if (FLAGS_blank_data_image_mb <= 0) {
+      LOG(FATAL) << "You should use -blank_data_image_mb with -data_policy="
+                 << kDataPolicyAlwaysCreate;
+    }
+    RemoveFile(FLAGS_data_image);
+    CreateBlankImage(
+        FLAGS_data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
+  } else if (FLAGS_data_policy == kDataPolicyUseExisting) {
+    // Do nothing. Use FLAGS_data_image.
+    if (FLAGS_blank_data_image_mb > 0) {
+      LOG(FATAL) << "You should NOT use -blank_data_image_mb with -data_policy="
+                 << kDataPolicyUseExisting;
+    }
+  } else {
+    LOG(FATAL) << "Invalid data_policy: " << FLAGS_data_policy;
   }
 
   if (FLAGS_data_image.empty()) {
