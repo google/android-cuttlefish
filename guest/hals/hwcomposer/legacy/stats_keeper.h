@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-#include <android-base/thread_annotations.h>
-#include <common/libs/threads/cuttlefish_thread.h>
-#include <common/libs/time/monotonic_time.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
 #include <deque>
 #include <set>
+
+#include <android-base/thread_annotations.h>
+
+#include "common/libs/threads/cuttlefish_thread.h"
+#include "common/libs/time/monotonic_time.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 
 #include "hwcomposer_common.h"
 
@@ -60,6 +62,20 @@ class CompositionData {
   cvd::time::Nanoseconds set_calls_time_;
 };
 
+struct HWCCompositionStats {
+  cvd::time::MonotonicTimePoint prepare_start;
+  cvd::time::MonotonicTimePoint prepare_end;
+  cvd::time::MonotonicTimePoint set_start;
+  cvd::time::MonotonicTimePoint set_end;
+  cvd::time::MonotonicTimePoint last_vsync;
+  // There may be more than one call to prepare, the timestamps are with regards
+  // to the last one (the one that precedes the set call)
+  int num_prepare_calls;
+  int num_layers;
+  // The number of layers composed by the hwcomposer
+  int num_hwc_layers;
+};
+
 class StatsKeeper {
  public:
   // The timespan parameter indicates for how long we keep stats about the past
@@ -78,9 +94,8 @@ class StatsKeeper {
   void RecordSetStart();
   void RecordSetEnd() EXCLUDES(mutex_);
 
-  const CompositionStats& last_composition_stats() {
-    return last_composition_stats_;
-  }
+  void GetLastCompositionStats(
+      vsoc::layout::framebuffer::CompositionStats* stats_p);
 
   // Calls to this function are synchronized with calls to 'RecordSetEnd' with a
   // mutex. The other Record* functions do not need such synchronization because
@@ -96,7 +111,7 @@ class StatsKeeper {
   int32_t vsync_period_;
   // Data collected about ongoing composition. These variables are not accessed
   // from Dump(), so they don't need to be guarded by a mutex.
-  CompositionStats last_composition_stats_;
+  HWCCompositionStats last_composition_stats_;
 
   // Aggregated performance data collected from past compositions. These
   // variables are modified when a composition is completed and when old
@@ -142,9 +157,9 @@ class StatsKeepingComposer {
         composer_(vsync_base_timestamp, vsync_period_ns) {
     // Don't let the composer broadcast by itself, allow it to return to collect
     // the timings and broadcast then.
-    composer_.ReplaceFbBroadcaster(NULL);
+    composer_.ReplaceFbBroadcaster(nullptr);
   }
-  ~StatsKeepingComposer() {}
+  ~StatsKeepingComposer() = default;
 
   int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     stats_keeper_.RecordPrepareStart(num_layers);
@@ -153,17 +168,19 @@ class StatsKeepingComposer {
     return num_hwc_layers;
   }
 
-  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+  int32_t SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+    vsoc::layout::framebuffer::CompositionStats stats;
     stats_keeper_.RecordSetStart();
-    int yoffset = composer_.SetLayers(num_layers, layers);
+    int32_t offset = composer_.SetLayers(num_layers, layers);
     stats_keeper_.RecordSetEnd();
-    if (yoffset >= 0) {
-      VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
-          yoffset, &stats_keeper_.last_composition_stats());
+    if (offset >= 0) {
+      stats_keeper_.GetLastCompositionStats(&stats);
+      vsoc::framebuffer::FBBroadcastRegionView::GetInstance()
+          ->BroadcastNewFrame(static_cast<uint32_t>(offset), &stats);
     } else {
-      ALOGE("%s: Error on SetLayers(), yoffset: %d", __FUNCTION__, yoffset);
+      ALOGE("%s: Error on SetLayers(), offset: %d", __FUNCTION__, offset);
     }
-    return yoffset;
+    return offset;
   }
 
   void Dump(char* buff, int buff_len) {

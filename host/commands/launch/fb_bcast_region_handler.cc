@@ -24,6 +24,7 @@
 DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
 DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
+DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 
 void InitializeFBBroadcastRegion() {
   std::shared_ptr<vsoc::framebuffer::FBBroadcastRegionView> region =
@@ -37,4 +38,5 @@ void InitializeFBBroadcastRegion() {
   dest->x_res = FLAGS_x_res;
   dest->y_res = FLAGS_y_res;
   dest->dpi = FLAGS_dpi;
+  dest->refresh_rate_hz = FLAGS_refresh_rate_hz;
 }

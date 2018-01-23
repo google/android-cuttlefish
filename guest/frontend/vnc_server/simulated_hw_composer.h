@@ -15,12 +15,6 @@
  * limitations under the License.
  */
 
-#include "blackboard.h"
-
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <common/libs/thread_safe_queue/thread_safe_queue.h>
-
 #include <mutex>
 #include <thread>
 
@@ -28,6 +22,11 @@
 #ifdef FUZZ_TEST_VNC
 #include <random>
 #endif
+
+#include "common/libs/thread_safe_queue/thread_safe_queue.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+
+#include "blackboard.h"
 
 namespace cvd {
 namespace vnc {
@@ -58,12 +57,9 @@ class SimulatedHWComposer {
   constexpr static std::size_t kMaxQueueElements = 64;
   bool closed_ GUARDED_BY(m_){};
   std::mutex m_;
-  VSoCFrameBufferControl& control_;
   BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;
-  char* frame_buffer_memory_{};
-  int frame_buffer_fd_{};
 };
 }  // namespace vnc
 }  // namespace cvd

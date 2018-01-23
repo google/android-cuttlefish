@@ -15,19 +15,24 @@
  */
 
 #include "vsoc_composer.h"
-#include <cutils/log.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <hardware/hwcomposer.h>
-#include <hardware/hwcomposer_defs.h>
-#include <libyuv.h>
-#include <system/graphics.h>
+
 #include <algorithm>
 #include <cstdlib>
 #include <utility>
 #include <vector>
+
+#include <cutils/log.h>
+#include <hardware/hwcomposer.h>
+#include <hardware/hwcomposer_defs.h>
+#include <libyuv.h>
+#include <system/graphics.h>
+
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+
 #include "geometry_utils.h"
 #include "hwcomposer_common.h"
+
+using vsoc::framebuffer::FBBroadcastRegionView;
 
 namespace cvd {
 
@@ -215,9 +220,9 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   uint8_t* src_y = src.buffer;
   int stride_y = stride_in_pixels;
   uint8_t* src_v = src_y + stride_y * src.height;
-  int stride_v = VSoCFrameBuffer::align(stride_y / 2, 16);
+  int stride_v = FBBroadcastRegionView::align(stride_y / 2, 16);
   uint8_t* src_u = src_v + stride_v * src.height / 2;
-  int stride_u = VSoCFrameBuffer::align(stride_y / 2, 16);
+  int stride_u = FBBroadcastRegionView::align(stride_y / 2, 16);
 
   // Adjust for crop
   src_y += src.crop_y * stride_y + src.crop_x;
@@ -453,7 +458,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
         // these sizes are taken from the displayFrame rectangle which is always
         // smaller than the framebuffer, the framebuffer in turn has aligned
         // stride and these buffers are the size of the framebuffer.
-        VSoCFrameBuffer::align(
+        FBBroadcastRegionView::align(
             x_res * formatToBytesPerPixel(dst_priv_handle->format), 16));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
@@ -475,7 +480,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       // Make width and height match the crop sizes on the source
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
-      int dst_stride = VSoCFrameBuffer::align(
+      int dst_stride = FBBroadcastRegionView::align(
           src_width * formatToBytesPerPixel(dst_priv_handle->format), 16);
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
@@ -581,17 +586,17 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
                            int32_t vsync_period_ns)
     : BaseComposer(vsync_base_timestamp, vsync_period_ns),
       tmp_buffer_(kNumTmpBufferPieces *
-                  VSoCFrameBuffer::getInstance().bufferSize()),
+                  FBBroadcastRegionView::GetInstance()->buffer_size()),
       next_hwc_framebuffer_(0) {
   hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                 reinterpret_cast<const hw_module_t**>(&gralloc_module_));
   gralloc_module_->common.methods->open(
       reinterpret_cast<const hw_module_t*>(gralloc_module_),
       GRALLOC_HARDWARE_GPU0, reinterpret_cast<hw_device_t**>(&gralloc_dev_));
-  for (int i = 0; i < VSoCFrameBuffer::kNumHwcBuffers; ++i) {
-    buffer_handle_t tmp;
-    gralloc_dev_->alloc_hwc_framebuffer(
-        reinterpret_cast<alloc_device_t*>(gralloc_dev_), &tmp);
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  buffer_handle_t tmp;
+  while (gralloc_dev_->alloc_hwc_framebuffer(
+             reinterpret_cast<alloc_device_t*>(gralloc_dev_), &tmp) == 0) {
     hwc_framebuffers_.push_back(tmp);
   }
 }
@@ -650,7 +655,7 @@ int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   return composited_layers_count;
 }
 
-int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+int32_t VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   int targetFbs = 0;
   buffer_handle_t fb_handle = FindFrameBuffer(num_layers, layers);
   if (!fb_handle) {
