@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
-#include <hardware/gralloc.h>
-#include "base_composer.h"
-#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
-#include "hwcomposer_common.h"
-
 #include <vector>
+
+#include <hardware/gralloc.h>
+
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+
+#include "base_composer.h"
+#include "hwcomposer_common.h"
 
 namespace cvd {
 
@@ -32,7 +34,7 @@ class VSoCComposer : public BaseComposer {
   // override
   int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
   // override
-  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
+  int32_t SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
 
  protected:
   static const int kNumTmpBufferPieces;

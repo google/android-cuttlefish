@@ -60,8 +60,7 @@ LOCAL_SHARED_LIBRARIES := \
     cuttlefish_auto_resources \
     cuttlefish_tcp_socket \
     libcuttlefish_fs \
-    vsoc_lib \
-    libvsocframebuffer
+    vsoc_lib
 
 LOCAL_STATIC_LIBRARIES := \
     libjsoncpp

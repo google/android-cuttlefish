@@ -17,16 +17,19 @@
 #include "base_composer.h"
 
 #include <cutils/log.h>
-#include "guest/hals/gralloc//legacy/gralloc_vsoc_priv.h"
-#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
+
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+
+using vsoc::framebuffer::FBBroadcastRegionView;
 
 namespace cvd {
 
 namespace {
 
-int BroadcastFrameBufferChanged(int yoffset) {
-  return VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
-      yoffset);
+void BroadcastFrameBufferChanged(int32_t offset) {
+  FBBroadcastRegionView::GetInstance()->BroadcastNewFrame(
+      static_cast<uint32_t>(offset));
 }
 
 }  // namespace
@@ -51,18 +54,13 @@ FbBroadcaster BaseComposer::ReplaceFbBroadcaster(FbBroadcaster fb_broadcaster) {
 
 void BaseComposer::Dump(char* buff __unused, int buff_len __unused) {}
 
-int BaseComposer::PostFrameBuffer(buffer_handle_t buffer) {
-  const int yoffset = YOffsetFromHandle(buffer);
-  // If the broadcaster is NULL or could not get a good yoffset just ignore it.
-  if (fb_broadcaster_ && yoffset >= 0) {
-    int retval = fb_broadcaster_(yoffset);
-    if (retval) {
-      ALOGI("Failed to post framebuffer");
-      return -1;
-    }
+int32_t BaseComposer::PostFrameBuffer(buffer_handle_t buffer) {
+  const int32_t offset = OffsetFromHandle(buffer);
+  // If the broadcaster is NULL or could not get a good offset just ignore it.
+  if (fb_broadcaster_ && offset >= 0) {
+    fb_broadcaster_(offset);
   }
-
-  return yoffset;
+  return offset;
 }
 
 int BaseComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
@@ -76,7 +74,7 @@ int BaseComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   return 0;
 }
 
-int BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+int32_t BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   for (size_t idx = 0; idx < num_layers; idx++) {
     if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
       return PostFrameBuffer(layers[idx].handle);

@@ -49,10 +49,8 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 
-#include <guest/hals/gralloc/legacy/gralloc_vsoc_priv.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <guest/libs/remoter/remoter_framework_pkt.h>
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 #include <sync/sync.h>
 
 #include "base_composer.h"
@@ -60,6 +58,8 @@
 #include "hwcomposer_common.h"
 #include "stats_keeper.h"
 #include "vsoc_composer.h"
+
+using vsoc::framebuffer::FBBroadcastRegionView;
 
 #ifdef USE_OLD_HWCOMPOSER
 typedef cvd::BaseComposer InnerComposerType;
@@ -245,20 +245,22 @@ static int vsoc_hwc_get_display_configs(vsoc_hwc_device* /*dev*/, int disp,
 #if VSOC_PLATFORM_SDK_AFTER(J)
 static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
                                   const uint32_t attribute) {
-  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
       return pdev->vsync_period_ns;
     case HWC_DISPLAY_WIDTH:
-      return config.x_res();
+      return fb_broadcast->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return config.y_res();
+      return fb_broadcast->y_res();
     case HWC_DISPLAY_DPI_X:
-      ALOGI("Reporting DPI_X of %d", config.dpi());
-      return config.dpi() * 1000;  // The number of pixels per thousand inches
+      ALOGI("Reporting DPI_X of %d", fb_broadcast->dpi());
+      // The number of pixels per thousand inches
+      return fb_broadcast->dpi() * 1000;
     case HWC_DISPLAY_DPI_Y:
-      ALOGI("Reporting DPI_Y of %d", config.dpi());
-      return config.dpi() * 1000;  // The number of pixels per thousand inches
+      ALOGI("Reporting DPI_Y of %d", fb_broadcast->dpi());
+      // The number of pixels per thousand inches
+      return fb_broadcast->dpi() * 1000;
     default:
       ALOGE("unknown display attribute %u", attribute);
       return -EINVAL;
@@ -310,7 +312,7 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
     return -ENOMEM;
   }
 
-  int refreshRate = 60;
+  int refreshRate = FBBroadcastRegionView::GetInstance()->refresh_rate_hz();
   dev->vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
   if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
