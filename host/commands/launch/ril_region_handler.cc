@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -30,11 +32,11 @@
 #include "host/libs/config/host_config.h"
 
 DECLARE_string(hypervisor_uri);
+DECLARE_string(mobile_interface);
 
 namespace {
 
 int number_of_ones(int val) {
-  LOG(INFO) << val;
   int ret = 0;
   while (val) {
     ret += val % 2;
@@ -51,8 +53,8 @@ class NetConfig {
   std::string ril_dns = "8.8.8.8";
   std::string ril_broadcast;
 
-  bool ObtainConfig() {
-    bool ret = ParseLibvirtXml() && ParseIfconfig();
+  bool ObtainConfig(const std::string& interface) {
+    bool ret = ParseLibvirtXml(interface) && GetBroadcastAddr(interface);
     LOG(INFO) << "Network config:";
     LOG(INFO) << "ipaddr = " << ril_ipaddr;
     LOG(INFO) << "gateway = " << ril_gateway;
@@ -63,29 +65,27 @@ class NetConfig {
   }
 
  private:
-  bool ParseIfconfig() {
-    std::shared_ptr<FILE> broadcast(
-        popen("ifconfig cvd-mobile-01 | egrep -o 'broadcast "
-              "[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+' | egrep -o "
-              "'[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+'",
-              "r"),
-        pclose);
-    if (!broadcast) {
-      LOG(ERROR) << "Unable to popen ifconfig...";
-      return false;
+  bool GetBroadcastAddr(const std::string& interface) {
+    struct ifaddrs *ifap, *ifa;
+    struct sockaddr_in *sa;
+    char *addr;
+    getifaddrs (&ifap);
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+      if (ifa->ifa_addr->sa_family==AF_INET) {
+        if (strcmp(ifa->ifa_name, interface.c_str())) continue;
+        sa = (struct sockaddr_in *) ifa->ifa_ifu.ifu_broadaddr;
+        addr = inet_ntoa(sa->sin_addr);
+        this->ril_broadcast = strtok(addr, "\n");
+      }
     }
-    char buffer[16];
-    if (fgets(&buffer[0], sizeof(buffer), broadcast.get()) == NULL) {
-      LOG(ERROR) << "Unable to read broadcast address from subprocess output";
-      return false;
-    }
-    this->ril_broadcast = strtok(&buffer[0], "\n");
-    return true;
+
+    freeifaddrs(ifap);
+    return (this->ril_broadcast.size() > 0);
   }
 
-  bool ParseLibvirtXml() {
+  bool ParseLibvirtXml(const std::string& interface) {
     std::string net_dump_command =
-        "virsh -c " + FLAGS_hypervisor_uri + " net-dumpxml cvd-mobile-01";
+        "virsh -c " + FLAGS_hypervisor_uri + " net-dumpxml " + interface;
     std::shared_ptr<FILE> net_xml_file(popen(net_dump_command.c_str(), "r"),
                                        pclose);
     if (!net_xml_file) {
@@ -157,7 +157,7 @@ class NetConfig {
 
 void InitializeRilRegion() {
   NetConfig netconfig;
-  if (!netconfig.ObtainConfig()) {
+  if (!netconfig.ObtainConfig(FLAGS_mobile_interface)) {
     LOG(ERROR) << "Unable to obtain the network configuration";
     return;
   }
