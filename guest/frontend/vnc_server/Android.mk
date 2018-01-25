@@ -42,7 +42,6 @@ LOCAL_SRC_FILES := \
     jpeg_compressor.cpp \
     main.cpp \
     simulated_hw_composer.cpp \
-    tcp_socket.cpp \
     virtual_inputs.cpp \
     vnc_client_connection.cpp \
     vnc_server.cpp \
@@ -59,6 +58,7 @@ LOCAL_SHARED_LIBRARIES := \
     libutils \
     libcutils \
     cuttlefish_auto_resources \
+    cuttlefish_tcp_socket \
     libcuttlefish_fs \
     vsoc_lib \
     libvsocframebuffer

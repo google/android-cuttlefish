@@ -25,8 +25,8 @@
 #include <thread>
 #include <vector>
 
+#include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/frontend/vnc_server/blackboard.h"
-#include "host/frontend/vnc_server/tcp_socket.h"
 #include "host/frontend/vnc_server/virtual_inputs.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 

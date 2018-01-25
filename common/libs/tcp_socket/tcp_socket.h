@@ -1,4 +1,5 @@
 #pragma once
+
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -15,16 +16,17 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
-
-#include <mutex>
-#include <cstdint>
-#include <cstddef>
+#include "common/libs/fs/shared_fd.h"
 
 #include <unistd.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+#include <vector>
+
 namespace cvd {
-namespace vnc {
+using Message = std::vector<std::uint8_t>;
 
 class ServerSocket;
 
@@ -32,27 +34,15 @@ class ServerSocket;
 // Send is thread safe in this regard, Recv is not.
 class ClientSocket {
  public:
-  ClientSocket(ClientSocket&& other) : fd_{other.fd_} {
-    other.fd_ = -1;
-  }
+  ClientSocket(ClientSocket&& other) : fd_{other.fd_} {}
 
   ClientSocket& operator=(ClientSocket&& other) {
-    if (fd_ >= 0) {
-      close(fd_);
-    }
     fd_ = other.fd_;
-    other.fd_ = -1;
     return *this;
   }
 
   ClientSocket(const ClientSocket&) = delete;
   ClientSocket& operator=(const ClientSocket&) = delete;
-
-  ~ClientSocket() {
-    if (fd_ >= 0) {
-      close(fd_);
-    }
-  }
 
   Message Recv(std::size_t length);
   ssize_t Send(const std::uint8_t* data, std::size_t size);
@@ -63,15 +53,13 @@ class ClientSocket {
     return Send(data, N);
   }
 
-  bool closed() const {
-    return other_side_closed_;
-  }
+  bool closed() const { return other_side_closed_; }
 
  private:
   friend ServerSocket;
-  explicit ClientSocket(int fd) : fd_(fd) {}
+  explicit ClientSocket(cvd::SharedFD fd) : fd_(fd) {}
 
-  int fd_ = -1;
+  cvd::SharedFD fd_;
   bool other_side_closed_{};
   std::mutex send_lock_;
 };
@@ -83,17 +71,10 @@ class ServerSocket {
   ServerSocket(const ServerSocket&) = delete;
   ServerSocket& operator=(const ServerSocket&) = delete;
 
-  ~ServerSocket() {
-    if (fd_ >= 0) {
-      close(fd_);
-    }
-  }
-
   ClientSocket Accept();
 
  private:
-  int fd_ = -1;
+  cvd::SharedFD fd_;
 };
 
-}  // namespace vnc
 }  // namespace cvd
