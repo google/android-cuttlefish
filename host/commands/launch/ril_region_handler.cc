@@ -71,7 +71,7 @@ class NetConfig {
     char *addr;
     getifaddrs (&ifap);
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-      if (ifa->ifa_addr->sa_family==AF_INET) {
+      if (ifa->ifa_addr && ifa->ifa_addr->sa_family==AF_INET) {
         if (strcmp(ifa->ifa_name, interface.c_str())) continue;
         sa = (struct sockaddr_in *) ifa->ifa_ifu.ifu_broadaddr;
         addr = inet_ntoa(sa->sin_addr);
