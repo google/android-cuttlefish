@@ -16,8 +16,9 @@
 
 #include "vnc_client_connection.h"
 #include "keysyms.h"
-#include "tcp_socket.h"
 #include "vnc_utils.h"
+
+#include "common/libs/tcp_socket/tcp_socket.h"
 
 #include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
 
@@ -42,7 +43,7 @@
 #include <cutils/log.h>
 #include <cutils/sockets.h>
 
-using cvd::vnc::Message;
+using cvd::Message;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
 using cvd::vnc::VncClientConnection;

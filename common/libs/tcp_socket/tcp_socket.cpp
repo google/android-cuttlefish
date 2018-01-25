@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/frontend/vnc_server/tcp_socket.h"
+#include "common/libs/tcp_socket/tcp_socket.h"
 
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -24,12 +24,10 @@
 
 #include <glog/logging.h>
 
-using cvd::SharedFD;
-using cvd::vnc::ClientSocket;
-using cvd::vnc::Message;
-using cvd::vnc::ServerSocket;
+using cvd::ClientSocket;
+using cvd::ServerSocket;
 
-Message ClientSocket::Recv(size_t length) {
+cvd::Message ClientSocket::Recv(size_t length) {
   Message buf(length);
   ssize_t total_read = 0;
   while (total_read < static_cast<ssize_t>(length)) {
@@ -53,7 +51,7 @@ ssize_t ClientSocket::Send(const uint8_t* data, std::size_t size) {
   while (written < static_cast<ssize_t>(size)) {
     auto just_written = fd_->Write(data + written, size - written);
     if (just_written <= 0) {
-      LOG(INFO) << "Couldn't write to vnc client: " << strerror(errno);
+      LOG(INFO) << "Couldn't write to client: " << strerror(errno);
       return just_written;
     }
     written += just_written;

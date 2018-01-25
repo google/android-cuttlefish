@@ -41,11 +41,11 @@ void InitCinfo(jpeg_compress_struct* cinfo, jpeg_error_mgr* err,
 }
 }  // namespace
 
-cvd::vnc::Message JpegCompressor::Compress(const Message& frame,
-                                           int jpeg_quality, std::uint16_t x,
-                                           std::uint16_t y, std::uint16_t width,
-                                           std::uint16_t height,
-                                           int screen_width) {
+cvd::Message JpegCompressor::Compress(const Message& frame,
+                                      int jpeg_quality, std::uint16_t x,
+                                      std::uint16_t y, std::uint16_t width,
+                                      std::uint16_t height,
+                                      int screen_width) {
   jpeg_compress_struct cinfo{};
   jpeg_error_mgr err{};
   InitCinfo(&cinfo, &err, width, height, jpeg_quality);

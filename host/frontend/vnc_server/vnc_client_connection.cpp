@@ -32,12 +32,12 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"
-#include "host/frontend/vnc_server/tcp_socket.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using cvd::vnc::Message;
+using cvd::Message;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
 using cvd::vnc::VncClientConnection;
