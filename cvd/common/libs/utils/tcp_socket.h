@@ -16,16 +16,17 @@
  * limitations under the License.
  */
 
-#include "host/frontend/vnc_server/vnc_utils.h"
+#include "common/libs/fs/shared_fd.h"
 
 #include <unistd.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+#include <vector>
 
 namespace cvd {
-namespace vnc {
+using Message = std::vector<std::uint8_t>;
 
 class ServerSocket;
 
@@ -76,5 +77,4 @@ class ServerSocket {
   cvd::SharedFD fd_;
 };
 
-}  // namespace vnc
 }  // namespace cvd
