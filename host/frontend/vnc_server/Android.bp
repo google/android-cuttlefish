@@ -22,7 +22,6 @@ cc_binary_host {
         "main.cpp",
         "simulated_hw_composer.cpp",
         "virtual_inputs.cpp",
-        "virtual_input_device.cpp",
         "vnc_client_connection.cpp",
         "vnc_server.cpp",
         "vnc_utils.cpp",

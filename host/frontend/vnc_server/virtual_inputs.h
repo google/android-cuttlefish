@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 
-#include <linux/input.h>
+#include "vnc_utils.h"
 
+#include <map>
 #include <mutex>
 
-#include "common/libs/fs/shared_fd.h"
-#include "common/libs/threads/thread_annotations.h"
-#include "host/frontend/vnc_server/virtual_input_device.h"
-#include "host/frontend/vnc_server/vnc_utils.h"
+#include "common/vsoc/lib/input_events_region_view.h"
 
 namespace cvd {
 namespace vnc {
@@ -31,19 +29,15 @@ namespace vnc {
 class VirtualInputs {
  public:
   VirtualInputs();
-  ~VirtualInputs();
 
   void GenerateKeyPressEvent(int code, bool down);
   void PressPowerButton(bool down);
   void HandlePointerEvent(bool touch_down, int x, int y);
 
  private:
-  cvd::SharedFD monkey_socket_;
-  bool SendMonkeyComand(std::string cmd);
-  std::mutex m_;
-  VirtualKeyboard virtual_keyboard_ GUARDED_BY(m_);
-  VirtualTouchPad virtual_touch_pad_ GUARDED_BY(m_);
-  VirtualButton virtual_power_button_ GUARDED_BY(m_);
+  std::shared_ptr<vsoc::input_events::InputEventsRegionView>
+      input_events_region_view_;
+  std::map<uint32_t, uint32_t> keymapping_;
 };
 
 }  // namespace vnc

@@ -137,7 +137,6 @@ class VncClientConnection {
 
   mutable std::mutex m_;
   ClientSocket client_;
-  cvd::SharedFD sensor_event_hal_;
   bool control_key_down_ = false;
   bool meta_key_down_ = false;
   VirtualInputs* virtual_inputs_{};
