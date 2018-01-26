@@ -57,7 +57,6 @@ PRODUCT_PACKAGES += \
     dhcpcd_wlan0 \
     gce_fs_monitor \
     usbforward \
-    vnc_server \
     VSoCService \
     wifirouter \
     wificlient \
@@ -139,62 +138,6 @@ PRODUCT_COPY_FILES += \
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
-
-
-#
-# Files for the VNC server
-#
-PRODUCT_COPY_FILES += \
-    external/libvncserver/webclients/novnc/images/drag.png:system/etc/novnc/images/drag.png \
-    external/libvncserver/webclients/novnc/images/screen_700x700.png:system/etc/novnc/images/screen_700x700.png \
-    external/libvncserver/webclients/novnc/images/keyboard.png:system/etc/novnc/images/keyboard.png \
-    external/libvncserver/webclients/novnc/images/favicon.png:system/etc/novnc/images/favicon.png \
-    external/libvncserver/webclients/novnc/images/power.png:system/etc/novnc/images/power.png \
-    external/libvncserver/webclients/novnc/images/mouse_none.png:system/etc/novnc/images/mouse_none.png \
-    external/libvncserver/webclients/novnc/images/esc.png:system/etc/novnc/images/esc.png \
-    external/libvncserver/webclients/novnc/images/connect.png:system/etc/novnc/images/connect.png \
-    external/libvncserver/webclients/novnc/images/showextrakeys.png:system/etc/novnc/images/showextrakeys.png \
-    external/libvncserver/webclients/novnc/images/mouse_right.png:system/etc/novnc/images/mouse_right.png \
-    external/libvncserver/webclients/novnc/images/favicon.ico:system/etc/novnc/images/favicon.ico \
-    external/libvncserver/webclients/novnc/images/ctrlaltdel.png:system/etc/novnc/images/ctrlaltdel.png \
-    external/libvncserver/webclients/novnc/images/tab.png:system/etc/novnc/images/tab.png \
-    external/libvncserver/webclients/novnc/images/mouse_left.png:system/etc/novnc/images/mouse_left.png \
-    external/libvncserver/webclients/novnc/images/ctrl.png:system/etc/novnc/images/ctrl.png \
-    external/libvncserver/webclients/novnc/images/screen_320x460.png:system/etc/novnc/images/screen_320x460.png \
-    external/libvncserver/webclients/novnc/images/alt.png:system/etc/novnc/images/alt.png \
-    external/libvncserver/webclients/novnc/images/disconnect.png:system/etc/novnc/images/disconnect.png \
-    external/libvncserver/webclients/novnc/images/settings.png:system/etc/novnc/images/settings.png \
-    external/libvncserver/webclients/novnc/images/screen_57x57.png:system/etc/novnc/images/screen_57x57.png \
-    external/libvncserver/webclients/novnc/images/mouse_middle.png:system/etc/novnc/images/mouse_middle.png \
-    external/libvncserver/webclients/novnc/images/clipboard.png:system/etc/novnc/images/clipboard.png \
-    external/libvncserver/webclients/novnc/LICENSE.txt:system/etc/novnc/LICENSE.txt \
-    external/libvncserver/webclients/novnc/include/display.js:system/etc/novnc/include/display.js \
-    external/libvncserver/webclients/novnc/include/des.js:system/etc/novnc/include/des.js \
-    external/libvncserver/webclients/novnc/include/Orbitron700.woff:system/etc/novnc/include/Orbitron700.woff \
-    external/libvncserver/webclients/novnc/include/websock.js:system/etc/novnc/include/websock.js \
-    external/libvncserver/webclients/novnc/include/base64.js:system/etc/novnc/include/base64.js \
-    external/libvncserver/webclients/novnc/include/chrome-app/tcp-client.js:system/etc/novnc/include/chrome-app/tcp-client.js \
-    external/libvncserver/webclients/novnc/include/keyboard.js:system/etc/novnc/include/keyboard.js \
-    external/libvncserver/webclients/novnc/include/util.js:system/etc/novnc/include/util.js \
-    external/libvncserver/webclients/novnc/include/jsunzip.js:system/etc/novnc/include/jsunzip.js \
-    external/libvncserver/webclients/novnc/include/playback.js:system/etc/novnc/include/playback.js \
-    external/libvncserver/webclients/novnc/include/base.css:system/etc/novnc/include/base.css \
-    external/libvncserver/webclients/novnc/include/webutil.js:system/etc/novnc/include/webutil.js \
-    external/libvncserver/webclients/novnc/include/logo.js:system/etc/novnc/include/logo.js \
-    external/libvncserver/webclients/novnc/include/black.css:system/etc/novnc/include/black.css \
-    external/libvncserver/webclients/novnc/include/ui.js:system/etc/novnc/include/ui.js \
-    external/libvncserver/webclients/novnc/include/keysym.js:system/etc/novnc/include/keysym.js \
-    external/libvncserver/webclients/novnc/include/Orbitron700.ttf:system/etc/novnc/include/Orbitron700.ttf \
-    external/libvncserver/webclients/novnc/include/web-socket-js/web_socket.js:system/etc/novnc/include/web-socket-js/web_socket.js \
-    external/libvncserver/webclients/novnc/include/web-socket-js/WebSocketMain.swf:system/etc/novnc/include/web-socket-js/WebSocketMain.swf \
-    external/libvncserver/webclients/novnc/include/web-socket-js/swfobject.js:system/etc/novnc/include/web-socket-js/swfobject.js \
-    external/libvncserver/webclients/novnc/include/rfb.js:system/etc/novnc/include/rfb.js \
-    external/libvncserver/webclients/novnc/include/vnc.js:system/etc/novnc/include/vnc.js \
-    external/libvncserver/webclients/novnc/include/input.js:system/etc/novnc/include/input.js \
-    external/libvncserver/webclients/novnc/include/keysymdef.js:system/etc/novnc/include/keysymdef.js \
-    external/libvncserver/webclients/novnc/include/blue.css:system/etc/novnc/include/blue.css \
-    external/libvncserver/webclients/novnc/vnc_auto.html:system/etc/novnc/vnc_auto.html \
-    external/libvncserver/webclients/novnc/vnc.html:system/etc/novnc/vnc.html
 
 # Packages for HAL implementations
 

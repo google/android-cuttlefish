@@ -1,9 +1,3 @@
-# TODO(b/65062047): Remove these rules (incl. the two file type definitions) once vnc_server is gone
-# Create /var/run/system directory and sensors_hal_socket socket in the directory.
-allow system_server var_run_system_file:dir w_dir_perms;
-type_transition system_server var_run_system_file:sock_file sensors_hal_socket;
-allow system_server sensors_hal_socket:sock_file { create setattr };
-
 # TODO(b/65201432): Switch into enforcing mode once execmem issue due to OpenGL is resolved. Also
 # remove the corresponding dontaudit.
 # The current (at the time of writing) implementation of OpenGL needs to create executable memory.
