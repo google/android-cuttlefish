@@ -183,9 +183,27 @@ template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
     RegionSignalingInterface* r, const char* buffer_in, uint32_t bytes,
     bool non_blocking) {
+  iovec iov;
+  iov.iov_base = const_cast<char *>(buffer_in);
+  iov.iov_len = bytes;
+  return Writev(r, &iov, 1 /* iov_count */, non_blocking);
+}
+
+template <uint32_t SizeLog2, uint32_t MaxPacketSize>
+intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Writev(
+      RegionSignalingInterface *r,
+      const iovec *iov,
+      size_t iov_count,
+      bool non_blocking) {
+  size_t bytes = 0;
+  for (size_t i = 0; i < iov_count; ++i) {
+    bytes += iov[i].iov_len;
+  }
+
   if (bytes > MaxPacketSize) {
     return -ENOSPC;
   }
+
   Range range;
   size_t buffered_size = this->CalculateBufferedSize(bytes);
   this->lock_.Lock();
@@ -201,7 +219,15 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
       static_cast<uint32_t>(range.start_idx + sizeof(uint32_t)),
       static_cast<uint32_t>(range.start_idx + sizeof(uint32_t) + bytes)};
   this->CopyInRange(reinterpret_cast<const char*>(&bytes), header);
-  this->CopyInRange(buffer_in, payload);
+
+  Range subRange = payload;
+  for (size_t i = 0; i < iov_count; ++i) {
+    subRange.end_idx = subRange.start_idx + iov[i].iov_len;
+    this->CopyInRange(static_cast<const char *>(iov[i].iov_base), subRange);
+
+    subRange.start_idx = subRange.end_idx;
+  }
+
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
   layout::Sides side;

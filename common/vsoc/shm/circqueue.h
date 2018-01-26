@@ -20,6 +20,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <sys/uio.h>
 
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/lock.h"
@@ -153,6 +154,20 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
    */
   intptr_t Write(RegionSignalingInterface* r, const char* buffer_in,
                  uint32_t bytes, bool non_blocking = false);
+
+  /**
+   * Writes the data referenced by the given iov scatter/gather array to the
+   * queue.
+   * If the number of bytes to be written exceeds the size of the queue
+   * -ENOSPC will be returned.
+   * If non_blocking is true and there is not enough free space on the queue to
+   * write all the data -EWOULDBLOCK will be returned.
+   */
+  intptr_t Writev(
+          RegionSignalingInterface *r,
+          const iovec *iov,
+          size_t iov_count,
+          bool non_blocking = false);
 
  protected:
   static_assert(CircularQueueBase<SizeLog2>::BufferSize >= MaxPacketSize,

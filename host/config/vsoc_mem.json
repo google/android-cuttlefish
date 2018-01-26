@@ -206,6 +206,23 @@
     "host_to_guest_signal_table" : {
       "num_nodes_lg2" : 1
     }
+   },
+
+   {
+     "device_name" : "audio_data",
+     "__comment" : "Write audio HAL output data to ringbuffer",
+     "current_version" : 0,
+     "min_compatible_version" : 0,
+     "region_size": 20480,
+
+     "guest_to_host_signal_table" : {
+       "__comment" : "sizeof each node is based on common/libs/shm_compatible/lock.h",
+       "num_nodes_lg2" : 2
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 2
+      }
    }
   ]
 }
