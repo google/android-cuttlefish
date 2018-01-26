@@ -15,4 +15,5 @@
 
 subdirs = [
     "launch",
+    "record_audio",
 ]

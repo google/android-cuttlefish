@@ -1,0 +1,18 @@
+cc_binary_host {
+    name: "record_audio",
+    srcs: [
+        "main.cc",
+    ],
+    include_dirs: [
+        "frameworks/av/cmds/stagefright",
+    ],
+    shared_libs: [
+        "libbase",
+        "vsoc_lib",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}

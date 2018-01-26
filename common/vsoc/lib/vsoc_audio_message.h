@@ -19,21 +19,24 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-
-#pragma GCC diagnostic push
-#pragma  GCC diagnostic ignored "-Wparentheses"
-#if VSOC_PLATFORM_SDK_AFTER(K)
-#pragma  GCC diagnostic ignored "-Wgnu-designator"
-#endif
 #include <system/audio.h>
-#pragma GCC diagnostic pop
 
-//TODO(b/71777986) Use a shared memory window instead
-#define AUDIO_HAL_SOCKET_NAME "/var/run/media/audio_hal_socket"
+typedef uint32_t size32_t;
+
+struct timespec32 {
+  uint32_t tv_sec;
+  uint32_t tv_nsec;
+
+  timespec32() = default;
+
+  timespec32(const timespec &from)
+      : tv_sec(from.tv_sec),
+        tv_nsec(from.tv_nsec) {
+  }
+};
 
 struct gce_audio_message {
-  static const size_t kMaxAudioFrameLen = 65536;
+  static const size32_t kMaxAudioFrameLen = 65536;
   enum message_t {
     UNKNOWN = 0,
     DATA_SAMPLES = 1,
@@ -44,16 +47,16 @@ struct gce_audio_message {
     CONTROL_PAUSE = 100
   };
   // Size of the header + data. Used to frame when we're on TCP.
-  size_t total_size;
+  size32_t total_size;
   // Size of the audio header
-  size_t header_size;
+  size32_t header_size;
   message_t message_type;
   // Identifier for the stream.
   uint32_t stream_number;
   // HAL assigned frame number, starts from 0.
   int64_t frame_num;
   // MONOTONIC_TIME when these frames were presented to the HAL.
-  timespec time_presented;
+  timespec32 time_presented;
   // Sample rate from the audio configuration.
   uint32_t frame_rate;
   // Channel mask from the audio configuration.
@@ -61,19 +64,19 @@ struct gce_audio_message {
   // Format from the audio configuration.
   audio_format_t format;
   // Size of each frame in bytes.
-  size_t frame_size;
+  size32_t frame_size;
   // Number of frames that were presented to the HAL.
-  size_t num_frames_presented;
+  size32_t num_frames_presented;
   // Number of frames that the HAL accepted.
   //   For blocking audio this will be the same as num_frames.
   //   For non-blocking audio this may be less.
-  size_t num_frames_accepted;
+  size32_t num_frames_accepted;
   // Count of the number of packets that were dropped because they would
   // have blocked the HAL or exceeded the maximum message size.
-  size_t num_packets_dropped;
+  size32_t num_packets_dropped;
   // Count of the number of packets that were shortened to fit within
   // kMaxAudioFrameLen.
-  size_t num_packets_shortened;
+  size32_t num_packets_shortened;
   // num_frames_presented (not num_frames_accepted) will follow here.
 
   gce_audio_message() :
