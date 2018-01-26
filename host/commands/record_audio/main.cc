@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-#include "vsoc_audio_message.h"
-
 #include "common/vsoc/lib/audio_data_region_view.h"
 #include "common/vsoc/lib/circqueue_impl.h"
+#include "common/vsoc/lib/vsoc_audio_message.h"
+#include "host/libs/config/host_config.h"
 
 #include "WaveWriter.h"
 
-#include <cstdlib>
-#include <cstring>
+#include <android-base/logging.h>
+#include <gflags/gflags.h>
 #include <iostream>
-#include <unistd.h>
+#include <signal.h>
 
 using AudioDataRegionView = vsoc::audio_data::AudioDataRegionView;
 using WaveWriter = android::WaveWriter;
 
-static void usage(const char *me) {
-  std::cerr << "usage: " << me << " -o filename [-v(erbose)]" << std::endl;
-  std::exit(1);
-}
+DEFINE_string(output_file, "", "Location of the output audio file.");
+DEFINE_bool(verbose, false, "Enable verbose logging.");
 
 volatile bool gDone = false;
 static void SigIntHandler(int /* sig */) {
@@ -40,47 +38,15 @@ static void SigIntHandler(int /* sig */) {
 }
 
 int main(int argc, char **argv) {
-  const char *me = argv[0];
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  google::ParseCommandLineFlags(&argc, &argv, true);
 
-  std::string outputPath;
-  bool verbose = false;
+  LOG_IF(FATAL, FLAGS_output_file.empty())
+      << "--output_file must be specified.";
 
-  int res;
-  while ((res = getopt(argc, argv, "ho:v")) >= 0) {
-    switch (res) {
-      case 'o':
-      {
-        outputPath = optarg;
-        break;
-      }
+  AudioDataRegionView *audio_data_rv =
+      AudioDataRegionView::GetInstance(vsoc::GetDomain().c_str());
 
-      case 'v' :
-      {
-        verbose = true;
-        break;
-      }
-
-      case '?':
-      case 'h':
-      default:
-      {
-        usage(me);
-        break;
-      }
-    }
-  }
-
-  argc -= optind;
-  argv += optind;
-
-  if (outputPath.empty()) {
-    usage(me);
-  }
-
-  auto audio_data_rv = AudioDataRegionView::GetInstance();
-  CHECK(audio_data_rv != nullptr);
-
-  /* std::unique_ptr<vsoc::RegionWorker> audio_worker = */
   auto worker = audio_data_rv->StartWorker();
 
   std::unique_ptr<WaveWriter> writer;
@@ -108,7 +74,7 @@ int main(int argc, char **argv) {
             sizeof(buffer));
 
     if (res < 0) {
-        std::cerr << "CircularPacketQueue::Read returned " << res << std::endl;
+      std::cerr << "CircularPacketQueue::Read returned " << res << std::endl;
         continue;
     }
 
@@ -123,8 +89,8 @@ int main(int argc, char **argv) {
 
     const size_t payloadSize = res - sizeof(gce_audio_message);
 
-    if (verbose) {
-      std::cout
+    if (FLAGS_verbose) {
+      std::cerr
           << "stream "
           << hdr.stream_number
           << ", frame "
@@ -144,7 +110,7 @@ int main(int argc, char **argv) {
       const size_t numChannels = hdr.frame_size / sizeof(int16_t);
 
       writer.reset(
-          new WaveWriter(outputPath.c_str(), numChannels, hdr.frame_rate));
+          new WaveWriter(FLAGS_output_file.c_str(), numChannels, hdr.frame_rate));
 
       frameCount = hdr.frame_num;
       writer_hdr = hdr;
@@ -165,7 +131,8 @@ int main(int argc, char **argv) {
     writer->Append(&buffer[sizeof(gce_audio_message)], payloadSize);
   }
 
-  std::cout << "Done." << std::endl;
+  std::cout << "DONE" << std::endl;
 
   return 0;
 }
+
