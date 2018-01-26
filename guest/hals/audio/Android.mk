@@ -63,32 +63,3 @@ LOCAL_MODULE := audio.primary.vsoc
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)
-
-################################################################################
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := record_audio
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_SRC_FILES := \
-    record_audio.cpp
-
-LOCAL_CFLAGS := \
-    -Wall -Werror \
-    $(VSOC_VERSION_CFLAGS)
-
-LOCAL_C_INCLUDES := \
-    device/google/cuttlefish_common \
-    device/google/cuttlefish_kernel \
-    frameworks/av/cmds/stagefright  \
-
-LOCAL_HEADER_LIBRARIES := \
-    libhardware_headers
-
-LOCAL_SHARED_LIBRARIES := \
-    libbase               \
-    vsoc_lib
-
-LOCAL_VENDOR_MODULE := true
-include $(BUILD_EXECUTABLE)
