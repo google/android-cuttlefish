@@ -67,7 +67,6 @@ on post-fs-data
 
 on early-boot
     start vsoc_input_service
-    start vnc_server
 
 
 on boot
@@ -87,10 +86,6 @@ service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
 
 
 service vsoc_input_service /vendor/bin/vsoc_input_service
-    oneshot
-
-
-service vnc_server /vendor/bin/vnc_server
     oneshot
 
 
