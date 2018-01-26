@@ -29,7 +29,6 @@
 #
 /vendor/bin/gce_fs_monitor  u:object_r:gce_fs_monitor_exec:s0
 /vendor/bin/usbforward  u:object_r:usbforward_exec:s0
-/vendor/bin/vnc_server  u:object_r:vnc_server_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/vsoc_guest_region_e2e_test  u:object_r:vsoc_guest_region_e2e_test_exec:s0
 /vendor/bin/wificlient  u:object_r:wificlient_exec:s0

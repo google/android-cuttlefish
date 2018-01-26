@@ -23,6 +23,7 @@ cvd_host_executables := \
     launch_cvd \
     socket_forward_proxy \
     wificlient \
+    vnc_server \
 
 cvd_host_tests := \
     auto_free_buffer_test \
