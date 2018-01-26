@@ -111,6 +111,13 @@ DEFINE_string(uuid, g_default_uuid.c_str(),
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
+DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
+DEFINE_string(vnc_server_binary,
+              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+                  "/bin/vnc_server",
+              "Location of the vnc server binary.");
+DEFINE_int32(vnc_server_port, vsoc::GetPerInstanceDefault(6444),
+             "The port on which the vnc server should listen");
 
 namespace {
 const std::string kDataPolicyUseExisting = "use_existing";
@@ -242,7 +249,9 @@ class KernelLogMonitor {
   KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
 };
 
-void subprocess(const char* const* command, const char* const* envp) {
+void subprocess(const char* const* command,
+                const char* const* envp,
+                bool wait_for_child = true) {
   pid_t pid = fork();
   if (!pid) {
     int rval = execve(command[0], const_cast<char* const*>(command),
@@ -255,8 +264,13 @@ void subprocess(const char* const* command, const char* const* envp) {
   if (pid == -1) {
     LOG(ERROR) << "fork of " << command[0] << " failed (" << strerror(errno)
                << ")";
-  } else {
-    waitpid(pid, 0, 0);
+  }
+  if (pid > 0) {
+    if (wait_for_child) {
+      waitpid(pid, 0, 0);
+    } else {
+      LOG(INFO) << "Started " << command[0] << ", pid: " << pid;
+    }
   }
 }
 
@@ -453,6 +467,14 @@ int main(int argc, char** argv) {
   int exit_code = pclose(launch);
   if (exit_code) {
     LOG(FATAL) << "Launch command exited with status " << exit_code;
+  }
+
+  if (FLAGS_start_vnc_server) {
+    // Launch the vnc server, don't wait for it to complete
+    auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
+    const char* vnc_command[] = {FLAGS_vnc_server_binary.c_str(),
+                                 port_options.c_str(), NULL};
+    subprocess(vnc_command, NULL, false);
   }
   pause();
 }
