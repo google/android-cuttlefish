@@ -282,6 +282,24 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
   return rval;
 }
 
+SharedFD SharedFD::SocketLocalClient(int port, int type) {
+  sockaddr_in addr{};
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
+  if (!rval->IsOpen()) {
+    return rval;
+  }
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
+                    sizeof addr) < 0) {
+    LOG(ERROR) << "Connect() failed" << rval->StrError();
+    return SharedFD(
+        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
+  }
+  return rval;
+}
+
 SharedFD SharedFD::SocketLocalServer(int port, int type) {
   struct sockaddr_in addr;
   memset(&addr, 0, sizeof(addr));
