@@ -242,10 +242,11 @@ class KernelLogMonitor {
   KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
 };
 
-void subprocess(const char* const* command) {
+void subprocess(const char* const* command, const char* const* envp) {
   pid_t pid = fork();
   if (!pid) {
-    int rval = execv(command[0], const_cast<char* const*>(command));
+    int rval = execve(command[0], const_cast<char* const*>(command),
+                      const_cast<char* const*>(envp));
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << command[0] << " failed (" << strerror(errno)
                << ")";
@@ -268,17 +269,18 @@ void CreateBlankImage(
   count += std::to_string(image_mb);
   const char* dd_command[]{
     "/bin/dd", "if=/dev/zero", of.c_str(), "bs=1M", count.c_str(), NULL};
-  subprocess(dd_command);
+  subprocess(dd_command, NULL);
   const char* mkfs_command[]{
-    "/usr/bin/sudo", "/sbin/mkfs", "-t", image_fmt.c_str(), image.c_str(), NULL};
-  subprocess(mkfs_command);
+    "/sbin/mkfs", "-t", image_fmt.c_str(), image.c_str(), NULL};
+  const char* envp[]{"PATH=/sbin", NULL};
+  subprocess(mkfs_command, envp);
 }
 
 void RemoveFile(const std::string& file) {
   LOG(INFO) << "Removing " << file;
   const char* rm_command[]{
-    "/usr/bin/sudo", "/bin/rm", "-f", file.c_str(), NULL};
-  subprocess(rm_command);
+    "/bin/rm", "-f", file.c_str(), NULL};
+  subprocess(rm_command, NULL);
 }
 }  // anonymous namespace
 
@@ -296,13 +298,13 @@ int main(int argc, char** argv) {
     const char* mkdir_command[]{
         "/usr/bin/sudo",          "/bin/mkdir", "-m", "0775",
         per_instance_dir.c_str(), NULL};
-    subprocess(mkdir_command);
+    subprocess(mkdir_command, NULL);
     std::string owner_group{getenv("USER")};
     owner_group += ":libvirt-qemu";
     const char* chown_command[]{"/usr/bin/sudo", "/bin/chown",
                                 owner_group.c_str(), per_instance_dir.c_str(),
                                 NULL};
-    subprocess(chown_command);
+    subprocess(chown_command, NULL);
   }
 
   // If user did not specify location of either of these files, expect them to
