@@ -1,0 +1,26 @@
+cc_binary {
+    name: "socket_forward_proxy",
+    srcs: [
+        "main.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "vsoc_lib",
+        "liblog",
+        "cuttlefish_tcp_socket",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    target: {
+        linux: {
+            static_libs: [
+                "libcuttlefish_host_config",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
+}
