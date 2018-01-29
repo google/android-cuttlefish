@@ -223,7 +223,6 @@ class FileInstance {
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
   bool CopyFrom(FileInstance& in);
-  bool CopyFrom(FileInstance& in, size_t length);
 
   int UNMANAGED_Dup() {
     errno = 0;
@@ -417,13 +416,6 @@ class FileInstance {
       fd_array[i] = fds[i]->fd_;
     }
     return SendMsg(&msg, flags);
-  }
-
-  int Shutdown(int how) {
-    errno = 0;
-    int rval = shutdown(fd_, how);
-    errno_ = errno;
-    return rval;
   }
 
   ssize_t SendTo(const void* buf, size_t len, int flags,
