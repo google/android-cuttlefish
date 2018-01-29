@@ -14,5 +14,6 @@
 // limitations under the License.
 
 subdirs = [
+    "socket_forward_proxy",
     "wificlient",
 ]
