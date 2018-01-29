@@ -122,6 +122,28 @@
    },
 
    {
+     "device_name" : "socket_forward",
+     "__comment" : "Holds the data being used by the socket forwarding",
+     "current_version" : 0,
+     "min_compatible_version" : 0,
+     "__comment" : "FIXME this region size is huge until I nail down the correct size",
+     "region_size" : 2105344,
+
+     "guest_to_host_signal_table" : {
+       "__comment" : [
+           "sizeof each node is based on common/libs/shm/lock.h",
+           "16 spinlocks = 16 * 4 = 64",
+           "then the atomic generation number is + 4"
+       ],
+       "num_nodes_lg2" : 7
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 7
+      }
+   },
+
+   {
      "device_name" : "wifi_exchange",
      "__comment" : [
        "WIFI exchange buffer for primary wireless network interface.",

@@ -153,6 +153,14 @@ const uint32_t version = 1;
 static const std::size_t RilLayout_size = 68;
 }  // namespace ril
 
+// Versioning Information for socket_forward_layout.h
+namespace socket_forward {
+constexpr uint32_t version = 0;
+constexpr std::size_t kNumQueues = 16;
+constexpr std::size_t SocketForwardLayout_size =
+    (65548 * 2  + 4 + 4 + 4) * kNumQueues // queues + state + port + lock
+    + 4; // seq_num
+}  // namespace socket_forward
 
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region
