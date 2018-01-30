@@ -49,6 +49,10 @@ LOCAL_VENDOR_MODULE := true
 ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
 LOCAL_MULTILIB := first
 endif
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 include $(BUILD_SHARED_LIBRARY)
 
 include $(call first-makefiles-under,$(LOCAL_PATH))

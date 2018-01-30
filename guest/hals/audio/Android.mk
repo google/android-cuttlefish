@@ -79,10 +79,17 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
     record_audio.cpp
 
+LOCAL_CFLAGS := \
+    -Wall -Werror \
+    $(VSOC_VERSION_CFLAGS)
+
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
     device/google/cuttlefish_kernel \
     frameworks/av/cmds/stagefright  \
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
 
 LOCAL_SHARED_LIBRARIES := \
     libbase               \
