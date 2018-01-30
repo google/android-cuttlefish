@@ -31,6 +31,9 @@ on init
     chown radio root /dev/ril
     chmod 0660 /dev/ril
     restorecon /dev/ril
+    chown audioserver root /dev/audio_data
+    chmod 0660 /dev/audio_data
+    restorecon /dev/audio_data
 
 
 on fs
