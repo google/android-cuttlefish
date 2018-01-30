@@ -48,6 +48,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := hwc_tests.vsoc
 LOCAL_MODULE_TAGS := optional
+LOCAL_VENDOR_MODULE := true
 
 LOCAL_SHARED_LIBRARIES := \
     libvsocframebuffer \
@@ -78,5 +79,8 @@ LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
     bionic \
     $(VSOC_STLPORT_INCLUDES)
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
 
 include $(BUILD_EXECUTABLE)

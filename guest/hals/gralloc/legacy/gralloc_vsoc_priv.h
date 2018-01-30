@@ -21,6 +21,7 @@
 #include <hardware/gralloc.h>
 #include <errno.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <cutils/native_handle.h>
 #include <cutils/log.h>
