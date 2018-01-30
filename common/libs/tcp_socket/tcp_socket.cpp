@@ -27,6 +27,24 @@
 using cvd::ClientSocket;
 using cvd::ServerSocket;
 
+ClientSocket::ClientSocket(int port)
+  : fd_(SharedFD::SocketLocalClient(port, SOCK_STREAM)) {}
+
+cvd::Message ClientSocket::RecvAny(size_t length) {
+  Message buf(length);
+  auto read_count = fd_->Read(buf.data(), buf.size());
+  if (read_count < 0) {
+    read_count = 0;
+  }
+  buf.resize(read_count);
+  return buf;
+}
+
+bool ClientSocket::closed() const {
+  std::lock_guard<std::mutex> guard(closed_lock_);
+  return other_side_closed_;
+}
+
 cvd::Message ClientSocket::Recv(size_t length) {
   Message buf(length);
   ssize_t total_read = 0;
@@ -36,7 +54,10 @@ cvd::Message ClientSocket::Recv(size_t length) {
       if (just_read < 0) {
         LOG(ERROR) << "read() error: " << strerror(errno);
       }
-      other_side_closed_ = true;
+      {
+        std::lock_guard<std::mutex> guard(closed_lock_);
+        other_side_closed_ = true;
+      }
       return Message{};
     }
     total_read += just_read;
@@ -49,9 +70,14 @@ ssize_t ClientSocket::Send(const uint8_t* data, std::size_t size) {
   std::lock_guard<std::mutex> lock(send_lock_);
   ssize_t written{};
   while (written < static_cast<ssize_t>(size)) {
+    if (!fd_->IsOpen()) { LOG(ERROR) << "fd_ is closed"; }
     auto just_written = fd_->Write(data + written, size - written);
     if (just_written <= 0) {
       LOG(INFO) << "Couldn't write to client: " << strerror(errno);
+      {
+        std::lock_guard<std::mutex> guard(closed_lock_);
+        other_side_closed_ = true;
+      }
       return just_written;
     }
     written += just_written;
