@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <atomic>
 
 #include "common/vsoc/shm/base.h"
 
