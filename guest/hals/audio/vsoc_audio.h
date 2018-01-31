@@ -17,6 +17,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/threads/cuttlefish_thread.h"
@@ -266,7 +267,7 @@ class GceAudio : public audio_hw_device {
 #endif
 
   using AudioDataRegionView = vsoc::audio_data::AudioDataRegionView;
-  AudioDataRegionView *audio_data_rv_ = NULL;
+  std::shared_ptr<AudioDataRegionView> audio_data_rv_;
   std::unique_ptr<vsoc::RegionWorker> audio_worker_;
 
   // Lock to protect the data below.

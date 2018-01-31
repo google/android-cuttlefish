@@ -23,30 +23,20 @@
 namespace vsoc {
 namespace ril {
 
-// TODO(jemoreira): use the general region singleton implementation when ready
 #if defined(CUTTLEFISH_HOST)
-RilRegionView* RilRegionView::GetInstance(const char* domain) {
-#else
-RilRegionView* RilRegionView::GetInstance() {
-#endif
-  static std::mutex m;
-  static RilRegionView* region;
-
-  std::lock_guard<std::mutex> lock(m);
-  if (!region) {
-    region = new RilRegionView();
-
-#if defined(CUTTLEFISH_HOST)
-    if (!region->Open(domain)) {
-#else
-    if (!region->Open()) {
-#endif
-      delete region;
-      region = nullptr;
-    }
-  }
-  return region;
+std::shared_ptr<RilRegionView> RilRegionView::GetInstance(const char* domain) {
+  return RegionView::GetInstanceImpl<RilRegionView>(
+      [](std::shared_ptr<RilRegionView> region, const char* domain) {
+        return region->Open(domain);
+      },
+      domain);
 }
+#else
+std::shared_ptr<RilRegionView> RilRegionView::GetInstance() {
+  return RegionView::GetInstanceImpl<RilRegionView>(
+      std::mem_fn(&RilRegionView::Open));
+}
+#endif
 
 const char* RilRegionView::address_and_prefix_length() const {
   static char buffer[sizeof(data().ipaddr) + 3]{};  // <ipaddr>/dd

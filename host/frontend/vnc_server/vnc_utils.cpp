@@ -15,15 +15,20 @@
  */
 
 #include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "host/libs/config/host_config.h"
 
 using vsoc::framebuffer::FBBroadcastRegionView;
 
 namespace cvd {
 namespace vnc {
 
-FBBroadcastRegionView* GetFBBroadcastRegionView() {
-  static FBBroadcastRegionView instance;
-  return &instance;
+std::shared_ptr<FBBroadcastRegionView> GetFBBroadcastRegionView() {
+  std::shared_ptr<FBBroadcastRegionView> region =
+      FBBroadcastRegionView::GetInstance(vsoc::GetDomain().c_str());
+  if (!region) {
+    LOG(FATAL) << "Unable to open FBBroadcastRegion";
+  }
+  return region;
 }
 
 }  // namespace vnc

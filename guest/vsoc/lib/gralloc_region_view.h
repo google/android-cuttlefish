@@ -18,6 +18,7 @@
 
 #include <common/vsoc/shm/gralloc_layout.h>
 #include <guest/vsoc/lib/manager_region_view.h>
+#include <memory>
 #include <stdlib.h>
 
 namespace vsoc {
@@ -26,6 +27,7 @@ namespace gralloc {
 class GrallocRegionView : public vsoc::ManagerRegionView<
                           vsoc::layout::gralloc::GrallocManagerLayout> {
  public:
+  GrallocRegionView() = default;
   // Allocates a gralloc buffer of (at least) the specified size. Returns a file
   // descriptor that exposes the buffer when mmapped from 0 to (the page
   // aligned) size (and fails to mmap anything outside of that range) or a
@@ -33,9 +35,9 @@ class GrallocRegionView : public vsoc::ManagerRegionView<
   // TODO(jemoreira): Include debug info like stride, width, height, etc
   int AllocateBuffer(size_t size, uint32_t* begin_offset = nullptr);
 
-  static GrallocRegionView* GetInstance();
+  static std::shared_ptr<GrallocRegionView> GetInstance();
+
  protected:
-  GrallocRegionView();
   GrallocRegionView(const GrallocRegionView&) = delete;
   GrallocRegionView & operator=(const GrallocRegionView&) = delete;
 
@@ -43,7 +45,6 @@ class GrallocRegionView : public vsoc::ManagerRegionView<
 
   vsoc_reg_off_t offset_of_buffer_memory_{};
   uint32_t total_buffer_memory_{};
-  bool is_open_{false};
 };
 
 } // namespace gralloc
