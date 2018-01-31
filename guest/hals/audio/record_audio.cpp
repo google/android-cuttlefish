@@ -77,8 +77,7 @@ int main(int argc, char **argv) {
     usage(me);
   }
 
-  AudioDataRegionView *audio_data_rv = AudioDataRegionView::GetInstance();
-  audio_data_rv->Open();
+  auto audio_data_rv = AudioDataRegionView::GetInstance();
 
   /* std::unique_ptr<vsoc::RegionWorker> audio_worker = */
     audio_data_rv->StartWorker();
@@ -103,7 +102,7 @@ int main(int argc, char **argv) {
 
   while (!gDone) {
     intptr_t res = audio_data_rv->data()->audio_queue.Read(
-            audio_data_rv,
+            audio_data_rv.get(),
             reinterpret_cast<char *>(buffer),
             sizeof(buffer));
 

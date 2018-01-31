@@ -25,12 +25,20 @@ using vsoc::layout::audio_data::AudioDataLayout;
 namespace vsoc {
 namespace audio_data {
 
-// static
-AudioDataRegionView *AudioDataRegionView::GetInstance() {
-    static AudioDataRegionView sInstance;
-    return &sInstance;
+#if defined(CUTTLEFISH_HOST)
+std::shared_ptr<AudioDataRegionView> AudioDataRegionView::GetInstance(
+    const char* domain) {
+  return RegionView::GetInstanceImpl<AudioDataRegionView>(
+      [](std::shared_ptr<AudioDataRegionView> region, const char* domain) {
+        return region->Open(domain);
+      },
+      domain);
 }
-
+#else
+std::shared_ptr<AudioDataRegionView> AudioDataRegionView::GetInstance() {
+  return RegionView::GetInstanceImpl<AudioDataRegionView>(
+      std::mem_fn(&AudioDataRegionView::Open));
+}
+#endif
 }  // namespace audio_data
 }  // namespace vsoc
-

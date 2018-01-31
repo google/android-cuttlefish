@@ -39,12 +39,6 @@
 const char* const VSoCFrameBuffer::kFrameBufferPath =
     "/dev/userspace_framebuffer";
 
-
-static vsoc::framebuffer::FBBroadcastRegionView* GetFBBroadcastRegionView() {
-  static vsoc::framebuffer::FBBroadcastRegionView instance;
-  return &instance;
-}
-
 const VSoCFrameBuffer & VSoCFrameBuffer::getInstance() {
   static VSoCFrameBuffer instance;
   instance.Configure();
@@ -53,11 +47,12 @@ const VSoCFrameBuffer & VSoCFrameBuffer::getInstance() {
 
 
 VSoCFrameBuffer::VSoCFrameBuffer()
-  : fb_region_view_(GetFBBroadcastRegionView()), line_length_(-1) { }
+  : line_length_(-1) { }
 
 
 void VSoCFrameBuffer::Configure() {
-  if (!fb_region_view_->Open()) {
+  fb_region_view_ = vsoc::framebuffer::FBBroadcastRegionView::GetInstance();
+  if (!fb_region_view_) {
     SLOGE("Failed to open broadcaster region");
   }
   line_length_ = align(x_res() * sizeof(Pixel));

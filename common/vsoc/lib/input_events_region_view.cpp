@@ -96,5 +96,20 @@ intptr_t InputEventsRegionView::GetPowerButtonEventsOrWait(
   return ret / sizeof(InputEvent);
 }
 
+#if defined(CUTTLEFISH_HOST)
+std::shared_ptr<InputEventsRegionView> InputEventsRegionView::GetInstance(
+    const char* domain) {
+  return RegionView::GetInstanceImpl<InputEventsRegionView>(
+      [](std::shared_ptr<InputEventsRegionView> region, const char* domain) {
+        return region->Open(domain);
+      },
+      domain);
+}
+#else
+std::shared_ptr<InputEventsRegionView> InputEventsRegionView::GetInstance() {
+  return RegionView::GetInstanceImpl<InputEventsRegionView>(
+      std::mem_fn(&InputEventsRegionView::Open));
+}
+#endif
 }
 }

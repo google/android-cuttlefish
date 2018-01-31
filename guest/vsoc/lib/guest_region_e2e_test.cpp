@@ -42,10 +42,10 @@ static inline void disable_tombstones() {
 }
 
 template <typename View>
-void DeathTestView(View* r) {
+void DeathTestView() {
   disable_tombstones();
-  // region.Open should never return.
-  EXPECT_FALSE(r->Open());
+  // View::GetInstance should never return.
+  EXPECT_FALSE(!!View::GetInstance());
 }
 
 // Here is a summary of the two regions interrupt and write test:
@@ -64,7 +64,7 @@ void DeathTestView(View* r) {
 // 12. Confirm that no interrupt is pending in the second region
 
 template <typename View>
-void SetGuestStrings(View* in) {
+void SetGuestStrings(std::shared_ptr<View> in) {
   size_t num_data = in->string_size();
   EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
@@ -76,7 +76,7 @@ void SetGuestStrings(View* in) {
 }
 
 template <typename View>
-void CheckPeerStrings(View* in) {
+void CheckPeerStrings(std::shared_ptr<View> in) {
   size_t num_data = in->string_size();
   EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
@@ -85,76 +85,94 @@ void CheckPeerStrings(View* in) {
 }
 
 TEST(RegionTest, BasicPeerTests) {
-  vsoc::E2EPrimaryRegionView primary;
-  vsoc::E2ESecondaryRegionView secondary;
-  ASSERT_TRUE(primary.Open());
-  ASSERT_TRUE(secondary.Open());
+  std::shared_ptr<vsoc::E2EPrimaryRegionView> primary =
+      vsoc::E2EPrimaryRegionView::GetInstance();
+  std::shared_ptr<vsoc::E2ESecondaryRegionView> secondary =
+      vsoc::E2ESecondaryRegionView::GetInstance();
+  ASSERT_TRUE(!!primary);
+  ASSERT_TRUE(!!secondary);
   LOG(INFO) << "Regions are open";
-  SetGuestStrings(&primary);
+  SetGuestStrings(primary);
   LOG(INFO) << "Primary guest strings are set";
-  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  EXPECT_FALSE(secondary->HasIncomingInterrupt());
   LOG(INFO) << "Verified no early second interrupt";
-  EXPECT_TRUE(primary.MaybeInterruptPeer());
+  EXPECT_TRUE(primary->MaybeInterruptPeer());
   LOG(INFO) << "Interrupt sent. Waiting for first interrupt from peer";
-  primary.WaitForInterrupt();
+  primary->WaitForInterrupt();
   LOG(INFO) << "First interrupt received";
-  CheckPeerStrings(&primary);
+  CheckPeerStrings(primary);
   LOG(INFO) << "Verified peer's primary strings";
-  SetGuestStrings(&secondary);
+  SetGuestStrings(secondary);
   LOG(INFO) << "Secondary guest strings are set";
-  EXPECT_TRUE(secondary.MaybeInterruptPeer());
+  EXPECT_TRUE(secondary->MaybeInterruptPeer());
   LOG(INFO) << "Second interrupt sent";
-  secondary.WaitForInterrupt();
+  secondary->WaitForInterrupt();
   LOG(INFO) << "Second interrupt received";
-  CheckPeerStrings(&secondary);
+  CheckPeerStrings(secondary);
   LOG(INFO) << "Verified peer's secondary strings";
 
   // Test signals
-  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  EXPECT_FALSE(secondary->HasIncomingInterrupt());
   LOG(INFO) << "Verified no early second signal";
   vsoc::layout::Sides side;
   side.value_ = vsoc::layout::Sides::Peer;
-  primary.SendSignal(side, &primary.data()->guest_to_host_signal);
+  primary->SendSignal(side, &primary->data()->guest_to_host_signal);
   LOG(INFO) << "Signal sent. Waiting for first signal from peer";
-  primary.WaitForInterrupt();
+  primary->WaitForInterrupt();
   int count = 0;  // counts the number of signals received.
-  primary.ProcessSignalsFromPeer(
+  primary->ProcessSignalsFromPeer(
       [&primary, &count](std::atomic<uint32_t>* uaddr) {
         ++count;
-        EXPECT_TRUE(uaddr == &primary.data()->host_to_guest_signal);
+        EXPECT_TRUE(uaddr == &primary->data()->host_to_guest_signal);
       });
   EXPECT_TRUE(count == 1);
   LOG(INFO) << "Signal received on primary region";
-  secondary.SendSignal(side, &secondary.data()->guest_to_host_signal);
+  secondary->SendSignal(side, &secondary->data()->guest_to_host_signal);
   LOG(INFO) << "Signal sent. Waiting for second signal from peer";
-  secondary.WaitForInterrupt();
+  secondary->WaitForInterrupt();
   count = 0;
-  secondary.ProcessSignalsFromPeer(
+  secondary->ProcessSignalsFromPeer(
       [&secondary, &count](std::atomic<uint32_t>* uaddr) {
         ++count;
-        EXPECT_TRUE(uaddr == &secondary.data()->host_to_guest_signal);
+        EXPECT_TRUE(uaddr == &secondary->data()->host_to_guest_signal);
       });
   EXPECT_TRUE(count == 1);
   LOG(INFO) << "Signal received on secondary region";
 
-  EXPECT_FALSE(primary.HasIncomingInterrupt());
-  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  EXPECT_FALSE(primary->HasIncomingInterrupt());
+  EXPECT_FALSE(secondary->HasIncomingInterrupt());
   LOG(INFO) << "PASS: BasicPeerTests";
 }
 
 TEST(RegionTest, MissingRegionDeathTest) {
-  vsoc::E2EUnfindableRegionView test;
   // EXPECT_DEATH creates a child for the test, so we do it out here.
   // DeathTestGuestRegion will actually do the deadly call after ensuring
   // that we don't create an unwanted tombstone.
-  EXPECT_EXIT(DeathTestView(&test), testing::ExitedWithCode(2),
+  EXPECT_EXIT(DeathTestView<vsoc::E2EUnfindableRegionView>(),
+              testing::ExitedWithCode(2),
               ".*" DEATH_TEST_MESSAGE ".*");
 }
+
+// Region view classes to allow calling the Open() function from the test.
+class E2EManagedTestRegionView
+    : public vsoc::TypedRegionView<E2EManagedTestRegionLayout> {
+ public:
+  bool Open() {
+    return vsoc::TypedRegionView<E2EManagedTestRegionLayout>::Open();
+  }
+};
+class E2EManagerTestRegionView
+    : public vsoc::ManagerRegionView<E2EManagerTestRegionLayout> {
+ public:
+  bool Open() {
+    return vsoc::ManagerRegionView<E2EManagerTestRegionLayout>::Open();
+  }
+};
 
 class ManagedRegionTest {
  public:
   void testManagedRegionFailMap() {
-    vsoc::TypedRegionView<E2EManagedTestRegionLayout> managed_region;
+    E2EManagedTestRegionView managed_region;
     disable_tombstones();
     // managed_region.Open should never return.
     EXPECT_FALSE(managed_region.Open());
@@ -204,7 +222,7 @@ class ManagedRegionTest {
   ManagedRegionTest() {}
 
  private:
-  vsoc::ManagerRegionView<E2EManagerTestRegionLayout> manager_region_;
+  E2EManagerTestRegionView manager_region_;
 };
 
 TEST(ManagedRegionTest, ManagedRegionFailMap) {
@@ -223,9 +241,9 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    vsoc::E2EPrimaryRegionView region;
-    region.Open();
-    region.guest_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
+    std::shared_ptr<vsoc::E2EPrimaryRegionView> region =
+        vsoc::E2EPrimaryRegionView::GetInstance();
+    region->guest_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
     LOG(INFO) << "stage_1_guest_region_e2e_tests PASSED";
   }
   return rval;

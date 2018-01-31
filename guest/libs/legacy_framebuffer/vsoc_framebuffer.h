@@ -17,7 +17,9 @@
 
 #include <pthread.h>
 #include <sys/mman.h>
+
 #include <climits>
+#include <memory>
 
 struct private_handle_t;
 struct remoter_request_packet;
@@ -101,7 +103,7 @@ private:
   VSoCFrameBuffer();
   void Configure();
 
-  vsoc::framebuffer::FBBroadcastRegionView* fb_region_view_;
+  std::shared_ptr<vsoc::framebuffer::FBBroadcastRegionView> fb_region_view_;
   static const int kBitsPerPixel = sizeof(Pixel) * CHAR_BIT;
   // Length of a scan-line in bytes.
   int line_length_;

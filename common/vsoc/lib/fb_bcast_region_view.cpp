@@ -27,7 +27,7 @@ using vsoc::framebuffer::FBBroadcastRegionView;
 // the hwcomposer when it's ran out of work to do and needs to get more from the
 // hwcomposer.
 void FBBroadcastRegionView::BroadcastNewFrame(uint32_t seq_num,
-                                          vsoc_reg_off_t frame_offset) {
+                                              vsoc_reg_off_t frame_offset) {
   {
     auto lock_guard(make_lock_guard(&data()->bcast_lock));
     data()->seq_num = seq_num;
@@ -42,7 +42,8 @@ void FBBroadcastRegionView::BroadcastNewFrame(uint32_t seq_num,
   SendSignal(side, &data()->seq_num);
 }
 
-vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(uint32_t* last_seq_num) {
+vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(
+    uint32_t* last_seq_num) {
   static std::unique_ptr<RegionWorker> worker = StartWorker();
   // It's ok to read seq_num here without holding the lock because the lock will
   // be acquired immediately after so we'll block if necessary to wait for the
@@ -61,3 +62,19 @@ vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(uint32_t* last_seq_nu
     return data()->frame_offset;
   }
 }
+
+#if defined(CUTTLEFISH_HOST)
+std::shared_ptr<FBBroadcastRegionView> FBBroadcastRegionView::GetInstance(
+    const char* domain) {
+  return RegionView::GetInstanceImpl<FBBroadcastRegionView>(
+      [](std::shared_ptr<FBBroadcastRegionView> region, const char* domain) {
+        return region->Open(domain);
+      },
+      domain);
+}
+#else
+std::shared_ptr<FBBroadcastRegionView> FBBroadcastRegionView::GetInstance() {
+  return RegionView::GetInstanceImpl<FBBroadcastRegionView>(
+      std::mem_fn(&FBBroadcastRegionView::Open));
+}
+#endif

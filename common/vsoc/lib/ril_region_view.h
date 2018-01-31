@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+
 #include "common/vsoc/lib/typed_region_view.h"
 #include "common/vsoc/shm/ril_layout.h"
 
@@ -24,9 +26,10 @@ class RilRegionView
     : public vsoc::TypedRegionView<vsoc::layout::ril::RilLayout> {
  public:
 #if defined(CUTTLEFISH_HOST)
-  static RilRegionView* GetInstance(const char* domain = nullptr);
+  static std::shared_ptr<RilRegionView> GetInstance(
+      const char* domain = nullptr);
 #else
-  static RilRegionView* GetInstance();
+  static std::shared_ptr<RilRegionView> GetInstance();
 #endif
 
   // returns a string with '<ip>/<prefix_len>' like this: 192.168.99.2/30

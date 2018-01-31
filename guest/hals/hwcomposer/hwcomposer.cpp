@@ -31,12 +31,6 @@
 using vsoc::framebuffer::FBBroadcastRegionView;
 
 // TODO(jemoreira): FBBroadcastRegionView may belong in the HWC region
-
-FBBroadcastRegionView* GetFBBroadcastRegionView() {
-  static FBBroadcastRegionView instance;
-  return &instance;
-}
-
 namespace {
 
 // Ensures that the layer does not include any inconsistencies
@@ -88,7 +82,6 @@ struct vsoc_hwc_device {
   pthread_t vsync_thread;
   int64_t vsync_base_timestamp;
   int32_t vsync_period_ns;
-  FBBroadcastRegionView* fb_broadcast;
   uint32_t frame_num;
 };
 
@@ -173,8 +166,8 @@ int hwc_set(struct hwc_composer_device_1* dev, size_t numDisplays,
       const vsoc_buffer_handle_t* fb_handle =
           reinterpret_cast<const vsoc_buffer_handle_t*>(
               list->hwLayers[i].handle);
-      pdev->fb_broadcast->BroadcastNewFrame(pdev->frame_num++,
-                                            fb_handle->offset);
+      FBBroadcastRegionView::GetInstance()->BroadcastNewFrame(
+          pdev->frame_num++, fb_handle->offset);
       break;
     }
   }
@@ -240,18 +233,19 @@ int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/, int disp,
   return -EINVAL;
 }
 
-int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
+int32_t vsoc_hwc_attribute(uint32_t attribute) {
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
-      return 1000000000 / pdev->fb_broadcast->refresh_rate_hz();
+      return 1000000000 / fb_broadcast->refresh_rate_hz();
     case HWC_DISPLAY_WIDTH:
-      return pdev->fb_broadcast->x_res();
+      return fb_broadcast->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return pdev->fb_broadcast->y_res();
+      return fb_broadcast->y_res();
     case HWC_DISPLAY_DPI_X:
     case HWC_DISPLAY_DPI_Y:
       // The number of pixels per thousand inches
-      return pdev->fb_broadcast->dpi() * 1000;
+      return fb_broadcast->dpi() * 1000;
     case HWC_DISPLAY_COLOR_TRANSFORM:
       // TODO(jemoreira): Add the other color transformations
       return HAL_COLOR_TRANSFORM_IDENTITY;
@@ -261,10 +255,9 @@ int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
   }
 }
 
-int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
+int hwc_getDisplayAttributes(struct hwc_composer_device_1* /*dev*/, int disp,
                              uint32_t /*config*/, const uint32_t* attributes,
                              int32_t* values) {
-  vsoc_hwc_device* pdev = reinterpret_cast<vsoc_hwc_device*>(dev);
 
   if (disp != HWC_DISPLAY_PRIMARY) {
     ALOGE("Unknown display type %u", disp);
@@ -272,7 +265,7 @@ int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
   }
 
   for (int i = 0; attributes[i] != HWC_DISPLAY_NO_ATTRIBUTE; i++) {
-    values[i] = vsoc_hwc_attribute(pdev, attributes[i]);
+    values[i] = vsoc_hwc_attribute(attributes[i]);
   }
 
   return 0;
@@ -325,8 +318,7 @@ int hwc_open(const struct hw_module_t* module, const char* name,
   dev->base.getDisplayConfigs = hwc_getDisplayConfigs;
   dev->base.getDisplayAttributes = hwc_getDisplayAttributes;
 
-  dev->fb_broadcast = GetFBBroadcastRegionView();
-  if (!dev->fb_broadcast->Open()) {
+  if (!FBBroadcastRegionView::GetInstance()) {
     ALOGE("Unable to open framebuffer broadcaster (%s)", __FUNCTION__);
     delete dev;
     return -1;
