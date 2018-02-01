@@ -321,3 +321,8 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     vsoc_mem_json
+
+# WLAN driver configuration files
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
+
