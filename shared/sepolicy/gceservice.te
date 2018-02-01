@@ -5,9 +5,6 @@ app_domain(gceservice)
 # Use system services exposed as part of Android framework public API
 allow gceservice app_api_service:service_manager find;
 
-# Export Binder service called "gce". Needed to make "dumpsys gce" work.
-add_service(gceservice, gce_service)
-
 # Read and write /data/data subdirectory (for its app-private persistent data).
 allow gceservice app_data_file:dir create_dir_perms;
 allow gceservice app_data_file:{ file lnk_file } create_file_perms;
