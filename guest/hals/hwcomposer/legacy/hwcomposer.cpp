@@ -101,9 +101,8 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
 int vsoc_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
                  hwc_surface_t sur, hwc_layer_list_t* list) {
-  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
-      list->numHwLayers, &list->hwLayers[0]);
-  return 0;
+  return reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)
+      ->composer->SetLayers(list->numHwLayers, &list->hwLayers[0]);
 }
 #else
 static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
@@ -114,8 +113,9 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
   if (!contents) return 0;
 
   vsoc_hwc_layer* layers = &contents->hwLayers[0];
-  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
-      contents->numHwLayers, layers);
+  int retval =
+      reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
+          contents->numHwLayers, layers);
 
   int closedFds = 0;
   for (size_t index = 0; index < contents->numHwLayers; ++index) {
@@ -132,7 +132,7 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
   // TODO(ghartman): This should be set before returning. On the next set it
   // should be signalled when we load the new frame.
   contents->retireFenceFd = -1;
-  return 0;
+  return retval;
 }
 #endif
 

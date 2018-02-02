@@ -51,17 +51,14 @@ struct FBBroadcastLayout : public RegionLayout {
   uint16_t dpi;
   uint16_t refresh_rate_hz;
 
-  uint32_t buffer_bits;
-
+  // Protects access to the frame offset, sequential number and stats.
+  // See the region implementation for more details.
+  SpinLock bcast_lock;
   // The frame sequential number
   std::atomic<uint32_t> seq_num;
   // The offset in the gralloc buffer region of the current frame buffer.
   uint32_t frame_offset;
   CompositionStats stats;
-  // Protects access to the frame offset, sequential number and stats.
-  // See the region implementation for more details.
-  SpinLock bcast_lock;
-  uint32_t reserved;
 };
 ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, fb_broadcast);
 

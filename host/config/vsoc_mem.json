@@ -91,7 +91,7 @@
      "managed_by" : "gralloc_manager",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size" : 394850304,
+     "region_size" : 407142400,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm/lock.h",
@@ -106,10 +106,10 @@
 
    {
      "device_name" : "framebuffer",
-     "__comment" : "Holds the frame buffers. Size is enough to accomodate 6 buffers 800x1280 in RGBA format plus an extra page",
+     "__comment" : "Holds the frame buffers. Size is enough to accomodate 3 buffers 800x1280 in RGBA format, with 4 bytes of padding, plus an extra page",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size" : 24584192,
+     "region_size" : 12292096,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm/lock.h",

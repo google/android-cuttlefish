@@ -28,11 +28,13 @@
 #include <system/graphics.h>
 
 #include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/framebuffer_region_view.h"
 
 #include "geometry_utils.h"
 #include "hwcomposer_common.h"
 
 using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::framebuffer::FrameBufferRegionView;
 
 namespace cvd {
 
@@ -339,45 +341,16 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
 
 }  // namespace
 
-// Returns a handle to the appropriate framebuffer to use:
-// - the one provided by surfaceflinger if it is doing any GLES composition
-// - the next hwc-only framebuffer otherwise
-// Takes care of rotating the hwc-only framebuffers
-buffer_handle_t VSoCComposer::FindFrameBuffer(int num_layers,
-                                              vsoc_hwc_layer* layers) {
-  buffer_handle_t* fb_handle = NULL;
-  bool use_hwc_fb = true;
-  // The framebuffer target is usually the last layer in the list, so iterate in
-  // reverse
-  for (int idx = num_layers - 1; idx >= 0; --idx) {
-    if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
-      fb_handle = &layers[idx].handle;
-    } else if (layers[idx].compositionType != HWC_OVERLAY) {
-      use_hwc_fb = false;
-      // Just in case the FB target was not found yet
-      if (fb_handle) break;
-    }
-  }
-  if (use_hwc_fb && !hwc_framebuffers_.empty()) {
-    fb_handle = &hwc_framebuffers_[next_hwc_framebuffer_];
-    next_hwc_framebuffer_ =
-        (next_hwc_framebuffer_ + 1) % hwc_framebuffers_.size();
-  }
-
-  return *fb_handle;
-}
-
 void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
-                                  buffer_handle_t dst_handle) {
+                                  int32_t fb_offset) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
   const private_handle_t* src_priv_handle =
       reinterpret_cast<const private_handle_t*>(src_layer->handle);
-  const private_handle_t* dst_priv_handle =
-      reinterpret_cast<const private_handle_t*>(dst_handle);
 
-  bool needs_conversion = src_priv_handle->format != dst_priv_handle->format;
+  // TODO(jemoreira): Remove the hardcoded fomat.
+  bool needs_conversion = src_priv_handle->format != HAL_PIXEL_FORMAT_RGBX_8888;
   bool needs_scaling = LayerNeedsScaling(*src_layer);
   bool needs_rotation = rotation != libyuv::kRotate0;
   bool needs_transpose = needs_rotation && rotation != libyuv::kRotate180;
@@ -388,7 +361,8 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
                       needs_vflip || needs_attenuation || needs_blending);
 
   uint8_t* src_buffer;
-  uint8_t* dst_buffer;
+  uint8_t* dst_buffer = reinterpret_cast<uint8_t*>(
+      FrameBufferRegionView::GetInstance()->GetBufferFromOffset(fb_offset));
   int retval = gralloc_module_->lock(
       gralloc_module_, src_layer->handle, GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
       src_priv_handle->x_res, src_priv_handle->y_res,
@@ -397,10 +371,6 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
     ALOGE("Got error code %d from lock function", retval);
     return;
   }
-  retval = gralloc_module_->lock(gralloc_module_, dst_handle,
-                                 GRALLOC_USAGE_SW_WRITE_OFTEN, 0, 0,
-                                 dst_priv_handle->x_res, dst_priv_handle->y_res,
-                                 reinterpret_cast<void**>(&dst_buffer));
   if (retval) {
     ALOGE("Got error code %d from lock function", retval);
     // TODO(jemoreira): Use a lock_guard-like object.
@@ -420,17 +390,18 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       src_layer->sourceCrop.bottom - src_layer->sourceCrop.top;
   src_layer_spec.format = src_priv_handle->format;
 
-  BufferSpec dst_layer_spec(dst_buffer, dst_priv_handle->total_size,
-                            dst_priv_handle->x_res, dst_priv_handle->y_res,
-                            dst_priv_handle->stride_in_pixels *
-                                formatToBytesPerPixel(dst_priv_handle->format));
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  BufferSpec dst_layer_spec(dst_buffer, fb_broadcast->buffer_size(),
+                            fb_broadcast->x_res(), fb_broadcast->y_res(),
+                            fb_broadcast->line_length());
   dst_layer_spec.crop_x = src_layer->displayFrame.left;
   dst_layer_spec.crop_y = src_layer->displayFrame.top;
   dst_layer_spec.crop_width =
       src_layer->displayFrame.right - src_layer->displayFrame.left;
   dst_layer_spec.crop_height =
       src_layer->displayFrame.bottom - src_layer->displayFrame.top;
-  dst_layer_spec.format = dst_priv_handle->format;
+  // TODO(jemoreira): Remove the hardcoded fomat.
+  dst_layer_spec.format = HAL_PIXEL_FORMAT_RGBX_8888;
 
   // Add the destination layer to the bottom of the buffer stack
   std::vector<BufferSpec> dest_buffer_stack(1, dst_layer_spec);
@@ -450,16 +421,13 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
   int x_res = src_layer->displayFrame.right - src_layer->displayFrame.left;
   int y_res = src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   size_t output_frame_size =
-      x_res * y_res * formatToBytesPerPixel(dst_priv_handle->format);
+      x_res *
+    FBBroadcastRegionView::align(y_res * fb_broadcast->bytes_per_pixel(), 16);
   while (needed_tmp_buffers > 0) {
-    BufferSpec tmp(
-        RotateTmpBuffer(needed_tmp_buffers), output_frame_size, x_res, y_res,
-        // There should be no danger of overflow aligning the stride because
-        // these sizes are taken from the displayFrame rectangle which is always
-        // smaller than the framebuffer, the framebuffer in turn has aligned
-        // stride and these buffers are the size of the framebuffer.
-        FBBroadcastRegionView::align(
-            x_res * formatToBytesPerPixel(dst_priv_handle->format), 16));
+    BufferSpec tmp(RotateTmpBuffer(needed_tmp_buffers), output_frame_size,
+                   x_res, y_res,
+                   FBBroadcastRegionView::align(
+                       x_res * fb_broadcast->bytes_per_pixel(), 16));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
   }
@@ -481,7 +449,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
       int dst_stride = FBBroadcastRegionView::align(
-          src_width * formatToBytesPerPixel(dst_priv_handle->format), 16);
+          src_width * fb_broadcast->bytes_per_pixel(), 16);
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
@@ -520,8 +488,8 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       std::swap(dst_buffer_spec.crop_width, dst_buffer_spec.crop_height);
       // TODO (jemoreira): Aligment (To align here may cause the needed size to
       // be bigger than the buffer, so care should be taken)
-      dst_buffer_spec.stride = dst_buffer_spec.width *
-                               formatToBytesPerPixel(dst_priv_handle->format);
+      dst_buffer_spec.stride =
+          dst_buffer_spec.width * fb_broadcast->bytes_per_pixel();
     }
     retval = DoScaling(src_layer_spec, dst_buffer_spec, needs_vflip);
     needs_vflip = false;
@@ -577,7 +545,6 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
   }
 
   gralloc_module_->unlock(gralloc_module_, src_priv_handle);
-  gralloc_module_->unlock(gralloc_module_, dst_priv_handle);
 }
 
 /* static */ const int VSoCComposer::kNumTmpBufferPieces = 2;
@@ -586,32 +553,9 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
                            int32_t vsync_period_ns)
     : BaseComposer(vsync_base_timestamp, vsync_period_ns),
       tmp_buffer_(kNumTmpBufferPieces *
-                  FBBroadcastRegionView::GetInstance()->buffer_size()),
-      next_hwc_framebuffer_(0) {
-  hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
-                reinterpret_cast<const hw_module_t**>(&gralloc_module_));
-  gralloc_module_->common.methods->open(
-      reinterpret_cast<const hw_module_t*>(gralloc_module_),
-      GRALLOC_HARDWARE_GPU0, reinterpret_cast<hw_device_t**>(&gralloc_dev_));
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
-  buffer_handle_t tmp;
-  while (gralloc_dev_->alloc_hwc_framebuffer(
-             reinterpret_cast<alloc_device_t*>(gralloc_dev_), &tmp) == 0) {
-    hwc_framebuffers_.push_back(tmp);
-  }
-}
+                  FBBroadcastRegionView::GetInstance()->buffer_size()) {}
 
-VSoCComposer::~VSoCComposer() {
-  // Free the hwc fb handles
-  for (auto buffer : hwc_framebuffers_) {
-    gralloc_dev_->device.free(reinterpret_cast<alloc_device_t*>(gralloc_dev_),
-                              buffer);
-  }
-
-  // close devices
-  gralloc_dev_->device.common.close(
-      reinterpret_cast<hw_device_t*>(gralloc_dev_));
-}
+VSoCComposer::~VSoCComposer() {}
 
 int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   int composited_layers_count = 0;
@@ -655,34 +599,58 @@ int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   return composited_layers_count;
 }
 
-int32_t VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   int targetFbs = 0;
-  buffer_handle_t fb_handle = FindFrameBuffer(num_layers, layers);
-  if (!fb_handle) {
-    ALOGE("%s: framebuffer handle is null", __FUNCTION__);
-    return -1;
+  int32_t fb_offset = NextFrameBufferOffset();
+
+  // The framebuffer target layer should be composed if at least one layers was
+  // marked HWC_FRAMEBUFFER or if it's the only layer in the composition
+  // (unlikely)
+  bool compose_fb_target = true;
+  for (size_t idx = 0; idx < num_layers; idx++) {
+    if (layers[idx].compositionType == HWC_FRAMEBUFFER) {
+      // At least one was found
+      compose_fb_target = true;
+      break;
+    }
+    if (layers[idx].compositionType == HWC_OVERLAY) {
+      // Not the only layer in the composition
+      compose_fb_target = false;
+    }
   }
-  // TODO(jemoreira): Lock all HWC_OVERLAY layers and the framebuffer before
-  // this loop and unlock them after. The way it's done now causes the target
-  // framebuffer to be locked and unlocked many times, if regions are
-  // implemented it will also be true for every layer that covers more than one
-  // region.
+
+  // When the framebuffer target needs to be composed, it has to be go first.
+  if (compose_fb_target) {
+    for (size_t idx = 0; idx < num_layers; idx++) {
+      if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
+        if (SanityCheckLayer(layers[idx]) != 0) {
+          ALOGE("FRAMEBUFFER_TARGET layer (%zu), failed sanity check", idx);
+          return -EINVAL;
+        }
+        CompositeLayer(&layers[idx], fb_offset);
+        break;
+      }
+    }
+  }
+
   for (size_t idx = 0; idx < num_layers; idx++) {
     if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
       ++targetFbs;
-    } else if (layers[idx].compositionType == HWC_OVERLAY &&
-               !(layers[idx].flags & HWC_SKIP_LAYER)) {
-      if (SanityCheckLayer(layers[idx])) {
-        ALOGE("Layer (%zu) failed sanity check", idx);
-        return -EINVAL;
+    }
+    if (layers[idx].compositionType == HWC_OVERLAY &&
+        !(layers[idx].flags & HWC_SKIP_LAYER)) {
+      if (SanityCheckLayer(layers[idx]) != 0) {
+          ALOGE("Layer (%zu) failed sanity check", idx);
+          return -EINVAL;
       }
-      CompositeLayer(&layers[idx], fb_handle);
+      CompositeLayer(&layers[idx], fb_offset);
     }
   }
   if (targetFbs != 1) {
     ALOGW("Saw %zu layers, posted=%d", num_layers, targetFbs);
   }
-  return PostFrameBuffer(fb_handle);
+  Broadcast(fb_offset);
+  return 0;
 }
 
 uint8_t* VSoCComposer::RotateTmpBuffer(unsigned int order) {

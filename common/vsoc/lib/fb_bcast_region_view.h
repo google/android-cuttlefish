@@ -63,15 +63,6 @@ class FBBroadcastRegionView
     return (align(x_res() * bytes_per_pixel()) * y_res()) + kSwiftShaderPadding;
   }
 
-  // The framebuffer broadcast region mantains a bit set to keep track of the
-  // buffers that have been allocated already. This function atomically finds an
-  // unset (0) bit in the set, sets it to 1 and returns it. The filter parameter
-  // specifies which bits to consider from the set.
-  // TODO(jemoreira): Move frame buffers to the gralloc region and remove this
-  // bitset.
-  uint32_t GetAndSetNextAvailableBufferBit(uint32_t filter);
-  void UnsetBufferBits(uint32_t bits);
-
   // Broadcasts a new frame.
   // frame_offset is the offset of the current frame in the framebuffer region.
   // stats holds performance information of the last composition, can be null.

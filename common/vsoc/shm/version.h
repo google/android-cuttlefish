@@ -118,9 +118,9 @@ static const std::size_t InputEventsLayout_size = 3 * (1024 + 3 * 4);
 // Changes to these structures will affect only the framebuffer broadcast region
 namespace fb_broadcast {
 namespace {
-const uint32_t version = 2;
+const uint32_t version = 3;
 }
-static const std::size_t FBBroadcastLayout_size = 120;
+static const std::size_t FBBroadcastLayout_size = 112;
 }  // namespace fb_broadcast
 
 // Versioning information for framebuffer_layout.h
