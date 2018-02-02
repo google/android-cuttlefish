@@ -51,29 +51,17 @@ struct private_handle_t;
 
 struct private_module_t {
   gralloc_module_t base;
-
-  private_handle_t* framebuffer;
-  pthread_mutex_t lock;
 };
-
-int initUserspaceFrameBuffer(struct private_module_t* module);
 
 /*****************************************************************************/
 
 struct priv_alloc_device_t {
   alloc_device_t  device;
-  // Creates handles for the hwcomposer-specific framebuffers
-  int (*alloc_hwc_framebuffer)(alloc_device_t* m,
-                                buffer_handle_t* handle);
 };
 
 /*****************************************************************************/
 
 struct private_handle_t : public native_handle {
-  enum {
-    PRIV_FLAGS_FRAMEBUFFER = 0x00000001
-  };
-
   // file-descriptors
   int     fd;
   // ints
@@ -305,28 +293,6 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
       return bytes_per_pixel * w16 * h16 +
              vsoc::framebuffer::FBBroadcastRegionView::kSwiftShaderPadding;
   }
-}
-
-// Calculates the offset from a framebuffer handle. It checks the given handle
-// for errors first. Returns the offset (non negative integer) or -1 if there
-// is an error.
-static inline int OffsetFromHandle(buffer_handle_t buffer_hnd) {
-    if (!buffer_hnd) {
-    ALOGE("Attempt to post null buffer");
-    return -1;
-  }
-  if (private_handle_t::validate(buffer_hnd) < 0) {
-    ALOGE("Attempt to post non-vsoc handle");
-    return -1;
-  }
-  const private_handle_t* hnd =
-      reinterpret_cast<private_handle_t const*>(buffer_hnd);
-  if (!(hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER)) {
-    ALOGE("Attempt to post non-framebuffer");
-    return -1;
-  }
-
-  return hnd->frame_offset;
 }
 
 int fb_device_open(

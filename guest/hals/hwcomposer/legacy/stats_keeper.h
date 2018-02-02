@@ -157,7 +157,9 @@ class StatsKeepingComposer {
         composer_(vsync_base_timestamp, vsync_period_ns) {
     // Don't let the composer broadcast by itself, allow it to return to collect
     // the timings and broadcast then.
-    composer_.ReplaceFbBroadcaster(nullptr);
+    composer_.ReplaceFbBroadcaster([this](int32_t offset){
+        BroadcastWithStats(offset);
+      });
   }
   ~StatsKeepingComposer() = default;
 
@@ -168,19 +170,17 @@ class StatsKeepingComposer {
     return num_hwc_layers;
   }
 
-  int32_t SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
-    vsoc::layout::framebuffer::CompositionStats stats;
-    stats_keeper_.RecordSetStart();
-    int32_t offset = composer_.SetLayers(num_layers, layers);
+  void BroadcastWithStats(int32_t offset) {
     stats_keeper_.RecordSetEnd();
-    if (offset >= 0) {
-      stats_keeper_.GetLastCompositionStats(&stats);
-      vsoc::framebuffer::FBBroadcastRegionView::GetInstance()
-          ->BroadcastNewFrame(static_cast<uint32_t>(offset), &stats);
-    } else {
-      ALOGE("%s: Error on SetLayers(), offset: %d", __FUNCTION__, offset);
-    }
-    return offset;
+    vsoc::layout::framebuffer::CompositionStats stats;
+    stats_keeper_.GetLastCompositionStats(&stats);
+    vsoc::framebuffer::FBBroadcastRegionView::GetInstance()
+      ->BroadcastNewFrame(static_cast<uint32_t>(offset), &stats);
+  }
+
+  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+    stats_keeper_.RecordSetStart();
+    return composer_.SetLayers(num_layers, layers);
   }
 
   void Dump(char* buff, int buff_len) {

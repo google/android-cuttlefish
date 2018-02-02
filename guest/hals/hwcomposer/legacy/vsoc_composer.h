@@ -34,20 +34,15 @@ class VSoCComposer : public BaseComposer {
   // override
   int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
   // override
-  int32_t SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
+  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
 
  protected:
   static const int kNumTmpBufferPieces;
   uint8_t* RotateTmpBuffer(unsigned int order);
   uint8_t* GetSpecialTmpBuffer(size_t needed_size);
-  buffer_handle_t FindFrameBuffer(int num_layers, vsoc_hwc_layer* layers);
-  void CompositeLayer(vsoc_hwc_layer* src_layer, buffer_handle_t dst_layer);
+  void CompositeLayer(vsoc_hwc_layer* src_layer, int32_t fb_offset);
   std::vector<uint8_t> tmp_buffer_;
   std::vector<uint8_t> special_tmp_buffer_;
-  const gralloc_module_t* gralloc_module_;
-  priv_alloc_device_t* gralloc_dev_;
-  std::vector<buffer_handle_t> hwc_framebuffers_;
-  int next_hwc_framebuffer_;
 };
 
 }  // namespace cvd
