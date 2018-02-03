@@ -105,7 +105,7 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:system/etc/media_codecs_performance.xml \
     device/google/cuttlefish/shared/config/media_profiles.xml:system/etc/media_profiles.xml \
     device/google/cuttlefish/shared/config/profile.root:root/profile \
-    device/google/cuttlefish/shared/config/fstab.vsoc:root/fstab.vsoc \
+    device/google/cuttlefish/shared/config/fstab.vsoc:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
     frameworks/av/media/libeffects/data/audio_effects.conf:system/etc/audio_effects.conf \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
@@ -233,4 +233,5 @@ PRODUCT_PACKAGES += \
 # TODO thermal
 
 PRODUCT_PACKAGES += \
-    vsoc_mem_json
+    vsoc_mem_json \
+    cuttlefish_dtb
