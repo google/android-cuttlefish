@@ -58,6 +58,7 @@ PRODUCT_PACKAGES += \
     audiotop \
     dhcpcd_wlan0 \
     gce_fs_monitor \
+    socket_forward_proxy \
     usbforward \
     VSoCService \
     wifirouter \
