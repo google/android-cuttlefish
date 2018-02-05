@@ -154,6 +154,12 @@ class SocketForwardRegionView
   SocketForwardRegionView(const SocketForwardRegionView&) = delete;
   SocketForwardRegionView& operator=(const SocketForwardRegionView&) = delete;
 
+  static std::shared_ptr<SocketForwardRegionView> GetInstance(
+#ifdef CUTTLEFISH_HOST
+    const char* domain
+#endif
+  );
+
 #ifdef CUTTLEFISH_HOST
   Connection OpenConnection(int port);
 #else

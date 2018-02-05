@@ -153,14 +153,16 @@ void LaunchWorkers(SocketForwardRegionView::Connection conn,
 }
 #endif
 
-void OpenShm(vsoc::socket_forward::SocketForwardRegionView* shm_ptr) {
-  if (!shm_ptr->Open(
+std::shared_ptr<SocketForwardRegionView> GetShm() {
+  auto shm = SocketForwardRegionView::GetInstance(
 #ifdef CUTTLEFISH_HOST
-          vsoc::GetDomain().c_str()
+      vsoc::GetDomain().c_str()
 #endif
-              )) {
+  );
+  if (!shm) {
     LOG(FATAL) << "Could not open SHM. Aborting.";
   }
+  return shm;
 }
 
 // makes sure we're running as root on the guest, no-op on the host
@@ -176,14 +178,13 @@ int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   assert_correct_user();
 
-  vsoc::socket_forward::SocketForwardRegionView shm{};
-  OpenShm(&shm);
-  auto worker = shm.StartWorker();
+  auto shm = GetShm();
+  auto worker = shm->StartWorker();
 
 #ifdef CUTTLEFISH_HOST
   CHECK_NE(FLAGS_port, 0u) << "Must specify --port flag";
-  host(&shm, FLAGS_port);
+  host(shm.get(), FLAGS_port);
 #else
-  guest(&shm);
+  guest(shm.get());
 #endif
 }
