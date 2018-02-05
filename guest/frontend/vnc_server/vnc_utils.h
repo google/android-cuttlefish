@@ -22,6 +22,8 @@
 #include <utility>
 #include <cstdint>
 
+#include "common/libs/tcp_socket/tcp_socket.h"
+
 #undef D
 #ifdef VSOC_VNC_DEBUG
 #define D(...) ALOGD(__VA_ARGS__)
@@ -50,8 +52,6 @@ class StripeSeqNumber {
  private:
   std::uint64_t t_{};
 };
-
-using Message = std::vector<std::uint8_t>;
 
 constexpr int32_t kJpegMaxQualityEncoding = -23;
 constexpr int32_t kJpegMinQualityEncoding = -32;

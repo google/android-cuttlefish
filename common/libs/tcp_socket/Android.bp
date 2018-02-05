@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "auto_resources",
-    "fs",
-    "net",
-    "tcp_socket",
-    "threads",
-    "time",
-    "wifi",
-]
+cc_library_shared {
+    name: "cuttlefish_tcp_socket",
+    srcs: [
+        "tcp_socket.cpp",
+    ],
+    shared_libs: [
+        "cuttlefish_auto_resources",
+        "libbase",
+        "libcuttlefish_fs",
+        "liblog",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    defaults: ["cuttlefish_host_and_guest"],
+}
