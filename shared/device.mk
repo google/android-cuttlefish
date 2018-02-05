@@ -62,7 +62,8 @@ PRODUCT_PACKAGES += \
     wifirouter \
     wificlient \
     wpa_supplicant.vsoc.conf \
-    vsoc_input_service
+    vsoc_input_service \
+    record_audio \
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -320,3 +321,8 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     vsoc_mem_json
+
+# WLAN driver configuration files
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
+
