@@ -21,6 +21,7 @@ tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
     launch_cvd \
+    socket_forward_proxy \
     wificlient \
     vnc_server \
 
