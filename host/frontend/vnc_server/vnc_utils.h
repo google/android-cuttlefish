@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/libs/tcp_socket/tcp_socket.h"
 
 namespace cvd {
 namespace vnc {
@@ -40,8 +41,6 @@ class StripeSeqNumber {
  private:
   std::uint64_t t_{};
 };
-
-using Message = std::vector<std::uint8_t>;
 
 constexpr int32_t kJpegMaxQualityEncoding = -23;
 constexpr int32_t kJpegMinQualityEncoding = -32;
