@@ -25,3 +25,11 @@ LOCAL_MODULE_PATH := $(HOST_OUT)/config
 LOCAL_MODULE_STEM := vsoc_mem.json
 LOCAL_SRC_FILES := vsoc_mem.json
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := cuttlefish_dtb
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(HOST_OUT)/config
+LOCAL_MODULE_STEM := cuttlefish.dtb
+LOCAL_SRC_FILES := cuttlefish.dtb
+include $(BUILD_PREBUILT)
