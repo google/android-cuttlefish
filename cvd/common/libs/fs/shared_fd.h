@@ -147,6 +147,7 @@ class SharedFD {
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
+  static SharedFD SocketLocalClient(int port, int type);
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
