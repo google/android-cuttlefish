@@ -49,6 +49,10 @@ std::string vsoc::GetPerInstanceDefault(const char* prefix) {
   return stream.str();
 }
 
+int vsoc::GetPerInstanceDefault(int base) {
+  return base + FLAGS_instance - 1;
+}
+
 std::string vsoc::GetDefaultPerInstanceDir() {
   return vsoc::GetPerInstanceDefault("/var/run/cvd-");
 }
