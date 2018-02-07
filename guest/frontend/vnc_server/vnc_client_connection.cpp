@@ -20,8 +20,6 @@
 
 #include "common/libs/tcp_socket/tcp_socket.h"
 
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-
 #include <netinet/in.h>
 #include <sys/time.h>
 
@@ -47,6 +45,7 @@ using cvd::Message;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
 using cvd::vnc::VncClientConnection;
+using vsoc::framebuffer::FBBroadcastRegionView;
 
 namespace {
 class BigEndianChecker {
@@ -140,18 +139,18 @@ std::int32_t int32_tAt(const void* p) {
 }
 
 std::uint32_t RedVal(std::uint32_t pixel) {
-  return (pixel >> VSoCFrameBuffer::kRedShift) &
-         ((0x1 << VSoCFrameBuffer::kRedBits) - 1);
+  return (pixel >> FBBroadcastRegionView::kRedShift) &
+         ((0x1 << FBBroadcastRegionView::kRedBits) - 1);
 }
 
 std::uint32_t BlueVal(std::uint32_t pixel) {
-  return (pixel >> VSoCFrameBuffer::kBlueShift) &
-         ((0x1 << VSoCFrameBuffer::kBlueBits) - 1);
+  return (pixel >> FBBroadcastRegionView::kBlueShift) &
+         ((0x1 << FBBroadcastRegionView::kBlueBits) - 1);
 }
 
 std::uint32_t GreenVal(std::uint32_t pixel) {
-  return (pixel >> VSoCFrameBuffer::kGreenShift) &
-         ((0x1 << VSoCFrameBuffer::kGreenBits) - 1);
+  return (pixel >> FBBroadcastRegionView::kGreenShift) &
+         ((0x1 << FBBroadcastRegionView::kGreenBits) - 1);
 }
 }  // namespace
 namespace cvd {
@@ -304,7 +303,7 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
 
 void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
                                           const Stripe& stripe) const {
-  using Pixel = VSoCFrameBuffer::Pixel;
+  using Pixel = FBBroadcastRegionView::Pixel;
   auto& fbu = *frame_buffer_update;
   AppendRawStripeHeader(&fbu, stripe);
   auto init_size = fbu.size();

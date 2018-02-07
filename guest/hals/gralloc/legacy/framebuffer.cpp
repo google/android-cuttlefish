@@ -40,12 +40,16 @@
 #endif
 
 #include "gralloc_vsoc_priv.h"
+#include "region_registry.h"
 
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <guest/libs/legacy_framebuffer/RegionRegistry.h>
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/threads/cuttlefish_thread.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/framebuffer_region_view.h"
+#include "common/vsoc/shm/framebuffer_layout.h"
+
+using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::framebuffer::FrameBufferRegionView;
 
 /*****************************************************************************/
 
@@ -77,17 +81,14 @@ static int fb_setUpdateRect(
   return 0;
 }
 
-static int fb_post(struct framebuffer_device_t* dev __unused, buffer_handle_t buffer) {
-  const int yoffset = YOffsetFromHandle(buffer);
-  if (yoffset >= 0) {
-    int retval =
-        VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
-            yoffset);
-    if (retval) ALOGI("Failed to post framebuffer");
-
-    return retval;
+static int fb_post(struct framebuffer_device_t* dev __unused,
+                   buffer_handle_t buffer) {
+  const int offset = OffsetFromHandle(buffer);
+  if (offset < 0 ) {
+    return offset;
   }
-  return -1;
+  FBBroadcastRegionView::GetInstance()->BroadcastNewFrame(offset);
+  return 0;
 }
 
 /*****************************************************************************/
@@ -98,24 +99,28 @@ int initUserspaceFrameBuffer(struct private_module_t* module) {
     return 0;
   }
 
+  // TODO(jemoreira): This assumes the location of the region device nodes, it
+  // should get the path from a more centralized place and have the guest region
+  // control use that as well.
+  std::string fb_file_path = std::string("/dev/").append(
+      vsoc::layout::framebuffer::FrameBufferLayout::region_name);
   int fd;
-  if (!VSoCFrameBuffer::OpenFrameBuffer(&fd)) {
+  if ((fd = open(fb_file_path.c_str(), O_RDWR)) < 0) {
+    ALOGE("Failed to open '%s' (%s)", fb_file_path.c_str(), strerror(errno));
     return -errno;
   }
 
-  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  auto framebuffer = FrameBufferRegionView::GetInstance();
 
   /*
-   * map the framebuffer
+   * MAP the framebuffer
    */
-  module->framebuffer =
-      new private_handle_t(fd,
-                           config.total_buffer_size(),
-                           config.hal_format(),
-                           config.x_res(),
-                           config.y_res(),
-                           config.line_length() / (config.bits_per_pixel() / 8),
-                           private_handle_t::PRIV_FLAGS_FRAMEBUFFER);
+  module->framebuffer = new private_handle_t(
+      fd, framebuffer->total_buffer_size(), HAL_PIXEL_FORMAT_RGBX_8888,
+      fb_broadcast->x_res(), fb_broadcast->y_res(),
+      fb_broadcast->line_length() / fb_broadcast->bytes_per_pixel(),
+      private_handle_t::PRIV_FLAGS_FRAMEBUFFER);
   reference_region("framebuffer_init", module->framebuffer);
 
   return 0;
@@ -154,20 +159,21 @@ int fb_device_open(
 
     status = initUserspaceFrameBuffer(m);
 
-    const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
+    auto fb_broadcast = FBBroadcastRegionView::GetInstance();
 
     if (status >= 0) {
-      int stride = config.line_length() / (config.bits_per_pixel() / 8);
-      int format = config.hal_format();
+      int stride =
+          fb_broadcast->line_length() / fb_broadcast->bytes_per_pixel();
+      int format = HAL_PIXEL_FORMAT_RGBX_8888;
       const_cast<uint32_t&>(dev->device.flags) = 0;
-      const_cast<uint32_t&>(dev->device.width) = config.x_res();
-      const_cast<uint32_t&>(dev->device.height) = config.y_res();
+      const_cast<uint32_t&>(dev->device.width) = fb_broadcast->x_res();
+      const_cast<uint32_t&>(dev->device.height) = fb_broadcast->y_res();
       const_cast<int&>(dev->device.stride) = stride;
       const_cast<int&>(dev->device.format) = format;
-      const_cast<float&>(dev->device.xdpi) = config.dpi();
-      const_cast<float&>(dev->device.ydpi) = config.dpi();
-      // TODO (jemoreira): DRY!! Managed by the vsync thread in the hwcomposer
-      const_cast<float&>(dev->device.fps) = (60 * 1000) / 1000.0f;
+      const_cast<float&>(dev->device.xdpi) = fb_broadcast->dpi();
+      const_cast<float&>(dev->device.ydpi) = fb_broadcast->dpi();
+      const_cast<float&>(dev->device.fps) =
+          (fb_broadcast->refresh_rate_hz() * 1000) / 1000.0f;
       const_cast<int&>(dev->device.minSwapInterval) = 1;
       const_cast<int&>(dev->device.maxSwapInterval) = 1;
       *device = &dev->device.common;

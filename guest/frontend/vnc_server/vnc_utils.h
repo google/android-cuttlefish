@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-
 #include <vector>
 #include <array>
 #include <utility>
 #include <cstdint>
 
 #include "common/libs/tcp_socket/tcp_socket.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 
 #undef D
 #ifdef VSOC_VNC_DEBUG
@@ -73,17 +72,17 @@ struct Stripe {
 };
 
 inline constexpr int BytesPerPixel() {
-  return sizeof(VSoCFrameBuffer::Pixel);
+  return sizeof(vsoc::framebuffer::FBBroadcastRegionView::Pixel);
 }
 
 // The width of the screen regardless of orientation. Does not change.
 inline int ActualScreenWidth() {
-  return VSoCFrameBuffer::getInstance().x_res();
+  return vsoc::framebuffer::FBBroadcastRegionView::GetInstance()->x_res();
 }
 
 // The height of the screen regardless of orientation. Does not change.
 inline int ActualScreenHeight() {
-  return VSoCFrameBuffer::getInstance().y_res();
+  return vsoc::framebuffer::FBBroadcastRegionView::GetInstance()->y_res();
 }
 
 inline int ScreenSizeInBytes() {

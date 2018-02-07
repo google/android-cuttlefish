@@ -162,12 +162,11 @@ int hwc_set(struct hwc_composer_device_1* dev, size_t numDisplays,
         ALOGW("Skipping layer %zu due to failed sanity check", i);
         continue;
       }
-      vsoc_hwc_device* pdev = reinterpret_cast<vsoc_hwc_device*>(dev);
       const vsoc_buffer_handle_t* fb_handle =
           reinterpret_cast<const vsoc_buffer_handle_t*>(
               list->hwLayers[i].handle);
       FBBroadcastRegionView::GetInstance()->BroadcastNewFrame(
-          pdev->frame_num++, fb_handle->offset);
+          fb_handle->offset);
       break;
     }
   }

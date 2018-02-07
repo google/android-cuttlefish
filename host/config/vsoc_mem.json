@@ -87,11 +87,29 @@
 
    {
      "device_name" : "gralloc_memory",
-     "__comment" : "Holds the gralloc buffers",
+     "__comment" : "Holds the gralloc buffers. Size is 400 MB minus the size of the framebuffer",
      "managed_by" : "gralloc_manager",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size" : 419430400,
+     "region_size" : 394850304,
+
+     "guest_to_host_signal_table" : {
+       "__comment" : "sizeof each node is based on common/libs/shm/lock.h",
+       "num_nodes_lg2" : 0
+      },
+
+     "host_to_guest_signal_table" : {
+       "num_nodes_lg2" : 0
+      }
+   },
+
+
+   {
+     "device_name" : "framebuffer",
+     "__comment" : "Holds the frame buffers. Size is enough to accomodate 6 buffers 800x1280 in RGBA format plus an extra page",
+     "current_version" : 0,
+     "min_compatible_version" : 0,
+     "region_size" : 24584192,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm/lock.h",

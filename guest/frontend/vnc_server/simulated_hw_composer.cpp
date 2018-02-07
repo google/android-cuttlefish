@@ -16,27 +16,25 @@
 
 #include "simulated_hw_composer.h"
 
+#include "common/vsoc/lib/framebuffer_region_view.h"
+
 using cvd::vnc::SimulatedHWComposer;
+using vsoc::framebuffer::FrameBufferRegionView;
+using vsoc::framebuffer::FBBroadcastRegionView;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
 #ifdef FUZZ_TEST_VNC
       engine_{std::random_device{}()},
 #endif
-      control_{VSoCFrameBufferControl::getInstance()},
       bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements) {
-  void* p{};
-  VSoCFrameBuffer::OpenAndMapFrameBuffer(&p, &frame_buffer_fd_);
-  frame_buffer_memory_ = static_cast<char*>(p);
   stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
 }
 
 SimulatedHWComposer::~SimulatedHWComposer() {
   close();
   stripe_maker_.join();
-  VSoCFrameBuffer::UnmapAndCloseFrameBuffer(frame_buffer_memory_,
-                                           frame_buffer_fd_);
 }
 
 cvd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
@@ -77,12 +75,11 @@ void SimulatedHWComposer::MakeStripes() {
   std::uint64_t stripe_seq_num = 1;
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
-    int y_offset{};
-    control_.WaitForFrameBufferChangeSince(previous_seq_num, &y_offset,
-                                           &previous_seq_num, nullptr);
-
-    const auto* frame_start =
-        frame_buffer_memory_ + y_offset * ActualScreenWidth() * BytesPerPixel();
+    uint32_t offset =
+        FBBroadcastRegionView::GetInstance()->WaitForNewFrameSince(
+            &previous_seq_num);
+    const char* frame_start = static_cast<char*>(
+        FrameBufferRegionView::GetInstance()->GetBufferFromOffset(offset));
     raw_screen.assign(frame_start, frame_start + ScreenSizeInBytes());
 
     for (int i = 0; i < kNumStripes; ++i) {

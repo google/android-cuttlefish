@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "VSoCGrallocRegionRegistry"
+
 #include <limits.h>
 #include <errno.h>
 #include <pthread.h>
@@ -24,7 +30,6 @@
 #include <sys/types.h>
 
 #include <cutils/hashmap.h>
-#define LOG_TAG "VSoCGrallocRegionRegistry"
 #include <cutils/log.h>
 #include <cutils/atomic.h>
 
@@ -34,7 +39,7 @@
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 
-#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+#include "gralloc_vsoc_priv.h"
 
 // TODO(ghartman): Make the configurable through a property
 static const bool g_log_refs = false;

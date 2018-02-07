@@ -20,7 +20,7 @@
 
 namespace cvd {
 
-typedef int (*FbBroadcaster)(int);
+using FbBroadcaster = void (*)(int);
 
 class BaseComposer {
  public:
@@ -30,13 +30,13 @@ class BaseComposer {
   // Sets the composition type of each layer and returns the number of layers
   // to be composited by the hwcomposer.
   int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
-  // Returns the yoffset that was broadcasted or a negative number if there was
+  // Returns the offset that was broadcasted or a negative number if there was
   // an error.
-  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
-  // Returns yoffset of the handle or negative on error.
-  int PostFrameBuffer(buffer_handle_t handle);
+  int32_t SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
+  // Returns buffer offset or negative on error.
+  int32_t PostFrameBuffer(buffer_handle_t handle);
   // Changes the broadcaster, gives the ability to report more than just the
-  // yoffset by using a wrapper like the StatsKeepingComposer. Returns the old
+  // offset by using a wrapper like the StatsKeepingComposer. Returns the old
   // broadcaster. Passing a NULL pointer will cause the composer to not
   // broadcast at all.
   FbBroadcaster ReplaceFbBroadcaster(FbBroadcaster);
