@@ -43,10 +43,12 @@ cvd_host_shared_libraries := \
     libicuuc-host \
 
 cvd_host_configs := \
-    vsoc_mem.json
+    vsoc_mem.json \
+    cuttlefish.dtb
 
 cvd_host_packages := \
     vsoc_mem_json \
+    cuttlefish_dtb \
     $(cvd_host_executables) \
     $(cvd_host_tests) \
 
