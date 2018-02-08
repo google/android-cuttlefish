@@ -103,6 +103,8 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat 
 
 service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -g@android:wpa_wlan0
+    interface android.hardware.wifi.supplicant@1.0::ISupplicant default
+    interface android.hardware.wifi.supplicant@1.1::ISupplicant default
     socket wpa_wlan0 dgram 660 wifi wifi
     group system wifi inet
     disabled
