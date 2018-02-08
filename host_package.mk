@@ -22,6 +22,7 @@ tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 cvd_host_executables := \
     launch_cvd \
     wificlient \
+    vnc_server \
 
 cvd_host_tests := \
     auto_free_buffer_test \
