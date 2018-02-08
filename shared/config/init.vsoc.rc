@@ -8,10 +8,6 @@ on early-init
     mkdir /var/run/system 0755 system root
     mkdir /dev/gce 0750
     chown system system /dev/gce
-    write /dev/userspace_framebuffer 0
-    chown system system /dev/userspace_framebuffer
-    chmod 0660 /dev/userspace_framebuffer
-    restorecon /dev/userspace_framebuffer
     write /dev/framebuffer_control 0
     chown system system /dev/framebuffer_control
     chmod 0660 /dev/framebuffer_control
@@ -34,6 +30,9 @@ on init
     chown audioserver root /dev/audio_data
     chmod 0660 /dev/audio_data
     restorecon /dev/audio_data
+    chown system root /dev/framebuffer
+    chmod 0660 /dev/framebuffer
+    restorecon /dev/framebuffer
 
 
 on fs
@@ -68,7 +67,6 @@ on post-fs-data
 
 on early-boot
     start vsoc_input_service
-    start vnc_server
 
 
 on boot
@@ -91,10 +89,6 @@ service vsoc_input_service /vendor/bin/vsoc_input_service
     oneshot
 
 
-service vnc_server /vendor/bin/vnc_server
-    oneshot
-
-
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
     class main
     user root
@@ -103,6 +97,8 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat 
 
 service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -g@android:wpa_wlan0
+    interface android.hardware.wifi.supplicant@1.0::ISupplicant default
+    interface android.hardware.wifi.supplicant@1.1::ISupplicant default
     socket wpa_wlan0 dgram 660 wifi wifi
     group system wifi inet
     disabled
@@ -134,4 +130,3 @@ service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     disabled
     oneshot
     keycodes 30 48
-
