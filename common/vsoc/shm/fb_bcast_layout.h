@@ -25,6 +25,23 @@ namespace vsoc {
 namespace layout {
 
 namespace framebuffer {
+struct TimeSpec {
+  int64_t ts_sec;
+  uint32_t ts_nsec;
+  // Host and guest compilers are giving the structure different sizes without
+  // this field.
+  uint32_t reserved;
+};
+struct CompositionStats {
+  uint32_t num_prepare_calls;
+  uint16_t num_layers;
+  uint16_t num_hwcomposited_layers;
+  TimeSpec last_vsync;
+  TimeSpec prepare_start;
+  TimeSpec prepare_end;
+  TimeSpec set_start;
+  TimeSpec set_end;
+};
 
 struct FBBroadcastLayout : public RegionLayout {
   static const char* region_name;
@@ -34,15 +51,16 @@ struct FBBroadcastLayout : public RegionLayout {
   uint16_t dpi;
   uint16_t refresh_rate_hz;
 
+  // Protects access to the frame offset, sequential number and stats.
+  // See the region implementation for more details.
+  SpinLock bcast_lock;
   // The frame sequential number
   std::atomic<uint32_t> seq_num;
   // The offset in the gralloc buffer region of the current frame buffer.
   uint32_t frame_offset;
-  // Protects access to the frame offset and sequential number.
-  // See the region implementation for more details.
-  SpinLock bcast_lock;
+  CompositionStats stats;
 };
-ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, framebuffer);
+ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, fb_broadcast);
 
 }  // namespace framebuffer
 

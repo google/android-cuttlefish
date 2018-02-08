@@ -1,5 +1,4 @@
 #pragma once
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -16,29 +15,22 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+#include "common/vsoc/shm/base.h"
+#include "common/vsoc/shm/version.h"
 
-#include <map>
-#include <mutex>
+// Memory for the framebuffer region
 
-#include "common/vsoc/lib/input_events_region_view.h"
+namespace vsoc {
+namespace layout {
 
-namespace cvd {
-namespace vnc {
+namespace framebuffer {
 
-class VirtualInputs {
- public:
-  VirtualInputs();
-
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
-
- private:
-  std::shared_ptr<vsoc::input_events::InputEventsRegionView>
-      input_events_region_view_;
-  std::map<uint32_t, uint32_t> keymapping_;
+struct FrameBufferLayout : public RegionLayout {
+  static const char* region_name;
 };
+ASSERT_SHM_COMPATIBLE(FrameBufferLayout, framebuffer);
 
-}  // namespace vnc
-}  // namespace cvd
+}  // namespace framebuffer
+
+}  // namespace layout
+}  // namespace vsoc

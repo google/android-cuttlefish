@@ -16,17 +16,25 @@
 
 #include "base_composer.h"
 
+#include <string.h>
+
 #include <cutils/log.h>
-#include "guest/hals/gralloc//legacy/gralloc_vsoc_priv.h"
-#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
+#include <hardware/gralloc.h>
+
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/framebuffer_region_view.h"
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+
+using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::framebuffer::FrameBufferRegionView;
 
 namespace cvd {
 
 namespace {
 
-int BroadcastFrameBufferChanged(int yoffset) {
-  return VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
-      yoffset);
+void BroadcastFrameBufferChanged(int32_t offset) {
+  FBBroadcastRegionView::GetInstance()->BroadcastNewFrame(
+      static_cast<uint32_t>(offset));
 }
 
 }  // namespace
@@ -35,10 +43,14 @@ BaseComposer::BaseComposer(int64_t vsync_base_timestamp,
                            int32_t vsync_period_ns)
     : vsync_base_timestamp_(vsync_base_timestamp),
       vsync_period_ns_(vsync_period_ns),
+      frame_buffer_count_(
+          // TODO(jemoreira): Join this two regions and move the buffer count to
+          // the joined region
+          FrameBufferRegionView::GetInstance()->total_buffer_size() /
+          FBBroadcastRegionView::GetInstance()->buffer_size()),
       fb_broadcaster_(BroadcastFrameBufferChanged) {
-  const gralloc_module_t* gralloc_module;
   hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
-                reinterpret_cast<const hw_module_t**>(&gralloc_module));
+                reinterpret_cast<const hw_module_t**>(&gralloc_module_));
 }
 
 BaseComposer::~BaseComposer() {}
@@ -51,19 +63,29 @@ FbBroadcaster BaseComposer::ReplaceFbBroadcaster(FbBroadcaster fb_broadcaster) {
 
 void BaseComposer::Dump(char* buff __unused, int buff_len __unused) {}
 
-int BaseComposer::PostFrameBuffer(buffer_handle_t buffer) {
-  const int yoffset = YOffsetFromHandle(buffer);
-  // If the broadcaster is NULL or could not get a good yoffset just ignore it.
-  if (fb_broadcaster_ && yoffset >= 0) {
-    int retval = fb_broadcaster_(yoffset);
-    if (retval) {
-      ALOGI("Failed to post framebuffer");
-      return -1;
-    }
-  }
-
-  return yoffset;
+void BaseComposer::Broadcast(int32_t offset) {
+  fb_broadcaster_(offset);
 }
+
+int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
+  int32_t fb_offset = NextFrameBufferOffset();
+  auto fb_region = FrameBufferRegionView::GetInstance();
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  void* frame_buffer = fb_region->GetBufferFromOffset(fb_offset);
+  const private_handle_t* p_handle =
+      reinterpret_cast<const private_handle_t*>(buffer_handle);
+  void* buffer;
+  int retval = gralloc_module_->lock(gralloc_module_, buffer_handle,
+                                     GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
+                                     p_handle->x_res, p_handle->y_res, &buffer);
+  if (retval != 0) {
+    ALOGE("Got error code %d from lock function", retval);
+    return -1;
+  }
+  memcpy(frame_buffer, buffer, fb_broadcast->buffer_size());
+  fb_broadcaster_(fb_offset);
+  return 0;
+}  // namespace cvd
 
 int BaseComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   // find unsupported overlays
@@ -79,10 +101,18 @@ int BaseComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 int BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   for (size_t idx = 0; idx < num_layers; idx++) {
     if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
-      return PostFrameBuffer(layers[idx].handle);
+      return PostFrameBufferTarget(layers[idx].handle);
     }
   }
   return -1;
+}
+
+uint32_t BaseComposer::NextFrameBufferOffset() {
+  last_frame_buffer_ = (last_frame_buffer_ + 1) % frame_buffer_count_;
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  auto fb_region = FrameBufferRegionView::GetInstance();
+  return fb_region->first_buffer_offset() +
+         last_frame_buffer_ * fb_broadcast->buffer_size();
 }
 
 }  // namespace cvd

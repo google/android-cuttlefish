@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -16,29 +14,18 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+#include "common/vsoc/lib/framebuffer_region_view.h"
 
-#include <map>
-#include <mutex>
+using vsoc::framebuffer::FrameBufferRegionView;
 
-#include "common/vsoc/lib/input_events_region_view.h"
+size_t FrameBufferRegionView::total_buffer_size() const {
+  return static_cast<size_t>(control_->region_data_size());
+}
 
-namespace cvd {
-namespace vnc {
+uint32_t FrameBufferRegionView::first_buffer_offset() const {
+  return control_->region_size() - control_->region_data_size();
+}
 
-class VirtualInputs {
- public:
-  VirtualInputs();
-
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
-
- private:
-  std::shared_ptr<vsoc::input_events::InputEventsRegionView>
-      input_events_region_view_;
-  std::map<uint32_t, uint32_t> keymapping_;
-};
-
-}  // namespace vnc
-}  // namespace cvd
+void* FrameBufferRegionView::GetBufferFromOffset(uint32_t offset) {
+  return region_offset_to_pointer<void>(offset);
+}

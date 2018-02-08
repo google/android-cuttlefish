@@ -15,12 +15,14 @@
  * limitations under the License.
  */
 
+#include <functional>
+
 #include <hardware/gralloc.h>
 #include "hwcomposer_common.h"
 
 namespace cvd {
 
-typedef int (*FbBroadcaster)(int);
+using FbBroadcaster = std::function<void(int32_t)>;
 
 class BaseComposer {
  public:
@@ -30,23 +32,28 @@ class BaseComposer {
   // Sets the composition type of each layer and returns the number of layers
   // to be composited by the hwcomposer.
   int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
-  // Returns the yoffset that was broadcasted or a negative number if there was
-  // an error.
+  // Returns 0 if successful.
   int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
-  // Returns yoffset of the handle or negative on error.
-  int PostFrameBuffer(buffer_handle_t handle);
   // Changes the broadcaster, gives the ability to report more than just the
-  // yoffset by using a wrapper like the StatsKeepingComposer. Returns the old
+  // offset by using a wrapper like the StatsKeepingComposer. Returns the old
   // broadcaster. Passing a NULL pointer will cause the composer to not
   // broadcast at all.
   FbBroadcaster ReplaceFbBroadcaster(FbBroadcaster);
   void Dump(char* buff, int buff_len);
 
  protected:
+  void Broadcast(int32_t offset);
+  uint32_t NextFrameBufferOffset();
+
+  const gralloc_module_t* gralloc_module_;
   int64_t vsync_base_timestamp_;
   int32_t vsync_period_ns_;
+  int frame_buffer_count_;
+  int last_frame_buffer_ = -1; // The first index whill be 0
 
  private:
+  // Returns buffer offset or negative on error.
+  int PostFrameBufferTarget(buffer_handle_t handle);
   FbBroadcaster fb_broadcaster_;
 };
 

@@ -28,7 +28,7 @@
 
 #include <linux/fb.h>
 
-#include "guest/libs/legacy_framebuffer/vsoc_framebuffer.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 #ifndef GRALLOC_MODULE_API_VERSION_0_2
@@ -51,29 +51,17 @@ struct private_handle_t;
 
 struct private_module_t {
   gralloc_module_t base;
-
-  private_handle_t* framebuffer;
-  pthread_mutex_t lock;
 };
-
-int initUserspaceFrameBuffer(struct private_module_t* module);
 
 /*****************************************************************************/
 
 struct priv_alloc_device_t {
   alloc_device_t  device;
-  // Creates handles for the hwcomposer-specific framebuffers
-  int (*alloc_hwc_framebuffer)(alloc_device_t* m,
-                                buffer_handle_t* handle);
 };
 
 /*****************************************************************************/
 
 struct private_handle_t : public native_handle {
-  enum {
-    PRIV_FLAGS_FRAMEBUFFER = 0x00000001
-  };
-
   // file-descriptors
   int     fd;
   // ints
@@ -157,6 +145,93 @@ static inline int formatToBytesPerPixel(int format) {
   }
 }
 
+inline const char* pixel_format_to_string(int format) {
+  switch (format) {
+    // Formats that are universal across versions
+    case HAL_PIXEL_FORMAT_RGBA_8888:
+      return "RGBA_8888";
+    case HAL_PIXEL_FORMAT_RGBX_8888:
+      return "RGBX_8888";
+    case HAL_PIXEL_FORMAT_BGRA_8888:
+      return "BGRA_8888";
+    case HAL_PIXEL_FORMAT_RGB_888:
+      return "RGB_888";
+    case HAL_PIXEL_FORMAT_RGB_565:
+      return "RGB_565";
+    case HAL_PIXEL_FORMAT_YV12:
+      return "YV12";
+    case HAL_PIXEL_FORMAT_YCrCb_420_SP:
+      return "YCrCb_420_SP";
+    case HAL_PIXEL_FORMAT_YCbCr_422_SP:
+      return "YCbCr_422_SP";
+    case HAL_PIXEL_FORMAT_YCbCr_422_I:
+      return "YCbCr_422_I";
+
+#if VSOC_PLATFORM_SDK_AFTER(J)
+    // First supported on JBMR1 (API 17)
+    case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+      return "IMPLEMENTATION_DEFINED";
+    case HAL_PIXEL_FORMAT_BLOB:
+      return "BLOB";
+#endif
+#if VSOC_PLATFORM_SDK_AFTER(J_MR1)
+    // First supported on JBMR2 (API 18)
+    case HAL_PIXEL_FORMAT_YCbCr_420_888:
+      return "YCbCr_420_888";
+    case HAL_PIXEL_FORMAT_Y8:
+      return "Y8";
+    case HAL_PIXEL_FORMAT_Y16:
+      return "Y16";
+#endif
+#if VSOC_PLATFORM_SDK_AFTER(K)
+    // Support was added in L (API 21)
+    case HAL_PIXEL_FORMAT_RAW_OPAQUE:
+      return "RAW_OPAQUE";
+    // This is an alias for RAW_SENSOR in L and replaces it in M.
+    case HAL_PIXEL_FORMAT_RAW16:
+      return "RAW16";
+    case HAL_PIXEL_FORMAT_RAW10:
+      return "RAW10";
+#endif
+#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+    case HAL_PIXEL_FORMAT_YCbCr_444_888:
+      return "YCbCr_444_888";
+    case HAL_PIXEL_FORMAT_YCbCr_422_888:
+      return "YCbCr_422_888";
+    case HAL_PIXEL_FORMAT_RAW12:
+      return "RAW12";
+    case HAL_PIXEL_FORMAT_FLEX_RGBA_8888:
+      return "FLEX_RGBA_8888";
+    case HAL_PIXEL_FORMAT_FLEX_RGB_888:
+      return "FLEX_RGB_888";
+#endif
+
+      // Formats that have been removed
+#if VSOC_PLATFORM_SDK_BEFORE(K)
+    // Support was dropped on K (API 19)
+    case HAL_PIXEL_FORMAT_RGBA_5551:
+      return "RGBA_5551";
+    case HAL_PIXEL_FORMAT_RGBA_4444:
+      return "RGBA_4444";
+#endif
+#if VSOC_PLATFORM_SDK_BEFORE(L)
+    // Renamed to RAW_16 in L. Both were present for L, but it was completely
+    // removed in M.
+    case HAL_PIXEL_FORMAT_RAW_SENSOR:
+      return "RAW_SENSOR";
+#endif
+#if VSOC_PLATFORM_SDK_AFTER(J_MR2) && VSOC_PLATFORM_SDK_BEFORE(M)
+    // Supported K, L, and LMR1. Not supported on JBMR0, JBMR1, JBMR2, and M
+    case HAL_PIXEL_FORMAT_sRGB_X_8888:
+      return "sRGB_X_8888";
+    case HAL_PIXEL_FORMAT_sRGB_A_8888:
+      return "sRGB_A_8888";
+#endif
+  }
+  return "UNKNOWN";
+}
+
+
 static inline void formatToYcbcr(
     int format, int width, int height, void* base_v, android_ycbcr* out) {
   char* it = static_cast<char*>(base_v);
@@ -167,8 +242,9 @@ static inline void formatToYcbcr(
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
 #endif
-      out->ystride = VSoCFrameBuffer::align(width, 16);
-      out->cstride = VSoCFrameBuffer::align(out->ystride / 2, 16);
+      out->ystride = vsoc::framebuffer::FBBroadcastRegionView::align(width, 16);
+      out->cstride =
+          vsoc::framebuffer::FBBroadcastRegionView::align(out->ystride / 2, 16);
       out->chroma_step = 1;
       out->y = it;
       it += out->ystride * height;
@@ -204,40 +280,19 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
       formatToYcbcr(format, w, h, NULL, &strides);
       y_size = strides.ystride * h;
       c_size = strides.cstride * h / 2;
-      return (y_size + 2 * c_size + VSoCFrameBuffer::kSwiftShaderPadding);
+      return (y_size + 2 * c_size +
+              vsoc::framebuffer::FBBroadcastRegionView::kSwiftShaderPadding);
     /*case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
     case HAL_PIXEL_FORMAT_RGB_888:
     case HAL_PIXEL_FORMAT_RGB_565:*/
     default:
-      w16 = VSoCFrameBuffer::align(w, 16);
-      h16 = VSoCFrameBuffer::align(h, 16);
-      return bytes_per_pixel * w16 * h16 + VSoCFrameBuffer::kSwiftShaderPadding;
+      w16 = vsoc::framebuffer::FBBroadcastRegionView::align(w, 16);
+      h16 = vsoc::framebuffer::FBBroadcastRegionView::align(h, 16);
+      return bytes_per_pixel * w16 * h16 +
+             vsoc::framebuffer::FBBroadcastRegionView::kSwiftShaderPadding;
   }
-}
-
-// Calculates the yoffset from a framebuffer handle. I checks the given handle
-// for errors first. Returns the yoffset (non negative integer) or -1 if there
-// is an error.
-static inline int YOffsetFromHandle(buffer_handle_t buffer_hnd) {
-    if (!buffer_hnd) {
-    ALOGE("Attempt to post null buffer");
-    return -1;
-  }
-  if (private_handle_t::validate(buffer_hnd) < 0) {
-    ALOGE("Attempt to post non-vsoc handle");
-    return -1;
-  }
-  const private_handle_t* hnd =
-      reinterpret_cast<private_handle_t const*>(buffer_hnd);
-  if (!(hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER)) {
-    ALOGE("Attempt to post non-framebuffer");
-    return -1;
-  }
-
-  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
-  return hnd->frame_offset / config.line_length();
 }
 
 int fb_device_open(

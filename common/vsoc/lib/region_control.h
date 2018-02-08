@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <sys/mman.h>
 #include <stdint.h>
 #include <memory>
 #include "uapi/vsoc_shm.h"

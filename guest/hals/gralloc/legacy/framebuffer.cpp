@@ -40,12 +40,16 @@
 #endif
 
 #include "gralloc_vsoc_priv.h"
+#include "region_registry.h"
 
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <guest/libs/legacy_framebuffer/RegionRegistry.h>
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/threads/cuttlefish_thread.h"
+#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/framebuffer_region_view.h"
+#include "common/vsoc/shm/framebuffer_layout.h"
+
+using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::framebuffer::FrameBufferRegionView;
 
 /*****************************************************************************/
 
@@ -77,50 +81,37 @@ static int fb_setUpdateRect(
   return 0;
 }
 
-static int fb_post(struct framebuffer_device_t* dev __unused, buffer_handle_t buffer) {
-  const int yoffset = YOffsetFromHandle(buffer);
-  if (yoffset >= 0) {
-    int retval =
-        VSoCFrameBufferControl::getInstance().BroadcastFrameBufferChanged(
-            yoffset);
-    if (retval) ALOGI("Failed to post framebuffer");
+static int fb_post(struct framebuffer_device_t* dev __unused,
+                   buffer_handle_t buffer_handle) {
+  static int frame_buffer_idx = 0;
 
-    return retval;
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  auto fb_region = FrameBufferRegionView::GetInstance();
+
+  int32_t fb_offset = fb_region->first_buffer_offset() +
+                      frame_buffer_idx * fb_broadcast->buffer_size();
+  void* frame_buffer = fb_region->GetBufferFromOffset(fb_offset);
+  const private_handle_t* p_handle =
+      reinterpret_cast<const private_handle_t*>(buffer_handle);
+  void* buffer;
+  int retval =
+      reinterpret_cast<gralloc_module_t*>(dev->common.module)
+          ->lock(reinterpret_cast<const gralloc_module_t*>(dev->common.module),
+                 buffer_handle, GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
+                 p_handle->x_res, p_handle->y_res, &buffer);
+  if (retval != 0) {
+    ALOGE("Got error code %d from lock function", retval);
+    return -1;
   }
-  return -1;
-}
+  memcpy(frame_buffer, buffer, fb_broadcast->buffer_size());
+  fb_broadcast->BroadcastNewFrame(fb_offset);
 
-/*****************************************************************************/
-
-int initUserspaceFrameBuffer(struct private_module_t* module) {
-  cvd::LockGuard<pthread_mutex_t> guard(module->lock);
-  if (module->framebuffer) {
-    return 0;
-  }
-
-  int fd;
-  if (!VSoCFrameBuffer::OpenFrameBuffer(&fd)) {
-    return -errno;
-  }
-
-  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
-
-  /*
-   * map the framebuffer
-   */
-  module->framebuffer =
-      new private_handle_t(fd,
-                           config.total_buffer_size(),
-                           config.hal_format(),
-                           config.x_res(),
-                           config.y_res(),
-                           config.line_length() / (config.bits_per_pixel() / 8),
-                           private_handle_t::PRIV_FLAGS_FRAMEBUFFER);
-  reference_region("framebuffer_init", module->framebuffer);
+  frame_buffer_idx =
+      (frame_buffer_idx + 1) %
+      (fb_region->total_buffer_size() /fb_broadcast->buffer_size());
 
   return 0;
 }
-
 
 /*****************************************************************************/
 
@@ -134,44 +125,40 @@ static int fb_close(struct hw_device_t *dev) {
 
 int fb_device_open(
     hw_module_t const* module, const char* name, hw_device_t** device) {
-  int status = -EINVAL;
-  if (!strcmp(name, GRALLOC_HARDWARE_FB0)) {
-    /* initialize our state here */
-    fb_context_t* dev = (fb_context_t*) malloc(sizeof(*dev));
-    LOG_FATAL_IF(!dev, "%s: malloc returned NULL.", __FUNCTION__);
-    memset(dev, 0, sizeof(*dev));
-
-    /* initialize the procs */
-    dev->device.common.tag = HARDWARE_DEVICE_TAG;
-    dev->device.common.version = 0;
-    dev->device.common.module = const_cast<hw_module_t*>(module);
-    dev->device.common.close = fb_close;
-    dev->device.setSwapInterval = fb_setSwapInterval;
-    dev->device.post            = fb_post;
-    dev->device.setUpdateRect   = fb_setUpdateRect;
-
-    private_module_t* m = (private_module_t*)module;
-
-    status = initUserspaceFrameBuffer(m);
-
-    const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
-
-    if (status >= 0) {
-      int stride = config.line_length() / (config.bits_per_pixel() / 8);
-      int format = config.hal_format();
-      const_cast<uint32_t&>(dev->device.flags) = 0;
-      const_cast<uint32_t&>(dev->device.width) = config.x_res();
-      const_cast<uint32_t&>(dev->device.height) = config.y_res();
-      const_cast<int&>(dev->device.stride) = stride;
-      const_cast<int&>(dev->device.format) = format;
-      const_cast<float&>(dev->device.xdpi) = config.dpi();
-      const_cast<float&>(dev->device.ydpi) = config.dpi();
-      // TODO (jemoreira): DRY!! Managed by the vsync thread in the hwcomposer
-      const_cast<float&>(dev->device.fps) = (60 * 1000) / 1000.0f;
-      const_cast<int&>(dev->device.minSwapInterval) = 1;
-      const_cast<int&>(dev->device.maxSwapInterval) = 1;
-      *device = &dev->device.common;
-    }
+  if (strcmp(name, GRALLOC_HARDWARE_FB0) != 0) {
+    return -EINVAL;
   }
-  return status;
+  /* initialize our state here */
+  fb_context_t* dev = (fb_context_t*) malloc(sizeof(*dev));
+  LOG_FATAL_IF(!dev, "%s: malloc returned NULL.", __FUNCTION__);
+  memset(dev, 0, sizeof(*dev));
+
+  /* initialize the procs */
+  dev->device.common.tag = HARDWARE_DEVICE_TAG;
+  dev->device.common.version = 0;
+  dev->device.common.module = const_cast<hw_module_t*>(module);
+  dev->device.common.close = fb_close;
+  dev->device.setSwapInterval = fb_setSwapInterval;
+  dev->device.post            = fb_post;
+  dev->device.setUpdateRect   = fb_setUpdateRect;
+
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+
+  int stride =
+    fb_broadcast->line_length() / fb_broadcast->bytes_per_pixel();
+  int format = HAL_PIXEL_FORMAT_RGBX_8888;
+  const_cast<uint32_t&>(dev->device.flags) = 0;
+  const_cast<uint32_t&>(dev->device.width) = fb_broadcast->x_res();
+  const_cast<uint32_t&>(dev->device.height) = fb_broadcast->y_res();
+  const_cast<int&>(dev->device.stride) = stride;
+  const_cast<int&>(dev->device.format) = format;
+  const_cast<float&>(dev->device.xdpi) = fb_broadcast->dpi();
+  const_cast<float&>(dev->device.ydpi) = fb_broadcast->dpi();
+  const_cast<float&>(dev->device.fps) =
+    (fb_broadcast->refresh_rate_hz() * 1000) / 1000.0f;
+  const_cast<int&>(dev->device.minSwapInterval) = 1;
+  const_cast<int&>(dev->device.maxSwapInterval) = 1;
+  *device = &dev->device.common;
+
+  return 0;
 }

@@ -25,10 +25,20 @@
 namespace vsoc {
 namespace framebuffer {
 
+// Provides information related to the device's screen. Allows to query screen
+// properties such as resolution and dpi, as well as subscribe/notify to/of
+// changes on the screen contents. It's independent of where the buffer holding
+// the screen contents is. This region will eventually become the display
+// region, which will represent display hardware including the hardware
+// composer.
 class FBBroadcastRegionView
     : public vsoc::TypedRegionView<
           vsoc::layout::framebuffer::FBBroadcastLayout> {
  public:
+  static int align(int input, int alignment = kAlignment) {
+    return (input + alignment - 1) & -alignment;
+  }
+
   // Screen width in pixels
   int x_res() const { return data().x_res; }
 
@@ -39,10 +49,7 @@ class FBBroadcastRegionView
   int dpi() const { return data().dpi; }
 
   // Refresh rate in Hertz
-  int refresh_rate_hz() const {
-    // TODO(jemoreira): region_->data()->refresh_rate_hz;
-    return kFbRefreshRateHz;
-  }
+  int refresh_rate_hz() const { return data().refresh_rate_hz; }
 
   uint32_t pixel_format() const { return kFbPixelFormat; }
 
@@ -50,17 +57,29 @@ class FBBroadcastRegionView
     return vsoc::PixelFormatProperties<kFbPixelFormat>::bytes_per_pixel;
   }
 
-  // Broadcasts a new frame. Meant to be used exclusively by the hwcomposer.
-  // Zero is an invalid frame_num, used to indicate that there is no frame
-  // available. It's expected that frame_num increases monotonically over time,
-  // but there is no hard requirement for this.
-  // frame_offset is the offset of the current frame in the gralloc region.
-  void BroadcastNewFrame(uint32_t frame_num, vsoc_reg_off_t frame_offset);
+  int line_length() const { return align(x_res() * bytes_per_pixel()); }
+
+  size_t buffer_size() const {
+    return (align(x_res() * bytes_per_pixel()) * y_res()) + kSwiftShaderPadding;
+  }
+
+  // Broadcasts a new frame.
+  // frame_offset is the offset of the current frame in the framebuffer region.
+  // stats holds performance information of the last composition, can be null.
+  void BroadcastNewFrame(
+      vsoc_reg_off_t frame_offset,
+      const vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
 
   // Waits for a new frame (one with a different seq_num than last one we saw).
   // Returns the offset of the new frame or zero if there was an error, stores
-  // the new sequential number in *last_seq_num.
-  vsoc_reg_off_t WaitForNewFrameSince(uint32_t* last_seq_num);
+  // the new sequential number in *last_seq_num. The frame sequential number are
+  // provided by the hwcomposer and expected to increase monotonically over time
+  // (though it's not a hard requirement), this numbers are guaranteed to be
+  // non-zero when a valid frame is available. Performance statistics are
+  // returned through the stats parameter when it's not null.
+  vsoc_reg_off_t WaitForNewFrameSince(
+      uint32_t* last_seq_num,
+      vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
 
 #if defined(CUTTLEFISH_HOST)
   static std::shared_ptr<FBBroadcastRegionView> GetInstance(const char* domain);
@@ -68,9 +87,16 @@ class FBBroadcastRegionView
   static std::shared_ptr<FBBroadcastRegionView> GetInstance();
 #endif
 
- private:
+  using Pixel = uint32_t;
+  static constexpr int kSwiftShaderPadding = 4;
+  static constexpr int kRedShift = 0;
+  static constexpr int kGreenShift = 8;
+  static constexpr int kBlueShift = 16;
+  static constexpr int kRedBits = 8;
+  static constexpr int kGreenBits = 8;
+  static constexpr int kBlueBits = 8;
   static constexpr uint32_t kFbPixelFormat = vsoc::VSOC_PIXEL_FORMAT_RGBA_8888;
-  static constexpr int kFbRefreshRateHz = 60;
+  static constexpr int kAlignment = 8;
 };
 }  // namespace framebuffer
 }  // namespace vsoc

@@ -13,6 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+#define LOG_TAG "VSoCGrallocRegionRegistry"
+
 #include <limits.h>
 #include <errno.h>
 #include <pthread.h>
@@ -24,7 +30,6 @@
 #include <sys/types.h>
 
 #include <cutils/hashmap.h>
-#define LOG_TAG "VSoCGrallocRegionRegistry"
 #include <cutils/log.h>
 #include <cutils/atomic.h>
 
@@ -34,7 +39,7 @@
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 
-#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+#include "gralloc_vsoc_priv.h"
 
 // TODO(ghartman): Make the configurable through a property
 static const bool g_log_refs = false;
@@ -121,14 +126,12 @@ void* reference_region(const char* op, const private_handle_t* hnd) {
       unlock_region(region);
       return NULL;
     }
-    if (!(hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER)) {
-      // Set up the guard pages. The last page is always a guard
-      uintptr_t base = uintptr_t(mappedAddress);
-      uintptr_t addr = base + hnd->total_size - PAGE_SIZE;
-      if (mprotect((void*)addr, PAGE_SIZE, PROT_NONE) == -1) {
-        ALOGE("mprotect base=%p, pg=%p failed (%s)",
-              (void*)base, (void*)addr, strerror(errno));
-      }
+    // Set up the guard pages. The last page is always a guard
+    uintptr_t base = uintptr_t(mappedAddress);
+    uintptr_t addr = base + hnd->total_size - PAGE_SIZE;
+    if (mprotect((void*)addr, PAGE_SIZE, PROT_NONE) == -1) {
+      ALOGE("mprotect base=%p, pg=%p failed (%s)", (void*)base, (void*)addr,
+            strerror(errno));
     }
     region->base_ = mappedAddress;
     ALOGI("Mapped %s hnd=%p fd=%d base=%p format=%s(0x%x) width=%d height=%d",

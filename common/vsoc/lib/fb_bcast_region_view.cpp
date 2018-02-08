@@ -20,18 +20,22 @@
 #include "common/vsoc/lib/lock_guard.h"
 
 using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::layout::framebuffer::CompositionStats;
 
 // We can use a locking protocol because we decided that the streamer should
 // have more priority than the hwcomposer, so it's OK to block the hwcomposer
 // waiting for the streamer to complete, while the streamer will only block on
 // the hwcomposer when it's ran out of work to do and needs to get more from the
 // hwcomposer.
-void FBBroadcastRegionView::BroadcastNewFrame(uint32_t seq_num,
-                                              vsoc_reg_off_t frame_offset) {
+void FBBroadcastRegionView::BroadcastNewFrame(vsoc_reg_off_t frame_offset,
+                                              const CompositionStats* stats) {
   {
     auto lock_guard(make_lock_guard(&data()->bcast_lock));
-    data()->seq_num = seq_num;
+    data()->seq_num++;
     data()->frame_offset = frame_offset;
+    if (stats) {
+      data()->stats = *stats;
+    }
   }
   // Signaling after releasing the lock may cause spurious wake ups.
   // Signaling while holding the lock may cause the just-awaken listener to
@@ -43,7 +47,7 @@ void FBBroadcastRegionView::BroadcastNewFrame(uint32_t seq_num,
 }
 
 vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(
-    uint32_t* last_seq_num) {
+    uint32_t* last_seq_num, CompositionStats* stats) {
   static std::unique_ptr<RegionWorker> worker = StartWorker();
   // It's ok to read seq_num here without holding the lock because the lock will
   // be acquired immediately after so we'll block if necessary to wait for the
@@ -59,6 +63,9 @@ vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(
   {
     auto lock_guard(make_lock_guard(&data()->bcast_lock));
     *last_seq_num = data()->seq_num;
+    if (stats) {
+      *stats = data()->stats;
+    }
     return data()->frame_offset;
   }
 }
