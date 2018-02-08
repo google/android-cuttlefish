@@ -22,28 +22,6 @@
 using vsoc::framebuffer::FBBroadcastRegionView;
 using vsoc::layout::framebuffer::CompositionStats;
 
-uint32_t FBBroadcastRegionView::GetAndSetNextAvailableBufferBit(
-    uint32_t filter) {
-  auto lock_guard(make_lock_guard(&data()->bcast_lock));
-  uint32_t bit = data()->buffer_bits & filter;
-  if (bit == filter) {
-    // All bits from the filter are already set.
-    return 0LU;
-  }
-  // Set available bits to 1
-  bit = (bit ^ filter);
-  // Isolate first available bit
-  bit &= ~bit + 1LU;
-  // Set it on bit set on shared memory
-  data()->buffer_bits |= bit;
-  return bit;
-}
-
-void FBBroadcastRegionView::UnsetBufferBits(uint32_t bits) {
-  auto lock_guard(make_lock_guard(&data()->bcast_lock));
-  data()->buffer_bits &= ~bits;
-}
-
 // We can use a locking protocol because we decided that the streamer should
 // have more priority than the hwcomposer, so it's OK to block the hwcomposer
 // waiting for the streamer to complete, while the streamer will only block on
