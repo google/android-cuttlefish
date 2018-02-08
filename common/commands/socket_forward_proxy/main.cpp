@@ -24,6 +24,8 @@
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 
+#include <unistd.h>
+
 #include "common/vsoc/lib/socket_forward_region_view.h"
 #include "common/libs/tcp_socket/tcp_socket.h"
 
@@ -168,7 +170,7 @@ std::shared_ptr<SocketForwardRegionView> GetShm() {
 // makes sure we're running as root on the guest, no-op on the host
 void assert_correct_user() {
 #ifndef CUTTLEFISH_HOST
-  CHECK_EQ(std::getenv("USER"), std::string{"root"}) << "must run as root!";
+    CHECK_EQ(getuid(), 0u) << "must run as root!";
 #endif
 }
 
