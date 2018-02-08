@@ -73,6 +73,7 @@ on boot
     chmod 0660 /dev/cpuctl
     mkdir /data/misc/wifi 0770 system wifi
     mkdir /data/misc/wifi/sockets 0770 system wifi
+    start socket_forward_proxy
 
     # TODO(ender): Re-enable these
     # Compass.
@@ -85,6 +86,9 @@ service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
 
 service vsoc_input_service /vendor/bin/vsoc_input_service
     oneshot
+
+
+service socket_forward_proxy /vendor/bin/socket_forward_proxy
 
 
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
