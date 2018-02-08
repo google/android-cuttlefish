@@ -114,6 +114,14 @@ DEFINE_string(vnc_server_binary,
               "Location of the vnc server binary.");
 DEFINE_int32(vnc_server_port, vsoc::GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
+// TODO(haining) bias the port number in a way that still goes to 5555 on the
+// guest-side
+DEFINE_string(socket_forward_proxy_binary,
+              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+                  "/bin/socket_forward_proxy",
+              "Location of the socket_forward_proxy binary.");
+DEFINE_int32(socket_forward_proxy_port, 5555, "port on which to run the "
+             "socket_forward_proxy server");
 
 DECLARE_string(uuid);
 
@@ -403,6 +411,12 @@ int main(int argc, char** argv) {
   }
 
   std::string entropy_source = "/dev/urandom";
+
+  auto port_arg = std::string{"--port="} +
+    std::to_string(FLAGS_socket_forward_proxy_port);
+  const char* const socket_proxy[] =
+    {FLAGS_socket_forward_proxy_binary.c_str(), port_arg.c_str(), NULL};
+  subprocess(socket_proxy, nullptr, false);
 
   config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
