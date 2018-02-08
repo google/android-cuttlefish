@@ -39,7 +39,7 @@ namespace cvd {
 namespace {
 
 // Ensures that the layer does not include any inconsistencies
-int SanityCheckLayer(const vsoc_hwc_layer& layer) {
+bool IsValidLayer(const vsoc_hwc_layer& layer) {
   // Check displayFrame
   if (layer.displayFrame.left > layer.displayFrame.right ||
       layer.displayFrame.top > layer.displayFrame.bottom) {
@@ -48,7 +48,7 @@ int SanityCheckLayer(const vsoc_hwc_layer& layer) {
         "%d, bottom = %d]",
         __FUNCTION__, layer.displayFrame.left, layer.displayFrame.right,
         layer.displayFrame.top, layer.displayFrame.bottom);
-    return -EINVAL;
+    return false;
   }
   // Check sourceCrop
   if (layer.sourceCrop.left > layer.sourceCrop.right ||
@@ -58,14 +58,14 @@ int SanityCheckLayer(const vsoc_hwc_layer& layer) {
         "%d, bottom = %d]",
         __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
         layer.sourceCrop.top, layer.sourceCrop.bottom);
-    return -EINVAL;
+    return false;
+  }
+  if (private_handle_t::validate(layer.handle) != 0) {
+    ALOGE("%s: Layer contains an invalid gralloc handle.", __FUNCTION__);
+    return false;
   }
   const private_handle_t* p_handle =
       reinterpret_cast<const private_handle_t*>(layer.handle);
-  if (!p_handle) {
-    ALOGE("Layer has a NULL buffer handle");
-    return -EINVAL;
-  }
   if (layer.sourceCrop.left < 0 || layer.sourceCrop.top < 0 ||
       layer.sourceCrop.right > p_handle->x_res ||
       layer.sourceCrop.bottom > p_handle->y_res) {
@@ -76,9 +76,47 @@ int SanityCheckLayer(const vsoc_hwc_layer& layer) {
         __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
         layer.sourceCrop.top, layer.sourceCrop.bottom, p_handle->x_res,
         p_handle->y_res);
-    return -EINVAL;
+    return false;
   }
-  return 0;
+  return true;
+}
+
+bool IsValidComposition(int num_layers, vsoc_hwc_layer* layers) {
+  // The FRAMEBUFFER_TARGET layer needs to be sane only if there is at least one
+  // layer marked HWC_FRAMEBUFFER or if there is no layer marked HWC_OVERLAY
+  // (i.e some layers where composed with OpenGL, no layer marked overlay or
+  // framebuffer means that surfaceflinger decided to go for OpenGL without
+  // asking the hwcomposer first)
+  bool check_fb_target = true;
+  for (int idx = 0; idx < num_layers; ++idx) {
+    if (layers[idx].compositionType == HWC_FRAMEBUFFER) {
+      // There is at least one, so it needs to be checked.
+      // It may have been set to false before, so ensure it's set to true.
+      check_fb_target = true;
+      break;
+    }
+    if (layers[idx].compositionType == HWC_OVERLAY) {
+      // At least one overlay, we may not need to.
+      check_fb_target = false;
+    }
+  }
+
+  for (int idx = 0; idx < num_layers; ++idx) {
+    switch (layers[idx].compositionType) {
+    case HWC_FRAMEBUFFER_TARGET:
+      if (check_fb_target && !IsValidLayer(layers[idx])) {
+        return false;
+      }
+      break;
+    case HWC_OVERLAY:
+      if (!(layers[idx].flags & HWC_SKIP_LAYER) &&
+          !IsValidLayer(layers[idx])) {
+        return false;
+      }
+      break;
+    }
+  }
+  return true;
 }
 
 bool LayerNeedsScaling(const vsoc_hwc_layer& layer) {
@@ -598,6 +636,10 @@ int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 }
 
 int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+  if (!IsValidComposition(num_layers, layers)) {
+    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
+    return -1;
+  }
   int targetFbs = 0;
   int buffer_idx = NextScreenBuffer();
 
@@ -617,14 +659,10 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     }
   }
 
-  // When the framebuffer target needs to be composed, it has to be go first.
+  // When the framebuffer target needs to be composed, it has to go first.
   if (fb_target) {
     for (size_t idx = 0; idx < num_layers; idx++) {
       if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
-        if (SanityCheckLayer(layers[idx]) != 0) {
-          ALOGE("FRAMEBUFFER_TARGET layer (%zu), failed sanity check", idx);
-          return -EINVAL;
-        }
         CompositeLayer(&layers[idx], buffer_idx);
         break;
       }
@@ -637,10 +675,6 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     }
     if (layers[idx].compositionType == HWC_OVERLAY &&
         !(layers[idx].flags & HWC_SKIP_LAYER)) {
-      if (SanityCheckLayer(layers[idx]) != 0) {
-          ALOGE("Layer (%zu) failed sanity check", idx);
-          return -EINVAL;
-      }
       CompositeLayer(&layers[idx], buffer_idx);
     }
   }
