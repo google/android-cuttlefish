@@ -50,7 +50,7 @@ std::string vsoc::GetPerInstanceDefault(const char* prefix) {
 }
 
 int vsoc::GetPerInstanceDefault(int base) {
-  return base + FLAGS_instance - 1;
+  return base + GetDefaultInstance() - 1;
 }
 
 std::string vsoc::GetDefaultPerInstanceDir() {
