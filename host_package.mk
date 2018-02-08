@@ -22,6 +22,7 @@ tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 cvd_host_executables := \
     launch_cvd \
     wificlient \
+    vnc_server \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -43,10 +44,12 @@ cvd_host_shared_libraries := \
     libicuuc-host \
 
 cvd_host_configs := \
-    vsoc_mem.json
+    vsoc_mem.json \
+    cuttlefish.dtb
 
 cvd_host_packages := \
     vsoc_mem_json \
+    cuttlefish_dtb \
     $(cvd_host_executables) \
     $(cvd_host_tests) \
 

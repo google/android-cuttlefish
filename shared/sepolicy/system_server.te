@@ -1,4 +1,8 @@
-# TODO(b/65062047): Remove these rules (incl. the two file type definitions) once vnc_server is gone
-# Create /var/run/system directory and sensors_hal_socket socket in the directory.
-allow system_server var_run_system_file:dir w_dir_perms;
-type_transition system_server var_run_system_file:sock_file sensors_hal_socket;
+# TODO(b/65201432): Switch into enforcing mode once execmem issue due to OpenGL is resolved. Also
+# remove the corresponding dontaudit.
+# The current (at the time of writing) implementation of OpenGL needs to create executable memory.
+# Unfortunately, we cannot grant execmem power using an allow rule because global policy
+# (system/sepolicy) contains a corresponding neverallow which would cause build-time errors if the
+# allow execmem rule were added here.
+permissive system_server;
+dontaudit system_server self:process execmem;
