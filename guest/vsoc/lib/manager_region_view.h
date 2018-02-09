@@ -27,8 +27,8 @@ namespace vsoc {
  * The Layout type must (in addition to requirements for TypedRegionView) also
  * provide a nested type for the layout of the managed region.
  */
-template <typename Layout>
-class ManagerRegionView : public TypedRegionView<Layout> {
+template <typename View, typename Layout>
+class ManagerRegionView : public TypedRegionView<View, Layout> {
  public:
   ManagerRegionView() = default;
   /**

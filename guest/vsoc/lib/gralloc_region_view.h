@@ -25,8 +25,11 @@ namespace vsoc {
 namespace gralloc {
 
 class GrallocRegionView : public vsoc::ManagerRegionView<
+                          GrallocRegionView,
                           vsoc::layout::gralloc::GrallocManagerLayout> {
  public:
+  friend TypedRegionView<
+      GrallocRegionView, vsoc::layout::gralloc::GrallocManagerLayout>;
   GrallocRegionView() = default;
   // Allocates a gralloc buffer of (at least) the specified size. Returns a file
   // descriptor that exposes the buffer when mmapped from 0 to (the page
@@ -34,8 +37,6 @@ class GrallocRegionView : public vsoc::ManagerRegionView<
   // negative number in case of error (e.g not enough free memory left).
   // TODO(jemoreira): Include debug info like stride, width, height, etc
   int AllocateBuffer(size_t size, uint32_t* begin_offset = nullptr);
-
-  static std::shared_ptr<GrallocRegionView> GetInstance();
 
  protected:
   GrallocRegionView(const GrallocRegionView&) = delete;

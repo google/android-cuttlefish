@@ -32,12 +32,3 @@ uint8_t* GrallocBufferRegionView::OffsetToBufferPtr(vsoc_reg_off_t offset) {
   }
   return region_offset_to_pointer<uint8_t>(offset);
 }
-
-std::shared_ptr<GrallocBufferRegionView> GrallocBufferRegionView::GetInstance(
-    const char* domain) {
-  return RegionView::GetInstanceImpl<GrallocBufferRegionView>(
-      [](std::shared_ptr<GrallocBufferRegionView> region, const char* domain) {
-        return region->Open(domain);
-      },
-      domain);
-}

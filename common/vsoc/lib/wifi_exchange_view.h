@@ -25,7 +25,9 @@ namespace vsoc {
 namespace wifi {
 
 class WifiExchangeView
-    : public vsoc::TypedRegionView<vsoc::layout::wifi::WifiExchangeLayout> {
+    : public vsoc::TypedRegionView<
+        WifiExchangeView,
+        vsoc::layout::wifi::WifiExchangeLayout> {
  public:
   // Send netlink packet to peer.
   // returns true, if operation was successful.
@@ -41,12 +43,6 @@ class WifiExchangeView
 
   void SetConfigReady();
   void WaitConfigReady();
-
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<WifiExchangeView> GetInstance(const char* domain);
-#else
-  static std::shared_ptr<WifiExchangeView> GetInstance();
-#endif
 };
 
 }  // namespace wifi

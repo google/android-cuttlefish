@@ -78,9 +78,10 @@ int main(int argc, char **argv) {
   }
 
   auto audio_data_rv = AudioDataRegionView::GetInstance();
+  CHECK(audio_data_rv != nullptr);
 
   /* std::unique_ptr<vsoc::RegionWorker> audio_worker = */
-    audio_data_rv->StartWorker();
+  audio_data_rv->StartWorker();
 
   std::unique_ptr<WaveWriter> writer;
   int64_t frameCount = 0ll;
@@ -102,7 +103,7 @@ int main(int argc, char **argv) {
 
   while (!gDone) {
     intptr_t res = audio_data_rv->data()->audio_queue.Read(
-            audio_data_rv.get(),
+            audio_data_rv,
             reinterpret_cast<char *>(buffer),
             sizeof(buffer));
 

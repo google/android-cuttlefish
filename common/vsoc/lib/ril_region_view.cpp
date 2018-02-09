@@ -23,21 +23,6 @@
 namespace vsoc {
 namespace ril {
 
-#if defined(CUTTLEFISH_HOST)
-std::shared_ptr<RilRegionView> RilRegionView::GetInstance(const char* domain) {
-  return RegionView::GetInstanceImpl<RilRegionView>(
-      [](std::shared_ptr<RilRegionView> region, const char* domain) {
-        return region->Open(domain);
-      },
-      domain);
-}
-#else
-std::shared_ptr<RilRegionView> RilRegionView::GetInstance() {
-  return RegionView::GetInstanceImpl<RilRegionView>(
-      std::mem_fn(&RilRegionView::Open));
-}
-#endif
-
 const char* RilRegionView::address_and_prefix_length() const {
   static char buffer[sizeof(data().ipaddr) + 3]{};  // <ipaddr>/dd
   if (buffer[0] == '\0') {

@@ -69,19 +69,3 @@ vsoc_reg_off_t FBBroadcastRegionView::WaitForNewFrameSince(
     return data()->frame_offset;
   }
 }
-
-#if defined(CUTTLEFISH_HOST)
-std::shared_ptr<FBBroadcastRegionView> FBBroadcastRegionView::GetInstance(
-    const char* domain) {
-  return RegionView::GetInstanceImpl<FBBroadcastRegionView>(
-      [](std::shared_ptr<FBBroadcastRegionView> region, const char* domain) {
-        return region->Open(domain);
-      },
-      domain);
-}
-#else
-std::shared_ptr<FBBroadcastRegionView> FBBroadcastRegionView::GetInstance() {
-  return RegionView::GetInstanceImpl<FBBroadcastRegionView>(
-      std::mem_fn(&FBBroadcastRegionView::Open));
-}
-#endif

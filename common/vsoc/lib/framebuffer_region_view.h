@@ -30,25 +30,9 @@ namespace framebuffer {
  * gralloc buffers region.*/
 class FrameBufferRegionView
     : public vsoc::TypedRegionView<
+          FrameBufferRegionView,
           vsoc::layout::framebuffer::FrameBufferLayout> {
  public:
-
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<FrameBufferRegionView> GetInstance(
-      const char* domain) {
-    return RegionView::GetInstanceImpl<FrameBufferRegionView>(
-        [](std::shared_ptr<FrameBufferRegionView> region, const char* domain) {
-          return region->Open(domain);
-        },
-        domain);
-  }
-#else
-  static std::shared_ptr<FrameBufferRegionView> GetInstance() {
-    return RegionView::GetInstanceImpl<FrameBufferRegionView>(
-        std::mem_fn(&FrameBufferRegionView::Open));
-  }
-#endif
-
   size_t total_buffer_size() const;
   uint32_t first_buffer_offset() const;
   // Gets a pointer to an offset of the region.
