@@ -32,6 +32,7 @@ struct InputEvent {
 
 class InputEventsRegionView
     : public vsoc::TypedRegionView<
+          InputEventsRegionView,
           vsoc::layout::input_events::InputEventsLayout> {
  public:
   static const int kMaxEventsPerPacket;
@@ -51,11 +52,6 @@ class InputEventsRegionView
   intptr_t GetKeyboardEventsOrWait(InputEvent* buffer, int max_event_count);
   intptr_t GetPowerButtonEventsOrWait(InputEvent* buffer, int max_event_count);
 
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<InputEventsRegionView> GetInstance(const char* domain);
-#else
-  static std::shared_ptr<InputEventsRegionView> GetInstance();
-#endif
 };
 }  // namespace input_events
 }  // namespace vsoc

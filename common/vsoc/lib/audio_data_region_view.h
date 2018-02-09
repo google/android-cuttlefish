@@ -26,17 +26,13 @@ namespace vsoc {
 namespace audio_data {
 
 class AudioDataRegionView
-    : public vsoc::TypedRegionView<vsoc::layout::audio_data::AudioDataLayout> {
+    : public vsoc::TypedRegionView<
+        AudioDataRegionView,
+        vsoc::layout::audio_data::AudioDataLayout> {
 public:
     AudioDataRegionView() = default;
     AudioDataRegionView(const AudioDataRegionView &) = delete;
     AudioDataRegionView &operator=(const AudioDataRegionView &) = delete;
-
-#if defined(CUTTLEFISH_HOST)
-    static std::shared_ptr<AudioDataRegionView> GetInstance(const char *domain);
-#else
-    static std::shared_ptr<AudioDataRegionView> GetInstance();
-#endif
 };
 
 }  // namespace audio_data

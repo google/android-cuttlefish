@@ -155,7 +155,7 @@ void LaunchWorkers(SocketForwardRegionView::Connection conn,
 }
 #endif
 
-std::shared_ptr<SocketForwardRegionView> GetShm() {
+SocketForwardRegionView* GetShm() {
   auto shm = SocketForwardRegionView::GetInstance(
 #ifdef CUTTLEFISH_HOST
       vsoc::GetDomain().c_str()
@@ -185,8 +185,8 @@ int main(int argc, char* argv[]) {
 
 #ifdef CUTTLEFISH_HOST
   CHECK_NE(FLAGS_port, 0u) << "Must specify --port flag";
-  host(shm.get(), FLAGS_port);
+  host(shm, FLAGS_port);
 #else
-  guest(shm.get());
+  guest(shm);
 #endif
 }

@@ -215,7 +215,7 @@ int GceAudio::Dump(int fd) const {
 
 ssize_t GceAudio::SendMsg(const msghdr& msg, int /* flags */) {
     intptr_t res = audio_data_rv_->data()->audio_queue.Writev(
-            audio_data_rv_.get(),
+            audio_data_rv_,
             msg.msg_iov,
             msg.msg_iovlen,
             true /* non_blocking */);

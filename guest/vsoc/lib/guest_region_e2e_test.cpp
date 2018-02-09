@@ -64,7 +64,7 @@ void DeathTestView() {
 // 12. Confirm that no interrupt is pending in the second region
 
 template <typename View>
-void SetGuestStrings(std::shared_ptr<View> in) {
+void SetGuestStrings(View* in) {
   size_t num_data = in->string_size();
   EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
@@ -76,7 +76,7 @@ void SetGuestStrings(std::shared_ptr<View> in) {
 }
 
 template <typename View>
-void CheckPeerStrings(std::shared_ptr<View> in) {
+void CheckPeerStrings(View* in) {
   size_t num_data = in->string_size();
   EXPECT_LE(2U, num_data);
   for (size_t i = 0; i < num_data; ++i) {
@@ -85,10 +85,8 @@ void CheckPeerStrings(std::shared_ptr<View> in) {
 }
 
 TEST(RegionTest, BasicPeerTests) {
-  std::shared_ptr<vsoc::E2EPrimaryRegionView> primary =
-      vsoc::E2EPrimaryRegionView::GetInstance();
-  std::shared_ptr<vsoc::E2ESecondaryRegionView> secondary =
-      vsoc::E2ESecondaryRegionView::GetInstance();
+  auto primary = vsoc::E2EPrimaryRegionView::GetInstance();
+  auto secondary = vsoc::E2ESecondaryRegionView::GetInstance();
   ASSERT_TRUE(!!primary);
   ASSERT_TRUE(!!secondary);
   LOG(INFO) << "Regions are open";
@@ -155,18 +153,20 @@ TEST(RegionTest, MissingRegionDeathTest) {
 
 // Region view classes to allow calling the Open() function from the test.
 class E2EManagedTestRegionView
-    : public vsoc::TypedRegionView<E2EManagedTestRegionLayout> {
+    : public vsoc::TypedRegionView<
+        E2EManagedTestRegionView,
+        E2EManagedTestRegionLayout> {
  public:
-  bool Open() {
-    return vsoc::TypedRegionView<E2EManagedTestRegionLayout>::Open();
-  }
+  using vsoc::TypedRegionView<
+      E2EManagedTestRegionView, E2EManagedTestRegionLayout>::Open;
 };
 class E2EManagerTestRegionView
-    : public vsoc::ManagerRegionView<E2EManagerTestRegionLayout> {
+    : public vsoc::ManagerRegionView<
+        E2EManagerTestRegionView,
+        E2EManagerTestRegionLayout> {
  public:
-  bool Open() {
-    return vsoc::ManagerRegionView<E2EManagerTestRegionLayout>::Open();
-  }
+  using vsoc::ManagerRegionView<
+      E2EManagerTestRegionView, E2EManagerTestRegionLayout>::Open;
 };
 
 class ManagedRegionTest {
@@ -241,8 +241,7 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    std::shared_ptr<vsoc::E2EPrimaryRegionView> region =
-        vsoc::E2EPrimaryRegionView::GetInstance();
+    auto region = vsoc::E2EPrimaryRegionView::GetInstance();
     region->guest_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
     LOG(INFO) << "stage_1_guest_region_e2e_tests PASSED";
   }

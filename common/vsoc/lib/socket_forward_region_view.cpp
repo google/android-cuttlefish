@@ -186,23 +186,6 @@ std::pair<int, int> SocketForwardRegionView::GetWaitingConnectionIDAndPort() {
   return {-1, -1};
 }
 
-#if defined(CUTTLEFISH_HOST)
-std::shared_ptr<SocketForwardRegionView> SocketForwardRegionView::GetInstance(
-    const char* domain) {
-  return RegionView::GetInstanceImpl<SocketForwardRegionView>(
-      [](std::shared_ptr<SocketForwardRegionView> region, const char* domain) {
-        return region->Open(domain);
-      },
-      domain);
-}
-#else
-std::shared_ptr<SocketForwardRegionView> SocketForwardRegionView::GetInstance()
-{
-  return RegionView::GetInstanceImpl<SocketForwardRegionView>(
-      std::mem_fn(&SocketForwardRegionView::Open));
-}
-#endif
-
 #ifdef CUTTLEFISH_HOST
 SocketForwardRegionView::Connection SocketForwardRegionView::OpenConnection(
     int port) {

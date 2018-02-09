@@ -216,10 +216,10 @@ void AddKeyMappings(std::map<uint32_t, uint32_t>* key_mapping) {
 }
 }  // namespace
 
-VirtualInputs::VirtualInputs() {
-  input_events_region_view_ =
+VirtualInputs::VirtualInputs()
+  : input_events_region_view_{
       vsoc::input_events::InputEventsRegionView::GetInstance(
-          vsoc::GetDomain().c_str());
+          vsoc::GetDomain().c_str())} {
   if (!input_events_region_view_) {
     LOG(FATAL) << "Failed to open Input events region view";
   }

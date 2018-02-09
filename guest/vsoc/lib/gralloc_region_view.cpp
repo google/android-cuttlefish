@@ -41,7 +41,7 @@ inline uint32_t gralloc_owned_value() {
 }  // namespace
 
 bool GrallocRegionView::Open() {
-  if (!vsoc::ManagerRegionView<GrallocManagerLayout>::Open()) {
+  if (!vsoc::ManagerRegionView<GrallocRegionView, GrallocManagerLayout>::Open()) {
     return false;
   }
   std::shared_ptr<vsoc::RegionControl> managed_region =
@@ -139,10 +139,4 @@ int GrallocRegionView::AllocateBuffer(size_t size, uint32_t* begin_offset) {
     }
     return fd;
   }
-}
-
-
-std::shared_ptr<GrallocRegionView> GrallocRegionView::GetInstance() {
-  return RegionView::GetInstanceImpl<GrallocRegionView>(
-      std::mem_fn(&GrallocRegionView::Open));
 }

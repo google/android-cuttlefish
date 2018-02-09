@@ -30,7 +30,9 @@ using Message = std::vector<std::uint8_t>;
 // Data sent will start with a uint32_t indicating the number of bytes being
 // sent, followed be the data itself
 class SocketForwardRegionView
-    : public TypedRegionView<layout::socket_forward::SocketForwardLayout> {
+    : public TypedRegionView<
+        SocketForwardRegionView,
+        layout::socket_forward::SocketForwardLayout> {
  private:
 #ifdef CUTTLEFISH_HOST
   int AcquireConnectionID(int port);
@@ -153,12 +155,6 @@ class SocketForwardRegionView
   ~SocketForwardRegionView() = default;
   SocketForwardRegionView(const SocketForwardRegionView&) = delete;
   SocketForwardRegionView& operator=(const SocketForwardRegionView&) = delete;
-
-  static std::shared_ptr<SocketForwardRegionView> GetInstance(
-#ifdef CUTTLEFISH_HOST
-    const char* domain
-#endif
-  );
 
 #ifdef CUTTLEFISH_HOST
   Connection OpenConnection(int port);

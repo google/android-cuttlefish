@@ -33,6 +33,7 @@ namespace framebuffer {
 // composer.
 class FBBroadcastRegionView
     : public vsoc::TypedRegionView<
+          FBBroadcastRegionView,
           vsoc::layout::framebuffer::FBBroadcastLayout> {
  public:
   static int align(int input, int alignment = kAlignment) {
@@ -80,12 +81,6 @@ class FBBroadcastRegionView
   uint32_t WaitForNewFrameSince(
       uint32_t* last_seq_num,
       vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
-
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<FBBroadcastRegionView> GetInstance(const char* domain);
-#else
-  static std::shared_ptr<FBBroadcastRegionView> GetInstance();
-#endif
 
   using Pixel = uint32_t;
   static constexpr int kSwiftShaderPadding = 4;

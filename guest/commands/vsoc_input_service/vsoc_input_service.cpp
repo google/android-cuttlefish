@@ -64,8 +64,7 @@ bool VSoCInputService::SetUpDevices() {
     return false;
   }
 
-  std::shared_ptr<FBBroadcastRegionView> fb_broadcast =
-      FBBroadcastRegionView::GetInstance();
+  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
   if (!fb_broadcast) {
     SLOGE("Failed to open framebuffer broadcast region");
     return false;
@@ -81,8 +80,7 @@ bool VSoCInputService::SetUpDevices() {
 }
 
 bool VSoCInputService::ProcessEvents() {
-  std::shared_ptr<InputEventsRegionView> input_events_rv =
-      InputEventsRegionView::GetInstance();
+  auto input_events_rv = InputEventsRegionView::GetInstance();
   // TODO(jemoreira): Post available devices to region
   input_events_rv->StartWorker();
 

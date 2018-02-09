@@ -23,7 +23,9 @@
 
 namespace vsoc {
 template <typename Layout>
-class E2ERegionView : public vsoc::TypedRegionView<Layout> {
+class E2ERegionView : public vsoc::TypedRegionView<
+                      E2ERegionView<Layout>,
+                      Layout> {
  public:
   const char* guest_string(size_t index) const {
     return const_cast<const char*>(this->data().data[index].guest_writable);
@@ -58,34 +60,13 @@ class E2ERegionView : public vsoc::TypedRegionView<Layout> {
   }
 };
 
-class E2EPrimaryRegionView
-    : public vsoc::E2ERegionView<layout::e2e_test::E2EPrimaryTestRegionLayout> {
- public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<E2EPrimaryRegionView> GetInstance(const char* domain);
-#else
-  static std::shared_ptr<E2EPrimaryRegionView> GetInstance();
-#endif
-};
-class E2ESecondaryRegionView
-    : public vsoc::E2ERegionView<
-          layout::e2e_test::E2ESecondaryTestRegionLayout> {
- public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<E2ESecondaryRegionView> GetInstance(
-      const char* domain);
-#else
-  static std::shared_ptr<E2ESecondaryRegionView> GetInstance();
-#endif
-};
-class E2EUnfindableRegionView
-    : public vsoc::E2ERegionView<layout::e2e_test::E2EUnfindableRegionLayout> {
- public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<E2EUnfindableRegionView> GetInstance(
-      const char* domain);
-#else
-  static std::shared_ptr<E2EUnfindableRegionView> GetInstance();
-#endif
-};
-} // namespace vsoc
+using E2EPrimaryRegionView =
+  vsoc::E2ERegionView<layout::e2e_test::E2EPrimaryTestRegionLayout>;
+
+using E2ESecondaryRegionView =
+  vsoc::E2ERegionView<layout::e2e_test::E2ESecondaryTestRegionLayout>;
+
+using E2EUnfindableRegionView =
+  vsoc::E2ERegionView<layout::e2e_test::E2EUnfindableRegionLayout>;
+
+}  // namespace vsoc

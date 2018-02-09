@@ -23,15 +23,10 @@
 namespace vsoc {
 namespace ril {
 class RilRegionView
-    : public vsoc::TypedRegionView<vsoc::layout::ril::RilLayout> {
+    : public vsoc::TypedRegionView<
+        RilRegionView,
+        vsoc::layout::ril::RilLayout> {
  public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<RilRegionView> GetInstance(
-      const char* domain = nullptr);
-#else
-  static std::shared_ptr<RilRegionView> GetInstance();
-#endif
-
   // returns a string with '<ip>/<prefix_len>' like this: 192.168.99.2/30
   const char* address_and_prefix_length() const;
 };
