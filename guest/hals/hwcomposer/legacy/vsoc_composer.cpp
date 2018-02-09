@@ -40,6 +40,10 @@ namespace {
 
 // Ensures that the layer does not include any inconsistencies
 bool IsValidLayer(const vsoc_hwc_layer& layer) {
+  if (layer.flags & HWC_SKIP_LAYER) {
+    // A layer we are asked to skip is valid regardless of its contents
+    return true;
+  }
   // Check displayFrame
   if (layer.displayFrame.left > layer.displayFrame.right ||
       layer.displayFrame.top > layer.displayFrame.bottom) {
@@ -50,6 +54,13 @@ bool IsValidLayer(const vsoc_hwc_layer& layer) {
         layer.displayFrame.top, layer.displayFrame.bottom);
     return false;
   }
+  // Validate the handle
+  if (private_handle_t::validate(layer.handle) != 0) {
+    ALOGE("%s: Layer contains an invalid gralloc handle.", __FUNCTION__);
+    return false;
+  }
+  const private_handle_t* p_handle =
+      reinterpret_cast<const private_handle_t*>(layer.handle);
   // Check sourceCrop
   if (layer.sourceCrop.left > layer.sourceCrop.right ||
       layer.sourceCrop.top > layer.sourceCrop.bottom) {
@@ -60,12 +71,6 @@ bool IsValidLayer(const vsoc_hwc_layer& layer) {
         layer.sourceCrop.top, layer.sourceCrop.bottom);
     return false;
   }
-  if (private_handle_t::validate(layer.handle) != 0) {
-    ALOGE("%s: Layer contains an invalid gralloc handle.", __FUNCTION__);
-    return false;
-  }
-  const private_handle_t* p_handle =
-      reinterpret_cast<const private_handle_t*>(layer.handle);
   if (layer.sourceCrop.left < 0 || layer.sourceCrop.top < 0 ||
       layer.sourceCrop.right > p_handle->x_res ||
       layer.sourceCrop.bottom > p_handle->y_res) {
@@ -594,6 +599,10 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
 VSoCComposer::~VSoCComposer() {}
 
 int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+  if (!IsValidComposition(num_layers, layers)) {
+    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
+    return -1;
+  }
   int composited_layers_count = 0;
 
   // Loop over layers in inverse order of z-index
