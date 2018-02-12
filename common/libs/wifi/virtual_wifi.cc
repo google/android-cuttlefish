@@ -19,6 +19,7 @@
 #include <fstream>
 
 #include <glog/logging.h>
+#include <linux/if_ether.h>
 #include <linux/nl80211.h>
 #include <netlink/genl/ctrl.h>
 

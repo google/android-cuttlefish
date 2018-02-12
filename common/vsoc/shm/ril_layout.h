@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-#include <netinet/in.h>
-
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/version.h"
 

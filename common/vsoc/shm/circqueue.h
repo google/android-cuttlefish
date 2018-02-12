@@ -20,10 +20,10 @@
 
 #include <atomic>
 #include <cstdint>
-#include <sys/uio.h>
-
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/lock.h"
+
+struct iovec;
 
 namespace vsoc {
 class RegionSignalingInterface;

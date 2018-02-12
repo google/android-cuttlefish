@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #pragma once
-#include <linux/if_ether.h>
 
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"
@@ -37,7 +36,7 @@ struct WifiExchangeLayout : public RegionLayout {
   // config_ready_ indicates whether config section is ready to be accessed.
   bool config_ready_;
   // Desired MAC address for guest device.
-  uint8_t mac_address[ETH_ALEN];
+  uint8_t mac_address[6];
 
   static const char* region_name;
 };

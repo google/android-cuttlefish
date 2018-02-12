@@ -25,6 +25,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <netinet/in.h>
+#include <linux/if_ether.h>
 #include <linux/netdevice.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/family.h>
