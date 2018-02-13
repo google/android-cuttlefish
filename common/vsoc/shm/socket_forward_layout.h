@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #pragma once
-#include <linux/if_ether.h>
 
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"

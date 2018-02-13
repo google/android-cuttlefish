@@ -28,11 +28,6 @@
 #include <atomic>
 #include <cstdint>
 
-#include <linux/futex.h>
-#include <sys/syscall.h>
-
-#include <unistd.h>
-
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/version.h"
 

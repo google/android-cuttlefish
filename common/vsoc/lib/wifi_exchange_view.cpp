@@ -15,6 +15,7 @@
  */
 #include "common/vsoc/lib/wifi_exchange_view.h"
 
+#include <linux/if_ether.h>
 #include "common/vsoc/lib/circqueue_impl.h"
 
 namespace vsoc {

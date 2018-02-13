@@ -19,6 +19,8 @@
 #include <cerrno>
 #include <cstring>
 
+#include <sys/uio.h>
+
 #include "common/vsoc/lib/region_signaling_interface.h"
 #include "common/vsoc/shm/circqueue.h"
 
