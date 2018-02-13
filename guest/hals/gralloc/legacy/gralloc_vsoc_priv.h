@@ -28,7 +28,7 @@
 
 #include <linux/fb.h>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 #ifndef GRALLOC_MODULE_API_VERSION_0_2
@@ -242,9 +242,9 @@ static inline void formatToYcbcr(
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
 #endif
-      out->ystride = vsoc::framebuffer::FBBroadcastRegionView::align(width, 16);
+      out->ystride = vsoc::screen::ScreenRegionView::align(width, 16);
       out->cstride =
-          vsoc::framebuffer::FBBroadcastRegionView::align(out->ystride / 2, 16);
+          vsoc::screen::ScreenRegionView::align(out->ystride / 2, 16);
       out->chroma_step = 1;
       out->y = it;
       it += out->ystride * height;
@@ -281,17 +281,17 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
       y_size = strides.ystride * h;
       c_size = strides.cstride * h / 2;
       return (y_size + 2 * c_size +
-              vsoc::framebuffer::FBBroadcastRegionView::kSwiftShaderPadding);
+              vsoc::screen::ScreenRegionView::kSwiftShaderPadding);
     /*case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
     case HAL_PIXEL_FORMAT_RGB_888:
     case HAL_PIXEL_FORMAT_RGB_565:*/
     default:
-      w16 = vsoc::framebuffer::FBBroadcastRegionView::align(w, 16);
-      h16 = vsoc::framebuffer::FBBroadcastRegionView::align(h, 16);
+      w16 = vsoc::screen::ScreenRegionView::align(w, 16);
+      h16 = vsoc::screen::ScreenRegionView::align(h, 16);
       return bytes_per_pixel * w16 * h16 +
-             vsoc::framebuffer::FBBroadcastRegionView::kSwiftShaderPadding;
+             vsoc::screen::ScreenRegionView::kSwiftShaderPadding;
   }
 }
 

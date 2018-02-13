@@ -23,10 +23,10 @@
 
 #include "log/log.h"
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "common/vsoc/lib/input_events_region_view.h"
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 using vsoc::input_events::InputEvent;
 using vsoc::input_events::InputEventsRegionView;
 using vsoc_input_service::VirtualDeviceBase;
@@ -64,14 +64,14 @@ bool VSoCInputService::SetUpDevices() {
     return false;
   }
 
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
-  if (!fb_broadcast) {
+  auto screen_view = ScreenRegionView::GetInstance();
+  if (!screen_view) {
     SLOGE("Failed to open framebuffer broadcast region");
     return false;
   }
 
   virtual_touchscreen_.reset(
-      new VirtualTouchScreen(fb_broadcast->x_res(), fb_broadcast->y_res()));
+      new VirtualTouchScreen(screen_view->x_res(), screen_view->y_res()));
   if (!virtual_touchscreen_->SetUp()) {
     return false;
   }

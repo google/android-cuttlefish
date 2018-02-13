@@ -44,12 +44,9 @@
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/threads/cuttlefish_thread.h"
-#include "common/vsoc/lib/fb_bcast_region_view.h"
-#include "common/vsoc/lib/framebuffer_region_view.h"
-#include "common/vsoc/shm/framebuffer_layout.h"
+#include "common/vsoc/lib/screen_region_view.h"
 
-using vsoc::framebuffer::FBBroadcastRegionView;
-using vsoc::framebuffer::FrameBufferRegionView;
+using vsoc::screen::ScreenRegionView;
 
 /*****************************************************************************/
 
@@ -85,12 +82,9 @@ static int fb_post(struct framebuffer_device_t* dev __unused,
                    buffer_handle_t buffer_handle) {
   static int frame_buffer_idx = 0;
 
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
-  auto fb_region = FrameBufferRegionView::GetInstance();
+  auto screen_view = ScreenRegionView::GetInstance();
 
-  int32_t fb_offset = fb_region->first_buffer_offset() +
-                      frame_buffer_idx * fb_broadcast->buffer_size();
-  void* frame_buffer = fb_region->GetBufferFromOffset(fb_offset);
+  void* frame_buffer = screen_view->GetBuffer(frame_buffer_idx);
   const private_handle_t* p_handle =
       reinterpret_cast<const private_handle_t*>(buffer_handle);
   void* buffer;
@@ -103,12 +97,10 @@ static int fb_post(struct framebuffer_device_t* dev __unused,
     ALOGE("Got error code %d from lock function", retval);
     return -1;
   }
-  memcpy(frame_buffer, buffer, fb_broadcast->buffer_size());
-  fb_broadcast->BroadcastNewFrame(fb_offset);
+  memcpy(frame_buffer, buffer, screen_view->buffer_size());
+  screen_view->BroadcastNewFrame(frame_buffer_idx);
 
-  frame_buffer_idx =
-      (frame_buffer_idx + 1) %
-      (fb_region->total_buffer_size() /fb_broadcast->buffer_size());
+  frame_buffer_idx = (frame_buffer_idx + 1) % screen_view->number_of_buffers();
 
   return 0;
 }
@@ -142,20 +134,20 @@ int fb_device_open(
   dev->device.post            = fb_post;
   dev->device.setUpdateRect   = fb_setUpdateRect;
 
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  auto screen_view = ScreenRegionView::GetInstance();
 
   int stride =
-    fb_broadcast->line_length() / fb_broadcast->bytes_per_pixel();
+    screen_view->line_length() / screen_view->bytes_per_pixel();
   int format = HAL_PIXEL_FORMAT_RGBX_8888;
   const_cast<uint32_t&>(dev->device.flags) = 0;
-  const_cast<uint32_t&>(dev->device.width) = fb_broadcast->x_res();
-  const_cast<uint32_t&>(dev->device.height) = fb_broadcast->y_res();
+  const_cast<uint32_t&>(dev->device.width) = screen_view->x_res();
+  const_cast<uint32_t&>(dev->device.height) = screen_view->y_res();
   const_cast<int&>(dev->device.stride) = stride;
   const_cast<int&>(dev->device.format) = format;
-  const_cast<float&>(dev->device.xdpi) = fb_broadcast->dpi();
-  const_cast<float&>(dev->device.ydpi) = fb_broadcast->dpi();
+  const_cast<float&>(dev->device.xdpi) = screen_view->dpi();
+  const_cast<float&>(dev->device.ydpi) = screen_view->dpi();
   const_cast<float&>(dev->device.fps) =
-    (fb_broadcast->refresh_rate_hz() * 1000) / 1000.0f;
+    (screen_view->refresh_rate_hz() * 1000) / 1000.0f;
   const_cast<int&>(dev->device.minSwapInterval) = 1;
   const_cast<int&>(dev->device.maxSwapInterval) = 1;
   *device = &dev->device.common;

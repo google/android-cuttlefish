@@ -31,7 +31,8 @@ using cvd::time::MonotonicTimePoint;
 using cvd::time::Nanoseconds;
 using cvd::time::Seconds;
 using cvd::time::TimeDifference;
-using vsoc::layout::framebuffer::TimeSpec;
+using vsoc::layout::screen::TimeSpec;
+using vsoc::layout::screen::CompositionStats;
 
 namespace cvd {
 
@@ -59,8 +60,7 @@ void TimeDifferenceToTimeSpec(const TimeDifference& td, TimeSpec* ts) {
 
 }  // namespace
 
-void StatsKeeper::GetLastCompositionStats(
-    vsoc::layout::framebuffer::CompositionStats* stats_p) {
+void StatsKeeper::GetLastCompositionStats(CompositionStats* stats_p) {
   if (stats_p) {
     TimeDifferenceToTimeSpec(last_composition_stats_.prepare_start.SinceEpoch(),
                              &stats_p->prepare_start);

@@ -27,14 +27,12 @@
 #include <libyuv.h>
 #include <system/graphics.h>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
-#include "common/vsoc/lib/framebuffer_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 
 #include "geometry_utils.h"
 #include "hwcomposer_common.h"
 
-using vsoc::framebuffer::FBBroadcastRegionView;
-using vsoc::framebuffer::FrameBufferRegionView;
+using vsoc::screen::ScreenRegionView;
 
 namespace cvd {
 
@@ -222,9 +220,9 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   uint8_t* src_y = src.buffer;
   int stride_y = stride_in_pixels;
   uint8_t* src_v = src_y + stride_y * src.height;
-  int stride_v = FBBroadcastRegionView::align(stride_y / 2, 16);
-  uint8_t* src_u = src_v + stride_v * src.height / 2;
-  int stride_u = FBBroadcastRegionView::align(stride_y / 2, 16);
+  int stride_v = ScreenRegionView::align(stride_y / 2, 16);
+  uint8_t* src_u = src_v + stride_v *  src.height / 2;
+  int stride_u = ScreenRegionView::align(stride_y / 2, 16);
 
   // Adjust for crop
   src_y += src.crop_y * stride_y + src.crop_x;
@@ -342,7 +340,7 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
 }  // namespace
 
 void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
-                                  int32_t fb_offset) {
+                                  int buffer_idx) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
@@ -362,7 +360,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
 
   uint8_t* src_buffer;
   uint8_t* dst_buffer = reinterpret_cast<uint8_t*>(
-      FrameBufferRegionView::GetInstance()->GetBufferFromOffset(fb_offset));
+      ScreenRegionView::GetInstance()->GetBuffer(buffer_idx));
   int retval = gralloc_module_->lock(
       gralloc_module_, src_layer->handle, GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
       src_priv_handle->x_res, src_priv_handle->y_res,
@@ -390,10 +388,10 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       src_layer->sourceCrop.bottom - src_layer->sourceCrop.top;
   src_layer_spec.format = src_priv_handle->format;
 
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
-  BufferSpec dst_layer_spec(dst_buffer, fb_broadcast->buffer_size(),
-                            fb_broadcast->x_res(), fb_broadcast->y_res(),
-                            fb_broadcast->line_length());
+  auto screen_view = ScreenRegionView::GetInstance();
+  BufferSpec dst_layer_spec(dst_buffer, screen_view->buffer_size(),
+                            screen_view->x_res(), screen_view->y_res(),
+                            screen_view->line_length());
   dst_layer_spec.crop_x = src_layer->displayFrame.left;
   dst_layer_spec.crop_y = src_layer->displayFrame.top;
   dst_layer_spec.crop_width =
@@ -422,12 +420,12 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
   int y_res = src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   size_t output_frame_size =
       x_res *
-    FBBroadcastRegionView::align(y_res * fb_broadcast->bytes_per_pixel(), 16);
+    ScreenRegionView::align(y_res * screen_view->bytes_per_pixel(), 16);
   while (needed_tmp_buffers > 0) {
     BufferSpec tmp(RotateTmpBuffer(needed_tmp_buffers), output_frame_size,
                    x_res, y_res,
-                   FBBroadcastRegionView::align(
-                       x_res * fb_broadcast->bytes_per_pixel(), 16));
+                   ScreenRegionView::align(
+                       x_res * screen_view->bytes_per_pixel(), 16));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
   }
@@ -448,8 +446,8 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       // Make width and height match the crop sizes on the source
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
-      int dst_stride = FBBroadcastRegionView::align(
-          src_width * fb_broadcast->bytes_per_pixel(), 16);
+      int dst_stride = ScreenRegionView::align(
+          src_width * screen_view->bytes_per_pixel(), 16);
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
@@ -489,7 +487,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       // TODO (jemoreira): Aligment (To align here may cause the needed size to
       // be bigger than the buffer, so care should be taken)
       dst_buffer_spec.stride =
-          dst_buffer_spec.width * fb_broadcast->bytes_per_pixel();
+          dst_buffer_spec.width * screen_view->bytes_per_pixel();
     }
     retval = DoScaling(src_layer_spec, dst_buffer_spec, needs_vflip);
     needs_vflip = false;
@@ -553,7 +551,7 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
                            int32_t vsync_period_ns)
     : BaseComposer(vsync_base_timestamp, vsync_period_ns),
       tmp_buffer_(kNumTmpBufferPieces *
-                  FBBroadcastRegionView::GetInstance()->buffer_size()) {}
+                  ScreenRegionView::GetInstance()->buffer_size()) {}
 
 VSoCComposer::~VSoCComposer() {}
 
@@ -601,33 +599,33 @@ int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 
 int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   int targetFbs = 0;
-  int32_t fb_offset = NextFrameBufferOffset();
+  int buffer_idx = NextScreenBuffer();
 
   // The framebuffer target layer should be composed if at least one layers was
   // marked HWC_FRAMEBUFFER or if it's the only layer in the composition
   // (unlikely)
-  bool compose_fb_target = true;
+  bool fb_target = true;
   for (size_t idx = 0; idx < num_layers; idx++) {
     if (layers[idx].compositionType == HWC_FRAMEBUFFER) {
       // At least one was found
-      compose_fb_target = true;
+      fb_target = true;
       break;
     }
     if (layers[idx].compositionType == HWC_OVERLAY) {
       // Not the only layer in the composition
-      compose_fb_target = false;
+      fb_target = false;
     }
   }
 
   // When the framebuffer target needs to be composed, it has to be go first.
-  if (compose_fb_target) {
+  if (fb_target) {
     for (size_t idx = 0; idx < num_layers; idx++) {
       if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
         if (SanityCheckLayer(layers[idx]) != 0) {
           ALOGE("FRAMEBUFFER_TARGET layer (%zu), failed sanity check", idx);
           return -EINVAL;
         }
-        CompositeLayer(&layers[idx], fb_offset);
+        CompositeLayer(&layers[idx], buffer_idx);
         break;
       }
     }
@@ -643,13 +641,13 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
           ALOGE("Layer (%zu) failed sanity check", idx);
           return -EINVAL;
       }
-      CompositeLayer(&layers[idx], fb_offset);
+      CompositeLayer(&layers[idx], buffer_idx);
     }
   }
   if (targetFbs != 1) {
     ALOGW("Saw %zu layers, posted=%d", num_layers, targetFbs);
   }
-  Broadcast(fb_offset);
+  Broadcast(buffer_idx);
   return 0;
 }
 

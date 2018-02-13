@@ -19,12 +19,12 @@
 #include "common/vsoc/shm/lock.h"
 #include "common/vsoc/shm/version.h"
 
-// Memory layout for the hwcomposer and hwcomposer broadcast regions
+// Memory layout for screen region
 
 namespace vsoc {
 namespace layout {
 
-namespace framebuffer {
+namespace screen {
 struct TimeSpec {
   int64_t ts_sec;
   uint32_t ts_nsec;
@@ -43,7 +43,7 @@ struct CompositionStats {
   TimeSpec set_end;
 };
 
-struct FBBroadcastLayout : public RegionLayout {
+struct ScreenLayout : public RegionLayout {
   static const char* region_name;
   // Display properties
   uint32_t x_res;
@@ -56,13 +56,14 @@ struct FBBroadcastLayout : public RegionLayout {
   SpinLock bcast_lock;
   // The frame sequential number
   std::atomic<uint32_t> seq_num;
-  // The offset in the gralloc buffer region of the current frame buffer.
-  uint32_t frame_offset;
+  // The index of the buffer containing the current frame.
+  int32_t buffer_index;
   CompositionStats stats;
+  uint8_t buffer[0];
 };
-ASSERT_SHM_COMPATIBLE(FBBroadcastLayout, fb_broadcast);
+ASSERT_SHM_COMPATIBLE(ScreenLayout, screen);
 
-}  // namespace framebuffer
+}  // namespace screen
 
 }  // namespace layout
 }  // namespace vsoc
