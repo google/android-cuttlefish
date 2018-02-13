@@ -84,6 +84,10 @@ class CircularQueueBase {
   intptr_t WriteReserveLocked(RegionSignalingInterface* r, size_t bytes,
                               Range* t, bool non_blocking);
 
+  bool RecoverBase() {
+    return lock_.Recover();
+  }
+
   // Note: Both of these fields may hold values larger than the buffer size,
   // they should be interpreted modulo the buffer size. This fact along with the
   // buffer size being a power of two greatly simplyfies the index calculations.
@@ -122,6 +126,10 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
    */
   intptr_t Write(RegionSignalingInterface* r, const char* buffer_in,
                  std::size_t bytes, bool non_blocking = false);
+
+  bool Recover() {
+    return this->RecoverBase();
+  }
 
  protected:
   using Range = typename CircularQueueBase<SizeLog2>::Range;
@@ -168,6 +176,10 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
           const iovec *iov,
           size_t iov_count,
           bool non_blocking = false);
+
+  bool Recover() {
+    return this->RecoverBase();
+  }
 
  protected:
   static_assert(CircularQueueBase<SizeLog2>::BufferSize >= MaxPacketSize,
