@@ -44,9 +44,32 @@ struct QueuePair {
   std::uint32_t port_;
 
   SpinLock queue_state_lock_;
+
+  bool Recover() {
+    bool recovered = false;
+    bool rval = host_to_guest.Recover();
+    recovered = recovered || rval;
+    rval = guest_to_host.Recover();
+    recovered = recovered || rval;
+    rval = queue_state_lock_.Recover();
+    recovered = recovered || rval;
+    // TODO: Put queue_state_ and port_ recovery here, probably after grabbing
+    // the queue_state_lock_.
+    return recovered;
+  }
 };
 
 struct SocketForwardLayout : public RegionLayout {
+  bool Recover() {
+    bool recovered = false;
+    for (auto& i : queues_) {
+      bool rval = i.Recover();
+      recovered = recovered || rval;
+    }
+    //TODO: consider handling the sequence number here
+    return recovered;
+  }
+
   QueuePair queues_[version_info::socket_forward::kNumQueues];
   std::atomic_uint32_t seq_num;
   static const char* region_name;

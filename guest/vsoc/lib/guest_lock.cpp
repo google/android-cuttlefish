@@ -41,5 +41,9 @@ void GuestLock::Unlock() {
   }
 }
 
+bool GuestLock::Recover() {
+  return RecoverSingleSided();
+}
+
 }  // namespace layout
 }  // namespace vsoc
