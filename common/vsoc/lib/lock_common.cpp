@@ -34,10 +34,20 @@ static_assert(HostWaitingFlag, "HostWaitingFlag is 0");
 static_assert((GuestWaitingFlag & HostWaitingFlag) == 0,
               "Waiting flags should not share bits");
 
-// const uint32_t ReservedForRobustLocksFlag = 0x20000000U;
+// Set if the current owner is the host
+const uint32_t HostIsOwner = 0x20000000U;
 
 // PID_MAX_LIMIT appears to be 0x00400000U, so we're probably ok here
-const uint32_t OwnerMask = 0x1FFFFFFFU;
+const uint32_t OwnerMask = 0x3FFFFFFFU;
+
+uint32_t MakeOwnerTid(uint32_t raw_tid) {
+  if (Sides::OurSide == Sides::Host) {
+    return (raw_tid | HostIsOwner) & OwnerMask;
+  } else {
+    return raw_tid & (OwnerMask & ~HostIsOwner);
+  }
+}
+
 };  // namespace
 
 namespace vsoc {
@@ -47,7 +57,7 @@ namespace vsoc {
  */
 bool vsoc::layout::WaitingLockBase::TryLock(uint32_t tid,
                                             uint32_t* expected_out) {
-  uint32_t masked_tid = tid & OwnerMask;
+  uint32_t masked_tid = MakeOwnerTid(tid);
   uint32_t expected = LockFree;
   while (1) {
     // First try to lock assuming that the mutex is free
@@ -94,7 +104,8 @@ layout::Sides vsoc::layout::WaitingLockBase::UnlockCommon(uint32_t tid) {
 
   // We didn't hold the lock. This process is insane and must die before it
   // does damage.
-  if ((tid ^ expected_state) & OwnerMask) {
+  uint32_t marked_tid = MakeOwnerTid(tid);
+  if ((marked_tid ^ expected_state) & OwnerMask) {
     LOG(FATAL) << tid << " unlocking " << this << " owned by "
                << expected_state;
   }
@@ -106,13 +117,19 @@ layout::Sides vsoc::layout::WaitingLockBase::UnlockCommon(uint32_t tid) {
       break;
     }
   }
-  if ((expected_state ^ tid) & OwnerMask) {
+  if ((expected_state ^ marked_tid) & OwnerMask) {
     LOG(FATAL) << "Lock owner of " << this << " changed from " << tid << " to "
                << expected_state << " during unlock";
   }
   Sides rval;
   rval.value_ = expected_state & (GuestWaitingFlag | HostWaitingFlag) >> 30;
   return rval;
+}
+
+bool vsoc::layout::WaitingLockBase::RecoverSingleSided() {
+  // No need to signal because the caller ensured that there were no other
+  // threads...
+  return lock_uint32_.exchange(LockFree) != LockFree;
 }
 
 void layout::GuestAndHostLock::Lock(RegionView* region) {
@@ -128,6 +145,29 @@ void layout::GuestAndHostLock::Lock(RegionView* region) {
 
 void layout::GuestAndHostLock::Unlock(RegionView* region) {
   region->SendSignal(UnlockCommon(gettid()), &lock_uint32_);
+}
+
+bool layout::GuestAndHostLock::Recover(RegionView* region) {
+  uint32_t expected_state = lock_uint32_;
+  uint32_t expected_owner_bit = (Sides::OurSide == Sides::Host) ? HostIsOwner : 0;
+  // This avoids check then act by reading exactly once and then
+  // eliminating the states where Recover should be a noop.
+  if (expected_state == LockFree) {
+    return false;
+  }
+  // Owned by the other side, do nothing.
+  if ((expected_state & HostIsOwner) != expected_owner_bit) {
+    return false;
+  }
+  // At this point we know two things:
+  //   * The lock was held by our side
+  //   * There are no other threads running on our side (precondition
+  //     for calling Recover())
+  // Therefore, we know that the current expected value should still
+  // be in the lock structure. Use the normal unlock logic, providing
+  // the tid that we observed in the lock.
+  region->SendSignal(UnlockCommon(expected_state), &lock_uint32_);
+  return true;
 }
 
 }  // namespace vsoc

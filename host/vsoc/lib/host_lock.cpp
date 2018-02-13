@@ -43,5 +43,9 @@ void HostLock::Unlock() {
   }
 }
 
+bool HostLock::Recover() {
+  return RecoverSingleSided();
+}
+
 }  // namespace layout
 }  // namespace vsoc
