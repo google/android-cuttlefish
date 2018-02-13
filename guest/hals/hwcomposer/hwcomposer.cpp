@@ -22,15 +22,15 @@
 #include <hardware/hwcomposer_defs.h>
 #include <log/log.h>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "guest/hals/gralloc/gralloc_vsoc_priv.h"
 
 // This file contains just a skeleton hwcomposer, the first step in the
 // multisided vsoc hwcomposer for cuttlefish.
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 
-// TODO(jemoreira): FBBroadcastRegionView may belong in the HWC region
+// TODO(jemoreira): ScreenRegionView may become the HWC region
 namespace {
 
 // Ensures that the layer does not include any inconsistencies
@@ -165,7 +165,7 @@ int hwc_set(struct hwc_composer_device_1* dev, size_t numDisplays,
       const vsoc_buffer_handle_t* fb_handle =
           reinterpret_cast<const vsoc_buffer_handle_t*>(
               list->hwLayers[i].handle);
-      FBBroadcastRegionView::GetInstance()->BroadcastNewFrame(
+      ScreenRegionView::GetInstance()->BroadcastNewFrame(
           fb_handle->offset);
       break;
     }
@@ -233,18 +233,18 @@ int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/, int disp,
 }
 
 int32_t vsoc_hwc_attribute(uint32_t attribute) {
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  auto screen_view = ScreenRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
-      return 1000000000 / fb_broadcast->refresh_rate_hz();
+      return 1000000000 / screen_view->refresh_rate_hz();
     case HWC_DISPLAY_WIDTH:
-      return fb_broadcast->x_res();
+      return screen_view->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return fb_broadcast->y_res();
+      return screen_view->y_res();
     case HWC_DISPLAY_DPI_X:
     case HWC_DISPLAY_DPI_Y:
       // The number of pixels per thousand inches
-      return fb_broadcast->dpi() * 1000;
+      return screen_view->dpi() * 1000;
     case HWC_DISPLAY_COLOR_TRANSFORM:
       // TODO(jemoreira): Add the other color transformations
       return HAL_COLOR_TRANSFORM_IDENTITY;
@@ -317,8 +317,8 @@ int hwc_open(const struct hw_module_t* module, const char* name,
   dev->base.getDisplayConfigs = hwc_getDisplayConfigs;
   dev->base.getDisplayAttributes = hwc_getDisplayAttributes;
 
-  if (!FBBroadcastRegionView::GetInstance()) {
-    ALOGE("Unable to open framebuffer broadcaster (%s)", __FUNCTION__);
+  if (!ScreenRegionView::GetInstance()) {
+    ALOGE("Unable to open screen region (%s)", __FUNCTION__);
     delete dev;
     return -1;
   }

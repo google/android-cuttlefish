@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "fb_bcast_region_view.h"
+#include "screen_region_view.h"
 #include "host/libs/config/host_config.h"
 #include <stdio.h>
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 
 int main() {
   uint32_t frame_num = 0;
-  uint32_t offset = 0;
+  int buffer_id = 0;
 
 #if defined(CUTTLEFISH_HOST)
-  auto region = FBBroadcastRegionView::GetInstance(vsoc::GetDomain().c_str());
+  auto region = ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
 #else
-  auto region = FBBroadcastRegionView::GetInstance();
+  auto region = ScreenRegionView::GetInstance();
 #endif
   if (!region) {
     fprintf(stderr, "Error opening region\n");
@@ -34,8 +34,8 @@ int main() {
   }
 
   while (1) {
-    offset = region->WaitForNewFrameSince(&frame_num);
-    printf("Signaled frame_num = %d, offset = 0x%x\n", frame_num, offset);
+    buffer_id = region->WaitForNewFrameSince(&frame_num);
+    printf("Signaled frame_num = %d, buffer_id = %d\n", frame_num, buffer_id);
   }
 
   return 0;

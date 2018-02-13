@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/vsoc/shm/framebuffer_layout.h"
+#include "common/vsoc/shm/screen_layout.h"
 
 namespace vsoc {
 namespace layout {
 
-namespace framebuffer {
+namespace screen {
 
-const char* FrameBufferLayout::region_name = "framebuffer";
+const char* ScreenLayout::region_name = "screen";
 
-}  // framebuffer
-}  // layout
-}  // vsoc
+}  // namespace screen
+}  // namespace layout
+}  // namespace vsoc

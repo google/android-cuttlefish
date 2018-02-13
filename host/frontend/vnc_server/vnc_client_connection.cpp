@@ -41,7 +41,7 @@ using cvd::Message;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
 using cvd::vnc::VncClientConnection;
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 
 DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
 
@@ -144,18 +144,18 @@ std::int32_t int32_tAt(const void* p) {
 }
 
 std::uint32_t RedVal(std::uint32_t pixel) {
-  return (pixel >> FBBroadcastRegionView::kRedShift) &
-         ((0x1 << FBBroadcastRegionView::kRedBits) - 1);
+  return (pixel >> ScreenRegionView::kRedShift) &
+         ((0x1 << ScreenRegionView::kRedBits) - 1);
 }
 
 std::uint32_t BlueVal(std::uint32_t pixel) {
-  return (pixel >> FBBroadcastRegionView::kBlueShift) &
-         ((0x1 << FBBroadcastRegionView::kBlueBits) - 1);
+  return (pixel >> ScreenRegionView::kBlueShift) &
+         ((0x1 << ScreenRegionView::kBlueBits) - 1);
 }
 
 std::uint32_t GreenVal(std::uint32_t pixel) {
-  return (pixel >> FBBroadcastRegionView::kGreenShift) &
-         ((0x1 << FBBroadcastRegionView::kGreenBits) - 1);
+  return (pixel >> ScreenRegionView::kGreenShift) &
+         ((0x1 << ScreenRegionView::kGreenBits) - 1);
 }
 }  // namespace
 namespace cvd {
@@ -313,7 +313,7 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
 
 void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
                                           const Stripe& stripe) const {
-  using Pixel = FBBroadcastRegionView::Pixel;
+  using Pixel = ScreenRegionView::Pixel;
   auto& fbu = *frame_buffer_update;
   AppendRawStripeHeader(&fbu, stripe);
   auto init_size = fbu.size();

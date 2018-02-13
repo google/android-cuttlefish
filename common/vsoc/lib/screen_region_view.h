@@ -18,23 +18,19 @@
 #include <memory>
 
 #include "common/vsoc/lib/typed_region_view.h"
-#include "common/vsoc/shm/fb_bcast_layout.h"
 #include "common/vsoc/shm/graphics.h"
+#include "common/vsoc/shm/screen_layout.h"
 #include "uapi/vsoc_shm.h"
 
 namespace vsoc {
-namespace framebuffer {
+namespace screen {
 
 // Provides information related to the device's screen. Allows to query screen
 // properties such as resolution and dpi, as well as subscribe/notify to/of
-// changes on the screen contents. It's independent of where the buffer holding
-// the screen contents is. This region will eventually become the display
-// region, which will represent display hardware including the hardware
-// composer.
-class FBBroadcastRegionView
-    : public vsoc::TypedRegionView<
-          FBBroadcastRegionView,
-          vsoc::layout::framebuffer::FBBroadcastLayout> {
+// changes on the screen contents. It also holds the contents of the display.
+class ScreenRegionView
+    : public vsoc::TypedRegionView<ScreenRegionView,
+                                   vsoc::layout::screen::ScreenLayout> {
  public:
   static int align(int input, int alignment = kAlignment) {
     return (input + alignment - 1) & -alignment;
@@ -64,23 +60,31 @@ class FBBroadcastRegionView
     return (align(x_res() * bytes_per_pixel()) * y_res()) + kSwiftShaderPadding;
   }
 
+  int number_of_buffers() const;
+
+  // Gets a pointer to the beginning of a buffer. Does not perform any bound
+  // checks on the index.
+  void* GetBuffer(int buffer_idx);
+
   // Broadcasts a new frame.
-  // frame_offset is the offset of the current frame in the framebuffer region.
-  // stats holds performance information of the last composition, can be null.
+  // buffer_idx is the index of the buffer containing the composed screen, it's
+  // a number in the range [0, number_of_buffers() - 1].
+  // Stats holds performance information of the last composition, can be null.
   void BroadcastNewFrame(
-      uint32_t frame_offset,
-      const vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
+      int buffer_idx,
+      const vsoc::layout::screen::CompositionStats* stats = nullptr);
 
   // Waits for a new frame (one with a different seq_num than last one we saw).
-  // Returns the offset of the new frame or zero if there was an error, stores
-  // the new sequential number in *last_seq_num. The frame sequential number are
-  // provided by the hwcomposer and expected to increase monotonically over time
-  // (though it's not a hard requirement), this numbers are guaranteed to be
-  // non-zero when a valid frame is available. Performance statistics are
-  // returned through the stats parameter when it's not null.
-  uint32_t WaitForNewFrameSince(
+  // Returns the index of the buffer containing the new frame or a negative
+  // number if there was an error, stores the new sequential number in
+  // *last_seq_num. The frame sequential numbers will be provided by the
+  // hwcomposer and expected to increase monotonically over time (though it's
+  // not a hard requirement), this numbers are guaranteed to be non-zero when a
+  // valid frame is available. Performance statistics are returned through the
+  // stats parameter when it's not null.
+  int WaitForNewFrameSince(
       uint32_t* last_seq_num,
-      vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
+      vsoc::layout::screen::CompositionStats* stats = nullptr);
 
   using Pixel = uint32_t;
   static constexpr int kSwiftShaderPadding = 4;
@@ -92,6 +96,9 @@ class FBBroadcastRegionView
   static constexpr int kBlueBits = 8;
   static constexpr uint32_t kFbPixelFormat = vsoc::VSOC_PIXEL_FORMAT_RGBA_8888;
   static constexpr int kAlignment = 8;
+
+ protected:
+  const uint8_t* first_buffer() const;
 };
-}  // namespace framebuffer
+}  // namespace screen
 }  // namespace vsoc
