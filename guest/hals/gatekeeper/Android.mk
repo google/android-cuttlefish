@@ -17,6 +17,12 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
+
+# See b/67109557
+ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
+LOCAL_MULTILIB := first
+endif
+
 LOCAL_VENDOR_MODULE := true
 LOCAL_MODULE := gatekeeper.vsoc
 LOCAL_MODULE_RELATIVE_PATH := hw
