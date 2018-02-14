@@ -268,24 +268,8 @@ status_t EmulatedCamera::getCameraInfo(struct camera_info* info) {
   return EmulatedBaseCamera::getCameraInfo(info);
 }
 
-status_t EmulatedCamera::getImageMetadata(struct ImageMetadata* meta) {
-  meta->mLensFocalLength =
-      mParameters.getFloat(CameraParameters::KEY_FOCAL_LENGTH);
-  meta->mGpsLatitude = mParameters.getFloat(CameraParameters::KEY_GPS_LATITUDE);
-  meta->mGpsLongitude =
-      mParameters.getFloat(CameraParameters::KEY_GPS_LONGITUDE);
-  meta->mGpsAltitude = mParameters.getFloat(CameraParameters::KEY_GPS_ALTITUDE);
-  meta->mGpsTimestamp = mParameters.getInt(CameraParameters::KEY_GPS_TIMESTAMP);
-  meta->mThumbnailWidth =
-      mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
-  meta->mThumbnailHeight =
-      mParameters.getInt(CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
-  const char* temp =
-      mParameters.get(CameraParameters::KEY_GPS_PROCESSING_METHOD);
-  if (temp) {
-    meta->mGpsProcessingMethod = temp;
-  }
-  return NO_ERROR;
+const CameraParameters* EmulatedCamera::getCameraParameters() {
+  return &mParameters;
 }
 
 status_t EmulatedCamera::setPreviewWindow(struct preview_stream_ops* window) {

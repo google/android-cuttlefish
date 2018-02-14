@@ -25,8 +25,9 @@
 #include <MetadataBufferType.h>
 #include <cutils/log.h>
 #include "EmulatedCameraDevice.h"
-#include "ImageMetadata.h"
 #include "JpegCompressor.h"
+#include "Exif.h"
+#include "Thumbnail.h"
 
 namespace android {
 
@@ -237,27 +238,49 @@ void CallbackNotifier::onNextFrameAvailable(const void* frame,
       /* Compress the frame to JPEG. Note that when taking pictures, we
        * have requested camera device to provide us with NV21 frames. */
       NV21JpegCompressor compressor;
-      struct ::ImageMetadata meta;
-      status_t res = camera_dev->getImageMetadata(&meta);
-      if (res == NO_ERROR) {
-        res = compressor.compressRawImage(frame, &meta, mJpegQuality);
-        if (res == NO_ERROR) {
-          camera_memory_t* jpeg_buff =
-              mGetMemoryCB(-1, compressor.getCompressedSize(), 1, mCBOpaque);
-          if (NULL != jpeg_buff && NULL != jpeg_buff->data) {
-            compressor.getCompressedImage(jpeg_buff->data);
-            mDataCB(CAMERA_MSG_COMPRESSED_IMAGE, jpeg_buff, 0, NULL, mCBOpaque);
-            jpeg_buff->release(jpeg_buff);
-          } else {
-            ALOGE("%s: Memory failure in CAMERA_MSG_VIDEO_FRAME", __FUNCTION__);
+      const CameraParameters* cameraParameters = camera_dev->getCameraParameters();
+      if (cameraParameters == nullptr) {
+        ALOGE("%s: Could not get camera parameters to take picture.", __FUNCTION__);
+        return;
+      }
+
+      ExifData* exifData = createExifData(*cameraParameters);
+
+      // Create a thumbnail and place the pointer and size in the EXIF
+      // data structure. This transfers ownership to the EXIF data and
+      // the memory will be deallocated in the freeExifData call below.
+      int width = camera_dev->getFrameWidth();
+      int height = camera_dev->getFrameHeight();
+      int thumbWidth = cameraParameters->getInt(
+              CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH);
+      int thumbHeight = cameraParameters->getInt(
+              CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT);
+      if (thumbWidth > 0 && thumbHeight > 0) {
+          if (!createThumbnail(static_cast<const unsigned char*>(frame),
+                               width, height, thumbWidth, thumbHeight,
+                               mJpegQuality, exifData)) {
+              // Not really a fatal error, we'll just keep going
+              ALOGE("%s: Failed to create thumbnail for image",
+                    __FUNCTION__);
           }
+      }
+
+      status_t res = compressor.compressRawImage(frame, exifData, mJpegQuality, width, height);
+      if (res == NO_ERROR) {
+        camera_memory_t* jpeg_buff =
+            mGetMemoryCB(-1, compressor.getCompressedSize(), 1, mCBOpaque);
+        if (NULL != jpeg_buff && NULL != jpeg_buff->data) {
+          compressor.getCompressedImage(jpeg_buff->data);
+          mDataCB(CAMERA_MSG_COMPRESSED_IMAGE, jpeg_buff, 0, NULL, mCBOpaque);
+          jpeg_buff->release(jpeg_buff);
         } else {
-          ALOGE("%s: Compression failure in CAMERA_MSG_VIDEO_FRAME",
-                __FUNCTION__);
+          ALOGE("%s: Memory failure in CAMERA_MSG_VIDEO_FRAME", __FUNCTION__);
         }
       } else {
-        ALOGE("%s: Image Metadata acquisition failure.", __FUNCTION__);
+        ALOGE("%s: Compression failure in CAMERA_MSG_VIDEO_FRAME",
+              __FUNCTION__);
       }
+      freeExifData(exifData);
     }
   }
 }

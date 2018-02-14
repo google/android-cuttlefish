@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <cutils/native_handle.h>
 #include <hardware/gralloc.h>
 #include <log/log.h>

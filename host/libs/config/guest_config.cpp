@@ -23,7 +23,23 @@
 #include <libxml/tree.h>
 #include "host/libs/config/host_config.h"
 
+namespace {
+std::string StringFromEnv(const char* varname, std::string defval) {
+  const char* const valstr = getenv(varname);
+  if (!valstr) {
+    return defval;
+  }
+  return valstr;
+}
+}  // namespace
+
+
 std::string g_default_libvirt_domain{vsoc::GetPerInstanceDefault("cvd-")};
+//TODO(b/72969289) This should be generated
+DEFINE_string(dtb,
+              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+                  "/config/cuttlefish.dtb",
+              "Location of the cuttlefish.dtb file.");
 DEFINE_string(libvirt_domain, g_default_libvirt_domain.c_str(),
               "Domain name to use with libvirt");
 
@@ -114,6 +130,7 @@ void ConfigureOperatingSystem(xmlNode* root, const std::string& kernel,
   xmlNewChild(os, nullptr, xc("kernel"), xc(kernel.c_str()));
   xmlNewChild(os, nullptr, xc("initrd"), xc(initrd.c_str()));
   xmlNewChild(os, nullptr, xc("cmdline"), xc(args.c_str()));
+  xmlNewChild(os, nullptr, xc("dtb"), xc(FLAGS_dtb.c_str()));
 }
 
 // Configure QEmu specific arguments.

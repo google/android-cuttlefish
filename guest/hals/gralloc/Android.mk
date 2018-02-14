@@ -42,6 +42,9 @@ LOCAL_SHARED_LIBRARIES := \
     liblog \
     vsoc_lib
 
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
+
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
 LOCAL_MODULE_RELATIVE_PATH := hw
 else
