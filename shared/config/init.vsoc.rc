@@ -14,9 +14,6 @@ on early-init
     setprop service.adb.tcp.port 5555
 
 on init
-    chown system root /dev/fb_broadcast
-    chmod 0660 /dev/fb_broadcast
-    restorecon /dev/fb_broadcast
     chown system root /dev/input_events
     chmod 0660 /dev/input_events
     restorecon /dev/input_events
@@ -26,9 +23,9 @@ on init
     chown audioserver root /dev/audio_data
     chmod 0660 /dev/audio_data
     restorecon /dev/audio_data
-    chown system root /dev/framebuffer
-    chmod 0660 /dev/framebuffer
-    restorecon /dev/framebuffer
+    chown system root /dev/screen
+    chmod 0660 /dev/screen
+    restorecon /dev/screen
 
 
 on fs
