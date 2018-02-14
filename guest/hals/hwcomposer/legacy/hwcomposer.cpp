@@ -98,10 +98,12 @@ std::string CompositionString(int type) {
       return "Background";
     case HWC_FRAMEBUFFER_TARGET:
       return "FramebufferTarget";
+#if VSOC_PLATFORM_SDK_AFTER(K)
     case HWC_SIDEBAND:
       return "Sideband";
     case HWC_CURSOR_OVERLAY:
       return "CursorOverlay";
+#endif
     default:
       return std::string("Unknown (") + std::to_string(type) + ")";
   }
