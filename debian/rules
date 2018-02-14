@@ -13,7 +13,6 @@ DEB_DISPLACE_FILES_cuttlefish-integration += \
 
 build:
 	make -C host/commands/adbshell
-	make -C host/commands/wifirouter
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/config-package.mk

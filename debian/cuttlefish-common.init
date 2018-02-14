@@ -80,9 +80,6 @@ start() {
       create_mobile_interface $i | /usr/bin/virsh net-create /dev/fd/0
       create_wifi_interface $i | /usr/bin/virsh net-create /dev/fd/0
     done
-
-    /usr/bin/nohup /usr/sbin/wifirouter 2>&1 >/dev/null &
-    echo $! > /var/run/wifirouter.pid
 }
 
 stop() {
@@ -90,7 +87,6 @@ stop() {
       /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $i)"
       /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $i)"
     done
-    /usr/bin/pkill -F /var/run/wifirouter.pid
     /sbin/rmmod mac80211_hwsim
 }
 

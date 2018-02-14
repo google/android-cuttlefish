@@ -1,5 +1,4 @@
 host/deploy/install_zip.sh /usr/bin/
 host/deploy/unpack_boot_image.py /usr/lib/cuttlefish-common/bin/
-host/commands/wifirouter/wifirouter /usr/sbin/
 host/packages/cuttlefish-common/* /
 
