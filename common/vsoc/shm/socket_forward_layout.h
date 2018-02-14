@@ -25,11 +25,13 @@ namespace vsoc {
 namespace layout {
 namespace socket_forward {
 
+constexpr std::size_t kMaxPacketSize = 8192;
+
 struct QueuePair {
   // Traffic originating from host that proceeds towards guest.
-  CircularPacketQueue<16, 8192> host_to_guest;
+  CircularPacketQueue<16, kMaxPacketSize> host_to_guest;
   // Traffic originating from guest that proceeds towards host.
-  CircularPacketQueue<16, 8192> guest_to_host;
+  CircularPacketQueue<16, kMaxPacketSize> guest_to_host;
 
   enum QueueState : std::uint32_t {
     INACTIVE = 0,
