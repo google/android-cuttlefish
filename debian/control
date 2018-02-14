@@ -37,7 +37,10 @@ Depends:
  qemu-system-common (>= 2.8.0),
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
- socat
+ socat,
+ ${misc:Depends}
+Provides: ${diverted-files}
+Conflicts: ${diverted-files}
 Description: Cuttlefish Android Virtual Device companion package.
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.

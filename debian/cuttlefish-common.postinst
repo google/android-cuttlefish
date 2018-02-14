@@ -15,3 +15,5 @@ case "$1" in
     # End automatically added section
     ;;
 esac
+
+#DEBHELPER#
