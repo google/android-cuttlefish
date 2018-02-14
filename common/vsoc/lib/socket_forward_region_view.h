@@ -27,6 +27,88 @@ namespace socket_forward {
 
 using Message = std::vector<std::uint8_t>;
 
+struct Header {
+  std::uint32_t payload_length;
+  std::uint32_t generation;
+  enum MessageType : std::uint32_t {
+    DATA = 0,
+    BEGIN,
+    END,
+  };
+  MessageType message_type;
+};
+
+constexpr std::size_t kMaxPayloadSize =
+  layout::socket_forward::kMaxPacketSize - sizeof(Header);
+
+struct Packet {
+ private:
+  Header header_;
+  char payload_data_[kMaxPayloadSize];
+
+  static Packet MakePacket(Header::MessageType type, std::uint32_t generation) {
+    Packet packet{};
+    packet.set_generation(generation);
+    packet.header_.message_type = type;
+    return packet;
+  }
+
+ public:
+  static Packet MakeBegin(std::uint32_t generation) {
+    return MakePacket(Header::BEGIN, generation);
+  }
+
+  static Packet MakeEnd(std::uint32_t generation) {
+    return MakePacket(Header::END, generation);
+  }
+
+  static Packet MakeData(std::uint32_t generation) {
+    return MakePacket(Header::DATA, generation);
+  }
+
+  void set_payload_length(std::uint32_t length) {
+    CHECK_LE(length, sizeof payload_data_);
+    header_.message_type = Header::DATA;
+    header_.payload_length = length;
+  }
+
+  std::uint32_t generation() const {
+    return header_.generation;
+  }
+
+  void set_generation(std::uint32_t generation) {
+    header_.generation = generation;
+  }
+
+  char* payload() {
+    return payload_data_;
+  }
+
+  std::uint32_t payload_length() const {
+    return header_.payload_length;
+  }
+
+  Header::MessageType message_type() const {
+    return header_.message_type;
+  }
+
+
+  char* raw_data() {
+    return reinterpret_cast<char*>(this);
+  }
+
+  const char* raw_data() const {
+    return reinterpret_cast<const char*>(this);
+  }
+
+  size_t raw_data_size() const {
+    return payload_length() + sizeof header_;
+  }
+};
+
+static_assert(sizeof(Packet) == layout::socket_forward::kMaxPacketSize, "");
+static_assert(std::is_pod<Packet>{}, "");
+
 // Data sent will start with a uint32_t indicating the number of bytes being
 // sent, followed be the data itself
 class SocketForwardRegionView
