@@ -26,13 +26,14 @@
 
 #include <unistd.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/vsoc/lib/socket_forward_region_view.h"
-#include "common/libs/tcp_socket/tcp_socket.h"
 
 #ifdef CUTTLEFISH_HOST
 #include "host/libs/config/host_config.h"
 #endif
 
+using vsoc::socket_forward::Packet;
 using vsoc::socket_forward::SocketForwardRegionView;
 
 #ifdef CUTTLEFISH_HOST
@@ -43,7 +44,7 @@ namespace {
 class Worker {
  public:
   Worker(SocketForwardRegionView::Connection shm_connection,
-         cvd::ClientSocket socket)
+         cvd::SharedFD socket)
       : shm_connection_(std::move(shm_connection)),
         socket_(std::move(socket)){}
 
@@ -54,7 +55,7 @@ class Worker {
         return true;
       }
     }
-    if (shm_connection_.closed() || socket_.closed()) {
+    if (shm_connection_.closed() || !socket_->IsOpen()) {
       std::lock_guard<std::mutex> guard(closed_lock_);
       closed_ = true;
     }
@@ -76,35 +77,54 @@ class Worker {
 
  private:
   void SocketToShmImpl() {
-    constexpr int kRecvSize = 8192;
+    auto shm_sender = shm_connection_.MakeSender();
 
-    auto sender = shm_connection_.MakeSender();
-
+    auto packet = Packet::MakeData();
     while (true) {
       if (closed()) {
         break;
       }
-      auto msg = socket_.RecvAny(kRecvSize);
-      if (msg.empty()) {
+      auto size = socket_->Recv(packet.payload(), sizeof packet.payload(), 0);
+      if (size <= 0) {
         break;
       }
-      sender.Send(std::move(msg));
+      packet.set_payload_length(size);
+      shm_sender.Send(packet);
     }
     LOG(INFO) << "Socket to shm exiting";
     close();
   }
 
+  ssize_t SocketSendAll(const Packet& packet) {
+    ssize_t written{};
+    while (written < static_cast<ssize_t>(packet.payload_length())) {
+      if (!socket_->IsOpen()) {
+        return -1;
+      }
+      auto just_written = socket_->Write(packet.payload() + written,
+                                         packet.payload_length() - written);
+      if (just_written <= 0) {
+        LOG(INFO) << "Couldn't write to client: "
+                  << strerror(socket_->GetErrno());
+        return just_written;
+      }
+      written += just_written;
+    }
+    return written;
+  }
+
   void ShmToSocketImpl() {
-    auto receiver = shm_connection_.MakeReceiver();
+    auto shm_receiver = shm_connection_.MakeReceiver();
+    Packet packet{};
     while (true) {
       if (closed()) {
         break;
       }
-      auto msg = receiver.Recv();
-      if (msg.empty() || socket_.closed()) {
+      shm_receiver.Recv(&packet);
+      if (packet.IsEnd()) {
         break;
       }
-      if (socket_.Send(msg) < 0) {
+      if (SocketSendAll(packet) < 0) {
         break;
       }
     }
@@ -113,7 +133,7 @@ class Worker {
   }
 
   SocketForwardRegionView::Connection shm_connection_;
-  cvd::ClientSocket socket_;
+  cvd::SharedFD socket_;
   bool closed_{};
   std::mutex closed_lock_;
 };
@@ -121,7 +141,7 @@ class Worker {
 // One thread for reading from shm and writing into a socket.
 // One thread for reading from a socket and writing into shm.
 void LaunchWorkers(SocketForwardRegionView::Connection conn,
-                   cvd::ClientSocket socket) {
+                   cvd::SharedFD socket) {
   auto worker = std::make_shared<Worker>(std::move(conn), std::move(socket));
   std::thread threads[] = {std::thread(Worker::SocketToShm, worker),
                            std::thread(Worker::ShmToSocket, worker)};
@@ -133,9 +153,11 @@ void LaunchWorkers(SocketForwardRegionView::Connection conn,
 #ifdef CUTTLEFISH_HOST
 [[noreturn]] void host(SocketForwardRegionView* shm, int port) {
   LOG(INFO) << "starting server on " << port;
-  cvd::ServerSocket server(port);
+  auto server = cvd::SharedFD::SocketLocalServer(port, SOCK_STREAM);
+  CHECK(server->IsOpen()) << "Could not start server on port " << port;
   while (true) {
-    auto client_socket = server.Accept();
+    auto client_socket = cvd::SharedFD::Accept(*server);
+    CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";
     auto conn = shm->OpenConnection(port);
     LOG(INFO) << "shm connection opened";
@@ -148,7 +170,8 @@ void LaunchWorkers(SocketForwardRegionView::Connection conn,
   while (true) {
     auto conn = shm->AcceptConnection();
     LOG(INFO) << "shm connection accepted";
-    auto sock = cvd::ClientSocket(conn.port());
+    auto sock = cvd::SharedFD::SocketLocalClient(conn.port(), SOCK_STREAM);
+    CHECK(sock->IsOpen()) << "Could not open socket to port " << conn.port();
     LOG(INFO) << "socket opened to " << conn.port();
     LaunchWorkers(std::move(conn), std::move(sock));
   }
@@ -170,7 +193,7 @@ SocketForwardRegionView* GetShm() {
 // makes sure we're running as root on the guest, no-op on the host
 void assert_correct_user() {
 #ifndef CUTTLEFISH_HOST
-    CHECK_EQ(getuid(), 0u) << "must run as root!";
+  CHECK_EQ(getuid(), 0u) << "must run as root!";
 #endif
 }
 

@@ -39,69 +39,44 @@ host_to_guest;
 guest_to_host;
 #endif
 
-using vsoc::socket_forward::Message;
 using vsoc::socket_forward::SocketForwardRegionView;
 
-constexpr std::int32_t kConnectionBegin = -1;
-constexpr std::int32_t kConnectionEnd = -2;
-
-Message SocketForwardRegionView::Recv(int connection_id) {
-  std::int32_t len{};
-  (data()->queues_[connection_id].*ReadDirection)
-      .Read(this, reinterpret_cast<char*>(&len), sizeof len);
-  if (len == kConnectionEnd) {
-    return {};
-  }
-  CHECK_NE(len, 0) << "zero-size message received";
-  CHECK_GT(len, 0) << "invalid size";
-  Message message(len);
-  (data()->queues_[connection_id].*ReadDirection)
-      .Read(this, reinterpret_cast<char*>(message.data()), message.size());
-  return message;
+void SocketForwardRegionView::Recv(int connection_id, Packet* packet) {
+  CHECK(packet != nullptr);
+  do {
+    (data()->queues_[connection_id].*ReadDirection)
+        .Read(this, reinterpret_cast<char*>(packet), sizeof *packet);
+  } while (packet->IsBegin());
+  // TODO(haining) check packet generation number
+  CHECK(!packet->empty()) << "zero-size data message received";
+  CHECK_LE(packet->payload_length(), kMaxPayloadSize) << "invalid size";
 }
 
-void SocketForwardRegionView::Send(int connection_id, const Message& message) {
-  if (message.empty()) {
+void SocketForwardRegionView::Send(int connection_id, const Packet& packet) {
+  if (packet.empty()) {
+    LOG(WARNING) << "ignoring empty packet (not sending)";
     return;
   }
-  std::int32_t len = message.size();
+  // TODO(haining) set packet generation number
+  CHECK_LE(packet.payload_length(), kMaxPayloadSize);
   (data()->queues_[connection_id].*WriteDirection)
-      .Write(this, reinterpret_cast<const char*>(&len), sizeof len);
-  (data()->queues_[connection_id].*WriteDirection)
-      .Write(this, reinterpret_cast<const char*>(message.data()),
-             message.size());
+      .Write(this, packet.raw_data(), packet.raw_data_length());
 }
 
 void SocketForwardRegionView::SendBegin(int connection_id) {
-  (data()->queues_[connection_id].*WriteDirection)
-      .Write(this, reinterpret_cast<const char*>(&kConnectionBegin),
-             sizeof kConnectionBegin);
+  Send(connection_id, Packet::MakeBegin());
 }
 
 void SocketForwardRegionView::SendEnd(int connection_id) {
-  (data()->queues_[connection_id].*WriteDirection)
-      .Write(this, reinterpret_cast<const char*>(&kConnectionEnd),
-             sizeof kConnectionEnd);
+  Send(connection_id, Packet::MakeEnd());
 }
 
 void SocketForwardRegionView::IgnoreUntilBegin(int connection_id) {
-  Message ignored(128);
-  while (true) {
-    std::int32_t len{};
+  Packet packet{};
+  do {
     (data()->queues_[connection_id].*ReadDirection)
-        .Read(this, reinterpret_cast<char*>(&len), sizeof len);
-    if (len == kConnectionBegin) {
-      break;
-    } else if (len == kConnectionEnd) {
-      continue;
-    }
-
-    CHECK_NE(len, 0) << "zero-size message received";
-    CHECK_GT(len, 0) << "invalid size";
-    ignored.resize(len);
-    (data()->queues_[connection_id].*ReadDirection)
-        .Read(this, reinterpret_cast<char*>(ignored.data()), ignored.size());
-  }
+        .Read(this, reinterpret_cast<char*>(&packet), sizeof packet);
+  } while (!packet.IsBegin());  // TODO(haining) check generation number
 }
 
 #ifdef CUTTLEFISH_HOST
@@ -231,8 +206,8 @@ void SocketForwardRegionView::Connection::IgnoreUntilBegin() {
   view_->IgnoreUntilBegin(connection_id_);
 }
 
-Message SocketForwardRegionView::Connection::Recv() {
-  return view_->Recv(connection_id_);
+void SocketForwardRegionView::Connection::Recv(Packet* packet) {
+  return view_->Recv(connection_id_, packet);
 }
 
 bool SocketForwardRegionView::Connection::closed() const {
@@ -247,10 +222,10 @@ void SocketForwardRegionView::Connection::SendBegin() {
   view_->SendBegin(connection_id_);
 }
 
-void SocketForwardRegionView::Connection::Send(const Message& message) {
+void SocketForwardRegionView::Connection::Send(const Packet& packet) {
   if (closed()) {
     LOG(INFO) << "connection closed, not sending\n";
     return;
   }
-  view_->Send(connection_id_, message);
+  view_->Send(connection_id_, packet);
 }
