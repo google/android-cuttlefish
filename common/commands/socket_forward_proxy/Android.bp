@@ -5,6 +5,7 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
+        "libcuttlefish_fs",
         "vsoc_lib",
         "liblog",
         "cuttlefish_tcp_socket",
