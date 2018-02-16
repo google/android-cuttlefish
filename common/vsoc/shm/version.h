@@ -114,23 +114,14 @@ const uint32_t version = 0;
 static const std::size_t InputEventsLayout_size = 3 * (1024 + 3 * 4);
 }  // namespace input_events
 
-// Versioning information for fb_bcast_layout.h
-// Changes to these structures will affect only the framebuffer broadcast region
-namespace fb_broadcast {
+// Versioning information for screen_layout.h
+// Changes to these structures will affect only the screen region.
+namespace screen {
 namespace {
-const uint32_t version = 3;
+const uint32_t version = 0;
 }
-static const std::size_t FBBroadcastLayout_size = 112;
-}  // namespace fb_broadcast
-
-// Versioning information for framebuffer_layout.h
-// Changes to these structures will affect only the framebuffer broadcast region
-namespace framebuffer {
-namespace {
-const uint32_t version = 1;
-}
-static const std::size_t FrameBufferLayout_size = 1;
-}  // namespace framebuffer
+static const std::size_t ScreenLayout_size = 112;
+}  // namespace screen
 
 // Versioning information for wifi_layout.h
 namespace wifi {

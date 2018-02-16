@@ -37,13 +37,11 @@
 #include <guest/libs/platform_support/api_level_fixes.h>
 
 #include "common/libs/auto_resources/auto_resources.h"
-#include "common/vsoc/lib/fb_bcast_region_view.h"
-#include "common/vsoc/lib/framebuffer_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "gralloc_vsoc_priv.h"
 #include "region_registry.h"
 
-using vsoc::framebuffer::FBBroadcastRegionView;
-using vsoc::framebuffer::FrameBufferRegionView;
+using vsoc::screen::ScreenRegionView;
 
 /*****************************************************************************/
 
@@ -66,9 +64,9 @@ static int gralloc_alloc_buffer(
   // a gralloc buffer in this format.
   ALOG_ASSERT(format != HAL_PIXEL_FORMAT_RGB_888);
   if (format == HAL_PIXEL_FORMAT_YV12) {
-    bytes_per_line = FBBroadcastRegionView::align(bytes_per_pixel * w, 16);
+    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w, 16);
   } else {
-    bytes_per_line = FBBroadcastRegionView::align(bytes_per_pixel * w);
+    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w);
   }
   size = roundUpToPageSize(size + formatToBytesPerFrame(format, w, h));
   size += PAGE_SIZE;

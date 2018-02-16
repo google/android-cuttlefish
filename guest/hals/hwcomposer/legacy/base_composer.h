@@ -22,7 +22,7 @@
 
 namespace cvd {
 
-using FbBroadcaster = std::function<void(int32_t)>;
+using FbBroadcaster = std::function<void(int)>;
 
 class BaseComposer {
  public:
@@ -43,12 +43,11 @@ class BaseComposer {
 
  protected:
   void Broadcast(int32_t offset);
-  uint32_t NextFrameBufferOffset();
+  int NextScreenBuffer();
 
   const gralloc_module_t* gralloc_module_;
   int64_t vsync_base_timestamp_;
   int32_t vsync_period_ns_;
-  int frame_buffer_count_;
   int last_frame_buffer_ = -1; // The first index whill be 0
 
  private:
