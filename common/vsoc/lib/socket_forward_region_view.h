@@ -25,7 +25,102 @@
 namespace vsoc {
 namespace socket_forward {
 
-using Message = std::vector<std::uint8_t>;
+struct Header {
+  std::uint32_t payload_length;
+  std::uint32_t generation;
+  enum MessageType : std::uint32_t {
+    DATA = 0,
+    BEGIN,
+    END,
+  };
+  MessageType message_type;
+};
+
+constexpr std::size_t kMaxPayloadSize =
+  layout::socket_forward::kMaxPacketSize - sizeof(Header);
+
+struct Packet {
+ private:
+  Header header_;
+  using Payload = char[kMaxPayloadSize];
+  Payload payload_data_;
+
+  static Packet MakePacket(Header::MessageType type) {
+    Packet packet{};
+    packet.header_.message_type = type;
+    return packet;
+  }
+
+ public:
+  static Packet MakeBegin() {
+    return MakePacket(Header::BEGIN);
+  }
+
+  static Packet MakeEnd() {
+    return MakePacket(Header::END);
+  }
+
+  static Packet MakeData() {
+    return MakePacket(Header::DATA);
+  }
+
+  bool empty() const {
+    return header_.message_type == Header::DATA && header_.payload_length == 0;
+  }
+
+  void set_payload_length(std::uint32_t length) {
+    CHECK_LE(length, sizeof payload_data_);
+    header_.message_type = Header::DATA;
+    header_.payload_length = length;
+  }
+
+  std::uint32_t generation() const {
+    return header_.generation;
+  }
+
+  void set_generation(std::uint32_t generation) {
+    header_.generation = generation;
+  }
+
+  Payload& payload() {
+    return payload_data_;
+  }
+
+  const Payload& payload() const {
+    return payload_data_;
+  }
+
+  std::uint32_t payload_length() const {
+    return header_.payload_length;
+  }
+
+  bool IsBegin() const {
+    return header_.message_type == Header::BEGIN;
+  }
+
+  bool IsEnd() const {
+    return header_.message_type == Header::END;
+  }
+
+  bool IsData() const {
+    return header_.message_type == Header::DATA;
+  }
+
+  char* raw_data() {
+    return reinterpret_cast<char*>(this);
+  }
+
+  const char* raw_data() const {
+    return reinterpret_cast<const char*>(this);
+  }
+
+  size_t raw_data_length() const {
+    return payload_length() + sizeof header_;
+  }
+};
+
+static_assert(sizeof(Packet) == layout::socket_forward::kMaxPacketSize, "");
+static_assert(std::is_pod<Packet>{}, "");
 
 // Data sent will start with a uint32_t indicating the number of bytes being
 // sent, followed be the data itself
@@ -40,17 +135,17 @@ class SocketForwardRegionView
   void ReleaseConnectionID(int connection_id);
   std::pair<int, int> GetWaitingConnectionIDAndPort();
 
-  // Returns an empty Message if the other side is closed.
-  Message Recv(int connection_id);
-  // Does nothing if message is empty
-  void Send(int connection_id, const Message& message);
+  // Returns an empty data packet if the other side is closed.
+  void Recv(int connection_id, Packet* packet);
+  // Does nothing if packet is empty
+  void Send(int connection_id, const Packet& packet);
 
   void SendBegin(int connection_id);
   void SendEnd(int connection_id);
 
-  // skip everything in the connection queue until seeing the beginning of
-  // the next message
+  // skip everything in the connection queue until seeing a BEGIN
   void IgnoreUntilBegin(int connection_id);
+
   bool IsOtherSideClosed(int connection_id);
 
  public:
@@ -82,12 +177,12 @@ class SocketForwardRegionView
 
    private:
     // Sends should be done using a Sender.
-    void Send(const Message& message);
+    void Send(const Packet& packet);
     void SendBegin();
     void SendEnd();
 
     // Receives should be done using a Receiver.
-    Message Recv();
+    void Recv(Packet* packet);
     void IgnoreUntilBegin();
 
     struct Releaser {
@@ -119,8 +214,8 @@ class SocketForwardRegionView
       connection_->SendBegin();
     }
 
-    void Send(const Message& message) {
-      connection_->Send(message);
+    void Send(const Packet& packet) {
+      connection_->Send(packet);
     }
 
    private:
@@ -143,8 +238,8 @@ class SocketForwardRegionView
       connection_->IgnoreUntilBegin();
     }
 
-    Message Recv() {
-      return connection_->Recv();
+    void Recv(Packet* packet) {
+      return connection_->Recv(packet);
     }
 
    private:
