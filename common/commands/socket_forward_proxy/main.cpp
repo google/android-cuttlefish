@@ -36,6 +36,7 @@
 using vsoc::socket_forward::Packet;
 using vsoc::socket_forward::SocketForwardRegionView;
 
+// TODO(haining) accept multiple ports
 #ifdef CUTTLEFISH_HOST
 DEFINE_uint32(port, 0, "Port from which to forward TCP connections.");
 #endif
@@ -48,25 +49,6 @@ class Worker {
       : shm_connection_(std::move(shm_connection)),
         socket_(std::move(socket)){}
 
-  [[nodiscard]] bool closed() {
-    {
-      std::lock_guard<std::mutex> guard(closed_lock_);
-      if (closed_) {
-        return true;
-      }
-    }
-    if (shm_connection_.closed() || !socket_->IsOpen()) {
-      std::lock_guard<std::mutex> guard(closed_lock_);
-      closed_ = true;
-    }
-    return closed_;
-  }
-
-  void close() {
-    std::lock_guard<std::mutex> guard(closed_lock_);
-    closed_ = true;
-  }
-
   static void SocketToShm(std::shared_ptr<Worker> worker) {
     worker->SocketToShmImpl();
   }
@@ -76,23 +58,28 @@ class Worker {
   }
 
  private:
+
+  // *packet will be empty if Read returns 0 or error
+  void SocketRecvPacket(Packet* packet) {
+    auto size = socket_->Read(packet->payload(), sizeof packet->payload());
+    if (size < 0) {
+      size = 0;
+    }
+    packet->set_payload_length(size);
+  }
+
   void SocketToShmImpl() {
     auto shm_sender = shm_connection_.MakeSender();
 
     auto packet = Packet::MakeData();
     while (true) {
-      if (closed()) {
+      SocketRecvPacket(&packet);
+      if (packet.empty()) {
         break;
       }
-      auto size = socket_->Recv(packet.payload(), sizeof packet.payload(), 0);
-      if (size <= 0) {
-        break;
-      }
-      packet.set_payload_length(size);
       shm_sender.Send(packet);
     }
     LOG(INFO) << "Socket to shm exiting";
-    close();
   }
 
   ssize_t SocketSendAll(const Packet& packet) {
@@ -101,8 +88,9 @@ class Worker {
       if (!socket_->IsOpen()) {
         return -1;
       }
-      auto just_written = socket_->Write(packet.payload() + written,
-                                         packet.payload_length() - written);
+      auto just_written = socket_->Send(packet.payload() + written,
+                                         packet.payload_length() - written,
+                                         MSG_NOSIGNAL);
       if (just_written <= 0) {
         LOG(INFO) << "Couldn't write to client: "
                   << strerror(socket_->GetErrno());
@@ -113,13 +101,20 @@ class Worker {
     return written;
   }
 
+  struct SocketShutdown {
+    cvd::SharedFD socket;
+    SocketShutdown(const SocketShutdown&) = delete;
+    SocketShutdown& operator=(const SocketShutdown&) = delete;
+    ~SocketShutdown() {
+      socket->Shutdown(SHUT_WR);
+    }
+  };
+
   void ShmToSocketImpl() {
     auto shm_receiver = shm_connection_.MakeReceiver();
+    SocketShutdown shutdown_socket{socket_};
     Packet packet{};
     while (true) {
-      if (closed()) {
-        break;
-      }
       shm_receiver.Recv(&packet);
       if (packet.IsEnd()) {
         break;
@@ -129,13 +124,10 @@ class Worker {
       }
     }
     LOG(INFO) << "Shm to socket exiting";
-    close();
   }
 
   SocketForwardRegionView::Connection shm_connection_;
   cvd::SharedFD socket_;
-  bool closed_{};
-  std::mutex closed_lock_;
 };
 
 // One thread for reading from shm and writing into a socket.

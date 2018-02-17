@@ -65,7 +65,7 @@ struct Packet {
   }
 
   bool empty() const {
-    return header_.message_type == Header::DATA && header_.payload_length == 0;
+    return IsData() && header_.payload_length == 0;
   }
 
   void set_payload_length(std::uint32_t length) {
