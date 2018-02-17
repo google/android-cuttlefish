@@ -137,7 +137,6 @@ void SocketForwardRegionView::ReleaseConnectionID(int connection_id) {
     queue_pair.port_ = 0;
     queue_pair.queue_state_ = QueuePair::INACTIVE;
   } else {
-    Send(connection_id, {});
     MarkThisSideDisconnected(&queue_pair);
   }
 }
