@@ -104,10 +104,6 @@ DEFINE_string(system_image_dir,
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
-std::string g_default_uuid{
-    GetPerInstanceDefault("699acfc4-c8c4-11e7-882b-5065f31dc1")};
-DEFINE_string(uuid, g_default_uuid.c_str(),
-              "UUID to use for the device. Random if not specified");
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
@@ -118,6 +114,8 @@ DEFINE_string(vnc_server_binary,
               "Location of the vnc server binary.");
 DEFINE_int32(vnc_server_port, vsoc::GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
+
+DECLARE_string(uuid);
 
 namespace {
 const std::string kDataPolicyUseExisting = "use_existing";

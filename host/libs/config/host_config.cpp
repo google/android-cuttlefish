@@ -24,12 +24,13 @@
 
 #include <gflags/gflags.h>
 
-const char vsoc_user_prefix[] = "vsoc-";
+const char kVsocUserPrefix[] = "vsoc-";
+const char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 
 int GetDefaultInstance() {
   char* user = getenv("USER");
-  if (user && !memcmp(user, vsoc_user_prefix, sizeof(vsoc_user_prefix) - 1)) {
-    int temp = atoi(user + sizeof(vsoc_user_prefix) - 1);
+  if (user && !memcmp(user, kVsocUserPrefix, sizeof(kVsocUserPrefix) - 1)) {
+    int temp = atoi(user + sizeof(kVsocUserPrefix) - 1);
     if (temp > 0) {
       return temp;
     }
@@ -41,6 +42,8 @@ DEFINE_string(domain, vsoc::GetDefaultShmClientSocketPath(),
               "Path to the ivshmem client socket");
 DEFINE_int32(instance, GetDefaultInstance(),
              "Instance number. Must be unique.");
+DEFINE_string(uuid, vsoc::GetPerInstanceDefault(kDefaultUuidPrefix).c_str(),
+              "UUID to use for the device. Random if not specified");
 
 std::string vsoc::GetPerInstanceDefault(const char* prefix) {
   std::ostringstream stream;
@@ -54,7 +57,9 @@ int vsoc::GetPerInstanceDefault(int base) {
 }
 
 std::string vsoc::GetDefaultPerInstanceDir() {
-  return vsoc::GetPerInstanceDefault("/var/run/cvd-");
+  std::ostringstream stream;
+  stream << "/var/run/libvirt-" << kDefaultUuidPrefix;
+  return vsoc::GetPerInstanceDefault(stream.str().c_str());
 }
 
 std::string vsoc::GetDefaultPerInstancePath(const std::string& basename) {
