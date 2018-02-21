@@ -100,7 +100,7 @@ TEST_F(HaldClientTest, HandshakeTerminatedByHald) {
 }
 
 TEST_F(HaldClientTest, HandshakeTerminatedByInvalidRegionSize) {
-  uint16_t sizes[] = {0, VSoCSharedMemory::kMaxRegionNameLength + 1, 0xffff};
+  uint16_t sizes[] = {0, VSOC_DEVICE_NAME_SZ + 1, 0xffff};
 
   for (uint16_t size : sizes) {
     std::thread thread([this, size]() {

@@ -44,7 +44,7 @@ class GrallocRegionView : public vsoc::ManagerRegionView<
 
   bool Open();
 
-  vsoc_reg_off_t offset_of_buffer_memory_{};
+  uint32_t offset_of_buffer_memory_{};
   uint32_t total_buffer_memory_{};
 };
 

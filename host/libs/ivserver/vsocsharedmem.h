@@ -35,9 +35,6 @@ class VSoCSharedMemory {
     cvd::SharedFD guest_fd;
   };
 
-  // Max name length of a memory region.
-  static constexpr int32_t kMaxRegionNameLength = sizeof(vsoc_device_name);
-
   VSoCSharedMemory() = default;
   virtual ~VSoCSharedMemory() = default;
 

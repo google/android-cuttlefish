@@ -40,7 +40,7 @@ class GrallocBufferRegionView
   GrallocBufferRegionView(const GrallocBufferRegionView&) = delete;
   GrallocBufferRegionView& operator=(const GrallocBufferRegionView&) = delete;
 
-  uint8_t* OffsetToBufferPtr(vsoc_reg_off_t offset);
+  uint8_t* OffsetToBufferPtr(uint32_t offset);
 };
 
 }  // namespace gralloc
