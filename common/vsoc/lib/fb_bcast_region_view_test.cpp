@@ -21,7 +21,7 @@ using vsoc::framebuffer::FBBroadcastRegionView;
 
 int main() {
   uint32_t frame_num = 0;
-  vsoc_reg_off_t offset = 0;
+  uint32_t offset = 0;
 
 #if defined(CUTTLEFISH_HOST)
   auto region = FBBroadcastRegionView::GetInstance(vsoc::GetDomain().c_str());

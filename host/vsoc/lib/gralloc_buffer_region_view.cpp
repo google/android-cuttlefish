@@ -22,7 +22,7 @@
 
 using vsoc::gralloc::GrallocBufferRegionView;
 
-uint8_t* GrallocBufferRegionView::OffsetToBufferPtr(vsoc_reg_off_t offset) {
+uint8_t* GrallocBufferRegionView::OffsetToBufferPtr(uint32_t offset) {
   if (offset <= control_->region_desc().offset_of_region_data ||
       offset >= control_->region_size()) {
     LOG(FATAL)

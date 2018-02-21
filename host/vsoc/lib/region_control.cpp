@@ -51,10 +51,10 @@ class HostRegionControl : public vsoc::RegionControl {
         shared_memory_fd_{shared_memory_fd} {}
 
   int CreateFdScopedPermission(const char* /*managed_region_name*/,
-                               vsoc_reg_off_t /*owner_offset*/,
+                               uint32_t /*owner_offset*/,
                                uint32_t /*owned_val*/,
-                               vsoc_reg_off_t /*begin_offset*/,
-                               vsoc_reg_off_t /*end_offset*/) override {
+                               uint32_t /*begin_offset*/,
+                               uint32_t /*end_offset*/) override {
     return -1;
   }
 
@@ -131,9 +131,9 @@ constexpr int kMaxSupportedProtocolVersion = 0;
 
 bool HostRegionControl::InitializeRegion() {
   size_t region_name_len = strlen(region_name_);
-  if (region_name_len >= sizeof(vsoc_device_name)) {
+  if (region_name_len >= VSOC_DEVICE_NAME_SZ) {
     LOG(FATAL) << "Region name length (" << region_name_len << ") not < "
-               << sizeof(vsoc_device_name);
+               << VSOC_DEVICE_NAME_SZ;
     return false;
   }
   vsoc_shm_layout_descriptor layout;

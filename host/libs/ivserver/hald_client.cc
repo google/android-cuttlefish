@@ -67,7 +67,7 @@ bool HaldClient::PerformHandshake(const VSoCSharedMemory& shared_mem) {
   }
 
   if (region_name_len <= 0 ||
-      region_name_len > VSoCSharedMemory::kMaxRegionNameLength) {
+      region_name_len > VSOC_DEVICE_NAME_SZ) {
     LOG(ERROR) << "Invalid region length received: " << region_name_len;
     return false;
   }
