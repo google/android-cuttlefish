@@ -124,9 +124,7 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionSignalingInterface* r,
   this->CopyOutRange(t, buffer_out);
   this->r_released_ = t.end_idx;
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->r_released_);
+  r->SendSignal(layout::Sides::Both, &this->r_released_);
   return t.end_idx - t.start_idx;
 }
 
@@ -146,9 +144,7 @@ intptr_t CircularByteQueue<SizeLog2>::Write(RegionSignalingInterface* r,
   // published.
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->w_pub_);
+  r->SendSignal(layout::Sides::Both, &this->w_pub_);
   return bytes;
 }
 
@@ -175,9 +171,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(
   this->CopyOutRange(t, buffer_out);
   this->r_released_ += this->CalculateBufferedSize(packet_size);
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->r_released_);
+  r->SendSignal(layout::Sides::Both, &this->r_released_);
   return packet_size;
 }
 
@@ -232,9 +226,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Writev(
 
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->w_pub_);
+  r->SendSignal(layout::Sides::Both, &this->w_pub_);
   return bytes;
 }
 

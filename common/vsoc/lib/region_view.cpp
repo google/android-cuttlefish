@@ -106,16 +106,16 @@ void vsoc::RegionView::ProcessSignalsFromPeer(
 
 void vsoc::RegionView::SendSignal(Sides sides_to_signal,
                                   std::atomic<uint32_t>* uaddr) {
-  if (sides_to_signal.value_ & Sides::Peer) {
+  if (sides_to_signal & Sides::Peer) {
     // If we should also be signalling our side set the round trip flag on
     // the futex signal.
-    bool round_trip = sides_to_signal.value_ & Sides::OurSide;
+    bool round_trip = sides_to_signal & Sides::OurSide;
     SendSignalToPeer(uaddr, round_trip);
     // Return without signaling our waiters to give the other side a chance
     // to run.
     return;
   }
-  if (sides_to_signal.value_ & Sides::OurSide) {
+  if (sides_to_signal & Sides::OurSide) {
     syscall(SYS_futex, reinterpret_cast<int32_t*>(uaddr), FUTEX_WAKE, -1,
             nullptr, nullptr, 0);
   }

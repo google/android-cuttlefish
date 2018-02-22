@@ -112,9 +112,8 @@ TEST(RegionTest, BasicPeerTests) {
   // Test signals
   EXPECT_FALSE(secondary->HasIncomingInterrupt());
   LOG(INFO) << "Verified no early second signal";
-  vsoc::layout::Sides side;
-  side.value_ = vsoc::layout::Sides::Peer;
-  primary->SendSignal(side, &primary->data()->guest_to_host_signal);
+  primary->SendSignal(vsoc::layout::Sides::Peer,
+                      &primary->data()->guest_to_host_signal);
   LOG(INFO) << "Signal sent. Waiting for first signal from peer";
   primary->WaitForInterrupt();
   int count = 0;  // counts the number of signals received.
@@ -125,7 +124,8 @@ TEST(RegionTest, BasicPeerTests) {
       });
   EXPECT_TRUE(count == 1);
   LOG(INFO) << "Signal received on primary region";
-  secondary->SendSignal(side, &secondary->data()->guest_to_host_signal);
+  secondary->SendSignal(vsoc::layout::Sides::Peer,
+                        &secondary->data()->guest_to_host_signal);
   LOG(INFO) << "Signal sent. Waiting for second signal from peer";
   secondary->WaitForInterrupt();
   count = 0;

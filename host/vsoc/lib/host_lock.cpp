@@ -38,7 +38,7 @@ void HostLock::Lock() {
 
 void HostLock::Unlock() {
   Sides sides_to_signal = UnlockCommon(gettid());
-  if (sides_to_signal.value_ != Sides::NoSides) {
+  if (sides_to_signal != Sides::NoSides) {
     SingleSidedSignal::Signal(&lock_uint32_);
   }
 }
