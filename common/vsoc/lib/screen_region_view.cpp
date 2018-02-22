@@ -66,9 +66,7 @@ void ScreenRegionView::BroadcastNewFrame(int buffer_idx,
   // Signaling while holding the lock may cause the just-awaken listener to
   // block immediately trying to acquire the lock.
   // The former is less costly and slightly less likely to happen.
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  SendSignal(side, &data()->seq_num);
+  SendSignal(layout::Sides::Both, &data()->seq_num);
 }
 
 int ScreenRegionView::WaitForNewFrameSince(uint32_t* last_seq_num,

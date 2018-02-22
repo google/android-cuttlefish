@@ -121,9 +121,16 @@ layout::Sides vsoc::layout::WaitingLockBase::UnlockCommon(uint32_t tid) {
     LOG(FATAL) << "Lock owner of " << this << " changed from " << tid << " to "
                << expected_state << " during unlock";
   }
-  Sides rval;
-  rval.value_ = expected_state & (GuestWaitingFlag | HostWaitingFlag) >> 30;
-  return rval;
+  switch (expected_state & (GuestWaitingFlag | HostWaitingFlag)) {
+    case 0:
+      return Sides::NoSides;
+    case GuestWaitingFlag:
+      return Sides::Guest;
+    case HostWaitingFlag:
+      return Sides::Host;
+    default:
+      return Sides::Both;
+  }
 }
 
 bool vsoc::layout::WaitingLockBase::RecoverSingleSided() {

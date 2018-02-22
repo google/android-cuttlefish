@@ -58,20 +58,18 @@ namespace layout {
  *
  * These are carefully formatted to make Guest and Host a bitfield.
  */
-struct Sides {
-  static const uint32_t NoSides = 0;
-  static const uint32_t Guest = 1;
-  static const uint32_t Host = 2;
-  static const uint32_t Both = 3;
+enum Sides : uint32_t {
+  NoSides = 0,
+  Guest = 1,
+  Host = 2,
+  Both = 3,
 #ifdef CUTTLEFISH_HOST
-  static const uint32_t OurSide = Host;
-  static const uint32_t Peer = Guest;
+  OurSide = Host,
+  Peer = Guest
 #else
-  static const uint32_t OurSide = Guest;
-  static const uint32_t Peer = Host;
+  OurSide = Guest,
+  Peer = Host
 #endif
-
-  uint32_t value_;
 };
 ASSERT_SHM_COMPATIBLE(Sides, multi_region);
 
