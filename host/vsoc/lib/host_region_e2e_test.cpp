@@ -89,11 +89,11 @@ TEST(RegionTest, PeerTests) {
   primary->WaitForInterrupt();
   int count = 0;  // counts the number of signals received.
   primary->ProcessSignalsFromPeer(
-      [&primary, &count](std::atomic<uint32_t>* uaddr) {
+      [&primary, &count](uint32_t offset) {
         ++count;
-        EXPECT_TRUE(uaddr == &primary->data()->guest_to_host_signal);
+        EXPECT_EQ(primary->guest_to_host_signal_offset(), offset);
       });
-  EXPECT_TRUE(count == 1);
+  EXPECT_EQ(1, count);
   LOG(INFO) << "Signal received on primary region";
   secondary->SendSignal(vsoc::layout::Sides::Peer,
                         &secondary->data()->host_to_guest_signal);
@@ -101,11 +101,11 @@ TEST(RegionTest, PeerTests) {
   secondary->WaitForInterrupt();
   count = 0;
   secondary->ProcessSignalsFromPeer(
-      [secondary, &count](std::atomic<uint32_t>* uaddr) {
+      [secondary, &count](uint32_t offset) {
         ++count;
-        EXPECT_TRUE(uaddr == &secondary->data()->guest_to_host_signal);
+        EXPECT_EQ(secondary->guest_to_host_signal_offset(), offset);
       });
-  EXPECT_TRUE(count == 1);
+  EXPECT_EQ(1, count);
   LOG(INFO) << "Signal received on secondary region";
 
   EXPECT_FALSE(primary->HasIncomingInterrupt());
