@@ -8,7 +8,6 @@ cc_binary {
         "libcuttlefish_fs",
         "vsoc_lib",
         "liblog",
-        "cuttlefish_tcp_socket",
     ],
     static_libs: [
         "libgflags",
