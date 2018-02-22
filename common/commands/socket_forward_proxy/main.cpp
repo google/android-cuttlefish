@@ -189,6 +189,7 @@ SocketForwardRegionView* GetShm() {
   if (!shm) {
     LOG(FATAL) << "Could not open SHM. Aborting.";
   }
+  shm->CleanUpPreviousConnections();
   return shm;
 }
 

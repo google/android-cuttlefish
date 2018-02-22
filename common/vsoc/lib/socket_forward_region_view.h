@@ -56,6 +56,7 @@ struct Packet {
 
   static Packet MakeEnd() { return MakePacket(Header::END); }
 
+  // NOTE payload and payload_length must still be set.
   static Packet MakeData() { return MakePacket(Header::DATA); }
 
   bool empty() const { return IsData() && header_.payload_length == 0; }
@@ -111,22 +112,26 @@ class SocketForwardRegionView
   // Returns true on success
   bool Send(int connection_id, const Packet& packet);
 
-  void SendBegin(int connection_id);
-  void SendEnd(int connection_id);
-
-  // skip everything in the connection queue until seeing a BEGIN
-  void IgnoreUntilBegin(int connection_id);
+  // skip everything in the connection queue until seeing a BEGIN for the
+  // current generation
+  void IgnoreUntilBegin(int connection_id, std::uint32_t generation);
 
   bool IsOtherSideRecvClosed(int connection_id);
+
+  void ResetQueueStates(layout::socket_forward::QueuePair* queue_pair);
 
  public:
   // Helper class that will send a ConnectionBegin marker when constructed and a
   // ConnectionEnd marker when destroyed.
   class Sender {
    public:
-    explicit Sender(SocketForwardRegionView* view, int connection_id)
-        : view_{view, {connection_id}}, connection_id_{connection_id} {
-      view_->SendBegin(connection_id);
+    explicit Sender(SocketForwardRegionView* view, int connection_id,
+                    std::uint32_t generation)
+        : view_{view, {connection_id, generation}},
+          connection_id_{connection_id} {
+      auto packet = Packet::MakeBegin();
+      packet.set_generation(generation);
+      view_->Send(connection_id, packet);
     }
 
     Sender(const Sender&) = delete;
@@ -145,10 +150,13 @@ class SocketForwardRegionView
 
     struct EndSender {
       int connection_id = -1;
+      std::uint32_t generation{};
       void operator()(SocketForwardRegionView* view) const {
         if (view) {
           CHECK(connection_id >= 0);
-          view->SendEnd(connection_id);
+          auto packet = Packet::MakeEnd();
+          packet.set_generation(generation);
+          view->Send(connection_id, packet);
           view->MarkSendQueueDisconnected(connection_id);
         }
       }
@@ -162,8 +170,11 @@ class SocketForwardRegionView
   // Helper class that will wait for a ConnectionBegin marker when constructed
   class Receiver {
    public:
-    explicit Receiver(SocketForwardRegionView* view, int connection_id)
-        : view_{view, {connection_id}}, connection_id_{connection_id} {}
+    explicit Receiver(SocketForwardRegionView* view, int connection_id,
+                      std::uint32_t generation)
+        : view_{view, {connection_id}},
+          connection_id_{connection_id},
+          generation_{generation} {}
     Receiver(const Receiver&) = delete;
     Receiver& operator=(const Receiver&) = delete;
 
@@ -189,6 +200,7 @@ class SocketForwardRegionView
     // side as disconnected
     std::unique_ptr<SocketForwardRegionView, QueueCloser> view_;
     int connection_id_{};
+    std::uint32_t generation_{};
     bool got_begin_ = false;
   };
 
@@ -204,6 +216,8 @@ class SocketForwardRegionView
 #endif
 
   int port(int connection_id);
+  std::uint32_t generation();
+  void CleanUpPreviousConnections();
   void MarkSendQueueDisconnected(int connection_id);
   void MarkRecvQueueDisconnected(int connection_id);
 

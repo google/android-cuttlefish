@@ -80,7 +80,8 @@ struct SocketForwardLayout : public RegionLayout {
   }
 
   QueuePair queues_[version_info::socket_forward::kNumQueues];
-  std::atomic_uint32_t seq_num;
+  std::atomic_uint32_t seq_num; // incremented for every new connection
+  std::atomic_uint32_t generation_num; // incremented for every new socket forward process
   static const char* region_name;
 };
 
