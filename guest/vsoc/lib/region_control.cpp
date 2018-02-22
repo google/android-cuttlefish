@@ -46,9 +46,9 @@ class GuestRegionControl : public vsoc::RegionControl {
 
  protected:
   int CreateFdScopedPermission(const char* managed_region_name,
-                               vsoc_reg_off_t owner_offset, uint32_t owned_val,
-                               vsoc_reg_off_t begin_offset,
-                               vsoc_reg_off_t end_offset) override;
+                               uint32_t owner_offset, uint32_t owned_val,
+                               uint32_t begin_offset,
+                               uint32_t end_offset) override;
   cvd::SharedFD region_fd_;
 };
 
@@ -73,9 +73,9 @@ void GuestRegionControl::WaitForInterrupt() {
 }
 
 int GuestRegionControl::CreateFdScopedPermission(
-    const char* managed_region_name, vsoc_reg_off_t owner_offset,
-    uint32_t owned_value, vsoc_reg_off_t begin_offset,
-    vsoc_reg_off_t end_offset) {
+    const char* managed_region_name, uint32_t owner_offset,
+    uint32_t owned_value, uint32_t begin_offset,
+    uint32_t end_offset) {
   if (!region_fd_->IsOpen()) {
     LOG(FATAL) << "Can't create permission before opening controller region";
     return -EINVAL;

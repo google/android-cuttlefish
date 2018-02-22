@@ -65,10 +65,10 @@ class RegionControl {
   // failure. FdScopedPermission is not supported on the host, so -1 is
   // always returned there.
   virtual int CreateFdScopedPermission(const char* managed_region_name,
-                                       vsoc_reg_off_t owner_offset,
+                                       uint32_t owner_offset,
                                        uint32_t owned_value,
-                                       vsoc_reg_off_t begin_offset,
-                                       vsoc_reg_off_t end_offset) = 0;
+                                       uint32_t begin_offset,
+                                       uint32_t end_offset) = 0;
 
   // Interrupt our peer, causing it to scan the outgoing_signal_table
   virtual bool InterruptPeer() = 0;

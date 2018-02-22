@@ -67,7 +67,7 @@ class FBBroadcastRegionView
   // frame_offset is the offset of the current frame in the framebuffer region.
   // stats holds performance information of the last composition, can be null.
   void BroadcastNewFrame(
-      vsoc_reg_off_t frame_offset,
+      uint32_t frame_offset,
       const vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
 
   // Waits for a new frame (one with a different seq_num than last one we saw).
@@ -77,7 +77,7 @@ class FBBroadcastRegionView
   // (though it's not a hard requirement), this numbers are guaranteed to be
   // non-zero when a valid frame is available. Performance statistics are
   // returned through the stats parameter when it's not null.
-  vsoc_reg_off_t WaitForNewFrameSince(
+  uint32_t WaitForNewFrameSince(
       uint32_t* last_seq_num,
       vsoc::layout::framebuffer::CompositionStats* stats = nullptr);
 

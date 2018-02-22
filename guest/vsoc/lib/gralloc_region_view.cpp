@@ -51,7 +51,7 @@ bool GrallocRegionView::Open() {
     LOG_FATAL("Unable to open managed region");
     return false;
   }
-  offset_of_buffer_memory_ = gralloc_align<vsoc_reg_off_t>(
+  offset_of_buffer_memory_ = gralloc_align<uint32_t>(
       managed_region->region_desc().offset_of_region_data);
   total_buffer_memory_ =
       managed_region->region_size() - offset_of_buffer_memory_;

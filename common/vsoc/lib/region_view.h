@@ -169,7 +169,7 @@ class RegionView : public RegionSignalingInterface {
 
  protected:
   template <typename T>
-  T* region_offset_to_pointer(vsoc_reg_off_t offset) {
+  T* region_offset_to_pointer(uint32_t offset) {
     if (offset > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
                  << region_base_;
@@ -179,7 +179,7 @@ class RegionView : public RegionSignalingInterface {
   }
 
   template <typename T>
-  const T& region_offset_to_reference(vsoc_reg_off_t offset) const {
+  const T& region_offset_to_reference(uint32_t offset) const {
     if (offset > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
                  << region_base_;
@@ -193,8 +193,8 @@ class RegionView : public RegionSignalingInterface {
   // This is mostly for the RegionView's internal plumbing. Use TypedRegionView
   // and RegionLayout to avoid this in most cases.
   template <typename T>
-  vsoc_reg_off_t pointer_to_region_offset(T* ptr) {
-    vsoc_reg_off_t rval = reinterpret_cast<uintptr_t>(ptr) -
+  uint32_t pointer_to_region_offset(T* ptr) {
+    uint32_t rval = reinterpret_cast<uintptr_t>(ptr) -
                           reinterpret_cast<uintptr_t>(region_base_);
     if (rval > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << ptr << " not in region @"
