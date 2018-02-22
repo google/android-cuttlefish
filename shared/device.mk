@@ -47,7 +47,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Packages for various cuttlefish-specific tests
 #
 PRODUCT_PACKAGES += \
-    vsoc_guest_region_e2e_test
+    vsoc_guest_region_e2e_test \
+    vsoc_driver_test
 
 #
 # Packages for various GCE-specific utilities
