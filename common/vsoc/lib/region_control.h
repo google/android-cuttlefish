@@ -82,6 +82,27 @@ class RegionControl {
   // Wait for an interrupt from our peer
   virtual void WaitForInterrupt() = 0;
 
+  // Signals local waiters at the given region offset.
+  // Defined only on the guest.
+  // Return value is negative on error.
+  virtual int SignalSelf(uint32_t offset) = 0;
+
+  // Waits for a signal at the given region offset.
+  // Defined only on the guest.
+  // Return value is negative on error. The number of false wakes is returned
+  // on success.
+  virtual int WaitForSignal(uint32_t offset, uint32_t expected_value) = 0;
+
+  template <typename T>
+  T* region_offset_to_pointer(uint32_t offset) {
+    if (offset > region_size()) {
+      LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
+                 << region_base_;
+    }
+    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(region_base_) +
+                                offset);
+  }
+
  protected:
   RegionControl() {}
   void* region_base_{};
