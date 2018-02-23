@@ -1,0 +1,5 @@
+type wifi_relay, domain;
+type wifi_relay_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(wifi_relay)
+allow wifi_relay self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;
