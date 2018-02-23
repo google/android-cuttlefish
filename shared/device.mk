@@ -60,8 +60,7 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy \
     usbforward \
     VSoCService \
-    wifirouter \
-    wificlient \
+    wifi_relay \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
 
@@ -267,4 +266,3 @@ PRODUCT_PACKAGES += \
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
-
