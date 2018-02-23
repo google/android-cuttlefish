@@ -27,38 +27,6 @@ class E2ERegionView : public vsoc::TypedRegionView<
                       E2ERegionView<Layout>,
                       Layout> {
  public:
-
-  uint32_t read_guest_self_register() const {
-    return this->data().guest_self_register;
-  }
-
-  void write_guest_self_register(uint32_t val) {
-    this->data()->guest_self_register = val;
-  }
-
-  void signal_guest_self_register() {
-    this->SendSignal(layout::Sides::OurSide,
-                     &this->data()->guest_self_register);
-  }
-
-  int wait_guest_self_register(uint32_t expected_value) {
-    return this->WaitForSignal(
-        &this->data()->guest_self_register, expected_value);
-  }
-
-  void signal_guest_to_host_register() {
-    this->SendSignal(layout::Sides::OurSide,
-                     &this->data()->guest_to_host_signal);
-  }
-
-  uint32_t guest_to_host_signal_offset() const {
-    return this->pointer_to_region_offset(&this->data().guest_to_host_signal);
-  }
-
-  uint32_t host_to_guest_signal_offset() const {
-    return this->pointer_to_region_offset(&this->data().host_to_guest_signal);
-  }
-
   const char* guest_string(size_t index) const {
     return const_cast<const char*>(this->data().data[index].guest_writable);
   }

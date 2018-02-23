@@ -59,13 +59,13 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
             nullptr, nullptr, 0);
   }
 
-  virtual int WaitForSignal(std::atomic<uint32_t>* uaddr,
+  virtual void WaitForSignal(std::atomic<uint32_t>* uaddr,
                              uint32_t expected_value) {
     {
       std::lock_guard<std::mutex> guard(mutex_);
       if (tid_to_addr_.find(std::this_thread::get_id()) != tid_to_addr_.end()) {
         // Same thread tries to wait
-        return 0;
+        return;
       }
       tid_to_addr_.emplace(std::this_thread::get_id(), uaddr);
       map_changed_.notify_one();
@@ -77,7 +77,6 @@ class MockRegionView : public vsoc::RegionSignalingInterface {
       std::lock_guard<std::mutex> guard(mutex_);
       tid_to_addr_.erase(std::this_thread::get_id());
     }
-    return 0;
   }
 
   // Mock methods from TypedRegionView

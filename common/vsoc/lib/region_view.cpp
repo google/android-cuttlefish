@@ -1,6 +1,8 @@
 #include "common/vsoc/lib/region_view.h"
 
+#include <linux/futex.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include "common/libs/glog/logging.h"
 
@@ -11,11 +13,8 @@ const uint32_t UADDR_OFFSET_ROUND_TRIP_FLAG = 1;
 
 using vsoc::layout::Sides;
 
-vsoc::RegionWorker::RegionWorker(RegionView* region,
-                                 std::shared_ptr<RegionControl> control)
-    : control_(control),
-      region_(region),
-      thread_(&vsoc::RegionWorker::Work, this) {}
+vsoc::RegionWorker::RegionWorker(RegionView* region)
+    : region_(region), thread_(&vsoc::RegionWorker::Work, this) {}
 
 void vsoc::RegionWorker::Work() {
   while (!stopping_) {
@@ -23,9 +22,9 @@ void vsoc::RegionWorker::Work() {
     if (stopping_) {
       return;
     }
-    region_->ProcessSignalsFromPeer([this](uint32_t offset) {
-        control_->SignalSelf(offset);
-      });
+    region_->ProcessSignalsFromPeer([](std::atomic<uint32_t>* uaddr) {
+      syscall(SYS_futex, uaddr, FUTEX_WAKE, -1, nullptr, nullptr, 0);
+    });
   }
 }
 
@@ -84,21 +83,22 @@ void vsoc::RegionView::WaitForInterrupt() {
 }
 
 void vsoc::RegionView::ProcessSignalsFromPeer(
-    std::function<void(uint32_t)> signal_handler) {
+    std::function<void(std::atomic<uint32_t>*)> signal_handler) {
   const vsoc_signal_table_layout& table = incoming_signal_table();
   const size_t num_offsets = (1 << table.num_nodes_lg2);
   std::atomic<uint32_t>* offsets =
       region_offset_to_pointer<std::atomic<uint32_t>>(
           table.futex_uaddr_table_offset);
   for (size_t i = 0; i < num_offsets; ++i) {
-    uint32_t raw_offset = offsets[i].exchange(0);
-    if (raw_offset) {
-      bool round_trip = raw_offset & UADDR_OFFSET_ROUND_TRIP_FLAG;
-      uint32_t offset = raw_offset & UADDR_OFFSET_MASK;
-      signal_handler(offset);
+    uint32_t offset = offsets[i].exchange(0);
+    if (offset) {
+      bool round_trip = offset & UADDR_OFFSET_ROUND_TRIP_FLAG;
+      std::atomic<uint32_t>* uaddr =
+          region_offset_to_pointer<std::atomic<uint32_t>>(offset &
+                                                          UADDR_OFFSET_MASK);
+      signal_handler(uaddr);
       if (round_trip) {
-        SendSignalToPeer(
-            region_offset_to_pointer<std::atomic<uint32_t>>(offset), false);
+        SendSignalToPeer(uaddr, false);
       }
     }
   }
@@ -116,7 +116,8 @@ void vsoc::RegionView::SendSignal(Sides sides_to_signal,
     return;
   }
   if (sides_to_signal & Sides::OurSide) {
-    control_->SignalSelf(pointer_to_region_offset(uaddr));
+    syscall(SYS_futex, reinterpret_cast<int32_t*>(uaddr), FUTEX_WAKE, -1,
+            nullptr, nullptr, 0);
   }
 }
 
@@ -179,12 +180,10 @@ void vsoc::RegionView::SendSignalToPeer(std::atomic<uint32_t>* uaddr,
 }
 
 std::unique_ptr<vsoc::RegionWorker> vsoc::RegionView::StartWorker() {
-  return std::unique_ptr<vsoc::RegionWorker>(new vsoc::RegionWorker(
-      this, control_));
+  return std::unique_ptr<vsoc::RegionWorker>(new vsoc::RegionWorker(this));
 }
 
-int vsoc::RegionView::WaitForSignal(std::atomic<uint32_t>* uaddr,
+void vsoc::RegionView::WaitForSignal(std::atomic<uint32_t>* uaddr,
                                      uint32_t expected_value) {
-  return control_->WaitForSignal(pointer_to_region_offset(uaddr),
-                                 expected_value);
+  syscall(SYS_futex, uaddr, FUTEX_WAIT, expected_value, nullptr, nullptr, 0);
 }

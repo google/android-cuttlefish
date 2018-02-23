@@ -120,7 +120,6 @@ class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
   // These fields are used to test the signaling mechanism.
   std::atomic<uint32_t> host_to_guest_signal;
   std::atomic<uint32_t> guest_to_host_signal;
-  std::atomic<uint32_t> guest_self_register;
   // There rest of the region will be filled by guest_host_strings.
   // We actually use more than one of these, but we can't know how many
   // until we examine the region.
