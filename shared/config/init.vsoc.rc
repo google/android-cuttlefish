@@ -64,8 +64,9 @@ on early-boot
 
 on boot
     chmod 0660 /dev/cpuctl
-    mkdir /data/misc/wifi 0770 system wifi
-    mkdir /data/misc/wifi/sockets 0770 system wifi
+    mkdir /data/vendor/wifi 0770 wifi wifi
+    mkdir /data/vendor/wifi/wpa 0770 wifi wifi
+    mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_forward_proxy
 
     # TODO(ender): Re-enable these
@@ -113,14 +114,10 @@ service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
     user root
 
 
-service wifirouter /vendor/bin/wifirouter
-    class main
-    user root
-
-
-service wificlient /vendor/bin/wificlient -iface=wlan0 -macaddr=00:43:56:44:01:02
+service wifi_relay /vendor/bin/wifi_relay
     class late_start
     user root
+
 
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
     class main

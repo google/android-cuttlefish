@@ -60,8 +60,7 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy \
     usbforward \
     VSoCService \
-    wifirouter \
-    wificlient \
+    wifi_relay \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
 
