@@ -187,7 +187,7 @@ class SocketForwardRegionView
 
     // Doesn't actually own the View, responsible for marking the receiving
     // side as disconnected
-    std::unique_ptr<SocketForwardRegionView, QueueCloser> view_{};
+    std::unique_ptr<SocketForwardRegionView, QueueCloser> view_;
     int connection_id_{};
     bool got_begin_ = false;
   };
