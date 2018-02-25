@@ -21,6 +21,7 @@ tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
     launch_cvd \
+    socket_forward_proxy \
     wificlient \
     vnc_server \
 
@@ -38,6 +39,7 @@ cvd_host_shared_libraries := \
     vsoc_lib \
     libcuttlefish_fs \
     cuttlefish_auto_resources \
+    cuttlefish_tcp_socket \
     liblog \
     libnl \
     libc++ \

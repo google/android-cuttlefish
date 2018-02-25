@@ -5,8 +5,7 @@
 /dev/e2e_manager                   u:object_r:region_e2e_test_device:s0
 /dev/e2e_primary                   u:object_r:region_e2e_test_device:s0
 /dev/e2e_secondary                 u:object_r:region_e2e_test_device:s0
-/dev/framebuffer_control           u:object_r:fb_ctl_file:s0
-/dev/userspace_framebuffer         u:object_r:userspace_fb_file:s0
+/dev/screen                        u:object_r:region_screen_device:s0
 /dev/vport[0-9]p[0-9]*             u:object_r:virtual_serial_device:s0
 
 #############################
@@ -29,6 +28,7 @@
 #
 /vendor/bin/gce_fs_monitor  u:object_r:gce_fs_monitor_exec:s0
 /vendor/bin/usbforward  u:object_r:usbforward_exec:s0
+/vendor/bin/socket_forward_proxy  u:object_r:socket_forward_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/vsoc_guest_region_e2e_test  u:object_r:vsoc_guest_region_e2e_test_exec:s0
 /vendor/bin/wificlient  u:object_r:wificlient_exec:s0
