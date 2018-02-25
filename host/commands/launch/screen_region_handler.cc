@@ -17,7 +17,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/host_config.h"
 
@@ -26,10 +26,9 @@ DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
 DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
 DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 
-void InitializeFBBroadcastRegion() {
-  std::shared_ptr<vsoc::framebuffer::FBBroadcastRegionView> region =
-      vsoc::framebuffer::FBBroadcastRegionView::GetInstance(
-          vsoc::GetDomain().c_str());
+void InitializeScreenRegion() {
+  auto region =
+      vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
   if (!region) {
     LOG(INFO) << "Framebuffer region was not found";
     return;

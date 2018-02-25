@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/vsoc/shm/framebuffer_layout.h"
 
-namespace vsoc {
-namespace layout {
+#include "common/vsoc/shm/socket_forward_layout.h"
 
-namespace framebuffer {
-
-const char* FrameBufferLayout::region_name = "framebuffer";
-
-}  // framebuffer
-}  // layout
-}  // vsoc
+const char* vsoc::layout::socket_forward::SocketForwardLayout::region_name =
+  "socket_forward";

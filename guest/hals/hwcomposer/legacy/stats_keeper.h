@@ -22,7 +22,7 @@
 
 #include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/time/monotonic_time.h"
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 
 #include "hwcomposer_common.h"
 
@@ -94,8 +94,7 @@ class StatsKeeper {
   void RecordSetStart();
   void RecordSetEnd() EXCLUDES(mutex_);
 
-  void GetLastCompositionStats(
-      vsoc::layout::framebuffer::CompositionStats* stats_p);
+  void GetLastCompositionStats(vsoc::layout::screen::CompositionStats* stats_p);
 
   // Calls to this function are synchronized with calls to 'RecordSetEnd' with a
   // mutex. The other Record* functions do not need such synchronization because
@@ -157,8 +156,8 @@ class StatsKeepingComposer {
         composer_(vsync_base_timestamp, vsync_period_ns) {
     // Don't let the composer broadcast by itself, allow it to return to collect
     // the timings and broadcast then.
-    composer_.ReplaceFbBroadcaster([this](int32_t offset){
-        BroadcastWithStats(offset);
+    composer_.ReplaceFbBroadcaster([this](int buffer_index){
+        BroadcastWithStats(buffer_index);
       });
   }
   ~StatsKeepingComposer() = default;
@@ -170,12 +169,12 @@ class StatsKeepingComposer {
     return num_hwc_layers;
   }
 
-  void BroadcastWithStats(int32_t offset) {
+  void BroadcastWithStats(int buffer_idx) {
     stats_keeper_.RecordSetEnd();
-    vsoc::layout::framebuffer::CompositionStats stats;
+    vsoc::layout::screen::CompositionStats stats;
     stats_keeper_.GetLastCompositionStats(&stats);
-    vsoc::framebuffer::FBBroadcastRegionView::GetInstance()
-      ->BroadcastNewFrame(static_cast<uint32_t>(offset), &stats);
+    vsoc::screen::ScreenRegionView::GetInstance()
+      ->BroadcastNewFrame(static_cast<uint32_t>(buffer_idx), &stats);
   }
 
   int SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {

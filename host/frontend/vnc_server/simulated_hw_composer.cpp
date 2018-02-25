@@ -18,11 +18,10 @@
 
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/config/host_config.h"
-#include "common/vsoc/lib/framebuffer_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 
 using cvd::vnc::SimulatedHWComposer;
-using vsoc::framebuffer::FrameBufferRegionView;
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
@@ -75,14 +74,12 @@ void SimulatedHWComposer::MakeStripes() {
   auto screen_height = ActualScreenHeight();
   Message raw_screen;
   std::uint64_t stripe_seq_num = 1;
+  auto screen_view = ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
-    uint32_t offset =
-        FBBroadcastRegionView::GetInstance(vsoc::GetDomain().c_str())
-            ->WaitForNewFrameSince(&previous_seq_num);
-    const char* frame_start = static_cast<char*>(
-        FrameBufferRegionView::GetInstance(vsoc::GetDomain().c_str())
-            ->GetBufferFromOffset(offset));
+    int buffer_idx = screen_view->WaitForNewFrameSince(&previous_seq_num);
+    const char* frame_start =
+        static_cast<char*>(screen_view->GetBuffer(buffer_idx));
     raw_screen.assign(frame_start, frame_start + ScreenSizeInBytes());
 
     for (int i = 0; i < kNumStripes; ++i) {

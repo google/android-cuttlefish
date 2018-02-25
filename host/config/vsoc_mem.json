@@ -52,11 +52,11 @@
    },
 
    {
-     "device_name" : "fb_broadcast",
-     "__comment" : "Broadcasts new frames",
+     "device_name" : "screen",
+     "__comment" : "The screen region.",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size": 4096,
+     "region_size": 12292096,
 
      "guest_to_host_signal_table" : {
        "__comment" : "sizeof each node is based on common/libs/shm_compatible/lock.h",
@@ -103,21 +103,25 @@
       }
    },
 
-
    {
-     "device_name" : "framebuffer",
-     "__comment" : "Holds the frame buffers. Size is enough to accomodate 3 buffers 800x1280 in RGBA format, with 4 bytes of padding, plus an extra page",
+     "device_name" : "socket_forward",
+     "__comment" : "Holds the data being used by the socket forwarding",
      "current_version" : 0,
      "min_compatible_version" : 0,
-     "region_size" : 12292096,
+     "__comment" : "FIXME this region size is huge until I nail down the correct size",
+     "region_size" : 2105344,
 
      "guest_to_host_signal_table" : {
-       "__comment" : "sizeof each node is based on common/libs/shm/lock.h",
-       "num_nodes_lg2" : 0
+       "__comment" : [
+           "sizeof each node is based on common/libs/shm/lock.h",
+           "16 spinlocks = 16 * 4 = 64",
+           "then the atomic generation number is + 4"
+       ],
+       "num_nodes_lg2" : 7
       },
 
      "host_to_guest_signal_table" : {
-       "num_nodes_lg2" : 0
+       "num_nodes_lg2" : 7
       }
    },
 

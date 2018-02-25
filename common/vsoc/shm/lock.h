@@ -28,11 +28,6 @@
 #include <atomic>
 #include <cstdint>
 
-#include <linux/futex.h>
-#include <sys/syscall.h>
-
-#include <unistd.h>
-
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/version.h"
 
@@ -61,9 +56,26 @@ class SpinLock {
    * readers and writers.
    */
   void Lock() {
-    while (lock_.exchange(1)) {
+    while (1) {
+      uint32_t expected = 0;
+      if (lock_.compare_exchange_strong(expected, Sides::OurSide)) {
+        return;
+      }
       _mm_pause();
     }
+  }
+
+  /**
+   * Drop the lock iff it is currently held by this side. Used by
+   * recovery code that cleans up regions in the event of a reboot
+   * (guest side) or a service restart (host side).
+   *
+   * The caller must ensure that there are no other threads on its
+   * side (e.g. guest/host) are using the window.
+   */
+  bool Recover() {
+    uint32_t expected = Sides::OurSide;
+    return lock_.compare_exchange_strong(expected, 0);
   }
 
   /**
@@ -97,6 +109,9 @@ class WaitingLockBase {
   // Must be called with the kernel's thread id
   // Returns sides that should be signalled or 0
   Sides UnlockCommon(uint32_t tid);
+
+  // Common code to recover single-sided locks.
+  bool RecoverSingleSided();
 
   // Non-zero values in this word indicate that the lock is in use.
   // This is 32 bits for compatibility with futex()
@@ -139,6 +154,14 @@ class GuestLock : public WaitingLockBase {
 #ifndef CUTTLEFISH_HOST
   void Lock();
   void Unlock();
+  /**
+   * Drop the lock iff it is currently held. Used by
+   * recovery code that cleans up regions in the event of a reboot.
+   *
+   * The caller must ensure that there are no other threads on its
+   * side (e.g. guest/host) are using the window.
+   */
+  bool Recover();
 #endif
 };
 ASSERT_SHM_COMPATIBLE(GuestLock, multi_region);
@@ -156,6 +179,15 @@ class HostLock : public WaitingLockBase {
 #ifdef CUTTLEFISH_HOST
   void Lock();
   void Unlock();
+  /**
+   * Drop the lock iff it is currently held. Used by
+   * recovery code that cleans up regions in the event of a daemon
+   * restart.
+   *
+   * The caller must ensure that there are no other threads on its
+   * side (e.g. guest/host) are using the window.
+   */
+  bool Recover();
 #endif
 };
 ASSERT_SHM_COMPATIBLE(HostLock, multi_region);
@@ -188,6 +220,15 @@ class GuestAndHostLock : public WaitingLockBase {
  public:
   void Lock(RegionView*);
   void Unlock(RegionView*);
+  /**
+   * Drop the lock iff it is currently held by this side. Used by
+   * recovery code that cleans up regions in the event of a reboot
+   * (guest side) or a service restart (host side).
+   *
+   * The caller must ensure that there are no other threads on its
+   * side (e.g. guest/host) are using the window.
+   */
+  bool Recover(RegionView*);
 };
 ASSERT_SHM_COMPATIBLE(GuestAndHostLock, multi_region);
 

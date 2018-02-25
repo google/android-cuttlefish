@@ -38,7 +38,7 @@
 // 12. Confirm that no interrupt is pending in the second region
 
 template <typename View>
-void SetHostStrings(std::shared_ptr<View> in) {
+void SetHostStrings(View* in) {
   size_t num_data = in->string_size();
   EXPECT_LE(static_cast<size_t>(2), num_data);
   for (size_t i = 0; i < num_data; ++i) {
@@ -50,7 +50,7 @@ void SetHostStrings(std::shared_ptr<View> in) {
 }
 
 template <typename View>
-void CheckPeerStrings(std::shared_ptr<View> in) {
+void CheckPeerStrings(View* in) {
   size_t num_data = in->string_size();
   EXPECT_LE(static_cast<size_t>(2), num_data);
   for (size_t i = 0; i < num_data; ++i) {
@@ -59,10 +59,10 @@ void CheckPeerStrings(std::shared_ptr<View> in) {
 }
 
 TEST(RegionTest, PeerTests) {
-  std::shared_ptr<vsoc::E2EPrimaryRegionView> primary =
+  auto primary =
       vsoc::E2EPrimaryRegionView::GetInstance(vsoc::GetDomain().c_str());
   ASSERT_TRUE(!!primary);
-  std::shared_ptr<vsoc::E2ESecondaryRegionView> secondary =
+  auto secondary =
       vsoc::E2ESecondaryRegionView::GetInstance(vsoc::GetDomain().c_str());
   ASSERT_TRUE(!!secondary);
   LOG(INFO) << "Regions are open";
@@ -83,9 +83,8 @@ TEST(RegionTest, PeerTests) {
   // Test signals
   EXPECT_FALSE(secondary->HasIncomingInterrupt());
   LOG(INFO) << "Verified no early second signal";
-  vsoc::layout::Sides side;
-  side.value_ = vsoc::layout::Sides::Peer;
-  primary->SendSignal(side, &primary->data()->host_to_guest_signal);
+  primary->SendSignal(vsoc::layout::Sides::Peer,
+                      &primary->data()->host_to_guest_signal);
   LOG(INFO) << "Signal sent. Waiting for first signal from peer";
   primary->WaitForInterrupt();
   int count = 0;  // counts the number of signals received.
@@ -96,7 +95,8 @@ TEST(RegionTest, PeerTests) {
       });
   EXPECT_TRUE(count == 1);
   LOG(INFO) << "Signal received on primary region";
-  secondary->SendSignal(side, &secondary->data()->host_to_guest_signal);
+  secondary->SendSignal(vsoc::layout::Sides::Peer,
+                        &secondary->data()->host_to_guest_signal);
   LOG(INFO) << "Signal sent. Waiting for second signal from peer";
   secondary->WaitForInterrupt();
   count = 0;
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    std::shared_ptr<vsoc::E2EPrimaryRegionView> region =
+    auto region =
         vsoc::E2EPrimaryRegionView::GetInstance(vsoc::GetDomain().c_str());
     region->host_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
   }

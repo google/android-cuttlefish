@@ -94,7 +94,8 @@ class HostRegionControl : public vsoc::RegionControl {
     ssize_t rval = incoming_interrupt_fd_->Read(&missed, sizeof(missed));
     if (rval != sizeof(missed)) {
       LOG(FATAL) << __FUNCTION__ << ": rval (" << rval
-                 << ") != sizeof(missed))";
+                 << ") != sizeof(missed)), are there more than one threads "
+                    "waiting for interrupts?";
     }
     if (!missed) {
       LOG(FATAL) << __FUNCTION__ << ": woke with 0 interrupts";

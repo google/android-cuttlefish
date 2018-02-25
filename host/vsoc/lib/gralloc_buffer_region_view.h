@@ -32,16 +32,15 @@ namespace gralloc {
 // VNC server (which uses only the frame buffer and gets the information it
 // needs from the framebuffer region).
 class GrallocBufferRegionView
-    : vsoc::TypedRegionView<vsoc::layout::gralloc::GrallocBufferLayout> {
- public:
+    : vsoc::TypedRegionView<
+        GrallocBufferRegionView,
+        vsoc::layout::gralloc::GrallocBufferLayout> {
+   public:
   GrallocBufferRegionView() = default;
   GrallocBufferRegionView(const GrallocBufferRegionView&) = delete;
   GrallocBufferRegionView& operator=(const GrallocBufferRegionView&) = delete;
 
   uint8_t* OffsetToBufferPtr(uint32_t offset);
-
-  static std::shared_ptr<GrallocBufferRegionView> GetInstance(
-      const char* domain);
 };
 
 }  // namespace gralloc

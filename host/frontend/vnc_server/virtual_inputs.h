@@ -35,8 +35,7 @@ class VirtualInputs {
   void HandlePointerEvent(bool touch_down, int x, int y);
 
  private:
-  std::shared_ptr<vsoc::input_events::InputEventsRegionView>
-      input_events_region_view_;
+  vsoc::input_events::InputEventsRegionView* input_events_region_view_{};
   std::map<uint32_t, uint32_t> keymapping_;
 };
 

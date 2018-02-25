@@ -17,13 +17,21 @@
 #ifndef HW_EMULATOR_CAMERA_EMULATED_FAKE_CAMERA3_H
 #define HW_EMULATOR_CAMERA_EMULATED_FAKE_CAMERA3_H
 
+#include "guest/libs/platform_support/api_level_fixes.h"
+
 /**
  * Contains declaration of a class EmulatedCamera that encapsulates
  * functionality of a fake camera that implements version 3 of the camera device
  * interace.
  */
 
+#if VSOC_PLATFORM_SDK_BEFORE(O_MR1)
+#include <camera/CameraMetadata.h>
+#else
 #include <CameraMetadata.h>
+using ::android::hardware::camera::common::V1_0::helper::CameraMetadata;
+#endif
+
 #include <utils/List.h>
 #include <utils/Mutex.h>
 #include <utils/SortedVector.h>
@@ -31,8 +39,6 @@
 #include "fake-pipeline2/Base.h"
 #include "fake-pipeline2/JpegCompressor.h"
 #include "fake-pipeline2/Sensor.h"
-
-using ::android::hardware::camera::common::V1_0::helper::CameraMetadata;
 
 namespace android {
 

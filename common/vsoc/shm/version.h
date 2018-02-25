@@ -114,23 +114,14 @@ const uint32_t version = 0;
 static const std::size_t InputEventsLayout_size = 3 * (1024 + 3 * 4);
 }  // namespace input_events
 
-// Versioning information for fb_bcast_layout.h
-// Changes to these structures will affect only the framebuffer broadcast region
-namespace fb_broadcast {
+// Versioning information for screen_layout.h
+// Changes to these structures will affect only the screen region.
+namespace screen {
 namespace {
-const uint32_t version = 3;
+const uint32_t version = 0;
 }
-static const std::size_t FBBroadcastLayout_size = 112;
-}  // namespace fb_broadcast
-
-// Versioning information for framebuffer_layout.h
-// Changes to these structures will affect only the framebuffer broadcast region
-namespace framebuffer {
-namespace {
-const uint32_t version = 1;
-}
-static const std::size_t FrameBufferLayout_size = 1;
-}  // namespace framebuffer
+static const std::size_t ScreenLayout_size = 112;
+}  // namespace screen
 
 // Versioning information for wifi_layout.h
 namespace wifi {
@@ -153,6 +144,14 @@ const uint32_t version = 1;
 static const std::size_t RilLayout_size = 68;
 }  // namespace ril
 
+// Versioning Information for socket_forward_layout.h
+namespace socket_forward {
+constexpr uint32_t version = 0;
+constexpr std::size_t kNumQueues = 16;
+constexpr std::size_t SocketForwardLayout_size =
+    (65548 * 2  + 4 + 4 + 4) * kNumQueues // queues + state + port + lock
+    + 4; // seq_num
+}  // namespace socket_forward
 
 // Versioning information for e2e_test_region.h
 // Changes to these structures will affect only the e2e_test_region

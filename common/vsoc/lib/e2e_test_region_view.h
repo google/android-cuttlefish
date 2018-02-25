@@ -23,23 +23,27 @@
 
 namespace vsoc {
 template <typename Layout>
-class E2ERegionView : public vsoc::TypedRegionView<Layout> {
+class E2ERegionView : public vsoc::TypedRegionView<
+                      E2ERegionView<Layout>,
+                      Layout> {
  public:
   const char* guest_string(size_t index) const {
-    return make_nonvolatile(this->data().data[index].guest_writable);
+    return const_cast<const char*>(this->data().data[index].guest_writable);
   }
 
   const char* host_string(size_t index) const {
-    return make_nonvolatile(this->data().data[index].host_writable);
+    return const_cast<const char*>(this->data().data[index].host_writable);
   }
 
   bool set_guest_string(size_t index, const char* value) {
-    strcpy(make_nonvolatile(this->data()->data[index].guest_writable), value);
+    strcpy(const_cast<char*>(this->data()->data[index].guest_writable),
+           value);
     return true;
   }
 
   bool set_host_string(size_t index, const char* value) {
-    strcpy(make_nonvolatile(this->data()->data[index].host_writable), value);
+    strcpy(const_cast<char*>(this->data()->data[index].host_writable),
+           value);
     return true;
   }
 
@@ -54,46 +58,15 @@ class E2ERegionView : public vsoc::TypedRegionView<Layout> {
   void host_status(vsoc::layout::e2e_test::E2ETestStage stage) {
     this->data()->host_status.set_value(stage);
   }
-
- protected:
-  /**
-   * The string functions have problems with volatile pointers, so
-   * this function casts them away.
-   */
-  template <typename T>
-  static T* make_nonvolatile(volatile T* in) {
-    return (T*)in;
-  }
 };
 
-class E2EPrimaryRegionView
-    : public vsoc::E2ERegionView<layout::e2e_test::E2EPrimaryTestRegionLayout> {
- public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<E2EPrimaryRegionView> GetInstance(const char* domain);
-#else
-  static std::shared_ptr<E2EPrimaryRegionView> GetInstance();
-#endif
-};
-class E2ESecondaryRegionView
-    : public vsoc::E2ERegionView<
-          layout::e2e_test::E2ESecondaryTestRegionLayout> {
- public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<E2ESecondaryRegionView> GetInstance(
-      const char* domain);
-#else
-  static std::shared_ptr<E2ESecondaryRegionView> GetInstance();
-#endif
-};
-class E2EUnfindableRegionView
-    : public vsoc::E2ERegionView<layout::e2e_test::E2EUnfindableRegionLayout> {
- public:
-#if defined(CUTTLEFISH_HOST)
-  static std::shared_ptr<E2EUnfindableRegionView> GetInstance(
-      const char* domain);
-#else
-  static std::shared_ptr<E2EUnfindableRegionView> GetInstance();
-#endif
-};
-} // namespace vsoc
+using E2EPrimaryRegionView =
+  vsoc::E2ERegionView<layout::e2e_test::E2EPrimaryTestRegionLayout>;
+
+using E2ESecondaryRegionView =
+  vsoc::E2ERegionView<layout::e2e_test::E2ESecondaryTestRegionLayout>;
+
+using E2EUnfindableRegionView =
+  vsoc::E2ERegionView<layout::e2e_test::E2EUnfindableRegionLayout>;
+
+}  // namespace vsoc

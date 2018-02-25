@@ -49,7 +49,7 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 #include <sync/sync.h>
 
@@ -59,7 +59,7 @@
 #include "stats_keeper.h"
 #include "vsoc_composer.h"
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 
 #ifdef USE_OLD_HWCOMPOSER
 typedef cvd::BaseComposer InnerComposerType;
@@ -245,22 +245,22 @@ static int vsoc_hwc_get_display_configs(vsoc_hwc_device* /*dev*/, int disp,
 #if VSOC_PLATFORM_SDK_AFTER(J)
 static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
                                   const uint32_t attribute) {
-  auto fb_broadcast = FBBroadcastRegionView::GetInstance();
+  auto screen_view = ScreenRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
       return pdev->vsync_period_ns;
     case HWC_DISPLAY_WIDTH:
-      return fb_broadcast->x_res();
+      return screen_view->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return fb_broadcast->y_res();
+      return screen_view->y_res();
     case HWC_DISPLAY_DPI_X:
-      ALOGI("Reporting DPI_X of %d", fb_broadcast->dpi());
+      ALOGI("Reporting DPI_X of %d", screen_view->dpi());
       // The number of pixels per thousand inches
-      return fb_broadcast->dpi() * 1000;
+      return screen_view->dpi() * 1000;
     case HWC_DISPLAY_DPI_Y:
-      ALOGI("Reporting DPI_Y of %d", fb_broadcast->dpi());
+      ALOGI("Reporting DPI_Y of %d", screen_view->dpi());
       // The number of pixels per thousand inches
-      return fb_broadcast->dpi() * 1000;
+      return screen_view->dpi() * 1000;
     default:
       ALOGE("unknown display attribute %u", attribute);
       return -EINVAL;
@@ -312,7 +312,7 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
     return -ENOMEM;
   }
 
-  int refreshRate = FBBroadcastRegionView::GetInstance()->refresh_rate_hz();
+  int refreshRate = ScreenRegionView::GetInstance()->refresh_rate_hz();
   dev->vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
   if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {

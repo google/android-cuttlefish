@@ -38,15 +38,26 @@ emulator_camera_shared_libraries := \
     libcamera_metadata \
     libhardware
 
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -lt 27; echo $$?))
+emulator_camera_shared_libraries += libcamera_client
+else
+emulator_camera_static_libraries += android.hardware.camera.common@1.0-helper
+endif
+
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -le 22; echo $$?))
 emulator_camera_shared_libraries += libjsoncpp
 else
 emulator_camera_static_libraries += libjsoncpp
 endif
 
-emulator_camera_static_libraries += \
-    android.hardware.camera.common@1.0-helper \
-    libyuv
+
+emulator_camera_static_libraries += android.hardware.camera.common@1.0-helper
+
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -le 26; echo $$?))
+emulator_camera_static_libraries += libyuv_static
+else
+emulator_camera_static_libraries += libyuv
+endif
 
 emulator_camera_c_includes := \
     device/google/cuttlefish_common \
