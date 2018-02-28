@@ -23,20 +23,35 @@
 #include "common/vsoc/shm/socket_forward_layout.h"
 
 using vsoc::layout::socket_forward::QueuePair;
+using vsoc::layout::socket_forward::QueueState;
 // store the read and write direction as variables to keep the ifdefs and macros
 // in later code to a minimum
 constexpr auto ReadDirection = &QueuePair::
 #ifdef CUTTLEFISH_HOST
-guest_to_host;
+                                   guest_to_host;
 #else
-host_to_guest;
+                                   host_to_guest;
 #endif
 
 constexpr auto WriteDirection = &QueuePair::
 #ifdef CUTTLEFISH_HOST
-host_to_guest;
+                                    host_to_guest;
 #else
-guest_to_host;
+                                    guest_to_host;
+#endif
+
+constexpr auto kOtherSideClosed = QueueState::
+#ifdef CUTTLEFISH_HOST
+    GUEST_CLOSED;
+#else
+    HOST_CLOSED;
+#endif
+
+constexpr auto kThisSideClosed = QueueState::
+#ifdef CUTTLEFISH_HOST
+    HOST_CLOSED;
+#else
+    GUEST_CLOSED;
 #endif
 
 using vsoc::socket_forward::SocketForwardRegionView;
@@ -45,38 +60,139 @@ void SocketForwardRegionView::Recv(int connection_id, Packet* packet) {
   CHECK(packet != nullptr);
   do {
     (data()->queues_[connection_id].*ReadDirection)
-        .Read(this, reinterpret_cast<char*>(packet), sizeof *packet);
+        .queue.Read(this, reinterpret_cast<char*>(packet), sizeof *packet);
   } while (packet->IsBegin());
   // TODO(haining) check packet generation number
   CHECK(!packet->empty()) << "zero-size data message received";
   CHECK_LE(packet->payload_length(), kMaxPayloadSize) << "invalid size";
 }
 
-void SocketForwardRegionView::Send(int connection_id, const Packet& packet) {
-  if (packet.empty()) {
-    LOG(WARNING) << "ignoring empty packet (not sending)";
-    return;
+bool SocketForwardRegionView::Send(int connection_id, const Packet& packet) {
+  CHECK(!packet.empty());
+  CHECK_LE(packet.payload_length(), kMaxPayloadSize);
+
+  // NOTE this is check-then-act but I think that it's okay. Worst case is that
+  // we send one-too-many packets.
+  auto& queue_pair = data()->queues_[connection_id];
+  {
+    auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+    if ((queue_pair.*WriteDirection).queue_state_ == kOtherSideClosed) {
+      LOG(INFO) << "connection closed, not sending\n";
+      return false;
+    }
+    CHECK((queue_pair.*WriteDirection).queue_state_ != QueueState::INACTIVE);
   }
   // TODO(haining) set packet generation number
-  CHECK_LE(packet.payload_length(), kMaxPayloadSize);
   (data()->queues_[connection_id].*WriteDirection)
-      .Write(this, packet.raw_data(), packet.raw_data_length());
+      .queue.Write(this, packet.raw_data(), packet.raw_data_length());
+  return true;
 }
 
-void SocketForwardRegionView::SendBegin(int connection_id) {
-  Send(connection_id, Packet::MakeBegin());
-}
-
-void SocketForwardRegionView::SendEnd(int connection_id) {
-  Send(connection_id, Packet::MakeEnd());
-}
-
-void SocketForwardRegionView::IgnoreUntilBegin(int connection_id) {
+void SocketForwardRegionView::IgnoreUntilBegin(int connection_id,
+                                               std::uint32_t generation) {
   Packet packet{};
   do {
     (data()->queues_[connection_id].*ReadDirection)
-        .Read(this, reinterpret_cast<char*>(&packet), sizeof packet);
-  } while (!packet.IsBegin());  // TODO(haining) check generation number
+        .queue.Read(this, reinterpret_cast<char*>(&packet), sizeof packet);
+  } while (!packet.IsBegin() || packet.generation() < generation);
+}
+
+bool SocketForwardRegionView::IsOtherSideRecvClosed(int connection_id) {
+  auto& queue_pair = data()->queues_[connection_id];
+  auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+  auto& queue = queue_pair.*WriteDirection;
+  return queue.queue_state_ == kOtherSideClosed ||
+         queue.queue_state_ == QueueState::INACTIVE;
+}
+
+void SocketForwardRegionView::ResetQueueStates(QueuePair* queue_pair) {
+  using vsoc::layout::socket_forward::Queue;
+  auto guard = make_lock_guard(&queue_pair->queue_state_lock_);
+  Queue* queues[] = {&queue_pair->host_to_guest, &queue_pair->guest_to_host};
+  for (auto* queue : queues) {
+    auto& state = queue->queue_state_;
+    switch (state) {
+      case QueueState::HOST_CONNECTED:
+      case kOtherSideClosed:
+        LOG(DEBUG) << "host_connected or other side is closed, marking inactive";
+        state = QueueState::INACTIVE;
+        break;
+
+      case QueueState::BOTH_CONNECTED:
+        LOG(DEBUG) << "both_connected, marking this side closed";
+        state = kThisSideClosed;
+        break;
+
+      case kThisSideClosed:
+        [[fallthrough]];
+      case QueueState::INACTIVE:
+        LOG(DEBUG) << "inactive or this side closed, not changing state";
+        break;
+    }
+  }
+}
+
+void SocketForwardRegionView::CleanUpPreviousConnections() {
+  data()->Recover();
+  int connection_id = 0;
+  auto current_generation = generation();
+  auto begin_packet = Packet::MakeBegin();
+  begin_packet.set_generation(current_generation);
+  auto end_packet = Packet::MakeEnd();
+  end_packet.set_generation(current_generation);
+  for (auto&& queue_pair : data()->queues_) {
+    QueueState state{};
+    {
+      auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+      state = (queue_pair.*WriteDirection).queue_state_;
+#ifndef CUTTLEFISH_HOST
+      if (state == QueueState::HOST_CONNECTED) {
+        state = (queue_pair.*WriteDirection).queue_state_ =
+            QueueState::BOTH_CONNECTED;
+      }
+#endif
+    }
+
+    if (state == QueueState::BOTH_CONNECTED
+#ifdef CUTTLEFISH_HOST
+        || state == QueueState::HOST_CONNECTED
+#endif
+    ) {
+      LOG(INFO) << "found connected write queue state, sending begin and end";
+      Send(connection_id, begin_packet);
+      Send(connection_id, end_packet);
+    }
+    ResetQueueStates(&queue_pair);
+    ++connection_id;
+  }
+  ++data()->generation_num;
+}
+// TODO merge these two into a helper since the only difference is one
+// Read/Write
+void SocketForwardRegionView::MarkSendQueueDisconnected(int connection_id) {
+  auto& queue_pair = data()->queues_[connection_id];
+  auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+  auto& queue = queue_pair.*WriteDirection;
+  queue.queue_state_ = queue.queue_state_ == kOtherSideClosed
+                           ? QueueState::INACTIVE
+                           : kThisSideClosed;
+}
+
+void SocketForwardRegionView::MarkRecvQueueDisconnected(int connection_id) {
+  auto& queue_pair = data()->queues_[connection_id];
+  auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+  auto& queue = queue_pair.*ReadDirection;
+  queue.queue_state_ = queue.queue_state_ == kOtherSideClosed
+                           ? QueueState::INACTIVE
+                           : kThisSideClosed;
+}
+
+int SocketForwardRegionView::port(int connection_id) {
+  return data()->queues_[connection_id].port_;
+}
+
+std::uint32_t SocketForwardRegionView::generation() {
+  return data()->generation_num;
 }
 
 #ifdef CUTTLEFISH_HOST
@@ -85,11 +201,13 @@ int SocketForwardRegionView::AcquireConnectionID(int port) {
   for (auto&& queue_pair : data()->queues_) {
     LOG(DEBUG) << "locking and checking queue at index " << id;
     auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-    if (queue_pair.queue_state_ == QueuePair::INACTIVE) {
+    if (queue_pair.host_to_guest.queue_state_ == QueueState::INACTIVE &&
+        queue_pair.guest_to_host.queue_state_ == QueueState::INACTIVE) {
       queue_pair.port_ = port;
-      queue_pair.queue_state_ = QueuePair::HOST_CONNECTED;
-      LOG(DEBUG) << "acquired queue " << id << " . current seq_num: "
-                 << data()->seq_num;
+      queue_pair.host_to_guest.queue_state_ = QueueState::HOST_CONNECTED;
+      queue_pair.guest_to_host.queue_state_ = QueueState::HOST_CONNECTED;
+      LOG(DEBUG) << "acquired queue " << id
+                 << ". current seq_num: " << data()->seq_num;
       ++data()->seq_num;
       return id;
     }
@@ -99,49 +217,17 @@ int SocketForwardRegionView::AcquireConnectionID(int port) {
   LOG(FATAL) << "no remaining shm queues for connection";
   return -1;
 }
-#endif
 
-namespace {
-bool OtherSideDisconnected(const QueuePair& queue_pair) {
-  constexpr auto kOtherSideClosed = QueuePair::
-#ifdef CUTTLEFISH_HOST
-      GUEST_CLOSED;
+std::pair<SocketForwardRegionView::Sender, SocketForwardRegionView::Receiver>
+SocketForwardRegionView::OpenConnection(int port) {
+  int connection_id = AcquireConnectionID(port);
+  LOG(INFO) << "Acquired connection with id " << connection_id;
+  auto current_generation = generation();
+  return {Sender{this, connection_id, current_generation},
+          Receiver{this, connection_id, current_generation}};
+}
 #else
-      HOST_CLOSED;
-#endif
-  return queue_pair.queue_state_ == kOtherSideClosed;
-}
-
-void MarkThisSideDisconnected(QueuePair* queue_pair) {
-  constexpr auto kThisSideClosed = QueuePair::
-#ifdef CUTTLEFISH_HOST
-      HOST_CLOSED;
-#else
-      GUEST_CLOSED;
-#endif
-  queue_pair->queue_state_ = kThisSideClosed;
-}
-
-}  // namespace
-
-bool SocketForwardRegionView::IsOtherSideClosed(int connection_id) {
-  auto& queue_pair = data()->queues_[connection_id];
-  auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-  return OtherSideDisconnected(queue_pair);
-}
-
-void SocketForwardRegionView::ReleaseConnectionID(int connection_id) {
-  auto& queue_pair = data()->queues_[connection_id];
-  auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-  if (OtherSideDisconnected(queue_pair)) {
-    queue_pair.port_ = 0;
-    queue_pair.queue_state_ = QueuePair::INACTIVE;
-  } else {
-    MarkThisSideDisconnected(&queue_pair);
-  }
-}
-
-std::pair<int, int> SocketForwardRegionView::GetWaitingConnectionIDAndPort() {
+int SocketForwardRegionView::GetWaitingConnectionID() {
   while (data()->seq_num == last_seq_number_) {
     WaitForSignal(&data()->seq_num, last_seq_number_);
   }
@@ -150,81 +236,46 @@ std::pair<int, int> SocketForwardRegionView::GetWaitingConnectionIDAndPort() {
   for (auto&& queue_pair : data()->queues_) {
     LOG(DEBUG) << "locking and checking queue at index " << id;
     auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-    if (queue_pair.queue_state_ == QueuePair::HOST_CONNECTED) {
+    if (queue_pair.host_to_guest.queue_state_ == QueueState::HOST_CONNECTED) {
+      CHECK(queue_pair.guest_to_host.queue_state_ ==
+            QueueState::HOST_CONNECTED);
       LOG(DEBUG) << "found waiting connection at index " << id;
-      queue_pair.queue_state_ = QueuePair::BOTH_CONNECTED;
-      return {id, queue_pair.port_};
+      queue_pair.host_to_guest.queue_state_ = QueueState::BOTH_CONNECTED;
+      queue_pair.guest_to_host.queue_state_ = QueueState::BOTH_CONNECTED;
+      return id;
     }
     ++id;
   }
-  return {-1, -1};
+  return -1;
 }
 
-#ifdef CUTTLEFISH_HOST
-SocketForwardRegionView::Connection SocketForwardRegionView::OpenConnection(
-    int port) {
-  return {this, AcquireConnectionID(port), port};
-}
-#else
-SocketForwardRegionView::Connection
+std::pair<SocketForwardRegionView::Sender, SocketForwardRegionView::Receiver>
 SocketForwardRegionView::AcceptConnection() {
   int connection_id = -1;
-  int port = -1;
   while (connection_id < 0) {
-    // TODO(haining) if ever in C++17, structured binding declaration
-    auto id_and_port = GetWaitingConnectionIDAndPort();
-    connection_id = id_and_port.first;
-    port = id_and_port.second;
+    connection_id = GetWaitingConnectionID();
   }
-  return {this, connection_id, port};
+  LOG(INFO) << "Accepted connection with id " << connection_id;
+
+  auto current_generation = generation();
+  return {Sender{this, connection_id, current_generation},
+          Receiver{this, connection_id, current_generation}};
 }
 #endif
 
 // --- Connection ---- //
-SocketForwardRegionView::Connection::Connection(SocketForwardRegionView* view,
-                                                int connection_id, int port)
-    : view_{view, {connection_id}}, connection_id_{connection_id}, port_{port} {
-  LOG(INFO) << "opened connection with id " << connection_id_;
-}
-
-SocketForwardRegionView::Sender
-SocketForwardRegionView::Connection::MakeSender() {
-  CHECK(!sender_created_);
-  sender_created_ = true;
-  return Sender{this};
-}
-
-SocketForwardRegionView::Receiver
-SocketForwardRegionView::Connection::MakeReceiver() {
-  CHECK(!receiver_created_);
-  receiver_created_ = true;
-  return Receiver{this};
-}
-
-void SocketForwardRegionView::Connection::IgnoreUntilBegin() {
-  view_->IgnoreUntilBegin(connection_id_);
-}
-
-void SocketForwardRegionView::Connection::Recv(Packet* packet) {
+void SocketForwardRegionView::Receiver::Recv(Packet* packet) {
+  if (!got_begin_) {
+    view_->IgnoreUntilBegin(connection_id_, generation_);
+    got_begin_ = true;
+  }
   return view_->Recv(connection_id_, packet);
 }
 
-bool SocketForwardRegionView::Connection::closed() const {
-  return view_->IsOtherSideClosed(connection_id_);
+bool SocketForwardRegionView::Sender::closed() const {
+  return view_->IsOtherSideRecvClosed(connection_id_);
 }
 
-void SocketForwardRegionView::Connection::SendEnd() {
-  view_->SendEnd(connection_id_);
-}
-
-void SocketForwardRegionView::Connection::SendBegin() {
-  view_->SendBegin(connection_id_);
-}
-
-void SocketForwardRegionView::Connection::Send(const Packet& packet) {
-  if (closed()) {
-    LOG(INFO) << "connection closed, not sending\n";
-    return;
-  }
-  view_->Send(connection_id_, packet);
+bool SocketForwardRegionView::Sender::Send(const Packet& packet) {
+  return view_->Send(connection_id_, packet);
 }

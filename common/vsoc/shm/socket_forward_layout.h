@@ -27,36 +27,43 @@ namespace socket_forward {
 
 constexpr std::size_t kMaxPacketSize = 8192;
 
+enum class QueueState : std::uint32_t {
+  INACTIVE = 0,
+  HOST_CONNECTED = 1,
+  BOTH_CONNECTED = 2,
+  HOST_CLOSED = 3,
+  GUEST_CLOSED = 4,
+  // If both are closed then the queue goes back to INACTIVE
+  // BOTH_CLOSED = 0,
+};
+
+struct Queue {
+  CircularPacketQueue<16, kMaxPacketSize> queue;
+
+  QueueState queue_state_;
+
+  bool Recover() {
+    return queue.Recover();
+  }
+};
+
 struct QueuePair {
   // Traffic originating from host that proceeds towards guest.
-  CircularPacketQueue<16, kMaxPacketSize> host_to_guest;
+  Queue host_to_guest;
   // Traffic originating from guest that proceeds towards host.
-  CircularPacketQueue<16, kMaxPacketSize> guest_to_host;
+  Queue guest_to_host;
 
-  enum QueueState : std::uint32_t {
-    INACTIVE = 0,
-    HOST_CONNECTED = 1,
-    BOTH_CONNECTED = 2,
-    HOST_CLOSED = 3,
-    GUEST_CLOSED = 4,
-    // If both are closed then the queue goes back to INACTIVE
-    // BOTH_CLOSED = 0,
-  };
-  QueueState queue_state_;
   std::uint32_t port_;
 
   SpinLock queue_state_lock_;
 
+
   bool Recover() {
-    bool recovered = false;
-    bool rval = host_to_guest.Recover();
-    recovered = recovered || rval;
-    rval = guest_to_host.Recover();
-    recovered = recovered || rval;
-    rval = queue_state_lock_.Recover();
-    recovered = recovered || rval;
     // TODO: Put queue_state_ and port_ recovery here, probably after grabbing
-    // the queue_state_lock_.
+    bool recovered = false;
+    recovered = recovered ||  host_to_guest.Recover();
+    recovered = recovered || guest_to_host.Recover();
+    recovered = recovered || queue_state_lock_.Recover();
     return recovered;
   }
 };
@@ -73,7 +80,8 @@ struct SocketForwardLayout : public RegionLayout {
   }
 
   QueuePair queues_[version_info::socket_forward::kNumQueues];
-  std::atomic_uint32_t seq_num;
+  std::atomic_uint32_t seq_num; // incremented for every new connection
+  std::atomic_uint32_t generation_num; // incremented for every new socket forward process
   static const char* region_name;
 };
 

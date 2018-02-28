@@ -42,55 +42,32 @@ DEFINE_uint32(port, 0, "Port from which to forward TCP connections.");
 #endif
 
 namespace {
-class Worker {
+// Sends packets, Shutdown(SHUT_WR) on destruction
+class SocketSender {
  public:
-  Worker(SocketForwardRegionView::Connection shm_connection,
-         cvd::SharedFD socket)
-      : shm_connection_(std::move(shm_connection)),
-        socket_(std::move(socket)){}
+  explicit SocketSender(cvd::SharedFD socket) : socket_{std::move(socket)} {}
 
-  static void SocketToShm(std::shared_ptr<Worker> worker) {
-    worker->SocketToShmImpl();
-  }
+  SocketSender(SocketSender&&) = default;
+  SocketSender& operator=(SocketSender&&) = default;
 
-  static void ShmToSocket(std::shared_ptr<Worker> worker) {
-    worker->ShmToSocketImpl();
-  }
+  SocketSender(const SocketSender&&) = delete;
+  SocketSender& operator=(const SocketSender&) = delete;
 
- private:
-
-  // *packet will be empty if Read returns 0 or error
-  void SocketRecvPacket(Packet* packet) {
-    auto size = socket_->Read(packet->payload(), sizeof packet->payload());
-    if (size < 0) {
-      size = 0;
+  ~SocketSender() {
+    if (socket_.operator->()) {  // check that socket_ was not moved-from
+      socket_->Shutdown(SHUT_WR);
     }
-    packet->set_payload_length(size);
   }
 
-  void SocketToShmImpl() {
-    auto shm_sender = shm_connection_.MakeSender();
-
-    auto packet = Packet::MakeData();
-    while (true) {
-      SocketRecvPacket(&packet);
-      if (packet.empty()) {
-        break;
-      }
-      shm_sender.Send(packet);
-    }
-    LOG(INFO) << "Socket to shm exiting";
-  }
-
-  ssize_t SocketSendAll(const Packet& packet) {
+  ssize_t SendAll(const Packet& packet) {
     ssize_t written{};
     while (written < static_cast<ssize_t>(packet.payload_length())) {
       if (!socket_->IsOpen()) {
         return -1;
       }
-      auto just_written = socket_->Send(packet.payload() + written,
-                                         packet.payload_length() - written,
-                                         MSG_NOSIGNAL);
+      auto just_written =
+          socket_->Send(packet.payload() + written,
+                        packet.payload_length() - written, MSG_NOSIGNAL);
       if (just_written <= 0) {
         LOG(INFO) << "Couldn't write to client: "
                   << strerror(socket_->GetErrno());
@@ -101,42 +78,73 @@ class Worker {
     return written;
   }
 
-  struct SocketShutdown {
-    cvd::SharedFD socket;
-    SocketShutdown(const SocketShutdown&) = delete;
-    SocketShutdown& operator=(const SocketShutdown&) = delete;
-    ~SocketShutdown() {
-      socket->Shutdown(SHUT_WR);
-    }
-  };
-
-  void ShmToSocketImpl() {
-    auto shm_receiver = shm_connection_.MakeReceiver();
-    SocketShutdown shutdown_socket{socket_};
-    Packet packet{};
-    while (true) {
-      shm_receiver.Recv(&packet);
-      if (packet.IsEnd()) {
-        break;
-      }
-      if (SocketSendAll(packet) < 0) {
-        break;
-      }
-    }
-    LOG(INFO) << "Shm to socket exiting";
-  }
-
-  SocketForwardRegionView::Connection shm_connection_;
+ private:
   cvd::SharedFD socket_;
 };
 
+class SocketReceiver {
+ public:
+  explicit SocketReceiver(cvd::SharedFD socket) : socket_{std::move(socket)} {}
+
+  SocketReceiver(SocketReceiver&&) = default;
+  SocketReceiver& operator=(SocketReceiver&&) = default;
+
+  SocketReceiver(const SocketReceiver&&) = delete;
+  SocketReceiver& operator=(const SocketReceiver&) = delete;
+
+  // *packet will be empty if Read returns 0 or error
+  void Recv(Packet* packet) {
+    auto size = socket_->Read(packet->payload(), sizeof packet->payload());
+    if (size < 0) {
+      size = 0;
+    }
+    packet->set_payload_length(size);
+  }
+
+ private:
+  cvd::SharedFD socket_;
+};
+
+void SocketToShm(SocketReceiver socket_receiver,
+                 SocketForwardRegionView::Sender shm_sender) {
+  auto packet = Packet::MakeData();
+  while (true) {
+    socket_receiver.Recv(&packet);
+    if (packet.empty()) {
+      break;
+    }
+    if (!shm_sender.Send(packet)) {
+      break;
+    }
+  }
+  LOG(INFO) << "Socket to shm exiting";
+}
+
+void ShmToSocket(SocketSender socket_sender,
+                 SocketForwardRegionView::Receiver shm_receiver) {
+  Packet packet{};
+  while (true) {
+    shm_receiver.Recv(&packet);
+    if (packet.IsEnd()) {
+      break;
+    }
+    if (socket_sender.SendAll(packet) < 0) {
+      break;
+    }
+  }
+  LOG(INFO) << "Shm to socket exiting";
+}
+
 // One thread for reading from shm and writing into a socket.
 // One thread for reading from a socket and writing into shm.
-void LaunchWorkers(SocketForwardRegionView::Connection conn,
+void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
+                             SocketForwardRegionView::Receiver>
+                       conn,
                    cvd::SharedFD socket) {
-  auto worker = std::make_shared<Worker>(std::move(conn), std::move(socket));
-  std::thread threads[] = {std::thread(Worker::SocketToShm, worker),
-                           std::thread(Worker::ShmToSocket, worker)};
+  // TODO create the SocketSender/Receivers in their respective threads?
+  std::thread threads[] = {
+      std::thread(SocketToShm, SocketReceiver{socket}, std::move(conn.first)),
+      std::thread(ShmToSocket, SocketSender{socket}, std::move(conn.second))};
   for (auto&& t : threads) {
     t.detach();
   }
@@ -162,9 +170,11 @@ void LaunchWorkers(SocketForwardRegionView::Connection conn,
   while (true) {
     auto conn = shm->AcceptConnection();
     LOG(INFO) << "shm connection accepted";
-    auto sock = cvd::SharedFD::SocketLocalClient(conn.port(), SOCK_STREAM);
-    CHECK(sock->IsOpen()) << "Could not open socket to port " << conn.port();
-    LOG(INFO) << "socket opened to " << conn.port();
+    auto sock =
+        cvd::SharedFD::SocketLocalClient(conn.first.port(), SOCK_STREAM);
+    CHECK(sock->IsOpen()) << "Could not open socket to port "
+                          << conn.first.port();
+    LOG(INFO) << "socket opened to " << conn.first.port();
     LaunchWorkers(std::move(conn), std::move(sock));
   }
 }
@@ -179,6 +189,7 @@ SocketForwardRegionView* GetShm() {
   if (!shm) {
     LOG(FATAL) << "Could not open SHM. Aborting.";
   }
+  shm->CleanUpPreviousConnections();
   return shm;
 }
 
