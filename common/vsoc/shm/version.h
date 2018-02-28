@@ -149,7 +149,10 @@ namespace socket_forward {
 constexpr uint32_t version = 0;
 constexpr std::size_t kNumQueues = 16;
 constexpr std::size_t SocketForwardLayout_size =
-    (65548 * 2  + 4 + 4 + 4) * kNumQueues // queues + state + port + lock
+    ((((65548  + 4) // queue + state
+       * 2) // host_to_guest and guest_to_host
+      + 4 + 4) // port and state_lock
+     * kNumQueues)
     + 4; // seq_num
 }  // namespace socket_forward
 
