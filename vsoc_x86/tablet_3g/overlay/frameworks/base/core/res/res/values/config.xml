@@ -35,7 +35,7 @@
     <item>"wlan0"</item>
   </string-array>
   <string-array name="config_tether_apndata" translatable="false">
-    <item>Android,android,,,,,,,,310,260,,default,dun,ims</item>
+    <item>Android,android,,,,,,,,302,780,,default,dun,ims</item>
   </string-array>
   <bool name="config_wifi_dual_band_support" translatable="false">true</bool>
   <bool name="config_bluetooth_address_validation">true</bool>
