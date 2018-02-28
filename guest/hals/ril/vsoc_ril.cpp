@@ -1491,7 +1491,7 @@ static void init_virtual_network() {
   gGSMNeighboringCells.resize(1);
   gGSMNeighboringCells[0].cid = (char*)"0000";
   gGSMNeighboringCells[0].rssi = 75;
-  gNetworkOperators["310260"] =
+  gNetworkOperators["302780"] =
       NetworkOperator("Android Virtual Operator", "Android", true);
   gNetworkOperators["310300"] =
       NetworkOperator("Alternative Operator", "Alternative", true);
@@ -1882,7 +1882,7 @@ static void pollSIMState(void* /*param*/) {
       // Transition directly to READY. Set default network operator.
       if (gRadioPowerState == RADIO_STATE_ON) {
         gSimStatus = SIM_READY;
-        gCurrentNetworkOperator = "310260";
+        gCurrentNetworkOperator = "302780";
       }
 
       gce_ril_env->RequestTimedCallback(pollSIMState, NULL, &TIMEVAL_SIMPOLL);
