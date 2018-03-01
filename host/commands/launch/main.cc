@@ -124,6 +124,12 @@ DEFINE_string(socket_forward_proxy_ports, "5555", "Comma-separated list of "
               "host-side socket_forward_proxy process will bias the port "
               "numbers.");
 
+DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
+DEFINE_string(wifi_relay_binary,
+              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
+                  "/bin/wifi_relay",
+              "Location of the wifi_relay binary.");
+
 DECLARE_string(uuid);
 
 namespace {
@@ -488,5 +494,20 @@ int main(int argc, char** argv) {
                                  port_options.c_str(), NULL};
     subprocess(vnc_command, NULL, false);
   }
+
+  if (FLAGS_start_wifi_relay) {
+    // Launch the wifi relay, don't wait for it to complete
+    std::string domainArg = "--domain=" + vsoc::GetDomain();
+
+    const char* relay_command[] = {
+        "/usr/bin/sudo",
+        FLAGS_wifi_relay_binary.c_str(),
+        domainArg.c_str(),
+        NULL
+    };
+
+    subprocess(relay_command, NULL /* envp */, false /* wait_for_child */);
+  }
+
   pause();
 }
