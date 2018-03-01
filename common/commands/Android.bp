@@ -16,4 +16,5 @@
 subdirs = [
     "socket_forward_proxy",
     "wificlient",
+    "wifi_relay",
 ]
