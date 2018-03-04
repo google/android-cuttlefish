@@ -147,7 +147,9 @@ void SocketForwardRegionView::CleanUpPreviousConnections() {
       state = (queue_pair.*WriteDirection).queue_state_;
 #ifndef CUTTLEFISH_HOST
       if (state == QueueState::HOST_CONNECTED) {
-        state = (queue_pair.*WriteDirection).queue_state_ =
+        state =
+            (queue_pair.*WriteDirection).queue_state_ =
+            (queue_pair.*ReadDirection).queue_state_ =
             QueueState::BOTH_CONNECTED;
       }
 #endif

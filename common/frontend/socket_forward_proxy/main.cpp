@@ -19,8 +19,10 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
+#include <vector>
 #include <glog/logging.h>
 #include <gflags/gflags.h>
 
@@ -36,9 +38,10 @@
 using vsoc::socket_forward::Packet;
 using vsoc::socket_forward::SocketForwardRegionView;
 
-// TODO(haining) accept multiple ports
 #ifdef CUTTLEFISH_HOST
-DEFINE_uint32(port, 0, "Port from which to forward TCP connections.");
+DEFINE_string(ports, "",
+              "Comma-separated list of ports from which to forward TCP "
+              "connections.");
 #endif
 
 namespace {
@@ -151,7 +154,15 @@ void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
 }
 
 #ifdef CUTTLEFISH_HOST
-[[noreturn]] void host(SocketForwardRegionView* shm, int port) {
+[[noreturn]] void host_impl(SocketForwardRegionView* shm,
+                            std::vector<int> ports, std::size_t index) {
+  // launch a worker for the following port before handling the current port.
+  // recursion (instead of a loop) removes the need fore any join() or having
+  // the main thread do no work.
+  if (index + 1 < ports.size()) {
+    std::thread(host_impl, shm, ports, index + 1).detach();
+  }
+  auto port = ports[index];
   LOG(INFO) << "starting server on " << port;
   auto server = cvd::SharedFD::SocketLocalServer(port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on port " << port;
@@ -164,6 +175,23 @@ void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
     LaunchWorkers(std::move(conn), std::move(client_socket));
   }
 }
+
+[[noreturn]] void host(SocketForwardRegionView* shm,
+                           std::vector<int> ports) {
+  CHECK(!ports.empty());
+  host_impl(shm, ports, 0);
+}
+
+std::vector<int> ParsePortsList(const std::string& ports_flag) {
+  std::istringstream ports_stream{ports_flag};
+  std::vector<int> ports;
+  std::string port_str{};
+  while (std::getline(ports_stream, port_str, ',')) {
+    ports.push_back(std::stoi(port_str));
+  }
+  return ports;
+}
+
 #else
 [[noreturn]] void guest(SocketForwardRegionView* shm) {
   LOG(INFO) << "Starting guest mainloop";
@@ -210,8 +238,8 @@ int main(int argc, char* argv[]) {
   auto worker = shm->StartWorker();
 
 #ifdef CUTTLEFISH_HOST
-  CHECK_NE(FLAGS_port, 0u) << "Must specify --port flag";
-  host(shm, FLAGS_port);
+  CHECK(!FLAGS_ports.empty()) << "Must specify --ports flag";
+  host(shm, ParsePortsList(FLAGS_ports));
 #else
   guest(shm);
 #endif
