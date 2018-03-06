@@ -80,9 +80,11 @@ start() {
       create_mobile_interface $i | /usr/bin/virsh net-create /dev/fd/0
       create_wifi_interface $i | /usr/bin/virsh net-create /dev/fd/0
     done
+    /usr/sbin/hostapd -B /etc/cf-hostapd.conf
 }
 
 stop() {
+    killall hostapd
     for i in $(seq ${num_cvd_accounts}); do
       /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $i)"
       /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $i)"
