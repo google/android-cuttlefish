@@ -36,3 +36,4 @@
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish      u:object_r:hal_dumpstate_impl_exec:s0
+/vendor/bin/hw/android\.hardware\.health@2\.0-service.cuttlefish          u:object_r:hal_health_default_exec:s0
