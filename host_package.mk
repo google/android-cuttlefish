@@ -24,6 +24,7 @@ cvd_host_executables := \
     socket_forward_proxy \
     vnc_server \
     wifi_relay \
+    record_audio \
 
 cvd_host_tests := \
     auto_free_buffer_test \
