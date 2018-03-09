@@ -1,0 +1,24 @@
+cc_library_static {
+    name: "libcuttlefish_wifi_relay",
+
+    srcs: [
+        "mac80211_hwsim.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libnl",
+        "vsoc_lib",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    target: {
+        linux_glibc: {
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libgflags",
+            ],
+        }
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
+}
