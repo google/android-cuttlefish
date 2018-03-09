@@ -22,7 +22,6 @@ PRODUCT_SHIPPING_API_LEVEL := 26
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
 PRODUCT_PROPERTY_OVERRIDES += \
-    tombstoned.max_tombstone_count=500 \
     debug.hwui.swap_with_damage=0 \
     ro.adb.qemud=0 \
     ro.carrier=unknown \
@@ -63,11 +62,10 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy \
     usbforward \
     VSoCService \
-    wifi_relay \
+    wifirouter \
+    wificlient \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
-    vport_trigger \
-    rename_netiface
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -96,7 +94,7 @@ PRODUCT_PACKAGES += \
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
-# PRODUCT_AAPT_PREF_CONFIG is intentionally not set to pick up every density resources.
+PRODUCT_AAPT_PREF_CONFIG := xhdpi
 
 #
 # General files
@@ -176,8 +174,8 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     audio.primary.vsoc \
-    android.hardware.audio@4.0-impl \
-    android.hardware.audio.effect@4.0-impl \
+    android.hardware.audio@2.0-impl \
+    android.hardware.audio.effect@2.0-impl \
     android.hardware.audio@2.0-service
 
 #
@@ -263,8 +261,10 @@ PRODUCT_PACKAGES += \
 # TODO thermal
 
 PRODUCT_PACKAGES += \
+    vsoc_mem_json \
     cuttlefish_dtb
 
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
+
