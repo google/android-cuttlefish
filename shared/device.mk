@@ -175,8 +175,8 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     audio.primary.vsoc \
-    android.hardware.audio@2.0-impl \
-    android.hardware.audio.effect@2.0-impl \
+    android.hardware.audio@4.0-impl \
+    android.hardware.audio.effect@4.0-impl \
     android.hardware.audio@2.0-service
 
 #
@@ -218,11 +218,9 @@ PRODUCT_PACKAGES += \
     android.hardware.gnss@1.0-impl \
     android.hardware.gnss@1.0-service
 
-#
 # Health
-#
 PRODUCT_PACKAGES += \
-    android.hardware.health@2.0-service
+    android.hardware.health@2.0-service.cuttlefish
 
 #
 # Sensors
