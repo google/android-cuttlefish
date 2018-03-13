@@ -22,6 +22,7 @@ PRODUCT_SHIPPING_API_LEVEL := 26
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
 PRODUCT_PROPERTY_OVERRIDES += \
+    tombstoned.max_tombstone_count=500 \
     debug.hwui.swap_with_damage=0 \
     ro.adb.qemud=0 \
     ro.carrier=unknown \
