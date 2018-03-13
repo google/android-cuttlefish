@@ -228,8 +228,16 @@ inline const char* pixel_format_to_string(int format) {
       return "RAW10";
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(L_MR1)
+    case HAL_PIXEL_FORMAT_YCbCr_444_888:
+      return "YCbCr_444_888";
+    case HAL_PIXEL_FORMAT_YCbCr_422_888:
+      return "YCbCr_422_888";
     case HAL_PIXEL_FORMAT_RAW12:
       return "RAW12";
+    case HAL_PIXEL_FORMAT_FLEX_RGBA_8888:
+      return "FLEX_RGBA_8888";
+    case HAL_PIXEL_FORMAT_FLEX_RGB_888:
+      return "FLEX_RGB_888";
 #endif
 
       // Formats that have been removed
@@ -252,17 +260,6 @@ inline const char* pixel_format_to_string(int format) {
       return "sRGB_X_8888";
     case HAL_PIXEL_FORMAT_sRGB_A_8888:
       return "sRGB_A_8888";
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(L_MR1) && VSOC_PLATFORM_SDK_BEFORE(P)
-    // Added in LMR1. Hidden from HALs since P.
-    case HAL_PIXEL_FORMAT_YCbCr_444_888:
-      return "YCbCr_444_888";
-    case HAL_PIXEL_FORMAT_YCbCr_422_888:
-      return "YCbCr_422_888";
-    case HAL_PIXEL_FORMAT_FLEX_RGBA_8888:
-      return "FLEX_RGBA_8888";
-    case HAL_PIXEL_FORMAT_FLEX_RGB_888:
-      return "FLEX_RGB_888";
 #endif
   }
   return "UNKNOWN";
