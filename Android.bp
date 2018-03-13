@@ -42,10 +42,17 @@ cc_defaults {
         "cuttlefish_kernel_headers",
     ],
     target: {
-        host: {
+        linux: {
             host_ldlibs: ["-lrt"],
             cflags: ["-DCUTTLEFISH_HOST"],
-            compile_multilib: "64"
+        },
+        // We don't need 32 bit host-side builds
+        linux_x86: {
+            enabled: false,
+        },
+        // We don't need Darwin host-side builds
+        darwin: {
+            enabled: false,
         },
     },
     cflags: ["-Werror", "-Wall"],
@@ -106,7 +113,7 @@ cc_library_shared {
         "liblog",
     ],
     target: {
-        host: {
+        linux: {
             srcs: [
                 "host/vsoc/lib/gralloc_buffer_region_view.cpp",
                 "host/vsoc/lib/host_lock.cpp",
