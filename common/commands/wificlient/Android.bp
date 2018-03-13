@@ -18,7 +18,7 @@ cc_binary {
         "cuttlefish_glog",
     ],
     target: {
-        host: {
+        linux: {
             static_libs: [
                 "libcuttlefish_wifi",
                 "libcuttlefish_host_config",
