@@ -38,92 +38,6 @@ namespace cvd {
 
 namespace {
 
-// Ensures that the layer does not include any inconsistencies
-bool IsValidLayer(const vsoc_hwc_layer& layer) {
-  if (layer.flags & HWC_SKIP_LAYER) {
-    // A layer we are asked to skip is valid regardless of its contents
-    return true;
-  }
-  // Check displayFrame
-  if (layer.displayFrame.left > layer.displayFrame.right ||
-      layer.displayFrame.top > layer.displayFrame.bottom) {
-    ALOGE(
-        "%s: Malformed rectangle (displayFrame): [left = %d, right = %d, top = "
-        "%d, bottom = %d]",
-        __FUNCTION__, layer.displayFrame.left, layer.displayFrame.right,
-        layer.displayFrame.top, layer.displayFrame.bottom);
-    return false;
-  }
-  // Validate the handle
-  if (private_handle_t::validate(layer.handle) != 0) {
-    ALOGE("%s: Layer contains an invalid gralloc handle.", __FUNCTION__);
-    return false;
-  }
-  const private_handle_t* p_handle =
-      reinterpret_cast<const private_handle_t*>(layer.handle);
-  // Check sourceCrop
-  if (layer.sourceCrop.left > layer.sourceCrop.right ||
-      layer.sourceCrop.top > layer.sourceCrop.bottom) {
-    ALOGE(
-        "%s: Malformed rectangle (sourceCrop): [left = %d, right = %d, top = "
-        "%d, bottom = %d]",
-        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
-        layer.sourceCrop.top, layer.sourceCrop.bottom);
-    return false;
-  }
-  if (layer.sourceCrop.left < 0 || layer.sourceCrop.top < 0 ||
-      layer.sourceCrop.right > p_handle->x_res ||
-      layer.sourceCrop.bottom > p_handle->y_res) {
-    ALOGE(
-        "%s: Invalid sourceCrop for buffer handle: sourceCrop = [left = %d, "
-        "right = %d, top = %d, bottom = %d], handle = [width = %d, height = "
-        "%d]",
-        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
-        layer.sourceCrop.top, layer.sourceCrop.bottom, p_handle->x_res,
-        p_handle->y_res);
-    return false;
-  }
-  return true;
-}
-
-bool IsValidComposition(int num_layers, vsoc_hwc_layer* layers) {
-  // The FRAMEBUFFER_TARGET layer needs to be sane only if there is at least one
-  // layer marked HWC_FRAMEBUFFER or if there is no layer marked HWC_OVERLAY
-  // (i.e some layers where composed with OpenGL, no layer marked overlay or
-  // framebuffer means that surfaceflinger decided to go for OpenGL without
-  // asking the hwcomposer first)
-  bool check_fb_target = true;
-  for (int idx = 0; idx < num_layers; ++idx) {
-    if (layers[idx].compositionType == HWC_FRAMEBUFFER) {
-      // There is at least one, so it needs to be checked.
-      // It may have been set to false before, so ensure it's set to true.
-      check_fb_target = true;
-      break;
-    }
-    if (layers[idx].compositionType == HWC_OVERLAY) {
-      // At least one overlay, we may not need to.
-      check_fb_target = false;
-    }
-  }
-
-  for (int idx = 0; idx < num_layers; ++idx) {
-    switch (layers[idx].compositionType) {
-    case HWC_FRAMEBUFFER_TARGET:
-      if (check_fb_target && !IsValidLayer(layers[idx])) {
-        return false;
-      }
-      break;
-    case HWC_OVERLAY:
-      if (!(layers[idx].flags & HWC_SKIP_LAYER) &&
-          !IsValidLayer(layers[idx])) {
-        return false;
-      }
-      break;
-    }
-  }
-  return true;
-}
-
 bool LayerNeedsScaling(const vsoc_hwc_layer& layer) {
   int from_w = layer.sourceCrop.right - layer.sourceCrop.left;
   int from_h = layer.sourceCrop.bottom - layer.sourceCrop.top;
@@ -599,10 +513,6 @@ VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp,
 VSoCComposer::~VSoCComposer() {}
 
 int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
-  if (!IsValidComposition(num_layers, layers)) {
-    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
-    return -1;
-  }
   int composited_layers_count = 0;
 
   // Loop over layers in inverse order of z-index
@@ -645,10 +555,6 @@ int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 }
 
 int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
-  if (!IsValidComposition(num_layers, layers)) {
-    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
-    return -1;
-  }
   int targetFbs = 0;
   int buffer_idx = NextScreenBuffer();
 
