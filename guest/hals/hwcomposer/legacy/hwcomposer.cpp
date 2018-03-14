@@ -22,6 +22,8 @@
 // to support 1.1 implementations it can be copied into cuttlefish from
 // frameworks/native/services/surfaceflinger/DisplayHardware/HWC2On1Adapter.*
 
+#define LOG_TAG "hwc.cf_x86"
+
 #include <guest/libs/platform_support/api_level_fixes.h>
 
 #include <errno.h>
@@ -36,6 +38,8 @@
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/time.h>
+
+#include <string>
 
 #define HWC_REMOVE_DEPRECATED_VERSIONS 1
 
@@ -84,11 +88,44 @@ struct vsoc_hwc_composer_device_1_t {
 
 namespace {
 
+std::string CompositionString(int type) {
+  switch (type) {
+    case HWC_FRAMEBUFFER:
+      return "Framebuffer";
+    case HWC_OVERLAY:
+      return "Overlay";
+    case HWC_BACKGROUND:
+      return "Background";
+    case HWC_FRAMEBUFFER_TARGET:
+      return "FramebufferTarget";
+    case HWC_SIDEBAND:
+      return "Sideband";
+    case HWC_CURSOR_OVERLAY:
+      return "CursorOverlay";
+    default:
+      return std::string("Unknown (") + std::to_string(type) + ")";
+  }
+}
+
+void LogLayers(int num_layers, vsoc_hwc_layer* layers, int invalid) {
+  ALOGE("Layers:");
+  for (int idx = 0; idx < num_layers; ++idx) {
+    std::string log_line;
+    if (idx == invalid) {
+      log_line = "Invalid layer: ";
+    }
+    log_line +=
+        "Composition Type: " + CompositionString(layers[idx].compositionType);
+    ALOGE("%s", log_line.c_str());
+  }
+}
+
 // Ensures that the layer does not include any inconsistencies
 bool IsValidLayer(const vsoc_hwc_layer& layer) {
   if (layer.flags & HWC_SKIP_LAYER) {
-    // A layer we are asked to skip is valid regardless of its contents
-    return true;
+    // A layer we are asked to skip validate should not be marked as skip
+    ALOGE("%s: Layer is marked as skip", __FUNCTION__);
+    return false;
   }
   // Check displayFrame
   if (layer.displayFrame.left > layer.displayFrame.right ||
@@ -132,12 +169,24 @@ bool IsValidLayer(const vsoc_hwc_layer& layer) {
   return true;
 }
 
-bool IsValidComposition(int num_layers, vsoc_hwc_layer* layers) {
-  // The FRAMEBUFFER_TARGET layer needs to be sane only if there is at least one
-  // layer marked HWC_FRAMEBUFFER or if there is no layer marked HWC_OVERLAY
-  // (i.e some layers where composed with OpenGL, no layer marked overlay or
-  // framebuffer means that surfaceflinger decided to go for OpenGL without
-  // asking the hwcomposer first)
+bool IsValidComposition(int num_layers, vsoc_hwc_layer* layers, bool on_set) {
+  if (num_layers == 0) {
+    ALOGE("Composition requested with 0 layers");
+    return false;
+  }
+  // Sometimes the hwcomposer receives a prepare and set calls with no other
+  // layer than the FRAMEBUFFER_TARGET with a null handler. We treat this case
+  // independently as a valid composition, but issue a warning about it.
+  if (num_layers == 1 && layers[0].compositionType == HWC_FRAMEBUFFER_TARGET &&
+      layers[0].handle == NULL) {
+    ALOGW("Received request for empty composition, treating as valid noop");
+    return true;
+  }
+  // The FRAMEBUFFER_TARGET layer needs to be sane only if
+  // there is at least one layer marked HWC_FRAMEBUFFER or if there is no layer
+  // marked HWC_OVERLAY (i.e some layers where composed with OpenGL, no layer
+  // marked overlay or framebuffer means that surfaceflinger decided to go for
+  // OpenGL without asking the hwcomposer first)
   bool check_fb_target = true;
   for (int idx = 0; idx < num_layers; ++idx) {
     if (layers[idx].compositionType == HWC_FRAMEBUFFER) {
@@ -155,13 +204,19 @@ bool IsValidComposition(int num_layers, vsoc_hwc_layer* layers) {
   for (int idx = 0; idx < num_layers; ++idx) {
     switch (layers[idx].compositionType) {
     case HWC_FRAMEBUFFER_TARGET:
-      if (check_fb_target && !IsValidLayer(layers[idx])) {
+      // In the call to prepare() the framebuffer target does not have a valid
+      // buffer_handle, so we don't validate it yet.
+      if (on_set && check_fb_target && !IsValidLayer(layers[idx])) {
+        ALOGE("%s: Invalid layer found", __FUNCTION__);
+        LogLayers(num_layers, layers, idx);
         return false;
       }
       break;
     case HWC_OVERLAY:
       if (!(layers[idx].flags & HWC_SKIP_LAYER) &&
           !IsValidLayer(layers[idx])) {
+        ALOGE("%s: Invalid layer found", __FUNCTION__);
+        LogLayers(num_layers, layers, idx);
         return false;
       }
       break;
@@ -183,8 +238,8 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 
   if (!list) return 0;
 #endif
-  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0])) {
-    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
+  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], false)) {
+    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
     return -1;
   }
   reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->PrepareLayers(
@@ -195,8 +250,13 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
 int vsoc_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
                  hwc_surface_t sur, hwc_layer_list_t* list) {
-  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0])) {
-    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
+  if (list->numHwLayers == 1 &&
+      layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
+    ALOGW("Received request for empty composition, treating as valid noop");
+    return 0;
+  }
+  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], true)) {
+    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
     return -1;
   }
   return reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)
@@ -211,8 +271,13 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
   if (!contents) return 0;
 
   vsoc_hwc_layer* layers = &contents->hwLayers[0];
-  if (!IsValidComposition(contents->numHwLayers, layers)) {
-    LOG_FATAL("%s: Invalid composition requested", __FUNCTION__);
+  if (contents->numHwLayers == 1 &&
+      layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
+    ALOGW("Received request for empty composition, treating as valid noop");
+    return 0;
+  }
+  if (!IsValidComposition(contents->numHwLayers, layers, true)) {
+    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
     return -1;
   }
   int retval =
