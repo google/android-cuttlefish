@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <linux/futex.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
@@ -117,6 +118,17 @@ class HostRegionControl : public vsoc::RegionControl {
       region_base_ = nullptr;
     }
     return region_base_;
+  }
+
+
+  virtual int SignalSelf(uint32_t offset) override {
+    return syscall(SYS_futex, region_offset_to_pointer<int32_t*>(offset),
+                   FUTEX_WAKE, -1, nullptr, nullptr, 0);
+  }
+
+  virtual int WaitForSignal(uint32_t offset, uint32_t expected_value) override {
+    return syscall(SYS_futex, region_offset_to_pointer<int32_t*>(offset),
+                   FUTEX_WAIT, expected_value, nullptr, nullptr, 0);
   }
 
  protected:
