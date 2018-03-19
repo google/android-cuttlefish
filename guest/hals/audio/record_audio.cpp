@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
   CHECK(audio_data_rv != nullptr);
 
   /* std::unique_ptr<vsoc::RegionWorker> audio_worker = */
-  audio_data_rv->StartWorker();
+  auto worker = audio_data_rv->StartWorker();
 
   std::unique_ptr<WaveWriter> writer;
   int64_t frameCount = 0ll;

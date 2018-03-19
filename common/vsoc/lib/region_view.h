@@ -146,7 +146,8 @@ class RegionView : public RegionSignalingInterface {
                      uint32_t last_observed_value) override;
 
   // Starts the signal table scanner. This must be invoked by subclasses, which
-  // must store the returned unique_ptr as a class member.
+  // MUST store the returned unique_ptr as a class member.
+  __attribute__((warn_unused_result))
   std::unique_ptr<RegionWorker> StartWorker();
 
   // Returns a pointer to the start of region data that is cast to the given
