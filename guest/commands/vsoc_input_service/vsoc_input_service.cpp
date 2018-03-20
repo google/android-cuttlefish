@@ -82,7 +82,7 @@ bool VSoCInputService::SetUpDevices() {
 bool VSoCInputService::ProcessEvents() {
   auto input_events_rv = InputEventsRegionView::GetInstance();
   // TODO(jemoreira): Post available devices to region
-  input_events_rv->StartWorker();
+  auto worker = input_events_rv->StartWorker();
 
   // Start device threads
   std::thread screen_thread([this]() {
