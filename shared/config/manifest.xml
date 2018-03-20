@@ -197,15 +197,6 @@
         </interface>
     </hal>
     <hal format="hidl">
-        <name>android.hardware.radio.deprecated</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IOemHook</name>
-            <instance>slot1</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
         <name>android.hardware.sensors</name>
         <transport>hwbinder</transport>
         <version>1.0</version>
