@@ -186,6 +186,8 @@ static void* hwc_vsync_thread(void* data) {
   int sent = 0;
   int last_sent = 0;
   static const int log_interval = 60;
+  void (*vsync_proc)(const struct hwc_procs*, int, int64_t) = nullptr;
+  bool log_no_procs = true, log_no_vsync = true;
   while (true) {
     struct timespec rt;
     if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
@@ -207,13 +209,27 @@ static void* hwc_vsync_thread(void* data) {
       }
     }
 
-    pdev->procs->vsync(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
+    // The vsync thread is started on device open, it may run before the
+    // registerProcs callback has a chance to be called, so we need to make sure
+    // procs is not NULL before dereferencing it.
+    if (pdev && pdev->procs) {
+      vsync_proc = pdev->procs->vsync;
+    } else if (log_no_procs) {
+      log_no_procs = false;
+      ALOGI("procs is not set yet, unable to deliver vsync event");
+    }
+    if (vsync_proc) {
+      vsync_proc(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
+      ++sent;
+    } else if (log_no_vsync) {
+      log_no_vsync = false;
+      ALOGE("vsync callback is null (but procs was already set)");
+    }
     if (rt.tv_sec - last_logged > log_interval) {
       ALOGI("Sent %d syncs in %ds", sent - last_sent, log_interval);
       last_logged = rt.tv_sec;
       last_sent = sent;
     }
-    ++sent;
   }
 
   return NULL;
