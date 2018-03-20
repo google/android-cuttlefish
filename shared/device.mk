@@ -161,6 +161,7 @@ PRODUCT_COPY_FILES += \
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
+    hwcomposer.drm \
     hwcomposer.vsoc \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl \
@@ -170,6 +171,7 @@ PRODUCT_PACKAGES += \
 # Gralloc HAL
 #
 PRODUCT_PACKAGES += \
+    gralloc.minigbm \
     gralloc.vsoc \
     android.hardware.graphics.mapper@2.0-impl \
     android.hardware.graphics.allocator@2.0-impl \
