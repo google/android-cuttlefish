@@ -43,6 +43,8 @@ class GuestRegionControl : public vsoc::RegionControl {
   virtual void InterruptSelf() override;
   virtual void WaitForInterrupt() override;
   virtual void* Map() override;
+  virtual int SignalSelf(uint32_t offset) override;
+  virtual int WaitForSignal(uint32_t offset, uint32_t expected_value) override;
 
  protected:
   int CreateFdScopedPermission(const char* managed_region_name,
@@ -70,6 +72,32 @@ void GuestRegionControl::InterruptSelf() {
 
 void GuestRegionControl::WaitForInterrupt() {
   region_fd_->Ioctl(VSOC_WAIT_FOR_INCOMING_INTERRUPT, 0);
+}
+
+int GuestRegionControl::SignalSelf(uint32_t offset) {
+  return region_fd_->Ioctl(VSOC_COND_WAKE, reinterpret_cast<void*>(offset));
+}
+
+int GuestRegionControl::WaitForSignal(uint32_t offset,
+                                      uint32_t expected_value) {
+  struct vsoc_cond_wait wait;
+  wait.offset = offset;
+  wait.value = expected_value;
+  wait.wake_time_sec = 0;
+  wait.wake_time_nsec = 0;
+  wait.wait_type = VSOC_WAIT_IF_EQUAL;
+  wait.wakes = 1000;
+  wait.reserved_1 = 0;
+  int rval = region_fd_->Ioctl(VSOC_COND_WAIT, &wait);
+  if (rval == -1) {
+    return rval;
+  }
+  // Clamp the number of wakes if it overflows an integer.
+  rval = wait.wakes;
+  if (rval >= 0) {
+    return rval;
+  }
+  return INT_MAX;
 }
 
 int GuestRegionControl::CreateFdScopedPermission(
