@@ -29,22 +29,17 @@ cc_binary {
     static_libs: [
         "libgflags",
         "libcuttlefish_wifi_relay",
+        "libcuttlefish_wifi",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     target: {
-        linux_glibc: {
+        host: {
             static_libs: [
-                "libcuttlefish_wifi",
                 "libcuttlefish_host_config",
             ],
         },
-        android: {
-            static_libs: [
-                "libcuttlefish_wifi",
-            ],
-        }
     },
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
 }
