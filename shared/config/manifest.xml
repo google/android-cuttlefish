@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="3">
+<manifest version="1.0" type="device" target-level="1">
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
