@@ -21,4 +21,5 @@ subdirs = [
     "threads",
     "time",
     "wifi",
+    "wifi_relay",
 ]
