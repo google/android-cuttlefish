@@ -12,20 +12,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+//
 cc_binary {
-    name: "socket_forward_proxy",
+    name: "wifi_relay",
     srcs: [
-        "main.cpp",
+        "wifi_relay.cpp",
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_fs",
         "vsoc_lib",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
         "liblog",
+        "libnl",
     ],
     static_libs: [
         "libgflags",
+        "libcuttlefish_wifi_relay",
+        "libcuttlefish_wifi",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -39,3 +43,4 @@ cc_binary {
     },
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
 }
+

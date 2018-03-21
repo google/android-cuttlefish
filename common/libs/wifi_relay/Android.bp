@@ -1,18 +1,13 @@
 cc_library_static {
-    name: "libcuttlefish_wifi",
+    name: "libcuttlefish_wifi_relay",
 
     srcs: [
-        "cmd.cc",
-        "netlink.cc",
-        "nl_client.cc",
-        "packet_switch.cc",
-        "virtual_wifi.cc",
-        "wr_client.cc",
+        "mac80211_hwsim.cpp",
     ],
     shared_libs: [
-        "vsoc_lib",
         "libbase",
         "libnl",
+        "vsoc_lib",
     ],
     header_libs: [
         "cuttlefish_glog",
