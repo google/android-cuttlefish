@@ -162,15 +162,17 @@ void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
   if (index + 1 < ports.size()) {
     std::thread(host_impl, shm, ports, index + 1).detach();
   }
-  auto port = ports[index];
-  LOG(INFO) << "starting server on " << port;
-  auto server = cvd::SharedFD::SocketLocalServer(port, SOCK_STREAM);
-  CHECK(server->IsOpen()) << "Could not start server on port " << port;
+  auto remote_port = ports[index];
+  auto local_port = vsoc::GetPerInstanceDefault(remote_port);
+  LOG(INFO) << "starting server on " << local_port
+            << " for guest port " << remote_port;
+  auto server = cvd::SharedFD::SocketLocalServer(local_port, SOCK_STREAM);
+  CHECK(server->IsOpen()) << "Could not start server on port " << local_port;
   while (true) {
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";
-    auto conn = shm->OpenConnection(port);
+    auto conn = shm->OpenConnection(remote_port);
     LOG(INFO) << "shm connection opened";
     LaunchWorkers(std::move(conn), std::move(client_socket));
   }

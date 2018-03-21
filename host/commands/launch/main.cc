@@ -114,14 +114,15 @@ DEFINE_string(vnc_server_binary,
               "Location of the vnc server binary.");
 DEFINE_int32(vnc_server_port, vsoc::GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
-// TODO(haining) bias the port number in a way that still goes to 5555 on the
-// guest-side
 DEFINE_string(socket_forward_proxy_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
                   "/bin/socket_forward_proxy",
               "Location of the socket_forward_proxy binary.");
 DEFINE_string(socket_forward_proxy_ports, "5555", "Comma-separated list of "
-              "ports on which to run the socket_forward_proxy server");
+              "ports on which to run the socket_forward_proxy server. These "
+              "are the port numbers of the guest-side process. The "
+              "host-side socket_forward_proxy process will bias the port "
+              "numbers.");
 
 DECLARE_string(uuid);
 
