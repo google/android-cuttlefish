@@ -38,49 +38,6 @@ namespace cvd {
 
 namespace {
 
-// Ensures that the layer does not include any inconsistencies
-int SanityCheckLayer(const vsoc_hwc_layer& layer) {
-  // Check displayFrame
-  if (layer.displayFrame.left > layer.displayFrame.right ||
-      layer.displayFrame.top > layer.displayFrame.bottom) {
-    ALOGE(
-        "%s: Malformed rectangle (displayFrame): [left = %d, right = %d, top = "
-        "%d, bottom = %d]",
-        __FUNCTION__, layer.displayFrame.left, layer.displayFrame.right,
-        layer.displayFrame.top, layer.displayFrame.bottom);
-    return -EINVAL;
-  }
-  // Check sourceCrop
-  if (layer.sourceCrop.left > layer.sourceCrop.right ||
-      layer.sourceCrop.top > layer.sourceCrop.bottom) {
-    ALOGE(
-        "%s: Malformed rectangle (sourceCrop): [left = %d, right = %d, top = "
-        "%d, bottom = %d]",
-        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
-        layer.sourceCrop.top, layer.sourceCrop.bottom);
-    return -EINVAL;
-  }
-  const private_handle_t* p_handle =
-      reinterpret_cast<const private_handle_t*>(layer.handle);
-  if (!p_handle) {
-    ALOGE("Layer has a NULL buffer handle");
-    return -EINVAL;
-  }
-  if (layer.sourceCrop.left < 0 || layer.sourceCrop.top < 0 ||
-      layer.sourceCrop.right > p_handle->x_res ||
-      layer.sourceCrop.bottom > p_handle->y_res) {
-    ALOGE(
-        "%s: Invalid sourceCrop for buffer handle: sourceCrop = [left = %d, "
-        "right = %d, top = %d, bottom = %d], handle = [width = %d, height = "
-        "%d]",
-        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
-        layer.sourceCrop.top, layer.sourceCrop.bottom, p_handle->x_res,
-        p_handle->y_res);
-    return -EINVAL;
-  }
-  return 0;
-}
-
 bool LayerNeedsScaling(const vsoc_hwc_layer& layer) {
   int from_w = layer.sourceCrop.right - layer.sourceCrop.left;
   int from_h = layer.sourceCrop.bottom - layer.sourceCrop.top;
@@ -617,14 +574,10 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     }
   }
 
-  // When the framebuffer target needs to be composed, it has to be go first.
+  // When the framebuffer target needs to be composed, it has to go first.
   if (fb_target) {
     for (size_t idx = 0; idx < num_layers; idx++) {
       if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
-        if (SanityCheckLayer(layers[idx]) != 0) {
-          ALOGE("FRAMEBUFFER_TARGET layer (%zu), failed sanity check", idx);
-          return -EINVAL;
-        }
         CompositeLayer(&layers[idx], buffer_idx);
         break;
       }
@@ -637,10 +590,6 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
     }
     if (layers[idx].compositionType == HWC_OVERLAY &&
         !(layers[idx].flags & HWC_SKIP_LAYER)) {
-      if (SanityCheckLayer(layers[idx]) != 0) {
-          ALOGE("Layer (%zu) failed sanity check", idx);
-          return -EINVAL;
-      }
       CompositeLayer(&layers[idx], buffer_idx);
     }
   }

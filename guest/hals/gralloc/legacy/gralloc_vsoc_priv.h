@@ -105,10 +105,44 @@ struct private_handle_t : public native_handle {
 
   static int validate(const native_handle* h) {
     const private_handle_t* hnd = (const private_handle_t*)h;
-    if (!h || h->version != sizeof(native_handle) ||
-        h->numInts != sNumInts() || h->numFds != sNumFds ||
-        hnd->magic != sMagic) {
-      ALOGE("invalid gralloc handle (at %p)", h);
+    if (!h) {
+      ALOGE("invalid gralloc handle (at %p): NULL pointer", h);
+      return -EINVAL;
+    }
+    if (h->version != sizeof(native_handle)) {
+      ALOGE(
+          "invalid gralloc handle (at %p): Wrong version(observed: %d, "
+          "expected: %zu)",
+          h,
+          h->version,
+          sizeof(native_handle));
+      return -EINVAL;
+    }
+    if (h->numInts != sNumInts()) {
+      ALOGE(
+          "invalid gralloc handle (at %p): Wrong number of ints(observed: %d, "
+          "expected: %d)",
+          h,
+          h->numInts,
+          sNumInts());
+      return -EINVAL;
+    }
+    if (h->numFds != sNumFds) {
+      ALOGE(
+          "invalid gralloc handle (at %p): Wrong number of file "
+          "descriptors(observed: %d, expected: %d)",
+          h,
+          h->numFds,
+          sNumFds);
+      return -EINVAL;
+    }
+    if (hnd->magic != sMagic) {
+      ALOGE(
+          "invalid gralloc handle (at %p): Wrong magic number(observed: %d, "
+          "expected: %d)",
+          h,
+          hnd->magic,
+          sMagic);
       return -EINVAL;
     }
     return 0;
