@@ -50,13 +50,16 @@ class RegionWorker {
  public:
   RegionWorker(RegionView* region, std::shared_ptr<RegionControl> control);
   ~RegionWorker();
+
+  void start();
+
   void Work();
 
  protected:
   std::shared_ptr<RegionControl> control_;
   RegionView* region_;
-  std::thread thread_;
-  volatile bool stopping_{};
+  std::unique_ptr<std::thread> thread_;
+  volatile bool stopping_;
 };
 
 /**

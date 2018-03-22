@@ -15,7 +15,12 @@ vsoc::RegionWorker::RegionWorker(RegionView* region,
                                  std::shared_ptr<RegionControl> control)
     : control_(control),
       region_(region),
-      thread_(&vsoc::RegionWorker::Work, this) {}
+      stopping_(false) {}
+
+void vsoc::RegionWorker::start() {
+  CHECK(thread_ == nullptr);
+  thread_.reset(new std::thread(&vsoc::RegionWorker::Work, this));
+}
 
 void vsoc::RegionWorker::Work() {
   while (!stopping_) {
@@ -25,14 +30,17 @@ void vsoc::RegionWorker::Work() {
     }
     region_->ProcessSignalsFromPeer([this](uint32_t offset) {
         control_->SignalSelf(offset);
-      });
+    });
   }
 }
 
 vsoc::RegionWorker::~RegionWorker() {
   stopping_ = true;
-  region_->InterruptSelf();
-  thread_.join();
+
+  if (thread_ != nullptr) {
+    region_->InterruptSelf();
+    thread_->join();
+  }
 }
 
 vsoc::RegionView::~RegionView() {
@@ -179,8 +187,11 @@ void vsoc::RegionView::SendSignalToPeer(std::atomic<uint32_t>* uaddr,
 }
 
 std::unique_ptr<vsoc::RegionWorker> vsoc::RegionView::StartWorker() {
-  return std::unique_ptr<vsoc::RegionWorker>(new vsoc::RegionWorker(
-      this, control_));
+    std::unique_ptr<vsoc::RegionWorker> worker(
+            new vsoc::RegionWorker(this /* region */, control_));
+
+    worker->start();
+    return worker;
 }
 
 int vsoc::RegionView::WaitForSignal(std::atomic<uint32_t>* uaddr,
