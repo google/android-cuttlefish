@@ -195,15 +195,25 @@ std::vector<int> ParsePortsList(const std::string& ports_flag) {
 }
 
 #else
+cvd::SharedFD OpenSocketConnection(int port) {
+  while (true) {
+    auto sock = cvd::SharedFD::SocketLocalClient(port, SOCK_STREAM);
+    if (sock->IsOpen()) {
+      return sock;
+    }
+    LOG(WARNING) << "could not connect on port " << port
+                 << ". sleeping for 1 second";
+    sleep(1);
+  }
+}
+
 [[noreturn]] void guest(SocketForwardRegionView* shm) {
   LOG(INFO) << "Starting guest mainloop";
   while (true) {
     auto conn = shm->AcceptConnection();
     LOG(INFO) << "shm connection accepted";
-    auto sock =
-        cvd::SharedFD::SocketLocalClient(conn.first.port(), SOCK_STREAM);
-    CHECK(sock->IsOpen()) << "Could not open socket to port "
-                          << conn.first.port();
+    auto sock = OpenSocketConnection(conn.first.port());
+    CHECK(sock->IsOpen());
     LOG(INFO) << "socket opened to " << conn.first.port();
     LaunchWorkers(std::move(conn), std::move(sock));
   }
