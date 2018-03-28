@@ -22,15 +22,19 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_select.h"
+#include "common/libs/strings/str_split.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/file_partition.h"
 #include "host/libs/config/guest_config.h"
@@ -112,17 +116,12 @@ DEFINE_string(vnc_server_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
                   "/bin/vnc_server",
               "Location of the vnc server binary.");
-DEFINE_int32(vnc_server_port, vsoc::GetPerInstanceDefault(6444),
+DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(socket_forward_proxy_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
                   "/bin/socket_forward_proxy",
               "Location of the socket_forward_proxy binary.");
-DEFINE_string(socket_forward_proxy_ports, "5555", "Comma-separated list of "
-              "ports on which to run the socket_forward_proxy server. These "
-              "are the port numbers of the guest-side process. The "
-              "host-side socket_forward_proxy process will bias the port "
-              "numbers.");
 
 DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
 DEFINE_string(wifi_relay_binary,
@@ -309,6 +308,20 @@ void RemoveFile(const std::string& file) {
     "/bin/rm", "-f", file.c_str(), NULL};
   subprocess(rm_command, NULL);
 }
+
+
+// Emulators are discovered on odd numbered ports from 5555 to 5585
+constexpr int kFirstEmulatorPort = 5555;
+
+std::string GetGuestPortArg() {
+  return std::string{"--guest_ports="} + std::to_string(kFirstEmulatorPort);
+}
+
+std::string GetHostPortArg() {
+  return std::string{"--host_ports="} +
+      std::to_string(kFirstEmulatorPort + (vsoc::GetDefaultInstance() - 1) * 2);
+}
+
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
@@ -419,9 +432,14 @@ int main(int argc, char** argv) {
 
   std::string entropy_source = "/dev/urandom";
 
-  auto port_arg = std::string{"--ports="} + FLAGS_socket_forward_proxy_ports;
+  auto guest_port_arg = GetGuestPortArg();
+  auto host_port_arg = GetHostPortArg();
+
   const char* const socket_proxy[] =
-    {FLAGS_socket_forward_proxy_binary.c_str(), port_arg.c_str(), NULL};
+    {FLAGS_socket_forward_proxy_binary.c_str(),
+     guest_port_arg.c_str(),
+     host_port_arg.c_str(),
+     NULL};
   subprocess(socket_proxy, nullptr, false);
 
   config::GuestConfig cfg;
