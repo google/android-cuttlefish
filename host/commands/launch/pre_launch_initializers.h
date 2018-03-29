@@ -22,11 +22,13 @@
 // source file and call from PreLaunchInitializers::Initialize().
 void InitializeScreenRegion();
 void InitializeRilRegion();
+void InitializeWifiRegion();
 
 class PreLaunchInitializers {
  public:
   static void Initialize() {
     InitializeScreenRegion();
     InitializeRilRegion();
+    InitializeWifiRegion();
   }
 };

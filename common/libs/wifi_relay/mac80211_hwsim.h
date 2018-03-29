@@ -24,10 +24,9 @@
 #include <memory>
 #include <mutex>
 #include <netlink/netlink.h>
-#include <vector>
 
 struct Mac80211HwSim {
-    using MacAddress = std::vector<uint8_t>;
+    using MacAddress = vsoc::wifi::WifiExchangeView::MacAddress;
 
     static constexpr size_t kMessageSizeMax = 128 * 1024;
 
@@ -51,8 +50,6 @@ struct Mac80211HwSim {
             vsoc::wifi::WifiExchangeView *wifiExchange);
 
     void removeRemote(const MacAddress &mac);
-
-    static bool ParseMACAddress(const std::string &s, MacAddress *mac);
 
 private:
     struct Remote {

@@ -15,6 +15,9 @@
  */
 #include "common/vsoc/lib/wifi_exchange_view.h"
 
+#include <algorithm>
+#include <string>
+
 #include <linux/if_ether.h>
 #include "common/vsoc/lib/circqueue_impl.h"
 
@@ -41,12 +44,74 @@ intptr_t WifiExchangeView::Recv(void* buffer, intptr_t max_length) {
 #endif
 }
 
-void WifiExchangeView::SetGuestMACAddress(const uint8_t* mac_address) {
-  memcpy(data()->mac_address, mac_address, ETH_ALEN);
+void WifiExchangeView::SetGuestMACAddress(
+    const WifiExchangeView::MacAddress& mac_address) {
+  std::copy(std::begin(mac_address),
+            std::end(mac_address),
+            std::begin(data()->guest_mac_address));
 }
 
-void WifiExchangeView::GetGuestMACAddress(uint8_t* mac_address) {
-  memcpy(mac_address, data()->mac_address, ETH_ALEN);
+WifiExchangeView::MacAddress WifiExchangeView::GetGuestMACAddress() {
+  WifiExchangeView::MacAddress ret;
+  std::copy(std::begin(data()->guest_mac_address),
+            std::end(data()->guest_mac_address),
+            std::begin(ret));
+  return ret;
+}
+
+void WifiExchangeView::SetHostMACAddress(
+    const WifiExchangeView::MacAddress& mac_address) {
+  std::copy(std::begin(mac_address),
+            std::end(mac_address),
+            std::begin(data()->host_mac_address));
+}
+
+WifiExchangeView::MacAddress WifiExchangeView::GetHostMACAddress() {
+  WifiExchangeView::MacAddress ret;
+  std::copy(std::begin(data()->host_mac_address),
+            std::end(data()->host_mac_address),
+            std::begin(ret));
+  return ret;
+}
+
+// static
+bool WifiExchangeView::ParseMACAddress(const std::string& s,
+                                       WifiExchangeView::MacAddress* mac) {
+  char dummy;
+  // This is likely to always be true, but better safe than sorry
+  static_assert(std::tuple_size<WifiExchangeView::MacAddress>::value == 6,
+                "Mac address size has changed");
+  if (sscanf(s.c_str(),
+             "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx%c",
+             &(*mac)[0],
+             &(*mac)[1],
+             &(*mac)[2],
+             &(*mac)[3],
+             &(*mac)[4],
+             &(*mac)[5],
+             &dummy) != 6) {
+    return false;
+  }
+  return true;
+}
+
+// static
+std::string WifiExchangeView::MacAddressToString(
+    const WifiExchangeView::MacAddress& mac) {
+  char buffer[3 * mac.size()];
+  // This is likely to always be true, but better safe than sorry
+  static_assert(std::tuple_size<WifiExchangeView::MacAddress>::value == 6,
+                "Mac address size has changed");
+  snprintf(buffer,
+           sizeof(buffer),
+           "%02x:%02x:%02x:%02x:%02x:%02x",
+           mac[0],
+           mac[1],
+           mac[2],
+           mac[3],
+           mac[4],
+           mac[5]);
+  return std::string(buffer);
 }
 
 }  // namespace wifi
