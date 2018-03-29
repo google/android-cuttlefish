@@ -44,4 +44,3 @@ class WifiRelay {
 
   std::unique_ptr<Mac80211HwSim> mMac80211HwSim;
 };
-

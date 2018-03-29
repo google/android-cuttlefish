@@ -33,16 +33,6 @@
 
 #include <fstream>
 
-DEFINE_string(
-        guest_mac_address,
-        "00:43:56:44:80:02",
-        "MAC address of the wifi interface to be created on the guest.");
-
-DEFINE_string(
-        host_mac_address,
-        "42:00:00:00:00:00",
-        "MAC address of the wifi interface running on the host.");
-
 #if !defined(CUTTLEFISH_HOST)
 DEFINE_string(
         iface_name, "wlan0", "Name of the wifi interface to be created.");
@@ -241,11 +231,14 @@ int updateInterface(
 int main(int argc, char **argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  Mac80211HwSim::MacAddress guestMAC, hostMAC;
-  if (!Mac80211HwSim::ParseMACAddress(FLAGS_guest_mac_address, &guestMAC)
-          || !Mac80211HwSim::ParseMACAddress(FLAGS_host_mac_address, &hostMAC)) {
-      exit(1);
-  }
+  auto wifi_view = vsoc::wifi::WifiExchangeView::GetInstance(
+#if defined(CUTTLEFISH_HOST)
+      vsoc::GetDomain().c_str()
+#endif
+  );
+
+  Mac80211HwSim::MacAddress guestMAC = wifi_view->GetGuestMACAddress();
+  Mac80211HwSim::MacAddress hostMAC = wifi_view->GetHostMACAddress();
 
 #ifdef CUTTLEFISH_HOST
   WifiRelay relay(hostMAC, guestMAC);
