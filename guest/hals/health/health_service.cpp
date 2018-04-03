@@ -28,7 +28,7 @@ void healthd_board_init(struct healthd_config*) {}
 
 int healthd_board_battery_update(
     struct android::BatteryProperties* battery_props) {
-  battery_props->chargerAcOnline = false;
+  battery_props->chargerAcOnline = true;
   battery_props->chargerUsbOnline = true;
   battery_props->chargerWirelessOnline = false;
   battery_props->maxChargingCurrent = 500000;
