@@ -21,6 +21,7 @@
 #include <string>
 
 namespace vsoc {
+int GetDefaultInstance();
 std::string GetPerInstanceDefault(const char* prefix);
 int GetPerInstanceDefault(int base);
 std::string GetDefaultPerInstanceDir();
