@@ -28,3 +28,16 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_tv:$(LOCAL_DIR)/vsoc_x86/tv/device.mk \
 	aosp_cf_x86_wear:$(LOCAL_DIR)/vsoc_x86/wear/device.mk \
 
+COMMON_LUNCH_CHOICES := \
+	aosp_cf_x86_auto-userdebug \
+	aosp_cf_x86_phone-userdebug \
+	aosp_cf_x86_tablet-userdebug \
+	aosp_cf_x86_tablet_3g-userdebug \
+	aosp_cf_x86_tv-userdebug \
+	aosp_cf_x86_wear-userdebug \
+	aosp_cf_x86_64_auto-userdebug \
+	aosp_cf_x86_64_phone-userdebug \
+	aosp_cf_x86_64_tablet-userdebug \
+	aosp_cf_x86_64_tablet_3g-userdebug \
+	aosp_cf_x86_64_tv-userdebug \
+	aosp_cf_x86_64_wear-userdebug
