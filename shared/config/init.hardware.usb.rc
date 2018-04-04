@@ -44,7 +44,6 @@ on boot
     mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
     mkdir /dev/usb-ffs/mtp 0770 mtp mtp
     mount functionfs mtp /dev/usb-ffs/mtp rmode=0770,fmode=0660,uid=1024,gid=1024,no_disconnect=1
-    setprop sys.usb.ffs.aio_compat 1
     setprop sys.usb.ffs.max_write 524288
     setprop sys.usb.ffs.max_read 524288
     setprop sys.usb.mtp.device_type 3
