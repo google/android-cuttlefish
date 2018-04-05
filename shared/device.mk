@@ -63,6 +63,7 @@ PRODUCT_PACKAGES += \
     wifi_relay \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
+    vport_trigger
 
 #
 # Packages for AOSP-available stuff we use from the framework
