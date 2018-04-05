@@ -34,5 +34,6 @@
 /vendor/bin/wificlient  u:object_r:wificlient_exec:s0
 /vendor/bin/wifirouter  u:object_r:wifirouter_exec:s0
 /vendor/bin/wifi_relay  u:object_r:wifi_relay_exec:s0
+/vendor/bin/vport_trigger  u:object_r:vport_trigger_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish      u:object_r:hal_dumpstate_impl_exec:s0
