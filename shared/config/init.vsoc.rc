@@ -55,7 +55,7 @@ on post-fs-data
     mkdir /data/dalvik-cache/x86 0771 root system
     mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
     start gce_fs_monitor
-    start seriallogging
+    start vport_trigger
 
 
 on early-boot
@@ -87,6 +87,20 @@ service vsoc_input_service /vendor/bin/vsoc_input_service
 service socket_forward_proxy /vendor/bin/socket_forward_proxy
 
 
+service vport_trigger /vendor/bin/vport_trigger
+    oneshot
+
+
+on property:sys.cf.ser.cf-logcat=*
+    symlink ${sys.cf.ser.cf-logcat} /dev/cf-logcat
+    enable seriallogging
+
+
+on property:sys.cf.ser.cf-gadget-usb-v1=*
+    symlink ${sys.cf.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
+    enable usbforward
+
+
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
     class main
     user root
@@ -111,6 +125,7 @@ service gce_fs_monitor /vendor/bin/gce_fs_monitor
 service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
     class late_start
     user root
+    disabled
 
 
 service wifi_relay /vendor/bin/wifi_relay
