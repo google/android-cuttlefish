@@ -122,7 +122,10 @@ DEFINE_string(socket_forward_proxy_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
                   "/bin/socket_forward_proxy",
               "Location of the socket_forward_proxy binary.");
-
+DEFINE_string(adb_mode, "tunnel",
+              "Mode for adb connection. Can be usb for usb forwarding, or "
+              "tunnel for tcp connection. If using tunnel, you may have to "
+              "run 'adb kill-server' to get the device to show up.");
 DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
 DEFINE_string(wifi_relay_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
@@ -135,6 +138,9 @@ namespace {
 const std::string kDataPolicyUseExisting = "use_existing";
 const std::string kDataPolicyCreateIfMissing = "create_if_missing";
 const std::string kDataPolicyAlwaysCreate = "always_create";
+
+constexpr char kAdbModeTunnel[] = "tunnel";
+constexpr char kAdbModeUsb[] = "usb";
 
 std::string GetVirshOptions() {
   return std::string("-c ").append(FLAGS_hypervisor_uri);
@@ -306,7 +312,6 @@ void RemoveFile(const std::string& file) {
   subprocess(rm_command, NULL);
 }
 
-
 // Emulators are discovered on odd numbered ports from 5555 to 5585
 constexpr int kFirstEmulatorPort = 5555;
 
@@ -319,11 +324,38 @@ std::string GetHostPortArg() {
       std::to_string(kFirstEmulatorPort + (vsoc::GetDefaultInstance() - 1) * 2);
 }
 
+void ValidateAdbModeFlag() {
+  CHECK(FLAGS_adb_mode == kAdbModeUsb ||
+        FLAGS_adb_mode == kAdbModeTunnel) << "invalid --adb_mode";
+}
+
+bool AdbTunnelEnabled() {
+  return FLAGS_adb_mode == kAdbModeTunnel;
+}
+
+bool AdbUsbEnabled() {
+  return FLAGS_adb_mode == kAdbModeUsb;
+}
+
+void LaunchSocketForwardProxyIfEnabled() {
+  if (AdbTunnelEnabled()) {
+    auto guest_port_arg = GetGuestPortArg();
+    auto host_port_arg = GetHostPortArg();
+
+    const char* const socket_proxy[] =
+      {FLAGS_socket_forward_proxy_binary.c_str(),
+       guest_port_arg.c_str(),
+       host_port_arg.c_str(),
+       NULL};
+    subprocess(socket_proxy, nullptr, false);
+  }
+}
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
+  ValidateAdbModeFlag();
 
   LOG_IF(FATAL, FLAGS_system_image_dir.empty())
       << "--system_image_dir must be specified.";
@@ -429,15 +461,7 @@ int main(int argc, char** argv) {
 
   std::string entropy_source = "/dev/urandom";
 
-  auto guest_port_arg = GetGuestPortArg();
-  auto host_port_arg = GetHostPortArg();
-
-  const char* const socket_proxy[] =
-    {FLAGS_socket_forward_proxy_binary.c_str(),
-     guest_port_arg.c_str(),
-     host_port_arg.c_str(),
-     NULL};
-  subprocess(socket_proxy, nullptr, false);
+  LaunchSocketForwardProxyIfEnabled();
 
   config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
@@ -457,8 +481,10 @@ int main(int argc, char** argv) {
       .SetDisableDACSecurity(FLAGS_disable_dac_security)
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
       .SetUUID(FLAGS_uuid);
-  cfg.SetUSBV1SocketName(
-      GetDefaultPerInstancePath(cfg.GetInstanceName() + "-usb"));
+  if(AdbUsbEnabled()) {
+    cfg.SetUSBV1SocketName(
+        GetDefaultPerInstancePath(cfg.GetInstanceName() + "-usb"));
+  }
   cfg.SetKernelLogSocketName(
       GetDefaultPerInstancePath(cfg.GetInstanceName() + "-kernel-log"));
 
