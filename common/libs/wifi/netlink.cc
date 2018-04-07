@@ -45,7 +45,7 @@ bool Netlink::Init() {
   }
 
   // Start the thread processing asynchronous netlink responses.
-  netlink_thread_.reset(new std::thread([this]() { HandleNetlinkMessages(); }));
+  std::thread([this] { HandleNetlinkMessages(); }).detach();
 
   // Query relevant netlink families:
   // MAC80211 family allows us to create virtual radios and corresponding
