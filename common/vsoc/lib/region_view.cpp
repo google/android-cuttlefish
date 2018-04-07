@@ -18,8 +18,8 @@ vsoc::RegionWorker::RegionWorker(RegionView* region,
       stopping_(false) {}
 
 void vsoc::RegionWorker::start() {
-  CHECK(thread_ == nullptr);
-  thread_.reset(new std::thread(&vsoc::RegionWorker::Work, this));
+  CHECK(!thread_.joinable());
+  thread_ = std::thread(&vsoc::RegionWorker::Work, this);
 }
 
 void vsoc::RegionWorker::Work() {
@@ -37,9 +37,9 @@ void vsoc::RegionWorker::Work() {
 vsoc::RegionWorker::~RegionWorker() {
   stopping_ = true;
 
-  if (thread_ != nullptr) {
+  if (thread_.joinable()) {
     region_->InterruptSelf();
-    thread_->join();
+    thread_.join();
   }
 }
 
