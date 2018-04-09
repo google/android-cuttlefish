@@ -25,6 +25,7 @@
 #include <fcntl.h>
 
 #include <climits>
+#include <cerrno>
 #include <string>
 
 // Taken from android::base, which wasn't available on platform versions
