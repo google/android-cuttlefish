@@ -271,37 +271,36 @@ int main(int argc, char **argv) {
       exit(1);
   }
 
-  std::unique_ptr<std::thread> nlThread(
-          new std::thread([&client, &nlRoute]() {
-              for (;;) {
-                  fd_set rs;
-                  FD_ZERO(&rs);
+  std::thread([&client, &nlRoute] {
+    for (;;) {
+      fd_set rs;
+      FD_ZERO(&rs);
 
-                  int fdGeneric = nl_socket_get_fd(client.Sock());
-                  int fdRoute = nl_socket_get_fd(nlRoute.Sock());
+      int fdGeneric = nl_socket_get_fd(client.Sock());
+      int fdRoute = nl_socket_get_fd(nlRoute.Sock());
 
-                  FD_SET(fdGeneric, &rs);
-                  FD_SET(fdRoute, &rs);
+      FD_SET(fdGeneric, &rs);
+      FD_SET(fdRoute, &rs);
 
-                  int maxFd = std::max(fdGeneric, fdRoute);
+      int maxFd = std::max(fdGeneric, fdRoute);
 
-                  int res = select(maxFd + 1, &rs, nullptr, nullptr, nullptr);
+      int res = select(maxFd + 1, &rs, nullptr, nullptr, nullptr);
 
-                  if (res == 0) {
-                      continue;
-                  } else if (res < 0) {
-                      continue;
-                  }
+      if (res == 0) {
+        continue;
+      } else if (res < 0) {
+        continue;
+      }
 
-                  if (FD_ISSET(fdGeneric, &rs)) {
-                      nl_recvmsgs_default(client.Sock());
-                  }
+      if (FD_ISSET(fdGeneric, &rs)) {
+        nl_recvmsgs_default(client.Sock());
+      }
 
-                  if (FD_ISSET(fdRoute, &rs)) {
-                      nl_recvmsgs_default(nlRoute.Sock());
-                  }
-              }
-          }));
+      if (FD_ISSET(fdRoute, &rs)) {
+        nl_recvmsgs_default(nlRoute.Sock());
+      }
+    }
+  }).detach();
 
   const std::string phyName = FLAGS_iface_name + "_phy";
   if (createRadio(&client, relay.mac80211Family(), phyName.c_str()) < 0) {
