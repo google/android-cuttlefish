@@ -171,7 +171,7 @@ class VirtualUSBManager {
   void Start() {
     CHECK(adb_.Init()) << "Could not initialize Virtual ADB server";
     CHECK(usbip_.Init()) << "Could not start USB/IP server";
-    thread_.reset(new std::thread([this]() { Thread(); }));
+    std::thread([this] { Thread(); }).detach();
   }
 
  private:
@@ -193,7 +193,6 @@ class VirtualUSBManager {
 
   vadb::VirtualADBServer adb_;
   vadb::usbip::Server usbip_;
-  std::unique_ptr<std::thread> thread_;
 
   VirtualUSBManager(const VirtualUSBManager&) = delete;
   VirtualUSBManager& operator=(const VirtualUSBManager&) = delete;
@@ -213,12 +212,11 @@ class IVServerManager {
 
   // Start IVServer thread.
   void Start() {
-    thread_.reset(new std::thread([this]() { server_.Serve(); }));
+    std::thread([this] { server_.Serve(); }).detach();
   }
 
  private:
   ivserver::IVServer server_;
-  std::unique_ptr<std::thread> thread_;
 
   IVServerManager(const IVServerManager&) = delete;
   IVServerManager& operator=(const IVServerManager&) = delete;
@@ -236,7 +234,7 @@ class KernelLogMonitor {
 
   void Start() {
     CHECK(klog_.Init()) << "Could not initialize kernel log server";
-    thread_.reset(new std::thread([this]() { Thread(); }));
+    std::thread([this] { Thread(); }).detach();
   }
 
  private:
@@ -255,7 +253,6 @@ class KernelLogMonitor {
   }
 
   monitor::KernelLogServer klog_;
-  std::unique_ptr<std::thread> thread_;
 
   KernelLogMonitor(const KernelLogMonitor&) = delete;
   KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
