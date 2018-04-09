@@ -31,12 +31,10 @@ struct WifiExchangeLayout : public RegionLayout {
   // Traffic originating from guest that proceeds towards host.
   CircularPacketQueue<16, 8192> guest_egress;
 
-  // config_lock_ manages access to configuration section
-  SpinLock config_lock_;
-  // config_ready_ indicates whether config section is ready to be accessed.
-  bool config_ready_;
   // Desired MAC address for guest device.
-  uint8_t mac_address[6];
+  uint8_t guest_mac_address[6];
+  // MAC address of host device.
+  uint8_t host_mac_address[6];
 
   static const char* region_name;
 };

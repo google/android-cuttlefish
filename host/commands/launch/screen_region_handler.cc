@@ -30,7 +30,7 @@ void InitializeScreenRegion() {
   auto region =
       vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
   if (!region) {
-    LOG(INFO) << "Framebuffer region was not found";
+    LOG(ERROR) << "Framebuffer region was not found";
     return;
   }
   auto dest = region->data();
