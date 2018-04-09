@@ -58,7 +58,7 @@ class VHCIInstrument {
 
  private:
   std::string name_;
-  std::unique_ptr<std::thread> attach_thread_;
+  std::thread attach_thread_;
   std::string syspath_;
   cvd::SharedFD control_write_end_;
   cvd::SharedFD control_read_end_;
