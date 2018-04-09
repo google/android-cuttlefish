@@ -114,9 +114,10 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
   std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
   std::unique_ptr<cvd::NetworkInterfaceManager> nm(
       cvd::NetworkInterfaceManager::New(factory));
-  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0"));
+  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0", "eth0"));
 
   if (ni) {
+    ni->SetName("rmnet0");
     ni->SetAddress(ipaddr);
     ni->SetBroadcastAddress(bcaddr);
     ni->SetPrefixLength(prefixlen);
@@ -132,7 +133,7 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
   auto nm(cvd::NetworkInterfaceManager::New(nullptr));
-  auto ni(nm->Open("rmnet0"));
+  auto ni(nm->Open("rmnet0", "eth0"));
 
   if (ni) {
     ni->SetOperational(false);

@@ -75,15 +75,22 @@ NetworkInterfaceManager::NetworkInterfaceManager(
     : nl_client_(std::move(nl_client)) {}
 
 std::unique_ptr<NetworkInterface> NetworkInterfaceManager::Open(
-    const std::string& if_name) {
+    const std::string& if_name, const std::string& if_name_alt) {
   std::unique_ptr<NetworkInterface> iface;
   // NOTE: do not replace this code with an IOCTL call.
   // On SELinux enabled Androids, RILD is not permitted to execute an IOCTL
   // and this call will fail.
-  const int32_t index = if_nametoindex(if_name.c_str());
-  if (index < 0) {
-    LOG(ERROR) << "Failed to get interface (" << if_name << ") index.";
-    return iface;
+  int32_t index = if_nametoindex(if_name.c_str());
+  if (index == 0) {
+    // Try the alternate name. This will be renamed to our preferred name
+    // by the kernel, because we specify IFLA_IFNAME, but open by index.
+    LOG(ERROR) << "Failed to get interface (" << if_name << ") index, "
+               << "trying alternate.";
+    index = if_nametoindex(if_name_alt.c_str());
+    if (index == 0) {
+      LOG(ERROR) << "Failed to get interface (" << if_name_alt << ") index.";
+      return iface;
+    }
   }
 
   iface.reset(new NetworkInterface(index));
