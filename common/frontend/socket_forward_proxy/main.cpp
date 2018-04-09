@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/strings/str_split.h"
 #include "common/vsoc/lib/socket_forward_region_view.h"
 
 #ifdef CUTTLEFISH_HOST
@@ -39,9 +40,12 @@ using vsoc::socket_forward::Packet;
 using vsoc::socket_forward::SocketForwardRegionView;
 
 #ifdef CUTTLEFISH_HOST
-DEFINE_string(ports, "",
-              "Comma-separated list of ports from which to forward TCP "
-              "connections.");
+DEFINE_string(guest_ports, "",
+              "Comma-separated list of ports on which to forward TCP "
+              "connections to the guest.");
+DEFINE_string(host_ports, "",
+              "Comma-separated list of ports on which to run TCP servers on "
+              "the host.");
 #endif
 
 namespace {
@@ -154,44 +158,53 @@ void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
 }
 
 #ifdef CUTTLEFISH_HOST
+struct PortPair {
+  int guest_port;
+  int host_port;
+};
+
+
 [[noreturn]] void host_impl(SocketForwardRegionView* shm,
-                            std::vector<int> ports, std::size_t index) {
+                            std::vector<PortPair> ports, std::size_t index) {
   // launch a worker for the following port before handling the current port.
   // recursion (instead of a loop) removes the need fore any join() or having
   // the main thread do no work.
   if (index + 1 < ports.size()) {
     std::thread(host_impl, shm, ports, index + 1).detach();
   }
-  auto remote_port = ports[index];
-  auto local_port = vsoc::GetPerInstanceDefault(remote_port);
-  LOG(INFO) << "starting server on " << local_port
-            << " for guest port " << remote_port;
-  auto server = cvd::SharedFD::SocketLocalServer(local_port, SOCK_STREAM);
-  CHECK(server->IsOpen()) << "Could not start server on port " << local_port;
+  auto guest_port = ports[index].guest_port;
+  auto host_port = ports[index].host_port;
+  LOG(INFO) << "starting server on " << host_port
+            << " for guest port " << guest_port;
+  auto server = cvd::SharedFD::SocketLocalServer(host_port, SOCK_STREAM);
+  CHECK(server->IsOpen()) << "Could not start server on port " << host_port;
   while (true) {
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";
-    auto conn = shm->OpenConnection(remote_port);
+    auto conn = shm->OpenConnection(guest_port);
     LOG(INFO) << "shm connection opened";
     LaunchWorkers(std::move(conn), std::move(client_socket));
   }
 }
 
 [[noreturn]] void host(SocketForwardRegionView* shm,
-                           std::vector<int> ports) {
+                       std::vector<PortPair> ports) {
   CHECK(!ports.empty());
   host_impl(shm, ports, 0);
 }
 
-std::vector<int> ParsePortsList(const std::string& ports_flag) {
-  std::istringstream ports_stream{ports_flag};
-  std::vector<int> ports;
-  std::string port_str{};
-  while (std::getline(ports_stream, port_str, ',')) {
-    ports.push_back(std::stoi(port_str));
+std::vector<PortPair> ParsePortsList(const std::string& guest_ports_str,
+                                const std::string& host_ports_str) {
+  std::vector<PortPair> ports{};
+  auto guest_ports = cvd::StrSplit(guest_ports_str, ',');
+  auto host_ports = cvd::StrSplit(host_ports_str, ',');
+  CHECK(guest_ports.size() == host_ports.size());
+  for (std::size_t i = 0; i < guest_ports.size(); ++i) {
+    ports.push_back({std::stoi(guest_ports[i]), std::stoi(host_ports[i])});
   }
   return ports;
+
 }
 
 #else
@@ -250,8 +263,9 @@ int main(int argc, char* argv[]) {
   auto worker = shm->StartWorker();
 
 #ifdef CUTTLEFISH_HOST
-  CHECK(!FLAGS_ports.empty()) << "Must specify --ports flag";
-  host(shm, ParsePortsList(FLAGS_ports));
+  CHECK(!FLAGS_guest_ports.empty()) << "Must specify --guest_ports flag";
+  CHECK(!FLAGS_host_ports.empty()) << "Must specify --host_ports flag";
+  host(shm, ParsePortsList(FLAGS_guest_ports, FLAGS_host_ports));
 #else
   guest(shm);
 #endif

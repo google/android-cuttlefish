@@ -13,31 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary {
-    name: "socket_forward_proxy",
+cc_library_shared {
+    name: "libcuttlefish_strings",
     srcs: [
-        "main.cpp",
+        "str_split.cpp",
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_strings",
-        "cuttlefish_auto_resources",
-        "vsoc_lib",
-        "liblog",
     ],
-    static_libs: [
-        "libgflags",
-    ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
-    target: {
-        host: {
-            static_libs: [
-                "libcuttlefish_host_config",
-            ],
-        },
-    },
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
+    defaults: ["cuttlefish_host_and_guest"],
 }
