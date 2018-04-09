@@ -62,8 +62,6 @@ class Netlink {
 #endif
   int nl80211_family_ = 0;
 
-  std::unique_ptr<std::thread> netlink_thread_;
-
   Netlink(const Netlink&) = delete;
   Netlink& operator=(const Netlink&) = delete;
 };
