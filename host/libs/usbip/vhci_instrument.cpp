@@ -82,7 +82,7 @@ VHCIInstrument::VHCIInstrument(const std::string& name)
 
 VHCIInstrument::~VHCIInstrument() {
   control_write_end_->Write(&kControlExit, sizeof(kControlExit));
-  attach_thread_->join();
+  attach_thread_.join();
 }
 
 bool VHCIInstrument::Init() {
@@ -110,7 +110,7 @@ bool VHCIInstrument::Init() {
     return false;
   }
 
-  attach_thread_.reset(new std::thread([this]() { AttachThread(); }));
+  attach_thread_ = std::thread([this] { AttachThread(); });
   return true;
 }
 
