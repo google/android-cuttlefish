@@ -40,6 +40,7 @@ cvd_host_shared_libraries := \
     vsoc_lib \
     libcuttlefish_fs \
     cuttlefish_auto_resources \
+    libcuttlefish_strings \
     cuttlefish_tcp_socket \
     liblog \
     libnl \
