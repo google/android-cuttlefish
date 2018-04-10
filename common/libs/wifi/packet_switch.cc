@@ -51,7 +51,7 @@ void PacketSwitch::Start() {
   nl_->WRCL().SetDefaultHandler(
       [this](nl_msg* m) { ProcessPacket(m, false); });
 
-  shm_xchg_.reset(new std::thread([this] {
+  shm_xchg_ = std::thread([this] {
       size_t maxlen = getpagesize();
       std::unique_ptr<uint8_t[]> msg(new uint8_t[maxlen]);
       auto hdr = reinterpret_cast<nlmsghdr*>(msg.get());
@@ -68,7 +68,7 @@ void PacketSwitch::Start() {
         nlm.reset(nlmsg_convert(hdr));
         ProcessPacket(nlm.get(), true);
       }
-    }));
+    });
 }
 
 void PacketSwitch::Stop() {
@@ -77,8 +77,7 @@ void PacketSwitch::Stop() {
   started_ = false;
   nl_->WRCL().SetDefaultHandler(std::function<void(nl_msg*)>());
 
-  shm_xchg_->join();
-  shm_xchg_.reset();
+  shm_xchg_.join();
 }
 
 void PacketSwitch::ProcessPacket(nl_msg* m, bool is_incoming) {

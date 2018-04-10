@@ -73,7 +73,7 @@ private:
         std::unique_ptr<vsoc::RegionWorker> mWifiWorker;
 
         volatile bool mDone = false;
-        std::unique_ptr<std::thread> mThread;
+        std::thread mThread;
     };
 
     int mInitCheck = -ENODEV;

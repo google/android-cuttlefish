@@ -40,7 +40,7 @@ Mac80211HwSim::Remote::Remote(
       mWifiExchange(wifiExchange) {
     mWifiWorker = mWifiExchange->StartWorker();
 
-    mThread.reset(new std::thread([this]{
+    mThread = std::thread([this]{
         std::unique_ptr<uint8_t[]> buf(
             new uint8_t[Mac80211HwSim::kMessageSizeMax]);
 
@@ -63,15 +63,14 @@ Mac80211HwSim::Remote::Remote(
 
             hdr = nlmsg_next(hdr, &len);
           }
-        }}));
+    }});
 }
 
 Mac80211HwSim::Remote::~Remote() {
     mDone = true;
     mWifiExchange->InterruptSelf();
 
-    mThread->join();
-    mThread.reset();
+    mThread.join();
 }
 
 intptr_t Mac80211HwSim::Remote::send(const void *data, size_t size) {

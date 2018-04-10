@@ -44,7 +44,7 @@ class PacketSwitch {
   // whether to carry on working, or terminate.
   bool started_ = false;
 
-  std::unique_ptr<std::thread> shm_xchg_;
+  std::thread shm_xchg_;
   std::unique_ptr<vsoc::RegionWorker> worker_;
   vsoc::wifi::WifiExchangeView* shm_wifi_;
 
