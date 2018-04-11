@@ -69,6 +69,7 @@ DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
+DECLARE_int32(dpi);
 DEFINE_bool(disable_app_armor_security, false,
             "Disable AppArmor security in libvirt. For debug only.");
 DEFINE_bool(disable_dac_security, false,
@@ -455,6 +456,7 @@ int main(int argc, char** argv) {
   cmdline << t.rdbuf();
   t.close();
   cmdline << " androidboot.serialno=" << FLAGS_serial_number;
+  cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
   if (FLAGS_extra_kernel_command_line.size()) {
     cmdline << " " << FLAGS_extra_kernel_command_line;
   }
