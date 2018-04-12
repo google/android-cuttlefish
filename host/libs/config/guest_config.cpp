@@ -210,6 +210,7 @@ void ConfigureDisk(xmlNode* devices, const std::string& name,
 // This section adds <channel> elements to <devices> node.
 void ConfigureVirtioChannel(xmlNode* devices, int port, const std::string& name,
                             DeviceSourceType type, const std::string& path) {
+  if (path.empty()) { return; }
   auto vch = xmlNewChild(devices, nullptr, xc("channel"), nullptr);
   ConfigureDeviceSource(vch, type, path);
 
