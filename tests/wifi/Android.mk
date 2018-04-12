@@ -24,7 +24,11 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_PACKAGE_NAME := CuttlefishWifiTests
 LOCAL_SDK_VERSION := current
 LOCAL_CERTIFICATE := platform
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 28; echo $$?))
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
+else
+LOCAL_JAVA_LIBRARIES := android.test.runner
+endif
 LOCAL_STATIC_JAVA_LIBRARIES := android-support-test platform-test-annotations
 
 include $(BUILD_PACKAGE)
