@@ -152,6 +152,10 @@ struct private_handle_t : public native_handle {
 
 static inline int formatToBytesPerPixel(int format) {
   switch (format) {
+#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
+    case HAL_PIXEL_FORMAT_RGBA_FP16:
+      return 8;
+#endif
     case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
@@ -175,7 +179,7 @@ static inline int formatToBytesPerPixel(int format) {
 #endif
     default:
       ALOGE("%s: unknown format=%d", __FUNCTION__, format);
-      return 4;
+      return 8;
   }
 }
 
@@ -238,6 +242,10 @@ inline const char* pixel_format_to_string(int format) {
       return "FLEX_RGBA_8888";
     case HAL_PIXEL_FORMAT_FLEX_RGB_888:
       return "FLEX_RGB_888";
+#endif
+#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
+    case HAL_PIXEL_FORMAT_RGBA_FP16:
+      return "RGBA_FP16";
 #endif
 
       // Formats that have been removed
