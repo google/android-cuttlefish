@@ -89,6 +89,7 @@ static const uint32_t VSOC_PIXEL_FORMAT_RGB_888 = 16;
 static const uint32_t VSOC_PIXEL_FORMAT_RGBA_8888 = 24;
 static const uint32_t VSOC_PIXEL_FORMAT_RGBX_8888 = 25;
 static const uint32_t VSOC_PIXEL_FORMAT_BGRA_8888 = 26;
+static const uint32_t VSOC_PIXEL_FORMAT_RGBA_FP16 = 56;
 }  // namespace constant_values
 }  // namespace multi_region
 
