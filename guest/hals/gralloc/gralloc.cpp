@@ -52,6 +52,10 @@ inline void formatToYcbcr(
 
 inline int formatToBytesPerPixel(int format) {
   switch (format) {
+#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
+    case HAL_PIXEL_FORMAT_RGBA_FP16:
+      return 8;
+#endif
     case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
@@ -69,7 +73,7 @@ inline int formatToBytesPerPixel(int format) {
       return 1;
     default:
       ALOGE("%s: unknown format=%d", __FUNCTION__, format);
-      return 4;
+      return 8;
   }
 }
 
