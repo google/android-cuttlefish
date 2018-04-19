@@ -83,6 +83,8 @@ enum PixelFormat {
   VSOC_PIXEL_FORMAT_RGBX_8888 =     PixelFormatBuilder<4,1>::value,
   VSOC_PIXEL_FORMAT_BGRA_8888 =     PixelFormatBuilder<4,2>::value,
 
+  VSOC_PIXEL_FORMAT_RGBA_FP16 =     PixelFormatBuilder<8,0>::value,
+
   // VSOC_PIXEL_FORMAT_IMPLEMENTATION_DEFINED intentionally left out. The HALs
   // should choose one of the defined contrete types.
   //
@@ -137,6 +139,7 @@ ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGB_888, multi_region);
 ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGBA_8888, multi_region);
 ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGBX_8888, multi_region);
 ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_BGRA_8888, multi_region);
+ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGBA_FP16, multi_region);
 
 namespace layout {
 
