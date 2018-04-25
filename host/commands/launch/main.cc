@@ -463,8 +463,6 @@ int main(int argc, char** argv) {
 
   std::string entropy_source = "/dev/urandom";
 
-  LaunchSocketForwardProxyIfEnabled();
-
   config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
       .SetVCPUs(FLAGS_cpus)
@@ -506,6 +504,8 @@ int main(int argc, char** argv) {
   kmon.Start();
 
   sleep(1);
+
+  LaunchSocketForwardProxyIfEnabled();
 
   // Initialize the regions that require it before the VM starts.
   PreLaunchInitializers::Initialize();
