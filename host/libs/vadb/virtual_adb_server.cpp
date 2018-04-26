@@ -19,6 +19,10 @@
 namespace vadb {
 
 bool VirtualADBServer::Init() {
+  if (name_.empty()) {
+    LOG(INFO) << "name_ empty, not starting server socket";
+    return true;
+  }
   LOG(INFO) << "Starting server socket: " << name_;
 
   server_ =
