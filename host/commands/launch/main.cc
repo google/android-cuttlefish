@@ -533,8 +533,13 @@ int main(int argc, char** argv) {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
+    auto domain_options = "--domain=" + vsoc::GetDomain();
+
     const char* vnc_command[] = {FLAGS_vnc_server_binary.c_str(),
-                                 port_options.c_str(), NULL};
+                                 port_options.c_str(),
+                                 domain_options.c_str(),
+                                 NULL};
+
     subprocess(vnc_command, NULL, false);
   }
 
