@@ -19,6 +19,8 @@
 #include <log/log.h>
 #include <stdlib.h>
 
+#include "guest/libs/platform_support/api_level_fixes.h"
+
 #include "guest/hals/gralloc/gralloc_vsoc_priv.h"
 #include "guest/vsoc/lib/gralloc_region_view.h"
 

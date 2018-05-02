@@ -32,7 +32,8 @@ LOCAL_C_INCLUDES += \
 LOCAL_CFLAGS := \
     -DLOG_TAG=\"gralloc_vsoc\" \
     -Wno-missing-field-initializers \
-    -Wall -Werror
+    -Wall -Werror \
+    $(VSOC_VERSION_CFLAGS)
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
