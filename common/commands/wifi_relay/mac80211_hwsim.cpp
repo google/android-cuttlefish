@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-#include "common/libs/wifi_relay/mac80211_hwsim.h"
+#include "common/commands/wifi_relay/mac80211_hwsim.h"
 
-#include "common/libs/wifi_relay/mac80211_hwsim_driver.h"
+#include "common/commands/wifi_relay/mac80211_hwsim_driver.h"
 
 #include <glog/logging.h>
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/genl.h>
 #include <signal.h>
+#include <sys/uio.h>
+#include <gflags/gflags.h>
+
+DEFINE_string(
+        pcap, "", "Path to save a pcap file of packets");
 
 static constexpr char kWifiSimFamilyName[] = "MAC80211_HWSIM";
 static constexpr char kNl80211FamilyName[] = "nl80211";
@@ -31,6 +36,65 @@ static constexpr uint32_t kSignalLevelDefault = -24;
 #if !defined(ETH_ALEN)
 static constexpr size_t ETH_ALEN = 6;
 #endif
+
+namespace {
+
+struct pcap_hdr_t {
+  uint32_t magic_number;   /* magic number */
+  uint16_t version_major;  /* major version number */
+  uint16_t version_minor;  /* minor version number */
+  int32_t  thiszone;       /* GMT to local correction */
+  uint32_t sigfigs;        /* accuracy of timestamps */
+  uint32_t snaplen;        /* max length of captured packets, in octets */
+  uint32_t network;        /* data link type */
+};
+
+struct pcaprec_hdr_t {
+  uint32_t ts_sec;         /* timestamp seconds */
+  uint32_t ts_usec;        /* timestamp microseconds */
+  uint32_t incl_len;       /* number of octets of packet saved in file */
+  uint32_t orig_len;       /* actual length of packet */
+};
+
+const pcap_hdr_t pcap_file_header{
+  0xa1b2c3d4,
+  2,
+  4,
+  0,
+  0,
+  65536,
+  105    // IEEE802.11 without radiotap
+};
+
+void WritePCap(const void* buffer, size_t length) {
+  if (FLAGS_pcap.empty()) {
+    return;
+  }
+  static int pcap = -1;
+  if (pcap == -1) {
+    pcap = open(FLAGS_pcap.c_str(), O_RDWR|O_CREAT|O_TRUNC, 0644);
+    if (pcap == -1) {
+      return;
+    }
+    (void)write(pcap, &pcap_file_header, sizeof(pcap_file_header));
+  }
+  size_t write_length = length;
+  if (write_length > pcap_file_header.snaplen) {
+    write_length = pcap_file_header.snaplen;
+  }
+  pcaprec_hdr_t hdr;
+  struct timespec now;
+  clock_gettime(CLOCK_REALTIME, &now);
+  hdr.ts_sec = now.tv_sec;
+  hdr.ts_usec = now.tv_nsec / 1000;
+  hdr.incl_len = write_length;
+  hdr.orig_len = length;
+  struct iovec iov[2] { {&hdr, sizeof(hdr)},
+    { const_cast<void*>(buffer), static_cast<size_t>(write_length)}};
+  (void)writev(pcap, iov, 2);
+}
+
+}
 
 Mac80211HwSim::Remote::Remote(
         Mac80211HwSim *parent,
@@ -51,17 +115,10 @@ Mac80211HwSim::Remote::Remote(
             LOG(ERROR) << "WifiExchangeView::Recv failed w/ res " << res;
             continue;
           }
+          WritePCap(buf.get(), static_cast<size_t>(res));
 
           // LOG(INFO) << "GUEST->HOST packet of size " << res;
-
-          struct nlmsghdr *hdr = reinterpret_cast<struct nlmsghdr *>(buf.get());
-
-          int len = res;
-          while (nlmsg_ok(hdr, len)) {
-            mParent->injectMessage(hdr);
-
-            hdr = nlmsg_next(hdr, &len);
-          }
+          mParent->injectFrame(buf.get(), res);
     }});
 }
 
@@ -73,7 +130,8 @@ Mac80211HwSim::Remote::~Remote() {
 }
 
 intptr_t Mac80211HwSim::Remote::send(const void *data, size_t size) {
-    return mWifiExchange->Send(data, size);
+  WritePCap(data, size);
+  return mWifiExchange->Send(data, size);
 }
 
 Mac80211HwSim::Mac80211HwSim(const MacAddress &mac)
@@ -145,73 +203,6 @@ int Mac80211HwSim::initCheck() const {
 
 int Mac80211HwSim::socketFd() const {
     return nl_socket_get_fd(mSock.get());
-}
-
-void Mac80211HwSim::dumpMessage(nlmsghdr *msg) const {
-    genlmsghdr *hdr = genlmsg_hdr(msg);
-
-    LOG(VERBOSE) << "message cmd = " << (int)hdr->cmd;
-
-    nlattr *attrs[__HWSIM_ATTR_MAX + 1];
-    int res = genlmsg_parse(
-            msg,
-            0 /* hdrlen */,
-            attrs,
-            __HWSIM_ATTR_MAX,
-            nullptr /* policy */);
-
-    if (res < 0) {
-        LOG(ERROR) << "genlmsg_parse failed.";
-        return;
-    }
-
-    // for HWSIM_CMD_FRAME, the following attributes are present:
-    // HWSIM_ATTR_ADDR_TRANSMITTER, HWSIM_ATTR_FRAME, HWSIM_ATTR_FLAGS,
-    // HWSIM_ATTR_TX_INFO, HWSIM_ATTR_COOKIE, HWSIM_ATTR_FREQ
-
-    for (size_t i = 0; i < __HWSIM_ATTR_MAX; ++i) {
-        if (attrs[i]) {
-            LOG(VERBOSE) << "Got attribute " << i;
-        }
-    }
-}
-
-void Mac80211HwSim::injectMessage(nlmsghdr *msg) {
-#ifdef CUTTLEFISH_HOST
-    LOG(VERBOSE) << "------------------- Guest -> Host -----------------------";
-#else
-    LOG(VERBOSE) << "------------------- Host -> Guest -----------------------";
-#endif
-    dumpMessage(msg);
-
-    // Do NOT check nlmsg_type against mMac80211Family, these are dynamically
-    // assigned and may not necessarily match across machines!
-
-    genlmsghdr *hdr = genlmsg_hdr(msg);
-    if (hdr->cmd != HWSIM_CMD_FRAME) {
-        LOG(VERBOSE) << "injectMessage: not cmd HWSIM_CMD_FRAME.";
-        return;
-    }
-
-    nlattr *attrs[__HWSIM_ATTR_MAX + 1];
-    int res = genlmsg_parse(
-            msg,
-            0 /* hdrlen */,
-            attrs,
-            __HWSIM_ATTR_MAX,
-            nullptr /* policy */);
-
-    if (res < 0) {
-        LOG(ERROR) << "genlmsg_parse failed.";
-        return;
-    }
-
-    nlattr *attr = attrs[HWSIM_ATTR_FRAME];
-    if (attr) {
-        injectFrame(nla_data(attr), nla_len(attr));
-    } else {
-        LOG(ERROR) << "injectMessage: no HWSIM_ATTR_FRAME.";
-    }
 }
 
 void Mac80211HwSim::ackFrame(nlmsghdr *inMsg) {
@@ -297,7 +288,6 @@ void Mac80211HwSim::injectFrame(const void *data, size_t size) {
     nla_put_u32(msg.get(), HWSIM_ATTR_SIGNAL, kSignalLevelDefault);
 
     LOG(VERBOSE) << "INJECTING!";
-    dumpMessage(nlmsg_hdr(msg.get()));
 
     int res = nl_send_auto_complete(mSock.get(), msg.get());
 
@@ -339,18 +329,41 @@ void Mac80211HwSim::handlePacket() {
     LOG(VERBOSE) << "------------------- Guest -> Host -----------------------";
 #endif
 
-    dumpMessage(msg.get());
+    genlmsghdr *hdr = genlmsg_hdr(msg.get());
+    if (hdr->cmd != HWSIM_CMD_FRAME) {
+        LOG(VERBOSE) << "cmd HWSIM_CMD_FRAME.";
+        return;
+    }
+
+    nlattr *attrs[__HWSIM_ATTR_MAX + 1];
+    int res = genlmsg_parse(
+        msg.get(),
+        0 /* hdrlen */,
+        attrs,
+        __HWSIM_ATTR_MAX,
+        nullptr /* policy */);
+
+    if (res < 0) {
+        LOG(ERROR) << "genlmsg_parse failed.";
+        return;
+    }
+
+    nlattr *attr = attrs[HWSIM_ATTR_FRAME];
+    if (!attr) {
+        LOG(ERROR) << "no HWSIM_ATTR_FRAME.";
+        return;
+    }
+    std::lock_guard<std::mutex> autoLock(mRemotesLock);
+    for (auto &remoteEntry : mRemotes) {
+      // TODO(andih): Check which remotes to forward this packet to based
+      // on the destination address.
+      remoteEntry.second->send(nla_data(attr), nla_len(attr));
+    }
 
 #if !defined(CUTTLEFISH_HOST)
     ackFrame(msg.get());
 #endif
 
-    std::lock_guard<std::mutex> autoLock(mRemotesLock);
-    for (auto &remoteEntry : mRemotes) {
-        // TODO(andih): Check which remotes to forward this packet to based
-        // on the destination address.
-        remoteEntry.second->send(msg.get(), msg->nlmsg_len);
-    }
 }
 
 int Mac80211HwSim::registerOrSubscribe(const MacAddress &mac) {

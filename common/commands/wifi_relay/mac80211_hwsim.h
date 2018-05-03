@@ -82,9 +82,7 @@ private:
     std::mutex mRemotesLock;
     std::map<MacAddress, std::unique_ptr<Remote>> mRemotes;
 
-    void injectMessage(nlmsghdr *hdr);
     void injectFrame(const void *data, size_t size);
     void ackFrame(nlmsghdr *msg);
-    void dumpMessage(nlmsghdr *msg) const;
     int registerOrSubscribe(const MacAddress &mac);
 };

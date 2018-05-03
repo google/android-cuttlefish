@@ -16,6 +16,9 @@
 cc_binary {
     name: "wifi_relay",
     srcs: [
+        "cmd.cpp",
+	"mac80211_hwsim.cpp",
+        "nl_client.cpp",
         "wifi_relay.cpp",
     ],
     shared_libs: [
@@ -28,8 +31,6 @@ cc_binary {
     ],
     static_libs: [
         "libgflags",
-        "libcuttlefish_wifi_relay",
-        "libcuttlefish_wifi",
     ],
     header_libs: [
         "cuttlefish_glog",
