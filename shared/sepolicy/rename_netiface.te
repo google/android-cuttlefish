@@ -1,0 +1,10 @@
+type rename_netiface, domain;
+type rename_netiface_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(rename_netiface)
+
+allow rename_netiface self:capability { net_admin net_raw sys_module };
+allow rename_netiface self:udp_socket { create ioctl };
+allow rename_netiface self:netlink_route_socket { bind create nlmsg_write read write };
+
+allow rename_netiface kernel:system module_request;
