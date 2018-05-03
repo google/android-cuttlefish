@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/wifi/nl_client.h"
+#include "common/commands/wifi_relay/nl_client.h"
 
 #include <glog/logging.h>
 
