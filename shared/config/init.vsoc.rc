@@ -34,6 +34,9 @@ on fs
     wait /vendor/etc/selinux/nonplat_mac_permissions.xml
     restorecon_recursive /vendor
 
+    # works around framework netiface enumeration issue
+    start rename_eth0
+
     # TODO(ender): Find better way to talk to serial port.
     chmod 622 /dev/kmsg
 
@@ -73,6 +76,10 @@ on boot
     # TODO(ender): Re-enable these
     # Compass.
     stop akmd
+
+
+service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
+    oneshot
 
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
