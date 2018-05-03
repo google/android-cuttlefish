@@ -20,6 +20,7 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
+    host_region_e2e_test \
     launch_cvd \
     socket_forward_proxy \
     stop_cvd \
