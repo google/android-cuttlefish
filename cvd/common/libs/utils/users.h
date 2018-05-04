@@ -15,10 +15,8 @@
  */
 #pragma once
 
-#include <string>
-
 namespace cvd {
 
-bool InGroup(const std::string& group);
+[[noreturn]] void EstablishAndMaintainConnection(int port);
 
 }  // namespace cvd
