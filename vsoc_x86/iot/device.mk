@@ -14,11 +14,18 @@
 # limitations under the License.
 #
 
-$(call inherit-product, device/google/iot/iot_base.mk)
-$(call inherit-product, device/google/iot/iot_cts_compatible.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
+$(call inherit-product, device/google/iot/iot_base.mk)
+$(call inherit-product, device/google/iot/iot_board_config_base.mk)
+$(call inherit-product, device/google/iot/iot_cts_compatible.mk)
 
 PRODUCT_NAME := aosp_cf_x86_iot
 PRODUCT_DEVICE := vsoc_x86
 PRODUCT_MODEL := Cuttlefish x86 IoT
 PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86/iot/overlay
+
+# Boot animation.
+PRODUCT_COPY_FILES += \
+    device/google/iot/bootanimation.zip:/system/media/bootanimation.zip
+
+PRODUCT_FULL_TREBLE_OVERRIDE := false
