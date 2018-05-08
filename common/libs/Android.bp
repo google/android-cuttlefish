@@ -21,6 +21,4 @@ subdirs = [
     "tcp_socket",
     "threads",
     "time",
-    "wifi",
-    "wifi_relay",
 ]
