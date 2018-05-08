@@ -129,6 +129,12 @@ class GuestConfig {
     return *this;
   }
 
+  // Set name of the wifi bridge, eg. br0
+  GuestConfig& SetWifiBridgeName(const std::string& name) {
+    wifi_bridge_name_ = name;
+    return *this;
+  }
+
   // GetInstanceName returns name of this newly created instance.
   std::string GetInstanceName() const;
 
@@ -171,6 +177,7 @@ class GuestConfig {
   int ivshmem_vector_count_;
 
   std::string mobile_bridge_name_;
+  std::string wifi_bridge_name_;
   std::string entropy_source_;
 
   std::string uuid_;

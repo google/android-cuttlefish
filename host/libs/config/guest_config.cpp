@@ -317,6 +317,7 @@ std::string GuestConfig::Build() const {
   ConfigureDisk(devices, "vdd", vendor_partition_path_);
 
   ConfigureNIC(devices, concat("amobile", id_), mobile_bridge_name_, id_, 1);
+  ConfigureNIC(devices, concat("awifi", id_), wifi_bridge_name_, id_, 2);
   ConfigureHWRNG(devices, entropy_source_);
 
   xmlChar* tgt;

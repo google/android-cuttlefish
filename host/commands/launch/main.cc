@@ -132,6 +132,9 @@ DEFINE_string(wifi_relay_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
                   "/bin/wifi_relay",
               "Location of the wifi_relay binary.");
+std::string g_default_wifi_interface{GetPerInstanceDefault("cvd-wifi-")};
+DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
+              "Network interface to use for wifi");
 
 DECLARE_string(uuid);
 
@@ -529,7 +532,8 @@ int main(int argc, char** argv) {
       .SetEntropySource(entropy_source)
       .SetDisableDACSecurity(FLAGS_disable_dac_security)
       .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
-      .SetUUID(FLAGS_uuid);
+      .SetUUID(FLAGS_uuid)
+      .SetWifiBridgeName(FLAGS_wifi_interface);
   if(AdbUsbEnabled()) {
     cfg.SetUSBV1SocketName(
         GetDefaultPerInstancePath(cfg.GetInstanceName() + "-usb"));
