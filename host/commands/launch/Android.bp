@@ -19,6 +19,7 @@ cc_binary_host {
         "main.cc",
         "screen_region_handler.cc",
         "ril_region_handler.cc",
+        "wifi_region_handler.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -30,9 +31,11 @@ cc_binary_host {
         "cuttlefish_auto_resources",
         "libicuuc",
         "libbase",
+        "libnl"
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libcuttlefish_wifi_relay",
         "libivserver",
         "libvadb",
         "libusbip",
