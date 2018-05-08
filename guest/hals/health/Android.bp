@@ -45,4 +45,6 @@ cc_binary {
     ],
 
     header_libs: ["libhealthd_headers"],
+
+    defaults: ["enabled_on_p_and_later"],
 }
