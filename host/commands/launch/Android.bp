@@ -35,7 +35,6 @@ cc_binary_host {
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libcuttlefish_wifi_relay",
         "libivserver",
         "libvadb",
         "libusbip",

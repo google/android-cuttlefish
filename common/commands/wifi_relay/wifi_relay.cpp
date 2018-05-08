@@ -16,8 +16,8 @@
 
 #include "wifi_relay.h"
 
-#include "common/libs/wifi_relay/mac80211_hwsim_driver.h"
-#include "common/libs/wifi/nl_client.h"
+#include "common/commands/wifi_relay/mac80211_hwsim_driver.h"
+#include "common/commands/wifi_relay/nl_client.h"
 
 #if defined(CUTTLEFISH_HOST)
 #include "host/libs/config/host_config.h"
@@ -229,6 +229,7 @@ int updateInterface(
 }
 
 int main(int argc, char **argv) {
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   auto wifi_view = vsoc::wifi::WifiExchangeView::GetInstance(

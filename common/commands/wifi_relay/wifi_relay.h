@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/libs/wifi_relay/mac80211_hwsim.h"
+#include "common/commands/wifi_relay/mac80211_hwsim.h"
 
 #include <errno.h>
 #include <memory>
