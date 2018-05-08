@@ -22,7 +22,6 @@
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/genl.h>
 #include <signal.h>
-#include <string>
 
 static constexpr char kWifiSimFamilyName[] = "MAC80211_HWSIM";
 static constexpr char kNl80211FamilyName[] = "nl80211";
@@ -417,25 +416,4 @@ void Mac80211HwSim::removeRemote(const MacAddress &mac) {
     if (it != mRemotes.end()) {
         mRemotes.erase(it);
     }
-}
-
-// static
-bool Mac80211HwSim::ParseMACAddress(const std::string &s, MacAddress *mac) {
-    mac->resize(ETH_ALEN);
-
-    char dummy;
-    if (sscanf(s.c_str(),
-               "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx%c",
-               &(*mac)[0],
-               &(*mac)[1],
-               &(*mac)[2],
-               &(*mac)[3],
-               &(*mac)[4],
-               &(*mac)[5],
-               &dummy) != 6) {
-        LOG(ERROR) << "Failed to parse MAC address: " << s;
-        return false;
-    }
-
-    return true;
 }
