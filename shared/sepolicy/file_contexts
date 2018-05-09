@@ -31,7 +31,7 @@
 /vendor/bin/socket_forward_proxy  u:object_r:socket_forward_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/vsoc_guest_region_e2e_test  u:object_r:vsoc_guest_region_e2e_test_exec:s0
-/vendor/bin/wifi_relay  u:object_r:wifi_relay_exec:s0
+/vendor/bin/wifi_setup  u:object_r:wifi_setup_exec:s0
 /vendor/bin/vport_trigger  u:object_r:vport_trigger_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
