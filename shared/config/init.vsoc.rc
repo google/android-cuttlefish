@@ -136,7 +136,7 @@ service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
     disabled
 
 
-service wifi_relay /vendor/bin/wifi_relay
+service wifi_setup /vendor/bin/wifi_setup
     class late_start
     user root
 
