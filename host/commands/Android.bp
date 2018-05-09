@@ -17,4 +17,5 @@ subdirs = [
     "launch",
     "stop_cvd",
     "record_audio",
+    "wifi_relay",
 ]

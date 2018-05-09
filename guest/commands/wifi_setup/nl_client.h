@@ -22,7 +22,7 @@
 
 #include <netlink/genl/genl.h>
 
-#include "common/commands/wifi_relay/cmd.h"
+#include "guest/commands/wifi_setup/cmd.h"
 
 namespace cvd {
 

@@ -16,12 +16,10 @@
 
 #include "wifi_relay.h"
 
-#include "common/commands/wifi_relay/mac80211_hwsim_driver.h"
-#include "common/commands/wifi_relay/nl_client.h"
+#include "host/commands/wifi_relay/mac80211_hwsim_driver.h"
+#include "host/commands/wifi_relay/nl_client.h"
 
-#if defined(CUTTLEFISH_HOST)
 #include "host/libs/config/host_config.h"
-#endif
 
 #include <linux/netdevice.h>
 #include <linux/nl80211.h>
@@ -33,10 +31,7 @@
 
 #include <fstream>
 
-#if !defined(CUTTLEFISH_HOST)
-DEFINE_string(
-        iface_name, "wlan0", "Name of the wifi interface to be created.");
-#endif
+using vsoc::wifi::WifiExchangeView;
 
 WifiRelay::WifiRelay(
         const Mac80211HwSim::MacAddress &localMAC,
@@ -50,12 +45,7 @@ WifiRelay::WifiRelay(
 
   init_check_ = mMac80211HwSim->addRemote(
           remoteMAC,
-#if defined(CUTTLEFISH_HOST)
-          vsoc::wifi::WifiExchangeView::GetInstance(vsoc::GetDomain().c_str())
-#else
-          vsoc::wifi::WifiExchangeView::GetInstance()
-#endif
-          );
+          WifiExchangeView::GetInstance(vsoc::GetDomain().c_str()));
 }
 
 int WifiRelay::initCheck() const {
@@ -232,20 +222,12 @@ int main(int argc, char **argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto wifi_view = vsoc::wifi::WifiExchangeView::GetInstance(
-#if defined(CUTTLEFISH_HOST)
-      vsoc::GetDomain().c_str()
-#endif
-  );
+  auto wifi_view = vsoc::wifi::WifiExchangeView::GetInstance(vsoc::GetDomain().c_str());
 
   Mac80211HwSim::MacAddress guestMAC = wifi_view->GetGuestMACAddress();
   Mac80211HwSim::MacAddress hostMAC = wifi_view->GetHostMACAddress();
 
-#ifdef CUTTLEFISH_HOST
   WifiRelay relay(hostMAC, guestMAC);
-#else
-  WifiRelay relay(guestMAC, hostMAC);
-#endif
   int res = relay.initCheck();
 
   if (res < 0) {
@@ -258,74 +240,6 @@ int main(int argc, char **argv) {
 
     exit(1);
   }
-
-#if !defined(CUTTLEFISH_HOST)
-  cvd::NlClient client(NETLINK_GENERIC);
-  if (!client.Init()) {
-      LOG(ERROR) << "Could not open Netlink Generic.";
-      exit(1);
-  }
-
-  cvd::NlClient nlRoute(NETLINK_ROUTE);
-  if (!nlRoute.Init()) {
-      LOG(ERROR) << "Could not open Netlink Route.";
-      exit(1);
-  }
-
-  std::thread([&client, &nlRoute] {
-    for (;;) {
-      fd_set rs;
-      FD_ZERO(&rs);
-
-      int fdGeneric = nl_socket_get_fd(client.Sock());
-      int fdRoute = nl_socket_get_fd(nlRoute.Sock());
-
-      FD_SET(fdGeneric, &rs);
-      FD_SET(fdRoute, &rs);
-
-      int maxFd = std::max(fdGeneric, fdRoute);
-
-      int res = select(maxFd + 1, &rs, nullptr, nullptr, nullptr);
-
-      if (res == 0) {
-        continue;
-      } else if (res < 0) {
-        continue;
-      }
-
-      if (FD_ISSET(fdGeneric, &rs)) {
-        nl_recvmsgs_default(client.Sock());
-      }
-
-      if (FD_ISSET(fdRoute, &rs)) {
-        nl_recvmsgs_default(nlRoute.Sock());
-      }
-    }
-  }).detach();
-
-  const std::string phyName = FLAGS_iface_name + "_phy";
-  if (createRadio(&client, relay.mac80211Family(), phyName.c_str()) < 0) {
-      LOG(ERROR) << "Could not create radio.";
-      exit(1);
-  }
-
-  int phyIndex = getPhyIndex(phyName);
-  CHECK_GE(phyIndex, 0);
-  LOG(VERBOSE) << "Got PHY index " << phyIndex;
-
-  int ifaceIndex = getInterfaceIndex(
-          &client, relay.nl80211Family(), static_cast<uint32_t>(phyIndex));
-
-  CHECK_GE(ifaceIndex, 0);
-  LOG(VERBOSE) << "Got interface index " << ifaceIndex;
-
-  if (updateInterface(
-              &nlRoute, ifaceIndex, FLAGS_iface_name, &guestMAC[0]) < 0) {
-      LOG(ERROR) << "Failed to update interface.";
-      exit(1);
-  }
-#endif  // !defined(CUTTLEFISH_HOST)
-
   relay.run();
 
   return 0;

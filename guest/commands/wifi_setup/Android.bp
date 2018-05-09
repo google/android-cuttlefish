@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,29 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+cc_binary {
+    name: "wifi_setup",
+    srcs: [
+        "cmd.cpp",
+	"mac80211_hwsim.cpp",
+        "nl_client.cpp",
+        "wifi_relay.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "vsoc_lib",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "liblog",
+        "libnl",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    defaults: ["cuttlefish_guest_only", "cuttlefish_native_isa"]
+}
 
-subdirs = [
-  "wifi_setup",
-]

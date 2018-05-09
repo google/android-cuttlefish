@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "common/commands/wifi_relay/mac80211_hwsim.h"
+#include "host/commands/wifi_relay/mac80211_hwsim.h"
 
-#include "common/commands/wifi_relay/mac80211_hwsim_driver.h"
+#include "host/commands/wifi_relay/mac80211_hwsim_driver.h"
 
 #include <glog/logging.h>
 #include <netlink/genl/ctrl.h>
@@ -180,16 +180,6 @@ Mac80211HwSim::Mac80211HwSim(const MacAddress &mac)
         mInitCheck = -ENODEV;
         goto bail;
     }
-
-#if !defined(CUTTLEFISH_HOST)
-    res = registerOrSubscribe(mMAC);
-
-    if (res < 0) {
-        mInitCheck = res;
-        goto bail;
-    }
-#endif
-
     mInitCheck = 0;
     return;
 
@@ -323,11 +313,7 @@ void Mac80211HwSim::handlePacket() {
         return;
     }
 
-#ifdef CUTTLEFISH_HOST
     LOG(VERBOSE) << "------------------- Host -> Guest -----------------------";
-#else
-    LOG(VERBOSE) << "------------------- Guest -> Host -----------------------";
-#endif
 
     genlmsghdr *hdr = genlmsg_hdr(msg.get());
     if (hdr->cmd != HWSIM_CMD_FRAME) {
@@ -359,11 +345,6 @@ void Mac80211HwSim::handlePacket() {
       // on the destination address.
       remoteEntry.second->send(nla_data(attr), nla_len(attr));
     }
-
-#if !defined(CUTTLEFISH_HOST)
-    ackFrame(msg.get());
-#endif
-
 }
 
 int Mac80211HwSim::registerOrSubscribe(const MacAddress &mac) {
@@ -378,19 +359,10 @@ int Mac80211HwSim::registerOrSubscribe(const MacAddress &mac) {
             mMac80211Family,
             0,
             NLM_F_REQUEST,
-#ifdef CUTTLEFISH_HOST
             HWSIM_CMD_SUBSCRIBE,
-#else
-            HWSIM_CMD_REGISTER,
-#endif
             0);
 
-#ifdef CUTTLEFISH_HOST
     nla_put(msg.get(), HWSIM_ATTR_ADDR_RECEIVER, ETH_ALEN, &mac[0]);
-#else
-    // HWSIM_CMD_REGISTER is a global command not specific to a MAC.
-    (void)mac;
-#endif
 
     int res = nl_send_auto_complete(mSock.get(), msg.get());
 
@@ -407,13 +379,11 @@ int Mac80211HwSim::registerOrSubscribe(const MacAddress &mac) {
 int Mac80211HwSim::addRemote(
         const MacAddress &mac,
         vsoc::wifi::WifiExchangeView *wifiExchange) {
-#ifdef CUTTLEFISH_HOST
     int res = registerOrSubscribe(mac);
 
     if (res < 0) {
         return res;
     }
-#endif
 
     std::lock_guard<std::mutex> autoLock(mRemotesLock);
 

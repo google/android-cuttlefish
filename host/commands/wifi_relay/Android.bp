@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-cc_binary {
+cc_binary_host {
     name: "wifi_relay",
     srcs: [
         "cmd.cpp",
@@ -31,17 +31,10 @@ cc_binary {
     ],
     static_libs: [
         "libgflags",
+        "libcuttlefish_host_config",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
-    target: {
-        host: {
-            static_libs: [
-                "libcuttlefish_host_config",
-            ],
-        },
-    },
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
+    defaults: ["cuttlefish_host_only"]
 }
-
