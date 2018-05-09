@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/libs/wifi/cmd.h"
+#include "common/commands/wifi_relay/cmd.h"
 
 namespace cvd {
 

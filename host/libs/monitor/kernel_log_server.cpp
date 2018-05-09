@@ -82,6 +82,9 @@ void KernelLogServer::HandleIncomingConnection() {
     LOG(ERROR) << "Client connection failed: " << client_fd_->StrError();
     return;
   }
+  if (client_fd_->Fcntl(F_SETFL, O_NONBLOCK) == -1) {
+    LOG(ERROR) << "Client connection refused O_NONBLOCK: " << client_fd_->StrError();
+  }
 }
 
 bool KernelLogServer::HandleIncomingMessage() {
@@ -93,6 +96,11 @@ bool KernelLogServer::HandleIncomingMessage() {
     return false;
   }
   if (ret == 0) return false;
+  // Write the log to a file
+  if (log_fd_->Write(buf, ret) < 0) {
+    LOG(ERROR) << "Could not write kernel log to file: " << log_fd_->StrError();
+    return false;
+  }
 
   // Detect VIRTUAL_DEVICE_BOOT_*
   for (ssize_t i=0; i<ret; i++) {
@@ -115,11 +123,6 @@ bool KernelLogServer::HandleIncomingMessage() {
     line_.append(1, buf[i]);
   }
 
-  // Write the log to a file
-  if (log_fd_->Write(buf, ret) < 0) {
-    LOG(ERROR) << "Could not write kernel log to file: " << log_fd_->StrError();
-    return false;
-  }
   return true;
 }
 

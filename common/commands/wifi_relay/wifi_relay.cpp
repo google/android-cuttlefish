@@ -16,8 +16,8 @@
 
 #include "wifi_relay.h"
 
-#include "common/libs/wifi_relay/mac80211_hwsim_driver.h"
-#include "common/libs/wifi/nl_client.h"
+#include "common/commands/wifi_relay/mac80211_hwsim_driver.h"
+#include "common/commands/wifi_relay/nl_client.h"
 
 #if defined(CUTTLEFISH_HOST)
 #include "host/libs/config/host_config.h"
@@ -32,16 +32,6 @@
 #include <glog/logging.h>
 
 #include <fstream>
-
-DEFINE_string(
-        guest_mac_address,
-        "00:43:56:44:80:02",
-        "MAC address of the wifi interface to be created on the guest.");
-
-DEFINE_string(
-        host_mac_address,
-        "42:00:00:00:00:00",
-        "MAC address of the wifi interface running on the host.");
 
 #if !defined(CUTTLEFISH_HOST)
 DEFINE_string(
@@ -239,13 +229,17 @@ int updateInterface(
 }
 
 int main(int argc, char **argv) {
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  Mac80211HwSim::MacAddress guestMAC, hostMAC;
-  if (!Mac80211HwSim::ParseMACAddress(FLAGS_guest_mac_address, &guestMAC)
-          || !Mac80211HwSim::ParseMACAddress(FLAGS_host_mac_address, &hostMAC)) {
-      exit(1);
-  }
+  auto wifi_view = vsoc::wifi::WifiExchangeView::GetInstance(
+#if defined(CUTTLEFISH_HOST)
+      vsoc::GetDomain().c_str()
+#endif
+  );
+
+  Mac80211HwSim::MacAddress guestMAC = wifi_view->GetGuestMACAddress();
+  Mac80211HwSim::MacAddress hostMAC = wifi_view->GetHostMACAddress();
 
 #ifdef CUTTLEFISH_HOST
   WifiRelay relay(hostMAC, guestMAC);
