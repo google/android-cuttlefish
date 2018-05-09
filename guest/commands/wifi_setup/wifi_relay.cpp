@@ -16,6 +16,7 @@
 
 #include "wifi_relay.h"
 
+#include "guest/commands/wifi_setup/guest_bridge.h"
 #include "guest/commands/wifi_setup/mac80211_hwsim_driver.h"
 #include "guest/commands/wifi_setup/nl_client.h"
 
@@ -240,6 +241,8 @@ int main(int argc, char **argv) {
 
     exit(1);
   }
+
+  make_bridge("eth1", FLAGS_iface_name.c_str());
 
   cvd::NlClient client(NETLINK_GENERIC);
   if (!client.Init()) {

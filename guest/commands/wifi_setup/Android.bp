@@ -17,13 +17,15 @@ cc_binary {
     name: "wifi_setup",
     srcs: [
         "cmd.cpp",
-	"mac80211_hwsim.cpp",
+        "guest_bridge.cpp",
+        "mac80211_hwsim.cpp",
         "nl_client.cpp",
         "wifi_relay.cpp",
     ],
     shared_libs: [
         "libbase",
         "vsoc_lib",
+        "cuttlefish_net",
         "libcuttlefish_fs",
         "cuttlefish_auto_resources",
         "liblog",
@@ -37,4 +39,3 @@ cc_binary {
     ],
     defaults: ["cuttlefish_guest_only", "cuttlefish_native_isa"]
 }
-
