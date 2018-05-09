@@ -70,6 +70,11 @@ cc_defaults {
 }
 
 cc_defaults {
+    name: "cuttlefish_guest_only",
+    defaults: ["cuttlefish_base"],
+}
+
+cc_defaults {
     name: "cuttlefish_host_only",
     device_supported: false,
     host_supported: true,
