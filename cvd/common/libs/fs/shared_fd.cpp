@@ -274,7 +274,7 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect((struct sockaddr*)&addr, addrlen) == -1) {
+  if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
     LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
@@ -316,7 +316,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
-  if(rval->Bind((struct sockaddr *) &addr, sizeof(addr)) < 0) {
+  if(rval->Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
@@ -351,7 +351,7 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
-  if (rval->Bind((struct sockaddr*)&addr, addrlen) == -1) {
+  if (rval->Bind(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
     LOG(ERROR) << "Bind failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
