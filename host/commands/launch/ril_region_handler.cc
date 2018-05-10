@@ -66,14 +66,14 @@ class NetConfig {
 
  private:
   bool GetBroadcastAddr(const std::string& interface) {
-    struct ifaddrs *ifap, *ifa;
-    struct sockaddr_in *sa;
-    char *addr;
+    struct ifaddrs *ifap{}, *ifa{};
+    struct sockaddr_in *sa{};
+    char *addr{};
     getifaddrs (&ifap);
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
       if (ifa->ifa_addr && ifa->ifa_addr->sa_family==AF_INET) {
         if (strcmp(ifa->ifa_name, interface.c_str())) continue;
-        sa = (struct sockaddr_in *) ifa->ifa_ifu.ifu_broadaddr;
+        sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_ifu.ifu_broadaddr);
         addr = inet_ntoa(sa->sin_addr);
         this->ril_broadcast = strtok(addr, "\n");
       }
@@ -102,7 +102,7 @@ class NetConfig {
     xmlNode* element = xmlDocGetRootElement(doc.get());
     element = element->xmlChildrenNode;
     while (element) {
-      if (strcmp((char*)element->name, "ip") == 0) {
+      if (strcmp(reinterpret_cast<const char*>(element->name), "ip") == 0) {
         return ProcessIpNode(element);
       }
       element = element->next;
@@ -113,10 +113,12 @@ class NetConfig {
 
   bool ParseIpAttributes(xmlNode* ip_node) {
     // The gateway is the host ip address
-    this->ril_gateway = (char*)xmlGetProp(ip_node, (xmlChar*)"address");
+    this->ril_gateway = reinterpret_cast<const char*>(
+        xmlGetProp(ip_node, reinterpret_cast<const xmlChar*>("address")));
 
     // The prefix length need to be obtained from the network mask
-    char* netmask = (char*)xmlGetProp(ip_node, (xmlChar*)"netmask");
+    auto* netmask = reinterpret_cast<const char*>(
+        xmlGetProp(ip_node, reinterpret_cast<const xmlChar*>("netmask")));
     int byte1, byte2, byte3, byte4;
     sscanf(netmask, "%d.%d.%d.%d", &byte1, &byte2, &byte3, &byte4);
     this->ril_prefixlen = 0;
@@ -130,8 +132,9 @@ class NetConfig {
   bool ProcessDhcpNode(xmlNode* dhcp_node) {
     xmlNode* child = dhcp_node->xmlChildrenNode;
     while (child) {
-      if (strcmp((char*)child->name, "range") == 0) {
-        this->ril_ipaddr = (char*)xmlGetProp(child, (xmlChar*)"start");
+      if (strcmp(reinterpret_cast<const char*>(child->name), "range") == 0) {
+        this->ril_ipaddr = reinterpret_cast<const char*>(
+            xmlGetProp(child, reinterpret_cast<const xmlChar*>("start")));
         return true;
       }
       child = child->next;
@@ -144,7 +147,7 @@ class NetConfig {
     ParseIpAttributes(ip_node);
     xmlNode* child = ip_node->xmlChildrenNode;
     while (child) {
-      if (strcmp((char*)child->name, "dhcp") == 0) {
+      if (strcmp(reinterpret_cast<const char*>(child->name), "dhcp") == 0) {
         return ProcessDhcpNode(child);
       }
       child = child->next;

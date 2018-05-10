@@ -58,7 +58,7 @@ class TimeDifference {
     // Nanoseconds must be in [0, 10^9) and so all are less
     // then 2^30. Even multiplied by the largest uint32
     // this will fit in a 64-bit int without overflow.
-    int64_t tv_nsec = (int64_t)ts_.tv_nsec * factor;
+    int64_t tv_nsec = static_cast<int64_t>(ts_.tv_nsec) * factor;
     rval.ts_.tv_sec += (tv_nsec / kNanosecondsPerSecond);
     rval.ts_.tv_nsec = tv_nsec % kNanosecondsPerSecond;
     return rval;
