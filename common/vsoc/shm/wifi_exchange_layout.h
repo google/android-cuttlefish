@@ -18,7 +18,6 @@
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"
 #include "common/vsoc/shm/lock.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for wifi packet exchange region.
 namespace vsoc {
@@ -38,8 +37,6 @@ struct WifiExchangeLayout : public RegionLayout {
 
   static const char* region_name;
 };
-
-ASSERT_SHM_COMPATIBLE(WifiExchangeLayout, wifi);
 
 }  // namespace wifi
 }  // namespace layout
