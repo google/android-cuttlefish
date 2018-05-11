@@ -29,7 +29,6 @@
 #include <cstdint>
 
 #include "common/vsoc/shm/base.h"
-#include "common/vsoc/shm/version.h"
 
 // Host userspace, guest userspace, and the guest kernel must all agree on
 // the relationship between std::atomic and atomic_t. That's hard to do without
@@ -88,7 +87,6 @@ class SpinLock {
  protected:
   std::atomic<uint32_t> lock_;
 };
-ASSERT_SHM_COMPATIBLE(SpinLock, multi_region);
 
 /**
  * This is a generic synchronization primitive that provides space for the
@@ -139,7 +137,6 @@ class WaitingLockBase {
   int64_t owner_scratch_[2];
 #pragma clang diagnostic pop
 };
-ASSERT_SHM_COMPATIBLE(WaitingLockBase, multi_region);
 
 /**
  * GuestLocks can be acquired and released only on the guest. They reside
@@ -164,7 +161,6 @@ class GuestLock : public WaitingLockBase {
   bool Recover();
 #endif
 };
-ASSERT_SHM_COMPATIBLE(GuestLock, multi_region);
 
 /**
  * HostLocks can be acquired and released only on the host. They reside
@@ -190,7 +186,6 @@ class HostLock : public WaitingLockBase {
   bool Recover();
 #endif
 };
-ASSERT_SHM_COMPATIBLE(HostLock, multi_region);
 
 /**
  * GuestAndHostLocks can be acquired and released on either side of the
@@ -230,7 +225,6 @@ class GuestAndHostLock : public WaitingLockBase {
    */
   bool Recover(RegionView*);
 };
-ASSERT_SHM_COMPATIBLE(GuestAndHostLock, multi_region);
 
 }  // namespace layout
 }  // namespace vsoc

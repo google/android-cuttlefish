@@ -18,7 +18,6 @@
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/graphics.h"
 #include "common/vsoc/shm/lock.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for the gralloc manager region.
 
@@ -45,12 +44,10 @@ struct BufferEntry {
     return buffer_end - buffer_begin;
   }
 };
-ASSERT_SHM_COMPATIBLE(BufferEntry, gralloc);
 
 struct GrallocBufferLayout : public RegionLayout {
   static const char* region_name;
 };
-ASSERT_SHM_COMPATIBLE(GrallocBufferLayout, gralloc);
 
 struct GrallocManagerLayout : public RegionLayout {
   static const char* region_name;
@@ -63,7 +60,6 @@ struct GrallocManagerLayout : public RegionLayout {
   // Needs to be last field
   BufferEntry buffers_table[1];
 };
-ASSERT_SHM_COMPATIBLE(GrallocManagerLayout, gralloc);
 
 } // namespace gralloc
 } // namespace layout
