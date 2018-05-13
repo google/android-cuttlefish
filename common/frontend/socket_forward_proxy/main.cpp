@@ -34,6 +34,7 @@
 
 #ifdef CUTTLEFISH_HOST
 #include "host/libs/config/host_config.h"
+#include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
 #endif
 
 using vsoc::socket_forward::Packet;
@@ -148,13 +149,11 @@ void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
                              SocketForwardRegionView::Receiver>
                        conn,
                    cvd::SharedFD socket) {
-  // TODO create the SocketSender/Receivers in their respective threads?
-  std::thread threads[] = {
-      std::thread(SocketToShm, SocketReceiver{socket}, std::move(conn.first)),
-      std::thread(ShmToSocket, SocketSender{socket}, std::move(conn.second))};
-  for (auto&& t : threads) {
-    t.detach();
-  }
+  // TODO create the SocketSender/Receiver in their respective threads?
+  std::thread(
+      SocketToShm, SocketReceiver{socket}, std::move(conn.first)).detach();
+  std::thread(
+      ShmToSocket, SocketSender{socket}, std::move(conn.second)).detach();
 }
 
 #ifdef CUTTLEFISH_HOST
@@ -162,6 +161,10 @@ struct PortPair {
   int guest_port;
   int host_port;
 };
+
+void LaunchConnectionMaintainer(int port) {
+  std::thread(cvd::EstablishAndMaintainConnection, port).detach();
+}
 
 
 [[noreturn]] void host_impl(SocketForwardRegionView* shm,
@@ -178,6 +181,7 @@ struct PortPair {
             << " for guest port " << guest_port;
   auto server = cvd::SharedFD::SocketLocalServer(host_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on port " << host_port;
+  LaunchConnectionMaintainer(host_port);
   while (true) {
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";

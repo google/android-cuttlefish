@@ -323,7 +323,7 @@ std::string GuestConfig::Build() const {
   int tgt_len;
 
   xmlDocDumpFormatMemoryEnc(xml.get(), &tgt, &tgt_len, "utf-8", true);
-  std::string out((const char*)(tgt), tgt_len);
+  std::string out(reinterpret_cast<const char*>(tgt), tgt_len);
   xmlFree(tgt);
   return out;
 }
