@@ -104,7 +104,7 @@ void EstablishConnection(int port) {
     LOG(INFO) << "Attempting to connect to device on port " << port;
     auto sock = cvd::SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
     if (sock->IsOpen() && AdbConnect(sock, port)) {
-      LOG(INFO) << "connected to device on port " << port << '\n';
+      LOG(INFO) << "connection attempted to device on port " << port;
       break;
     }
     sleep(2);
