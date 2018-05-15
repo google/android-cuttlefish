@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-#include <vector>
-
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/lock.h"
 
@@ -27,13 +25,19 @@ namespace layout {
 
 namespace screen {
 struct TimeSpec {
+  static constexpr size_t layout_size = 16;
+
   int64_t ts_sec;
   uint32_t ts_nsec;
   // Host and guest compilers are giving the structure different sizes without
   // this field.
   uint32_t reserved;
 };
+ASSERT_SHM_COMPATIBLE(TimeSpec);
+
 struct CompositionStats {
+  static constexpr size_t layout_size = 4 + 2 * 2 + 5 * TimeSpec::layout_size;
+
   uint32_t num_prepare_calls;
   uint16_t num_layers;
   uint16_t num_hwcomposited_layers;
@@ -43,8 +47,10 @@ struct CompositionStats {
   TimeSpec set_start;
   TimeSpec set_end;
 };
+ASSERT_SHM_COMPATIBLE(CompositionStats);
 
 struct ScreenLayout : public RegionLayout {
+  static constexpr size_t layout_size = 24 + CompositionStats::layout_size;
   static const char* region_name;
   // Display properties
   uint32_t x_res;
@@ -62,6 +68,7 @@ struct ScreenLayout : public RegionLayout {
   CompositionStats stats;
   uint8_t buffer[0];
 };
+ASSERT_SHM_COMPATIBLE(ScreenLayout);
 
 }  // namespace screen
 

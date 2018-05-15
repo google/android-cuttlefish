@@ -25,6 +25,8 @@ namespace layout {
 namespace wifi {
 
 struct WifiExchangeLayout : public RegionLayout {
+  static constexpr size_t layout_size = 2 * CircularPacketQueue<16, 8192>::layout_size + 12;
+
   // Traffic originating from host that proceeds towards guest.
   CircularPacketQueue<16, 8192> guest_ingress;
   // Traffic originating from guest that proceeds towards host.
@@ -37,6 +39,8 @@ struct WifiExchangeLayout : public RegionLayout {
 
   static const char* region_name;
 };
+
+ASSERT_SHM_COMPATIBLE(WifiExchangeLayout);
 
 }  // namespace wifi
 }  // namespace layout
