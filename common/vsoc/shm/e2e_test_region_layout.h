@@ -18,7 +18,6 @@
 #include <atomic>
 #include <cstdint>
 #include "common/vsoc/shm/base.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for a region that supports end-to-end (E2E) testing of
 // shared memory regions. This verifies that all sorts of things work along the
@@ -66,7 +65,6 @@ struct E2EMemoryFill {
   char host_writable[kOwnedFieldSize];
   char guest_writable[kOwnedFieldSize];
 };
-ASSERT_SHM_COMPATIBLE(E2EMemoryFill, e2e_test);
 
 /**
  * Structure that grants permission to write in the region to either the guest
@@ -87,7 +85,6 @@ class E2ETestStageRegister {
   // doing memory mapped I/O.
   uint32_t value_;
 };
-ASSERT_SHM_COMPATIBLE(E2ETestStageRegister, e2e_test);
 
 /**
  * Describes the layout of the regions used for the end-to-end test. There
@@ -126,21 +123,18 @@ class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
   // until we examine the region.
   E2EMemoryFill data[1];
 };
-ASSERT_SHM_COMPATIBLE(E2ETestRegionLayout, e2e_test);
 
 struct E2EPrimaryTestRegionLayout : public E2ETestRegionLayout {
   static const char* region_name;
   static const char guest_pattern[E2EMemoryFill::kOwnedFieldSize];
   static const char host_pattern[E2EMemoryFill::kOwnedFieldSize];
 };
-ASSERT_SHM_COMPATIBLE(E2EPrimaryTestRegionLayout, e2e_test);
 
 struct E2ESecondaryTestRegionLayout : public E2ETestRegionLayout {
   static const char* region_name;
   static const char guest_pattern[E2EMemoryFill::kOwnedFieldSize];
   static const char host_pattern[E2EMemoryFill::kOwnedFieldSize];
 };
-ASSERT_SHM_COMPATIBLE(E2ESecondaryTestRegionLayout, e2e_test);
 
 /**
  * Defines an end-to-end region with a name that should never be configured.
@@ -148,20 +142,17 @@ ASSERT_SHM_COMPATIBLE(E2ESecondaryTestRegionLayout, e2e_test);
 struct E2EUnfindableRegionLayout : public E2ETestRegionLayout {
   static const char* region_name;
 };
-ASSERT_SHM_COMPATIBLE(E2EUnfindableRegionLayout, e2e_test);
 
 struct E2EManagedTestRegionLayout : public RegionLayout {
   static const char* region_name;
   uint32_t val;  // Not needed, here only to avoid an empty struct.
 };
-ASSERT_SHM_COMPATIBLE(E2EManagedTestRegionLayout, e2e_test);
 
 struct E2EManagerTestRegionLayout : public RegionLayout {
   static const char* region_name;
   typedef E2EManagedTestRegionLayout ManagedRegion;
   uint32_t data[4];  // We don't need more than 4 for the tests
 };
-ASSERT_SHM_COMPATIBLE(E2EManagerTestRegionLayout, e2e_test);
 
 }  // namespace e2e_test
 }  // namespace layout

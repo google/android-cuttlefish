@@ -17,7 +17,6 @@
 
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for region carrying audio data from audio HAL to client.
 
@@ -31,9 +30,7 @@ struct AudioDataLayout : public RegionLayout {
     // size = 2^14 = 16384, packets are up to 4KB bytes each.
     CircularPacketQueue<14, 4096> audio_queue;
 };
-ASSERT_SHM_COMPATIBLE(AudioDataLayout, audio_data);
 
 }  // namespace audio_data
 }  // namespace layout
 }  // namespace vsoc
-
