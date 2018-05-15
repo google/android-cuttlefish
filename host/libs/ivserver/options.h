@@ -24,14 +24,12 @@ namespace ivserver {
 const uint16_t kIVServerMajorVersion = 1;
 const uint16_t kIVServerMinorVersion = 0;
 const uint32_t kIVServerDefaultShmSizeInMiB = 4;
-const std::string kIVServerDefaultLayoutFile = "vsoc_mem.json";
 
 //
 // structure that contains the various options to start the server.
 //
 struct IVServerOptions final {
-  IVServerOptions(const std::string &mem_layout_conf,
-                  const std::string &shm_file_path,
+  IVServerOptions(const std::string &shm_file_path,
                   const std::string &qemu_socket_path,
                   const std::string &client_socket_path);
 
@@ -41,7 +39,6 @@ struct IVServerOptions final {
   friend std::ostream &operator<<(std::ostream &out,
                                   const IVServerOptions &opts);
 
-  const std::string memory_layout_conf_path;
   const std::string shm_file_path;
   const std::string qemu_socket_path;
   const std::string client_socket_path;
