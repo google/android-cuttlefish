@@ -36,6 +36,10 @@ namespace layout {
  */
 template <uint32_t SizeLog2>
 class CircularQueueBase {
+ public:
+  static constexpr size_t layout_size = (1 << SizeLog2) + 12;
+
+ private:
   CircularQueueBase() = delete;
   CircularQueueBase(const CircularQueueBase&) = delete;
   CircularQueueBase& operator=(const CircularQueueBase&) = delete;
@@ -101,6 +105,7 @@ class CircularQueueBase {
   char buffer_[BufferSize];
 };
 using CircularQueueBase64k = CircularQueueBase<16>;
+ASSERT_SHM_COMPATIBLE(CircularQueueBase64k);
 
 /**
  * Byte oriented circular queue. Reads will always return some data, but
@@ -110,6 +115,8 @@ using CircularQueueBase64k = CircularQueueBase<16>;
 template <uint32_t SizeLog2>
 class CircularByteQueue : public CircularQueueBase<SizeLog2> {
  public:
+  static constexpr size_t layout_size =
+      CircularQueueBase<SizeLog2>::layout_size;
   /**
    * Read at most max_size bytes from the qeueue, placing them in buffer_out
    */
@@ -134,6 +141,7 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
   using Range = typename CircularQueueBase<SizeLog2>::Range;
 };
 using CircularByteQueue64k = CircularByteQueue<16>;
+ASSERT_SHM_COMPATIBLE(CircularByteQueue64k);
 
 /**
  * Packet oriented circular queue. Reads will either return data or an error.
@@ -143,6 +151,9 @@ using CircularByteQueue64k = CircularByteQueue<16>;
 template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
  public:
+  static constexpr size_t layout_size =
+      CircularQueueBase<SizeLog2>::layout_size;
+
   /**
    * Read a single packet from the queue, placing its data into buffer_out.
    * If max_size indicates that buffer_out cannot hold the entire packet
@@ -186,6 +197,7 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
   intptr_t CalculateBufferedSize(size_t payload);
 };
 using CircularPacketQueue64k = CircularPacketQueue<16, 1024>;
+ASSERT_SHM_COMPATIBLE(CircularPacketQueue64k);
 
 }  // namespace layout
 }  // namespace vsoc
