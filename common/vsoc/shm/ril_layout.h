@@ -16,7 +16,6 @@
  */
 
 #include "common/vsoc/shm/base.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for the ril hal region
 
@@ -33,7 +32,6 @@ struct RilLayout : public RegionLayout {
   char broadcast[16];
   uint32_t prefixlen;
 };
-ASSERT_SHM_COMPATIBLE(RilLayout, ril);
 }  // namespace ril
 }  // namespace layout
 }  // namespace vsoc

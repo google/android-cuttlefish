@@ -25,7 +25,6 @@
 #include <cstdint>
 
 #include "common/vsoc/shm/base.h"
-#include "common/vsoc/shm/version.h"
 
 namespace vsoc {
 
@@ -130,16 +129,6 @@ enum PixelFormat {
   //   VSOC_PIXEL_FORMAT_sRGB_X_8888
   //   VSOC_PIXEL_FORMAT_sRGB_A_8888
 };
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_UNINITIALIZED, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_BLOB, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGB_565, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_YV12, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_YCbCr_420_888, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGB_888, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGBA_8888, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGBX_8888, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_BGRA_8888, multi_region);
-ASSERT_SHM_CONSTANT_VALUE(VSOC_PIXEL_FORMAT_RGBA_FP16, multi_region);
 
 namespace layout {
 
@@ -148,7 +137,6 @@ namespace layout {
 struct PixelFormatRegister {
   volatile PixelFormat value_;
 };
-ASSERT_SHM_COMPATIBLE(PixelFormatRegister, multi_region);
 
 // Register layout for a mask giving different PixelFormats. Reserve enough
 // space to allow for future expansion. For example, we may well end with
@@ -160,7 +148,6 @@ struct PixelFormatMaskRegister {
     return !!(value_ & (uint64_t(1) << in));
   }
 };
-ASSERT_SHM_COMPATIBLE(PixelFormatMaskRegister, multi_region);
 
 // Ensure that the mask is large enough to hold the highest encodable
 // pixel format.
