@@ -22,6 +22,7 @@
 #include "common/vsoc/shm/lock.h"
 #include "common/vsoc/shm/socket_forward_layout.h"
 
+using vsoc::layout::socket_forward::Queue;
 using vsoc::layout::socket_forward::QueuePair;
 using vsoc::layout::socket_forward::QueueState;
 // store the read and write direction as variables to keep the ifdefs and macros
@@ -114,7 +115,8 @@ void SocketForwardRegionView::ResetQueueStates(QueuePair* queue_pair) {
     switch (state) {
       case QueueState::HOST_CONNECTED:
       case kOtherSideClosed:
-        LOG(DEBUG) << "host_connected or other side is closed, marking inactive";
+        LOG(DEBUG)
+            << "host_connected or other side is closed, marking inactive";
         state = QueueState::INACTIVE;
         break;
 
@@ -147,10 +149,9 @@ void SocketForwardRegionView::CleanUpPreviousConnections() {
       state = (queue_pair.*WriteDirection).queue_state_;
 #ifndef CUTTLEFISH_HOST
       if (state == QueueState::HOST_CONNECTED) {
-        state =
-            (queue_pair.*WriteDirection).queue_state_ =
+        state = (queue_pair.*WriteDirection).queue_state_ =
             (queue_pair.*ReadDirection).queue_state_ =
-            QueueState::BOTH_CONNECTED;
+                QueueState::BOTH_CONNECTED;
       }
 #endif
     }
@@ -169,24 +170,38 @@ void SocketForwardRegionView::CleanUpPreviousConnections() {
   }
   ++data()->generation_num;
 }
-// TODO merge these two into a helper since the only difference is one
-// Read/Write
-void SocketForwardRegionView::MarkSendQueueDisconnected(int connection_id) {
+
+void SocketForwardRegionView::MarkQueueDisconnected(
+    int connection_id, Queue QueuePair::*direction) {
   auto& queue_pair = data()->queues_[connection_id];
+  auto& queue = queue_pair.*direction;
+
+#ifdef CUTTLEFISH_HOST
+  // if the host has connected but the guest hasn't seen it yet, wait for the
+  // guest to connect so the protocol can follow the normal state transition.
+  while (true) {
+    auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+    if (queue.queue_state_ != QueueState::HOST_CONNECTED) {
+      break;
+    }
+    LOG(WARNING) << "closing queue in HOST_CONNECTED state. waiting";
+    sleep(1);
+  }
+#endif
+
   auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-  auto& queue = queue_pair.*WriteDirection;
+
   queue.queue_state_ = queue.queue_state_ == kOtherSideClosed
                            ? QueueState::INACTIVE
                            : kThisSideClosed;
 }
 
+void SocketForwardRegionView::MarkSendQueueDisconnected(int connection_id) {
+  MarkQueueDisconnected(connection_id, WriteDirection);
+}
+
 void SocketForwardRegionView::MarkRecvQueueDisconnected(int connection_id) {
-  auto& queue_pair = data()->queues_[connection_id];
-  auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-  auto& queue = queue_pair.*ReadDirection;
-  queue.queue_state_ = queue.queue_state_ == kOtherSideClosed
-                           ? QueueState::INACTIVE
-                           : kThisSideClosed;
+  MarkQueueDisconnected(connection_id, ReadDirection);
 }
 
 int SocketForwardRegionView::port(int connection_id) {
@@ -199,25 +214,26 @@ std::uint32_t SocketForwardRegionView::generation() {
 
 #ifdef CUTTLEFISH_HOST
 int SocketForwardRegionView::AcquireConnectionID(int port) {
-  int id = 0;
-  for (auto&& queue_pair : data()->queues_) {
-    LOG(DEBUG) << "locking and checking queue at index " << id;
-    auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-    if (queue_pair.host_to_guest.queue_state_ == QueueState::INACTIVE &&
-        queue_pair.guest_to_host.queue_state_ == QueueState::INACTIVE) {
-      queue_pair.port_ = port;
-      queue_pair.host_to_guest.queue_state_ = QueueState::HOST_CONNECTED;
-      queue_pair.guest_to_host.queue_state_ = QueueState::HOST_CONNECTED;
-      LOG(DEBUG) << "acquired queue " << id
-                 << ". current seq_num: " << data()->seq_num;
-      ++data()->seq_num;
-      return id;
+  while (true) {
+    int id = 0;
+    for (auto&& queue_pair : data()->queues_) {
+      LOG(DEBUG) << "locking and checking queue at index " << id;
+      auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+      if (queue_pair.host_to_guest.queue_state_ == QueueState::INACTIVE &&
+          queue_pair.guest_to_host.queue_state_ == QueueState::INACTIVE) {
+        queue_pair.port_ = port;
+        queue_pair.host_to_guest.queue_state_ = QueueState::HOST_CONNECTED;
+        queue_pair.guest_to_host.queue_state_ = QueueState::HOST_CONNECTED;
+        LOG(DEBUG) << "acquired queue " << id
+                   << ". current seq_num: " << data()->seq_num;
+        ++data()->seq_num;
+        return id;
+      }
+      ++id;
     }
-    ++id;
+    LOG(ERROR) << "no remaining shm queues for connection, sleeping.";
+    sleep(10);
   }
-  // TODO(haining) handle all queues being used
-  LOG(FATAL) << "no remaining shm queues for connection";
-  return -1;
 }
 
 std::pair<SocketForwardRegionView::Sender, SocketForwardRegionView::Receiver>
