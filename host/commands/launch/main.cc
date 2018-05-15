@@ -35,6 +35,7 @@
 
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
+#include "common/vsoc/lib/vsoc_memory.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/file_partition.h"
 #include "host/libs/config/guest_config.h"
@@ -86,10 +87,6 @@ DEFINE_string(launch_command,
               "virsh " VIRSH_OPTIONS_PLACEHOLDER " create /dev/fd/0",
               "Command to start an instance. If <virsh_options> is present it "
               "will be replaced by options to the virsh command");
-DEFINE_string(layout,
-              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-                  "/config/vsoc_mem.json",
-              "Location of the vsoc_mem.json file.");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
@@ -148,23 +145,6 @@ std::string GetVirshOptions() {
   return std::string("-c ").append(FLAGS_hypervisor_uri);
 }
 
-Json::Value LoadLayoutFile(const std::string& file) {
-  char real_file_path[PATH_MAX];
-  if (realpath(file.c_str(), real_file_path) == nullptr) {
-    LOG(FATAL) << "Could not get real path for file " << file << ": "
-               << strerror(errno);
-  }
-
-  Json::Value result;
-  Json::Reader reader;
-  std::ifstream ifs(real_file_path);
-  if (!reader.parse(ifs, result)) {
-    LOG(FATAL) << "Could not read layout file " << file << ": "
-               << reader.getFormattedErrorMessages();
-  }
-  return result;
-}
-
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
  public:
@@ -210,11 +190,10 @@ class VirtualUSBManager {
 // Cuttlefish and host-side daemons.
 class IVServerManager {
  public:
-  IVServerManager(const Json::Value& json_root)
-      : server_(ivserver::IVServerOptions(FLAGS_layout, FLAGS_mempath,
+  IVServerManager()
+      : server_(ivserver::IVServerOptions(FLAGS_mempath,
                                           FLAGS_qemusocket,
-                                          vsoc::GetDomain()),
-                json_root) {}
+                                          vsoc::GetDomain())) {}
 
   ~IVServerManager() = default;
 
@@ -484,8 +463,6 @@ int main(int argc, char** argv) {
     FLAGS_vendor_image = FLAGS_system_image_dir + "/vendor.img";
   }
 
-  Json::Value json_root = LoadLayoutFile(FLAGS_layout);
-
   // Each of these calls is free to fail and terminate launch if file does not
   // exist or could not be created.
   auto system_partition = config::FilePartition::ReuseExistingFile(
@@ -520,7 +497,7 @@ int main(int argc, char** argv) {
       .SetInitRDName(FLAGS_initrd)
       .SetKernelArgs(cmdline.str())
       .SetIVShMemSocketPath(FLAGS_qemusocket)
-      .SetIVShMemVectorCount(json_root["vsoc_device_regions"].size())
+      .SetIVShMemVectorCount(vsoc::GetVsocMemoryLayout().size())
       .SetSystemPartitionPath(system_partition->GetName())
       .SetCachePartitionPath(cache_partition->GetName())
       .SetDataPartitionPath(data_partition->GetName())
@@ -545,7 +522,7 @@ int main(int argc, char** argv) {
   VirtualUSBManager vadb(cfg.GetUSBV1SocketName(), FLAGS_vhci_port,
                          GetPerInstanceDefault("android_usbip"));
   vadb.Start();
-  IVServerManager ivshmem(json_root);
+  IVServerManager ivshmem;
   ivshmem.Start();
   KernelLogMonitor kmon(cfg.GetKernelLogSocketName(),
                         GetDefaultPerInstancePath("kernel.log"),

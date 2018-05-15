@@ -16,10 +16,10 @@
  */
 
 #include <inttypes.h>
-#include <json/json.h>
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "uapi/vsoc_shm.h"
@@ -38,8 +38,7 @@ class VSoCSharedMemory {
   VSoCSharedMemory() = default;
   virtual ~VSoCSharedMemory() = default;
 
-  static std::unique_ptr<VSoCSharedMemory> New(const std::string &name,
-                                               const Json::Value &json_root);
+  static std::unique_ptr<VSoCSharedMemory> New(const std::string &name);
 
   virtual bool GetEventFdPairForRegion(const std::string &region_name,
                                        cvd::SharedFD *guest_to_host,

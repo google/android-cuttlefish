@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include <json/json.h>
 #include <memory>
 
 #include "common/libs/fs/shared_fd.h"
@@ -28,8 +27,9 @@ namespace ivserver {
 // new connections.
 class IVServer final {
  public:
-  IVServer(const IVServerOptions &options, const Json::Value &json_root);
+  IVServer(const IVServerOptions &options);
   IVServer(const IVServer &) = delete;
+  IVServer& operator=(const IVServer&) = delete;
 
   // Serves incoming client and qemu connection.
   // This method should never return.
@@ -39,7 +39,6 @@ class IVServer final {
   void HandleNewClientConnection();
   void HandleNewQemuConnection();
 
-  const Json::Value &json_root_;
   std::unique_ptr<VSoCSharedMemory> vsoc_shmem_;
   cvd::SharedFD qemu_channel_;
   cvd::SharedFD client_channel_;
