@@ -18,7 +18,6 @@
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"
 #include "common/vsoc/shm/lock.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for wifi packet exchange region.
 namespace vsoc {
@@ -26,6 +25,7 @@ namespace layout {
 namespace socket_forward {
 
 constexpr std::size_t kMaxPacketSize = 8192;
+constexpr std::size_t kNumQueues = 16;
 
 enum class QueueState : std::uint32_t {
   INACTIVE = 0,
@@ -79,13 +79,11 @@ struct SocketForwardLayout : public RegionLayout {
     return recovered;
   }
 
-  QueuePair queues_[version_info::socket_forward::kNumQueues];
+  QueuePair queues_[kNumQueues];
   std::atomic_uint32_t seq_num; // incremented for every new connection
   std::atomic_uint32_t generation_num; // incremented for every new socket forward process
   static const char* region_name;
 };
-
-ASSERT_SHM_COMPATIBLE(SocketForwardLayout, socket_forward);
 
 }  // namespace socket_forward
 }  // namespace layout

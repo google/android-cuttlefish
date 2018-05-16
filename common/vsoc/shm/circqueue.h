@@ -101,7 +101,6 @@ class CircularQueueBase {
   char buffer_[BufferSize];
 };
 using CircularQueueBase64k = CircularQueueBase<16>;
-ASSERT_SHM_COMPATIBLE(CircularQueueBase64k, multi_region);
 
 /**
  * Byte oriented circular queue. Reads will always return some data, but
@@ -135,7 +134,6 @@ class CircularByteQueue : public CircularQueueBase<SizeLog2> {
   using Range = typename CircularQueueBase<SizeLog2>::Range;
 };
 using CircularByteQueue64k = CircularByteQueue<16>;
-ASSERT_SHM_COMPATIBLE(CircularByteQueue64k, multi_region);
 
 /**
  * Packet oriented circular queue. Reads will either return data or an error.
@@ -188,7 +186,6 @@ class CircularPacketQueue : public CircularQueueBase<SizeLog2> {
   intptr_t CalculateBufferedSize(size_t payload);
 };
 using CircularPacketQueue64k = CircularPacketQueue<16, 1024>;
-ASSERT_SHM_COMPATIBLE(CircularPacketQueue64k, multi_region);
 
 }  // namespace layout
 }  // namespace vsoc

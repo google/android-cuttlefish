@@ -120,6 +120,10 @@ class SocketForwardRegionView
 
   void ResetQueueStates(layout::socket_forward::QueuePair* queue_pair);
 
+  void MarkQueueDisconnected(int connection_id,
+                             layout::socket_forward::Queue
+                                 layout::socket_forward::QueuePair::*direction);
+
  public:
   // Helper class that will send a ConnectionBegin marker when constructed and a
   // ConnectionEnd marker when destroyed.
@@ -167,7 +171,6 @@ class SocketForwardRegionView
     int connection_id_{};
   };
 
-  // Helper class that will wait for a ConnectionBegin marker when constructed
   class Receiver {
    public:
     explicit Receiver(SocketForwardRegionView* view, int connection_id,

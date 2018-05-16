@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
+#include <vector>
+
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/lock.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for screen region
 
@@ -61,7 +62,6 @@ struct ScreenLayout : public RegionLayout {
   CompositionStats stats;
   uint8_t buffer[0];
 };
-ASSERT_SHM_COMPATIBLE(ScreenLayout, screen);
 
 }  // namespace screen
 
