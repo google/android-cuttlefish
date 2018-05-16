@@ -17,7 +17,7 @@
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, device/google/cuttlefish/shared/auto/device.mk)
 
-PRODUCT_NAME := aosp_cf_x86_64_auto
+PRODUCT_NAME := aosp_cf_x86_64a
 PRODUCT_DEVICE := vsoc_x86_64
 PRODUCT_MODEL := Cuttlefish x86_64 auto
 # PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86_64/auto/overlay
