@@ -127,6 +127,7 @@ DEFINE_string(adb_mode, "tunnel",
               "Mode for adb connection. Can be usb for usb forwarding, or "
               "tunnel for tcp connection. If using tunnel, you may have to "
               "run 'adb kill-server' to get the device to show up.");
+DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
 DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
 DEFINE_string(wifi_relay_binary,
               StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
@@ -170,9 +171,9 @@ Json::Value LoadLayoutFile(const std::string& file) {
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
  public:
-  VirtualUSBManager(const std::string& usbsocket,
+  VirtualUSBManager(const std::string& usbsocket, int vhci_port,
                     const std::string& android_usbipsocket)
-      : adb_{usbsocket, android_usbipsocket},
+      : adb_{usbsocket, vhci_port, android_usbipsocket},
         usbip_{android_usbipsocket, adb_.Pool()} {}
 
   ~VirtualUSBManager() = default;
@@ -545,7 +546,7 @@ int main(int argc, char** argv) {
     LOG(INFO) << "Using XML:\n" << xml;
   }
 
-  VirtualUSBManager vadb(cfg.GetUSBV1SocketName(),
+  VirtualUSBManager vadb(cfg.GetUSBV1SocketName(), FLAGS_vhci_port,
                          GetPerInstanceDefault("android_usbip"));
   vadb.Start();
   IVServerManager ivshmem(json_root);
