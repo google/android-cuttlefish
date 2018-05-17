@@ -26,9 +26,11 @@ namespace vadb {
 // VirtualADBServer manages incoming VirtualUSB/ADB connections from QEmu.
 class VirtualADBServer {
  public:
-  VirtualADBServer(const std::string& usb_socket_name,
+  VirtualADBServer(const std::string& usb_socket_name, int vhci_port,
                    const std::string& usbip_socket_name)
-      : name_(usb_socket_name), usbip_name_(usbip_socket_name) {}
+      : name_(usb_socket_name),
+        vhci_port_{vhci_port},
+        usbip_name_(usbip_socket_name) {}
 
   ~VirtualADBServer() = default;
 
@@ -52,6 +54,7 @@ class VirtualADBServer {
 
   usbip::DevicePool pool_;
   std::string name_;
+  int vhci_port_{};
   std::string usbip_name_;
   cvd::SharedFD server_;
   std::list<VirtualADBClient> clients_;
