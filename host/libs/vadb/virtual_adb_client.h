@@ -35,7 +35,7 @@ namespace vadb {
 // remote USB devices possible with help of USB/IP protocol.
 class VirtualADBClient {
  public:
-  VirtualADBClient(usbip::DevicePool* pool, cvd::SharedFD fd,
+  VirtualADBClient(usbip::DevicePool* pool, cvd::SharedFD fd, int vhci_port,
                    const std::string& usbip_socket_name);
 
   virtual ~VirtualADBClient() = default;

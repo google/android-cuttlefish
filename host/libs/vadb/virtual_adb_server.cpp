@@ -36,7 +36,9 @@ bool VirtualADBServer::Init() {
 
 void VirtualADBServer::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(server_);
-  for (const auto& client : clients_) client.BeforeSelect(fd_read);
+  for (const auto& client : clients_) {
+    client.BeforeSelect(fd_read);
+  }
 }
 
 void VirtualADBServer::AfterSelect(const cvd::SharedFDSet& fd_read) {
@@ -62,7 +64,7 @@ void VirtualADBServer::HandleIncomingConnection() {
     return;
   }
 
-  clients_.emplace_back(&pool_, client, usbip_name_);
+  clients_.emplace_back(&pool_, client, vhci_port_, usbip_name_);
 }
 
 }  // namespace vadb
