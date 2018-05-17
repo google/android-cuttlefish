@@ -313,16 +313,15 @@ void RemoveFile(const std::string& file) {
   subprocess(rm_command, NULL);
 }
 
-// Emulators are discovered on odd numbered ports from 5555 to 5585
-constexpr int kFirstEmulatorPort = 5555;
-
 std::string GetGuestPortArg() {
-  return std::string{"--guest_ports="} + std::to_string(kFirstEmulatorPort);
+  constexpr int kEmulatorPort = 5555;
+  return std::string{"--guest_ports="} + std::to_string(kEmulatorPort);
 }
 
 std::string GetHostPortArg() {
+  constexpr int kFirstHostPort = 6520;
   return std::string{"--host_ports="} +
-      std::to_string(kFirstEmulatorPort + (vsoc::GetDefaultInstance() - 1) * 2);
+      std::to_string(vsoc::GetPerInstanceDefault(kFirstHostPort));
 }
 
 std::string GetDomainArg() {
