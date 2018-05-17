@@ -62,6 +62,10 @@ void BaseComposer::Broadcast(int fb_index) {
 
 int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
   int fb_index = NextScreenBuffer();
+  if (fb_index < 0) {
+    ALOGE("Could not get the next buffer. Is the screen region large enough?");
+    return -1;
+  }
   auto screen_view = ScreenRegionView::GetInstance();
   void* frame_buffer = screen_view->GetBuffer(fb_index);
   const private_handle_t* p_handle =
@@ -100,8 +104,9 @@ int BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 }
 
 int BaseComposer::NextScreenBuffer() {
-  last_frame_buffer_ = (last_frame_buffer_ + 1) %
-                       ScreenRegionView::GetInstance()->number_of_buffers();
+  int num_buffers = ScreenRegionView::GetInstance()->number_of_buffers();
+  last_frame_buffer_ =
+      num_buffers > 0 ? (last_frame_buffer_ + 1) % num_buffers : -1;
   return last_frame_buffer_;
 }
 
