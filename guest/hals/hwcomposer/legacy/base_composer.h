@@ -48,7 +48,7 @@ class BaseComposer {
   const gralloc_module_t* gralloc_module_;
   int64_t vsync_base_timestamp_;
   int32_t vsync_period_ns_;
-  int last_frame_buffer_ = -1; // The first index whill be 0
+  int last_frame_buffer_ = -1; // The first index will be 0
 
  private:
   // Returns buffer offset or negative on error.
