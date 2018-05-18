@@ -30,7 +30,11 @@ class VSoCSharedMemory {
  public:
   // Region describes a VSoCSharedMem region.
   struct Region {
-    vsoc_device_region values{};
+    Region() = default;
+    explicit Region(const char *device_name, const cvd::SharedFD &host_fd,
+                    const cvd::SharedFD &guest_fd)
+        : device_name(device_name), host_fd(host_fd), guest_fd(guest_fd) {}
+    const char *device_name;
     cvd::SharedFD host_fd;
     cvd::SharedFD guest_fd;
   };
