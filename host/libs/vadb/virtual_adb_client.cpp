@@ -35,8 +35,9 @@ constexpr int kHeartbeatTimeoutSeconds = 3;
 }  // namespace
 
 VirtualADBClient::VirtualADBClient(usbip::DevicePool* pool, cvd::SharedFD fd,
+                                   int vhci_port,
                                    const std::string& usbip_socket_name)
-    : pool_{pool}, fd_{fd}, vhci_{usbip_socket_name} {
+    : pool_{pool}, fd_{fd}, vhci_{vhci_port, usbip_socket_name} {
   CHECK(vhci_.Init());
   timer_ = cvd::SharedFD::TimerFD(CLOCK_MONOTONIC, 0);
   SendHeartbeat();

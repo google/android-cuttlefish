@@ -26,7 +26,7 @@ namespace usbip {
 // VHCIInstrument class configures VHCI-HCD on local kernel.
 class VHCIInstrument {
  public:
-  VHCIInstrument(const std::string& name);
+  VHCIInstrument(int port, const std::string& name);
   virtual ~VHCIInstrument();
 
   // Init opens vhci-hcd driver and allocates port to which remote USB device
@@ -54,7 +54,7 @@ class VHCIInstrument {
   // AttachThread is a background thread that responds to configuration
   // requests.
   void AttachThread();
-  bool FindFreePort();
+  bool VerifyPortIsFree() const;
 
  private:
   std::string name_;
@@ -63,7 +63,7 @@ class VHCIInstrument {
   cvd::SharedFD control_write_end_;
   cvd::SharedFD control_read_end_;
   cvd::SharedFD vhci_socket_;
-  int port_;
+  int port_{};
 
   VHCIInstrument(const VHCIInstrument& other) = delete;
   VHCIInstrument& operator=(const VHCIInstrument& other) = delete;
