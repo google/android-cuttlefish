@@ -25,12 +25,13 @@ DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
 DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
 DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
+DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
 
 void InitializeScreenRegion() {
   auto region =
       vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
   if (!region) {
-    LOG(ERROR) << "Framebuffer region was not found";
+    LOG(ERROR) << "Screen region was not found";
     return;
   }
   auto dest = region->data();
