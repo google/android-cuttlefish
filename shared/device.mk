@@ -262,7 +262,6 @@ PRODUCT_PACKAGES += \
 # TODO thermal
 
 PRODUCT_PACKAGES += \
-    vsoc_mem_json \
     cuttlefish_dtb
 
 # WLAN driver configuration files
