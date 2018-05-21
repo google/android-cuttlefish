@@ -83,7 +83,6 @@ DEFINE_bool(disable_dac_security, false,
             "Disable DAC security in libvirt. For debug only.");
 DEFINE_string(extra_kernel_command_line, "",
               "Additional flags to put on the kernel command line");
-DECLARE_int32(instance);
 DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 DEFINE_string(kernel_command_line, "",
@@ -259,8 +258,16 @@ void subprocess(const char* const* command,
                 bool wait_for_child = true) {
   pid_t pid = fork();
   if (!pid) {
-    int rval = execve(command[0], const_cast<char* const*>(command),
-                      const_cast<char* const*>(envp));
+    int rval;
+    // If envp is NULL, the current process's environment is used as the
+    // environment of the child process. To force an empty emvironment for the
+    // child process pass the address of a pointer to NULL
+    if (envp == NULL) {
+      rval = execv(command[0], const_cast<char* const*>(command));
+    } else {
+      rval = execve(command[0], const_cast<char* const*>(command),
+                    const_cast<char* const*>(envp));
+    }
     // No need for an if: if exec worked it wouldn't have returned
     LOG(ERROR) << "exec of " << command[0] << " failed (" << strerror(errno)
                << ")";
@@ -313,14 +320,6 @@ std::string GetHostPortArg() {
       std::to_string(vsoc::GetPerInstanceDefault(kFirstHostPort));
 }
 
-std::string GetDomainArg() {
-  return std::string{"--domain="} + vsoc::GetDomain();
-}
-
-std::string GetInstanceArg() {
-  return std::string{"--instance="} + std::to_string(FLAGS_instance);
-}
-
 void ValidateAdbModeFlag() {
   CHECK(FLAGS_adb_mode == kAdbModeUsb ||
         FLAGS_adb_mode == kAdbModeTunnel) << "invalid --adb_mode";
@@ -338,15 +337,11 @@ void LaunchSocketForwardProxyIfEnabled() {
   if (AdbTunnelEnabled()) {
     auto guest_port_arg = GetGuestPortArg();
     auto host_port_arg = GetHostPortArg();
-    auto domain_arg = GetDomainArg();
-    auto instance_arg = GetInstanceArg();
 
     const char* const socket_proxy[] = {
       FLAGS_socket_forward_proxy_binary.c_str(),
       guest_port_arg.c_str(),
       host_port_arg.c_str(),
-      domain_arg.c_str(),
-      instance_arg.c_str(),
       NULL
     };
     subprocess(socket_proxy, nullptr, false);
@@ -357,13 +352,9 @@ void LaunchVNCServerIfEnabled() {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
-    auto domain_arg = GetDomainArg();
-    auto instance_arg = GetInstanceArg();
     const char* vnc_command[] = {
       FLAGS_vnc_server_binary.c_str(),
       port_options.c_str(),
-      domain_arg.c_str(),
-      instance_arg.c_str(),
       NULL
     };
     subprocess(vnc_command, NULL, false);
@@ -373,14 +364,10 @@ void LaunchVNCServerIfEnabled() {
 void LaunchWifiRelayIfEnabled() {
   if (FLAGS_start_wifi_relay) {
     // Launch the wifi relay, don't wait for it to complete
-    auto domain_arg = GetDomainArg();
-    auto instance_arg = GetInstanceArg();
-
     const char* relay_command[] = {
         "/usr/bin/sudo",
+        "-E",
         FLAGS_wifi_relay_binary.c_str(),
-        domain_arg.c_str(),
-        instance_arg.c_str(),
         NULL
     };
 
@@ -500,7 +487,7 @@ int main(int argc, char** argv) {
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
 
   config::GuestConfig cfg;
-  cfg.SetID(FLAGS_instance)
+  cfg.SetID(vsoc::GetInstance())
       .SetVCPUs(FLAGS_cpus)
       .SetMemoryMB(FLAGS_memory_mb)
       .SetKernelName(FLAGS_kernel)
