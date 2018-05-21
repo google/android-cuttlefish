@@ -36,6 +36,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
 #include "common/vsoc/lib/vsoc_memory.h"
+#include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/file_partition.h"
 #include "host/libs/config/guest_config.h"
@@ -70,7 +71,12 @@ DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
+
 DECLARE_int32(dpi);
+DECLARE_int32(x_res);
+DECLARE_int32(y_res);
+DECLARE_int32(num_screen_buffers);
+
 DEFINE_bool(disable_app_armor_security, false,
             "Disable AppArmor security in libvirt. For debug only.");
 DEFINE_bool(disable_dac_security, false,
@@ -488,6 +494,7 @@ int main(int argc, char** argv) {
   }
 
   std::string entropy_source = "/dev/urandom";
+  auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
 
   config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
@@ -497,7 +504,7 @@ int main(int argc, char** argv) {
       .SetInitRDName(FLAGS_initrd)
       .SetKernelArgs(cmdline.str())
       .SetIVShMemSocketPath(FLAGS_qemusocket)
-      .SetIVShMemVectorCount(vsoc::GetVsocMemoryLayout().size())
+      .SetIVShMemVectorCount(memory_layout.GetRegions().size())
       .SetSystemPartitionPath(system_partition->GetName())
       .SetCachePartitionPath(cache_partition->GetName())
       .SetDataPartitionPath(data_partition->GetName())
@@ -522,6 +529,22 @@ int main(int argc, char** argv) {
   VirtualUSBManager vadb(cfg.GetUSBV1SocketName(), FLAGS_vhci_port,
                          GetPerInstanceDefault("android_usbip"));
   vadb.Start();
+
+  // TODO(b/79170615) These values need to go to the config object/file and the
+  // region resizing be done by the ivserver process (or maybe the config
+  // library to ensure all processes have the correct value?)
+  size_t screen_size =
+      memory_layout
+          .GetRegionByName(vsoc::layout::screen::ScreenLayout::region_name)
+          ->region_size();
+  auto actual_width = ((FLAGS_x_res * 4) + 15) & ~15;  // aligned to 16
+  screen_size += FLAGS_num_screen_buffers *
+                 (actual_width * FLAGS_y_res + 16 /* padding */);
+  screen_size += (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
+  memory_layout.ResizeRegion(vsoc::layout::screen::ScreenLayout::region_name,
+                             screen_size);
+  // TODO(b/79170615) Resize gralloc region too.
+
   IVServerManager ivshmem;
   ivshmem.Start();
   KernelLogMonitor kmon(cfg.GetKernelLogSocketName(),
