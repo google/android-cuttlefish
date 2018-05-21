@@ -29,6 +29,7 @@
 
 #include <glog/logging.h>
 
+#include "common/vsoc/lib/vsoc_memory.h"
 #include "uapi/vsoc_shm.h"
 
 namespace ivserver {
@@ -36,12 +37,6 @@ namespace {
 
 static_assert(CURRENT_VSOC_LAYOUT_MAJOR_VERSION == 2,
               "Region layout code must be updated");
-
-// Field names from the json file. These are declared so the compiler will
-// catch typos.
-const char g_vsoc_device_regions[] = "vsoc_device_regions";
-const char g_device_name_tag[] = "device_name";
-const char g_managed_by_tag[] = "managed_by";
 
 class RegionAllocator {
  public:
@@ -169,58 +164,33 @@ bool VSoCSharedMemoryImpl::GetEventFdPairForRegion(
   return true;
 }
 
-template <typename T>
-void GetMandatoryUInt(const std::string &region_name,
-                      const Json::Value &json_region, const char *field_name,
-                      bool *error, T *dest) {
-  if (!json_region.isMember(field_name)) {
-    LOG(ERROR) << region_name << " missing " << field_name << " field";
-    *error = true;
-    return;
-  }
-  if (!json_region[field_name].isNumeric()) {
-    LOG(ERROR) << region_name << " " << field_name << " is not numeric";
-    *error = true;
-    return;
-  }
-  *dest = json_region[field_name].asUInt();
-}
-
-void JSONToSignalTable(const std::string &region_name,
-                       const Json::Value &json_region, const char *table_name,
-                       RegionAllocator *allocator, bool *error,
-                       vsoc_signal_table_layout *dest) {
-  if (!json_region.isMember(table_name)) {
-    LOG(ERROR) << region_name << " has no " << table_name << " section";
-    *error = true;
-    return;
-  }
-  GetMandatoryUInt(region_name, json_region[table_name], "num_nodes_lg2", error,
-                   &dest->num_nodes_lg2);
-  dest->futex_uaddr_table_offset = allocator->Allocate(
-      (1 << dest->num_nodes_lg2) * sizeof(uint32_t), "node table", error);
-  dest->interrupt_signalled_offset =
-      allocator->Allocate(sizeof(uint32_t), "signal word", error);
-}
-
-std::shared_ptr<VSoCSharedMemory::Region> JSONToRegion(
-    const std::string &region_name, const Json::Value &json_region,
+std::shared_ptr<VSoCSharedMemory::Region> SpecToRegion(
+    const std::string &region_name, const vsoc::RegionMemoryLayout &region_spec,
     bool *failed) {
   std::shared_ptr<VSoCSharedMemory::Region> region(
       new VSoCSharedMemory::Region);
-  GetMandatoryUInt(region_name, json_region, "current_version", failed,
-                   &region->values.current_version);
-  GetMandatoryUInt(region_name, json_region, "min_compatible_version", failed,
-                   &region->values.min_compatible_version);
-  GetMandatoryUInt(region_name, json_region, "region_size", failed,
-                   &region->values.region_end_offset);
+  // This is obsolete, but the vsoc driver still uses it, so set it to safe
+  // values
+  region->values.current_version = 0;
+  region->values.min_compatible_version = 0;
+
+  region->values.region_end_offset = region_spec.region_size();
   RegionAllocator allocator(region_name, region->values.region_end_offset);
-  JSONToSignalTable(region_name, json_region, "guest_to_host_signal_table",
-                    &allocator, failed,
-                    &region->values.guest_to_host_signal_table);
-  JSONToSignalTable(region_name, json_region, "host_to_guest_signal_table",
-                    &allocator, failed,
-                    &region->values.host_to_guest_signal_table);
+
+  // Signal tables
+  vsoc_signal_table_layout *dest = &region->values.guest_to_host_signal_table;
+  dest->num_nodes_lg2 = region_spec.guest_to_host_signal_table_log_size();
+  dest->futex_uaddr_table_offset = allocator.Allocate(
+      (1 << dest->num_nodes_lg2) * sizeof(uint32_t), "node table", failed);
+  dest->interrupt_signalled_offset =
+      allocator.Allocate(sizeof(uint32_t), "signal word", failed);
+
+  dest = &region->values.host_to_guest_signal_table;
+  dest->num_nodes_lg2 = region_spec.host_to_guest_signal_table_log_size();
+  dest->futex_uaddr_table_offset = allocator.Allocate(
+      (1 << dest->num_nodes_lg2) * sizeof(uint32_t), "node table", failed);
+  dest->interrupt_signalled_offset =
+      allocator.Allocate(sizeof(uint32_t), "signal word", failed);
 
   region->values.offset_of_region_data = allocator.AllocateRest(failed);
   return region;
@@ -229,13 +199,8 @@ std::shared_ptr<VSoCSharedMemory::Region> JSONToRegion(
 }  // anonymous namespace
 
 std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
-    const std::string &path, const Json::Value &root) {
-  // This is so catastrophic that there isn't anything else to check.
-  if (!root.isMember(g_vsoc_device_regions)) {
-    LOG(ERROR) << "vsoc_device_regions section is absent";
-    return nullptr;
-  }
-  auto device_regions = root[g_vsoc_device_regions];
+    const std::string &path) {
+  auto& device_regions = vsoc::GetVsocMemoryLayout();
   bool failed = false;
   RegionAllocator shm_file("shared_memory_file", UINT32_MAX);
   vsoc_shm_layout_descriptor header{};
@@ -257,20 +222,15 @@ std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
 
   // Pass 1: Parse individual region structures validating all of the
   // fields that can be validated without help.
-  for (const auto &json_region : device_regions) {
-    if (!json_region.isMember(g_device_name_tag)) {
-      LOG(ERROR) << g_device_name_tag << " is missing from region";
-      failed = true;
-      continue;
-    }
-    const std::string device_name = json_region[g_device_name_tag].asString();
+  for (const auto &region_spec : device_regions) {
+    const std::string device_name = region_spec.region_name();
     if (name_to_region_idx.count(device_name)) {
       LOG(ERROR) << device_name << " used for more than one region";
       failed = true;
       continue;
     }
     std::shared_ptr<Region> region =
-        JSONToRegion(device_name, json_region, &failed);
+        SpecToRegion(device_name, region_spec, &failed);
     // Create one pair of eventfds for this region. Note that the guest to host
     // eventfd is non-blocking, whereas the host to guest eventfd is blocking.
     // This is in anticipation of blocking semantics for the host side locks.
@@ -297,35 +257,30 @@ std::unique_ptr<VSoCSharedMemory> VSoCSharedMemory::New(
       strcpy(region->values.device_name, device_name.c_str());
     }
 
-    name_to_region_idx[device_name] = regions.size();
+    auto region_idx = regions.size();
+    name_to_region_idx[device_name] = region_idx;
     regions.push_back(*region);
-    // We will attempt to resolve this link in Pass 2
-    if (json_region.isMember(g_managed_by_tag)) {
-      managed_by_references[device_name] =
-          json_region[g_managed_by_tag].asString();
-    }
-  }
 
-  // Pass 2: Resolve the managed_by_references
-  for (const auto &it : managed_by_references) {
-    if (!name_to_region_idx.count(it.second)) {
-      LOG(ERROR) << it.first << " managed by missing region " << it.second;
-      failed = true;
-      continue;
-    }
-    regions[name_to_region_idx[it.first]].values.managed_by =
-        name_to_region_idx[it.second];
-    if (regions[name_to_region_idx[it.first]].values.managed_by ==
-        VSOC_REGION_WHOLE) {
-      LOG(ERROR)
-          << "Region '" << it.first << "' has owner " << it.second
-          << " with index "
-          << regions[name_to_region_idx[it.first]].values.managed_by
-          << " which is the default value for regions without an owner. Choose"
-             "a different region to be at index "
-          << regions[name_to_region_idx[it.first]].values.managed_by
-          << ", make sure the chosen region is NOT the owner of any other "
-             "region";
+    if (region_spec.managed_by()) {
+      // This forces manager to appear before the managed region, indirectly
+      // forbidding cycles in managed links.
+      if (!name_to_region_idx.count(region_spec.managed_by())) {
+        LOG(ERROR) << device_name << " managed by missing region "
+                   << region_spec.managed_by();
+        failed = true;
+        continue;
+      }
+      auto manager_idx = name_to_region_idx[region_spec.managed_by()];
+      regions[region_idx].values.managed_by = manager_idx;
+      if (manager_idx == VSOC_REGION_WHOLE) {
+        LOG(ERROR) << "Region '" << device_name << "' has owner "
+                   << region_spec.managed_by() << " with index " << manager_idx
+                   << " which is the default value for regions without an "
+                      "owner. Choose a different region to be at index "
+                   << manager_idx
+                   << ", make sure the chosen region is NOT the owner of any "
+                      "other region";
+      }
     }
   }
   if (failed) {

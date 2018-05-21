@@ -27,6 +27,7 @@ cc_library_host_static {
     ],
     shared_libs: [
         "libbase",
+        "vsoc_lib",
     ],
     static_libs: [
         "libjsoncpp",
@@ -46,6 +47,7 @@ cc_test_host {
         "libcuttlefish_fs",
         "cuttlefish_auto_resources",
         "libbase",
+        "vsoc_lib",
     ],
     static_libs: [
         "libivserver",
