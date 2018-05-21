@@ -16,8 +16,31 @@
  */
 
 #include <stdint.h>
+#include <type_traits>
 
 // Base macros for all layout structures.
+// ShmTypeValidator provides meaningful information about the type size
+// mismatch in compilation error messages, eg.
+//
+// error:
+//    static_assert failed "Class size changed, update the layout_size field"
+//    static_assert(Current == Expected,
+// note: in instantiation of template class
+//    'ShmTypeValidator<vsoc::layout::myclass::ClassName>'
+//    requested here ASSERT_SHM_COMPATIBLE(ClassName);
+//
+template <typename Type, size_t expected_size = Type::layout_size>
+struct ShmTypeValidator {
+  static_assert(sizeof(Type) == expected_size,
+                "Class size changed, update the layout_size field");
+  static_assert(std::is_trivial<Type>(), "Class uses features that are unsafe");
+  static constexpr bool valid =
+      sizeof(Type) == expected_size && std::is_trivial<Type>();
+};
+
+#define ASSERT_SHM_COMPATIBLE(T)            \
+  static_assert(ShmTypeValidator<T>::valid, \
+                "Compilation error. Please fix above errors and retry.")
 
 namespace vsoc {
 namespace layout {
@@ -42,12 +65,18 @@ enum Sides : uint32_t {
   Peer = Host
 #endif
 };
+// Enums can't have static members, so can't use the macro here.
+  static_assert(ShmTypeValidator<Sides, 4>::valid,
+              "Compilation error. Please fix above errors and retry.");
 
 /**
  * Base class for all region layout structures.
  */
 class RegionLayout {
+public:
+  static constexpr size_t layout_size = 1;
 };
+ASSERT_SHM_COMPATIBLE(RegionLayout);
 
 }  // namespace layout
 }  // namespace vsoc

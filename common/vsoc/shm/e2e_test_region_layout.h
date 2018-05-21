@@ -43,7 +43,7 @@ namespace e2e_test {
  * Flags that are used to indicate test status. Some of the latter testing
  * stages rely on initializion that must be done on the peer.
  */
-enum E2ETestStage {
+  enum E2ETestStage : uint32_t {
   // No tests have passed
   E2E_STAGE_NONE = 0,
   // This side has finished writing its pattern to the region
@@ -51,12 +51,16 @@ enum E2ETestStage {
   // This side has confirmed that it can see its peer's writes to the region
   E2E_PEER_MEMORY_READ = 2,
 };
+static_assert(ShmTypeValidator<E2ETestStage, 4>::valid,
+              "Compilation error. Please fix above errors and retry.");
 
 /**
  * Structure that grants permission to write in the region to either the guest
  * or the host. This size of these fields is arbitrary.
  */
 struct E2EMemoryFill {
+  static constexpr size_t layout_size = 64;
+
   static const std::size_t kOwnedFieldSize = 32;
 
   // The compiler must not attempt to optimize away reads and writes to the
@@ -65,6 +69,7 @@ struct E2EMemoryFill {
   char host_writable[kOwnedFieldSize];
   char guest_writable[kOwnedFieldSize];
 };
+ASSERT_SHM_COMPATIBLE(E2EMemoryFill);
 
 /**
  * Structure that grants permission to write in the region to either the guest
@@ -72,9 +77,10 @@ struct E2EMemoryFill {
  */
 class E2ETestStageRegister {
  public:
+  static constexpr size_t layout_size = 4;
+
   E2ETestStage value() const {
-    E2ETestStage rval = static_cast<E2ETestStage>(value_);
-    return rval;
+    return value_;
   }
 
   void set_value(E2ETestStage new_value) { value_ = new_value; }
@@ -83,8 +89,9 @@ class E2ETestStageRegister {
   // The compiler must not attempt to optimize away reads and writes to the
   // shared memory window. This is pretty typical when dealing with devices
   // doing memory mapped I/O.
-  uint32_t value_;
+  E2ETestStage value_;
 };
+ASSERT_SHM_COMPATIBLE(E2ETestStageRegister);
 
 /**
  * Describes the layout of the regions used for the end-to-end test. There
@@ -93,6 +100,9 @@ class E2ETestStageRegister {
  */
 class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
  public:
+  static constexpr size_t layout_size = 2 * E2ETestStageRegister::layout_size +
+                                        3 * 4 + E2EMemoryFill::layout_size;
+
   /**
    * Computes how many E2EMemoryFill records we need to cover the region.
    * Covering the entire region during the test ensures that everything is
@@ -123,36 +133,52 @@ class E2ETestRegionLayout : public ::vsoc::layout::RegionLayout {
   // until we examine the region.
   E2EMemoryFill data[1];
 };
+ASSERT_SHM_COMPATIBLE(E2ETestRegionLayout);
 
 struct E2EPrimaryTestRegionLayout : public E2ETestRegionLayout {
+  static constexpr size_t layout_size = E2ETestRegionLayout::layout_size;
+
   static const char* region_name;
   static const char guest_pattern[E2EMemoryFill::kOwnedFieldSize];
   static const char host_pattern[E2EMemoryFill::kOwnedFieldSize];
 };
+ASSERT_SHM_COMPATIBLE(E2EPrimaryTestRegionLayout);
 
 struct E2ESecondaryTestRegionLayout : public E2ETestRegionLayout {
+  static constexpr size_t layout_size = E2ETestRegionLayout::layout_size;
+
   static const char* region_name;
   static const char guest_pattern[E2EMemoryFill::kOwnedFieldSize];
   static const char host_pattern[E2EMemoryFill::kOwnedFieldSize];
 };
+ASSERT_SHM_COMPATIBLE(E2ESecondaryTestRegionLayout);
 
 /**
  * Defines an end-to-end region with a name that should never be configured.
  */
 struct E2EUnfindableRegionLayout : public E2ETestRegionLayout {
+  static constexpr size_t layout_size = E2ETestRegionLayout::layout_size;
+
   static const char* region_name;
 };
+ASSERT_SHM_COMPATIBLE(E2EUnfindableRegionLayout);
 
 struct E2EManagedTestRegionLayout : public RegionLayout {
+  static constexpr size_t layout_size = 4;
+
   static const char* region_name;
   uint32_t val;  // Not needed, here only to avoid an empty struct.
 };
+ASSERT_SHM_COMPATIBLE(E2EManagedTestRegionLayout);
 
 struct E2EManagerTestRegionLayout : public RegionLayout {
+  static constexpr size_t layout_size = 4 * 4;
+
   static const char* region_name;
   typedef E2EManagedTestRegionLayout ManagedRegion;
   uint32_t data[4];  // We don't need more than 4 for the tests
 };
+ASSERT_SHM_COMPATIBLE(E2EManagerTestRegionLayout);
 
 }  // namespace e2e_test
 }  // namespace layout

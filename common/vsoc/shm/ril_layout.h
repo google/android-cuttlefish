@@ -24,6 +24,7 @@ namespace layout {
 namespace ril {
 
 struct RilLayout : public RegionLayout {
+  static constexpr size_t layout_size = 4 * 16 + 4;
   static const char* region_name;
 
   char ipaddr[16]; // xxx.xxx.xxx.xxx\0 = 16 bytes
@@ -32,6 +33,7 @@ struct RilLayout : public RegionLayout {
   char broadcast[16];
   uint32_t prefixlen;
 };
+ASSERT_SHM_COMPATIBLE(RilLayout);
 }  // namespace ril
 }  // namespace layout
 }  // namespace vsoc
