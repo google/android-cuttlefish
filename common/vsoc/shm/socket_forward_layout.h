@@ -36,8 +36,13 @@ enum class QueueState : std::uint32_t {
   // If both are closed then the queue goes back to INACTIVE
   // BOTH_CLOSED = 0,
 };
+static_assert(ShmTypeValidator<QueueState, 4>::valid,
+              "Compilation error. Please fix above errors and retry.");
 
 struct Queue {
+  static constexpr size_t layout_size =
+      CircularPacketQueue<16, kMaxPacketSize>::layout_size + 4;
+
   CircularPacketQueue<16, kMaxPacketSize> queue;
 
   QueueState queue_state_;
@@ -46,8 +51,11 @@ struct Queue {
     return queue.Recover();
   }
 };
+ASSERT_SHM_COMPATIBLE(Queue);
 
 struct QueuePair {
+  static constexpr size_t layout_size = 2 * Queue::layout_size + 8;
+
   // Traffic originating from host that proceeds towards guest.
   Queue host_to_guest;
   // Traffic originating from guest that proceeds towards host.
@@ -67,8 +75,11 @@ struct QueuePair {
     return recovered;
   }
 };
+ASSERT_SHM_COMPATIBLE(QueuePair);
 
 struct SocketForwardLayout : public RegionLayout {
+  static constexpr size_t layout_size = QueuePair::layout_size * kNumQueues + 8;
+
   bool Recover() {
     bool recovered = false;
     for (auto& i : queues_) {
@@ -84,6 +95,8 @@ struct SocketForwardLayout : public RegionLayout {
   std::atomic_uint32_t generation_num; // incremented for every new socket forward process
   static const char* region_name;
 };
+
+ASSERT_SHM_COMPATIBLE(SocketForwardLayout);
 
 }  // namespace socket_forward
 }  // namespace layout

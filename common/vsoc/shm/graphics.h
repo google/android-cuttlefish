@@ -68,7 +68,7 @@ struct PixelFormatProperties {
 //   * Observant reviewers can verify that the same pixel value is not assigned
 //     to multiple formats. Keep the enums in numerical order below to
 //     make this easier.
-enum PixelFormat {
+enum PixelFormat : uint32_t {
   VSOC_PIXEL_FORMAT_UNINITIALIZED = PixelFormatBuilder<1,0>::value,
   VSOC_PIXEL_FORMAT_BLOB =          PixelFormatBuilder<1,1>::value,
 
@@ -129,25 +129,34 @@ enum PixelFormat {
   //   VSOC_PIXEL_FORMAT_sRGB_X_8888
   //   VSOC_PIXEL_FORMAT_sRGB_A_8888
 };
+// Enums can't have static members, so can't use the macro here.
+static_assert(ShmTypeValidator<PixelFormat, 4>::valid,
+              "Compilation error. Please fix above errors and retry.");
 
 namespace layout {
 
 // VSoC memory layout for a register that accepts a single pixel format.
 // The value is volatile to ensure that the compiler does not eliminate stores.
 struct PixelFormatRegister {
+  static constexpr size_t layout_size = 4;
+
   volatile PixelFormat value_;
 };
+ASSERT_SHM_COMPATIBLE(PixelFormatRegister);
 
 // Register layout for a mask giving different PixelFormats. Reserve enough
 // space to allow for future expansion. For example, we may well end with
 // a 12 bit per channel format in the future.
 struct PixelFormatMaskRegister {
+  static constexpr size_t layout_size = 8;
+
   volatile uint64_t value_;
 
   bool HasValue(PixelFormat in) {
     return !!(value_ & (uint64_t(1) << in));
   }
 };
+ASSERT_SHM_COMPATIBLE(PixelFormatMaskRegister);
 
 // Ensure that the mask is large enough to hold the highest encodable
 // pixel format.

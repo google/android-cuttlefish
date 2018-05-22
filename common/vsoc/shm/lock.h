@@ -50,6 +50,8 @@ namespace layout {
  */
 class SpinLock {
  public:
+  static constexpr size_t layout_size = 4;
+
   /**
    * Acquire the spinlock on the queue. This will effectively block all
    * readers and writers.
@@ -87,12 +89,16 @@ class SpinLock {
  protected:
   std::atomic<uint32_t> lock_;
 };
+ASSERT_SHM_COMPATIBLE(SpinLock);
 
 /**
  * This is a generic synchronization primitive that provides space for the
  * owner of the lock to write platform-specific information.
  */
 class WaitingLockBase {
+ public:
+  static constexpr size_t layout_size = 40;
+
  protected:
   // Common code to handle locking
   // Must be called with the kernel's thread id
@@ -137,6 +143,7 @@ class WaitingLockBase {
   int64_t owner_scratch_[2];
 #pragma clang diagnostic pop
 };
+ASSERT_SHM_COMPATIBLE(WaitingLockBase);
 
 /**
  * GuestLocks can be acquired and released only on the guest. They reside
@@ -148,6 +155,8 @@ class WaitingLockBase {
  */
 class GuestLock : public WaitingLockBase {
  public:
+  static constexpr size_t layout_size = WaitingLockBase::layout_size;
+
 #ifndef CUTTLEFISH_HOST
   void Lock();
   void Unlock();
@@ -161,6 +170,7 @@ class GuestLock : public WaitingLockBase {
   bool Recover();
 #endif
 };
+ASSERT_SHM_COMPATIBLE(GuestLock);
 
 /**
  * HostLocks can be acquired and released only on the host. They reside
@@ -172,6 +182,8 @@ class GuestLock : public WaitingLockBase {
  */
 class HostLock : public WaitingLockBase {
  public:
+  static constexpr size_t layout_size = WaitingLockBase::layout_size;
+
 #ifdef CUTTLEFISH_HOST
   void Lock();
   void Unlock();
@@ -186,6 +198,7 @@ class HostLock : public WaitingLockBase {
   bool Recover();
 #endif
 };
+ASSERT_SHM_COMPATIBLE(HostLock);
 
 /**
  * GuestAndHostLocks can be acquired and released on either side of the
@@ -213,6 +226,8 @@ class HostLock : public WaitingLockBase {
  */
 class GuestAndHostLock : public WaitingLockBase {
  public:
+  static constexpr size_t layout_size = WaitingLockBase::layout_size;
+
   void Lock(RegionView*);
   void Unlock(RegionView*);
   /**
@@ -225,6 +240,7 @@ class GuestAndHostLock : public WaitingLockBase {
    */
   bool Recover(RegionView*);
 };
+ASSERT_SHM_COMPATIBLE(GuestAndHostLock);
 
 }  // namespace layout
 }  // namespace vsoc

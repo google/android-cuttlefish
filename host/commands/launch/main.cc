@@ -35,6 +35,8 @@
 
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
+#include "common/vsoc/lib/vsoc_memory.h"
+#include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/file_partition.h"
 #include "host/libs/config/guest_config.h"
@@ -69,7 +71,12 @@ DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
+
 DECLARE_int32(dpi);
+DECLARE_int32(x_res);
+DECLARE_int32(y_res);
+DECLARE_int32(num_screen_buffers);
+
 DEFINE_bool(disable_app_armor_security, false,
             "Disable AppArmor security in libvirt. For debug only.");
 DEFINE_bool(disable_dac_security, false,
@@ -86,10 +93,6 @@ DEFINE_string(launch_command,
               "virsh " VIRSH_OPTIONS_PLACEHOLDER " create /dev/fd/0",
               "Command to start an instance. If <virsh_options> is present it "
               "will be replaced by options to the virsh command");
-DEFINE_string(layout,
-              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-                  "/config/vsoc_mem.json",
-              "Location of the vsoc_mem.json file.");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
@@ -148,23 +151,6 @@ std::string GetVirshOptions() {
   return std::string("-c ").append(FLAGS_hypervisor_uri);
 }
 
-Json::Value LoadLayoutFile(const std::string& file) {
-  char real_file_path[PATH_MAX];
-  if (realpath(file.c_str(), real_file_path) == nullptr) {
-    LOG(FATAL) << "Could not get real path for file " << file << ": "
-               << strerror(errno);
-  }
-
-  Json::Value result;
-  Json::Reader reader;
-  std::ifstream ifs(real_file_path);
-  if (!reader.parse(ifs, result)) {
-    LOG(FATAL) << "Could not read layout file " << file << ": "
-               << reader.getFormattedErrorMessages();
-  }
-  return result;
-}
-
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
  public:
@@ -210,11 +196,10 @@ class VirtualUSBManager {
 // Cuttlefish and host-side daemons.
 class IVServerManager {
  public:
-  IVServerManager(const Json::Value& json_root)
-      : server_(ivserver::IVServerOptions(FLAGS_layout, FLAGS_mempath,
+  IVServerManager()
+      : server_(ivserver::IVServerOptions(FLAGS_mempath,
                                           FLAGS_qemusocket,
-                                          vsoc::GetDomain()),
-                json_root) {}
+                                          vsoc::GetDomain())) {}
 
   ~IVServerManager() = default;
 
@@ -484,8 +469,6 @@ int main(int argc, char** argv) {
     FLAGS_vendor_image = FLAGS_system_image_dir + "/vendor.img";
   }
 
-  Json::Value json_root = LoadLayoutFile(FLAGS_layout);
-
   // Each of these calls is free to fail and terminate launch if file does not
   // exist or could not be created.
   auto system_partition = config::FilePartition::ReuseExistingFile(
@@ -511,6 +494,7 @@ int main(int argc, char** argv) {
   }
 
   std::string entropy_source = "/dev/urandom";
+  auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
 
   config::GuestConfig cfg;
   cfg.SetID(FLAGS_instance)
@@ -520,7 +504,7 @@ int main(int argc, char** argv) {
       .SetInitRDName(FLAGS_initrd)
       .SetKernelArgs(cmdline.str())
       .SetIVShMemSocketPath(FLAGS_qemusocket)
-      .SetIVShMemVectorCount(json_root["vsoc_device_regions"].size())
+      .SetIVShMemVectorCount(memory_layout.GetRegions().size())
       .SetSystemPartitionPath(system_partition->GetName())
       .SetCachePartitionPath(cache_partition->GetName())
       .SetDataPartitionPath(data_partition->GetName())
@@ -545,7 +529,23 @@ int main(int argc, char** argv) {
   VirtualUSBManager vadb(cfg.GetUSBV1SocketName(), FLAGS_vhci_port,
                          GetPerInstanceDefault("android_usbip"));
   vadb.Start();
-  IVServerManager ivshmem(json_root);
+
+  // TODO(b/79170615) These values need to go to the config object/file and the
+  // region resizing be done by the ivserver process (or maybe the config
+  // library to ensure all processes have the correct value?)
+  size_t screen_size =
+      memory_layout
+          .GetRegionByName(vsoc::layout::screen::ScreenLayout::region_name)
+          ->region_size();
+  auto actual_width = ((FLAGS_x_res * 4) + 15) & ~15;  // aligned to 16
+  screen_size += FLAGS_num_screen_buffers *
+                 (actual_width * FLAGS_y_res + 16 /* padding */);
+  screen_size += (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
+  memory_layout.ResizeRegion(vsoc::layout::screen::ScreenLayout::region_name,
+                             screen_size);
+  // TODO(b/79170615) Resize gralloc region too.
+
+  IVServerManager ivshmem;
   ivshmem.Start();
   KernelLogMonitor kmon(cfg.GetKernelLogSocketName(),
                         GetDefaultPerInstancePath("kernel.log"),

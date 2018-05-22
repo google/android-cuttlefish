@@ -26,10 +26,12 @@ namespace audio_data {
 
 struct AudioDataLayout : public RegionLayout {
     static const char *const region_name;
+    static constexpr size_t layout_size = 16396;
 
     // size = 2^14 = 16384, packets are up to 4KB bytes each.
     CircularPacketQueue<14, 4096> audio_queue;
 };
+ASSERT_SHM_COMPATIBLE(AudioDataLayout);
 
 }  // namespace audio_data
 }  // namespace layout

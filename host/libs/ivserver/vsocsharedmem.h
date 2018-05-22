@@ -16,10 +16,10 @@
  */
 
 #include <inttypes.h>
-#include <json/json.h>
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "uapi/vsoc_shm.h"
@@ -30,7 +30,11 @@ class VSoCSharedMemory {
  public:
   // Region describes a VSoCSharedMem region.
   struct Region {
-    vsoc_device_region values{};
+    Region() = default;
+    explicit Region(const char *device_name, const cvd::SharedFD &host_fd,
+                    const cvd::SharedFD &guest_fd)
+        : device_name(device_name), host_fd(host_fd), guest_fd(guest_fd) {}
+    const char *device_name;
     cvd::SharedFD host_fd;
     cvd::SharedFD guest_fd;
   };
@@ -38,8 +42,7 @@ class VSoCSharedMemory {
   VSoCSharedMemory() = default;
   virtual ~VSoCSharedMemory() = default;
 
-  static std::unique_ptr<VSoCSharedMemory> New(const std::string &name,
-                                               const Json::Value &json_root);
+  static std::unique_ptr<VSoCSharedMemory> New(const std::string &name);
 
   virtual bool GetEventFdPairForRegion(const std::string &region_name,
                                        cvd::SharedFD *guest_to_host,
