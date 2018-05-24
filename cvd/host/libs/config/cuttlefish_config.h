@@ -154,6 +154,9 @@ class CuttlefishConfig {
   bool disable_app_armor_security() const;
   void set_disable_app_armor_security(bool disable_app_armor_security);
 
+  void set_cuttlefish_env_path(const std::string& path);
+  std::string cuttlefish_env_path() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
