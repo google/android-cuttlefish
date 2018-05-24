@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -33,6 +34,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
 #include "common/vsoc/lib/vsoc_memory.h"
@@ -418,10 +420,13 @@ std::string GetGuestPortArg() {
   return std::string{"--guest_ports="} + std::to_string(kEmulatorPort);
 }
 
-std::string GetHostPortArg() {
+int GetHostPort() {
   constexpr int kFirstHostPort = 6520;
-  return std::string{"--host_ports="} +
-      std::to_string(vsoc::GetPerInstanceDefault(kFirstHostPort));
+  return vsoc::GetPerInstanceDefault(kFirstHostPort);
+}
+
+std::string GetHostPortArg() {
+  return std::string{"--host_ports="} + std::to_string(GetHostPort());
 }
 
 void ValidateAdbModeFlag() {
@@ -608,6 +613,9 @@ bool SetUpGlobalConfiguration() {
     config->disable_usb_adb();
   }
 
+  config->set_cuttlefish_env_path(
+      StringFromEnv("HOME", ".") + "/.cuttlefish.sh");
+
   return true;
 }
 
@@ -627,7 +635,8 @@ void ParseCommandLineFlags(int argc, char** argv) {
 bool CleanPriorFiles() {
   auto config = vsoc::CuttlefishConfig::Get();
   std::string run_files = config->PerInstancePath("*") + " " +
-                          config->mempath();
+                          config->mempath() + " " +
+                          config->cuttlefish_env_path();
   LOG(INFO) << "Assuming run files of " << run_files;
   // TODO(b/78512938): Shouldn't need sudo here
   std::string fuser_cmd = "sudo fuser " + run_files + " 2> /dev/null";
@@ -645,6 +654,28 @@ bool CleanPriorFiles() {
   }
   return true;
 }
+
+bool WriteCuttlefishEnvironment() {
+  auto config = vsoc::CuttlefishConfig::Get();
+  auto env = cvd::SharedFD::Open(config->cuttlefish_env_path().c_str(),
+                                 O_CREAT | O_RDWR, 0755);
+  if (!env->IsOpen()) {
+    LOG(ERROR) << "Unable to create cuttlefish.env file";
+    return false;
+  }
+  std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
+                           config->PerInstancePath(".") + "\"\n";
+  config_env += "export ANDROID_SERIAL=";
+  if (AdbUsbEnabled()) {
+    config_env += config->serial_number();
+  } else {
+    config_env += "127.0.0.1:" + std::to_string(GetHostPort());
+  }
+  config_env += "\n";
+  env->Write(config_env.c_str(), config_env.size());
+  return true;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -658,6 +689,10 @@ int main(int argc, char** argv) {
 
   if (!CleanPriorFiles()) {
     LOG(FATAL) << "Failed to clean prior files";
+  }
+
+  if (!WriteCuttlefishEnvironment()) {
+    LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
