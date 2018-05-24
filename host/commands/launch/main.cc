@@ -38,14 +38,13 @@
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/pre_launch_initializers.h"
-#include "host/libs/config/file_partition.h"
-#include "host/libs/config/guest_config.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/ivserver/ivserver.h"
 #include "host/libs/ivserver/options.h"
 #include "host/libs/monitor/kernel_log_server.h"
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
 
 namespace {
 std::string StringFromEnv(const char* varname, std::string defval) {
@@ -55,13 +54,20 @@ std::string StringFromEnv(const char* varname, std::string defval) {
   }
   return valstr;
 }
+
+std::string DefaultHostArtifactsPath(const char* file_name) {
+  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
+         file_name;
+}
+
 }  // namespace
 
-#define VIRSH_OPTIONS_PLACEHOLDER "<virsh_options>"
-
 using vsoc::GetPerInstanceDefault;
-using vsoc::GetDefaultPerInstancePath;
 
+DEFINE_string(
+    system_image, "",
+    "Path to the system image, if empty it is assumed to be a file named "
+    "system.img in the directory specified by -system_image_dir");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
@@ -72,10 +78,11 @@ DEFINE_int32(blank_data_image_mb, 0,
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
 
-DECLARE_int32(dpi);
-DECLARE_int32(x_res);
-DECLARE_int32(y_res);
-DECLARE_int32(num_screen_buffers);
+DEFINE_int32(x_res, 720, "Width of the screen in pixels");
+DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
+DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
+DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
+DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
 
 DEFINE_bool(disable_app_armor_security, false,
             "Disable AppArmor security in libvirt. For debug only.");
@@ -87,12 +94,6 @@ DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
 DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
 DEFINE_string(kernel_command_line, "",
               "Location of a text file with the kernel command line.");
-DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
-DEFINE_string(launch_command,
-              "virsh " VIRSH_OPTIONS_PLACEHOLDER " create /dev/fd/0",
-              "Command to start an instance. If <virsh_options> is present it "
-              "will be replaced by options to the virsh command");
-DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
@@ -101,11 +102,13 @@ DEFINE_string(mempath, g_default_mempath.c_str(),
 std::string g_default_mobile_interface{GetPerInstanceDefault("cvd-mobile-")};
 DEFINE_string(mobile_interface, g_default_mobile_interface.c_str(),
               "Network interface to use for mobile networking");
-std::string g_default_qemusocket = GetDefaultPerInstancePath("ivshmem_socket_qemu");
-DEFINE_string(qemusocket, g_default_qemusocket.c_str(), "QEmu socket path");
+DEFINE_string(mobile_tap_name, GetPerInstanceDefault("amobile"),
+              "The name of the tap interface to use for mobile");
 std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
 DEFINE_string(serial_number, g_default_serial_number.c_str(),
               "Serial number to use for the device");
+DEFINE_string(instance_dir, vsoc::GetDefaultPerInstanceDir(),
+              "A directory to put all instance specific files");
 DEFINE_string(system_image_dir,
               StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
               "Location of the system partition images.");
@@ -116,27 +119,40 @@ DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " Will be deprecated soon.");
 DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
-              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-                  "/bin/vnc_server",
+              DefaultHostArtifactsPath("/bin/vnc_server"),
               "Location of the vnc server binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(socket_forward_proxy_binary,
-              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-                  "/bin/socket_forward_proxy",
+              DefaultHostArtifactsPath("/bin/socket_forward_proxy"),
               "Location of the socket_forward_proxy binary.");
 DEFINE_string(adb_mode, "tunnel",
               "Mode for adb connection. Can be usb for usb forwarding, or "
               "tunnel for tcp connection. If using tunnel, you may have to "
               "run 'adb kill-server' to get the device to show up.");
 DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
+DEFINE_string(guest_mac_address,
+              GetPerInstanceDefault("00:43:56:44:80:"), // 00:43:56:44:80:0x
+              "MAC address of the wifi interface to be created on the guest.");
+DEFINE_string(host_mac_address,
+              "42:00:00:00:00:00",
+              "MAC address of the wifi interface running on the host.");
 DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
 DEFINE_string(wifi_relay_binary,
-              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-                  "/bin/wifi_relay",
+              DefaultHostArtifactsPath("/bin/wifi_relay"),
               "Location of the wifi_relay binary.");
+std::string g_default_wifi_interface{GetPerInstanceDefault("cvd-wifi-")};
+DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
+              "Network interface to use for wifi");
+// TODO(b/72969289) This should be generated
+DEFINE_string(dtb, DefaultHostArtifactsPath("config/cuttlefish.dtb"),
+              "Path to the cuttlefish.dtb file");
 
-DECLARE_string(uuid);
+constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
+DEFINE_string(uuid, vsoc::GetPerInstanceDefault(kDefaultUuidPrefix).c_str(),
+              "UUID to use for the device. Random if not specified");
+
+DECLARE_string(config_file);
 
 namespace {
 const std::string kDataPolicyUseExisting = "use_existing";
@@ -145,10 +161,6 @@ const std::string kDataPolicyAlwaysCreate = "always_create";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeUsb[] = "usb";
-
-std::string GetVirshOptions() {
-  return std::string("-c ").append(FLAGS_hypervisor_uri);
-}
 
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
@@ -195,9 +207,8 @@ class VirtualUSBManager {
 // Cuttlefish and host-side daemons.
 class IVServerManager {
  public:
-  IVServerManager()
-      : server_(ivserver::IVServerOptions(FLAGS_mempath,
-                                          FLAGS_qemusocket,
+  IVServerManager(const std::string& mempath, const std::string& qemu_socket)
+      : server_(ivserver::IVServerOptions(mempath, qemu_socket,
                                           vsoc::GetDomain())) {}
 
   ~IVServerManager() = default;
@@ -283,6 +294,11 @@ void subprocess(const char* const* command,
   }
 }
 
+bool FileExists(const char* path) {
+  struct stat unused;
+  return stat(path, &unused) != -1 || errno != ENOENT;
+}
+
 void CreateBlankImage(
     const std::string& image, int image_mb, const std::string& image_fmt) {
   LOG(INFO) << "Creating " << image;
@@ -305,6 +321,84 @@ void RemoveFile(const std::string& file) {
     "/bin/rm", "-f", file.c_str(), NULL};
   subprocess(rm_command, NULL);
 }
+
+bool ApplyDataImagePolicy(const char* data_image) {
+  bool data_exists = FileExists(data_image);
+  bool remove{};
+  bool create{};
+
+  if (FLAGS_data_policy == kDataPolicyUseExisting) {
+    if (!data_exists) {
+      LOG(FATAL) << "Specified data image file does not exists: " << data_image;
+      return false;
+    }
+    if (FLAGS_blank_data_image_mb > 0) {
+      LOG(FATAL) << "You should NOT use -blank_data_image_mb with -data_policy="
+                 << kDataPolicyUseExisting;
+      return false;
+    }
+    create = false;
+    remove = false;
+  } else if (FLAGS_data_policy == kDataPolicyAlwaysCreate) {
+    remove = data_exists;
+    create = true;
+  } else if (FLAGS_data_policy == kDataPolicyCreateIfMissing) {
+    create = !data_exists;
+    remove = false;
+  } else {
+    LOG(FATAL) << "Invalid data_policy: " << FLAGS_data_policy;
+  }
+
+  if (remove) {
+    RemoveFile(data_image);
+  }
+
+  if (create) {
+    if (FLAGS_blank_data_image_mb <= 0) {
+      LOG(FATAL) << "-blank_data_image_mb is required to create data image";
+    }
+    CreateBlankImage(
+        data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
+  } else {
+    LOG(INFO) << data_image << " exists. Not creating it.";
+  }
+
+  return true;
+}
+
+bool EnsureDirExists(const char* dir) {
+  if (!FileExists(dir)) {
+    LOG(INFO) << "Setting up " << dir;
+    if (mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+      if (errno == EACCES) {
+        // TODO(79170615) Don't use sudo once libvirt is replaced
+        LOG(WARNING) << "Not enough permission to create " << dir
+                     << " retrying with sudo";
+        const char* mkdir_command[]{"/usr/bin/sudo", "/bin/mkdir", "-m",
+                                    "0775",          dir,          NULL};
+        subprocess(mkdir_command, NULL);
+
+        // When created with sudo the owner and group is root.
+        std::string user_group = getenv("USER");
+        user_group += ":libvirt-qemu";
+        const char* chown_cmd[] = {"/usr/bin/sudo", "/bin/chown",
+                                   user_group.c_str(), dir, NULL};
+        subprocess(chown_cmd, NULL);
+      } else {
+        LOG(FATAL) << "Unable to create " << dir << ". Error: " << errno;
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+std::string GetConfigFile() {
+  return vsoc::CuttlefishConfig::Get()->PerInstancePath(
+      "cuttlefish_config.json");
+}
+
+std::string GetConfigFileArg() { return "-config_file=" + GetConfigFile(); }
 
 std::string GetGuestPortArg() {
   constexpr int kEmulatorPort = 5555;
@@ -334,11 +428,13 @@ void LaunchSocketForwardProxyIfEnabled() {
   if (AdbTunnelEnabled()) {
     auto guest_port_arg = GetGuestPortArg();
     auto host_port_arg = GetHostPortArg();
+    auto config_arg = GetConfigFileArg();
 
     const char* const socket_proxy[] = {
       FLAGS_socket_forward_proxy_binary.c_str(),
       guest_port_arg.c_str(),
       host_port_arg.c_str(),
+      config_arg.c_str(),
       NULL
     };
     subprocess(socket_proxy, nullptr, false);
@@ -349,9 +445,11 @@ void LaunchVNCServerIfEnabled() {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
+    auto config_arg = GetConfigFileArg();
     const char* vnc_command[] = {
       FLAGS_vnc_server_binary.c_str(),
       port_options.c_str(),
+      config_arg.c_str(),
       NULL
     };
     subprocess(vnc_command, NULL, false);
@@ -361,41 +459,22 @@ void LaunchVNCServerIfEnabled() {
 void LaunchWifiRelayIfEnabled() {
   if (FLAGS_start_wifi_relay) {
     // Launch the wifi relay, don't wait for it to complete
+    auto config_arg = GetConfigFileArg();
     const char* relay_command[] = {
         "/usr/bin/sudo",
         "-E",
         FLAGS_wifi_relay_binary.c_str(),
+        config_arg.c_str(),
         NULL
     };
 
     subprocess(relay_command, NULL /* envp */, false /* wait_for_child */);
   }
 }
-
-}  // anonymous namespace
-
-int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
-  google::ParseCommandLineFlags(&argc, &argv, true);
-  ValidateAdbModeFlag();
-
-  LOG_IF(FATAL, FLAGS_system_image_dir.empty())
-      << "--system_image_dir must be specified.";
-
-  std::string per_instance_dir = vsoc::GetDefaultPerInstanceDir();
-  struct stat unused;
-  if ((stat(per_instance_dir.c_str(), &unused) == -1) && (errno == ENOENT)) {
-    LOG(INFO) << "Setting up " << per_instance_dir;
-    const char* mkdir_command[]{
-        "/usr/bin/sudo",          "/bin/mkdir", "-m", "0775",
-        per_instance_dir.c_str(), NULL};
-    subprocess(mkdir_command, NULL);
-    std::string owner_group{getenv("USER")};
-    owner_group += ":libvirt-qemu";
-    const char* chown_command[]{"/usr/bin/sudo", "/bin/chown",
-                                owner_group.c_str(), per_instance_dir.c_str(),
-                                NULL};
-    subprocess(chown_command, NULL);
+bool ResolveInstanceFiles() {
+  if (FLAGS_system_image_dir.empty()) {
+    LOG(FATAL) << "--system_image_dir must be specified.";
+    return false;
   }
 
   // If user did not specify location of either of these files, expect them to
@@ -403,165 +482,190 @@ int main(int argc, char** argv) {
   if (FLAGS_kernel.empty()) {
     FLAGS_kernel = FLAGS_system_image_dir + "/kernel";
   }
-
   if (FLAGS_kernel_command_line.empty()) {
     FLAGS_kernel_command_line = FLAGS_system_image_dir + "/cmdline";
   }
-
+  if (FLAGS_system_image.empty()) {
+    FLAGS_system_image = FLAGS_system_image_dir + "/system.img";
+  }
   if (FLAGS_initrd.empty()) {
     FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
   }
-
   if (FLAGS_cache_image.empty()) {
     FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
   }
-
-  if (FLAGS_data_policy == kDataPolicyCreateIfMissing) {
-    FLAGS_data_image = FLAGS_system_image_dir + "/userdata_blank.img";
-    if (FLAGS_blank_data_image_mb <= 0) {
-      LOG(FATAL) << "You should use -blank_data_image_mb with -data_policy="
-                 << kDataPolicyCreateIfMissing;
-    }
-    // Create a blank data image if the image doesn't exist yet
-    if ((stat(FLAGS_data_image.c_str(), &unused) == -1) && (errno == ENOENT)) {
-      CreateBlankImage(
-          FLAGS_data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
-    } else {
-      LOG(INFO) << FLAGS_data_image << " exists. Not creating it.";
-    }
-  } else if (FLAGS_data_policy == kDataPolicyAlwaysCreate) {
-    FLAGS_data_image = FLAGS_system_image_dir + "/userdata_blank.img";
-    if (FLAGS_blank_data_image_mb <= 0) {
-      LOG(FATAL) << "You should use -blank_data_image_mb with -data_policy="
-                 << kDataPolicyAlwaysCreate;
-    }
-    RemoveFile(FLAGS_data_image);
-    CreateBlankImage(
-        FLAGS_data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
-  } else if (FLAGS_data_policy == kDataPolicyUseExisting) {
-    // Do nothing. Use FLAGS_data_image.
-    if (FLAGS_blank_data_image_mb > 0) {
-      LOG(FATAL) << "You should NOT use -blank_data_image_mb with -data_policy="
-                 << kDataPolicyUseExisting;
-    }
-  } else {
-    LOG(FATAL) << "Invalid data_policy: " << FLAGS_data_policy;
-  }
-
   if (FLAGS_data_image.empty()) {
     FLAGS_data_image = FLAGS_system_image_dir + "/userdata.img";
   }
-
   if (FLAGS_vendor_image.empty()) {
     FLAGS_vendor_image = FLAGS_system_image_dir + "/vendor.img";
   }
 
-  // Each of these calls is free to fail and terminate launch if file does not
-  // exist or could not be created.
-  auto system_partition = config::FilePartition::ReuseExistingFile(
-      FLAGS_system_image_dir + "/system.img");
-  auto data_partition =
-      config::FilePartition::ReuseExistingFile(FLAGS_data_image);
-  auto cache_partition =
-      config::FilePartition::ReuseExistingFile(FLAGS_cache_image);
-  auto vendor_partition =
-      config::FilePartition::ReuseExistingFile(FLAGS_vendor_image);
-
-  std::ostringstream cmdline;
-  std::ifstream t(FLAGS_kernel_command_line);
-  if (!t) {
-    LOG(FATAL) << "Unable to open " << FLAGS_kernel_command_line;
-  }
-  cmdline << t.rdbuf();
-  t.close();
-  cmdline << " androidboot.serialno=" << FLAGS_serial_number;
-  cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
-  if (FLAGS_extra_kernel_command_line.size()) {
-    cmdline << " " << FLAGS_extra_kernel_command_line;
+  // Create data if necessary
+  if (!ApplyDataImagePolicy(FLAGS_data_image.c_str())) {
+    return false;
   }
 
-  std::string entropy_source = "/dev/urandom";
+  // Check that the files exist
+  for (const auto& file :
+       {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image, FLAGS_kernel,
+        FLAGS_initrd, FLAGS_data_image, FLAGS_kernel_command_line}) {
+    if (!FileExists(file.c_str())) {
+      LOG(FATAL) << "File not found: " << file;
+      return false;
+    }
+  }
+  return true;
+}
+
+bool SetUpGlobalConfiguration() {
+  if (!ResolveInstanceFiles()) {
+    return false;
+  }
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
-
-  config::GuestConfig cfg;
-  cfg.SetID(vsoc::GetInstance())
-      .SetVCPUs(FLAGS_cpus)
-      .SetMemoryMB(FLAGS_memory_mb)
-      .SetKernelName(FLAGS_kernel)
-      .SetInitRDName(FLAGS_initrd)
-      .SetKernelArgs(cmdline.str())
-      .SetIVShMemSocketPath(FLAGS_qemusocket)
-      .SetIVShMemVectorCount(memory_layout.GetRegions().size())
-      .SetSystemPartitionPath(system_partition->GetName())
-      .SetCachePartitionPath(cache_partition->GetName())
-      .SetDataPartitionPath(data_partition->GetName())
-      .SetVendorPartitionPath(vendor_partition->GetName())
-      .SetMobileBridgeName(FLAGS_mobile_interface)
-      .SetEntropySource(entropy_source)
-      .SetDisableDACSecurity(FLAGS_disable_dac_security)
-      .SetDisableAppArmorSecurity(FLAGS_disable_app_armor_security)
-      .SetUUID(FLAGS_uuid);
-  if(AdbUsbEnabled()) {
-    cfg.SetUSBV1SocketName(
-        GetDefaultPerInstancePath(cfg.GetInstanceName() + "-usb"));
-  }
-  cfg.SetKernelLogSocketName(
-      GetDefaultPerInstancePath(cfg.GetInstanceName() + "-kernel-log"));
-
-  std::string xml = cfg.Build();
-  if (FLAGS_log_xml) {
-    LOG(INFO) << "Using XML:\n" << xml;
+  auto config = vsoc::CuttlefishConfig::Get();
+  // Set this first so that calls to PerInstancePath below are correct
+  config->set_instance_dir(FLAGS_instance_dir);
+  if (!EnsureDirExists(FLAGS_instance_dir.c_str())) {
+    return false;
   }
 
-  VirtualUSBManager vadb(cfg.GetUSBV1SocketName(), FLAGS_vhci_port,
-                         GetPerInstanceDefault("android_usbip"));
-  vadb.Start();
+  config->set_serial_number(FLAGS_serial_number);
 
+  config->set_cpus(FLAGS_cpus);
+  config->set_memory_mb(FLAGS_memory_mb);
+
+  config->set_dpi(FLAGS_dpi);
+  config->set_x_res(FLAGS_x_res);
+  config->set_y_res(FLAGS_y_res);
+  config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
+
+  config->set_kernel_image_path(FLAGS_kernel);
+  std::ostringstream extra_cmdline;
+  extra_cmdline << " androidboot.serialno=" << FLAGS_serial_number;
+  extra_cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
+  if (FLAGS_extra_kernel_command_line.size()) {
+    extra_cmdline << " " << FLAGS_extra_kernel_command_line;
+  }
+  config->ReadKernelArgs(FLAGS_kernel_command_line.c_str(),
+                         extra_cmdline.str());
+
+  config->set_ramdisk_image_path(FLAGS_initrd);
+  config->set_system_image_path(FLAGS_system_image);
+  config->set_cache_image_path(FLAGS_cache_image);
+  config->set_data_image_path(FLAGS_data_image);
+  config->set_vendor_image_path(FLAGS_vendor_image);
+  config->set_dtb_path(FLAGS_dtb);
+
+  config->set_mempath(FLAGS_mempath);
+  config->set_ivshmem_qemu_socket_path(
+      config->PerInstancePath("ivshmem_socket_qemu"));
+  config->set_ivshmem_client_socket_path(
+      config->PerInstancePath("ivshmem_socket_client"));
+  config->set_ivshmem_vector_count(memory_layout.GetRegions().size());
+
+  config->set_usb_v1_socket_name(config->PerInstancePath("usb-v1"));
+  config->set_vhci_port(FLAGS_vhci_port);
+  config->set_usb_ip_socket_name(config->PerInstancePath("usb-ip"));
+
+  config->set_kernel_log_socket_name(config->PerInstancePath("kernel-log"));
+  config->set_console_path(config->PerInstancePath("console"));
+  config->set_logcat_path(config->PerInstancePath("logcat"));
+
+  config->set_mobile_bridge_name(FLAGS_mobile_interface);
+  config->set_mobile_tap_name(FLAGS_mobile_tap_name);
+
+  config->set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
+  config->set_wifi_host_mac_addr(FLAGS_host_mac_address);
+
+  config->set_entropy_source("/dev/urandom");
+  config->set_uuid(FLAGS_uuid);
+
+  config->set_disable_dac_security(FLAGS_disable_dac_security);
+  config->set_disable_app_armor_security(FLAGS_disable_app_armor_security);
+
+  if(!AdbUsbEnabled()) {
+    config->disable_usb_adb();
+  }
+
+  return true;
+}
+
+}  // anonymous namespace
+
+namespace launch_cvd {
+void ParseCommandLineFlags(int argc, char** argv) {
+  // The config_file is created by the launcher, so the launcher is the only
+  // host process that doesn't use the flag.
+  // Set the default to empty.
+  google::SetCommandLineOptionWithMode("config_file", "",
+                                       gflags::SET_FLAGS_DEFAULT);
+  google::ParseCommandLineFlags(&argc, &argv, true);
+  // Set the flag value to empty (in case the caller passed a value for it).
+  FLAGS_config_file = "";
+
+  ValidateAdbModeFlag();
+}
+}  // namespace launch_cvd
+
+int main(int argc, char** argv) {
+  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  launch_cvd::ParseCommandLineFlags(argc, argv);
+
+  // Do this early so that the config object is ready for anything that needs it
+  if (!SetUpGlobalConfiguration()) {
+    return -1;
+  }
+
+  auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   // TODO(b/79170615) These values need to go to the config object/file and the
   // region resizing be done by the ivserver process (or maybe the config
   // library to ensure all processes have the correct value?)
-  size_t screen_size =
+  size_t screen_region_size =
       memory_layout
           .GetRegionByName(vsoc::layout::screen::ScreenLayout::region_name)
           ->region_size();
   auto actual_width = ((FLAGS_x_res * 4) + 15) & ~15;  // aligned to 16
-  screen_size += FLAGS_num_screen_buffers *
+  screen_region_size += FLAGS_num_screen_buffers *
                  (actual_width * FLAGS_y_res + 16 /* padding */);
-  screen_size += (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
+  screen_region_size += (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
   memory_layout.ResizeRegion(vsoc::layout::screen::ScreenLayout::region_name,
-                             screen_size);
+                             screen_region_size);
   // TODO(b/79170615) Resize gralloc region too.
 
-  IVServerManager ivshmem;
+
+  auto config = vsoc::CuttlefishConfig::Get();
+  // Save the config object before starting any host process
+  if (!config->SaveToFile(GetConfigFile())) {
+    return -1;
+  }
+
+  // Start the usb manager
+  VirtualUSBManager vadb(config->usb_v1_socket_name(), config->vhci_port(),
+                         config->usb_ip_socket_name());
+  vadb.Start();
+
+  // Start IVServer
+  IVServerManager ivshmem(config->mempath(), config->ivshmem_qemu_socket_path());
   ivshmem.Start();
-  KernelLogMonitor kmon(cfg.GetKernelLogSocketName(),
-                        GetDefaultPerInstancePath("kernel.log"),
+
+  KernelLogMonitor kmon(config->kernel_log_socket_name(),
+                        config->PerInstancePath("kernel.log"),
                         FLAGS_deprecated_boot_completed);
   kmon.Start();
 
+  // TODO(b/78512938): Use a more reliable method to wait for other host
+  // processes to be ready
   sleep(1);
 
-  // Initialize the regions that require it before the VM starts.
+  // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize();
 
-  std::string launch_command = FLAGS_launch_command;
-  auto pos = launch_command.find(VIRSH_OPTIONS_PLACEHOLDER);
-  if (pos != std::string::npos) {
-    launch_command.replace(
-        pos, sizeof(VIRSH_OPTIONS_PLACEHOLDER) - 1, GetVirshOptions());
-  }
-
-  FILE* launch = popen(launch_command.c_str(), "w");
-  if (!launch) {
-    LOG(FATAL) << "Unable to execute " << launch_command;
-  }
-  int rval = fputs(xml.c_str(), launch);
-  if (rval == EOF) {
-    LOG(FATAL) << "Launch command exited while accepting XML";
-  }
-  int exit_code = pclose(launch);
-  if (exit_code) {
-    LOG(FATAL) << "Launch command exited with status " << exit_code;
+  // Start the guest VM
+  vm_manager::LibvirtManager libvirt;
+  if (!libvirt.Start()) {
+    LOG(FATAL) << "Unable to start libvirt";
+    return -1;
   }
 
   LaunchSocketForwardProxyIfEnabled();

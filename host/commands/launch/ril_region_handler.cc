@@ -22,21 +22,13 @@
 #include <memory>
 #include <string>
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-
 #include "common/vsoc/lib/ril_region_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
-#include "host/libs/config/host_config.h"
-
-DECLARE_string(hypervisor_uri);
-DECLARE_string(mobile_interface);
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace {
 
-int number_of_ones(int val) {
+int number_of_ones(unsigned long val) {
   int ret = 0;
   while (val) {
     ret += val % 2;
@@ -54,7 +46,7 @@ class NetConfig {
   std::string ril_broadcast;
 
   bool ObtainConfig(const std::string& interface) {
-    bool ret = ParseLibvirtXml(interface) && GetBroadcastAddr(interface);
+    bool ret = ParseIntefaceAttributes(interface);
     LOG(INFO) << "Network config:";
     LOG(INFO) << "ipaddr = " << ril_ipaddr;
     LOG(INFO) << "gateway = " << ril_gateway;
@@ -65,102 +57,74 @@ class NetConfig {
   }
 
  private:
-  bool GetBroadcastAddr(const std::string& interface) {
-    struct ifaddrs *ifap{}, *ifa{};
-    struct sockaddr_in *sa{};
-    char *addr{};
-    getifaddrs (&ifap);
-    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-      if (ifa->ifa_addr && ifa->ifa_addr->sa_family==AF_INET) {
-        if (strcmp(ifa->ifa_name, interface.c_str())) continue;
-        sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_ifu.ifu_broadaddr);
-        addr = inet_ntoa(sa->sin_addr);
-        this->ril_broadcast = strtok(addr, "\n");
+  bool ParseIntefaceAttributes(struct ifaddrs* ifa) {
+    // if (ifa->ifa_addr->sa_family != AF_INET) {
+    //   LOG(ERROR) << "The " << ifa->ifa_name << " interface is not IPv4";
+    //   return false;
+    // }
+    struct sockaddr_in* sa;
+    char* addr_str;
+
+    // Gateway
+    sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_addr);
+    addr_str = inet_ntoa(sa->sin_addr);
+    this->ril_gateway = strtok(addr_str, "\n");
+    auto gateway_s_addr = ntohl(sa->sin_addr.s_addr);
+
+    // Broadcast
+    sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_broadaddr);
+    addr_str = inet_ntoa(sa->sin_addr);
+    this->ril_broadcast = strtok(addr_str, "\n");
+    auto broadcast_s_addr = ntohl(sa->sin_addr.s_addr);
+
+    // Netmask
+    sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_netmask);
+    this->ril_prefixlen = number_of_ones(sa->sin_addr.s_addr);
+    auto netmask_s_addr = ntohl(sa->sin_addr.s_addr);
+
+    // Address (Find an address in the network different than the network, the
+    // gateway and the broadcast)
+    auto network = gateway_s_addr & netmask_s_addr;
+    auto s_addr = network + 1;
+    // s_addr & ~netmask_s_addr is zero when s_addr wraps around the network
+    while (s_addr & ~netmask_s_addr) {
+      if (s_addr != gateway_s_addr && s_addr != broadcast_s_addr) {
+        break;
       }
+      ++s_addr;
     }
-
-    freeifaddrs(ifap);
-    return (this->ril_broadcast.size() > 0);
-  }
-
-  bool ParseLibvirtXml(const std::string& interface) {
-    std::string net_dump_command =
-        "virsh -c " + FLAGS_hypervisor_uri + " net-dumpxml " + interface;
-    std::shared_ptr<FILE> net_xml_file(popen(net_dump_command.c_str(), "r"),
-                                       pclose);
-    if (!net_xml_file) {
-      LOG(ERROR) << "Unable to popen virsh...";
+    if (s_addr == network) {
+      LOG(ERROR) << "No available address found in interface " << ifa->ifa_name;
       return false;
     }
-    std::shared_ptr<xmlDoc> doc(
-        xmlReadFd(fileno(net_xml_file.get()), NULL, NULL, 0), xmlFreeDoc);
-    if (!doc) {
-      LOG(ERROR) << "Unable to parse network xml";
-      return false;
-    }
-
-    xmlNode* element = xmlDocGetRootElement(doc.get());
-    element = element->xmlChildrenNode;
-    while (element) {
-      if (strcmp(reinterpret_cast<const char*>(element->name), "ip") == 0) {
-        return ProcessIpNode(element);
-      }
-      element = element->next;
-    }
-    LOG(ERROR) << "ip node not found in network xml spec";
-    return false;
-  }
-
-  bool ParseIpAttributes(xmlNode* ip_node) {
-    // The gateway is the host ip address
-    this->ril_gateway = reinterpret_cast<const char*>(
-        xmlGetProp(ip_node, reinterpret_cast<const xmlChar*>("address")));
-
-    // The prefix length need to be obtained from the network mask
-    auto* netmask = reinterpret_cast<const char*>(
-        xmlGetProp(ip_node, reinterpret_cast<const xmlChar*>("netmask")));
-    int byte1, byte2, byte3, byte4;
-    sscanf(netmask, "%d.%d.%d.%d", &byte1, &byte2, &byte3, &byte4);
-    this->ril_prefixlen = 0;
-    this->ril_prefixlen += number_of_ones(byte1);
-    this->ril_prefixlen += number_of_ones(byte2);
-    this->ril_prefixlen += number_of_ones(byte3);
-    this->ril_prefixlen += number_of_ones(byte4);
+    struct in_addr addr;
+    addr.s_addr = htonl(s_addr);
+    addr_str = inet_ntoa(addr);
+    this->ril_ipaddr = strtok(addr_str, "\n");
     return true;
   }
 
-  bool ProcessDhcpNode(xmlNode* dhcp_node) {
-    xmlNode* child = dhcp_node->xmlChildrenNode;
-    while (child) {
-      if (strcmp(reinterpret_cast<const char*>(child->name), "range") == 0) {
-        this->ril_ipaddr = reinterpret_cast<const char*>(
-            xmlGetProp(child, reinterpret_cast<const xmlChar*>("start")));
-        return true;
+  bool ParseIntefaceAttributes(const std::string& interface) {
+    struct ifaddrs *ifa_list{}, *ifa{};
+    bool ret = false;
+    getifaddrs(&ifa_list);
+    for (ifa = ifa_list; ifa; ifa = ifa->ifa_next) {
+      if (strcmp(ifa->ifa_name, interface.c_str()) == 0 &&
+          ifa->ifa_addr->sa_family == AF_INET) {
+        ret = ParseIntefaceAttributes(ifa);
+        break;
       }
-      child = child->next;
     }
-    LOG(ERROR) << "range node not found in network xml spec";
-    return false;
-  }
-
-  bool ProcessIpNode(xmlNode* ip_node) {
-    ParseIpAttributes(ip_node);
-    xmlNode* child = ip_node->xmlChildrenNode;
-    while (child) {
-      if (strcmp(reinterpret_cast<const char*>(child->name), "dhcp") == 0) {
-        return ProcessDhcpNode(child);
-      }
-      child = child->next;
-    }
-    LOG(ERROR) << "dhcp node not found in network xml spec";
-    return false;
+    freeifaddrs(ifa_list);
+    return ret;
   }
 };
 }  // namespace
 
 void InitializeRilRegion() {
   NetConfig netconfig;
-  if (!netconfig.ObtainConfig(FLAGS_mobile_interface)) {
+  auto config = vsoc::CuttlefishConfig::Get();
+  if (!netconfig.ObtainConfig(config->mobile_bridge_name())) {
     LOG(ERROR) << "Unable to obtain the network configuration";
     return;
   }
@@ -175,16 +139,12 @@ void InitializeRilRegion() {
 
   auto dest = region->data();
 
-  snprintf(
-      dest->ipaddr, sizeof(dest->ipaddr), "%s", netconfig.ril_ipaddr.c_str());
-  snprintf(dest->gateway,
-           sizeof(dest->gateway),
-           "%s",
+  snprintf(dest->ipaddr, sizeof(dest->ipaddr), "%s",
+           netconfig.ril_ipaddr.c_str());
+  snprintf(dest->gateway, sizeof(dest->gateway), "%s",
            netconfig.ril_gateway.c_str());
   snprintf(dest->dns, sizeof(dest->dns), "%s", netconfig.ril_dns.c_str());
-  snprintf(dest->broadcast,
-           sizeof(dest->broadcast),
-           "%s",
+  snprintf(dest->broadcast, sizeof(dest->broadcast), "%s",
            netconfig.ril_broadcast.c_str());
   dest->prefixlen = netconfig.ril_prefixlen;
 }
