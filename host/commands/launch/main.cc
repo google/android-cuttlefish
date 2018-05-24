@@ -617,9 +617,6 @@ bool SetUpGlobalConfiguration() {
   return true;
 }
 
-}  // anonymous namespace
-
-namespace launch_cvd {
 void ParseCommandLineFlags(int argc, char** argv) {
   // The config_file is created by the launcher, so the launcher is the only
   // host process that doesn't use the flag.
@@ -632,15 +629,41 @@ void ParseCommandLineFlags(int argc, char** argv) {
 
   ValidateAdbModeFlag();
 }
-}  // namespace launch_cvd
+
+bool CleanPriorFiles() {
+  auto config = vsoc::CuttlefishConfig::Get();
+  std::string run_files = config->PerInstancePath("*") + " " +
+                          config->mempath();
+  LOG(INFO) << "Assuming run files of " << run_files;
+  // TODO(b/78512938): Shouldn't need sudo here
+  std::string fuser_cmd = "sudo fuser " + run_files + " 2> /dev/null";
+  int rval = std::system(fuser_cmd.c_str());
+  // fuser returns 0 if any of the files are open
+  if (WEXITSTATUS(rval) == 0) {
+    LOG(ERROR) << "Clean aborted: files are in use";
+    return false;
+  }
+  std::string clean_command = "sudo rm -rf " + run_files;
+  rval = std::system(clean_command.c_str());
+  if (WEXITSTATUS(rval) != 0) {
+    LOG(ERROR) << "Remove of files failed";
+    return false;
+  }
+  return true;
+}
+}  // namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  launch_cvd::ParseCommandLineFlags(argc, argv);
+  ParseCommandLineFlags(argc, argv);
 
   // Do this early so that the config object is ready for anything that needs it
   if (!SetUpGlobalConfiguration()) {
     return -1;
+  }
+
+  if (!CleanPriorFiles()) {
+    LOG(FATAL) << "Failed to clean prior files";
   }
 
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
