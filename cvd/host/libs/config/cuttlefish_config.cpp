@@ -28,8 +28,6 @@
 #include <glog/logging.h>
 #include <json/json.h>
 
-#include "common/libs/utils/environment.h"
-
 DEFINE_string(config_file,
               vsoc::GetDefaultPerInstanceDir() + "/cuttlefish_config.json",
               "A file from where to load the config values. This flag is "
@@ -77,7 +75,6 @@ const char* kYRes = "y_res";
 const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
-const char* kGdbFlag = "gdb_flag";
 const char* kKernelArgs = "kernel_args";
 const char* kRamdiskImagePath = "ramdisk_image_path";
 
@@ -100,8 +97,6 @@ const char* kIvshmemVectorCount = "ivshmem_vector_count";
 
 const char* kMobileBridgeName = "mobile_bridge_name";
 const char* kMobileTapName = "mobile_tap_name";
-const char* kWifiBridgeName = "wifi_bridge_name";
-const char* kWifiTapName = "wifi_tap_name";
 const char* kWifiGuestMacAddr = "wifi_guest_mac_addr";
 const char* kWifiHostMacAddr = "wifi_host_mac_addr";
 const char* kEntropySource = "entropy_source";
@@ -110,8 +105,6 @@ const char* kUuid = "uuid";
 const char* kDisableDacSecurity = "disable_dac_security";
 const char* kDisableAppArmorSecurity = "disable_app_armor_security";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
-
-const char* kAdbMode = "adb_mode";
 }  // namespace
 
 namespace vsoc {
@@ -159,19 +152,9 @@ void CuttlefishConfig::set_refresh_rate_hz(int refresh_rate_hz) {
 std::string CuttlefishConfig::kernel_image_path() const {
   return (*dictionary_)[kKernelImagePath].asString();
 }
-
 void CuttlefishConfig::set_kernel_image_path(
     const std::string& kernel_image_path) {
   (*dictionary_)[kKernelImagePath] = kernel_image_path;
-}
-
-std::string CuttlefishConfig::gdb_flag() const {
-  return (*dictionary_)[kGdbFlag].asString();
-}
-
-void CuttlefishConfig::set_gdb_flag(
-    const std::string& device) {
-  (*dictionary_)[kGdbFlag] = device;
 }
 
 std::string CuttlefishConfig::kernel_args() const {
@@ -310,14 +293,6 @@ void CuttlefishConfig::set_mobile_bridge_name(
   (*dictionary_)[kMobileBridgeName] = mobile_bridge_name;
 }
 
-std::string CuttlefishConfig::wifi_bridge_name() const {
-  return (*dictionary_)[kWifiBridgeName].asString();
-}
-void CuttlefishConfig::set_wifi_bridge_name(
-    const std::string& wifi_bridge_name) {
-  (*dictionary_)[kWifiBridgeName] = wifi_bridge_name;
-}
-
 std::string CuttlefishConfig::wifi_guest_mac_addr() const {
   return (*dictionary_)[kWifiGuestMacAddr].asString();
 }
@@ -339,13 +314,6 @@ std::string CuttlefishConfig::mobile_tap_name() const {
 }
 void CuttlefishConfig::set_mobile_tap_name(const std::string& mobile_tap_name) {
   (*dictionary_)[kMobileTapName] = mobile_tap_name;
-}
-
-std::string CuttlefishConfig::wifi_tap_name() const {
-  return (*dictionary_)[kWifiTapName].asString();
-}
-void CuttlefishConfig::set_wifi_tap_name(const std::string& wifi_tap_name) {
-  (*dictionary_)[kWifiTapName] = wifi_tap_name;
 }
 
 std::string CuttlefishConfig::entropy_source() const {
@@ -382,14 +350,6 @@ bool CuttlefishConfig::disable_app_armor_security() const {
 void CuttlefishConfig::set_disable_app_armor_security(
     bool disable_app_armor_security) {
   (*dictionary_)[kDisableAppArmorSecurity] = disable_app_armor_security;
-}
-
-std::string CuttlefishConfig::adb_mode() const {
-  return (*dictionary_)[kAdbMode].asString();
-}
-
-void CuttlefishConfig::set_adb_mode(const std::string& mode) {
-  (*dictionary_)[kAdbMode] = mode;
 }
 
 /*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
@@ -435,6 +395,24 @@ std::string CuttlefishConfig::instance_name() const {
   return GetPerInstanceDefault("cvd-");
 }
 
+bool CuttlefishConfig::ReadKernelArgs(const std::string& cmdline_file,
+                                      const std::string& extra_args) {
+  std::ostringstream kernel_args;
+  std::ifstream cmd_stream(cmdline_file);
+  if (!cmd_stream) {
+    LOG(WARNING) << "Unable to open " << cmdline_file;
+    return false;
+  } else {
+    kernel_args << cmd_stream.rdbuf();
+    cmd_stream.close();
+  }
+  if (!extra_args.empty()) {
+    kernel_args << " " << extra_args;
+  }
+  set_kernel_args(kernel_args.str());
+  return true;
+}
+
 int GetInstance() {
   static int instance_id = InstanceFromEnvironment();
   return instance_id;
@@ -452,34 +430,12 @@ std::string GetPerInstanceDefault(const char* prefix) {
 int GetPerInstanceDefault(int base) { return base + GetInstance() - 1; }
 
 std::string GetDefaultPerInstanceDir() {
+  // TODO(79170615): Change to a directory in home once libvirt is no longer
+  // default.
   std::ostringstream stream;
-  if (HostSupportsQemuCli()) {
-    stream << std::getenv("HOME") << "/cuttlefish_runtime";
-  } else {
-    stream << "/var/run/libvirt-" << kDefaultUuidPrefix << std::setfill('0')
-           << std::setw(2) << GetInstance();
-  }
+  stream << "/var/run/libvirt-" << kDefaultUuidPrefix << std::setfill('0')
+         << std::setw(2) << GetInstance();
   return stream.str();
 }
 
-std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (cvd::StringFromEnv("ANDROID_HOST_OUT",
-                             cvd::StringFromEnv("HOME", ".")) +
-          "/") +
-         file_name;
-}
-
-std::string DefaultGuestImagePath(const std::string& file_name) {
-  return (cvd::StringFromEnv("ANDROID_PRODUCT_OUT",
-                        cvd::StringFromEnv("HOME", ".")) +
-          "/") +
-         file_name;
-}
-
-bool HostSupportsQemuCli() {
-  static bool supported =
-      std::system(
-          "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
-  return supported;
-}
 }  // namespace vsoc
