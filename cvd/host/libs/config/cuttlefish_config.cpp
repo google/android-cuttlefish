@@ -104,6 +104,7 @@ const char* kEntropySource = "entropy_source";
 const char* kUuid = "uuid";
 const char* kDisableDacSecurity = "disable_dac_security";
 const char* kDisableAppArmorSecurity = "disable_app_armor_security";
+const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 }  // namespace
 
 namespace vsoc {
@@ -334,6 +335,13 @@ bool CuttlefishConfig::disable_dac_security() const {
 }
 void CuttlefishConfig::set_disable_dac_security(bool disable_dac_security) {
   (*dictionary_)[kDisableDacSecurity] = disable_dac_security;
+}
+
+void CuttlefishConfig::set_cuttlefish_env_path(const std::string& path) {
+  (*dictionary_)[kCuttlefishEnvPath] = path;
+}
+std::string CuttlefishConfig::cuttlefish_env_path() const {
+  return (*dictionary_)[kCuttlefishEnvPath].asString();
 }
 
 bool CuttlefishConfig::disable_app_armor_security() const {
