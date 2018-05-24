@@ -71,9 +71,4 @@ int main(int argc, char** argv) {
   fuser_cmd += " ";
   fuser_cmd += config->mempath();
   RunCommand(fuser_cmd.c_str());
-  std::string delete_cmd = "rm -f ";
-  delete_cmd += run_files;
-  RunCommand(delete_cmd.c_str());
-
-  return exit_code;
 }
