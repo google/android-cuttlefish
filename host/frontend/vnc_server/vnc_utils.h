@@ -23,7 +23,7 @@
 
 #include "common/libs/tcp_socket/tcp_socket.h"
 #include "common/vsoc/lib/screen_region_view.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cvd {
 namespace vnc {

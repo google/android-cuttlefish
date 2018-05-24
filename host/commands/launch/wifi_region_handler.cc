@@ -14,60 +14,38 @@
  * limitations under the License.
  */
 
-#include <cassert>
 #include <string>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/vsoc/lib/wifi_exchange_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 using vsoc::wifi::WifiExchangeView;
 
-namespace {
-
-std::string GetPerInstanceDefaultMacAddress(const char* base_mac) {
-  WifiExchangeView::MacAddress addr;
-  if (!WifiExchangeView::ParseMACAddress(base_mac, &addr)) {
-    LOG(FATAL) << "Unable to parse MAC address: " << base_mac;
-    return "";
-  }
-  // Modify the last byte of the mac address to make it different for every cvd
-  addr.back() = static_cast<uint8_t>(vsoc::GetPerInstanceDefault(addr.back()));
-  return WifiExchangeView::MacAddressToString(addr);
-}
-
-}  // namespace
-
-DEFINE_string(guest_mac_address,
-              GetPerInstanceDefaultMacAddress("00:43:56:44:80:01"),
-              "MAC address of the wifi interface to be created on the guest.");
-
-DEFINE_string(host_mac_address,
-              "42:00:00:00:00:00",
-              "MAC address of the wifi interface running on the host.");
-
 void InitializeWifiRegion() {
   auto region = WifiExchangeView::GetInstance(vsoc::GetDomain().c_str());
+  auto config = vsoc::CuttlefishConfig::Get();
   if (!region) {
     LOG(FATAL) << "Wifi region not found";
     return;
   }
   WifiExchangeView::MacAddress guest_mac, host_mac;
-  if (!WifiExchangeView::ParseMACAddress(FLAGS_guest_mac_address, &guest_mac)) {
+  if (!WifiExchangeView::ParseMACAddress(config->wifi_guest_mac_addr(),
+                                         &guest_mac)) {
     LOG(FATAL) << "Unable to parse guest mac address: "
-               << FLAGS_guest_mac_address;
+               << config->wifi_guest_mac_addr();
     return;
   }
-  LOG(INFO) << "Setting guest mac to " << FLAGS_guest_mac_address;
+  LOG(INFO) << "Setting guest mac to " << config->wifi_guest_mac_addr();
   region->SetGuestMACAddress(guest_mac);
-  if (!WifiExchangeView::ParseMACAddress(FLAGS_host_mac_address, &host_mac)) {
+  if (!WifiExchangeView::ParseMACAddress(config->wifi_host_mac_addr(),
+                                         &host_mac)) {
     LOG(FATAL) << "Unable to parse guest mac address: "
-               << FLAGS_guest_mac_address;
+               << config->wifi_guest_mac_addr();
     return;
   }
-  LOG(INFO) << "Setting host mac to " << FLAGS_host_mac_address;
+  LOG(INFO) << "Setting host mac to " << config->wifi_host_mac_addr();
   region->SetHostMACAddress(host_mac);
 }

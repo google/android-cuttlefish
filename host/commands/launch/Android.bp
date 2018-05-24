@@ -35,6 +35,7 @@ cc_binary_host {
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libcuttlefish_vm_manager",
         "libivserver",
         "libvadb",
         "libusbip",

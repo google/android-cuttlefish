@@ -17,7 +17,7 @@
 #include "host/frontend/vnc_server/simulated_hw_composer.h"
 
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "common/vsoc/lib/screen_region_view.h"
 
 using cvd::vnc::SimulatedHWComposer;

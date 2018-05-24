@@ -20,4 +20,5 @@ subdirs = [
     "ivserver",
     "vadb",
     "usbip",
+    "vm_manager",
 ]
