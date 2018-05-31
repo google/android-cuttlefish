@@ -35,6 +35,7 @@ Depends:
  libxml2,
  linux-image-extra-virtual | linux-image-amd64 (>= 4.9),
  psmisc,
+ python,
  qemu-kvm (>= 2.8.0),
  qemu-system-common (>= 2.8.0),
  qemu-system-x86 (>= 2.8.0),

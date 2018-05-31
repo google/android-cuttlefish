@@ -1,3 +1,9 @@
+cuttlefish-common (0.7pre2) UNRELEASED; urgency=medium
+
+  * Changes to add host capabilities
+
+ -- Jorge Moreira Broche <jemoreira@jemoreira0.mtv.corp.google.com>  Mon, 18 Jun 2018 18:21:29 -0700
+
 cuttlefish-common (0.7pre1) UNRELEASED; urgency=medium
 
   * Back out the 0.6 era wifi b/110059274
