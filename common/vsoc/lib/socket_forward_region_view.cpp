@@ -227,6 +227,7 @@ int SocketForwardRegionView::AcquireConnectionID(int port) {
         LOG(DEBUG) << "acquired queue " << id
                    << ". current seq_num: " << data()->seq_num;
         ++data()->seq_num;
+        SendSignal(layout::Sides::Peer, &data()->seq_num);
         return id;
       }
       ++id;
