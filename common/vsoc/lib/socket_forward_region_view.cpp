@@ -24,6 +24,7 @@
 
 using vsoc::layout::socket_forward::Queue;
 using vsoc::layout::socket_forward::QueuePair;
+namespace QueueState = vsoc::layout::socket_forward::QueueState;
 // store the read and write direction as variables to keep the ifdefs and macros
 // in later code to a minimum
 constexpr auto ReadDirection = &QueuePair::
@@ -83,6 +84,25 @@ constexpr int kNumQueues =
 
 void SocketForwardRegionView::CleanUpPreviousConnections() {
   data()->Recover();
+  int connection_id = 0;
+  auto current_generation = generation();
+  auto begin_packet = Packet::MakeBegin();
+  begin_packet.set_generation(current_generation);
+  auto end_packet = Packet::MakeEnd();
+  end_packet.set_generation(current_generation);
+  for (auto&& queue_pair : data()->queues_) {
+    std::uint32_t state{};
+    {
+      auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+      state = (queue_pair.*WriteDirection).queue_state_;
+#ifndef CUTTLEFISH_HOST
+      if (state == QueueState::HOST_CONNECTED) {
+        state = (queue_pair.*WriteDirection).queue_state_ =
+            (queue_pair.*ReadDirection).queue_state_ =
+                QueueState::BOTH_CONNECTED;
+      }
+#endif
+    }
 
   static constexpr auto kRestartPacket = Packet::MakeRestart();
   for (int connection_id = 0; connection_id < kNumQueues; ++connection_id) {
@@ -90,11 +110,18 @@ void SocketForwardRegionView::CleanUpPreviousConnections() {
   }
 }
 
-SocketForwardRegionView::ConnectionViewCollection
-SocketForwardRegionView::AllConnections() {
-  SocketForwardRegionView::ConnectionViewCollection all_queues;
-  for (int connection_id = 0; connection_id < kNumQueues; ++connection_id) {
-    all_queues.emplace_back(this, connection_id);
+void SocketForwardRegionView::MarkQueueDisconnected(
+    int connection_id, Queue QueuePair::*direction) {
+  auto& queue_pair = data()->queues_[connection_id];
+  auto& queue = queue_pair.*direction;
+
+#ifdef CUTTLEFISH_HOST
+  // if the host has connected but the guest hasn't seen it yet, wait for the
+  // guest to connect so the protocol can follow the normal state transition.
+  while (queue.queue_state_ == QueueState::HOST_CONNECTED) {
+    LOG(WARNING) << "closing queue[" << connection_id
+                 << "] in HOST_CONNECTED state. waiting";
+    WaitForSignal(&queue.queue_state_, QueueState::HOST_CONNECTED);
   }
   return all_queues;
 }
@@ -163,15 +190,20 @@ void SocketForwardRegionView::ShmConnectionView::Receiver::UpdatePacketAndSignal
     static constexpr auto kEmptyPacket = Packet::MakeData();
     received_packet_ = kEmptyPacket;
   }
-  received_packet_free_ = false;
-  receive_thread_data_cv_.notify_one();
-}
-
-void SocketForwardRegionView::ShmConnectionView::Receiver::Start() {
-  while (ExpectMorePackets()) {
-    std::unique_lock<std::mutex> guard(receive_thread_data_lock_);
-    while (!received_packet_free_) {
-      receive_thread_data_cv_.wait(guard);
+  ++last_seq_number_;
+  int id = 0;
+  for (auto&& queue_pair : data()->queues_) {
+    LOG(DEBUG) << "locking and checking queue at index " << id;
+    auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
+    if (queue_pair.host_to_guest.queue_state_ == QueueState::HOST_CONNECTED) {
+      CHECK(queue_pair.guest_to_host.queue_state_ ==
+            QueueState::HOST_CONNECTED);
+      LOG(DEBUG) << "found waiting connection at index " << id;
+      queue_pair.host_to_guest.queue_state_ = QueueState::BOTH_CONNECTED;
+      queue_pair.guest_to_host.queue_state_ = QueueState::BOTH_CONNECTED;
+      SendSignal(layout::Sides::Peer, &queue_pair.host_to_guest.queue_state_);
+      SendSignal(layout::Sides::Peer, &queue_pair.guest_to_host.queue_state_);
+      return id;
     }
 
     do {
