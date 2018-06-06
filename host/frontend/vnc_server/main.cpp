@@ -22,7 +22,7 @@
 #include "common/libs/glog/logging.h"
 #include "host/frontend/vnc_server/vnc_server.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_bool(agressive, false, "Whether to use agressive server");
 DEFINE_int32(port, 6444, "Port where to listen for connections");

@@ -33,7 +33,7 @@
 #include "common/vsoc/lib/socket_forward_region_view.h"
 
 #ifdef CUTTLEFISH_HOST
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
 #endif
 

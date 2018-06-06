@@ -19,7 +19,7 @@
 #include "host/commands/wifi_relay/mac80211_hwsim_driver.h"
 #include "host/commands/wifi_relay/nl_client.h"
 
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 #include <linux/netdevice.h>
 #include <linux/nl80211.h>

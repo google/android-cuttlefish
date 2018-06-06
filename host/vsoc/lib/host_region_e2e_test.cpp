@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "common/vsoc/lib/e2e_test_region_view.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 // Here is a summary of the two regions interrupt and write test:
 // 1. Write our strings to the first region

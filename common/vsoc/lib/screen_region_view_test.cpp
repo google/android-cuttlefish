@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "screen_region_view.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 #include <stdio.h>
 
 using vsoc::screen::ScreenRegionView;

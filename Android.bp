@@ -155,6 +155,7 @@ cc_binary_host {
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libjsoncpp",
         "libgflags",
     ],
     shared_libs: [
@@ -206,6 +207,7 @@ cc_binary_host {
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libjsoncpp",
         "libgtest_host",
         "libgflags",
     ],

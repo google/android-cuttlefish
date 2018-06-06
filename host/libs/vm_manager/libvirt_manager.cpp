@@ -14,41 +14,26 @@
  * limitations under the License.
  */
 
-#include "host/libs/config/guest_config.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
+
+#include <stdio.h>
+#include <cstdlib>
 #include <iomanip>
 #include <sstream>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <libxml/tree.h>
-#include "host/libs/config/host_config.h"
 
-namespace {
-std::string StringFromEnv(const char* varname, std::string defval) {
-  const char* const valstr = getenv(varname);
-  if (!valstr) {
-    return defval;
-  }
-  return valstr;
-}
-}  // namespace
+DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
+DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 
-
-std::string g_default_libvirt_domain{vsoc::GetPerInstanceDefault("cvd-")};
-//TODO(b/72969289) This should be generated
-DEFINE_string(dtb,
-              StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) +
-                  "/config/cuttlefish.dtb",
-              "Location of the cuttlefish.dtb file.");
-DEFINE_string(libvirt_domain, g_default_libvirt_domain.c_str(),
-              "Domain name to use with libvirt");
-
-// This class represents libvirt guest configuration.
 // A lot of useful information about the document created here can be found on
 // these websites:
 // - https://libvirt.org/formatdomain.html
 // - https://wiki.libvirt.org/page/Virtio
-namespace config {
+namespace vm_manager {
+
 namespace {
 // This trivial no-op helper function serves purpose of making libxml2 happy.
 // Apparently, *most* (not all!) string literals in libxml2 have to be of
@@ -120,7 +105,7 @@ void ConfigureVMFeatures(xmlNode* root,
 // This section configures target os (<os>).
 void ConfigureOperatingSystem(xmlNode* root, const std::string& kernel,
                               const std::string& initrd,
-                              const std::string& args) {
+                              const std::string& args, const std::string& dtb) {
   auto os = xmlNewChild(root, nullptr, xc("os"), nullptr);
 
   auto type = xmlNewChild(os, nullptr, xc("type"), xc("hvm"));
@@ -130,7 +115,7 @@ void ConfigureOperatingSystem(xmlNode* root, const std::string& kernel,
   xmlNewChild(os, nullptr, xc("kernel"), xc(kernel.c_str()));
   xmlNewChild(os, nullptr, xc("initrd"), xc(initrd.c_str()));
   xmlNewChild(os, nullptr, xc("cmdline"), xc(args.c_str()));
-  xmlNewChild(os, nullptr, xc("dtb"), xc(FLAGS_dtb.c_str()));
+  xmlNewChild(os, nullptr, xc("dtb"), xc(dtb.c_str()));
 }
 
 // Configure QEmu specific arguments.
@@ -210,7 +195,9 @@ void ConfigureDisk(xmlNode* devices, const std::string& name,
 // This section adds <channel> elements to <devices> node.
 void ConfigureVirtioChannel(xmlNode* devices, int port, const std::string& name,
                             DeviceSourceType type, const std::string& path) {
-  if (path.empty()) { return; }
+  if (path.empty()) {
+    return;
+  }
   auto vch = xmlNewChild(devices, nullptr, xc("channel"), nullptr);
   ConfigureDeviceSource(vch, type, path);
 
@@ -262,14 +249,19 @@ void ConfigureHWRNG(xmlNode* devices, const std::string& entsrc) {
   xmlNewProp(bend, xc("model"), xc("random"));
 }
 
-}  // namespace
-
-std::string GuestConfig::GetInstanceName() const {
-  return FLAGS_libvirt_domain;
+std::string GetLibvirtCommand() {
+  std::string cmd = "virsh";
+  if (!FLAGS_hypervisor_uri.empty()) {
+    cmd += " -c " + FLAGS_hypervisor_uri;
+  }
+  return cmd;
 }
 
-std::string GuestConfig::Build() const {
-  std::string instance_name = GetInstanceName();
+}  // namespace
+
+std::string LibvirtManager::BuildXmlConfig() const {
+  auto config = vsoc::CuttlefishConfig::Get();
+  std::string instance_name = config->instance_name();
 
   std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> xml{xmlNewDoc(xc("1.0")),
                                                    xmlFreeDoc};
@@ -277,23 +269,27 @@ std::string GuestConfig::Build() const {
   xmlDocSetRootElement(xml.get(), root);
   xmlNewProp(root, xc("type"), xc("kvm"));
 
-  ConfigureVM(root, instance_name, vcpus_, memory_mb_, uuid_);
+  ConfigureVM(root, instance_name, config->cpus(), config->memory_mb(),
+              config->uuid());
   ConfigureVMFeatures(root, {"acpi", "apic", "hap"});
-  ConfigureOperatingSystem(root, kernel_name_, initrd_name_, kernel_args_);
+  ConfigureOperatingSystem(root, config->kernel_image_path(),
+                           config->ramdisk_image_path(), config->kernel_args(),
+                           config->dtb_path());
   ConfigureQEmuSpecificOptions(
-      root,
-      {"-chardev", concat("socket,path=", ivshmem_socket_path_, ",id=ivsocket"),
-       "-device",
-       concat("ivshmem-doorbell,chardev=ivsocket,vectors=",
-              ivshmem_vector_count_),
-       "-cpu", "host"});
+      root, {"-chardev",
+             concat("socket,path=", config->ivshmem_qemu_socket_path(),
+                    ",id=ivsocket"),
+             "-device",
+             concat("ivshmem-doorbell,chardev=ivsocket,vectors=",
+                    config->ivshmem_vector_count()),
+             "-cpu", "host"});
 
-  if (disable_app_armor_security_) {
+  if (config->disable_app_armor_security()) {
     auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
     xmlNewProp(seclabel, xc("type"), xc("none"));
     xmlNewProp(seclabel, xc("model"), xc("apparmor"));
   }
-  if (disable_dac_security_) {
+  if (config->disable_dac_security()) {
     auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
     xmlNewProp(seclabel, xc("type"), xc("none"));
     xmlNewProp(seclabel, xc("model"), xc("dac"));
@@ -302,31 +298,65 @@ std::string GuestConfig::Build() const {
   auto devices = xmlNewChild(root, nullptr, xc("devices"), nullptr);
 
   ConfigureSerialPort(devices, 0, DeviceSourceType::kUnixSocketClient,
-                      GetKernelLogSocketName());
+                      config->kernel_log_socket_name());
   ConfigureSerialPort(devices, 1, DeviceSourceType::kUnixSocketServer,
-                      vsoc::GetDefaultPerInstancePath("console"));
+                      config->console_path());
   ConfigureVirtioChannel(devices, 1, "cf-logcat", DeviceSourceType::kFile,
-                         vsoc::GetDefaultPerInstancePath("logcat"));
+                         config->logcat_path());
   ConfigureVirtioChannel(devices, 2, "cf-gadget-usb-v1",
                          DeviceSourceType::kUnixSocketClient,
-                         GetUSBV1SocketName());
+                         config->usb_v1_socket_name());
 
-  ConfigureDisk(devices, "vda", system_partition_path_);
-  ConfigureDisk(devices, "vdb", data_partition_path_);
-  ConfigureDisk(devices, "vdc", cache_partition_path_);
-  ConfigureDisk(devices, "vdd", vendor_partition_path_);
+  ConfigureDisk(devices, "vda", config->system_image_path());
+  ConfigureDisk(devices, "vdb", config->data_image_path());
+  ConfigureDisk(devices, "vdc", config->cache_image_path());
+  ConfigureDisk(devices, "vdd", config->vendor_image_path());
 
-  ConfigureNIC(devices, concat("amobile", id_), mobile_bridge_name_, id_, 1);
-  ConfigureNIC(devices, concat("awifi", id_), wifi_bridge_name_, id_, 2);
-  ConfigureHWRNG(devices, entropy_source_);
+  ConfigureNIC(devices, config->mobile_tap_name(), config->mobile_bridge_name(),
+               vsoc::GetInstance(), 1);
+  ConfigureHWRNG(devices, config->entropy_source());
 
   xmlChar* tgt;
   int tgt_len;
 
   xmlDocDumpFormatMemoryEnc(xml.get(), &tgt, &tgt_len, "utf-8", true);
-  std::string out(reinterpret_cast<const char*>(tgt), tgt_len);
+  std::string out((const char*)(tgt), tgt_len);
   xmlFree(tgt);
   return out;
 }
 
-}  // namespace config
+bool LibvirtManager::Start() const {
+  std::string start_command = GetLibvirtCommand();
+  start_command += " create /dev/fd/0";
+
+  std::string xml = BuildXmlConfig();
+  if (FLAGS_log_xml) {
+    LOG(INFO) << "Using XML:\n" << xml;
+  }
+
+  FILE* launch = popen(start_command.c_str(), "w");
+  if (!launch) {
+    LOG(FATAL) << "Unable to execute " << start_command;
+    return false;
+  }
+  int rval = fputs(xml.c_str(), launch);
+  if (rval == EOF) {
+    LOG(FATAL) << "Launch command exited while accepting XML";
+    return false;
+  }
+  int exit_code = pclose(launch);
+  if (exit_code != 0) {
+    LOG(FATAL) << "Launch command exited with status " << exit_code;
+    return false;
+  }
+  return true;
+}
+
+bool LibvirtManager::Stop() const {
+  auto config = vsoc::CuttlefishConfig::Get();
+  auto stop_command = GetLibvirtCommand();
+  stop_command += " destroy " + config->instance_name();
+  return std::system(stop_command.c_str()) == 0;
+}
+
+}  // namespace vm_manager
