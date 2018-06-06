@@ -40,7 +40,6 @@
 using vsoc::GetDefaultPerInstancePath;
 using vsoc::GetPerInstanceDefault;
 
-DECLARE_int32(instance);
 // TODO(b/78512938): These parameters should go away when the launcher work is
 // completed and the process monitor handles the shutdown.
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
@@ -65,7 +64,7 @@ int main(int argc, char** argv) {
 
   // TODO(b/78512938): Should ask the monitor to do the shutdown instead
   std::ostringstream cvd_strm;
-  cvd_strm << "cvd-" << std::setfill('0') << std::setw(2) << FLAGS_instance;
+  cvd_strm << "cvd-" << std::setfill('0') << std::setw(2) << vsoc::GetInstance();
   auto cvd = cvd_strm.str();
   std::string destroy_cmd = "virsh ";
   destroy_cmd += "-c ";

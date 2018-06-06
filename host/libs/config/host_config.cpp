@@ -28,33 +28,54 @@ constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 
 DEFINE_string(domain, vsoc::GetDefaultShmClientSocketPath(),
               "Path to the ivshmem client socket");
-DEFINE_int32(instance, vsoc::GetDefaultInstance(),
-             "Instance number. Must be unique.");
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(kDefaultUuidPrefix).c_str(),
               "UUID to use for the device. Random if not specified");
 
-int vsoc::GetDefaultInstance() {
+namespace {
+
+int InstanceFromEnvironment() {
+  static constexpr char kInstanceEnvironmentVariable[] = "CUTTLEFISH_INSTANCE";
   static constexpr char kVsocUserPrefix[] = "vsoc-";
-  const char* user = std::getenv("USER");
-  if (user && !std::strncmp(user, kVsocUserPrefix,
-                            sizeof(kVsocUserPrefix) - 1)) {
-    int temp = std::atoi(user + sizeof(kVsocUserPrefix) - 1);
-    if (temp > 0) {
-      return temp;
+  static constexpr int kDefaultInstance = 1;
+
+  // CUTTLEFISH_INSTANCE environment variable
+  const char * instance_str = std::getenv(kInstanceEnvironmentVariable);
+  if (!instance_str) {
+    // Try to get it from the user instead
+    instance_str = std::getenv("USER");
+    if (!instance_str || std::strncmp(instance_str, kVsocUserPrefix,
+                                      sizeof(kVsocUserPrefix) - 1)) {
+      // No user or we don't recognize this user
+      return kDefaultInstance;
     }
+    instance_str += sizeof(kVsocUserPrefix) - 1;
+    // Set the environment variable so that child processes see it
+    setenv(kInstanceEnvironmentVariable, instance_str, 0);
   }
-  return 1;
+
+  int instance = std::atoi(instance_str);
+  if (instance <= 0) {
+    instance = kDefaultInstance;
+  }
+
+  return instance;
+}
+
+} // namespace
+
+int vsoc::GetInstance() {
+  static int instance = InstanceFromEnvironment();
+  return instance;
 }
 
 std::string vsoc::GetPerInstanceDefault(const char* prefix) {
   std::ostringstream stream;
-  stream << prefix << std::setfill('0') << std::setw(2)
-         << GetDefaultInstance();
+  stream << prefix << std::setfill('0') << std::setw(2) << GetInstance();
   return stream.str();
 }
 
 int vsoc::GetPerInstanceDefault(int base) {
-  return base + GetDefaultInstance() - 1;
+  return base + GetInstance() - 1;
 }
 
 std::string vsoc::GetDefaultPerInstanceDir() {
