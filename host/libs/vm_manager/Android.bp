@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2018 The Android Open Source Project
+// Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,26 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
-    name: "stop_cvd",
+cc_library_host_static {
+    name: "libcuttlefish_vm_manager",
     srcs: [
-        "main.cc",
+        "libvirt_manager.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     shared_libs: [
-        "libbase",
         "libcuttlefish_fs",
         "cuttlefish_auto_resources",
+        "libbase",
         "libicuuc",
     ],
     static_libs: [
-        "libcuttlefish_host_config",
-        "libcuttlefish_vm_manager",
-        "libjsoncpp",
-        "libgflags",
         "libxml2",
+        "libgflags",
+        "libcuttlefish_host_config",
+        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_only"],
 }

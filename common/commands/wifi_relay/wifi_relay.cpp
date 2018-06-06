@@ -20,7 +20,7 @@
 #include "common/commands/wifi_relay/nl_client.h"
 
 #if defined(CUTTLEFISH_HOST)
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 #endif
 
 #include <linux/netdevice.h>

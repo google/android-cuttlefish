@@ -14,29 +14,23 @@
  * limitations under the License.
  */
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/vsoc/lib/screen_region_view.h"
 #include "host/commands/launch/pre_launch_initializers.h"
-#include "host/libs/config/host_config.h"
-
-DEFINE_int32(x_res, 720, "Width of the screen in pixels");
-DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
-DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
-DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
-DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
+#include "host/libs/config/cuttlefish_config.h"
 
 void InitializeScreenRegion() {
   auto region =
       vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
+  auto config = vsoc::CuttlefishConfig::Get();
   if (!region) {
-    LOG(ERROR) << "Screen region was not found";
+    LOG(FATAL) << "Screen region was not found";
     return;
   }
   auto dest = region->data();
-  dest->x_res = FLAGS_x_res;
-  dest->y_res = FLAGS_y_res;
-  dest->dpi = FLAGS_dpi;
-  dest->refresh_rate_hz = FLAGS_refresh_rate_hz;
+  dest->x_res = config->x_res();
+  dest->y_res = config->y_res();
+  dest->dpi = config->dpi();
+  dest->refresh_rate_hz = config->refresh_rate_hz();
 }

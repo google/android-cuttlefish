@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  * Copyright (C) 2017 The Android Open Source Project
  *
@@ -15,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/* Host-specific values associated with RegionControl. */
+#pragma once
 
 #include <string>
 
-namespace vsoc {
-int GetDefaultInstance();
-std::string GetPerInstanceDefault(const char* prefix);
-int GetPerInstanceDefault(int base);
-std::string GetDefaultPerInstanceDir();
-std::string GetDefaultPerInstancePath(const std::string& basename);
-std::string GetDefaultShmClientSocketPath();
-std::string GetDomain();
-}  // namespace vsoc
+#include "host/libs/config/cuttlefish_config.h"
+
+namespace vm_manager {
+
+class LibvirtManager {
+ public:
+  LibvirtManager() = default;
+  ~LibvirtManager() = default;
+
+  bool Start() const;
+  bool Stop() const;
+
+ protected:
+  std::string BuildXmlConfig() const;
+};
+
+}  // namespace vm_manager

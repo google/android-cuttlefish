@@ -36,6 +36,7 @@ cc_binary {
         host: {
             static_libs: [
                 "libcuttlefish_host_config",
+                "libjsoncpp",
                 "libadb_connection_maintainer",
             ],
         },
