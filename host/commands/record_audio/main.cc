@@ -17,7 +17,7 @@
 #include "common/vsoc/lib/audio_data_region_view.h"
 #include "common/vsoc/lib/circqueue_impl.h"
 #include "common/vsoc/lib/vsoc_audio_message.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 #include "WaveWriter.h"
 
