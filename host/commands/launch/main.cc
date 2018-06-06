@@ -654,10 +654,6 @@ int main(int argc, char** argv) {
                         FLAGS_deprecated_boot_completed);
   kmon.Start();
 
-  // TODO(b/78512938): Use a more reliable method to wait for other host
-  // processes to be ready
-  sleep(1);
-
   // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize();
 
