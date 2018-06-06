@@ -27,6 +27,7 @@ cc_binary_host {
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libjsoncpp",
         "libgflags",
     ],
     defaults: ["cuttlefish_host_only"],

@@ -35,25 +35,15 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "host/libs/config/host_config.h"
-
-using vsoc::GetDefaultPerInstancePath;
-using vsoc::GetPerInstanceDefault;
-
-// TODO(b/78512938): These parameters should go away when the launcher work is
-// completed and the process monitor handles the shutdown.
-DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
-std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
-DEFINE_string(mempath,
-              g_default_mempath.c_str(),
-              "Target location for the shmem file.");
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
 
 namespace {
 void RunCommand(const char* command) {
-  LOG(INFO) << "Running: " << command;
   int rval = std::system(command);
   if (rval) {
-    LOG(ERROR) << "Unable to execute command: " << command;
+    LOG(ERROR) << "Unable to execute command: " << command
+               << ". Exit code: " << rval;
   }
 }
 }  // anonymous namespace
@@ -62,25 +52,28 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
+  int exit_code = 0;
+
   // TODO(b/78512938): Should ask the monitor to do the shutdown instead
-  std::ostringstream cvd_strm;
-  cvd_strm << "cvd-" << std::setfill('0') << std::setw(2) << vsoc::GetInstance();
-  auto cvd = cvd_strm.str();
-  std::string destroy_cmd = "virsh ";
-  destroy_cmd += "-c ";
-  destroy_cmd += FLAGS_hypervisor_uri;
-  destroy_cmd += " destroy ";
-  destroy_cmd += cvd;
-  RunCommand(destroy_cmd.c_str());
+  vm_manager::LibvirtManager libvirt_manager;
+  if (!libvirt_manager.Stop()) {
+    LOG(ERROR)
+        << "Error when stopping guest virtual machine. Is it still running?";
+    exit_code = 1;
+  }
+
+  auto config = vsoc::CuttlefishConfig::Get();
 
   // TODO(b/78512938): Shouldn't need sudo to shut down
-  std::string run_files = vsoc::GetDefaultPerInstanceDir() + "/*";
+  std::string run_files = config->PerInstancePath("*");
   std::string fuser_cmd = "sudo fuser -k ";
   fuser_cmd += run_files;
   fuser_cmd += " ";
-  fuser_cmd += FLAGS_mempath;
+  fuser_cmd += config->mempath();
   RunCommand(fuser_cmd.c_str());
   std::string delete_cmd = "rm -f ";
   delete_cmd += run_files;
   RunCommand(delete_cmd.c_str());
+
+  return exit_code;
 }
