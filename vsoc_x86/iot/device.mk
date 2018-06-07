@@ -16,7 +16,7 @@
 
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 $(call inherit-product, device/google/iot/iot_base.mk)
-$(call inherit-product, device/google/iot/iot_board_config_base.mk)
+$(call inherit-product, device/google/iot/iot_board_config_minimal.mk)
 
 PRODUCT_NAME := aosp_cf_x86_iot
 PRODUCT_DEVICE := vsoc_x86
