@@ -15,9 +15,9 @@
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
+LOCAL_VENDOR_MODULE := true
 
 LOCAL_SHARED_LIBRARIES := \
-    libvsocframebuffer \
     libbase \
     liblog \
     libcutils \
@@ -25,6 +25,7 @@ LOCAL_SHARED_LIBRARIES := \
     libsync \
     libhardware \
     libjpeg \
+    vsoc_lib \
     $(VSOC_STLPORT_LIBS)
 
 LOCAL_STATIC_LIBRARIES := \
@@ -44,6 +45,7 @@ LOCAL_CFLAGS += \
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
+    device/google/cuttlefish_kernel \
     external/libyuv/files/include \
     bionic \
     $(VSOC_STLPORT_INCLUDES)

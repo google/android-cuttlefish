@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 #pragma once
-#include <linux/if_ether.h>
 
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"
 #include "common/vsoc/shm/lock.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for wifi packet exchange region.
 namespace vsoc {
@@ -27,22 +25,22 @@ namespace layout {
 namespace wifi {
 
 struct WifiExchangeLayout : public RegionLayout {
+  static constexpr size_t layout_size = 2 * CircularPacketQueue<16, 8192>::layout_size + 12;
+
   // Traffic originating from host that proceeds towards guest.
   CircularPacketQueue<16, 8192> guest_ingress;
   // Traffic originating from guest that proceeds towards host.
   CircularPacketQueue<16, 8192> guest_egress;
 
-  // config_lock_ manages access to configuration section
-  SpinLock config_lock_;
-  // config_ready_ indicates whether config section is ready to be accessed.
-  bool config_ready_;
   // Desired MAC address for guest device.
-  uint8_t mac_address[ETH_ALEN];
+  uint8_t guest_mac_address[6];
+  // MAC address of host device.
+  uint8_t host_mac_address[6];
 
   static const char* region_name;
 };
 
-ASSERT_SHM_COMPATIBLE(WifiExchangeLayout, wifi);
+ASSERT_SHM_COMPATIBLE(WifiExchangeLayout);
 
 }  // namespace wifi
 }  // namespace layout

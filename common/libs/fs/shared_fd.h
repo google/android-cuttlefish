@@ -147,6 +147,7 @@ class SharedFD {
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
+  static SharedFD SocketLocalClient(int port, int type);
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
@@ -415,6 +416,13 @@ class FileInstance {
       fd_array[i] = fds[i]->fd_;
     }
     return SendMsg(&msg, flags);
+  }
+
+  int Shutdown(int how) {
+    errno = 0;
+    int rval = shutdown(fd_, how);
+    errno_ = errno;
+    return rval;
   }
 
   ssize_t SendTo(const void* buf, size_t len, int flags,

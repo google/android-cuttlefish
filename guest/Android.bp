@@ -15,4 +15,5 @@
 
 subdirs = [
     "commands",
+    "hals/health",
 ]

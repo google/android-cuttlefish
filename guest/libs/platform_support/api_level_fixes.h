@@ -63,6 +63,7 @@
 #define VSOC_PLATFORM_SDK_N_MR1            25
 #define VSOC_PLATFORM_SDK_O                26
 #define VSOC_PLATFORM_SDK_O_MR1            27
+#define VSOC_PLATFORM_SDK_P                28
 #define VSOC_PLATFORM_SDK_LAST_SHIPPED     27
 
 #define VSOC_PLATFORM_SDK_BEFORE(X) (VSOC_PLATFORM_SDK_VERSION < VSOC_PLATFORM_SDK_##X)

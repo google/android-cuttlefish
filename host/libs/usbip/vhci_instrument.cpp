@@ -23,6 +23,7 @@
 
 #include <glog/logging.h>
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include "common/libs/fs/shared_select.h"
 
@@ -52,8 +53,8 @@ constexpr uint32_t kDefaultDeviceSpeed = 3;
 
 // Subsystem and device type where VHCI driver is located.
 const char* const kVHCIPlatformPaths[] = {
-  "/sys/devices/platform/vhci_hcd",
-  "/sys/devices/platform/vhci_hcd.1",
+    "/sys/devices/platform/vhci_hcd",
+    "/sys/devices/platform/vhci_hcd.1",
 };
 
 // Control messages.
@@ -70,19 +71,14 @@ enum EpollEventType {
   kVHCIEvent,
 };
 
-// Port status values deducted from /sys/devices/platform/vhci_hcd/status
-enum {
-  // kVHCIPortFree indicates the port is not currently in use.
-  kVHCIStatusPortFree = 4
-};
 }  // anonymous namespace
 
-VHCIInstrument::VHCIInstrument(const std::string& name)
-    : name_(name) {}
+VHCIInstrument::VHCIInstrument(int port, const std::string& name)
+    : name_(name), port_{port} {}
 
 VHCIInstrument::~VHCIInstrument() {
   control_write_end_->Write(&kControlExit, sizeof(kControlExit));
-  attach_thread_->join();
+  attach_thread_.join();
 }
 
 bool VHCIInstrument::Init() {
@@ -103,40 +99,46 @@ bool VHCIInstrument::Init() {
     return false;
   }
 
-  if (!FindFreePort()) {
-    LOG(ERROR) << "It appears all your VHCI ports are currently occupied.";
-    LOG(ERROR) << "New VHCI device cannot be registered unless one of the "
-               << "ports is freed.";
+  if (!VerifyPortIsFree()) {
+    LOG(ERROR) << "Trying to use VHCI port " << port_ << " but it is already in"
+               << " use.";
     return false;
   }
 
-  attach_thread_.reset(new std::thread([this]() { AttachThread(); }));
+  LOG(INFO) << "Using VHCI port " << port_;
+  attach_thread_ = std::thread([this] { AttachThread(); });
   return true;
 }
 
-bool VHCIInstrument::FindFreePort() {
-  std::ifstream stat(syspath_ + "/status");
-  int port;
-  int status;
-  std::string everything_else;
+bool VHCIInstrument::VerifyPortIsFree() const {
+  std::ifstream status_file(syspath_ + "/status");
 
-  if (!stat.is_open()) {
+  if (!status_file.good()) {
     LOG(ERROR) << "Could not open usb-ip status file.";
     return false;
   }
 
   // Skip past the header line.
-  std::getline(stat, everything_else);
+  status_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-  while (stat.rdstate() == std::ios_base::goodbit) {
-    stat >> port >> status;
-    std::getline(stat, everything_else);
-    if (status == kVHCIStatusPortFree) {
-      port_ = port;
-      LOG(INFO) << "Using VHCI port " << port_;
-      return true;
+  while (true) {
+    // Port status values deducted from /sys/devices/platform/vhci_hcd/status
+    // kVHCIPortFree indicates the port is not currently in use.
+    constexpr static int kVHCIStatusPortFree = 4;
+
+    int port{};
+    int status{};
+    status_file >> port >> status;
+    if (!status_file.good()) {
+      break;
+    }
+
+    status_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    if (port_ == port) {
+      return status == kVHCIStatusPortFree;
     }
   }
+  LOG(ERROR) << "Couldn't find status for VHCI port " << port_;
   return false;
 }
 
@@ -245,8 +247,8 @@ bool VHCIInstrument::Attach() {
     // It is unclear whether duplicate FD should remain open or not. There are
     // cases supporting both assumptions, likely related to kernel version.
     // Kernel 4.10 is having problems communicating with USB/IP server if the
-    // socket is closed after it's passed to kernel. It is a clear indication that
-    // the kernel requires the socket to be kept open.
+    // socket is closed after it's passed to kernel. It is a clear indication
+    // that the kernel requires the socket to be kept open.
     success = attach.rdstate() == std::ios_base::goodbit;
     // Make sure everything was written and flushed. This happens when we close
     // the ofstream attach.

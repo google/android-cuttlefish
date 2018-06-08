@@ -32,15 +32,16 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"
-#include "host/frontend/vnc_server/tcp_socket.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using cvd::vnc::Message;
+using cvd::Message;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
 using cvd::vnc::VncClientConnection;
+using vsoc::screen::ScreenRegionView;
 
 DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
 
@@ -143,18 +144,18 @@ std::int32_t int32_tAt(const void* p) {
 }
 
 std::uint32_t RedVal(std::uint32_t pixel) {
-  return (pixel >> GceFrameBuffer::kRedShift) &
-         ((0x1 << GceFrameBuffer::kRedBits) - 1);
+  return (pixel >> ScreenRegionView::kRedShift) &
+         ((0x1 << ScreenRegionView::kRedBits) - 1);
 }
 
 std::uint32_t BlueVal(std::uint32_t pixel) {
-  return (pixel >> GceFrameBuffer::kBlueShift) &
-         ((0x1 << GceFrameBuffer::kBlueBits) - 1);
+  return (pixel >> ScreenRegionView::kBlueShift) &
+         ((0x1 << ScreenRegionView::kBlueBits) - 1);
 }
 
 std::uint32_t GreenVal(std::uint32_t pixel) {
-  return (pixel >> GceFrameBuffer::kGreenShift) &
-         ((0x1 << GceFrameBuffer::kGreenBits) - 1);
+  return (pixel >> ScreenRegionView::kGreenShift) &
+         ((0x1 << ScreenRegionView::kGreenBits) - 1);
 }
 }  // namespace
 namespace cvd {
@@ -175,11 +176,7 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
 VncClientConnection::VncClientConnection(ClientSocket client,
                                          VirtualInputs* virtual_inputs,
                                          BlackBoard* bb, bool aggressive)
-    : client_{std::move(client)},
-      sensor_event_hal_{cvd::SharedFD::SocketSeqPacketClient(
-          gce_sensors_message::kSensorsHALSocketName)},
-      virtual_inputs_{virtual_inputs},
-      bb_{bb} {
+    : client_{std::move(client)}, virtual_inputs_{virtual_inputs}, bb_{bb} {
   frame_buffer_request_handler_tid_ = std::thread(
       &VncClientConnection::FrameBufferUpdateRequestHandler, this, aggressive);
 }
@@ -316,7 +313,7 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
 
 void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
                                           const Stripe& stripe) const {
-  using Pixel = GceFrameBuffer::Pixel;
+  using Pixel = ScreenRegionView::Pixel;
   auto& fbu = *frame_buffer_update;
   AppendRawStripeHeader(&fbu, stripe);
   auto init_size = fbu.size();
@@ -515,41 +512,7 @@ void VncClientConnection::HandlePointerEvent() {
 
 void VncClientConnection::UpdateAccelerometer(float /*x*/, float /*y*/,
                                               float /*z*/) {
-  // // Discard the event if we don't have a connection to the HAL.
-  // if (!sensor_event_hal_->IsOpen()) {
-  //   LOG(ERROR) << "sensor event client not open";
-  //   return;
-  // }
-  // timespec current_time{};
-  // clock_gettime(CLOCK_MONOTONIC, &current_time);
-  // // Construct the sensor message.
-  // gce_sensors_message message{};
-  // message.version = sizeof message;
-  // message.sensor = cvd::sensors_constants::kAccelerometerHandle;
-  // message.type = SENSOR_TYPE_ACCELEROMETER;
-  // message.timestamp = current_time.tv_sec * static_cast<int64_t>(1000000000)
-  // +
-  //                     current_time.tv_nsec;
-  // message.data[0] = x;
-  // message.data[1] = y;
-  // message.data[2] = z;
-
-  // std::array<iovec, 1> msg_iov{};
-  // msg_iov[0].iov_base = &message;
-  // msg_iov[0].iov_len = sizeof(sensors_event_t);
-
-  // msghdr msg;
-  // msg.msg_name = nullptr;
-  // msg.msg_namelen = 0;
-  // msg.msg_iov = msg_iov.data();
-  // msg.msg_iovlen = msg_iov.size();
-  // msg.msg_control = nullptr;
-  // msg.msg_controllen = 0;
-  // msg.msg_flags = 0;
-  // if (sensor_event_hal_->SendMsg(&msg, 0) == -1) {
-  //   LOG(ERROR) << __FUNCTION__ << ": Could not send sensor data. (%s)." <<
-  //         sensor_event_hal_->StrError();
-  // }
+  // TODO(jemoreira): Implement when vsoc sensor hal is updated
 }
 
 VncClientConnection::Coordinates VncClientConnection::CoordinatesForOrientation(

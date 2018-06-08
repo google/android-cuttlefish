@@ -52,8 +52,6 @@ public class GceService extends Service {
 
     private GceWifiManager mWifiManager = null;
     private String mMostRecentAction = null;
-    private BinderService mBinderService;
-
 
     public GceService() {}
 
@@ -131,16 +129,14 @@ public class GceService extends Service {
             mExecutor.schedule(mBluetoothChecker);
         }
 
-        mBinderService = new BinderService();
-        ServiceManager.addService("gce", mBinderService, false);
-
         /* If anything goes wrong, make sure we receive intent again. */
         return Service.START_STICKY;
     }
 
     /** Dump the virtual device state
      */
-    private void dumpInternal(FileDescriptor fd, PrintWriter pw, String[] args) {
+    @Override
+    protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         pw.println("Boot reporter:");
         List<String> messageList = mBootReporter.getMessageList();
         for (int i = 0; i < messageList.size(); i++) {
@@ -158,11 +154,5 @@ public class GceService extends Service {
         pw.println("  Tombstone dropped (on boot): "
             + !mTombstoneChecker.getTombstoneResult().isDone());
         pw.println("");
-    }
-
-    private final class BinderService extends Binder {
-        @Override protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-            dumpInternal(fd, pw, args);
-        }
     }
 }

@@ -36,13 +36,18 @@
 
 #include <guest/libs/platform_support/api_level_fixes.h>
 
-#include "guest/libs/legacy_framebuffer/vsoc_framebuffer.h"
-#include "guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h"
-#include "guest/libs/legacy_framebuffer/RegionRegistry.h"
-#include "gralloc_vsoc_priv.h"
 #include "common/libs/auto_resources/auto_resources.h"
+#include "common/vsoc/lib/screen_region_view.h"
+#include "gralloc_vsoc_priv.h"
+#include "region_registry.h"
+
+using vsoc::screen::ScreenRegionView;
 
 /*****************************************************************************/
+
+static inline size_t roundUpToPageSize(size_t x) {
+  return (x + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1);
+}
 
 static int gralloc_alloc_buffer(
     alloc_device_t* /*dev*/, int format, int w, int h,
@@ -59,9 +64,9 @@ static int gralloc_alloc_buffer(
   // a gralloc buffer in this format.
   ALOG_ASSERT(format != HAL_PIXEL_FORMAT_RGB_888);
   if (format == HAL_PIXEL_FORMAT_YV12) {
-    bytes_per_line = VSoCFrameBuffer::align(bytes_per_pixel * w, 16);
+    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w, 16);
   } else {
-    bytes_per_line = VSoCFrameBuffer::align(bytes_per_pixel * w);
+    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w);
   }
   size = roundUpToPageSize(size + formatToBytesPerFrame(format, w, h));
   size += PAGE_SIZE;
@@ -94,109 +99,13 @@ static int gralloc_alloc_buffer(
 
 /*****************************************************************************/
 
-static int ensure_framebuffer_allocated(private_module_t* m) {
-  // allocate the framebuffer
-  if (m->framebuffer == NULL) {
-    // The framebuffer is mapped once and forever.
-    int err = initUserspaceFrameBuffer(m);
-    if (err < 0) {
-      ALOGE("Failed to map framebuffer (%d)", errno);
-      return err;
-    }
-  }
-  return 0;
-}
-
-static int gralloc_free_framebuffer(private_handle_t const * hnd) {
-    static const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
-    static VSoCFrameBufferControl& fb_control =
-        VSoCFrameBufferControl::getInstance();
-
-    // free this buffer
-    const size_t bufferSize = config.line_length() * config.y_res();
-    int index = hnd->frame_offset / bufferSize;
-    return fb_control.UnsetBufferBits(1LU << index);
-}
-
-// Allocates a framebuffer taken from the set of buffers given by buffer_mask.
-static int gralloc_alloc_framebuffer(alloc_device_t* dev,
-                                     buffer_handle_t* pHandle,
-                                     int* pStrideInPixels,
-                                     uint32_t buffer_mask) {
-  static const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
-  static VSoCFrameBufferControl& fb_control =
-      VSoCFrameBufferControl::getInstance();
-
-  private_module_t* m = reinterpret_cast<private_module_t*>(
-      dev->common.module);
-
-  ensure_framebuffer_allocated(m);
-
-  const uint32_t numBuffers = VSoCFrameBuffer::kNumBuffers;
-  const size_t bufferSize = config.bufferSize();
-
-  // Paranoia: Force the mask to be valid
-  buffer_mask &= (1LU << numBuffers) - 1;
-
-  uint32_t bit = fb_control.GetAndSetNextAvailableBufferBit(buffer_mask);
-  if (!bit) {
-    // All buffers in the mask have been allocated already or there was another
-    // error
-    return -ENOMEM;
-  }
-
-  int frame_offset = 0;
-  while (bit != 1LU) {
-    bit >>= 1;
-    frame_offset += bufferSize;
-  }
-
-  int stride_in_pixels = config.line_length() / (config.bits_per_pixel() / 8);
-
-  // create a "fake" handle for it
-  private_handle_t* hnd = new private_handle_t(
-      dup(m->framebuffer->fd), config.total_buffer_size(),
-      config.hal_format(), config.x_res(), config.y_res(),
-      stride_in_pixels, private_handle_t::PRIV_FLAGS_FRAMEBUFFER, frame_offset);
-
-  *pHandle = hnd;
-  if (pStrideInPixels) {
-    *pStrideInPixels = stride_in_pixels;
-  }
-
-  return 0;
-}
-
-static int gralloc_alloc_sf_framebuffer(alloc_device_t* dev,
-                                        buffer_handle_t* pHandle,
-                                        int* pStrideInPixels) {
-  uint32_t mask = (1LU << VSoCFrameBuffer::kNumSfBuffers) - 1LU;
-  // Skip the first buffers since those are for HWC usage
-  mask <<= VSoCFrameBuffer::kNumHwcBuffers;
-  return gralloc_alloc_framebuffer(dev, pHandle, pStrideInPixels, mask);
-}
-
-static int gralloc_alloc_hwc_framebuffer(alloc_device_t* dev,
-                                         buffer_handle_t* pHandle) {
-  // Use the first kNumHwcBuffers for hwcomposer
-  uint32_t mask = (1LU << VSoCFrameBuffer::kNumHwcBuffers) - 1LU;
-  return gralloc_alloc_framebuffer(dev, pHandle, NULL, mask);
-}
-
-/*****************************************************************************/
-
-static int gralloc_alloc(
-    alloc_device_t* dev, int w, int h, int format, int usage,
-    buffer_handle_t* pHandle, int* pStrideInPixels) {
+static int gralloc_alloc(alloc_device_t* dev, int w, int h, int format,
+                         int /*usage*/, buffer_handle_t* pHandle,
+                         int* pStrideInPixels) {
   if (!pHandle || !pStrideInPixels)
     return -EINVAL;
 
-  int err;
-  if (usage & GRALLOC_USAGE_HW_FB) {
-    err = gralloc_alloc_sf_framebuffer(dev, pHandle, pStrideInPixels);
-  } else {
-    err = gralloc_alloc_buffer(dev, format, w, h, pHandle, pStrideInPixels);
-  }
+  int err = gralloc_alloc_buffer(dev, format, w, h, pHandle, pStrideInPixels);
 
   if (err < 0) {
     return err;
@@ -209,15 +118,9 @@ static int gralloc_free(alloc_device_t* /*dev*/, buffer_handle_t handle) {
     return -EINVAL;
   }
 
-  int retval = 0;
-
   private_handle_t const* hnd = reinterpret_cast<private_handle_t const*>(
     handle);
-  if (hnd->flags & private_handle_t::PRIV_FLAGS_FRAMEBUFFER) {
-    retval = gralloc_free_framebuffer(hnd);
-  } else {
-    retval = unreference_region(__FUNCTION__, hnd);
-  }
+  int retval = unreference_region(__FUNCTION__, hnd);
 
   close(hnd->fd);
   delete hnd;
@@ -256,8 +159,6 @@ static int gralloc_device_open(
 
     dev->device.alloc   = gralloc_alloc;
     dev->device.free    = gralloc_free;
-    dev->alloc_hwc_framebuffer = gralloc_alloc_hwc_framebuffer;
-
 
     *device = &dev->device.common;
     status = 0;
@@ -299,6 +200,4 @@ struct private_module_t HAL_MODULE_INFO_SYM = {
     VSOC_STATIC_INITIALIZER(lock_ycbcr) gralloc_lock_ycbcr,
 #endif
   },
-  VSOC_STATIC_INITIALIZER(framebuffer) 0,
-  VSOC_STATIC_INITIALIZER(lock) PTHREAD_MUTEX_INITIALIZER,
 };

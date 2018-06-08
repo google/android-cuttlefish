@@ -17,6 +17,8 @@
 #ifndef HW_EMULATOR_CAMERA_EMULATED_CAMERA_H
 #define HW_EMULATOR_CAMERA_EMULATED_CAMERA_H
 
+#include "guest/libs/platform_support/api_level_fixes.h"
+
 /*
  * Contains declaration of a class EmulatedCamera that encapsulates
  * functionality common to all version 1.0 emulated camera devices ("fake",
@@ -26,14 +28,18 @@
  * defined by camera_device_ops_t API.
  */
 
+#if VSOC_PLATFORM_SDK_BEFORE(O_MR1)
+#include <camera/CameraParameters.h>
+#else
 #include <CameraParameters.h>
+using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
+using ::android::hardware::camera::common::V1_0::helper::Size;
+#endif
+
 #include "CallbackNotifier.h"
 #include "EmulatedBaseCamera.h"
 #include "EmulatedCameraDevice.h"
 #include "PreviewWindow.h"
-
-using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
-using ::android::hardware::camera::common::V1_0::helper::Size;
 
 namespace android {
 
@@ -121,7 +127,7 @@ class EmulatedCamera : public camera_device, public EmulatedBaseCamera {
   virtual status_t getCameraInfo(struct camera_info* info);
 
   /** Override of base class method */
-  virtual status_t getImageMetadata(struct ImageMetadata* meta);
+  virtual const CameraParameters* getCameraParameters() override;
 
   /****************************************************************************
    * Camera API implementation.

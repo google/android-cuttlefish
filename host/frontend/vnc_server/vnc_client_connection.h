@@ -25,8 +25,8 @@
 #include <thread>
 #include <vector>
 
+#include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/frontend/vnc_server/blackboard.h"
-#include "host/frontend/vnc_server/tcp_socket.h"
 #include "host/frontend/vnc_server/virtual_inputs.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
@@ -137,7 +137,6 @@ class VncClientConnection {
 
   mutable std::mutex m_;
   ClientSocket client_;
-  cvd::SharedFD sensor_event_hal_;
   bool control_key_down_ = false;
   bool meta_key_down_ = false;
   VirtualInputs* virtual_inputs_{};

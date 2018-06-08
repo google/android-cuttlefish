@@ -23,10 +23,10 @@
 
 #include "log/log.h"
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "common/vsoc/lib/input_events_region_view.h"
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 using vsoc::input_events::InputEvent;
 using vsoc::input_events::InputEventsRegionView;
 using vsoc_input_service::VirtualDeviceBase;
@@ -36,12 +36,6 @@ using vsoc_input_service::VirtualTouchScreen;
 using vsoc_input_service::VSoCInputService;
 
 namespace {
-
-template <class RegionView>
-RegionView* GetRegionView() {
-  static RegionView instance;
-  return &instance;
-}
 
 void EventLoop(std::shared_ptr<VirtualDeviceBase> device,
                std::function<int(InputEvent*, int)> next_events) {
@@ -70,14 +64,14 @@ bool VSoCInputService::SetUpDevices() {
     return false;
   }
 
-  FBBroadcastRegionView* fb_broadcast = GetRegionView<FBBroadcastRegionView>();
-  if (!fb_broadcast->Open()) {
+  auto screen_view = ScreenRegionView::GetInstance();
+  if (!screen_view) {
     SLOGE("Failed to open framebuffer broadcast region");
     return false;
   }
 
   virtual_touchscreen_.reset(
-      new VirtualTouchScreen(fb_broadcast->x_res(), fb_broadcast->y_res()));
+      new VirtualTouchScreen(screen_view->x_res(), screen_view->y_res()));
   if (!virtual_touchscreen_->SetUp()) {
     return false;
   }
@@ -86,32 +80,30 @@ bool VSoCInputService::SetUpDevices() {
 }
 
 bool VSoCInputService::ProcessEvents() {
-  InputEventsRegionView* input_events_rv =
-      GetRegionView<InputEventsRegionView>();
-  input_events_rv->Open();
+  auto input_events_rv = InputEventsRegionView::GetInstance();
   // TODO(jemoreira): Post available devices to region
-  input_events_rv->StartWorker();
+  auto worker = input_events_rv->StartWorker();
 
   // Start device threads
   std::thread screen_thread([this]() {
     EventLoop(
         virtual_touchscreen_, [](InputEvent* event_buffer, int max_events) {
-          return GetRegionView<InputEventsRegionView>()->GetScreenEventsOrWait(
+          return InputEventsRegionView::GetInstance()->GetScreenEventsOrWait(
               event_buffer, max_events);
         });
   });
   std::thread keyboard_thread([this]() {
     EventLoop(virtual_keyboard_, [](InputEvent* event_buffer, int max_events) {
-      return GetRegionView<InputEventsRegionView>()->GetKeyboardEventsOrWait(
+      return InputEventsRegionView::GetInstance()->GetKeyboardEventsOrWait(
           event_buffer, max_events);
     });
   });
   std::thread button_thread([this]() {
-    EventLoop(virtual_power_button_, [](InputEvent* event_buffer,
-                                        int max_events) {
-      return GetRegionView<InputEventsRegionView>()->GetPowerButtonEventsOrWait(
-          event_buffer, max_events);
-    });
+    EventLoop(virtual_power_button_,
+              [](InputEvent* event_buffer, int max_events) {
+                return InputEventsRegionView::GetInstance()
+                    ->GetPowerButtonEventsOrWait(event_buffer, max_events);
+              });
   });
 
   screen_thread.join();

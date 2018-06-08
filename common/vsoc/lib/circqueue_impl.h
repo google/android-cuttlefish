@@ -16,18 +16,19 @@
  * limitations under the License.
  */
 
-#include <string.h>
+#include <cerrno>
+#include <cstring>
+
+#include <sys/uio.h>
 
 #include "common/vsoc/lib/region_signaling_interface.h"
 #include "common/vsoc/shm/circqueue.h"
 
-namespace {
 // Increases the given index until it is naturally aligned for T.
 template <typename T>
 uintptr_t align(uintptr_t index) {
   return (index + sizeof(T) - 1) & ~(sizeof(T) - 1);
 }
-}  // namespace
 
 namespace vsoc {
 class RegionSignalingInterface;
@@ -39,12 +40,12 @@ void CircularQueueBase<SizeLog2>::CopyInRange(const char* buffer_in,
   size_t bytes = t.end_idx - t.start_idx;
   uint32_t index = t.start_idx & (BufferSize - 1);
   if (index + bytes <= BufferSize) {
-    memcpy(buffer_ + index, buffer_in, bytes);
+    std::memcpy(buffer_ + index, buffer_in, bytes);
   } else {
     size_t part1_size = BufferSize - index;
     size_t part2_size = bytes - part1_size;
-    memcpy(buffer_ + index, buffer_in, part1_size);
-    memcpy(buffer_, buffer_in + part1_size, part2_size);
+    std::memcpy(buffer_ + index, buffer_in, part1_size);
+    std::memcpy(buffer_, buffer_in + part1_size, part2_size);
   }
 }
 
@@ -54,12 +55,12 @@ void CircularQueueBase<SizeLog2>::CopyOutRange(const Range& t,
   uint32_t index = t.start_idx & (BufferSize - 1);
   size_t total_size = t.end_idx - t.start_idx;
   if (index + total_size <= BufferSize) {
-    memcpy(buffer_out, buffer_ + index, total_size);
+    std::memcpy(buffer_out, buffer_ + index, total_size);
   } else {
     uint32_t part1_size = BufferSize - index;
     uint32_t part2_size = total_size - part1_size;
-    memcpy(buffer_out, buffer_ + index, part1_size);
-    memcpy(buffer_out + part1_size, buffer_, part2_size);
+    std::memcpy(buffer_out, buffer_ + index, part1_size);
+    std::memcpy(buffer_out + part1_size, buffer_, part2_size);
   }
 }
 
@@ -123,9 +124,7 @@ intptr_t CircularByteQueue<SizeLog2>::Read(RegionSignalingInterface* r,
   this->CopyOutRange(t, buffer_out);
   this->r_released_ = t.end_idx;
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->r_released_);
+  r->SendSignal(layout::Sides::Both, &this->r_released_);
   return t.end_idx - t.start_idx;
 }
 
@@ -145,9 +144,7 @@ intptr_t CircularByteQueue<SizeLog2>::Write(RegionSignalingInterface* r,
   // published.
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->w_pub_);
+  r->SendSignal(layout::Sides::Both, &this->w_pub_);
   return bytes;
 }
 
@@ -174,9 +171,7 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Read(
   this->CopyOutRange(t, buffer_out);
   this->r_released_ += this->CalculateBufferedSize(packet_size);
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->r_released_);
+  r->SendSignal(layout::Sides::Both, &this->r_released_);
   return packet_size;
 }
 
@@ -184,9 +179,27 @@ template <uint32_t SizeLog2, uint32_t MaxPacketSize>
 intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
     RegionSignalingInterface* r, const char* buffer_in, uint32_t bytes,
     bool non_blocking) {
+  iovec iov;
+  iov.iov_base = const_cast<char *>(buffer_in);
+  iov.iov_len = bytes;
+  return Writev(r, &iov, 1 /* iov_count */, non_blocking);
+}
+
+template <uint32_t SizeLog2, uint32_t MaxPacketSize>
+intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Writev(
+      RegionSignalingInterface *r,
+      const iovec *iov,
+      size_t iov_count,
+      bool non_blocking) {
+  size_t bytes = 0;
+  for (size_t i = 0; i < iov_count; ++i) {
+    bytes += iov[i].iov_len;
+  }
+
   if (bytes > MaxPacketSize) {
     return -ENOSPC;
   }
+
   Range range;
   size_t buffered_size = this->CalculateBufferedSize(bytes);
   this->lock_.Lock();
@@ -202,12 +215,18 @@ intptr_t CircularPacketQueue<SizeLog2, MaxPacketSize>::Write(
       static_cast<uint32_t>(range.start_idx + sizeof(uint32_t)),
       static_cast<uint32_t>(range.start_idx + sizeof(uint32_t) + bytes)};
   this->CopyInRange(reinterpret_cast<const char*>(&bytes), header);
-  this->CopyInRange(buffer_in, payload);
+
+  Range subRange = payload;
+  for (size_t i = 0; i < iov_count; ++i) {
+    subRange.end_idx = subRange.start_idx + iov[i].iov_len;
+    this->CopyInRange(static_cast<const char *>(iov[i].iov_base), subRange);
+
+    subRange.start_idx = subRange.end_idx;
+  }
+
   this->w_pub_ = range.end_idx;
   this->lock_.Unlock();
-  layout::Sides side;
-  side.value_ = layout::Sides::Both;
-  r->SendSignal(side, &this->w_pub_);
+  r->SendSignal(layout::Sides::Both, &this->w_pub_);
   return bytes;
 }
 

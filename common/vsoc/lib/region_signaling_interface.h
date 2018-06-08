@@ -17,6 +17,7 @@
  */
 
 #include <stdlib.h>
+#include <atomic>
 
 #include "common/vsoc/shm/base.h"
 
@@ -49,7 +50,14 @@ class RegionSignalingInterface {
   //   signal_addr: the memory that will be signaled. Must be within the region.
   //
   //   last_observed_value: the value that motivated the calling code to wait.
-  virtual void WaitForSignal(std::atomic<uint32_t>* signal_addr,
+  //
+  // The return values are:
+  //   -1 on failure
+  //    0 indicates success with no tuning information
+  //    >0 indicates success. The number indicates how many times the thread
+  //       woke before it could return.
+  //       Large values indicate that the regions should be tuned.
+  virtual int WaitForSignal(std::atomic<uint32_t>* signal_addr,
                              uint32_t last_observed_value) = 0;
 };
 

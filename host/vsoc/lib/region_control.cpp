@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <linux/futex.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
@@ -51,10 +52,10 @@ class HostRegionControl : public vsoc::RegionControl {
         shared_memory_fd_{shared_memory_fd} {}
 
   int CreateFdScopedPermission(const char* /*managed_region_name*/,
-                               vsoc_reg_off_t /*owner_offset*/,
+                               uint32_t /*owner_offset*/,
                                uint32_t /*owned_val*/,
-                               vsoc_reg_off_t /*begin_offset*/,
-                               vsoc_reg_off_t /*end_offset*/) override {
+                               uint32_t /*begin_offset*/,
+                               uint32_t /*end_offset*/) override {
     return -1;
   }
 
@@ -94,7 +95,8 @@ class HostRegionControl : public vsoc::RegionControl {
     ssize_t rval = incoming_interrupt_fd_->Read(&missed, sizeof(missed));
     if (rval != sizeof(missed)) {
       LOG(FATAL) << __FUNCTION__ << ": rval (" << rval
-                 << ") != sizeof(missed))";
+                 << ") != sizeof(missed)), are there more than one threads "
+                    "waiting for interrupts?";
     }
     if (!missed) {
       LOG(FATAL) << __FUNCTION__ << ": woke with 0 interrupts";
@@ -118,6 +120,17 @@ class HostRegionControl : public vsoc::RegionControl {
     return region_base_;
   }
 
+
+  virtual int SignalSelf(uint32_t offset) override {
+    return syscall(SYS_futex, region_offset_to_pointer<int32_t*>(offset),
+                   FUTEX_WAKE, -1, nullptr, nullptr, 0);
+  }
+
+  virtual int WaitForSignal(uint32_t offset, uint32_t expected_value) override {
+    return syscall(SYS_futex, region_offset_to_pointer<int32_t*>(offset),
+                   FUTEX_WAIT, expected_value, nullptr, nullptr, 0);
+  }
+
  protected:
   const char* region_name_{};
   cvd::SharedFD incoming_interrupt_fd_;
@@ -131,9 +144,9 @@ constexpr int kMaxSupportedProtocolVersion = 0;
 
 bool HostRegionControl::InitializeRegion() {
   size_t region_name_len = strlen(region_name_);
-  if (region_name_len >= sizeof(vsoc_device_name)) {
+  if (region_name_len >= VSOC_DEVICE_NAME_SZ) {
     LOG(FATAL) << "Region name length (" << region_name_len << ") not < "
-               << sizeof(vsoc_device_name);
+               << VSOC_DEVICE_NAME_SZ;
     return false;
   }
   vsoc_shm_layout_descriptor layout;

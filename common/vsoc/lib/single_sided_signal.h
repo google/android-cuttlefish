@@ -16,6 +16,11 @@
  * limitations under the License.
  */
 
+#include <unistd.h>
+#include <linux/futex.h>
+#include <sys/syscall.h>
+
+
 // Signaling mechanism that allows threads to signal changes to shared
 // memory and to wait for signals.
 

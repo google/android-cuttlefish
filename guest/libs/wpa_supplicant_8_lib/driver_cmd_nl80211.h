@@ -24,6 +24,7 @@
 #include "common.h"
 #include "linux_ioctl.h"
 #include "wpa_supplicant_i.h"
+#include <linux/if_ether.h>
 
 #define VSOC_WPA_SUPPLICANT_DEBUG 0
 

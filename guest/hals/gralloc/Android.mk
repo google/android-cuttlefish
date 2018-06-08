@@ -32,7 +32,8 @@ LOCAL_C_INCLUDES += \
 LOCAL_CFLAGS := \
     -DLOG_TAG=\"gralloc_vsoc\" \
     -Wno-missing-field-initializers \
-    -Wall -Werror
+    -Wall -Werror \
+    $(VSOC_VERSION_CFLAGS)
 
 LOCAL_SHARED_LIBRARIES := \
     libbase \
@@ -41,6 +42,9 @@ LOCAL_SHARED_LIBRARIES := \
     libcuttlefish_fs \
     liblog \
     vsoc_lib
+
+LOCAL_HEADER_LIBRARIES := \
+    libhardware_headers
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
 LOCAL_MODULE_RELATIVE_PATH := hw

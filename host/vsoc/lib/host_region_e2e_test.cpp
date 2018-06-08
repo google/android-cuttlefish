@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "common/vsoc/lib/e2e_test_region_view.h"
-#include "host/libs/config/host_config.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 // Here is a summary of the two regions interrupt and write test:
 // 1. Write our strings to the first region
@@ -59,69 +59,72 @@ void CheckPeerStrings(View* in) {
 }
 
 TEST(RegionTest, PeerTests) {
-  vsoc::E2EPrimaryRegionView primary;
-  ASSERT_TRUE(primary.Open(vsoc::GetDomain().c_str()));
-  vsoc::E2ESecondaryRegionView secondary;
-  ASSERT_TRUE(secondary.Open(vsoc::GetDomain().c_str()));
+  auto primary =
+      vsoc::E2EPrimaryRegionView::GetInstance(vsoc::GetDomain().c_str());
+  ASSERT_TRUE(!!primary);
+  auto secondary =
+      vsoc::E2ESecondaryRegionView::GetInstance(vsoc::GetDomain().c_str());
+  ASSERT_TRUE(!!secondary);
   LOG(INFO) << "Regions are open";
-  SetHostStrings(&primary);
-  EXPECT_FALSE(secondary.HasIncomingInterrupt());
-  EXPECT_TRUE(primary.MaybeInterruptPeer());
+  SetHostStrings(primary);
+  EXPECT_FALSE(secondary->HasIncomingInterrupt());
+  EXPECT_TRUE(primary->MaybeInterruptPeer());
   LOG(INFO) << "Waiting for first interrupt from peer";
-  primary.WaitForInterrupt();
+  primary->WaitForInterrupt();
   LOG(INFO) << "First interrupt received";
-  CheckPeerStrings(&primary);
-  SetHostStrings(&secondary);
-  EXPECT_TRUE(secondary.MaybeInterruptPeer());
+  CheckPeerStrings(primary);
+  SetHostStrings(secondary);
+  EXPECT_TRUE(secondary->MaybeInterruptPeer());
   LOG(INFO) << "Waiting for second interrupt from peer";
-  secondary.WaitForInterrupt();
+  secondary->WaitForInterrupt();
   LOG(INFO) << "Second interrupt received";
-  CheckPeerStrings(&secondary);
+  CheckPeerStrings(secondary);
 
   // Test signals
-  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  EXPECT_FALSE(secondary->HasIncomingInterrupt());
   LOG(INFO) << "Verified no early second signal";
-  vsoc::layout::Sides side;
-  side.value_ = vsoc::layout::Sides::Peer;
-  primary.SendSignal(side, &primary.data()->host_to_guest_signal);
+  primary->SendSignal(vsoc::layout::Sides::Peer,
+                      &primary->data()->host_to_guest_signal);
   LOG(INFO) << "Signal sent. Waiting for first signal from peer";
-  primary.WaitForInterrupt();
+  primary->WaitForInterrupt();
   int count = 0;  // counts the number of signals received.
-  primary.ProcessSignalsFromPeer(
-      [&primary, &count](std::atomic<uint32_t>* uaddr) {
+  primary->ProcessSignalsFromPeer(
+      [&primary, &count](uint32_t offset) {
         ++count;
-        EXPECT_TRUE(uaddr == &primary.data()->guest_to_host_signal);
+        EXPECT_EQ(primary->guest_to_host_signal_offset(), offset);
       });
-  EXPECT_TRUE(count == 1);
+  EXPECT_EQ(1, count);
   LOG(INFO) << "Signal received on primary region";
-  secondary.SendSignal(side, &secondary.data()->host_to_guest_signal);
+  secondary->SendSignal(vsoc::layout::Sides::Peer,
+                        &secondary->data()->host_to_guest_signal);
   LOG(INFO) << "Signal sent. Waiting for second signal from peer";
-  secondary.WaitForInterrupt();
+  secondary->WaitForInterrupt();
   count = 0;
-  secondary.ProcessSignalsFromPeer(
-      [&secondary, &count](std::atomic<uint32_t>* uaddr) {
+  secondary->ProcessSignalsFromPeer(
+      [secondary, &count](uint32_t offset) {
         ++count;
-        EXPECT_TRUE(uaddr == &secondary.data()->guest_to_host_signal);
+        EXPECT_EQ(secondary->guest_to_host_signal_offset(), offset);
       });
-  EXPECT_TRUE(count == 1);
+  EXPECT_EQ(1, count);
   LOG(INFO) << "Signal received on secondary region";
 
-  EXPECT_FALSE(primary.HasIncomingInterrupt());
-  EXPECT_FALSE(secondary.HasIncomingInterrupt());
+  EXPECT_FALSE(primary->HasIncomingInterrupt());
+  EXPECT_FALSE(secondary->HasIncomingInterrupt());
 }
 
 TEST(RegionTest, MissingRegionCausesDeath) {
-  vsoc::E2EUnfindableRegionView test;
-  EXPECT_DEATH(test.Open(vsoc::GetDomain().c_str()), ".*");
+  EXPECT_DEATH(
+      vsoc::E2EUnfindableRegionView::GetInstance(vsoc::GetDomain().c_str()),
+      ".*");
 }
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   int rval = RUN_ALL_TESTS();
   if (!rval) {
-    vsoc::E2EPrimaryRegionView region;
-    region.Open(vsoc::GetDomain().c_str());
-    region.host_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
+    auto region =
+        vsoc::E2EPrimaryRegionView::GetInstance(vsoc::GetDomain().c_str());
+    region->host_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
   }
   return rval;
 }

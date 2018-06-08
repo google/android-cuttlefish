@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <memory>
+
 #include "common/vsoc/lib/typed_region_view.h"
 #include "common/vsoc/shm/input_events_layout.h"
 #include "uapi/vsoc_shm.h"
@@ -30,6 +32,7 @@ struct InputEvent {
 
 class InputEventsRegionView
     : public vsoc::TypedRegionView<
+          InputEventsRegionView,
           vsoc::layout::input_events::InputEventsLayout> {
  public:
   static const int kMaxEventsPerPacket;
@@ -48,7 +51,7 @@ class InputEventsRegionView
   intptr_t GetScreenEventsOrWait(InputEvent* buffer, int max_event_count);
   intptr_t GetKeyboardEventsOrWait(InputEvent* buffer, int max_event_count);
   intptr_t GetPowerButtonEventsOrWait(InputEvent* buffer, int max_event_count);
-};
 
+};
 }  // namespace input_events
 }  // namespace vsoc

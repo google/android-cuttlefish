@@ -22,21 +22,15 @@
 #include <hardware/hwcomposer_defs.h>
 #include <log/log.h>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/vsoc/lib/screen_region_view.h"
 #include "guest/hals/gralloc/gralloc_vsoc_priv.h"
 
 // This file contains just a skeleton hwcomposer, the first step in the
 // multisided vsoc hwcomposer for cuttlefish.
 
-using vsoc::framebuffer::FBBroadcastRegionView;
+using vsoc::screen::ScreenRegionView;
 
-// TODO(jemoreira): FBBroadcastRegionView may belong in the HWC region
-
-FBBroadcastRegionView* GetFBBroadcastRegionView() {
-  static FBBroadcastRegionView instance;
-  return &instance;
-}
-
+// TODO(jemoreira): ScreenRegionView may become the HWC region
 namespace {
 
 // Ensures that the layer does not include any inconsistencies
@@ -88,7 +82,6 @@ struct vsoc_hwc_device {
   pthread_t vsync_thread;
   int64_t vsync_base_timestamp;
   int32_t vsync_period_ns;
-  FBBroadcastRegionView* fb_broadcast;
   uint32_t frame_num;
 };
 
@@ -101,6 +94,8 @@ void* vsync_thread(void* arg) {
   int sent = 0;
   int last_sent = 0;
   static const int log_interval = 60;
+  void (*vsync_proc)(const struct hwc_procs*, int, int64_t) = nullptr;
+  bool log_no_procs = true, log_no_vsync = true;
   while (true) {
     struct timespec rt;
     if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
@@ -122,13 +117,27 @@ void* vsync_thread(void* arg) {
       }
     }
 
-    pdev->procs->vsync(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
+    // The vsync thread is started on device open, it may run before the
+    // registerProcs callback has a chance to be called, so we need to make sure
+    // procs is not NULL before dereferencing it.
+    if (pdev && pdev->procs) {
+      vsync_proc = pdev->procs->vsync;
+    } else if (log_no_procs) {
+      log_no_procs = false;
+      ALOGI("procs is not set yet, unable to deliver vsync event");
+    }
+    if (vsync_proc) {
+      vsync_proc(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
+      ++sent;
+    } else if (log_no_vsync) {
+      log_no_vsync = false;
+      ALOGE("vsync callback is null (but procs was already set)");
+    }
     if (rt.tv_sec - last_logged > log_interval) {
       ALOGI("Sent %d syncs in %ds", sent - last_sent, log_interval);
       last_logged = rt.tv_sec;
       last_sent = sent;
     }
-    ++sent;
   }
 
   return NULL;
@@ -169,12 +178,11 @@ int hwc_set(struct hwc_composer_device_1* dev, size_t numDisplays,
         ALOGW("Skipping layer %zu due to failed sanity check", i);
         continue;
       }
-      vsoc_hwc_device* pdev = reinterpret_cast<vsoc_hwc_device*>(dev);
       const vsoc_buffer_handle_t* fb_handle =
           reinterpret_cast<const vsoc_buffer_handle_t*>(
               list->hwLayers[i].handle);
-      pdev->fb_broadcast->BroadcastNewFrame(pdev->frame_num++,
-                                            fb_handle->offset);
+      ScreenRegionView::GetInstance()->BroadcastNewFrame(
+          fb_handle->offset);
       break;
     }
   }
@@ -240,18 +248,19 @@ int hwc_getDisplayConfigs(struct hwc_composer_device_1* /*dev*/, int disp,
   return -EINVAL;
 }
 
-int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
+int32_t vsoc_hwc_attribute(uint32_t attribute) {
+  auto screen_view = ScreenRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
-      return 1000000000 / pdev->fb_broadcast->refresh_rate_hz();
+      return 1000000000 / screen_view->refresh_rate_hz();
     case HWC_DISPLAY_WIDTH:
-      return pdev->fb_broadcast->x_res();
+      return screen_view->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return pdev->fb_broadcast->y_res();
+      return screen_view->y_res();
     case HWC_DISPLAY_DPI_X:
     case HWC_DISPLAY_DPI_Y:
       // The number of pixels per thousand inches
-      return pdev->fb_broadcast->dpi() * 1000;
+      return screen_view->dpi() * 1000;
     case HWC_DISPLAY_COLOR_TRANSFORM:
       // TODO(jemoreira): Add the other color transformations
       return HAL_COLOR_TRANSFORM_IDENTITY;
@@ -261,10 +270,9 @@ int32_t vsoc_hwc_attribute(vsoc_hwc_device* pdev, uint32_t attribute) {
   }
 }
 
-int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
+int hwc_getDisplayAttributes(struct hwc_composer_device_1* /*dev*/, int disp,
                              uint32_t /*config*/, const uint32_t* attributes,
                              int32_t* values) {
-  vsoc_hwc_device* pdev = reinterpret_cast<vsoc_hwc_device*>(dev);
 
   if (disp != HWC_DISPLAY_PRIMARY) {
     ALOGE("Unknown display type %u", disp);
@@ -272,7 +280,7 @@ int hwc_getDisplayAttributes(struct hwc_composer_device_1* dev, int disp,
   }
 
   for (int i = 0; attributes[i] != HWC_DISPLAY_NO_ATTRIBUTE; i++) {
-    values[i] = vsoc_hwc_attribute(pdev, attributes[i]);
+    values[i] = vsoc_hwc_attribute(attributes[i]);
   }
 
   return 0;
@@ -325,9 +333,8 @@ int hwc_open(const struct hw_module_t* module, const char* name,
   dev->base.getDisplayConfigs = hwc_getDisplayConfigs;
   dev->base.getDisplayAttributes = hwc_getDisplayAttributes;
 
-  dev->fb_broadcast = GetFBBroadcastRegionView();
-  if (!dev->fb_broadcast->Open()) {
-    ALOGE("Unable to open framebuffer broadcaster (%s)", __FUNCTION__);
+  if (!ScreenRegionView::GetInstance()) {
+    ALOGE("Unable to open screen region (%s)", __FUNCTION__);
     delete dev;
     return -1;
   }

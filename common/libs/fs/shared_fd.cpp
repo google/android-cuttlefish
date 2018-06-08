@@ -274,8 +274,26 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect((struct sockaddr*)&addr, addrlen) == -1) {
+  if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
     LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
+    return SharedFD(
+        std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
+  }
+  return rval;
+}
+
+SharedFD SharedFD::SocketLocalClient(int port, int type) {
+  sockaddr_in addr{};
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
+  if (!rval->IsOpen()) {
+    return rval;
+  }
+  if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
+                    sizeof addr) < 0) {
+    LOG(ERROR) << "Connect() failed" << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
@@ -298,7 +316,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
-  if(rval->Bind((struct sockaddr *) &addr, sizeof(addr)) < 0) {
+  if(rval->Bind(reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
@@ -333,7 +351,7 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
-  if (rval->Bind((struct sockaddr*)&addr, addrlen) == -1) {
+  if (rval->Bind(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
     LOG(ERROR) << "Bind failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));

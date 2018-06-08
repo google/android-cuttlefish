@@ -15,4 +15,6 @@
 
 subdirs = [
     "launch",
+    "stop_cvd",
+    "record_audio",
 ]

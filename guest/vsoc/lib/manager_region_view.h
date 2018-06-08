@@ -27,8 +27,8 @@ namespace vsoc {
  * The Layout type must (in addition to requirements for TypedRegionView) also
  * provide a nested type for the layout of the managed region.
  */
-template <typename Layout>
-class ManagerRegionView : public TypedRegionView<Layout> {
+template <typename View, typename Layout>
+class ManagerRegionView : public TypedRegionView<View, Layout> {
  public:
   ManagerRegionView() = default;
   /**
@@ -46,8 +46,8 @@ class ManagerRegionView : public TypedRegionView<Layout> {
    * one returns -EBUSY, returns a different negative number otherwise.
    */
   int CreateFdScopedPermission(uint32_t* owner_ptr, uint32_t owned_val,
-                               vsoc_reg_off_t begin_offset,
-                               vsoc_reg_off_t end_offset) {
+                               uint32_t begin_offset,
+                               uint32_t end_offset) {
     return this->control_->CreateFdScopedPermission(
         Layout::ManagedRegion::region_name,
         this->pointer_to_region_offset(owner_ptr), owned_val, begin_offset,

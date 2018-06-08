@@ -16,11 +16,11 @@
 
 #include "guest/vsoc/lib/gralloc_region_view.h"
 
-#include <atomic>
 #include <common/vsoc/lib/lock_guard.h>
 #include <log/log.h>
 #include <sys/types.h>
 #include <uapi/vsoc_shm.h>
+#include <atomic>
 
 using vsoc::gralloc::GrallocRegionView;
 using vsoc::layout::gralloc::BufferEntry;
@@ -40,18 +40,8 @@ inline uint32_t gralloc_owned_value() {
 
 }  // namespace
 
-GrallocRegionView::GrallocRegionView() {
-  // The construction in the singleton is thread safe, so we call Open here to
-  // make sure it opens thread safe too. The singleton will return null if the
-  // region failed to open.
-  Open();
-}
-
 bool GrallocRegionView::Open() {
-  if (is_open_) {
-    return true;
-  }
-  if (!vsoc::ManagerRegionView<GrallocManagerLayout>::Open()) {
+  if (!vsoc::ManagerRegionView<GrallocRegionView, GrallocManagerLayout>::Open()) {
     return false;
   }
   std::shared_ptr<vsoc::RegionControl> managed_region =
@@ -61,13 +51,12 @@ bool GrallocRegionView::Open() {
     LOG_FATAL("Unable to open managed region");
     return false;
   }
-  offset_of_buffer_memory_ = gralloc_align<vsoc_reg_off_t>(
+  offset_of_buffer_memory_ = gralloc_align<uint32_t>(
       managed_region->region_desc().offset_of_region_data);
   total_buffer_memory_ =
       managed_region->region_size() - offset_of_buffer_memory_;
 
   // TODO(jemoreira): Handle the case of unexpected values in the region.
-  is_open_ = true;
   return true;
 }
 
@@ -150,16 +139,4 @@ int GrallocRegionView::AllocateBuffer(size_t size, uint32_t* begin_offset) {
     }
     return fd;
   }
-}
-
-/* static */
-// The C++03 standard does not guarantee this singleton implemention to be
-// thread safe, however magic statics are part of the gcc compiler since
-// version 4.3.
-GrallocRegionView* GrallocRegionView::GetInstance() {
-  static GrallocRegionView singleton;
-  if (!singleton.is_open_) {
-    return NULL;
-  }
-  return &singleton;
 }

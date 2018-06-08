@@ -14,5 +14,5 @@
 // limitations under the License.
 
 subdirs = [
-    "wificlient",
+    "wifi_relay",
 ]

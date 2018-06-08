@@ -16,13 +16,12 @@
 
 #include "host/frontend/vnc_server/simulated_hw_composer.h"
 
-#include "common/vsoc/lib/typed_region_view.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/libs/config/host_config.h"
-#include "host/vsoc/lib/gralloc_buffer_region_view.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "common/vsoc/lib/screen_region_view.h"
 
 using cvd::vnc::SimulatedHWComposer;
-using vsoc::gralloc::GrallocBufferRegionView;
+using vsoc::screen::ScreenRegionView;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
@@ -75,14 +74,12 @@ void SimulatedHWComposer::MakeStripes() {
   auto screen_height = ActualScreenHeight();
   Message raw_screen;
   std::uint64_t stripe_seq_num = 1;
+  auto screen_view = ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
-    vsoc_reg_off_t buffer_offset =
-        GetFBBroadcastRegionView()->WaitForNewFrameSince(&previous_seq_num);
-
-    const auto* frame_start =
-        GrallocBufferRegionView::GetInstance(vsoc::GetDomain().c_str())
-            ->OffsetToBufferPtr(buffer_offset);
+    int buffer_idx = screen_view->WaitForNewFrameSince(&previous_seq_num);
+    const char* frame_start =
+        static_cast<char*>(screen_view->GetBuffer(buffer_idx));
     raw_screen.assign(frame_start, frame_start + ScreenSizeInBytes());
 
     for (int i = 0; i < kNumStripes; ++i) {

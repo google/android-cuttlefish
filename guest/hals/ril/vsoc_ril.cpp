@@ -29,6 +29,7 @@
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
+#include "common/vsoc/lib/ril_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 #define VSOC_RIL_VERSION_STRING "Android VSoC RIL 1.0"
@@ -113,9 +114,10 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
   std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
   std::unique_ptr<cvd::NetworkInterfaceManager> nm(
       cvd::NetworkInterfaceManager::New(factory));
-  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0"));
+  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0", "eth0"));
 
   if (ni) {
+    ni->SetName("rmnet0");
     ni->SetAddress(ipaddr);
     ni->SetBroadcastAddress(bcaddr);
     ni->SetPrefixLength(prefixlen);
@@ -131,7 +133,7 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
   auto nm(cvd::NetworkInterfaceManager::New(nullptr));
-  auto ni(nm->Open("rmnet0"));
+  auto ni(nm->Open("rmnet0", "eth0"));
 
   if (ni) {
     ni->SetOperational(false);
@@ -184,10 +186,13 @@ static int request_or_send_data_calllist(RIL_Token* t) {
         break;
     }
 
+    auto ril_region_view = vsoc::ril::RilRegionView::GetInstance();
+
     responses[index].ifname = (char*)"rmnet0";
-    responses[index].addresses = (char*)"192.168.99.2/30";
-    responses[index].dnses = (char*)"8.8.8.8";
-    responses[index].gateways = (char*)"192.168.99.1";
+    responses[index].addresses =
+      const_cast<char*>(ril_region_view->address_and_prefix_length());
+    responses[index].dnses = (char*)ril_region_view->data()->dns;
+    responses[index].gateways = (char*)ril_region_view->data()->gateway;
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
@@ -309,7 +314,10 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (gDataCalls.empty()) {
-    SetUpNetworkInterface("192.168.99.2", 30, "192.168.99.3");
+    auto ril_region_view = vsoc::ril::RilRegionView::GetInstance();
+    SetUpNetworkInterface(ril_region_view->data()->ipaddr,
+                          ril_region_view->data()->prefixlen,
+                          ril_region_view->data()->broadcast);
   }
 
   gDataCalls[gNextDataCallId] = call;
@@ -1483,7 +1491,11 @@ static void init_virtual_network() {
   gGSMNeighboringCells.resize(1);
   gGSMNeighboringCells[0].cid = (char*)"0000";
   gGSMNeighboringCells[0].rssi = 75;
+#if VSOC_PLATFORM_SDK_AFTER(O_MR1)
+  gNetworkOperators["302780"] =
+#else
   gNetworkOperators["310260"] =
+#endif
       NetworkOperator("Android Virtual Operator", "Android", true);
   gNetworkOperators["310300"] =
       NetworkOperator("Alternative Operator", "Alternative", true);
@@ -1874,7 +1886,11 @@ static void pollSIMState(void* /*param*/) {
       // Transition directly to READY. Set default network operator.
       if (gRadioPowerState == RADIO_STATE_ON) {
         gSimStatus = SIM_READY;
+#if VSOC_PLATFORM_SDK_AFTER(O_MR1)
+        gCurrentNetworkOperator = "302780";
+#else
         gCurrentNetworkOperator = "310260";
+#endif
       }
 
       gce_ril_env->RequestTimedCallback(pollSIMState, NULL, &TIMEVAL_SIMPOLL);

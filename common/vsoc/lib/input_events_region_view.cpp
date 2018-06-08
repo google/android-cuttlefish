@@ -96,5 +96,5 @@ intptr_t InputEventsRegionView::GetPowerButtonEventsOrWait(
   return ret / sizeof(InputEvent);
 }
 
-}
-}
+}  // namespace input_events
+}  // namespace vsoc

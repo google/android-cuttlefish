@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-#include "gralloc_vsoc_priv.h"
 #include <hardware/gralloc.h>
 #include <hardware/hardware.h>
 #include <log/log.h>
 #include <stdlib.h>
+
+#include "guest/libs/platform_support/api_level_fixes.h"
+
+#include "guest/hals/gralloc/gralloc_vsoc_priv.h"
+#include "guest/vsoc/lib/gralloc_region_view.h"
+
+using vsoc::gralloc::GrallocRegionView;
 
 namespace {
 
@@ -48,6 +54,10 @@ inline void formatToYcbcr(
 
 inline int formatToBytesPerPixel(int format) {
   switch (format) {
+#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
+    case HAL_PIXEL_FORMAT_RGBA_FP16:
+      return 8;
+#endif
     case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
@@ -65,7 +75,7 @@ inline int formatToBytesPerPixel(int format) {
       return 1;
     default:
       ALOGE("%s: unknown format=%d", __FUNCTION__, format);
-      return 4;
+      return 8;
   }
 }
 
@@ -160,9 +170,13 @@ int lock_ycbcr(struct gralloc_module_t const* module,
 
 /******************************************************************************/
 
-static int gralloc_alloc(
-    alloc_device_t* dev, int w, int h, int format, int /*usage*/,
-    buffer_handle_t* pHandle, int* pStrideInPixels) {
+static int gralloc_alloc(alloc_device_t* /*dev*/,
+                         int w,
+                         int h,
+                         int format,
+                         int /*usage*/,
+                         buffer_handle_t* pHandle,
+                         int* pStrideInPixels) {
   int fd = -1;
 
   int bytes_per_pixel = formatToBytesPerPixel(format);
@@ -180,8 +194,7 @@ static int gralloc_alloc(
   }
   size = align(size + formatToBytesPerFrame(format, w, h), PAGE_SIZE);
   size += PAGE_SIZE;
-  fd = reinterpret_cast<vsoc_alloc_device_t*>(dev)
-           ->gralloc_region->AllocateBuffer(size, &offset);
+  fd = GrallocRegionView::GetInstance()->AllocateBuffer(size, &offset);
   if (fd < 0) {
     ALOGE("Unable to allocate buffer (%s)", strerror(-fd));
     return fd;
@@ -267,8 +280,7 @@ static int gralloc_device_open(
     dev->device.alloc   = gralloc_alloc;
     dev->device.free    = gralloc_free;
 
-    dev->gralloc_region = vsoc::gralloc::GrallocRegionView::GetInstance();
-    if (!dev->gralloc_region) {
+    if (!GrallocRegionView::GetInstance()) {
       LOG_FATAL("Unable to instantiate the gralloc region");
       free(dev);
       return -EIO;
