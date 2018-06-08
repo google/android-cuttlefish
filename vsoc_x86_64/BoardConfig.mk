@@ -20,6 +20,8 @@
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 
+TARGET_BOOTLOADER_BOARD_NAME := vsoc_x86_64
+TARGET_BOARD_PLATFORM := vsoc_x86_64
 TARGET_ARCH := x86_64
 TARGET_ARCH_VARIANT := silvermont
 TARGET_CPU_ABI := x86_64
@@ -29,4 +31,5 @@ TARGET_2ND_CPU_ABI := x86
 TARGET_2ND_CPU_ABI2 := x86
 TARGET_2ND_ARCH_VARIANT := silvermont
 TARGET_2ND_CPU_VARIANT := silvermont
+TARGET_TRANSLATE_2ND_ARCH := false
 

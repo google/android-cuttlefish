@@ -20,8 +20,13 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
+    host_region_e2e_test \
     launch_cvd \
-    wificlient \
+    socket_forward_proxy \
+    stop_cvd \
+    vnc_server \
+    wifi_relay \
+    record_audio \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -37,16 +42,18 @@ cvd_host_shared_libraries := \
     vsoc_lib \
     libcuttlefish_fs \
     cuttlefish_auto_resources \
+    libcuttlefish_strings \
+    cuttlefish_tcp_socket \
     liblog \
     libnl \
     libc++ \
     libicuuc-host \
 
 cvd_host_configs := \
-    vsoc_mem.json
+    cuttlefish.dtb
 
 cvd_host_packages := \
-    vsoc_mem_json \
+    cuttlefish_dtb \
     $(cvd_host_executables) \
     $(cvd_host_tests) \
 

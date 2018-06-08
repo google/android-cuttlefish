@@ -16,11 +16,11 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device">
+<manifest version="1.0" type="device" target-level="1">
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
-        <version>2.0</version>
+        <version>4.0</version>
         <interface>
             <name>IDevicesFactory</name>
             <instance>default</instance>
@@ -29,7 +29,7 @@
     <hal format="hidl">
         <name>android.hardware.audio.effect</name>
         <transport>hwbinder</transport>
-        <version>2.0</version>
+        <version>4.0</version>
         <interface>
             <name>IEffectsFactory</name>
             <instance>default</instance>
@@ -90,6 +90,15 @@
         <version>1.0</version>
         <interface>
             <name>IDumpstateDevice</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.gatekeeper</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IGatekeeper</name>
             <instance>default</instance>
         </interface>
     </hal>

@@ -21,16 +21,15 @@ $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 PRODUCT_CHARACTERISTICS := tablet,nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    gsm.sim.operator.alpha=Android \
-    gsm.sim.operator.iso-country=us \
-    gsm.sim.operator.numeric=310260 \
     keyguard.no_require_sim=true \
     rild.libpath=libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
-    ro.cdma.home.operator.numeric=310260 \
-    ro.com.android.dataroaming=true \
+    ro.cdma.home.operator.numeric=302780 \
     ro.gsm.home.operator.alpha=Android \
-    ro.gsm.home.operator.numeric=310260 \
+    ro.gsm.home.operator.numeric=302780 \
+    gsm.sim.operator.numeric=302780 \
+    gsm.sim.operator.alpha=Android \
+    gsm.sim.operator.iso-country=us \
 
 PRODUCT_PACKAGES += \
     MmsService \
@@ -42,8 +41,4 @@ PRODUCT_PACKAGES += \
     rild \
 
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/apns-conf.xml:system/etc/apns-conf.xml \
-    device/google/cuttlefish/shared/config/spn-conf.xml:system/etc/spn-conf.xml \
-    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
-
-
+    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml

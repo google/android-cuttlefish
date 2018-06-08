@@ -16,10 +16,13 @@
 
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
+PRODUCT_SHIPPING_API_LEVEL := 26
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
 PRODUCT_PROPERTY_OVERRIDES += \
+    tombstoned.max_tombstone_count=500 \
     debug.hwui.swap_with_damage=0 \
     ro.adb.qemud=0 \
     ro.carrier=unknown \
@@ -47,7 +50,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Packages for various cuttlefish-specific tests
 #
 PRODUCT_PACKAGES += \
-    vsoc_guest_region_e2e_test
+    vsoc_guest_region_e2e_test \
+    vsoc_driver_test
 
 #
 # Packages for various GCE-specific utilities
@@ -56,13 +60,14 @@ PRODUCT_PACKAGES += \
     audiotop \
     dhcpcd_wlan0 \
     gce_fs_monitor \
+    socket_forward_proxy \
     usbforward \
-    vnc_server \
     VSoCService \
-    wifirouter \
-    wificlient \
+    wifi_relay \
     wpa_supplicant.vsoc.conf \
-    vsoc_input_service
+    vsoc_input_service \
+    vport_trigger \
+    rename_netiface
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -91,7 +96,7 @@ PRODUCT_PACKAGES += \
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
-PRODUCT_AAPT_PREF_CONFIG := xhdpi
+# PRODUCT_AAPT_PREF_CONFIG is intentionally not set to pick up every density resources.
 
 #
 # General files
@@ -104,7 +109,7 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:system/etc/media_codecs_performance.xml \
     device/google/cuttlefish/shared/config/media_profiles.xml:system/etc/media_profiles.xml \
     device/google/cuttlefish/shared/config/profile.root:root/profile \
-    device/google/cuttlefish/shared/config/fstab.vsoc:root/fstab.vsoc \
+    device/google/cuttlefish/shared/config/fstab.vsoc:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
     frameworks/av/media/libeffects/data/audio_effects.conf:system/etc/audio_effects.conf \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
@@ -139,65 +144,6 @@ PRODUCT_COPY_FILES += \
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
 
-
-#
-# Files for the VNC server
-#
-PRODUCT_COPY_FILES += \
-    external/libvncserver/webclients/novnc/images/drag.png:system/etc/novnc/images/drag.png \
-    external/libvncserver/webclients/novnc/images/screen_700x700.png:system/etc/novnc/images/screen_700x700.png \
-    external/libvncserver/webclients/novnc/images/keyboard.png:system/etc/novnc/images/keyboard.png \
-    external/libvncserver/webclients/novnc/images/favicon.png:system/etc/novnc/images/favicon.png \
-    external/libvncserver/webclients/novnc/images/power.png:system/etc/novnc/images/power.png \
-    external/libvncserver/webclients/novnc/images/mouse_none.png:system/etc/novnc/images/mouse_none.png \
-    external/libvncserver/webclients/novnc/images/esc.png:system/etc/novnc/images/esc.png \
-    external/libvncserver/webclients/novnc/images/connect.png:system/etc/novnc/images/connect.png \
-    external/libvncserver/webclients/novnc/images/showextrakeys.png:system/etc/novnc/images/showextrakeys.png \
-    external/libvncserver/webclients/novnc/images/mouse_right.png:system/etc/novnc/images/mouse_right.png \
-    external/libvncserver/webclients/novnc/images/favicon.ico:system/etc/novnc/images/favicon.ico \
-    external/libvncserver/webclients/novnc/images/ctrlaltdel.png:system/etc/novnc/images/ctrlaltdel.png \
-    external/libvncserver/webclients/novnc/images/tab.png:system/etc/novnc/images/tab.png \
-    external/libvncserver/webclients/novnc/images/mouse_left.png:system/etc/novnc/images/mouse_left.png \
-    external/libvncserver/webclients/novnc/images/ctrl.png:system/etc/novnc/images/ctrl.png \
-    external/libvncserver/webclients/novnc/images/screen_320x460.png:system/etc/novnc/images/screen_320x460.png \
-    external/libvncserver/webclients/novnc/images/alt.png:system/etc/novnc/images/alt.png \
-    external/libvncserver/webclients/novnc/images/disconnect.png:system/etc/novnc/images/disconnect.png \
-    external/libvncserver/webclients/novnc/images/settings.png:system/etc/novnc/images/settings.png \
-    external/libvncserver/webclients/novnc/images/screen_57x57.png:system/etc/novnc/images/screen_57x57.png \
-    external/libvncserver/webclients/novnc/images/mouse_middle.png:system/etc/novnc/images/mouse_middle.png \
-    external/libvncserver/webclients/novnc/images/clipboard.png:system/etc/novnc/images/clipboard.png \
-    external/libvncserver/webclients/novnc/LICENSE.txt:system/etc/novnc/LICENSE.txt \
-    external/libvncserver/webclients/novnc/include/display.js:system/etc/novnc/include/display.js \
-    external/libvncserver/webclients/novnc/include/des.js:system/etc/novnc/include/des.js \
-    external/libvncserver/webclients/novnc/include/Orbitron700.woff:system/etc/novnc/include/Orbitron700.woff \
-    external/libvncserver/webclients/novnc/include/websock.js:system/etc/novnc/include/websock.js \
-    external/libvncserver/webclients/novnc/include/base64.js:system/etc/novnc/include/base64.js \
-    external/libvncserver/webclients/novnc/include/chrome-app/tcp-client.js:system/etc/novnc/include/chrome-app/tcp-client.js \
-    external/libvncserver/webclients/novnc/include/keyboard.js:system/etc/novnc/include/keyboard.js \
-    external/libvncserver/webclients/novnc/include/util.js:system/etc/novnc/include/util.js \
-    external/libvncserver/webclients/novnc/include/jsunzip.js:system/etc/novnc/include/jsunzip.js \
-    external/libvncserver/webclients/novnc/include/playback.js:system/etc/novnc/include/playback.js \
-    external/libvncserver/webclients/novnc/include/base.css:system/etc/novnc/include/base.css \
-    external/libvncserver/webclients/novnc/include/webutil.js:system/etc/novnc/include/webutil.js \
-    external/libvncserver/webclients/novnc/include/logo.js:system/etc/novnc/include/logo.js \
-    external/libvncserver/webclients/novnc/include/black.css:system/etc/novnc/include/black.css \
-    external/libvncserver/webclients/novnc/include/ui.js:system/etc/novnc/include/ui.js \
-    external/libvncserver/webclients/novnc/include/keysym.js:system/etc/novnc/include/keysym.js \
-    external/libvncserver/webclients/novnc/include/Orbitron700.ttf:system/etc/novnc/include/Orbitron700.ttf \
-    external/libvncserver/webclients/novnc/include/web-socket-js/web_socket.js:system/etc/novnc/include/web-socket-js/web_socket.js \
-    external/libvncserver/webclients/novnc/include/web-socket-js/WebSocketMain.swf:system/etc/novnc/include/web-socket-js/WebSocketMain.swf \
-    external/libvncserver/webclients/novnc/include/web-socket-js/swfobject.js:system/etc/novnc/include/web-socket-js/swfobject.js \
-    external/libvncserver/webclients/novnc/include/rfb.js:system/etc/novnc/include/rfb.js \
-    external/libvncserver/webclients/novnc/include/vnc.js:system/etc/novnc/include/vnc.js \
-    external/libvncserver/webclients/novnc/include/input.js:system/etc/novnc/include/input.js \
-    external/libvncserver/webclients/novnc/include/keysymdef.js:system/etc/novnc/include/keysymdef.js \
-    external/libvncserver/webclients/novnc/include/blue.css:system/etc/novnc/include/blue.css \
-    external/libvncserver/webclients/novnc/vnc_auto.html:system/etc/novnc/vnc_auto.html \
-    external/libvncserver/webclients/novnc/vnc.html:system/etc/novnc/vnc.html
-
-# Product full Treble requirements
-PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
-
 # Packages for HAL implementations
 
 #
@@ -230,8 +176,8 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     audio.primary.vsoc \
-    android.hardware.audio@2.0-impl \
-    android.hardware.audio.effect@2.0-impl \
+    android.hardware.audio@4.0-impl \
+    android.hardware.audio.effect@4.0-impl \
     android.hardware.audio@2.0-service
 
 #
@@ -258,6 +204,14 @@ PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-service
 
 #
+# Gatekeeper
+#
+PRODUCT_PACKAGES += \
+    gatekeeper.vsoc \
+    android.hardware.gatekeeper@1.0-impl \
+    android.hardware.gatekeeper@1.0-service
+
+#
 # GPS
 #
 PRODUCT_PACKAGES += \
@@ -265,11 +219,9 @@ PRODUCT_PACKAGES += \
     android.hardware.gnss@1.0-impl \
     android.hardware.gnss@1.0-service
 
-#
 # Health
-#
 PRODUCT_PACKAGES += \
-    android.hardware.health@2.0-service
+    android.hardware.health@2.0-service.cuttlefish
 
 #
 # Sensors
@@ -311,4 +263,8 @@ PRODUCT_PACKAGES += \
 # TODO thermal
 
 PRODUCT_PACKAGES += \
-    vsoc_mem_json
+    cuttlefish_dtb
+
+# WLAN driver configuration files
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf

@@ -5,8 +5,7 @@
 /dev/e2e_manager                   u:object_r:region_e2e_test_device:s0
 /dev/e2e_primary                   u:object_r:region_e2e_test_device:s0
 /dev/e2e_secondary                 u:object_r:region_e2e_test_device:s0
-/dev/framebuffer_control           u:object_r:fb_ctl_file:s0
-/dev/userspace_framebuffer         u:object_r:userspace_fb_file:s0
+/dev/screen                        u:object_r:region_screen_device:s0
 /dev/vport[0-9]p[0-9]*             u:object_r:virtual_serial_device:s0
 
 #############################
@@ -19,20 +18,16 @@
 /var/run/system(/.*)?              u:object_r:var_run_system_file:s0
 
 #############################
-# sysfs files
-#
-/sys/bus/usb(/.*)?                             u:object_r:sysfs_usb_priv:s0
-/sys/devices/platform/dummy_hcd\.[0-9](/.*)?   u:object_r:sysfs_usb_priv:s0
-
-#############################
 # Vendor files
 #
 /vendor/bin/gce_fs_monitor  u:object_r:gce_fs_monitor_exec:s0
 /vendor/bin/usbforward  u:object_r:usbforward_exec:s0
-/vendor/bin/vnc_server  u:object_r:vnc_server_exec:s0
+/vendor/bin/socket_forward_proxy  u:object_r:socket_forward_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/vsoc_guest_region_e2e_test  u:object_r:vsoc_guest_region_e2e_test_exec:s0
-/vendor/bin/wificlient  u:object_r:wificlient_exec:s0
-/vendor/bin/wifirouter  u:object_r:wifirouter_exec:s0
+/vendor/bin/wifi_relay  u:object_r:wifi_relay_exec:s0
+/vendor/bin/vport_trigger  u:object_r:vport_trigger_exec:s0
+/vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish      u:object_r:hal_dumpstate_impl_exec:s0
+/vendor/bin/hw/android\.hardware\.health@2\.0-service.cuttlefish          u:object_r:hal_health_default_exec:s0
