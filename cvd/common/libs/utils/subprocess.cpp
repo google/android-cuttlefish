@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/utils/subprocess.h"
+#include "common/libs//utils/subprocess.h"
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -45,11 +45,7 @@ pid_t subprocess_impl(const char* const* command, const char* const* envp) {
   if (pid == -1) {
     LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
   }
-  LOG(INFO) << "Started (pid: " << pid << "): " << command[0];
-  int i = 1;
-  while (command[i]) {
-    LOG(INFO) << command[i++];
-  }
+  LOG(INFO) << "Started " << command[0] << ", pid: " << pid;
   return pid;
 }
 
