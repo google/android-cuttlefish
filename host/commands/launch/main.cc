@@ -37,6 +37,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
+#include "common/libs/utils/subprocess.h"
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/pre_launch_initializers.h"
@@ -262,39 +263,6 @@ class KernelLogMonitor {
   KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
 };
 
-void subprocess(const char* const* command,
-                const char* const* envp,
-                bool wait_for_child = true) {
-  pid_t pid = fork();
-  if (!pid) {
-    int rval;
-    // If envp is NULL, the current process's environment is used as the
-    // environment of the child process. To force an empty emvironment for the
-    // child process pass the address of a pointer to NULL
-    if (envp == NULL) {
-      rval = execv(command[0], const_cast<char* const*>(command));
-    } else {
-      rval = execve(command[0], const_cast<char* const*>(command),
-                    const_cast<char* const*>(envp));
-    }
-    // No need for an if: if exec worked it wouldn't have returned
-    LOG(ERROR) << "exec of " << command[0] << " failed (" << strerror(errno)
-               << ")";
-    exit(rval);
-  }
-  if (pid == -1) {
-    LOG(ERROR) << "fork of " << command[0] << " failed (" << strerror(errno)
-               << ")";
-  }
-  if (pid > 0) {
-    if (wait_for_child) {
-      waitpid(pid, 0, 0);
-    } else {
-      LOG(INFO) << "Started " << command[0] << ", pid: " << pid;
-    }
-  }
-}
-
 bool DirExists(const char* path) {
   struct stat st;
   if (stat(path, &st) == -1)
@@ -320,20 +288,13 @@ void CreateBlankImage(
   of += image;
   std::string count = "count=";
   count += std::to_string(image_mb);
-  const char* dd_command[]{
-    "/bin/dd", "if=/dev/zero", of.c_str(), "bs=1M", count.c_str(), NULL};
-  subprocess(dd_command, NULL);
-  const char* mkfs_command[]{
-    "/sbin/mkfs", "-t", image_fmt.c_str(), image.c_str(), NULL};
-  const char* envp[]{"PATH=/sbin", NULL};
-  subprocess(mkfs_command, envp);
+  cvd::execute({"/bin/dd", "if=/dev/zero", of, "bs=1M", count});
+  cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
 }
 
 void RemoveFile(const std::string& file) {
   LOG(INFO) << "Removing " << file;
-  const char* rm_command[]{
-    "/bin/rm", "-f", file.c_str(), NULL};
-  subprocess(rm_command, NULL);
+  cvd::execute({"/bin/rm", "-f", file});
 }
 
 bool ApplyDataImagePolicy(const char* data_image) {
@@ -380,24 +341,20 @@ bool ApplyDataImagePolicy(const char* data_image) {
   return true;
 }
 
-bool EnsureDirExists(const char* dir) {
-  if (!DirExists(dir)) {
+bool EnsureDirExists(const std::string& dir) {
+  if (!DirExists(dir.c_str())) {
     LOG(INFO) << "Setting up " << dir;
-    if (mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+    if (mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
       if (errno == EACCES) {
         // TODO(79170615) Don't use sudo once libvirt is replaced
         LOG(WARNING) << "Not enough permission to create " << dir
                      << " retrying with sudo";
-        const char* mkdir_command[]{"/usr/bin/sudo", "/bin/mkdir", "-m",
-                                    "0775",          dir,          NULL};
-        subprocess(mkdir_command, NULL);
+        cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", dir});
 
         // When created with sudo the owner and group is root.
         std::string user_group = getenv("USER");
         user_group += ":libvirt-qemu";
-        const char* chown_cmd[] = {"/usr/bin/sudo", "/bin/chown",
-                                   user_group.c_str(), dir, NULL};
-        subprocess(chown_cmd, NULL);
+        cvd::execute({"/usr/bin/sudo", "/bin/chown", user_group, dir});
       } else {
         LOG(FATAL) << "Unable to create " << dir << ". Error: " << errno;
         return false;
@@ -443,18 +400,10 @@ bool AdbUsbEnabled() {
 
 void LaunchSocketForwardProxyIfEnabled() {
   if (AdbTunnelEnabled()) {
-    auto guest_port_arg = GetGuestPortArg();
-    auto host_port_arg = GetHostPortArg();
-    auto config_arg = GetConfigFileArg();
-
-    const char* const socket_proxy[] = {
-      FLAGS_socket_forward_proxy_binary.c_str(),
-      guest_port_arg.c_str(),
-      host_port_arg.c_str(),
-      config_arg.c_str(),
-      NULL
-    };
-    subprocess(socket_proxy, nullptr, false);
+    cvd::subprocess({FLAGS_socket_forward_proxy_binary,
+                     GetGuestPortArg(),
+                     GetHostPortArg(),
+                     GetConfigFileArg()});
   }
 }
 
@@ -462,30 +411,16 @@ void LaunchVNCServerIfEnabled() {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
-    auto config_arg = GetConfigFileArg();
-    const char* vnc_command[] = {
-      FLAGS_vnc_server_binary.c_str(),
-      port_options.c_str(),
-      config_arg.c_str(),
-      NULL
-    };
-    subprocess(vnc_command, NULL, false);
+    cvd::subprocess(
+        {FLAGS_vnc_server_binary, port_options, GetConfigFileArg()});
   }
 }
 
 void LaunchWifiRelayIfEnabled() {
   if (FLAGS_start_wifi_relay) {
     // Launch the wifi relay, don't wait for it to complete
-    auto config_arg = GetConfigFileArg();
-    const char* relay_command[] = {
-        "/usr/bin/sudo",
-        "-E",
-        FLAGS_wifi_relay_binary.c_str(),
-        config_arg.c_str(),
-        NULL
-    };
-
-    subprocess(relay_command, NULL /* envp */, false /* wait_for_child */);
+    cvd::subprocess(
+        {"/usr/bin/sudo", "-E", FLAGS_wifi_relay_binary, GetConfigFileArg()});
   }
 }
 bool ResolveInstanceFiles() {
@@ -554,7 +489,7 @@ bool SetUpGlobalConfiguration() {
   auto config = vsoc::CuttlefishConfig::Get();
   // Set this first so that calls to PerInstancePath below are correct
   config->set_instance_dir(FLAGS_instance_dir);
-  if (!EnsureDirExists(FLAGS_instance_dir.c_str())) {
+  if (!EnsureDirExists(FLAGS_instance_dir)) {
     return false;
   }
 
