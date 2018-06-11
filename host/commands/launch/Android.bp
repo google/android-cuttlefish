@@ -28,6 +28,7 @@ cc_binary_host {
         "vsoc_lib",
         "libcuttlefish_fs",
         "libcuttlefish_strings",
+        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libicuuc",
         "libbase",
