@@ -1,3 +1,9 @@
+cuttlefish-common (0.7pre1) UNRELEASED; urgency=medium
+
+  * Back out the 0.6 era wifi b/110059274
+
+ -- Greg Hartman <ghartman@hartman.mtv.corp.google.com>  Mon, 11 Jun 2018 18:19:44 -0700
+
 cuttlefish-common (0.6) RELEASED; urgency=medium
 
   * Changes to fully enable WiFi

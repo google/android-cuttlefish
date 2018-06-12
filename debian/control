@@ -34,7 +34,6 @@ Depends:
  libvirt-daemon-system,
  libxml2,
  linux-image-extra-virtual | linux-image-amd64 (>= 4.9),
- mac80211-hwsim-dkms,
  psmisc,
  qemu-kvm (>= 2.8.0),
  qemu-system-common (>= 2.8.0),
