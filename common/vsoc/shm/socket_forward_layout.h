@@ -27,17 +27,15 @@ namespace socket_forward {
 constexpr std::size_t kMaxPacketSize = 8192;
 constexpr std::size_t kNumQueues = 16;
 
-enum class QueueState : std::uint32_t {
-  INACTIVE = 0,
-  HOST_CONNECTED = 1,
-  BOTH_CONNECTED = 2,
-  HOST_CLOSED = 3,
-  GUEST_CLOSED = 4,
-  // If both are closed then the queue goes back to INACTIVE
-  // BOTH_CLOSED = 0,
-};
-static_assert(ShmTypeValidator<QueueState, 4>::valid,
-              "Compilation error. Please fix above errors and retry.");
+namespace QueueState {
+constexpr std::uint32_t INACTIVE = 0;
+constexpr std::uint32_t HOST_CONNECTED = 1;
+constexpr std::uint32_t BOTH_CONNECTED = 2;
+constexpr std::uint32_t HOST_CLOSED = 3;
+constexpr std::uint32_t GUEST_CLOSED = 4;
+// If both are closed then the queue goes back to INACTIVE
+// BOTH_CLOSED = 0,
+}  // namespace QueueState
 
 struct Queue {
   static constexpr size_t layout_size =
@@ -45,11 +43,9 @@ struct Queue {
 
   CircularPacketQueue<16, kMaxPacketSize> queue;
 
-  QueueState queue_state_;
+  std::atomic_uint32_t queue_state_;
 
-  bool Recover() {
-    return queue.Recover();
-  }
+  bool Recover() { return queue.Recover(); }
 };
 ASSERT_SHM_COMPATIBLE(Queue);
 
@@ -65,11 +61,10 @@ struct QueuePair {
 
   SpinLock queue_state_lock_;
 
-
   bool Recover() {
     // TODO: Put queue_state_ and port_ recovery here, probably after grabbing
     bool recovered = false;
-    recovered = recovered ||  host_to_guest.Recover();
+    recovered = recovered || host_to_guest.Recover();
     recovered = recovered || guest_to_host.Recover();
     recovered = recovered || queue_state_lock_.Recover();
     return recovered;
@@ -86,13 +81,14 @@ struct SocketForwardLayout : public RegionLayout {
       bool rval = i.Recover();
       recovered = recovered || rval;
     }
-    //TODO: consider handling the sequence number here
+    // TODO: consider handling the sequence number here
     return recovered;
   }
 
   QueuePair queues_[kNumQueues];
-  std::atomic_uint32_t seq_num; // incremented for every new connection
-  std::atomic_uint32_t generation_num; // incremented for every new socket forward process
+  std::atomic_uint32_t seq_num;  // incremented for every new connection
+  std::atomic_uint32_t
+      generation_num;  // incremented for every new socket forward process
   static const char* region_name;
 };
 
