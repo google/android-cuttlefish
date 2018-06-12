@@ -22,14 +22,6 @@
 			compatible = "android,firmware";
 			fstab {
 				compatible = "android,fstab";
-				system {
-					compatible = "android,system";
-					dev = "/dev/block/vda";
-					type = "ext4";
-					mnt_flags = "noatime,ro,errors=panic";
-					fsmgr_flags = "wait";
-				};
-
 				vendor {
 					compatible = "android,vendor";
 					dev = "/dev/block/vdd";
