@@ -24,7 +24,7 @@
 
 using vsoc::layout::socket_forward::Queue;
 using vsoc::layout::socket_forward::QueuePair;
-using vsoc::layout::socket_forward::QueueState;
+namespace QueueState = vsoc::layout::socket_forward::QueueState;
 // store the read and write direction as variables to keep the ifdefs and macros
 // in later code to a minimum
 constexpr auto ReadDirection = &QueuePair::
@@ -143,7 +143,7 @@ void SocketForwardRegionView::CleanUpPreviousConnections() {
   auto end_packet = Packet::MakeEnd();
   end_packet.set_generation(current_generation);
   for (auto&& queue_pair : data()->queues_) {
-    QueueState state{};
+    std::uint32_t state{};
     {
       auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
       state = (queue_pair.*WriteDirection).queue_state_;
@@ -179,13 +179,10 @@ void SocketForwardRegionView::MarkQueueDisconnected(
 #ifdef CUTTLEFISH_HOST
   // if the host has connected but the guest hasn't seen it yet, wait for the
   // guest to connect so the protocol can follow the normal state transition.
-  while (true) {
-    auto guard = make_lock_guard(&queue_pair.queue_state_lock_);
-    if (queue.queue_state_ != QueueState::HOST_CONNECTED) {
-      break;
-    }
-    LOG(WARNING) << "closing queue in HOST_CONNECTED state. waiting";
-    sleep(1);
+  while (queue.queue_state_ == QueueState::HOST_CONNECTED) {
+    LOG(WARNING) << "closing queue[" << connection_id
+                 << "] in HOST_CONNECTED state. waiting";
+    WaitForSignal(&queue.queue_state_, QueueState::HOST_CONNECTED);
   }
 #endif
 
@@ -261,6 +258,8 @@ int SocketForwardRegionView::GetWaitingConnectionID() {
       LOG(DEBUG) << "found waiting connection at index " << id;
       queue_pair.host_to_guest.queue_state_ = QueueState::BOTH_CONNECTED;
       queue_pair.guest_to_host.queue_state_ = QueueState::BOTH_CONNECTED;
+      SendSignal(layout::Sides::Peer, &queue_pair.host_to_guest.queue_state_);
+      SendSignal(layout::Sides::Peer, &queue_pair.guest_to_host.queue_state_);
       return id;
     }
     ++id;
