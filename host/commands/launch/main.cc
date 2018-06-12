@@ -295,8 +295,12 @@ void subprocess(const char* const* command,
 }
 
 bool FileExists(const char* path) {
-  struct stat unused;
-  return stat(path, &unused) != -1 || errno != ENOENT;
+  struct stat st;
+  if (stat(path, &st))
+    return false;
+  if (st.st_size == 0)
+    return false;
+  return true;
 }
 
 void CreateBlankImage(
@@ -490,6 +494,10 @@ bool ResolveInstanceFiles() {
   }
   if (FLAGS_initrd.empty()) {
     FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
+    if (!FileExists(FLAGS_initrd.c_str())) {
+      LOG(WARNING) << "No ramdisk.img found; assuming system-as-root build";
+      FLAGS_initrd.clear();
+    }
   }
   if (FLAGS_cache_image.empty()) {
     FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
@@ -509,7 +517,7 @@ bool ResolveInstanceFiles() {
   // Check that the files exist
   for (const auto& file :
        {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image, FLAGS_kernel,
-        FLAGS_initrd, FLAGS_data_image, FLAGS_kernel_command_line}) {
+        FLAGS_data_image, FLAGS_kernel_command_line}) {
     if (!FileExists(file.c_str())) {
       LOG(FATAL) << "File not found: " << file;
       return false;
@@ -542,6 +550,9 @@ bool SetUpGlobalConfiguration() {
 
   config->set_kernel_image_path(FLAGS_kernel);
   std::ostringstream extra_cmdline;
+  if (FLAGS_initrd.empty()) {
+    extra_cmdline << " root=/dev/vda init=/init";
+  }
   extra_cmdline << " androidboot.serialno=" << FLAGS_serial_number;
   extra_cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
   if (FLAGS_extra_kernel_command_line.size()) {
