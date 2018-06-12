@@ -30,7 +30,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
     ro.com.google.locationfeatures=1 \
-    ro.debuggable=1 \
     ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
     ro.opengles.version=131072 \
