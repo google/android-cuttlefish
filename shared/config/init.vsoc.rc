@@ -66,10 +66,6 @@ on boot
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_forward_proxy
 
-    # TODO(ender): Re-enable these
-    # Compass.
-    stop akmd
-
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
     user root
