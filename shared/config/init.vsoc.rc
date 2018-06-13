@@ -92,13 +92,13 @@ service vport_trigger /vendor/bin/vport_trigger
     oneshot
 
 
-on property:sys.cf.ser.cf-logcat=*
-    symlink ${sys.cf.ser.cf-logcat} /dev/cf-logcat
+on property:vendor.ser.cf-logcat=*
+    symlink ${vendor.ser.cf-logcat} /dev/cf-logcat
     enable seriallogging
 
 
-on property:sys.cf.ser.cf-gadget-usb-v1=*
-    symlink ${sys.cf.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
+on property:vendor.ser.cf-gadget-usb-v1=*
+    symlink ${vendor.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
     enable usbforward
 
 
