@@ -30,7 +30,6 @@ on init
 
 on fs
     mount_all /vendor/etc/fstab.${ro.hardware}
-    wait /vendor/etc/selinux/nonplat_mac_permissions.xml
     restorecon_recursive /vendor
 
     # TODO(ender): Find better way to talk to serial port.
