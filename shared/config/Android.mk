@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+LOCAL_PATH := $(call my-dir)
+
 include $(CLEAR_VARS)
 
 # This section generates wpa_supplicant.conf using the target product name and
@@ -28,9 +30,18 @@ LOCAL_MULTILIB := first
 
 include $(BUILD_SYSTEM)/base_rules.mk
 
-$(LOCAL_BUILT_MODULE): device/google/cuttlefish/shared/config/gen_wpa_supplicant_conf.sh
+$(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/gen_wpa_supplicant_conf.sh
 	$(hide) echo "Generating $@"
 	$(hide) mkdir -p $(dir $@)
-	$(hide) device/google/cuttlefish/shared/config/gen_wpa_supplicant_conf.sh \
-	    "${TARGET_PRODUCT}" "${PRODUCT_MODEL}" "${PLATFORM_SDK_VERSION}" \
-	    > $@
+	$(hide) $< "${TARGET_PRODUCT}" "${PRODUCT_MODEL}" \
+	    "${PLATFORM_SDK_VERSION}" > $@
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := cuttlefish_dtb
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(HOST_OUT)/config
+LOCAL_MODULE_STEM := cuttlefish.dtb
+LOCAL_SRC_FILES := cuttlefish.dtb
+
+include $(BUILD_PREBUILT)
