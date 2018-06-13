@@ -51,7 +51,7 @@ def stop_cvd(args):
 
 def main():
   parser = argparse.ArgumentParser(
-      description='Fetch images from a compute engine bucket')
+      description='Upload a local build to Google Compute Engine and run it')
   parser.add_argument(
       '-dist_dir',
       type=str,
