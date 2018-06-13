@@ -294,9 +294,18 @@ void subprocess(const char* const* command,
   }
 }
 
-bool FileExists(const char* path) {
+bool DirExists(const char* path) {
   struct stat st;
-  if (stat(path, &st))
+  if (stat(path, &st) == -1)
+    return false;
+  if ((st.st_mode & S_IFMT) != S_IFDIR)
+    return false;
+  return true;
+}
+
+bool FileHasContent(const char* path) {
+  struct stat st;
+  if (stat(path, &st) == -1)
     return false;
   if (st.st_size == 0)
     return false;
@@ -327,7 +336,7 @@ void RemoveFile(const std::string& file) {
 }
 
 bool ApplyDataImagePolicy(const char* data_image) {
-  bool data_exists = FileExists(data_image);
+  bool data_exists = FileHasContent(data_image);
   bool remove{};
   bool create{};
 
@@ -371,7 +380,7 @@ bool ApplyDataImagePolicy(const char* data_image) {
 }
 
 bool EnsureDirExists(const char* dir) {
-  if (!FileExists(dir)) {
+  if (!DirExists(dir)) {
     LOG(INFO) << "Setting up " << dir;
     if (mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
       if (errno == EACCES) {
@@ -494,7 +503,7 @@ bool ResolveInstanceFiles() {
   }
   if (FLAGS_initrd.empty()) {
     FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
-    if (!FileExists(FLAGS_initrd.c_str())) {
+    if (!FileHasContent(FLAGS_initrd.c_str())) {
       LOG(WARNING) << "No ramdisk.img found; assuming system-as-root build";
       FLAGS_initrd.clear();
     }
@@ -518,7 +527,7 @@ bool ResolveInstanceFiles() {
   for (const auto& file :
        {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image, FLAGS_kernel,
         FLAGS_data_image, FLAGS_kernel_command_line}) {
-    if (!FileExists(file.c_str())) {
+    if (!FileHasContent(file.c_str())) {
       LOG(FATAL) << "File not found: " << file;
       return false;
     }
