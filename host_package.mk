@@ -28,6 +28,7 @@ cvd_host_executables := \
     vnc_server \
     wifi_relay \
     record_audio \
+    cf_qemu.sh \
 
 cvd_host_tests := \
     auto_free_buffer_test \
