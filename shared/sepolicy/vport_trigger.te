@@ -8,3 +8,4 @@ init_daemon_domain(vport_trigger)
 r_dir_file(vport_trigger, sysfs_type)
 
 set_prop(vport_trigger, sys_cf_ser_prop)
+set_prop(vport_trigger, vendor_default_prop)
