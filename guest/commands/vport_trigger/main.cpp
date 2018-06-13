@@ -74,9 +74,12 @@ int main(int argc __unused, char *argv[] __unused) {
       }
       content.erase(content.end() - 1);
       // Leaves 32-11=22 characters for the port name from QEMU.
-      std::string propname("sys.cf.ser." + content);
       std::string dev("/dev/" + dirname);
+      std::string propname("vendor.ser." + content);
       property_set(propname.c_str(), dev.c_str());
+      // Property was renamed; this is for compatibility
+      std::string legacy_propname("sys.cf.ser." + content);
+      property_set(legacy_propname.c_str(), dev.c_str());
     }
   }
   return 0;
