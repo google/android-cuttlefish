@@ -449,12 +449,34 @@ std::string GetPerInstanceDefault(const char* prefix) {
 int GetPerInstanceDefault(int base) { return base + GetInstance() - 1; }
 
 std::string GetDefaultPerInstanceDir() {
-  // TODO(79170615): Change to a directory in home once libvirt is no longer
-  // default.
   std::ostringstream stream;
-  stream << "/var/run/libvirt-" << kDefaultUuidPrefix << std::setfill('0')
-         << std::setw(2) << GetInstance();
+  if (HostSupportsQemuCli()) {
+    stream << std::getenv("HOME") << "/runfiles";
+  } else {
+    stream << "/var/run/libvirt-" << kDefaultUuidPrefix << std::setfill('0')
+           << std::setw(2) << GetInstance();
+  }
   return stream.str();
 }
 
+std::string DefaultHostArtifactsPath(const std::string& file_name) {
+  return (cvd::StringFromEnv("ANDROID_HOST_OUT",
+                             cvd::StringFromEnv("HOME", ".")) +
+          "/") +
+         file_name;
+}
+
+std::string DefaultGuestImagePath(const std::string& file_name) {
+  return (cvd::StringFromEnv("ANDROID_PRODUCT_OUT",
+                        cvd::StringFromEnv("HOME", ".")) +
+          "/") +
+         file_name;
+}
+
+bool HostSupportsQemuCli() {
+  static bool supported =
+      std::system(
+          "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
+  return supported;
+}
 }  // namespace vsoc
