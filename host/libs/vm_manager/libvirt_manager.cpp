@@ -20,10 +20,13 @@
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <libxml/tree.h>
+
+#include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
@@ -259,9 +262,7 @@ std::string GetLibvirtCommand() {
   return cmd;
 }
 
-}  // namespace
-
-std::string LibvirtManager::BuildXmlConfig() const {
+std::string BuildXmlConfig() {
   auto config = vsoc::CuttlefishConfig::Get();
   std::string instance_name = config->instance_name();
 
@@ -328,6 +329,8 @@ std::string LibvirtManager::BuildXmlConfig() const {
   xmlFree(tgt);
   return out;
 }
+}  // namespace
+
 
 bool LibvirtManager::Start() const {
   std::string start_command = GetLibvirtCommand();

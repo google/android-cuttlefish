@@ -48,23 +48,7 @@
 #include "host/libs/monitor/kernel_log_server.h"
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
-#include "host/libs/vm_manager/libvirt_manager.h"
-
-namespace {
-std::string StringFromEnv(const char* varname, std::string defval) {
-  const char* const valstr = getenv(varname);
-  if (!valstr) {
-    return defval;
-  }
-  return valstr;
-}
-
-std::string DefaultHostArtifactsPath(const char* file_name) {
-  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
-         file_name;
-}
-
-}  // namespace
+#include "host/libs/vm_manager/vm_manager.h"
 
 using vsoc::GetPerInstanceDefault;
 
@@ -103,18 +87,25 @@ DEFINE_int32(memory_mb, 2048,
 std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
 DEFINE_string(mempath, g_default_mempath.c_str(),
               "Target location for the shmem file.");
-std::string g_default_mobile_interface{GetPerInstanceDefault("cvd-mobile-")};
+// The cvd-mobile-{tap|br}-xx interfaces are created by default, but libvirt
+// needs to create its own on tap interfaces on every run so we use a different
+// set for it.
+std::string g_default_mobile_interface{
+    vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-mbr-")
+                                : GetPerInstanceDefault("cvd-mobile-")};
 DEFINE_string(mobile_interface, g_default_mobile_interface.c_str(),
               "Network interface to use for mobile networking");
-DEFINE_string(mobile_tap_name, GetPerInstanceDefault("amobile"),
+std::string g_default_mobile_tap_interface =
+    vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-mtap-")
+                                : GetPerInstanceDefault("amobile");
+DEFINE_string(mobile_tap_name, g_default_mobile_tap_interface.c_str(),
               "The name of the tap interface to use for mobile");
 std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
 DEFINE_string(serial_number, g_default_serial_number.c_str(),
               "Serial number to use for the device");
 DEFINE_string(instance_dir, vsoc::GetDefaultPerInstanceDir(),
               "A directory to put all instance specific files");
-DEFINE_string(system_image_dir,
-              StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", ".")),
+DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 
@@ -123,12 +114,12 @@ DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " Will be deprecated soon.");
 DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
-              DefaultHostArtifactsPath("/bin/vnc_server"),
+              vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
               "Location of the vnc server binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(socket_forward_proxy_binary,
-              DefaultHostArtifactsPath("/bin/socket_forward_proxy"),
+              vsoc::DefaultHostArtifactsPath("bin/socket_forward_proxy"),
               "Location of the socket_forward_proxy binary.");
 DEFINE_string(adb_mode, "tunnel",
               "Mode for adb connection. Can be usb for usb forwarding, or "
@@ -143,7 +134,7 @@ DEFINE_string(host_mac_address,
               "MAC address of the wifi interface running on the host.");
 DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
 DEFINE_string(wifi_relay_binary,
-              DefaultHostArtifactsPath("/bin/wifi_relay"),
+              vsoc::DefaultHostArtifactsPath("bin/wifi_relay"),
               "Location of the wifi_relay binary.");
 std::string g_default_wifi_interface{GetPerInstanceDefault("cvd-wifi-")};
 DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
@@ -151,7 +142,7 @@ DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
 DEFINE_string(wifi_tap_name, GetPerInstanceDefault("awifi"),
               "The name of the tap interface to use for wifi");
 // TODO(b/72969289) This should be generated
-DEFINE_string(dtb, DefaultHostArtifactsPath("config/cuttlefish.dtb"),
+DEFINE_string(dtb, vsoc::DefaultHostArtifactsPath("config/cuttlefish.dtb"),
               "Path to the cuttlefish.dtb file");
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
@@ -677,9 +668,9 @@ int main(int argc, char** argv) {
   PreLaunchInitializers::Initialize();
 
   // Start the guest VM
-  vm_manager::LibvirtManager libvirt;
-  if (!libvirt.Start()) {
-    LOG(FATAL) << "Unable to start libvirt";
+  auto vm_manager = vm_manager::VmManager::Get();
+  if (!vm_manager->Start()) {
+    LOG(FATAL) << "Unable to start vm_manager";
     return -1;
   }
 

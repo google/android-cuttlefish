@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
 #include "host/libs/vm_manager/vm_manager.h"
 
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
+
 namespace vm_manager {
-
-class LibvirtManager : public VmManager {
- public:
-  LibvirtManager() = default;
-  virtual ~LibvirtManager() = default;
-
-  bool Start() const override;
-  bool Stop() const override;
-};
-
+std::shared_ptr<VmManager> VmManager::Get() {
+  static std::shared_ptr<VmManager> vm_manager(
+      vsoc::HostSupportsQemuCli()
+          ? static_cast<VmManager*>(new QemuManager())
+          : static_cast<VmManager*>(new LibvirtManager()));
+  return vm_manager;
+}
 }  // namespace vm_manager
