@@ -37,6 +37,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
@@ -548,8 +549,8 @@ bool SetUpGlobalConfiguration() {
     config->disable_usb_adb();
   }
 
-  config->set_cuttlefish_env_path(
-      StringFromEnv("HOME", ".") + "/.cuttlefish.sh");
+  config->set_cuttlefish_env_path(cvd::StringFromEnv("HOME", ".") +
+                                  "/.cuttlefish.sh");
 
   return true;
 }
