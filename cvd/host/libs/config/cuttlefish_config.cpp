@@ -28,6 +28,8 @@
 #include <glog/logging.h>
 #include <json/json.h>
 
+#include "common/libs/utils/environment.h"
+
 DEFINE_string(config_file,
               vsoc::GetDefaultPerInstanceDir() + "/cuttlefish_config.json",
               "A file from where to load the config values. This flag is "
