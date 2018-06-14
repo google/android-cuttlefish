@@ -17,6 +17,7 @@ cc_library_shared {
     name: "libcuttlefish_utils",
     srcs: [
         "subprocess.cpp",
+        "environment.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
