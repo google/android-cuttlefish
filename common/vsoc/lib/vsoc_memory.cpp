@@ -198,6 +198,7 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
     }
 
     region.SetRegionSize(new_min_size);
+    LOG(INFO) << region_name << ": resized to " << new_min_size;
 
     // Get new offset for next region
     auto offset = region.begin_offset() + region.region_size();
