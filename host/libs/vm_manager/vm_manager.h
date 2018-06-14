@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,22 @@
  */
 #pragma once
 
-#include "host/libs/vm_manager/vm_manager.h"
+#include <memory>
+#include <string>
 
 namespace vm_manager {
 
-class LibvirtManager : public VmManager {
+// Superclass of every guest VM manager. It provides a static getter that
+// chooses the best subclass to instantiate based on the capabilities supported
+// by the host packages.
+class VmManager {
  public:
-  LibvirtManager() = default;
-  virtual ~LibvirtManager() = default;
+  // Returns the most suitable vm manager as a singleton.
+  static std::shared_ptr<VmManager> Get();
+  virtual ~VmManager() = default;
 
-  bool Start() const override;
-  bool Stop() const override;
+  virtual bool Start() const = 0;
+  virtual bool Stop() const = 0;
 };
 
 }  // namespace vm_manager
