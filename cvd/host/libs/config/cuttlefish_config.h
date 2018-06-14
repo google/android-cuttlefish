@@ -32,7 +32,7 @@ class CuttlefishConfig {
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
-  bool SaveToFile(const std::string& file) const ;
+  bool SaveToFile(const std::string& file) const;
 
   // Returns the path to a file with the given name in the instance directory..
   std::string PerInstancePath(const char* file_name) const;
@@ -188,4 +188,10 @@ int GetPerInstanceDefault(int base);
 
 std::string GetDefaultPerInstanceDir();
 
+std::string DefaultHostArtifactsPath(const std::string& file);
+std::string DefaultGuestImagePath(const std::string& file);
+
+// Whether the installed host packages support calling qemu directly instead of
+// through libvirt
+bool HostSupportsQemuCli();
 }  // namespace vsoc
