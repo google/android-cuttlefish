@@ -136,6 +136,12 @@ class CuttlefishConfig {
   std::string mobile_tap_name() const;
   void set_mobile_tap_name(const std::string& mobile_tap_name);
 
+  std::string wifi_bridge_name() const;
+  void set_wifi_bridge_name(const std::string& wifi_bridge_name);
+
+  std::string wifi_tap_name() const;
+  void set_wifi_tap_name(const std::string& wifi_tap_name);
+
   std::string wifi_guest_mac_addr() const;
   void set_wifi_guest_mac_addr(const std::string& wifi_guest_mac_addr);
 
