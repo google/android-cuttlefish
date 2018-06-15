@@ -70,10 +70,6 @@ on boot
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_forward_proxy
 
-    # TODO(ender): Re-enable these
-    # Compass.
-    stop akmd
-
 
 service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
     oneshot
