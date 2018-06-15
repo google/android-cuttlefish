@@ -144,6 +144,8 @@ DEFINE_string(wifi_relay_binary,
 std::string g_default_wifi_interface{GetPerInstanceDefault("cvd-wifi-")};
 DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
               "Network interface to use for wifi");
+DEFINE_string(wifi_tap_name, GetPerInstanceDefault("awifi"),
+              "The name of the tap interface to use for wifi");
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, DefaultHostArtifactsPath("config/cuttlefish.dtb"),
               "Path to the cuttlefish.dtb file");
@@ -594,6 +596,9 @@ bool SetUpGlobalConfiguration() {
 
   config->set_mobile_bridge_name(FLAGS_mobile_interface);
   config->set_mobile_tap_name(FLAGS_mobile_tap_name);
+
+  config->set_wifi_bridge_name(FLAGS_wifi_interface);
+  config->set_wifi_tap_name(FLAGS_wifi_tap_name);
 
   config->set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
   config->set_wifi_host_mac_addr(FLAGS_host_mac_address);
