@@ -16,6 +16,7 @@
 
 PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64/auto/device.mk \
+	aosp_cf_x86_64_iot:$(LOCAL_DIR)/vsoc_x86_64/iot/device.mk \
 	aosp_cf_x86_64_pasan:$(LOCAL_DIR)/vsoc_x86_64/pasan/device.mk \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/device.mk \
 	aosp_cf_x86_64_tablet:$(LOCAL_DIR)/vsoc_x86_64/tablet/device.mk \
@@ -40,6 +41,7 @@ COMMON_LUNCH_CHOICES := \
 	aosp_cf_x86_tv-userdebug \
 	aosp_cf_x86_wear-userdebug \
 	aosp_cf_x86_64_auto-userdebug \
+	aosp_cf_x86_64_iot-userdebug \
 	aosp_cf_x86_64_phone-userdebug \
 	aosp_cf_x86_64_tablet-userdebug \
 	aosp_cf_x86_64_tablet_3g-userdebug \
