@@ -8,8 +8,9 @@ hosttar: $(cvd_host_package_tar)
 .PHONY: cf_local_image
 cf_local_image: bootimage cacheimage hosttar systemimage userdataimage vendorimage
 
+$(cvd_host_package_tar): PRIVATE_TAR_FORMAT :=
 ifeq ($(HOST_OS),linux)
-CVD_TAR_FORMAT := --format=gnu
+$(cvd_host_package_tar): PRIVATE_TAR_FORMAT := --format=gnu
 endif
 
 # Build and store them on the build server.
@@ -53,17 +54,13 @@ cvd_host_shared_libraries := \
 cvd_host_configs := \
     cuttlefish.dtb
 
-cvd_host_packages := \
-    cuttlefish_dtb \
-    $(cvd_host_executables) \
-    $(cvd_host_tests) \
-
 cvd_host_package_files := \
      $(addprefix config/,$(cvd_host_configs)) \
      $(addprefix $(bin_path)/,$(cvd_host_executables)) \
      $(addprefix $(lib_path)/,$(addsuffix .so,$(cvd_host_shared_libraries))) \
      $(foreach test,$(cvd_host_tests), ${tests_path}/$(test)/$(test)) \
 
-$(cvd_host_package_tar): $(cvd_host_packages)
-	$(hide) rm -rf $@ && tar Scfz $@.tmp -C $(HOST_OUT) $(CVD_TAR_FORMAT) $(cvd_host_package_files)
+$(cvd_host_package_tar): PRIVATE_FILES := $(cvd_host_package_files)
+$(cvd_host_package_tar): $(addprefix $(HOST_OUT)/,$(cvd_host_package_files))
+	$(hide) rm -rf $@ && tar Scfz $@.tmp -C $(HOST_OUT) $(PRIVATE_TAR_FORMAT) $(PRIVATE_FILES)
 	$(hide) mv $@.tmp $@
