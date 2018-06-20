@@ -316,8 +316,6 @@ std::string LibvirtManager::BuildXmlConfig() const {
 
   ConfigureNIC(devices, config->mobile_tap_name(), config->mobile_bridge_name(),
                vsoc::GetInstance(), 1);
-  ConfigureNIC(devices, config->wifi_tap_name(), config->wifi_bridge_name(),
-	       vsoc::GetInstance(), 2);
   ConfigureHWRNG(devices, config->entropy_source());
 
   xmlChar* tgt;
