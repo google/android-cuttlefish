@@ -18,7 +18,7 @@ PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
 PRODUCT_SHIPPING_API_LEVEL := 26
 
-DISABLE_RILD_OEM_HOOK := true
+PRODUCT_ENFORCE_RRO_TARGETS := framework-res
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
@@ -67,7 +67,8 @@ PRODUCT_PACKAGES += \
     wifi_setup \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
-    vport_trigger
+    vport_trigger \
+    rename_netiface
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -95,8 +96,10 @@ PRODUCT_PACKAGES += \
     libGLESv2_swiftshader \
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
+
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
-PRODUCT_AAPT_PREF_CONFIG := xhdpi
+# PRODUCT_AAPT_PREF_CONFIG is intentionally not set to pick up every density resources.
 
 #
 # General files
@@ -263,7 +266,6 @@ PRODUCT_PACKAGES += \
 # TODO thermal
 
 PRODUCT_PACKAGES += \
-    vsoc_mem_json \
     cuttlefish_dtb
 
 # WLAN driver configuration files
