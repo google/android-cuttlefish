@@ -24,8 +24,8 @@ namespace vm_manager {
 std::shared_ptr<VmManager> VmManager::Get() {
   static std::shared_ptr<VmManager> vm_manager(
       vsoc::HostSupportsQemuCli()
-          ? static_cast<VmManager*>(new QemuManager())
-          : static_cast<VmManager*>(new LibvirtManager()));
+          ? std::shared_ptr<VmManager>(new QemuManager())
+          : std::shared_ptr<VmManager>(new LibvirtManager()));
   return vm_manager;
 }
 }  // namespace vm_manager
