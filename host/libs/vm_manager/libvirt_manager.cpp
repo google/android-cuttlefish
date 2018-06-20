@@ -315,10 +315,10 @@ std::string BuildXmlConfig() {
   ConfigureDisk(devices, "vdc", config->cache_image_path());
   ConfigureDisk(devices, "vdd", config->vendor_image_path());
 
-  ConfigureNIC(devices, config->mobile_tap_name(), config->mobile_bridge_name(),
-               vsoc::GetInstance(), 1);
   ConfigureNIC(devices, config->wifi_tap_name(), config->wifi_bridge_name(),
-	       vsoc::GetInstance(), 2);
+	       vsoc::GetInstance(), 1);
+  ConfigureNIC(devices, config->mobile_tap_name(), config->mobile_bridge_name(),
+               vsoc::GetInstance(), 2);
   ConfigureHWRNG(devices, config->entropy_source());
 
   xmlChar* tgt;
