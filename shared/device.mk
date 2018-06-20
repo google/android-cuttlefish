@@ -18,6 +18,8 @@ PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
 PRODUCT_SHIPPING_API_LEVEL := 26
 
+PRODUCT_ENFORCE_RRO_TARGETS := framework-res
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
@@ -94,6 +96,8 @@ PRODUCT_PACKAGES += \
     libGLESv2_swiftshader \
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
+
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
 # PRODUCT_AAPT_PREF_CONFIG is intentionally not set to pick up every density resources.
 
