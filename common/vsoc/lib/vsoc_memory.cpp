@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include "common/libs/glog/logging.h"
+#include "common/libs/utils/size_utils.h"
 #include "common/vsoc/shm/audio_data_layout.h"
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/e2e_test_region_layout.h"
@@ -37,19 +38,6 @@
 #include "uapi/vsoc_shm.h"
 
 namespace {
-
-uint32_t AlignToPageSize(uint32_t val) {
-  static uint32_t page_size = sysconf(_SC_PAGESIZE);
-  return ((val + (page_size - 1)) / page_size) * page_size;
-}
-
-uint32_t AlignToPowerOf2(uint32_t val) {
-  uint32_t power_of_2 = 1;
-  while (power_of_2 < val) {
-    power_of_2 *= 2;
-  }
-  return power_of_2;
-}
 
 // Takes a vector of objects and returns a vector of pointers to those objects.
 template <typename T, typename R>
@@ -106,7 +94,7 @@ class VSoCRegionLayoutImpl : public VSoCRegionLayout {
     auto size = GetOffsetOfRegionData();
     // Data section
     size += layout_size_;
-    size = AlignToPageSize(size);
+    size = cvd::AlignToPageSize(size);
     return size;
   }
 
@@ -151,7 +139,7 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
     offset += sizeof(vsoc_shm_layout_descriptor);
     // and region descriptors
     offset += regions_.size() * sizeof(vsoc_device_region);
-    offset = AlignToPageSize(offset);
+    offset = cvd::AlignToPageSize(offset);
 
     // Calculate offsets for all regions and set the size of the device
     UpdateRegionOffsetsAndDeviceSize(offset);
@@ -189,7 +177,7 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
     auto min_required_size = region.GetMinRegionSize();
 
     // Align to page size
-    new_min_size = AlignToPageSize(new_min_size);
+    new_min_size = cvd::AlignToPageSize(new_min_size);
     if (new_min_size < min_required_size) {
       LOG(ERROR) << "Requested resize of region " << region_name << " to "
                  << new_min_size << " (after alignment), it needs at least "
@@ -235,7 +223,7 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
     }
 
     // Make the device's size the smaller power of two possible
-    device_size_ = AlignToPowerOf2(offset);
+    device_size_ = cvd::RoundUpToNextPowerOf2(offset);
   }
 
   std::vector<VSoCRegionLayoutImpl> regions_;
