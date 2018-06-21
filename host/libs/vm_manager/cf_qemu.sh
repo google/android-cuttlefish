@@ -65,7 +65,7 @@ exec "${qemu_binary=/usr/bin/qemu-system-x86_64}" \
     -drive "file=${vendor_image_path=${HOME}/vendor.img},format=raw,if=none,id=drive-virtio-disk3,aio=threads" \
     -device "virtio-blk-pci,scsi=off,bus=pci.0,addr=0x7,drive=drive-virtio-disk3,id=virtio-disk3" \
     -netdev "tap,id=hostnet0,ifname=${mobile_tap_name=${default_mobile_tap_name}},script=no,downscript=no" \
-    -device "virtio-net-pci,netdev=hostnet0,id=net0,mac=00:43:56:44:01:01,bus=pci.0,addr=0x2" \
+    -device "virtio-net-pci,netdev=hostnet0,id=net0,bus=pci.0,addr=0x2" \
     -chardev "socket,id=charserial0,path=${kernel_log_socket_name=${default_dir}/kernel-log}" \
     -device "isa-serial,chardev=charserial0,id=serial0" \
     -chardev "socket,id=charserial1,path=${console_path=${default_dir}/console},server,nowait" \
