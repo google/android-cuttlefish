@@ -23,6 +23,7 @@ Package: cuttlefish-common
 Architecture: amd64
 Depends:
  adb,
+ device-tree-compiler,
  hostapd,
  libarchive-tools | bsdtar,
  libc6,
