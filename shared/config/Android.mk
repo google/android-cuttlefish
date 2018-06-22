@@ -42,6 +42,8 @@ LOCAL_MODULE := cuttlefish_dtb
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(HOST_OUT)/config
 LOCAL_MODULE_STEM := cuttlefish.dtb
-LOCAL_SRC_FILES := cuttlefish.dtb
+LOCAL_SRC_FILES := \
+	initrd-root.dtb \
+	system-root.dtb
 
 include $(BUILD_PREBUILT)

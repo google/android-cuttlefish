@@ -18,6 +18,8 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+CUTTLEFISH_SYSTEM_AS_ROOT := true
+
 PRODUCT_CHARACTERISTICS := nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
