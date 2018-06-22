@@ -53,7 +53,8 @@ cvd_host_shared_libraries := \
     libicuuc-host \
 
 cvd_host_configs := \
-    cuttlefish.dtb
+    system-root.dtb \
+    initrd-root.dtb
 
 cvd_host_package_files := \
      $(addprefix config/,$(cvd_host_configs)) \
