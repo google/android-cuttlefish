@@ -38,12 +38,20 @@ $(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/gen_wpa_supplicant_conf.sh
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := cuttlefish_dtb
+LOCAL_MODULE := initrd_root_dtb
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(HOST_OUT)/config
-LOCAL_MODULE_STEM := cuttlefish.dtb
-LOCAL_SRC_FILES := \
-	initrd-root.dtb \
-	system-root.dtb
+LOCAL_MODULE_STEM := initrd-root.dtb
+LOCAL_SRC_FILES := initrd-root.dtb
+
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := system_root_dtb
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(HOST_OUT)/config
+LOCAL_MODULE_STEM := system-root.dtb
+LOCAL_SRC_FILES := system-root.dtb
 
 include $(BUILD_PREBUILT)
