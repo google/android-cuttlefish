@@ -39,9 +39,11 @@
 #include "common/libs/strings/str_split.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/size_utils.h"
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/pre_launch_initializers.h"
+#include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/ivserver/ivserver.h"
 #include "host/libs/ivserver/options.h"
@@ -200,28 +202,6 @@ class VirtualUSBManager {
 
   VirtualUSBManager(const VirtualUSBManager&) = delete;
   VirtualUSBManager& operator=(const VirtualUSBManager&) = delete;
-};
-
-// IVServerManager takes care of serving shared memory segments between
-// Cuttlefish and host-side daemons.
-class IVServerManager {
- public:
-  IVServerManager(const std::string& mempath, const std::string& qemu_socket)
-      : server_(ivserver::IVServerOptions(mempath, qemu_socket,
-                                          vsoc::GetDomain())) {}
-
-  ~IVServerManager() = default;
-
-  // Start IVServer thread.
-  void Start() {
-    std::thread([this] { server_.Serve(); }).detach();
-  }
-
- private:
-  ivserver::IVServer server_;
-
-  IVServerManager(const IVServerManager&) = delete;
-  IVServerManager& operator=(const IVServerManager&) = delete;
 };
 
 // KernelLogMonitor receives and monitors kernel log for Cuttlefish.
@@ -395,6 +375,33 @@ bool AdbUsbEnabled() {
   return FLAGS_adb_mode == kAdbModeUsb;
 }
 
+void LaunchIvServer() {
+  auto config = vsoc::CuttlefishConfig::Get();
+  // Resize gralloc region
+  auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
+  uint32_t screen_buffers_size =
+      FLAGS_num_screen_buffers *
+      cvd::AlignToPageSize(actual_width * FLAGS_y_res + 16 /* padding */);
+  screen_buffers_size +=
+      (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
+
+  // TODO(b/79170615) Resize gralloc region too.
+
+  vsoc::CreateSharedMemoryFile(
+      config->mempath(),
+      {{vsoc::layout::screen::ScreenLayout::region_name, screen_buffers_size}});
+
+  // Construct the server outside the thread so that the socket is guaranteed to
+  // be created when this function return. Use a shared pointer to avoid the
+  // destruction of the object.
+  std::shared_ptr<ivserver::IVServer> server(new ivserver::IVServer(ivserver::IVServerOptions(
+        config->mempath(), config->ivshmem_qemu_socket_path(),
+        vsoc::GetDomain())));
+  std::thread([server] {
+    server->Serve();
+  }).detach();
+}
+
 void LaunchSocketForwardProxyIfEnabled() {
   if (AdbTunnelEnabled()) {
     cvd::subprocess({FLAGS_socket_forward_proxy_binary,
@@ -420,6 +427,7 @@ void LaunchWifiRelayIfEnabled() {
         {"/usr/bin/sudo", "-E", FLAGS_wifi_relay_binary, GetConfigFileArg()});
   }
 }
+
 bool ResolveInstanceFiles() {
   if (FLAGS_system_image_dir.empty()) {
     LOG(FATAL) << "--system_image_dir must be specified.";
@@ -636,23 +644,6 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
-  auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
-  // TODO(b/79170615) These values need to go to the config object/file and the
-  // region resizing be done by the ivserver process (or maybe the config
-  // library to ensure all processes have the correct value?)
-  size_t screen_region_size =
-      memory_layout
-          .GetRegionByName(vsoc::layout::screen::ScreenLayout::region_name)
-          ->region_size();
-  auto actual_width = ((FLAGS_x_res * 4) + 15) & ~15;  // aligned to 16
-  screen_region_size += FLAGS_num_screen_buffers *
-                 (actual_width * FLAGS_y_res + 16 /* padding */);
-  screen_region_size += (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
-  memory_layout.ResizeRegion(vsoc::layout::screen::ScreenLayout::region_name,
-                             screen_region_size);
-  // TODO(b/79170615) Resize gralloc region too.
-
-
   auto config = vsoc::CuttlefishConfig::Get();
   // Save the config object before starting any host process
   if (!config->SaveToFile(GetConfigFile())) {
@@ -664,9 +655,7 @@ int main(int argc, char** argv) {
                          config->usb_ip_socket_name());
   vadb.Start();
 
-  // Start IVServer
-  IVServerManager ivshmem(config->mempath(), config->ivshmem_qemu_socket_path());
-  ivshmem.Start();
+  LaunchIvServer();
 
   KernelLogMonitor kmon(config->kernel_log_socket_name(),
                         config->PerInstancePath("kernel.log"),

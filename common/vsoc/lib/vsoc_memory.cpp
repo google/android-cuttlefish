@@ -24,7 +24,6 @@
 #include <type_traits>
 
 #include "common/libs/glog/logging.h"
-#include "common/libs/utils/size_utils.h"
 #include "common/vsoc/shm/audio_data_layout.h"
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/e2e_test_region_layout.h"
@@ -68,8 +67,6 @@ class VSoCRegionLayoutImpl : public VSoCRegionLayout {
         host_to_guest_signal_table_log_size_(
             host_to_guest_signal_table_log_size),
         managed_by_(managed_by) {
-    size_ = GetMinRegionSize();
-    LOG(INFO) << region_name << ": is " << size_;
   }
   VSoCRegionLayoutImpl(const VSoCRegionLayoutImpl&) = default;
 
@@ -83,30 +80,6 @@ class VSoCRegionLayoutImpl : public VSoCRegionLayout {
   int host_to_guest_signal_table_log_size() const override {
     return host_to_guest_signal_table_log_size_;
   }
-  uint32_t begin_offset() const override { return begin_offset_; }
-  size_t region_size() const override { return size_; }
-  void SetRegionSize(size_t size) { size_ = size; }
-  void SetBeginOffset(uint32_t offset) { begin_offset_ = offset; }
-
-  // Returns the minimum size the region needs to accomodate the signaling
-  // section and the data layout.
-  size_t GetMinRegionSize() const {
-    auto size = GetOffsetOfRegionData();
-    // Data section
-    size += layout_size_;
-    size = cvd::AlignToPageSize(size);
-    return size;
-  }
-
-  uint32_t GetOffsetOfRegionData() const {
-    uint32_t offset = 0;
-    // Signal tables
-    offset += (1 << guest_to_host_signal_table_log_size_) * sizeof(uint32_t);
-    offset += (1 << host_to_guest_signal_table_log_size_) * sizeof(uint32_t);
-    // Interrup signals
-    offset += 2 * sizeof(uint32_t);
-    return offset;
-  }
 
  private:
   const char* region_name_{};
@@ -114,8 +87,6 @@ class VSoCRegionLayoutImpl : public VSoCRegionLayout {
   const int guest_to_host_signal_table_log_size_{};
   const int host_to_guest_signal_table_log_size_{};
   const char* managed_by_{};
-  uint32_t begin_offset_{};
-  size_t size_{};
 };
 
 class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
@@ -133,16 +104,6 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
                       "they manage";
       }
     }
-
-    uint32_t offset = 0;
-    // Reserve space for global header
-    offset += sizeof(vsoc_shm_layout_descriptor);
-    // and region descriptors
-    offset += regions_.size() * sizeof(vsoc_device_region);
-    offset = cvd::AlignToPageSize(offset);
-
-    // Calculate offsets for all regions and set the size of the device
-    UpdateRegionOffsetsAndDeviceSize(offset);
   }
 
   ~VSoCMemoryLayoutImpl() = default;
@@ -160,39 +121,6 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
       return nullptr;
     }
     return &regions_[region_idx_by_name_.at(region_name)];
-  }
-
-  uint32_t GetMemoryFileSize() const override { return device_size_; }
-
-  void WriteLayout(void* shared_memory) const override;
-
-  bool ResizeRegion(const char* region_name, size_t new_min_size) override {
-    if (!region_idx_by_name_.count(region_name)) {
-      LOG(ERROR) << "Unable to resize region: " << region_name
-                 << ". Region not found";
-      return false;
-    }
-    auto index = region_idx_by_name_.at(region_name);
-    auto& region = regions_[index];
-    auto min_required_size = region.GetMinRegionSize();
-
-    // Align to page size
-    new_min_size = cvd::AlignToPageSize(new_min_size);
-    if (new_min_size < min_required_size) {
-      LOG(ERROR) << "Requested resize of region " << region_name << " to "
-                 << new_min_size << " (after alignment), it needs at least "
-                 << min_required_size << " bytes.";
-      return false;
-    }
-
-    region.SetRegionSize(new_min_size);
-    LOG(INFO) << region_name << ": resized to " << new_min_size;
-
-    // Get new offset for next region
-    auto offset = region.begin_offset() + region.region_size();
-    // Update offsets for all following regions
-    UpdateRegionOffsetsAndDeviceSize(offset, index + 1);
-    return true;
   }
 
  protected:
@@ -214,104 +142,9 @@ class VSoCMemoryLayoutImpl : public VSoCMemoryLayout {
     return result;
   }
 
-  // Updates the beginning offset of all regions starting at a specific index
-  // (useful after a resize operation) and the device's size.
-  void UpdateRegionOffsetsAndDeviceSize(uint32_t offset, size_t index = 0) {
-    for (; index < regions_.size(); ++index) {
-      regions_[index].SetBeginOffset(offset);
-      offset += regions_[index].region_size();
-    }
-
-    // Make the device's size the smaller power of two possible
-    device_size_ = cvd::RoundUpToNextPowerOf2(offset);
-  }
-
   std::vector<VSoCRegionLayoutImpl> regions_;
   const std::map<const char*, size_t> region_idx_by_name_;
-  uint32_t device_size_{};
 };
-
-// Writes a region's signal table layout to shared memory. Returns the region
-// offset of free memory after the table and interrupt signaled word.
-uint32_t WriteSignalTableDescription(vsoc_signal_table_layout* layout,
-                                     uint32_t offset, int log_size) {
-  layout->num_nodes_lg2 = log_size;
-  // First the signal table
-  layout->futex_uaddr_table_offset = offset;
-  offset += (1 << log_size) * sizeof(uint32_t);
-  // Then the interrupt signaled word
-  layout->interrupt_signalled_offset = offset;
-  offset += sizeof(uint32_t);
-  return offset;
-}
-
-// Writes a region's layout description to shared memory
-void WriteRegionDescription(vsoc_device_region* shmem_region_desc,
-                            const VSoCRegionLayoutImpl& region) {
-  // Region versions are deprecated, write some sensible value
-  shmem_region_desc->current_version = 0;
-  shmem_region_desc->min_compatible_version = 0;
-
-  shmem_region_desc->region_begin_offset = region.begin_offset();
-  shmem_region_desc->region_end_offset =
-      region.begin_offset() + region.region_size();
-  shmem_region_desc->offset_of_region_data = region.GetOffsetOfRegionData();
-  strncpy(shmem_region_desc->device_name, region.region_name(),
-          VSOC_DEVICE_NAME_SZ - 1);
-  shmem_region_desc->device_name[VSOC_DEVICE_NAME_SZ - 1] = '\0';
-  // Guest to host signal table at the beginning of the region
-  uint32_t offset = 0;
-  offset = WriteSignalTableDescription(
-      &shmem_region_desc->guest_to_host_signal_table, offset,
-      region.guest_to_host_signal_table_log_size());
-  // Host to guest signal table right after
-  offset = WriteSignalTableDescription(
-      &shmem_region_desc->host_to_guest_signal_table, offset,
-      region.host_to_guest_signal_table_log_size());
-  // Double check that the region metadata does not collide with the data
-  if (offset > shmem_region_desc->offset_of_region_data) {
-    LOG(FATAL) << "Error: Offset of region data too small (is "
-               << shmem_region_desc->offset_of_region_data << " should be "
-               << offset << " ) for region " << region.region_name()
-               << ". This is a bug";
-  }
-}
-
-void VSoCMemoryLayoutImpl::WriteLayout(void* shared_memory) const {
-  // Device header
-  static_assert(CURRENT_VSOC_LAYOUT_MAJOR_VERSION == 2,
-                "Region layout code must be updated");
-  auto header = reinterpret_cast<vsoc_shm_layout_descriptor*>(shared_memory);
-  header->major_version = CURRENT_VSOC_LAYOUT_MAJOR_VERSION;
-  header->minor_version = CURRENT_VSOC_LAYOUT_MINOR_VERSION;
-  header->size = GetMemoryFileSize();
-  header->region_count = regions_.size();
-
-  // Region descriptions go right after the layout descriptor
-  header->vsoc_region_desc_offset = sizeof(vsoc_shm_layout_descriptor);
-  auto region_descriptions = reinterpret_cast<vsoc_device_region*>(header + 1);
-  for (size_t idx = 0; idx < regions_.size(); ++idx) {
-    auto shmem_region_desc = &region_descriptions[idx];
-    const auto& region = regions_[idx];
-    WriteRegionDescription(shmem_region_desc, region);
-    // Handle managed_by links
-    if (region.managed_by()) {
-      auto manager_idx = region_idx_by_name_.at(region.managed_by());
-      if (manager_idx == VSOC_REGION_WHOLE) {
-        LOG(FATAL) << "Region '" << region.region_name() << "' has owner "
-                   << region.managed_by() << " with index " << manager_idx
-                   << " which is the default value for regions without an "
-                      "owner. Choose a different region to be at index "
-                   << manager_idx
-                   << ", make sure the chosen region is NOT the owner of any "
-                      "other region";
-      }
-      shmem_region_desc->managed_by = manager_idx;
-    } else {
-      shmem_region_desc->managed_by = VSOC_REGION_WHOLE;
-    }
-  }
-}
 
 template <class R>
 VSoCRegionLayoutImpl ValidateAndBuildLayout(int g_to_h_signal_table_log_size,
@@ -353,10 +186,9 @@ VSoCMemoryLayout* VSoCMemoryLayout::Get() {
        ValidateAndBuildLayout<layout::audio_data::AudioDataLayout>(2, 2)});
 
   // We need this code to compile on both sides to enforce the static checks,
-  // but should only be used host side if for no other reason because of the
-  // possible resizing of some regions not being visible on the guest.
+  // but should only be used host side.
 #if !defined(CUTTLEFISH_HOST)
-  LOG(FATAL) << "Memory layout is not accurate in guest side, use region "
+  LOG(FATAL) << "Memory layout should not be used guest side, use region "
                 "classes or the vsoc driver directly instead.";
 #endif
   return &layout;
