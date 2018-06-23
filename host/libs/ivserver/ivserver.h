@@ -27,7 +27,11 @@ namespace ivserver {
 // new connections.
 class IVServer final {
  public:
-  IVServer(const IVServerOptions &options);
+  // The qemu_channel_fd and client_channel_fd are the server sockets. If
+  // non-positive values are provided the server will create those sockets
+  // itself.
+  IVServer(const IVServerOptions &options, int qemu_channel_fd,
+           int client_channel_fd);
   IVServer(const IVServer &) = delete;
   IVServer& operator=(const IVServer&) = delete;
 
