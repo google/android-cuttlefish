@@ -443,9 +443,9 @@ bool ResolveInstanceFiles() {
   }
   if (FLAGS_dtb.empty()) {
     if (FLAGS_initrd.empty()) {
-      FLAGS_dtb = DefaultHostArtifactsPath("config/system-root.dtb");
+      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
     } else {
-      FLAGS_dtb = DefaultHostArtifactsPath("config/initrd-root.dtb");
+      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
     }
   }
   if (FLAGS_cache_image.empty()) {
