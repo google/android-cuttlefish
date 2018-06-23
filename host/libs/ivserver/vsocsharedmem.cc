@@ -63,24 +63,11 @@ class VSoCSharedMemoryImpl : public VSoCSharedMemory {
 VSoCSharedMemoryImpl::VSoCSharedMemoryImpl(
     const std::map<std::string, size_t> &name_to_region_idx,
     const std::vector<Region> &regions, const std::string &path)
-    : region_name_to_index_{name_to_region_idx},
+    : shared_mem_fd_(cvd::SharedFD::Open(path.c_str(), O_RDWR)),
+      region_name_to_index_{name_to_region_idx},
       region_data_{regions} {
-  // TODO(ender): Lock the file after creation and check lock status upon second
-  // execution attempt instead of throwing an error.
-  LOG_IF(WARNING, unlink(path.c_str()) == 0)
-      << "Removed existing instance of " << path
-      << ". We currently don't know if another instance of daemon is running";
-  shared_mem_fd_ = cvd::SharedFD::Open(path.c_str(), O_RDWR | O_CREAT | O_EXCL,
-                                       S_IRUSR | S_IWUSR);
   LOG_IF(FATAL, !shared_mem_fd_->IsOpen())
       << "Error in creating shared_memory file: " << shared_mem_fd_->StrError();
-
-  int truncate_res = shared_mem_fd_->Truncate(
-      vsoc::VSoCMemoryLayout::Get()->GetMemoryFileSize());
-  LOG_IF(FATAL, truncate_res == -1)
-      << "Error in sizing up the shared memory file: "
-      << shared_mem_fd_->StrError();
-  CreateLayout();
 }
 
 const cvd::SharedFD &VSoCSharedMemoryImpl::SharedMemFD() const {
@@ -90,16 +77,6 @@ const cvd::SharedFD &VSoCSharedMemoryImpl::SharedMemFD() const {
 const std::vector<VSoCSharedMemory::Region> &VSoCSharedMemoryImpl::Regions()
     const {
   return region_data_;
-}
-
-void VSoCSharedMemoryImpl::CreateLayout() {
-  auto mmap_length = vsoc::VSoCMemoryLayout::Get()->GetMemoryFileSize();
-  void *mmap_addr = shared_mem_fd_->Mmap(0, mmap_length, PROT_READ | PROT_WRITE,
-                                         MAP_SHARED, 0);
-  LOG_IF(FATAL, mmap_addr == MAP_FAILED)
-      << "Error mmaping file: " << strerror(errno);
-  vsoc::VSoCMemoryLayout::Get()->WriteLayout(mmap_addr);
-  munmap(mmap_addr, mmap_length);
 }
 
 bool VSoCSharedMemoryImpl::GetEventFdPairForRegion(

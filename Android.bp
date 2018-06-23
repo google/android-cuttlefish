@@ -111,7 +111,6 @@ cc_library_shared {
     header_libs: ["cuttlefish_glog"],
     shared_libs: [
         "libcuttlefish_fs",
-        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
         "liblog",
