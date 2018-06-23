@@ -74,6 +74,7 @@ int BuildAndRunQemuCmd() {
   qemu_envp.push_back("data_image_path=" + config->data_image_path());
   qemu_envp.push_back("cache_image_path=" + config->cache_image_path());
   qemu_envp.push_back("vendor_image_path=" + config->vendor_image_path());
+  qemu_envp.push_back("wifi_tap_name=" + config->wifi_tap_name());
   qemu_envp.push_back("mobile_tap_name=" + config->mobile_tap_name());
   qemu_envp.push_back("kernel_log_socket_name=" +
                       config->kernel_log_socket_name());
