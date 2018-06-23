@@ -45,8 +45,6 @@
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/ivserver/ivserver.h"
-#include "host/libs/ivserver/options.h"
 #include "host/libs/monitor/kernel_log_server.h"
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
@@ -118,6 +116,9 @@ DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
               "Location of the vnc server binary.");
+DEFINE_string(ivserver_binary,
+              vsoc::DefaultHostArtifactsPath("bin/ivserver"),
+              "Location of the ivshmem server binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(socket_forward_proxy_binary,
@@ -373,6 +374,11 @@ bool AdbUsbEnabled() {
   return FLAGS_adb_mode == kAdbModeUsb;
 }
 
+int CreateIvServerUnixSocket(const std::string& path) {
+  return cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM,
+                                          0666)->UNMANAGED_Dup();
+}
+
 void LaunchIvServer() {
   auto config = vsoc::CuttlefishConfig::Get();
   // Resize gralloc region
@@ -389,15 +395,17 @@ void LaunchIvServer() {
       config->mempath(),
       {{vsoc::layout::screen::ScreenLayout::region_name, screen_buffers_size}});
 
-  // Construct the server outside the thread so that the socket is guaranteed to
-  // be created when this function return. Use a shared pointer to avoid the
-  // destruction of the object.
-  std::shared_ptr<ivserver::IVServer> server(new ivserver::IVServer(ivserver::IVServerOptions(
-        config->mempath(), config->ivshmem_qemu_socket_path(),
-        vsoc::GetDomain())));
-  std::thread([server] {
-    server->Serve();
-  }).detach();
+  auto qemu_channel =
+      CreateIvServerUnixSocket(config->ivshmem_qemu_socket_path());
+  auto client_channel =
+      CreateIvServerUnixSocket(config->ivshmem_client_socket_path());
+  auto qemu_socket_arg = "-qemu_socket_fd=" + std::to_string(qemu_channel);
+  auto client_socket_arg =
+      "-client_socket_fd=" + std::to_string(client_channel);
+  cvd::subprocess({FLAGS_ivserver_binary, qemu_socket_arg, client_socket_arg,
+                   GetConfigFileArg()});
+  close(qemu_channel);
+  close(client_channel);
 }
 
 void LaunchSocketForwardProxyIfEnabled() {

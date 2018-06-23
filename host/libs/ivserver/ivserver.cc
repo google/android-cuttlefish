@@ -26,21 +26,30 @@
 
 namespace ivserver {
 
-IVServer::IVServer(const IVServerOptions &options)
+IVServer::IVServer(const IVServerOptions &options, int qemu_channel_fd,
+                   int client_channel_fd)
     : vsoc_shmem_(VSoCSharedMemory::New(options.shm_file_path)) {
-  LOG_IF(WARNING, unlink(options.qemu_socket_path.c_str()) == 0)
-      << "Removed existing unix socket: " << options.qemu_socket_path
-      << ". We can't confirm yet whether another instance is running.";
-  qemu_channel_ = cvd::SharedFD::SocketLocalServer(
-      options.qemu_socket_path.c_str(), false, SOCK_STREAM, 0666);
+  if (qemu_channel_fd > 0) {
+    qemu_channel_ = cvd::SharedFD::Dup(qemu_channel_fd);
+  } else {
+    LOG_IF(WARNING, unlink(options.qemu_socket_path.c_str()) == 0)
+        << "Removed existing unix socket: " << options.qemu_socket_path
+        << ". We can't confirm yet whether another instance is running.";
+    qemu_channel_ = cvd::SharedFD::SocketLocalServer(
+        options.qemu_socket_path.c_str(), false, SOCK_STREAM, 0666);
+  }
   LOG_IF(FATAL, !qemu_channel_->IsOpen())
       << "Could not create QEmu channel: " << qemu_channel_->StrError();
 
-  LOG_IF(WARNING, unlink(options.client_socket_path.c_str()) == 0)
-      << "Removed existing unix socket: " << options.client_socket_path
-      << ". We can't confirm yet whether another instance is running.";
-  client_channel_ = cvd::SharedFD::SocketLocalServer(
-      options.client_socket_path.c_str(), false, SOCK_STREAM, 0666);
+  if (client_channel_fd > 0) {
+    client_channel_ = cvd::SharedFD::Dup(client_channel_fd);
+  } else {
+    LOG_IF(WARNING, unlink(options.client_socket_path.c_str()) == 0)
+        << "Removed existing unix socket: " << options.client_socket_path
+        << ". We can't confirm yet whether another instance is running.";
+    client_channel_ = cvd::SharedFD::SocketLocalServer(
+        options.client_socket_path.c_str(), false, SOCK_STREAM, 0666);
+  }
   LOG_IF(FATAL, !client_channel_->IsOpen())
       << "Could not create Client channel: " << client_channel_->StrError();
 }
