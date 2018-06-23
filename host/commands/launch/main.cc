@@ -136,10 +136,13 @@ DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
 DEFINE_string(wifi_relay_binary,
               vsoc::DefaultHostArtifactsPath("bin/wifi_relay"),
               "Location of the wifi_relay binary.");
-std::string g_default_wifi_interface{GetPerInstanceDefault("cvd-wifi-")};
-DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
+DEFINE_string(wifi_interface,
+              vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wbr-")
+                                          : GetPerInstanceDefault("cvd-wifi-"),
               "Network interface to use for wifi");
-DEFINE_string(wifi_tap_name, GetPerInstanceDefault("awifi"),
+DEFINE_string(wifi_tap_name,
+              vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wtap-")
+                                          : GetPerInstanceDefault("awifi"),
               "The name of the tap interface to use for wifi");
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, vsoc::DefaultHostArtifactsPath("config/cuttlefish.dtb"),
