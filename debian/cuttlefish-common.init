@@ -158,9 +158,11 @@ start() {
       create_legacy_interfaces $i
       create_interfaces $i
     done
+    /usr/sbin/hostapd -B /etc/cf-hostapd.conf
 }
 
 stop() {
+    killall hostapd
     for i in $(seq ${num_cvd_accounts}); do
       destroy_legacy_interfaces $i
       destroy_interfaces $i

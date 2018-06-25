@@ -1,4 +1,10 @@
-cuttlefish-common (0.7pre3) UNRELEASED; urgency=medium
+cuttlefish-common (0.7pre4) unstable; urgency=medium
+
+  * Put the legacy WiFi back in to allow TreeHugger to update
+
+ -- Greg Hartman <ghartman@hartman.mtv.corp.google.com>  Mon, 25 Jun 2018 15:50:59 -0700
+
+cuttlefish-common (0.7pre3) unstable; urgency=medium
 
   * Changes to allow running without libvirt
 
