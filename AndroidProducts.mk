@@ -15,12 +15,14 @@
 #
 
 PRODUCT_MAKEFILES := \
+	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64/auto/device.mk \
 	aosp_cf_x86_64_iot:$(LOCAL_DIR)/vsoc_x86_64/iot/device.mk \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/device.mk \
 	aosp_cf_x86_64_tablet:$(LOCAL_DIR)/vsoc_x86_64/tablet/device.mk \
 	aosp_cf_x86_64_tablet_3g:$(LOCAL_DIR)/vsoc_x86_64/tablet_3g/device.mk \
 	aosp_cf_x86_64_tv:$(LOCAL_DIR)/vsoc_x86_64/tv/device.mk \
 	aosp_cf_x86_64_wear:$(LOCAL_DIR)/vsoc_x86_64/wear/device.mk \
+	aosp_cf_x86_auto:$(LOCAL_DIR)/vsoc_x86/auto/device.mk \
 	aosp_cf_x86_iot:$(LOCAL_DIR)/vsoc_x86/iot/device.mk \
 	aosp_cf_x86_phone:$(LOCAL_DIR)/vsoc_x86/phone/device.mk \
 	aosp_cf_x86_tablet:$(LOCAL_DIR)/vsoc_x86/tablet/device.mk \
@@ -29,12 +31,14 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_wear:$(LOCAL_DIR)/vsoc_x86/wear/device.mk \
 
 COMMON_LUNCH_CHOICES := \
+	aosp_cf_x86_auto-userdebug \
 	aosp_cf_x86_iot-userdebug \
 	aosp_cf_x86_phone-userdebug \
 	aosp_cf_x86_tablet-userdebug \
 	aosp_cf_x86_tablet_3g-userdebug \
 	aosp_cf_x86_tv-userdebug \
 	aosp_cf_x86_wear-userdebug \
+	aosp_cf_x86_64_auto-userdebug \
 	aosp_cf_x86_64_iot-userdebug \
 	aosp_cf_x86_64_phone-userdebug \
 	aosp_cf_x86_64_tablet-userdebug \
