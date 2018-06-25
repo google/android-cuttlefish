@@ -69,3 +69,6 @@ BOARD_IS_AUTOMOTIVE := true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, packages/services/Car/car_product/build/car.mk)
+
+# Placed here due to b/110784510
+PRODUCT_BRAND := generic
