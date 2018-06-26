@@ -145,8 +145,7 @@ DEFINE_string(wifi_tap_name,
                                           : GetPerInstanceDefault("awifi"),
               "The name of the tap interface to use for wifi");
 // TODO(b/72969289) This should be generated
-DEFINE_string(dtb, vsoc::DefaultHostArtifactsPath("config/cuttlefish.dtb"),
-              "Path to the cuttlefish.dtb file");
+DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(kDefaultUuidPrefix).c_str(),
@@ -443,6 +442,13 @@ bool ResolveInstanceFiles() {
     if (!FileHasContent(FLAGS_initrd.c_str())) {
       LOG(WARNING) << "No ramdisk.img found; assuming system-as-root build";
       FLAGS_initrd.clear();
+    }
+  }
+  if (FLAGS_dtb.empty()) {
+    if (FLAGS_initrd.empty()) {
+      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
+    } else {
+      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
     }
   }
   if (FLAGS_cache_image.empty()) {
