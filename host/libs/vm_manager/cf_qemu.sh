@@ -26,7 +26,7 @@ default_instance_number() {
 CUTTLEFISH_INSTANCE="${CUTTLEFISH_INSTANCE:-$(default_instance_number)}"
 default_instance_name="cvd-${CUTTLEFISH_INSTANCE}"
 default_uuid="699acfc4-c8c4-11e7-882b-5065f31dc1${CUTTLEFISH_INSTANCE}"
-default_dir="${HOME}/runfiles"
+default_dir="${HOME}/cuttlefish_runtime"
 default_mobile_tap_name="cvd-mtap-${CUTTLEFISH_INSTANCE}"
 default_wifi_tap_name="cvd-wtap-${CUTTLEFISH_INSTANCE}"
 
