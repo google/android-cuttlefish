@@ -451,7 +451,7 @@ int GetPerInstanceDefault(int base) { return base + GetInstance() - 1; }
 std::string GetDefaultPerInstanceDir() {
   std::ostringstream stream;
   if (HostSupportsQemuCli()) {
-    stream << std::getenv("HOME") << "/runfiles";
+    stream << std::getenv("HOME") << "/cuttlefish_runtime";
   } else {
     stream << "/var/run/libvirt-" << kDefaultUuidPrefix << std::setfill('0')
            << std::setw(2) << GetInstance();
