@@ -49,5 +49,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml
 
 # These flags are important for the GSI, but break auto
-PRODUCT_ENFORCE_RRO_TARGETS := framework-res
-PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
+# RRO is not enforcable before OC-MR1
+#PRODUCT_ENFORCE_RRO_TARGETS := framework-res
+#PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
