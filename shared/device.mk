@@ -16,7 +16,10 @@
 
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
-PRODUCT_SHIPPING_API_LEVEL := 26
+# SwiftShader needs libcutils, which is part of the API_LEVEL 26 VNDK.
+# However, the framework code that was released with O doesn't know that yet,
+# so we son't set this even though the API level here is 26.
+# PRODUCT_SHIPPING_API_LEVEL := 26
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
