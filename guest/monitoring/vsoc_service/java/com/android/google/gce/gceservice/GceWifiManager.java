@@ -32,78 +32,36 @@ import java.util.List;
  */
 public class GceWifiManager extends JobBase {
     private static final String LOG_TAG = "GceWifiManager";
-    /* Timeout after which another attempt to re-connect wifi will be made. */
-    private static final int WIFI_RECONNECTION_TIMEOUT_S = 3;
-    /* Maximum number of retries before giving up and marking WIFI as inoperable. */
-    private static final int WIFI_RECONNECTION_MAX_ATTEMPTS = 10;
-
-    /** Describes possible WIFI states.
-     * WifiState is:
-     * - UNKNOWN only at the initialization time, replaced with state from
-     *           from Android's WifiManager.
-     * - ENABLED when WIFI is connected and operational,
-     * - DISABLED when WIFI is turned off,
-     * - FAILED if GceWifiManager was unable to configure WIFI.
-     */
-    public enum WifiState {
-        DISABLED,
-        ENABLED;
-    };
+    /* Timeout after which the service will check if wifi has come up. */
+    private static final int WIFI_RECONNECTION_TIMEOUT_S = 5;
+    private static final String WIFI_CONNECTED_MESSAGE =
+        "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 
     private final JobExecutor mJobExecutor;
     private final Context mContext;
     private final WifiManager mWifiManager;
     private final ConnectivityManager mConnManager;
+    private final BootReporter mBootReporter;
 
-    private ConfigureWifi mConfigureWifiJob = new ConfigureWifi();
-    private SetWifiState mSetInitialWifiStateJob = new SetWifiState();
+    private final MonitorWifiJob mMonitorWifiJob;
 
 
-    /** Constructor.
-    */
-    public GceWifiManager(Context context, JobExecutor executor) {
+    public GceWifiManager(Context context, BootReporter bootReporter, JobExecutor executor) {
         super(LOG_TAG);
 
         mContext = context;
         mWifiManager = (WifiManager)context.getSystemService(Context.WIFI_SERVICE);
         mConnManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        mBootReporter = bootReporter;
         mJobExecutor = executor;
+        mMonitorWifiJob = new MonitorWifiJob();
     }
 
 
-    private boolean isMobileNetworkAvailable() {
-        for (NetworkInfo network : mConnManager.getAllNetworkInfo()) {
-            if (network.getType() == ConnectivityManager.TYPE_MOBILE) return true;
-        }
-        return false;
-    }
-
-
-    private WifiState getExpectedWifiState() {
-        // TODO(ender): we will probably want to define this differently once virtual WIFI is
-        // available again.
-        return WifiState.DISABLED;
-    }
-
-
-    /** Executed during initial configuration.
-    */
+    /** Executed during initial configuration. */
     @Override
     public synchronized int execute() {
-        WifiState initialState = getExpectedWifiState();
-        mSetInitialWifiStateJob.setState(initialState);
-
-        // Only configure wifi if expected state is ENABLED.
-        // Configuring wifi *requires* wpa_supplicant to be up.
-        // This means that in order to configure wifi, we have to enable it first.
-        if (initialState == WifiState.ENABLED) {
-            mJobExecutor.schedule(mConfigureWifiJob);
-            mJobExecutor.schedule(mSetInitialWifiStateJob, mConfigureWifiJob.getWifiConfigured());
-        } else {
-            // If initial state is DISABLED, there's no need to wait for Wifi configuration to
-            // complete. Just shut it off.
-            mJobExecutor.schedule(mSetInitialWifiStateJob);
-        }
+        mJobExecutor.schedule(mMonitorWifiJob);
         return 0;
     }
 
@@ -111,70 +69,12 @@ public class GceWifiManager extends JobBase {
     @Override
     public void onDependencyFailed(Exception e) {
         Log.e(LOG_TAG, "Initial WIFI configuration failed due to dependency.", e);
-        getInitialWifiStateChangeReady().set(e);
+        getWifiReady().set(e);
     }
 
 
-    public GceFuture<Boolean> getInitialWifiStateChangeReady() {
-        return mSetInitialWifiStateJob.getWifiReady();
-    }
-
-
-    /* Configure WIFI network stack.
-     *
-     * Adds network configuration that covers AndroidWifi virtual hotspot.
-     */
-    private class ConfigureWifi extends JobBase {
-        private final GceFuture<Boolean> mWifiConfigured =
-                new GceFuture<Boolean>("WIFI Configured");
-        private boolean mReportedWaitingForSupplicant = false;
-
-
-        public ConfigureWifi() {
-            super(LOG_TAG);
-        }
-
-
-        @Override
-        public int execute() {
-            if (mWifiConfigured.isDone()) return 0;
-
-            if (!mWifiManager.pingSupplicant()) {
-                if (!mWifiManager.isWifiEnabled()) {
-                    mWifiManager.setWifiEnabled(true);
-                }
-                if (!mReportedWaitingForSupplicant) {
-                    Log.i(LOG_TAG, "Supplicant not ready.");
-                    mReportedWaitingForSupplicant = true;
-                }
-                return WIFI_RECONNECTION_TIMEOUT_S;
-            }
-
-            WifiConfiguration conf = new WifiConfiguration();
-            conf.SSID = "\"AndroidWifi\"";
-            conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-            int network_id = mWifiManager.addNetwork(conf);
-            if (network_id < 0) {
-                Log.e(LOG_TAG, "Could not update wifi network.");
-                mWifiConfigured.set(new Exception("Could not add WIFI network"));
-            } else {
-                mWifiManager.enableNetwork(network_id, false);
-                mWifiConfigured.set(true);
-            }
-            return 0;
-        }
-
-
-        @Override
-        public void onDependencyFailed(Exception e) {
-            Log.e(LOG_TAG, "Could not configure WIFI.", e);
-            mWifiConfigured.set(e);
-        }
-
-
-        public GceFuture<Boolean> getWifiConfigured() {
-            return mWifiConfigured;
-        }
+    public GceFuture<Boolean> getWifiReady() {
+        return mMonitorWifiJob.getWifiReady();
     }
 
 
@@ -183,21 +83,14 @@ public class GceWifiManager extends JobBase {
      * - if wifi enable requested (state == true), turns on wifi and arms the
      *   connection timeout (see startWifiReconnectionTimeout).
      */
-    private class SetWifiState extends JobBase {
+    private class MonitorWifiJob extends JobBase {
         private final GceFuture<Boolean> mWifiReady =
                 new GceFuture<Boolean>("WIFI Ready");
-        private WifiState mDesiredState = WifiState.DISABLED;
-        private int mWifiStateChangeAttempt = 0;
         private boolean mReportedWifiNotConnected = false;
 
 
-        public SetWifiState() {
+        public MonitorWifiJob() {
             super(LOG_TAG);
-        }
-
-
-        public void setState(WifiState state) {
-            mDesiredState = state;
         }
 
 
@@ -210,62 +103,22 @@ public class GceWifiManager extends JobBase {
 
         @Override
         public synchronized int execute() {
-            WifiState currentState = mWifiManager.isWifiEnabled() ?
-                    WifiState.ENABLED : WifiState.DISABLED;
-
             // Could be cancelled or exception.
             if (mWifiReady.isDone()) return 0;
 
-            if (mWifiStateChangeAttempt >= WIFI_RECONNECTION_MAX_ATTEMPTS) {
-                mWifiReady.set(new Exception(
-                        String.format("Unable to change wifi state after %d attempts.",
-                            WIFI_RECONNECTION_MAX_ATTEMPTS)));
+            WifiInfo info = mWifiManager.getConnectionInfo();
+            if (info.getSupplicantState() != SupplicantState.COMPLETED) {
+                if (!mReportedWifiNotConnected) {
+                    Log.w(LOG_TAG, "Wifi not yet connected.");
+                    mReportedWifiNotConnected = true;
+                }
+                return WIFI_RECONNECTION_TIMEOUT_S;
+            } else {
+                mBootReporter.reportMessage(WIFI_CONNECTED_MESSAGE);
+                Log.i(LOG_TAG, "Wifi connected.");
+                mWifiReady.set(true);
                 return 0;
             }
-
-            if (currentState == mDesiredState) {
-                switch (currentState) {
-                    case ENABLED:
-                        // Wifi is enabled, but probably not yet connected. Check.
-                        WifiInfo info = mWifiManager.getConnectionInfo();
-                        if (info.getSupplicantState() != SupplicantState.COMPLETED) {
-                            if (!mReportedWifiNotConnected) {
-                                Log.w(LOG_TAG, "Wifi not yet connected.");
-                                mReportedWifiNotConnected = true;
-                            }
-                        } else {
-                            Log.i(LOG_TAG, "Wifi connected.");
-                            mWifiReady.set(true);
-                        }
-                        break;
-
-                    case DISABLED:
-                        // There's nothing extra to check for disable wifi.
-                        mWifiReady.set(true);
-                        break;
-                }
-
-                if (mWifiReady.isDone()) {
-                    return 0;
-                }
-            }
-
-            // At this point we know that:
-            // - current state is different that desired state, or
-            // - current state is enabled, but wifi is not yet connected.
-            ++mWifiStateChangeAttempt;
-
-            switch (mDesiredState) {
-                case DISABLED:
-                    mWifiManager.setWifiEnabled(false);
-                    break;
-
-                case ENABLED:
-                    mWifiManager.setWifiEnabled(true);
-                    mWifiManager.reconnect();
-                    break;
-            }
-            return WIFI_RECONNECTION_TIMEOUT_S;
         }
 
 

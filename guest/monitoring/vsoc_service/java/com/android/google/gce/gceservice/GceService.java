@@ -63,7 +63,7 @@ public class GceService extends Service {
             mBootReporter.reportBootStarted();
             registerBroadcastReceivers();
 
-            mWifiManager = new GceWifiManager(this, mExecutor);
+            mWifiManager = new GceWifiManager(this, mBootReporter, mExecutor);
 
             mExecutor.schedule(mLocationServices);
             mExecutor.schedule(mPackageVerifier);
@@ -78,7 +78,6 @@ public class GceService extends Service {
                     mLocationServices.getLocationServicesReady(),
                     mPackageVerifier.getPackageVerifierReady(),
                     mConnChecker.getConnected(),
-                    mWifiManager.getInitialWifiStateChangeReady(),
                     mBluetoothChecker.getEnabled()
                     // mTombstoneChecker.getTombstoneResult()
                     );
@@ -149,7 +148,7 @@ public class GceService extends Service {
         pw.println("  Package verifier ready: "
             + mPackageVerifier.getPackageVerifierReady().isDone());
         pw.println("  Network connected: " + mConnChecker.getConnected().isDone());
-        pw.println("  WiFi configured: " + mWifiManager.getInitialWifiStateChangeReady().isDone());
+        pw.println("  WiFi configured: " + mWifiManager.getWifiReady().isDone());
         pw.println("  Bluetooth enabled: " + mBluetoothChecker.getEnabled().isDone());
         pw.println("  Tombstone dropped (on boot): "
             + !mTombstoneChecker.getTombstoneResult().isDone());
