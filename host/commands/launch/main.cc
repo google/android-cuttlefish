@@ -129,6 +129,13 @@ DEFINE_string(adb_mode, "tunnel",
               "Mode for adb connection. Can be usb for usb forwarding, or "
               "tunnel for tcp connection. If using tunnel, you may have to "
               "run 'adb kill-server' to get the device to show up.");
+DEFINE_bool(run_adb_connector, true,
+            "Maintain adb connection by sending 'adb connect' commands to the "
+            "server. Only relevant with --adb_mode=tunnel");
+DEFINE_string(adb_connector_binary,
+              vsoc::DefaultHostArtifactsPath("bin/adb_connector"),
+              "Location of the adb_connector binary. Only relevant if "
+              "--run_adb_connector is true");
 DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
 DEFINE_string(guest_mac_address,
               GetPerInstanceDefault("00:43:56:44:80:"), // 00:43:56:44:80:0x
@@ -319,6 +326,10 @@ std::string GetHostPortArg() {
   return std::string{"--host_ports="} + std::to_string(GetHostPort());
 }
 
+std::string GetAdbConnectorPortArg() {
+  return std::string{"--ports="} + std::to_string(GetHostPort());
+}
+
 void ValidateAdbModeFlag() {
   CHECK(FLAGS_adb_mode == kAdbModeUsb ||
         FLAGS_adb_mode == kAdbModeTunnel) << "invalid --adb_mode";
@@ -335,6 +346,10 @@ bool AdbUsbEnabled() {
 int CreateIvServerUnixSocket(const std::string& path) {
   return cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM,
                                           0666)->UNMANAGED_Dup();
+}
+
+bool AdbConnectorEnabled() {
+  return FLAGS_run_adb_connector;
 }
 
 void LaunchIvServer() {
@@ -364,6 +379,13 @@ void LaunchIvServer() {
                    GetConfigFileArg()});
   close(qemu_channel);
   close(client_channel);
+}
+
+void LaunchAdbConnectorIfEnabled() {
+  if (AdbConnectorEnabled()) {
+    cvd::subprocess({FLAGS_adb_connector_binary,
+                     GetAdbConnectorPortArg()});
+  }
 }
 
 void LaunchSocketForwardProxyIfEnabled() {
@@ -645,6 +667,7 @@ int main(int argc, char** argv) {
 
   LaunchSocketForwardProxyIfEnabled();
   LaunchVNCServerIfEnabled();
+  LaunchAdbConnectorIfEnabled();
 
   pause();
 }
