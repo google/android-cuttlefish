@@ -26,7 +26,6 @@ cvd_host_executables := \
     socket_forward_proxy \
     stop_cvd \
     vnc_server \
-    wifi_relay \
     record_audio \
     cf_qemu.sh \
     ivserver \
