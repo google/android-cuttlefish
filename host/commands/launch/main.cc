@@ -135,10 +135,6 @@ DEFINE_string(guest_mac_address,
 DEFINE_string(host_mac_address,
               "42:00:00:00:00:00",
               "MAC address of the wifi interface running on the host.");
-DEFINE_bool(start_wifi_relay, true, "Whether to start the wifi_relay process.");
-DEFINE_string(wifi_relay_binary,
-              vsoc::DefaultHostArtifactsPath("bin/wifi_relay"),
-              "Location of the wifi_relay binary.");
 DEFINE_string(wifi_interface,
               vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wbr-")
                                           : GetPerInstanceDefault("cvd-wifi-"),
@@ -428,14 +424,6 @@ void LaunchVNCServerIfEnabled() {
   }
 }
 
-void LaunchWifiRelayIfEnabled() {
-  if (FLAGS_start_wifi_relay) {
-    // Launch the wifi relay, don't wait for it to complete
-    cvd::subprocess(
-        {"/usr/bin/sudo", "-E", FLAGS_wifi_relay_binary, GetConfigFileArg()});
-  }
-}
-
 bool ResolveInstanceFiles() {
   if (FLAGS_system_image_dir.empty()) {
     LOG(FATAL) << "--system_image_dir must be specified.";
@@ -681,7 +669,6 @@ int main(int argc, char** argv) {
 
   LaunchSocketForwardProxyIfEnabled();
   LaunchVNCServerIfEnabled();
-  LaunchWifiRelayIfEnabled();
 
   pause();
 }
