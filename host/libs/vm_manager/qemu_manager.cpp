@@ -35,8 +35,6 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-extern char** environ;
-
 DEFINE_string(qemu_binary,
               "/usr/bin/qemu-system-x86_64",
               "The qemu binary to use");
@@ -49,46 +47,40 @@ std::string GetMonitorPath() {
   return vsoc::CuttlefishConfig::Get()->PerInstancePath("qemu_monitor.sock");
 }
 
+void LogAndSetEnv(const char* key, const std::string& value) {
+  setenv(key, value.c_str(), 1);
+  LOG(INFO) << key << "=" << value;
+}
+
 int BuildAndRunQemuCmd() {
   auto config = vsoc::CuttlefishConfig::Get();
-  std::vector<std::string> qemu_envp;
-  // Copy this process' environment
-  char** env = environ;
-  while (*env) {
-    qemu_envp.push_back(*env);
-    ++env;
-  }
   // Set the config values in the environment
-  qemu_envp.push_back("qemu_binary=" + FLAGS_qemu_binary);
-  qemu_envp.push_back("instance_name=" + config->instance_name());
-  qemu_envp.push_back("memory_mb=" + std::to_string(config->memory_mb()));
-  qemu_envp.push_back("cpus=" + std::to_string(config->cpus()));
-  qemu_envp.push_back("uuid=" + config->uuid());
-  qemu_envp.push_back("monitor_path=" +
+  LogAndSetEnv("qemu_binary", FLAGS_qemu_binary);
+  LogAndSetEnv("instance_name", config->instance_name());
+  LogAndSetEnv("memory_mb", std::to_string(config->memory_mb()));
+  LogAndSetEnv("cpus", std::to_string(config->cpus()));
+  LogAndSetEnv("uuid", config->uuid());
+  LogAndSetEnv("monitor_path",
                       config->PerInstancePath("qemu_monitor.sock"));
-  qemu_envp.push_back("kernel_image_path=" + config->kernel_image_path());
-  qemu_envp.push_back("ramdisk_image_path=" + config->ramdisk_image_path());
-  qemu_envp.push_back("kernel_args=" + config->kernel_args());
-  qemu_envp.push_back("dtb_path=" + config->dtb_path());
-  qemu_envp.push_back("system_image_path=" + config->system_image_path());
-  qemu_envp.push_back("data_image_path=" + config->data_image_path());
-  qemu_envp.push_back("cache_image_path=" + config->cache_image_path());
-  qemu_envp.push_back("vendor_image_path=" + config->vendor_image_path());
-  qemu_envp.push_back("wifi_tap_name=" + config->wifi_tap_name());
-  qemu_envp.push_back("mobile_tap_name=" + config->mobile_tap_name());
-  qemu_envp.push_back("kernel_log_socket_name=" +
+  LogAndSetEnv("kernel_image_path", config->kernel_image_path());
+  LogAndSetEnv("ramdisk_image_path", config->ramdisk_image_path());
+  LogAndSetEnv("kernel_args", config->kernel_args());
+  LogAndSetEnv("dtb_path", config->dtb_path());
+  LogAndSetEnv("system_image_path", config->system_image_path());
+  LogAndSetEnv("data_image_path", config->data_image_path());
+  LogAndSetEnv("cache_image_path", config->cache_image_path());
+  LogAndSetEnv("vendor_image_path", config->vendor_image_path());
+  LogAndSetEnv("wifi_tap_name", config->wifi_tap_name());
+  LogAndSetEnv("mobile_tap_name", config->mobile_tap_name());
+  LogAndSetEnv("kernel_log_socket_name",
                       config->kernel_log_socket_name());
-  qemu_envp.push_back("console_path=" + config->console_path());
-  qemu_envp.push_back("logcat_path=" + config->logcat_path());
-  qemu_envp.push_back("ivshmem_qemu_socket_path=" +
+  LogAndSetEnv("console_path", config->console_path());
+  LogAndSetEnv("logcat_path", config->logcat_path());
+  LogAndSetEnv("ivshmem_qemu_socket_path",
                       config->ivshmem_qemu_socket_path());
-  qemu_envp.push_back("ivshmem_vector_count=" +
+  LogAndSetEnv("ivshmem_vector_count",
                       std::to_string(config->ivshmem_vector_count()));
-  for (const auto& arg : qemu_envp) {
-    LOG(INFO) << arg;
-  }
-  return cvd::execute({vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh")},
-                      qemu_envp);
+  return cvd::execute({vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh")});
 }
 
 }  // namespace
