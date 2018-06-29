@@ -62,7 +62,6 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy \
     usbforward \
     VSoCService \
-    wifi_setup \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
     vport_trigger \
