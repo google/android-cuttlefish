@@ -87,5 +87,14 @@ if [[ -n "${ramdisk_image_path}" ]]; then
   args+=(-initrd "${ramdisk_image_path}")
 fi
 
+printf %s "exec ${qemu_binary=/usr/bin/qemu-system-x86_64}"
+for i in "${args[@]}"; do
+  case "$i" in
+    -*) printf "\\%s  %s " $'\n' "$i" ;;
+    *) printf "%s " "$i" ;;
+  esac
+done
+echo
+
 exec "${qemu_binary=/usr/bin/qemu-system-x86_64}" \
   "${args[@]}"
