@@ -18,5 +18,4 @@ subdirs = [
     "stop_cvd",
     "ivserver",
     "record_audio",
-    "wifi_relay",
 ]
