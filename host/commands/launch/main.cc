@@ -455,10 +455,9 @@ bool ResolveInstanceFiles() {
   }
   if (FLAGS_initrd.empty()) {
     FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
-    if (!FileHasContent(FLAGS_initrd.c_str())) {
-      LOG(WARNING) << "No ramdisk.img found; assuming system-as-root build";
-      FLAGS_initrd.clear();
-    }
+  }
+  if (!FileHasContent(FLAGS_initrd.c_str())) {
+    FLAGS_initrd.clear();
   }
   if (FLAGS_dtb.empty()) {
     if (FLAGS_initrd.empty()) {
