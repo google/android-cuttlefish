@@ -24,6 +24,7 @@ cvd_host_executables := \
     host_region_e2e_test \
     launch_cvd \
     socket_forward_proxy \
+    adb_connector \
     stop_cvd \
     vnc_server \
     record_audio \
