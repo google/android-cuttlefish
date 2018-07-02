@@ -414,24 +414,6 @@ std::string CuttlefishConfig::instance_name() const {
   return GetPerInstanceDefault("cvd-");
 }
 
-bool CuttlefishConfig::ReadKernelArgs(const std::string& cmdline_file,
-                                      const std::string& extra_args) {
-  std::ostringstream kernel_args;
-  std::ifstream cmd_stream(cmdline_file);
-  if (!cmd_stream) {
-    LOG(WARNING) << "Unable to open " << cmdline_file;
-    return false;
-  } else {
-    kernel_args << cmd_stream.rdbuf();
-    cmd_stream.close();
-  }
-  if (!extra_args.empty()) {
-    kernel_args << " " << extra_args;
-  }
-  set_kernel_args(kernel_args.str());
-  return true;
-}
-
 int GetInstance() {
   static int instance_id = InstanceFromEnvironment();
   return instance_id;
