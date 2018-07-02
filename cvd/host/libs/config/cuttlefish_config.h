@@ -44,10 +44,6 @@ class CuttlefishConfig {
     set_usb_v1_socket_name("");
   }
 
-  // Reads the kernel command line from a file and appends extra arguments.
-  bool ReadKernelArgs(const std::string& cmdline_file,
-                      const std::string& extra_args);
-
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
 
