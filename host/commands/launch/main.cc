@@ -42,6 +42,7 @@
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
+#include "host/commands/launch/boot_image_unpacker.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -78,10 +79,7 @@ DEFINE_bool(disable_dac_security, false,
             "Disable DAC security in libvirt. For debug only.");
 DEFINE_string(extra_kernel_command_line, "",
               "Additional flags to put on the kernel command line");
-DEFINE_string(initrd, "", "Location of cuttlefish initrd file.");
-DEFINE_string(kernel, "", "Location of cuttlefish kernel file.");
-DEFINE_string(kernel_command_line, "",
-              "Location of a text file with the kernel command line.");
+DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
@@ -432,27 +430,11 @@ bool ResolveInstanceFiles() {
 
   // If user did not specify location of either of these files, expect them to
   // be placed in --system_image_dir location.
-  if (FLAGS_kernel.empty()) {
-    FLAGS_kernel = FLAGS_system_image_dir + "/kernel";
-  }
-  if (FLAGS_kernel_command_line.empty()) {
-    FLAGS_kernel_command_line = FLAGS_system_image_dir + "/cmdline";
-  }
   if (FLAGS_system_image.empty()) {
     FLAGS_system_image = FLAGS_system_image_dir + "/system.img";
   }
-  if (FLAGS_initrd.empty()) {
-    FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
-  }
-  if (!FileHasContent(FLAGS_initrd.c_str())) {
-    FLAGS_initrd.clear();
-  }
-  if (FLAGS_dtb.empty()) {
-    if (FLAGS_initrd.empty()) {
-      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
-    } else {
-      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
-    }
+  if (FLAGS_boot_image.empty()) {
+    FLAGS_boot_image = FLAGS_system_image_dir + "/boot.img";
   }
   if (FLAGS_cache_image.empty()) {
     FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
@@ -471,8 +453,8 @@ bool ResolveInstanceFiles() {
 
   // Check that the files exist
   for (const auto& file :
-       {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image, FLAGS_kernel,
-        FLAGS_data_image, FLAGS_kernel_command_line}) {
+       {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image,
+        FLAGS_data_image, FLAGS_boot_image}) {
     if (!FileHasContent(file.c_str())) {
       LOG(FATAL) << "File not found: " << file;
       return false;
@@ -481,10 +463,28 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-bool SetUpGlobalConfiguration() {
-  if (!ResolveInstanceFiles()) {
+bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
+  auto config = vsoc::CuttlefishConfig::Get();
+  if (boot_image_unpacker.HasRamdiskImage()) {
+    if (!boot_image_unpacker.ExtractRamdiskImage(config->ramdisk_image_path())) {
+      LOG(FATAL) << "Error extracting ramdisk from boot image";
+      return false;
+    }
+  }
+  if (boot_image_unpacker.HasKernelImage()) {
+    if (!boot_image_unpacker.ExtractKernelImage(config->kernel_image_path())) {
+      LOG(FATAL) << "Error extracting kernel from boot image";
+      return false;
+    }
+  } else {
+    LOG(FATAL) << "No kernel found on boot image";
     return false;
   }
+  return true;
+}
+
+bool SetUpGlobalConfiguration(
+    const cvd::BootImageUnpacker& boot_image_unpacker) {
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   auto config = vsoc::CuttlefishConfig::Get();
   // Set this first so that calls to PerInstancePath below are correct
@@ -503,20 +503,38 @@ bool SetUpGlobalConfiguration() {
   config->set_y_res(FLAGS_y_res);
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
 
-  config->set_kernel_image_path(FLAGS_kernel);
-  std::ostringstream extra_cmdline;
-  if (FLAGS_initrd.empty()) {
-    extra_cmdline << " root=/dev/vda init=/init";
-  }
-  extra_cmdline << " androidboot.serialno=" << FLAGS_serial_number;
-  extra_cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
-  if (FLAGS_extra_kernel_command_line.size()) {
-    extra_cmdline << " " << FLAGS_extra_kernel_command_line;
-  }
-  config->ReadKernelArgs(FLAGS_kernel_command_line.c_str(),
-                         extra_cmdline.str());
+  config->set_kernel_image_path(config->PerInstancePath("kernel"));
 
-  config->set_ramdisk_image_path(FLAGS_initrd);
+  auto ramdisk_path = config->PerInstancePath("ramdisk.img");
+  bool use_ramdisk = boot_image_unpacker.HasRamdiskImage();
+  if (!use_ramdisk) {
+    LOG(INFO) << "No ramdisk present; assuming system-as-root build";
+    ramdisk_path = "";
+  }
+
+  // This needs to be done here because the dtb path depends on the presence of
+  // the ramdisk
+  if (FLAGS_dtb.empty()) {
+    if (use_ramdisk) {
+      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
+    } else {
+      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
+    }
+  }
+
+  std::ostringstream kernel_cmdline;
+  kernel_cmdline << boot_image_unpacker.kernel_command_line();
+  if (!use_ramdisk) {
+    kernel_cmdline << " root=/dev/vda init=/init";
+  }
+  kernel_cmdline << " androidboot.serialno=" << FLAGS_serial_number;
+  kernel_cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
+  if (FLAGS_extra_kernel_command_line.size()) {
+    kernel_cmdline << " " << FLAGS_extra_kernel_command_line;
+  }
+  config->set_kernel_args(kernel_cmdline.str());
+
+  config->set_ramdisk_image_path(ramdisk_path);
   config->set_system_image_path(FLAGS_system_image);
   config->set_cache_image_path(FLAGS_cache_image);
   config->set_data_image_path(FLAGS_data_image);
@@ -626,13 +644,22 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   ParseCommandLineFlags(argc, argv);
 
+  if (!ResolveInstanceFiles()) {
+    return -1;
+  }
+  auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
   // Do this early so that the config object is ready for anything that needs it
-  if (!SetUpGlobalConfiguration()) {
+  if (!SetUpGlobalConfiguration(*boot_img_unpacker)) {
     return -1;
   }
 
   if (!CleanPriorFiles()) {
     LOG(FATAL) << "Failed to clean prior files";
+  }
+
+  if (!UnpackBootImage(*boot_img_unpacker)) {
+    LOG(ERROR) << "Failed to unpack boot image";
+    return -1;
   }
 
   if (!WriteCuttlefishEnvironment()) {
