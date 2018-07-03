@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <algorithm>
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/glog/logging.h"
@@ -71,6 +72,23 @@ bool FileInstance::CopyFrom(FileInstance& in) {
         // The caller will have to log an appropriate message.
         return false;
       }
+    }
+  }
+  return true;
+}
+
+bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
+  AutoFreeBuffer buffer;
+  buffer.Resize(8192);
+  while (length > 0) {
+    ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
+    length -= num_read;
+    if (num_read <= 0) {
+      return false;
+    }
+    if (Write(buffer.data(), num_read) != num_read) {
+      // The caller will have to log an appropriate message.
+      return false;
     }
   }
   return true;
