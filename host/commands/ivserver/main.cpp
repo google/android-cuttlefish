@@ -22,8 +22,8 @@
 #include <glog/logging.h>
 
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/ivserver/ivserver.h"
-#include "host/libs/ivserver/options.h"
+#include "host/commands/ivserver/ivserver.h"
+#include "host/commands/ivserver/options.h"
 
 DEFINE_int32(
     qemu_socket_fd, -1,
