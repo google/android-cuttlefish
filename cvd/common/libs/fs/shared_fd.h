@@ -223,6 +223,7 @@ class FileInstance {
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
   bool CopyFrom(FileInstance& in);
+  bool CopyFrom(FileInstance& in, size_t length);
 
   int UNMANAGED_Dup() {
     errno = 0;
