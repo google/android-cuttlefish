@@ -17,6 +17,7 @@
 ################################################
 # Begin GCE specific configurations
 
+$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 ################################################
@@ -25,6 +26,10 @@ $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 PRODUCT_COPY_FILES += \
     packages/services/Car/car_product/init/init.bootstat.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw//init.bootstat.rc \
     packages/services/Car/car_product/init/init.car.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw//init.car.rc
+
+
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml
 
 # Auto core hardware permissions
 PRODUCT_COPY_FILES += \
@@ -42,6 +47,17 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     android.car.hvac.demo=true
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    keyguard.no_require_sim=true \
+    rild.libpath=libvsoc-ril.so \
+    ro.cdma.home.operator.alpha=Android \
+    ro.cdma.home.operator.numeric=302780 \
+    ro.gsm.home.operator.alpha=Android \
+    ro.gsm.home.operator.numeric=302780 \
+    gsm.sim.operator.numeric=302780 \
+    gsm.sim.operator.alpha=Android \
+    gsm.sim.operator.iso-country=us
+
 # vehicle HAL
 PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
 
@@ -54,6 +70,16 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     gps.vsoc_x86 \
     android.hardware.gnss@1.0-impl
+
+# Cell network connection
+PRODUCT_PACKAGES += \
+    MmsService \
+    Phone \
+    PhoneService \
+    Telecom \
+    TeleService \
+    libvsoc-ril \
+    rild \
 
 # DRM Properities
 PRODUCT_PROPERTY_OVERRIDES += \
