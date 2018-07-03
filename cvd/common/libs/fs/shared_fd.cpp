@@ -293,6 +293,7 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
     return rval;
   }
   if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
+    LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
@@ -310,6 +311,7 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   }
   if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
                     sizeof addr) < 0) {
+    LOG(ERROR) << "Connect() failed" << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
