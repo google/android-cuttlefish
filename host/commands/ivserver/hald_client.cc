@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/ivserver/hald_client.h"
+#include "host/commands/ivserver/hald_client.h"
 
 #include <string>
 

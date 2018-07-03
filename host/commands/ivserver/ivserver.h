@@ -18,8 +18,8 @@
 #include <memory>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/ivserver/options.h"
-#include "host/libs/ivserver/vsocsharedmem.h"
+#include "host/commands/ivserver/options.h"
+#include "host/commands/ivserver/vsocsharedmem.h"
 
 namespace ivserver {
 

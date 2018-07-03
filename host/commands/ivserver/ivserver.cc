@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/ivserver/ivserver.h"
+#include "host/commands/ivserver/ivserver.h"
 
 #include <sys/select.h>
 #include <algorithm>
@@ -21,8 +21,8 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_select.h"
-#include "host/libs/ivserver/hald_client.h"
-#include "host/libs/ivserver/qemu_client.h"
+#include "host/commands/ivserver/hald_client.h"
+#include "host/commands/ivserver/qemu_client.h"
 
 namespace ivserver {
 
