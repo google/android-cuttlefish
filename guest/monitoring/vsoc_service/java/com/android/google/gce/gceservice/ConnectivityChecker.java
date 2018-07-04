@@ -17,6 +17,8 @@ package com.android.google.gce.gceservice;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.util.Log;
 
@@ -24,37 +26,42 @@ import java.util.ArrayList;
 
 public class ConnectivityChecker extends JobBase {
     private static final String LOG_TAG = "GceConnChecker";
+    private static final String MOBILE_NETWORK_CONNECTED_MESSAGE =
+        "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
 
     private final Context mContext;
+    private final BootReporter mBootReporter;
     private final GceFuture<Boolean> mConnected = new GceFuture<Boolean>("Connectivity");
+    // TODO(schuffelen): Figure out why this has to be static in order to not report 3 times.
+    private static boolean reportedMobileConnectivity = false;
 
-
-    public ConnectivityChecker(Context context) {
+    public ConnectivityChecker(Context context, BootReporter bootReporter) {
         super(LOG_TAG);
         mContext = context;
+        mBootReporter = bootReporter;
     }
 
 
     @Override
     public int execute() {
         ConnectivityManager connManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (mConnected.isDone()) return 0;
-
-        NetworkInfo[] networks = connManager.getAllNetworkInfo();
-        ArrayList<String> connected = new ArrayList<String>();
-        ArrayList<String> disconnected = new ArrayList<String>();
-
-        for (NetworkInfo network : networks) {
-            if (network.isConnected()) {
-                connected.add(network.getTypeName());
-                mConnected.set(true);
-                break;
-            } else {
-                disconnected.add(network.getTypeName());
-            }
+        if (mConnected.isDone()) {
+            return 0;
         }
 
-        Log.i(LOG_TAG, "Connectivity status: connected:" + connected + ", disconnected:" + disconnected);
+        Network[] networks = connManager.getAllNetworks();
+        for (Network network : networks) {
+            NetworkInfo info = connManager.getNetworkInfo(network);
+            if (info.isConnected()) {
+                NetworkCapabilities capabilities = connManager.getNetworkCapabilities(network);
+                if (capabilities != null
+                        && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                        && !reportedMobileConnectivity) {
+                    mBootReporter.reportMessage(MOBILE_NETWORK_CONNECTED_MESSAGE);
+                    reportedMobileConnectivity = true;
+                }
+            }
+        }
 
         return 0;
     }

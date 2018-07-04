@@ -41,7 +41,6 @@ public class GceService extends Service {
     private static final int NETWORK_OR_BOOT_TIMEOUT = 30;
 
     private final JobExecutor mExecutor = new JobExecutor();
-    private final ConnectivityChecker mConnChecker = new ConnectivityChecker(this);
     private final LocationServicesManager mLocationServices = new LocationServicesManager(this);
     private final PackageVerifierManager mPackageVerifier = new PackageVerifierManager(this);
     private final PackageVerificationConsentEnforcer mConsentEnforcer = new PackageVerificationConsentEnforcer(this);
@@ -50,6 +49,7 @@ public class GceService extends Service {
     private final BluetoothChecker mBluetoothChecker = new BluetoothChecker();
     private final TombstoneChecker mTombstoneChecker = new TombstoneChecker();
 
+    private ConnectivityChecker mConnChecker;
     private GceWifiManager mWifiManager = null;
     private String mMostRecentAction = null;
 
@@ -63,6 +63,7 @@ public class GceService extends Service {
             mBootReporter.reportBootStarted();
             registerBroadcastReceivers();
 
+            mConnChecker = new ConnectivityChecker(this, mBootReporter);
             mWifiManager = new GceWifiManager(this, mBootReporter, mExecutor);
 
             mExecutor.schedule(mLocationServices);
@@ -70,6 +71,7 @@ public class GceService extends Service {
             mExecutor.schedule(mConsentEnforcer);
             mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
+            mExecutor.schedule(mConnChecker);
             // TODO(ender): TombstoneChecker is disabled, because we no longer have the code that
             // produces /ts_snap.txt file. We need to rethink how TombstoneChecker should work.
             // mExecutor.schedule(mTombstoneChecker);
@@ -77,7 +79,6 @@ public class GceService extends Service {
             mExecutor.schedule(mBootReporter,
                     mLocationServices.getLocationServicesReady(),
                     mPackageVerifier.getPackageVerifierReady(),
-                    mConnChecker.getConnected(),
                     mBluetoothChecker.getEnabled()
                     // mTombstoneChecker.getTombstoneResult()
                     );
