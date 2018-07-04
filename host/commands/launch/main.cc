@@ -77,6 +77,8 @@ DEFINE_bool(disable_app_armor_security, false,
             "Disable AppArmor security in libvirt. For debug only.");
 DEFINE_bool(disable_dac_security, false,
             "Disable DAC security in libvirt. For debug only.");
+DEFINE_string(kernel_path, "",
+	      "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(extra_kernel_command_line, "",
               "Additional flags to put on the kernel command line");
 DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
@@ -471,14 +473,16 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
       return false;
     }
   }
-  if (boot_image_unpacker.HasKernelImage()) {
-    if (!boot_image_unpacker.ExtractKernelImage(config->kernel_image_path())) {
-      LOG(FATAL) << "Error extracting kernel from boot image";
+  if (!FLAGS_kernel_path.size()) {
+    if (boot_image_unpacker.HasKernelImage()) {
+      if (!boot_image_unpacker.ExtractKernelImage(config->kernel_image_path())) {
+        LOG(ERROR) << "Error extracting kernel from boot image";
+        return false;
+      }
+    } else {
+      LOG(ERROR) << "No kernel found on boot image";
       return false;
     }
-  } else {
-    LOG(FATAL) << "No kernel found on boot image";
-    return false;
   }
   return true;
 }
@@ -503,7 +507,11 @@ bool SetUpGlobalConfiguration(
   config->set_y_res(FLAGS_y_res);
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
 
-  config->set_kernel_image_path(config->PerInstancePath("kernel"));
+  if (FLAGS_kernel_path.size()) {
+    config->set_kernel_image_path(FLAGS_kernel_path);
+  } else {
+    config->set_kernel_image_path(config->PerInstancePath("kernel"));
+  }
 
   auto ramdisk_path = config->PerInstancePath("ramdisk.img");
   bool use_ramdisk = boot_image_unpacker.HasRamdiskImage();
