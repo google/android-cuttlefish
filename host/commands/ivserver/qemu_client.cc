@@ -65,7 +65,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
 
   // 3. The number -1, accompanied by the file descriptor for the shared
   //    memory.
-  if (!SendSocketInfo(QemuFDMsg::kSharedMem, shmem.SharedMemFD())) {
+  if (!SendSocketInfo(kSharedMem, shmem.SharedMemFD())) {
     LOG(ERROR) << "Failed to send Shared Memory socket: "
                << client_socket_->StrError();
     return false;
@@ -79,7 +79,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   //    vectors, it closes the extra file descriptors.  If it is configured
   //    for more, the extra vectors remain unconnected.
   for (const auto region_data : shmem.Regions()) {
-    if (!SendSocketInfo(QemuFDMsg::kHostSideHald, region_data.host_fd)) {
+    if (!SendSocketInfo(kHostID, region_data.host_fd)) {
       LOG(ERROR) << "Failed to send Host Side FD for region "
                  << region_data.device_name << ": " << client_socket_->StrError();
       return false;
@@ -93,7 +93,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   //    the extra file descriptors.  If it is configured for more, the
   //    extra vectors remain unconnected.
   for (const auto region_data : shmem.Regions()) {
-    if (!SendSocketInfo(QemuFDMsg::kGuestSideHal, region_data.guest_fd)) {
+    if (!SendSocketInfo(kGuestID, region_data.guest_fd)) {
       LOG(ERROR) << "Failed to send Guest Side FD for region "
                  << region_data.device_name << ": " << client_socket_->StrError();
       return false;
@@ -104,7 +104,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   return true;
 }
 
-bool QemuClient::SendSocketInfo(QemuFDMsg message,
+bool QemuClient::SendSocketInfo(QemuConstants message,
                                 const cvd::SharedFD& socket) {
   struct iovec vec {
     &message, sizeof(message)
