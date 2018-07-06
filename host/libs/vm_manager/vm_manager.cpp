@@ -28,4 +28,5 @@ std::shared_ptr<VmManager> VmManager::Get() {
           : std::shared_ptr<VmManager>(new LibvirtManager()));
   return vm_manager;
 }
+
 }  // namespace vm_manager

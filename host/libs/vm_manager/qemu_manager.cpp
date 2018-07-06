@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/wait.h>
@@ -32,6 +33,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -140,4 +142,37 @@ bool QemuManager::Stop() const {
   return true;
 }
 
+bool QemuManager::EnsureInstanceDirExists() const {
+  auto instance_dir = vsoc::CuttlefishConfig::Get()->instance_dir();
+  if (!cvd::DirectoryExists(instance_dir.c_str())) {
+    LOG(INFO) << "Setting up " << instance_dir;
+    if (mkdir(instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+      LOG(ERROR) << "Unable to create " << instance_dir << ". Error: " << errno;
+      return false;
+    }
+  }
+  return true;
+
+}
+bool QemuManager::CleanPriorFiles() const {
+  auto config = vsoc::CuttlefishConfig::Get();
+  std::string run_files = config->PerInstancePath("*") + " " +
+                          config->mempath() + " " +
+                          config->cuttlefish_env_path();
+  LOG(INFO) << "Assuming run files of " << run_files;
+  std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
+  int rval = std::system(fuser_cmd.c_str());
+  // fuser returns 0 if any of the files are open
+  if (WEXITSTATUS(rval) == 0) {
+    LOG(ERROR) << "Clean aborted: files are in use";
+    return false;
+  }
+  std::string clean_command = "rm -rf " + run_files;
+  rval = std::system(clean_command.c_str());
+  if (WEXITSTATUS(rval) != 0) {
+    LOG(ERROR) << "Remove of files failed";
+    return false;
+  }
+  return true;
+}
 }  // namespace vm_manager

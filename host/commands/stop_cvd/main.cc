@@ -64,9 +64,8 @@ int main(int argc, char** argv) {
 
   auto config = vsoc::CuttlefishConfig::Get();
 
-  // TODO(b/78512938): Shouldn't need sudo to shut down
   std::string run_files = config->PerInstancePath("*");
-  std::string fuser_cmd = "sudo fuser -k ";
+  std::string fuser_cmd = "fuser -k ";
   fuser_cmd += run_files;
   fuser_cmd += " ";
   fuser_cmd += config->mempath();

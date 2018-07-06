@@ -16,6 +16,8 @@
 
 #include "host/libs/vm_manager/libvirt_manager.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <cstdlib>
 #include <iomanip>
@@ -26,6 +28,8 @@
 #include <glog/logging.h>
 #include <libxml/tree.h>
 
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
@@ -331,7 +335,6 @@ std::string BuildXmlConfig() {
 }
 }  // namespace
 
-
 bool LibvirtManager::Start() const {
   std::string start_command = GetLibvirtCommand();
   start_command += " create /dev/fd/0";
@@ -366,4 +369,39 @@ bool LibvirtManager::Stop() const {
   return std::system(stop_command.c_str()) == 0;
 }
 
+bool LibvirtManager::EnsureInstanceDirExists() const {
+  auto instance_dir = vsoc::CuttlefishConfig::Get()->instance_dir();
+  if (!cvd::DirectoryExists(instance_dir)) {
+    LOG(INFO) << "Setting up " << instance_dir;
+    cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", instance_dir});
+
+    // When created with sudo the owner and group is root.
+    std::string user_group = getenv("USER");
+    user_group += ":libvirt-qemu";
+    cvd::execute({"/usr/bin/sudo", "/bin/chown", user_group, instance_dir});
+  }
+  return true;
+}
+
+bool LibvirtManager::CleanPriorFiles() const {
+  auto config = vsoc::CuttlefishConfig::Get();
+  std::string run_files = config->PerInstancePath("*") + " " +
+                          config->mempath() + " " +
+                          config->cuttlefish_env_path();
+  LOG(INFO) << "Assuming run files of " << run_files;
+  std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
+  int rval = std::system(fuser_cmd.c_str());
+  // fuser returns 0 if any of the files are open
+  if (WEXITSTATUS(rval) == 0) {
+    LOG(ERROR) << "Clean aborted: files are in use";
+    return false;
+  }
+  std::string clean_command = "rm -rf " + run_files;
+  rval = std::system(clean_command.c_str());
+  if (WEXITSTATUS(rval) != 0) {
+    LOG(ERROR) << "Remove of files failed";
+    return false;
+  }
+  return true;
+}
 }  // namespace vm_manager
