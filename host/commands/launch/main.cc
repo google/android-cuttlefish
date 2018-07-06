@@ -38,6 +38,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/lib/vsoc_memory.h"
@@ -237,24 +238,6 @@ class KernelLogMonitor {
   KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
 };
 
-bool DirExists(const char* path) {
-  struct stat st;
-  if (stat(path, &st) == -1)
-    return false;
-  if ((st.st_mode & S_IFMT) != S_IFDIR)
-    return false;
-  return true;
-}
-
-bool FileHasContent(const char* path) {
-  struct stat st;
-  if (stat(path, &st) == -1)
-    return false;
-  if (st.st_size == 0)
-    return false;
-  return true;
-}
-
 void CreateBlankImage(
     const std::string& image, int image_mb, const std::string& image_fmt) {
   LOG(INFO) << "Creating " << image;
@@ -272,7 +255,7 @@ void RemoveFile(const std::string& file) {
 }
 
 bool ApplyDataImagePolicy(const char* data_image) {
-  bool data_exists = FileHasContent(data_image);
+  bool data_exists = cvd::FileHasContent(data_image);
   bool remove{};
   bool create{};
 
@@ -316,7 +299,7 @@ bool ApplyDataImagePolicy(const char* data_image) {
 }
 
 bool EnsureDirExists(const std::string& dir) {
-  if (!DirExists(dir.c_str())) {
+  if (!cvd::DirectoryExists(dir.c_str())) {
     LOG(INFO) << "Setting up " << dir;
     if (mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
       if (errno == EACCES) {
@@ -457,7 +440,7 @@ bool ResolveInstanceFiles() {
   for (const auto& file :
        {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image,
         FLAGS_data_image, FLAGS_boot_image}) {
-    if (!FileHasContent(file.c_str())) {
+    if (!cvd::FileHasContent(file.c_str())) {
       LOG(FATAL) << "File not found: " << file;
       return false;
     }
