@@ -26,6 +26,9 @@ class LibvirtManager : public VmManager {
 
   bool Start() const override;
   bool Stop() const override;
+
+  bool EnsureInstanceDirExists() const override;
+  bool CleanPriorFiles() const override;
 };
 
 }  // namespace vm_manager
