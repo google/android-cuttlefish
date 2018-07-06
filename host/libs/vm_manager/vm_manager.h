@@ -31,6 +31,9 @@ class VmManager {
 
   virtual bool Start() const = 0;
   virtual bool Stop() const = 0;
+
+  virtual bool EnsureInstanceDirExists() const = 0;
+  virtual bool CleanPriorFiles() const = 0;
 };
 
 }  // namespace vm_manager

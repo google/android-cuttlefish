@@ -298,29 +298,6 @@ bool ApplyDataImagePolicy(const char* data_image) {
   return true;
 }
 
-bool EnsureDirExists(const std::string& dir) {
-  if (!cvd::DirectoryExists(dir.c_str())) {
-    LOG(INFO) << "Setting up " << dir;
-    if (mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
-      if (errno == EACCES) {
-        // TODO(79170615) Don't use sudo once libvirt is replaced
-        LOG(WARNING) << "Not enough permission to create " << dir
-                     << " retrying with sudo";
-        cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", dir});
-
-        // When created with sudo the owner and group is root.
-        std::string user_group = getenv("USER");
-        user_group += ":libvirt-qemu";
-        cvd::execute({"/usr/bin/sudo", "/bin/chown", user_group, dir});
-      } else {
-        LOG(FATAL) << "Unable to create " << dir << ". Error: " << errno;
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 std::string GetConfigFile() {
   return vsoc::CuttlefishConfig::Get()->PerInstancePath(
       "cuttlefish_config.json");
@@ -476,9 +453,6 @@ bool SetUpGlobalConfiguration(
   auto config = vsoc::CuttlefishConfig::Get();
   // Set this first so that calls to PerInstancePath below are correct
   config->set_instance_dir(FLAGS_instance_dir);
-  if (!EnsureDirExists(FLAGS_instance_dir)) {
-    return false;
-  }
 
   config->set_serial_number(FLAGS_serial_number);
 
@@ -572,7 +546,7 @@ bool SetUpGlobalConfiguration(
   return true;
 }
 
-void ParseCommandLineFlags(int argc, char** argv) {
+bool ParseCommandLineFlags(int argc, char** argv) {
   // The config_file is created by the launcher, so the launcher is the only
   // host process that doesn't use the flag.
   // Set the default to empty.
@@ -583,29 +557,8 @@ void ParseCommandLineFlags(int argc, char** argv) {
   FLAGS_config_file = "";
 
   ValidateAdbModeFlag();
-}
 
-bool CleanPriorFiles() {
-  auto config = vsoc::CuttlefishConfig::Get();
-  std::string run_files = config->PerInstancePath("*") + " " +
-                          config->mempath() + " " +
-                          config->cuttlefish_env_path();
-  LOG(INFO) << "Assuming run files of " << run_files;
-  // TODO(b/78512938): Shouldn't need sudo here
-  std::string fuser_cmd = "sudo fuser " + run_files + " 2> /dev/null";
-  int rval = std::system(fuser_cmd.c_str());
-  // fuser returns 0 if any of the files are open
-  if (WEXITSTATUS(rval) == 0) {
-    LOG(ERROR) << "Clean aborted: files are in use";
-    return false;
-  }
-  std::string clean_command = "sudo rm -rf " + run_files;
-  rval = std::system(clean_command.c_str());
-  if (WEXITSTATUS(rval) != 0) {
-    LOG(ERROR) << "Remove of files failed";
-    return false;
-  }
-  return true;
+  return ResolveInstanceFiles();
 }
 
 bool WriteCuttlefishEnvironment() {
@@ -628,24 +581,30 @@ bool WriteCuttlefishEnvironment() {
   env->Write(config_env.c_str(), config_env.size());
   return true;
 }
-
 }  // namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  ParseCommandLineFlags(argc, argv);
-
-  if (!ResolveInstanceFiles()) {
+  if (!ParseCommandLineFlags(argc, argv)) {
     return -1;
   }
+
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
+  auto vm_manager = vm_manager::VmManager::Get();
+
   // Do this early so that the config object is ready for anything that needs it
   if (!SetUpGlobalConfiguration(*boot_img_unpacker)) {
     return -1;
   }
 
-  if (!CleanPriorFiles()) {
-    LOG(FATAL) << "Failed to clean prior files";
+  if (!vm_manager->EnsureInstanceDirExists()) {
+    LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
+    return -1;
+  }
+
+  if (!vm_manager->CleanPriorFiles()) {
+    LOG(ERROR) << "Failed to clean prior files";
+    return -1;
   }
 
   if (!UnpackBootImage(*boot_img_unpacker)) {
@@ -679,7 +638,6 @@ int main(int argc, char** argv) {
   PreLaunchInitializers::Initialize();
 
   // Start the guest VM
-  auto vm_manager = vm_manager::VmManager::Get();
   if (!vm_manager->Start()) {
     LOG(FATAL) << "Unable to start vm_manager";
     return -1;
