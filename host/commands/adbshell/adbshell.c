@@ -41,24 +41,34 @@
 // default.
 //
 const char SERIAL_NUMBER_PREFIX[] = "CUTTLEFISHCVD";
-const char USER_PREFIX[] = "cvd-";
 
-int main(int argc, char* argv[]) {
-  char* user = getenv("USER");
-  const char* instance = "01";
-  if (user && !memcmp(user, USER_PREFIX, sizeof(USER_PREFIX) - 1)) {
-    instance = user + sizeof(USER_PREFIX) - 1;
+static const char* InstanceNumberAsStr() {
+  static const char USER_PREFIX[] = "cvd-";
+
+  const char* user = getenv("USER");
+  if (user && !strncmp(user, USER_PREFIX, sizeof(USER_PREFIX) - 1)) {
+    return user + sizeof(USER_PREFIX) - 1;
   }
-  char** new_argv = malloc((argc + 5) * sizeof(char*));
-  new_argv[0] = "/usr/bin/adb";
-  new_argv[1] = "-s";
+  return "01";
+}
+
+static char* InstanceStr() {
+  const char* instance = InstanceNumberAsStr();
   size_t sz = strlen(SERIAL_NUMBER_PREFIX) + strlen(instance) + 1;
-  new_argv[2] = malloc(sz);
-  if (!new_argv[2]) {
+  char* instance_str = malloc(sz);
+  if (!instance_str) {
     fprintf(stderr, "Unable to allocate %zu bytes for instance name\n", sz);
     exit(2);
   }
-  snprintf(new_argv[2], sz, "%s%s", SERIAL_NUMBER_PREFIX, instance);
+  snprintf(instance_str, sz, "%s%s", SERIAL_NUMBER_PREFIX, instance);
+  return instance_str;
+}
+
+int main(int argc, char* argv[]) {
+  char** new_argv = malloc((argc + 5) * sizeof(*new_argv));
+  new_argv[0] = "/usr/bin/adb";
+  new_argv[1] = "-s";
+  new_argv[2] = InstanceStr();
   new_argv[3] = "shell";
   new_argv[4] = "/system/bin/sh";
 
@@ -67,7 +77,7 @@ int main(int argc, char* argv[]) {
   // * ssh with no arguments comes in with 1 arg of -adbshell. The command
   //   given above does the right thing if we don't invoke the shell.
   if (argc == 1) {
-    new_argv[4] = 0;
+    new_argv[4] = NULL;
   }
   // * simple shell commands come in with a -c and a single string. The
   //   problem here is that adb doesn't preserve spaces, so we need
@@ -84,7 +94,7 @@ int main(int argc, char* argv[]) {
   //   "scp: with ambiguous target." We might be able to fix this with
   //   some creative parsing of the arguments, but that seems like
   //   overkill.
-  new_argv[argc + 4] = 0;
+  new_argv[argc + 4] = NULL;
   execv(new_argv[0], new_argv);
   // This never should happen
   return 2;
