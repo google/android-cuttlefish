@@ -12,6 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CFLAGS := -std=c99 -Werror -Wall
+CFLAGS := -std=c99 -Werror -Wall -D_XOPEN_SOURCE
 
 adbshell: adbshell.c

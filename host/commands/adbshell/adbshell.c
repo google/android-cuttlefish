@@ -40,28 +40,68 @@
 // The code in the commands/launch directory also follows these conventions by
 // default.
 //
-const char SERIAL_NUMBER_PREFIX[] = "CUTTLEFISHCVD";
 
 static const char* InstanceNumberAsStr() {
-  static const char USER_PREFIX[] = "cvd-";
+  static const char kUserPrefix[] = "cvd-";
 
   const char* user = getenv("USER");
-  if (user && !strncmp(user, USER_PREFIX, sizeof(USER_PREFIX) - 1)) {
-    return user + sizeof(USER_PREFIX) - 1;
+  if (user && !strncmp(user, kUserPrefix, sizeof(kUserPrefix) - 1)) {
+    return user + sizeof(kUserPrefix) - 1;
   }
   return "01";
 }
 
-static char* InstanceStr() {
-  const char* instance = InstanceNumberAsStr();
-  size_t sz = strlen(SERIAL_NUMBER_PREFIX) + strlen(instance) + 1;
+static int InstanceNumberAsInt() {
+  const char* instance_str = InstanceNumberAsStr();
+  char* end = NULL;
+  int result = (int)strtol(instance_str, &end, 10);
+  return *end || result < 1 ? 1 : result;
+}
+
+static char* TCPInstanceStr() {
+  enum { kPortWidth = 4, kFirstPort = 6520 };
+  const char kIPPrefix[] = "127.0.0.1:";
+  size_t sz = (sizeof kIPPrefix) + kPortWidth;
   char* instance_str = malloc(sz);
   if (!instance_str) {
     fprintf(stderr, "Unable to allocate %zu bytes for instance name\n", sz);
     exit(2);
   }
-  snprintf(instance_str, sz, "%s%s", SERIAL_NUMBER_PREFIX, instance);
+  int instance_port = InstanceNumberAsInt() - 1 + kFirstPort;
+  snprintf(instance_str, sz, "%s%d", kIPPrefix, instance_port);
   return instance_str;
+}
+
+static char* USBInstanceStr() {
+  const char kSerialNumberPrefix[] = "CUTTLEFISHCVD";
+  const char* instance = InstanceNumberAsStr();
+  size_t sz = (sizeof kSerialNumberPrefix) + strlen(instance);
+  char* instance_str = malloc(sz);
+  if (!instance_str) {
+    fprintf(stderr, "Unable to allocate %zu bytes for instance name\n", sz);
+    exit(2);
+  }
+  snprintf(instance_str, sz, "%s%s", kSerialNumberPrefix, instance);
+  return instance_str;
+}
+
+static char* InstanceStr() {
+  char* possible_device_names[] = {TCPInstanceStr(), USBInstanceStr()};
+  enum {
+    kNumDeviceNames =
+        sizeof possible_device_names / sizeof possible_device_names[0]
+  };
+
+  FILE* adb_devices_cmd_stream = popen("/usr/bin/adb devices", "r");
+  char line[128] = {0};
+  while (fgets(line, sizeof line, adb_devices_cmd_stream) != NULL) {
+    for (int i = 0; i < kNumDeviceNames; ++i) {
+      if (strstr(line, possible_device_names[i])) {
+        return possible_device_names[i];
+      }
+    }
+  }
+  return NULL;
 }
 
 int main(int argc, char* argv[]) {
