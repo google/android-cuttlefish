@@ -20,6 +20,7 @@ cc_library_shared {
         "environment.cpp",
         "size_utils.cpp",
         "files.cpp",
+        "users.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
