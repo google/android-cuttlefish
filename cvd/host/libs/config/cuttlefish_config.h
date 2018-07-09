@@ -74,6 +74,9 @@ class CuttlefishConfig {
   std::string kernel_args() const;
   void set_kernel_args(const std::string& kernel_args);
 
+  std::string gdb_flag() const;
+  void set_gdb_flag(const std::string& gdb);
+
   std::string ramdisk_image_path() const;
   void set_ramdisk_image_path(const std::string& ramdisk_image_path);
 
