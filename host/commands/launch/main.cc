@@ -126,9 +126,9 @@ DEFINE_string(socket_forward_proxy_binary,
               vsoc::DefaultHostArtifactsPath("bin/socket_forward_proxy"),
               "Location of the socket_forward_proxy binary.");
 DEFINE_string(adb_mode, "tunnel",
-              "Mode for adb connection. Can be usb for usb forwarding, or "
-              "tunnel for tcp connection. If using tunnel, you may have to "
-              "run 'adb kill-server' to get the device to show up.");
+              "Mode for adb connection. Can be 'usb' for usb forwarding, "
+              "'tunnel' for tcp connection, or a comma separated list of types "
+              "as in 'usb,tunnel'");
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with --adb_mode=tunnel");
@@ -330,17 +330,23 @@ std::string GetAdbConnectorPortArg() {
   return std::string{"--ports="} + std::to_string(GetHostPort());
 }
 
-void ValidateAdbModeFlag() {
-  CHECK(FLAGS_adb_mode == kAdbModeUsb ||
-        FLAGS_adb_mode == kAdbModeTunnel) << "invalid --adb_mode";
+bool AdbModeEnabled(const char* mode) {
+  auto modes = cvd::StrSplit(FLAGS_adb_mode, ',');
+  return std::find(modes.begin(), modes.end(), mode) != modes.end();
 }
 
 bool AdbTunnelEnabled() {
-  return FLAGS_adb_mode == kAdbModeTunnel;
+  return AdbModeEnabled(kAdbModeTunnel);
 }
 
 bool AdbUsbEnabled() {
-  return FLAGS_adb_mode == kAdbModeUsb;
+  return AdbModeEnabled(kAdbModeUsb);
+}
+
+void ValidateAdbModeFlag() {
+  if (!AdbUsbEnabled() && !AdbTunnelEnabled()) {
+    LOG(INFO) << "ADB not enabled";
+  }
 }
 
 int CreateIvServerUnixSocket(const std::string& path) {
