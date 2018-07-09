@@ -83,6 +83,10 @@ args=(
     -msg "timestamp=on"
 )
 
+if [[ -n "${gdb_flag}" ]]; then
+  args+=(-gdb "${gdb_flag}")
+fi
+
 if [[ -n "${ramdisk_image_path}" ]]; then
   args+=(-initrd "${ramdisk_image_path}")
 fi

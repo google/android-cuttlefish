@@ -67,6 +67,8 @@ DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
+DEFINE_string(qemu_gdb, "",
+	      "Debug flag to pass to qemu. e.g. --qemu_gdb=tcp::1234");
 
 DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
@@ -485,9 +487,7 @@ bool SetUpGlobalConfiguration(
   config->set_x_res(FLAGS_x_res);
   config->set_y_res(FLAGS_y_res);
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
-
-  config->set_adb_mode(FLAGS_adb_mode);
-
+  config->set_gdb_flag(FLAGS_qemu_gdb);
   if (FLAGS_kernel_path.size()) {
     config->set_kernel_image_path(FLAGS_kernel_path);
   } else {
