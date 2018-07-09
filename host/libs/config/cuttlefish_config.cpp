@@ -77,6 +77,7 @@ const char* kYRes = "y_res";
 const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
+const char* kGdbFlag = "gdb_flag";
 const char* kKernelArgs = "kernel_args";
 const char* kRamdiskImagePath = "ramdisk_image_path";
 
@@ -158,9 +159,19 @@ void CuttlefishConfig::set_refresh_rate_hz(int refresh_rate_hz) {
 std::string CuttlefishConfig::kernel_image_path() const {
   return (*dictionary_)[kKernelImagePath].asString();
 }
+
 void CuttlefishConfig::set_kernel_image_path(
     const std::string& kernel_image_path) {
   (*dictionary_)[kKernelImagePath] = kernel_image_path;
+}
+
+std::string CuttlefishConfig::gdb_flag() const {
+  return (*dictionary_)[kGdbFlag].asString();
+}
+
+void CuttlefishConfig::set_gdb_flag(
+    const std::string& device) {
+  (*dictionary_)[kGdbFlag] = device;
 }
 
 std::string CuttlefishConfig::kernel_args() const {

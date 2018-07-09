@@ -129,16 +129,24 @@ void ConfigureOperatingSystem(xmlNode* root, const std::string& kernel,
 
 // Configure QEmu specific arguments.
 // This section adds the <qemu:commandline> node.
-void ConfigureQEmuSpecificOptions(
-    xmlNode* root, std::initializer_list<std::string> qemu_args) {
+xmlNodePtr ConfigureQEmuSpecificOptions(
+    xmlNode* root, std::initializer_list<std::string> qemu_args,
+    xmlNode* existing_options = nullptr) {
   xmlNs* qemu_ns{xmlNewNs(
       root, xc("http://libvirt.org/schemas/domain/qemu/1.0"), xc("qemu"))};
 
-  auto cmd = xmlNewChild(root, qemu_ns, xc("commandline"), nullptr);
+  xmlNode* cmd;
+  if (existing_options) {
+    cmd = existing_options;
+  } else {
+    cmd = xmlNewChild(root, qemu_ns, xc("commandline"), nullptr);
+  }
+
   for (const auto& str : qemu_args) {
     auto arg = xmlNewChild(cmd, qemu_ns, xc("arg"), nullptr);
     xmlNewProp(arg, xc("value"), xc(str.c_str()));
   }
+  return cmd;
 }
 
 void ConfigureDeviceSource(xmlNode* device, DeviceSourceType type,
@@ -276,7 +284,7 @@ std::string BuildXmlConfig() {
   ConfigureOperatingSystem(root, config->kernel_image_path(),
                            config->ramdisk_image_path(), config->kernel_args(),
                            config->dtb_path());
-  ConfigureQEmuSpecificOptions(
+  auto qemu_options = ConfigureQEmuSpecificOptions(
       root, {"-chardev",
              concat("socket,path=", config->ivshmem_qemu_socket_path(),
                     ",id=ivsocket"),
@@ -284,6 +292,11 @@ std::string BuildXmlConfig() {
              concat("ivshmem-doorbell,chardev=ivsocket,vectors=",
                     config->ivshmem_vector_count()),
              "-cpu", "host"});
+  if (config->gdb_flag().size()) {
+    ConfigureQEmuSpecificOptions(root, {"-gdb", config->gdb_flag().c_str(),
+                                        "-S"},
+                                 qemu_options);
+  }
 
   if (config->disable_app_armor_security()) {
     auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
