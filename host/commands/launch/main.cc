@@ -349,7 +349,7 @@ int CreateIvServerUnixSocket(const std::string& path) {
 }
 
 bool AdbConnectorEnabled() {
-  return FLAGS_run_adb_connector;
+  return FLAGS_run_adb_connector && AdbTunnelEnabled();
 }
 
 void LaunchIvServer() {
