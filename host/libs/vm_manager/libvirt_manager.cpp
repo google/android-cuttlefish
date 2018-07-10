@@ -170,12 +170,6 @@ void ConfigureSerialPort(xmlNode* devices, int port, DeviceSourceType type,
   auto tty = xmlNewChild(devices, nullptr, xc("serial"), nullptr);
   ConfigureDeviceSource(tty, type, path);
 
-  if (type == DeviceSourceType::kFile) {
-    LOG(INFO) << "Non-interactive serial port will send output to " << path;
-  } else {
-    LOG(INFO) << "Interactive serial port set up. To access the console run:";
-    LOG(INFO) << "$ sudo socat file:$(tty),raw,echo=0 " << path;
-  }
   auto tgt = xmlNewChild(tty, nullptr, xc("target"), nullptr);
   xmlNewProp(tgt, xc("port"), xc(concat(port).c_str()));
 }
