@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <functional>
 #include <fstream>
 #include <iomanip>
 #include <memory>
@@ -220,6 +221,10 @@ class KernelLogMonitor {
       : klog_{socket_name, log_name, deprecated_boot_completed} {}
 
   ~KernelLogMonitor() = default;
+
+  void SubscribeToBootEvents(monitor::BootEventCallback callback) {
+    klog_.SubscribeToBootEvents(callback);
+  }
 
   void Start() {
     CHECK(klog_.Init()) << "Could not initialize kernel log server";
