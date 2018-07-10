@@ -29,6 +29,9 @@ class LibvirtManager : public VmManager {
 
   bool EnsureInstanceDirExists() const override;
   bool CleanPriorFiles() const override;
+
+  bool ValidateHostConfiguration(
+      std::vector<std::string>* config_commands) const override;
 };
 
 }  // namespace vm_manager
