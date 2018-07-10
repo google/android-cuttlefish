@@ -644,6 +644,14 @@ int main(int argc, char** argv) {
     return -1;
   }
 
+  LOG(INFO) << "The following files contain useful debugging information:";
+  LOG(INFO) << "  Android's logcat output: " << config->logcat_path();
+  LOG(INFO) << "  Kernel log: " << config->PerInstancePath("kernel.log");
+  LOG(INFO) << "  Instance configuration: " << GetConfigFile();
+  LOG(INFO) << "  Instance environment: " << config->cuttlefish_env_path();
+  LOG(INFO) << "To access the console run: socat file:$(tty),raw,echo=0 "
+            << config->console_path();
+
   // Start the usb manager
   VirtualUSBManager vadb(config->usb_v1_socket_name(), config->vhci_port(),
                          config->usb_ip_socket_name());
