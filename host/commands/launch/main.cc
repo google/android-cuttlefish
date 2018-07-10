@@ -537,9 +537,11 @@ bool SetUpGlobalConfiguration(
       config->PerInstancePath("ivshmem_socket_client"));
   config->set_ivshmem_vector_count(memory_layout.GetRegions().size());
 
-  config->set_usb_v1_socket_name(config->PerInstancePath("usb-v1"));
-  config->set_vhci_port(FLAGS_vhci_port);
-  config->set_usb_ip_socket_name(config->PerInstancePath("usb-ip"));
+  if (AdbUsbEnabled()) {
+    config->set_usb_v1_socket_name(config->PerInstancePath("usb-v1"));
+    config->set_vhci_port(FLAGS_vhci_port);
+    config->set_usb_ip_socket_name(config->PerInstancePath("usb-ip"));
+  }
 
   config->set_kernel_log_socket_name(config->PerInstancePath("kernel-log"));
   config->set_console_path(config->PerInstancePath("console"));
