@@ -486,6 +486,8 @@ bool SetUpGlobalConfiguration(
   config->set_y_res(FLAGS_y_res);
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
 
+  config->set_adb_mode(FLAGS_adb_mode);
+
   if (FLAGS_kernel_path.size()) {
     config->set_kernel_image_path(FLAGS_kernel_path);
   } else {

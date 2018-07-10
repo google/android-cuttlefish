@@ -159,6 +159,9 @@ class CuttlefishConfig {
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
 
+  void set_adb_mode(const std::string& mode);
+  std::string adb_mode() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 

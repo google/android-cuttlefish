@@ -109,6 +109,8 @@ const char* kUuid = "uuid";
 const char* kDisableDacSecurity = "disable_dac_security";
 const char* kDisableAppArmorSecurity = "disable_app_armor_security";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
+
+const char* kAdbMode = "adb_mode";
 }  // namespace
 
 namespace vsoc {
@@ -369,6 +371,14 @@ bool CuttlefishConfig::disable_app_armor_security() const {
 void CuttlefishConfig::set_disable_app_armor_security(
     bool disable_app_armor_security) {
   (*dictionary_)[kDisableAppArmorSecurity] = disable_app_armor_security;
+}
+
+std::string CuttlefishConfig::adb_mode() const {
+  return (*dictionary_)[kAdbMode].asString();
+}
+
+void CuttlefishConfig::set_adb_mode(const std::string& mode) {
+  (*dictionary_)[kAdbMode] = mode;
 }
 
 /*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
