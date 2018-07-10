@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace vm_manager {
 
@@ -34,6 +35,13 @@ class VmManager {
 
   virtual bool EnsureInstanceDirExists() const = 0;
   virtual bool CleanPriorFiles() const = 0;
+
+  virtual bool ValidateHostConfiguration(
+      std::vector<std::string>* config_commands) const = 0;
+
+ protected:
+  static bool UserInGroup(const std::string& group,
+                          std::vector<std::string>* config_commands);
 };
 
 }  // namespace vm_manager

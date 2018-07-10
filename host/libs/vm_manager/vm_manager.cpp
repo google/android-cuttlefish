@@ -16,6 +16,9 @@
 
 #include "host/libs/vm_manager/vm_manager.h"
 
+#include <glog/logging.h>
+
+#include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -29,4 +32,14 @@ std::shared_ptr<VmManager> VmManager::Get() {
   return vm_manager;
 }
 
+bool VmManager::UserInGroup(const std::string& group,
+                            std::vector<std::string>* config_commands) {
+  if (!cvd::InGroup(group)) {
+    LOG(ERROR) << "User must be a member of " << group;
+    config_commands->push_back("# Add your user to the " + group + " group:");
+    config_commands->push_back("sudo usermod -aG " + group + " $USER");
+    return false;
+  }
+  return true;
+}
 }  // namespace vm_manager
