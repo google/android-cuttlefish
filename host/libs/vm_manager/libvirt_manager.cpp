@@ -30,6 +30,7 @@
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
@@ -410,5 +411,10 @@ bool LibvirtManager::CleanPriorFiles() const {
     return false;
   }
   return true;
+}
+
+bool LibvirtManager::ValidateHostConfiguration(
+    std::vector<std::string>* config_commands) const {
+  return VmManager::UserInGroup("libvirt", config_commands);
 }
 }  // namespace vm_manager

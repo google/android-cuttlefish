@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <functional>
+#include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <memory>
@@ -486,7 +487,7 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
   return true;
 }
 
-bool SetUpGlobalConfiguration(
+bool InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker) {
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   auto config = vsoc::CuttlefishConfig::Get();
@@ -665,30 +666,43 @@ cvd::SharedFD DaemonizeLauncher() {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   if (!ParseCommandLineFlags(argc, argv)) {
-    return -1;
+    return 1;
   }
 
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
   auto vm_manager = vm_manager::VmManager::Get();
 
+  // Check host configuration
+  std::vector<std::string> config_commands;
+  if (!vm_manager->ValidateHostConfiguration(&config_commands)) {
+    LOG(ERROR) << "Validation of user configuration failed";
+    std::cout << "Execute the following to correctly configure:" << std::endl;
+    for (auto& command : config_commands) {
+      std::cout << "  " << command << std::endl;
+    }
+    std::cout << "You may need to logout for the changes to take effect"
+              << std::endl;
+    return 2;
+  }
+
   // Do this early so that the config object is ready for anything that needs it
-  if (!SetUpGlobalConfiguration(*boot_img_unpacker)) {
-    return -1;
+  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
+    return 3;
   }
 
   if (!vm_manager->EnsureInstanceDirExists()) {
     LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
-    return -1;
+    return 4;
   }
 
   if (!vm_manager->CleanPriorFiles()) {
     LOG(ERROR) << "Failed to clean prior files";
-    return -1;
+    return 5;
   }
 
   if (!UnpackBootImage(*boot_img_unpacker)) {
     LOG(ERROR) << "Failed to unpack boot image";
-    return -1;
+    return 6;
   }
 
   if (!WriteCuttlefishEnvironment()) {
@@ -698,7 +712,7 @@ int main(int argc, char** argv) {
   auto config = vsoc::CuttlefishConfig::Get();
   // Save the config object before starting any host process
   if (!config->SaveToFile(GetConfigFile())) {
-    return -1;
+    return 7;
   }
 
   LOG(INFO) << "The following files contain useful debugging information:";
@@ -754,7 +768,7 @@ int main(int argc, char** argv) {
   // Start the guest VM
   if (!vm_manager->Start()) {
     LOG(FATAL) << "Unable to start vm_manager";
-    return -1;
+    return 8;
   }
 
   LaunchSocketForwardProxyIfEnabled();
