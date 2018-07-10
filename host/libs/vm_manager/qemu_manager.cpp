@@ -82,6 +82,7 @@ int BuildAndRunQemuCmd() {
                       config->ivshmem_qemu_socket_path());
   LogAndSetEnv("ivshmem_vector_count",
                       std::to_string(config->ivshmem_vector_count()));
+  LogAndSetEnv("usb_v1_socket_name", config->usb_v1_socket_name());
   return cvd::execute({vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh")});
 }
 
