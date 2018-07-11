@@ -87,6 +87,12 @@ if [[ -n "${ramdisk_image_path}" ]]; then
   args+=(-initrd "${ramdisk_image_path}")
 fi
 
+if [[ -n "${usb_v1_socket_name}" ]]; then
+  args+=(
+      -chardev "socket,id=charchannel1,path=${usb_v1_socket_name:-${default_dir}/usb-v1}"
+      -device "virtserialport,bus=virtio-serial0.0,nr=2,chardev=charchannel1,id=channel1,name=cf-gadget-usb-v1"
+  )
+fi
 printf %s "exec ${qemu_binary=/usr/bin/qemu-system-x86_64}"
 for i in "${args[@]}"; do
   case "$i" in
