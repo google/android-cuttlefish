@@ -97,7 +97,7 @@ bool QemuManager::Start() const {
     if (status != 0) {
       LOG(FATAL) << "Qemu process exited prematurely";
     } else {
-      LOG(ERROR) << "Qemu process exited normally, it shouldn't happen";
+      LOG(INFO) << "Qemu process exited normally";
     }
   });
   waiting_thread.detach();

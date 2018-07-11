@@ -15,6 +15,7 @@
  */
 
 #include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -80,7 +81,7 @@ DEFINE_bool(disable_app_armor_security, false,
 DEFINE_bool(disable_dac_security, false,
             "Disable DAC security in libvirt. For debug only.");
 DEFINE_string(kernel_path, "",
-	      "Path to the kernel. Overrides the one from the boot image");
+              "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(extra_kernel_command_line, "",
               "Additional flags to put on the kernel command line");
 DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
@@ -158,6 +159,9 @@ DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(kDefaultUuidPrefix).c_str(),
               "UUID to use for the device. Random if not specified");
+DEFINE_bool(daemon, false,
+            "Run cuttlefish in background, the launcher exits on boot "
+            "completed/failed");
 
 DECLARE_string(config_file);
 
@@ -612,6 +616,44 @@ bool WriteCuttlefishEnvironment() {
   env->Write(config_env.c_str(), config_env.size());
   return true;
 }
+
+// Forks and returns the write end of a pipe to the child process. The parent
+// process waits for boot events to come through the pipe and exits accordingly.
+cvd::SharedFD DaemonizeLauncher() {
+  cvd::SharedFD read_end, write_end;
+  if (!cvd::SharedFD::Pipe(&read_end, &write_end)) {
+    LOG(ERROR) << "Unable to create pipe";
+    return cvd::SharedFD(); // a closed FD
+  }
+  auto pid = fork();
+  if (pid) {
+    // Explicitly close here, otherwise we may end up reading forever if the
+    // child process dies.
+    write_end->Close();
+    monitor::BootEvent evt;
+    while(true) {
+      auto bytes_read = read_end->Read(&evt, sizeof(evt));
+      if (bytes_read != sizeof(evt)) {
+        LOG(ERROR) << "Fail to read a complete event, read " << bytes_read
+                   << " bytes only instead of the expected " << sizeof(evt);
+        std::exit(10);
+      }
+      if (evt == monitor::BootEvent::BootCompleted) {
+        std::exit(0);
+      }
+      if (evt == monitor::BootEvent::BootFailed) {
+        std::exit(11);
+      }
+      // Do nothing for the other signals
+    }
+  } else {
+    // The child returns the write end of the pipe
+    // TODO(111321286): Make the child the head of a new process group that will
+    // contain all other host processes.
+    read_end->Close();
+    return write_end;
+  }
+}
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -661,17 +703,44 @@ int main(int argc, char** argv) {
   LOG(INFO) << "To access the console run: socat file:$(tty),raw,echo=0 "
             << config->console_path();
 
+  KernelLogMonitor kmon(config->kernel_log_socket_name(),
+                        config->PerInstancePath("kernel.log"),
+                        FLAGS_deprecated_boot_completed);
+
+  if (FLAGS_daemon) {
+    // This code will move to its own process eventually so the signal handling
+    // is done here to keep everything that needs to move close together.
+    // Disable default handling of SIGPIPE.
+    struct sigaction new_action{}, old_action{};
+    new_action.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &new_action, &old_action);
+
+    auto pipe_fd = DaemonizeLauncher();
+    if (!pipe_fd->IsOpen()) {
+      return 9;
+    }
+    kmon.SubscribeToBootEvents([pipe_fd](monitor::BootEvent evt) {
+      int retval = pipe_fd->Write(&evt, sizeof(evt));
+      if (retval < 0) {
+        if (pipe_fd->GetErrno() == EPIPE) {
+          pipe_fd->Close();
+        } else {
+          LOG(ERROR) << "Error while writing to pipe: " << pipe_fd->StrError();
+        }
+        return monitor::SubscriptionAction::CancelSubscription;
+      }
+      return monitor::SubscriptionAction::ContinueSubscription;
+    });
+  }
+
+  kmon.Start();
+
   // Start the usb manager
   VirtualUSBManager vadb(config->usb_v1_socket_name(), config->vhci_port(),
                          config->usb_ip_socket_name());
   vadb.Start();
 
   LaunchIvServer();
-
-  KernelLogMonitor kmon(config->kernel_log_socket_name(),
-                        config->PerInstancePath("kernel.log"),
-                        FLAGS_deprecated_boot_completed);
-  kmon.Start();
 
   // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize();
