@@ -42,6 +42,8 @@ def extract_file(f, seekpt, size, dest_path):
       dest_path: the pathname of the file that should be created
     """
     f.seek(seekpt)
+    # Hack to deal with libvirt changing ownership of these files.
+    subprocess.call(['rm', '-f', dest_path])
     with open(dest_path, 'wb') as out:
         while size:
           bytes=min(size, 8192)

@@ -11,9 +11,11 @@ DEB_DISPLACE_EXTENSION = .cuttlefish
 DEB_DISPLACE_FILES_cuttlefish-integration += \
         /etc/default/instance_configs.cfg.template.cuttlefish
 
+DEB_DISPLACE_FILES_cuttlefish-common += \
+	/etc/apparmor.d/libvirt/TEMPLATE.qemu.cuttlefish
+
 build:
 	make -C host/commands/adbshell
-	make -C host/commands/wifirouter
 
 include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/rules/config-package.mk

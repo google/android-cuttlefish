@@ -3,3 +3,5 @@ if [ -x "/etc/init.d/cuttlefish-common" ] || [ -e "/etc/init/cuttlefish-common.c
 	invoke-rc.d cuttlefish-common stop || exit $?
 fi
 # End automatically added section
+
+#DEBHELPER#

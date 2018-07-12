@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<domain xmlns:qemu="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
+  <name>cvd-01</name>
+  <uuid>libvirt-699acfc4-c8c4-11e7-882b-5065f31dc101</uuid>
+</domain>
