@@ -23,20 +23,27 @@ Package: cuttlefish-common
 Architecture: amd64
 Depends:
  adb,
+ hostapd,
  libarchive-tools | bsdtar,
  libc6,
- libgoogle-glog0v5,
+ libgoogle-glog0v5 | libgoogle-glog0,
+ libnl-genl-3-200,
  libstdc++6,
  libudev1,
  libvirt-bin | libvirt-clients,
  libvirt-daemon-system,
  libxml2,
  linux-image-extra-virtual | linux-image-amd64 (>= 4.9),
+ psmisc,
+ python,
  qemu-kvm (>= 2.8.0),
  qemu-system-common (>= 2.8.0),
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
- socat
+ socat,
+ ${misc:Depends}
+Provides: ${diverted-files}
+Conflicts: ${diverted-files}
 Description: Cuttlefish Android Virtual Device companion package.
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.

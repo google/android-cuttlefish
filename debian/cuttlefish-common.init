@@ -32,7 +32,7 @@
 
 num_cvd_accounts=8
 
-create_interface() {
+create_legacy_interface() {
   printf '<network>\n'
   printf '  <name>cvd-%s-%02d</name>\n' "$2" $1
   printf "  <forward mode='nat'>\n"
@@ -51,13 +51,89 @@ create_interface() {
   printf "</network>\n"
 }
 
-create_mobile_interface() {
-  create_interface "$1" mobile 192.168.99
+create_legacy_mobile_interface() {
+  create_legacy_interface "$1" mobile 192.168.99
 }
 
-create_wifi_interface() {
-  create_interface "$1" wifi 192.168.98
+create_legacy_wifi_interface() {
+  create_legacy_interface "$1" wifi 192.168.98
 }
+
+create_legacy_interfaces() {
+    [ -f /usr/bin/virsh ] || return 1
+    create_legacy_mobile_interface $1 | /usr/bin/virsh net-create /dev/fd/0
+    create_legacy_wifi_interface $1 | /usr/bin/virsh net-create /dev/fd/0
+}
+
+destroy_legacy_interfaces() {
+    [ -f /usr/bin/virsh ] || return 1
+    /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $1)"
+    /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $1)"
+}
+
+# Creates a pair of bridge and tap interfaces
+create_interface() {
+    bridge="$(printf cvd-${1}br-%02d $2)"
+    tap="$(printf cvd-${1}tap-%02d $2)"
+    gateway="${3}.$((4*$2 - 3))"
+    network="${3}.$((4*$2 - 4))/30"
+    netmask="255.255.255.252"
+    dhcp_range="${3}.$((4*$2 - 2)),${3}.$((4*$2 - 2))"
+
+    /sbin/brctl addbr "${bridge}"
+    /sbin/brctl stp "${bridge}" off
+    /sbin/brctl setfd "${bridge}" 0
+    /sbin/ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
+
+    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+
+    dnsmasq \
+    --strict-order \
+    --except-interface=lo \
+    --interface="${bridge}" \
+    --listen-address="${gateway}" \
+    --bind-interfaces \
+    --dhcp-range="${dhcp_range}" \
+    --conf-file="" \
+    --pid-file=/var/run/cuttlefish-dnsmasq-"${bridge}".pid \
+    --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
+    --dhcp-no-override
+
+    ip tuntap add dev "${tap}" mode tap group cvdnetwork
+    /sbin/ifconfig "${tap}" 0.0.0.0 up
+    /sbin/brctl addif "${bridge}" "${tap}"
+}
+
+create_interfaces(){
+    create_interface w $1 192.168.96
+    create_interface m $1 192.168.97
+}
+
+destroy_interface() {
+    bridge="$(printf cvd-${1}br-%02d $2)"
+    tap="$(printf cvd-${1}tap-%02d $2)"
+    network="${3}.$((4*$2 - 4))/30"
+
+    /sbin/ifconfig "${tap}" down
+    ip link delete "${tap}"
+
+    if [ -f /var/run/cuttlefish-dnsmasq-"${bridge}".pid ]; then
+        kill $(cat /var/run/cuttlefish-dnsmasq-"${bridge}".pid)
+    fi
+
+    iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+
+    /sbin/ifconfig "${bridge}" down
+    /sbin/brctl delbr "${bridge}"
+}
+
+destroy_interfaces(){
+    # Use wtap/wbr and mtap/mbr for wifi and mobile network respectively to
+    # avoid going over the interface name size limit
+    destroy_interface w $1 192.168.96
+    destroy_interface m $1 192.168.97
+}
+
 
 start() {
     /sbin/modprobe vhci-hcd
@@ -76,21 +152,19 @@ start() {
     else
       log_warning_msg "USB controller not found. adb may not be available"
     fi
+    # Enable ip forwarding
+    echo 1 >/proc/sys/net/ipv4/ip_forward
     for i in $(seq ${num_cvd_accounts}); do
-      create_mobile_interface $i | /usr/bin/virsh net-create /dev/fd/0
-      create_wifi_interface $i | /usr/bin/virsh net-create /dev/fd/0
+      create_legacy_interfaces $i
+      create_interfaces $i
     done
-
-    /usr/bin/nohup /usr/sbin/wifirouter 2>&1 >/dev/null &
-    echo $! > /var/run/wifirouter.pid
 }
 
 stop() {
     for i in $(seq ${num_cvd_accounts}); do
-      /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $i)"
-      /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $i)"
+      destroy_legacy_interfaces $i
+      destroy_interfaces $i
     done
-    /usr/bin/pkill -F /var/run/wifirouter.pid
     /sbin/rmmod mac80211_hwsim
 }
 
