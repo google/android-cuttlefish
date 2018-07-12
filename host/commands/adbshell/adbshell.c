@@ -16,6 +16,7 @@
 
 /* Utility that uses an adb connection as the login shell. */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,7 @@
 // default.
 //
 
-static const char* InstanceNumberAsStr() {
+static const char* InstanceNumberAsStr(void) {
   static const char kUserPrefix[] = "cvd-";
 
   const char* user = getenv("USER");
@@ -51,14 +52,14 @@ static const char* InstanceNumberAsStr() {
   return "01";
 }
 
-static int InstanceNumberAsInt() {
+static int InstanceNumberAsInt(void) {
   const char* instance_str = InstanceNumberAsStr();
   char* end = NULL;
   int result = (int)strtol(instance_str, &end, 10);
   return *end || result < 1 ? 1 : result;
 }
 
-static char* TCPInstanceStr() {
+static char* TCPInstanceStr(void) {
   enum { kPortWidth = 4, kFirstPort = 6520 };
   const char kIPPrefix[] = "127.0.0.1:";
   size_t sz = (sizeof kIPPrefix) + kPortWidth;
@@ -72,7 +73,7 @@ static char* TCPInstanceStr() {
   return instance_str;
 }
 
-static char* USBInstanceStr() {
+static char* USBInstanceStr(void) {
   const char kSerialNumberPrefix[] = "CUTTLEFISHCVD";
   const char* instance = InstanceNumberAsStr();
   size_t sz = (sizeof kSerialNumberPrefix) + strlen(instance);
@@ -85,7 +86,7 @@ static char* USBInstanceStr() {
   return instance_str;
 }
 
-static char* InstanceStr() {
+static char* InstanceStr(void) {
   char* possible_device_names[] = {TCPInstanceStr(), USBInstanceStr()};
   enum {
     kNumDeviceNames =
@@ -104,7 +105,36 @@ static char* InstanceStr() {
   return NULL;
 }
 
+static char* VsocUserName(void) {
+  const char kVsocUserPrefix[] = "vsoc-";
+  const char* num = InstanceNumberAsStr();
+  const size_t length = (sizeof kVsocUserPrefix) + strlen(num);
+  char* vsoc_user_name = malloc(length);
+  snprintf(vsoc_user_name, length, "%s%s", kVsocUserPrefix, num);
+  return vsoc_user_name;
+}
+
+static char* VsocHomeAdbShellPath(void) {
+  const char kVsocAdbShellFmt[] = "/home/%s/bin/adbshell";
+  const char* vsoc_user_name = VsocUserName();
+  size_t length = (sizeof kVsocAdbShellFmt) + strlen(vsoc_user_name);
+  char* adb_shell_path = malloc(length);
+  snprintf(adb_shell_path, length, kVsocAdbShellFmt, vsoc_user_name);
+  return adb_shell_path;
+}
+
+static void TryExecHomeAdbShell(char* argv[]) {
+  char* home_shell = VsocHomeAdbShellPath();
+  if (access(home_shell, X_OK) != -1
+      && strcmp(argv[0], home_shell)) {
+    argv[0] = home_shell;
+    execv(home_shell, argv);
+    assert(0 && "execv() returned");
+  }
+}
+
 int main(int argc, char* argv[]) {
+  TryExecHomeAdbShell(argv);
   char** new_argv = malloc((argc + 5) * sizeof(*new_argv));
   new_argv[0] = "/usr/bin/adb";
   new_argv[1] = "-s";
