@@ -16,7 +16,7 @@
 cc_binary_host {
     name: "adbshell",
     srcs: [
-        "main.c",
+        "main.cpp",
     ],
     cflags: [
         "-D_XOPEN_SOURCE",
