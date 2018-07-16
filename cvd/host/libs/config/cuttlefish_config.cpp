@@ -29,7 +29,6 @@
 #include <json/json.h>
 
 #include "common/libs/utils/environment.h"
-#include "common/libs/utils/files.h"
 
 DEFINE_string(config_file,
               vsoc::GetDefaultPerInstanceDir() + "/cuttlefish_config.json",
@@ -67,7 +66,6 @@ int InstanceFromEnvironment() {
 
   return instance;
 }
-
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 
@@ -93,6 +91,7 @@ const char* kUsbIpSocketName = "usb_ip_socket_name";
 const char* kKernelLogSocketName = "kernel_log_socket_name";
 const char* kConsolePath = "console_path";
 const char* kLogcatPath = "logcat_path";
+const char* kLauncherLogPath = "launcher_log_path";
 const char* kDtbPath = "dtb_path";
 
 const char* kMempath = "mempath";
@@ -304,6 +303,14 @@ void CuttlefishConfig::set_logcat_path(const std::string& logcat_path) {
   (*dictionary_)[kLogcatPath] = logcat_path;
 }
 
+std::string CuttlefishConfig::launcher_log_path() const {
+  return (*dictionary_)[kLauncherLogPath].asString();
+}
+void CuttlefishConfig::set_launcher_log_path(
+    const std::string& launcher_log_path) {
+  (*dictionary_)[kLauncherLogPath] = launcher_log_path;
+}
+
 std::string CuttlefishConfig::mobile_bridge_name() const {
   return (*dictionary_)[kMobileBridgeName].asString();
 }
@@ -406,10 +413,12 @@ CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {
 }
 
 void CuttlefishConfig::LoadFromFile(const char* file) {
-  auto real_file_path = cvd::RealPath(file);
-  if (real_file_path.empty()) {
-    LOG(FATAL) << "Could not get real path for file " << file;
+  char real_file_path[PATH_MAX];
+  if (realpath(file, real_file_path) == nullptr) {
+    LOG(FATAL) << "Could not get real path for file " << file << ": "
+               << strerror(errno);
   }
+
   Json::Reader reader;
   std::ifstream ifs(real_file_path);
   if (!reader.parse(ifs, *dictionary_)) {
