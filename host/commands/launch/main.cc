@@ -504,6 +504,7 @@ bool InitializeCuttlefishConfiguration(
   config->set_y_res(FLAGS_y_res);
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   config->set_gdb_flag(FLAGS_qemu_gdb);
+  config->set_adb_mode(FLAGS_adb_mode);
   if (FLAGS_kernel_path.size()) {
     config->set_kernel_image_path(FLAGS_kernel_path);
   } else {
