@@ -176,6 +176,21 @@ const std::string kDataPolicyAlwaysCreate = "always_create";
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeUsb[] = "usb";
 
+enum LauncherExitCodes : int {
+  kSuccess = 0,
+  kArgumentParsingError = 1,
+  kInvalidHostConfiguration = 2,
+  kCuttlefishConfigurationInitError = 3,
+  kInstanceDirCreationError = 4,
+  kPrioFilesCleanupError = 5,
+  kBootImageUnpackError = 6,
+  kCuttlefishConfigurationSaveError = 7,
+  kDaemonizationError = 8,
+  kVMCreationError = 9,
+  kPipeIOError = 10,
+  kVirtualDeviceBootFailed = 11,
+};
+
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
  public:
@@ -280,11 +295,11 @@ bool ApplyDataImagePolicy(const char* data_image) {
 
   if (FLAGS_data_policy == kDataPolicyUseExisting) {
     if (!data_exists) {
-      LOG(FATAL) << "Specified data image file does not exists: " << data_image;
+      LOG(ERROR) << "Specified data image file does not exists: " << data_image;
       return false;
     }
     if (FLAGS_blank_data_image_mb > 0) {
-      LOG(FATAL) << "You should NOT use -blank_data_image_mb with -data_policy="
+      LOG(ERROR) << "You should NOT use -blank_data_image_mb with -data_policy="
                  << kDataPolicyUseExisting;
       return false;
     }
@@ -297,7 +312,8 @@ bool ApplyDataImagePolicy(const char* data_image) {
     create = !data_exists;
     remove = false;
   } else {
-    LOG(FATAL) << "Invalid data_policy: " << FLAGS_data_policy;
+    LOG(ERROR) << "Invalid data_policy: " << FLAGS_data_policy;
+    return false;
   }
 
   if (remove) {
@@ -306,7 +322,8 @@ bool ApplyDataImagePolicy(const char* data_image) {
 
   if (create) {
     if (FLAGS_blank_data_image_mb <= 0) {
-      LOG(FATAL) << "-blank_data_image_mb is required to create data image";
+      LOG(ERROR) << "-blank_data_image_mb is required to create data image";
+      return false;
     }
     CreateBlankImage(
         data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
@@ -426,7 +443,7 @@ void LaunchVNCServerIfEnabled() {
 
 bool ResolveInstanceFiles() {
   if (FLAGS_system_image_dir.empty()) {
-    LOG(FATAL) << "--system_image_dir must be specified.";
+    LOG(ERROR) << "--system_image_dir must be specified.";
     return false;
   }
 
@@ -458,7 +475,7 @@ bool ResolveInstanceFiles() {
        {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image,
         FLAGS_data_image, FLAGS_boot_image}) {
     if (!cvd::FileHasContent(file.c_str())) {
-      LOG(FATAL) << "File not found: " << file;
+      LOG(ERROR) << "File not found: " << file;
       return false;
     }
   }
@@ -469,7 +486,7 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
   auto config = vsoc::CuttlefishConfig::Get();
   if (boot_image_unpacker.HasRamdiskImage()) {
     if (!boot_image_unpacker.ExtractRamdiskImage(config->ramdisk_image_path())) {
-      LOG(FATAL) << "Error extracting ramdisk from boot image";
+      LOG(ERROR) << "Error extracting ramdisk from boot image";
       return false;
     }
   }
@@ -644,13 +661,13 @@ cvd::SharedFD DaemonizeLauncher() {
       if (bytes_read != sizeof(evt)) {
         LOG(ERROR) << "Fail to read a complete event, read " << bytes_read
                    << " bytes only instead of the expected " << sizeof(evt);
-        std::exit(10);
+        std::exit(LauncherExitCodes::kPipeIOError);
       }
       if (evt == monitor::BootEvent::BootCompleted) {
-        std::exit(0);
+        std::exit(LauncherExitCodes::kSuccess);
       }
       if (evt == monitor::BootEvent::BootFailed) {
-        std::exit(11);
+        std::exit(LauncherExitCodes::kVirtualDeviceBootFailed);
       }
       // Do nothing for the other signals
     }
@@ -667,7 +684,7 @@ cvd::SharedFD DaemonizeLauncher() {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   if (!ParseCommandLineFlags(argc, argv)) {
-    return 1;
+    return LauncherExitCodes::kArgumentParsingError;
   }
 
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
@@ -683,27 +700,27 @@ int main(int argc, char** argv) {
     }
     std::cout << "You may need to logout for the changes to take effect"
               << std::endl;
-    return 2;
+    return LauncherExitCodes::kInvalidHostConfiguration;
   }
 
   // Do this early so that the config object is ready for anything that needs it
   if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
-    return 3;
+    return LauncherExitCodes::kCuttlefishConfigurationInitError;
   }
 
   if (!vm_manager->EnsureInstanceDirExists()) {
     LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
-    return 4;
+    return LauncherExitCodes::kInstanceDirCreationError;
   }
 
   if (!vm_manager->CleanPriorFiles()) {
     LOG(ERROR) << "Failed to clean prior files";
-    return 5;
+    return LauncherExitCodes::kPrioFilesCleanupError;
   }
 
   if (!UnpackBootImage(*boot_img_unpacker)) {
     LOG(ERROR) << "Failed to unpack boot image";
-    return 6;
+    return LauncherExitCodes::kBootImageUnpackError;
   }
 
   if (!WriteCuttlefishEnvironment()) {
@@ -713,7 +730,7 @@ int main(int argc, char** argv) {
   auto config = vsoc::CuttlefishConfig::Get();
   // Save the config object before starting any host process
   if (!config->SaveToFile(GetConfigFile())) {
-    return 7;
+    return LauncherExitCodes::kCuttlefishConfigurationSaveError;
   }
 
   LOG(INFO) << "The following files contain useful debugging information:";
@@ -738,7 +755,7 @@ int main(int argc, char** argv) {
 
     auto pipe_fd = DaemonizeLauncher();
     if (!pipe_fd->IsOpen()) {
-      return 9;
+      return LauncherExitCodes::kDaemonizationError;
     }
     kmon.SubscribeToBootEvents([pipe_fd](monitor::BootEvent evt) {
       int retval = pipe_fd->Write(&evt, sizeof(evt));
@@ -768,8 +785,9 @@ int main(int argc, char** argv) {
 
   // Start the guest VM
   if (!vm_manager->Start()) {
-    LOG(FATAL) << "Unable to start vm_manager";
-    return 8;
+    LOG(ERROR) << "Unable to start vm_manager";
+    // TODO(111453282): All host processes should die here.
+    return LauncherExitCodes::kVMCreationError;
   }
 
   LaunchSocketForwardProxyIfEnabled();

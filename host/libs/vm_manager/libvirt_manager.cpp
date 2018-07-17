@@ -354,17 +354,17 @@ bool LibvirtManager::Start() const {
 
   FILE* launch = popen(start_command.c_str(), "w");
   if (!launch) {
-    LOG(FATAL) << "Unable to execute " << start_command;
+    LOG(ERROR) << "Unable to execute " << start_command;
     return false;
   }
   int rval = fputs(xml.c_str(), launch);
   if (rval == EOF) {
-    LOG(FATAL) << "Launch command exited while accepting XML";
+    LOG(ERROR) << "Launch command exited while accepting XML";
     return false;
   }
   int exit_code = pclose(launch);
   if (exit_code != 0) {
-    LOG(FATAL) << "Launch command exited with status " << exit_code;
+    LOG(ERROR) << "Launch command exited with status " << exit_code;
     return false;
   }
   return true;
