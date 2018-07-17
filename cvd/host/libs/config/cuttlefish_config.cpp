@@ -162,9 +162,16 @@ std::string CuttlefishConfig::kernel_image_path() const {
   return (*dictionary_)[kKernelImagePath].asString();
 }
 
+void CuttlefishConfig::SetPath(const std::string& key,
+                               const std::string& path) {
+  if (!path.empty()) {
+    (*dictionary_)[key] = cvd::RealPath(path);
+  }
+}
+
 void CuttlefishConfig::set_kernel_image_path(
     const std::string& kernel_image_path) {
-  (*dictionary_)[kKernelImagePath] = kernel_image_path;
+  SetPath(kKernelImagePath, kernel_image_path);
 }
 
 std::string CuttlefishConfig::gdb_flag() const {
@@ -173,7 +180,7 @@ std::string CuttlefishConfig::gdb_flag() const {
 
 void CuttlefishConfig::set_gdb_flag(
     const std::string& device) {
-  (*dictionary_)[kGdbFlag] = device;
+  SetPath(kGdbFlag, device);
 }
 
 std::string CuttlefishConfig::kernel_args() const {
@@ -188,7 +195,7 @@ std::string CuttlefishConfig::ramdisk_image_path() const {
 }
 void CuttlefishConfig::set_ramdisk_image_path(
     const std::string& ramdisk_image_path) {
-  (*dictionary_)[kRamdiskImagePath] = ramdisk_image_path;
+  SetPath(kRamdiskImagePath, ramdisk_image_path);
 }
 
 std::string CuttlefishConfig::system_image_path() const {
@@ -196,7 +203,7 @@ std::string CuttlefishConfig::system_image_path() const {
 }
 void CuttlefishConfig::set_system_image_path(
     const std::string& system_image_path) {
-  (*dictionary_)[kSystemImagePath] = system_image_path;
+  SetPath(kSystemImagePath, system_image_path);
 }
 
 std::string CuttlefishConfig::cache_image_path() const {
@@ -204,14 +211,14 @@ std::string CuttlefishConfig::cache_image_path() const {
 }
 void CuttlefishConfig::set_cache_image_path(
     const std::string& cache_image_path) {
-  (*dictionary_)[kCacheImagePath] = cache_image_path;
+  SetPath(kCacheImagePath, cache_image_path);
 }
 
 std::string CuttlefishConfig::data_image_path() const {
   return (*dictionary_)[kDataImagePath].asString();
 }
 void CuttlefishConfig::set_data_image_path(const std::string& data_image_path) {
-  (*dictionary_)[kDataImagePath] = data_image_path;
+  SetPath(kDataImagePath, data_image_path);
 }
 
 std::string CuttlefishConfig::vendor_image_path() const {
@@ -219,21 +226,21 @@ std::string CuttlefishConfig::vendor_image_path() const {
 }
 void CuttlefishConfig::set_vendor_image_path(
     const std::string& vendor_image_path) {
-  (*dictionary_)[kVendorImagePath] = vendor_image_path;
+  SetPath(kVendorImagePath, vendor_image_path);
 }
 
 std::string CuttlefishConfig::dtb_path() const {
   return (*dictionary_)[kDtbPath].asString();
 }
 void CuttlefishConfig::set_dtb_path(const std::string& dtb_path) {
-  (*dictionary_)[kDtbPath] = dtb_path;
+  SetPath(kDtbPath, dtb_path);
 }
 
 std::string CuttlefishConfig::mempath() const {
   return (*dictionary_)[kMempath].asString();
 }
 void CuttlefishConfig::set_mempath(const std::string& mempath) {
-  (*dictionary_)[kMempath] = mempath;
+  SetPath(kMempath, mempath);
 }
 
 std::string CuttlefishConfig::ivshmem_qemu_socket_path() const {
@@ -241,7 +248,7 @@ std::string CuttlefishConfig::ivshmem_qemu_socket_path() const {
 }
 void CuttlefishConfig::set_ivshmem_qemu_socket_path(
     const std::string& ivshmem_qemu_socket_path) {
-  (*dictionary_)[kIvshmemQemuSocketPath] = ivshmem_qemu_socket_path;
+  SetPath(kIvshmemQemuSocketPath, ivshmem_qemu_socket_path);
 }
 
 std::string CuttlefishConfig::ivshmem_client_socket_path() const {
@@ -249,7 +256,7 @@ std::string CuttlefishConfig::ivshmem_client_socket_path() const {
 }
 void CuttlefishConfig::set_ivshmem_client_socket_path(
     const std::string& ivshmem_client_socket_path) {
-  (*dictionary_)[kIvshmemClientSocketPath] = ivshmem_client_socket_path;
+  SetPath(kIvshmemClientSocketPath, ivshmem_client_socket_path);
 }
 
 int CuttlefishConfig::ivshmem_vector_count() const {
@@ -294,14 +301,14 @@ std::string CuttlefishConfig::console_path() const {
   return (*dictionary_)[kConsolePath].asString();
 }
 void CuttlefishConfig::set_console_path(const std::string& console_path) {
-  (*dictionary_)[kConsolePath] = console_path;
+  SetPath(kConsolePath, console_path);
 }
 
 std::string CuttlefishConfig::logcat_path() const {
   return (*dictionary_)[kLogcatPath].asString();
 }
 void CuttlefishConfig::set_logcat_path(const std::string& logcat_path) {
-  (*dictionary_)[kLogcatPath] = logcat_path;
+  SetPath(kLogcatPath, logcat_path);
 }
 
 std::string CuttlefishConfig::mobile_bridge_name() const {
@@ -372,7 +379,7 @@ void CuttlefishConfig::set_disable_dac_security(bool disable_dac_security) {
 }
 
 void CuttlefishConfig::set_cuttlefish_env_path(const std::string& path) {
-  (*dictionary_)[kCuttlefishEnvPath] = path;
+  SetPath(kCuttlefishEnvPath, path);
 }
 std::string CuttlefishConfig::cuttlefish_env_path() const {
   return (*dictionary_)[kCuttlefishEnvPath].asString();
