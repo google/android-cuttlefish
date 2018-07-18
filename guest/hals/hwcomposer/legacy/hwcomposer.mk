@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
+LOCAL_MODULE_RELATIVE_PATH := hw
+else
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
+endif
 LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
