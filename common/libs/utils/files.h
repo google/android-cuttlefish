@@ -20,4 +20,7 @@
 namespace cvd {
 bool FileHasContent(const std::string& path);
 bool DirectoryExists(const std::string& path);
+
+// returns empty string if realpath() fails
+std::string RealPath(const std::string& path);
 }  // namespace cvd

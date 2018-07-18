@@ -16,6 +16,11 @@
 
 #include "common/libs/utils/files.h"
 
+#include <glog/logging.h>
+
+#include <array>
+#include <climits>
+#include <cstdlib>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -24,17 +29,34 @@ namespace cvd {
 
 bool FileHasContent(const std::string& path) {
   struct stat st;
-  if (stat(path.c_str(), &st) == -1)
+  if (stat(path.c_str(), &st) == -1) {
     return false;
-  if (st.st_size == 0)
+  }
+  if (st.st_size == 0) {
     return false;
+  }
   return true;
 }
 
 bool DirectoryExists(const std::string& path) {
   struct stat st;
-  if (stat(path.c_str(), &st) == -1) return false;
-  if ((st.st_mode & S_IFMT) != S_IFDIR) return false;
+  if (stat(path.c_str(), &st) == -1) {
+    return false;
+  }
+  if ((st.st_mode & S_IFMT) != S_IFDIR) {
+    return false;
+  }
   return true;
 }
+
+std::string RealPath(const std::string& path) {
+  std::array<char, PATH_MAX> buffer{};
+  if (!realpath(path.c_str(), buffer.data())) {
+    LOG(WARNING) << "Could not get real path for file " << path << ": "
+                 << strerror(errno);
+    return {};
+  }
+  return {buffer.data()};
+}
+
 }  // namespace cvd
