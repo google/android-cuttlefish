@@ -184,6 +184,9 @@ class CuttlefishConfig {
 // Returns the instance number as obtained from the CUTTLEFISH_INSTANCE
 // environment variable or the username.
 int GetInstance();
+// Returns a path where the launhcer puts a link to the config file which makes
+// it easily discoverable regardless of what vm manager is in use
+std::string GetGlobalConfigFileLink();
 
 // Returns the path to the ivserver's client socket.
 std::string GetDomain();
