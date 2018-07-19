@@ -92,6 +92,7 @@ const char* kKernelLogSocketName = "kernel_log_socket_name";
 const char* kConsolePath = "console_path";
 const char* kLogcatPath = "logcat_path";
 const char* kLauncherLogPath = "launcher_log_path";
+const char* kLauncherMonitorPath = "launcher_monitor_socket";
 const char* kDtbPath = "dtb_path";
 
 const char* kMempath = "mempath";
@@ -308,6 +309,14 @@ std::string CuttlefishConfig::logcat_path() const {
 }
 void CuttlefishConfig::set_logcat_path(const std::string& logcat_path) {
   SetPath(kLogcatPath, logcat_path);
+}
+
+std::string CuttlefishConfig::launcher_monitor_socket_path() const {
+  return (*dictionary_)[kLauncherMonitorPath].asString();
+}
+void CuttlefishConfig::set_launcher_monitor_socket_path(
+    const std::string& launhcer_monitor_path) {
+  (*dictionary_)[kLauncherMonitorPath] = launhcer_monitor_path;
 }
 
 std::string CuttlefishConfig::launcher_log_path() const {

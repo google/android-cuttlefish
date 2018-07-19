@@ -567,6 +567,8 @@ bool InitializeCuttlefishConfiguration(
   config->set_console_path(config->PerInstancePath("console"));
   config->set_logcat_path(config->PerInstancePath("logcat"));
   config->set_launcher_log_path(config->PerInstancePath("launcher.log"));
+  config->set_launcher_monitor_socket_path(
+      config->PerInstancePath("launcher_monitor.sock"));
 
   config->set_mobile_bridge_name(FLAGS_mobile_interface);
   config->set_mobile_tap_name(FLAGS_mobile_tap_name);
@@ -697,6 +699,64 @@ cvd::SharedFD DaemonizeLauncher() {
     return write_end;
   }
 }
+
+// Stops the device. If this function is successful it returns on a child of the
+// launcher (after it killed the laucher) and it should exit immediately
+bool StopCvd() {
+  auto vm_manager = vm_manager::VmManager::Get();
+  vm_manager->Stop();
+  auto pgid = getpgid(0);
+  auto child_pid = fork();
+  if (child_pid > 0) {
+    // The parent just waits for the child to kill it.
+    int wstatus;
+    waitpid(child_pid, &wstatus, 0);
+    LOG(ERROR) << "The forked child exited before delivering signal with "
+                  "status: "
+               << wstatus;
+    // If waitpid returns it means the child exited before the signal was
+    // delivered, notify the client of the error and continue serving
+    return false;
+  } else if (child_pid == 0) {
+    // The child makes sure it is in a different process group before
+    // killing everyone on its parent's
+    // This call never fails (see SETPGID(2))
+    setpgid(0, 0);
+    killpg(pgid, SIGKILL);
+    return true;
+  } else {
+    // The fork failed, the system is in pretty bad shape
+    LOG(FATAL) << "Unable to fork before on Stop: " << strerror(errno);
+    return false;
+  }
+}
+
+void ServerLoop(cvd::SharedFD server) {
+  while (true) {
+    // TODO: use select to handle simultaneous connections.
+    auto client = cvd::SharedFD::Accept(*server);
+    cvd::LauncherAction action;
+    while (client->IsOpen() && client->Read(&action, sizeof(char)) > 0) {
+      switch (action) {
+        case cvd::LauncherAction::kStop:
+          if (StopCvd()) {
+            auto response = cvd::LauncherResponse::kSuccess;
+            client->Write(&response, sizeof(response));
+            std::exit(0);
+          } else {
+            auto response = cvd::LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+          }
+          break;
+        default:
+          LOG(ERROR) << "Unrecognized launcher action: "
+                     << static_cast<char>(action);
+          auto response = cvd::LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+      }
+    }
+  }
+}
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -773,6 +833,13 @@ int main(int argc, char** argv) {
                         config->PerInstancePath("kernel.log"),
                         FLAGS_deprecated_boot_completed);
 
+  auto launcher_monitor_path = config->launcher_monitor_socket_path();
+  auto launcher_monitor_socket = cvd::SharedFD::SocketLocalServer(
+      launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
+  if (!launcher_monitor_socket->IsOpen()) {
+    LOG(ERROR) << "Error when opening launcher server: " << launcher_monitor_socket->StrError();
+    return cvd::LauncherExitCodes::kMonitorCreationFailed;
+  }
   if (FLAGS_daemon) {
     // This code will move to its own process eventually so the signal handling
     // is done here to keep everything that needs to move close together.
@@ -832,5 +899,7 @@ int main(int argc, char** argv) {
   LaunchVNCServerIfEnabled();
   LaunchAdbConnectorIfEnabled();
 
-  pause();
+  ServerLoop(launcher_monitor_socket); // Should not return
+  LOG(ERROR) << "The server loop returned, it should never happen!!";
+  return cvd::LauncherExitCodes::kServerError;
 }

@@ -31,6 +31,19 @@ enum LauncherExitCodes : int {
   kPipeIOError = 10,
   kVirtualDeviceBootFailed = 11,
   kProcessGroupError = 12,
+  kMonitorCreationFailed = 13,
+  kServerError = 14,
 };
 
-}
+// Actions supported by the launcher server
+enum class LauncherAction : char {
+  kStop = 'X',
+};
+
+// Responses from the launcher server
+enum class LauncherResponse : char {
+  kSuccess = 'S',
+  kError = 'E',
+  kUnknownAction = 'U',
+};
+}  // namespace cvd
