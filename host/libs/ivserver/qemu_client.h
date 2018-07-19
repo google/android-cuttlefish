@@ -37,28 +37,18 @@ class QemuClient final {
  private:
   enum QemuConstants : int64_t {
     kIvshMemProtocolVersion = 0,
+    // Marker for the shared memory file
+    kSharedMem = -1,
     // HostID is in fact a Peer ID and can take multiple values, depending on
     // how many subsystems we would like Guest to talk to.
-    kHostBaseID = 0,
+    kHostID = 0,
     // GuestID is a unique form of Peer ID (see above), that identifies newly
     // created quest in IvSharedMem world.
-    kGuestID = 1024
+    kGuestID = 1
   };
 
-  static_assert(QemuConstants::kHostBaseID < QemuConstants::kGuestID,
+  static_assert(QemuConstants::kHostID != QemuConstants::kGuestID,
                 "Guest and host should have different IDs");
-  // Type of QEmu FD messages.
-  // QEmu uses these messages to identify purpose of socket it is
-  // receiving.
-  enum class QemuFDMsg : int64_t {
-    // Represents SharedMemory FD.
-    kSharedMem = -1,
-    // Represents primary (and currently only) FD that is owned and managed by
-    // Host side.
-    kHostSideHald = QemuConstants::kHostBaseID,
-    // Represents FDs that are owned by Guest.
-    kGuestSideHal = QemuConstants::kGuestID,
-  };
 
   cvd::SharedFD client_socket_;
 
@@ -70,7 +60,7 @@ class QemuClient final {
   bool PerformHandshake(const VSoCSharedMemory &shmem_fd);
 
   // Send socket data to Qemu.
-  bool SendSocketInfo(QemuFDMsg message, const cvd::SharedFD &socket);
+  bool SendSocketInfo(QemuConstants message, const cvd::SharedFD &socket);
 
   QemuClient(const QemuClient &) = delete;
   QemuClient &operator=(const QemuClient &) = delete;

@@ -63,15 +63,7 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
     return false;
   }
 
-  // 3. The number -1, accompanied by the file descriptor for the shared
-  //    memory.
-  if (!SendSocketInfo(QemuFDMsg::kSharedMem, shmem.SharedMemFD())) {
-    LOG(ERROR) << "Failed to send Shared Memory socket: "
-               << client_socket_->StrError();
-    return false;
-  }
-
-  // 4. Connect notifications for existing other clients, if any.  This is
+  // 3. Connect notifications for existing other clients, if any.  This is
   //    a peer ID (number between 0 and 65535 other than the client's ID),
   //    repeated N times.  Each repetition is accompanied by one file
   //    descriptor.  These are for interrupting the peer with that ID using
@@ -79,32 +71,41 @@ bool QemuClient::PerformHandshake(const VSoCSharedMemory& shmem) {
   //    vectors, it closes the extra file descriptors.  If it is configured
   //    for more, the extra vectors remain unconnected.
   for (const auto region_data : shmem.Regions()) {
-    if (!SendSocketInfo(QemuFDMsg::kHostSideHald, region_data.host_fd)) {
+    if (!SendSocketInfo(kHostID, region_data.host_fd)) {
       LOG(ERROR) << "Failed to send Host Side FD for region "
                  << region_data.device_name << ": " << client_socket_->StrError();
       return false;
     }
   }
 
-  // 5. Interrupt setup.  This is the client's own ID, repeated N times.
+  // 4. Interrupt setup.  This is the client's own ID, repeated N times.
   //    Each repetition is accompanied by one file descriptor.  These are
   //    for receiving interrupts from peers using vector 0,..,N-1, in
   //    order.  If the client is configured for fewer vectors, it closes
   //    the extra file descriptors.  If it is configured for more, the
   //    extra vectors remain unconnected.
   for (const auto region_data : shmem.Regions()) {
-    if (!SendSocketInfo(QemuFDMsg::kGuestSideHal, region_data.guest_fd)) {
+    if (!SendSocketInfo(kGuestID, region_data.guest_fd)) {
       LOG(ERROR) << "Failed to send Guest Side FD for region "
                  << region_data.device_name << ": " << client_socket_->StrError();
       return false;
     }
   }
 
+  // 5. The number -1, accompanied by the file descriptor for the shared
+  //    memory.
+  if (!SendSocketInfo(kSharedMem, shmem.SharedMemFD())) {
+    LOG(ERROR) << "Failed to send Shared Memory socket: "
+               << client_socket_->StrError();
+    return false;
+  }
+
+
   LOG(INFO) << "QEmu handshake completed.";
   return true;
 }
 
-bool QemuClient::SendSocketInfo(QemuFDMsg message,
+bool QemuClient::SendSocketInfo(QemuConstants message,
                                 const cvd::SharedFD& socket) {
   struct iovec vec {
     &message, sizeof(message)

@@ -145,8 +145,7 @@ std::string g_default_wifi_interface{GetPerInstanceDefault("cvd-wifi-")};
 DEFINE_string(wifi_interface, g_default_wifi_interface.c_str(),
               "Network interface to use for wifi");
 // TODO(b/72969289) This should be generated
-DEFINE_string(dtb, DefaultHostArtifactsPath("config/cuttlefish.dtb"),
-              "Path to the cuttlefish.dtb file");
+DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(kDefaultUuidPrefix).c_str(),
@@ -294,9 +293,22 @@ void subprocess(const char* const* command,
   }
 }
 
-bool FileExists(const char* path) {
-  struct stat unused;
-  return stat(path, &unused) != -1 || errno != ENOENT;
+bool DirExists(const char* path) {
+  struct stat st;
+  if (stat(path, &st) == -1)
+    return false;
+  if ((st.st_mode & S_IFMT) != S_IFDIR)
+    return false;
+  return true;
+}
+
+bool FileHasContent(const char* path) {
+  struct stat st;
+  if (stat(path, &st) == -1)
+    return false;
+  if (st.st_size == 0)
+    return false;
+  return true;
 }
 
 void CreateBlankImage(
@@ -323,7 +335,7 @@ void RemoveFile(const std::string& file) {
 }
 
 bool ApplyDataImagePolicy(const char* data_image) {
-  bool data_exists = FileExists(data_image);
+  bool data_exists = FileHasContent(data_image);
   bool remove{};
   bool create{};
 
@@ -367,7 +379,7 @@ bool ApplyDataImagePolicy(const char* data_image) {
 }
 
 bool EnsureDirExists(const char* dir) {
-  if (!FileExists(dir)) {
+  if (!DirExists(dir)) {
     LOG(INFO) << "Setting up " << dir;
     if (mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
       if (errno == EACCES) {
@@ -490,6 +502,17 @@ bool ResolveInstanceFiles() {
   }
   if (FLAGS_initrd.empty()) {
     FLAGS_initrd = FLAGS_system_image_dir + "/ramdisk.img";
+    if (!FileHasContent(FLAGS_initrd.c_str())) {
+      LOG(WARNING) << "No ramdisk.img found; assuming system-as-root build";
+      FLAGS_initrd.clear();
+    }
+  }
+  if (FLAGS_dtb.empty()) {
+    if (FLAGS_initrd.empty()) {
+      FLAGS_dtb = DefaultHostArtifactsPath("config/system-root.dtb");
+    } else {
+      FLAGS_dtb = DefaultHostArtifactsPath("config/initrd-root.dtb");
+    }
   }
   if (FLAGS_cache_image.empty()) {
     FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
@@ -509,8 +532,8 @@ bool ResolveInstanceFiles() {
   // Check that the files exist
   for (const auto& file :
        {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image, FLAGS_kernel,
-        FLAGS_initrd, FLAGS_data_image, FLAGS_kernel_command_line}) {
-    if (!FileExists(file.c_str())) {
+        FLAGS_data_image, FLAGS_kernel_command_line}) {
+    if (!FileHasContent(file.c_str())) {
       LOG(FATAL) << "File not found: " << file;
       return false;
     }
@@ -542,6 +565,9 @@ bool SetUpGlobalConfiguration() {
 
   config->set_kernel_image_path(FLAGS_kernel);
   std::ostringstream extra_cmdline;
+  if (FLAGS_initrd.empty()) {
+    extra_cmdline << " root=/dev/vda init=/init";
+  }
   extra_cmdline << " androidboot.serialno=" << FLAGS_serial_number;
   extra_cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
   if (FLAGS_extra_kernel_command_line.size()) {
