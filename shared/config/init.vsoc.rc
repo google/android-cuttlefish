@@ -1,8 +1,6 @@
 on early-init
 #    loglevel 8
     symlink /sdcard /storage/sdcard0
-    symlink /profile /.profile
-    chmod 0555 /profile
     mkdir /var/run 0755 root root
     mkdir /var/run/media 0755 media root
     mkdir /var/run/system 0755 system root
@@ -31,7 +29,6 @@ on init
 
 on fs
     mount_all /vendor/etc/fstab.${ro.hardware}
-    wait /vendor/etc/selinux/nonplat_mac_permissions.xml
     restorecon_recursive /vendor
 
     # works around framework netiface enumeration issue
@@ -73,10 +70,6 @@ on boot
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_forward_proxy
 
-    # TODO(ender): Re-enable these
-    # Compass.
-    stop akmd
-
 
 service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
     oneshot
@@ -99,13 +92,13 @@ service vport_trigger /vendor/bin/vport_trigger
     oneshot
 
 
-on property:sys.cf.ser.cf-logcat=*
-    symlink ${sys.cf.ser.cf-logcat} /dev/cf-logcat
+on property:vendor.ser.cf-logcat=*
+    symlink ${vendor.ser.cf-logcat} /dev/cf-logcat
     enable seriallogging
 
 
-on property:sys.cf.ser.cf-gadget-usb-v1=*
-    symlink ${sys.cf.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
+on property:vendor.ser.cf-gadget-usb-v1=*
+    symlink ${vendor.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
     enable usbforward
 
 
