@@ -651,9 +651,11 @@ cvd::SharedFD DaemonizeLauncher() {
         std::exit(LauncherExitCodes::kPipeIOError);
       }
       if (evt == monitor::BootEvent::BootCompleted) {
+        LOG(INFO) << "Virtual device booted successfully";
         std::exit(LauncherExitCodes::kSuccess);
       }
       if (evt == monitor::BootEvent::BootFailed) {
+        LOG(ERROR) << "Virtual device failed to boot";
         std::exit(LauncherExitCodes::kVirtualDeviceBootFailed);
       }
       // Do nothing for the other signals
