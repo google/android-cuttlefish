@@ -129,9 +129,6 @@ class CuttlefishConfig {
   std::string logcat_path() const;
   void set_logcat_path(const std::string& logcat_path);
 
-  std::string launcher_log_path() const;
-  void set_launcher_log_path(const std::string& launcher_log_path);
-
   std::string mobile_bridge_name() const;
   void set_mobile_bridge_name(const std::string& mobile_bridge_name);
 
@@ -172,6 +169,7 @@ class CuttlefishConfig {
   std::unique_ptr<Json::Value> dictionary_;
 
   void LoadFromFile(const char* file);
+  void SetPath(const std::string& key, const std::string& path);
 
   CuttlefishConfig();
   CuttlefishConfig(const CuttlefishConfig&) = delete;
