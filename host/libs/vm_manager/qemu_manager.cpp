@@ -161,7 +161,8 @@ bool QemuManager::CleanPriorFiles() const {
   auto config = vsoc::CuttlefishConfig::Get();
   std::string run_files = config->PerInstancePath("*") + " " +
                           config->mempath() + " " +
-                          config->cuttlefish_env_path();
+                          config->cuttlefish_env_path() + " " +
+                          vsoc::GetGlobalConfigFileLink();
   LOG(INFO) << "Assuming run files of " << run_files;
   std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
   int rval = std::system(fuser_cmd.c_str());

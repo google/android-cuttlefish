@@ -32,7 +32,7 @@
 #include "common/libs/utils/files.h"
 
 DEFINE_string(config_file,
-              vsoc::GetDefaultPerInstanceDir() + "/cuttlefish_config.json",
+              vsoc::GetGlobalConfigFileLink(),
               "A file from where to load the config values. This flag is "
               "ignored by the launcher");
 
@@ -452,6 +452,10 @@ std::string CuttlefishConfig::instance_name() const {
 int GetInstance() {
   static int instance_id = InstanceFromEnvironment();
   return instance_id;
+}
+
+std::string GetGlobalConfigFileLink() {
+  return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish_config.json";
 }
 
 std::string GetDomain() {

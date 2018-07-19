@@ -744,8 +744,15 @@ int main(int argc, char** argv) {
   }
 
   auto config = vsoc::CuttlefishConfig::Get();
+  auto config_file = GetConfigFile();
+  auto config_link = vsoc::GetGlobalConfigFileLink();
   // Save the config object before starting any host process
-  if (!config->SaveToFile(GetConfigFile())) {
+  if (!config->SaveToFile(config_file)) {
+    return LauncherExitCodes::kCuttlefishConfigurationSaveError;
+  }
+  if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
+    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
+               << ": " << strerror(errno);
     return LauncherExitCodes::kCuttlefishConfigurationSaveError;
   }
 
