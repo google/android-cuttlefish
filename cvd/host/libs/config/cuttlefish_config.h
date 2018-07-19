@@ -169,7 +169,6 @@ class CuttlefishConfig {
   std::unique_ptr<Json::Value> dictionary_;
 
   void LoadFromFile(const char* file);
-  void SetPath(const std::string& key, const std::string& path);
 
   CuttlefishConfig();
   CuttlefishConfig(const CuttlefishConfig&) = delete;
