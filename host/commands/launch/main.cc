@@ -580,6 +580,7 @@ bool InitializeCuttlefishConfiguration(
   config->set_kernel_log_socket_name(config->PerInstancePath("kernel-log"));
   config->set_console_path(config->PerInstancePath("console"));
   config->set_logcat_path(config->PerInstancePath("logcat"));
+  config->set_launcher_log_path(config->PerInstancePath("launcher.log"));
 
   config->set_mobile_bridge_name(FLAGS_mobile_interface);
   config->set_mobile_tap_name(FLAGS_mobile_tap_name);
@@ -673,8 +674,37 @@ cvd::SharedFD DaemonizeLauncher() {
     }
   } else {
     // The child returns the write end of the pipe
-    // TODO(111321286): Make the child the head of a new process group that will
-    // contain all other host processes.
+    if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
+      LOG(ERROR) << "Failed to daemonize child process: " << strerror(errno);
+      std::exit(LauncherExitCodes::kDaemonizationError);
+    }
+    // Redirect standard I/O
+    auto log_path = vsoc::CuttlefishConfig::Get()->launcher_log_path();
+    auto log =
+        cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
+                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    if (!log->IsOpen()) {
+      LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
+      std::exit(LauncherExitCodes::kDaemonizationError);
+    }
+    auto dev_null = cvd::SharedFD::Open("/dev/null", O_RDONLY);
+    if (!dev_null->IsOpen()) {
+      LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
+      std::exit(LauncherExitCodes::kDaemonizationError);
+    }
+    if (dev_null->UNMANAGED_Dup2(0) < 0) {
+      LOG(ERROR) << "Failed dup2 stdin: " << dev_null->StrError();
+      std::exit(LauncherExitCodes::kDaemonizationError);
+    }
+    if (log->UNMANAGED_Dup2(1) < 0) {
+      LOG(ERROR) << "Failed dup2 stdout: " << log->StrError();
+      std::exit(LauncherExitCodes::kDaemonizationError);
+    }
+    if (log->UNMANAGED_Dup2(2) < 0) {
+      LOG(ERROR) << "Failed dup2 seterr: " << log->StrError();
+      std::exit(LauncherExitCodes::kDaemonizationError);
+    }
+
     read_end->Close();
     return write_end;
   }
@@ -734,6 +764,9 @@ int main(int argc, char** argv) {
   }
 
   LOG(INFO) << "The following files contain useful debugging information:";
+  if (FLAGS_daemon) {
+    LOG(INFO) << "  Launcher log: " << config->launcher_log_path();
+  }
   LOG(INFO) << "  Android's logcat output: " << config->logcat_path();
   LOG(INFO) << "  Kernel log: " << config->PerInstancePath("kernel.log");
   LOG(INFO) << "  Instance configuration: " << GetConfigFile();

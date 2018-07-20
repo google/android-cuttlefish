@@ -93,6 +93,7 @@ const char* kUsbIpSocketName = "usb_ip_socket_name";
 const char* kKernelLogSocketName = "kernel_log_socket_name";
 const char* kConsolePath = "console_path";
 const char* kLogcatPath = "logcat_path";
+const char* kLauncherLogPath = "launcher_log_path";
 const char* kDtbPath = "dtb_path";
 
 const char* kMempath = "mempath";
@@ -302,6 +303,14 @@ std::string CuttlefishConfig::logcat_path() const {
 }
 void CuttlefishConfig::set_logcat_path(const std::string& logcat_path) {
   (*dictionary_)[kLogcatPath] = logcat_path;
+}
+
+std::string CuttlefishConfig::launcher_log_path() const {
+  return (*dictionary_)[kLauncherLogPath].asString();
+}
+void CuttlefishConfig::set_launcher_log_path(
+    const std::string& launcher_log_path) {
+  (*dictionary_)[kLauncherLogPath] = launcher_log_path;
 }
 
 std::string CuttlefishConfig::mobile_bridge_name() const {
