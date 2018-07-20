@@ -29,6 +29,7 @@
 #include <json/json.h>
 
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 
 DEFINE_string(config_file,
               vsoc::GetDefaultPerInstanceDir() + "/cuttlefish_config.json",
@@ -66,6 +67,7 @@ int InstanceFromEnvironment() {
 
   return instance;
 }
+
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 
@@ -413,12 +415,10 @@ CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {
 }
 
 void CuttlefishConfig::LoadFromFile(const char* file) {
-  char real_file_path[PATH_MAX];
-  if (realpath(file, real_file_path) == nullptr) {
-    LOG(FATAL) << "Could not get real path for file " << file << ": "
-               << strerror(errno);
+  auto real_file_path = cvd::RealPath(file);
+  if (real_file_path.empty()) {
+    LOG(FATAL) << "Could not get real path for file " << file;
   }
-
   Json::Reader reader;
   std::ifstream ifs(real_file_path);
   if (!reader.parse(ifs, *dictionary_)) {
