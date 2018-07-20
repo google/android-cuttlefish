@@ -417,28 +417,44 @@ void CuttlefishConfig::set_adb_mode(const std::string& mode) {
   (*dictionary_)[kAdbMode] = mode;
 }
 
-/*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
-  static CuttlefishConfig config;
-  return &config;
-}
-
-CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {
-  if (!FLAGS_config_file.empty()) {
-    LoadFromFile(FLAGS_config_file.c_str());
+// Creates the (initially empty) config object and populates it with values from
+// the config file if the --config_file command line argument is present.
+// Returns nullptr if there was an error loading from file
+/*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
+  auto ret = new CuttlefishConfig();
+  if (ret && !FLAGS_config_file.empty()) {
+    auto loaded = ret->LoadFromFile(FLAGS_config_file.c_str());
+    if (!loaded) {
+      return nullptr;
+    }
   }
+  return ret;
 }
 
-void CuttlefishConfig::LoadFromFile(const char* file) {
+/*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
+  static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
+  return config.get();
+}
+
+CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {}
+// Can't use '= default' on the header because the compiler complains of
+// Json::Value being an incomplete type
+CuttlefishConfig::~CuttlefishConfig() {}
+
+bool CuttlefishConfig::LoadFromFile(const char* file) {
   auto real_file_path = cvd::AbsolutePath(file);
   if (real_file_path.empty()) {
-    LOG(FATAL) << "Could not get real path for file " << file;
+    LOG(ERROR) << "Could not get real path for file " << file;
+    return false;
   }
   Json::Reader reader;
   std::ifstream ifs(real_file_path);
   if (!reader.parse(ifs, *dictionary_)) {
-    LOG(FATAL) << "Could not read config file " << file << ": "
+    LOG(ERROR) << "Could not read config file " << file << ": "
                << reader.getFormattedErrorMessages();
+    return false;
   }
+  return true;
 }
 bool CuttlefishConfig::SaveToFile(const std::string& file) const {
   std::ofstream ofs(file);
@@ -487,6 +503,10 @@ std::string GetDefaultPerInstanceDir() {
            << std::setw(2) << GetInstance();
   }
   return stream.str();
+}
+
+std::string GetDefaultMempath() {
+  return GetPerInstanceDefault("/var/run/shm/cvd-");
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {

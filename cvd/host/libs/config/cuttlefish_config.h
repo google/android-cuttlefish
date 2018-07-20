@@ -30,7 +30,9 @@ constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 class CuttlefishConfig {
  public:
   static CuttlefishConfig* Get();
-  ~CuttlefishConfig() = default;
+
+  CuttlefishConfig();
+  ~CuttlefishConfig();
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
@@ -177,10 +179,10 @@ class CuttlefishConfig {
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
-  void LoadFromFile(const char* file);
   void SetPath(const std::string& key, const std::string& path);
+  bool LoadFromFile(const char* file);
+  static CuttlefishConfig* BuildConfigImpl();
 
-  CuttlefishConfig();
   CuttlefishConfig(const CuttlefishConfig&) = delete;
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
 };
@@ -202,6 +204,7 @@ std::string GetPerInstanceDefault(const char* prefix);
 int GetPerInstanceDefault(int base);
 
 std::string GetDefaultPerInstanceDir();
+std::string GetDefaultMempath();
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
