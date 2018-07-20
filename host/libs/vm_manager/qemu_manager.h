@@ -23,7 +23,7 @@ namespace vm_manager {
 // package to support the qemu-cli capability.
 class QemuManager : public VmManager {
  public:
-  QemuManager() = default;
+  QemuManager(vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
   bool Start() const override;

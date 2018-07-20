@@ -24,11 +24,16 @@
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace vm_manager {
-std::shared_ptr<VmManager> VmManager::Get() {
+
+VmManager::VmManager(vsoc::CuttlefishConfig* config)
+    : config_(config) {}
+
+std::shared_ptr<VmManager> VmManager::Get(
+    vsoc::CuttlefishConfig* config) {
   static std::shared_ptr<VmManager> vm_manager(
       vsoc::HostSupportsQemuCli()
-          ? std::shared_ptr<VmManager>(new QemuManager())
-          : std::shared_ptr<VmManager>(new LibvirtManager()));
+          ? std::shared_ptr<VmManager>(new QemuManager(config))
+          : std::shared_ptr<VmManager>(new LibvirtManager(config)));
   return vm_manager;
 }
 

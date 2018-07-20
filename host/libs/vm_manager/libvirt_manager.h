@@ -21,7 +21,7 @@ namespace vm_manager {
 
 class LibvirtManager : public VmManager {
  public:
-  LibvirtManager() = default;
+  LibvirtManager(vsoc::CuttlefishConfig* config);
   virtual ~LibvirtManager() = default;
 
   bool Start() const override;

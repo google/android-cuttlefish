@@ -19,6 +19,8 @@
 #include <string>
 #include <vector>
 
+#include <host/libs/config/cuttlefish_config.h>
+
 namespace vm_manager {
 
 // Superclass of every guest VM manager. It provides a static getter that
@@ -27,7 +29,8 @@ namespace vm_manager {
 class VmManager {
  public:
   // Returns the most suitable vm manager as a singleton.
-  static std::shared_ptr<VmManager> Get();
+  static std::shared_ptr<VmManager> Get(
+      vsoc::CuttlefishConfig* config);
   virtual ~VmManager() = default;
 
   virtual bool Start() const = 0;
@@ -42,6 +45,8 @@ class VmManager {
  protected:
   static bool UserInGroup(const std::string& group,
                           std::vector<std::string>* config_commands);
+  vsoc::CuttlefishConfig* config_;
+  VmManager(vsoc::CuttlefishConfig* config);
 };
 
 }  // namespace vm_manager

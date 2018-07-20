@@ -92,7 +92,7 @@ DEFINE_string(extra_kernel_command_line, "",
 DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
+std::string g_default_mempath{vsoc::GetDefaultMempath()};
 DEFINE_string(mempath, g_default_mempath.c_str(),
               "Target location for the shmem file.");
 // The cvd-mobile-{tap|br}-xx interfaces are created by default, but libvirt
@@ -373,8 +373,7 @@ bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && AdbTunnelEnabled();
 }
 
-void LaunchIvServer() {
-  auto config = vsoc::CuttlefishConfig::Get();
+void LaunchIvServer(vsoc::CuttlefishConfig* config) {
   // Resize gralloc region
   auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
   uint32_t screen_buffers_size =
@@ -468,17 +467,19 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
-  auto config = vsoc::CuttlefishConfig::Get();
+bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker,
+                     vsoc::CuttlefishConfig* config) {
   if (boot_image_unpacker.HasRamdiskImage()) {
-    if (!boot_image_unpacker.ExtractRamdiskImage(config->ramdisk_image_path())) {
+    if (!boot_image_unpacker.ExtractRamdiskImage(
+            config->ramdisk_image_path())) {
       LOG(ERROR) << "Error extracting ramdisk from boot image";
       return false;
     }
   }
   if (!FLAGS_kernel_path.size()) {
     if (boot_image_unpacker.HasKernelImage()) {
-      if (!boot_image_unpacker.ExtractKernelImage(config->kernel_image_path())) {
+      if (!boot_image_unpacker.ExtractKernelImage(
+              config->kernel_image_path())) {
         LOG(ERROR) << "Error extracting kernel from boot image";
         return false;
       }
@@ -490,10 +491,16 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
   return true;
 }
 
-bool InitializeCuttlefishConfiguration(
+vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker) {
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   auto config = vsoc::CuttlefishConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "Failed to instantiate config object. Most likely because "
+                  "config file was specified and doesn't exits: '"
+               << FLAGS_config_file << "'";
+    return nullptr;
+  }
   // Set this first so that calls to PerInstancePath below are correct
   config->set_instance_dir(FLAGS_instance_dir);
 
@@ -592,7 +599,7 @@ bool InitializeCuttlefishConfiguration(
   config->set_cuttlefish_env_path(cvd::StringFromEnv("HOME", ".") +
                                   "/.cuttlefish.sh");
 
-  return true;
+  return config;
 }
 
 bool ParseCommandLineFlags(int argc, char** argv) {
@@ -610,8 +617,7 @@ bool ParseCommandLineFlags(int argc, char** argv) {
   return ResolveInstanceFiles();
 }
 
-bool WriteCuttlefishEnvironment() {
-  auto config = vsoc::CuttlefishConfig::Get();
+bool WriteCuttlefishEnvironment(vsoc::CuttlefishConfig* config) {
   auto env = cvd::SharedFD::Open(config->cuttlefish_env_path().c_str(),
                                  O_CREAT | O_RDWR, 0755);
   if (!env->IsOpen()) {
@@ -633,7 +639,7 @@ bool WriteCuttlefishEnvironment() {
 
 // Forks and returns the write end of a pipe to the child process. The parent
 // process waits for boot events to come through the pipe and exits accordingly.
-cvd::SharedFD DaemonizeLauncher() {
+cvd::SharedFD DaemonizeLauncher(vsoc::CuttlefishConfig* config) {
   cvd::SharedFD read_end, write_end;
   if (!cvd::SharedFD::Pipe(&read_end, &write_end)) {
     LOG(ERROR) << "Unable to create pipe";
@@ -669,7 +675,7 @@ cvd::SharedFD DaemonizeLauncher() {
       std::exit(LauncherExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
-    auto log_path = vsoc::CuttlefishConfig::Get()->launcher_log_path();
+    auto log_path = config->launcher_log_path();
     auto log =
         cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -702,8 +708,8 @@ cvd::SharedFD DaemonizeLauncher() {
 
 // Stops the device. If this function is successful it returns on a child of the
 // launcher (after it killed the laucher) and it should exit immediately
-bool StopCvd() {
-  auto vm_manager = vm_manager::VmManager::Get();
+bool StopCvd(vsoc::CuttlefishConfig* config) {
+  auto vm_manager = vm_manager::VmManager::Get(config);
   vm_manager->Stop();
   auto pgid = getpgid(0);
   auto child_pid = fork();
@@ -731,7 +737,8 @@ bool StopCvd() {
   }
 }
 
-void ServerLoop(cvd::SharedFD server) {
+void ServerLoop(cvd::SharedFD server,
+                vsoc::CuttlefishConfig* config) {
   while (true) {
     // TODO: use select to handle simultaneous connections.
     auto client = cvd::SharedFD::Accept(*server);
@@ -739,7 +746,7 @@ void ServerLoop(cvd::SharedFD server) {
     while (client->IsOpen() && client->Read(&action, sizeof(char)) > 0) {
       switch (action) {
         case cvd::LauncherAction::kStop:
-          if (StopCvd()) {
+          if (StopCvd(config)) {
             auto response = cvd::LauncherResponse::kSuccess;
             client->Write(&response, sizeof(response));
             std::exit(0);
@@ -766,7 +773,12 @@ int main(int argc, char** argv) {
   }
 
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
-  auto vm_manager = vm_manager::VmManager::Get();
+  // Do this early so that the config object is ready for anything that needs it
+  auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker);
+  if (!config) {
+    return LauncherExitCodes::kCuttlefishConfigurationInitError;
+  }
+  auto vm_manager = vm_manager::VmManager::Get(config);
 
   // Check host configuration
   std::vector<std::string> config_commands;
@@ -781,11 +793,6 @@ int main(int argc, char** argv) {
     return LauncherExitCodes::kInvalidHostConfiguration;
   }
 
-  // Do this early so that the config object is ready for anything that needs it
-  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
-    return LauncherExitCodes::kCuttlefishConfigurationInitError;
-  }
-
   if (!vm_manager->EnsureInstanceDirExists()) {
     LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
     return LauncherExitCodes::kInstanceDirCreationError;
@@ -796,16 +803,15 @@ int main(int argc, char** argv) {
     return LauncherExitCodes::kPrioFilesCleanupError;
   }
 
-  if (!UnpackBootImage(*boot_img_unpacker)) {
+  if (!UnpackBootImage(*boot_img_unpacker, config)) {
     LOG(ERROR) << "Failed to unpack boot image";
     return LauncherExitCodes::kBootImageUnpackError;
   }
 
-  if (!WriteCuttlefishEnvironment()) {
+  if (!WriteCuttlefishEnvironment(config)) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
-  auto config = vsoc::CuttlefishConfig::Get();
   auto config_file = GetConfigFile();
   auto config_link = vsoc::GetGlobalConfigFileLink();
   // Save the config object before starting any host process
@@ -848,7 +854,7 @@ int main(int argc, char** argv) {
     new_action.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &new_action, &old_action);
 
-    auto pipe_fd = DaemonizeLauncher();
+    auto pipe_fd = DaemonizeLauncher(config);
     if (!pipe_fd->IsOpen()) {
       return LauncherExitCodes::kDaemonizationError;
     }
@@ -883,10 +889,10 @@ int main(int argc, char** argv) {
                          config->usb_ip_socket_name());
   vadb.Start();
 
-  LaunchIvServer();
+  LaunchIvServer(config);
 
   // Initialize the regions that require so before the VM starts.
-  PreLaunchInitializers::Initialize();
+  PreLaunchInitializers::Initialize(config);
 
   // Start the guest VM
   if (!vm_manager->Start()) {
@@ -899,7 +905,7 @@ int main(int argc, char** argv) {
   LaunchVNCServerIfEnabled();
   LaunchAdbConnectorIfEnabled();
 
-  ServerLoop(launcher_monitor_socket); // Should not return
+  ServerLoop(launcher_monitor_socket, config); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
   return cvd::LauncherExitCodes::kServerError;
 }

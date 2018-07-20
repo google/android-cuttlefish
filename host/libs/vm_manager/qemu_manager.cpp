@@ -46,8 +46,8 @@ namespace vm_manager {
 
 namespace {
 
-std::string GetMonitorPath() {
-  return vsoc::CuttlefishConfig::Get()->PerInstancePath("qemu_monitor.sock");
+std::string GetMonitorPath(vsoc::CuttlefishConfig* config) {
+  return config->PerInstancePath("qemu_monitor.sock");
 }
 
 void LogAndSetEnv(const char* key, const std::string& value) {
@@ -55,8 +55,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
   LOG(INFO) << key << "=" << value;
 }
 
-int BuildAndRunQemuCmd() {
-  auto config = vsoc::CuttlefishConfig::Get();
+int BuildAndRunQemuCmd(vsoc::CuttlefishConfig* config) {
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", FLAGS_qemu_binary);
   LogAndSetEnv("instance_name", config->instance_name());
@@ -89,13 +88,16 @@ int BuildAndRunQemuCmd() {
 }
 
 }  // namespace
+QemuManager::QemuManager(vsoc::CuttlefishConfig* config)
+  : VmManager(config) {}
 
 bool QemuManager::Start() const {
   // Create a thread that will make the launcher abort if the qemu process
   // crashes, this avoids having the launcher waiting forever for
   // VIRTUAL_DEVICE_BOOT_COMPLETED in this cases.
-  std::thread waiting_thread([]() {
-    int status = BuildAndRunQemuCmd();
+  auto config = this->config_;
+  std::thread waiting_thread([config]() {
+    int status = BuildAndRunQemuCmd(config);
     if (status != 0) {
       LOG(FATAL) << "Qemu process exited prematurely";
     } else {
@@ -117,7 +119,7 @@ bool QemuManager::Stop() const {
   struct sockaddr_un addr;
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
-  std::string monitor_path = GetMonitorPath();
+  std::string monitor_path = GetMonitorPath(config_);
   strncpy(addr.sun_path, monitor_path.c_str(), sizeof(addr.sun_path) - 1);
 
   if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
@@ -146,7 +148,7 @@ bool QemuManager::Stop() const {
 }
 
 bool QemuManager::EnsureInstanceDirExists() const {
-  auto instance_dir = vsoc::CuttlefishConfig::Get()->instance_dir();
+  auto instance_dir = config_->instance_dir();
   if (!cvd::DirectoryExists(instance_dir.c_str())) {
     LOG(INFO) << "Setting up " << instance_dir;
     if (mkdir(instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
@@ -158,10 +160,9 @@ bool QemuManager::EnsureInstanceDirExists() const {
 
 }
 bool QemuManager::CleanPriorFiles() const {
-  auto config = vsoc::CuttlefishConfig::Get();
-  std::string run_files = config->PerInstancePath("*") + " " +
-                          config->mempath() + " " +
-                          config->cuttlefish_env_path() + " " +
+  std::string run_files = config_->PerInstancePath("*") + " " +
+                          config_->mempath() + " " +
+                          config_->cuttlefish_env_path() + " " +
                           vsoc::GetGlobalConfigFileLink();
   LOG(INFO) << "Assuming run files of " << run_files;
   std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
