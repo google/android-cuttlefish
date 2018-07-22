@@ -55,6 +55,8 @@
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
 #include "host/libs/vm_manager/vm_manager.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 
 using vsoc::GetPerInstanceDefault;
 using cvd::LauncherExitCodes;
@@ -95,24 +97,20 @@ DEFINE_int32(memory_mb, 2048,
 std::string g_default_mempath{vsoc::GetDefaultMempath()};
 DEFINE_string(mempath, g_default_mempath.c_str(),
               "Target location for the shmem file.");
-// The cvd-mobile-{tap|br}-xx interfaces are created by default, but libvirt
-// needs to create its own on tap interfaces on every run so we use a different
-// set for it.
-std::string g_default_mobile_interface{
-    vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-mbr-")
-                                : GetPerInstanceDefault("cvd-mobile-")};
-DEFINE_string(mobile_interface, g_default_mobile_interface.c_str(),
+DEFINE_string(mobile_interface, "", // default handled on ParseCommandLine
               "Network interface to use for mobile networking");
-std::string g_default_mobile_tap_interface =
-    vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-mtap-")
-                                : GetPerInstanceDefault("amobile");
-DEFINE_string(mobile_tap_name, g_default_mobile_tap_interface.c_str(),
+DEFINE_string(mobile_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for mobile");
 std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
 DEFINE_string(serial_number, g_default_serial_number.c_str(),
               "Serial number to use for the device");
-DEFINE_string(instance_dir, vsoc::GetDefaultPerInstanceDir(),
+DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
+DEFINE_string(
+    vm_manager,
+    vsoc::HostSupportsQemuCli() ? vm_manager::QemuManager::name()
+                                : vm_manager::LibvirtManager::name(),
+    "What virtual machine manager to use, one of libvirt or qemu_cli");
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
@@ -150,13 +148,9 @@ DEFINE_string(guest_mac_address,
 DEFINE_string(host_mac_address,
               "42:00:00:00:00:00",
               "MAC address of the wifi interface running on the host.");
-DEFINE_string(wifi_interface,
-              vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wbr-")
-                                          : GetPerInstanceDefault("cvd-wifi-"),
+DEFINE_string(wifi_interface, "", // default handled on ParseCommandLine
               "Network interface to use for wifi");
-DEFINE_string(wifi_tap_name,
-              vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wtap-")
-                                          : GetPerInstanceDefault("awifi"),
+DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for wifi");
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
@@ -503,6 +497,11 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   }
   // Set this first so that calls to PerInstancePath below are correct
   config->set_instance_dir(FLAGS_instance_dir);
+  if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
+    LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
+    return nullptr;
+  }
+  config->set_vm_manager(FLAGS_vm_manager);
 
   config->set_serial_number(FLAGS_serial_number);
 
@@ -602,13 +601,76 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   return config;
 }
 
-bool ParseCommandLineFlags(int argc, char** argv) {
+void SetDefaultFlagsForQemu() {
+  auto default_mobile_interface = GetPerInstanceDefault("cvd-mbr-");
+  SetCommandLineOptionWithMode("mobile_interface",
+                               default_mobile_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_mobile_tap_name = GetPerInstanceDefault("cvd-mtap-");
+  SetCommandLineOptionWithMode("mobile_tap_name",
+                               default_mobile_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_interface = GetPerInstanceDefault("cvd-wbr-");
+  SetCommandLineOptionWithMode("wifi_interface",
+                               default_wifi_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
+  SetCommandLineOptionWithMode("wifi_tap_name",
+                               default_wifi_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_instance_dir =
+      cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
+  SetCommandLineOptionWithMode("instance_dir",
+                               default_instance_dir.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
+
+void SetDefaultFlagsForLibvirt() {
+  auto default_mobile_interface = GetPerInstanceDefault("cvd-mobile-");
+  SetCommandLineOptionWithMode("mobile_interface",
+                               default_mobile_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_mobile_tap_name = GetPerInstanceDefault("amobile");
+  SetCommandLineOptionWithMode("mobile_tap_name",
+                               default_mobile_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_interface = GetPerInstanceDefault("cvd-wifi-");
+  SetCommandLineOptionWithMode("wifi_interface",
+                               default_wifi_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_tap_name = GetPerInstanceDefault("awifi");
+  SetCommandLineOptionWithMode("wifi_tap_name",
+                               default_wifi_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_instance_dir =
+      "/var/run/libvirt-" +
+      vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix);
+  SetCommandLineOptionWithMode("instance_dir",
+                               default_instance_dir.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
+
+bool ParseCommandLineFlags(int* argc, char*** argv) {
   // The config_file is created by the launcher, so the launcher is the only
   // host process that doesn't use the flag.
   // Set the default to empty.
   google::SetCommandLineOptionWithMode("config_file", "",
                                        gflags::SET_FLAGS_DEFAULT);
-  google::ParseCommandLineFlags(&argc, &argv, true);
+  google::ParseCommandLineNonHelpFlags(argc, argv, true);
+  bool invalid_manager = false;
+  if (FLAGS_vm_manager == vm_manager::LibvirtManager::name()) {
+    SetDefaultFlagsForLibvirt();
+  } else if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
+    SetDefaultFlagsForQemu();
+  } else {
+    std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
+              << std::endl;
+    invalid_manager = true;
+  }
+  google::HandleCommandLineHelpFlags();
+  if (invalid_manager) {
+    return false;
+  }
   // Set the flag value to empty (in case the caller passed a value for it).
   FLAGS_config_file = "";
 
@@ -708,8 +770,7 @@ cvd::SharedFD DaemonizeLauncher(vsoc::CuttlefishConfig* config) {
 
 // Stops the device. If this function is successful it returns on a child of the
 // launcher (after it killed the laucher) and it should exit immediately
-bool StopCvd(vsoc::CuttlefishConfig* config) {
-  auto vm_manager = vm_manager::VmManager::Get(config);
+bool StopCvd(vm_manager::VmManager* vm_manager) {
   vm_manager->Stop();
   auto pgid = getpgid(0);
   auto child_pid = fork();
@@ -738,7 +799,7 @@ bool StopCvd(vsoc::CuttlefishConfig* config) {
 }
 
 void ServerLoop(cvd::SharedFD server,
-                vsoc::CuttlefishConfig* config) {
+                vm_manager::VmManager* vm_manager) {
   while (true) {
     // TODO: use select to handle simultaneous connections.
     auto client = cvd::SharedFD::Accept(*server);
@@ -746,7 +807,7 @@ void ServerLoop(cvd::SharedFD server,
     while (client->IsOpen() && client->Read(&action, sizeof(char)) > 0) {
       switch (action) {
         case cvd::LauncherAction::kStop:
-          if (StopCvd(config)) {
+          if (StopCvd(vm_manager)) {
             auto response = cvd::LauncherResponse::kSuccess;
             client->Write(&response, sizeof(response));
             std::exit(0);
@@ -768,7 +829,7 @@ void ServerLoop(cvd::SharedFD server,
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  if (!ParseCommandLineFlags(argc, argv)) {
+  if (!ParseCommandLineFlags(&argc, &argv)) {
     return LauncherExitCodes::kArgumentParsingError;
   }
 
@@ -778,7 +839,8 @@ int main(int argc, char** argv) {
   if (!config) {
     return LauncherExitCodes::kCuttlefishConfigurationInitError;
   }
-  auto vm_manager = vm_manager::VmManager::Get(config);
+
+  auto vm_manager = vm_manager::VmManager::Get(config->vm_manager(), config);
 
   // Check host configuration
   std::vector<std::string> config_commands;
@@ -905,7 +967,7 @@ int main(int argc, char** argv) {
   LaunchVNCServerIfEnabled();
   LaunchAdbConnectorIfEnabled();
 
-  ServerLoop(launcher_monitor_socket, config); // Should not return
+  ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
   return cvd::LauncherExitCodes::kServerError;
 }

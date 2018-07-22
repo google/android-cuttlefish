@@ -44,6 +44,7 @@
 #include "host/commands/launch/launcher_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
 
 DEFINE_int32(wait_for_launcher, 5,
              "How many seconds to wait for the launcher to respond to the stop "
@@ -81,13 +82,23 @@ std::set<pid_t> GetCandidateProcessGroups() {
   return ret;
 }
 
-int FallBackStop(vsoc::CuttlefishConfig* config) {
-  auto vm_manager = vm_manager::VmManager::Get(config);
+int FallBackStop() {
   auto exit_code = 1; // Having to fallback is an error
-  if (!vm_manager->Stop()) {
-    LOG(ERROR)
-        << "Error when stopping guest virtual machine. Is it still running?";
-    exit_code |= 2;
+  if (vm_manager::VmManager::IsVmManagerSupported(
+          vm_manager::LibvirtManager::name())) {
+    // Libvirt doesn't run as the same user as stop_cvd, so we must stop it
+    // through the manager. Qemu on the other hand would get killed by the
+    // commands below.
+    vsoc::CuttlefishConfig config;
+    config.set_instance_dir(std::string("/var/run/libvirt-") +
+                            vsoc::kDefaultUuidPrefix);
+    auto vm_manager =
+      vm_manager::VmManager::Get(vm_manager::LibvirtManager::name(), &config);
+    if (!vm_manager->Stop()) {
+      LOG(WARNING) << "Failed to stop the libvirt domain: Is it still running? "
+                      "Is it using qemu_cli?";
+      exit_code |= 2;
+    }
   }
 
   auto process_groups = GetCandidateProcessGroups();
@@ -103,16 +114,6 @@ int FallBackStop(vsoc::CuttlefishConfig* config) {
 
   return exit_code;
 }
-
-// Even if the config file can't be found, we still need a valid config object
-// with some defaults to be able to run the fallback stopping procedure
-vsoc::CuttlefishConfig* BuildSensibleConfig() {
-  vsoc::CuttlefishConfig* config(new vsoc::CuttlefishConfig());
-  config->set_instance_dir(vsoc::GetDefaultPerInstanceDir());
-  // This one is pretty safe to assume is there
-  config->set_mempath(vsoc::GetDefaultMempath());
-  return config;
-}
 }  // anonymous namespace
 
 int main(int argc, char** argv) {
@@ -122,27 +123,27 @@ int main(int argc, char** argv) {
   auto config = vsoc::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
-    return FallBackStop(BuildSensibleConfig());
+    return FallBackStop();
   }
 
   auto monitor_path = config->launcher_monitor_socket_path();
   if (monitor_path.empty()) {
     LOG(ERROR) << "No path to launcher monitor found";
-    return FallBackStop(config);
+    return FallBackStop();
   }
   auto monitor_socket = cvd::SharedFD::SocketLocalClient(monitor_path.c_str(),
                                                          false, SOCK_STREAM);
   if (!monitor_socket->IsOpen()) {
     LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
                << ": " << monitor_socket->StrError();
-    return FallBackStop(config);
+    return FallBackStop();
   }
   auto request = cvd::LauncherAction::kStop;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
   if (bytes_sent < 0) {
     LOG(ERROR) << "Error sending launcher monitor the stop command: "
                << monitor_socket->StrError();
-    return FallBackStop(config);
+    return FallBackStop();
   }
   // Perform a select with a timeout to guard against launcher hanging
   cvd::SharedFDSet read_set;
@@ -153,23 +154,23 @@ int main(int argc, char** argv) {
   if (selected < 0){
     LOG(ERROR) << "Failed communication with the launcher monitor: "
                << strerror(errno);
-    return FallBackStop(config);
+    return FallBackStop();
   }
   if (selected == 0) {
     LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
-    return FallBackStop(config);
+    return FallBackStop();
   }
   cvd::LauncherResponse response;
   auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
   if (bytes_recv < 0) {
     LOG(ERROR) << "Error receiving response from launcher monitor: "
                << monitor_socket->StrError();
-    return FallBackStop(config);
+    return FallBackStop();
   }
   if (response != cvd::LauncherResponse::kSuccess) {
     LOG(ERROR) << "Received '" << static_cast<char>(response)
                << "' response from launcher monitor";
-    return FallBackStop(config);
+    return FallBackStop();
   }
   LOG(INFO) << "Successfully stopped device";
   return 0;

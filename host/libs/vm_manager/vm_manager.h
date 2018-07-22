@@ -15,8 +15,9 @@
  */
 #pragma once
 
-#include <memory>
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <host/libs/config/cuttlefish_config.h>
@@ -24,13 +25,18 @@
 namespace vm_manager {
 
 // Superclass of every guest VM manager. It provides a static getter that
-// chooses the best subclass to instantiate based on the capabilities supported
-// by the host packages.
+// returns the requested vm manager as a singleton.
 class VmManager {
  public:
-  // Returns the most suitable vm manager as a singleton.
-  static std::shared_ptr<VmManager> Get(
-      vsoc::CuttlefishConfig* config);
+  // Returns the most suitable vm manager as a singleton. It may return nullptr
+  // if the requested vm manager is not supported by the current version of the
+  // host packages
+  static VmManager* Get(const std::string& vm_manager_name,
+                        vsoc::CuttlefishConfig* config);
+  static bool IsValidName(const std::string& name);
+  static bool IsVmManagerSupported(const std::string& name);
+  static std::vector<std::string> GetValidNames();
+
   virtual ~VmManager() = default;
 
   virtual bool Start() const = 0;
@@ -47,6 +53,15 @@ class VmManager {
                           std::vector<std::string>* config_commands);
   vsoc::CuttlefishConfig* config_;
   VmManager(vsoc::CuttlefishConfig* config);
+
+private:
+  // Holds a map of manager names to a pair of functions. The first function
+  // implements a singleton for the specified manager and the second one
+  // specifies whether the host packages support it.
+ using Builder = std::function<VmManager*(vsoc::CuttlefishConfig*)>;
+ using SupportChecker = std::function<bool()>;
+ using VmManagerHelper = std::pair<Builder, SupportChecker>;
+ static std::map<std::string, VmManagerHelper> vm_manager_helpers_;
 };
 
 }  // namespace vm_manager

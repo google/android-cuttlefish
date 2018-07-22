@@ -16,6 +16,8 @@
 
 #include "host/libs/vm_manager/vm_manager.h"
 
+#include <memory>
+
 #include <glog/logging.h>
 
 #include "common/libs/utils/users.h"
@@ -28,13 +30,51 @@ namespace vm_manager {
 VmManager::VmManager(vsoc::CuttlefishConfig* config)
     : config_(config) {}
 
-std::shared_ptr<VmManager> VmManager::Get(
-    vsoc::CuttlefishConfig* config) {
-  static std::shared_ptr<VmManager> vm_manager(
-      vsoc::HostSupportsQemuCli()
-          ? std::shared_ptr<VmManager>(new QemuManager(config))
-          : std::shared_ptr<VmManager>(new LibvirtManager(config)));
-  return vm_manager;
+namespace{
+template <typename T>
+VmManager* GetManagerSingleton(vsoc::CuttlefishConfig* config) {
+  static std::shared_ptr<VmManager> vm_manager(new T(config));
+  return vm_manager.get();
+}
+}
+
+std::map<std::string, VmManager::VmManagerHelper>
+    VmManager::vm_manager_helpers_ = {
+        {LibvirtManager::name(),
+         {[](vsoc::CuttlefishConfig* config) {
+            return GetManagerSingleton<LibvirtManager>(config);
+          },
+          []() { return true; }}},
+        {QemuManager::name(),
+         {[](vsoc::CuttlefishConfig* config) {
+            return GetManagerSingleton<QemuManager>(config);
+          },
+          []() { return vsoc::HostSupportsQemuCli(); }}}};
+
+VmManager* VmManager::Get(const std::string& vm_manager_name,
+                          vsoc::CuttlefishConfig* config) {
+  if (VmManager::IsValidName(vm_manager_name)) {
+    return vm_manager_helpers_[vm_manager_name].first(config);
+  }
+  LOG(ERROR) << "Requested invalid VmManager: " << vm_manager_name;
+  return nullptr;
+}
+
+bool VmManager::IsValidName(const std::string& name) {
+  return vm_manager_helpers_.count(name) > 0;
+}
+
+bool VmManager::IsVmManagerSupported(const std::string& name) {
+  return VmManager::IsValidName(name) &&
+         vm_manager_helpers_[name].second();
+}
+
+std::vector<std::string> VmManager::GetValidNames() {
+  std::vector<std::string> ret = {};
+  for (auto key_val: vm_manager_helpers_) {
+    ret.push_back(key_val.first);
+  }
+  return ret;
 }
 
 bool VmManager::UserInGroup(const std::string& group,

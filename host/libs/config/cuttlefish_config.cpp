@@ -68,6 +68,7 @@ int InstanceFromEnvironment() {
 
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
+const char* kVmManager = "vm_manager";
 
 const char* kCpus = "cpus";
 const char* kMemoryMb = "memory_mb";
@@ -123,6 +124,13 @@ std::string CuttlefishConfig::instance_dir() const {
 }
 void CuttlefishConfig::set_instance_dir(const std::string& instance_dir) {
   (*dictionary_)[kInstanceDir] = instance_dir;
+}
+
+std::string CuttlefishConfig::vm_manager() const {
+  return (*dictionary_)[kVmManager].asString();
+}
+void CuttlefishConfig::set_vm_manager(const std::string& name) {
+    (*dictionary_)[kVmManager] = name;
 }
 
 std::string CuttlefishConfig::serial_number() const {

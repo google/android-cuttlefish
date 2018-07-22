@@ -341,8 +341,11 @@ std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
   return out;
 }
 }  // namespace
+
+const std::string LibvirtManager::name() { return "libvirt"; }
+
 LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
-    : VmManager(config) {}
+  : VmManager(config) {}
 
 bool LibvirtManager::Start() const {
   std::string start_command = GetLibvirtCommand();

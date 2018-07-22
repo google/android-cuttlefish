@@ -88,6 +88,9 @@ int BuildAndRunQemuCmd(vsoc::CuttlefishConfig* config) {
 }
 
 }  // namespace
+
+const std::string QemuManager::name() { return "qemu_cli"; }
+
 QemuManager::QemuManager(vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
