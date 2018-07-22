@@ -51,6 +51,9 @@ class CuttlefishConfig {
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
 
+  std::string vm_manager() const;
+  void set_vm_manager(const std::string& name);
+
   std::string serial_number() const;
   void set_serial_number(const std::string& serial_number);
 
