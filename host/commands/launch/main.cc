@@ -32,6 +32,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include <gflags/gflags.h>
@@ -52,8 +53,6 @@
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/monitor/kernel_log_server.h"
-#include "host/libs/usbip/server.h"
-#include "host/libs/vadb/virtual_adb_server.h"
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -122,6 +121,9 @@ DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
               "Location of the vnc server binary.");
+DEFINE_string(virtual_usb_manager_binary,
+              vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"),
+              "Location of the virtual usb manager binary.");
 DEFINE_string(ivserver_binary,
               vsoc::DefaultHostArtifactsPath("bin/ivserver"),
               "Location of the ivshmem server binary.");
@@ -170,47 +172,6 @@ const std::string kDataPolicyAlwaysCreate = "always_create";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeUsb[] = "usb";
-
-// VirtualUSBManager manages virtual USB device presence for Cuttlefish.
-class VirtualUSBManager {
- public:
-  VirtualUSBManager(const std::string& usbsocket, int vhci_port,
-                    const std::string& android_usbipsocket)
-      : adb_{usbsocket, vhci_port, android_usbipsocket},
-        usbip_{android_usbipsocket, adb_.Pool()} {}
-
-  ~VirtualUSBManager() = default;
-
-  // Initialize Virtual USB and start USB management thread.
-  void Start() {
-    CHECK(adb_.Init()) << "Could not initialize Virtual ADB server";
-    CHECK(usbip_.Init()) << "Could not start USB/IP server";
-    std::thread([this] { Thread(); }).detach();
-  }
-
- private:
-  void Thread() {
-    for (;;) {
-      cvd::SharedFDSet fd_read;
-      fd_read.Zero();
-
-      adb_.BeforeSelect(&fd_read);
-      usbip_.BeforeSelect(&fd_read);
-
-      int ret = cvd::Select(&fd_read, nullptr, nullptr, nullptr);
-      if (ret <= 0) continue;
-
-      adb_.AfterSelect(fd_read);
-      usbip_.AfterSelect(fd_read);
-    }
-  }
-
-  vadb::VirtualADBServer adb_;
-  vadb::usbip::Server usbip_;
-
-  VirtualUSBManager(const VirtualUSBManager&) = delete;
-  VirtualUSBManager& operator=(const VirtualUSBManager&) = delete;
-};
 
 // KernelLogMonitor receives and monitors kernel log for Cuttlefish.
 class KernelLogMonitor {
@@ -365,6 +326,32 @@ int CreateIvServerUnixSocket(const std::string& path) {
 
 bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && AdbTunnelEnabled();
+}
+
+void LaunchUsbServerIfEnabled(vsoc::CuttlefishConfig* config) {
+  if (!AdbUsbEnabled()) {
+    return;
+  }
+  auto socket_name = config->usb_v1_socket_name();
+  auto usb_v1_server = cvd::SharedFD::SocketLocalServer(
+      socket_name.c_str(), false, SOCK_STREAM, 0666);
+  if (!usb_v1_server->IsOpen()) {
+    LOG(ERROR) << "Unable to create USB v1 server socket: "
+               << usb_v1_server->StrError();
+    std::exit(cvd::LauncherExitCodes::kUsbV1SocketError);
+  }
+  int server_fd = usb_v1_server->UNMANAGED_Dup();
+  if (server_fd < 0) {
+    LOG(ERROR) << "Unable to dup USB v1 server socket file descriptor: "
+               << strerror(errno);
+    std::exit(cvd::LauncherExitCodes::kUsbV1SocketError);
+  }
+
+  cvd::subprocess({FLAGS_virtual_usb_manager_binary,
+                   "-usb_v1_fd=" + std::to_string(server_fd),
+                   GetConfigFileArg()});
+
+  close(server_fd);
 }
 
 void LaunchIvServer(vsoc::CuttlefishConfig* config) {
@@ -946,11 +933,7 @@ int main(int argc, char** argv) {
 
   kmon.Start();
 
-  // Start the usb manager
-  VirtualUSBManager vadb(config->usb_v1_socket_name(), config->vhci_port(),
-                         config->usb_ip_socket_name());
-  vadb.Start();
-
+  LaunchUsbServerIfEnabled(config);
   LaunchIvServer(config);
 
   // Initialize the regions that require so before the VM starts.

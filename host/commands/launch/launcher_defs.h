@@ -33,6 +33,7 @@ enum LauncherExitCodes : int {
   kProcessGroupError = 12,
   kMonitorCreationFailed = 13,
   kServerError = 14,
+  kUsbV1SocketError = 15,
 };
 
 // Actions supported by the launcher server

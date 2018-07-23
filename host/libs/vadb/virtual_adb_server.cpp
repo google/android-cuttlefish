@@ -18,22 +18,6 @@
 
 namespace vadb {
 
-bool VirtualADBServer::Init() {
-  if (name_.empty()) {
-    LOG(INFO) << "name_ empty, not starting server socket";
-    return true;
-  }
-  LOG(INFO) << "Starting server socket: " << name_;
-
-  server_ =
-      cvd::SharedFD::SocketLocalServer(name_.c_str(), false, SOCK_STREAM, 0666);
-  if (!server_->IsOpen()) {
-    LOG(ERROR) << "Could not create socket: " << server_->StrError();
-    return false;
-  }
-  return true;
-}
-
 void VirtualADBServer::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   fd_read->Set(server_);
   for (const auto& client : clients_) {
