@@ -47,6 +47,7 @@
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/boot_image_unpacker.h"
+#include "host/commands/launch/launcher_defs.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -56,6 +57,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 using vsoc::GetPerInstanceDefault;
+using cvd::LauncherExitCodes;
 
 DEFINE_string(
     system_image, "",
@@ -175,21 +177,6 @@ const std::string kDataPolicyAlwaysCreate = "always_create";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeUsb[] = "usb";
-
-enum LauncherExitCodes : int {
-  kSuccess = 0,
-  kArgumentParsingError = 1,
-  kInvalidHostConfiguration = 2,
-  kCuttlefishConfigurationInitError = 3,
-  kInstanceDirCreationError = 4,
-  kPrioFilesCleanupError = 5,
-  kBootImageUnpackError = 6,
-  kCuttlefishConfigurationSaveError = 7,
-  kDaemonizationError = 8,
-  kVMCreationError = 9,
-  kPipeIOError = 10,
-  kVirtualDeviceBootFailed = 11,
-};
 
 // VirtualUSBManager manages virtual USB device presence for Cuttlefish.
 class VirtualUSBManager {
@@ -802,6 +789,14 @@ int main(int argc, char** argv) {
       }
       return monitor::SubscriptionAction::ContinueSubscription;
     });
+  } else {
+    // Make sure the launcher runs in its own process group even when running in
+    // foreground
+    int retval = setpgid(0, 0);
+    if (retval) {
+      LOG(ERROR) << "Failed to create new process group: " << strerror(errno);
+      std::exit(LauncherExitCodes::kProcessGroupError);
+    }
   }
 
   kmon.Start();
