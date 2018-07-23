@@ -31,6 +31,7 @@ cvd_host_executables := \
     record_audio \
     cf_qemu.sh \
     ivserver \
+    virtual_usb_manager \
 
 cvd_host_tests := \
     auto_free_buffer_test \
