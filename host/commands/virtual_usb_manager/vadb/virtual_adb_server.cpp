@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vadb/virtual_adb_server.h"
+#include "host/commands/virtual_usb_manager/vadb/virtual_adb_server.h"
 
 namespace vadb {
 

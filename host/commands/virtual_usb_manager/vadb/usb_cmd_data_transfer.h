@@ -19,8 +19,8 @@
 #include <stdint.h>
 
 #include "common/libs/usbforward/protocol.h"
-#include "host/libs/vadb/usb_cmd.h"
-#include "host/libs/usbip/device.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd.h"
+#include "host/commands/virtual_usb_manager/usbip/device.h"
 
 namespace vadb {
 // Execute control transfer.

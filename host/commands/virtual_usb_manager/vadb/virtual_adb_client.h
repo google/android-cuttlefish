@@ -20,11 +20,11 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/usbforward/protocol.h"
-#include "host/libs/vadb/usb_cmd.h"
-#include "host/libs/usbip/device.h"
-#include "host/libs/usbip/device_pool.h"
-#include "host/libs/usbip/messages.h"
-#include "host/libs/usbip/vhci_instrument.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd.h"
+#include "host/commands/virtual_usb_manager/usbip/device.h"
+#include "host/commands/virtual_usb_manager/usbip/device_pool.h"
+#include "host/commands/virtual_usb_manager/usbip/messages.h"
+#include "host/commands/virtual_usb_manager/usbip/vhci_instrument.h"
 
 namespace vadb {
 // VirtualADBClient is a companion class for USBForwarder, running on

@@ -19,23 +19,20 @@
 #include <string>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/usbip/device_pool.h"
-#include "host/libs/vadb/virtual_adb_client.h"
+#include "host/commands/virtual_usb_manager/usbip/client.h"
+#include "host/commands/virtual_usb_manager/usbip/device_pool.h"
 
 namespace vadb {
-// VirtualADBServer manages incoming VirtualUSB/ADB connections from QEmu.
-class VirtualADBServer {
+namespace usbip {
+
+class Server final {
  public:
-  VirtualADBServer(cvd::SharedFD usb_v1_socket, int vhci_port,
-                   const std::string& usbip_socket_name)
-      : vhci_port_{vhci_port},
-        usbip_name_(usbip_socket_name),
-        server_(usb_v1_socket) {}
+  Server(const std::string& name, const DevicePool& device_pool);
+  ~Server() = default;
 
-  ~VirtualADBServer() = default;
-
-  // Pool of USB devices available to export.
-  const usbip::DevicePool& Pool() const { return pool_; };
+  // Initialize this instance of Server.
+  // Returns true, if initialization was successful.
+  bool Init();
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
@@ -46,16 +43,23 @@ class VirtualADBServer {
   void AfterSelect(const cvd::SharedFDSet& fd_read);
 
  private:
+  // Create USBIP server socket.
+  // Returns true, if socket was successfully created.
+  bool CreateServerSocket();
+
+  // Handle new client connection.
+  // New clients will be appended to clients_ list.
   void HandleIncomingConnection();
 
-  usbip::DevicePool pool_;
-  int vhci_port_{};
-  std::string usbip_name_;
+  std::string name_;
   cvd::SharedFD server_;
-  std::list<VirtualADBClient> clients_;
+  std::list<Client> clients_;
 
-  VirtualADBServer(const VirtualADBServer&) = delete;
-  VirtualADBServer& operator=(const VirtualADBServer&) = delete;
+  const DevicePool& device_pool_;
+
+  Server(const Server&) = delete;
+  Server& operator=(const Server&) = delete;
 };
 
+}  // namespace usbip
 }  // namespace vadb

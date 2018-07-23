@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 
-#include "host/libs/usbip/messages.h"
+#include "host/commands/virtual_usb_manager/usbip/messages.h"
 
 namespace vadb {
 namespace usbip {
