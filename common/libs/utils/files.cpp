@@ -49,14 +49,21 @@ bool DirectoryExists(const std::string& path) {
   return true;
 }
 
-std::string RealPath(const std::string& path) {
-  std::array<char, PATH_MAX> buffer{};
-  if (!realpath(path.c_str(), buffer.data())) {
-    LOG(WARNING) << "Could not get real path for file " << path << ": "
-                 << strerror(errno);
+std::string AbsolutePath(const std::string& path) {
+  if (path.empty()) {
     return {};
   }
-  return {buffer.data()};
+  if (path[0] == '/') {
+    return path;
+  }
+
+  std::array<char, PATH_MAX> buffer{};
+  if (!realpath(".", buffer.data())) {
+    LOG(WARNING) << "Could not get real path for current directory \".\""
+                 << ": " << strerror(errno);
+    return {};
+  }
+  return std::string{buffer.data()} + "/" + path;
 }
 
 }  // namespace cvd
