@@ -36,7 +36,6 @@
 
 #ifdef CUTTLEFISH_HOST
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
 #endif
 
 using vsoc::socket_forward::Packet;
@@ -178,10 +177,6 @@ static constexpr auto kNumHostThreads =
 using SocketConnectionInfoCollection =
     std::array<SocketConnectionInfo, kNumHostThreads>;
 
-void LaunchConnectionMaintainer(int port) {
-  std::thread(cvd::EstablishAndMaintainConnection, port).detach();
-}
-
 void MarkAsFree(SocketConnectionInfo* conn) {
   std::lock_guard<std::mutex> guard{conn->lock};
   conn->socket = cvd::SharedFD{};
@@ -264,9 +259,6 @@ void AllocateWorkers(cvd::SharedFD socket,
             << guest_port;
   auto server = cvd::SharedFD::SocketLocalServer(host_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on port " << host_port;
-  // Note: If generically forwarding ports, the adb connection maintainer should
-  // be disabled
-  LaunchConnectionMaintainer(host_port);
   while (true) {
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";

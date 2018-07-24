@@ -23,6 +23,7 @@ cc_binary_host {
     ],
     shared_libs: [
         "libbase",
+        "libcuttlefish_utils",
         "vsoc_lib",
     ],
     static_libs: [

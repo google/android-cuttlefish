@@ -21,4 +21,5 @@ subdirs = [
     "tcp_socket",
     "threads",
     "time",
+    "utils",
 ]

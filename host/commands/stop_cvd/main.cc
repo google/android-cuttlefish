@@ -36,7 +36,7 @@
 #include <glog/logging.h>
 
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/libvirt_manager.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace {
 void RunCommand(const char* command) {
@@ -55,8 +55,8 @@ int main(int argc, char** argv) {
   int exit_code = 0;
 
   // TODO(b/78512938): Should ask the monitor to do the shutdown instead
-  vm_manager::LibvirtManager libvirt_manager;
-  if (!libvirt_manager.Stop()) {
+  auto vm_manager = vm_manager::VmManager::Get();
+  if (!vm_manager->Stop()) {
     LOG(ERROR)
         << "Error when stopping guest virtual machine. Is it still running?";
     exit_code = 1;
@@ -64,16 +64,10 @@ int main(int argc, char** argv) {
 
   auto config = vsoc::CuttlefishConfig::Get();
 
-  // TODO(b/78512938): Shouldn't need sudo to shut down
   std::string run_files = config->PerInstancePath("*");
-  std::string fuser_cmd = "sudo fuser -k ";
+  std::string fuser_cmd = "fuser -k ";
   fuser_cmd += run_files;
   fuser_cmd += " ";
   fuser_cmd += config->mempath();
   RunCommand(fuser_cmd.c_str());
-  std::string delete_cmd = "rm -f ";
-  delete_cmd += run_files;
-  RunCommand(delete_cmd.c_str());
-
-  return exit_code;
 }

@@ -19,7 +19,9 @@ cc_binary_host {
         "main.cc",
         "screen_region_handler.cc",
         "ril_region_handler.cc",
+        "vsoc_shared_memory.cc",
         "wifi_region_handler.cc",
+        "boot_image_unpacker.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -28,6 +30,7 @@ cc_binary_host {
         "vsoc_lib",
         "libcuttlefish_fs",
         "libcuttlefish_strings",
+        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libicuuc",
         "libbase",

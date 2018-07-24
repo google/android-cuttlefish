@@ -17,12 +17,15 @@ cc_library_host_static {
     name: "libcuttlefish_vm_manager",
     srcs: [
         "libvirt_manager.cpp",
+        "qemu_manager.cpp",
+        "vm_manager.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     shared_libs: [
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
         "libicuuc",
@@ -33,5 +36,11 @@ cc_library_host_static {
         "libcuttlefish_host_config",
         "libjsoncpp",
     ],
+    defaults: ["cuttlefish_host_only"],
+}
+
+cc_prebuilt_binary {
+    name: "cf_qemu.sh",
+    srcs: ["cf_qemu.sh"],
     defaults: ["cuttlefish_host_only"],
 }

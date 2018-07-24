@@ -102,7 +102,6 @@ constexpr int kAdbDaemonPort = 5037;
 
 bool AdbSendMessage(cvd::SharedFD sock, const std::string& message) {
   if (!sock->IsOpen()) {
-    LOG(INFO) << "failed to connect to adb daemon";
     return false;
   }
   if (!SendAll(sock, message)) {
@@ -175,14 +174,11 @@ int RecvUptimeResult(cvd::SharedFD sock) {
 static constexpr int kAdbCommandGapTime = 5;
 
 void EstablishConnection(int port) {
-  while (true) {
-    LOG(INFO) << "Attempting to connect to device on port " << port;
-    if (AdbConnect(port)) {
-      LOG(DEBUG) << "adb connect message for " << port << " successfully sent";
-      break;
-    }
+  LOG(INFO) << "Attempting to connect to device on port " << port;
+  while (!AdbConnect(port)) {
     sleep(kAdbCommandGapTime);
   }
+  LOG(INFO) << "adb connect message for " << port << " successfully sent";
   sleep(kAdbCommandGapTime);
 }
 

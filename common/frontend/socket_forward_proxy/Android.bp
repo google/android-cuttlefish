@@ -21,6 +21,7 @@ cc_binary {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libcuttlefish_strings",
         "cuttlefish_auto_resources",
         "vsoc_lib",
@@ -37,7 +38,6 @@ cc_binary {
             static_libs: [
                 "libcuttlefish_host_config",
                 "libjsoncpp",
-                "libadb_connection_maintainer",
             ],
         },
     },

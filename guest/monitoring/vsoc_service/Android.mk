@@ -18,6 +18,7 @@ include $(CLEAR_VARS)
 LOCAL_CERTIFICATE := platform
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $(call all-java-files-under, java)
+LOCAL_STATIC_JAVA_LIBRARIES := guava
 LOCAL_PACKAGE_NAME := VSoCService
 LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_PROGUARD_FLAGS := -include build/core/proguard.flags
