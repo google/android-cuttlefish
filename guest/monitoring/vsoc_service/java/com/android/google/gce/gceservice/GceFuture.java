@@ -22,12 +22,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
+import com.google.common.util.concurrent.AbstractFuture;
 
-public class GceFuture<T> implements Future<T> {
+public class GceFuture<T> extends AbstractFuture<T> {
     private static final String LOG_TAG = "GceFuture";
-    private boolean mDone = false;
-    private Exception mException = null;
-    private T mResult = null;
     private final String mName;
 
 
@@ -41,113 +39,52 @@ public class GceFuture<T> implements Future<T> {
     }
 
 
-    public void set(T value) {
-        synchronized(this) {
-            if (mDone) {
-                Exception e = new Exception();
-                Log.e(LOG_TAG, mName + ": Multiple return values from a future object.", e);
-                return;
-            }
-
-            mResult = value;
-            mDone = true;
-            notifyAll();
+    @Override
+    public boolean set(T value) {
+        if (super.set(value)) {
+            return true;
+        } else {
+            Exception e = new Exception();
+            Log.e(LOG_TAG, mName + ": Multiple return values from a future object.", e);
+            return false;
         }
     }
 
 
     public void set(Exception e) {
-        synchronized(this) {
-            if (mDone) {
-                Log.w(LOG_TAG, mName + ": Discarding execution exception -- job done.", e);
-                return;
-            }
-
-            Log.w(LOG_TAG, mName + ": Could not complete job: " + e.getMessage(), e);
-            mException = e;
-            mDone = true;
-            notifyAll();
+        if (!super.setException(e)) {
+            Log.w(LOG_TAG, mName + ": Discarding execution exception -- job done.", e);
+            return;
         }
+        Log.w(LOG_TAG, mName + ": Could not complete job: " + e.getMessage(), e);
     }
 
 
     @Override
     public boolean cancel(boolean canInterrupt) {
+        // TODO(schuffelen): See if this can be deleted, since GceFuture.cancel is never invoked
+        // directly.
         // We do not support interrupting jobs on purpose:
         // this offers us little benefit (stripping maybe a second or two), at the expense
         // of killing something that may cascade, like BroadcastReceiver.
-        synchronized(this) {
-            if (mDone) return false;
-            set(new CancellationException("cancelled"));
-        }
-
-        return true;
+        return super.setException(new CancellationException("cancelled"));
     }
 
 
     @Override
     public boolean isCancelled() {
-        synchronized(this) {
-            return (mException != null) && (mException instanceof CancellationException);
-        }
-    }
-
-
-    @Override
-    public boolean isDone() {
-        synchronized(this) {
-            return mDone;
-        }
-    }
-
-
-    @Override
-    public T get() throws CancellationException, ExecutionException, InterruptedException {
-        try {
-            return get(-1, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            // This is a really interesting case to consider.
-            // Fatal error to add to the drama.
-            Log.wtf(LOG_TAG, mName + ": Unexpected condition: Infinite wait timed out.");
-            return null;
-        }
-    }
-
-
-    @Override
-    public T get(long timeout, TimeUnit units)
-    throws CancellationException, ExecutionException, InterruptedException, TimeoutException {
-        waitDone(timeout, units);
-
-        if (mException != null) {
-            if (mException instanceof CancellationException)
-                throw (CancellationException)mException;
-            throw new ExecutionException(mException);
-        }
-
-        return mResult;
-    }
-
-
-    /** Wait for final result.
-     *
-     * Result is considered available, when:
-     * - provider returned value,
-     * - this object was cancelled,
-     * - provider threw an exception.
-     */
-    private void waitDone(long timeout, TimeUnit units)
-            throws InterruptedException, TimeoutException {
-        while (!mDone) {
-            synchronized(this) {
-                if (timeout >= 0) {
-                    this.wait(units.toMillis(timeout));
-                    if (!mDone) throw new InterruptedException();
-                } else {
-                    this.wait();
-                }
+        if (isDone()) {
+            try {
+                get();
+            } catch (ExecutionException ex) {
+                return ex.getCause() instanceof CancellationException;
+            } catch (InterruptedException ex) {
+                return false;
+            } catch (CancellationException ex) {
+                return true;
             }
         }
+        return false;
     }
 
 

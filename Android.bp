@@ -161,6 +161,7 @@ cc_binary_host {
     shared_libs: [
         "vsoc_lib",
         "libbase",
+        "libcuttlefish_utils",
     ],
     defaults: ["cuttlefish_host_only"],
 }
@@ -202,6 +203,7 @@ cc_binary_host {
     shared_libs: [
         "vsoc_lib",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
     ],

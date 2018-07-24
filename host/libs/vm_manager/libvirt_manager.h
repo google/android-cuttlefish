@@ -15,22 +15,23 @@
  */
 #pragma once
 
-#include <string>
-
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 namespace vm_manager {
 
-class LibvirtManager {
+class LibvirtManager : public VmManager {
  public:
   LibvirtManager() = default;
-  ~LibvirtManager() = default;
+  virtual ~LibvirtManager() = default;
 
-  bool Start() const;
-  bool Stop() const;
+  bool Start() const override;
+  bool Stop() const override;
 
- protected:
-  std::string BuildXmlConfig() const;
+  bool EnsureInstanceDirExists() const override;
+  bool CleanPriorFiles() const override;
+
+  bool ValidateHostConfiguration(
+      std::vector<std::string>* config_commands) const override;
 };
 
 }  // namespace vm_manager

@@ -15,13 +15,33 @@
  */
 #pragma once
 
+#include <stdint.h>
+
+#include <functional>
 #include <string>
+#include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 //#include "host/libs/monitor/kernel_log_client.h"
 
 namespace monitor {
+
+enum BootEvent : int32_t {
+  BootStarted = 0,
+  BootCompleted = 1,
+  BootFailed = 2,
+  WifiNetworkConnected = 3,
+  MobileNetworkConnected = 4,
+};
+
+enum class SubscriptionAction {
+  ContinueSubscription,
+  CancelSubscription,
+};
+
+using BootEventCallback = std::function<SubscriptionAction(BootEvent)>;
+
 // KernelLogServer manages incoming kernel log connection from QEmu. Only accept
 // one connection.
 class KernelLogServer {
@@ -44,6 +64,7 @@ class KernelLogServer {
   // on affected SharedFDs.
   void AfterSelect(const cvd::SharedFDSet& fd_read);
 
+  void SubscribeToBootEvents(BootEventCallback callback);
  private:
   // Create kernel log server socket.
   // Returns true, if socket was successfully created.
@@ -62,6 +83,7 @@ class KernelLogServer {
   cvd::SharedFD log_fd_;
   std::string line_;
   bool deprecated_boot_completed_;
+  std::vector<BootEventCallback> subscribers_;
 
   KernelLogServer(const KernelLogServer&) = delete;
   KernelLogServer& operator=(const KernelLogServer&) = delete;
