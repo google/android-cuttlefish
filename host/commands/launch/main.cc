@@ -792,10 +792,12 @@ int main(int argc, char** argv) {
   } else {
     // Make sure the launcher runs in its own process group even when running in
     // foreground
-    int retval = setpgid(0, 0);
-    if (retval) {
-      LOG(ERROR) << "Failed to create new process group: " << strerror(errno);
-      std::exit(LauncherExitCodes::kProcessGroupError);
+    if (getsid(0) != getpid()) {
+      int retval = setpgid(0, 0);
+      if (retval) {
+        LOG(ERROR) << "Failed to create new process group: " << strerror(errno);
+        std::exit(LauncherExitCodes::kProcessGroupError);
+      }
     }
   }
 
