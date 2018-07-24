@@ -38,7 +38,7 @@ static void *getProc(const char *name, void *userData) {
 }
 
 __attribute__((constructor)) void setup() {
-	void *egl_handle = dlopen("/system/vendor/lib/egl/libEGL_swiftshader.so", RTLD_NOW);
+	void *egl_handle = dlopen("/vendor/lib/gl_impl/swiftshader/libEGL_swiftshader.so", RTLD_NOW);
 	g_egl_wrapper_context.initDispatchByName(getProc, egl_handle);
 	g_egl_wrapper_context.setContextAccessor(egl);
 }
