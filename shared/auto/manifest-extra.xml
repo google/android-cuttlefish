@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+/*
+** Copyright 2018, The Android Open Source Project.
+**
+** Licensed under the Apache License, Version 2.0 (the "License");
+** you may not use this file except in compliance with the License.
+** limitations under the License.
+*/
+-->
+<!-- Android Auto Embedded specific HALs-->
+<manifest version="1.0" type="device" target-level="1">
+    <hal format="hidl">
+        <name>android.hardware.automotive.audiocontrol</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IAudioControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.automotive.vehicle</name>
+        <transport>hwbinder</transport>
+        <version>2.0</version>
+        <interface>
+            <name>IVehicle</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    <hal format="hidl">
+        <name>android.hardware.broadcastradio</name>
+        <transport>hwbinder</transport>
+        <version>2.0</version>
+        <interface>
+            <name>IBroadcastRadio</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+</manifest>
