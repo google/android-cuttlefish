@@ -15,7 +15,7 @@
  */
 #include <glog/logging.h>
 
-#include "host/libs/vadb/usb_cmd_control_transfer.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd_control_transfer.h"
 
 namespace vadb {
 USBCmdControlTransfer::USBCmdControlTransfer(

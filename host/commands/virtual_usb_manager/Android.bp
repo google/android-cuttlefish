@@ -17,6 +17,18 @@ cc_binary_host {
     name: "virtual_usb_manager",
     srcs: [
         "main.cc",
+        "vadb/usb_cmd_attach.cpp",
+        "vadb/usb_cmd_control_transfer.cpp",
+        "vadb/usb_cmd_data_transfer.cpp",
+        "vadb/usb_cmd_device_list.cpp",
+        "vadb/usb_cmd_heartbeat.cpp",
+        "vadb/virtual_adb_client.cpp",
+        "vadb/virtual_adb_server.cpp",
+        "usbip/client.cpp",
+        "usbip/device_pool.cpp",
+        "usbip/messages.cpp",
+        "usbip/server.cpp",
+        "usbip/vhci_instrument.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -30,8 +42,6 @@ cc_binary_host {
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libvadb",
-        "libusbip",
         "libgflags",
         "libjsoncpp",
     ],

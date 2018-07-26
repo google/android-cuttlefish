@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/usbip/messages.h"
+#include "host/commands/virtual_usb_manager/usbip/messages.h"
 
 #include <netinet/in.h>
 #include <iostream>

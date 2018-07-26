@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "host/libs/usbip/client.h"
+#include "host/commands/virtual_usb_manager/usbip/client.h"
 
 #include <arpa/inet.h>
 
 #include <glog/logging.h>
 #include <iostream>
 
-#include "host/libs/usbip/device.h"
-#include "host/libs/usbip/messages.h"
+#include "host/commands/virtual_usb_manager/usbip/device.h"
+#include "host/commands/virtual_usb_manager/usbip/messages.h"
 
 namespace vadb {
 namespace usbip {

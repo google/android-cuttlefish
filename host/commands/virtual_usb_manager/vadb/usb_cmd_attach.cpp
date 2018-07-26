@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "host/libs/usbip/device_pool.h"
-
 #include <glog/logging.h>
 
+#include "common/libs/usbforward/protocol.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd_attach.h"
+
 namespace vadb {
-namespace usbip {
-
-void DevicePool::AddDevice(BusDevNumber bdn, std::unique_ptr<Device> device) {
-  devices_[bdn] = std::move(device);
+bool USBCmdAttach::OnRequest(const cvd::SharedFD& fd) {
+  if (fd->Write(&req_, sizeof(req_)) != sizeof(req_)) {
+    LOG(ERROR) << "Short write: " << fd->StrError();
+    return false;
+  }
+  return true;
 }
 
-Device* DevicePool::GetDevice(BusDevNumber bus_id) const {
-  auto iter = devices_.find(bus_id);
-  if (iter == devices_.end()) return nullptr;
-  return iter->second.get();
+bool USBCmdAttach::OnResponse(bool is_success, const cvd::SharedFD& /*data*/) {
+  if (!is_success) return false;
+  LOG(INFO) << "Attach successful.";
+  return true;
 }
 
-}  // namespace usbip
+USBCmdAttach::USBCmdAttach(uint8_t bus_id, uint8_t dev_id) {
+  req_.bus_id = bus_id;
+  req_.dev_id = dev_id;
+}
 }  // namespace vadb

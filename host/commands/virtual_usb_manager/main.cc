@@ -23,8 +23,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/usbip/server.h"
-#include "host/libs/vadb/virtual_adb_server.h"
+#include "host/commands/virtual_usb_manager/usbip/server.h"
+#include "host/commands/virtual_usb_manager/vadb/virtual_adb_server.h"
 
 DEFINE_int32(
     usb_v1_fd, -1,

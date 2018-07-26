@@ -16,7 +16,7 @@
 #include <glog/logging.h>
 
 #include "common/libs/usbforward/protocol.h"
-#include "host/libs/vadb/usb_cmd_heartbeat.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd_heartbeat.h"
 
 namespace vadb {
 bool USBCmdHeartbeat::OnRequest(const cvd::SharedFD& /*fd*/) { return true; }

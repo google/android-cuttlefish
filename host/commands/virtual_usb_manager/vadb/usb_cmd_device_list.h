@@ -15,17 +15,28 @@
  */
 #pragma once
 
-#include "host/libs/vadb/usb_cmd.h"
+#include <functional>
+#include <vector>
+#include "common/libs/usbforward/protocol.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd.h"
 
 namespace vadb {
-// Request remote device attach (~open).
-class USBCmdAttach : public USBCommand {
+// Request device list from remote host.
+class USBCmdDeviceList : public USBCommand {
  public:
-  USBCmdAttach(uint8_t bus_id, uint8_t dev_id);
-  ~USBCmdAttach() override = default;
+  // DeviceDiscoveredCB is a callback function invoked for every new discovered
+  // device.
+  using DeviceDiscoveredCB =
+      std::function<void(const usb_forward::DeviceInfo&,
+                         const std::vector<usb_forward::InterfaceInfo>&)>;
+
+  USBCmdDeviceList(DeviceDiscoveredCB cb)
+      : on_device_discovered_(std::move(cb)) {}
+
+  ~USBCmdDeviceList() override = default;
 
   // Return usbforward command this instance is executing.
-  usb_forward::Command Command() override { return usb_forward::CmdAttach; }
+  usb_forward::Command Command() override { return usb_forward::CmdDeviceList; }
 
   // Send request body to the server.
   // Return false, if communication failed.
@@ -36,9 +47,8 @@ class USBCmdAttach : public USBCommand {
   bool OnResponse(bool is_success, const cvd::SharedFD& data) override;
 
  private:
-  usb_forward::AttachRequest req_;
-
-  USBCmdAttach(const USBCmdAttach& other) = delete;
-  USBCmdAttach& operator=(const USBCmdAttach& other) = delete;
+  DeviceDiscoveredCB on_device_discovered_;
+  USBCmdDeviceList(const USBCmdDeviceList& other) = delete;
+  USBCmdDeviceList& operator=(const USBCmdDeviceList& other) = delete;
 };
 }  // namespace vadb

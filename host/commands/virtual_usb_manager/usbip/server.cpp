@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/usbip/server.h"
+#include "host/commands/virtual_usb_manager/usbip/server.h"
 
 #include <glog/logging.h>
 #include <netinet/in.h>

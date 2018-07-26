@@ -15,29 +15,17 @@
  */
 #pragma once
 
-#include <memory>
-
-#include <stdint.h>
-
-#include "common/libs/usbforward/protocol.h"
-#include "host/libs/vadb/usb_cmd.h"
-#include "host/libs/usbip/device.h"
+#include "host/commands/virtual_usb_manager/vadb/usb_cmd.h"
 
 namespace vadb {
-// Execute control transfer.
-class USBCmdControlTransfer : public USBCommand {
+// Request remote device attach (~open).
+class USBCmdAttach : public USBCommand {
  public:
-  USBCmdControlTransfer(uint8_t bus_id, uint8_t dev_id, uint8_t type,
-                        uint8_t request, uint16_t value, uint16_t index,
-                        uint32_t timeout, std::vector<uint8_t> data,
-                        usbip::Device::AsyncTransferReadyCB callback);
-
-  ~USBCmdControlTransfer() override = default;
+  USBCmdAttach(uint8_t bus_id, uint8_t dev_id);
+  ~USBCmdAttach() override = default;
 
   // Return usbforward command this instance is executing.
-  usb_forward::Command Command() override {
-    return usb_forward::CmdControlTransfer;
-  }
+  usb_forward::Command Command() override { return usb_forward::CmdAttach; }
 
   // Send request body to the server.
   // Return false, if communication failed.
@@ -48,11 +36,9 @@ class USBCmdControlTransfer : public USBCommand {
   bool OnResponse(bool is_success, const cvd::SharedFD& data) override;
 
  private:
-  usb_forward::ControlTransfer req_;
-  std::vector<uint8_t> data_;
-  usbip::Device::AsyncTransferReadyCB callback_;
+  usb_forward::AttachRequest req_;
 
-  USBCmdControlTransfer(const USBCmdControlTransfer& other) = delete;
-  USBCmdControlTransfer& operator=(const USBCmdControlTransfer& other) = delete;
+  USBCmdAttach(const USBCmdAttach& other) = delete;
+  USBCmdAttach& operator=(const USBCmdAttach& other) = delete;
 };
 }  // namespace vadb
