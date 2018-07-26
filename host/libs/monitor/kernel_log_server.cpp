@@ -59,29 +59,12 @@ void ProcessSubscriptions(
 }  // namespace
 
 namespace monitor {
-KernelLogServer::KernelLogServer(const std::string& socket_name,
+KernelLogServer::KernelLogServer(cvd::SharedFD server_socket,
                                  const std::string& log_name,
                                  bool deprecated_boot_completed)
-    : name_(socket_name),
-      log_fd_(cvd::SharedFD::Open(
-          log_name.c_str(), O_CREAT | O_RDWR, 0666)),
+    : server_fd_(server_socket),
+      log_fd_(cvd::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR, 0666)),
       deprecated_boot_completed_(deprecated_boot_completed) {}
-
-bool KernelLogServer::Init() { return CreateServerSocket(); }
-
-// Open new listening server socket.
-// Returns false, if listening socket could not be created.
-bool KernelLogServer::CreateServerSocket() {
-  LOG(INFO) << "Starting server socket: " << name_;
-
-  server_fd_ =
-      cvd::SharedFD::SocketLocalServer(name_.c_str(), false, SOCK_STREAM, 0666);
-  if (!server_fd_->IsOpen()) {
-    LOG(ERROR) << "Could not create socket: " << server_fd_->StrError();
-    return false;
-  }
-  return true;
-}
 
 void KernelLogServer::BeforeSelect(cvd::SharedFDSet* fd_read) const {
   if (!client_fd_->IsOpen()) fd_read->Set(server_fd_);
