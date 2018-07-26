@@ -17,6 +17,8 @@
 
 #include "host/libs/vm_manager/vm_manager.h"
 
+#include "common/libs/fs/shared_fd.h"
+
 namespace vm_manager {
 
 // Starts a guest VM using the qemu command directly. It requires the host
@@ -27,14 +29,16 @@ class QemuManager : public VmManager {
   QemuManager(vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
-  bool Start() const override;
-  bool Stop() const override;
+  bool Start() override;
+  bool Stop() override;
 
   bool EnsureInstanceDirExists() const override;
   bool CleanPriorFiles() const override;
 
   bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const override;
+ private:
+  cvd::SharedFD monitor_conn_;
 };
 
 }  // namespace vm_manager

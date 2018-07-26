@@ -347,7 +347,7 @@ const std::string LibvirtManager::name() { return "libvirt"; }
 LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
-bool LibvirtManager::Start() const {
+bool LibvirtManager::Start() {
   std::string start_command = GetLibvirtCommand();
   start_command += " create /dev/fd/0";
 
@@ -374,7 +374,7 @@ bool LibvirtManager::Start() const {
   return true;
 }
 
-bool LibvirtManager::Stop() const {
+bool LibvirtManager::Stop() {
   auto stop_command = GetLibvirtCommand();
   stop_command += " destroy " + config_->instance_name();
   return std::system(stop_command.c_str()) == 0;

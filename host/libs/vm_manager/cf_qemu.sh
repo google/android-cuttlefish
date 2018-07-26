@@ -46,7 +46,7 @@ args=(
     -display none
     -no-user-config
     -nodefaults
-    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},server,nowait"
+    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},nowait"
     -mon "chardev=charmonitor,id=monitor,mode=control"
     -rtc "base=utc"
     -no-shutdown

@@ -27,8 +27,8 @@ class LibvirtManager : public VmManager {
   LibvirtManager(vsoc::CuttlefishConfig* config);
   virtual ~LibvirtManager() = default;
 
-  bool Start() const override;
-  bool Stop() const override;
+  bool Start() override;
+  bool Stop() override;
 
   bool EnsureInstanceDirExists() const override;
   bool CleanPriorFiles() const override;

@@ -39,8 +39,8 @@ class VmManager {
 
   virtual ~VmManager() = default;
 
-  virtual bool Start() const = 0;
-  virtual bool Stop() const = 0;
+  virtual bool Start() = 0;
+  virtual bool Stop() = 0;
 
   virtual bool EnsureInstanceDirExists() const = 0;
   virtual bool CleanPriorFiles() const = 0;
