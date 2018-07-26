@@ -90,6 +90,7 @@ const char* kUsbV1SocketName = "usb_v1_socket_name";
 const char* kVhciPort = "vhci_port";
 const char* kUsbIpSocketName = "usb_ip_socket_name";
 const char* kKernelLogSocketName = "kernel_log_socket_name";
+const char* kDeprecatedBootCompleted = "deprecated_boot_completed";
 const char* kConsolePath = "console_path";
 const char* kLogcatPath = "logcat_path";
 const char* kLauncherLogPath = "launcher_log_path";
@@ -302,6 +303,14 @@ std::string CuttlefishConfig::kernel_log_socket_name() const {
 void CuttlefishConfig::set_kernel_log_socket_name(
     const std::string& kernel_log_socket_name) {
   (*dictionary_)[kKernelLogSocketName] = kernel_log_socket_name;
+}
+
+bool CuttlefishConfig::deprecated_boot_completed() const {
+  return (*dictionary_)[kDeprecatedBootCompleted].asBool();
+}
+void CuttlefishConfig::set_deprecated_boot_completed(
+    bool deprecated_boot_completed) {
+  (*dictionary_)[kDeprecatedBootCompleted] = deprecated_boot_completed;
 }
 
 std::string CuttlefishConfig::console_path() const {
