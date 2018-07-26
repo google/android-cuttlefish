@@ -13,11 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "adbshell",
-    "launch",
-    "stop_cvd",
-    "ivserver",
-    "record_audio",
-    "virtual_usb_manager",
-]
+cc_binary_host {
+    name: "virtual_usb_manager",
+    srcs: [
+        "main.cc",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    shared_libs: [
+        "vsoc_lib",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "cuttlefish_auto_resources",
+        "libbase",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libvadb",
+        "libusbip",
+        "libgflags",
+        "libjsoncpp",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
