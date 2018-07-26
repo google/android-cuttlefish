@@ -269,8 +269,7 @@ std::string GetLibvirtCommand() {
   return cmd;
 }
 
-std::string BuildXmlConfig() {
-  auto config = vsoc::CuttlefishConfig::Get();
+std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
   std::string instance_name = config->instance_name();
 
   std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> xml{xmlNewDoc(xc("1.0")),
@@ -343,11 +342,16 @@ std::string BuildXmlConfig() {
 }
 }  // namespace
 
+const std::string LibvirtManager::name() { return "libvirt"; }
+
+LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
+  : VmManager(config) {}
+
 bool LibvirtManager::Start() const {
   std::string start_command = GetLibvirtCommand();
   start_command += " create /dev/fd/0";
 
-  std::string xml = BuildXmlConfig();
+  std::string xml = BuildXmlConfig(config_);
   if (FLAGS_log_xml) {
     LOG(INFO) << "Using XML:\n" << xml;
   }
@@ -371,14 +375,13 @@ bool LibvirtManager::Start() const {
 }
 
 bool LibvirtManager::Stop() const {
-  auto config = vsoc::CuttlefishConfig::Get();
   auto stop_command = GetLibvirtCommand();
-  stop_command += " destroy " + config->instance_name();
+  stop_command += " destroy " + config_->instance_name();
   return std::system(stop_command.c_str()) == 0;
 }
 
 bool LibvirtManager::EnsureInstanceDirExists() const {
-  auto instance_dir = vsoc::CuttlefishConfig::Get()->instance_dir();
+  auto instance_dir = config_->instance_dir();
   if (!cvd::DirectoryExists(instance_dir)) {
     LOG(INFO) << "Setting up " << instance_dir;
     cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", instance_dir});
@@ -392,10 +395,10 @@ bool LibvirtManager::EnsureInstanceDirExists() const {
 }
 
 bool LibvirtManager::CleanPriorFiles() const {
-  auto config = vsoc::CuttlefishConfig::Get();
-  std::string run_files = config->PerInstancePath("*") + " " +
-                          config->mempath() + " " +
-                          config->cuttlefish_env_path();
+  std::string run_files = config_->PerInstancePath("*") + " " +
+                          config_->mempath() + " " +
+                          config_->cuttlefish_env_path() + " " +
+                          vsoc::GetGlobalConfigFileLink();
   LOG(INFO) << "Assuming run files of " << run_files;
   std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
   int rval = std::system(fuser_cmd.c_str());

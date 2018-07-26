@@ -30,7 +30,9 @@ constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 class CuttlefishConfig {
  public:
   static CuttlefishConfig* Get();
-  ~CuttlefishConfig() = default;
+
+  CuttlefishConfig();
+  ~CuttlefishConfig();
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
@@ -48,6 +50,9 @@ class CuttlefishConfig {
 
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
+
+  std::string vm_manager() const;
+  void set_vm_manager(const std::string& name);
 
   std::string serial_number() const;
   void set_serial_number(const std::string& serial_number);
@@ -134,6 +139,10 @@ class CuttlefishConfig {
   std::string launcher_log_path() const;
   void set_launcher_log_path(const std::string& launcher_log_path);
 
+  std::string launcher_monitor_socket_path() const;
+  void set_launcher_monitor_socket_path(
+      const std::string& launhcer_monitor_path);
+
   std::string mobile_bridge_name() const;
   void set_mobile_bridge_name(const std::string& mobile_bridge_name);
 
@@ -173,10 +182,10 @@ class CuttlefishConfig {
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
-  void LoadFromFile(const char* file);
   void SetPath(const std::string& key, const std::string& path);
+  bool LoadFromFile(const char* file);
+  static CuttlefishConfig* BuildConfigImpl();
 
-  CuttlefishConfig();
   CuttlefishConfig(const CuttlefishConfig&) = delete;
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
 };
@@ -184,6 +193,9 @@ class CuttlefishConfig {
 // Returns the instance number as obtained from the CUTTLEFISH_INSTANCE
 // environment variable or the username.
 int GetInstance();
+// Returns a path where the launhcer puts a link to the config file which makes
+// it easily discoverable regardless of what vm manager is in use
+std::string GetGlobalConfigFileLink();
 
 // Returns the path to the ivserver's client socket.
 std::string GetDomain();
@@ -195,6 +207,7 @@ std::string GetPerInstanceDefault(const char* prefix);
 int GetPerInstanceDefault(int base);
 
 std::string GetDefaultPerInstanceDir();
+std::string GetDefaultMempath();
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);

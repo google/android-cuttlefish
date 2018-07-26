@@ -55,6 +55,8 @@
 #include "host/libs/usbip/server.h"
 #include "host/libs/vadb/virtual_adb_server.h"
 #include "host/libs/vm_manager/vm_manager.h"
+#include "host/libs/vm_manager/libvirt_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 
 using vsoc::GetPerInstanceDefault;
 using cvd::LauncherExitCodes;
@@ -92,27 +94,23 @@ DEFINE_string(extra_kernel_command_line, "",
 DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-std::string g_default_mempath{GetPerInstanceDefault("/var/run/shm/cvd-")};
+std::string g_default_mempath{vsoc::GetDefaultMempath()};
 DEFINE_string(mempath, g_default_mempath.c_str(),
               "Target location for the shmem file.");
-// The cvd-mobile-{tap|br}-xx interfaces are created by default, but libvirt
-// needs to create its own on tap interfaces on every run so we use a different
-// set for it.
-std::string g_default_mobile_interface{
-    vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-mbr-")
-                                : GetPerInstanceDefault("cvd-mobile-")};
-DEFINE_string(mobile_interface, g_default_mobile_interface.c_str(),
+DEFINE_string(mobile_interface, "", // default handled on ParseCommandLine
               "Network interface to use for mobile networking");
-std::string g_default_mobile_tap_interface =
-    vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-mtap-")
-                                : GetPerInstanceDefault("amobile");
-DEFINE_string(mobile_tap_name, g_default_mobile_tap_interface.c_str(),
+DEFINE_string(mobile_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for mobile");
 std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
 DEFINE_string(serial_number, g_default_serial_number.c_str(),
               "Serial number to use for the device");
-DEFINE_string(instance_dir, vsoc::GetDefaultPerInstanceDir(),
+DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
+DEFINE_string(
+    vm_manager,
+    vsoc::HostSupportsQemuCli() ? vm_manager::QemuManager::name()
+                                : vm_manager::LibvirtManager::name(),
+    "What virtual machine manager to use, one of libvirt or qemu_cli");
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
@@ -150,13 +148,9 @@ DEFINE_string(guest_mac_address,
 DEFINE_string(host_mac_address,
               "42:00:00:00:00:00",
               "MAC address of the wifi interface running on the host.");
-DEFINE_string(wifi_interface,
-              vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wbr-")
-                                          : GetPerInstanceDefault("cvd-wifi-"),
+DEFINE_string(wifi_interface, "", // default handled on ParseCommandLine
               "Network interface to use for wifi");
-DEFINE_string(wifi_tap_name,
-              vsoc::HostSupportsQemuCli() ? GetPerInstanceDefault("cvd-wtap-")
-                                          : GetPerInstanceDefault("awifi"),
+DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for wifi");
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
@@ -373,8 +367,7 @@ bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && AdbTunnelEnabled();
 }
 
-void LaunchIvServer() {
-  auto config = vsoc::CuttlefishConfig::Get();
+void LaunchIvServer(vsoc::CuttlefishConfig* config) {
   // Resize gralloc region
   auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
   uint32_t screen_buffers_size =
@@ -468,17 +461,19 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
-  auto config = vsoc::CuttlefishConfig::Get();
+bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker,
+                     vsoc::CuttlefishConfig* config) {
   if (boot_image_unpacker.HasRamdiskImage()) {
-    if (!boot_image_unpacker.ExtractRamdiskImage(config->ramdisk_image_path())) {
+    if (!boot_image_unpacker.ExtractRamdiskImage(
+            config->ramdisk_image_path())) {
       LOG(ERROR) << "Error extracting ramdisk from boot image";
       return false;
     }
   }
   if (!FLAGS_kernel_path.size()) {
     if (boot_image_unpacker.HasKernelImage()) {
-      if (!boot_image_unpacker.ExtractKernelImage(config->kernel_image_path())) {
+      if (!boot_image_unpacker.ExtractKernelImage(
+              config->kernel_image_path())) {
         LOG(ERROR) << "Error extracting kernel from boot image";
         return false;
       }
@@ -490,12 +485,23 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker) {
   return true;
 }
 
-bool InitializeCuttlefishConfiguration(
+vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker) {
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   auto config = vsoc::CuttlefishConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "Failed to instantiate config object. Most likely because "
+                  "config file was specified and doesn't exits: '"
+               << FLAGS_config_file << "'";
+    return nullptr;
+  }
   // Set this first so that calls to PerInstancePath below are correct
   config->set_instance_dir(FLAGS_instance_dir);
+  if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
+    LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
+    return nullptr;
+  }
+  config->set_vm_manager(FLAGS_vm_manager);
 
   config->set_serial_number(FLAGS_serial_number);
 
@@ -567,6 +573,8 @@ bool InitializeCuttlefishConfiguration(
   config->set_console_path(config->PerInstancePath("console"));
   config->set_logcat_path(config->PerInstancePath("logcat"));
   config->set_launcher_log_path(config->PerInstancePath("launcher.log"));
+  config->set_launcher_monitor_socket_path(
+      config->PerInstancePath("launcher_monitor.sock"));
 
   config->set_mobile_bridge_name(FLAGS_mobile_interface);
   config->set_mobile_tap_name(FLAGS_mobile_tap_name);
@@ -590,16 +598,79 @@ bool InitializeCuttlefishConfiguration(
   config->set_cuttlefish_env_path(cvd::StringFromEnv("HOME", ".") +
                                   "/.cuttlefish.sh");
 
-  return true;
+  return config;
 }
 
-bool ParseCommandLineFlags(int argc, char** argv) {
+void SetDefaultFlagsForQemu() {
+  auto default_mobile_interface = GetPerInstanceDefault("cvd-mbr-");
+  SetCommandLineOptionWithMode("mobile_interface",
+                               default_mobile_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_mobile_tap_name = GetPerInstanceDefault("cvd-mtap-");
+  SetCommandLineOptionWithMode("mobile_tap_name",
+                               default_mobile_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_interface = GetPerInstanceDefault("cvd-wbr-");
+  SetCommandLineOptionWithMode("wifi_interface",
+                               default_wifi_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
+  SetCommandLineOptionWithMode("wifi_tap_name",
+                               default_wifi_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_instance_dir =
+      cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
+  SetCommandLineOptionWithMode("instance_dir",
+                               default_instance_dir.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
+
+void SetDefaultFlagsForLibvirt() {
+  auto default_mobile_interface = GetPerInstanceDefault("cvd-mobile-");
+  SetCommandLineOptionWithMode("mobile_interface",
+                               default_mobile_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_mobile_tap_name = GetPerInstanceDefault("amobile");
+  SetCommandLineOptionWithMode("mobile_tap_name",
+                               default_mobile_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_interface = GetPerInstanceDefault("cvd-wifi-");
+  SetCommandLineOptionWithMode("wifi_interface",
+                               default_wifi_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_tap_name = GetPerInstanceDefault("awifi");
+  SetCommandLineOptionWithMode("wifi_tap_name",
+                               default_wifi_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_instance_dir =
+      "/var/run/libvirt-" +
+      vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix);
+  SetCommandLineOptionWithMode("instance_dir",
+                               default_instance_dir.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
+
+bool ParseCommandLineFlags(int* argc, char*** argv) {
   // The config_file is created by the launcher, so the launcher is the only
   // host process that doesn't use the flag.
   // Set the default to empty.
   google::SetCommandLineOptionWithMode("config_file", "",
                                        gflags::SET_FLAGS_DEFAULT);
-  google::ParseCommandLineFlags(&argc, &argv, true);
+  google::ParseCommandLineNonHelpFlags(argc, argv, true);
+  bool invalid_manager = false;
+  if (FLAGS_vm_manager == vm_manager::LibvirtManager::name()) {
+    SetDefaultFlagsForLibvirt();
+  } else if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
+    SetDefaultFlagsForQemu();
+  } else {
+    std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
+              << std::endl;
+    invalid_manager = true;
+  }
+  google::HandleCommandLineHelpFlags();
+  if (invalid_manager) {
+    return false;
+  }
   // Set the flag value to empty (in case the caller passed a value for it).
   FLAGS_config_file = "";
 
@@ -608,8 +679,7 @@ bool ParseCommandLineFlags(int argc, char** argv) {
   return ResolveInstanceFiles();
 }
 
-bool WriteCuttlefishEnvironment() {
-  auto config = vsoc::CuttlefishConfig::Get();
+bool WriteCuttlefishEnvironment(vsoc::CuttlefishConfig* config) {
   auto env = cvd::SharedFD::Open(config->cuttlefish_env_path().c_str(),
                                  O_CREAT | O_RDWR, 0755);
   if (!env->IsOpen()) {
@@ -631,7 +701,7 @@ bool WriteCuttlefishEnvironment() {
 
 // Forks and returns the write end of a pipe to the child process. The parent
 // process waits for boot events to come through the pipe and exits accordingly.
-cvd::SharedFD DaemonizeLauncher() {
+cvd::SharedFD DaemonizeLauncher(vsoc::CuttlefishConfig* config) {
   cvd::SharedFD read_end, write_end;
   if (!cvd::SharedFD::Pipe(&read_end, &write_end)) {
     LOG(ERROR) << "Unable to create pipe";
@@ -651,9 +721,11 @@ cvd::SharedFD DaemonizeLauncher() {
         std::exit(LauncherExitCodes::kPipeIOError);
       }
       if (evt == monitor::BootEvent::BootCompleted) {
+        LOG(INFO) << "Virtual device booted successfully";
         std::exit(LauncherExitCodes::kSuccess);
       }
       if (evt == monitor::BootEvent::BootFailed) {
+        LOG(ERROR) << "Virtual device failed to boot";
         std::exit(LauncherExitCodes::kVirtualDeviceBootFailed);
       }
       // Do nothing for the other signals
@@ -665,7 +737,7 @@ cvd::SharedFD DaemonizeLauncher() {
       std::exit(LauncherExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
-    auto log_path = vsoc::CuttlefishConfig::Get()->launcher_log_path();
+    auto log_path = config->launcher_log_path();
     auto log =
         cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -695,16 +767,80 @@ cvd::SharedFD DaemonizeLauncher() {
     return write_end;
   }
 }
+
+// Stops the device. If this function is successful it returns on a child of the
+// launcher (after it killed the laucher) and it should exit immediately
+bool StopCvd(vm_manager::VmManager* vm_manager) {
+  vm_manager->Stop();
+  auto pgid = getpgid(0);
+  auto child_pid = fork();
+  if (child_pid > 0) {
+    // The parent just waits for the child to kill it.
+    int wstatus;
+    waitpid(child_pid, &wstatus, 0);
+    LOG(ERROR) << "The forked child exited before delivering signal with "
+                  "status: "
+               << wstatus;
+    // If waitpid returns it means the child exited before the signal was
+    // delivered, notify the client of the error and continue serving
+    return false;
+  } else if (child_pid == 0) {
+    // The child makes sure it is in a different process group before
+    // killing everyone on its parent's
+    // This call never fails (see SETPGID(2))
+    setpgid(0, 0);
+    killpg(pgid, SIGKILL);
+    return true;
+  } else {
+    // The fork failed, the system is in pretty bad shape
+    LOG(FATAL) << "Unable to fork before on Stop: " << strerror(errno);
+    return false;
+  }
+}
+
+void ServerLoop(cvd::SharedFD server,
+                vm_manager::VmManager* vm_manager) {
+  while (true) {
+    // TODO: use select to handle simultaneous connections.
+    auto client = cvd::SharedFD::Accept(*server);
+    cvd::LauncherAction action;
+    while (client->IsOpen() && client->Read(&action, sizeof(char)) > 0) {
+      switch (action) {
+        case cvd::LauncherAction::kStop:
+          if (StopCvd(vm_manager)) {
+            auto response = cvd::LauncherResponse::kSuccess;
+            client->Write(&response, sizeof(response));
+            std::exit(0);
+          } else {
+            auto response = cvd::LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+          }
+          break;
+        default:
+          LOG(ERROR) << "Unrecognized launcher action: "
+                     << static_cast<char>(action);
+          auto response = cvd::LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+      }
+    }
+  }
+}
 }  // namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
-  if (!ParseCommandLineFlags(argc, argv)) {
+  if (!ParseCommandLineFlags(&argc, &argv)) {
     return LauncherExitCodes::kArgumentParsingError;
   }
 
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
-  auto vm_manager = vm_manager::VmManager::Get();
+  // Do this early so that the config object is ready for anything that needs it
+  auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker);
+  if (!config) {
+    return LauncherExitCodes::kCuttlefishConfigurationInitError;
+  }
+
+  auto vm_manager = vm_manager::VmManager::Get(config->vm_manager(), config);
 
   // Check host configuration
   std::vector<std::string> config_commands;
@@ -719,11 +855,6 @@ int main(int argc, char** argv) {
     return LauncherExitCodes::kInvalidHostConfiguration;
   }
 
-  // Do this early so that the config object is ready for anything that needs it
-  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
-    return LauncherExitCodes::kCuttlefishConfigurationInitError;
-  }
-
   if (!vm_manager->EnsureInstanceDirExists()) {
     LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
     return LauncherExitCodes::kInstanceDirCreationError;
@@ -734,18 +865,24 @@ int main(int argc, char** argv) {
     return LauncherExitCodes::kPrioFilesCleanupError;
   }
 
-  if (!UnpackBootImage(*boot_img_unpacker)) {
+  if (!UnpackBootImage(*boot_img_unpacker, config)) {
     LOG(ERROR) << "Failed to unpack boot image";
     return LauncherExitCodes::kBootImageUnpackError;
   }
 
-  if (!WriteCuttlefishEnvironment()) {
+  if (!WriteCuttlefishEnvironment(config)) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config_file = GetConfigFile();
+  auto config_link = vsoc::GetGlobalConfigFileLink();
   // Save the config object before starting any host process
-  if (!config->SaveToFile(GetConfigFile())) {
+  if (!config->SaveToFile(config_file)) {
+    return LauncherExitCodes::kCuttlefishConfigurationSaveError;
+  }
+  if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
+    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
+               << ": " << strerror(errno);
     return LauncherExitCodes::kCuttlefishConfigurationSaveError;
   }
 
@@ -764,6 +901,13 @@ int main(int argc, char** argv) {
                         config->PerInstancePath("kernel.log"),
                         FLAGS_deprecated_boot_completed);
 
+  auto launcher_monitor_path = config->launcher_monitor_socket_path();
+  auto launcher_monitor_socket = cvd::SharedFD::SocketLocalServer(
+      launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
+  if (!launcher_monitor_socket->IsOpen()) {
+    LOG(ERROR) << "Error when opening launcher server: " << launcher_monitor_socket->StrError();
+    return cvd::LauncherExitCodes::kMonitorCreationFailed;
+  }
   if (FLAGS_daemon) {
     // This code will move to its own process eventually so the signal handling
     // is done here to keep everything that needs to move close together.
@@ -772,7 +916,7 @@ int main(int argc, char** argv) {
     new_action.sa_handler = SIG_IGN;
     sigaction(SIGPIPE, &new_action, &old_action);
 
-    auto pipe_fd = DaemonizeLauncher();
+    auto pipe_fd = DaemonizeLauncher(config);
     if (!pipe_fd->IsOpen()) {
       return LauncherExitCodes::kDaemonizationError;
     }
@@ -807,10 +951,10 @@ int main(int argc, char** argv) {
                          config->usb_ip_socket_name());
   vadb.Start();
 
-  LaunchIvServer();
+  LaunchIvServer(config);
 
   // Initialize the regions that require so before the VM starts.
-  PreLaunchInitializers::Initialize();
+  PreLaunchInitializers::Initialize(config);
 
   // Start the guest VM
   if (!vm_manager->Start()) {
@@ -823,5 +967,7 @@ int main(int argc, char** argv) {
   LaunchVNCServerIfEnabled();
   LaunchAdbConnectorIfEnabled();
 
-  pause();
+  ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
+  LOG(ERROR) << "The server loop returned, it should never happen!!";
+  return cvd::LauncherExitCodes::kServerError;
 }

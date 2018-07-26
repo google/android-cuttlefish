@@ -32,7 +32,7 @@
 #include "common/libs/utils/files.h"
 
 DEFINE_string(config_file,
-              vsoc::GetDefaultPerInstanceDir() + "/cuttlefish_config.json",
+              vsoc::GetGlobalConfigFileLink(),
               "A file from where to load the config values. This flag is "
               "ignored by the launcher");
 
@@ -68,6 +68,7 @@ int InstanceFromEnvironment() {
 
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
+const char* kVmManager = "vm_manager";
 
 const char* kCpus = "cpus";
 const char* kMemoryMb = "memory_mb";
@@ -92,6 +93,7 @@ const char* kKernelLogSocketName = "kernel_log_socket_name";
 const char* kConsolePath = "console_path";
 const char* kLogcatPath = "logcat_path";
 const char* kLauncherLogPath = "launcher_log_path";
+const char* kLauncherMonitorPath = "launcher_monitor_socket";
 const char* kDtbPath = "dtb_path";
 
 const char* kMempath = "mempath";
@@ -122,6 +124,13 @@ std::string CuttlefishConfig::instance_dir() const {
 }
 void CuttlefishConfig::set_instance_dir(const std::string& instance_dir) {
   (*dictionary_)[kInstanceDir] = instance_dir;
+}
+
+std::string CuttlefishConfig::vm_manager() const {
+  return (*dictionary_)[kVmManager].asString();
+}
+void CuttlefishConfig::set_vm_manager(const std::string& name) {
+    (*dictionary_)[kVmManager] = name;
 }
 
 std::string CuttlefishConfig::serial_number() const {
@@ -310,6 +319,14 @@ void CuttlefishConfig::set_logcat_path(const std::string& logcat_path) {
   SetPath(kLogcatPath, logcat_path);
 }
 
+std::string CuttlefishConfig::launcher_monitor_socket_path() const {
+  return (*dictionary_)[kLauncherMonitorPath].asString();
+}
+void CuttlefishConfig::set_launcher_monitor_socket_path(
+    const std::string& launhcer_monitor_path) {
+  (*dictionary_)[kLauncherMonitorPath] = launhcer_monitor_path;
+}
+
 std::string CuttlefishConfig::launcher_log_path() const {
   return (*dictionary_)[kLauncherLogPath].asString();
 }
@@ -408,28 +425,44 @@ void CuttlefishConfig::set_adb_mode(const std::string& mode) {
   (*dictionary_)[kAdbMode] = mode;
 }
 
-/*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
-  static CuttlefishConfig config;
-  return &config;
-}
-
-CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {
-  if (!FLAGS_config_file.empty()) {
-    LoadFromFile(FLAGS_config_file.c_str());
+// Creates the (initially empty) config object and populates it with values from
+// the config file if the --config_file command line argument is present.
+// Returns nullptr if there was an error loading from file
+/*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
+  auto ret = new CuttlefishConfig();
+  if (ret && !FLAGS_config_file.empty()) {
+    auto loaded = ret->LoadFromFile(FLAGS_config_file.c_str());
+    if (!loaded) {
+      return nullptr;
+    }
   }
+  return ret;
 }
 
-void CuttlefishConfig::LoadFromFile(const char* file) {
+/*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
+  static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
+  return config.get();
+}
+
+CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {}
+// Can't use '= default' on the header because the compiler complains of
+// Json::Value being an incomplete type
+CuttlefishConfig::~CuttlefishConfig() {}
+
+bool CuttlefishConfig::LoadFromFile(const char* file) {
   auto real_file_path = cvd::AbsolutePath(file);
   if (real_file_path.empty()) {
-    LOG(FATAL) << "Could not get real path for file " << file;
+    LOG(ERROR) << "Could not get real path for file " << file;
+    return false;
   }
   Json::Reader reader;
   std::ifstream ifs(real_file_path);
   if (!reader.parse(ifs, *dictionary_)) {
-    LOG(FATAL) << "Could not read config file " << file << ": "
+    LOG(ERROR) << "Could not read config file " << file << ": "
                << reader.getFormattedErrorMessages();
+    return false;
   }
+  return true;
 }
 bool CuttlefishConfig::SaveToFile(const std::string& file) const {
   std::ofstream ofs(file);
@@ -454,6 +487,10 @@ int GetInstance() {
   return instance_id;
 }
 
+std::string GetGlobalConfigFileLink() {
+  return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish_config.json";
+}
+
 std::string GetDomain() {
   return CuttlefishConfig::Get()->ivshmem_client_socket_path();
 }
@@ -474,6 +511,10 @@ std::string GetDefaultPerInstanceDir() {
            << std::setw(2) << GetInstance();
   }
   return stream.str();
+}
+
+std::string GetDefaultMempath() {
+  return GetPerInstanceDefault("/var/run/shm/cvd-");
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {

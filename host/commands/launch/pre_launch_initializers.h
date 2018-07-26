@@ -16,19 +16,23 @@
  * limitations under the License.
  */
 
+#include <memory>
+
+#include <host/libs/config/cuttlefish_config.h>
+
 // Handles initialization of regions that require it strictly before the virtual
 // machine is started.
 // To add initializers for more regions declare here, implement in its own
 // source file and call from PreLaunchInitializers::Initialize().
-void InitializeScreenRegion();
-void InitializeRilRegion();
-void InitializeWifiRegion();
+void InitializeScreenRegion(vsoc::CuttlefishConfig* config);
+void InitializeRilRegion(vsoc::CuttlefishConfig* config);
+void InitializeWifiRegion(vsoc::CuttlefishConfig* config);
 
 class PreLaunchInitializers {
  public:
-  static void Initialize() {
-    InitializeScreenRegion();
-    InitializeRilRegion();
-    InitializeWifiRegion();
+  static void Initialize(vsoc::CuttlefishConfig* config) {
+    InitializeScreenRegion(config);
+    InitializeRilRegion(config);
+    InitializeWifiRegion(config);
   }
 };
