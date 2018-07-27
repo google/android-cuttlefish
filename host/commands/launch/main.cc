@@ -774,8 +774,11 @@ bool StopCvd(vm_manager::VmManager* vm_manager) {
   } else if (child_pid == 0) {
     // The child makes sure it is in a different process group before
     // killing everyone on its parent's
-    // This call never fails (see SETPGID(2))
-    setpgid(0, 0);
+    // This call should never fail (see SETPGID(2))
+    if (setpgid(0, 0) != 0) {
+      LOG(ERROR) << "setpgid failed (" << strerror(errno)
+                 << ") the launcher's child is about to kill itself";
+    }
     killpg(pgid, SIGKILL);
     return true;
   } else {
@@ -791,7 +794,7 @@ void ServerLoop(cvd::SharedFD server,
     // TODO: use select to handle simultaneous connections.
     auto client = cvd::SharedFD::Accept(*server);
     cvd::LauncherAction action;
-    while (client->IsOpen() && client->Read(&action, sizeof(char)) > 0) {
+    while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
       switch (action) {
         case cvd::LauncherAction::kStop:
           if (StopCvd(vm_manager)) {
