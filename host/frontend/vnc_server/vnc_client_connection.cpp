@@ -36,6 +36,7 @@
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 using cvd::Message;
 using cvd::vnc::Stripe;
@@ -117,9 +118,9 @@ Message CreateMessage(Ts... vals) {
 }
 
 std::string HostName() {
-  // Localhost is good enough for local development and to connect through ssh
-  // tunneling, for something else this probably needs to change.
-  return "localhost";
+  auto config = vsoc::CuttlefishConfig::Get();
+  return !config || config->device_title().empty() ? std::string{"localhost"}
+                                                   : config->device_title();
 }
 
 std::uint16_t uint16_tAt(const void* p) {
