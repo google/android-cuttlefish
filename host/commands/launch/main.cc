@@ -163,6 +163,9 @@ DEFINE_bool(daemon, false,
             "Run cuttlefish in background, the launcher exits on boot "
             "completed/failed");
 
+DEFINE_string(device_title, "", "Human readable name for the instance, "
+              "used by the vnc_server for its server title");
+
 DECLARE_string(config_file);
 
 namespace {
@@ -501,6 +504,7 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   config->set_gdb_flag(FLAGS_qemu_gdb);
   config->set_adb_mode(FLAGS_adb_mode);
+  config->set_device_title(FLAGS_device_title);
   if (FLAGS_kernel_path.size()) {
     config->set_kernel_image_path(FLAGS_kernel_path);
   } else {
