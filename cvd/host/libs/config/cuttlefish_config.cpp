@@ -322,8 +322,8 @@ std::string CuttlefishConfig::launcher_monitor_socket_path() const {
   return (*dictionary_)[kLauncherMonitorPath].asString();
 }
 void CuttlefishConfig::set_launcher_monitor_socket_path(
-    const std::string& launhcer_monitor_path) {
-  (*dictionary_)[kLauncherMonitorPath] = launhcer_monitor_path;
+    const std::string& launcher_monitor_path) {
+  SetPath(kLauncherMonitorPath, launcher_monitor_path);
 }
 
 std::string CuttlefishConfig::launcher_log_path() const {
