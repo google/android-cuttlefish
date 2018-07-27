@@ -179,6 +179,9 @@ class CuttlefishConfig {
   void set_adb_mode(const std::string& mode);
   std::string adb_mode() const;
 
+  void set_device_title(const std::string& title);
+  std::string device_title() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 

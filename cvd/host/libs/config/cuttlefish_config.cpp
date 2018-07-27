@@ -31,8 +31,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 
-DEFINE_string(config_file,
-              vsoc::GetGlobalConfigFileLink(),
+DEFINE_string(config_file, vsoc::GetGlobalConfigFileLink(),
               "A file from where to load the config values. This flag is "
               "ignored by the launcher");
 
@@ -69,6 +68,7 @@ int InstanceFromEnvironment() {
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
+const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
 const char* kMemoryMb = "memory_mb";
@@ -130,7 +130,7 @@ std::string CuttlefishConfig::vm_manager() const {
   return (*dictionary_)[kVmManager].asString();
 }
 void CuttlefishConfig::set_vm_manager(const std::string& name) {
-    (*dictionary_)[kVmManager] = name;
+  (*dictionary_)[kVmManager] = name;
 }
 
 std::string CuttlefishConfig::serial_number() const {
@@ -186,8 +186,7 @@ std::string CuttlefishConfig::gdb_flag() const {
   return (*dictionary_)[kGdbFlag].asString();
 }
 
-void CuttlefishConfig::set_gdb_flag(
-    const std::string& device) {
+void CuttlefishConfig::set_gdb_flag(const std::string& device) {
   SetPath(kGdbFlag, device);
 }
 
@@ -323,8 +322,8 @@ std::string CuttlefishConfig::launcher_monitor_socket_path() const {
   return (*dictionary_)[kLauncherMonitorPath].asString();
 }
 void CuttlefishConfig::set_launcher_monitor_socket_path(
-    const std::string& launcher_monitor_path) {
-  SetPath(kLauncherMonitorPath, launcher_monitor_path);
+    const std::string& launhcer_monitor_path) {
+  (*dictionary_)[kLauncherMonitorPath] = launhcer_monitor_path;
 }
 
 std::string CuttlefishConfig::launcher_log_path() const {
@@ -423,6 +422,14 @@ std::string CuttlefishConfig::adb_mode() const {
 
 void CuttlefishConfig::set_adb_mode(const std::string& mode) {
   (*dictionary_)[kAdbMode] = mode;
+}
+
+std::string CuttlefishConfig::device_title() const {
+  return (*dictionary_)[kDeviceTitle].asString();
+}
+
+void CuttlefishConfig::set_device_title(const std::string& title) {
+  (*dictionary_)[kDeviceTitle] = title;
 }
 
 // Creates the (initially empty) config object and populates it with values from
@@ -526,7 +533,7 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
   return (cvd::StringFromEnv("ANDROID_PRODUCT_OUT",
-                        cvd::StringFromEnv("HOME", ".")) +
+                             cvd::StringFromEnv("HOME", ".")) +
           "/") +
          file_name;
 }
