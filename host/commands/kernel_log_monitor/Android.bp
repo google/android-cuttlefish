@@ -17,6 +17,7 @@ cc_binary_host {
     name: "kernel_log_monitor",
     srcs: [
         "main.cc",
+        "kernel_log_server.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -31,7 +32,6 @@ cc_binary_host {
         "libcuttlefish_host_config",
         "libgflags",
         "libjsoncpp",
-        "libmonitor",
     ],
     defaults: ["cuttlefish_host_only"],
 }

@@ -52,7 +52,7 @@
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"

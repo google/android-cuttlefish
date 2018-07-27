@@ -22,7 +22,7 @@
 #include <common/libs/fs/shared_fd.h>
 #include <common/libs/fs/shared_select.h>
 #include <host/libs/config/cuttlefish_config.h>
-#include "host/libs/monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
 DEFINE_int32(log_server_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "

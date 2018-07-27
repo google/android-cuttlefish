@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
 #include <map>
 #include <utility>
