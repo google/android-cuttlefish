@@ -42,6 +42,7 @@ cvd_host_tests := \
     lock_test \
     monotonic_time_test \
     vsoc_graphics_test \
+    cuttlefish_net_tests \
 
 cvd_host_shared_libraries := \
     libbase \
