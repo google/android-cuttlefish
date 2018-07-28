@@ -147,7 +147,57 @@ TEST(NetlinkClientTest, BasicIntNode) {
   } expected;
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
-  request.AddInt32(kDummyTag, kValue);
+  request.AddInt(kDummyTag, kValue);
+  EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
+}
+
+TEST(NetlinkClientTest, AllIntegerTypes) {
+  // Basic { Dummy: Value } test.
+  constexpr uint16_t kDummyTag = 0xfce2;
+  constexpr uint8_t kValue = 0x1b;
+
+  // The attribute is necessary for correct binary alignment.
+  constexpr struct __attribute__((__packed__)) {
+    uint16_t attr_length_i64 = 12;
+    uint16_t attr_type_i64 = kDummyTag;
+    int64_t attr_value_i64 = kValue;
+    uint16_t attr_length_i32 = 8;
+    uint16_t attr_type_i32 = kDummyTag + 1;
+    int32_t attr_value_i32 = kValue;
+    uint16_t attr_length_i16 = 6;
+    uint16_t attr_type_i16 = kDummyTag + 2;
+    int16_t attr_value_i16 = kValue;
+    uint8_t attr_padding_i16[2] = {0, 0};
+    uint16_t attr_length_i8 = 5;
+    uint16_t attr_type_i8 = kDummyTag + 3;
+    int8_t attr_value_i8 = kValue;
+    uint8_t attr_padding_i8[3] = {0, 0, 0};
+    uint16_t attr_length_u64 = 12;
+    uint16_t attr_type_u64 = kDummyTag + 4;
+    uint64_t attr_value_u64 = kValue;
+    uint16_t attr_length_u32 = 8;
+    uint16_t attr_type_u32 = kDummyTag + 5;
+    uint32_t attr_value_u32 = kValue;
+    uint16_t attr_length_u16 = 6;
+    uint16_t attr_type_u16 = kDummyTag + 6;
+    uint16_t attr_value_u16 = kValue;
+    uint8_t attr_padding_u16[2] = {0, 0};
+    uint16_t attr_length_u8 = 5;
+    uint16_t attr_type_u8 = kDummyTag + 7;
+    uint8_t attr_value_u8 = kValue;
+    uint8_t attr_padding_u8[3] = {0, 0, 0};
+  } expected;
+
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  request.AddInt<int64_t>(kDummyTag, kValue);
+  request.AddInt<int32_t>(kDummyTag + 1, kValue);
+  request.AddInt<int16_t>(kDummyTag + 2, kValue);
+  request.AddInt<int8_t>(kDummyTag + 3, kValue);
+  request.AddInt<uint64_t>(kDummyTag + 4, kValue);
+  request.AddInt<uint32_t>(kDummyTag + 5, kValue);
+  request.AddInt<int16_t>(kDummyTag + 6, kValue);
+  request.AddInt<int8_t>(kDummyTag + 7, kValue);
+
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
@@ -167,7 +217,7 @@ TEST(NetlinkClientTest, SingleList) {
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kListTag);
-  request.AddInt32(kDummyTag, kValue);
+  request.AddInt(kDummyTag, kValue);
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
@@ -193,7 +243,7 @@ TEST(NetlinkClientTest, NestedList) {
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
-  request.AddInt32(kDummyTag, kValue);
+  request.AddInt(kDummyTag, kValue);
   request.PopList();
   request.PopList();
 
@@ -224,10 +274,10 @@ TEST(NetlinkClientTest, ListSequence) {
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
-  request.AddInt32(kDummy1Tag, kValue1);
+  request.AddInt(kDummy1Tag, kValue1);
   request.PopList();
   request.PushList(kList2Tag);
-  request.AddInt32(kDummy2Tag, kValue2);
+  request.AddInt(kDummy2Tag, kValue2);
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
@@ -258,9 +308,9 @@ TEST(NetlinkClientTest, ComplexList) {
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
-  request.AddInt32(kDummy1Tag, kValue1);
+  request.AddInt(kDummy1Tag, kValue1);
   request.PopList();
-  request.AddInt32(kDummy2Tag, kValue2);
+  request.AddInt(kDummy2Tag, kValue2);
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
