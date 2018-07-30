@@ -79,6 +79,8 @@ WITH_DEXPREOPT := true
 
 USE_OPENGL_RENDERER := true
 
+BOARD_SWIFTSHADER_RELATIVE_PATH := gl_impl/swiftshader
+
 # Wifi.
 BOARD_WLAN_DEVICE           := wlan0
 BOARD_HOSTAPD_DRIVER        := NL80211
