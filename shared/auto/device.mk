@@ -17,9 +17,10 @@
 ################################################
 # Begin GCE specific configurations
 
-$(call inherit-product, device/google/cuttlefish/shared/device.mk)
-
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
 DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/auto/manifest-extra.xml
+
+$(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
 ################################################
 # Begin general Android Auto Embedded configurations
