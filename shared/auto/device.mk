@@ -19,6 +19,8 @@
 
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/auto/manifest-extra.xml
+
 ################################################
 # Begin general Android Auto Embedded configurations
 
@@ -38,6 +40,10 @@ PRODUCT_COPY_FILES += \
 # Location permissions
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml
+
+# Broadcast Radio permissions
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.broadcastradio.xml:system/etc/permissions/android.hardware.broadcastradio.xml
 
 PRODUCT_PROPERTY_OVERRIDES += \
     android.car.hvac.demo=true
