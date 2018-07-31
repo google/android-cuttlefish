@@ -65,7 +65,8 @@ PRODUCT_PACKAGES += \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
     vport_trigger \
-    rename_netiface
+    rename_netiface \
+    ip_link_add \
 
 #
 # Packages for AOSP-available stuff we use from the framework
