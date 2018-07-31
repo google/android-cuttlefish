@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
+
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
 $(call inherit-product, frameworks/native/build/tablet-7in-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
