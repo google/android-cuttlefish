@@ -30,3 +30,4 @@
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish      u:object_r:hal_dumpstate_impl_exec:s0
 /vendor/bin/hw/android\.hardware\.health@2\.0-service.cuttlefish          u:object_r:hal_health_default_exec:s0
+/vendor/bin/ip_link_add    u:object_r:ip_link_add_exec:s0
