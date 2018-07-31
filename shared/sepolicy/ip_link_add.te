@@ -1,0 +1,10 @@
+type ip_link_add, domain;
+type ip_link_add_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(ip_link_add)
+
+allow ip_link_add self:capability { net_admin net_raw sys_module };
+allow ip_link_add self:udp_socket { create ioctl };
+allow ip_link_add self:netlink_route_socket { bind create nlmsg_write read write };
+
+allow ip_link_add kernel:system module_request;
