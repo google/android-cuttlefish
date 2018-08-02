@@ -52,7 +52,7 @@
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -124,6 +124,9 @@ DEFINE_string(vnc_server_binary,
 DEFINE_string(virtual_usb_manager_binary,
               vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"),
               "Location of the virtual usb manager binary.");
+DEFINE_string(kernel_log_monitor_binary,
+              vsoc::DefaultHostArtifactsPath("bin/kernel_log_monitor"),
+              "Location of the log monitor binary.");
 DEFINE_string(ivserver_binary,
               vsoc::DefaultHostArtifactsPath("bin/ivserver"),
               "Location of the ivshmem server binary.");
@@ -175,46 +178,6 @@ const std::string kDataPolicyAlwaysCreate = "always_create";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeUsb[] = "usb";
-
-// KernelLogMonitor receives and monitors kernel log for Cuttlefish.
-class KernelLogMonitor {
- public:
-  KernelLogMonitor(const std::string& socket_name,
-                   const std::string& log_name,
-                   bool deprecated_boot_completed)
-      : klog_{socket_name, log_name, deprecated_boot_completed} {}
-
-  ~KernelLogMonitor() = default;
-
-  void SubscribeToBootEvents(monitor::BootEventCallback callback) {
-    klog_.SubscribeToBootEvents(callback);
-  }
-
-  void Start() {
-    CHECK(klog_.Init()) << "Could not initialize kernel log server";
-    std::thread([this] { Thread(); }).detach();
-  }
-
- private:
-  void Thread() {
-    for (;;) {
-      cvd::SharedFDSet fd_read;
-      fd_read.Zero();
-
-      klog_.BeforeSelect(&fd_read);
-
-      int ret = cvd::Select(&fd_read, nullptr, nullptr, nullptr);
-      if (ret <= 0) continue;
-
-      klog_.AfterSelect(fd_read);
-    }
-  }
-
-  monitor::KernelLogServer klog_;
-
-  KernelLogMonitor(const KernelLogMonitor&) = delete;
-  KernelLogMonitor& operator=(const KernelLogMonitor&) = delete;
-};
 
 void CreateBlankImage(
     const std::string& image, int image_mb, const std::string& image_fmt) {
@@ -355,6 +318,26 @@ void LaunchUsbServerIfEnabled(vsoc::CuttlefishConfig* config) {
                    GetConfigFileArg()});
 
   close(server_fd);
+}
+
+void LaunchKernelLogMonitor(vsoc::CuttlefishConfig* config,
+                            cvd::SharedFD boot_events_pipe) {
+  auto log_name = config->kernel_log_socket_name();
+  auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
+                                                 SOCK_STREAM, 0666);
+  int server_fd = server->UNMANAGED_Dup();
+  int subscriptor_fd = -1;
+  if (boot_events_pipe->IsOpen()) {
+    subscriptor_fd = boot_events_pipe->UNMANAGED_Dup();
+  }
+  cvd::subprocess({FLAGS_kernel_log_monitor_binary,
+                   "-log_server_fd=" + std::to_string(server_fd),
+                   "-subscriptor_fd=" + std::to_string(subscriptor_fd),
+                   GetConfigFileArg()});
+  close(server_fd);
+  if (subscriptor_fd >= 0) {
+    close(subscriptor_fd);
+  }
 }
 
 void LaunchIvServer(vsoc::CuttlefishConfig* config) {
@@ -561,6 +544,7 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   }
 
   config->set_kernel_log_socket_name(config->PerInstancePath("kernel-log"));
+  config->set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
   config->set_console_path(config->PerInstancePath("console"));
   config->set_logcat_path(config->PerInstancePath("logcat"));
   config->set_launcher_log_path(config->PerInstancePath("launcher.log"));
@@ -891,41 +875,20 @@ int main(int argc, char** argv) {
   LOG(INFO) << "To access the console run: socat file:$(tty),raw,echo=0 "
             << config->console_path();
 
-  KernelLogMonitor kmon(config->kernel_log_socket_name(),
-                        config->PerInstancePath("kernel.log"),
-                        FLAGS_deprecated_boot_completed);
-
   auto launcher_monitor_path = config->launcher_monitor_socket_path();
   auto launcher_monitor_socket = cvd::SharedFD::SocketLocalServer(
       launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
   if (!launcher_monitor_socket->IsOpen()) {
-    LOG(ERROR) << "Error when opening launcher server: " << launcher_monitor_socket->StrError();
+    LOG(ERROR) << "Error when opening launcher server: "
+               << launcher_monitor_socket->StrError();
     return cvd::LauncherExitCodes::kMonitorCreationFailed;
   }
+  cvd::SharedFD boot_events_pipe;
   if (FLAGS_daemon) {
-    // This code will move to its own process eventually so the signal handling
-    // is done here to keep everything that needs to move close together.
-    // Disable default handling of SIGPIPE.
-    struct sigaction new_action{}, old_action{};
-    new_action.sa_handler = SIG_IGN;
-    sigaction(SIGPIPE, &new_action, &old_action);
-
-    auto pipe_fd = DaemonizeLauncher(config);
-    if (!pipe_fd->IsOpen()) {
+    boot_events_pipe = DaemonizeLauncher(config);
+    if (!boot_events_pipe->IsOpen()) {
       return LauncherExitCodes::kDaemonizationError;
     }
-    kmon.SubscribeToBootEvents([pipe_fd](monitor::BootEvent evt) {
-      int retval = pipe_fd->Write(&evt, sizeof(evt));
-      if (retval < 0) {
-        if (pipe_fd->GetErrno() == EPIPE) {
-          pipe_fd->Close();
-        } else {
-          LOG(ERROR) << "Error while writing to pipe: " << pipe_fd->StrError();
-        }
-        return monitor::SubscriptionAction::CancelSubscription;
-      }
-      return monitor::SubscriptionAction::ContinueSubscription;
-    });
   } else {
     // Make sure the launcher runs in its own process group even when running in
     // foreground
@@ -938,8 +901,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  kmon.Start();
-
+  LaunchKernelLogMonitor(config, boot_events_pipe);
   LaunchUsbServerIfEnabled(config);
   LaunchIvServer(config);
 

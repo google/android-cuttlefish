@@ -46,15 +46,11 @@ using BootEventCallback = std::function<SubscriptionAction(BootEvent)>;
 // one connection.
 class KernelLogServer {
  public:
-  KernelLogServer(const std::string& socket_name,
+  KernelLogServer(cvd::SharedFD server_socket,
                   const std::string& log_name,
                   bool deprecated_boot_completed);
 
   ~KernelLogServer() = default;
-
-  // Initialize this instance of Server.
-  // Returns true, if initialization was successful.
-  bool Init();
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
@@ -66,10 +62,6 @@ class KernelLogServer {
 
   void SubscribeToBootEvents(BootEventCallback callback);
  private:
-  // Create kernel log server socket.
-  // Returns true, if socket was successfully created.
-  bool CreateServerSocket();
-
   // Handle new client connection. Only accept one connection.
   void HandleIncomingConnection();
 
@@ -77,7 +69,6 @@ class KernelLogServer {
   // Returns false, if client disconnected.
   bool HandleIncomingMessage();
 
-  std::string name_;
   cvd::SharedFD server_fd_;
   cvd::SharedFD client_fd_;
   cvd::SharedFD log_fd_;
