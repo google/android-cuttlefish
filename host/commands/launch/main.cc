@@ -326,17 +326,17 @@ void LaunchKernelLogMonitor(vsoc::CuttlefishConfig* config,
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
   int server_fd = server->UNMANAGED_Dup();
-  int subscriptor_fd = -1;
+  int subscriber_fd = -1;
   if (boot_events_pipe->IsOpen()) {
-    subscriptor_fd = boot_events_pipe->UNMANAGED_Dup();
+    subscriber_fd = boot_events_pipe->UNMANAGED_Dup();
   }
   cvd::subprocess({FLAGS_kernel_log_monitor_binary,
                    "-log_server_fd=" + std::to_string(server_fd),
-                   "-subscriptor_fd=" + std::to_string(subscriptor_fd),
+                   "-subscriber_fd=" + std::to_string(subscriber_fd),
                    GetConfigFileArg()});
   close(server_fd);
-  if (subscriptor_fd >= 0) {
-    close(subscriptor_fd);
+  if (subscriber_fd >= 0) {
+    close(subscriber_fd);
   }
 }
 
