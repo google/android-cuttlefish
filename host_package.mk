@@ -32,6 +32,7 @@ cvd_host_executables := \
     cf_qemu.sh \
     ivserver \
     virtual_usb_manager \
+    kernel_log_monitor \
 
 cvd_host_tests := \
     auto_free_buffer_test \
