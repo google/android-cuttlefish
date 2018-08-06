@@ -1,5 +1,5 @@
 #
-# Copyright 2017 The Android Open-Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,22 +14,10 @@
 # limitations under the License.
 #
 
-#
-# x86 target for Cuttlefish
-#
+$(call inherit-product, device/google/cuttlefish/shared/go/device.mk)
+$(call inherit-product, device/google/cuttlefish/vsoc_x86_64/phone/device.mk)
 
--include device/google/cuttlefish/shared/BoardConfig.mk
-
-TARGET_BOOTLOADER_BOARD_NAME := vsoc_x86
-TARGET_BOARD_PLATFORM := vsoc_x86
-TARGET_ARCH := x86
-TARGET_ARCH_VARIANT := x86
-TARGET_2ND_ARCH := arm
-TARGET_TRANSLATE_2ND_ARCH := true
-TARGET_CPU_ABI := x86
-TARGET_2ND_CPU_ABI := armeabi-v7a
-TARGET_2ND_CPU_ABI2 := armeabi
-TARGET_2ND_ARCH_VARIANT := armv7-a-neon
-TARGET_2ND_CPU_VARIANT := generic
-
-BUILD_BROKEN_DUP_RULES := true
+PRODUCT_NAME := aosp_cf_x86_64_go_phone
+PRODUCT_DEVICE := vsoc_x86_64
+PRODUCT_MODEL := Cuttlefish x86_64 Go phone
+PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86_64/phone/overlay

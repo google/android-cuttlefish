@@ -7,5 +7,4 @@ init_daemon_domain(vsoc_input_service)
 allow vsoc_input_service uhid_device:chr_file rw_file_perms;
 
 # Framebuffer I/O (needed to obtain the screen size)
-allow vsoc_input_service fb_ctl_file:file rw_file_perms;
-allow vsoc_input_service userspace_fb_file:file rw_file_perms;
+allow vsoc_input_service region_screen_device:chr_file rw_file_perms;

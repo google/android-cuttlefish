@@ -21,8 +21,16 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
+    adbshell \
+    host_region_e2e_test \
     launch_cvd \
-    wificlient \
+    socket_forward_proxy \
+    adb_connector \
+    stop_cvd \
+    vnc_server \
+    record_audio \
+    cf_qemu.sh \
+    ivserver \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -38,13 +46,17 @@ cvd_host_shared_libraries := \
     vsoc_lib \
     libcuttlefish_fs \
     cuttlefish_auto_resources \
+    libcuttlefish_strings \
+    libcuttlefish_utils \
+    cuttlefish_tcp_socket \
     liblog \
     libnl \
     libc++ \
     libicuuc-host \
 
 cvd_host_configs := \
-    vsoc_mem.json
+    system-root.dtb \
+    initrd-root.dtb
 
 cvd_host_package_files := \
      $(addprefix config/,$(cvd_host_configs)) \

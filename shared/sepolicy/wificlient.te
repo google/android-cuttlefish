@@ -1,5 +1,0 @@
-type wificlient, domain;
-type wificlient_exec, exec_type, vendor_file_type, file_type;
-
-init_daemon_domain(wificlient)
-allow wificlient self:netlink_kobject_uevent_socket create_socket_perms_no_ioctl;

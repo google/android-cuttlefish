@@ -14,23 +14,26 @@
 # limitations under the License.
 #
 
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
+
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+CUTTLEFISH_SYSTEM_AS_ROOT := true
+
 PRODUCT_CHARACTERISTICS := nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    gsm.sim.operator.alpha=Android \
-    gsm.sim.operator.iso-country=us \
-    gsm.sim.operator.numeric=310260 \
     keyguard.no_require_sim=true \
     rild.libpath=libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
-    ro.cdma.home.operator.numeric=310260 \
-    ro.com.android.dataroaming=true \
+    ro.cdma.home.operator.numeric=302780 \
     ro.gsm.home.operator.alpha=Android \
-    ro.gsm.home.operator.numeric=310260 \
+    ro.gsm.home.operator.numeric=302780 \
+    gsm.sim.operator.numeric=302780 \
+    gsm.sim.operator.alpha=Android \
+    gsm.sim.operator.iso-country=us
 
 PRODUCT_PACKAGES += \
     MmsService \
@@ -42,7 +45,8 @@ PRODUCT_PACKAGES += \
     rild \
 
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/apns-conf.xml:system/etc/apns-conf.xml \
-    device/google/cuttlefish/shared/config/spn-conf.xml:system/etc/spn-conf.xml \
-    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:system/etc/permissions/android.hardware.telephony.gsm.xml \
+    frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml
 
+# These flags are important for the GSI, but break auto
+PRODUCT_ENFORCE_RRO_TARGETS := framework-res
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay

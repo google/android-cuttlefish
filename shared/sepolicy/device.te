@@ -1,3 +1,4 @@
 # Device types
 type region_e2e_test_device, dev_type;
 type virtual_serial_device, dev_type;
+type region_screen_device, dev_type;

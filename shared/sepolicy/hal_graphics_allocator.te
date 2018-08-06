@@ -3,8 +3,4 @@ allow hal_graphics_allocator_client hal_graphics_allocator_default_tmpfs:file re
 
 # Read GCE initial metadata file
 allow hal_graphics_allocator_server initial_metadata_file:file r_file_perms;
-
-# Interact with the userspace framebuffer
-# TODO(b/64158954): Remove/update these	rules once gralloc impl	changes
-allow hal_graphics_allocator_server fb_ctl_file:file rw_file_perms;
-allow hal_graphics_allocator_server userspace_fb_file:file rw_file_perms;
+allow hal_graphics_allocator_server region_screen_device:chr_file rw_file_perms;
