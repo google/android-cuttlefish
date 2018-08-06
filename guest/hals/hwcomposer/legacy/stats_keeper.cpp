@@ -31,6 +31,8 @@ using cvd::time::MonotonicTimePoint;
 using cvd::time::Nanoseconds;
 using cvd::time::Seconds;
 using cvd::time::TimeDifference;
+using vsoc::layout::screen::TimeSpec;
+using vsoc::layout::screen::CompositionStats;
 
 namespace cvd {
 
@@ -51,7 +53,31 @@ const T& MultisetMax(const std::multiset<T>& mset) {
   return *mset.rbegin();
 }
 
+void TimeDifferenceToTimeSpec(const TimeDifference& td, TimeSpec* ts) {
+  ts->ts_sec = td.seconds();
+  ts->ts_nsec = td.subseconds_in_ns();
+}
+
 }  // namespace
+
+void StatsKeeper::GetLastCompositionStats(CompositionStats* stats_p) {
+  if (stats_p) {
+    TimeDifferenceToTimeSpec(last_composition_stats_.prepare_start.SinceEpoch(),
+                             &stats_p->prepare_start);
+    TimeDifferenceToTimeSpec(last_composition_stats_.prepare_end.SinceEpoch(),
+                             &stats_p->prepare_end);
+    TimeDifferenceToTimeSpec(last_composition_stats_.set_start.SinceEpoch(),
+                             &stats_p->set_start);
+    TimeDifferenceToTimeSpec(last_composition_stats_.set_end.SinceEpoch(),
+                             &stats_p->set_end);
+    TimeDifferenceToTimeSpec(last_composition_stats_.last_vsync.SinceEpoch(),
+                             &stats_p->last_vsync);
+
+    stats_p->num_prepare_calls = last_composition_stats_.num_prepare_calls;
+    stats_p->num_layers = last_composition_stats_.num_layers;
+    stats_p->num_hwcomposited_layers = last_composition_stats_.num_hwc_layers;
+  }
+}
 
 StatsKeeper::StatsKeeper(TimeDifference timespan, int64_t vsync_base,
                          int32_t vsync_period)

@@ -25,11 +25,13 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MULTILIB := first
 
 LOCAL_SHARED_LIBRARIES := \
+    libbase \
     liblog \
     libcutils \
     cuttlefish_auto_resources \
     libcuttlefish_fs \
-    cuttlefish_time
+    cuttlefish_time \
+    vsoc_lib
 
 LOCAL_HEADER_LIBRARIES := \
     libhardware_headers
@@ -42,6 +44,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
+    device/google/cuttlefish_kernel \
     $(VSOC_STLPORT_INCLUDES) \
     frameworks/native/include/media/hardware \
     $(call include-path-for, audio)

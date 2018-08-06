@@ -32,14 +32,15 @@ namespace cvd {
 //
 //   std::unique_ptr<NetlinkClient> client(NetlinkClient::GetDefault());
 //   NetworkInterfaceManager manager(client.get());
-//   std::unique_ptr<NetworkInterface> iface(manager.Open("eth0"));
+//   std::unique_ptr<NetworkInterface> iface(manager.Open("eth0", "em0"));
 //
 class NetworkInterfaceManager {
  public:
   // Open existing network interface.
   //
   // NOTE: this method does not fill in any NetworkInterface details yet.
-  std::unique_ptr<NetworkInterface> Open(const std::string& if_name);
+  std::unique_ptr<NetworkInterface> Open(const std::string& if_name,
+                                         const std::string& if_name_alt);
 
   // Apply changes made to existing network interface.
   // This method cannot be used to instantiate new network interfaces.

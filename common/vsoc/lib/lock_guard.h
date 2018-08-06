@@ -29,15 +29,17 @@ class RegionView;
 template <typename Lock>
 class LockGuard {
  public:
-  explicit LockGuard(Lock* lock) : lock_(lock) { lock_->Lock(); }
+  explicit LockGuard(Lock* lock) : lock_(lock) {
+    lock_->Lock();
+  }
 
-  LockGuard(LockGuard<Lock>&& o) noexcept {
+  LockGuard(LockGuard&& o) noexcept {
     lock_ = o.lock_;
     o.lock_ = nullptr;
   }
 
-  LockGuard(const LockGuard<Lock>&) = delete;
-  LockGuard<Lock>& operator=(const LockGuard<Lock>&) = delete;
+  LockGuard(const LockGuard&) = delete;
+  LockGuard& operator=(const LockGuard&) = delete;
 
   ~LockGuard() {
     if (lock_) {
@@ -58,15 +60,15 @@ class LockGuard<::vsoc::layout::GuestAndHostLock> {
     lock_->Lock(region_);
   }
 
-  LockGuard(LockGuard<Lock>&& o) noexcept {
+  LockGuard(LockGuard&& o) noexcept {
     lock_ = o.lock_;
     o.lock_ = nullptr;
     region_ = o.region_;
     o.region_ = nullptr;
   }
 
-  LockGuard(const LockGuard<Lock>&) = delete;
-  LockGuard<Lock>& operator=(const LockGuard<Lock>&) = delete;
+  LockGuard(const LockGuard&) = delete;
+  LockGuard& operator=(const LockGuard&) = delete;
 
   ~LockGuard() {
     if (lock_) {

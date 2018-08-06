@@ -42,13 +42,10 @@ cc_defaults {
         "cuttlefish_kernel_headers",
     ],
     target: {
-        linux_glibc: {
+        host: {
             host_ldlibs: ["-lrt"],
             cflags: ["-DCUTTLEFISH_HOST"],
-        },
-        // We don't need 32 bit host-side builds
-        linux_glibc_x86: {
-            enabled: false,
+            compile_multilib: "64",
         },
         // We don't need Darwin host-side builds
         darwin: {
@@ -73,6 +70,11 @@ cc_defaults {
 }
 
 cc_defaults {
+    name: "cuttlefish_guest_only",
+    defaults: ["cuttlefish_base"],
+}
+
+cc_defaults {
     name: "cuttlefish_host_only",
     device_supported: false,
     host_supported: true,
@@ -89,14 +91,20 @@ cc_library_shared {
     name: "vsoc_lib",
     srcs: [
         "common/vsoc/lib/compat.cpp",
+        "common/vsoc/lib/audio_data_layout.cpp",
         "common/vsoc/lib/e2e_test_region_layout.cpp",
-        "common/vsoc/lib/fb_bcast_layout.cpp",
-        "common/vsoc/lib/fb_bcast_region_view.cpp",
         "common/vsoc/lib/gralloc_layout.cpp",
         "common/vsoc/lib/input_events_layout.cpp",
         "common/vsoc/lib/input_events_region_view.cpp",
         "common/vsoc/lib/lock_common.cpp",
         "common/vsoc/lib/region_view.cpp",
+        "common/vsoc/lib/ril_layout.cpp",
+        "common/vsoc/lib/ril_region_view.cpp",
+        "common/vsoc/lib/screen_layout.cpp",
+        "common/vsoc/lib/screen_region_view.cpp",
+        "common/vsoc/lib/socket_forward_layout.cpp",
+        "common/vsoc/lib/socket_forward_region_view.cpp",
+        "common/vsoc/lib/vsoc_memory.cpp",
         "common/vsoc/lib/wifi_exchange_layout.cpp",
         "common/vsoc/lib/wifi_exchange_view.cpp",
     ],
@@ -108,7 +116,7 @@ cc_library_shared {
         "liblog",
     ],
     target: {
-        linux_glibc: {
+        host: {
             srcs: [
                 "host/vsoc/lib/gralloc_buffer_region_view.cpp",
                 "host/vsoc/lib/host_lock.cpp",
@@ -140,24 +148,22 @@ cc_test_host {
     defaults: ["cuttlefish_host_only"],
 }
 
-cc_test {
-    name: "vsoc_fb_bcast_region_view_test",
+cc_binary_host {
+    name: "vsoc_screen_region_view_test",
     srcs: [
-        "common/vsoc/lib/fb_bcast_region_view_test.cpp",
+        "common/vsoc/lib/screen_region_view_test.cpp",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libjsoncpp",
+        "libgflags",
     ],
     shared_libs: [
         "vsoc_lib",
         "libbase",
+        "libcuttlefish_utils",
     ],
-    target : {
-        linux_glibc_x86_64: {
-            static_libs: [
-                "libcuttlefish_host_config",
-                "libgflags",
-            ],
-        },
-    },
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+    defaults: ["cuttlefish_host_only"],
 }
 
 cc_test_host {
@@ -197,11 +203,13 @@ cc_binary_host {
     shared_libs: [
         "vsoc_lib",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libjsoncpp",
         "libgtest_host",
         "libgflags",
     ],

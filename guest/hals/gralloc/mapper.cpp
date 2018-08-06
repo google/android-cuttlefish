@@ -16,14 +16,18 @@
 
 #include "gralloc_vsoc_priv.h"
 
+#include <unistd.h>
+#include <string.h>
+#include <sys/mman.h>
+
 #include <cutils/hashmap.h>
 #include <hardware/gralloc.h>
 #include <hardware/hardware.h>
 #include <log/log.h>
-#include <string.h>
-#include <sys/mman.h>
 
 namespace {
+
+const size_t g_page_size = sysconf(_SC_PAGESIZE);
 
 struct HmLockGuard {
   HmLockGuard(Hashmap* map) : map_(map) {
@@ -82,8 +86,8 @@ void* reference_buffer(const vsoc_buffer_handle_t* hnd) {
     }
     // Set up the guard pages. The last page is always a guard
     uintptr_t base = uintptr_t(mapped);
-    uintptr_t addr = base + hnd->size - PAGE_SIZE;
-    if (mprotect((void*)addr, PAGE_SIZE, PROT_NONE) == -1) {
+    uintptr_t addr = base + hnd->size - g_page_size;
+    if (mprotect((void*)addr, g_page_size, PROT_NONE) == -1) {
       ALOGW("Unable to protect last page of buffer (offset: %d, size: %d): %s",
             hnd->offset,
             hnd->size,

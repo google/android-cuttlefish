@@ -108,7 +108,7 @@ public class BootReporter extends JobBase {
     }
 
 
-    private void reportMessage(String message) {
+    public void reportMessage(String message) {
         Log.i(LOG_TAG, message);
         mKmsgWriter.printf(KLOG_FORMAT, KLOG_NOTICE, LOG_TAG, message);
         mKmsgWriter.flush();

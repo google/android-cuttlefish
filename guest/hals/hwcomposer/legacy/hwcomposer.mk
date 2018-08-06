@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
+LOCAL_MODULE_RELATIVE_PATH := hw
+else
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
+endif
 LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
+LOCAL_VENDOR_MODULE := true
 
 LOCAL_SHARED_LIBRARIES := \
-    libvsocframebuffer \
     libbase \
     liblog \
     libcutils \
@@ -25,6 +30,7 @@ LOCAL_SHARED_LIBRARIES := \
     libsync \
     libhardware \
     libjpeg \
+    vsoc_lib \
     $(VSOC_STLPORT_LIBS)
 
 LOCAL_STATIC_LIBRARIES := \
@@ -44,6 +50,7 @@ LOCAL_CFLAGS += \
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \
+    device/google/cuttlefish_kernel \
     external/libyuv/files/include \
     bionic \
     $(VSOC_STLPORT_INCLUDES)

@@ -16,6 +16,9 @@
 
 #include "host/libs/monitor/kernel_log_server.h"
 
+#include <map>
+#include <utility>
+
 #include <glog/logging.h>
 #include <netinet/in.h>
 #include "common/libs/fs/shared_select.h"
@@ -23,11 +26,36 @@
 using cvd::SharedFD;
 
 namespace {
-static const std::string kVirtualDeviceStages[] = {
-  "VIRTUAL_DEVICE_BOOT_STARTED",
-  "VIRTUAL_DEVICE_BOOT_COMPLETED",
-  "VIRTUAL_DEVICE_BOOT_FAILED",
+static const std::map<std::string, monitor::BootEvent> kStageToEventMap = {
+    {"VIRTUAL_DEVICE_BOOT_STARTED", monitor::BootEvent::BootStarted},
+    {"VIRTUAL_DEVICE_BOOT_COMPLETED", monitor::BootEvent::BootCompleted},
+    {"VIRTUAL_DEVICE_BOOT_FAILED", monitor::BootEvent::BootFailed},
+    {"VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED",
+     monitor::BootEvent::MobileNetworkConnected},
+    {"VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED",
+     monitor::BootEvent::WifiNetworkConnected},
 };
+
+void ProcessSubscriptions(
+    monitor::BootEvent evt,
+    std::vector<monitor::BootEventCallback>* subscribers) {
+  auto active_subscription_count = subscribers->size();
+  std::size_t idx = 0;
+  while (idx < active_subscription_count) {
+    // Call the callback
+    auto action = (*subscribers)[idx](evt);
+    if (action == monitor::SubscriptionAction::ContinueSubscription) {
+      ++idx;
+    } else {
+      // Cancel the subscription by swaping it with the last active subscription
+      // and decreasing the active subscription count
+      --active_subscription_count;
+      std::swap((*subscribers)[idx], (*subscribers)[active_subscription_count]);
+    }
+  }
+  // Keep only the active subscriptions
+  subscribers->resize(active_subscription_count);
+}
 }  // namespace
 
 namespace monitor {
@@ -70,6 +98,11 @@ void KernelLogServer::AfterSelect(const cvd::SharedFDSet& fd_read) {
   }
 }
 
+void KernelLogServer::SubscribeToBootEvents(
+    monitor::BootEventCallback callback) {
+  subscribers_.push_back(callback);
+}
+
 // Accept new kernel log connection.
 void KernelLogServer::HandleIncomingConnection() {
   if (client_fd_->IsOpen()) {
@@ -82,6 +115,9 @@ void KernelLogServer::HandleIncomingConnection() {
     LOG(ERROR) << "Client connection failed: " << client_fd_->StrError();
     return;
   }
+  if (client_fd_->Fcntl(F_SETFL, O_NONBLOCK) == -1) {
+    LOG(ERROR) << "Client connection refused O_NONBLOCK: " << client_fd_->StrError();
+  }
 }
 
 bool KernelLogServer::HandleIncomingMessage() {
@@ -93,13 +129,22 @@ bool KernelLogServer::HandleIncomingMessage() {
     return false;
   }
   if (ret == 0) return false;
+  // Write the log to a file
+  if (log_fd_->Write(buf, ret) < 0) {
+    LOG(ERROR) << "Could not write kernel log to file: " << log_fd_->StrError();
+    return false;
+  }
 
   // Detect VIRTUAL_DEVICE_BOOT_*
   for (ssize_t i=0; i<ret; i++) {
     if ('\n' == buf[i]) {
-      for (auto stage : kVirtualDeviceStages) {
+      for (auto& stage_kv : kStageToEventMap) {
+        auto& stage = stage_kv.first;
+        auto event = stage_kv.second;
         if (std::string::npos != line_.find(stage)) {
+          // Log the stage
           LOG(INFO) << stage;
+          ProcessSubscriptions(event, &subscribers_);
           //TODO(b/69417553) Remove this when our clients have transitioned to the
           // new boot completed
           if (deprecated_boot_completed_) {
@@ -115,11 +160,6 @@ bool KernelLogServer::HandleIncomingMessage() {
     line_.append(1, buf[i]);
   }
 
-  // Write the log to a file
-  if (log_fd_->Write(buf, ret) < 0) {
-    LOG(ERROR) << "Could not write kernel log to file: " << log_fd_->StrError();
-    return false;
-  }
   return true;
 }
 

@@ -15,38 +15,32 @@
  * limitations under the License.
  */
 
-// Base macros for all layout structures.
-
+#include <stdint.h>
 #include <type_traits>
-#include "common/vsoc/shm/version.h"
 
+// Base macros for all layout structures.
 // ShmTypeValidator provides meaningful information about the type size
 // mismatch in compilation error messages, eg.
 //
 // error:
-//    static_assert failed "Class size changed, update the version"
+//    static_assert failed "Class size changed, update the layout_size field"
 //    static_assert(Current == Expected,
 // note: in instantiation of template class
-//    'ShmTypeValidator<vsoc::layout::myclass::ClassName, 1232, 1240>'
-//    requested here ASSERT_SHM_COMPATIBLE(ClassName, myclass);
+//    'ShmTypeValidator<vsoc::layout::myclass::ClassName>'
+//    requested here ASSERT_SHM_COMPATIBLE(ClassName);
 //
-template<typename Type, size_t Current, size_t Expected>
+template <typename Type, size_t expected_size = Type::layout_size>
 struct ShmTypeValidator {
-    static_assert(Current == Expected,
-                  "Class size changed, update the version");
-    static_assert(std::is_trivial<Type>(),
-                  "Class uses features that are unsafe");
-    static constexpr bool valid = (Current == Expected);
+  static_assert(sizeof(Type) == expected_size,
+                "Class size changed, update the layout_size field");
+  static_assert(std::is_trivial<Type>(), "Class uses features that are unsafe");
+  static constexpr bool valid =
+      sizeof(Type) == expected_size && std::is_trivial<Type>();
 };
 
-#define ASSERT_SHM_COMPATIBLE(T, R)                                   \
-  static_assert(                                                      \
-      ShmTypeValidator<T, sizeof(T), vsoc::layout::version_info::R::T##_size> \
-      ::valid, "Compilation error. Please fix above errors and retry.")
-
-#define ASSERT_SHM_CONSTANT_VALUE(T, R)                                 \
-  static_assert(T == vsoc::layout::version_info::R::constant_values::T, \
-                "Constant value changed")
+#define ASSERT_SHM_COMPATIBLE(T)            \
+  static_assert(ShmTypeValidator<T>::valid, \
+                "Compilation error. Please fix above errors and retry.")
 
 namespace vsoc {
 namespace layout {
@@ -58,29 +52,31 @@ namespace layout {
  *
  * These are carefully formatted to make Guest and Host a bitfield.
  */
-struct Sides {
-  static const uint32_t NoSides = 0;
-  static const uint32_t Guest = 1;
-  static const uint32_t Host = 2;
-  static const uint32_t Both = 3;
+enum Sides : uint32_t {
+  NoSides = 0,
+  Guest = 1,
+  Host = 2,
+  Both = 3,
 #ifdef CUTTLEFISH_HOST
-  static const uint32_t OurSide = Host;
-  static const uint32_t Peer = Guest;
+  OurSide = Host,
+  Peer = Guest
 #else
-  static const uint32_t OurSide = Guest;
-  static const uint32_t Peer = Host;
+  OurSide = Guest,
+  Peer = Host
 #endif
-
-  uint32_t value_;
 };
-ASSERT_SHM_COMPATIBLE(Sides, multi_region);
+// Enums can't have static members, so can't use the macro here.
+  static_assert(ShmTypeValidator<Sides, 4>::valid,
+              "Compilation error. Please fix above errors and retry.");
 
 /**
  * Base class for all region layout structures.
  */
 class RegionLayout {
+public:
+  static constexpr size_t layout_size = 1;
 };
-ASSERT_SHM_COMPATIBLE(RegionLayout, multi_region);
+ASSERT_SHM_COMPATIBLE(RegionLayout);
 
 }  // namespace layout
 }  // namespace vsoc

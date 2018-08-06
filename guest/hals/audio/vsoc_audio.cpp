@@ -15,6 +15,7 @@
  */
 #include "guest/hals/audio/audio_hal.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -28,6 +29,7 @@ extern "C" {
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/threads/thunkers.h"
+#include "common/vsoc/lib/circqueue_impl.h"
 #include "guest/hals/audio/vsoc_audio.h"
 #include "guest/hals/audio/vsoc_audio_input_stream.h"
 #include "guest/hals/audio/vsoc_audio_output_stream.h"
@@ -63,19 +65,8 @@ int GceAudio::Close() {
       delete it->second;
     }
   }
-  // Make certain that the listener thread wakes up
-  cvd::SharedFD temp_client =
-      cvd::SharedFD::SocketSeqPacketClient(AUDIO_HAL_SOCKET_NAME);
-  uint64_t dummy_val = 1;
-  terminate_listener_thread_event_->Write(&dummy_val, sizeof dummy_val);
-  pthread_join(listener_thread_, NULL);
   delete this;
   return 0;
-}
-
-cvd::SharedFD GceAudio::GetAudioFd() {
-  LockGuard<Mutex> guard(lock_);
-  return audio_data_socket_;
 }
 
 size_t GceAudio::GetInputBufferSize(const audio_config*) const {
@@ -222,12 +213,20 @@ int GceAudio::Dump(int fd) const {
   return 0;
 }
 
-ssize_t GceAudio::SendMsg(const msghdr& msg, int flags) {
-  cvd::SharedFD fd = GetAudioFd();
-  if (!fd->IsOpen()) {
-    return 0;
-  }
-  return fd->SendMsg(&msg, flags);
+ssize_t GceAudio::SendMsg(const msghdr& msg, int /* flags */) {
+    intptr_t res = audio_data_rv_->data()->audio_queue.Writev(
+            audio_data_rv_,
+            msg.msg_iov,
+            msg.msg_iovlen,
+            true /* non_blocking */);
+
+    if (res < 0) {
+        ALOGV("GceAudio::%s: CircularPacketQueue::Write returned %" PRIiPTR,
+              __FUNCTION__,
+              res);
+    }
+
+    return static_cast<ssize_t>(res);
 }
 
 ssize_t GceAudio::SendStreamUpdate(
@@ -282,94 +281,6 @@ int GceAudio::SetMode(audio_mode_t mode) {
   return 0;
 }
 
-void* GceAudio::Listener() {
-  // TODO(ghartman): Consider tightening the mode on this later.
-  audio_listener_socket_ = cvd::SharedFD::SocketSeqPacketServer(
-      AUDIO_HAL_SOCKET_NAME, 0777);
-  if (!audio_listener_socket_->IsOpen()) {
-    ALOGE("GceAudio::%s: Could not listen for audio connections. (%s).",
-          __FUNCTION__, audio_listener_socket_->StrError());
-    return NULL;
-  }
-  ALOGI("GceAudio::%s: Listening for audio connections at %s",
-        __FUNCTION__, AUDIO_HAL_SOCKET_NAME);
-  remoter_request_packet announce;
-  remoter_request_packet_init(&announce, kRemoterHALReady, 0);
-  announce.send_response = 0;
-  strncpy(announce.params.hal_ready_params.unix_socket,
-          AUDIO_HAL_SOCKET_NAME,
-          sizeof(announce.params.hal_ready_params.unix_socket));
-  AutoCloseFileDescriptor remoter_socket(remoter_connect());
-  if (remoter_socket.IsError()) {
-    ALOGI("GceAudio::%s: Couldn't connect to remoter to register HAL (%s).",
-          __FUNCTION__, strerror(errno));
-  } else {
-    int err = remoter_do_single_request_with_socket(
-        remoter_socket, &announce, NULL);
-    if (err == -1) {
-      ALOGI("GceAudio::%s: HAL registration failed after connect (%s).",
-            __FUNCTION__, strerror(errno));
-    } else {
-      ALOGI("GceAudio::%s: HAL registered with the remoter", __FUNCTION__);
-    }
-  }
-  while (true) {
-    // Poll for new connections or the terminatation event.
-    // The listener is non-blocking. We send to at most one client. If a new
-    // client comes in disconnect the old one.
-    cvd::SharedFDSet fd_set;
-    fd_set.Set(audio_listener_socket_);
-    fd_set.Set(terminate_listener_thread_event_);
-    if (cvd::Select(&fd_set, NULL, NULL, NULL) <= 0) {
-      // There's no timeout, so 0 shouldn't happen.
-      ALOGE("GceAudio::%s: Error using shared Select", __FUNCTION__);
-      break;
-    }
-    if (fd_set.IsSet(terminate_listener_thread_event_)) {
-      break;
-    }
-    LOG_FATAL_IF(fd_set.IsSet(audio_listener_socket_),
-                 "No error in Select() but nothing ready to read");
-    cvd::SharedFD fd = cvd::SharedFD::Accept(
-        *audio_listener_socket_);
-    if (!fd->IsOpen()) {
-      continue;
-    }
-    std::list<gce_audio_message> streams;
-    {
-      LockGuard<Mutex> guard(lock_);
-      // Do not do I/O while holding the lock. It could block the HAL
-      // implementation.
-      // Register the fd before dropping the lock to ensure that every
-      // active stream will appear when we first connect.
-      // Some output streams may appear twice if an open is active
-      // during the connect.
-      audio_data_socket_ = fd;
-      for (std::list<GceAudioOutputStream*>::iterator it = output_list_.begin();
-           it != output_list_.end(); ++it) {
-        streams.push_back((*it)->GetStreamDescriptor(
-            gce_audio_message::OPEN_OUTPUT_STREAM));
-      }
-      for (input_map_t::iterator it = input_map_.begin();
-           it != input_map_.end(); ++it) {
-        streams.push_back(it->second->GetStreamDescriptor(
-            it->first, gce_audio_message::OPEN_INPUT_STREAM));
-      }
-    }
-    for (std::list<gce_audio_message>::iterator it = streams.begin();
-         it != streams.end(); ++it) {
-      // We're willing to block because this is independent of the HAL
-      // implementation. We also don't want to forget to mention the input
-      // streams.
-      if (SendStreamUpdate(*it, 0) < 0) {
-        ALOGE("GceAudio::%s: Failed to announce open stream (%s)",
-              __FUNCTION__, fd->StrError());
-      }
-    }
-  }
-  return NULL;
-}
-
 int GceAudio::Open(const hw_module_t* module, const char* name,
                    hw_device_t** device) {
   D("GceAudio::%s", __FUNCTION__);
@@ -381,13 +292,10 @@ int GceAudio::Open(const hw_module_t* module, const char* name,
   }
 
   GceAudio* rval = new GceAudio;
-  int err = pthread_create(
-      &rval->listener_thread_, NULL,
-      AudioThreadThunker<void*()>::call<&GceAudio::Listener>, rval);
-  if (err) {
-    ALOGE("GceAudio::%s: Unable to start listener thread (%s)", __FUNCTION__,
-          strerror(err));
-  }
+
+  rval->audio_data_rv_ = AudioDataRegionView::GetInstance();
+  rval->audio_worker_ = rval->audio_data_rv_->StartWorker();
+
   rval->common.tag = HARDWARE_DEVICE_TAG;
   rval->common.version = version_;
   rval->common.module = const_cast<hw_module_t *>(module);

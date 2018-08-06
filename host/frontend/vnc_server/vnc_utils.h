@@ -21,7 +21,9 @@
 #include <utility>
 #include <vector>
 
-#include "common/vsoc/lib/fb_bcast_region_view.h"
+#include "common/libs/tcp_socket/tcp_socket.h"
+#include "common/vsoc/lib/screen_region_view.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cvd {
 namespace vnc {
@@ -40,8 +42,6 @@ class StripeSeqNumber {
  private:
   std::uint64_t t_{};
 };
-
-using Message = std::vector<std::uint8_t>;
 
 constexpr int32_t kJpegMaxQualityEncoding = -23;
 constexpr int32_t kJpegMinQualityEncoding = -32;
@@ -62,20 +62,22 @@ struct Stripe {
   ScreenOrientation orientation{};
 };
 
-vsoc::framebuffer::FBBroadcastRegionView* GetFBBroadcastRegionView();
-
-inline int BytesPerPixel() {
-  return GetFBBroadcastRegionView()->bytes_per_pixel();
+inline constexpr int BytesPerPixel() {
+  return sizeof(vsoc::screen::ScreenRegionView::Pixel);
 }
 
 // The width of the screen regardless of orientation. Does not change.
 inline int ActualScreenWidth() {
-  return GetFBBroadcastRegionView()->x_res();
+  return vsoc::screen::ScreenRegionView::GetInstance(
+             vsoc::GetDomain().c_str())
+      ->x_res();
 }
 
 // The height of the screen regardless of orientation. Does not change.
 inline int ActualScreenHeight() {
-  return GetFBBroadcastRegionView()->y_res();
+  return vsoc::screen::ScreenRegionView::GetInstance(
+             vsoc::GetDomain().c_str())
+      ->y_res();
 }
 
 inline int ScreenSizeInBytes() {

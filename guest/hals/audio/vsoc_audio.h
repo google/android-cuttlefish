@@ -17,12 +17,14 @@
 
 #include <list>
 #include <map>
+#include <memory>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/threads/cuttlefish_thread.h"
+#include "common/vsoc/lib/audio_data_region_view.h"
+#include "common/vsoc/lib/vsoc_audio_message.h"
 #include "guest/hals/audio/audio_hal.h"
 #include "guest/hals/audio/vsoc_audio_input_stream.h"
-#include "guest/hals/audio/vsoc_audio_message.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace cvd {
@@ -45,10 +47,6 @@ class GceAudio : public audio_hw_device {
     cvd::LockGuard<cvd::Mutex> guard(lock_);
     return mic_muted_;
   }
-
-  // Retrieves the SharedFD of the process accepting audio data.
-  // Returns a non-open fd if no process is listening (the normal case).
-  cvd::SharedFD GetAudioFd();
 
   // Send a message to the connected streamer.
   // Returns:
@@ -211,8 +209,6 @@ class GceAudio : public audio_hw_device {
 
 
  private:
-  // Main routine for a thread that listens for incoming streamer connections.
-  void* Listener();
   // HAL 3.0 modifies the signatures of OpenInputStream and OpenOutputStream.
   // We don't want to fork the implementation, and we don't want #ifdefs all
   // over the code. The current implementation defines OpenInputStream and
@@ -270,19 +266,12 @@ class GceAudio : public audio_hw_device {
   static const unsigned int version_ = AUDIO_DEVICE_API_VERSION_1_0;
 #endif
 
-  // Thread to handle new connections.
-  pthread_t listener_thread_;
-  // Event to indicate that the listener thread should terminate.
-  cvd::SharedFD terminate_listener_thread_event_;
-  // The listener socket, which is polled for new connections.
-  // TODO(ghartman): Consider using a thread.
-  cvd::SharedFD audio_listener_socket_;
+  using AudioDataRegionView = vsoc::audio_data::AudioDataRegionView;
+  AudioDataRegionView* audio_data_rv_{};
+  std::unique_ptr<vsoc::RegionWorker> audio_worker_;
+
   // Lock to protect the data below.
   mutable cvd::Mutex lock_;
-  // The data socket for the current streamer. Typically -1.
-  // The behavior of the HAL should not be affected by the presence or absence
-  // of the streamer.
-  cvd::SharedFD audio_data_socket_;
   // State that is managed at the device level.
   float voice_volume_;
   float master_volume_;
@@ -307,7 +296,6 @@ class GceAudio : public audio_hw_device {
 
   GceAudio() :
       audio_hw_device(),
-      terminate_listener_thread_event_(cvd::SharedFD::Event()),
       voice_volume_(0.0),
       master_volume_(0.0),
       master_muted_(false),

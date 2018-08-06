@@ -24,6 +24,7 @@
 #include <cstdint>
 
 #include <functional>
+#include <map>
 #include <thread>
 
 #include "common/libs/fs/shared_fd.h"
@@ -36,6 +37,7 @@
 
 namespace vsoc {
 
+class RegionControl;
 class RegionView;
 
 /**
@@ -46,14 +48,18 @@ class RegionView;
  */
 class RegionWorker {
  public:
-  explicit RegionWorker(RegionView* region);
+  RegionWorker(RegionView* region, std::shared_ptr<RegionControl> control);
   ~RegionWorker();
+
+  void start();
+
   void Work();
 
  protected:
+  std::shared_ptr<RegionControl> control_;
   RegionView* region_;
   std::thread thread_;
-  volatile bool stopping_{};
+  volatile bool stopping_;
 };
 
 /**
@@ -101,7 +107,7 @@ class RegionView : public RegionSignalingInterface {
   //   peer, usually a FUTEX_WAKE call, but can be customized for other
   //   purposes.
   void ProcessSignalsFromPeer(
-      std::function<void(std::atomic<uint32_t>*)> signal_handler);
+      std::function<void(uint32_t)> signal_handler);
 
   // Post a signal to the guest, the host, or both.
   // See futex(2) FUTEX_WAKE for details.
@@ -136,11 +142,15 @@ class RegionView : public RegionSignalingInterface {
   //   signal_addr: the memory that will be signaled. Must be within the region.
   //
   //   last_observed_value: the value that motivated the calling code to wait.
-  void WaitForSignal(std::atomic<uint32_t>* signal_addr,
-                     uint32_t last_observed_value);
+  //
+  // The return value is -1 on error. On the guest positive values give the
+  // number of false wakes.
+  int WaitForSignal(std::atomic<uint32_t>* signal_addr,
+                     uint32_t last_observed_value) override;
 
   // Starts the signal table scanner. This must be invoked by subclasses, which
-  // must store the returned unique_ptr as a class member.
+  // MUST store the returned unique_ptr as a class member.
+  __attribute__((warn_unused_result))
   std::unique_ptr<RegionWorker> StartWorker();
 
   // Returns a pointer to the start of region data that is cast to the given
@@ -168,17 +178,12 @@ class RegionView : public RegionSignalingInterface {
 
  protected:
   template <typename T>
-  T* region_offset_to_pointer(vsoc_reg_off_t offset) {
-    if (offset > control_->region_size()) {
-      LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
-                 << region_base_;
-    }
-    return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(region_base_) +
-                                offset);
+  T* region_offset_to_pointer(uint32_t offset) {
+    return control_->region_offset_to_pointer<T>(offset);
   }
 
   template <typename T>
-  const T& region_offset_to_reference(vsoc_reg_off_t offset) const {
+  const T& region_offset_to_reference(uint32_t offset) const {
     if (offset > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << offset << " not in region @"
                  << region_base_;
@@ -192,8 +197,8 @@ class RegionView : public RegionSignalingInterface {
   // This is mostly for the RegionView's internal plumbing. Use TypedRegionView
   // and RegionLayout to avoid this in most cases.
   template <typename T>
-  vsoc_reg_off_t pointer_to_region_offset(T* ptr) {
-    vsoc_reg_off_t rval = reinterpret_cast<uintptr_t>(ptr) -
+  uint32_t pointer_to_region_offset(T* ptr) const {
+    uint32_t rval = reinterpret_cast<uintptr_t>(ptr) -
                           reinterpret_cast<uintptr_t>(region_base_);
     if (rval > control_->region_size()) {
       LOG(FATAL) << __FUNCTION__ << ": " << ptr << " not in region @"

@@ -17,7 +17,6 @@
 
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/circqueue.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for region carrying input events from host to guest
 
@@ -27,6 +26,10 @@ namespace layout {
 namespace input_events {
 
 struct InputEventsLayout : public RegionLayout {
+  static constexpr size_t layout_size =
+      CircularPacketQueue<10, 256>::layout_size +
+      2 * CircularPacketQueue<10, 16>::layout_size;
+
   static const char* region_name;
   // Event queues for the different input devices supported. Both the power
   // button and the keyboard need only generate 2 input events for every
@@ -36,7 +39,7 @@ struct InputEventsLayout : public RegionLayout {
   CircularPacketQueue<10, 16> keyboard_queue;
   CircularPacketQueue<10, 16> power_button_queue;
 };
-ASSERT_SHM_COMPATIBLE(InputEventsLayout, input_events);
+ASSERT_SHM_COMPATIBLE(InputEventsLayout);
 
 }  // namespace input_events
 }  // namespace layout

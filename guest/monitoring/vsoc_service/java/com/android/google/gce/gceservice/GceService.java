@@ -41,7 +41,6 @@ public class GceService extends Service {
     private static final int NETWORK_OR_BOOT_TIMEOUT = 30;
 
     private final JobExecutor mExecutor = new JobExecutor();
-    private final ConnectivityChecker mConnChecker = new ConnectivityChecker(this);
     private final LocationServicesManager mLocationServices = new LocationServicesManager(this);
     private final PackageVerifierManager mPackageVerifier = new PackageVerifierManager(this);
     private final PackageVerificationConsentEnforcer mConsentEnforcer = new PackageVerificationConsentEnforcer(this);
@@ -50,10 +49,9 @@ public class GceService extends Service {
     private final BluetoothChecker mBluetoothChecker = new BluetoothChecker();
     private final TombstoneChecker mTombstoneChecker = new TombstoneChecker();
 
+    private ConnectivityChecker mConnChecker;
     private GceWifiManager mWifiManager = null;
     private String mMostRecentAction = null;
-    private BinderService mBinderService;
-
 
     public GceService() {}
 
@@ -65,13 +63,15 @@ public class GceService extends Service {
             mBootReporter.reportBootStarted();
             registerBroadcastReceivers();
 
-            mWifiManager = new GceWifiManager(this, mExecutor);
+            mConnChecker = new ConnectivityChecker(this, mBootReporter);
+            mWifiManager = new GceWifiManager(this, mBootReporter, mExecutor);
 
             mExecutor.schedule(mLocationServices);
             mExecutor.schedule(mPackageVerifier);
             mExecutor.schedule(mConsentEnforcer);
             mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
+            mExecutor.schedule(mConnChecker);
             // TODO(ender): TombstoneChecker is disabled, because we no longer have the code that
             // produces /ts_snap.txt file. We need to rethink how TombstoneChecker should work.
             // mExecutor.schedule(mTombstoneChecker);
@@ -79,8 +79,6 @@ public class GceService extends Service {
             mExecutor.schedule(mBootReporter,
                     mLocationServices.getLocationServicesReady(),
                     mPackageVerifier.getPackageVerifierReady(),
-                    mConnChecker.getConnected(),
-                    mWifiManager.getInitialWifiStateChangeReady(),
                     mBluetoothChecker.getEnabled()
                     // mTombstoneChecker.getTombstoneResult()
                     );
@@ -131,16 +129,14 @@ public class GceService extends Service {
             mExecutor.schedule(mBluetoothChecker);
         }
 
-        mBinderService = new BinderService();
-        ServiceManager.addService("gce", mBinderService, false);
-
         /* If anything goes wrong, make sure we receive intent again. */
         return Service.START_STICKY;
     }
 
     /** Dump the virtual device state
      */
-    private void dumpInternal(FileDescriptor fd, PrintWriter pw, String[] args) {
+    @Override
+    protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
         pw.println("Boot reporter:");
         List<String> messageList = mBootReporter.getMessageList();
         for (int i = 0; i < messageList.size(); i++) {
@@ -153,16 +149,10 @@ public class GceService extends Service {
         pw.println("  Package verifier ready: "
             + mPackageVerifier.getPackageVerifierReady().isDone());
         pw.println("  Network connected: " + mConnChecker.getConnected().isDone());
-        pw.println("  WiFi configured: " + mWifiManager.getInitialWifiStateChangeReady().isDone());
+        pw.println("  WiFi configured: " + mWifiManager.getWifiReady().isDone());
         pw.println("  Bluetooth enabled: " + mBluetoothChecker.getEnabled().isDone());
         pw.println("  Tombstone dropped (on boot): "
             + !mTombstoneChecker.getTombstoneResult().isDone());
         pw.println("");
-    }
-
-    private final class BinderService extends Binder {
-        @Override protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-            dumpInternal(fd, pw, args);
-        }
     }
 }

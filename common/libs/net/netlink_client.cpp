@@ -63,10 +63,12 @@ bool NetlinkClientImpl::CheckResponse(uint32_t seq_no) {
     return false;
   }
 
-  len = (uint32_t)result;
+  len = static_cast<uint32_t>(result);
   LOG(INFO) << "Received netlink response (" << len << " bytes)";
 
-  for (nh = (struct nlmsghdr*)buf; NLMSG_OK(nh, len); nh = NLMSG_NEXT(nh, len)) {
+  for (nh = reinterpret_cast<nlmsghdr*>(buf);
+       NLMSG_OK(nh, len);
+       nh = NLMSG_NEXT(nh, len)) {
     if (nh->nlmsg_seq != seq_no) {
       // This really shouldn't happen. If we see this, it means somebody is
       // issuing netlink requests using the same socket as us, and ignoring
@@ -133,7 +135,7 @@ bool NetlinkClientImpl::OpenNetlink(int type) {
   address_.nl_family = AF_NETLINK;
   address_.nl_groups = 0;
 
-  netlink_fd_->Bind((struct sockaddr*)&address_, sizeof(address_));
+  netlink_fd_->Bind(reinterpret_cast<sockaddr*>(&address_), sizeof(address_));
 
   return true;
 }

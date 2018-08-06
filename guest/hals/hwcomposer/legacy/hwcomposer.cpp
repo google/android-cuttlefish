@@ -22,6 +22,8 @@
 // to support 1.1 implementations it can be copied into cuttlefish from
 // frameworks/native/services/surfaceflinger/DisplayHardware/HWC2On1Adapter.*
 
+#define LOG_TAG "hwc.cf_x86"
+
 #include <guest/libs/platform_support/api_level_fixes.h>
 
 #include <errno.h>
@@ -37,6 +39,8 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#include <string>
+
 #define HWC_REMOVE_DEPRECATED_VERSIONS 1
 
 #include <cutils/compiler.h>
@@ -49,10 +53,8 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 
-#include <guest/hals/gralloc/legacy/gralloc_vsoc_priv.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer.h>
-#include <guest/libs/legacy_framebuffer/vsoc_framebuffer_control.h>
-#include <guest/libs/remoter/remoter_framework_pkt.h>
+#include "common/vsoc/lib/screen_region_view.h"
+#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 #include <sync/sync.h>
 
 #include "base_composer.h"
@@ -60,6 +62,8 @@
 #include "hwcomposer_common.h"
 #include "stats_keeper.h"
 #include "vsoc_composer.h"
+
+using vsoc::screen::ScreenRegionView;
 
 #ifdef USE_OLD_HWCOMPOSER
 typedef cvd::BaseComposer InnerComposerType;
@@ -82,6 +86,149 @@ struct vsoc_hwc_composer_device_1_t {
   ComposerType* composer;
 };
 
+namespace {
+
+std::string CompositionString(int type) {
+  switch (type) {
+    case HWC_FRAMEBUFFER:
+      return "Framebuffer";
+    case HWC_OVERLAY:
+      return "Overlay";
+    case HWC_BACKGROUND:
+      return "Background";
+    case HWC_FRAMEBUFFER_TARGET:
+      return "FramebufferTarget";
+#if VSOC_PLATFORM_SDK_AFTER(K)
+    case HWC_SIDEBAND:
+      return "Sideband";
+    case HWC_CURSOR_OVERLAY:
+      return "CursorOverlay";
+#endif
+    default:
+      return std::string("Unknown (") + std::to_string(type) + ")";
+  }
+}
+
+void LogLayers(int num_layers, vsoc_hwc_layer* layers, int invalid) {
+  ALOGE("Layers:");
+  for (int idx = 0; idx < num_layers; ++idx) {
+    std::string log_line;
+    if (idx == invalid) {
+      log_line = "Invalid layer: ";
+    }
+    log_line +=
+        "Composition Type: " + CompositionString(layers[idx].compositionType);
+    ALOGE("%s", log_line.c_str());
+  }
+}
+
+// Ensures that the layer does not include any inconsistencies
+bool IsValidLayer(const vsoc_hwc_layer& layer) {
+  if (layer.flags & HWC_SKIP_LAYER) {
+    // A layer we are asked to skip validate should not be marked as skip
+    ALOGE("%s: Layer is marked as skip", __FUNCTION__);
+    return false;
+  }
+  // Check displayFrame
+  if (layer.displayFrame.left > layer.displayFrame.right ||
+      layer.displayFrame.top > layer.displayFrame.bottom) {
+    ALOGE(
+        "%s: Malformed rectangle (displayFrame): [left = %d, right = %d, top = "
+        "%d, bottom = %d]",
+        __FUNCTION__, layer.displayFrame.left, layer.displayFrame.right,
+        layer.displayFrame.top, layer.displayFrame.bottom);
+    return false;
+  }
+  // Validate the handle
+  if (private_handle_t::validate(layer.handle) != 0) {
+    ALOGE("%s: Layer contains an invalid gralloc handle.", __FUNCTION__);
+    return false;
+  }
+  const private_handle_t* p_handle =
+      reinterpret_cast<const private_handle_t*>(layer.handle);
+  // Check sourceCrop
+  if (layer.sourceCrop.left > layer.sourceCrop.right ||
+      layer.sourceCrop.top > layer.sourceCrop.bottom) {
+    ALOGE(
+        "%s: Malformed rectangle (sourceCrop): [left = %d, right = %d, top = "
+        "%d, bottom = %d]",
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom);
+    return false;
+  }
+  if (layer.sourceCrop.left < 0 || layer.sourceCrop.top < 0 ||
+      layer.sourceCrop.right > p_handle->x_res ||
+      layer.sourceCrop.bottom > p_handle->y_res) {
+    ALOGE(
+        "%s: Invalid sourceCrop for buffer handle: sourceCrop = [left = %d, "
+        "right = %d, top = %d, bottom = %d], handle = [width = %d, height = "
+        "%d]",
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom, p_handle->x_res,
+        p_handle->y_res);
+    return false;
+  }
+  return true;
+}
+
+bool IsValidComposition(int num_layers, vsoc_hwc_layer* layers, bool on_set) {
+  if (num_layers == 0) {
+    ALOGE("Composition requested with 0 layers");
+    return false;
+  }
+  // Sometimes the hwcomposer receives a prepare and set calls with no other
+  // layer than the FRAMEBUFFER_TARGET with a null handler. We treat this case
+  // independently as a valid composition, but issue a warning about it.
+  if (num_layers == 1 && layers[0].compositionType == HWC_FRAMEBUFFER_TARGET &&
+      layers[0].handle == NULL) {
+    ALOGW("Received request for empty composition, treating as valid noop");
+    return true;
+  }
+  // The FRAMEBUFFER_TARGET layer needs to be sane only if
+  // there is at least one layer marked HWC_FRAMEBUFFER or if there is no layer
+  // marked HWC_OVERLAY (i.e some layers where composed with OpenGL, no layer
+  // marked overlay or framebuffer means that surfaceflinger decided to go for
+  // OpenGL without asking the hwcomposer first)
+  bool check_fb_target = true;
+  for (int idx = 0; idx < num_layers; ++idx) {
+    if (layers[idx].compositionType == HWC_FRAMEBUFFER) {
+      // There is at least one, so it needs to be checked.
+      // It may have been set to false before, so ensure it's set to true.
+      check_fb_target = true;
+      break;
+    }
+    if (layers[idx].compositionType == HWC_OVERLAY) {
+      // At least one overlay, we may not need to.
+      check_fb_target = false;
+    }
+  }
+
+  for (int idx = 0; idx < num_layers; ++idx) {
+    switch (layers[idx].compositionType) {
+    case HWC_FRAMEBUFFER_TARGET:
+      // In the call to prepare() the framebuffer target does not have a valid
+      // buffer_handle, so we don't validate it yet.
+      if (on_set && check_fb_target && !IsValidLayer(layers[idx])) {
+        ALOGE("%s: Invalid layer found", __FUNCTION__);
+        LogLayers(num_layers, layers, idx);
+        return false;
+      }
+      break;
+    case HWC_OVERLAY:
+      if (!(layers[idx].flags & HWC_SKIP_LAYER) &&
+          !IsValidLayer(layers[idx])) {
+        ALOGE("%s: Invalid layer found", __FUNCTION__);
+        LogLayers(num_layers, layers, idx);
+        return false;
+      }
+      break;
+    }
+  }
+  return true;
+}
+
+}
+
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
 static int vsoc_hwc_prepare(vsoc_hwc_device* dev, hwc_layer_list_t* list) {
 #else
@@ -93,6 +240,10 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 
   if (!list) return 0;
 #endif
+  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], false)) {
+    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
+    return -1;
+  }
   reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->PrepareLayers(
       list->numHwLayers, &list->hwLayers[0]);
   return 0;
@@ -101,9 +252,17 @@ static int vsoc_hwc_prepare(vsoc_hwc_device* dev, size_t numDisplays,
 #if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
 int vsoc_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
                  hwc_surface_t sur, hwc_layer_list_t* list) {
-  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
-      list->numHwLayers, &list->hwLayers[0]);
-  return 0;
+  if (list->numHwLayers == 1 &&
+      layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
+    ALOGW("Received request for empty composition, treating as valid noop");
+    return 0;
+  }
+  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], true)) {
+    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
+    return -1;
+  }
+  return reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)
+      ->composer->SetLayers(list->numHwLayers, &list->hwLayers[0]);
 }
 #else
 static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
@@ -114,8 +273,18 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
   if (!contents) return 0;
 
   vsoc_hwc_layer* layers = &contents->hwLayers[0];
-  reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
-      contents->numHwLayers, layers);
+  if (contents->numHwLayers == 1 &&
+      layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
+    ALOGW("Received request for empty composition, treating as valid noop");
+    return 0;
+  }
+  if (!IsValidComposition(contents->numHwLayers, layers, true)) {
+    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
+    return -1;
+  }
+  int retval =
+      reinterpret_cast<vsoc_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
+          contents->numHwLayers, layers);
 
   int closedFds = 0;
   for (size_t index = 0; index < contents->numHwLayers; ++index) {
@@ -132,7 +301,7 @@ static int vsoc_hwc_set(vsoc_hwc_device* dev, size_t numDisplays,
   // TODO(ghartman): This should be set before returning. On the next set it
   // should be signalled when we load the new frame.
   contents->retireFenceFd = -1;
-  return 0;
+  return retval;
 }
 #endif
 
@@ -186,6 +355,8 @@ static void* hwc_vsync_thread(void* data) {
   int sent = 0;
   int last_sent = 0;
   static const int log_interval = 60;
+  void (*vsync_proc)(const struct hwc_procs*, int, int64_t) = nullptr;
+  bool log_no_procs = true, log_no_vsync = true;
   while (true) {
     struct timespec rt;
     if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
@@ -207,13 +378,27 @@ static void* hwc_vsync_thread(void* data) {
       }
     }
 
-    pdev->procs->vsync(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
+    // The vsync thread is started on device open, it may run before the
+    // registerProcs callback has a chance to be called, so we need to make sure
+    // procs is not NULL before dereferencing it.
+    if (pdev && pdev->procs) {
+      vsync_proc = pdev->procs->vsync;
+    } else if (log_no_procs) {
+      log_no_procs = false;
+      ALOGI("procs is not set yet, unable to deliver vsync event");
+    }
+    if (vsync_proc) {
+      vsync_proc(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
+      ++sent;
+    } else if (log_no_vsync) {
+      log_no_vsync = false;
+      ALOGE("vsync callback is null (but procs was already set)");
+    }
     if (rt.tv_sec - last_logged > log_interval) {
       ALOGI("Sent %d syncs in %ds", sent - last_sent, log_interval);
       last_logged = rt.tv_sec;
       last_sent = sent;
     }
-    ++sent;
   }
 
   return NULL;
@@ -245,20 +430,22 @@ static int vsoc_hwc_get_display_configs(vsoc_hwc_device* /*dev*/, int disp,
 #if VSOC_PLATFORM_SDK_AFTER(J)
 static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
                                   const uint32_t attribute) {
-  const VSoCFrameBuffer& config = VSoCFrameBuffer::getInstance();
+  auto screen_view = ScreenRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
       return pdev->vsync_period_ns;
     case HWC_DISPLAY_WIDTH:
-      return config.x_res();
+      return screen_view->x_res();
     case HWC_DISPLAY_HEIGHT:
-      return config.y_res();
+      return screen_view->y_res();
     case HWC_DISPLAY_DPI_X:
-      ALOGI("Reporting DPI_X of %d", config.dpi());
-      return config.dpi() * 1000;  // The number of pixels per thousand inches
+      ALOGI("Reporting DPI_X of %d", screen_view->dpi());
+      // The number of pixels per thousand inches
+      return screen_view->dpi() * 1000;
     case HWC_DISPLAY_DPI_Y:
-      ALOGI("Reporting DPI_Y of %d", config.dpi());
-      return config.dpi() * 1000;  // The number of pixels per thousand inches
+      ALOGI("Reporting DPI_Y of %d", screen_view->dpi());
+      // The number of pixels per thousand inches
+      return screen_view->dpi() * 1000;
     default:
       ALOGE("unknown display attribute %u", attribute);
       return -EINVAL;
@@ -310,7 +497,7 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
     return -ENOMEM;
   }
 
-  int refreshRate = 60;
+  int refreshRate = ScreenRegionView::GetInstance()->refresh_rate_hz();
   dev->vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
   if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {

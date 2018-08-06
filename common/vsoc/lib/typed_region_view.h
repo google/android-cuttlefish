@@ -34,7 +34,7 @@ namespace vsoc {
  * Layout should be VSoC shared memory compatible, defined in common/vsoc/shm,
  * and should have a constant string region name.
  */
-template <typename LayoutType>
+template <typename ViewType, typename LayoutType>
 class TypedRegionView : public RegionView {
  public:
   using Layout = LayoutType;
@@ -49,6 +49,7 @@ class TypedRegionView : public RegionView {
         control_->region_desc().offset_of_region_data);
   }
 
+ protected:
 #if defined(CUTTLEFISH_HOST)
   bool Open(const char* domain) {
     return RegionView::Open(LayoutType::region_name, domain);
@@ -58,6 +59,46 @@ class TypedRegionView : public RegionView {
     return RegionView::Open(LayoutType::region_name);
   }
 #endif
+
+ public:
+  // Implementation of the region singletons.
+#if defined(CUTTLEFISH_HOST)
+  static ViewType* GetInstance(const char* domain) {
+    static std::mutex mtx;
+    static std::map<std::string, std::unique_ptr<ViewType>> instances;
+    if (!domain) {
+      return nullptr;
+    }
+    std::lock_guard<std::mutex> lock(mtx);
+    // Get a reference to the actual unique_ptr that's stored in the map, if
+    // there wasn't one it will be default constructed pointing to nullptr.
+    auto& instance = instances[domain];
+    if (!instance) {
+      // Update the referenced pointer with the address of the newly created
+      // region view.
+      instance.reset(new ViewType{});
+      if (!instance->Open(domain)) {
+        instance.reset();
+      }
+    }
+    return instance.get();
+  }
+#else
+  static ViewType* GetInstance() {
+    static std::mutex mtx;
+    static std::unique_ptr<ViewType> instance;
+    std::lock_guard<std::mutex> lock(mtx);
+    if (!instance) {
+      instance.reset(new ViewType{});
+      if (!instance->Open()) {
+        instance.reset();
+      }
+    }
+    return instance.get();
+  }
+#endif
+
+
 };
 
 }  // namespace vsoc

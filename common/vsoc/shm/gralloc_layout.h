@@ -18,7 +18,6 @@
 #include "common/vsoc/shm/base.h"
 #include "common/vsoc/shm/graphics.h"
 #include "common/vsoc/shm/lock.h"
-#include "common/vsoc/shm/version.h"
 
 // Memory layout for the gralloc manager region.
 
@@ -28,6 +27,9 @@ namespace layout {
 namespace gralloc {
 
 struct BufferEntry {
+  static constexpr size_t layout_size =
+      7 * 4 + PixelFormatRegister::layout_size;
+
   uint32_t owned_by;
   uint32_t buffer_begin;
   uint32_t buffer_end;
@@ -45,14 +47,17 @@ struct BufferEntry {
     return buffer_end - buffer_begin;
   }
 };
-ASSERT_SHM_COMPATIBLE(BufferEntry, gralloc);
+ASSERT_SHM_COMPATIBLE(BufferEntry);
 
 struct GrallocBufferLayout : public RegionLayout {
+  static constexpr size_t layout_size = 1;
   static const char* region_name;
 };
-ASSERT_SHM_COMPATIBLE(GrallocBufferLayout, gralloc);
+ASSERT_SHM_COMPATIBLE(GrallocBufferLayout);
 
 struct GrallocManagerLayout : public RegionLayout {
+  static constexpr size_t layout_size =
+      8 + GuestLock::layout_size + BufferEntry::layout_size;
   static const char* region_name;
   typedef GrallocBufferLayout ManagedRegion;
 
@@ -63,7 +68,7 @@ struct GrallocManagerLayout : public RegionLayout {
   // Needs to be last field
   BufferEntry buffers_table[1];
 };
-ASSERT_SHM_COMPATIBLE(GrallocManagerLayout, gralloc);
+ASSERT_SHM_COMPATIBLE(GrallocManagerLayout);
 
 } // namespace gralloc
 } // namespace layout

@@ -36,9 +36,13 @@ void GuestLock::Lock() {
 
 void GuestLock::Unlock() {
   Sides sides_to_signal = UnlockCommon(gettid());
-  if (sides_to_signal.value_ != Sides::NoSides) {
+  if (sides_to_signal != Sides::NoSides) {
     SingleSidedSignal::Signal(&lock_uint32_);
   }
+}
+
+bool GuestLock::Recover() {
+  return RecoverSingleSided();
 }
 
 }  // namespace layout

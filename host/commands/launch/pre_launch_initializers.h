@@ -20,11 +20,15 @@
 // machine is started.
 // To add initializers for more regions declare here, implement in its own
 // source file and call from PreLaunchInitializers::Initialize().
-void InitializeFBBroadcastRegion();
+void InitializeScreenRegion();
+void InitializeRilRegion();
+void InitializeWifiRegion();
 
 class PreLaunchInitializers {
  public:
   static void Initialize() {
-    InitializeFBBroadcastRegion();
+    InitializeScreenRegion();
+    InitializeRilRegion();
+    InitializeWifiRegion();
   }
 };

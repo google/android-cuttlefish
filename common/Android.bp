@@ -15,5 +15,6 @@
 
 subdirs = [
     "commands",
+    "frontend",
     "libs",
 ]

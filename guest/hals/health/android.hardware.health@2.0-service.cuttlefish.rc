@@ -1,0 +1,4 @@
+service vendor.health-hal-2-0 /vendor/bin/hw/android.hardware.health@2.0-service.cuttlefish
+    class hal
+    user system
+    group system

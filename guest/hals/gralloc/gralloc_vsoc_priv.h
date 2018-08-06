@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <cutils/native_handle.h>
 #include <hardware/gralloc.h>
 #include <log/log.h>
 
-#include "guest/vsoc/lib/gralloc_region_view.h"
-
 struct vsoc_alloc_device_t {
   alloc_device_t device;
-  vsoc::gralloc::GrallocRegionView* gralloc_region;
 };
 
 struct vsoc_gralloc_module_t {
