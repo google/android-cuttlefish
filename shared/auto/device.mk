@@ -52,9 +52,6 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.broadcastradio.xml:system/etc/permissions/android.hardware.broadcastradio.xml
 
 PRODUCT_PROPERTY_OVERRIDES += \
-    android.car.hvac.demo=true
-
-PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
     rild.libpath=libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
