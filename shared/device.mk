@@ -16,13 +16,8 @@
 
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
-# SwiftShader needs libcutils, which is part of the API_LEVEL 26 and 27 VNDK
-# according to pi-dev.
-# However, the framework code that was released with O MR1 doesn't agree, so we
-# can't set PRODUCT_SHIPPING_API_LEVEL. We've tried both of the values below,
-# and in both cases SwiftShader becomes unloadable due to libcutils
-# PRODUCT_SHIPPING_API_LEVEL := 26
-# PRODUCT_SHIPPING_API_LEVEL := 27
+PRODUCT_SHIPPING_API_LEVEL := 26
+BOARD_VNDK_VERSION := current
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
