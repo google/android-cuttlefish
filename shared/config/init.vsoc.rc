@@ -27,6 +27,9 @@ on init
     chmod 0660 /dev/screen
     restorecon /dev/screen
 
+    # ZRAM setup
+    write /sys/block/zram0/comp_algorithm lz4
+
 
 on fs
     mount_all /vendor/etc/fstab.${ro.hardware}
@@ -73,6 +76,18 @@ on boot
 
 service setup_network /vendor/bin/setup_network ${ro.boot.cuttlefish_network}
     oneshot
+
+
+on property:sys.boot_completed=1
+    trigger sys-boot-completed-set
+
+
+# We want one opportunity per boot to enable zram, so we
+# use a trigger we fire from the above stanza. If
+# persist.sys.zram_enabled becomes true after boot,
+# we don't want to run swapon_all at that time.
+on sys-boot-completed-set && property:persist.sys.zram_enabled=1
+    swapon_all /vendor/etc/fstab.${ro.hardware}
 
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
