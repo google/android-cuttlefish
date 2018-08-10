@@ -16,11 +16,13 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 
+#include <algorithm>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <sstream>
 #include <string>
 
@@ -191,11 +193,45 @@ void CuttlefishConfig::set_gdb_flag(const std::string& device) {
   SetPath(kGdbFlag, device);
 }
 
-std::string CuttlefishConfig::kernel_args() const {
-  return (*dictionary_)[kKernelArgs].asString();
+std::set<std::string> CuttlefishConfig::kernel_args() const {
+  std::set<std::string> args_set;
+  auto args_json_obj = (*dictionary_)[kKernelArgs];
+  std::transform(args_json_obj.begin(), args_json_obj.end(),
+                 std::inserter(args_set, args_set.begin()),
+                 [](const Json::Value& it) { return it.asString(); });
+  return args_set;
 }
-void CuttlefishConfig::set_kernel_args(const std::string& kernel_args) {
-  (*dictionary_)[kKernelArgs] = kernel_args;
+void CuttlefishConfig::set_kernel_args(const std::set<std::string>& kernel_args) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (auto kernel_arg : kernel_args) {
+    args_json_obj.append(kernel_arg);
+  }
+  (*dictionary_)[kKernelArgs] = args_json_obj;
+}
+void CuttlefishConfig::add_kernel_args(const std::set<std::string>& args) {
+  std::set<std::string> current_args = kernel_args();
+  for (auto arg : args) {
+    if (current_args.count(arg)) {
+      LOG(ERROR) << "Kernel argument " << arg << " is duplicated";
+    }
+    current_args.insert(arg);
+  }
+  set_kernel_args(current_args);
+}
+void CuttlefishConfig::add_kernel_args(const std::string& kernel_args) {
+  std::stringstream args_stream(kernel_args);
+  std::set<std::string> kernel_args_set;
+  using is_iter = std::istream_iterator<std::string>;
+  std::copy(is_iter(args_stream), is_iter(),
+            std::inserter(kernel_args_set, kernel_args_set.begin()));
+  add_kernel_args(kernel_args_set);
+}
+std::string CuttlefishConfig::kernel_args_as_string() const {
+  auto args_set = kernel_args();
+  std::stringstream output;
+  std::copy(args_set.begin(), args_set.end(),
+            std::ostream_iterator<std::string>(output, " "));
+  return output.str();
 }
 
 std::string CuttlefishConfig::ramdisk_image_path() const {
