@@ -17,6 +17,7 @@
 PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_auto:$(LOCAL_DIR)/vsoc_x86_64/auto/device.mk \
 	aosp_cf_x86_64_iot:$(LOCAL_DIR)/vsoc_x86_64/iot/device.mk \
+	aosp_cf_x86_64_pasan:$(LOCAL_DIR)/vsoc_x86_64/pasan/device.mk \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/device.mk \
 	aosp_cf_x86_64_go_phone:$(LOCAL_DIR)/vsoc_x86_64/go_phone/device.mk \
 	aosp_cf_x86_64_go_512_phone:$(LOCAL_DIR)/vsoc_x86_64/go_512_phone/device.mk \
@@ -26,6 +27,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_64_wear:$(LOCAL_DIR)/vsoc_x86_64/wear/device.mk \
 	aosp_cf_x86_auto:$(LOCAL_DIR)/vsoc_x86/auto/device.mk \
 	aosp_cf_x86_iot:$(LOCAL_DIR)/vsoc_x86/iot/device.mk \
+	aosp_cf_x86_pasan:$(LOCAL_DIR)/vsoc_x86/pasan/device.mk \
 	aosp_cf_x86_phone:$(LOCAL_DIR)/vsoc_x86/phone/device.mk \
 	aosp_cf_x86_go_phone:$(LOCAL_DIR)/vsoc_x86/go_phone/device.mk \
 	aosp_cf_x86_go_512_phone:$(LOCAL_DIR)/vsoc_x86/go_512_phone/device.mk \
