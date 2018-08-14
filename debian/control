@@ -42,6 +42,7 @@ Depends:
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
  socat,
+ vde2,
  ${misc:Depends}
 Provides: ${diverted-files}
 Conflicts: ${diverted-files}

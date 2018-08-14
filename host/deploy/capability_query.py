@@ -24,7 +24,7 @@ comparing the version numbers.
 import sys
 
 def main():
-    capabilities = {"capability_check", "qemu_cli"}
+    capabilities = {"capability_check", "qemu_cli", "vde"}
     if len(sys.argv) == 1:
         # Print all capabilities
         print('\n'.join(capabilities))
