@@ -186,7 +186,7 @@ TEST(NetlinkClientTest, AllIntegerTypes) {
     uint16_t attr_type_u8 = kDummyTag + 7;
     uint8_t attr_value_u8 = kValue;
     uint8_t attr_padding_u8[3] = {0, 0, 0};
-  } expected;
+  } expected = {};
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.AddInt<int64_t>(kDummyTag, kValue);
