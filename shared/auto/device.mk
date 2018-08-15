@@ -65,6 +65,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # vehicle HAL
 PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
 
+# Broadcast Radio
+PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
+
 # DRM HAL
 PRODUCT_PACKAGES += \
     android.hardware.drm@1.0-impl \
