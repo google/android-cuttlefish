@@ -458,6 +458,13 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker,
   return true;
 }
 
+template<typename S, typename T>
+static std::string concat(const S& s, const T& t) {
+  std::ostringstream os;
+  os << s << t;
+  return os.str();
+}
+
 vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker) {
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
@@ -511,17 +518,15 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
     }
   }
 
-  std::ostringstream kernel_cmdline;
-  kernel_cmdline << boot_image_unpacker.kernel_command_line();
+  config->add_kernel_args(boot_image_unpacker.kernel_command_line());
   if (!use_ramdisk) {
-    kernel_cmdline << " root=/dev/vda init=/init";
+    config->add_kernel_args("root=/dev/vda init=/init");
   }
-  kernel_cmdline << " androidboot.serialno=" << FLAGS_serial_number;
-  kernel_cmdline << " androidboot.lcd_density=" << FLAGS_dpi;
+  config->add_kernel_args(concat("androidboot.serialno=", FLAGS_serial_number));
+  config->add_kernel_args(concat("androidboot.lcd_density=", FLAGS_dpi));
   if (FLAGS_extra_kernel_command_line.size()) {
-    kernel_cmdline << " " << FLAGS_extra_kernel_command_line;
+    config->add_kernel_args(FLAGS_extra_kernel_command_line);
   }
-  config->set_kernel_args(kernel_cmdline.str());
 
   config->set_ramdisk_image_path(ramdisk_path);
   config->set_system_image_path(FLAGS_system_image);
