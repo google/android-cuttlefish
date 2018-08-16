@@ -38,11 +38,6 @@ TARGET_USES_64_BIT_BINDER := true
 # Hardware composer configuration
 TARGET_USES_HWC2 := true
 
-# Bluetooth configuration
-BOARD_BLUETOOTH_USE_TEST_AS_VENDOR := true
-BOARD_BLUETOOTH_IMPL_DIR := $(TOP_DIR)system/bt
-BOARD_USE_BLUETOOTH_STUBS := false
-
 # The compiler will occasionally generate movaps, etc.
 BOARD_MALLOC_ALIGNMENT := 16
 
