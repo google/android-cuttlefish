@@ -182,7 +182,6 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-service.sim \
-    libbt-vendor-build-test
 
 #
 # Audio HAL
