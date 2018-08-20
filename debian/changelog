@@ -1,6 +1,12 @@
+cuttlefish-common (0.8) stable; urgency=medium
+
+  * Remove the dkms module needed for legacy WiFi. Final release for gLinux
+
+ -- Greg Hartman <ghartman@hartman.mtv.corp.google.com>  Mon, 20 Aug 2018 13:56:40 -0700
+
 cuttlefish-common (0.7) stable; urgency=medium
 
-  * Final release
+  * Final release for GCE images
 
  -- Greg Hartman <ghartman@hartman.mtv.corp.google.com>  Mon, 20 Aug 2018 13:38:20 -0700
 
