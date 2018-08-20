@@ -1,3 +1,9 @@
+cuttlefish-common (0.7) stable; urgency=medium
+
+  * Final release
+
+ -- Greg Hartman <ghartman@hartman.mtv.corp.google.com>  Mon, 20 Aug 2018 13:38:20 -0700
+
 cuttlefish-common (0.7pre4) unstable; urgency=medium
 
   * Put the legacy WiFi back in to allow TreeHugger to update
