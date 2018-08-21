@@ -114,7 +114,7 @@ PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
-    device/google/cuttlefish/shared/config/camera_v1.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
+    device/google/cuttlefish/shared/config/camera_v3.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
     device/google/cuttlefish/shared/config/init.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
     device/google/cuttlefish/shared/config/ueventd.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/ueventd.vsoc.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
