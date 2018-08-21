@@ -1,3 +1,15 @@
+cuttlefish-common (0.9+nmu1) unstable; urgency=medium
+
+  * Incorporate change that removes mac80211
+
+ -- Greg Hartman <ghartman@google.com>  Tue, 21 Aug 2018 15:11:27 -0700
+
+cuttlefish-common (0.8.1) stable; urgency=medium
+
+  * Remove dangling mac80211hwsim reference
+
+ -- Greg Hartman <ghartman@google.com>  Tue, 21 Aug 2018 14:47:36 -0700
+
 cuttlefish-common (0.9pre1) unstable; urgency=medium
 
   * Initial work for vde networking architecture
