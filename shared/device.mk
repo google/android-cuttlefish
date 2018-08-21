@@ -17,7 +17,7 @@
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
 PRODUCT_SHIPPING_API_LEVEL := 26
-# BOARD_VNDK_VERSION := current
+BOARD_VNDK_VERSION := current
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
