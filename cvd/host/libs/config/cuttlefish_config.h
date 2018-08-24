@@ -79,11 +79,11 @@ class CuttlefishConfig {
   std::string kernel_image_path() const;
   void set_kernel_image_path(const std::string& kernel_image_path);
 
-  std::set<std::string> kernel_args() const;
-  void set_kernel_args(const std::set<std::string>& kernel_args);
-  void add_kernel_args(const std::string& arg);
-  void add_kernel_args(const std::set<std::string>& kernel_args);
-  std::string kernel_args_as_string() const;
+  std::set<std::string> kernel_cmdline() const;
+  void set_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
+  void add_kernel_cmdline(const std::string& arg);
+  void add_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
+  std::string kernel_cmdline_as_string() const;
 
   std::string gdb_flag() const;
   void set_gdb_flag(const std::string& gdb);

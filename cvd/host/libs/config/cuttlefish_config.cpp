@@ -81,7 +81,7 @@ const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
 const char* kGdbFlag = "gdb_flag";
-const char* kKernelArgs = "kernel_args";
+const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
 
 const char* kSystemImagePath = "system_image_path";
@@ -193,41 +193,43 @@ void CuttlefishConfig::set_gdb_flag(const std::string& device) {
   SetPath(kGdbFlag, device);
 }
 
-std::set<std::string> CuttlefishConfig::kernel_args() const {
+std::set<std::string> CuttlefishConfig::kernel_cmdline() const {
   std::set<std::string> args_set;
-  auto args_json_obj = (*dictionary_)[kKernelArgs];
+  auto args_json_obj = (*dictionary_)[kKernelCmdline];
   std::transform(args_json_obj.begin(), args_json_obj.end(),
                  std::inserter(args_set, args_set.begin()),
                  [](const Json::Value& it) { return it.asString(); });
   return args_set;
 }
-void CuttlefishConfig::set_kernel_args(const std::set<std::string>& kernel_args) {
+void CuttlefishConfig::set_kernel_cmdline(
+    const std::set<std::string>& kernel_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (auto kernel_arg : kernel_args) {
-    args_json_obj.append(kernel_arg);
+  for (auto arg : kernel_cmdline) {
+    args_json_obj.append(arg);
   }
-  (*dictionary_)[kKernelArgs] = args_json_obj;
+  (*dictionary_)[kKernelCmdline] = args_json_obj;
 }
-void CuttlefishConfig::add_kernel_args(const std::set<std::string>& args) {
-  std::set<std::string> current_args = kernel_args();
-  for (auto arg : args) {
-    if (current_args.count(arg)) {
+void CuttlefishConfig::add_kernel_cmdline(
+    const std::set<std::string>& extra_args) {
+  std::set<std::string> cmdline = kernel_cmdline();
+  for (auto arg : extra_args) {
+    if (cmdline.count(arg)) {
       LOG(ERROR) << "Kernel argument " << arg << " is duplicated";
     }
-    current_args.insert(arg);
+    cmdline.insert(arg);
   }
-  set_kernel_args(current_args);
+  set_kernel_cmdline(cmdline);
 }
-void CuttlefishConfig::add_kernel_args(const std::string& kernel_args) {
-  std::stringstream args_stream(kernel_args);
-  std::set<std::string> kernel_args_set;
+void CuttlefishConfig::add_kernel_cmdline(const std::string& kernel_cmdline) {
+  std::stringstream args_stream(kernel_cmdline);
+  std::set<std::string> kernel_cmdline_set;
   using is_iter = std::istream_iterator<std::string>;
   std::copy(is_iter(args_stream), is_iter(),
-            std::inserter(kernel_args_set, kernel_args_set.begin()));
-  add_kernel_args(kernel_args_set);
+            std::inserter(kernel_cmdline_set, kernel_cmdline_set.begin()));
+  add_kernel_cmdline(kernel_cmdline_set);
 }
-std::string CuttlefishConfig::kernel_args_as_string() const {
-  auto args_set = kernel_args();
+std::string CuttlefishConfig::kernel_cmdline_as_string() const {
+  auto args_set = kernel_cmdline();
   std::stringstream output;
   std::copy(args_set.begin(), args_set.end(),
             std::ostream_iterator<std::string>(output, " "));
