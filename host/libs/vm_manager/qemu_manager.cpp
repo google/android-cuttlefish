@@ -67,7 +67,7 @@ pid_t BuildAndRunQemuCmd(vsoc::CuttlefishConfig* config) {
   LogAndSetEnv("kernel_image_path", config->kernel_image_path());
   LogAndSetEnv("gdb_flag", config->gdb_flag());
   LogAndSetEnv("ramdisk_image_path", config->ramdisk_image_path());
-  LogAndSetEnv("kernel_args", config->kernel_args_as_string());
+  LogAndSetEnv("kernel_cmdline", config->kernel_cmdline_as_string());
   LogAndSetEnv("dtb_path", config->dtb_path());
   LogAndSetEnv("system_image_path", config->system_image_path());
   LogAndSetEnv("data_image_path", config->data_image_path());

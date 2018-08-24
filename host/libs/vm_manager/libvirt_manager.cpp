@@ -283,7 +283,8 @@ std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
   ConfigureVMFeatures(root, {"acpi", "apic", "hap"});
   ConfigureOperatingSystem(root, config->kernel_image_path(),
                            config->ramdisk_image_path(),
-                           config->kernel_args_as_string(), config->dtb_path());
+                           config->kernel_cmdline_as_string(),
+                           config->dtb_path());
   auto qemu_options = ConfigureQEmuSpecificOptions(
       root, {"-chardev",
              concat("socket,path=", config->ivshmem_qemu_socket_path(),

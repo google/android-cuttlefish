@@ -88,7 +88,7 @@ DEFINE_bool(disable_dac_security, false,
             "Disable DAC security in libvirt. For debug only.");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
-DEFINE_string(extra_kernel_command_line, "",
+DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
 DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
 DEFINE_int32(memory_mb, 2048,
@@ -518,14 +518,15 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
     }
   }
 
-  config->add_kernel_args(boot_image_unpacker.kernel_command_line());
+  config->add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   if (!use_ramdisk) {
-    config->add_kernel_args("root=/dev/vda init=/init");
+    config->add_kernel_cmdline("root=/dev/vda init=/init");
   }
-  config->add_kernel_args(concat("androidboot.serialno=", FLAGS_serial_number));
-  config->add_kernel_args(concat("androidboot.lcd_density=", FLAGS_dpi));
-  if (FLAGS_extra_kernel_command_line.size()) {
-    config->add_kernel_args(FLAGS_extra_kernel_command_line);
+  config->add_kernel_cmdline(
+      concat("androidboot.serialno=", FLAGS_serial_number));
+  config->add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
+  if (FLAGS_extra_kernel_cmdline.size()) {
+    config->add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
 
   config->set_ramdisk_image_path(ramdisk_path);
