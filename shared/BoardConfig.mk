@@ -55,16 +55,6 @@ BOARD_USES_DRM_HWCOMPOSER := true
 BOARD_USES_MINIGBM := true
 BOARD_GPU_DRIVERS := virgl
 
-BOARD_KERNEL_CMDLINE := loop.max_part=7
-BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS1
-BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc
-BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
-BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
-BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
-
-# TODO(b/65266349) Figure out why this is needed
-BOARD_KERNEL_CMDLINE += security=selinux
-
 # Minimum size of the final bootable disk image: 10G
 # GCE will pad disk images out to 10G. Our disk images should be at least as
 # big to avoid warnings about partition table oddities.
