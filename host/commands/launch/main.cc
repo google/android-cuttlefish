@@ -90,6 +90,19 @@ DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
+DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
+DEFINE_string(console, "ttyS0", "Console device for the guest kernel.");
+DEFINE_string(androidboot_console, "ttyS1",
+              "Console device for the Android framework");
+DEFINE_string(hardware_name, "cuttlefish",
+              "The codename of the device's hardware");
+DEFINE_string(guest_security, "selinux",
+              "The security module to use in the guest");
+DEFINE_bool(guest_enforce_security, false,
+            "Whether to run in enforcing mode (non permissive). Ignored if "
+            "-guest_security is empty.");
+DEFINE_bool(guest_audit_security, true,
+            "Whether to log security audits.");
 DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
@@ -525,6 +538,32 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   config->add_kernel_cmdline(
       concat("androidboot.serialno=", FLAGS_serial_number));
   config->add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
+  config->add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
+  if (!FLAGS_console.empty()) {
+    config->add_kernel_cmdline(concat("console=", FLAGS_console));
+  }
+  if (!FLAGS_androidboot_console.empty()) {
+    config->add_kernel_cmdline(
+        concat("androidboot.console=", FLAGS_androidboot_console));
+  }
+  if (!FLAGS_hardware_name.empty()) {
+    config->add_kernel_cmdline(
+        concat("androidboot.hardware=", FLAGS_hardware_name));
+  }
+  if (!FLAGS_guest_security.empty()) {
+    config->add_kernel_cmdline(concat("security=", FLAGS_guest_security));
+    if (FLAGS_guest_enforce_security) {
+      config->add_kernel_cmdline("enforcing=1");
+    } else {
+      config->add_kernel_cmdline("enforcing=0");
+      config->add_kernel_cmdline("androidboot.selinux=permissive");
+    }
+    if (FLAGS_guest_audit_security) {
+      config->add_kernel_cmdline("audit=1");
+    } else {
+      config->add_kernel_cmdline("audit=0");
+    }
+  }
   if (FLAGS_extra_kernel_cmdline.size()) {
     config->add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
