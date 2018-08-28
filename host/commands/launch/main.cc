@@ -94,7 +94,7 @@ DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
 DEFINE_string(console, "ttyS0", "Console device for the guest kernel.");
 DEFINE_string(androidboot_console, "ttyS1",
               "Console device for the Android framework");
-DEFINE_string(hardware_name, "cuttlefish",
+DEFINE_string(hardware_name, "vsoc",
               "The codename of the device's hardware");
 DEFINE_string(guest_security, "selinux",
               "The security module to use in the guest");
