@@ -21,6 +21,7 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
+    adb \
     adbshell \
     host_region_e2e_test \
     launch_cvd \
