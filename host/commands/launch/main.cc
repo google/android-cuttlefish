@@ -537,6 +537,7 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   }
   config->add_kernel_cmdline(
       concat("androidboot.serialno=", FLAGS_serial_number));
+  config->add_kernel_cmdline("mac80211_hwsim.radios=0");
   config->add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
   config->add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
   if (!FLAGS_console.empty()) {
