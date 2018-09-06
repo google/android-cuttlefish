@@ -17,7 +17,7 @@
 #include <hardware/hardware.h>
 #include <hardware/gatekeeper.h>
 #define LOG_TAG "CuttlefishGatekeeper"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <string.h>
 #include <errno.h>

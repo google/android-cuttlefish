@@ -26,7 +26,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_Device"
 #include "EmulatedCameraDevice.h"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <sys/select.h>
 #include <algorithm>
 #include <cmath>

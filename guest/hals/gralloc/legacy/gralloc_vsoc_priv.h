@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include <cutils/native_handle.h>
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <linux/fb.h>
 
