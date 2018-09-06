@@ -19,7 +19,7 @@
 
 #include <android-base/file.h>
 #include <android-base/strings.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <json/json.h>
 #include <json/reader.h>
 #include <stdlib.h>

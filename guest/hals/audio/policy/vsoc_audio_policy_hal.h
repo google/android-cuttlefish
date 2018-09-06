@@ -17,7 +17,7 @@
 
 #include <errno.h>
 #include <string.h>
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <hardware/hardware.h>
 #include <system/audio.h>

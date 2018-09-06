@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <strings.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <libusb/libusb.h>
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/usbforward/protocol.h"

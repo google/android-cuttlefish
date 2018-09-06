@@ -23,7 +23,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/sockets.h>
 #include <hardware/gps.h>
 

@@ -19,7 +19,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_JPEGStub"
 #include <errno.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <stdlib.h>
 
 #include "Compressor.h"

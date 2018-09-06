@@ -22,7 +22,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_QemuCamera"
 #include "EmulatedQemuCamera.h"
-#include <cutils/log.h>
+#include <log/log.h>
 #include "EmulatedCameraFactory.h"
 
 namespace android {

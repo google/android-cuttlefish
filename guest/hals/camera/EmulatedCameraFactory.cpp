@@ -21,7 +21,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_Factory"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 #include "EmulatedFakeCamera.h"
 #include "guest/libs/platform_support/api_level_fixes.h"

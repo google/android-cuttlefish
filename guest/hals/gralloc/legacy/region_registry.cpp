@@ -30,7 +30,7 @@
 #include <sys/types.h>
 
 #include <cutils/hashmap.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/atomic.h>
 
 #include <linux/ashmem.h>

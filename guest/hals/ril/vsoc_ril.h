@@ -20,7 +20,7 @@
 
 #define LOG_TAG "VSoCRil"
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/time.h>
