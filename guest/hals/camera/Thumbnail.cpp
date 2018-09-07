@@ -18,7 +18,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_Thumbnail"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <libexif/exif-data.h>
 #include <libyuv.h>
 

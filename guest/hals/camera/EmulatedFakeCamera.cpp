@@ -22,7 +22,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_FakeCamera"
 #include "EmulatedFakeCamera.h"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 #undef min
 #undef max

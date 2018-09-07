@@ -26,7 +26,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_BaseCamera"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include "EmulatedBaseCamera.h"
 

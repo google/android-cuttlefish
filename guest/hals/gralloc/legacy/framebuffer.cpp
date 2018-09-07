@@ -18,7 +18,7 @@
 #include <dlfcn.h>
 
 #include <cutils/ashmem.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 
 #include <sys/system_properties.h>
@@ -33,7 +33,6 @@
 #include <stdlib.h>
 
 #include <cutils/atomic.h>
-#include <private/android_filesystem_config.h>
 
 #if defined(__ANDROID__)
 #include <linux/fb.h>

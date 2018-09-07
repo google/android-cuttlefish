@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <hardware/hardware.h>
 #include <hardware/sensors.h>
 

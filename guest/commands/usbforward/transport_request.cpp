@@ -16,7 +16,7 @@
 
 #include "guest/commands/usbforward/transport_request.h"
 
-#include <cutils/log.h>
+#include <log/log.h>
 
 namespace usb_forward {
 

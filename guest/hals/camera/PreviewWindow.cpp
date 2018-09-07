@@ -22,7 +22,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_Preview"
 #include "PreviewWindow.h"
-#include <cutils/log.h>
+#include <log/log.h>
 #include <hardware/camera.h>
 #include "EmulatedCameraDevice.h"
 #include "GrallocModule.h"
