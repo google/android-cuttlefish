@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 #include <cutils/sockets.h>
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include "common/libs/fs/shared_fd.h"
 
