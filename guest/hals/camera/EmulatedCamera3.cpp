@@ -24,7 +24,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera3_Camera"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include "EmulatedCamera3.h"
 #include "system/camera_metadata.h"

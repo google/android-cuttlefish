@@ -16,7 +16,7 @@
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_Exif"
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <inttypes.h>
 #include <math.h>

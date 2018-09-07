@@ -22,7 +22,7 @@
 #define LOG_NDEBUG 0
 #define LOG_TAG "EmulatedCamera_FakeDevice"
 #include "EmulatedFakeCameraDevice.h"
-#include <cutils/log.h>
+#include <log/log.h>
 #include "EmulatedFakeCamera.h"
 
 namespace android {

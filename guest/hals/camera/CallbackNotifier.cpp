@@ -23,7 +23,7 @@
 #define LOG_TAG "EmulatedCamera_CallbackNotifier"
 #include "CallbackNotifier.h"
 #include <MetadataBufferType.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include "EmulatedCameraDevice.h"
 #include "JpegCompressor.h"
 #include "Exif.h"

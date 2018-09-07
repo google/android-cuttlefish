@@ -44,7 +44,7 @@
 #define HWC_REMOVE_DEPRECATED_VERSIONS 1
 
 #include <cutils/compiler.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/properties.h>
 #include <hardware/gralloc.h>
 #include <hardware/hardware.h>
