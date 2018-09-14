@@ -320,7 +320,7 @@ void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
   auto init_size = fbu.size();
   fbu.insert(fbu.end(), stripe.raw_data.begin(), stripe.raw_data.end());
   for (size_t i = init_size; i < fbu.size(); i += sizeof(Pixel)) {
-    CHECK((i + sizeof(Pixel)) < fbu.size());
+    CHECK_LE(i + sizeof(Pixel), fbu.size());
     Pixel raw_pixel{};
     std::memcpy(&raw_pixel, &fbu[i], sizeof raw_pixel);
     auto red = RedVal(raw_pixel);
@@ -336,7 +336,6 @@ void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
       std::swap(p[0], p[3]);
       std::swap(p[1], p[2]);
     }
-    CHECK(i + sizeof pixel <= fbu.size());
     std::memcpy(&fbu[i], &pixel, sizeof pixel);
   }
 }
