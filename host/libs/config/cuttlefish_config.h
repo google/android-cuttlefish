@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <string>
+#include <set>
 
 namespace Json {
 class Value;
@@ -24,15 +25,19 @@ class Value;
 
 namespace vsoc {
 
+constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
+
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
  public:
   static CuttlefishConfig* Get();
-  ~CuttlefishConfig() = default;
+
+  CuttlefishConfig();
+  ~CuttlefishConfig();
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
-  bool SaveToFile(const std::string& file) const ;
+  bool SaveToFile(const std::string& file) const;
 
   // Returns the path to a file with the given name in the instance directory..
   std::string PerInstancePath(const char* file_name) const;
@@ -44,12 +49,11 @@ class CuttlefishConfig {
     set_usb_v1_socket_name("");
   }
 
-  // Reads the kernel command line from a file and appends extra arguments.
-  bool ReadKernelArgs(const std::string& cmdline_file,
-                      const std::string& extra_args);
-
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
+
+  std::string vm_manager() const;
+  void set_vm_manager(const std::string& name);
 
   std::string serial_number() const;
   void set_serial_number(const std::string& serial_number);
@@ -75,8 +79,14 @@ class CuttlefishConfig {
   std::string kernel_image_path() const;
   void set_kernel_image_path(const std::string& kernel_image_path);
 
-  std::string kernel_args() const;
-  void set_kernel_args(const std::string& kernel_args);
+  std::set<std::string> kernel_cmdline() const;
+  void set_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
+  void add_kernel_cmdline(const std::string& arg);
+  void add_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
+  std::string kernel_cmdline_as_string() const;
+
+  std::string gdb_flag() const;
+  void set_gdb_flag(const std::string& gdb);
 
   std::string ramdisk_image_path() const;
   void set_ramdisk_image_path(const std::string& ramdisk_image_path);
@@ -124,17 +134,33 @@ class CuttlefishConfig {
   std::string kernel_log_socket_name() const;
   void set_kernel_log_socket_name(const std::string& kernel_log_socket_name);
 
+  bool deprecated_boot_completed() const;
+  void set_deprecated_boot_completed(bool deprecated_boot_completed);
+
   std::string console_path() const;
   void set_console_path(const std::string& console_path);
 
   std::string logcat_path() const;
   void set_logcat_path(const std::string& logcat_path);
 
+  std::string launcher_log_path() const;
+  void set_launcher_log_path(const std::string& launcher_log_path);
+
+  std::string launcher_monitor_socket_path() const;
+  void set_launcher_monitor_socket_path(
+      const std::string& launhcer_monitor_path);
+
   std::string mobile_bridge_name() const;
   void set_mobile_bridge_name(const std::string& mobile_bridge_name);
 
   std::string mobile_tap_name() const;
   void set_mobile_tap_name(const std::string& mobile_tap_name);
+
+  std::string wifi_bridge_name() const;
+  void set_wifi_bridge_name(const std::string& wifi_bridge_name);
+
+  std::string wifi_tap_name() const;
+  void set_wifi_tap_name(const std::string& wifi_tap_name);
 
   std::string wifi_guest_mac_addr() const;
   void set_wifi_guest_mac_addr(const std::string& wifi_guest_mac_addr);
@@ -154,12 +180,22 @@ class CuttlefishConfig {
   bool disable_app_armor_security() const;
   void set_disable_app_armor_security(bool disable_app_armor_security);
 
+  void set_cuttlefish_env_path(const std::string& path);
+  std::string cuttlefish_env_path() const;
+
+  void set_adb_mode(const std::string& mode);
+  std::string adb_mode() const;
+
+  void set_device_title(const std::string& title);
+  std::string device_title() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
-  void LoadFromFile(const char* file);
+  void SetPath(const std::string& key, const std::string& path);
+  bool LoadFromFile(const char* file);
+  static CuttlefishConfig* BuildConfigImpl();
 
-  CuttlefishConfig();
   CuttlefishConfig(const CuttlefishConfig&) = delete;
   CuttlefishConfig& operator=(const CuttlefishConfig&) = delete;
 };
@@ -167,6 +203,9 @@ class CuttlefishConfig {
 // Returns the instance number as obtained from the CUTTLEFISH_INSTANCE
 // environment variable or the username.
 int GetInstance();
+// Returns a path where the launhcer puts a link to the config file which makes
+// it easily discoverable regardless of what vm manager is in use
+std::string GetGlobalConfigFileLink();
 
 // Returns the path to the ivserver's client socket.
 std::string GetDomain();
@@ -178,5 +217,12 @@ std::string GetPerInstanceDefault(const char* prefix);
 int GetPerInstanceDefault(int base);
 
 std::string GetDefaultPerInstanceDir();
+std::string GetDefaultMempath();
 
+std::string DefaultHostArtifactsPath(const std::string& file);
+std::string DefaultGuestImagePath(const std::string& file);
+
+// Whether the installed host packages support calling qemu directly instead of
+// through libvirt
+bool HostSupportsQemuCli();
 }  // namespace vsoc

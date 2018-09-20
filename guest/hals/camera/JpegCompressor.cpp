@@ -23,7 +23,7 @@
 #define LOG_TAG "EmulatedCamera_JPEG"
 #include "JpegCompressor.h"
 #include <assert.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <dlfcn.h>
 
 namespace android {

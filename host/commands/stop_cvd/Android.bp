@@ -24,6 +24,7 @@ cc_binary_host {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libicuuc",
     ],

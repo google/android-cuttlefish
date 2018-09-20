@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
 #include <libyuv.h>

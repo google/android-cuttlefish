@@ -16,6 +16,7 @@
  */
 #include <stdint.h>
 #include <limits.h>
+#include <string.h>
 #include <sys/cdefs.h>
 #include <sys/mman.h>
 #include <hardware/gralloc.h>
@@ -24,7 +25,7 @@
 #include <string.h>
 
 #include <cutils/native_handle.h>
-#include <cutils/log.h>
+#include <log/log.h>
 
 #include <linux/fb.h>
 

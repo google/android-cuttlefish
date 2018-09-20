@@ -27,58 +27,35 @@ namespace socket_forward {
 constexpr std::size_t kMaxPacketSize = 8192;
 constexpr std::size_t kNumQueues = 16;
 
-enum class QueueState : std::uint32_t {
-  INACTIVE = 0,
-  HOST_CONNECTED = 1,
-  BOTH_CONNECTED = 2,
-  HOST_CLOSED = 3,
-  GUEST_CLOSED = 4,
-  // If both are closed then the queue goes back to INACTIVE
-  // BOTH_CLOSED = 0,
-};
-static_assert(ShmTypeValidator<QueueState, 4>::valid,
-              "Compilation error. Please fix above errors and retry.");
-
 struct Queue {
   static constexpr size_t layout_size =
-      CircularPacketQueue<16, kMaxPacketSize>::layout_size + 4;
+      CircularPacketQueue<16, kMaxPacketSize>::layout_size;
 
   CircularPacketQueue<16, kMaxPacketSize> queue;
 
-  QueueState queue_state_;
-
-  bool Recover() {
-    return queue.Recover();
-  }
+  bool Recover() { return queue.Recover(); }
 };
 ASSERT_SHM_COMPATIBLE(Queue);
 
 struct QueuePair {
-  static constexpr size_t layout_size = 2 * Queue::layout_size + 8;
+  static constexpr size_t layout_size = 2 * Queue::layout_size;
 
   // Traffic originating from host that proceeds towards guest.
   Queue host_to_guest;
   // Traffic originating from guest that proceeds towards host.
   Queue guest_to_host;
 
-  std::uint32_t port_;
-
-  SpinLock queue_state_lock_;
-
-
   bool Recover() {
-    // TODO: Put queue_state_ and port_ recovery here, probably after grabbing
     bool recovered = false;
-    recovered = recovered ||  host_to_guest.Recover();
+    recovered = recovered || host_to_guest.Recover();
     recovered = recovered || guest_to_host.Recover();
-    recovered = recovered || queue_state_lock_.Recover();
     return recovered;
   }
 };
 ASSERT_SHM_COMPATIBLE(QueuePair);
 
 struct SocketForwardLayout : public RegionLayout {
-  static constexpr size_t layout_size = QueuePair::layout_size * kNumQueues + 8;
+  static constexpr size_t layout_size = QueuePair::layout_size * kNumQueues;
 
   bool Recover() {
     bool recovered = false;
@@ -86,13 +63,10 @@ struct SocketForwardLayout : public RegionLayout {
       bool rval = i.Recover();
       recovered = recovered || rval;
     }
-    //TODO: consider handling the sequence number here
     return recovered;
   }
 
   QueuePair queues_[kNumQueues];
-  std::atomic_uint32_t seq_num; // incremented for every new connection
-  std::atomic_uint32_t generation_num; // incremented for every new socket forward process
   static const char* region_name;
 };
 

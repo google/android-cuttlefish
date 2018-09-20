@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <sstream>
@@ -34,7 +36,6 @@
 
 #ifdef CUTTLEFISH_HOST
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
 #endif
 
 using vsoc::socket_forward::Packet;
@@ -114,14 +115,11 @@ class SocketReceiver {
 };
 
 void SocketToShm(SocketReceiver socket_receiver,
-                 SocketForwardRegionView::Sender shm_sender) {
-  auto packet = Packet::MakeData();
+                 SocketForwardRegionView::ShmSender shm_sender) {
   while (true) {
+    auto packet = Packet::MakeData();
     socket_receiver.Recv(&packet);
-    if (packet.empty()) {
-      break;
-    }
-    if (!shm_sender.Send(packet)) {
+    if (packet.empty() || !shm_sender.Send(packet)) {
       break;
     }
   }
@@ -129,11 +127,12 @@ void SocketToShm(SocketReceiver socket_receiver,
 }
 
 void ShmToSocket(SocketSender socket_sender,
-                 SocketForwardRegionView::Receiver shm_receiver) {
-  Packet packet{};
+                 SocketForwardRegionView::ShmReceiver shm_receiver) {
+  auto packet = Packet{};
   while (true) {
     shm_receiver.Recv(&packet);
-    if (packet.IsEnd()) {
+    CHECK(packet.IsData());
+    if (packet.empty()) {
       break;
     }
     if (socket_sender.SendAll(packet) < 0) {
@@ -145,15 +144,12 @@ void ShmToSocket(SocketSender socket_sender,
 
 // One thread for reading from shm and writing into a socket.
 // One thread for reading from a socket and writing into shm.
-void LaunchWorkers(std::pair<SocketForwardRegionView::Sender,
-                             SocketForwardRegionView::Receiver>
-                       conn,
-                   cvd::SharedFD socket) {
-  // TODO create the SocketSender/Receiver in their respective threads?
-  std::thread(
-      SocketToShm, SocketReceiver{socket}, std::move(conn.first)).detach();
-  std::thread(
-      ShmToSocket, SocketSender{socket}, std::move(conn.second)).detach();
+void HandleConnection(SocketForwardRegionView::ShmSenderReceiverPair shm_sender_and_receiver,
+                      cvd::SharedFD socket) {
+  auto socket_to_shm =
+      std::thread(SocketToShm, SocketReceiver{socket}, std::move(shm_sender_and_receiver.first));
+  ShmToSocket(SocketSender{socket}, std::move(shm_sender_and_receiver.second));
+  socket_to_shm.join();
 }
 
 #ifdef CUTTLEFISH_HOST
@@ -162,44 +158,136 @@ struct PortPair {
   int host_port;
 };
 
-void LaunchConnectionMaintainer(int port) {
-  std::thread(cvd::EstablishAndMaintainConnection, port).detach();
+enum class QueueState {
+  kFree,
+  kUsed,
+};
+
+struct SocketConnectionInfo {
+  std::mutex lock{};
+  std::condition_variable cv{};
+  cvd::SharedFD socket{};
+  int guest_port{};
+  QueueState state = QueueState::kFree;
+};
+
+static constexpr auto kNumHostThreads =
+    vsoc::layout::socket_forward::kNumQueues;
+
+using SocketConnectionInfoCollection =
+    std::array<SocketConnectionInfo, kNumHostThreads>;
+
+void MarkAsFree(SocketConnectionInfo* conn) {
+  std::lock_guard<std::mutex> guard{conn->lock};
+  conn->socket = cvd::SharedFD{};
+  conn->guest_port = 0;
+  conn->state = QueueState::kFree;
 }
 
+std::pair<int, cvd::SharedFD> WaitForConnection(SocketConnectionInfo* conn) {
+  std::unique_lock<std::mutex> guard{conn->lock};
+  while (conn->state != QueueState::kUsed) {
+    conn->cv.wait(guard);
+  }
+  return {conn->guest_port, conn->socket};
+}
 
-[[noreturn]] void host_impl(SocketForwardRegionView* shm,
-                            std::vector<PortPair> ports, std::size_t index) {
+[[noreturn]] void host_thread(SocketForwardRegionView::ShmConnectionView view,
+                              SocketConnectionInfo* conn) {
+  while (true) {
+    int guest_port{};
+    cvd::SharedFD socket{};
+    // TODO structured binding in C++17
+    std::tie(guest_port, socket) = WaitForConnection(conn);
+
+    LOG(INFO) << "Establishing connection to guest port " << guest_port
+              << " with connection_id: " << view.connection_id();
+    HandleConnection(view.EstablishConnection(guest_port), std::move(socket));
+    LOG(INFO) << "Connection to guest port " << guest_port
+              << " closed. Marking queue " << view.connection_id()
+              << " as free.";
+    MarkAsFree(conn);
+  }
+}
+
+bool TryAllocateConnection(SocketConnectionInfo* conn, int guest_port,
+                           cvd::SharedFD socket) {
+  bool success = false;
+  {
+    std::lock_guard<std::mutex> guard{conn->lock};
+    if (conn->state == QueueState::kFree) {
+      conn->socket = std::move(socket);
+      conn->guest_port = guest_port;
+      conn->state = QueueState::kUsed;
+      success = true;
+    }
+  }
+  if (success) {
+    conn->cv.notify_one();
+  }
+  return success;
+}
+
+void AllocateWorkers(cvd::SharedFD socket,
+                     SocketConnectionInfoCollection* socket_connection_info,
+                     int guest_port) {
+  while (true) {
+    for (auto& conn : *socket_connection_info) {
+      if (TryAllocateConnection(&conn, guest_port, socket)) {
+        return;
+      }
+    }
+    LOG(INFO) << "no queues available. sleeping and retrying";
+    sleep(5);
+  }
+}
+
+[[noreturn]] void host_impl(
+    SocketForwardRegionView* shm,
+    SocketConnectionInfoCollection* socket_connection_info,
+    std::vector<PortPair> ports, std::size_t index) {
   // launch a worker for the following port before handling the current port.
   // recursion (instead of a loop) removes the need fore any join() or having
   // the main thread do no work.
   if (index + 1 < ports.size()) {
-    std::thread(host_impl, shm, ports, index + 1).detach();
+    std::thread(host_impl, shm, socket_connection_info, ports, index + 1)
+        .detach();
   }
   auto guest_port = ports[index].guest_port;
   auto host_port = ports[index].host_port;
-  LOG(INFO) << "starting server on " << host_port
-            << " for guest port " << guest_port;
+  LOG(INFO) << "starting server on " << host_port << " for guest port "
+            << guest_port;
   auto server = cvd::SharedFD::SocketLocalServer(host_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on port " << host_port;
-  LaunchConnectionMaintainer(host_port);
   while (true) {
+    LOG(INFO) << "waiting for client connection";
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";
-    auto conn = shm->OpenConnection(guest_port);
-    LOG(INFO) << "shm connection opened";
-    LaunchWorkers(std::move(conn), std::move(client_socket));
+    AllocateWorkers(std::move(client_socket), socket_connection_info,
+                    guest_port);
   }
 }
 
 [[noreturn]] void host(SocketForwardRegionView* shm,
                        std::vector<PortPair> ports) {
   CHECK(!ports.empty());
-  host_impl(shm, ports, 0);
+
+  SocketConnectionInfoCollection socket_connection_info{};
+
+  auto conn_info_iter = std::begin(socket_connection_info);
+  for (auto& shm_connection_view : shm->AllConnections()) {
+    CHECK_NE(conn_info_iter, std::end(socket_connection_info));
+    std::thread(host_thread, std::move(shm_connection_view), &*conn_info_iter)
+        .detach();
+    ++conn_info_iter;
+  }
+  CHECK_EQ(conn_info_iter, std::end(socket_connection_info));
+  host_impl(shm, &socket_connection_info, ports, 0);
 }
 
 std::vector<PortPair> ParsePortsList(const std::string& guest_ports_str,
-                                const std::string& host_ports_str) {
+                                     const std::string& host_ports_str) {
   std::vector<PortPair> ports{};
   auto guest_ports = cvd::StrSplit(guest_ports_str, ',');
   auto host_ports = cvd::StrSplit(host_ports_str, ',');
@@ -208,7 +296,6 @@ std::vector<PortPair> ParsePortsList(const std::string& guest_ports_str,
     ports.push_back({std::stoi(guest_ports[i]), std::stoi(host_ports[i])});
   }
   return ports;
-
 }
 
 #else
@@ -224,17 +311,28 @@ cvd::SharedFD OpenSocketConnection(int port) {
   }
 }
 
-[[noreturn]] void guest(SocketForwardRegionView* shm) {
-  LOG(INFO) << "Starting guest mainloop";
+[[noreturn]] void guest_thread(
+    SocketForwardRegionView::ShmConnectionView view) {
   while (true) {
-    auto conn = shm->AcceptConnection();
-    LOG(INFO) << "shm connection accepted";
-    auto sock = OpenSocketConnection(conn.first.port());
-    CHECK(sock->IsOpen());
-    LOG(INFO) << "socket opened to " << conn.first.port();
-    LaunchWorkers(std::move(conn), std::move(sock));
+    LOG(INFO) << "waiting for new connection";
+    auto shm_sender_and_receiver = view.WaitForNewConnection();
+    LOG(INFO) << "new connection for port " << view.port();
+    HandleConnection(std::move(shm_sender_and_receiver), OpenSocketConnection(view.port()));
+    LOG(INFO) << "connection closed on port " << view.port();
   }
 }
+
+[[noreturn]] void guest(SocketForwardRegionView* shm) {
+  LOG(INFO) << "Starting guest mainloop";
+  auto connection_views = shm->AllConnections();
+  for (auto&& shm_connection_view : connection_views) {
+    std::thread(guest_thread, std::move(shm_connection_view)).detach();
+  }
+  while (true) {
+    sleep(std::numeric_limits<unsigned int>::max());
+  }
+}
+
 #endif
 
 SocketForwardRegionView* GetShm() {

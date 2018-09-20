@@ -16,14 +16,22 @@
 
 #include "host/libs/vm_manager/libvirt_manager.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <string>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <libxml/tree.h>
+
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/users.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
@@ -113,23 +121,33 @@ void ConfigureOperatingSystem(xmlNode* root, const std::string& kernel,
   xmlNewProp(type, xc("machine"), xc("pc"));
 
   xmlNewChild(os, nullptr, xc("kernel"), xc(kernel.c_str()));
-  xmlNewChild(os, nullptr, xc("initrd"), xc(initrd.c_str()));
+  if (!initrd.empty()) {
+    xmlNewChild(os, nullptr, xc("initrd"), xc(initrd.c_str()));
+  }
   xmlNewChild(os, nullptr, xc("cmdline"), xc(args.c_str()));
   xmlNewChild(os, nullptr, xc("dtb"), xc(dtb.c_str()));
 }
 
 // Configure QEmu specific arguments.
 // This section adds the <qemu:commandline> node.
-void ConfigureQEmuSpecificOptions(
-    xmlNode* root, std::initializer_list<std::string> qemu_args) {
+xmlNodePtr ConfigureQEmuSpecificOptions(
+    xmlNode* root, std::initializer_list<std::string> qemu_args,
+    xmlNode* existing_options = nullptr) {
   xmlNs* qemu_ns{xmlNewNs(
       root, xc("http://libvirt.org/schemas/domain/qemu/1.0"), xc("qemu"))};
 
-  auto cmd = xmlNewChild(root, qemu_ns, xc("commandline"), nullptr);
+  xmlNode* cmd;
+  if (existing_options) {
+    cmd = existing_options;
+  } else {
+    cmd = xmlNewChild(root, qemu_ns, xc("commandline"), nullptr);
+  }
+
   for (const auto& str : qemu_args) {
     auto arg = xmlNewChild(cmd, qemu_ns, xc("arg"), nullptr);
     xmlNewProp(arg, xc("value"), xc(str.c_str()));
   }
+  return cmd;
 }
 
 void ConfigureDeviceSource(xmlNode* device, DeviceSourceType type,
@@ -161,12 +179,6 @@ void ConfigureSerialPort(xmlNode* devices, int port, DeviceSourceType type,
   auto tty = xmlNewChild(devices, nullptr, xc("serial"), nullptr);
   ConfigureDeviceSource(tty, type, path);
 
-  if (type == DeviceSourceType::kFile) {
-    LOG(INFO) << "Non-interactive serial port will send output to " << path;
-  } else {
-    LOG(INFO) << "Interactive serial port set up. To access the console run:";
-    LOG(INFO) << "$ sudo socat file:$(tty),raw,echo=0 " << path;
-  }
   auto tgt = xmlNewChild(tty, nullptr, xc("target"), nullptr);
   xmlNewProp(tgt, xc("port"), xc(concat(port).c_str()));
 }
@@ -257,10 +269,7 @@ std::string GetLibvirtCommand() {
   return cmd;
 }
 
-}  // namespace
-
-std::string LibvirtManager::BuildXmlConfig() const {
-  auto config = vsoc::CuttlefishConfig::Get();
+std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
   std::string instance_name = config->instance_name();
 
   std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> xml{xmlNewDoc(xc("1.0")),
@@ -273,9 +282,10 @@ std::string LibvirtManager::BuildXmlConfig() const {
               config->uuid());
   ConfigureVMFeatures(root, {"acpi", "apic", "hap"});
   ConfigureOperatingSystem(root, config->kernel_image_path(),
-                           config->ramdisk_image_path(), config->kernel_args(),
+                           config->ramdisk_image_path(),
+                           config->kernel_cmdline_as_string(),
                            config->dtb_path());
-  ConfigureQEmuSpecificOptions(
+  auto qemu_options = ConfigureQEmuSpecificOptions(
       root, {"-chardev",
              concat("socket,path=", config->ivshmem_qemu_socket_path(),
                     ",id=ivsocket"),
@@ -283,6 +293,11 @@ std::string LibvirtManager::BuildXmlConfig() const {
              concat("ivshmem-doorbell,chardev=ivsocket,vectors=",
                     config->ivshmem_vector_count()),
              "-cpu", "host"});
+  if (config->gdb_flag().size()) {
+    ConfigureQEmuSpecificOptions(root, {"-gdb", config->gdb_flag().c_str(),
+                                        "-S"},
+                                 qemu_options);
+  }
 
   if (config->disable_app_armor_security()) {
     auto seclabel = xmlNewChild(root, nullptr, xc("seclabel"), nullptr);
@@ -312,8 +327,10 @@ std::string LibvirtManager::BuildXmlConfig() const {
   ConfigureDisk(devices, "vdc", config->cache_image_path());
   ConfigureDisk(devices, "vdd", config->vendor_image_path());
 
+  ConfigureNIC(devices, config->wifi_tap_name(), config->wifi_bridge_name(),
+	       vsoc::GetInstance(), 1);
   ConfigureNIC(devices, config->mobile_tap_name(), config->mobile_bridge_name(),
-               vsoc::GetInstance(), 1);
+               vsoc::GetInstance(), 2);
   ConfigureHWRNG(devices, config->entropy_source());
 
   xmlChar* tgt;
@@ -324,39 +341,84 @@ std::string LibvirtManager::BuildXmlConfig() const {
   xmlFree(tgt);
   return out;
 }
+}  // namespace
 
-bool LibvirtManager::Start() const {
+const std::string LibvirtManager::name() { return "libvirt"; }
+
+LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
+  : VmManager(config) {}
+
+bool LibvirtManager::Start() {
   std::string start_command = GetLibvirtCommand();
   start_command += " create /dev/fd/0";
 
-  std::string xml = BuildXmlConfig();
+  std::string xml = BuildXmlConfig(config_);
   if (FLAGS_log_xml) {
     LOG(INFO) << "Using XML:\n" << xml;
   }
 
   FILE* launch = popen(start_command.c_str(), "w");
   if (!launch) {
-    LOG(FATAL) << "Unable to execute " << start_command;
+    LOG(ERROR) << "Unable to execute " << start_command;
     return false;
   }
   int rval = fputs(xml.c_str(), launch);
   if (rval == EOF) {
-    LOG(FATAL) << "Launch command exited while accepting XML";
+    LOG(ERROR) << "Launch command exited while accepting XML";
     return false;
   }
   int exit_code = pclose(launch);
   if (exit_code != 0) {
-    LOG(FATAL) << "Launch command exited with status " << exit_code;
+    LOG(ERROR) << "Launch command exited with status " << exit_code;
     return false;
   }
   return true;
 }
 
-bool LibvirtManager::Stop() const {
-  auto config = vsoc::CuttlefishConfig::Get();
+bool LibvirtManager::Stop() {
   auto stop_command = GetLibvirtCommand();
-  stop_command += " destroy " + config->instance_name();
+  stop_command += " destroy " + config_->instance_name();
   return std::system(stop_command.c_str()) == 0;
 }
 
+bool LibvirtManager::EnsureInstanceDirExists() const {
+  auto instance_dir = config_->instance_dir();
+  if (!cvd::DirectoryExists(instance_dir)) {
+    LOG(INFO) << "Setting up " << instance_dir;
+    cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", instance_dir});
+
+    // When created with sudo the owner and group is root.
+    std::string user_group = getenv("USER");
+    user_group += ":libvirt-qemu";
+    cvd::execute({"/usr/bin/sudo", "/bin/chown", user_group, instance_dir});
+  }
+  return true;
+}
+
+bool LibvirtManager::CleanPriorFiles() const {
+  std::string run_files = config_->PerInstancePath("*") + " " +
+                          config_->mempath() + " " +
+                          config_->cuttlefish_env_path() + " " +
+                          vsoc::GetGlobalConfigFileLink();
+  LOG(INFO) << "Assuming run files of " << run_files;
+  std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
+  int rval = std::system(fuser_cmd.c_str());
+  // fuser returns 0 if any of the files are open
+  if (WEXITSTATUS(rval) == 0) {
+    LOG(ERROR) << "Clean aborted: files are in use";
+    return false;
+  }
+  std::string clean_command = "rm -rf " + run_files;
+  rval = std::system(clean_command.c_str());
+  if (WEXITSTATUS(rval) != 0) {
+    LOG(ERROR) << "Remove of files failed";
+    return false;
+  }
+  return true;
+}
+
+bool LibvirtManager::ValidateHostConfiguration(
+    std::vector<std::string>* config_commands) const {
+  return VmManager::UserInGroup("libvirt", config_commands);
+}
 }  // namespace vm_manager

@@ -14,7 +14,11 @@
 // limitations under the License.
 
 subdirs = [
+    "adbshell",
     "launch",
     "stop_cvd",
+    "ivserver",
     "record_audio",
+    "virtual_usb_manager",
+    "kernel_log_monitor",
 ]

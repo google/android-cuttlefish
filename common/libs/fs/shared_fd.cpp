@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <algorithm>
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/glog/logging.h"
@@ -71,6 +72,23 @@ bool FileInstance::CopyFrom(FileInstance& in) {
         // The caller will have to log an appropriate message.
         return false;
       }
+    }
+  }
+  return true;
+}
+
+bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
+  AutoFreeBuffer buffer;
+  buffer.Resize(8192);
+  while (length > 0) {
+    ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
+    length -= num_read;
+    if (num_read <= 0) {
+      return false;
+    }
+    if (Write(buffer.data(), num_read) != num_read) {
+      // The caller will have to log an appropriate message.
+      return false;
     }
   }
   return true;
@@ -256,6 +274,10 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   }
 }
 
+SharedFD SharedFD::Creat(const char* path, mode_t mode) {
+  return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
+}
+
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
   if (fd == -1) {
@@ -275,7 +297,6 @@ SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
     return rval;
   }
   if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
-    LOG(ERROR) << "Connect failed; name=" << name << ": " << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }
@@ -293,7 +314,6 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   }
   if (rval->Connect(reinterpret_cast<const sockaddr*>(&addr),
                     sizeof addr) < 0) {
-    LOG(ERROR) << "Connect() failed" << rval->StrError();
     return SharedFD(
         std::shared_ptr<FileInstance>(new FileInstance(-1, rval->GetErrno())));
   }

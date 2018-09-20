@@ -18,7 +18,7 @@
 
 #include <string.h>
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <hardware/gralloc.h>
 
 #include "common/vsoc/lib/screen_region_view.h"
