@@ -118,6 +118,7 @@ const char* kDisableAppArmorSecurity = "disable_app_armor_security";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
+const char* kSetupWizardMode = "setupwizard_mode";
 }  // namespace
 
 namespace vsoc {
@@ -477,6 +478,14 @@ std::string CuttlefishConfig::device_title() const {
 
 void CuttlefishConfig::set_device_title(const std::string& title) {
   (*dictionary_)[kDeviceTitle] = title;
+}
+
+std::string CuttlefishConfig::setupwizard_mode() const {
+  return (*dictionary_)[kSetupWizardMode].asString();
+}
+
+void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
+  (*dictionary_)[kSetupWizardMode] = mode;
 }
 
 // Creates the (initially empty) config object and populates it with values from

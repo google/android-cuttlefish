@@ -189,6 +189,9 @@ class CuttlefishConfig {
   void set_device_title(const std::string& title);
   std::string device_title() const;
 
+  void set_setupwizard_mode(const std::string& title);
+  std::string setupwizard_mode() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
