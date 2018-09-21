@@ -54,6 +54,8 @@ BOARD_DRM_HWCOMPOSER_BUFFER_IMPORTER := minigbm
 BOARD_USES_DRM_HWCOMPOSER := true
 BOARD_USES_MINIGBM := true
 BOARD_GPU_DRIVERS := virgl
+# This prevents mesa3d from unconditionally pulling in some modules
+BOARD_USE_CUSTOMIZED_MESA := true
 
 # Minimum size of the final bootable disk image: 10G
 # GCE will pad disk images out to 10G. Our disk images should be at least as
