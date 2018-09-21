@@ -18,6 +18,8 @@ PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
 
 PRODUCT_SHIPPING_API_LEVEL := 26
 
+DISABLE_RILD_OEM_HOOK := true
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 2.0
