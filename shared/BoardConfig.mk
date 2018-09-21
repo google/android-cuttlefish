@@ -112,6 +112,9 @@ STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 INIT_BOOTCHART := true
 
 DEVICE_MANIFEST_FILE := device/google/cuttlefish/shared/config/manifest.xml
+ifneq (,$(filter cf_x86_auto cf_x86_64_auto aosp_x86_auto aosp_x86_64_auto, $(TARGET_PRODUCT)))
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/auto/manifest-extra.xml
+endif
 
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
