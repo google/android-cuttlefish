@@ -1,3 +1,9 @@
+cuttlefish-common (0.9+nmu2) UNRELEASED; urgency=medium
+
+  * Add acl package dependency for setfacl (required by install_zip.sh)
+
+ -- Steven Laver <lavers@google.com>  Wed, 26 Sep 2018 16:45:35 -0700
+
 cuttlefish-common (0.9+nmu1) unstable; urgency=medium
 
   * Incorporate change that removes mac80211

@@ -22,6 +22,7 @@ Build-Depends:
 Package: cuttlefish-common
 Architecture: amd64
 Depends:
+ acl,
  adb,
  device-tree-compiler,
  hostapd,
