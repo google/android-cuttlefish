@@ -181,6 +181,8 @@ DEFINE_bool(daemon, false,
 
 DEFINE_string(device_title, "", "Human readable name for the instance, "
               "used by the vnc_server for its server title");
+DEFINE_string(setupwizard_mode, "DISABLED",
+	      "One of DISABLED,OPTIONAL,REQUIRED");
 
 DECLARE_string(config_file);
 
@@ -502,6 +504,7 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   config->set_memory_mb(FLAGS_memory_mb);
 
   config->set_dpi(FLAGS_dpi);
+  config->set_setupwizard_mode(FLAGS_setupwizard_mode);
   config->set_x_res(FLAGS_x_res);
   config->set_y_res(FLAGS_y_res);
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
@@ -539,6 +542,8 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
       concat("androidboot.serialno=", FLAGS_serial_number));
   config->add_kernel_cmdline("mac80211_hwsim.radios=0");
   config->add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
+  config->add_kernel_cmdline(concat("androidboot.setupwizard_mode=",
+				    FLAGS_setupwizard_mode));
   config->add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
   if (!FLAGS_console.empty()) {
     config->add_kernel_cmdline(concat("console=", FLAGS_console));
