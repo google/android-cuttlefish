@@ -26,8 +26,6 @@ class Value;
 namespace vsoc {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
-constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
-constexpr char kVsocUserPrefix[] = "vsoc-";
 
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
@@ -188,25 +186,11 @@ class CuttlefishConfig {
   void set_adb_mode(const std::string& mode);
   std::string adb_mode() const;
 
-  void set_adb_ip_and_port(const std::string& ip_port);
-  std::string adb_ip_and_port() const;
-
-  std::string adb_device_name() const;
-
   void set_device_title(const std::string& title);
   std::string device_title() const;
 
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
-
-  void set_log_xml(bool log_xml);
-  bool log_xml() const;
-
-  void set_hypervisor_uri(const std::string& hypervisor_uri);
-  std::string hypervisor_uri() const;
-
-  void set_qemu_binary(const std::string& qemu_binary);
-  std::string qemu_binary() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;

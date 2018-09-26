@@ -26,16 +26,22 @@
 #include <sstream>
 #include <string>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <json/json.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 
+DEFINE_string(config_file, vsoc::GetGlobalConfigFileLink(),
+              "A file from where to load the config values. This flag is "
+              "ignored by the launcher");
+
 namespace {
 
 int InstanceFromEnvironment() {
   static constexpr char kInstanceEnvironmentVariable[] = "CUTTLEFISH_INSTANCE";
+  static constexpr char kVsocUserPrefix[] = "vsoc-";
   static constexpr int kDefaultInstance = 1;
 
   // CUTTLEFISH_INSTANCE environment variable
@@ -43,15 +49,12 @@ int InstanceFromEnvironment() {
   if (!instance_str) {
     // Try to get it from the user instead
     instance_str = std::getenv("USER");
-
-    if (!instance_str || std::strncmp(instance_str, vsoc::kVsocUserPrefix,
-                                      sizeof(vsoc::kVsocUserPrefix) - 1)) {
+    if (!instance_str || std::strncmp(instance_str, kVsocUserPrefix,
+                                      sizeof(kVsocUserPrefix) - 1)) {
       // No user or we don't recognize this user
-      LOG(WARNING) << "No user or non-vsoc user, returning default config";
       return kDefaultInstance;
     }
-    instance_str += sizeof(vsoc::kVsocUserPrefix) - 1;
-
+    instance_str += sizeof(kVsocUserPrefix) - 1;
     // Set the environment variable so that child processes see it
     setenv(kInstanceEnvironmentVariable, instance_str, 0);
   }
@@ -115,12 +118,7 @@ const char* kDisableAppArmorSecurity = "disable_app_armor_security";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
-const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
-
-const char* kLogXml = "log_xml";
-const char* kHypervisorUri = "hypervisor_uri";
-const char* kQemuBinary = "qemu_binary";
 }  // namespace
 
 namespace vsoc {
@@ -193,7 +191,7 @@ std::string CuttlefishConfig::gdb_flag() const {
 }
 
 void CuttlefishConfig::set_gdb_flag(const std::string& device) {
-  (*dictionary_)[kGdbFlag] = device;
+  SetPath(kGdbFlag, device);
 }
 
 std::set<std::string> CuttlefishConfig::kernel_cmdline() const {
@@ -474,24 +472,6 @@ void CuttlefishConfig::set_adb_mode(const std::string& mode) {
   (*dictionary_)[kAdbMode] = mode;
 }
 
-std::string CuttlefishConfig::adb_ip_and_port() const {
-  return (*dictionary_)[kAdbIPAndPort].asString();
-}
-
-void CuttlefishConfig::set_adb_ip_and_port(const std::string& ip_port) {
-  (*dictionary_)[kAdbIPAndPort] = ip_port;
-}
-
-std::string CuttlefishConfig::adb_device_name() const {
-  if (adb_mode().find("tunnel") != std::string::npos) {
-    return adb_ip_and_port();
-  } else if (adb_mode().find("usb") != std::string::npos) {
-    return serial_number();
-  }
-  LOG(ERROR) << "no adb_mode found, returning bad device name";
-  return "NO_ADB_MODE_SET_NO_VALID_DEVICE_NAME";
-}
-
 std::string CuttlefishConfig::device_title() const {
   return (*dictionary_)[kDeviceTitle].asString();
 }
@@ -508,41 +488,14 @@ void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
   (*dictionary_)[kSetupWizardMode] = mode;
 }
 
-bool CuttlefishConfig::log_xml() const {
-  return (*dictionary_)[kLogXml].asBool();
-}
-
-void CuttlefishConfig::set_log_xml(bool log_xml) {
-  (*dictionary_)[kLogXml] = log_xml;
-}
-
-std::string CuttlefishConfig::hypervisor_uri() const {
-  return (*dictionary_)[kHypervisorUri].asString();
-}
-
-void CuttlefishConfig::set_hypervisor_uri(const std::string& hypervisor_uri) {
-  (*dictionary_)[kHypervisorUri] = hypervisor_uri;
-}
-
-std::string CuttlefishConfig::qemu_binary() const {
-  return (*dictionary_)[kQemuBinary].asString();
-}
-
-void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
-  (*dictionary_)[kQemuBinary] = qemu_binary;
-}
-
 // Creates the (initially empty) config object and populates it with values from
-// the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
+// the config file if the --config_file command line argument is present.
 // Returns nullptr if there was an error loading from file
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
-  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
-                                             vsoc::GetGlobalConfigFileLink());
   auto ret = new CuttlefishConfig();
-  if (ret) {
-    auto loaded = ret->LoadFromFile(config_file_path.c_str());
+  if (ret && !FLAGS_config_file.empty()) {
+    auto loaded = ret->LoadFromFile(FLAGS_config_file.c_str());
     if (!loaded) {
-      delete ret;
       return nullptr;
     }
   }
