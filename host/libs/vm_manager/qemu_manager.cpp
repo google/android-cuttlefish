@@ -74,6 +74,8 @@ pid_t BuildAndRunQemuCmd(vsoc::CuttlefishConfig* config) {
   LogAndSetEnv("cache_image_path", config->cache_image_path());
   LogAndSetEnv("vendor_image_path", config->vendor_image_path());
   LogAndSetEnv("wifi_tap_name", config->wifi_tap_name());
+  LogAndSetEnv("vlan_tap_name", config->vlan_tap_name());
+  LogAndSetEnv("guest_vlans", config->guest_vlans() ? "true" : "false");
   LogAndSetEnv("mobile_tap_name", config->mobile_tap_name());
   LogAndSetEnv("kernel_log_socket_name",
                       config->kernel_log_socket_name());
