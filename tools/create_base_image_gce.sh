@@ -32,9 +32,26 @@ done
 
 # Now gather all of the *.deb files to copy them into the image
 debs=(*.deb)
+
+# See if we are using a local build of qemu.
+if [[ -x build-qemu-packages.sh ]]; then
+  ./build-qemu-packages.sh
+  # We want only a subset of the debs that will be generated
+  for i in *.deb; do
+    case "$i" in
+      qemu-kvm_*) debs+=("$i") ;;
+      qemu-system-common_*) debs+=("$i") ;;
+      qemu-system-x86_*) debs+=("$i") ;;
+      qemu-utils_*) debs+=("$i") ;;
+      qemu-system-data_*) debs+=("$i") ;;
+      libvirglrenderer0*) debs+=("$i") ;;
+    esac
+  done                         
+fi
+
 tmp_debs=()
 for i in "${debs[@]}"; do
-  tmp_debs+=(/tmp/"$i")
+  tmp_debs+=(/tmp/"$(basename "$i")")
 done
 
 # Now install the packages on the disk
