@@ -31,7 +31,5 @@ popd
 sudo mk-build-deps -i qemu/debian/control  -t "apt-get -y"
 rm -f ./qemu-build-deps_2.12+dfsg-3_amd64.deb
 pushd qemu
-dpkg-buildpackage -uc -us
+dpkg-buildpackage -uc -us --jobs=auto
 popd
-mkdir -p dist
-mv *.deb *.xz *.bz2 *.dsc *.buildinfo *.changes dist/
