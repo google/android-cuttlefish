@@ -108,8 +108,6 @@ const char* kMobileBridgeName = "mobile_bridge_name";
 const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiBridgeName = "wifi_bridge_name";
 const char* kWifiTapName = "wifi_tap_name";
-const char* kVlanTapName = "vlan_tap_name";
-const char* kGuestVlansName = "guest_vlans";
 const char* kWifiGuestMacAddr = "wifi_guest_mac_addr";
 const char* kWifiHostMacAddr = "wifi_host_mac_addr";
 const char* kEntropySource = "entropy_source";
@@ -428,20 +426,6 @@ std::string CuttlefishConfig::wifi_tap_name() const {
 }
 void CuttlefishConfig::set_wifi_tap_name(const std::string& wifi_tap_name) {
   (*dictionary_)[kWifiTapName] = wifi_tap_name;
-}
-
-bool CuttlefishConfig::guest_vlans() const {
-  return (*dictionary_)[kGuestVlansName].asBool();
-}
-void CuttlefishConfig::set_guest_vlans(bool guest_vlans) {
-  (*dictionary_)[kGuestVlansName] = guest_vlans;
-}
-
-std::string CuttlefishConfig::vlan_tap_name() const {
-  return (*dictionary_)[kVlanTapName].asString();
-}
-void CuttlefishConfig::set_vlan_tap_name(const std::string& vlan_tap_name) {
-  (*dictionary_)[kVlanTapName] = vlan_tap_name;
 }
 
 std::string CuttlefishConfig::entropy_source() const {
