@@ -60,7 +60,7 @@ BOARD_USE_CUSTOMIZED_MESA := true
 # Enable goldfish's encoder.
 # TODO(b/113617962) Remove this if we decide to use
 # device/generic/opengl-transport to generate the encoder
-BUILD_EMULATOR_OPENGL_DRIVER := false
+BUILD_EMULATOR_OPENGL_DRIVER := true
 BUILD_EMULATOR_OPENGL := true
 
 # Minimum size of the final bootable disk image: 10G
