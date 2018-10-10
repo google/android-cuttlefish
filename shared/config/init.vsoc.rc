@@ -33,7 +33,13 @@ on fs
     mount_all /vendor/etc/fstab.${ro.hardware}
     restorecon_recursive /vendor
 
-    start setup_network
+    start rename_eth0
+    # works around framework netiface enumeration issue
+    start rename_eth1
+
+    # wait until rename_eth0 is done before attempting to stack wifi
+    wait /proc/self/net/xt_qtaguid/iface_stat/buried_eth0
+    start create_wifi
 
     # TODO(ender): Find better way to talk to serial port.
     chmod 622 /dev/kmsg
@@ -72,7 +78,15 @@ on boot
     start socket_forward_proxy
 
 
-service setup_network /vendor/bin/setup_network ${ro.boot.cuttlefish_network}
+service rename_eth0 /vendor/bin/rename_netiface eth0 buried_eth0
+    oneshot
+
+
+service rename_eth1 /vendor/bin/rename_netiface eth1 rmnet0
+    oneshot
+
+
+service create_wifi /vendor/bin/ip_link_add virt_wifi buried_eth0 wlan0
     oneshot
 
 
