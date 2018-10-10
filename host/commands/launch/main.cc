@@ -170,10 +170,6 @@ DEFINE_string(wifi_interface, "", // default handled on ParseCommandLine
               "Network interface to use for wifi");
 DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for wifi");
-DEFINE_string(vlan_tap_name, "", // default handled on ParseCommandLine
-              "The name of the tap interface to use for the vlan network");
-DEFINE_bool(guest_vlans, false,
-            "Force the guest to use or not use VLANs.");
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
 
@@ -577,8 +573,6 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   if (FLAGS_extra_kernel_cmdline.size()) {
     config->add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
-  config->add_kernel_cmdline(concat("androidboot.cuttlefish_network=",
-                                 FLAGS_guest_vlans ? "vlan" : "legacy"));
 
   config->set_ramdisk_image_path(ramdisk_path);
   config->set_system_image_path(FLAGS_system_image);
@@ -613,9 +607,6 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
 
   config->set_wifi_bridge_name(FLAGS_wifi_interface);
   config->set_wifi_tap_name(FLAGS_wifi_tap_name);
-
-  config->set_guest_vlans(FLAGS_guest_vlans);
-  config->set_vlan_tap_name(FLAGS_vlan_tap_name);
 
   config->set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
   config->set_wifi_host_mac_addr(FLAGS_host_mac_address);
@@ -652,10 +643,6 @@ void SetDefaultFlagsForQemu() {
   auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
   SetCommandLineOptionWithMode("wifi_tap_name",
                                default_wifi_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_vlan_tap_name = GetPerInstanceDefault("cvd-net-");
-  SetCommandLineOptionWithMode("vlan_tap_name",
-                               default_vlan_tap_name.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto default_instance_dir =
       cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";

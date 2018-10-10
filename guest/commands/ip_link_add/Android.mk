@@ -16,10 +16,10 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := setup_network
+LOCAL_MODULE := ip_link_add
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := main.cpp
-LOCAL_SHARED_LIBRARIES := cuttlefish_net cuttlefish_auto_resources libbase liblog
+LOCAL_SHARED_LIBRARIES := cuttlefish_net cuttlefish_auto_resources
 LOCAL_C_INCLUDES := device/google/cuttlefish_common
 LOCAL_MULTILIB := first
 LOCAL_VENDOR_MODULE := true
