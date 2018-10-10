@@ -58,6 +58,11 @@ cvd_host_shared_libraries := \
     libnl \
     libc++ \
     libicuuc-host \
+    libvirglrenderer_cuttlefish \
+    libEGL_swiftshader \
+    libGLESv1_CM_swiftshader \
+    libGLESv2_swiftshader \
+
 
 cvd_host_configs := \
     system-root.dtb \
