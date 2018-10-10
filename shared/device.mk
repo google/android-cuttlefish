@@ -69,7 +69,7 @@ PRODUCT_PACKAGES += \
     vsoc_input_service \
     vport_trigger \
     rename_netiface \
-    setup_network \
+    ip_link_add \
 
 #
 # Packages for AOSP-available stuff we use from the framework
