@@ -35,7 +35,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=131072 \
     ro.ril.gprsclass=10 \
     ro.ril.hsxpa=1 \
-    ro.setupwizard.mode=DISABLED \
     wifi.interface=wlan0 \
 
 # Below is a list of properties we probably should get rid of.

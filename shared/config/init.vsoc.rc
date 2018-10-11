@@ -12,6 +12,7 @@ on early-init
     chmod 0755 /sys/kernel/debug
     setprop service.adb.tcp.port 5555
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
+    setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
 on init
     chown system root /dev/input_events
