@@ -26,6 +26,7 @@ class Value;
 namespace vsoc {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
+constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
