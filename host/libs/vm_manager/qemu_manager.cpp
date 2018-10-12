@@ -30,7 +30,6 @@
 #include <thread>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_select.h"
@@ -38,10 +37,6 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
-
-DEFINE_string(qemu_binary,
-              "/usr/bin/qemu-system-x86_64",
-              "The qemu binary to use");
 
 namespace vm_manager {
 
@@ -58,7 +53,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 
 pid_t BuildAndRunQemuCmd(vsoc::CuttlefishConfig* config) {
   // Set the config values in the environment
-  LogAndSetEnv("qemu_binary", FLAGS_qemu_binary);
+  LogAndSetEnv("qemu_binary", config->qemu_binary());
   LogAndSetEnv("instance_name", config->instance_name());
   LogAndSetEnv("memory_mb", std::to_string(config->memory_mb()));
   LogAndSetEnv("cpus", std::to_string(config->cpus()));
