@@ -184,6 +184,12 @@ DEFINE_string(device_title, "", "Human readable name for the instance, "
 DEFINE_string(setupwizard_mode, "DISABLED",
 	      "One of DISABLED,OPTIONAL,REQUIRED");
 
+DEFINE_string(qemu_binary,
+              "/usr/bin/qemu-system-x86_64",
+              "The qemu binary to use");
+DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
+DEFINE_bool(log_xml, false, "Log the XML machine configuration");
+
 DECLARE_string(config_file);
 
 namespace {
@@ -616,6 +622,10 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
 
   config->set_disable_dac_security(FLAGS_disable_dac_security);
   config->set_disable_app_armor_security(FLAGS_disable_app_armor_security);
+
+  config->set_qemu_binary(FLAGS_qemu_binary);
+  config->set_hypervisor_uri(FLAGS_hypervisor_uri);
+  config->set_log_xml(FLAGS_log_xml);
 
   if(!AdbUsbEnabled()) {
     config->disable_usb_adb();

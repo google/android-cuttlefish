@@ -24,7 +24,6 @@
 #include <sstream>
 #include <string>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <libxml/tree.h>
 
@@ -32,9 +31,6 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
-
-DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
-DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 
 // A lot of useful information about the document created here can be found on
 // these websites:
@@ -261,10 +257,10 @@ void ConfigureHWRNG(xmlNode* devices, const std::string& entsrc) {
   xmlNewProp(bend, xc("model"), xc("random"));
 }
 
-std::string GetLibvirtCommand() {
+static std::string GetLibvirtCommand(vsoc::CuttlefishConfig* config) {
   std::string cmd = "virsh";
-  if (!FLAGS_hypervisor_uri.empty()) {
-    cmd += " -c " + FLAGS_hypervisor_uri;
+  if (!config->hypervisor_uri().empty()) {
+    cmd += " -c " + config->hypervisor_uri();
   }
   return cmd;
 }
@@ -349,11 +345,11 @@ LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
 bool LibvirtManager::Start() {
-  std::string start_command = GetLibvirtCommand();
+  std::string start_command = GetLibvirtCommand(config_);
   start_command += " create /dev/fd/0";
 
   std::string xml = BuildXmlConfig(config_);
-  if (FLAGS_log_xml) {
+  if (config_->log_xml()) {
     LOG(INFO) << "Using XML:\n" << xml;
   }
 
@@ -376,7 +372,7 @@ bool LibvirtManager::Start() {
 }
 
 bool LibvirtManager::Stop() {
-  auto stop_command = GetLibvirtCommand();
+  auto stop_command = GetLibvirtCommand(config_);
   stop_command += " destroy " + config_->instance_name();
   return std::system(stop_command.c_str()) == 0;
 }
