@@ -267,8 +267,6 @@ std::string GetConfigFile() {
       "cuttlefish_config.json");
 }
 
-std::string GetConfigFileArg() { return "-config_file=" + GetConfigFile(); }
-
 std::string GetGuestPortArg() {
   constexpr int kEmulatorPort = 5555;
   return std::string{"--guest_ports="} + std::to_string(kEmulatorPort);
@@ -335,8 +333,7 @@ void LaunchUsbServerIfEnabled(vsoc::CuttlefishConfig* config) {
   }
 
   cvd::subprocess({FLAGS_virtual_usb_manager_binary,
-                   "-usb_v1_fd=" + std::to_string(server_fd),
-                   GetConfigFileArg()});
+                   "-usb_v1_fd=" + std::to_string(server_fd)});
 
   close(server_fd);
 }
@@ -353,8 +350,7 @@ void LaunchKernelLogMonitor(vsoc::CuttlefishConfig* config,
   }
   cvd::subprocess({FLAGS_kernel_log_monitor_binary,
                    "-log_server_fd=" + std::to_string(server_fd),
-                   "-subscriber_fd=" + std::to_string(subscriber_fd),
-                   GetConfigFileArg()});
+                   "-subscriber_fd=" + std::to_string(subscriber_fd)});
   close(server_fd);
   if (subscriber_fd >= 0) {
     close(subscriber_fd);
@@ -383,8 +379,7 @@ void LaunchIvServer(vsoc::CuttlefishConfig* config) {
   auto qemu_socket_arg = "-qemu_socket_fd=" + std::to_string(qemu_channel);
   auto client_socket_arg =
       "-client_socket_fd=" + std::to_string(client_channel);
-  cvd::subprocess({FLAGS_ivserver_binary, qemu_socket_arg, client_socket_arg,
-                   GetConfigFileArg()});
+  cvd::subprocess({FLAGS_ivserver_binary, qemu_socket_arg, client_socket_arg});
   close(qemu_channel);
   close(client_channel);
 }
@@ -400,8 +395,7 @@ void LaunchSocketForwardProxyIfEnabled() {
   if (AdbTunnelEnabled()) {
     cvd::subprocess({FLAGS_socket_forward_proxy_binary,
                      GetGuestPortArg(),
-                     GetHostPortArg(),
-                     GetConfigFileArg()});
+                     GetHostPortArg()});
   }
 }
 
@@ -409,8 +403,7 @@ void LaunchVNCServerIfEnabled() {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
-    cvd::subprocess(
-        {FLAGS_vnc_server_binary, port_options, GetConfigFileArg()});
+    cvd::subprocess({FLAGS_vnc_server_binary, port_options});
   }
 }
 
@@ -492,8 +485,8 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   auto config = vsoc::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to instantiate config object. Most likely because "
-                  "config file was specified and doesn't exits: '"
-               << FLAGS_config_file << "'";
+                  "config file was specified and doesn't exist: '"
+               << getenv(vsoc::kCuttlefishConfigEnvVarName) << "'";
     return nullptr;
   }
   // Set this first so that calls to PerInstancePath below are correct
@@ -707,8 +700,8 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   if (invalid_manager) {
     return false;
   }
-  // Set the flag value to empty (in case the caller passed a value for it).
-  FLAGS_config_file = "";
+  // Set the env variable to empty (in case the caller passed a value for it).
+  unsetenv(vsoc::kCuttlefishConfigEnvVarName);
 
   ValidateAdbModeFlag();
 
@@ -919,6 +912,7 @@ int main(int argc, char** argv) {
   if (!config->SaveToFile(config_file)) {
     return LauncherExitCodes::kCuttlefishConfigurationSaveError;
   }
+  setenv(vsoc::kCuttlefishConfigEnvVarName, config_file.c_str(), true);
   if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
     LOG(ERROR) << "Failed to create symlink to config file at " << config_link
                << ": " << strerror(errno);

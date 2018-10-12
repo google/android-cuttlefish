@@ -26,16 +26,11 @@
 #include <sstream>
 #include <string>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <json/json.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-
-DEFINE_string(config_file, vsoc::GetGlobalConfigFileLink(),
-              "A file from where to load the config values. This flag is "
-              "ignored by the launcher");
 
 namespace {
 
@@ -517,13 +512,15 @@ void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
 }
 
 // Creates the (initially empty) config object and populates it with values from
-// the config file if the --config_file command line argument is present.
+// the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
 // Returns nullptr if there was an error loading from file
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
   auto ret = new CuttlefishConfig();
-  if (ret && !FLAGS_config_file.empty()) {
-    auto loaded = ret->LoadFromFile(FLAGS_config_file.c_str());
+  char* config_file_cstr = getenv(kCuttlefishConfigEnvVarName);
+  if (ret && config_file_cstr && strlen(config_file_cstr) > 0) {
+    auto loaded = ret->LoadFromFile(config_file_cstr);
     if (!loaded) {
+      delete ret;
       return nullptr;
     }
   }
