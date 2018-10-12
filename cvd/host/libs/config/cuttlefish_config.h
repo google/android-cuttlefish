@@ -192,6 +192,15 @@ class CuttlefishConfig {
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
 
+  void set_log_xml(bool log_xml);
+  bool log_xml() const;
+
+  void set_hypervisor_uri(const std::string& hypervisor_uri);
+  std::string hypervisor_uri() const;
+
+  void set_qemu_binary(const std::string& qemu_binary);
+  std::string qemu_binary() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
