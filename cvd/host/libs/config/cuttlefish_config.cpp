@@ -119,6 +119,10 @@ const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
 const char* kSetupWizardMode = "setupwizard_mode";
+
+const char* kLogXml = "log_xml";
+const char* kHypervisorUri = "hypervisor_uri";
+const char* kQemuBinary = "qemu_binary";
 }  // namespace
 
 namespace vsoc {
@@ -486,6 +490,30 @@ std::string CuttlefishConfig::setupwizard_mode() const {
 
 void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
   (*dictionary_)[kSetupWizardMode] = mode;
+}
+
+bool CuttlefishConfig::log_xml() const {
+  return (*dictionary_)[kLogXml].asBool();
+}
+
+void CuttlefishConfig::set_log_xml(bool log_xml) {
+  (*dictionary_)[kLogXml] = log_xml;
+}
+
+std::string CuttlefishConfig::hypervisor_uri() const {
+  return (*dictionary_)[kHypervisorUri].asString();
+}
+
+void CuttlefishConfig::set_hypervisor_uri(const std::string& hypervisor_uri) {
+  (*dictionary_)[kHypervisorUri] = hypervisor_uri;
+}
+
+std::string CuttlefishConfig::qemu_binary() const {
+  return (*dictionary_)[kQemuBinary].asString();
+}
+
+void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
+  (*dictionary_)[kQemuBinary] = qemu_binary;
 }
 
 // Creates the (initially empty) config object and populates it with values from
