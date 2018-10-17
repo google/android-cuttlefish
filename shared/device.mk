@@ -93,7 +93,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/README_egl.md:$(TARGET_COPY_OUT_VENDOR)/lib/egl/README.md
 
-# SwiftShader provides a software-only implementation that is not thread-safe
+# Guest side SwiftShader
 PRODUCT_PACKAGES += \
     libEGL_swiftshader \
     libGLESv1_CM_swiftshader \
@@ -101,10 +101,17 @@ PRODUCT_PACKAGES += \
 
 # The locking_wrapper puts a lock around all of the SwiftShader entry points to
 # serialize all access to the library, reducing the chances for races.
+# Applies only to guest-side SwiftShader
 PRODUCT_PACKAGES += \
     libEGL_locking_wrapper \
     libGLESv1_CM_locking_wrapper \
     libGLESv2_locking_wrapper
+
+# GLES encoder, reused from goldfish
+PRODUCT_PACKAGES += \
+    libEGL_emulation \
+    libGLESv1_CM_emulation \
+    libGLESv2_emulation \
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
