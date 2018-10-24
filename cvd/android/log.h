@@ -35,6 +35,11 @@
  */
 
 /**
+ * @addtogroup Logging
+ * @{
+ */
+
+/**
  * \file
  *
  * Support routines to send messages to the Android log buffer,
@@ -110,15 +115,7 @@ int __android_log_write(int prio, const char* tag, const char* text);
  */
 int __android_log_print(int prio, const char* tag, const char* fmt, ...)
 #if defined(__GNUC__)
-#ifdef __USE_MINGW_ANSI_STDIO
-#if __USE_MINGW_ANSI_STDIO
-    __attribute__((__format__(gnu_printf, 3, 4)))
-#else
     __attribute__((__format__(printf, 3, 4)))
-#endif
-#else
-    __attribute__((__format__(printf, 3, 4)))
-#endif
 #endif
     ;
 
@@ -128,15 +125,7 @@ int __android_log_print(int prio, const char* tag, const char* fmt, ...)
  */
 int __android_log_vprint(int prio, const char* tag, const char* fmt, va_list ap)
 #if defined(__GNUC__)
-#ifdef __USE_MINGW_ANSI_STDIO
-#if __USE_MINGW_ANSI_STDIO
-    __attribute__((__format__(gnu_printf, 3, 0)))
-#else
     __attribute__((__format__(printf, 3, 0)))
-#endif
-#else
-    __attribute__((__format__(printf, 3, 0)))
-#endif
 #endif
     ;
 
@@ -159,15 +148,7 @@ void __android_log_assert(const char* cond, const char* tag, const char* fmt,
                           ...)
 #if defined(__GNUC__)
     __attribute__((__noreturn__))
-#ifdef __USE_MINGW_ANSI_STDIO
-#if __USE_MINGW_ANSI_STDIO
-    __attribute__((__format__(gnu_printf, 3, 4)))
-#else
     __attribute__((__format__(printf, 3, 4)))
-#endif
-#else
-    __attribute__((__format__(printf, 3, 4)))
-#endif
 #endif
     ;
 
@@ -204,5 +185,7 @@ int __android_log_buf_print(int bufID, int prio, const char* tag,
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif /* _ANDROID_LOG_H */
