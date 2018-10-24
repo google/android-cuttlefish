@@ -32,7 +32,7 @@ class CuttlefishConfig {
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
-  bool SaveToFile(const std::string& file) const ;
+  bool SaveToFile(const std::string& file) const;
 
   // Returns the path to a file with the given name in the instance directory..
   std::string PerInstancePath(const char* file_name) const;
@@ -43,10 +43,6 @@ class CuttlefishConfig {
     // This seems to be the way usb is being disbled in the launcher
     set_usb_v1_socket_name("");
   }
-
-  // Reads the kernel command line from a file and appends extra arguments.
-  bool ReadKernelArgs(const std::string& cmdline_file,
-                      const std::string& extra_args);
 
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
@@ -77,6 +73,9 @@ class CuttlefishConfig {
 
   std::string kernel_args() const;
   void set_kernel_args(const std::string& kernel_args);
+
+  std::string gdb_flag() const;
+  void set_gdb_flag(const std::string& gdb);
 
   std::string ramdisk_image_path() const;
   void set_ramdisk_image_path(const std::string& ramdisk_image_path);
@@ -136,6 +135,12 @@ class CuttlefishConfig {
   std::string mobile_tap_name() const;
   void set_mobile_tap_name(const std::string& mobile_tap_name);
 
+  std::string wifi_bridge_name() const;
+  void set_wifi_bridge_name(const std::string& wifi_bridge_name);
+
+  std::string wifi_tap_name() const;
+  void set_wifi_tap_name(const std::string& wifi_tap_name);
+
   std::string wifi_guest_mac_addr() const;
   void set_wifi_guest_mac_addr(const std::string& wifi_guest_mac_addr);
 
@@ -153,6 +158,12 @@ class CuttlefishConfig {
 
   bool disable_app_armor_security() const;
   void set_disable_app_armor_security(bool disable_app_armor_security);
+
+  void set_cuttlefish_env_path(const std::string& path);
+  std::string cuttlefish_env_path() const;
+
+  void set_adb_mode(const std::string& mode);
+  std::string adb_mode() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
@@ -179,4 +190,10 @@ int GetPerInstanceDefault(int base);
 
 std::string GetDefaultPerInstanceDir();
 
+std::string DefaultHostArtifactsPath(const std::string& file);
+std::string DefaultGuestImagePath(const std::string& file);
+
+// Whether the installed host packages support calling qemu directly instead of
+// through libvirt
+bool HostSupportsQemuCli();
 }  // namespace vsoc
