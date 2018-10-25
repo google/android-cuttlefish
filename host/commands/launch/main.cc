@@ -303,9 +303,9 @@ void ValidateAdbModeFlag() {
   }
 }
 
-int CreateIvServerUnixSocket(const std::string& path) {
+cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
   return cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM,
-                                          0666)->UNMANAGED_Dup();
+                                          0666);
 }
 
 bool AdbConnectorEnabled() {
@@ -324,17 +324,9 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config) {
                << usb_v1_server->StrError();
     std::exit(cvd::LauncherExitCodes::kUsbV1SocketError);
   }
-  int server_fd = usb_v1_server->UNMANAGED_Dup();
-  if (server_fd < 0) {
-    LOG(ERROR) << "Unable to dup USB v1 server socket file descriptor: "
-               << strerror(errno);
-    std::exit(cvd::LauncherExitCodes::kUsbV1SocketError);
-  }
-
-  cvd::subprocess({FLAGS_virtual_usb_manager_binary,
-                   "-usb_v1_fd=" + std::to_string(server_fd)});
-
-  close(server_fd);
+  cvd::Command usb_server(FLAGS_virtual_usb_manager_binary);
+  usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
+  usb_server.Start();
 }
 
 void LaunchKernelLogMonitor(const vsoc::CuttlefishConfig& config,
@@ -342,18 +334,12 @@ void LaunchKernelLogMonitor(const vsoc::CuttlefishConfig& config,
   auto log_name = config.kernel_log_socket_name();
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
-  int server_fd = server->UNMANAGED_Dup();
-  int subscriber_fd = -1;
+  cvd::Command kernel_log_monitor(FLAGS_kernel_log_monitor_binary);
+  kernel_log_monitor.AddParameter("-log_server_fd=", server);
   if (boot_events_pipe->IsOpen()) {
-    subscriber_fd = boot_events_pipe->UNMANAGED_Dup();
+    kernel_log_monitor.AddParameter("-subscriber_fd=", boot_events_pipe);
   }
-  cvd::subprocess({FLAGS_kernel_log_monitor_binary,
-                   "-log_server_fd=" + std::to_string(server_fd),
-                   "-subscriber_fd=" + std::to_string(subscriber_fd)});
-  close(server_fd);
-  if (subscriber_fd >= 0) {
-    close(subscriber_fd);
-  }
+  kernel_log_monitor.Start();
 }
 
 void LaunchIvServer(const vsoc::CuttlefishConfig& config) {
@@ -371,30 +357,31 @@ void LaunchIvServer(const vsoc::CuttlefishConfig& config) {
       config.mempath(),
       {{vsoc::layout::screen::ScreenLayout::region_name, screen_buffers_size}});
 
-  auto qemu_channel =
-      CreateIvServerUnixSocket(config.ivshmem_qemu_socket_path());
-  auto client_channel =
-      CreateIvServerUnixSocket(config.ivshmem_client_socket_path());
-  auto qemu_socket_arg = "-qemu_socket_fd=" + std::to_string(qemu_channel);
-  auto client_socket_arg =
-      "-client_socket_fd=" + std::to_string(client_channel);
-  cvd::subprocess({FLAGS_ivserver_binary, qemu_socket_arg, client_socket_arg});
-  close(qemu_channel);
-  close(client_channel);
+
+  cvd::Command ivserver(FLAGS_ivserver_binary);
+  ivserver.AddParameter(
+      "-qemu_socket_fd=",
+      CreateIvServerUnixSocket(config.ivshmem_qemu_socket_path()));
+  ivserver.AddParameter(
+      "-client_socket_fd=",
+      CreateIvServerUnixSocket(config.ivshmem_client_socket_path()));
+  ivserver.Start();
 }
 
 void LaunchAdbConnectorIfEnabled() {
   if (AdbConnectorEnabled()) {
-    cvd::subprocess({FLAGS_adb_connector_binary,
-                     GetAdbConnectorPortArg()});
+    cvd::Command adb_connector(FLAGS_adb_connector_binary);
+    adb_connector.AddParameter(GetAdbConnectorPortArg());
+    adb_connector.Start();
   }
 }
 
 void LaunchSocketForwardProxyIfEnabled() {
   if (AdbTunnelEnabled()) {
-    cvd::subprocess({FLAGS_socket_forward_proxy_binary,
-                     GetGuestPortArg(),
-                     GetHostPortArg()});
+    cvd::Command adb_tunnel(FLAGS_socket_forward_proxy_binary);
+    adb_tunnel.AddParameter(GetGuestPortArg());
+    adb_tunnel.AddParameter(GetHostPortArg());
+    adb_tunnel.Start();
   }
 }
 
@@ -402,7 +389,9 @@ void LaunchVNCServerIfEnabled() {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
-    cvd::subprocess({FLAGS_vnc_server_binary, port_options});
+    cvd::Command vnc_server(FLAGS_vnc_server_binary);
+    vnc_server.AddParameter(port_options);
+    vnc_server.Start();
   }
 }
 
