@@ -137,7 +137,8 @@ class SharedFD {
   static SharedFD Accept(const FileInstance& listener);
   static SharedFD Dup(int unmanaged_fd);
   static SharedFD GetControlSocket(const char* name);
-  // Returns false on failure, true on success.
+  // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
+  // Fcntl or Dup functions.
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const char* pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
@@ -506,6 +507,9 @@ class FileInstance {
 
  private:
   FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
+    // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
+    // flag
+    TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
     identity_.PrintF("fd=%d @%p", fd, this);
   }
 

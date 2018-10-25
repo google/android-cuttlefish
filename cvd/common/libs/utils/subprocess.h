@@ -17,20 +17,106 @@
 
 #include <sys/types.h>
 
+#include <map>
+#include <string>
+#include <sstream>
 #include <vector>
 
+#include <common/libs/fs/shared_fd.h>
+
 namespace cvd {
+// Keeps track of a running (sub)process. Allows to wait for its completion.
+// It's an error to wait twice for the same subprocess.
+class Subprocess {
+ public:
+  Subprocess(pid_t pid) : pid_(pid), started_(pid > 0) {}
+  Subprocess(Subprocess&&) = default;
+  ~Subprocess() = default;
+  // Waits for the subprocess to complete. Returns zero if completed
+  // successfully, non-zero otherwise.
+  int Wait();
+  // Same as waitpid(2)
+  pid_t Wait(int* wstatus, int options);
+  // Whether the command started successfully. It only says whether the call to
+  // fork() succeeded or not, it says nothing about exec or successful
+  // completion of the command, that's what Wait is for.
+  bool Started() const {return started_;}
 
-// Starts a new child process with the given parameters. Returns the pid of the
-// started process or -1 if failed. The function with no environment arguments
-// launches the subprocess with the same environment as the parent, to have an
-// empty environment just pass an empty vector as second argument.
-pid_t subprocess(const std::vector<std::string>& command,
-                 const std::vector<std::string>& env);
-pid_t subprocess(const std::vector<std::string>& command);
+ private:
+  // Copy is disabled to avoid waiting twice for the same pid (the first wait
+  // frees the pid, which allows the kernel to reuse it so we may end up waiting
+  // for the wrong process)
+  Subprocess(const Subprocess&) = delete;
+  Subprocess& operator=(const Subprocess&) = delete;
+  pid_t pid_ = -1;
+  bool started_= false;
+};
 
-// Same as subprocess, but it waits for the child process before returning.
-// Returns zero if the process completed successfully, non zero otherwise.
+// An executable command. Multiple subprocesses can be started from the same
+// command object. This class owns any file descriptors that the subprocess
+// should inherit.
+class Command {
+ private:
+  template<typename T>
+  // For every type other than SharedFD (for which there is a specialisation)
+  bool BuildParameter(std::stringstream* stream, T t) {
+    *stream << t;
+    return true;
+  }
+  // Special treatment for SharedFD
+  bool BuildParameter(std::stringstream* stream, SharedFD shared_fd);
+  template<typename T, typename...Args>
+  bool BuildParameter(std::stringstream* stream, T t, Args...args) {
+    return BuildParameter(stream, t) &&
+           BuildParameter(stream, args...);
+  }
+ public:
+  Command(const std::string& executable) {
+    command_.push_back(executable);
+  }
+  Command(Command&&) = default;
+  // The default copy constructor is unsafe because it would mean multiple
+  // closing of the inherited file descriptors. If needed it can be implemented
+  // using dup(2)
+  Command(const Command&) = delete;
+  Command& operator=(const Command&) = delete;
+  ~Command();
+
+  // Specify the environment for the subprocesses to be started. By default
+  // subprocesses inherit the parent's environment.
+  void SetEnvironment(const std::vector<std::string>& env) {
+    use_parent_env_ = false;
+    env_ = env;
+  }
+  // Adds a single parameter to the command. All arguments are concatenated into
+  // a single string to form a parameter. If one of those arguments is a
+  // SharedFD a duplicate of it will be used and won't be closed until the
+  // object is destroyed. To add multiple parameters to the command the function
+  // must be called multiple times, one per parameter.
+  template<typename... Args>
+  bool AddParameter(Args... args) {
+    std::stringstream ss;
+    if (BuildParameter(&ss, args...)) {
+      command_.push_back(ss.str());
+      return true;
+    }
+    return false;
+  }
+  // Starts execution of the command. This method can be called multiple times,
+  // effectively staring multiple (possibly concurrent) instances.
+  Subprocess Start() const;
+
+ private:
+  std::vector<std::string> command_;
+  std::map<cvd::SharedFD, int> inherited_fds_{};
+  bool use_parent_env_ = true;
+  std::vector<std::string> env_{};
+};
+
+// Convenience wrapper around Command and Subprocess class, allows to easily
+// execute a command and wait for it to complete. The version without the env
+// parameter starts the command with the same environment as the parent. Returns
+// zero if the command completed successfully, non zero otherwise.
 int execute(const std::vector<std::string>& command,
             const std::vector<std::string>& env);
 int execute(const std::vector<std::string>& command);
