@@ -7,10 +7,12 @@ on early-init
     mkdir /dev/gce 0750
     chown system system /dev/gce
 
+    mount none /vendor/lib/gl_impl/locking_wrapper /vendor/lib/egl bind rec
     mount debugfs debugfs /sys/kernel/debug
     chmod 0755 /sys/kernel/debug
     setprop service.adb.tcp.port 5555
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
+    setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
 on init
     chown system root /dev/input_events
@@ -26,13 +28,21 @@ on init
     chmod 0660 /dev/screen
     restorecon /dev/screen
 
+    # ZRAM setup
+    write /sys/block/zram0/comp_algorithm lz4
+
 
 on fs
     mount_all /vendor/etc/fstab.${ro.hardware}
     restorecon_recursive /vendor
 
-    # works around framework netiface enumeration issue
     start rename_eth0
+    # works around framework netiface enumeration issue
+    start rename_eth1
+
+    # wait until rename_eth0 is done before attempting to stack wifi
+    wait /proc/self/net/xt_qtaguid/iface_stat/buried_eth0
+    start create_wifi
 
     # TODO(ender): Find better way to talk to serial port.
     chmod 622 /dev/kmsg
@@ -71,8 +81,28 @@ on boot
     start socket_forward_proxy
 
 
-service rename_eth0 /vendor/bin/rename_netiface eth0 rmnet0
+service rename_eth0 /vendor/bin/rename_netiface eth0 buried_eth0
     oneshot
+
+
+service rename_eth1 /vendor/bin/rename_netiface eth1 rmnet0
+    oneshot
+
+
+service create_wifi /vendor/bin/ip_link_add virt_wifi buried_eth0 wlan0
+    oneshot
+
+
+on property:sys.boot_completed=1
+    trigger sys-boot-completed-set
+
+
+# We want one opportunity per boot to enable zram, so we
+# use a trigger we fire from the above stanza. If
+# persist.sys.zram_enabled becomes true after boot,
+# we don't want to run swapon_all at that time.
+on sys-boot-completed-set && property:persist.sys.zram_enabled=1
+    swapon_all /vendor/etc/fstab.${ro.hardware}
 
 
 service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
