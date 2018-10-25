@@ -27,6 +27,7 @@ namespace vsoc {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
+constexpr char kVsocUserPrefix[] = "vsoc-";
 
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
@@ -186,6 +187,11 @@ class CuttlefishConfig {
 
   void set_adb_mode(const std::string& mode);
   std::string adb_mode() const;
+
+  void set_adb_ip_and_port(const std::string& ip_port);
+  std::string adb_ip_and_port() const;
+
+  std::string adb_device_name() const;
 
   void set_device_title(const std::string& title);
   std::string device_title() const;
