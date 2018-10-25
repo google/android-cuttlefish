@@ -509,6 +509,8 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
   config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   config->set_gdb_flag(FLAGS_qemu_gdb);
   config->set_adb_mode(FLAGS_adb_mode);
+  config->set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
+
   config->set_device_title(FLAGS_device_title);
   if (FLAGS_kernel_path.size()) {
     config->set_kernel_image_path(FLAGS_kernel_path);
