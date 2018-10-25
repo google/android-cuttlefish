@@ -515,10 +515,11 @@ void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
 // the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
 // Returns nullptr if there was an error loading from file
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
+  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
+                                             vsoc::GetGlobalConfigFileLink());
   auto ret = new CuttlefishConfig();
-  char* config_file_cstr = getenv(kCuttlefishConfigEnvVarName);
-  if (ret && config_file_cstr && strlen(config_file_cstr) > 0) {
-    auto loaded = ret->LoadFromFile(config_file_cstr);
+  if (ret) {
+    auto loaded = ret->LoadFromFile(config_file_path.c_str());
     if (!loaded) {
       delete ret;
       return nullptr;
