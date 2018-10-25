@@ -36,7 +36,6 @@ namespace {
 
 int InstanceFromEnvironment() {
   static constexpr char kInstanceEnvironmentVariable[] = "CUTTLEFISH_INSTANCE";
-  static constexpr char kVsocUserPrefix[] = "vsoc-";
   static constexpr int kDefaultInstance = 1;
 
   // CUTTLEFISH_INSTANCE environment variable
@@ -44,12 +43,15 @@ int InstanceFromEnvironment() {
   if (!instance_str) {
     // Try to get it from the user instead
     instance_str = std::getenv("USER");
-    if (!instance_str || std::strncmp(instance_str, kVsocUserPrefix,
-                                      sizeof(kVsocUserPrefix) - 1)) {
+
+    if (!instance_str || std::strncmp(instance_str, vsoc::kVsocUserPrefix,
+                                      sizeof(vsoc::kVsocUserPrefix) - 1)) {
       // No user or we don't recognize this user
+      LOG(WARNING) << "No user or non-vsoc user, returning default config";
       return kDefaultInstance;
     }
-    instance_str += sizeof(kVsocUserPrefix) - 1;
+    instance_str += sizeof(vsoc::kVsocUserPrefix) - 1;
+
     // Set the environment variable so that child processes see it
     setenv(kInstanceEnvironmentVariable, instance_str, 0);
   }
@@ -113,6 +115,7 @@ const char* kDisableAppArmorSecurity = "disable_app_armor_security";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
+const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
 
 const char* kLogXml = "log_xml";
@@ -471,6 +474,24 @@ void CuttlefishConfig::set_adb_mode(const std::string& mode) {
   (*dictionary_)[kAdbMode] = mode;
 }
 
+std::string CuttlefishConfig::adb_ip_and_port() const {
+  return (*dictionary_)[kAdbIPAndPort].asString();
+}
+
+void CuttlefishConfig::set_adb_ip_and_port(const std::string& ip_port) {
+  (*dictionary_)[kAdbIPAndPort] = ip_port;
+}
+
+std::string CuttlefishConfig::adb_device_name() const {
+  if (adb_mode().find("tunnel") != std::string::npos) {
+    return adb_ip_and_port();
+  } else if (adb_mode().find("usb") != std::string::npos) {
+    return serial_number();
+  }
+  LOG(ERROR) << "no adb_mode found, returning bad device name";
+  return "NO_ADB_MODE_SET_NO_VALID_DEVICE_NAME";
+}
+
 std::string CuttlefishConfig::device_title() const {
   return (*dictionary_)[kDeviceTitle].asString();
 }
@@ -515,11 +536,10 @@ void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
 // the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
 // Returns nullptr if there was an error loading from file
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
-  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
-                                             vsoc::GetGlobalConfigFileLink());
   auto ret = new CuttlefishConfig();
-  if (ret) {
-    auto loaded = ret->LoadFromFile(config_file_path.c_str());
+  char* config_file_cstr = getenv(kCuttlefishConfigEnvVarName);
+  if (ret && config_file_cstr && strlen(config_file_cstr) > 0) {
+    auto loaded = ret->LoadFromFile(config_file_cstr);
     if (!loaded) {
       delete ret;
       return nullptr;
