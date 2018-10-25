@@ -26,14 +26,13 @@ namespace vm_manager {
 class QemuManager : public VmManager {
  public:
   static const std::string name();
-  QemuManager(vsoc::CuttlefishConfig* config);
+  static bool EnsureInstanceDirExists(const std::string& instance_dir);
+
+  QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
   bool Start() override;
   bool Stop() override;
-
-  bool EnsureInstanceDirExists() const override;
-  bool CleanPriorFiles() const override;
 
   bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const override;

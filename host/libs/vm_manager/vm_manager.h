@@ -32,18 +32,17 @@ class VmManager {
   // if the requested vm manager is not supported by the current version of the
   // host packages
   static VmManager* Get(const std::string& vm_manager_name,
-                        vsoc::CuttlefishConfig* config);
+                        const vsoc::CuttlefishConfig* config);
   static bool IsValidName(const std::string& name);
   static bool IsVmManagerSupported(const std::string& name);
   static std::vector<std::string> GetValidNames();
+  static bool EnsureInstanceDirExists(const std::string& vm_manager_name,
+                                      const std::string& instance_dir_path);
 
   virtual ~VmManager() = default;
 
   virtual bool Start() = 0;
   virtual bool Stop() = 0;
-
-  virtual bool EnsureInstanceDirExists() const = 0;
-  virtual bool CleanPriorFiles() const = 0;
 
   virtual bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const = 0;
@@ -51,17 +50,20 @@ class VmManager {
  protected:
   static bool UserInGroup(const std::string& group,
                           std::vector<std::string>* config_commands);
-  vsoc::CuttlefishConfig* config_;
-  VmManager(vsoc::CuttlefishConfig* config);
+  const vsoc::CuttlefishConfig* config_;
+  VmManager(const vsoc::CuttlefishConfig* config);
 
 private:
-  // Holds a map of manager names to a pair of functions. The first function
-  // implements a singleton for the specified manager and the second one
-  // specifies whether the host packages support it.
- using Builder = std::function<VmManager*(vsoc::CuttlefishConfig*)>;
- using SupportChecker = std::function<bool()>;
- using VmManagerHelper = std::pair<Builder, SupportChecker>;
- static std::map<std::string, VmManagerHelper> vm_manager_helpers_;
+  struct VmManagerHelper {
+    // The singleton implementation
+    std::function<VmManager*(const vsoc::CuttlefishConfig*)> builder;
+    // Whether the host packages support this vm manager
+    std::function<bool()> support_checker;
+    // Creates the instance directory if it doesn't exist
+    std::function<bool(const std::string&)> instance_dir_creator;
+  };
+  // Asociates a vm manager helper to every valid vm manager name
+  static std::map<std::string, VmManagerHelper> vm_manager_helpers_;
 };
 
 }  // namespace vm_manager
