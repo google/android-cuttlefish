@@ -274,6 +274,10 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   }
 }
 
+SharedFD SharedFD::Creat(const char* path, mode_t mode) {
+  return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
+}
+
 SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   int fd = TEMP_FAILURE_RETRY(socket(domain, socket_type, protocol));
   if (fd == -1) {

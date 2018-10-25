@@ -39,6 +39,10 @@ int main(int argc, char* argv[]) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   auto config = vsoc::CuttlefishConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "Unable to get cuttlefish config";
+    return 1;
+  }
 
   ivserver::IVServer server(
       ivserver::IVServerOptions(config->mempath(),
