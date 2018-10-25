@@ -257,7 +257,7 @@ void ConfigureHWRNG(xmlNode* devices, const std::string& entsrc) {
   xmlNewProp(bend, xc("model"), xc("random"));
 }
 
-static std::string GetLibvirtCommand(vsoc::CuttlefishConfig* config) {
+static std::string GetLibvirtCommand(const vsoc::CuttlefishConfig* config) {
   std::string cmd = "virsh";
   if (!config->hypervisor_uri().empty()) {
     cmd += " -c " + config->hypervisor_uri();
@@ -265,7 +265,7 @@ static std::string GetLibvirtCommand(vsoc::CuttlefishConfig* config) {
   return cmd;
 }
 
-std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
+std::string BuildXmlConfig(const vsoc::CuttlefishConfig* config) {
   std::string instance_name = config->instance_name();
 
   std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> xml{xmlNewDoc(xc("1.0")),
@@ -341,7 +341,7 @@ std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
 
 const std::string LibvirtManager::name() { return "libvirt"; }
 
-LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
+LibvirtManager::LibvirtManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
 bool LibvirtManager::Start() {
@@ -377,8 +377,7 @@ bool LibvirtManager::Stop() {
   return std::system(stop_command.c_str()) == 0;
 }
 
-bool LibvirtManager::EnsureInstanceDirExists() const {
-  auto instance_dir = config_->instance_dir();
+bool LibvirtManager::EnsureInstanceDirExists(const std::string& instance_dir) {
   if (!cvd::DirectoryExists(instance_dir)) {
     LOG(INFO) << "Setting up " << instance_dir;
     cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", instance_dir});
@@ -387,28 +386,6 @@ bool LibvirtManager::EnsureInstanceDirExists() const {
     std::string user_group = getenv("USER");
     user_group += ":libvirt-qemu";
     cvd::execute({"/usr/bin/sudo", "/bin/chown", user_group, instance_dir});
-  }
-  return true;
-}
-
-bool LibvirtManager::CleanPriorFiles() const {
-  std::string run_files = config_->PerInstancePath("*") + " " +
-                          config_->mempath() + " " +
-                          config_->cuttlefish_env_path() + " " +
-                          vsoc::GetGlobalConfigFileLink();
-  LOG(INFO) << "Assuming run files of " << run_files;
-  std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
-  int rval = std::system(fuser_cmd.c_str());
-  // fuser returns 0 if any of the files are open
-  if (WEXITSTATUS(rval) == 0) {
-    LOG(ERROR) << "Clean aborted: files are in use";
-    return false;
-  }
-  std::string clean_command = "rm -rf " + run_files;
-  rval = std::system(clean_command.c_str());
-  if (WEXITSTATUS(rval) != 0) {
-    LOG(ERROR) << "Remove of files failed";
-    return false;
   }
   return true;
 }

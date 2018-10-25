@@ -20,7 +20,7 @@
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-void InitializeScreenRegion(vsoc::CuttlefishConfig* config) {
+void InitializeScreenRegion(const vsoc::CuttlefishConfig& config) {
   auto region =
       vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
   if (!region) {
@@ -28,8 +28,8 @@ void InitializeScreenRegion(vsoc::CuttlefishConfig* config) {
     return;
   }
   auto dest = region->data();
-  dest->x_res = config->x_res();
-  dest->y_res = config->y_res();
-  dest->dpi = config->dpi();
-  dest->refresh_rate_hz = config->refresh_rate_hz();
+  dest->x_res = config.x_res();
+  dest->y_res = config.y_res();
+  dest->dpi = config.dpi();
+  dest->refresh_rate_hz = config.refresh_rate_hz();
 }
