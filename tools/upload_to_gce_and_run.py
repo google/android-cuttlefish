@@ -34,11 +34,21 @@ def upload_artifacts(args):
 
 
 def launch_cvd(args):
-  subprocess.check_call(
-      'gcloud compute ssh %s@%s -- bin/launch_cvd' % (
-          args.user,
-          args.instance),
-      shell=True)
+  if args.data_image:
+    subprocess.check_call(
+        'gcloud compute ssh %s@%s -- bin/launch_cvd --data-image %s '
+        '--data-policy create_if_missing --blank-data-image-mb %d' % (
+            args.user,
+            args.instance,
+            args.data_image,
+            args.blank_data_image_mb),
+        shell=True)
+  else:
+    subprocess.check_call(
+        'gcloud compute ssh %s@%s -- bin/launch_cvd' % (
+            args.user,
+            args.instance),
+        shell=True)
 
 
 def stop_cvd(args):
@@ -69,6 +79,12 @@ def main():
   parser.add_argument(
       '-user', type=str, default='vsoc-01',
       help='user to update on the instance')
+  parser.add_argument(
+      '-data-image', type=str, default=None,
+      help='userdata image file name, this file will be used instead of default one')
+  parser.add_argument(
+      '-blank-data-image-mb', type=int, default=4098,
+      help='custom userdata image size in megabytes')
   args = parser.parse_args()
   stop_cvd(args)
   upload_artifacts(args)
