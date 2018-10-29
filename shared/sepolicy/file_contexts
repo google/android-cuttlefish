@@ -7,6 +7,7 @@
 /dev/e2e_secondary                 u:object_r:region_e2e_test_device:s0
 /dev/screen                        u:object_r:region_screen_device:s0
 /dev/vport[0-9]p[0-9]*             u:object_r:virtual_serial_device:s0
+/dev/block/zram0                   u:object_r:swap_block_device:s0
 
 #############################
 # Root files
@@ -30,3 +31,4 @@
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim             u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish      u:object_r:hal_dumpstate_impl_exec:s0
 /vendor/bin/hw/android\.hardware\.health@2\.0-service.cuttlefish          u:object_r:hal_health_default_exec:s0
+/vendor/bin/ip_link_add    u:object_r:ip_link_add_exec:s0

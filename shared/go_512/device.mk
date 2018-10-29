@@ -15,3 +15,8 @@
 #
 
 $(call inherit-product, build/target/product/go_defaults_512.mk)
+
+# By default, enable zram; experiment can toggle the flag,
+# which takes effect on boot
+PRODUCT_PROPERTY_OVERRIDES += \
+    persist.sys.zram_enabled=1

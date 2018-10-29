@@ -1,2 +1,3 @@
 /dev/block/vdb /data ext4 nodev,noatime,nosuid,errors=panic wait
 /dev/block/vdc /cache ext4 nodev,noatime,nosuid,errors=panic wait
+/dev/block/zram0 none swap defaults zramsize=75%

@@ -38,11 +38,6 @@ TARGET_USES_64_BIT_BINDER := true
 # Hardware composer configuration
 TARGET_USES_HWC2 := true
 
-# Bluetooth configuration
-BOARD_BLUETOOTH_USE_TEST_AS_VENDOR := true
-BOARD_BLUETOOTH_IMPL_DIR := $(TOP_DIR)system/bt
-BOARD_USE_BLUETOOTH_STUBS := false
-
 # The compiler will occasionally generate movaps, etc.
 BOARD_MALLOC_ALIGNMENT := 16
 
@@ -55,15 +50,18 @@ BOARD_USERDATAIMAGE_PARTITION_SIZE := 4294967296
 BOARD_CACHEIMAGE_PARTITION_SIZE := 67108864
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
-BOARD_KERNEL_CMDLINE := loop.max_part=7
-BOARD_KERNEL_CMDLINE += console=ttyS0 androidboot.console=ttyS1
-BOARD_KERNEL_CMDLINE += androidboot.hardware=vsoc
-BOARD_KERNEL_CMDLINE += enforcing=0 audit=1
-BOARD_KERNEL_CMDLINE += androidboot.selinux=permissive
-BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
+BOARD_DRM_HWCOMPOSER_BUFFER_IMPORTER := minigbm
+BOARD_USES_DRM_HWCOMPOSER := true
+BOARD_USES_MINIGBM := true
+BOARD_GPU_DRIVERS := virgl
+# This prevents mesa3d from unconditionally pulling in some modules
+BOARD_USE_CUSTOMIZED_MESA := true
 
-# TODO(b/65266349) Figure out why this is needed
-BOARD_KERNEL_CMDLINE += security=selinux
+# Enable goldfish's encoder.
+# TODO(b/113617962) Remove this if we decide to use
+# device/generic/opengl-transport to generate the encoder
+BUILD_EMULATOR_OPENGL_DRIVER := true
+BUILD_EMULATOR_OPENGL := true
 
 # Minimum size of the final bootable disk image: 10G
 # GCE will pad disk images out to 10G. Our disk images should be at least as
@@ -78,6 +76,8 @@ BOARD_FLASH_BLOCK_SIZE := 512
 WITH_DEXPREOPT := true
 
 USE_OPENGL_RENDERER := true
+
+BOARD_SWIFTSHADER_RELATIVE_PATH := gl_impl/swiftshader
 
 # Wifi.
 BOARD_WLAN_DEVICE           := wlan0
