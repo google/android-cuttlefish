@@ -21,6 +21,7 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 
 cvd_host_executables := \
+    adb \
     adbshell \
     host_region_e2e_test \
     launch_cvd \
@@ -31,6 +32,8 @@ cvd_host_executables := \
     record_audio \
     cf_qemu.sh \
     ivserver \
+    virtual_usb_manager \
+    kernel_log_monitor \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -40,6 +43,7 @@ cvd_host_tests := \
     lock_test \
     monotonic_time_test \
     vsoc_graphics_test \
+    cuttlefish_net_tests \
 
 cvd_host_shared_libraries := \
     libbase \
@@ -49,10 +53,16 @@ cvd_host_shared_libraries := \
     libcuttlefish_strings \
     libcuttlefish_utils \
     cuttlefish_tcp_socket \
+    cuttlefish_net \
     liblog \
     libnl \
     libc++ \
     libicuuc-host \
+    libvirglrenderer_cuttlefish \
+    libEGL_swiftshader \
+    libGLESv1_CM_swiftshader \
+    libGLESv2_swiftshader \
+
 
 cvd_host_configs := \
     system-root.dtb \
