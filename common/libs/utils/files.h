@@ -20,4 +20,9 @@
 namespace cvd {
 bool FileHasContent(const std::string& path);
 bool DirectoryExists(const std::string& path);
+
+// The returned value may contain .. or . if these are present in the path
+// argument.
+// path must not contain ~
+std::string AbsolutePath(const std::string& path);
 }  // namespace cvd

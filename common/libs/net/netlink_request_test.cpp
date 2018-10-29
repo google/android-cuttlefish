@@ -117,15 +117,7 @@ MATCHER_P4(RequestHeaderIs, length, type, flags, seq,
 }
 }  // namespace
 
-class NetlinkClientTest : public ::testing::Test {
-  void SetUp() {
-    google::InstallFailureSignalHandler();
-  }
- protected:
-  std::unique_ptr<NetlinkClient> nl_client_;
-};
-
-TEST_F(NetlinkClientTest, BasicStringNode) {
+TEST(NetlinkClientTest, BasicStringNode) {
   constexpr uint16_t kDummyTag = 0xfce2;
   constexpr char kLongString[] = "long string";
 
@@ -143,7 +135,7 @@ TEST_F(NetlinkClientTest, BasicStringNode) {
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
-TEST_F(NetlinkClientTest, BasicIntNode) {
+TEST(NetlinkClientTest, BasicIntNode) {
   // Basic { Dummy: Value } test.
   constexpr uint16_t kDummyTag = 0xfce2;
   constexpr int32_t kValue = 0x1badd00d;
@@ -155,11 +147,61 @@ TEST_F(NetlinkClientTest, BasicIntNode) {
   } expected;
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
-  request.AddInt32(kDummyTag, kValue);
+  request.AddInt(kDummyTag, kValue);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
-TEST_F(NetlinkClientTest, SingleList) {
+TEST(NetlinkClientTest, AllIntegerTypes) {
+  // Basic { Dummy: Value } test.
+  constexpr uint16_t kDummyTag = 0xfce2;
+  constexpr uint8_t kValue = 0x1b;
+
+  // The attribute is necessary for correct binary alignment.
+  constexpr struct __attribute__((__packed__)) {
+    uint16_t attr_length_i64 = 12;
+    uint16_t attr_type_i64 = kDummyTag;
+    int64_t attr_value_i64 = kValue;
+    uint16_t attr_length_i32 = 8;
+    uint16_t attr_type_i32 = kDummyTag + 1;
+    int32_t attr_value_i32 = kValue;
+    uint16_t attr_length_i16 = 6;
+    uint16_t attr_type_i16 = kDummyTag + 2;
+    int16_t attr_value_i16 = kValue;
+    uint8_t attr_padding_i16[2] = {0, 0};
+    uint16_t attr_length_i8 = 5;
+    uint16_t attr_type_i8 = kDummyTag + 3;
+    int8_t attr_value_i8 = kValue;
+    uint8_t attr_padding_i8[3] = {0, 0, 0};
+    uint16_t attr_length_u64 = 12;
+    uint16_t attr_type_u64 = kDummyTag + 4;
+    uint64_t attr_value_u64 = kValue;
+    uint16_t attr_length_u32 = 8;
+    uint16_t attr_type_u32 = kDummyTag + 5;
+    uint32_t attr_value_u32 = kValue;
+    uint16_t attr_length_u16 = 6;
+    uint16_t attr_type_u16 = kDummyTag + 6;
+    uint16_t attr_value_u16 = kValue;
+    uint8_t attr_padding_u16[2] = {0, 0};
+    uint16_t attr_length_u8 = 5;
+    uint16_t attr_type_u8 = kDummyTag + 7;
+    uint8_t attr_value_u8 = kValue;
+    uint8_t attr_padding_u8[3] = {0, 0, 0};
+  } expected = {};
+
+  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  request.AddInt<int64_t>(kDummyTag, kValue);
+  request.AddInt<int32_t>(kDummyTag + 1, kValue);
+  request.AddInt<int16_t>(kDummyTag + 2, kValue);
+  request.AddInt<int8_t>(kDummyTag + 3, kValue);
+  request.AddInt<uint64_t>(kDummyTag + 4, kValue);
+  request.AddInt<uint32_t>(kDummyTag + 5, kValue);
+  request.AddInt<int16_t>(kDummyTag + 6, kValue);
+  request.AddInt<int8_t>(kDummyTag + 7, kValue);
+
+  EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
+}
+
+TEST(NetlinkClientTest, SingleList) {
   // List: { Dummy: Value}
   constexpr uint16_t kDummyTag = 0xfce2;
   constexpr uint16_t kListTag = 0xcafe;
@@ -175,13 +217,13 @@ TEST_F(NetlinkClientTest, SingleList) {
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kListTag);
-  request.AddInt32(kDummyTag, kValue);
+  request.AddInt(kDummyTag, kValue);
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
-TEST_F(NetlinkClientTest, NestedList) {
+TEST(NetlinkClientTest, NestedList) {
   // List1: { List2: { Dummy: Value}}
   constexpr uint16_t kDummyTag = 0xfce2;
   constexpr uint16_t kList1Tag = 0xcafe;
@@ -201,14 +243,14 @@ TEST_F(NetlinkClientTest, NestedList) {
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
-  request.AddInt32(kDummyTag, kValue);
+  request.AddInt(kDummyTag, kValue);
   request.PopList();
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
-TEST_F(NetlinkClientTest, ListSequence) {
+TEST(NetlinkClientTest, ListSequence) {
   // List1: { Dummy1: Value1}, List2: { Dummy2: Value2 }
   constexpr uint16_t kDummy1Tag = 0xfce2;
   constexpr uint16_t kDummy2Tag = 0xfd38;
@@ -232,16 +274,16 @@ TEST_F(NetlinkClientTest, ListSequence) {
 
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
-  request.AddInt32(kDummy1Tag, kValue1);
+  request.AddInt(kDummy1Tag, kValue1);
   request.PopList();
   request.PushList(kList2Tag);
-  request.AddInt32(kDummy2Tag, kValue2);
+  request.AddInt(kDummy2Tag, kValue2);
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
-TEST_F(NetlinkClientTest, ComplexList) {
+TEST(NetlinkClientTest, ComplexList) {
   // List1: { List2: { Dummy1: Value1 }, Dummy2: Value2 }
   constexpr uint16_t kDummy1Tag = 0xfce2;
   constexpr uint16_t kDummy2Tag = 0xfd38;
@@ -266,22 +308,22 @@ TEST_F(NetlinkClientTest, ComplexList) {
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
-  request.AddInt32(kDummy1Tag, kValue1);
+  request.AddInt(kDummy1Tag, kValue1);
   request.PopList();
-  request.AddInt32(kDummy2Tag, kValue2);
+  request.AddInt(kDummy2Tag, kValue2);
   request.PopList();
 
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
 
-TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
+TEST(NetlinkClientTest, SimpleNetlinkCreateHeader) {
   cvd::NetlinkRequest request(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
   constexpr char kValue[] = "random string";
   request.AddString(0, kValue);  // Have something to work with.
 
   constexpr size_t kMsgLength =
       sizeof(nlmsghdr) + sizeof(nlattr) + RTA_ALIGN(sizeof(kValue));
-  int base_seq = request.SeqNo();
+  uint32_t base_seq = request.SeqNo();
 
   EXPECT_THAT(request, RequestHeaderIs(
       kMsgLength,
@@ -298,14 +340,14 @@ TEST_F(NetlinkClientTest, SimpleNetlinkCreateHeader) {
       base_seq + 1));
 }
 
-TEST_F(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
+TEST(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
   cvd::NetlinkRequest request(RTM_SETLINK, 0);
   constexpr char kValue[] = "random string";
   request.AddString(0, kValue);  // Have something to work with.
 
   constexpr size_t kMsgLength =
       sizeof(nlmsghdr) + sizeof(nlattr) + RTA_ALIGN(sizeof(kValue));
-  int base_seq = request.SeqNo();
+  uint32_t base_seq = request.SeqNo();
 
   EXPECT_THAT(request, RequestHeaderIs(
       kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, base_seq));

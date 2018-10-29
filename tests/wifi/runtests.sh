@@ -21,7 +21,7 @@ if [ -z $ANDROID_BUILD_TOP ]; then
 fi
 
 set -e # fail early
-make -j32 -C $ANDROID_BUILD_TOP -f build/core/main.mk MODULES-IN-device-google-cuttlefish-tests-wifi
+make -j32 -C $ANDROID_BUILD_TOP -f build/core/main.mk CuttlefishWifiTests
 adb wait-for-device
 # Same as 'package' in manifest file
 adb uninstall com.android.cuttlefish.wifi.tests || true

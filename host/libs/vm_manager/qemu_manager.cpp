@@ -30,24 +30,20 @@
 #include <thread>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-DEFINE_string(qemu_binary,
-              "/usr/bin/qemu-system-x86_64",
-              "The qemu binary to use");
-
 namespace vm_manager {
 
 namespace {
 
-std::string GetMonitorPath() {
-  return vsoc::CuttlefishConfig::Get()->PerInstancePath("qemu_monitor.sock");
+std::string GetMonitorPath(vsoc::CuttlefishConfig* config) {
+  return config->PerInstancePath("qemu_monitor.sock");
 }
 
 void LogAndSetEnv(const char* key, const std::string& value) {
@@ -55,20 +51,18 @@ void LogAndSetEnv(const char* key, const std::string& value) {
   LOG(INFO) << key << "=" << value;
 }
 
-int BuildAndRunQemuCmd() {
-  auto config = vsoc::CuttlefishConfig::Get();
+pid_t BuildAndRunQemuCmd(vsoc::CuttlefishConfig* config) {
   // Set the config values in the environment
-  LogAndSetEnv("qemu_binary", FLAGS_qemu_binary);
+  LogAndSetEnv("qemu_binary", config->qemu_binary());
   LogAndSetEnv("instance_name", config->instance_name());
   LogAndSetEnv("memory_mb", std::to_string(config->memory_mb()));
   LogAndSetEnv("cpus", std::to_string(config->cpus()));
   LogAndSetEnv("uuid", config->uuid());
-  LogAndSetEnv("monitor_path",
-                      config->PerInstancePath("qemu_monitor.sock"));
+  LogAndSetEnv("monitor_path", GetMonitorPath(config));
   LogAndSetEnv("kernel_image_path", config->kernel_image_path());
   LogAndSetEnv("gdb_flag", config->gdb_flag());
   LogAndSetEnv("ramdisk_image_path", config->ramdisk_image_path());
-  LogAndSetEnv("kernel_args", config->kernel_args());
+  LogAndSetEnv("kernel_cmdline", config->kernel_cmdline_as_string());
   LogAndSetEnv("dtb_path", config->dtb_path());
   LogAndSetEnv("system_image_path", config->system_image_path());
   LogAndSetEnv("data_image_path", config->data_image_path());
@@ -85,59 +79,61 @@ int BuildAndRunQemuCmd() {
   LogAndSetEnv("ivshmem_vector_count",
                       std::to_string(config->ivshmem_vector_count()));
   LogAndSetEnv("usb_v1_socket_name", config->usb_v1_socket_name());
-  return cvd::execute({vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh")});
+  return cvd::subprocess({vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh")});
 }
 
 }  // namespace
 
-bool QemuManager::Start() const {
-  // Create a thread that will make the launcher abort if the qemu process
-  // crashes, this avoids having the launcher waiting forever for
-  // VIRTUAL_DEVICE_BOOT_COMPLETED in this cases.
-  std::thread waiting_thread([]() {
-    int status = BuildAndRunQemuCmd();
-    if (status != 0) {
-      LOG(FATAL) << "Qemu process exited prematurely";
-    } else {
-      LOG(INFO) << "Qemu process exited normally";
-    }
-  });
-  waiting_thread.detach();
-  return true;
+const std::string QemuManager::name() { return "qemu_cli"; }
+
+QemuManager::QemuManager(vsoc::CuttlefishConfig* config)
+  : VmManager(config) {}
+
+bool QemuManager::Start() {
+  if (monitor_conn_->IsOpen()) {
+    LOG(ERROR) << "Already started, should call Stop() first";
+    return false;
+  }
+  auto monitor_path = GetMonitorPath(config_);
+  auto monitor_sock = cvd::SharedFD::SocketLocalServer(
+      monitor_path.c_str(), false, SOCK_STREAM, 0666);
+
+  BuildAndRunQemuCmd(config_);
+
+  cvd::SharedFDSet fdset;
+  fdset.Set(monitor_sock);
+  struct timeval timeout {5, 0}; // Wait at most 5 seconds for qemu to connect
+  int select_result = cvd::Select(&fdset, 0, 0, &timeout);
+  if (select_result < 0) {
+    LOG(ERROR) << "Error when calling seletct: " << strerror(errno);
+    return false;
+  }
+  if (select_result == 0) {
+    LOG(ERROR) << "Timed out waiting for qemu to connect to monitor";
+    return false;
+  }
+  monitor_conn_ = cvd::SharedFD::Accept(*monitor_sock);
+  monitor_conn_->Fcntl(F_SETFD, FD_CLOEXEC);
+  return monitor_conn_->IsOpen();
 }
-bool QemuManager::Stop() const {
-  int errno_;
-  int fd = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (fd == -1) {
-    errno_ = errno;
-    LOG(ERROR) << "Error creating socket: " << strerror(errno_);
+bool QemuManager::Stop() {
+  if (!monitor_conn_->IsOpen()) {
+    LOG(ERROR) << "The connection to qemu is closed, is it still running?";
     return false;
   }
-
-  struct sockaddr_un addr;
-  memset(&addr, 0, sizeof(addr));
-  addr.sun_family = AF_UNIX;
-  std::string monitor_path = GetMonitorPath();
-  strncpy(addr.sun_path, monitor_path.c_str(), sizeof(addr.sun_path) - 1);
-
-  if (connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-    errno_ = errno;
-    LOG(ERROR) << "Error connecting to qemu monitor: " << strerror(errno_);
-    return false;
-  }
-
   char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
   ssize_t len = sizeof(msg) - 1;
   while (len > 0) {
-    int tmp = TEMP_FAILURE_RETRY(write(fd, msg, len));
+    int tmp = monitor_conn_->Write(msg, len);
     if (tmp < 0) {
-      LOG(ERROR) << "Error writing to socket";
+      LOG(ERROR) << "Error writing to socket: " << monitor_conn_->StrError();
+      return false;
     }
     len -= tmp;
   }
   // Log the reply
   char buff[1000];
-  while ((len = TEMP_FAILURE_RETRY(read(fd, buff, sizeof(buff) - 1))) > 0) {
+  while ((len = monitor_conn_->Read(buff, sizeof(buff) - 1)) > 0) {
     buff[len] = '\0';
     LOG(INFO) << "From qemu monitor: " << buff;
   }
@@ -146,7 +142,7 @@ bool QemuManager::Stop() const {
 }
 
 bool QemuManager::EnsureInstanceDirExists() const {
-  auto instance_dir = vsoc::CuttlefishConfig::Get()->instance_dir();
+  auto instance_dir = config_->instance_dir();
   if (!cvd::DirectoryExists(instance_dir.c_str())) {
     LOG(INFO) << "Setting up " << instance_dir;
     if (mkdir(instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
@@ -158,10 +154,10 @@ bool QemuManager::EnsureInstanceDirExists() const {
 
 }
 bool QemuManager::CleanPriorFiles() const {
-  auto config = vsoc::CuttlefishConfig::Get();
-  std::string run_files = config->PerInstancePath("*") + " " +
-                          config->mempath() + " " +
-                          config->cuttlefish_env_path();
+  std::string run_files = config_->PerInstancePath("*") + " " +
+                          config_->mempath() + " " +
+                          config_->cuttlefish_env_path() + " " +
+                          vsoc::GetGlobalConfigFileLink();
   LOG(INFO) << "Assuming run files of " << run_files;
   std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
   int rval = std::system(fuser_cmd.c_str());

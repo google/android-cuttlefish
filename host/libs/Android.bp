@@ -16,8 +16,5 @@
 subdirs = [
     "adb_connection_maintainer",
     "config",
-    "monitor",
-    "vadb",
-    "usbip",
     "vm_manager",
 ]

@@ -260,6 +260,7 @@ void AllocateWorkers(cvd::SharedFD socket,
   auto server = cvd::SharedFD::SocketLocalServer(host_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on port " << host_port;
   while (true) {
+    LOG(INFO) << "waiting for client connection";
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";

@@ -20,10 +20,9 @@
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-void InitializeScreenRegion() {
+void InitializeScreenRegion(vsoc::CuttlefishConfig* config) {
   auto region =
       vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
-  auto config = vsoc::CuttlefishConfig::Get();
   if (!region) {
     LOG(FATAL) << "Screen region was not found";
     return;
