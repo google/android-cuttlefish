@@ -43,13 +43,13 @@ class NetlinkRequest {
   // Returns true, if successful.
   void AddString(uint16_t type, const std::string& value);
 
-  // Add an IFLA tag followed by int32.
-  // Returns true, if successful.
-  void AddInt32(uint16_t type, int32_t value);
-
-  // Add an IFLA tag followed by int8.
-  // Returns true, if successful.
-  void AddInt8(uint16_t type, int8_t value);
+  // Add an IFLA tag followed by an integer.
+  template <typename T>
+  void AddInt(uint16_t type, T value) {
+    static_assert(std::is_integral<T>::value,
+                  "AddInt must be used on integer types.");
+    AppendTag(type, &value, sizeof(value));
+  }
 
   // Add an interface info structure.
   // Parameter |if_index| specifies particular interface index to which the

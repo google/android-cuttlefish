@@ -82,14 +82,6 @@ void NetlinkRequest::AddString(uint16_t type, const std::string& value) {
   AppendTag(type, value.c_str(), value.length() + 1);
 }
 
-void NetlinkRequest::AddInt32(uint16_t type, int32_t value) {
-  AppendTag(type, &value, sizeof(value));
-}
-
-void NetlinkRequest::AddInt8(uint16_t type, int8_t value) {
-  AppendTag(type, &value, sizeof(value));
-}
-
 void NetlinkRequest::AddIfInfo(int32_t if_index, bool operational) {
   ifinfomsg* if_info = Reserve<ifinfomsg>();
   if_info->ifi_family = AF_UNSPEC;

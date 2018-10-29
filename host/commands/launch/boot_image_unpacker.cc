@@ -85,8 +85,8 @@ std::unique_ptr<BootImageUnpacker> BootImageUnpacker::FromImage(
   return ret;
 }
 
-std::string BootImageUnpacker::kernel_command_line() const {
-  return kernel_command_line_;
+std::string BootImageUnpacker::kernel_cmdline() const {
+  return kernel_cmdline_;
 }
 
 bool BootImageUnpacker::ExtractKernelImage(const std::string& path) const {

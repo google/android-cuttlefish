@@ -24,9 +24,8 @@
 
 using vsoc::wifi::WifiExchangeView;
 
-void InitializeWifiRegion() {
+void InitializeWifiRegion(vsoc::CuttlefishConfig* config) {
   auto region = WifiExchangeView::GetInstance(vsoc::GetDomain().c_str());
-  auto config = vsoc::CuttlefishConfig::Get();
   if (!region) {
     LOG(FATAL) << "Wifi region not found";
     return;

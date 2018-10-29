@@ -36,6 +36,7 @@
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 using cvd::Message;
 using cvd::vnc::Stripe;
@@ -117,9 +118,9 @@ Message CreateMessage(Ts... vals) {
 }
 
 std::string HostName() {
-  // Localhost is good enough for local development and to connect through ssh
-  // tunneling, for something else this probably needs to change.
-  return "localhost";
+  auto config = vsoc::CuttlefishConfig::Get();
+  return !config || config->device_title().empty() ? std::string{"localhost"}
+                                                   : config->device_title();
 }
 
 std::uint16_t uint16_tAt(const void* p) {
@@ -319,7 +320,7 @@ void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
   auto init_size = fbu.size();
   fbu.insert(fbu.end(), stripe.raw_data.begin(), stripe.raw_data.end());
   for (size_t i = init_size; i < fbu.size(); i += sizeof(Pixel)) {
-    CHECK((i + sizeof(Pixel)) < fbu.size());
+    CHECK_LE(i + sizeof(Pixel), fbu.size());
     Pixel raw_pixel{};
     std::memcpy(&raw_pixel, &fbu[i], sizeof raw_pixel);
     auto red = RedVal(raw_pixel);
@@ -335,7 +336,6 @@ void VncClientConnection::AppendRawStripe(Message* frame_buffer_update,
       std::swap(p[0], p[3]);
       std::swap(p[1], p[2]);
     }
-    CHECK(i + sizeof pixel <= fbu.size());
     std::memcpy(&fbu[i], &pixel, sizeof pixel);
   }
 }

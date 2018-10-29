@@ -45,10 +45,10 @@ NetlinkRequest BuildAddrRequest(
   NetlinkRequest request(RTM_NEWADDR, 0);
   request.AddAddrInfo(interface.Index(), interface.PrefixLength());
   in_addr_t address{inet_addr(interface.Address().c_str())};
-  request.AddInt32(IFA_LOCAL, address);
-  request.AddInt32(IFA_ADDRESS, address);
-  request.AddInt32(IFA_BROADCAST,
-                    inet_addr(interface.BroadcastAddress().c_str()));
+  request.AddInt(IFA_LOCAL, address);
+  request.AddInt(IFA_ADDRESS, address);
+  request.AddInt(IFA_BROADCAST,
+                 inet_addr(interface.BroadcastAddress().c_str()));
 
   return request;
 }
