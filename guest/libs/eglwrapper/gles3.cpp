@@ -31,14 +31,12 @@ void gles3_wrapper_context_t::setContextAccessor(gles3_wrapper_context_t* (*f)(v
 	getGLES3Context = f;
 }
 
-std::mutex g_context_mutex;
-
 static void *getProc(const char *name, void *userData) {
 	return dlsym(userData, name);
 }
 
 __attribute__((constructor)) void setup() {
-	void *gles3_handle = dlopen("/system/vendor/lib/egl/libGLESv2_swiftshader.so", RTLD_NOW);
+	void *gles3_handle = dlopen("/vendor/lib/gl_impl/swiftshader/libGLESv2_swiftshader.so", RTLD_NOW);
 	g_gles3_wrapper_context.initDispatchByName(getProc, gles3_handle);
 	g_gles3_wrapper_context.setContextAccessor(gles3);
 }

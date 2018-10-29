@@ -20,7 +20,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libEGL_a_wrapper
+LOCAL_MODULE := libEGL_locking_wrapper
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
     egl.cpp \
@@ -33,9 +33,9 @@ LOCAL_SHARED_LIBRARIES := libdl
 LOCAL_VENDOR_MODULE := true
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := egl
+LOCAL_MODULE_RELATIVE_PATH := gl_impl/locking_wrapper
 else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/gl_impl/locking_wrapper
 endif
 
 # See b/67109557
@@ -47,7 +47,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libGLESv1_CM_a_wrapper
+LOCAL_MODULE := libGLESv1_CM_locking_wrapper
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
     gles1.cpp \
@@ -55,14 +55,14 @@ LOCAL_SRC_FILES := \
     gles1_wrapper_entry.cpp
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_C_INCLUDES := frameworks/native/opengl/include
-LOCAL_SHARED_LIBRARIES := libdl
+LOCAL_SHARED_LIBRARIES := libEGL_locking_wrapper libdl
 
 LOCAL_VENDOR_MODULE := true
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := egl
+LOCAL_MODULE_RELATIVE_PATH := gl_impl/locking_wrapper
 else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/gl_impl/locking_wrapper
 endif
 
 # See b/67109557
@@ -74,7 +74,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libGLESv2_a_wrapper
+LOCAL_MODULE := libGLESv2_locking_wrapper
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := \
     gles3.cpp \
@@ -82,14 +82,14 @@ LOCAL_SRC_FILES := \
     gles3_wrapper_entry.cpp
 LOCAL_CFLAGS := -Wall -Werror
 LOCAL_C_INCLUDES := frameworks/native/opengl/include
-LOCAL_SHARED_LIBRARIES := libdl
+LOCAL_SHARED_LIBRARIES := libEGL_locking_wrapper libdl
 
 LOCAL_VENDOR_MODULE := true
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -ge 21; echo $$?))
-LOCAL_MODULE_RELATIVE_PATH := egl
+LOCAL_MODULE_RELATIVE_PATH := gl_impl/locking_wrapper
 else
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/egl
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/gl_impl/locking_wrapper
 endif
 
 # See b/67109557

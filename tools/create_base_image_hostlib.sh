@@ -23,6 +23,8 @@ DEFINE_string repository_url \
   "URL to the repository with host changes" "u"
 DEFINE_string repository_branch master \
   "Branch to check out" "b"
+DEFINE_string variant master \
+  "Variant to build: generally master or stable"
 
 wait_for_instance() {
   alive=""
@@ -63,10 +65,15 @@ main() {
   package_source "${FLAGS_repository_url}" "${FLAGS_repository_branch}" \
     "cuttlefish-common_${FLAGS_version}"
   popd
+  source_files=(
+    "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common/tools/create_base_image_gce.sh"
+    ${scratch_dir}/*
+  )
+  if [[ "${FLAGS_variant}" == master ]]; then
+    source_files+=("${ANDROID_BUILD_TOP}/device/google/cuttlefish_common/tools/build-qemu-packages.sh")
+  fi
   if [[ -n "${INTERNAL_extra_source}" ]]; then
-    source_files=("${INTERNAL_extra_source}"/* ${scratch_dir}/*)
-  else
-    source_files=(${scratch_dir}/*)
+    source_files+=("${INTERNAL_extra_source}"/*)
   fi
 
   delete_instances=("${FLAGS_build_instance}" "${FLAGS_dest_image}")
@@ -87,8 +94,10 @@ main() {
     "${FLAGS_dest_image}"
   gcloud compute instances create \
     "${dest_project_flag[@]}" \
+    --machine-type=n1-standard-16 \
     --image-family="${FLAGS_source_image_family}" \
     --image-project="${FLAGS_source_image_project}" \
+    --boot-disk-size=200GiB \
     "${FLAGS_build_instance}"
   wait_for_instance "${dest_project_flag[@]}" "${FLAGS_build_instance}"
   # Ubuntu tends to mount the wrong disk as root, so help it by waiting until
@@ -98,7 +107,6 @@ main() {
       "${FLAGS_build_instance}" --disk="${FLAGS_dest_image}"
   gcloud compute scp "${dest_project_flag[@]}" \
     "${source_files[@]}" \
-    "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common/tools/create_base_image_gce.sh" \
     "${FLAGS_build_instance}:"
   gcloud compute ssh \
     "${dest_project_flag[@]}" "${FLAGS_build_instance}" -- \
@@ -115,7 +123,7 @@ main() {
   if [[ -n "${FLAGS_launch_instance}" ]]; then
     gcloud compute instances create "${dest_project_flag[@]}" \
       --image="${FLAGS_dest_image}" \
-      --machine-type=n1-standard-2 \
+      --machine-type=n1-standard-4 \
       --scopes storage-ro \
       "${FLAGS_launch_instance}"
   fi

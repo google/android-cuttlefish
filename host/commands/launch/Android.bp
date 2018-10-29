@@ -40,12 +40,9 @@ cc_binary_host {
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
         "libivserver",
-        "libvadb",
-        "libusbip",
         "libgflags",
         "libxml2",
         "libjsoncpp",
-        "libmonitor",
     ],
     defaults: ["cuttlefish_host_only"],
 }

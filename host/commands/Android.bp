@@ -19,4 +19,6 @@ subdirs = [
     "stop_cvd",
     "ivserver",
     "record_audio",
+    "virtual_usb_manager",
+    "kernel_log_monitor",
 ]

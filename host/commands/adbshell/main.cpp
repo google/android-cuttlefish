@@ -91,29 +91,9 @@ std::string InstanceStr() {
   return nullptr;
 }
 
-std::string VsocUserName() {
-  const char kVsocUserPrefix[] = "vsoc-";
-  auto num = InstanceNumberAsStr();
-  return std::string{kVsocUserPrefix} + num;
-}
-
-std::string VsocHomeAdbShellPath() {
-  return std::string{"/home/"} + VsocUserName() + "/bin/adbshell";
-}
-
-void TryExecHomeAdbShell(char* argv[]) {
-  auto home_shell = VsocHomeAdbShellPath();
-  if (access(home_shell.c_str(), X_OK) != -1 && home_shell != argv[0]) {
-    home_shell.push_back('\0');
-    argv[0] = &home_shell[0];
-    execv(argv[0], argv);
-    assert(0 && "execv() returned");
-  }
-}
 }  // namespace
 
 int main(int argc, char* argv[]) {
-  TryExecHomeAdbShell(argv);
   auto instance = InstanceStr();
   std::vector<char*> new_argv = {
       const_cast<char*>("/usr/bin/adb"), const_cast<char*>("-s"),
