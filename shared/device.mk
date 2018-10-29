@@ -35,7 +35,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=131072 \
     ro.ril.gprsclass=10 \
     ro.ril.hsxpa=1 \
-    ro.setupwizard.mode=DISABLED \
     wifi.interface=wlan0 \
 
 # Below is a list of properties we probably should get rid of.
@@ -67,7 +66,8 @@ PRODUCT_PACKAGES += \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
     vport_trigger \
-    rename_netiface
+    rename_netiface \
+    ip_link_add \
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -87,12 +87,31 @@ PRODUCT_PACKAGES += \
 
 #
 # Packages for the OpenGL implementation
-# TODO(ghartman): Remove this vendor dependency when possible
 #
+
+# Placeholder to ensure that /vendor/lib/egl exists
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/README_egl.md:$(TARGET_COPY_OUT_VENDOR)/lib/egl/README.md
+
+# Guest side SwiftShader
 PRODUCT_PACKAGES += \
     libEGL_swiftshader \
     libGLESv1_CM_swiftshader \
-    libGLESv2_swiftshader \
+    libGLESv2_swiftshader
+
+# The locking_wrapper puts a lock around all of the SwiftShader entry points to
+# serialize all access to the library, reducing the chances for races.
+# Applies only to guest-side SwiftShader
+PRODUCT_PACKAGES += \
+    libEGL_locking_wrapper \
+    libGLESv1_CM_locking_wrapper \
+    libGLESv2_locking_wrapper
+
+# GLES encoder, reused from goldfish
+PRODUCT_PACKAGES += \
+    libEGL_emulation \
+    libGLESv1_CM_emulation \
+    libGLESv2_emulation \
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
@@ -103,7 +122,7 @@ PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
 #
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
-    device/google/cuttlefish/shared/config/camera_v1.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
+    device/google/cuttlefish/shared/config/camera_v3.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
     device/google/cuttlefish/shared/config/init.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
     device/google/cuttlefish/shared/config/ueventd.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/ueventd.vsoc.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
@@ -150,6 +169,7 @@ PRODUCT_COPY_FILES += \
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
+    hwcomposer.drm \
     hwcomposer.vsoc \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl \
@@ -159,6 +179,7 @@ PRODUCT_PACKAGES += \
 # Gralloc HAL
 #
 PRODUCT_PACKAGES += \
+    gralloc.minigbm \
     gralloc.vsoc \
     android.hardware.graphics.mapper@2.0-impl \
     android.hardware.graphics.allocator@2.0-impl \

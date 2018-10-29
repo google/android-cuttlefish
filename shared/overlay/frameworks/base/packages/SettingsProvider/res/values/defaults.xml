@@ -21,7 +21,6 @@
     <bool name="def_wifi_on">false</bool>
     <bool name="def_stay_on_while_plugged_in">true</bool>
     <bool name="def_device_provisioned">true</bool>
-    <bool name="def_user_setup_complete">true</bool>
     <bool name="def_install_non_market_apps">true</bool>
     <bool name="def_package_verifier_enable">false</bool>
 </resources>
