@@ -33,7 +33,7 @@ class BootImageUnpacker {
 
   ~BootImageUnpacker() = default;
 
-  std::string kernel_command_line() const;
+  std::string kernel_cmdline() const;
 
   bool HasKernelImage() const { return kernel_image_size_ > 0; }
   bool HasRamdiskImage() const { return ramdisk_image_size_ > 0; }
@@ -50,7 +50,7 @@ class BootImageUnpacker {
                     uint32_t kernel_image_size, uint32_t kernel_image_offset,
                     uint32_t ramdisk_image_size, uint32_t ramdisk_image_offset)
       : boot_image_(boot_image),
-        kernel_command_line_(cmdline),
+        kernel_cmdline_(cmdline),
         kernel_image_size_(kernel_image_size),
         kernel_image_offset_(kernel_image_offset),
         ramdisk_image_size_(ramdisk_image_size),
@@ -58,7 +58,7 @@ class BootImageUnpacker {
 
   // Mutable because we only read from the fd, but do not modify its contents
   mutable SharedFD boot_image_;
-  std::string kernel_command_line_;
+  std::string kernel_cmdline_;
   // When buidling the boot image a particular page size is assumed, which may
   // not match the actual page size of the system.
   uint32_t kernel_image_size_;

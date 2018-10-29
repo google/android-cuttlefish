@@ -139,6 +139,7 @@ class SharedFD {
   static SharedFD GetControlSocket(const char* name);
   // Returns false on failure, true on success.
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
+  static SharedFD Creat(const char* pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD Epoll(int flags = 0);
@@ -228,6 +229,13 @@ class FileInstance {
   int UNMANAGED_Dup() {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(dup(fd_));
+    errno_ = errno;
+    return rval;
+  }
+
+  int UNMANAGED_Dup2(int newfd) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(dup2(fd_, newfd));
     errno_ = errno;
     return rval;
   }

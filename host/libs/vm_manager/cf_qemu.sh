@@ -46,13 +46,13 @@ args=(
     -display none
     -no-user-config
     -nodefaults
-    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},server,nowait"
+    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},nowait"
     -mon "chardev=charmonitor,id=monitor,mode=control"
     -rtc "base=utc"
     -no-shutdown
     -boot "strict=on"
     -kernel "${kernel_image_path:-${HOME}/kernel}"
-    -append "${kernel_args:-"loop.max_part=7 console=ttyS0 androidboot.console=ttyS1 androidboot.hardware=vsoc enforcing=0 audit=1 androidboot.selinux=permissive mac80211_hwsim.radios=0 security=selinux buildvariant=userdebug  androidboot.serialno=CUTTLEFISHCVD01 androidboot.lcd_density=160"}"
+    -append "${kernel_cmdline:-"loop.max_part=7 console=ttyS0 androidboot.console=ttyS1 androidboot.hardware=vsoc enforcing=0 audit=1 androidboot.selinux=permissive mac80211_hwsim.radios=0 security=selinux buildvariant=userdebug  androidboot.serialno=CUTTLEFISHCVD01 androidboot.lcd_density=160"}"
     -dtb "${dtb_path:-${HOME}/config/cuttlefish.dtb}"
     -device "piix3-usb-uhci,id=usb,bus=pci.0,addr=0x1.0x2"
     -device "virtio-serial-pci,id=virtio-serial0,bus=pci.0,addr=0x4"

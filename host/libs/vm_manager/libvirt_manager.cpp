@@ -24,7 +24,6 @@
 #include <sstream>
 #include <string>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 #include <libxml/tree.h>
 
@@ -32,9 +31,6 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
-
-DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
-DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 
 // A lot of useful information about the document created here can be found on
 // these websites:
@@ -261,16 +257,15 @@ void ConfigureHWRNG(xmlNode* devices, const std::string& entsrc) {
   xmlNewProp(bend, xc("model"), xc("random"));
 }
 
-std::string GetLibvirtCommand() {
+static std::string GetLibvirtCommand(vsoc::CuttlefishConfig* config) {
   std::string cmd = "virsh";
-  if (!FLAGS_hypervisor_uri.empty()) {
-    cmd += " -c " + FLAGS_hypervisor_uri;
+  if (!config->hypervisor_uri().empty()) {
+    cmd += " -c " + config->hypervisor_uri();
   }
   return cmd;
 }
 
-std::string BuildXmlConfig() {
-  auto config = vsoc::CuttlefishConfig::Get();
+std::string BuildXmlConfig(vsoc::CuttlefishConfig* config) {
   std::string instance_name = config->instance_name();
 
   std::unique_ptr<xmlDoc, void (*)(xmlDocPtr)> xml{xmlNewDoc(xc("1.0")),
@@ -283,7 +278,8 @@ std::string BuildXmlConfig() {
               config->uuid());
   ConfigureVMFeatures(root, {"acpi", "apic", "hap"});
   ConfigureOperatingSystem(root, config->kernel_image_path(),
-                           config->ramdisk_image_path(), config->kernel_args(),
+                           config->ramdisk_image_path(),
+                           config->kernel_cmdline_as_string(),
                            config->dtb_path());
   auto qemu_options = ConfigureQEmuSpecificOptions(
       root, {"-chardev",
@@ -343,42 +339,46 @@ std::string BuildXmlConfig() {
 }
 }  // namespace
 
-bool LibvirtManager::Start() const {
-  std::string start_command = GetLibvirtCommand();
+const std::string LibvirtManager::name() { return "libvirt"; }
+
+LibvirtManager::LibvirtManager(vsoc::CuttlefishConfig* config)
+  : VmManager(config) {}
+
+bool LibvirtManager::Start() {
+  std::string start_command = GetLibvirtCommand(config_);
   start_command += " create /dev/fd/0";
 
-  std::string xml = BuildXmlConfig();
-  if (FLAGS_log_xml) {
+  std::string xml = BuildXmlConfig(config_);
+  if (config_->log_xml()) {
     LOG(INFO) << "Using XML:\n" << xml;
   }
 
   FILE* launch = popen(start_command.c_str(), "w");
   if (!launch) {
-    LOG(FATAL) << "Unable to execute " << start_command;
+    LOG(ERROR) << "Unable to execute " << start_command;
     return false;
   }
   int rval = fputs(xml.c_str(), launch);
   if (rval == EOF) {
-    LOG(FATAL) << "Launch command exited while accepting XML";
+    LOG(ERROR) << "Launch command exited while accepting XML";
     return false;
   }
   int exit_code = pclose(launch);
   if (exit_code != 0) {
-    LOG(FATAL) << "Launch command exited with status " << exit_code;
+    LOG(ERROR) << "Launch command exited with status " << exit_code;
     return false;
   }
   return true;
 }
 
-bool LibvirtManager::Stop() const {
-  auto config = vsoc::CuttlefishConfig::Get();
-  auto stop_command = GetLibvirtCommand();
-  stop_command += " destroy " + config->instance_name();
+bool LibvirtManager::Stop() {
+  auto stop_command = GetLibvirtCommand(config_);
+  stop_command += " destroy " + config_->instance_name();
   return std::system(stop_command.c_str()) == 0;
 }
 
 bool LibvirtManager::EnsureInstanceDirExists() const {
-  auto instance_dir = vsoc::CuttlefishConfig::Get()->instance_dir();
+  auto instance_dir = config_->instance_dir();
   if (!cvd::DirectoryExists(instance_dir)) {
     LOG(INFO) << "Setting up " << instance_dir;
     cvd::execute({"/usr/bin/sudo", "/bin/mkdir", "-m", "0775", instance_dir});
@@ -392,10 +392,10 @@ bool LibvirtManager::EnsureInstanceDirExists() const {
 }
 
 bool LibvirtManager::CleanPriorFiles() const {
-  auto config = vsoc::CuttlefishConfig::Get();
-  std::string run_files = config->PerInstancePath("*") + " " +
-                          config->mempath() + " " +
-                          config->cuttlefish_env_path();
+  std::string run_files = config_->PerInstancePath("*") + " " +
+                          config_->mempath() + " " +
+                          config_->cuttlefish_env_path() + " " +
+                          vsoc::GetGlobalConfigFileLink();
   LOG(INFO) << "Assuming run files of " << run_files;
   std::string fuser_cmd = "fuser " + run_files + " 2> /dev/null";
   int rval = std::system(fuser_cmd.c_str());
