@@ -16,10 +16,10 @@
 
 #pragma once
 
+#include <dirent.h>
 #include <fcntl.h>
 
 #if !defined(_WIN32)
-#include <dirent.h>
 #include <sys/socket.h>
 #endif
 
@@ -212,17 +212,6 @@ inline FILE* Fdopen(unique_fd&& ufd, const char* mode) {
   return file;
 }
 
-// Using fdopendir with unique_fd correctly is more annoying than it should be,
-// because fdopen doesn't close the file descriptor received upon failure.
-inline DIR* Fdopendir(unique_fd&& ufd) {
-  int fd = ufd.release();
-  DIR* dir = fdopendir(fd);
-  if (dir == nullptr) {
-    close(fd);
-  }
-  return dir;
-}
-
 #endif  // !defined(_WIN32)
 
 }  // namespace base
@@ -231,3 +220,13 @@ inline DIR* Fdopendir(unique_fd&& ufd) {
 template <typename T>
 int close(const android::base::unique_fd_impl<T>&)
     __attribute__((__unavailable__("close called on unique_fd")));
+
+template <typename T>
+FILE* fdopen(const android::base::unique_fd_impl<T>&, const char* mode)
+    __attribute__((__unavailable__("fdopen takes ownership of the fd passed in; either dup the "
+                                   "unique_fd, or use android::base::Fdopen to pass ownership")));
+
+template <typename T>
+DIR* fdopendir(const android::base::unique_fd_impl<T>&) __attribute__((
+    __unavailable__("fdopendir takes ownership of the fd passed in; either dup the "
+                    "unique_fd, or use android::base::Fdopendir to pass ownership")));
