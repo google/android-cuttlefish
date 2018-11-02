@@ -24,27 +24,27 @@
 
 using vsoc::wifi::WifiExchangeView;
 
-void InitializeWifiRegion(vsoc::CuttlefishConfig* config) {
+void InitializeWifiRegion(const vsoc::CuttlefishConfig& config) {
   auto region = WifiExchangeView::GetInstance(vsoc::GetDomain().c_str());
   if (!region) {
     LOG(FATAL) << "Wifi region not found";
     return;
   }
   WifiExchangeView::MacAddress guest_mac, host_mac;
-  if (!WifiExchangeView::ParseMACAddress(config->wifi_guest_mac_addr(),
+  if (!WifiExchangeView::ParseMACAddress(config.wifi_guest_mac_addr(),
                                          &guest_mac)) {
     LOG(FATAL) << "Unable to parse guest mac address: "
-               << config->wifi_guest_mac_addr();
+               << config.wifi_guest_mac_addr();
     return;
   }
-  LOG(INFO) << "Setting guest mac to " << config->wifi_guest_mac_addr();
+  LOG(INFO) << "Setting guest mac to " << config.wifi_guest_mac_addr();
   region->SetGuestMACAddress(guest_mac);
-  if (!WifiExchangeView::ParseMACAddress(config->wifi_host_mac_addr(),
+  if (!WifiExchangeView::ParseMACAddress(config.wifi_host_mac_addr(),
                                          &host_mac)) {
     LOG(FATAL) << "Unable to parse guest mac address: "
-               << config->wifi_guest_mac_addr();
+               << config.wifi_guest_mac_addr();
     return;
   }
-  LOG(INFO) << "Setting host mac to " << config->wifi_host_mac_addr();
+  LOG(INFO) << "Setting host mac to " << config.wifi_host_mac_addr();
   region->SetHostMACAddress(host_mac);
 }

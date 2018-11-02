@@ -24,14 +24,13 @@ namespace vm_manager {
 class LibvirtManager : public VmManager {
  public:
   static const std::string name();
-  LibvirtManager(vsoc::CuttlefishConfig* config);
+  static bool EnsureInstanceDirExists(const std::string& instance_dir);
+
+  LibvirtManager(const vsoc::CuttlefishConfig* config);
   virtual ~LibvirtManager() = default;
 
   bool Start() override;
   bool Stop() override;
-
-  bool EnsureInstanceDirExists() const override;
-  bool CleanPriorFiles() const override;
 
   bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const override;
