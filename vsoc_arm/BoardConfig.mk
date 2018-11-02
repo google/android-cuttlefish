@@ -14,11 +14,17 @@
 # limitations under the License.
 #
 
-ifneq ($(filter $(TARGET_DEVICE), vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64),)
-LOCAL_PATH:= $(call my-dir)
+#
+# x86 target for Cuttlefish
+#
 
-include $(CLEAR_VARS)
-include $(LOCAL_PATH)/host_package.mk
+-include device/google/cuttlefish/shared/BoardConfig.mk
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
-endif
+TARGET_BOOTLOADER_BOARD_NAME := vsoc_arm
+TARGET_BOARD_PLATFORM := vsoc_arm
+TARGET_ARCH := arm
+TARGET_ARCH_VARIANT := armv8-a
+TARGET_CPU_ABI := armeabi-v7a
+TARGET_CPU_VARIANT := cortex-a53
+
+BUILD_BROKEN_DUP_RULES := true

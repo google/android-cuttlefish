@@ -1,5 +1,5 @@
 #
-# Copyright 2017 The Android Open-Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 
-ifneq ($(filter $(TARGET_DEVICE), vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64),)
-LOCAL_PATH:= $(call my-dir)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, device/google/cuttlefish/shared/phone/device.mk)
 
-include $(CLEAR_VARS)
-include $(LOCAL_PATH)/host_package.mk
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
-endif
+PRODUCT_NAME := aosp_cf_arm64_phone
+PRODUCT_DEVICE := vsoc_arm64
+PRODUCT_MODEL := Cuttlefish arm64 phone
+PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_arm64/phone/overlay
