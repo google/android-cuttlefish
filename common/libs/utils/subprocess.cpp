@@ -23,6 +23,7 @@
 
 #include <glog/logging.h>
 namespace {
+
 pid_t subprocess_impl(const char* const* command, const char* const* envp) {
   pid_t pid = fork();
   if (!pid) {
@@ -53,28 +54,6 @@ pid_t subprocess_impl(const char* const* command, const char* const* envp) {
   return pid;
 }
 
-int execute_impl(const char* const* command, const char* const* envp) {
-  pid_t pid = subprocess_impl(command, envp);
-  if (pid == -1) {
-    return -1;
-  }
-  int wstatus = 0;
-  waitpid(pid, &wstatus, 0);
-  int retval = 0;
-  if (WIFEXITED(wstatus)) {
-    retval = WEXITSTATUS(wstatus);
-    if (retval) {
-      LOG(ERROR) << "Command " << command[0]
-                 << " exited with error code: " << retval;
-    }
-  } else if (WIFSIGNALED(wstatus)) {
-    LOG(ERROR) << "Command " << command[0]
-               << " was interrupted by a signal: " << WTERMSIG(wstatus);
-    retval = -1;
-  }
-  return retval;
-}
-
 std::vector<const char*> ToCharPointers(
     const std::vector<std::string>& vect) {
   std::vector<const char*> ret = {};
@@ -86,28 +65,101 @@ std::vector<const char*> ToCharPointers(
 }
 }  // namespace
 namespace cvd {
-pid_t subprocess(const std::vector<std::string>& command,
-                 const std::vector<std::string>& env) {
-  auto cmd = ToCharPointers(command);
-  auto envp = ToCharPointers(env);
 
-  return subprocess_impl(cmd.data(), &envp[0]);
+int Subprocess::Wait() {
+  if (pid_ < 0) {
+    LOG(ERROR)
+        << "Attempt to wait on invalid pid(has it been waited on already?): "
+        << pid_;
+    return -1;
+  }
+  int wstatus = 0;
+  auto pid = pid_; // Wait will set pid_ to -1 after waiting
+  auto wait_ret = Wait(&wstatus, 0);
+  if (wait_ret < 0) {
+    LOG(ERROR) << "Error on call to waitpid: " << strerror(errno);
+    return wait_ret;
+  }
+  int retval = 0;
+  if (WIFEXITED(wstatus)) {
+    retval = WEXITSTATUS(wstatus);
+    if (retval) {
+      LOG(ERROR) << "Subprocess " << pid
+                 << " exited with error code: " << retval;
+    }
+  } else if (WIFSIGNALED(wstatus)) {
+    LOG(ERROR) << "Subprocess " << pid
+               << " was interrupted by a signal: " << WTERMSIG(wstatus);
+    retval = -1;
+  }
+  return retval;
 }
-pid_t subprocess(const std::vector<std::string>& command) {
-  auto cmd = ToCharPointers(command);
+pid_t Subprocess::Wait(int* wstatus, int options) {
+  if (pid_ < 0) {
+    LOG(ERROR)
+        << "Attempt to wait on invalid pid(has it been waited on already?): "
+        << pid_;
+    return -1;
+  }
+  auto retval = waitpid(pid_, wstatus, options);
+  // We don't want to wait twice for the same process
+  pid_ = -1;
+  return retval;
+}
 
-  return subprocess_impl(cmd.data(), NULL);
+Command::~Command() {
+  for(const auto& entry: inherited_fds_) {
+    close(entry.second);
+  }
 }
+
+bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
+  int fd;
+  if (inherited_fds_.count(shared_fd)) {
+    fd = inherited_fds_[shared_fd];
+  } else {
+    fd = shared_fd->UNMANAGED_Dup();
+    if (fd < 0) {
+      return false;
+    }
+    inherited_fds_[shared_fd] = fd;
+  }
+  *stream << fd;
+  return true;
+}
+
+Subprocess Command::Start() const {
+  auto cmd = ToCharPointers(command_);
+  if (use_parent_env_) {
+    return Subprocess(subprocess_impl(cmd.data(), NULL));
+  } else {
+    auto envp = ToCharPointers(env_);
+    return Subprocess(subprocess_impl(cmd.data(), envp.data()));
+  }
+}
+
 int execute(const std::vector<std::string>& command,
             const std::vector<std::string>& env) {
-  auto cmd = ToCharPointers(command);
-  auto envp = ToCharPointers(env);
-
-  return execute_impl(cmd.data(), &envp[0]);
+  Command cmd(command[0]);
+  for (size_t i = 1; i < command.size(); ++i) {
+    cmd.AddParameter(command[i]);
+  }
+  cmd.SetEnvironment(env);
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
+  }
+  return subprocess.Wait();
 }
 int execute(const std::vector<std::string>& command) {
-  auto cmd = ToCharPointers(command);
-
-  return execute_impl(cmd.data(), NULL);
+  Command cmd(command[0]);
+  for (size_t i = 1; i < command.size(); ++i) {
+    cmd.AddParameter(command[i]);
+  }
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
+  }
+  return subprocess.Wait();
 }
 }  // namespace cvd
