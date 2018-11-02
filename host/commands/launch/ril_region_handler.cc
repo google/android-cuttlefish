@@ -121,9 +121,9 @@ class NetConfig {
 };
 }  // namespace
 
-void InitializeRilRegion(vsoc::CuttlefishConfig* config) {
+void InitializeRilRegion(const vsoc::CuttlefishConfig& config) {
   NetConfig netconfig;
-  if (!netconfig.ObtainConfig(config->mobile_bridge_name())) {
+  if (!netconfig.ObtainConfig(config.mobile_bridge_name())) {
     LOG(ERROR) << "Unable to obtain the network configuration";
     return;
   }
