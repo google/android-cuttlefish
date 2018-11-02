@@ -74,7 +74,7 @@ DEFINE_int32(blank_data_image_mb, 0,
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
 DEFINE_string(qemu_gdb, "",
-	      "Debug flag to pass to qemu. e.g. --qemu_gdb=tcp::1234");
+              "Debug flag to pass to qemu. e.g. --qemu_gdb=tcp::1234");
 
 DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
@@ -262,9 +262,8 @@ bool ApplyDataImagePolicy(const char* data_image) {
   return true;
 }
 
-std::string GetConfigFile() {
-  return vsoc::CuttlefishConfig::Get()->PerInstancePath(
-      "cuttlefish_config.json");
+std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
+  return config.PerInstancePath("cuttlefish_config.json");
 }
 
 std::string GetGuestPortArg() {
@@ -313,11 +312,11 @@ bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && AdbTunnelEnabled();
 }
 
-void LaunchUsbServerIfEnabled(vsoc::CuttlefishConfig* config) {
+void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config) {
   if (!AdbUsbEnabled()) {
     return;
   }
-  auto socket_name = config->usb_v1_socket_name();
+  auto socket_name = config.usb_v1_socket_name();
   auto usb_v1_server = cvd::SharedFD::SocketLocalServer(
       socket_name.c_str(), false, SOCK_STREAM, 0666);
   if (!usb_v1_server->IsOpen()) {
@@ -338,9 +337,9 @@ void LaunchUsbServerIfEnabled(vsoc::CuttlefishConfig* config) {
   close(server_fd);
 }
 
-void LaunchKernelLogMonitor(vsoc::CuttlefishConfig* config,
+void LaunchKernelLogMonitor(const vsoc::CuttlefishConfig& config,
                             cvd::SharedFD boot_events_pipe) {
-  auto log_name = config->kernel_log_socket_name();
+  auto log_name = config.kernel_log_socket_name();
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
   int server_fd = server->UNMANAGED_Dup();
@@ -357,7 +356,7 @@ void LaunchKernelLogMonitor(vsoc::CuttlefishConfig* config,
   }
 }
 
-void LaunchIvServer(vsoc::CuttlefishConfig* config) {
+void LaunchIvServer(const vsoc::CuttlefishConfig& config) {
   // Resize gralloc region
   auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
   uint32_t screen_buffers_size =
@@ -369,13 +368,13 @@ void LaunchIvServer(vsoc::CuttlefishConfig* config) {
   // TODO(b/79170615) Resize gralloc region too.
 
   vsoc::CreateSharedMemoryFile(
-      config->mempath(),
+      config.mempath(),
       {{vsoc::layout::screen::ScreenLayout::region_name, screen_buffers_size}});
 
   auto qemu_channel =
-      CreateIvServerUnixSocket(config->ivshmem_qemu_socket_path());
+      CreateIvServerUnixSocket(config.ivshmem_qemu_socket_path());
   auto client_channel =
-      CreateIvServerUnixSocket(config->ivshmem_client_socket_path());
+      CreateIvServerUnixSocket(config.ivshmem_client_socket_path());
   auto qemu_socket_arg = "-qemu_socket_fd=" + std::to_string(qemu_channel);
   auto client_socket_arg =
       "-client_socket_fd=" + std::to_string(client_channel);
@@ -449,10 +448,10 @@ bool ResolveInstanceFiles() {
 }
 
 bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker,
-                     vsoc::CuttlefishConfig* config) {
+                     const vsoc::CuttlefishConfig& config) {
   if (boot_image_unpacker.HasRamdiskImage()) {
     if (!boot_image_unpacker.ExtractRamdiskImage(
-            config->ramdisk_image_path())) {
+            config.ramdisk_image_path())) {
       LOG(ERROR) << "Error extracting ramdisk from boot image";
       return false;
     }
@@ -460,7 +459,7 @@ bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker,
   if (!FLAGS_kernel_path.size()) {
     if (boot_image_unpacker.HasKernelImage()) {
       if (!boot_image_unpacker.ExtractKernelImage(
-              config->kernel_image_path())) {
+              config.kernel_image_path())) {
         LOG(ERROR) << "Error extracting kernel from boot image";
         return false;
       }
@@ -479,44 +478,46 @@ static std::string concat(const S& s, const T& t) {
   return os.str();
 }
 
-vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
+std::string GetCuttlefishEnvPath() {
+  return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
+}
+
+// Initializes the config object and saves it to file. It doesn't return it, all
+// further uses of the config should happen through the singleton
+bool InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker) {
+  vsoc::CuttlefishConfig tmp_config_obj;
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
-  auto config = vsoc::CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Failed to instantiate config object. Most likely because "
-                  "config file was specified and doesn't exist: '"
-               << getenv(vsoc::kCuttlefishConfigEnvVarName) << "'";
-    return nullptr;
-  }
   // Set this first so that calls to PerInstancePath below are correct
-  config->set_instance_dir(FLAGS_instance_dir);
+  tmp_config_obj.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
     LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
-    return nullptr;
+    return false;
   }
-  config->set_vm_manager(FLAGS_vm_manager);
+  tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
 
-  config->set_serial_number(FLAGS_serial_number);
+  tmp_config_obj.set_serial_number(FLAGS_serial_number);
 
-  config->set_cpus(FLAGS_cpus);
-  config->set_memory_mb(FLAGS_memory_mb);
+  tmp_config_obj.set_cpus(FLAGS_cpus);
+  tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
-  config->set_dpi(FLAGS_dpi);
-  config->set_setupwizard_mode(FLAGS_setupwizard_mode);
-  config->set_x_res(FLAGS_x_res);
-  config->set_y_res(FLAGS_y_res);
-  config->set_refresh_rate_hz(FLAGS_refresh_rate_hz);
-  config->set_gdb_flag(FLAGS_qemu_gdb);
-  config->set_adb_mode(FLAGS_adb_mode);
-  config->set_device_title(FLAGS_device_title);
+  tmp_config_obj.set_dpi(FLAGS_dpi);
+  tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
+  tmp_config_obj.set_x_res(FLAGS_x_res);
+  tmp_config_obj.set_y_res(FLAGS_y_res);
+  tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
+  tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
+  tmp_config_obj.set_adb_mode(FLAGS_adb_mode);
+
+  tmp_config_obj.set_device_title(FLAGS_device_title);
   if (FLAGS_kernel_path.size()) {
-    config->set_kernel_image_path(FLAGS_kernel_path);
+    tmp_config_obj.set_kernel_image_path(FLAGS_kernel_path);
   } else {
-    config->set_kernel_image_path(config->PerInstancePath("kernel"));
+    tmp_config_obj.set_kernel_image_path(
+        tmp_config_obj.PerInstancePath("kernel"));
   }
 
-  auto ramdisk_path = config->PerInstancePath("ramdisk.img");
+  auto ramdisk_path = tmp_config_obj.PerInstancePath("ramdisk.img");
   bool use_ramdisk = boot_image_unpacker.HasRamdiskImage();
   if (!use_ramdisk) {
     LOG(INFO) << "No ramdisk present; assuming system-as-root build";
@@ -533,101 +534,114 @@ vsoc::CuttlefishConfig* InitializeCuttlefishConfiguration(
     }
   }
 
-  config->add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
+  tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   if (!use_ramdisk) {
-    config->add_kernel_cmdline("root=/dev/vda init=/init");
+    tmp_config_obj.add_kernel_cmdline("root=/dev/vda init=/init");
   }
-  config->add_kernel_cmdline(
+  tmp_config_obj.add_kernel_cmdline(
       concat("androidboot.serialno=", FLAGS_serial_number));
-  config->add_kernel_cmdline("mac80211_hwsim.radios=0");
-  config->add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
-  config->add_kernel_cmdline(concat("androidboot.setupwizard_mode=",
-				    FLAGS_setupwizard_mode));
-  config->add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
+  tmp_config_obj.add_kernel_cmdline("mac80211_hwsim.radios=0");
+  tmp_config_obj.add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
+  tmp_config_obj.add_kernel_cmdline(
+      concat("androidboot.setupwizard_mode=", FLAGS_setupwizard_mode));
+  tmp_config_obj.add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
   if (!FLAGS_console.empty()) {
-    config->add_kernel_cmdline(concat("console=", FLAGS_console));
+    tmp_config_obj.add_kernel_cmdline(concat("console=", FLAGS_console));
   }
   if (!FLAGS_androidboot_console.empty()) {
-    config->add_kernel_cmdline(
+    tmp_config_obj.add_kernel_cmdline(
         concat("androidboot.console=", FLAGS_androidboot_console));
   }
   if (!FLAGS_hardware_name.empty()) {
-    config->add_kernel_cmdline(
+    tmp_config_obj.add_kernel_cmdline(
         concat("androidboot.hardware=", FLAGS_hardware_name));
   }
   if (!FLAGS_guest_security.empty()) {
-    config->add_kernel_cmdline(concat("security=", FLAGS_guest_security));
+    tmp_config_obj.add_kernel_cmdline(concat("security=", FLAGS_guest_security));
     if (FLAGS_guest_enforce_security) {
-      config->add_kernel_cmdline("enforcing=1");
+      tmp_config_obj.add_kernel_cmdline("enforcing=1");
     } else {
-      config->add_kernel_cmdline("enforcing=0");
-      config->add_kernel_cmdline("androidboot.selinux=permissive");
+      tmp_config_obj.add_kernel_cmdline("enforcing=0");
+      tmp_config_obj.add_kernel_cmdline("androidboot.selinux=permissive");
     }
     if (FLAGS_guest_audit_security) {
-      config->add_kernel_cmdline("audit=1");
+      tmp_config_obj.add_kernel_cmdline("audit=1");
     } else {
-      config->add_kernel_cmdline("audit=0");
+      tmp_config_obj.add_kernel_cmdline("audit=0");
     }
   }
   if (FLAGS_extra_kernel_cmdline.size()) {
-    config->add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
+    tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
 
-  config->set_ramdisk_image_path(ramdisk_path);
-  config->set_system_image_path(FLAGS_system_image);
-  config->set_cache_image_path(FLAGS_cache_image);
-  config->set_data_image_path(FLAGS_data_image);
-  config->set_vendor_image_path(FLAGS_vendor_image);
-  config->set_dtb_path(FLAGS_dtb);
+  tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
+  tmp_config_obj.set_system_image_path(FLAGS_system_image);
+  tmp_config_obj.set_cache_image_path(FLAGS_cache_image);
+  tmp_config_obj.set_data_image_path(FLAGS_data_image);
+  tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
+  tmp_config_obj.set_dtb_path(FLAGS_dtb);
 
-  config->set_mempath(FLAGS_mempath);
-  config->set_ivshmem_qemu_socket_path(
-      config->PerInstancePath("ivshmem_socket_qemu"));
-  config->set_ivshmem_client_socket_path(
-      config->PerInstancePath("ivshmem_socket_client"));
-  config->set_ivshmem_vector_count(memory_layout.GetRegions().size());
+  tmp_config_obj.set_mempath(FLAGS_mempath);
+  tmp_config_obj.set_ivshmem_qemu_socket_path(
+      tmp_config_obj.PerInstancePath("ivshmem_socket_qemu"));
+  tmp_config_obj.set_ivshmem_client_socket_path(
+      tmp_config_obj.PerInstancePath("ivshmem_socket_client"));
+  tmp_config_obj.set_ivshmem_vector_count(memory_layout.GetRegions().size());
 
   if (AdbUsbEnabled()) {
-    config->set_usb_v1_socket_name(config->PerInstancePath("usb-v1"));
-    config->set_vhci_port(FLAGS_vhci_port);
-    config->set_usb_ip_socket_name(config->PerInstancePath("usb-ip"));
+    tmp_config_obj.set_usb_v1_socket_name(tmp_config_obj.PerInstancePath("usb-v1"));
+    tmp_config_obj.set_vhci_port(FLAGS_vhci_port);
+    tmp_config_obj.set_usb_ip_socket_name(tmp_config_obj.PerInstancePath("usb-ip"));
   }
 
-  config->set_kernel_log_socket_name(config->PerInstancePath("kernel-log"));
-  config->set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
-  config->set_console_path(config->PerInstancePath("console"));
-  config->set_logcat_path(config->PerInstancePath("logcat"));
-  config->set_launcher_log_path(config->PerInstancePath("launcher.log"));
-  config->set_launcher_monitor_socket_path(
-      config->PerInstancePath("launcher_monitor.sock"));
+  tmp_config_obj.set_kernel_log_socket_name(tmp_config_obj.PerInstancePath("kernel-log"));
+  tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
+  tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
+  tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
+  tmp_config_obj.set_launcher_log_path(tmp_config_obj.PerInstancePath("launcher.log"));
+  tmp_config_obj.set_launcher_monitor_socket_path(
+      tmp_config_obj.PerInstancePath("launcher_monitor.sock"));
 
-  config->set_mobile_bridge_name(FLAGS_mobile_interface);
-  config->set_mobile_tap_name(FLAGS_mobile_tap_name);
+  tmp_config_obj.set_mobile_bridge_name(FLAGS_mobile_interface);
+  tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
 
-  config->set_wifi_bridge_name(FLAGS_wifi_interface);
-  config->set_wifi_tap_name(FLAGS_wifi_tap_name);
+  tmp_config_obj.set_wifi_bridge_name(FLAGS_wifi_interface);
+  tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);
 
-  config->set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
-  config->set_wifi_host_mac_addr(FLAGS_host_mac_address);
+  tmp_config_obj.set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
+  tmp_config_obj.set_wifi_host_mac_addr(FLAGS_host_mac_address);
 
-  config->set_entropy_source("/dev/urandom");
-  config->set_uuid(FLAGS_uuid);
+  tmp_config_obj.set_entropy_source("/dev/urandom");
+  tmp_config_obj.set_uuid(FLAGS_uuid);
 
-  config->set_disable_dac_security(FLAGS_disable_dac_security);
-  config->set_disable_app_armor_security(FLAGS_disable_app_armor_security);
+  tmp_config_obj.set_disable_dac_security(FLAGS_disable_dac_security);
+  tmp_config_obj.set_disable_app_armor_security(FLAGS_disable_app_armor_security);
 
-  config->set_qemu_binary(FLAGS_qemu_binary);
-  config->set_hypervisor_uri(FLAGS_hypervisor_uri);
-  config->set_log_xml(FLAGS_log_xml);
+  tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
+  tmp_config_obj.set_hypervisor_uri(FLAGS_hypervisor_uri);
+  tmp_config_obj.set_log_xml(FLAGS_log_xml);
 
   if(!AdbUsbEnabled()) {
-    config->disable_usb_adb();
+    tmp_config_obj.disable_usb_adb();
   }
 
-  config->set_cuttlefish_env_path(cvd::StringFromEnv("HOME", ".") +
-                                  "/.cuttlefish.sh");
+  tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
-  return config;
+  auto config_file = GetConfigFilePath(tmp_config_obj);
+  auto config_link = vsoc::GetGlobalConfigFileLink();
+  // Save the config object before starting any host process
+  if (!tmp_config_obj.SaveToFile(config_file)) {
+    LOG(ERROR) << "Unable to save config object";
+    return false;
+  }
+  setenv(vsoc::kCuttlefishConfigEnvVarName, config_file.c_str(), true);
+  if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
+    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
+               << ": " << strerror(errno);
+    return false;
+  }
+
+  return true;
 }
 
 void SetDefaultFlagsForQemu() {
@@ -708,18 +722,49 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   return ResolveInstanceFiles();
 }
 
-bool WriteCuttlefishEnvironment(vsoc::CuttlefishConfig* config) {
-  auto env = cvd::SharedFD::Open(config->cuttlefish_env_path().c_str(),
+bool CleanPriorFiles() {
+  // Everything on the instance directory
+  std::string prior_files = FLAGS_instance_dir + "/*";
+  // The shared memory file
+  prior_files += " " + FLAGS_mempath;
+  // The environment file
+  prior_files += " " + GetCuttlefishEnvPath();
+  // The global link to the config file
+  prior_files += " " + vsoc::GetGlobalConfigFileLink();
+  LOG(INFO) << "Assuming prior files of " << prior_files;
+  std::string fuser_cmd = "fuser " + prior_files + " 2> /dev/null";
+  int rval = std::system(fuser_cmd.c_str());
+  // fuser returns 0 if any of the files are open
+  if (WEXITSTATUS(rval) == 0) {
+    LOG(ERROR) << "Clean aborted: files are in use";
+    return false;
+  }
+  std::string clean_command = "rm -rf " + prior_files;
+  if (FLAGS_vm_manager == vm_manager::LibvirtManager::name()) {
+    // Libvirt runs as libvirt-qemu so we need sudo to delete the files it
+    // creates
+    clean_command = "sudo " + clean_command;
+  }
+  rval = std::system(clean_command.c_str());
+  if (WEXITSTATUS(rval) != 0) {
+    LOG(ERROR) << "Remove of files failed";
+    return false;
+  }
+  return true;
+}
+
+bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
+  auto env = cvd::SharedFD::Open(config.cuttlefish_env_path().c_str(),
                                  O_CREAT | O_RDWR, 0755);
   if (!env->IsOpen()) {
     LOG(ERROR) << "Unable to create cuttlefish.env file";
     return false;
   }
   std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
-                           config->PerInstancePath(".") + "\"\n";
+                           config.PerInstancePath(".") + "\"\n";
   config_env += "export ANDROID_SERIAL=";
   if (AdbUsbEnabled()) {
-    config_env += config->serial_number();
+    config_env += config.serial_number();
   } else {
     config_env += "127.0.0.1:" + std::to_string(GetHostPort());
   }
@@ -730,7 +775,7 @@ bool WriteCuttlefishEnvironment(vsoc::CuttlefishConfig* config) {
 
 // Forks and returns the write end of a pipe to the child process. The parent
 // process waits for boot events to come through the pipe and exits accordingly.
-cvd::SharedFD DaemonizeLauncher(vsoc::CuttlefishConfig* config) {
+cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
   cvd::SharedFD read_end, write_end;
   if (!cvd::SharedFD::Pipe(&read_end, &write_end)) {
     LOG(ERROR) << "Unable to create pipe";
@@ -766,7 +811,7 @@ cvd::SharedFD DaemonizeLauncher(vsoc::CuttlefishConfig* config) {
       std::exit(LauncherExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
-    auto log_path = config->launcher_log_path();
+    auto log_path = config.launcher_log_path();
     auto log =
         cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -862,13 +907,35 @@ void ServerLoop(cvd::SharedFD server,
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   if (!ParseCommandLineFlags(&argc, &argv)) {
+    LOG(ERROR) << "Failed to parse command arguments";
     return LauncherExitCodes::kArgumentParsingError;
   }
 
+  // Clean up prior files before saving the config file (doing it after would
+  // delete it)
+  if (!CleanPriorFiles()) {
+    LOG(ERROR) << "Failed to clean prior files";
+    return LauncherExitCodes::kPrioFilesCleanupError;
+  }
+  // For now it has to be the vm manager who ensures the instance dir exists
+  // because in the case of the libvirt manager root privileges are required to
+  // create and set acls on the directory
+  if (!vm_manager::VmManager::EnsureInstanceDirExists(FLAGS_vm_manager,
+                                                      FLAGS_instance_dir)) {
+    LOG(ERROR) << "Failed to create instance directory";
+    return LauncherExitCodes::kInstanceDirCreationError;
+  }
+
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
+
+  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
+    LOG(ERROR) << "Failed to initialize configuration";
+    return LauncherExitCodes::kCuttlefishConfigurationInitError;
+  }
   // Do this early so that the config object is ready for anything that needs it
-  auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker);
+  auto config = vsoc::CuttlefishConfig::Get();
   if (!config) {
+    LOG(ERROR) << "Failed to obtain config singleton";
     return LauncherExitCodes::kCuttlefishConfigurationInitError;
   }
 
@@ -887,36 +954,19 @@ int main(int argc, char** argv) {
     return LauncherExitCodes::kInvalidHostConfiguration;
   }
 
-  if (!vm_manager->EnsureInstanceDirExists()) {
+  if (!vm_manager->EnsureInstanceDirExists(FLAGS_vm_manager,
+                                           FLAGS_instance_dir)) {
     LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
     return LauncherExitCodes::kInstanceDirCreationError;
   }
 
-  if (!vm_manager->CleanPriorFiles()) {
-    LOG(ERROR) << "Failed to clean prior files";
-    return LauncherExitCodes::kPrioFilesCleanupError;
-  }
-
-  if (!UnpackBootImage(*boot_img_unpacker, config)) {
+  if (!UnpackBootImage(*boot_img_unpacker, *config)) {
     LOG(ERROR) << "Failed to unpack boot image";
     return LauncherExitCodes::kBootImageUnpackError;
   }
 
-  if (!WriteCuttlefishEnvironment(config)) {
+  if (!WriteCuttlefishEnvironment(*config)) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
-  }
-
-  auto config_file = GetConfigFile();
-  auto config_link = vsoc::GetGlobalConfigFileLink();
-  // Save the config object before starting any host process
-  if (!config->SaveToFile(config_file)) {
-    return LauncherExitCodes::kCuttlefishConfigurationSaveError;
-  }
-  setenv(vsoc::kCuttlefishConfigEnvVarName, config_file.c_str(), true);
-  if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
-    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
-               << ": " << strerror(errno);
-    return LauncherExitCodes::kCuttlefishConfigurationSaveError;
   }
 
   LOG(INFO) << "The following files contain useful debugging information:";
@@ -925,7 +975,7 @@ int main(int argc, char** argv) {
   }
   LOG(INFO) << "  Android's logcat output: " << config->logcat_path();
   LOG(INFO) << "  Kernel log: " << config->PerInstancePath("kernel.log");
-  LOG(INFO) << "  Instance configuration: " << GetConfigFile();
+  LOG(INFO) << "  Instance configuration: " << GetConfigFilePath(*config);
   LOG(INFO) << "  Instance environment: " << config->cuttlefish_env_path();
   LOG(INFO) << "To access the console run: socat file:$(tty),raw,echo=0 "
             << config->console_path();
@@ -940,7 +990,7 @@ int main(int argc, char** argv) {
   }
   cvd::SharedFD boot_events_pipe;
   if (FLAGS_daemon) {
-    boot_events_pipe = DaemonizeLauncher(config);
+    boot_events_pipe = DaemonizeLauncher(*config);
     if (!boot_events_pipe->IsOpen()) {
       return LauncherExitCodes::kDaemonizationError;
     }
@@ -956,12 +1006,12 @@ int main(int argc, char** argv) {
     }
   }
 
-  LaunchKernelLogMonitor(config, boot_events_pipe);
-  LaunchUsbServerIfEnabled(config);
-  LaunchIvServer(config);
+  LaunchKernelLogMonitor(*config, boot_events_pipe);
+  LaunchUsbServerIfEnabled(*config);
+  LaunchIvServer(*config);
 
   // Initialize the regions that require so before the VM starts.
-  PreLaunchInitializers::Initialize(config);
+  PreLaunchInitializers::Initialize(*config);
 
   // Start the guest VM
   if (!vm_manager->Start()) {

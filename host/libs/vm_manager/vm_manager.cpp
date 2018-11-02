@@ -27,12 +27,12 @@
 
 namespace vm_manager {
 
-VmManager::VmManager(vsoc::CuttlefishConfig* config)
+VmManager::VmManager(const vsoc::CuttlefishConfig* config)
     : config_(config) {}
 
 namespace{
 template <typename T>
-VmManager* GetManagerSingleton(vsoc::CuttlefishConfig* config) {
+VmManager* GetManagerSingleton(const vsoc::CuttlefishConfig* config) {
   static std::shared_ptr<VmManager> vm_manager(new T(config));
   return vm_manager.get();
 }
@@ -41,20 +41,26 @@ VmManager* GetManagerSingleton(vsoc::CuttlefishConfig* config) {
 std::map<std::string, VmManager::VmManagerHelper>
     VmManager::vm_manager_helpers_ = {
         {LibvirtManager::name(),
-         {[](vsoc::CuttlefishConfig* config) {
+         {[](const vsoc::CuttlefishConfig* config) {
             return GetManagerSingleton<LibvirtManager>(config);
           },
-          []() { return true; }}},
+          []() { return true; },
+          [](const std::string& dir_path) {
+            return LibvirtManager::EnsureInstanceDirExists(dir_path);
+          }}},
         {QemuManager::name(),
-         {[](vsoc::CuttlefishConfig* config) {
+         {[](const vsoc::CuttlefishConfig* config) {
             return GetManagerSingleton<QemuManager>(config);
           },
-          []() { return vsoc::HostSupportsQemuCli(); }}}};
+          []() { return vsoc::HostSupportsQemuCli(); },
+          [](const std::string& dir_path) {
+            return QemuManager::EnsureInstanceDirExists(dir_path);
+          }}}};
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
-                          vsoc::CuttlefishConfig* config) {
+                          const vsoc::CuttlefishConfig* config) {
   if (VmManager::IsValidName(vm_manager_name)) {
-    return vm_manager_helpers_[vm_manager_name].first(config);
+    return vm_manager_helpers_[vm_manager_name].builder(config);
   }
   LOG(ERROR) << "Requested invalid VmManager: " << vm_manager_name;
   return nullptr;
@@ -66,7 +72,7 @@ bool VmManager::IsValidName(const std::string& name) {
 
 bool VmManager::IsVmManagerSupported(const std::string& name) {
   return VmManager::IsValidName(name) &&
-         vm_manager_helpers_[name].second();
+         vm_manager_helpers_[name].support_checker();
 }
 
 std::vector<std::string> VmManager::GetValidNames() {
@@ -86,5 +92,11 @@ bool VmManager::UserInGroup(const std::string& group,
     return false;
   }
   return true;
+}
+
+bool VmManager::EnsureInstanceDirExists(const std::string& vm_manager_name,
+                                        const std::string& instance_dir_path) {
+  return vm_manager_helpers_[vm_manager_name].instance_dir_creator(
+      instance_dir_path);
 }
 }  // namespace vm_manager
