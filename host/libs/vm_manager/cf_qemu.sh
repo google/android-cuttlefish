@@ -78,7 +78,7 @@ args=(
     -object "rng-random,id=objrng0,filename=/dev/urandom"
     -device "virtio-rng-pci,rng=objrng0,id=rng0,max-bytes=1024,period=2000,bus=pci.0,addr=0xa"
     -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_dir}/ivshmem_socket_qemu},id=ivsocket"
-    -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
+    -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count},bus=pci.0,addr=0xd"
     -cpu host
     -msg "timestamp=on"
 )
