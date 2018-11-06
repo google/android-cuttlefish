@@ -66,6 +66,23 @@ std::vector<const char*> ToCharPointers(
 }  // namespace
 namespace cvd {
 
+Subprocess::Subprocess(Subprocess&& subprocess)
+    : pid_(subprocess.pid_),
+      started_(subprocess.started_) {
+  // Make sure the moved object no longer controls this subprocess
+  subprocess.pid_ = -1;
+  subprocess.started_ = false;
+}
+
+Subprocess& Subprocess::operator=(Subprocess&& other) {
+  pid_ = other.pid_;
+  started_ = other.started_;
+
+  other.pid_ = -1;
+  other.started_ = false;
+  return *this;
+}
+
 int Subprocess::Wait() {
   if (pid_ < 0) {
     LOG(ERROR)

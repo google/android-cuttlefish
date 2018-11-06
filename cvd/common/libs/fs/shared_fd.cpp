@@ -253,8 +253,8 @@ SharedFD SharedFD::Epoll(int flags) {
       new FileInstance(epoll_create1(flags), errno));
 }
 
-inline bool SharedFD::SocketPair(int domain, int type, int protocol,
-                                 SharedFD* fd0, SharedFD* fd1) {
+bool SharedFD::SocketPair(int domain, int type, int protocol,
+                          SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
   int rval = socketpair(domain, type, protocol, fds);
   if (rval != -1) {
