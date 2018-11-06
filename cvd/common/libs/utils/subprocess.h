@@ -29,7 +29,8 @@ namespace cvd {
 // It's an error to wait twice for the same subprocess.
 class Subprocess {
  public:
-  Subprocess(pid_t pid) : pid_(pid), started_(pid > 0) {}
+  Subprocess(pid_t pid, SharedFD control)
+      : pid_(pid), started_(pid > 0), control_socket_(control) {}
   // The default implementation won't do because we need to reset the pid of the
   // moved object.
   Subprocess(Subprocess&&);
@@ -44,6 +45,9 @@ class Subprocess {
   // fork() succeeded or not, it says nothing about exec or successful
   // completion of the command, that's what Wait is for.
   bool Started() const {return started_;}
+  SharedFD control_socket() {
+    return control_socket_;
+  }
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
@@ -52,7 +56,8 @@ class Subprocess {
   Subprocess(const Subprocess&) = delete;
   Subprocess& operator=(const Subprocess&) = delete;
   pid_t pid_ = -1;
-  bool started_= false;
+  bool started_ = false;
+  SharedFD control_socket_;
 };
 
 // An executable command. Multiple subprocesses can be started from the same
@@ -106,9 +111,16 @@ class Command {
     return false;
   }
   // Starts execution of the command. This method can be called multiple times,
-  // effectively staring multiple (possibly concurrent) instances.
-  Subprocess Start() const;
+  // effectively staring multiple (possibly concurrent) instances. If
+  // with_control_socket is true the returned Subprocess instance will have a
+  // sharedFD that enables communication with the child process.
+  Subprocess Start(bool with_control_socket = false) const;
 
+  std::string GetShortName() const {
+    // This is safe because the constructor guarantees the name of the binary to
+    // be at index 0 on the vector
+    return command_[0];
+  }
  private:
   std::vector<std::string> command_;
   std::map<cvd::SharedFD, int> inherited_fds_{};
