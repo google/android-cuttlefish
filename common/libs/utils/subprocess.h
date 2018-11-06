@@ -30,8 +30,11 @@ namespace cvd {
 class Subprocess {
  public:
   Subprocess(pid_t pid) : pid_(pid), started_(pid > 0) {}
-  Subprocess(Subprocess&&) = default;
+  // The default implementation won't do because we need to reset the pid of the
+  // moved object.
+  Subprocess(Subprocess&&);
   ~Subprocess() = default;
+  Subprocess& operator=(Subprocess&&);
   // Waits for the subprocess to complete. Returns zero if completed
   // successfully, non-zero otherwise.
   int Wait();
