@@ -213,7 +213,7 @@ void CreateBlankImage(
 
 void RemoveFile(const std::string& file) {
   LOG(INFO) << "Removing " << file;
-  cvd::execute({"/bin/rm", "-f", file});
+  remove(file.c_str());
 }
 
 bool ApplyDataImagePolicy(const char* data_image) {
