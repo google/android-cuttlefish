@@ -314,6 +314,14 @@ bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && AdbTunnelEnabled();
 }
 
+bool OnSubprocessExitCallback(cvd::MonitorEntry* entry) {
+  if (FLAGS_restart_subprocesses) {
+    return cvd::ProcessMonitor::RestartOnExitCb(entry);
+  } else {
+    return cvd::ProcessMonitor::DoNotMonitorCb(entry);
+  }
+}
+
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor) {
   if (!AdbUsbEnabled()) {
@@ -330,7 +338,7 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
   cvd::Command usb_server(FLAGS_virtual_usb_manager_binary);
   usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
   process_monitor->StartSubprocess(std::move(usb_server),
-                                   FLAGS_restart_subprocesses);
+                                   OnSubprocessExitCallback);
 }
 
 cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
@@ -377,7 +385,7 @@ void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor) {
     cvd::Command adb_connector(FLAGS_adb_connector_binary);
     adb_connector.AddParameter(GetAdbConnectorPortArg());
     process_monitor->StartSubprocess(std::move(adb_connector),
-                                     FLAGS_restart_subprocesses);
+                                     OnSubprocessExitCallback);
   }
 }
 
@@ -387,7 +395,7 @@ void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
     adb_tunnel.AddParameter(GetGuestPortArg());
     adb_tunnel.AddParameter(GetHostPortArg());
     process_monitor->StartSubprocess(std::move(adb_tunnel),
-                                     FLAGS_restart_subprocesses);
+                                     OnSubprocessExitCallback);
   }
 }
 
@@ -398,7 +406,7 @@ void LaunchVNCServerIfEnabled(cvd::ProcessMonitor* process_monitor) {
     cvd::Command vnc_server(FLAGS_vnc_server_binary);
     vnc_server.AddParameter(port_options);
     process_monitor->StartSubprocess(std::move(vnc_server),
-                                     FLAGS_restart_subprocesses);
+                                     OnSubprocessExitCallback);
   }
 }
 
@@ -1008,10 +1016,11 @@ int main(int argc, char** argv) {
 
   process_monitor.StartSubprocess(
       GetKernelLogMonitorCommand(*config, boot_events_pipe),
-      FLAGS_restart_subprocesses);
+      OnSubprocessExitCallback);
   LaunchUsbServerIfEnabled(*config, &process_monitor);
-  process_monitor.StartSubprocess(GetIvServerCommand(*config),
-                                  FLAGS_restart_subprocesses);
+  process_monitor.StartSubprocess(
+      GetIvServerCommand(*config),
+      OnSubprocessExitCallback);
 
   // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize(*config);
