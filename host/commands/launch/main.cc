@@ -191,6 +191,10 @@ DEFINE_string(qemu_binary,
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
+DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
+DEFINE_string(e2e_test_binary,
+              vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
+              "Location of the region end to end test binary");
 
 DECLARE_string(config_file);
 
@@ -341,15 +345,132 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                                    OnSubprocessExitCallback);
 }
 
+// Maintains the state of the boot process, once a final state is reached
+// (success or failure) it sends the appropriate exit code to the foreground
+// launcher process
+class CvdBootStateMachine {
+ public:
+  CvdBootStateMachine(cvd::SharedFD fg_launcher_pipe)
+      : fg_launcher_pipe_(fg_launcher_pipe), state_(kBootStarted) {}
+
+  // Returns true if the machine is left in a final state
+  bool OnBootEvtReceived(cvd::SharedFD boot_events_pipe) {
+    monitor::BootEvent evt;
+    auto bytes_read = boot_events_pipe->Read(&evt, sizeof(evt));
+    if (bytes_read != sizeof(evt)) {
+      LOG(ERROR) << "Fail to read a complete event, read " << bytes_read
+                 << " bytes only instead of the expected " << sizeof(evt);
+      state_ |= kGuestBootFailed;
+    } else if (evt == monitor::BootEvent::BootCompleted) {
+      LOG(INFO) << "Virtual device booted successfully";
+      state_ |= kGuestBootCompleted;
+    } else if (evt == monitor::BootEvent::BootFailed) {
+      LOG(ERROR) << "Virtual device failed to boot";
+      state_ |= kGuestBootFailed;
+    }  // Ignore the other signals
+
+    return MaybeWriteToForegroundLauncher();
+  }
+
+  bool  OnE2eTestCompleted(int exit_code) {
+    if (exit_code != 0) {
+      LOG(ERROR) << "VSoC e2e test failed";
+      state_ |= kE2eTestFailed;
+    } else {
+      LOG(INFO) << "VSoC e2e test passed";
+      state_ |= kE2eTestPassed;
+    }
+    return MaybeWriteToForegroundLauncher();
+  }
+
+  bool BootCompleted() const {
+    return state_ == (kGuestBootCompleted | kE2eTestPassed);
+  }
+
+  bool BootFailed() const {
+    return state_ & (kGuestBootFailed | kE2eTestFailed);
+  }
+
+ private:
+  void SendExitCode(cvd::LauncherExitCodes exit_code) {
+    fg_launcher_pipe_->Write(&exit_code, sizeof(exit_code));
+    // The foreground process will exit after receiving the exit code, if we try
+    // to write again we'll get a SIGPIPE
+    fg_launcher_pipe_->Close();
+  }
+  bool MaybeWriteToForegroundLauncher() {
+    if (fg_launcher_pipe_->IsOpen()) {
+      if (BootCompleted()) {
+        SendExitCode(cvd::LauncherExitCodes::kSuccess);
+      } else if (state_ & kGuestBootFailed) {
+        SendExitCode(cvd::LauncherExitCodes::kVirtualDeviceBootFailed);
+      } else if (state_ & kE2eTestFailed) {
+        SendExitCode(cvd::LauncherExitCodes::kE2eTestFailed);
+      } else {
+        // No final state was reached
+        return false;
+      }
+    }
+    // Either we sent the code before or just sent it, in any case the state is
+    // final
+    return true;
+  }
+
+  cvd::SharedFD fg_launcher_pipe_;
+  int state_;
+  static const int kBootStarted = 0;
+  static const int kGuestBootCompleted = 1 << 0;
+  static const int kGuestBootFailed = 1 << 1;
+  static const int kE2eTestPassed = 1 << 2;
+  static const int kE2eTestFailed = 1 << 3;
+};
+
+// Abuse the process monitor to make it call us back when boot events are ready
+void SetUpHandlingOfBootEvents(
+    cvd::ProcessMonitor* process_monitor, cvd::SharedFD boot_events_pipe,
+    std::shared_ptr<CvdBootStateMachine> state_machine) {
+  process_monitor->MonitorExistingSubprocess(
+      // A dummy command, so logs are desciptive
+      cvd::Command("boot_events_listener"),
+      // A dummy subprocess, with the boot events pipe as control socket
+      cvd::Subprocess(-1, boot_events_pipe),
+      [boot_events_pipe, state_machine](cvd::MonitorEntry*) {
+        auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
+        return !sent_code;
+      });
+}
+
+void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
+                   std::shared_ptr<CvdBootStateMachine> state_machine) {
+  // Run a command that always succeeds if we are not running e2e tests
+  std::string e2e_test_cmd =
+      FLAGS_run_e2e_test ? FLAGS_e2e_test_binary : "/bin/true";
+  process_monitor->StartSubprocess(
+      cvd::Command(e2e_test_cmd),
+      [state_machine](cvd::MonitorEntry* entry) {
+        auto test_result = entry->proc->Wait();
+        state_machine->OnE2eTestCompleted(test_result);
+        return false;
+      });
+}
+
+// Build the kernel log monitor command. If boot_event_pipe is not NULL, a
+// subscription to boot events from the kernel log monitor will be created and
+// events will appear on *boot_events_pipe
 cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
-                                        cvd::SharedFD boot_events_pipe) {
+                                        cvd::SharedFD* boot_events_pipe) {
   auto log_name = config.kernel_log_socket_name();
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
   cvd::Command kernel_log_monitor(FLAGS_kernel_log_monitor_binary);
   kernel_log_monitor.AddParameter("-log_server_fd=", server);
-  if (boot_events_pipe->IsOpen()) {
-    kernel_log_monitor.AddParameter("-subscriber_fd=", boot_events_pipe);
+  if (boot_events_pipe) {
+    cvd::SharedFD pipe_write_end;
+    if (!cvd::SharedFD::Pipe(boot_events_pipe, &pipe_write_end)) {
+      LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
+      std::exit(LauncherExitCodes::kPipeIOError);
+    }
+    kernel_log_monitor.AddParameter("-subscriber_fd=", pipe_write_end);
   }
   return kernel_log_monitor;
 }
@@ -791,24 +912,22 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
     // Explicitly close here, otherwise we may end up reading forever if the
     // child process dies.
     write_end->Close();
-    monitor::BootEvent evt;
-    while(true) {
-      auto bytes_read = read_end->Read(&evt, sizeof(evt));
-      if (bytes_read != sizeof(evt)) {
-        LOG(ERROR) << "Fail to read a complete event, read " << bytes_read
-                   << " bytes only instead of the expected " << sizeof(evt);
-        std::exit(LauncherExitCodes::kPipeIOError);
-      }
-      if (evt == monitor::BootEvent::BootCompleted) {
-        LOG(INFO) << "Virtual device booted successfully";
-        std::exit(LauncherExitCodes::kSuccess);
-      }
-      if (evt == monitor::BootEvent::BootFailed) {
-        LOG(ERROR) << "Virtual device failed to boot";
-        std::exit(LauncherExitCodes::kVirtualDeviceBootFailed);
-      }
-      // Do nothing for the other signals
+    LauncherExitCodes exit_code;
+    auto bytes_read = read_end->Read(&exit_code, sizeof(exit_code));
+    if (bytes_read != sizeof(exit_code)) {
+      LOG(ERROR) << "Failed to read a complete exit code, read " << bytes_read
+                 << " bytes only instead of the expected " << sizeof(exit_code);
+      exit_code = LauncherExitCodes::kPipeIOError;
+    } else if (exit_code == LauncherExitCodes::kSuccess) {
+      LOG(INFO) << "Virtual device booted successfully";
+    } else if (exit_code == LauncherExitCodes::kVirtualDeviceBootFailed) {
+      LOG(ERROR) << "Virtual device failed to boot";
+    } else if (exit_code == LauncherExitCodes::kE2eTestFailed) {
+      LOG(ERROR) << "Host VSoC region end to end test failed";
+    } else {
+      LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
+    std::exit(exit_code);
   } else {
     // The child returns the write end of the pipe
     if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
@@ -993,10 +1112,10 @@ int main(int argc, char** argv) {
                << launcher_monitor_socket->StrError();
     return cvd::LauncherExitCodes::kMonitorCreationFailed;
   }
-  cvd::SharedFD boot_events_pipe;
+  cvd::SharedFD foreground_launcher_pipe;
   if (FLAGS_daemon) {
-    boot_events_pipe = DaemonizeLauncher(*config);
-    if (!boot_events_pipe->IsOpen()) {
+    foreground_launcher_pipe = DaemonizeLauncher(*config);
+    if (!foreground_launcher_pipe->IsOpen()) {
       return LauncherExitCodes::kDaemonizationError;
     }
   } else {
@@ -1011,19 +1130,33 @@ int main(int argc, char** argv) {
     }
   }
 
+  auto boot_state_machine =
+      std::make_shared<CvdBootStateMachine>(foreground_launcher_pipe);
+
   // Monitor and restart host processes supporting the CVD
   cvd::ProcessMonitor process_monitor;
 
+  cvd::SharedFD boot_events_pipe;
+  // Only subscribe to boot events if running as daemon
   process_monitor.StartSubprocess(
-      GetKernelLogMonitorCommand(*config, boot_events_pipe),
+      GetKernelLogMonitorCommand(*config,
+                                 FLAGS_daemon ? &boot_events_pipe : nullptr),
       OnSubprocessExitCallback);
+
+  SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
+                            boot_state_machine);
+
   LaunchUsbServerIfEnabled(*config, &process_monitor);
+
   process_monitor.StartSubprocess(
       GetIvServerCommand(*config),
       OnSubprocessExitCallback);
 
   // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize(*config);
+
+  // Launch the e2e test after the shared memory is initialized
+  LaunchE2eTest(&process_monitor, boot_state_machine);
 
   // Start the guest VM, don't monitor it, if it fails the device is considered
   // failed

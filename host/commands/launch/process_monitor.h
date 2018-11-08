@@ -44,6 +44,9 @@ class ProcessMonitor {
   // lead to a dealock. If the callback returns false the subprocess will no
   // longer be monitored
   void StartSubprocess(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
+  // Monitors an alreacy started subprocess
+  void MonitorExistingSubprocess(Command cmd, Subprocess sub_process,
+                                 OnSocketReadyCb on_control_socket_ready_cb);
   static bool RestartOnExitCb(MonitorEntry* entry);
   static bool DoNotMonitorCb(MonitorEntry* entry);
 

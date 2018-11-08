@@ -69,6 +69,11 @@ void ProcessMonitor::StartSubprocess(Command cmd, OnSocketReadyCb callback) {
     LOG(ERROR) << "Failed to start process";
     return;
   }
+  MonitorExistingSubprocess(std::move(cmd), std::move(proc), callback);
+}
+
+void ProcessMonitor::MonitorExistingSubprocess(Command cmd, Subprocess proc,
+                                               OnSocketReadyCb callback) {
   {
     std::lock_guard<std::mutex> lock(processes_mutex_);
     monitored_processes_.push_back(MonitorEntry());
