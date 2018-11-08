@@ -2207,13 +2207,19 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     return;
   }
 
-  // Ignore all non-power requests when RADIO_STATE_OFF (except
-  // RIL_REQUEST_GET_SIM_STATUS)
-  if (gRadioPowerState == RADIO_STATE_OFF &&
-      !(request == RIL_REQUEST_RADIO_POWER ||
-        request == RIL_REQUEST_GET_SIM_STATUS)) {
-    gce_ril_env->OnRequestComplete(t, RIL_E_RADIO_NOT_AVAILABLE, NULL, 0);
-    return;
+  // Ignore all non-power requests when RADIO_STATE_OFF.
+  if (gRadioPowerState == RADIO_STATE_OFF) {
+    switch (request) {
+      case RIL_REQUEST_GET_SIM_STATUS:
+      case RIL_REQUEST_OPERATOR:
+      case RIL_REQUEST_RADIO_POWER:
+      case RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE:
+        // Process all the above, even though the radio is off
+        break;
+      default:
+        gce_ril_env->OnRequestComplete(t, RIL_E_RADIO_NOT_AVAILABLE, NULL, 0);
+        return;
+    }
   }
 
   ALOGV("Received request %d", request);
