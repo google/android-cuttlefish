@@ -63,7 +63,6 @@ on fs
 
 
 on post-fs-data
-    start vsoc_guest_region_e2e_test
     mkdir /data/dalvik-cache 0771 root root
     mkdir /data/dalvik-cache/x86 0771 root system
     mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
@@ -81,6 +80,10 @@ on boot
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_forward_proxy
+
+
+on property:ro.boot.vsoc_e2e_test=1
+    start vsoc_guest_region_e2e_test
 
 
 service rename_eth0 /vendor/bin/rename_netiface eth0 buried_eth0
