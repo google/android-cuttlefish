@@ -22,6 +22,7 @@ cc_binary_host {
         "vsoc_shared_memory.cc",
         "wifi_region_handler.cc",
         "boot_image_unpacker.cc",
+        "process_monitor.cc",
     ],
     header_libs: [
         "cuttlefish_glog",

@@ -50,6 +50,7 @@
 #include "host/commands/launch/boot_image_unpacker.h"
 #include "host/commands/launch/launcher_defs.h"
 #include "host/commands/launch/pre_launch_initializers.h"
+#include "host/commands/launch/process_monitor.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
@@ -189,6 +190,7 @@ DEFINE_string(qemu_binary,
               "The qemu binary to use");
 DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
 DEFINE_bool(log_xml, false, "Log the XML machine configuration");
+DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 
 DECLARE_string(config_file);
 
@@ -312,7 +314,8 @@ bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && AdbTunnelEnabled();
 }
 
-void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config) {
+void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
+                              cvd::ProcessMonitor* process_monitor) {
   if (!AdbUsbEnabled()) {
     return;
   }
@@ -326,11 +329,12 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config) {
   }
   cvd::Command usb_server(FLAGS_virtual_usb_manager_binary);
   usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
-  usb_server.Start();
+  process_monitor->StartSubprocess(std::move(usb_server),
+                                   FLAGS_restart_subprocesses);
 }
 
-void LaunchKernelLogMonitor(const vsoc::CuttlefishConfig& config,
-                            cvd::SharedFD boot_events_pipe) {
+cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
+                                        cvd::SharedFD boot_events_pipe) {
   auto log_name = config.kernel_log_socket_name();
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
@@ -339,10 +343,10 @@ void LaunchKernelLogMonitor(const vsoc::CuttlefishConfig& config,
   if (boot_events_pipe->IsOpen()) {
     kernel_log_monitor.AddParameter("-subscriber_fd=", boot_events_pipe);
   }
-  kernel_log_monitor.Start();
+  return kernel_log_monitor;
 }
 
-void LaunchIvServer(const vsoc::CuttlefishConfig& config) {
+cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config) {
   // Resize gralloc region
   auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
   uint32_t screen_buffers_size =
@@ -365,33 +369,36 @@ void LaunchIvServer(const vsoc::CuttlefishConfig& config) {
   ivserver.AddParameter(
       "-client_socket_fd=",
       CreateIvServerUnixSocket(config.ivshmem_client_socket_path()));
-  ivserver.Start();
+  return ivserver;
 }
 
-void LaunchAdbConnectorIfEnabled() {
+void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor) {
   if (AdbConnectorEnabled()) {
     cvd::Command adb_connector(FLAGS_adb_connector_binary);
     adb_connector.AddParameter(GetAdbConnectorPortArg());
-    adb_connector.Start();
+    process_monitor->StartSubprocess(std::move(adb_connector),
+                                     FLAGS_restart_subprocesses);
   }
 }
 
-void LaunchSocketForwardProxyIfEnabled() {
+void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
   if (AdbTunnelEnabled()) {
     cvd::Command adb_tunnel(FLAGS_socket_forward_proxy_binary);
     adb_tunnel.AddParameter(GetGuestPortArg());
     adb_tunnel.AddParameter(GetHostPortArg());
-    adb_tunnel.Start();
+    process_monitor->StartSubprocess(std::move(adb_tunnel),
+                                     FLAGS_restart_subprocesses);
   }
 }
 
-void LaunchVNCServerIfEnabled() {
+void LaunchVNCServerIfEnabled(cvd::ProcessMonitor* process_monitor) {
   if (FLAGS_start_vnc_server) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
     cvd::Command vnc_server(FLAGS_vnc_server_binary);
     vnc_server.AddParameter(port_options);
-    vnc_server.Start();
+    process_monitor->StartSubprocess(std::move(vnc_server),
+                                     FLAGS_restart_subprocesses);
   }
 }
 
@@ -996,23 +1003,30 @@ int main(int argc, char** argv) {
     }
   }
 
-  LaunchKernelLogMonitor(*config, boot_events_pipe);
-  LaunchUsbServerIfEnabled(*config);
-  LaunchIvServer(*config);
+  // Monitor and restart host processes supporting the CVD
+  cvd::ProcessMonitor process_monitor;
+
+  process_monitor.StartSubprocess(
+      GetKernelLogMonitorCommand(*config, boot_events_pipe),
+      FLAGS_restart_subprocesses);
+  LaunchUsbServerIfEnabled(*config, &process_monitor);
+  process_monitor.StartSubprocess(GetIvServerCommand(*config),
+                                  FLAGS_restart_subprocesses);
 
   // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize(*config);
 
-  // Start the guest VM
+  // Start the guest VM, don't monitor it, if it fails the device is considered
+  // failed
   if (!vm_manager->Start()) {
     LOG(ERROR) << "Unable to start vm_manager";
     // TODO(111453282): All host processes should die here.
     return LauncherExitCodes::kVMCreationError;
   }
 
-  LaunchSocketForwardProxyIfEnabled();
-  LaunchVNCServerIfEnabled();
-  LaunchAdbConnectorIfEnabled();
+  LaunchSocketForwardProxyIfEnabled(&process_monitor);
+  LaunchVNCServerIfEnabled(&process_monitor);
+  LaunchAdbConnectorIfEnabled(&process_monitor);
 
   ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";

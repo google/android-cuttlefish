@@ -24,7 +24,23 @@
 #include <glog/logging.h>
 namespace {
 
-pid_t subprocess_impl(const char* const* command, const char* const* envp) {
+cvd::Subprocess subprocess_impl(const char* const* command,
+                                const char* const* envp,
+                                bool with_control_socket) {
+  // The parent socket will get closed on the child on the call to exec, the
+  // child socket will be closed on the parent when this function returns and no
+  // references to the fd are left
+  cvd::SharedFD parent_socket, child_socket;
+  if (with_control_socket) {
+    if (!cvd::SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &parent_socket,
+                                   &child_socket)) {
+      LOG(ERROR) << "Unable to create control socket pair: " << strerror(errno);
+      return cvd::Subprocess(-1, {});
+    }
+    // Remove FD_CLOEXEC from the child socket, ensure the parent has it
+    child_socket->Fcntl(F_SETFD, 0);
+    parent_socket->Fcntl(F_SETFD, FD_CLOEXEC);
+  }
   pid_t pid = fork();
   if (!pid) {
     int rval;
@@ -51,7 +67,7 @@ pid_t subprocess_impl(const char* const* command, const char* const* envp) {
   while (command[i]) {
     LOG(INFO) << command[i++];
   }
-  return pid;
+  return cvd::Subprocess(pid, parent_socket);
 }
 
 std::vector<const char*> ToCharPointers(
@@ -68,18 +84,22 @@ namespace cvd {
 
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
-      started_(subprocess.started_) {
+      started_(subprocess.started_),
+      control_socket_(subprocess.control_socket_) {
   // Make sure the moved object no longer controls this subprocess
   subprocess.pid_ = -1;
   subprocess.started_ = false;
+  subprocess.control_socket_ = SharedFD();
 }
 
 Subprocess& Subprocess::operator=(Subprocess&& other) {
   pid_ = other.pid_;
   started_ = other.started_;
+  control_socket_ = other.control_socket_;
 
   other.pid_ = -1;
   other.started_ = false;
+  other.control_socket_ = SharedFD();
   return *this;
 }
 
@@ -145,13 +165,13 @@ bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   return true;
 }
 
-Subprocess Command::Start() const {
+Subprocess Command::Start(bool with_control_socket) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
-    return Subprocess(subprocess_impl(cmd.data(), NULL));
+    return subprocess_impl(cmd.data(), nullptr, with_control_socket);
   } else {
     auto envp = ToCharPointers(env_);
-    return Subprocess(subprocess_impl(cmd.data(), envp.data()));
+    return subprocess_impl(cmd.data(), envp.data(), with_control_socket);
   }
 }
 
