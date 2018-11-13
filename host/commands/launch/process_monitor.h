@@ -23,24 +23,37 @@
 #include <common/libs/utils/subprocess.h>
 
 namespace cvd {
+
+struct MonitorEntry;
+using OnSocketReadyCb = std::function<bool(MonitorEntry*)>;
+
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
   std::unique_ptr<Subprocess> proc;
+  OnSocketReadyCb on_control_socket_ready_cb;
 };
 
 // Keeps track of launched subprocesses, restarts them if they unexpectedly exit
 class ProcessMonitor {
  public:
   ProcessMonitor();
-  void StartSubprocess(Command cmd, bool restart_on_exit = false);
+  // Starts a managed subprocess with a controlling socket. The
+  // on_control_socket_ready_cb callback will be called when data is ready to be
+  // read from the socket or the subprocess has ended. No member functions of
+  // the process monitor object should be called from the callback as it may
+  // lead to a dealock. If the callback returns false the subprocess will no
+  // longer be monitored
+  void StartSubprocess(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
+  static bool RestartOnExitCb(MonitorEntry* entry);
+  static bool DoNotMonitorCb(MonitorEntry* entry);
 
  private:
-  void RestarterRoutine();
+  void MonitorRoutine();
 
   std::vector<MonitorEntry> monitored_processes_;
   // Used for communication with the restarter thread
-  cvd::SharedFD thread_comm_main_, thread_comm_restarter_;
-  std::thread restarter_;
+  cvd::SharedFD thread_comm_main_, thread_comm_monitor_;
+  std::thread monitor_thread_;
   // Protects access to the monitored_processes_
   std::mutex processes_mutex_;
 };
