@@ -61,3 +61,27 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_MULTILIB := first
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_EXECUTABLE)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := vsoc_managed_region_e2e_test
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := managed_region_e2e_test.cpp
+
+LOCAL_C_INCLUDES := \
+    device/google/cuttlefish_common \
+    device/google/cuttlefish_kernel
+
+LOCAL_CFLAGS += -DGTEST_OS_LINUX_ANDROID -DGTEST_HAS_STD_STRING -Werror -Wall
+
+LOCAL_STATIC_LIBRARIES := \
+    libgtest
+
+LOCAL_SHARED_LIBRARIES := \
+    vsoc_lib \
+    cuttlefish_auto_resources \
+    libcuttlefish_fs \
+    libbase
+
+LOCAL_MULTILIB := first
+LOCAL_VENDOR_MODULE := true
+include $(BUILD_EXECUTABLE)
