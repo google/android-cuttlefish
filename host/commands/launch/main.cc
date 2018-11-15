@@ -183,7 +183,7 @@ DEFINE_bool(daemon, false,
 DEFINE_string(device_title, "", "Human readable name for the instance, "
               "used by the vnc_server for its server title");
 DEFINE_string(setupwizard_mode, "DISABLED",
-	      "One of DISABLED,OPTIONAL,REQUIRED");
+            "One of DISABLED,OPTIONAL,REQUIRED");
 
 DEFINE_string(qemu_binary,
               "/usr/bin/qemu-system-x86_64",
@@ -195,8 +195,6 @@ DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
 DEFINE_string(e2e_test_binary,
               vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
               "Location of the region end to end test binary");
-
-DECLARE_string(config_file);
 
 namespace {
 const std::string kDataPolicyUseExisting = "use_existing";
