@@ -696,6 +696,9 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.add_kernel_cmdline("audit=0");
     }
   }
+  if (FLAGS_run_e2e_test) {
+    tmp_config_obj.add_kernel_cmdline("androidboot.vsoc_e2e_test=1");
+  }
   if (FLAGS_extra_kernel_cmdline.size()) {
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }

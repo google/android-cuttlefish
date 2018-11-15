@@ -142,6 +142,8 @@ int main(int argc, char** argv) {
     auto region = vsoc::E2EPrimaryRegionView::GetInstance();
     region->guest_status(vsoc::layout::e2e_test::E2E_MEMORY_FILLED);
     LOG(INFO) << "stage_1_guest_region_e2e_tests PASSED";
+  } else {
+    LOG(ERROR) << "stage_1_guest_region_e2e_tests FAILED";
   }
   return rval;
 }
