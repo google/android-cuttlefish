@@ -43,7 +43,7 @@ namespace e2e_test {
  * Flags that are used to indicate test status. Some of the latter testing
  * stages rely on initializion that must be done on the peer.
  */
-  enum E2ETestStage : uint32_t {
+enum E2ETestStage : uint32_t {
   // No tests have passed
   E2E_STAGE_NONE = 0,
   // This side has finished writing its pattern to the region
@@ -162,23 +162,6 @@ struct E2EUnfindableRegionLayout : public E2ETestRegionLayout {
   static const char* region_name;
 };
 ASSERT_SHM_COMPATIBLE(E2EUnfindableRegionLayout);
-
-struct E2EManagedTestRegionLayout : public RegionLayout {
-  static constexpr size_t layout_size = 4;
-
-  static const char* region_name;
-  uint32_t val;  // Not needed, here only to avoid an empty struct.
-};
-ASSERT_SHM_COMPATIBLE(E2EManagedTestRegionLayout);
-
-struct E2EManagerTestRegionLayout : public RegionLayout {
-  static constexpr size_t layout_size = 4 * 4;
-
-  static const char* region_name;
-  typedef E2EManagedTestRegionLayout ManagedRegion;
-  uint32_t data[4];  // We don't need more than 4 for the tests
-};
-ASSERT_SHM_COMPATIBLE(E2EManagerTestRegionLayout);
 
 }  // namespace e2e_test
 }  // namespace layout

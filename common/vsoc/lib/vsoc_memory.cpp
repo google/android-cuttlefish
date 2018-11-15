@@ -29,6 +29,7 @@
 #include "common/vsoc/shm/e2e_test_region_layout.h"
 #include "common/vsoc/shm/gralloc_layout.h"
 #include "common/vsoc/shm/input_events_layout.h"
+#include "common/vsoc/shm/managed_e2e_test_region_layout.h"
 #include "common/vsoc/shm/ril_layout.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "common/vsoc/shm/socket_forward_layout.h"
