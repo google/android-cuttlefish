@@ -51,6 +51,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 #
 PRODUCT_PACKAGES += \
     vsoc_guest_region_e2e_test \
+    vsoc_managed_region_e2e_test \
     vsoc_driver_test
 
 #
