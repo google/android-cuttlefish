@@ -76,47 +76,6 @@ constexpr size_t kKeyEventLength = 7;
 constexpr size_t kPointerEventLength = 5;
 constexpr size_t kClientCutTextLength = 7;  // more bytes follow
 
-void AppendInNetworkByteOrder(Message* msg, const std::uint8_t b) {
-  msg->push_back(b);
-}
-
-void AppendInNetworkByteOrder(Message* msg, const std::uint16_t s) {
-  const std::uint16_t n = htons(s);
-  auto p = reinterpret_cast<const std::uint8_t*>(&n);
-  msg->insert(msg->end(), p, p + sizeof n);
-}
-
-void AppendInNetworkByteOrder(Message* msg, const std::uint32_t w) {
-  const std::uint32_t n = htonl(w);
-  auto p = reinterpret_cast<const std::uint8_t*>(&n);
-  msg->insert(msg->end(), p, p + sizeof n);
-}
-
-void AppendInNetworkByteOrder(Message* msg, const int32_t w) {
-  std::uint32_t u{};
-  std::memcpy(&u, &w, sizeof u);
-  AppendInNetworkByteOrder(msg, u);
-}
-
-void AppendInNetworkByteOrder(Message* msg, const std::string& str) {
-  msg->insert(msg->end(), str.begin(), str.end());
-}
-
-void AppendToMessage(Message*) {}
-
-template <typename T, typename... Ts>
-void AppendToMessage(Message* msg, T v, Ts... vals) {
-  AppendInNetworkByteOrder(msg, v);
-  AppendToMessage(msg, vals...);
-}
-
-template <typename... Ts>
-Message CreateMessage(Ts... vals) {
-  Message m;
-  AppendToMessage(&m, vals...);
-  return m;
-}
-
 std::string HostName() {
   auto config = vsoc::CuttlefishConfig::Get();
   return !config || config->device_title().empty() ? std::string{"localhost"}
@@ -259,7 +218,7 @@ void VncClientConnection::GetClientInit() {
 void VncClientConnection::SendServerInit() {
   const std::string server_name = HostName();
   std::lock_guard<std::mutex> guard(m_);
-  auto server_init = CreateMessage(
+  auto server_init = cvd::CreateMessage(
       static_cast<std::uint16_t>(ScreenWidth()),
       static_cast<std::uint16_t>(ScreenHeight()), pixel_format_.bits_per_pixel,
       pixel_format_.depth, pixel_format_.big_endian, pixel_format_.true_color,
@@ -273,17 +232,17 @@ void VncClientConnection::SendServerInit() {
 
 Message VncClientConnection::MakeFrameBufferUpdateHeader(
     std::uint16_t num_stripes) {
-  return CreateMessage(std::uint8_t{0},  // message-type
-                       std::uint8_t{},   // padding
-                       std::uint16_t{num_stripes});
+  return cvd::CreateMessage(std::uint8_t{0},  // message-type
+                            std::uint8_t{},   // padding
+                            std::uint16_t{num_stripes});
 }
 
 void VncClientConnection::AppendRawStripeHeader(Message* frame_buffer_update,
                                                 const Stripe& stripe) {
   static constexpr int32_t kRawEncoding = 0;
-  AppendToMessage(frame_buffer_update, std::uint16_t{stripe.x},
-                  std::uint16_t{stripe.y}, std::uint16_t{stripe.width},
-                  std::uint16_t{stripe.height}, kRawEncoding);
+  cvd::AppendToMessage(frame_buffer_update, std::uint16_t{stripe.x},
+                       std::uint16_t{stripe.y}, std::uint16_t{stripe.width},
+                       std::uint16_t{stripe.height}, kRawEncoding);
 }
 
 void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
@@ -293,22 +252,23 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
   constexpr size_t kJpegSizeThreeByteMax = 4194303;
 
   if (jpeg_size <= kJpegSizeOneByteMax) {
-    AppendToMessage(frame_buffer_update, static_cast<std::uint8_t>(jpeg_size));
+    cvd::AppendToMessage(frame_buffer_update,
+                         static_cast<std::uint8_t>(jpeg_size));
   } else if (jpeg_size <= kJpegSizeTwoByteMax) {
     auto sz = static_cast<std::uint32_t>(jpeg_size);
-    AppendToMessage(frame_buffer_update,
-                    static_cast<std::uint8_t>((sz & 0x7F) | 0x80),
-                    static_cast<std::uint8_t>((sz >> 7) & 0xFF));
+    cvd::AppendToMessage(frame_buffer_update,
+                         static_cast<std::uint8_t>((sz & 0x7F) | 0x80),
+                         static_cast<std::uint8_t>((sz >> 7) & 0xFF));
   } else {
     if (jpeg_size > kJpegSizeThreeByteMax) {
       LOG(FATAL) << "jpeg size is too big: " << jpeg_size << " must be under "
                  << kJpegSizeThreeByteMax;
     }
     const auto sz = static_cast<std::uint32_t>(jpeg_size);
-    AppendToMessage(frame_buffer_update,
-                    static_cast<std::uint8_t>((sz & 0x7F) | 0x80),
-                    static_cast<std::uint8_t>(((sz >> 7) & 0x7F) | 0x80),
-                    static_cast<std::uint8_t>((sz >> 14) & 0xFF));
+    cvd::AppendToMessage(frame_buffer_update,
+                         static_cast<std::uint8_t>((sz & 0x7F) | 0x80),
+                         static_cast<std::uint8_t>(((sz >> 7) & 0x7F) | 0x80),
+                         static_cast<std::uint8_t>((sz >> 14) & 0xFF));
   }
 }
 
@@ -353,8 +313,8 @@ Message VncClientConnection::MakeRawFrameBufferUpdate(
 void VncClientConnection::AppendJpegStripeHeader(Message* frame_buffer_update,
                                                  const Stripe& stripe) {
   static constexpr std::uint8_t kJpegEncoding = 0x90;
-  AppendToMessage(frame_buffer_update, stripe.x, stripe.y, stripe.width,
-                  stripe.height, kTightEncoding, kJpegEncoding);
+  cvd::AppendToMessage(frame_buffer_update, stripe.x, stripe.y, stripe.width,
+                       stripe.height, kTightEncoding, kJpegEncoding);
   AppendJpegSize(frame_buffer_update, stripe.jpeg_data.size());
 }
 
@@ -411,13 +371,13 @@ void VncClientConnection::FrameBufferUpdateRequestHandler(bool aggressive) {
 
 void VncClientConnection::SendDesktopSizeUpdate() {
   static constexpr int32_t kDesktopSizeEncoding = -223;
-  client_.Send(CreateMessage(std::uint8_t{0},   // message-type,
-                             std::uint8_t{},    // padding
-                             std::uint16_t{1},  // one pseudo rectangle
-                             std::uint16_t{0}, std::uint16_t{0},
-                             static_cast<std::uint16_t>(ScreenWidth()),
-                             static_cast<std::uint16_t>(ScreenHeight()),
-                             kDesktopSizeEncoding));
+  client_.Send(cvd::CreateMessage(std::uint8_t{0},   // message-type,
+                                  std::uint8_t{},    // padding
+                                  std::uint16_t{1},  // one pseudo rectangle
+                                  std::uint16_t{0}, std::uint16_t{0},
+                                  static_cast<std::uint16_t>(ScreenWidth()),
+                                  static_cast<std::uint16_t>(ScreenHeight()),
+                                  kDesktopSizeEncoding));
 }
 
 bool VncClientConnection::IsUrgent(
