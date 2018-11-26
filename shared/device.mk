@@ -167,6 +167,13 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
     device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
 
+else ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_cvm \
+    device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
+
 else
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_ivsh \
