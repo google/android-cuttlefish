@@ -33,7 +33,6 @@ cc_binary_host {
         "libcuttlefish_strings",
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
-        "libicuuc",
         "libbase",
         "libnl"
     ],
@@ -45,5 +44,5 @@ cc_binary_host {
         "libxml2",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }
