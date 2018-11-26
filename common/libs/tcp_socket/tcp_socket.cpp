@@ -66,14 +66,14 @@ cvd::Message ClientSocket::Recv(std::size_t length) {
   return buf;
 }
 
-ssize_t ClientSocket::Send(const uint8_t* data, std::size_t size) {
+ssize_t ClientSocket::SendNoSignal(const uint8_t* data, std::size_t size) {
   std::lock_guard<std::mutex> lock(send_lock_);
   ssize_t written{};
   while (written < static_cast<ssize_t>(size)) {
     if (!fd_->IsOpen()) {
       LOG(ERROR) << "fd_ is closed";
     }
-    auto just_written = fd_->Write(data + written, size - written);
+    auto just_written = fd_->Send(data + written, size - written, MSG_NOSIGNAL);
     if (just_written <= 0) {
       LOG(INFO) << "Couldn't write to client: " << strerror(errno);
       {
@@ -87,8 +87,8 @@ ssize_t ClientSocket::Send(const uint8_t* data, std::size_t size) {
   return written;
 }
 
-ssize_t ClientSocket::Send(const Message& message) {
-  return Send(&message[0], message.size());
+ssize_t ClientSocket::SendNoSignal(const Message& message) {
+  return SendNoSignal(&message[0], message.size());
 }
 
 ServerSocket::ServerSocket(int port)

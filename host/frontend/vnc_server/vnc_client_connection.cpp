@@ -184,7 +184,8 @@ bool VncClientConnection::closed() {
 void VncClientConnection::SetupProtocol() {
   static constexpr char kRFBVersion[] = "RFB 003.008\n";
   static constexpr auto kVersionLen = (sizeof kRFBVersion) - 1;
-  client_.Send(reinterpret_cast<const std::uint8_t*>(kRFBVersion), kVersionLen);
+  client_.SendNoSignal(reinterpret_cast<const std::uint8_t*>(kRFBVersion),
+                       kVersionLen);
   auto client_protocol = client_.Recv(kVersionLen);
   if (std::memcmp(&client_protocol[0], kRFBVersion,
                   std::min(kVersionLen, client_protocol.size())) != 0) {
@@ -198,7 +199,7 @@ void VncClientConnection::SetupSecurityType() {
   static constexpr std::uint8_t kNoneSecurity = 0x1;
   // The first '0x1' indicates the number of items that follow
   static constexpr std::uint8_t kOnlyNoneSecurity[] = {0x01, kNoneSecurity};
-  client_.Send(kOnlyNoneSecurity);
+  client_.SendNoSignal(kOnlyNoneSecurity);
   auto client_security = client_.Recv(1);
   if (client_.closed()) {
     return;
@@ -208,7 +209,7 @@ void VncClientConnection::SetupSecurityType() {
                << static_cast<int>(client_security.front());
   }
   static constexpr std::uint8_t kZero[4] = {};
-  client_.Send(kZero);
+  client_.SendNoSignal(kZero);
 }
 
 void VncClientConnection::GetClientInit() {
@@ -227,7 +228,7 @@ void VncClientConnection::SendServerInit() {
       pixel_format_.blue_shift, std::uint16_t{},  // padding
       std::uint8_t{},                             // padding
       static_cast<std::uint32_t>(server_name.size()), server_name);
-  client_.Send(server_init);
+  client_.SendNoSignal(server_init);
 }
 
 Message VncClientConnection::MakeFrameBufferUpdateHeader(
@@ -361,7 +362,7 @@ void VncClientConnection::FrameBufferUpdateRequestHandler(bool aggressive) {
                          ? "portrait"
                          : "landscape")
                  << " mode";
-      client_.Send(MakeFrameBufferUpdate(stripes));
+      client_.SendNoSignal(MakeFrameBufferUpdate(stripes));
     }
     if (aggressive) {
       bb_->FrameBufferUpdateRequestReceived(this);
@@ -371,13 +372,13 @@ void VncClientConnection::FrameBufferUpdateRequestHandler(bool aggressive) {
 
 void VncClientConnection::SendDesktopSizeUpdate() {
   static constexpr int32_t kDesktopSizeEncoding = -223;
-  client_.Send(cvd::CreateMessage(std::uint8_t{0},   // message-type,
-                                  std::uint8_t{},    // padding
-                                  std::uint16_t{1},  // one pseudo rectangle
-                                  std::uint16_t{0}, std::uint16_t{0},
-                                  static_cast<std::uint16_t>(ScreenWidth()),
-                                  static_cast<std::uint16_t>(ScreenHeight()),
-                                  kDesktopSizeEncoding));
+  client_.SendNoSignal(cvd::CreateMessage(
+      std::uint8_t{0},   // message-type,
+      std::uint8_t{},    // padding
+      std::uint16_t{1},  // one pseudo rectangle
+      std::uint16_t{0}, std::uint16_t{0},
+      static_cast<std::uint16_t>(ScreenWidth()),
+      static_cast<std::uint16_t>(ScreenHeight()), kDesktopSizeEncoding));
 }
 
 bool VncClientConnection::IsUrgent(
