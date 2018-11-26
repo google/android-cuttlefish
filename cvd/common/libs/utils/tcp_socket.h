@@ -49,7 +49,7 @@ class ClientSocket {
   Message Recv(std::size_t length);
   // RecvAny will receive whatever is available.
   // An empty message returned indicates error or close.
-  Message RecvAny(size_t length);
+  Message RecvAny(std::size_t length);
   ssize_t Send(const std::uint8_t* data, std::size_t size);
   ssize_t Send(const Message& message);
 
@@ -82,5 +82,26 @@ class ServerSocket {
  private:
   cvd::SharedFD fd_;
 };
+
+void AppendInNetworkByteOrder(Message* msg, const std::uint8_t b);
+void AppendInNetworkByteOrder(Message* msg, const std::uint16_t s);
+void AppendInNetworkByteOrder(Message* msg, const std::uint32_t w);
+void AppendInNetworkByteOrder(Message* msg, const std::int32_t w);
+void AppendInNetworkByteOrder(Message* msg, const std::string& str);
+
+inline void AppendToMessage(Message*) {}
+
+template <typename T, typename... Ts>
+void AppendToMessage(Message* msg, T v, Ts... vals) {
+  AppendInNetworkByteOrder(msg, v);
+  AppendToMessage(msg, vals...);
+}
+
+template <typename... Ts>
+Message CreateMessage(Ts... vals) {
+  Message m;
+  AppendToMessage(&m, vals...);
+  return m;
+}
 
 }  // namespace cvd
