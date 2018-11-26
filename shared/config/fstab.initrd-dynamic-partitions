@@ -1,0 +1,11 @@
+boot /boot emmc defaults recoveryonly
+system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
+# Add all non-dynamic partitions except system, after this comment
+/dev/block/vdb /data ext4 nodev,noatime,nosuid,errors=panic wait,fileencryption=aes-256-xts:aes-256-cts
+/dev/block/vdc /cache ext4 nodev,noatime,nosuid,errors=panic wait
+/dev/block/vdd /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable,first_stage_mount
+# Add all dynamic partitions except system, after this comment
+vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
+product /product ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
+/dev/block/zram0 none swap defaults zramsize=75%
+/tmp /sdcard none defaults,bind recoveryonly
