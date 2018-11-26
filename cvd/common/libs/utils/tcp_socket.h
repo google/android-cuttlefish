@@ -50,12 +50,13 @@ class ClientSocket {
   // RecvAny will receive whatever is available.
   // An empty message returned indicates error or close.
   Message RecvAny(std::size_t length);
-  ssize_t Send(const std::uint8_t* data, std::size_t size);
-  ssize_t Send(const Message& message);
+  // Sends are called with MSG_NOSIGNAL to suppress SIGPIPE
+  ssize_t SendNoSignal(const std::uint8_t* data, std::size_t size);
+  ssize_t SendNoSignal(const Message& message);
 
   template <std::size_t N>
-  ssize_t Send(const std::uint8_t (&data)[N]) {
-    return Send(data, N);
+  ssize_t SendNoSignal(const std::uint8_t (&data)[N]) {
+    return SendNoSignal(data, N);
   }
 
   bool closed() const;
