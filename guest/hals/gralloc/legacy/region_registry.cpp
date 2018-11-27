@@ -41,6 +41,10 @@
 
 #include "gralloc_vsoc_priv.h"
 
+#include <deque>
+#include <map>
+#include <mutex>
+
 // TODO(ghartman): Make the configurable through a property
 static const bool g_log_refs = false;
 
@@ -115,11 +119,73 @@ static inline void unlock_region(GrallocRegion* ) {
 }
 
 
+/*
+ * surface_flinger can drop its last reference to a gralloc buffer (from the
+ * gralloc HAL's point of view) even though it also has work in flight to the
+ * GPU for that target. This causes segfaults in the swiftshader code.
+ *
+ * We create a compromise solution. On unmap we release the pages by mmaping
+ * anonymous memory over the range, but we don't release the address space.
+ * Instead we mark the address space for recycling into a new gralloc buffer.
+ * This means that the shaders can still write, that the writes won't land in
+ * the gralloc buffer, and the gralloc buffer memory can be released.
+ *
+ * When we're preparing to mmap a new gralloc buffer we see if we can recycle
+ * address space from a prior gralloc buffer.
+ *
+ * The protects the application layer from stray memory writes and pointer
+ * references to freed memory. It does mean that bad pixel data can land in
+ * a buffer in the case of a fast map-unmap-map sequence. However, that
+ * could also happen on a physical GPU.
+ *
+ * The alternative to this would be to create an elaborate reference counting
+ * mechanism below both gralloc and SwiftShader. However, we want to keep the
+ * SwiftShader code clean, so that seems undesirable.
+ *
+ * This problem also comes up for physical GPUs b/62267886. Background fo rthis
+ * solution is in b/118777601
+ */
+
+static std::map<size_t, std::deque<void*>> g_recycled_addrs;
+std::mutex g_recycled_addrs_mutex;
+
+
+
+static void* recycle_mmap(void *addr, size_t length, int prot, int flags,
+                          int fd, off_t offset) {
+  if (!addr) {
+    std::lock_guard<std::mutex> guard(g_recycled_addrs_mutex);
+    auto it = g_recycled_addrs.find(length);
+    if (it != g_recycled_addrs.end()) {
+      if (it->second.size()) {
+        addr = it->second.front();
+        flags |= MAP_FIXED;
+        it->second.pop_front();
+      }
+    }
+  }
+  return mmap(addr, length, prot, flags, fd, offset);
+}
+
+
+static int recycle_munmap(void *addr, size_t length) {
+  // Do this first so we don't hold the mutex during the syscall
+  if (addr != mmap(addr, length, PROT_READ|PROT_WRITE,
+                   MAP_PRIVATE|MAP_ANONYMOUS|MAP_FIXED, -1, 0)) {
+    // Be conservative. Don't recycle here.
+    return -1;
+  }
+  std::lock_guard<std::mutex> guard(g_recycled_addrs_mutex);
+  g_recycled_addrs[length].push_back(addr);
+  return 0;
+}
+
+
 void* reference_region(const char* op, const private_handle_t* hnd) {
   char name_buf[ASHMEM_NAME_LEN];
   GrallocRegion* region = lock_region_for_handle(hnd, name_buf);
   if (!region->base_) {
-    void* mappedAddress = mmap(
+    void* mappedAddress = recycle_mmap(
         0, hnd->total_size, PROT_READ|PROT_WRITE, MAP_SHARED, hnd->fd, 0);
     if (mappedAddress == MAP_FAILED) {
       ALOGE("Could not mmap %s", strerror(errno));
@@ -168,7 +234,7 @@ int unreference_region(const char* op, const private_handle_t* hnd) {
   if (!region->num_references_) {
     ALOGI("Unmapped %s hnd=%p fd=%d base=%p", name_buf, hnd,
           hnd->fd, region->base_);
-    if (munmap(region->base_, hnd->total_size) < 0) {
+    if (recycle_munmap(region->base_, hnd->total_size) < 0) {
       ALOGE("Could not unmap %s", strerror(errno));
     }
     region->base_ = 0;
