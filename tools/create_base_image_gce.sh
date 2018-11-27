@@ -70,6 +70,7 @@ sudo chroot /mnt/image /usr/bin/apt install -y "${tmp_debs[@]}"
 # install tools dependencies
 sudo chroot /mnt/image /usr/bin/apt install -y default-jre
 sudo chroot /mnt/image /usr/bin/apt install -y unzip bzip2
+sudo chroot /mnt/image /usr/bin/apt install -y aapt
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
 # Clean up the builder's version of resolv.conf
