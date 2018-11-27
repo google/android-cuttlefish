@@ -51,7 +51,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
   LOG(INFO) << key << "=" << value;
 }
 
-pid_t BuildAndRunQemuCmd(const vsoc::CuttlefishConfig* config) {
+cvd::Subprocess BuildAndRunQemuCmd(const vsoc::CuttlefishConfig* config) {
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", config->qemu_binary());
   LogAndSetEnv("instance_name", config->instance_name());
@@ -79,7 +79,9 @@ pid_t BuildAndRunQemuCmd(const vsoc::CuttlefishConfig* config) {
   LogAndSetEnv("ivshmem_vector_count",
                       std::to_string(config->ivshmem_vector_count()));
   LogAndSetEnv("usb_v1_socket_name", config->usb_v1_socket_name());
-  return cvd::subprocess({vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh")});
+
+  cvd::Command qemu_cmd(vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh"));
+  return qemu_cmd.Start();
 }
 
 }  // namespace
