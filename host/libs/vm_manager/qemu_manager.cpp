@@ -54,6 +54,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 }  // namespace
 
 const std::string QemuManager::name() { return "qemu_cli"; }
+
 bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
   if (config->gpu_mode() != vsoc::kGpuModeGuestAshmem) {
     return false;
@@ -66,6 +67,13 @@ bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
   config->add_kernel_cmdline(
       "androidboot.hardware.hwcomposer=cutf_ivsh_ashmem");
   return true;
+}
+
+void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
+  // PCI domain 0, bus 0, device 3, function 0
+  // This is controlled with 'addr=0x3' in cf_qemu.sh
+  config->add_kernel_cmdline(
+    "androidboot.boot_devices=pci0000:00/0000:00:03.0");
 }
 
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
@@ -90,6 +98,7 @@ cvd::Command QemuManager::StartCommand(){
   LogAndSetEnv("vendor_image_path", config_->vendor_image_path());
   LogAndSetEnv("metadata_image_path", config_->metadata_image_path());
   LogAndSetEnv("product_image_path", config_->product_image_path());
+  LogAndSetEnv("super_image_path", config_->super_image_path());
   LogAndSetEnv("wifi_tap_name", config_->wifi_tap_name());
   LogAndSetEnv("mobile_tap_name", config_->mobile_tap_name());
   LogAndSetEnv("kernel_log_socket_name",
