@@ -28,6 +28,7 @@ cvd_host_executables := \
     socket_forward_proxy \
     adb_connector \
     stop_cvd \
+    stream_audio \
     vnc_server \
     record_audio \
     cf_qemu.sh \
