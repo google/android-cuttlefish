@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "stream_audio",
-    "vnc_server",
-    "adb_connector",
-]
+cc_binary_host {
+    name: "stream_audio",
+    srcs: [
+        "main.cpp",
+    ],
+    shared_libs: [
+        "cuttlefish_tcp_socket",
+        "libbase",
+        "libcuttlefish_utils",
+        "libcuttlefish_fs",
+        "vsoc_lib",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libjsoncpp",
+        "libgflags",
+    ],
+    cpp_std: "c++17",
+    defaults: ["cuttlefish_host_only"],
+}
