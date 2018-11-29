@@ -135,6 +135,11 @@ DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
               "Location of the vnc server binary.");
+DEFINE_bool(start_stream_audio, true,
+            "Whether to start the stream audio process.");
+DEFINE_string(stream_audio_binary,
+              vsoc::DefaultHostArtifactsPath("bin/stream_audio"),
+              "Location of the stream_audio binary.");
 DEFINE_string(virtual_usb_manager_binary,
               vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"),
               "Location of the virtual usb manager binary.");
@@ -146,6 +151,8 @@ DEFINE_string(ivserver_binary,
               "Location of the ivshmem server binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
+DEFINE_int32(stream_audio_port, GetPerInstanceDefault(7444),
+             "The port on which stream_audio should listen.");
 DEFINE_string(socket_forward_proxy_binary,
               vsoc::DefaultHostArtifactsPath("bin/socket_forward_proxy"),
               "Location of the socket_forward_proxy binary.");
@@ -525,6 +532,16 @@ void LaunchVNCServerIfEnabled(cvd::ProcessMonitor* process_monitor) {
     cvd::Command vnc_server(FLAGS_vnc_server_binary);
     vnc_server.AddParameter(port_options);
     process_monitor->StartSubprocess(std::move(vnc_server),
+                                     OnSubprocessExitCallback);
+  }
+}
+
+void LaunchStreamAudioIfEnabled(cvd::ProcessMonitor* process_monitor) {
+  if (FLAGS_start_stream_audio) {
+    auto port_options = "-port=" + std::to_string(FLAGS_stream_audio_port);
+    cvd::Command stream_audio(FLAGS_stream_audio_binary);
+    stream_audio.AddParameter(port_options);
+    process_monitor->StartSubprocess(std::move(stream_audio),
                                      OnSubprocessExitCallback);
   }
 }
@@ -1169,6 +1186,7 @@ int main(int argc, char** argv) {
 
   LaunchSocketForwardProxyIfEnabled(&process_monitor);
   LaunchVNCServerIfEnabled(&process_monitor);
+  LaunchStreamAudioIfEnabled(&process_monitor);
   LaunchAdbConnectorIfEnabled(&process_monitor);
 
   ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
