@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,8 +14,4 @@
 # limitations under the License.
 #
 
-DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
-
-$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
-$(call inherit-product, device/google/cuttlefish/shared/device.mk)
-
+$(call inherit-product, build/target/product/go_defaults.mk)

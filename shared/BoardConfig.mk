@@ -25,6 +25,9 @@ BOARD_VENDORIMAGE_PARTITION_SIZE := 100663296 # 96MB
 TARGET_COPY_OUT_VENDOR := vendor
 
 TARGET_NO_RECOVERY := true
+ifneq (,$(CUTTLEFISH_SYSTEM_AS_ROOT))
+BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
+endif
 BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
 TARGET_USERIMAGES_USE_EXT4 := true
@@ -115,8 +118,6 @@ GCE_PROTOBUF_SHARED_LIB := $(VSOC_PROTOBUF_SHARED_LIB)
 STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
 INIT_BOOTCHART := true
-
-DEVICE_MANIFEST_FILE := device/google/cuttlefish/shared/config/manifest.xml
 
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
