@@ -113,7 +113,9 @@ void ConfigureOperatingSystem(xmlNode* root, const std::string& kernel,
   xmlNewProp(type, xc("machine"), xc("pc"));
 
   xmlNewChild(os, nullptr, xc("kernel"), xc(kernel.c_str()));
-  xmlNewChild(os, nullptr, xc("initrd"), xc(initrd.c_str()));
+  if (!initrd.empty()) {
+    xmlNewChild(os, nullptr, xc("initrd"), xc(initrd.c_str()));
+  }
   xmlNewChild(os, nullptr, xc("cmdline"), xc(args.c_str()));
   xmlNewChild(os, nullptr, xc("dtb"), xc(dtb.c_str()));
 }

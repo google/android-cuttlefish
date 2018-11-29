@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,30 +14,21 @@
  * limitations under the License.
  */
 
-/dts-v1/;
+#ifndef __gles1_types_h
+#define __gles1_types_h
 
-/ {
-	firmware {
-		android {
-			compatible = "android,firmware";
-			fstab {
-				compatible = "android,fstab";
-				system {
-					compatible = "android,system";
-					dev = "/dev/block/vda";
-					type = "ext4";
-					mnt_flags = "noatime,ro,errors=panic";
-					fsmgr_flags = "wait";
-				};
+#include <GLES/gl.h>
+#include <GLES/glext.h>
 
-				vendor {
-					compatible = "android,vendor";
-					dev = "/dev/block/vdd";
-					type = "ext4";
-					mnt_flags = "noatime,ro,errors=panic";
-					fsmgr_flags = "wait";
-				};
-			};
-		};
-	};
-};
+#include <mutex>
+
+extern std::mutex g_context_mutex;
+
+struct gles1_wrapper_context_t;
+extern gles1_wrapper_context_t* (*getGLES1Context)(void);
+
+#define GET_CONTEXT \
+	std::lock_guard<std::mutex> lock(g_context_mutex); \
+	gles1_wrapper_context_t *ctx = getGLES1Context()
+
+#endif
