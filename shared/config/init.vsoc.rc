@@ -61,6 +61,9 @@ on fs
 
     chmod 0755 /system/bin/dhcpcd_wlan0
 
+on post-fs
+    # Set netd memlock rlimit to 8MB b/119279144
+    setrlimit 8 8388608 8388608
 
 on post-fs-data
     mkdir /data/dalvik-cache 0771 root root
