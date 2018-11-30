@@ -71,14 +71,14 @@ args=(
     -chardev "socket,id=charserial0,path=${kernel_log_socket_name:-${default_dir}/kernel-log}"
     -device "isa-serial,chardev=charserial0,id=serial0"
     -chardev "socket,id=charserial1,path=${console_path:-${default_dir}/console},server,nowait"
-    -device "isa-serial,chardev=charserial1,id=serial1"
+    -device "pci-serial,chardev=charserial1,id=serial1,bus=pci.0,addr=0xc"
     -chardev "file,id=charchannel0,path=${logcat_path:-${default_dir}/logcat},append=on"
     -device "virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=cf-logcat"
     -device "virtio-balloon-pci,id=balloon0,bus=pci.0,addr=0x9"
     -object "rng-random,id=objrng0,filename=/dev/urandom"
     -device "virtio-rng-pci,rng=objrng0,id=rng0,max-bytes=1024,period=2000,bus=pci.0,addr=0xa"
     -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_dir}/ivshmem_socket_qemu},id=ivsocket"
-    -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
+    -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count},bus=pci.0,addr=0xd"
     -cpu host
     -msg "timestamp=on"
 )
