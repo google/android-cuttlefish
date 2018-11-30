@@ -23,7 +23,7 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 include device/google/cuttlefish/shared/device.mk
 PRODUCT_SHIPPING_API_LEVEL := 27
 
-CUTTLEFISH_SYSTEM_AS_ROOT := true
+TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
 
 PRODUCT_CHARACTERISTICS := nosdcard
 

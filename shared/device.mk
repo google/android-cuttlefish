@@ -129,7 +129,6 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
     device/google/cuttlefish/shared/config/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
-    device/google/cuttlefish/shared/config/fstab.vsoc:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
     frameworks/av/media/libeffects/data/audio_effects.conf:system/etc/audio_effects.conf \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
@@ -156,6 +155,26 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.software.app_widgets.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.app_widgets.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:system/etc/bluetooth/controller_properties.json \
+
+
+#
+# The fstab requires special handling. For system-as-root builds, we *must*
+# retrieve the vendor partition mount options from DTB, as system must be
+# "pristine" to support GSI. For builds with an initrd, we prefer not to
+# rely on DTB, and *must* retrieve the partition mount options from an fstab
+# in the initrd instead. (In either case, the fstab *must also* be installed to
+# /vendor/etc)
+#
+ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
+
+else
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.vsoc \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
+
+endif
 
 
 #

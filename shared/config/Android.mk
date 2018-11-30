@@ -38,6 +38,10 @@ $(LOCAL_BUILT_MODULE): $(LOCAL_PATH)/gen_wpa_supplicant_conf.sh
 
 include $(CLEAR_VARS)
 
+# This file is deprecated and is kept round for host tools compatibility with
+# older target filesystem images. It is not necessary to pass a .dtb blob
+# through to QEMU any more.
+
 LOCAL_MODULE := initrd_root_dtb
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(HOST_OUT)/config
