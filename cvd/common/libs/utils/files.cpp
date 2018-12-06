@@ -28,14 +28,7 @@
 namespace cvd {
 
 bool FileHasContent(const std::string& path) {
-  struct stat st;
-  if (stat(path.c_str(), &st) == -1) {
-    return false;
-  }
-  if (st.st_size == 0) {
-    return false;
-  }
-  return true;
+  return FileSize(path) > 0;
 }
 
 bool DirectoryExists(const std::string& path) {
@@ -64,6 +57,14 @@ std::string AbsolutePath(const std::string& path) {
     return {};
   }
   return std::string{buffer.data()} + "/" + path;
+}
+
+off_t FileSize(const std::string& path) {
+  struct stat st;
+  if (stat(path.c_str(), &st) == -1) {
+    return 0;
+  }
+  return st.st_size;
 }
 
 }  // namespace cvd
