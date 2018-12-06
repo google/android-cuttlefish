@@ -23,7 +23,6 @@ import android.net.ConnectivityManager;
 import android.util.Log;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.ServiceManager;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.List;
