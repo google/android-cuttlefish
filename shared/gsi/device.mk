@@ -21,7 +21,7 @@ $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 
 # use include below so PRODUCT_SHIPPING_API_LEVEL can be overriden
 include device/google/cuttlefish/shared/device.mk
-PRODUCT_SHIPPING_API_LEVEL := 27
+PRODUCT_SHIPPING_API_LEVEL := 28
 
 CUTTLEFISH_SYSTEM_AS_ROOT := true
 
@@ -29,7 +29,7 @@ PRODUCT_CHARACTERISTICS := nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
-    rild.libpath=libvsoc-ril.so \
+    vendor.rild.libpath=libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
     ro.gsm.home.operator.alpha=Android \
