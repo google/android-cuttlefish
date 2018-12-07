@@ -19,4 +19,4 @@ $(call inherit-product, device/google/cuttlefish/shared/auto/device.mk)
 PRODUCT_NAME := aosp_cf_x86_auto
 PRODUCT_DEVICE := vsoc_x86
 PRODUCT_MODEL := Cuttlefish x86 auto
-# PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86/auto/overlay
+PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86/auto/overlay
