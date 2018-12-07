@@ -16,6 +16,7 @@
 
 /* Utility that uses an adb connection as the login shell. */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,25 +41,104 @@
 // The code in the commands/launch directory also follows these conventions by
 // default.
 //
-const char SERIAL_NUMBER_PREFIX[] = "CUTTLEFISHCVD";
-const char USER_PREFIX[] = "cvd-";
 
-int main(int argc, char* argv[]) {
-  char* user = getenv("USER");
-  const char* instance = "01";
-  if (user && !memcmp(user, USER_PREFIX, sizeof(USER_PREFIX) - 1)) {
-    instance = user + sizeof(USER_PREFIX) - 1;
+static const char* InstanceNumberAsStr(void) {
+  static const char kUserPrefix[] = "cvd-";
+
+  const char* user = getenv("USER");
+  if (user && !strncmp(user, kUserPrefix, sizeof(kUserPrefix) - 1)) {
+    return user + sizeof(kUserPrefix) - 1;
   }
-  char** new_argv = malloc((argc + 5) * sizeof(char*));
-  new_argv[0] = "/usr/bin/adb";
-  new_argv[1] = "-s";
-  size_t sz = strlen(SERIAL_NUMBER_PREFIX) + strlen(instance) + 1;
-  new_argv[2] = malloc(sz);
-  if (!new_argv[2]) {
+  return "01";
+}
+
+static int InstanceNumberAsInt(void) {
+  const char* instance_str = InstanceNumberAsStr();
+  char* end = NULL;
+  int result = (int)strtol(instance_str, &end, 10);
+  return *end || result < 1 ? 1 : result;
+}
+
+static char* TCPInstanceStr(void) {
+  enum { kPortWidth = 4, kFirstPort = 6520 };
+  const char kIPPrefix[] = "127.0.0.1:";
+  size_t sz = (sizeof kIPPrefix) + kPortWidth;
+  char* instance_str = malloc(sz);
+  if (!instance_str) {
     fprintf(stderr, "Unable to allocate %zu bytes for instance name\n", sz);
     exit(2);
   }
-  snprintf(new_argv[2], sz, "%s%s", SERIAL_NUMBER_PREFIX, instance);
+  int instance_port = InstanceNumberAsInt() - 1 + kFirstPort;
+  snprintf(instance_str, sz, "%s%d", kIPPrefix, instance_port);
+  return instance_str;
+}
+
+static char* USBInstanceStr(void) {
+  const char kSerialNumberPrefix[] = "CUTTLEFISHCVD";
+  const char* instance = InstanceNumberAsStr();
+  size_t sz = (sizeof kSerialNumberPrefix) + strlen(instance);
+  char* instance_str = malloc(sz);
+  if (!instance_str) {
+    fprintf(stderr, "Unable to allocate %zu bytes for instance name\n", sz);
+    exit(2);
+  }
+  snprintf(instance_str, sz, "%s%s", kSerialNumberPrefix, instance);
+  return instance_str;
+}
+
+static char* InstanceStr(void) {
+  char* possible_device_names[] = {TCPInstanceStr(), USBInstanceStr()};
+  enum {
+    kNumDeviceNames =
+        sizeof possible_device_names / sizeof possible_device_names[0]
+  };
+
+  FILE* adb_devices_cmd_stream = popen("/usr/bin/adb devices", "r");
+  char line[128] = {0};
+  while (fgets(line, sizeof line, adb_devices_cmd_stream) != NULL) {
+    for (int i = 0; i < kNumDeviceNames; ++i) {
+      if (strstr(line, possible_device_names[i])) {
+        return possible_device_names[i];
+      }
+    }
+  }
+  return NULL;
+}
+
+static char* VsocUserName(void) {
+  const char kVsocUserPrefix[] = "vsoc-";
+  const char* num = InstanceNumberAsStr();
+  const size_t length = (sizeof kVsocUserPrefix) + strlen(num);
+  char* vsoc_user_name = malloc(length);
+  snprintf(vsoc_user_name, length, "%s%s", kVsocUserPrefix, num);
+  return vsoc_user_name;
+}
+
+static char* VsocHomeAdbShellPath(void) {
+  const char kVsocAdbShellFmt[] = "/home/%s/bin/adbshell";
+  const char* vsoc_user_name = VsocUserName();
+  size_t length = (sizeof kVsocAdbShellFmt) + strlen(vsoc_user_name);
+  char* adb_shell_path = malloc(length);
+  snprintf(adb_shell_path, length, kVsocAdbShellFmt, vsoc_user_name);
+  return adb_shell_path;
+}
+
+static void TryExecHomeAdbShell(char* argv[]) {
+  char* home_shell = VsocHomeAdbShellPath();
+  if (access(home_shell, X_OK) != -1
+      && strcmp(argv[0], home_shell)) {
+    argv[0] = home_shell;
+    execv(home_shell, argv);
+    assert(0 && "execv() returned");
+  }
+}
+
+int main(int argc, char* argv[]) {
+  TryExecHomeAdbShell(argv);
+  char** new_argv = malloc((argc + 5) * sizeof(*new_argv));
+  new_argv[0] = "/usr/bin/adb";
+  new_argv[1] = "-s";
+  new_argv[2] = InstanceStr();
   new_argv[3] = "shell";
   new_argv[4] = "/system/bin/sh";
 
@@ -67,7 +147,7 @@ int main(int argc, char* argv[]) {
   // * ssh with no arguments comes in with 1 arg of -adbshell. The command
   //   given above does the right thing if we don't invoke the shell.
   if (argc == 1) {
-    new_argv[4] = 0;
+    new_argv[4] = NULL;
   }
   // * simple shell commands come in with a -c and a single string. The
   //   problem here is that adb doesn't preserve spaces, so we need
@@ -84,7 +164,7 @@ int main(int argc, char* argv[]) {
   //   "scp: with ambiguous target." We might be able to fix this with
   //   some creative parsing of the arguments, but that seems like
   //   overkill.
-  new_argv[argc + 4] = 0;
+  new_argv[argc + 4] = NULL;
   execv(new_argv[0], new_argv);
   // This never should happen
   return 2;

@@ -137,7 +137,6 @@ destroy_interfaces(){
 
 start() {
     /sbin/modprobe vhci-hcd
-    /sbin/modprobe mac80211_hwsim
     # This has to be expressed in very basic shell syntax, so we can't
     # use the typical array idiom.
     for i in /sys/devices/platform/vhci_hcd/attach \
@@ -165,7 +164,6 @@ stop() {
       destroy_legacy_interfaces $i
       destroy_interfaces $i
     done
-    /sbin/rmmod mac80211_hwsim
 }
 
 usage() {
