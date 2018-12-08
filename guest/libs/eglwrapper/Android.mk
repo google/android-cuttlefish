@@ -27,7 +27,9 @@ LOCAL_SRC_FILES := \
     egl_wrapper_context.cpp \
     egl_wrapper_entry.cpp
 LOCAL_CFLAGS := -Wall -Werror
-LOCAL_C_INCLUDES := frameworks/native/opengl/include
+LOCAL_C_INCLUDES := \
+	frameworks/native/opengl/include \
+	external/swiftshader
 LOCAL_SHARED_LIBRARIES := libdl
 
 LOCAL_VENDOR_MODULE := true

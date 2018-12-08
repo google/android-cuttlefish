@@ -14,22 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef __egl_types_h
-#define __egl_types_h
+#pragma once
 
-typedef const char* EGLconstcharptr;
-
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-
-#include "scoped_txn.h"
-#include "src/Main/FrameBufferAndroidHook.hpp"
-
-struct egl_wrapper_context_t;
-extern egl_wrapper_context_t* (*getEGLContext)(void);
-
-#define GET_CONTEXT \
-	ScopedTxn lock; \
-	egl_wrapper_context_t *ctx = getEGLContext()
-
-#endif
+class ScopedTxn {
+public:
+	ScopedTxn();
+	~ScopedTxn();
+};

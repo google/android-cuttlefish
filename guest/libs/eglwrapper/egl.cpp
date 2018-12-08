@@ -17,13 +17,14 @@
 #include "egl_wrapper_context.h"
 #undef GET_CONTEXT
 
+#include <mutex>
 #include <dlfcn.h>
 
 egl_wrapper_context_t* (*getEGLContext)(void) = NULL;
 
 static egl_wrapper_context_t g_egl_wrapper_context;
 
-static egl_wrapper_context_t *egl(void) {
+static egl_wrapper_context_t *egl_context(void) {
 	return &g_egl_wrapper_context;
 }
 
@@ -31,7 +32,35 @@ void egl_wrapper_context_t::setContextAccessor(egl_wrapper_context_t* (*f)(void)
 	getEGLContext = f;
 }
 
-std::mutex g_context_mutex;
+static std::mutex context_mutex;
+thread_local std::unique_lock<std::mutex> g_current_txn(
+		context_mutex, std::defer_lock);
+
+ScopedTxn::ScopedTxn() {
+	g_current_txn.lock();
+}
+
+ScopedTxn::~ScopedTxn() {
+	if (g_current_txn.owns_lock()) {
+	  g_current_txn.unlock();
+	}
+}
+
+
+static int nativeWindowHook(NativeWindowRequest* request) {
+	static t_nativeWindowFunction next = nullptr;
+	if (request->command == RegisterInnerFunction) {
+		next = request->inner_function;
+		return 0;
+	}
+	if (!next) {
+		return 0;
+	}
+	if (g_current_txn.owns_lock()) {
+	  g_current_txn.unlock();
+	}
+	return next(request);
+}
 
 static void *getProc(const char *name, void *userData) {
 	return dlsym(userData, name);
@@ -40,5 +69,11 @@ static void *getProc(const char *name, void *userData) {
 __attribute__((constructor)) void setup() {
 	void *egl_handle = dlopen("/vendor/lib/gl_impl/swiftshader/libEGL_swiftshader.so", RTLD_NOW);
 	g_egl_wrapper_context.initDispatchByName(getProc, egl_handle);
-	g_egl_wrapper_context.setContextAccessor(egl);
+	g_egl_wrapper_context.setContextAccessor(egl_context);
+	t_nativeWindowFunction (*hook)(t_nativeWindowFunction) =
+		(t_nativeWindowFunction (*)(t_nativeWindowFunction))
+		g_egl_wrapper_context.eglGetProcAddress("eglHookNativeWindow");
+	if (hook) {
+		hook(nativeWindowHook);
+	}
 }
