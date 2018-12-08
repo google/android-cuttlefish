@@ -15,11 +15,14 @@
  */
 #pragma once
 
+#include <sys/types.h>
+
 #include <string>
 
 namespace cvd {
 bool FileHasContent(const std::string& path);
 bool DirectoryExists(const std::string& path);
+off_t FileSize(const std::string& path);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
