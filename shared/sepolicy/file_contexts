@@ -33,5 +33,6 @@
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish  u:object_r:hal_dumpstate_impl_exec:s0
 /vendor/bin/hw/android\.hardware\.health@2\.0-service\.cuttlefish  u:object_r:hal_health_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health\.storage@1\.0-service\.cuttlefish u:object_r:hal_health_storage_default_exec:s0
+/vendor/bin/hw/android\.hardware\.neuralnetworks@1\.2-service-sample-.*   u:object_r:hal_neuralnetworks_sample_exec:s0
 /vendor/bin/ip_link_add  u:object_r:ip_link_add_exec:s0
 /vendor/bin/hw/android\.hardware\.thermal@2\.0-service\.mock  u:object_r:hal_thermal_default_exec:s0
