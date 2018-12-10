@@ -22,13 +22,15 @@ typedef void* GLvoidptr;
 
 #include <GLES3/gl3.h>
 
-#include "scoped_txn.h"
+#include <mutex>
+
+extern std::mutex g_context_mutex;
 
 struct gles3_wrapper_context_t;
 extern gles3_wrapper_context_t* (*getGLES3Context)(void);
 
 #define GET_CONTEXT \
-	ScopedTxn lock; \
+	std::lock_guard<std::mutex> lock(g_context_mutex); \
 	gles3_wrapper_context_t *ctx = getGLES3Context()
 
 #endif
