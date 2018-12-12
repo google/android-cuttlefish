@@ -79,6 +79,7 @@ cvd::Subprocess BuildAndRunQemuCmd(const vsoc::CuttlefishConfig* config) {
   LogAndSetEnv("ivshmem_vector_count",
                       std::to_string(config->ivshmem_vector_count()));
   LogAndSetEnv("usb_v1_socket_name", config->usb_v1_socket_name());
+  LogAndSetEnv("vsock_guest_cid", std::to_string(config->vsock_guest_cid()));
 
   cvd::Command qemu_cmd(vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh"));
   return qemu_cmd.Start();
