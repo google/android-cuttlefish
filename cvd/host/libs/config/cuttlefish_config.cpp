@@ -108,6 +108,7 @@ const char* kWifiTapName = "wifi_tap_name";
 const char* kWifiGuestMacAddr = "wifi_guest_mac_addr";
 const char* kWifiHostMacAddr = "wifi_host_mac_addr";
 const char* kEntropySource = "entropy_source";
+const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kUuid = "uuid";
 const char* kDisableDacSecurity = "disable_dac_security";
@@ -437,6 +438,14 @@ void CuttlefishConfig::set_entropy_source(const std::string& entropy_source) {
   (*dictionary_)[kEntropySource] = entropy_source;
 }
 
+int CuttlefishConfig::vsock_guest_cid() const {
+  return (*dictionary_)[kVsockGuestCid].asInt();
+}
+
+void CuttlefishConfig::set_vsock_guest_cid(int vsock_guest_cid) {
+  (*dictionary_)[kVsockGuestCid] = vsock_guest_cid;
+}
+
 std::string CuttlefishConfig::uuid() const {
   return (*dictionary_)[kUuid].asString();
 }
@@ -627,6 +636,11 @@ std::string GetDefaultMempath() {
   return GetPerInstanceDefault("/var/run/shm/cvd-");
 }
 
+int GetDefaultPerInstanceVsockCid() {
+  constexpr int kFirstGuestCid = 3;
+  return vsoc::HostSupportsVsock() ? GetPerInstanceDefault(kFirstGuestCid) : 0;
+}
+
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
   return (cvd::StringFromEnv("ANDROID_HOST_OUT",
                              cvd::StringFromEnv("HOME", ".")) +
@@ -645,6 +659,13 @@ bool HostSupportsQemuCli() {
   static bool supported =
       std::system(
           "/usr/lib/cuttlefish-common/bin/capability_query.py qemu_cli") == 0;
+  return supported;
+}
+
+bool HostSupportsVsock() {
+  static bool supported =
+      std::system(
+          "/usr/lib/cuttlefish-common/bin/capability_query.py vsock") == 0;
   return supported;
 }
 }  // namespace vsoc
