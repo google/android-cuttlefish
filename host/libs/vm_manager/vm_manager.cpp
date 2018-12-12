@@ -77,7 +77,7 @@ bool VmManager::IsVmManagerSupported(const std::string& name) {
 
 std::vector<std::string> VmManager::GetValidNames() {
   std::vector<std::string> ret = {};
-  for (auto key_val: vm_manager_helpers_) {
+  for (const auto& key_val: vm_manager_helpers_) {
     ret.push_back(key_val.first);
   }
   return ret;
