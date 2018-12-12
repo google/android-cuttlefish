@@ -173,6 +173,9 @@ class CuttlefishConfig {
   std::string entropy_source() const;
   void set_entropy_source(const std::string& entropy_source);
 
+  void set_vsock_guest_cid(int vsock_guest_cid);
+  int vsock_guest_cid() const;
+
   std::string uuid() const;
   void set_uuid(const std::string& uuid);
 
@@ -237,6 +240,7 @@ int GetPerInstanceDefault(int base);
 
 std::string GetDefaultPerInstanceDir();
 std::string GetDefaultMempath();
+int GetDefaultPerInstanceVsockCid();
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
@@ -244,4 +248,5 @@ std::string DefaultGuestImagePath(const std::string& file);
 // Whether the installed host packages support calling qemu directly instead of
 // through libvirt
 bool HostSupportsQemuCli();
+bool HostSupportsVsock();
 }  // namespace vsoc
