@@ -207,7 +207,7 @@ std::set<std::string> CuttlefishConfig::kernel_cmdline() const {
 void CuttlefishConfig::set_kernel_cmdline(
     const std::set<std::string>& kernel_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
-  for (auto arg : kernel_cmdline) {
+  for (const auto& arg : kernel_cmdline) {
     args_json_obj.append(arg);
   }
   (*dictionary_)[kKernelCmdline] = args_json_obj;
@@ -215,7 +215,7 @@ void CuttlefishConfig::set_kernel_cmdline(
 void CuttlefishConfig::add_kernel_cmdline(
     const std::set<std::string>& extra_args) {
   std::set<std::string> cmdline = kernel_cmdline();
-  for (auto arg : extra_args) {
+  for (const auto& arg : extra_args) {
     if (cmdline.count(arg)) {
       LOG(ERROR) << "Kernel argument " << arg << " is duplicated";
     }
