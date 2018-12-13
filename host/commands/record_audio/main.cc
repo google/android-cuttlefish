@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   auto worker = audio_data_rv->StartWorker();
 
   std::unique_ptr<WaveWriter> writer;
-  int64_t frameCount = 0ll;
+  int64_t frameCount = 0LL;
 
   // The configuration the writer is setup for.
   gce_audio_message writer_hdr;
