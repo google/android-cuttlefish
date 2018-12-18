@@ -137,6 +137,8 @@ destroy_interfaces(){
 
 start() {
     /sbin/modprobe vhci-hcd
+    /sbin/modprobe vhost_vsock
+    chmod 0666 /dev/vhost-vsock
     # This has to be expressed in very basic shell syntax, so we can't
     # use the typical array idiom.
     for i in /sys/devices/platform/vhci_hcd/attach \
