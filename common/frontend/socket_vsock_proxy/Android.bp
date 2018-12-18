@@ -13,7 +13,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "socket_forward_proxy",
-    "socket_vsock_proxy",
-]
+cc_binary {
+    name: "socket_vsock_proxy",
+    srcs: [
+        "main.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libcuttlefish_strings",
+        "liblog",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    target: {
+        host: {
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libjsoncpp",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
+}

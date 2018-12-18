@@ -157,13 +157,16 @@ DEFINE_int32(stream_audio_port, GetPerInstanceDefault(7444),
 DEFINE_string(socket_forward_proxy_binary,
               vsoc::DefaultHostArtifactsPath("bin/socket_forward_proxy"),
               "Location of the socket_forward_proxy binary.");
+DEFINE_string(socket_vsock_proxy_binary,
+              vsoc::DefaultHostArtifactsPath("bin/socket_vsock_proxy"),
+              "Location of the socket_vsock_proxy binary.");
 DEFINE_string(adb_mode, "tunnel",
               "Mode for adb connection. Can be 'usb' for usb forwarding, "
-              "'tunnel' for tcp connection, or a comma separated list of types "
-              "as in 'usb,tunnel'");
+              "'tunnel' for tcp connection, 'vsock_tunnel' for vsock tcp,"
+              "or a comma separated list of types as in 'usb,tunnel'");
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
-            "server. Only relevant with --adb_mode=tunnel");
+            "server. Only relevant with --adb_mode=tunnel or vsock_tunnel");
 DEFINE_string(adb_connector_binary,
               vsoc::DefaultHostArtifactsPath("bin/adb_connector"),
               "Location of the adb_connector binary. Only relevant if "
@@ -215,6 +218,7 @@ const std::string kDataPolicyAlwaysCreate = "always_create";
 const std::string kDataPolicyResizeUpTo= "resize_up_to";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
+constexpr char kAdbModeVsockTunnel[] = "vsock_tunnel";
 constexpr char kAdbModeUsb[] = "usb";
 
 void CreateBlankImage(
@@ -373,12 +377,16 @@ bool AdbTunnelEnabled() {
   return AdbModeEnabled(kAdbModeTunnel);
 }
 
+bool AdbVsockTunnelEnabled() {
+  return FLAGS_vsock_guest_cid > 2 && AdbModeEnabled(kAdbModeVsockTunnel);
+}
+
 bool AdbUsbEnabled() {
   return AdbModeEnabled(kAdbModeUsb);
 }
 
 void ValidateAdbModeFlag() {
-  if (!AdbUsbEnabled() && !AdbTunnelEnabled()) {
+  if (!AdbUsbEnabled() && !AdbTunnelEnabled() && !AdbVsockTunnelEnabled()) {
     LOG(INFO) << "ADB not enabled";
   }
 }
@@ -389,7 +397,7 @@ cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
 }
 
 bool AdbConnectorEnabled() {
-  return FLAGS_run_adb_connector && AdbTunnelEnabled();
+  return FLAGS_run_adb_connector && (AdbTunnelEnabled() || AdbVsockTunnelEnabled());
 }
 
 bool OnSubprocessExitCallback(cvd::MonitorEntry* entry) {
@@ -589,6 +597,19 @@ void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
     cvd::Command adb_tunnel(FLAGS_socket_forward_proxy_binary);
     adb_tunnel.AddParameter(GetGuestPortArg());
     adb_tunnel.AddParameter(GetHostPortArg());
+    process_monitor->StartSubprocess(std::move(adb_tunnel),
+                                     OnSubprocessExitCallback);
+  }
+}
+
+void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
+  if (AdbVsockTunnelEnabled()) {
+    cvd::Command adb_tunnel(FLAGS_socket_vsock_proxy_binary);
+    adb_tunnel.AddParameter("--guest_port=5555");
+    adb_tunnel.AddParameter(
+        std::string{"--host_port="} + std::to_string(GetHostPort()));
+    adb_tunnel.AddParameter(
+        std::string{"--vsock_guest_cid="} + std::to_string(FLAGS_vsock_guest_cid));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
                                      OnSubprocessExitCallback);
   }
@@ -1256,6 +1277,7 @@ int main(int argc, char** argv) {
   }
 
   LaunchSocketForwardProxyIfEnabled(&process_monitor);
+  LaunchSocketVsockProxyIfEnabled(&process_monitor);
   LaunchVNCServerIfEnabled(&process_monitor);
   LaunchStreamAudioIfEnabled(&process_monitor);
   LaunchAdbConnectorIfEnabled(&process_monitor);
