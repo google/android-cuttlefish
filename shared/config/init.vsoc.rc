@@ -85,6 +85,7 @@ on boot
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_forward_proxy
+    start socket_vsock_proxy
 
 
 on property:ro.boot.vsoc_e2e_test=1
@@ -126,6 +127,8 @@ service vsoc_input_service /vendor/bin/vsoc_input_service
 
 
 service socket_forward_proxy /vendor/bin/socket_forward_proxy
+
+service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -guest_port=5555
 
 
 service vport_trigger /vendor/bin/vport_trigger
