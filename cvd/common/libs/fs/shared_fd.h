@@ -531,7 +531,7 @@ class FileInstance {
 /* Methods that need both a fully defined SharedFD and a fully defined
    FileInstance. */
 
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
+inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cvd
 
