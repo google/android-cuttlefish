@@ -42,6 +42,7 @@ Depends:
  qemu-system-common (>= 2.8.0),
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
+ rsync,
  socat,
  vde2,
  ${misc:Depends}
