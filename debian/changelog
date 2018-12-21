@@ -1,8 +1,12 @@
-cuttlefish-common (0.9+nmu2) UNRELEASED; urgency=medium
+cuttlefish-common (0.9+nmu3) UNRELEASED; urgency=medium
 
+  [ Steven Laver ]
   * Add acl package dependency for setfacl (required by install_zip.sh)
 
- -- Steven Laver <lavers@google.com>  Wed, 26 Sep 2018 16:45:35 -0700
+  [ Greg Hartman ]
+  * Add rsync dependency
+
+ -- Greg Hartman <ghartman@google.com>  Thu, 20 Dec 2018 20:39:23 -0800
 
 cuttlefish-common (0.9+nmu1) unstable; urgency=medium
 
