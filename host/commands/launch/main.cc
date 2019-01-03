@@ -179,6 +179,10 @@ DEFINE_string(wifi_interface, "", // default handled on ParseCommandLine
               "Network interface to use for wifi");
 DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for wifi");
+DEFINE_int32(vsock_guest_cid,
+             vsoc::GetDefaultPerInstanceVsockCid(),
+             "Guest identifier for vsock. Disabled if under 3.");
+
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
 
@@ -819,6 +823,8 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
   tmp_config_obj.set_wifi_host_mac_addr(FLAGS_host_mac_address);
+
+  tmp_config_obj.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
 
   tmp_config_obj.set_entropy_source("/dev/urandom");
   tmp_config_obj.set_uuid(FLAGS_uuid);

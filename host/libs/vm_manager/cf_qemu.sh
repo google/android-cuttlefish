@@ -97,6 +97,11 @@ if [[ -n "${usb_v1_socket_name}" ]]; then
       -device "virtserialport,bus=virtio-serial0.0,nr=2,chardev=charchannel1,id=channel1,name=cf-gadget-usb-v1"
   )
 fi
+
+if [[ ${vsock_guest_cid:-0} -gt 2 ]]; then
+  args+=(-device "vhost-vsock-pci,guest-cid=${vsock_guest_cid}")
+fi
+
 printf %s "exec ${qemu_binary=/usr/bin/qemu-system-x86_64}"
 for i in "${args[@]}"; do
   case "$i" in
