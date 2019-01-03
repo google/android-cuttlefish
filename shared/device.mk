@@ -316,3 +316,13 @@ PRODUCT_PACKAGES += \
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
+
+# Recovery mode
+ifneq ($(TARGET_NO_RECOVERY),true)
+PRODUCT_PACKAGES += \
+    socket_forward_proxy.recovery \
+
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/init.recovery.vsoc.rc:recovery/root/init.recovery.vsoc.rc \
+
+endif
