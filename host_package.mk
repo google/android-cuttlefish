@@ -58,6 +58,8 @@ cvd_host_shared_libraries := \
     libnl \
     libc++ \
     libicuuc-host \
+    libicui18n-host \
+    libandroidicu-host \
     libvirglrenderer_cuttlefish \
     libEGL_swiftshader \
     libGLESv1_CM_swiftshader \
