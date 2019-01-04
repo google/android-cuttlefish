@@ -20,13 +20,15 @@
 #include <GLES/gl.h>
 #include <GLES/glext.h>
 
-#include "scoped_txn.h"
+#include <mutex>
+
+extern std::mutex g_context_mutex;
 
 struct gles1_wrapper_context_t;
 extern gles1_wrapper_context_t* (*getGLES1Context)(void);
 
 #define GET_CONTEXT \
-	ScopedTxn lock; \
+	std::lock_guard<std::mutex> lock(g_context_mutex); \
 	gles1_wrapper_context_t *ctx = getGLES1Context()
 
 #endif
