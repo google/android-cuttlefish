@@ -767,8 +767,9 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   if (!use_ramdisk) {
-    tmp_config_obj.add_kernel_cmdline("root=/dev/vda init=/init");
+    tmp_config_obj.add_kernel_cmdline("root=/dev/vda");
   }
+  tmp_config_obj.add_kernel_cmdline("init=/init");
   tmp_config_obj.add_kernel_cmdline(
       concat("androidboot.serialno=", FLAGS_serial_number));
   tmp_config_obj.add_kernel_cmdline("mac80211_hwsim.radios=0");
