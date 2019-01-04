@@ -27,6 +27,7 @@ cc_binary_host {
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libicuuc",
+        "libandroidicu",
     ],
     static_libs: [
         "libcuttlefish_host_config",
