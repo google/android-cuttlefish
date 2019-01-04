@@ -53,14 +53,6 @@ namespace cvd {
 const size_t GceAudioOutputStream::kOutBufferSize;
 const size_t GceAudioOutputStream::kOutLatency;
 
-namespace {
-template <typename F> struct Thunker :
-  ThunkerBase<audio_stream, GceAudioOutputStream, F>{};
-
-template <typename F> struct OutThunker :
-  ThunkerBase<audio_stream_out, GceAudioOutputStream, F>{};
-}
-
 GceAudioOutputStream::GceAudioOutputStream(GceAudio* dev) :
     audio_stream_out(),
     dev_(dev),
@@ -285,50 +277,38 @@ int GceAudioOutputStream::Open(
       0;
 #endif
   out->common.get_sample_rate =
-      Thunker<uint32_t()>::call<&GceAudioOutputStream::GetSampleRate>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::GetSampleRate>;
   out->common.set_sample_rate =
-      Thunker<int(uint32_t)>::call<&GceAudioOutputStream::SetSampleRate>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::SetSampleRate>;
   out->common.get_buffer_size =
-      Thunker<size_t()>::call<&GceAudioOutputStream::GetBufferSize>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::GetBufferSize>;
   out->common.get_channels =
-      Thunker<audio_channel_mask_t()>::call<
-        &GceAudioOutputStream::GetChannels>;
-  out->common.get_format = Thunker<audio_format_t()>::call<
-    &GceAudioOutputStream::GetFormat>;
-  out->common.set_format = Thunker<int(audio_format_t)>::call<
-    &GceAudioOutputStream::SetFormat>;
-  out->common.standby = Thunker<int()>::call<&GceAudioOutputStream::Standby>;
-  out->common.dump = Thunker<int(int)>::call<&GceAudioOutputStream::Dump>;
-  out->common.get_device = Thunker<audio_devices_t()>::call<
-    &GceAudioOutputStream::GetDevice>;
-  out->common.set_device = Thunker<int(audio_devices_t)>::call<
-    &GceAudioOutputStream::SetDevice>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::GetChannels>;
+  out->common.get_format = cvd::thunk<audio_stream, &GceAudioOutputStream::GetFormat>;
+  out->common.set_format = cvd::thunk<audio_stream, &GceAudioOutputStream::SetFormat>;
+  out->common.standby = cvd::thunk<audio_stream, &GceAudioOutputStream::Standby>;
+  out->common.dump = cvd::thunk<audio_stream, &GceAudioOutputStream::Dump>;
+  out->common.get_device = cvd::thunk<audio_stream, &GceAudioOutputStream::GetDevice>;
+  out->common.set_device = cvd::thunk<audio_stream, &GceAudioOutputStream::SetDevice>;
   out->common.set_parameters =
-      Thunker<int(const char*)>::call<
-      &GceAudioOutputStream::SetParameters>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::SetParameters>;
   out->common.get_parameters =
-      Thunker<char*(const char *)>::call<
-        &GceAudioOutputStream::GetParameters>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::GetParameters>;
   out->common.add_audio_effect =
-      Thunker<int(effect_handle_t)>::call<
-        &GceAudioOutputStream::AddAudioEffect>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::AddAudioEffect>;
   out->common.remove_audio_effect =
-      Thunker<int(effect_handle_t)>::call<
-        &GceAudioOutputStream::RemoveAudioEffect>;
+      cvd::thunk<audio_stream, &GceAudioOutputStream::RemoveAudioEffect>;
+
   out->get_latency =
-      OutThunker<uint32_t()>::call<
-        &GceAudioOutputStream::GetLatency>;
+      cvd::thunk<audio_stream_out, &GceAudioOutputStream::GetLatency>;
   out->set_volume =
-      OutThunker<int(float, float)>::call<&GceAudioOutputStream::SetVolume>;
+      cvd::thunk<audio_stream_out, &GceAudioOutputStream::SetVolume>;
   out->write =
-      OutThunker<ssize_t(const void*, size_t)>::call<
-        &GceAudioOutputStream::Write>;
+      cvd::thunk<audio_stream_out, &GceAudioOutputStream::Write>;
   out->get_render_position =
-      OutThunker<int(uint32_t*)>::call<
-        &GceAudioOutputStream::GetRenderPosition>;
+      cvd::thunk<audio_stream_out, &GceAudioOutputStream::GetRenderPosition>;
   out->get_next_write_timestamp =
-      OutThunker<int(int64_t*)>::call<
-        &GceAudioOutputStream::GetNextWriteTimestamp>;
+      cvd::thunk<audio_stream_out, &GceAudioOutputStream::GetNextWriteTimestamp>;
   out->device_ = devices;
   out->frame_size_ = GceAudioFrameSize(out.get());
 

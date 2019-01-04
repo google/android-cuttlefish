@@ -52,10 +52,8 @@ class MutexTest {
 
   void Run() {
     {
-      ScopedThread thread_a(
-          MutexTestThunker<void*()>::call<&MutexTest::FastThread>, this);
-      ScopedThread thread_b(
-          MutexTestThunker<void*()>::call<&MutexTest::SlowThread>, this);
+      ScopedThread thread_a(cvd::thunk<void, &MutexTest::FastThread>, this);
+      ScopedThread thread_b(cvd::thunk<void, &MutexTest::SlowThread>, this);
     }
     LOG(INFO) << "MutexTest: completed at stage "
               << stage_
@@ -64,9 +62,6 @@ class MutexTest {
   }
 
 protected:
-  template <typename F> struct MutexTestThunker :
-  ThunkerBase<void, MutexTest, F>{};
-
   void* FastThread() {
     mutex_.Lock();
     CHECK(busy_ == NULL);
@@ -111,11 +106,11 @@ class NotifyOneTest {
   void Run() {
     {
       ScopedThread thread_s(
-          Thunker<void*()>::call<&NotifyOneTest::SignalThread>, this);
+          cvd::thunk<void, &NotifyOneTest::SignalThread>, this);
       ScopedThread thread_w1(
-          Thunker<void*()>::call<&NotifyOneTest::WaitThread>, this);
+          cvd::thunk<void, &NotifyOneTest::WaitThread>, this);
       ScopedThread thread_w2(
-          Thunker<void*()>::call<&NotifyOneTest::WaitThread>, this);
+          cvd::thunk<void, &NotifyOneTest::WaitThread>, this);
     }
     LOG(INFO) << "NotifyOneTest: completed, signalled "
               << signalled_
@@ -124,9 +119,6 @@ class NotifyOneTest {
   }
 
 protected:
-  template <typename F> struct Thunker :
-  ThunkerBase<void, NotifyOneTest, F>{};
-
   void* SignalThread() {
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
@@ -164,20 +156,17 @@ class NotifyAllTest {
   void Run() {
     {
       ScopedThread thread_s(
-          Thunker<void*()>::call<&NotifyAllTest::SignalThread>, this);
+          cvd::thunk<void, &NotifyAllTest::SignalThread>, this);
       ScopedThread thread_w1(
-          Thunker<void*()>::call<&NotifyAllTest::WaitThread>, this);
+          cvd::thunk<void, &NotifyAllTest::WaitThread>, this);
       ScopedThread thread_w2(
-          Thunker<void*()>::call<&NotifyAllTest::WaitThread>, this);
+          cvd::thunk<void, &NotifyAllTest::WaitThread>, this);
     }
     printf("NotifyAllTest: completed, signalled %d (%s)\n",
            signalled_, (signalled_ == 2) ? "PASSED" : "FAILED");
   }
 
 protected:
-  template <typename F> struct Thunker :
-  ThunkerBase<void, NotifyAllTest, F>{};
-
   void* SignalThread() {
     SleepUntil(MonotonicTimePoint::Now() + Milliseconds(100));
     mutex_.Lock();
@@ -211,18 +200,15 @@ class WaitUntilTest {
     start_ = MonotonicTimePoint::Now();
     {
       ScopedThread thread_s(
-          Thunker<void*()>::call<&WaitUntilTest::SignalThread>, this);
+          cvd::thunk<void, &WaitUntilTest::SignalThread>, this);
       ScopedThread thread_w2(
-          Thunker<void*()>::call<&WaitUntilTest::WaitThread>, this);
+          cvd::thunk<void, &WaitUntilTest::WaitThread>, this);
     }
     printf("WaitUntilTest: completed, stage %d (%s)\n",
            stage_, (stage_ == FINISHED) ? "PASSED" : "FAILED");
   }
 
 protected:
-  template <typename F> struct Thunker :
-  ThunkerBase<void, WaitUntilTest, F>{};
-
   void* SignalThread() {
     SleepUntil(start_ + Milliseconds(200));
     mutex_.Lock();
