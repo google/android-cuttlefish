@@ -247,6 +247,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.health@2.0-service.cuttlefish
 
+# Health Storage
+PRODUCT_PACKAGES += \
+    android.hardware.health.storage@1.0-service.cuttlefish
+
 #
 # Sensors
 #
