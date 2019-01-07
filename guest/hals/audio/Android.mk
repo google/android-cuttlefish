@@ -55,7 +55,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(VSOC_STLPORT_STATIC_LIBS)
 
 LOCAL_CFLAGS := \
-    -Wall -Werror \
+    -Wall -Werror -std=c++17 \
     $(VSOC_VERSION_CFLAGS)
 
 

@@ -32,13 +32,6 @@ extern "C"{
 
 namespace cvd {
 
-namespace {
-template <typename F> struct Thunker :
-  ThunkerBase<audio_stream, GceAudioInputStream, F>{};
-template <typename F> struct InThunker :
-  ThunkerBase<audio_stream_in, GceAudioInputStream, F>{};
-}
-
 #if defined(AUDIO_DEVICE_API_VERSION_3_0)
 static inline size_t GceAudioFrameSize(const audio_stream_in* s) {
   return audio_stream_in_frame_size(s);
@@ -63,36 +56,30 @@ GceAudioInputStream::GceAudioInputStream(
       gain_(0.0),
       device_(devices) {
   common.get_sample_rate =
-      Thunker<uint32_t()>::call<&GceAudioInputStream::GetSampleRate>;
+      cvd::thunk<audio_stream, &GceAudioInputStream::GetSampleRate>;
   common.set_sample_rate =
-      Thunker<int(uint32_t)>::call<&GceAudioInputStream::SetSampleRate>;
+      cvd::thunk<audio_stream, &GceAudioInputStream::SetSampleRate>;
   common.get_buffer_size =
-      Thunker<size_t()>::call<&GceAudioInputStream::GetBufferSize>;
+      cvd::thunk<audio_stream, &GceAudioInputStream::GetBufferSize>;
   common.get_channels =
-      Thunker<audio_channel_mask_t()>::call<&GceAudioInputStream::GetChannels>;
-  common.get_device =
-      Thunker<audio_devices_t()>::call<&GceAudioInputStream::GetDevice>;
-  common.set_device =
-      Thunker<int(audio_devices_t)>::call<&GceAudioInputStream::SetDevice>;
-  common.get_format =
-      Thunker<audio_format_t()>::call<&GceAudioInputStream::GetFormat>;
-  common.set_format =
-      Thunker<int(audio_format_t)>::call<&GceAudioInputStream::SetFormat>;
-  common.standby =
-      Thunker<int()>::call<&GceAudioInputStream::Standby>;
-  common.dump =
-      Thunker<int(int)>::call<&GceAudioInputStream::Dump>;
+      cvd::thunk<audio_stream, &GceAudioInputStream::GetChannels>;
+  common.get_device = cvd::thunk<audio_stream, &GceAudioInputStream::GetDevice>;
+  common.set_device = cvd::thunk<audio_stream, &GceAudioInputStream::SetDevice>;
+  common.get_format = cvd::thunk<audio_stream, &GceAudioInputStream::GetFormat>;
+  common.set_format = cvd::thunk<audio_stream, &GceAudioInputStream::SetFormat>;
+  common.standby = cvd::thunk<audio_stream, &GceAudioInputStream::Standby>;
+  common.dump = cvd::thunk<audio_stream, &GceAudioInputStream::Dump>;
   common.set_parameters = GceAudio::SetStreamParameters;
   common.get_parameters =
-      Thunker<char*(const char *)>::call<&GceAudioInputStream::GetParameters>;
+      cvd::thunk<audio_stream, &GceAudioInputStream::GetParameters>;
   common.add_audio_effect =
-      Thunker<int(effect_handle_t)>::call<&GceAudioInputStream::AddAudioEffect>;
-  common.remove_audio_effect = Thunker<int(effect_handle_t)>::call<
+      cvd::thunk<audio_stream, &GceAudioInputStream::AddAudioEffect>;
+  common.remove_audio_effect = cvd::thunk<audio_stream,
     &GceAudioInputStream::RemoveAudioEffect>;
-  set_gain = InThunker<int(float)>::call<&GceAudioInputStream::SetGain>;
-  read = InThunker<ssize_t(void*, size_t)>::call<
+  set_gain = cvd::thunk<audio_stream_in, &GceAudioInputStream::SetGain>;
+  read = cvd::thunk<audio_stream_in,
     &GceAudioInputStream::Read>;
-  get_input_frames_lost = InThunker<uint32_t()>::call<
+  get_input_frames_lost = cvd::thunk<audio_stream_in,
     &GceAudioInputStream::GetInputFramesLost>;
   frame_size_ = GceAudioFrameSize(this);
   buffer_model_.reset(

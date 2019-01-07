@@ -44,6 +44,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_CFLAGS := -DLOG_TAG=\"VSoC-Sensors\" \
     $(VSOC_VERSION_CFLAGS) \
+    -std=c++17 \
     -Werror -Wall -Wno-missing-field-initializers -Wno-unused-parameter
 
 LOCAL_C_INCLUDES := \

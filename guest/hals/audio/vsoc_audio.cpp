@@ -41,15 +41,6 @@ using cvd::Mutex;
 
 namespace cvd {
 
-namespace {
-template <typename F> struct HWDeviceThunker :
-  ThunkerBase<hw_device_t, GceAudio, F>{};
-template <typename F> struct AudioThunker :
-  ThunkerBase<audio_hw_device, GceAudio, F>{};
-template <typename F> struct AudioThreadThunker :
-  ThunkerBase<void, GceAudio, F>{};
-}
-
 GceAudio::~GceAudio() { }
 
 int GceAudio::Close() {
@@ -299,7 +290,7 @@ int GceAudio::Open(const hw_module_t* module, const char* name,
   rval->common.tag = HARDWARE_DEVICE_TAG;
   rval->common.version = version_;
   rval->common.module = const_cast<hw_module_t *>(module);
-  rval->common.close = HWDeviceThunker<int()>::call<&GceAudio::Close>;
+  rval->common.close = cvd::thunk<hw_device_t, &GceAudio::Close>;
 
 #if !defined(AUDIO_DEVICE_API_VERSION_2_0)
   // This HAL entry is supported only on AUDIO_DEVICE_API_VERSION_1_0.
@@ -308,51 +299,45 @@ int GceAudio::Open(const hw_module_t* module, const char* name,
   // Skipping the assignment is ok: the memset in the constructor already
   // put a NULL here.
   rval->get_supported_devices =
-      AudioThunker<uint32_t()>::call<&GceAudio::GetSupportedDevices>;
+      cvd::thunk<audio_hw_device, &GceAudio::GetSupportedDevices>;
 #endif
-  rval->init_check = AudioThunker<int()>::call<&GceAudio::InitCheck>;
+  rval->init_check = cvd::thunk<audio_hw_device, &GceAudio::InitCheck>;
 
   rval->set_voice_volume =
-      AudioThunker<int(float)>::call<&GceAudio::SetVoiceVolume>;
+      cvd::thunk<audio_hw_device, &GceAudio::SetVoiceVolume>;
   rval->set_master_volume =
-      AudioThunker<int(float)>::call<&GceAudio::SetMasterVolume>;
+      cvd::thunk<audio_hw_device, &GceAudio::SetMasterVolume>;
   rval->get_master_volume =
-      AudioThunker<int(float*)>::call<&GceAudio::GetMasterVolume>;
+      cvd::thunk<audio_hw_device, &GceAudio::GetMasterVolume>;
 
 #if defined(AUDIO_DEVICE_API_VERSION_2_0)
   rval->set_master_mute =
-      AudioThunker<int(bool)>::call<&GceAudio::SetMasterMute>;
+      cvd::thunk<audio_hw_device, &GceAudio::SetMasterMute>;
   rval->get_master_mute =
-      AudioThunker<int(bool*)>::call<&GceAudio::GetMasterMute>;
+      cvd::thunk<audio_hw_device, &GceAudio::GetMasterMute>;
 #endif
 
-  rval->set_mode = AudioThunker<int(audio_mode_t)>::call<&GceAudio::SetMode>;
-  rval->set_mic_mute = AudioThunker<int(bool)>::call<&GceAudio::SetMicMute>;
-  rval->get_mic_mute =
-      AudioThunker<int(bool*)>::call<&GceAudio::GetMicMute>;
+  rval->set_mode = cvd::thunk<audio_hw_device, &GceAudio::SetMode>;
+  rval->set_mic_mute = cvd::thunk<audio_hw_device, &GceAudio::SetMicMute>;
+  rval->get_mic_mute = cvd::thunk<audio_hw_device, &GceAudio::GetMicMute>;
 
-  rval->set_parameters =
-      AudioThunker<int(const char*)>::call<&GceAudio::SetParameters>;
-  rval->get_parameters =
-      AudioThunker<char*(const char*)>::call<&GceAudio::GetParameters>;
+  rval->set_parameters = cvd::thunk<audio_hw_device, &GceAudio::SetParameters>;
+  rval->get_parameters = cvd::thunk<audio_hw_device, &GceAudio::GetParameters>;
 
   rval->get_input_buffer_size =
-      AudioThunker<size_t(const audio_config*)>::call<
-        &GceAudio::GetInputBufferSize>;
+      cvd::thunk<audio_hw_device, &GceAudio::GetInputBufferSize>;
 
   rval->open_input_stream =
-      AudioThunker<GceAudio::OpenInputStreamHAL_t>::call<
-        &GceAudio::OpenInputStreamCurrentHAL>;
+      cvd::thunk<audio_hw_device, &GceAudio::OpenInputStreamCurrentHAL>;
   rval->close_input_stream =
-      AudioThunker<void(audio_stream_in*)>::call<&GceAudio::CloseInputStream>;
+      cvd::thunk<audio_hw_device, &GceAudio::CloseInputStream>;
 
   rval->open_output_stream =
-      AudioThunker<GceAudio::OpenOutputStreamHAL_t>::call<
-        &GceAudio::OpenOutputStreamCurrentHAL>;
+      cvd::thunk<audio_hw_device, &GceAudio::OpenOutputStreamCurrentHAL>;
   rval->close_output_stream =
-      AudioThunker<void(audio_stream_out*)>::call<&GceAudio::CloseOutputStream>;
+      cvd::thunk<audio_hw_device, &GceAudio::CloseOutputStream>;
 
-  rval->dump = AudioThunker<int(int)>::call<&GceAudio::Dump>;
+  rval->dump = cvd::thunk<audio_hw_device, &GceAudio::Dump>;
 
   *device = &rval->common;
   return 0;

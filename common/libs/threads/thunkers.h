@@ -16,20 +16,39 @@
 #ifndef CUTTLEFISH_COMMON_COMMON_LIBS_THREADS_THUNKERS_H_
 #define CUTTLEFISH_COMMON_COMMON_LIBS_THREADS_THUNKERS_H_
 
-template <typename HalType, typename Impl, typename F>
-struct ThunkerBase;
+namespace cvd {
+namespace internal {
+
+template <typename HalType, typename F>
+struct ThunkerImpl;
 
 template <typename HalType, typename Impl, typename R, typename... Args>
-struct ThunkerBase<HalType, Impl, R(Args...)> {
+struct ThunkerImpl<HalType, R (Impl::*)(Args...)> {
   template <R (Impl::*MemFn)(Args...)>
   static R call(HalType* in, Args... args) {
     return (reinterpret_cast<Impl*>(in)->*MemFn)(args...);
   }
+};
 
+template <typename HalType, typename Impl, typename R, typename... Args>
+struct ThunkerImpl<HalType, R (Impl::*)(Args...) const> {
   template <R (Impl::*MemFn)(Args...) const>
   static R call(const HalType* in, Args... args) {
     return (reinterpret_cast<const Impl*>(in)->*MemFn)(args...);
   }
 };
+
+template <typename HalType, auto MemFunc>
+struct Thunker {
+  static constexpr auto call =
+      ThunkerImpl<HalType, decltype(MemFunc)>::template call<MemFunc>;
+};
+
+}  // namespace internal
+
+template <typename HalType, auto MemFunc>
+constexpr auto thunk = internal::Thunker<HalType, MemFunc>::call;
+
+}  // namespace cvd
 
 #endif
