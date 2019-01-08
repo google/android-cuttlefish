@@ -190,6 +190,12 @@ PRODUCT_COPY_FILES += \
 # Packages for HAL implementations
 
 #
+# Atrace HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.atrace@1.0-service
+
+#
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
@@ -276,6 +282,11 @@ PRODUCT_PACKAGES += \
     sensors.vsoc \
     android.hardware.sensors@1.0-impl \
     android.hardware.sensors@1.0-service
+#
+# Thermal (mock)
+#
+PRODUCT_PACKAGES += \
+    android.hardware.thermal@2.0-service
 
 #
 # Lights
@@ -306,7 +317,6 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
 
 # TODO vibrator HAL
-# TODO thermal
 
 PRODUCT_PACKAGES += \
     cuttlefish_dtb
