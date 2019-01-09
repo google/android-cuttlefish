@@ -15,7 +15,17 @@
 
 
 cc_defaults {
+  name: "cuttlefish_recovery_available",
+  recovery_available : true
+}
+
+cc_defaults {
   name: "enabled_on_p_and_later",
+  enabled: true
+}
+
+cc_defaults {
+  name: "enabled_on_q_and_later",
   enabled: true
 }
 
