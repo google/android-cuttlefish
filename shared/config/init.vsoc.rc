@@ -72,6 +72,8 @@ on post-fs-data
     start gce_fs_monitor
     start vport_trigger
 
+on late-fs
+    write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
 on early-boot
     start vsoc_input_service
