@@ -26,6 +26,11 @@
 using cvd::SharedFD;
 
 namespace {
+static const std::map<std::string, std::string> kInformationalPatterns = {
+    {"] Linux version ", "GUEST_KERNEL_VERSION: "},
+    {"GUEST_BUILD_FINGERPRINT: ", "GUEST_BUILD_FINGERPRINT: "},
+};
+
 static const std::map<std::string, monitor::BootEvent> kStageToEventMap = {
     {"VIRTUAL_DEVICE_BOOT_STARTED", monitor::BootEvent::BootStarted},
     {"VIRTUAL_DEVICE_BOOT_COMPLETED", monitor::BootEvent::BootCompleted},
@@ -121,6 +126,14 @@ bool KernelLogServer::HandleIncomingMessage() {
   // Detect VIRTUAL_DEVICE_BOOT_*
   for (ssize_t i=0; i<ret; i++) {
     if ('\n' == buf[i]) {
+      for (auto& info_kv : kInformationalPatterns) {
+        auto& match = info_kv.first;
+        auto& prefix = info_kv.second;
+        auto pos = line_.find(match);
+        if (std::string::npos != pos) {
+          LOG(INFO) << prefix << line_.substr(pos + match.size());
+        }
+      }
       for (auto& stage_kv : kStageToEventMap) {
         auto& stage = stage_kv.first;
         auto event = stage_kv.second;
