@@ -286,7 +286,7 @@ PRODUCT_PACKAGES += \
 # Thermal (mock)
 #
 PRODUCT_PACKAGES += \
-    android.hardware.thermal@2.0-service
+    android.hardware.thermal@2.0-service.mock
 
 #
 # Lights
