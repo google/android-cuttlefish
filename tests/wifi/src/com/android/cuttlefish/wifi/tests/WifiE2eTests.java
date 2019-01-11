@@ -100,6 +100,16 @@ public class WifiE2eTests {
     }
 
 
+    private void enableNetwork(String SSID) {
+        WifiConfiguration conf = new WifiConfiguration();
+        conf.SSID = SSID;
+        conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        int networkId = mWifiManager.addNetwork(conf);
+        Assert.assertTrue(networkId >= 0);
+        mWifiManager.enableNetwork(networkId, false);
+    }
+
+
     /**
      * Initialize wifi, erase all settings.
      */
@@ -143,12 +153,8 @@ public class WifiE2eTests {
         //    - Enable network,
         //    - Scan for network
         Log.i(TAG, "Configuring WIFI...");
-        WifiConfiguration conf = new WifiConfiguration();
-        conf.SSID = "\"AndroidWifi\"";
-        conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-        int networkId = mWifiManager.addNetwork(conf);
-        Assert.assertTrue(networkId >= 0);
-        mWifiManager.enableNetwork(networkId, false);
+        enableNetwork("\"VirtWifi\"");
+        enableNetwork("\"AndroidWifi\"");
         mWifiManager.startScan();
 
         // 4. Wait until connected.
