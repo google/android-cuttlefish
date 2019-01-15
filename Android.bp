@@ -59,19 +59,6 @@ cc_defaults {
     vendor: true,
 }
 
-// ARM code should not touch the VSoC window on an x86 CPU.
-cc_defaults {
-    name: "cuttlefish_native_isa",
-    target: {
-        android_arm: {
-            enabled: false,
-        },
-        android_arm64: {
-            enabled: false,
-        },
-    },
-}
-
 cc_defaults {
     name: "cuttlefish_guest_only",
     defaults: ["cuttlefish_base"],
@@ -137,7 +124,7 @@ cc_library_shared {
             ],
         },
     },
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
 cc_test_host {
