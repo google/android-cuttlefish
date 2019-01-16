@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <set>
 #include <thread>
 #include <glog/logging.h>
 #include <gflags/gflags.h>
@@ -147,10 +148,11 @@ void HandleConnection(cvd::SharedFD vsock,
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";
-    auto vsock_socket = cvd::SharedFD::VsockClient(FLAGS_vsock_guest_cid,
-                                                   FLAGS_guest_port,
-                                                   SOCK_STREAM);
-    CHECK(vsock_socket->IsOpen()) << "error connecting over vsock";
+    cvd::SharedFD vsock_socket = cvd::SharedFD::VsockClient(
+        FLAGS_vsock_guest_cid, FLAGS_guest_port, SOCK_STREAM);
+    if (!vsock_socket->IsOpen()) {
+      continue;
+    }
     auto thread = std::thread(HandleConnection, std::move(vsock_socket),
                               std::move(client_socket));
     thread.detach();
@@ -170,10 +172,28 @@ cvd::SharedFD OpenSocketConnection() {
   }
 }
 
+bool socketErrorIsRecoverable(int error) {
+  std::set<int> unrecoverable{EACCES, EAFNOSUPPORT, EINVAL, EPROTONOSUPPORT};
+  return unrecoverable.find(error) == unrecoverable.end();
+}
+
+[[noreturn]] static void SleepForever() {
+  while (true) {
+    sleep(std::numeric_limits<unsigned int>::max());
+  }
+}
+
 [[noreturn]] void guest() {
   LOG(INFO) << "Starting guest mainloop";
   LOG(INFO) << "starting server on " << FLAGS_guest_port;
-  auto vsock = cvd::SharedFD::VsockServer(FLAGS_guest_port, SOCK_STREAM);
+  cvd::SharedFD vsock;
+  do {
+    vsock = cvd::SharedFD::VsockServer(FLAGS_guest_port, SOCK_STREAM);
+    if (!vsock->IsOpen() && !socketErrorIsRecoverable(vsock->GetErrno())) {
+      LOG(ERROR) << "Could not open vsock socket: " << vsock->StrError();
+      SleepForever();
+    }
+  } while (!vsock->IsOpen());
   CHECK(vsock->IsOpen()) << "Could not start server on " << FLAGS_guest_port;
   while (true) {
     LOG(INFO) << "waiting for vsock connection";
