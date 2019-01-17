@@ -17,11 +17,22 @@
 
 # Installs an Android zip file to a directory
 
+set -e
+
 usage() {
-  echo cat build.zip \| $0 "\${dir}"
+  echo cat build.zip \| $0 "\${dir} [ -- file_to_extract [another_file]... ]"
   echo or
-  echo $0 build-zip "\${dir}"
+  echo $0 build-zip "\${dir} [ -- file_to_extract [another_file]... ]"
 }
+
+# sanitize input to treat everything after '--' as files to be extracted
+idx=0
+for arg in $@; do
+    if [[ "$arg" == "--" ]]; then break; fi
+    idx=$((idx+1))
+done
+files_to_extract=${@:(($idx+2))}
+set -- ${@:1:$idx}
 
 case $# in
   1)
@@ -39,11 +50,16 @@ case $# in
 esac
 
 mkdir -p "${destdir}"
-bsdtar -x -C "${destdir}" -f "${source}"
+bsdtar -x -C "${destdir}" -f "${source}" ${files_to_extract}
 
-/usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
+if [[ " ${files_to_extract[*]} " == *" boot.img "* ]]; then
+    /usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
+fi
+
 for i in cache.img cmdline kernel ramdisk.img system.img userdata.img vendor.img; do
   # Use setfacl so that libvirt does not lose access to this file if user
   # does anything to this file at any point.
   [ -f "${destdir}/${i}" ] && sudo setfacl -m g:libvirt-qemu:rw "${destdir}/${i}"
 done
+
+exit 0
