@@ -59,3 +59,13 @@ LOCAL_MODULE_STEM := system-root.dtb
 LOCAL_SRC_FILES := system-root.dtb
 
 include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := gsi_fstab
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(HOST_OUT)/config
+LOCAL_MODULE_STEM := gsi.fstab
+LOCAL_SRC_FILES := gsi.fstab
+
+include $(BUILD_PREBUILT)
