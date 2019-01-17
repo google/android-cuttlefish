@@ -17,6 +17,8 @@
 
 # Installs an Android zip file to a directory
 
+set -e
+
 usage() {
   echo cat build.zip \| $0 "\${dir}"
   echo or
@@ -47,3 +49,5 @@ for i in cache.img cmdline kernel ramdisk.img system.img userdata.img vendor.img
   # does anything to this file at any point.
   [ -f "${destdir}/${i}" ] && sudo setfacl -m g:libvirt-qemu:rw "${destdir}/${i}"
 done
+
+exit 0
