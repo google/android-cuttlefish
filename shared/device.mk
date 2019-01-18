@@ -46,9 +46,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.media.treble_omx=false
 
-# Enable Perfetto traced
+# Enable Perfetto traced and heapprofd
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.traced.enable=1
+    persist.traced.enable=1 \
+    persist.heapprofd.enable=1
 
 #
 # Packages for various cuttlefish-specific tests
