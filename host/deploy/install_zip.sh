@@ -56,6 +56,13 @@ if [[ " ${files_to_extract[*]} " == *" boot.img "* ]]; then
     /usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
 fi
 
+find "${destdir}" -name "*.img" -exec sh -c '
+  img="$0"
+  file "$img" | grep "Android sparse image," -q  \
+    && simg2img "$img" "$img.inflated"           \
+    && mv "$img.inflated" "$img"
+' {} ';'
+
 for i in cache.img cmdline kernel ramdisk.img system.img userdata.img vendor.img; do
   # Use setfacl so that libvirt does not lose access to this file if user
   # does anything to this file at any point.

@@ -26,6 +26,7 @@ Depends:
  adb,
  device-tree-compiler,
  hostapd,
+ simg2img,
  libarchive-tools | bsdtar,
  libc6,
  libgoogle-glog0v5 | libgoogle-glog0,
