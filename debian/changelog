@@ -1,6 +1,14 @@
+cuttlefish-common (0.9+nmu5) UNRELEASED; urgency=medium
+
+  * install_zip.sh: exit early in case of errors
+  * install_zip.sh: support partial extraction
+  * install_zip.sh: convert sparse images
+
+ -- Matthias Männich <maennich@google.com>  Mon, 21 Jan 2019 09:27:21 +0000
+
 cuttlefish-common (0.9+nmu4) UNRELEASED; urgency=medium
 
-  * Add support for vsock connections. 
+  * Add support for vsock connections.
 
  -- Cody Schuffelen <schuffelen@google.com>  Fri, 04 Jan 2019 17:06:46 -0800
 
