@@ -66,6 +66,7 @@ PRODUCT_PACKAGES += \
     dhcpcd_wlan0 \
     gce_fs_monitor \
     socket_forward_proxy \
+    socket_vsock_proxy \
     usbforward \
     VSoCService \
     wpa_supplicant.vsoc.conf \
