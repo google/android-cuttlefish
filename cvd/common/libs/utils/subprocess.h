@@ -29,6 +29,12 @@ namespace cvd {
 // It's an error to wait twice for the same subprocess.
 class Subprocess {
  public:
+  enum class StdIOChannel {
+    kStdIn = 0,
+    kStdOut = 1,
+    kStdErr = 2,
+  };
+
   Subprocess(pid_t pid, SharedFD control)
       : pid_(pid), started_(pid > 0), control_socket_(control) {}
   // The default implementation won't do because we need to reset the pid of the
@@ -110,6 +116,10 @@ class Command {
     }
     return false;
   }
+
+  // Redirects the standard IO of the command.
+  bool RedirectStdIO(Subprocess::StdIOChannel channel, cvd::SharedFD shared_fd);
+
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances. If
   // with_control_socket is true the returned Subprocess instance will have a
@@ -124,6 +134,7 @@ class Command {
  private:
   std::vector<std::string> command_;
   std::map<cvd::SharedFD, int> inherited_fds_{};
+  std::map<Subprocess::StdIOChannel, int> redirects_{};
   bool use_parent_env_ = true;
   std::vector<std::string> env_{};
 };
