@@ -221,6 +221,24 @@ class CuttlefishConfig {
       const std::string& kernel_log_monitor_binary);
   std::string kernel_log_monitor_binary() const;
 
+  void set_enable_vnc_server(bool enable_vnc_server);
+  bool enable_vnc_server() const;
+
+  void set_vnc_server_port(int vnc_server_port);
+  int vnc_server_port() const;
+
+  void set_vnc_server_binary(const std::string& vnc_server_binary);
+  std::string vnc_server_binary() const;
+
+  void set_enable_stream_audio(bool enable_stream_audio);
+  bool enable_stream_audio() const;
+
+  void set_stream_audio_port(int stream_audio_port);
+  int stream_audio_port() const;
+
+  void set_stream_audio_binary(const std::string& stream_audio_binary);
+  std::string stream_audio_binary() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
