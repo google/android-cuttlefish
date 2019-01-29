@@ -230,6 +230,9 @@ class CuttlefishConfig {
   void set_stream_audio_binary(const std::string& stream_audio_binary);
   std::string stream_audio_binary() const;
 
+  void set_restart_subprocesses(bool restart_subprocesses);
+  bool restart_subprocesses() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
