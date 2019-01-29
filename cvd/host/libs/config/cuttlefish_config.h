@@ -182,12 +182,6 @@ class CuttlefishConfig {
   std::string uuid() const;
   void set_uuid(const std::string& uuid);
 
-  bool disable_dac_security() const;
-  void set_disable_dac_security(bool disable_dac_security);
-
-  bool disable_app_armor_security() const;
-  void set_disable_app_armor_security(bool disable_app_armor_security);
-
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
 
@@ -204,12 +198,6 @@ class CuttlefishConfig {
 
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
-
-  void set_log_xml(bool log_xml);
-  bool log_xml() const;
-
-  void set_hypervisor_uri(const std::string& hypervisor_uri);
-  std::string hypervisor_uri() const;
 
   void set_qemu_binary(const std::string& qemu_binary);
   std::string qemu_binary() const;
@@ -273,8 +261,7 @@ int GetDefaultPerInstanceVsockCid();
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
 
-// Whether the installed host packages support calling qemu directly instead of
-// through libvirt
+// Whether the host supports qemu
 bool HostSupportsQemuCli();
 bool HostSupportsVsock();
 }  // namespace vsoc
