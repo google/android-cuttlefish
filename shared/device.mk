@@ -289,6 +289,13 @@ PRODUCT_PACKAGES += \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service
 
+
+#
+# PowerStats HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.power.stats@1.0-service.mock
+
 #
 # USB
 PRODUCT_PACKAGES += \
