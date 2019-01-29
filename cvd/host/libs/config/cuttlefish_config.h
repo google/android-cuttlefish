@@ -84,6 +84,9 @@ class CuttlefishConfig {
   std::string kernel_image_path() const;
   void set_kernel_image_path(const std::string& kernel_image_path);
 
+  bool use_unpacked_kernel() const;
+  void set_use_unpacked_kernel(bool use_unpacked_kernel);
+
   std::set<std::string> kernel_cmdline() const;
   void set_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
   void add_kernel_cmdline(const std::string& arg);
