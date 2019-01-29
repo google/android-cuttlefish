@@ -31,6 +31,8 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "host/libs/vm_manager/qemu_manager.h"
+
 
 namespace {
 
@@ -67,6 +69,7 @@ int InstanceFromEnvironment() {
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
+const char* kHardwareName = "hardware_name";
 const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
@@ -97,6 +100,7 @@ const char* kLogcatPath = "logcat_path";
 const char* kLauncherLogPath = "launcher_log_path";
 const char* kLauncherMonitorPath = "launcher_monitor_socket";
 const char* kDtbPath = "dtb_path";
+const char* kGsiFstabPath = "gsi.fstab_path";
 
 const char* kMempath = "mempath";
 const char* kIvshmemQemuSocketPath = "ivshmem_qemu_socket_path";
@@ -120,6 +124,7 @@ const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
 
 const char* kQemuBinary = "qemu_binary";
+const char* kCrosvmBinary = "crosvm_binary";
 const char* kIvServerBinary = "ivserver_binary";
 const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
 
@@ -161,6 +166,13 @@ std::string CuttlefishConfig::vm_manager() const {
 }
 void CuttlefishConfig::set_vm_manager(const std::string& name) {
   (*dictionary_)[kVmManager] = name;
+}
+
+std::string CuttlefishConfig::hardware_name() const {
+  return (*dictionary_)[kHardwareName].asString();
+}
+void CuttlefishConfig::set_hardware_name(const std::string& name) {
+  (*dictionary_)[kHardwareName] = name;
 }
 
 std::string CuttlefishConfig::serial_number() const {
@@ -322,6 +334,13 @@ std::string CuttlefishConfig::dtb_path() const {
 }
 void CuttlefishConfig::set_dtb_path(const std::string& dtb_path) {
   SetPath(kDtbPath, dtb_path);
+}
+
+std::string CuttlefishConfig::gsi_fstab_path() const {
+  return (*dictionary_)[kGsiFstabPath].asString();
+}
+void CuttlefishConfig::set_gsi_fstab_path(const std::string& path){
+  SetPath(kGsiFstabPath, path);
 }
 
 std::string CuttlefishConfig::mempath() const {
@@ -546,6 +565,14 @@ std::string CuttlefishConfig::qemu_binary() const {
 
 void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
   (*dictionary_)[kQemuBinary] = qemu_binary;
+}
+
+std::string CuttlefishConfig::crosvm_binary() const {
+  return (*dictionary_)[kCrosvmBinary].asString();
+}
+
+void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
+  (*dictionary_)[kCrosvmBinary] = crosvm_binary;
 }
 
 std::string CuttlefishConfig::ivserver_binary() const {
