@@ -124,6 +124,7 @@ const char* kLogXml = "log_xml";
 const char* kHypervisorUri = "hypervisor_uri";
 const char* kQemuBinary = "qemu_binary";
 const char* kIvServerBinary = "ivserver_binary";
+const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
 }  // namespace
 
 namespace vsoc {
@@ -556,6 +557,15 @@ std::string CuttlefishConfig::ivserver_binary() const {
 
 void CuttlefishConfig::set_ivserver_binary(const std::string& ivserver_binary) {
   (*dictionary_)[kIvServerBinary] = ivserver_binary;
+}
+
+std::string CuttlefishConfig::kernel_log_monitor_binary() const {
+  return (*dictionary_)[kKernelLogMonitorBinary].asString();
+}
+
+void CuttlefishConfig::set_kernel_log_monitor_binary(
+    const std::string& kernel_log_monitor_binary) {
+  (*dictionary_)[kKernelLogMonitorBinary] = kernel_log_monitor_binary;
 }
 
 // Creates the (initially empty) config object and populates it with values from
