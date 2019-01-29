@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include <common/libs/utils/subprocess.h>
 #include <host/libs/config/cuttlefish_config.h>
 
 namespace vm_manager {
@@ -39,7 +40,7 @@ class VmManager {
 
   virtual ~VmManager() = default;
 
-  virtual bool Start() = 0;
+  virtual cvd::Command StartCommand() = 0;
   virtual bool Stop() = 0;
 
   virtual bool ValidateHostConfiguration(

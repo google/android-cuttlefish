@@ -1031,14 +1031,11 @@ int main(int argc, char** argv) {
   // Launch the e2e test after the shared memory is initialized
   LaunchE2eTest(&process_monitor, boot_state_machine);
 
-  // Start the guest VM, don't monitor it, if it fails the device is considered
-  // failed
-  if (!vm_manager->Start()) {
-    LOG(ERROR) << "Unable to start vm_manager";
-    // TODO(111453282): All host processes should die here.
-    return LauncherExitCodes::kVMCreationError;
-  }
+  // Start the guest VM
+  process_monitor.StartSubprocess(vm_manager->StartCommand(),
+                                  OnSubprocessExitCallback);
 
+  // Start other host processes
   LaunchSocketForwardProxyIfEnabled(&process_monitor);
   LaunchSocketVsockProxyIfEnabled(&process_monitor);
   LaunchVNCServerIfEnabled(*config, &process_monitor, OnSubprocessExitCallback);
