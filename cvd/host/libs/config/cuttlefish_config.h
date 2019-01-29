@@ -217,6 +217,10 @@ class CuttlefishConfig {
   void set_ivserver_binary(const std::string& ivserver_binary);
   std::string ivserver_binary() const;
 
+  void set_kernel_log_monitor_binary(
+      const std::string& kernel_log_monitor_binary);
+  std::string kernel_log_monitor_binary() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
