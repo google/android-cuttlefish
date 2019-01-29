@@ -48,6 +48,7 @@
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/boot_image_unpacker.h"
+#include "host/commands/launch/data_image.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
 #include "host/commands/launch/pre_launch_initializers.h"
@@ -213,139 +214,10 @@ DEFINE_string(e2e_test_binary,
               "Location of the region end to end test binary");
 
 namespace {
-const std::string kDataPolicyUseExisting = "use_existing";
-const std::string kDataPolicyCreateIfMissing = "create_if_missing";
-const std::string kDataPolicyAlwaysCreate = "always_create";
-const std::string kDataPolicyResizeUpTo= "resize_up_to";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeVsockTunnel[] = "vsock_tunnel";
 constexpr char kAdbModeUsb[] = "usb";
-
-void CreateBlankImage(
-    const std::string& image, int image_mb, const std::string& image_fmt) {
-  LOG(INFO) << "Creating " << image;
-  std::string of = "of=";
-  of += image;
-  std::string count = "count=";
-  count += std::to_string(image_mb);
-  cvd::execute({"/bin/dd", "if=/dev/zero", of, "bs=1M", count});
-  cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
-}
-
-void RemoveFile(const std::string& file) {
-  LOG(INFO) << "Removing " << file;
-  remove(file.c_str());
-}
-
-const int FSCK_ERROR_CORRECTED = 1;
-const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
-
-bool ForceFsckImage(const char* data_image) {
-  int fsck_status = cvd::execute({"/sbin/e2fsck", "-y", "-f", data_image});
-  if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
-    LOG(ERROR) << "`e2fsck -y -f " << data_image << "` failed with code "
-               << fsck_status;
-    return false;
-  }
-  return true;
-}
-
-bool ResizeImage(const char* data_image, int data_image_mb) {
-  auto file_mb = cvd::FileSize(data_image) >> 20;
-  if (file_mb > data_image_mb) {
-    LOG(ERROR) << data_image << " is already " << file_mb << " MB, will not "
-               << "resize down.";
-    return false;
-  } else if (file_mb == data_image_mb) {
-    LOG(INFO) << data_image << " is already the right size";
-    return true;
-  } else {
-    off_t raw_target = static_cast<off_t>(data_image_mb) << 20;
-    int truncate_status =
-        cvd::SharedFD::Open(data_image, O_RDWR)->Truncate(raw_target);
-    if (truncate_status != 0) {
-      LOG(ERROR) << "`truncate --size=" << data_image_mb << "M "
-                  << data_image << "` failed with code " << truncate_status;
-      return false;
-    }
-    bool fsck_success = ForceFsckImage(data_image);
-    if (!fsck_success) {
-      return false;
-    }
-    int resize_status = cvd::execute({"/sbin/resize2fs", data_image});
-    if (resize_status != 0) {
-      LOG(ERROR) << "`resize2fs " << data_image << "` failed with code "
-                 << resize_status;
-      return false;
-    }
-    fsck_success = ForceFsckImage(data_image);
-    if (!fsck_success) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool ApplyDataImagePolicy(const char* data_image) {
-  bool data_exists = cvd::FileHasContent(data_image);
-  bool remove{};
-  bool create{};
-  bool resize{};
-
-  if (FLAGS_data_policy == kDataPolicyUseExisting) {
-    if (!data_exists) {
-      LOG(ERROR) << "Specified data image file does not exists: " << data_image;
-      return false;
-    }
-    if (FLAGS_blank_data_image_mb > 0) {
-      LOG(ERROR) << "You should NOT use -blank_data_image_mb with -data_policy="
-                 << kDataPolicyUseExisting;
-      return false;
-    }
-    create = false;
-    remove = false;
-    resize = false;
-  } else if (FLAGS_data_policy == kDataPolicyAlwaysCreate) {
-    remove = data_exists;
-    create = true;
-    resize = false;
-  } else if (FLAGS_data_policy == kDataPolicyCreateIfMissing) {
-    create = !data_exists;
-    remove = false;
-    resize = false;
-  } else if (FLAGS_data_policy == kDataPolicyResizeUpTo) {
-    create = false;
-    remove = false;
-    resize = true;
-  } else {
-    LOG(ERROR) << "Invalid data_policy: " << FLAGS_data_policy;
-    return false;
-  }
-
-  if (remove) {
-    RemoveFile(data_image);
-  }
-
-  if (create) {
-    if (FLAGS_blank_data_image_mb <= 0) {
-      LOG(ERROR) << "-blank_data_image_mb is required to create data image";
-      return false;
-    }
-    CreateBlankImage(
-        data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
-  } else if (resize) {
-    if (!data_exists) {
-      LOG(ERROR) << data_image << " does not exist, but resizing was requested";
-      return false;
-    }
-    return ResizeImage(data_image, FLAGS_blank_data_image_mb);
-  } else {
-    LOG(INFO) << data_image << " exists. Not creating it.";
-  }
-
-  return true;
-}
 
 std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
   return config.PerInstancePath("cuttlefish_config.json");
@@ -610,7 +482,10 @@ bool ResolveInstanceFiles() {
   }
 
   // Create data if necessary
-  if (!ApplyDataImagePolicy(FLAGS_data_image.c_str())) {
+  if (!ApplyDataImagePolicy(FLAGS_data_image.c_str(),
+                            FLAGS_data_policy,
+                            FLAGS_blank_data_image_mb,
+                            FLAGS_blank_data_image_fmt)) {
     return false;
   }
 

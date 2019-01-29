@@ -24,6 +24,7 @@ cc_binary_host {
         "boot_image_unpacker.cc",
         "process_monitor.cc",
         "launch.cc",
+        "data_image.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
