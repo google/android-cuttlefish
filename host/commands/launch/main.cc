@@ -57,7 +57,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/libs/vm_manager/vm_manager.h"
-#include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 using vsoc::GetPerInstanceDefault;
@@ -85,11 +84,6 @@ DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
 DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
 DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
-
-DEFINE_bool(disable_app_armor_security, false,
-            "Disable AppArmor security in libvirt. For debug only.");
-DEFINE_bool(disable_dac_security, false,
-            "Disable DAC security in libvirt. For debug only.");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(extra_kernel_cmdline, "",
@@ -123,10 +117,8 @@ DEFINE_string(serial_number, g_default_serial_number.c_str(),
 DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
 DEFINE_string(
-    vm_manager,
-    vsoc::HostSupportsQemuCli() ? vm_manager::QemuManager::name()
-                                : vm_manager::LibvirtManager::name(),
-    "What virtual machine manager to use, one of libvirt or qemu_cli");
+    vm_manager, vm_manager::QemuManager::name(),
+    "What virtual machine manager to use, one of {qemu_cli}");
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
@@ -205,8 +197,6 @@ DEFINE_string(setupwizard_mode, "DISABLED",
 DEFINE_string(qemu_binary,
               "/usr/bin/qemu-system-x86_64",
               "The qemu binary to use");
-DEFINE_string(hypervisor_uri, "qemu:///system", "Hypervisor cannonical uri.");
-DEFINE_bool(log_xml, false, "Log the XML machine configuration");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
 DEFINE_string(e2e_test_binary,
@@ -655,14 +645,9 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_entropy_source("/dev/urandom");
   tmp_config_obj.set_uuid(FLAGS_uuid);
 
-  tmp_config_obj.set_disable_dac_security(FLAGS_disable_dac_security);
-  tmp_config_obj.set_disable_app_armor_security(FLAGS_disable_app_armor_security);
-
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_ivserver_binary(FLAGS_ivserver_binary);
   tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
-  tmp_config_obj.set_hypervisor_uri(FLAGS_hypervisor_uri);
-  tmp_config_obj.set_log_xml(FLAGS_log_xml);
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
   tmp_config_obj.set_vnc_server_binary(FLAGS_vnc_server_binary);
@@ -719,31 +704,6 @@ void SetDefaultFlagsForQemu() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
-void SetDefaultFlagsForLibvirt() {
-  auto default_mobile_interface = GetPerInstanceDefault("cvd-mobile-");
-  SetCommandLineOptionWithMode("mobile_interface",
-                               default_mobile_interface.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_mobile_tap_name = GetPerInstanceDefault("amobile");
-  SetCommandLineOptionWithMode("mobile_tap_name",
-                               default_mobile_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_wifi_interface = GetPerInstanceDefault("cvd-wifi-");
-  SetCommandLineOptionWithMode("wifi_interface",
-                               default_wifi_interface.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_wifi_tap_name = GetPerInstanceDefault("awifi");
-  SetCommandLineOptionWithMode("wifi_tap_name",
-                               default_wifi_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_instance_dir =
-      "/var/run/libvirt-" +
-      vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix);
-  SetCommandLineOptionWithMode("instance_dir",
-                               default_instance_dir.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-}
-
 bool ParseCommandLineFlags(int* argc, char*** argv) {
   // The config_file is created by the launcher, so the launcher is the only
   // host process that doesn't use the flag.
@@ -752,9 +712,7 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
                                        gflags::SET_FLAGS_DEFAULT);
   google::ParseCommandLineNonHelpFlags(argc, argv, true);
   bool invalid_manager = false;
-  if (FLAGS_vm_manager == vm_manager::LibvirtManager::name()) {
-    SetDefaultFlagsForLibvirt();
-  } else if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
+  if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
     SetDefaultFlagsForQemu();
   } else {
     std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
@@ -791,11 +749,6 @@ bool CleanPriorFiles() {
     return false;
   }
   std::string clean_command = "rm -rf " + prior_files;
-  if (FLAGS_vm_manager == vm_manager::LibvirtManager::name()) {
-    // Libvirt runs as libvirt-qemu so we need sudo to delete the files it
-    // creates
-    clean_command = "sudo " + clean_command;
-  }
   rval = std::system(clean_command.c_str());
   if (WEXITSTATUS(rval) != 0) {
     LOG(ERROR) << "Remove of files failed";
@@ -966,13 +919,14 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Failed to clean prior files";
     return LauncherExitCodes::kPrioFilesCleanupError;
   }
-  // For now it has to be the vm manager who ensures the instance dir exists
-  // because in the case of the libvirt manager root privileges are required to
-  // create and set acls on the directory
-  if (!vm_manager::VmManager::EnsureInstanceDirExists(FLAGS_vm_manager,
-                                                      FLAGS_instance_dir)) {
-    LOG(ERROR) << "Failed to create instance directory";
-    return LauncherExitCodes::kInstanceDirCreationError;
+  // Create instance directory if it doesn't exist.
+  if (!cvd::DirectoryExists(FLAGS_instance_dir.c_str())) {
+    LOG(INFO) << "Setting up " << FLAGS_instance_dir;
+    if (mkdir(FLAGS_instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+      LOG(ERROR) << "Failed to create instance directory: "
+                 << FLAGS_instance_dir << ". Error: " << errno;
+      return LauncherExitCodes::kInstanceDirCreationError;
+    }
   }
 
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
@@ -1001,12 +955,6 @@ int main(int argc, char** argv) {
     std::cout << "You may need to logout for the changes to take effect"
               << std::endl;
     return LauncherExitCodes::kInvalidHostConfiguration;
-  }
-
-  if (!vm_manager->EnsureInstanceDirExists(FLAGS_vm_manager,
-                                           FLAGS_instance_dir)) {
-    LOG(ERROR) << "Failed to create instance directory: " << FLAGS_instance_dir;
-    return LauncherExitCodes::kInstanceDirCreationError;
   }
 
   if (!UnpackBootImage(*boot_img_unpacker, *config)) {

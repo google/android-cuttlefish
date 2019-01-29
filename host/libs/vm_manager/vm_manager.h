@@ -36,8 +36,6 @@ class VmManager {
   static bool IsValidName(const std::string& name);
   static bool IsVmManagerSupported(const std::string& name);
   static std::vector<std::string> GetValidNames();
-  static bool EnsureInstanceDirExists(const std::string& vm_manager_name,
-                                      const std::string& instance_dir_path);
 
   virtual ~VmManager() = default;
 
@@ -59,8 +57,6 @@ private:
     std::function<VmManager*(const vsoc::CuttlefishConfig*)> builder;
     // Whether the host packages support this vm manager
     std::function<bool()> support_checker;
-    // Creates the instance directory if it doesn't exist
-    std::function<bool(const std::string&)> instance_dir_creator;
   };
   // Asociates a vm manager helper to every valid vm manager name
   static std::map<std::string, VmManagerHelper> vm_manager_helpers_;
