@@ -258,11 +258,12 @@ bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && (AdbTunnelEnabled() || AdbVsockTunnelEnabled());
 }
 
-bool OnSubprocessExitCallback(cvd::MonitorEntry* entry) {
-  if (FLAGS_restart_subprocesses) {
-    return cvd::ProcessMonitor::RestartOnExitCb(entry);
+cvd::OnSocketReadyCb GetOnSubprocessExitCallback(
+    const vsoc::CuttlefishConfig& config) {
+  if (config.restart_subprocesses()) {
+    return cvd::ProcessMonitor::RestartOnExitCb;
   } else {
-    return cvd::ProcessMonitor::DoNotMonitorCb(entry);
+    return cvd::ProcessMonitor::DoNotMonitorCb;
   }
 }
 
@@ -282,7 +283,7 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
   cvd::Command usb_server(FLAGS_virtual_usb_manager_binary);
   usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
   process_monitor->StartSubprocess(std::move(usb_server),
-                                   OnSubprocessExitCallback);
+                                   GetOnSubprocessExitCallback(config));
 }
 
 // Maintains the state of the boot process, once a final state is reached
@@ -394,26 +395,29 @@ void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
       });
 }
 
-void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor) {
+void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
+                                 const vsoc::CuttlefishConfig& config) {
   if (AdbConnectorEnabled()) {
     cvd::Command adb_connector(FLAGS_adb_connector_binary);
     adb_connector.AddParameter(GetAdbConnectorPortArg());
     process_monitor->StartSubprocess(std::move(adb_connector),
-                                     OnSubprocessExitCallback);
+                                     GetOnSubprocessExitCallback(config));
   }
 }
 
-void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
+void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
+                                 const vsoc::CuttlefishConfig& config) {
   if (AdbTunnelEnabled()) {
     cvd::Command adb_tunnel(FLAGS_socket_forward_proxy_binary);
     adb_tunnel.AddParameter(GetGuestPortArg());
     adb_tunnel.AddParameter(GetHostPortArg());
     process_monitor->StartSubprocess(std::move(adb_tunnel),
-                                     OnSubprocessExitCallback);
+                                     GetOnSubprocessExitCallback(config));
   }
 }
 
-void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
+void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
+                                 const vsoc::CuttlefishConfig& config) {
   if (AdbVsockTunnelEnabled()) {
     cvd::Command adb_tunnel(FLAGS_socket_vsock_proxy_binary);
     adb_tunnel.AddParameter("--guest_port=5555");
@@ -422,7 +426,7 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
     adb_tunnel.AddParameter(
         std::string{"--vsock_guest_cid="} + std::to_string(FLAGS_vsock_guest_cid));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
-                                     OnSubprocessExitCallback);
+                                     GetOnSubprocessExitCallback(config));
   }
 }
 
@@ -634,6 +638,8 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_stream_audio(FLAGS_start_stream_audio);
   tmp_config_obj.set_stream_audio_binary(FLAGS_stream_audio_binary);
   tmp_config_obj.set_stream_audio_port(FLAGS_stream_audio_port);
+
+  tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
 
   if(!AdbUsbEnabled()) {
     tmp_config_obj.disable_usb_adb();
@@ -995,7 +1001,7 @@ int main(int argc, char** argv) {
   process_monitor.StartSubprocess(
       GetKernelLogMonitorCommand(*config,
                                  FLAGS_daemon ? &boot_events_pipe : nullptr),
-      OnSubprocessExitCallback);
+      GetOnSubprocessExitCallback(*config));
 
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
@@ -1004,7 +1010,7 @@ int main(int argc, char** argv) {
 
   process_monitor.StartSubprocess(
       GetIvServerCommand(*config),
-      OnSubprocessExitCallback);
+      GetOnSubprocessExitCallback(*config));
 
   // Initialize the regions that require so before the VM starts.
   PreLaunchInitializers::Initialize(*config);
@@ -1014,15 +1020,16 @@ int main(int argc, char** argv) {
 
   // Start the guest VM
   process_monitor.StartSubprocess(vm_manager->StartCommand(),
-                                  OnSubprocessExitCallback);
+                                  GetOnSubprocessExitCallback(*config));
 
   // Start other host processes
-  LaunchSocketForwardProxyIfEnabled(&process_monitor);
-  LaunchSocketVsockProxyIfEnabled(&process_monitor);
-  LaunchVNCServerIfEnabled(*config, &process_monitor, OnSubprocessExitCallback);
+  LaunchSocketForwardProxyIfEnabled(&process_monitor, *config);
+  LaunchSocketVsockProxyIfEnabled(&process_monitor, *config);
+  LaunchVNCServerIfEnabled(*config, &process_monitor,
+                           GetOnSubprocessExitCallback(*config));
   LaunchStreamAudioIfEnabled(*config, &process_monitor,
-                             OnSubprocessExitCallback);
-  LaunchAdbConnectorIfEnabled(&process_monitor);
+                             GetOnSubprocessExitCallback(*config));
+  LaunchAdbConnectorIfEnabled(&process_monitor, *config);
 
   ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";

@@ -130,6 +130,8 @@ const char* kVncServerPort = "vnc_server_port";
 const char* kEnableStreamAudio = "enable_stream_audio";
 const char* kStreamAudioBinary = "stream_audio_binary";
 const char* kStreamAudioPort = "stream_audio_port";
+
+const char* kRestartSubprocesses = "restart_subprocesses";
 }  // namespace
 
 namespace vsoc {
@@ -598,6 +600,14 @@ int CuttlefishConfig::stream_audio_port() const {
 
 void CuttlefishConfig::set_stream_audio_port(int stream_audio_port) {
   (*dictionary_)[kStreamAudioPort] = stream_audio_port;
+}
+
+bool CuttlefishConfig::restart_subprocesses() const {
+  return (*dictionary_)[kRestartSubprocesses].asBool();
+}
+
+void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
+  (*dictionary_)[kRestartSubprocesses] = restart_subprocesses;
 }
 
 // Creates the (initially empty) config object and populates it with values from
