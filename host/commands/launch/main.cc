@@ -532,27 +532,6 @@ void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
       });
 }
 
-// Build the kernel log monitor command. If boot_event_pipe is not NULL, a
-// subscription to boot events from the kernel log monitor will be created and
-// events will appear on *boot_events_pipe
-cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
-                                        cvd::SharedFD* boot_events_pipe) {
-  auto log_name = config.kernel_log_socket_name();
-  auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
-                                                 SOCK_STREAM, 0666);
-  cvd::Command kernel_log_monitor(FLAGS_kernel_log_monitor_binary);
-  kernel_log_monitor.AddParameter("-log_server_fd=", server);
-  if (boot_events_pipe) {
-    cvd::SharedFD pipe_write_end;
-    if (!cvd::SharedFD::Pipe(boot_events_pipe, &pipe_write_end)) {
-      LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
-      std::exit(LauncherExitCodes::kPipeIOError);
-    }
-    kernel_log_monitor.AddParameter("-subscriber_fd=", pipe_write_end);
-  }
-  return kernel_log_monitor;
-}
-
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor) {
   if (AdbConnectorEnabled()) {
     cvd::Command adb_connector(FLAGS_adb_connector_binary);
@@ -827,6 +806,7 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_ivserver_binary(FLAGS_ivserver_binary);
+  tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
   tmp_config_obj.set_hypervisor_uri(FLAGS_hypervisor_uri);
   tmp_config_obj.set_log_xml(FLAGS_log_xml);
 
