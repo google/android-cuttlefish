@@ -57,6 +57,9 @@ class CuttlefishConfig {
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
+  std::string hardware_name() const;
+  void set_hardware_name(const std::string& name);
+
   std::string serial_number() const;
   void set_serial_number(const std::string& serial_number);
 
@@ -113,6 +116,9 @@ class CuttlefishConfig {
 
   std::string dtb_path() const;
   void set_dtb_path(const std::string& dtb_path);
+
+  std::string gsi_fstab_path() const;
+  void set_gsi_fstab_path(const std::string& path);
 
   std::string mempath() const;
   void set_mempath(const std::string& mempath);
@@ -204,6 +210,9 @@ class CuttlefishConfig {
 
   void set_qemu_binary(const std::string& qemu_binary);
   std::string qemu_binary() const;
+
+  void set_crosvm_binary(const std::string& crosvm_binary);
+  std::string crosvm_binary() const;
 
   void set_ivserver_binary(const std::string& ivserver_binary);
   std::string ivserver_binary() const;

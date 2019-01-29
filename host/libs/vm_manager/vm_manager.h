@@ -44,7 +44,7 @@ class VmManager {
   virtual bool Stop() = 0;
 
   virtual bool ValidateHostConfiguration(
-      std::vector<std::string>* config_commands) const = 0;
+      std::vector<std::string>* config_commands) const;
 
  protected:
   static bool UserInGroup(const std::string& group,

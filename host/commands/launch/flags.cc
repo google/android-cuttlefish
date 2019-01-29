@@ -12,6 +12,7 @@
 #include "host/commands/launch/data_image.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -48,8 +49,9 @@ DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
 DEFINE_string(console, "ttyS0", "Console device for the guest kernel.");
 DEFINE_string(androidboot_console, "ttyS1",
               "Console device for the Android framework");
-DEFINE_string(hardware_name, "vsoc",
-              "The codename of the device's hardware");
+DEFINE_string(
+    hardware_name, "",
+    "The codename of the device's hardware, one of {vsoc, virtio}");
 DEFINE_string(guest_security, "selinux",
               "The security module to use in the guest");
 DEFINE_bool(guest_enforce_security, false,
@@ -74,7 +76,7 @@ DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
 DEFINE_string(
     vm_manager, vm_manager::QemuManager::name(),
-    "What virtual machine manager to use, one of {qemu_cli}");
+    "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
@@ -110,7 +112,7 @@ DEFINE_string(socket_forward_proxy_binary,
 DEFINE_string(socket_vsock_proxy_binary,
               vsoc::DefaultHostArtifactsPath("bin/socket_vsock_proxy"),
               "Location of the socket_vsock_proxy binary.");
-DEFINE_string(adb_mode, "tunnel",
+DEFINE_string(adb_mode, "",
               "Mode for adb connection. Can be 'usb' for usb forwarding, "
               "'tunnel' for tcp connection, 'vsock_tunnel' for vsock tcp,"
               "or a comma separated list of types as in 'usb,tunnel'");
@@ -138,6 +140,9 @@ DEFINE_int32(vsock_guest_cid,
 
 // TODO(b/72969289) This should be generated
 DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
+DEFINE_string(gsi_fstab,
+              vsoc::DefaultHostArtifactsPath("config/gsi.fstab"),
+              "Path to the GSI fstab file");
 
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix),
               "UUID to use for the device. Random if not specified");
@@ -153,6 +158,9 @@ DEFINE_string(setupwizard_mode, "DISABLED",
 DEFINE_string(qemu_binary,
               "/usr/bin/qemu-system-x86_64",
               "The qemu binary to use");
+DEFINE_string(crosvm_binary,
+              vsoc::DefaultHostArtifactsPath("bin/crosvm"),
+              "The Crosvm binary to use");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
 DEFINE_string(e2e_test_binary,
@@ -278,6 +286,7 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(
         concat("androidboot.hardware=", FLAGS_hardware_name));
   }
+  tmp_config_obj.set_hardware_name(FLAGS_hardware_name);
   if (!FLAGS_guest_security.empty()) {
     tmp_config_obj.add_kernel_cmdline(concat("security=", FLAGS_guest_security));
     if (FLAGS_guest_enforce_security) {
@@ -305,6 +314,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_data_image_path(FLAGS_data_image);
   tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
   tmp_config_obj.set_dtb_path(FLAGS_dtb);
+  tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
   tmp_config_obj.set_ivshmem_qemu_socket_path(
@@ -342,6 +352,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_uuid(FLAGS_uuid);
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
+  tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_ivserver_binary(FLAGS_ivserver_binary);
   tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
 
@@ -414,6 +425,40 @@ void SetDefaultFlagsForQemu() {
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("hardware_name",
+                               "vsoc",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("adb_mode", "tunnel",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
+
+void SetDefaultFlagsForCrosvm() {
+  auto default_mobile_interface = GetPerInstanceDefault("cvd-mbr-");
+  SetCommandLineOptionWithMode("mobile_interface",
+                               default_mobile_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_mobile_tap_name = GetPerInstanceDefault("cvd-mtap-");
+  SetCommandLineOptionWithMode("mobile_tap_name",
+                               default_mobile_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_interface = GetPerInstanceDefault("cvd-wbr-");
+  SetCommandLineOptionWithMode("wifi_interface",
+                               default_wifi_interface.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
+  SetCommandLineOptionWithMode("wifi_tap_name",
+                               default_wifi_tap_name.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_instance_dir =
+      cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
+  SetCommandLineOptionWithMode("instance_dir",
+                               default_instance_dir.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("hardware_name",
+                               "virtio",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("adb_mode", "vsock_tunnel",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
 bool ParseCommandLineFlags(int* argc, char*** argv) {
@@ -426,6 +471,8 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   bool invalid_manager = false;
   if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
     SetDefaultFlagsForQemu();
+  } else if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
+    SetDefaultFlagsForCrosvm();
   } else {
     std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
               << std::endl;

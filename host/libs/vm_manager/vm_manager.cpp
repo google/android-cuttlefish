@@ -23,6 +23,7 @@
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/qemu_manager.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 
 namespace vm_manager {
 
@@ -43,6 +44,12 @@ std::map<std::string, VmManager::VmManagerHelper>
          {[](const vsoc::CuttlefishConfig* config) {
             return GetManagerSingleton<QemuManager>(config);
           },
+          []() { return vsoc::HostSupportsQemuCli(); }}},
+        {CrosvmManager::name(),
+         {[](const vsoc::CuttlefishConfig* config) {
+            return GetManagerSingleton<CrosvmManager>(config);
+          },
+        // Same as Qemu for the time being
           []() { return vsoc::HostSupportsQemuCli(); }}}};
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
@@ -80,5 +87,14 @@ bool VmManager::UserInGroup(const std::string& group,
     return false;
   }
   return true;
+}
+
+bool VmManager::ValidateHostConfiguration(
+    std::vector<std::string>* config_commands) const {
+  // the check for cvdnetwork needs to happen even if the user is not in kvm, so
+  // we cant just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
+  auto in_kvm = VmManager::UserInGroup("kvm", config_commands);
+  auto in_cvdnetwork = VmManager::UserInGroup("cvdnetwork", config_commands);
+  return in_kvm && in_cvdnetwork;
 }
 }  // namespace vm_manager

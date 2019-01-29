@@ -7,6 +7,7 @@
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/launcher_defs.h"
+#include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 
 using cvd::LauncherExitCodes;
@@ -36,13 +37,17 @@ std::string GetAdbConnectorPortArg() {
   return std::string{"--ports="} + std::to_string(GetHostPort());
 }
 
+bool VSoCEnabled(const vsoc::CuttlefishConfig& config) {
+  return config.hardware_name() == "vsoc";
+}
+
 bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, const char* mode) {
   auto modes = cvd::StrSplit(config.adb_mode(), ',');
   return std::find(modes.begin(), modes.end(), mode) != modes.end();
 }
 
 bool AdbTunnelEnabled(const vsoc::CuttlefishConfig& config) {
-  return AdbModeEnabled(config, kAdbModeTunnel);
+  return VSoCEnabled(config) && AdbModeEnabled(config, kAdbModeTunnel);
 }
 
 bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
@@ -71,7 +76,7 @@ int GetHostPort() {
 }
 
 bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
-  return AdbModeEnabled(config, kAdbModeUsb);
+  return VSoCEnabled(config) && AdbModeEnabled(config, kAdbModeUsb);
 }
 
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
@@ -150,7 +155,7 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
 void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor,
                               std::function<bool(MonitorEntry*)> callback) {
-  if (config.enable_vnc_server()) {
+  if (VSoCEnabled(config) && config.enable_vnc_server()) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(config.vnc_server_port());
     cvd::Command vnc_server(config.vnc_server_binary());
@@ -162,7 +167,7 @@ void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
 void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
                                 cvd::ProcessMonitor* process_monitor,
                                 std::function<bool(MonitorEntry*)> callback) {
-  if (config.enable_stream_audio()) {
+  if (VSoCEnabled(config) && config.enable_stream_audio()) {
     auto port_options = "-port=" + std::to_string(config.stream_audio_port());
     cvd::Command stream_audio(config.stream_audio_binary());
     stream_audio.AddParameter(port_options);
@@ -203,4 +208,16 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
     process_monitor->StartSubprocess(std::move(adb_tunnel),
                                      GetOnSubprocessExitCallback(config));
   }
+}
+
+void LaunchIvServerIfEnabled(cvd::ProcessMonitor* process_monitor,
+                             const vsoc::CuttlefishConfig& config) {
+  if (!VSoCEnabled(config)) {
+    return;
+  }
+  process_monitor->StartSubprocess(GetIvServerCommand(config),
+                                   GetOnSubprocessExitCallback(config));
+
+  // Initialize the regions that require so before the VM starts.
+  PreLaunchInitializers::Initialize(config);
 }
