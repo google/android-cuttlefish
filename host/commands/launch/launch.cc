@@ -9,6 +9,7 @@
 #include "host/commands/launch/vsoc_shared_memory.h"
 
 using cvd::LauncherExitCodes;
+using cvd::MonitorEntry;
 
 namespace {
 cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
@@ -62,4 +63,27 @@ cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
     kernel_log_monitor.AddParameter("-subscriber_fd=", pipe_write_end);
   }
   return kernel_log_monitor;
+}
+
+void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
+                              cvd::ProcessMonitor* process_monitor,
+                              std::function<bool(MonitorEntry*)> callback) {
+  if (config.enable_vnc_server()) {
+    // Launch the vnc server, don't wait for it to complete
+    auto port_options = "-port=" + std::to_string(config.vnc_server_port());
+    cvd::Command vnc_server(config.vnc_server_binary());
+    vnc_server.AddParameter(port_options);
+    process_monitor->StartSubprocess(std::move(vnc_server), callback);
+  }
+}
+
+void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
+                                cvd::ProcessMonitor* process_monitor,
+                                std::function<bool(MonitorEntry*)> callback) {
+  if (config.enable_stream_audio()) {
+    auto port_options = "-port=" + std::to_string(config.stream_audio_port());
+    cvd::Command stream_audio(config.stream_audio_binary());
+    stream_audio.AddParameter(port_options);
+    process_monitor->StartSubprocess(std::move(stream_audio), callback);
+  }
 }

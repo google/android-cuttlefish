@@ -436,27 +436,6 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
   }
 }
 
-void LaunchVNCServerIfEnabled(cvd::ProcessMonitor* process_monitor) {
-  if (FLAGS_start_vnc_server) {
-    // Launch the vnc server, don't wait for it to complete
-    auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
-    cvd::Command vnc_server(FLAGS_vnc_server_binary);
-    vnc_server.AddParameter(port_options);
-    process_monitor->StartSubprocess(std::move(vnc_server),
-                                     OnSubprocessExitCallback);
-  }
-}
-
-void LaunchStreamAudioIfEnabled(cvd::ProcessMonitor* process_monitor) {
-  if (FLAGS_start_stream_audio) {
-    auto port_options = "-port=" + std::to_string(FLAGS_stream_audio_port);
-    cvd::Command stream_audio(FLAGS_stream_audio_binary);
-    stream_audio.AddParameter(port_options);
-    process_monitor->StartSubprocess(std::move(stream_audio),
-                                     OnSubprocessExitCallback);
-  }
-}
-
 bool ResolveInstanceFiles() {
   if (FLAGS_system_image_dir.empty()) {
     LOG(ERROR) << "--system_image_dir must be specified.";
@@ -684,6 +663,14 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
   tmp_config_obj.set_hypervisor_uri(FLAGS_hypervisor_uri);
   tmp_config_obj.set_log_xml(FLAGS_log_xml);
+
+  tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
+  tmp_config_obj.set_vnc_server_binary(FLAGS_vnc_server_binary);
+  tmp_config_obj.set_vnc_server_port(FLAGS_vnc_server_port);
+
+  tmp_config_obj.set_enable_stream_audio(FLAGS_start_stream_audio);
+  tmp_config_obj.set_stream_audio_binary(FLAGS_stream_audio_binary);
+  tmp_config_obj.set_stream_audio_port(FLAGS_stream_audio_port);
 
   if(!AdbUsbEnabled()) {
     tmp_config_obj.disable_usb_adb();
@@ -1106,8 +1093,9 @@ int main(int argc, char** argv) {
 
   LaunchSocketForwardProxyIfEnabled(&process_monitor);
   LaunchSocketVsockProxyIfEnabled(&process_monitor);
-  LaunchVNCServerIfEnabled(&process_monitor);
-  LaunchStreamAudioIfEnabled(&process_monitor);
+  LaunchVNCServerIfEnabled(*config, &process_monitor, OnSubprocessExitCallback);
+  LaunchStreamAudioIfEnabled(*config, &process_monitor,
+                             OnSubprocessExitCallback);
   LaunchAdbConnectorIfEnabled(&process_monitor);
 
   ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
