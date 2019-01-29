@@ -74,6 +74,7 @@ const char* kMemoryMb = "memory_mb";
 const char* kDpi = "dpi";
 const char* kXRes = "x_res";
 const char* kYRes = "y_res";
+const char* kNumScreenBuffers = "num_screen_buffers";
 const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
@@ -122,6 +123,7 @@ const char* kSetupWizardMode = "setupwizard_mode";
 const char* kLogXml = "log_xml";
 const char* kHypervisorUri = "hypervisor_uri";
 const char* kQemuBinary = "qemu_binary";
+const char* kIvServerBinary = "ivserver_binary";
 }  // namespace
 
 namespace vsoc {
@@ -165,6 +167,13 @@ void CuttlefishConfig::set_x_res(int x_res) { (*dictionary_)[kXRes] = x_res; }
 
 int CuttlefishConfig::y_res() const { return (*dictionary_)[kYRes].asInt(); }
 void CuttlefishConfig::set_y_res(int y_res) { (*dictionary_)[kYRes] = y_res; }
+
+int CuttlefishConfig::num_screen_buffers() const {
+  return (*dictionary_)[kNumScreenBuffers].asInt();
+}
+void CuttlefishConfig::set_num_screen_buffers(int num_screen_buffers) {
+  (*dictionary_)[kNumScreenBuffers] = num_screen_buffers;
+}
 
 int CuttlefishConfig::refresh_rate_hz() const {
   return (*dictionary_)[kRefreshRateHz].asInt();
@@ -539,6 +548,14 @@ std::string CuttlefishConfig::qemu_binary() const {
 
 void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
   (*dictionary_)[kQemuBinary] = qemu_binary;
+}
+
+std::string CuttlefishConfig::ivserver_binary() const {
+  return (*dictionary_)[kIvServerBinary].asString();
+}
+
+void CuttlefishConfig::set_ivserver_binary(const std::string& ivserver_binary) {
+  (*dictionary_)[kIvServerBinary] = ivserver_binary;
 }
 
 // Creates the (initially empty) config object and populates it with values from

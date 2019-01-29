@@ -48,6 +48,7 @@
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/boot_image_unpacker.h"
+#include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/process_monitor.h"
@@ -391,11 +392,6 @@ void ValidateAdbModeFlag() {
   }
 }
 
-cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
-  return cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM,
-                                          0666);
-}
-
 bool AdbConnectorEnabled() {
   return FLAGS_run_adb_connector && (AdbTunnelEnabled() || AdbVsockTunnelEnabled());
 }
@@ -557,32 +553,6 @@ cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
   return kernel_log_monitor;
 }
 
-cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config) {
-  // Resize gralloc region
-  auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
-  uint32_t screen_buffers_size =
-      FLAGS_num_screen_buffers *
-      cvd::AlignToPageSize(actual_width * FLAGS_y_res + 16 /* padding */);
-  screen_buffers_size +=
-      (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
-
-  // TODO(b/79170615) Resize gralloc region too.
-
-  vsoc::CreateSharedMemoryFile(
-      config.mempath(),
-      {{vsoc::layout::screen::ScreenLayout::region_name, screen_buffers_size}});
-
-
-  cvd::Command ivserver(FLAGS_ivserver_binary);
-  ivserver.AddParameter(
-      "-qemu_socket_fd=",
-      CreateIvServerUnixSocket(config.ivshmem_qemu_socket_path()));
-  ivserver.AddParameter(
-      "-client_socket_fd=",
-      CreateIvServerUnixSocket(config.ivshmem_client_socket_path()));
-  return ivserver;
-}
-
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor) {
   if (AdbConnectorEnabled()) {
     cvd::Command adb_connector(FLAGS_adb_connector_binary);
@@ -735,6 +705,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
   tmp_config_obj.set_x_res(FLAGS_x_res);
   tmp_config_obj.set_y_res(FLAGS_y_res);
+  tmp_config_obj.set_num_screen_buffers(FLAGS_num_screen_buffers);
   tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   tmp_config_obj.set_adb_mode(FLAGS_adb_mode);
@@ -855,6 +826,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_disable_app_armor_security(FLAGS_disable_app_armor_security);
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
+  tmp_config_obj.set_ivserver_binary(FLAGS_ivserver_binary);
   tmp_config_obj.set_hypervisor_uri(FLAGS_hypervisor_uri);
   tmp_config_obj.set_log_xml(FLAGS_log_xml);
 
