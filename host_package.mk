@@ -70,7 +70,7 @@ cvd_host_shared_libraries := \
 
 cvd_host_configs := \
     system-root.dtb \
-    initrd-root.dtb
+    initrd-root.dtb \
 
 cvd_host_package_files := \
      $(addprefix config/,$(cvd_host_configs)) \
