@@ -75,6 +75,9 @@ class CuttlefishConfig {
   int y_res() const;
   void set_y_res(int y_res);
 
+  int num_screen_buffers() const;
+  void set_num_screen_buffers(int num_screen_buffers);
+
   int refresh_rate_hz() const;
   void set_refresh_rate_hz(int refresh_rate_hz);
 
@@ -210,6 +213,9 @@ class CuttlefishConfig {
 
   void set_qemu_binary(const std::string& qemu_binary);
   std::string qemu_binary() const;
+
+  void set_ivserver_binary(const std::string& ivserver_binary);
+  std::string ivserver_binary() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
