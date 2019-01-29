@@ -470,30 +470,6 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-bool UnpackBootImage(const cvd::BootImageUnpacker& boot_image_unpacker,
-                     const vsoc::CuttlefishConfig& config) {
-  if (boot_image_unpacker.HasRamdiskImage()) {
-    if (!boot_image_unpacker.ExtractRamdiskImage(
-            config.ramdisk_image_path())) {
-      LOG(ERROR) << "Error extracting ramdisk from boot image";
-      return false;
-    }
-  }
-  if (!FLAGS_kernel_path.size()) {
-    if (boot_image_unpacker.HasKernelImage()) {
-      if (!boot_image_unpacker.ExtractKernelImage(
-              config.kernel_image_path())) {
-        LOG(ERROR) << "Error extracting kernel from boot image";
-        return false;
-      }
-    } else {
-      LOG(ERROR) << "No kernel found on boot image";
-      return false;
-    }
-  }
-  return true;
-}
-
 template<typename S, typename T>
 static std::string concat(const S& s, const T& t) {
   std::ostringstream os;
@@ -537,9 +513,11 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_device_title(FLAGS_device_title);
   if (FLAGS_kernel_path.size()) {
     tmp_config_obj.set_kernel_image_path(FLAGS_kernel_path);
+    tmp_config_obj.set_use_unpacked_kernel(false);
   } else {
     tmp_config_obj.set_kernel_image_path(
         tmp_config_obj.PerInstancePath("kernel"));
+    tmp_config_obj.set_use_unpacked_kernel(true);
   }
 
   auto ramdisk_path = tmp_config_obj.PerInstancePath("ramdisk.img");
@@ -957,7 +935,10 @@ int main(int argc, char** argv) {
     return LauncherExitCodes::kInvalidHostConfiguration;
   }
 
-  if (!UnpackBootImage(*boot_img_unpacker, *config)) {
+  if (!boot_img_unpacker->Unpack(config->ramdisk_image_path(),
+                                 config->use_unpacked_kernel()
+                                     ? config->kernel_image_path()
+                                     : "")) {
     LOG(ERROR) << "Failed to unpack boot image";
     return LauncherExitCodes::kBootImageUnpackError;
   }

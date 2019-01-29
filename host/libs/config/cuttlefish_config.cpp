@@ -78,6 +78,7 @@ const char* kNumScreenBuffers = "num_screen_buffers";
 const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
+const char* kUseUnpackedKernel = "use_unpacked_kernel";
 const char* kGdbFlag = "gdb_flag";
 const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
@@ -201,6 +202,14 @@ void CuttlefishConfig::SetPath(const std::string& key,
 void CuttlefishConfig::set_kernel_image_path(
     const std::string& kernel_image_path) {
   SetPath(kKernelImagePath, kernel_image_path);
+}
+
+bool CuttlefishConfig::use_unpacked_kernel() const {
+  return (*dictionary_)[kUseUnpackedKernel].asBool();
+}
+
+void CuttlefishConfig::set_use_unpacked_kernel(bool use_unpacked_kernel) {
+  (*dictionary_)[kUseUnpackedKernel] = use_unpacked_kernel;
 }
 
 std::string CuttlefishConfig::gdb_flag() const {
