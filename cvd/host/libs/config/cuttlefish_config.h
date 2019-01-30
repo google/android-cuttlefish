@@ -233,6 +233,21 @@ class CuttlefishConfig {
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
 
+  void set_run_adb_connector(bool run_adb_connector);
+  bool run_adb_connector() const;
+
+  void set_adb_connector_binary(const std::string& adb_connector_binary);
+  std::string adb_connector_binary() const;
+
+  void set_virtual_usb_manager_binary(const std::string& binary);
+  std::string virtual_usb_manager_binary() const;
+
+  void set_socket_forward_proxy_binary(const std::string& binary);
+  std::string socket_forward_proxy_binary() const;
+
+  void set_socket_vsock_proxy_binary(const std::string& binary);
+  std::string socket_vsock_proxy_binary() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
