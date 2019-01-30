@@ -178,7 +178,7 @@ fi
 # The (maybe patched) DTB can also be provided now.
 
 args+=(
-    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},nowait"
+    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},server,nowait"
     -mon "chardev=charmonitor,id=monitor,mode=control"
     -chardev "socket,id=charserial0,path=${kernel_log_socket_name:-${default_dir}/kernel-log}"
     -device "${kernel_console_serial},chardev=charserial0,id=serial0"

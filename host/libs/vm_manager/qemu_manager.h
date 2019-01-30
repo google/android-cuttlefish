@@ -30,13 +30,11 @@ class QemuManager : public VmManager {
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
-  bool Start() override;
+  cvd::Command StartCommand() override;
   bool Stop() override;
 
   bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const override;
- private:
-  cvd::SharedFD monitor_conn_;
 };
 
 }  // namespace vm_manager
