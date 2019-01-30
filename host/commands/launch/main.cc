@@ -48,6 +48,8 @@
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/boot_image_unpacker.h"
+#include "host/commands/launch/data_image.h"
+#include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
 #include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/process_monitor.h"
@@ -212,139 +214,10 @@ DEFINE_string(e2e_test_binary,
               "Location of the region end to end test binary");
 
 namespace {
-const std::string kDataPolicyUseExisting = "use_existing";
-const std::string kDataPolicyCreateIfMissing = "create_if_missing";
-const std::string kDataPolicyAlwaysCreate = "always_create";
-const std::string kDataPolicyResizeUpTo= "resize_up_to";
 
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeVsockTunnel[] = "vsock_tunnel";
 constexpr char kAdbModeUsb[] = "usb";
-
-void CreateBlankImage(
-    const std::string& image, int image_mb, const std::string& image_fmt) {
-  LOG(INFO) << "Creating " << image;
-  std::string of = "of=";
-  of += image;
-  std::string count = "count=";
-  count += std::to_string(image_mb);
-  cvd::execute({"/bin/dd", "if=/dev/zero", of, "bs=1M", count});
-  cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
-}
-
-void RemoveFile(const std::string& file) {
-  LOG(INFO) << "Removing " << file;
-  remove(file.c_str());
-}
-
-const int FSCK_ERROR_CORRECTED = 1;
-const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
-
-bool ForceFsckImage(const char* data_image) {
-  int fsck_status = cvd::execute({"/sbin/e2fsck", "-y", "-f", data_image});
-  if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
-    LOG(ERROR) << "`e2fsck -y -f " << data_image << "` failed with code "
-               << fsck_status;
-    return false;
-  }
-  return true;
-}
-
-bool ResizeImage(const char* data_image, int data_image_mb) {
-  auto file_mb = cvd::FileSize(data_image) >> 20;
-  if (file_mb > data_image_mb) {
-    LOG(ERROR) << data_image << " is already " << file_mb << " MB, will not "
-               << "resize down.";
-    return false;
-  } else if (file_mb == data_image_mb) {
-    LOG(INFO) << data_image << " is already the right size";
-    return true;
-  } else {
-    off_t raw_target = static_cast<off_t>(data_image_mb) << 20;
-    int truncate_status =
-        cvd::SharedFD::Open(data_image, O_RDWR)->Truncate(raw_target);
-    if (truncate_status != 0) {
-      LOG(ERROR) << "`truncate --size=" << data_image_mb << "M "
-                  << data_image << "` failed with code " << truncate_status;
-      return false;
-    }
-    bool fsck_success = ForceFsckImage(data_image);
-    if (!fsck_success) {
-      return false;
-    }
-    int resize_status = cvd::execute({"/sbin/resize2fs", data_image});
-    if (resize_status != 0) {
-      LOG(ERROR) << "`resize2fs " << data_image << "` failed with code "
-                 << resize_status;
-      return false;
-    }
-    fsck_success = ForceFsckImage(data_image);
-    if (!fsck_success) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool ApplyDataImagePolicy(const char* data_image) {
-  bool data_exists = cvd::FileHasContent(data_image);
-  bool remove{};
-  bool create{};
-  bool resize{};
-
-  if (FLAGS_data_policy == kDataPolicyUseExisting) {
-    if (!data_exists) {
-      LOG(ERROR) << "Specified data image file does not exists: " << data_image;
-      return false;
-    }
-    if (FLAGS_blank_data_image_mb > 0) {
-      LOG(ERROR) << "You should NOT use -blank_data_image_mb with -data_policy="
-                 << kDataPolicyUseExisting;
-      return false;
-    }
-    create = false;
-    remove = false;
-    resize = false;
-  } else if (FLAGS_data_policy == kDataPolicyAlwaysCreate) {
-    remove = data_exists;
-    create = true;
-    resize = false;
-  } else if (FLAGS_data_policy == kDataPolicyCreateIfMissing) {
-    create = !data_exists;
-    remove = false;
-    resize = false;
-  } else if (FLAGS_data_policy == kDataPolicyResizeUpTo) {
-    create = false;
-    remove = false;
-    resize = true;
-  } else {
-    LOG(ERROR) << "Invalid data_policy: " << FLAGS_data_policy;
-    return false;
-  }
-
-  if (remove) {
-    RemoveFile(data_image);
-  }
-
-  if (create) {
-    if (FLAGS_blank_data_image_mb <= 0) {
-      LOG(ERROR) << "-blank_data_image_mb is required to create data image";
-      return false;
-    }
-    CreateBlankImage(
-        data_image, FLAGS_blank_data_image_mb, FLAGS_blank_data_image_fmt);
-  } else if (resize) {
-    if (!data_exists) {
-      LOG(ERROR) << data_image << " does not exist, but resizing was requested";
-      return false;
-    }
-    return ResizeImage(data_image, FLAGS_blank_data_image_mb);
-  } else {
-    LOG(INFO) << data_image << " exists. Not creating it.";
-  }
-
-  return true;
-}
 
 std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
   return config.PerInstancePath("cuttlefish_config.json");
@@ -389,11 +262,6 @@ void ValidateAdbModeFlag() {
   if (!AdbUsbEnabled() && !AdbTunnelEnabled() && !AdbVsockTunnelEnabled()) {
     LOG(INFO) << "ADB not enabled";
   }
-}
-
-cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
-  return cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM,
-                                          0666);
 }
 
 bool AdbConnectorEnabled() {
@@ -536,53 +404,6 @@ void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
       });
 }
 
-// Build the kernel log monitor command. If boot_event_pipe is not NULL, a
-// subscription to boot events from the kernel log monitor will be created and
-// events will appear on *boot_events_pipe
-cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
-                                        cvd::SharedFD* boot_events_pipe) {
-  auto log_name = config.kernel_log_socket_name();
-  auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
-                                                 SOCK_STREAM, 0666);
-  cvd::Command kernel_log_monitor(FLAGS_kernel_log_monitor_binary);
-  kernel_log_monitor.AddParameter("-log_server_fd=", server);
-  if (boot_events_pipe) {
-    cvd::SharedFD pipe_write_end;
-    if (!cvd::SharedFD::Pipe(boot_events_pipe, &pipe_write_end)) {
-      LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
-      std::exit(LauncherExitCodes::kPipeIOError);
-    }
-    kernel_log_monitor.AddParameter("-subscriber_fd=", pipe_write_end);
-  }
-  return kernel_log_monitor;
-}
-
-cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config) {
-  // Resize gralloc region
-  auto actual_width = cvd::AlignToPowerOf2(FLAGS_x_res * 4, 4);  // align to 16
-  uint32_t screen_buffers_size =
-      FLAGS_num_screen_buffers *
-      cvd::AlignToPageSize(actual_width * FLAGS_y_res + 16 /* padding */);
-  screen_buffers_size +=
-      (FLAGS_num_screen_buffers - 1) * 4096; /* Guard pages */
-
-  // TODO(b/79170615) Resize gralloc region too.
-
-  vsoc::CreateSharedMemoryFile(
-      config.mempath(),
-      {{vsoc::layout::screen::ScreenLayout::region_name, screen_buffers_size}});
-
-
-  cvd::Command ivserver(FLAGS_ivserver_binary);
-  ivserver.AddParameter(
-      "-qemu_socket_fd=",
-      CreateIvServerUnixSocket(config.ivshmem_qemu_socket_path()));
-  ivserver.AddParameter(
-      "-client_socket_fd=",
-      CreateIvServerUnixSocket(config.ivshmem_client_socket_path()));
-  return ivserver;
-}
-
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor) {
   if (AdbConnectorEnabled()) {
     cvd::Command adb_connector(FLAGS_adb_connector_binary);
@@ -615,27 +436,6 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor) {
   }
 }
 
-void LaunchVNCServerIfEnabled(cvd::ProcessMonitor* process_monitor) {
-  if (FLAGS_start_vnc_server) {
-    // Launch the vnc server, don't wait for it to complete
-    auto port_options = "-port=" + std::to_string(FLAGS_vnc_server_port);
-    cvd::Command vnc_server(FLAGS_vnc_server_binary);
-    vnc_server.AddParameter(port_options);
-    process_monitor->StartSubprocess(std::move(vnc_server),
-                                     OnSubprocessExitCallback);
-  }
-}
-
-void LaunchStreamAudioIfEnabled(cvd::ProcessMonitor* process_monitor) {
-  if (FLAGS_start_stream_audio) {
-    auto port_options = "-port=" + std::to_string(FLAGS_stream_audio_port);
-    cvd::Command stream_audio(FLAGS_stream_audio_binary);
-    stream_audio.AddParameter(port_options);
-    process_monitor->StartSubprocess(std::move(stream_audio),
-                                     OnSubprocessExitCallback);
-  }
-}
-
 bool ResolveInstanceFiles() {
   if (FLAGS_system_image_dir.empty()) {
     LOG(ERROR) << "--system_image_dir must be specified.";
@@ -661,7 +461,10 @@ bool ResolveInstanceFiles() {
   }
 
   // Create data if necessary
-  if (!ApplyDataImagePolicy(FLAGS_data_image.c_str())) {
+  if (!ApplyDataImagePolicy(FLAGS_data_image.c_str(),
+                            FLAGS_data_policy,
+                            FLAGS_blank_data_image_mb,
+                            FLAGS_blank_data_image_fmt)) {
     return false;
   }
 
@@ -735,6 +538,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
   tmp_config_obj.set_x_res(FLAGS_x_res);
   tmp_config_obj.set_y_res(FLAGS_y_res);
+  tmp_config_obj.set_num_screen_buffers(FLAGS_num_screen_buffers);
   tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   tmp_config_obj.set_adb_mode(FLAGS_adb_mode);
@@ -855,8 +659,18 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_disable_app_armor_security(FLAGS_disable_app_armor_security);
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
+  tmp_config_obj.set_ivserver_binary(FLAGS_ivserver_binary);
+  tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
   tmp_config_obj.set_hypervisor_uri(FLAGS_hypervisor_uri);
   tmp_config_obj.set_log_xml(FLAGS_log_xml);
+
+  tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
+  tmp_config_obj.set_vnc_server_binary(FLAGS_vnc_server_binary);
+  tmp_config_obj.set_vnc_server_port(FLAGS_vnc_server_port);
+
+  tmp_config_obj.set_enable_stream_audio(FLAGS_start_stream_audio);
+  tmp_config_obj.set_stream_audio_binary(FLAGS_stream_audio_binary);
+  tmp_config_obj.set_stream_audio_port(FLAGS_stream_audio_port);
 
   if(!AdbUsbEnabled()) {
     tmp_config_obj.disable_usb_adb();
@@ -1279,8 +1093,9 @@ int main(int argc, char** argv) {
 
   LaunchSocketForwardProxyIfEnabled(&process_monitor);
   LaunchSocketVsockProxyIfEnabled(&process_monitor);
-  LaunchVNCServerIfEnabled(&process_monitor);
-  LaunchStreamAudioIfEnabled(&process_monitor);
+  LaunchVNCServerIfEnabled(*config, &process_monitor, OnSubprocessExitCallback);
+  LaunchStreamAudioIfEnabled(*config, &process_monitor,
+                             OnSubprocessExitCallback);
   LaunchAdbConnectorIfEnabled(&process_monitor);
 
   ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
