@@ -192,23 +192,6 @@ bool ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("vendor_image", default_vendor_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
-  // Create data if necessary
-  if (!ApplyDataImagePolicy(FLAGS_data_image.c_str(),
-                            FLAGS_data_policy,
-                            FLAGS_blank_data_image_mb,
-                            FLAGS_blank_data_image_fmt)) {
-    return false;
-  }
-
-  // Check that the files exist
-  for (const auto& file :
-       {FLAGS_system_image, FLAGS_vendor_image, FLAGS_cache_image,
-        FLAGS_data_image, FLAGS_boot_image}) {
-    if (!cvd::FileHasContent(file.c_str())) {
-      LOG(ERROR) << "File not found: " << file;
-      return false;
-    }
-  }
   return true;
 }
 
@@ -382,6 +365,10 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_run_e2e_test(FLAGS_run_e2e_test);
   tmp_config_obj.set_e2e_test_binary(FLAGS_e2e_test_binary);
 
+  tmp_config_obj.set_data_policy(FLAGS_data_policy);
+  tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
+  tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
+
   if(!AdbUsbEnabled(tmp_config_obj)) {
     tmp_config_obj.disable_usb_adb();
   }
@@ -503,6 +490,11 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
     }
   }
 
+  if (!cvd::FileHasContent(FLAGS_boot_image)) {
+    LOG(ERROR) << "File not found: " << FLAGS_boot_image;
+    exit(cvd::kCuttlefishConfigurationInitError);
+  }
+
   auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
 
   if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
@@ -525,6 +517,21 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   }
 
   ValidateAdbModeFlag(*config);
+
+  // Create data if necessary
+  if (!ApplyDataImagePolicy(*config)) {
+    exit(cvd::kCuttlefishConfigurationInitError);
+  }
+
+  // Check that the files exist
+  for (const auto& file :
+       {config->system_image_path(), config->vendor_image_path(),
+        config->cache_image_path(), config->data_image_path()}) {
+    if (!cvd::FileHasContent(file.c_str())) {
+      LOG(ERROR) << "File not found: " << file;
+      exit(cvd::kCuttlefishConfigurationInitError);
+    }
+  }
 
   return config;
 }
