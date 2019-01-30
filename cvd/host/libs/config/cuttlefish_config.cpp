@@ -141,6 +141,10 @@ const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
 const char* kRunAsDaemon = "run_as_daemon";
 const char* kRunE2eTest = "run_e2e_test";
 const char* kE2eTestBinary = "e2e_test_binary";
+
+const char* kDataPolicy = "data_policy";
+const char* kBlankDataImageMb = "blank_data_image_mb";
+const char* kBlankDataImageFmt = "blank_data_image_fmt";
 }  // namespace
 
 namespace vsoc {
@@ -685,6 +689,30 @@ std::string CuttlefishConfig::e2e_test_binary() const {
 
 void CuttlefishConfig::set_e2e_test_binary(const std::string& e2e_test_binary) {
   (*dictionary_)[kE2eTestBinary] = e2e_test_binary;
+}
+
+std::string CuttlefishConfig::data_policy() const {
+  return (*dictionary_)[kDataPolicy].asString();
+}
+
+void CuttlefishConfig::set_data_policy(const std::string& data_policy) {
+  (*dictionary_)[kDataPolicy] = data_policy;
+}
+
+int CuttlefishConfig::blank_data_image_mb() const {
+  return (*dictionary_)[kBlankDataImageMb].asBool();
+}
+
+void CuttlefishConfig::set_blank_data_image_mb(int blank_data_image_mb) {
+  (*dictionary_)[kBlankDataImageMb] = blank_data_image_mb;
+}
+
+std::string CuttlefishConfig::blank_data_image_fmt() const {
+  return (*dictionary_)[kBlankDataImageFmt].asString();
+}
+
+void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
+  (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
 }
 
 // Creates the (initially empty) config object and populates it with values from
