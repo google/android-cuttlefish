@@ -248,6 +248,9 @@ class CuttlefishConfig {
   void set_socket_vsock_proxy_binary(const std::string& binary);
   std::string socket_vsock_proxy_binary() const;
 
+  void set_run_as_daemon(bool run_as_daemon);
+  bool run_as_daemon() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
