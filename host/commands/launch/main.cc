@@ -314,10 +314,11 @@ void SetUpHandlingOfBootEvents(
 }
 
 void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
-                   std::shared_ptr<CvdBootStateMachine> state_machine) {
+                   std::shared_ptr<CvdBootStateMachine> state_machine,
+                   const vsoc::CuttlefishConfig& config) {
   // Run a command that always succeeds if we are not running e2e tests
   std::string e2e_test_cmd =
-      FLAGS_run_e2e_test ? FLAGS_e2e_test_binary : "/bin/true";
+      config.run_e2e_test() ? config.e2e_test_binary() : "/bin/true";
   process_monitor->StartSubprocess(
       cvd::Command(e2e_test_cmd),
       [state_machine](cvd::MonitorEntry* entry) {
@@ -545,6 +546,8 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_socket_forward_proxy_binary);
   tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
+  tmp_config_obj.set_run_e2e_test(FLAGS_run_e2e_test);
+  tmp_config_obj.set_e2e_test_binary(FLAGS_e2e_test_binary);
 
   if(!AdbUsbEnabled(tmp_config_obj)) {
     tmp_config_obj.disable_usb_adb();
@@ -923,7 +926,7 @@ int main(int argc, char** argv) {
   PreLaunchInitializers::Initialize(*config);
 
   // Launch the e2e test after the shared memory is initialized
-  LaunchE2eTest(&process_monitor, boot_state_machine);
+  LaunchE2eTest(&process_monitor, boot_state_machine, *config);
 
   // Start the guest VM
   process_monitor.StartSubprocess(vm_manager->StartCommand(),
