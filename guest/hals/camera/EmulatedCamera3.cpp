@@ -243,6 +243,9 @@ camera3_device_ops_t EmulatedCamera3::sDeviceOps = {
     /* DEPRECATED: get_metadata_vendor_tag_ops */ nullptr,
     EmulatedCamera3::dump,
     EmulatedCamera3::flush,
+#ifdef CAMERA_DEVICE_API_VERSION_3_6
+    /*UNUSED: signal_stream_flush*/nullptr,
+#endif
     {0}};
 
 const char* EmulatedCamera3::sAvailableCapabilitiesStrings[NUM_CAPABILITIES] = {
