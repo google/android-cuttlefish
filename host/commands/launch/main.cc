@@ -241,7 +241,7 @@ bool AdbTunnelEnabled(const vsoc::CuttlefishConfig& config) {
 }
 
 bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
-  return FLAGS_vsock_guest_cid > 2
+  return config.vsock_guest_cid() > 2
       && AdbModeEnabled(config, kAdbModeVsockTunnel);
 }
 
@@ -257,7 +257,7 @@ void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
 }
 
 bool AdbConnectorEnabled(const vsoc::CuttlefishConfig& config) {
-  return FLAGS_run_adb_connector
+  return config.run_adb_connector()
       && (AdbTunnelEnabled(config) || AdbVsockTunnelEnabled(config));
 }
 
@@ -283,7 +283,7 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                << usb_v1_server->StrError();
     std::exit(cvd::LauncherExitCodes::kUsbV1SocketError);
   }
-  cvd::Command usb_server(FLAGS_virtual_usb_manager_binary);
+  cvd::Command usb_server(config.virtual_usb_manager_binary());
   usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
   process_monitor->StartSubprocess(std::move(usb_server),
                                    GetOnSubprocessExitCallback(config));
@@ -401,7 +401,7 @@ void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
   if (AdbConnectorEnabled(config)) {
-    cvd::Command adb_connector(FLAGS_adb_connector_binary);
+    cvd::Command adb_connector(config.adb_connector_binary());
     adb_connector.AddParameter(GetAdbConnectorPortArg());
     process_monitor->StartSubprocess(std::move(adb_connector),
                                      GetOnSubprocessExitCallback(config));
@@ -411,7 +411,7 @@ void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
 void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
   if (AdbTunnelEnabled(config)) {
-    cvd::Command adb_tunnel(FLAGS_socket_forward_proxy_binary);
+    cvd::Command adb_tunnel(config.socket_forward_proxy_binary());
     adb_tunnel.AddParameter(GetGuestPortArg());
     adb_tunnel.AddParameter(GetHostPortArg());
     process_monitor->StartSubprocess(std::move(adb_tunnel),
@@ -422,7 +422,7 @@ void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
   if (AdbVsockTunnelEnabled(config)) {
-    cvd::Command adb_tunnel(FLAGS_socket_vsock_proxy_binary);
+    cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
     adb_tunnel.AddParameter("--guest_port=5555");
     adb_tunnel.AddParameter(
         std::string{"--host_port="} + std::to_string(GetHostPort()));
@@ -643,6 +643,13 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_stream_audio_port(FLAGS_stream_audio_port);
 
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
+  tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
+  tmp_config_obj.set_adb_connector_binary(FLAGS_adb_connector_binary);
+  tmp_config_obj.set_virtual_usb_manager_binary(
+      FLAGS_virtual_usb_manager_binary);
+  tmp_config_obj.set_socket_forward_proxy_binary(
+      FLAGS_socket_forward_proxy_binary);
+  tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
 
   if(!AdbUsbEnabled(tmp_config_obj)) {
     tmp_config_obj.disable_usb_adb();

@@ -132,6 +132,11 @@ const char* kStreamAudioBinary = "stream_audio_binary";
 const char* kStreamAudioPort = "stream_audio_port";
 
 const char* kRestartSubprocesses = "restart_subprocesses";
+const char* kRunAdbConnector = "run_adb_connector";
+const char* kAdbConnectorBinary = "adb_connector_binary";
+const char* kVirtualUsbManagerBinary = "virtual_usb_manager_binary";
+const char* kSocketForwardProxyBinary = "socket_forward_proxy_binary";
+const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
 }  // namespace
 
 namespace vsoc {
@@ -608,6 +613,50 @@ bool CuttlefishConfig::restart_subprocesses() const {
 
 void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
   (*dictionary_)[kRestartSubprocesses] = restart_subprocesses;
+}
+
+bool CuttlefishConfig::run_adb_connector() const {
+  return (*dictionary_)[kRestartSubprocesses].asBool();
+}
+
+void CuttlefishConfig::set_run_adb_connector(bool run_adb_connector) {
+  (*dictionary_)[kRunAdbConnector] = run_adb_connector;
+}
+
+std::string CuttlefishConfig::adb_connector_binary() const {
+  return (*dictionary_)[kAdbConnectorBinary].asString();
+}
+
+void CuttlefishConfig::set_adb_connector_binary(
+    const std::string& adb_connector_binary) {
+  (*dictionary_)[kAdbConnectorBinary] = adb_connector_binary;
+}
+
+std::string CuttlefishConfig::virtual_usb_manager_binary() const {
+  return (*dictionary_)[kVirtualUsbManagerBinary].asString();
+}
+
+void CuttlefishConfig::set_virtual_usb_manager_binary(
+    const std::string& virtual_usb_manager_binary) {
+  (*dictionary_)[kVirtualUsbManagerBinary] = virtual_usb_manager_binary;
+}
+
+std::string CuttlefishConfig::socket_forward_proxy_binary() const {
+  return (*dictionary_)[kSocketForwardProxyBinary].asString();
+}
+
+void CuttlefishConfig::set_socket_forward_proxy_binary(
+    const std::string& socket_forward_proxy_binary) {
+  (*dictionary_)[kSocketForwardProxyBinary] = socket_forward_proxy_binary;
+}
+
+std::string CuttlefishConfig::socket_vsock_proxy_binary() const {
+  return (*dictionary_)[kSocketVsockProxyBinary].asString();
+}
+
+void CuttlefishConfig::set_socket_vsock_proxy_binary(
+    const std::string& socket_vsock_proxy_binary) {
+  (*dictionary_)[kSocketVsockProxyBinary] = socket_vsock_proxy_binary;
 }
 
 // Creates the (initially empty) config object and populates it with values from
