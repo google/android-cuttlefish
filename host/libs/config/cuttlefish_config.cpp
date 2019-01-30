@@ -137,6 +137,8 @@ const char* kAdbConnectorBinary = "adb_connector_binary";
 const char* kVirtualUsbManagerBinary = "virtual_usb_manager_binary";
 const char* kSocketForwardProxyBinary = "socket_forward_proxy_binary";
 const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
+
+const char* kRunAsDaemon = "run_as_daemon";
 }  // namespace
 
 namespace vsoc {
@@ -657,6 +659,14 @@ std::string CuttlefishConfig::socket_vsock_proxy_binary() const {
 void CuttlefishConfig::set_socket_vsock_proxy_binary(
     const std::string& socket_vsock_proxy_binary) {
   (*dictionary_)[kSocketVsockProxyBinary] = socket_vsock_proxy_binary;
+}
+
+bool CuttlefishConfig::run_as_daemon() const {
+  return (*dictionary_)[kRunAsDaemon].asBool();
+}
+
+void CuttlefishConfig::set_run_as_daemon(bool run_as_daemon) {
+  (*dictionary_)[kRunAsDaemon] = run_as_daemon;
 }
 
 // Creates the (initially empty) config object and populates it with values from

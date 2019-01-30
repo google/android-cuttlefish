@@ -544,6 +544,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_socket_forward_proxy_binary(
       FLAGS_socket_forward_proxy_binary);
   tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
+  tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
   if(!AdbUsbEnabled(tmp_config_obj)) {
     tmp_config_obj.disable_usb_adb();
@@ -858,7 +859,7 @@ int main(int argc, char** argv) {
   }
 
   LOG(INFO) << "The following files contain useful debugging information:";
-  if (FLAGS_daemon) {
+  if (config->run_as_daemon()) {
     LOG(INFO) << "  Launcher log: " << config->launcher_log_path();
   }
   LOG(INFO) << "  Android's logcat output: " << config->logcat_path();
@@ -877,7 +878,7 @@ int main(int argc, char** argv) {
     return cvd::LauncherExitCodes::kMonitorCreationFailed;
   }
   cvd::SharedFD foreground_launcher_pipe;
-  if (FLAGS_daemon) {
+  if (config->run_as_daemon()) {
     foreground_launcher_pipe = DaemonizeLauncher(*config);
     if (!foreground_launcher_pipe->IsOpen()) {
       return LauncherExitCodes::kDaemonizationError;
@@ -904,7 +905,9 @@ int main(int argc, char** argv) {
   // Only subscribe to boot events if running as daemon
   process_monitor.StartSubprocess(
       GetKernelLogMonitorCommand(*config,
-                                 FLAGS_daemon ? &boot_events_pipe : nullptr),
+                                 config->run_as_daemon()
+                                   ? &boot_events_pipe
+                                   : nullptr),
       GetOnSubprocessExitCallback(*config));
 
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
