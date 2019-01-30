@@ -335,21 +335,21 @@ bool ResolveInstanceFiles() {
 
   // If user did not specify location of either of these files, expect them to
   // be placed in --system_image_dir location.
-  if (FLAGS_system_image.empty()) {
-    FLAGS_system_image = FLAGS_system_image_dir + "/system.img";
-  }
-  if (FLAGS_boot_image.empty()) {
-    FLAGS_boot_image = FLAGS_system_image_dir + "/boot.img";
-  }
-  if (FLAGS_cache_image.empty()) {
-    FLAGS_cache_image = FLAGS_system_image_dir + "/cache.img";
-  }
-  if (FLAGS_data_image.empty()) {
-    FLAGS_data_image = FLAGS_system_image_dir + "/userdata.img";
-  }
-  if (FLAGS_vendor_image.empty()) {
-    FLAGS_vendor_image = FLAGS_system_image_dir + "/vendor.img";
-  }
+  std::string default_system_image = FLAGS_system_image_dir + "/system.img";
+  SetCommandLineOptionWithMode("system_image", default_system_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_boot_image = FLAGS_system_image_dir + "/boot.img";
+  SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_cache_image = FLAGS_system_image_dir + "/cache.img";
+  SetCommandLineOptionWithMode("cache_image", default_cache_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_data_image = FLAGS_system_image_dir + "/userdata.img";
+  SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_vendor_image = FLAGS_system_image_dir + "/vendor.img";
+  SetCommandLineOptionWithMode("vendor_image", default_vendor_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   // Create data if necessary
   if (!ApplyDataImagePolicy(FLAGS_data_image.c_str(),
