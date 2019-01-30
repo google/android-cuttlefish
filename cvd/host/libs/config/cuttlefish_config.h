@@ -257,6 +257,15 @@ class CuttlefishConfig {
   void set_e2e_test_binary(const std::string& e2e_test_binary);
   std::string e2e_test_binary() const;
 
+  void set_data_policy(const std::string& data_policy);
+  std::string data_policy() const;
+
+  void set_blank_data_image_mb(int blank_data_image_mb);
+  int blank_data_image_mb() const;
+
+  void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
+  std::string blank_data_image_fmt() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
