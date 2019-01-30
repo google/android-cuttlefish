@@ -144,18 +144,6 @@ bool QemuManager::Stop() {
   return true;
 }
 
-bool QemuManager::EnsureInstanceDirExists(const std::string& instance_dir) {
-  if (!cvd::DirectoryExists(instance_dir.c_str())) {
-    LOG(INFO) << "Setting up " << instance_dir;
-    if (mkdir(instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
-      LOG(ERROR) << "Unable to create " << instance_dir << ". Error: " << errno;
-      return false;
-    }
-  }
-  return true;
-
-}
-
 bool QemuManager::ValidateHostConfiguration(
     std::vector<std::string>* config_commands) const {
   // the check for cvdnetwork needs to happen even if the user is not in kvm, so

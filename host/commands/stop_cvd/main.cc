@@ -44,7 +44,6 @@
 #include "host/commands/launch/launcher_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
-#include "host/libs/vm_manager/libvirt_manager.h"
 
 DEFINE_int32(wait_for_launcher, 5,
              "How many seconds to wait for the launcher to respond to the stop "
@@ -54,12 +53,9 @@ namespace {
 // Gets a set of the possible process groups of a previous launch
 std::set<pid_t> GetCandidateProcessGroups() {
   std::string cmd = "fuser";
-  // Add the instance directory for qemu
+  // Add the instance directory
   cmd += " " + cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime/*";
-  // Add the instance directory for libvirt
-  auto libvirt_instance_dir =
-      std::string("/var/run/libvirt-") + vsoc::kDefaultUuidPrefix;
-  cmd += " " + vsoc::GetPerInstanceDefault(libvirt_instance_dir.c_str()) + "/*";
+  // Add the shared memory file
   cmd += " " + vsoc::GetPerInstanceDefault("/dev/shm/cvd-");
   std::shared_ptr<FILE> cmd_out(popen(cmd.c_str(), "r"), pclose);
   if (!cmd_out) {
@@ -84,22 +80,6 @@ std::set<pid_t> GetCandidateProcessGroups() {
 
 int FallBackStop() {
   auto exit_code = 1; // Having to fallback is an error
-  if (vm_manager::VmManager::IsVmManagerSupported(
-          vm_manager::LibvirtManager::name())) {
-    // Libvirt doesn't run as the same user as stop_cvd, so we must stop it
-    // through the manager. Qemu on the other hand would get killed by the
-    // commands below.
-    vsoc::CuttlefishConfig config;
-    config.set_instance_dir(std::string("/var/run/libvirt-") +
-                            vsoc::kDefaultUuidPrefix);
-    auto vm_manager =
-      vm_manager::VmManager::Get(vm_manager::LibvirtManager::name(), &config);
-    if (!vm_manager->Stop()) {
-      LOG(WARNING) << "Failed to stop the libvirt domain: Is it still running? "
-                      "Is it using qemu_cli?";
-      exit_code |= 2;
-    }
-  }
 
   auto process_groups = GetCandidateProcessGroups();
   for (auto pgid: process_groups) {

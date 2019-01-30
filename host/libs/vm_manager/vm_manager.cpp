@@ -22,7 +22,6 @@
 
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace vm_manager {
@@ -40,22 +39,11 @@ VmManager* GetManagerSingleton(const vsoc::CuttlefishConfig* config) {
 
 std::map<std::string, VmManager::VmManagerHelper>
     VmManager::vm_manager_helpers_ = {
-        {LibvirtManager::name(),
-         {[](const vsoc::CuttlefishConfig* config) {
-            return GetManagerSingleton<LibvirtManager>(config);
-          },
-          []() { return true; },
-          [](const std::string& dir_path) {
-            return LibvirtManager::EnsureInstanceDirExists(dir_path);
-          }}},
         {QemuManager::name(),
          {[](const vsoc::CuttlefishConfig* config) {
             return GetManagerSingleton<QemuManager>(config);
           },
-          []() { return vsoc::HostSupportsQemuCli(); },
-          [](const std::string& dir_path) {
-            return QemuManager::EnsureInstanceDirExists(dir_path);
-          }}}};
+          []() { return vsoc::HostSupportsQemuCli(); }}}};
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
                           const vsoc::CuttlefishConfig* config) {
@@ -92,11 +80,5 @@ bool VmManager::UserInGroup(const std::string& group,
     return false;
   }
   return true;
-}
-
-bool VmManager::EnsureInstanceDirExists(const std::string& vm_manager_name,
-                                        const std::string& instance_dir_path) {
-  return vm_manager_helpers_[vm_manager_name].instance_dir_creator(
-      instance_dir_path);
 }
 }  // namespace vm_manager

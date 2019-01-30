@@ -26,7 +26,6 @@ namespace vm_manager {
 class QemuManager : public VmManager {
  public:
   static const std::string name();
-  static bool EnsureInstanceDirExists(const std::string& instance_dir);
 
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;

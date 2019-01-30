@@ -112,16 +112,12 @@ const char* kEntropySource = "entropy_source";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kUuid = "uuid";
-const char* kDisableDacSecurity = "disable_dac_security";
-const char* kDisableAppArmorSecurity = "disable_app_armor_security";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
 const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
 
-const char* kLogXml = "log_xml";
-const char* kHypervisorUri = "hypervisor_uri";
 const char* kQemuBinary = "qemu_binary";
 const char* kIvServerBinary = "ivserver_binary";
 const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
@@ -471,26 +467,11 @@ void CuttlefishConfig::set_uuid(const std::string& uuid) {
   (*dictionary_)[kUuid] = uuid;
 }
 
-bool CuttlefishConfig::disable_dac_security() const {
-  return (*dictionary_)[kDisableDacSecurity].asBool();
-}
-void CuttlefishConfig::set_disable_dac_security(bool disable_dac_security) {
-  (*dictionary_)[kDisableDacSecurity] = disable_dac_security;
-}
-
 void CuttlefishConfig::set_cuttlefish_env_path(const std::string& path) {
   SetPath(kCuttlefishEnvPath, path);
 }
 std::string CuttlefishConfig::cuttlefish_env_path() const {
   return (*dictionary_)[kCuttlefishEnvPath].asString();
-}
-
-bool CuttlefishConfig::disable_app_armor_security() const {
-  return (*dictionary_)[kDisableAppArmorSecurity].asBool();
-}
-void CuttlefishConfig::set_disable_app_armor_security(
-    bool disable_app_armor_security) {
-  (*dictionary_)[kDisableAppArmorSecurity] = disable_app_armor_security;
 }
 
 std::string CuttlefishConfig::adb_mode() const {
@@ -533,22 +514,6 @@ std::string CuttlefishConfig::setupwizard_mode() const {
 
 void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
   (*dictionary_)[kSetupWizardMode] = mode;
-}
-
-bool CuttlefishConfig::log_xml() const {
-  return (*dictionary_)[kLogXml].asBool();
-}
-
-void CuttlefishConfig::set_log_xml(bool log_xml) {
-  (*dictionary_)[kLogXml] = log_xml;
-}
-
-std::string CuttlefishConfig::hypervisor_uri() const {
-  return (*dictionary_)[kHypervisorUri].asString();
-}
-
-void CuttlefishConfig::set_hypervisor_uri(const std::string& hypervisor_uri) {
-  (*dictionary_)[kHypervisorUri] = hypervisor_uri;
 }
 
 std::string CuttlefishConfig::qemu_binary() const {
@@ -708,12 +673,7 @@ int GetPerInstanceDefault(int base) { return base + GetInstance() - 1; }
 
 std::string GetDefaultPerInstanceDir() {
   std::ostringstream stream;
-  if (HostSupportsQemuCli()) {
-    stream << std::getenv("HOME") << "/cuttlefish_runtime";
-  } else {
-    stream << "/var/run/libvirt-" << kDefaultUuidPrefix << std::setfill('0')
-           << std::setw(2) << GetInstance();
-  }
+  stream << std::getenv("HOME") << "/cuttlefish_runtime";
   return stream.str();
 }
 
