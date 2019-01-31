@@ -311,7 +311,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
 
-# TODO vibrator HAL
+# Vibrator HAL
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator@1.3-service.example
 
 PRODUCT_PACKAGES += \
     cuttlefish_dtb
