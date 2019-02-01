@@ -1,6 +1,5 @@
 # GceService app
 type gceservice, domain;
-type gceservice_tmpfs, file_type;
 app_domain(gceservice)
 
 # Use system services exposed as part of Android framework public API
