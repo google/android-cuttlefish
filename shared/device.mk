@@ -130,7 +130,9 @@ PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
     device/google/cuttlefish/shared/config/camera_v3.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
+    device/google/cuttlefish/shared/config/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.common.rc \
     device/google/cuttlefish/shared/config/init.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
+    device/google/cuttlefish/shared/config/init.virtio.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.virtio.rc \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/ueventd.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
@@ -174,11 +176,14 @@ PRODUCT_COPY_FILES += \
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
+    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.virtio \
 
 else
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.vsoc \
     device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.virtio \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.virtio \
 
 endif
 
@@ -332,6 +337,8 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy.recovery \
 
 PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/init.recovery.common.rc:recovery/root/init.recovery.common.rc \
     device/google/cuttlefish/shared/config/init.recovery.vsoc.rc:recovery/root/init.recovery.vsoc.rc \
+    device/google/cuttlefish/shared/config/init.recovery.virtio.rc:recovery/root/init.recovery.virtio.rc \
 
 endif
