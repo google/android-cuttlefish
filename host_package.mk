@@ -36,6 +36,7 @@ cvd_host_executables := \
     ivserver \
     virtual_usb_manager \
     kernel_log_monitor \
+    extract-vmlinux \
     crosvm \
 
 cvd_host_tests := \
