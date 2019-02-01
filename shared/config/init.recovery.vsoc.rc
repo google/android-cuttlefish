@@ -1,6 +1,9 @@
 service socket_forward_proxy /system/bin/socket_forward_proxy
     seclabel u:r:socket_forward_proxy:s0
 
+service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -guest_port=5555
+    seclabel u:r:socket_vsock_proxy:s0
+
 service console /system/bin/sh
     class core
     console
@@ -12,6 +15,7 @@ service console /system/bin/sh
 
 on boot
     start socket_forward_proxy
+    start socket_vsock_proxy
 
 on property:ro.debuggable=1
     start console
