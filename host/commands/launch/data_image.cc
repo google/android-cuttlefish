@@ -77,21 +77,19 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
 }
 } // namespace
 
-bool ApplyDataImagePolicy(const char* data_image,
-                          const std::string& data_policy,
-                          int blank_data_image_mb,
-                          const std::string& blank_data_image_fmt) {
-  bool data_exists = cvd::FileHasContent(data_image);
+bool ApplyDataImagePolicy(const vsoc::CuttlefishConfig& config) {
+  std::string data_image = config.data_image_path();
+  bool data_exists = cvd::FileHasContent(data_image.c_str());
   bool remove{};
   bool create{};
   bool resize{};
 
-  if (data_policy == kDataPolicyUseExisting) {
+  if (config.data_policy() == kDataPolicyUseExisting) {
     if (!data_exists) {
       LOG(ERROR) << "Specified data image file does not exists: " << data_image;
       return false;
     }
-    if (blank_data_image_mb > 0) {
+    if (config.blank_data_image_mb() > 0) {
       LOG(ERROR) << "You should NOT use -blank_data_image_mb with -data_policy="
                  << kDataPolicyUseExisting;
       return false;
@@ -99,39 +97,40 @@ bool ApplyDataImagePolicy(const char* data_image,
     create = false;
     remove = false;
     resize = false;
-  } else if (data_policy == kDataPolicyAlwaysCreate) {
+  } else if (config.data_policy() == kDataPolicyAlwaysCreate) {
     remove = data_exists;
     create = true;
     resize = false;
-  } else if (data_policy == kDataPolicyCreateIfMissing) {
+  } else if (config.data_policy() == kDataPolicyCreateIfMissing) {
     create = !data_exists;
     remove = false;
     resize = false;
-  } else if (data_policy == kDataPolicyResizeUpTo) {
+  } else if (config.data_policy() == kDataPolicyResizeUpTo) {
     create = false;
     remove = false;
     resize = true;
   } else {
-    LOG(ERROR) << "Invalid data_policy: " << data_policy;
+    LOG(ERROR) << "Invalid data_policy: " << config.data_policy();
     return false;
   }
 
   if (remove) {
-    RemoveFile(data_image);
+    RemoveFile(data_image.c_str());
   }
 
   if (create) {
-    if (blank_data_image_mb <= 0) {
+    if (config.blank_data_image_mb() <= 0) {
       LOG(ERROR) << "-blank_data_image_mb is required to create data image";
       return false;
     }
-    CreateBlankImage(data_image, blank_data_image_mb, blank_data_image_fmt);
+    CreateBlankImage(data_image.c_str(), config.blank_data_image_mb(),
+                     config.blank_data_image_fmt());
   } else if (resize) {
     if (!data_exists) {
       LOG(ERROR) << data_image << " does not exist, but resizing was requested";
       return false;
     }
-    return ResizeImage(data_image, blank_data_image_mb);
+    return ResizeImage(data_image.c_str(), config.blank_data_image_mb());
   } else {
     LOG(INFO) << data_image << " exists. Not creating it.";
   }
