@@ -84,6 +84,9 @@ class CuttlefishConfig {
   std::string kernel_image_path() const;
   void set_kernel_image_path(const std::string& kernel_image_path);
 
+  bool use_unpacked_kernel() const;
+  void set_use_unpacked_kernel(bool use_unpacked_kernel);
+
   std::set<std::string> kernel_cmdline() const;
   void set_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
   void add_kernel_cmdline(const std::string& arg);
@@ -226,6 +229,42 @@ class CuttlefishConfig {
 
   void set_stream_audio_binary(const std::string& stream_audio_binary);
   std::string stream_audio_binary() const;
+
+  void set_restart_subprocesses(bool restart_subprocesses);
+  bool restart_subprocesses() const;
+
+  void set_run_adb_connector(bool run_adb_connector);
+  bool run_adb_connector() const;
+
+  void set_adb_connector_binary(const std::string& adb_connector_binary);
+  std::string adb_connector_binary() const;
+
+  void set_virtual_usb_manager_binary(const std::string& binary);
+  std::string virtual_usb_manager_binary() const;
+
+  void set_socket_forward_proxy_binary(const std::string& binary);
+  std::string socket_forward_proxy_binary() const;
+
+  void set_socket_vsock_proxy_binary(const std::string& binary);
+  std::string socket_vsock_proxy_binary() const;
+
+  void set_run_as_daemon(bool run_as_daemon);
+  bool run_as_daemon() const;
+
+  void set_run_e2e_test(bool run_e2e_test);
+  bool run_e2e_test() const;
+
+  void set_e2e_test_binary(const std::string& e2e_test_binary);
+  std::string e2e_test_binary() const;
+
+  void set_data_policy(const std::string& data_policy);
+  std::string data_policy() const;
+
+  void set_blank_data_image_mb(int blank_data_image_mb);
+  int blank_data_image_mb() const;
+
+  void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
+  std::string blank_data_image_fmt() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;

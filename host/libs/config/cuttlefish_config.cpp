@@ -78,6 +78,7 @@ const char* kNumScreenBuffers = "num_screen_buffers";
 const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
+const char* kUseUnpackedKernel = "use_unpacked_kernel";
 const char* kGdbFlag = "gdb_flag";
 const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
@@ -129,6 +130,21 @@ const char* kVncServerPort = "vnc_server_port";
 const char* kEnableStreamAudio = "enable_stream_audio";
 const char* kStreamAudioBinary = "stream_audio_binary";
 const char* kStreamAudioPort = "stream_audio_port";
+
+const char* kRestartSubprocesses = "restart_subprocesses";
+const char* kRunAdbConnector = "run_adb_connector";
+const char* kAdbConnectorBinary = "adb_connector_binary";
+const char* kVirtualUsbManagerBinary = "virtual_usb_manager_binary";
+const char* kSocketForwardProxyBinary = "socket_forward_proxy_binary";
+const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
+
+const char* kRunAsDaemon = "run_as_daemon";
+const char* kRunE2eTest = "run_e2e_test";
+const char* kE2eTestBinary = "e2e_test_binary";
+
+const char* kDataPolicy = "data_policy";
+const char* kBlankDataImageMb = "blank_data_image_mb";
+const char* kBlankDataImageFmt = "blank_data_image_fmt";
 }  // namespace
 
 namespace vsoc {
@@ -201,6 +217,14 @@ void CuttlefishConfig::SetPath(const std::string& key,
 void CuttlefishConfig::set_kernel_image_path(
     const std::string& kernel_image_path) {
   SetPath(kKernelImagePath, kernel_image_path);
+}
+
+bool CuttlefishConfig::use_unpacked_kernel() const {
+  return (*dictionary_)[kUseUnpackedKernel].asBool();
+}
+
+void CuttlefishConfig::set_use_unpacked_kernel(bool use_unpacked_kernel) {
+  (*dictionary_)[kUseUnpackedKernel] = use_unpacked_kernel;
 }
 
 std::string CuttlefishConfig::gdb_flag() const {
@@ -589,6 +613,106 @@ int CuttlefishConfig::stream_audio_port() const {
 
 void CuttlefishConfig::set_stream_audio_port(int stream_audio_port) {
   (*dictionary_)[kStreamAudioPort] = stream_audio_port;
+}
+
+bool CuttlefishConfig::restart_subprocesses() const {
+  return (*dictionary_)[kRestartSubprocesses].asBool();
+}
+
+void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
+  (*dictionary_)[kRestartSubprocesses] = restart_subprocesses;
+}
+
+bool CuttlefishConfig::run_adb_connector() const {
+  return (*dictionary_)[kRestartSubprocesses].asBool();
+}
+
+void CuttlefishConfig::set_run_adb_connector(bool run_adb_connector) {
+  (*dictionary_)[kRunAdbConnector] = run_adb_connector;
+}
+
+std::string CuttlefishConfig::adb_connector_binary() const {
+  return (*dictionary_)[kAdbConnectorBinary].asString();
+}
+
+void CuttlefishConfig::set_adb_connector_binary(
+    const std::string& adb_connector_binary) {
+  (*dictionary_)[kAdbConnectorBinary] = adb_connector_binary;
+}
+
+std::string CuttlefishConfig::virtual_usb_manager_binary() const {
+  return (*dictionary_)[kVirtualUsbManagerBinary].asString();
+}
+
+void CuttlefishConfig::set_virtual_usb_manager_binary(
+    const std::string& virtual_usb_manager_binary) {
+  (*dictionary_)[kVirtualUsbManagerBinary] = virtual_usb_manager_binary;
+}
+
+std::string CuttlefishConfig::socket_forward_proxy_binary() const {
+  return (*dictionary_)[kSocketForwardProxyBinary].asString();
+}
+
+void CuttlefishConfig::set_socket_forward_proxy_binary(
+    const std::string& socket_forward_proxy_binary) {
+  (*dictionary_)[kSocketForwardProxyBinary] = socket_forward_proxy_binary;
+}
+
+std::string CuttlefishConfig::socket_vsock_proxy_binary() const {
+  return (*dictionary_)[kSocketVsockProxyBinary].asString();
+}
+
+void CuttlefishConfig::set_socket_vsock_proxy_binary(
+    const std::string& socket_vsock_proxy_binary) {
+  (*dictionary_)[kSocketVsockProxyBinary] = socket_vsock_proxy_binary;
+}
+
+bool CuttlefishConfig::run_as_daemon() const {
+  return (*dictionary_)[kRunAsDaemon].asBool();
+}
+
+void CuttlefishConfig::set_run_as_daemon(bool run_as_daemon) {
+  (*dictionary_)[kRunAsDaemon] = run_as_daemon;
+}
+
+bool CuttlefishConfig::run_e2e_test() const {
+  return (*dictionary_)[kRunE2eTest].asBool();
+}
+
+void CuttlefishConfig::set_run_e2e_test(bool run_e2e_test) {
+  (*dictionary_)[kRunE2eTest] = run_e2e_test;
+}
+
+std::string CuttlefishConfig::e2e_test_binary() const {
+  return (*dictionary_)[kE2eTestBinary].asString();
+}
+
+void CuttlefishConfig::set_e2e_test_binary(const std::string& e2e_test_binary) {
+  (*dictionary_)[kE2eTestBinary] = e2e_test_binary;
+}
+
+std::string CuttlefishConfig::data_policy() const {
+  return (*dictionary_)[kDataPolicy].asString();
+}
+
+void CuttlefishConfig::set_data_policy(const std::string& data_policy) {
+  (*dictionary_)[kDataPolicy] = data_policy;
+}
+
+int CuttlefishConfig::blank_data_image_mb() const {
+  return (*dictionary_)[kBlankDataImageMb].asBool();
+}
+
+void CuttlefishConfig::set_blank_data_image_mb(int blank_data_image_mb) {
+  (*dictionary_)[kBlankDataImageMb] = blank_data_image_mb;
+}
+
+std::string CuttlefishConfig::blank_data_image_fmt() const {
+  return (*dictionary_)[kBlankDataImageFmt].asString();
+}
+
+void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
+  (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
 }
 
 // Creates the (initially empty) config object and populates it with values from
