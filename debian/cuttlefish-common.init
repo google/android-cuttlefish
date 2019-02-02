@@ -2,8 +2,8 @@
 #
 ### BEGIN INIT INFO
 # Provides: cuttlefish-common
-# Required-Start: $remote_fs libvirtd
-# Required-Stop: $remote_fs libvirtd
+# Required-Start: $network $remote_fs libvirtd
+# Required-Stop: $network $remote_fs libvirtd
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
 # Short-Description: Set up initial cuttlefish environment
