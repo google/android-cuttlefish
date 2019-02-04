@@ -651,7 +651,7 @@ void CuttlefishConfig::set_restart_subprocesses(bool restart_subprocesses) {
 }
 
 bool CuttlefishConfig::run_adb_connector() const {
-  return (*dictionary_)[kRestartSubprocesses].asBool();
+  return (*dictionary_)[kRunAdbConnector].asBool();
 }
 
 void CuttlefishConfig::set_run_adb_connector(bool run_adb_connector) {
