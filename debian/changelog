@@ -1,3 +1,9 @@
+cuttlefish-common (0.9.1+nmu1) UNRELEASED; urgency=medium
+
+  * Use udev for vhost-vsock instead of a chmod.
+
+ -- Cody Schuffelen <schuffelen@google.com>  Mon, 04 Feb 2019 16:17:19 -0800
+
 cuttlefish-common (0.9.1) UNRELEASED; urgency=medium
 
   * Add a network dependency on cuttlefish-common
