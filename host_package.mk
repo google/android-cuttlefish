@@ -36,6 +36,7 @@ cvd_host_executables := \
     ivserver \
     virtual_usb_manager \
     kernel_log_monitor \
+    crosvm \
 
 cvd_host_tests := \
     auto_free_buffer_test \
