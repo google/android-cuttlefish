@@ -113,7 +113,17 @@ class CvdBootStateMachine {
   }
 
   bool BootCompleted() const {
-    return state_ == (kGuestBootCompleted | kE2eTestPassed);
+    bool boot_completed = state_ & kGuestBootCompleted;
+    bool test_passed_or_disabled =
+        (state_ & kE2eTestPassed) || (state_ & kE2eTestDisabled);
+    bool something_failed =
+        state_ & ~(kGuestBootCompleted | kE2eTestPassed | kE2eTestDisabled);
+    return boot_completed && test_passed_or_disabled && !something_failed;
+  }
+
+  bool DisableE2eTests() {
+    state_ |= kE2eTestDisabled;
+    return MaybeWriteToForegroundLauncher();
   }
 
   bool BootFailed() const {
@@ -152,6 +162,7 @@ class CvdBootStateMachine {
   static const int kGuestBootFailed = 1 << 1;
   static const int kE2eTestPassed = 1 << 2;
   static const int kE2eTestFailed = 1 << 3;
+  static const int kE2eTestDisabled = 1 << 4;
 };
 
 // Abuse the process monitor to make it call us back when boot events are ready
@@ -172,19 +183,17 @@ void SetUpHandlingOfBootEvents(
 void LaunchE2eTestIfEnabled(cvd::ProcessMonitor* process_monitor,
                             std::shared_ptr<CvdBootStateMachine> state_machine,
                             const vsoc::CuttlefishConfig& config) {
-  std::string e2e_test_cmd = config.e2e_test_binary();
-  if (!config.run_e2e_test() || config.hardware_name() != "vsoc") {
-    // Run a command that always succeeds if we are not running e2e tests
-    // TODO make the state machine aware of the fact that the tests may not run
-    e2e_test_cmd = "/bin/true";
+  if (config.run_e2e_test()) {
+    process_monitor->StartSubprocess(
+        cvd::Command(config.e2e_test_binary()),
+        [state_machine](cvd::MonitorEntry* entry) {
+          auto test_result = entry->proc->Wait();
+          state_machine->OnE2eTestCompleted(test_result);
+          return false;
+        });
+  } else {
+    state_machine->DisableE2eTests();
   }
-  process_monitor->StartSubprocess(
-      cvd::Command(e2e_test_cmd),
-      [state_machine](cvd::MonitorEntry* entry) {
-        auto test_result = entry->proc->Wait();
-        state_machine->OnE2eTestCompleted(test_result);
-        return false;
-      });
 }
 
 bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
@@ -419,7 +428,6 @@ int main(int argc, char** argv) {
 
   LaunchIvServerIfEnabled(&process_monitor, *config);
   // Launch the e2e tests after the ivserver is ready
-  // TODO move this to launch.cc and make it
   LaunchE2eTestIfEnabled(&process_monitor, boot_state_machine, *config);
 
   // Start the guest VM
