@@ -30,18 +30,18 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
 
-DEFINE_string(ports, "", "Comma-separated list of ports to 'adb connect' to");
+DEFINE_string(addresses, "", "Comma-separated list of addresses to 'adb connect' to");
 
 namespace {
-void LaunchConnectionMaintainerThread(int port) {
-  std::thread(cvd::EstablishAndMaintainConnection, port).detach();
+void LaunchConnectionMaintainerThread(const std::string& address) {
+  std::thread(cvd::EstablishAndMaintainConnection, address).detach();
 }
 
-std::vector<int> ParsePortsList(std::string ports) {
+std::vector<std::string> ParseAddressList(std::string ports) {
   std::replace(ports.begin(), ports.end(), ',', ' ');
   std::istringstream port_stream{ports};
-  return {std::istream_iterator<int>{port_stream},
-          std::istream_iterator<int>{}};
+  return {std::istream_iterator<std::string>{port_stream},
+          std::istream_iterator<std::string>{}};
 }
 
 [[noreturn]] void SleepForever() {
@@ -53,10 +53,10 @@ std::vector<int> ParsePortsList(std::string ports) {
 
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  CHECK(!FLAGS_ports.empty()) << "Must specify --ports flag";
+  CHECK(!FLAGS_addresses.empty()) << "Must specify --addresses flag";
 
-  for (auto port : ParsePortsList(FLAGS_ports)) {
-    LaunchConnectionMaintainerThread(port);
+  for (auto address : ParseAddressList(FLAGS_addresses)) {
+    LaunchConnectionMaintainerThread(address);
   }
 
   SleepForever();
