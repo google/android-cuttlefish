@@ -82,6 +82,8 @@ const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
 const char* kUseUnpackedKernel = "use_unpacked_kernel";
+const char* kDecompressedKernelImagePath = "decompressed_kernel_image_path";
+const char* kDecompressKernel = "decompress_kernel";
 const char* kGdbFlag = "gdb_flag";
 const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
@@ -237,6 +239,21 @@ bool CuttlefishConfig::use_unpacked_kernel() const {
 
 void CuttlefishConfig::set_use_unpacked_kernel(bool use_unpacked_kernel) {
   (*dictionary_)[kUseUnpackedKernel] = use_unpacked_kernel;
+}
+
+bool CuttlefishConfig::decompress_kernel() const {
+  return (*dictionary_)[kDecompressKernel].asBool();
+}
+void CuttlefishConfig::set_decompress_kernel(bool decompress_kernel) {
+  (*dictionary_)[kDecompressKernel] = decompress_kernel;
+}
+
+std::string CuttlefishConfig::decompressed_kernel_image_path() const {
+  return (*dictionary_)[kDecompressedKernelImagePath].asString();
+}
+void CuttlefishConfig::set_decompressed_kernel_image_path(
+    const std::string& path) {
+  SetPath(kDecompressedKernelImagePath, path);
 }
 
 std::string CuttlefishConfig::gdb_flag() const {

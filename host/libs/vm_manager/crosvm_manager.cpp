@@ -91,7 +91,7 @@ cvd::Command CrosvmManager::StartCommand() {
   }
 
   // This needs to be the last parameter
-  command.AddParameter(config_->kernel_image_path());
+  command.AddParameter(config_->GetKernelImageToUse());
 
   return command;
 }
