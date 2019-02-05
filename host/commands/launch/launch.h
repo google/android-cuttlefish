@@ -27,3 +27,5 @@ void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
+void LaunchIvServerIfEnabled(cvd::ProcessMonitor* process_monitor,
+                             const vsoc::CuttlefishConfig& config);

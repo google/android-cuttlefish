@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,17 +18,19 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/subprocess.h"
 
 namespace vm_manager {
 
-// Starts a guest VM using the qemu command directly. It requires the host
-// package to support the qemu-cli capability.
-class QemuManager : public VmManager {
+// Starts a guest VM with crosvm. It requires the host package to support the
+// qemu-cli capability (for network only).
+class CrosvmManager : public VmManager {
  public:
   static const std::string name();
+  static bool EnsureInstanceDirExists(const std::string& instance_dir);
 
-  QemuManager(const vsoc::CuttlefishConfig* config);
-  virtual ~QemuManager() = default;
+  CrosvmManager(const vsoc::CuttlefishConfig* config);
+  virtual ~CrosvmManager() = default;
 
   cvd::Command StartCommand() override;
   bool Stop() override;

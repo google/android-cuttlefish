@@ -37,6 +37,7 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#include <host/libs/vm_manager/crosvm_manager.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
@@ -52,7 +53,6 @@
 #include "host/commands/launch/flags.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
-#include "host/commands/launch/pre_launch_initializers.h"
 #include "host/commands/launch/process_monitor.h"
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -169,12 +169,15 @@ void SetUpHandlingOfBootEvents(
       });
 }
 
-void LaunchE2eTest(cvd::ProcessMonitor* process_monitor,
-                   std::shared_ptr<CvdBootStateMachine> state_machine,
-                   const vsoc::CuttlefishConfig& config) {
-  // Run a command that always succeeds if we are not running e2e tests
-  std::string e2e_test_cmd =
-      config.run_e2e_test() ? config.e2e_test_binary() : "/bin/true";
+void LaunchE2eTestIfEnabled(cvd::ProcessMonitor* process_monitor,
+                            std::shared_ptr<CvdBootStateMachine> state_machine,
+                            const vsoc::CuttlefishConfig& config) {
+  std::string e2e_test_cmd = config.e2e_test_binary();
+  if (!config.run_e2e_test() || config.hardware_name() != "vsoc") {
+    // Run a command that always succeeds if we are not running e2e tests
+    // TODO make the state machine aware of the fact that the tests may not run
+    e2e_test_cmd = "/bin/true";
+  }
   process_monitor->StartSubprocess(
       cvd::Command(e2e_test_cmd),
       [state_machine](cvd::MonitorEntry* entry) {
@@ -414,15 +417,10 @@ int main(int argc, char** argv) {
 
   LaunchUsbServerIfEnabled(*config, &process_monitor);
 
-  process_monitor.StartSubprocess(
-      GetIvServerCommand(*config),
-      GetOnSubprocessExitCallback(*config));
-
-  // Initialize the regions that require so before the VM starts.
-  PreLaunchInitializers::Initialize(*config);
-
-  // Launch the e2e test after the shared memory is initialized
-  LaunchE2eTest(&process_monitor, boot_state_machine, *config);
+  LaunchIvServerIfEnabled(&process_monitor, *config);
+  // Launch the e2e tests after the ivserver is ready
+  // TODO move this to launch.cc and make it
+  LaunchE2eTestIfEnabled(&process_monitor, boot_state_machine, *config);
 
   // Start the guest VM
   process_monitor.StartSubprocess(vm_manager->StartCommand(),
