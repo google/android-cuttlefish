@@ -72,6 +72,7 @@ PRODUCT_PACKAGES += \
     vport_trigger \
     rename_netiface \
     ip_link_add \
+    setup_wifi \
 
 #
 # Packages for AOSP-available stuff we use from the framework
