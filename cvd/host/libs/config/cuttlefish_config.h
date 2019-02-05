@@ -84,8 +84,26 @@ class CuttlefishConfig {
   int refresh_rate_hz() const;
   void set_refresh_rate_hz(int refresh_rate_hz);
 
+  // Returns kernel image extracted from the boot image or the user-provided one
+  // if given by command line to the launcher. This function should not be used
+  // to get the kernel image the vmm should boot, GetKernelImageToUse() should
+  // be used instead.
   std::string kernel_image_path() const;
   void set_kernel_image_path(const std::string& kernel_image_path);
+
+  bool decompress_kernel() const;
+  void set_decompress_kernel(bool decompress_kernel);
+
+  // Returns the path to the kernel image that should be given to the vm manager
+  // to boot, takes into account whether the original image was decompressed or
+  // not.
+  std::string GetKernelImageToUse() const {
+    return decompress_kernel() ? decompressed_kernel_image_path()
+                               : kernel_image_path();
+  }
+
+  std::string decompressed_kernel_image_path() const;
+  void set_decompressed_kernel_image_path(const std::string& path);
 
   bool use_unpacked_kernel() const;
   void set_use_unpacked_kernel(bool use_unpacked_kernel);
