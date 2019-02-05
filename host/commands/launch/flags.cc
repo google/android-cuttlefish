@@ -43,6 +43,11 @@ DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
+DEFINE_bool(decompress_kernel, false,
+            "Whether to decompress the kernel image. Required for crosvm.");
+DEFINE_string(kernel_decompresser_executable,
+              vsoc::DefaultHostArtifactsPath("bin/extract-vmlinux"),
+             "Path to the extract-vmlinux executable.");
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
 DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
@@ -245,6 +250,11 @@ bool InitializeCuttlefishConfiguration(
         tmp_config_obj.PerInstancePath("kernel"));
     tmp_config_obj.set_use_unpacked_kernel(true);
   }
+  tmp_config_obj.set_decompress_kernel(FLAGS_decompress_kernel);
+  if (FLAGS_decompress_kernel) {
+    tmp_config_obj.set_decompressed_kernel_image_path(
+        tmp_config_obj.PerInstancePath("vmlinux"));
+  }
 
   auto ramdisk_path = tmp_config_obj.PerInstancePath("ramdisk.img");
   bool use_ramdisk = boot_image_unpacker.HasRamdiskImage();
@@ -430,6 +440,8 @@ void SetDefaultFlagsForQemu() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("adb_mode", "tunnel",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("decompress_kernel", "false",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
 void SetDefaultFlagsForCrosvm() {
@@ -458,6 +470,8 @@ void SetDefaultFlagsForCrosvm() {
                                "virtio",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("adb_mode", "vsock_tunnel",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("decompress_kernel", "true",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
@@ -513,6 +527,20 @@ bool CleanPriorFiles() {
   }
   return true;
 }
+
+bool DecompressKernel(const std::string& src, const std::string& dst) {
+  cvd::Command decomp_cmd(FLAGS_kernel_decompresser_executable);
+  decomp_cmd.AddParameter(src);
+  auto output_file = cvd::SharedFD::Creat(dst.c_str(), 0666);
+  if (!output_file->IsOpen()) {
+    LOG(ERROR) << "Unable to create decompressed image file: "
+               << output_file->StrError();
+    return false;
+  }
+  decomp_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, output_file);
+  auto decomp_proc = decomp_cmd.Start(false);
+  return decomp_proc.Started() && decomp_proc.Wait() == 0;
+}
 } // namespace
 
 vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
@@ -561,6 +589,14 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
                                      : "")) {
     LOG(ERROR) << "Failed to unpack boot image";
     exit(LauncherExitCodes::kBootImageUnpackError);
+  }
+
+  if (config->decompress_kernel()) {
+    if (!DecompressKernel(config->kernel_image_path(),
+        config->decompressed_kernel_image_path())) {
+      LOG(ERROR) << "Failed to decompress kernel";
+      exit(LauncherExitCodes::kKernelDecompressError);
+    }
   }
 
   ValidateAdbModeFlag(*config);
