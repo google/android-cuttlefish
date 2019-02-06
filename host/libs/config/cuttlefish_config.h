@@ -293,6 +293,8 @@ class CuttlefishConfig {
   void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
   std::string blank_data_image_fmt() const;
 
+  bool enable_ivserver() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
