@@ -193,7 +193,7 @@ std::string CuttlefishConfig::gdb_flag() const {
 }
 
 void CuttlefishConfig::set_gdb_flag(const std::string& device) {
-  SetPath(kGdbFlag, device);
+  (*dictionary_)[kGdbFlag] = device;
 }
 
 std::set<std::string> CuttlefishConfig::kernel_cmdline() const {
