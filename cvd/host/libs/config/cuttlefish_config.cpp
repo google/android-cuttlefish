@@ -759,6 +759,11 @@ void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_im
   (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
 }
 
+
+bool CuttlefishConfig::enable_ivserver() const {
+  return hardware_name() == "vsoc";
+}
+
 // Creates the (initially empty) config object and populates it with values from
 // the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
 // Returns nullptr if there was an error loading from file
