@@ -24,7 +24,7 @@ PRODUCT_CHARACTERISTICS := tablet,nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
-    rild.libpath=libvsoc-ril.so \
+    rild.libpath=libcuttlefish-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
     ro.gsm.home.operator.alpha=Android \
@@ -39,7 +39,7 @@ PRODUCT_PACKAGES += \
     PhoneService \
     Telecom \
     TeleService \
-    libvsoc-ril \
+    libcuttlefish-ril \
     rild \
 
 PRODUCT_COPY_FILES += \
