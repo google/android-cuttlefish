@@ -167,7 +167,7 @@ void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
 void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
                                 cvd::ProcessMonitor* process_monitor,
                                 std::function<bool(MonitorEntry*)> callback) {
-  if (VSoCEnabled(config) && config.enable_stream_audio()) {
+  if (config.enable_stream_audio()) {
     auto port_options = "-port=" + std::to_string(config.stream_audio_port());
     cvd::Command stream_audio(config.stream_audio_binary());
     stream_audio.AddParameter(port_options);
