@@ -47,7 +47,7 @@ bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, const char* mode) {
 }
 
 bool AdbTunnelEnabled(const vsoc::CuttlefishConfig& config) {
-  return VSoCEnabled(config) && AdbModeEnabled(config, kAdbModeTunnel);
+  return AdbModeEnabled(config, kAdbModeTunnel);
 }
 
 bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
@@ -76,7 +76,7 @@ int GetHostPort() {
 }
 
 bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
-  return VSoCEnabled(config) && AdbModeEnabled(config, kAdbModeUsb);
+  return AdbModeEnabled(config, kAdbModeUsb);
 }
 
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
