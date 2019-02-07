@@ -14,7 +14,7 @@
 ** limitations under the License.
 */
 
-#include "guest/hals/ril/vsoc_ril.h"
+#include "guest/hals/ril/cuttlefish_ril.h"
 
 #include <cutils/properties.h>
 #include <string.h>
@@ -32,7 +32,7 @@
 #include "common/vsoc/lib/ril_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-#define VSOC_RIL_VERSION_STRING "Android VSoC RIL 1.0"
+#define CUTTLEFISH_RIL_VERSION_STRING "Android Cuttlefish RIL 1.0"
 
 /* Modem Technology bits */
 #define MDM_GSM 0x01
@@ -302,7 +302,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (call.connection_type_ != DataCall::kConnTypeIPv4) {
-    ALOGE("Non-IPv4 connections are not supported by VSOC RIL.");
+    ALOGE("Non-IPv4 connections are not supported by Cuttlefish RIL.");
     gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
     return;
   }
@@ -1391,8 +1391,8 @@ static void gce_ril_on_cancel(RIL_Token /*t*/) {
 }
 
 static const char* gce_ril_get_version(void) {
-  ALOGV("Reporting VSOC version " VSOC_RIL_VERSION_STRING);
-  return VSOC_RIL_VERSION_STRING;
+  ALOGV("Reporting Cuttlefish version " CUTTLEFISH_RIL_VERSION_STRING);
+  return CUTTLEFISH_RIL_VERSION_STRING;
 }
 
 static int s_cell_info_rate_ms = INT_MAX;
@@ -2459,10 +2459,10 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
   }
 }
 
-#define VSOC_RIL_VERSION 6
+#define CUTTLEFISH_RIL_VERSION 6
 
 static const RIL_RadioFunctions ril_callbacks = {
-    VSOC_RIL_VERSION,     gce_ril_on_request, gce_ril_current_state,
+    CUTTLEFISH_RIL_VERSION,     gce_ril_on_request, gce_ril_current_state,
     gce_ril_on_supports, gce_ril_on_cancel,  gce_ril_get_version};
 
 extern "C" {
