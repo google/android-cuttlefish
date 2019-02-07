@@ -155,7 +155,7 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
 void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor,
                               std::function<bool(MonitorEntry*)> callback) {
-  if (VSoCEnabled(config) && config.enable_vnc_server()) {
+  if (config.enable_vnc_server()) {
     // Launch the vnc server, don't wait for it to complete
     auto port_options = "-port=" + std::to_string(config.vnc_server_port());
     cvd::Command vnc_server(config.vnc_server_binary());
