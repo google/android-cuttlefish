@@ -37,10 +37,6 @@ std::string GetAdbConnectorPortArg() {
   return std::string{"--ports="} + std::to_string(GetHostPort());
 }
 
-bool VSoCEnabled(const vsoc::CuttlefishConfig& config) {
-  return config.hardware_name() == "vsoc";
-}
-
 bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, const char* mode) {
   auto modes = cvd::StrSplit(config.adb_mode(), ',');
   return std::find(modes.begin(), modes.end(), mode) != modes.end();
@@ -212,12 +208,11 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
 
 void LaunchIvServerIfEnabled(cvd::ProcessMonitor* process_monitor,
                              const vsoc::CuttlefishConfig& config) {
-  if (!VSoCEnabled(config)) {
-    return;
-  }
-  process_monitor->StartSubprocess(GetIvServerCommand(config),
-                                   GetOnSubprocessExitCallback(config));
+  if (config.enable_ivserver()) {
+    process_monitor->StartSubprocess(GetIvServerCommand(config),
+                                     GetOnSubprocessExitCallback(config));
 
-  // Initialize the regions that require so before the VM starts.
-  PreLaunchInitializers::Initialize(config);
+    // Initialize the regions that require so before the VM starts.
+    PreLaunchInitializers::Initialize(config);
+  }
 }
