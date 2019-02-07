@@ -15,20 +15,20 @@
  * limitations under the License.
  */
 
-// TODO(b/120082384) I plan on changing this to use something better than pcm
-// this is just to get something minimal running.
-//
 // For each client that connects initially a header is sent with the following,
 // in this order, all as uint16_t in network-byte-order:
-// sample_width, number of channels, frame rate
+//  number of channels, frame rate
 //
 // Following, audio packets are sent as a uint32_t length (network byte order)
+// indicating the number of bytes
+// followed by the (opus) frame_size as a uint32_t
 // followed by <length> bytes.
 
 #include "common/libs/tcp_socket/tcp_socket.h"
 #include "common/vsoc/lib/audio_data_region_view.h"
 #include "common/vsoc/lib/circqueue_impl.h"
 #include "common/vsoc/lib/vsoc_audio_message.h"
+#include "host/frontend/stream_audio/opuscpp/opus_wrapper.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 #include <android-base/logging.h>
@@ -60,11 +60,25 @@ class AudioStreamer {
       buffer_cv_.wait(guard);
     }
 
-    const size_t num_channels = header_.frame_size / sizeof(int16_t);
-    return cvd::CreateMessage(
-        static_cast<std::uint16_t>(header_.frame_size / num_channels),
-        static_cast<std::uint16_t>(num_channels),
-        static_cast<std::uint16_t>(header_.frame_rate));
+    const size_t num_channels = header_.frame_size / sizeof(opus_int16);
+    return cvd::CreateMessage(static_cast<std::uint16_t>(num_channels),
+                              static_cast<std::uint16_t>(header_.frame_rate));
+  }
+
+  std::uint32_t frame_rate() const {
+    std::unique_lock guard(buffer_lock_);
+    while (!audio_buffer_) {
+      buffer_cv_.wait(guard);
+    }
+    return header_.frame_rate;
+  }
+
+  std::uint32_t num_channels() const {
+    std::unique_lock guard(buffer_lock_);
+    while (!audio_buffer_) {
+      buffer_cv_.wait(guard);
+    }
+    return header_.frame_size / sizeof(opus_int16);
   }
 
   // Returns the frame id and audio frame
@@ -188,18 +202,35 @@ class AudioStreamer {
 
 void HandleClient(AudioStreamer* audio_streamer,
                   cvd::ClientSocket client_socket) {
+  auto num_channels = audio_streamer->num_channels();
+  opus::Encoder enc(audio_streamer->frame_rate(),
+                    audio_streamer->num_channels(), OPUS_APPLICATION_AUDIO);
+  CHECK(enc.valid()) << "Could not construct Encoder. Maybe bad frame_rate ("
+                     << audio_streamer->frame_rate() <<") or num_channels ("
+                     << audio_streamer->num_channels() << ")?";
+
   auto header = audio_streamer->MakeAudioDescriptionHeader();
   client_socket.SendNoSignal(header);
   std::int64_t previous_frame_num = 0;
 
   while (!client_socket.closed()) {
+    CHECK(enc.valid()) << "encoder in invalid state";
     auto [frame_num, audio_data] =
         audio_streamer->audio_buffer(previous_frame_num);
-    auto length_message =
-        cvd::CreateMessage(static_cast<std::uint32_t>(audio_data->size()));
-    client_socket.SendNoSignal(length_message);
-    client_socket.SendNoSignal(*audio_data);
     previous_frame_num = frame_num;
+
+    std::vector<opus_int16> pcm(audio_data->size() / sizeof(opus_int16));
+    std::memcpy(pcm.data(), audio_data->data(), audio_data->size());
+    // in opus terms "frame_size" is the number of unencoded samples per frame
+    const std::uint32_t frame_size = pcm.size() / num_channels;
+    auto encoded = enc.Encode(pcm, frame_size);
+    for (auto&& p : encoded) {
+      auto length_message =
+          cvd::CreateMessage(static_cast<std::uint32_t>(p.size()));
+      client_socket.SendNoSignal(length_message);
+      client_socket.SendNoSignal(cvd::CreateMessage(frame_size));
+      client_socket.SendNoSignal(p);
+    }
   }
 }
 
