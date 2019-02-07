@@ -12,6 +12,7 @@
 #include "host/commands/launch/data_image.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
+#include "host/commands/launch/ril_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -349,6 +350,7 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_mobile_bridge_name(FLAGS_mobile_interface);
   tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
+  ConfigureRil(&tmp_config_obj);
 
   tmp_config_obj.set_wifi_bridge_name(FLAGS_wifi_interface);
   tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);

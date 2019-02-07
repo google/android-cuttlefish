@@ -20,11 +20,13 @@
 #include <string.h>
 
 #include <memory>
+#include <sstream>
 #include <string>
 
-#include "common/vsoc/lib/ril_region_view.h"
-#include "host/commands/launch/pre_launch_initializers.h"
-#include "host/libs/config/cuttlefish_config.h"
+#include <glog/logging.h>
+
+#include "common/libs/constants/ril.h"
+#include "host/commands/launch/ril_config.h"
 
 namespace {
 
@@ -119,31 +121,31 @@ class NetConfig {
     return ret;
   }
 };
+
+template <typename T>
+std::string BuildPropertyDefinition(const std::string& prop_name,
+                                  const T& prop_value) {
+  std::ostringstream stream;
+  stream << prop_name << "=" << prop_value;
+  return stream.str();
+}
 }  // namespace
 
-void InitializeRilRegion(const vsoc::CuttlefishConfig& config) {
+void ConfigureRil(vsoc::CuttlefishConfig* config) {
   NetConfig netconfig;
-  if (!netconfig.ObtainConfig(config.mobile_bridge_name())) {
+  if (!netconfig.ObtainConfig(config->mobile_bridge_name())) {
     LOG(ERROR) << "Unable to obtain the network configuration";
     return;
   }
 
-  auto region =
-      vsoc::ril::RilRegionView::GetInstance(vsoc::GetDomain().c_str());
-
-  if (!region) {
-    LOG(ERROR) << "Ril region was not found";
-    return;
-  }
-
-  auto dest = region->data();
-
-  snprintf(dest->ipaddr, sizeof(dest->ipaddr), "%s",
-           netconfig.ril_ipaddr.c_str());
-  snprintf(dest->gateway, sizeof(dest->gateway), "%s",
-           netconfig.ril_gateway.c_str());
-  snprintf(dest->dns, sizeof(dest->dns), "%s", netconfig.ril_dns.c_str());
-  snprintf(dest->broadcast, sizeof(dest->broadcast), "%s",
-           netconfig.ril_broadcast.c_str());
-  dest->prefixlen = netconfig.ril_prefixlen;
+  config->add_kernel_cmdline(BuildPropertyDefinition(
+      CUTTLEFISH_RIL_ADDR_PROPERTY, netconfig.ril_ipaddr));
+  config->add_kernel_cmdline(BuildPropertyDefinition(
+      CUTTLEFISH_RIL_GATEWAY_PROPERTY, netconfig.ril_gateway));
+  config->add_kernel_cmdline(BuildPropertyDefinition(
+      CUTTLEFISH_RIL_DNS_PROPERTY, netconfig.ril_dns));
+  config->add_kernel_cmdline(BuildPropertyDefinition(
+      CUTTLEFISH_RIL_BROADCAST_PROPERTY, netconfig.ril_broadcast));
+  config->add_kernel_cmdline(BuildPropertyDefinition(
+      CUTTLEFISH_RIL_PREFIXLEN_PROPERTY, netconfig.ril_prefixlen));
 }
