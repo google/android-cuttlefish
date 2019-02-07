@@ -214,9 +214,9 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
   if (AdbVsockTunnelEnabled(config)) {
     cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
-    adb_tunnel.AddParameter("--guest_port=5555");
+    adb_tunnel.AddParameter("--vsock_port=6520");
     adb_tunnel.AddParameter(
-        std::string{"--host_port="} + std::to_string(GetHostPort()));
+        std::string{"--tcp_port="} + std::to_string(GetHostPort()));
     adb_tunnel.AddParameter(std::string{"--vsock_guest_cid="} +
                             std::to_string(config.vsock_guest_cid()));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
