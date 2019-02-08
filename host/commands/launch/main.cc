@@ -75,7 +75,7 @@ DEFINE_int32(blank_data_image_mb, 0,
 DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
 DEFINE_string(qemu_gdb, "",
-              "Debug flag to pass to qemu. e.g. --qemu_gdb=tcp::1234");
+              "Debug flag to pass to qemu. e.g. -qemu_gdb=tcp::1234");
 
 DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
@@ -155,11 +155,11 @@ DEFINE_string(adb_mode, "tunnel",
               "as in 'usb,tunnel'");
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
-            "server. Only relevant with --adb_mode=tunnel");
+            "server. Only relevant with -adb_mode=tunnel");
 DEFINE_string(adb_connector_binary,
               vsoc::DefaultHostArtifactsPath("bin/adb_connector"),
               "Location of the adb_connector binary. Only relevant if "
-              "--run_adb_connector is true");
+              "-run_adb_connector is true");
 DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
 DEFINE_string(guest_mac_address,
               GetPerInstanceDefault("00:43:56:44:80:"), // 00:43:56:44:80:0x
