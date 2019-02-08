@@ -17,7 +17,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= \
-  vsoc_ril.cpp
+  cuttlefish_ril.cpp
 
 LOCAL_SHARED_LIBRARIES := \
   liblog \
@@ -39,7 +39,7 @@ LOCAL_CFLAGS += \
   -Werror \
   $(VSOC_VERSION_CFLAGS)
 
-LOCAL_MODULE:= libvsoc-ril
+LOCAL_MODULE:= libcuttlefish-ril
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 

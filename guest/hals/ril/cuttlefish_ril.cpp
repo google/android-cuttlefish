@@ -14,9 +14,10 @@
 ** limitations under the License.
 */
 
-#include "guest/hals/ril/vsoc_ril.h"
+#include "guest/hals/ril/cuttlefish_ril.h"
 
 #include <cutils/properties.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
@@ -26,13 +27,13 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/constants/ril.h"
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
-#include "common/vsoc/lib/ril_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-#define VSOC_RIL_VERSION_STRING "Android VSoC RIL 1.0"
+#define CUTTLEFISH_RIL_VERSION_STRING "Android Cuttlefish RIL 1.0"
 
 /* Modem Technology bits */
 #define MDM_GSM 0x01
@@ -60,6 +61,49 @@ typedef enum {
   RUIM_PUK = 10,
   RUIM_NETWORK_PERSONALIZATION = 11
 } SIM_Status;
+
+class RilConfig {
+ public:
+  static void InitRilConfig();
+
+  static char* address_and_prefixlength() {
+    return RilConfig::global_ril_config_.address_and_prefixlength_;
+  }
+
+  static char* dns() {
+    return RilConfig::global_ril_config_.dns_;
+  }
+
+  static char* gateway() {
+    return RilConfig::global_ril_config_.gateway_;
+  }
+
+  static char* ipaddr() {
+    return RilConfig::global_ril_config_.ipaddr_;
+  }
+
+  static int prefixlen() {
+    return RilConfig::global_ril_config_.prefixlen_;
+  }
+
+  static char* broadcast() {
+    return RilConfig::global_ril_config_.broadcast_;
+  }
+
+ private:
+  RilConfig() = default;
+  RilConfig(const RilConfig&) = default;
+
+  char ipaddr_[16]; // xxx.xxx.xxx.xxx\0 = 16 bytes
+  char gateway_[16];
+  char dns_[16];
+  char broadcast_[16];
+  char address_and_prefixlength_[19]; // <ipaddr>/dd
+  int prefixlen_;
+
+  static RilConfig global_ril_config_;
+};
+RilConfig RilConfig::global_ril_config_;
 
 static const struct RIL_Env* gce_ril_env;
 
@@ -129,6 +173,43 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
   return false;
 }
 
+static bool ReadStringProperty(char* dst, const char* key, size_t max_size) {
+  char buffer[PROPERTY_VALUE_MAX];
+  auto res = property_get(key, buffer, NULL);
+  if (res < 0) {
+    ALOGE("Failed to read property %s", key);
+    return false;
+  }
+  if (res > static_cast<int>(max_size - 1)) {
+    ALOGE("Invalid value in property %s: value too long: %s", key, buffer);
+    return false;
+  }
+  snprintf(dst, res + 1, "%s", buffer);
+  return true;
+}
+
+void RilConfig::InitRilConfig() {
+  RilConfig tmp_config;
+  ReadStringProperty(&tmp_config.ipaddr_[0], CUTTLEFISH_RIL_ADDR_PROPERTY,
+                     sizeof(tmp_config.ipaddr_));
+  ReadStringProperty(&tmp_config.gateway_[0],
+                     CUTTLEFISH_RIL_GATEWAY_PROPERTY,
+                     sizeof(tmp_config.gateway_));
+  ReadStringProperty(&tmp_config.dns_[0], CUTTLEFISH_RIL_DNS_PROPERTY,
+                     sizeof(tmp_config.dns_));
+  ReadStringProperty(&tmp_config.broadcast_[0],
+                     CUTTLEFISH_RIL_BROADCAST_PROPERTY,
+                     sizeof(tmp_config.broadcast_));
+  tmp_config.prefixlen_ =
+      property_get_int32(CUTTLEFISH_RIL_PREFIXLEN_PROPERTY, 30);
+
+  snprintf(&tmp_config.address_and_prefixlength_[0],
+           sizeof(tmp_config.address_and_prefixlength_), "%s/%d",
+           tmp_config.ipaddr_, tmp_config.prefixlen_);
+
+  RilConfig::global_ril_config_ = tmp_config;
+}
+
 // TearDownNetworkInterface disables network interface.
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
@@ -186,13 +267,11 @@ static int request_or_send_data_calllist(RIL_Token* t) {
         break;
     }
 
-    auto ril_region_view = vsoc::ril::RilRegionView::GetInstance();
-
     responses[index].ifname = (char*)"rmnet0";
     responses[index].addresses =
-      const_cast<char*>(ril_region_view->address_and_prefix_length());
-    responses[index].dnses = (char*)ril_region_view->data()->dns;
-    responses[index].gateways = (char*)ril_region_view->data()->gateway;
+      const_cast<char*>(RilConfig::address_and_prefixlength());
+    responses[index].dnses = RilConfig::dns();
+    responses[index].gateways = RilConfig::gateway();
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
@@ -302,7 +381,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (call.connection_type_ != DataCall::kConnTypeIPv4) {
-    ALOGE("Non-IPv4 connections are not supported by VSOC RIL.");
+    ALOGE("Non-IPv4 connections are not supported by Cuttlefish RIL.");
     gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
     return;
   }
@@ -314,10 +393,8 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (gDataCalls.empty()) {
-    auto ril_region_view = vsoc::ril::RilRegionView::GetInstance();
-    SetUpNetworkInterface(ril_region_view->data()->ipaddr,
-                          ril_region_view->data()->prefixlen,
-                          ril_region_view->data()->broadcast);
+    SetUpNetworkInterface(RilConfig::ipaddr(), RilConfig::prefixlen(),
+                          RilConfig::broadcast());
   }
 
   gDataCalls[gNextDataCallId] = call;
@@ -1391,8 +1468,8 @@ static void gce_ril_on_cancel(RIL_Token /*t*/) {
 }
 
 static const char* gce_ril_get_version(void) {
-  ALOGV("Reporting VSOC version " VSOC_RIL_VERSION_STRING);
-  return VSOC_RIL_VERSION_STRING;
+  ALOGV("Reporting Cuttlefish version " CUTTLEFISH_RIL_VERSION_STRING);
+  return CUTTLEFISH_RIL_VERSION_STRING;
 }
 
 static int s_cell_info_rate_ms = INT_MAX;
@@ -2459,10 +2536,10 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
   }
 }
 
-#define VSOC_RIL_VERSION 6
+#define CUTTLEFISH_RIL_VERSION 6
 
 static const RIL_RadioFunctions ril_callbacks = {
-    VSOC_RIL_VERSION,     gce_ril_on_request, gce_ril_current_state,
+    CUTTLEFISH_RIL_VERSION,     gce_ril_on_request, gce_ril_current_state,
     gce_ril_on_supports, gce_ril_on_cancel,  gce_ril_get_version};
 
 extern "C" {
@@ -2471,6 +2548,8 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env* env, int /*argc*/,
                                    char** /*argv*/) {
   time(&gce_ril_start_time);
   gce_ril_env = env;
+
+  RilConfig::InitRilConfig();
 
   TearDownNetworkInterface();
 
