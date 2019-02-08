@@ -89,8 +89,6 @@ cc_library_shared {
         "common/vsoc/lib/lock_common.cpp",
         "common/vsoc/lib/managed_e2e_test_region_layout.cpp",
         "common/vsoc/lib/region_view.cpp",
-        "common/vsoc/lib/ril_layout.cpp",
-        "common/vsoc/lib/ril_region_view.cpp",
         "common/vsoc/lib/screen_layout.cpp",
         "common/vsoc/lib/screen_region_view.cpp",
         "common/vsoc/lib/socket_forward_layout.cpp",
