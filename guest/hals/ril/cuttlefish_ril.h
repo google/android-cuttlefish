@@ -18,7 +18,7 @@
 
 #define RIL_SHLIB
 
-#define LOG_TAG "VSoCRil"
+#define LOG_TAG "CuttlefishRil"
 
 #include <log/log.h>
 #include <stdint.h>
