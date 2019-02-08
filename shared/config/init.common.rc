@@ -90,7 +90,7 @@ on sys-boot-completed-set && property:persist.sys.zram_enabled=1
     swapon_all /vendor/etc/fstab.${ro.hardware}
 
 
-service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -guest_port=5555
+service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -tcp_port=5555 -vsock_port=6520
 
 
 service vport_trigger /vendor/bin/vport_trigger
