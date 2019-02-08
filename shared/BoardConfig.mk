@@ -94,7 +94,7 @@ BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy
 
 # master has breaking changes in dlfcn.h, but the platform SDK hasn't been
 # bumped. Restore the line below when it is.
-VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=28
+VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=29
 # VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
 VSOC_STLPORT_INCLUDES :=
 VSOC_STLPORT_LIBS :=
