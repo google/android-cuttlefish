@@ -23,7 +23,6 @@ LOCAL_SHARED_LIBRARIES := \
   liblog \
   libcutils \
   libutils \
-  libril \
   libcuttlefish_fs \
   cuttlefish_net \
   cuttlefish_auto_resources \
@@ -38,6 +37,59 @@ LOCAL_CFLAGS += \
   -Wall \
   -Werror \
   $(VSOC_VERSION_CFLAGS)
+
+# only for PLATFORM_VERSION greater or equal to Q
+ifeq ($(PLATFORM_VERSION), $(word 1, $(sort Q $(PLATFORM_VERSION))))
+    $(info Use updated hal for PLATFORM VERSION = $(PLATFORM_VERSION))
+
+    LOCAL_SRC_FILES += \
+        libril/ril.cpp \
+        libril/ril_service.cpp \
+        libril/ril_event.cpp \
+        libril/RilSapSocket.cpp \
+        libril/sap_service.cpp
+
+    LOCAL_SHARED_LIBRARIES += \
+        libhardware_legacy \
+        libhidlbase  \
+        libhidltransport \
+        libhwbinder \
+        librilutils \
+        android.hardware.radio@1.0 \
+        android.hardware.radio@1.1 \
+        android.hardware.radio.deprecated@1.0 \
+        android.hardware.radio@1.2 \
+        android.hardware.radio@1.3 \
+        android.hardware.radio@1.4
+
+
+    LOCAL_STATIC_LIBRARIES := \
+        libprotobuf-c-nano-enable_malloc \
+
+    LOCAL_C_INCLUDES += \
+        external/nanopb-c \
+        hardware/ril/include \
+        hardware/ril/libril
+
+    LOCAL_CFLAGS += \
+        -Wextra \
+        -Wno-unused-parameter
+
+    LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)
+
+    ifeq ($(SIM_COUNT), 2)
+        LOCAL_CFLAGS += -DANDROID_MULTI_SIM -DDSDA_RILD1
+        LOCAL_CFLAGS += -DANDROID_SIM_COUNT_2
+    endif
+
+    ifneq ($(DISABLE_RILD_OEM_HOOK),)
+        LOCAL_CFLAGS += -DOEM_HOOK_DISABLED
+    endif
+else
+    $(info Use deprecated libril)
+    LOCAL_SHARED_LIBRARIES += \
+        libril
+endif
 
 LOCAL_MODULE:= libvsoc-ril
 LOCAL_MODULE_TAGS := optional
