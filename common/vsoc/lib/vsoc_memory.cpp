@@ -32,7 +32,6 @@
 #include "common/vsoc/shm/managed_e2e_test_region_layout.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "common/vsoc/shm/socket_forward_layout.h"
-#include "common/vsoc/shm/wifi_exchange_layout.h"
 
 #include "uapi/vsoc_shm.h"
 
@@ -173,7 +172,6 @@ VSoCMemoryLayout* VSoCMemoryLayout::Get() {
            /* managed_by */ layout::gralloc::GrallocManagerLayout::region_name),
        ValidateAndBuildLayout<layout::socket_forward::SocketForwardLayout>(7,
                                                                            7),
-       ValidateAndBuildLayout<layout::wifi::WifiExchangeLayout>(2, 2),
        ValidateAndBuildLayout<layout::e2e_test::E2EPrimaryTestRegionLayout>(1,
                                                                             1),
        ValidateAndBuildLayout<layout::e2e_test::E2ESecondaryTestRegionLayout>(
