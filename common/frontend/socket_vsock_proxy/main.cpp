@@ -28,12 +28,9 @@
 
 using vsoc::socket_forward::Packet;
 
-DEFINE_uint32(guest_port, 0,
-             "Port on which to forward TCP connections to the guest.");
-#ifdef CUTTLEFISH_HOST
-DEFINE_uint32(host_port, 0, "Ports on which to run a TCP server on the host.");
+DEFINE_uint32(tcp_port, 0, "TCP port (server on host, client on guest)");
+DEFINE_uint32(vsock_port, 0, "vsock port (client on host, server on guest");
 DEFINE_uint32(vsock_guest_cid, 0, "Guest identifier");
-#endif
 
 namespace {
 // Sends packets, Shutdown(SHUT_WR) on destruction
@@ -139,17 +136,17 @@ void HandleConnection(cvd::SharedFD vsock,
 
 #ifdef CUTTLEFISH_HOST
 [[noreturn]] void host() {
-  LOG(INFO) << "starting server on " << FLAGS_host_port << " for guest port "
-            << FLAGS_guest_port;
-  auto server = cvd::SharedFD::SocketLocalServer(FLAGS_host_port, SOCK_STREAM);
-  CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_host_port;
+  LOG(INFO) << "starting server on " << FLAGS_tcp_port << " for vsock port "
+            << FLAGS_vsock_port;
+  auto server = cvd::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
+  CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_tcp_port;
   while (true) {
     LOG(INFO) << "waiting for client connection";
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     LOG(INFO) << "client socket accepted";
     cvd::SharedFD vsock_socket = cvd::SharedFD::VsockClient(
-        FLAGS_vsock_guest_cid, FLAGS_guest_port, SOCK_STREAM);
+        FLAGS_vsock_guest_cid, FLAGS_vsock_port, SOCK_STREAM);
     if (!vsock_socket->IsOpen()) {
       continue;
     }
@@ -162,11 +159,11 @@ void HandleConnection(cvd::SharedFD vsock,
 #else
 cvd::SharedFD OpenSocketConnection() {
   while (true) {
-    auto sock = cvd::SharedFD::SocketLocalClient(FLAGS_guest_port, SOCK_STREAM);
+    auto sock = cvd::SharedFD::SocketLocalClient(FLAGS_tcp_port, SOCK_STREAM);
     if (sock->IsOpen()) {
       return sock;
     }
-    LOG(WARNING) << "could not connect on port " << FLAGS_guest_port
+    LOG(WARNING) << "could not connect on port " << FLAGS_tcp_port
                  << ". sleeping for 1 second";
     sleep(1);
   }
@@ -185,16 +182,16 @@ bool socketErrorIsRecoverable(int error) {
 
 [[noreturn]] void guest() {
   LOG(INFO) << "Starting guest mainloop";
-  LOG(INFO) << "starting server on " << FLAGS_guest_port;
+  LOG(INFO) << "starting server on " << FLAGS_vsock_port;
   cvd::SharedFD vsock;
   do {
-    vsock = cvd::SharedFD::VsockServer(FLAGS_guest_port, SOCK_STREAM);
+    vsock = cvd::SharedFD::VsockServer(FLAGS_vsock_port, SOCK_STREAM);
     if (!vsock->IsOpen() && !socketErrorIsRecoverable(vsock->GetErrno())) {
       LOG(ERROR) << "Could not open vsock socket: " << vsock->StrError();
       SleepForever();
     }
   } while (!vsock->IsOpen());
-  CHECK(vsock->IsOpen()) << "Could not start server on " << FLAGS_guest_port;
+  CHECK(vsock->IsOpen()) << "Could not start server on " << FLAGS_vsock_port;
   while (true) {
     LOG(INFO) << "waiting for vsock connection";
     auto vsock_client = cvd::SharedFD::Accept(*vsock);
@@ -214,10 +211,10 @@ bool socketErrorIsRecoverable(int error) {
 int main(int argc, char* argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  CHECK(FLAGS_guest_port != 0) << "Must specify --guest_port flag";
+  CHECK(FLAGS_tcp_port != 0) << "Must specify -tcp_port flag";
+  CHECK(FLAGS_vsock_port != 0) << "Must specify -vsock_port flag";
 #ifdef CUTTLEFISH_HOST
-  CHECK(FLAGS_vsock_guest_cid != 0) << "Must specify --vsock_guest_cid flag";
-  CHECK(FLAGS_host_port != 0) << "Must specify --host_port flag";
+  CHECK(FLAGS_vsock_guest_cid != 0) << "Must specify -vsock_guest_cid flag";
   host();
 #else
   guest();
