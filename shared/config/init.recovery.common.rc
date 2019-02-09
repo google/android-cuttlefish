@@ -1,4 +1,4 @@
-service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -guest_port=5555
+service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -tcp_port=5555 -vsock_port=6520
     seclabel u:r:socket_vsock_proxy:s0
 
 service console /system/bin/sh
