@@ -16,6 +16,7 @@ using cvd::MonitorEntry;
 namespace {
 
 constexpr char kAdbModeTunnel[] = "tunnel";
+constexpr char kAdbModeNativeVsock[] = "native_vsock";
 constexpr char kAdbModeVsockTunnel[] = "vsock_tunnel";
 constexpr char kAdbModeUsb[] = "usb";
 
@@ -33,8 +34,14 @@ std::string GetHostPortArg() {
   return std::string{"--host_ports="} + std::to_string(GetHostPort());
 }
 
-std::string GetAdbConnectorPortArg() {
-  return std::string{"--ports="} + std::to_string(GetHostPort());
+std::string GetAdbConnectorTcpArg() {
+  return std::string{"--addresses=127.0.0.1:"} + std::to_string(GetHostPort());
+}
+
+std::string GetAdbConnectorVsockArg(const vsoc::CuttlefishConfig& config) {
+  return std::string{"--addresses=vsock:"}
+      + std::to_string(config.vsock_guest_cid())
+      + std::string{":5555"};
 }
 
 bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, const char* mode) {
@@ -51,9 +58,14 @@ bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
       && AdbModeEnabled(config, kAdbModeVsockTunnel);
 }
 
-bool AdbConnectorEnabled(const vsoc::CuttlefishConfig& config) {
+bool AdbTcpConnectorEnabled(const vsoc::CuttlefishConfig& config) {
   return config.run_adb_connector()
       && (AdbTunnelEnabled(config) || AdbVsockTunnelEnabled(config));
+}
+
+bool AdbVsockConnectorEnabled(const vsoc::CuttlefishConfig& config) {
+  return config.run_adb_connector()
+      && AdbModeEnabled(config, kAdbModeNativeVsock);
 }
 
 cvd::OnSocketReadyCb GetOnSubprocessExitCallback(
@@ -173,9 +185,15 @@ void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
 
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
-  if (AdbConnectorEnabled(config)) {
+  if (AdbTcpConnectorEnabled(config)) {
     cvd::Command adb_connector(config.adb_connector_binary());
-    adb_connector.AddParameter(GetAdbConnectorPortArg());
+    adb_connector.AddParameter(GetAdbConnectorTcpArg());
+    process_monitor->StartSubprocess(std::move(adb_connector),
+                                     GetOnSubprocessExitCallback(config));
+  }
+  if (AdbVsockConnectorEnabled(config)) {
+    cvd::Command adb_connector(config.adb_connector_binary());
+    adb_connector.AddParameter(GetAdbConnectorVsockArg(config));
     process_monitor->StartSubprocess(std::move(adb_connector),
                                      GetOnSubprocessExitCallback(config));
   }
@@ -196,9 +214,9 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
   if (AdbVsockTunnelEnabled(config)) {
     cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
-    adb_tunnel.AddParameter("--guest_port=5555");
+    adb_tunnel.AddParameter("--vsock_port=6520");
     adb_tunnel.AddParameter(
-        std::string{"--host_port="} + std::to_string(GetHostPort()));
+        std::string{"--tcp_port="} + std::to_string(GetHostPort()));
     adb_tunnel.AddParameter(std::string{"--vsock_guest_cid="} +
                             std::to_string(config.vsock_guest_cid()));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
