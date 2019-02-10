@@ -341,3 +341,6 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.recovery.cutf_cvm.rc:recovery/root/init.recovery.cutf_cvm.rc \
 
 endif
+
+# Host packages to install
+PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy
