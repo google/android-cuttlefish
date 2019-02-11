@@ -28,6 +28,7 @@
 /vendor/bin/vsoc_guest_region_e2e_test  u:object_r:vsoc_guest_region_e2e_test_exec:s0
 /vendor/bin/vport_trigger  u:object_r:vport_trigger_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
+/vendor/bin/hw/libvsoc-rild  u:object_r:rild_exec:s0
 /vendor/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock  u:object_r:hal_power_stats_default_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim  u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish  u:object_r:hal_dumpstate_impl_exec:s0
