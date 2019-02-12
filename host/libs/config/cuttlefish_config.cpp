@@ -744,7 +744,7 @@ void CuttlefishConfig::set_data_policy(const std::string& data_policy) {
 }
 
 int CuttlefishConfig::blank_data_image_mb() const {
-  return (*dictionary_)[kBlankDataImageMb].asBool();
+  return (*dictionary_)[kBlankDataImageMb].asInt();
 }
 
 void CuttlefishConfig::set_blank_data_image_mb(int blank_data_image_mb) {
