@@ -245,6 +245,7 @@ camera3_device_ops_t EmulatedCamera3::sDeviceOps = {
     EmulatedCamera3::flush,
 #ifdef CAMERA_DEVICE_API_VERSION_3_6
     /*UNUSED: signal_stream_flush*/nullptr,
+    /*UNUSED: is_reconfiguration_required*/nullptr,
 #endif
     {0}};
 
