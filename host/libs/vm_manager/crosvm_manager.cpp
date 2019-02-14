@@ -21,6 +21,7 @@
 
 #include <glog/logging.h>
 
+#include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -36,6 +37,16 @@ std::string GetControlSocketPath(const vsoc::CuttlefishConfig* config) {
 cvd::SharedFD ConnectToLogMonitor(const std::string& log_monitor_name) {
   return cvd::SharedFD::SocketLocalClient(log_monitor_name.c_str(), false,
                                           SOCK_STREAM);
+}
+
+void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
+  auto tap_fd = cvd::OpenTapInterface(tap_name);
+  if (tap_fd->IsOpen()) {
+    crosvm_cmd->AddParameter("--tap-fd=", tap_fd);
+  } else {
+    LOG(ERROR) << "Unable to connect to " << tap_name << ": "
+               << tap_fd->StrError();
+  }
 }
 
 }  // namespace
@@ -72,6 +83,9 @@ cvd::Command CrosvmManager::StartCommand() {
   command.AddParameter("--disk=", config_->vendor_image_path());
   command.AddParameter("--socket=", GetControlSocketPath(config_));
   command.AddParameter("--android-fstab=", config_->gsi_fstab_path());
+
+  AddTapFdParameter(&command, config_->wifi_tap_name());
+  AddTapFdParameter(&command, config_->mobile_tap_name());
 
   // TODO remove this (use crosvm's seccomp files)
   command.AddParameter("--disable-sandbox");
