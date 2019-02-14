@@ -18,6 +18,8 @@
 # Common BoardConfig for all supported architectures.
 #
 
+TARGET_BOOTLOADER_BOARD_NAME := vsoc
+
 # Build a separate vendor.img partition
 BOARD_USES_VENDORIMAGE := true
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
