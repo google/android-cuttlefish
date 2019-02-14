@@ -21,6 +21,7 @@ cc_library_shared {
         "size_utils.cpp",
         "files.cpp",
         "users.cpp",
+        "network.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
