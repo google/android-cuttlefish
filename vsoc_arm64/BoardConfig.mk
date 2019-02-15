@@ -20,7 +20,6 @@
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 
-TARGET_BOOTLOADER_BOARD_NAME := vsoc_arm64
 TARGET_BOARD_PLATFORM := vsoc_arm64
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
