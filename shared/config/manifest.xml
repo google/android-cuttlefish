@@ -169,14 +169,12 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- cuttlefish doesn't support SIM slot 2 -->
+    <!-- TODO need ISap 1.2 and IRadioConfig 1.2 supported-->
     <hal format="hidl">
         <name>android.hardware.radio</name>
         <transport>hwbinder</transport>
-        <version>1.1</version>
-        <interface>
-            <name>IRadio</name>
-            <instance>slot1</instance>
-        </interface>
+        <fqname>@1.4::IRadio/slot1</fqname>
     </hal>
     <hal format="hidl">
         <name>android.hardware.usb</name>
