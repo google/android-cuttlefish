@@ -76,6 +76,7 @@ PRODUCT_PACKAGES += \
     rename_netiface \
     ip_link_add \
     setup_wifi \
+    vsock_logcat \
 
 #
 # Packages for AOSP-available stuff we use from the framework

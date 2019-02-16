@@ -41,6 +41,7 @@ cvd_host_executables := \
     kernel_log_monitor \
     extract-vmlinux \
     crosvm \
+    logcat_receiver \
 
 cvd_host_tests := \
     auto_free_buffer_test \
