@@ -32,7 +32,7 @@
 #include "common/vsoc/lib/ril_region_view.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-#define VSOC_RIL_VERSION_STRING "Android VSoC RIL 1.0"
+#define VSOC_RIL_VERSION_STRING "Android VSoC RIL 1.4"
 
 /* Modem Technology bits */
 #define MDM_GSM 0x01
@@ -259,6 +259,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
     ALOGE("%s returning: called with small datalen %zu", __FUNCTION__, datalen);
     return;
   }
+
   DataCall call;
   int tech = atoi(details[0]);
   switch (tech) {
@@ -2197,6 +2198,35 @@ static void request_ims_registration_state(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, reply, sizeof(reply));
 }
 
+// New functions after P.
+#if VSOC_PLATFORM_SDK_AFTER(P)
+static void request_start_network_scan(RIL_Token t) {
+  ALOGV("Scanning network - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_start_network_scan4(RIL_Token t) {
+  ALOGV("Scanning network 1.4 - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_emergency_dial(int /*request*/, void* /*data*/, size_t /*datalen*/,
+    RIL_Token t) {
+  ALOGV("Emergency dial - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_set_sim_card_power(int /*request*/, void* /*data*/, size_t /*datalen*/,
+    RIL_Token t) {
+  ALOGV("Set sim card power - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+#endif
+
 static void gce_ril_on_request(int request, void* data, size_t datalen,
                                RIL_Token t) {
   // Ignore all requests except RIL_REQUEST_GET_SIM_STATUS
@@ -2421,6 +2451,22 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
       break;
 
+#endif
+
+// New requests after P.
+#if VSOC_PLATFORM_SDK_AFTER(P)
+    case RIL_REQUEST_START_NETWORK_SCAN:
+      request_start_network_scan(t);
+      break;
+    case RIL_REQUEST_START_NETWORK_SCAN4:
+      request_start_network_scan4(t);
+      break;
+    case RIL_REQUEST_EMERGENCY_DIAL:
+      request_emergency_dial(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_SIM_CARD_POWER:
+      request_set_sim_card_power(request, data, datalen, t);
+      break;
 #endif
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
