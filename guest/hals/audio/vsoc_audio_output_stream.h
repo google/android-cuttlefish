@@ -17,9 +17,9 @@
 
 #include <memory>
 
+#include "common/libs/utils/simulated_buffer.h"
 #include "common/vsoc/lib/vsoc_audio_message.h"
 #include "guest/hals/audio/audio_hal.h"
-#include "guest/hals/audio/simulated_buffer.h"
 
 namespace cvd {
 

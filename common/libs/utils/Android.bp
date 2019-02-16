@@ -33,3 +33,11 @@ cc_library_shared {
     ],
     defaults: ["cuttlefish_host_and_guest"],
 }
+
+cc_test {
+    name: "cuttlefish_simulated_buffer_test",
+    srcs: ["simulated_buffer_test.cpp"],
+    shared_libs: ["libcuttlefish_utils"],
+    gtest: true,
+    defaults: ["cuttlefish_host_only"],
+}
