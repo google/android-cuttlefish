@@ -42,7 +42,14 @@ PRODUCT_PACKAGES += \
     Telecom \
     TeleService \
     libvsoc-ril \
-    rild \
+
+ifeq ($(PLATFORM_VERSION), $(word 1, $(sort Q $(PLATFORM_VERSION))))
+    PRODUCT_PACKAGES += \
+        libvsoc-rild
+else
+    PRODUCT_PACKAGES += \
+        rild
+endif
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml
