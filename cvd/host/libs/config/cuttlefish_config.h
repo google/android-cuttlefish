@@ -175,6 +175,9 @@ class CuttlefishConfig {
   std::string logcat_path() const;
   void set_logcat_path(const std::string& logcat_path);
 
+  std::string logcat_receiver_binary() const;
+  void set_logcat_receiver_binary(const std::string& binary);
+
   std::string launcher_log_path() const;
   void set_launcher_log_path(const std::string& launcher_log_path);
 
@@ -292,6 +295,12 @@ class CuttlefishConfig {
 
   void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
   std::string blank_data_image_fmt() const;
+
+  void set_logcat_mode(const std::string& mode);
+  std::string logcat_mode() const;
+
+  void set_logcat_vsock_port(int port);
+  int logcat_vsock_port() const;
 
   bool enable_ivserver() const;
 
