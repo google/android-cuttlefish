@@ -16,6 +16,6 @@
 
 DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/generic_no_telephony.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_minimal.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
