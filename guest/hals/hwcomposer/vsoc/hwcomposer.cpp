@@ -350,8 +350,10 @@ static void* hwc_vsync_thread(void* data) {
       (struct vsoc_hwc_composer_device_1_t*)data;
   setpriority(PRIO_PROCESS, 0, HAL_PRIORITY_URGENT_DISPLAY);
 
+  int64_t nanoseconds = static_cast<int64_t>(1e9);
+
   int64_t base_timestamp = pdev->vsync_base_timestamp;
-  int64_t last_logged = base_timestamp / 1e9;
+  int64_t last_logged = base_timestamp / nanoseconds;
   int sent = 0;
   int last_sent = 0;
   static const int log_interval = 60;
@@ -363,13 +365,13 @@ static void* hwc_vsync_thread(void* data) {
       ALOGE("%s:%d error in vsync thread clock_gettime: %s", __FILE__, __LINE__,
             strerror(errno));
     }
-    int64_t timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
+    int64_t timestamp = int64_t(rt.tv_sec) * nanoseconds + rt.tv_nsec;
     // Given now's timestamp calculate the time of the next timestamp.
     timestamp += pdev->vsync_period_ns -
                  (timestamp - base_timestamp) % pdev->vsync_period_ns;
 
-    rt.tv_sec = timestamp / 1e9;
-    rt.tv_nsec = timestamp % static_cast<int32_t>(1e9);
+    rt.tv_sec = timestamp / nanoseconds;
+    rt.tv_nsec = timestamp % static_cast<int32_t>(nanoseconds);
     int err = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &rt, NULL);
     if (err == -1) {
       ALOGE("error in vsync thread: %s", strerror(errno));
