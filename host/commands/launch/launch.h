@@ -13,6 +13,8 @@ void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config);
 cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config);
 cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
                                         cvd::SharedFD* boot_events_pipe);
+void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                   cvd::ProcessMonitor* process_monitor);
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor);
 void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
