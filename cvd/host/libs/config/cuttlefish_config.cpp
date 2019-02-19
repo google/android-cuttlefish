@@ -152,6 +152,10 @@ const char* kE2eTestBinary = "e2e_test_binary";
 const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
+
+const char* kLogcatMode = "logcat_mode";
+const char* kLogcatVsockPort = "logcat_vsock_mode";
+const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 }  // namespace
 
 namespace vsoc {
@@ -757,6 +761,31 @@ std::string CuttlefishConfig::blank_data_image_fmt() const {
 
 void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
   (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
+}
+
+
+void CuttlefishConfig::set_logcat_mode(const std::string& mode) {
+  (*dictionary_)[kLogcatMode] = mode;
+}
+
+std::string CuttlefishConfig::logcat_mode() const {
+  return (*dictionary_)[kLogcatMode].asString();
+}
+
+void CuttlefishConfig::set_logcat_vsock_port(int port) {
+  (*dictionary_)[kLogcatVsockPort] = port;
+}
+
+int CuttlefishConfig::logcat_vsock_port() const {
+  return (*dictionary_)[kLogcatVsockPort].asInt();
+}
+
+void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
+  SetPath(kLogcatReceiverBinary, binary);
+}
+
+std::string CuttlefishConfig::logcat_receiver_binary() const {
+  return (*dictionary_)[kLogcatReceiverBinary].asString();
 }
 
 
