@@ -2207,7 +2207,7 @@ static void request_start_network_scan(RIL_Token t) {
 }
 
 static void request_start_network_scan4(RIL_Token t) {
-  ALOGV("Scanning network 1.4 - void");
+  ALOGV("Scanning network 1.4");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }

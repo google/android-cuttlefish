@@ -160,3 +160,4 @@
     {RIL_REQUEST_STOP_NETWORK_SCAN, radio_1_4::stopNetworkScanResponse},
     {RIL_REQUEST_START_KEEPALIVE, radio_1_4::startKeepaliveResponse},
     {RIL_REQUEST_STOP_KEEPALIVE, radio_1_4::stopKeepaliveResponse},
+    {RIL_REQUEST_START_NETWORK_SCAN4, radio_1_4::startNetworkScanResponse4},
