@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "hwcomposer_common.h"
+#include "hwcomposer.h"
 
 namespace cvd {
 

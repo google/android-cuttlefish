@@ -24,7 +24,7 @@
 #include "common/libs/time/monotonic_time.h"
 #include "common/vsoc/lib/screen_region_view.h"
 
-#include "hwcomposer_common.h"
+#include "hwcomposer.h"
 
 namespace cvd {
 

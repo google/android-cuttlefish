@@ -30,7 +30,6 @@
 #include "common/vsoc/lib/screen_region_view.h"
 
 #include "geometry_utils.h"
-#include "hwcomposer_common.h"
 
 using vsoc::screen::ScreenRegionView;
 

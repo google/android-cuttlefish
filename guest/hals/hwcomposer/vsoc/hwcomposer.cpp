@@ -59,7 +59,7 @@
 
 #include "base_composer.h"
 #include "geometry_utils.h"
-#include "hwcomposer_common.h"
+#include "hwcomposer.h"
 #include "stats_keeper.h"
 #include "vsoc_composer.h"
 
