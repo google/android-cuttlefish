@@ -18,7 +18,7 @@
 #include <functional>
 
 #include <hardware/gralloc.h>
-#include "hwcomposer_common.h"
+#include "hwcomposer.h"
 
 namespace cvd {
 
