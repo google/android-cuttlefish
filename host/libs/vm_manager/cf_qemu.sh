@@ -184,11 +184,16 @@ args+=(
     -device "${kernel_console_serial},chardev=charserial0,id=serial0"
     -chardev "socket,id=charserial1,path=${console_path:-${default_dir}/console},server,nowait"
     -device "pci-serial,chardev=charserial1,id=serial1"
-    -chardev "file,id=charchannel0,path=${logcat_path:-${default_dir}/logcat},append=on"
-    -device "virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=cf-logcat"
     -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_dir}/ivshmem_socket_qemu},id=ivsocket"
     -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
 )
+
+if [[ "${logcat_mode}" == "serial" ]]; then
+    args+=(
+        -chardev "file,id=charchannel0,path=${logcat_path:-${default_dir}/logcat},append=on"
+        -device "virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=cf-logcat"
+    )
+fi
 
 if [[ -n "${gdb_flag}" ]]; then
   args+=(-gdb "${gdb_flag}")

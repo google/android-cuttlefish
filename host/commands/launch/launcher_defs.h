@@ -17,6 +17,9 @@
 
 namespace cvd {
 
+constexpr char kLogcatSerialMode[] = "serial";
+constexpr char kLogcatVsockMode[] = "vsock";
+
 enum LauncherExitCodes : int {
   kSuccess = 0,
   kArgumentParsingError = 1,
@@ -36,6 +39,7 @@ enum LauncherExitCodes : int {
   kUsbV1SocketError = 15,
   kE2eTestFailed = 16,
   kKernelDecompressError = 17,
+  kLogcatServerError = 18,
 };
 
 // Actions supported by the launcher server
