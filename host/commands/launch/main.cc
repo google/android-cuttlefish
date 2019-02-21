@@ -424,6 +424,8 @@ int main(int argc, char** argv) {
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
 
+  LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
+
   LaunchUsbServerIfEnabled(*config, &process_monitor);
 
   LaunchIvServerIfEnabled(&process_monitor, *config);

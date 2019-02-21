@@ -83,6 +83,10 @@ int GetHostPort() {
   return vsoc::GetPerInstanceDefault(kFirstHostPort);
 }
 
+bool LogcatReceiverEnabled(const vsoc::CuttlefishConfig& config) {
+  return config.logcat_mode() == cvd::kLogcatVsockMode;
+}
+
 bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
   return AdbModeEnabled(config, kAdbModeUsb);
 }
@@ -139,6 +143,24 @@ cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
     kernel_log_monitor.AddParameter("-subscriber_fd=", pipe_write_end);
   }
   return kernel_log_monitor;
+}
+
+void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                   cvd::ProcessMonitor* process_monitor) {
+  if (!LogcatReceiverEnabled(config)) {
+    return;
+  }
+  auto port = config.logcat_vsock_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  if (!socket->IsOpen()) {
+    LOG(ERROR) << "Unable to create logcat server socket: "
+               << socket->StrError();
+    std::exit(LauncherExitCodes::kLogcatServerError);
+  }
+  cvd::Command cmd(config.logcat_receiver_binary());
+  cmd.AddParameter("-server_fd=", socket);
+  process_monitor->StartSubprocess(std::move(cmd),
+                                   GetOnSubprocessExitCallback(config));
 }
 
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
