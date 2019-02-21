@@ -13,6 +13,9 @@ ifeq ($(HOST_OS),linux)
 $(cvd_host_package_tar): PRIVATE_TAR_FORMAT := --format=gnu
 endif
 
+# Build this by default when a developer types make
+droidcore: $(cvd_host_package_tar)
+
 # Build and store them on the build server.
 $(call dist-for-goals, dist_files, $(cvd_host_package_tar))
 
