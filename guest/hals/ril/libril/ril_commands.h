@@ -161,3 +161,4 @@
     {RIL_REQUEST_START_KEEPALIVE, radio_1_4::startKeepaliveResponse},
     {RIL_REQUEST_STOP_KEEPALIVE, radio_1_4::stopKeepaliveResponse},
     {RIL_REQUEST_START_NETWORK_SCAN4, radio_1_4::startNetworkScanResponse4},
+    {RIL_REQUEST_GET_MODEM_STACK_STATUS, radio_1_4::getModemStackStatusResponse},
