@@ -6339,6 +6339,28 @@ typedef struct {
 #define RIL_REQUEST_STOP_KEEPALIVE 145
 
 /**
+ * RIL_REQUEST_START_NETWORK_SCAN4
+ *
+ * Starts a new network scan
+ *
+ * Request to start a network scan with specified radio access networks with frequency bands and/or
+ * channels.
+ *
+ * "data" is a const RIL_NetworkScanRequest *.
+ * "response" is NULL
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  DEVICE_IN_USE
+ *  INTERNAL_ERR
+ *  MODEM_ERR
+ *  INVALID_ARGUMENTS
+ *
+ */
+#define RIL_REQUEST_START_NETWORK_SCAN4 146
+
+/** FIXME: define value based on the s_commands or unsol_response index when implement.
  * RIL_REQUEST_EMERGENCY_DIAL
  *
  * Initiate emergency voice call, with zero or more emergency service category(s), zero or
@@ -6389,28 +6411,6 @@ typedef struct {
  *  INVALID_MODEM_STATE
  */
 #define RIL_REQUEST_EMERGENCY_DIAL 205
-
-/**
- * RIL_REQUEST_START_NETWORK_SCAN4
- *
- * Starts a new network scan
- *
- * Request to start a network scan with specified radio access networks with frequency bands and/or
- * channels.
- *
- * "data" is a const RIL_NetworkScanRequest *.
- * "response" is NULL
- *
- * Valid errors:
- *  SUCCESS
- *  RADIO_NOT_AVAILABLE
- *  DEVICE_IN_USE
- *  INTERNAL_ERR
- *  MODEM_ERR
- *  INVALID_ARGUMENTS
- *
- */
-#define RIL_REQUEST_START_NETWORK_SCAN4 206
 
 /***********************************************************************/
 

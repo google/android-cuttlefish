@@ -203,6 +203,10 @@ int startNetworkScanResponse(int slotId,
                              int responseType, int serial, RIL_Errno e, void *response,
                              size_t responselen);
 
+int startNetworkScanResponse4(int slotId,
+                             int responseType, int serial, RIL_Errno e, void *response,
+                             size_t responselen);
+
 int stopNetworkScanResponse(int slotId,
                             int responseType, int serial, RIL_Errno e, void *response,
                             size_t responselen);
