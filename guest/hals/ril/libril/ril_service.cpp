@@ -125,6 +125,10 @@ struct RadioImpl_1_4 : public V1_4::IRadio {
     int32_t mSlotId;
     sp<IRadioResponse> mRadioResponse;
     sp<IRadioIndication> mRadioIndication;
+    sp<V1_2::IRadioResponse> mRadioResponseV1_2;
+    sp<V1_2::IRadioIndication> mRadioIndicationV1_2;
+    sp<V1_3::IRadioResponse> mRadioResponseV1_3;
+    sp<V1_3::IRadioIndication> mRadioIndicationV1_3;
     sp<V1_4::IRadioResponse> mRadioResponseV1_4;
     sp<V1_4::IRadioIndication> mRadioIndicationV1_4;
 
@@ -832,6 +836,10 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
             if (isRadioService) {
                 radioService[slotId]->mRadioResponse = NULL;
                 radioService[slotId]->mRadioIndication = NULL;
+                radioService[slotId]->mRadioResponseV1_2 = NULL;
+                radioService[slotId]->mRadioIndicationV1_2 = NULL;
+                radioService[slotId]->mRadioResponseV1_3 = NULL;
+                radioService[slotId]->mRadioIndicationV1_3 = NULL;
                 radioService[slotId]->mRadioResponseV1_4 = NULL;
                 radioService[slotId]->mRadioIndicationV1_4 = NULL;
             } else {
@@ -874,6 +882,20 @@ Return<void> RadioImpl_1_4::setResponseFunctions(
     if (mRadioResponseV1_4 == nullptr || mRadioIndicationV1_4 == nullptr) {
         mRadioResponseV1_4 = nullptr;
         mRadioIndicationV1_4 = nullptr;
+    }
+
+    mRadioResponseV1_3 = V1_3::IRadioResponse::castFrom(mRadioResponse).withDefault(nullptr);
+    mRadioIndicationV1_3 = V1_3::IRadioIndication::castFrom(mRadioIndication).withDefault(nullptr);
+    if (mRadioResponseV1_3 == nullptr || mRadioIndicationV1_3 == nullptr) {
+        mRadioResponseV1_3 = nullptr;
+        mRadioIndicationV1_3 = nullptr;
+    }
+
+    mRadioResponseV1_2 = V1_2::IRadioResponse::castFrom(mRadioResponse).withDefault(nullptr);
+    mRadioIndicationV1_2 = V1_2::IRadioIndication::castFrom(mRadioIndication).withDefault(nullptr);
+    if (mRadioResponseV1_2 == nullptr || mRadioIndicationV1_2 == nullptr) {
+        mRadioResponseV1_2 = nullptr;
+        mRadioIndicationV1_2 = nullptr;
     }
 
     mCounterRadio[mSlotId]++;
@@ -3134,12 +3156,12 @@ Return<void> RadioImpl_1_4::deactivateDataCall_1_2(int32_t /* serial */, int32_t
 }
 
 // Methods from ::android::hardware::radio::V1_3::IRadio follow.
-Return<void> RadioImpl_1_4::setSystemSelectionChannels(int32_t /* serial */, bool /* specifyChannels */,
+Return<void> RadioImpl_1_4::setSystemSelectionChannels(int32_t serial, bool /* specifyChannels */,
         const hidl_vec<::android::hardware::radio::V1_1::RadioAccessSpecifier>& /* specifiers */) {
-    // TODO implement
 #if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+    RLOGD("setSystemSelectionChannels: serial %d", serial);
 #endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS);
     return Void();
 }
 
@@ -3458,6 +3480,7 @@ int radio_1_4::getIccCardStatusResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
     if (radioService[slotId]->mRadioResponseV1_4 != NULL
+        || radioService[slotId]->mRadioResponseV1_2 != NULL
         || radioService[slotId]->mRadioResponse != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
@@ -3504,6 +3527,21 @@ int radio_1_4::getIccCardStatusResponse(int slotId,
             Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4->
                     getIccCardStatusResponse_1_4(responseInfo, cardStatusV1_4);
             radioService[slotId]->checkReturnStatus(retStatus);
+        } else if (radioService[slotId]->mRadioResponseV1_3 != NULL) {
+            ::android::hardware::radio::V1_2::CardStatus cardStatusV1_2;
+            cardStatusV1_2.base = cardStatus;
+            cardStatusV1_2.physicalSlotId = -1;
+            Return<void> retStatus = radioService[slotId]->mRadioResponseV1_3->
+                    getIccCardStatusResponse_1_2(responseInfo, cardStatusV1_2);
+            radioService[slotId]->checkReturnStatus(retStatus);
+        } else if (radioService[slotId]->mRadioResponseV1_2 != NULL) {
+            ::android::hardware::radio::V1_2::CardStatus cardStatusV1_2;
+            cardStatusV1_2.base = cardStatus;
+            cardStatusV1_2.physicalSlotId = -1;
+            Return<void> retStatus = radioService[slotId]->mRadioResponseV1_2->
+                    getIccCardStatusResponse_1_2(responseInfo, cardStatusV1_2);
+            radioService[slotId]->checkReturnStatus(retStatus);
+            // TODO: add 1.1 if needed.
         } else {
             Return<void> retStatus = radioService[slotId]->mRadioResponse->
                     getIccCardStatusResponse(responseInfo, cardStatus);
@@ -7294,16 +7332,16 @@ int radio_1_4::getModemStackStatusResponse(int slotId, int responseType, int ser
     populateResponseInfo(responseInfo, serial, responseType, e);
 
     // If we don't have a radio service, there's nothing we can do
-    if (radioService[slotId]->mRadioResponseV1_4 == NULL) {
-        RLOGE("%s: radioService[%d]->mRadioResponseV1_4 == NULL", __FUNCTION__, slotId);
+    if (radioService[slotId]->mRadioResponseV1_3 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_3 == NULL", __FUNCTION__, slotId);
         return 0;
     }
 
     Return<void> retStatus =
-            radioService[slotId]->mRadioResponseV1_4->getModemStackStatusResponse(
+            radioService[slotId]->mRadioResponseV1_3->getModemStackStatusResponse(
             responseInfo, true);
     radioService[slotId]->checkReturnStatus(retStatus);
-    return 1;
+    return 0;
 }
 
 int radio_1_4::sendRequestRawResponse(int slotId,
@@ -7371,6 +7409,27 @@ int radio_1_4::sendRequestStringsResponse(int slotId,
                 "NULL", slotId);
     }
 
+    return 0;
+}
+
+int radio_1_4::setSystemSelectionChannelsResponse(int slotId, int responseType, int serial,
+                                        RIL_Errno e, void* /* response */, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_3 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_3 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_3->setSystemSelectionChannelsResponse(
+            responseInfo);
+    radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
 

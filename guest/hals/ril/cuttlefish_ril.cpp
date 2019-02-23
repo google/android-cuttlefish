@@ -2338,6 +2338,12 @@ static void request_get_modem_stack_status(int /*request*/, RIL_Token t) {
   return;
 }
 
+static void request_set_system_selection_channels(int /*request*/, RIL_Token t) {
+  ALOGV("request_set_system_selection_channels - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
 #endif
 
 static void gce_ril_on_request(int request, void* data, size_t datalen,
@@ -2594,6 +2600,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP:
       request_set_preferred_network_type_bitmap(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS:
+      request_set_system_selection_channels(request, t);
       break;
 #endif
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:
