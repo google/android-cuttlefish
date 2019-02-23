@@ -761,6 +761,10 @@ int carrierInfoForImsiEncryption(int slotId,
                         int responseType, int serial, RIL_Errno e,
                         void *response, size_t responseLen);
 
+int setSystemSelectionChannelsResponse(int slotId,
+                               int responseType, int serial, RIL_Errno e,
+                               void *response, size_t responseLen);
+
 pthread_rwlock_t * getRadioServiceRwlock(int slotId);
 
 void setNitzTimeReceived(int slotId, long timeReceived);
