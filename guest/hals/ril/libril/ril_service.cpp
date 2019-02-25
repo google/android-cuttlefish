@@ -3276,20 +3276,20 @@ Return<void> RadioImpl_1_4::startNetworkScan_1_4(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_4::getPreferredNetworkTypeBitmap(int32_t /* serial */) {
-    // TODO implement
+Return<void> RadioImpl_1_4::getPreferredNetworkTypeBitmap(int32_t serial ) {
 #if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+    RLOGD("getPreferredNetworkTypeBitmap: serial %d", serial);
 #endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP);
     return Void();
 }
 
 Return<void> RadioImpl_1_4::setPreferredNetworkTypeBitmap(
-        int32_t /* serial */, hidl_bitfield<RadioAccessFamily> /* networkTypeBitmap */) {
-    // TODO implement
+        int32_t serial, hidl_bitfield<RadioAccessFamily> networkTypeBitmap) {
 #if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+    RLOGD("setPreferredNetworkTypeBitmap: serial %d", serial);
 #endif
+    dispatchInts(serial, mSlotId, RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP, 1, networkTypeBitmap);
     return Void();
 }
 
@@ -5426,6 +5426,53 @@ int radio_1_4::getPreferredNetworkTypeResponse(int slotId,
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("getPreferredNetworkTypeResponse: radioService[%d]->mRadioResponse == NULL",
+                slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_4::setPreferredNetworkTypeBitmapResponse(int slotId,
+                                 int responseType, int serial, RIL_Errno e,
+                                 void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("setPreferredNetworkTypeBitmapResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_4->setPreferredNetworkTypeBitmapResponse(
+                responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("setPreferredNetworkTypeBitmapResponse: radioService[%d]->mRadioResponseV1_4 == NULL",
+                slotId);
+    }
+
+    return 0;
+}
+
+
+int radio_1_4::getPreferredNetworkTypeBitmapResponse(int slotId,
+                                          int responseType, int serial, RIL_Errno e,
+                                          void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("getPreferredNetworkTypeBitmapResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        int ret = responseInt(responseInfo, serial, responseType, e, response, responseLen);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_4->getPreferredNetworkTypeBitmapResponse(
+                responseInfo,
+                (const ::android::hardware::hidl_bitfield<
+                ::android::hardware::radio::V1_4::RadioAccessFamily>) ret);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("getPreferredNetworkTypeBitmapResponse: radioService[%d]->mRadioResponseV1_4 == NULL",
                 slotId);
     }
 
