@@ -809,8 +809,6 @@ bool dispatchIccApdu(int serial, int slotId, int request, const SimApdu& message
 }
 
 void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
-    RLOGD("checkReturnStatus: ret.isOK(). slotId = %d, isRadioService = %s", slotId,
-        isRadioService ? "Y" : "N");
     if (ret.isOk() == false) {
         RLOGE("checkReturnStatus: unable to call response/indication callback");
         // Remote process hosting the callbacks must be dead. Reset the callback objects;
@@ -2969,14 +2967,47 @@ int prepareNetworkScanRequest_1_2(RIL_NetworkScanRequest &scan_request,
     const ::android::hardware::radio::V1_2::NetworkScanRequest& request,
     RequestInfo *pRI) {
 
-    if (request.specifiers.size() > MAX_RADIO_ACCESS_NETWORKS) {
+    scan_request.type = (RIL_ScanType) request.type;
+    scan_request.interval = request.interval;
+    scan_request.specifiers_length = request.specifiers.size();
+
+    int intervalLow = static_cast<int>(::android::hardware::radio::V1_2::ScanIntervalRange::MIN);
+    int intervalHigh = static_cast<int>(::android::hardware::radio::V1_2::ScanIntervalRange::MAX);
+    int maxSearchTimeLow =
+        static_cast<int>(::android::hardware::radio::V1_2::MaxSearchTimeRange::MIN);
+    int maxSearchTimeHigh =
+        static_cast<int>(::android::hardware::radio::V1_2::MaxSearchTimeRange::MAX);
+    int incrementalResultsPeriodicityRangeLow =
+        static_cast<int>(::android::hardware::radio::V1_2::IncrementalResultsPeriodicityRange::MIN);
+    int incrementalResultsPeriodicityRangeHigh =
+        static_cast<int>(::android::hardware::radio::V1_2::IncrementalResultsPeriodicityRange::MAX);
+    uint maxSpecifierSize =
+        static_cast<uint>(::android::hardware::radio::V1_2::RadioConst
+            ::RADIO_ACCESS_SPECIFIER_MAX_SIZE);
+
+    if (request.interval < intervalLow || request.interval > intervalHigh) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+    // If defined, must fall in correct range.
+    if (request.maxSearchTime != 0
+        && (request.maxSearchTime < maxSearchTimeLow
+            || request.maxSearchTime > maxSearchTimeHigh)) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+    if (request.maxSearchTime != 0
+        && (request.incrementalResultsPeriodicity < incrementalResultsPeriodicityRangeLow
+            || request.incrementalResultsPeriodicity > incrementalResultsPeriodicityRangeHigh
+            || request.incrementalResultsPeriodicity > request.maxSearchTime)) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+    if (request.specifiers.size() == 0 || request.specifiers.size() > maxSpecifierSize) {
         sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
         return -1;
     }
 
-    scan_request.type = (RIL_ScanType) request.type;
-    scan_request.interval = request.interval;
-    scan_request.specifiers_length = request.specifiers.size();
     for (size_t i = 0; i < request.specifiers.size(); ++i) {
         if (request.specifiers[i].geranBands.size() > MAX_BANDS ||
             request.specifiers[i].utranBands.size() > MAX_BANDS ||
@@ -3392,7 +3423,7 @@ int responseInt(RadioResponseInfo& responseInfo, int serial, int responseType, R
 int radio_1_4::getIccCardStatusResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
-    if (radioService[slotId]->mRadioResponse != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
         CardStatus cardStatus = {CardState::ABSENT, PinState::UNKNOWN, -1, -1, -1, {}};
@@ -3429,8 +3460,13 @@ int radio_1_4::getIccCardStatusResponse(int slotId,
             }
         }
 
-        Return<void> retStatus = radioService[slotId]->mRadioResponse->
-                getIccCardStatusResponse(responseInfo, cardStatus);
+        ::android::hardware::radio::V1_2::CardStatus cardStatusV1_2;
+        ::android::hardware::radio::V1_4::CardStatus cardStatusV1_4;
+        cardStatusV1_2.base = cardStatus;
+        cardStatusV1_2.physicalSlotId = -1;
+        cardStatusV1_4.base = cardStatusV1_2;
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4->
+                getIccCardStatusResponse_1_4(responseInfo, cardStatusV1_4);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("getIccCardStatusResponse: radioService[%d]->mRadioResponse == NULL", slotId);
@@ -7023,6 +7059,24 @@ int radio_1_4::startNetworkScanResponse(int slotId, int responseType, int serial
         populateResponseInfo(responseInfo, serial, responseType, e);
         Return<void> retStatus
                 = radioService[slotId]->mRadioResponseV1_4->startNetworkScanResponse(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("startNetworkScanResponse: radioService[%d]->mRadioResponseV1_4 == NULL", slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_4::startNetworkScanResponse4(int slotId, int responseType, int serial, RIL_Errno e,
+                                    void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("startNetworkScanResponse4: serial %d", serial);
+#endif
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_4->startNetworkScanResponse_1_4(responseInfo);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("startNetworkScanResponse: radioService[%d]->mRadioResponseV1_4 == NULL", slotId);

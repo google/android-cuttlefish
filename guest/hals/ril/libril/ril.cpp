@@ -601,7 +601,7 @@ RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responsel
     }
 
     socket_id = pRI->socket_id;
-    RLOGD("RequestComplete, %s", rilSocketIdToString(socket_id));
+
 #if VDBG
     RLOGD("RequestComplete, %s", rilSocketIdToString(socket_id));
 #endif
@@ -1074,6 +1074,8 @@ requestToString(int request) {
         case RIL_REQUEST_SET_FACILITY_LOCK: return "SET_FACILITY_LOCK";
         case RIL_REQUEST_CHANGE_BARRING_PASSWORD: return "CHANGE_BARRING_PASSWORD";
         case RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE: return "QUERY_NETWORK_SELECTION_MODE";
+        case RIL_REQUEST_START_NETWORK_SCAN: return "RIL_REQUEST_START_NETWORK_SCAN";
+        case RIL_REQUEST_START_NETWORK_SCAN4: return "RIL_REQUEST_START_NETWORK_SCAN4";
         case RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC: return "SET_NETWORK_SELECTION_AUTOMATIC";
         case RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL: return "SET_NETWORK_SELECTION_MANUAL";
         case RIL_REQUEST_QUERY_AVAILABLE_NETWORKS: return "QUERY_AVAILABLE_NETWORKS";
