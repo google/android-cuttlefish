@@ -3311,11 +3311,11 @@ Return<void> RadioImpl_1_4::getAllowedCarriers_1_4(int32_t /* serial */) {
     return Void();
 }
 
-Return<void> RadioImpl_1_4::getSignalStrength_1_4(int32_t /* serial */) {
-    // TODO implement
+Return<void> RadioImpl_1_4::getSignalStrength_1_4(int32_t serial) {
 #if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+    RLOGD("getSignalStrength_1_4: serial %d", serial);
 #endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_SIGNAL_STRENGTH);
     return Void();
 }
 
@@ -3423,7 +3423,8 @@ int responseInt(RadioResponseInfo& responseInfo, int serial, int responseType, R
 int radio_1_4::getIccCardStatusResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
-    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL
+        || radioService[slotId]->mRadioResponse != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
         CardStatus cardStatus = {CardState::ABSENT, PinState::UNKNOWN, -1, -1, -1, {}};
@@ -3460,14 +3461,20 @@ int radio_1_4::getIccCardStatusResponse(int slotId,
             }
         }
 
-        ::android::hardware::radio::V1_2::CardStatus cardStatusV1_2;
-        ::android::hardware::radio::V1_4::CardStatus cardStatusV1_4;
-        cardStatusV1_2.base = cardStatus;
-        cardStatusV1_2.physicalSlotId = -1;
-        cardStatusV1_4.base = cardStatusV1_2;
-        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4->
-                getIccCardStatusResponse_1_4(responseInfo, cardStatusV1_4);
-        radioService[slotId]->checkReturnStatus(retStatus);
+        if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+            ::android::hardware::radio::V1_2::CardStatus cardStatusV1_2;
+            ::android::hardware::radio::V1_4::CardStatus cardStatusV1_4;
+            cardStatusV1_2.base = cardStatus;
+            cardStatusV1_2.physicalSlotId = -1;
+            cardStatusV1_4.base = cardStatusV1_2;
+            Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4->
+                    getIccCardStatusResponse_1_4(responseInfo, cardStatusV1_4);
+            radioService[slotId]->checkReturnStatus(retStatus);
+        } else {
+            Return<void> retStatus = radioService[slotId]->mRadioResponse->
+                    getIccCardStatusResponse(responseInfo, cardStatus);
+            radioService[slotId]->checkReturnStatus(retStatus);
+        }
     } else {
         RLOGE("getIccCardStatusResponse: radioService[%d]->mRadioResponse == NULL", slotId);
     }
@@ -3894,7 +3901,28 @@ int radio_1_4::getSignalStrengthResponse(int slotId,
     RLOGD("getSignalStrengthResponse: serial %d", serial);
 #endif
 
-    if (radioService[slotId]->mRadioResponse != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        SignalStrength signalStrength = {};
+        if (response == NULL || responseLen != sizeof(RIL_SignalStrength_v10)) {
+            RLOGE("getSignalStrengthResponse: Invalid response");
+            if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+        } else {
+            convertRilSignalStrengthToHal(response, responseLen, signalStrength);
+        }
+
+        ::android::hardware::radio::V1_4::SignalStrength signalStrength_1_4;
+        signalStrength_1_4.gsm = signalStrength.gw;
+        signalStrength_1_4.cdma = signalStrength.cdma;
+        signalStrength_1_4.evdo = signalStrength.evdo;
+        signalStrength_1_4.lte = signalStrength.lte;
+        //TODO: future implementation needs to fill tdScdma, wcdma and nr signal strength.
+
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4->
+                getSignalStrengthResponse_1_4(responseInfo, signalStrength_1_4);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
         SignalStrength signalStrength = {};
