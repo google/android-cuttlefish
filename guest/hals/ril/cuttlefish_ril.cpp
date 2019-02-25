@@ -2289,6 +2289,35 @@ static void request_start_network_scan4(RIL_Token t) {
   return;
 }
 
+static void request_set_preferred_network_type_bitmap(int /*request*/, void* data,
+                                               size_t /*datalen*/,
+                                               RIL_Token t) {
+  RIL_RadioAccessFamily desired_access = *(RIL_RadioAccessFamily*)(data);
+
+  ALOGV("Requesting modem technology change -> %d", desired_access);
+
+  /** TODO future implementation: set modem type based on radio access family.
+   * 1) find supported_technologies and desired_technologies
+   * 2) return RIL_E_MODE_NOT_SUPPORTED error if not supported
+   * 3) set modem current type and radio technology according to the radio access family
+   */
+  ALOGV("Modem technology skip set to %d.", desired_access);
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_get_preferred_network_type_bitmap(int /*request*/, void* /*data*/,
+                                               size_t /*datalen*/,
+                                               RIL_Token t) {
+  ALOGV("Requesting modem radio access family, default -> %d", RAF_LTE);
+  /** TODO future implementation: return radio access family of current modem
+   * return a default value for now.
+   */
+  RIL_RadioAccessFamily default_access = RAF_LTE;
+  gce_ril_env->OnRequestComplete(
+      t, RIL_E_SUCCESS, (RIL_RadioAccessFamily*)(&default_access), sizeof(default_access));
+}
+
 static void request_emergency_dial(int /*request*/, void* /*data*/, size_t /*datalen*/,
     RIL_Token t) {
   ALOGV("Emergency dial - void");
@@ -2559,6 +2588,12 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_SET_SIM_CARD_POWER:
       request_set_sim_card_power(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP:
+      request_get_preferred_network_type_bitmap(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP:
+      request_set_preferred_network_type_bitmap(request, data, datalen, t);
       break;
 #endif
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:

@@ -287,6 +287,14 @@ int getPreferredNetworkTypeResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e, void *response,
                                    size_t responselen);
 
+int setPreferredNetworkTypeBitmapResponse(int slotId,
+                                   int responseType, int serial, RIL_Errno e, void *response,
+                                   size_t responselen);
+
+int getPreferredNetworkTypeBitmapResponse(int slotId,
+                                   int responseType, int serial, RIL_Errno e, void *response,
+                                   size_t responselen);
+
 int getNeighboringCidsResponse(int slotId,
                               int responseType, int serial, RIL_Errno e, void *response,
                               size_t responselen);
