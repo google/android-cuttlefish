@@ -195,17 +195,4 @@ SensorInfo RelativeHumiditySensor() {
                     flags);
 }
 
-SensorInfo StepCounterSensor() {
-  uint32_t flags = sc::kStepCounterReportingMode |
-      (sc::kStepCounterIsWakeup ? SENSOR_FLAG_WAKE_UP : 0);
-
-  return SensorInfo(sc::kStepCounterName, sc::kVendor, sc::kVersion,
-                    sc::kStepCounterHandle, SENSOR_TYPE_STEP_COUNTER,
-                    sc::kStepCounterMaxRange, sc::kStepCounterResolution,
-                    sc::kStepCounterPower, sc::kStepCounterMinDelay,
-                    sc::kFifoReservedEventCount, sc::kFifoMaxEventCount,
-                    sc::kStepCounterStringType, sc::kRequiredPermission,
-                    sc::kMaxDelay, flags);
-}
-
 }  // namespace cvd
