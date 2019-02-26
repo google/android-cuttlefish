@@ -2225,6 +2225,13 @@ static void request_set_sim_card_power(int /*request*/, void* /*data*/, size_t /
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
+
+static void request_get_modem_stack_status(int /*request*/, RIL_Token t) {
+  ALOGV("Getting modem stack status - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
 #endif
 
 static void gce_ril_on_request(int request, void* data, size_t datalen,
@@ -2460,6 +2467,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_START_NETWORK_SCAN4:
       request_start_network_scan4(t);
+      break;
+    case RIL_REQUEST_GET_MODEM_STACK_STATUS:
+      request_get_modem_stack_status(request, t);
       break;
     case RIL_REQUEST_EMERGENCY_DIAL:
       request_emergency_dial(request, data, datalen, t);
