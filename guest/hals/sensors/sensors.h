@@ -47,6 +47,7 @@ class SensorInfo : public sensor_t {
   friend SensorInfo AmbientTempSensor();
   friend SensorInfo DeviceTempSensor();
   friend SensorInfo RelativeHumiditySensor();
+  friend SensorInfo StepCounterSensor();
 };
 
 SensorInfo AccelerometerSensor();
@@ -58,6 +59,7 @@ SensorInfo ProximitySensor();
 SensorInfo AmbientTempSensor();
 SensorInfo DeviceTempSensor();
 SensorInfo RelativeHumiditySensor();
+SensorInfo StepCounterSensor();
 
 // Stores the current state of a sensor.
 class SensorState {
@@ -111,6 +113,7 @@ const char kProximityName[] = "proximity";
 const char kAmbientTempName[] = "ambient_temp";
 const char kDeviceTempName[] = "device_temp";
 const char kRelativeHumidityName[] = "relative_humidity";
+const char kStepCounterName[] = "step_counter";
 
 // Handle that identifies the sensor. This is used as an array index,
 // so must be unique in the range [0, # sensors)
@@ -124,6 +127,7 @@ const int kProximityHandle = 5;
 const int kAmbientTempHandle = 6;
 const int kDeviceTempHandle = 7;
 const int kRelativeHumidityHandle = 8;
+const int kStepCounterHandle = 9;
 
 // For continuous sensors, minimum sample period (in microseconds).
 // On-Change (0), One-shot (-1), and special (0).
@@ -136,6 +140,7 @@ const int32_t kProximityMinDelay = 0;
 const int32_t kAmbientTempMinDelay = 4444;
 const int32_t kDeviceTempMinDelay = 4444;
 const int32_t kRelativeHumidityMinDelay = 4444;
+const int32_t kStepCounterMinDelay = 0;
 
 // Maximum range of this sensor's value in SI units.
 const float kAccelerometerMaxRange = 39.226593f;
@@ -147,6 +152,7 @@ const float kProximityMaxRange = 5.0f;
 const float kAmbientTempMaxRange = 80.0f;
 const float kDeviceTempMaxRange = 80.0f;
 const float kRelativeHumidityMaxRange = 100;
+const float kStepCounterMaxRange = 1.0f;
 
 // Smallest difference between two values reported by this sensor.
 const float kAccelerometerResolution = 0.45f;
@@ -158,6 +164,7 @@ const float kProximityResolution = 1.0f;
 const float kAmbientTempResolution = 1.0f;
 const float kDeviceTempResolution = 1.0f;
 const float kRelativeHumidityResolution = 1.0f;
+const float kStepCounterResolution = 1.0f;
 
 // Rough estimate of this sensor's power consumption in mA.
 const float kAccelerometerPower = 0.45f;
@@ -169,6 +176,7 @@ const float kProximityPower = 12.675f;
 const float kAmbientTempPower = 1.0f;
 const float kDeviceTempPower = 1.0f;
 const float kRelativeHumidityPower = 1.0f;
+const float kStepCounterPower = 0.1f;
 
 // Type of this sensor, represented as a string.
 
@@ -182,6 +190,7 @@ const char kProximityStringType[] = SENSOR_STRING_TYPE_PROXIMITY;
 const char kAmbientTempStringType[] = SENSOR_STRING_TYPE_AMBIENT_TEMPERATURE;
 const char kDeviceTempStringType[] = SENSOR_STRING_TYPE_TEMPERATURE;
 const char kRelativeHumidityStringType[] = SENSOR_STRING_TYPE_RELATIVE_HUMIDITY;
+const char kStepCounterStringType[] = SENSOR_STRING_TYPE_STEP_COUNTER;
 #else
 const char kAccelerometerStringType[] = "";
 const char kGyroscopeStringType[] = "";
@@ -192,6 +201,7 @@ const char kProximityStringType[] = "";
 const char kAmbientTempStringType[] = "";
 const char kDeviceTempStringType[] = "";
 const char kRelativeHumidityStringType[] = "";
+const char kStepCounterStringType[] = "";
 #endif
 
 #if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
@@ -204,6 +214,7 @@ const uint32_t kProximityReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 const uint32_t kAmbientTempReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 const uint32_t kDeviceTempReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 const uint32_t kRelativeHumidityReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
+const uint32_t kStepCounterReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 #else
 const uint32_t kAccelerometerReportingMode = 0;
 const uint32_t kGyroscopeReportingMode = 0;
@@ -214,6 +225,7 @@ const uint32_t kProximityReportingMode = 0;
 const uint32_t kAmbientTempReportingMode = 0;
 const uint32_t kDeviceTempReportingMode = 0;
 const uint32_t kRelativeHumidityReportingMode = 0;
+const uint32_t kStepCounterReportingMode = 0;
 #endif
 
 const bool kAccelerometerIsWakeup = false;
@@ -225,6 +237,7 @@ const bool kProximityIsWakeup = true;
 const bool kAmbientTempIsWakeup = false;
 const bool kDeviceTempIsWakeup = false;
 const bool kRelativeHumidityIsWakeup = false;
+const bool kStepCounterIsWakeup = false;
 
 }  // namespace sensors_constants
 }  // namespace cvd
