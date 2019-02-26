@@ -502,7 +502,7 @@ int GceSensors::RegisterSensors() {
   if (total_sensor_count_ != -1) {
     return -1;
   }
-  total_sensor_count_ = 10;
+  total_sensor_count_ = 9;
   sensor_infos_ = new SensorInfo[total_sensor_count_];
   sensor_infos_[sensors_constants::kAccelerometerHandle] =
       AccelerometerSensor();
@@ -516,7 +516,6 @@ int GceSensors::RegisterSensors() {
   sensor_infos_[sensors_constants::kDeviceTempHandle] = DeviceTempSensor();
   sensor_infos_[sensors_constants::kRelativeHumidityHandle] =
       RelativeHumiditySensor();
-  sensor_infos_[sensors_constants::kStepCounterHandle] = StepCounterSensor();
   int i;
   for (i = 0; i < total_sensor_count_; i++) {
     D("Found sensor %s with handle %d", sensor_infos_[i].name,
