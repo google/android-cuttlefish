@@ -22,7 +22,7 @@ DISABLE_RILD_OEM_HOOK := true
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
-#   ro.opengles.version OpenGLES 3.0
+#   ro.opengles.version OpenGLES 2.0
 PRODUCT_PROPERTY_OVERRIDES += \
     tombstoned.max_tombstone_count=500 \
     debug.hwui.swap_with_damage=0 \
@@ -32,7 +32,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.com.google.locationfeatures=1 \
     ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
-    ro.opengles.version=196608 \
+    ro.opengles.version=131072 \
     ro.ril.gprsclass=10 \
     ro.ril.hsxpa=1 \
     wifi.interface=wlan0 \
