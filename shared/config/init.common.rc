@@ -44,8 +44,6 @@ on fs
     chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/ps
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
 
-    chmod 0755 /system/bin/dhcpcd_wlan0
-
 on post-fs
     # Set netd memlock rlimit to 8MB b/119279144
     setrlimit 8 8388608 8388608
