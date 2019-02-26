@@ -162,3 +162,5 @@
     {RIL_REQUEST_STOP_KEEPALIVE, radio_1_4::stopKeepaliveResponse},
     {RIL_REQUEST_START_NETWORK_SCAN4, radio_1_4::startNetworkScanResponse4},
     {RIL_REQUEST_GET_MODEM_STACK_STATUS, radio_1_4::getModemStackStatusResponse},
+    {RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP, radio_1_4::getPreferredNetworkTypeBitmapResponse},
+    {RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP, radio_1_4::setPreferredNetworkTypeBitmapResponse},
