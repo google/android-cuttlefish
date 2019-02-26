@@ -6374,6 +6374,38 @@ typedef struct {
  */
 #define RIL_REQUEST_GET_MODEM_STACK_STATUS 147
 
+/**
+ * @param info Response info struct containing response type, serial no. and error
+ * @param networkTypeBitmap a 32-bit bitmap of RadioAccessFamily.
+ *
+ * Valid errors returned:
+ *   RadioError:NONE
+ *   RadioError:RADIO_NOT_AVAILABLE
+ *   RadioError:INTERNAL_ERR
+ *   RadioError:INVALID_ARGUMENTS
+ *   RadioError:MODEM_ERR
+ *   RadioError:REQUEST_NOT_SUPPORTED
+ *   RadioError:NO_RESOURCES
+ */
+#define RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP 148
+
+/**
+ * Callback of IRadio.setPreferredNetworkTypeBitmap(int, bitfield<RadioAccessFamily>)
+ *
+ * @param info Response info struct containing response type, serial no. and error
+ *
+ * Valid errors returned:
+ *   RadioError:NONE
+ *   RadioError:RADIO_NOT_AVAILABLE
+ *   RadioError:OPERATION_NOT_ALLOWED
+ *   RadioError:MODE_NOT_SUPPORTED
+ *   RadioError:INTERNAL_ERR
+ *   RadioError:INVALID_ARGUMENTS
+ *   RadioError:MODEM_ERR
+ *   RadioError:REQUEST_NOT_SUPPORTED
+ *   RadioError:NO_RESOURCES
+ */
+#define RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP 149
 
 /** FIXME: define value based on the s_commands or unsol_response index when implement.
  * RIL_REQUEST_EMERGENCY_DIAL
