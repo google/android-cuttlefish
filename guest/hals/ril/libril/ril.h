@@ -90,6 +90,7 @@ extern "C" {
  *                    RIL_REQUEST_START_NETWORK_SCAN
  *                    RIL_REQUEST_STOP_NETWORK_SCAN
  *                    RIL_UNSOL_NETWORK_SCAN_RESULT
+ *                    RIL_REQUEST_GET_MODEM_STACK_STATUS
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -6359,6 +6360,20 @@ typedef struct {
  *
  */
 #define RIL_REQUEST_START_NETWORK_SCAN4 146
+
+/**
+ * RIL_REQUEST_GET_MODEM_STACK_STATUS
+ *
+ * Request status of a logical modem
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  MODEM_ERR
+ *
+ */
+#define RIL_REQUEST_GET_MODEM_STACK_STATUS 147
+
 
 /** FIXME: define value based on the s_commands or unsol_response index when implement.
  * RIL_REQUEST_EMERGENCY_DIAL

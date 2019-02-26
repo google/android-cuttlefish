@@ -525,6 +525,10 @@ int getModemActivityInfoResponse(int slotId,
                                 int responseType, int serial, RIL_Errno e,
                                 void *response, size_t responselen);
 
+int getModemStackStatusResponse(int slotId,
+                                int responseType, int serial, RIL_Errno e,
+                                void *response, size_t responselen);
+
 int setAllowedCarriersResponse(int slotId,
                               int responseType, int serial, RIL_Errno e,
                               void *response, size_t responselen);

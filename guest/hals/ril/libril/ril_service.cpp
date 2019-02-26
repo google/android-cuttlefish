@@ -3151,11 +3151,11 @@ Return<void> RadioImpl_1_4::enableModem(int32_t /* serial */, bool /* on */) {
     return Void();
 }
 
-Return<void> RadioImpl_1_4::getModemStackStatus(int32_t /* serial */) {
-    // TODO implement
+Return<void> RadioImpl_1_4::getModemStackStatus(int32_t serial) {
 #if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+    RLOGD("getModemStackStatus: serial %d", serial);
 #endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_MODEM_STACK_STATUS);
     return Void();
 }
 
@@ -7156,6 +7156,27 @@ int radio_1_4::stopKeepaliveResponse(int slotId, int responseType, int serial, R
             radioService[slotId]->mRadioResponseV1_4->stopKeepaliveResponse(responseInfo);
     radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
+}
+
+int radio_1_4::getModemStackStatusResponse(int slotId, int responseType, int serial, RIL_Errno e,
+                                    void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_4 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_4 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_4->getModemStackStatusResponse(
+            responseInfo, true);
+    radioService[slotId]->checkReturnStatus(retStatus);
+    return 1;
 }
 
 int radio_1_4::sendRequestRawResponse(int slotId,
