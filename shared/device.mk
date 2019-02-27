@@ -224,6 +224,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-service.sim \
+    android.hardware.bluetooth.audio@2.0-impl
 
 #
 # Audio HAL
