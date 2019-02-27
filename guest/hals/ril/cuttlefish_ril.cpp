@@ -2338,6 +2338,12 @@ static void request_get_modem_stack_status(int /*request*/, RIL_Token t) {
   return;
 }
 
+static void request_enable_modem(int /*request*/, RIL_Token t) {
+  ALOGV("Enabling modem - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
 static void request_set_system_selection_channels(int /*request*/, RIL_Token t) {
   ALOGV("request_set_system_selection_channels - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2588,6 +2594,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_GET_MODEM_STACK_STATUS:
       request_get_modem_stack_status(request, t);
+      break;
+    case RIL_REQUEST_ENABLE_MODEM:
+      request_enable_modem(request, t);
       break;
     case RIL_REQUEST_EMERGENCY_DIAL:
       request_emergency_dial(request, data, datalen, t);
