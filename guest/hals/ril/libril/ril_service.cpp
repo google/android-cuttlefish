@@ -3236,7 +3236,7 @@ Return<void> RadioImpl_1_4::setDataProfile_1_4(int32_t /* serial */,
 }
 
 Return<void> RadioImpl_1_4::emergencyDial(int32_t serial,
-        const ::android::hardware::radio::V1_0::Dial& /* dialInfo */,
+        const ::android::hardware::radio::V1_0::Dial& dialInfo,
         hidl_bitfield<android::hardware::radio::V1_4::EmergencyServiceCategory> /* categories */,
         const hidl_vec<hidl_string>& /* urns */,
         ::android::hardware::radio::V1_4::EmergencyCallRouting /* routing */,
@@ -3244,8 +3244,42 @@ Return<void> RadioImpl_1_4::emergencyDial(int32_t serial,
 #if VDBG
     RLOGD("emergencyDial: serial %d", serial);
 #endif
-    // TODO actual implementation
-    dispatchVoid(serial, mSlotId, RIL_REQUEST_EMERGENCY_DIAL);
+
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_EMERGENCY_DIAL);
+    if (pRI == NULL) {
+        return Void();
+    }
+    RIL_Dial dial = {};
+    RIL_UUS_Info uusInfo = {};
+    int32_t sizeOfDial = sizeof(dial);
+
+    if (!copyHidlStringToRil(&dial.address, dialInfo.address, pRI)) {
+        return Void();
+    }
+    dial.clir = (int) dialInfo.clir;
+
+    if (dialInfo.uusInfo.size() != 0) {
+        uusInfo.uusType = (RIL_UUS_Type) dialInfo.uusInfo[0].uusType;
+        uusInfo.uusDcs = (RIL_UUS_DCS) dialInfo.uusInfo[0].uusDcs;
+
+        if (dialInfo.uusInfo[0].uusData.size() == 0) {
+            uusInfo.uusData = NULL;
+            uusInfo.uusLength = 0;
+        } else {
+            if (!copyHidlStringToRil(&uusInfo.uusData, dialInfo.uusInfo[0].uusData, pRI)) {
+                memsetAndFreeStrings(1, dial.address);
+                return Void();
+            }
+            uusInfo.uusLength = dialInfo.uusInfo[0].uusData.size();
+        }
+
+        dial.uusInfo = &uusInfo;
+    }
+
+    CALL_ONREQUEST(RIL_REQUEST_EMERGENCY_DIAL, &dial, sizeOfDial, pRI, mSlotId);
+
+    memsetAndFreeStrings(2, dial.address, uusInfo.uusData);
+
     return Void();
 }
 
@@ -7176,6 +7210,24 @@ int radio_1_4::stopNetworkScanResponse(int slotId, int responseType, int serial,
         RLOGE("stopNetworkScanResponse: radioService[%d]->mRadioResponseV1_4 == NULL", slotId);
     }
 
+    return 0;
+}
+
+int radio_1_4::emergencyDialResponse(int slotId, int responseType, int serial, RIL_Errno e,
+                                    void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("emergencyDialResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_4->emergencyDialResponse(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("emergencyDialResponse: radioService[%d]->mRadioResponseV1_4 == NULL", slotId);
+    }
     return 0;
 }
 
