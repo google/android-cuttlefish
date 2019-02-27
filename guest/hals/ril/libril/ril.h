@@ -91,6 +91,7 @@ extern "C" {
  *                    RIL_REQUEST_STOP_NETWORK_SCAN
  *                    RIL_UNSOL_NETWORK_SCAN_RESULT
  *                    RIL_REQUEST_GET_MODEM_STACK_STATUS
+ *                    RIL_REQUEST_EMERGENCY_DIAL
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -6457,7 +6458,7 @@ typedef struct {
  *  ABORTED
  *  INVALID_MODEM_STATE
  */
-#define RIL_REQUEST_EMERGENCY_DIAL 205
+#define RIL_REQUEST_EMERGENCY_DIAL 150
 
 /***********************************************************************/
 
