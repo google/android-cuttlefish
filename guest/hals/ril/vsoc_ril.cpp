@@ -2243,7 +2243,7 @@ static void request_get_preferred_network_type_bitmap(int /*request*/, void* /*d
 
 static void request_emergency_dial(int /*request*/, void* /*data*/, size_t /*datalen*/,
     RIL_Token t) {
-  ALOGV("Emergency dial - void");
+  ALOGV("Emergency dial");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
