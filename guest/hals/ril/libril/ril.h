@@ -91,6 +91,7 @@ extern "C" {
  *                    RIL_REQUEST_STOP_NETWORK_SCAN
  *                    RIL_UNSOL_NETWORK_SCAN_RESULT
  *                    RIL_REQUEST_GET_MODEM_STACK_STATUS
+ *                    RIL_REQUEST_ENABLE_MODEM
  *                    RIL_REQUEST_EMERGENCY_DIAL
  *                    RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS
  */
@@ -6476,6 +6477,19 @@ typedef struct {
  *
  */
 #define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS 151
+
+/**
+ * RIL_REQUEST_ENABLE_MODEM
+ *
+ * Enable a logical modem
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  MODEM_ERR
+ *
+ */
+#define RIL_REQUEST_ENABLE_MODEM 152
 
 /***********************************************************************/
 
