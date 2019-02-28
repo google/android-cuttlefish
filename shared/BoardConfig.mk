@@ -18,7 +18,7 @@
 # Common BoardConfig for all supported architectures.
 #
 
-TARGET_BOOTLOADER_BOARD_NAME := vsoc
+TARGET_BOOTLOADER_BOARD_NAME := cutf
 
 # Build a separate vendor.img partition
 BOARD_USES_VENDORIMAGE := true
