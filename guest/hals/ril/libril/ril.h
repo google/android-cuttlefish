@@ -92,6 +92,7 @@ extern "C" {
  *                    RIL_UNSOL_NETWORK_SCAN_RESULT
  *                    RIL_REQUEST_GET_MODEM_STACK_STATUS
  *                    RIL_REQUEST_EMERGENCY_DIAL
+ *                    RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -6408,7 +6409,7 @@ typedef struct {
  */
 #define RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP 149
 
-/** FIXME: define value based on the s_commands or unsol_response index when implement.
+/**
  * RIL_REQUEST_EMERGENCY_DIAL
  *
  * Initiate emergency voice call, with zero or more emergency service category(s), zero or
@@ -6459,6 +6460,22 @@ typedef struct {
  *  INVALID_MODEM_STATE
  */
 #define RIL_REQUEST_EMERGENCY_DIAL 150
+
+/**
+ * Specify which bands modem's background scan must act on.
+ * If specifyChannels is true, it only scans bands specified in specifiers.
+ * If specifyChannels is false, it scans all bands.
+ *
+ * For example, CBRS is only on LTE band 48. By specifying this band,
+ * modem saves more power.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  INTERNAL_ERR
+ *
+ */
+#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS 151
 
 /***********************************************************************/
 
