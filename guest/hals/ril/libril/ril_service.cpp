@@ -2760,6 +2760,71 @@ Return<void> RadioImpl_1_4::getModemActivityInfo(int32_t serial) {
     return Void();
 }
 
+int prepareCarrierRestrictions(RIL_CarrierRestrictions &request, bool allAllowed,
+                               const hidl_vec<Carrier>& allowedList,
+                               const hidl_vec<Carrier>& excludedList,
+                               RequestInfo *pRI) {
+    RIL_Carrier *allowedCarriers = NULL;
+    RIL_Carrier *excludedCarriers = NULL;
+
+    request.len_allowed_carriers = allowedList.size();
+    allowedCarriers = (RIL_Carrier *)calloc(request.len_allowed_carriers, sizeof(RIL_Carrier));
+    if (allowedCarriers == NULL) {
+        RLOGE("prepareCarrierRestrictions: Memory allocation failed for request %s",
+                requestToString(pRI->pCI->requestNumber));
+        sendErrorResponse(pRI, RIL_E_NO_MEMORY);
+        return -1;
+    }
+    request.allowed_carriers = allowedCarriers;
+
+    request.len_excluded_carriers = excludedList.size();
+    excludedCarriers = (RIL_Carrier *)calloc(request.len_excluded_carriers, sizeof(RIL_Carrier));
+    if (excludedCarriers == NULL) {
+        RLOGE("prepareCarrierRestrictions: Memory allocation failed for request %s",
+                requestToString(pRI->pCI->requestNumber));
+        sendErrorResponse(pRI, RIL_E_NO_MEMORY);
+#ifdef MEMSET_FREED
+        memset(allowedCarriers, 0, request.len_allowed_carriers * sizeof(RIL_Carrier));
+#endif
+        free(allowedCarriers);
+        return -1;
+    }
+    request.excluded_carriers = excludedCarriers;
+
+    for (int i = 0; i < request.len_allowed_carriers; i++) {
+        allowedCarriers[i].mcc = allowedList[i].mcc.c_str();
+        allowedCarriers[i].mnc = allowedList[i].mnc.c_str();
+        allowedCarriers[i].match_type = (RIL_CarrierMatchType) allowedList[i].matchType;
+        allowedCarriers[i].match_data = allowedList[i].matchData.c_str();
+    }
+
+    for (int i = 0; i < request.len_excluded_carriers; i++) {
+        excludedCarriers[i].mcc = excludedList[i].mcc.c_str();
+        excludedCarriers[i].mnc = excludedList[i].mnc.c_str();
+        excludedCarriers[i].match_type =
+                (RIL_CarrierMatchType) excludedList[i].matchType;
+        excludedCarriers[i].match_data = excludedList[i].matchData.c_str();
+    }
+
+    return 0;
+}
+
+void freeCarrierRestrictions(RIL_CarrierRestrictions &request) {
+    if (request.allowed_carriers != NULL) {
+#ifdef MEMSET_FREED
+        memset(request.allowed_carriers, 0, request.len_allowed_carriers * sizeof(RIL_Carrier));
+#endif
+        free(request.allowed_carriers);
+    }
+    if (request.excluded_carriers != NULL) {
+#ifdef MEMSET_FREED
+        memset(request.excluded_carriers, 0, request.len_excluded_carriers * sizeof(RIL_Carrier));
+#endif
+        free(request.excluded_carriers);
+    }
+}
+
+
 Return<void> RadioImpl_1_4::setAllowedCarriers(int32_t serial, bool allAllowed,
                                            const CarrierRestrictions& carriers) {
 #if VDBG
@@ -2772,56 +2837,51 @@ Return<void> RadioImpl_1_4::setAllowedCarriers(int32_t serial, bool allAllowed,
     }
 
     RIL_CarrierRestrictions cr = {};
-    RIL_Carrier *allowedCarriers = NULL;
-    RIL_Carrier *excludedCarriers = NULL;
-
-    cr.len_allowed_carriers = carriers.allowedCarriers.size();
-    allowedCarriers = (RIL_Carrier *)calloc(cr.len_allowed_carriers, sizeof(RIL_Carrier));
-    if (allowedCarriers == NULL) {
-        RLOGE("setAllowedCarriers: Memory allocation failed for request %s",
-                requestToString(pRI->pCI->requestNumber));
-        sendErrorResponse(pRI, RIL_E_NO_MEMORY);
+    if (prepareCarrierRestrictions(cr, allAllowed, carriers.allowedCarriers,
+            carriers.excludedCarriers, pRI) < 0) {
         return Void();
-    }
-    cr.allowed_carriers = allowedCarriers;
-
-    cr.len_excluded_carriers = carriers.excludedCarriers.size();
-    excludedCarriers = (RIL_Carrier *)calloc(cr.len_excluded_carriers, sizeof(RIL_Carrier));
-    if (excludedCarriers == NULL) {
-        RLOGE("setAllowedCarriers: Memory allocation failed for request %s",
-                requestToString(pRI->pCI->requestNumber));
-        sendErrorResponse(pRI, RIL_E_NO_MEMORY);
-#ifdef MEMSET_FREED
-        memset(allowedCarriers, 0, cr.len_allowed_carriers * sizeof(RIL_Carrier));
-#endif
-        free(allowedCarriers);
-        return Void();
-    }
-    cr.excluded_carriers = excludedCarriers;
-
-    for (int i = 0; i < cr.len_allowed_carriers; i++) {
-        allowedCarriers[i].mcc = carriers.allowedCarriers[i].mcc.c_str();
-        allowedCarriers[i].mnc = carriers.allowedCarriers[i].mnc.c_str();
-        allowedCarriers[i].match_type = (RIL_CarrierMatchType) carriers.allowedCarriers[i].matchType;
-        allowedCarriers[i].match_data = carriers.allowedCarriers[i].matchData.c_str();
-    }
-
-    for (int i = 0; i < cr.len_excluded_carriers; i++) {
-        excludedCarriers[i].mcc = carriers.excludedCarriers[i].mcc.c_str();
-        excludedCarriers[i].mnc = carriers.excludedCarriers[i].mnc.c_str();
-        excludedCarriers[i].match_type =
-                (RIL_CarrierMatchType) carriers.excludedCarriers[i].matchType;
-        excludedCarriers[i].match_data = carriers.excludedCarriers[i].matchData.c_str();
     }
 
     CALL_ONREQUEST(pRI->pCI->requestNumber, &cr, sizeof(RIL_CarrierRestrictions), pRI, mSlotId);
 
-#ifdef MEMSET_FREED
-    memset(allowedCarriers, 0, cr.len_allowed_carriers * sizeof(RIL_Carrier));
-    memset(excludedCarriers, 0, cr.len_excluded_carriers * sizeof(RIL_Carrier));
+    freeCarrierRestrictions(cr);
+
+    return Void();
+}
+
+Return<void> RadioImpl_1_4::setAllowedCarriers_1_4(int32_t  serial,
+        const ::android::hardware::radio::V1_4::CarrierRestrictionsWithPriority& carriers,
+        ::android::hardware::radio::V1_4::SimLockMultiSimPolicy multiSimPolicy) {
+#if VDBG
+    RLOGD("setAllowedCarriers_1_4: serial %d", serial);
 #endif
-    free(allowedCarriers);
-    free(excludedCarriers);
+
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
+            RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    // Prepare legacy structure (defined in IRadio 1.0) to re-use existing code.
+    RIL_CarrierRestrictions cr = {};
+    if (prepareCarrierRestrictions(cr, false, carriers.allowedCarriers,
+                                   carriers.excludedCarriers, pRI) < 0) {
+        return Void();
+    }
+    // Copy the legacy structure into the new structure (defined in IRadio 1.4)
+    RIL_CarrierRestrictionsWithPriority crExt = {};
+    crExt.len_allowed_carriers = cr.len_allowed_carriers;
+    crExt.allowed_carriers = cr.allowed_carriers;
+    crExt.len_excluded_carriers = cr.len_excluded_carriers;
+    crExt.excluded_carriers = cr.excluded_carriers;
+    crExt.allowedCarriersPrioritized = BOOL_TO_INT(carriers.allowedCarriersPrioritized);
+    crExt.multiSimPolicy = (RIL_SimLockMultiSimPolicy)multiSimPolicy;
+
+    CALL_ONREQUEST(pRI->pCI->requestNumber, &crExt,
+                   sizeof(RIL_CarrierRestrictionsWithPriority), pRI, mSlotId);
+
+    freeCarrierRestrictions(cr);
+
     return Void();
 }
 
@@ -2830,6 +2890,14 @@ Return<void> RadioImpl_1_4::getAllowedCarriers(int32_t serial) {
     RLOGD("getAllowedCarriers: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CARRIER_RESTRICTIONS);
+    return Void();
+}
+
+Return<void> RadioImpl_1_4::getAllowedCarriers_1_4(int32_t serial) {
+#if VDBG
+    RLOGD("getAllowedCarriers_1_4: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4);
     return Void();
 }
 
@@ -3346,24 +3414,6 @@ Return<void> RadioImpl_1_4::setPreferredNetworkTypeBitmap(
     RLOGD("setPreferredNetworkTypeBitmap: serial %d", serial);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP, 1, networkTypeBitmap);
-    return Void();
-}
-
-Return<void> RadioImpl_1_4::setAllowedCarriers_1_4(int32_t /* serial */,
-        const ::android::hardware::radio::V1_4::CarrierRestrictionsWithPriority& /* carriers */,
-        ::android::hardware::radio::V1_4::SimLockMultiSimPolicy /* multiSimPolicy */) {
-    // TODO implement
-#if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
-#endif
-    return Void();
-}
-
-Return<void> RadioImpl_1_4::getAllowedCarriers_1_4(int32_t /* serial */) {
-    // TODO implement
-#if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
-#endif
     return Void();
 }
 
@@ -7048,6 +7098,53 @@ int radio_1_4::setAllowedCarriersResponse(int slotId,
     return 0;
 }
 
+int radio_1_4::setAllowedCarriersResponse4(int slotId, int responseType, int serial, RIL_Errno e,
+                                    void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("setAllowedCarriersResponse4: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_4->setAllowedCarriersResponse_1_4(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("setAllowedCarriersResponse4: radioService[%d]->mRadioResponseV1_4 == NULL", slotId);
+    }
+
+    return 0;
+}
+
+void prepareCarrierRestrictionsResponse(hidl_vec<Carrier>& allowedCarriers,
+                                       hidl_vec<Carrier>& excludedCarriers,
+                                       bool& allAllowed,
+                                       const RIL_CarrierRestrictions* pCr) {
+    if (pCr->len_allowed_carriers > 0 || pCr->len_excluded_carriers > 0) {
+        allAllowed = false;
+    }
+    allowedCarriers.resize(pCr->len_allowed_carriers);
+    for(int i = 0; i < pCr->len_allowed_carriers; i++) {
+        RIL_Carrier *carrier = pCr->allowed_carriers + i;
+        allowedCarriers[i].mcc = convertCharPtrToHidlString(carrier->mcc);
+        allowedCarriers[i].mnc = convertCharPtrToHidlString(carrier->mnc);
+        allowedCarriers[i].matchType = (CarrierMatchType) carrier->match_type;
+        allowedCarriers[i].matchData =
+                convertCharPtrToHidlString(carrier->match_data);
+    }
+
+    excludedCarriers.resize(pCr->len_excluded_carriers);
+    for(int i = 0; i < pCr->len_excluded_carriers; i++) {
+        RIL_Carrier *carrier = pCr->excluded_carriers + i;
+        excludedCarriers[i].mcc = convertCharPtrToHidlString(carrier->mcc);
+        excludedCarriers[i].mnc = convertCharPtrToHidlString(carrier->mnc);
+        excludedCarriers[i].matchType = (CarrierMatchType) carrier->match_type;
+        excludedCarriers[i].matchData =
+                convertCharPtrToHidlString(carrier->match_data);
+    }
+}
+
 int radio_1_4::getAllowedCarriersResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
@@ -7068,32 +7165,12 @@ int radio_1_4::getAllowedCarriersResponse(int slotId,
             carrierInfo.excludedCarriers.resize(0);
         } else if (responseLen != sizeof(RIL_CarrierRestrictions)) {
             RLOGE("getAllowedCarriersResponse Invalid response");
-            if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+            if (e == RIL_E_SUCCESS) {
+                responseInfo.error = RadioError::INVALID_RESPONSE;
+            }
         } else {
             RIL_CarrierRestrictions *pCr = (RIL_CarrierRestrictions *)response;
-            if (pCr->len_allowed_carriers > 0 || pCr->len_excluded_carriers > 0) {
-                allAllowed = false;
-            }
-
-            carrierInfo.allowedCarriers.resize(pCr->len_allowed_carriers);
-            for(int i = 0; i < pCr->len_allowed_carriers; i++) {
-                RIL_Carrier *carrier = pCr->allowed_carriers + i;
-                carrierInfo.allowedCarriers[i].mcc = convertCharPtrToHidlString(carrier->mcc);
-                carrierInfo.allowedCarriers[i].mnc = convertCharPtrToHidlString(carrier->mnc);
-                carrierInfo.allowedCarriers[i].matchType = (CarrierMatchType) carrier->match_type;
-                carrierInfo.allowedCarriers[i].matchData =
-                        convertCharPtrToHidlString(carrier->match_data);
-            }
-
-            carrierInfo.excludedCarriers.resize(pCr->len_excluded_carriers);
-            for(int i = 0; i < pCr->len_excluded_carriers; i++) {
-                RIL_Carrier *carrier = pCr->excluded_carriers + i;
-                carrierInfo.excludedCarriers[i].mcc = convertCharPtrToHidlString(carrier->mcc);
-                carrierInfo.excludedCarriers[i].mnc = convertCharPtrToHidlString(carrier->mnc);
-                carrierInfo.excludedCarriers[i].matchType = (CarrierMatchType) carrier->match_type;
-                carrierInfo.excludedCarriers[i].matchData =
-                        convertCharPtrToHidlString(carrier->match_data);
-            }
+            prepareCarrierRestrictionsResponse(carrierInfo.allowedCarriers, carrierInfo.excludedCarriers, allAllowed, pCr);
         }
 
         Return<void> retStatus
@@ -7103,6 +7180,60 @@ int radio_1_4::getAllowedCarriersResponse(int slotId,
     } else {
         RLOGE("getAllowedCarriersResponse: radioService[%d]->mRadioResponse == NULL",
                 slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_4::getAllowedCarriersResponse4(int slotId,
+                                      int responseType, int serial, RIL_Errno e,
+                                      void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("getAllowedCarriersResponse4: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+
+        ::android::hardware::radio::V1_4::CarrierRestrictionsWithPriority carrierInfo = {};
+        ::android::hardware::radio::V1_4::SimLockMultiSimPolicy multiSimPolicy =
+                ::android::hardware::radio::V1_4::SimLockMultiSimPolicy::NO_MULTISIM_POLICY;
+        bool allAllowed = true;
+
+        if (response == NULL) {
+#if VDBG
+            RLOGD("getAllowedCarriersResponse4 response is NULL: all allowed");
+#endif
+            carrierInfo.allowedCarriers.resize(0);
+            carrierInfo.excludedCarriers.resize(0);
+            carrierInfo.allowedCarriersPrioritized = false;
+        } else if (responseLen != sizeof(RIL_CarrierRestrictionsWithPriority)) {
+            RLOGE("getAllowedCarriersResponse4 Invalid response");
+            if (e == RIL_E_SUCCESS) {
+                responseInfo.error = RadioError::INVALID_RESPONSE;
+            }
+        } else {
+            RIL_CarrierRestrictionsWithPriority *pCrExt = (RIL_CarrierRestrictionsWithPriority *)response;
+
+            // Convert into the structure used in IRadio 1.0 to re-use existing code
+            RIL_CarrierRestrictions cr = {};
+            cr.len_allowed_carriers = pCrExt->len_allowed_carriers;
+            cr.len_excluded_carriers = pCrExt->len_excluded_carriers;
+            cr.allowed_carriers = pCrExt->allowed_carriers;
+            cr.excluded_carriers = pCrExt->excluded_carriers;
+            prepareCarrierRestrictionsResponse(carrierInfo.allowedCarriers, carrierInfo.excludedCarriers, allAllowed, &cr);
+
+            carrierInfo.allowedCarriersPrioritized = (bool)pCrExt->allowedCarriersPrioritized;
+            multiSimPolicy = (::android::hardware::radio::V1_4::SimLockMultiSimPolicy)pCrExt->multiSimPolicy;
+        }
+
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_4->getAllowedCarriersResponse_1_4(responseInfo,
+                carrierInfo, multiSimPolicy);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("getAllowedCarriersResponse4: radioService[%d]->mRadioResponseV1_4 == NULL", slotId);
     }
 
     return 0;
