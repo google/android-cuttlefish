@@ -24,7 +24,6 @@ cc_library_headers {
     vendor: true,
     export_include_dirs: ["."],
     host_supported: true,
-    defaults: ["cuttlefish_recovery_available"],
 }
 
 // TODO(b/67435044) Update the include paths and remove this
@@ -33,7 +32,6 @@ cc_library_headers {
     vendor: true,
     export_include_dirs: ["common/libs"],
     host_supported: true,
-    defaults: ["cuttlefish_recovery_available"],
 }
 
 cc_defaults {
@@ -55,7 +53,6 @@ cc_defaults {
         },
     },
     cflags: ["-Werror", "-Wall"],
-    defaults: ["cuttlefish_recovery_available"],
     vendor: true,
 }
 
