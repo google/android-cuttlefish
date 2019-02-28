@@ -790,7 +790,7 @@ std::string CuttlefishConfig::logcat_receiver_binary() const {
 
 
 bool CuttlefishConfig::enable_ivserver() const {
-  return hardware_name() == "vsoc";
+  return hardware_name() == "cutf_ivsh";
 }
 
 // Creates the (initially empty) config object and populates it with values from
