@@ -28,7 +28,6 @@ LOCAL_SHARED_LIBRARIES := \
   cuttlefish_net \
   cuttlefish_auto_resources \
   libbase \
-  vsoc_lib
 
 LOCAL_C_INCLUDES := \
     device/google/cuttlefish_common \

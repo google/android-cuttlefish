@@ -57,7 +57,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcuttlefish_remoter_framework \
     $(VSOC_STLPORT_STATIC_LIBS)
 
-LOCAL_MODULE := sensors.vsoc
+LOCAL_MODULE := sensors.cutf
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)

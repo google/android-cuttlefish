@@ -21,7 +21,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
 LOCAL_CFLAGS += -DUSE_OLD_HWCOMPOSER -Wall -Werror
-LOCAL_MODULE := hwcomposer.vsoc-deprecated
+LOCAL_MODULE := hwcomposer.cutf_ivsh-deprecated
 
 # See b/67109557
 ifeq (true, $(TARGET_TRANSLATE_2ND_ARCH))
@@ -33,7 +33,7 @@ include $(BUILD_SHARED_LIBRARY)
 # New hwcomposer, performs software composition
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
-LOCAL_MODULE := hwcomposer.vsoc
+LOCAL_MODULE := hwcomposer.cutf_ivsh
 LOCAL_VENDOR_MODULE := true
 
 # See b/67109557
