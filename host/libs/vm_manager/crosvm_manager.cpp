@@ -77,10 +77,10 @@ cvd::Command CrosvmManager::StartCommand() {
   command.AddParameter("--mem=", config_->memory_mb());
   command.AddParameter("--cpus=", config_->cpus());
   command.AddParameter("--params=", config_->kernel_cmdline_as_string());
-  command.AddParameter("--disk=", config_->system_image_path());
+  command.AddParameter("--rwdisk=", config_->system_image_path());
   command.AddParameter("--rwdisk=", config_->data_image_path());
   command.AddParameter("--rwdisk=", config_->cache_image_path());
-  command.AddParameter("--disk=", config_->vendor_image_path());
+  command.AddParameter("--rwdisk=", config_->vendor_image_path());
   command.AddParameter("--socket=", GetControlSocketPath(config_));
   command.AddParameter("--android-fstab=", config_->gsi_fstab_path());
 
