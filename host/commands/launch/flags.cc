@@ -119,9 +119,13 @@ DEFINE_string(socket_vsock_proxy_binary,
               vsoc::DefaultHostArtifactsPath("bin/socket_vsock_proxy"),
               "Location of the socket_vsock_proxy binary.");
 DEFINE_string(adb_mode, "",
-              "Mode for adb connection. Can be 'usb' for usb forwarding, "
-              "'tunnel' for tcp connection, 'vsock_tunnel' for vsock tcp,"
-              "or a comma separated list of types as in 'usb,tunnel'");
+              "Mode for ADB connection. Can be 'usb' for USB forwarding, "
+              "'tunnel' for a TCP connection tunneled through VSoC, "
+              "'vsock_tunnel' for a TCP connection tunneled through vsock, "
+              "'native_vsock' for a  direct connection to the guest ADB over "
+              "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
+              "the guest ADB server, or a comma separated list of types as in "
+              "'usb,tunnel'");
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with --adb_mode=tunnel or vsock_tunnel");
