@@ -215,8 +215,8 @@ class CuttlefishConfig {
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
 
-  void set_adb_mode(const std::string& mode);
-  std::string adb_mode() const;
+  void set_adb_mode(const std::set<std::string>& modes);
+  std::set<std::string> adb_mode() const;
 
   void set_adb_ip_and_port(const std::string& ip_port);
   std::string adb_ip_and_port() const;

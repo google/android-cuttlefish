@@ -3,7 +3,6 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/strings/str_split.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/launcher_defs.h"
@@ -46,8 +45,7 @@ std::string GetAdbConnectorVsockArg(const vsoc::CuttlefishConfig& config) {
 }
 
 bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, const char* mode) {
-  auto modes = cvd::StrSplit(config.adb_mode(), ',');
-  return std::find(modes.begin(), modes.end(), mode) != modes.end();
+  return config.adb_mode().count(mode) > 0;
 }
 
 bool AdbTunnelEnabled(const vsoc::CuttlefishConfig& config) {
