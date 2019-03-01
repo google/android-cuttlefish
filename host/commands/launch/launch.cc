@@ -66,7 +66,7 @@ bool AdbVsockHalfTunnelEnabled(const vsoc::CuttlefishConfig& config) {
 
 bool AdbTcpConnectorEnabled(const vsoc::CuttlefishConfig& config) {
   bool tunnel = AdbTunnelEnabled(config);
-  bool vsock_tunnel = AdbVsockHalfTunnelEnabled(config);
+  bool vsock_tunnel = AdbVsockTunnelEnabled(config);
   bool vsock_half_tunnel = AdbVsockHalfTunnelEnabled(config);
   return config.run_adb_connector()
       && (tunnel || vsock_tunnel || vsock_half_tunnel);
