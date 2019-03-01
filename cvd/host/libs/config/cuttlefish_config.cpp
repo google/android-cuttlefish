@@ -538,12 +538,20 @@ std::string CuttlefishConfig::cuttlefish_env_path() const {
   return (*dictionary_)[kCuttlefishEnvPath].asString();
 }
 
-std::string CuttlefishConfig::adb_mode() const {
-  return (*dictionary_)[kAdbMode].asString();
+std::set<std::string> CuttlefishConfig::adb_mode() const {
+  std::set<std::string> args_set;
+  for (auto& mode : (*dictionary_)[kAdbMode]) {
+    args_set.insert(mode.asString());
+  }
+  return args_set;
 }
 
-void CuttlefishConfig::set_adb_mode(const std::string& mode) {
-  (*dictionary_)[kAdbMode] = mode;
+void CuttlefishConfig::set_adb_mode(const std::set<std::string>& mode) {
+  Json::Value mode_json_obj(Json::arrayValue);
+  for (const auto& arg : mode) {
+    mode_json_obj.append(arg);
+  }
+  (*dictionary_)[kAdbMode] = mode_json_obj;
 }
 
 std::string CuttlefishConfig::adb_ip_and_port() const {
@@ -555,9 +563,14 @@ void CuttlefishConfig::set_adb_ip_and_port(const std::string& ip_port) {
 }
 
 std::string CuttlefishConfig::adb_device_name() const {
-  if (adb_mode().find("tunnel") != std::string::npos) {
+  // TODO(schuffelen): Deal with duplication between here and launch.cc
+  bool tunnelMode = adb_mode().count("tunnel") > 0;
+  bool vsockTunnel = adb_mode().count("vsock_tunnel") > 0;
+  bool vsockHalfProxy = adb_mode().count("vsock_half_proxy") > 0;
+  bool nativeVsock = adb_mode().count("native_vsock") > 0;
+  if (tunnelMode || vsockTunnel || vsockHalfProxy || nativeVsock) {
     return adb_ip_and_port();
-  } else if (adb_mode().find("usb") != std::string::npos) {
+  } else if (adb_mode().count("usb") > 0) {
     return serial_number();
   }
   LOG(ERROR) << "no adb_mode found, returning bad device name";
