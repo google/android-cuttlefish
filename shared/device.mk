@@ -354,8 +354,6 @@ PRODUCT_COPY_FILES += \
 
 # Recovery mode
 ifneq ($(TARGET_NO_RECOVERY),true)
-PRODUCT_PACKAGES += \
-    socket_forward_proxy.recovery \
 
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.recovery.common.rc:recovery/root/init.recovery.common.rc \
