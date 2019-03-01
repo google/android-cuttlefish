@@ -18,6 +18,7 @@ namespace {
 constexpr char kAdbModeTunnel[] = "tunnel";
 constexpr char kAdbModeNativeVsock[] = "native_vsock";
 constexpr char kAdbModeVsockTunnel[] = "vsock_tunnel";
+constexpr char kAdbModeVsockHalfTunnel[] = "vsock_half_tunnel";
 constexpr char kAdbModeUsb[] = "usb";
 
 cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
@@ -58,9 +59,17 @@ bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
       && AdbModeEnabled(config, kAdbModeVsockTunnel);
 }
 
+bool AdbVsockHalfTunnelEnabled(const vsoc::CuttlefishConfig& config) {
+  return config.vsock_guest_cid() > 2
+      && AdbModeEnabled(config, kAdbModeVsockHalfTunnel);
+}
+
 bool AdbTcpConnectorEnabled(const vsoc::CuttlefishConfig& config) {
+  bool tunnel = AdbTunnelEnabled(config);
+  bool vsock_tunnel = AdbVsockHalfTunnelEnabled(config);
+  bool vsock_half_tunnel = AdbVsockHalfTunnelEnabled(config);
   return config.run_adb_connector()
-      && (AdbTunnelEnabled(config) || AdbVsockTunnelEnabled(config));
+      && (tunnel || vsock_tunnel || vsock_half_tunnel);
 }
 
 bool AdbVsockConnectorEnabled(const vsoc::CuttlefishConfig& config) {
@@ -237,6 +246,16 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
   if (AdbVsockTunnelEnabled(config)) {
     cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
     adb_tunnel.AddParameter("--vsock_port=6520");
+    adb_tunnel.AddParameter(
+        std::string{"--tcp_port="} + std::to_string(GetHostPort()));
+    adb_tunnel.AddParameter(std::string{"--vsock_guest_cid="} +
+                            std::to_string(config.vsock_guest_cid()));
+    process_monitor->StartSubprocess(std::move(adb_tunnel),
+                                     GetOnSubprocessExitCallback(config));
+  }
+  if (AdbVsockHalfTunnelEnabled(config)) {
+    cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
+    adb_tunnel.AddParameter("--vsock_port=5555");
     adb_tunnel.AddParameter(
         std::string{"--tcp_port="} + std::to_string(GetHostPort()));
     adb_tunnel.AddParameter(std::string{"--vsock_guest_cid="} +
