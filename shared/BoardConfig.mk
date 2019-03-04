@@ -33,7 +33,6 @@ BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true
-BOARD_EGL_CFG := device/google/cuttlefish/shared/config/egl.cfg
 TARGET_USES_64_BIT_BINDER := true
 
 # Hardware composer configuration
