@@ -59,7 +59,7 @@ LOCAL_CFLAGS := \
     $(VSOC_VERSION_CFLAGS)
 
 
-LOCAL_MODULE := audio.primary.vsoc
+LOCAL_MODULE := audio.primary.cutf_ivsh
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)

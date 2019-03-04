@@ -24,7 +24,7 @@ LOCAL_MULTILIB := first
 endif
 
 LOCAL_VENDOR_MODULE := true
-LOCAL_MODULE := gatekeeper.vsoc
+LOCAL_MODULE := gatekeeper.cutf
 LOCAL_MODULE_RELATIVE_PATH := hw
 
 LOCAL_CFLAGS := -Wall -Wextra -Werror -Wunused

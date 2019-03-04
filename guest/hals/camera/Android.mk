@@ -124,7 +124,7 @@ LOCAL_SRC_FILES := ${emulator_camera_src} ${emulator_camera_ext_src} \
 	$(if $(enable_emulated_camera2),$(emulated_camera2_src),) \
 	$(if $(enable_emulated_camera3),$(emulated_camera3_src),)
 
-LOCAL_MODULE := camera.vsoc
+LOCAL_MODULE := camera.cutf
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 
@@ -175,7 +175,7 @@ LOCAL_SHARED_LIBRARIES := ${jpeg_shared_libraries}
 LOCAL_C_INCLUDES += ${jpeg_c_includes}
 LOCAL_SRC_FILES := ${jpeg_src}
 
-LOCAL_MODULE := camera.vsoc.jpeg
+LOCAL_MODULE := camera.cutf.jpeg
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 

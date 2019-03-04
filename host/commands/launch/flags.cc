@@ -57,7 +57,7 @@ DEFINE_string(androidboot_console, "ttyS1",
               "Console device for the Android framework");
 DEFINE_string(
     hardware_name, "",
-    "The codename of the device's hardware, one of {vsoc, virtio}");
+    "The codename of the device's hardware, one of {cutf_ivsh, cutf_cvm}");
 DEFINE_string(guest_security, "selinux",
               "The security module to use in the guest");
 DEFINE_bool(guest_enforce_security, false,
@@ -455,8 +455,7 @@ void SetDefaultFlagsForQemu() {
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("hardware_name",
-                               "vsoc",
+  SetCommandLineOptionWithMode("hardware_name", "cutf_ivsh",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("adb_mode", "tunnel",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -488,8 +487,7 @@ void SetDefaultFlagsForCrosvm() {
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("hardware_name",
-                               "virtio",
+  SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("adb_mode", "vsock_tunnel",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);

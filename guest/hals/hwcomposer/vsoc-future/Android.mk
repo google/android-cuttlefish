@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := hwcomposer.vsoc-future
+LOCAL_MODULE := hwcomposer.cutf_ivsh-future
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
