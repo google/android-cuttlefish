@@ -34,14 +34,15 @@ LOCAL_SHARED_LIBRARIES := \
     $(VSOC_STLPORT_LIBS)
 
 LOCAL_STATIC_LIBRARIES := \
-    libyuv_static
+    libyuv_static \
+    hwcomposer_common \
 
 LOCAL_SRC_FILES := \
     geometry_utils.cpp \
     hwcomposer.cpp \
     vsoc_composer.cpp \
     stats_keeper.cpp \
-    base_composer.cpp
+    base_composer.cpp \
 
 LOCAL_CFLAGS += \
     -DGATHER_STATS \

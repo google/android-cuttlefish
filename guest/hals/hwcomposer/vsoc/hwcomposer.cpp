@@ -55,6 +55,7 @@
 
 #include "common/vsoc/lib/screen_region_view.h"
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+#include "guest/hals/hwcomposer/common/hwcomposer.h"
 #include <sync/sync.h>
 
 #include "base_composer.h"
@@ -79,10 +80,7 @@ typedef InnerComposerType ComposerType;
 
 struct vsoc_hwc_composer_device_1_t {
   vsoc_hwc_device base;
-  const hwc_procs_t* procs;
-  pthread_t vsync_thread;
-  int64_t vsync_base_timestamp;
-  int32_t vsync_period_ns;
+  cvd::hwc_composer_device_data_t vsync_data;
   ComposerType* composer;
 };
 
@@ -309,7 +307,7 @@ static void vsoc_hwc_register_procs(vsoc_hwc_device* dev,
                                     const hwc_procs_t* procs) {
   struct vsoc_hwc_composer_device_1_t* pdev =
       (struct vsoc_hwc_composer_device_1_t*)dev;
-  pdev->procs = procs;
+  pdev->vsync_data.procs = procs;
 }
 
 static int vsoc_hwc_query(vsoc_hwc_device* dev, int what, int* value) {
@@ -322,7 +320,7 @@ static int vsoc_hwc_query(vsoc_hwc_device* dev, int what, int* value) {
       value[0] = 0;
       break;
     case HWC_VSYNC_PERIOD:
-      value[0] = pdev->vsync_period_ns;
+      value[0] = pdev->vsync_data.vsync_period_ns;
       break;
     default:
       // unsupported query
@@ -343,67 +341,6 @@ static int vsoc_hwc_event_control(
     return 0;
   }
   return -EINVAL;
-}
-
-static void* hwc_vsync_thread(void* data) {
-  struct vsoc_hwc_composer_device_1_t* pdev =
-      (struct vsoc_hwc_composer_device_1_t*)data;
-  setpriority(PRIO_PROCESS, 0, HAL_PRIORITY_URGENT_DISPLAY);
-
-  int64_t nanoseconds = static_cast<int64_t>(1e9);
-
-  int64_t base_timestamp = pdev->vsync_base_timestamp;
-  int64_t last_logged = base_timestamp / nanoseconds;
-  int sent = 0;
-  int last_sent = 0;
-  static const int log_interval = 60;
-  void (*vsync_proc)(const struct hwc_procs*, int, int64_t) = nullptr;
-  bool log_no_procs = true, log_no_vsync = true;
-  while (true) {
-    struct timespec rt;
-    if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
-      ALOGE("%s:%d error in vsync thread clock_gettime: %s", __FILE__, __LINE__,
-            strerror(errno));
-    }
-    int64_t timestamp = int64_t(rt.tv_sec) * nanoseconds + rt.tv_nsec;
-    // Given now's timestamp calculate the time of the next timestamp.
-    timestamp += pdev->vsync_period_ns -
-                 (timestamp - base_timestamp) % pdev->vsync_period_ns;
-
-    rt.tv_sec = timestamp / nanoseconds;
-    rt.tv_nsec = timestamp % static_cast<int32_t>(nanoseconds);
-    int err = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &rt, NULL);
-    if (err == -1) {
-      ALOGE("error in vsync thread: %s", strerror(errno));
-      if (errno == EINTR) {
-        continue;
-      }
-    }
-
-    // The vsync thread is started on device open, it may run before the
-    // registerProcs callback has a chance to be called, so we need to make sure
-    // procs is not NULL before dereferencing it.
-    if (pdev && pdev->procs) {
-      vsync_proc = pdev->procs->vsync;
-    } else if (log_no_procs) {
-      log_no_procs = false;
-      ALOGI("procs is not set yet, unable to deliver vsync event");
-    }
-    if (vsync_proc) {
-      vsync_proc(const_cast<hwc_procs_t*>(pdev->procs), 0, timestamp);
-      ++sent;
-    } else if (log_no_vsync) {
-      log_no_vsync = false;
-      ALOGE("vsync callback is null (but procs was already set)");
-    }
-    if (rt.tv_sec - last_logged > log_interval) {
-      ALOGI("Sent %d syncs in %ds", sent - last_sent, log_interval);
-      last_logged = rt.tv_sec;
-      last_sent = sent;
-    }
-  }
-
-  return NULL;
 }
 
 static int vsoc_hwc_blank(vsoc_hwc_device* /*dev*/, int disp, int /*blank*/) {
@@ -435,7 +372,7 @@ static int32_t vsoc_hwc_attribute(struct vsoc_hwc_composer_device_1_t* pdev,
   auto screen_view = ScreenRegionView::GetInstance();
   switch (attribute) {
     case HWC_DISPLAY_VSYNC_PERIOD:
-      return pdev->vsync_period_ns;
+      return pdev->vsync_data.vsync_period_ns;
     case HWC_DISPLAY_WIDTH:
       return screen_view->x_res();
     case HWC_DISPLAY_HEIGHT:
@@ -478,8 +415,8 @@ static int vsoc_hwc_close(hw_device_t* device) {
   struct vsoc_hwc_composer_device_1_t* dev =
       (struct vsoc_hwc_composer_device_1_t*)device;
   ALOGE("vsoc_hwc_close");
-  pthread_kill(dev->vsync_thread, SIGTERM);
-  pthread_join(dev->vsync_thread, NULL);
+  pthread_kill(dev->vsync_data.vsync_thread, SIGTERM);
+  pthread_join(dev->vsync_data.vsync_thread, NULL);
   delete dev->composer;
   delete dev;
   return 0;
@@ -500,13 +437,13 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
   }
 
   int refreshRate = ScreenRegionView::GetInstance()->refresh_rate_hz();
-  dev->vsync_period_ns = 1000000000 / refreshRate;
+  dev->vsync_data.vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
   if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
     ALOGE("%s:%d error in vsync thread clock_gettime: %s", __FILE__, __LINE__,
           strerror(errno));
   }
-  dev->vsync_base_timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
+  dev->vsync_data.vsync_base_timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
 
   dev->base.common.tag = HARDWARE_DEVICE_TAG;
   dev->base.common.version = VSOC_HWC_DEVICE_API_VERSION;
@@ -528,9 +465,9 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
   dev->base.getDisplayAttributes = vsoc_hwc_get_display_attributes;
 #endif
   dev->composer =
-      new ComposerType(dev->vsync_base_timestamp, dev->vsync_period_ns);
+      new ComposerType(dev->vsync_data.vsync_base_timestamp, dev->vsync_data.vsync_period_ns);
 
-  int ret = pthread_create(&dev->vsync_thread, NULL, hwc_vsync_thread, dev);
+  int ret = pthread_create(&dev->vsync_data.vsync_thread, NULL, cvd::hwc_vsync_thread, &dev->vsync_data);
   if (ret) {
     ALOGE("failed to start vsync thread: %s", strerror(ret));
     ret = -ret;
