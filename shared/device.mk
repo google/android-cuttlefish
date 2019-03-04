@@ -133,8 +133,8 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
     device/google/cuttlefish/shared/config/camera_v3.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
     device/google/cuttlefish/shared/config/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.common.rc \
-    device/google/cuttlefish/shared/config/init.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
-    device/google/cuttlefish/shared/config/init.virtio.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.virtio.rc \
+    device/google/cuttlefish/shared/config/init.cutf_ivsh.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_ivsh.rc \
+    device/google/cuttlefish/shared/config/init.cutf_cvm.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_cvm.rc \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/ueventd.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
     device/google/cuttlefish/shared/config/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml \
@@ -178,15 +178,15 @@ PRODUCT_COPY_FILES += \
 #
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
-    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.virtio \
+    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
 
 else
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.vsoc \
-    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
-    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.virtio \
-    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.virtio \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_cvm \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
 
 endif
 
@@ -195,7 +195,7 @@ endif
 # USB Specific
 #
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
+    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cutf_ivsh.usb.rc
 
 # Packages for HAL implementations
 
@@ -210,7 +210,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     hwcomposer.drm \
-    hwcomposer.vsoc \
+    hwcomposer.cutf_ivsh \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl \
     android.hardware.graphics.composer@2.1-service
@@ -220,7 +220,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     gralloc.minigbm \
-    gralloc.vsoc \
+    gralloc.cutf \
     android.hardware.graphics.mapper@2.0-impl \
     android.hardware.graphics.allocator@2.0-impl \
     android.hardware.graphics.allocator@2.0-service
@@ -236,7 +236,7 @@ PRODUCT_PACKAGES += \
 # Audio HAL
 #
 PRODUCT_PACKAGES += \
-    audio.primary.vsoc \
+    audio.primary.cutf_ivsh \
     android.hardware.audio@5.0-impl \
     android.hardware.audio.effect@5.0-impl \
     android.hardware.audio@2.0-service
@@ -258,8 +258,8 @@ PRODUCT_PACKAGES += \
 # Camera
 #
 PRODUCT_PACKAGES += \
-    camera.vsoc \
-    camera.vsoc.jpeg \
+    camera.cutf \
+    camera.cutf.jpeg \
     camera.device@3.2-impl \
     android.hardware.camera.provider@2.4-impl \
     android.hardware.camera.provider@2.4-service
@@ -268,7 +268,7 @@ PRODUCT_PACKAGES += \
 # Gatekeeper
 #
 PRODUCT_PACKAGES += \
-    gatekeeper.vsoc \
+    gatekeeper.cutf \
     android.hardware.gatekeeper@1.0-impl \
     android.hardware.gatekeeper@1.0-service
 
@@ -301,7 +301,7 @@ PRODUCT_PACKAGES += \
 # Lights
 #
 PRODUCT_PACKAGES += \
-    lights.vsoc \
+    lights.cutf \
     android.hardware.light@2.0-impl \
     android.hardware.light@2.0-service
 
@@ -316,7 +316,7 @@ PRODUCT_PACKAGES += \
 # Power HAL
 #
 PRODUCT_PACKAGES += \
-    power.vsoc \
+    power.cutf \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service
 
@@ -358,7 +358,7 @@ ifneq ($(TARGET_NO_RECOVERY),true)
 
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.recovery.common.rc:recovery/root/init.recovery.common.rc \
-    device/google/cuttlefish/shared/config/init.recovery.vsoc.rc:recovery/root/init.recovery.vsoc.rc \
-    device/google/cuttlefish/shared/config/init.recovery.virtio.rc:recovery/root/init.recovery.virtio.rc \
+    device/google/cuttlefish/shared/config/init.recovery.cutf_ivsh.rc:recovery/root/init.recovery.cutf_ivsh.rc \
+    device/google/cuttlefish/shared/config/init.recovery.cutf_cvm.rc:recovery/root/init.recovery.cutf_cvm.rc \
 
 endif
