@@ -1378,6 +1378,20 @@ static void request_exit_emergency_mode(void* /*data*/, size_t /*datalen*/,
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
+static void request_set_carrier_restrictions4(void* /*data*/,
+                                              size_t /*datalen*/,
+                                              RIL_Token t) {
+  ALOGV("Set carrier restrictions is not supported");
+  // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
+  gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+}
+
+static void request_get_carrier_restrictions4(RIL_Token t) {
+  ALOGV("Get carrier restrictions is not supported");
+  // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
+  gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+}
+
 static RIL_RadioState gce_ril_current_state() {
   ALOGV("Reporting radio state %d", gRadioPowerState);
   return gRadioPowerState;
@@ -2525,6 +2539,12 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS:
       request_set_system_selection_channels(request, t);
+      break;
+    case RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4:
+      request_set_carrier_restrictions4(data, datalen, t);
+      break;
+    case RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4:
+      request_get_carrier_restrictions4(t);
       break;
 #endif
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:
