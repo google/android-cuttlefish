@@ -755,6 +755,27 @@ typedef struct {
                                          */
 } RIL_CarrierRestrictions;
 
+typedef enum {
+    NO_MULTISIM_POLICY = 0,             /* configuration applies to each slot independently. */
+    ONE_VALID_SIM_MUST_BE_PRESENT = 1,  /* Any SIM card can be used as far as one valid card is
+                                         * present in the device.
+                                         */
+} RIL_SimLockMultiSimPolicy;
+
+typedef struct {
+  int32_t len_allowed_carriers;         /* length of array allowed_carriers */
+  int32_t len_excluded_carriers;        /* length of array excluded_carriers */
+  RIL_Carrier * allowed_carriers;       /* whitelist for allowed carriers */
+  RIL_Carrier * excluded_carriers;      /* blacklist for explicitly excluded carriers
+                                         * which match allowed_carriers. Eg. allowed_carriers match
+                                         * mcc/mnc, excluded_carriers has same mcc/mnc and gid1
+                                         * is ABCD. It means except the carrier whose gid1 is ABCD,
+                                         * all carriers with the same mcc/mnc are allowed.
+                                         */
+  int allowedCarriersPrioritized;       /* allowed list prioritized */
+  RIL_SimLockMultiSimPolicy multiSimPolicy; /* multisim policy */
+} RIL_CarrierRestrictionsWithPriority;
+
 typedef struct {
   char * mcc;                         /* MCC of the Carrier. */
   char * mnc ;                        /* MNC of the Carrier. */
@@ -6490,6 +6511,55 @@ typedef struct {
  *
  */
 #define RIL_REQUEST_ENABLE_MODEM 152
+
+/**
+ * RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4
+ *
+ * Set carrier restrictions. Expected modem behavior:
+ *  If never receives this command:
+ *  - Must allow all carriers
+ *  Receives this command:
+ *  - Only allow carriers specified in carriers. The restriction persists across power cycles
+ *    and FDR. If a present SIM is allowed, modem must not reload the SIM. If a present SIM is
+ *    *not* allowed, modem must detach from the registered network and only keep emergency
+ *    service, and notify Android SIM refresh reset with new SIM state being
+ *    CardState:RESTRICTED. Emergency service must be enabled.
+ *
+ * "data" is const RIL_CarrierRestrictionsWithPriority *
+ * A list of allowed carriers and possibly a list of excluded carriers with the priority and
+ * multisim policy.
+ *
+ * Valid errors:
+ *  RIL_E_SUCCESS
+ *  RIL_E_INVALID_ARGUMENTS
+ *  RIL_E_RADIO_NOT_AVAILABLE
+ *  RIL_E_REQUEST_NOT_SUPPORTED
+ *  INTERNAL_ERR
+ *  NO_MEMORY
+ *  NO_RESOURCES
+ *  CANCELLED
+ */
+#define RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4 153
+
+/**
+ * RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4
+ *
+ * Gets the carrier restrictions.
+ *
+ * "data" is NULL
+ *
+ * "response" is const RIL_CarrierRestrictionsWithPriority *.
+ *
+ * Valid errors:
+ *  RIL_E_SUCCESS
+ *  RIL_E_RADIO_NOT_AVAILABLE
+ *  RIL_E_REQUEST_NOT_SUPPORTED
+ *  INTERNAL_ERR
+ *  NO_MEMORY
+ *  NO_RESOURCES
+ *  CANCELLED
+ */
+#define RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4 154
 
 /***********************************************************************/
 
