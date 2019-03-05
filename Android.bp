@@ -40,6 +40,7 @@ cc_defaults {
     header_libs: [
         "cuttlefish_common_headers",
         "cuttlefish_kernel_headers",
+        "cuttlefish_shared_config",
     ],
     target: {
         host: {
