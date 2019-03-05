@@ -105,20 +105,6 @@ PRODUCT_PACKAGES += \
     libGLESv1_CM_swiftshader \
     libGLESv2_swiftshader
 
-# The locking_wrapper puts a lock around all of the SwiftShader entry points to
-# serialize all access to the library, reducing the chances for races.
-# Applies only to guest-side SwiftShader
-PRODUCT_PACKAGES += \
-    libEGL_locking_wrapper \
-    libGLESv1_CM_locking_wrapper \
-    libGLESv2_locking_wrapper
-
-# GLES encoder, reused from goldfish
-PRODUCT_PACKAGES += \
-    libEGL_emulation \
-    libGLESv1_CM_emulation \
-    libGLESv2_emulation \
-
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
 # PRODUCT_AAPT_PREF_CONFIG is intentionally not set to pick up every density resources.
