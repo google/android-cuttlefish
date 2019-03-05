@@ -116,6 +116,7 @@ args=(
     -device "virtio-rng-pci,rng=objrng0,id=rng0,max-bytes=1024,period=2000"
     -cpu "${cpu}"
     -msg "timestamp=on"
+    -device "AC97"
 )
 
 if [[ -n "${dtb_path}" ]]; then

@@ -74,6 +74,7 @@ cvd::Command CrosvmManager::StartCommand() {
   cvd::Command command(config_->crosvm_binary());
   command.AddParameter("run");
 
+  command.AddParameter("--null-audio");
   command.AddParameter("--mem=", config_->memory_mb());
   command.AddParameter("--cpus=", config_->cpus());
   command.AddParameter("--params=", config_->kernel_cmdline_as_string());
