@@ -116,10 +116,16 @@ void convertRilSignalStrengthToHal(void *response, size_t responseLen,
 void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
         SetupDataCallResult& dcResult);
 
+void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+        ::android::hardware::radio::V1_4::SetupDataCallResult& dcResult);
+
 void convertRilDataCallListToHal(void *response, size_t responseLen,
         hidl_vec<SetupDataCallResult>& dcResultList);
 
 void convertRilCellInfoListToHal(void *response, size_t responseLen, hidl_vec<CellInfo>& records);
+
+void populateResponseInfo(RadioResponseInfo& responseInfo, int serial, int responseType,
+                         RIL_Errno e);
 
 struct RadioImpl_1_4 : public V1_4::IRadio {
     int32_t mSlotId;
@@ -3307,21 +3313,55 @@ Return<void> RadioImpl_1_4::setupDataCall_1_4(int32_t serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_4::setInitialAttachApn_1_4(int32_t /* serial */,
-        const ::android::hardware::radio::V1_4::DataProfileInfo& /* dataProfileInfo */) {
-    // TODO implement
-#if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
-#endif
+Return<void> RadioImpl_1_4::setInitialAttachApn_1_4(int32_t  serial ,
+        const ::android::hardware::radio::V1_4::DataProfileInfo& dataProfileInfo) {
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
+            RIL_REQUEST_SET_INITIAL_ATTACH_APN);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, RESPONSE_SOLICITED, RIL_E_SUCCESS);
+
+    if (radioService[mSlotId]->mRadioResponseV1_4 != NULL) {
+        Return<void> retStatus
+                = radioService[mSlotId]->mRadioResponseV1_4->setInitialAttachApnResponse(responseInfo);
+        radioService[mSlotId]->checkReturnStatus(retStatus);
+    } else if (radioService[mSlotId]->mRadioResponse != NULL) {
+        Return<void> retStatus
+                = radioService[mSlotId]->mRadioResponse->setInitialAttachApnResponse(responseInfo);
+        radioService[mSlotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("setInitialAttachApnResponse: radioService[%d]->mRadioResponse == NULL", mSlotId);
+    }
+
     return Void();
 }
 
-Return<void> RadioImpl_1_4::setDataProfile_1_4(int32_t /* serial */,
+Return<void> RadioImpl_1_4::setDataProfile_1_4(int32_t  serial ,
         const hidl_vec<::android::hardware::radio::V1_4::DataProfileInfo>& /* profiles */) {
-    // TODO implement
-#if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
-#endif
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
+            RIL_REQUEST_SET_DATA_PROFILE);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, RESPONSE_SOLICITED, RIL_E_SUCCESS);
+
+    if (radioService[mSlotId]->mRadioResponseV1_4 != NULL) {
+        Return<void> retStatus
+                = radioService[mSlotId]->mRadioResponseV1_4->setDataProfileResponse(responseInfo);
+        radioService[mSlotId]->checkReturnStatus(retStatus);
+    } else if (radioService[mSlotId]->mRadioResponse != NULL) {
+        Return<void> retStatus
+                = radioService[mSlotId]->mRadioResponse->setDataProfileResponse(responseInfo);
+        radioService[mSlotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("setDataProfileResponse: radioService[%d]->mRadioResponse == NULL", mSlotId);
+    }
+
     return Void();
 }
 
@@ -4619,29 +4659,52 @@ int radio_1_4::setupDataCallResponse(int slotId,
     RLOGD("setupDataCallResponse: serial %d", serial);
 #endif
 
-    if (radioService[slotId]->mRadioResponse != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
-
-        SetupDataCallResult result = {};
+        ::android::hardware::radio::V1_4::SetupDataCallResult result;
         if (response == NULL || (responseLen % sizeof(RIL_Data_Call_Response_v11)) != 0) {
             if (response != NULL) {
                 RLOGE("setupDataCallResponse: Invalid response");
                 if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
             }
-            result.status = DataCallFailCause::ERROR_UNSPECIFIED;
-            result.type = hidl_string();
+            result.cause = ::android::hardware::radio::V1_4::DataCallFailCause::ERROR_UNSPECIFIED;
+            result.type = ::android::hardware::radio::V1_4::PdpProtocolType::UNKNOWN;
             result.ifname = hidl_string();
-            result.addresses = hidl_string();
-            result.dnses = hidl_string();
-            result.gateways = hidl_string();
-            result.pcscf = hidl_string();
+            result.addresses = hidl_vec<hidl_string>();
+            result.dnses = hidl_vec<hidl_string>();
+            result.gateways = hidl_vec<hidl_string>();
+            result.pcscf = hidl_vec<hidl_string>();
         } else {
             convertRilDataCallToHal((RIL_Data_Call_Response_v11 *) response, result);
         }
 
-        Return<void> retStatus = radioService[slotId]->mRadioResponse->setupDataCallResponse(
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_4->setupDataCallResponse_1_4(
                 responseInfo, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+
+        SetupDataCallResult result = {};
+        if (response == NULL || (responseLen % sizeof(RIL_Data_Call_Response_v11)) != 0) {
+           if (response != NULL) {
+               RLOGE("setupDataCallResponse: Invalid response");
+               if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+           }
+           result.status = DataCallFailCause::ERROR_UNSPECIFIED;
+           result.type = hidl_string();
+           result.ifname = hidl_string();
+           result.addresses = hidl_string();
+           result.dnses = hidl_string();
+           result.gateways = hidl_string();
+           result.pcscf = hidl_string();
+        } else {
+           convertRilDataCallToHal((RIL_Data_Call_Response_v11 *) response, result);
+        }
+
+        Return<void> retStatus = radioService[slotId]->mRadioResponse->setupDataCallResponse(
+               responseInfo, result);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("setupDataCallResponse: radioService[%d]->mRadioResponse == NULL", slotId);
@@ -7901,6 +7964,53 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
     dcResult.pcscf = convertCharPtrToHidlString(dcResponse->pcscf);
     dcResult.mtu = dcResponse->mtu;
 }
+
+hidl_vec<hidl_string> split(hidl_string str) {
+    std::vector<hidl_string> ret;
+    std::stringstream ss(static_cast<std::string>(str));
+
+    std::string tok;
+
+    while(getline(ss, tok, ' ')) {
+        ret.push_back(hidl_string(tok));
+    }
+
+    return ret;
+}
+
+::android::hardware::radio::V1_4::PdpProtocolType convertToPdpProtocolType(hidl_string str) {
+    if (strncmp("IP", str.c_str(), 2) == 0) {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::IP;
+    } else if (strncmp("IPV6", str.c_str(), 4) == 0) {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::IPV6;
+    } else if (strncmp("IPV4V6", str.c_str(), 6) == 0) {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::IPV4V6;
+    } else if (strncmp("PPP", str.c_str(), 3) == 0) {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::PPP;
+    } else if (strncmp("NON_IP", str.c_str(), 6) == 0) {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::NON_IP;
+    } else if (strncmp("UNSTRUCTURED", str.c_str(), 12) == 0) {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::UNSTRUCTURED;
+    } else {
+        return ::android::hardware::radio::V1_4::PdpProtocolType::UNKNOWN;
+    }
+}
+
+void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+        ::android::hardware::radio::V1_4::SetupDataCallResult& dcResult) {
+    dcResult.cause = (::android::hardware::radio::V1_4::DataCallFailCause) dcResponse->status;
+    dcResult.suggestedRetryTime = dcResponse->suggestedRetryTime;
+    dcResult.cid = dcResponse->cid;
+    dcResult.active = (::android::hardware::radio::V1_4::DataConnActiveStatus)dcResponse->active;
+    dcResult.type = convertToPdpProtocolType(convertCharPtrToHidlString(dcResponse->type));
+    dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+    dcResult.addresses = split(convertCharPtrToHidlString(dcResponse->addresses));
+    dcResult.dnses = split(convertCharPtrToHidlString(dcResponse->dnses));
+    dcResult.gateways = split(convertCharPtrToHidlString(dcResponse->gateways));
+    dcResult.pcscf = split(convertCharPtrToHidlString(dcResponse->pcscf));
+    dcResult.mtu = dcResponse->mtu;
+}
+
 
 void convertRilDataCallListToHal(void *response, size_t responseLen,
         hidl_vec<SetupDataCallResult>& dcResultList) {
