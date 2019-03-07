@@ -12,6 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * This code was forked from device/generic/goldfish/audio/audio_hw.c
+ *
+ * At the time of forking, the code was identical except that a fallback
+ * to a legacy HAL which does not use ALSA was removed, and the dependency
+ * on libdl was also removed.
  */
 
 #define LOG_TAG "audio_hw_generic"
