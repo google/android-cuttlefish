@@ -154,7 +154,8 @@ const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
 const char* kLogcatMode = "logcat_mode";
-const char* kLogcatVsockPort = "logcat_vsock_mode";
+const char* kLogcatVsockPort = "logcat_vsock_port";
+const char* kFramesVsockPort = "frames_vsock_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 }  // namespace
 
@@ -793,6 +794,14 @@ int CuttlefishConfig::logcat_vsock_port() const {
   return (*dictionary_)[kLogcatVsockPort].asInt();
 }
 
+void CuttlefishConfig::set_frames_vsock_port(int port) {
+  (*dictionary_)[kFramesVsockPort] = port;
+}
+
+int CuttlefishConfig::frames_vsock_port() const {
+  return (*dictionary_)[kFramesVsockPort].asInt();
+}
+
 void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
   SetPath(kLogcatReceiverBinary, binary);
 }
@@ -801,9 +810,16 @@ std::string CuttlefishConfig::logcat_receiver_binary() const {
   return (*dictionary_)[kLogcatReceiverBinary].asString();
 }
 
-
 bool CuttlefishConfig::enable_ivserver() const {
   return hardware_name() == "cutf_ivsh";
+}
+
+std::string CuttlefishConfig::touch_socket_path() const {
+  return PerInstancePath("touch.sock");
+}
+
+std::string CuttlefishConfig::keyboard_socket_path() const {
+  return PerInstancePath("keyboard.sock");
 }
 
 // Creates the (initially empty) config object and populates it with values from
