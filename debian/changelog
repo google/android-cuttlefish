@@ -1,8 +1,13 @@
-cuttlefish-common (0.9.1+nmu1) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.3+nmu1) UNRELEASED; urgency=medium
 
+  [ Cody Schuffelen ]
   * Use udev for vhost-vsock instead of a chmod.
 
- -- Cody Schuffelen <schuffelen@google.com>  Mon, 04 Feb 2019 16:17:19 -0800
+  [ Greg Hartman ]
+  * Use modprobe.d to load modules
+  * Remove remaining libvirt cruft
+
+ -- Greg Hartman <ghartman@google.com>  Thu, 07 Mar 2019 10:54:55 -0800
 
 cuttlefish-common (0.9.1) UNRELEASED; urgency=medium
 
