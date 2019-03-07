@@ -85,6 +85,9 @@ cvd::Command CrosvmManager::StartCommand() {
   command.AddParameter("--rwdisk=", config_->metadata_image_path());
   command.AddParameter("--socket=", GetControlSocketPath(config_));
   command.AddParameter("--android-fstab=", config_->gsi_fstab_path());
+  command.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
+                       config_->x_res(), ":", config_->y_res());
+  command.AddParameter("--keyboard=", config_->keyboard_socket_path());
 
   AddTapFdParameter(&command, config_->wifi_tap_name());
   AddTapFdParameter(&command, config_->mobile_tap_name());

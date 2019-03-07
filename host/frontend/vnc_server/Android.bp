@@ -20,6 +20,7 @@ cc_binary_host {
         "frame_buffer_watcher.cpp",
         "jpeg_compressor.cpp",
         "main.cpp",
+        "screen_connector.cpp",
         "simulated_hw_composer.cpp",
         "virtual_inputs.cpp",
         "vnc_client_connection.cpp",

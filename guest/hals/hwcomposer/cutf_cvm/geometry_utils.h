@@ -1,7 +1,6 @@
 #pragma once
-
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +15,10 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
-
-#include <map>
-#include <mutex>
-
-#include "common/vsoc/lib/input_events_region_view.h"
+#include "hwcomposer.h"
 
 namespace cvd {
-namespace vnc {
 
-class VirtualInputs {
- public:
-  static VirtualInputs* Get();
+bool LayersOverlap(const vsoc_hwc_layer& layer1, const vsoc_hwc_layer& layer2);
 
-  virtual ~VirtualInputs() = default;
-
-  virtual void GenerateKeyPressEvent(int code, bool down) = 0;
-  virtual void PressPowerButton(bool down) = 0;
-  virtual void HandlePointerEvent(bool touch_down, int x, int y) = 0;
-
- protected:
-  VirtualInputs();
-
-  std::map<uint32_t, uint16_t> keymapping_;
-};
-
-}  // namespace vnc
 }  // namespace cvd

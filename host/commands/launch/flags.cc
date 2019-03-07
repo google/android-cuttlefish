@@ -186,6 +186,8 @@ DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
 DEFINE_int32(logcat_vsock_port, vsoc::GetPerInstanceDefault(5620),
              "The port for logcat over vsock");
+DEFINE_int32(frames_vsock_port, vsoc::GetPerInstanceDefault(5580),
+             "The vsock port to receive frames from the guest on");
 namespace {
 
 template<typename S, typename T>
@@ -420,6 +422,11 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
+  tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
+  if (!tmp_config_obj.enable_ivserver()) {
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_frames_port=",
+                                             FLAGS_frames_vsock_port));
+  }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
@@ -493,8 +500,6 @@ void SetDefaultFlagsForCrosvm() {
   SetCommandLineOptionWithMode("decompress_kernel", "true",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("run_e2e_test", "false",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("start_vnc_server", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
