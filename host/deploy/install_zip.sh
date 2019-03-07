@@ -63,10 +63,4 @@ find "${destdir}" -name "*.img" -exec sh -c '
     && mv "$img.inflated" "$img"
 ' {} ';'
 
-for i in cache.img cmdline kernel ramdisk.img system.img userdata.img vendor.img; do
-  # Use setfacl so that libvirt does not lose access to this file if user
-  # does anything to this file at any point.
-  [ -f "${destdir}/${i}" ] && sudo setfacl -m g:libvirt-qemu:rw "${destdir}/${i}"
-done
-
 exit 0
