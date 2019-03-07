@@ -94,7 +94,7 @@ DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
               "Location of the vnc server binary.");
-DEFINE_bool(start_stream_audio, true,
+DEFINE_bool(start_stream_audio, false,
             "Whether to start the stream audio process.");
 DEFINE_string(stream_audio_binary,
               vsoc::DefaultHostArtifactsPath("bin/stream_audio"),
@@ -496,8 +496,6 @@ void SetDefaultFlagsForCrosvm() {
   SetCommandLineOptionWithMode("run_e2e_test", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("start_vnc_server", "false",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("start_stream_audio", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
