@@ -26,7 +26,7 @@ namespace cvd {
 SharedFD OpenTapInterface(const std::string& interface_name) {
   constexpr auto TUNTAP_DEV = "/dev/net/tun";
 
-  auto tap_fd = SharedFD::Open(TUNTAP_DEV, O_RDWR);
+  auto tap_fd = SharedFD::Open(TUNTAP_DEV, O_RDWR | O_NONBLOCK);
   if (!tap_fd->IsOpen()) {
     LOG(ERROR) << "Unable to open tun device: " << tap_fd->StrError();
     return tap_fd;
@@ -34,7 +34,7 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
 
   struct ifreq ifr;
   memset(&ifr, 0, sizeof(ifr));
-  ifr.ifr_flags = IFF_TAP;
+  ifr.ifr_flags = IFF_TAP | IFF_NO_PI | IFF_VNET_HDR;
   strncpy(ifr.ifr_name, interface_name.c_str(), IFNAMSIZ);
 
   int err = tap_fd->Ioctl(TUNSETIFF, &ifr);
