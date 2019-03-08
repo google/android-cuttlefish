@@ -140,8 +140,6 @@ DEFINE_string(guest_mac_address,
 DEFINE_string(host_mac_address,
               "42:00:00:00:00:00",
               "MAC address of the wifi interface running on the host.");
-DEFINE_string(wifi_interface, "", // default handled on ParseCommandLine
-              "Network interface to use for wifi");
 DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for wifi");
 DEFINE_int32(vsock_guest_cid,
@@ -367,7 +365,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
   ConfigureRil(&tmp_config_obj);
 
-  tmp_config_obj.set_wifi_bridge_name(FLAGS_wifi_interface);
   tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);
 
   tmp_config_obj.set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
@@ -442,10 +439,6 @@ void SetDefaultFlagsForQemu() {
   SetCommandLineOptionWithMode("mobile_tap_name",
                                default_mobile_tap_name.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_wifi_interface = GetPerInstanceDefault("cvd-wbr-");
-  SetCommandLineOptionWithMode("wifi_interface",
-                               default_wifi_interface.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
   SetCommandLineOptionWithMode("wifi_tap_name",
                                default_wifi_tap_name.c_str(),
@@ -473,10 +466,6 @@ void SetDefaultFlagsForCrosvm() {
   auto default_mobile_tap_name = GetPerInstanceDefault("cvd-mtap-");
   SetCommandLineOptionWithMode("mobile_tap_name",
                                default_mobile_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_wifi_interface = GetPerInstanceDefault("cvd-wbr-");
-  SetCommandLineOptionWithMode("wifi_interface",
-                               default_wifi_interface.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
   SetCommandLineOptionWithMode("wifi_tap_name",
