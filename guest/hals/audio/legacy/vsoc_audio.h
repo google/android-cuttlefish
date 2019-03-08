@@ -23,8 +23,8 @@
 #include "common/libs/threads/cuttlefish_thread.h"
 #include "common/vsoc/lib/audio_data_region_view.h"
 #include "common/vsoc/lib/vsoc_audio_message.h"
-#include "guest/hals/audio/audio_hal.h"
-#include "guest/hals/audio/vsoc_audio_input_stream.h"
+#include "guest/hals/audio/legacy/audio_hal.h"
+#include "guest/hals/audio/legacy/vsoc_audio_input_stream.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace cvd {
