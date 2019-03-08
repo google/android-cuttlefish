@@ -1,2 +1,0 @@
-install vhost_vsock /bin/true
-install vhci-hcd /bin/true

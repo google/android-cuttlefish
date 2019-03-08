@@ -7,8 +7,9 @@ cuttlefish-common (0.9.3+nmu1) UNRELEASED; urgency=medium
   * Use modprobe.d to load modules
   * Remove remaining libvirt cruft
   * Add missing dependencies on cuttlefish-common
+  * Revert "Use modprobe.d to load modules"
 
- -- Greg Hartman <ghartman@google.com>  Thu, 07 Mar 2019 15:15:12 -0800
+ -- Greg Hartman <ghartman@google.com>  Thu, 07 Mar 2019 20:33:41 -0800
 
 cuttlefish-common (0.9.1) UNRELEASED; urgency=medium
 
