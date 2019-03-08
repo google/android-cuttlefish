@@ -305,7 +305,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
 
   if (call.connection_type_ != DataCall::kConnTypeIPv4) {
     ALOGE("Non-IPv4 connections are not supported by VSOC RIL.");
-    gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    gce_ril_env->OnRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
     return;
   }
 
@@ -2480,6 +2480,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_SET_RADIO_CAPABILITY:
       request_set_radio_capability(data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_DATA_PROFILE:
+      gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
       break;
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(K)
