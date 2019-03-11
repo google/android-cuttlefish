@@ -1,0 +1,5 @@
+allow vendor_init {
+  audio_device
+  input_events_device
+  region_screen_device
+}:chr_file { getattr };
