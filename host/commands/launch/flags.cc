@@ -25,6 +25,10 @@ DEFINE_string(
     "Path to the system image, if empty it is assumed to be a file named "
     "system.img in the directory specified by -system_image_dir");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
+DEFINE_string(metadata_image, "", "Location of the metadata partition image "
+              "to be generated.");
+DEFINE_int32(blank_metadata_image_mb, 16,
+             "The size of the blank metadata image to generate, MB.");
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -213,6 +217,9 @@ bool ResolveInstanceFiles() {
   std::string default_vendor_image = FLAGS_system_image_dir + "/vendor.img";
   SetCommandLineOptionWithMode("vendor_image", default_vendor_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_metadata_image = FLAGS_system_image_dir + "/metadata.img";
+  SetCommandLineOptionWithMode("metadata_image", default_metadata_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
@@ -336,6 +343,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_cache_image_path(FLAGS_cache_image);
   tmp_config_obj.set_data_image_path(FLAGS_data_image);
   tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
+  tmp_config_obj.set_metadata_image_path(FLAGS_metadata_image);
   tmp_config_obj.set_dtb_path(FLAGS_dtb);
   tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
 
@@ -621,10 +629,13 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
+  CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
+
   // Check that the files exist
   for (const auto& file :
        {config->system_image_path(), config->vendor_image_path(),
-        config->cache_image_path(), config->data_image_path()}) {
+        config->cache_image_path(), config->data_image_path(),
+        config->metadata_image_path()}) {
     if (!cvd::FileHasContent(file.c_str())) {
       LOG(ERROR) << "File not found: " << file;
       exit(cvd::kCuttlefishConfigurationInitError);
