@@ -132,6 +132,9 @@ class CuttlefishConfig {
   std::string vendor_image_path() const;
   void set_vendor_image_path(const std::string& vendor_image_path);
 
+  std::string metadata_image_path() const;
+  void set_metadata_image_path(const std::string& metadata_image_path);
+
   std::string dtb_path() const;
   void set_dtb_path(const std::string& dtb_path);
 
