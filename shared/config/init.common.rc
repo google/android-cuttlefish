@@ -49,9 +49,6 @@ on post-fs
     setrlimit 8 8388608 8388608
 
 on post-fs-data
-    mkdir /data/dalvik-cache 0771 root root
-    mkdir /data/dalvik-cache/x86 0771 root system
-    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
     start vport_trigger
 
 
