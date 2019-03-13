@@ -105,6 +105,13 @@ cvd::Command CrosvmManager::StartCommand() {
                           kernel_log_connection);
   }
 
+  auto dev_null = cvd::SharedFD::Open("/dev/null", O_RDONLY);
+  if (dev_null->IsOpen()) {
+    command.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, dev_null);
+  } else {
+    LOG(ERROR) << "Unable to open /dev/null for stdin redirection";
+  }
+
   // This needs to be the last parameter
   command.AddParameter(config_->GetKernelImageToUse());
 
