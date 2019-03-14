@@ -36,6 +36,7 @@ service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
 
 
 service vsoc_input_service /vendor/bin/vsoc_input_service
+    group root uhid
     oneshot
 
 
