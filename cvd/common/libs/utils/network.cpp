@@ -23,6 +23,23 @@
 #include "common/libs/glog/logging.h"
 
 namespace cvd {
+namespace {
+// This should be the size of virtio_net_hdr_v1, from linux/virtio_net.h, but
+// the version of that header that ships with android in Pie does not include
+// that struct (it was added in Q).
+// This is what that struct looks like:
+// struct virtio_net_hdr_v1 {
+// u8 flags;
+// u8 gso_type;
+// u16 hdr_len;
+// u16 gso_size;
+// u16 csum_start;
+// u16 csum_offset;
+// u16 num_buffers;
+// };
+static constexpr int SIZE_OF_VIRTIO_NET_HDR_V1 = 12;
+}  // namespace
+
 SharedFD OpenTapInterface(const std::string& interface_name) {
   constexpr auto TUNTAP_DEV = "/dev/net/tun";
 
@@ -45,6 +62,16 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
     return cvd::SharedFD();
   }
 
+  // The interface's configuration may have been modified or just not set
+  // correctly on creation. While qemu checks this and enforces the right
+  // configuration, crosvm does not, so it needs to be set before it's passed to
+  // it.
+  tap_fd->Ioctl(TUNSETOFFLOAD,
+                reinterpret_cast<void*>(TUN_F_CSUM | TUN_F_UFO | TUN_F_TSO4 |
+                                        TUN_F_TSO6));
+  int len = SIZE_OF_VIRTIO_NET_HDR_V1;
+  tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
+
   return tap_fd;
 }
-}
+}  // namespace cvd
