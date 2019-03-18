@@ -1455,6 +1455,7 @@ static void request_exit_emergency_mode(void* /*data*/, size_t /*datalen*/,
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
+#if VSOC_PLATFORM_SDK_AFTER(P)
 static void request_set_carrier_restrictions4(void* /*data*/,
                                               size_t /*datalen*/,
                                               RIL_Token t) {
@@ -1468,6 +1469,7 @@ static void request_get_carrier_restrictions4(RIL_Token t) {
   // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
   gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
 }
+#endif
 
 static RIL_RadioState gce_ril_current_state() {
   ALOGV("Reporting radio state %d", gRadioPowerState);

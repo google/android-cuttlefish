@@ -1,4 +1,4 @@
-service vendor.ril-daemon /vendor/bin/hw/libvsoc-rild
+service vendor.ril-daemon /vendor/bin/hw/libcuttlefish-rild
     class main
     user radio
     group radio cache inet misc audio log readproc wakelock
