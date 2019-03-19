@@ -50,7 +50,7 @@ case $# in
 esac
 
 mkdir -p "${destdir}"
-bsdtar -x -C "${destdir}" -f "${source}" ${files_to_extract}
+bsdtar -x -S -C "${destdir}" -f "${source}" ${files_to_extract}
 
 if [[ " ${files_to_extract[*]} " == *" boot.img "* ]]; then
     /usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
