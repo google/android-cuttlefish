@@ -107,6 +107,8 @@ args=(
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk2,id=virtio-disk2"
     -drive "file=${vendor_image_path:-${HOME}/vendor.img},format=raw,if=none,id=drive-virtio-disk3,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk3,id=virtio-disk3"
+    -drive "file=${metadata_image_path:-${HOME}/metadata.img},format=raw,if=none,id=drive-virtio-disk4,aio=threads"
+    -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk4,id=virtio-disk4"
     -netdev "tap,id=hostnet0,ifname=${wifi_tap_name:-${default_wifi_tap_name}},script=no,downscript=no"
     -device "virtio-net-pci,netdev=hostnet0,id=net0"
     -netdev "tap,id=hostnet1,ifname=${mobile_tap_name:-${default_mobile_tap_name}},script=no,downscript=no"

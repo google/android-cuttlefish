@@ -11,17 +11,6 @@ const std::string kDataPolicyCreateIfMissing = "create_if_missing";
 const std::string kDataPolicyAlwaysCreate = "always_create";
 const std::string kDataPolicyResizeUpTo= "resize_up_to";
 
-void CreateBlankImage(
-    const std::string& image, int image_mb, const std::string& image_fmt) {
-  LOG(INFO) << "Creating " << image;
-  std::string of = "of=";
-  of += image;
-  std::string count = "count=";
-  count += std::to_string(image_mb);
-  cvd::execute({"/bin/dd", "if=/dev/zero", of, "bs=1M", count});
-  cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
-}
-
 void RemoveFile(const std::string& file) {
   LOG(INFO) << "Removing " << file;
   remove(file.c_str());
@@ -76,6 +65,19 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
   return true;
 }
 } // namespace
+
+void CreateBlankImage(
+    const std::string& image, int image_mb, const std::string& image_fmt) {
+  LOG(INFO) << "Creating " << image;
+  std::string of = "of=";
+  of += image;
+  std::string count = "count=";
+  count += std::to_string(image_mb);
+  cvd::execute({"/bin/dd", "if=/dev/zero", of, "bs=1M", count});
+  if (image_fmt != "none") {
+    cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
+  }
+}
 
 bool ApplyDataImagePolicy(const vsoc::CuttlefishConfig& config) {
   std::string data_image = config.data_image_path();
