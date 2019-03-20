@@ -1,1 +1,3 @@
 vndbinder_use(hal_camera_default)
+
+hal_client_domain(hal_camera_default, hal_graphics_allocator)
