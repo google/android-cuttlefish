@@ -217,4 +217,5 @@ if [[ ${vsock_guest_cid:-0} -gt 2 ]]; then
   args+=(-device "vhost-vsock-pci,guest-cid=${vsock_guest_cid}")
 fi
 
+export QEMU_AUDIO_DRV=none
 exec_run "${qemu_binary}" "${args[@]}"
