@@ -1,6 +1,11 @@
 ##########################
 # Devices
 #
+/dev/block/vda  u:object_r:system_block_device:s0
+/dev/block/vdb  u:object_r:userdata_block_device:s0
+/dev/block/vdc  u:object_r:cache_block_device:s0
+/dev/block/vdd  u:object_r:system_block_device:s0
+/dev/block/vde  u:object_r:metadata_block_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/e2e_managed  u:object_r:region_e2e_test_device:s0
 /dev/e2e_manager  u:object_r:region_e2e_test_device:s0
