@@ -1,0 +1,2 @@
+allow adbd self:socket create;
+allow adbd kernel:system module_request;
