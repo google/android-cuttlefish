@@ -64,9 +64,6 @@ on fs
 
 on post-fs-data
     start vsoc_guest_region_e2e_test
-    mkdir /data/dalvik-cache 0771 root root
-    mkdir /data/dalvik-cache/x86 0771 root system
-    mkdir /data/misc/dhcp-6.8.2 0755 dhcp root
     start gce_fs_monitor
     start vport_trigger
 
