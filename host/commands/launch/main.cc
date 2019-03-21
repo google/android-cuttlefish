@@ -99,7 +99,7 @@ DEFINE_string(hardware_name, "vsoc",
               "The codename of the device's hardware");
 DEFINE_string(guest_security, "selinux",
               "The security module to use in the guest");
-DEFINE_bool(guest_enforce_security, false,
+DEFINE_bool(guest_enforce_security, true,
             "Whether to run in enforcing mode (non permissive). Ignored if "
             "-guest_security is empty.");
 DEFINE_bool(guest_audit_security, true,
