@@ -30,7 +30,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 else
 LOCAL_JAVA_LIBRARIES := android.test.runner
 endif
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test espresso-core
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules androidx.test.espresso.core
 
 LOCAL_STATIC_JAVA_LIBRARIES+=platform-test-annotations
 
