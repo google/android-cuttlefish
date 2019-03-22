@@ -23,7 +23,7 @@ LOCAL_SHARED_LIBRARIES := \
   liblog \
   libcutils \
   libutils \
-  libril \
+  ${CUTTLEFISH_LIBRIL_NAME} \
   libcuttlefish_fs \
   cuttlefish_net \
   cuttlefish_auto_resources \
@@ -48,3 +48,5 @@ LOCAL_MULTILIB := first
 endif
 
 include $(BUILD_SHARED_LIBRARY)
+
+include $(call first-makefiles-under,$(LOCAL_PATH))

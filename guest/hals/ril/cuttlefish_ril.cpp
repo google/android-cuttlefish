@@ -33,7 +33,7 @@
 #include "common/libs/net/network_interface_manager.h"
 #include "guest/libs/platform_support/api_level_fixes.h"
 
-#define CUTTLEFISH_RIL_VERSION_STRING "Android Cuttlefish RIL 1.0"
+#define CUTTLEFISH_RIL_VERSION_STRING "Android Cuttlefish RIL 1.4"
 
 /* Modem Technology bits */
 #define MDM_GSM 0x01
@@ -114,6 +114,7 @@ static time_t gce_ril_start_time;
 static void pollSIMState(void* param);
 
 RIL_RadioState gRadioPowerState = RADIO_STATE_OFF;
+RIL_RadioAccessFamily default_access = RAF_LTE;
 
 struct DataCall {
   enum AllowedAuthenticationType { kNone = 0, kPap = 1, kChap = 2, kBoth = 3 };
@@ -338,6 +339,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
     ALOGE("%s returning: called with small datalen %zu", __FUNCTION__, datalen);
     return;
   }
+
   DataCall call;
   int tech = atoi(details[0]);
   switch (tech) {
@@ -382,7 +384,7 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
 
   if (call.connection_type_ != DataCall::kConnTypeIPv4) {
     ALOGE("Non-IPv4 connections are not supported by Cuttlefish RIL.");
-    gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    gce_ril_env->OnRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
     return;
   }
 
@@ -1453,6 +1455,22 @@ static void request_exit_emergency_mode(void* /*data*/, size_t /*datalen*/,
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
+#if VSOC_PLATFORM_SDK_AFTER(P)
+static void request_set_carrier_restrictions4(void* /*data*/,
+                                              size_t /*datalen*/,
+                                              RIL_Token t) {
+  ALOGV("Set carrier restrictions is not supported");
+  // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
+  gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+}
+
+static void request_get_carrier_restrictions4(RIL_Token t) {
+  ALOGV("Get carrier restrictions is not supported");
+  // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
+  gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
+}
+#endif
+
 static RIL_RadioState gce_ril_current_state() {
   ALOGV("Reporting radio state %d", gRadioPowerState);
   return gRadioPowerState;
@@ -2274,6 +2292,78 @@ static void request_ims_registration_state(RIL_Token t) {
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, reply, sizeof(reply));
 }
 
+// New functions after P.
+#if VSOC_PLATFORM_SDK_AFTER(P)
+static void request_start_network_scan(RIL_Token t) {
+  ALOGV("Scanning network - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_start_network_scan4(RIL_Token t) {
+  ALOGV("Scanning network 1.4");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_set_preferred_network_type_bitmap(int /*request*/, void* data,
+                                               size_t /*datalen*/,
+                                               RIL_Token t) {
+  RIL_RadioAccessFamily desired_access = *(RIL_RadioAccessFamily*)(data);
+
+  ALOGV("Requesting modem technology change %d -> %d", default_access, desired_access);
+
+  /** TODO future implementation: set modem type based on radio access family.
+   * 1) find supported_technologies and desired_technologies
+   * 2) return RIL_E_MODE_NOT_SUPPORTED error if not supported
+   */
+  default_access = desired_access;
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_get_preferred_network_type_bitmap(int /*request*/, void* /*data*/,
+                                               size_t /*datalen*/,
+                                               RIL_Token t) {
+  ALOGV("Requesting modem radio access family: %d", default_access);
+  gce_ril_env->OnRequestComplete(
+      t, RIL_E_SUCCESS, (RIL_RadioAccessFamily*)(&default_access), sizeof(default_access));
+}
+
+static void request_emergency_dial(int /*request*/, void* /*data*/, size_t /*datalen*/,
+    RIL_Token t) {
+  ALOGV("Emergency dial");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_set_sim_card_power(int /*request*/, void* /*data*/, size_t /*datalen*/,
+    RIL_Token t) {
+  ALOGV("Set sim card power - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_get_modem_stack_status(int /*request*/, RIL_Token t) {
+  ALOGV("Getting modem stack status - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_enable_modem(int /*request*/, RIL_Token t) {
+  ALOGV("Enabling modem - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_set_system_selection_channels(int /*request*/, RIL_Token t) {
+  ALOGV("request_set_system_selection_channels - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+#endif
+
 static void gce_ril_on_request(int request, void* data, size_t datalen,
                                RIL_Token t) {
   // Ignore all requests except RIL_REQUEST_GET_SIM_STATUS
@@ -2476,6 +2566,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_SET_RADIO_CAPABILITY:
       request_set_radio_capability(data, datalen, t);
       break;
+    case RIL_REQUEST_SET_DATA_PROFILE:
+      gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+      break;
 #endif
 #if VSOC_PLATFORM_SDK_AFTER(K)
     case RIL_REQUEST_GET_HARDWARE_CONFIG:
@@ -2504,6 +2597,43 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
       break;
 
+#endif
+
+// New requests after P.
+#if VSOC_PLATFORM_SDK_AFTER(P)
+    case RIL_REQUEST_START_NETWORK_SCAN:
+      request_start_network_scan(t);
+      break;
+    case RIL_REQUEST_START_NETWORK_SCAN4:
+      request_start_network_scan4(t);
+      break;
+    case RIL_REQUEST_GET_MODEM_STACK_STATUS:
+      request_get_modem_stack_status(request, t);
+      break;
+    case RIL_REQUEST_ENABLE_MODEM:
+      request_enable_modem(request, t);
+      break;
+    case RIL_REQUEST_EMERGENCY_DIAL:
+      request_emergency_dial(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_SIM_CARD_POWER:
+      request_set_sim_card_power(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP:
+      request_get_preferred_network_type_bitmap(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP:
+      request_set_preferred_network_type_bitmap(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS:
+      request_set_system_selection_channels(request, t);
+      break;
+    case RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4:
+      request_set_carrier_restrictions4(data, datalen, t);
+      break;
+    case RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4:
+      request_get_carrier_restrictions4(t);
+      break;
 #endif
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);

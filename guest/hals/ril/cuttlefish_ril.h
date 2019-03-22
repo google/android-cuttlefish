@@ -24,5 +24,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/time.h>
+
+// Start to use and maintain the local ril.h file from Q.
+#include "guest/libs/platform_support/api_level_fixes.h"
+#if VSOC_PLATFORM_SDK_BEFORE(Q)
 #include <telephony/ril.h>
+#else
+#include <guest/hals/ril/libril/ril.h>
+#endif
+
 #include <telephony/ril_cdma_sms.h>
