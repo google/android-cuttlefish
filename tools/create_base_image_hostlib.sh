@@ -69,9 +69,6 @@ main() {
     "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common/tools/create_base_image_gce.sh"
     ${scratch_dir}/*
   )
-  if [[ "${FLAGS_variant}" == master ]]; then
-    source_files+=("${ANDROID_BUILD_TOP}/device/google/cuttlefish_common/tools/build-qemu-packages.sh")
-  fi
   if [[ -n "${INTERNAL_extra_source}" ]]; then
     source_files+=("${INTERNAL_extra_source}"/*)
   fi
