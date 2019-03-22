@@ -5,6 +5,9 @@
 # INTERNAL_extra_source may be set to a directory containing the source for
 # extra package to build.
 
+# INTERNAL_IP can be set to --internal-ip run on a GCE instance
+# The instance will need --scope compute-rw
+
 source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
 
 DEFINE_string build_instance \
@@ -26,11 +29,13 @@ DEFINE_string repository_branch master \
 DEFINE_string variant master \
   "Variant to build: generally master or stable"
 
+SSH_FLAGS=(${INTERNAL_IP})
+
 wait_for_instance() {
   alive=""
   while [[ -z "${alive}" ]]; do
     sleep 5
-    alive="$(gcloud compute ssh "$@" -- uptime || true)"
+    alive="$(gcloud compute ssh "${SSH_FLAGS[@]}" "$@" -- uptime || true)"
   done
 }
 
@@ -102,10 +107,11 @@ main() {
   gcloud compute instances attach-disk \
       "${dest_project_flag[@]}" \
       "${FLAGS_build_instance}" --disk="${FLAGS_dest_image}"
-  gcloud compute scp "${dest_project_flag[@]}" \
+  # beta for the --internal-ip flag that may be passed via SSH_FLAGS
+  gcloud beta compute scp "${SSH_FLAGS[@]}" "${dest_project_flag[@]}" \
     "${source_files[@]}" \
     "${FLAGS_build_instance}:"
-  gcloud compute ssh \
+  gcloud compute ssh "${SSH_FLAGS[@]}" \
     "${dest_project_flag[@]}" "${FLAGS_build_instance}" -- \
     ./create_base_image_gce.sh
   gcloud compute instances delete -q \
