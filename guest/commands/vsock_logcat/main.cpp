@@ -63,7 +63,7 @@ class ServiceStatus {
   char status_[PROP_VALUE_MAX];
 };
 
-const char* ServiceStatus::kServiceStatusProperty = "vsock_logcat_status";
+const char* ServiceStatus::kServiceStatusProperty = "vendor.vsock_logcat_status";
 const char* ServiceStatus::kStatusStarted = "started";
 const char* ServiceStatus::kStatusFailed = "failed";
 
