@@ -4,8 +4,8 @@ type socket_vsock_proxy_exec, exec_type, vendor_file_type, file_type;
 init_daemon_domain(socket_vsock_proxy)
 
 allow socket_vsock_proxy self:global_capability_class_set { net_admin net_raw };
-allow socket_vsock_proxy self:socket { create read write listen accept bind };
+allow socket_vsock_proxy self:{ socket vsock_socket } { create read write listen accept bind };
 
 # TODO: socket returned by accept() has unlabeled context on it. Give it a
 # specific label.
-allow socket_vsock_proxy unlabeled:socket { getopt read write shutdown};
+allow socket_vsock_proxy unlabeled:{ socket vsock_socket } { getopt read write shutdown };
