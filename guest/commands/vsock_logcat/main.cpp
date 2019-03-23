@@ -18,6 +18,10 @@
 
 #include <string.h>
 
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -27,13 +31,18 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
 DEFINE_uint32(port, property_get_int32("ro.boot.vsock_logcat_port", 0),
               "VSOCK port to send logcat output to");
 DEFINE_uint32(cid, 2, "VSOCK CID to send logcat output to");
+DEFINE_string(pipe_name, "/dev/cf_logcat_pipe",
+              "The path for the named pipe logcat will write to");
 
 namespace {
+
+constexpr char kLogcatExitMsg[] = "\nDetected exit of logcat process\n\n";
 
 class ServiceStatus {
  public:
@@ -106,32 +115,26 @@ int main(int argc, char** argv) {
                << ServiceStatus::kServiceStatusProperty;
   }
 
-  cvd::Command logcat_cmd("/system/bin/logcat");
-  logcat_cmd.AddParameter("-b");
-  logcat_cmd.AddParameter("all");
-  logcat_cmd.AddParameter("-v");
-  logcat_cmd.AddParameter("threadtime");
-  logcat_cmd.AddParameter("*:V");
-
-  logcat_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, log_fd);
-
-  while (true) {
-    int wstatus;
-    logcat_cmd.Start().Wait(&wstatus, 0);
-    std::ostringstream exit_msg_builder;
-    exit_msg_builder << std::endl
-                     << "Logcat process exited with wstatus " << wstatus
-                     << ", restarting ..." << std::endl
-                     << std::endl;
-    auto exit_msg = exit_msg_builder.str();
-    size_t written = log_fd->Write(exit_msg.c_str(), exit_msg.size());
-    if (written != exit_msg.size()) {
-      std::ostringstream ss;
-      ss << exit_msg << std::endl
-         << "Unable to write complete message on socket: "
-         << log_fd->StrError();
-      LogFailed(ss.str(), &status);
-      return 2;
+  if (cvd::FileExists(FLAGS_pipe_name)) {
+    LOG(WARNING) << "The file " << FLAGS_pipe_name << " already exists. Deleting...";
+    cvd::RemoveFile(FLAGS_pipe_name);
+  }
+  auto pipe = mkfifo(FLAGS_pipe_name.c_str(), 0600);
+  if (pipe != 0) {
+    LOG(FATAL) << "unable to create pipe: " << strerror(errno);
+  }
+  property_set("vendor.ser.cf-logcat", FLAGS_pipe_name.c_str());
+  while (1) {
+    auto conn = cvd::SharedFD::Open(FLAGS_pipe_name.c_str(), O_RDONLY);
+    while (conn->IsOpen()) {
+      char buff[4096];
+      auto read = conn->Read(buff, sizeof(buff));
+      if (read) {
+        log_fd->Write(buff, read);
+      } else {
+        conn->Close();
+      }
     }
+    log_fd->Write(kLogcatExitMsg, sizeof(kLogcatExitMsg) - 1);
   }
 }
