@@ -11,11 +11,6 @@ const std::string kDataPolicyCreateIfMissing = "create_if_missing";
 const std::string kDataPolicyAlwaysCreate = "always_create";
 const std::string kDataPolicyResizeUpTo= "resize_up_to";
 
-void RemoveFile(const std::string& file) {
-  LOG(INFO) << "Removing " << file;
-  remove(file.c_str());
-}
-
 const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
 
@@ -117,7 +112,7 @@ bool ApplyDataImagePolicy(const vsoc::CuttlefishConfig& config) {
   }
 
   if (remove) {
-    RemoveFile(data_image.c_str());
+    cvd::RemoveFile(data_image.c_str());
   }
 
   if (create) {
