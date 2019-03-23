@@ -20,12 +20,18 @@
 
 #include <array>
 #include <climits>
+#include <cstdio>
 #include <cstdlib>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 namespace cvd {
+
+bool FileExists(const std::string& path) {
+  struct stat st;
+  return stat(path.c_str(), &st) == 0;
+}
 
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
@@ -65,6 +71,11 @@ off_t FileSize(const std::string& path) {
     return 0;
   }
   return st.st_size;
+}
+
+bool RemoveFile(const std::string& file) {
+  LOG(INFO) << "Removing " << file;
+  return remove(file.c_str()) == 0;
 }
 
 }  // namespace cvd
