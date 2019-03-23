@@ -20,9 +20,11 @@
 #include <string>
 
 namespace cvd {
+bool FileExists(const std::string& path);
 bool FileHasContent(const std::string& path);
 bool DirectoryExists(const std::string& path);
 off_t FileSize(const std::string& path);
+bool RemoveFile(const std::string& file);
 
 // The returned value may contain .. or . if these are present in the path
 // argument.
