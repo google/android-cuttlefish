@@ -1,2 +1,5 @@
 sys.cf.ser.  u:object_r:sys_cf_ser_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
+ro.boot.vsock_logcat_port  u:object_r:vsock_logcat_port_prop:s0
+vendor.vsock_logcat_status  u:object_r:vsock_logcat_status_prop:s0
+vendor.ser.cf-logcat  u:object_r:cf_logcat_path_prop:s0
