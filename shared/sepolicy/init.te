@@ -7,3 +7,7 @@ allow init configfs:lnk_file create;
 
 # Add loadable modules. Needed for usbfunc:diag, usbfunc:diag, usbfunc:gsi, usbfunc:qdss modules.
 allow init kernel:system module_request;
+
+# binfmt_misc arm for ndk translator
+allow init binfmt_miscfs:file w_file_perms;
+allow init proc:dir mounton;
