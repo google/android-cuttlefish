@@ -1,7 +1,5 @@
-#pragma once
-
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +14,24 @@
  * limitations under the License.
  */
 
-#include "vnc_utils.h"
+#pragma once
 
-#include <map>
-#include <mutex>
-
-#include "common/vsoc/lib/input_events_region_view.h"
+#include <cstdint>
 
 namespace cvd {
 namespace vnc {
 
-class VirtualInputs {
+class ScreenConnector {
  public:
-  static VirtualInputs* Get();
+  static ScreenConnector* Get();
 
-  virtual ~VirtualInputs() = default;
+  virtual ~ScreenConnector() = default;
 
-  virtual void GenerateKeyPressEvent(int code, bool down) = 0;
-  virtual void PressPowerButton(bool down) = 0;
-  virtual void HandlePointerEvent(bool touch_down, int x, int y) = 0;
+  virtual int WaitForNewFrameSince(std::uint32_t* seq_num) = 0;
+  virtual void* GetBuffer(int buffer_idx) = 0;
 
  protected:
-  VirtualInputs();
-
-  std::map<uint32_t, uint16_t> keymapping_;
+  ScreenConnector() = default;
 };
 
 }  // namespace vnc

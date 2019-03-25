@@ -133,9 +133,9 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
 }  // namespace vnc
 }  // namespace cvd
 
-VncClientConnection::VncClientConnection(ClientSocket client,
-                                         VirtualInputs* virtual_inputs,
-                                         BlackBoard* bb, bool aggressive)
+VncClientConnection::VncClientConnection(
+    ClientSocket client, std::shared_ptr<VirtualInputs> virtual_inputs,
+    BlackBoard* bb, bool aggressive)
     : client_{std::move(client)}, virtual_inputs_{virtual_inputs}, bb_{bb} {
   frame_buffer_request_handler_tid_ = std::thread(
       &VncClientConnection::FrameBufferUpdateRequestHandler, this, aggressive);

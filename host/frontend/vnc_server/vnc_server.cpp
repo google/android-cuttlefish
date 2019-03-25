@@ -28,7 +28,10 @@
 using cvd::vnc::VncServer;
 
 VncServer::VncServer(int port, bool aggressive)
-    : server_(port), frame_buffer_watcher_{&bb_}, aggressive_{aggressive} {}
+    : server_(port),
+    virtual_inputs_(VirtualInputs::Get()),
+    frame_buffer_watcher_{&bb_},
+    aggressive_{aggressive} {}
 
 void VncServer::MainLoop() {
   while (true) {
@@ -50,7 +53,7 @@ void VncServer::StartClientThread(ClientSocket sock) {
   // data members. In the current setup, if the VncServer is destroyed with
   // clients still running, the clients will all be left with dangling
   // pointers.
-  VncClientConnection client(std::move(sock), &virtual_inputs_, &bb_,
+  VncClientConnection client(std::move(sock), virtual_inputs_, &bb_,
                              aggressive_);
   client.StartSession();
 }

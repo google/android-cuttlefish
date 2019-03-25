@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include <string>
 #include <thread>
 #include <utility>
@@ -46,7 +47,7 @@ class VncServer {
   void StartClientThread(ClientSocket sock);
 
   ServerSocket server_;
-  VirtualInputs virtual_inputs_;
+  std::shared_ptr<VirtualInputs> virtual_inputs_;
   BlackBoard bb_;
   FrameBufferWatcher frame_buffer_watcher_;
   bool aggressive_{};

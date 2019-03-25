@@ -302,7 +302,13 @@ class CuttlefishConfig {
   void set_logcat_vsock_port(int port);
   int logcat_vsock_port() const;
 
+  void set_frames_vsock_port(int port);
+  int frames_vsock_port() const;
+
   bool enable_ivserver() const;
+
+  std::string touch_socket_path() const;
+  std::string keyboard_socket_path() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
