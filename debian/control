@@ -36,6 +36,7 @@ Depends:
  libudev1,
  libxml2,
  linux-image-extra-virtual | linux-image-amd64 (>= 4.9),
+ lzop,
  psmisc,
  python,
  qemu-kvm (>= 2.8.0),
