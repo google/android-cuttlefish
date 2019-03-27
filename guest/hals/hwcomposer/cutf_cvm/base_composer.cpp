@@ -81,18 +81,25 @@ FrameBuffer::FrameBuffer()
           2, property_get_int32("ro.boot.vsock_frames_port", 5580),
           SOCK_STREAM)),
       broadcast_thread_([this]() { BroadcastLoop(); }) {
-  // TODO(b/128842613): Get this info from the configuration server
-  int32_t screen_params[4];
-  auto res = screen_server_->Read(screen_params, sizeof(screen_params));
-  if (res != sizeof(screen_params)) {
-    LOG(ERROR) << "Unable to get screen configuration parameters from screen "
-               << "server (" << res << "): " << screen_server_->StrError();
-    return;
+  if (screen_server_->IsOpen()) {
+    // TODO(b/128842613): Get this info from the configuration server
+    int32_t screen_params[4];
+    auto res = screen_server_->Read(screen_params, sizeof(screen_params));
+    if (res == sizeof(screen_params)) {
+      x_res_ = screen_params[0];
+      y_res_ = screen_params[1];
+      dpi_ = screen_params[2];
+      refresh_rate_ = screen_params[3];
+    } else {
+      LOG(ERROR) << "Unable to get screen configuration parameters from screen "
+                 << "server (" << res << "): " << screen_server_->StrError();
+    }
+  } else {
+    LOG(ERROR) << "Unable to connect to screen server: "
+               << screen_server_->StrError();
   }
-  x_res_ = screen_params[0];
-  y_res_ = screen_params[1];
-  dpi_ = screen_params[2];
-  refresh_rate_ = screen_params[3];
+  // This needs to happen no matter what, otherwise there won't be a buffer for
+  // the set calls to compose on.
   inner_buffer_ = std::vector<char>(FrameBuffer::buffer_size() * 8);
 }
 
@@ -109,6 +116,12 @@ int FrameBuffer::NextScreenBuffer() {
 }
 
 void FrameBuffer::BroadcastLoop() {
+  if (!screen_server_->IsOpen()) {
+    LOG(ERROR) << "Broadcaster thread exiting due to no connection to screen"
+               << " server. Compositions will occur, but frames won't be sent"
+               << " anywhere";
+    return;
+  }
   int32_t current_seq = 0;
   int32_t current_offset;
   while (running_) {
