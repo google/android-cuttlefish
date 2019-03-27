@@ -193,7 +193,7 @@ PRODUCT_PACKAGES += \
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
-    hwcomposer.drm \
+    hwcomposer.drm_minigbm \
     hwcomposer.cutf_ivsh \
     hwcomposer.cutf_cvm \
     hwcomposer-stats \
