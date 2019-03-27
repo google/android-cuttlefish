@@ -163,7 +163,7 @@ PRODUCT_PACKAGES += \
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
-    hwcomposer.drm \
+    hwcomposer.drm_minigbm \
     hwcomposer.vsoc \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl \
