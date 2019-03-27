@@ -140,14 +140,24 @@ void HandleConnection(cvd::SharedFD vsock,
             << FLAGS_vsock_port;
   auto server = cvd::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_tcp_port;
+  LOG(INFO) << "Accepting client connections";
+  int last_failure_reason = 0;
   while (true) {
-    LOG(INFO) << "waiting for client connection";
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
-    LOG(INFO) << "client socket accepted";
     cvd::SharedFD vsock_socket = cvd::SharedFD::VsockClient(
         FLAGS_vsock_guest_cid, FLAGS_vsock_port, SOCK_STREAM);
-    if (!vsock_socket->IsOpen()) {
+    if (vsock_socket->IsOpen()) {
+      last_failure_reason = 0;
+      LOG(INFO) << "Connected to vsock:" << FLAGS_vsock_guest_cid << ":"
+                << FLAGS_vsock_port;
+    } else {
+      // Don't log if the previous connection failed with the same error
+      if (last_failure_reason != vsock_socket->GetErrno()) {
+        last_failure_reason = vsock_socket->GetErrno();
+        LOG(ERROR) << "Unable to connect to vsock server: "
+                   << vsock_socket->StrError();
+      }
       continue;
     }
     auto thread = std::thread(HandleConnection, std::move(vsock_socket),
