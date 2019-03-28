@@ -29,14 +29,9 @@ PRODUCT_CHARACTERISTICS := nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
-    vendor.rild.libpath=libcuttlefish-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
-    ro.gsm.home.operator.alpha=Android \
-    ro.gsm.home.operator.numeric=302780 \
-    gsm.sim.operator.numeric=302780 \
-    gsm.sim.operator.alpha=Android \
-    gsm.sim.operator.iso-country=us
+    vendor.rild.libpath=libcuttlefish-ril.so \
 
 PRODUCT_PACKAGES += \
     MmsService \
