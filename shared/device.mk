@@ -26,7 +26,6 @@ DISABLE_RILD_OEM_HOOK := true
 PRODUCT_PROPERTY_OVERRIDES += \
     tombstoned.max_tombstone_count=500 \
     debug.hwui.swap_with_damage=0 \
-    ro.adb.qemud=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
     ro.com.google.locationfeatures=1 \
