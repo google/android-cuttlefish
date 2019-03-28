@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     // ril/socket id received as -c parameter, otherwise set to 0
     const char *clientId = NULL;
 
-    RLOGD("**RIL Daemon Started - Hola, Benito A 1.4**");
+    RLOGD("**RIL Daemon Started - Version 1.4**");
     RLOGD("**RILd param count=%d**", argc);
 
     umask(S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);

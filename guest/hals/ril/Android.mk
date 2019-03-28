@@ -40,7 +40,6 @@ LOCAL_CFLAGS += \
 
 # only for PLATFORM_VERSION greater or equal to Q
 ifeq ($(PLATFORM_VERSION), $(word 1, $(sort Q $(PLATFORM_VERSION))))
-    $(info Use updated hal for PLATFORM VERSION = $(PLATFORM_VERSION))
 
     LOCAL_SRC_FILES += \
         libril/ril.cpp \
