@@ -1,4 +1,4 @@
-cuttlefish-common (0.9.3+nmu1) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.3) stable; urgency=medium
 
   [ Cody Schuffelen ]
   * Use udev for vhost-vsock instead of a chmod.
@@ -11,7 +11,7 @@ cuttlefish-common (0.9.3+nmu1) UNRELEASED; urgency=medium
   * Use modules-load.d to load required cuttlefish modules
   * Add dependency on lzop for faster image uploads
 
- -- Greg Hartman <ghartman@google.com>  Mon, 25 Mar 2019 21:22:12 -0700
+ -- Greg Hartman <ghartman@google.com>  Thu, 28 Mar 2019 12:44:36 -0700
 
 cuttlefish-common (0.9.1) UNRELEASED; urgency=medium
 
