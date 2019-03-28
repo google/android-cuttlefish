@@ -13,9 +13,6 @@ on early-init
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
-    # Disable the rootcanal test console as it violates selinux policy
-    setprop bt.rootcanal_test_console off
-
 
 on init
     # ZRAM setup

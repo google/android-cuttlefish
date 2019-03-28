@@ -7,4 +7,6 @@ allow vendor_init {
   region_screen_device
 }:chr_file { getattr };
 
+set_prop(vendor_init, hal_bluetooth_sim_prop)
+
 set_prop(vendor_init, vendor_init_radio_prop)
