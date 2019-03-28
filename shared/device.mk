@@ -32,8 +32,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
     ro.opengles.version=196608 \
-    ro.ril.gprsclass=10 \
-    ro.ril.hsxpa=1 \
     wifi.interface=wlan0 \
 
 # Below is a list of properties we probably should get rid of.
