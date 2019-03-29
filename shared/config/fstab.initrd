@@ -3,5 +3,6 @@
 /dev/block/vdc /cache ext4 nodev,noatime,nosuid,errors=panic wait
 /dev/block/vdd /vendor ext4 noatime,ro,errors=panic wait
 /dev/block/vde /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
+/dev/block/vdf /product ext4 noatime,ro,errors=panic wait
 /dev/block/zram0 none swap defaults zramsize=75%
 /tmp /sdcard none defaults,bind recoveryonly
