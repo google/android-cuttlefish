@@ -57,6 +57,12 @@ class CuttlefishConfig {
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
+  std::string gpu_mode() const;
+  void set_gpu_mode(const std::string& name);
+
+  std::string wayland_socket() const;
+  void set_wayland_socket(const std::string& path);
+
   std::string hardware_name() const;
   void set_hardware_name(const std::string& name);
 
@@ -346,8 +352,15 @@ int GetDefaultPerInstanceVsockCid();
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
+std::string DefaultEnvironmentPath(const char* environment_key,
+                                   const char* default_value,
+                                   const char* path);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
 bool HostSupportsVsock();
+
+// GPU modes
+extern const char* const kGpuModeGuestAshmem;
+extern const char* const kGpuModeGuestDrm;
 }  // namespace vsoc
