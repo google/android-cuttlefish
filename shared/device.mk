@@ -25,6 +25,7 @@ DISABLE_RILD_OEM_HOOK := true
 #   ro.opengles.version OpenGLES 3.0
 PRODUCT_PROPERTY_OVERRIDES += \
     tombstoned.max_tombstone_count=500 \
+    bt.rootcanal_test_console=off \
     debug.hwui.swap_with_damage=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
