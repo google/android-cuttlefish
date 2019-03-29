@@ -23,6 +23,7 @@ Architecture: amd64
 Depends:
  acl,
  adb,
+ binutils,
  bridge-utils,
  device-tree-compiler,
  hostapd,
