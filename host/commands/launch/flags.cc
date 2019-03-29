@@ -91,6 +91,7 @@ DEFINE_string(
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
+DEFINE_string(product_image, "", "Location of the product partition image.");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -223,6 +224,9 @@ bool ResolveInstanceFiles() {
   std::string default_metadata_image = FLAGS_system_image_dir + "/metadata.img";
   SetCommandLineOptionWithMode("metadata_image", default_metadata_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_product_image = FLAGS_system_image_dir + "/product.img";
+  SetCommandLineOptionWithMode("product_image", default_product_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
@@ -348,6 +352,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_data_image_path(FLAGS_data_image);
   tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
   tmp_config_obj.set_metadata_image_path(FLAGS_metadata_image);
+  tmp_config_obj.set_product_image_path(FLAGS_product_image);
   tmp_config_obj.set_dtb_path(FLAGS_dtb);
   tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
 
@@ -642,7 +647,7 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   for (const auto& file :
        {config->system_image_path(), config->vendor_image_path(),
         config->cache_image_path(), config->data_image_path(),
-        config->metadata_image_path()}) {
+        config->metadata_image_path(), config->product_image_path()}) {
     if (!cvd::FileHasContent(file.c_str())) {
       LOG(ERROR) << "File not found: " << file;
       exit(cvd::kCuttlefishConfigurationInitError);

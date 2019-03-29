@@ -76,6 +76,7 @@ cvd::Command QemuManager::StartCommand(){
   LogAndSetEnv("cache_image_path", config_->cache_image_path());
   LogAndSetEnv("vendor_image_path", config_->vendor_image_path());
   LogAndSetEnv("metadata_image_path", config_->metadata_image_path());
+  LogAndSetEnv("product_image_path", config_->product_image_path());
   LogAndSetEnv("wifi_tap_name", config_->wifi_tap_name());
   LogAndSetEnv("mobile_tap_name", config_->mobile_tap_name());
   LogAndSetEnv("kernel_log_socket_name",
