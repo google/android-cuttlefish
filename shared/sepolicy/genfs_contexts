@@ -1,0 +1,1 @@
+genfscon sysfs /devices/pnp0/00:00/rtc  u:object_r:sysfs_rtc:s0
