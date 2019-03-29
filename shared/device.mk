@@ -40,10 +40,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
 
 
-# Default OMX service to non-Treble
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.media.treble_omx=false
-
 # Enable Perfetto traced and heapprofd
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.traced.enable=1 \
