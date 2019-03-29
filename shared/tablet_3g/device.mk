@@ -27,11 +27,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     rild.libpath=libcuttlefish-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
-    ro.gsm.home.operator.alpha=Android \
-    ro.gsm.home.operator.numeric=302780 \
-    gsm.sim.operator.numeric=302780 \
-    gsm.sim.operator.alpha=Android \
-    gsm.sim.operator.iso-country=us \
 
 PRODUCT_PACKAGES += \
     MmsService \
