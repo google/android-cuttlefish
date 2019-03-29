@@ -69,6 +69,8 @@ int InstanceFromEnvironment() {
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
+const char* const kGpuMode = "gpu_mode";
+const char* const kWaylandSocket = "wayland_socket";
 const char* kHardwareName = "hardware_name";
 const char* kDeviceTitle = "device_title";
 
@@ -162,6 +164,16 @@ const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 
 namespace vsoc {
 
+const char* const kGpuModeGuestAshmem = "guest_ashmem";
+const char* const kGpuModeGuestDrm = "guest_drm";
+
+std::string DefaultEnvironmentPath(const char* environment_key,
+                                   const char* default_value,
+                                   const char* subpath) {
+  return cvd::StringFromEnv(environment_key, default_value) + "/" + subpath;
+}
+
+
 std::string CuttlefishConfig::instance_dir() const {
   return (*dictionary_)[kInstanceDir].asString();
 }
@@ -174,6 +186,21 @@ std::string CuttlefishConfig::vm_manager() const {
 }
 void CuttlefishConfig::set_vm_manager(const std::string& name) {
   (*dictionary_)[kVmManager] = name;
+}
+
+std::string CuttlefishConfig::gpu_mode() const {
+  return (*dictionary_)[kGpuMode].asString();
+}
+void CuttlefishConfig::set_gpu_mode(const std::string& name) {
+  (*dictionary_)[kGpuMode] = name;
+}
+
+std::string CuttlefishConfig::wayland_socket() const {
+  // Don't use SetPath here: the path is already fully formed.
+  return (*dictionary_)[kWaylandSocket].asString();
+}
+void CuttlefishConfig::set_wayland_socket(const std::string& path) {
+  (*dictionary_)[kWaylandSocket] = path;
 }
 
 std::string CuttlefishConfig::hardware_name() const {

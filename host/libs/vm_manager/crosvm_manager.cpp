@@ -53,6 +53,26 @@ void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
 
 const std::string CrosvmManager::name() { return "crosvm"; }
 
+bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
+  // Override the default HAL search paths in all cases. We do this because
+  // the HAL search path allows for fallbacks, and fallbacks in conjunction
+  // with properities lead to non-deterministic behavior while loading the
+  // HALs.
+  if (config->gpu_mode() == vsoc::kGpuModeGuestDrm) {
+    config->add_kernel_cmdline("androidboot.hardware.gralloc=minigbm");
+    config->add_kernel_cmdline("androidboot.hardware.hwcomposer=drm");
+    return true;
+  }
+  if (config->gpu_mode() == vsoc::kGpuModeGuestAshmem) {
+    config->add_kernel_cmdline(
+        "androidboot.hardware.gralloc=cutf_ashmem");
+    config->add_kernel_cmdline(
+        "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
+    return true;
+  }
+  return false;
+}
+
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
@@ -74,6 +94,10 @@ cvd::Command CrosvmManager::StartCommand() {
   cvd::Command command(config_->crosvm_binary());
   command.AddParameter("run");
 
+  if (config_->gpu_mode() != vsoc::kGpuModeGuestAshmem) {
+    command.AddParameter("--gpu");
+    command.AddParameter("--wayland-sock=", config_->wayland_socket());
+  }
   command.AddParameter("--null-audio");
   command.AddParameter("--mem=", config_->memory_mb());
   command.AddParameter("--cpus=", config_->cpus());

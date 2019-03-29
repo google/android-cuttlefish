@@ -29,7 +29,7 @@ VSOC_GRALLOC_COMMON_CFLAGS:= \
     $(VSOC_VERSION_CFLAGS)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := gralloc.cutf
+LOCAL_MODULE := gralloc.cutf_ashmem
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE_TAGS := optional
 
