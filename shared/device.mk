@@ -20,6 +20,15 @@ PRODUCT_SHIPPING_API_LEVEL := 26
 
 DISABLE_RILD_OEM_HOOK := true
 
+# Properties that are not vendor-specific. These will go in the product
+# partition, instead of the vendor partition, and do not need vendor
+# sepolicy
+PRODUCT_PRODUCT_PROPERTIES := \
+    persist.adb.tcp.port=5555 \
+    persist.traced.enable=1 \
+    persist.heapprofd.enable=1 \
+    ro.com.google.locationfeatures=1 \
+ 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 3.0
@@ -29,7 +38,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     debug.hwui.swap_with_damage=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
-    ro.com.google.locationfeatures=1 \
     ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
     ro.opengles.version=196608 \
@@ -38,12 +46,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # Below is a list of properties we probably should get rid of.
 PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
-
-
-# Enable Perfetto traced and heapprofd
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.traced.enable=1 \
-    persist.heapprofd.enable=1
 
 #
 # Packages for various cuttlefish-specific tests

@@ -28,6 +28,12 @@ TARGET_COPY_OUT_VENDOR := vendor
 
 BOARD_USES_METADATA_PARTITION := true
 
+# Build a separate product.img partition
+BOARD_USES_PRODUCTIMAGE := true
+BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := ext4
+BOARD_PRODUCTIMAGE_PARTITION_SIZE := 805306368 # 768MB
+TARGET_COPY_OUT_PRODUCT := product
+
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
 endif
@@ -43,8 +49,8 @@ TARGET_USES_HWC2 := true
 # The compiler will occasionally generate movaps, etc.
 BOARD_MALLOC_ALIGNMENT := 16
 
-# System partition size: 3.0G
-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 3221225472
+# System partition size: 2.25G
+BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2415919104
 # Make the userdata partition 4G to accomodate ASAN and CTS
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 4294967296
 
