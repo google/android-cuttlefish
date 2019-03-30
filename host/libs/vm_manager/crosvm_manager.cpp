@@ -83,6 +83,7 @@ cvd::Command CrosvmManager::StartCommand() {
   command.AddParameter("--rwdisk=", config_->cache_image_path());
   command.AddParameter("--rwdisk=", config_->vendor_image_path());
   command.AddParameter("--rwdisk=", config_->metadata_image_path());
+  command.AddParameter("--rwdisk=", config_->product_image_path());
   command.AddParameter("--socket=", GetControlSocketPath(config_));
   command.AddParameter("--android-fstab=", config_->gsi_fstab_path());
   command.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
