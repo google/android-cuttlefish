@@ -110,6 +110,13 @@ TEST(ManagedRegionTest, ManagedRegionMap) {
 }
 
 int main(int argc, char** argv) {
+  if (argc == 2) {
+    // gtest tries to leave temporary files in the current directory, so make the
+    // current directory something that we control.
+    if (chdir(argv[1]) != 0) {
+      abort();
+    }
+  }
   android::base::InitLogging(argv);
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
