@@ -7,6 +7,8 @@
 /dev/block/vdd  u:object_r:system_block_device:s0
 /dev/block/vde  u:object_r:metadata_block_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
+/dev/dri/card0  u:object_r:graphics_device:s0
+/dev/dri/renderD128  u:object_r:graphics_device:s0
 /dev/e2e_managed  u:object_r:region_e2e_test_device:s0
 /dev/e2e_manager  u:object_r:region_e2e_test_device:s0
 /dev/e2e_primary  u:object_r:region_e2e_test_device:s0
@@ -50,6 +52,6 @@
 
 /vendor/lib(64)?/cuttlefish_auto_resources.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/gralloc.vsoc.so  u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/hw/gralloc.cutf.so  u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/hw/gralloc.cutf_ashmem.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libcuttlefish_fs.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/vsoc_lib.so  u:object_r:same_process_hal_file:s0
