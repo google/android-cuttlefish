@@ -10,6 +10,9 @@ on early-init
     mount debugfs debugfs /sys/kernel/debug
     chmod 0755 /sys/kernel/debug
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
+
+
+on early-init && property:ro.boot.setupwizard_mode=*
     setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
 
