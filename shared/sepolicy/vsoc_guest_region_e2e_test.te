@@ -5,3 +5,5 @@ init_daemon_domain(vsoc_guest_region_e2e_test)
 
 # Access region test devices
 allow vsoc_guest_region_e2e_test region_e2e_test_device:chr_file rw_file_perms;
+allow vsoc_guest_region_e2e_test vendor_data_file:file { create_file_perms };
+allow vsoc_guest_region_e2e_test vendor_data_file:dir { create_file_perms create_dir_perms };

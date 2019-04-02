@@ -1,6 +1,20 @@
+type vendor_init_radio_prop, property_type;
+type cf_setupwizard_mode_prop, property_type;
+type vendor_init_setupwizard_prop, property_type;
+
 allow vendor_init {
   audio_device
   input_events_device
-  libvsoc_rild_device
+  libcuttlefish_rild_device
   region_screen_device
 }:chr_file { getattr };
+
+set_prop(vendor_init, hal_bluetooth_sim_prop)
+
+set_prop(vendor_init, vendor_init_radio_prop)
+
+get_prop(vendor_init, vendor_ser_prop)
+
+get_prop(vendor_init, cf_setupwizard_mode_prop)
+
+set_prop(vendor_init, vendor_init_setupwizard_prop)

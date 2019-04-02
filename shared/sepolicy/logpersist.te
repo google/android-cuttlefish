@@ -1,3 +1,5 @@
 # Output to virtual serial console. Needed because seriallogging daemon
-# runs logcat and directs its output to /dev/vport0p1.
-allow logpersist virtual_serial_device:chr_file { open getattr append };
+# runs logcat and directs its output to vportXpY or cf_logcat_pipe under
+# the /dev filesystem.
+allow logpersist device:fifo_file ra_file_perms;
+allow logpersist virtual_serial_device:chr_file ra_file_perms;
