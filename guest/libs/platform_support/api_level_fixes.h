@@ -41,6 +41,10 @@
 #include <time.h>
 
 #ifndef VSOC_PLATFORM_SDK_VERSION
+#include "platform_version.h"
+#endif
+
+#ifndef VSOC_PLATFORM_SDK_VERSION
 #error VSOC_PLATFORM_SDK_VERSION is not set. Check your Android.mk
 #endif
 

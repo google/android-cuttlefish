@@ -15,4 +15,5 @@
 
 subdirs = [
     "socket_forward_proxy",
+    "socket_vsock_proxy",
 ]

@@ -16,4 +16,5 @@
 subdirs = [
     "commands",
     "hals/health",
+    "hals/hwcomposer",
 ]

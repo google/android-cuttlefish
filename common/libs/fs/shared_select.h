@@ -48,7 +48,7 @@ class SharedFDSet {
   }
 
   void Clr(const SharedFD& in) {
-    value_.insert(in);
+    value_.erase(in);
   }
 
   bool IsSet(const SharedFD& in) const {
