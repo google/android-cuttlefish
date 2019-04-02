@@ -18,10 +18,13 @@ cc_binary_host {
     srcs: [
         "main.cc",
         "screen_region_handler.cc",
-        "ril_region_handler.cc",
+        "ril_config.cc",
         "vsoc_shared_memory.cc",
-        "wifi_region_handler.cc",
         "boot_image_unpacker.cc",
+        "process_monitor.cc",
+        "launch.cc",
+        "data_image.cc",
+        "flags.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -32,8 +35,6 @@ cc_binary_host {
         "libcuttlefish_strings",
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
-        "libicuuc",
-        "libandroidicu",
         "libbase",
         "libnl"
     ],
@@ -45,5 +46,5 @@ cc_binary_host {
         "libxml2",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }

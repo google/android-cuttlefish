@@ -17,6 +17,6 @@
 
 namespace cvd {
 
-[[noreturn]] void EstablishAndMaintainConnection(int port);
+[[noreturn]] void EstablishAndMaintainConnection(std::string address);
 
 }  // namespace cvd

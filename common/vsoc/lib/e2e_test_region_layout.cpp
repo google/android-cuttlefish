@@ -38,10 +38,6 @@ const char
 
 const char* E2EUnfindableRegionLayout::region_name = "e2e_must_not_exist";
 
-const char* E2EManagedTestRegionLayout::region_name = "e2e_managed";
-
-const char* E2EManagerTestRegionLayout::region_name = "e2e_manager";
-
 }  // namespace e2e_test
 }  // namespace layout
 }  // namespace vsoc

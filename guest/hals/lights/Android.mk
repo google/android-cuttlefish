@@ -29,7 +29,7 @@ LOCAL_C_INCLUDES := device/google/cuttlefish_common
 LOCAL_HEADER_LIBRARIES := libhardware_headers
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_SRC_FILES := lights_vsoc.c
-LOCAL_MODULE := lights.vsoc
+LOCAL_MODULE := lights.cutf
 LOCAL_CFLAGS += -DLIGHT_BACKLIGHT -DLOG_TAG=\"VSoC-lights\" $(VSOC_VERSION_CFLAGS)
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)

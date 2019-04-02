@@ -28,15 +28,18 @@ namespace vnc {
 
 class VirtualInputs {
  public:
+  static VirtualInputs* Get();
+
+  virtual ~VirtualInputs() = default;
+
+  virtual void GenerateKeyPressEvent(int code, bool down) = 0;
+  virtual void PressPowerButton(bool down) = 0;
+  virtual void HandlePointerEvent(bool touch_down, int x, int y) = 0;
+
+ protected:
   VirtualInputs();
 
-  void GenerateKeyPressEvent(int code, bool down);
-  void PressPowerButton(bool down);
-  void HandlePointerEvent(bool touch_down, int x, int y);
-
- private:
-  vsoc::input_events::InputEventsRegionView* input_events_region_view_{};
-  std::map<uint32_t, uint32_t> keymapping_;
+  std::map<uint32_t, uint16_t> keymapping_;
 };
 
 }  // namespace vnc

@@ -23,7 +23,13 @@
 // types that can be referenced below.
 
 // For _mm_pause()
+#if defined(__SSE2__)
 #include <x86intrin.h>
+#define _pause() _mm_pause()
+#elif defined(__arm__) || defined(__aarch64__)
+#include <arm_acle.h>
+#define _pause() __yield()
+#endif
 
 #include <atomic>
 #include <cstdint>
@@ -62,7 +68,7 @@ class SpinLock {
       if (lock_.compare_exchange_strong(expected, Sides::OurSide)) {
         return;
       }
-      _mm_pause();
+      _pause();
     }
   }
 

@@ -32,7 +32,7 @@ LOCAL_MULTILIB := first
 LOCAL_HEADER_LIBRARIES := libhardware_headers libutils_headers
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_SRC_FILES := power.c
-LOCAL_MODULE := power.vsoc
+LOCAL_MODULE := power.cutf
 LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 include $(BUILD_SHARED_LIBRARY)

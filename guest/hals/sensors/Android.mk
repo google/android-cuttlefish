@@ -44,6 +44,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_CFLAGS := -DLOG_TAG=\"VSoC-Sensors\" \
     $(VSOC_VERSION_CFLAGS) \
+    -std=c++17 \
     -Werror -Wall -Wno-missing-field-initializers -Wno-unused-parameter
 
 LOCAL_C_INCLUDES := \
@@ -56,7 +57,7 @@ LOCAL_STATIC_LIBRARIES := \
     libcuttlefish_remoter_framework \
     $(VSOC_STLPORT_STATIC_LIBS)
 
-LOCAL_MODULE := sensors.vsoc
+LOCAL_MODULE := sensors.cutf
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)

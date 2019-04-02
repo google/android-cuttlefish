@@ -41,5 +41,5 @@ cc_binary {
             ],
         },
     },
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"]
+    defaults: ["cuttlefish_host_and_guest"]
 }

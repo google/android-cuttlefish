@@ -22,5 +22,6 @@ cc_test_host {
         "cuttlefish_time",
         "libbase",
     ],
+    cpp_std: "c++17",
     defaults: ["cuttlefish_host_only"],
 }

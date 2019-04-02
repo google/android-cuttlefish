@@ -16,7 +16,7 @@
 cc_library_host_static {
     name: "libcuttlefish_vm_manager",
     srcs: [
-        "libvirt_manager.cpp",
+        "crosvm_manager.cpp",
         "qemu_manager.cpp",
         "vm_manager.cpp",
     ],
