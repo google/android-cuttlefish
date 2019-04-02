@@ -20,20 +20,15 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
-CUTTLEFISH_SYSTEM_AS_ROOT := true
+TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
 
 PRODUCT_CHARACTERISTICS := nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
-    rild.libpath=libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
-    ro.gsm.home.operator.alpha=Android \
-    ro.gsm.home.operator.numeric=302780 \
-    gsm.sim.operator.numeric=302780 \
-    gsm.sim.operator.alpha=Android \
-    gsm.sim.operator.iso-country=us
+    vendor.rild.libpath=libcuttlefish-ril.so \
 
 PRODUCT_PACKAGES += \
     MmsService \
@@ -41,15 +36,8 @@ PRODUCT_PACKAGES += \
     PhoneService \
     Telecom \
     TeleService \
-    libvsoc-ril \
-
-ifeq ($(PLATFORM_VERSION), $(word 1, $(sort Q $(PLATFORM_VERSION))))
-    PRODUCT_PACKAGES += \
-        libvsoc-rild
-else
-    PRODUCT_PACKAGES += \
-        rild
-endif
+    libcuttlefish-ril \
+    libcuttlefish-rild
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml

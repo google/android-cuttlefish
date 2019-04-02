@@ -53,14 +53,9 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
-    rild.libpath=libvsoc-ril.so \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
-    ro.gsm.home.operator.alpha=Android \
-    ro.gsm.home.operator.numeric=302780 \
-    gsm.sim.operator.numeric=302780 \
-    gsm.sim.operator.alpha=Android \
-    gsm.sim.operator.iso-country=us
+    vendor.rild.libpath=libcuttlefish-ril.so \
 
 # vehicle HAL
 PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
@@ -85,7 +80,7 @@ PRODUCT_PACKAGES += \
     PhoneService \
     Telecom \
     TeleService \
-    libvsoc-ril \
+    libcuttlefish-ril \
     rild \
 
 # DRM Properities

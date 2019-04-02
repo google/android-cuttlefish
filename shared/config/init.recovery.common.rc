@@ -1,0 +1,17 @@
+service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -tcp_port=5555 -vsock_port=6520
+    seclabel u:r:socket_vsock_proxy:s0
+
+service console /system/bin/sh
+    class core
+    console
+    disabled
+    user root
+    group shell log readproc
+    seclabel u:r:shell:s0
+    setenv HOSTNAME console
+
+on boot
+    start socket_vsock_proxy
+
+on property:ro.debuggable=1
+    start console
