@@ -8,6 +8,8 @@
 # export DH_VERBOSE=1
 
 DEB_DISPLACE_EXTENSION = .cuttlefish
+DEB_DISPLACE_FILES_cuttlefish-integration += \
+	/etc/ssh/sshd_config
 
 build:
 	make -C host/commands/adbshell

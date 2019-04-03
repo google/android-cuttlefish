@@ -23,6 +23,14 @@ case "$1" in
           -G "${cvd_account_groups}" -s /usr/bin/adbshell
       fi
     done
+    # Update the installed version of the diverted file with the
+    # desired configuration.
+    # We can't use the traditional transform approach here because
+    # sshd_config doesn't have a registered md5sum in older versions.
+    cat /etc/ssh/sshd_config - >/etc/ssh/sshd_config.cuttlefish <<EOF
+SyslogFacility LOCAL1
+LogLevel DEBUG1
+EOF
     ;;
 esac
 
