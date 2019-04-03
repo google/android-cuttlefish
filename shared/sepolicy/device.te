@@ -1,6 +1,6 @@
 # Device types
 type input_events_device, dev_type;
-type libvsoc_rild_device, dev_type;
+type libcuttlefish_rild_device, dev_type;
 type region_e2e_test_device, dev_type;
 type region_screen_device, dev_type;
 type socket_forward_device, dev_type;

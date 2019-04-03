@@ -14,48 +14,46 @@
 # limitations under the License.
 #
 
-PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.4-x86_64/kernel:kernel
+PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
 
-PRODUCT_SHIPPING_API_LEVEL := 26
+PRODUCT_SHIPPING_API_LEVEL := 29
+PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 
 DISABLE_RILD_OEM_HOOK := true
 
+# Properties that are not vendor-specific. These will go in the product
+# partition, instead of the vendor partition, and do not need vendor
+# sepolicy
+PRODUCT_PRODUCT_PROPERTIES := \
+    persist.adb.tcp.port=5555 \
+    persist.traced.enable=1 \
+    persist.heapprofd.enable=1 \
+    ro.com.google.locationfeatures=1 \
+ 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
-#   ro.opengles.version OpenGLES 2.0
+#   ro.opengles.version OpenGLES 3.0
 PRODUCT_PROPERTY_OVERRIDES += \
     tombstoned.max_tombstone_count=500 \
+    bt.rootcanal_test_console=off \
     debug.hwui.swap_with_damage=0 \
-    ro.adb.qemud=0 \
     ro.carrier=unknown \
     ro.com.android.dataroaming=false \
-    ro.com.google.locationfeatures=1 \
     ro.hardware.virtual_device=1 \
     ro.logd.size=1M \
-    ro.opengles.version=131072 \
-    ro.ril.gprsclass=10 \
-    ro.ril.hsxpa=1 \
+    ro.opengles.version=196608 \
     wifi.interface=wlan0 \
 
 # Below is a list of properties we probably should get rid of.
 PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
 
-
-# Default OMX service to non-Treble
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.media.treble_omx=false
-
-# Enable Perfetto traced and heapprofd
-PRODUCT_PROPERTY_OVERRIDES += \
-    persist.traced.enable=1 \
-    persist.heapprofd.enable=1
-
 #
 # Packages for various cuttlefish-specific tests
 #
 PRODUCT_PACKAGES += \
     vsoc_guest_region_e2e_test \
+    vsoc_managed_region_e2e_test \
     vsoc_driver_test
 
 #
@@ -66,6 +64,7 @@ PRODUCT_PACKAGES += \
     dhcpcd_wlan0 \
     gce_fs_monitor \
     socket_forward_proxy \
+    socket_vsock_proxy \
     usbforward \
     VSoCService \
     wpa_supplicant.vsoc.conf \
@@ -74,6 +73,7 @@ PRODUCT_PACKAGES += \
     rename_netiface \
     ip_link_add \
     setup_wifi \
+    vsock_logcat \
 
 #
 # Packages for AOSP-available stuff we use from the framework
@@ -109,21 +109,24 @@ PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
 # General files
 #
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    device/google/cuttlefish/shared/config/audio_policy.conf:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy.conf \
     device/google/cuttlefish/shared/config/camera_v3.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
-    device/google/cuttlefish/shared/config/init.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.vsoc.rc \
-    device/google/cuttlefish/shared/config/ueventd.vsoc.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/ueventd.vsoc.rc \
+    device/google/cuttlefish/shared/config/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.common.rc \
+    device/google/cuttlefish/shared/config/init.cutf_ivsh.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_ivsh.rc \
+    device/google/cuttlefish/shared/config/init.cutf_cvm.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_cvm.rc \
+    device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/ueventd.rc \
     device/google/cuttlefish/shared/config/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
+    device/google/cuttlefish/shared/config/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml \
     device/google/cuttlefish/shared/config/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
     device/google/cuttlefish/shared/config/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
-    device/google/cuttlefish/shared/config/fstab.vsoc:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.vsoc \
     frameworks/av/media/libeffects/data/audio_effects.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_effects.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
-    frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml \
+    frameworks/av/services/audiopolicy/config/audio_policy_configuration_generic.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/primary_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/primary_audio_policy_configuration.xml \
+    frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
-    frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
@@ -136,6 +139,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.barometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.barometer.xml \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
+    frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml \
     frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml \
     frameworks/native/data/etc/android.hardware.touchscreen.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.xml \
@@ -146,10 +150,33 @@ PRODUCT_COPY_FILES += \
 
 
 #
+# The fstab requires special handling. For system-as-root builds, we *must*
+# retrieve the vendor partition mount options from DTB, as system must be
+# "pristine" to support GSI. For builds with an initrd, we prefer not to
+# rely on DTB, and *must* retrieve the partition mount options from an fstab
+# in the initrd instead. (In either case, the fstab *must also* be installed to
+# /vendor/etc)
+#
+ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
+
+else
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_cvm \
+    device/google/cuttlefish/shared/config/fstab.initrd:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
+
+endif
+
+
+#
 # USB Specific
 #
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.vsoc.usb.rc
+    device/google/cuttlefish/shared/config/init.hardware.usb.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/init.cutf_ivsh.usb.rc
 
 # Packages for HAL implementations
 
@@ -158,7 +185,8 @@ PRODUCT_COPY_FILES += \
 #
 PRODUCT_PACKAGES += \
     hwcomposer.drm_minigbm \
-    hwcomposer.vsoc \
+    hwcomposer.cutf_ivsh \
+    hwcomposer.cutf_cvm \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.1-impl \
     android.hardware.graphics.composer@2.1-service
@@ -168,7 +196,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     gralloc.minigbm \
-    gralloc.vsoc \
+    gralloc.cutf \
     android.hardware.graphics.mapper@2.0-impl \
     android.hardware.graphics.allocator@2.0-impl \
     android.hardware.graphics.allocator@2.0-service
@@ -184,10 +212,12 @@ PRODUCT_PACKAGES += \
 # Audio HAL
 #
 PRODUCT_PACKAGES += \
-    audio.primary.vsoc \
-    android.hardware.audio@4.0-impl \
-    android.hardware.audio.effect@4.0-impl \
-    android.hardware.audio@2.0-service
+    audio.primary.cutf \
+    audio.r_submix.default \
+    android.hardware.audio@4.0-impl:32 \
+    android.hardware.audio.effect@4.0-impl:32 \
+    android.hardware.audio@2.0-service \
+    android.hardware.soundtrigger@2.0-impl \
 
 #
 # Drm HAL
@@ -206,8 +236,8 @@ PRODUCT_PACKAGES += \
 # Camera
 #
 PRODUCT_PACKAGES += \
-    camera.vsoc \
-    camera.vsoc.jpeg \
+    camera.cutf \
+    camera.cutf.jpeg \
     camera.device@3.2-impl \
     android.hardware.camera.provider@2.4-impl \
     android.hardware.camera.provider@2.4-service
@@ -216,7 +246,7 @@ PRODUCT_PACKAGES += \
 # Gatekeeper
 #
 PRODUCT_PACKAGES += \
-    gatekeeper.vsoc \
+    gatekeeper.cutf \
     android.hardware.gatekeeper@1.0-impl \
     android.hardware.gatekeeper@1.0-service
 
@@ -224,7 +254,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    gps.vsoc \
+    gps.cutf \
     android.hardware.gnss@1.0-impl \
     android.hardware.gnss@1.0-service
 
@@ -240,7 +270,7 @@ PRODUCT_PACKAGES += \
 # Sensors
 #
 PRODUCT_PACKAGES += \
-    sensors.vsoc \
+    sensors.cutf \
     android.hardware.sensors@1.0-impl \
     android.hardware.sensors@1.0-service
 
@@ -248,7 +278,7 @@ PRODUCT_PACKAGES += \
 # Lights
 #
 PRODUCT_PACKAGES += \
-    lights.vsoc \
+    lights.cutf \
     android.hardware.light@2.0-impl \
     android.hardware.light@2.0-service
 
@@ -263,7 +293,7 @@ PRODUCT_PACKAGES += \
 # Power HAL
 #
 PRODUCT_PACKAGES += \
-    power.vsoc \
+    power.cutf \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service
 
@@ -299,5 +329,15 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
 
+# Recovery mode
+ifneq ($(TARGET_NO_RECOVERY),true)
+
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/init.recovery.common.rc:recovery/root/init.recovery.common.rc \
+    device/google/cuttlefish/shared/config/init.recovery.cutf_ivsh.rc:recovery/root/init.recovery.cutf_ivsh.rc \
+    device/google/cuttlefish/shared/config/init.recovery.cutf_cvm.rc:recovery/root/init.recovery.cutf_cvm.rc \
+
+endif
+
 # Host packages to install
-PRODUCT_HOST_PACKAGES += socket_forward_proxy
+PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy

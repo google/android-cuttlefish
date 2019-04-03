@@ -45,45 +45,85 @@
 
 <MediaCodecs>
     <Encoders>
-        <MediaCodec name="OMX.google.h264.encoder" type="video/avc" update="true">
-            <Limit name="measured-frame-rate-320x240" range="694-2414" />
-        </MediaCodec>
         <MediaCodec name="OMX.google.h263.encoder" type="video/3gpp" update="true">
-            <Limit name="measured-frame-rate-176x144" range="1140-3967" />
+            <!-- 3 runs, min 849 max 1008 gmean 943 -->
+            <Limit name="measured-frame-rate-176x144" range="849-1008" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h264.encoder" type="video/avc" update="true">
+            <!-- 3 runs, min 496 max 629 gmean 565 -->
+            <Limit name="measured-frame-rate-320x240" range="496-629" />
+            <!-- 2 runs, min 197 max 203 gmean 201 -->
+            <Limit name="measured-frame-rate-720x480" range="197-203" />
+            <!-- 2 runs, min 93 max 97 gmean 95 -->
+            <Limit name="measured-frame-rate-1280x720" range="93-97" />
+            <!-- 2 runs, min 45 max 47 gmean 46 -->
+            <Limit name="measured-frame-rate-1920x1080" range="45-47" />
         </MediaCodec>
         <MediaCodec name="OMX.google.mpeg4.encoder" type="video/mp4v-es" update="true">
-            <Limit name="measured-frame-rate-176x144" range="1493-5192" />
+            <!-- 3 runs, min 881 max 1142 gmean 994 -->
+            <Limit name="measured-frame-rate-176x144" range="881-1142" />
         </MediaCodec>
         <MediaCodec name="OMX.google.vp8.encoder" type="video/x-vnd.on2.vp8" update="true">
-            <Limit name="measured-frame-rate-1280x720" range="105-364" />
-            <Limit name="measured-frame-rate-1920x1080" range="49-172" />
+            <!-- 3 runs, min 249 max 285 gmean 264 -->
+            <Limit name="measured-frame-rate-320x180" range="249-285" />
+            <!-- 3 runs, min 104 max 115 gmean 109 -->
+            <Limit name="measured-frame-rate-640x360" range="104-115" />
+            <!-- 3 runs, min 34 max 35 gmean 34 -->
+            <Limit name="measured-frame-rate-1280x720" range="34-35" />
+            <!-- 3 runs, min 26 max 29 gmean 27 -->
+            <Limit name="measured-frame-rate-1920x1080" range="26-29" />
         </MediaCodec>
     </Encoders>
     <Decoders>
-        <MediaCodec name="OMX.google.h264.decoder" type="video/avc" update="true">
-            <Limit name="measured-frame-rate-320x240" range="4353-15114" />
-        </MediaCodec>
         <MediaCodec name="OMX.google.h263.decoder" type="video/3gpp" update="true">
-            <Limit name="measured-frame-rate-176x144" range="4061-14126" />
+            <!-- 3 runs, min 1246 max 1390 gmean 1342 -->
+            <Limit name="measured-frame-rate-176x144" range="1246-1390" />
+        </MediaCodec>
+        <MediaCodec name="OMX.google.h264.decoder" type="video/avc" update="true">
+            <!-- 5 runs, min 299 max 629 gmean 567 -->
+            <Limit name="measured-frame-rate-320x240" range="299-629" />
+            <!-- 4 runs, min 215 max 250 gmean 232 -->
+            <Limit name="measured-frame-rate-720x480" range="215-250" />
+            <!-- 4 runs, min 75 max 85 gmean 78 -->
+            <Limit name="measured-frame-rate-1280x720" range="75-85" />
+            <!-- 4 runs, min 31 max 34 gmean 33 -->
+            <Limit name="measured-frame-rate-1920x1080" range="31-34" />
         </MediaCodec>
         <MediaCodec name="OMX.google.hevc.decoder" type="video/hevc" update="true">
-          <Limit name="measured-frame-rate-352x288" range="1000-4000" />
-          <Limit name="measured-frame-rate-720x480" range="500-2000" />
-          <Limit name="measured-frame-rate-1280x720" range="100-1000" />
-          <Limit name="measured-frame-rate-1920x1080" range="50-700" />
+            <!-- 4 runs, min 754 max 817 gmean 775 -->
+            <Limit name="measured-frame-rate-352x288" range="754-817" />
+            <!-- 4 runs, min 323 max 394 gmean 373 -->
+            <Limit name="measured-frame-rate-640x360" range="323-394" />
+            <!-- 4 runs, min 349 max 372 gmean 358 -->
+            <Limit name="measured-frame-rate-720x480" range="349-372" />
+            <!-- 4 runs, min 144 max 157 gmean 151 -->
+            <Limit name="measured-frame-rate-1280x720" range="144-157" />
+            <!-- 4 runs, min 74 max 85 gmean 80 -->
+            <Limit name="measured-frame-rate-1920x1080" range="74-85" />
         </MediaCodec>
         <MediaCodec name="OMX.google.mpeg4.decoder" type="video/mp4v-es" update="true">
-            <Limit name="measured-frame-rate-176x144" range="3729-12970" />
+            <!-- 4 runs, min 1439 max 1625 gmean 1523 -->
+            <Limit name="measured-frame-rate-176x144" range="1439-1625" />
         </MediaCodec>
         <MediaCodec name="OMX.google.vp8.decoder" type="video/x-vnd.on2.vp8" update="true">
-            <Limit name="measured-frame-rate-1280x720" range="645-2245" />
-            <Limit name="measured-frame-rate-1920x1080" range="263-915" />
+            <!-- 3 runs, min 1129 max 1261 gmean 1190 -->
+            <Limit name="measured-frame-rate-320x180" range="1129-1261" />
+            <!-- 3 runs, min 471 max 525 gmean 504 -->
+            <Limit name="measured-frame-rate-640x360" range="471-525" />
+            <!-- 3 runs, min 126 max 145 gmean 132 -->
+            <Limit name="measured-frame-rate-1280x720" range="126-145" />
+            <!-- 3 runs, min 48 max 51 gmean 49 -->
+            <Limit name="measured-frame-rate-1920x1080" range="48-51" />
         </MediaCodec>
         <MediaCodec name="OMX.google.vp9.decoder" type="video/x-vnd.on2.vp9" update="true">
-            <Limit name="measured-frame-rate-320x240" range="645-2245" />
-            <Limit name="measured-frame-rate-640x360" range="500-3000" />
-            <Limit name="measured-frame-rate-1280x720" range="350-1500" />
-            <Limit name="measured-frame-rate-1920x1080" range="150-1000" />
+            <!-- 2 runs, min 968 max 1101 gmean 1044 -->
+            <Limit name="measured-frame-rate-320x180" range="968-1101" />
+            <!-- 3 runs, min 291 max 338 gmean 319 -->
+            <Limit name="measured-frame-rate-640x360" range="291-338" />
+            <!-- Those values are from buildbots -->
+            <Limit name="measured-frame-rate-1280x720" range="280-400" />
+            <!-- Buildbot gets ~180 if it is in the first run, ~230 if it is the second run -->
+            <Limit name="measured-frame-rate-1920x1080" range="178-240" />
         </MediaCodec>
     </Decoders>
 </MediaCodecs>
