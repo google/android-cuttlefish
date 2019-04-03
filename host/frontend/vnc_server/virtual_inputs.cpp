@@ -22,11 +22,20 @@
 #include <mutex>
 #include "keysyms.h"
 
+#include <common/libs/fs/shared_select.h>
+#include <host/libs/config/cuttlefish_config.h>
+
 using cvd::vnc::VirtualInputs;
 using vsoc::input_events::InputEventsRegionView;
 
+DEFINE_int32(touch_fd, -1,
+             "A fd for a socket where to accept touch connections");
+
+DEFINE_int32(keyboard_fd, -1,
+             "A fd for a socket where to accept keyboard connections");
+
 namespace {
-void AddKeyMappings(std::map<uint32_t, uint32_t>* key_mapping) {
+void AddKeyMappings(std::map<uint32_t, uint16_t>* key_mapping) {
   (*key_mapping)[cvd::xk::AltLeft] = KEY_LEFTALT;
   (*key_mapping)[cvd::xk::ControlLeft] = KEY_LEFTCTRL;
   (*key_mapping)[cvd::xk::ShiftLeft] = KEY_LEFTSHIFT;
@@ -214,30 +223,132 @@ void AddKeyMappings(std::map<uint32_t, uint32_t>* key_mapping) {
   (*key_mapping)[cvd::xk::Menu] = KEY_MENU;
   (*key_mapping)[cvd::xk::VNCMenu] = KEY_MENU;
 }
+
+void InitInputEvent(struct input_event* evt, uint16_t type, uint16_t code,
+                    int32_t value) {
+  evt->type = type;
+  evt->code = code;
+  evt->value = value;
+}
+
 }  // namespace
 
-VirtualInputs::VirtualInputs()
-  : input_events_region_view_{
-      vsoc::input_events::InputEventsRegionView::GetInstance(
-          vsoc::GetDomain().c_str())} {
-  if (!input_events_region_view_) {
-    LOG(FATAL) << "Failed to open Input events region view";
+class VSoCVirtualInputs : public VirtualInputs {
+ public:
+  VSoCVirtualInputs()
+      : input_events_region_view_{
+            vsoc::input_events::InputEventsRegionView::GetInstance(
+                vsoc::GetDomain().c_str())} {
+    if (!input_events_region_view_) {
+      LOG(FATAL) << "Failed to open Input events region view";
+    }
   }
-  AddKeyMappings(&keymapping_);
-}
 
-void VirtualInputs::GenerateKeyPressEvent(int key_code, bool down) {
-  if (keymapping_.count(key_code)) {
-    input_events_region_view_->HandleKeyboardEvent(down, keymapping_[key_code]);
+  void GenerateKeyPressEvent(int code, bool down) override {
+    if (keymapping_.count(code)) {
+      input_events_region_view_->HandleKeyboardEvent(down, keymapping_[code]);
+    } else {
+      LOG(ERROR) << "Unknown keycode" << code;
+    }
+  }
+
+  void PressPowerButton(bool down) override {
+    input_events_region_view_->HandlePowerButtonEvent(down);
+  }
+
+  void HandlePointerEvent(bool touch_down, int x, int y) override {
+    input_events_region_view_->HandleSingleTouchEvent(touch_down, x, y);
+  }
+
+ private:
+  vsoc::input_events::InputEventsRegionView* input_events_region_view_{};
+};
+
+class SocketVirtualInputs : public VirtualInputs {
+ public:
+  SocketVirtualInputs()
+      : client_connector_([this]() { ClientConnectorLoop(); }) {}
+
+  void GenerateKeyPressEvent(int key_code, bool down) override {
+    struct input_event events[2];
+    InitInputEvent(&events[0], EV_KEY, keymapping_[key_code], down);
+    InitInputEvent(&events[1], EV_SYN, 0, 0);
+
+    SendEvents(keyboard_socket_, events, sizeof(events));
+  }
+
+  void PressPowerButton(bool down) override {
+    struct input_event events[2];
+    InitInputEvent(&events[0], EV_KEY, KEY_POWER, down);
+    InitInputEvent(&events[1], EV_SYN, 0, 0);
+
+    SendEvents(keyboard_socket_, events, sizeof(events));
+  }
+
+  void HandlePointerEvent(bool touch_down, int x, int y) override {
+    // TODO(b/124121375): Use multitouch when available
+    struct input_event events[4];
+    InitInputEvent(&events[0], EV_ABS, ABS_X, x);
+    InitInputEvent(&events[1], EV_ABS, ABS_Y, y);
+    InitInputEvent(&events[2], EV_KEY, BTN_TOUCH, touch_down);
+    InitInputEvent(&events[3], EV_SYN, 0, 0);
+
+    SendEvents(touch_socket_, events, sizeof(events));
+  }
+
+ private:
+  void SendEvents(cvd::SharedFD socket, void* event_buffer, int byte_count) {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (!socket->IsOpen()) {
+      // This is unlikely as it would only happen between the start of the vnc
+      // server and the connection of the VMM to the socket.
+      // If it happens, just drop the events as the VM is not yet ready to
+      // handle it.
+      return;
+    }
+    auto ret = socket->Write(event_buffer, byte_count);
+    if (ret < 0) {
+      LOG(ERROR) << "Error sending input event: " << socket->StrError();
+    }
+  }
+
+  void ClientConnectorLoop() {
+    auto touch_server = cvd::SharedFD::Dup(FLAGS_touch_fd);
+    close(FLAGS_touch_fd);
+    FLAGS_touch_fd = -1;
+
+    auto keyboard_server = cvd::SharedFD::Dup(FLAGS_keyboard_fd);
+    close(FLAGS_keyboard_fd);
+    FLAGS_keyboard_fd = -1;
+
+    while (1) {
+      cvd::SharedFDSet read_set;
+      read_set.Set(touch_server);
+      read_set.Set(keyboard_server);
+      cvd::Select(&read_set, nullptr, nullptr, nullptr);
+      {
+        std::lock_guard<std::mutex> lock(socket_mutex_);
+        if (read_set.IsSet(touch_server)) {
+          touch_socket_ = cvd::SharedFD::Accept(*touch_server);
+        }
+        if (read_set.IsSet(keyboard_server)) {
+          keyboard_socket_ = cvd::SharedFD::Accept(*keyboard_server);
+        }
+      }
+    }
+  }
+  cvd::SharedFD touch_socket_;
+  cvd::SharedFD keyboard_socket_;
+  std::thread client_connector_;
+  std::mutex socket_mutex_;
+};
+
+VirtualInputs::VirtualInputs() { AddKeyMappings(&keymapping_); }
+
+VirtualInputs* VirtualInputs::Get() {
+  if (vsoc::CuttlefishConfig::Get()->enable_ivserver()) {
+    return new VSoCVirtualInputs();
   } else {
-    LOG(INFO) << "Unknown keycode" << key_code;
+    return new SocketVirtualInputs();
   }
-}
-
-void VirtualInputs::PressPowerButton(bool down) {
-  input_events_region_view_->HandlePowerButtonEvent(down);
-}
-
-void VirtualInputs::HandlePointerEvent(bool touch_down, int x, int y) {
-  input_events_region_view_->HandleSingleTouchEvent(touch_down, x, y);
 }

@@ -22,8 +22,8 @@
 
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/libvirt_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 
 namespace vm_manager {
 
@@ -40,22 +40,17 @@ VmManager* GetManagerSingleton(const vsoc::CuttlefishConfig* config) {
 
 std::map<std::string, VmManager::VmManagerHelper>
     VmManager::vm_manager_helpers_ = {
-        {LibvirtManager::name(),
-         {[](const vsoc::CuttlefishConfig* config) {
-            return GetManagerSingleton<LibvirtManager>(config);
-          },
-          []() { return true; },
-          [](const std::string& dir_path) {
-            return LibvirtManager::EnsureInstanceDirExists(dir_path);
-          }}},
         {QemuManager::name(),
          {[](const vsoc::CuttlefishConfig* config) {
             return GetManagerSingleton<QemuManager>(config);
           },
-          []() { return vsoc::HostSupportsQemuCli(); },
-          [](const std::string& dir_path) {
-            return QemuManager::EnsureInstanceDirExists(dir_path);
-          }}}};
+          []() { return vsoc::HostSupportsQemuCli(); }}},
+        {CrosvmManager::name(),
+         {[](const vsoc::CuttlefishConfig* config) {
+            return GetManagerSingleton<CrosvmManager>(config);
+          },
+        // Same as Qemu for the time being
+          []() { return vsoc::HostSupportsQemuCli(); }}}};
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
                           const vsoc::CuttlefishConfig* config) {
@@ -77,7 +72,7 @@ bool VmManager::IsVmManagerSupported(const std::string& name) {
 
 std::vector<std::string> VmManager::GetValidNames() {
   std::vector<std::string> ret = {};
-  for (auto key_val: vm_manager_helpers_) {
+  for (const auto& key_val: vm_manager_helpers_) {
     ret.push_back(key_val.first);
   }
   return ret;
@@ -94,9 +89,12 @@ bool VmManager::UserInGroup(const std::string& group,
   return true;
 }
 
-bool VmManager::EnsureInstanceDirExists(const std::string& vm_manager_name,
-                                        const std::string& instance_dir_path) {
-  return vm_manager_helpers_[vm_manager_name].instance_dir_creator(
-      instance_dir_path);
+bool VmManager::ValidateHostConfiguration(
+    std::vector<std::string>* config_commands) const {
+  // the check for cvdnetwork needs to happen even if the user is not in kvm, so
+  // we cant just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
+  auto in_kvm = VmManager::UserInGroup("kvm", config_commands);
+  auto in_cvdnetwork = VmManager::UserInGroup("cvdnetwork", config_commands);
+  return in_kvm && in_cvdnetwork;
 }
 }  // namespace vm_manager

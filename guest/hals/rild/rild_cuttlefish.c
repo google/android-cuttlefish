@@ -36,13 +36,8 @@
 #include <sys/types.h>
 #include <guest/hals/ril/libril/ril_ex.h>
 
-#if defined(PRODUCT_COMPATIBLE_PROPERTY)
 #define LIB_PATH_PROPERTY   "vendor.rild.libpath"
 #define LIB_ARGS_PROPERTY   "vendor.rild.libargs"
-#else
-#define LIB_PATH_PROPERTY   "rild.libpath"
-#define LIB_ARGS_PROPERTY   "rild.libargs"
-#endif
 #define MAX_LIB_ARGS        16
 
 static void usage(const char *argv0) {

@@ -40,6 +40,7 @@ cc_defaults {
     header_libs: [
         "cuttlefish_common_headers",
         "cuttlefish_kernel_headers",
+        "cuttlefish_shared_config",
     ],
     target: {
         host: {
@@ -54,19 +55,6 @@ cc_defaults {
     },
     cflags: ["-Werror", "-Wall"],
     vendor: true,
-}
-
-// ARM code should not touch the VSoC window on an x86 CPU.
-cc_defaults {
-    name: "cuttlefish_native_isa",
-    target: {
-        android_arm: {
-            enabled: false,
-        },
-        android_arm64: {
-            enabled: false,
-        },
-    },
 }
 
 cc_defaults {
@@ -97,16 +85,13 @@ cc_library_shared {
         "common/vsoc/lib/input_events_layout.cpp",
         "common/vsoc/lib/input_events_region_view.cpp",
         "common/vsoc/lib/lock_common.cpp",
+        "common/vsoc/lib/managed_e2e_test_region_layout.cpp",
         "common/vsoc/lib/region_view.cpp",
-        "common/vsoc/lib/ril_layout.cpp",
-        "common/vsoc/lib/ril_region_view.cpp",
         "common/vsoc/lib/screen_layout.cpp",
         "common/vsoc/lib/screen_region_view.cpp",
         "common/vsoc/lib/socket_forward_layout.cpp",
         "common/vsoc/lib/socket_forward_region_view.cpp",
         "common/vsoc/lib/vsoc_memory.cpp",
-        "common/vsoc/lib/wifi_exchange_layout.cpp",
-        "common/vsoc/lib/wifi_exchange_view.cpp",
     ],
     header_libs: ["cuttlefish_glog"],
     shared_libs: [
@@ -133,7 +118,7 @@ cc_library_shared {
             ],
         },
     },
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_native_isa"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
 cc_test_host {

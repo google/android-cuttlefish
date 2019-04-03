@@ -26,18 +26,12 @@ namespace vm_manager {
 class QemuManager : public VmManager {
  public:
   static const std::string name();
-  static bool EnsureInstanceDirExists(const std::string& instance_dir);
 
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
-  bool Start() override;
+  cvd::Command StartCommand() override;
   bool Stop() override;
-
-  bool ValidateHostConfiguration(
-      std::vector<std::string>* config_commands) const override;
- private:
-  cvd::SharedFD monitor_conn_;
 };
 
 }  // namespace vm_manager

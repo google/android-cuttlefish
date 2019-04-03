@@ -1,0 +1,44 @@
+// Copyright (C) 2019 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+cc_library_shared {
+    name: "hwcomposer.cutf_cvm",
+    relative_install_path: "hw",
+    defaults: ["cuttlefish_guest_only"],
+    vendor: true,
+    srcs: [
+        "hwcomposer.cpp",
+        "geometry_utils.cpp",
+        "vsoc_composer.cpp",
+        "base_composer.cpp",
+    ],
+    include_dirs: [
+        "device/google/cuttlefish_common",
+    ],
+    export_include_dirs: ["."],
+    static_libs: ["libyuv_static", "hwcomposer_common"],
+    shared_libs: [
+        "liblog",
+        "libhardware",
+        "libbase",
+        "libcutils",
+        "libutils",
+        "libsync",
+        "libhardware",
+        "libjpeg",
+        "libcuttlefish_utils",
+        "libcuttlefish_fs",
+    ],
+}
