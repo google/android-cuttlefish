@@ -100,4 +100,26 @@ bool BootImageUnpacker::ExtractRamdiskImage(const std::string& path) const {
                      path);
 }
 
+bool BootImageUnpacker::Unpack(const std::string& ramdisk_image_path,
+                               const std::string& kernel_image_path) {
+  if (HasRamdiskImage()) {
+    if (!ExtractRamdiskImage(ramdisk_image_path)) {
+      LOG(ERROR) << "Error extracting ramdisk from boot image";
+      return false;
+    }
+  }
+  if (!kernel_image_path.empty()) {
+    if (HasKernelImage()) {
+      if (!ExtractKernelImage(kernel_image_path)) {
+        LOG(ERROR) << "Error extracting kernel from boot image";
+        return false;
+      }
+    } else {
+      LOG(ERROR) << "No kernel found on boot image";
+      return false;
+    }
+  }
+  return true;
+}
+
 }  // namespace cvd

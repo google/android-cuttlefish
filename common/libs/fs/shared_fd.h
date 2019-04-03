@@ -40,6 +40,7 @@
 #include <unistd.h>
 
 #include "common/libs/auto_resources/auto_resources.h"
+#include "vm_sockets.h"
 
 /**
  * Classes to to enable safe access to files.
@@ -155,6 +156,8 @@ class SharedFD {
   static SharedFD SocketLocalServer(int port, int type);
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
+  static SharedFD VsockServer(unsigned int port, int type);
+  static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
   static SharedFD TimerFD(int clock, int flags);
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
@@ -176,6 +179,8 @@ class SharedFD {
   cvd::FileInstance& operator*() { return *value_; }
 
  private:
+  static SharedFD ErrorFD(int error);
+
   std::shared_ptr<FileInstance> value_;
 };
 
@@ -531,7 +536,7 @@ class FileInstance {
 /* Methods that need both a fully defined SharedFD and a fully defined
    FileInstance. */
 
-SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
+inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
 }  // namespace cvd
 

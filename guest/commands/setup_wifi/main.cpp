@@ -93,7 +93,7 @@ int RenameNetwork(const std::string& name, const std::string& new_name) {
   return 0;
 }
 
-int main(int argc, char** argv) {
+int main() {
   int renamed_eth0 = RenameNetwork("eth0", "buried_eth0");
   if (renamed_eth0 != 0) {
     return renamed_eth0;

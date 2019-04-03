@@ -26,8 +26,6 @@ cc_binary_host {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
-        "libicuuc",
-        "libandroidicu",
     ],
     static_libs: [
         "libcuttlefish_host_config",
@@ -36,5 +34,5 @@ cc_binary_host {
         "libgflags",
         "libxml2",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }

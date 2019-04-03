@@ -28,7 +28,7 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_SRC_FILES := gps_vsoc.cpp gps_thread.cpp
-LOCAL_MODULE := gps.vsoc
+LOCAL_MODULE := gps.cutf
 LOCAL_C_INCLUDES := device/google/cuttlefish_common
 
 LOCAL_HEADER_LIBRARIES := \

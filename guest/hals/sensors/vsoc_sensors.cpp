@@ -40,17 +40,6 @@ using cvd::time::Nanoseconds;
 
 namespace cvd {
 
-namespace {
-template <typename F>
-struct HWDeviceThunker : ThunkerBase<hw_device_t, GceSensors, F> {};
-template <typename F>
-struct SensorsThunker : ThunkerBase<sensors_poll_device_t, GceSensors, F> {};
-template <typename F>
-struct SensorsThunker1 : ThunkerBase<sensors_poll_device_1, GceSensors, F> {};
-template <typename F>
-struct SensorsThreadThunker : ThunkerBase<void, GceSensors, F> {};
-}
-
 int GceSensors::total_sensor_count_ = -1;
 SensorInfo* GceSensors::sensor_infos_ = NULL;
 const int GceSensors::kInjectedEventWaitPeriods = 3;
@@ -111,28 +100,28 @@ int GceSensors::Open(const struct hw_module_t* module, const char* name,
     rval->common.tag = HARDWARE_DEVICE_TAG;
     rval->common.version = VSOC_SENSOR_DEVICE_VERSION;
     rval->common.module = (struct hw_module_t*)module;
-    rval->common.close = HWDeviceThunker<int()>::call<&GceSensors::Close>;
-    rval->poll =
-        SensorsThunker<int(sensors_event_t*, int)>::call<&GceSensors::Poll>;
-    rval->activate = SensorsThunker<int(int, int)>::call<&GceSensors::Activate>;
-    rval->setDelay =
-        SensorsThunker<int(int, int64_t)>::call<&GceSensors::SetDelay>;
+    rval->common.close = cvd::thunk<hw_device_t, &GceSensors::Close>;
+
+    rval->poll = cvd::thunk<sensors_poll_device_t, &GceSensors::Poll>;
+    rval->activate = cvd::thunk<sensors_poll_device_t, &GceSensors::Activate>;
+    rval->setDelay = cvd::thunk<sensors_poll_device_t, &GceSensors::SetDelay>;
 #if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
-    rval->batch = SensorsThunker1<int(int, int, int64_t,
-                                      int64_t)>::call<&GceSensors::Batch>;
+
+    rval->batch = cvd::thunk<sensors_poll_device_1, &GceSensors::Batch>;
 #endif
 #if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
-    rval->flush = SensorsThunker1<int(int)>::call<&GceSensors::Flush>;
+    rval->flush = cvd::thunk<sensors_poll_device_1, &GceSensors::Flush>;
 #endif
 #if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
-    rval->inject_sensor_data = SensorsThunker1<int(
-        const sensors_event_t*)>::call<&GceSensors::InjectSensorData>;
+    rval->inject_sensor_data =
+        cvd::thunk<sensors_poll_device_1, &GceSensors::InjectSensorData>;
 #endif
 
     // Spawn a thread to listen for incoming data from the remoter.
     int err = pthread_create(
         &rval->receiver_thread_, NULL,
-        SensorsThreadThunker<void*()>::call<&GceSensors::Receiver>, rval);
+        cvd::thunk<void, &GceSensors::Receiver>,
+        rval);
     if (err) {
       ALOGE("GceSensors::%s: Unable to start receiver thread (%s)",
             __FUNCTION__, strerror(err));

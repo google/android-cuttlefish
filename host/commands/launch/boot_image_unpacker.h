@@ -45,6 +45,9 @@ class BootImageUnpacker {
   // as root.
   bool ExtractRamdiskImage(const std::string& path) const;
 
+  bool Unpack(const std::string& ramdisk_image_path,
+              const std::string& kernel_image_path);
+
  private:
   BootImageUnpacker(SharedFD boot_image, const std::string& cmdline,
                     uint32_t kernel_image_size, uint32_t kernel_image_offset,

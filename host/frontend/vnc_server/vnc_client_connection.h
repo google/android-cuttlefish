@@ -35,7 +35,8 @@ namespace vnc {
 
 class VncClientConnection {
  public:
-  VncClientConnection(ClientSocket client, VirtualInputs* virtual_inputs,
+  VncClientConnection(ClientSocket client,
+                      std::shared_ptr<VirtualInputs> virtual_inputs,
                       BlackBoard* bb, bool aggressive);
   VncClientConnection(const VncClientConnection&) = delete;
   VncClientConnection& operator=(const VncClientConnection&) = delete;
@@ -139,7 +140,7 @@ class VncClientConnection {
   ClientSocket client_;
   bool control_key_down_ = false;
   bool meta_key_down_ = false;
-  VirtualInputs* virtual_inputs_{};
+  std::shared_ptr<VirtualInputs> virtual_inputs_{};
 
   FrameBufferUpdateRequest previous_update_request_{};
   BlackBoard* bb_;

@@ -16,7 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := gralloc.vsoc-future
+LOCAL_MODULE := gralloc.cutf_ivsh-future
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \

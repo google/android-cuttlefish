@@ -14,6 +14,7 @@
 // limitations under the License.
 
 subdirs = [
+    "stream_audio",
     "vnc_server",
     "adb_connector",
 ]
