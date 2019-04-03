@@ -7,3 +7,5 @@ ro.boot.vsock_logcat_port  u:object_r:vsock_logcat_port_prop:s0
 ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
 ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
 vendor.vsock_logcat_status  u:object_r:vsock_logcat_status_prop:s0
+ro.boot.setupwizard_mode  u:object_r:cf_setupwizard_mode_prop:s0
+ro.setupwizard.mode  u:object_r:vendor_init_setupwizard_prop:s0
