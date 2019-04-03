@@ -9,27 +9,11 @@ on early-init
 
     mount debugfs debugfs /sys/kernel/debug
     chmod 0755 /sys/kernel/debug
-    setprop service.adb.tcp.port 5555
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
 
-    # Disable the rootcanal test console, as it violates selinux policy
-    setprop bt.rootcanal_test_console off
 
 on init
-    chown system root /dev/input_events
-    chmod 0660 /dev/input_events
-    restorecon /dev/input_events
-    chown radio root /dev/ril
-    chmod 0660 /dev/ril
-    restorecon /dev/ril
-    chown audioserver root /dev/audio_data
-    chmod 0660 /dev/audio_data
-    restorecon /dev/audio_data
-    chown system root /dev/screen
-    chmod 0660 /dev/screen
-    restorecon /dev/screen
-
     # ZRAM setup
     write /sys/block/zram0/comp_algorithm lz4
 
@@ -56,17 +40,16 @@ on fs
     chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/ps
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
 
-    chmod 0755 /system/bin/dhcpcd_wlan0
-
+on post-fs
+    # Set netd memlock rlimit to 8MB b/119279144
+    setrlimit 8 8388608 8388608
 
 on post-fs-data
-    start vsoc_guest_region_e2e_test
-    start gce_fs_monitor
     start vport_trigger
 
 
-on early-boot
-    start vsoc_input_service
+on late-fs
+    write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
 
 on boot
@@ -74,7 +57,7 @@ on boot
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
-    start socket_forward_proxy
+    start socket_vsock_proxy
 
 
 service setup_wifi /vendor/bin/setup_wifi
@@ -97,18 +80,7 @@ on sys-boot-completed-set && property:persist.sys.zram_enabled=1
     swapon_all /vendor/etc/fstab.${ro.hardware}
 
 
-service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test
-    user root
-    group shell
-    oneshot
-
-
-service vsoc_input_service /vendor/bin/vsoc_input_service
-    group root uhid
-    oneshot
-
-
-service socket_forward_proxy /vendor/bin/socket_forward_proxy
+service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -tcp_port=5555 -vsock_port=6520
 
 
 service vport_trigger /vendor/bin/vport_trigger
@@ -120,12 +92,17 @@ on property:vendor.ser.cf-logcat=*
     enable seriallogging
 
 
-on property:vendor.ser.cf-gadget-usb-v1=*
-    symlink ${vendor.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
-    enable usbforward
-
-
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
+    class main
+    user root
+    disabled
+
+
+on property:ro.boot.vsock_logcat_port=*
+   enable vsock_logcat
+
+
+service vsock_logcat /vendor/bin/vsock_logcat
     class main
     user root
     disabled
@@ -138,18 +115,6 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant -g@android:wpa_wlan0
     group system wifi inet
     disabled
     oneshot
-
-
-service gce_fs_monitor /vendor/bin/gce_fs_monitor
-    class late_start
-    disabled
-    oneshot
-
-
-service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
-    class late_start
-    user root
-    disabled
 
 
 service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport

@@ -29,6 +29,14 @@
 					mnt_flags = "noatime,ro,errors=panic";
 					fsmgr_flags = "wait";
 				};
+
+				product {
+					compatible = "android,product";
+					dev = "/dev/block/vdf";
+					type = "ext4";
+					mnt_flags = "noatime,ro,errors=panic";
+					fsmgr_flags = "wait";
+				};
 			};
 		};
 	};
