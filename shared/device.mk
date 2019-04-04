@@ -206,7 +206,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-service.sim \
-    android.hardware.bluetooth.audio@2.0-impl
+    android.hardware.bluetooth.a2dp@1.0-impl
 
 #
 # Audio HAL
@@ -223,8 +223,8 @@ PRODUCT_PACKAGES += \
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.0-impl \
-    android.hardware.drm@1.0-service
+    android.hardware.drm@1.1-impl \
+    android.hardware.drm@1.1-service
 
 #
 # Dumpstate HAL
@@ -286,8 +286,8 @@ PRODUCT_PACKAGES += \
 # Keymaster HAL
 #
 PRODUCT_PACKAGES += \
-     android.hardware.keymaster@3.0-impl \
-     android.hardware.keymaster@3.0-service
+     android.hardware.keymaster@4.0-impl \
+     android.hardware.keymaster@4.0-service
 
 #
 # Power HAL
