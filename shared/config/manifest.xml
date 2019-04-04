@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="1">
+<manifest version="1.0" type="device" target-level="3">
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
@@ -35,6 +35,28 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130079340):
+    <hal format="hidl">
+        <name>android.hardware.authsecret</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IAuthSecret</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079316):
+    <hal format="hidl">
+        <name>android.hardware.biometrics.fingerprint</name>
+        <transport>hwbinder</transport>
+        <version>2.1</version>
+        <interface>
+            <name>IBiometricsFingerprint</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.bluetooth</name>
         <transport>hwbinder</transport>
@@ -45,14 +67,25 @@
         </interface>
     </hal>
     <hal format="hidl">
-        <name>android.hardware.bluetooth.audio</name>
+        <name>android.hardware.bluetooth.a2dp</name>
         <transport>hwbinder</transport>
-        <version>2.0</version>
+        <version>1.0</version>
         <interface>
-            <name>IBluetoothAudioProvidersFactory</name>
+            <name>IBluetoothAudioOffload</name>
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130078382):
+    <hal format="hidl">
+        <name>android.hardware.boot</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IBootControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.camera.provider</name>
         <transport>hwbinder</transport>
@@ -65,16 +98,38 @@
     <hal format="hidl">
         <name>android.hardware.configstore</name>
         <transport>hwbinder</transport>
-        <version>1.0</version>
+        <version>1.1</version>
         <interface>
             <name>ISurfaceFlingerConfigs</name>
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130078386):
+    <hal format="hidl">
+        <name>android.hardware.confirmationui</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IConfirmationUI</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130077250):
+    <hal format="hidl">
+        <name>android.hardware.contexthub</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IContexthub</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.drm</name>
         <transport>hwbinder</transport>
-        <version>1.0</version>
+        <version>1.1</version>
         <interface>
             <name>ICryptoFactory</name>
             <instance>default</instance>
@@ -102,6 +157,7 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- FIXME: Upgrade gnss to 1.1 -->
     <hal format="hidl">
         <name>android.hardware.gnss</name>
         <transport>hwbinder</transport>
@@ -147,10 +203,21 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130075874):
+    <hal format="hidl">
+        <name>android.hardware.ir</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IConsumerIr</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.keymaster</name>
         <transport>hwbinder</transport>
-        <version>3.0</version>
+        <version>4.0</version>
         <interface>
             <name>IKeymasterDevice</name>
             <instance>default</instance>
@@ -178,6 +245,49 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130079342):
+    <hal format="hidl">
+        <name>android.hardware.memtrack</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IMemtrack</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <hal format="hidl">
+        <name>android.hardware.neuralnetworks</name>
+        <transport>hwbinder</transport>
+        <fqname>@1.1::IDevice/sample-all</fqname>
+        <fqname>@1.1::IDevice/sample-float-fast</fqname>
+        <fqname>@1.1::IDevice/sample-float-slow</fqname>
+        <fqname>@1.1::IDevice/sample-minimal</fqname>
+        <fqname>@1.1::IDevice/sample-quant</fqname>
+    </hal>
+    <!-- TODO (b/130080415):
+    <hal format="hidl">
+        <name>android.hardware.nfc</name>
+        <transport>hwbinder</transport>
+        <version>1.1</version>
+        <interface>
+            <name>INfc</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079343):
+    <hal format="hidl">
+        <name>android.hardware.oemlock</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IOemLock</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079218): -->
     <hal format="hidl">
         <name>android.hardware.power</name>
         <transport>hwbinder</transport>
@@ -187,13 +297,44 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- cuttlefish doesn't support SIM slot 2 -->
-    <!-- TODO need ISap 1.2 and IRadioConfig 1.2 supported-->
     <hal format="hidl">
         <name>android.hardware.radio</name>
         <transport>hwbinder</transport>
-        <fqname>@1.4::IRadio/slot1</fqname>
+        <version>1.1</version>
+        <interface>
+            <name>IRadio</name>
+            <instance>slot1</instance>
+            <!-- cuttlefish doesn't support SIM slot 2/3 -->
+        </interface>
+        <!-- TODO (b/130079344):
+        <interface>
+            <name>ISap</name>
+            <instance>slot1</instance>
+        </interface>
+        -->
     </hal>
+    <!-- TODO (b/130076972):
+    <hal format="hidl">
+        <name>android.hardware.radio.config</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IRadioConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079239):
+    <hal format="hidl">
+        <name>android.hardware.secure_element</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>ISecureElement</name>
+            <instance>eSE1</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.sensors</name>
         <transport>hwbinder</transport>
@@ -203,15 +344,136 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130078389):
+    <hal format="hidl">
+        <name>android.hardware.soundtrigger</name>
+        <transport>hwbinder</transport>
+        <version>2.1</version>
+        <interface>
+            <name>ISoundTriggerHw</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079321):
+    <hal format="hidl">
+        <name>android.hardware.tetheroffload.config</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IOffloadConfig</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130080416):
+    <hal format="hidl">
+        <name>android.hardware.tetheroffload.control</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IOffloadControl</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- FIXME: Implement thermal HAL
+    <hal format="hidl">
+        <name>android.hardware.thermal</name>
+        <transport>hwbinder</transport>
+        <version>1.1</version>
+        <interface>
+            <name>IThermal</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.usb</name>
         <transport>hwbinder</transport>
-        <version>1.0</version>
+        <version>1.1</version>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130076572):
+    <hal format="hidl">
+        <name>android.hardware.usb.gadget</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IUsbGadget</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- FIXME: Implement vibrator HAL
+    <hal format="hidl">
+        <name>android.hardware.vibrator</name>
+        <transport>hwbinder</transport>
+        <version>1.2</version>
+        <interface>
+            <name>IVibrator</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079219):
+    <hal format="hidl">
+        <name>android.hardware.vr</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IVr</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079240):
+    <hal format="hidl">
+        <name>android.hardware.weaver</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IWeaver</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079638):
+    <hal format="hidl">
+        <name>android.hardware.wifi</name>
+        <transport>hwbinder</transport>
+        <version>1.2</version>
+        <interface>
+            <name>IWifi</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130079936):
+    <hal format="hidl">
+        <name>android.hardware.wifi.hostapd</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IHostapd</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
+    <!-- TODO (b/130080335):
+    <hal format="hidl">
+        <name>android.hardware.wifi.offload</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IOffload</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.wifi.supplicant</name>
         <transport>hwbinder</transport>
