@@ -188,6 +188,12 @@ PRODUCT_PACKAGES += \
     android.hardware.atrace@1.0-service
 
 #
+# Authsecret HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.authsecret@1.0-service
+
+#
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
@@ -213,7 +219,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth@1.0-service.sim \
-    android.hardware.bluetooth.a2dp@1.0-impl
+    android.hardware.bluetooth.audio@2.0-impl
 
 #
 # Audio HAL
@@ -230,8 +236,8 @@ PRODUCT_PACKAGES += \
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.1-impl \
-    android.hardware.drm@1.1-service
+    android.hardware.drm@1.2-impl \
+    android.hardware.drm@1.2-service
 
 #
 # Dumpstate HAL
