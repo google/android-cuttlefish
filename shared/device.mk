@@ -354,3 +354,7 @@ endif
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy
+
+# cuttlefish supports updating of APEXes
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.apex.updatable=true
