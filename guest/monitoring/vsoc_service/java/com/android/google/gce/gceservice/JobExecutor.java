@@ -49,8 +49,13 @@ public class JobExecutor {
     public void schedule(final JobBase job, final GceFuture<?>... futures) {
         mExecutor.schedule(new Runnable() {
             private boolean mDependenciesReady = false;
-            private ArrayList<GceFuture<?>> mFutures =
-                    new ArrayList<GceFuture<?>>(Arrays.asList(futures));
+            private ArrayList<GceFuture<?>> mFutures = new ArrayList<GceFuture<?>>();
+
+            {
+                for (GceFuture<?> future: futures) {
+                    mFutures.add(future);
+                }
+            }
 
             public void run() {
                 if (!mDependenciesReady) {
