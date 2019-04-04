@@ -15,6 +15,7 @@
 #
 
 DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/tv/manifest.xml
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_minimal.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
