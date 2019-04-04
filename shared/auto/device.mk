@@ -70,8 +70,7 @@ PRODUCT_PACKAGES += \
 
 # GPS HAL
 PRODUCT_PACKAGES += \
-    gps.vsoc_x86 \
-    android.hardware.gnss@1.0-impl
+    android.hardware.gnss@1.1-service
 
 # Cell network connection
 PRODUCT_PACKAGES += \
