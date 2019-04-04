@@ -65,13 +65,12 @@ PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
 # DRM HAL
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.1-impl \
-    android.hardware.drm@1.1-service
+    android.hardware.drm@1.2-impl \
+    android.hardware.drm@1.2-service
 
 # GPS HAL
 PRODUCT_PACKAGES += \
-    gps.vsoc_x86 \
-    android.hardware.gnss@1.0-impl
+    android.hardware.gnss@2.0-service
 
 # Cell network connection
 PRODUCT_PACKAGES += \
