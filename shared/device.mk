@@ -27,7 +27,6 @@ DISABLE_RILD_OEM_HOOK := true
 PRODUCT_PRODUCT_PROPERTIES := \
     persist.adb.tcp.port=5555 \
     persist.traced.enable=1 \
-    persist.heapprofd.enable=1 \
     ro.com.google.locationfeatures=1 \
  
 # Explanation of specific properties:
