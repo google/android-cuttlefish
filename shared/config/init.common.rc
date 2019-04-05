@@ -11,6 +11,8 @@ on early-init
     chmod 0755 /sys/kernel/debug
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
+    setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
+    setprop ro.hardware.hwcomposer ${ro.boot.hardware.hwcomposer}
 
 
 on init
