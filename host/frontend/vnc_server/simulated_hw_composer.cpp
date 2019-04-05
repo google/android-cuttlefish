@@ -103,6 +103,7 @@ void SimulatedHWComposer::MakeStripes() {
       s.x = 0;
       s.y = y;
       s.width = ActualScreenWidth();
+      s.stride = ActualScreenStride();
       s.height = height;
       s.raw_data.assign(raw_start, raw_end);
       s.seq_number = StripeSeqNumber{stripe_seq_num};
