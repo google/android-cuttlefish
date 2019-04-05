@@ -95,7 +95,7 @@ class ScreenRegionView
   static constexpr int kGreenBits = 8;
   static constexpr int kBlueBits = 8;
   static constexpr uint32_t kFbPixelFormat = vsoc::VSOC_PIXEL_FORMAT_RGBA_8888;
-  static constexpr int kAlignment = 8;
+  static constexpr int kAlignment = 16;
 
  protected:
   const uint8_t* first_buffer() const;
