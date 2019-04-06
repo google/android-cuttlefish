@@ -285,9 +285,9 @@ static inline void formatToYcbcr(
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
 #endif
-      out->ystride = vsoc::screen::ScreenRegionView::align(width, 16);
+      out->ystride = vsoc::screen::ScreenRegionView::align(width);
       out->cstride =
-          vsoc::screen::ScreenRegionView::align(out->ystride / 2, 16);
+          vsoc::screen::ScreenRegionView::align(out->ystride / 2);
       out->chroma_step = 1;
       out->y = it;
       it += out->ystride * height;
@@ -331,8 +331,8 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
     case HAL_PIXEL_FORMAT_RGB_888:
     case HAL_PIXEL_FORMAT_RGB_565:*/
     default:
-      w16 = vsoc::screen::ScreenRegionView::align(w, 16);
-      h16 = vsoc::screen::ScreenRegionView::align(h, 16);
+      w16 = vsoc::screen::ScreenRegionView::align(w);
+      h16 = vsoc::screen::ScreenRegionView::align(h);
       return bytes_per_pixel * w16 * h16 +
              vsoc::screen::ScreenRegionView::kSwiftShaderPadding;
   }

@@ -64,7 +64,7 @@ static int gralloc_alloc_buffer(
   // a gralloc buffer in this format.
   ALOG_ASSERT(format != HAL_PIXEL_FORMAT_RGB_888);
   if (format == HAL_PIXEL_FORMAT_YV12) {
-    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w, 16);
+    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w);
   } else {
     bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w);
   }
