@@ -379,6 +379,6 @@ bool HostSupportsQemuCli();
 bool HostSupportsVsock();
 
 // GPU modes
-extern const char* const kGpuModeGuestAshmem;
-extern const char* const kGpuModeGuestDrm;
+extern const char* const kGpuModeGuestSwiftshader;
+extern const char* const kGpuModeDrmVirgl;
 }  // namespace vsoc

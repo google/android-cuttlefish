@@ -171,8 +171,8 @@ const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 namespace vsoc {
 
-const char* const kGpuModeGuestAshmem = "guest_ashmem";
-const char* const kGpuModeGuestDrm = "guest_drm";
+const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
+const char* const kGpuModeDrmVirgl = "drm_virgl";
 
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
@@ -618,7 +618,7 @@ std::string CuttlefishConfig::adb_device_name() const {
   // TODO(schuffelen): Deal with duplication between here and launch.cc
   bool tunnelMode = adb_mode().count("tunnel") > 0;
   bool vsockTunnel = adb_mode().count("vsock_tunnel") > 0;
-  bool vsockHalfProxy = adb_mode().count("vsock_half_tunnel") > 0;
+  bool vsockHalfProxy = adb_mode().count("vsock_half_proxy") > 0;
   bool nativeVsock = adb_mode().count("native_vsock") > 0;
   if (tunnelMode || vsockTunnel || vsockHalfProxy || nativeVsock) {
     return adb_ip_and_port();
