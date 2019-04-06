@@ -43,7 +43,7 @@ cvd::Message JpegCompressor::Compress(const Message& frame,
                                       int jpeg_quality, std::uint16_t x,
                                       std::uint16_t y, std::uint16_t width,
                                       std::uint16_t height,
-                                      int screen_width) {
+                                      int stride) {
   jpeg_compress_struct cinfo{};
   jpeg_error_mgr err{};
   InitCinfo(&cinfo, &err, width, height, jpeg_quality);
@@ -55,8 +55,8 @@ cvd::Message JpegCompressor::Compress(const Message& frame,
 
   while (cinfo.next_scanline < cinfo.image_height) {
     auto row = static_cast<JSAMPROW>(const_cast<std::uint8_t*>(
-        &frame[(y * screen_width * BytesPerPixel()) +
-               (cinfo.next_scanline * BytesPerPixel() * screen_width) +
+        &frame[(y * stride) +
+               (cinfo.next_scanline * stride) +
                (x * BytesPerPixel())]));
     jpeg_write_scanlines(&cinfo, &row, 1);
   }

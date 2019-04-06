@@ -64,13 +64,14 @@ cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
     LOG(FATAL) << "Rotating a landscape stripe, this is a mistake";
   }
   auto w = stripe.width;
+  auto s = stripe.stride;
   auto h = stripe.height;
   const auto& raw = stripe.raw_data;
   Message rotated(raw.size(), 0xAA);
   for (std::uint16_t i = 0; i < w; ++i) {
     for (std::uint16_t j = 0; j < h; ++j) {
       size_t to = (i * h + j) * BytesPerPixel();
-      size_t from = (w - (i + 1) + w * j) * BytesPerPixel();
+      size_t from = (w - (i + 1)) * BytesPerPixel() + s * j;
       CHECK(from < raw.size());
       CHECK(to < rotated.size());
       std::memcpy(&rotated[to], &raw[from], BytesPerPixel());
@@ -78,6 +79,8 @@ cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
   }
   std::swap(stripe.x, stripe.y);
   std::swap(stripe.width, stripe.height);
+  // The new stride after rotating is the height, as it is not aligned again.
+  stripe.stride = stripe.width * BytesPerPixel();
   stripe.raw_data = std::move(rotated);
   stripe.orientation = ScreenOrientation::Landscape;
   return stripe;
@@ -136,7 +139,7 @@ void FrameBufferWatcher::CompressStripe(JpegCompressor* jpeg_compressor,
                                         Stripe* stripe) {
   stripe->jpeg_data = jpeg_compressor->Compress(
       stripe->raw_data, bb_->jpeg_quality_level(), 0, 0, stripe->width,
-      stripe->height, stripe->width);
+      stripe->height, stripe->stride);
 }
 
 void FrameBufferWatcher::Worker() {
