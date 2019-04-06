@@ -60,7 +60,7 @@ bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
   // HALs.
   if (config->gpu_mode() == vsoc::kGpuModeGuestDrm) {
     config->add_kernel_cmdline("androidboot.hardware.gralloc=minigbm");
-    config->add_kernel_cmdline("androidboot.hardware.hwcomposer=drm");
+    config->add_kernel_cmdline("androidboot.hardware.hwcomposer=drm_minigbm");
     return true;
   }
   if (config->gpu_mode() == vsoc::kGpuModeGuestAshmem) {
