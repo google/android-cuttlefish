@@ -56,6 +56,7 @@ struct Stripe {
   std::uint16_t x{};
   std::uint16_t y{};
   std::uint16_t width{};
+  std::uint16_t stride{};
   std::uint16_t height{};
   Message raw_data{};
   Message jpeg_data{};
@@ -69,7 +70,12 @@ inline constexpr int BytesPerPixel() {
 
 // The width of the screen regardless of orientation. Does not change.
 inline int ActualScreenWidth() {
-  return AlignToPowerOf2(vsoc::CuttlefishConfig::Get()->x_res(), 4);
+  return vsoc::CuttlefishConfig::Get()->x_res();
+}
+
+// The length of the screen stride regardless of orientation. Does not change.
+inline int ActualScreenStride() {
+  return AlignToPowerOf2(ActualScreenWidth() * BytesPerPixel(), 4);
 }
 
 // The height of the screen regardless of orientation. Does not change.
