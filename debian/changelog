@@ -1,9 +1,10 @@
-cuttlefish-common (0.9.5) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.5) stable; urgency=medium
 
   * No need to displace instance_configs.cfg.template
   * Turn on detailed logging in ssh
+  * Do a sparse unpack if the zip is local
 
- -- Greg Hartman <ghartman@google.com>  Tue, 02 Apr 2019 17:48:43 -0700
+ -- Greg Hartman <ghartman@google.com>  Fri, 05 Apr 2019 17:03:33 -0700
 
 cuttlefish-common (0.9.4) stable; urgency=medium
 
