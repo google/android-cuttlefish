@@ -14,7 +14,3 @@ set_prop(vendor_init, hal_bluetooth_sim_prop)
 set_prop(vendor_init, vendor_init_radio_prop)
 
 get_prop(vendor_init, vendor_ser_prop)
-
-get_prop(vendor_init, cf_setupwizard_mode_prop)
-
-set_prop(vendor_init, vendor_init_setupwizard_prop)
