@@ -1,0 +1,2 @@
+on early-init
+    setprop ro.setupwizard.mode ${ro.boot.setupwizard_mode}
