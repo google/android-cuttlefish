@@ -1,3 +1,9 @@
+cuttlefish-common (0.9.6) stable; urgency=medium
+
+  * Add missing dependency on dnsmasq.
+
+ -- Cody Schuffelen <schuffelen@google.com>  Wed, 10 Apr 2019 16:26:46 -0700
+
 cuttlefish-common (0.9.5) stable; urgency=medium
 
   * No need to displace instance_configs.cfg.template
