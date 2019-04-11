@@ -26,6 +26,7 @@ Depends:
  binutils,
  bridge-utils,
  device-tree-compiler,
+ dnsmasq-base,
  hostapd,
  simg2img,
  iptables,

@@ -85,9 +85,9 @@ create_interface() {
     /sbin/brctl setfd "${bridge}" 0
     /sbin/ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
 
-    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    /sbin/iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 
-    dnsmasq \
+    /usr/sbin/dnsmasq \
     --strict-order \
     --except-interface=lo \
     --interface="${bridge}" \
