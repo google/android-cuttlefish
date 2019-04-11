@@ -162,6 +162,7 @@ ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
   BOARD_SUPER_PARTITION_METADATA_DEVICE := vda
   BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
   BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
+  TARGET_RELEASETOOLS_EXTENSIONS := device/google/cuttlefish/shared
 else
   # No dynamic partitions support; we must specify maximum sizes
   BOARD_SYSTEMIMAGE_PARTITION_SIZE := 4294967296 # 4 GB
