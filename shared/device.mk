@@ -181,6 +181,18 @@ PRODUCT_COPY_FILES += \
 # Packages for HAL implementations
 
 #
+# Atrace HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.atrace@1.0-service
+
+#
+# Authsecret HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.authsecret@1.0-service
+
+#
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
@@ -223,8 +235,8 @@ PRODUCT_PACKAGES += \
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.0-impl \
-    android.hardware.drm@1.0-service
+    android.hardware.drm@1.1-impl \
+    android.hardware.drm@1.1-service
 
 #
 # Dumpstate HAL
@@ -254,9 +266,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    gps.cutf \
-    android.hardware.gnss@1.0-impl \
-    android.hardware.gnss@1.0-service
+    android.hardware.gnss@1.1-service
 
 # Health
 PRODUCT_PACKAGES += \
@@ -273,6 +283,12 @@ PRODUCT_PACKAGES += \
     sensors.cutf \
     android.hardware.sensors@1.0-impl \
     android.hardware.sensors@1.0-service
+#
+# Thermal (mock)
+#
+PRODUCT_PACKAGES += \
+    android.hardware.thermal@1.0-impl \
+    android.hardware.thermal@1.0-service
 
 #
 # Lights
@@ -286,8 +302,8 @@ PRODUCT_PACKAGES += \
 # Keymaster HAL
 #
 PRODUCT_PACKAGES += \
-     android.hardware.keymaster@3.0-impl \
-     android.hardware.keymaster@3.0-service
+     android.hardware.keymaster@4.0-impl \
+     android.hardware.keymaster@4.0-service
 
 #
 # Power HAL
