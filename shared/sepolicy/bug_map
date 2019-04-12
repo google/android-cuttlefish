@@ -1,5 +1,6 @@
 hal_bluetooth_sim hal_bluetooth_sim tcp_socket 128355308
 installd device file 128336318
+lmkd device file 128336318
 netd device file 128336318
 storaged device file 128336318
 system_server system_server process 65201432
