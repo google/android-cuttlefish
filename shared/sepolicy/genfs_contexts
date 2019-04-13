@@ -1,1 +1,3 @@
 genfscon sysfs /devices/pnp0/00:00/rtc  u:object_r:sysfs_rtc:s0
+genfscon sysfs /devices/pci0000:00/0000:00:0a.0/virtio8/net u:object_r:sysfs_net:s0 # qemu
+genfscon sysfs /devices/pci0000:00/0000:00:0c.0/virtio11/net u:object_r:sysfs_net:s0 # crosvm
