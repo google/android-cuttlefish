@@ -9,7 +9,7 @@
 */
 -->
 <!-- Android Auto Embedded specific HALs-->
-<manifest version="1.0" type="device">
+<manifest version="1.0" type="device" target-level="3">
     <hal format="hidl">
         <name>android.hardware.automotive.audiocontrol</name>
         <transport>hwbinder</transport>
@@ -19,6 +19,17 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- FIXME: Implement automotive.evs HAL
+    <hal format="hidl">
+        <name>android.hardware.automotive.evs</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IEvsEnumerator</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.automotive.vehicle</name>
         <transport>hwbinder</transport>
@@ -28,6 +39,7 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- FIXME: Move this to shared manifest.xml -->
     <hal format="hidl">
         <name>android.hardware.broadcastradio</name>
         <transport>hwbinder</transport>
