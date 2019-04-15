@@ -6,3 +6,4 @@ netd device file 128336318
 storaged device file 128336318
 system_server system_server process 65201432
 vendor_init kernel system 130424539
+vold device file 128336318
