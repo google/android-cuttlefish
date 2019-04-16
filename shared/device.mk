@@ -14,6 +14,9 @@
 # limitations under the License.
 #
 
+# Enable updating of APEXes
+$(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
+
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
 
 PRODUCT_SHIPPING_API_LEVEL := 29
@@ -360,7 +363,3 @@ endif
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy
-
-# cuttlefish supports updating of APEXes
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.apex.updatable=true
