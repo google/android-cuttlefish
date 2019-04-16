@@ -51,7 +51,11 @@ case $# in
 esac
 
 mkdir -p "${destdir}"
-bsdtar -x -C "${destdir}" -f "${source}" ${sparse} ${files_to_extract}
+if ! bsdtar -x -C "${destdir}" -f "${source}" ${sparse} ${files_to_extract}; then
+    echo "WARNING: extraction failed: very likely a file to be extracted was"
+    echo "         requested that was not part of the archive."
+    echo "         See above error log for details."
+fi
 
 if [[ " ${files_to_extract[*]} " == *" boot.img "* ]]; then
     /usr/lib/cuttlefish-common/bin/unpack_boot_image.py -boot_img "${destdir}/boot.img" -dest "${destdir}"
