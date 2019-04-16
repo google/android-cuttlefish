@@ -15,23 +15,20 @@
  */
 
 #include <arpa/inet.h>
+#include <glog/logging.h>
 #include <ifaddrs.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 
-#include <memory>
-#include <sstream>
-#include <string>
+#include "device_config.h"
 
-#include <glog/logging.h>
-
-#include "common/libs/constants/ril.h"
-#include "host/commands/launch/ril_config.h"
+namespace cvd {
 
 namespace {
 
-int number_of_ones(unsigned long val) {
-  int ret = 0;
+uint8_t number_of_ones(unsigned long val) {
+  uint8_t ret = 0;
   while (val) {
     ret += val % 2;
     val >>= 1;
@@ -41,7 +38,7 @@ int number_of_ones(unsigned long val) {
 
 class NetConfig {
  public:
-  uint32_t ril_prefixlen = -1;
+  uint8_t ril_prefixlen = -1;
   std::string ril_ipaddr;
   std::string ril_gateway;
   std::string ril_dns = "8.8.8.8";
@@ -54,16 +51,12 @@ class NetConfig {
     LOG(INFO) << "gateway = " << ril_gateway;
     LOG(INFO) << "dns = " << ril_dns;
     LOG(INFO) << "broadcast = " << ril_broadcast;
-    LOG(INFO) << "prefix length = " << ril_prefixlen;
+    LOG(INFO) << "prefix length = " << static_cast<int>(ril_prefixlen);
     return ret;
   }
 
  private:
   bool ParseIntefaceAttributes(struct ifaddrs* ifa) {
-    // if (ifa->ifa_addr->sa_family != AF_INET) {
-    //   LOG(ERROR) << "The " << ifa->ifa_name << " interface is not IPv4";
-    //   return false;
-    // }
     struct sockaddr_in* sa;
     char* addr_str;
 
@@ -122,30 +115,50 @@ class NetConfig {
   }
 };
 
-template <typename T>
-std::string BuildPropertyDefinition(const std::string& prop_name,
-                                  const T& prop_value) {
-  std::ostringstream stream;
-  stream << prop_name << "=" << prop_value;
-  return stream.str();
+inline void CopyChars(char* dest, size_t size, const char* src) {
+  auto res = snprintf(dest, size, "%s", src);
+  if (res >= static_cast<int>(size)) {
+    LOG(ERROR) << "Longer(" << res << ") than expected(" << (size - 1)
+               << ") config string was truncated: " << dest;
+  }
 }
+
 }  // namespace
 
-void ConfigureRil(vsoc::CuttlefishConfig* config) {
+std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
+  auto config = vsoc::CuttlefishConfig::Get();
+  if (!config) return nullptr;
+  std::unique_ptr<DeviceConfig> dev_config(new DeviceConfig());
+  if (!dev_config->InitializeNetworkConfiguration(*config)) {
+    return nullptr;
+  }
+  return dev_config;
+}
+
+bool DeviceConfig::InitializeNetworkConfiguration(
+    const vsoc::CuttlefishConfig& config) {
   NetConfig netconfig;
-  if (!netconfig.ObtainConfig(config->mobile_bridge_name())) {
+  if (!netconfig.ObtainConfig(config.mobile_bridge_name())) {
     LOG(ERROR) << "Unable to obtain the network configuration";
-    return;
+    return false;
   }
 
-  config->add_kernel_cmdline(BuildPropertyDefinition(
-      CUTTLEFISH_RIL_ADDR_PROPERTY, netconfig.ril_ipaddr));
-  config->add_kernel_cmdline(BuildPropertyDefinition(
-      CUTTLEFISH_RIL_GATEWAY_PROPERTY, netconfig.ril_gateway));
-  config->add_kernel_cmdline(BuildPropertyDefinition(
-      CUTTLEFISH_RIL_DNS_PROPERTY, netconfig.ril_dns));
-  config->add_kernel_cmdline(BuildPropertyDefinition(
-      CUTTLEFISH_RIL_BROADCAST_PROPERTY, netconfig.ril_broadcast));
-  config->add_kernel_cmdline(BuildPropertyDefinition(
-      CUTTLEFISH_RIL_PREFIXLEN_PROPERTY, netconfig.ril_prefixlen));
+  auto res = snprintf(data_.ril.ipaddr, sizeof(data_.ril.ipaddr), "%s",
+                      netconfig.ril_ipaddr.c_str());
+  if (res >= (int)sizeof(data_.ril.ipaddr)) {
+    LOG(ERROR) << "Longer than expected config string was truncated: "
+               << data_.ril.ipaddr;
+  }
+  CopyChars(data_.ril.gateway, sizeof(data_.ril.gateway),
+            netconfig.ril_gateway.c_str());
+  CopyChars(data_.ril.dns, sizeof(data_.ril.dns), netconfig.ril_dns.c_str());
+  CopyChars(data_.ril.broadcast, sizeof(data_.ril.broadcast),
+            netconfig.ril_broadcast.c_str());
+  data_.ril.prefixlen = netconfig.ril_prefixlen;
+
+  generate_address_and_prefix();
+
+  return true;
 }
+
+}  // namespace cvd

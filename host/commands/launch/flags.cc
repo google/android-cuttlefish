@@ -13,7 +13,6 @@
 #include "host/commands/launch/data_image.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
-#include "host/commands/launch/ril_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -193,6 +192,11 @@ DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
 DEFINE_int32(logcat_vsock_port, vsoc::GetPerInstanceDefault(5620),
              "The port for logcat over vsock");
+DEFINE_string(config_server_binary,
+              vsoc::DefaultHostArtifactsPath("bin/config_server"),
+              "Binary for the configuration server");
+DEFINE_int32(config_server_port, vsoc::GetPerInstanceDefault(4680),
+             "The (vsock) port for the configuration server");
 DEFINE_int32(frames_vsock_port, vsoc::GetPerInstanceDefault(5580),
              "The vsock port to receive frames from the guest on");
 namespace {
@@ -341,6 +345,8 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_logcat_port=",
                                              FLAGS_logcat_vsock_port));
   }
+  tmp_config_obj.add_kernel_cmdline(concat("androidboot.cuttlefish_config_server_port=",
+                                           FLAGS_config_server_port));
   tmp_config_obj.set_hardware_name(FLAGS_hardware_name);
   if (!FLAGS_guest_security.empty()) {
     tmp_config_obj.add_kernel_cmdline(concat("security=", FLAGS_guest_security));
@@ -391,13 +397,13 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
   tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
   tmp_config_obj.set_logcat_receiver_binary(FLAGS_logcat_receiver_binary);
+  tmp_config_obj.set_config_server_binary(FLAGS_config_server_binary);
   tmp_config_obj.set_launcher_log_path(tmp_config_obj.PerInstancePath("launcher.log"));
   tmp_config_obj.set_launcher_monitor_socket_path(
       tmp_config_obj.PerInstancePath("launcher_monitor.sock"));
 
   tmp_config_obj.set_mobile_bridge_name(FLAGS_mobile_interface);
   tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
-  ConfigureRil(&tmp_config_obj);
 
   tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);
 
@@ -444,6 +450,7 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
+  tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
   tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
   if (!tmp_config_obj.enable_ivserver()) {
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_frames_port=",

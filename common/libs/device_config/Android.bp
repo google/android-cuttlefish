@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,37 +13,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
-    name: "launch_cvd",
+cc_library_shared {
+    name: "libcuttlefish_device_config",
     srcs: [
-        "main.cc",
-        "screen_region_handler.cc",
-        "vsoc_shared_memory.cc",
-        "boot_image_unpacker.cc",
-        "process_monitor.cc",
-        "launch.cc",
-        "data_image.cc",
-        "flags.cc",
+        "device_config.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     shared_libs: [
-        "vsoc_lib",
-        "libcuttlefish_fs",
-        "libcuttlefish_strings",
-        "libcuttlefish_utils",
-        "cuttlefish_auto_resources",
         "libbase",
-        "libnl"
+        "liblog",
+        "libcuttlefish_fs",
+        "cuttlefish_auto_resources",
+        "libcuttlefish_utils",
     ],
-    static_libs: [
-        "libcuttlefish_host_config",
-        "libcuttlefish_vm_manager",
-        "libivserver",
-        "libgflags",
-        "libxml2",
-        "libjsoncpp",
-    ],
-    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
+    target: {
+        host: {
+            srcs: [
+                "host_device_config.cpp",
+            ],
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libjsoncpp",
+            ],
+        },
+        android: {
+            srcs: [
+                "guest_device_config.cpp",
+            ],
+            shared_libs: [
+                "libcutils",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest"],
 }
