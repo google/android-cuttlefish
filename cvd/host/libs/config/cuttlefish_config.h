@@ -190,6 +190,9 @@ class CuttlefishConfig {
   std::string logcat_receiver_binary() const;
   void set_logcat_receiver_binary(const std::string& binary);
 
+  std::string config_server_binary() const;
+  void set_config_server_binary(const std::string& binary);
+
   std::string launcher_log_path() const;
   void set_launcher_log_path(const std::string& launcher_log_path);
 
@@ -310,6 +313,9 @@ class CuttlefishConfig {
 
   void set_logcat_vsock_port(int port);
   int logcat_vsock_port() const;
+
+  void set_config_server_port(int port);
+  int config_server_port() const;
 
   void set_frames_vsock_port(int port);
   int frames_vsock_port() const;
