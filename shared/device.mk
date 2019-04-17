@@ -65,7 +65,7 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy \
     socket_vsock_proxy \
     usbforward \
-    VSoCService \
+    CuttlefishService \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
     vport_trigger \
