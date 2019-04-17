@@ -1,3 +1,7 @@
+type hal_camera_prop, property_type;
+
 vndbinder_use(hal_camera_default)
 
 hal_client_domain(hal_camera_default, hal_graphics_allocator)
+
+get_prop(hal_camera_default, hal_camera_prop)

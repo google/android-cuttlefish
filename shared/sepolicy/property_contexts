@@ -7,6 +7,8 @@ ro.boot.vsock_logcat_port  u:object_r:vsock_logcat_port_prop:s0
 ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
 ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
 vendor.vsock_logcat_status  u:object_r:vsock_logcat_status_prop:s0
+qemu.sf.back_camera_caps  u:object_r:hal_camera_prop:s0
+qemu.sf.front_camera_caps  u:object_r:hal_camera_prop:s0
 ro.boot.hardware.gralloc u:object_r:cf_graphics_config_prop:s0 exact string
 ro.boot.hardware.hwcomposer u:object_r:cf_graphics_config_prop:s0 exact string
 ro.boot.lcd_density u:object_r:cf_graphics_config_prop:s0 exact int
