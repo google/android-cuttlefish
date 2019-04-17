@@ -77,12 +77,6 @@ CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
 cvd::Command CrosvmManager::StartCommand() {
-  if (!config_->ramdisk_image_path().empty()) {
-    // TODO re-enable ramdisk when crosvm supports it
-    LOG(FATAL) << "initramfs not supported";
-    return cvd::Command("/bin/false");
-  }
-
   // TODO Add aarch64 support
   // TODO Add the tap interfaces (--tap-fd)
   // TODO Redirect logcat output
@@ -97,6 +91,9 @@ cvd::Command CrosvmManager::StartCommand() {
   if (config_->gpu_mode() != vsoc::kGpuModeGuestAshmem) {
     command.AddParameter("--gpu");
     command.AddParameter("--wayland-sock=", config_->wayland_socket());
+  }
+  if (!config_->ramdisk_image_path().empty()) {
+    command.AddParameter("--initrd=", config_->ramdisk_image_path());
   }
   command.AddParameter("--null-audio");
   command.AddParameter("--mem=", config_->memory_mb());
