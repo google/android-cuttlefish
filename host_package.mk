@@ -5,9 +5,6 @@ cvd_host_package_tar := $(HOST_OUT)/cvd-host_package.tar.gz
 .PHONY: hosttar
 hosttar: $(cvd_host_package_tar)
 
-.PHONY: cf_local_image
-cf_local_image: bootimage cacheimage hosttar systemimage productimage userdataimage vendorimage
-
 $(cvd_host_package_tar): PRIVATE_TAR_FORMAT :=
 ifeq ($(HOST_OS),linux)
 $(cvd_host_package_tar): PRIVATE_TAR_FORMAT := --format=gnu
