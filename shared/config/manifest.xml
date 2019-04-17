@@ -381,7 +381,7 @@
         </interface>
     </hal>
     -->
-    <!-- FIXME: Upgrade thermal to 1.1 -->
+    <!-- FIXME: AOSP thermal HAL 1.0 is broken
     <hal format="hidl">
         <name>android.hardware.thermal</name>
         <transport>hwbinder</transport>
@@ -391,6 +391,7 @@
             <instance>default</instance>
         </interface>
     </hal>
+    -->
     <hal format="hidl">
         <name>android.hardware.usb</name>
         <transport>hwbinder</transport>
