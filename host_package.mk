@@ -39,6 +39,7 @@ cvd_host_executables := \
     extract-vmlinux \
     crosvm \
     logcat_receiver \
+    config_server \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -74,6 +75,7 @@ cvd_host_shared_libraries := \
     crosvm/libgbm.so.1 \
     crosvm/libminijail.so \
     crosvm/libvirglrenderer.so.0 \
+    libcuttlefish_device_config.so \
 
 
 cvd_host_configs := \

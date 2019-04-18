@@ -1,4 +1,4 @@
-type cuttlefish_ril_prop, property_type;
+type cuttlefish_config_server_port_prop, property_type;
 type libcuttlefish_rild, domain;
 type libcuttlefish_rild_exec, exec_type, vendor_file_type, file_type;
 
@@ -11,4 +11,6 @@ allow libcuttlefish_rild libcuttlefish_rild_device:chr_file rw_file_perms;
 # Failing to create these sockets appears to be non-fatal
 net_domain(libcuttlefish_rild)
 
-get_prop(libcuttlefish_rild, cuttlefish_ril_prop)
+get_prop(libcuttlefish_rild, cuttlefish_config_server_port_prop)
+
+allow libcuttlefish_rild self:{ socket vsock_socket } create_socket_perms_no_ioctl;
