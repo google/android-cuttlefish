@@ -1,7 +1,7 @@
 bt.rootcanal_test_console  u:object_r:hal_bluetooth_sim_prop:s0
 sys.cf.ser.  u:object_r:sys_cf_ser_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
-ro.boot.cuttlefish_ril  u:object_r:cuttlefish_ril_prop:s0
+ro.boot.cuttlefish_config_server_port  u:object_r:cuttlefish_config_server_port_prop:s0
 ro.boot.vsock_frames_port  u:object_r:vsock_frames_port_prop:s0
 ro.boot.vsock_logcat_port  u:object_r:vsock_logcat_port_prop:s0
 ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
