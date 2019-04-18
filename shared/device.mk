@@ -283,12 +283,6 @@ PRODUCT_PACKAGES += \
     sensors.cutf \
     android.hardware.sensors@1.0-impl \
     android.hardware.sensors@1.0-service
-#
-# Thermal (mock)
-#
-PRODUCT_PACKAGES += \
-    android.hardware.thermal@1.0-impl \
-    android.hardware.thermal@1.0-service
 
 #
 # Lights
@@ -336,7 +330,6 @@ PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
 
 # TODO vibrator HAL
-# TODO thermal
 
 PRODUCT_PACKAGES += \
     cuttlefish_dtb
