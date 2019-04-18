@@ -15,6 +15,7 @@
 
 subdirs = [
     "auto_resources",
+    "device_config",
     "fs",
     "net",
     "strings",

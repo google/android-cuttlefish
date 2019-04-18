@@ -170,6 +170,21 @@ void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                    GetOnSubprocessExitCallback(config));
 }
 
+void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+                        cvd::ProcessMonitor* process_monitor) {
+  auto port = config.config_server_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  if (!socket->IsOpen()) {
+    LOG(ERROR) << "Unable to create configuration server socket: "
+               << socket->StrError();
+    std::exit(LauncherExitCodes::kConfigServerError);
+  }
+  cvd::Command cmd(config.config_server_binary());
+  cmd.AddParameter("-server_fd=", socket);
+  process_monitor->StartSubprocess(std::move(cmd),
+                                   GetOnSubprocessExitCallback(config));
+}
+
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor) {
   if (!AdbUsbEnabled(config)) {

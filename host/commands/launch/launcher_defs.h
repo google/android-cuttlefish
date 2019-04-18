@@ -40,6 +40,7 @@ enum LauncherExitCodes : int {
   kE2eTestFailed = 16,
   kKernelDecompressError = 17,
   kLogcatServerError = 18,
+  kConfigServerError = 19,
 };
 
 // Actions supported by the launcher server
