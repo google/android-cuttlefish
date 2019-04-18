@@ -210,7 +210,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     gralloc.minigbm \
     gralloc.cutf_ashmem \
-    android.hardware.graphics.mapper@2.0-impl \
+    android.hardware.graphics.mapper@2.0-impl-2.1 \
     android.hardware.graphics.allocator@2.0-impl \
     android.hardware.graphics.allocator@2.0-service
 
