@@ -64,9 +64,7 @@ PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
 # DRM HAL
-PRODUCT_PACKAGES += \
-    android.hardware.drm@1.1-impl \
-    android.hardware.drm@1.1-service
+PRODUCT_PACKAGES += android.hardware.drm@1.1-service.clearkey
 
 # GPS HAL
 PRODUCT_PACKAGES += \
