@@ -239,8 +239,7 @@ PRODUCT_PACKAGES += \
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.2-impl \
-    android.hardware.drm@1.2-service
+    android.hardware.drm@1.2-service.clearkey
 
 #
 # Dumpstate HAL
