@@ -199,6 +199,13 @@ DEFINE_int32(config_server_port, vsoc::GetPerInstanceDefault(4680),
              "The (vsock) port for the configuration server");
 DEFINE_int32(frames_vsock_port, vsoc::GetPerInstanceDefault(5580),
              "The vsock port to receive frames from the guest on");
+DEFINE_bool(enable_tombstone_receiver, false, "Enables the tombstone logger on "
+            "both the guest and the host");
+DEFINE_string(tombstone_receiver_binary,
+              vsoc::DefaultHostArtifactsPath("bin/tombstone_receiver"),
+              "Binary for the tombstone server");
+DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
+             "The vsock port for tombstones");
 namespace {
 
 template<typename S, typename T>
@@ -455,6 +462,19 @@ bool InitializeCuttlefishConfiguration(
   if (!tmp_config_obj.enable_ivserver()) {
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_frames_port=",
                                              FLAGS_frames_vsock_port));
+  }
+
+  tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
+  tmp_config_obj.set_tombstone_receiver_port(FLAGS_tombstone_receiver_port);
+  tmp_config_obj.set_tombstone_receiver_binary(FLAGS_tombstone_receiver_binary);
+  if (FLAGS_enable_tombstone_receiver) {
+    tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=1");
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_tombstone_port="
+      ,FLAGS_tombstone_receiver_port));
+    // TODO (b/128842613) populate a cid flag to read the host CID during 
+    // runtime
+  } else {
+    tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=0");
   }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());

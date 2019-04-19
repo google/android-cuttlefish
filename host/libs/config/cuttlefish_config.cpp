@@ -162,6 +162,10 @@ const char* kConfigServerPort = "config_server_port";
 const char* kFramesVsockPort = "frames_vsock_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerBinary = "config_server_binary";
+
+const char* kRunTombstoneReceiver = "enable_tombstone_logger";
+const char* kTombstoneReceiverPort = "tombstone_logger_port";
+const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 }  // namespace
 
 namespace vsoc {
@@ -862,6 +866,30 @@ void CuttlefishConfig::set_config_server_binary(const std::string& binary) {
 
 std::string CuttlefishConfig::config_server_binary() const {
   return (*dictionary_)[kConfigServerBinary].asString();
+}
+
+bool CuttlefishConfig::enable_tombstone_receiver() const {
+  return (*dictionary_)[kRunTombstoneReceiver].asBool();
+}
+
+void CuttlefishConfig::set_enable_tombstone_receiver(bool enable_tombstone_receiver) {
+  (*dictionary_)[kRunTombstoneReceiver] = enable_tombstone_receiver;
+}
+
+std::string CuttlefishConfig::tombstone_receiver_binary() const {
+  return (*dictionary_)[kTombstoneReceiverBinary].asString();
+}
+
+void CuttlefishConfig::set_tombstone_receiver_binary(const std::string& e2e_test_binary) {
+  (*dictionary_)[kTombstoneReceiverBinary] = e2e_test_binary;
+}
+
+void CuttlefishConfig::set_tombstone_receiver_port(int port) {
+  (*dictionary_)[kTombstoneReceiverPort] = port;
+}
+
+int CuttlefishConfig::tombstone_receiver_port() const {
+  return (*dictionary_)[kTombstoneReceiverPort].asInt();
 }
 
 bool CuttlefishConfig::enable_ivserver() const {

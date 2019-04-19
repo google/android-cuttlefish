@@ -41,6 +41,8 @@ enum LauncherExitCodes : int {
   kKernelDecompressError = 17,
   kLogcatServerError = 18,
   kConfigServerError = 19,
+  kTombstoneServerError = 20,
+  kTombstoneDirCreationError = 21,
 };
 
 // Actions supported by the launcher server
