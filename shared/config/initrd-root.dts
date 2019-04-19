@@ -32,7 +32,7 @@
 
 				vendor {
 					compatible = "android,vendor";
-					dev = "/dev/block/vdd";
+					dev = "/dev/block/vde";
 					type = "ext4";
 					mnt_flags = "noatime,ro,errors=panic";
 					fsmgr_flags = "wait";
