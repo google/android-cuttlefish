@@ -204,8 +204,8 @@ PRODUCT_PACKAGES += \
     hwcomposer.cutf_ivsh \
     hwcomposer.cutf_cvm \
     hwcomposer-stats \
-    android.hardware.graphics.composer@2.1-impl \
-    android.hardware.graphics.composer@2.1-service
+    android.hardware.graphics.composer@2.2-impl \
+    android.hardware.graphics.composer@2.2-service
 
 #
 # Gralloc HAL
