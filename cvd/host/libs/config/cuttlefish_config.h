@@ -320,6 +320,15 @@ class CuttlefishConfig {
   void set_frames_vsock_port(int port);
   int frames_vsock_port() const;
 
+  void set_enable_tombstone_receiver(bool enable_tombstone_receiver);
+  bool enable_tombstone_receiver() const;
+
+  void set_tombstone_receiver_binary(const std::string& binary);
+  std::string tombstone_receiver_binary() const;
+
+  void set_tombstone_receiver_port(int port);
+  int tombstone_receiver_port() const;
+
   bool enable_ivserver() const;
 
   std::string touch_socket_path() const;
