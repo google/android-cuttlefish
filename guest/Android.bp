@@ -18,4 +18,5 @@ subdirs = [
     "hals/health",
     "hals/hwcomposer",
     "monitoring/dumpstate_ext",
+    "vsoc/lib"
 ]
