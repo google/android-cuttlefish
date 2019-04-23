@@ -21,6 +21,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_pasan:$(LOCAL_DIR)/vsoc_x86/pasan/device.mk \
 	aosp_cf_x86_phone:$(LOCAL_DIR)/vsoc_x86/phone/device.mk \
 	aosp_cf_x86_go_phone:$(LOCAL_DIR)/vsoc_x86/go_phone/device.mk \
+	aosp_cf_x86_go_512_phone:$(LOCAL_DIR)/vsoc_x86/go_512_phone/device.mk \
 	aosp_cf_x86_gsi:$(LOCAL_DIR)/vsoc_x86/gsi/aosp_cf_x86_gsi.mk \
 	aosp_cf_x86_tv:$(LOCAL_DIR)/vsoc_x86/tv/device.mk
 
