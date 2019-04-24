@@ -14,8 +14,7 @@
 // limitations under the License.
 
 subdirs = [
-    "commands",
-    "hals",
-    "monitoring/dumpstate_ext",
-    "vsoc/lib"
+    "health",
+    "hwcomposer",
+    "power",
 ]
