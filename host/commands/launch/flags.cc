@@ -249,6 +249,9 @@ bool InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
 
+  // TODO(b/77276633): This should be handled as part of the GPU configuration
+  tmp_config_obj.add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
+
   tmp_config_obj.set_serial_number(FLAGS_serial_number);
 
   tmp_config_obj.set_cpus(FLAGS_cpus);
