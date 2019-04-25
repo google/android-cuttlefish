@@ -96,7 +96,7 @@ WIFI_DRIVER_FW_PATH_PARAM   := "/dev/null"
 WIFI_DRIVER_FW_PATH_STA     := "/dev/null"
 WIFI_DRIVER_FW_PATH_AP      := "/dev/null"
 
-BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor
 
 # master has breaking changes in dlfcn.h, but the platform SDK hasn't been
 # bumped. Restore the line below when it is.
