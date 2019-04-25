@@ -86,11 +86,6 @@ PRODUCT_PACKAGES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     drm.service.enabled=true
 
-# Add car related sepolicy
-# TODO: Now use sepolicies from car emulator for test. Create a separate one for GCE
-BOARD_SEPOLICY_DIRS += \
-    device/generic/car/common/sepolicy \
-
 BOARD_IS_AUTOMOTIVE := true
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)

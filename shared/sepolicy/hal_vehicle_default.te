@@ -1,0 +1,4 @@
+# The sepolicy defines rules for default Vehicle HAL on Automotive devices
+typeattribute hal_vehicle_default hal_automotive_socket_exemption;
+
+net_domain(hal_vehicle_default)
