@@ -73,7 +73,9 @@ PRODUCT_PACKAGES += \
     rename_netiface \
     ip_link_add \
     setup_wifi \
+    tombstone_transmit \
     vsock_logcat \
+    crasher \
 
 #
 # Packages for AOSP-available stuff we use from the framework
