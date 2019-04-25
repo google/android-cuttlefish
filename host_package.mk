@@ -40,6 +40,7 @@ cvd_host_executables := \
     crosvm \
     logcat_receiver \
     config_server \
+    tombstone_receiver \
 
 cvd_host_tests := \
     auto_free_buffer_test \
