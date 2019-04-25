@@ -26,3 +26,20 @@ cc_library_shared {
     ],
     defaults: ["cuttlefish_host_and_guest"],
 }
+
+cc_library_static {
+    name: "libcuttlefish_fs_static",
+    static_libs: [
+        "cuttlefish_auto_resources_static",
+    ],
+    srcs: [
+        "gce_fs.cpp",
+        "shared_fd.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+    stl: "libc++_static",
+    defaults: ["cuttlefish_guest_product_only"],
+}

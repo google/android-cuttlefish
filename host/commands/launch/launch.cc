@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/launch/launcher_defs.h"
@@ -181,6 +182,38 @@ void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
   }
   cvd::Command cmd(config.config_server_binary());
   cmd.AddParameter("-server_fd=", socket);
+  process_monitor->StartSubprocess(std::move(cmd),
+                                   GetOnSubprocessExitCallback(config));
+}
+
+void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                      cvd::ProcessMonitor* process_monitor) {
+  if (!config.enable_tombstone_receiver()) {
+    return;
+  }
+
+  std::string tombstoneDir = config.PerInstancePath("tombstones");
+  if (!cvd::DirectoryExists(tombstoneDir.c_str())) {
+    LOG(INFO) << "Setting up " << tombstoneDir;
+    if (mkdir(tombstoneDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
+        0) {
+      LOG(ERROR) << "Failed to create tombstone directory: " << tombstoneDir
+                 << ". Error: " << errno;
+      exit(LauncherExitCodes::kTombstoneDirCreationError);
+    }
+  }
+
+  auto port = config.tombstone_receiver_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  if (!socket->IsOpen()) {
+    LOG(ERROR) << "Unable to create tombstone server socket: "
+               << socket->StrError();
+    std::exit(LauncherExitCodes::kTombstoneServerError);
+  }
+  cvd::Command cmd(config.tombstone_receiver_binary());
+  cmd.AddParameter("-server_fd=", socket);
+  cmd.AddParameter("-tombstone_dir=", tombstoneDir);
+
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
 }

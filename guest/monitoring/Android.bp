@@ -14,8 +14,6 @@
 // limitations under the License.
 
 subdirs = [
-    "commands",
-    "hals",
-    "monitoring",
-    "vsoc/lib",
+    "dumpstate_ext",
+    "tombstone_transmit",
 ]
