@@ -21,7 +21,7 @@ PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
 
 PRODUCT_SHIPPING_API_LEVEL := 29
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
-
+PRODUCT_BUILD_BOOT_IMAGE := true
 DISABLE_RILD_OEM_HOOK := true
 
 # Properties that are not vendor-specific. These will go in the product
