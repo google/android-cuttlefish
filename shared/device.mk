@@ -19,7 +19,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
 
 PRODUCT_SHIPPING_API_LEVEL := 29
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
-
+PRODUCT_BUILD_BOOT_IMAGE := true
 DISABLE_RILD_OEM_HOOK := true
 
 # Properties that are not vendor-specific. These will go in the product
