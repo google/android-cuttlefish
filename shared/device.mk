@@ -75,7 +75,6 @@ PRODUCT_PACKAGES += \
     setup_wifi \
     tombstone_transmit \
     vsock_logcat \
-    crasher \
 
 #
 # Packages for AOSP-available stuff we use from the framework
