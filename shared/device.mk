@@ -31,7 +31,11 @@ PRODUCT_PRODUCT_PROPERTIES := \
     persist.adb.tcp.port=5555 \
     persist.traced.enable=1 \
     ro.com.google.locationfeatures=1 \
- 
+
+# Temporarily turn off nonblocking ffs until b/130638368 is resolved.
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.adb.nonblocking_ffs=0
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 3.0
