@@ -304,7 +304,6 @@ PRODUCT_PACKAGES += \
 # Power HAL
 #
 PRODUCT_PACKAGES += \
-    power.cutf \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service
 
