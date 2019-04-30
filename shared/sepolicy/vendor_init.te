@@ -1,6 +1,4 @@
 type vendor_init_radio_prop, property_type;
-type cf_setupwizard_mode_prop, property_type;
-type vendor_init_setupwizard_prop, property_type;
 type cf_graphics_config_prop, property_type;
 
 allow vendor_init {
