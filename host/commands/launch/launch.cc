@@ -100,7 +100,7 @@ bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
 
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
   if (!AdbUsbEnabled(config) && !AdbTunnelEnabled(config)
-      && !AdbVsockTunnelEnabled(config)) {
+      && !AdbVsockTunnelEnabled(config) && !AdbVsockHalfTunnelEnabled(config)) {
     LOG(INFO) << "ADB not enabled";
   }
 }
