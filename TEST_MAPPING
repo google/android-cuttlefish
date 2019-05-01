@@ -1,0 +1,13 @@
+{
+  "presubmit": [
+    {
+      "name": "circqueue_test"
+    },
+    {
+      "name": "lock_test"
+    },
+    {
+      "name": "vsoc_graphics_test"
+    }
+  ]
+}
