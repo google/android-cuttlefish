@@ -1,7 +1,8 @@
 {
   "presubmit": [
     {
-      "name": "monotonic_time_test"
+      "name": "monotonic_time_test",
+      "host": true
     }
   ]
 }

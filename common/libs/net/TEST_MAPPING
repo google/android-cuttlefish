@@ -1,7 +1,8 @@
 {
   "presubmit": [
     {
-      "name": "cuttlefish_net_tests"
+      "name": "cuttlefish_net_tests",
+      "host": true
     }
   ]
 }
