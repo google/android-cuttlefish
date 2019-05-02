@@ -19,7 +19,7 @@ Build-Depends:
  libnl-genl-3-dev
 
 Package: cuttlefish-common
-Architecture: amd64
+Architecture: all
 Depends:
  acl,
  adb,
@@ -37,7 +37,6 @@ Depends:
  libstdc++6,
  libudev1,
  libxml2,
- linux-image-extra-virtual | linux-image-amd64 (>= 4.9),
  lzop,
  psmisc,
  python,
@@ -54,7 +53,7 @@ Description: Cuttlefish Android Virtual Device companion package.
  Cuttlefish Android Virtual Device that are used in all deployments.
 
 Package: cuttlefish-integration
-Architecture: amd64
+Architecture: any
 Depends:
  adb,
  cuttlefish-common,
