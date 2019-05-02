@@ -41,4 +41,5 @@ cc_test_host {
         "libgmock",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }
