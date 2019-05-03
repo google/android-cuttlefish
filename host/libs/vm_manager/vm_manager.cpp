@@ -49,6 +49,9 @@ std::map<std::string, VmManager::VmManagerHelper>
             []() { return vsoc::HostSupportsQemuCli(); },
             [](vsoc::CuttlefishConfig* c) {
               return QemuManager::ConfigureGpu(c);
+            },
+            [](vsoc::CuttlefishConfig* c) {
+              return QemuManager::ConfigureBootDevices(c);
             }
           },
         },
@@ -62,6 +65,9 @@ std::map<std::string, VmManager::VmManagerHelper>
             []() { return vsoc::HostSupportsQemuCli(); },
             [](vsoc::CuttlefishConfig* c) {
               return CrosvmManager::ConfigureGpu(c);
+            },
+            [](vsoc::CuttlefishConfig* c) {
+              return CrosvmManager::ConfigureBootDevices(c);
             }
           }
         }
@@ -91,6 +97,14 @@ bool VmManager::ConfigureGpuMode(vsoc::CuttlefishConfig* config) {
     return false;
   }
   return it->second.configure_gpu_mode(config);
+}
+
+void VmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
+  auto it = vm_manager_helpers_.find(config->vm_manager());
+  if (it == vm_manager_helpers_.end()) {
+    return;
+  }
+  it->second.configure_boot_devices(config);
 }
 
 std::vector<std::string> VmManager::GetValidNames() {
