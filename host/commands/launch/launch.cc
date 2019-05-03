@@ -135,20 +135,27 @@ cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config) {
 // subscription to boot events from the kernel log monitor will be created and
 // events will appear on *boot_events_pipe
 cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
-                                        cvd::SharedFD* boot_events_pipe) {
+                                        cvd::SharedFD* boot_events_pipe,
+                                        cvd::SharedFD* adbd_events_pipe) {
   auto log_name = config.kernel_log_socket_name();
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
   cvd::Command kernel_log_monitor(config.kernel_log_monitor_binary());
   kernel_log_monitor.AddParameter("-log_server_fd=", server);
-  if (boot_events_pipe) {
-    cvd::SharedFD pipe_write_end;
-    if (!cvd::SharedFD::Pipe(boot_events_pipe, &pipe_write_end)) {
-      LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
-      std::exit(LauncherExitCodes::kPipeIOError);
-    }
-    kernel_log_monitor.AddParameter("-subscriber_fds=", pipe_write_end);
+
+  cvd::SharedFD boot_pipe_write_end;
+  if (!cvd::SharedFD::Pipe(boot_events_pipe, &boot_pipe_write_end)) {
+    LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
+    std::exit(LauncherExitCodes::kPipeIOError);
   }
+  cvd::SharedFD adbd_pipe_write_end;
+  if (!cvd::SharedFD::Pipe(adbd_events_pipe, &adbd_pipe_write_end)) {
+    LOG(ERROR) << "Unable to create adbd events pipe: " << strerror(errno);
+    std::exit(LauncherExitCodes::kPipeIOError);
+  }
+  kernel_log_monitor.AddParameter("-subscriber_fds=", boot_pipe_write_end, ",",
+                                  adbd_pipe_write_end);
+
   return kernel_log_monitor;
 }
 
@@ -250,16 +257,22 @@ void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
 }
 
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
-                                 const vsoc::CuttlefishConfig& config) {
+                                 const vsoc::CuttlefishConfig& config,
+                                 cvd::SharedFD adbd_events_pipe) {
+  bool launch = false;
+  cvd::Command adb_connector(config.adb_connector_binary());
+  adb_connector.AddParameter("-adbd_events_fd=", adbd_events_pipe);
+
   if (AdbTcpConnectorEnabled(config)) {
-    cvd::Command adb_connector(config.adb_connector_binary());
+    launch = true;
     adb_connector.AddParameter(GetAdbConnectorTcpArg());
-    process_monitor->StartSubprocess(std::move(adb_connector),
-                                     GetOnSubprocessExitCallback(config));
   }
   if (AdbVsockConnectorEnabled(config)) {
-    cvd::Command adb_connector(config.adb_connector_binary());
+    launch = true;
     adb_connector.AddParameter(GetAdbConnectorVsockArg(config));
+  }
+
+  if (launch) {
     process_monitor->StartSubprocess(std::move(adb_connector),
                                      GetOnSubprocessExitCallback(config));
   }

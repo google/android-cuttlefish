@@ -413,12 +413,10 @@ int main(int argc, char** argv) {
   cvd::ProcessMonitor process_monitor;
 
   cvd::SharedFD boot_events_pipe;
+  cvd::SharedFD adbd_events_pipe;
   // Only subscribe to boot events if running as daemon
   process_monitor.StartSubprocess(
-      GetKernelLogMonitorCommand(*config,
-                                 config->run_as_daemon()
-                                   ? &boot_events_pipe
-                                   : nullptr),
+      GetKernelLogMonitorCommand(*config, &boot_events_pipe, &adbd_events_pipe),
       GetOnSubprocessExitCallback(*config));
 
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
@@ -443,7 +441,7 @@ int main(int argc, char** argv) {
                            GetOnSubprocessExitCallback(*config));
   LaunchStreamAudioIfEnabled(*config, &process_monitor,
                              GetOnSubprocessExitCallback(*config));
-  LaunchAdbConnectorIfEnabled(&process_monitor, *config);
+  LaunchAdbConnectorIfEnabled(&process_monitor, *config, adbd_events_pipe);
 
   ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
