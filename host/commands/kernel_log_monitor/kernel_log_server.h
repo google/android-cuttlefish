@@ -23,7 +23,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
-//#include "host/libs/monitor/kernel_log_client.h"
 
 namespace monitor {
 
