@@ -147,7 +147,7 @@ cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
       LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
       std::exit(LauncherExitCodes::kPipeIOError);
     }
-    kernel_log_monitor.AddParameter("-subscriber_fd=", pipe_write_end);
+    kernel_log_monitor.AddParameter("-subscriber_fds=", pipe_write_end);
   }
   return kernel_log_monitor;
 }
