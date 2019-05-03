@@ -1,5 +1,5 @@
 {
-  "presubmit": [
+  "postsubmit": [
     {
       "name": "cuttlefish_net_tests",
       "host": true

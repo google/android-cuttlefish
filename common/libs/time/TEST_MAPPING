@@ -1,5 +1,5 @@
 {
-  "presubmit": [
+  "postsubmit": [
     {
       "name": "monotonic_time_test",
       "host": true
