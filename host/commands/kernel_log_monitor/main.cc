@@ -15,12 +15,17 @@
  */
 
 #include <signal.h>
+#include <unistd.h>
+
+#include <string>
+#include <vector>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <common/libs/fs/shared_fd.h>
 #include <common/libs/fs/shared_select.h>
+#include <common/libs/strings/str_split.h>
 #include <host/libs/config/cuttlefish_config.h>
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
@@ -28,13 +33,37 @@ DEFINE_int32(log_server_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
              "read the logs. If -1 is given the socket is created according to "
              "the instance configuration");
-DEFINE_int32(subscriber_fd, -1,
-             "A file descriptor (a pipe) to write boot events to. If -1 is "
-             "given no events will be sent");
+DEFINE_string(subscriber_fds, "",
+             "A comma separated list of file descriptors (most likely pipes) to"
+             " send boot events to.");
+
+std::vector<cvd::SharedFD> SubscribersFromCmdline() {
+  // Validate the parameter
+  std::string fd_list = FLAGS_subscriber_fds;
+  for (auto c: fd_list) {
+    if (c != ',' && (c < '0' || c > '9')) {
+      LOG(ERROR) << "Invalid file descriptor list: " << fd_list;
+      std::exit(1);
+    }
+  }
+
+  auto fds = cvd::StrSplit(FLAGS_subscriber_fds, ',');
+  std::vector<cvd::SharedFD> shared_fds;
+  for (auto& fd_str: fds) {
+    auto fd = std::stoi(fd_str);
+    auto shared_fd = cvd::SharedFD::Dup(fd);
+    close(fd);
+    shared_fds.push_back(shared_fd);
+  }
+
+  return shared_fds;
+}
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
+
+  auto subscriber_fds = SubscribersFromCmdline();
 
   // Disable default handling of SIGPIPE
   struct sigaction new_action {
@@ -66,24 +95,22 @@ int main(int argc, char** argv) {
   monitor::KernelLogServer klog{server, config->PerInstancePath("kernel.log"),
                                 config->deprecated_boot_completed()};
 
-  if (FLAGS_subscriber_fd >= 0) {
-    auto pipe_fd = cvd::SharedFD::Dup(FLAGS_subscriber_fd);
-    close(FLAGS_subscriber_fd);
-    if (pipe_fd->IsOpen()) {
-      klog.SubscribeToBootEvents([pipe_fd](monitor::BootEvent evt) {
-        int retval = pipe_fd->Write(&evt, sizeof(evt));
+  for (auto subscriber_fd: subscriber_fds) {
+    if (subscriber_fd->IsOpen()) {
+      klog.SubscribeToBootEvents([subscriber_fd](monitor::BootEvent evt) {
+        int retval = subscriber_fd->Write(&evt, sizeof(evt));
         if (retval < 0) {
-          if (pipe_fd->GetErrno() != EPIPE) {
+          if (subscriber_fd->GetErrno() != EPIPE) {
             LOG(ERROR) << "Error while writing to pipe: "
-                       << pipe_fd->StrError();
+                       << subscriber_fd->StrError();
           }
-          pipe_fd->Close();
+          subscriber_fd->Close();
           return monitor::SubscriptionAction::CancelSubscription;
         }
         return monitor::SubscriptionAction::ContinueSubscription;
       });
     } else {
-      LOG(ERROR) << "Subscriber fd isn't valid: " << pipe_fd->StrError();
+      LOG(ERROR) << "Subscriber fd isn't valid: " << subscriber_fd->StrError();
       // Don't return here, we still need to write the logs to a file
     }
   }
