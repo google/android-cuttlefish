@@ -39,6 +39,8 @@ static const std::map<std::string, monitor::BootEvent> kStageToEventMap = {
      monitor::BootEvent::MobileNetworkConnected},
     {"VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED",
      monitor::BootEvent::WifiNetworkConnected},
+    // TODO(b/131864854): Replace this with a string less likely to change
+    {"init: starting service 'adbd'", monitor::BootEvent::AdbdStarted},
 };
 
 void ProcessSubscriptions(

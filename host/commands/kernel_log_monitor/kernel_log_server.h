@@ -32,6 +32,7 @@ enum BootEvent : int32_t {
   BootFailed = 2,
   WifiNetworkConnected = 3,
   MobileNetworkConnected = 4,
+  AdbdStarted = 5,
 };
 
 enum class SubscriptionAction {
