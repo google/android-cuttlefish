@@ -20,10 +20,15 @@
 
 TARGET_BOOTLOADER_BOARD_NAME := cutf
 
+# Boot partition size: 32M
+# This is only used for OTA update packages. The image size on disk
+# will not change (as is it not a filesystem.)
+BOARD_BOOTIMAGE_PARTITION_SIZE := 33554432
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 33554432
+
 # Build a separate vendor.img partition
 BOARD_USES_VENDORIMAGE := true
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
-BOARD_VENDORIMAGE_PARTITION_SIZE := 536870912 # 512MB
 TARGET_COPY_OUT_VENDOR := vendor
 
 BOARD_USES_METADATA_PARTITION := true
@@ -31,7 +36,6 @@ BOARD_USES_METADATA_PARTITION := true
 # Build a separate product.img partition
 BOARD_USES_PRODUCTIMAGE := true
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := ext4
-BOARD_PRODUCTIMAGE_PARTITION_SIZE := 1610612736 # 1.5GB
 TARGET_COPY_OUT_PRODUCT := product
 
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
@@ -49,7 +53,6 @@ TARGET_USES_HWC2 := true
 # The compiler will occasionally generate movaps, etc.
 BOARD_MALLOC_ALIGNMENT := 16
 
-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 4294967296 # 4 GB
 # Make the userdata partition 4G to accomodate ASAN and CTS
 BOARD_USERDATAIMAGE_PARTITION_SIZE := 4294967296
 
@@ -140,12 +143,32 @@ BOARD_VNDK_VERSION := current
 # TODO(b/73078796): remove
 BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
 
-TARGET_NO_RECOVERY ?= true
 TARGET_RECOVERY_PIXEL_FORMAT := ABGR_8888
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
-TARGET_RECOVERY_FSTAB := device/google/cuttlefish/shared/config/fstab.dtb
+# Use the initrd version for the dtb build, because we need to have /system
+# defined somewhere, and the dtb fstab doesn't define it (deliberately)
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd
+else ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions
 else
-TARGET_RECOVERY_FSTAB := device/google/cuttlefish/shared/config/fstab.initrd
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd
+endif
+
+ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
+  BOARD_SUPER_PARTITION_SIZE := 6442450944
+  BOARD_SUPER_PARTITION_GROUPS := google_dynamic_partitions
+  BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product
+  BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 6442450944
+  BOARD_SUPER_PARTITION_METADATA_DEVICE := vda
+  BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
+  BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
+  TARGET_RELEASETOOLS_EXTENSIONS := device/google/cuttlefish/shared
+else
+  # No dynamic partitions support; we must specify maximum sizes
+  BOARD_SYSTEMIMAGE_PARTITION_SIZE := 4294967296 # 4 GB
+  BOARD_VENDORIMAGE_PARTITION_SIZE := 536870912 # 512MB
+  BOARD_PRODUCTIMAGE_PARTITION_SIZE := 1610612736 # 1.5GB
+  TARGET_NO_RECOVERY ?= true
 endif
 
 # To see full logs from init, disable ratelimiting.
