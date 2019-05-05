@@ -53,6 +53,13 @@ void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
 
 const std::string CrosvmManager::name() { return "crosvm"; }
 
+void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
+  // PCI domain 0, bus 0, device 5, function 0
+  // TODO There is no way to control this assignment with crosvm (yet)
+  config->add_kernel_cmdline(
+    "androidboot.boot_devices=pci0000:00/0000:00:05.0");
+}
+
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
@@ -75,12 +82,18 @@ cvd::Command CrosvmManager::StartCommand() {
   command.AddParameter("--mem=", config_->memory_mb());
   command.AddParameter("--cpus=", config_->cpus());
   command.AddParameter("--params=", config_->kernel_cmdline_as_string());
-  command.AddParameter("--rwdisk=", config_->system_image_path());
+  if (config_->super_image_path().empty()) {
+    command.AddParameter("--rwdisk=", config_->system_image_path());
+  } else {
+    command.AddParameter("--rwdisk=", config_->super_image_path());
+  }
   command.AddParameter("--rwdisk=", config_->data_image_path());
   command.AddParameter("--rwdisk=", config_->cache_image_path());
   command.AddParameter("--rwdisk=", config_->metadata_image_path());
-  command.AddParameter("--rwdisk=", config_->vendor_image_path());
-  command.AddParameter("--rwdisk=", config_->product_image_path());
+  if (config_->super_image_path().empty()) {
+    command.AddParameter("--rwdisk=", config_->vendor_image_path());
+    command.AddParameter("--rwdisk=", config_->product_image_path());
+  }
   command.AddParameter("--socket=", GetControlSocketPath(config_));
   if (!config_->gsi_fstab_path().empty()) {
     command.AddParameter("--android-fstab=", config_->gsi_fstab_path());

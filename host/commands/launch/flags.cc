@@ -92,6 +92,7 @@ DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 DEFINE_string(product_image, "", "Location of the product partition image.");
+DEFINE_string(super_image, "", "Location of the super partition image.");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -227,6 +228,9 @@ bool ResolveInstanceFiles() {
   std::string default_product_image = FLAGS_system_image_dir + "/product.img";
   SetCommandLineOptionWithMode("product_image", default_product_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_super_image = FLAGS_system_image_dir + "/super.img";
+  SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
@@ -251,6 +255,8 @@ bool InitializeCuttlefishConfiguration(
 
   // TODO(b/77276633): This should be handled as part of the GPU configuration
   tmp_config_obj.add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
+
+  vm_manager::VmManager::ConfigureBootDevices(&tmp_config_obj);
 
   tmp_config_obj.set_serial_number(FLAGS_serial_number);
 
@@ -290,9 +296,16 @@ bool InitializeCuttlefishConfiguration(
     ramdisk_path = "";
   }
 
+  // Fallback for older builds, or builds from branches without DAP
+  if (!FLAGS_super_image.empty() && !cvd::FileHasContent(FLAGS_super_image.c_str())) {
+    LOG(INFO) << "No super image detected; assuming non-DAP build";
+    FLAGS_super_image.clear();
+  }
+
   // This needs to be done here because the dtb path depends on the presence of
-  // the ramdisk
-  if (FLAGS_dtb.empty()) {
+  // the ramdisk. If we are booting a super image, the fstab is passed through
+  // from the ramdisk, it should never be defined by dt.
+  if (FLAGS_super_image.empty() && FLAGS_dtb.empty()) {
     if (use_ramdisk) {
       FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
     } else {
@@ -303,6 +316,9 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   if (!use_ramdisk) {
     tmp_config_obj.add_kernel_cmdline("root=/dev/vda");
+  }
+  if (!FLAGS_super_image.empty()) {
+    tmp_config_obj.add_kernel_cmdline("androidboot.super_partition=vda");
   }
   tmp_config_obj.add_kernel_cmdline("init=/init");
   tmp_config_obj.add_kernel_cmdline(
@@ -349,15 +365,26 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
 
+  if (FLAGS_super_image.empty()) {
+    tmp_config_obj.set_system_image_path(FLAGS_system_image);
+    tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
+    tmp_config_obj.set_product_image_path(FLAGS_product_image);
+    tmp_config_obj.set_super_image_path("");
+    tmp_config_obj.set_dtb_path(FLAGS_dtb);
+    tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
+  } else {
+    tmp_config_obj.set_system_image_path("");
+    tmp_config_obj.set_vendor_image_path("");
+    tmp_config_obj.set_product_image_path("");
+    tmp_config_obj.set_super_image_path(FLAGS_super_image);
+    tmp_config_obj.set_dtb_path("");
+    tmp_config_obj.set_gsi_fstab_path("");
+  }
+
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
-  tmp_config_obj.set_system_image_path(FLAGS_system_image);
   tmp_config_obj.set_cache_image_path(FLAGS_cache_image);
   tmp_config_obj.set_data_image_path(FLAGS_data_image);
-  tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
   tmp_config_obj.set_metadata_image_path(FLAGS_metadata_image);
-  tmp_config_obj.set_product_image_path(FLAGS_product_image);
-  tmp_config_obj.set_dtb_path(FLAGS_dtb);
-  tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
   tmp_config_obj.set_ivshmem_qemu_socket_path(
@@ -644,10 +671,11 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
 
   // Check that the files exist
   for (const auto& file :
-       {config->system_image_path(), config->vendor_image_path(),
-        config->cache_image_path(), config->data_image_path(),
-        config->metadata_image_path(), config->product_image_path()}) {
-    if (!cvd::FileHasContent(file.c_str())) {
+       {config->system_image_path(), config->cache_image_path(),
+        config->data_image_path(), config->vendor_image_path(),
+        config->metadata_image_path(),  config->product_image_path(),
+        config->super_image_path()}) {
+    if (!file.empty() && !cvd::FileHasContent(file.c_str())) {
       LOG(ERROR) << "File not found: " << file;
       exit(cvd::kCuttlefishConfigurationInitError);
     }

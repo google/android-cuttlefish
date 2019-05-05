@@ -95,22 +95,42 @@ args=(
     -no-shutdown
     -boot "strict=on"
     -kernel "${kernel_image_path:-${HOME}/kernel}"
-    -append "${kernel_cmdline:-"loop.max_part=7 console=ttyS0 androidboot.console=ttyS1 androidboot.hardware=vsoc enforcing=0 audit=1 androidboot.selinux=permissive mac80211_hwsim.radios=0 security=selinux buildvariant=userdebug  androidboot.serialno=CUTTLEFISHCVD01 androidboot.lcd_density=160"}"
-    -dtb "${dtb_path:-${HOME}/config/cuttlefish.dtb}"
+    -append "${kernel_cmdline:-"loop.max_part=7 console=ttyS0 androidboot.console=ttyS1 androidboot.hardware=vsoc enforcing=0 audit=1 androidboot.selinux=permissive mac80211_hwsim.radios=0 security=selinux buildvariant=userdebug  androidboot.serialno=CUTTLEFISHCVD01 androidboot.lcd_density=160 androidboot.boot_devices=pci0000:00/0000:00:03.0"}"
     -device "piix3-usb-uhci,id=usb,addr=0x1.0x2"
     -device "virtio-serial-pci,id=virtio-serial0"
+)
+
+if [[ -n "${super_image_path}" ]]; then
+  args+=(
+    -drive "file=${super_image_path:-${HOME}/obj/PACKAGING/super.img_intermediates/super.img},format=raw,if=none,id=drive-virtio-disk0,aio=threads"
+    -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk0,id=virtio-disk0"
+  )
+else
+  args+=(
     -drive "file=${system_image_path:-${HOME}/system.img},format=raw,if=none,id=drive-virtio-disk0,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk0,id=virtio-disk0,bootindex=1"
+  )
+fi
+
+args+=(
     -drive "file=${data_image_path:-${HOME}/userdata.img},format=raw,if=none,id=drive-virtio-disk1,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk1,id=virtio-disk1"
     -drive "file=${cache_image_path:-${HOME}/cache.img},format=raw,if=none,id=drive-virtio-disk2,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk2,id=virtio-disk2"
     -drive "file=${metadata_image_path:-${HOME}/metadata.img},format=raw,if=none,id=drive-virtio-disk3,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk3,id=virtio-disk3"
+)
+
+if [[ -z "${super_image_path}" ]]; then
+  args+=(
     -drive "file=${vendor_image_path:-${HOME}/vendor.img},format=raw,if=none,id=drive-virtio-disk4,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk4,id=virtio-disk4"
     -drive "file=${product_image_path:-${HOME}/product.img},format=raw,if=none,id=drive-virtio-disk5,aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk5,id=virtio-disk5"
+  )
+fi
+
+args+=(
     -netdev "tap,id=hostnet0,ifname=${wifi_tap_name:-${default_wifi_tap_name}},script=no,downscript=no"
     -device "virtio-net-pci,netdev=hostnet0,id=net0"
     -netdev "tap,id=hostnet1,ifname=${mobile_tap_name:-${default_mobile_tap_name}},script=no,downscript=no"
