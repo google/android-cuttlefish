@@ -26,6 +26,7 @@ namespace vm_manager {
 class QemuManager : public VmManager {
  public:
   static const std::string name();
+  static void ConfigureBootDevices(vsoc::CuttlefishConfig* config);
 
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
