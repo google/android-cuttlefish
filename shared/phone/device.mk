@@ -20,8 +20,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 $(call inherit-product, frameworks/native/build/phone-xhdpi-2048-dalvik-heap.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
-TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
-
 PRODUCT_CHARACTERISTICS := nosdcard
 
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -45,3 +43,11 @@ PRODUCT_COPY_FILES += \
 # These flags are important for the GSI, but break auto
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
 PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
+
+TARGET_USE_DYNAMIC_PARTITIONS ?= true
+ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
+  PRODUCT_USE_DYNAMIC_PARTITIONS := true
+  TARGET_BUILD_SYSTEM_ROOT_IMAGE := false
+else
+  TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
+endif
