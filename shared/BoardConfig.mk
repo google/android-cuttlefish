@@ -20,6 +20,12 @@
 
 TARGET_BOOTLOADER_BOARD_NAME := cutf
 
+# Boot partition size: 32M
+# This is only used for OTA update packages. The image size on disk
+# will not change (as is it not a filesystem.)
+BOARD_BOOTIMAGE_PARTITION_SIZE := 33554432
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 33554432
+
 # Build a separate vendor.img partition
 BOARD_USES_VENDORIMAGE := true
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
@@ -143,9 +149,11 @@ BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
 TARGET_NO_RECOVERY ?= true
 TARGET_RECOVERY_PIXEL_FORMAT := ABGR_8888
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
-TARGET_RECOVERY_FSTAB := device/google/cuttlefish/shared/config/fstab.dtb
+# Use the initrd version for the dtb build, because we need to have /system
+# defined somewhere, and the dtb fstab doesn't define it (deliberately)
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd
 else
-TARGET_RECOVERY_FSTAB := device/google/cuttlefish/shared/config/fstab.initrd
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd
 endif
 
 # To see full logs from init, disable ratelimiting.
