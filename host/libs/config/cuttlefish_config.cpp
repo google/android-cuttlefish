@@ -94,6 +94,7 @@ const char* kDataImagePath = "data_image_path";
 const char* kVendorImagePath = "vendor_image_path";
 const char* kMetadataImagePath = "metadata_image_path";
 const char* kProductImagePath = "product_image_path";
+const char* kSuperImagePath = "super_image_path";
 const char* kUsbV1SocketName = "usb_v1_socket_name";
 const char* kVhciPort = "vhci_port";
 const char* kUsbIpSocketName = "usb_ip_socket_name";
@@ -358,6 +359,14 @@ std::string CuttlefishConfig::metadata_image_path() const {
 void CuttlefishConfig::set_metadata_image_path(
     const std::string& metadata_image_path) {
   SetPath(kMetadataImagePath, metadata_image_path);
+}
+
+std::string CuttlefishConfig::super_image_path() const {
+  return (*dictionary_)[kSuperImagePath].asString();
+}
+void CuttlefishConfig::set_super_image_path(
+    const std::string& super_image_path) {
+  SetPath(kSuperImagePath, super_image_path);
 }
 
 std::string CuttlefishConfig::product_image_path() const {

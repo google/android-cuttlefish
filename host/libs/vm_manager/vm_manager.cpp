@@ -40,17 +40,32 @@ VmManager* GetManagerSingleton(const vsoc::CuttlefishConfig* config) {
 
 std::map<std::string, VmManager::VmManagerHelper>
     VmManager::vm_manager_helpers_ = {
-        {QemuManager::name(),
-         {[](const vsoc::CuttlefishConfig* config) {
-            return GetManagerSingleton<QemuManager>(config);
+        {
+          QemuManager::name(),
+          {
+            [](const vsoc::CuttlefishConfig* config) {
+              return GetManagerSingleton<QemuManager>(config);
+            },
+            []() { return vsoc::HostSupportsQemuCli(); },
+            [](vsoc::CuttlefishConfig* c) {
+              return QemuManager::ConfigureBootDevices(c);
+            }
           },
-          []() { return vsoc::HostSupportsQemuCli(); }}},
-        {CrosvmManager::name(),
-         {[](const vsoc::CuttlefishConfig* config) {
-            return GetManagerSingleton<CrosvmManager>(config);
-          },
-        // Same as Qemu for the time being
-          []() { return vsoc::HostSupportsQemuCli(); }}}};
+        },
+        {
+          CrosvmManager::name(),
+          {
+            [](const vsoc::CuttlefishConfig* config) {
+              return GetManagerSingleton<CrosvmManager>(config);
+            },
+            // Same as Qemu for the time being
+            []() { return vsoc::HostSupportsQemuCli(); },
+            [](vsoc::CuttlefishConfig* c) {
+              return CrosvmManager::ConfigureBootDevices(c);
+            }
+          }
+        }
+    };
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
                           const vsoc::CuttlefishConfig* config) {
@@ -68,6 +83,14 @@ bool VmManager::IsValidName(const std::string& name) {
 bool VmManager::IsVmManagerSupported(const std::string& name) {
   return VmManager::IsValidName(name) &&
          vm_manager_helpers_[name].support_checker();
+}
+
+void VmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
+  auto it = vm_manager_helpers_.find(config->vm_manager());
+  if (it == vm_manager_helpers_.end()) {
+    return;
+  }
+  it->second.configure_boot_devices(config);
 }
 
 std::vector<std::string> VmManager::GetValidNames() {
