@@ -38,6 +38,16 @@ cvd_host_executables := \
     kernel_log_monitor \
     extract-vmlinux \
     crosvm \
+    aarch64-linux-gnu/crosvm \
+    aarch64-linux-gnu/libepoxy.so.0 \
+    aarch64-linux-gnu/libgbm.so.1 \
+    aarch64-linux-gnu/libminijail.so \
+    aarch64-linux-gnu/libvirglrenderer.so.0 \
+    x86_64-linux-gnu/crosvm \
+    x86_64-linux-gnu/libepoxy.so.0 \
+    x86_64-linux-gnu/libgbm.so.1 \
+    x86_64-linux-gnu/libminijail.so \
+    x86_64-linux-gnu/libvirglrenderer.so.0 \
     logcat_receiver \
     config_server \
     tombstone_receiver \
@@ -72,10 +82,6 @@ cvd_host_shared_libraries := \
     libEGL_swiftshader.so \
     libGLESv1_CM_swiftshader.so \
     libGLESv2_swiftshader.so \
-    crosvm/libepoxy.so.0 \
-    crosvm/libgbm.so.1 \
-    crosvm/libminijail.so \
-    crosvm/libvirglrenderer.so.0 \
     libcuttlefish_device_config.so \
 
 
