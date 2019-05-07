@@ -132,32 +132,40 @@ cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config) {
   return ivserver;
 }
 
-// Build the kernel log monitor command. If boot_event_pipe is not NULL, a
-// subscription to boot events from the kernel log monitor will be created and
-// events will appear on *boot_events_pipe
-cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
-                                        cvd::SharedFD* boot_events_pipe,
-                                        cvd::SharedFD* adbd_events_pipe) {
+std::vector<cvd::SharedFD> LaunchKernelLogMonitor(
+    const vsoc::CuttlefishConfig& config,
+    cvd::ProcessMonitor* process_monitor,
+    unsigned int number_of_event_pipes) {
   auto log_name = config.kernel_log_socket_name();
   auto server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
                                                  SOCK_STREAM, 0666);
-  cvd::Command kernel_log_monitor(config.kernel_log_monitor_binary());
-  kernel_log_monitor.AddParameter("-log_server_fd=", server);
+  cvd::Command command(config.kernel_log_monitor_binary());
+  command.AddParameter("-log_server_fd=", server);
 
-  cvd::SharedFD boot_pipe_write_end;
-  if (!cvd::SharedFD::Pipe(boot_events_pipe, &boot_pipe_write_end)) {
-    LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
-    std::exit(LauncherExitCodes::kPipeIOError);
-  }
-  cvd::SharedFD adbd_pipe_write_end;
-  if (!cvd::SharedFD::Pipe(adbd_events_pipe, &adbd_pipe_write_end)) {
-    LOG(ERROR) << "Unable to create adbd events pipe: " << strerror(errno);
-    std::exit(LauncherExitCodes::kPipeIOError);
-  }
-  kernel_log_monitor.AddParameter("-subscriber_fds=", boot_pipe_write_end, ",",
-                                  adbd_pipe_write_end);
+  std::vector<cvd::SharedFD> ret;
 
-  return kernel_log_monitor;
+  if (number_of_event_pipes > 0) {
+    auto param_builder = command.GetParameterBuilder();
+    param_builder << "-subscriber_fds=";
+    for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
+      cvd::SharedFD event_pipe_write_end, event_pipe_read_end;
+      if (!cvd::SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
+        LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
+        std::exit(LauncherExitCodes::kPipeIOError);
+      }
+      if (i > 0) {
+        param_builder << ",";
+      }
+      param_builder << event_pipe_write_end;
+      ret.push_back(event_pipe_read_end);
+    }
+    param_builder.Build();
+  }
+
+  process_monitor->StartSubprocess(std::move(command),
+                                   GetOnSubprocessExitCallback(config));
+
+  return ret;
 }
 
 void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
