@@ -11,9 +11,10 @@ bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config);
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config);
 
 cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config);
-cvd::Command GetKernelLogMonitorCommand(const vsoc::CuttlefishConfig& config,
-                                        cvd::SharedFD* boot_events_pipe,
-                                        cvd::SharedFD* adbd_events_pipe);
+std::vector <cvd::SharedFD> LaunchKernelLogMonitor(
+    const vsoc::CuttlefishConfig& config,
+    cvd::ProcessMonitor* process_monitor,
+    unsigned int number_of_event_pipes);
 void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                    cvd::ProcessMonitor* process_monitor);
 void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
