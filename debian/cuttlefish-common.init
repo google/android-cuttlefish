@@ -32,45 +32,6 @@
 
 num_cvd_accounts=8
 
-create_legacy_interface() {
-  printf '<network>\n'
-  printf '  <name>cvd-%s-%02d</name>\n' "$2" $1
-  printf "  <forward mode='nat'>\n"
-  printf "    <nat>\n"
-  printf "      <port start='1024' end='65535'/>\n"
-  printf "    </nat>\n"
-  printf "  </forward>\n"
-  printf "  <bridge name='cvd-%s-%02d' stp='on' delay='0'/>\n" "$2" $1
-  printf "  <ip address='%s.%d' netmask='255.255.255.252'>\n" \
-    "$3" $(($1 * 4 - 3))
-  printf "    <dhcp>\n"
-  printf "      <range start='%s.%d' end='%s.%d'/>\n" \
-    "$3" $(($1 * 4 - 2)) "$3" $(($1 * 4 - 2))
-  printf "    </dhcp>\n"
-  printf "  </ip>\n"
-  printf "</network>\n"
-}
-
-create_legacy_mobile_interface() {
-  create_legacy_interface "$1" mobile 192.168.99
-}
-
-create_legacy_wifi_interface() {
-  create_legacy_interface "$1" wifi 192.168.98
-}
-
-create_legacy_interfaces() {
-    [ -f /usr/bin/virsh ] || return 1
-    create_legacy_mobile_interface $1 | /usr/bin/virsh net-create /dev/fd/0
-    create_legacy_wifi_interface $1 | /usr/bin/virsh net-create /dev/fd/0
-}
-
-destroy_legacy_interfaces() {
-    [ -f /usr/bin/virsh ] || return 1
-    /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $1)"
-    /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $1)"
-}
-
 # Creates a pair of bridge and tap interfaces
 create_interface() {
     bridge="$(printf cvd-${1}br-%02d $2)"
@@ -83,7 +44,8 @@ create_interface() {
     /sbin/brctl addbr "${bridge}"
     /sbin/brctl stp "${bridge}" off
     /sbin/brctl setfd "${bridge}" 0
-    /sbin/ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
+    ip -4 addr add ${gateway}/30 broadcast + dev "${bridge}"
+    ip link set dev ${bridge} up
 
     /sbin/iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 
@@ -100,7 +62,7 @@ create_interface() {
     --dhcp-no-override
 
     ip tuntap add dev "${tap}" mode tap group cvdnetwork
-    /sbin/ifconfig "${tap}" 0.0.0.0 up
+    ip link set dev "${tap}" up
     /sbin/brctl addif "${bridge}" "${tap}"
 }
 
@@ -114,7 +76,7 @@ destroy_interface() {
     tap="$(printf cvd-${1}tap-%02d $2)"
     network="${3}.$((4*$2 - 4))/30"
 
-    /sbin/ifconfig "${tap}" down
+    ip link set dev "${tap}" down
     ip link delete "${tap}"
 
     if [ -f /var/run/cuttlefish-dnsmasq-"${bridge}".pid ]; then
@@ -123,7 +85,7 @@ destroy_interface() {
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
 
-    /sbin/ifconfig "${bridge}" down
+    ip link set dev "${bridge}" down
     /sbin/brctl delbr "${bridge}"
 }
 
@@ -147,14 +109,12 @@ start() {
     # Enable ip forwarding
     echo 1 >/proc/sys/net/ipv4/ip_forward
     for i in $(seq ${num_cvd_accounts}); do
-      create_legacy_interfaces $i
       create_interfaces $i
     done
 }
 
 stop() {
     for i in $(seq ${num_cvd_accounts}); do
-      destroy_legacy_interfaces $i
       destroy_interfaces $i
     done
 }

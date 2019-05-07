@@ -2,9 +2,10 @@ cuttlefish-common (0.9.8) UNRELEASED; urgency=medium
 
   * Changes to enable arm builds
   * Fix dependencies for buster
-  * Add qemu-user-static on non-amd64
+  * Add amd64 packages to cuttlefish-common
+  * Clean up network
 
- -- Greg Hartman <ghartman@google.com>  Thu, 02 May 2019 17:43:13 -0700
+ -- Greg Hartman <ghartman@google.com>  Tue, 07 May 2019 15:27:23 -0700
 
 cuttlefish-common (0.9.6) stable; urgency=medium
 
