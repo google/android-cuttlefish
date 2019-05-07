@@ -412,12 +412,11 @@ int main(int argc, char** argv) {
   // Monitor and restart host processes supporting the CVD
   cvd::ProcessMonitor process_monitor;
 
-  cvd::SharedFD boot_events_pipe;
-  cvd::SharedFD adbd_events_pipe;
-  // Only subscribe to boot events if running as daemon
-  process_monitor.StartSubprocess(
-      GetKernelLogMonitorCommand(*config, &boot_events_pipe, &adbd_events_pipe),
-      GetOnSubprocessExitCallback(*config));
+  auto event_pipes =
+      LaunchKernelLogMonitor(*config, &process_monitor, 2);
+  cvd::SharedFD boot_events_pipe = event_pipes[0];
+  cvd::SharedFD adbd_events_pipe = event_pipes[1];
+  event_pipes.clear();
 
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
