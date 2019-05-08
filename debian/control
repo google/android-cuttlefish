@@ -19,7 +19,7 @@ Build-Depends:
  libnl-genl-3-dev
 
 Package: cuttlefish-common
-Architecture: all
+Architecture: any
 Depends:
  acl,
  adb,
@@ -28,7 +28,8 @@ Depends:
  device-tree-compiler,
  dnsmasq-base,
  hostapd,
- simg2img,
+ simg2img [amd64],
+ simg2img:amd64 [!amd64],
  iptables,
  libarchive-tools | bsdtar,
  libc6,
@@ -40,7 +41,8 @@ Depends:
  lzop,
  psmisc,
  python,
- qemu-kvm (>= 2.8.0),
+ libc6:amd64 [!amd64],
+ qemu-user-static [!amd64],
  qemu-system-common (>= 2.8.0),
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
