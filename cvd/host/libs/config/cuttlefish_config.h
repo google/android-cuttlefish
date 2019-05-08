@@ -29,6 +29,15 @@ constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 constexpr char kVsocUserPrefix[] = "vsoc-";
 
+enum class AdbMode {
+  Tunnel,
+  VsockTunnel,
+  VsockHalfTunnel,
+  NativeVsock,
+  Usb,
+  Unknown,
+};
+
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
  public:
@@ -231,7 +240,7 @@ class CuttlefishConfig {
   std::string cuttlefish_env_path() const;
 
   void set_adb_mode(const std::set<std::string>& modes);
-  std::set<std::string> adb_mode() const;
+  std::set<AdbMode> adb_mode() const;
 
   void set_adb_ip_and_port(const std::string& ip_port);
   std::string adb_ip_and_port() const;

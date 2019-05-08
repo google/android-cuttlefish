@@ -590,10 +590,27 @@ std::string CuttlefishConfig::cuttlefish_env_path() const {
   return (*dictionary_)[kCuttlefishEnvPath].asString();
 }
 
-std::set<std::string> CuttlefishConfig::adb_mode() const {
-  std::set<std::string> args_set;
+static AdbMode stringToAdbMode(std::string mode) {
+  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+  if (mode == "tunnel") {
+    return AdbMode::Tunnel;
+  } else if (mode == "vsock_tunnel") {
+    return AdbMode::VsockTunnel;
+  } else if (mode == "vsock_half_tunnel") {
+    return AdbMode::VsockHalfTunnel;
+  } else if (mode == "native_vsock") {
+    return AdbMode::NativeVsock;
+  } else if (mode == "usb") {
+    return AdbMode::Usb;
+  } else {
+    return AdbMode::Unknown;
+  }
+}
+
+std::set<AdbMode> CuttlefishConfig::adb_mode() const {
+  std::set<AdbMode> args_set;
   for (auto& mode : (*dictionary_)[kAdbMode]) {
-    args_set.insert(mode.asString());
+    args_set.insert(stringToAdbMode(mode.asString()));
   }
   return args_set;
 }
@@ -616,13 +633,13 @@ void CuttlefishConfig::set_adb_ip_and_port(const std::string& ip_port) {
 
 std::string CuttlefishConfig::adb_device_name() const {
   // TODO(schuffelen): Deal with duplication between here and launch.cc
-  bool tunnelMode = adb_mode().count("tunnel") > 0;
-  bool vsockTunnel = adb_mode().count("vsock_tunnel") > 0;
-  bool vsockHalfProxy = adb_mode().count("vsock_half_tunnel") > 0;
-  bool nativeVsock = adb_mode().count("native_vsock") > 0;
+  bool tunnelMode = adb_mode().count(AdbMode::Tunnel) > 0;
+  bool vsockTunnel = adb_mode().count(AdbMode::VsockTunnel) > 0;
+  bool vsockHalfProxy = adb_mode().count(AdbMode::VsockHalfTunnel) > 0;
+  bool nativeVsock = adb_mode().count(AdbMode::NativeVsock) > 0;
   if (tunnelMode || vsockTunnel || vsockHalfProxy || nativeVsock) {
     return adb_ip_and_port();
-  } else if (adb_mode().count("usb") > 0) {
+  } else if (adb_mode().count(AdbMode::Usb) > 0) {
     return serial_number();
   }
   LOG(ERROR) << "no adb_mode found, returning bad device name";
