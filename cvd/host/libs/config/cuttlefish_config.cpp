@@ -585,7 +585,7 @@ std::string CuttlefishConfig::adb_device_name() const {
   // TODO(schuffelen): Deal with duplication between here and launch.cc
   bool tunnelMode = adb_mode().count("tunnel") > 0;
   bool vsockTunnel = adb_mode().count("vsock_tunnel") > 0;
-  bool vsockHalfProxy = adb_mode().count("vsock_half_proxy") > 0;
+  bool vsockHalfProxy = adb_mode().count("vsock_half_tunnel") > 0;
   bool nativeVsock = adb_mode().count("native_vsock") > 0;
   if (tunnelMode || vsockTunnel || vsockHalfProxy || nativeVsock) {
     return adb_ip_and_port();
