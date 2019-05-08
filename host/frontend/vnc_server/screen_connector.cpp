@@ -61,6 +61,7 @@ class SocketBasedScreenConnector : public ScreenConnector {
     while (seq_num_ == *seq_num) {
       new_frame_cond_var_.wait(lock);
     }
+    *seq_num = seq_num_;
     return newest_buffer_;
   }
 
