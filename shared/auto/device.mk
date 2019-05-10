@@ -80,7 +80,7 @@ PRODUCT_PACKAGES += \
     Telecom \
     TeleService \
     libcuttlefish-ril \
-    rild \
+    libcuttlefish-rild \
 
 # DRM Properities
 PRODUCT_PROPERTY_OVERRIDES += \
