@@ -56,7 +56,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 const std::string QemuManager::name() { return "qemu_cli"; }
 
 bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
-  if (config->gpu_mode() != vsoc::kGpuModeGuestAshmem) {
+  if (config->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
     return false;
   }
   // Override the default HAL search paths in all cases. We do this because
@@ -66,6 +66,8 @@ bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
   config->add_kernel_cmdline("androidboot.hardware.gralloc=cutf_ashmem");
   config->add_kernel_cmdline(
       "androidboot.hardware.hwcomposer=cutf_ivsh_ashmem");
+  config->add_kernel_cmdline(
+      "androidboot.hardware.egl=swiftshader");
   return true;
 }
 

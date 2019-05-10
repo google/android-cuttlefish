@@ -88,10 +88,10 @@ DEFINE_string(
     vm_manager, vm_manager::CrosvmManager::name(),
     "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_string(
-    gpu_mode, vsoc::kGpuModeGuestAshmem,
-    "What gpu configuration to use, one of {guest_ashmem, guest_drm}");
+    gpu_mode, vsoc::kGpuModeGuestSwiftshader,
+    "What gpu configuration to use, one of {guest_swiftshader, drm_virgl}");
 DEFINE_string(wayland_socket, "",
-    "Location of the wayland socket to use for *_drm gpu_modes.");
+    "Location of the wayland socket to use for drm_virgl gpu_mode.");
 
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
@@ -280,9 +280,6 @@ bool InitializeCuttlefishConfiguration(
     return false;
   }
   tmp_config_obj.set_wayland_socket(FLAGS_wayland_socket);
-
-  // TODO(b/77276633): This should be handled as part of the GPU configuration
-  tmp_config_obj.add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
 
   vm_manager::VmManager::ConfigureBootDevices(&tmp_config_obj);
 
