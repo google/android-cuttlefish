@@ -4,6 +4,7 @@ kernel device blk_file 130468851
 kernel kernel system 130424539
 lmkd device file 128336318
 netd device file 128336318
+shell adbd vsock_socket 131904985
 storaged device file 128336318
 system_server system_server process 65201432
 vendor_init kernel system 130424539
