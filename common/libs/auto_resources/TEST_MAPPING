@@ -1,5 +1,5 @@
 {
-  "postsubmit": [
+  "presubmit": [
     {
       "name": "auto_free_buffer_test",
       "host": true
