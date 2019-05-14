@@ -32,7 +32,7 @@ class QemuManager : public VmManager {
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
-  cvd::Command StartCommand() override;
+  cvd::Command StartCommand(bool with_frontend) override;
   bool Stop() override;
 };
 

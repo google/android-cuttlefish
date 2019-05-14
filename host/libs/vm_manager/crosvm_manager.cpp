@@ -85,7 +85,7 @@ void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
-cvd::Command CrosvmManager::StartCommand() {
+cvd::Command CrosvmManager::StartCommand(bool with_frontend) {
   // TODO Add aarch64 support
   // TODO Add the tap interfaces (--tap-fd)
   // TODO Redirect logcat output
@@ -124,9 +124,12 @@ cvd::Command CrosvmManager::StartCommand() {
   if (!config_->gsi_fstab_path().empty()) {
     command.AddParameter("--android-fstab=", config_->gsi_fstab_path());
   }
-  command.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
-                       config_->x_res(), ":", config_->y_res());
-  command.AddParameter("--keyboard=", config_->keyboard_socket_path());
+
+  if (with_frontend) {
+    command.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
+                         config_->x_res(), ":", config_->y_res());
+    command.AddParameter("--keyboard=", config_->keyboard_socket_path());
+  }
 
   AddTapFdParameter(&command, config_->wifi_tap_name());
   AddTapFdParameter(&command, config_->mobile_tap_name());
