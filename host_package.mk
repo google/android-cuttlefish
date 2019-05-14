@@ -78,10 +78,6 @@ cvd_host_shared_libraries := \
     libicui18n-host.so \
     libandroidicu-host.so \
     libopus.so \
-    libvirglrenderer_cuttlefish.so \
-    libEGL_swiftshader.so \
-    libGLESv1_CM_swiftshader.so \
-    libGLESv2_swiftshader.so \
     libcuttlefish_device_config.so \
 
 
