@@ -486,7 +486,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
   tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
   tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
-  if (!tmp_config_obj.enable_ivserver()) {
+  if (!tmp_config_obj.enable_ivserver() && tmp_config_obj.enable_vnc_server()) {
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_frames_port=",
                                              FLAGS_frames_vsock_port));
   }

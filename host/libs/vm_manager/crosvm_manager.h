@@ -34,7 +34,7 @@ class CrosvmManager : public VmManager {
   CrosvmManager(const vsoc::CuttlefishConfig* config);
   virtual ~CrosvmManager() = default;
 
-  cvd::Command StartCommand() override;
+  cvd::Command StartCommand(bool with_frontend) override;
   bool Stop() override;
 };
 
