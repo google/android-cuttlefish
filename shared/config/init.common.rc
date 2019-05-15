@@ -39,9 +39,11 @@ on fs
     chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/ps
     chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
 
+
 on post-fs
-    # Set netd memlock rlimit to 8MB b/119279144
-    setrlimit 8 8388608 8388608
+    # set RLIMIT_MEMLOCK to 64MB
+    setrlimit 8 67108864 67108864
+
 
 on post-fs-data
     start vport_trigger
