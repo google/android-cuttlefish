@@ -27,4 +27,4 @@ adb wait-for-device
 adb uninstall com.android.cuttlefish.wifi.tests || true
 adb install -r -g "$OUT/data/app/CuttlefishWifiTests/CuttlefishWifiTests.apk"
 # optionally: -e class com.android.cuttlefish.wifi.WifiE2eTests#testName
-adb shell am instrument -w "$@" 'com.android.cuttlefish.wifi.tests/androidx.test.runner.AndroidJUnitRunner'
+adb shell am instrument -w "$@" 'com.android.cuttlefish.wifi.tests/android.support.test.runner.AndroidJUnitRunner'

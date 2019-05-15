@@ -19,13 +19,13 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
+import android.net.ConnectivityManager;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.support.test.InstrumentationRegistry;
 import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
 
 import org.junit.Assert;
 import org.junit.Before;
