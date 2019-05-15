@@ -29,7 +29,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 else
 LOCAL_JAVA_LIBRARIES := android.test.runner
 endif
-LOCAL_STATIC_JAVA_LIBRARIES := androidx.test.rules platform-test-annotations
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test platform-test-annotations
 
 include $(BUILD_PACKAGE)
 endif
