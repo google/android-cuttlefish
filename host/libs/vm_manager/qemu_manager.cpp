@@ -81,7 +81,7 @@ void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
-cvd::Command QemuManager::StartCommand(){
+cvd::Command QemuManager::StartCommand(bool /*with_frontend*/){
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", config_->qemu_binary());
   LogAndSetEnv("instance_name", config_->instance_name());

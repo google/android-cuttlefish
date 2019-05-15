@@ -433,15 +433,19 @@ int main(int argc, char** argv) {
   // Launch the e2e tests after the ivserver is ready
   LaunchE2eTestIfEnabled(&process_monitor, boot_state_machine, *config);
 
+  // The vnc server needs to be launched after the ivserver because it connects
+  // to it when using qemu. It needs to launch before the VMM because it serves
+  // on several sockets (input devices, vsock frame server) when using crosvm.
+  auto frontend_enabled = LaunchVNCServerIfEnabled(
+      *config, &process_monitor, GetOnSubprocessExitCallback(*config));
+
   // Start the guest VM
-  process_monitor.StartSubprocess(vm_manager->StartCommand(),
+  process_monitor.StartSubprocess(vm_manager->StartCommand(frontend_enabled),
                                   GetOnSubprocessExitCallback(*config));
 
   // Start other host processes
   LaunchSocketForwardProxyIfEnabled(&process_monitor, *config);
   LaunchSocketVsockProxyIfEnabled(&process_monitor, *config);
-  LaunchVNCServerIfEnabled(*config, &process_monitor,
-                           GetOnSubprocessExitCallback(*config));
   LaunchStreamAudioIfEnabled(*config, &process_monitor,
                              GetOnSubprocessExitCallback(*config));
   LaunchAdbConnectorIfEnabled(&process_monitor, *config, adbd_events_pipe);

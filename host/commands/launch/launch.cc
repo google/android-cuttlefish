@@ -262,7 +262,7 @@ cvd::SharedFD CreateVncInputServer(const std::string& path) {
   return server;
 }
 
-void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
+bool LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor,
                               std::function<bool(MonitorEntry*)> callback) {
   if (config.enable_vnc_server()) {
@@ -276,14 +276,14 @@ void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
       // crosvm)
       auto touch_server = CreateVncInputServer(config.touch_socket_path());
       if (!touch_server->IsOpen()) {
-        return;
+        return false;
       }
       vnc_server.AddParameter("-touch_fd=", touch_server);
 
       auto keyboard_server =
           CreateVncInputServer(config.keyboard_socket_path());
       if (!keyboard_server->IsOpen()) {
-        return;
+        return false;
       }
       vnc_server.AddParameter("-keyboard_fd=", keyboard_server);
       // TODO(b/128852363): This should be handled through the wayland mock
@@ -293,12 +293,14 @@ void LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
       auto frames_server =
           cvd::SharedFD::VsockServer(config.frames_vsock_port(), SOCK_STREAM);
       if (!frames_server->IsOpen()) {
-        return;
+        return false;
       }
       vnc_server.AddParameter("-frame_server_fd=", frames_server);
     }
     process_monitor->StartSubprocess(std::move(vnc_server), callback);
+    return true;
   }
+  return false;
 }
 
 void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,

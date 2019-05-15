@@ -30,6 +30,7 @@ cc_library_shared {
     export_include_dirs: ["."],
     static_libs: ["libyuv_static", "hwcomposer_common"],
     shared_libs: [
+        "cuttlefish_auto_resources",
         "liblog",
         "libhardware",
         "libbase",

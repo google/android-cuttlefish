@@ -42,7 +42,7 @@ class VmManager {
 
   virtual ~VmManager() = default;
 
-  virtual cvd::Command StartCommand() = 0;
+  virtual cvd::Command StartCommand(bool with_frontend = true) = 0;
   virtual bool Stop() = 0;
 
   virtual bool ValidateHostConfiguration(
