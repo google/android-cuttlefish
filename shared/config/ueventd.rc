@@ -5,3 +5,6 @@
 /dev/dri/card0 0660 system graphics
 /dev/dri/controlD64 0660 system graphics
 /dev/dri/renderD128 0666 system graphics
+
+# media.codec2
+/dev/ion 0664 system system
