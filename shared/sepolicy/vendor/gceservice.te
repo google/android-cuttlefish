@@ -24,3 +24,6 @@ allow gceservice tombstone_data_file:file getattr;
 # started before Android init and thus before SELinux rule are applied.
 # TODO(b/65049764): Update once GCE metadata proxy is moved outside of the emulator or gets labelled
 allow gceservice kernel:unix_stream_socket connectto;
+
+# gceservice writes to /dev/stune/foreground/tasks
+allow gceservice cgroup:file w_file_perms;
