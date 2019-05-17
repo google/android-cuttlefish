@@ -1,4 +1,3 @@
-hal_bluetooth_sim hal_bluetooth_sim tcp_socket 128355308
 kernel kernel system 130424539
 logpersist logpersist capability 132911257
 shell adbd vsock_socket 131904985
