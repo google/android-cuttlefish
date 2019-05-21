@@ -16,6 +16,7 @@
 
 # Enable updating of APEXes
 $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
+PRODUCT_PACKAGES := com.android.apex.cts.shim.v1_prebuilt
 
 PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
 
