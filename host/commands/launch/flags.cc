@@ -86,7 +86,7 @@ DEFINE_string(serial_number, g_default_serial_number.c_str(),
 DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
 DEFINE_string(
-    vm_manager, vm_manager::CrosvmManager::name(),
+    vm_manager, vm_manager::QemuManager::name(),
     "What virtual machine manager to use, one of {qemu_cli, crosvm}");
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
