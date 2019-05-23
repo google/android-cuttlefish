@@ -44,9 +44,10 @@ void* hwc_vsync_thread(void* data) {
   while (true) {
     struct timespec rt;
     if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
-      ALOGE("%s:%d error in vsync thread clock_gettime: %s", __FILE__, __LINE__,
-            strerror(errno));
+      LOG_ALWAYS_FATAL("%s:%d error in vsync thread clock_gettime: %s",
+        __FILE__, __LINE__, strerror(errno));
     }
+
     int64_t timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
     // Given now's timestamp calculate the time of the next timestamp.
     timestamp += pdev->vsync_period_ns -
