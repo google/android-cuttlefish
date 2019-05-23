@@ -1,3 +1,5 @@
+init system_lib_file dir 131810078
+init system_lib_file file 131810078
 kernel kernel system 130424539
 logpersist logpersist capability 132911257
 shell adbd vsock_socket 131904985
