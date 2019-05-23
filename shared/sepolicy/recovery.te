@@ -1,17 +1,3 @@
 allow recovery gpu_device:chr_file rw_file_perms;
 
 allow recovery appdomain_tmpfs:file r_file_perms;
-
-allow recovery sysfs_dm:dir r_dir_perms;
-allow recovery sysfs_dm:file r_file_perms;
-
-# TODO: This should really be 'super_block_device', but we can't label
-#       vda both system_block_device and super_block_device..
-allowxperm recovery system_block_device:blk_file ioctl { BLKIOMIN BLKALIGNOFF };
-
-# Copied from update_engine.te:
-# Note: fsetid checks are triggered when creating a file in a directory with
-# the setgid bit set to determine if the file should inherit setgid. In this
-# case, setgid on the file is undesirable so we should just suppress the
-# denial.
-dontaudit recovery self:global_capability_class_set fsetid;
