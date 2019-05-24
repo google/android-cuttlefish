@@ -5,11 +5,6 @@ cvd_host_package_tar := $(HOST_OUT)/cvd-host_package.tar.gz
 .PHONY: hosttar
 hosttar: $(cvd_host_package_tar)
 
-$(cvd_host_package_tar): PRIVATE_TAR_FORMAT :=
-ifeq ($(HOST_OS),linux)
-$(cvd_host_package_tar): PRIVATE_TAR_FORMAT := --format=gnu
-endif
-
 # Build this by default when a developer types make
 droidcore: $(cvd_host_package_tar)
 
@@ -89,5 +84,5 @@ cvd_host_package_files := \
 
 $(cvd_host_package_tar): PRIVATE_FILES := $(cvd_host_package_files)
 $(cvd_host_package_tar): $(addprefix $(HOST_OUT)/,$(cvd_host_package_files))
-	$(hide) rm -rf $@ && tar Scfz $@.tmp -C $(HOST_OUT) $(PRIVATE_TAR_FORMAT) $(PRIVATE_FILES)
+	$(hide) rm -rf $@ && tar Scfz $@.tmp -C $(HOST_OUT) $(PRIVATE_FILES)
 	$(hide) mv $@.tmp $@
