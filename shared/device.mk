@@ -62,9 +62,6 @@ PRODUCT_PACKAGES += \
 # Packages for various GCE-specific utilities
 #
 PRODUCT_PACKAGES += \
-    audiotop \
-    dhcpcd_wlan0 \
-    gce_fs_monitor \
     socket_forward_proxy \
     socket_vsock_proxy \
     usbforward \
@@ -81,13 +78,8 @@ PRODUCT_PACKAGES += \
 # Packages for AOSP-available stuff we use from the framework
 #
 PRODUCT_PACKAGES += \
-    dhcpcd-6.8.2 \
-    dhcpcd-6.8.2.conf \
     e2fsck \
     ip \
-    network \
-    perf \
-    scp \
     sleep \
     tcpdump \
     wpa_supplicant \
