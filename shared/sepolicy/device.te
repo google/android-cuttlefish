@@ -5,3 +5,4 @@ type region_e2e_test_device, dev_type;
 type region_screen_device, dev_type;
 type socket_forward_device, dev_type;
 type virtual_serial_device, dev_type;
+typeattribute system_block_device super_block_device_type;
