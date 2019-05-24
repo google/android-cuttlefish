@@ -57,7 +57,7 @@ void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
   // PCI domain 0, bus 0, device 5, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
   config->add_kernel_cmdline(
-    "androidboot.boot_devices=pci0000:00/0000:00:05.0");
+    "androidboot.boot_devices=pci0000:00/0000:00:01.0");
 }
 
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
