@@ -16,7 +16,7 @@
 cc_binary {
     name: "tombstone_transmit",
     srcs: [
-        "main.cpp",
+        "tombstone_transmit.cpp",
     ],
     static_libs: [
         "libcuttlefish_fs_static",
@@ -29,6 +29,14 @@ cc_binary {
     stl: "libc++_static",
     header_libs: [
         "cuttlefish_glog_product",
+    ],
+    defaults: ["cuttlefish_guest_product_only"],
+}
+
+cc_binary {
+    name: "tombstone_producer",
+    srcs: [
+        "tombstone_producer.cpp",
     ],
     defaults: ["cuttlefish_guest_product_only"],
 }

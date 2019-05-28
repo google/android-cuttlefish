@@ -200,7 +200,7 @@ DEFINE_int32(config_server_port, vsoc::GetPerInstanceDefault(4680),
              "The (vsock) port for the configuration server");
 DEFINE_int32(frames_vsock_port, vsoc::GetPerInstanceDefault(5580),
              "The vsock port to receive frames from the guest on");
-DEFINE_bool(enable_tombstone_receiver, false, "Enables the tombstone logger on "
+DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
             "both the guest and the host");
 DEFINE_string(tombstone_receiver_binary,
               vsoc::DefaultHostArtifactsPath("bin/tombstone_receiver"),
