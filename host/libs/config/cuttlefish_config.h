@@ -320,6 +320,12 @@ class CuttlefishConfig {
   void set_tombstone_receiver_port(int port);
   int tombstone_receiver_port() const;
 
+  void set_use_bootloader(bool use_bootloader);
+  bool use_bootloader() const;
+
+  void set_bootloader(const std::string& bootloader_path);
+  std::string bootloader() const;
+
   bool enable_ivserver() const;
 
   std::string touch_socket_path() const;
