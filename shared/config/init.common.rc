@@ -14,6 +14,12 @@ on early-init
     setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
     setprop ro.hardware.hwcomposer ${ro.boot.hardware.hwcomposer}
 
+on early-init && property:ro.boot.fstab_name="fstab"
+    mount /dev/block/vdd /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
+
+on early-init && property:ro.boot.fstab_name="composite-fstab"
+    mount /dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
+
 
 on init
     # ZRAM setup
@@ -21,7 +27,7 @@ on init
 
 
 on fs
-    mount_all /vendor/etc/fstab.${ro.hardware}
+    mount_all /vendor/etc/${ro.boot.fstab_name}.${ro.hardware}
     restorecon_recursive /vendor
 
     start setup_wifi

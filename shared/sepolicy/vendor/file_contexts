@@ -7,6 +7,12 @@
 /dev/block/vdd  u:object_r:metadata_block_device:s0
 /dev/block/vde  u:object_r:system_block_device:s0
 /dev/block/vdf  u:object_r:system_block_device:s0
+/dev/block/vda1  u:object_r:system_block_device:s0
+/dev/block/vda2  u:object_r:userdata_block_device:s0
+/dev/block/vda3  u:object_r:cache_block_device:s0
+/dev/block/vda4  u:object_r:metadata_block_device:s0
+/dev/block/vda5  u:object_r:system_block_device:s0
+/dev/block/vda6  u:object_r:system_block_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
 /dev/dri/renderD128  u:object_r:graphics_device:s0
