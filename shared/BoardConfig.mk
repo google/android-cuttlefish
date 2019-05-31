@@ -88,14 +88,15 @@ USE_OPENGL_RENDERER := true
 BOARD_WLAN_DEVICE           := wlan0
 BOARD_HOSTAPD_DRIVER        := NL80211
 BOARD_WPA_SUPPLICANT_DRIVER := NL80211
-BOARD_HOSTAPD_PRIVATE_LIB   := lib_driver_cmd_simulated
-BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_simulated
 WPA_SUPPLICANT_VERSION      := VER_0_8_X
 WIFI_DRIVER_FW_PATH_PARAM   := "/dev/null"
 WIFI_DRIVER_FW_PATH_STA     := "/dev/null"
 WIFI_DRIVER_FW_PATH_AP      := "/dev/null"
 
-BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor
+PRODUCT_PRIVATE_SEPOLICY_DIRS := device/google/cuttlefish/shared/sepolicy/private
+# TODO(b/131193755) remove the following line.
+PRODUCT_PUBLIC_SEPOLICY_DIRS := device/google/cuttlefish/shared/sepolicy/public
 
 # master has breaking changes in dlfcn.h, but the platform SDK hasn't been
 # bumped. Restore the line below when it is.

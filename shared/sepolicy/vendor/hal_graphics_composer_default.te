@@ -1,0 +1,3 @@
+vndbinder_use(hal_graphics_composer_default)
+
+allow hal_graphics_composer_default self:netlink_kobject_uevent_socket { bind create read };

@@ -19,3 +19,10 @@ cc_library_headers {
     export_include_dirs: ["."],
     host_supported: true,
 }
+
+cc_library_headers {
+    name: "cuttlefish_shared_config_product",
+    product_specific: true,
+    export_include_dirs: ["."],
+    host_supported: true,
+}

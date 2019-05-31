@@ -1,0 +1,9 @@
+genfscon sysfs /devices/pnp0/00:00/rtc  u:object_r:sysfs_rtc:s0
+genfscon sysfs /devices/pci0000:00/0000:00:07.0/virtio5/net u:object_r:sysfs_net:s0 # (new) qemu buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:08.0/virtio6/net u:object_r:sysfs_net:s0 # (new) qemu rmnet0
+genfscon sysfs /devices/pci0000:00/0000:00:09.0/virtio8/net u:object_r:sysfs_net:s0 # (new) crosvm buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:0a.0/virtio9/net u:object_r:sysfs_net:s0 # (new) crosvm rmnet0
+genfscon sysfs /devices/pci0000:00/0000:00:09.0/virtio7/net u:object_r:sysfs_net:s0 # (old) qemu buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:0a.0/virtio8/net u:object_r:sysfs_net:s0 # (old) qemu rmnet0
+genfscon sysfs /devices/pci0000:00/0000:00:0b.0/virtio10/net u:object_r:sysfs_net:s0 # (old) crosvm buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:0c.0/virtio11/net u:object_r:sysfs_net:s0 # (old) crosvm rmnet0
