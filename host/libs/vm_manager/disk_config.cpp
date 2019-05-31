@@ -26,17 +26,9 @@
 
 namespace vm_manager {
 
-bool should_create_composite_disk(const vsoc::CuttlefishConfig& config) {
-  if (config.composite_disk_path().empty()) {
-    return false;
-  }
-  return !cvd::FileExists(config.composite_disk_path());
-}
+namespace {
 
-void create_composite_disk(const vsoc::CuttlefishConfig& config) {
-  if (config.composite_disk_path().empty()) {
-    LOG(FATAL) << "asked to create composite disk, but path was empty";
-  }
+std::vector<ImagePartition> disk_config(const vsoc::CuttlefishConfig& config) {
   std::vector<ImagePartition> partitions;
   if (config.super_image_path().empty()) {
     partitions.push_back(ImagePartition {
@@ -71,7 +63,32 @@ void create_composite_disk(const vsoc::CuttlefishConfig& config) {
       .image_file_path = config.vendor_image_path(),
     });
   }
-  aggregate_image(partitions, config.composite_disk_path());
+  return partitions;
+}
+
+} // namespace
+
+bool should_create_composite_disk(const vsoc::CuttlefishConfig& config) {
+  if (config.composite_disk_path().empty()) {
+    return false;
+  }
+  auto composite_age = cvd::FileModificationTime(config.composite_disk_path());
+  for (auto& partition : disk_config(config)) {
+    auto partition_age = cvd::FileModificationTime(partition.image_file_path);
+    if (partition_age >= composite_age) {
+      LOG(INFO) << "composite disk age was \"" << std::chrono::system_clock::to_time_t(composite_age) << "\", "
+                << "partition age was \"" << std::chrono::system_clock::to_time_t(partition_age) << "\"";
+      return true;
+    }
+  }
+  return false;
+}
+
+void create_composite_disk(const vsoc::CuttlefishConfig& config) {
+  if (config.composite_disk_path().empty()) {
+    LOG(FATAL) << "asked to create composite disk, but path was empty";
+  }
+  aggregate_image(disk_config(config), config.composite_disk_path());
 }
 
 } // namespace vm_manager

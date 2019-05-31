@@ -741,7 +741,9 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
-  CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
+  if (!cvd::FileExists(FLAGS_metadata_image)) {
+    CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
+  }
 
   // Check that the files exist
   for (const auto& file :
