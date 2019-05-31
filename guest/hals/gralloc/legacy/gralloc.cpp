@@ -64,7 +64,7 @@ static int gralloc_alloc_buffer(
   // a gralloc buffer in this format.
   ALOG_ASSERT(format != HAL_PIXEL_FORMAT_RGB_888);
   if (format == HAL_PIXEL_FORMAT_YV12) {
-    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w, 16);
+    bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w);
   } else {
     bytes_per_line = ScreenRegionView::align(bytes_per_pixel * w);
   }
@@ -195,8 +195,10 @@ struct private_module_t HAL_MODULE_INFO_SYM = {
     VSOC_STATIC_INITIALIZER(unregisterBuffer) gralloc_unregister_buffer,
     VSOC_STATIC_INITIALIZER(lock) gralloc_lock,
     VSOC_STATIC_INITIALIZER(unlock) gralloc_unlock,
+#if VSOC_PLATFORM_SDK_AFTER(P)
     VSOC_STATIC_INITIALIZER(validateBufferSize) NULL,
     VSOC_STATIC_INITIALIZER(getTransportSize) NULL,
+#endif
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     VSOC_STATIC_INITIALIZER(perform) NULL,
     VSOC_STATIC_INITIALIZER(lock_ycbcr) gralloc_lock_ycbcr,

@@ -35,13 +35,14 @@ class VmManager {
   static VmManager* Get(const std::string& vm_manager_name,
                         const vsoc::CuttlefishConfig* config);
   static bool IsValidName(const std::string& name);
+  static bool ConfigureGpuMode(vsoc::CuttlefishConfig* config);
   static void ConfigureBootDevices(vsoc::CuttlefishConfig* config);
   static bool IsVmManagerSupported(const std::string& name);
   static std::vector<std::string> GetValidNames();
 
   virtual ~VmManager() = default;
 
-  virtual cvd::Command StartCommand() = 0;
+  virtual cvd::Command StartCommand(bool with_frontend = true) = 0;
   virtual bool Stop() = 0;
 
   virtual bool ValidateHostConfiguration(
@@ -59,6 +60,7 @@ private:
     std::function<VmManager*(const vsoc::CuttlefishConfig*)> builder;
     // Whether the host packages support this vm manager
     std::function<bool()> support_checker;
+    std::function<bool(vsoc::CuttlefishConfig*)> configure_gpu_mode;
     std::function<void(vsoc::CuttlefishConfig*)> configure_boot_devices;
   };
   // Asociates a vm manager helper to every valid vm manager name

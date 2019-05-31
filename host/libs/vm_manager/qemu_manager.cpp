@@ -55,6 +55,22 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 
 const std::string QemuManager::name() { return "qemu_cli"; }
 
+bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
+  if (config->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
+    return false;
+  }
+  // Override the default HAL search paths in all cases. We do this because
+  // the HAL search path allows for fallbacks, and fallbacks in conjunction
+  // with properities lead to non-deterministic behavior while loading the
+  // HALs.
+  config->add_kernel_cmdline("androidboot.hardware.gralloc=cutf_ashmem");
+  config->add_kernel_cmdline(
+      "androidboot.hardware.hwcomposer=cutf_ivsh_ashmem");
+  config->add_kernel_cmdline(
+      "androidboot.hardware.egl=swiftshader");
+  return true;
+}
+
 void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
   // PCI domain 0, bus 0, device 3, function 0
   // This is controlled with 'addr=0x3' in cf_qemu.sh
@@ -65,7 +81,7 @@ void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
-cvd::Command QemuManager::StartCommand(){
+cvd::Command QemuManager::StartCommand(bool /*with_frontend*/){
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", config_->qemu_binary());
   LogAndSetEnv("instance_name", config_->instance_name());
