@@ -188,6 +188,17 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
   return retval;
 }
 
+Command::ParameterBuilder::~ParameterBuilder() {
+  Build();
+}
+void Command::ParameterBuilder::Build()  {
+  auto param = stream_.str();
+  stream_ = std::stringstream();
+  if (param.size()) {
+    cmd_->AddParameter(param);
+  }
+}
+
 Command::~Command() {
   // Close all inherited file descriptors
   for(const auto& entry: inherited_fds_) {

@@ -33,7 +33,7 @@ include $(BUILD_SHARED_LIBRARY)
 # New hwcomposer, performs software composition
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/hwcomposer.mk
-LOCAL_MODULE := hwcomposer.cutf_ivsh
+LOCAL_MODULE := hwcomposer.cutf_ivsh_ashmem
 LOCAL_VENDOR_MODULE := true
 
 # See b/67109557

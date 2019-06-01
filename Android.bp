@@ -26,10 +26,25 @@ cc_library_headers {
     host_supported: true,
 }
 
+cc_library_headers {
+    name: "cuttlefish_common_headers_product",
+    product_specific: true,
+    export_include_dirs: ["."],
+    host_supported: true,
+}
+
 // TODO(b/67435044) Update the include paths and remove this
 cc_library_headers {
     name: "cuttlefish_glog",
     vendor: true,
+    export_include_dirs: ["common/libs"],
+    host_supported: true,
+}
+
+// TODO(b/67435044) Update the include paths and remove this
+cc_library_headers {
+    name: "cuttlefish_glog_product",
+    product_specific: true,
     export_include_dirs: ["common/libs"],
     host_supported: true,
 }
@@ -55,6 +70,29 @@ cc_defaults {
     },
     cflags: ["-Werror", "-Wall"],
     vendor: true,
+}
+
+cc_defaults {
+    name: "cuttlefish_guest_product_only",
+    product_specific: true,
+    gnu_extensions: false,
+    header_libs: [
+        "cuttlefish_common_headers_product",
+        "cuttlefish_kernel_headers_product",
+        "cuttlefish_shared_config_product",
+    ],
+    target: {
+        host: {
+            host_ldlibs: ["-lrt"],
+            cflags: ["-DCUTTLEFISH_HOST"],
+            compile_multilib: "64",
+        },
+        // We don't need Darwin host-side builds
+        darwin: {
+            enabled: false,
+        },
+    },
+    cflags: ["-Werror", "-Wall"],
 }
 
 cc_defaults {
@@ -131,6 +169,7 @@ cc_test_host {
         "libbase",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }
 
 cc_binary_host {
@@ -166,6 +205,7 @@ cc_test_host {
         "libgtest_host",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }
 
 cc_test_host {
@@ -178,6 +218,7 @@ cc_test_host {
         "libbase",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }
 
 cc_binary_host {
