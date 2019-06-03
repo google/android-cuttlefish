@@ -335,7 +335,11 @@ bool InitializeCuttlefishConfiguration(
     if (use_ramdisk) {
       FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
     } else {
-      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
+      if (FLAGS_composite_disk.empty()) {
+        FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
+      } else {
+        FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/composite-system-root.dtb");
+      }
     }
   }
 
