@@ -57,6 +57,12 @@ class CuttlefishConfig {
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
+  std::string gpu_mode() const;
+  void set_gpu_mode(const std::string& name);
+
+  std::string wayland_socket() const;
+  void set_wayland_socket(const std::string& path);
+
   std::string hardware_name() const;
   void set_hardware_name(const std::string& name);
 
@@ -187,6 +193,9 @@ class CuttlefishConfig {
   std::string logcat_receiver_binary() const;
   void set_logcat_receiver_binary(const std::string& binary);
 
+  std::string config_server_binary() const;
+  void set_config_server_binary(const std::string& binary);
+
   std::string launcher_log_path() const;
   void set_launcher_log_path(const std::string& launcher_log_path);
 
@@ -308,8 +317,20 @@ class CuttlefishConfig {
   void set_logcat_vsock_port(int port);
   int logcat_vsock_port() const;
 
+  void set_config_server_port(int port);
+  int config_server_port() const;
+
   void set_frames_vsock_port(int port);
   int frames_vsock_port() const;
+
+  void set_enable_tombstone_receiver(bool enable_tombstone_receiver);
+  bool enable_tombstone_receiver() const;
+
+  void set_tombstone_receiver_binary(const std::string& binary);
+  std::string tombstone_receiver_binary() const;
+
+  void set_tombstone_receiver_port(int port);
+  int tombstone_receiver_port() const;
 
   bool enable_ivserver() const;
 
@@ -349,8 +370,15 @@ int GetDefaultPerInstanceVsockCid();
 
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
+std::string DefaultEnvironmentPath(const char* environment_key,
+                                   const char* default_value,
+                                   const char* path);
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
 bool HostSupportsVsock();
+
+// GPU modes
+extern const char* const kGpuModeGuestSwiftshader;
+extern const char* const kGpuModeDrmVirgl;
 }  // namespace vsoc

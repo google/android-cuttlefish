@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/constants/ril.h"
+#include "common/libs/device_config/device_config.h"
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
@@ -62,48 +62,7 @@ typedef enum {
   RUIM_NETWORK_PERSONALIZATION = 11
 } SIM_Status;
 
-class RilConfig {
- public:
-  static void InitRilConfig();
-
-  static char* address_and_prefixlength() {
-    return RilConfig::global_ril_config_.address_and_prefixlength_;
-  }
-
-  static char* dns() {
-    return RilConfig::global_ril_config_.dns_;
-  }
-
-  static char* gateway() {
-    return RilConfig::global_ril_config_.gateway_;
-  }
-
-  static char* ipaddr() {
-    return RilConfig::global_ril_config_.ipaddr_;
-  }
-
-  static int prefixlen() {
-    return RilConfig::global_ril_config_.prefixlen_;
-  }
-
-  static char* broadcast() {
-    return RilConfig::global_ril_config_.broadcast_;
-  }
-
- private:
-  RilConfig() = default;
-  RilConfig(const RilConfig&) = default;
-
-  char ipaddr_[16]; // xxx.xxx.xxx.xxx\0 = 16 bytes
-  char gateway_[16];
-  char dns_[16];
-  char broadcast_[16];
-  char address_and_prefixlength_[19]; // <ipaddr>/dd
-  int prefixlen_;
-
-  static RilConfig global_ril_config_;
-};
-RilConfig RilConfig::global_ril_config_;
+static std::unique_ptr<cvd::DeviceConfig> global_ril_config = nullptr;
 
 static const struct RIL_Env* gce_ril_env;
 
@@ -174,43 +133,6 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
   return false;
 }
 
-static bool ReadStringProperty(char* dst, const char* key, size_t max_size) {
-  char buffer[PROPERTY_VALUE_MAX];
-  auto res = property_get(key, buffer, NULL);
-  if (res < 0) {
-    ALOGE("Failed to read property %s", key);
-    return false;
-  }
-  if (res > static_cast<int>(max_size - 1)) {
-    ALOGE("Invalid value in property %s: value too long: %s", key, buffer);
-    return false;
-  }
-  snprintf(dst, res + 1, "%s", buffer);
-  return true;
-}
-
-void RilConfig::InitRilConfig() {
-  RilConfig tmp_config;
-  ReadStringProperty(&tmp_config.ipaddr_[0], CUTTLEFISH_RIL_ADDR_PROPERTY,
-                     sizeof(tmp_config.ipaddr_));
-  ReadStringProperty(&tmp_config.gateway_[0],
-                     CUTTLEFISH_RIL_GATEWAY_PROPERTY,
-                     sizeof(tmp_config.gateway_));
-  ReadStringProperty(&tmp_config.dns_[0], CUTTLEFISH_RIL_DNS_PROPERTY,
-                     sizeof(tmp_config.dns_));
-  ReadStringProperty(&tmp_config.broadcast_[0],
-                     CUTTLEFISH_RIL_BROADCAST_PROPERTY,
-                     sizeof(tmp_config.broadcast_));
-  tmp_config.prefixlen_ =
-      property_get_int32(CUTTLEFISH_RIL_PREFIXLEN_PROPERTY, 30);
-
-  snprintf(&tmp_config.address_and_prefixlength_[0],
-           sizeof(tmp_config.address_and_prefixlength_), "%s/%d",
-           tmp_config.ipaddr_, tmp_config.prefixlen_);
-
-  RilConfig::global_ril_config_ = tmp_config;
-}
-
 // TearDownNetworkInterface disables network interface.
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
@@ -270,9 +192,9 @@ static int request_or_send_data_calllist(RIL_Token* t) {
 
     responses[index].ifname = (char*)"rmnet0";
     responses[index].addresses =
-      const_cast<char*>(RilConfig::address_and_prefixlength());
-    responses[index].dnses = RilConfig::dns();
-    responses[index].gateways = RilConfig::gateway();
+      const_cast<char*>(global_ril_config->ril_address_and_prefix());
+    responses[index].dnses = const_cast<char*>(global_ril_config->ril_dns());
+    responses[index].gateways = const_cast<char*>(global_ril_config->ril_gateway());
 #if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
@@ -395,8 +317,9 @@ static void request_setup_data_call(void* data, size_t datalen, RIL_Token t) {
   }
 
   if (gDataCalls.empty()) {
-    SetUpNetworkInterface(RilConfig::ipaddr(), RilConfig::prefixlen(),
-                          RilConfig::broadcast());
+    SetUpNetworkInterface(global_ril_config->ril_ipaddr(),
+                          global_ril_config->ril_prefixlen(),
+                          global_ril_config->ril_broadcast());
   }
 
   gDataCalls[gNextDataCallId] = call;
@@ -2679,7 +2602,11 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env* env, int /*argc*/,
   time(&gce_ril_start_time);
   gce_ril_env = env;
 
-  RilConfig::InitRilConfig();
+  global_ril_config = cvd::DeviceConfig::Get();
+  if (!global_ril_config) {
+    ALOGE("Failed to open device configuration!!!");
+    return nullptr;
+  }
 
   TearDownNetworkInterface();
 

@@ -276,7 +276,7 @@ void USBServer::OnTransferComplete(uint32_t tag, bool is_data_in,
 }
 
 int USBServer::HandleDeviceEvent(libusb_context*, libusb_device*,
-                                 libusb_hotplug_event event, void* self_raw) {
+                                 libusb_hotplug_event, void* self_raw) {
   auto self = reinterpret_cast<USBServer*>(self_raw);
   int64_t dummy = 1;
   self->device_event_fd_->Write(&dummy, sizeof(dummy));
