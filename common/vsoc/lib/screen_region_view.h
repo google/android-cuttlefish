@@ -32,7 +32,8 @@ class ScreenRegionView
     : public vsoc::TypedRegionView<ScreenRegionView,
                                    vsoc::layout::screen::ScreenLayout> {
  public:
-  static int align(int input, int alignment = kAlignment) {
+  static int align(int input) {
+    auto constexpr alignment = 16;
     return (input + alignment - 1) & -alignment;
   }
 
@@ -95,7 +96,6 @@ class ScreenRegionView
   static constexpr int kGreenBits = 8;
   static constexpr int kBlueBits = 8;
   static constexpr uint32_t kFbPixelFormat = vsoc::VSOC_PIXEL_FORMAT_RGBA_8888;
-  static constexpr int kAlignment = 16;
 
  protected:
   const uint8_t* first_buffer() const;

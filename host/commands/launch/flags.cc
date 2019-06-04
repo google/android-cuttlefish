@@ -13,7 +13,6 @@
 #include "host/commands/launch/data_image.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
-#include "host/commands/launch/ril_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -88,6 +87,12 @@ DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
 DEFINE_string(
     vm_manager, vm_manager::CrosvmManager::name(),
     "What virtual machine manager to use, one of {qemu_cli, crosvm}");
+DEFINE_string(
+    gpu_mode, vsoc::kGpuModeGuestSwiftshader,
+    "What gpu configuration to use, one of {guest_swiftshader, drm_virgl}");
+DEFINE_string(wayland_socket, "",
+    "Location of the wayland socket to use for drm_virgl gpu_mode.");
+
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
@@ -188,8 +193,20 @@ DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
 DEFINE_int32(logcat_vsock_port, vsoc::GetPerInstanceDefault(5620),
              "The port for logcat over vsock");
+DEFINE_string(config_server_binary,
+              vsoc::DefaultHostArtifactsPath("bin/config_server"),
+              "Binary for the configuration server");
+DEFINE_int32(config_server_port, vsoc::GetPerInstanceDefault(4680),
+             "The (vsock) port for the configuration server");
 DEFINE_int32(frames_vsock_port, vsoc::GetPerInstanceDefault(5580),
              "The vsock port to receive frames from the guest on");
+DEFINE_bool(enable_tombstone_receiver, false, "Enables the tombstone logger on "
+            "both the guest and the host");
+DEFINE_string(tombstone_receiver_binary,
+              vsoc::DefaultHostArtifactsPath("bin/tombstone_receiver"),
+              "Binary for the tombstone server");
+DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
+             "The vsock port for tombstones");
 namespace {
 
 template<typename S, typename T>
@@ -251,10 +268,18 @@ bool InitializeCuttlefishConfiguration(
     LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
     return false;
   }
+  if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
+    LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
+    return false;
+  }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
-
-  // TODO(b/77276633): This should be handled as part of the GPU configuration
-  tmp_config_obj.add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
+  tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
+  if (!vm_manager::VmManager::ConfigureGpuMode(&tmp_config_obj)) {
+    LOG(ERROR) << "Invalid gpu_mode=" << FLAGS_gpu_mode <<
+               " does not work with vm_manager=" << FLAGS_vm_manager;
+    return false;
+  }
+  tmp_config_obj.set_wayland_socket(FLAGS_wayland_socket);
 
   vm_manager::VmManager::ConfigureBootDevices(&tmp_config_obj);
 
@@ -343,6 +368,8 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_logcat_port=",
                                              FLAGS_logcat_vsock_port));
   }
+  tmp_config_obj.add_kernel_cmdline(concat("androidboot.cuttlefish_config_server_port=",
+                                           FLAGS_config_server_port));
   tmp_config_obj.set_hardware_name(FLAGS_hardware_name);
   if (!FLAGS_guest_security.empty()) {
     tmp_config_obj.add_kernel_cmdline(concat("security=", FLAGS_guest_security));
@@ -404,13 +431,13 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
   tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
   tmp_config_obj.set_logcat_receiver_binary(FLAGS_logcat_receiver_binary);
+  tmp_config_obj.set_config_server_binary(FLAGS_config_server_binary);
   tmp_config_obj.set_launcher_log_path(tmp_config_obj.PerInstancePath("launcher.log"));
   tmp_config_obj.set_launcher_monitor_socket_path(
       tmp_config_obj.PerInstancePath("launcher_monitor.sock"));
 
   tmp_config_obj.set_mobile_bridge_name(FLAGS_mobile_interface);
   tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
-  ConfigureRil(&tmp_config_obj);
 
   tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);
 
@@ -457,10 +484,24 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
+  tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
   tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
-  if (!tmp_config_obj.enable_ivserver()) {
+  if (!tmp_config_obj.enable_ivserver() && tmp_config_obj.enable_vnc_server()) {
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_frames_port=",
                                              FLAGS_frames_vsock_port));
+  }
+
+  tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
+  tmp_config_obj.set_tombstone_receiver_port(FLAGS_tombstone_receiver_port);
+  tmp_config_obj.set_tombstone_receiver_binary(FLAGS_tombstone_receiver_binary);
+  if (FLAGS_enable_tombstone_receiver) {
+    tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=1");
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_tombstone_port="
+      ,FLAGS_tombstone_receiver_port));
+    // TODO (b/128842613) populate a cid flag to read the host CID during
+    // runtime
+  } else {
+    tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=0");
   }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
@@ -525,6 +566,11 @@ void SetDefaultFlagsForCrosvm() {
       cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  auto default_wayland_socket = vsoc::DefaultEnvironmentPath(
+      "XDG_RUNTIME_DIR", default_instance_dir.c_str(), "wayland-0");
+  SetCommandLineOptionWithMode("wayland_socket",
+                               default_wayland_socket.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);

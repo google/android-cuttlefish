@@ -69,6 +69,8 @@ int InstanceFromEnvironment() {
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
+const char* const kGpuMode = "gpu_mode";
+const char* const kWaylandSocket = "wayland_socket";
 const char* kHardwareName = "hardware_name";
 const char* kDeviceTitle = "device_title";
 
@@ -157,11 +159,27 @@ const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
 const char* kLogcatMode = "logcat_mode";
 const char* kLogcatVsockPort = "logcat_vsock_port";
+const char* kConfigServerPort = "config_server_port";
 const char* kFramesVsockPort = "frames_vsock_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
+const char* kConfigServerBinary = "config_server_binary";
+
+const char* kRunTombstoneReceiver = "enable_tombstone_logger";
+const char* kTombstoneReceiverPort = "tombstone_logger_port";
+const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 }  // namespace
 
 namespace vsoc {
+
+const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
+const char* const kGpuModeDrmVirgl = "drm_virgl";
+
+std::string DefaultEnvironmentPath(const char* environment_key,
+                                   const char* default_value,
+                                   const char* subpath) {
+  return cvd::StringFromEnv(environment_key, default_value) + "/" + subpath;
+}
+
 
 std::string CuttlefishConfig::instance_dir() const {
   return (*dictionary_)[kInstanceDir].asString();
@@ -175,6 +193,21 @@ std::string CuttlefishConfig::vm_manager() const {
 }
 void CuttlefishConfig::set_vm_manager(const std::string& name) {
   (*dictionary_)[kVmManager] = name;
+}
+
+std::string CuttlefishConfig::gpu_mode() const {
+  return (*dictionary_)[kGpuMode].asString();
+}
+void CuttlefishConfig::set_gpu_mode(const std::string& name) {
+  (*dictionary_)[kGpuMode] = name;
+}
+
+std::string CuttlefishConfig::wayland_socket() const {
+  // Don't use SetPath here: the path is already fully formed.
+  return (*dictionary_)[kWaylandSocket].asString();
+}
+void CuttlefishConfig::set_wayland_socket(const std::string& path) {
+  (*dictionary_)[kWaylandSocket] = path;
 }
 
 std::string CuttlefishConfig::hardware_name() const {
@@ -812,6 +845,14 @@ int CuttlefishConfig::logcat_vsock_port() const {
   return (*dictionary_)[kLogcatVsockPort].asInt();
 }
 
+void CuttlefishConfig::set_config_server_port(int port) {
+  (*dictionary_)[kConfigServerPort] = port;
+}
+
+int CuttlefishConfig::config_server_port() const {
+  return (*dictionary_)[kConfigServerPort].asInt();
+}
+
 void CuttlefishConfig::set_frames_vsock_port(int port) {
   (*dictionary_)[kFramesVsockPort] = port;
 }
@@ -826,6 +867,38 @@ void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
 
 std::string CuttlefishConfig::logcat_receiver_binary() const {
   return (*dictionary_)[kLogcatReceiverBinary].asString();
+}
+
+void CuttlefishConfig::set_config_server_binary(const std::string& binary) {
+  SetPath(kConfigServerBinary, binary);
+}
+
+std::string CuttlefishConfig::config_server_binary() const {
+  return (*dictionary_)[kConfigServerBinary].asString();
+}
+
+bool CuttlefishConfig::enable_tombstone_receiver() const {
+  return (*dictionary_)[kRunTombstoneReceiver].asBool();
+}
+
+void CuttlefishConfig::set_enable_tombstone_receiver(bool enable_tombstone_receiver) {
+  (*dictionary_)[kRunTombstoneReceiver] = enable_tombstone_receiver;
+}
+
+std::string CuttlefishConfig::tombstone_receiver_binary() const {
+  return (*dictionary_)[kTombstoneReceiverBinary].asString();
+}
+
+void CuttlefishConfig::set_tombstone_receiver_binary(const std::string& e2e_test_binary) {
+  (*dictionary_)[kTombstoneReceiverBinary] = e2e_test_binary;
+}
+
+void CuttlefishConfig::set_tombstone_receiver_port(int port) {
+  (*dictionary_)[kTombstoneReceiverPort] = port;
+}
+
+int CuttlefishConfig::tombstone_receiver_port() const {
+  return (*dictionary_)[kTombstoneReceiverPort].asInt();
 }
 
 bool CuttlefishConfig::enable_ivserver() const {

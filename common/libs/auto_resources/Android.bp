@@ -21,6 +21,14 @@ cc_library_shared {
     defaults: ["cuttlefish_host_and_guest"],
 }
 
+cc_library_static {
+    name: "cuttlefish_auto_resources_static",
+    srcs: [
+        "auto_resources.cpp",
+    ],
+    defaults: ["cuttlefish_guest_product_only"],
+}
+
 cc_test_host {
     name: "auto_free_buffer_test",
     srcs: [
@@ -33,4 +41,5 @@ cc_test_host {
         "libgmock",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }

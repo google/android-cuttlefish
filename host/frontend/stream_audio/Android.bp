@@ -33,5 +33,6 @@ cc_binary_host {
         "libopuscpp",
     ],
     cpp_std: "c++17",
+    enabled: false,
     defaults: ["cuttlefish_host_only"],
 }

@@ -30,4 +30,5 @@ cc_test_host {
         "cuttlefish_time",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }

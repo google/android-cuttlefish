@@ -318,7 +318,9 @@ struct vsoc_gralloc_module_t HAL_MODULE_INFO_SYM = {
     .unlock = unlock,
     .lock_ycbcr = lock_ycbcr,
     .perform = NULL,
+#if VSOC_PLATFORM_SDK_AFTER(P)
     .validateBufferSize = NULL,
     .getTransportSize = NULL,
+#endif
   },
 };

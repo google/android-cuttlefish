@@ -440,8 +440,8 @@ static int vsoc_hwc_open(const struct hw_module_t* module, const char* name,
   dev->vsync_data.vsync_period_ns = 1000000000 / refreshRate;
   struct timespec rt;
   if (clock_gettime(CLOCK_MONOTONIC, &rt) == -1) {
-    ALOGE("%s:%d error in vsync thread clock_gettime: %s", __FILE__, __LINE__,
-          strerror(errno));
+    LOG_ALWAYS_FATAL("%s:%d error in vsync thread clock_gettime: %s", __FILE__,
+      __LINE__, strerror(errno));
   }
   dev->vsync_data.vsync_base_timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
 

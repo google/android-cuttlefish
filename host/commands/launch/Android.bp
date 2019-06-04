@@ -18,7 +18,6 @@ cc_binary_host {
     srcs: [
         "main.cc",
         "screen_region_handler.cc",
-        "ril_config.cc",
         "vsoc_shared_memory.cc",
         "boot_image_unpacker.cc",
         "process_monitor.cc",

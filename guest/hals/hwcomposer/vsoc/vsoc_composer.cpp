@@ -176,9 +176,9 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   uint8_t* src_y = src.buffer;
   int stride_y = stride_in_pixels;
   uint8_t* src_v = src_y + stride_y * src.height;
-  int stride_v = ScreenRegionView::align(stride_y / 2, 16);
+  int stride_v = ScreenRegionView::align(stride_y / 2);
   uint8_t* src_u = src_v + stride_v *  src.height / 2;
-  int stride_u = ScreenRegionView::align(stride_y / 2, 16);
+  int stride_u = ScreenRegionView::align(stride_y / 2);
 
   // Adjust for crop
   src_y += src.crop_y * stride_y + src.crop_x;
@@ -376,12 +376,12 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
   int y_res = src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   size_t output_frame_size =
       x_res *
-    ScreenRegionView::align(y_res * screen_view->bytes_per_pixel(), 16);
+    ScreenRegionView::align(y_res * screen_view->bytes_per_pixel());
   while (needed_tmp_buffers > 0) {
     BufferSpec tmp(RotateTmpBuffer(needed_tmp_buffers), output_frame_size,
                    x_res, y_res,
                    ScreenRegionView::align(
-                       x_res * screen_view->bytes_per_pixel(), 16));
+                       x_res * screen_view->bytes_per_pixel()));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
   }
@@ -403,7 +403,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
       int dst_stride = ScreenRegionView::align(
-          src_width * screen_view->bytes_per_pixel(), 16);
+          src_width * screen_view->bytes_per_pixel());
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
