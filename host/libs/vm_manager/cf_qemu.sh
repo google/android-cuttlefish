@@ -212,7 +212,7 @@ fi
 args+=(
     -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},server,nowait"
     -mon "chardev=charmonitor,id=monitor,mode=control"
-    -chardev "socket,id=charserial0,path=${kernel_log_socket_name:-${default_dir}/kernel-log}"
+    -chardev "file,id=charserial0,path=${kernel_log_pipe_name:-${default_dir}/kernel-log},append=on"
     -device "${kernel_console_serial},chardev=charserial0,id=serial0"
     -chardev "socket,id=charserial1,path=${console_path:-${default_dir}/console},server,nowait"
     -device "pci-serial,chardev=charserial1,id=serial1"
