@@ -1,0 +1,4 @@
+#############################
+# Product files
+#
+/product/bin/tombstone_transmit  u:object_r:tombstone_transmit_exec:s0
