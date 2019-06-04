@@ -16,8 +16,7 @@
 
 # Enable updating of APEXes
 $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
-
-PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
+PRODUCT_PACKAGES := com.android.apex.cts.shim.v1_prebuilt
 
 PRODUCT_SHIPPING_API_LEVEL := 29
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
@@ -65,13 +64,14 @@ PRODUCT_PACKAGES += \
     socket_forward_proxy \
     socket_vsock_proxy \
     usbforward \
-    VSoCService \
+    CuttlefishService \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
     vport_trigger \
     rename_netiface \
     ip_link_add \
     setup_wifi \
+    tombstone_transmit \
     vsock_logcat \
 
 #
@@ -200,8 +200,8 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     hwcomposer.drm_minigbm \
-    hwcomposer.cutf_ivsh \
-    hwcomposer.cutf_cvm \
+    hwcomposer.cutf_cvm_ashmem \
+    hwcomposer.cutf_ivsh_ashmem \
     hwcomposer-stats \
     android.hardware.graphics.composer@2.2-impl \
     android.hardware.graphics.composer@2.2-service
@@ -211,7 +211,7 @@ PRODUCT_PACKAGES += \
 #
 PRODUCT_PACKAGES += \
     gralloc.minigbm \
-    gralloc.cutf \
+    gralloc.cutf_ashmem \
     android.hardware.graphics.mapper@2.0-impl-2.1 \
     android.hardware.graphics.allocator@2.0-impl \
     android.hardware.graphics.allocator@2.0-service
@@ -312,7 +312,6 @@ PRODUCT_PACKAGES += \
 # Power HAL
 #
 PRODUCT_PACKAGES += \
-    power.cutf \
     android.hardware.power@1.0-impl \
     android.hardware.power@1.0-service
 

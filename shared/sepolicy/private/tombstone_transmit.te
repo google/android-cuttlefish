@@ -1,0 +1,12 @@
+type tombstone_transmit, domain, coredomain;
+type tombstone_transmit_exec, exec_type, file_type;
+
+init_daemon_domain(tombstone_transmit);
+
+type vsock_tombstone_port_prop, property_type;
+get_prop(tombstone_transmit, vsock_tombstone_port_prop)
+
+allow tombstone_transmit self:capability net_admin;
+r_dir_file(tombstone_transmit, tombstone_data_file)
+
+allow tombstone_transmit self:{ vsock_socket } create_socket_perms_no_ioctl;

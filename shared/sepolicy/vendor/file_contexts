@@ -59,6 +59,6 @@
 /vendor/lib(64)?/cuttlefish_auto_resources.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/android\.hardware\.graphics\.mapper@2\.0-impl-2\.1\.so u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/gralloc.vsoc.so  u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/hw/gralloc.cutf.so  u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/hw/gralloc.cutf_ashmem.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libcuttlefish_fs.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/vsoc_lib.so  u:object_r:same_process_hal_file:s0
