@@ -193,8 +193,8 @@ class CuttlefishConfig {
   std::string usb_ip_socket_name() const;
   void set_usb_ip_socket_name(const std::string& usb_ip_socket_name);
 
-  std::string kernel_log_socket_name() const;
-  void set_kernel_log_socket_name(const std::string& kernel_log_socket_name);
+  std::string kernel_log_pipe_name() const;
+  void set_kernel_log_pipe_name(const std::string& kernel_log_pipe_name);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
