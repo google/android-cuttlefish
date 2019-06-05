@@ -44,4 +44,5 @@ cc_test_host {
         "libgtest_host",
     ],
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }

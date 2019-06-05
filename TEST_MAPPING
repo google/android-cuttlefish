@@ -1,0 +1,16 @@
+{
+  "presubmit": [
+    {
+      "name": "circqueue_test",
+      "host": true
+    },
+    {
+      "name": "lock_test",
+      "host": true
+    },
+    {
+      "name": "vsoc_graphics_test",
+      "host": true
+    }
+  ]
+}

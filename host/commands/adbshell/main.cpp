@@ -25,6 +25,8 @@
 #include <cstring>
 #include <string>
 #include <vector>
+
+#include <errno.h>
 #include <unistd.h>
 
 // Many of our users interact with CVDs via ssh. They expect to be able to
@@ -65,6 +67,14 @@ std::string CuttlefishConfigLocation() {
          "/cuttlefish_runtime/cuttlefish_config.json";
 }
 
+std::string CuttlefishFindAdb() {
+  std::string rval = std::string("/home/") + VsocUser() + "/bin/adb";
+  if (TEMP_FAILURE_RETRY(access(rval.c_str(), X_OK)) == -1) {
+    return "/usr/bin/adb";
+  }
+  return rval;
+}
+
 void SetCuttlefishConfigEnv() {
   setenv(vsoc::kCuttlefishConfigEnvVarName, CuttlefishConfigLocation().c_str(),
          true);
@@ -74,9 +84,10 @@ void SetCuttlefishConfigEnv() {
 int main(int argc, char* argv[]) {
   SetCuttlefishConfigEnv();
   auto instance = vsoc::CuttlefishConfig::Get()->adb_device_name();
+  std::string adb_path = CuttlefishFindAdb();
 
   std::vector<char*> new_argv = {
-      const_cast<char*>("/usr/bin/adb"), const_cast<char*>("-s"),
+      const_cast<char*>(adb_path.c_str()), const_cast<char*>("-s"),
       const_cast<char*>(instance.c_str()), const_cast<char*>("shell"),
       const_cast<char*>("/system/bin/sh")};
 

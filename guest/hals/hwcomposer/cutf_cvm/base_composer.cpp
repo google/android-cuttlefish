@@ -77,30 +77,34 @@ int BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 }
 
 FrameBuffer::FrameBuffer()
-    : screen_server_(cvd::SharedFD::VsockClient(
-          2, property_get_int32("ro.boot.vsock_frames_port", 5580),
-          SOCK_STREAM)),
-      broadcast_thread_([this]() { BroadcastLoop(); }) {
-  if (screen_server_->IsOpen()) {
-    // TODO(b/128842613): Get this info from the configuration server
-    int32_t screen_params[4];
-    auto res = screen_server_->Read(screen_params, sizeof(screen_params));
-    if (res == sizeof(screen_params)) {
-      x_res_ = screen_params[0];
-      y_res_ = screen_params[1];
-      dpi_ = screen_params[2];
-      refresh_rate_ = screen_params[3];
+    : broadcast_thread_([this]() { BroadcastLoop(); }) {
+  auto vsock_frames_port = property_get_int32("ro.boot.vsock_frames_port", -1);
+  if (vsock_frames_port > 0) {
+    screen_server_ = cvd::SharedFD::VsockClient(2, vsock_frames_port,
+                                                SOCK_STREAM);
+    if (screen_server_->IsOpen()) {
+      // TODO(b/128842613): Get this info from the configuration server
+      int32_t screen_params[4];
+      auto res = screen_server_->Read(screen_params, sizeof(screen_params));
+      if (res == sizeof(screen_params)) {
+        x_res_ = screen_params[0];
+        y_res_ = screen_params[1];
+        dpi_ = screen_params[2];
+        refresh_rate_ = screen_params[3];
+      } else {
+        LOG(ERROR) << "Unable to get screen configuration parameters from screen "
+                   << "server (" << res << "): " << screen_server_->StrError();
+      }
     } else {
-      LOG(ERROR) << "Unable to get screen configuration parameters from screen "
-                 << "server (" << res << "): " << screen_server_->StrError();
+      LOG(ERROR) << "Unable to connect to screen server: "
+                 << screen_server_->StrError();
     }
   } else {
-    LOG(ERROR) << "Unable to connect to screen server: "
-               << screen_server_->StrError();
+    LOG(INFO) << "No screen server configured, operating on headless mode";
   }
   // This needs to happen no matter what, otherwise there won't be a buffer for
   // the set calls to compose on.
-  inner_buffer_ = std::vector<char>(FrameBuffer::buffer_size() * 8);
+  inner_buffer_ = std::vector<char>(buffer_size() * 8);
 }
 
 FrameBuffer::~FrameBuffer() {

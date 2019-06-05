@@ -53,6 +53,28 @@ void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
 
 const std::string CrosvmManager::name() { return "crosvm"; }
 
+bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
+  // Override the default HAL search paths in all cases. We do this because
+  // the HAL search path allows for fallbacks, and fallbacks in conjunction
+  // with properities lead to non-deterministic behavior while loading the
+  // HALs.
+  if (config->gpu_mode() == vsoc::kGpuModeDrmVirgl) {
+    config->add_kernel_cmdline("androidboot.hardware.gralloc=minigbm");
+    config->add_kernel_cmdline("androidboot.hardware.hwcomposer=drm_minigbm");
+    config->add_kernel_cmdline("androidboot.hardware.egl=mesa");
+    return true;
+  }
+  if (config->gpu_mode() == vsoc::kGpuModeGuestSwiftshader) {
+    config->add_kernel_cmdline(
+        "androidboot.hardware.gralloc=cutf_ashmem");
+    config->add_kernel_cmdline(
+        "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
+    config->add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
+    return true;
+  }
+  return false;
+}
+
 void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
   // PCI domain 0, bus 0, device 5, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
@@ -63,7 +85,7 @@ void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
-cvd::Command CrosvmManager::StartCommand() {
+cvd::Command CrosvmManager::StartCommand(bool with_frontend) {
   // TODO Add aarch64 support
   // TODO Add the tap interfaces (--tap-fd)
   // TODO Redirect logcat output
@@ -75,6 +97,10 @@ cvd::Command CrosvmManager::StartCommand() {
   cvd::Command command(config_->crosvm_binary());
   command.AddParameter("run");
 
+  if (config_->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
+    command.AddParameter("--gpu");
+    command.AddParameter("--wayland-sock=", config_->wayland_socket());
+  }
   if (!config_->ramdisk_image_path().empty()) {
     command.AddParameter("--initrd=", config_->ramdisk_image_path());
   }
@@ -98,9 +124,12 @@ cvd::Command CrosvmManager::StartCommand() {
   if (!config_->gsi_fstab_path().empty()) {
     command.AddParameter("--android-fstab=", config_->gsi_fstab_path());
   }
-  command.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
-                       config_->x_res(), ":", config_->y_res());
-  command.AddParameter("--keyboard=", config_->keyboard_socket_path());
+
+  if (with_frontend) {
+    command.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
+                         config_->x_res(), ":", config_->y_res());
+    command.AddParameter("--keyboard=", config_->keyboard_socket_path());
+  }
 
   AddTapFdParameter(&command, config_->wifi_tap_name());
   AddTapFdParameter(&command, config_->mobile_tap_name());
@@ -146,4 +175,3 @@ bool CrosvmManager::Stop() {
 }
 
 }  // namespace vm_manager
-
