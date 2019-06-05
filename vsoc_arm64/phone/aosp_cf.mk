@@ -43,6 +43,7 @@ $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/vsoc_arm64/phone/overlay
 
+$(call inherit-product, device/google/cuttlefish/vsoc_arm64/device.mk)
 
 PRODUCT_NAME := aosp_cf_arm64_phone
 PRODUCT_DEVICE := vsoc_arm64

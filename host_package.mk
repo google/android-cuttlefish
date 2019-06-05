@@ -24,7 +24,6 @@ cvd_host_executables := \
     socket_vsock_proxy \
     adb_connector \
     stop_cvd \
-    stream_audio \
     vnc_server \
     record_audio \
     cf_qemu.sh \
@@ -33,7 +32,19 @@ cvd_host_executables := \
     kernel_log_monitor \
     extract-vmlinux \
     crosvm \
+    aarch64-linux-gnu/crosvm \
+    aarch64-linux-gnu/libepoxy.so.0 \
+    aarch64-linux-gnu/libgbm.so.1 \
+    aarch64-linux-gnu/libminijail.so \
+    aarch64-linux-gnu/libvirglrenderer.so.0 \
+    x86_64-linux-gnu/crosvm \
+    x86_64-linux-gnu/libepoxy.so.0 \
+    x86_64-linux-gnu/libgbm.so.1 \
+    x86_64-linux-gnu/libminijail.so \
+    x86_64-linux-gnu/libvirglrenderer.so.0 \
     logcat_receiver \
+    config_server \
+    tombstone_receiver \
 
 cvd_host_tests := \
     auto_free_buffer_test \
@@ -60,15 +71,7 @@ cvd_host_shared_libraries := \
     libicuuc-host.so \
     libicui18n-host.so \
     libandroidicu-host.so \
-    libopus.so \
-    libvirglrenderer_cuttlefish.so \
-    libEGL_swiftshader.so \
-    libGLESv1_CM_swiftshader.so \
-    libGLESv2_swiftshader.so \
-    crosvm/libepoxy.so.0 \
-    crosvm/libgbm.so.1 \
-    crosvm/libminijail.so \
-    crosvm/libvirglrenderer.so.0 \
+    libcuttlefish_device_config.so \
 
 
 cvd_host_configs := \
