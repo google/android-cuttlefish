@@ -20,6 +20,8 @@ cvd_host_executables := \
     adbshell \
     host_region_e2e_test \
     launch_cvd \
+    lpmake \
+    lpunpack \
     socket_forward_proxy \
     socket_vsock_proxy \
     adb_connector \
@@ -68,6 +70,12 @@ cvd_host_shared_libraries := \
     liblog.so \
     libnl.so \
     libc++.so \
+    liblp.so \
+    libsparse-host.so \
+    libcrypto-host.so \
+    libcrypto_utils.so \
+    libext4_utils.so \
+    libz-host.so \
     libicuuc-host.so \
     libicui18n-host.so \
     libandroidicu-host.so \
