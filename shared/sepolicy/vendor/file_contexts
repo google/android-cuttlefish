@@ -45,6 +45,7 @@
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim  u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@1\.1-service\.clearkey  u:object_r:hal_drm_default_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish  u:object_r:hal_dumpstate_impl_exec:s0
+/vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health@2\.0-service\.cuttlefish  u:object_r:hal_health_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health\.storage@1\.0-service\.cuttlefish u:object_r:hal_health_storage_default_exec:s0
 /vendor/bin/hw/android\.hardware\.neuralnetworks@1\.2-service-sample-.*   u:object_r:hal_neuralnetworks_sample_exec:s0
