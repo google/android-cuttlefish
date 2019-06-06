@@ -47,6 +47,7 @@ cvd_host_executables := \
     logcat_receiver \
     config_server \
     tombstone_receiver \
+    console_forwarder \
 
 cvd_host_tests := \
     auto_free_buffer_test \
