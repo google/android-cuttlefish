@@ -265,6 +265,9 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
+  void set_console_forwarder_binary(const std::string& crosvm_binary);
+  std::string console_forwarder_binary() const;
+
   void set_ivserver_binary(const std::string& ivserver_binary);
   std::string ivserver_binary() const;
 
