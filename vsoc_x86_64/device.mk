@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2019 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-$(call inherit-product, device/google/cuttlefish/shared/phone/device.mk)
-$(call inherit-product, device/google/cuttlefish/vsoc_x86_64/device.mk)
-
-PRODUCT_NAME := aosp_cf_x86_64_phone
-PRODUCT_DEVICE := vsoc_x86_64
-PRODUCT_MODEL := Cuttlefish x86_64 phone
-PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86_64/phone/overlay
-
+PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
