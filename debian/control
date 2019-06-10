@@ -48,6 +48,7 @@ Depends:
  qemu-utils (>= 2.8.0),
  rsync,
  socat,
+ u-boot-tools,
  vde2,
  ${misc:Depends}
 Description: Cuttlefish Android Virtual Device companion package.
