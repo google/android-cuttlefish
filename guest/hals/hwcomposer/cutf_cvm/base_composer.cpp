@@ -22,6 +22,7 @@
 #include <hardware/gralloc.h>
 #include <log/log.h>
 
+#include <common/libs/device_config/device_config.h>
 #include <common/libs/utils/size_utils.h>
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 
@@ -78,32 +79,9 @@ int BaseComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
 
 FrameBuffer::FrameBuffer()
     : broadcast_thread_([this]() { BroadcastLoop(); }) {
-  auto vsock_frames_port = property_get_int32("ro.boot.vsock_frames_port", -1);
-  if (vsock_frames_port > 0) {
-    screen_server_ = cvd::SharedFD::VsockClient(2, vsock_frames_port,
-                                                SOCK_STREAM);
-    if (screen_server_->IsOpen()) {
-      // TODO(b/128842613): Get this info from the configuration server
-      int32_t screen_params[4];
-      auto res = screen_server_->Read(screen_params, sizeof(screen_params));
-      if (res == sizeof(screen_params)) {
-        x_res_ = screen_params[0];
-        y_res_ = screen_params[1];
-        dpi_ = screen_params[2];
-        refresh_rate_ = screen_params[3];
-      } else {
-        LOG(ERROR) << "Unable to get screen configuration parameters from screen "
-                   << "server (" << res << "): " << screen_server_->StrError();
-      }
-    } else {
-      LOG(ERROR) << "Unable to connect to screen server: "
-                 << screen_server_->StrError();
-    }
-  } else {
-    LOG(INFO) << "No screen server configured, operating on headless mode";
-  }
-  // This needs to happen no matter what, otherwise there won't be a buffer for
-  // the set calls to compose on.
+  GetScreenParameters();
+  // inner_buffer needs to be initialized after the final values of the screen
+  // parameters are set (either from the config server or default).
   inner_buffer_ = std::vector<char>(buffer_size() * 8);
 }
 
@@ -119,8 +97,46 @@ int FrameBuffer::NextScreenBuffer() {
   return last_frame_buffer_;
 }
 
-void FrameBuffer::BroadcastLoop() {
+void FrameBuffer::GetScreenParameters() {
+  auto device_config = cvd::DeviceConfig::Get();
+  if (!device_config) {
+    LOG(INFO) << "Failed to obtain device configuration from server, running in"
+              << " headless mode";
+    // It is impossible to ensure host and guest agree on the screen parameters
+    // if these could not be read from the host configuration server. It's best
+    // to not attempt to send frames in this case.
+    running_ = false;
+    // Do a phony Broadcast to ensure the broadcaster thread exits.
+    Broadcast(-1);
+    return;
+  }
+  x_res_ = device_config->screen_x_res();
+  y_res_ = device_config->screen_y_res();
+  dpi_ = device_config->screen_dpi();
+  refresh_rate_ = device_config->screen_refresh_rate();
+}
+
+bool FrameBuffer::ConnectToScreenServer() {
+  auto vsock_frames_port = property_get_int32("ro.boot.vsock_frames_port", -1);
+  if (vsock_frames_port <= 0) {
+    LOG(INFO) << "No screen server configured, operating on headless mode";
+    return false;
+  }
+
+  screen_server_ = cvd::SharedFD::VsockClient(2, vsock_frames_port,
+                                              SOCK_STREAM);
   if (!screen_server_->IsOpen()) {
+    LOG(ERROR) << "Unable to connect to screen server: "
+               << screen_server_->StrError();
+    return false;
+  }
+
+  return true;
+}
+
+void FrameBuffer::BroadcastLoop() {
+  auto connected = ConnectToScreenServer();
+  if (!connected) {
     LOG(ERROR) << "Broadcaster thread exiting due to no connection to screen"
                << " server. Compositions will occur, but frames won't be sent"
                << " anywhere";
@@ -128,11 +144,16 @@ void FrameBuffer::BroadcastLoop() {
   }
   int32_t current_seq = 0;
   int32_t current_offset;
-  while (running_) {
+  LOG(INFO) << "Broadcaster thread loop starting";
+  while (true) {
     {
       std::unique_lock<std::mutex> lock(mutex_);
-      while (current_seq == current_seq_) {
+      while (running_ && current_seq == current_seq_) {
         cond_var_.wait(lock);
+      }
+      if (!running_) {
+        LOG(INFO) << "Broadcaster thread exiting";
+        return;
       }
       current_offset = current_offset_;
       current_seq = current_seq_;
