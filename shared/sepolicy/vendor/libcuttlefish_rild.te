@@ -1,4 +1,3 @@
-type cuttlefish_config_server_port_prop, property_type;
 type libcuttlefish_rild, domain;
 type libcuttlefish_rild_exec, exec_type, vendor_file_type, file_type;
 
