@@ -89,10 +89,14 @@ class SocketBasedScreenConnector : public ScreenConnector {
     int current_buffer = 0;
 
     while (1) {
+      LOG(INFO) << "Screen Connector accepting connections...";
       auto conn = SharedFD::Accept(*server);
+      if (!conn->IsOpen()) {
+        LOG(ERROR) << "Disconnected fd returned from accept";
+        continue;
+      }
+      SendScreenParameters(conn);
       while (conn->IsOpen()) {
-        SendScreenParameters(conn);
-
         int32_t size = 0;
         conn->Read(&size, sizeof(size));
         auto buff = reinterpret_cast<uint8_t*>(GetBuffer(current_buffer));
