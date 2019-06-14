@@ -132,6 +132,7 @@ std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
   if (!dev_config->InitializeNetworkConfiguration(*config)) {
     return nullptr;
   }
+  dev_config->InitializeScreenConfiguration(*config);
   return dev_config;
 }
 
@@ -159,6 +160,14 @@ bool DeviceConfig::InitializeNetworkConfiguration(
   generate_address_and_prefix();
 
   return true;
+}
+
+void DeviceConfig::InitializeScreenConfiguration(
+    const vsoc::CuttlefishConfig& config) {
+  data_.screen.x_res = config.x_res();
+  data_.screen.y_res = config.y_res();
+  data_.screen.dpi = config.dpi();
+  data_.screen.refresh_rate = config.refresh_rate_hz();
 }
 
 }  // namespace cvd

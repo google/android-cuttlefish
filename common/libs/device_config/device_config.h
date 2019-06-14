@@ -47,6 +47,12 @@ class DeviceConfig {
       uint8_t prefixlen;
       uint8_t reserved[3];
     } ril;
+    struct {
+      int32_t x_res;
+      int32_t y_res;
+      int32_t dpi;
+      int32_t refresh_rate;
+    } screen;
   };
 
   static std::unique_ptr<DeviceConfig> Get();
@@ -61,12 +67,17 @@ class DeviceConfig {
   const char* ril_dns() const { return data_.ril.dns; }
   const char* ril_broadcast() const { return data_.ril.broadcast; }
   int ril_prefixlen() const { return data_.ril.prefixlen; }
+  int32_t screen_x_res() { return data_.screen.x_res; }
+  int32_t screen_y_res() { return data_.screen.y_res; }
+  int32_t screen_dpi() { return data_.screen.dpi; }
+  int32_t screen_refresh_rate() { return data_.screen.refresh_rate; }
 
  private:
   void generate_address_and_prefix();
 #ifdef CUTTLEFISH_HOST
   DeviceConfig() = default;
   bool InitializeNetworkConfiguration(const vsoc::CuttlefishConfig& config);
+  void InitializeScreenConfiguration(const vsoc::CuttlefishConfig& config);
 #else
   explicit DeviceConfig(const RawData& data);
 #endif
