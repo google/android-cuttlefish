@@ -1,4 +1,10 @@
-cuttlefish-common (0.9.8) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.9) stable; urgency=medium
+
+  * Added missing dependencies for crosvm and rockpi4
+
+ -- Greg Hartman <ghartman@google.com>  Fri, 14 Jun 2019 09:43:13 -0700
+
+cuttlefish-common (0.9.8) stable; urgency=medium
 
   * Changes to enable arm builds
   * Fix dependencies for buster
