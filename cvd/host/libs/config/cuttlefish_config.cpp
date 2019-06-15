@@ -90,15 +90,7 @@ const char* kGdbFlag = "gdb_flag";
 const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
 
-const char* kSystemImagePath = "system_image_path";
-const char* kCacheImagePath = "cache_image_path";
-const char* kDataImagePath = "data_image_path";
-const char* kVendorImagePath = "vendor_image_path";
-const char* kMetadataImagePath = "metadata_image_path";
-const char* kProductImagePath = "product_image_path";
-const char* kSuperImagePath = "super_image_path";
-const char* kBootImagePath = "boot_image_path";
-const char* kCompositeDiskPath = "composite_disk_path";
+const char* kVirtualDiskPaths = "virtual_disk_paths";
 const char* kUsbV1SocketName = "usb_v1_socket_name";
 const char* kVhciPort = "vhci_port";
 const char* kUsbIpSocketName = "usb_ip_socket_name";
@@ -358,75 +350,21 @@ void CuttlefishConfig::set_ramdisk_image_path(
   SetPath(kRamdiskImagePath, ramdisk_image_path);
 }
 
-std::string CuttlefishConfig::system_image_path() const {
-  return (*dictionary_)[kSystemImagePath].asString();
+std::vector<std::string> CuttlefishConfig::virtual_disk_paths() const {
+  std::vector<std::string> virtual_disks;
+  auto virtual_disks_json_obj = (*dictionary_)[kVirtualDiskPaths];
+  for (const auto& disk : virtual_disks_json_obj) {
+    virtual_disks.push_back(disk.asString());
+  }
+  return virtual_disks;
 }
-void CuttlefishConfig::set_system_image_path(
-    const std::string& system_image_path) {
-  SetPath(kSystemImagePath, system_image_path);
-}
-
-std::string CuttlefishConfig::cache_image_path() const {
-  return (*dictionary_)[kCacheImagePath].asString();
-}
-void CuttlefishConfig::set_cache_image_path(
-    const std::string& cache_image_path) {
-  SetPath(kCacheImagePath, cache_image_path);
-}
-
-std::string CuttlefishConfig::data_image_path() const {
-  return (*dictionary_)[kDataImagePath].asString();
-}
-void CuttlefishConfig::set_data_image_path(const std::string& data_image_path) {
-  SetPath(kDataImagePath, data_image_path);
-}
-
-std::string CuttlefishConfig::vendor_image_path() const {
-  return (*dictionary_)[kVendorImagePath].asString();
-}
-void CuttlefishConfig::set_vendor_image_path(
-    const std::string& vendor_image_path) {
-  SetPath(kVendorImagePath, vendor_image_path);
-}
-
-std::string CuttlefishConfig::metadata_image_path() const {
-  return (*dictionary_)[kMetadataImagePath].asString();
-}
-void CuttlefishConfig::set_metadata_image_path(
-    const std::string& metadata_image_path) {
-  SetPath(kMetadataImagePath, metadata_image_path);
-}
-
-std::string CuttlefishConfig::super_image_path() const {
-  return (*dictionary_)[kSuperImagePath].asString();
-}
-void CuttlefishConfig::set_super_image_path(
-    const std::string& super_image_path) {
-  SetPath(kSuperImagePath, super_image_path);
-}
-
-std::string CuttlefishConfig::boot_image_path() const {
-  return (*dictionary_)[kBootImagePath].asString();
-}
-void CuttlefishConfig::set_boot_image_path(
-    const std::string& boot_image_path) {
-  SetPath(kBootImagePath, boot_image_path);
-}
-
-std::string CuttlefishConfig::composite_disk_path() const {
-  return (*dictionary_)[kCompositeDiskPath].asString();
-}
-void CuttlefishConfig::set_composite_disk_path(
-    const std::string& composite_disk_path) {
-  SetPath(kCompositeDiskPath, composite_disk_path);
-}
-
-std::string CuttlefishConfig::product_image_path() const {
-  return (*dictionary_)[kProductImagePath].asString();
-}
-void CuttlefishConfig::set_product_image_path(
-    const std::string& product_image_path) {
-  SetPath(kProductImagePath, product_image_path);
+void CuttlefishConfig::set_virtual_disk_paths(
+    const std::vector<std::string>& virtual_disk_paths) {
+  Json::Value virtual_disks_json_obj(Json::arrayValue);
+  for (const auto& arg : virtual_disk_paths) {
+    virtual_disks_json_obj.append(arg);
+  }
+  (*dictionary_)[kVirtualDiskPaths] = virtual_disks_json_obj;
 }
 
 std::string CuttlefishConfig::dtb_path() const {

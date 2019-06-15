@@ -135,32 +135,8 @@ class CuttlefishConfig {
   std::string ramdisk_image_path() const;
   void set_ramdisk_image_path(const std::string& ramdisk_image_path);
 
-  std::string system_image_path() const;
-  void set_system_image_path(const std::string& system_image_path);
-
-  std::string cache_image_path() const;
-  void set_cache_image_path(const std::string& cache_image_path);
-
-  std::string data_image_path() const;
-  void set_data_image_path(const std::string& data_image_path);
-
-  std::string vendor_image_path() const;
-  void set_vendor_image_path(const std::string& vendor_image_path);
-
-  std::string metadata_image_path() const;
-  void set_metadata_image_path(const std::string& metadata_image_path);
-
-  std::string product_image_path() const;
-  void set_product_image_path(const std::string& product_image_path);
-
-  std::string super_image_path() const;
-  void set_super_image_path(const std::string& super_image_path);
-
-  std::string boot_image_path() const;
-  void set_boot_image_path(const std::string& boot_image_path);
-
-  std::string composite_disk_path() const;
-  void set_composite_disk_path(const std::string& composite_disk_path);
+  std::vector<std::string> virtual_disk_paths() const;
+  void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
 
   std::string dtb_path() const;
   void set_dtb_path(const std::string& dtb_path);
