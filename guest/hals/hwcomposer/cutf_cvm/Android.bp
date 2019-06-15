@@ -41,5 +41,6 @@ cc_library_shared {
         "libjpeg",
         "libcuttlefish_utils",
         "libcuttlefish_fs",
+        "libcuttlefish_device_config",
     ],
 }

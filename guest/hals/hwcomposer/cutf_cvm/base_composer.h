@@ -42,6 +42,8 @@ class FrameBuffer{
   int32_t dpi();
   int32_t refresh_rate();
  private:
+  bool ConnectToScreenServer();
+  void GetScreenParameters();
   void BroadcastLoop();
 
   std::vector<char> inner_buffer_;
