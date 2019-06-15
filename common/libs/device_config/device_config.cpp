@@ -28,7 +28,8 @@ namespace cvd {
 // TODO(jemoreira): Endianness when on arm64 guest and x86 host is a problem
 // Raw data is sent through a vsocket from host to guest, this assert tries to
 // ensure the binary representation of the struct is the same in both sides.
-static_assert(sizeof(DeviceConfig::RawData) == 68 &&
+static constexpr int kRawDataSize = 68 + 16;  // ril + screen
+static_assert(sizeof(DeviceConfig::RawData) == kRawDataSize &&
                   std::is_trivial<DeviceConfig::RawData>().value,
               "DeviceConfigRawData needs to be the same in host and guess, did "
               "you forget to update the size?");
