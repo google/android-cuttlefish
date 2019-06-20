@@ -13,20 +13,23 @@
 // limitations under the License.
 
 
-cc_library_static {
-    name: "hwcomposer_common",
+cc_library_shared {
+    name: "hwcomposer.cutf_ivsh_ashmem",
+    relative_install_path: "hw",
     defaults: ["cuttlefish_guest_only"],
-    vendor: true,
-    srcs: [
-        "hwcomposer.cpp",
-        "screen_view.cpp",
-        "base_composer.cpp",
-        "geometry_utils.cpp",
-        "cpu_composer.cpp",
-        "stats_keeper.cpp",
+    cflags: [
+        "-DGATHER_STATS",
+        // Uncomment the following line to revert to GL compositions
+        // "-DUSE_OLD_HWCOMPOSER",
     ],
+    srcs: [
+        "vsoc_screen_view.cpp",
+        "hwcomposer.cpp",
+    ],
+    export_include_dirs: ["."],
     static_libs: [
-        "libyuv_static",
+        "libyuv_static", 
+        "hwcomposer_common"
     ],
     shared_libs: [
         "cuttlefish_auto_resources",
@@ -36,9 +39,9 @@ cc_library_static {
         "libcutils",
         "libutils",
         "libsync",
-        "libhardware",
         "libjpeg",
         "libcuttlefish_utils",
         "libcuttlefish_fs",
+        "vsoc_lib",
     ],
 }

@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -15,32 +14,35 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #include <vector>
 
 #include <hardware/gralloc.h>
 
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 
-#include "base_composer.h"
-#include "hwcomposer.h"
+#include "guest/hals/hwcomposer/common/base_composer.h"
+#include "guest/hals/hwcomposer/common/hwcomposer.h"
 
 namespace cvd {
 
-class VSoCComposer : public BaseComposer {
+class CpuComposer : public BaseComposer {
  public:
-  VSoCComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns);
-  ~VSoCComposer();
+  CpuComposer(int64_t vsync_base_timestamp,
+              std::unique_ptr<ScreenView> screen_view);
+  ~CpuComposer() = default;
 
   // override
-  int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
+  int PrepareLayers(size_t num_layers, cvd_hwc_layer* layers);
   // override
-  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
+  int SetLayers(size_t num_layers, cvd_hwc_layer* layers);
 
  protected:
   static const int kNumTmpBufferPieces;
   uint8_t* RotateTmpBuffer(unsigned int order);
   uint8_t* GetSpecialTmpBuffer(size_t needed_size);
-  void CompositeLayer(vsoc_hwc_layer* src_layer, int32_t fb_offset);
+  void CompositeLayer(cvd_hwc_layer* src_layer, int32_t fb_offset);
   std::vector<uint8_t> tmp_buffer_;
   std::vector<uint8_t> special_tmp_buffer_;
 };

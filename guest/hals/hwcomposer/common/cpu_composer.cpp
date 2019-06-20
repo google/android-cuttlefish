@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-#include "vsoc_composer.h"
+#include "guest/hals/hwcomposer/common/cpu_composer.h"
 
 #include <algorithm>
 #include <cstdlib>
 #include <utility>
 #include <vector>
 
-#include <log/log.h>
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
 #include <libyuv.h>
+#include <log/log.h>
 #include <system/graphics.h>
 
-#include <common/libs/utils/size_utils.h>
-
-#include "geometry_utils.h"
+#include "common/libs/utils/size_utils.h"
+#include "guest/hals/hwcomposer/common/geometry_utils.h"
 
 namespace cvd {
 
 namespace {
 
-bool LayerNeedsScaling(const vsoc_hwc_layer& layer) {
+bool LayerNeedsScaling(const cvd_hwc_layer& layer) {
   int from_w = layer.sourceCrop.right - layer.sourceCrop.left;
   int from_h = layer.sourceCrop.bottom - layer.sourceCrop.top;
   int to_w = layer.displayFrame.right - layer.displayFrame.left;
@@ -49,11 +48,11 @@ bool LayerNeedsScaling(const vsoc_hwc_layer& layer) {
   return needs_rot ? rot_scale : not_rot_scale;
 }
 
-bool LayerNeedsBlending(const vsoc_hwc_layer& layer) {
+bool LayerNeedsBlending(const cvd_hwc_layer& layer) {
   return layer.blending != HWC_BLENDING_NONE;
 }
 
-bool LayerNeedsAttenuation(const vsoc_hwc_layer& layer) {
+bool LayerNeedsAttenuation(const cvd_hwc_layer& layer) {
   return layer.blending == HWC_BLENDING_COVERAGE;
 }
 
@@ -103,7 +102,7 @@ ConverterFunction GetConverter(uint32_t format) {
 // Whether we support a given format
 bool IsFormatSupported(uint32_t format) { return GetConverter(format) != NULL; }
 
-bool CanCompositeLayer(const vsoc_hwc_layer& layer) {
+bool CanCompositeLayer(const cvd_hwc_layer& layer) {
   if (layer.handle == NULL) {
     ALOGW("%s received a layer with a null handler", __FUNCTION__);
     return false;
@@ -175,7 +174,7 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   int stride_y = stride_in_pixels;
   uint8_t* src_v = src_y + stride_y * src.height;
   int stride_v = cvd::AlignToPowerOf2(stride_y / 2, 4);
-  uint8_t* src_u = src_v + stride_v *  src.height / 2;
+  uint8_t* src_u = src_v + stride_v * src.height / 2;
   int stride_u = cvd::AlignToPowerOf2(stride_y / 2, 4);
 
   // Adjust for crop
@@ -293,8 +292,7 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
 
 }  // namespace
 
-void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
-                                  int buffer_idx) {
+void CpuComposer::CompositeLayer(cvd_hwc_layer* src_layer, int buffer_idx) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
@@ -313,8 +311,8 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
                       needs_vflip || needs_attenuation || needs_blending);
 
   uint8_t* src_buffer;
-  uint8_t* dst_buffer = reinterpret_cast<uint8_t*>(
-      frame_buffer_.GetBuffer(buffer_idx));
+  uint8_t* dst_buffer =
+      reinterpret_cast<uint8_t*>(screen_view_->GetBuffer(buffer_idx));
   int retval = gralloc_module_->lock(
       gralloc_module_, src_layer->handle, GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
       src_priv_handle->x_res, src_priv_handle->y_res,
@@ -342,9 +340,9 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       src_layer->sourceCrop.bottom - src_layer->sourceCrop.top;
   src_layer_spec.format = src_priv_handle->format;
 
-  BufferSpec dst_layer_spec(dst_buffer, frame_buffer_.buffer_size(),
-                            frame_buffer_.x_res(), frame_buffer_.y_res(),
-                            frame_buffer_.line_length());
+  BufferSpec dst_layer_spec(dst_buffer, screen_view_->buffer_size(),
+                            screen_view_->x_res(), screen_view_->y_res(),
+                            screen_view_->line_length());
   dst_layer_spec.crop_x = src_layer->displayFrame.left;
   dst_layer_spec.crop_y = src_layer->displayFrame.top;
   dst_layer_spec.crop_width =
@@ -372,13 +370,11 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
   int x_res = src_layer->displayFrame.right - src_layer->displayFrame.left;
   int y_res = src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   size_t output_frame_size =
-      x_res *
-    cvd::AlignToPowerOf2(y_res * frame_buffer_.bytes_per_pixel(), 4);
+      x_res * cvd::AlignToPowerOf2(y_res * screen_view_->bytes_per_pixel(), 4);
   while (needed_tmp_buffers > 0) {
-    BufferSpec tmp(RotateTmpBuffer(needed_tmp_buffers), output_frame_size,
-                   x_res, y_res,
-                   cvd::AlignToPowerOf2(
-                       x_res * frame_buffer_.bytes_per_pixel(), 4));
+    BufferSpec tmp(
+        RotateTmpBuffer(needed_tmp_buffers), output_frame_size, x_res, y_res,
+        cvd::AlignToPowerOf2(x_res * screen_view_->bytes_per_pixel(), 4));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
   }
@@ -399,8 +395,8 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       // Make width and height match the crop sizes on the source
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
-      int dst_stride = cvd::AlignToPowerOf2(
-          src_width * frame_buffer_.bytes_per_pixel(), 4);
+      int dst_stride =
+          cvd::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
@@ -440,7 +436,7 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
       // TODO (jemoreira): Aligment (To align here may cause the needed size to
       // be bigger than the buffer, so care should be taken)
       dst_buffer_spec.stride =
-          dst_buffer_spec.width * frame_buffer_.bytes_per_pixel();
+          dst_buffer_spec.width * screen_view_->bytes_per_pixel();
     }
     retval = DoScaling(src_layer_spec, dst_buffer_spec, needs_vflip);
     needs_vflip = false;
@@ -498,16 +494,14 @@ void VSoCComposer::CompositeLayer(vsoc_hwc_layer* src_layer,
   gralloc_module_->unlock(gralloc_module_, src_priv_handle);
 }
 
-/* static */ const int VSoCComposer::kNumTmpBufferPieces = 2;
+/* static */ const int CpuComposer::kNumTmpBufferPieces = 2;
 
-VSoCComposer::VSoCComposer(int64_t vsync_base_timestamp)
-    : BaseComposer(vsync_base_timestamp),
-      tmp_buffer_(kNumTmpBufferPieces *
-                  frame_buffer_.buffer_size()) {}
+CpuComposer::CpuComposer(int64_t vsync_base_timestamp,
+                         std::unique_ptr<ScreenView> screen_view)
+    : BaseComposer(vsync_base_timestamp, std::move(screen_view)),
+      tmp_buffer_(kNumTmpBufferPieces * screen_view_->buffer_size()) {}
 
-VSoCComposer::~VSoCComposer() {}
-
-int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+int CpuComposer::PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
   int composited_layers_count = 0;
 
   // Loop over layers in inverse order of z-index
@@ -549,9 +543,9 @@ int VSoCComposer::PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   return composited_layers_count;
 }
 
-int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+int CpuComposer::SetLayers(size_t num_layers, cvd_hwc_layer* layers) {
   int targetFbs = 0;
-  int buffer_idx = frame_buffer_.NextScreenBuffer();
+  int buffer_idx = screen_view_->NextBuffer();
 
   // The framebuffer target layer should be composed if at least one layers was
   // marked HWC_FRAMEBUFFER or if it's the only layer in the composition
@@ -591,16 +585,16 @@ int VSoCComposer::SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
   if (targetFbs != 1) {
     ALOGW("Saw %zu layers, posted=%d", num_layers, targetFbs);
   }
-  frame_buffer_.Broadcast(buffer_idx);
+  screen_view_->Broadcast(buffer_idx);
   return 0;
 }
 
-uint8_t* VSoCComposer::RotateTmpBuffer(unsigned int order) {
+uint8_t* CpuComposer::RotateTmpBuffer(unsigned int order) {
   return &tmp_buffer_[(order % kNumTmpBufferPieces) * tmp_buffer_.size() /
                       kNumTmpBufferPieces];
 }
 
-uint8_t* VSoCComposer::GetSpecialTmpBuffer(size_t needed_size) {
+uint8_t* CpuComposer::GetSpecialTmpBuffer(size_t needed_size) {
   special_tmp_buffer_.resize(needed_size);
   return &special_tmp_buffer_[0];
 }
