@@ -186,27 +186,28 @@ class StatsKeepingComposer : public BaseComposer {
   // Keep stats from the last 10 seconds.
   StatsKeepingComposer(int64_t vsync_base_timestamp,
                        std::unique_ptr<ScreenView> screen_view)
-      : composer_(vsync_base_timestamp,
-                  std::unique_ptr<ScreenView>(new WrappedScreenView(
-                      std::move(screen_view),
-                      [this](CompositionStats* stats) { FinalizeStatsAndGet(stats); }))),
+      : composer_(std::unique_ptr<ScreenView>(
+                      new WrappedScreenView(std::move(screen_view),
+                                            [this](CompositionStats* stats) {
+                                              FinalizeStatsAndGet(stats);
+                                            }))),
         stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
                       vsync_base_timestamp, 1e9 / composer_.refresh_rate()) {}
-  ~StatsKeepingComposer() = default;
+  virtual ~StatsKeepingComposer() = default;
 
-  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
+  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) override {
     stats_keeper_.RecordPrepareStart(num_layers);
     int num_hwc_layers = composer_.PrepareLayers(num_layers, layers);
     stats_keeper_.RecordPrepareEnd(num_hwc_layers);
     return num_hwc_layers;
   }
 
-  int SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
+  int SetLayers(size_t num_layers, hwc_layer_1_t* layers) override {
     stats_keeper_.RecordSetStart();
     return composer_.SetLayers(num_layers, layers);
   }
 
-  void Dump(char* buff, int buff_len) {
+  void Dump(char* buff, int buff_len) override {
     stats_keeper_.SynchronizedDump(buff, buff_len);
   }
 
