@@ -52,7 +52,7 @@ class VSoCScreenConnector : public ScreenConnector {
 //  wayland mock
 class SocketBasedScreenConnector : public ScreenConnector {
  public:
-  SocketBasedScreenConnector(vsoc::CuttlefishConfig* config) : config_(config) {
+  SocketBasedScreenConnector() {
     screen_server_thread_ = std::thread([this]() { ServerLoop(); });
   }
 
@@ -95,7 +95,6 @@ class SocketBasedScreenConnector : public ScreenConnector {
         LOG(ERROR) << "Disconnected fd returned from accept";
         continue;
       }
-      SendScreenParameters(conn);
       while (conn->IsOpen()) {
         int32_t size = 0;
         conn->Read(&size, sizeof(size));
@@ -116,22 +115,6 @@ class SocketBasedScreenConnector : public ScreenConnector {
     }
   }
 
-  void SendScreenParameters(SharedFD conn) const {
-    // TODO(b/128842613): Send this info from the configuration server
-    int32_t screen_params[4];
-    screen_params[0] = config_->x_res();
-    screen_params[1] = config_->y_res();
-    screen_params[2] = config_->dpi();
-    screen_params[3] = config_->refresh_rate_hz();
-    int buff_size = sizeof(screen_params);
-    int res = conn->Write(screen_params, buff_size);
-    if (res != buff_size) {
-          LOG(FATAL)
-              << "Unable to send full screen parameters to the hwcomposer ("
-              << res << "): " << conn->StrError();
-        }
-  }
-
   void BroadcastNewFrame(int buffer_idx) {
     {
       std::lock_guard<std::mutex> lock(new_frame_mtx_);
@@ -141,7 +124,6 @@ class SocketBasedScreenConnector : public ScreenConnector {
     new_frame_cond_var_.notify_all();
   }
 
-  vsoc::CuttlefishConfig* config_;
   std::vector<std::uint8_t> buffer_ =
       std::vector<std::uint8_t>(NUM_BUFFERS_ * ScreenSizeInBytes());
   std::uint32_t seq_num_{0};
@@ -157,7 +139,7 @@ ScreenConnector* ScreenConnector::Get() {
   if (config->enable_ivserver()) {
     return new VSoCScreenConnector();
   } else {
-    return new SocketBasedScreenConnector(config);
+    return new SocketBasedScreenConnector();
   }
 }
 
