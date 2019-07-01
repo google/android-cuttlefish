@@ -1,4 +1,9 @@
 {
+  "postsubmit" : [
+    {
+      "name": "tombstone_transmit_tests"
+    }
+  ],
   "presubmit": [
     {
       "name": "circqueue_test",
