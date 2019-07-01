@@ -31,7 +31,7 @@ cc_defaults {
 
 cc_defaults {
   name: "enabled_on_q_internal_and_later",
-  enabled: false
+  enabled: true
 }
 
 cc_defaults {

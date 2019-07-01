@@ -66,11 +66,11 @@ PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
 # DRM HAL
-PRODUCT_PACKAGES += android.hardware.drm@1.1-service.clearkey
+PRODUCT_PACKAGES += android.hardware.drm@1.2-service.clearkey
 
 # GPS HAL
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@1.1-service
+    android.hardware.gnss@2.0-service
 
 # Cell network connection
 PRODUCT_PACKAGES += \
@@ -94,3 +94,6 @@ $(call inherit-product, packages/services/Car/car_product/build/car.mk)
 
 # Placed here due to b/110784510
 PRODUCT_BRAND := generic
+
+PRODUCT_ENFORCE_RRO_TARGETS := framework-res
+PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay

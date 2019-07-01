@@ -16,6 +16,7 @@
 
 # Enable updating of APEXes
 $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
+PRODUCT_PACKAGES := com.android.apex.cts.shim.v1_prebuilt
 
 PRODUCT_SHIPPING_API_LEVEL := 29
 PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
@@ -121,6 +122,7 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
+    frameworks/av/services/audiopolicy/config/surround_sound_configuration_5_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/surround_sound_configuration_5_0.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
@@ -227,8 +229,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     audio.primary.cutf \
     audio.r_submix.default \
-    android.hardware.audio@4.0-impl:32 \
-    android.hardware.audio.effect@4.0-impl:32 \
+    android.hardware.audio@5.0-impl:32 \
+    android.hardware.audio.effect@5.0-impl:32 \
     android.hardware.audio@2.0-service \
     android.hardware.soundtrigger@2.0-impl \
 
@@ -236,7 +238,7 @@ PRODUCT_PACKAGES += \
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.1-service.clearkey
+    android.hardware.drm@1.2-service.clearkey
 
 #
 # Dumpstate HAL
@@ -264,7 +266,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@1.1-service
+    android.hardware.gnss@2.0-service
 
 # Health
 PRODUCT_PACKAGES += \
@@ -274,13 +276,20 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.health.storage@1.0-service.cuttlefish
 
+# Input Classifier HAL
+PRODUCT_PACKAGES += \
+    android.hardware.input.classifier@1.0-service.default
+
 #
 # Sensors
 #
 PRODUCT_PACKAGES += \
-    sensors.cutf \
-    android.hardware.sensors@1.0-impl \
-    android.hardware.sensors@1.0-service
+    android.hardware.sensors@2.0-service.mock
+#
+# Thermal (mock)
+#
+PRODUCT_PACKAGES += \
+    android.hardware.thermal@2.0-service.mock
 
 #
 # Lights
@@ -326,7 +335,9 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.usb@1.0-service
 
-# TODO vibrator HAL
+# Vibrator HAL
+PRODUCT_PACKAGES += \
+    android.hardware.vibrator@1.3-service.example
 
 PRODUCT_PACKAGES += \
     cuttlefish_dtb
