@@ -46,7 +46,8 @@
         <version>2.0</version>
         <interface>
             <name>IBroadcastRadio</name>
-            <instance>default</instance>
+            <instance>amfm</instance>
+            <instance>dab</instance>
         </interface>
     </hal>
 </manifest>

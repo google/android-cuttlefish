@@ -20,7 +20,7 @@
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
-        <version>4.0</version>
+        <version>5.0</version>
         <interface>
             <name>IDevicesFactory</name>
             <instance>default</instance>
@@ -29,7 +29,7 @@
     <hal format="hidl">
         <name>android.hardware.audio.effect</name>
         <transport>hwbinder</transport>
-        <version>4.0</version>
+        <version>5.0</version>
         <interface>
             <name>IEffectsFactory</name>
             <instance>default</instance>
@@ -44,6 +44,17 @@
             <instance>default</instance>
         </interface>
     </hal>
+    <!-- TODO (b/130076570):
+    <hal format="hidl">
+        <name>android.hardware.biometrics.face</name>
+        <transport>hwbinder</transport>
+        <version>1.0</version>
+        <interface>
+            <name>IBiometricsFace</name>
+            <instance>default</instance>
+        </interface>
+    </hal>
+    -->
     <!-- TODO (b/130079316):
     <hal format="hidl">
         <name>android.hardware.biometrics.fingerprint</name>
@@ -128,7 +139,7 @@
     <hal format="hidl">
         <name>android.hardware.drm</name>
         <transport>hwbinder</transport>
-        <version>1.1</version>
+        <version>1.2</version>
         <interface>
             <name>ICryptoFactory</name>
             <instance>default</instance>
@@ -144,16 +155,6 @@
         <version>1.0</version>
         <interface>
             <name>IDumpstateDevice</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <!-- FIXME: Upgrade gnss to 1.1 -->
-    <hal format="hidl">
-        <name>android.hardware.gnss</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IGnss</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -196,17 +197,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- FIXME: compatibility_matrix.current.xml is broken
-    <hal format="hidl">
-        <name>android.hardware.health.filesystem</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IFileSystem</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    -->
     <!-- TODO (b/130075874):
     <hal format="hidl">
         <name>android.hardware.ir</name>
@@ -330,15 +320,6 @@
         </interface>
     </hal>
     -->
-    <hal format="hidl">
-        <name>android.hardware.sensors</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>ISensors</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <!-- TODO (b/130078389):
     <hal format="hidl">
         <name>android.hardware.soundtrigger</name>
@@ -368,17 +349,6 @@
         <version>1.0</version>
         <interface>
             <name>IOffloadControl</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    -->
-    <!-- FIXME: AOSP thermal HAL 1.0 is broken
-    <hal format="hidl">
-        <name>android.hardware.thermal</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IThermal</name>
             <instance>default</instance>
         </interface>
     </hal>
@@ -461,7 +431,7 @@
     <hal format="hidl">
         <name>android.hardware.wifi.supplicant</name>
         <transport>hwbinder</transport>
-        <version>1.1</version>
+        <version>1.2</version>
         <interface>
             <name>ISupplicant</name>
             <instance>default</instance>
