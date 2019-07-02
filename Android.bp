@@ -60,3 +60,15 @@ cc_defaults {
         "manifest_android.hardware.health.storage@1.0.cuttlefish.xml",
     ],
 }
+
+java_test_host {
+    name: "tombstone_transmit_tests",
+
+    libs: ["tradefed"],
+
+    srcs:  ["tests/src/**/TombstoneTransmitTest.java"],
+
+    test_config: "tests/tombstone-transmit-tests.xml",
+
+    test_suites: ["general-tests"],
+}
