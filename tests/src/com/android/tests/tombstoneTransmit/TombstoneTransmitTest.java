@@ -89,6 +89,11 @@ public class TombstoneTransmitTest extends BaseHostJUnit4Test {
             hostTombstoneListPostCrash.removeAll(hostTombstoneListPreCrash);
             guestTombstoneListPostCrash.removeAll(guestTombstoneListPreCrash);
 
+            CLog.i("===========Host Tombstone Statistics===========");
+            printTombstoneListStats(hostTombstoneListPostCrash);
+            CLog.i("===========Guest Tombstone Statistics===========");
+            printTombstoneListStats(guestTombstoneListPostCrash);
+
             Assert.assertTrue("Tombstones on guest and host do not match",
                 hostTombstoneListPostCrash.containsAll(guestTombstoneListPostCrash));
             Assert.assertEquals("Host does not have expected tombstone count in this iteration",
@@ -98,7 +103,20 @@ public class TombstoneTransmitTest extends BaseHostJUnit4Test {
         }
     }
 
-    public synchronized void clearTombstonesFromCuttlefish() throws DeviceNotAvailableException {
+    public static void printTombstoneListStats(List<String> tList) {
+        CLog.i("List contains %d tombstones.", tList.size());
+
+        int averageTombstoneLength = 0;
+        for(String tombstone: tList) {
+            averageTombstoneLength += tombstone.length();
+        }
+
+        if(tList.size() != 0) {
+            CLog.i("Average tombstone size is %d.", averageTombstoneLength / tList.size());
+        }
+    }
+
+    public void clearTombstonesFromCuttlefish() throws DeviceNotAvailableException {
         if (!getDevice().isAdbRoot()) {
             throw new DeviceNotAvailableException("Device was not root, cannot collect tombstones."
                 , getDevice().getSerialNumber());
