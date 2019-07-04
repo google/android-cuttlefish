@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ifneq ($(filter vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64, $(TARGET_DEVICE)),)
+ifneq ($(filter vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64 vsoc_x86_noapex, $(TARGET_DEVICE)),)
 LOCAL_PATH:= $(call my-dir)
 include $(call first-makefiles-under,$(LOCAL_PATH))
 endif
