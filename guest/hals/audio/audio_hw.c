@@ -307,45 +307,38 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct generic_stream_out *out = (struct generic_stream_out *)stream;
     struct str_parms *parms;
     char value[32];
-    int ret = -ENOSYS;
+    int ret = -EINVAL;
     int success;
     long val;
     char *end;
+    bool new_device_req = false;
+    int new_device;
 
     if (kvpairs == NULL || kvpairs[0] == 0) {
         return 0;
     }
+    parms = str_parms_create_str(kvpairs);
+    success = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
+            value, sizeof(value));
+    if (success >= 0) {
+        errno = 0;
+        val = strtol(value, &end, 10);
+        if ((errno == 0) && (end != NULL) && (*end == '\0') && ((int)val == val)) {
+            new_device_req = true;
+            new_device = (int)val;
+            ret = 0;
+        }
+    }
+    str_parms_destroy(parms);
+    if (ret != 0) {
+        ALOGD("%s: Unsupported parameter %s", __FUNCTION__, kvpairs);
+        return ret;
+    }
+
+    // Try applying change requests
     pthread_mutex_lock(&out->lock);
-    if (out->standby) {
-        parms = str_parms_create_str(kvpairs);
-        success = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
-                                value, sizeof(value));
-        if (success >= 0) {
-            errno = 0;
-            val = strtol(value, &end, 10);
-            if (errno == 0 && (end != NULL) && (*end == '\0') && ((int)val == val)) {
-                out->device = (int)val;
-                ret = 0;
-            }
-        }
-
-        // NO op for AUDIO_PARAMETER_DEVICE_CONNECT and AUDIO_PARAMETER_DEVICE_DISCONNECT
-        success = str_parms_get_str(parms, AUDIO_PARAMETER_DEVICE_CONNECT,
-                                value, sizeof(value));
-        if (success >= 0) {
-            ret = 0;
-        }
-        success = str_parms_get_str(parms, AUDIO_PARAMETER_DEVICE_DISCONNECT,
-                                value, sizeof(value));
-        if (success >= 0) {
-            ret = 0;
-        }
-
-        if (ret != 0) {
-            ALOGD("%s Unsupported parameter %s", __FUNCTION__, kvpairs);
-        }
-
-        str_parms_destroy(parms);
+    if (new_device_req) {
+        out->device = new_device;
     }
     pthread_mutex_unlock(&out->lock);
     return ret;
@@ -844,45 +837,38 @@ static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct generic_stream_in *in = (struct generic_stream_in *)stream;
     struct str_parms *parms;
     char value[32];
-    int ret = -ENOSYS;
+    int ret = -EINVAL;
     int success;
     long val;
     char *end;
+    bool new_device_req = false;
+    int new_device;
 
     if (kvpairs == NULL || kvpairs[0] == 0) {
         return 0;
     }
+    parms = str_parms_create_str(kvpairs);
+    success = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
+            value, sizeof(value));
+    if (success >= 0) {
+        errno = 0;
+        val = strtol(value, &end, 10);
+        if ((errno == 0) && (end != NULL) && (*end == '\0') && ((int)val == val)) {
+            new_device_req = true;
+            new_device = (int)val;
+            ret = 0;
+        }
+    }
+    str_parms_destroy(parms);
+    if (ret != 0) {
+        ALOGD("%s: Unsupported parameter %s", __FUNCTION__, kvpairs);
+        return ret;
+    }
+
+    // Try applying change requests
     pthread_mutex_lock(&in->lock);
-    if (in->standby) {
-        parms = str_parms_create_str(kvpairs);
-
-        success = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
-                                value, sizeof(value));
-        if (success >= 0) {
-            errno = 0;
-            val = strtol(value, &end, 10);
-            if ((errno == 0) && (end != NULL) && (*end == '\0') && ((int)val == val)) {
-                in->device = (int)val;
-                ret = 0;
-            }
-        }
-        // NO op for AUDIO_PARAMETER_DEVICE_CONNECT and AUDIO_PARAMETER_DEVICE_DISCONNECT
-        success = str_parms_get_str(parms, AUDIO_PARAMETER_DEVICE_CONNECT,
-                                value, sizeof(value));
-        if (success >= 0) {
-            ret = 0;
-        }
-        success = str_parms_get_str(parms, AUDIO_PARAMETER_DEVICE_DISCONNECT,
-                                value, sizeof(value));
-        if (success >= 0) {
-            ret = 0;
-        }
-
-        if (ret != 0) {
-            ALOGD("%s: Unsupported parameter %s", __FUNCTION__, kvpairs);
-        }
-
-        str_parms_destroy(parms);
+    if (new_device_req) {
+        in->device = new_device;
     }
     pthread_mutex_unlock(&in->lock);
     return ret;
