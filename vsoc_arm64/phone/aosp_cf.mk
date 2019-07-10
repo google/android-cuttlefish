@@ -34,16 +34,20 @@ PRODUCT_ARTIFACT_PATH_REQUIREMENT_WHITELIST += \
 #
 # All components inherited here go to product image (same as GSI product)
 #
-$(call inherit-product, device/google/cuttlefish/shared/phone/aosp_product.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 
 #
 # All components inherited here go to vendor image
 #
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
+#
+# Special settings for the target
+#
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/vsoc_arm64/phone/overlay
 
 $(call inherit-product, device/google/cuttlefish/vsoc_arm64/device.mk)
+
 
 PRODUCT_NAME := aosp_cf_arm64_phone
 PRODUCT_DEVICE := vsoc_arm64
