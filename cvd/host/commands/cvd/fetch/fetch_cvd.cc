@@ -20,6 +20,8 @@
 
 #include <glog/logging.h>
 
+#include "common/libs/utils/subprocess.h"
+
 #include "build_api.h"
 
 namespace {
@@ -43,11 +45,11 @@ int main(int, char** argv) {
     bool has_image_zip = false;
     const std::string img_zip_name = "aosp_cf_x86_phone-img-" + build_id + ".zip";
     for (const auto& artifact : artifacts) {
-      has_host_package |= artifact.Name() == "cvd-host_package.tar.gz";
+      has_host_package |= artifact.Name() == HOST_TOOLS;
       has_image_zip |= artifact.Name() == img_zip_name;
     }
     if (!has_host_package) {
-      LOG(FATAL) << "Target build " << build_id << " did not have cvd-host_package.tar.gz";
+      LOG(FATAL) << "Target build " << build_id << " did not have " << HOST_TOOLS;
     }
     if (!has_image_zip) {
       LOG(FATAL) << "Target build " << build_id << " did not have" << img_zip_name;
@@ -56,8 +58,21 @@ int main(int, char** argv) {
     build_api.ArtifactToFile(build_id, TARGET, "latest",
                              HOST_TOOLS, HOST_TOOLS);
     build_api.ArtifactToFile(build_id, TARGET, "latest",
-                             img_zip_name,
-                             "img.zip");
+                             img_zip_name, img_zip_name);
+
+    if (cvd::execute({"/bin/tar", "xvf", HOST_TOOLS}) != 0) {
+      LOG(FATAL) << "Could not extract " << HOST_TOOLS;
+    }
+    if (cvd::execute({"/usr/bin/unzip", img_zip_name}) != 0) {
+      LOG(FATAL) << "Could not unzip " << img_zip_name;
+    }
+
+    if (unlink(HOST_TOOLS.c_str()) != 0) {
+      LOG(ERROR) << "Could not delete " << HOST_TOOLS;
+    }
+    if (unlink(img_zip_name.c_str()) != 0) {
+      LOG(ERROR) << "Could not delete " << img_zip_name;
+    }
   }
   curl_global_cleanup();
 }
