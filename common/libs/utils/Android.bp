@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
+cc_library {
     name: "libcuttlefish_utils",
     srcs: [
         "subprocess.cpp",
@@ -26,11 +26,20 @@ cc_library_shared {
     header_libs: [
         "cuttlefish_glog",
     ],
-    shared_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "cuttlefish_auto_resources",
-    ],
+    shared: {
+        shared_libs: [
+            "libbase",
+            "libcuttlefish_fs",
+            "cuttlefish_auto_resources",
+        ],
+    },
+    static: {
+        static_libs: [
+            "libbase",
+            "libcuttlefish_fs",
+            "cuttlefish_auto_resources",
+        ],
+    },
     defaults: ["cuttlefish_host_and_guest"],
 }
 

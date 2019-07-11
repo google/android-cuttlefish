@@ -25,7 +25,10 @@ cc_binary_host {
     ],
     stl: "libc++_static",
     static_libs: [
+        "cuttlefish_auto_resources",
         "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "libcurl",
         "libcrypto",
         "libssl",
