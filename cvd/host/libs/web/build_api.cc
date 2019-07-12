@@ -37,11 +37,22 @@ Artifact::Artifact(const Json::Value& json_artifact) {
   crc32 = json_artifact["crc32"].asUInt();
 }
 
+BuildApi::BuildApi(std::unique_ptr<CredentialSource> credential_source)
+    : credential_source(std::move(credential_source)) {}
+
+std::vector<std::string> BuildApi::Headers() {
+  std::vector<std::string> headers;
+  if (credential_source) {
+    headers.push_back("Authorization:Bearer " + credential_source->Credential());
+  }
+  return headers;
+}
+
 std::string BuildApi::LatestBuildId(const std::string& branch,
                                     const std::string& target) {
   std::string url = BUILD_API + "/builds?branch=" + branch
       + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
-  auto response = curl.DownloadToJson(url);
+  auto response = curl.DownloadToJson(url, Headers());
   if (response["builds"].size() != 1) {
     LOG(ERROR) << "invalid number of builds\n";
     return "";
@@ -54,7 +65,7 @@ std::vector<Artifact> BuildApi::Artifacts(const std::string& build_id,
                                           const std::string& attempt_id) {
   std::string url = BUILD_API + "/builds/" + build_id + "/" + target
       + "/attempts/" + attempt_id + "/artifacts?maxResults=1000";
-  auto artifacts_json = curl.DownloadToJson(url);
+  auto artifacts_json = curl.DownloadToJson(url, Headers());
   std::vector<Artifact> artifacts;
   for (const auto& artifact_json : artifacts_json["artifacts"]) {
     artifacts.emplace_back(artifact_json);
@@ -69,5 +80,5 @@ bool BuildApi::ArtifactToFile(const std::string& build_id,
                               const std::string& path) {
   std::string url = BUILD_API + "/builds/" + build_id + "/" + target
       + "/attempts/" + attempt_id + "/artifacts/" + artifact + "?alt=media";
-  return curl.DownloadToFile(url, path);
+  return curl.DownloadToFile(url, path, Headers());
 }

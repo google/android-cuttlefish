@@ -15,8 +15,11 @@
 
 #pragma once
 
+#include <functional>
+#include <memory>
 #include <string>
 
+#include "credential_source.h"
 #include "curl_wrapper.h"
 
 class Artifact {
@@ -43,9 +46,11 @@ public:
 
 class BuildApi {
   CurlWrapper curl;
-  // TODO credential fetcher
+  std::unique_ptr<CredentialSource> credential_source;
+
+  std::vector<std::string> Headers();
 public:
-  BuildApi() = default;
+  BuildApi(std::unique_ptr<CredentialSource> credential_source);
   ~BuildApi() = default;
 
   std::string LatestBuildId(const std::string& branch,
