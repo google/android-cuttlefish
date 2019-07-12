@@ -26,17 +26,92 @@
 #include "build_api.h"
 #include "credential_source.h"
 
-namespace {
-
-const std::string& HOST_TOOLS = "cvd-host_package.tar.gz";
-
-} // namespace
-
 // TODO(schuffelen): Mixed builds.
 DEFINE_string(build_id, "latest", "Build ID for all artifacts");
 DEFINE_string(branch, "aosp-master", "Branch when build_id=\"latest\"");
 DEFINE_string(target, "aosp_cf_x86_phone-userdebug", "Build target");
 DEFINE_string(credential_source, "", "Build API credential source");
+DEFINE_string(system_image_build_target, "", "Alternate target for the system image");
+DEFINE_string(system_image_build_id, "", "Alternate build for the system image");
+
+namespace {
+
+const std::string& HOST_TOOLS = "cvd-host_package.tar.gz";
+
+std::string target_image_zip(std::string target, const std::string& build_id) {
+  if (target.find("-userdebug") != std::string::npos) {
+    target.replace(target.find("-userdebug"), sizeof("-userdebug"), "");
+  }
+  if (target.find("-eng") != std::string::npos) {
+    target.replace(target.find("-eng"), sizeof("-eng"), "");
+  }
+  return target + "-img-" + build_id + ".zip";
+}
+
+bool download_images(BuildApi* build_api, const std::string& target,
+                     const std::string& build_id,
+                     const std::vector<std::string>& images) {
+  std::string img_zip_name = target_image_zip(target, build_id);
+  auto artifacts = build_api->Artifacts(build_id, target, "latest");
+  bool has_image_zip = false;
+  for (const auto& artifact : artifacts) {
+    has_image_zip |= artifact.Name() == img_zip_name;
+  }
+  if (!has_image_zip) {
+    LOG(ERROR) << "Target " << target << " at id " << build_id
+        << " did not have " << img_zip_name;
+    return false;
+  }
+  build_api->ArtifactToFile(build_id, target, "latest",
+                            img_zip_name, img_zip_name);
+  // -o for "overwrite"
+  std::vector<std::string> command = {"/usr/bin/unzip", "-o", img_zip_name};
+  for (const auto& image_file : images) {
+    command.push_back(image_file);
+  }
+  int result = cvd::execute(command);
+  if (result != 0) {
+    LOG(ERROR) << "Could not extract " << img_zip_name << "; ran command";
+    for (const auto& argument : command) {
+      LOG(ERROR) << argument;
+    }
+    return false;
+  }
+  if (unlink(img_zip_name.c_str()) != 0) {
+    LOG(ERROR) << "Could not delete " << img_zip_name;
+  }
+  return true;
+}
+bool download_images(BuildApi* build_api, const std::string& target,
+                     const std::string& build_id) {
+  return download_images(build_api, target, build_id, {});
+}
+
+bool download_host_package(BuildApi* build_api, const std::string& target,
+                           const std::string& build_id) {
+  auto artifacts = build_api->Artifacts(build_id, target, "latest");
+  bool has_host_package = false;
+  for (const auto& artifact : artifacts) {
+    has_host_package |= artifact.Name() == HOST_TOOLS;
+  }
+  if (!has_host_package) {
+    LOG(ERROR) << "Target " << target << " at id " << build_id
+        << " did not have " << HOST_TOOLS;
+    return false;
+  }
+  build_api->ArtifactToFile(build_id, target, "latest",
+                            HOST_TOOLS, HOST_TOOLS);
+  if (cvd::execute({"/bin/tar", "xvf", HOST_TOOLS}) != 0) {
+    LOG(FATAL) << "Could not extract " << HOST_TOOLS;
+    return false;
+  }
+  if (unlink(HOST_TOOLS.c_str()) != 0) {
+    LOG(ERROR) << "Could not delete " << HOST_TOOLS;
+  }
+  return true;
+}
+
+} // namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -54,38 +129,22 @@ int main(int argc, char** argv) {
       build_id = build_api.LatestBuildId(FLAGS_branch, FLAGS_target);
     }
 
-    auto artifacts = build_api.Artifacts(build_id, FLAGS_target, "latest");
-    bool has_host_package = false;
-    bool has_image_zip = false;
-    const std::string img_zip_name = FLAGS_target + "-img-" + build_id + ".zip";
-    for (const auto& artifact : artifacts) {
-      has_host_package |= artifact.Name() == HOST_TOOLS;
-      has_image_zip |= artifact.Name() == img_zip_name;
+    if (!download_host_package(&build_api, FLAGS_target, build_id)) {
+      LOG(FATAL) << "Could not download host package with target "
+          << FLAGS_target << " and build id " << build_id;
     }
-    if (!has_host_package) {
-      LOG(FATAL) << "Target build " << build_id << " did not have " << HOST_TOOLS;
+    if (!download_images(&build_api, FLAGS_target, build_id)) {
+      LOG(FATAL) << "Could not download images with target "
+          << FLAGS_target << " and build id " << build_id;
     }
-    if (!has_image_zip) {
-      LOG(FATAL) << "Target build " << build_id << " did not have " << img_zip_name;
-    }
-
-    build_api.ArtifactToFile(build_id, FLAGS_target, "latest",
-                             HOST_TOOLS, HOST_TOOLS);
-    build_api.ArtifactToFile(build_id, FLAGS_target, "latest",
-                             img_zip_name, img_zip_name);
-
-    if (cvd::execute({"/bin/tar", "xvf", HOST_TOOLS}) != 0) {
-      LOG(FATAL) << "Could not extract " << HOST_TOOLS;
-    }
-    if (cvd::execute({"/usr/bin/unzip", img_zip_name}) != 0) {
-      LOG(FATAL) << "Could not unzip " << img_zip_name;
-    }
-
-    if (unlink(HOST_TOOLS.c_str()) != 0) {
-      LOG(ERROR) << "Could not delete " << HOST_TOOLS;
-    }
-    if (unlink(img_zip_name.c_str()) != 0) {
-      LOG(ERROR) << "Could not delete " << img_zip_name;
+    if (FLAGS_system_image_build_id != "") {
+      std::string system_target = FLAGS_system_image_build_target == ""
+          ? FLAGS_target
+          : FLAGS_system_image_build_target;
+      if (!download_images(&build_api, system_target, FLAGS_system_image_build_id, {"system.img"})) {
+        LOG(FATAL) << "Could not download system image at target "
+            << FLAGS_target << " and build id " << FLAGS_system_image_build_id;
+      }
     }
   }
   curl_global_cleanup();
