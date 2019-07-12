@@ -32,6 +32,22 @@ size_t file_write_callback(char *ptr, size_t, size_t nmemb, void *userdata) {
   return nmemb;
 }
 
+curl_slist* build_slist(const std::vector<std::string>& strings) {
+  curl_slist* curl_headers = nullptr;
+  for (const auto& str : strings) {
+    curl_slist* temp = curl_slist_append(curl_headers, str.c_str());
+    if (temp == nullptr) {
+      LOG(ERROR) << "curl_slist_append failed to add " << str;
+      if (curl_headers) {
+        curl_slist_free_all(curl_headers);
+        return nullptr;
+      }
+    }
+    curl_headers = temp;
+  }
+  return curl_headers;
+}
+
 } // namespace
 
 CurlWrapper::CurlWrapper() {
@@ -40,7 +56,6 @@ CurlWrapper::CurlWrapper() {
     LOG(ERROR) << "failed to initialize curl";
     return;
   }
-  curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
 }
 
 CurlWrapper::~CurlWrapper() {
@@ -48,12 +63,20 @@ CurlWrapper::~CurlWrapper() {
 }
 
 bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path) {
+  return CurlWrapper::DownloadToFile(url, path, {});
+}
+
+bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path,
+                                 const std::vector<std::string>& headers) {
   LOG(INFO) << "Attempting to save \"" << url << "\" to \"" << path << "\"";
   if (!curl) {
     LOG(ERROR) << "curl was not initialized\n";
     return false;
   }
+  curl_slist* curl_headers = build_slist(headers);
   curl_easy_reset(curl);
+  curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_headers);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   FILE* file = fopen(path.c_str(), "w");
   if (!file) {
@@ -62,26 +85,40 @@ bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path
   }
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*) file);
   CURLcode res = curl_easy_perform(curl);
+  if (curl_headers) {
+    curl_slist_free_all(curl_headers);
+  }
+  fclose(file);
   if(res != CURLE_OK) {
     LOG(ERROR) << "curl_easy_perform() failed: " << curl_easy_strerror(res);
     return false;
   }
-  fclose(file);
   return true;
 }
 
 std::string CurlWrapper::DownloadToString(const std::string& url) {
+  return DownloadToString(url, {});
+}
+
+std::string CurlWrapper::DownloadToString(const std::string& url,
+                                          const std::vector<std::string>& headers) {
   LOG(INFO) << "Attempting to download \"" << url << "\"";
   if (!curl) {
     LOG(ERROR) << "curl was not initialized\n";
     return "";
   }
+  curl_slist* curl_headers = build_slist(headers);
   curl_easy_reset(curl);
+  curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_headers);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   std::stringstream data;
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, file_write_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
   CURLcode res = curl_easy_perform(curl);
+  if (curl_headers) {
+    curl_slist_free_all(curl_headers);
+  }
   if(res != CURLE_OK) {
     LOG(ERROR) << "curl_easy_perform() failed: " << curl_easy_strerror(res);
     return "";
@@ -90,7 +127,12 @@ std::string CurlWrapper::DownloadToString(const std::string& url) {
 }
 
 Json::Value CurlWrapper::DownloadToJson(const std::string& url) {
-  std::string contents = DownloadToString(url);
+  return DownloadToJson(url, {});
+}
+
+Json::Value CurlWrapper::DownloadToJson(const std::string& url,
+                                        const std::vector<std::string>& headers) {
+  std::string contents = DownloadToString(url, headers);
   Json::Reader reader;
   Json::Value json;
   if (!reader.parse(contents, json)) {
