@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "gflags/gflags.h"
 #include <glog/logging.h>
 
 #include "common/libs/utils/subprocess.h"
@@ -26,21 +27,28 @@
 
 namespace {
 
-const std::string& TARGET = "aosp_cf_x86_phone-userdebug";
 const std::string& HOST_TOOLS = "cvd-host_package.tar.gz";
 
 } // namespace
 
-int main(int, char** argv) {
+// TODO(schuffelen): Mixed builds.
+DEFINE_string(build_id, "latest", "Build ID for all artifacts");
+DEFINE_string(branch, "aosp-master", "Branch when build_id=\"latest\"");
+DEFINE_string(target, "aosp_cf_x86_phone-userdebug", "Build target");
+
+int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     BuildApi build_api;
-    std::string build_id =
-        build_api.LatestBuildId("aosp-master", TARGET);
+    std::string build_id = FLAGS_build_id;
+    if (build_id == "latest") {
+      build_id = build_api.LatestBuildId(FLAGS_branch, FLAGS_target);
+    }
 
-    auto artifacts = build_api.Artifacts(build_id, TARGET, "latest");
+    auto artifacts = build_api.Artifacts(build_id, FLAGS_target, "latest");
     bool has_host_package = false;
     bool has_image_zip = false;
     const std::string img_zip_name = "aosp_cf_x86_phone-img-" + build_id + ".zip";
@@ -55,9 +63,9 @@ int main(int, char** argv) {
       LOG(FATAL) << "Target build " << build_id << " did not have" << img_zip_name;
     }
 
-    build_api.ArtifactToFile(build_id, TARGET, "latest",
+    build_api.ArtifactToFile(build_id, FLAGS_target, "latest",
                              HOST_TOOLS, HOST_TOOLS);
-    build_api.ArtifactToFile(build_id, TARGET, "latest",
+    build_api.ArtifactToFile(build_id, FLAGS_target, "latest",
                              img_zip_name, img_zip_name);
 
     if (cvd::execute({"/bin/tar", "xvf", HOST_TOOLS}) != 0) {
