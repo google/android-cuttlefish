@@ -122,6 +122,8 @@ int main(int argc, char** argv) {
     std::unique_ptr<CredentialSource> credential_source;
     if (FLAGS_credential_source == "gce") {
       credential_source = GceMetadataCredentialSource::make();
+    } else if (FLAGS_credential_source != "") {
+      credential_source = FixedCredentialSource::make(FLAGS_credential_source);
     }
     BuildApi build_api(std::move(credential_source));
     std::string build_id = FLAGS_build_id;
