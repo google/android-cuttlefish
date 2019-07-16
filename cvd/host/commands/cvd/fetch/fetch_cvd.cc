@@ -38,6 +38,7 @@ DEFINE_string(system_image_build_id, "", "Alternate build for the system "
                                          "image");
 DEFINE_string(directory, cvd::CurrentDirectory(), "Target directory to fetch "
                                                   "files into");
+DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
 
 namespace {
 
@@ -167,4 +168,35 @@ int main(int argc, char** argv) {
     }
   }
   curl_global_cleanup();
+
+  if (!FLAGS_run_next_stage) {
+    return 0;
+  }
+
+  if (chdir(target_dir.c_str()) != 0) {
+    int error_num = errno;
+    LOG(FATAL) << "Could not change directory to \"" << target_dir << "\"."
+        << "errno was " << error_num << " \"" << strerror(error_num) << "\"";
+  }
+
+  // Ignore return code. We want to make sure there is no running instance,
+  // and stop_cvd will exit with an error code if there is already no running instance.
+  cvd::execute({"bin/stop_cvd"});
+
+  // gflags::ParseCommandLineFlags will remove fetch_cvd's flags from this.
+  // This depends the remove_flags argument (3rd) is "true".
+
+  // TODO(b/139199114): Go into assemble_cvd when the interface is stable and implemented.
+
+  std::string next_stage = "bin/launch_cvd";
+  std::vector<const char*> next_stage_argv = {"launch_cvd"};
+  LOG(INFO) << "Running " << next_stage;
+  for (int i = 1; i < argc; i++) {
+    LOG(INFO) << argv[i];
+    next_stage_argv.push_back(argv[i]);
+  }
+  next_stage_argv.push_back(nullptr);
+  execv(next_stage.c_str(), const_cast<char* const*>(next_stage_argv.data()));
+  int error = errno;
+  LOG(FATAL) << "execv returned with errno " << error << ":" << strerror(error);
 }
