@@ -32,4 +32,6 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
 // argument.
 // path must not contain ~
 std::string AbsolutePath(const std::string& path);
+
+std::string CurrentDirectory();
 }  // namespace cvd
