@@ -61,8 +61,6 @@ BOARD_CACHEIMAGE_PARTITION_SIZE := 67108864
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
 BOARD_GPU_DRIVERS := virgl
-# This prevents mesa3d from unconditionally pulling in some modules
-BOARD_USE_CUSTOMIZED_MESA := true
 
 # Enable goldfish's encoder.
 # TODO(b/113617962) Remove this if we decide to use
