@@ -88,4 +88,11 @@ bool RemoveFile(const std::string& file) {
   return remove(file.c_str()) == 0;
 }
 
+std::string CurrentDirectory() {
+  char* path = getcwd(nullptr, 0);
+  std::string ret(path);
+  free(path);
+  return ret;
+}
+
 }  // namespace cvd
