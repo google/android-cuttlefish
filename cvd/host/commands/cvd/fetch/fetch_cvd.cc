@@ -28,10 +28,11 @@
 #include "credential_source.h"
 #include "install_zip.h"
 
-// TODO(schuffelen): Mixed builds.
-DEFINE_string(build_id, "latest", "Build ID for all artifacts");
-DEFINE_string(branch, "aosp-master", "Branch when build_id=\"latest\"");
-DEFINE_string(target, "aosp_cf_x86_phone-userdebug", "Build target");
+DEFINE_string(default_build, "aosp-master/aosp_cf_x86_phone-userdebug",
+              "source for the cuttlefish build to use (vendor.img + host)");
+DEFINE_string(system_build, "", "source for system.img and product.img");
+DEFINE_string(kernel_build, "", "source for the kernel or gki target");
+
 DEFINE_string(credential_source, "", "Build API credential source");
 DEFINE_string(system_image_build_target, "", "Alternate target for the system "
                                              "image");
@@ -45,34 +46,33 @@ namespace {
 
 const std::string& HOST_TOOLS = "cvd-host_package.tar.gz";
 
-std::string target_image_zip(std::string target, const std::string& build_id) {
+std::string target_image_zip(const DeviceBuild& build) {
+  std::string target = build.target;
   if (target.find("-userdebug") != std::string::npos) {
     target.replace(target.find("-userdebug"), sizeof("-userdebug"), "");
   }
   if (target.find("-eng") != std::string::npos) {
     target.replace(target.find("-eng"), sizeof("-eng"), "");
   }
-  return target + "-img-" + build_id + ".zip";
+  return target + "-img-" + build.id + ".zip";
 }
 
-bool download_images(BuildApi* build_api, const std::string& target,
-                     const std::string& build_id,
+bool download_images(BuildApi* build_api, const DeviceBuild& build,
                      const std::string& target_directory,
                      const std::vector<std::string>& images) {
-  std::string img_zip_name = target_image_zip(target, build_id);
-  auto artifacts = build_api->Artifacts(build_id, target, "latest");
+  std::string img_zip_name = target_image_zip(build);
+  auto artifacts = build_api->Artifacts(build);
   bool has_image_zip = false;
   for (const auto& artifact : artifacts) {
     has_image_zip |= artifact.Name() == img_zip_name;
   }
   if (!has_image_zip) {
-    LOG(ERROR) << "Target " << target << " at id " << build_id
+    LOG(ERROR) << "Target " << build.target << " at id " << build.id
         << " did not have " << img_zip_name;
     return false;
   }
   std::string local_path = target_directory + "/" + img_zip_name;
-  build_api->ArtifactToFile(build_id, target, "latest",
-                            img_zip_name, local_path);
+  build_api->ArtifactToFile(build, img_zip_name, local_path);
 
   auto could_extract = ExtractImages(local_path, target_directory, images);
   if (!could_extract) {
@@ -84,27 +84,25 @@ bool download_images(BuildApi* build_api, const std::string& target,
   }
   return true;
 }
-bool download_images(BuildApi* build_api, const std::string& target,
-                     const std::string& build_id,
+bool download_images(BuildApi* build_api, const DeviceBuild& build,
                      const std::string& target_directory) {
-  return download_images(build_api, target, build_id, target_directory, {});
+  return download_images(build_api, build, target_directory, {});
 }
 
-bool download_host_package(BuildApi* build_api, const std::string& target,
-                           const std::string& build_id,
+bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
                            const std::string& target_directory) {
-  auto artifacts = build_api->Artifacts(build_id, target, "latest");
+  auto artifacts = build_api->Artifacts(build);
   bool has_host_package = false;
   for (const auto& artifact : artifacts) {
     has_host_package |= artifact.Name() == HOST_TOOLS;
   }
   if (!has_host_package) {
-    LOG(ERROR) << "Target " << target << " at id " << build_id
+    LOG(ERROR) << "Target " << build.target << " at id " << build.id
         << " did not have " << HOST_TOOLS;
     return false;
   }
   std::string local_path = target_directory + "/" + HOST_TOOLS;
-  build_api->ArtifactToFile(build_id, target, "latest", HOST_TOOLS, local_path);
+  build_api->ArtifactToFile(build, HOST_TOOLS, local_path);
   if (cvd::execute({"/bin/tar", "xvf", local_path, "-C", target_directory}) != 0) {
     LOG(FATAL) << "Could not extract " << local_path;
     return false;
@@ -124,10 +122,20 @@ bool desparse(const std::string& file) {
   return true;
 }
 
+std::string USAGE_MESSAGE =
+    "<flags>\n"
+    "\n"
+    "\"*_build\" flags accept values in the following format:\n"
+    "\"branch/build_target\" - latest build of \"branch\" for \"build_target\"\n"
+    "\"build_id/build_target\" - build \"build_id\" for \"build_target\"\n"
+    "\"branch\" - latest build of \"branch\" for \"aosp_cf_x86_phone-userdebug\"\n"
+    "\"build_id\" - build \"build_id\" for \"aosp_cf_x86_phone-userdebug\"\n";
+
 } // namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
+  gflags::SetUsageMessage(USAGE_MESSAGE);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   std::string target_dir = cvd::AbsolutePath(FLAGS_directory);
@@ -144,30 +152,34 @@ int main(int argc, char** argv) {
       credential_source = FixedCredentialSource::make(FLAGS_credential_source);
     }
     BuildApi build_api(std::move(credential_source));
-    std::string build_id = FLAGS_build_id;
-    if (build_id == "latest") {
-      build_id = build_api.LatestBuildId(FLAGS_branch, FLAGS_target);
+
+    DeviceBuild default_build = ArgumentToBuild(&build_api, FLAGS_default_build);
+
+    if (!download_host_package(&build_api, default_build, target_dir)) {
+      LOG(FATAL) << "Could not download host package with target "
+          << default_build.target << " and build id " << default_build.id;
+    }
+    if (!download_images(&build_api, default_build, target_dir)) {
+      LOG(FATAL) << "Could not download images with target "
+          << default_build.target << " and build id " << default_build.id;
     }
 
-    if (!download_host_package(&build_api, FLAGS_target, build_id,
-                               target_dir)) {
-      LOG(FATAL) << "Could not download host package with target "
-          << FLAGS_target << " and build id " << build_id;
-    }
-    if (!download_images(&build_api, FLAGS_target, build_id, target_dir)) {
-      LOG(FATAL) << "Could not download images with target "
-          << FLAGS_target << " and build id " << build_id;
-    }
     desparse(target_dir + "/userdata.img");
-    if (FLAGS_system_image_build_id != "") {
-      std::string system_target = FLAGS_system_image_build_target == ""
-          ? FLAGS_target
-          : FLAGS_system_image_build_target;
-      if (!download_images(&build_api, system_target, FLAGS_system_image_build_id,
-                           target_dir, {"system.img"})) {
+
+    if (FLAGS_system_build != "") {
+      DeviceBuild system_build = ArgumentToBuild(&build_api, FLAGS_system_build);
+
+      if (!download_images(&build_api, system_build, target_dir,
+                           {"system.img"})) {
         LOG(FATAL) << "Could not download system image at target "
-            << FLAGS_target << " and build id " << FLAGS_system_image_build_id;
+            << system_build.target << " and build id " << system_build.id;
       }
+    }
+
+    if (FLAGS_kernel_build != "") {
+      DeviceBuild kernel_build = ArgumentToBuild(&build_api, FLAGS_kernel_build);
+
+      build_api.ArtifactToFile(kernel_build, "bzImage", target_dir + "/kernel");
     }
   }
   curl_global_cleanup();

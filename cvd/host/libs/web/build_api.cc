@@ -54,17 +54,15 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
       + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
   auto response = curl.DownloadToJson(url, Headers());
   if (response["builds"].size() != 1) {
-    LOG(ERROR) << "invalid number of builds\n";
+    LOG(WARNING) << "invalid number of builds\n";
     return "";
   }
   return response["builds"][0]["buildId"].asString();
 }
 
-std::vector<Artifact> BuildApi::Artifacts(const std::string& build_id,
-                                          const std::string& target,
-                                          const std::string& attempt_id) {
-  std::string url = BUILD_API + "/builds/" + build_id + "/" + target
-      + "/attempts/" + attempt_id + "/artifacts?maxResults=1000";
+std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
+      + "/attempts/latest/artifacts?maxResults=1000";
   auto artifacts_json = curl.DownloadToJson(url, Headers());
   std::vector<Artifact> artifacts;
   for (const auto& artifact_json : artifacts_json["artifacts"]) {
@@ -73,12 +71,38 @@ std::vector<Artifact> BuildApi::Artifacts(const std::string& build_id,
   return artifacts;
 }
 
-bool BuildApi::ArtifactToFile(const std::string& build_id,
-                              const std::string& target,
-                              const std::string& attempt_id,
+bool BuildApi::ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path) {
-  std::string url = BUILD_API + "/builds/" + build_id + "/" + target
-      + "/attempts/" + attempt_id + "/artifacts/" + artifact + "?alt=media";
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
+      + "/attempts/latest/artifacts/" + artifact + "?alt=media";
   return curl.DownloadToFile(url, path, Headers());
+}
+
+DeviceBuild ArgumentToBuild(BuildApi* build_api, const std::string& arg) {
+  size_t slash_pos = arg.find('/');
+  if (slash_pos != std::string::npos
+        && arg.find('/', slash_pos + 1) != std::string::npos) {
+    LOG(FATAL) << "Build argument cannot have more than one '/' slash. Was at "
+        << slash_pos << " and " << arg.find('/', slash_pos + 1);
+  }
+  std::string build_target = slash_pos == std::string::npos
+      ? "aosp_cf_x86_phone-userdebug" : arg.substr(slash_pos + 1);
+  std::string branch_or_id = slash_pos == std::string::npos
+      ? arg: arg.substr(0, slash_pos);
+  std::string branch_latest_build_id =
+      build_api->LatestBuildId(branch_or_id, build_target);
+  if (branch_latest_build_id != "") {
+    LOG(INFO) << "The latest good build on branch \"" << branch_or_id
+        << "\"with build target \"" << build_target
+        << "is \"" << branch_latest_build_id << "\"";
+    return DeviceBuild(branch_latest_build_id, build_target);
+  } else {
+    DeviceBuild proposed_build = DeviceBuild(branch_or_id, build_target);
+    if (build_api->Artifacts(proposed_build).size() == 0) {
+      LOG(FATAL) << '"' << branch_or_id << "\" with build target \""
+          << build_target << "\" is not a valid branch or build id.";
+    }
+    return proposed_build;
+  }
 }
