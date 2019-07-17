@@ -26,6 +26,7 @@
 
 #include "build_api.h"
 #include "credential_source.h"
+#include "install_zip.h"
 
 // TODO(schuffelen): Mixed builds.
 DEFINE_string(build_id, "latest", "Build ID for all artifacts");
@@ -72,18 +73,10 @@ bool download_images(BuildApi* build_api, const std::string& target,
   std::string local_path = target_directory + "/" + img_zip_name;
   build_api->ArtifactToFile(build_id, target, "latest",
                             img_zip_name, local_path);
-  // -o for "overwrite"
-  std::vector<std::string> command = {"/usr/bin/unzip", "-o", local_path,
-                                      "-d", target_directory};
-  for (const auto& image_file : images) {
-    command.push_back(image_file);
-  }
-  int result = cvd::execute(command);
-  if (result != 0) {
-    LOG(ERROR) << "Could not extract " << local_path << "; ran command";
-    for (const auto& argument : command) {
-      LOG(ERROR) << argument;
-    }
+
+  auto could_extract = ExtractImages(local_path, target_directory, images);
+  if (!could_extract) {
+    LOG(ERROR) << "Could not extract " << local_path;
     return false;
   }
   if (unlink(local_path.c_str()) != 0) {
@@ -122,6 +115,15 @@ bool download_host_package(BuildApi* build_api, const std::string& target,
   return true;
 }
 
+bool desparse(const std::string& file) {
+  LOG(INFO) << "Unsparsing " << file;
+  if (cvd::execute({"/bin/dd", "if=" + file, "of=" + file, "conv=notrunc"}) != 0) {
+    LOG(ERROR) << "Could not unsparse " << file;
+    return false;
+  }
+  return true;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -156,6 +158,7 @@ int main(int argc, char** argv) {
       LOG(FATAL) << "Could not download images with target "
           << FLAGS_target << " and build id " << build_id;
     }
+    desparse(target_dir + "/userdata.img");
     if (FLAGS_system_image_build_id != "") {
       std::string system_target = FLAGS_system_image_build_target == ""
           ? FLAGS_target
