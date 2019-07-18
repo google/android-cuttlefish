@@ -377,7 +377,7 @@ static char * out_get_parameters(const struct audio_stream *stream, const char *
     }
 
     if (get) {
-        str = strdup(str_parms_to_str(reply));
+        str = str_parms_to_str(reply);
     }
     else {
         ALOGD("%s Unsupported paramter: %s", __FUNCTION__, keys);
@@ -906,7 +906,7 @@ static char * in_get_parameters(const struct audio_stream *stream,
     }
 
     if (get) {
-        str = strdup(str_parms_to_str(reply));
+        str = str_parms_to_str(reply);
     }
     else {
         ALOGD("%s Unsupported paramter: %s", __FUNCTION__, keys);
