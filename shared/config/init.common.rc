@@ -87,7 +87,7 @@ on property:sys.boot_completed=1
 # persist.sys.zram_enabled becomes true after boot,
 # we don't want to run swapon_all at that time.
 on sys-boot-completed-set && property:persist.sys.zram_enabled=1
-    swapon_all /vendor/etc/fstab.${ro.hardware}
+    swapon_all /vendor/etc/${ro.boot.fstab_name}.${ro.hardware}
 
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -tcp_port=5555 -vsock_port=6520
