@@ -28,4 +28,3 @@ PRODUCT_PROPERTY_OVERRIDES += \
     pm.dexopt.shared=quicken \
     dalvik.vm.heapgrowthlimit=128m \
     dalvik.vm.heapsize=256m \
-    persist.sys.zram_enabled=1
