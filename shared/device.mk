@@ -30,7 +30,7 @@ PRODUCT_PRODUCT_PROPERTIES := \
     persist.adb.tcp.port=5555 \
     persist.traced.enable=1 \
     ro.com.google.locationfeatures=1 \
- 
+
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 3.0
@@ -44,6 +44,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.logd.size=1M \
     ro.opengles.version=196608 \
     wifi.interface=wlan0 \
+    persist.sys.zram_enabled=1 \
 
 # Below is a list of properties we probably should get rid of.
 PRODUCT_PROPERTY_OVERRIDES += \
