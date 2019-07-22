@@ -1,4 +1,3 @@
-//
 // Copyright (C) 2017 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,9 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "gps",
-    "health",
-    "hwcomposer",
-    "power",
-]
+// HAL module implementation stored in
+// hw/<POWERS_HARDWARE_MODULE_ID>.<ro.hardware>.so
+cc_library_shared {
+    name: "power.cutf",
+    srcs: ["power.c"],
+    relative_install_path: "hw",
+    header_libs: [
+        "libhardware_headers",
+        "libutils_headers",
+    ],
+    shared_libs: [
+        "liblog",
+        "libcutils",
+    ],
+    defaults: ["cuttlefish_guest_only"],
+}
