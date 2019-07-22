@@ -20,8 +20,6 @@
 DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
 DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/auto/manifest.xml
 
-TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
-
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base_telephony.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
@@ -100,3 +98,11 @@ PRODUCT_BRAND := generic
 
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
 PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
+
+TARGET_USE_DYNAMIC_PARTITIONS ?= true
+ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
+  PRODUCT_USE_DYNAMIC_PARTITIONS := true
+  TARGET_BUILD_SYSTEM_ROOT_IMAGE := false
+else
+  TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
+endif
