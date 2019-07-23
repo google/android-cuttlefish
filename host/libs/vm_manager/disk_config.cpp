@@ -63,6 +63,10 @@ std::vector<ImagePartition> disk_config(const vsoc::CuttlefishConfig& config) {
       .image_file_path = config.vendor_image_path(),
     });
   }
+  partitions.push_back(ImagePartition {
+    .label = "boot",
+    .image_file_path = config.boot_image_path(),
+  });
   return partitions;
 }
 
