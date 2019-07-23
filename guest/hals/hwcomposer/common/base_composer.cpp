@@ -26,11 +26,8 @@
 
 namespace cvd {
 
-BaseComposer::BaseComposer(int64_t vsync_base_timestamp,
-                           std::unique_ptr<ScreenView> screen_view)
-    : screen_view_(std::move(screen_view)),
-      vsync_base_timestamp_(vsync_base_timestamp),
-      vsync_period_ns_(1e9 / screen_view_->refresh_rate()) {
+BaseComposer::BaseComposer(std::unique_ptr<ScreenView> screen_view)
+    : screen_view_(std::move(screen_view)) {
   hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                 reinterpret_cast<const hw_module_t**>(&gralloc_module_));
 }
