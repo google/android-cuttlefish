@@ -17,8 +17,6 @@ cc_library_host_static {
     name: "libcuttlefish_vm_manager",
     srcs: [
         "crosvm_manager.cpp",
-        "disk_config.cpp",
-        "image_aggregator.cpp",
         "qemu_manager.cpp",
         "vm_manager.cpp",
     ],
@@ -43,11 +41,5 @@ cc_library_host_static {
 cc_prebuilt_binary {
     name: "cf_qemu.sh",
     srcs: ["cf_qemu.sh"],
-    defaults: ["cuttlefish_host_only"],
-}
-
-cc_prebuilt_binary {
-    name: "cf_bpttool",
-    srcs: ["cf_bpttool"],
     defaults: ["cuttlefish_host_only"],
 }

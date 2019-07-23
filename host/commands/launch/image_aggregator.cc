@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/libs/vm_manager/image_aggregator.h"
+#include "host/commands/launch/image_aggregator.h"
 
 #include <string>
 #include <vector>
@@ -26,8 +26,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
-
-namespace vm_manager {
 
 namespace {
 
@@ -118,5 +116,3 @@ void aggregate_image(const std::vector<ImagePartition>& partitions,
   auto table_fd = bpttool_make_table(input_json_fd);
   bpttool_make_disk_image(partitions, table_fd, output_path);
 };
-
-} // namespace vm_manager
