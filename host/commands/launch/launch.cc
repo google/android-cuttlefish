@@ -30,11 +30,11 @@ std::string GetHostPortArg() {
 }
 
 std::string GetAdbConnectorTcpArg() {
-  return std::string{"--addresses=127.0.0.1:"} + std::to_string(GetHostPort());
+  return std::string{"127.0.0.1:"} + std::to_string(GetHostPort());
 }
 
 std::string GetAdbConnectorVsockArg(const vsoc::CuttlefishConfig& config) {
-  return std::string{"--addresses=vsock:"}
+  return std::string{"vsock:"}
       + std::to_string(config.vsock_guest_cid())
       + std::string{":5555"};
 }
@@ -311,20 +311,24 @@ void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config,
                                  cvd::SharedFD adbd_events_pipe) {
-  bool launch = false;
   cvd::Command adb_connector(config.adb_connector_binary());
   adb_connector.AddParameter("-adbd_events_fd=", adbd_events_pipe);
+  std::set<std::string> addresses;
 
   if (AdbTcpConnectorEnabled(config)) {
-    launch = true;
-    adb_connector.AddParameter(GetAdbConnectorTcpArg());
+    addresses.insert(GetAdbConnectorTcpArg());
   }
   if (AdbVsockConnectorEnabled(config)) {
-    launch = true;
-    adb_connector.AddParameter(GetAdbConnectorVsockArg(config));
+    addresses.insert(GetAdbConnectorVsockArg(config));
   }
 
-  if (launch) {
+  if (addresses.size() > 0) {
+    std::string address_arg = "--addresses=";
+    for (auto& arg : addresses) {
+      address_arg += arg + ",";
+    }
+    address_arg.pop_back();
+    adb_connector.AddParameter(address_arg);
     process_monitor->StartSubprocess(std::move(adb_connector),
                                      GetOnSubprocessExitCallback(config));
   }
