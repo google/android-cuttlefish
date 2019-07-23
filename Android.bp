@@ -68,7 +68,7 @@ cc_defaults {
             enabled: false,
         },
     },
-    cflags: ["-Werror", "-Wall"],
+    cflags: ["-Werror", "-Wall", "-D_FILE_OFFSET_BITS=64"],
     vendor: true,
 }
 
