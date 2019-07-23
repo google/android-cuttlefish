@@ -37,6 +37,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/disk_config.h"
 
 namespace vm_manager {
 
@@ -82,6 +83,10 @@ QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
 cvd::Command QemuManager::StartCommand(bool /*with_frontend*/){
+  if (should_create_composite_disk(*config_)) {
+      create_composite_disk(*config_);
+    }
+
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", config_->qemu_binary());
   LogAndSetEnv("instance_name", config_->instance_name());
@@ -101,6 +106,7 @@ cvd::Command QemuManager::StartCommand(bool /*with_frontend*/){
   LogAndSetEnv("metadata_image_path", config_->metadata_image_path());
   LogAndSetEnv("product_image_path", config_->product_image_path());
   LogAndSetEnv("super_image_path", config_->super_image_path());
+  LogAndSetEnv("composite_disk_path", config_->composite_disk_path());
   LogAndSetEnv("wifi_tap_name", config_->wifi_tap_name());
   LogAndSetEnv("mobile_tap_name", config_->mobile_tap_name());
   LogAndSetEnv("kernel_log_socket_name",
