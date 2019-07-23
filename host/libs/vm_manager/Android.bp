@@ -43,3 +43,9 @@ cc_prebuilt_binary {
     srcs: ["cf_qemu.sh"],
     defaults: ["cuttlefish_host_only"],
 }
+
+cc_prebuilt_binary {
+    name: "cf_bpttool",
+    srcs: ["cf_bpttool"],
+    defaults: ["cuttlefish_host_only"],
+}
