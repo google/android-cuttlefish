@@ -82,10 +82,10 @@ void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
-cvd::Command QemuManager::StartCommand(bool /*with_frontend*/){
+std::vector<cvd::Command> QemuManager::StartCommands(bool /*with_frontend*/) {
   if (should_create_composite_disk(*config_)) {
-      create_composite_disk(*config_);
-    }
+    create_composite_disk(*config_);
+  }
 
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", config_->qemu_binary());
@@ -122,8 +122,11 @@ cvd::Command QemuManager::StartCommand(bool /*with_frontend*/){
   LogAndSetEnv("logcat_mode", config_->logcat_mode());
 
   cvd::Command qemu_cmd(vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh"));
-  return qemu_cmd;
+  std::vector<cvd::Command> ret;
+  ret.push_back(std::move(qemu_cmd));
+  return ret;
 }
+
 bool QemuManager::Stop() {
   auto monitor_path = GetMonitorPath(config_);
   auto monitor_sock = cvd::SharedFD::SocketLocalClient(
