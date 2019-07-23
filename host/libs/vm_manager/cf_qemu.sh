@@ -100,42 +100,20 @@ args=(
     -device "virtio-serial-pci,id=virtio-serial0"
 )
 
-if [[ -n "${composite_disk_path}" ]]; then
-  args+=(
-    -drive "file=${composite_disk_path:-${HOME}/composite.img},format=raw,if=none,id=drive-virtio-disk0,aio=threads"
-    -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk0,id=virtio-disk0,bootindex=1"
-  )
-else
-  if [[ -n "${super_image_path}" ]]; then
-    args+=(
-      -drive "file=${super_image_path:-${HOME}/obj/PACKAGING/super.img_intermediates/super.img},format=raw,if=none,id=drive-virtio-disk0,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk0,id=virtio-disk0"
-    )
+IFS=';' read -ra virtual_disk_array <<< "$virtual_disk_paths"
+virtual_disk_index=0
+for virtual_disk in "${virtual_disk_array[@]}"; do
+  if [[ $virtual_disk_index == 0 ]]; then
+    bootindex=",bootindex=1"
   else
-    args+=(
-      -drive "file=${system_image_path:-${HOME}/system.img},format=raw,if=none,id=drive-virtio-disk0,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk0,id=virtio-disk0,bootindex=1"
-    )
+    bootindex=""
   fi
-
   args+=(
-      -drive "file=${data_image_path:-${HOME}/userdata.img},format=raw,if=none,id=drive-virtio-disk1,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk1,id=virtio-disk1"
-      -drive "file=${cache_image_path:-${HOME}/cache.img},format=raw,if=none,id=drive-virtio-disk2,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk2,id=virtio-disk2"
-      -drive "file=${metadata_image_path:-${HOME}/metadata.img},format=raw,if=none,id=drive-virtio-disk3,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk3,id=virtio-disk3"
+    -drive "file=${virtual_disk},format=raw,if=none,id=drive-virtio-disk${virtual_disk_index},aio=threads"
+    -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk${virtual_disk_index},id=virtio-disk${virtual_disk_index}${bootindex}"
   )
-
-  if [[ -z "${super_image_path}" ]]; then
-    args+=(
-      -drive "file=${vendor_image_path:-${HOME}/vendor.img},format=raw,if=none,id=drive-virtio-disk4,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk4,id=virtio-disk4"
-      -drive "file=${product_image_path:-${HOME}/product.img},format=raw,if=none,id=drive-virtio-disk5,aio=threads"
-      -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk5,id=virtio-disk5"
-    )
-  fi
-fi
+  virtual_disk_index=$((virtual_disk_index + 1))
+done
 
 args+=(
     -netdev "tap,id=hostnet0,ifname=${wifi_tap_name:-${default_wifi_tap_name}},script=no,downscript=no"

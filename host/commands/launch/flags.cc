@@ -11,6 +11,7 @@
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "host/commands/launch/boot_image_unpacker.h"
 #include "host/commands/launch/data_image.h"
+#include "host/commands/launch/image_aggregator.h"
 #include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -420,27 +421,34 @@ bool InitializeCuttlefishConfiguration(
   }
 
   if (FLAGS_super_image.empty()) {
-    tmp_config_obj.set_system_image_path(FLAGS_system_image);
-    tmp_config_obj.set_vendor_image_path(FLAGS_vendor_image);
-    tmp_config_obj.set_product_image_path(FLAGS_product_image);
-    tmp_config_obj.set_super_image_path("");
     tmp_config_obj.set_dtb_path(FLAGS_dtb);
     tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
   } else {
-    tmp_config_obj.set_system_image_path("");
-    tmp_config_obj.set_vendor_image_path("");
-    tmp_config_obj.set_product_image_path("");
-    tmp_config_obj.set_super_image_path(FLAGS_super_image);
     tmp_config_obj.set_dtb_path("");
     tmp_config_obj.set_gsi_fstab_path("");
   }
 
+  if (!FLAGS_composite_disk.empty()) {
+    tmp_config_obj.set_virtual_disk_paths({FLAGS_composite_disk});
+  } else if(!FLAGS_super_image.empty()) {
+    tmp_config_obj.set_virtual_disk_paths({
+      FLAGS_super_image,
+      FLAGS_data_image,
+      FLAGS_cache_image,
+      FLAGS_metadata_image,
+    });
+  } else {
+    tmp_config_obj.set_virtual_disk_paths({
+      FLAGS_system_image,
+      FLAGS_data_image,
+      FLAGS_cache_image,
+      FLAGS_metadata_image,
+      FLAGS_vendor_image,
+      FLAGS_product_image,
+    });
+  }
+
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
-  tmp_config_obj.set_cache_image_path(FLAGS_cache_image);
-  tmp_config_obj.set_data_image_path(FLAGS_data_image);
-  tmp_config_obj.set_metadata_image_path(FLAGS_metadata_image);
-  tmp_config_obj.set_boot_image_path(FLAGS_boot_image);
-  tmp_config_obj.set_composite_disk_path(FLAGS_composite_disk);
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
   tmp_config_obj.set_ivshmem_qemu_socket_path(
@@ -683,6 +691,75 @@ bool DecompressKernel(const std::string& src, const std::string& dst) {
 }
 } // namespace
 
+namespace {
+
+std::vector<ImagePartition> disk_config() {
+  std::vector<ImagePartition> partitions;
+  if (FLAGS_super_image.empty()) {
+    partitions.push_back(ImagePartition {
+      .label = "system",
+      .image_file_path = FLAGS_system_image,
+    });
+  } else {
+    partitions.push_back(ImagePartition {
+      .label = "super",
+      .image_file_path = FLAGS_super_image,
+    });
+  }
+  partitions.push_back(ImagePartition {
+    .label = "userdata",
+    .image_file_path = FLAGS_data_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "cache",
+    .image_file_path = FLAGS_cache_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "metadata",
+    .image_file_path = FLAGS_metadata_image,
+  });
+  if (FLAGS_super_image.empty()) {
+    partitions.push_back(ImagePartition {
+      .label = "product",
+      .image_file_path = FLAGS_product_image,
+    });
+    partitions.push_back(ImagePartition {
+      .label = "vendor",
+      .image_file_path = FLAGS_vendor_image,
+    });
+  }
+  partitions.push_back(ImagePartition {
+    .label = "boot",
+    .image_file_path = FLAGS_boot_image,
+  });
+  return partitions;
+}
+
+bool ShouldCreateCompositeDisk() {
+  if (FLAGS_composite_disk.empty()) {
+    return false;
+  }
+  auto composite_age = cvd::FileModificationTime(FLAGS_composite_disk);
+  for (auto& partition : disk_config()) {
+    auto partition_age = cvd::FileModificationTime(partition.image_file_path);
+    if (partition_age >= composite_age) {
+      LOG(INFO) << "composite disk age was \"" << std::chrono::system_clock::to_time_t(composite_age) << "\", "
+                << "partition age was \"" << std::chrono::system_clock::to_time_t(partition_age) << "\"";
+      return true;
+    }
+  }
+  return false;
+}
+
+void CreateCompositeDisk() {
+  if (FLAGS_composite_disk.empty()) {
+    LOG(FATAL) << "asked to create composite disk, but path was empty";
+  }
+  aggregate_image(disk_config(), FLAGS_composite_disk);
+}
+
+} // namespace
+
 vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   if (!ParseCommandLineFlags(argc, argv)) {
     LOG(ERROR) << "Failed to parse command arguments";
@@ -742,7 +819,7 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   ValidateAdbModeFlag(*config);
 
   // Create data if necessary
-  if (!ApplyDataImagePolicy(*config)) {
+  if (!ApplyDataImagePolicy(*config, FLAGS_data_image)) {
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
@@ -750,12 +827,12 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
   }
 
+  if (ShouldCreateCompositeDisk()) {
+    CreateCompositeDisk();
+  }
+
   // Check that the files exist
-  for (const auto& file :
-       {config->system_image_path(), config->cache_image_path(),
-        config->data_image_path(), config->vendor_image_path(),
-        config->metadata_image_path(),  config->product_image_path(),
-        config->super_image_path(), config->boot_image_path()}) {
+  for (const auto& file : config->virtual_disk_paths()) {
     if (!file.empty() && !cvd::FileHasContent(file.c_str())) {
       LOG(ERROR) << "File not found: " << file;
       exit(cvd::kCuttlefishConfigurationInitError);

@@ -24,6 +24,7 @@ cc_binary_host {
         "launch.cc",
         "data_image.cc",
         "flags.cc",
+        "image_aggregator.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -46,4 +47,10 @@ cc_binary_host {
         "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
+}
+
+cc_prebuilt_binary {
+    name: "cf_bpttool",
+    srcs: ["cf_bpttool"],
+    defaults: ["cuttlefish_host_only"],
 }
