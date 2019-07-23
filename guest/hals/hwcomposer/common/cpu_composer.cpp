@@ -496,9 +496,8 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
 
 /* static */ const int CpuComposer::kNumTmpBufferPieces = 2;
 
-CpuComposer::CpuComposer(int64_t vsync_base_timestamp,
-                         std::unique_ptr<ScreenView> screen_view)
-    : BaseComposer(vsync_base_timestamp, std::move(screen_view)),
+CpuComposer::CpuComposer(std::unique_ptr<ScreenView> screen_view)
+    : BaseComposer(std::move(screen_view)),
       tmp_buffer_(kNumTmpBufferPieces * screen_view_->buffer_size()) {}
 
 int CpuComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
