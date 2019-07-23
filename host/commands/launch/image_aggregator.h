@@ -16,11 +16,13 @@
 
 #pragma once
 
-#include <host/libs/config/cuttlefish_config.h>
+#include <string>
+#include <vector>
 
-namespace vm_manager {
+struct ImagePartition {
+  std::string label;
+  std::string image_file_path;
+};
 
-bool should_create_composite_disk(const vsoc::CuttlefishConfig& config);
-void create_composite_disk(const vsoc::CuttlefishConfig& config);
-
-} // namespace vm_manager
+void aggregate_image(const std::vector<ImagePartition>& partitions,
+                     const std::string& output_path);

@@ -24,7 +24,6 @@
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/disk_config.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace vm_manager {
@@ -96,24 +95,8 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
   crosvm_cmd.AddParameter("--mem=", config_->memory_mb());
   crosvm_cmd.AddParameter("--cpus=", config_->cpus());
   crosvm_cmd.AddParameter("--params=", config_->kernel_cmdline_as_string());
-  if (config_->composite_disk_path().empty()) {
-    if (config_->super_image_path().empty()) {
-      crosvm_cmd.AddParameter("--rwdisk=", config_->system_image_path());
-    } else {
-      crosvm_cmd.AddParameter("--rwdisk=", config_->super_image_path());
-    }
-    crosvm_cmd.AddParameter("--rwdisk=", config_->data_image_path());
-    crosvm_cmd.AddParameter("--rwdisk=", config_->cache_image_path());
-    crosvm_cmd.AddParameter("--rwdisk=", config_->metadata_image_path());
-    if (config_->super_image_path().empty()) {
-      crosvm_cmd.AddParameter("--rwdisk=", config_->vendor_image_path());
-      crosvm_cmd.AddParameter("--rwdisk=", config_->product_image_path());
-    }
-  } else {
-    if (should_create_composite_disk(*config_)) {
-      create_composite_disk(*config_);
-    }
-    crosvm_cmd.AddParameter("--rwdisk=", config_->composite_disk_path());
+  for (const auto& disk : config_->virtual_disk_paths()) {
+    crosvm_cmd.AddParameter("--rwdisk=", disk);
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));
   if (!config_->gsi_fstab_path().empty()) {
