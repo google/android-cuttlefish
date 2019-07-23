@@ -1,0 +1,2 @@
+/dev/block/by-name/vendor /vendor ext4 noatime,ro,errors=panic wait
+/dev/block/by-name/product /product ext4 noatime,ro,errors=panic wait
