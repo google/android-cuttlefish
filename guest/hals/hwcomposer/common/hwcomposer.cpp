@@ -58,15 +58,9 @@
 #include "guest/hals/hwcomposer/common/hwcomposer.h"
 
 #ifdef USE_OLD_HWCOMPOSER
-typedef cvd::BaseComposer InnerComposerType;
+typedef cvd::BaseComposer ComposerType;
 #else
-typedef cvd::CpuComposer InnerComposerType;
-#endif
-
-#ifdef GATHER_STATS
-typedef cvd::StatsKeepingComposer<InnerComposerType> ComposerType;
-#else
-typedef InnerComposerType ComposerType;
+typedef cvd::CpuComposer ComposerType;
 #endif
 
 struct hwc_composer_device_data_t {
@@ -79,7 +73,7 @@ struct hwc_composer_device_data_t {
 struct cvd_hwc_composer_device_1_t {
   hwc_composer_device_1_t base;
   hwc_composer_device_data_t vsync_data;
-  ComposerType* composer;
+  cvd::BaseComposer* composer;
 };
 
 namespace {
@@ -488,8 +482,13 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
   dev->base.eventControl = cvd_hwc_event_control;
   dev->base.getDisplayConfigs = cvd_hwc_get_display_configs;
   dev->base.getDisplayAttributes = cvd_hwc_get_display_attributes;
-  dev->composer = new ComposerType(dev->vsync_data.vsync_base_timestamp,
-                                   std::move(screen_view));
+#ifdef GATHER_STATS
+  dev->composer = new cvd::StatsKeepingComposer<ComposerType>(
+      dev->vsync_data.vsync_base_timestamp, std::move(screen_view));
+#else
+  dev->composer = new ComposerType(std::move(screen_view));
+#endif
+
   if (!dev->composer) {
     ALOGE("Failed to instantiate the composer object");
     delete dev;
