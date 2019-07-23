@@ -29,14 +29,13 @@ namespace cvd {
 
 class CpuComposer : public BaseComposer {
  public:
-  CpuComposer(int64_t vsync_base_timestamp,
-              std::unique_ptr<ScreenView> screen_view);
-  ~CpuComposer() = default;
+  CpuComposer(std::unique_ptr<ScreenView> screen_view);
+  virtual ~CpuComposer() = default;
 
   // override
-  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers);
+  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) override;
   // override
-  int SetLayers(size_t num_layers, hwc_layer_1_t* layers);
+  int SetLayers(size_t num_layers, hwc_layer_1_t* layers) override;
 
  protected:
   static const int kNumTmpBufferPieces;

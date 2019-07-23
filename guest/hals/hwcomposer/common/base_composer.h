@@ -25,16 +25,15 @@ namespace cvd {
 
 class BaseComposer {
  public:
-  BaseComposer(int64_t vsync_base_timestamp,
-               std::unique_ptr<ScreenView> screen_view);
-  ~BaseComposer() = default;
+  BaseComposer(std::unique_ptr<ScreenView> screen_view);
+  virtual ~BaseComposer() = default;
 
   // Sets the composition type of each layer and returns the number of layers
   // to be composited by the hwcomposer.
-  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers);
+  virtual int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers);
   // Returns 0 if successful.
-  int SetLayers(size_t num_layers, hwc_layer_1_t* layers);
-  void Dump(char* buff, int buff_len);
+  virtual int SetLayers(size_t num_layers, hwc_layer_1_t* layers);
+  virtual void Dump(char* buff, int buff_len);
 
   int32_t x_res() { return screen_view_->x_res(); }
   int32_t y_res() { return screen_view_->y_res(); }
@@ -44,8 +43,6 @@ class BaseComposer {
  protected:
   std::unique_ptr<ScreenView> screen_view_;
   const gralloc_module_t* gralloc_module_;
-  int64_t vsync_base_timestamp_;
-  int32_t vsync_period_ns_;
 
  private:
   // Returns buffer offset or negative on error.
