@@ -62,6 +62,16 @@ include $(BUILD_PREBUILT)
 
 include $(CLEAR_VARS)
 
+LOCAL_MODULE := composite_system_root_dtb
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(HOST_OUT)/config
+LOCAL_MODULE_STEM := composite-system-root.dtb
+LOCAL_SRC_FILES := composite-system-root.dtb
+
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+
 LOCAL_MODULE := gsi_fstab
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(HOST_OUT)/config
