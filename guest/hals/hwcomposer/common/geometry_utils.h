@@ -1,3 +1,4 @@
+#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -14,27 +15,10 @@
  * limitations under the License.
  */
 
-#include "geometry_utils.h"
-#include <algorithm>
-#include <utility>
+#include "guest/hals/hwcomposer/common/hwcomposer.h"
 
 namespace cvd {
 
-bool LayersOverlap(const vsoc_hwc_layer& layer1, const vsoc_hwc_layer& layer2) {
-  int left1 = layer1.displayFrame.left;
-  int right1 = layer1.displayFrame.right;
-  int top1 = layer1.displayFrame.top;
-  int bottom1 = layer1.displayFrame.bottom;
-
-  int left2 = layer2.displayFrame.left;
-  int right2 = layer2.displayFrame.right;
-  int top2 = layer2.displayFrame.top;
-  int bottom2 = layer2.displayFrame.bottom;
-
-  bool overlap_x = left1 < right2 && left2 < right1;
-  bool overlap_y = top1 < bottom2 && top2 < bottom1;
-
-  return overlap_x && overlap_y;
-}
+bool LayersOverlap(const cvd_hwc_layer& layer1, const cvd_hwc_layer& layer2);
 
 }  // namespace cvd

@@ -1,6 +1,5 @@
-#pragma once
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +14,25 @@
  * limitations under the License.
  */
 
-#include "hwcomposer.h"
+#include "guest/hals/hwcomposer/common/screen_view.h"
+
+#include "common/libs/utils/size_utils.h"
 
 namespace cvd {
 
-bool LayersOverlap(const vsoc_hwc_layer& layer1, const vsoc_hwc_layer& layer2);
+int ScreenView::NextBuffer() {
+  int num_buffers = this->num_buffers();
+  last_buffer_ = num_buffers > 0 ? (last_buffer_ + 1) % num_buffers : -1;
+  return last_buffer_;
+}
 
+size_t ScreenView::buffer_size() const {
+  return line_length() * y_res() + 4 /* swiftshader padding */;
+}
+
+size_t ScreenView::line_length() const {
+  return cvd::AlignToPowerOf2(x_res() * bytes_per_pixel(), 4);
+}
+
+int ScreenView::bytes_per_pixel() const { return 4; }
 }  // namespace cvd

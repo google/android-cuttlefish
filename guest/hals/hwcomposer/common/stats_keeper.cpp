@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 
-#include <log/log.h>
+#include "guest/hals/hwcomposer/common/stats_keeper.h"
+
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <algorithm>
 #include <utility>
 #include <vector>
 
-#include "geometry_utils.h"
-#include "stats_keeper.h"
+#include <log/log.h>
+
+#include "guest/hals/hwcomposer/common/geometry_utils.h"
 
 using cvd::LockGuard;
 using cvd::Mutex;
@@ -31,8 +36,6 @@ using cvd::time::MonotonicTimePoint;
 using cvd::time::Nanoseconds;
 using cvd::time::Seconds;
 using cvd::time::TimeDifference;
-using vsoc::layout::screen::TimeSpec;
-using vsoc::layout::screen::CompositionStats;
 
 namespace cvd {
 
@@ -53,9 +56,9 @@ const T& MultisetMax(const std::multiset<T>& mset) {
   return *mset.rbegin();
 }
 
-void TimeDifferenceToTimeSpec(const TimeDifference& td, TimeSpec* ts) {
-  ts->ts_sec = td.seconds();
-  ts->ts_nsec = td.subseconds_in_ns();
+void TimeDifferenceToTimeSpec(const TimeDifference& td, timespec* ts) {
+  ts->tv_sec = td.seconds();
+  ts->tv_nsec = td.subseconds_in_ns();
 }
 
 }  // namespace
