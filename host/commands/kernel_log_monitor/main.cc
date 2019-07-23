@@ -29,7 +29,7 @@
 #include <host/libs/config/cuttlefish_config.h>
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
-DEFINE_int32(log_server_fd, -1,
+DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
              "read the logs. If -1 is given the socket is created according to "
              "the instance configuration");
@@ -77,22 +77,21 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  cvd::SharedFD server;
-  if (FLAGS_log_server_fd < 0) {
-    auto log_name = config->kernel_log_socket_name();
-    server = cvd::SharedFD::SocketLocalServer(log_name.c_str(), false,
-                                              SOCK_STREAM, 0666);
+  cvd::SharedFD pipe;
+  if (FLAGS_log_pipe_fd < 0) {
+    auto log_name = config->kernel_log_pipe_name();
+    pipe = cvd::SharedFD::Open(log_name.c_str(), O_RDONLY);
   } else {
-    server = cvd::SharedFD::Dup(FLAGS_log_server_fd);
-    close(FLAGS_log_server_fd);
+    pipe = cvd::SharedFD::Dup(FLAGS_log_pipe_fd);
+    close(FLAGS_log_pipe_fd);
   }
 
-  if (!server->IsOpen()) {
-    LOG(ERROR) << "Error opening log server: " << server->StrError();
+  if (!pipe->IsOpen()) {
+    LOG(ERROR) << "Error opening log pipe: " << pipe->StrError();
     return 2;
   }
 
-  monitor::KernelLogServer klog{server, config->PerInstancePath("kernel.log"),
+  monitor::KernelLogServer klog{pipe, config->PerInstancePath("kernel.log"),
                                 config->deprecated_boot_completed()};
 
   for (auto subscriber_fd: subscriber_fds) {

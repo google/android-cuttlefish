@@ -46,7 +46,7 @@ using BootEventCallback = std::function<SubscriptionAction(BootEvent)>;
 // one connection.
 class KernelLogServer {
  public:
-  KernelLogServer(cvd::SharedFD server_socket,
+  KernelLogServer(cvd::SharedFD pipe_fd,
                   const std::string& log_name,
                   bool deprecated_boot_completed);
 
@@ -62,15 +62,11 @@ class KernelLogServer {
 
   void SubscribeToBootEvents(BootEventCallback callback);
  private:
-  // Handle new client connection. Only accept one connection.
-  void HandleIncomingConnection();
-
   // Respond to message from remote client.
   // Returns false, if client disconnected.
   bool HandleIncomingMessage();
 
-  cvd::SharedFD server_fd_;
-  cvd::SharedFD client_fd_;
+  cvd::SharedFD pipe_fd_;
   cvd::SharedFD log_fd_;
   std::string line_;
   bool deprecated_boot_completed_;
