@@ -22,9 +22,9 @@
 
 #include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/time/monotonic_time.h"
-#include "common/vsoc/lib/screen_region_view.h"
 
-#include "hwcomposer.h"
+#include "guest/hals/hwcomposer/common/base_composer.h"
+#include "guest/hals/hwcomposer/common/hwcomposer.h"
 
 namespace cvd {
 
@@ -94,7 +94,7 @@ class StatsKeeper {
   void RecordSetStart();
   void RecordSetEnd() EXCLUDES(mutex_);
 
-  void GetLastCompositionStats(vsoc::layout::screen::CompositionStats* stats_p);
+  void GetLastCompositionStats(CompositionStats* stats_p);
 
   // Calls to this function are synchronized with calls to 'RecordSetEnd' with a
   // mutex. The other Record* functions do not need such synchronization because
@@ -146,38 +146,62 @@ class StatsKeeper {
   mutable cvd::Mutex mutex_;
 };
 
+class WrappedScreenView : public ScreenView {
+ public:
+  WrappedScreenView(std::unique_ptr<ScreenView> screen_view,
+                    std::function<void(CompositionStats*)> stats_getter)
+      : screen_view_(std::move(screen_view)), stats_getter_(stats_getter) {}
+  virtual ~WrappedScreenView() = default;
+
+  void Broadcast(int buffer_id, const CompositionStats*) override {
+    // The composer object in stats_keeper produces null stats, use the ones
+    // provided by the stats_keeper instead.
+    CompositionStats stats;
+    stats_getter_(&stats);
+    return screen_view_->Broadcast(buffer_id, &stats);
+  }
+
+  void* GetBuffer(int buffer_id) override {
+    return screen_view_->GetBuffer(buffer_id);
+  }
+
+  int32_t x_res() const override { return screen_view_->x_res(); }
+
+  int32_t y_res() const override { return screen_view_->y_res(); }
+
+  int32_t dpi() const override { return screen_view_->dpi(); }
+
+  int32_t refresh_rate() const override { return screen_view_->refresh_rate(); }
+
+  int num_buffers() const override { return screen_view_->num_buffers(); }
+
+ private:
+  std::unique_ptr<ScreenView> screen_view_;
+  std::function<void(CompositionStats*)> stats_getter_;
+};
+
 template <class Composer>
-class StatsKeepingComposer {
+class StatsKeepingComposer : public BaseComposer {
  public:
   // Keep stats from the last 10 seconds.
-  StatsKeepingComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns)
-      : stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
-                      vsync_base_timestamp, vsync_period_ns),
-        composer_(vsync_base_timestamp, vsync_period_ns) {
-    // Don't let the composer broadcast by itself, allow it to return to collect
-    // the timings and broadcast then.
-    composer_.ReplaceFbBroadcaster([this](int buffer_index){
-        BroadcastWithStats(buffer_index);
-      });
-  }
+  StatsKeepingComposer(int64_t vsync_base_timestamp,
+                       std::unique_ptr<ScreenView> screen_view)
+      : composer_(vsync_base_timestamp,
+                  std::unique_ptr<ScreenView>(new WrappedScreenView(
+                      std::move(screen_view),
+                      [this](CompositionStats* stats) { FinalizeStatsAndGet(stats); }))),
+        stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
+                      vsync_base_timestamp, 1e9 / composer_.refresh_rate()) {}
   ~StatsKeepingComposer() = default;
 
-  int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+  int PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
     stats_keeper_.RecordPrepareStart(num_layers);
     int num_hwc_layers = composer_.PrepareLayers(num_layers, layers);
     stats_keeper_.RecordPrepareEnd(num_hwc_layers);
     return num_hwc_layers;
   }
 
-  void BroadcastWithStats(int buffer_idx) {
-    stats_keeper_.RecordSetEnd();
-    vsoc::layout::screen::CompositionStats stats;
-    stats_keeper_.GetLastCompositionStats(&stats);
-    vsoc::screen::ScreenRegionView::GetInstance()
-      ->BroadcastNewFrame(static_cast<uint32_t>(buffer_idx), &stats);
-  }
-
-  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers) {
+  int SetLayers(size_t num_layers, cvd_hwc_layer* layers) {
     stats_keeper_.RecordSetStart();
     return composer_.SetLayers(num_layers, layers);
   }
@@ -186,9 +210,14 @@ class StatsKeepingComposer {
     stats_keeper_.SynchronizedDump(buff, buff_len);
   }
 
+  void FinalizeStatsAndGet(CompositionStats* stats) {
+    stats_keeper_.RecordSetEnd();
+    stats_keeper_.GetLastCompositionStats(&stats);
+  }
+
  private:
-  StatsKeeper stats_keeper_;
   Composer composer_;
+  StatsKeeper stats_keeper_;
 };
 
 }  // namespace cvd

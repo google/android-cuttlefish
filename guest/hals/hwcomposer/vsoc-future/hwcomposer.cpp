@@ -181,8 +181,7 @@ int hwc_set(struct hwc_composer_device_1* dev, size_t numDisplays,
       const vsoc_buffer_handle_t* fb_handle =
           reinterpret_cast<const vsoc_buffer_handle_t*>(
               list->hwLayers[i].handle);
-      ScreenRegionView::GetInstance()->BroadcastNewFrame(
-          fb_handle->offset);
+      ScreenRegionView::GetInstance()->BroadcastNewFrame(fb_handle->offset);
       break;
     }
   }
@@ -273,7 +272,6 @@ int32_t vsoc_hwc_attribute(uint32_t attribute) {
 int hwc_getDisplayAttributes(struct hwc_composer_device_1* /*dev*/, int disp,
                              uint32_t /*config*/, const uint32_t* attributes,
                              int32_t* values) {
-
   if (disp != HWC_DISPLAY_PRIMARY) {
     ALOGE("Unknown display type %u", disp);
     return -EINVAL;
