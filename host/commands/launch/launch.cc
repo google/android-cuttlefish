@@ -15,12 +15,6 @@ using cvd::MonitorEntry;
 
 namespace {
 
-constexpr char kAdbModeTunnel[] = "tunnel";
-constexpr char kAdbModeNativeVsock[] = "native_vsock";
-constexpr char kAdbModeVsockTunnel[] = "vsock_tunnel";
-constexpr char kAdbModeVsockHalfTunnel[] = "vsock_half_tunnel";
-constexpr char kAdbModeUsb[] = "usb";
-
 cvd::SharedFD CreateIvServerUnixSocket(const std::string& path) {
   return cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM,
                                           0666);
@@ -45,22 +39,22 @@ std::string GetAdbConnectorVsockArg(const vsoc::CuttlefishConfig& config) {
       + std::string{":5555"};
 }
 
-bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, const char* mode) {
+bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, vsoc::AdbMode mode) {
   return config.adb_mode().count(mode) > 0;
 }
 
 bool AdbTunnelEnabled(const vsoc::CuttlefishConfig& config) {
-  return AdbModeEnabled(config, kAdbModeTunnel);
+  return AdbModeEnabled(config, vsoc::AdbMode::Tunnel);
 }
 
 bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
   return config.vsock_guest_cid() > 2
-      && AdbModeEnabled(config, kAdbModeVsockTunnel);
+      && AdbModeEnabled(config, vsoc::AdbMode::VsockTunnel);
 }
 
 bool AdbVsockHalfTunnelEnabled(const vsoc::CuttlefishConfig& config) {
   return config.vsock_guest_cid() > 2
-      && AdbModeEnabled(config, kAdbModeVsockHalfTunnel);
+      && AdbModeEnabled(config, vsoc::AdbMode::VsockHalfTunnel);
 }
 
 bool AdbTcpConnectorEnabled(const vsoc::CuttlefishConfig& config) {
@@ -73,7 +67,7 @@ bool AdbTcpConnectorEnabled(const vsoc::CuttlefishConfig& config) {
 
 bool AdbVsockConnectorEnabled(const vsoc::CuttlefishConfig& config) {
   return config.run_adb_connector()
-      && AdbModeEnabled(config, kAdbModeNativeVsock);
+      && AdbModeEnabled(config, vsoc::AdbMode::NativeVsock);
 }
 
 cvd::OnSocketReadyCb GetOnSubprocessExitCallback(
@@ -96,7 +90,7 @@ bool LogcatReceiverEnabled(const vsoc::CuttlefishConfig& config) {
 }
 
 bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
-  return AdbModeEnabled(config, kAdbModeUsb);
+  return AdbModeEnabled(config, vsoc::AdbMode::Usb);
 }
 
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
