@@ -39,15 +39,6 @@ typedef hwc_layer_1_t cvd_hwc_layer;
 #endif
 
 namespace cvd {
-struct hwc_composer_device_data_t {
-  const hwc_procs_t* procs;
-  pthread_t vsync_thread;
-  int64_t vsync_base_timestamp;
-  int32_t vsync_period_ns;
-};
-
-void* hwc_vsync_thread(void* data);
-
 int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
                  const struct hw_module_t* module, const char* name,
                  struct hw_device_t** device);

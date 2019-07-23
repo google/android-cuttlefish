@@ -70,13 +70,20 @@ typedef cvd::StatsKeepingComposer<InnerComposerType> ComposerType;
 typedef InnerComposerType ComposerType;
 #endif
 
+struct hwc_composer_device_data_t {
+  const hwc_procs_t* procs;
+  pthread_t vsync_thread;
+  int64_t vsync_base_timestamp;
+  int32_t vsync_period_ns;
+};
+
 struct cvd_hwc_composer_device_1_t {
   cvd_hwc_device base;
-  cvd::hwc_composer_device_data_t vsync_data;
+  hwc_composer_device_data_t vsync_data;
   ComposerType* composer;
 };
 
-namespace cvd {
+namespace {
 
 void* hwc_vsync_thread(void* data) {
   struct hwc_composer_device_data_t* pdev =
@@ -137,10 +144,6 @@ void* hwc_vsync_thread(void* data) {
 
   return NULL;
 }
-
-}  // namespace cvd
-
-namespace {
 
 std::string CompositionString(int type) {
   switch (type) {
@@ -529,7 +532,7 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
     return -1;
   }
   int ret = pthread_create(&dev->vsync_data.vsync_thread, NULL,
-                           cvd::hwc_vsync_thread, &dev->vsync_data);
+                           hwc_vsync_thread, &dev->vsync_data);
   if (ret) {
     ALOGE("failed to start vsync thread: %s", strerror(ret));
     ret = -ret;
