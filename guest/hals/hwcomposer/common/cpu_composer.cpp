@@ -34,7 +34,7 @@ namespace cvd {
 
 namespace {
 
-bool LayerNeedsScaling(const cvd_hwc_layer& layer) {
+bool LayerNeedsScaling(const hwc_layer_1_t& layer) {
   int from_w = layer.sourceCrop.right - layer.sourceCrop.left;
   int from_h = layer.sourceCrop.bottom - layer.sourceCrop.top;
   int to_w = layer.displayFrame.right - layer.displayFrame.left;
@@ -48,11 +48,11 @@ bool LayerNeedsScaling(const cvd_hwc_layer& layer) {
   return needs_rot ? rot_scale : not_rot_scale;
 }
 
-bool LayerNeedsBlending(const cvd_hwc_layer& layer) {
+bool LayerNeedsBlending(const hwc_layer_1_t& layer) {
   return layer.blending != HWC_BLENDING_NONE;
 }
 
-bool LayerNeedsAttenuation(const cvd_hwc_layer& layer) {
+bool LayerNeedsAttenuation(const hwc_layer_1_t& layer) {
   return layer.blending == HWC_BLENDING_COVERAGE;
 }
 
@@ -102,7 +102,7 @@ ConverterFunction GetConverter(uint32_t format) {
 // Whether we support a given format
 bool IsFormatSupported(uint32_t format) { return GetConverter(format) != NULL; }
 
-bool CanCompositeLayer(const cvd_hwc_layer& layer) {
+bool CanCompositeLayer(const hwc_layer_1_t& layer) {
   if (layer.handle == NULL) {
     ALOGW("%s received a layer with a null handler", __FUNCTION__);
     return false;
@@ -292,7 +292,7 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
 
 }  // namespace
 
-void CpuComposer::CompositeLayer(cvd_hwc_layer* src_layer, int buffer_idx) {
+void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
@@ -501,7 +501,7 @@ CpuComposer::CpuComposer(int64_t vsync_base_timestamp,
     : BaseComposer(vsync_base_timestamp, std::move(screen_view)),
       tmp_buffer_(kNumTmpBufferPieces * screen_view_->buffer_size()) {}
 
-int CpuComposer::PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
+int CpuComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
   int composited_layers_count = 0;
 
   // Loop over layers in inverse order of z-index
@@ -543,7 +543,7 @@ int CpuComposer::PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
   return composited_layers_count;
 }
 
-int CpuComposer::SetLayers(size_t num_layers, cvd_hwc_layer* layers) {
+int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   int targetFbs = 0;
   int buffer_idx = screen_view_->NextBuffer();
 

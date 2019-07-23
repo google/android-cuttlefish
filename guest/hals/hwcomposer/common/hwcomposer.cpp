@@ -51,7 +51,6 @@
 #include <utils/Vector.h>
 
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 #include "guest/hals/hwcomposer/common/base_composer.h"
 #include "guest/hals/hwcomposer/common/cpu_composer.h"
@@ -78,7 +77,7 @@ struct hwc_composer_device_data_t {
 };
 
 struct cvd_hwc_composer_device_1_t {
-  cvd_hwc_device base;
+  hwc_composer_device_1_t base;
   hwc_composer_device_data_t vsync_data;
   ComposerType* composer;
 };
@@ -155,18 +154,16 @@ std::string CompositionString(int type) {
       return "Background";
     case HWC_FRAMEBUFFER_TARGET:
       return "FramebufferTarget";
-#if VSOC_PLATFORM_SDK_AFTER(K)
     case HWC_SIDEBAND:
       return "Sideband";
     case HWC_CURSOR_OVERLAY:
       return "CursorOverlay";
-#endif
     default:
       return std::string("Unknown (") + std::to_string(type) + ")";
   }
 }
 
-void LogLayers(int num_layers, cvd_hwc_layer* layers, int invalid) {
+void LogLayers(int num_layers, hwc_layer_1_t* layers, int invalid) {
   ALOGE("Layers:");
   for (int idx = 0; idx < num_layers; ++idx) {
     std::string log_line;
@@ -180,7 +177,7 @@ void LogLayers(int num_layers, cvd_hwc_layer* layers, int invalid) {
 }
 
 // Ensures that the layer does not include any inconsistencies
-bool IsValidLayer(const cvd_hwc_layer& layer) {
+bool IsValidLayer(const hwc_layer_1_t& layer) {
   if (layer.flags & HWC_SKIP_LAYER) {
     // A layer we are asked to skip validate should not be marked as skip
     ALOGE("%s: Layer is marked as skip", __FUNCTION__);
@@ -228,7 +225,7 @@ bool IsValidLayer(const cvd_hwc_layer& layer) {
   return true;
 }
 
-bool IsValidComposition(int num_layers, cvd_hwc_layer* layers, bool on_set) {
+bool IsValidComposition(int num_layers, hwc_layer_1_t* layers, bool on_set) {
   if (num_layers == 0) {
     ALOGE("Composition requested with 0 layers");
     return false;
@@ -286,17 +283,13 @@ bool IsValidComposition(int num_layers, cvd_hwc_layer* layers, bool on_set) {
 
 }  // namespace
 
-#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
-static int cvd_hwc_prepare(cvd_hwc_device* dev, hwc_layer_list_t* list) {
-#else
-static int cvd_hwc_prepare(cvd_hwc_device* dev, size_t numDisplays,
+static int cvd_hwc_prepare(hwc_composer_device_1_t* dev, size_t numDisplays,
                            hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
   hwc_display_contents_1_t* list = displays[HWC_DISPLAY_PRIMARY];
 
   if (!list) return 0;
-#endif
   if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], false)) {
     LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
     return -1;
@@ -306,30 +299,14 @@ static int cvd_hwc_prepare(cvd_hwc_device* dev, size_t numDisplays,
   return 0;
 }
 
-#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
-int cvd_hwc_set(struct hwc_composer_device* dev, hwc_display_t dpy,
-                hwc_surface_t sur, hwc_layer_list_t* list) {
-  if (list->numHwLayers == 1 &&
-      layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
-    ALOGW("Received request for empty composition, treating as valid noop");
-    return 0;
-  }
-  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], true)) {
-    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
-    return -1;
-  }
-  return reinterpret_cast<cvd_hwc_composer_device_1_t*>(dev)
-      ->composer->SetLayers(list->numHwLayers, &list->hwLayers[0]);
-}
-#else
-static int cvd_hwc_set(cvd_hwc_device* dev, size_t numDisplays,
+static int cvd_hwc_set(hwc_composer_device_1_t* dev, size_t numDisplays,
                        hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
   hwc_display_contents_1_t* contents = displays[HWC_DISPLAY_PRIMARY];
   if (!contents) return 0;
 
-  cvd_hwc_layer* layers = &contents->hwLayers[0];
+  hwc_layer_1_t* layers = &contents->hwLayers[0];
   if (contents->numHwLayers == 1 &&
       layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
     ALOGW("Received request for empty composition, treating as valid noop");
@@ -360,16 +337,15 @@ static int cvd_hwc_set(cvd_hwc_device* dev, size_t numDisplays,
   contents->retireFenceFd = -1;
   return retval;
 }
-#endif
 
-static void cvd_hwc_register_procs(cvd_hwc_device* dev,
+static void cvd_hwc_register_procs(hwc_composer_device_1_t* dev,
                                    const hwc_procs_t* procs) {
   struct cvd_hwc_composer_device_1_t* pdev =
       (struct cvd_hwc_composer_device_1_t*)dev;
   pdev->vsync_data.procs = procs;
 }
 
-static int cvd_hwc_query(cvd_hwc_device* dev, int what, int* value) {
+static int cvd_hwc_query(hwc_composer_device_1_t* dev, int what, int* value) {
   struct cvd_hwc_composer_device_1_t* pdev =
       (struct cvd_hwc_composer_device_1_t*)dev;
 
@@ -389,30 +365,25 @@ static int cvd_hwc_query(cvd_hwc_device* dev, int what, int* value) {
   return 0;
 }
 
-static int cvd_hwc_event_control(
-#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
-    cvd_hwc_device* /*dev*/, int event, int /*enabled*/) {
-#else
-    cvd_hwc_device* /*dev*/, int /*dpy*/, int event, int /*enabled*/) {
-#endif
-
+static int cvd_hwc_event_control(hwc_composer_device_1_t* /*dev*/, int /*dpy*/,
+                                 int event, int /*enabled*/) {
   if (event == HWC_EVENT_VSYNC) {
     return 0;
   }
   return -EINVAL;
 }
 
-static int cvd_hwc_blank(cvd_hwc_device* /*dev*/, int disp, int /*blank*/) {
+static int cvd_hwc_blank(hwc_composer_device_1_t* /*dev*/, int disp, int /*blank*/) {
   if (!IS_PRIMARY_DISPLAY(disp)) return -EINVAL;
   return 0;
 }
 
-static void cvd_hwc_dump(cvd_hwc_device* dev, char* buff, int buff_len) {
+static void cvd_hwc_dump(hwc_composer_device_1_t* dev, char* buff, int buff_len) {
   reinterpret_cast<cvd_hwc_composer_device_1_t*>(dev)->composer->Dump(buff,
                                                                       buff_len);
 }
 
-static int cvd_hwc_get_display_configs(cvd_hwc_device* /*dev*/, int disp,
+static int cvd_hwc_get_display_configs(hwc_composer_device_1_t* /*dev*/, int disp,
                                        uint32_t* configs, size_t* numConfigs) {
   if (*numConfigs == 0) return 0;
 
@@ -425,7 +396,6 @@ static int cvd_hwc_get_display_configs(cvd_hwc_device* /*dev*/, int disp,
   return -EINVAL;
 }
 
-#if VSOC_PLATFORM_SDK_AFTER(J)
 static int32_t cvd_hwc_attribute(struct cvd_hwc_composer_device_1_t* pdev,
                                  const uint32_t attribute) {
   switch (attribute) {
@@ -449,7 +419,7 @@ static int32_t cvd_hwc_attribute(struct cvd_hwc_composer_device_1_t* pdev,
   }
 }
 
-static int cvd_hwc_get_display_attributes(cvd_hwc_device* dev, int disp,
+static int cvd_hwc_get_display_attributes(hwc_composer_device_1_t* dev, int disp,
                                           uint32_t config __unused,
                                           const uint32_t* attributes,
                                           int32_t* values) {
@@ -467,7 +437,6 @@ static int cvd_hwc_get_display_attributes(cvd_hwc_device* dev, int disp,
 
   return 0;
 }
-#endif
 
 static int cvd_hwc_close(hw_device_t* device) {
   struct cvd_hwc_composer_device_1_t* dev =
@@ -506,7 +475,7 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
   dev->vsync_data.vsync_period_ns = 1e9 / screen_view->refresh_rate();
 
   dev->base.common.tag = HARDWARE_DEVICE_TAG;
-  dev->base.common.version = VSOC_HWC_DEVICE_API_VERSION;
+  dev->base.common.version = HWC_DEVICE_API_VERSION_1_1;
   dev->base.common.module = const_cast<hw_module_t*>(module);
   dev->base.common.close = cvd_hwc_close;
 
@@ -515,15 +484,10 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
   dev->base.query = cvd_hwc_query;
   dev->base.registerProcs = cvd_hwc_register_procs;
   dev->base.dump = cvd_hwc_dump;
-#if VSOC_PLATFORM_SDK_BEFORE(J_MR1)
-  static hwc_methods_t hwc_methods = {cvd_hwc_event_control};
-  dev->base.methods = &hwc_methods;
-#else
   dev->base.blank = cvd_hwc_blank;
   dev->base.eventControl = cvd_hwc_event_control;
   dev->base.getDisplayConfigs = cvd_hwc_get_display_configs;
   dev->base.getDisplayAttributes = cvd_hwc_get_display_attributes;
-#endif
   dev->composer = new ComposerType(dev->vsync_data.vsync_base_timestamp,
                                    std::move(screen_view));
   if (!dev->composer) {
