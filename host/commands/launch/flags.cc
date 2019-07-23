@@ -49,7 +49,7 @@ DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
 DEFINE_bool(decompress_kernel, false,
-            "Whether to decompress the kernel image. Required for crosvm.");
+            "Whether to decompress the kernel image.");
 DEFINE_string(kernel_decompresser_executable,
               vsoc::DefaultHostArtifactsPath("bin/extract-vmlinux"),
              "Path to the extract-vmlinux executable.");
@@ -573,8 +573,6 @@ void SetDefaultFlagsForQemu() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("hardware_name", "cutf_ivsh",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("decompress_kernel", "false",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatSerialMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
@@ -603,8 +601,6 @@ void SetDefaultFlagsForCrosvm() {
                                default_wayland_socket.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("decompress_kernel", "true",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("run_e2e_test", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
