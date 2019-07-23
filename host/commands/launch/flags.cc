@@ -436,6 +436,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_cache_image_path(FLAGS_cache_image);
   tmp_config_obj.set_data_image_path(FLAGS_data_image);
   tmp_config_obj.set_metadata_image_path(FLAGS_metadata_image);
+  tmp_config_obj.set_boot_image_path(FLAGS_boot_image);
   tmp_config_obj.set_composite_disk_path(FLAGS_composite_disk);
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
@@ -754,7 +755,7 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
        {config->system_image_path(), config->cache_image_path(),
         config->data_image_path(), config->vendor_image_path(),
         config->metadata_image_path(),  config->product_image_path(),
-        config->super_image_path()}) {
+        config->super_image_path(), config->boot_image_path()}) {
     if (!file.empty() && !cvd::FileHasContent(file.c_str())) {
       LOG(ERROR) << "File not found: " << file;
       exit(cvd::kCuttlefishConfigurationInitError);

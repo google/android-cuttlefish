@@ -156,6 +156,9 @@ class CuttlefishConfig {
   std::string super_image_path() const;
   void set_super_image_path(const std::string& super_image_path);
 
+  std::string boot_image_path() const;
+  void set_boot_image_path(const std::string& boot_image_path);
+
   std::string composite_disk_path() const;
   void set_composite_disk_path(const std::string& composite_disk_path);
 
