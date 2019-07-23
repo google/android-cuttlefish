@@ -42,7 +42,11 @@ class VmManager {
 
   virtual ~VmManager() = default;
 
-  virtual cvd::Command StartCommand(bool with_frontend = true) = 0;
+  // Starts the VMM. It will usually build a command and pass it to the
+  // command_starter function, although it may start more than one. The
+  // command_starter function allows to customize the way vmm commands are
+  // started/tracked/etc.
+  virtual std::vector<cvd::Command> StartCommands(bool with_frontend) = 0;
   virtual bool Stop() = 0;
 
   virtual bool ValidateHostConfiguration(
@@ -54,7 +58,7 @@ class VmManager {
   const vsoc::CuttlefishConfig* config_;
   VmManager(const vsoc::CuttlefishConfig* config);
 
-private:
+ private:
   struct VmManagerHelper {
     // The singleton implementation
     std::function<VmManager*(const vsoc::CuttlefishConfig*)> builder;
