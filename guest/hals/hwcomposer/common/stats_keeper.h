@@ -194,14 +194,14 @@ class StatsKeepingComposer : public BaseComposer {
                       vsync_base_timestamp, 1e9 / composer_.refresh_rate()) {}
   ~StatsKeepingComposer() = default;
 
-  int PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
+  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
     stats_keeper_.RecordPrepareStart(num_layers);
     int num_hwc_layers = composer_.PrepareLayers(num_layers, layers);
     stats_keeper_.RecordPrepareEnd(num_hwc_layers);
     return num_hwc_layers;
   }
 
-  int SetLayers(size_t num_layers, cvd_hwc_layer* layers) {
+  int SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
     stats_keeper_.RecordSetStart();
     return composer_.SetLayers(num_layers, layers);
   }

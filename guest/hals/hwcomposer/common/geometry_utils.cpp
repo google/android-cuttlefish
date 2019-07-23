@@ -21,7 +21,7 @@
 
 namespace cvd {
 
-bool LayersOverlap(const cvd_hwc_layer& layer1, const cvd_hwc_layer& layer2) {
+bool LayersOverlap(const hwc_layer_1_t& layer1, const hwc_layer_1_t& layer2) {
   int left1 = layer1.displayFrame.left;
   int right1 = layer1.displayFrame.right;
   int top1 = layer1.displayFrame.top;
