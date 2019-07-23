@@ -77,7 +77,7 @@ bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
 }
 
 void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
-  // PCI domain 0, bus 0, device 5, function 0
+  // PCI domain 0, bus 0, device 1, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
   config->add_kernel_cmdline(
     "androidboot.boot_devices=pci0000:00/0000:00:01.0");
@@ -87,10 +87,6 @@ CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
 cvd::Command CrosvmManager::StartCommand(bool with_frontend) {
-  // TODO Add aarch64 support
-  // TODO Add the tap interfaces (--tap-fd)
-  // TODO Redirect logcat output
-
   // Run crosvm directly instead of through a cf_crosvm.sh script. The kernel
   // logs are on crosvm's standard output, so we need to redirect it to the log
   // monitor socket, a helper script will print more than just the logs to
