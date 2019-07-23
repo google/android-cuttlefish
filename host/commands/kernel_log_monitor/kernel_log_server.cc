@@ -66,25 +66,20 @@ void ProcessSubscriptions(
 }  // namespace
 
 namespace monitor {
-KernelLogServer::KernelLogServer(cvd::SharedFD server_socket,
+KernelLogServer::KernelLogServer(cvd::SharedFD pipe_fd,
                                  const std::string& log_name,
                                  bool deprecated_boot_completed)
-    : server_fd_(server_socket),
+    : pipe_fd_(pipe_fd),
       log_fd_(cvd::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR, 0666)),
       deprecated_boot_completed_(deprecated_boot_completed) {}
 
 void KernelLogServer::BeforeSelect(cvd::SharedFDSet* fd_read) const {
-  if (!client_fd_->IsOpen()) fd_read->Set(server_fd_);
-  if (client_fd_->IsOpen()) fd_read->Set(client_fd_);
+  fd_read->Set(pipe_fd_);
 }
 
 void KernelLogServer::AfterSelect(const cvd::SharedFDSet& fd_read) {
-  if (fd_read.IsSet(server_fd_)) HandleIncomingConnection();
-
-  if (client_fd_->IsOpen() && fd_read.IsSet(client_fd_)) {
-    if (!HandleIncomingMessage()) {
-      client_fd_->Close();
-    }
+  if (fd_read.IsSet(pipe_fd_)) {
+    HandleIncomingMessage();
   }
 }
 
@@ -93,29 +88,12 @@ void KernelLogServer::SubscribeToBootEvents(
   subscribers_.push_back(callback);
 }
 
-// Accept new kernel log connection.
-void KernelLogServer::HandleIncomingConnection() {
-  if (client_fd_->IsOpen()) {
-    LOG(ERROR) << "Client already connected. No longer accepting connection.";
-    return;
-  }
-
-  client_fd_ = SharedFD::Accept(*server_fd_, nullptr, nullptr);
-  if (!client_fd_->IsOpen()) {
-    LOG(ERROR) << "Client connection failed: " << client_fd_->StrError();
-    return;
-  }
-  if (client_fd_->Fcntl(F_SETFL, O_NONBLOCK) == -1) {
-    LOG(ERROR) << "Client connection refused O_NONBLOCK: " << client_fd_->StrError();
-  }
-}
-
 bool KernelLogServer::HandleIncomingMessage() {
   const size_t buf_len = 256;
   char buf[buf_len];
-  ssize_t ret = client_fd_->Read(buf, buf_len);
+  ssize_t ret = pipe_fd_->Read(buf, buf_len);
   if (ret < 0) {
-    LOG(ERROR) << "Could not read from QEmu serial port: " << client_fd_->StrError();
+    LOG(ERROR) << "Could not read kernel logs: " << pipe_fd_->StrError();
     return false;
   }
   if (ret == 0) return false;
