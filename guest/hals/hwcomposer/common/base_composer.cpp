@@ -55,7 +55,7 @@ int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
   return 0;
 }  // namespace cvd
 
-int BaseComposer::PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
+int BaseComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
   // find unsupported overlays
   for (size_t i = 0; i < num_layers; i++) {
     if (IS_TARGET_FRAMEBUFFER(layers[i].compositionType)) {
@@ -66,7 +66,7 @@ int BaseComposer::PrepareLayers(size_t num_layers, cvd_hwc_layer* layers) {
   return 0;
 }
 
-int BaseComposer::SetLayers(size_t num_layers, cvd_hwc_layer* layers) {
+int BaseComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   for (size_t idx = 0; idx < num_layers; idx++) {
     if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
       return PostFrameBufferTarget(layers[idx].handle);

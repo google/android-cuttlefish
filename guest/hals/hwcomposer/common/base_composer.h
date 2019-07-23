@@ -31,9 +31,9 @@ class BaseComposer {
 
   // Sets the composition type of each layer and returns the number of layers
   // to be composited by the hwcomposer.
-  int PrepareLayers(size_t num_layers, cvd_hwc_layer* layers);
+  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers);
   // Returns 0 if successful.
-  int SetLayers(size_t num_layers, cvd_hwc_layer* layers);
+  int SetLayers(size_t num_layers, hwc_layer_1_t* layers);
   void Dump(char* buff, int buff_len);
 
   int32_t x_res() { return screen_view_->x_res(); }

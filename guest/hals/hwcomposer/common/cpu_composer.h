@@ -34,15 +34,15 @@ class CpuComposer : public BaseComposer {
   ~CpuComposer() = default;
 
   // override
-  int PrepareLayers(size_t num_layers, cvd_hwc_layer* layers);
+  int PrepareLayers(size_t num_layers, hwc_layer_1_t* layers);
   // override
-  int SetLayers(size_t num_layers, cvd_hwc_layer* layers);
+  int SetLayers(size_t num_layers, hwc_layer_1_t* layers);
 
  protected:
   static const int kNumTmpBufferPieces;
   uint8_t* RotateTmpBuffer(unsigned int order);
   uint8_t* GetSpecialTmpBuffer(size_t needed_size);
-  void CompositeLayer(cvd_hwc_layer* src_layer, int32_t fb_offset);
+  void CompositeLayer(hwc_layer_1_t* src_layer, int32_t fb_offset);
   std::vector<uint8_t> tmp_buffer_;
   std::vector<uint8_t> special_tmp_buffer_;
 };
