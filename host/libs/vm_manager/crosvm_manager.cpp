@@ -35,10 +35,6 @@ std::string GetControlSocketPath(const vsoc::CuttlefishConfig* config) {
   return config->PerInstancePath("crosvm_control.sock");
 }
 
-cvd::SharedFD ConnectToLogMonitor(const std::string& log_monitor_name) {
-  return cvd::SharedFD::Open(log_monitor_name.c_str(), O_WRONLY);
-}
-
 void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
   auto tap_fd = cvd::OpenTapInterface(tap_name);
   if (tap_fd->IsOpen()) {
@@ -144,15 +140,9 @@ cvd::Command CrosvmManager::StartCommand(bool with_frontend) {
     command.AddParameter("--cid=", config_->vsock_guest_cid());
   }
 
-  auto kernel_log_connection =
-      ConnectToLogMonitor(config_->kernel_log_pipe_name());
-  if (!kernel_log_connection->IsOpen()) {
-    LOG(WARNING) << "Unable to connect to log monitor: "
-                 << kernel_log_connection->StrError();
-  } else {
-    command.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                          kernel_log_connection);
-  }
+  command.AddParameter("--serial=num=1,type=file,path=",
+                       config_->kernel_log_pipe_name());
+  command.AddParameter("--serial=num=2,type=sink,console=true");
 
   auto dev_null = cvd::SharedFD::Open("/dev/null", O_RDONLY);
   if (dev_null->IsOpen()) {
