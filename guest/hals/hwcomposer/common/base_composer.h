@@ -1,4 +1,3 @@
-#pragma once
 /*
  * Copyright (C) 2016 The Android Open Source Project
  *
@@ -15,45 +14,41 @@
  * limitations under the License.
  */
 
-#include <functional>
+#pragma once
 
-#include <hardware/gralloc.h>
-#include "hwcomposer.h"
+#include <memory>
+
+#include "guest/hals/hwcomposer/common/hwcomposer.h"
+#include "guest/hals/hwcomposer/common/screen_view.h"
 
 namespace cvd {
 
-using FbBroadcaster = std::function<void(int)>;
-
 class BaseComposer {
  public:
-  BaseComposer(int64_t vsync_base_timestamp, int32_t vsync_period_ns);
-  ~BaseComposer();
+  BaseComposer(int64_t vsync_base_timestamp,
+               std::unique_ptr<ScreenView> screen_view);
+  ~BaseComposer() = default;
 
   // Sets the composition type of each layer and returns the number of layers
   // to be composited by the hwcomposer.
-  int PrepareLayers(size_t num_layers, vsoc_hwc_layer* layers);
+  int PrepareLayers(size_t num_layers, cvd_hwc_layer* layers);
   // Returns 0 if successful.
-  int SetLayers(size_t num_layers, vsoc_hwc_layer* layers);
-  // Changes the broadcaster, gives the ability to report more than just the
-  // offset by using a wrapper like the StatsKeepingComposer. Returns the old
-  // broadcaster. Passing a NULL pointer will cause the composer to not
-  // broadcast at all.
-  FbBroadcaster ReplaceFbBroadcaster(FbBroadcaster);
+  int SetLayers(size_t num_layers, cvd_hwc_layer* layers);
   void Dump(char* buff, int buff_len);
 
- protected:
-  void Broadcast(int32_t offset);
-  int NextScreenBuffer();
+  int32_t x_res() { return screen_view_->x_res(); }
+  int32_t y_res() { return screen_view_->y_res(); }
+  int32_t dpi() { return screen_view_->dpi(); }
+  int32_t refresh_rate() { return screen_view_->refresh_rate(); }
 
+ protected:
+  std::unique_ptr<ScreenView> screen_view_;
   const gralloc_module_t* gralloc_module_;
   int64_t vsync_base_timestamp_;
   int32_t vsync_period_ns_;
-  int last_frame_buffer_ = -1; // The first index will be 0
 
  private:
   // Returns buffer offset or negative on error.
   int PostFrameBufferTarget(buffer_handle_t handle);
-  FbBroadcaster fb_broadcaster_;
 };
-
 }  // namespace cvd
