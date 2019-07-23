@@ -440,8 +440,11 @@ int main(int argc, char** argv) {
       *config, &process_monitor, GetOnSubprocessExitCallback(*config));
 
   // Start the guest VM
-  process_monitor.StartSubprocess(vm_manager->StartCommand(frontend_enabled),
-                                  GetOnSubprocessExitCallback(*config));
+  auto vmm_commands = vm_manager->StartCommands(frontend_enabled);
+  for (auto& vmm_cmd: vmm_commands) {
+      process_monitor.StartSubprocess(std::move(vmm_cmd),
+                                      GetOnSubprocessExitCallback(*config));
+  }
 
   // Start other host processes
   LaunchSocketForwardProxyIfEnabled(&process_monitor, *config);
