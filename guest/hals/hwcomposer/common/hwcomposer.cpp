@@ -523,11 +523,17 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
 #endif
   dev->composer = new ComposerType(dev->vsync_data.vsync_base_timestamp,
                                    std::move(screen_view));
+  if (!dev->composer) {
+    ALOGE("Failed to instantiate the composer object");
+    delete dev;
+    return -1;
+  }
   int ret = pthread_create(&dev->vsync_data.vsync_thread, NULL,
                            cvd::hwc_vsync_thread, &dev->vsync_data);
   if (ret) {
     ALOGE("failed to start vsync thread: %s", strerror(ret));
     ret = -ret;
+    delete dev->composer;
     delete dev;
   } else {
     *device = &dev->base.common;
