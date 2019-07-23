@@ -19,16 +19,17 @@ cc_library_shared {
     defaults: ["cuttlefish_guest_only"],
     vendor: true,
     srcs: [
+        "vsocket_screen_view.cpp",
         "hwcomposer.cpp",
-        "geometry_utils.cpp",
-        "vsoc_composer.cpp",
-        "base_composer.cpp",
     ],
     include_dirs: [
         "device/google/cuttlefish_common",
     ],
     export_include_dirs: ["."],
-    static_libs: ["libyuv_static", "hwcomposer_common"],
+    static_libs: [
+        "libyuv_static", 
+        "hwcomposer_common"
+    ],
     shared_libs: [
         "cuttlefish_auto_resources",
         "liblog",
@@ -37,7 +38,6 @@ cc_library_shared {
         "libcutils",
         "libutils",
         "libsync",
-        "libhardware",
         "libjpeg",
         "libcuttlefish_utils",
         "libcuttlefish_fs",

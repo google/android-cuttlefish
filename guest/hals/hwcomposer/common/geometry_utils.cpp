@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#include "geometry_utils.h"
+#include "guest/hals/hwcomposer/common/geometry_utils.h"
+
 #include <algorithm>
 #include <utility>
 
 namespace cvd {
 
-bool LayersOverlap(const vsoc_hwc_layer& layer1, const vsoc_hwc_layer& layer2) {
+bool LayersOverlap(const cvd_hwc_layer& layer1, const cvd_hwc_layer& layer2) {
   int left1 = layer1.displayFrame.left;
   int right1 = layer1.displayFrame.right;
   int top1 = layer1.displayFrame.top;
