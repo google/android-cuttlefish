@@ -452,7 +452,7 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.set_usb_ip_socket_name(tmp_config_obj.PerInstancePath("usb-ip"));
   }
 
-  tmp_config_obj.set_kernel_log_socket_name(tmp_config_obj.PerInstancePath("kernel-log"));
+  tmp_config_obj.set_kernel_log_pipe_name(tmp_config_obj.PerInstancePath("kernel-log"));
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
   tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
   tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
