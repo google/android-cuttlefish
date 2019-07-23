@@ -159,6 +159,8 @@ ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
     device/google/cuttlefish/shared/config/fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
+    device/google/cuttlefish/shared/config/composite-fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/composite-fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/composite-fstab.dtb:$(TARGET_COPY_OUT_VENDOR)/etc/composite-fstab.cutf_cvm \
 
 else ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
 PRODUCT_COPY_FILES += \
@@ -166,6 +168,8 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_ivsh \
     device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_cvm \
     device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
+    device/google/cuttlefish/shared/config/composite-fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_VENDOR)/etc/composite-fstab.cutf_ivsh \
+    device/google/cuttlefish/shared/config/composite-fstab.initrd-dynamic-partitions:$(TARGET_COPY_OUT_VENDOR)/etc/composite-fstab.cutf_cvm \
 
 else
 PRODUCT_COPY_FILES += \
