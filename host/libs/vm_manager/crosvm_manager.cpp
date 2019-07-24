@@ -86,7 +86,12 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
 
   if (config_->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
     crosvm_cmd.AddParameter("--gpu");
-    crosvm_cmd.AddParameter("--wayland-sock=", config_->wayland_socket());
+    if (config_->wayland_socket().size()) {
+      crosvm_cmd.AddParameter("--wayland-sock=", config_->wayland_socket());
+    }
+    if (config_->x_display().size()) {
+      crosvm_cmd.AddParameter("--x-display=", config_->x_display());
+    }
   }
   if (!config_->ramdisk_image_path().empty()) {
     crosvm_cmd.AddParameter("--initrd=", config_->ramdisk_image_path());
