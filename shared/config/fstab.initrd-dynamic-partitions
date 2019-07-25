@@ -7,5 +7,6 @@ system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
 # Add all dynamic partitions except system, after this comment
 vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
 product /product ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
+system_ext /system_ext ext4 noatime,ro,errors=panic wait,logical,first_stage_mount
 /dev/block/zram0 none swap defaults zramsize=75%
 /tmp /sdcard none defaults,bind recoveryonly
