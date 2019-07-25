@@ -1,0 +1,11 @@
+# hal_tv_cec_mock service
+type hal_tv_cec_mock, domain;
+hal_server_domain(hal_tv_cec_mock, hal_tv_cec);
+# Allow tv cec HAL's mock implementation to use vendor-binder service
+vndbinder_use(hal_tv_cec_mock);
+
+allow hal_tv_cec_mock hal_allocator:fd use;
+
+type hal_tv_cec_mock_exec, exec_type, file_type, vendor_file_type;
+
+init_daemon_domain(hal_tv_cec_mock)

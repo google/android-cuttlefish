@@ -25,6 +25,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.lmk.kill_timeout_ms=100 \
     ro.lmk.use_minfree_levels=true \
 
+# HDMI CEC HAL
+PRODUCT_PACKAGES += android.hardware.tv.cec@1.0-service.mock
+
 TARGET_USE_DYNAMIC_PARTITIONS ?= true
 ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
   PRODUCT_USE_DYNAMIC_PARTITIONS := true
