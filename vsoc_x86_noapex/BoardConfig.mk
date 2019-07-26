@@ -21,3 +21,5 @@
 include device/google/cuttlefish/vsoc_x86/BoardConfig.mk
 
 TARGET_FLATTEN_APEX := true
+BOARD_VENDOR_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/4.19-x86_64/*.ko)
+BOARD_VENDOR_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/mainline-x86_64/*.ko)

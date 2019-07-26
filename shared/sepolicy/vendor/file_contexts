@@ -59,6 +59,7 @@
 /vendor/bin/ip_link_add  u:object_r:ip_link_add_exec:s0
 /vendor/bin/setup_wifi  u:object_r:setup_wifi_exec:s0
 /vendor/bin/hw/android\.hardware\.authsecret@1\.0-service  u:object_r:hal_authsecret_default_exec:s0
+/vendor/bin/init\.insmod\.sh  u:object_r:init_insmod_sh_exec:s0
 
 /vendor/lib(64)?/cuttlefish_auto_resources.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/android\.hardware\.graphics\.mapper@2\.0-impl-2\.1\.so u:object_r:same_process_hal_file:s0
