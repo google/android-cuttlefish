@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <atomic>
 #include <limits.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -54,7 +55,7 @@ static int gralloc_alloc_buffer(
     buffer_handle_t* pHandle, int* pStrideInPixels) {
   int err = 0;
   int fd = -1;
-  static int sequence = 0;
+  static std::atomic<int> sequence;
 
   int bytes_per_pixel = formatToBytesPerPixel(format);
   int bytes_per_line;
