@@ -363,5 +363,11 @@ PRODUCT_COPY_FILES += \
 
 endif
 
+#
+# Shell script Vendor Module Loading
+#
+PRODUCT_COPY_FILES += \
+   $(LOCAL_PATH)/config/init.insmod.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.insmod.sh \
+
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy
