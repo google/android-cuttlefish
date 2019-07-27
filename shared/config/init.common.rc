@@ -14,12 +14,14 @@ on early-init
     setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
     setprop ro.hardware.hwcomposer ${ro.boot.hardware.hwcomposer}
 
+    # start module load in the background
+    start vendor.insmod_sh
+
 on early-init && property:ro.boot.fstab_name="fstab"
     mount /dev/block/vdd /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
 
 on early-init && property:ro.boot.fstab_name="composite-fstab"
     mount /dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
-
 
 on init
     # ZRAM setup
@@ -89,6 +91,12 @@ on property:sys.boot_completed=1
 on sys-boot-completed-set && property:persist.sys.zram_enabled=1
     swapon_all /vendor/etc/${ro.boot.fstab_name}.${ro.hardware}
 
+service vendor.insmod_sh /vendor/bin/init.insmod.sh
+    class main
+    user root
+    group root system
+    disabled
+    oneshot
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -tcp_port=5555 -vsock_port=6520
 
