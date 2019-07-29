@@ -23,8 +23,8 @@ TARGET_BOOTLOADER_BOARD_NAME := cutf
 # Boot partition size: 32M
 # This is only used for OTA update packages. The image size on disk
 # will not change (as is it not a filesystem.)
-BOARD_BOOTIMAGE_PARTITION_SIZE := 33554432
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 33554432
+BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
 
 # Build a separate vendor.img partition
 BOARD_USES_VENDORIMAGE := true
