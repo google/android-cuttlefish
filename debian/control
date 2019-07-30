@@ -22,7 +22,6 @@ Package: cuttlefish-common
 Architecture: any
 Depends:
  acl,
- adb,
  binutils,
  bridge-utils,
  device-tree-compiler,
@@ -57,7 +56,6 @@ Description: Cuttlefish Android Virtual Device companion package.
 Package: cuttlefish-integration
 Architecture: any
 Depends:
- adb,
  cuttlefish-common,
  libc6,
  ${misc:Depends}
