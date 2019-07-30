@@ -57,7 +57,6 @@ DEFINE_string(kernel_decompresser_executable,
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
 DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
-DEFINE_string(console, "ttyS0", "Console device for the guest kernel.");
 DEFINE_string(androidboot_console, "ttyS1",
               "Console device for the Android framework");
 DEFINE_string(
@@ -384,9 +383,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.add_kernel_cmdline(
       concat("androidboot.setupwizard_mode=", FLAGS_setupwizard_mode));
   tmp_config_obj.add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
-  if (!FLAGS_console.empty()) {
-    tmp_config_obj.add_kernel_cmdline(concat("console=", FLAGS_console));
-  }
   if (!FLAGS_androidboot_console.empty()) {
     tmp_config_obj.add_kernel_cmdline(
         concat("androidboot.console=", FLAGS_androidboot_console));
