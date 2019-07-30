@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
@@ -66,10 +67,14 @@ public:
   std::string LatestBuildId(const std::string& branch,
                             const std::string& target);
 
+  std::string BuildStatus(const DeviceBuild&);
+
   std::vector<Artifact> Artifacts(const DeviceBuild&);
 
   bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
                       const std::string& path);
 };
 
-DeviceBuild ArgumentToBuild(BuildApi* api, const std::string& arg);
+DeviceBuild ArgumentToBuild(BuildApi* api, const std::string& arg,
+                            const std::string& default_build_target,
+                            const std::chrono::seconds& retry_period);

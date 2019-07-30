@@ -41,6 +41,8 @@ DEFINE_string(system_image_build_id, "", "Alternate build for the system "
 DEFINE_string(directory, cvd::CurrentDirectory(), "Target directory to fetch "
                                                   "files into");
 DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
+DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
+                                       "in seconds. Set to 0 to not wait.");
 
 namespace {
 
@@ -142,6 +144,7 @@ int main(int argc, char** argv) {
   if (!cvd::DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << target_dir;
   }
+  std::chrono::seconds retry_period(std::stoi(FLAGS_wait_retry_period));
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
@@ -153,7 +156,9 @@ int main(int argc, char** argv) {
     }
     BuildApi build_api(std::move(credential_source));
 
-    DeviceBuild default_build = ArgumentToBuild(&build_api, FLAGS_default_build);
+    DeviceBuild default_build = ArgumentToBuild(&build_api, FLAGS_default_build,
+                                                "aosp_cf_x86_phone-userdebug",
+                                                retry_period);
 
     if (!download_host_package(&build_api, default_build, target_dir)) {
       LOG(FATAL) << "Could not download host package with target "
@@ -167,7 +172,9 @@ int main(int argc, char** argv) {
     desparse(target_dir + "/userdata.img");
 
     if (FLAGS_system_build != "") {
-      DeviceBuild system_build = ArgumentToBuild(&build_api, FLAGS_system_build);
+      DeviceBuild system_build = ArgumentToBuild(&build_api, FLAGS_system_build,
+                                                 "aosp_cf_x86_phone-userdebug",
+                                                 retry_period);
 
       if (!download_images(&build_api, system_build, target_dir,
                            {"system.img"})) {
@@ -177,7 +184,8 @@ int main(int argc, char** argv) {
     }
 
     if (FLAGS_kernel_build != "") {
-      DeviceBuild kernel_build = ArgumentToBuild(&build_api, FLAGS_kernel_build);
+      DeviceBuild kernel_build = ArgumentToBuild(&build_api, FLAGS_kernel_build,
+                                                 "kernel", retry_period);
 
       build_api.ArtifactToFile(kernel_build, "bzImage", target_dir + "/kernel");
     }
