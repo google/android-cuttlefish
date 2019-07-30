@@ -124,11 +124,13 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
     crosvm_cmd.AddParameter("--cid=", config_->vsock_guest_cid());
   }
 
+  // TODO (138616941) re-enable the console on its own serial port
+
   // Redirect the first serial port with the kernel logs to the appropriate file
   crosvm_cmd.AddParameter("--serial=num=1,type=file,path=",
-                       config_->kernel_log_pipe_name());
+                       config_->kernel_log_pipe_name(),",console=true");
   // Use stdio for the second serial port, it contains the serial console.
-  crosvm_cmd.AddParameter("--serial=num=2,type=stdout,console=true");
+  crosvm_cmd.AddParameter("--serial=num=2,type=stdout");
 
   // Redirect standard input and output to a couple of pipes for the console
   // forwarder host process to handle.
