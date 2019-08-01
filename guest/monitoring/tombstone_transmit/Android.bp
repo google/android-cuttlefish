@@ -19,9 +19,9 @@ cc_binary {
         "tombstone_transmit.cpp",
     ],
     static_libs: [
-        "libcuttlefish_fs_static",
+        "libcuttlefish_fs_product",
         "libgflags",
-        "cuttlefish_auto_resources_static",
+        "cuttlefish_auto_resources_product",
         "liblog",
         "libbase",
         "libcutils",
