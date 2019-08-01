@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2019 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,15 +13,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "adbshell",
-    "fetch_cvd",
-    "launch",
-    "stop_cvd",
-    "ivserver",
-    "record_audio",
-    "virtual_usb_manager",
-    "kernel_log_monitor",
-    "config_server",
-    "console_forwarder",
-]
+#pragma once
+
+#include <string>
+
+#include <curl/curl.h>
+#include <json/json.h>
+
+class CurlWrapper {
+  CURL* curl;
+public:
+  CurlWrapper();
+  ~CurlWrapper();
+  CurlWrapper(const CurlWrapper&) = delete;
+  CurlWrapper& operator=(const CurlWrapper*) = delete;
+  CurlWrapper(const CurlWrapper&&) = delete;
+
+  bool DownloadToFile(const std::string& url, const std::string& path);
+  std::string DownloadToString(const std::string& url);
+  Json::Value DownloadToJson(const std::string& url);
+};
