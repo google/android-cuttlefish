@@ -1,11 +1,15 @@
 cuttlefish-common (0.9.8) UNRELEASED; urgency=medium
 
+  [ Greg Hartman ]
   * Changes to enable arm builds
   * Fix dependencies for buster
   * Add qemu-user-static on non-amd64
   * Remove Debian adb package
 
- -- Greg Hartman <ghartman@google.com>  Wed, 26 Jun 2019 11:18:47 -0700
+  [ Julien Desprez ]
+  * Update default number of cvd account to 10 
+
+ -- Cody Schuffelen <schuffelen@google.com>  Thu, 01 Aug 2019 14:54:42 -0700
 
 cuttlefish-common (0.9.6) stable; urgency=medium
 
