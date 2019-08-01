@@ -40,3 +40,13 @@ public:
 
   static std::unique_ptr<CredentialSource> make();
 };
+
+class FixedCredentialSource : public CredentialSource {
+  std::string credential;
+public:
+  FixedCredentialSource(const std::string& credential);
+
+  virtual std::string Credential();
+
+  static std::unique_ptr<CredentialSource> make(const std::string& credential);
+};
