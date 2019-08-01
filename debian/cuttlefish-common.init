@@ -30,7 +30,7 @@
 
 . /lib/lsb/init-functions
 
-num_cvd_accounts=8
+num_cvd_accounts=10
 
 create_legacy_interface() {
   printf '<network>\n'
