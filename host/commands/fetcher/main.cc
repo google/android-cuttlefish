@@ -24,6 +24,7 @@
 #include "common/libs/utils/subprocess.h"
 
 #include "build_api.h"
+#include "credential_source.h"
 
 namespace {
 
@@ -35,6 +36,7 @@ const std::string& HOST_TOOLS = "cvd-host_package.tar.gz";
 DEFINE_string(build_id, "latest", "Build ID for all artifacts");
 DEFINE_string(branch, "aosp-master", "Branch when build_id=\"latest\"");
 DEFINE_string(target, "aosp_cf_x86_phone-userdebug", "Build target");
+DEFINE_string(credential_source, "", "Build API credential source");
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -42,7 +44,11 @@ int main(int argc, char** argv) {
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
-    BuildApi build_api;
+    std::unique_ptr<CredentialSource> credential_source;
+    if (FLAGS_credential_source == "gce") {
+      credential_source = GceMetadataCredentialSource::make();
+    }
+    BuildApi build_api(std::move(credential_source));
     std::string build_id = FLAGS_build_id;
     if (build_id == "latest") {
       build_id = build_api.LatestBuildId(FLAGS_branch, FLAGS_target);
@@ -51,7 +57,7 @@ int main(int argc, char** argv) {
     auto artifacts = build_api.Artifacts(build_id, FLAGS_target, "latest");
     bool has_host_package = false;
     bool has_image_zip = false;
-    const std::string img_zip_name = "aosp_cf_x86_phone-img-" + build_id + ".zip";
+    const std::string img_zip_name = FLAGS_target + "-img-" + build_id + ".zip";
     for (const auto& artifact : artifacts) {
       has_host_package |= artifact.Name() == HOST_TOOLS;
       has_image_zip |= artifact.Name() == img_zip_name;
@@ -60,7 +66,7 @@ int main(int argc, char** argv) {
       LOG(FATAL) << "Target build " << build_id << " did not have " << HOST_TOOLS;
     }
     if (!has_image_zip) {
-      LOG(FATAL) << "Target build " << build_id << " did not have" << img_zip_name;
+      LOG(FATAL) << "Target build " << build_id << " did not have " << img_zip_name;
     }
 
     build_api.ArtifactToFile(build_id, FLAGS_target, "latest",
