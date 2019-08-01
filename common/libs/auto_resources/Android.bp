@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
+cc_library {
     name: "cuttlefish_auto_resources",
     srcs: [
         "auto_resources.cpp",
@@ -22,7 +22,7 @@ cc_library_shared {
 }
 
 cc_library_static {
-    name: "cuttlefish_auto_resources_static",
+    name: "cuttlefish_auto_resources_product",
     srcs: [
         "auto_resources.cpp",
     ],
