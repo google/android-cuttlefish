@@ -13,24 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
+cc_library {
     name: "libcuttlefish_fs",
     srcs: [
         "gce_fs.cpp",
         "shared_fd.cpp",
     ],
-    shared_libs: [
-        "cuttlefish_auto_resources",
-        "libbase",
-        "liblog",
-    ],
+    shared: {
+        shared_libs: [
+            "cuttlefish_auto_resources",
+            "libbase",
+            "liblog",
+        ],
+    },
+    static: {
+        static_libs: [
+            "cuttlefish_auto_resources",
+            "libbase",
+            "liblog",
+        ],
+    },
+    target: {
+        vendor: {
+            // Liblog does not have a vendor-static variant.
+            shared_libs: ["liblog"],
+            exclude_static_libs: ["liblog"],
+        },
+    },
     defaults: ["cuttlefish_host_and_guest"],
 }
 
 cc_library_static {
-    name: "libcuttlefish_fs_static",
+    name: "libcuttlefish_fs_product",
     static_libs: [
-        "cuttlefish_auto_resources_static",
+        "cuttlefish_auto_resources_product",
     ],
     srcs: [
         "gce_fs.cpp",
