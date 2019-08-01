@@ -21,6 +21,7 @@
 #include "gflags/gflags.h"
 #include <glog/logging.h>
 
+#include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
 #include "build_api.h"
@@ -31,8 +32,12 @@ DEFINE_string(build_id, "latest", "Build ID for all artifacts");
 DEFINE_string(branch, "aosp-master", "Branch when build_id=\"latest\"");
 DEFINE_string(target, "aosp_cf_x86_phone-userdebug", "Build target");
 DEFINE_string(credential_source, "", "Build API credential source");
-DEFINE_string(system_image_build_target, "", "Alternate target for the system image");
-DEFINE_string(system_image_build_id, "", "Alternate build for the system image");
+DEFINE_string(system_image_build_target, "", "Alternate target for the system "
+                                             "image");
+DEFINE_string(system_image_build_id, "", "Alternate build for the system "
+                                         "image");
+DEFINE_string(directory, cvd::CurrentDirectory(), "Target directory to fetch "
+                                                  "files into");
 
 namespace {
 
@@ -50,6 +55,7 @@ std::string target_image_zip(std::string target, const std::string& build_id) {
 
 bool download_images(BuildApi* build_api, const std::string& target,
                      const std::string& build_id,
+                     const std::string& target_directory,
                      const std::vector<std::string>& images) {
   std::string img_zip_name = target_image_zip(target, build_id);
   auto artifacts = build_api->Artifacts(build_id, target, "latest");
@@ -62,33 +68,37 @@ bool download_images(BuildApi* build_api, const std::string& target,
         << " did not have " << img_zip_name;
     return false;
   }
+  std::string local_path = target_directory + "/" + img_zip_name;
   build_api->ArtifactToFile(build_id, target, "latest",
-                            img_zip_name, img_zip_name);
+                            img_zip_name, local_path);
   // -o for "overwrite"
-  std::vector<std::string> command = {"/usr/bin/unzip", "-o", img_zip_name};
+  std::vector<std::string> command = {"/usr/bin/unzip", "-o", local_path,
+                                      "-d", target_directory};
   for (const auto& image_file : images) {
     command.push_back(image_file);
   }
   int result = cvd::execute(command);
   if (result != 0) {
-    LOG(ERROR) << "Could not extract " << img_zip_name << "; ran command";
+    LOG(ERROR) << "Could not extract " << local_path << "; ran command";
     for (const auto& argument : command) {
       LOG(ERROR) << argument;
     }
     return false;
   }
-  if (unlink(img_zip_name.c_str()) != 0) {
-    LOG(ERROR) << "Could not delete " << img_zip_name;
+  if (unlink(local_path.c_str()) != 0) {
+    LOG(ERROR) << "Could not delete " << local_path;
   }
   return true;
 }
 bool download_images(BuildApi* build_api, const std::string& target,
-                     const std::string& build_id) {
-  return download_images(build_api, target, build_id, {});
+                     const std::string& build_id,
+                     const std::string& target_directory) {
+  return download_images(build_api, target, build_id, target_directory, {});
 }
 
 bool download_host_package(BuildApi* build_api, const std::string& target,
-                           const std::string& build_id) {
+                           const std::string& build_id,
+                           const std::string& target_directory) {
   auto artifacts = build_api->Artifacts(build_id, target, "latest");
   bool has_host_package = false;
   for (const auto& artifact : artifacts) {
@@ -99,14 +109,14 @@ bool download_host_package(BuildApi* build_api, const std::string& target,
         << " did not have " << HOST_TOOLS;
     return false;
   }
-  build_api->ArtifactToFile(build_id, target, "latest",
-                            HOST_TOOLS, HOST_TOOLS);
-  if (cvd::execute({"/bin/tar", "xvf", HOST_TOOLS}) != 0) {
-    LOG(FATAL) << "Could not extract " << HOST_TOOLS;
+  std::string local_path = target_directory + "/" + HOST_TOOLS;
+  build_api->ArtifactToFile(build_id, target, "latest", HOST_TOOLS, local_path);
+  if (cvd::execute({"/bin/tar", "xvf", local_path, "-C", target_directory}) != 0) {
+    LOG(FATAL) << "Could not extract " << local_path;
     return false;
   }
   if (unlink(HOST_TOOLS.c_str()) != 0) {
-    LOG(ERROR) << "Could not delete " << HOST_TOOLS;
+    LOG(ERROR) << "Could not delete " << local_path;
   }
   return true;
 }
@@ -116,6 +126,11 @@ bool download_host_package(BuildApi* build_api, const std::string& target,
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+  std::string target_dir = cvd::AbsolutePath(FLAGS_directory);
+  if (!cvd::DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
+    LOG(FATAL) << "Could not create " << target_dir;
+  }
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
@@ -131,11 +146,12 @@ int main(int argc, char** argv) {
       build_id = build_api.LatestBuildId(FLAGS_branch, FLAGS_target);
     }
 
-    if (!download_host_package(&build_api, FLAGS_target, build_id)) {
+    if (!download_host_package(&build_api, FLAGS_target, build_id,
+                               target_dir)) {
       LOG(FATAL) << "Could not download host package with target "
           << FLAGS_target << " and build id " << build_id;
     }
-    if (!download_images(&build_api, FLAGS_target, build_id)) {
+    if (!download_images(&build_api, FLAGS_target, build_id, target_dir)) {
       LOG(FATAL) << "Could not download images with target "
           << FLAGS_target << " and build id " << build_id;
     }
@@ -143,7 +159,8 @@ int main(int argc, char** argv) {
       std::string system_target = FLAGS_system_image_build_target == ""
           ? FLAGS_target
           : FLAGS_system_image_build_target;
-      if (!download_images(&build_api, system_target, FLAGS_system_image_build_id, {"system.img"})) {
+      if (!download_images(&build_api, system_target, FLAGS_system_image_build_id,
+                           target_dir, {"system.img"})) {
         LOG(FATAL) << "Could not download system image at target "
             << FLAGS_target << " and build id " << FLAGS_system_image_build_id;
       }
