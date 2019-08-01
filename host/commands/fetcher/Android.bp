@@ -31,6 +31,7 @@ cc_binary_host {
         "libcuttlefish_utils",
         "libcurl",
         "libcrypto",
+        "libgflags",
         "libssl",
         "libz",
         "libjsoncpp",
