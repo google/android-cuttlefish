@@ -13,29 +13,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
-    name: "fetch_cvd",
-    srcs: [
-        "build_api.cc",
-        "credential_source.cc",
-        "curl_wrapper.cc",
-        "main.cc",
-    ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
-    stl: "libc++_static",
-    static_libs: [
-        "cuttlefish_auto_resources",
-        "libbase",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libcurl",
-        "libcrypto",
-        "libgflags",
-        "libssl",
-        "libz",
-        "libjsoncpp",
-    ],
-    defaults: ["cuttlefish_host_only"],
-}
+#pragma once
+
+#include <chrono>
+#include <memory>
+
+#include "curl_wrapper.h"
+
+class CredentialSource {
+public:
+  virtual ~CredentialSource() = default;
+  virtual std::string Credential() = 0;
+};
+
+class GceMetadataCredentialSource : public CredentialSource {
+  CurlWrapper curl;
+  std::string latest_credential;
+  std::chrono::steady_clock::time_point expiration;
+
+  void RefreshCredential();
+public:
+  GceMetadataCredentialSource();
+  GceMetadataCredentialSource(GceMetadataCredentialSource&&) = default;
+
+  virtual std::string Credential();
+
+  static std::unique_ptr<CredentialSource> make();
+};
