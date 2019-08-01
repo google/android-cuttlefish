@@ -27,9 +27,15 @@ public:
   ~CurlWrapper();
   CurlWrapper(const CurlWrapper&) = delete;
   CurlWrapper& operator=(const CurlWrapper*) = delete;
-  CurlWrapper(const CurlWrapper&&) = delete;
+  CurlWrapper(CurlWrapper&&) = default;
 
   bool DownloadToFile(const std::string& url, const std::string& path);
+  bool DownloadToFile(const std::string& url, const std::string& path,
+                      const std::vector<std::string>& headers);
   std::string DownloadToString(const std::string& url);
+  std::string DownloadToString(const std::string& url,
+                               const std::vector<std::string>& headers);
   Json::Value DownloadToJson(const std::string& url);
+  Json::Value DownloadToJson(const std::string& url,
+                             const std::vector<std::string>& headers);
 };
