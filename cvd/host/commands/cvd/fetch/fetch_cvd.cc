@@ -74,7 +74,11 @@ bool download_images(BuildApi* build_api, const DeviceBuild& build,
     return false;
   }
   std::string local_path = target_directory + "/" + img_zip_name;
-  build_api->ArtifactToFile(build, img_zip_name, local_path);
+  if (!build_api->ArtifactToFile(build, img_zip_name, local_path)) {
+    LOG(ERROR) << "Unable to download " << build << ":" << img_zip_name << " to "
+        << local_path;
+    return false;
+  }
 
   auto could_extract = ExtractImages(local_path, target_directory, images);
   if (!could_extract) {
@@ -104,7 +108,13 @@ bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
     return false;
   }
   std::string local_path = target_directory + "/" + HOST_TOOLS;
-  build_api->ArtifactToFile(build, HOST_TOOLS, local_path);
+
+  if (!build_api->ArtifactToFile(build, HOST_TOOLS, local_path)) {
+    LOG(ERROR) << "Unable to download " << build << ":" << HOST_TOOLS << " to "
+        << local_path;
+    return false;
+  }
+
   if (cvd::execute({"/bin/tar", "xvf", local_path, "-C", target_directory}) != 0) {
     LOG(FATAL) << "Could not extract " << local_path;
     return false;
@@ -161,12 +171,10 @@ int main(int argc, char** argv) {
                                                 retry_period);
 
     if (!download_host_package(&build_api, default_build, target_dir)) {
-      LOG(FATAL) << "Could not download host package with target "
-          << default_build.target << " and build id " << default_build.id;
+      LOG(FATAL) << "Could not download host package for " << default_build;
     }
     if (!download_images(&build_api, default_build, target_dir)) {
-      LOG(FATAL) << "Could not download images with target "
-          << default_build.target << " and build id " << default_build.id;
+      LOG(FATAL) << "Could not download images for " << default_build;
     }
 
     desparse(target_dir + "/userdata.img");
@@ -178,8 +186,7 @@ int main(int argc, char** argv) {
 
       if (!download_images(&build_api, system_build, target_dir,
                            {"system.img"})) {
-        LOG(FATAL) << "Could not download system image at target "
-            << system_build.target << " and build id " << system_build.id;
+        LOG(FATAL) << "Could not download system image for " << system_build;
       }
     }
 
@@ -187,7 +194,10 @@ int main(int argc, char** argv) {
       DeviceBuild kernel_build = ArgumentToBuild(&build_api, FLAGS_kernel_build,
                                                  "kernel", retry_period);
 
-      build_api.ArtifactToFile(kernel_build, "bzImage", target_dir + "/kernel");
+      if (!build_api.ArtifactToFile(kernel_build, "bzImage", target_dir + "/kernel")) {
+        LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
+            << target_dir + "/kernel";
+      }
     }
   }
   curl_global_cleanup();

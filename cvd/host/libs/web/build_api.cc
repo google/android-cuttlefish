@@ -52,6 +52,10 @@ Artifact::Artifact(const Json::Value& json_artifact) {
   crc32 = json_artifact["crc32"].asUInt();
 }
 
+std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
+  return out << "(id=\"" << build.id << "\", target=\"" << build.target << "\")";
+}
+
 BuildApi::BuildApi(std::unique_ptr<CredentialSource> credential_source)
     : credential_source(std::move(credential_source)) {}
 
@@ -68,8 +72,13 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
   std::string url = BUILD_API + "/builds?branch=" + branch
       + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
   auto response = curl.DownloadToJson(url, Headers());
-  if (response["builds"].size() != 1) {
-    LOG(WARNING) << "invalid number of builds\n";
+  CHECK(!response.isMember("error")) << "Error fetching the latest build of \""
+      << target << "\" on \"" << branch << "\". Response was " << response;
+
+  if (!response.isMember("builds") || response["builds"].size() != 1) {
+    LOG(WARNING) << "expected to receive 1 build for \"" << target << "\" on \""
+        << branch << "\", but received " << response["builds"].size()
+        << ". Full response was " << response;
     return "";
   }
   return response["builds"][0]["buildId"].asString();
@@ -78,6 +87,9 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
 std::string BuildApi::BuildStatus(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
   auto response_json = curl.DownloadToJson(url, Headers());
+  CHECK(!response_json.isMember("error")) << "Error fetching the status of "
+      << "build " << build << ". Response was " << response_json;
+
   return response_json["buildAttemptStatus"].asString();
 }
 
@@ -85,6 +97,9 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
   std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
       + "/attempts/latest/artifacts?maxResults=1000";
   auto artifacts_json = curl.DownloadToJson(url, Headers());
+  CHECK(!artifacts_json.isMember("error")) << "Error fetching the artifacts of "
+      << build << ". Response was " << artifacts_json;
+
   std::vector<Artifact> artifacts;
   for (const auto& artifact_json : artifacts_json["artifacts"]) {
     artifacts.emplace_back(artifact_json);
@@ -119,24 +134,21 @@ DeviceBuild ArgumentToBuild(BuildApi* build_api, const std::string& arg,
   if (branch_latest_build_id != "") {
     LOG(INFO) << "The latest good build on branch \"" << branch_or_id
         << "\"with build target \"" << build_target
-        << "is \"" << branch_latest_build_id << "\"";
+        << "\" is \"" << branch_latest_build_id << "\"";
     build_id = branch_latest_build_id;
   }
   DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
   std::string status = build_api->BuildStatus(proposed_build);
   if (status == "") {
-    LOG(FATAL) << '"' << build_id << "\" with build target \""
-        << build_target << "\" is not a valid branch or build id.";
+    LOG(FATAL) << proposed_build << " is not a valid branch or build id.";
   }
-  LOG(INFO) << "Status for build " << build_id << "/" << build_target
-      << " is " << status;
+  LOG(INFO) << "Status for build " << proposed_build << " is " << status;
   while (retry_period != std::chrono::seconds::zero() && !StatusIsTerminal(status)) {
     LOG(INFO) << "Status is \"" << status << "\". Waiting for " << retry_period.count()
         << " seconds.";
     std::this_thread::sleep_for(retry_period);
     status = build_api->BuildStatus(proposed_build);
   }
-  LOG(INFO) << "Status for build " << build_id << "/" << build_target
-      << " is " << status;
+  LOG(INFO) << "Status for build " << proposed_build << " is " << status;
   return proposed_build;
 }
