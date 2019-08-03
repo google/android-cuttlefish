@@ -18,6 +18,7 @@
 #include <chrono>
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <string>
 
 #include "credential_source.h"
@@ -54,6 +55,8 @@ struct DeviceBuild {
   std::string id;
   std::string target;
 };
+
+std::ostream& operator<<(std::ostream&, const DeviceBuild&);
 
 class BuildApi {
   CurlWrapper curl;
