@@ -130,7 +130,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
   crosvm_cmd.AddParameter("--serial=num=1,type=file,path=",
                        config_->kernel_log_pipe_name(),",console=true");
   // Use stdio for the second serial port, it contains the serial console.
-  crosvm_cmd.AddParameter("--serial=num=2,type=stdout");
+  crosvm_cmd.AddParameter("--serial=num=2,type=stdout,stdin=true");
 
   // Redirect standard input and output to a couple of pipes for the console
   // forwarder host process to handle.
