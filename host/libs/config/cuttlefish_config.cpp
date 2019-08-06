@@ -114,7 +114,6 @@ const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
 const char* kWifiGuestMacAddr = "wifi_guest_mac_addr";
 const char* kWifiHostMacAddr = "wifi_host_mac_addr";
-const char* kEntropySource = "entropy_source";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kUuid = "uuid";
@@ -524,13 +523,6 @@ std::string CuttlefishConfig::wifi_tap_name() const {
 }
 void CuttlefishConfig::set_wifi_tap_name(const std::string& wifi_tap_name) {
   (*dictionary_)[kWifiTapName] = wifi_tap_name;
-}
-
-std::string CuttlefishConfig::entropy_source() const {
-  return (*dictionary_)[kEntropySource].asString();
-}
-void CuttlefishConfig::set_entropy_source(const std::string& entropy_source) {
-  (*dictionary_)[kEntropySource] = entropy_source;
 }
 
 int CuttlefishConfig::vsock_guest_cid() const {

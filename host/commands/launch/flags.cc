@@ -482,7 +482,6 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
 
-  tmp_config_obj.set_entropy_source("/dev/urandom");
   tmp_config_obj.set_uuid(FLAGS_uuid);
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
