@@ -212,9 +212,6 @@ class CuttlefishConfig {
   std::string wifi_host_mac_addr() const;
   void set_wifi_host_mac_addr(const std::string& wifi_host_mac_addr);
 
-  std::string entropy_source() const;
-  void set_entropy_source(const std::string& entropy_source);
-
   void set_vsock_guest_cid(int vsock_guest_cid);
   int vsock_guest_cid() const;
 
