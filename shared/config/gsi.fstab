@@ -1,2 +1,3 @@
 /dev/block/vde /vendor ext4 noatime,ro,errors=panic wait
 /dev/block/vdf /product ext4 noatime,ro,errors=panic wait
+/dev/block/vdg /system_ext ext4 noatime,ro,errors=panic wait

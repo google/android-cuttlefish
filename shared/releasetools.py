@@ -25,6 +25,7 @@ from common import BlockDifference, EmptyImage, GetUserImage
 #   know that an image is present in source build but not in target build.
 USERIMAGE_PARTITIONS = [
     "product",
+    "system_ext",
 ]
 
 
