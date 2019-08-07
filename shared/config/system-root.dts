@@ -37,6 +37,14 @@
 					mnt_flags = "noatime,ro,errors=panic";
 					fsmgr_flags = "wait";
 				};
+
+				system_ext {
+					compatible = "android,system_ext";
+					dev = "/dev/block/vdg";
+					type = "ext4";
+					mnt_flags = "noatime,ro,errors=panic";
+					fsmgr_flags = "wait";
+				};
 			};
 		};
 	};
