@@ -100,6 +100,7 @@ DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
 DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 DEFINE_string(product_image, "", "Location of the product partition image.");
 DEFINE_string(super_image, "", "Location of the super partition image.");
+DEFINE_string(system_ext_image, "", "Location of the system extension partition image.");
 DEFINE_string(composite_disk, "", "Location of the composite disk image.");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
@@ -250,6 +251,9 @@ bool ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_product_image = FLAGS_system_image_dir + "/product.img";
   SetCommandLineOptionWithMode("product_image", default_product_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_system_ext_image = FLAGS_system_image_dir + "/system_ext.img";
+  SetCommandLineOptionWithMode("system_ext_image", default_system_ext_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_super_image = FLAGS_system_image_dir + "/super.img";
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
@@ -444,6 +448,7 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_metadata_image,
       FLAGS_vendor_image,
       FLAGS_product_image,
+      FLAGS_system_ext_image,
     });
   }
 
@@ -725,6 +730,10 @@ std::vector<ImagePartition> disk_config() {
     partitions.push_back(ImagePartition {
       .label = "vendor",
       .image_file_path = FLAGS_vendor_image,
+    });
+    partitions.push_back(ImagePartition {
+      .label = "system_ext",
+      .image_file_path = FLAGS_system_ext_image,
     });
   }
   partitions.push_back(ImagePartition {
