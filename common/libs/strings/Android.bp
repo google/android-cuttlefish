@@ -13,13 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_shared {
+cc_library {
     name: "libcuttlefish_strings",
     srcs: [
         "str_split.cpp",
     ],
-    shared_libs: [
-        "libbase",
-    ],
+    shared: {
+        shared_libs: [
+            "libbase",
+        ],
+    },
+    static: {
+        static_libs: [
+            "libbase",
+        ],
+    },
     defaults: ["cuttlefish_host_and_guest"],
 }
