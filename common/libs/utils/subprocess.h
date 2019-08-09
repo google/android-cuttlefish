@@ -169,4 +169,8 @@ int execute(const std::vector<std::string>& command,
             const std::vector<std::string>& env);
 int execute(const std::vector<std::string>& command);
 
+// Like execute, but captures stdout and stderr and returns it in "output".
+int execute_capture_output(const std::vector<std::string>& command,
+                           std::string* output);
+
 }  // namespace cvd
