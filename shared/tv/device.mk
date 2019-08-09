@@ -28,6 +28,9 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # HDMI CEC HAL
 PRODUCT_PACKAGES += android.hardware.tv.cec@1.0-service.mock
 
+# Tuner HAL
+PRODUCT_PACKAGES += android.hardware.tv.tuner@1.0-service
+
 TARGET_USE_DYNAMIC_PARTITIONS ?= true
 ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
   PRODUCT_USE_DYNAMIC_PARTITIONS := true
