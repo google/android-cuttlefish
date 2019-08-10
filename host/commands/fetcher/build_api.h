@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
@@ -44,6 +45,16 @@ public:
   unsigned int Crc32() const { return crc32; }
 };
 
+struct DeviceBuild {
+  DeviceBuild(const std::string& id, const std::string& target) {
+    this->id = id;
+    this->target = target;
+  }
+
+  std::string id;
+  std::string target;
+};
+
 class BuildApi {
   CurlWrapper curl;
   std::unique_ptr<CredentialSource> credential_source;
@@ -56,11 +67,14 @@ public:
   std::string LatestBuildId(const std::string& branch,
                             const std::string& target);
 
-  std::vector<Artifact> Artifacts(const std::string& build_id,
-                                  const std::string& target,
-                                  const std::string& attempt_id);
+  std::string BuildStatus(const DeviceBuild&);
 
-  bool ArtifactToFile(const std::string& build_id, const std::string& target,
-                      const std::string& attempt_id,
-                      const std::string& artifact, const std::string& path);
+  std::vector<Artifact> Artifacts(const DeviceBuild&);
+
+  bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
+                      const std::string& path);
 };
+
+DeviceBuild ArgumentToBuild(BuildApi* api, const std::string& arg,
+                            const std::string& default_build_target,
+                            const std::chrono::seconds& retry_period);
