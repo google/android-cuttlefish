@@ -15,6 +15,8 @@
 
 #include "credential_source.h"
 
+#include <glog/logging.h>
+
 namespace {
 
 std::chrono::steady_clock::duration REFRESH_WINDOW =
@@ -39,6 +41,16 @@ std::string GceMetadataCredentialSource::Credential() {
 void GceMetadataCredentialSource::RefreshCredential() {
   Json::Value credential_json =
       curl.DownloadToJson(REFRESH_URL, {"Metadata-Flavor: Google"});
+
+  CHECK(!credential_json.isMember("error")) << "Error fetching credentials. " <<
+      "Response was " << credential_json;
+  bool has_access_token = credential_json.isMember("access_token");
+  bool has_expires_in = credential_json.isMember("expires_in");
+  if (!has_access_token || !has_expires_in) {
+    LOG(FATAL) << "GCE credential was missing access_token or expires_in. "
+        << "Full response was " << credential_json << "";
+  }
+
   expiration = std::chrono::steady_clock::now()
       + std::chrono::seconds(credential_json["expires_in"].asInt());
   latest_credential = credential_json["access_token"].asString();
