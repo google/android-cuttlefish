@@ -15,7 +15,10 @@
 
 #include "build_api.h"
 
+#include <chrono>
+#include <set>
 #include <string>
+#include <thread>
 
 #include <glog/logging.h>
 
@@ -23,6 +26,18 @@ namespace {
 
 const std::string BUILD_API =
     "https://www.googleapis.com/android/internal/build/v3";
+
+bool StatusIsTerminal(const std::string& status) {
+  const static std::set<std::string> terminal_statuses = {
+    "abandoned",
+    "complete",
+    "error",
+    "ABANDONED",
+    "COMPLETE",
+    "ERROR",
+  };
+  return terminal_statuses.count(status) > 0;
+}
 
 } // namespace
 
@@ -54,17 +69,21 @@ std::string BuildApi::LatestBuildId(const std::string& branch,
       + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
   auto response = curl.DownloadToJson(url, Headers());
   if (response["builds"].size() != 1) {
-    LOG(ERROR) << "invalid number of builds\n";
+    LOG(WARNING) << "invalid number of builds\n";
     return "";
   }
   return response["builds"][0]["buildId"].asString();
 }
 
-std::vector<Artifact> BuildApi::Artifacts(const std::string& build_id,
-                                          const std::string& target,
-                                          const std::string& attempt_id) {
-  std::string url = BUILD_API + "/builds/" + build_id + "/" + target
-      + "/attempts/" + attempt_id + "/artifacts?maxResults=1000";
+std::string BuildApi::BuildStatus(const DeviceBuild& build) {
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target;
+  auto response_json = curl.DownloadToJson(url, Headers());
+  return response_json["buildAttemptStatus"].asString();
+}
+
+std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
+      + "/attempts/latest/artifacts?maxResults=1000";
   auto artifacts_json = curl.DownloadToJson(url, Headers());
   std::vector<Artifact> artifacts;
   for (const auto& artifact_json : artifacts_json["artifacts"]) {
@@ -73,12 +92,51 @@ std::vector<Artifact> BuildApi::Artifacts(const std::string& build_id,
   return artifacts;
 }
 
-bool BuildApi::ArtifactToFile(const std::string& build_id,
-                              const std::string& target,
-                              const std::string& attempt_id,
+bool BuildApi::ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path) {
-  std::string url = BUILD_API + "/builds/" + build_id + "/" + target
-      + "/attempts/" + attempt_id + "/artifacts/" + artifact + "?alt=media";
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
+      + "/attempts/latest/artifacts/" + artifact + "?alt=media";
   return curl.DownloadToFile(url, path, Headers());
+}
+
+DeviceBuild ArgumentToBuild(BuildApi* build_api, const std::string& arg,
+                            const std::string& default_build_target,
+                            const std::chrono::seconds& retry_period) {
+  size_t slash_pos = arg.find('/');
+  if (slash_pos != std::string::npos
+        && arg.find('/', slash_pos + 1) != std::string::npos) {
+    LOG(FATAL) << "Build argument cannot have more than one '/' slash. Was at "
+        << slash_pos << " and " << arg.find('/', slash_pos + 1);
+  }
+  std::string build_target = slash_pos == std::string::npos
+      ? default_build_target : arg.substr(slash_pos + 1);
+  std::string branch_or_id = slash_pos == std::string::npos
+      ? arg: arg.substr(0, slash_pos);
+  std::string branch_latest_build_id =
+      build_api->LatestBuildId(branch_or_id, build_target);
+  std::string build_id = branch_or_id;
+  if (branch_latest_build_id != "") {
+    LOG(INFO) << "The latest good build on branch \"" << branch_or_id
+        << "\"with build target \"" << build_target
+        << "is \"" << branch_latest_build_id << "\"";
+    build_id = branch_latest_build_id;
+  }
+  DeviceBuild proposed_build = DeviceBuild(build_id, build_target);
+  std::string status = build_api->BuildStatus(proposed_build);
+  if (status == "") {
+    LOG(FATAL) << '"' << build_id << "\" with build target \""
+        << build_target << "\" is not a valid branch or build id.";
+  }
+  LOG(INFO) << "Status for build " << build_id << "/" << build_target
+      << " is " << status;
+  while (retry_period != std::chrono::seconds::zero() && !StatusIsTerminal(status)) {
+    LOG(INFO) << "Status is \"" << status << "\". Waiting for " << retry_period.count()
+        << " seconds.";
+    std::this_thread::sleep_for(retry_period);
+    status = build_api->BuildStatus(proposed_build);
+  }
+  LOG(INFO) << "Status for build " << build_id << "/" << build_target
+      << " is " << status;
+  return proposed_build;
 }

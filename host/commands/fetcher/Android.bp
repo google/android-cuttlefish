@@ -19,8 +19,8 @@ cc_binary_host {
         "build_api.cc",
         "credential_source.cc",
         "curl_wrapper.cc",
+        "fetch_cvd.cc",
         "install_zip.cc",
-        "main.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
