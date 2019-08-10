@@ -78,6 +78,9 @@ bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path
   curl_easy_setopt(curl, CURLOPT_CAINFO, "/etc/ssl/certs/ca-certificates.crt");
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, curl_headers);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  char error_buf[CURL_ERROR_SIZE];
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
+  curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
   FILE* file = fopen(path.c_str(), "w");
   if (!file) {
     LOG(ERROR) << "could not open file " << path;
@@ -89,8 +92,11 @@ bool CurlWrapper::DownloadToFile(const std::string& url, const std::string& path
     curl_slist_free_all(curl_headers);
   }
   fclose(file);
-  if(res != CURLE_OK) {
-    LOG(ERROR) << "curl_easy_perform() failed: " << curl_easy_strerror(res);
+  if (res != CURLE_OK) {
+    LOG(ERROR) << "curl_easy_perform() failed. "
+        << "Code was \"" << res << "\". "
+        << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+        << "Error buffer was \"" << error_buf << "\".";
     return false;
   }
   return true;
@@ -115,12 +121,18 @@ std::string CurlWrapper::DownloadToString(const std::string& url,
   std::stringstream data;
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, file_write_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &data);
+  char error_buf[CURL_ERROR_SIZE];
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
+  curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
   CURLcode res = curl_easy_perform(curl);
   if (curl_headers) {
     curl_slist_free_all(curl_headers);
   }
-  if(res != CURLE_OK) {
-    LOG(ERROR) << "curl_easy_perform() failed: " << curl_easy_strerror(res);
+  if (res != CURLE_OK) {
+    LOG(ERROR) << "curl_easy_perform() failed. "
+        << "Code was \"" << res << "\". "
+        << "Strerror was \"" << curl_easy_strerror(res) << "\". "
+        << "Error buffer was \"" << error_buf << "\".";
     return "";
   }
   return data.str();
@@ -137,6 +149,8 @@ Json::Value CurlWrapper::DownloadToJson(const std::string& url,
   Json::Value json;
   if (!reader.parse(contents, json)) {
     LOG(ERROR) << "Could not parse json: " << reader.getFormattedErrorMessages();
+    json["error"] = "Failed to parse json.";
+    json["response"] = contents;
   }
   return json;
 }
