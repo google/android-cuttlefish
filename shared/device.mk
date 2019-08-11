@@ -97,8 +97,8 @@ PRODUCT_PACKAGES += \
     libGLESv2_swiftshader
 
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
-PRODUCT_AAPT_CONFIG := normal large xlarge hdpi xhdpi
-# PRODUCT_AAPT_PREF_CONFIG is intentionally not set to pick up every density resources.
+# PRODUCT_AAPT_CONFIG and PRODUCT_AAPT_PREF_CONFIG are intentionally not set to
+# pick up every density resources.
 
 #
 # General files
