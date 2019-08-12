@@ -3,3 +3,4 @@
 allow bootanim kernel:fd use;
 
 allow bootanim self:process execmem;
+virgl_access(bootanim)

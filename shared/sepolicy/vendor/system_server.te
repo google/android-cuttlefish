@@ -5,3 +5,4 @@
 # (system/sepolicy) contains a corresponding neverallow which would cause build-time errors if the
 # allow execmem rule were added here.
 permissive system_server;
+virgl_access(system_server)
