@@ -1,0 +1,7 @@
+#####################################
+# virgl_access(client_domain)
+# Allow client_domain to communicate with the virgl GPU
+define(`virgl_access', `
+allow $1 gpu_device:dir { open read search };
+allow $1 sysfs_gpu:file { getattr open read };
+')
