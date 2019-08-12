@@ -2,3 +2,4 @@ allow surfaceflinger self:process execmem;
 
 # Read GCE initial metadata file
 allow surfaceflinger initial_metadata_file:file r_file_perms;
+virgl_access(surfaceflinger)
