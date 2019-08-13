@@ -1,1 +1,1 @@
-virgl_access(untrusted_app_all)
+gpu_access(untrusted_app_all)
