@@ -14,3 +14,6 @@ ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
 sys.cf.ser.  u:object_r:sys_cf_ser_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
 vendor.vsock_logcat_status  u:object_r:vsock_logcat_status_prop:s0
+hwc.drm.device u:object_r:cf_graphics_config_prop:s0 exact string
+hwc.drm.exclude_non_hwfb_imports u:object_r:cf_graphics_config_prop:s0 exact int
+hwc.drm.use_overlay_planes u:object_r:cf_graphics_config_prop:s0 exact int
