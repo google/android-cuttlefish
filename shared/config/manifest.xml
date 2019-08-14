@@ -131,10 +131,12 @@
         <version>1.1</version>
         <interface>
             <name>ICryptoFactory</name>
+            <instance>clearkey</instance>
             <instance>default</instance>
         </interface>
         <interface>
             <name>IDrmFactory</name>
+            <instance>clearkey</instance>
             <instance>default</instance>
         </interface>
     </hal>
@@ -147,11 +149,10 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- FIXME: Upgrade gnss to 1.1 -->
     <hal format="hidl">
         <name>android.hardware.gnss</name>
         <transport>hwbinder</transport>
-        <version>1.0</version>
+        <version>1.1</version>
         <interface>
             <name>IGnss</name>
             <instance>default</instance>
@@ -339,17 +340,15 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- TODO (b/130078389):
     <hal format="hidl">
         <name>android.hardware.soundtrigger</name>
         <transport>hwbinder</transport>
-        <version>2.2</version>
+        <version>2.0</version>
         <interface>
             <name>ISoundTriggerHw</name>
             <instance>default</instance>
         </interface>
     </hal>
-    -->
     <!-- TODO (b/130079321):
     <hal format="hidl">
         <name>android.hardware.tetheroffload.config</name>
