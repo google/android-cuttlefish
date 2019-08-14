@@ -9445,7 +9445,7 @@ void radio_1_4::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         if (kOemHookEnabled) {
             oemHookService[i] = new OemHookImpl;
             oemHookService[i]->mSlotId = i;
-            status = oemHookService[i]->registerAsService(serviceNames[i]);
+            // status = oemHookService[i]->registerAsService(serviceNames[i]);
         }
 
         ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
