@@ -32,7 +32,8 @@ int main() {
     configureRpcThreadpool(1, true);
 
     sp<IStorage> service = new Storage();
-    status_t result = LazyServiceRegistrar().registerService(service);
+    auto serviceRegistrar = LazyServiceRegistrar::getInstance();
+    status_t result = serviceRegistrar.registerService(service);
 
     if (result != OK) {
         return result;
