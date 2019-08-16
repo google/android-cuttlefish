@@ -1,0 +1,2 @@
+# Ramdump app
+user=_app seinfo=platform name=com.android.ramdump domain=ramdump_app type=app_data_file levelFrom=all
