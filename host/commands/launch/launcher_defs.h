@@ -43,6 +43,7 @@ enum LauncherExitCodes : int {
   kConfigServerError = 19,
   kTombstoneServerError = 20,
   kTombstoneDirCreationError = 21,
+  kInitRamFsConcatError = 22,
 };
 
 // Actions supported by the launcher server
