@@ -1,6 +1,7 @@
 #include "host/commands/launch/flags.h"
 
 #include <iostream>
+#include <fstream>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -49,6 +50,7 @@ DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
+DEFINE_string(initramfs_path, "", "Path to the initramfs");
 DEFINE_bool(decompress_kernel, false,
             "Whether to decompress the kernel image.");
 DEFINE_string(kernel_decompresser_executable,
@@ -759,6 +761,19 @@ bool ShouldCreateCompositeDisk() {
   return false;
 }
 
+bool AppendToRamdisk(const std::string& ramdisk_path, const std::string& appendee_path) {
+  std::ofstream ramdisk(ramdisk_path, std::ios_base::binary | std::ios_base::app);
+  std::ifstream appendee(appendee_path, std::ios_base::binary);
+
+  if(!ramdisk.is_open() || !appendee.is_open()) {
+    return false;
+  }
+
+  ramdisk.seekp(0, std::ios_base::end);
+  ramdisk << appendee.rdbuf();
+  return true;
+}
+
 void CreateCompositeDisk() {
   if (FLAGS_composite_disk.empty()) {
     LOG(FATAL) << "asked to create composite disk, but path was empty";
@@ -814,6 +829,13 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
                                      : "")) {
     LOG(ERROR) << "Failed to unpack boot image";
     exit(LauncherExitCodes::kBootImageUnpackError);
+  }
+
+  if(FLAGS_initramfs_path.size()) {
+    if(!AppendToRamdisk(config->ramdisk_image_path(), FLAGS_initramfs_path)) {
+      LOG(ERROR) << "Failed to concatenate ramdisk and initramfs";
+      exit(LauncherExitCodes::kInitRamFsConcatError);
+    }
   }
 
   if (config->decompress_kernel()) {
