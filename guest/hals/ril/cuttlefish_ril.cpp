@@ -1510,7 +1510,7 @@ static void init_virtual_network() {
   gGSMNeighboringCells[0].cid = (char*)"0000";
   gGSMNeighboringCells[0].rssi = 75;
 #if VSOC_PLATFORM_SDK_AFTER(O_MR1)
-  gNetworkOperators["302780"] =
+  gNetworkOperators["311740"] =
 #else
   gNetworkOperators["310260"] =
 #endif
@@ -1905,7 +1905,7 @@ static void pollSIMState(void* /*param*/) {
       if (gRadioPowerState == RADIO_STATE_ON) {
         gSimStatus = SIM_READY;
 #if VSOC_PLATFORM_SDK_AFTER(O_MR1)
-        gCurrentNetworkOperator = "302780";
+        gCurrentNetworkOperator = "311740";
 #else
         gCurrentNetworkOperator = "310260";
 #endif
