@@ -68,6 +68,12 @@ PRODUCT_PACKAGES += android.hardware.drm@1.2-service.clearkey
 PRODUCT_PACKAGES += \
     android.hardware.gnss@2.0-service
 
+# CAN bus HAL
+PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
+PRODUCT_PACKAGES_DEBUG += canhalctrl \
+    canhaldump \
+    canhalsend
+
 # DRM Properities
 PRODUCT_PROPERTY_OVERRIDES += \
     drm.service.enabled=true
