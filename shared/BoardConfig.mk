@@ -97,6 +97,7 @@ WIFI_DRIVER_FW_PATH_STA     := "/dev/null"
 WIFI_DRIVER_FW_PATH_AP      := "/dev/null"
 
 BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor/google
 PRODUCT_PRIVATE_SEPOLICY_DIRS := device/google/cuttlefish/shared/sepolicy/private
 # TODO(b/131193755) remove the following line.
 PRODUCT_PUBLIC_SEPOLICY_DIRS := device/google/cuttlefish/shared/sepolicy/public
