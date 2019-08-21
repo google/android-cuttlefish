@@ -112,8 +112,6 @@ const char* kIvshmemVectorCount = "ivshmem_vector_count";
 const char* kMobileBridgeName = "mobile_bridge_name";
 const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
-const char* kWifiGuestMacAddr = "wifi_guest_mac_addr";
-const char* kWifiHostMacAddr = "wifi_host_mac_addr";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kUuid = "uuid";
@@ -493,22 +491,6 @@ std::string CuttlefishConfig::mobile_bridge_name() const {
 void CuttlefishConfig::set_mobile_bridge_name(
     const std::string& mobile_bridge_name) {
   (*dictionary_)[kMobileBridgeName] = mobile_bridge_name;
-}
-
-std::string CuttlefishConfig::wifi_guest_mac_addr() const {
-  return (*dictionary_)[kWifiGuestMacAddr].asString();
-}
-void CuttlefishConfig::set_wifi_guest_mac_addr(
-    const std::string& wifi_guest_mac_addr) {
-  (*dictionary_)[kWifiGuestMacAddr] = wifi_guest_mac_addr;
-}
-
-std::string CuttlefishConfig::wifi_host_mac_addr() const {
-  return (*dictionary_)[kWifiHostMacAddr].asString();
-}
-void CuttlefishConfig::set_wifi_host_mac_addr(
-    const std::string& wifi_host_mac_addr) {
-  (*dictionary_)[kWifiHostMacAddr] = wifi_host_mac_addr;
 }
 
 std::string CuttlefishConfig::mobile_tap_name() const {
