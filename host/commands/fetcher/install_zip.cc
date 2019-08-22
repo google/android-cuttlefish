@@ -42,18 +42,20 @@ std::vector<std::string> ArchiveContents(const std::string& archive) {
 bool ExtractImages(const std::string& archive,
                    const std::string& target_directory,
                    const std::vector<std::string>& images) {
-  std::vector<std::string> bsdtar_cmd = {
-      "/usr/bin/bsdtar",
-      "-x",
-      "-v",
-      "-C", target_directory,
-      "-f", archive,
-      "-S",
-  };
+  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
+  bsdtar_cmd.AddParameter("-x");
+  bsdtar_cmd.AddParameter("-v");
+  bsdtar_cmd.AddParameter("-C");
+  bsdtar_cmd.AddParameter(target_directory);
+  bsdtar_cmd.AddParameter("-f");
+  bsdtar_cmd.AddParameter(archive);
+  bsdtar_cmd.AddParameter("-S");
   for (const auto& img : images) {
-    bsdtar_cmd.push_back(img);
+    bsdtar_cmd.AddParameter(img);
   }
-  auto bsdtar_ret = cvd::execute(bsdtar_cmd);
+  bsdtar_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
+                           cvd::Subprocess::StdIOChannel::kStdErr);
+  auto bsdtar_ret = bsdtar_cmd.Start().Wait();
   if (bsdtar_ret != 0) {
     LOG(ERROR) << "Unable to extract images. bsdtar returned " << bsdtar_ret;
     return false;
@@ -80,8 +82,12 @@ bool ExtractImages(const std::string& archive,
       continue;
     }
     std::string inflated_file = extracted_file + ".inflated";
-    auto simg_ret = cvd::execute({"/usr/bin/simg2img", extracted_file, inflated_file});
-    if (simg_ret != 0) {
+    cvd::Command simg_cmd("/usr/bin/simg2img");
+    simg_cmd.AddParameter(extracted_file);
+    simg_cmd.AddParameter(inflated_file);
+    simg_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
+                           cvd::Subprocess::StdIOChannel::kStdErr);
+    if (simg_cmd.Start().Wait() != 0) {
       LOG(ERROR) << "Unable to run simg2img on " << file;
       extraction_success = false;
       continue;
