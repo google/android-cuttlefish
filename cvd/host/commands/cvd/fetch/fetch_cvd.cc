@@ -41,11 +41,11 @@ DEFINE_string(system_build, "", "source for system.img and product.img");
 DEFINE_string(kernel_build, "", "source for the kernel or gki target");
 DEFINE_string(otatools_build, "", "source for the host ota tools");
 
+DEFINE_bool(download_img_zip, true, "Whether to fetch the -img-*.zip file.");
+DEFINE_bool(download_target_files_zip, false, "Whether to fetch the "
+                                              "-target_files-*.zip file.");
+
 DEFINE_string(credential_source, "", "Build API credential source");
-DEFINE_string(system_image_build_target, "", "Alternate target for the system "
-                                             "image");
-DEFINE_string(system_image_build_id, "", "Alternate build for the system "
-                                         "image");
 DEFINE_string(directory, cvd::CurrentDirectory(), "Target directory to fetch "
                                                   "files into");
 DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
@@ -57,7 +57,12 @@ namespace {
 const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
 const std::string OTA_TOOLS = "otatools.zip";
 
-std::string target_image_zip(const DeviceBuild& build) {
+/** Returns the name of one of the artifact target zip files.
+ *
+ * For example, for a target "aosp_cf_x86_phone-userdebug" at a build "5824130",
+ * the image zip file would be "aosp_cf_x86_phone-img-5824130.zip"
+ */
+std::string target_build_zip(const DeviceBuild& build, const std::string& name) {
   std::string target = build.target;
   if (target.find("-userdebug") != std::string::npos) {
     target.replace(target.find("-userdebug"), sizeof("-userdebug"), "");
@@ -65,13 +70,13 @@ std::string target_image_zip(const DeviceBuild& build) {
   if (target.find("-eng") != std::string::npos) {
     target.replace(target.find("-eng"), sizeof("-eng"), "");
   }
-  return target + "-img-" + build.id + ".zip";
+  return target + "-" + name + "-" + build.id + ".zip";
 }
 
 bool download_images(BuildApi* build_api, const DeviceBuild& build,
                      const std::string& target_directory,
                      const std::vector<std::string>& images) {
-  std::string img_zip_name = target_image_zip(build);
+  std::string img_zip_name = target_build_zip(build, "img");
   auto artifacts = build_api->Artifacts(build);
   bool has_image_zip = false;
   for (const auto& artifact : artifacts) {
@@ -102,6 +107,28 @@ bool download_images(BuildApi* build_api, const DeviceBuild& build,
 bool download_images(BuildApi* build_api, const DeviceBuild& build,
                      const std::string& target_directory) {
   return download_images(build_api, build, target_directory, {});
+}
+
+bool download_target_files(BuildApi* build_api, const DeviceBuild& build,
+                           const std::string& target_directory) {
+  std::string target_zip = target_build_zip(build, "target_files");
+  auto artifacts = build_api->Artifacts(build);
+  bool has_target_zip = false;
+  for (const auto& artifact : artifacts) {
+    has_target_zip |= artifact.Name() == target_zip;
+  }
+  if (!has_target_zip) {
+    LOG(ERROR) << "Target " << build.target << " at id " << build.id
+        << " did not have " << target_zip;
+    return false;
+  }
+  std::string local_path = target_directory + "/" + target_zip;
+  if (!build_api->ArtifactToFile(build, target_zip, local_path)) {
+    LOG(ERROR) << "Unable to download " << build << ":" << target_zip << " to "
+        << local_path;
+    return false;
+  }
+  return true;
 }
 
 bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
@@ -226,19 +253,32 @@ int main(int argc, char** argv) {
         LOG(FATAL) << "Could not download ota tools for " << ota_build;
       }
     }
-    if (!download_images(&build_api, default_build, target_dir)) {
-      LOG(FATAL) << "Could not download images for " << default_build;
+    if (FLAGS_download_img_zip) {
+      if (!download_images(&build_api, default_build, target_dir)) {
+        LOG(FATAL) << "Could not download images for " << default_build;
+      }
+      desparse(target_dir + "/userdata.img");
     }
-    desparse(target_dir + "/userdata.img");
+    if (FLAGS_download_target_files_zip) {
+      if (!download_target_files(&build_api, default_build, target_dir)) {
+        LOG(FATAL) << "Could not download target files for " << default_build;
+      }
+    }
 
     if (FLAGS_system_build != "") {
       DeviceBuild system_build = ArgumentToBuild(&build_api, FLAGS_system_build,
                                                  DEFAULT_BUILD_TARGET,
                                                  retry_period);
-
-      if (!download_images(&build_api, system_build, target_dir,
-                           {"system.img"})) {
-        LOG(FATAL) << "Could not download system image for " << system_build;
+      if (FLAGS_download_img_zip) {
+        if (!download_images(&build_api, system_build, target_dir,
+                            {"system.img"})) {
+          LOG(FATAL) << "Could not download system image for " << system_build;
+        }
+      }
+      if (FLAGS_download_target_files_zip) {
+        if (!download_target_files(&build_api, system_build, target_dir)) {
+          LOG(FATAL) << "Could not download target files for " << system_build;
+        }
       }
     }
 
