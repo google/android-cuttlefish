@@ -152,12 +152,6 @@ DEFINE_string(adb_connector_binary,
               "Location of the adb_connector binary. Only relevant if "
               "-run_adb_connector is true");
 DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
-DEFINE_string(guest_mac_address,
-              GetPerInstanceDefault("00:43:56:44:80:"), // 00:43:56:44:80:0x
-              "MAC address of the wifi interface to be created on the guest.");
-DEFINE_string(host_mac_address,
-              "42:00:00:00:00:00",
-              "MAC address of the wifi interface running on the host.");
 DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
               "The name of the tap interface to use for wifi");
 DEFINE_int32(vsock_guest_cid,
@@ -483,9 +477,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
 
   tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);
-
-  tmp_config_obj.set_wifi_guest_mac_addr(FLAGS_guest_mac_address);
-  tmp_config_obj.set_wifi_host_mac_addr(FLAGS_host_mac_address);
 
   tmp_config_obj.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
 
