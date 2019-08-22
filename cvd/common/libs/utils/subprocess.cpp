@@ -245,6 +245,11 @@ bool Command::RedirectStdIO(cvd::Subprocess::StdIOChannel channel,
   redirects_[channel] = dup_fd;
   return true;
 }
+bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                            Subprocess::StdIOChannel parent_channel) {
+  return RedirectStdIO(subprocess_channel,
+                       cvd::SharedFD::Dup(static_cast<int>(parent_channel)));
+}
 
 Subprocess Command::Start(bool with_control_socket) const {
   auto cmd = ToCharPointers(command_);

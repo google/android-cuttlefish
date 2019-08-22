@@ -141,6 +141,8 @@ class Command {
 
   // Redirects the standard IO of the command.
   bool RedirectStdIO(Subprocess::StdIOChannel channel, cvd::SharedFD shared_fd);
+  bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+                     Subprocess::StdIOChannel parent_channel);
 
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances. If
