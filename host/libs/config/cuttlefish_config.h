@@ -206,12 +206,6 @@ class CuttlefishConfig {
   std::string wifi_tap_name() const;
   void set_wifi_tap_name(const std::string& wifi_tap_name);
 
-  std::string wifi_guest_mac_addr() const;
-  void set_wifi_guest_mac_addr(const std::string& wifi_guest_mac_addr);
-
-  std::string wifi_host_mac_addr() const;
-  void set_wifi_host_mac_addr(const std::string& wifi_host_mac_addr);
-
   void set_vsock_guest_cid(int vsock_guest_cid);
   int vsock_guest_cid() const;
 
