@@ -21,6 +21,7 @@
 #include "gflags/gflags.h"
 #include <glog/logging.h>
 
+#include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
@@ -149,14 +150,8 @@ bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
     return false;
   }
 
-  cvd::Command tar_cmd("/bin/tar");
-  tar_cmd.AddParameter("xvf");
-  tar_cmd.AddParameter(local_path);
-  tar_cmd.AddParameter("-C");
-  tar_cmd.AddParameter(target_directory);
-  tar_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                        cvd::Subprocess::StdIOChannel::kStdErr);
-  if (tar_cmd.Start().Wait() != 0) {
+  cvd::Archive archive(local_path);
+  if (!archive.ExtractAll(target_directory)) {
     LOG(FATAL) << "Could not extract " << local_path;
     return false;
   }
@@ -206,17 +201,8 @@ bool download_ota_tools(BuildApi* build_api, const DeviceBuild& build,
     LOG(FATAL) << "Could not create " << otatools_dir;
     return false;
   }
-  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
-  bsdtar_cmd.AddParameter("-x");
-  bsdtar_cmd.AddParameter("-v");
-  bsdtar_cmd.AddParameter("-C");
-  bsdtar_cmd.AddParameter(otatools_dir);
-  bsdtar_cmd.AddParameter("-f");
-  bsdtar_cmd.AddParameter(local_path);
-  bsdtar_cmd.AddParameter("-S");
-  bsdtar_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                           cvd::Subprocess::StdIOChannel::kStdErr);
-  if (bsdtar_cmd.Start().Wait() != 0) {
+  cvd::Archive archive(local_path);
+  if (!archive.ExtractAll(otatools_dir)) {
     LOG(FATAL) << "Could not extract " << local_path;
     return false;
   }

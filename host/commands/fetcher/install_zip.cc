@@ -22,48 +22,25 @@
 
 #include <glog/logging.h>
 
-#include "common/libs/strings/str_split.h"
+#include "common/libs/utils/archive.h"
 #include "common/libs/utils/subprocess.h"
 
-namespace {
-
-std::vector<std::string> ArchiveContents(const std::string& archive) {
-  std::string bsdtar_output;
-  auto bsdtar_ret =
-      cvd::execute_capture_output({"/usr/bin/bsdtar", "-tf", archive},
-                                  &bsdtar_output);
-  return bsdtar_ret == 0
-      ? cvd::StrSplit(bsdtar_output, '\n')
-      : std::vector<std::string>();
-}
-
-} // namespace
-
-bool ExtractImages(const std::string& archive,
+bool ExtractImages(const std::string& archive_file,
                    const std::string& target_directory,
                    const std::vector<std::string>& images) {
-  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
-  bsdtar_cmd.AddParameter("-x");
-  bsdtar_cmd.AddParameter("-v");
-  bsdtar_cmd.AddParameter("-C");
-  bsdtar_cmd.AddParameter(target_directory);
-  bsdtar_cmd.AddParameter("-f");
-  bsdtar_cmd.AddParameter(archive);
-  bsdtar_cmd.AddParameter("-S");
-  for (const auto& img : images) {
-    bsdtar_cmd.AddParameter(img);
-  }
-  bsdtar_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                           cvd::Subprocess::StdIOChannel::kStdErr);
-  auto bsdtar_ret = bsdtar_cmd.Start().Wait();
-  if (bsdtar_ret != 0) {
-    LOG(ERROR) << "Unable to extract images. bsdtar returned " << bsdtar_ret;
+  cvd::Archive archive(archive_file);
+  bool extracted =
+      images.size() > 0
+          ? archive.ExtractFiles(images, target_directory)
+          : archive.ExtractAll(target_directory);
+  if (!extracted) {
+    LOG(ERROR) << "Unable to extract images.";
     return false;
   }
 
   bool extraction_success = true;
   std::vector<std::string> files =
-      images.size() > 0 ? images : ArchiveContents(archive);
+      images.size() > 0 ? images : archive.Contents();
   for (const auto& file : files) {
     if (file.find(".img") == std::string::npos) {
       continue;
