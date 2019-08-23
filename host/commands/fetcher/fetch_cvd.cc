@@ -28,10 +28,18 @@
 #include "credential_source.h"
 #include "install_zip.h"
 
-DEFINE_string(default_build, "aosp-master/aosp_cf_x86_phone-userdebug",
+namespace {
+
+const std::string DEFAULT_BRANCH = "aosp-master";
+const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_phone-userdebug";
+
+}
+
+DEFINE_string(default_build, DEFAULT_BRANCH + "/" + DEFAULT_BUILD_TARGET,
               "source for the cuttlefish build to use (vendor.img + host)");
 DEFINE_string(system_build, "", "source for system.img and product.img");
 DEFINE_string(kernel_build, "", "source for the kernel or gki target");
+DEFINE_string(otatools_build, "", "source for the host ota tools");
 
 DEFINE_string(credential_source, "", "Build API credential source");
 DEFINE_string(system_image_build_target, "", "Alternate target for the system "
@@ -46,7 +54,8 @@ DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
 
 namespace {
 
-const std::string& HOST_TOOLS = "cvd-host_package.tar.gz";
+const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
+const std::string OTA_TOOLS = "otatools.zip";
 
 std::string target_image_zip(const DeviceBuild& build) {
   std::string target = build.target;
@@ -134,6 +143,40 @@ bool desparse(const std::string& file) {
   return true;
 }
 
+bool download_ota_tools(BuildApi* build_api, const DeviceBuild& build,
+                        const std::string& target_directory) {
+  auto artifacts = build_api->Artifacts(build);
+  bool has_host_package = false;
+  for (const auto& artifact : artifacts) {
+    has_host_package |= artifact.Name() == OTA_TOOLS;
+  }
+  if (!has_host_package) {
+    LOG(ERROR) << "Target " << build.target << " at id " << build.id
+        << " did not have " << OTA_TOOLS;
+    return false;
+  }
+  std::string local_path = target_directory + "/" + OTA_TOOLS;
+
+  if (!build_api->ArtifactToFile(build, OTA_TOOLS, local_path)) {
+    LOG(ERROR) << "Unable to download " << build << ":" << OTA_TOOLS << " to "
+        << local_path;
+    return false;
+  }
+
+  std::string otatools_dir = target_directory + "/otatools";
+  if (!cvd::DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
+    LOG(FATAL) << "Could not create " << otatools_dir;
+    return false;
+  }
+  auto bsdtar_out = cvd::execute(
+      {"/usr/bin/bsdtar", "-x", "-v", "-C", otatools_dir, "-f", local_path, "-S"});
+  if (bsdtar_out != 0) {
+    LOG(FATAL) << "Could not extract " << local_path;
+    return false;
+  }
+  return true;
+}
+
 std::string USAGE_MESSAGE =
     "<flags>\n"
     "\n"
@@ -167,21 +210,30 @@ int main(int argc, char** argv) {
     BuildApi build_api(std::move(credential_source));
 
     DeviceBuild default_build = ArgumentToBuild(&build_api, FLAGS_default_build,
-                                                "aosp_cf_x86_phone-userdebug",
+                                                DEFAULT_BUILD_TARGET,
                                                 retry_period);
 
     if (!download_host_package(&build_api, default_build, target_dir)) {
       LOG(FATAL) << "Could not download host package for " << default_build;
     }
+    if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
+      DeviceBuild ota_build = default_build;
+      if (FLAGS_otatools_build != "") {
+        ota_build = ArgumentToBuild(&build_api, FLAGS_otatools_build,
+                                    DEFAULT_BUILD_TARGET, retry_period);
+      }
+      if (!download_ota_tools(&build_api, ota_build, target_dir)) {
+        LOG(FATAL) << "Could not download ota tools for " << ota_build;
+      }
+    }
     if (!download_images(&build_api, default_build, target_dir)) {
       LOG(FATAL) << "Could not download images for " << default_build;
     }
-
     desparse(target_dir + "/userdata.img");
 
     if (FLAGS_system_build != "") {
       DeviceBuild system_build = ArgumentToBuild(&build_api, FLAGS_system_build,
-                                                 "aosp_cf_x86_phone-userdebug",
+                                                 DEFAULT_BUILD_TARGET,
                                                  retry_period);
 
       if (!download_images(&build_api, system_build, target_dir,
