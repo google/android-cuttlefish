@@ -70,6 +70,7 @@ std::vector<std::string> BuildApi::Headers() {
 std::string BuildApi::LatestBuildId(const std::string& branch,
                                     const std::string& target) {
   std::string url = BUILD_API + "/builds?branch=" + branch
+      + "&buildAttemptStatus=complete"
       + "&buildType=submitted&maxResults=1&successful=true&target=" + target;
   auto response = curl.DownloadToJson(url, Headers());
   CHECK(!response.isMember("error")) << "Error fetching the latest build of \""
