@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
+#include <iterator>
 #include <string>
 
 #include <sys/stat.h>
@@ -72,9 +74,10 @@ std::string target_build_zip(const DeviceBuild& build, const std::string& name) 
   return target + "-" + name + "-" + build.id + ".zip";
 }
 
-bool download_images(BuildApi* build_api, const DeviceBuild& build,
-                     const std::string& target_directory,
-                     const std::vector<std::string>& images) {
+std::vector<std::string> download_images(BuildApi* build_api,
+                                         const DeviceBuild& build,
+                                         const std::string& target_directory,
+                                         const std::vector<std::string>& images) {
   std::string img_zip_name = target_build_zip(build, "img");
   auto artifacts = build_api->Artifacts(build);
   bool has_image_zip = false;
@@ -82,34 +85,37 @@ bool download_images(BuildApi* build_api, const DeviceBuild& build,
     has_image_zip |= artifact.Name() == img_zip_name;
   }
   if (!has_image_zip) {
-    LOG(ERROR) << "Target " << build.target << " at id " << build.id
-        << " did not have " << img_zip_name;
-    return false;
+    LOG(FATAL) << "Target " << build.target << " at id " << build.id
+               << " did not have " << img_zip_name;
+    return {};
   }
   std::string local_path = target_directory + "/" + img_zip_name;
   if (!build_api->ArtifactToFile(build, img_zip_name, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << img_zip_name << " to "
-        << local_path;
-    return false;
+    LOG(FATAL) << "Unable to download " << build << ":" << img_zip_name << " to "
+               << local_path;
+    return {};
   }
 
-  auto could_extract = ExtractImages(local_path, target_directory, images);
-  if (!could_extract) {
-    LOG(ERROR) << "Could not extract " << local_path;
-    return false;
+  std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
+  if (files.empty()) {
+    LOG(FATAL) << "Could not extract " << local_path;
+    return {};
   }
   if (unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
+    files.push_back(local_path);
   }
-  return true;
+  return files;
 }
-bool download_images(BuildApi* build_api, const DeviceBuild& build,
-                     const std::string& target_directory) {
+std::vector<std::string> download_images(BuildApi* build_api,
+                                         const DeviceBuild& build,
+                                         const std::string& target_directory) {
   return download_images(build_api, build, target_directory, {});
 }
 
-bool download_target_files(BuildApi* build_api, const DeviceBuild& build,
-                           const std::string& target_directory) {
+std::vector<std::string> download_target_files(BuildApi* build_api,
+                                               const DeviceBuild& build,
+                                               const std::string& target_directory) {
   std::string target_zip = target_build_zip(build, "target_files");
   auto artifacts = build_api->Artifacts(build);
   bool has_target_zip = false;
@@ -117,48 +123,54 @@ bool download_target_files(BuildApi* build_api, const DeviceBuild& build,
     has_target_zip |= artifact.Name() == target_zip;
   }
   if (!has_target_zip) {
-    LOG(ERROR) << "Target " << build.target << " at id " << build.id
+    LOG(FATAL) << "Target " << build.target << " at id " << build.id
         << " did not have " << target_zip;
-    return false;
+    return {};
   }
   std::string local_path = target_directory + "/" + target_zip;
   if (!build_api->ArtifactToFile(build, target_zip, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << target_zip << " to "
-        << local_path;
-    return false;
+    LOG(FATAL) << "Unable to download " << build << ":" << target_zip << " to "
+               << local_path;
+    return {};
   }
-  return true;
+  return {local_path};
 }
 
-bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
-                           const std::string& target_directory) {
+std::vector<std::string> download_host_package(BuildApi* build_api,
+                                               const DeviceBuild& build,
+                                               const std::string& target_directory) {
   auto artifacts = build_api->Artifacts(build);
   bool has_host_package = false;
   for (const auto& artifact : artifacts) {
     has_host_package |= artifact.Name() == HOST_TOOLS;
   }
   if (!has_host_package) {
-    LOG(ERROR) << "Target " << build.target << " at id " << build.id
-        << " did not have " << HOST_TOOLS;
-    return false;
+    LOG(FATAL) << "Target " << build.target << " at id " << build.id
+               << " did not have " << HOST_TOOLS;
+    return {};
   }
   std::string local_path = target_directory + "/" + HOST_TOOLS;
 
   if (!build_api->ArtifactToFile(build, HOST_TOOLS, local_path)) {
-    LOG(ERROR) << "Unable to download " << build << ":" << HOST_TOOLS << " to "
-        << local_path;
-    return false;
+    LOG(FATAL) << "Unable to download " << build << ":" << HOST_TOOLS << " to "
+               << local_path;
+    return {};
   }
 
   cvd::Archive archive(local_path);
   if (!archive.ExtractAll(target_directory)) {
     LOG(FATAL) << "Could not extract " << local_path;
-    return false;
+    return {};
+  }
+  std::vector<std::string> files = archive.Contents();
+  for (auto& file : files) {
+    file = target_directory + "/" + file;
   }
   if (unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
+    files.push_back(local_path);
   }
-  return true;
+  return files;
 }
 
 bool desparse(const std::string& file) {
@@ -176,8 +188,9 @@ bool desparse(const std::string& file) {
   return true;
 }
 
-bool download_ota_tools(BuildApi* build_api, const DeviceBuild& build,
-                        const std::string& target_directory) {
+std::vector<std::string> download_ota_tools(BuildApi* build_api,
+                                            const DeviceBuild& build,
+                                            const std::string& target_directory) {
   auto artifacts = build_api->Artifacts(build);
   bool has_host_package = false;
   for (const auto& artifact : artifacts) {
@@ -186,27 +199,40 @@ bool download_ota_tools(BuildApi* build_api, const DeviceBuild& build,
   if (!has_host_package) {
     LOG(ERROR) << "Target " << build.target << " at id " << build.id
         << " did not have " << OTA_TOOLS;
-    return false;
+    return {};
   }
   std::string local_path = target_directory + "/" + OTA_TOOLS;
 
   if (!build_api->ArtifactToFile(build, OTA_TOOLS, local_path)) {
     LOG(ERROR) << "Unable to download " << build << ":" << OTA_TOOLS << " to "
         << local_path;
-    return false;
+    return {};
   }
 
   std::string otatools_dir = target_directory + "/otatools";
   if (!cvd::DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << otatools_dir;
-    return false;
+    return {};
   }
   cvd::Archive archive(local_path);
   if (!archive.ExtractAll(otatools_dir)) {
     LOG(FATAL) << "Could not extract " << local_path;
-    return false;
+    return {};
   }
-  return true;
+  std::vector<std::string> files = archive.Contents();
+  for (auto& file : files) {
+    file = target_directory + "/" + file;
+  }
+  files.push_back(local_path);
+  return files;
+}
+
+template<typename T>
+std::vector<T> combine_vectors(std::vector<T>&& first, std::vector<T>&& second) {
+  first.insert(first.end(),
+               std::make_move_iterator(second.begin()),
+               std::make_move_iterator(second.end()));
+  return std::move(first);
 }
 
 std::string USAGE_MESSAGE =
@@ -231,6 +257,8 @@ int main(int argc, char** argv) {
   }
   std::chrono::seconds retry_period(std::stoi(FLAGS_wait_retry_period));
 
+  std::vector<std::string> downloaded_files;
+
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
     std::unique_ptr<CredentialSource> credential_source;
@@ -245,29 +273,45 @@ int main(int argc, char** argv) {
                                                 DEFAULT_BUILD_TARGET,
                                                 retry_period);
 
-    if (!download_host_package(&build_api, default_build, target_dir)) {
+    std::vector<std::string> host_package_files =
+        download_host_package(&build_api, default_build, target_dir);
+    if (host_package_files.empty()) {
       LOG(FATAL) << "Could not download host package for " << default_build;
     }
+    downloaded_files = combine_vectors(std::move(downloaded_files),
+                                       std::move(host_package_files));
     if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
       DeviceBuild ota_build = default_build;
       if (FLAGS_otatools_build != "") {
         ota_build = ArgumentToBuild(&build_api, FLAGS_otatools_build,
                                     DEFAULT_BUILD_TARGET, retry_period);
       }
-      if (!download_ota_tools(&build_api, ota_build, target_dir)) {
+      std::vector<std::string> ota_tools_files =
+          download_ota_tools(&build_api, ota_build, target_dir);
+      if (ota_tools_files.empty()) {
         LOG(FATAL) << "Could not download ota tools for " << ota_build;
       }
+      downloaded_files = combine_vectors(std::move(downloaded_files),
+                                         std::move(ota_tools_files));
     }
     if (FLAGS_download_img_zip) {
-      if (!download_images(&build_api, default_build, target_dir)) {
+      std::vector<std::string> image_files =
+          download_images(&build_api, default_build, target_dir);
+      if (image_files.empty()) {
         LOG(FATAL) << "Could not download images for " << default_build;
       }
+      downloaded_files = combine_vectors(std::move(downloaded_files),
+                                         std::move(image_files));
       desparse(target_dir + "/userdata.img");
     }
     if (FLAGS_download_target_files_zip) {
-      if (!download_target_files(&build_api, default_build, target_dir)) {
+      std::vector<std::string> target_files =
+          download_target_files(&build_api, default_build, target_dir);
+      if (target_files.empty()) {
         LOG(FATAL) << "Could not download target files for " << default_build;
       }
+      downloaded_files = combine_vectors(std::move(downloaded_files),
+                                         std::move(target_files));
     }
 
     if (FLAGS_system_build != "") {
@@ -275,15 +319,22 @@ int main(int argc, char** argv) {
                                                  DEFAULT_BUILD_TARGET,
                                                  retry_period);
       if (FLAGS_download_img_zip) {
-        if (!download_images(&build_api, system_build, target_dir,
-                            {"system.img"})) {
+        std::vector<std::string> image_files =
+            download_images(&build_api, system_build, target_dir, {"system.img"});
+        if (image_files.empty()) {
           LOG(FATAL) << "Could not download system image for " << system_build;
         }
+        downloaded_files = combine_vectors(std::move(downloaded_files),
+                                           std::move(image_files));
       }
       if (FLAGS_download_target_files_zip) {
-        if (!download_target_files(&build_api, system_build, target_dir)) {
+        std::vector<std::string> target_files =
+            download_target_files(&build_api, system_build, target_dir);
+        if (target_files.empty()) {
           LOG(FATAL) << "Could not download target files for " << system_build;
         }
+        downloaded_files = combine_vectors(std::move(downloaded_files),
+                                           std::move(target_files));
       }
     }
 
@@ -291,9 +342,12 @@ int main(int argc, char** argv) {
       DeviceBuild kernel_build = ArgumentToBuild(&build_api, FLAGS_kernel_build,
                                                  "kernel", retry_period);
 
-      if (!build_api.ArtifactToFile(kernel_build, "bzImage", target_dir + "/kernel")) {
+      std::string local_path = target_dir + "/kernel";
+      if (build_api.ArtifactToFile(kernel_build, "bzImage", local_path)) {
+        downloaded_files.push_back(local_path);
+      } else {
         LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
-            << target_dir + "/kernel";
+            << local_path;
       }
       std::vector<Artifact> kernel_artifacts = build_api.Artifacts(kernel_build);
       for (const auto& artifact : kernel_artifacts) {
@@ -306,10 +360,16 @@ int main(int argc, char** argv) {
           LOG(FATAL) << "Could not download " << kernel_build << ":initramfs.img to "
                      << target_dir + "/initramfs.img";
         }
+        downloaded_files.push_back(target_dir + "/initramfs.img");
       }
     }
   }
   curl_global_cleanup();
+
+  for (const auto& file : downloaded_files) {
+    std::cout << file << "\n";
+  }
+  std::cout << std::flush;
 
   if (!FLAGS_run_next_stage) {
     return 0;
