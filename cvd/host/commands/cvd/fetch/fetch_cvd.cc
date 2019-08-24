@@ -27,6 +27,8 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
+#include "host/libs/config/fetcher_config.h"
+
 #include "build_api.h"
 #include "credential_source.h"
 #include "install_zip.h"
@@ -251,6 +253,9 @@ int main(int argc, char** argv) {
   gflags::SetUsageMessage(USAGE_MESSAGE);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+  cvd::FetcherConfig fetcher_config;
+  fetcher_config.RecordFlags();
+
   std::string target_dir = cvd::AbsolutePath(FLAGS_directory);
   if (!cvd::DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << target_dir;
@@ -365,6 +370,11 @@ int main(int argc, char** argv) {
     }
   }
   curl_global_cleanup();
+
+  std::string fetcher_path = target_dir + "/fetcher_config.json";
+  downloaded_files.push_back(fetcher_path);
+  fetcher_config.set_files(downloaded_files);
+  fetcher_config.SaveToFile(fetcher_path);
 
   for (const auto& file : downloaded_files) {
     std::cout << file << "\n";
