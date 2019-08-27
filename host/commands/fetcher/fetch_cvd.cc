@@ -61,6 +61,7 @@ namespace {
 
 const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
 const std::string OTA_TOOLS = "otatools.zip";
+const std::string OTA_TOOLS_DIR = "/otatools/";
 
 /** Returns the name of one of the artifact target zip files.
  *
@@ -211,7 +212,7 @@ std::vector<std::string> download_ota_tools(BuildApi* build_api,
     return {};
   }
 
-  std::string otatools_dir = target_directory + "/otatools";
+  std::string otatools_dir = target_directory + OTA_TOOLS_DIR;
   if (!cvd::DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << otatools_dir;
     return {};
@@ -223,18 +224,24 @@ std::vector<std::string> download_ota_tools(BuildApi* build_api,
   }
   std::vector<std::string> files = archive.Contents();
   for (auto& file : files) {
-    file = target_directory + "/" + file;
+    file = target_directory + OTA_TOOLS_DIR + file;
   }
   files.push_back(local_path);
   return files;
 }
 
-template<typename T>
-std::vector<T> combine_vectors(std::vector<T>&& first, std::vector<T>&& second) {
-  first.insert(first.end(),
-               std::make_move_iterator(second.begin()),
-               std::make_move_iterator(second.end()));
-  return std::move(first);
+void AddFilesToConfig(cvd::FileSource purpose, const DeviceBuild& build,
+                      const std::vector<std::string>& paths, cvd::FetcherConfig* config,
+                      bool override_entry = false) {
+  for (const std::string& path : paths) {
+    cvd::CvdFile file(purpose, build.id, build.target, path);
+    bool added = config->add_cvd_file(file, override_entry);
+    if (!added) {
+      LOG(ERROR) << "Duplicate file " << file;
+      LOG(ERROR) << "Existing file: " << config->get_cvd_files()[path];
+      LOG(FATAL) << "Failed to add path " << path;
+    }
+  }
 }
 
 std::string USAGE_MESSAGE =
@@ -253,16 +260,14 @@ int main(int argc, char** argv) {
   gflags::SetUsageMessage(USAGE_MESSAGE);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  cvd::FetcherConfig fetcher_config;
-  fetcher_config.RecordFlags();
+  cvd::FetcherConfig config;
+  config.RecordFlags();
 
   std::string target_dir = cvd::AbsolutePath(FLAGS_directory);
   if (!cvd::DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << target_dir;
   }
   std::chrono::seconds retry_period(std::stoi(FLAGS_wait_retry_period));
-
-  std::vector<std::string> downloaded_files;
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
   {
@@ -283,8 +288,8 @@ int main(int argc, char** argv) {
     if (host_package_files.empty()) {
       LOG(FATAL) << "Could not download host package for " << default_build;
     }
-    downloaded_files = combine_vectors(std::move(downloaded_files),
-                                       std::move(host_package_files));
+    AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, host_package_files, &config);
+
     if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
       DeviceBuild ota_build = default_build;
       if (FLAGS_otatools_build != "") {
@@ -296,8 +301,7 @@ int main(int argc, char** argv) {
       if (ota_tools_files.empty()) {
         LOG(FATAL) << "Could not download ota tools for " << ota_build;
       }
-      downloaded_files = combine_vectors(std::move(downloaded_files),
-                                         std::move(ota_tools_files));
+      AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, ota_tools_files, &config);
     }
     if (FLAGS_download_img_zip) {
       std::vector<std::string> image_files =
@@ -305,9 +309,8 @@ int main(int argc, char** argv) {
       if (image_files.empty()) {
         LOG(FATAL) << "Could not download images for " << default_build;
       }
-      downloaded_files = combine_vectors(std::move(downloaded_files),
-                                         std::move(image_files));
       desparse(target_dir + "/userdata.img");
+      AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, image_files, &config);
     }
     if (FLAGS_download_target_files_zip) {
       std::vector<std::string> target_files =
@@ -315,8 +318,7 @@ int main(int argc, char** argv) {
       if (target_files.empty()) {
         LOG(FATAL) << "Could not download target files for " << default_build;
       }
-      downloaded_files = combine_vectors(std::move(downloaded_files),
-                                         std::move(target_files));
+      AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, target_files, &config);
     }
 
     if (FLAGS_system_build != "") {
@@ -329,8 +331,7 @@ int main(int argc, char** argv) {
         if (image_files.empty()) {
           LOG(FATAL) << "Could not download system image for " << system_build;
         }
-        downloaded_files = combine_vectors(std::move(downloaded_files),
-                                           std::move(image_files));
+        AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, image_files, &config, true);
       }
       if (FLAGS_download_target_files_zip) {
         std::vector<std::string> target_files =
@@ -338,8 +339,7 @@ int main(int argc, char** argv) {
         if (target_files.empty()) {
           LOG(FATAL) << "Could not download target files for " << system_build;
         }
-        downloaded_files = combine_vectors(std::move(downloaded_files),
-                                           std::move(target_files));
+        AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, target_files, &config);
       }
     }
 
@@ -349,7 +349,7 @@ int main(int argc, char** argv) {
 
       std::string local_path = target_dir + "/kernel";
       if (build_api.ArtifactToFile(kernel_build, "bzImage", local_path)) {
-        downloaded_files.push_back(local_path);
+        AddFilesToConfig(cvd::FileSource::KERNEL_BUILD, kernel_build, {local_path}, &config);
       } else {
         LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
             << local_path;
@@ -365,19 +365,22 @@ int main(int argc, char** argv) {
           LOG(FATAL) << "Could not download " << kernel_build << ":initramfs.img to "
                      << target_dir + "/initramfs.img";
         }
-        downloaded_files.push_back(target_dir + "/initramfs.img");
+        AddFilesToConfig(cvd::FileSource::KERNEL_BUILD, kernel_build,
+                         {target_dir + "/initramfs.img"}, &config);
       }
     }
   }
   curl_global_cleanup();
 
+  // Due to constraints of the build system, artifacts intentionally cannot determine
+  // their own build id. So it's unclear which build number fetch_cvd itself was built at.
+  // https://android.googlesource.com/platform/build/+/979c9f3/Changes.md#build_number
   std::string fetcher_path = target_dir + "/fetcher_config.json";
-  downloaded_files.push_back(fetcher_path);
-  fetcher_config.set_files(downloaded_files);
-  fetcher_config.SaveToFile(fetcher_path);
+  AddFilesToConfig(cvd::GENERATED, DeviceBuild("", ""), {fetcher_path}, &config);
+  config.SaveToFile(fetcher_path);
 
-  for (const auto& file : downloaded_files) {
-    std::cout << file << "\n";
+  for (const auto& file : config.get_cvd_files()) {
+    std::cout << file.second.file_path << "\n";
   }
   std::cout << std::flush;
 
