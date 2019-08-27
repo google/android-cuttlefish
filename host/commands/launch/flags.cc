@@ -752,16 +752,18 @@ bool ShouldCreateCompositeDisk() {
   return false;
 }
 
-bool AppendToRamdisk(const std::string& ramdisk_path, const std::string& appendee_path) {
-  std::ofstream ramdisk(ramdisk_path, std::ios_base::binary | std::ios_base::app);
-  std::ifstream appendee(appendee_path, std::ios_base::binary);
+bool ConcatRamdisks(const std::string& new_ramdisk_path, const std::string& ramdisk_a_path,
+  const std::string& ramdisk_b_path) {
+  // clear out file of any pre-existing content
+  std::ofstream new_ramdisk(new_ramdisk_path, std::ios_base::binary | std::ios_base::trunc);
+  std::ifstream ramdisk_a(ramdisk_a_path, std::ios_base::binary);
+  std::ifstream ramdisk_b(ramdisk_b_path, std::ios_base::binary);
 
-  if(!ramdisk.is_open() || !appendee.is_open()) {
+  if(!new_ramdisk.is_open() || !ramdisk_a.is_open() || !ramdisk_b.is_open()) {
     return false;
   }
 
-  ramdisk.seekp(0, std::ios_base::end);
-  ramdisk << appendee.rdbuf();
+  new_ramdisk << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
   return true;
 }
 
@@ -823,10 +825,12 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   }
 
   if(FLAGS_initramfs_path.size()) {
-    if(!AppendToRamdisk(config->ramdisk_image_path(), FLAGS_initramfs_path)) {
+    auto concat_ramdisk_path = config->ramdisk_image_path() + ".concat";
+    if(!ConcatRamdisks(concat_ramdisk_path, config->ramdisk_image_path(), FLAGS_initramfs_path)) {
       LOG(ERROR) << "Failed to concatenate ramdisk and initramfs";
       exit(LauncherExitCodes::kInitRamFsConcatError);
     }
+    config->set_ramdisk_image_path(concat_ramdisk_path);
   }
 
   if (config->decompress_kernel()) {
