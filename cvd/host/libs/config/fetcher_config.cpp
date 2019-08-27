@@ -27,14 +27,69 @@
 
 #include "common/libs/utils/files.h"
 
+namespace cvd {
+
 namespace {
 
 const char* kFlags = "flags";
-const char* kFiles = "files";
+const char* kCvdFiles = "cvd_files";
+const char* kCvdFileSource = "source";
+const char* kCvdFileBuildId = "build_id";
+const char* kCvdFileBuildTarget = "build_target";
+
+FileSource SourceStringToEnum(std::string source) {
+  for (auto& c : source) {
+    c = std::tolower(c);
+  }
+  if (source == "default_build") {
+    return FileSource::DEFAULT_BUILD;
+  } else if (source == "system_build") {
+    return FileSource::SYSTEM_BUILD;
+  } else if (source == "kernel_build") {
+    return FileSource::KERNEL_BUILD;
+  } else if (source == "local_file") {
+    return FileSource::LOCAL_FILE;
+  } else if (source == "generated") {
+    return FileSource::GENERATED;
+  } else {
+    return FileSource::UNKNOWN_PURPOSE;
+  }
+}
+
+std::string SourceEnumToString(const FileSource& source) {
+  if (source == FileSource::DEFAULT_BUILD) {
+    return "default_build";
+  } else if (source == FileSource::SYSTEM_BUILD) {
+    return "system_build";
+  } else if (source == FileSource::KERNEL_BUILD) {
+    return "kernel_build";
+  } else if (source == FileSource::LOCAL_FILE) {
+    return "local_file";
+  } else if (source == FileSource::GENERATED) {
+    return "generated";
+  } else {
+    return "unknown";
+  }
+}
 
 } // namespace
 
-namespace cvd {
+CvdFile::CvdFile() {
+}
+
+CvdFile::CvdFile(const FileSource& source, const std::string& build_id,
+                 const std::string& build_target, const std::string& file_path)
+    : source(source), build_id(build_id), build_target(build_target), file_path(file_path) {
+}
+
+std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
+  os << "CvdFile(";
+  os << "source = " << SourceEnumToString(cvd_file.source) << ", ";
+  os << "build_id = " << cvd_file.build_id << ", ";
+  os << "build_target = " << cvd_file.build_target << ", ";
+  os << "file_path = " << cvd_file.file_path << ")";
+  return os;
+}
 
 FetcherConfig::FetcherConfig() : dictionary_(new Json::Value()) {
 }
@@ -87,21 +142,55 @@ void FetcherConfig::RecordFlags() {
   (*dictionary_)[kFlags] = flags_json;
 }
 
-void FetcherConfig::set_files(const std::vector<std::string>& files) {
-  Json::Value files_json(Json::arrayValue);
-  for (const auto& file : files) {
-    files_json.append(file);
+namespace {
+
+CvdFile JsonToCvdFile(const std::string& file_path, const Json::Value& json) {
+  CvdFile cvd_file;
+  cvd_file.file_path = file_path;
+  if (json.isMember(kCvdFileSource)) {
+    cvd_file.source = SourceStringToEnum(json[kCvdFileSource].asString());
+  } else {
+    cvd_file.source = UNKNOWN_PURPOSE;
   }
-  (*dictionary_)[kFiles] = files_json;
+  if (json.isMember(kCvdFileBuildId)) {
+    cvd_file.build_id = json[kCvdFileBuildId].asString();
+  }
+  if (json.isMember(kCvdFileBuildTarget)) {
+    cvd_file.build_target = json[kCvdFileBuildTarget].asString();
+  }
+  return cvd_file;
 }
 
-std::vector<std::string> FetcherConfig::files() const {
-  if (!dictionary_->isMember(kFiles)) {
+Json::Value CvdFileToJson(const CvdFile& cvd_file) {
+  Json::Value json;
+  json[kCvdFileSource] = SourceEnumToString(cvd_file.source);
+  json[kCvdFileBuildId] = cvd_file.build_id;
+  json[kCvdFileBuildTarget] = cvd_file.build_target;
+  return json;
+}
+
+} // namespace
+
+bool FetcherConfig::add_cvd_file(const CvdFile& file, bool override_entry) {
+  if (!dictionary_->isMember(kCvdFiles)) {
+    Json::Value files_json(Json::objectValue);
+    (*dictionary_)[kCvdFiles] = files_json;
+  }
+  if ((*dictionary_)[kCvdFiles].isMember(file.file_path) && !override_entry) {
+    return false;
+  }
+  (*dictionary_)[kCvdFiles][file.file_path] = CvdFileToJson(file);
+  return true;
+}
+
+std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
+  if (!dictionary_->isMember(kCvdFiles)) {
     return {};
   }
-  std::vector<std::string> files;
-  for (const auto& file : (*dictionary_)[kFiles]) {
-    files.push_back(file.asString());
+  std::map<std::string, CvdFile> files;
+  const auto& json_files = (*dictionary_)[kCvdFiles];
+  for (auto it = json_files.begin(); it != json_files.end(); it++) {
+    files[it.key().asString()] = JsonToCvdFile(it.key().asString(), *it);
   }
   return files;
 }
