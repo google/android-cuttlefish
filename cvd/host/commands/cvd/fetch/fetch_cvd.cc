@@ -290,6 +290,18 @@ int main(int argc, char** argv) {
         LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
             << target_dir + "/kernel";
       }
+      std::vector<Artifact> kernel_artifacts = build_api.Artifacts(kernel_build);
+      for (const auto& artifact : kernel_artifacts) {
+        if (artifact.Name() != "initramfs.img") {
+          continue;
+        }
+        bool downloaded = build_api.ArtifactToFile(
+            kernel_build, "initramfs.img", target_dir + "/initramfs.img");
+        if (!downloaded) {
+          LOG(FATAL) << "Could not download " << kernel_build << ":initramfs.img to "
+                     << target_dir + "/initramfs.img";
+        }
+      }
     }
   }
   curl_global_cleanup();
