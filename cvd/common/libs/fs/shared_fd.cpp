@@ -244,13 +244,13 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
 }
 
 SharedFD SharedFD::Event(int initval, int flags) {
-  return std::shared_ptr<FileInstance>(
-      new FileInstance(eventfd(initval, flags), errno));
+  int fd = eventfd(initval, flags);
+  return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
 
 SharedFD SharedFD::Epoll(int flags) {
-  return std::shared_ptr<FileInstance>(
-      new FileInstance(epoll_create1(flags), errno));
+  int fd = epoll_create1(flags);
+  return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
 
 bool SharedFD::SocketPair(int domain, int type, int protocol,
