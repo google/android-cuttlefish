@@ -137,7 +137,7 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant -g@android:wpa_wlan0
     oneshot
 
 
-service bugreport /system/bin/dumpstate -d -p -B -z -o /sdcard/bugreport
+service bugreport /system/bin/dumpstate -d -p -z
     class main
     disabled
     oneshot
