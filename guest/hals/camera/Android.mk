@@ -21,7 +21,7 @@ include $(CLEAR_VARS)
 emulator_camera_module_relative_path := hw
 emulator_camera_cflags := -fno-short-enums $(VSOC_VERSION_CFLAGS)
 emulator_camera_cflags += \
-    -std=gnu++11 \
+    -std=gnu++17 \
     -Wall \
     -Werror
 
