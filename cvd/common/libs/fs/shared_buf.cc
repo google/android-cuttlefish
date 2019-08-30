@@ -39,10 +39,43 @@ ssize_t ReadAll(SharedFD fd, std::string* buf) {
     ss << std::string(buff, read);
   }
   if (read < 0) {
+    errno = fd->GetErrno();
     return read;
   }
   *buf = ss.str();
   return buf->size();
+}
+
+ssize_t ReadExact(SharedFD fd, std::string* buf) {
+  size_t total_read = 0;
+  ssize_t read = 0;
+  while ((read = fd->Read((void*)&((*buf)[total_read]), buf->size() - total_read)) > 0) {
+    if (read < 0) {
+      errno = fd->GetErrno();
+      return read;
+    }
+    total_read += read;
+    if (total_read == buf->size()) {
+      break;
+    }
+  }
+  return total_read;
+}
+
+ssize_t WriteAll(SharedFD fd, const std::string& buf) {
+  size_t total_written = 0;
+  ssize_t written = 0;
+  while ((written = fd->Write((void*)&(buf[total_written]), buf.size() - total_written)) > 0) {
+    if (written < 0) {
+      errno = fd->GetErrno();
+      return written;
+    }
+    total_written += written;
+    if (total_written == buf.size()) {
+      break;
+    }
+  }
+  return total_written;
 }
 
 } // namespace cvd
