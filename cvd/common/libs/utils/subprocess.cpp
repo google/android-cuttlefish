@@ -40,10 +40,10 @@ bool validate_redirects(
   // Add the redirected IO channels to a set as integers. This allows converting
   // the enum values into integers instead of the other way around.
   std::set<int> int_redirects;
-  for (const auto& entry: redirects) {
+  for (const auto& entry : redirects) {
     int_redirects.insert(static_cast<int>(entry.first));
   }
-  for (const auto& entry: inherited_fds) {
+  for (const auto& entry : inherited_fds) {
     auto dupped_fd = entry.second;
     if (int_redirects.count(dupped_fd)) {
       LOG(ERROR) << "Requested redirect of fd(" << dupped_fd
@@ -54,8 +54,9 @@ bool validate_redirects(
   return true;
 }
 
-void do_redirects(const std::map<cvd::Subprocess::StdIOChannel, int>& redirects) {
-  for (const auto& entry: redirects) {
+void do_redirects(
+    const std::map<cvd::Subprocess::StdIOChannel, int>& redirects) {
+  for (const auto& entry : redirects) {
     auto std_channel = static_cast<int>(entry.first);
     auto fd = entry.second;
     TEMP_FAILURE_RETRY(dup2(fd, std_channel));
@@ -63,11 +64,10 @@ void do_redirects(const std::map<cvd::Subprocess::StdIOChannel, int>& redirects)
 }
 
 cvd::Subprocess subprocess_impl(
-    const char* const* command,
-    const char* const* envp,
+    const char* const* command, const char* const* envp,
     const std::map<cvd::Subprocess::StdIOChannel, int>& redirects,
-    const std::map<cvd::SharedFD, int>& inherited_fds,
-    bool with_control_socket) {
+    const std::map<cvd::SharedFD, int>& inherited_fds, bool with_control_socket,
+    bool in_group = false) {
   // The parent socket will get closed on the child on the call to exec, the
   // child socket will be closed on the parent when this function returns and no
   // references to the fd are left
@@ -90,6 +90,13 @@ cvd::Subprocess subprocess_impl(
   pid_t pid = fork();
   if (!pid) {
     do_redirects(redirects);
+    if (in_group) {
+      // This call should never fail (see SETPGID(2))
+      if (setpgid(0, 0) != 0) {
+        auto error = errno;
+        LOG(ERROR) << "setpgid failed (" << strerror(error) << ")";
+      }
+    }
     int rval;
     // If envp is NULL, the current process's environment is used as the
     // environment of the child process. To force an empty emvironment for
@@ -97,8 +104,7 @@ cvd::Subprocess subprocess_impl(
     if (envp == NULL) {
       rval = execv(command[0], const_cast<char* const*>(command));
     } else {
-      rval = execve(command[0],
-                    const_cast<char* const*>(command),
+      rval = execve(command[0], const_cast<char* const*>(command),
                     const_cast<char* const*>(envp));
     }
     // No need for an if: if exec worked it wouldn't have returned
@@ -117,8 +123,7 @@ cvd::Subprocess subprocess_impl(
   return cvd::Subprocess(pid, parent_socket);
 }
 
-std::vector<const char*> ToCharPointers(
-    const std::vector<std::string>& vect) {
+std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   std::vector<const char*> ret = {};
   for (const auto& str : vect) {
     ret.push_back(str.c_str());
@@ -158,7 +163,7 @@ int Subprocess::Wait() {
     return -1;
   }
   int wstatus = 0;
-  auto pid = pid_; // Wait will set pid_ to -1 after waiting
+  auto pid = pid_;  // Wait will set pid_ to -1 after waiting
   auto wait_ret = Wait(&wstatus, 0);
   if (wait_ret < 0) {
     LOG(ERROR) << "Error on call to waitpid: " << strerror(errno);
@@ -191,10 +196,8 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
   return retval;
 }
 
-Command::ParameterBuilder::~ParameterBuilder() {
-  Build();
-}
-void Command::ParameterBuilder::Build()  {
+Command::ParameterBuilder::~ParameterBuilder() { Build(); }
+void Command::ParameterBuilder::Build() {
   auto param = stream_.str();
   stream_ = std::stringstream();
   if (param.size()) {
@@ -204,11 +207,11 @@ void Command::ParameterBuilder::Build()  {
 
 Command::~Command() {
   // Close all inherited file descriptors
-  for(const auto& entry: inherited_fds_) {
+  for (const auto& entry : inherited_fds_) {
     close(entry.second);
   }
   // Close all redirected file descriptors
-  for (const auto& entry: redirects_) {
+  for (const auto& entry : redirects_) {
     close(entry.second);
   }
 }
@@ -229,7 +232,7 @@ bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
 }
 
 bool Command::RedirectStdIO(cvd::Subprocess::StdIOChannel channel,
-                            cvd::SharedFD shared_fd){
+                            cvd::SharedFD shared_fd) {
   if (!shared_fd->IsOpen()) {
     return false;
   }
@@ -251,16 +254,24 @@ bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                        cvd::SharedFD::Dup(static_cast<int>(parent_channel)));
 }
 
-Subprocess Command::Start(bool with_control_socket) const {
+Subprocess Command::StartHelper(bool with_control_socket, bool in_group) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
     return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
-                           with_control_socket);
+                           with_control_socket, in_group);
   } else {
     auto envp = ToCharPointers(env_);
     return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
-                           with_control_socket);
+                           with_control_socket, in_group);
   }
+}
+
+Subprocess Command::Start(bool with_control_socket) const {
+  return StartHelper(with_control_socket, false);
+}
+
+Subprocess Command::StartInGroup(bool with_control_socket) const {
+  return StartHelper(with_control_socket, true);
 }
 
 int execute(const std::vector<std::string>& command,

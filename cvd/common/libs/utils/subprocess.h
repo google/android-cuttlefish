@@ -18,8 +18,8 @@
 #include <sys/types.h>
 
 #include <map>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <common/libs/fs/shared_fd.h>
@@ -50,10 +50,9 @@ class Subprocess {
   // Whether the command started successfully. It only says whether the call to
   // fork() succeeded or not, it says nothing about exec or successful
   // completion of the command, that's what Wait is for.
-  bool Started() const {return started_;}
-  SharedFD control_socket() {
-    return control_socket_;
-  }
+  bool Started() const { return started_; }
+  SharedFD control_socket() { return control_socket_; }
+  pid_t pid() const { return pid_; }
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
@@ -71,7 +70,7 @@ class Subprocess {
 // should inherit.
 class Command {
  private:
-  template<typename T>
+  template <typename T>
   // For every type other than SharedFD (for which there is a specialisation)
   bool BuildParameter(std::stringstream* stream, T t) {
     *stream << t;
@@ -79,33 +78,32 @@ class Command {
   }
   // Special treatment for SharedFD
   bool BuildParameter(std::stringstream* stream, SharedFD shared_fd);
-  template<typename T, typename...Args>
-  bool BuildParameter(std::stringstream* stream, T t, Args...args) {
-    return BuildParameter(stream, t) &&
-           BuildParameter(stream, args...);
+  template <typename T, typename... Args>
+  bool BuildParameter(std::stringstream* stream, T t, Args... args) {
+    return BuildParameter(stream, t) && BuildParameter(stream, args...);
   }
+
  public:
   class ParameterBuilder {
-  public:
-    ParameterBuilder(Command* cmd) : cmd_(cmd) {};
+   public:
+    ParameterBuilder(Command* cmd) : cmd_(cmd){};
     ParameterBuilder(ParameterBuilder&& builder) = default;
     ~ParameterBuilder();
 
-    template<typename T>
+    template <typename T>
     ParameterBuilder& operator<<(T t) {
       cmd_->BuildParameter(&stream_, t);
       return *this;
     }
 
     void Build();
-  private:
+
+   private:
     cvd::Command* cmd_;
     std::stringstream stream_;
   };
 
-  Command(const std::string& executable) {
-    command_.push_back(executable);
-  }
+  Command(const std::string& executable) { command_.push_back(executable); }
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -125,7 +123,7 @@ class Command {
   // SharedFD a duplicate of it will be used and won't be closed until the
   // object is destroyed. To add multiple parameters to the command the function
   // must be called multiple times, one per parameter.
-  template<typename... Args>
+  template <typename... Args>
   bool AddParameter(Args... args) {
     std::stringstream ss;
     if (BuildParameter(&ss, args...)) {
@@ -135,9 +133,7 @@ class Command {
     return false;
   }
 
-  ParameterBuilder GetParameterBuilder() {
-    return ParameterBuilder(this);
-  }
+  ParameterBuilder GetParameterBuilder() { return ParameterBuilder(this); }
 
   // Redirects the standard IO of the command.
   bool RedirectStdIO(Subprocess::StdIOChannel channel, cvd::SharedFD shared_fd);
@@ -149,13 +145,19 @@ class Command {
   // with_control_socket is true the returned Subprocess instance will have a
   // sharedFD that enables communication with the child process.
   Subprocess Start(bool with_control_socket = false) const;
+  // Same as Start(bool), but the subprocess runs as head of its own process
+  // group.
+  Subprocess StartInGroup(bool with_control_socket = false) const;
 
   std::string GetShortName() const {
     // This is safe because the constructor guarantees the name of the binary to
     // be at index 0 on the vector
     return command_[0];
   }
+
  private:
+  Subprocess StartHelper(bool with_control_socket, bool in_group) const;
+
   std::vector<std::string> command_;
   std::map<cvd::SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
