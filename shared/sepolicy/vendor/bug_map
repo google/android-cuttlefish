@@ -2,8 +2,8 @@ init system_lib_file dir 133444385
 init system_lib_file file 133444385
 kernel kernel system 130424539
 logpersist logpersist capability 132911257
+platform_app radio_prop property_service 140284352
 shell adbd vsock_socket 131904985
 system_server system_server process 65201432
 vendor_init kernel system 130424539
 zygote ramdump_app process 139558100
-
