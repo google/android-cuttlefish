@@ -71,7 +71,9 @@ DEFINE_bool(guest_enforce_security, true,
             "-guest_security is empty.");
 DEFINE_bool(guest_audit_security, true,
             "Whether to log security audits.");
-DEFINE_string(boot_image, "", "Location of cuttlefish boot image.");
+DEFINE_string(boot_image, "",
+              "Location of cuttlefish boot image. If empty it is assumed to be "
+              "boot.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 std::string g_default_mempath{vsoc::GetDefaultMempath()};
@@ -103,6 +105,9 @@ DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
 DEFINE_string(product_image, "", "Location of the product partition image.");
 DEFINE_string(super_image, "", "Location of the super partition image.");
 DEFINE_string(system_ext_image, "", "Location of the system extension partition image.");
+DEFINE_string(misc_image, "",
+              "Location of the misc partition image. If the image does not "
+              "exist, a blank new misc partition image is created.");
 DEFINE_string(composite_disk, "", "Location of the composite disk image.");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
@@ -210,6 +215,7 @@ DEFINE_string(tombstone_receiver_binary,
               "Binary for the tombstone server");
 DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
              "The vsock port for tombstones");
+
 namespace {
 
 template<typename S, typename T>
@@ -253,6 +259,9 @@ bool ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_super_image = FLAGS_system_image_dir + "/super.img";
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_misc_image = FLAGS_system_image_dir + "/misc.img";
+  SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
@@ -445,6 +454,7 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_vendor_image,
       FLAGS_product_image,
       FLAGS_system_ext_image,
+      FLAGS_misc_image,
     });
   }
 
@@ -733,6 +743,10 @@ std::vector<ImagePartition> disk_config() {
     .label = "boot",
     .image_file_path = FLAGS_boot_image,
   });
+  partitions.push_back(ImagePartition {
+    .label = "misc",
+    .image_file_path = FLAGS_misc_image
+  });
   return partitions;
 }
 
@@ -842,6 +856,11 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   }
 
   ValidateAdbModeFlag(*config);
+
+  // Create misc if necessary
+  if (!InitializeMiscImage(FLAGS_misc_image)) {
+    exit(cvd::kCuttlefishConfigurationInitError);
+  }
 
   // Create data if necessary
   if (!ApplyDataImagePolicy(*config, FLAGS_data_image)) {
