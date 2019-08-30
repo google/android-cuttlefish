@@ -31,14 +31,6 @@ PRODUCT_PACKAGES += android.hardware.tv.cec@1.0-service.mock
 # Tuner HAL
 PRODUCT_PACKAGES += android.hardware.tv.tuner@1.0-service
 
-TARGET_USE_DYNAMIC_PARTITIONS ?= true
-ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
-  PRODUCT_USE_DYNAMIC_PARTITIONS := true
-  TARGET_BUILD_SYSTEM_ROOT_IMAGE := false
-else
-  TARGET_BUILD_SYSTEM_ROOT_IMAGE ?= true
-endif
-
 # Enabling managed profiles
 PRODUCT_COPY_FILES += frameworks/native/data/etc/android.software.managed_users.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.managed_users.xml
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/tv/overlay

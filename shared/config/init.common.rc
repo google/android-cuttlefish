@@ -20,7 +20,7 @@ on early-init
 on early-init && property:ro.boot.fstab_name="fstab"
     mount /dev/block/vdd /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
 
-on early-init && property:ro.boot.fstab_name="composite-fstab"
+on early-init && property:ro.boot.fstab_name="fstab.composite"
     mount /dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable
 
 on init
