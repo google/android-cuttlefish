@@ -101,8 +101,6 @@ const char* kConsolePath = "console_path";
 const char* kLogcatPath = "logcat_path";
 const char* kLauncherLogPath = "launcher_log_path";
 const char* kLauncherMonitorPath = "launcher_monitor_socket";
-const char* kDtbPath = "dtb_path";
-const char* kGsiFstabPath = "gsi.fstab_path";
 
 const char* kMempath = "mempath";
 const char* kIvshmemQemuSocketPath = "ivshmem_qemu_socket_path";
@@ -370,20 +368,6 @@ void CuttlefishConfig::set_virtual_disk_paths(
     virtual_disks_json_obj.append(arg);
   }
   (*dictionary_)[kVirtualDiskPaths] = virtual_disks_json_obj;
-}
-
-std::string CuttlefishConfig::dtb_path() const {
-  return (*dictionary_)[kDtbPath].asString();
-}
-void CuttlefishConfig::set_dtb_path(const std::string& dtb_path) {
-  SetPath(kDtbPath, dtb_path);
-}
-
-std::string CuttlefishConfig::gsi_fstab_path() const {
-  return (*dictionary_)[kGsiFstabPath].asString();
-}
-void CuttlefishConfig::set_gsi_fstab_path(const std::string& path){
-  SetPath(kGsiFstabPath, path);
 }
 
 std::string CuttlefishConfig::mempath() const {
