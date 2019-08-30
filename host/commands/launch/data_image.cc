@@ -134,3 +134,16 @@ bool ApplyDataImagePolicy(const vsoc::CuttlefishConfig& config,
 
   return true;
 }
+
+bool InitializeMiscImage(const std::string& misc_image) {
+  bool misc_exists = cvd::FileHasContent(misc_image.c_str());
+
+  if (misc_exists) {
+    LOG(INFO) << "misc partition image: use existing";
+    return true;
+  }
+
+  LOG(INFO) << "misc partition image: creating empty";
+  CreateBlankImage(misc_image, 1 /* mb */, "none");
+  return true;
+}
