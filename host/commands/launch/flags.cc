@@ -661,6 +661,12 @@ bool ShouldCreateCompositeDisk() {
   if (FLAGS_composite_disk.empty()) {
     return false;
   }
+  if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
+    // The crosvm implementation is very fast to rebuild but also more brittle due to being split
+    // into multiple files. The QEMU implementation is slow to build, but completely self-contained
+    // at that point. Therefore, always rebuild on crosvm but check if it is necessary for QEMU.
+    return true;
+  }
   auto composite_age = cvd::FileModificationTime(FLAGS_composite_disk);
   for (auto& partition : disk_config()) {
     auto partition_age = cvd::FileModificationTime(partition.image_file_path);
@@ -688,11 +694,17 @@ bool ConcatRamdisks(const std::string& new_ramdisk_path, const std::string& ramd
   return true;
 }
 
-void CreateCompositeDisk() {
+void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
   if (FLAGS_composite_disk.empty()) {
     LOG(FATAL) << "asked to create composite disk, but path was empty";
   }
-  aggregate_image(disk_config(), FLAGS_composite_disk);
+  if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
+    std::string header_path = config.PerInstancePath("gpt_header.img");
+    std::string footer_path = config.PerInstancePath("gpt_footer.img");
+    create_composite_disk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
+  } else {
+    aggregate_image(disk_config(), FLAGS_composite_disk);
+  }
 }
 
 } // namespace
@@ -779,7 +791,7 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   }
 
   if (ShouldCreateCompositeDisk()) {
-    CreateCompositeDisk();
+    CreateCompositeDisk(*config);
   }
 
   // Check that the files exist
