@@ -18,6 +18,15 @@
 # Common BoardConfig for all supported architectures.
 #
 
+include build/make/target/board/BoardConfigMainlineCommon.mk
+
+# Reset CF unsupported settings
+TARGET_NO_RECOVERY := false
+BOARD_USES_SYSTEM_OTHER_ODEX :=
+WITH_DEXPREOPT := true
+BOARD_AVB_ENABLE := false
+
+
 TARGET_BOOTLOADER_BOARD_NAME := cutf
 
 # Boot partition size: 32M
@@ -29,14 +38,12 @@ BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
 # Build a separate vendor.img partition
 BOARD_USES_VENDORIMAGE := true
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := ext4
-TARGET_COPY_OUT_VENDOR := vendor
 
 BOARD_USES_METADATA_PARTITION := true
 
 # Build a separate product.img partition
 BOARD_USES_PRODUCTIMAGE := true
 BOARD_PRODUCTIMAGE_FILE_SYSTEM_TYPE := ext4
-TARGET_COPY_OUT_PRODUCT := product
 
 # Build a separate system_ext.img partition
 BOARD_USES_SYSTEM_EXTIMAGE := true
@@ -48,9 +55,7 @@ BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
 endif
 BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
-TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true
-TARGET_USES_64_BIT_BINDER := true
 
 # Hardware composer configuration
 TARGET_USES_HWC2 := true
@@ -82,8 +87,6 @@ BOARD_BOOTIMAGE_MAX_SIZE := 8388608
 BOARD_SYSLOADER_MAX_SIZE := 7340032
 # TODO(san): See if we can get rid of this.
 BOARD_FLASH_BLOCK_SIZE := 512
-
-WITH_DEXPREOPT := true
 
 USE_OPENGL_RENDERER := true
 
@@ -141,12 +144,6 @@ DHCPCD_USE_IPV6 := no
 DHCPCD_USE_DBUS := no
 DHCPCD_USE_SCRIPT := yes
 
-USE_XML_AUDIO_POLICY_CONF := 1
-
-BOARD_VNDK_VERSION := current
-
-# TODO(b/73078796): remove
-BOARD_PROPERTY_OVERRIDES_SPLIT_ENABLED := true
 
 TARGET_RECOVERY_PIXEL_FORMAT := ABGR_8888
 ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
@@ -180,6 +177,3 @@ endif
 # To see full logs from init, disable ratelimiting.
 # The default is 5 messages per second amortized, with a burst of up to 10.
 BOARD_KERNEL_CMDLINE += printk.devkmsg=on
-
-# Include stats logging code in LMKD
-TARGET_LMKD_STATS_LOG := true
