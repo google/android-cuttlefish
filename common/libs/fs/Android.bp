@@ -61,3 +61,22 @@ cc_library_static {
     stl: "libc++_static",
     defaults: ["cuttlefish_guest_product_only"],
 }
+
+cc_test_host {
+    name: "libcuttlefish_fs_tests",
+    srcs: [
+        "shared_fd_test.cpp",
+    ],
+    header_libs: ["cuttlefish_glog"],
+    shared_libs: [
+        "cuttlefish_auto_resources",
+        "libcuttlefish_fs",
+        "libbase",
+    ],
+    static_libs: [
+        "libgmock",
+        "libgtest_host",
+    ],
+    defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
+}
