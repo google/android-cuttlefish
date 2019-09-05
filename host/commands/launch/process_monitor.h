@@ -37,16 +37,18 @@ struct MonitorEntry {
 class ProcessMonitor {
  public:
   ProcessMonitor();
-  // Starts a managed subprocess with a controlling socket. The
-  // on_control_socket_ready_cb callback will be called when data is ready to be
-  // read from the socket or the subprocess has ended. No member functions of
-  // the process monitor object should be called from the callback as it may
-  // lead to a dealock. If the callback returns false the subprocess will no
-  // longer be monitored
+  // Starts a managed subprocess with a controlling socket.
+  // The on_control_socket_ready_cb callback will be called when data is ready
+  // to be read from the socket or the subprocess has ended. No member functions
+  // of the process monitor object should be called from the callback as it may
+  // lead to a deadlock. If the callback returns false the subprocess will no
+  // longer be monitored.
   void StartSubprocess(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
-  // Monitors an alreacy started subprocess
+  // Monitors an already started subprocess
   void MonitorExistingSubprocess(Command cmd, Subprocess sub_process,
                                  OnSocketReadyCb on_control_socket_ready_cb);
+  // Stops all monitored subprocesses.
+  void StopMonitoredProcesses();
   static bool RestartOnExitCb(MonitorEntry* entry);
   static bool DoNotMonitorCb(MonitorEntry* entry);
 
