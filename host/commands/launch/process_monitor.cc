@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
+#include <sys/types.h>
+#include <sys/wait.h>
+
 #include <assert.h>
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 
 #include <map>
@@ -64,7 +68,7 @@ ProcessMonitor::ProcessMonitor() {
 }
 
 void ProcessMonitor::StartSubprocess(Command cmd, OnSocketReadyCb callback) {
-  auto proc = cmd.Start(true);
+  auto proc = cmd.StartInGroup(true);
   if (!proc.Started()) {
     LOG(ERROR) << "Failed to start process";
     return;
@@ -88,6 +92,47 @@ void ProcessMonitor::MonitorExistingSubprocess(Command cmd, Subprocess proc,
   NotifyThread(thread_comm_main_);
 }
 
+void ProcessMonitor::StopMonitoredProcesses() {
+  std::lock_guard<std::mutex> lock(processes_mutex_);
+  for (auto& entry : monitored_processes_) {
+    auto pid = entry.proc->pid();
+    if (pid > 0) {
+      auto pgid = getpgid(pid);
+      if (pgid < 0) {
+        auto error = errno;
+        LOG(WARNING) << "Error obtaining process group id of process with pid="
+                     << pid << ": " << strerror(error);
+        // Send the kill signal anyways, because pgid will be -1 it will be sent
+        // to the process and not a (non-existent) group
+      }
+      bool is_group_head = pid == pgid;
+      if (is_group_head) {
+        killpg(pid, SIGKILL);
+      } else {
+        kill(pid, SIGKILL);
+      }
+    }
+  }
+  for (auto& entry : monitored_processes_) {
+    auto pid = entry.proc->pid();
+    if (pid > 0) {
+      int wstatus;
+      pid_t ret_pid;
+      do {
+        errno = 0;
+        ret_pid = waitpid(pid, &wstatus, 0);
+      } while (ret_pid < 0 && errno == EINTR);
+      if (ret_pid < 0) {
+        auto error = errno;
+        LOG(WARNING) << "Failed to wait for process with pid=" << pid
+                     << ": " << strerror(error);
+      }
+    }
+  }
+  // Clear the list to ensure they are not started again
+  monitored_processes_.clear();
+}
+
 bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {
   // Make sure the process actually exited
   char buffer[16];
@@ -108,24 +153,21 @@ bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {
   // None of the error conditions specified on waitpid(2) apply
   assert(wait_ret > 0);
   if (WIFEXITED(wstatus)) {
-    LOG(INFO) << "Subprocess " << entry->cmd->GetShortName() << " ("
-              << wait_ret << ") has exited with exit code "
-              << WEXITSTATUS(wstatus);
+    LOG(INFO) << "Subprocess " << entry->cmd->GetShortName() << " (" << wait_ret
+              << ") has exited with exit code " << WEXITSTATUS(wstatus);
   } else if (WIFSIGNALED(wstatus)) {
     LOG(ERROR) << "Subprocess " << entry->cmd->GetShortName() << " ("
-               << wait_ret << ") was interrupted by a signal: "
-               << WTERMSIG(wstatus);
+               << wait_ret
+               << ") was interrupted by a signal: " << WTERMSIG(wstatus);
   } else {
-    LOG(INFO) << "subprocess " << entry->cmd->GetShortName() << " ("
-               << wait_ret << ") has exited for unknown reasons";
+    LOG(INFO) << "subprocess " << entry->cmd->GetShortName() << " (" << wait_ret
+              << ") has exited for unknown reasons";
   }
   entry->proc.reset(new Subprocess(entry->cmd->Start(true)));
   return true;
 }
 
-bool ProcessMonitor::DoNotMonitorCb(MonitorEntry*) {
-  return false;
-}
+bool ProcessMonitor::DoNotMonitorCb(MonitorEntry*) { return false; }
 
 void ProcessMonitor::MonitorRoutine() {
   LOG(INFO) << "Started monitoring subprocesses";
@@ -134,9 +176,9 @@ void ProcessMonitor::MonitorRoutine() {
     read_set.Set(thread_comm_monitor_);
     {
       std::lock_guard<std::mutex> lock(processes_mutex_);
-      for (auto& monitored_process: monitored_processes_) {
+      for (auto& monitored_process : monitored_processes_) {
         auto control_socket = monitored_process.proc->control_socket();
-        if (!control_socket->IsOpen())  {
+        if (!control_socket->IsOpen()) {
           LOG(ERROR) << "The control socket for "
                      << monitored_process.cmd->GetShortName()
                      << " is closed, it's effectively NOT being monitored";
