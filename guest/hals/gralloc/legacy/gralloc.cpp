@@ -196,6 +196,10 @@ struct private_module_t HAL_MODULE_INFO_SYM = {
     VSOC_STATIC_INITIALIZER(unregisterBuffer) gralloc_unregister_buffer,
     VSOC_STATIC_INITIALIZER(lock) gralloc_lock,
     VSOC_STATIC_INITIALIZER(unlock) gralloc_unlock,
+#if VSOC_PLATFORM_SDK_AFTER(P)
+    VSOC_STATIC_INITIALIZER(validateBufferSize) NULL,
+    VSOC_STATIC_INITIALIZER(getTransportSize) NULL,
+#endif
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     VSOC_STATIC_INITIALIZER(perform) NULL,
     VSOC_STATIC_INITIALIZER(lock_ycbcr) gralloc_lock_ycbcr,
