@@ -15,6 +15,8 @@
  */
 #include "common/libs/threads/cuttlefish_thread.h"
 
+#include <gtest/gtest.h>
+
 #include <android-base/logging.h>
 #include "common/libs/threads/thunkers.h"
 #include "common/libs/time/monotonic_time.h"
@@ -196,7 +198,7 @@ class WaitUntilTest {
  public:
   WaitUntilTest() : cond_(&mutex_), stage_(0) {}
 
-  void Run() {
+  bool Run() {
     start_ = MonotonicTimePoint::Now();
     {
       ScopedThread thread_s(
@@ -206,6 +208,7 @@ class WaitUntilTest {
     }
     printf("WaitUntilTest: completed, stage %d (%s)\n",
            stage_, (stage_ == FINISHED) ? "PASSED" : "FAILED");
+    return stage_ == FINISHED;
   }
 
 protected:
@@ -243,8 +246,7 @@ protected:
   MonotonicTimePoint start_;
 };
 
-int main(int, char**argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+TEST(ThreadTest, Mutex) {
   MutexTest mt;
   mt.Run();
   NotifyOneTest nt1;
@@ -252,5 +254,6 @@ int main(int, char**argv) {
   NotifyAllTest nta;
   nta.Run();
   WaitUntilTest wu;
-  wu.Run();
+  bool success = wu.Run();
+  EXPECT_TRUE(success);
 }
