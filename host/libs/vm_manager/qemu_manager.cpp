@@ -66,6 +66,36 @@ std::string JoinString(const std::vector<std::string>& args,
   return output.str();
 }
 
+bool Stop() {
+  auto config = vsoc::CuttlefishConfig::Get();
+  auto monitor_path = GetMonitorPath(config);
+  auto monitor_sock = cvd::SharedFD::SocketLocalClient(
+      monitor_path.c_str(), false, SOCK_STREAM);
+
+  if (!monitor_sock->IsOpen()) {
+    LOG(ERROR) << "The connection to qemu is closed, is it still running?";
+    return false;
+  }
+  char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
+  ssize_t len = sizeof(msg) - 1;
+  while (len > 0) {
+    int tmp = monitor_sock->Write(msg, len);
+    if (tmp < 0) {
+      LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
+      return false;
+    }
+    len -= tmp;
+  }
+  // Log the reply
+  char buff[1000];
+  while ((len = monitor_sock->Read(buff, sizeof(buff) - 1)) > 0) {
+    buff[len] = '\0';
+    LOG(INFO) << "From qemu monitor: " << buff;
+  }
+
+  return true;
+}
+
 }  // namespace
 
 const std::string QemuManager::name() { return "qemu_cli"; }
@@ -124,39 +154,19 @@ std::vector<cvd::Command> QemuManager::StartCommands(bool /*with_frontend*/) {
   LogAndSetEnv("vsock_guest_cid", std::to_string(config_->vsock_guest_cid()));
   LogAndSetEnv("logcat_mode", config_->logcat_mode());
 
-  cvd::Command qemu_cmd(vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh"));
+  cvd::Command qemu_cmd(vsoc::DefaultHostArtifactsPath("bin/cf_qemu.sh"),
+                        [](cvd::Subprocess* proc) {
+                          auto stopped = Stop();
+                          if (stopped) {
+                            return true;
+                          }
+                          LOG(WARNING) << "Failed to stop VMM nicely, "
+                                       << "attempting to KILL";
+                          return KillSubprocess(proc);
+                        });
   std::vector<cvd::Command> ret;
   ret.push_back(std::move(qemu_cmd));
   return ret;
-}
-
-bool QemuManager::Stop() {
-  auto monitor_path = GetMonitorPath(config_);
-  auto monitor_sock = cvd::SharedFD::SocketLocalClient(
-      monitor_path.c_str(), false, SOCK_STREAM);
-
-  if (!monitor_sock->IsOpen()) {
-    LOG(ERROR) << "The connection to qemu is closed, is it still running?";
-    return false;
-  }
-  char msg[] = "{\"execute\":\"qmp_capabilities\"}{\"execute\":\"quit\"}";
-  ssize_t len = sizeof(msg) - 1;
-  while (len > 0) {
-    int tmp = monitor_sock->Write(msg, len);
-    if (tmp < 0) {
-      LOG(ERROR) << "Error writing to socket: " << monitor_sock->StrError();
-      return false;
-    }
-    len -= tmp;
-  }
-  // Log the reply
-  char buff[1000];
-  while ((len = monitor_sock->Read(buff, sizeof(buff) - 1)) > 0) {
-    buff[len] = '\0';
-    LOG(INFO) << "From qemu monitor: " << buff;
-  }
-
-  return true;
 }
 
 }  // namespace vm_manager

@@ -92,45 +92,33 @@ void ProcessMonitor::MonitorExistingSubprocess(Command cmd, Subprocess proc,
   NotifyThread(thread_comm_main_);
 }
 
-void ProcessMonitor::StopMonitoredProcesses() {
+bool ProcessMonitor::StopMonitoredProcesses() {
+  // Because the mutex is held while this function executes, the restarter
+  // thread is kept blocked and by the time it resumes execution there are no
+  // more processes to monitor
   std::lock_guard<std::mutex> lock(processes_mutex_);
-  for (auto& entry : monitored_processes_) {
-    auto pid = entry.proc->pid();
-    if (pid > 0) {
-      auto pgid = getpgid(pid);
-      if (pgid < 0) {
-        auto error = errno;
-        LOG(WARNING) << "Error obtaining process group id of process with pid="
-                     << pid << ": " << strerror(error);
-        // Send the kill signal anyways, because pgid will be -1 it will be sent
-        // to the process and not a (non-existent) group
-      }
-      bool is_group_head = pid == pgid;
-      if (is_group_head) {
-        killpg(pid, SIGKILL);
-      } else {
-        kill(pid, SIGKILL);
-      }
-    }
+  bool result = true;
+  // Processes were started in the order they appear in the vector, stop them in
+  // reverse order for symmetry.
+  for (auto entry_it = monitored_processes_.rbegin();
+       entry_it != monitored_processes_.rend(); ++entry_it) {
+    auto& entry = *entry_it;
+    result = result && entry.proc->Stop();
   }
+  // Wait for all processes to actually exit.
   for (auto& entry : monitored_processes_) {
-    auto pid = entry.proc->pid();
-    if (pid > 0) {
-      int wstatus;
-      pid_t ret_pid;
-      do {
-        errno = 0;
-        ret_pid = waitpid(pid, &wstatus, 0);
-      } while (ret_pid < 0 && errno == EINTR);
-      if (ret_pid < 0) {
-        auto error = errno;
-        LOG(WARNING) << "Failed to wait for process with pid=" << pid
-                     << ": " << strerror(error);
-      }
+    // Most processes are being killed by signals, calling Wait(void) would be
+    // too verbose on the logs.
+    int wstatus;
+    auto ret = entry.proc->Wait(&wstatus, 0);
+    if (ret < 0) {
+      LOG(WARNING) << "Failed to wait for process "
+                   << entry.cmd->GetShortName();
     }
   }
   // Clear the list to ensure they are not started again
   monitored_processes_.clear();
+  return result;
 }
 
 bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {

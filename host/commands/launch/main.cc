@@ -37,7 +37,6 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
-#include <host/libs/vm_manager/crosvm_manager.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
@@ -57,6 +56,7 @@
 #include "host/commands/launch/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
+#include <host/libs/vm_manager/crosvm_manager.h>
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
@@ -284,25 +284,27 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
 }
 
 void ServerLoop(cvd::SharedFD server,
-                vm_manager::VmManager* vm_manager,
                 cvd::ProcessMonitor* process_monitor) {
   while (true) {
     // TODO: use select to handle simultaneous connections.
     auto client = cvd::SharedFD::Accept(*server);
     cvd::LauncherAction action;
-    auto response = cvd::LauncherResponse::kSuccess;
     while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
       switch (action) {
         case cvd::LauncherAction::kStop:
-          vm_manager->Stop();
-          process_monitor->StopMonitoredProcesses();
-          client->Write(&response, sizeof(response));
-          std::exit(0);
+          if (process_monitor->StopMonitoredProcesses()) {
+            auto response = cvd::LauncherResponse::kSuccess;
+            client->Write(&response, sizeof(response));
+            std::exit(0);
+          } else {
+            auto response = cvd::LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+          }
           break;
         default:
           LOG(ERROR) << "Unrecognized launcher action: "
                      << static_cast<char>(action);
-          response = cvd::LauncherResponse::kError;
+          auto response = cvd::LauncherResponse::kError;
           client->Write(&response, sizeof(response));
       }
     }
@@ -430,7 +432,7 @@ int main(int argc, char** argv) {
                              GetOnSubprocessExitCallback(*config));
   LaunchAdbConnectorIfEnabled(&process_monitor, *config, adbd_events_pipe);
 
-  ServerLoop(launcher_monitor_socket, vm_manager, &process_monitor); // Should not return
+  ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
   return cvd::LauncherExitCodes::kServerError;
 }
