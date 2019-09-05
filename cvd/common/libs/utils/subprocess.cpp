@@ -17,6 +17,7 @@
 #include "common/libs/utils/subprocess.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -67,6 +68,7 @@ cvd::Subprocess subprocess_impl(
     const char* const* command, const char* const* envp,
     const std::map<cvd::Subprocess::StdIOChannel, int>& redirects,
     const std::map<cvd::SharedFD, int>& inherited_fds, bool with_control_socket,
+    cvd::SubprocessStopper stopper,
     bool in_group = false) {
   // The parent socket will get closed on the child on the call to exec, the
   // child socket will be closed on the parent when this function returns and no
@@ -120,7 +122,7 @@ cvd::Subprocess subprocess_impl(
   while (command[i]) {
     LOG(INFO) << command[i++];
   }
-  return cvd::Subprocess(pid, parent_socket);
+  return cvd::Subprocess(pid, parent_socket, stopper);
 }
 
 std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
@@ -137,7 +139,8 @@ namespace cvd {
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
       started_(subprocess.started_),
-      control_socket_(subprocess.control_socket_) {
+      control_socket_(subprocess.control_socket_),
+      stopper_(subprocess.stopper_) {
   // Make sure the moved object no longer controls this subprocess
   subprocess.pid_ = -1;
   subprocess.started_ = false;
@@ -148,6 +151,7 @@ Subprocess& Subprocess::operator=(Subprocess&& other) {
   pid_ = other.pid_;
   started_ = other.started_;
   control_socket_ = other.control_socket_;
+  stopper_ = other.stopper_;
 
   other.pid_ = -1;
   other.started_ = false;
@@ -166,7 +170,8 @@ int Subprocess::Wait() {
   auto pid = pid_;  // Wait will set pid_ to -1 after waiting
   auto wait_ret = Wait(&wstatus, 0);
   if (wait_ret < 0) {
-    LOG(ERROR) << "Error on call to waitpid: " << strerror(errno);
+    auto error = errno;
+    LOG(ERROR) << "Error on call to waitpid: " << strerror(error);
     return wait_ret;
   }
   int retval = 0;
@@ -196,6 +201,26 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
   return retval;
 }
 
+bool KillSubprocess(Subprocess* subprocess) {
+  auto pid = subprocess->pid();
+  if (pid > 0) {
+    auto pgid = getpgid(pid);
+    if (pgid < 0) {
+      auto error = errno;
+      LOG(WARNING) << "Error obtaining process group id of process with pid="
+                   << pid << ": " << strerror(error);
+      // Send the kill signal anyways, because pgid will be -1 it will be sent
+      // to the process and not a (non-existent) group
+    }
+    bool is_group_head = pid == pgid;
+    if (is_group_head) {
+      return killpg(pid, SIGKILL) == 0;
+    } else {
+      return kill(pid, SIGKILL) == 0;
+    }
+  }
+  return true;
+}
 Command::ParameterBuilder::~ParameterBuilder() { Build(); }
 void Command::ParameterBuilder::Build() {
   auto param = stream_.str();
@@ -258,11 +283,11 @@ Subprocess Command::StartHelper(bool with_control_socket, bool in_group) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
     return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
-                           with_control_socket, in_group);
+                           with_control_socket, subprocess_stopper_, in_group);
   } else {
     auto envp = ToCharPointers(env_);
     return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
-                           with_control_socket, in_group);
+                           with_control_socket, subprocess_stopper_, in_group);
   }
 }
 

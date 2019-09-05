@@ -17,6 +17,7 @@
 
 #include <sys/types.h>
 
+#include <functional>
 #include <map>
 #include <sstream>
 #include <string>
@@ -25,6 +26,11 @@
 #include <common/libs/fs/shared_fd.h>
 
 namespace cvd {
+class Subprocess;
+using SubprocessStopper = std::function<bool(Subprocess*)>;
+// Kills a process by sending it the SIGKILL signal.
+bool KillSubprocess(Subprocess* subprocess);
+
 // Keeps track of a running (sub)process. Allows to wait for its completion.
 // It's an error to wait twice for the same subprocess.
 class Subprocess {
@@ -35,8 +41,11 @@ class Subprocess {
     kStdErr = 2,
   };
 
-  Subprocess(pid_t pid, SharedFD control)
-      : pid_(pid), started_(pid > 0), control_socket_(control) {}
+  Subprocess(pid_t pid, SharedFD control, SubprocessStopper stopper = KillSubprocess)
+      : pid_(pid),
+        started_(pid > 0),
+        control_socket_(control),
+        stopper_(stopper) {}
   // The default implementation won't do because we need to reset the pid of the
   // moved object.
   Subprocess(Subprocess&&);
@@ -53,6 +62,7 @@ class Subprocess {
   bool Started() const { return started_; }
   SharedFD control_socket() { return control_socket_; }
   pid_t pid() const { return pid_; }
+  bool Stop() { return stopper_(this); }
 
  private:
   // Copy is disabled to avoid waiting twice for the same pid (the first wait
@@ -63,6 +73,7 @@ class Subprocess {
   pid_t pid_ = -1;
   bool started_ = false;
   SharedFD control_socket_;
+  SubprocessStopper stopper_;
 };
 
 // An executable command. Multiple subprocesses can be started from the same
@@ -103,7 +114,14 @@ class Command {
     std::stringstream stream_;
   };
 
-  Command(const std::string& executable) { command_.push_back(executable); }
+  // Constructs a command object from the path to an executable binary and an
+  // optional subprocess stopper. When not provided, stopper defaults to sending
+  // SIGKILL to the subprocess.
+  Command(const std::string& executable,
+          SubprocessStopper stopper = KillSubprocess)
+      : subprocess_stopper_(stopper) {
+    command_.push_back(executable);
+  }
   Command(Command&&) = default;
   // The default copy constructor is unsafe because it would mean multiple
   // closing of the inherited file descriptors. If needed it can be implemented
@@ -163,6 +181,7 @@ class Command {
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   bool use_parent_env_ = true;
   std::vector<std::string> env_{};
+  SubprocessStopper subprocess_stopper_;
 };
 
 // Convenience wrapper around Command and Subprocess class, allows to easily
