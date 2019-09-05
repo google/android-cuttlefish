@@ -283,61 +283,26 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
   }
 }
 
-// Stops the device. If this function is successful it returns on a child of the
-// launcher (after it killed the laucher) and it should exit immediately
-bool StopCvd(vm_manager::VmManager* vm_manager) {
-  vm_manager->Stop();
-  auto pgid = getpgid(0);
-  auto child_pid = fork();
-  if (child_pid > 0) {
-    // The parent just waits for the child to kill it.
-    int wstatus;
-    waitpid(child_pid, &wstatus, 0);
-    LOG(ERROR) << "The forked child exited before delivering signal with "
-                  "status: "
-               << wstatus;
-    // If waitpid returns it means the child exited before the signal was
-    // delivered, notify the client of the error and continue serving
-    return false;
-  } else if (child_pid == 0) {
-    // The child makes sure it is in a different process group before
-    // killing everyone on its parent's
-    // This call should never fail (see SETPGID(2))
-    if (setpgid(0, 0) != 0) {
-      LOG(ERROR) << "setpgid failed (" << strerror(errno)
-                 << ") the launcher's child is about to kill itself";
-    }
-    killpg(pgid, SIGKILL);
-    return true;
-  } else {
-    // The fork failed, the system is in pretty bad shape
-    LOG(FATAL) << "Unable to fork before on Stop: " << strerror(errno);
-    return false;
-  }
-}
-
 void ServerLoop(cvd::SharedFD server,
-                vm_manager::VmManager* vm_manager) {
+                vm_manager::VmManager* vm_manager,
+                cvd::ProcessMonitor* process_monitor) {
   while (true) {
     // TODO: use select to handle simultaneous connections.
     auto client = cvd::SharedFD::Accept(*server);
     cvd::LauncherAction action;
+    auto response = cvd::LauncherResponse::kSuccess;
     while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
       switch (action) {
         case cvd::LauncherAction::kStop:
-          if (StopCvd(vm_manager)) {
-            auto response = cvd::LauncherResponse::kSuccess;
-            client->Write(&response, sizeof(response));
-            std::exit(0);
-          } else {
-            auto response = cvd::LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-          }
+          vm_manager->Stop();
+          process_monitor->StopMonitoredProcesses();
+          client->Write(&response, sizeof(response));
+          std::exit(0);
           break;
         default:
           LOG(ERROR) << "Unrecognized launcher action: "
                      << static_cast<char>(action);
-          auto response = cvd::LauncherResponse::kError;
+          response = cvd::LauncherResponse::kError;
           client->Write(&response, sizeof(response));
       }
     }
@@ -453,7 +418,7 @@ int main(int argc, char** argv) {
                              GetOnSubprocessExitCallback(*config));
   LaunchAdbConnectorIfEnabled(&process_monitor, *config, adbd_events_pipe);
 
-  ServerLoop(launcher_monitor_socket, vm_manager); // Should not return
+  ServerLoop(launcher_monitor_socket, vm_manager, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
   return cvd::LauncherExitCodes::kServerError;
 }
