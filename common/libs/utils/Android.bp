@@ -49,4 +49,5 @@ cc_test {
     shared_libs: ["libcuttlefish_utils"],
     gtest: true,
     defaults: ["cuttlefish_host_only"],
+    test_suites: ["general-tests"],
 }
