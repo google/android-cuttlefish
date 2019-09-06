@@ -163,12 +163,6 @@ DEFINE_int32(vsock_guest_cid,
              vsoc::GetDefaultPerInstanceVsockCid(),
              "Guest identifier for vsock. Disabled if under 3.");
 
-// TODO(b/72969289) This should be generated
-DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
-DEFINE_string(gsi_fstab,
-              vsoc::DefaultHostArtifactsPath("config/gsi.fstab"),
-              "Path to the GSI fstab file");
-
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix),
               "UUID to use for the device. Random if not specified");
 DEFINE_bool(daemon, false,
@@ -343,28 +337,13 @@ bool InitializeCuttlefishConfiguration(
     FLAGS_super_image.clear();
   }
 
-  // This needs to be done here because the dtb path depends on the presence of
-  // the ramdisk. If we are booting a super image, the fstab is passed through
-  // from the ramdisk, it should never be defined by dt.
-  if (FLAGS_super_image.empty() && FLAGS_dtb.empty()) {
-    if (use_ramdisk) {
-      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
-    } else {
-      if (FLAGS_composite_disk.empty()) {
-        FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
-      } else {
-        FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/composite-system-root.dtb");
-      }
-    }
-  }
-
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
 
   if (use_ramdisk) {
     if (FLAGS_composite_disk.empty()) {
       tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
     } else {
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=composite-fstab");
+      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
     }
   } else {
     if (FLAGS_composite_disk.empty()) {
@@ -372,7 +351,7 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
     } else {
       tmp_config_obj.add_kernel_cmdline("root=/dev/vda1");
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=composite-fstab");
+      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
     }
   }
 
@@ -426,14 +405,6 @@ bool InitializeCuttlefishConfiguration(
   }
   if (FLAGS_extra_kernel_cmdline.size()) {
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
-  }
-
-  if (FLAGS_super_image.empty()) {
-    tmp_config_obj.set_dtb_path(FLAGS_dtb);
-    tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
-  } else {
-    tmp_config_obj.set_dtb_path("");
-    tmp_config_obj.set_gsi_fstab_path("");
   }
 
   if (!FLAGS_composite_disk.empty()) {
@@ -621,13 +592,6 @@ void SetDefaultFlagsForCrosvm() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-
-  if (!FLAGS_composite_disk.empty()) {
-    std::string composite_gsi_fstab =
-        vsoc::DefaultHostArtifactsPath("config/composite-gsi.fstab");
-    SetCommandLineOptionWithMode("gsi_fstab", composite_gsi_fstab.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  }
 }
 
 bool ParseCommandLineFlags(int* argc, char*** argv) {

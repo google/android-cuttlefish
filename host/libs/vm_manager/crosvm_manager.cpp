@@ -104,9 +104,6 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
     crosvm_cmd.AddParameter("--rwdisk=", disk);
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));
-  if (!config_->gsi_fstab_path().empty()) {
-    crosvm_cmd.AddParameter("--android-fstab=", config_->gsi_fstab_path());
-  }
 
   if (with_frontend) {
     crosvm_cmd.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
