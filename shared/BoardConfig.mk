@@ -50,9 +50,6 @@ BOARD_USES_SYSTEM_EXTIMAGE := true
 BOARD_SYSTEM_EXTIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 
-ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
-BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
-endif
 BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
 TARGET_USERIMAGES_SPARSE_EXT_DISABLED := true
@@ -146,33 +143,17 @@ DHCPCD_USE_SCRIPT := yes
 
 
 TARGET_RECOVERY_PIXEL_FORMAT := ABGR_8888
-ifeq ($(TARGET_BUILD_SYSTEM_ROOT_IMAGE),true)
-# Use the initrd version for the dtb build, because we need to have /system
-# defined somewhere, and the dtb fstab doesn't define it (deliberately)
-TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd
-else ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
-TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd-dynamic-partitions
-else
-TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.initrd
-endif
 
-ifeq ($(TARGET_USE_DYNAMIC_PARTITIONS),true)
-  BOARD_SUPER_PARTITION_SIZE := 6442450944
-  BOARD_SUPER_PARTITION_GROUPS := google_dynamic_partitions
-  BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product system_ext
-  BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 6442450944
-  BOARD_SUPER_PARTITION_METADATA_DEVICE := vda
-  BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
-  BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
-  TARGET_RELEASETOOLS_EXTENSIONS := device/google/cuttlefish/shared
-else
-  # No dynamic partitions support; we must specify maximum sizes
-  BOARD_SYSTEMIMAGE_PARTITION_SIZE := 2147483648 # 2GB
-  BOARD_VENDORIMAGE_PARTITION_SIZE := 536870912 # 512MB
-  BOARD_PRODUCTIMAGE_PARTITION_SIZE := 2147483648 # 2GB
-  BOARD_SYSTEM_EXTIMAGE_PARTITION_SIZE := 1610612736 # 1.5GB
-  TARGET_NO_RECOVERY ?= true
-endif
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab
+
+BOARD_SUPER_PARTITION_SIZE := 6442450944
+BOARD_SUPER_PARTITION_GROUPS := google_dynamic_partitions
+BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := system vendor product system_ext
+BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 6442450944
+BOARD_SUPER_PARTITION_METADATA_DEVICE := vda
+BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
+BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
+TARGET_RELEASETOOLS_EXTENSIONS := device/google/cuttlefish/shared
 
 # To see full logs from init, disable ratelimiting.
 # The default is 5 messages per second amortized, with a burst of up to 10.
