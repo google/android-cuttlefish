@@ -22,10 +22,6 @@
 using vsoc::GetPerInstanceDefault;
 using cvd::LauncherExitCodes;
 
-DEFINE_string(
-    system_image, "",
-    "Path to the system image, if empty it is assumed to be a file named "
-    "system.img in the directory specified by -system_image_dir");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(metadata_image, "", "Location of the metadata partition image "
               "to be generated.");
@@ -101,10 +97,7 @@ DEFINE_string(x_display, "",
 
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
-DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
-DEFINE_string(product_image, "", "Location of the product partition image.");
 DEFINE_string(super_image, "", "Location of the super partition image.");
-DEFINE_string(system_ext_image, "", "Location of the system extension partition image.");
 DEFINE_string(misc_image, "",
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
@@ -162,12 +155,6 @@ DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
 DEFINE_int32(vsock_guest_cid,
              vsoc::GetDefaultPerInstanceVsockCid(),
              "Guest identifier for vsock. Disabled if under 3.");
-
-// TODO(b/72969289) This should be generated
-DEFINE_string(dtb, "", "Path to the cuttlefish.dtb file");
-DEFINE_string(gsi_fstab,
-              vsoc::DefaultHostArtifactsPath("config/gsi.fstab"),
-              "Path to the GSI fstab file");
 
 DEFINE_string(uuid, vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix),
               "UUID to use for the device. Random if not specified");
@@ -233,9 +220,6 @@ bool ResolveInstanceFiles() {
 
   // If user did not specify location of either of these files, expect them to
   // be placed in --system_image_dir location.
-  std::string default_system_image = FLAGS_system_image_dir + "/system.img";
-  SetCommandLineOptionWithMode("system_image", default_system_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_boot_image = FLAGS_system_image_dir + "/boot.img";
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -245,17 +229,8 @@ bool ResolveInstanceFiles() {
   std::string default_data_image = FLAGS_system_image_dir + "/userdata.img";
   SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_vendor_image = FLAGS_system_image_dir + "/vendor.img";
-  SetCommandLineOptionWithMode("vendor_image", default_vendor_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_metadata_image = FLAGS_system_image_dir + "/metadata.img";
   SetCommandLineOptionWithMode("metadata_image", default_metadata_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_product_image = FLAGS_system_image_dir + "/product.img";
-  SetCommandLineOptionWithMode("product_image", default_product_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_system_ext_image = FLAGS_system_image_dir + "/system_ext.img";
-  SetCommandLineOptionWithMode("system_ext_image", default_system_ext_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_super_image = FLAGS_system_image_dir + "/super.img";
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
@@ -337,34 +312,13 @@ bool InitializeCuttlefishConfiguration(
     ramdisk_path = "";
   }
 
-  // Fallback for older builds, or builds from branches without DAP
-  if (!FLAGS_super_image.empty() && !cvd::FileHasContent(FLAGS_super_image.c_str())) {
-    LOG(INFO) << "No super image detected; assuming non-DAP build";
-    FLAGS_super_image.clear();
-  }
-
-  // This needs to be done here because the dtb path depends on the presence of
-  // the ramdisk. If we are booting a super image, the fstab is passed through
-  // from the ramdisk, it should never be defined by dt.
-  if (FLAGS_super_image.empty() && FLAGS_dtb.empty()) {
-    if (use_ramdisk) {
-      FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/initrd-root.dtb");
-    } else {
-      if (FLAGS_composite_disk.empty()) {
-        FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/system-root.dtb");
-      } else {
-        FLAGS_dtb = vsoc::DefaultHostArtifactsPath("config/composite-system-root.dtb");
-      }
-    }
-  }
-
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
 
   if (use_ramdisk) {
     if (FLAGS_composite_disk.empty()) {
       tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
     } else {
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=composite-fstab");
+      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
     }
   } else {
     if (FLAGS_composite_disk.empty()) {
@@ -372,7 +326,7 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
     } else {
       tmp_config_obj.add_kernel_cmdline("root=/dev/vda1");
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=composite-fstab");
+      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
     }
   }
 
@@ -428,33 +382,14 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
 
-  if (FLAGS_super_image.empty()) {
-    tmp_config_obj.set_dtb_path(FLAGS_dtb);
-    tmp_config_obj.set_gsi_fstab_path(FLAGS_gsi_fstab);
-  } else {
-    tmp_config_obj.set_dtb_path("");
-    tmp_config_obj.set_gsi_fstab_path("");
-  }
-
   if (!FLAGS_composite_disk.empty()) {
     tmp_config_obj.set_virtual_disk_paths({FLAGS_composite_disk});
-  } else if(!FLAGS_super_image.empty()) {
+  } else {
     tmp_config_obj.set_virtual_disk_paths({
       FLAGS_super_image,
       FLAGS_data_image,
       FLAGS_cache_image,
       FLAGS_metadata_image,
-    });
-  } else {
-    tmp_config_obj.set_virtual_disk_paths({
-      FLAGS_system_image,
-      FLAGS_data_image,
-      FLAGS_cache_image,
-      FLAGS_metadata_image,
-      FLAGS_vendor_image,
-      FLAGS_product_image,
-      FLAGS_system_ext_image,
-      FLAGS_misc_image,
     });
   }
 
@@ -621,13 +556,6 @@ void SetDefaultFlagsForCrosvm() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-
-  if (!FLAGS_composite_disk.empty()) {
-    std::string composite_gsi_fstab =
-        vsoc::DefaultHostArtifactsPath("config/composite-gsi.fstab");
-    SetCommandLineOptionWithMode("gsi_fstab", composite_gsi_fstab.c_str(),
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  }
 }
 
 bool ParseCommandLineFlags(int* argc, char*** argv) {
@@ -702,17 +630,10 @@ namespace {
 
 std::vector<ImagePartition> disk_config() {
   std::vector<ImagePartition> partitions;
-  if (FLAGS_super_image.empty()) {
-    partitions.push_back(ImagePartition {
-      .label = "system",
-      .image_file_path = FLAGS_system_image,
-    });
-  } else {
-    partitions.push_back(ImagePartition {
-      .label = "super",
-      .image_file_path = FLAGS_super_image,
-    });
-  }
+  partitions.push_back(ImagePartition {
+    .label = "super",
+    .image_file_path = FLAGS_super_image,
+  });
   partitions.push_back(ImagePartition {
     .label = "userdata",
     .image_file_path = FLAGS_data_image,
@@ -725,20 +646,6 @@ std::vector<ImagePartition> disk_config() {
     .label = "metadata",
     .image_file_path = FLAGS_metadata_image,
   });
-  if (FLAGS_super_image.empty()) {
-    partitions.push_back(ImagePartition {
-      .label = "product",
-      .image_file_path = FLAGS_product_image,
-    });
-    partitions.push_back(ImagePartition {
-      .label = "vendor",
-      .image_file_path = FLAGS_vendor_image,
-    });
-    partitions.push_back(ImagePartition {
-      .label = "system_ext",
-      .image_file_path = FLAGS_system_ext_image,
-    });
-  }
   partitions.push_back(ImagePartition {
     .label = "boot",
     .image_file_path = FLAGS_boot_image,
