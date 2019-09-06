@@ -156,6 +156,10 @@ class CuttlefishConfig {
   std::string final_ramdisk_path() const;
   void set_final_ramdisk_path(const std::string& final_ramdisk_path);
 
+  std::string vendor_ramdisk_image_path() const;
+  void set_vendor_ramdisk_image_path(const std::string&
+    vendor_ramdisk_image_path);
+
   std::vector<std::string> virtual_disk_paths() const;
   void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
 
