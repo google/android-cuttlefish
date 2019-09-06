@@ -64,11 +64,9 @@ const std::string OTA_TOOLS = "otatools.zip";
  */
 std::string target_build_zip(const DeviceBuild& build, const std::string& name) {
   std::string target = build.target;
-  if (target.find("-userdebug") != std::string::npos) {
-    target.replace(target.find("-userdebug"), sizeof("-userdebug"), "");
-  }
-  if (target.find("-eng") != std::string::npos) {
-    target.replace(target.find("-eng"), sizeof("-eng"), "");
+  size_t dash_pos = target.find("-");
+  if (dash_pos != std::string::npos) {
+    target.replace(dash_pos, target.size() - dash_pos, "");
   }
   return target + "-" + name + "-" + build.id + ".zip";
 }
