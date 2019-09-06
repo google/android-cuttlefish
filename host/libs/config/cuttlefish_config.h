@@ -141,12 +141,6 @@ class CuttlefishConfig {
   std::vector<std::string> virtual_disk_paths() const;
   void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
 
-  std::string dtb_path() const;
-  void set_dtb_path(const std::string& dtb_path);
-
-  std::string gsi_fstab_path() const;
-  void set_gsi_fstab_path(const std::string& path);
-
   std::string mempath() const;
   void set_mempath(const std::string& mempath);
 
