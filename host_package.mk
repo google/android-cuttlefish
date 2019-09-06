@@ -84,15 +84,7 @@ cvd_host_shared_libraries := \
     libcuttlefish_device_config.so \
 
 
-cvd_host_configs := \
-    system-root.dtb \
-    composite-system-root.dtb \
-    initrd-root.dtb \
-    gsi.fstab \
-    composite-gsi.fstab \
-
 cvd_host_package_files := \
-     $(addprefix config/,$(cvd_host_configs)) \
      $(addprefix $(bin_path)/,$(cvd_host_executables)) \
      $(addprefix $(lib_path)/,$(cvd_host_shared_libraries)) \
      $(foreach test,$(cvd_host_tests), ${tests_path}/$(test)/$(test)) \
