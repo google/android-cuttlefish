@@ -22,10 +22,6 @@
 using vsoc::GetPerInstanceDefault;
 using cvd::LauncherExitCodes;
 
-DEFINE_string(
-    system_image, "",
-    "Path to the system image, if empty it is assumed to be a file named "
-    "system.img in the directory specified by -system_image_dir");
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(metadata_image, "", "Location of the metadata partition image "
               "to be generated.");
@@ -101,10 +97,7 @@ DEFINE_string(x_display, "",
 
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
-DEFINE_string(vendor_image, "", "Location of the vendor partition image.");
-DEFINE_string(product_image, "", "Location of the product partition image.");
 DEFINE_string(super_image, "", "Location of the super partition image.");
-DEFINE_string(system_ext_image, "", "Location of the system extension partition image.");
 DEFINE_string(misc_image, "",
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
@@ -227,9 +220,6 @@ bool ResolveInstanceFiles() {
 
   // If user did not specify location of either of these files, expect them to
   // be placed in --system_image_dir location.
-  std::string default_system_image = FLAGS_system_image_dir + "/system.img";
-  SetCommandLineOptionWithMode("system_image", default_system_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_boot_image = FLAGS_system_image_dir + "/boot.img";
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -239,17 +229,8 @@ bool ResolveInstanceFiles() {
   std::string default_data_image = FLAGS_system_image_dir + "/userdata.img";
   SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_vendor_image = FLAGS_system_image_dir + "/vendor.img";
-  SetCommandLineOptionWithMode("vendor_image", default_vendor_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_metadata_image = FLAGS_system_image_dir + "/metadata.img";
   SetCommandLineOptionWithMode("metadata_image", default_metadata_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_product_image = FLAGS_system_image_dir + "/product.img";
-  SetCommandLineOptionWithMode("product_image", default_product_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_system_ext_image = FLAGS_system_image_dir + "/system_ext.img";
-  SetCommandLineOptionWithMode("system_ext_image", default_system_ext_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_super_image = FLAGS_system_image_dir + "/super.img";
   SetCommandLineOptionWithMode("super_image", default_super_image.c_str(),
@@ -331,12 +312,6 @@ bool InitializeCuttlefishConfiguration(
     ramdisk_path = "";
   }
 
-  // Fallback for older builds, or builds from branches without DAP
-  if (!FLAGS_super_image.empty() && !cvd::FileHasContent(FLAGS_super_image.c_str())) {
-    LOG(INFO) << "No super image detected; assuming non-DAP build";
-    FLAGS_super_image.clear();
-  }
-
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
 
   if (use_ramdisk) {
@@ -409,23 +384,12 @@ bool InitializeCuttlefishConfiguration(
 
   if (!FLAGS_composite_disk.empty()) {
     tmp_config_obj.set_virtual_disk_paths({FLAGS_composite_disk});
-  } else if(!FLAGS_super_image.empty()) {
+  } else {
     tmp_config_obj.set_virtual_disk_paths({
       FLAGS_super_image,
       FLAGS_data_image,
       FLAGS_cache_image,
       FLAGS_metadata_image,
-    });
-  } else {
-    tmp_config_obj.set_virtual_disk_paths({
-      FLAGS_system_image,
-      FLAGS_data_image,
-      FLAGS_cache_image,
-      FLAGS_metadata_image,
-      FLAGS_vendor_image,
-      FLAGS_product_image,
-      FLAGS_system_ext_image,
-      FLAGS_misc_image,
     });
   }
 
@@ -666,17 +630,10 @@ namespace {
 
 std::vector<ImagePartition> disk_config() {
   std::vector<ImagePartition> partitions;
-  if (FLAGS_super_image.empty()) {
-    partitions.push_back(ImagePartition {
-      .label = "system",
-      .image_file_path = FLAGS_system_image,
-    });
-  } else {
-    partitions.push_back(ImagePartition {
-      .label = "super",
-      .image_file_path = FLAGS_super_image,
-    });
-  }
+  partitions.push_back(ImagePartition {
+    .label = "super",
+    .image_file_path = FLAGS_super_image,
+  });
   partitions.push_back(ImagePartition {
     .label = "userdata",
     .image_file_path = FLAGS_data_image,
@@ -689,20 +646,6 @@ std::vector<ImagePartition> disk_config() {
     .label = "metadata",
     .image_file_path = FLAGS_metadata_image,
   });
-  if (FLAGS_super_image.empty()) {
-    partitions.push_back(ImagePartition {
-      .label = "product",
-      .image_file_path = FLAGS_product_image,
-    });
-    partitions.push_back(ImagePartition {
-      .label = "vendor",
-      .image_file_path = FLAGS_vendor_image,
-    });
-    partitions.push_back(ImagePartition {
-      .label = "system_ext",
-      .image_file_path = FLAGS_system_ext_image,
-    });
-  }
   partitions.push_back(ImagePartition {
     .label = "boot",
     .image_file_path = FLAGS_boot_image,
