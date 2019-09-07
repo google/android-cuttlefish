@@ -206,7 +206,7 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
   std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
                            config.PerInstancePath(".") + "\"\n";
   config_env += "export ANDROID_SERIAL=";
-  if (AdbUsbEnabled(config)) {
+  if (config.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
     config_env += config.serial_number();
   } else {
     config_env += "127.0.0.1:" + std::to_string(GetHostPort());
