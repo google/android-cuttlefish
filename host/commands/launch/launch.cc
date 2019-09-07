@@ -96,13 +96,6 @@ bool LogcatReceiverEnabled(const vsoc::CuttlefishConfig& config) {
   return config.logcat_mode() == cvd::kLogcatVsockMode;
 }
 
-void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
-  if (!AdbUsbEnabled(config) && !AdbTunnelEnabled(config)
-      && !AdbVsockTunnelEnabled(config) && !AdbVsockHalfTunnelEnabled(config)) {
-    LOG(INFO) << "ADB not enabled";
-  }
-}
-
 cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config) {
   // Resize screen region
   auto actual_width = cvd::AlignToPowerOf2(config.x_res() * 4, 4);// align to 16

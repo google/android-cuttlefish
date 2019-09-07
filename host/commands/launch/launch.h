@@ -7,7 +7,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 int GetHostPort();
-void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config);
 
 cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config);
 std::vector <cvd::SharedFD> LaunchKernelLogMonitor(

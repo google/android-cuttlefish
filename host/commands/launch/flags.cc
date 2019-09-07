@@ -624,6 +624,15 @@ bool DecompressKernel(const std::string& src, const std::string& dst) {
   auto decomp_proc = decomp_cmd.Start(false);
   return decomp_proc.Started() && decomp_proc.Wait() == 0;
 }
+
+void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
+  auto adb_modes = config.adb_mode();
+  adb_modes.erase(vsoc::AdbMode::Unknown);
+  if (adb_modes.size() < 1) {
+    LOG(INFO) << "ADB not enabled";
+  }
+}
+
 } // namespace
 
 namespace {
