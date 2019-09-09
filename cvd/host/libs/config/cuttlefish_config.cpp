@@ -116,6 +116,7 @@ const char* kUuid = "uuid";
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
+const char* kHostPort = "host_port";
 const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
 
@@ -544,6 +545,14 @@ void CuttlefishConfig::set_adb_mode(const std::set<std::string>& mode) {
     mode_json_obj.append(arg);
   }
   (*dictionary_)[kAdbMode] = mode_json_obj;
+}
+
+int CuttlefishConfig::host_port() const {
+  return (*dictionary_)[kHostPort].asInt();
+}
+
+void CuttlefishConfig::set_host_port(int host_port) {
+  (*dictionary_)[kHostPort] = host_port;
 }
 
 std::string CuttlefishConfig::adb_ip_and_port() const {
