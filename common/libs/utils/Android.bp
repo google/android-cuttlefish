@@ -16,6 +16,7 @@
 cc_library {
     name: "libcuttlefish_utils",
     srcs: [
+        "archive.cpp",
         "subprocess.cpp",
         "environment.cpp",
         "size_utils.cpp",
@@ -30,6 +31,7 @@ cc_library {
         shared_libs: [
             "libbase",
             "libcuttlefish_fs",
+            "libcuttlefish_strings",
             "cuttlefish_auto_resources",
         ],
     },
@@ -37,6 +39,7 @@ cc_library {
         static_libs: [
             "libbase",
             "libcuttlefish_fs",
+            "libcuttlefish_strings",
             "cuttlefish_auto_resources",
         ],
     },
