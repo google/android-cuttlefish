@@ -22,46 +22,25 @@
 
 #include <glog/logging.h>
 
-#include "common/libs/strings/str_split.h"
+#include "common/libs/utils/archive.h"
 #include "common/libs/utils/subprocess.h"
 
-namespace {
-
-std::vector<std::string> ArchiveContents(const std::string& archive) {
-  std::string bsdtar_output;
-  auto bsdtar_ret =
-      cvd::execute_capture_output({"/usr/bin/bsdtar", "-tf", archive},
-                                  &bsdtar_output);
-  return bsdtar_ret == 0
-      ? cvd::StrSplit(bsdtar_output, '\n')
-      : std::vector<std::string>();
-}
-
-} // namespace
-
-bool ExtractImages(const std::string& archive,
+bool ExtractImages(const std::string& archive_file,
                    const std::string& target_directory,
                    const std::vector<std::string>& images) {
-  std::vector<std::string> bsdtar_cmd = {
-      "/usr/bin/bsdtar",
-      "-x",
-      "-v",
-      "-C", target_directory,
-      "-f", archive,
-      "-S",
-  };
-  for (const auto& img : images) {
-    bsdtar_cmd.push_back(img);
-  }
-  auto bsdtar_ret = cvd::execute(bsdtar_cmd);
-  if (bsdtar_ret != 0) {
-    LOG(ERROR) << "Unable to extract images. bsdtar returned " << bsdtar_ret;
+  cvd::Archive archive(archive_file);
+  bool extracted =
+      images.size() > 0
+          ? archive.ExtractFiles(images, target_directory)
+          : archive.ExtractAll(target_directory);
+  if (!extracted) {
+    LOG(ERROR) << "Unable to extract images.";
     return false;
   }
 
   bool extraction_success = true;
   std::vector<std::string> files =
-      images.size() > 0 ? images : ArchiveContents(archive);
+      images.size() > 0 ? images : archive.Contents();
   for (const auto& file : files) {
     if (file.find(".img") == std::string::npos) {
       continue;
@@ -80,8 +59,12 @@ bool ExtractImages(const std::string& archive,
       continue;
     }
     std::string inflated_file = extracted_file + ".inflated";
-    auto simg_ret = cvd::execute({"/usr/bin/simg2img", extracted_file, inflated_file});
-    if (simg_ret != 0) {
+    cvd::Command simg_cmd("/usr/bin/simg2img");
+    simg_cmd.AddParameter(extracted_file);
+    simg_cmd.AddParameter(inflated_file);
+    simg_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
+                           cvd::Subprocess::StdIOChannel::kStdErr);
+    if (simg_cmd.Start().Wait() != 0) {
       LOG(ERROR) << "Unable to run simg2img on " << file;
       extraction_success = false;
       continue;

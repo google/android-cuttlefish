@@ -21,6 +21,7 @@
 #include "gflags/gflags.h"
 #include <glog/logging.h>
 
+#include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
@@ -149,11 +150,12 @@ bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
     return false;
   }
 
-  if (cvd::execute({"/bin/tar", "xvf", local_path, "-C", target_directory}) != 0) {
+  cvd::Archive archive(local_path);
+  if (!archive.ExtractAll(target_directory)) {
     LOG(FATAL) << "Could not extract " << local_path;
     return false;
   }
-  if (unlink(HOST_TOOLS.c_str()) != 0) {
+  if (unlink(local_path.c_str()) != 0) {
     LOG(ERROR) << "Could not delete " << local_path;
   }
   return true;
@@ -161,7 +163,13 @@ bool download_host_package(BuildApi* build_api, const DeviceBuild& build,
 
 bool desparse(const std::string& file) {
   LOG(INFO) << "Unsparsing " << file;
-  if (cvd::execute({"/bin/dd", "if=" + file, "of=" + file, "conv=notrunc"}) != 0) {
+  cvd::Command dd_cmd("/bin/dd");
+  dd_cmd.AddParameter("if=", file);
+  dd_cmd.AddParameter("of=", file);
+  dd_cmd.AddParameter("conv=notrunc");
+  dd_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
+                       cvd::Subprocess::StdIOChannel::kStdErr);
+  if (dd_cmd.Start().Wait() != 0) {
     LOG(ERROR) << "Could not unsparse " << file;
     return false;
   }
@@ -193,9 +201,8 @@ bool download_ota_tools(BuildApi* build_api, const DeviceBuild& build,
     LOG(FATAL) << "Could not create " << otatools_dir;
     return false;
   }
-  auto bsdtar_out = cvd::execute(
-      {"/usr/bin/bsdtar", "-x", "-v", "-C", otatools_dir, "-f", local_path, "-S"});
-  if (bsdtar_out != 0) {
+  cvd::Archive archive(local_path);
+  if (!archive.ExtractAll(otatools_dir)) {
     LOG(FATAL) << "Could not extract " << local_path;
     return false;
   }
@@ -316,7 +323,10 @@ int main(int argc, char** argv) {
 
   // Ignore return code. We want to make sure there is no running instance,
   // and stop_cvd will exit with an error code if there is already no running instance.
-  cvd::execute({"bin/stop_cvd"});
+  cvd::Command stop_cmd("bin/stop_cvd");
+  stop_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
+                         cvd::Subprocess::StdIOChannel::kStdErr);
+  stop_cmd.Start().Wait();
 
   // gflags::ParseCommandLineFlags will remove fetch_cvd's flags from this.
   // This depends the remove_flags argument (3rd) is "true".
