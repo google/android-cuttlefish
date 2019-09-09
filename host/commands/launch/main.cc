@@ -315,6 +315,18 @@ int main(int argc, char** argv) {
 
   auto config = InitFilesystemAndCreateConfig(&argc, &argv);
 
+  // Change working directory to the instance directory as early as possible to
+  // ensure all host processes have the same working dir. This helps stop_cvd
+  // find the running processes when it can't establish a communication with the
+  // launcher.
+  auto chdir_ret = chdir(config->instance_dir().c_str());
+  if (chdir_ret != 0) {
+    auto error = errno;
+    LOG(ERROR) << "Unable to change dir into instance directory ("
+               << config->instance_dir() << "): " << strerror(error);
+    return LauncherExitCodes::kInstanceDirCreationError;
+  }
+
   auto vm_manager = vm_manager::VmManager::Get(config->vm_manager(), config);
 
   // Check host configuration
