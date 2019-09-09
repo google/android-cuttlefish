@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/launch/boot_image_unpacker.h"
+#include "host/commands/assemble_cvd/boot_image_unpacker.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -24,7 +24,7 @@
 #include <glog/logging.h>
 
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/launch/bootimg.h"
+#include "host/commands/assemble_cvd/bootimg.h"
 
 namespace cvd {
 
