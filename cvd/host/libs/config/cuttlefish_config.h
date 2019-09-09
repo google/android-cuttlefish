@@ -212,6 +212,9 @@ class CuttlefishConfig {
   void set_adb_mode(const std::set<std::string>& modes);
   std::set<AdbMode> adb_mode() const;
 
+  void set_host_port(int host_port);
+  int host_port() const;
+
   void set_adb_ip_and_port(const std::string& ip_port);
   std::string adb_ip_and_port() const;
 
