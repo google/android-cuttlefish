@@ -48,7 +48,7 @@ class ProcessMonitor {
   void MonitorExistingSubprocess(Command cmd, Subprocess sub_process,
                                  OnSocketReadyCb on_control_socket_ready_cb);
   // Stops all monitored subprocesses.
-  void StopMonitoredProcesses();
+  bool StopMonitoredProcesses();
   static bool RestartOnExitCb(MonitorEntry* entry);
   static bool DoNotMonitorCb(MonitorEntry* entry);
 

@@ -44,6 +44,17 @@ void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
   }
 }
 
+bool Stop() {
+  auto config = vsoc::CuttlefishConfig::Get();
+  cvd::Command command(config->crosvm_binary());
+  command.AddParameter("stop");
+  command.AddParameter(GetControlSocketPath(config));
+
+  auto process = command.Start();
+
+  return process.Wait() == 0;
+}
+
 }  // namespace
 
 const std::string CrosvmManager::name() { return "crosvm"; }
@@ -81,7 +92,14 @@ CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
 std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
-  cvd::Command crosvm_cmd(config_->crosvm_binary());
+  cvd::Command crosvm_cmd(config_->crosvm_binary(), [](cvd::Subprocess* proc) {
+    auto stopped = Stop();
+    if (stopped) {
+      return true;
+    }
+    LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
+    return KillSubprocess(proc);
+  });
   crosvm_cmd.AddParameter("run");
 
   if (config_->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
@@ -154,16 +172,6 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
   ret.push_back(std::move(crosvm_cmd));
   ret.push_back(std::move(console_cmd));
   return ret;
-}
-
-bool CrosvmManager::Stop() {
-  cvd::Command command(config_->crosvm_binary());
-  command.AddParameter("stop");
-  command.AddParameter(GetControlSocketPath(config_));
-
-  auto process = command.Start();
-
-  return process.Wait() == 0;
 }
 
 }  // namespace vm_manager
