@@ -17,6 +17,7 @@
 
 #include <glog/logging.h>
 
+#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/flags.h"
 
 int main(int argc, char** argv) {
@@ -26,4 +27,6 @@ int main(int argc, char** argv) {
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
+
+  return cvd::AssemblerExitCodes::kSuccess;
 }
