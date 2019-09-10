@@ -47,7 +47,6 @@ class VmManager {
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
   virtual std::vector<cvd::Command> StartCommands(bool with_frontend) = 0;
-  virtual bool Stop() = 0;
 
   virtual bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const;

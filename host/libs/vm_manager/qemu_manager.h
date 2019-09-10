@@ -33,7 +33,6 @@ class QemuManager : public VmManager {
   virtual ~QemuManager() = default;
 
   std::vector<cvd::Command> StartCommands(bool with_frontend) override;
-  bool Stop() override;
 };
 
 }  // namespace vm_manager
