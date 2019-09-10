@@ -324,6 +324,19 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
+  if (isatty(0)) {
+    LOG(FATAL) << "stdin was a tty, expected to be passed the output of a previous stage. "
+               << "Did you mean to run launch_cvd?";
+    return cvd::RunnerExitCodes::kInvalidHostConfiguration;
+  } else {
+    int error_num = errno;
+    if (error_num == EBADF) {
+      LOG(FATAL) << "stdin was not a valid file descriptor, expected to be passed the output "
+                 << "of assemble_cvd. Did you mean to run launch_cvd?";
+      return cvd::RunnerExitCodes::kInvalidHostConfiguration;
+    }
+  }
+
   std::string input_files_str;
   {
     auto input_fd = cvd::SharedFD::Dup(0);
