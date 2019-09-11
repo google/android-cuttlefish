@@ -18,6 +18,6 @@
 #include <string>
 #include <vector>
 
-bool ExtractImages(const std::string& archive,
-                   const std::string& target_directory,
-                   const std::vector<std::string>& images);
+std::vector<std::string> ExtractImages(const std::string& archive,
+                                       const std::string& target_directory,
+                                       const std::vector<std::string>& images);
