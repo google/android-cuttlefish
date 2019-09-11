@@ -29,6 +29,7 @@ cc_binary_host {
     static_libs: [
         "cuttlefish_auto_resources",
         "libbase",
+        "libcuttlefish_host_config",
         "libcuttlefish_fs",
         "libcuttlefish_strings",
         "libcuttlefish_utils",
