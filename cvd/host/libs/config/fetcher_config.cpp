@@ -94,6 +94,8 @@ std::ostream& operator<<(std::ostream& os, const CvdFile& cvd_file) {
 FetcherConfig::FetcherConfig() : dictionary_(new Json::Value()) {
 }
 
+FetcherConfig::FetcherConfig(FetcherConfig&&) = default;
+
 FetcherConfig::~FetcherConfig() {
 }
 
