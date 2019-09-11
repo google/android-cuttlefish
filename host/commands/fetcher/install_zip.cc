@@ -25,9 +25,9 @@
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/subprocess.h"
 
-bool ExtractImages(const std::string& archive_file,
-                   const std::string& target_directory,
-                   const std::vector<std::string>& images) {
+std::vector<std::string> ExtractImages(const std::string& archive_file,
+                                       const std::string& target_directory,
+                                       const std::vector<std::string>& images) {
   cvd::Archive archive(archive_file);
   bool extracted =
       images.size() > 0
@@ -35,7 +35,7 @@ bool ExtractImages(const std::string& archive_file,
           : archive.ExtractAll(target_directory);
   if (!extracted) {
     LOG(ERROR) << "Unable to extract images.";
-    return false;
+    return {};
   }
 
   bool extraction_success = true;
@@ -75,5 +75,8 @@ bool ExtractImages(const std::string& archive_file,
       extraction_success = false;
     }
   }
-  return extraction_success;
+  for (auto& file : files) {
+    file = target_directory + "/" + file;
+  }
+  return extraction_success ? files : std::vector<std::string>{};
 }
