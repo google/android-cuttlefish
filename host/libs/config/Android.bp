@@ -16,7 +16,8 @@
 cc_library_host_static {
     name: "libcuttlefish_host_config",
     srcs: [
-        "cuttlefish_config.cpp"
+        "cuttlefish_config.cpp",
+        "fetcher_config.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
@@ -26,6 +27,7 @@ cc_library_host_static {
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
+        "libgflags",
     ],
     static_libs: [
         "libxml2",
