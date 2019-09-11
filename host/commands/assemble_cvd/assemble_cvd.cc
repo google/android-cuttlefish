@@ -17,8 +17,32 @@
 
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_buf.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/strings/str_split.h"
 #include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/flags.h"
+#include "host/libs/config/fetcher_config.h"
+
+namespace {
+
+std::string kFetcherConfigFile = "fetcher_config.json";
+
+cvd::FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
+  cvd::FetcherConfig fetcher_config;
+  for (const auto& file : files) {
+    auto expected_pos = file.size() - kFetcherConfigFile.size();
+    if (file.rfind(kFetcherConfigFile) == expected_pos) {
+      if (fetcher_config.LoadFromFile(file)) {
+        return fetcher_config;
+      }
+      LOG(ERROR) << "Could not load fetcher config file.";
+    }
+  }
+  return fetcher_config;
+}
+
+} // namespace
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -36,7 +60,17 @@ int main(int argc, char** argv) {
     }
   }
 
-  auto config = InitFilesystemAndCreateConfig(&argc, &argv);
+  std::string input_files_str;
+  {
+    auto input_fd = cvd::SharedFD::Dup(0);
+    auto bytes_read = cvd::ReadAll(input_fd, &input_files_str);
+    if (bytes_read < 0) {
+      LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
+    }
+  }
+  std::vector<std::string> input_files = cvd::StrSplit(input_files_str, '\n');
+
+  auto config = InitFilesystemAndCreateConfig(&argc, &argv, FindFetcherConfig(input_files));
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
