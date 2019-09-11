@@ -1,6 +1,7 @@
 type vendor_init_radio_prop, property_type;
 type cf_graphics_config_prop, property_type;
 type cf_fstab_name_prop, property_type;
+type logcat_serial_port_prop, property_type;
 
 allow vendor_init {
   audio_device
@@ -18,3 +19,5 @@ get_prop(vendor_init, vendor_ser_prop)
 get_prop(vendor_init, cf_graphics_config_prop)
 
 get_prop(vendor_init, cf_fstab_name_prop)
+
+get_prop(vendor_init, logcat_serial_port_prop)
