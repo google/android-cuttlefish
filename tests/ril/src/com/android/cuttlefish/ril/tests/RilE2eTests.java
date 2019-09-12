@@ -41,7 +41,7 @@ import java.net.Socket;
 import java.util.List;
 
 /**
- * Tests used to validate E2E WIFI functionality.
+ * Tests used to validate E2E RIL functionality.
  */
 @RunWith(JUnit4.class)
 public class RilE2eTests {
@@ -103,7 +103,7 @@ public class RilE2eTests {
 
 
     /**
-     * Verify that WIFI stack is able to get up and connect to network in
+     * Verify that RIL stack is able to get up and connect to network in
      * 60 seconds.
      */
     @Test(timeout = 60 * 1000)
