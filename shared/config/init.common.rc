@@ -110,19 +110,16 @@ on property:vendor.ser.cf-logcat=*
     enable seriallogging
 
 
+on property:ro.boot.logcat_serial_port=*
+    chown logd log ${ro.boot.logcat_serial_port}
+    symlink ${ro.boot.logcat_serial_port} /dev/cf-logcat
+    enable seriallogging
+
+
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
     class main
-    user root
-    disabled
-
-
-on property:ro.boot.vsock_logcat_port=*
-   enable vsock_logcat
-
-
-service vsock_logcat /vendor/bin/vsock_logcat
-    class main
-    user root
+    user logd
+    group log
     disabled
 
 
