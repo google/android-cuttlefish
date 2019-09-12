@@ -181,13 +181,8 @@ DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
 DEFINE_string(e2e_test_binary,
               vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
               "Location of the region end to end test binary");
-DEFINE_string(logcat_receiver_binary,
-              vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"),
-              "Binary for the logcat server");
-DEFINE_string(logcat_mode, "", "How to send android's log messages from "
-                               "guest to host. One of [serial, vsock]");
-DEFINE_int32(logcat_vsock_port, vsoc::GetPerInstanceDefault(5620),
-             "The port for logcat over vsock");
+DEFINE_string(logcat_serial_port, "",
+             "The serial port for logcat. Used only with crosvm");
 DEFINE_string(config_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/config_server"),
               "Binary for the configuration server");
@@ -354,9 +349,9 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(
         concat("androidboot.hardware=", FLAGS_hardware_name));
   }
-  if (FLAGS_logcat_mode == cvd::kLogcatVsockMode) {
-    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_logcat_port=",
-                                             FLAGS_logcat_vsock_port));
+  if (!FLAGS_logcat_serial_port.empty()) {
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.logcat_serial_port=/dev/",
+                                             FLAGS_logcat_serial_port));
   }
   tmp_config_obj.add_kernel_cmdline(concat("androidboot.cuttlefish_config_server_port=",
                                            FLAGS_config_server_port));
@@ -412,7 +407,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
   tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
   tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
-  tmp_config_obj.set_logcat_receiver_binary(FLAGS_logcat_receiver_binary);
   tmp_config_obj.set_config_server_binary(FLAGS_config_server_binary);
   tmp_config_obj.set_launcher_log_path(tmp_config_obj.PerInstancePath("launcher.log"));
   tmp_config_obj.set_launcher_monitor_socket_path(
@@ -461,8 +455,7 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.disable_usb_adb();
   }
 
-  tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
-  tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
+  tmp_config_obj.set_logcat_serial_port(FLAGS_logcat_serial_port);
   tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
   tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
   if (!tmp_config_obj.enable_ivserver() && tmp_config_obj.enable_vnc_server()) {
@@ -522,7 +515,7 @@ void SetDefaultFlagsForQemu() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("hardware_name", "cutf_ivsh",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatSerialMode,
+  SetCommandLineOptionWithMode("logcat_serial_port", "",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
@@ -554,7 +547,7 @@ void SetDefaultFlagsForCrosvm() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("run_e2e_test", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
+  SetCommandLineOptionWithMode("logcat_serial_port", "ttyS2",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 

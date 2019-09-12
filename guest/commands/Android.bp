@@ -14,7 +14,6 @@
 // limitations under the License.
 
 subdirs = [
-  "vsock_logcat",
   "ip_link_add",
   "usbforward",
   "vport_trigger",
