@@ -57,20 +57,10 @@ public class RilE2eTests {
         mWifiManager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
         mConnManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         mTeleManager = (TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        disableAllWifiNetworks();
-    }
-
-
-    private void enableWifi() {
-        Log.i(TAG, "Enabling WIFI...");
-        mWifiManager.setWifiEnabled(true);
-        while (!(mWifiManager.isWifiEnabled() && mWifiManager.pingSupplicant())) {
-            Log.i(TAG, "Waiting for WIFI (Enabled: " + mWifiManager.isWifiEnabled() +
-                    ", Ready: " + mWifiManager.pingSupplicant() + ")");
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {}
-        }
+        // There must not be an active wifi connection while running the test or else
+        // getActiveNetworkInfo() will return that instead of the telephony network.
+        // Turning wifi off should do the trick.
+        disableWifi();
     }
 
 
@@ -84,21 +74,6 @@ public class RilE2eTests {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {}
         }
-    }
-
-
-    private void disableAllWifiNetworks() {
-        enableWifi();
-
-        List<WifiConfiguration> configs = mWifiManager.getConfiguredNetworks();
-        Assert.assertNotNull(configs);
-        for (WifiConfiguration config : configs) {
-            Log.i(TAG, "Removing network " + config.networkId + ": " + config.SSID);
-            Assert.assertTrue(mWifiManager.disableNetwork(config.networkId));
-            Assert.assertTrue(mWifiManager.removeNetwork(config.networkId));
-        }
-
-        disableWifi();
     }
 
 
