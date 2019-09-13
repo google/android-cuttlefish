@@ -30,7 +30,8 @@ JpegCompressor::JpegCompressor()
       mIsBusy(false),
       mSynchronous(false),
       mBuffers(NULL),
-      mListener(NULL) {}
+      mListener(NULL),
+      mFoundAux(false) {}
 
 JpegCompressor::~JpegCompressor() { Mutex::Autolock lock(mMutex); }
 
@@ -121,7 +122,6 @@ status_t JpegCompressor::compress() {
   // Find source and target buffers. Assumes only one buffer matches
   // each condition!
   ALOGV("%s: Compressing start", __FUNCTION__);
-  bool mFoundAux = false;
   for (size_t i = 0; i < mBuffers->size(); i++) {
     const StreamBuffer &b = (*mBuffers)[i];
     if (b.format == HAL_PIXEL_FORMAT_BLOB) {
