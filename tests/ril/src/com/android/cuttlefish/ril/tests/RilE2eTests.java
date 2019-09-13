@@ -46,6 +46,7 @@ import java.util.List;
 @RunWith(JUnit4.class)
 public class RilE2eTests {
     private static final String TAG = "RilE2eTests";
+    private static final int MAX_POLL_DISABLED_WIFI_COUNT = 10;
     private Context mContext;
     private WifiManager mWifiManager;
     private ConnectivityManager mConnManager;
@@ -64,15 +65,20 @@ public class RilE2eTests {
     }
 
 
-    private void disableWifi() {
+    private void disableWifi() throws Exception {
         Log.i(TAG, "Disabling WIFI...");
 
         mWifiManager.setWifiEnabled(false);
-        while (mWifiManager.isWifiEnabled()) {
+        int count = MAX_POLL_DISABLED_WIFI_COUNT;
+        while (mWifiManager.isWifiEnabled() && count-- > 0) {
             Log.i(TAG, "Waiting for WIFI to be disabled...");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {}
+        }
+        if (count < 0) {
+            Log.e(TAG, "Reached max number of polls while waiting to disable wifi");
+            throw new Exception("Timed out waiting for wifi to be disabled");
         }
     }
 
@@ -81,7 +87,7 @@ public class RilE2eTests {
      * Verify that RIL stack is able to get up and connect to network in
      * 60 seconds.
      */
-    @Test(timeout = 60 * 1000)
+    @Test(timeout = 10 * 1000)
     public void testRilConnects() throws Exception {
         while (true) {
             NetworkInfo net = mConnManager.getActiveNetworkInfo();
