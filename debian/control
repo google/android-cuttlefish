@@ -4,53 +4,26 @@ Section: misc
 Priority: optional
 Standards-Version: 3.9.2
 Build-Depends:
- clang-3.8,
- debhelper (>= 9),
- libgflags-dev,
- libgoogle-glog-dev,
- libudev-dev,
- libxml2-dev,
- libjsoncpp-dev,
  cdbs,
- debhelper,
- dh-buildinfo,
  config-package-dev (>= 4.5~),
- libnl-3-dev,
- libnl-genl-3-dev
+ debhelper (>= 9),
+ gcc
 
 Package: cuttlefish-common
 Architecture: any
 Depends:
- acl,
- binutils,
+ binfmt-support [!amd64],
  bridge-utils,
- device-tree-compiler,
- dnsmasq-base,
- hostapd,
- simg2img [amd64],
- simg2img:amd64 [!amd64],
- iptables,
  libarchive-tools | bsdtar,
- libdrm2,
  libc6,
- libgoogle-glog0v5 | libgoogle-glog0,
- libnl-genl-3-200,
- libstdc++6,
- libudev1,
- libwayland-client0,
- libwayland-server0,
- libxml2,
- lzop,
- psmisc,
- python,
  libc6:amd64 [!amd64],
- qemu-user-binfmt [!amd64],
- qemu-system-common (>= 2.8.0),
- qemu-system-x86 (>= 2.8.0),
- qemu-utils (>= 2.8.0),
- rsync,
- socat,
- vde2,
+ libdrm2,
+ libfdt1,
+ libwayland-client0,
+ libx11-6,
+ libxext6,
+ python,
+ qemu-user-static [!amd64],
  ${misc:Depends}
 Description: Cuttlefish Android Virtual Device companion package.
  Contains set of tools and binaries required to boot up and manage
