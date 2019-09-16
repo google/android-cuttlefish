@@ -14,7 +14,7 @@ def upload_artifacts(args):
     os.chdir(args.image_dir)
     images = glob.glob('*.img')
     if len(images) == 0:
-      raise OSError('File not found: %s' + image_pat)
+      raise OSError('File not found: ' + args.image_dir + '/*.img')
     subprocess.check_call(
       'tar -c -f - --lzop -S ' + ' '.join(images) +
         ' | ssh %s@%s -- tar -x -f - --lzop -S' % (
