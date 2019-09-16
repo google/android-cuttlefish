@@ -16,13 +16,15 @@ Build-Depends:
  dh-buildinfo,
  config-package-dev (>= 4.5~),
  libnl-3-dev,
- libnl-genl-3-dev
+ libnl-genl-3-dev,
+ gcc
 
 Package: cuttlefish-common
 Architecture: any
 Depends:
  acl,
  binutils,
+ binfmt-support [!amd64],
  bridge-utils,
  device-tree-compiler,
  dnsmasq-base,
@@ -33,18 +35,23 @@ Depends:
  libarchive-tools | bsdtar,
  libdrm2,
  libc6,
+ libc6:amd64 [!amd64],
+ libfdt1,
  libgoogle-glog0v5 | libgoogle-glog0,
  libnl-genl-3-200,
  libstdc++6,
  libudev1,
  libwayland-client0,
  libwayland-server0,
+ libx11-6,
+ libxext6,
  libxml2,
  lzop,
  psmisc,
  python,
  libc6:amd64 [!amd64],
  qemu-user-binfmt [!amd64],
+ qemu-user-static [!amd64],
  qemu-system-common (>= 2.8.0),
  qemu-system-x86 (>= 2.8.0),
  qemu-utils (>= 2.8.0),
