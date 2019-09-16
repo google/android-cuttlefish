@@ -45,6 +45,7 @@ cvd_host_executables := \
     x86_64-linux-gnu/libgbm.so.1 \
     x86_64-linux-gnu/libminijail.so \
     x86_64-linux-gnu/libvirglrenderer.so.0 \
+    logcat_receiver \
     config_server \
     tombstone_receiver \
     console_forwarder \
