@@ -15,6 +15,8 @@ std::vector <cvd::SharedFD> LaunchKernelLogMonitor(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     unsigned int number_of_event_pipes);
+void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                   cvd::ProcessMonitor* process_monitor);
 void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
                         cvd::ProcessMonitor* process_monitor);
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,

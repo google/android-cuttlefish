@@ -144,10 +144,12 @@ args+=(
     -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
 )
 
-args+=(
-    -chardev "file,id=charchannel0,path=${logcat_path:-${default_dir}/logcat},append=on"
-    -device "virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=cf-logcat"
-)
+if [[ "${logcat_mode}" == "serial" ]]; then
+    args+=(
+        -chardev "file,id=charchannel0,path=${logcat_path:-${default_dir}/logcat},append=on"
+        -device "virtserialport,bus=virtio-serial0.0,nr=1,chardev=charchannel0,id=channel0,name=cf-logcat"
+    )
+fi
 
 if [[ -n "${gdb_flag}" ]]; then
   args+=(-gdb "${gdb_flag}")
