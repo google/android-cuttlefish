@@ -14,39 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-image=$1
-if [ "${image}" == "" ]; then
-	echo "usage: "`basename $0`" <image>"
-	exit 1
-fi
-if [ ! -e "${image}" ]; then
-	echo "error: can't find image. aborting..."
-	exit 1
-fi
+source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
 
-init_devs=`lsblk --nodeps -oNAME -n`
-echo "Reinsert device (to write to) into PC"
-while true; do
-	devs=`lsblk --nodeps -oNAME -n`
-	new_devs="$(echo -e "${init_devs}\n${devs}" | sort | uniq -u | awk 'NF')"
-	num_devs=`echo "${new_devs}" | wc -l`
-	if [[ "${new_devs}" == "" ]]; then
-		num_devs=0
-	fi
-	if [[ ${num_devs} -gt 1 ]]; then
-		echo "error: too many new devices detected! aborting..."
+DEFINE_boolean expand \
+  false "expand filesystem to fill device" "e"
+
+FLAGS_HELP="USAGE: $0 [flags] image"
+
+main ()
+{
+	image=$1
+	if [ "${image}" == "" ]; then
+		flags_help
 		exit 1
 	fi
-	if [[ ${num_devs} -eq 1 ]]; then
-		break
+	if [ ! -e "${image}" ]; then
+		echo "error: can't find image. aborting..."
+		exit 1
 	fi
-done
-sd_card=${new_devs}
-# don't inform user we found the sd card yet (it's confusing)
 
-init_devs=${devs}
-echo "${init_devs}" | grep "${sd_card}" >/dev/null
-if [[ $? -ne 0 ]]; then
+	init_devs=`lsblk --nodeps -oNAME -n`
+	echo "Reinsert device (to write to) into PC"
 	while true; do
 		devs=`lsblk --nodeps -oNAME -n`
 		new_devs="$(echo -e "${init_devs}\n${devs}" | sort | uniq -u | awk 'NF')"
@@ -59,46 +47,71 @@ if [[ $? -ne 0 ]]; then
 			exit 1
 		fi
 		if [[ ${num_devs} -eq 1 ]]; then
-			if [[ "${new_devs}" != "${sd_card}" ]]; then
-				echo "error: block device name mismatch ${new_devs} != ${sd_card}"
-				echo "Reinsert device (to write to) into PC"
-				sd_card=${new_devs}
-				new_devs=""
-				continue
-			fi
 			break
 		fi
 	done
-fi
-# now inform the user
-echo "Detected device at /dev/${sd_card}"
+	blk_dev=${new_devs}
+	# don't inform user we found the block device yet (it's confusing)
 
-imgsize=`ls -lah ${image} | awk -F " " {'print $5'}`
-echo "Ready to write ${imgsize} image to block device at /dev/${sd_card}..."
-sudo chmod 666 /dev/${sd_card}
-type pv > /dev/null 2>&1
-if [ $? == 0 ]; then
-	pv ${image} > /dev/${sd_card}
-else
-	dd if=${image} of=/dev/${sd_card} bs=1M conv=sync,noerror status=progress
-fi
+	init_devs=${devs}
+	echo "${init_devs}" | grep "${blk_dev}" >/dev/null
+	if [[ $? -ne 0 ]]; then
+		while true; do
+			devs=`lsblk --nodeps -oNAME -n`
+			new_devs="$(echo -e "${init_devs}\n${devs}" | sort | uniq -u | awk 'NF')"
+			num_devs=`echo "${new_devs}" | wc -l`
+			if [[ "${new_devs}" == "" ]]; then
+				num_devs=0
+			fi
+			if [[ ${num_devs} -gt 1 ]]; then
+				echo "error: too many new devices detected! aborting..."
+				exit 1
+			fi
+			if [[ ${num_devs} -eq 1 ]]; then
+				if [[ "${new_devs}" != "${blk_dev}" ]]; then
+					echo "error: block device name mismatch ${new_devs} != ${blk_dev}"
+					echo "Reinsert device (to write to) into PC"
+					blk_dev=${new_devs}
+					new_devs=""
+					continue
+				fi
+				break
+			fi
+		done
+	fi
+	# now inform the user
+	echo "Detected device at /dev/${blk_dev}"
 
-echo "Expanding partition and filesystem..."
-part_type=`sudo gdisk -l /dev/${sd_card}  2>/dev/null | grep ": present" | sed 's/ *\([^:]*\):.*/\1/'`
-if [ "$part_type" == "MBR" ]; then
-	sudo parted -s /dev/${sd_card} resizepart 1 100%
-	sudo e2fsck -y -f /dev/${sd_card}1 >/dev/null 2>&1
-	sudo resize2fs /dev/${sd_card}1 >/dev/null 2>&1
-elif [ "$part_type" == "GPT" ]; then
-	parts=`sudo gdisk -l  /dev/${sd_card} | grep "^Number" -A999 | tail -n +2 | wc -l`
-	FIRST_SECTOR=`sudo gdisk -l /dev/${sd_card} 2>/dev/null | tail -1 | tr -s ' ' | cut -d" " -f3`
-	LAST_SECTOR=61071326  # 32GB eMMC size
-	sudo sgdisk -d${parts} /dev/${sd_card} >/dev/null 2>&1
-	sudo sgdisk -a1 -n:${parts}:${FIRST_SECTOR}:${LAST_SECTOR} -A:${parts}:set:2 -t:${parts}:8305 -c:${parts}:rootfs /dev/${sd_card} >/dev/null 2>&1
-	sudo e2fsck -fy /dev/${sd_card}${parts} >/dev/null 2>&1
-	sudo resize2fs /dev/${sd_card}${parts} >/dev/null 2>&1
-fi
-sudo sync /dev/${sd_card}
-sudo eject /dev/${sd_card}
+	imgsize=`ls -lah ${image} | awk -F " " {'print $5'}`
+	echo "Ready to write ${imgsize} image to block device at /dev/${blk_dev}..."
+	sudo chmod 666 /dev/${blk_dev}
+	type pv > /dev/null 2>&1
+	if [ $? == 0 ]; then
+		pv ${image} > /dev/${blk_dev}
+	else
+		dd if=${image} of=/dev/${blk_dev} bs=1M conv=sync,noerror status=progress
+	fi
 
-echo "Now insert the device into Rock Pi and plug in the USB power adapter"
+	if [ ${FLAGS_expand} -eq ${FLAGS_TRUE} ]; then
+		echo "Expanding partition and filesystem..."
+		part_type=`sudo gdisk -l /dev/${blk_dev}  2>/dev/null | grep ": present" | sed 's/ *\([^:]*\):.*/\1/'`
+		if [ "$part_type" == "MBR" ]; then
+			sudo parted -s /dev/${blk_dev} resizepart 1 100%
+			sudo e2fsck -y -f /dev/${blk_dev}1 >/dev/null 2>&1
+			sudo resize2fs /dev/${blk_dev}1 >/dev/null 2>&1
+		elif [ "$part_type" == "GPT" ]; then
+			parts=`sudo gdisk -l  /dev/${blk_dev} | grep "^Number" -A999 | tail -n +2 | wc -l`
+			FIRST_SECTOR=`sudo gdisk -l /dev/${blk_dev} 2>/dev/null | tail -1 | tr -s ' ' | cut -d" " -f3`
+			sudo sgdisk -d${parts} /dev/${blk_dev} >/dev/null 2>&1
+			sudo sgdisk -a1 -n:${parts}:${FIRST_SECTOR}:- -A:${parts}:set:2 -t:${parts}:8305 -c:${parts}:rootfs /dev/${blk_dev} >/dev/null 2>&1
+			sudo e2fsck -fy /dev/${blk_dev}${parts} >/dev/null 2>&1
+			sudo resize2fs /dev/${blk_dev}${parts} >/dev/null 2>&1
+		fi
+	fi
+	sudo sync /dev/${blk_dev}
+	sudo eject /dev/${blk_dev}
+}
+
+FLAGS "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+main "$@"
