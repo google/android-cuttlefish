@@ -16,8 +16,8 @@
 #pragma once
 
 #include <map>
+#include <ostream>
 #include <string>
-#include <vector>
 
 namespace Json {
 class Value;
@@ -25,6 +25,44 @@ class Value;
 
 namespace cvd {
 
+// Order in enum is not guaranteed to be stable, serialized as a string.
+enum FileSource {
+  UNKNOWN_PURPOSE = 0,
+  DEFAULT_BUILD,
+  SYSTEM_BUILD,
+  KERNEL_BUILD,
+  LOCAL_FILE,
+  GENERATED,
+};
+
+/*
+ * Attempts to answer the general question "where did this file come from, and
+ * what purpose is it serving?
+ */
+struct CvdFile {
+  FileSource source;
+  std::string build_id;
+  std::string build_target;
+  std::string file_path;
+
+  CvdFile();
+  CvdFile(const FileSource& source, const std::string& build_id,
+          const std::string& build_target, const std::string& file_path);
+};
+
+std::ostream& operator<<(std::ostream&, const CvdFile&);
+
+/**
+ * A report of state to transfer from fetch_cvd to downstream consumers.
+ *
+ * This includes data intended for programmatic access by other tools such as
+ * assemble_cvd. assemble_cvd can use signals like that multiple build IDs are
+ * present to judge that it needs to do super image remixing or rebuilding the
+ * boot image for a new kernel.
+ *
+ * The output json also includes data relevant for human debugging, like which
+ * flags fetch_cvd was invoked with.
+ */
 class FetcherConfig {
   std::unique_ptr<Json::Value> dictionary_;
 public:
@@ -37,8 +75,8 @@ public:
   // For debugging only, not intended for programmatic access.
   void RecordFlags();
 
-  void set_files(const std::vector<std::string>& files);
-  std::vector<std::string> files() const;
+  bool add_cvd_file(const CvdFile& file, bool override_entry = false);
+  std::map<std::string, CvdFile> get_cvd_files() const;
 };
 
 } // namespace cvd
