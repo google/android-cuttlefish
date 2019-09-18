@@ -7,7 +7,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 int GetHostPort();
-bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config);
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config);
 
 cvd::Command GetIvServerCommand(const vsoc::CuttlefishConfig& config);
