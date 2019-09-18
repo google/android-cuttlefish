@@ -73,6 +73,10 @@ bool AdbVsockConnectorEnabled(const vsoc::CuttlefishConfig& config) {
       && AdbModeEnabled(config, vsoc::AdbMode::NativeVsock);
 }
 
+bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
+  return AdbModeEnabled(config, vsoc::AdbMode::Usb);
+}
+
 cvd::OnSocketReadyCb GetOnSubprocessExitCallback(
     const vsoc::CuttlefishConfig& config) {
   if (config.restart_subprocesses()) {
@@ -90,10 +94,6 @@ int GetHostPort() {
 
 bool LogcatReceiverEnabled(const vsoc::CuttlefishConfig& config) {
   return config.logcat_mode() == cvd::kLogcatVsockMode;
-}
-
-bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
-  return AdbModeEnabled(config, vsoc::AdbMode::Usb);
 }
 
 void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {

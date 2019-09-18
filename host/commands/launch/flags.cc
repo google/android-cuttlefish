@@ -402,7 +402,7 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.PerInstancePath("ivshmem_socket_client"));
   tmp_config_obj.set_ivshmem_vector_count(memory_layout.GetRegions().size());
 
-  if (AdbUsbEnabled(tmp_config_obj)) {
+  if (tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
     tmp_config_obj.set_usb_v1_socket_name(tmp_config_obj.PerInstancePath("usb-v1"));
     tmp_config_obj.set_vhci_port(FLAGS_vhci_port);
     tmp_config_obj.set_usb_ip_socket_name(tmp_config_obj.PerInstancePath("usb-ip"));
@@ -457,7 +457,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
   tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
 
-  if(!AdbUsbEnabled(tmp_config_obj)) {
+  if(tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) == 0) {
     tmp_config_obj.disable_usb_adb();
   }
 
