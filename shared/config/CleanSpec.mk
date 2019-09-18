@@ -44,3 +44,4 @@
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib/hw/gps.vsoc.so)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/lib/hw/android.hardware.gnss@1.0-impl.so)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.gnss@1.0-service)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.drm@1.2-service.clearkey)
