@@ -13,6 +13,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+cc_library_host_shared {
+    name: "cdisk_spec",
+    srcs: [
+        "cdisk_spec.proto",
+    ],
+    proto: {
+        type: "full",
+        export_proto_headers: true,
+        include_dirs: [
+            "external/protobuf/src",
+        ],
+    },
+    defaults: ["cuttlefish_host_only"],
+}
+
 cc_binary_host {
     name: "launch_cvd",
     srcs: [
@@ -30,13 +45,15 @@ cc_binary_host {
         "cuttlefish_glog",
     ],
     shared_libs: [
+        "cdisk_spec",
         "vsoc_lib",
         "libcuttlefish_fs",
         "libcuttlefish_strings",
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
-        "libnl"
+        "libnl",
+        "libprotobuf-cpp-full",
     ],
     static_libs: [
         "libcuttlefish_host_config",
