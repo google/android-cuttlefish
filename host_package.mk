@@ -84,6 +84,8 @@ cvd_host_shared_libraries := \
     libicui18n-host.so \
     libandroidicu-host.so \
     libcuttlefish_device_config.so \
+    cdisk_spec.so \
+    libprotobuf-cpp-full.so \
 
 
 cvd_host_package_files := \
