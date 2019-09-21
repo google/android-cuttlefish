@@ -38,15 +38,15 @@
     <item>Android,android,,,,,,,,310,260,,default,dun,ims</item>
   </string-array>
   <bool name="config_wifi_dual_band_support" translatable="false">true</bool>
-  <bool name="config_bluetooth_address_validation">true</bool>
-  <bool name="config_sms_capable">true</bool>
+  <bool name="config_bluetooth_address_validation" translatable="false">true</bool>
+  <bool name="config_sms_capable" translatable="false">true</bool>
   <string name="default_sms_application" translatable="false">com.android.mms</string>
-  <bool name="config_showNavigationBar">true</bool>
-  <dimen name="config_viewConfigurationTouchSlop">12dp</dimen>
-  <integer name="config_mobile_mtu">1460</integer>
-  <!-- cuttlefish uses mac80211-hwsim, which does not support Preferred
-  Network Offload feature. We disable the use of this feature here. -->
-  <bool translatable="false" name="config_wifi_background_scan_support">false</bool>
+  <bool name="config_showNavigationBar" translatable="false">true</bool>
+  <dimen name="config_viewConfigurationTouchSlop" translatable="false">12dp</dimen>
+  <integer name="config_mobile_mtu" translatable="false">1460</integer>
+  <!-- cuttlefish uses mac80211-hwsim, which does not support the Preferred
+  Network Offload feature. The below config disables the use of this feature. -->
+  <bool name="config_wifi_background_scan_support" translatable="false">false</bool>
   <!--  Maximum number of supported users -->
-  <integer name="config_multiuserMaximumUsers">4</integer>
+  <integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
 </resources>
