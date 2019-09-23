@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.14-x86_64/kernel:kernel
+PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/4.19-x86_64/kernel:kernel
