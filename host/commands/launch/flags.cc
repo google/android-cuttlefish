@@ -13,7 +13,6 @@
 #include "host/commands/launch/boot_image_unpacker.h"
 #include "host/commands/launch/data_image.h"
 #include "host/commands/launch/image_aggregator.h"
-#include "host/commands/launch/launch.h"
 #include "host/commands/launch/launcher_defs.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -250,6 +249,11 @@ std::string GetCuttlefishEnvPath() {
   return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
 }
 
+int GetHostPort() {
+  constexpr int kFirstHostPort = 6520;
+  return vsoc::GetPerInstanceDefault(kFirstHostPort);
+}
+
 // Initializes the config object and saves it to file. It doesn't return it, all
 // further uses of the config should happen through the singleton
 bool InitializeCuttlefishConfiguration(
@@ -292,6 +296,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = cvd::StrSplit(FLAGS_adb_mode, ',');
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
+  tmp_config_obj.set_host_port(GetHostPort());
   tmp_config_obj.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
 
   tmp_config_obj.set_device_title(FLAGS_device_title);
@@ -628,6 +633,15 @@ bool DecompressKernel(const std::string& src, const std::string& dst) {
   auto decomp_proc = decomp_cmd.Start(false);
   return decomp_proc.Started() && decomp_proc.Wait() == 0;
 }
+
+void ValidateAdbModeFlag(const vsoc::CuttlefishConfig& config) {
+  auto adb_modes = config.adb_mode();
+  adb_modes.erase(vsoc::AdbMode::Unknown);
+  if (adb_modes.size() < 1) {
+    LOG(INFO) << "ADB not enabled";
+  }
+}
+
 } // namespace
 
 namespace {
