@@ -209,7 +209,7 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
   if (config.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
     config_env += config.serial_number();
   } else {
-    config_env += "127.0.0.1:" + std::to_string(GetHostPort());
+    config_env += config.adb_ip_and_port();
   }
   config_env += "\n";
   env->Write(config_env.c_str(), config_env.size());
