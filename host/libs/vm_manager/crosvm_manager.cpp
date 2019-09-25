@@ -16,6 +16,9 @@
 
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <string>
 #include <vector>
 
@@ -71,8 +74,7 @@ bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
     return true;
   }
   if (config->gpu_mode() == vsoc::kGpuModeGuestSwiftshader) {
-    config->add_kernel_cmdline(
-        "androidboot.hardware.gralloc=cutf_ashmem");
+    config->add_kernel_cmdline("androidboot.hardware.gralloc=cutf_ashmem");
     config->add_kernel_cmdline(
         "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
     config->add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
@@ -85,7 +87,7 @@ void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
   // PCI domain 0, bus 0, device 1, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
   config->add_kernel_cmdline(
-    "androidboot.boot_devices=pci0000:00/0000:00:01.0");
+      "androidboot.boot_devices=pci0000:00/0000:00:01.0");
 }
 
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
@@ -124,8 +126,8 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));
 
   if (with_frontend) {
-    crosvm_cmd.AddParameter("--single-touch=", config_->touch_socket_path(), ":",
-                         config_->x_res(), ":", config_->y_res());
+    crosvm_cmd.AddParameter("--single-touch=", config_->touch_socket_path(),
+                            ":", config_->x_res(), ":", config_->y_res());
     crosvm_cmd.AddParameter("--keyboard=", config_->keyboard_socket_path());
   }
 
@@ -139,28 +141,44 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
     crosvm_cmd.AddParameter("--cid=", config_->vsock_guest_cid());
   }
 
-  // TODO (138616941) re-enable the console on its own serial port
-
   // Redirect the first serial port with the kernel logs to the appropriate file
   crosvm_cmd.AddParameter("--serial=num=1,type=file,path=",
-                       config_->kernel_log_pipe_name(),",console=true");
-  // Use stdio for the second serial port, it contains the serial console.
-  crosvm_cmd.AddParameter("--serial=num=2,type=stdout,stdin=true");
+                          config_->kernel_log_pipe_name(), ",console=true");
 
-  // Redirect standard input and output to a couple of pipes for the console
-  // forwarder host process to handle.
-  cvd::SharedFD console_in_rd, console_in_wr, console_out_rd, console_out_wr;
-  if (!cvd::SharedFD::Pipe(&console_in_rd, &console_in_wr) ||
-      !cvd::SharedFD::Pipe(&console_out_rd, &console_out_wr)) {
-    LOG(ERROR) << "Failed to create console pipes for crosvm: "
-               << strerror(errno);
+  // Redirect standard input to a pipe for the console forwarder host process
+  // to handle.
+  cvd::SharedFD console_in_rd, console_in_wr;
+  if (!cvd::SharedFD::Pipe(&console_in_rd, &console_in_wr)) {
+    LOG(ERROR) << "Failed to create console pipe for crosvm's stdin: "
+               << console_in_rd->StrError();
+    return {};
+  }
+  auto console_pipe_name = config_->console_pipe_name();
+  if (mkfifo(console_pipe_name.c_str(), 0660) != 0) {
+    auto error = errno;
+    LOG(ERROR) << "Failed to create console fifo for crosvm: "
+               << strerror(error);
     return {};
   }
 
+  // This fd will only be read from, but it's open with write access as well to
+  // keep the pipe open in case the subprocesses exit.
+  cvd::SharedFD console_out_rd =
+      cvd::SharedFD::Open(console_pipe_name.c_str(), O_RDWR);
+  if (!console_out_rd->IsOpen()) {
+    LOG(ERROR) << "Failed to open console fifo for reads: "
+               << console_out_rd->StrError();
+    return {};
+  }
+  // stdin is the only currently supported way to write data to a serial port in
+  // crosvm. A file (named pipe) is used here instead of stdout to ensure only
+  // the serial port output is received by the console forwarder as crosvm may
+  // print other messages to stdout.
+  crosvm_cmd.AddParameter("--serial=num=2,type=file,path=", console_pipe_name,
+                          ",stdin=true");
+
   crosvm_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn,
                            console_in_rd);
-  crosvm_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                           console_out_wr);
   cvd::Command console_cmd(config_->console_forwarder_binary());
   console_cmd.AddParameter("--console_in_fd=", console_in_wr);
   console_cmd.AddParameter("--console_out_fd=", console_out_rd);
