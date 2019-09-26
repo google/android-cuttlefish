@@ -1,7 +1,5 @@
 genfscon sysfs /devices/pnp0/00:00/rtc  u:object_r:sysfs_rtc:s0 # qemu virtual rtc
 genfscon sysfs /devices/platform/rtc-test.0/rtc  u:object_r:sysfs_rtc:s0 # crosvm has no rtc, use kernel test driver
-genfscon sysfs /devices/platform/rtc-test.1/rtc  u:object_r:sysfs_rtc:s0 # crosvm has no rtc, use kernel test driver
-genfscon sysfs /devices/platform/rtc-test.2/rtc  u:object_r:sysfs_rtc:s0 # crosvm has no rtc, use kernel test driver
 genfscon sysfs /devices/pci0000:00/0000:00:04.0/virtio2/net u:object_r:sysfs_net:s0 # (new) qemu composite buried_eth0 & wlan0
 genfscon sysfs /devices/pci0000:00/0000:00:05.0/virtio3/net u:object_r:sysfs_net:s0 # (new) qemu composite rmnet0
 genfscon sysfs /devices/pci0000:00/0000:00:06.0/virtio5/net u:object_r:sysfs_net:s0 # (new) crosvm composite buried_eth0 & wlan0
