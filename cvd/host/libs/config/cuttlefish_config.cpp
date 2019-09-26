@@ -165,6 +165,8 @@ const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
+
+const char* kBootSlot = "boot_slot";
 }  // namespace
 
 namespace vsoc {
@@ -901,6 +903,14 @@ std::string CuttlefishConfig::bootloader() const {
 
 void CuttlefishConfig::set_bootloader(const std::string& bootloader) {
   SetPath(kBootloader, bootloader);
+}
+
+void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
+  (*dictionary_)[kBootSlot] = boot_slot;
+}
+
+std::string CuttlefishConfig::boot_slot() const {
+  return (*dictionary_)[kBootSlot].asString();
 }
 
 int CuttlefishConfig::tombstone_receiver_port() const {
