@@ -119,7 +119,7 @@ class Command {
   // SIGKILL to the subprocess.
   Command(const std::string& executable,
           SubprocessStopper stopper = KillSubprocess)
-      : subprocess_stopper_(stopper) {
+      : subprocess_stopper_(stopper), verbose_(true) {
     command_.push_back(executable);
   }
   Command(Command&&) = default;
@@ -158,6 +158,8 @@ class Command {
   bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                      Subprocess::StdIOChannel parent_channel);
 
+  void SetVerbose(bool verbose);
+
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances. If
   // with_control_socket is true the returned Subprocess instance will have a
@@ -182,6 +184,7 @@ class Command {
   bool use_parent_env_ = true;
   std::vector<std::string> env_{};
   SubprocessStopper subprocess_stopper_;
+  bool verbose_;
 };
 
 // Convenience wrapper around Command and Subprocess class, allows to easily

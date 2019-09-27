@@ -68,8 +68,7 @@ cvd::Subprocess subprocess_impl(
     const char* const* command, const char* const* envp,
     const std::map<cvd::Subprocess::StdIOChannel, int>& redirects,
     const std::map<cvd::SharedFD, int>& inherited_fds, bool with_control_socket,
-    cvd::SubprocessStopper stopper,
-    bool in_group = false) {
+    cvd::SubprocessStopper stopper, bool in_group = false, bool verbose = false) {
   // The parent socket will get closed on the child on the call to exec, the
   // child socket will be closed on the parent when this function returns and no
   // references to the fd are left
@@ -117,10 +116,12 @@ cvd::Subprocess subprocess_impl(
   if (pid == -1) {
     LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
   }
-  LOG(INFO) << "Started (pid: " << pid << "): " << command[0];
-  int i = 1;
-  while (command[i]) {
-    LOG(INFO) << command[i++];
+  if (verbose) {
+    LOG(INFO) << "Started (pid: " << pid << "): " << command[0];
+    int i = 1;
+    while (command[i]) {
+      LOG(INFO) << command[i++];
+    }
   }
   return cvd::Subprocess(pid, parent_socket, stopper);
 }
@@ -279,15 +280,21 @@ bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                        cvd::SharedFD::Dup(static_cast<int>(parent_channel)));
 }
 
+void Command::SetVerbose(bool verbose) {
+  verbose_ = verbose;
+}
+
 Subprocess Command::StartHelper(bool with_control_socket, bool in_group) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
     return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
-                           with_control_socket, subprocess_stopper_, in_group);
+                           with_control_socket, subprocess_stopper_, in_group,
+                           verbose_);
   } else {
     auto envp = ToCharPointers(env_);
     return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
-                           with_control_socket, subprocess_stopper_, in_group);
+                           with_control_socket, subprocess_stopper_, in_group,
+                           verbose_);
   }
 }
 
