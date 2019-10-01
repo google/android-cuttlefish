@@ -244,6 +244,11 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
     } else {
       LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
+    if (exit_code == LauncherExitCodes::kSuccess) {
+      LOG(INFO) << vsoc::kBootCompletedMessage;
+    } else {
+      LOG(INFO) << vsoc::kBootFailedMessage;
+    }
     std::exit(exit_code);
   } else {
     // The child returns the write end of the pipe

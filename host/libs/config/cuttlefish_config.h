@@ -28,6 +28,13 @@ namespace vsoc {
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 constexpr char kVsocUserPrefix[] = "vsoc-";
+constexpr char kBootStartedMessage[] ="VIRTUAL_DEVICE_BOOT_STARTED";
+constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
+constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
+constexpr char kMobileNetworkConnectedMessage[] =
+    "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
+constexpr char kWifiConnectedMessage[] =
+    "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 
 enum class AdbMode {
   Tunnel,
