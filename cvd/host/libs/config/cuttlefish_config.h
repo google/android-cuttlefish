@@ -28,6 +28,13 @@ namespace vsoc {
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
 constexpr char kVsocUserPrefix[] = "vsoc-";
+constexpr char kBootStartedMessage[] ="VIRTUAL_DEVICE_BOOT_STARTED";
+constexpr char kBootCompletedMessage[] = "VIRTUAL_DEVICE_BOOT_COMPLETED";
+constexpr char kBootFailedMessage[] = "VIRTUAL_DEVICE_BOOT_FAILED";
+constexpr char kMobileNetworkConnectedMessage[] =
+    "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
+constexpr char kWifiConnectedMessage[] =
+    "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 
 enum class AdbMode {
   Tunnel,
@@ -168,9 +175,6 @@ class CuttlefishConfig {
 
   std::string kernel_log_pipe_name() const;
   void set_kernel_log_pipe_name(const std::string& kernel_log_pipe_name);
-
-  std::string console_pipe_name() const;
-  void set_console_pipe_name(const std::string& console_pipe_name);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
@@ -319,12 +323,6 @@ class CuttlefishConfig {
 
   void set_tombstone_receiver_port(int port);
   int tombstone_receiver_port() const;
-
-  void set_use_bootloader(bool use_bootloader);
-  bool use_bootloader() const;
-
-  void set_bootloader(const std::string& bootloader_path);
-  std::string bootloader() const;
 
   bool enable_ivserver() const;
 
