@@ -102,10 +102,6 @@ PRODUCT_PRIVATE_SEPOLICY_DIRS := device/google/cuttlefish/shared/sepolicy/privat
 # TODO(b/131193755) remove the following line.
 PRODUCT_PUBLIC_SEPOLICY_DIRS := device/google/cuttlefish/shared/sepolicy/public
 
-# master has breaking changes in dlfcn.h, but the platform SDK hasn't been
-# bumped. Restore the line below when it is.
-VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=29
-# VSOC_VERSION_CFLAGS := -DVSOC_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
 VSOC_STLPORT_INCLUDES :=
 VSOC_STLPORT_LIBS :=
 VSOC_STLPORT_STATIC_LIBS :=
