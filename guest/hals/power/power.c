@@ -25,31 +25,17 @@
 
 #include <hardware/hardware.h>
 #include <hardware/power.h>
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 struct vsoc_power_module {
     struct power_module base;
     pthread_mutex_t lock;
 };
 
-
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
-
 static void vsoc_power_set_feature(struct power_module __unused *module,
                                   feature_t __unused hint,
                                   int __unused state) {
     return;
 }
-
-#elif VSOC_PLATFORM_SDK_AFTER(L)
-
-static void vsoc_power_set_feature(struct power_module __unused *module,
-                                  power_hint_t __unused hint,
-                                  int __unused state) {
-    return;
-}
-
-#endif
 
 static void vsoc_power_hint(struct power_module __unused *module,
                            power_hint_t __unused hint,
@@ -76,30 +62,28 @@ static  void vsoc_power_init(struct power_module __unused *module) {
  * prior: frameworks/base/services/core/jni/com_android_server_power_PowerManagerService.cpp
  */
 static struct hw_module_methods_t power_module_methods = {
-    VSOC_STATIC_INITIALIZER(open) NULL
+    .open = NULL
 };
 
 
 struct vsoc_power_module HAL_MODULE_INFO_SYM = {
-  VSOC_STATIC_INITIALIZER(base) {
+  .base = {
     .common = {
-        VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-        VSOC_STATIC_INITIALIZER(module_api_version) POWER_MODULE_API_VERSION_0_2,
-        VSOC_STATIC_INITIALIZER(hal_api_version) HARDWARE_HAL_API_VERSION,
-        VSOC_STATIC_INITIALIZER(id) POWER_HARDWARE_MODULE_ID,
-        VSOC_STATIC_INITIALIZER(name) "VSoC Power HAL",
-        VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
-        VSOC_STATIC_INITIALIZER(methods) &power_module_methods,
+        .tag = HARDWARE_MODULE_TAG,
+        .module_api_version = POWER_MODULE_API_VERSION_0_2,
+        .hal_api_version = HARDWARE_HAL_API_VERSION,
+        .id = POWER_HARDWARE_MODULE_ID,
+        .name = "VSoC Power HAL",
+        .author = "The Android Open Source Project",
+        .methods = &power_module_methods,
     },
-    VSOC_STATIC_INITIALIZER(init) vsoc_power_init,
-    VSOC_STATIC_INITIALIZER(setInteractive) vsoc_power_set_interactive,
-    VSOC_STATIC_INITIALIZER(powerHint) vsoc_power_hint,
+    .init = vsoc_power_init,
+    .setInteractive = vsoc_power_set_interactive,
+    .powerHint = vsoc_power_hint,
     // Before L_MR1 we don't have setFeature
-#if VSOC_PLATFORM_SDK_AFTER(L)
-    VSOC_STATIC_INITIALIZER(setFeature) vsoc_power_set_feature,
-#endif
+    .setFeature = vsoc_power_set_feature,
   },
 
-  VSOC_STATIC_INITIALIZER(lock) PTHREAD_MUTEX_INITIALIZER,
+  .lock = PTHREAD_MUTEX_INITIALIZER,
 };
 

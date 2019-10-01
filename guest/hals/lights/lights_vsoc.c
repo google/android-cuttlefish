@@ -25,8 +25,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-
 static int set_light(struct light_device_t* dev,
                      struct light_state_t const* state) {
   ALOGI("%s: dev %p state %p", __FUNCTION__, dev, state);
@@ -59,15 +57,15 @@ static int open_lights(const struct hw_module_t* module,
 }
 
 static struct hw_module_methods_t lights_module_methods = {
-    VSOC_STATIC_INITIALIZER(open) open_lights,
+    .open = open_lights,
 };
 
 struct hw_module_t HAL_MODULE_INFO_SYM = {
-    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-    VSOC_STATIC_INITIALIZER(version_major) 1,
-    VSOC_STATIC_INITIALIZER(version_minor) 0,
-    VSOC_STATIC_INITIALIZER(id) LIGHTS_HARDWARE_MODULE_ID,
-    VSOC_STATIC_INITIALIZER(name) "Android GCE lights Module",
-    VSOC_STATIC_INITIALIZER(author) "Google",
-    VSOC_STATIC_INITIALIZER(methods) & lights_module_methods,
+    .tag = HARDWARE_MODULE_TAG,
+    .version_major = 1,
+    .version_minor = 0,
+    .id = LIGHTS_HARDWARE_MODULE_ID,
+    .name = "Android GCE lights Module",
+    .author = "Google",
+    .methods = & lights_module_methods,
 };

@@ -29,13 +29,9 @@
 
 #include <hardware/hardware.h>
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-
 #pragma GCC diagnostic push
 #pragma  GCC diagnostic ignored "-Wparentheses"
-#if VSOC_PLATFORM_SDK_AFTER(K)
 #pragma  GCC diagnostic ignored "-Wgnu-designator"
-#endif
 #include <system/audio.h>
 #pragma GCC diagnostic pop
 

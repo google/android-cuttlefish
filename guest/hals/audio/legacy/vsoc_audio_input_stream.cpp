@@ -28,7 +28,6 @@ extern "C"{
 #include "guest/hals/audio/legacy/audio_hal.h"
 #include "guest/hals/audio/legacy/vsoc_audio.h"
 #include "guest/hals/audio/legacy/vsoc_audio_input_stream.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace cvd {
 

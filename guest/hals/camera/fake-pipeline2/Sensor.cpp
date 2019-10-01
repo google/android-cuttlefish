@@ -30,7 +30,6 @@
 #include <cstdlib>
 #include "../EmulatedFakeCamera2.h"
 #include "Sensor.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 #include "system/camera_metadata.h"
 
 namespace android {
@@ -309,11 +308,9 @@ bool Sensor::threadLoop() {
           i, b.streamId, b.width, b.height, b.format, b.stride, b.buffer,
           b.img);
       switch (b.format) {
-#if VSOC_PLATFORM_SDK_AFTER(K)
         case HAL_PIXEL_FORMAT_RAW16:
           captureRaw(b.img, gain, b.stride);
           break;
-#endif
         case HAL_PIXEL_FORMAT_RGB_888:
           captureRGB(b.img, gain, b.stride);
           break;
