@@ -18,6 +18,8 @@
 #undef LOG_TAG
 #endif
 #define LOG_TAG "VSoCGrallocRegionRegistry"
+// Ensure verbose messages appear even on release builds
+#define LOG_NDEBUG 0
 
 #include <limits.h>
 #include <errno.h>
@@ -201,7 +203,8 @@ void* reference_region(const char* op, const private_handle_t* hnd) {
             strerror(errno));
     }
     region->base_ = mappedAddress;
-    ALOGI_IF(g_log_maps, "Mapped %s hnd=%p fd=%d base=%p format=%s(0x%x) width=%d height=%d stride_in_pixels=%d total_size=%d",
+    ALOGV_IF(g_log_maps, "Mapped %s hnd=%p fd=%d base=%p format=%s(0x%x) "
+              "width=%d height=%d stride_in_pixels=%d total_size=%d",
           name_buf, hnd, hnd->fd, region->base_,
           pixel_format_to_string(hnd->format), hnd->format,
           hnd->x_res, hnd->y_res, hnd->stride_in_pixels, hnd->total_size);
@@ -209,7 +212,7 @@ void* reference_region(const char* op, const private_handle_t* hnd) {
 
   void* rval = region->base_;
   ++region->num_references_;
-  ALOGI_IF(g_log_refs, "Referencing name=%s op=%s addr=%p new numRefs=%d",
+  ALOGV_IF(g_log_refs, "Referencing name=%s op=%s addr=%p new numRefs=%d",
            name_buf, op, region->base_, region->num_references_);
   unlock_region(region);
   return rval;
@@ -233,14 +236,14 @@ int unreference_region(const char* op, const private_handle_t* hnd) {
   }
   --region->num_references_;
   if (!region->num_references_) {
-    ALOGI_IF(g_log_maps, "Unmapped %s hnd=%p fd=%d base=%p", name_buf, hnd,
+    ALOGV_IF(g_log_maps, "Unmapped %s hnd=%p fd=%d base=%p", name_buf, hnd,
              hnd->fd, region->base_);
     if (recycle_munmap(region->base_, hnd->total_size) < 0) {
       ALOGE("Could not unmap %s", strerror(errno));
     }
     region->base_ = 0;
   }
-  ALOGI_IF(g_log_refs, "Unreferencing name=%s op=%s addr=%p new numRefs=%d",
+  ALOGV_IF(g_log_refs, "Unreferencing name=%s op=%s addr=%p new numRefs=%d",
            name_buf, op, region->base_, region->num_references_);
   unlock_region(region);
   return 0;
