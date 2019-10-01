@@ -133,13 +133,19 @@ args+=(
 # OK to add them now, after the dumping and patching has completed.
 # The (maybe patched) DTB can also be provided now.
 
+if [[ "${use_bootloader}" = "true" ]]; then
+  args+=(
+    -bios "${bootloader}"
+  )
+fi
+
 args+=(
     -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},server,nowait"
     -mon "chardev=charmonitor,id=monitor,mode=control"
     -chardev "file,id=charserial0,path=${kernel_log_pipe_name:-${default_dir}/kernel-log},append=on"
     -device "${kernel_console_serial},chardev=charserial0,id=serial0"
     -chardev "socket,id=charserial1,path=${console_path:-${default_dir}/console},server,nowait"
-    -device "pci-serial,chardev=charserial1,id=serial1"
+    -device "${kernel_console_serial},chardev=charserial1,id=serial1"
     -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_dir}/ivshmem_socket_qemu},id=ivsocket"
     -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
 )

@@ -201,6 +201,8 @@ DEFINE_string(tombstone_receiver_binary,
               "Binary for the tombstone server");
 DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
              "The vsock port for tombstones");
+DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
+DEFINE_string(bootloader, "", "Bootloader binary path");
 
 namespace {
 
@@ -488,6 +490,9 @@ bool InitializeCuttlefishConfiguration(
   } else {
     tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=0");
   }
+
+  tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
+  tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
