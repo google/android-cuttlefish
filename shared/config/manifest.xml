@@ -349,7 +349,7 @@
     <hal format="hidl">
         <name>android.hardware.usb</name>
         <transport>hwbinder</transport>
-        <version>1.2</version>
+        <version>1.0</version>
         <interface>
             <name>IUsb</name>
             <instance>default</instance>
