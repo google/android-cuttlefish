@@ -38,8 +38,6 @@ cc_binary {
         "libbase",
         "libcutils",
         "libhidlbase",
-        "libhidltransport",
-        "libhwbinder",
         "libutils",
         "android.hardware.health@2.0",
     ],
