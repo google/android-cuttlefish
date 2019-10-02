@@ -36,8 +36,6 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libhardware_legacy \
     libhidlbase \
-    libhidltransport \
-    libhwbinder \
     librilutils \
     android.hardware.radio@1.0 \
     android.hardware.radio@1.1 \

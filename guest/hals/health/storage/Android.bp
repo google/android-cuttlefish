@@ -34,7 +34,6 @@ cc_binary {
         "android.hardware.health.storage@1.0",
         "libbase",
         "libhidlbase",
-        "libhidltransport",
         "libutils",
     ],
 }
