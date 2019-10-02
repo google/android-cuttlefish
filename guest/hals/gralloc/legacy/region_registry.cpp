@@ -48,7 +48,7 @@
 #include <mutex>
 
 // TODO(ghartman): Make the configurable through a property
-static const bool g_log_maps = true;
+static const bool g_log_maps = false;
 static const bool g_log_refs = false;
 
 struct GrallocRegion {
