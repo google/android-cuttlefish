@@ -47,7 +47,6 @@
 #include <map>
 #include <mutex>
 
-// TODO(ghartman): Make the configurable through a property
 static const bool g_log_maps = false;
 static const bool g_log_refs = false;
 
