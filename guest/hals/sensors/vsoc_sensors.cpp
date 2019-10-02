@@ -29,7 +29,6 @@
 #include "guest/hals/sensors/sensors_hal.h"
 #include "guest/hals/sensors/vsoc_sensors.h"
 #include "guest/hals/sensors/vsoc_sensors_message.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 #include "guest/libs/remoter/remoter_framework_pkt.h"
 
 using cvd::LockGuard;
@@ -105,17 +104,11 @@ int GceSensors::Open(const struct hw_module_t* module, const char* name,
     rval->poll = cvd::thunk<sensors_poll_device_t, &GceSensors::Poll>;
     rval->activate = cvd::thunk<sensors_poll_device_t, &GceSensors::Activate>;
     rval->setDelay = cvd::thunk<sensors_poll_device_t, &GceSensors::SetDelay>;
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
 
     rval->batch = cvd::thunk<sensors_poll_device_1, &GceSensors::Batch>;
-#endif
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
     rval->flush = cvd::thunk<sensors_poll_device_1, &GceSensors::Flush>;
-#endif
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
     rval->inject_sensor_data =
         cvd::thunk<sensors_poll_device_1, &GceSensors::InjectSensorData>;
-#endif
 
     // Spawn a thread to listen for incoming data from the remoter.
     int err = pthread_create(

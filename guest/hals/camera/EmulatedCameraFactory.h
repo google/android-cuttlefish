@@ -23,7 +23,6 @@
 #include "CameraConfiguration.h"
 #include "EmulatedBaseCamera.h"
 #include "common/libs/threads/cuttlefish_thread.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace android {
 
@@ -84,7 +83,6 @@ class EmulatedCameraFactory {
    */
   int getCameraInfo(int camera_id, struct camera_info* info);
 
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
   /* Sets emulated camera callbacks.
    * This method is called in response to camera_module_t::set_callbacks
    * callback.
@@ -96,7 +94,6 @@ class EmulatedCameraFactory {
    * callback.
    */
   void getVendorTagOps(vendor_tag_ops_t* ops);
-#endif
 
   int setTorchMode(const char* camera_id, bool enabled);
 
@@ -111,13 +108,11 @@ class EmulatedCameraFactory {
   /* camera_module_t::get_camera_info callback entry point. */
   static int get_camera_info(int camera_id, struct camera_info* info);
 
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
   /* camera_module_t::set_callbacks callback entry point. */
   static int set_callbacks(const camera_module_callbacks_t* callbacks);
 
   /* camera_module_t::get_vendor_tag_ops callback entry point */
   static void get_vendor_tag_ops(vendor_tag_ops_t* ops);
-#endif
 
   /* camera_module_t::open_legacy callback entry point */
   static int open_legacy(const struct hw_module_t* module, const char* id,
@@ -174,13 +169,11 @@ class EmulatedCameraFactory {
   /* Guards access to mEmulatedCameras. */
   cvd::Mutex mEmulatedCamerasMutex;
 
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
   /* Camera callbacks (for status changing) */
   const camera_module_callbacks_t* mCallbacks;
 
   /* Hotplug thread (to call onStatusChanged) */
   sp<EmulatedCameraHotplugThread> mHotplugThread;
-#endif
 
   /* Back- and front camera properties accessed from the vsoc device. */
   cvd::CameraConfiguration mCameraConfiguration;

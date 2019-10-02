@@ -19,8 +19,6 @@
 #include <log/log.h>
 #include <stdlib.h>
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-
 #include "guest/hals/gralloc/gralloc_vsoc_priv.h"
 #include "guest/vsoc/lib/gralloc_region_view.h"
 
@@ -54,10 +52,8 @@ inline void formatToYcbcr(
 
 inline int formatToBytesPerPixel(int format) {
   switch (format) {
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     case HAL_PIXEL_FORMAT_RGBA_FP16:
       return 8;
-#endif
     case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
@@ -318,9 +314,7 @@ struct vsoc_gralloc_module_t HAL_MODULE_INFO_SYM = {
     .unlock = unlock,
     .lock_ycbcr = lock_ycbcr,
     .perform = NULL,
-#if VSOC_PLATFORM_SDK_AFTER(P)
     .validateBufferSize = NULL,
     .getTransportSize = NULL,
-#endif
   },
 };

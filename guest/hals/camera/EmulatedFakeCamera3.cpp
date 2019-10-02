@@ -20,6 +20,7 @@
  */
 
 #include <cstdint>
+#include <inttypes.h>
 
 //#define LOG_NDEBUG 0
 //#define LOG_NNDEBUG 0
@@ -205,11 +206,9 @@ status_t EmulatedFakeCamera3::getCameraInfo(struct camera_info *info) {
   info->facing = mFacingBack ? CAMERA_FACING_BACK : CAMERA_FACING_FRONT;
   info->orientation =
       EmulatedCameraFactory::Instance().getFakeCameraOrientation();
-#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
   info->resource_cost = 100;
   info->conflicting_devices = NULL;
   info->conflicting_devices_length = 0;
-#endif
   return EmulatedCamera3::getCameraInfo(info);
 }
 
