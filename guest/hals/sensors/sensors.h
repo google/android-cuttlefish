@@ -17,7 +17,6 @@
 
 #include "common/libs/time/monotonic_time.h"
 #include "guest/hals/sensors/sensors_hal.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 namespace cvd {
 
@@ -172,7 +171,6 @@ const float kRelativeHumidityPower = 1.0f;
 
 // Type of this sensor, represented as a string.
 
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_2)
 const char kAccelerometerStringType[] = SENSOR_STRING_TYPE_ACCELEROMETER;
 const char kGyroscopeStringType[] = SENSOR_STRING_TYPE_GYROSCOPE;
 const char kLightStringType[] = SENSOR_STRING_TYPE_LIGHT;
@@ -182,19 +180,7 @@ const char kProximityStringType[] = SENSOR_STRING_TYPE_PROXIMITY;
 const char kAmbientTempStringType[] = SENSOR_STRING_TYPE_AMBIENT_TEMPERATURE;
 const char kDeviceTempStringType[] = SENSOR_STRING_TYPE_TEMPERATURE;
 const char kRelativeHumidityStringType[] = SENSOR_STRING_TYPE_RELATIVE_HUMIDITY;
-#else
-const char kAccelerometerStringType[] = "";
-const char kGyroscopeStringType[] = "";
-const char kLightStringType[] = "";
-const char kMagneticFieldStringType[] = "";
-const char kPressureStringType[] = "";
-const char kProximityStringType[] = "";
-const char kAmbientTempStringType[] = "";
-const char kDeviceTempStringType[] = "";
-const char kRelativeHumidityStringType[] = "";
-#endif
 
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
 const uint32_t kAccelerometerReportingMode = SENSOR_FLAG_CONTINUOUS_MODE;
 const uint32_t kGyroscopeReportingMode = SENSOR_FLAG_CONTINUOUS_MODE;
 const uint32_t kLightReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
@@ -204,17 +190,6 @@ const uint32_t kProximityReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 const uint32_t kAmbientTempReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 const uint32_t kDeviceTempReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
 const uint32_t kRelativeHumidityReportingMode = SENSOR_FLAG_ON_CHANGE_MODE;
-#else
-const uint32_t kAccelerometerReportingMode = 0;
-const uint32_t kGyroscopeReportingMode = 0;
-const uint32_t kLightReportingMode = 0;
-const uint32_t kMagneticFieldReportingMode = 0;
-const uint32_t kPressureReportingMode = 0;
-const uint32_t kProximityReportingMode = 0;
-const uint32_t kAmbientTempReportingMode = 0;
-const uint32_t kDeviceTempReportingMode = 0;
-const uint32_t kRelativeHumidityReportingMode = 0;
-#endif
 
 const bool kAccelerometerIsWakeup = false;
 const bool kGyroscopeIsWakeup = false;

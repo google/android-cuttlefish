@@ -22,15 +22,10 @@
 #include <math.h>
 #include <stdint.h>
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-#if VSOC_PLATFORM_SDK_BEFORE(O_MR1)
-#include <camera/CameraParameters.h>
-#else
 #include <CameraParameters.h>
 
 using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
 using ::android::hardware::camera::common::V1_0::helper::Size;
-#endif
 
 #include "Exif.h"
 
