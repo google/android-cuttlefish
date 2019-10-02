@@ -18,14 +18,9 @@
 #ifndef CUTTLEFISH_CAMERA_EXIF_H
 #define CUTTLEFISH_CAMERA_EXIF_H
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-#if VSOC_PLATFORM_SDK_BEFORE(O_MR1)
-#include <camera/CameraParameters.h>
-#else
 #include <CameraParameters.h>
 
 using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
-#endif
 
 struct _ExifData;
 typedef struct _ExifData ExifData;

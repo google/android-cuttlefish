@@ -22,11 +22,6 @@
 #ifndef HW_EMULATOR_CAMERA2_BASE_H
 #define HW_EMULATOR_CAMERA2_BASE_H
 
-#include "guest/libs/platform_support/api_level_fixes.h"
-
-#if VSOC_PLATFORM_SDK_BEFORE(O_MR1)
-#include <system/window.h>
-#endif
 #include <hardware/camera2.h>
 #include <utils/Vector.h>
 

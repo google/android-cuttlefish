@@ -33,7 +33,6 @@ extern "C" {
 #include "guest/hals/audio/legacy/vsoc_audio.h"
 #include "guest/hals/audio/legacy/vsoc_audio_input_stream.h"
 #include "guest/hals/audio/legacy/vsoc_audio_output_stream.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 #include "guest/libs/remoter/remoter_framework_pkt.h"
 
 using cvd::LockGuard;

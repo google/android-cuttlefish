@@ -16,24 +16,21 @@
 #include "guest/hals/sensors/sensors_hal.h"
 
 #include "guest/hals/sensors/vsoc_sensors.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
-  VSOC_STATIC_INITIALIZER(open) cvd::GceSensors::Open,
+  .open = cvd::GceSensors::Open,
 };
 
 sensors_module_t HAL_MODULE_INFO_SYM = {
-  VSOC_STATIC_INITIALIZER(common){
-    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-    VSOC_STATIC_INITIALIZER(module_api_version) 1,
-    VSOC_STATIC_INITIALIZER(hal_api_version) 0,
-    VSOC_STATIC_INITIALIZER(id) SENSORS_HARDWARE_MODULE_ID,
-    VSOC_STATIC_INITIALIZER(name) "Android-GCE SENSORS Module",
-    VSOC_STATIC_INITIALIZER(author) "Google",
-    VSOC_STATIC_INITIALIZER(methods) & hal_module_methods,
+  .common = {
+    .tag = HARDWARE_MODULE_TAG,
+    .module_api_version = 1,
+    .hal_api_version = 0,
+    .id = SENSORS_HARDWARE_MODULE_ID,
+    .name = "Android-GCE SENSORS Module",
+    .author = "Google",
+    .methods = & hal_module_methods,
   },
-  VSOC_STATIC_INITIALIZER(get_sensors_list) cvd::GceSensors::GetSensorsList,
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
-  VSOC_STATIC_INITIALIZER(set_operation_mode) cvd::GceSensors::SetOperationMode,
-#endif
+  .get_sensors_list = cvd::GceSensors::GetSensorsList,
+  .set_operation_mode = cvd::GceSensors::SetOperationMode,
 };

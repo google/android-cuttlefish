@@ -30,7 +30,6 @@
 #include <linux/fb.h>
 
 #include "common/vsoc/lib/screen_region_view.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 #ifndef GRALLOC_MODULE_API_VERSION_0_2
 // This structure will be defined in later releases of Android. Declare it
@@ -153,18 +152,14 @@ struct private_handle_t : public native_handle {
 
 static inline int formatToBytesPerPixel(int format) {
   switch (format) {
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     case HAL_PIXEL_FORMAT_RGBA_FP16:
       return 8;
-#endif
     case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
-#if VSOC_PLATFORM_SDK_AFTER(J)
     // The camera 3.0 implementation assumes that IMPLEMENTATION_DEFINED
     // means HAL_PIXEL_FORMAT_RGBA_8888
     case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
-#endif
       return 4;
     case HAL_PIXEL_FORMAT_RGB_888:
       return 3;
@@ -174,10 +169,8 @@ static inline int formatToBytesPerPixel(int format) {
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
 #endif
       return 2;
-#if VSOC_PLATFORM_SDK_AFTER(J)
     case HAL_PIXEL_FORMAT_BLOB:
       return 1;
-#endif
     default:
       ALOGE("%s: unknown format=%d", __FUNCTION__, format);
       return 8;
@@ -206,14 +199,11 @@ inline const char* pixel_format_to_string(int format) {
     case HAL_PIXEL_FORMAT_YCbCr_422_I:
       return "YCbCr_422_I";
 
-#if VSOC_PLATFORM_SDK_AFTER(J)
     // First supported on JBMR1 (API 17)
     case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
       return "IMPLEMENTATION_DEFINED";
     case HAL_PIXEL_FORMAT_BLOB:
       return "BLOB";
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(J_MR1)
     // First supported on JBMR2 (API 18)
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
       return "YCbCr_420_888";
@@ -221,8 +211,6 @@ inline const char* pixel_format_to_string(int format) {
       return "Y8";
     case HAL_PIXEL_FORMAT_Y16:
       return "Y16";
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(K)
     // Support was added in L (API 21)
     case HAL_PIXEL_FORMAT_RAW_OPAQUE:
       return "RAW_OPAQUE";
@@ -231,8 +219,6 @@ inline const char* pixel_format_to_string(int format) {
       return "RAW16";
     case HAL_PIXEL_FORMAT_RAW10:
       return "RAW10";
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
     case HAL_PIXEL_FORMAT_YCbCr_444_888:
       return "YCbCr_444_888";
     case HAL_PIXEL_FORMAT_YCbCr_422_888:
@@ -243,33 +229,8 @@ inline const char* pixel_format_to_string(int format) {
       return "FLEX_RGBA_8888";
     case HAL_PIXEL_FORMAT_FLEX_RGB_888:
       return "FLEX_RGB_888";
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     case HAL_PIXEL_FORMAT_RGBA_FP16:
       return "RGBA_FP16";
-#endif
-
-      // Formats that have been removed
-#if VSOC_PLATFORM_SDK_BEFORE(K)
-    // Support was dropped on K (API 19)
-    case HAL_PIXEL_FORMAT_RGBA_5551:
-      return "RGBA_5551";
-    case HAL_PIXEL_FORMAT_RGBA_4444:
-      return "RGBA_4444";
-#endif
-#if VSOC_PLATFORM_SDK_BEFORE(L)
-    // Renamed to RAW_16 in L. Both were present for L, but it was completely
-    // removed in M.
-    case HAL_PIXEL_FORMAT_RAW_SENSOR:
-      return "RAW_SENSOR";
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2) && VSOC_PLATFORM_SDK_BEFORE(M)
-    // Supported K, L, and LMR1. Not supported on JBMR0, JBMR1, JBMR2, and M
-    case HAL_PIXEL_FORMAT_sRGB_X_8888:
-      return "sRGB_X_8888";
-    case HAL_PIXEL_FORMAT_sRGB_A_8888:
-      return "sRGB_A_8888";
-#endif
   }
   return "UNKNOWN";
 }
@@ -307,14 +268,12 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
   int y_size, c_size;
 
   switch (format) {
-#if VSOC_PLATFORM_SDK_AFTER(J)
     // BLOB is used to allocate buffers for JPEG formatted data. Bytes per pixel
     // is 1, the desired buffer size is in w, and h should be 1. We refrain from
     // adding additional padding, although the caller is likely to round
     // up to a page size.
     case HAL_PIXEL_FORMAT_BLOB:
       return bytes_per_pixel * w * h;
-#endif
     case HAL_PIXEL_FORMAT_YV12:
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     case HAL_PIXEL_FORMAT_YCbCr_420_888:

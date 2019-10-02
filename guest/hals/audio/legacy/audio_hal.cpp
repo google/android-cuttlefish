@@ -16,21 +16,20 @@
 #include "guest/hals/audio/legacy/vsoc_audio.h"
 
 #include "guest/hals/audio/legacy/audio_hal.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 static hw_module_methods_t hal_module_methods = {
-  VSOC_STATIC_INITIALIZER(open) cvd::GceAudio::Open,
+  .open = cvd::GceAudio::Open,
 };
 
 
 audio_module HAL_MODULE_INFO_SYM = {
-  VSOC_STATIC_INITIALIZER(common) {
-    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-    VSOC_STATIC_INITIALIZER(module_api_version) AUDIO_MODULE_API_VERSION_0_1,
-    VSOC_STATIC_INITIALIZER(hal_api_version) HARDWARE_HAL_API_VERSION,
-    VSOC_STATIC_INITIALIZER(id) AUDIO_HARDWARE_MODULE_ID,
-    VSOC_STATIC_INITIALIZER(name) "GCE Audio HW HAL",
-    VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
-    VSOC_STATIC_INITIALIZER(methods) &hal_module_methods,
+  .common = {
+    .tag = HARDWARE_MODULE_TAG,
+    .module_api_version = AUDIO_MODULE_API_VERSION_0_1,
+    .hal_api_version = HARDWARE_HAL_API_VERSION,
+    .id = AUDIO_HARDWARE_MODULE_ID,
+    .name = "GCE Audio HW HAL",
+    .author = "The Android Open Source Project",
+    .methods = &hal_module_methods,
   },
 };
