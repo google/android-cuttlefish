@@ -31,7 +31,6 @@
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 #define CUTTLEFISH_RIL_VERSION_STRING "Android Cuttlefish RIL 1.4"
 
@@ -41,11 +40,6 @@
 #define MDM_CDMA 0x04
 #define MDM_EVDO 0x08
 #define MDM_LTE 0x10
-
-#if VSOC_PLATFORM_SDK_BEFORE(K)
-#define RADIO_TECH_3GPP 1
-#define RADIO_TECH_3GPP2 2
-#endif
 
 typedef enum {
   SIM_ABSENT = 0,
@@ -153,13 +147,8 @@ static std::map<int, DataCall> gDataCalls;
 static bool gRilConnected = false;
 
 static int request_or_send_data_calllist(RIL_Token* t) {
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
   RIL_Data_Call_Response_v11* responses =
       new RIL_Data_Call_Response_v11[gDataCalls.size()];
-#else
-  RIL_Data_Call_Response_v6* responses =
-      new RIL_Data_Call_Response_v6[gDataCalls.size()];
-#endif
 
   int index = 0;
 
@@ -195,10 +184,8 @@ static int request_or_send_data_calllist(RIL_Token* t) {
       const_cast<char*>(global_ril_config->ril_address_and_prefix());
     responses[index].dnses = const_cast<char*>(global_ril_config->ril_dns());
     responses[index].gateways = const_cast<char*>(global_ril_config->ril_gateway());
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
     responses[index].pcscf = (char*)"";
     responses[index].mtu = 1440;
-#endif
   }
 
   bool new_conn_state = (gDataCalls.size() > 0);
@@ -761,11 +748,7 @@ static int gLTESignalStrength = kLTESignalStrengthMax;
 static void request_signal_strength(void* /*data*/, size_t /*datalen*/,
                                     RIL_Token t) {
   // TODO(ender): possible to support newer APIs here.
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
   RIL_SignalStrength_v10 strength;
-#else
-  RIL_SignalStrength_v6 strength;
-#endif
 
   gGatewaySignalStrength += (rand() % 3 - 1);
   gCDMASignalStrength += (rand() % 3 - 1);
@@ -973,7 +956,6 @@ static void setRadioTechnology(RIL_PreferredNetworkType network_type) {
   }
 }
 
-#if VSOC_PLATFORM_SDK_AFTER(L)
 static void request_get_radio_capability(RIL_Token t) {
   ALOGV("Requesting radio capability.");
   RIL_RadioCapability rc;
@@ -997,7 +979,6 @@ static void request_set_radio_capability(void* data, size_t datalen,
   // TODO(ender): do something about these numbers.
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, rc, datalen);
 }
-#endif
 
 static void request_set_preferred_network_type(int /*request*/, void* data,
                                                size_t /*datalen*/,
@@ -1285,7 +1266,6 @@ static const int gMaxConcurrentVoiceCalls = 4;
 static const int gMaxConcurrentDataCalls = 4;
 static const int gMaxConcurrentStandbyConnections = 4;
 
-#if VSOC_PLATFORM_SDK_AFTER(K)
 static void request_hardware_config(RIL_Token t) {
   RIL_HardwareConfig hw_cfg[2];
 
@@ -1316,7 +1296,6 @@ static void request_hardware_config(RIL_Token t) {
 
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &hw_cfg, sizeof(hw_cfg));
 }
-#endif
 
 // 0 = Home network only, 1 = preferred networks only, 2 = all networks.
 static int gCdmaRoamingPreference = 2;
@@ -1378,7 +1357,6 @@ static void request_exit_emergency_mode(void* /*data*/, size_t /*datalen*/,
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-#if VSOC_PLATFORM_SDK_AFTER(P)
 static void request_set_carrier_restrictions4(void* /*data*/,
                                               size_t /*datalen*/,
                                               RIL_Token t) {
@@ -1392,7 +1370,6 @@ static void request_get_carrier_restrictions4(RIL_Token t) {
   // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
   gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
 }
-#endif
 
 static RIL_RadioState gce_ril_current_state() {
   ALOGV("Reporting radio state %d", gRadioPowerState);
@@ -1442,7 +1419,6 @@ static void request_get_neighboring_cell_ids(void* /*data*/, size_t /*datalen*/,
   delete[] cells;
 }
 
-#if VSOC_PLATFORM_SDK_AFTER(J_MR1)
 static void request_get_cell_info_list(void* /*data*/, size_t /*datalen*/,
                                        RIL_Token t) {
   struct timespec now;
@@ -1453,11 +1429,7 @@ static void request_get_cell_info_list(void* /*data*/, size_t /*datalen*/,
   clock_gettime(CLOCK_MONOTONIC, &now);
   curTime = now.tv_sec * 1000000000LL + now.tv_nsec;
 
-#if VSOC_PLATFORM_SDK_AFTER(N_MR1)
   RIL_CellInfo_v12 ci;
-#else
-  RIL_CellInfo ci;
-#endif
 
   if (isGSM()) {
     ci.cellInfoType = RIL_CELL_INFO_TYPE_GSM;
@@ -1479,7 +1451,6 @@ static void request_get_cell_info_list(void* /*data*/, size_t /*datalen*/,
     gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
   }
 }
-#endif
 
 struct NetworkOperator {
   std::string long_name;
@@ -1509,11 +1480,7 @@ static void init_virtual_network() {
   gGSMNeighboringCells.resize(1);
   gGSMNeighboringCells[0].cid = (char*)"0000";
   gGSMNeighboringCells[0].rssi = 75;
-#if VSOC_PLATFORM_SDK_AFTER(O_MR1)
   gNetworkOperators["311740"] =
-#else
-  gNetworkOperators["310260"] =
-#endif
       NetworkOperator("Android Virtual Operator", "Android", true);
   gNetworkOperators["310300"] =
       NetworkOperator("Alternative Operator", "Alternative", true);
@@ -1644,7 +1611,6 @@ static void request_send_SMS(void* data, RIL_Token t) {
   //                                sizeof(response));
 }
 
-#if VSOC_PLATFORM_SDK_AFTER(J_MR1)
 static void request_set_cell_info_list_rate(void* data, size_t /*datalen*/,
                                             RIL_Token t) {
   // For now we'll save the rate but no RIL_UNSOL_CELL_INFO_LIST messages
@@ -1653,8 +1619,6 @@ static void request_set_cell_info_list_rate(void* data, size_t /*datalen*/,
   s_cell_info_rate_ms = ((int*)data)[0];
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
 static void request_ims_send_SMS(void* data, size_t /*datalen*/, RIL_Token t) {
   RIL_IMS_SMS_Message* args = (RIL_IMS_SMS_Message*)data;
   RIL_SMS_Response response{};
@@ -1675,7 +1639,6 @@ static void request_ims_send_SMS(void* data, size_t /*datalen*/, RIL_Token t) {
                                      sizeof(response));
   }
 }
-#endif
 
 static void request_SMS_acknowledge(void* data, size_t /*datalen*/,
                                     RIL_Token t) {
@@ -1904,11 +1867,7 @@ static void pollSIMState(void* /*param*/) {
       // Transition directly to READY. Set default network operator.
       if (gRadioPowerState == RADIO_STATE_ON) {
         gSimStatus = SIM_READY;
-#if VSOC_PLATFORM_SDK_AFTER(O_MR1)
         gCurrentNetworkOperator = "311740";
-#else
-        gCurrentNetworkOperator = "310260";
-#endif
       }
 
       gce_ril_env->RequestTimedCallback(pollSIMState, NULL, &TIMEVAL_SIMPOLL);
@@ -2112,7 +2071,6 @@ static void request_sim_close_channel(void* data, size_t /*datalen*/,
   }
 }
 
-#if VSOC_PLATFORM_SDK_AFTER(K)
 static void request_sim_apdu(void* data, size_t /*datalen*/, RIL_Token t) {
   RIL_SIM_APDU* apdu = (RIL_SIM_APDU*)data;
 
@@ -2133,7 +2091,6 @@ static void request_sim_apdu(void* data, size_t /*datalen*/, RIL_Token t) {
     gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
   }
 }
-#endif
 
 // 0 = Lock is available, but disabled.
 // 1 = Lock is available and enabled,
@@ -2216,7 +2173,6 @@ static void request_ims_registration_state(RIL_Token t) {
 }
 
 // New functions after P.
-#if VSOC_PLATFORM_SDK_AFTER(P)
 static void request_start_network_scan(RIL_Token t) {
   ALOGV("Scanning network - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2284,8 +2240,6 @@ static void request_set_system_selection_channels(int /*request*/, RIL_Token t) 
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
-
-#endif
 
 static void gce_ril_on_request(int request, void* data, size_t datalen,
                                RIL_Token t) {
@@ -2464,14 +2418,12 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_GET_NEIGHBORING_CELL_IDS:
       request_get_neighboring_cell_ids(data, datalen, t);
       break;
-#if VSOC_PLATFORM_SDK_AFTER(J_MR1)
     case RIL_REQUEST_GET_CELL_INFO_LIST:
       request_get_cell_info_list(data, datalen, t);
       break;
     case RIL_REQUEST_SET_UNSOL_CELL_INFO_LIST_RATE:
       request_set_cell_info_list_rate(data, datalen, t);
       break;
-#endif
     case RIL_REQUEST_BASEBAND_VERSION:
       request_baseband_version(t);
       break;
@@ -2481,8 +2433,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_QUERY_TTY_MODE:
       request_get_tty_mode(t);
       break;
-
-#if VSOC_PLATFORM_SDK_AFTER(L)
     case RIL_REQUEST_GET_RADIO_CAPABILITY:
       request_get_radio_capability(t);
       break;
@@ -2492,8 +2442,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_SET_DATA_PROFILE:
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
       break;
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(K)
     case RIL_REQUEST_GET_HARDWARE_CONFIG:
       request_hardware_config(t);
       break;
@@ -2509,8 +2457,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_SIM_CLOSE_CHANNEL:
       request_sim_close_channel(data, datalen, t);
       break;
-#endif
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     case RIL_REQUEST_IMS_SEND_SMS:
       request_ims_send_SMS(data, datalen, t);
       break;
@@ -2520,10 +2466,7 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
       break;
 
-#endif
-
 // New requests after P.
-#if VSOC_PLATFORM_SDK_AFTER(P)
     case RIL_REQUEST_START_NETWORK_SCAN:
       request_start_network_scan(t);
       break;
@@ -2557,7 +2500,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4:
       request_get_carrier_restrictions4(t);
       break;
-#endif
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
       break;

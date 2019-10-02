@@ -35,8 +35,6 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 
-#include <guest/libs/platform_support/api_level_fixes.h>
-
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/vsoc/lib/screen_region_view.h"
 #include "gralloc_vsoc_priv.h"
@@ -172,37 +170,35 @@ static int gralloc_device_open(
 /*****************************************************************************/
 
 static struct hw_module_methods_t gralloc_module_methods = {
-  VSOC_STATIC_INITIALIZER(open) gralloc_device_open
+  .open = gralloc_device_open
 };
 
 struct private_module_t HAL_MODULE_INFO_SYM = {
-  VSOC_STATIC_INITIALIZER(base) {
-    VSOC_STATIC_INITIALIZER(common) {
-      VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
+  .base = {
+    .common = {
+      .tag = HARDWARE_MODULE_TAG,
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
-      VSOC_STATIC_INITIALIZER(version_major) GRALLOC_MODULE_API_VERSION_0_2,
+      .version_major = GRALLOC_MODULE_API_VERSION_0_2,
 #else
-      VSOC_STATIC_INITIALIZER(version_major) 1,
+      .version_major = 1,
 #endif
-      VSOC_STATIC_INITIALIZER(version_minor) 0,
-      VSOC_STATIC_INITIALIZER(id) GRALLOC_HARDWARE_MODULE_ID,
-      VSOC_STATIC_INITIALIZER(name) "VSOC X86 Graphics Memory Allocator Module",
-      VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
-      VSOC_STATIC_INITIALIZER(methods) &gralloc_module_methods,
-      VSOC_STATIC_INITIALIZER(dso) NULL,
-      VSOC_STATIC_INITIALIZER(reserved) {0},
+      .version_minor = 0,
+      .id = GRALLOC_HARDWARE_MODULE_ID,
+      .name = "VSOC X86 Graphics Memory Allocator Module",
+      .author = "The Android Open Source Project",
+      .methods = &gralloc_module_methods,
+      .dso = NULL,
+      .reserved = {0},
     },
-    VSOC_STATIC_INITIALIZER(registerBuffer) gralloc_register_buffer,
-    VSOC_STATIC_INITIALIZER(unregisterBuffer) gralloc_unregister_buffer,
-    VSOC_STATIC_INITIALIZER(lock) gralloc_lock,
-    VSOC_STATIC_INITIALIZER(unlock) gralloc_unlock,
-#if VSOC_PLATFORM_SDK_AFTER(P)
-    VSOC_STATIC_INITIALIZER(validateBufferSize) NULL,
-    VSOC_STATIC_INITIALIZER(getTransportSize) NULL,
-#endif
+    .registerBuffer = gralloc_register_buffer,
+    .unregisterBuffer = gralloc_unregister_buffer,
+    .lock = gralloc_lock,
+    .unlock = gralloc_unlock,
+    .validateBufferSize = NULL,
+    .getTransportSize = NULL,
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
-    VSOC_STATIC_INITIALIZER(perform) NULL,
-    VSOC_STATIC_INITIALIZER(lock_ycbcr) gralloc_lock_ycbcr,
+    .perform = NULL,
+    .lock_ycbcr = gralloc_lock_ycbcr,
 #endif
   },
 };
