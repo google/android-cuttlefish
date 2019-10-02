@@ -22,6 +22,7 @@
 #include <glog/logging.h>
 #include <netinet/in.h>
 #include "common/libs/fs/shared_select.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 using cvd::SharedFD;
 
@@ -32,13 +33,12 @@ static const std::map<std::string, std::string> kInformationalPatterns = {
 };
 
 static const std::map<std::string, monitor::BootEvent> kStageToEventMap = {
-    {"VIRTUAL_DEVICE_BOOT_STARTED", monitor::BootEvent::BootStarted},
-    {"VIRTUAL_DEVICE_BOOT_COMPLETED", monitor::BootEvent::BootCompleted},
-    {"VIRTUAL_DEVICE_BOOT_FAILED", monitor::BootEvent::BootFailed},
-    {"VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED",
+    {vsoc::kBootStartedMessage, monitor::BootEvent::BootStarted},
+    {vsoc::kBootCompletedMessage, monitor::BootEvent::BootCompleted},
+    {vsoc::kBootFailedMessage, monitor::BootEvent::BootFailed},
+    {vsoc::kMobileNetworkConnectedMessage,
      monitor::BootEvent::MobileNetworkConnected},
-    {"VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED",
-     monitor::BootEvent::WifiNetworkConnected},
+    {vsoc::kWifiConnectedMessage, monitor::BootEvent::WifiNetworkConnected},
     // TODO(b/131864854): Replace this with a string less likely to change
     {"init: starting service 'adbd'", monitor::BootEvent::AdbdStarted},
 };
