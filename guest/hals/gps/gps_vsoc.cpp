@@ -24,13 +24,13 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include <log/log.h>
 #include <cutils/sockets.h>
 #include <hardware/gps.h>
 
 #include "guest/hals/gps/gps_thread.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
 
 static GpsState _gps_state;
 
@@ -245,14 +245,14 @@ static int open_gps(const struct hw_module_t* module, char const* /*name*/,
 }
 
 static struct hw_module_methods_t gps_module_methods = {
-    VSOC_STATIC_INITIALIZER(open) open_gps};
+    .open = open_gps};
 
 struct hw_module_t HAL_MODULE_INFO_SYM = {
-    VSOC_STATIC_INITIALIZER(tag) HARDWARE_MODULE_TAG,
-    VSOC_STATIC_INITIALIZER(version_major) 1,
-    VSOC_STATIC_INITIALIZER(version_minor) 0,
-    VSOC_STATIC_INITIALIZER(id) GPS_HARDWARE_MODULE_ID,
-    VSOC_STATIC_INITIALIZER(name) "GCE GPS Module",
-    VSOC_STATIC_INITIALIZER(author) "The Android Open Source Project",
-    VSOC_STATIC_INITIALIZER(methods) & gps_module_methods,
+    .tag = HARDWARE_MODULE_TAG,
+    .version_major = 1,
+    .version_minor = 0,
+    .id = GPS_HARDWARE_MODULE_ID,
+    .name = "GCE GPS Module",
+    .author = "The Android Open Source Project",
+    .methods = & gps_module_methods,
 };

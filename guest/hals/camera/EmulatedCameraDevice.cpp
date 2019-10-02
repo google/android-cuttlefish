@@ -324,11 +324,7 @@ status_t EmulatedCameraDevice::WorkerThread::stopThread() {
     // If thread is running and readyToRun() has not finished running,
     //    then wait until it is done.
     Mutex::Autolock lock(mCameraDevice->mObjectLock);
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
     if (isRunning() && (mThreadControl < 0 || mControlFD < 0)) {
-#else
-    if (getTid() != -1 && (mThreadControl < 0 || mControlFD < 0)) {
-#endif
       mSetup.wait(mCameraDevice->mObjectLock);
     }
   }

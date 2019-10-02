@@ -20,13 +20,8 @@
 #include <hardware/camera_common.h>
 #include <utils/Errors.h>
 #include "CameraConfiguration.h"
-#include "guest/libs/platform_support/api_level_fixes.h"
-#if VSOC_PLATFORM_SDK_BEFORE(O_MR1)
-#include <camera/CameraParameters.h>
-#else
 #include <CameraParameters.h>
 using ::android::hardware::camera::common::V1_0::helper::CameraParameters;
-#endif
 
 namespace android {
 
@@ -82,9 +77,7 @@ class EmulatedBaseCamera {
    */
   virtual status_t unplugCamera();
 
-#if VSOC_PLATFORM_SDK_AFTER(J_MR2)
   virtual camera_device_status_t getHotplugStatus();
-#endif
 
   /* Closes connection to the emulated camera.
    * This method is called in response to camera_device::close callback.
