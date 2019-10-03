@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/launch/vsoc_shared_memory.h"
+#include "host/commands/run_cvd/vsoc_shared_memory.h"
 
 #include <unistd.h>
 

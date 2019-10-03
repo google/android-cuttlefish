@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "host/commands/launch/image_aggregator.h"
+#include "host/commands/assemble_cvd/image_aggregator.h"
 
 #include <fstream>
 #include <string>
@@ -29,7 +29,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "device/google/cuttlefish_common/host/commands/launch/cdisk_spec.pb.h"
+#include "device/google/cuttlefish_common/host/commands/assemble_cvd/cdisk_spec.pb.h"
 
 namespace {
 
