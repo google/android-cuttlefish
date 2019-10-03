@@ -13,25 +13,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 
+#include "flag_forwarder.h"
+
 namespace {
 
-cvd::Subprocess StartAssembler(int argc, char** argv, cvd::SharedFD assembler_stdout) {
-  cvd::Command assemble_cmd(vsoc::DefaultHostArtifactsPath("bin/assemble_cvd"));
-  for (int i = 1; i < argc; i++) {
-    assemble_cmd.AddParameter(argv[i]);
+std::string kAssemblerBin = vsoc::DefaultHostArtifactsPath("bin/assemble_cvd");
+std::string kRunnerBin = vsoc::DefaultHostArtifactsPath("bin/run_cvd");
+
+cvd::Subprocess StartAssembler(cvd::SharedFD assembler_stdout,
+                               const std::vector<std::string>& argv) {
+  cvd::Command assemble_cmd(kAssemblerBin);
+  for (const auto& arg : argv) {
+    assemble_cmd.AddParameter(arg);
   }
   assemble_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, assembler_stdout);
   return assemble_cmd.Start();
 }
 
-cvd::Subprocess StartRunner(cvd::SharedFD runner_stdin) {
-  cvd::Command run_cmd(vsoc::DefaultHostArtifactsPath("bin/run_cvd"));
+cvd::Subprocess StartRunner(cvd::SharedFD runner_stdin,
+                            const std::vector<std::string>& argv) {
+  cvd::Command run_cmd(kRunnerBin);
+  for (const auto& arg : argv) {
+    run_cmd.AddParameter(arg);
+  }
   run_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, runner_stdin);
   return run_cmd.Start();
 }
@@ -41,13 +52,23 @@ cvd::Subprocess StartRunner(cvd::SharedFD runner_stdin) {
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
+  FlagForwarder forwarder({kAssemblerBin, kRunnerBin});
+
+  gflags::ParseCommandLineNonHelpFlags(&argc, &argv, false);
+
+  forwarder.UpdateFlagDefaults();
+
+  gflags::HandleCommandLineHelpFlags();
+
   cvd::SharedFD assembler_stdout, runner_stdin;
   cvd::SharedFD::Pipe(&runner_stdin, &assembler_stdout);
 
   // SharedFDs are std::move-d in to avoid dangling references.
   // Removing the std::move will probably make run_cvd hang as its stdin never closes.
-  auto assemble_proc = StartAssembler(argc, argv, std::move(assembler_stdout));
-  auto run_proc = StartRunner(std::move(runner_stdin));
+  auto assemble_proc = StartAssembler(std::move(assembler_stdout),
+                                      forwarder.ArgvForSubprocess(kAssemblerBin));
+  auto run_proc = StartRunner(std::move(runner_stdin),
+                              forwarder.ArgvForSubprocess(kRunnerBin));
 
   auto assemble_ret = assemble_proc.Wait();
   if (assemble_ret != 0) {
