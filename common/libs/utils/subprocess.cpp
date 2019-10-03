@@ -25,6 +25,7 @@
 
 #include <map>
 #include <set>
+#include <thread>
 
 #include <glog/logging.h>
 
@@ -306,6 +307,123 @@ Subprocess Command::StartInGroup(bool with_control_socket) const {
   return StartHelper(with_control_socket, true);
 }
 
+// A class that waits for threads to exit in its destructor.
+class ThreadJoiner {
+std::vector<std::thread*> threads_;
+public:
+  ThreadJoiner(const std::vector<std::thread*> threads) : threads_(threads) {}
+  ~ThreadJoiner() {
+    for (auto& thread : threads_) {
+      if (thread->joinable()) {
+        thread->join();
+      }
+    }
+  }
+};
+
+int RunWithManagedStdio(cvd::Command&& cmd_tmp, const std::string* stdin,
+                        std::string* stdout, std::string* stderr) {
+  /*
+   * The order of these declarations is necessary for safety. If the function
+   * returns at any point, the cvd::Command will be destroyed first, closing all
+   * of its references to SharedFDs. This will cause the thread internals to fail
+   * their reads or writes. The ThreadJoiner then waits for the threads to
+   * complete, as running the destructor of an active std::thread crashes the
+   * program.
+   *
+   * C++ scoping rules dictate that objects are descoped in reverse order to
+   * construction, so this behavior is predictable.
+   */
+  std::thread stdin_thread, stdout_thread, stderr_thread;
+  ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
+  cvd::Command cmd = std::move(cmd_tmp);
+  bool io_error = false;
+  if (stdin != nullptr) {
+    cvd::SharedFD pipe_read, pipe_write;
+    if (!cvd::SharedFD::Pipe(&pipe_read, &pipe_write)) {
+      LOG(ERROR) << "Could not create a pipe to write the stdin of \""
+                << cmd.GetShortName() << "\"";
+      return -1;
+    }
+    if (!cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, pipe_read)) {
+      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
+                << "\", was already set.";
+      return -1;
+    }
+    stdin_thread = std::thread([pipe_write, stdin, &io_error]() {
+      int written = cvd::WriteAll(pipe_write, *stdin);
+      if (written < 0) {
+        io_error = true;
+        LOG(ERROR) << "Error in writing stdin to process";
+      }
+    });
+  }
+  if (stdout != nullptr) {
+    cvd::SharedFD pipe_read, pipe_write;
+    if (!cvd::SharedFD::Pipe(&pipe_read, &pipe_write)) {
+      LOG(ERROR) << "Could not create a pipe to read the stdout of \""
+                << cmd.GetShortName() << "\"";
+      return -1;
+    }
+    if (!cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, pipe_write)) {
+      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
+                << "\", was already set.";
+      return -1;
+    }
+    stdout_thread = std::thread([pipe_read, stdout, &io_error]() {
+      int read = cvd::ReadAll(pipe_read, stdout);
+      if (read < 0) {
+        io_error = true;
+        LOG(ERROR) << "Error in reading stdout from process";
+      }
+    });
+  }
+  if (stderr != nullptr) {
+    cvd::SharedFD pipe_read, pipe_write;
+    if (!cvd::SharedFD::Pipe(&pipe_read, &pipe_write)) {
+      LOG(ERROR) << "Could not create a pipe to read the stderr of \""
+                << cmd.GetShortName() << "\"";
+      return -1;
+    }
+    if (!cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdErr, pipe_write)) {
+      LOG(ERROR) << "Could not set stderr of \"" << cmd.GetShortName()
+                << "\", was already set.";
+      return -1;
+    }
+    stderr_thread = std::thread([pipe_read, stderr, &io_error]() {
+      int read = cvd::ReadAll(pipe_read, stderr);
+      if (read < 0) {
+        io_error = true;
+        LOG(ERROR) << "Error in reading stderr from process";
+      }
+    });
+  }
+
+  auto subprocess = cmd.Start();
+  if (!subprocess.Started()) {
+    return -1;
+  }
+  {
+    // Force the destructor to run by moving it into a smaller scope.
+    // This is necessary to close the write end of the pipe.
+    cvd::Command forceDelete = std::move(cmd);
+  }
+  int wstatus;
+  subprocess.Wait(&wstatus, 0);
+  if (WIFSIGNALED(wstatus)) {
+    LOG(ERROR) << "Command was interrupted by a signal: " << WTERMSIG(wstatus);
+    return -1;
+  }
+  {
+    auto join_threads = std::move(thread_joiner);
+  }
+  if (io_error) {
+    LOG(ERROR) << "IO error communicating with " << cmd.GetShortName();
+    return -1;
+  }
+  return WEXITSTATUS(wstatus);
+}
+
 int execute(const std::vector<std::string>& command,
             const std::vector<std::string>& env) {
   Command cmd(command[0]);
@@ -327,35 +445,6 @@ int execute(const std::vector<std::string>& command) {
   auto subprocess = cmd.Start();
   if (!subprocess.Started()) {
     return -1;
-  }
-  return subprocess.Wait();
-}
-
-int execute_capture_output(const std::vector<std::string>& command,
-                           std::string* output) {
-  Command cmd(command[0]);
-  for (size_t i = 1; i < command.size(); ++i) {
-    cmd.AddParameter(command[i]);
-  }
-  cvd::SharedFD pipe_read, pipe_write;
-  cvd::SharedFD::Pipe(&pipe_read, &pipe_write);
-  cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, pipe_write);
-  cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdErr, pipe_write);
-
-  auto subprocess = cmd.Start();
-  if (!subprocess.Started()) {
-    return -1;
-  }
-  {
-    pipe_write->Close();
-    // Force the destructor to run by moving it into a smaller scope.
-    // This is necessary to close the write end of the pipe.
-    cvd::Command forceDelete = std::move(cmd);
-  }
-
-  int read = cvd::ReadAll(pipe_read, output);
-  if (read < 0) {
-    LOG(FATAL) << "Could not read from pipe in execute_capture_output";
   }
   return subprocess.Wait();
 }
