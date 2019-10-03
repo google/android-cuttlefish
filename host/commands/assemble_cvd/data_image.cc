@@ -1,4 +1,4 @@
-#include "host/commands/launch/data_image.h"
+#include "host/commands/assemble_cvd/data_image.h"
 
 #include <glog/logging.h>
 

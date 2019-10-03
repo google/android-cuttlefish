@@ -17,7 +17,7 @@
 #include <glog/logging.h>
 
 #include "common/vsoc/lib/screen_region_view.h"
-#include "host/commands/launch/pre_launch_initializers.h"
+#include "host/commands/run_cvd/pre_launch_initializers.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 void InitializeScreenRegion(const vsoc::CuttlefishConfig& config) {

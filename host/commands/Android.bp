@@ -24,4 +24,6 @@ subdirs = [
     "kernel_log_monitor",
     "config_server",
     "console_forwarder",
+    "run_cvd",
+    "assemble_cvd",
 ]
