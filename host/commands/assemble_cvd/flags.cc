@@ -570,11 +570,6 @@ void SetDefaultFlagsForCrosvm() {
 }
 
 bool ParseCommandLineFlags(int* argc, char*** argv) {
-  // The config_file is created by the launcher, so the launcher is the only
-  // host process that doesn't use the flag.
-  // Set the default to empty.
-  google::SetCommandLineOptionWithMode("config_file", "",
-                                       gflags::SET_FLAGS_DEFAULT);
   google::ParseCommandLineNonHelpFlags(argc, argv, true);
   bool invalid_manager = false;
   if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
