@@ -187,6 +187,21 @@ class Command {
   bool verbose_;
 };
 
+/*
+ * Consumes a cvd::Command and runs it, optionally managing the stdio channels.
+ *
+ * If `stdin` is set, the subprocess stdin will be pipe providing its contents.
+ * If `stdout` is set, the subprocess stdout will be captured and saved to it.
+ * If `stderr` is set, the subprocess stderr will be captured and saved to it.
+ *
+ * If `command` exits normally, the lower 8 bits of the return code will be
+ * returned in a value between 0 and 255.
+ * If some setup fails, `command` fails to start, or `command` exits due to a
+ * signal, the return value will be negative.
+ */
+int RunWithManagedStdio(cvd::Command&& command, const std::string* stdin,
+                        std::string* stdout, std::string* stderr);
+
 // Convenience wrapper around Command and Subprocess class, allows to easily
 // execute a command and wait for it to complete. The version without the env
 // parameter starts the command with the same environment as the parent. Returns
@@ -194,9 +209,5 @@ class Command {
 int execute(const std::vector<std::string>& command,
             const std::vector<std::string>& env);
 int execute(const std::vector<std::string>& command);
-
-// Like execute, but captures stdout and stderr and returns it in "output".
-int execute_capture_output(const std::vector<std::string>& command,
-                           std::string* output);
 
 }  // namespace cvd
