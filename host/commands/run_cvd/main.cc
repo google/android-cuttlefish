@@ -320,8 +320,9 @@ std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
 
 }  // namespace
 
-int main(int, char** argv) {
+int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
+  google::ParseCommandLineFlags(&argc, &argv, false);
 
   std::string input_files_str;
   {
