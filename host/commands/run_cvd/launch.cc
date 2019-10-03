@@ -1,4 +1,4 @@
-#include "host/commands/launch/launch.h"
+#include "host/commands/run_cvd/launch.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,9 +9,9 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/shm/screen_layout.h"
-#include "host/commands/launch/launcher_defs.h"
-#include "host/commands/launch/pre_launch_initializers.h"
-#include "host/commands/launch/vsoc_shared_memory.h"
+#include "host/commands/run_cvd/runner_defs.h"
+#include "host/commands/run_cvd/pre_launch_initializers.h"
+#include "host/commands/run_cvd/vsoc_shared_memory.h"
 
 using cvd::LauncherExitCodes;
 using cvd::MonitorEntry;

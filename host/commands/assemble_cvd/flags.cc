@@ -1,4 +1,4 @@
-#include "host/commands/launch/flags.h"
+#include "host/commands/assemble_cvd/flags.h"
 
 #include <iostream>
 #include <fstream>
@@ -10,10 +10,10 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/vsoc/lib/vsoc_memory.h"
-#include "host/commands/launch/boot_image_unpacker.h"
-#include "host/commands/launch/data_image.h"
-#include "host/commands/launch/image_aggregator.h"
-#include "host/commands/launch/launcher_defs.h"
+#include "host/commands/assemble_cvd/boot_image_unpacker.h"
+#include "host/commands/assemble_cvd/data_image.h"
+#include "host/commands/assemble_cvd/image_aggregator.h"
+#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"

@@ -13,10 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
+
 #include <glog/logging.h>
 
-int main(int, char** argv) {
+#include "host/commands/assemble_cvd/flags.h"
+
+int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  LOG(INFO) << "Hello world.";
+  auto config = InitFilesystemAndCreateConfig(&argc, &argv);
+
+  std::cout << GetConfigFilePath(*config) << "\n";
+  std::cout << std::flush;
 }

@@ -16,13 +16,31 @@
 cc_binary_host {
     name: "run_cvd",
     srcs: [
-        "run_cvd.cc",
+        "launch.cc",
+        "process_monitor.cc",
+        "main.cc",
+        "screen_region_handler.cc",
+        "vsoc_shared_memory.cc",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     shared_libs: [
+        "vsoc_lib",
+        "libcuttlefish_fs",
+        "libcuttlefish_strings",
+        "libcuttlefish_utils",
+        "cuttlefish_auto_resources",
         "libbase",
+        "libnl"
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libcuttlefish_vm_manager",
+        "libivserver",
+        "libgflags",
+        "libxml2",
+        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }

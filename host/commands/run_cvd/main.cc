@@ -38,6 +38,7 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/strings/str_split.h"
@@ -47,13 +48,10 @@
 #include "common/libs/utils/size_utils.h"
 #include "common/vsoc/lib/vsoc_memory.h"
 #include "common/vsoc/shm/screen_layout.h"
-#include "host/commands/launch/boot_image_unpacker.h"
-#include "host/commands/launch/data_image.h"
-#include "host/commands/launch/flags.h"
-#include "host/commands/launch/launch.h"
-#include "host/commands/launch/launcher_defs.h"
-#include "host/commands/launch/process_monitor.h"
-#include "host/commands/launch/vsoc_shared_memory.h"
+#include "host/commands/run_cvd/launch.h"
+#include "host/commands/run_cvd/runner_defs.h"
+#include "host/commands/run_cvd/process_monitor.h"
+#include "host/commands/run_cvd/vsoc_shared_memory.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include <host/libs/vm_manager/crosvm_manager.h>
@@ -315,12 +313,37 @@ void ServerLoop(cvd::SharedFD server,
     }
   }
 }
+
+std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
+  return config.PerInstancePath("cuttlefish_config.json");
+}
+
 }  // namespace
 
-int main(int argc, char** argv) {
+int main(int, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  auto config = InitFilesystemAndCreateConfig(&argc, &argv);
+  std::string input_files_str;
+  {
+    auto input_fd = cvd::SharedFD::Dup(0);
+    auto bytes_read = cvd::ReadAll(input_fd, &input_files_str);
+    if (bytes_read < 0) {
+      LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
+    }
+  }
+  std::vector<std::string> input_files = cvd::StrSplit(input_files_str, '\n');
+  bool found_config = false;
+  for (const auto& file : input_files) {
+    if (file.find("cuttlefish_config.json") != std::string::npos) {
+      found_config = true;
+      setenv(vsoc::kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
+    }
+  }
+  if (!found_config) {
+    return LauncherExitCodes::kCuttlefishConfigurationInitError;
+  }
+
+  auto config = vsoc::CuttlefishConfig::Get();
 
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
