@@ -194,8 +194,8 @@ struct private_module_t HAL_MODULE_INFO_SYM = {
     .unregisterBuffer = gralloc_unregister_buffer,
     .lock = gralloc_lock,
     .unlock = gralloc_unlock,
-    .validateBufferSize = NULL,
-    .getTransportSize = NULL,
+    .validateBufferSize = gralloc_validate_buffer_size,
+    .getTransportSize = gralloc_get_transport_size,
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     .perform = NULL,
     .lock_ycbcr = gralloc_lock_ycbcr,

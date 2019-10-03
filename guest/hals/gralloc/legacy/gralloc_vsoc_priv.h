@@ -320,3 +320,12 @@ int gralloc_lock_ycbcr(
     buffer_handle_t handle, int usage,
     int l, int t, int w, int h,
     struct android_ycbcr *ycbcr);
+
+int32_t gralloc_get_transport_size(
+    struct gralloc_module_t const* module, buffer_handle_t handle,
+    uint32_t *outNumFds, uint32_t *outNumInts);
+
+int32_t gralloc_validate_buffer_size(
+    struct gralloc_module_t const* device, buffer_handle_t handle,
+    uint32_t w, uint32_t h, int32_t format, int usage,
+    uint32_t stride);
