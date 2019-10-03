@@ -26,11 +26,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/mainline_system.mk)
 
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := relaxed
 
-# TODO(ycchen): The component below will be in Q mainline, and will be removed
-# from the whitelist when Q is released. See b/131162245 for some details.
-PRODUCT_ARTIFACT_PATH_REQUIREMENT_WHITELIST += \
-    system/apex/com.android.apex.cts.shim.apex \
-
 #
 # All components inherited here go to product image (same as GSI product)
 #
