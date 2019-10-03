@@ -122,3 +122,36 @@ int gralloc_lock_ycbcr(
   formatToYcbcr(hnd->format, hnd->x_res, hnd->y_res, base, ycbcr);
   return 0;
 }
+
+int32_t gralloc_get_transport_size(struct gralloc_module_t const* /*module*/,
+                                   buffer_handle_t handle,
+                                   uint32_t *outNumFds,
+                                   uint32_t *outNumInts) {
+  if (private_handle_t::validate(handle) < 0) {
+    return 2; // GRALLOC1_ERROR_BAD_HANDLE
+  }
+  private_handle_t* hnd = (private_handle_t*)handle;
+  *outNumFds = hnd->numFds;
+  *outNumInts = hnd->numInts;
+  return 0;
+}
+
+int32_t gralloc_validate_buffer_size(struct gralloc_module_t const* /*device*/,
+                                     buffer_handle_t handle,
+                                     uint32_t w,
+                                     uint32_t h,
+                                     int32_t format,
+                                     int /*usage*/,
+                                     uint32_t stride) {
+  if (private_handle_t::validate(handle) < 0) {
+    return 2; // GRALLOC1_ERROR_BAD_HANDLE
+  }
+  private_handle_t* hnd = (private_handle_t*)handle;
+  if (format != hnd->format ||
+      w > hnd->x_res ||
+      h > hnd->y_res ||
+      stride > hnd->stride_in_pixels) {
+    return 3; // GRALLOC1_ERROR_BAD_VALUE
+  }
+  return 0;
+}
