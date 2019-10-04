@@ -206,6 +206,8 @@ DEFINE_string(bootloader, "", "Bootloader binary path");
 
 namespace {
 
+std::string kRamdiskConcatExt = ".concat";
+
 template<typename S, typename T>
 static std::string concat(const S& s, const T& t) {
   std::ostringstream os;
@@ -401,6 +403,12 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
+  if(FLAGS_initramfs_path.size() > 0) {
+    tmp_config_obj.set_initramfs_path(FLAGS_initramfs_path);
+    tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
+  } else {
+    tmp_config_obj.set_final_ramdisk_path(ramdisk_path);
+  }
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
   tmp_config_obj.set_ivshmem_qemu_socket_path(
@@ -772,13 +780,12 @@ vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
     exit(LauncherExitCodes::kBootImageUnpackError);
   }
 
-  if(FLAGS_initramfs_path.size()) {
-    auto concat_ramdisk_path = config->ramdisk_image_path() + ".concat";
-    if(!ConcatRamdisks(concat_ramdisk_path, config->ramdisk_image_path(), FLAGS_initramfs_path)) {
+  if(config->initramfs_path().size() != 0) {
+    if(!ConcatRamdisks(config->final_ramdisk_path(), config->ramdisk_image_path(),
+        config->initramfs_path())) {
       LOG(ERROR) << "Failed to concatenate ramdisk and initramfs";
       exit(LauncherExitCodes::kInitRamFsConcatError);
     }
-    config->set_ramdisk_image_path(concat_ramdisk_path);
   }
 
   if (config->decompress_kernel()) {
