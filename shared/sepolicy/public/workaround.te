@@ -1,3 +1,0 @@
-# TODO(b/131193755) Once PRODUCT_PUBLIC_SEPOLICY_DIRS is optional, this file
-# and the containing folder can be deleted.
-type workaround;
