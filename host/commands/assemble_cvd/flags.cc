@@ -100,7 +100,8 @@ DEFINE_string(super_image, "", "Location of the super partition image.");
 DEFINE_string(misc_image, "",
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
-DEFINE_string(composite_disk, "", "Location of the composite disk image.");
+DEFINE_string(composite_disk, "", "Location of the composite disk image. "
+                                  "If empty, a composite disk is not used.");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -239,6 +240,9 @@ bool ResolveInstanceFiles() {
   std::string default_misc_image = FLAGS_system_image_dir + "/misc.img";
   SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_composite_disk = FLAGS_system_image_dir + "/composite.img";
+  SetCommandLineOptionWithMode("composite_disk", default_composite_disk.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
@@ -334,14 +338,6 @@ bool InitializeCuttlefishConfiguration(
     } else {
       tmp_config_obj.add_kernel_cmdline("root=/dev/vda1");
       tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
-    }
-  }
-
-  if (!FLAGS_super_image.empty()) {
-    if (FLAGS_composite_disk.empty()) {
-      tmp_config_obj.add_kernel_cmdline("androidboot.super_partition=vda");
-    } else {
-      tmp_config_obj.add_kernel_cmdline("androidboot.super_partition=super");
     }
   }
 
