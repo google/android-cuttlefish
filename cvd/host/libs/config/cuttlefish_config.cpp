@@ -933,7 +933,7 @@ std::string CuttlefishConfig::keyboard_socket_path() const {
   return ret;
 }
 
-/*static*/ CuttlefishConfig* CuttlefishConfig::Get() {
+/*static*/ const CuttlefishConfig* CuttlefishConfig::Get() {
   static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
   return config.get();
 }
