@@ -732,7 +732,7 @@ void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
 
 } // namespace
 
-vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
+const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   if (!ParseCommandLineFlags(argc, argv)) {
     LOG(ERROR) << "Failed to parse command arguments";
     exit(LauncherExitCodes::kArgumentParsingError);
