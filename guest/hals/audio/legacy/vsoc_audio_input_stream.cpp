@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cstdint>
+#include <cinttypes>
 
 extern "C"{
 #include <cutils/str_parms.h>
@@ -120,7 +121,7 @@ int GceAudioInputStream::SetFormat(audio_format_t format) {
 
 int GceAudioInputStream::Dump(int fd) const {
   D("GceAudioInputStream::%s", __FUNCTION__);
-  VSOC_FDPRINTF(
+  dprintf(
       fd,
       "\tInputSteam Dump:\n"
       "\t\tsample rate: %u\n"
