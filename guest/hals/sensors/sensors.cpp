@@ -23,12 +23,6 @@ namespace cvd {
 namespace {
 const cvd::time::Milliseconds kDefaultSamplingRate(200);
 
-#if !VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
-namespace {
-const int SENSOR_FLAG_WAKE_UP = 0;
-}
-#endif
-
 timespec infinity() {
   timespec ts;
   ts.tv_sec = std::numeric_limits<time_t>::max();
@@ -65,18 +59,12 @@ SensorInfo::SensorInfo(const char* name, const char* vendor, int version,
   this->resolution = resolution;
   this->power = power;
   this->minDelay = min_delay;
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
   this->fifoReservedEventCount = fifo_reserved_event_count;
   this->fifoMaxEventCount = fifo_max_event_count;
-#endif
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_2)
   this->stringType = string_type;
   this->requiredPermission = required_permission;
-#endif
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_3)
   this->maxDelay = max_delay;
   this->flags = reporting_mode;
-#endif
 }
 
 namespace sc = sensors_constants;
