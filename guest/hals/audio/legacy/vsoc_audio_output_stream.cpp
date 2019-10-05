@@ -62,7 +62,7 @@ GceAudioOutputStream::GceAudioOutputStream(GceAudio* dev) :
 
 int GceAudioOutputStream::Dump(int fd) const {
   D("GceAudioOutputStream::%s", __FUNCTION__);
-  VSOC_FDPRINTF(
+  dprintf(
       fd,
       "\tout_dump:\n"
       "\t\tsample rate: %u\n"

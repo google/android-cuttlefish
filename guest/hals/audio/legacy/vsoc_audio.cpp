@@ -180,7 +180,7 @@ void GceAudio::CloseOutputStream(audio_stream_out *stream) {
 
 int GceAudio::Dump(int fd) const {
   LockGuard<Mutex> guard(lock_);
-  VSOC_FDPRINTF(
+  dprintf(
       fd,
       "\nadev_dump:\n"
       "\tmic_mute: %s\n"
