@@ -47,9 +47,11 @@ std::vector<std::string> ExtractImages(const std::string& archive_file,
     }
     std::string extracted_file = target_directory + "/" + file;
 
-    std::string file_output;
-    auto file_ret = cvd::execute_capture_output(
-      {"/usr/bin/file", extracted_file}, &file_output);
+    std::string file_input, file_output;
+    cvd::Command file_cmd("/usr/bin/file");
+    file_cmd.AddParameter(extracted_file);
+    auto file_ret = cvd::RunWithManagedStdio(std::move(file_cmd), &file_input,
+                                             &file_output, nullptr);
     if (file_ret != 0) {
       LOG(ERROR) << "Unable to run file on " << file << ", returned" << file_ret;
       extraction_success = false;

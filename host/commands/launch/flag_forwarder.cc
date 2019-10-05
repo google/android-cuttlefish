@@ -143,49 +143,6 @@ T FromString(const std::string& str) {
   return output;
 }
 
-std::string CaptureSubprocessStdout(cvd::Command cmd) {
-  // TODO(b/141889929): Unify this with execute_capture_output.
-  cmd.SetVerbose(false);
-  auto dev_null = cvd::SharedFD::Open("/dev/null", O_RDONLY);
-  if (!dev_null->IsOpen()) {
-    LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
-    return "";
-  }
-  cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, dev_null);
-  cvd::SharedFD pipe_read, pipe_write;
-  cvd::SharedFD::Pipe(&pipe_read, &pipe_write);
-  cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, pipe_write);
-  auto subprocess = cmd.Start();
-  if (!subprocess.Started()) {
-    LOG(ERROR) << "Could not start subprocess";
-    return "";
-  }
-  {
-    pipe_write->Close();
-    // Force the destructor to run by moving it into a smaller scope.
-    // This is necessary to close the write end of the pipe.
-    cvd::Command forceDelete = std::move(cmd);
-  }
-  std::string output;
-  int read = cvd::ReadAll(pipe_read, &output);
-  if (read < 0) {
-    LOG(ERROR) << "Could not read from pipe in CaptureSubprocessStdout";
-    return "";
-  }
-  int status;
-  subprocess.Wait(&status, 0);
-  if (!WIFEXITED(status)) {
-    LOG(ERROR) << "Subprocess exited with abnormal conditions.";
-    return "";
-  }
-  if (WEXITSTATUS(status) != 1) {
-    LOG(ERROR) << "Subprocess exited with status " << WEXITSTATUS(status)
-               << ", expected 1";
-    return "";
-  }
-  return output;
-}
-
 /**
  * Creates a dynamic flag
  */
@@ -278,8 +235,16 @@ FlagForwarder::FlagForwarder(std::set<std::string> subprocesses)
 
   for (const auto& subprocess : subprocesses_) {
     cvd::Command cmd(subprocess);
+    cmd.SetVerbose(false);
     cmd.AddParameter("--helpxml");
-    std::string helpxml_output = CaptureSubprocessStdout(std::move(cmd));
+    std::string helpxml_input, helpxml_output, helpxml_error;
+    int helpxml_ret = cvd::RunWithManagedStdio(std::move(cmd), &helpxml_input,
+                                               &helpxml_output, &helpxml_error);
+    if (helpxml_ret != 1) {
+      LOG(FATAL) << subprocess << " --helpxml returned unexpected response "
+                 << helpxml_ret << ". Stderr was " << helpxml_error;
+      return;
+    }
 
     auto subprocess_flags = FlagsForSubprocess(helpxml_output);
     for (const auto& flag : subprocess_flags) {
@@ -307,6 +272,7 @@ void FlagForwarder::UpdateFlagDefaults() const {
 
   for (const auto& subprocess : subprocesses_) {
     cvd::Command cmd(subprocess);
+    cmd.SetVerbose(false);
     std::vector<std::string> invocation = {subprocess};
     for (const auto& flag : ArgvForSubprocess(subprocess)) {
       cmd.AddParameter(flag);
@@ -322,7 +288,14 @@ void FlagForwarder::UpdateFlagDefaults() const {
     cmd.AddParameter("--noversion");
     // Ensure this is set on by putting it at the end.
     cmd.AddParameter("--helpxml");
-    std::string helpxml_output = CaptureSubprocessStdout(std::move(cmd));
+    std::string helpxml_input, helpxml_output, helpxml_error;
+    int helpxml_ret = cvd::RunWithManagedStdio(std::move(cmd), &helpxml_input,
+                                               &helpxml_output, &helpxml_error);
+    if (helpxml_ret != 1) {
+      LOG(FATAL) << subprocess << " --helpxml returned unexpected response "
+                 << helpxml_ret << ". Stderr was " << helpxml_error;
+      return;
+    }
 
     auto subprocess_flags = FlagsForSubprocess(helpxml_output);
     for (const auto& flag : subprocess_flags) {
