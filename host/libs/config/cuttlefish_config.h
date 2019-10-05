@@ -48,7 +48,7 @@ enum class AdbMode {
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
  public:
-  static CuttlefishConfig* Get();
+  static const CuttlefishConfig* Get();
 
   CuttlefishConfig();
   ~CuttlefishConfig();
