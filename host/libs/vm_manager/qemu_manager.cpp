@@ -136,7 +136,7 @@ std::vector<cvd::Command> QemuManager::StartCommands(bool /*with_frontend*/) {
   LogAndSetEnv("monitor_path", GetMonitorPath(config_));
   LogAndSetEnv("kernel_image_path", config_->GetKernelImageToUse());
   LogAndSetEnv("gdb_flag", config_->gdb_flag());
-  LogAndSetEnv("ramdisk_image_path", config_->ramdisk_image_path());
+  LogAndSetEnv("ramdisk_image_path", config_->final_ramdisk_path());
   LogAndSetEnv("kernel_cmdline", config_->kernel_cmdline_as_string());
   LogAndSetEnv("virtual_disk_paths", JoinString(config_->virtual_disk_paths(),
                                                 ";"));
