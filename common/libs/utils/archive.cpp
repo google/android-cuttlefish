@@ -33,10 +33,12 @@ Archive::~Archive() {
 }
 
 std::vector<std::string> Archive::Contents() {
-  std::string bsdtar_output;
-  auto bsdtar_ret =
-      cvd::execute_capture_output({"/usr/bin/bsdtar", "-tf", file},
-                                  &bsdtar_output);
+  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
+  bsdtar_cmd.AddParameter("-tf");
+  bsdtar_cmd.AddParameter(file);
+  std::string bsdtar_input, bsdtar_output;
+  auto bsdtar_ret = cvd::RunWithManagedStdio(std::move(bsdtar_cmd), &bsdtar_input,
+                                             &bsdtar_output, nullptr);
   if (bsdtar_ret != 0) {
     LOG(ERROR) << "`bsdtar -tf \"" << file << "\"` returned " << bsdtar_ret;
   }
