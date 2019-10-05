@@ -35,7 +35,6 @@ typedef struct {
   uint8_t sensor_handle;
 } SensorControlMessage;
 
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
 // Last updated to HAL 1.4
 // Version history:
 //   Before jb, jb-mr1 SENSORS_DEVICE_API_VERSION_0_1 (no version in sensors.h)
@@ -43,10 +42,6 @@ typedef struct {
 //   k: SENSORS_DEVICE_API_VERSION_1_1
 //   l, l-mr1: SENSORS_DEVICE_API_VERSION_1_3
 //   m, n, n-mr1: SENSORS_DEVICE_API_VERSION_1_4
-#else
-// Pre-1.0 sensors do not define the sensors_poll_device_1 type.
-typedef sensors_poll_device_t sensors_poll_device_1;
-#endif
 
 class GceSensors : public sensors_poll_device_1 {
  public:
@@ -112,7 +107,6 @@ class GceSensors : public sensors_poll_device_1 {
   // an error.
   int Poll(sensors_event_t* data, int count);
 
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_0)
   // Sets a sensor’s parameters, including sampling frequency and maximum
   // report latency. This function can be called while the sensor is
   // activated, in which case it must not cause any sensor measurements to
@@ -131,9 +125,7 @@ class GceSensors : public sensors_poll_device_1 {
     // TODO: Add support for maximum report latency with max_report_latency_ns.
     return SetDelay(sensor_handle, sampling_period_ns);
   }
-#endif
 
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_1)
   // Adds a META_DATA_FLUSH_COMPLETE event (sensors_event_meta_data_t)
   // to the end of the "batch mode" FIFO for the specified sensor and flushes
   // the FIFO.
@@ -151,9 +143,7 @@ class GceSensors : public sensors_poll_device_1 {
   int Flush(int sensor_handle) {
     return -EINVAL;
   }
-#endif
 
-#if VSOC_SENSORS_DEVICE_API_VERSION_ATLEAST(1_4)
   // Inject a single sensor sample to be to this device.
   // data points to the sensor event to be injected
   // @return 0 on success
@@ -162,7 +152,6 @@ class GceSensors : public sensors_poll_device_1 {
   int InjectSensorData(const sensors_event_t *data) {
     return -EINVAL;
   }
-#endif
 
  private:
   typedef std::vector<SensorState*> SensorStateVector;
