@@ -16,7 +16,6 @@
 
 # Enable updating of APEXes
 $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
-PRODUCT_PACKAGES := com.android.apex.cts.shim.v1_prebuilt
 
 PRODUCT_SHIPPING_API_LEVEL := 29
 PRODUCT_BUILD_BOOT_IMAGE := true
