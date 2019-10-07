@@ -20,7 +20,7 @@ namespace cvd {
 constexpr char kLogcatSerialMode[] = "serial";
 constexpr char kLogcatVsockMode[] = "vsock";
 
-enum LauncherExitCodes : int {
+enum AssemblerExitCodes : int {
   kSuccess = 0,
   kArgumentParsingError = 1,
   kInvalidHostConfiguration = 2,
@@ -46,15 +46,4 @@ enum LauncherExitCodes : int {
   kInitRamFsConcatError = 22,
 };
 
-// Actions supported by the launcher server
-enum class LauncherAction : char {
-  kStop = 'X',
-};
-
-// Responses from the launcher server
-enum class LauncherResponse : char {
-  kSuccess = 'S',
-  kError = 'E',
-  kUnknownAction = 'U',
-};
 }  // namespace cvd

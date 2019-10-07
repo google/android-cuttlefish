@@ -13,7 +13,7 @@
 #include "host/commands/run_cvd/pre_launch_initializers.h"
 #include "host/commands/run_cvd/vsoc_shared_memory.h"
 
-using cvd::LauncherExitCodes;
+using cvd::RunnerExitCodes;
 using cvd::MonitorEntry;
 
 namespace {
@@ -145,7 +145,7 @@ std::vector<cvd::SharedFD> LaunchKernelLogMonitor(
       cvd::SharedFD event_pipe_write_end, event_pipe_read_end;
       if (!cvd::SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
         LOG(ERROR) << "Unable to create boot events pipe: " << strerror(errno);
-        std::exit(LauncherExitCodes::kPipeIOError);
+        std::exit(RunnerExitCodes::kPipeIOError);
       }
       if (i > 0) {
         param_builder << ",";
@@ -172,7 +172,7 @@ void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create logcat server socket: "
                << socket->StrError();
-    std::exit(LauncherExitCodes::kLogcatServerError);
+    std::exit(RunnerExitCodes::kLogcatServerError);
   }
   cvd::Command cmd(config.logcat_receiver_binary());
   cmd.AddParameter("-server_fd=", socket);
@@ -187,7 +187,7 @@ void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create configuration server socket: "
                << socket->StrError();
-    std::exit(LauncherExitCodes::kConfigServerError);
+    std::exit(RunnerExitCodes::kConfigServerError);
   }
   cvd::Command cmd(config.config_server_binary());
   cmd.AddParameter("-server_fd=", socket);
@@ -208,7 +208,7 @@ void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
         0) {
       LOG(ERROR) << "Failed to create tombstone directory: " << tombstoneDir
                  << ". Error: " << errno;
-      exit(LauncherExitCodes::kTombstoneDirCreationError);
+      exit(RunnerExitCodes::kTombstoneDirCreationError);
     }
   }
 
@@ -217,7 +217,7 @@ void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create tombstone server socket: "
                << socket->StrError();
-    std::exit(LauncherExitCodes::kTombstoneServerError);
+    std::exit(RunnerExitCodes::kTombstoneServerError);
   }
   cvd::Command cmd(config.tombstone_receiver_binary());
   cmd.AddParameter("-server_fd=", socket);
@@ -238,7 +238,7 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
   if (!usb_v1_server->IsOpen()) {
     LOG(ERROR) << "Unable to create USB v1 server socket: "
                << usb_v1_server->StrError();
-    std::exit(cvd::LauncherExitCodes::kUsbV1SocketError);
+    std::exit(cvd::RunnerExitCodes::kUsbV1SocketError);
   }
   cvd::Command usb_server(config.virtual_usb_manager_binary());
   usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
