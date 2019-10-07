@@ -19,7 +19,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 using vsoc::GetPerInstanceDefault;
-using cvd::LauncherExitCodes;
+using cvd::AssemblerExitCodes;
 
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(metadata_image, "", "Location of the metadata partition image "
@@ -731,14 +731,14 @@ void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
 const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   if (!ParseCommandLineFlags(argc, argv)) {
     LOG(ERROR) << "Failed to parse command arguments";
-    exit(LauncherExitCodes::kArgumentParsingError);
+    exit(AssemblerExitCodes::kArgumentParsingError);
   }
 
   // Clean up prior files before saving the config file (doing it after would
   // delete it)
   if (!CleanPriorFiles()) {
     LOG(ERROR) << "Failed to clean prior files";
-    exit(LauncherExitCodes::kPrioFilesCleanupError);
+    exit(AssemblerExitCodes::kPrioFilesCleanupError);
   }
   // Create instance directory if it doesn't exist.
   if (!cvd::DirectoryExists(FLAGS_instance_dir.c_str())) {
@@ -746,7 +746,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** a
     if (mkdir(FLAGS_instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
       LOG(ERROR) << "Failed to create instance directory: "
                  << FLAGS_instance_dir << ". Error: " << errno;
-      exit(LauncherExitCodes::kInstanceDirCreationError);
+      exit(AssemblerExitCodes::kInstanceDirCreationError);
     }
   }
 
@@ -759,13 +759,13 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** a
 
   if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
     LOG(ERROR) << "Failed to initialize configuration";
-    exit(LauncherExitCodes::kCuttlefishConfigurationInitError);
+    exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
   }
   // Do this early so that the config object is ready for anything that needs it
   auto config = vsoc::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config singleton";
-    exit(LauncherExitCodes::kCuttlefishConfigurationInitError);
+    exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
   }
 
   if (!boot_img_unpacker->Unpack(config->ramdisk_image_path(),
@@ -773,14 +773,14 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** a
                                      ? config->kernel_image_path()
                                      : "")) {
     LOG(ERROR) << "Failed to unpack boot image";
-    exit(LauncherExitCodes::kBootImageUnpackError);
+    exit(AssemblerExitCodes::kBootImageUnpackError);
   }
 
   if(config->initramfs_path().size() != 0) {
     if(!ConcatRamdisks(config->final_ramdisk_path(), config->ramdisk_image_path(),
         config->initramfs_path())) {
       LOG(ERROR) << "Failed to concatenate ramdisk and initramfs";
-      exit(LauncherExitCodes::kInitRamFsConcatError);
+      exit(AssemblerExitCodes::kInitRamFsConcatError);
     }
   }
 
@@ -788,7 +788,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** a
     if (!DecompressKernel(config->kernel_image_path(),
         config->decompressed_kernel_image_path())) {
       LOG(ERROR) << "Failed to decompress kernel";
-      exit(LauncherExitCodes::kKernelDecompressError);
+      exit(AssemblerExitCodes::kKernelDecompressError);
     }
   }
 
