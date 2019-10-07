@@ -59,7 +59,7 @@
 #include "host/libs/vm_manager/qemu_manager.h"
 
 using vsoc::GetPerInstanceDefault;
-using cvd::LauncherExitCodes;
+using cvd::RunnerExitCodes;
 
 namespace {
 
@@ -129,7 +129,7 @@ class CvdBootStateMachine {
   }
 
  private:
-  void SendExitCode(cvd::LauncherExitCodes exit_code) {
+  void SendExitCode(cvd::RunnerExitCodes exit_code) {
     fg_launcher_pipe_->Write(&exit_code, sizeof(exit_code));
     // The foreground process will exit after receiving the exit code, if we try
     // to write again we'll get a SIGPIPE
@@ -138,11 +138,11 @@ class CvdBootStateMachine {
   bool MaybeWriteToForegroundLauncher() {
     if (fg_launcher_pipe_->IsOpen()) {
       if (BootCompleted()) {
-        SendExitCode(cvd::LauncherExitCodes::kSuccess);
+        SendExitCode(cvd::RunnerExitCodes::kSuccess);
       } else if (state_ & kGuestBootFailed) {
-        SendExitCode(cvd::LauncherExitCodes::kVirtualDeviceBootFailed);
+        SendExitCode(cvd::RunnerExitCodes::kVirtualDeviceBootFailed);
       } else if (state_ & kE2eTestFailed) {
-        SendExitCode(cvd::LauncherExitCodes::kE2eTestFailed);
+        SendExitCode(cvd::RunnerExitCodes::kE2eTestFailed);
       } else {
         // No final state was reached
         return false;
@@ -227,22 +227,22 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
     // Explicitly close here, otherwise we may end up reading forever if the
     // child process dies.
     write_end->Close();
-    LauncherExitCodes exit_code;
+    RunnerExitCodes exit_code;
     auto bytes_read = read_end->Read(&exit_code, sizeof(exit_code));
     if (bytes_read != sizeof(exit_code)) {
       LOG(ERROR) << "Failed to read a complete exit code, read " << bytes_read
                  << " bytes only instead of the expected " << sizeof(exit_code);
-      exit_code = LauncherExitCodes::kPipeIOError;
-    } else if (exit_code == LauncherExitCodes::kSuccess) {
+      exit_code = RunnerExitCodes::kPipeIOError;
+    } else if (exit_code == RunnerExitCodes::kSuccess) {
       LOG(INFO) << "Virtual device booted successfully";
-    } else if (exit_code == LauncherExitCodes::kVirtualDeviceBootFailed) {
+    } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
       LOG(ERROR) << "Virtual device failed to boot";
-    } else if (exit_code == LauncherExitCodes::kE2eTestFailed) {
+    } else if (exit_code == RunnerExitCodes::kE2eTestFailed) {
       LOG(ERROR) << "Host VSoC region end to end test failed";
     } else {
       LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
-    if (exit_code == LauncherExitCodes::kSuccess) {
+    if (exit_code == RunnerExitCodes::kSuccess) {
       LOG(INFO) << vsoc::kBootCompletedMessage;
     } else {
       LOG(INFO) << vsoc::kBootFailedMessage;
@@ -252,7 +252,7 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
     // The child returns the write end of the pipe
     if (daemon(/*nochdir*/ 1, /*noclose*/ 1) != 0) {
       LOG(ERROR) << "Failed to daemonize child process: " << strerror(errno);
-      std::exit(LauncherExitCodes::kDaemonizationError);
+      std::exit(RunnerExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
     auto log_path = config.launcher_log_path();
@@ -261,24 +261,24 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
     if (!log->IsOpen()) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
-      std::exit(LauncherExitCodes::kDaemonizationError);
+      std::exit(RunnerExitCodes::kDaemonizationError);
     }
     auto dev_null = cvd::SharedFD::Open("/dev/null", O_RDONLY);
     if (!dev_null->IsOpen()) {
       LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
-      std::exit(LauncherExitCodes::kDaemonizationError);
+      std::exit(RunnerExitCodes::kDaemonizationError);
     }
     if (dev_null->UNMANAGED_Dup2(0) < 0) {
       LOG(ERROR) << "Failed dup2 stdin: " << dev_null->StrError();
-      std::exit(LauncherExitCodes::kDaemonizationError);
+      std::exit(RunnerExitCodes::kDaemonizationError);
     }
     if (log->UNMANAGED_Dup2(1) < 0) {
       LOG(ERROR) << "Failed dup2 stdout: " << log->StrError();
-      std::exit(LauncherExitCodes::kDaemonizationError);
+      std::exit(RunnerExitCodes::kDaemonizationError);
     }
     if (log->UNMANAGED_Dup2(2) < 0) {
       LOG(ERROR) << "Failed dup2 seterr: " << log->StrError();
-      std::exit(LauncherExitCodes::kDaemonizationError);
+      std::exit(RunnerExitCodes::kDaemonizationError);
     }
 
     read_end->Close();
@@ -341,7 +341,7 @@ int main(int argc, char** argv) {
     }
   }
   if (!found_config) {
-    return LauncherExitCodes::kCuttlefishConfigurationInitError;
+    return RunnerExitCodes::kCuttlefishConfigurationInitError;
   }
 
   auto config = vsoc::CuttlefishConfig::Get();
@@ -355,7 +355,7 @@ int main(int argc, char** argv) {
     auto error = errno;
     LOG(ERROR) << "Unable to change dir into instance directory ("
                << config->instance_dir() << "): " << strerror(error);
-    return LauncherExitCodes::kInstanceDirCreationError;
+    return RunnerExitCodes::kInstanceDirCreationError;
   }
 
   auto vm_manager = vm_manager::VmManager::Get(config->vm_manager(), config);
@@ -370,7 +370,7 @@ int main(int argc, char** argv) {
     }
     std::cout << "You may need to logout for the changes to take effect"
               << std::endl;
-    return LauncherExitCodes::kInvalidHostConfiguration;
+    return RunnerExitCodes::kInvalidHostConfiguration;
   }
 
   if (!WriteCuttlefishEnvironment(*config)) {
@@ -394,13 +394,13 @@ int main(int argc, char** argv) {
   if (!launcher_monitor_socket->IsOpen()) {
     LOG(ERROR) << "Error when opening launcher server: "
                << launcher_monitor_socket->StrError();
-    return cvd::LauncherExitCodes::kMonitorCreationFailed;
+    return cvd::RunnerExitCodes::kMonitorCreationFailed;
   }
   cvd::SharedFD foreground_launcher_pipe;
   if (config->run_as_daemon()) {
     foreground_launcher_pipe = DaemonizeLauncher(*config);
     if (!foreground_launcher_pipe->IsOpen()) {
-      return LauncherExitCodes::kDaemonizationError;
+      return RunnerExitCodes::kDaemonizationError;
     }
   } else {
     // Make sure the launcher runs in its own process group even when running in
@@ -409,7 +409,7 @@ int main(int argc, char** argv) {
       int retval = setpgid(0, 0);
       if (retval) {
         LOG(ERROR) << "Failed to create new process group: " << strerror(errno);
-        std::exit(LauncherExitCodes::kProcessGroupError);
+        std::exit(RunnerExitCodes::kProcessGroupError);
       }
     }
   }
@@ -463,5 +463,5 @@ int main(int argc, char** argv) {
 
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
-  return cvd::LauncherExitCodes::kServerError;
+  return cvd::RunnerExitCodes::kServerError;
 }
