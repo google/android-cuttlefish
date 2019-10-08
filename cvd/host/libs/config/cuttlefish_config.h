@@ -35,6 +35,8 @@ constexpr char kMobileNetworkConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
 constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
+constexpr char kInternalDirName[] = "internal";
+
 
 enum class AdbMode {
   Tunnel,
@@ -59,6 +61,7 @@ class CuttlefishConfig {
 
   // Returns the path to a file with the given name in the instance directory..
   std::string PerInstancePath(const char* file_name) const;
+  std::string PerInstanceInternalPath(const char* file_name) const;
 
   std::string instance_name() const;
 
@@ -69,6 +72,8 @@ class CuttlefishConfig {
 
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
+
+  std::string instance_internal_dir() const;
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
