@@ -23,6 +23,19 @@
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
+  if (isatty(0)) {
+    LOG(FATAL) << "stdin was a tty, expected to be passed the output of a previous stage. "
+               << "Did you mean to run launch_cvd?";
+    return cvd::AssemblerExitCodes::kInvalidHostConfiguration;
+  } else {
+    int error_num = errno;
+    if (error_num == EBADF) {
+      LOG(FATAL) << "stdin was not a valid file descriptor, expected to be passed the output "
+                 << "of assemble_cvd. Did you mean to run launch_cvd?";
+      return cvd::AssemblerExitCodes::kInvalidHostConfiguration;
+    }
+  }
+
   auto config = InitFilesystemAndCreateConfig(&argc, &argv);
 
   std::cout << GetConfigFilePath(*config) << "\n";
