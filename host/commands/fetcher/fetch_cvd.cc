@@ -101,7 +101,7 @@ std::vector<std::string> download_images(BuildApi* build_api,
 
   std::vector<std::string> files = ExtractImages(local_path, target_directory, images);
   if (files.empty()) {
-    LOG(FATAL) << "Could not extract " << local_path;
+    LOG(ERROR) << "Could not extract " << local_path;
     return {};
   }
   if (unlink(local_path.c_str()) != 0) {
@@ -312,7 +312,7 @@ int main(int argc, char** argv) {
       desparse(target_dir + "/userdata.img");
       AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, image_files, &config);
     }
-    if (FLAGS_download_target_files_zip) {
+    if (FLAGS_system_build != "" || FLAGS_download_target_files_zip) {
       std::vector<std::string> target_files =
           download_target_files(&build_api, default_build, target_dir);
       if (target_files.empty()) {
@@ -329,18 +329,20 @@ int main(int argc, char** argv) {
         std::vector<std::string> image_files =
             download_images(&build_api, system_build, target_dir, {"system.img"});
         if (image_files.empty()) {
-          LOG(FATAL) << "Could not download system image for " << system_build;
+          LOG(INFO) << "Could not find system image for " << system_build
+                    << "in the img zip. Assuming a super image build, which will "
+                    << "get the super image from the target zip.";
+        } else {
+          AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, image_files,
+                           &config, true);
         }
-        AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, image_files, &config, true);
       }
-      if (FLAGS_download_target_files_zip) {
-        std::vector<std::string> target_files =
-            download_target_files(&build_api, system_build, target_dir);
-        if (target_files.empty()) {
-          LOG(FATAL) << "Could not download target files for " << system_build;
-        }
-        AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, target_files, &config);
+      std::vector<std::string> target_files =
+          download_target_files(&build_api, system_build, target_dir);
+      if (target_files.empty()) {
+        LOG(FATAL) << "Could not download target files for " << system_build;
       }
+      AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, target_files, &config);
     }
 
     if (FLAGS_kernel_build != "") {
