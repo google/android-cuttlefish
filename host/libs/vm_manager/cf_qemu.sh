@@ -54,6 +54,7 @@ CUTTLEFISH_INSTANCE="${CUTTLEFISH_INSTANCE:-$(default_instance_number)}"
 default_instance_name="cvd-${CUTTLEFISH_INSTANCE}"
 default_uuid="699acfc4-c8c4-11e7-882b-5065f31dc1${CUTTLEFISH_INSTANCE}"
 default_dir="${HOME}/cuttlefish_runtime"
+default_internal_dir="${default_internal_dir}"
 default_mobile_tap_name="cvd-mtap-${CUTTLEFISH_INSTANCE}"
 default_wifi_tap_name="cvd-wtap-${CUTTLEFISH_INSTANCE}"
 
@@ -140,13 +141,13 @@ if [[ "${use_bootloader}" = "true" ]]; then
 fi
 
 args+=(
-    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_dir}/qemu_monitor.sock},server,nowait"
+    -chardev "socket,id=charmonitor,path=${monitor_path:-${default_internal_dir}/_qemu_monitor.sock},server,nowait"
     -mon "chardev=charmonitor,id=monitor,mode=control"
-    -chardev "file,id=charserial0,path=${kernel_log_pipe_name:-${default_dir}/kernel-log},append=on"
+    -chardev "file,id=charserial0,path=${kernel_log_pipe_name:-${default_internal_dir}/_kernel-log},append=on"
     -device "${kernel_console_serial},chardev=charserial0,id=serial0"
     -chardev "socket,id=charserial1,path=${console_path:-${default_dir}/console},server,nowait"
     -device "${kernel_console_serial},chardev=charserial1,id=serial1"
-    -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_dir}/ivshmem_socket_qemu},id=ivsocket"
+    -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_internal_dir}/_ivshmem_socket_qemu},id=ivsocket"
     -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
 )
 
@@ -167,7 +168,7 @@ fi
 
 if [[ -n "${usb_v1_socket_name}" ]]; then
   args+=(
-      -chardev "socket,id=charchannel1,path=${usb_v1_socket_name:-${default_dir}/usb-v1}"
+      -chardev "socket,id=charchannel1,path=${usb_v1_socket_name:-${default_internal_dir}/_usb-v1}"
       -device "virtserialport,bus=virtio-serial0.0,nr=2,chardev=charchannel1,id=channel1,name=cf-gadget-usb-v1"
   )
 fi
