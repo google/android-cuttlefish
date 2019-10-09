@@ -16,6 +16,7 @@
 cc_binary_host {
     name: "launch_cvd",
     srcs: [
+        "filesystem_explorer.cc",
         "flag_forwarder.cc",
         "launch_cvd.cc",
     ],
