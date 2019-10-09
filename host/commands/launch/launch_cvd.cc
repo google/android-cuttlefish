@@ -13,12 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <sstream>
+
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/launch/filesystem_explorer.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/fetcher_config.h"
 
 #include "flag_forwarder.h"
 
@@ -39,10 +44,6 @@ namespace {
 
 std::string kAssemblerBin = vsoc::DefaultHostArtifactsPath("bin/assemble_cvd");
 std::string kRunnerBin = vsoc::DefaultHostArtifactsPath("bin/run_cvd");
-
-void AvailableFilesReport(cvd::SharedFD) {
-  // TODO(schuffelen): Scan directories like ANDROID_PRODUCT_OUT, ANDROID_HOST_OUT, HOME
-}
 
 cvd::Subprocess StartAssembler(cvd::SharedFD assembler_stdin,
                                cvd::SharedFD assembler_stdout,
@@ -66,6 +67,19 @@ cvd::Subprocess StartRunner(cvd::SharedFD runner_stdin,
   }
   run_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, runner_stdin);
   return run_cmd.Start();
+}
+
+void WriteFiles(cvd::FetcherConfig fetcher_config, cvd::SharedFD out) {
+  std::stringstream output_streambuf;
+  for (const auto& file : fetcher_config.get_cvd_files()) {
+    output_streambuf << file.first << "\n";
+  }
+  std::string output_string = output_streambuf.str();
+  int written = cvd::WriteAll(out, output_string);
+  if (written < 0) {
+    LOG(FATAL) << "Could not write file report (" << strerror(out->GetErrno())
+               << ")";
+  }
 }
 
 } // namespace
@@ -99,7 +113,7 @@ int main(int argc, char** argv) {
                               forwarder.ArgvForSubprocess(kRunnerBin));
 
   if (should_generate_report) {
-    AvailableFilesReport(std::move(launcher_report));
+    WriteFiles(AvailableFilesReport(), std::move(launcher_report));
   }
 
   auto assemble_ret = assemble_proc.Wait();

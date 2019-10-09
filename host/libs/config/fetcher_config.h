@@ -67,6 +67,7 @@ class FetcherConfig {
   std::unique_ptr<Json::Value> dictionary_;
 public:
   FetcherConfig();
+  FetcherConfig(FetcherConfig&&);
   ~FetcherConfig();
 
   bool SaveToFile(const std::string& file) const;
