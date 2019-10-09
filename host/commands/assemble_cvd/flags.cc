@@ -408,25 +408,30 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
   tmp_config_obj.set_ivshmem_qemu_socket_path(
-      tmp_config_obj.PerInstancePath("ivshmem_socket_qemu"));
+      tmp_config_obj.PerInstanceInternalPath("ivshmem_socket_qemu"));
   tmp_config_obj.set_ivshmem_client_socket_path(
-      tmp_config_obj.PerInstancePath("ivshmem_socket_client"));
+      tmp_config_obj.PerInstanceInternalPath("ivshmem_socket_client"));
   tmp_config_obj.set_ivshmem_vector_count(memory_layout.GetRegions().size());
 
   if (tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
-    tmp_config_obj.set_usb_v1_socket_name(tmp_config_obj.PerInstancePath("usb-v1"));
+    tmp_config_obj.set_usb_v1_socket_name(
+        tmp_config_obj.PerInstanceInternalPath("usb-v1"));
     tmp_config_obj.set_vhci_port(FLAGS_vhci_port);
-    tmp_config_obj.set_usb_ip_socket_name(tmp_config_obj.PerInstancePath("usb-ip"));
+    tmp_config_obj.set_usb_ip_socket_name(
+        tmp_config_obj.PerInstanceInternalPath("usb-ip"));
   }
 
-  tmp_config_obj.set_kernel_log_pipe_name(tmp_config_obj.PerInstancePath("kernel-log"));
-  tmp_config_obj.set_console_pipe_name(tmp_config_obj.PerInstancePath("console-pipe"));
+  tmp_config_obj.set_kernel_log_pipe_name(
+      tmp_config_obj.PerInstanceInternalPath("kernel-log-pipe"));
+  tmp_config_obj.set_console_pipe_name(
+      tmp_config_obj.PerInstanceInternalPath("console-pipe"));
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
   tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
   tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
   tmp_config_obj.set_logcat_receiver_binary(FLAGS_logcat_receiver_binary);
   tmp_config_obj.set_config_server_binary(FLAGS_config_server_binary);
-  tmp_config_obj.set_launcher_log_path(tmp_config_obj.PerInstancePath("launcher.log"));
+  tmp_config_obj.set_launcher_log_path(
+      tmp_config_obj.PerInstancePath("launcher.log"));
   tmp_config_obj.set_launcher_monitor_socket_path(
       tmp_config_obj.PerInstancePath("launcher_monitor.sock"));
 
@@ -746,6 +751,16 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** a
     if (mkdir(FLAGS_instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
       LOG(ERROR) << "Failed to create instance directory: "
                  << FLAGS_instance_dir << ". Error: " << errno;
+      exit(AssemblerExitCodes::kInstanceDirCreationError);
+    }
+  }
+
+  auto internal_dir = FLAGS_instance_dir + "/" + vsoc::kInternalDirName;
+  if (!cvd::DirectoryExists(internal_dir)) {
+    if (mkdir(internal_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
+        0) {
+      LOG(ERROR) << "Failed to create internal instance directory: "
+                 << internal_dir << ". Error: " << errno;
       exit(AssemblerExitCodes::kInstanceDirCreationError);
     }
   }
