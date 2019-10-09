@@ -34,7 +34,7 @@ namespace vm_manager {
 namespace {
 
 std::string GetControlSocketPath(const vsoc::CuttlefishConfig* config) {
-  return config->PerInstancePath("crosvm_control.sock");
+  return config->PerInstanceInternalPath("crosvm_control.sock");
 }
 
 void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
