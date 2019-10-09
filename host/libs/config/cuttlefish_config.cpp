@@ -178,12 +178,15 @@ std::string DefaultEnvironmentPath(const char* environment_key,
   return cvd::StringFromEnv(environment_key, default_value) + "/" + subpath;
 }
 
-
 std::string CuttlefishConfig::instance_dir() const {
   return (*dictionary_)[kInstanceDir].asString();
 }
 void CuttlefishConfig::set_instance_dir(const std::string& instance_dir) {
   (*dictionary_)[kInstanceDir] = instance_dir;
+}
+
+std::string CuttlefishConfig::instance_internal_dir() const {
+  return PerInstancePath(kInternalDirName);
 }
 
 std::string CuttlefishConfig::vm_manager() const {
@@ -909,11 +912,11 @@ bool CuttlefishConfig::enable_ivserver() const {
 }
 
 std::string CuttlefishConfig::touch_socket_path() const {
-  return PerInstancePath("touch.sock");
+  return PerInstanceInternalPath("touch.sock");
 }
 
 std::string CuttlefishConfig::keyboard_socket_path() const {
-  return PerInstancePath("keyboard.sock");
+  return PerInstanceInternalPath("keyboard.sock");
 }
 
 // Creates the (initially empty) config object and populates it with values from
@@ -970,6 +973,16 @@ bool CuttlefishConfig::SaveToFile(const std::string& file) const {
 
 std::string CuttlefishConfig::PerInstancePath(const char* file_name) const {
   return (instance_dir() + "/") + file_name;
+}
+
+std::string CuttlefishConfig::PerInstanceInternalPath(
+    const char* file_name) const {
+  if (file_name[0] == '\0') {
+    // Don't append a / if file_name is empty.
+    return PerInstancePath(kInternalDirName);
+  }
+  auto relative_path = (std::string(kInternalDirName) + "/") + file_name;
+  return PerInstancePath(relative_path.c_str());
 }
 
 std::string CuttlefishConfig::instance_name() const {
