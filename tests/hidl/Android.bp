@@ -1,0 +1,13 @@
+cc_test {
+    name: "hidl_implementation_test",
+    srcs: ["hidl_implementation_test.cpp"],
+    static_libs: [
+        "libhidlmetadata",
+        "libhidl-gen-utils",
+    ],
+    shared_libs: [
+        "libbase",
+        "libvintf",
+    ],
+    test_suites: ["device-tests"],
+}
