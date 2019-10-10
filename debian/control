@@ -22,6 +22,7 @@ Depends:
  libwayland-client0,
  libx11-6,
  libxext6,
+ net-tools,
  python,
  qemu-user-static [!amd64],
  ${misc:Depends}
