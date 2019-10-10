@@ -285,12 +285,12 @@ static void resendLastNITZTimeData(RIL_SOCKET_ID socket_id) {
                            : RESPONSE_UNSOLICITED;
         // acquire read lock for the service before calling nitzTimeReceivedInd() since it reads
         // nitzTimeReceived in ril_service
-        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_4::getRadioServiceRwlock(
+        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(
                 (int) socket_id);
         int rwlockRet = pthread_rwlock_rdlock(radioServiceRwlockPtr);
         assert(rwlockRet == 0);
 
-        int ret = radio_1_4::nitzTimeReceivedInd(
+        int ret = radio_1_5::nitzTimeReceivedInd(
             (int)socket_id, responseType, 0,
             RIL_E_SUCCESS, s_lastNITZTimeData, s_lastNITZTimeDataSize);
         if (ret == 0) {
@@ -456,7 +456,7 @@ RIL_register (const RIL_RadioFunctions *callbacks) {
                 == s_unsolResponses[i].requestNumber);
     }
 
-    radio_1_4::registerService(&s_callbacks, s_commands);
+    radio_1_5::registerService(&s_callbacks, s_commands);
     RLOGI("RILHIDL called registerService");
 
 }
@@ -574,12 +574,12 @@ RIL_onRequestAck(RIL_Token t) {
     appendPrintBuf("Ack [%04d]< %s", pRI->token, requestToString(pRI->pCI->requestNumber));
 
     if (pRI->cancelled == 0) {
-        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_4::getRadioServiceRwlock(
+        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(
                 (int) socket_id);
         int rwlockRet = pthread_rwlock_rdlock(radioServiceRwlockPtr);
         assert(rwlockRet == 0);
 
-        radio_1_4::acknowledgeRequest((int) socket_id, pRI->token);
+        radio_1_5::acknowledgeRequest((int) socket_id, pRI->token);
 
         rwlockRet = pthread_rwlock_unlock(radioServiceRwlockPtr);
         assert(rwlockRet == 0);
@@ -632,7 +632,7 @@ RIL_onRequestComplete(RIL_Token t, RIL_Errno e, void *response, size_t responsel
         RLOGE ("Calling responseFunction() for token %d", pRI->token);
 #endif
 
-        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_4::getRadioServiceRwlock((int) socket_id);
+        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock((int) socket_id);
         int rwlockRet = pthread_rwlock_rdlock(radioServiceRwlockPtr);
         assert(rwlockRet == 0);
 
@@ -778,14 +778,14 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
         responseType = RESPONSE_UNSOLICITED;
     }
 
-    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_4::getRadioServiceRwlock((int) soc_id);
+    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock((int) soc_id);
     int rwlockRet;
 
     if (unsolResponse == RIL_UNSOL_NITZ_TIME_RECEIVED) {
         // get a write lock in caes of NITZ since setNitzTimeReceived() is called
         rwlockRet = pthread_rwlock_wrlock(radioServiceRwlockPtr);
         assert(rwlockRet == 0);
-        radio_1_4::setNitzTimeReceived((int) soc_id, android::elapsedRealtime());
+        radio_1_5::setNitzTimeReceived((int) soc_id, android::elapsedRealtime());
     } else {
         rwlockRet = pthread_rwlock_rdlock(radioServiceRwlockPtr);
         assert(rwlockRet == 0);
