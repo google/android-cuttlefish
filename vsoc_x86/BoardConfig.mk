@@ -31,5 +31,4 @@ TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_ABI := armeabi-v7a armeabi
 
 BUILD_BROKEN_DUP_RULES := true
-BOARD_VENDOR_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/4.19-x86_64/*.ko)
-BOARD_VENDOR_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/mainline-x86_64/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/4.19-x86_64/*.ko)
