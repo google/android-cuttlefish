@@ -19,67 +19,61 @@ if [[ "$OSTYPE" != "linux-gnu" ]]; then
 	exit 1
 fi
 
+sleep_time=0.1
 DEFAULTNET=$1
 if [ "$DEFAULTNET" == "" ]; then
-	warn1=0
-	warn2=0
-	attempts=0
-	sleep_time=0.1
-	warn_after=2.0
-	max_attempts=`echo "(${warn_after}/${sleep_time})-1" | bc`
+	warn_no_default_network=0
+	warn_multiple_networks=0
+	warn_disconnect_rockpi=0
 	while true; do
 		DEFAULTNET=`ip link | grep "state UP" | sed 's/[0-9]*: \([^:]*\):.*/\1/'`
 		if [[ "${DEFAULTNET}" == "" ]]; then
-			if [[ $warn1 -eq 0 ]]; then
+			if [[ $warn_no_default_network -eq 0 ]]; then
 				echo "error: couldn't detect any connected default network"
-				warn1=1
-				warn2=0
+				warn_no_default_network=1
+				warn_multiple_networks=0
 			fi
 			continue
 		elif [ `echo "$DEFAULTNET" | wc -l` -eq 1 ]; then
 			break
 		elif [ `echo "$DEFAULTNET" | wc -l` -ne 1 ]; then
-			if [[ $attempts -eq 0 ]]; then
+			if [[ $warn_disconnect_rockpi -eq 0 ]]; then
 				echo "Please disconnect the network cable from the Rock Pi"
+				warn_disconnect_rockpi=1
 			fi
-			if [[ $warn2 -eq 0 ]] && [[ $attempts -ge $max_attempts ]]; then
+			if [[ $warn_multiple_networks -eq 0 ]]; then
 				echo "error: detected multiple connected networks, not sure which to use as default:"
 				for net in $DEFAULTNET; do echo "    $net"; done
-				warn1=0
-				warn2=1
+				warn_no_default_network=0
+				warn_multiple_networks=1
 			fi
 			sleep $sleep_time
-			attempts=$((attempts+1))
 		fi
 	done
-	echo "Found default network at ${DEFAULTNET}"
-	echo "Attach network cable from Rock Pi to PC's spare network port"
 fi
 
 # escalate to superuser
 if [ "$UID" -ne 0 ]; then
-	exec sudo bash "$0" "${CORPNET}"
+	exec sudo bash "$0" "${DEFAULTNET}"
 fi
 
-warn3=0
-attempts=0
+echo "Found default network at ${DEFAULTNET}"
+echo "Please reconnect network cable from Rock Pi to PC's spare network port"
+
+ROCKNETinit=`ip link | grep "state UP" | grep -v $DEFAULTNET | sed 's/[0-9]*: \([^:]*\):.*/\1/' | awk 'NF'`
 while true; do
 	ROCKNET=`ip link | grep "state UP" | grep -v $DEFAULTNET | sed 's/[0-9]*: \([^:]*\):.*/\1/' | awk 'NF'`
+	networks=`echo "$ROCKNET" | wc -l`
 	if [[ "${ROCKNET}" == "" ]]; then
 		continue
-	elif [ `echo "$ROCKNET" | wc -l` -eq 1 ]; then
+	elif [ $networks -eq 1 ]; then
 		break
-	elif [ `echo "$ROCKNET" | wc -l` -gt 1 ]; then
-		if [[ $attempts -eq 0 ]]; then
-			echo "Please keep the default network and rock pi network connected; disconnect the rest"
-		fi
-		if [[ $warn3 -eq 0 ]]; then
-			echo "error: detected multiple additional networks, not sure which is the Rock Pi:"
-			for net in $ROCKNET; do echo "    $net"; done
-			warn3=1
+	elif [ $networks -gt 1 ]; then
+		ROCKNET=`comm -3 <(echo "$ROCKNETinit" | sort) <(echo "$ROCKNET" | sort) | awk '{$1=$1};1'`
+		if [ "${ROCKNET}" != "" ]; then
+			break
 		fi
 		sleep $sleep_time
-		attempts=$((attempts+1))
 	fi
 done
 echo "Found Rock Pi network at ${ROCKNET}"
@@ -129,7 +123,6 @@ cat /etc/default/dnsmasq | grep "ENABLED" >/dev/null
 if [ $? == 0 ]; then
 	sed -i 's/.*ENABLED.*/ENABLED=1/' /etc/default/dnsmasq
 else
-	sed -i 's/.*ENABLED.*/ENABLED=1/' /etc/default/dnsmasq
 	echo "ENABLED=1" >> /etc/default/dnsmasq
 fi
 
