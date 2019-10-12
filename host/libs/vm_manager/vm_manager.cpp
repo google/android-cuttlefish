@@ -19,6 +19,7 @@
 #include <memory>
 
 #include <glog/logging.h>
+#include <sys/utsname.h>
 
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -126,12 +127,31 @@ bool VmManager::UserInGroup(const std::string& group,
   return true;
 }
 
+bool VmManager::LinuxVersionAtLeast4_8(std::vector<std::string>* config_commands) {
+  struct utsname info;
+  if (!uname(&info)) {
+    char* digit = strtok(info.release, "+.-");
+    int major = atoi(digit);
+    if (digit) {
+      digit = strtok(NULL, "+.-");
+      int minor = atoi(digit);
+      if (major > 4 || (major == 4 && minor >= 8)) {
+        return true;
+      }
+    }
+  }
+  LOG(ERROR) << "Kernel version must be >=4.8";
+  config_commands->push_back("# Please upgrade your kernel to >=4.8");
+  return false;
+}
+
 bool VmManager::ValidateHostConfiguration(
     std::vector<std::string>* config_commands) const {
   // the check for cvdnetwork needs to happen even if the user is not in kvm, so
-  // we cant just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
+  // we can't just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
   auto in_kvm = VmManager::UserInGroup("kvm", config_commands);
   auto in_cvdnetwork = VmManager::UserInGroup("cvdnetwork", config_commands);
-  return in_kvm && in_cvdnetwork;
+  auto linux_ver_4_8 = VmManager::LinuxVersionAtLeast4_8(config_commands);
+  return in_kvm && in_cvdnetwork && linux_ver_4_8;
 }
 }  // namespace vm_manager
