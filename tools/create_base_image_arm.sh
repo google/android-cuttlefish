@@ -133,11 +133,43 @@ Name=en*
 DHCP=yes
 EOF
 
+echo "Creating cleanup script..."
+cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
+#!/bin/bash
+rm /etc/machine-id
+rm /var/lib/dbus/machine-id
+dbus-uuidgen --ensure
+systemd-machine-id-setup
+
+systemctl disable cleanup
+rm /usr/local/bin/install-cleanup
+EOF
+chmod +x ${mntdir}/usr/local/bin/install-cleanup
+
+echo "Creating cleanup service..."
+cat > ${mntdir}/etc/systemd/system/cleanup.service << EOF
+[Unit]
+ Description=cleanup service
+ ConditionPathExists=/usr/local/bin/install-cleanup
+
+[Service]
+ Type=simple
+ ExecStart=/usr/local/bin/install-cleanup
+ TimeoutSec=0
+ StandardOutput=tty
+
+[Install]
+ WantedBy=multi-user.target
+EOF
+
 chroot ${mntdir} /bin/bash << "EOT"
 echo "Adding user vsoc-01 and groups..."
 useradd -m -G sudo -d /home/vsoc-01 --shell /bin/bash vsoc-01
 echo -e "cuttlefish\ncuttlefish" | passwd
 echo -e "cuttlefish\ncuttlefish" | passwd vsoc-01
+
+echo "Enabling services..."
+systemctl enable cleanup
 
 echo "Creating Initial Ramdisk..."
 update-initramfs -c -t -k "5.2.0"
