@@ -113,15 +113,14 @@ mkdir -p ${mntdir}/boot/dtb/rockchip/
 cp ${KERNEL_DIR}/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtb ${mntdir}/boot/dtb/rockchip/
 cd -
 
-sudo mount -o bind /proc ${mntdir}/proc
-sudo mount -o bind /sys ${mntdir}/sys
-sudo mount -o bind /dev ${mntdir}/dev
+mount -o bind /proc ${mntdir}/proc
+mount -o bind /sys ${mntdir}/sys
+mount -o bind /dev ${mntdir}/dev
 
 echo "Installing required packages..."
 chroot ${mntdir} /bin/bash <<EOF
 apt-get update
-apt-get install -y -f initramfs-tools u-boot-tools network-manager openssh-server sudo
-apt-get clean
+apt-get install -y -f initramfs-tools u-boot-tools network-manager openssh-server sudo man-db vim git dpkg-dev cdbs debhelper config-package-dev gdisk eject lzop binfmt-support ntpdate
 EOF
 
 echo "Turning on DHCP client..."
@@ -133,9 +132,46 @@ Name=en*
 DHCP=yes
 EOF
 
+chroot ${mntdir} /bin/bash << "EOT"
+echo "Adding user vsoc-01 and groups..."
+useradd -m -G kvm,sudo -d /home/vsoc-01 --shell /bin/bash vsoc-01
+echo -e "cuttlefish\ncuttlefish" | passwd
+echo -e "cuttlefish\ncuttlefish" | passwd vsoc-01
+EOT
+
+echo "Cloning android-cuttlefish..."
+cd ${mntdir}/home/vsoc-01
+git clone https://github.com/google/android-cuttlefish.git
+cd -
+
 echo "Creating cleanup script..."
 cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
 #!/bin/bash
+echo "Installing cuttlefish-common package..."
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+MAC=`ip link | grep eth0 -A1 | grep ether | sed 's/.*\(..:..:..:..:..:..\) .*/\1/'`
+sed -i " 1 s/.*/& rockpi-${MAC}/" /etc/hosts
+sudo hostnamectl set-hostname "rockpi-${MAC}"
+
+dpkg --add-architecture amd64
+until ping -c1 ftp.debian.org; do sleep 1; done
+ntpdate time.google.com
+while true; do
+	apt-get -o Acquire::Check-Valid-Until=false update
+	if [ $? != 0 ]; then sleep 1; continue; fi
+	apt-get install -y -f libc6:amd64 qemu-user-static
+	if [ $? != 0 ]; then sleep 1; continue; fi
+	break
+done
+cd /home/vsoc-01/android-cuttlefish
+dpkg-buildpackage -d -uc -us
+apt-get install -y -f ../cuttlefish-common_*_arm64.deb
+apt-get clean
+usermod -aG cvdnetwork vsoc-01
+chown -R vsoc-01:vsoc-01 /home/vsoc-01
+chmod 660 /dev/vhost-vsock
+chown root:cvdnetwork /dev/vhost-vsock
+
 rm /etc/machine-id
 rm /var/lib/dbus/machine-id
 dbus-uuidgen --ensure
@@ -163,11 +199,6 @@ cat > ${mntdir}/etc/systemd/system/cleanup.service << EOF
 EOF
 
 chroot ${mntdir} /bin/bash << "EOT"
-echo "Adding user vsoc-01 and groups..."
-useradd -m -G sudo -d /home/vsoc-01 --shell /bin/bash vsoc-01
-echo -e "cuttlefish\ncuttlefish" | passwd
-echo -e "cuttlefish\ncuttlefish" | passwd vsoc-01
-
 echo "Enabling services..."
 systemctl enable cleanup
 
