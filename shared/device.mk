@@ -320,7 +320,7 @@ PRODUCT_PACKAGES += \
 
 # Vibrator HAL
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator@1.3-service.example
+    android.hardware.vibrator@1.x-service.example
 
 PRODUCT_PACKAGES += \
     cuttlefish_dtb
