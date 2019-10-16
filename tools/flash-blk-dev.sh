@@ -91,6 +91,10 @@ main ()
 	else
 		dd if=${image} of=/dev/${blk_dev} bs=1M conv=sync,noerror status=progress
 	fi
+	if [ $? != 0 ]; then
+		echo "error: failed to write to device. aborting..."
+		exit 1
+	fi
 
 	if [ ${FLAGS_expand} -eq ${FLAGS_TRUE} ]; then
 		echo "Expanding partition and filesystem..."
