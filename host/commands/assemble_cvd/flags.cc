@@ -14,7 +14,6 @@
 #include "host/commands/assemble_cvd/data_image.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/assembler_defs.h"
-#include "host/libs/config/fetcher_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -734,8 +733,7 @@ void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
 
 } // namespace
 
-const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
-    int* argc, char*** argv, cvd::FetcherConfig) {
+const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv) {
   if (!ParseCommandLineFlags(argc, argv)) {
     LOG(ERROR) << "Failed to parse command arguments";
     exit(AssemblerExitCodes::kArgumentParsingError);
