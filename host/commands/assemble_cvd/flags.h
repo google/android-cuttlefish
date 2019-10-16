@@ -1,8 +1,6 @@
 #pragma once
 
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/fetcher_config.h"
 
-const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
-    int* argc, char*** argv, cvd::FetcherConfig config);
+const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(int* argc, char*** argv);
 std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config);
