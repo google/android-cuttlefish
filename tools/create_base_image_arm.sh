@@ -32,6 +32,7 @@ for arg in "$@" ; do
 	fi
 done
 
+USE_IMAGE=`[ -z "${IMAGE}" ] && echo "0" || echo "1"`
 if [ -z $KERNEL_DIR ] || [ -z $IMAGE ]; then
 	flags_help
 	exit 1
@@ -53,6 +54,41 @@ if [ $UID -ne 0 ]; then
 	mmma external/u-boot
 	cd -
 	exec sudo -E "${0}" ${@}
+fi
+
+if [ $USE_IMAGE -eq 0 ]; then
+	init_devs=`lsblk --nodeps -oNAME -n`
+	echo "Reinsert device (to write to) into PC"
+	while true; do
+		devs=`lsblk --nodeps -oNAME -n`
+		new_devs="$(echo -e "${init_devs}\n${devs}" | sort | uniq -u | awk 'NF')"
+		num_devs=`echo "${new_devs}" | wc -l`
+		if [[ "${new_devs}" == "" ]]; then
+			num_devs=0
+		fi
+		if [[ ${num_devs} -gt 1 ]]; then
+			echo "error: too many new devices detected! aborting..."
+			exit 1
+		fi
+		if [[ ${num_devs} -eq 1 ]]; then
+			if [[ "${new_devs}" != "${mmc_dev}" ]]; then
+				if [[ "${mmc_dev}" != "" ]]; then
+					echo "error: block device name mismatch ${new_devs} != ${mmc_dev}"
+					echo "Reinsert device (to write to) into PC"
+				fi
+				mmc_dev=${new_devs}
+				continue
+			fi
+			echo "${init_devs}" | grep "${mmc_dev}" >/dev/null
+			if [[ $? -eq 0 ]]; then
+				init_devs="${devs}"
+				continue
+			fi
+			break
+		fi
+	done
+	# now inform the user
+	echo "Detected device at /dev/${mmc_dev}"
 fi
 
 cd ${ANDROID_BUILD_TOP}/external/arm-trusted-firmware
@@ -78,10 +114,6 @@ e2fsck -f ${IMAGE}
 resize2fs ${IMAGE}
 
 mntdir=`mktemp -d`
-if [ $? -ne 0 ]; then
-	echo "error: failed to mkdir tmp. exiting..."
-	exit 1
-fi
 mount ${IMAGE} ${mntdir}
 if [ $? != 0 ]; then
 	echo "error: unable to mount ${IMAGE} ${mntdir}"
@@ -213,57 +245,79 @@ umount ${mntdir}/dev
 umount ${mntdir}/proc
 umount ${mntdir}
 
+if [ ${USE_IMAGE} -eq 0 ]; then
+	# 32GB eMMC size
+	last_sector=61071326
+
+	device=/dev/${mmc_dev}
+	devicep=${device}
+
+	sgdisk -Z -a1 ${device}
+	sgdisk -a1 -n:1:64:8127 -t:1:8301 -c:1:loader1 ${device}
+	sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env ${device}
+	sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 ${device}
+	sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust ${device}
+	sgdisk -a1 -n:5:32768:${last_sector} -A:5:set:2 -t:5:8305 -c:5:rootfs ${device}
+fi
+
 # Turn on journaling
 tune2fs -O ^has_journal ${IMAGE}
 e2fsck -fy ${IMAGE} >/dev/null 2>&1
 
-# Minimize rootfs filesystem
-while true; do
-	out=`sudo resize2fs -M ${IMAGE} 2>&1`
-	if [[ $out =~ "Nothing to do" ]]; then
-		break
-	fi
-done
+if [ ${USE_IMAGE} -eq 0 ]; then
+	dd if=${IMAGE} of=${devicep}5 bs=1M
+	resize2fs ${devicep}5 >/dev/null 2>&1
+else
+	# Minimize rootfs filesystem
+	while true; do
+		out=`sudo resize2fs -M ${IMAGE} 2>&1`
+		if [[ $out =~ "Nothing to do" ]]; then
+			break
+		fi
+	done
 
-# Minimize rootfs file size
-block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
-block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
-sector_size=512
-start_sector=32768
-fs_size=$(( block_count*block_size ))
-fs_sectors=$(( fs_size/sector_size ))
-part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
-end_sector=$(( start_sector+part_sectors-1 ))
-secondary_gpt_sectors=33
-fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
-image_size=$(( part_sectors*sector_size ))
-truncate -s ${image_size} ${IMAGE}
-e2fsck -fy ${IMAGE} >/dev/null 2>&1
+	# Minimize rootfs file size
+	block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
+	block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
+	sector_size=512
+	start_sector=32768
+	fs_size=$(( block_count*block_size ))
+	fs_sectors=$(( fs_size/sector_size ))
+	part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
+	end_sector=$(( start_sector+part_sectors-1 ))
+	secondary_gpt_sectors=33
+	fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
+	image_size=$(( part_sectors*sector_size ))
+	truncate -s ${image_size} ${IMAGE}
+	e2fsck -fy ${IMAGE} >/dev/null 2>&1
 
-# Create final image
-tmpimg=`mktemp`
-truncate -s ${fs_end} ${tmpimg}
-mknod -m640 /dev/loop100 b 7 100
-chown root:disk /dev/loop100
+	# Create final image
+	tmpimg=`mktemp`
+	truncate -s ${fs_end} ${tmpimg}
 
-# Create GPT
-sgdisk -Z -a1 ${tmpimg}
-sgdisk -a1 -n:1:64:8127 -t:1:8301 -c:1:loader1 ${tmpimg}
-sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env ${tmpimg}
-sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 ${tmpimg}
-sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust ${tmpimg}
-sgdisk -a1 -n:5:32768:${end_sector} -A:5:set:2 -t:5:8305 -c:5:rootfs ${tmpimg}
+	# Create GPT
+	sgdisk -Z -a1 ${tmpimg}
+	sgdisk -a1 -n:1:64:8127 -t:1:8301 -c:1:loader1 ${tmpimg}
+	sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env ${tmpimg}
+	sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 ${tmpimg}
+	sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust ${tmpimg}
+	sgdisk -a1 -n:5:32768:${end_sector} -A:5:set:2 -t:5:8305 -c:5:rootfs ${tmpimg}
 
-device=$(losetup -f)
-losetup ${device} ${tmpimg}
-partx -v --add ${device}
+	device=$(losetup -f)
+	devicep=${device}p
+	losetup ${device} ${tmpimg}
+	partx -v --add ${device}
 
-# copy over data
-dd if=${idbloader} of=${device}p1
-dd if=${ANDROID_BUILD_TOP}/external/u-boot/u-boot.itb of=${device}p3
-dd if=${IMAGE} of=${device}p5 bs=1M
+	# copy over data
+	dd if=${IMAGE} of=${devicep}5 bs=1M
+fi
 
-chown $SUDO_USER:`id -ng $SUDO_USER` ${tmpimg}
-mv ${tmpimg} ${IMAGE}
-partx -v --delete ${device}
-losetup -d ${device}
+dd if=${idbloader} of=${devicep}1
+dd if=${ANDROID_BUILD_TOP}/external/u-boot/u-boot.itb of=${devicep}3
+
+if [ ${USE_IMAGE} -eq 1 ]; then
+	chown $SUDO_USER:`id -ng $SUDO_USER` ${tmpimg}
+	mv ${tmpimg} ${IMAGE}
+	partx -v --delete ${device}
+	losetup -d ${device}
+fi
