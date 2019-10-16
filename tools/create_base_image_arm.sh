@@ -176,6 +176,149 @@ cd ${mntdir}/home/vsoc-01
 git clone https://github.com/google/android-cuttlefish.git
 cd -
 
+echo "Creating led script..."
+cat > ${mntdir}/usr/local/bin/led << "EOF"
+#!/bin/bash
+
+if [ "$1" == "--start" ]; then
+  echo 125 > /sys/class/gpio/export
+  echo out > /sys/class/gpio/gpio125/direction
+  chmod 666 /sys/class/gpio/gpio125/value
+  echo 0 > /sys/class/gpio/gpio125/value
+  exit 0
+fi
+
+if [ "$1" == "--stop" ]; then
+  echo 0 > /sys/class/gpio/gpio125/value
+  echo 125 > /sys/class/gpio/unexport
+  exit 0
+fi
+
+if [ ! -e /sys/class/gpio/gpio125/value ]; then
+  echo "error: led service not initialized"
+  exit 1
+fi
+
+if [ "$1" == "0" ] || [ "$1" == "off" ] || [ "$1" == "OFF" ]; then
+  echo 0 > /sys/class/gpio/gpio125/value
+  exit 0
+fi
+
+if [ "$1" == "1" ] || [ "$1" == "on" ] || [ "$1" == "ON" ]; then
+  echo 1 > /sys/class/gpio/gpio125/value
+  exit 0
+fi
+
+echo "usage: led <0|1>"
+exit 1
+EOF
+chown root:root ${mntdir}/usr/local/bin/led
+chmod 755 ${mntdir}/usr/local/bin/led
+
+echo "Creating led service..."
+cat > ${mntdir}/etc/systemd/system/led.service << EOF
+[Unit]
+ Description=led service
+ ConditionPathExists=/usr/local/bin/led
+
+[Service]
+ Type=oneshot
+ ExecStart=/usr/local/bin/led --start
+ ExecStop=/usr/local/bin/led --stop
+ RemainAfterExit=true
+ StandardOutput=journal
+
+[Install]
+ WantedBy=multi-user.target
+EOF
+
+echo "Creating SD duplicator script..."
+cat > ${mntdir}/usr/local/bin/sd-dupe << "EOF"
+#!/bin/bash
+led 0
+
+src_dev=mmcblk0
+dest_dev=mmcblk1
+part_num=p5
+
+if [ -e /dev/mmcblk0p5 ]; then
+  led 1
+
+  sgdisk -Z -a1 /dev/${dest_dev}
+  sgdisk -a1 -n:1:64:8127 -t:1:8301 -c:1:loader1 /dev/${dest_dev}
+  sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env /dev/${dest_dev}
+  sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 /dev/${dest_dev}
+  sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust /dev/${dest_dev}
+  sgdisk -a1 -n:5:32768:- -A:5:set:2 -t:5:8305 -c:5:rootfs /dev/${dest_dev}
+
+  src_block_count=`tune2fs -l /dev/${src_dev}${part_num} | grep "Block count:" | sed 's/.*: *//'`
+  src_block_size=`tune2fs -l /dev/${src_dev}${part_num} | grep "Block size:" | sed 's/.*: *//'`
+  src_fs_size=$(( src_block_count*src_block_size ))
+  src_fs_size_m=$(( src_fs_size / 1024 / 1024 + 1 ))
+
+  dd if=/dev/${src_dev}p1 of=/dev/${dest_dev}p1 conv=sync,noerror status=progress
+  dd if=/dev/${src_dev}p2 of=/dev/${dest_dev}p2 conv=sync,noerror status=progress
+  dd if=/dev/${src_dev}p3 of=/dev/${dest_dev}p3 conv=sync,noerror status=progress
+  dd if=/dev/${src_dev}p4 of=/dev/${dest_dev}p4 conv=sync,noerror status=progress
+
+  echo "Writing ${src_fs_size_m} MB: /dev/${src_dev} -> /dev/${dest_dev}..."
+  dd if=/dev/${src_dev}${part_num} of=/dev/${dest_dev}${part_num} bs=1M conv=sync,noerror status=progress
+
+  echo "Expanding /dev/${dest_dev}${part_num} filesystem..."
+  e2fsck -fy /dev/${dest_dev}${part_num}
+  resize2fs /dev/${dest_dev}${part_num}
+  tune2fs -O has_journal /dev/${dest_dev}${part_num}
+  e2fsck -fy /dev/${dest_dev}${part_num}
+  sync /dev/${dest_dev}
+
+  echo "Cleaning up..."
+  mount /dev/${dest_dev}${part_num} /media
+  chroot /media /usr/local/bin/install-cleanup
+
+  if [ $? == 0 ]; then
+    echo "Successfully copied Rock Pi image!"
+    while true; do
+      led 1; sleep 0.5
+      led 0; sleep 0.5
+    done
+  else
+    echo "Error while copying Rock Pi image"
+    while true; do
+      led 1; sleep 0.1
+      led 0; sleep 0.1
+    done
+  fi
+else
+  echo "Expanding /dev/${dest_dev}${part_num} filesystem..."
+  e2fsck -fy /dev/${dest_dev}${part_num}
+  resize2fs /dev/${dest_dev}${part_num}
+  tune2fs -O has_journal /dev/${dest_dev}${part_num}
+  e2fsck -fy /dev/${dest_dev}${part_num}
+  sync /dev/${dest_dev}
+
+  echo "Cleaning up..."
+  /usr/local/bin/install-cleanup
+fi
+EOF
+chmod +x ${mntdir}/usr/local/bin/sd-dupe
+
+echo "Creating SD duplicator service..."
+cat > ${mntdir}/etc/systemd/system/sd-dupe.service << EOF
+[Unit]
+ Description=Duplicate SD card rootfs to eMMC on Rock Pi
+ ConditionPathExists=/usr/local/bin/sd-dupe
+ After=led.service
+
+[Service]
+ Type=simple
+ ExecStart=/usr/local/bin/sd-dupe
+ TimeoutSec=0
+ StandardOutput=tty
+
+[Install]
+ WantedBy=multi-user.target
+EOF
+
 echo "Creating cleanup script..."
 cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
 #!/bin/bash
@@ -200,7 +343,6 @@ dpkg-buildpackage -d -uc -us
 apt-get install -y -f ../cuttlefish-common_*_arm64.deb
 apt-get clean
 usermod -aG cvdnetwork vsoc-01
-chown -R vsoc-01:vsoc-01 /home/vsoc-01
 chmod 660 /dev/vhost-vsock
 chown root:cvdnetwork /dev/vhost-vsock
 
@@ -209,30 +351,17 @@ rm /var/lib/dbus/machine-id
 dbus-uuidgen --ensure
 systemd-machine-id-setup
 
-systemctl disable cleanup
+systemctl disable sd-dupe
+rm /etc/systemd/system/sd-dupe.service
+rm /usr/local/bin/sd-dupe
 rm /usr/local/bin/install-cleanup
 EOF
 chmod +x ${mntdir}/usr/local/bin/install-cleanup
 
-echo "Creating cleanup service..."
-cat > ${mntdir}/etc/systemd/system/cleanup.service << EOF
-[Unit]
- Description=cleanup service
- ConditionPathExists=/usr/local/bin/install-cleanup
-
-[Service]
- Type=simple
- ExecStart=/usr/local/bin/install-cleanup
- TimeoutSec=0
- StandardOutput=tty
-
-[Install]
- WantedBy=multi-user.target
-EOF
-
 chroot ${mntdir} /bin/bash << "EOT"
 echo "Enabling services..."
-systemctl enable cleanup
+systemctl enable led
+systemctl enable sd-dupe
 
 echo "Creating Initial Ramdisk..."
 update-initramfs -c -t -k "5.2.0"
