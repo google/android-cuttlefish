@@ -193,6 +193,68 @@ EOF
 		-C none -A arm -T script -d ${mntdir}/boot/init.cmd ${mntdir}/boot/init.scr
 
 	cat > ${mntdir}/boot/boot.cmd << "EOF"
+setenv bootcmd_dhcp '
+mw.b ${scriptaddr} 0 0x8000
+mmc dev 0 0
+mmc read ${scriptaddr} 0x1fc0 0x40
+env import -b ${scriptaddr} 0x8000
+mw.b ${scriptaddr} 0 0x8000
+if dhcp ${scriptaddr} manifest.txt; then
+	setenv OldSha ${Sha}
+	setenv Sha
+	env import -t ${scriptaddr} 0x8000 ManifestVersion
+	if test "$ManifestVersion" = "1"; then
+		run manifest1
+	else
+		run manifestX
+	fi
+fi'
+setenv manifestX 'echo "***** ERROR: Unknown manifest version! *****";'
+setenv manifest1 '
+echo "Manifest version 1";
+env import -t ${scriptaddr} 0x8000
+if test "$Sha" != "$OldSha"; then
+	setenv serverip ${TftpServer}
+	setenv loadaddr 0x00200000
+	mmc dev 0 0;
+	file=$TplSplImg; offset=0x40; size=0x1f80; run tftpget1; setenv TplSplImg
+	file=$UbootItb;  offset=0x4000; size=0x2000; run tftpget1; setenv UbootItb
+	file=$TrustImg; offset=0x6000; size=0x2000; run tftpget1; setenv TrustImg
+	file=$RootfsImg; offset=0x8000; size=0; run tftpget1; setenv RootfsImg
+	file=$UbootEnv; offset=0x1fc0; size=0x40; run tftpget1; setenv UbootEnv
+	mw.b ${scriptaddr} 0 0x8000
+	env export -b ${scriptaddr} 0x8000
+	mmc write ${scriptaddr} 0x1fc0 0x40
+else
+	echo "Already have ${Sha}. Booting..."
+fi'
+setenv tftpget1 "
+mw.b ${loadaddr} 0 0x400000
+&& tftp ${file}
+&& isGz=0 && setexpr isGz sub .*\\.gz\$ 1 ${file}
+&& if test $isGz = 1; then
+	setexpr boffset ${offset} * 0x200
+	&& gzwrite mmc 0 ${loadaddr} 0x${filesize} 100000 ${boffset}
+	&& echo Updated: ${bootfile}
+elif test ${file} = boot.env; then
+	env import -b ${loadaddr}
+	&& echo Updated: boot.env
+else
+	&& if test $size = 0; then
+		setexpr x $filesize - 1
+		&& setexpr x $x / 0x1000
+		&& setexpr x $x + 1
+		&& setexpr x $x * 0x1000
+		&& setexpr x $x / 0x200
+		&& size=0x${x}
+	fi
+	&& mmc write ${loadaddr} ${offset} ${size}
+	&& echo Updated: ${bootfile}
+fi
+|| echo ** UPDATE FAILED: ${bootfile} **"
+if mmc dev 1 0; then; else
+	run bootcmd_dhcp;
+fi
 load mmc ${devnum}:${distro_bootpart} 0x02080000 /boot/Image
 load mmc ${devnum}:${distro_bootpart} 0x04000000 /boot/uInitrd
 load mmc ${devnum}:${distro_bootpart} 0x01f00000 /boot/dtb/rockchip/rk3399-rock-pi-4.dtb
