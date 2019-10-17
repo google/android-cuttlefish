@@ -96,8 +96,27 @@ CROSS_COMPILE=aarch64-linux-gnu- make PLAT=rk3399 DEBUG=0 ERROR_DEPRECATED=1 bl3
 export BL31="${ANDROID_BUILD_TOP}/external/arm-trusted-firmware/build/rk3399/release/bl31/bl31.elf"
 cd -
 
-idbloader=`mktemp`
 cd ${ANDROID_BUILD_TOP}/external/u-boot
+
+tmpfile=`mktemp`
+bootenv=`mktemp`
+cat > ${tmpfile} << "EOF"
+bootdelay=2
+baudrate=1500000
+scriptaddr=0x00500000
+boot_targets=mmc1 mmc0
+bootcmd=run distro_bootcmd
+distro_bootcmd=for target in ${boot_targets}; do run bootcmd_${target}; done
+bootcmd_mmc0=devnum=0; run mmc_boot
+bootcmd_mmc1=devnum=1; run mmc_boot
+mmc_boot=if mmc dev ${devnum}; then ; run scan_for_boot_part; fi
+scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devplist || setenv devplist 1; for part in ${devplist}; do if fstype mmc ${devnum}:${part} bootfstype; then run find_init_script; fi; done; setenv devplist
+find_init_script=if test -e mmc ${devnum}:${part} /boot/init.scr; then echo Found U-Boot script /boot/init.scr; run init_scr; fi
+init_scr=load mmc ${devnum}:${part} ${scriptaddr} /boot/init.scr; source ${scriptaddr}
+EOF
+${ANDROID_HOST_OUT}/bin/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
+
+idbloader=`mktemp`
 make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- rock-pi-4-rk3399_defconfig
 make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j`nproc`
 ${ANDROID_HOST_OUT}/bin/mkimage -n rk3399 -T rksd -d tpl/u-boot-tpl.bin ${idbloader}
@@ -119,6 +138,20 @@ if [ $? != 0 ]; then
 	echo "error: unable to mount ${IMAGE} ${mntdir}"
 	exit 1
 fi
+
+cat > ${mntdir}/boot/init.cmd << "EOF"
+mmc dev 1 0; mmc read 0x02080000 0x1fc0 0x40;
+ethaddr=$ethaddr
+env default -a
+setenv ethaddr $ethaddr
+setenv boot_targets 'mmc1 mmc0 usb0 pxe'
+saveenv
+mmc dev 1 0; mmc read 0x04000000 0x1fc0 0x40;
+mmc dev 0 0; mmc write 0x04000000 0x1fc0 0x40;
+mmc dev 1 0; mmc write 0x02080000 0x1fc0 0x40;
+EOF
+${ANDROID_BUILD_TOP}/external/u-boot/tools/mkimage \
+		-C none -A arm -T script -d ${mntdir}/boot/init.cmd ${mntdir}/boot/init.scr
 
 cat > ${mntdir}/boot/boot.cmd << "EOF"
 load mmc ${devnum}:${distro_bootpart} 0x02080000 /boot/Image
@@ -442,6 +475,7 @@ else
 fi
 
 dd if=${idbloader} of=${devicep}1
+dd if=${bootenv} of=${devicep}2
 dd if=${ANDROID_BUILD_TOP}/external/u-boot/u-boot.itb of=${devicep}3
 
 if [ ${USE_IMAGE} -eq 1 ]; then
