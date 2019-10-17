@@ -14,6 +14,7 @@
 #include "host/commands/assemble_cvd/data_image.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/assembler_defs.h"
+#include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -735,7 +736,7 @@ void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
 } // namespace
 
 const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
-    int* argc, char*** argv, cvd::FetcherConfig) {
+    int* argc, char*** argv, cvd::FetcherConfig fetcher_config) {
   if (!ParseCommandLineFlags(argc, argv)) {
     LOG(ERROR) << "Failed to parse command arguments";
     exit(AssemblerExitCodes::kArgumentParsingError);
@@ -823,6 +824,13 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
 
   if (!cvd::FileExists(FLAGS_metadata_image)) {
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
+  }
+
+  if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
+    if (!RebuildSuperImage(fetcher_config, *config, FLAGS_super_image)) {
+      LOG(ERROR) << "Super image rebuilding requested but could not be completed.";
+      exit(cvd::kCuttlefishConfigurationInitError);
+    }
   }
 
   if (ShouldCreateCompositeDisk()) {
