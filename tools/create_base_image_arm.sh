@@ -56,12 +56,9 @@ for arg in "$@" ; do
 done
 
 USE_IMAGE=`[ -z "${IMAGE}" ] && echo "0" || echo "1"`
-if [ -z $KERNEL_DIR ] || [ -z $IMAGE ]; then
+OVERWRITE=`[ -e "${IMAGE}" ] && echo "1" || echo "0"`
+if [ -z $KERNEL_DIR ]; then
 	flags_help
-	exit 1
-fi
-if [ -e "${IMAGE}" ]; then
-	echo "error: ${IMAGE} already exists"
 	exit 1
 fi
 if [ ! -e "${KERNEL_DIR}" ]; then
@@ -77,6 +74,11 @@ if [ $UID -ne 0 ]; then
 	mmma external/u-boot
 	cd -
 	exec sudo -E "${0}" ${@}
+fi
+
+if [ $OVERWRITE -eq 1 ]; then
+	OVERWRITE_IMAGE=${IMAGE}
+	IMAGE=`mktemp`
 fi
 
 if [ $USE_IMAGE -eq 0 ]; then
@@ -497,7 +499,11 @@ else
 	fi
 
 	# Create final image
-	tmpimg=`mktemp`
+	if [ $OVERWRITE -eq 1 ]; then
+		tmpimg=${OVERWRITE_IMAGE}
+	else
+		tmpimg=`mktemp`
+	fi
 	truncate -s ${fs_end} ${tmpimg}
 
 	# Create GPT
@@ -526,7 +532,9 @@ if [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
 fi
 if [ ${USE_IMAGE} -eq 1 ]; then
 	chown $SUDO_USER:`id -ng $SUDO_USER` ${tmpimg}
-	mv ${tmpimg} ${IMAGE}
+	if [ $OVERWRITE -eq 0 ]; then
+		mv ${tmpimg} ${IMAGE}
+	fi
 	partx -v --delete ${device}
 	losetup -d ${device}
 fi
