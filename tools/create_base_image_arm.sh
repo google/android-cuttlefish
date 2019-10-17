@@ -16,10 +16,33 @@
 
 source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
 
-FLAGS_HELP="USAGE: $0 <KERNEL_DIR> [IMAGE]"
+DEFINE_boolean p1 \
+	false "Only generate/write the 1st partition (loader1)" "1"
+DEFINE_boolean p2 \
+	false "Only generate/write the 2nd partition (env)" "2"
+DEFINE_boolean p3 \
+	false "Only generate/write the 3rd partition (loader2)" "3"
+DEFINE_boolean p4 \
+	false "Only generate/write the 4th partition (trust)" "4"
+DEFINE_boolean p5 \
+	false "Only generate/write the 5th partition (rootfs)" "5"
+
+FLAGS_HELP="USAGE: $0 <KERNEL_DIR> [IMAGE] [flags]"
 
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
+
+if [ ${FLAGS_p1} -eq ${FLAGS_FALSE} ] &&
+   [ ${FLAGS_p2} -eq ${FLAGS_FALSE} ] &&
+   [ ${FLAGS_p3} -eq ${FLAGS_FALSE} ] &&
+   [ ${FLAGS_p4} -eq ${FLAGS_FALSE} ] &&
+   [ ${FLAGS_p5} -eq ${FLAGS_FALSE} ]; then
+	FLAGS_p1=${FLAGS_TRUE}
+	FLAGS_p2=${FLAGS_TRUE}
+	FLAGS_p3=${FLAGS_TRUE}
+	FLAGS_p4=${FLAGS_TRUE}
+	FLAGS_p5=${FLAGS_TRUE}
+fi
 
 for arg in "$@" ; do
 	if [ -z $KERNEL_DIR ]; then
@@ -91,16 +114,19 @@ if [ $USE_IMAGE -eq 0 ]; then
 	echo "Detected device at /dev/${mmc_dev}"
 fi
 
-cd ${ANDROID_BUILD_TOP}/external/arm-trusted-firmware
-CROSS_COMPILE=aarch64-linux-gnu- make PLAT=rk3399 DEBUG=0 ERROR_DEPRECATED=1 bl31
-export BL31="${ANDROID_BUILD_TOP}/external/arm-trusted-firmware/build/rk3399/release/bl31/bl31.elf"
-cd -
+if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ]; then
+	cd ${ANDROID_BUILD_TOP}/external/arm-trusted-firmware
+	CROSS_COMPILE=aarch64-linux-gnu- make PLAT=rk3399 DEBUG=0 ERROR_DEPRECATED=1 bl31
+	export BL31="${ANDROID_BUILD_TOP}/external/arm-trusted-firmware/build/rk3399/release/bl31/bl31.elf"
+	cd -
+fi
 
 cd ${ANDROID_BUILD_TOP}/external/u-boot
 
-tmpfile=`mktemp`
-bootenv=`mktemp`
-cat > ${tmpfile} << "EOF"
+if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
+	tmpfile=`mktemp`
+	bootenv=`mktemp`
+	cat > ${tmpfile} << "EOF"
 bootdelay=2
 baudrate=1500000
 scriptaddr=0x00500000
@@ -114,32 +140,43 @@ scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devpli
 find_init_script=if test -e mmc ${devnum}:${part} /boot/init.scr; then echo Found U-Boot script /boot/init.scr; run init_scr; fi
 init_scr=load mmc ${devnum}:${part} ${scriptaddr} /boot/init.scr; source ${scriptaddr}
 EOF
-${ANDROID_HOST_OUT}/bin/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
+	${ANDROID_HOST_OUT}/bin/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
+fi
 
-idbloader=`mktemp`
-make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- rock-pi-4-rk3399_defconfig
-make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j`nproc`
-${ANDROID_HOST_OUT}/bin/mkimage -n rk3399 -T rksd -d tpl/u-boot-tpl.bin ${idbloader}
-cat spl/u-boot-spl.bin >> ${idbloader}
+if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ] || [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
+	make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- rock-pi-4-rk3399_defconfig
+	if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ]; then
+		make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- -j`nproc`
+	fi
+	if [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
+		make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- u-boot.itb
+	fi
+	if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ]; then
+		idbloader=`mktemp`
+		${ANDROID_HOST_OUT}/bin/mkimage -n rk3399 -T rksd -d tpl/u-boot-tpl.bin ${idbloader}
+		cat spl/u-boot-spl.bin >> ${idbloader}
+	fi
+fi
 cd -
 
-${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh -a arm64 -s buster -n ${IMAGE}
-if [ $? -ne 0 ]; then
-	echo "error: failed to build rootfs. exiting..."
-	exit 1
-fi
-truncate -s +3G ${IMAGE}
-e2fsck -f ${IMAGE}
-resize2fs ${IMAGE}
+if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
+	${ANDROID_BUILD_TOP}/kernel/tests/net/test/build_rootfs.sh -a arm64 -s buster -n ${IMAGE}
+	if [ $? -ne 0 ]; then
+		echo "error: failed to build rootfs. exiting..."
+		exit 1
+	fi
+	truncate -s +3G ${IMAGE}
+	e2fsck -f ${IMAGE}
+	resize2fs ${IMAGE}
 
-mntdir=`mktemp -d`
-mount ${IMAGE} ${mntdir}
-if [ $? != 0 ]; then
-	echo "error: unable to mount ${IMAGE} ${mntdir}"
-	exit 1
-fi
+	mntdir=`mktemp -d`
+	mount ${IMAGE} ${mntdir}
+	if [ $? != 0 ]; then
+		echo "error: unable to mount ${IMAGE} ${mntdir}"
+		exit 1
+	fi
 
-cat > ${mntdir}/boot/init.cmd << "EOF"
+	cat > ${mntdir}/boot/init.cmd << "EOF"
 mmc dev 1 0; mmc read 0x02080000 0x1fc0 0x40;
 ethaddr=$ethaddr
 env default -a
@@ -150,10 +187,10 @@ mmc dev 1 0; mmc read 0x04000000 0x1fc0 0x40;
 mmc dev 0 0; mmc write 0x04000000 0x1fc0 0x40;
 mmc dev 1 0; mmc write 0x02080000 0x1fc0 0x40;
 EOF
-${ANDROID_BUILD_TOP}/external/u-boot/tools/mkimage \
+	${ANDROID_BUILD_TOP}/external/u-boot/tools/mkimage \
 		-C none -A arm -T script -d ${mntdir}/boot/init.cmd ${mntdir}/boot/init.scr
 
-cat > ${mntdir}/boot/boot.cmd << "EOF"
+	cat > ${mntdir}/boot/boot.cmd << "EOF"
 load mmc ${devnum}:${distro_bootpart} 0x02080000 /boot/Image
 load mmc ${devnum}:${distro_bootpart} 0x04000000 /boot/uInitrd
 load mmc ${devnum}:${distro_bootpart} 0x01f00000 /boot/dtb/rockchip/rk3399-rock-pi-4.dtb
@@ -162,34 +199,34 @@ run finduuid
 setenv bootargs "earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 loglevel=7 root=PARTUUID=${uuid} rootwait rootfstype=ext4 sdhci.debug_quirks=0x20000000"
 booti 0x02080000 0x04000000 0x01f00000
 EOF
-${ANDROID_HOST_OUT}/bin/mkimage \
-	-C none -A arm -T script -d ${mntdir}/boot/boot.cmd ${mntdir}/boot/boot.scr
+	${ANDROID_HOST_OUT}/bin/mkimage \
+		-C none -A arm -T script -d ${mntdir}/boot/boot.cmd ${mntdir}/boot/boot.scr
 
-cd ${KERNEL_DIR}
-export PATH=${ANDROID_BUILD_TOP}/prebuilts/clang/host/linux-x86/clang-r353983c/bin:$PATH
-export PATH=${ANDROID_BUILD_TOP}/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin:$PATH
-make ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-androidkernel- \
-      CLANG_TRIPLE=aarch64-linux-gnu- rockpi4_defconfig
-make ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-androidkernel- \
-      CLANG_TRIPLE=aarch64-linux-gnu- -j`nproc`
+	cd ${KERNEL_DIR}
+	export PATH=${ANDROID_BUILD_TOP}/prebuilts/clang/host/linux-x86/clang-r353983c/bin:$PATH
+	export PATH=${ANDROID_BUILD_TOP}/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin:$PATH
+	make ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-androidkernel- \
+	      CLANG_TRIPLE=aarch64-linux-gnu- rockpi4_defconfig
+	make ARCH=arm64 CC=clang CROSS_COMPILE=aarch64-linux-androidkernel- \
+	      CLANG_TRIPLE=aarch64-linux-gnu- -j`nproc`
 
-cp ${KERNEL_DIR}/arch/arm64/boot/Image ${mntdir}/boot/
-mkdir -p ${mntdir}/boot/dtb/rockchip/
-cp ${KERNEL_DIR}/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtb ${mntdir}/boot/dtb/rockchip/
-cd -
+	cp ${KERNEL_DIR}/arch/arm64/boot/Image ${mntdir}/boot/
+	mkdir -p ${mntdir}/boot/dtb/rockchip/
+	cp ${KERNEL_DIR}/arch/arm64/boot/dts/rockchip/rk3399-rock-pi-4.dtb ${mntdir}/boot/dtb/rockchip/
+	cd -
 
-mount -o bind /proc ${mntdir}/proc
-mount -o bind /sys ${mntdir}/sys
-mount -o bind /dev ${mntdir}/dev
+	mount -o bind /proc ${mntdir}/proc
+	mount -o bind /sys ${mntdir}/sys
+	mount -o bind /dev ${mntdir}/dev
 
-echo "Installing required packages..."
-chroot ${mntdir} /bin/bash <<EOF
+	echo "Installing required packages..."
+	chroot ${mntdir} /bin/bash <<EOF
 apt-get update
 apt-get install -y -f initramfs-tools u-boot-tools network-manager openssh-server sudo man-db vim git dpkg-dev cdbs debhelper config-package-dev gdisk eject lzop binfmt-support ntpdate
 EOF
 
-echo "Turning on DHCP client..."
-cat >${mntdir}/etc/systemd/network/dhcp.network <<EOF
+	echo "Turning on DHCP client..."
+	cat >${mntdir}/etc/systemd/network/dhcp.network <<EOF
 [Match]
 Name=en*
 
@@ -197,59 +234,59 @@ Name=en*
 DHCP=yes
 EOF
 
-chroot ${mntdir} /bin/bash << "EOT"
+	chroot ${mntdir} /bin/bash << "EOT"
 echo "Adding user vsoc-01 and groups..."
 useradd -m -G kvm,sudo -d /home/vsoc-01 --shell /bin/bash vsoc-01
 echo -e "cuttlefish\ncuttlefish" | passwd
 echo -e "cuttlefish\ncuttlefish" | passwd vsoc-01
 EOT
 
-echo "Cloning android-cuttlefish..."
-cd ${mntdir}/home/vsoc-01
-git clone https://github.com/google/android-cuttlefish.git
-cd -
+	echo "Cloning android-cuttlefish..."
+	cd ${mntdir}/home/vsoc-01
+	git clone https://github.com/google/android-cuttlefish.git
+	cd -
 
-echo "Creating led script..."
-cat > ${mntdir}/usr/local/bin/led << "EOF"
+	echo "Creating led script..."
+	cat > ${mntdir}/usr/local/bin/led << "EOF"
 #!/bin/bash
 
 if [ "$1" == "--start" ]; then
-  echo 125 > /sys/class/gpio/export
-  echo out > /sys/class/gpio/gpio125/direction
-  chmod 666 /sys/class/gpio/gpio125/value
-  echo 0 > /sys/class/gpio/gpio125/value
-  exit 0
+	echo 125 > /sys/class/gpio/export
+	echo out > /sys/class/gpio/gpio125/direction
+	chmod 666 /sys/class/gpio/gpio125/value
+	echo 0 > /sys/class/gpio/gpio125/value
+	exit 0
 fi
 
 if [ "$1" == "--stop" ]; then
-  echo 0 > /sys/class/gpio/gpio125/value
-  echo 125 > /sys/class/gpio/unexport
-  exit 0
+	echo 0 > /sys/class/gpio/gpio125/value
+	echo 125 > /sys/class/gpio/unexport
+	exit 0
 fi
 
 if [ ! -e /sys/class/gpio/gpio125/value ]; then
-  echo "error: led service not initialized"
-  exit 1
+	echo "error: led service not initialized"
+	exit 1
 fi
 
 if [ "$1" == "0" ] || [ "$1" == "off" ] || [ "$1" == "OFF" ]; then
-  echo 0 > /sys/class/gpio/gpio125/value
-  exit 0
+	echo 0 > /sys/class/gpio/gpio125/value
+	exit 0
 fi
 
 if [ "$1" == "1" ] || [ "$1" == "on" ] || [ "$1" == "ON" ]; then
-  echo 1 > /sys/class/gpio/gpio125/value
-  exit 0
+	echo 1 > /sys/class/gpio/gpio125/value
+	exit 0
 fi
 
 echo "usage: led <0|1>"
 exit 1
 EOF
-chown root:root ${mntdir}/usr/local/bin/led
-chmod 755 ${mntdir}/usr/local/bin/led
+	chown root:root ${mntdir}/usr/local/bin/led
+	chmod 755 ${mntdir}/usr/local/bin/led
 
-echo "Creating led service..."
-cat > ${mntdir}/etc/systemd/system/led.service << EOF
+	echo "Creating led service..."
+	cat > ${mntdir}/etc/systemd/system/led.service << EOF
 [Unit]
  Description=led service
  ConditionPathExists=/usr/local/bin/led
@@ -265,8 +302,8 @@ cat > ${mntdir}/etc/systemd/system/led.service << EOF
  WantedBy=multi-user.target
 EOF
 
-echo "Creating SD duplicator script..."
-cat > ${mntdir}/usr/local/bin/sd-dupe << "EOF"
+	echo "Creating SD duplicator script..."
+	cat > ${mntdir}/usr/local/bin/sd-dupe << "EOF"
 #!/bin/bash
 led 0
 
@@ -275,68 +312,68 @@ dest_dev=mmcblk1
 part_num=p5
 
 if [ -e /dev/mmcblk0p5 ]; then
-  led 1
+	led 1
 
-  sgdisk -Z -a1 /dev/${dest_dev}
-  sgdisk -a1 -n:1:64:8127 -t:1:8301 -c:1:loader1 /dev/${dest_dev}
-  sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env /dev/${dest_dev}
-  sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 /dev/${dest_dev}
-  sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust /dev/${dest_dev}
-  sgdisk -a1 -n:5:32768:- -A:5:set:2 -t:5:8305 -c:5:rootfs /dev/${dest_dev}
+	sgdisk -Z -a1 /dev/${dest_dev}
+	sgdisk -a1 -n:1:64:8127 -t:1:8301 -c:1:loader1 /dev/${dest_dev}
+	sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env /dev/${dest_dev}
+	sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 /dev/${dest_dev}
+	sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust /dev/${dest_dev}
+	sgdisk -a1 -n:5:32768:- -A:5:set:2 -t:5:8305 -c:5:rootfs /dev/${dest_dev}
 
-  src_block_count=`tune2fs -l /dev/${src_dev}${part_num} | grep "Block count:" | sed 's/.*: *//'`
-  src_block_size=`tune2fs -l /dev/${src_dev}${part_num} | grep "Block size:" | sed 's/.*: *//'`
-  src_fs_size=$(( src_block_count*src_block_size ))
-  src_fs_size_m=$(( src_fs_size / 1024 / 1024 + 1 ))
+	src_block_count=`tune2fs -l /dev/${src_dev}${part_num} | grep "Block count:" | sed 's/.*: *//'`
+	src_block_size=`tune2fs -l /dev/${src_dev}${part_num} | grep "Block size:" | sed 's/.*: *//'`
+	src_fs_size=$(( src_block_count*src_block_size ))
+	src_fs_size_m=$(( src_fs_size / 1024 / 1024 + 1 ))
 
-  dd if=/dev/${src_dev}p1 of=/dev/${dest_dev}p1 conv=sync,noerror status=progress
-  dd if=/dev/${src_dev}p2 of=/dev/${dest_dev}p2 conv=sync,noerror status=progress
-  dd if=/dev/${src_dev}p3 of=/dev/${dest_dev}p3 conv=sync,noerror status=progress
-  dd if=/dev/${src_dev}p4 of=/dev/${dest_dev}p4 conv=sync,noerror status=progress
+	dd if=/dev/${src_dev}p1 of=/dev/${dest_dev}p1 conv=sync,noerror status=progress
+	dd if=/dev/${src_dev}p2 of=/dev/${dest_dev}p2 conv=sync,noerror status=progress
+	dd if=/dev/${src_dev}p3 of=/dev/${dest_dev}p3 conv=sync,noerror status=progress
+	dd if=/dev/${src_dev}p4 of=/dev/${dest_dev}p4 conv=sync,noerror status=progress
 
-  echo "Writing ${src_fs_size_m} MB: /dev/${src_dev} -> /dev/${dest_dev}..."
-  dd if=/dev/${src_dev}${part_num} of=/dev/${dest_dev}${part_num} bs=1M conv=sync,noerror status=progress
+	echo "Writing ${src_fs_size_m} MB: /dev/${src_dev} -> /dev/${dest_dev}..."
+	dd if=/dev/${src_dev}${part_num} of=/dev/${dest_dev}${part_num} bs=1M conv=sync,noerror status=progress
 
-  echo "Expanding /dev/${dest_dev}${part_num} filesystem..."
-  e2fsck -fy /dev/${dest_dev}${part_num}
-  resize2fs /dev/${dest_dev}${part_num}
-  tune2fs -O has_journal /dev/${dest_dev}${part_num}
-  e2fsck -fy /dev/${dest_dev}${part_num}
-  sync /dev/${dest_dev}
+	echo "Expanding /dev/${dest_dev}${part_num} filesystem..."
+	e2fsck -fy /dev/${dest_dev}${part_num}
+	resize2fs /dev/${dest_dev}${part_num}
+	tune2fs -O has_journal /dev/${dest_dev}${part_num}
+	e2fsck -fy /dev/${dest_dev}${part_num}
+	sync /dev/${dest_dev}
 
-  echo "Cleaning up..."
-  mount /dev/${dest_dev}${part_num} /media
-  chroot /media /usr/local/bin/install-cleanup
+	echo "Cleaning up..."
+	mount /dev/${dest_dev}${part_num} /media
+	chroot /media /usr/local/bin/install-cleanup
 
-  if [ $? == 0 ]; then
-    echo "Successfully copied Rock Pi image!"
-    while true; do
-      led 1; sleep 0.5
-      led 0; sleep 0.5
-    done
-  else
-    echo "Error while copying Rock Pi image"
-    while true; do
-      led 1; sleep 0.1
-      led 0; sleep 0.1
-    done
-  fi
+	if [ $? == 0 ]; then
+		echo "Successfully copied Rock Pi image!"
+		while true; do
+			led 1; sleep 0.5
+			led 0; sleep 0.5
+		done
+	else
+		echo "Error while copying Rock Pi image"
+		while true; do
+			led 1; sleep 0.1
+			led 0; sleep 0.1
+		done
+	fi
 else
-  echo "Expanding /dev/${dest_dev}${part_num} filesystem..."
-  e2fsck -fy /dev/${dest_dev}${part_num}
-  resize2fs /dev/${dest_dev}${part_num}
-  tune2fs -O has_journal /dev/${dest_dev}${part_num}
-  e2fsck -fy /dev/${dest_dev}${part_num}
-  sync /dev/${dest_dev}
+	echo "Expanding /dev/${dest_dev}${part_num} filesystem..."
+	e2fsck -fy /dev/${dest_dev}${part_num}
+	resize2fs /dev/${dest_dev}${part_num}
+	tune2fs -O has_journal /dev/${dest_dev}${part_num}
+	e2fsck -fy /dev/${dest_dev}${part_num}
+	sync /dev/${dest_dev}
 
-  echo "Cleaning up..."
-  /usr/local/bin/install-cleanup
+	echo "Cleaning up..."
+	/usr/local/bin/install-cleanup
 fi
 EOF
-chmod +x ${mntdir}/usr/local/bin/sd-dupe
+	chmod +x ${mntdir}/usr/local/bin/sd-dupe
 
-echo "Creating SD duplicator service..."
-cat > ${mntdir}/etc/systemd/system/sd-dupe.service << EOF
+	echo "Creating SD duplicator service..."
+	cat > ${mntdir}/etc/systemd/system/sd-dupe.service << EOF
 [Unit]
  Description=Duplicate SD card rootfs to eMMC on Rock Pi
  ConditionPathExists=/usr/local/bin/sd-dupe
@@ -352,8 +389,8 @@ cat > ${mntdir}/etc/systemd/system/sd-dupe.service << EOF
  WantedBy=multi-user.target
 EOF
 
-echo "Creating cleanup script..."
-cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
+	echo "Creating cleanup script..."
+	cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
 #!/bin/bash
 echo "Installing cuttlefish-common package..."
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
@@ -389,9 +426,9 @@ rm /etc/systemd/system/sd-dupe.service
 rm /usr/local/bin/sd-dupe
 rm /usr/local/bin/install-cleanup
 EOF
-chmod +x ${mntdir}/usr/local/bin/install-cleanup
+	chmod +x ${mntdir}/usr/local/bin/install-cleanup
 
-chroot ${mntdir} /bin/bash << "EOT"
+	chroot ${mntdir} /bin/bash << "EOT"
 echo "Enabling services..."
 systemctl enable led
 systemctl enable sd-dupe
@@ -402,15 +439,19 @@ mkimage -A arm -O linux -T ramdisk -C none -a 0 -e 0 -n uInitrd -d /boot/initrd.
 ln -s /boot/uInitrd-5.2.0 /boot/uInitrd
 EOT
 
-umount ${mntdir}/sys
-umount ${mntdir}/dev
-umount ${mntdir}/proc
-umount ${mntdir}
+	umount ${mntdir}/sys
+	umount ${mntdir}/dev
+	umount ${mntdir}/proc
+	umount ${mntdir}
+
+	# Turn on journaling
+	tune2fs -O ^has_journal ${IMAGE}
+	e2fsck -fy ${IMAGE} >/dev/null 2>&1
+fi
 
 if [ ${USE_IMAGE} -eq 0 ]; then
 	# 32GB eMMC size
-	last_sector=61071326
-
+	end_sector=61071326
 	device=/dev/${mmc_dev}
 	devicep=${device}
 
@@ -419,39 +460,41 @@ if [ ${USE_IMAGE} -eq 0 ]; then
 	sgdisk -a1 -n:2:8128:8191 -t:2:8301 -c:2:env ${device}
 	sgdisk -a1 -n:3:16384:24575 -t:3:8301 -c:3:loader2 ${device}
 	sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust ${device}
-	sgdisk -a1 -n:5:32768:${last_sector} -A:5:set:2 -t:5:8305 -c:5:rootfs ${device}
-fi
-
-# Turn on journaling
-tune2fs -O ^has_journal ${IMAGE}
-e2fsck -fy ${IMAGE} >/dev/null 2>&1
-
-if [ ${USE_IMAGE} -eq 0 ]; then
-	dd if=${IMAGE} of=${devicep}5 bs=1M
-	resize2fs ${devicep}5 >/dev/null 2>&1
+	sgdisk -a1 -n:5:32768:${end_sector} -A:5:set:2 -t:5:8305 -c:5:rootfs ${device}
+	if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
+		dd if=${IMAGE} of=${devicep}5 bs=1M
+		resize2fs ${devicep}5 >/dev/null 2>&1
+	fi
 else
-	# Minimize rootfs filesystem
-	while true; do
-		out=`sudo resize2fs -M ${IMAGE} 2>&1`
-		if [[ $out =~ "Nothing to do" ]]; then
-			break
-		fi
-	done
-
-	# Minimize rootfs file size
-	block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
-	block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
-	sector_size=512
-	start_sector=32768
-	fs_size=$(( block_count*block_size ))
-	fs_sectors=$(( fs_size/sector_size ))
-	part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
-	end_sector=$(( start_sector+part_sectors-1 ))
-	secondary_gpt_sectors=33
-	fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
-	image_size=$(( part_sectors*sector_size ))
-	truncate -s ${image_size} ${IMAGE}
-	e2fsck -fy ${IMAGE} >/dev/null 2>&1
+	device=$(losetup -f)
+	devicep=${device}p
+	if [ ${FLAGS_p5} -eq ${FLAGS_FALSE} ]; then
+		fs_end=3G
+		end_sector=-
+	fi
+	if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
+		# Minimize rootfs filesystem
+		while true; do
+			out=`sudo resize2fs -M ${IMAGE} 2>&1`
+			if [[ $out =~ "Nothing to do" ]]; then
+				break
+			fi
+		done
+		# Minimize rootfs file size
+		block_count=`sudo tune2fs -l ${IMAGE} | grep "Block count:" | sed 's/.*: *//'`
+		block_size=`sudo tune2fs -l ${IMAGE} | grep "Block size:" | sed 's/.*: *//'`
+		sector_size=512
+		start_sector=32768
+		fs_size=$(( block_count*block_size ))
+		fs_sectors=$(( fs_size/sector_size ))
+		part_sectors=$(( ((fs_sectors-1)/2048+1)*2048 ))  # 1MB-aligned
+		end_sector=$(( start_sector+part_sectors-1 ))
+		secondary_gpt_sectors=33
+		fs_end=$(( (end_sector+secondary_gpt_sectors+1)*sector_size ))
+		image_size=$(( part_sectors*sector_size ))
+		truncate -s ${image_size} ${IMAGE}
+		e2fsck -fy ${IMAGE} >/dev/null 2>&1
+	fi
 
 	# Create final image
 	tmpimg=`mktemp`
@@ -465,19 +508,22 @@ else
 	sgdisk -a1 -n:4:24576:32767 -t:4:8301 -c:4:trust ${tmpimg}
 	sgdisk -a1 -n:5:32768:${end_sector} -A:5:set:2 -t:5:8305 -c:5:rootfs ${tmpimg}
 
-	device=$(losetup -f)
-	devicep=${device}p
 	losetup ${device} ${tmpimg}
 	partx -v --add ${device}
 
-	# copy over data
-	dd if=${IMAGE} of=${devicep}5 bs=1M
+	if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
+		dd if=${IMAGE} of=${devicep}5 bs=1M
+	fi
 fi
-
-dd if=${idbloader} of=${devicep}1
-dd if=${bootenv} of=${devicep}2
-dd if=${ANDROID_BUILD_TOP}/external/u-boot/u-boot.itb of=${devicep}3
-
+if [ ${FLAGS_p1} -eq ${FLAGS_TRUE} ]; then
+	dd if=${idbloader} of=${devicep}1
+fi
+if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
+	dd if=${bootenv} of=${devicep}2
+fi
+if [ ${FLAGS_p3} -eq ${FLAGS_TRUE} ]; then
+	dd if=${ANDROID_BUILD_TOP}/external/u-boot/u-boot.itb of=${devicep}3
+fi
 if [ ${USE_IMAGE} -eq 1 ]; then
 	chown $SUDO_USER:`id -ng $SUDO_USER` ${tmpimg}
 	mv ${tmpimg} ${IMAGE}
