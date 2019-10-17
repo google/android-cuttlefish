@@ -37,7 +37,7 @@
  * Controllable with a flag for extraordinary scenarios such as running from a
  * daemon which closes its own stdin.
  */
-DEFINE_bool(run_file_discovery, (bool) isatty(0),
+DEFINE_bool(run_file_discovery, true,
             "Whether to run file discovery or get input files from stdin.");
 
 namespace {
