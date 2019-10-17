@@ -14,20 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
+usage() {
+	echo "USAGE: $0 [flags] image"
+	echo "flags:"
+	echo "  -e,--expand:  expand filesystem to fill device (default: false)"
+	echo "  -h,--help:    show this help (default: false)"
+}
 
-DEFINE_boolean expand \
-  false "expand filesystem to fill device" "e"
-
-FLAGS_HELP="USAGE: $0 [flags] image"
-
-main ()
+main()
 {
-	image=$1
-	if [ "${image}" == "" ]; then
-		flags_help
-		exit 1
-	fi
 	if [ ! -e "${image}" ]; then
 		echo "error: can't find image. aborting..."
 		exit 1
@@ -96,7 +91,7 @@ main ()
 		exit 1
 	fi
 
-	if [ ${FLAGS_expand} -eq ${FLAGS_TRUE} ]; then
+	if [ ${expand} -eq 1 ]; then
 		echo "Expanding partition and filesystem..."
 		part_type=`sudo gdisk -l /dev/${blk_dev}  2>/dev/null | grep ": present" | sed 's/ *\([^:]*\):.*/\1/'`
 		if [ "$part_type" == "MBR" ]; then
@@ -116,6 +111,21 @@ main ()
 	sudo eject /dev/${blk_dev}
 }
 
-FLAGS "$@" || exit $?
-eval set -- "${FLAGS_ARGV}"
+expand=0
+if [ "$1" == "-e" ] || [ "$1" == "--expand" ]; then
+	expand=1
+	shift
+fi
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+	usage
+	exit 0
+fi
+
+image=$1
+if [ "${image}" == "" ]; then
+	usage
+	exit 1
+fi
+
 main "$@"
