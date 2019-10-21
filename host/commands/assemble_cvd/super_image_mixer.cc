@@ -89,8 +89,13 @@ ManagedCFile OpenFile(const std::string& path, const std::string& mode) {
 }
 
 const std::string kMiscInfoPath = "META/misc_info.txt";
-const std::string kSystemPath = "IMAGES/system.img";
-const std::string kSystemExtPath = "IMAGES/system_ext.img";
+const std::set<std::string> kDefaultTargetImages = {
+  "IMAGES/boot.img",
+  "IMAGES/cache.img",
+  "IMAGES/recovery.img",
+  "IMAGES/userdata.img",
+  "IMAGES/vendor.img.",
+};
 
 bool CopyZipFileContents(const uint8_t* buf, size_t buf_size, void* cookie) {
   ZipWriter* out_writer = (ZipWriter*) cookie;
@@ -123,22 +128,15 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
   ZipWriter out_writer{out_file.get()};
 
   ZipEntry entry;
-  if (FindEntry(system_target.get(), kSystemPath, &entry) != 0) {
-    LOG(ERROR) << "System target files zip does not have " << kSystemPath;
-    return false;
-  }
 
-  if (FindEntry(default_target.get(), kMiscInfoPath, &entry) != 0) {
-    LOG(ERROR) << "Default target files zip does not have " << kMiscInfoPath;
+  if (FindEntry(system_target.get(), kMiscInfoPath, &entry) != 0) {
+    LOG(ERROR) << "System target files zip does not have " << kMiscInfoPath;
     return false;
   }
   out_writer.StartEntry(kMiscInfoPath, 0);
   ProcessZipEntryContents(
-      default_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
+      system_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
   out_writer.FinishEntry();
-
-  bool system_target_has_ext =
-      FindEntry(system_target.get(), kSystemExtPath, &entry) == 0;
 
   void* iteration_cookie;
   std::string name;
@@ -149,9 +147,7 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       continue;
     }
     LOG(INFO) << "Name is \"" << name << "\"";
-    if (name == kSystemPath) {
-      continue;
-    } else if (system_target_has_ext && name == kSystemExtPath) {
+    if (kDefaultTargetImages.count(name) == 0) {
       continue;
     }
     LOG(INFO) << "Writing " << name;
@@ -164,9 +160,7 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
 
   StartIteration(system_target.get(), &iteration_cookie, "IMAGES/", ".img");
   for (int status = 0; status != -1; status = Next(iteration_cookie, &entry, &name)) {
-    bool is_system_image = name == kSystemPath;
-    bool is_system_ext_image = name == kSystemExtPath;
-    if (!is_system_image && !is_system_ext_image) {
+    if (kDefaultTargetImages.count(name) > 0) {
       continue;
     }
     LOG(INFO) << "Writing " << name;
