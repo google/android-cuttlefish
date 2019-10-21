@@ -104,8 +104,11 @@ cvd::FetcherConfig AvailableFilesReport() {
     files.merge(HeuristicFileReport(home));
   }
 
+  std::string psuedo_fetcher_dir =
+      cvd::StringFromEnv("ANDROID_HOST_OUT",
+                         cvd::StringFromEnv("HOME", current_directory));
   std::string psuedo_fetcher_config =
-      current_directory + "/launcher_psuedo_fetcher_config.json";
+      psuedo_fetcher_dir + "/launcher_psuedo_fetcher_config.json";
   files.insert(psuedo_fetcher_config);
 
   cvd::FetcherConfig config;
