@@ -39,6 +39,7 @@ cc_binary_host {
         "super_image_mixer.cc",
     ],
     header_libs: [
+        "bootimg_headers",
         "cuttlefish_glog",
     ],
     shared_libs: [
