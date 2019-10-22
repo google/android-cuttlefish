@@ -92,7 +92,6 @@ const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
 const char* kInitramfsPath = "initramfs_path";
 const char* kFinalRamdiskPath = "final_ramdisk_path";
-const char* kVendorRamdiskImagePath = "vendor_ramdisk_image_path";
 
 const char* kVirtualDiskPaths = "virtual_disk_paths";
 const char* kUsbV1SocketName = "usb_v1_socket_name";
@@ -379,14 +378,6 @@ std::string CuttlefishConfig::final_ramdisk_path() const {
 void CuttlefishConfig::set_final_ramdisk_path(
     const std::string& final_ramdisk_path) {
   SetPath(kFinalRamdiskPath, final_ramdisk_path);
-}
-
-std::string CuttlefishConfig::vendor_ramdisk_image_path() const {
-  return (*dictionary_)[kVendorRamdiskImagePath].asString();
-}
-void CuttlefishConfig::set_vendor_ramdisk_image_path(
-    const std::string& vendor_ramdisk_image_path) {
-  SetPath(kVendorRamdiskImagePath, vendor_ramdisk_image_path);
 }
 
 std::vector<std::string> CuttlefishConfig::virtual_disk_paths() const {
