@@ -206,6 +206,10 @@ DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
              "The vsock port for tombstones");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
+DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
+             "the slot will be chosen based on the misc partition if using a "
+             "bootloader. It will default to 'a' if empty and not using a "
+             "bootloader.");
 
 namespace {
 
@@ -504,6 +508,20 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
+
+  if (!FLAGS_boot_slot.empty()) {
+      tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
+  }
+
+  if (!FLAGS_use_bootloader) {
+    std::string slot_suffix;
+    if (FLAGS_boot_slot.empty()) {
+      slot_suffix = "_a";
+    } else {
+      slot_suffix = "_" + FLAGS_boot_slot;
+    }
+    tmp_config_obj.add_kernel_cmdline("androidboot.slot_suffix=" + slot_suffix);
+  }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
