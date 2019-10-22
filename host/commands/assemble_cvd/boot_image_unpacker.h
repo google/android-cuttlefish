@@ -29,7 +29,9 @@ class BootImageUnpacker {
  public:
   // Reads header section of boot image at path and returns a BootImageUnpacker
   // preloaded with all the metadata.
-  static std::unique_ptr<BootImageUnpacker> FromImage(const std::string& path);
+  static std::unique_ptr<BootImageUnpacker> FromImages(
+    const std::string& boot_image_path,
+    const std::string& vendor_boot_image_path);
 
   ~BootImageUnpacker() = default;
 
@@ -37,30 +39,32 @@ class BootImageUnpacker {
 
   bool HasKernelImage() const { return kernel_image_size_ > 0; }
   bool HasRamdiskImage() const { return ramdisk_image_size_ > 0; }
-
-  // Extracts the kernel image to the given path
-  bool ExtractKernelImage(const std::string& path) const;
-  // Extracts the ramdisk image to the given path. It may return false if the
-  // boot image does not contain a ramdisk, which is the case when having system
-  // as root.
-  bool ExtractRamdiskImage(const std::string& path) const;
+  bool HasVendorRamdiskImage() const { return vendor_ramdisk_image_size_ > 0; }
 
   bool Unpack(const std::string& ramdisk_image_path,
+              const std::string& vendor_ramdisk_image_path,
               const std::string& kernel_image_path);
 
  private:
   BootImageUnpacker(SharedFD boot_image, const std::string& cmdline,
                     uint32_t kernel_image_size, uint32_t kernel_image_offset,
-                    uint32_t ramdisk_image_size, uint32_t ramdisk_image_offset)
+                    uint32_t ramdisk_image_size, uint32_t ramdisk_image_offset,
+                    SharedFD vendor_boot_image,
+                    uint32_t vendor_ramdisk_image_size,
+                    uint32_t vendor_ramdisk_image_offset)
       : boot_image_(boot_image),
+        vendor_boot_image_(vendor_boot_image),
         kernel_cmdline_(cmdline),
         kernel_image_size_(kernel_image_size),
         kernel_image_offset_(kernel_image_offset),
         ramdisk_image_size_(ramdisk_image_size),
-        ramdisk_image_offset_(ramdisk_image_offset) {}
+        ramdisk_image_offset_(ramdisk_image_offset),
+        vendor_ramdisk_image_size_(vendor_ramdisk_image_size),
+        vendor_ramdisk_image_offset_(vendor_ramdisk_image_offset) {}
 
   // Mutable because we only read from the fd, but do not modify its contents
   mutable SharedFD boot_image_;
+  mutable SharedFD vendor_boot_image_;
   std::string kernel_cmdline_;
   // When buidling the boot image a particular page size is assumed, which may
   // not match the actual page size of the system.
@@ -68,6 +72,17 @@ class BootImageUnpacker {
   uint32_t kernel_image_offset_;
   uint32_t ramdisk_image_size_;
   uint32_t ramdisk_image_offset_;
+  uint32_t vendor_ramdisk_image_size_;
+  uint32_t vendor_ramdisk_image_offset_;
+
+  // Extracts the kernel image to the given path
+  bool ExtractKernelImage(const std::string& path) const;
+  // Extracts the ramdisk image to the given path. It may return false if the
+  // boot image does not contain a ramdisk, which is the case when having system
+  // as root.
+  bool ExtractRamdiskImage(const std::string& path) const;
+  // Extracts the vendor ramdisk image to the given path
+  bool ExtractVendorRamdiskImage(const std::string& path) const;
 };
 
 }  // namespace cvd
