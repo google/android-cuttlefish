@@ -71,6 +71,9 @@ DEFINE_bool(guest_audit_security, true,
 DEFINE_string(boot_image, "",
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
+DEFINE_string(vendor_boot_image, "",
+              "Location of cuttlefish vendor boot image. If empty it is assumed to "
+              "be vendor_boot.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 std::string g_default_mempath{vsoc::GetDefaultMempath()};
@@ -251,6 +254,11 @@ bool ResolveInstanceFiles() {
   std::string default_composite_disk = FLAGS_system_image_dir + "/composite.img";
   SetCommandLineOptionWithMode("composite_disk", default_composite_disk.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_vendor_boot_image = FLAGS_system_image_dir
+                                        + "/vendor_boot.img";
+  SetCommandLineOptionWithMode("vendor_boot_image",
+                               default_vendor_boot_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
@@ -325,10 +333,12 @@ bool InitializeCuttlefishConfiguration(
   }
 
   auto ramdisk_path = tmp_config_obj.PerInstancePath("ramdisk.img");
+  auto vendor_ramdisk_path = tmp_config_obj.PerInstancePath("vendor_ramdisk.img");
   bool use_ramdisk = boot_image_unpacker.HasRamdiskImage();
   if (!use_ramdisk) {
     LOG(INFO) << "No ramdisk present; assuming system-as-root build";
     ramdisk_path = "";
+    vendor_ramdisk_path = "";
   }
 
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
@@ -405,11 +415,12 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
+  // Boot as recovery is set so normal boot needs to be forced every boot
+  tmp_config_obj.add_kernel_cmdline("androidboot.force_normal_boot=1");
+  tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
+  tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
   if(FLAGS_initramfs_path.size() > 0) {
     tmp_config_obj.set_initramfs_path(FLAGS_initramfs_path);
-    tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
-  } else {
-    tmp_config_obj.set_final_ramdisk_path(ramdisk_path);
   }
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
@@ -791,7 +802,14 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
-  auto boot_img_unpacker = cvd::BootImageUnpacker::FromImage(FLAGS_boot_image);
+  if (!cvd::FileHasContent(FLAGS_vendor_boot_image)) {
+    LOG(ERROR) << "File not found: " << FLAGS_vendor_boot_image;
+    exit(cvd::kCuttlefishConfigurationInitError);
+  }
+
+  auto boot_img_unpacker =
+    cvd::BootImageUnpacker::FromImages(FLAGS_boot_image,
+                                       FLAGS_vendor_boot_image);
 
   if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
     LOG(ERROR) << "Failed to initialize configuration";
@@ -805,6 +823,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   }
 
   if (!boot_img_unpacker->Unpack(config->ramdisk_image_path(),
+                                 config->vendor_ramdisk_image_path(),
                                  config->use_unpacked_kernel()
                                      ? config->kernel_image_path()
                                      : "")) {
@@ -812,12 +831,20 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     exit(AssemblerExitCodes::kBootImageUnpackError);
   }
 
-  if(config->initramfs_path().size() != 0) {
-    if(!ConcatRamdisks(config->final_ramdisk_path(), config->ramdisk_image_path(),
-        config->initramfs_path())) {
-      LOG(ERROR) << "Failed to concatenate ramdisk and initramfs";
-      exit(AssemblerExitCodes::kInitRamFsConcatError);
-    }
+  // TODO(134522463) as part of the bootloader refactor, repack the vendor boot
+  // image and use the bootloader to load both the boot and vendor ramdisk.
+  // Until then, this hack to get gki modules into cuttlefish will suffice.
+
+  // If a vendor ramdisk comes in via this mechanism, let it supercede the one
+  // in the vendor boot image. This flag is what kernel presubmit testing uses
+  // to pass in the kernel ramdisk.
+  const std::string& vendor_ramdisk_path = config->initramfs_path().size() ?
+                                           config->initramfs_path() :
+                                           config->vendor_ramdisk_image_path();
+  if(!ConcatRamdisks(config->final_ramdisk_path(), config->ramdisk_image_path(),
+                     vendor_ramdisk_path)) {
+    LOG(ERROR) << "Failed to concatenate ramdisk and vendor ramdisk";
+    exit(AssemblerExitCodes::kInitRamFsConcatError);
   }
 
   if (config->decompress_kernel()) {
