@@ -21,10 +21,10 @@
 
 #include <sstream>
 
+#include <bootimg.h>
 #include <glog/logging.h>
 
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/assemble_cvd/bootimg.h"
 
 namespace cvd {
 
@@ -48,39 +48,58 @@ bool ExtractFile(SharedFD source, off_t offset, size_t size,
 }
 }  // namespace
 
-std::unique_ptr<BootImageUnpacker> BootImageUnpacker::FromImage(
-    const std::string& path) {
-  auto boot_img = SharedFD::Open(path.c_str(), O_RDONLY);
+std::unique_ptr<BootImageUnpacker> BootImageUnpacker::FromImages(
+    const std::string& boot_image_path,
+    const std::string& vendor_boot_image_path) {
+  auto boot_img = SharedFD::Open(boot_image_path.c_str(), O_RDONLY);
   if (!boot_img->IsOpen()) {
-    LOG(ERROR) << "Unable to open boot image (" << path
+    LOG(ERROR) << "Unable to open boot image (" << boot_image_path
                << "): " << boot_img->StrError();
     return nullptr;
   }
-  boot_img_hdr header;
+  boot_img_hdr_v3 header;
   auto bytes_read = boot_img->Read(&header, sizeof(header));
   if (bytes_read != sizeof(header)) {
     LOG(ERROR) << "Error reading boot image header";
     return nullptr;
   }
 
-  std::ostringstream cmdline;
-  cmdline << reinterpret_cast<char*>(&header.cmdline[0]);
-  if (header.extra_cmdline[0] != '\0') {
-    cmdline << " ";
-    cmdline << reinterpret_cast<char*>(&header.extra_cmdline[0]);
+  auto vendor_boot_img = SharedFD::Open(vendor_boot_image_path.c_str(),
+                                        O_RDONLY);
+  if (!vendor_boot_img->IsOpen()) {
+    LOG(ERROR) << "Unable to open vendor boot image (" << vendor_boot_image_path
+               << "): " << vendor_boot_img->StrError();
+    return nullptr;
+  }
+  vendor_boot_img_hdr_v3 vboot_header;
+  bytes_read = vendor_boot_img->Read(&vboot_header, sizeof(vboot_header));
+  if (bytes_read != sizeof(vboot_header)) {
+    LOG(ERROR) << "Error reading vendor boot image header";
+    return nullptr;
   }
 
-  uint32_t page_size = header.page_size;
-  // See system/core/mkbootimg/include/mkbootimg/bootimg.h for the origin of
+  std::ostringstream cmdline;
+  cmdline << reinterpret_cast<char*>(&header.cmdline[0]);
+  if (vboot_header.cmdline[0] != '\0') {
+    cmdline << " ";
+    cmdline << reinterpret_cast<char*>(&vboot_header.cmdline[0]);
+  }
+
+  uint32_t page_size = 4096;
+  // See system/tools/mkbootimg/include/bootimg/bootimg.h for the origin of
   // these offset calculations
   uint32_t kernel_offset = page_size;
   uint32_t ramdisk_offset =
       kernel_offset +
       ((header.kernel_size + page_size - 1) / page_size) * page_size;
+  uint32_t vendor_ramdisk_offset =
+      ((vboot_header.header_size + vboot_header.page_size - 1) / vboot_header.page_size) *
+      vboot_header.page_size;
 
   std::unique_ptr<BootImageUnpacker> ret(new BootImageUnpacker(
       boot_img, cmdline.str(), header.kernel_size, kernel_offset,
-      header.ramdisk_size, ramdisk_offset));
+      header.ramdisk_size, ramdisk_offset, vendor_boot_img,
+      vboot_header.vendor_ramdisk_size, vendor_ramdisk_offset));
 
   return ret;
 }
@@ -99,12 +118,24 @@ bool BootImageUnpacker::ExtractRamdiskImage(const std::string& path) const {
   return ExtractFile(boot_image_, ramdisk_image_offset_, ramdisk_image_size_,
                      path);
 }
+bool BootImageUnpacker::ExtractVendorRamdiskImage(const std::string& path) const {
+  if (vendor_ramdisk_image_size_ == 0) return false;
+  return ExtractFile(vendor_boot_image_, vendor_ramdisk_image_offset_,
+                     vendor_ramdisk_image_size_, path);
+}
 
 bool BootImageUnpacker::Unpack(const std::string& ramdisk_image_path,
+                               const std::string& vendor_ramdisk_image_path,
                                const std::string& kernel_image_path) {
   if (HasRamdiskImage()) {
     if (!ExtractRamdiskImage(ramdisk_image_path)) {
       LOG(ERROR) << "Error extracting ramdisk from boot image";
+      return false;
+    }
+  }
+  if (HasVendorRamdiskImage()) {
+    if (!ExtractVendorRamdiskImage(vendor_ramdisk_image_path)) {
+      LOG(ERROR) << "Error extracting vendor ramdisk from venodr boot image";
       return false;
     }
   }
