@@ -84,17 +84,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- TODO (b/130078382):
-    <hal format="hidl">
-        <name>android.hardware.boot</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IBootControl</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    -->
     <!-- TODO (b/130078384): -->
     <hal format="hidl">
         <name>android.hardware.camera.provider</name>
