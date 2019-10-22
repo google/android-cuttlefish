@@ -322,6 +322,12 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.vibrator@1.x-service.example
 
+# BootControl HAL
+PRODUCT_PACKAGES += \
+    android.hardware.boot@1.1-impl \
+    android.hardware.boot@1.1-impl.recovery \
+    android.hardware.boot@1.1-service
+
 PRODUCT_PACKAGES += \
     cuttlefish_dtb
 
