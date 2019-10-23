@@ -1,21 +1,33 @@
 # So you want to try cuttlefish?
 
-1. Go to http://ci.android.com/
-2. Enter a branch name. Start with `aosp-master` if you don't know what you're
+1. Download, build, and install the host debian package:
+
+```bash
+git clone https://github.com/google/android-cuttlefish
+cd android-cuttlefish
+debuild -i -us -uc -b
+sudo dpkg -i ../cuttlefish-common_*_amd64.deb
+sudo apt-get install -f
+```
+
+2. Go to http://ci.android.com/
+3. Enter a branch name. Start with `aosp-master` if you don't know what you're
    looking for
-3. Navigate to `aosp_cf_x86_phone` and click on `userdebug` for the latest build
-4. Click on `Artifacts`
-5. Scroll down to the OTA images. These packages look like
+4. Navigate to `aosp_cf_x86_phone` and click on `userdebug` for the latest build
+5. Click on `Artifacts`
+6. Scroll down to the OTA images. These packages look like
    `aosp_cf_x86_phone-img-xxxxxx.zip` -- it will always have `img` in the name.
    Download this file
-6. Scroll down to `cvd-host_package.tar.gz`. You should always download a host
+7. Scroll down to `cvd-host_package.tar.gz`. You should always download a host
    package from the same build as your images.
-7. On your local system, combine the packages:
+8. On your local system, combine the packages:
 
-   `$ mkdir cf`
-   `$ cd cf`
-   `$ tar xvf /path/to/cvd-host_package.tar.gz`
-   `$ unzip /path/to/aosp_cf_x86_phone-img-xxxxxx.zip`
+```bash
+mkdir cf
+cd cf
+tar xvf /path/to/cvd-host_package.tar.gz
+unzip /path/to/aosp_cf_x86_phone-img-xxxxxx.zip
+```
 
 8. Launch cuttlefish with:
 
