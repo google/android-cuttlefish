@@ -51,6 +51,7 @@ cvd_host_executables := \
     console_forwarder \
     assemble_cvd \
     run_cvd \
+    cvd_status \
 
 cvd_host_tests := \
     auto_free_buffer_test \
