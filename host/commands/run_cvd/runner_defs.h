@@ -48,6 +48,7 @@ enum RunnerExitCodes : int {
 
 // Actions supported by the launcher server
 enum class LauncherAction : char {
+  kStatus = 'I',
   kStop = 'X',
 };
 
