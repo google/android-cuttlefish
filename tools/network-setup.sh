@@ -19,63 +19,100 @@ if [[ "$OSTYPE" != "linux-gnu" ]]; then
 	exit 1
 fi
 
+# escalate to superuser
+if [ "$UID" -ne 0 ]; then
+	exec sudo bash "$0"
+fi
+
 sleep_time=0.1
+max_attempts=100
 DEFAULTNET=$1
 if [ "$DEFAULTNET" == "" ]; then
 	warn_no_default_network=0
-	warn_multiple_networks=0
 	warn_disconnect_rockpi=0
+	attempts=0
 	while true; do
-		DEFAULTNET=`ip link | grep "state UP" | sed 's/[0-9]*: \([^:]*\):.*/\1/'`
-		if [[ "${DEFAULTNET}" == "" ]]; then
+		NETLIST=`ip link | grep "state UP" | sed 's/[0-9]*: \([^:]*\):.*/\1/'`
+		if [[ "${NETLIST}" == "" ]]; then
 			if [[ $warn_no_default_network -eq 0 ]]; then
 				echo "error: couldn't detect any connected default network"
 				warn_no_default_network=1
-				warn_multiple_networks=0
 			fi
 			continue
-		elif [ `echo "$DEFAULTNET" | wc -l` -eq 1 ]; then
+		elif [ `echo "${NETLIST}" | wc -l` -eq 1 ]; then
+			DEFAULTNET=${NETLIST}
 			break
-		elif [ `echo "$DEFAULTNET" | wc -l` -ne 1 ]; then
+		elif [ `echo "${NETLIST}" | wc -l` -ne 1 ]; then
 			if [[ $warn_disconnect_rockpi -eq 0 ]]; then
 				echo "Please disconnect the network cable from the Rock Pi"
 				warn_disconnect_rockpi=1
 			fi
-			if [[ $warn_multiple_networks -eq 0 ]]; then
-				echo "error: detected multiple connected networks, not sure which to use as default:"
-				for net in $DEFAULTNET; do echo "    $net"; done
+			if [[ ${attempts} -gt ${max_attempts} ]]; then
+				echo -e "\nerror: detected multiple connected networks, please tell me what to do:"
+				count=1
+				for net in ${NETLIST}; do
+					echo "${count}) $net"
+					let count+=1
+				done
+				read -p "Enter the number of your default network connection: " num_default
+				count=1
+				for net in ${NETLIST}; do
+					if [ ${count} -eq ${num_default} ]; then
+						echo "Setting default to: ${net}"
+						DEFAULTNET=${net}
+					fi
+					let count+=1
+				done
 				warn_no_default_network=0
-				warn_multiple_networks=1
+				break
 			fi
+			echo -ne "\r"
+			printf "Manual configuration in %.1f seconds..." "$(( max_attempts-attempts ))e-1"
 			sleep $sleep_time
 		fi
+		let attempts+=1
 	done
 fi
-
-# escalate to superuser
-if [ "$UID" -ne 0 ]; then
-	exec sudo bash "$0" "${DEFAULTNET}"
-fi
-
 echo "Found default network at ${DEFAULTNET}"
-echo "Please reconnect network cable from Rock Pi to PC's spare network port"
 
-ROCKNETinit=`ip link | grep "state UP" | grep -v $DEFAULTNET | sed 's/[0-9]*: \([^:]*\):.*/\1/' | awk 'NF'`
-while true; do
-	ROCKNET=`ip link | grep "state UP" | grep -v $DEFAULTNET | sed 's/[0-9]*: \([^:]*\):.*/\1/' | awk 'NF'`
-	networks=`echo "$ROCKNET" | wc -l`
-	if [[ "${ROCKNET}" == "" ]]; then
-		continue
-	elif [ $networks -eq 1 ]; then
-		break
-	elif [ $networks -gt 1 ]; then
-		ROCKNET=`comm -3 <(echo "$ROCKNETinit" | sort) <(echo "$ROCKNET" | sort) | awk '{$1=$1};1'`
-		if [ "${ROCKNET}" != "" ]; then
+if [ "${ROCKNET}" == "" ]; then
+	echo "Please reconnect network cable from Rock Pi to PC's spare network port"
+	attempts=0
+	while true; do
+		NETLIST=`ip link | grep "state UP" | grep -v $DEFAULTNET | sed 's/[0-9]*: \([^:]*\):.*/\1/' | awk 'NF'`
+		networks=`echo "$NETLIST" | wc -l`
+		if [[ "${NETLIST}" == "" ]]; then
+			networks=0
+		fi
+		if [ $networks -eq 1 ]; then
+			ROCKNET=${NETLIST}
 			break
+		elif [ $networks -gt 1 ]; then
+			if [[ ${attempts} -gt ${max_attempts} ]]; then
+				echo -e "\nerror: detected multiple connected networks, please tell me what to do:"
+				count=1
+				for net in ${NETLIST}; do
+					echo "${count}) $net"
+					let count+=1
+				done
+				read -p "Enter the number of your rock pi network connection: " num_rockpi
+				count=1
+				for net in ${NETLIST}; do
+					if [ ${count} -eq ${num_rockpi} ]; then
+						echo "Setting rock pi to: ${net}"
+						ROCKNET=${net}
+					fi
+					let count+=1
+				done
+				break
+			fi
+			echo -ne "\r"
+			printf "Manual configuration in %.1f seconds..." "$(( max_attempts-attempts ))e-1"
+			let attempts+=1
 		fi
 		sleep $sleep_time
-	fi
-done
+	done
+fi
 echo "Found Rock Pi network at ${ROCKNET}"
 sudo ifconfig ${ROCKNET} down
 
