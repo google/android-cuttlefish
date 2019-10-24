@@ -4,3 +4,4 @@ type sensors_hal_socket, file_type;
 type tombstone_snapshot_file, file_type;
 type var_run_system_file, file_type;
 type sysfs_gpu, fs_type, sysfs_type;
+type mediadrm_vendor_data_file, file_type, data_file_type;

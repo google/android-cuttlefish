@@ -37,6 +37,10 @@
 /ts_snap\.txt  u:object_r:tombstone_snapshot_file:s0
 
 #############################
+# data files
+/data/vendor/mediadrm(/.*)?  u:object_r:mediadrm_vendor_data_file:s0
+
+#############################
 # var files
 /var/run/system(/.*)?  u:object_r:var_run_system_file:s0
 
@@ -56,6 +60,8 @@
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.0-service\.sim  u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@1\.2-service\.clearkey  u:object_r:hal_drm_clearkey_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@1\.2-service-lazy\.clearkey  u:object_r:hal_drm_clearkey_exec:s0
+/vendor/bin/hw/android\.hardware\.drm@1\.2-service\.widevine  u:object_r:hal_drm_widevine_exec:s0
+/vendor/bin/hw/android\.hardware\.drm@1\.2-service-lazy\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.dumpstate@1\.0-service\.cuttlefish  u:object_r:hal_dumpstate_impl_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health@2\.0-service\.cuttlefish  u:object_r:hal_health_default_exec:s0
