@@ -60,6 +60,7 @@ static std::set<std::string> kKnownMissing = {
     "android.hardware.graphics.mapper@3.0",
     "android.hardware.graphics.mapper@4.0",
     "android.hardware.health@1.0",
+    "android.hardware.health@2.1",
     "android.hardware.ir@1.0",
     "android.hardware.keymaster@3.0",
     "android.hardware.media.bufferpool@1.0",
