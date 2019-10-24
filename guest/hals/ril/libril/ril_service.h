@@ -20,7 +20,7 @@
 #include <guest/hals/ril/libril/ril.h>
 #include <ril_internal.h>
 
-namespace radio_1_4 {
+namespace radio_1_5 {
 void registerService(RIL_RadioFunctions *callbacks, android::CommandInfo *commands);
 
 int getIccCardStatusResponse(int slotId, int responseType,
