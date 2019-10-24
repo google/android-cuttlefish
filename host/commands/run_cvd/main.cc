@@ -304,6 +304,12 @@ void ServerLoop(cvd::SharedFD server,
             client->Write(&response, sizeof(response));
           }
           break;
+        case cvd::LauncherAction::kStatus: {
+          // TODO(schuffelen): Return more information on a side channel
+          auto response = cvd::LauncherResponse::kSuccess;
+          client->Write(&response, sizeof(response));
+          break;
+        }
         default:
           LOG(ERROR) << "Unrecognized launcher action: "
                      << static_cast<char>(action);
