@@ -415,12 +415,23 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
+  tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
+
   // Boot as recovery is set so normal boot needs to be forced every boot
   tmp_config_obj.add_kernel_cmdline("androidboot.force_normal_boot=1");
-  tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
-  tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
-  if(FLAGS_initramfs_path.size() > 0) {
-    tmp_config_obj.set_initramfs_path(FLAGS_initramfs_path);
+
+  if (FLAGS_kernel_path.size() && !FLAGS_initramfs_path.size()) {
+    // If there's a kernel that's passed in without an initramfs, that implies
+    // user error or a kernel built with no modules. In either case, let's
+    // choose to avoid loading the modules from the vendor ramdisk which are
+    // built for the default cf kernel. Once boot occurs, user error will
+    // become obvious.
+    tmp_config_obj.set_final_ramdisk_path(ramdisk_path);
+  } else {
+    tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
+    if(FLAGS_initramfs_path.size()) {
+      tmp_config_obj.set_initramfs_path(FLAGS_initramfs_path);
+    }
   }
 
   tmp_config_obj.set_mempath(FLAGS_mempath);
@@ -838,13 +849,21 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   // If a vendor ramdisk comes in via this mechanism, let it supercede the one
   // in the vendor boot image. This flag is what kernel presubmit testing uses
   // to pass in the kernel ramdisk.
-  const std::string& vendor_ramdisk_path = config->initramfs_path().size() ?
-                                           config->initramfs_path() :
-                                           config->vendor_ramdisk_image_path();
-  if(!ConcatRamdisks(config->final_ramdisk_path(), config->ramdisk_image_path(),
-                     vendor_ramdisk_path)) {
-    LOG(ERROR) << "Failed to concatenate ramdisk and vendor ramdisk";
-    exit(AssemblerExitCodes::kInitRamFsConcatError);
+
+  // If no kernel is passed in or an initramfs is made available, the default
+  // vendor boot ramdisk or the initramfs provided should be appended to the
+  // boot ramdisk. If a kernel IS provided with no initramfs, it is safe to
+  // safe to assume that the kernel was built with no modules and expects no
+  // modules for cf to run properly.
+  if(!FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
+    const std::string& vendor_ramdisk_path =
+      config->initramfs_path().size() ? config->initramfs_path()
+                                      : config->vendor_ramdisk_image_path();
+    if(!ConcatRamdisks(config->final_ramdisk_path(),
+                       config->ramdisk_image_path(), vendor_ramdisk_path)) {
+      LOG(ERROR) << "Failed to concatenate ramdisk and vendor ramdisk";
+      exit(AssemblerExitCodes::kInitRamFsConcatError);
+    }
   }
 
   if (config->decompress_kernel()) {
