@@ -79,6 +79,5 @@ $(call inherit-product, packages/services/Car/car_product/build/car.mk)
 PRODUCT_BRAND := generic
 
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
-PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
 
 TARGET_NO_TELEPHONY := true
