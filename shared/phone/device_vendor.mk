@@ -49,4 +49,3 @@ PRODUCT_COPY_FILES += \
 # TODO: below should be moved to vendor
 # These flags are important for the GSI, but break auto
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
-PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS := device/google/cuttlefish/shared/overlay
