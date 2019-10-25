@@ -335,7 +335,7 @@ PRODUCT_PACKAGES += \
 
 # Vibrator HAL
 PRODUCT_PACKAGES += \
-    android.hardware.vibrator@1.x-service.example
+    android.hardware.vibrator-service.example
 
 # BootControl HAL
 PRODUCT_PACKAGES += \
