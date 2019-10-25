@@ -129,6 +129,7 @@ if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
 	tmpfile=`mktemp`
 	bootenv=`mktemp`
 	cat > ${tmpfile} << "EOF"
+ethaddr=00:00:00:00:00:00
 bootdelay=2
 baudrate=1500000
 scriptaddr=0x00500000
