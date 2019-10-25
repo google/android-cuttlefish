@@ -22,6 +22,9 @@
     },
     {
       "name": "vts_treble_vintf_vendor_test"
+    },
+    {
+      "name": "hidl_implementation_test"
     }
   ]
 }
