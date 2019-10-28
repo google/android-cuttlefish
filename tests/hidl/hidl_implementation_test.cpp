@@ -45,6 +45,7 @@ static std::set<std::string> kKnownMissing = {
     "android.hardware.camera.device@1.0",
     "android.hardware.camera.device@3.5",
     "android.hardware.camera.provider@2.5",
+    "android.hardware.cas@1.2",
     "android.hardware.cas.native@1.0",
     "android.hardware.confirmationui@1.0",
     "android.hardware.contexthub@1.0",
