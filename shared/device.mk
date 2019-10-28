@@ -365,5 +365,3 @@ PRODUCT_COPY_FILES += \
 
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy
-
-PRODUCT_EXTRA_VNDK_VERSIONS := 28 29
