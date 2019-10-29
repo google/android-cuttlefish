@@ -45,7 +45,3 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml
-
-# TODO: below should be moved to vendor
-# These flags are important for the GSI, but break auto
-PRODUCT_ENFORCE_RRO_TARGETS := framework-res
