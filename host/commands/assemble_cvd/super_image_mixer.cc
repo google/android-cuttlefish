@@ -94,7 +94,7 @@ const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/cache.img",
   "IMAGES/recovery.img",
   "IMAGES/userdata.img",
-  "IMAGES/vendor.img.",
+  "IMAGES/vendor.img",
 };
 
 bool CopyZipFileContents(const uint8_t* buf, size_t buf_size, void* cookie) {
@@ -129,13 +129,13 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
 
   ZipEntry entry;
 
-  if (FindEntry(system_target.get(), kMiscInfoPath, &entry) != 0) {
-    LOG(ERROR) << "System target files zip does not have " << kMiscInfoPath;
+  if (FindEntry(default_target.get(), kMiscInfoPath, &entry) != 0) {
+    LOG(ERROR) << "Default target files zip does not have " << kMiscInfoPath;
     return false;
   }
   out_writer.StartEntry(kMiscInfoPath, 0);
   ProcessZipEntryContents(
-      system_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
+      default_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
   out_writer.FinishEntry();
 
   void* iteration_cookie;
