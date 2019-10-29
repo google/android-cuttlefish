@@ -197,4 +197,20 @@ std::map<std::string, CvdFile> FetcherConfig::get_cvd_files() const {
   return files;
 }
 
+std::string FetcherConfig::FindCvdFileWithSuffix(const std::string& suffix) const {
+  if (!dictionary_->isMember(kCvdFiles)) {
+    return {};
+  }
+  const auto& json_files = (*dictionary_)[kCvdFiles];
+  for (auto it = json_files.begin(); it != json_files.end(); it++) {
+    auto file = it.key().asString();
+    auto expected_pos = file.size() - suffix.size();
+    if (file.rfind(suffix) == expected_pos) {
+      return file;
+    }
+  }
+  LOG(ERROR) << "Could not find file ending in " << suffix;
+  return "";
+}
+
 } // namespace cvd

@@ -78,6 +78,8 @@ public:
 
   bool add_cvd_file(const CvdFile& file, bool override_entry = false);
   std::map<std::string, CvdFile> get_cvd_files() const;
+
+  std::string FindCvdFileWithSuffix(const std::string& suffix) const;
 };
 
 } // namespace cvd
