@@ -97,14 +97,19 @@ class SocketBasedScreenConnector : public ScreenConnector {
       }
       while (conn->IsOpen()) {
         int32_t size = 0;
-        conn->Read(&size, sizeof(size));
+        if (conn->Read(&size, sizeof(size)) < 0) {
+          LOG(ERROR) << "Failed to read from hwcomposer: "
+                      << conn->StrError();
+          break;
+        }
         auto buff = reinterpret_cast<uint8_t*>(GetBuffer(current_buffer));
         while (size > 0) {
           auto read = conn->Read(buff, size);
           if (read < 0) {
             LOG(ERROR) << "Failed to read from hwcomposer: "
                        << conn->StrError();
-            return;
+            conn->Close();
+            break;
           }
           size -= read;
           buff += read;
