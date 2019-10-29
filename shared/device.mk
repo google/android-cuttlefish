@@ -101,6 +101,12 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libGLES_mesa
 
+#
+# Packages for the Vulkan implementation
+#
+PRODUCT_PACKAGES += \
+    vulkan.pastel
+
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 # PRODUCT_AAPT_CONFIG and PRODUCT_AAPT_PREF_CONFIG are intentionally not set to
 # pick up every density resources.
