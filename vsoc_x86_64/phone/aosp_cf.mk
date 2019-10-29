@@ -18,10 +18,6 @@
 # All components inherited here go to system image (same as GSI system)
 #
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-
-PRODUCT_ARTIFACT_PATH_REQUIREMENT_WHITELIST += \
-    root/init.zygote64_32.rc \
-
 $(call inherit-product, $(SRC_TARGET_DIR)/product/mainline_system.mk)
 
 PRODUCT_ENFORCE_ARTIFACT_PATH_REQUIREMENTS := relaxed
