@@ -41,4 +41,5 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.telephony.gsm.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.telephony.gsm.xml
 
 # These flags are important for the GSI, but break auto
+# These are used by aosp_cf_x86_go_phone targets
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
