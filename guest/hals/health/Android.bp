@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-cc_binary {
-    name: "android.hardware.health@2.0-service.cuttlefish",
-    init_rc: ["android.hardware.health@2.0-service.cuttlefish.rc"],
+cc_library_shared {
+    name: "android.hardware.health@2.1-impl-cuttlefish",
+    stem: "android.hardware.health@2.0-impl-2.1-cuttlefish",
     proprietary: true,
+    recovery_available: true,
+
     relative_install_path: "hw",
+
     srcs: [
-        "health_service.cpp",
+        "health.cpp",
     ],
 
     cflags: [
@@ -28,10 +31,10 @@ cc_binary {
     ],
 
     static_libs: [
-        "android.hardware.health@2.0-impl",
         "android.hardware.health@1.0-convert",
-        "libhealthservice",
         "libbatterymonitor",
+        "libhealthloop",
+        "libhealth2impl",
     ],
 
     shared_libs: [
@@ -40,13 +43,8 @@ cc_binary {
         "libhidlbase",
         "libutils",
         "android.hardware.health@2.0",
+        "android.hardware.health@2.1",
     ],
-
-    header_libs: ["libhealthd_headers"],
 
     defaults: ["enabled_on_p_and_later"],
-
-    overrides: [
-        "healthd",
-    ],
 }
