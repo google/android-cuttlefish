@@ -15,26 +15,42 @@
  */
 #define LOG_TAG "android.hardware.health@2.0-service.cuttlefish"
 
-#include <health2/Health.h>
-#include <health2/service.h>
-#include <healthd/healthd.h>
+#include <memory>
+#include <string_view>
 
 #include <android-base/logging.h>
+#include <health/utils.h>
+#include <health2impl/Health.h>
 
-using android::hardware::health::V2_0::DiskStats;
-using android::hardware::health::V2_0::StorageInfo;
+using ::android::sp;
+using ::android::hardware::Return;
+using ::android::hardware::Void;
+using ::android::hardware::health::InitHealthdConfig;
+using ::android::hardware::health::V2_1::IHealth;
+using namespace std::literals;
 
-void healthd_board_init(struct healthd_config*) {}
+namespace android {
+namespace hardware {
+namespace health {
+namespace V2_1 {
+namespace implementation {
+class HealthImpl : public Health {
+ public:
+  HealthImpl(std::unique_ptr<healthd_config>&& config)
+    : Health(std::move(config)) {}
+ protected:
+  void UpdateHealthInfo(HealthInfo* health_info) override;
+};
 
-int healthd_board_battery_update(
-    struct android::BatteryProperties* battery_props) {
+void HealthImpl::UpdateHealthInfo(HealthInfo* health_info) {
+  auto* battery_props = &health_info->legacy.legacy;
   battery_props->chargerAcOnline = true;
   battery_props->chargerUsbOnline = true;
   battery_props->chargerWirelessOnline = false;
   battery_props->maxChargingCurrent = 500000;
   battery_props->maxChargingVoltage = 5000000;
-  battery_props->batteryStatus = android::BATTERY_STATUS_CHARGING;
-  battery_props->batteryHealth = android::BATTERY_HEALTH_GOOD;
+  battery_props->batteryStatus = V1_0::BatteryStatus::CHARGING;
+  battery_props->batteryHealth = V1_0::BatteryHealth::GOOD;
   battery_props->batteryPresent = true;
   battery_props->batteryLevel = 85;
   battery_props->batteryVoltage = 3600;
@@ -44,11 +60,22 @@ int healthd_board_battery_update(
   battery_props->batteryFullCharge = 4000000;
   battery_props->batteryChargeCounter = 1900000;
   battery_props->batteryTechnology = "Li-ion";
-  return 0;
 }
 
-void get_storage_info(std::vector<struct StorageInfo>&) {}
+}  // namespace implementation
+}  // namespace V2_1
+}  // namespace health
+}  // namespace hardware
+}  // namespace android
 
-void get_disk_stats(std::vector<struct DiskStats>&) {}
 
-int main(void) { return health_service_main(); }
+extern "C" IHealth* HIDL_FETCH_IHealth(const char* instance) {
+  using ::android::hardware::health::V2_1::implementation::HealthImpl;
+  if (instance != "default"sv) {
+      return nullptr;
+  }
+  auto config = std::make_unique<healthd_config>();
+  InitHealthdConfig(config.get());
+
+  return new HealthImpl(std::move(config));
+}
