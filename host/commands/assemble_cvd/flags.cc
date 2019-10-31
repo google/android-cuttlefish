@@ -180,7 +180,6 @@ DEFINE_string(console_forwarder_binary,
               vsoc::DefaultHostArtifactsPath("bin/console_forwarder"),
               "The Console Forwarder binary to use");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
 DEFINE_string(e2e_test_binary,
               vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
               "Location of the region end to end test binary");
@@ -394,9 +393,6 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.add_kernel_cmdline("audit=0");
     }
   }
-  if (FLAGS_run_e2e_test) {
-    tmp_config_obj.add_kernel_cmdline("androidboot.vsoc_e2e_test=1");
-  }
   if (FLAGS_extra_kernel_cmdline.size()) {
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
@@ -493,7 +489,7 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_socket_forward_proxy_binary);
   tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
-  tmp_config_obj.set_run_e2e_test(FLAGS_run_e2e_test);
+  tmp_config_obj.set_run_e2e_test(false);
   tmp_config_obj.set_e2e_test_binary(FLAGS_e2e_test_binary);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
@@ -568,7 +564,8 @@ void SetDefaultFlagsForQemu() {
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("hardware_name", "cutf_ivsh",
+  // TODO(b/144111429): Consolidate to one hardware name
+  SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatSerialMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -586,9 +583,8 @@ void SetDefaultFlagsForCrosvm() {
   SetCommandLineOptionWithMode("x_display",
                                getenv("DISPLAY"),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  // TODO(b/144111429): Consolidate to one hardware name
   SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("run_e2e_test", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
