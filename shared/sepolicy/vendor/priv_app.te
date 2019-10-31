@@ -1,1 +1,2 @@
 gpu_access(priv_app)
+get_prop(priv_app, hal_camera_prop)
