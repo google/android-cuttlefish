@@ -76,15 +76,13 @@ DEFINE_string(vendor_boot_image, "",
               "be vendor_boot.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-std::string g_default_mempath{vsoc::GetDefaultMempath()};
-DEFINE_string(mempath, g_default_mempath.c_str(),
+DEFINE_string(mempath, vsoc::GetDefaultMempath(),
               "Target location for the shmem file.");
-DEFINE_string(mobile_interface, "", // default handled on ParseCommandLine
+DEFINE_string(mobile_interface, GetPerInstanceDefault("cvd-mbr-"),
               "Network interface to use for mobile networking");
-DEFINE_string(mobile_tap_name, "", // default handled on ParseCommandLine
+DEFINE_string(mobile_tap_name, GetPerInstanceDefault("cvd-mtap-"),
               "The name of the tap interface to use for mobile");
-std::string g_default_serial_number{GetPerInstanceDefault("CUTTLEFISHCVD")};
-DEFINE_string(serial_number, g_default_serial_number.c_str(),
+DEFINE_string(serial_number, GetPerInstanceDefault("CUTTLEFISHCVD"),
               "Serial number to use for the device");
 DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
@@ -155,7 +153,7 @@ DEFINE_string(adb_connector_binary,
               "Location of the adb_connector binary. Only relevant if "
               "-run_adb_connector is true");
 DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
-DEFINE_string(wifi_tap_name, "", // default handled on ParseCommandLine
+DEFINE_string(wifi_tap_name, GetPerInstanceDefault("cvd-wtap-"),
               "The name of the tap interface to use for wifi");
 DEFINE_int32(vsock_guest_cid,
              vsoc::GetDefaultPerInstanceVsockCid(),
@@ -565,18 +563,6 @@ bool InitializeCuttlefishConfiguration(
 }
 
 void SetDefaultFlagsForQemu() {
-  auto default_mobile_interface = GetPerInstanceDefault("cvd-mbr-");
-  SetCommandLineOptionWithMode("mobile_interface",
-                               default_mobile_interface.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_mobile_tap_name = GetPerInstanceDefault("cvd-mtap-");
-  SetCommandLineOptionWithMode("mobile_tap_name",
-                               default_mobile_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
-  SetCommandLineOptionWithMode("wifi_tap_name",
-                               default_wifi_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto default_instance_dir =
       cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
   SetCommandLineOptionWithMode("instance_dir",
@@ -589,18 +575,6 @@ void SetDefaultFlagsForQemu() {
 }
 
 void SetDefaultFlagsForCrosvm() {
-  auto default_mobile_interface = GetPerInstanceDefault("cvd-mbr-");
-  SetCommandLineOptionWithMode("mobile_interface",
-                               default_mobile_interface.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_mobile_tap_name = GetPerInstanceDefault("cvd-mtap-");
-  SetCommandLineOptionWithMode("mobile_tap_name",
-                               default_mobile_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  auto default_wifi_tap_name = GetPerInstanceDefault("cvd-wtap-");
-  SetCommandLineOptionWithMode("wifi_tap_name",
-                               default_wifi_tap_name.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   auto default_instance_dir =
       cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
   SetCommandLineOptionWithMode("instance_dir",
