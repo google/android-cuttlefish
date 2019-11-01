@@ -57,12 +57,19 @@ createManifest() {
 if [ ! -e manifest.txt ]; then
 	cat > manifest.txt << EOF
 ManifestVersion=1
-TftpServer=${FLAGS_tftp}
 EOF
 fi
 }
 
-makeSHA() {
+addKVToManifest() {
+	key=$1
+	value=$2
+	grep -q "^${key}=" manifest.txt && \
+		sed -i "s/^${key}=.*/${key}=${value}/" manifest.txt || \
+		echo "${key}=${value}" >> manifest.txt
+}
+
+addSHAToManifest() {
 	key="SHA"
 	cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common"
 	SHA=`git rev-parse HEAD`
@@ -73,12 +80,11 @@ makeSHA() {
 	cd "${ANDROID_BUILD_TOP}/external/arm-trusted-firmware"
 	SHA="$SHA,`git rev-parse HEAD`"
 	cd -
-	grep -q "^${key}=" manifest.txt && \
-		sed -i "s/^${key}=.*/${key}=${SHA}/" manifest.txt || \
-		echo "${key}=${SHA}" >> manifest.txt
+
+	addKVToManifest "${key}" "${SHA}"
 }
 
-addToManifest() {
+addPathToManifest() {
 	key=$1
 	path=$2
 
@@ -98,14 +104,14 @@ addToManifest() {
 	else
 		unset filename
 	fi
-	grep -q "^${key}=" manifest.txt && \
-		sed -i "s/^${key}=.*/${key}=${filename}/" manifest.txt || \
-		echo "${key}=${filename}" >> manifest.txt
+
+	addKVToManifest "${key}" "${filename}"
 }
 
 createManifest
-addToManifest RootfsImg ${FLAGS_rootfs}
-addToManifest UbootEnv ${FLAGS_env}
-addToManifest TplSplImg ${FLAGS_loader1}
-addToManifest UbootItb ${FLAGS_loader2}
-makeSHA
+addKVToManifest TftpServer ${FLAGS_tftp}
+addPathToManifest RootfsImg ${FLAGS_rootfs}
+addPathToManifest UbootEnv ${FLAGS_env}
+addPathToManifest TplSplImg ${FLAGS_loader1}
+addPathToManifest UbootItb ${FLAGS_loader2}
+addSHAToManifest
