@@ -24,6 +24,25 @@ if [ "$UID" -ne 0 ]; then
 	exec sudo bash "$0"
 fi
 
+cleanup() {
+	echo "Starting up network-manager..."
+	service network-manager start
+	if [ $? != 0 ]; then
+		echo "error: failed to start network-manager"
+		exit 1
+	fi
+
+	echo "Starting up networking..."
+	service networking start
+	if [ $? != 0 ]; then
+		echo "error: failed to start networking"
+		exit 1
+	fi
+	if [ ! -z "$1" ]; then
+		exit $1
+	fi
+}
+
 sleep_time=0.1
 max_attempts=100
 DEFAULTNET=$1
@@ -116,44 +135,25 @@ fi
 echo "Found Rock Pi network at ${ROCKNET}"
 sudo ifconfig ${ROCKNET} down
 
-echo "Configuring udev rules..."
-cat >/etc/udev/rules.d/82-${ROCKNET}.rules <<EOF
-ACTION=="add", SUBSYSTEM=="net", KERNEL=="${ROCKNET}", ENV{NM_UNMANAGED}="1"
-EOF
+echo "Downloading dnsmasq..."
+apt-get install -d -y dnsmasq >/dev/null
 
-echo "Configuring network interface..."
-cat >/etc/network/interfaces.d/${ROCKNET}.conf <<EOF
-auto ${ROCKNET}
-iface ${ROCKNET} inet static
-	address 192.168.0.1
-	netmask 255.255.255.0
-EOF
-
-echo "Restarting network interface..."
-service network-manager restart
+echo "Shutting down network-manager to prevent interference..."
+service network-manager stop
 if [ $? != 0 ]; then
-	echo "error: failed to restart network-manager"
-	exit 1
-fi
-service networking restart
-if [ $? != 0 ]; then
-	echo "error: failed to restart networking"
-	exit 1
+	echo "error: failed to stop network-manager"
+	cleanup 1
 fi
 
-# Verify the Rock Pi was configured correctly
-ip link show ${ROCKNET} >/dev/null
+echo "Shutting down networking to prevent interference..."
+service networking stop
 if [ $? != 0 ]; then
-	echo "error: wasn't able to successfully configure connection to Rock Pi"
-	exit 1
+	echo "error: failed to stop networking"
+	cleanup 1
 fi
 
-# Check if dnsmasq is already installed
-dpkg -l | grep " dnsmasq " >/dev/null
-if [ $? != 0 ]; then
-	echo "Installing dnsmasq..."
-	apt-get install dnsmasq >/dev/null
-fi
+echo "Installing dnsmasq..."
+apt-get install dnsmasq >/dev/null
 
 echo "Enabling dnsmasq daemon..."
 cat /etc/default/dnsmasq | grep "ENABLED" >/dev/null
@@ -174,12 +174,18 @@ port=0
 dhcp-range=192.168.0.100,192.168.0.199
 EOF
 
-echo "Restarting dnsmasq service..."
-service dnsmasq restart
-if [ $? != 0 ]; then
-	echo "error: failed to restart dnsmasq"
-	exit 1
-fi
+echo "Configuring udev rules..."
+cat >/etc/udev/rules.d/82-${ROCKNET}.rules <<EOF
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="${ROCKNET}", ENV{NM_UNMANAGED}="1"
+EOF
+
+echo "Configuring network interface..."
+cat >/etc/network/interfaces.d/${ROCKNET}.conf <<EOF
+auto ${ROCKNET}
+iface ${ROCKNET} inet static
+	address 192.168.0.1
+	netmask 255.255.255.0
+EOF
 
 echo "Enabling IP forwarding..."
 echo 1 >/proc/sys/net/ipv4/ip_forward
@@ -216,6 +222,22 @@ sudo systemctl daemon-reload
 echo "Start IP tables rules service..."
 sudo systemctl enable iptables-rockpi
 sudo systemctl start iptables-rockpi
+
+cleanup
+
+echo "Restarting dnsmasq service..."
+service dnsmasq restart
+if [ $? != 0 ]; then
+	echo "error: failed to restart dnsmasq"
+	exit 1
+fi
+
+# Verify the Rock Pi was configured correctly
+ip link show ${ROCKNET} >/dev/null
+if [ $? != 0 ]; then
+	echo "error: wasn't able to successfully configure connection to Rock Pi"
+	exit 1
+fi
 
 echo "Searching for Rock Pi's IP address..."
 while true; do
