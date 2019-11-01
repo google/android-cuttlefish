@@ -85,6 +85,7 @@ static std::set<std::string> kKnownMissing = {
     "android.hardware.tv.tuner@1.0",
     "android.hardware.usb@1.2",
     "android.hardware.usb.gadget@1.0",
+    "android.hardware.vibrator@1.4",
     "android.hardware.vr@1.0",
     "android.hardware.weaver@1.0",
     "android.hardware.wifi@1.3",
