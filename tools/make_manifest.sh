@@ -57,7 +57,7 @@ createManifest() {
 if [ ! -e manifest.txt ]; then
 	cat > manifest.txt << EOF
 ManifestVersion=1
-TftpServer=${tftp}
+TftpServer=${FLAGS_tftp}
 EOF
 fi
 }
@@ -84,16 +84,16 @@ addToManifest() {
 
 	if [ "${path}" != "" ]; then
 		filename=$(basename $path)
-
-		if [ $key == "UbootEnv" ] && [ ${file: -3} == ".gz" ]; then
+		filetype=`file -b --mime-type "${path}"`
+		if [ "$key" == "UbootEnv" ] && [ "${filetype}" == "application/gzip" ]; then
 			echo "error: gzip not supported for env images"
 		fi
-		if [ $key != "UbootEnv" ] && [ ${file: -3} != ".gz" ]; then
+		if [ "$key" != "UbootEnv" ] && [ "${filetype}" != "application/gzip" ]; then
 			echo "warning: gzip recommended for all non-env images"
 			confirm || exit 1
 		fi
-		if [ ! "${path}" -ef "${tftpdir}/${filename}" ]; then
-			cp "${path}" "${tftpdir}/"
+		if [ ! "${path}" -ef "${FLAGS_tftpdir}/${filename}" ]; then
+			cp "${path}" "${FLAGS_tftpdir}/"
 		fi
 	else
 		unset filename
@@ -104,8 +104,8 @@ addToManifest() {
 }
 
 createManifest
-addToManifest RootfsImg ${rootfs}
-addToManifest UbootEnv ${env}
-addToManifest TplSplImg ${loader1}
-addToManifest UbootItb ${loader2}
+addToManifest RootfsImg ${FLAGS_rootfs}
+addToManifest UbootEnv ${FLAGS_env}
+addToManifest TplSplImg ${FLAGS_loader1}
+addToManifest UbootItb ${FLAGS_loader2}
 makeSHA
