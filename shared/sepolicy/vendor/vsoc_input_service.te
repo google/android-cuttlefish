@@ -1,5 +1,7 @@
 type vsoc_input_service, domain;
 type vsoc_input_service_exec, exec_type, vendor_file_type, file_type;
+type cuttlefish_vsock_keyboard_port, property_type;
+type cuttlefish_vsock_touch_port, property_type;
 
 init_daemon_domain(vsoc_input_service)
 
@@ -10,3 +12,9 @@ allow vsoc_input_service uhid_device:chr_file rw_file_perms;
 allow vsoc_input_service region_screen_device:chr_file rw_file_perms;
 
 allow vsoc_input_service input_events_device:chr_file rw_file_perms;
+
+net_domain(vsoc_input_service)
+
+get_prop(vsoc_input_service, cuttlefish_config_server_port_prop)
+
+allow vsoc_input_service self:{ socket vsock_socket } create_socket_perms_no_ioctl;
