@@ -16,8 +16,6 @@
 
 #include "device_config.h"
 
-#include <stdio.h>
-
 #include <sstream>
 #include <type_traits>
 
