@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
+#include "device_config.h"
+
+#include <chrono>
+#include <thread>
+
 #include <cutils/properties.h>
 #include <glog/logging.h>
-
-#include "device_config.h"
 
 namespace cvd {
 
 namespace {
 
 static constexpr auto kDataSize = sizeof(DeviceConfig::RawData);
+static constexpr int kRetries = 5;
+static constexpr int kRetryDelaySeconds = 5;
 
 bool GetRawFromServer(DeviceConfig::RawData* data) {
   auto port_property = "ro.boot.cuttlefish_config_server_port";
@@ -63,9 +68,18 @@ bool GetRawFromServer(DeviceConfig::RawData* data) {
 
 std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
   DeviceConfig::RawData data;
-  if (!GetRawFromServer(&data)) return nullptr;
 
-  return std::unique_ptr<DeviceConfig>(new DeviceConfig(data));
+  int attempts_remaining = 1 + kRetries;
+  while (attempts_remaining > 0) {
+    if (GetRawFromServer(&data)) {
+      return std::unique_ptr<DeviceConfig>(new DeviceConfig(data));
+    }
+
+    std::this_thread::sleep_for(std::chrono::seconds(kRetryDelaySeconds));
+
+    --attempts_remaining;
+  }
+  return nullptr;
 }
 
 DeviceConfig::DeviceConfig(const DeviceConfig::RawData& data) : data_(data) {

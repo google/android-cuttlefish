@@ -207,6 +207,11 @@ int main(int argc, char **argv) {
     rilArgv[0] = argv[0];
 
     funcs = rilInit(&s_rilEnv, argc, rilArgv);
+    if (funcs == NULL) {
+        RLOGE("RIL_Init rilInit failed.\n");
+        exit(EXIT_FAILURE);
+    }
+
     RLOGD("RIL_Init rilInit completed");
 
     RLOGD("RIL_Init callback versions = %d", funcs->version);
