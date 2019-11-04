@@ -356,6 +356,12 @@ class CuttlefishConfig {
   std::string touch_socket_path() const;
   std::string keyboard_socket_path() const;
 
+  void set_touch_socket_port(int touch_socket_port);
+  int touch_socket_port() const;
+
+  void set_keyboard_socket_port(int keyboard_socket_port);
+  int keyboard_socket_port() const;
+
  private:
   std::unique_ptr<Json::Value> dictionary_;
 
