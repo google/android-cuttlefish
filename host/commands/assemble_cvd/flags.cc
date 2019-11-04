@@ -204,6 +204,10 @@ DEFINE_string(tombstone_receiver_binary,
               "Binary for the tombstone server");
 DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
              "The vsock port for tombstones");
+DEFINE_int32(keyboard_server_port, GetPerInstanceDefault(5540),
+             "The port on which the vsock keyboard server should listen");
+DEFINE_int32(touch_server_port, GetPerInstanceDefault(5640),
+             "The port on which the vsock touch server should listen");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -522,6 +526,15 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=0");
   }
 
+  tmp_config_obj.set_touch_socket_port(FLAGS_touch_server_port);
+  tmp_config_obj.set_keyboard_socket_port(FLAGS_keyboard_server_port);
+  if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_touch_port=",
+                                             FLAGS_touch_server_port));
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_keyboard_port=",
+                                             FLAGS_keyboard_server_port));
+  }
+
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
@@ -567,7 +580,8 @@ void SetDefaultFlagsForQemu() {
   // TODO(b/144111429): Consolidate to one hardware name
   SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatSerialMode,
+  // TODO(b/144119457) Use the serial port.
+  SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 

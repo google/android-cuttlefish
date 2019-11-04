@@ -12,6 +12,8 @@
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/pre_launch_initializers.h"
 #include "host/commands/run_cvd/vsoc_shared_memory.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 
 using cvd::RunnerExitCodes;
 using cvd::MonitorEntry;
@@ -246,10 +248,20 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                                    GetOnSubprocessExitCallback(config));
 }
 
-cvd::SharedFD CreateVncInputServer(const std::string& path) {
+cvd::SharedFD CreateUnixVncInputServer(const std::string& path) {
   auto server = cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM, 0666);
   if (!server->IsOpen()) {
-    LOG(ERROR) << "Unable to create mouse server: "
+    LOG(ERROR) << "Unable to create unix input server: "
+               << server->StrError();
+    return cvd::SharedFD();
+  }
+  return server;
+}
+
+cvd::SharedFD CreateVsockVncInputServer(int port) {
+  auto server = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  if (!server->IsOpen()) {
+    LOG(ERROR) << "Unable to create vsock input server: "
                << server->StrError();
     return cvd::SharedFD();
   }
@@ -264,33 +276,38 @@ bool LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
     auto port_options = "-port=" + std::to_string(config.vnc_server_port());
     cvd::Command vnc_server(config.vnc_server_binary());
     vnc_server.AddParameter(port_options);
-    if (!config.enable_ivserver()) {
-      // When the ivserver is not enabled, the vnc touch_server needs to serve
-      // on unix sockets and send input events to whoever connects to it (namely
-      // crosvm)
-      auto touch_server = CreateVncInputServer(config.touch_socket_path());
-      if (!touch_server->IsOpen()) {
-        return false;
-      }
-      vnc_server.AddParameter("-touch_fd=", touch_server);
-
-      auto keyboard_server =
-          CreateVncInputServer(config.keyboard_socket_path());
-      if (!keyboard_server->IsOpen()) {
-        return false;
-      }
-      vnc_server.AddParameter("-keyboard_fd=", keyboard_server);
-      // TODO(b/128852363): This should be handled through the wayland mock
-      //  instead.
-      // Additionally it receives the frame updates from a virtual socket
-      // instead
-      auto frames_server =
-          cvd::SharedFD::VsockServer(config.frames_vsock_port(), SOCK_STREAM);
-      if (!frames_server->IsOpen()) {
-        return false;
-      }
-      vnc_server.AddParameter("-frame_server_fd=", frames_server);
+    if (config.vm_manager() == vm_manager::QemuManager::name()) {
+      vnc_server.AddParameter("-write_virtio_input");
     }
+    // When the ivserver is not enabled, the vnc touch_server needs to serve
+    // on sockets and send input events to whoever connects to it (the VMM).
+    auto touch_server =
+        config.vm_manager() == vm_manager::CrosvmManager::name()
+            ? CreateUnixVncInputServer(config.touch_socket_path())
+            : CreateVsockVncInputServer(config.touch_socket_port());
+    if (!touch_server->IsOpen()) {
+      return false;
+    }
+    vnc_server.AddParameter("-touch_fd=", touch_server);
+
+    auto keyboard_server =
+        config.vm_manager() == vm_manager::CrosvmManager::name()
+            ? CreateUnixVncInputServer(config.keyboard_socket_path())
+            : CreateVsockVncInputServer(config.keyboard_socket_port());
+    if (!keyboard_server->IsOpen()) {
+      return false;
+    }
+    vnc_server.AddParameter("-keyboard_fd=", keyboard_server);
+    // TODO(b/128852363): This should be handled through the wayland mock
+    //  instead.
+    // Additionally it receives the frame updates from a virtual socket
+    // instead
+    auto frames_server =
+        cvd::SharedFD::VsockServer(config.frames_vsock_port(), SOCK_STREAM);
+    if (!frames_server->IsOpen()) {
+      return false;
+    }
+    vnc_server.AddParameter("-frame_server_fd=", frames_server);
     process_monitor->StartSubprocess(std::move(vnc_server), callback);
     return true;
   }
