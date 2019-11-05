@@ -19,7 +19,6 @@
 #
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
--include $(wildcard device/*/cuttlestone_x86_phone/BoardConfig.mk)
 
 TARGET_BOARD_PLATFORM := vsoc_x86
 TARGET_ARCH := x86
