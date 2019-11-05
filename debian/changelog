@@ -7,8 +7,9 @@ cuttlefish-common (0.9.10) UNRELEASED; urgency=medium
 
   [ A. Cody Schuffelen ]
   * Add missing libusb-1.0-0 dependency
+  * Add psmisc dependency for fuser.
 
- -- Cody Schuffelen <schuffelen@google.com>  Mon, 04 Nov 2019 18:54:57 -0800
+ -- Cody Schuffelen <schuffelen@google.com>  Tue, 05 Nov 2019 15:26:55 -0800
 
 cuttlefish-common (0.9.9) stable; urgency=medium
 

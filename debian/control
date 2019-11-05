@@ -24,6 +24,7 @@ Depends:
  libx11-6,
  libxext6,
  net-tools,
+ psmisc,
  python,
  qemu-user-static [!amd64],
  ${misc:Depends}
