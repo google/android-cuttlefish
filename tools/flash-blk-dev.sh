@@ -101,19 +101,6 @@ main()
 		elif [ "$part_type" == "GPT" ]; then
 			parts=`sudo gdisk -l  /dev/${blk_dev} | grep "^Number" -A999 | tail -n +2 | wc -l`
 			FIRST_SECTOR=`sudo gdisk -l /dev/${blk_dev} 2>/dev/null | tail -1 | tr -s ' ' | cut -d" " -f3`
-
-			if [ ${parts} -ge 2 ]; then
-				hexchars="0123456789abcdef"
-				valid2ndchar="26ae"
-				mac=`echo -n ${hexchars:$(( $RANDOM % 16 )):1}`
-				mac+=`echo -n ${valid2ndchar:$(( $RANDOM % 4 )):1}`
-				mac+=`for i in {1..10}; do echo -n ${hexchars:$(( $RANDOM % 16 )):1}; done | sed -e 's/\(..\)/:\1/g'`
-
-				envfile=`mktemp`
-				dd if=/dev/${blk_dev}2 of=${envfile}
-				sed -i "s/00:00:00:00:00:00/${mac}/" ${envfile}
-			fi
-
 			sudo sgdisk -d${parts} /dev/${blk_dev} >/dev/null 2>&1
 			sudo sgdisk -a1 -n:${parts}:${FIRST_SECTOR}:- -A:${parts}:set:2 -t:${parts}:8305 -c:${parts}:rootfs /dev/${blk_dev} >/dev/null 2>&1
 			sudo e2fsck -fy /dev/${blk_dev}${parts} >/dev/null 2>&1
