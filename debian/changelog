@@ -1,3 +1,15 @@
+cuttlefish-common (0.9.10) UNRELEASED; urgency=medium
+
+  [ Tristan Muntsinger ]
+  * Add in required dependencies for arm64 buster
+  * Remove superfluous dependencies for cuttlefish-common
+  * Add in net-tools dependency
+
+  [ A. Cody Schuffelen ]
+  * Add missing libusb-1.0-0 dependency
+
+ -- Cody Schuffelen <schuffelen@google.com>  Mon, 04 Nov 2019 18:54:57 -0800
+
 cuttlefish-common (0.9.9) stable; urgency=medium
 
   * Added missing dependencies for crosvm and rockpi4

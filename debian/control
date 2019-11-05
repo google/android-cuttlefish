@@ -19,6 +19,7 @@ Depends:
  libc6:amd64 [!amd64],
  libdrm2,
  libfdt1,
+ libusb-1.0-0,
  libwayland-client0,
  libx11-6,
  libxext6,
