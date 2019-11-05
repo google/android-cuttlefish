@@ -129,7 +129,6 @@ if [ ${FLAGS_p2} -eq ${FLAGS_TRUE} ]; then
 	tmpfile=`mktemp`
 	bootenv=`mktemp`
 	cat > ${tmpfile} << "EOF"
-ethaddr=00:00:00:00:00:00
 bootdelay=2
 baudrate=1500000
 scriptaddr=0x00500000
@@ -139,9 +138,9 @@ distro_bootcmd=for target in ${boot_targets}; do run bootcmd_${target}; done
 bootcmd_mmc0=devnum=0; run mmc_boot
 bootcmd_mmc1=devnum=1; run mmc_boot
 mmc_boot=if mmc dev ${devnum}; then ; run scan_for_boot_part; fi
-scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devplist || setenv devplist 1; if test $devnum = 1; then script_type=init; else script_type=boot; fi; for part in ${devplist}; do if fstype mmc ${devnum}:${part} bootfstype; then run find_script; fi; done; setenv devplist; setenv script_type;
-find_script=if test -e mmc ${devnum}:${part} /boot/$script_type.scr; then echo Found U-Boot script /boot/$script_type.scr; run run_scr; fi
-run_scr=load mmc ${devnum}:${part} ${scriptaddr} /boot/$script_type.scr; source ${scriptaddr}
+scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devplist || setenv devplist 1; if test $devnum = 1; then script_type=init; else script_type=boot; fi; for distro_bootpart in ${devplist}; do if fstype mmc ${devnum}:${distro_bootpart} bootfstype; then run find_script; fi; done; setenv devplist; setenv script_type;
+find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/$script_type.scr; then echo Found U-Boot script /boot/$script_type.scr; run run_scr; fi
+run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/$script_type.scr; source ${scriptaddr}
 EOF
 	${ANDROID_HOST_OUT}/bin/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
 fi
