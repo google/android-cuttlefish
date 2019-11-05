@@ -65,10 +65,6 @@ PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 # DRM HAL
 PRODUCT_PACKAGES += android.hardware.drm@1.2-service.clearkey
 
-# GPS HAL
-PRODUCT_PACKAGES += \
-    android.hardware.gnss@2.0-service
-
 # CAN bus HAL
 PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
 PRODUCT_PACKAGES_DEBUG += canhalctrl \
