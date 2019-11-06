@@ -52,6 +52,52 @@ public class TombstoneTransmitTest extends BaseHostJUnit4Test {
     private static final int NUM_TOMBSTONES_IN_TEST = 1000;
 
     /**
+     * Creates 15 tombstones on the virtual device of varying lenghts.
+     * Each tombstone is expected to be sync'd to the host and checked for integrity.
+     */
+    @Test
+    public void testTombstonesOfVaryingLengths() throws Exception {
+        InstanceType type = getDevice().getOptions().getInstanceType();
+        // It can't be guaranteed that this test is run on a virtual device.
+        if(!InstanceType.CUTTLEFISH.equals(type) && !InstanceType.REMOTE_NESTED_AVD.equals(type)) {
+            CLog.i("This test must be run on a Cuttlefish device. Aborting.");
+            return;
+        } else {
+            CLog.i("This test IS being run on a Cuttlefish device.");
+        }
+
+        clearTombstonesFromCuttlefish();
+        List<String> hostTombstoneListPreTest = convertFileListToStringList(getDevice().getTombstones());
+        List<String> guestTombstoneListPreTest = convertFileListToStringList(getTombstonesViaAdb());
+
+        // Generate tombstones in doubling sizes from 1k to 16M
+        for(int i = 0; i < 15; i++) {
+            generateTombstoneOfLengthInKb((int) Math.pow(2,i));
+        }
+
+        List<String> hostTombstoneListPostTest =
+            convertFileListToStringList(getDevice().getTombstones());
+        List<String> guestTombstoneListPostTest =
+            convertFileListToStringList(getTombstonesViaAdb());
+
+        // Clear out all tombstones pretest.
+        hostTombstoneListPostTest.removeAll(hostTombstoneListPreTest);
+        guestTombstoneListPostTest.removeAll(guestTombstoneListPreTest);
+
+        CLog.i("===========Host Tombstone Statistics===========");
+        printTombstoneListStats(hostTombstoneListPostTest);
+        CLog.i("===========Guest Tombstone Statistics===========");
+        printTombstoneListStats(guestTombstoneListPostTest);
+
+        Assert.assertTrue("Tombstones on guest and host do not match",
+            hostTombstoneListPostTest.containsAll(guestTombstoneListPostTest));
+        Assert.assertEquals("Host does not have expected tombstone count in this iteration",
+            hostTombstoneListPostTest.size(), 15);
+        Assert.assertEquals("Guest does not have expected tombstone count in this iteration",
+            guestTombstoneListPostTest.size(), 15);
+    }
+
+    /**
      * Triggers 1000 tombstones on the virtual device and verifies the integrity of each one.
      * Note that the tombstone generation is chunk'd since the virtual device overwrites the oldest
      * tombstone once the 500th is created (or 50th in the case of most physical devices).
@@ -163,5 +209,29 @@ public class TombstoneTransmitTest extends BaseHostJUnit4Test {
         }
 
         return stringBuilder.toString();
+    }
+
+    private void generateTombstoneOfLengthInKb(int requestedLengthInKb) throws DeviceNotAvailableException {
+        if (!getDevice().isAdbRoot()) {
+            throw new DeviceNotAvailableException("Device was not root, cannot generate tombstone."
+                , getDevice().getSerialNumber());
+        }
+
+        // Generate file in directory not monitored by tombstone daemon and then link it into the
+        // tombstone dir.
+        // Context - tombstones are created in a tmp dir and then linked into the tombstones
+        // dir. The tombstone daemon waits for the link inotify event and then copies
+        // the full contents of the linked file to the host.
+        // If the file is instead being written into the tombstones dir on the guest, the integrity
+        // of the file written out on the host side cannot be guaranteed.
+        CommandResult commandResult = getDevice().
+            executeShellV2Command("dd if=/dev/urandom of=/data/tmp-file bs=1K count=" +
+                requestedLengthInKb);
+        Assert.assertEquals(CommandStatus.SUCCESS, commandResult.getStatus());
+
+        commandResult = getDevice().
+            executeShellV2Command("mv /data/tmp-file /data/tombstones/" +
+                System.currentTimeMillis());
+        Assert.assertEquals(CommandStatus.SUCCESS, commandResult.getStatus());
     }
 }
