@@ -2101,6 +2101,7 @@ typedef enum {
     GERAN = 0x01,   // GSM EDGE Radio Access Network
     UTRAN = 0x02,   // Universal Terrestrial Radio Access Network
     EUTRAN = 0x03,  // Evolved Universal Terrestrial Radio Access Network
+    NGRAN = 0x04,   // Next-Generation Radio Access Network
 } RIL_RadioAccessNetworks;
 
 typedef enum {
@@ -2194,6 +2195,45 @@ typedef enum {
     EUTRAN_BAND_70 = 70,
 } RIL_EutranBands;
 
+typedef enum {
+    NGRAN_BAND_1 = 1,
+    NGRAN_BAND_2 = 2,
+    NGRAN_BAND_3 = 3,
+    NGRAN_BAND_5 = 5,
+    NGRAN_BAND_7 = 7,
+    NGRAN_BAND_8 = 8,
+    NGRAN_BAND_12 = 12,
+    NGRAN_BAND_20 = 20,
+    NGRAN_BAND_25 = 25,
+    NGRAN_BAND_28 = 28,
+    NGRAN_BAND_34 = 34,
+    NGRAN_BAND_38 = 38,
+    NGRAN_BAND_39 = 39,
+    NGRAN_BAND_40 = 40,
+    NGRAN_BAND_41 = 41,
+    NGRAN_BAND_50 = 50,
+    NGRAN_BAND_51 = 51,
+    NGRAN_BAND_66 = 66,
+    NGRAN_BAND_70 = 70,
+    NGRAN_BAND_71 = 71,
+    NGRAN_BAND_74 = 74,
+    NGRAN_BAND_75 = 75,
+    NGRAN_BAND_76 = 76,
+    NGRAN_BAND_77 = 77,
+    NGRAN_BAND_78 = 78,
+    NGRAN_BAND_79 = 79,
+    NGRAN_BAND_80 = 80,
+    NGRAN_BAND_81 = 81,
+    NGRAN_BAND_82 = 82,
+    NGRAN_BAND_83 = 83,
+    NGRAN_BAND_84 = 84,
+    NGRAN_BAND_86 = 86,
+    NGRAN_BAND_257 = 257,
+    NGRAN_BAND_258 = 258,
+    NGRAN_BAND_260 = 260,
+    NGRAN_BAND_261 = 261,
+} RIL_NgranBands;
+
 typedef struct {
     RIL_RadioAccessNetworks radio_access_network; // The type of network to scan.
     uint32_t bands_length;                        // Length of bands
@@ -2201,6 +2241,7 @@ typedef struct {
         RIL_GeranBands geran_bands[MAX_BANDS];
         RIL_UtranBands utran_bands[MAX_BANDS];
         RIL_EutranBands eutran_bands[MAX_BANDS];
+        RIL_NgranBands ngran_bands[MAX_BANDS];
     } bands;
     uint32_t channels_length;                     // Length of channels
     uint32_t channels[MAX_CHANNELS];              // Frequency channels to scan
@@ -6642,6 +6683,45 @@ typedef struct {
  *  INTERNAL_ERR
  */
 #define RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT 158
+
+/**
+ * Specify which bands modem's background scan must act on.
+ * If specifyChannels is true, it only scans bands specified in specifiers.
+ * If specifyChannels is false, it scans all bands.
+ *
+ * For example, CBRS is only on LTE band 48. By specifying this band,
+ * modem saves more power.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  INTERNAL_ERR
+ *  INVALID_ARGUMENTS
+ *
+ */
+#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5 159
+
+/**
+ * RIL_REQUEST_START_NETWORK_SCAN5
+ *
+ * Starts a new network scan
+ *
+ * Request to start a network scan with specified radio access networks with frequency bands and/or
+ * channels.
+ *
+ * "data" is a const RIL_NetworkScanRequest *.
+ * "response" is NULL
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  DEVICE_IN_USE
+ *  INTERNAL_ERR
+ *  MODEM_ERR
+ *  INVALID_ARGUMENTS
+ *
+ */
+#define RIL_REQUEST_START_NETWORK_SCAN_1_5 160
 
 /***********************************************************************/
 

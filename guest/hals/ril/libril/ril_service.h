@@ -207,6 +207,10 @@ int startNetworkScanResponse4(int slotId,
                              int responseType, int serial, RIL_Errno e, void *response,
                              size_t responselen);
 
+int startNetworkScanResponse_1_5(int slotId,
+                             int responseType, int serial, RIL_Errno e, void *response,
+                             size_t responselen);
+
 int stopNetworkScanResponse(int slotId,
                             int responseType, int serial, RIL_Errno e, void *response,
                             size_t responselen);
@@ -765,6 +769,10 @@ int carrierInfoForImsiEncryption(int slotId,
                         void *response, size_t responseLen);
 
 int setSystemSelectionChannelsResponse(int slotId,
+                               int responseType, int serial, RIL_Errno e,
+                               void *response, size_t responseLen);
+
+int setSystemSelectionChannelsResponse_1_5(int slotId,
                                int responseType, int serial, RIL_Errno e,
                                void *response, size_t responseLen);
 

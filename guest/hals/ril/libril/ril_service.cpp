@@ -500,8 +500,7 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
 
     // Methods from ::android::hardware::radio::V1_3::IRadio follow.
     Return<void> setSystemSelectionChannels(int32_t serial, bool specifyChannels,
-            const hidl_vec<::android::hardware::radio::V1_1::RadioAccessSpecifier>& specifiers)
-           ;
+            const hidl_vec<::android::hardware::radio::V1_1::RadioAccessSpecifier>& specifiers);
     Return<void> enableModem(int32_t serial, bool on);
     Return<void> getModemStackStatus(int32_t serial);
 
@@ -539,6 +538,10 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
     Return<void> enableUiccApplications(int32_t serial, bool detach);
     Return<void> areUiccApplicationsEnabled(int32_t serial);
     Return<void> canToggleUiccApplicationsEnablement(int32_t serial);
+    Return<void> setSystemSelectionChannels_1_5(int32_t serial, bool specifyChannels,
+            const hidl_vec<::android::hardware::radio::V1_5::RadioAccessSpecifier>& specifiers);
+    Return<void> startNetworkScan_1_5(int32_t serial,
+            const ::android::hardware::radio::V1_5::NetworkScanRequest& request);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3167,6 +3170,98 @@ int prepareNetworkScanRequest_1_2(RIL_NetworkScanRequest &scan_request,
     return 0;
 }
 
+int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest &scan_request,
+    const ::android::hardware::radio::V1_5::NetworkScanRequest& request,
+    RequestInfo *pRI) {
+
+    scan_request.type = (RIL_ScanType) request.type;
+    scan_request.interval = request.interval;
+    scan_request.specifiers_length = request.specifiers.size();
+
+    int intervalLow = static_cast<int>(::android::hardware::radio::V1_2::ScanIntervalRange::MIN);
+    int intervalHigh = static_cast<int>(::android::hardware::radio::V1_2::ScanIntervalRange::MAX);
+    int maxSearchTimeLow =
+        static_cast<int>(::android::hardware::radio::V1_2::MaxSearchTimeRange::MIN);
+    int maxSearchTimeHigh =
+        static_cast<int>(::android::hardware::radio::V1_2::MaxSearchTimeRange::MAX);
+    int incrementalResultsPeriodicityRangeLow =
+        static_cast<int>(::android::hardware::radio::V1_2::IncrementalResultsPeriodicityRange::MIN);
+    int incrementalResultsPeriodicityRangeHigh =
+        static_cast<int>(::android::hardware::radio::V1_2::IncrementalResultsPeriodicityRange::MAX);
+    uint maxSpecifierSize =
+        static_cast<uint>(::android::hardware::radio::V1_2::RadioConst
+            ::RADIO_ACCESS_SPECIFIER_MAX_SIZE);
+
+    if (request.interval < intervalLow || request.interval > intervalHigh) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+    // If defined, must fall in correct range.
+    if (request.maxSearchTime != 0
+        && (request.maxSearchTime < maxSearchTimeLow
+            || request.maxSearchTime > maxSearchTimeHigh)) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+    if (request.maxSearchTime != 0
+        && (request.incrementalResultsPeriodicity < incrementalResultsPeriodicityRangeLow
+            || request.incrementalResultsPeriodicity > incrementalResultsPeriodicityRangeHigh
+            || request.incrementalResultsPeriodicity > request.maxSearchTime)) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+    if (request.specifiers.size() == 0 || request.specifiers.size() > maxSpecifierSize) {
+        sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        return -1;
+    }
+
+    for (size_t i = 0; i < request.specifiers.size(); ++i) {
+        if (request.specifiers[i].bands.geranBands().size() > MAX_BANDS ||
+            request.specifiers[i].bands.utranBands().size() > MAX_BANDS ||
+            request.specifiers[i].bands.eutranBands().size() > MAX_BANDS ||
+            request.specifiers[i].bands.ngranBands().size() > MAX_BANDS ||
+            request.specifiers[i].channels.size() > MAX_CHANNELS) {
+            sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+            return -1;
+        }
+        const V1_5::RadioAccessSpecifier& ras_from = request.specifiers[i];
+        RIL_RadioAccessSpecifier& ras_to = scan_request.specifiers[i];
+
+        ras_to.radio_access_network = (RIL_RadioAccessNetworks) ras_from.radioAccessNetwork;
+        ras_to.channels_length = ras_from.channels.size();
+
+        std::copy(ras_from.channels.begin(), ras_from.channels.end(), ras_to.channels);
+        const std::vector<uint32_t> * bands = nullptr;
+        switch (request.specifiers[i].radioAccessNetwork) {
+            case V1_5::RadioAccessNetworks::GERAN:
+                ras_to.bands_length = ras_from.bands.geranBands().size();
+                bands = (std::vector<uint32_t> *) &ras_from.bands;
+                break;
+            case V1_5::RadioAccessNetworks::UTRAN:
+                ras_to.bands_length = ras_from.bands.utranBands().size();
+                bands = (std::vector<uint32_t> *) &ras_from.bands;
+                break;
+            case V1_5::RadioAccessNetworks::EUTRAN:
+                ras_to.bands_length = ras_from.bands.eutranBands().size();
+                bands = (std::vector<uint32_t> *) &ras_from.bands;
+                break;
+            case V1_5::RadioAccessNetworks::NGRAN:
+                ras_to.bands_length = ras_from.bands.ngranBands().size();
+                bands = (std::vector<uint32_t> *) &ras_from.bands;
+                break;
+            default:
+                sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+                return -1;
+        }
+        // safe to copy to geran_bands because it's a union member
+        for (size_t idx = 0; idx < ras_to.bands_length; ++idx) {
+            ras_to.bands.geran_bands[idx] = (RIL_GeranBands) (*bands)[idx];
+        }
+    }
+
+    return 0;
+}
+
 // Methods from ::android::hardware::radio::V1_2::IRadio follow.
 Return<void> RadioImpl_1_5::startNetworkScan_1_2(int32_t serial,
         const ::android::hardware::radio::V1_2::NetworkScanRequest& request) {
@@ -3208,16 +3303,6 @@ Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria(int32_t /* serial
         int32_t /* hysteresisMs */, int32_t /* hysteresisDb */,
         const hidl_vec<int32_t>& /* thresholdsDbm */,
         ::android::hardware::radio::V1_2::AccessNetwork /* accessNetwork */) {
-    // TODO implement
-#if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
-#endif
-    return Void();
-}
-
-Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria_1_5(int32_t /* serial */,
-        const ::android::hardware::radio::V1_5::SignalThresholdInfo& /* signalThresholdInfo */,
-        const ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */) {
     // TODO implement
 #if VDBG
     RLOGE("[%04d]< %s", serial, "Method is not implemented");
@@ -3495,7 +3580,17 @@ Return<void> RadioImpl_1_5::getSignalStrength_1_4(int32_t serial) {
     return Void();
 }
 
-// radio::V1_5::IRadio methods:
+// Methods from ::android::hardware::radio::IRadio::V1_5 follow.
+Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria_1_5(int32_t /* serial */,
+        const ::android::hardware::radio::V1_5::SignalThresholdInfo& /* signalThresholdInfo */,
+        const ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */) {
+    // TODO implement
+#if VDBG
+    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+#endif
+    return Void();
+}
+
 Return<void> RadioImpl_1_5::enableUiccApplications(int32_t serial, bool enable) {
 #if VDBG
     RLOGD("enableUiccApplications: serial %d enable %d", serial, enable);
@@ -3517,6 +3612,42 @@ Return<void> RadioImpl_1_5::canToggleUiccApplicationsEnablement(int32_t serial) 
     RLOGD("canToggleUiccApplicationsEnablement: serial %d.", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT);
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::setSystemSelectionChannels_1_5(int32_t serial, bool /* specifyChannels */,
+        const hidl_vec<::android::hardware::radio::V1_5::RadioAccessSpecifier>& /* specifiers */) {
+#if VDBG
+    RLOGD("setSystemSelectionChannels_1_5: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5);
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::startNetworkScan_1_5(int32_t serial,
+        const ::android::hardware::radio::V1_5::NetworkScanRequest& request) {
+#if VDBG
+    RLOGD("startNetworkScan_1_5: serial %d", serial);
+#endif
+
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_START_NETWORK_SCAN_1_5);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    // TODO: implement checks for new fields.
+    // NetworkScanRequest added maxSearchTime, incrementalResults, incrementalResultsPeriodicity and
+    // mccMncs, could add more validations using request2 here.
+
+    RIL_NetworkScanRequest scan_request = {};
+
+    if (prepareNetworkScanRequest_1_5(scan_request, request, pRI) < 0) {
+        return Void();
+    }
+
+    CALL_ONREQUEST(RIL_REQUEST_START_NETWORK_SCAN_1_5, &scan_request, sizeof(scan_request), pRI,
+            mSlotId);
+
     return Void();
 }
 
@@ -7793,6 +7924,44 @@ int radio_1_5::canToggleUiccApplicationsEnablementResponse(int slotId, int respo
     return 0;
 }
 
+int radio_1_5::setSystemSelectionChannelsResponse_1_5(int slotId, int responseType, int serial,
+                                        RIL_Errno e, void* /* response */, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_5->setSystemSelectionChannelsResponse_1_5(
+            responseInfo);
+    radioService[slotId]->checkReturnStatus(retStatus);
+    return 0;
+}
+
+int radio_1_5::startNetworkScanResponse_1_5(int slotId, int responseType, int serial, RIL_Errno e,
+                                    void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("startNetworkScanResponse_1_5: serial %d", serial);
+#endif
+    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_5->startNetworkScanResponse_1_5(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("startNetworkScanResponse: radioService[%d]->mRadioResponseV1_5 == NULL", slotId);
+    }
+    return 0;
+}
+
 /***************************************************************************************************
  * INDICATION FUNCTIONS
  * The below function handle unsolicited messages coming from the Radio
@@ -9583,7 +9752,7 @@ void radio_1_5::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
 
         radioService[i] = new RadioImpl_1_5;
         radioService[i]->mSlotId = i;
-        RLOGD("registerService: starting android::hardware::radio::V1_4::IRadio %s for slot %d",
+        RLOGD("registerService: starting android::hardware::radio::V1_5::IRadio %s for slot %d",
                 serviceNames[i], i);
         android::status_t status = radioService[i]->registerAsService(serviceNames[i]);
         assert(status == android::OK);
