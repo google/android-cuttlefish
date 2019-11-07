@@ -65,8 +65,7 @@ cc_binary_host {
     defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }
 
-cc_prebuilt_binary {
+sh_binary_host {
     name: "cf_bpttool",
-    srcs: ["cf_bpttool"],
-    defaults: ["cuttlefish_host_only"],
+    src: "cf_bpttool",
 }

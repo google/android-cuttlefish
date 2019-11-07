@@ -38,8 +38,7 @@ cc_library_host_static {
     defaults: ["cuttlefish_host_only"],
 }
 
-cc_prebuilt_binary {
+sh_binary_host {
     name: "cf_qemu.sh",
-    srcs: ["cf_qemu.sh"],
-    defaults: ["cuttlefish_host_only"],
+    src: "cf_qemu.sh",
 }
