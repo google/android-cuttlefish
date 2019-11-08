@@ -214,7 +214,9 @@ DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
 
 namespace {
 
-std::string kRamdiskConcatExt = ".concat";
+const std::string kKernelDefaultPath = "kernel";
+const std::string kInitramfsImg = "initramfs.img";
+const std::string kRamdiskConcatExt = ".concat";
 
 template<typename S, typename T>
 static std::string concat(const S& s, const T& t) {
@@ -273,7 +275,8 @@ int GetHostPort() {
 // Initializes the config object and saves it to file. It doesn't return it, all
 // further uses of the config should happen through the singleton
 bool InitializeCuttlefishConfiguration(
-    const cvd::BootImageUnpacker& boot_image_unpacker) {
+    const cvd::BootImageUnpacker& boot_image_unpacker,
+    const cvd::FetcherConfig& fetcher_config) {
   vsoc::CuttlefishConfig tmp_config_obj;
   auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   // Set this first so that calls to PerInstancePath below are correct
@@ -316,12 +319,14 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
 
   tmp_config_obj.set_device_title(FLAGS_device_title);
-  if (FLAGS_kernel_path.size()) {
-    tmp_config_obj.set_kernel_image_path(FLAGS_kernel_path);
+  std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
+  std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
+  if (foreign_kernel.size()) {
+    tmp_config_obj.set_kernel_image_path(foreign_kernel);
     tmp_config_obj.set_use_unpacked_kernel(false);
   } else {
     tmp_config_obj.set_kernel_image_path(
-        tmp_config_obj.PerInstancePath("kernel"));
+        tmp_config_obj.PerInstancePath(kKernelDefaultPath.c_str()));
     tmp_config_obj.set_use_unpacked_kernel(true);
   }
   tmp_config_obj.set_decompress_kernel(FLAGS_decompress_kernel);
@@ -418,7 +423,9 @@ bool InitializeCuttlefishConfiguration(
   // Boot as recovery is set so normal boot needs to be forced every boot
   tmp_config_obj.add_kernel_cmdline("androidboot.force_normal_boot=1");
 
-  if (FLAGS_kernel_path.size() && !FLAGS_initramfs_path.size()) {
+  std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
+  std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
+  if (foreign_kernel.size() && !foreign_ramdisk.size()) {
     // If there's a kernel that's passed in without an initramfs, that implies
     // user error or a kernel built with no modules. In either case, let's
     // choose to avoid loading the modules from the vendor ramdisk which are
@@ -427,8 +434,8 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.set_final_ramdisk_path(ramdisk_path);
   } else {
     tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
-    if(FLAGS_initramfs_path.size()) {
-      tmp_config_obj.set_initramfs_path(FLAGS_initramfs_path);
+    if(foreign_ramdisk.size()) {
+      tmp_config_obj.set_initramfs_path(foreign_ramdisk);
     }
   }
 
@@ -796,7 +803,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     cvd::BootImageUnpacker::FromImages(FLAGS_boot_image,
                                        FLAGS_vendor_boot_image);
 
-  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker)) {
+  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config)) {
     LOG(ERROR) << "Failed to initialize configuration";
     exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
   }
@@ -829,7 +836,11 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   // boot ramdisk. If a kernel IS provided with no initramfs, it is safe to
   // safe to assume that the kernel was built with no modules and expects no
   // modules for cf to run properly.
-  if(!FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
+  std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
+  std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
+  std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
+  std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
+  if(!foreign_kernel.size() || foreign_ramdisk.size()) {
     const std::string& vendor_ramdisk_path =
       config->initramfs_path().size() ? config->initramfs_path()
                                       : config->vendor_ramdisk_image_path();
