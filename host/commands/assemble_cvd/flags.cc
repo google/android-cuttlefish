@@ -93,23 +93,23 @@ DEFINE_string(composite_disk, "", "Location of the composite disk image. "
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
-DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
+DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process.");
 
 DEFINE_bool(start_webrtc, false, "Whether to start the webrtc process.");
 
 DEFINE_string(
         webrtc_assets_dir,
-        vsoc::DefaultHostArtifactsPath("webrtc"),
+        vsoc::DefaultHostArtifactsPath("usr/share/webrtc/assets"),
         "Path to WebRTC webpage assets.");
 
 DEFINE_string(
         webrtc_certs_dir,
-        vsoc::DefaultHostArtifactsPath("webrtc/certs"),
+        vsoc::DefaultHostArtifactsPath("usr/share/webrtc/certs"),
         "Path to WebRTC certificates directory.");
 
 DEFINE_string(
         webrtc_public_ip,
-        "0.0.0.0",
+        "127.0.0.1",
         "Public IPv4 address of your server, a.b.c.d format");
 
 DEFINE_bool(
@@ -431,6 +431,13 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
     std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
               << std::endl;
     invalid_manager = true;
+  }
+  if (NumStreamers() == 0) {
+    // This makes the vnc server the default streamer unless the user requests
+    // another via a --star_<streamer> flag, while at the same time it's
+    // possible to run without any streamer by setting --start_vnc_server=false.
+    SetCommandLineOptionWithMode("start_vnc_server", "true",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   google::HandleCommandLineHelpFlags();
   if (invalid_manager) {
