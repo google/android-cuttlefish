@@ -86,7 +86,6 @@ DEFINE_uint32(port, property_get_int32("ro.boot.vsock_tombstone_port", 0),
               "VSOCK port to send tombstones to");
 DEFINE_uint32(cid, 2, "VSOCK CID to send logcat output to");
 #define TOMBSTONE_BUFFER_SIZE (1024)
-#define MAX_TOMBSTONE_SIZE (50 * TOMBSTONE_BUFFER_SIZE)
 
 int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -114,8 +113,7 @@ int main(int argc, char** argv) {
     char buffer[TOMBSTONE_BUFFER_SIZE];
     uint num_transfers = 0;
     int num_bytes_read = 0;
-    while (log_fd->IsOpen() && ifs.is_open() && !ifs.eof() &&
-           num_bytes_read < MAX_TOMBSTONE_SIZE) {
+    while (log_fd->IsOpen() && ifs.is_open() && !ifs.eof()) {
       ifs.read(buffer, sizeof(buffer));
       num_bytes_read += ifs.gcount();
       log_fd->Write(buffer, ifs.gcount());
