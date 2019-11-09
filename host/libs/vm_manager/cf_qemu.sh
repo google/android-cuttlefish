@@ -61,11 +61,6 @@ default_wifi_tap_name="cvd-wtap-${CUTTLEFISH_INSTANCE}"
 qemu_binary=${qemu_binary=/usr/bin/qemu-system-x86_64}
 dtc_binary=${dtc_binary:-dtc}
 
-if [[ -z "${ivshmem_vector_count}" ]]; then
-    echo "The required ivshmem_vector_count environment variable is not set" >&2
-    exit 1
-fi
-
 if [[ "${qemu_binary##*/}" = "qemu-system-aarch64" ]]; then
   # On ARM, the early console can be PCI, and ISA is not supported
   kernel_console_serial="pci-serial"
@@ -147,8 +142,6 @@ args+=(
     -device "${kernel_console_serial},chardev=charserial0,id=serial0"
     -chardev "socket,id=charserial1,path=${console_path:-${default_dir}/console},server,nowait"
     -device "${kernel_console_serial},chardev=charserial1,id=serial1"
-    -chardev "socket,path=${ivshmem_qemu_socket_path:-${default_internal_dir}/ivshmem_socket_qemu},id=ivsocket"
-    -device "ivshmem-doorbell,chardev=ivsocket,vectors=${ivshmem_vector_count}"
 )
 
 if [[ "${logcat_mode}" == "serial" ]]; then

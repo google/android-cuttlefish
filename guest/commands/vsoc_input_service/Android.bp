@@ -24,12 +24,19 @@ cc_binary {
         "virtual_touchscreen.cpp",
         "vsoc_input_service.cpp",
     ],
+    static_libs: [
+        "libgflags",
+    ],
     shared_libs: [
         "cuttlefish_auto_resources",
+        "libcuttlefish_device_config",
         "libcuttlefish_fs",
         "libbase",
         "liblog",
         "vsoc_lib",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
     ],
     defaults: ["cuttlefish_guest_only"]
 }
