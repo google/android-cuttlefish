@@ -18,37 +18,35 @@
 
 #include <linux/input.h>
 #include <linux/uinput.h>
+#include <linux/virtio_input.h>
 
 #include <thread>
 
+#include <gflags/gflags.h>
 #include "log/log.h"
+#include <glog/logging.h>
 
-#include "common/vsoc/lib/screen_region_view.h"
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/device_config/device_config.h"
 #include "common/vsoc/lib/input_events_region_view.h"
 
-using vsoc::screen::ScreenRegionView;
 using vsoc::input_events::InputEvent;
-using vsoc::input_events::InputEventsRegionView;
 using vsoc_input_service::VirtualDeviceBase;
 using vsoc_input_service::VirtualKeyboard;
 using vsoc_input_service::VirtualPowerButton;
 using vsoc_input_service::VirtualTouchScreen;
 using vsoc_input_service::VSoCInputService;
 
+DEFINE_uint32(keyboard_port, 0, "keyboard vsock port");
+DEFINE_uint32(touch_port, 0, "keyboard vsock port");
+
 namespace {
 
 void EventLoop(std::shared_ptr<VirtualDeviceBase> device,
-               std::function<int(InputEvent*, int)> next_events) {
+               std::function<InputEvent()> next_event) {
   while (1) {
-    InputEvent events[InputEventsRegionView::kMaxEventsPerPacket];
-    int count = next_events(events, InputEventsRegionView::kMaxEventsPerPacket);
-    if (count <= 0) {
-      SLOGE("Error getting events from the queue: Maybe check packet size");
-      continue;
-    }
-    for (int i = 0; i < count; ++i) {
-      device->EmitEvent(events[i].type, events[i].code, events[i].value);
-    }
+    InputEvent event = next_event();
+    device->EmitEvent(event.type, event.code, event.value);
   }
 }
 
@@ -64,14 +62,14 @@ bool VSoCInputService::SetUpDevices() {
     return false;
   }
 
-  auto screen_view = ScreenRegionView::GetInstance();
-  if (!screen_view) {
-    SLOGE("Failed to open framebuffer broadcast region");
+  auto config = cvd::DeviceConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "Failed to open device config";
     return false;
   }
 
   virtual_touchscreen_.reset(
-      new VirtualTouchScreen(screen_view->x_res(), screen_view->y_res()));
+      new VirtualTouchScreen(config->screen_x_res(), config->screen_y_res()));
   if (!virtual_touchscreen_->SetUp()) {
     return false;
   }
@@ -80,35 +78,56 @@ bool VSoCInputService::SetUpDevices() {
 }
 
 bool VSoCInputService::ProcessEvents() {
-  auto input_events_rv = InputEventsRegionView::GetInstance();
-  // TODO(jemoreira): Post available devices to region
-  auto worker = input_events_rv->StartWorker();
+  cvd::SharedFD keyboard_fd;
+  cvd::SharedFD touch_fd;
+
+  LOG(INFO) << "Connecting to the keyboard at " << FLAGS_keyboard_port;
+  if (FLAGS_keyboard_port) {
+    keyboard_fd = cvd::SharedFD::VsockClient(2, FLAGS_keyboard_port, SOCK_STREAM);
+    if (!keyboard_fd->IsOpen()) {
+      LOG(ERROR) << "Could not connect to the keyboard at vsock:2:" << FLAGS_keyboard_port;
+    }
+    LOG(INFO) << "Connected to keyboard";
+  }
+  LOG(INFO) << "Connecting to the touchscreen at " << FLAGS_keyboard_port;
+  if (FLAGS_touch_port) {
+    touch_fd = cvd::SharedFD::VsockClient(2, FLAGS_touch_port, SOCK_STREAM);
+    if (!touch_fd->IsOpen()) {
+      LOG(ERROR) << "Could not connect to the touch at vsock:2:" << FLAGS_touch_port;
+    }
+    LOG(INFO) << "Connected to touch";
+  }
 
   // Start device threads
-  std::thread screen_thread([this]() {
-    EventLoop(
-        virtual_touchscreen_, [](InputEvent* event_buffer, int max_events) {
-          return InputEventsRegionView::GetInstance()->GetScreenEventsOrWait(
-              event_buffer, max_events);
-        });
-  });
-  std::thread keyboard_thread([this]() {
-    EventLoop(virtual_keyboard_, [](InputEvent* event_buffer, int max_events) {
-      return InputEventsRegionView::GetInstance()->GetKeyboardEventsOrWait(
-          event_buffer, max_events);
+  std::thread screen_thread([this, touch_fd]() {
+    EventLoop(virtual_touchscreen_, [touch_fd]() {
+      struct virtio_input_event event;
+      if (touch_fd->Read(&event, sizeof(event)) != sizeof(event)) {
+        LOG(FATAL) << "Could not read touch event: " << touch_fd->StrError();
+      }
+      return InputEvent {
+        .type = event.type,
+        .code = event.code,
+        .value = event.value,
+      };
     });
   });
-  std::thread button_thread([this]() {
-    EventLoop(virtual_power_button_,
-              [](InputEvent* event_buffer, int max_events) {
-                return InputEventsRegionView::GetInstance()
-                    ->GetPowerButtonEventsOrWait(event_buffer, max_events);
-              });
+  std::thread keyboard_thread([this, keyboard_fd]() {
+    EventLoop(virtual_keyboard_, [keyboard_fd]() {
+      struct virtio_input_event event;
+      if (keyboard_fd->Read(&event, sizeof(event)) != sizeof(event)) {
+        LOG(FATAL) << "Could not read keyboard event: " << keyboard_fd->StrError();
+      }
+      return InputEvent {
+        .type = event.type,
+        .code = event.code,
+        .value = event.value,
+      };
+    });
   });
 
   screen_thread.join();
   keyboard_thread.join();
-  button_thread.join();
 
   // Should never return
   return false;

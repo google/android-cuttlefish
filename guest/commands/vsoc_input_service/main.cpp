@@ -15,10 +15,12 @@
  */
 
 #include "log/log.h"
+#include <gflags/gflags.h>
 
 #include "vsoc_input_service.h"
 
-int main(int /* arg */, char* /* argv */[]) {
+int main(int argc, char* argv[]) {
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   vsoc_input_service::VSoCInputService service;
   if (!service.SetUpDevices()) {
     return -1;

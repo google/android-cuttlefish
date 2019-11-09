@@ -16,6 +16,7 @@
 
 #include "virtual_device_base.h"
 
+#include <glog/logging.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
@@ -102,6 +103,8 @@ bool VirtualDeviceBase::SetUp() {
     SLOGE("Unable to create input device (%s)", strerror(errno));
     return false;
   }
+
+  LOG(INFO) << "set up virtual device";
 
   return true;
 }
