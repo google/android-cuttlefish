@@ -6561,6 +6561,41 @@ typedef struct {
  */
 #define RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4 154
 
+/**
+ * Sets the signal strength reporting criteria.
+ *
+ * The resulting reporting rules are the AND of all the supplied criteria. For each RAN
+ * The hysteresisDb apply to only the following measured quantities:
+ * -GERAN    - RSSI
+ * -CDMA2000 - RSSI
+ * -UTRAN    - RSCP
+ * -EUTRAN   - RSRP/RSRQ/RSSNR
+ *
+ * The thresholds apply to only the following measured quantities:
+ * -GERAN    - RSSI
+ * -CDMA2000 - RSSI
+ * -UTRAN    - RSCP
+ * -EUTRAN   - RSRP/RSRQ/RSSNR
+ * -NGRAN    - SSRSRP/SSRSRQ/SSSINR
+ *
+ * Note: Reporting criteria must be individually set for each RAN. For any unset reporting
+ * criteria, the value is implementation-defined.
+ *
+ * Note: @1.5::SignalThresholdInfo includes fields 'hysteresisDb', 'hysteresisMs',
+ * and 'thresholds'. As this mechanism generally only constrains reports based on one
+ * measured quantity per RAN, if multiple measured quantities must be used to trigger a report
+ * for a given RAN, the only valid field may be hysteresisMs: hysteresisDb and thresholds must
+ * be set to zero and length zero respectively. If either hysteresisDb or thresholds is set,
+ * then reports shall only be triggered by the respective measured quantity, subject to the
+ * applied constraints.
+ *
+ * Valid errors returned:
+ *   RadioError:NONE
+ *   RadioError:INVALID_ARGUMENTS
+ *   RadioError:RADIO_NOT_AVAILABLE
+ */
+#define RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5 155
+
 /***********************************************************************/
 
 /**

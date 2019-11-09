@@ -778,6 +778,10 @@ int getAllowedCarriersResponse4(int slotId,
                                 void *response,
                                 size_t responselen);
 
+int setSignalStrengthReportingCriteriaResponse_1_5(int slotId,
+                          int responseType, int serial, RIL_Errno e,
+                          void *response, size_t responselen);
+
 pthread_rwlock_t * getRadioServiceRwlock(int slotId);
 
 void setNitzTimeReceived(int slotId, long timeReceived);
