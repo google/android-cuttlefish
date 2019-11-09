@@ -30,6 +30,8 @@ DEFINE_string tftp \
   "192.168.0.1" "TFTP server address" "f"
 DEFINE_string tftpdir \
   "/tftpboot" "TFTP server directory" "d"
+DEFINE_string version \
+  "1" "Specify which manifest version to use (default: latest)" "v"
 
 FLAGS_HELP="USAGE: $0 [flags]"
 
@@ -54,11 +56,7 @@ confirm() {
 }
 
 createManifest() {
-if [ ! -e manifest.txt ]; then
-	cat > manifest.txt << EOF
-ManifestVersion=1
-EOF
-fi
+	>>manifest.txt
 }
 
 addKVToManifest() {
@@ -109,6 +107,7 @@ addPathToManifest() {
 }
 
 createManifest
+addKVToManifest ManifestVersion ${FLAGS_version}
 addKVToManifest TftpServer ${FLAGS_tftp}
 addPathToManifest RootfsImg ${FLAGS_rootfs}
 addPathToManifest UbootEnv ${FLAGS_env}
