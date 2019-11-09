@@ -180,7 +180,6 @@ DEFINE_string(console_forwarder_binary,
               vsoc::DefaultHostArtifactsPath("bin/console_forwarder"),
               "The Console Forwarder binary to use");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_bool(run_e2e_test, true, "Run e2e test after device launches");
 DEFINE_string(e2e_test_binary,
               vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
               "Location of the region end to end test binary");
@@ -205,6 +204,10 @@ DEFINE_string(tombstone_receiver_binary,
               "Binary for the tombstone server");
 DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
              "The vsock port for tombstones");
+DEFINE_int32(keyboard_server_port, GetPerInstanceDefault(5540),
+             "The port on which the vsock keyboard server should listen");
+DEFINE_int32(touch_server_port, GetPerInstanceDefault(5640),
+             "The port on which the vsock touch server should listen");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -399,9 +402,6 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.add_kernel_cmdline("audit=0");
     }
   }
-  if (FLAGS_run_e2e_test) {
-    tmp_config_obj.add_kernel_cmdline("androidboot.vsoc_e2e_test=1");
-  }
   if (FLAGS_extra_kernel_cmdline.size()) {
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
@@ -500,7 +500,7 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_socket_forward_proxy_binary);
   tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
-  tmp_config_obj.set_run_e2e_test(FLAGS_run_e2e_test);
+  tmp_config_obj.set_run_e2e_test(false);
   tmp_config_obj.set_e2e_test_binary(FLAGS_e2e_test_binary);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
@@ -531,6 +531,15 @@ bool InitializeCuttlefishConfiguration(
     // runtime
   } else {
     tmp_config_obj.add_kernel_cmdline("androidboot.tombstone_transmit=0");
+  }
+
+  tmp_config_obj.set_touch_socket_port(FLAGS_touch_server_port);
+  tmp_config_obj.set_keyboard_socket_port(FLAGS_keyboard_server_port);
+  if (FLAGS_vm_manager == vm_manager::QemuManager::name()) {
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_touch_port=",
+                                             FLAGS_touch_server_port));
+    tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_keyboard_port=",
+                                             FLAGS_keyboard_server_port));
   }
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
@@ -575,9 +584,11 @@ void SetDefaultFlagsForQemu() {
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("hardware_name", "cutf_ivsh",
+  // TODO(b/144111429): Consolidate to one hardware name
+  SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatSerialMode,
+  // TODO(b/144119457) Use the serial port.
+  SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
@@ -593,9 +604,8 @@ void SetDefaultFlagsForCrosvm() {
   SetCommandLineOptionWithMode("x_display",
                                getenv("DISPLAY"),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  // TODO(b/144111429): Consolidate to one hardware name
   SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("run_e2e_test", "false",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
