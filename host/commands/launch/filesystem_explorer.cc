@@ -36,7 +36,8 @@ namespace {
  * This is a shallow exploration that ignores directories, i.e. it only prints
  * any regular files.
  */
-std::set<std::string> ReportFiles(const std::string& directory_path) {
+std::set<std::string> ReportFiles(const std::string& directory_path,
+                                  const std::string& suffix = "") {
   // TODO(schuffelen): Put this in a common library.
   DIR* directory = opendir(directory_path.c_str());
   if (!directory) {
@@ -51,7 +52,12 @@ std::set<std::string> ReportFiles(const std::string& directory_path) {
     if (entry->d_type == DT_DIR) {
       continue;
     }
-    found_files.insert(directory_path + "/" + std::string(entry->d_name));
+    std::string full_path = directory_path + "/" + std::string(entry->d_name);
+    if (suffix != "" && full_path.compare(full_path.length() - suffix.length(),
+                                          suffix.length(), suffix) != 0) {
+      continue;
+    }
+    found_files.insert(full_path);
   }
   closedir(directory);
   return found_files;
@@ -94,7 +100,7 @@ cvd::FetcherConfig AvailableFilesReport() {
 
   std::string product_out = cvd::StringFromEnv("ANDROID_PRODUCT_OUT", "");
   if (product_out != "") {
-    files.merge(ReportFiles(cvd::AbsolutePath(product_out)));
+    files.merge(ReportFiles(cvd::AbsolutePath(product_out), ".img"));
   }
 
   files.merge(HeuristicFileReport(current_directory));
