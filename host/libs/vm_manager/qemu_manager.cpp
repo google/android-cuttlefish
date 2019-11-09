@@ -110,9 +110,8 @@ bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
   // HALs.
   config->add_kernel_cmdline("androidboot.hardware.gralloc=cutf_ashmem");
   config->add_kernel_cmdline(
-      "androidboot.hardware.hwcomposer=cutf_ivsh_ashmem");
-  config->add_kernel_cmdline(
-      "androidboot.hardware.egl=swiftshader");
+      "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
+  config->add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
   return true;
 }
 

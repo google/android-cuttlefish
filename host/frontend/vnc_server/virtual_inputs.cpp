@@ -19,6 +19,7 @@
 #include <linux/input.h>
 #include <linux/uinput.h>
 
+#include <cstdint>
 #include <mutex>
 #include "keysyms.h"
 
@@ -34,7 +35,18 @@ DEFINE_int32(touch_fd, -1,
 DEFINE_int32(keyboard_fd, -1,
              "A fd for a socket where to accept keyboard connections");
 
+DEFINE_bool(write_virtio_input, false,
+            "Whether to write the virtio_input struct over the socket");
+
 namespace {
+// Necessary to define here as the virtio_input.h header is not available
+// in the host glibc.
+struct virtio_input_event {
+  std::uint16_t type;
+  std::uint16_t code;
+  std::int32_t value;
+};
+
 void AddKeyMappings(std::map<uint32_t, uint16_t>* key_mapping) {
   (*key_mapping)[cvd::xk::AltLeft] = KEY_LEFTALT;
   (*key_mapping)[cvd::xk::ControlLeft] = KEY_LEFTCTRL;
@@ -274,7 +286,7 @@ class SocketVirtualInputs : public VirtualInputs {
     InitInputEvent(&events[0], EV_KEY, keymapping_[key_code], down);
     InitInputEvent(&events[1], EV_SYN, 0, 0);
 
-    SendEvents(keyboard_socket_, events, sizeof(events));
+    SendEvents(keyboard_socket_, events);
   }
 
   void PressPowerButton(bool down) override {
@@ -282,7 +294,7 @@ class SocketVirtualInputs : public VirtualInputs {
     InitInputEvent(&events[0], EV_KEY, KEY_POWER, down);
     InitInputEvent(&events[1], EV_SYN, 0, 0);
 
-    SendEvents(keyboard_socket_, events, sizeof(events));
+    SendEvents(keyboard_socket_, events);
   }
 
   void HandlePointerEvent(bool touch_down, int x, int y) override {
@@ -293,11 +305,12 @@ class SocketVirtualInputs : public VirtualInputs {
     InitInputEvent(&events[2], EV_KEY, BTN_TOUCH, touch_down);
     InitInputEvent(&events[3], EV_SYN, 0, 0);
 
-    SendEvents(touch_socket_, events, sizeof(events));
+    SendEvents(touch_socket_, events);
   }
 
  private:
-  void SendEvents(cvd::SharedFD socket, void* event_buffer, int byte_count) {
+  template<size_t num_events>
+  void SendEvents(cvd::SharedFD socket, struct input_event (&event_buffer)[num_events]) {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (!socket->IsOpen()) {
       // This is unlikely as it would only happen between the start of the vnc
@@ -306,9 +319,25 @@ class SocketVirtualInputs : public VirtualInputs {
       // handle it.
       return;
     }
-    auto ret = socket->Write(event_buffer, byte_count);
-    if (ret < 0) {
-      LOG(ERROR) << "Error sending input event: " << socket->StrError();
+
+    if (FLAGS_write_virtio_input) {
+      struct virtio_input_event virtio_events[num_events];
+      for (size_t i = 0; i < num_events; i++) {
+        virtio_events[i] = (struct virtio_input_event) {
+          .type = event_buffer[i].type,
+          .code = event_buffer[i].code,
+          .value = event_buffer[i].value,
+        };
+      }
+      auto ret = socket->Write(virtio_events, sizeof(virtio_events));
+      if (ret < 0) {
+        LOG(ERROR) << "Error sending input events: " << socket->StrError();
+      }
+    } else {
+      auto ret = socket->Write(event_buffer, sizeof(event_buffer));
+      if (ret < 0) {
+        LOG(ERROR) << "Error sending input events: " << socket->StrError();
+      }
     }
   }
 
@@ -320,6 +349,7 @@ class SocketVirtualInputs : public VirtualInputs {
     auto keyboard_server = cvd::SharedFD::Dup(FLAGS_keyboard_fd);
     close(FLAGS_keyboard_fd);
     FLAGS_keyboard_fd = -1;
+    LOG(INFO) << "Input socket host accepting connections...";
 
     while (1) {
       cvd::SharedFDSet read_set;
@@ -330,9 +360,11 @@ class SocketVirtualInputs : public VirtualInputs {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         if (read_set.IsSet(touch_server)) {
           touch_socket_ = cvd::SharedFD::Accept(*touch_server);
+          LOG(INFO) << "connected to touch";
         }
         if (read_set.IsSet(keyboard_server)) {
           keyboard_socket_ = cvd::SharedFD::Accept(*keyboard_server);
+          LOG(INFO) << "connected to keyboard";
         }
       }
     }
@@ -346,9 +378,5 @@ class SocketVirtualInputs : public VirtualInputs {
 VirtualInputs::VirtualInputs() { AddKeyMappings(&keymapping_); }
 
 VirtualInputs* VirtualInputs::Get() {
-  if (vsoc::CuttlefishConfig::Get()->enable_ivserver()) {
-    return new VSoCVirtualInputs();
-  } else {
-    return new SocketVirtualInputs();
-  }
+  return new SocketVirtualInputs();
 }
