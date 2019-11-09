@@ -31,7 +31,9 @@ DEFINE_string tftp \
 DEFINE_string tftpdir \
   "/tftpboot" "TFTP server directory" "d"
 DEFINE_string version \
-  "1" "Specify which manifest version to use (default: latest)" "v"
+  "2" "Specify which manifest version to use (default: latest)" "v"
+DEFINE_string ethaddr \
+  "" "MAC address of device to DFU (default: all)" "m"
 
 FLAGS_HELP="USAGE: $0 [flags]"
 
@@ -109,6 +111,7 @@ addPathToManifest() {
 createManifest
 addKVToManifest ManifestVersion ${FLAGS_version}
 addKVToManifest TftpServer ${FLAGS_tftp}
+addKVToManifest DFUethaddr ${FLAGS_ethaddr}
 addPathToManifest RootfsImg ${FLAGS_rootfs}
 addPathToManifest UbootEnv ${FLAGS_env}
 addPathToManifest TplSplImg ${FLAGS_loader1}
