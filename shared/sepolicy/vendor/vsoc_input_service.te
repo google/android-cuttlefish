@@ -18,3 +18,5 @@ net_domain(vsoc_input_service)
 get_prop(vsoc_input_service, cuttlefish_config_server_port_prop)
 
 allow vsoc_input_service self:{ socket vsock_socket } create_socket_perms_no_ioctl;
+
+allow vsoc_input_service self:capability net_admin;
