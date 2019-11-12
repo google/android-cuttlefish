@@ -9,7 +9,6 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-#include "common/vsoc/lib/vsoc_memory.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/data_image.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
@@ -274,7 +273,6 @@ bool InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker,
     const cvd::FetcherConfig& fetcher_config) {
   vsoc::CuttlefishConfig tmp_config_obj;
-  auto& memory_layout = *vsoc::VSoCMemoryLayout::Get();
   // Set this first so that calls to PerInstancePath below are correct
   tmp_config_obj.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
@@ -437,7 +435,7 @@ bool InitializeCuttlefishConfiguration(
       tmp_config_obj.PerInstanceInternalPath("ivshmem_socket_qemu"));
   tmp_config_obj.set_ivshmem_client_socket_path(
       tmp_config_obj.PerInstanceInternalPath("ivshmem_socket_client"));
-  tmp_config_obj.set_ivshmem_vector_count(memory_layout.GetRegions().size());
+  tmp_config_obj.set_ivshmem_vector_count(0);
 
   if (tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
     tmp_config_obj.set_usb_v1_socket_name(
