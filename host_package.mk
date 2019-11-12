@@ -52,17 +52,12 @@ cvd_host_executables := \
 
 cvd_host_tests := \
     auto_free_buffer_test \
-    circqueue_test \
     cuttlefish_thread_test \
-    hald_client_test \
-    lock_test \
     monotonic_time_test \
-    vsoc_graphics_test \
     cuttlefish_net_tests \
 
 cvd_host_shared_libraries := \
     libbase.so \
-    vsoc_lib.so \
     libcuttlefish_fs.so \
     cuttlefish_auto_resources.so \
     libcuttlefish_strings.so \
