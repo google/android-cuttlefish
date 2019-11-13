@@ -170,3 +170,6 @@
     {RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4, radio_1_5::setAllowedCarriersResponse4},
     {RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4, radio_1_5::getAllowedCarriersResponse4},
     {RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5, radio_1_5::setSignalStrengthReportingCriteriaResponse_1_5},
+    {RIL_REQUEST_ENABLE_UICC_APPLICATIONS, radio_1_5::enableUiccApplicationsResponse},
+    {RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED, radio_1_5::areUiccApplicationsEnabledResponse},
+    {RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT, radio_1_5::canToggleUiccApplicationsEnablementResponse},

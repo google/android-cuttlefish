@@ -536,6 +536,9 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
     Return<void> setSignalStrengthReportingCriteria_1_5(int32_t serial,
             const ::android::hardware::radio::V1_5::SignalThresholdInfo& signalThresholdInfo,
             const ::android::hardware::radio::V1_5::AccessNetwork accessNetwork);
+    Return<void> enableUiccApplications(int32_t serial, bool detach);
+    Return<void> areUiccApplicationsEnabled(int32_t serial);
+    Return<void> canToggleUiccApplicationsEnablement(int32_t serial);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3492,6 +3495,32 @@ Return<void> RadioImpl_1_5::getSignalStrength_1_4(int32_t serial) {
     return Void();
 }
 
+// radio::V1_5::IRadio methods:
+Return<void> RadioImpl_1_5::enableUiccApplications(int32_t serial, bool enable) {
+#if VDBG
+    RLOGD("enableUiccApplications: serial %d enable %d", serial, enable);
+#endif
+    dispatchInts(serial, mSlotId, RIL_REQUEST_ENABLE_UICC_APPLICATIONS, 1, BOOL_TO_INT(enable));
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::areUiccApplicationsEnabled(int32_t serial) {
+#if VDBG
+    RLOGD("areUiccApplicationsEnabled: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED);
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::canToggleUiccApplicationsEnablement(int32_t serial) {
+#if VDBG
+    RLOGD("canToggleUiccApplicationsEnablement: serial %d.", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT);
+    return Void();
+}
+
+// OEM hook methods:
 Return<void> OemHookImpl::setResponseFunctions(
         const ::android::sp<IOemHookResponse>& oemHookResponseParam,
         const ::android::sp<IOemHookIndication>& oemHookIndicationParam) {
@@ -7690,6 +7719,77 @@ int radio_1_5::setSignalStrengthReportingCriteriaResponse_1_5(int slotId, int re
                 responseInfo);
         radioService[slotId]->checkReturnStatus(retStatus);
     }
+    return 0;
+}
+
+int radio_1_5::enableUiccApplicationsResponse(int slotId, int responseType, int serial,
+                                    RIL_Errno e, void* /* response */, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_5->enableUiccApplicationsResponse(
+            responseInfo);
+    radioService[slotId]->checkReturnStatus(retStatus);
+    return 0;
+}
+
+int radio_1_5::areUiccApplicationsEnabledResponse(int slotId, int responseType, int serial,
+                                        RIL_Errno e, void* response, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    bool enable = false;
+    if (response == NULL || responseLen != sizeof(bool)) {
+        RLOGE("isSimDetachedFromNetwork Invalid response.");
+    } else {
+        enable = (*((bool *) response));
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_5->areUiccApplicationsEnabledResponse(
+            responseInfo, enable);
+    radioService[slotId]->checkReturnStatus(retStatus);
+    return 0;
+}
+
+int radio_1_5::canToggleUiccApplicationsEnablementResponse(int slotId, int responseType,
+                                                       int serial, RIL_Errno e,
+                                                       void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_5->canToggleUiccApplicationsEnablementResponse(
+            responseInfo, true);
+    radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
 
