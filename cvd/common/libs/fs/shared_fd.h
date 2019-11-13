@@ -33,6 +33,7 @@
 #include <sys/un.h>
 
 #include <memory>
+#include <sstream>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -515,7 +516,9 @@ class FileInstance {
     // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
     // flag
     TEMP_FAILURE_RETRY(fcntl(fd, F_SETFD, FD_CLOEXEC));
-    identity_.PrintF("fd=%d @%p", fd, this);
+    std::stringstream identity;
+    identity << "fd=" << fd << " @" << this;
+    identity_ = identity.str();
   }
 
   FileInstance* Accept(struct sockaddr* addr, socklen_t* addrlen) const {
@@ -529,7 +532,7 @@ class FileInstance {
 
   int fd_;
   int errno_;
-  AutoFreeBuffer identity_;
+  std::string identity_;
   char strerror_buf_[160];
 };
 

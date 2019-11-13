@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <algorithm>
+#include <vector>
 
 #include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/glog/logging.h"
@@ -57,8 +58,7 @@ void CheckMarked(fd_set* in_out_mask, SharedFDSet* in_out_set) {
 namespace cvd {
 
 bool FileInstance::CopyFrom(FileInstance& in) {
-  AutoFreeBuffer buffer;
-  buffer.Resize(8192);
+  std::vector<char> buffer(8192);
   while (true) {
     ssize_t num_read = in.Read(buffer.data(), buffer.size());
     if (!num_read) {
@@ -78,8 +78,7 @@ bool FileInstance::CopyFrom(FileInstance& in) {
 }
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
-  AutoFreeBuffer buffer;
-  buffer.Resize(8192);
+  std::vector<char> buffer(8192);
   while (length > 0) {
     ssize_t num_read = in.Read(buffer.data(), std::min(buffer.size(), length));
     length -= num_read;
@@ -95,30 +94,34 @@ bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
 }
 
 void FileInstance::Close() {
-  AutoFreeBuffer message;
+  std::stringstream message;
   if (fd_ == -1) {
     errno_ = EBADF;
   } else if (close(fd_) == -1) {
     errno_ = errno;
     if (identity_.size()) {
-      message.PrintF("%s: %s failed (%s)", __FUNCTION__, identity_.data(),
-                     StrError());
-      Log(message.data());
+      message << __FUNCTION__ << ": " << identity_ << " failed (" << StrError() << ")";
+      std::string message_str = message.str();
+      Log(message_str.c_str());
     }
   } else {
     if (identity_.size()) {
-      message.PrintF("%s: %s succeeded", __FUNCTION__, identity_.data());
-      Log(message.data());
+      message << __FUNCTION__ << ": " << identity_ << "succeeded";
+      std::string message_str = message.str();
+      Log(message_str.c_str());
     }
   }
   fd_ = -1;
 }
 
 void FileInstance::Identify(const char* identity) {
-  identity_.PrintF("fd=%d @%p is %s", fd_, this, identity);
-  AutoFreeBuffer message;
-  message.PrintF("%s: %s", __FUNCTION__, identity_.data());
-  Log(message.data());
+  std::stringstream identity_stream;
+  identity_stream << "fd=" << fd_ << " @" << this << " is " << identity;
+  identity_ = identity_stream.str();
+  std::stringstream message;
+  message << __FUNCTION__ << ": " << identity_;
+  std::string message_str = message.str();
+  Log(message_str.c_str());
 }
 
 bool FileInstance::IsSet(fd_set* in) const {
