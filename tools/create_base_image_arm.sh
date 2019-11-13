@@ -203,15 +203,17 @@ if dhcp ${scriptaddr} manifest.txt; then
 	setenv OldSha ${Sha}
 	setenv Sha
 	env import -t ${scriptaddr} 0x8000 ManifestVersion
+	echo "Manifest version $ManifestVersion";
 	if test "$ManifestVersion" = "1"; then
 		run manifest1
+	elif test "$ManifestVersion" = "2"; then
+		run manifest2
 	else
 		run manifestX
 	fi
 fi'
 setenv manifestX 'echo "***** ERROR: Unknown manifest version! *****";'
 setenv manifest1 '
-echo "Manifest version 1";
 env import -t ${scriptaddr} 0x8000
 if test "$Sha" != "$OldSha"; then
 	setenv serverip ${TftpServer}
@@ -227,6 +229,27 @@ if test "$Sha" != "$OldSha"; then
 	mmc write ${scriptaddr} 0x1fc0 0x40
 else
 	echo "Already have ${Sha}. Booting..."
+fi'
+setenv manifest2 '
+env import -t ${scriptaddr} 0x8000
+if test "$DFUethaddr" = "$ethaddr" || test "$DFUethaddr" = ""; then
+	if test "$Sha" != "$OldSha"; then
+		setenv serverip ${TftpServer}
+		setenv loadaddr 0x00200000
+		mmc dev 0 0;
+		file=$TplSplImg; offset=0x40; size=0x1f80; run tftpget1; setenv TplSplImg
+		file=$UbootItb;  offset=0x4000; size=0x2000; run tftpget1; setenv UbootItb
+		file=$TrustImg; offset=0x6000; size=0x2000; run tftpget1; setenv TrustImg
+		file=$RootfsImg; offset=0x8000; size=0; run tftpget1; setenv RootfsImg
+		file=$UbootEnv; offset=0x1fc0; size=0x40; run tftpget1; setenv UbootEnv
+		mw.b ${scriptaddr} 0 0x8000
+		env export -b ${scriptaddr} 0x8000
+		mmc write ${scriptaddr} 0x1fc0 0x40
+	else
+		echo "Already have ${Sha}. Booting..."
+	fi
+else
+	echo "Update ${Sha} isn't for me. Booting..."
 fi'
 setenv tftpget1 "
 mw.b ${loadaddr} 0 0x400000
