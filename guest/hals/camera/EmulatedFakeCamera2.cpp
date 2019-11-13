@@ -1441,12 +1441,12 @@ status_t EmulatedFakeCamera2::ReadoutThread::collectStatisticsMetadata(
   // To simulate some kind of real detection going on, we jitter the rectangles
   // on each frame by a few pixels in each dimension.
   for (size_t i = 0; i < numFaces * 4; i++) {
-    rects[i] += (int32_t)(((float)rand() / RAND_MAX) * 6 - 3);
+    rects[i] += (int32_t)(((float)rand() / (float)RAND_MAX) * 6 - 3);
   }
   // The confidence scores (0-100) are similarly jittered.
   uint8_t scores[numFaces] = {85, 95};
   for (size_t i = 0; i < numFaces; i++) {
-    scores[i] += (int32_t)(((float)rand() / RAND_MAX) * 10 - 5);
+    scores[i] += (int32_t)(((float)rand() / (float)RAND_MAX) * 10 - 5);
   }
 
   res = add_camera_metadata_entry(frame, ANDROID_STATISTICS_FACE_RECTANGLES,
@@ -1485,7 +1485,7 @@ status_t EmulatedFakeCamera2::ReadoutThread::collectStatisticsMetadata(
   };
   // Jitter these a bit less than the rects
   for (size_t i = 0; i < numFaces * 6; i++) {
-    features[i] += (int32_t)(((float)rand() / RAND_MAX) * 4 - 2);
+    features[i] += (int32_t)(((float)rand() / (float)RAND_MAX) * 4 - 2);
   }
   // These are unique IDs that are used to identify each face while it's
   // visible to the detector (if a face went away and came back, it'd get a
