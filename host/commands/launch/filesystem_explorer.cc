@@ -42,7 +42,7 @@ cvd::FetcherConfig AvailableFilesReport() {
       cvd::StringFromEnv("ANDROID_HOST_OUT",
                          cvd::StringFromEnv("HOME", current_directory));
   std::string psuedo_fetcher_config =
-      psuedo_fetcher_dir + "/launcher_psuedo_fetcher_config.json";
+      psuedo_fetcher_dir + "/launcher_pseudo_fetcher_config.json";
   files.insert(psuedo_fetcher_config);
 
   cvd::FetcherConfig config;
