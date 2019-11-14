@@ -33,54 +33,6 @@ char (&ArraySizeHelper(const T (&array)[N]))[N];
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
 // Automatically close a file descriptor
-class AutoCloseFILE {
- public:
-  explicit AutoCloseFILE(FILE *f) : f_(f) { }
-  virtual ~AutoCloseFILE() {
-    if (f_) {
-      (void)::fclose(f_);
-      f_ = NULL;
-    }
-  }
-
-  operator FILE*() const {
-    return f_;
-  }
-
-  bool CopyFrom(const AutoCloseFILE& in);
-
-  bool IsError() const {
-    return f_ == NULL;
-  }
-
-  bool IsEOF() const {
-    return IsError() || feof(f_);
-  }
-
-  bool IsOpen() const {
-    return f_ != NULL;
-  }
-
-  // Close the underlying file descriptor, returning a status to give the caller
-  // the chance to act on failure to close.
-  // Returns true on success.
-  bool close() {
-    bool rval = true;
-    if (f_) {
-      rval = !::fclose(f_);
-      f_ = NULL;
-    }
-    return rval;
-  }
-
- private:
-  AutoCloseFILE& operator=(const AutoCloseFILE & o);
-  explicit AutoCloseFILE(const AutoCloseFILE &);
-
-  FILE* f_;
-};
-
-// Automatically close a file descriptor
 class AutoCloseFileDescriptor {
  public:
   explicit AutoCloseFileDescriptor(int fd) : fd_(fd) { }

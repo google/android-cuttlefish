@@ -19,29 +19,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-bool AutoCloseFILE::CopyFrom(const AutoCloseFILE& in) {
-  char buffer[8192];
-  while (!in.IsEOF()) {
-    size_t num_read = fread(buffer, 1, sizeof(buffer), in);
-    if (!num_read) {
-      if (in.IsEOF()) {
-        return true;
-      }
-      printf("%s: unable to fread %s:%d (%s)\n",
-             __FUNCTION__, __FILE__, __LINE__, strerror(errno));
-      return false;
-    }
-    size_t num_written = fwrite(buffer, 1, num_read, *this);
-    if (num_written != num_read) {
-      printf("%s: unable to fwrite, %zu != %zu %s:%d (%s)\n",
-             __FUNCTION__, num_read, num_written, __FILE__, __LINE__,
-             strerror(errno));
-      return false;
-    }
-  }
-  return true;
-}
-
 AutoFreeBuffer::~AutoFreeBuffer() {
   if (data_) free(data_);
 }
