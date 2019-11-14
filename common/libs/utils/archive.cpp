@@ -19,9 +19,9 @@
 #include <string>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 
-#include "common/libs/strings/str_split.h"
 #include "common/libs/utils/subprocess.h"
 
 namespace cvd {
@@ -43,7 +43,7 @@ std::vector<std::string> Archive::Contents() {
     LOG(ERROR) << "`bsdtar -tf \"" << file << "\"` returned " << bsdtar_ret;
   }
   return bsdtar_ret == 0
-      ? cvd::StrSplit(bsdtar_output, '\n')
+      ? android::base::Split(bsdtar_output, "\n")
       : std::vector<std::string>();
 }
 
