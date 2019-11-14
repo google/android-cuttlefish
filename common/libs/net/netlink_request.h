@@ -23,8 +23,6 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/auto_resources/auto_resources.h"
-
 namespace cvd {
 // Abstraction of Network link request.
 // Used to supply kernel with information about which interface needs to be
@@ -100,7 +98,7 @@ class NetlinkRequest {
   nlattr* AppendTag(uint16_t type, const void* data, uint16_t length);
 
   std::vector<std::pair<nlattr*, int32_t>> lists_;
-  AutoFreeBuffer request_;
+  std::vector<char> request_;
   nlmsghdr* header_;
 
   NetlinkRequest(const NetlinkRequest&) = delete;
