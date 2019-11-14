@@ -207,17 +207,4 @@ class AutoFreeBuffer {
   AutoFreeBuffer& operator=(const AutoFreeBuffer&);
   explicit AutoFreeBuffer(const AutoFreeBuffer&);
 };
-
-class AutoUMask {
- public:
-  explicit AutoUMask(mode_t mask) {
-      prev_umask = umask(mask);
-  }
-
-  ~AutoUMask() {
-    umask(prev_umask);
-  }
- private:
-  mode_t prev_umask;
-};
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_AUTO_RESOURCES_AUTO_RESOURCES_H_
