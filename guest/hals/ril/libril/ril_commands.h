@@ -169,3 +169,4 @@
     {RIL_REQUEST_ENABLE_MODEM, radio_1_5::enableModemResponse},
     {RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4, radio_1_5::setAllowedCarriersResponse4},
     {RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4, radio_1_5::getAllowedCarriersResponse4},
+    {RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5, radio_1_5::setSignalStrengthReportingCriteriaResponse_1_5},

@@ -531,6 +531,11 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
             ::android::hardware::radio::V1_4::SimLockMultiSimPolicy multiSimPolicy);
     Return<void> getAllowedCarriers_1_4(int32_t serial);
     Return<void> getSignalStrength_1_4(int32_t serial);
+
+    // Methods from ::android::hardware::radio::V1_5::IRadio follow.
+    Return<void> setSignalStrengthReportingCriteria_1_5(int32_t serial,
+            const ::android::hardware::radio::V1_5::SignalThresholdInfo& signalThresholdInfo,
+            const ::android::hardware::radio::V1_5::AccessNetwork accessNetwork);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3200,6 +3205,16 @@ Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria(int32_t /* serial
         int32_t /* hysteresisMs */, int32_t /* hysteresisDb */,
         const hidl_vec<int32_t>& /* thresholdsDbm */,
         ::android::hardware::radio::V1_2::AccessNetwork /* accessNetwork */) {
+    // TODO implement
+#if VDBG
+    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+#endif
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria_1_5(int32_t /* serial */,
+        const ::android::hardware::radio::V1_5::SignalThresholdInfo& /* signalThresholdInfo */,
+        const ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */) {
     // TODO implement
 #if VDBG
     RLOGE("[%04d]< %s", serial, "Method is not implemented");
@@ -7656,6 +7671,25 @@ int radio_1_5::setSystemSelectionChannelsResponse(int slotId, int responseType, 
             radioService[slotId]->mRadioResponseV1_3->setSystemSelectionChannelsResponse(
             responseInfo);
     radioService[slotId]->checkReturnStatus(retStatus);
+    return 0;
+}
+
+int radio_1_5::setSignalStrengthReportingCriteriaResponse_1_5(int slotId, int responseType,
+                                        int serial, RIL_Errno e, void* /* response */,
+                                        size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
+        Return<void> retStatus =
+                radioService[slotId]->mRadioResponseV1_5->setSignalStrengthReportingCriteriaResponse_1_5(
+                responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    }
     return 0;
 }
 
