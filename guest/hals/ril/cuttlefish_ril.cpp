@@ -2229,6 +2229,13 @@ static void request_get_modem_stack_status(int /*request*/, RIL_Token t) {
   return;
 }
 
+static void request_set_signal_strength_reporting_criteria_1_5(int /*request*/, void* /*data*/,
+                                                               size_t /*datalen*/, RIL_Token t) {
+  ALOGV("request_set_signal_strength_reporting_criteria_1_5 - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
 static void request_enable_modem(int /*request*/, RIL_Token t) {
   ALOGV("Enabling modem - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2472,6 +2479,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_START_NETWORK_SCAN4:
       request_start_network_scan4(t);
+      break;
+    case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5:
+      request_set_signal_strength_reporting_criteria_1_5(request, data, datalen, t);
       break;
     case RIL_REQUEST_GET_MODEM_STACK_STATUS:
       request_get_modem_stack_status(request, t);
