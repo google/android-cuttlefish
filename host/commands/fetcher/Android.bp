@@ -31,7 +31,6 @@ cc_binary_host {
         "libbase",
         "libcuttlefish_host_config",
         "libcuttlefish_fs",
-        "libcuttlefish_strings",
         "libcuttlefish_utils",
         "libcurl",
         "libcrypto",
