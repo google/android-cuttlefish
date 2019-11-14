@@ -32,44 +32,6 @@ char (&ArraySizeHelper(const T (&array)[N]))[N];
 
 #define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
-// Automatically close a file descriptor
-class AutoCloseFileDescriptor {
- public:
-  explicit AutoCloseFileDescriptor(int fd) : fd_(fd) { }
-  virtual ~AutoCloseFileDescriptor() {
-    if (fd_ != -1) {
-      (void)::close(fd_);
-      fd_ = -1;
-    }
-  }
-
-  operator int() const {
-    return fd_;
-  }
-
-  bool IsError() const {
-    return fd_ == -1;
-  }
-
-  // Close the underlying file descriptor, returning a status to give the caller
-  // the chance to act on failure to close.
-  // Returns true on success.
-  bool close() {
-    bool rval = true;
-    if (fd_ != -1) {
-      rval = !::close(fd_);
-      fd_ = -1;
-    }
-    return rval;
-  }
-
- private:
-  AutoCloseFileDescriptor& operator=(const AutoCloseFileDescriptor & o);
-  explicit AutoCloseFileDescriptor(const AutoCloseFileDescriptor &);
-
-  int fd_;
-};
-
 // In C++11 this is just std::vector<char>, but Android isn't
 // there yet.
 class AutoFreeBuffer {
