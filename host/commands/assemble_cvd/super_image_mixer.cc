@@ -15,15 +15,17 @@
 
 #include "super_image_mixer.h"
 
+#include <sys/stat.h>
+
+#include <algorithm>
 #include <cstdio>
 #include <functional>
 #include <memory>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 
-#include "ziparchive/zip_archive.h"
-#include "ziparchive/zip_writer.h"
-
+#include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
@@ -49,45 +51,6 @@ std::string TargetFilesZip(const cvd::FetcherConfig& fetcher_config,
   return "";
 }
 
-class ZipArchiveDeleter {
-public:
-  void operator()(ZipArchive* archive) {
-    CloseArchive(archive);
-  }
-};
-
-using ManagedZipArchive = std::unique_ptr<ZipArchive, ZipArchiveDeleter>;
-
-class CFileCloser {
-public:
-  void operator()(FILE* file) {
-    fclose(file);
-  }
-};
-
-using ManagedCFile = std::unique_ptr<FILE, CFileCloser>;
-
-ManagedZipArchive OpenZipArchive(const std::string& path) {
-  ZipArchive* ptr;
-  int status = OpenArchive(path.c_str(), &ptr);
-  if (status != 0) {
-    LOG(ERROR) << "Could not open archive \"" << path << "\": " << status;
-    return {};
-  }
-  return ManagedZipArchive(ptr);
-}
-
-ManagedCFile OpenFile(const std::string& path, const std::string& mode) {
-  FILE* ptr = fopen(path.c_str(), mode.c_str());
-  if (ptr == nullptr) {
-    int error_num = errno;
-    LOG(ERROR) << "Could not open \"" << path << "\". Error was "
-               << strerror(error_num);
-    return {};
-  }
-  return ManagedCFile(ptr);
-}
-
 const std::string kMiscInfoPath = "META/misc_info.txt";
 const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/boot.img",
@@ -97,84 +60,65 @@ const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/vendor.img",
 };
 
-bool CopyZipFileContents(const uint8_t* buf, size_t buf_size, void* cookie) {
-  ZipWriter* out_writer = (ZipWriter*) cookie;
-  int32_t status = out_writer->WriteBytes(buf, buf_size);
-  if (status != 0) {
-    LOG(ERROR) << "Could not write zip file contents, error code " << status;
-    return false;
-  }
-  return true;
-}
-
 bool CombineTargetZipFiles(const std::string& default_target_zip,
                            const std::string& system_target_zip,
                            const std::string& output_path) {
-  auto default_target = OpenZipArchive(default_target_zip);
-  if (!default_target) {
+  cvd::Archive default_target_archive(default_target_zip);
+  cvd::Archive system_target_archive(system_target_zip);
+
+  auto default_target_contents = default_target_archive.Contents();
+  if (default_target_contents.size() == 0) {
     LOG(ERROR) << "Could not open " << default_target_zip;
     return false;
   }
-  auto system_target = OpenZipArchive(system_target_zip);
-  if (!system_target) {
+  auto system_target_contents = system_target_archive.Contents();
+  if (system_target_contents.size() == 0) {
     LOG(ERROR) << "Could not open " << system_target_zip;
     return false;
   }
-  auto out_file = OpenFile(output_path, "wb");
-  if (!out_file) {
-    LOG(ERROR) << "Could not open " << output_path;
+  if (mkdir(output_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+    LOG(ERROR) << "Could not create directory " << output_path;
     return false;
   }
-  ZipWriter out_writer{out_file.get()};
 
-  ZipEntry entry;
-
-  if (FindEntry(default_target.get(), kMiscInfoPath, &entry) != 0) {
+  if (std::find(default_target_contents.begin(), default_target_contents.end(), kMiscInfoPath)
+      == default_target_contents.end()) {
     LOG(ERROR) << "Default target files zip does not have " << kMiscInfoPath;
     return false;
   }
-  out_writer.StartEntry(kMiscInfoPath, 0);
-  ProcessZipEntryContents(
-      default_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
-  out_writer.FinishEntry();
-
-  void* iteration_cookie;
-  std::string name;
-
-  StartIteration(default_target.get(), &iteration_cookie, "IMAGES/", ".img");
-  for (int status = 0; status != -1; status = Next(iteration_cookie, &entry, &name)) {
-    if (name == "") {
-      continue;
-    }
-    LOG(INFO) << "Name is \"" << name << "\"";
-    if (kDefaultTargetImages.count(name) == 0) {
-      continue;
-    }
-    LOG(INFO) << "Writing " << name;
-    out_writer.StartEntry(name, 0);
-    ProcessZipEntryContents(
-        default_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
-    out_writer.FinishEntry();
-  }
-  EndIteration(iteration_cookie);
-
-  StartIteration(system_target.get(), &iteration_cookie, "IMAGES/", ".img");
-  for (int status = 0; status != -1; status = Next(iteration_cookie, &entry, &name)) {
-    if (kDefaultTargetImages.count(name) > 0) {
-      continue;
-    }
-    LOG(INFO) << "Writing " << name;
-    out_writer.StartEntry(name, 0);
-    ProcessZipEntryContents(
-        system_target.get(), &entry, CopyZipFileContents, (void*) &out_writer);
-    out_writer.FinishEntry();
-  }
-  EndIteration(iteration_cookie);
-
-  int success = out_writer.Finish();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to write combined image zip archive: " << success;
+  if (!default_target_archive.ExtractFiles({kMiscInfoPath}, output_path)) {
+    LOG(ERROR) << "Failed to write misc info to output directory";
     return false;
+  }
+
+  for (const auto& name : default_target_contents) {
+    if (!android::base::StartsWith(name, "IMAGES/")) {
+      continue;
+    } else if (!android::base::EndsWith(name, ".img")) {
+      continue;
+    } else if (kDefaultTargetImages.count(name) == 0) {
+      continue;
+    }
+    LOG(INFO) << "Writing " << name;
+    if (!default_target_archive.ExtractFiles({name}, output_path)) {
+      LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
+      return false;
+    }
+  }
+
+  for (const auto& name : system_target_contents) {
+    if (!android::base::StartsWith(name, "IMAGES/")) {
+      continue;
+    } else if (!android::base::EndsWith(name, ".img")) {
+      continue;
+    } else if (kDefaultTargetImages.count(name) > 0) {
+      continue;
+    }
+    LOG(INFO) << "Writing " << name;
+    if (!system_target_archive.ExtractFiles({name}, output_path)) {
+      LOG(ERROR) << "Failed to extract " << name << " from the system target zip";
+      return false;
+    }
   }
 
   return true;
@@ -235,14 +179,14 @@ bool RebuildSuperImage(const cvd::FetcherConfig& fetcher_config,
     LOG(ERROR) << "Unable to find system target zip file.";
     return false;
   }
-  std::string combined_target_zip = config.PerInstancePath("target_combined.zip");
+  std::string combined_target_path = config.PerInstanceInternalPath("target_combined");
   // TODO(schuffelen): Use otatools/bin/merge_target_files
   if (!CombineTargetZipFiles(default_target_zip, system_target_zip,
-                             combined_target_zip)) {
+                             combined_target_path)) {
     LOG(ERROR) << "Could not combine target zip files.";
     return false;
   }
-  bool success = BuildSuperImage(combined_target_zip, output_path);
+  bool success = BuildSuperImage(combined_target_path, output_path);
   if (!success) {
     LOG(ERROR) << "Could not write the final output super image.";
   }
