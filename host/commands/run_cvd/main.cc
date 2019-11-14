@@ -472,8 +472,6 @@ int main(int argc, char** argv) {
 
   // Start other host processes
   LaunchSocketVsockProxyIfEnabled(&process_monitor, *config);
-  LaunchStreamAudioIfEnabled(*config, &process_monitor,
-                             GetOnSubprocessExitCallback(*config));
   LaunchAdbConnectorIfEnabled(&process_monitor, *config, adbd_events_pipe);
 
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
