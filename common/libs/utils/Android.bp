@@ -31,7 +31,6 @@ cc_library {
         shared_libs: [
             "libbase",
             "libcuttlefish_fs",
-            "libcuttlefish_strings",
             "cuttlefish_auto_resources",
         ],
     },
@@ -39,7 +38,6 @@ cc_library {
         static_libs: [
             "libbase",
             "libcuttlefish_fs",
-            "libcuttlefish_strings",
             "cuttlefish_auto_resources",
         ],
     },
