@@ -131,9 +131,11 @@ service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.
 
 on early-boot && property:ro.boot.vsock_touch_port=*
    enable vsoc_input_service
+   start vsoc_input_service
 
 on early-boot && property:ro.boot.vsock_keyboard_port=*
    enable vsoc_input_service
+   start vsoc_input_service
 
 service wpa_supplicant /vendor/bin/hw/wpa_supplicant -g@android:wpa_wlan0
     interface android.hardware.wifi.supplicant@1.0::ISupplicant default
