@@ -563,9 +563,7 @@ std::string CuttlefishConfig::cuttlefish_env_path() const {
 
 static AdbMode stringToAdbMode(std::string mode) {
   std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
-  if (mode == "tunnel") {
-    return AdbMode::Tunnel;
-  } else if (mode == "vsock_tunnel") {
+  if (mode == "vsock_tunnel") {
     return AdbMode::VsockTunnel;
   } else if (mode == "vsock_half_tunnel") {
     return AdbMode::VsockHalfTunnel;
@@ -612,11 +610,10 @@ void CuttlefishConfig::set_adb_ip_and_port(const std::string& ip_port) {
 
 std::string CuttlefishConfig::adb_device_name() const {
   // TODO(schuffelen): Deal with duplication between here and launch.cc
-  bool tunnelMode = adb_mode().count(AdbMode::Tunnel) > 0;
   bool vsockTunnel = adb_mode().count(AdbMode::VsockTunnel) > 0;
   bool vsockHalfProxy = adb_mode().count(AdbMode::VsockHalfTunnel) > 0;
   bool nativeVsock = adb_mode().count(AdbMode::NativeVsock) > 0;
-  if (tunnelMode || vsockTunnel || vsockHalfProxy || nativeVsock) {
+  if (vsockTunnel || vsockHalfProxy || nativeVsock) {
     return adb_ip_and_port();
   } else if (adb_mode().count(AdbMode::Usb) > 0) {
     return serial_number();
