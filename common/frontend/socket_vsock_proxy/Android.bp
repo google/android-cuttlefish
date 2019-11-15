@@ -23,7 +23,6 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libcuttlefish_strings",
         "liblog",
     ],
     static_libs: [
