@@ -15,11 +15,11 @@
 
 #include <iostream>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/strings/str_split.h"
 #include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/fetcher_config.h"
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
       LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
     }
   }
-  std::vector<std::string> input_files = cvd::StrSplit(input_files_str, '\n');
+  std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
   auto config = InitFilesystemAndCreateConfig(&argc, &argv, FindFetcherConfig(input_files));
 

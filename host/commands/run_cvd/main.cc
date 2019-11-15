@@ -35,13 +35,13 @@
 #include <thread>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
-#include "common/libs/strings/str_split.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
@@ -351,7 +351,7 @@ int main(int argc, char** argv) {
       LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
     }
   }
-  std::vector<std::string> input_files = cvd::StrSplit(input_files_str, '\n');
+  std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
   bool found_config = false;
   for (const auto& file : input_files) {
     if (file.find("cuttlefish_config.json") != std::string::npos) {

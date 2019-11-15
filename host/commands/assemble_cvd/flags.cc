@@ -3,10 +3,10 @@
 #include <iostream>
 #include <fstream>
 
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-#include "common/libs/strings/str_split.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/vsoc/lib/vsoc_memory.h"
@@ -316,7 +316,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_num_screen_buffers(FLAGS_num_screen_buffers);
   tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
-  std::vector<std::string> adb = cvd::StrSplit(FLAGS_adb_mode, ',');
+  std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
   tmp_config_obj.set_host_port(GetHostPort());
   tmp_config_obj.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
