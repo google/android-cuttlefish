@@ -28,7 +28,6 @@ cc_binary_host {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
-        "libcuttlefish_strings",
         "liblog",
     ],
     defaults: ["cuttlefish_host_only"],

@@ -28,7 +28,6 @@ cc_binary_host {
     shared_libs: [
         "vsoc_lib",
         "libcuttlefish_fs",
-        "libcuttlefish_strings",
         "libcuttlefish_utils",
         "cuttlefish_auto_resources",
         "libbase",
