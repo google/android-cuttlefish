@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-ifneq ($(filter $(TARGET_DEVICE), vsoc_arm vsoc_arm64 vsoc_x86 vsoc_x86_64 vsoc_x86_noapex),)
+ifneq ($(filter $(TARGET_BOARD_PLATFORM), vsoc_arm64 vsoc_x86 vsoc_x86_64),)
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
