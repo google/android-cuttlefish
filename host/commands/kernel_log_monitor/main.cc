@@ -20,12 +20,12 @@
 #include <string>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <common/libs/fs/shared_fd.h>
 #include <common/libs/fs/shared_select.h>
-#include <common/libs/strings/str_split.h>
 #include <host/libs/config/cuttlefish_config.h>
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
@@ -47,7 +47,7 @@ std::vector<cvd::SharedFD> SubscribersFromCmdline() {
     }
   }
 
-  auto fds = cvd::StrSplit(FLAGS_subscriber_fds, ',');
+  auto fds = android::base::Split(FLAGS_subscriber_fds, ",");
   std::vector<cvd::SharedFD> shared_fds;
   for (auto& fd_str: fds) {
     auto fd = std::stoi(fd_str);
