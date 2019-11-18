@@ -1,0 +1,127 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+
+<!-- Copyright (C) 2019 Google Inc.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+
+<!--
+    This file contains permissions to be granted by default. Default
+    permissions are granted to special platform components and to apps
+    that are approved to get default grants. The special components
+    are apps that are expected tto work out-of-the-box as they provide
+    core use cases such as default dialer, default email, etc. These
+    grants are managed by the platform. The apps that are additionally
+    approved for default grants are ones that provide carrier specific
+    functionality, ones legally required at some location, ones providing
+    alternative disclosure and opt-out UI, ones providing highlight features
+    of a dedicated device, etc. This file contains only the latter exceptions.
+    Fixed permissions cannot be controlled by the user and need a special
+    approval. Typically these are to ensure either legally mandated functions
+    or the app is considered a part of the OS.
+-->
+
+<exceptions>
+
+    <!-- This is an example of an exception:
+    <exception
+        package="foo.bar.permission"
+      <permission name="android.permission.READ_CONTACTS" fixed="true"/>
+      <permission name="android.permission.READ_CALENDAR" fixed="false"/>
+    </exception>
+    -->
+
+    <exception
+            package="com.google.android.apps.pixelmigrate">
+        <!-- External storage -->
+        <permission name="android.permission.READ_EXTERNAL_STORAGE" fixed="false"/>
+        <permission name="android.permission.WRITE_EXTERNAL_STORAGE" fixed="false"/>
+        <!-- Contacts -->
+        <permission name="android.permission.READ_CONTACTS" fixed="false"/>
+        <permission name="android.permission.WRITE_CONTACTS" fixed="false"/>
+        <!-- Call logs -->
+        <permission name="android.permission.READ_CALL_LOG" fixed="false"/>
+        <permission name="android.permission.WRITE_CALL_LOG" fixed="false"/>
+        <!-- SMS -->
+        <permission name="android.permission.RECEIVE_SMS" fixed="false"/>
+        <permission name="android.permission.READ_PHONE_NUMBERS" fixed="false"/>
+    </exception>
+
+    <exception
+            package="com.verizon.mips.services">
+        <!-- Call -->
+        <permission name="android.permission.PROCESS_OUTGOING_CALLS" fixed="false"/>
+        <!-- Phone -->
+        <permission name="android.permission.READ_PHONE_STATE" fixed="false"/>
+        <!-- SMS -->
+        <permission name="android.permission.RECEIVE_SMS" fixed="false"/>
+    </exception>
+
+    <exception
+            package="com.google.android.projection.gearhead"
+            sha256-cert-digest="FD:B0:0C:43:DB:DE:8B:51:CB:31:2A:A8:1D:3B:5F:A1:77:13:AD:B9:4B:28:F5:98:D7:7F:8E:B8:9D:AC:EE:DF">
+        <!-- Gearhead legacy -->
+        <permission name="android.permission.ACCESS_FINE_LOCATION" fixed="false"/>
+        <permission name="android.permission.CALL_PHONE" fixed="false"/>
+        <permission name="android.permission.READ_CALL_LOG" fixed="false"/>
+        <permission name="android.permission.READ_CONTACTS" fixed="false"/>
+        <permission name="android.permission.READ_PHONE_STATE" fixed="false"/>
+        <permission name="android.permission.RECEIVE_SMS" fixed="false"/>
+        <permission name="android.permission.RECORD_AUDIO" fixed="false"/>
+        <permission name="android.permission.SEND_SMS" fixed="false"/>
+        <!-- For Top Gear -->
+        <permission name="android.permission.PROCESS_OUTGOING_CALLS" fixed="false"/>
+        <permission name="android.permission.READ_SMS" fixed="false"/>
+        <permission name="android.permission.RECEIVE_MMS" fixed="false"/>
+        <permission name="android.permission.WRITE_CALL_LOG" fixed="false"/>
+        <permission name="android.permission.ACCESS_COARSE_LOCATION" fixed="false"/>
+    </exception>
+
+    <exception package="com.google.android.settings.intelligence">
+        <!-- Calendar -->
+        <permission name="android.permission.READ_CALENDAR" fixed="true"/>
+        <!-- Location -->
+        <permission name="android.permission.ACCESS_FINE_LOCATION" fixed="true"/>
+        <permission name="android.permission.ACCESS_BACKGROUND_LOCATION" fixed="true"/>
+    </exception>
+
+    <exception package="com.google.android.cbrsnetworkmonitor">
+        <!-- Location access to create CBRS geofences-->
+        <permission name="android.permission.ACCESS_FINE_LOCATION" fixed="true"/>
+        <permission name="android.permission.ACCESS_BACKGROUND_LOCATION" fixed="true"/>
+    </exception>
+
+    <exception package="com.google.android.apps.scone">
+        <!-- NLP Location access to determine proximity to country border -->
+        <permission name="android.permission.ACCESS_COARSE_LOCATION" fixed="false"/>
+        <permission name="android.permission.ACCESS_BACKGROUND_LOCATION" fixed="false"/>
+        <!-- Used to call ActivityTransition API for Smart OOS & Smart PNO -->
+        <permission name="android.permission.ACTIVITY_RECOGNITION" fixed="false"/>
+    </exception>
+
+    <exception package="com.google.android.wfcactivation">
+        <!-- SMS -->
+        <permission name="android.permission.RECEIVE_WAP_PUSH" fixed="false"/>
+    </exception>
+    <exception
+        package="com.google.vr.apps.ornament"
+        sha256-cert-digest="4A:9E:3F:3B:C8:D6:0C:E4:D3:CB:E5:A9:C6:6E:EC:11:EF:D0:1C:5F:E9:C7:8D:8C:92:3B:9D:42:48:23:00:13">
+        <!-- Camera -->
+        <permission name="android.permission.CAMERA" fixed="false"/>
+        <!-- Microphone -->
+        <permission name="android.permission.RECORD_AUDIO" fixed="false"/>
+        <!-- Storage -->
+        <permission name="android.permission.READ_EXTERNAL_STORAGE" fixed="false"/>
+        <permission name="android.permission.WRITE_EXTERNAL_STORAGE" fixed="false"/>
+    </exception>
+</exceptions>
