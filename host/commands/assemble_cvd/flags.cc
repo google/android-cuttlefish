@@ -323,29 +323,17 @@ bool InitializeCuttlefishConfiguration(
 
   auto ramdisk_path = tmp_config_obj.PerInstancePath("ramdisk.img");
   auto vendor_ramdisk_path = tmp_config_obj.PerInstancePath("vendor_ramdisk.img");
-  bool use_ramdisk = boot_image_unpacker.HasRamdiskImage();
-  if (!use_ramdisk) {
-    LOG(INFO) << "No ramdisk present; assuming system-as-root build";
-    ramdisk_path = "";
-    vendor_ramdisk_path = "";
+  if (!boot_image_unpacker.HasRamdiskImage()) {
+    LOG(INFO) << "A ramdisk is required, but the boot image did not have one.";
+    return false;
   }
 
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
 
-  if (use_ramdisk) {
-    if (FLAGS_composite_disk.empty()) {
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
-    } else {
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
-    }
+  if (FLAGS_composite_disk.empty()) {
+    tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
   } else {
-    if (FLAGS_composite_disk.empty()) {
-      tmp_config_obj.add_kernel_cmdline("root=/dev/vda");
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
-    } else {
-      tmp_config_obj.add_kernel_cmdline("root=/dev/vda1");
-      tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
-    }
+    tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
   }
 
   tmp_config_obj.add_kernel_cmdline("init=/init");
