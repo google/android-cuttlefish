@@ -99,6 +99,12 @@ cvd::Subprocess subprocess_impl(
         LOG(ERROR) << "setpgid failed (" << strerror(error) << ")";
       }
     }
+    for (const auto& entry : inherited_fds) {
+      if (fcntl(entry.second, F_SETFD, 0)) {
+        int error_num = errno;
+        LOG(ERROR) << "fcntl failed: " << strerror(error_num);
+      }
+    }
     int rval;
     // If envp is NULL, the current process's environment is used as the
     // environment of the child process. To force an empty emvironment for
@@ -248,8 +254,9 @@ bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   if (inherited_fds_.count(shared_fd)) {
     fd = inherited_fds_[shared_fd];
   } else {
-    fd = shared_fd->UNMANAGED_Dup();
+    fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
     if (fd < 0) {
+      LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
       return false;
     }
     inherited_fds_[shared_fd] = fd;
@@ -268,8 +275,9 @@ bool Command::RedirectStdIO(cvd::Subprocess::StdIOChannel channel,
                << static_cast<int>(channel);
     return false;
   }
-  auto dup_fd = shared_fd->UNMANAGED_Dup();
+  auto dup_fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
   if (dup_fd < 0) {
+    LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
     return false;
   }
   redirects_[channel] = dup_fd;
