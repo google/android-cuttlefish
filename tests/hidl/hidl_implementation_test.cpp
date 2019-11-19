@@ -42,8 +42,6 @@ static std::set<std::string> kKnownMissing = {
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
-    "android.hardware.camera.device@1.0",
-    "android.hardware.camera.device@3.5",
     "android.hardware.camera.provider@2.5",
     "android.hardware.cas@1.2",
     "android.hardware.cas.native@1.0",
@@ -100,6 +98,8 @@ static bool isPackageWhitelist(const FQName& name) {
     static std::vector<std::string> gAospExclude = {
         // packages not implemented now that we never expect to be implemented
         "android.hardware.tests",
+        // packages not registered with hwservicemanager, usually sub-interfaces
+        "android.hardware.camera.device",
     };
     for (const std::string& package : gAospExclude) {
         if (name.inPackage(package)) {
