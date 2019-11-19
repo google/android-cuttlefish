@@ -329,13 +329,6 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
-
-  if (FLAGS_composite_disk.empty()) {
-    tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab");
-  } else {
-    tmp_config_obj.add_kernel_cmdline("androidboot.fstab_name=fstab.composite");
-  }
-
   tmp_config_obj.add_kernel_cmdline("init=/init");
   tmp_config_obj.add_kernel_cmdline(
       concat("androidboot.serialno=", FLAGS_serial_number));
@@ -377,16 +370,7 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
   }
 
-  if (!FLAGS_composite_disk.empty()) {
-    tmp_config_obj.set_virtual_disk_paths({FLAGS_composite_disk});
-  } else {
-    tmp_config_obj.set_virtual_disk_paths({
-      FLAGS_super_image,
-      FLAGS_data_image,
-      FLAGS_cache_image,
-      FLAGS_metadata_image,
-    });
-  }
+  tmp_config_obj.set_virtual_disk_paths({FLAGS_composite_disk});
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
@@ -670,9 +654,6 @@ std::vector<ImagePartition> disk_config() {
 }
 
 bool ShouldCreateCompositeDisk() {
-  if (FLAGS_composite_disk.empty()) {
-    return false;
-  }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
     // The crosvm implementation is very fast to rebuild but also more brittle due to being split
     // into multiple files. The QEMU implementation is slow to build, but completely self-contained
