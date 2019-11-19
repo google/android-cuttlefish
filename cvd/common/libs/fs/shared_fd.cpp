@@ -231,8 +231,9 @@ SharedFD SharedFD::Accept(const FileInstance& listener) {
 }
 
 SharedFD SharedFD::Dup(int unmanaged_fd) {
-  int fd = dup(unmanaged_fd);
-  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
+  int fd = fcntl(unmanaged_fd, F_DUPFD_CLOEXEC, 3);
+  int error_num = errno;
+  return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, error_num)));
 }
 
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
