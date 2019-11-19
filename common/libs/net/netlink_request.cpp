@@ -20,6 +20,7 @@
 #include <net/if.h>
 #include <string.h>
 
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -35,11 +36,10 @@ uint32_t NetlinkRequest::SeqNo() const {
 }
 
 void* NetlinkRequest::AppendRaw(const void* data, size_t length) {
-  size_t original_size = request_.size();
-  request_.resize(original_size + RTA_ALIGN(length), '\0');
-  memcpy(request_.data() + original_size, data, length);
-
-  return reinterpret_cast<void*>(request_.data() + original_size);
+  auto* output = static_cast<char*>(ReserveRaw(length));
+  const auto* input = static_cast<const char*>(data);
+  std::copy(input, input + length, output);
+  return output;
 }
 
 void* NetlinkRequest::ReserveRaw(size_t length) {
