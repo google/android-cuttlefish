@@ -69,19 +69,19 @@ addKVToManifest() {
 		echo "${key}=${value}" >> manifest.txt
 }
 
-addSHAToManifest() {
-	key="SHA"
+addShaToManifest() {
+	key="Sha"
 	cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common"
-	SHA=`git rev-parse HEAD`
+	Sha=`git rev-parse HEAD`
 	cd -
 	cd "${ANDROID_BUILD_TOP}/external/u-boot"
-	SHA="$SHA,`git rev-parse HEAD`"
+	Sha="$Sha,`git rev-parse HEAD`"
 	cd -
 	cd "${ANDROID_BUILD_TOP}/external/arm-trusted-firmware"
-	SHA="$SHA,`git rev-parse HEAD`"
+	Sha="$Sha,`git rev-parse HEAD`"
 	cd -
 
-	addKVToManifest "${key}" "${SHA}"
+	addKVToManifest "${key}" "${Sha}"
 }
 
 addPathToManifest() {
@@ -116,4 +116,4 @@ addPathToManifest RootfsImg ${FLAGS_rootfs}
 addPathToManifest UbootEnv ${FLAGS_env}
 addPathToManifest TplSplImg ${FLAGS_loader1}
 addPathToManifest UbootItb ${FLAGS_loader2}
-addSHAToManifest
+addShaToManifest
