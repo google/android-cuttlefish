@@ -162,20 +162,6 @@ class CuttlefishConfig {
   std::vector<std::string> virtual_disk_paths() const;
   void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
 
-  std::string mempath() const;
-  void set_mempath(const std::string& mempath);
-
-  std::string ivshmem_qemu_socket_path() const;
-  void set_ivshmem_qemu_socket_path(
-      const std::string& ivshmem_qemu_socket_path);
-
-  std::string ivshmem_client_socket_path() const;
-  void set_ivshmem_client_socket_path(
-      const std::string& ivshmem_client_socket_path);
-
-  int ivshmem_vector_count() const;
-  void set_ivshmem_vector_count(int ivshmem_vector_count);
-
   // The name of the socket that will be used to forward access to USB gadget.
   // This is for V1 of the USB bus.
   std::string usb_v1_socket_name() const;
@@ -259,9 +245,6 @@ class CuttlefishConfig {
   void set_console_forwarder_binary(const std::string& crosvm_binary);
   std::string console_forwarder_binary() const;
 
-  void set_ivserver_binary(const std::string& ivserver_binary);
-  std::string ivserver_binary() const;
-
   void set_kernel_log_monitor_binary(
       const std::string& kernel_log_monitor_binary);
   std::string kernel_log_monitor_binary() const;
@@ -341,8 +324,6 @@ class CuttlefishConfig {
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
-  bool enable_ivserver() const;
-
   std::string touch_socket_path() const;
   std::string keyboard_socket_path() const;
 
@@ -369,9 +350,6 @@ int GetInstance();
 // Returns a path where the launhcer puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use
 std::string GetGlobalConfigFileLink();
-
-// Returns the path to the ivserver's client socket.
-std::string GetDomain();
 
 // These functions modify a given base value to make it different accross
 // different instances by appending the instance id in case of strings or adding
