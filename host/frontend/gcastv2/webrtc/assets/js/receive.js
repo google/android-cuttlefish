@@ -429,8 +429,35 @@ function onContinueDrag(e) {
 }
 
 function sendMouseUpdate(down, e) {
-    const x = e.pageX - 7;
-    const y = e.pageY - 46;
+    var x = e.offsetX;
+    var y = e.offsetY;
+
+    const videoWidth = videoElement.videoWidth;
+    const videoHeight = videoElement.videoHeight;
+    const elementWidth = videoElement.width;
+    const elementHeight = videoElement.height;
+
+    // vh*ew > eh*vw? then scale h instead of w
+    const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
+    var elementScaling = 0, videoScaling = 0;
+    if (scaleHeight) {
+        elementScaling = elementHeight;
+        videoScaling = videoHeight;
+    } else {
+        elementScaling = elementWidth;
+        videoScaling = videoWidth;
+    }
+
+    // Substract the offset produced by the difference in aspect ratio if any.
+    if (scaleHeight) {
+        x -= (elementWidth - elementScaling * videoWidth / videoScaling) / 2;
+    } else {
+        y -= (elementHeight - elementScaling * videoHeight / videoScaling) / 2;
+    }
+
+    // Convert to coordinates relative to the video
+    x = videoScaling * x / elementScaling;
+    y = videoScaling * y / elementScaling;
 
     ws.send('{\r\n'
         +     '"type": "set-mouse-position",\r\n'
