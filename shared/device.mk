@@ -60,7 +60,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
 
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera
-PRODUCT_SOONG_NAMESPACES += vendor/google/camera
+PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 
 #
 # Packages for various cuttlefish-specific tests
