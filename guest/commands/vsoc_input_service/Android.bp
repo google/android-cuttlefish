@@ -28,7 +28,6 @@ cc_binary {
         "libgflags",
     ],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "libcuttlefish_device_config",
         "libcuttlefish_fs",
         "libbase",

@@ -33,7 +33,6 @@ cc_binary_host {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "cuttlefish_tcp_socket",
-        "cuttlefish_auto_resources",
         "libbase",
     ],
     static_libs: [

@@ -19,7 +19,6 @@ cc_binary {
         "main.cpp",
     ],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
