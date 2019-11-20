@@ -167,9 +167,6 @@ DEFINE_string(console_forwarder_binary,
               vsoc::DefaultHostArtifactsPath("bin/console_forwarder"),
               "The Console Forwarder binary to use");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_string(e2e_test_binary,
-              vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
-              "Location of the region end to end test binary");
 DEFINE_string(logcat_receiver_binary,
               vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"),
               "Binary for the logcat server");
@@ -474,8 +471,6 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_socket_forward_proxy_binary);
   tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
-  tmp_config_obj.set_run_e2e_test(false);
-  tmp_config_obj.set_e2e_test_binary(FLAGS_e2e_test_binary);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
