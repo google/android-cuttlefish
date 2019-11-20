@@ -136,8 +136,6 @@ const char* kSocketForwardProxyBinary = "socket_forward_proxy_binary";
 const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
 
 const char* kRunAsDaemon = "run_as_daemon";
-const char* kRunE2eTest = "run_e2e_test";
-const char* kE2eTestBinary = "e2e_test_binary";
 
 const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
@@ -716,23 +714,6 @@ bool CuttlefishConfig::run_as_daemon() const {
 void CuttlefishConfig::set_run_as_daemon(bool run_as_daemon) {
   (*dictionary_)[kRunAsDaemon] = run_as_daemon;
 }
-
-bool CuttlefishConfig::run_e2e_test() const {
-  return (*dictionary_)[kRunE2eTest].asBool();
-}
-
-void CuttlefishConfig::set_run_e2e_test(bool run_e2e_test) {
-  (*dictionary_)[kRunE2eTest] = run_e2e_test;
-}
-
-std::string CuttlefishConfig::e2e_test_binary() const {
-  return (*dictionary_)[kE2eTestBinary].asString();
-}
-
-void CuttlefishConfig::set_e2e_test_binary(const std::string& e2e_test_binary) {
-  (*dictionary_)[kE2eTestBinary] = e2e_test_binary;
-}
-
 std::string CuttlefishConfig::data_policy() const {
   return (*dictionary_)[kDataPolicy].asString();
 }

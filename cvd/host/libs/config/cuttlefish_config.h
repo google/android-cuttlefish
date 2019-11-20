@@ -279,12 +279,6 @@ class CuttlefishConfig {
   void set_run_as_daemon(bool run_as_daemon);
   bool run_as_daemon() const;
 
-  void set_run_e2e_test(bool run_e2e_test);
-  bool run_e2e_test() const;
-
-  void set_e2e_test_binary(const std::string& e2e_test_binary);
-  std::string e2e_test_binary() const;
-
   void set_data_policy(const std::string& data_policy);
   std::string data_policy() const;
 
