@@ -481,7 +481,7 @@ EOF
 #!/bin/bash
 echo "Installing cuttlefish-common package..."
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
-MAC=`ip link | grep eth0 -A1 | grep ether | sed 's/.*\(..:..:..:..:..:..\) .*/\1/'`
+MAC=`ip link | grep eth0 -A1 | grep ether | sed 's/.*\(..:..:..:..:..:..\) .*/\1/' | tr -d :`
 sed -i " 1 s/.*/& rockpi-${MAC}/" /etc/hosts
 sudo hostnamectl set-hostname "rockpi-${MAC}"
 
