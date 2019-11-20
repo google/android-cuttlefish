@@ -77,10 +77,6 @@ DEFINE_string(
 DEFINE_string(
     gpu_mode, vsoc::kGpuModeGuestSwiftshader,
     "What gpu configuration to use, one of {guest_swiftshader, drm_virgl}");
-DEFINE_string(wayland_socket, "",
-    "Location of the wayland socket to use for drm_virgl gpu_mode.");
-DEFINE_string(x_display, "",
-    "X display to use for drm_virgl gpu_mode.");
 
 DEFINE_string(system_image_dir, vsoc::DefaultGuestImagePath(""),
               "Location of the system partition images.");
@@ -219,8 +215,6 @@ bool InitializeCuttlefishConfiguration(
                " does not work with vm_manager=" << FLAGS_vm_manager;
     return false;
   }
-  tmp_config_obj.set_wayland_socket(FLAGS_wayland_socket);
-  tmp_config_obj.set_x_display(FLAGS_x_display);
 
   tmp_config_obj.set_serial_number(FLAGS_serial_number);
 
@@ -376,12 +370,6 @@ void SetDefaultFlagsForCrosvm() {
       cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("wayland_socket",
-                               "",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  SetCommandLineOptionWithMode("x_display",
-                               getenv("DISPLAY"),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
