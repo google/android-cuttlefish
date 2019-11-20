@@ -214,7 +214,7 @@ PRODUCT_PACKAGES += \
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
 #
 PRODUCT_PACKAGES += \
-    android.hardware.bluetooth@1.0-service.sim \
+    android.hardware.bluetooth@1.1-service.sim \
     android.hardware.bluetooth.audio@2.0-impl
 
 #
