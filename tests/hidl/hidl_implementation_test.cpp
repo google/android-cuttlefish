@@ -21,7 +21,7 @@
 
 using namespace android;
 
-static std::set<std::string> kKnownMissing = {
+static const std::set<std::string> kKnownMissing = {
     "android.frameworks.bufferhub@1.0",
     "android.frameworks.cameraservice.device@2.0",
     "android.frameworks.vr.composer@1.0",
@@ -137,7 +137,7 @@ static std::set<FQName> allManifestInstances() {
     std::set<FQName> ret;
     auto setInserter = [&] (const vintf::ManifestInstance& i) -> bool {
         if (i.format() != vintf::HalFormat::HIDL) {
-            std::cout << "[ WARNING ] Not checking non-HIDL instance: " << i.description() << std::endl;
+            std::cout << "[ WARNING  ] Not checking non-HIDL instance: " << i.description() << std::endl;
             return true;  // continue
         }
         ret.insert(i.getFqInstance().getFqName());
@@ -155,7 +155,7 @@ TEST(Hidl, IsAospDevice) {
 }
 
 TEST(Hidl, InterfacesImplemented) {
-    // instances -> major version -> minor versions version
+    // instances -> major version -> minor versions
     std::map<std::string, std::map<size_t, std::set<size_t>>> unimplemented;
 
     for (const FQName& f : allTreeInterfaces()) {
@@ -164,7 +164,16 @@ TEST(Hidl, InterfacesImplemented) {
         unimplemented[f.package()][f.getPackageMajorVersion()].insert(f.getPackageMinorVersion());
     }
 
+    // we'll be removing items from this which we know are missing
+    // in order to be left with those elements which we thought we
+    // knew were missing but are actually present
+    std::set<std::string> thoughtMissing = kKnownMissing;
+
     for (const FQName& f : allManifestInstances()) {
+        if (thoughtMissing.erase(f.getPackageAndVersion().string()) > 0) {
+             std::cout << "[ WARNING  ] Instance in missing list, but available: " << f.string() << std::endl;
+        }
+
         std::set<size_t>& minors = unimplemented[f.package()][f.getPackageMajorVersion()];
         size_t minor = f.getPackageMinorVersion();
 
@@ -184,9 +193,13 @@ TEST(Hidl, InterfacesImplemented) {
             FQName missing;
             ASSERT_TRUE(missing.setTo(package, major, maxMinor));
 
-            if (kKnownMissing.find(missing.string()) != kKnownMissing.end()) continue;
+            if (thoughtMissing.erase(missing.string()) > 0) continue;
 
             ADD_FAILURE() << "Missing implementation from " << missing.string();
         }
+    }
+
+    for (const std::string& missing : thoughtMissing) {
+        std::cout << "[ WARNING  ] Instance in missing list, and cannot find it anywhere: " << missing << std::endl;
     }
 }
