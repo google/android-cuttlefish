@@ -23,6 +23,7 @@ LOCAL_PACKAGE_NAME := CuttlefishService
 LOCAL_SDK_VERSION := 28
 LOCAL_PROGUARD_FLAGS := -include build/core/proguard.flags
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+LOCAL_PROGUARD_ENABLED := obfuscation
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_PACKAGE)
