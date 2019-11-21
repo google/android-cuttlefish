@@ -14,7 +14,7 @@
 
 # Keep enough data for stack traces
 -renamesourcefileattribute SourceFile
--keepattributes SourceFile,LineNumberTable,*Annotation*
+-keepattributes SourceFile,LineNumberTable,RuntimeVisible*Annotations,AnnotationDefault
 
 # Keep classes and methods that have the guava @VisibleForTesting annotation
 -keep @com.google.common.annotations.VisibleForTesting class *
@@ -24,3 +24,6 @@
 
 -keep public class * extends android.app.Service
 -keep public class * extends android.content.BroadcastReceiver
+
+# -dontobfuscate
+-keep,allowshrinking class * { *; }
