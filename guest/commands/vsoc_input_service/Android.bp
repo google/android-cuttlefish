@@ -33,6 +33,7 @@ cc_binary {
         "libcuttlefish_fs",
         "libbase",
         "liblog",
+        "vsoc_lib",
     ],
     header_libs: [
         "cuttlefish_glog",

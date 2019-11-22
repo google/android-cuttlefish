@@ -42,17 +42,7 @@ using cvd::Message;
 using cvd::vnc::Stripe;
 using cvd::vnc::StripePtrVec;
 using cvd::vnc::VncClientConnection;
-
-struct ScreenRegionView {
-  using Pixel = uint32_t;
-  static constexpr int kSwiftShaderPadding = 4;
-  static constexpr int kRedShift = 0;
-  static constexpr int kGreenShift = 8;
-  static constexpr int kBlueShift = 16;
-  static constexpr int kRedBits = 8;
-  static constexpr int kGreenBits = 8;
-  static constexpr int kBlueBits = 8;
-};
+using vsoc::screen::ScreenRegionView;
 
 DEFINE_bool(debug_client, false, "Turn on detailed logging for the client");
 
