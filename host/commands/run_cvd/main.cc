@@ -474,7 +474,6 @@ int main(int argc, char** argv) {
   }
 
   // Start other host processes
-  LaunchSocketForwardProxyIfEnabled(&process_monitor, *config);
   LaunchSocketVsockProxyIfEnabled(&process_monitor, *config);
   LaunchStreamAudioIfEnabled(*config, &process_monitor,
                              GetOnSubprocessExitCallback(*config));
