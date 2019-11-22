@@ -20,13 +20,103 @@
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/vsoc/lib/socket_forward_region_view.h"
 
 #ifdef CUTTLEFISH_HOST
 #include "host/libs/config/cuttlefish_config.h"
 #endif
 
-using vsoc::socket_forward::Packet;
+struct Header {
+  std::uint32_t payload_length;
+  enum MessageType : std::uint32_t {
+    DATA = 0,
+    BEGIN,
+    END,
+    RECV_CLOSED,  // indicate that this side's receive end is closed
+    RESTART,
+  };
+  MessageType message_type;
+};
+
+constexpr std::size_t kMaxPacketSize = 8192;
+constexpr std::size_t kMaxPayloadSize = kMaxPacketSize - sizeof(Header);
+
+struct Packet {
+ private:
+  Header header_;
+  using Payload = char[kMaxPayloadSize];
+  Payload payload_data_;
+
+  static constexpr Packet MakePacket(Header::MessageType type) {
+    Packet packet{};
+    packet.header_.message_type = type;
+    return packet;
+  }
+
+ public:
+  // port is only revelant on the host-side.
+  static Packet MakeBegin(std::uint16_t port);
+
+  static constexpr Packet MakeEnd() { return MakePacket(Header::END); }
+
+  static constexpr Packet MakeRecvClosed() {
+    return MakePacket(Header::RECV_CLOSED);
+  }
+
+  static constexpr Packet MakeRestart() { return MakePacket(Header::RESTART); }
+
+  // NOTE payload and payload_length must still be set.
+  static constexpr Packet MakeData() { return MakePacket(Header::DATA); }
+
+  bool empty() const { return IsData() && header_.payload_length == 0; }
+
+  void set_payload_length(std::uint32_t length) {
+    CHECK_LE(length, sizeof payload_data_);
+    header_.payload_length = length;
+  }
+
+  Payload& payload() { return payload_data_; }
+
+  const Payload& payload() const { return payload_data_; }
+
+  constexpr std::uint32_t payload_length() const {
+    return header_.payload_length;
+  }
+
+  constexpr bool IsBegin() const {
+    return header_.message_type == Header::BEGIN;
+  }
+
+  constexpr bool IsEnd() const { return header_.message_type == Header::END; }
+
+  constexpr bool IsData() const { return header_.message_type == Header::DATA; }
+
+  constexpr bool IsRecvClosed() const {
+    return header_.message_type == Header::RECV_CLOSED;
+  }
+
+  constexpr bool IsRestart() const {
+    return header_.message_type == Header::RESTART;
+  }
+
+  constexpr std::uint16_t port() const {
+    CHECK(IsBegin());
+    std::uint16_t port_number{};
+    CHECK_EQ(payload_length(), sizeof port_number);
+    std::memcpy(&port_number, payload(), sizeof port_number);
+    return port_number;
+  }
+
+  char* raw_data() { return reinterpret_cast<char*>(this); }
+
+  const char* raw_data() const { return reinterpret_cast<const char*>(this); }
+
+  constexpr size_t raw_data_length() const {
+    return payload_length() + sizeof header_;
+  }
+};
+
+static_assert(sizeof(Packet) == kMaxPacketSize, "");
+static_assert(std::is_pod<Packet>{}, "");
 
 DEFINE_uint32(tcp_port, 0, "TCP port (server on host, client on guest)");
 DEFINE_uint32(vsock_port, 0, "vsock port (client on host, server on guest");
