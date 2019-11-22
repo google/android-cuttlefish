@@ -151,6 +151,7 @@ TARGET_RELEASETOOLS_EXTENSIONS := device/google/cuttlefish/shared
 # To see full logs from init, disable ratelimiting.
 # The default is 5 messages per second amortized, with a burst of up to 10.
 BOARD_KERNEL_CMDLINE += printk.devkmsg=on
+BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_BOOT_HEADER_VERSION := 3
@@ -158,3 +159,4 @@ BOARD_USES_RECOVERY_AS_BOOT := true
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 PRODUCT_COPY_FILES += device/google/cuttlefish/dtb.img:dtb.img
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
+
