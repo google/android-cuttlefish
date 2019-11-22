@@ -39,6 +39,7 @@ constexpr char kInternalDirName[] = "internal";
 
 
 enum class AdbMode {
+  Tunnel,
   VsockTunnel,
   VsockHalfTunnel,
   NativeVsock,
@@ -274,6 +275,15 @@ class CuttlefishConfig {
 
   void set_vnc_server_binary(const std::string& vnc_server_binary);
   std::string vnc_server_binary() const;
+
+  void set_enable_stream_audio(bool enable_stream_audio);
+  bool enable_stream_audio() const;
+
+  void set_stream_audio_port(int stream_audio_port);
+  int stream_audio_port() const;
+
+  void set_stream_audio_binary(const std::string& stream_audio_binary);
+  std::string stream_audio_binary() const;
 
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
