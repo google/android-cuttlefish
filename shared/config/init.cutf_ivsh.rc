@@ -1,0 +1,54 @@
+# This file should contain entries specific to the vsoc hardware only, for
+# common entries use common file instead.
+import /vendor/etc/init/hw/init.common.rc
+
+on init
+    chown system root /dev/input_events
+    chmod 0660 /dev/input_events
+    restorecon /dev/input_events
+    chown radio root /dev/ril
+    chmod 0660 /dev/ril
+    restorecon /dev/ril
+    chown audioserver root /dev/audio_data
+    chmod 0660 /dev/audio_data
+    restorecon /dev/audio_data
+    chown system root /dev/screen
+    chmod 0660 /dev/screen
+    restorecon /dev/screen
+
+
+on early-boot
+    start vsoc_input_service
+
+
+on boot
+    start socket_forward_proxy
+
+
+on boot && property:ro.boot.vsoc_e2e_test=1
+    mkdir /data/vendor/cf-tmp
+    start vsoc_guest_region_e2e_test
+
+
+service vsoc_guest_region_e2e_test /vendor/bin/vsoc_guest_region_e2e_test /data/vendor/cf-tmp
+    user root
+    oneshot
+
+
+service vsoc_input_service /vendor/bin/vsoc_input_service
+    group root uhid
+    oneshot
+
+
+service socket_forward_proxy /vendor/bin/socket_forward_proxy
+
+
+on property:vendor.ser.cf-gadget-usb-v1=*
+    symlink ${vendor.ser.cf-gadget-usb-v1} /dev/cf-gadget-usb-v1
+    enable usbforward
+
+
+service usbforward /vendor/bin/usbforward /dev/cf-gadget-usb-v1
+    class late_start
+    user root
+    disabled
