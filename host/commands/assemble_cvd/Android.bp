@@ -57,7 +57,6 @@ cc_binary_host {
     static_libs: [
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
-        "libivserver",
         "libgflags",
         "libxml2",
         "libjsoncpp",
