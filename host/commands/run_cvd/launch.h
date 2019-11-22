@@ -26,8 +26,6 @@ void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config,
                                  cvd::SharedFD adbd_events_pipe);
-void LaunchSocketForwardProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
-                                 const vsoc::CuttlefishConfig& config);
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
 void LaunchIvServerIfEnabled(cvd::ProcessMonitor* process_monitor,

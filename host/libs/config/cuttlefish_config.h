@@ -39,7 +39,6 @@ constexpr char kInternalDirName[] = "internal";
 
 
 enum class AdbMode {
-  Tunnel,
   VsockTunnel,
   VsockHalfTunnel,
   NativeVsock,
