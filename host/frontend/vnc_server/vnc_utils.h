@@ -23,7 +23,6 @@
 
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/tcp_socket/tcp_socket.h"
-#include "common/vsoc/lib/screen_region_view.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cvd {
@@ -65,7 +64,7 @@ struct Stripe {
 };
 
 inline constexpr int BytesPerPixel() {
-  return sizeof(vsoc::screen::ScreenRegionView::Pixel);
+  return sizeof(uint32_t);
 }
 
 // The width of the screen regardless of orientation. Does not change.
