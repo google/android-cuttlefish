@@ -19,9 +19,6 @@ void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
 bool LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor,
                               std::function<bool(cvd::MonitorEntry*)> callback);
-void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
-                                cvd::ProcessMonitor* process_monitor,
-                                std::function<bool(cvd::MonitorEntry*)> callback);
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config,
                                  cvd::SharedFD adbd_events_pipe);
