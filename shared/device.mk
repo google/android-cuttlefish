@@ -63,9 +63,18 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 
 #
+# Packages for various cuttlefish-specific tests
+#
+PRODUCT_PACKAGES += \
+    vsoc_guest_region_e2e_test \
+    vsoc_managed_region_e2e_test \
+    vsoc_driver_test
+
+#
 # Packages for various GCE-specific utilities
 #
 PRODUCT_PACKAGES += \
+    socket_forward_proxy \
     socket_vsock_proxy \
     usbforward \
     CuttlefishService \
@@ -117,6 +126,7 @@ PRODUCT_COPY_FILES += \
     hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json \
     hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_depth.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_depth.json \
     device/google/cuttlefish/shared/config/init.common.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.common.rc \
+    device/google/cuttlefish/shared/config/init.cutf_ivsh.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_ivsh.rc \
     device/google/cuttlefish/shared/config/init.cutf_cvm.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_cvm.rc \
     device/google/cuttlefish/shared/config/init.product.rc:$(TARGET_COPY_OUT_PRODUCT)/etc/init/init.rc \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/ueventd.rc \
@@ -345,6 +355,7 @@ ifneq ($(TARGET_NO_RECOVERY),true)
 
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/init.recovery.common.rc:recovery/root/init.recovery.common.rc \
+    device/google/cuttlefish/shared/config/init.recovery.cutf_ivsh.rc:recovery/root/init.recovery.cutf_ivsh.rc \
     device/google/cuttlefish/shared/config/init.recovery.cutf_cvm.rc:recovery/root/init.recovery.cutf_cvm.rc \
 
 endif
@@ -356,6 +367,6 @@ PRODUCT_COPY_FILES += \
    $(LOCAL_PATH)/config/init.insmod.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.insmod.sh \
 
 # Host packages to install
-PRODUCT_HOST_PACKAGES += socket_vsock_proxy
+PRODUCT_HOST_PACKAGES += socket_forward_proxy socket_vsock_proxy
 
 PRODUCT_EXTRA_VNDK_VERSIONS := 28 29
