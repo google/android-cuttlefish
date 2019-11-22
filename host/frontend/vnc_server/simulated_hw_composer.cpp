@@ -20,6 +20,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 using cvd::vnc::SimulatedHWComposer;
+using vsoc::screen::ScreenRegionView;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
