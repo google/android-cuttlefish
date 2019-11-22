@@ -113,11 +113,6 @@ DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_string(vnc_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
               "Location of the vnc server binary.");
-DEFINE_bool(start_stream_audio, false,
-            "Whether to start the stream audio process.");
-DEFINE_string(stream_audio_binary,
-              vsoc::DefaultHostArtifactsPath("bin/stream_audio"),
-              "Location of the stream_audio binary.");
 DEFINE_string(virtual_usb_manager_binary,
               vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"),
               "Location of the virtual usb manager binary.");
@@ -129,8 +124,6 @@ DEFINE_string(ivserver_binary,
               "Location of the ivshmem server binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
-DEFINE_int32(stream_audio_port, GetPerInstanceDefault(7444),
-             "The port on which stream_audio should listen.");
 DEFINE_string(socket_forward_proxy_binary,
               vsoc::DefaultHostArtifactsPath("bin/socket_forward_proxy"),
               "Location of the socket_forward_proxy binary.");
@@ -486,10 +479,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
   tmp_config_obj.set_vnc_server_binary(FLAGS_vnc_server_binary);
   tmp_config_obj.set_vnc_server_port(FLAGS_vnc_server_port);
-
-  tmp_config_obj.set_enable_stream_audio(FLAGS_start_stream_audio);
-  tmp_config_obj.set_stream_audio_binary(FLAGS_stream_audio_binary);
-  tmp_config_obj.set_stream_audio_port(FLAGS_stream_audio_port);
 
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
   tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
