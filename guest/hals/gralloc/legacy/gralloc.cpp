@@ -36,7 +36,6 @@
 #include <hardware/gralloc.h>
 
 #include "common/libs/auto_resources/auto_resources.h"
-#include "common/vsoc/lib/screen_region_view.h"
 #include "gralloc_vsoc_priv.h"
 #include "region_registry.h"
 
@@ -162,7 +161,7 @@ static int gralloc_device_open(
     *device = &dev->device.common;
     status = 0;
   } else {
-    status = fb_device_open(module, name, device);
+    ALOGE("Need to create framebuffer, but it is unsupported");
   }
   return status;
 }

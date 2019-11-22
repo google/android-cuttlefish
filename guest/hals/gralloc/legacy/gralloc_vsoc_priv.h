@@ -29,8 +29,6 @@
 
 #include <linux/fb.h>
 
-#include "common/vsoc/lib/screen_region_view.h"
-
 #ifndef GRALLOC_MODULE_API_VERSION_0_2
 // This structure will be defined in later releases of Android. Declare it
 // here to allow us to structure the code well.
@@ -44,6 +42,20 @@ struct android_ycbcr {
   uint32_t reserved[8];
 };
 #endif
+
+namespace vsoc {
+namespace screen {
+
+struct ScreenRegionView {
+  static int align(int input) {
+    auto constexpr alignment = 16;
+    return (input + alignment - 1) & -alignment;
+  }
+  static constexpr int kSwiftShaderPadding = 4;
+};
+
+}
+}
 
 /*****************************************************************************/
 
@@ -296,9 +308,6 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
              vsoc::screen::ScreenRegionView::kSwiftShaderPadding;
   }
 }
-
-int fb_device_open(
-    const hw_module_t* module, const char* name, hw_device_t** device);
 
 int gralloc_lock(
     gralloc_module_t const* module,
