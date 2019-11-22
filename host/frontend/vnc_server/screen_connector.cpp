@@ -18,11 +18,11 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <thread>
 
+#include <glog/logging.h>
 #include <gflags/gflags.h>
 
-#include <common/vsoc/lib/screen_region_view.h>
-#include <host/libs/config/cuttlefish_config.h>
 #include "host/frontend/vnc_server/vnc_utils.h"
 
 DEFINE_int32(frame_server_fd, -1, "");
@@ -31,23 +31,6 @@ namespace cvd {
 namespace vnc {
 
 namespace {
-class VSoCScreenConnector : public ScreenConnector {
- public:
-  int WaitForNewFrameSince(std::uint32_t* seq_num) override {
-    if (!screen_view_) return -1;
-    return screen_view_->WaitForNewFrameSince(seq_num);
-  }
-
-  void* GetBuffer(int buffer_idx) override {
-    if (!screen_view_) return nullptr;
-    return screen_view_->GetBuffer(buffer_idx);
-  }
-
- private:
-  vsoc::screen::ScreenRegionView* screen_view_ =
-      vsoc::screen::ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
-};
-
 // TODO(b/128852363): Substitute with one based on memory shared with the
 //  wayland mock
 class SocketBasedScreenConnector : public ScreenConnector {
@@ -140,12 +123,7 @@ class SocketBasedScreenConnector : public ScreenConnector {
 }  // namespace
 
 ScreenConnector* ScreenConnector::Get() {
-  auto config = vsoc::CuttlefishConfig::Get();
-  if (config->enable_ivserver()) {
-    return new VSoCScreenConnector();
-  } else {
-    return new SocketBasedScreenConnector();
-  }
+  return new SocketBasedScreenConnector();
 }
 
 }  // namespace vnc
