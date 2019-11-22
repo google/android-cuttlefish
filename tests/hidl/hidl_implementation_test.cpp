@@ -70,7 +70,6 @@ static const std::set<std::string> kKnownMissing = {
     "android.hardware.renderscript@1.0",
     "android.hardware.secure_element@1.1",
     "android.hardware.sensors@1.0",
-    "android.hardware.soundtrigger@2.2",
     "android.hardware.tetheroffload.config@1.0",
     "android.hardware.tetheroffload.control@1.0",
     "android.hardware.thermal@1.1",
