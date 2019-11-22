@@ -267,17 +267,6 @@ bool LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
   return false;
 }
 
-void LaunchStreamAudioIfEnabled(const vsoc::CuttlefishConfig& config,
-                                cvd::ProcessMonitor* process_monitor,
-                                std::function<bool(MonitorEntry*)> callback) {
-  if (config.enable_stream_audio()) {
-    auto port_options = "-port=" + std::to_string(config.stream_audio_port());
-    cvd::Command stream_audio(config.stream_audio_binary());
-    stream_audio.AddParameter(port_options);
-    process_monitor->StartSubprocess(std::move(stream_audio), callback);
-  }
-}
-
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config,
                                  cvd::SharedFD adbd_events_pipe) {
