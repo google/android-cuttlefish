@@ -18,6 +18,7 @@ LOCAL_PATH := $(call my-dir)
 
 VSOC_GRALLOC_COMMON_SRC_FILES := \
     gralloc.cpp \
+    framebuffer.cpp \
     mapper.cpp \
     region_registry.cpp
 
@@ -46,7 +47,8 @@ LOCAL_SHARED_LIBRARIES := \
     libbase \
     liblog \
     libutils \
-    libcutils
+    libcutils \
+    vsoc_lib
 
 LOCAL_VENDOR_MODULE := true
 
