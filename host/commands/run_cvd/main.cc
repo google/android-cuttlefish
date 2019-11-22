@@ -46,8 +46,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
-#include "common/vsoc/lib/vsoc_memory.h"
-#include "common/vsoc/shm/screen_layout.h"
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/process_monitor.h"

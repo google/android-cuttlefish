@@ -18,7 +18,9 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <thread>
 
+#include <glog/logging.h>
 #include <gflags/gflags.h>
 
 #include "host/frontend/vnc_server/vnc_utils.h"

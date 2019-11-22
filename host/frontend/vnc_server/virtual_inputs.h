@@ -21,8 +21,6 @@
 #include <map>
 #include <mutex>
 
-#include "common/vsoc/lib/input_events_region_view.h"
-
 namespace cvd {
 namespace vnc {
 
