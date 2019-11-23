@@ -21,6 +21,18 @@
 #include "virtual_power_button.h"
 #include "virtual_touchscreen.h"
 
+namespace vsoc {
+namespace input_events {
+
+struct InputEvent {
+  uint16_t type;
+  uint16_t code;
+  uint32_t value;
+};
+
+} // namespace input_events
+} // namespace vsoc
+
 namespace vsoc_input_service {
 
 class VSoCInputService {
