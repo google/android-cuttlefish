@@ -1,7 +1,0 @@
-type socket_forward_proxy, domain, netdomain;
-type socket_forward_proxy_exec, exec_type, vendor_file_type, file_type;
-
-init_daemon_domain(socket_forward_proxy)
-
-allow socket_forward_proxy socket_forward_device:chr_file rw_file_perms;
-allow socket_forward_proxy self:capability net_raw;
