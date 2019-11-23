@@ -30,7 +30,6 @@ cc_binary_host {
         "cuttlefish_glog",
     ],
     shared_libs: [
-        "vsoc_lib",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "cuttlefish_tcp_socket",

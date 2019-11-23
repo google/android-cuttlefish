@@ -16,18 +16,19 @@
 
 #include "host/frontend/vnc_server/virtual_inputs.h"
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
 
 #include <cstdint>
 #include <mutex>
+#include <thread>
 #include "keysyms.h"
 
 #include <common/libs/fs/shared_select.h>
 #include <host/libs/config/cuttlefish_config.h>
 
 using cvd::vnc::VirtualInputs;
-using vsoc::input_events::InputEventsRegionView;
 
 DEFINE_int32(touch_fd, -1,
              "A fd for a socket where to accept touch connections");
@@ -244,37 +245,6 @@ void InitInputEvent(struct input_event* evt, uint16_t type, uint16_t code,
 }
 
 }  // namespace
-
-class VSoCVirtualInputs : public VirtualInputs {
- public:
-  VSoCVirtualInputs()
-      : input_events_region_view_{
-            vsoc::input_events::InputEventsRegionView::GetInstance(
-                vsoc::GetDomain().c_str())} {
-    if (!input_events_region_view_) {
-      LOG(FATAL) << "Failed to open Input events region view";
-    }
-  }
-
-  void GenerateKeyPressEvent(int code, bool down) override {
-    if (keymapping_.count(code)) {
-      input_events_region_view_->HandleKeyboardEvent(down, keymapping_[code]);
-    } else {
-      LOG(ERROR) << "Unknown keycode" << code;
-    }
-  }
-
-  void PressPowerButton(bool down) override {
-    input_events_region_view_->HandlePowerButtonEvent(down);
-  }
-
-  void HandlePointerEvent(bool touch_down, int x, int y) override {
-    input_events_region_view_->HandleSingleTouchEvent(touch_down, x, y);
-  }
-
- private:
-  vsoc::input_events::InputEventsRegionView* input_events_region_view_{};
-};
 
 class SocketVirtualInputs : public VirtualInputs {
  public:
