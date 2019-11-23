@@ -28,7 +28,6 @@
 #include <host/commands/kernel_log_monitor/kernel_log_server.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/strings/str_split.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
 
