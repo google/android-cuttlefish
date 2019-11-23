@@ -50,7 +50,6 @@ cvd_host_executables := \
     cvd_status \
 
 cvd_host_tests := \
-    auto_free_buffer_test \
     cuttlefish_thread_test \
     monotonic_time_test \
     cuttlefish_net_tests \
@@ -58,7 +57,6 @@ cvd_host_tests := \
 cvd_host_shared_libraries := \
     libbase.so \
     libcuttlefish_fs.so \
-    cuttlefish_auto_resources.so \
     libcuttlefish_strings.so \
     libcuttlefish_utils.so \
     cuttlefish_tcp_socket.so \
