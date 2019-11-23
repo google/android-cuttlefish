@@ -25,7 +25,6 @@
 #include <algorithm>
 #include <vector>
 
-#include "common/libs/auto_resources/auto_resources.h"
 #include "common/libs/glog/logging.h"
 #include "common/libs/fs/shared_select.h"
 
