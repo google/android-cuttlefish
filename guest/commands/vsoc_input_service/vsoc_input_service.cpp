@@ -28,7 +28,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/device_config/device_config.h"
-#include "common/vsoc/lib/input_events_region_view.h"
 
 using vsoc::input_events::InputEvent;
 using vsoc_input_service::VirtualDeviceBase;
