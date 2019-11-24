@@ -138,9 +138,9 @@ distro_bootcmd=for target in ${boot_targets}; do run bootcmd_${target}; done
 bootcmd_mmc0=devnum=0; run mmc_boot
 bootcmd_mmc1=devnum=1; run mmc_boot
 mmc_boot=if mmc dev ${devnum}; then ; run scan_for_boot_part; fi
-scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devplist || setenv devplist 1; if test $devnum = 1; then script_type=init; else script_type=boot; fi; for distro_bootpart in ${devplist}; do if fstype mmc ${devnum}:${distro_bootpart} bootfstype; then run find_script; fi; done; setenv devplist; setenv script_type;
-find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/$script_type.scr; then echo Found U-Boot script /boot/$script_type.scr; run run_scr; fi
-run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/$script_type.scr; source ${scriptaddr}
+scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devplist || setenv devplist 1; for distro_bootpart in ${devplist}; do if fstype mmc ${devnum}:${distro_bootpart} bootfstype; then run find_script; fi; done; setenv devplist;
+find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/boot.scr; then echo Found U-Boot script /boot/boot.scr; run run_scr; fi
+run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/boot.scr; source ${scriptaddr}
 EOF
 	${ANDROID_HOST_OUT}/bin/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
 fi
@@ -177,20 +177,6 @@ if [ ${FLAGS_p5} -eq ${FLAGS_TRUE} ]; then
 		echo "error: unable to mount ${IMAGE} ${mntdir}"
 		exit 1
 	fi
-
-	cat > ${mntdir}/boot/init.cmd << "EOF"
-mmc dev 1 0; mmc read 0x02080000 0x1fc0 0x40;
-ethaddr=$ethaddr
-env default -a
-setenv ethaddr $ethaddr
-setenv boot_targets 'mmc1 mmc0 usb0 pxe'
-saveenv
-mmc dev 1 0; mmc read 0x04000000 0x1fc0 0x40;
-mmc dev 0 0; mmc write 0x04000000 0x1fc0 0x40;
-mmc dev 1 0; mmc write 0x02080000 0x1fc0 0x40;
-EOF
-	${ANDROID_BUILD_TOP}/external/u-boot/tools/mkimage \
-		-C none -A arm -T script -d ${mntdir}/boot/init.cmd ${mntdir}/boot/init.scr
 
 	cat > ${mntdir}/boot/boot.cmd << "EOF"
 setenv bootcmd_dhcp '
