@@ -1,0 +1,1 @@
+get_prop(gmscore_app, hal_camera_prop)
