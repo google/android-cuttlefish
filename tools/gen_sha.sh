@@ -16,6 +16,19 @@
 
 source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
 
+DEFINE_string kernel \
+  "" "Path to kernel build dir" "k"
+
+FLAGS_HELP="USAGE: $0 [flags]"
+
+FLAGS "$@" || exit $?
+eval set -- "${FLAGS_ARGV}"
+
+if [ -z ${FLAGS_kernel} ]; then
+	flags_help
+	exit 1
+fi
+
 cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common"
 Sha=`git rev-parse HEAD`
 cd - >/dev/null
@@ -23,6 +36,9 @@ cd "${ANDROID_BUILD_TOP}/external/u-boot"
 Sha="$Sha,`git rev-parse HEAD`"
 cd - >/dev/null
 cd "${ANDROID_BUILD_TOP}/external/arm-trusted-firmware"
+Sha="$Sha,`git rev-parse HEAD`"
+cd - >/dev/null
+cd "${FLAGS_kernel}"
 Sha="$Sha,`git rev-parse HEAD`"
 cd - >/dev/null
 echo $Sha
