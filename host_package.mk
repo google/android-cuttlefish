@@ -80,7 +80,6 @@ cvd_host_shared_libraries := \
     libssl-host.so \
     libopus.so \
     libyuv.so \
-    libFraunhoferAAC.so \
     libjpeg.so \
 
 

@@ -286,11 +286,6 @@ sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit) {
     *out++ = picParamSet->size() & 0xff;
     memcpy(out, picParamSet->data(), picParamSet->size());
 
-#if 0
-    ALOGI("AVC seq param set");
-    hexdump(seqParamSet->data(), seqParamSet->size());
-#endif
-
     sp<MetaData> meta = new MetaData;
     meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_AVC);
 

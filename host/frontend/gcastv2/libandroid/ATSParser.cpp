@@ -294,9 +294,6 @@ status_t ATSParser::Program::parseProgramMap(ABitReader *br) {
 
         CHECK_GE(infoBytesRemaining - 5, ES_info_length);
 
-#if 0
-        br->skipBits(ES_info_length * 8);  // skip descriptors
-#else
         unsigned info_bytes_remaining = ES_info_length;
         while (info_bytes_remaining >= 2) {
             MY_LOGV("      tag = 0x%02x", br->getBits(8));
@@ -311,7 +308,6 @@ status_t ATSParser::Program::parseProgramMap(ABitReader *br) {
             info_bytes_remaining -= descLength + 2;
         }
         CHECK_EQ(info_bytes_remaining, 0u);
-#endif
 
         StreamInfo info;
         info.mType = streamType;
@@ -335,22 +331,6 @@ status_t ATSParser::Program::parseProgramMap(ABitReader *br) {
     }
 
     if (PIDsChanged) {
-#if 0
-        ALOGI("before:");
-        for (size_t i = 0; i < mStreams.size(); ++i) {
-            sp<Stream> stream = mStreams.editValueAt(i);
-
-            ALOGI("PID 0x%08x => type 0x%02x", stream->pid(), stream->type());
-        }
-
-        ALOGI("after:");
-        for (size_t i = 0; i < infos.size(); ++i) {
-            StreamInfo &info = infos.editItemAt(i);
-
-            ALOGI("PID 0x%08x => type 0x%02x", info.mPID, info.mType);
-        }
-#endif
-
         // The only case we can recover from is if we have two streams
         // and they switched PIDs.
 
@@ -528,16 +508,6 @@ status_t ATSParser::Stream::parse(
         mPayloadStarted = false;
         mBuffer->setRange(0, 0);
         mExpectedContinuityCounter = -1;
-
-#if 0
-        // Uncomment this if you'd rather see no corruption whatsoever on
-        // screen and suspend updates until we come across another IDR frame.
-
-        if (mStreamType == STREAMTYPE_H264) {
-            ALOGI("clearing video queue");
-            mQueue->clear(true /* clearFormat */);
-        }
-#endif
 
         return OK;
     }
@@ -832,14 +802,6 @@ status_t ATSParser::Stream::flush() {
 void ATSParser::Stream::onPayloadData(
         unsigned PTS_DTS_flags, uint64_t PTS, uint64_t /* DTS */,
         const uint8_t *data, size_t size) {
-#if 0
-    ALOGI("payload streamType 0x%02x, PTS = 0x%016llx, dPTS = %lld",
-          mStreamType,
-          PTS,
-          (int64_t)PTS - mPrevPTS);
-    mPrevPTS = PTS;
-#endif
-
     ALOGV("onPayloadData mStreamType=0x%02x", mStreamType);
 
     int64_t timeUs = 0ll;  // no presentation timestamp available.
@@ -1234,15 +1196,6 @@ void ATSParser::updatePCR(
     mSystemTimeUs[mNumPCRs] = ALooper::GetNowUs();
 
     ++mNumPCRs;
-
-#if 0
-    if (mNumPCRs == 2) {
-        double transportRate =
-            (mPCRBytes[1] - mPCRBytes[0]) * 27E6 / (mPCR[1] - mPCR[0]);
-
-        ALOGV("transportRate = %.2f bytes/sec", transportRate);
-    }
-#endif
 }
 
 ////////////////////////////////////////////////////////////////////////////////

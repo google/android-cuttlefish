@@ -17,19 +17,15 @@ cc_library_host_static {
     srcs: [
         "AudioSource.cpp",
         "TouchSink.cpp",
-        "DisplayListsSource.cpp",
         "FrameBufferSource.cpp",
         "HostToGuestComms.cpp",
         "StreamingSource.cpp",
-        "TouchSource.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     shared_libs: [
         "libbase",
-        "libFraunhoferAAC",
-// "libx264",
         "libyuv",
         "libopus",
         "libvpx",
@@ -39,9 +35,6 @@ cc_library_host_static {
         "libcuttlefish_host_config",
         "libgflags",
         "libhttps",
-    ],
-    cflags: [
-        "-DTARGET_ANDROID",
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],

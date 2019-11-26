@@ -113,11 +113,6 @@ void VP8Packetizer::packetize(const sp<ABuffer> &accessUnit, int64_t timeUs) {
 
         CHECK_EQ(dstOffset, packetSize);
 
-#if 0
-        LOG(INFO) << "Sending packet of size " << packetSize;
-        hexdump(dst, std::min(128ul, packetSize));
-#endif
-
         srcOffset += copy;
 
         queueRTPDatagram(&packet);
