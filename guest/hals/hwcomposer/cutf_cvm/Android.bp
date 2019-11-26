@@ -31,7 +31,6 @@ cc_library_shared {
         "hwcomposer_common"
     ],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "liblog",
         "libhardware",
         "libbase",

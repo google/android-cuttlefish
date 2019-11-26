@@ -25,7 +25,6 @@ cc_library_shared {
         "libbase",
         "liblog",
         "libcuttlefish_fs",
-        "cuttlefish_auto_resources",
         "libcuttlefish_utils",
     ],
     target: {

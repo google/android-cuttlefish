@@ -21,14 +21,12 @@ cc_library {
     ],
     shared: {
         shared_libs: [
-            "cuttlefish_auto_resources",
             "libbase",
             "liblog",
         ],
     },
     static: {
         static_libs: [
-            "cuttlefish_auto_resources",
             "libbase",
             "liblog",
         ],
@@ -45,9 +43,6 @@ cc_library {
 
 cc_library_static {
     name: "libcuttlefish_fs_product",
-    static_libs: [
-        "cuttlefish_auto_resources_product",
-    ],
     srcs: [
         "shared_buf.cc",
         "shared_fd.cpp",
@@ -67,7 +62,6 @@ cc_test_host {
     ],
     header_libs: ["cuttlefish_glog"],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "libcuttlefish_fs",
         "libbase",
     ],

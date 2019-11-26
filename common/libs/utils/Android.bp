@@ -31,14 +31,12 @@ cc_library {
         shared_libs: [
             "libbase",
             "libcuttlefish_fs",
-            "cuttlefish_auto_resources",
         ],
     },
     static: {
         static_libs: [
             "libbase",
             "libcuttlefish_fs",
-            "cuttlefish_auto_resources",
         ],
     },
     defaults: ["cuttlefish_host_and_guest"],

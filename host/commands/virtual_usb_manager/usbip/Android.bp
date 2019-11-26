@@ -27,7 +27,6 @@ cc_library_host_static {
     ],
     shared_libs: [
         "libcuttlefish_fs",
-        "cuttlefish_auto_resources",
         "libbase",
     ],
     static_libs: [
