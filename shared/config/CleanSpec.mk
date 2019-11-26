@@ -47,3 +47,4 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.gnss
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.drm@1.2-service.clearkey)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.drm@1.2-service.widevine)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.gnss@2.0-service)
+$(call add-clean-step, find $(PRODUCT_OUT)/vendor/bin/hw/ -type f -name "android.hardware.drm@*" -print0 | xargs -0 rm -f)

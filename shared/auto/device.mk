@@ -63,7 +63,7 @@ PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
 # DRM HAL
-PRODUCT_PACKAGES += android.hardware.drm@1.2-service.clearkey
+PRODUCT_PACKAGES += android.hardware.drm@1.3-service.clearkey
 
 # CAN bus HAL
 PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
