@@ -106,11 +106,6 @@ const char* kLogcatPath = "logcat_path";
 const char* kLauncherLogPath = "launcher_log_path";
 const char* kLauncherMonitorPath = "launcher_monitor_socket";
 
-const char* kMempath = "mempath";
-const char* kIvshmemQemuSocketPath = "ivshmem_qemu_socket_path";
-const char* kIvshmemClientSocketPath = "ivshmem_client_socket_path";
-const char* kIvshmemVectorCount = "ivshmem_vector_count";
-
 const char* kMobileBridgeName = "mobile_bridge_name";
 const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
@@ -127,7 +122,6 @@ const char* kSetupWizardMode = "setupwizard_mode";
 const char* kQemuBinary = "qemu_binary";
 const char* kCrosvmBinary = "crosvm_binary";
 const char* kConsoleForwarderBinary = "console_forwarder_binary";
-const char* kIvServerBinary = "ivserver_binary";
 const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
 
 const char* kEnableVncServer = "enable_vnc_server";
@@ -142,8 +136,6 @@ const char* kSocketForwardProxyBinary = "socket_forward_proxy_binary";
 const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
 
 const char* kRunAsDaemon = "run_as_daemon";
-const char* kRunE2eTest = "run_e2e_test";
-const char* kE2eTestBinary = "e2e_test_binary";
 
 const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
@@ -406,36 +398,6 @@ void CuttlefishConfig::set_virtual_disk_paths(
   (*dictionary_)[kVirtualDiskPaths] = virtual_disks_json_obj;
 }
 
-std::string CuttlefishConfig::mempath() const {
-  return (*dictionary_)[kMempath].asString();
-}
-void CuttlefishConfig::set_mempath(const std::string& mempath) {
-  SetPath(kMempath, mempath);
-}
-
-std::string CuttlefishConfig::ivshmem_qemu_socket_path() const {
-  return (*dictionary_)[kIvshmemQemuSocketPath].asString();
-}
-void CuttlefishConfig::set_ivshmem_qemu_socket_path(
-    const std::string& ivshmem_qemu_socket_path) {
-  SetPath(kIvshmemQemuSocketPath, ivshmem_qemu_socket_path);
-}
-
-std::string CuttlefishConfig::ivshmem_client_socket_path() const {
-  return (*dictionary_)[kIvshmemClientSocketPath].asString();
-}
-void CuttlefishConfig::set_ivshmem_client_socket_path(
-    const std::string& ivshmem_client_socket_path) {
-  SetPath(kIvshmemClientSocketPath, ivshmem_client_socket_path);
-}
-
-int CuttlefishConfig::ivshmem_vector_count() const {
-  return (*dictionary_)[kIvshmemVectorCount].asInt();
-}
-void CuttlefishConfig::set_ivshmem_vector_count(int ivshmem_vector_count) {
-  (*dictionary_)[kIvshmemVectorCount] = ivshmem_vector_count;
-}
-
 std::string CuttlefishConfig::usb_v1_socket_name() const {
   return (*dictionary_)[kUsbV1SocketName].asString();
 }
@@ -659,14 +621,6 @@ void CuttlefishConfig::set_console_forwarder_binary(
   (*dictionary_)[kConsoleForwarderBinary] = binary;
 }
 
-std::string CuttlefishConfig::ivserver_binary() const {
-  return (*dictionary_)[kIvServerBinary].asString();
-}
-
-void CuttlefishConfig::set_ivserver_binary(const std::string& ivserver_binary) {
-  (*dictionary_)[kIvServerBinary] = ivserver_binary;
-}
-
 std::string CuttlefishConfig::kernel_log_monitor_binary() const {
   return (*dictionary_)[kKernelLogMonitorBinary].asString();
 }
@@ -760,23 +714,6 @@ bool CuttlefishConfig::run_as_daemon() const {
 void CuttlefishConfig::set_run_as_daemon(bool run_as_daemon) {
   (*dictionary_)[kRunAsDaemon] = run_as_daemon;
 }
-
-bool CuttlefishConfig::run_e2e_test() const {
-  return (*dictionary_)[kRunE2eTest].asBool();
-}
-
-void CuttlefishConfig::set_run_e2e_test(bool run_e2e_test) {
-  (*dictionary_)[kRunE2eTest] = run_e2e_test;
-}
-
-std::string CuttlefishConfig::e2e_test_binary() const {
-  return (*dictionary_)[kE2eTestBinary].asString();
-}
-
-void CuttlefishConfig::set_e2e_test_binary(const std::string& e2e_test_binary) {
-  (*dictionary_)[kE2eTestBinary] = e2e_test_binary;
-}
-
 std::string CuttlefishConfig::data_policy() const {
   return (*dictionary_)[kDataPolicy].asString();
 }
@@ -898,10 +835,6 @@ int CuttlefishConfig::tombstone_receiver_port() const {
   return (*dictionary_)[kTombstoneReceiverPort].asInt();
 }
 
-bool CuttlefishConfig::enable_ivserver() const {
-  return hardware_name() == "cutf_ivsh";
-}
-
 std::string CuttlefishConfig::touch_socket_path() const {
   return PerInstanceInternalPath("touch.sock");
 }
@@ -1005,10 +938,6 @@ std::string GetGlobalConfigFileLink() {
   return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish_config.json";
 }
 
-std::string GetDomain() {
-  return CuttlefishConfig::Get()->ivshmem_client_socket_path();
-}
-
 std::string GetPerInstanceDefault(const char* prefix) {
   std::ostringstream stream;
   stream << prefix << std::setfill('0') << std::setw(2) << GetInstance();
@@ -1020,10 +949,6 @@ std::string GetDefaultPerInstanceDir() {
   std::ostringstream stream;
   stream << std::getenv("HOME") << "/cuttlefish_runtime";
   return stream.str();
-}
-
-std::string GetDefaultMempath() {
-  return GetPerInstanceDefault("/var/run/shm/cvd-");
 }
 
 int GetDefaultPerInstanceVsockCid() {

@@ -75,8 +75,6 @@ DEFINE_string(vendor_boot_image, "",
               "be vendor_boot.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-DEFINE_string(mempath, vsoc::GetDefaultMempath(),
-              "Target location for the shmem file.");
 DEFINE_string(mobile_interface, GetPerInstanceDefault("cvd-mbr-"),
               "Network interface to use for mobile networking");
 DEFINE_string(mobile_tap_name, GetPerInstanceDefault("cvd-mtap-"),
@@ -118,9 +116,6 @@ DEFINE_string(virtual_usb_manager_binary,
 DEFINE_string(kernel_log_monitor_binary,
               vsoc::DefaultHostArtifactsPath("bin/kernel_log_monitor"),
               "Location of the log monitor binary.");
-DEFINE_string(ivserver_binary,
-              vsoc::DefaultHostArtifactsPath("bin/ivserver"),
-              "Location of the ivshmem server binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(socket_forward_proxy_binary,
@@ -172,9 +167,6 @@ DEFINE_string(console_forwarder_binary,
               vsoc::DefaultHostArtifactsPath("bin/console_forwarder"),
               "The Console Forwarder binary to use");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_string(e2e_test_binary,
-              vsoc::DefaultHostArtifactsPath("bin/host_region_e2e_test"),
-              "Location of the region end to end test binary");
 DEFINE_string(logcat_receiver_binary,
               vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"),
               "Binary for the logcat server");
@@ -430,13 +422,6 @@ bool InitializeCuttlefishConfiguration(
     }
   }
 
-  tmp_config_obj.set_mempath(FLAGS_mempath);
-  tmp_config_obj.set_ivshmem_qemu_socket_path(
-      tmp_config_obj.PerInstanceInternalPath("ivshmem_socket_qemu"));
-  tmp_config_obj.set_ivshmem_client_socket_path(
-      tmp_config_obj.PerInstanceInternalPath("ivshmem_socket_client"));
-  tmp_config_obj.set_ivshmem_vector_count(0);
-
   if (tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
     tmp_config_obj.set_usb_v1_socket_name(
         tmp_config_obj.PerInstanceInternalPath("usb-v1"));
@@ -471,7 +456,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_console_forwarder_binary(FLAGS_console_forwarder_binary);
-  tmp_config_obj.set_ivserver_binary(FLAGS_ivserver_binary);
   tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
@@ -487,8 +471,6 @@ bool InitializeCuttlefishConfiguration(
       FLAGS_socket_forward_proxy_binary);
   tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
-  tmp_config_obj.set_run_e2e_test(false);
-  tmp_config_obj.set_e2e_test_binary(FLAGS_e2e_test_binary);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
@@ -502,7 +484,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
   tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
   tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
-  if (!tmp_config_obj.enable_ivserver() && tmp_config_obj.enable_vnc_server()) {
+  if (tmp_config_obj.enable_vnc_server()) {
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_frames_port=",
                                              FLAGS_frames_vsock_port));
   }
@@ -623,8 +605,6 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
 bool CleanPriorFiles() {
   // Everything on the instance directory
   std::string prior_files = FLAGS_instance_dir + "/*";
-  // The shared memory file
-  prior_files += " " + FLAGS_mempath;
   // The environment file
   prior_files += " " + GetCuttlefishEnvPath();
   // The global link to the config file
