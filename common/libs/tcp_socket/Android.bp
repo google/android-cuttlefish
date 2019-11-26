@@ -19,7 +19,6 @@ cc_library_shared {
         "tcp_socket.cpp",
     ],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "libbase",
         "libcuttlefish_fs",
         "liblog",

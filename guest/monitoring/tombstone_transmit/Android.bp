@@ -21,7 +21,6 @@ cc_binary {
     static_libs: [
         "libcuttlefish_fs_product",
         "libgflags",
-        "cuttlefish_auto_resources_product",
         "liblog",
         "libbase",
         "libcutils",

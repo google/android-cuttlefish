@@ -21,7 +21,6 @@ cc_binary {
     ],
     shared_libs: [
         "cuttlefish_net",
-        "cuttlefish_auto_resources",
         "libbase",
         "liblog",
     ],
