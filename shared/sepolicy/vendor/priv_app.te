@@ -1,2 +1,6 @@
 gpu_access(priv_app)
 get_prop(priv_app, hal_camera_prop)
+# b/142672293: No other priv-app should need this allow rule now and GMS core runs in its own domain.
+userdebug_or_eng(`
+  auditallow priv_app hal_camera_prop:file { getattr open read map };
+')
