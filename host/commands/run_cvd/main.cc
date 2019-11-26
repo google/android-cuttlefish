@@ -96,33 +96,12 @@ class CvdBootStateMachine {
     return MaybeWriteToForegroundLauncher();
   }
 
-  bool  OnE2eTestCompleted(int exit_code) {
-    if (exit_code != 0) {
-      LOG(ERROR) << "VSoC e2e test failed";
-      state_ |= kE2eTestFailed;
-    } else {
-      LOG(INFO) << "VSoC e2e test passed";
-      state_ |= kE2eTestPassed;
-    }
-    return MaybeWriteToForegroundLauncher();
-  }
-
   bool BootCompleted() const {
-    bool boot_completed = state_ & kGuestBootCompleted;
-    bool test_passed_or_disabled =
-        (state_ & kE2eTestPassed) || (state_ & kE2eTestDisabled);
-    bool something_failed =
-        state_ & ~(kGuestBootCompleted | kE2eTestPassed | kE2eTestDisabled);
-    return boot_completed && test_passed_or_disabled && !something_failed;
-  }
-
-  bool DisableE2eTests() {
-    state_ |= kE2eTestDisabled;
-    return MaybeWriteToForegroundLauncher();
+    return state_ & kGuestBootCompleted;
   }
 
   bool BootFailed() const {
-    return state_ & (kGuestBootFailed | kE2eTestFailed);
+    return state_ & kGuestBootFailed;
   }
 
  private:
@@ -138,8 +117,6 @@ class CvdBootStateMachine {
         SendExitCode(cvd::RunnerExitCodes::kSuccess);
       } else if (state_ & kGuestBootFailed) {
         SendExitCode(cvd::RunnerExitCodes::kVirtualDeviceBootFailed);
-      } else if (state_ & kE2eTestFailed) {
-        SendExitCode(cvd::RunnerExitCodes::kE2eTestFailed);
       } else {
         // No final state was reached
         return false;
@@ -155,9 +132,6 @@ class CvdBootStateMachine {
   static const int kBootStarted = 0;
   static const int kGuestBootCompleted = 1 << 0;
   static const int kGuestBootFailed = 1 << 1;
-  static const int kE2eTestPassed = 1 << 2;
-  static const int kE2eTestFailed = 1 << 3;
-  static const int kE2eTestDisabled = 1 << 4;
 };
 
 // Abuse the process monitor to make it call us back when boot events are ready
@@ -173,22 +147,6 @@ void SetUpHandlingOfBootEvents(
         auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
         return !sent_code;
       });
-}
-
-void LaunchE2eTestIfEnabled(cvd::ProcessMonitor* process_monitor,
-                            std::shared_ptr<CvdBootStateMachine> state_machine,
-                            const vsoc::CuttlefishConfig& config) {
-  if (config.run_e2e_test()) {
-    process_monitor->StartSubprocess(
-        cvd::Command(config.e2e_test_binary()),
-        [state_machine](cvd::MonitorEntry* entry) {
-          auto test_result = entry->proc->Wait();
-          state_machine->OnE2eTestCompleted(test_result);
-          return false;
-        });
-  } else {
-    state_machine->DisableE2eTests();
-  }
 }
 
 bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
@@ -234,8 +192,6 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
       LOG(INFO) << "Virtual device booted successfully";
     } else if (exit_code == RunnerExitCodes::kVirtualDeviceBootFailed) {
       LOG(ERROR) << "Virtual device failed to boot";
-    } else if (exit_code == RunnerExitCodes::kE2eTestFailed) {
-      LOG(ERROR) << "Host VSoC region end to end test failed";
     } else {
       LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
@@ -452,8 +408,6 @@ int main(int argc, char** argv) {
   LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
 
   LaunchUsbServerIfEnabled(*config, &process_monitor);
-  // Launch the e2e tests after the ivserver is ready
-  LaunchE2eTestIfEnabled(&process_monitor, boot_state_machine, *config);
 
   // The vnc server needs to be launched after the ivserver because it connects
   // to it when using qemu. It needs to launch before the VMM because it serves
