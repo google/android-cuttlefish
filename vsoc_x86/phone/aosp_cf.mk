@@ -44,6 +44,9 @@ DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/vsoc_x86/phone/overlay
 
 $(call inherit-product, device/google/cuttlefish/vsoc_x86/device.mk)
 
+# Exclude features that are not available on AOSP devices.
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
 
 PRODUCT_NAME := aosp_cf_x86_phone
 PRODUCT_DEVICE := vsoc_x86
