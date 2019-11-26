@@ -34,8 +34,10 @@ DEFINE_string version \
   "2" "Specify which manifest version to use (default: latest)" "v"
 DEFINE_string ethaddr \
   "" "MAC address of device to DFU (default: all)" "m"
+DEFINE_string kernel \
+  "" "Path to kernel build dir" "k"
 
-FLAGS_HELP="USAGE: $0 [flags]"
+FLAGS_HELP="USAGE: $0 --kernel <dir> [flags]"
 
 FLAGS "$@" || exit $?
 eval set -- "${FLAGS_ARGV}"
@@ -44,6 +46,11 @@ for arg in "$@" ; do
 	flags_help
 	exit 1
 done
+
+if [ -z ${FLAGS_kernel} ]; then
+	flags_help
+	exit 1
+fi
 
 confirm() {
     read -r -p "${1:-Are you sure you want to continue? [y/N]} " response
@@ -70,7 +77,7 @@ addKVToManifest() {
 }
 
 addShaToManifest() {
-	addKVToManifest "Sha" `./gen_sha.sh`
+	addKVToManifest "Sha" `./gen_sha.sh --kernel ${FLAGS_kernel}`
 }
 
 addPathToManifest() {
