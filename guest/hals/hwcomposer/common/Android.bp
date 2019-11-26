@@ -29,7 +29,6 @@ cc_library_static {
         "libyuv_static",
     ],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "liblog",
         "libhardware",
         "libbase",

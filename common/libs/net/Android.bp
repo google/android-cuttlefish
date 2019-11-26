@@ -21,7 +21,6 @@ cc_library_shared {
     ],
     shared_libs: [
         "libcuttlefish_fs",
-        "cuttlefish_auto_resources",
         "libbase",
     ],
     defaults: ["cuttlefish_host_and_guest"],
@@ -36,7 +35,6 @@ cc_test_host {
     shared_libs: [
         "libcuttlefish_fs",
         "cuttlefish_net",
-        "cuttlefish_auto_resources",
         "libbase",
     ],
     static_libs: [

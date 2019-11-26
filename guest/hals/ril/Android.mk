@@ -26,7 +26,6 @@ LOCAL_SHARED_LIBRARIES := \
   ${CUTTLEFISH_LIBRIL_NAME} \
   libcuttlefish_fs \
   cuttlefish_net \
-  cuttlefish_auto_resources \
   libbase \
   libcuttlefish_device_config \
 
