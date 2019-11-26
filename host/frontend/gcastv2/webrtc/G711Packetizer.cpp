@@ -77,12 +77,6 @@ void G711Packetizer::packetize(const sp<ABuffer> &accessUnit, int64_t timeUs) {
 
     uint32_t rtpTime = ((timeUs - mStartTimeMedia) * 8) / 1000;
 
-#if 0
-    static uint32_t lastRtpTime = 0;
-    LOG(INFO) << "rtpTime = " << rtpTime << " [+" << (rtpTime - lastRtpTime) << "]";
-    lastRtpTime = rtpTime;
-#endif
-
     CHECK_LE(12 + size, kMaxSRTPPayloadSize);
 
     std::vector<uint8_t> packet(12 + size);

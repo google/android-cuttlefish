@@ -10,21 +10,13 @@
 #include <utils/Errors.h>
 #include <utils/RefBase.h>
 
-#ifdef TARGET_ANDROID_DEVICE
-#include <helpers/JavaThread.h>
-#include <memory>
-#include <thread>
-#else
 #include <pthread.h>
-#endif
 
 namespace android {
 
 struct Thread : public RefBase {
     Thread()
-#ifndef TARGET_ANDROID_DEVICE
         : mThread(0)
-#endif
     {
     }
 
@@ -36,12 +28,6 @@ struct Thread : public RefBase {
         mName = name;
 
         mExitRequested = false;
-#ifdef TARGET_ANDROID_DEVICE
-        mThread = std::make_unique<std::thread>(
-                createJavaThread([this] {
-                    (void)ThreadWrapper(this);
-                }));
-#else
         int res = pthread_create(&mThread, NULL, &Thread::ThreadWrapper, this);
 
         if (res != 0) {
@@ -49,7 +35,6 @@ struct Thread : public RefBase {
 
             return -errno;
         }
-#endif
 
         return OK;
     }
@@ -58,17 +43,9 @@ struct Thread : public RefBase {
 
     void requestExitAndWait() {
         requestExit();
-
-#ifdef TARGET_ANDROID_DEVICE
-        if (mThread) {
-            mThread->join();
-            mThread.reset();
-        }
-#else
         void *dummy;
         pthread_join(mThread, &dummy);
         mThread = 0;
-#endif
     }
 
 protected:
@@ -83,11 +60,7 @@ protected:
     }
 
 private:
-#ifdef TARGET_ANDROID_DEVICE
-    std::unique_ptr<std::thread> mThread;
-#else
     pthread_t mThread;
-#endif
     volatile bool mExitRequested;
     std::string mName;
 

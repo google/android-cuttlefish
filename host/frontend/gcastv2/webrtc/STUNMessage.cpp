@@ -12,11 +12,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#if defined(TARGET_ANDROID) || defined(TARGET_ANDROID_DEVICE)
 #include <openssl/hmac.h>
-#else
-#include <Security/Security.h>
-#endif
 
 static constexpr uint8_t kMagicCookie[4] = { 0x21, 0x12, 0xa4, 0x42 };
 
@@ -84,7 +80,6 @@ void STUNMessage::addMessageIntegrityAttribute(std::string_view password) {
     mData[2] = (truncatedLength >> 8);
     mData[3] = (truncatedLength & 0xff);
 
-#if defined(TARGET_ANDROID) || defined(TARGET_ANDROID_DEVICE)
     uint8_t digest[20];
     unsigned int digestLen = sizeof(digest);
 
@@ -98,53 +93,6 @@ void STUNMessage::addMessageIntegrityAttribute(std::string_view password) {
 
     CHECK_EQ(digestLen, 20);
     addAttribute(0x0008 /* MESSAGE-INTEGRITY */, digest, digestLen);
-#else
-    CFErrorRef err;
-    auto digest = SecDigestTransformCreate(
-            kSecDigestHMACSHA1, 20 /* digestLength */, &err);
-
-    CHECK(digest);
-
-    auto input = CFDataCreateWithBytesNoCopy(
-            kCFAllocatorDefault, mData.data(), offset, kCFAllocatorNull);
-
-    auto success = SecTransformSetAttribute(
-            digest, kSecTransformInputAttributeName, input, &err);
-
-    CFRelease(input);
-    input = nullptr;
-
-    CHECK(success);
-
-    auto key = CFDataCreateWithBytesNoCopy(
-            kCFAllocatorDefault,
-            reinterpret_cast<const UInt8 *>(password.data()),
-            password.size(),
-            kCFAllocatorNull);
-
-    success = SecTransformSetAttribute(
-            digest, kSecDigestHMACKeyAttribute, key, &err);
-
-    CFRelease(key);
-    key = nullptr;
-
-    CHECK(success);
-
-    auto output = SecTransformExecute(digest, &err);
-    CHECK(output);
-
-    auto outputAsData = static_cast<CFDataRef>(output);
-    CHECK_EQ(CFDataGetLength(outputAsData), 20);
-
-    addAttribute(
-            0x0008 /* MESSAGE-INTEGRITY */, CFDataGetBytePtr(outputAsData), 20);
-
-    CFRelease(output);
-    output = nullptr;
-
-    CFRelease(digest);
-    digest = nullptr;
-#endif
 
     mAddedMessageIntegrity = true;
 }
@@ -324,7 +272,6 @@ bool STUNMessage::verifyMessageIntegrity(
     copy[2] = (truncatedLength >> 8);
     copy[3] = (truncatedLength & 0xff);
 
-#if defined(TARGET_ANDROID) || defined(TARGET_ANDROID_DEVICE)
     uint8_t digest[20];
     unsigned int digestLen = sizeof(digest);
 
@@ -344,54 +291,6 @@ bool STUNMessage::verifyMessageIntegrity(
             digestLen);
 
     return success;
-#else
-    CFErrorRef err;
-    auto digest = SecDigestTransformCreate(
-            kSecDigestHMACSHA1, 20 /* digestLength */, &err);
-
-    CHECK(digest);
-
-    auto input = CFDataCreateWithBytesNoCopy(
-            kCFAllocatorDefault, copy.data(), copy.size(), kCFAllocatorNull);
-
-    auto success = SecTransformSetAttribute(
-            digest, kSecTransformInputAttributeName, input, &err);
-
-    CFRelease(input);
-    input = nullptr;
-
-    CHECK(success);
-
-    auto key = CFDataCreateWithBytesNoCopy(
-            kCFAllocatorDefault,
-            reinterpret_cast<const UInt8 *>(password.data()),
-            password.size(),
-            kCFAllocatorNull);
-
-    success = SecTransformSetAttribute(
-            digest, kSecDigestHMACKeyAttribute, key, &err);
-
-    CFRelease(key);
-    key = nullptr;
-
-    CHECK(success);
-
-    auto output = SecTransformExecute(digest, &err);
-    CHECK(output);
-
-    success = !memcmp(
-            CFDataGetBytePtr(static_cast<CFDataRef>(output)),
-            &mData[offset + 4],
-            20);
-
-    CFRelease(output);
-    output = nullptr;
-
-    CFRelease(digest);
-    digest = nullptr;
-
-    return success;
-#endif
 }
 
 void STUNMessage::addFingerprint() {

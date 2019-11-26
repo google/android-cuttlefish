@@ -9,19 +9,6 @@
 
 #include <cstdlib>
 
-#if defined(TARGET_IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED < 110000
-void *operator new(size_t size, std::align_val_t align) {
-    void *data;
-    posix_memalign(&data, static_cast<size_t>(align), size);
-
-    return data;
-}
-
-void operator delete(void *data, std::align_val_t align) {
-    free(data);
-}
-#endif
-
 ClientSocket::ClientSocket(
         std::shared_ptr<RunLoop> rl,
         HTTPServer *server,

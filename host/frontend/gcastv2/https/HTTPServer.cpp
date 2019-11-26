@@ -10,11 +10,6 @@
 #include <map>
 #include <string>
 
-#if defined(TARGET_MAC) || defined(TARGET_IOS)
-#include <CommonCrypto/CommonDigest.h>
-#endif
-
-#if defined(TARGET_ANDROID) || defined(TARGET_ANDROID_DEVICE)
 #include <openssl/sha.h>
 
 #define CC_SHA1_CTX     SHA_CTX
@@ -22,7 +17,6 @@
 #define CC_SHA1_Update  SHA1_Update
 #define CC_SHA1_Final   SHA1_Final
 #define CC_LONG         size_t
-#endif
 
 HTTPServer::HTTPServer(
         std::shared_ptr<RunLoop> runLoop,
@@ -68,13 +62,6 @@ bool HTTPServer::handleSingleRequest(
         { 503, "Service Unavailable" },
         { 505, "HTTP Version Not Supported" },
     };
-
-#if 0
-    LOG(INFO)
-        << "handleSingleRequest on socket " << clientSocket->fd() << std::endl;
-
-    hexdump(data, size);
-#endif
 
     HTTPRequest request;
     request.setTo(data, size);

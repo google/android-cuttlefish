@@ -2,15 +2,7 @@
 
 #include <https/Support.h>
 
-#ifdef TARGET_ANDROID_DEVICE
-#include <helpers/JavaThread.h>
-#endif
-
-#ifdef TARGET_ANDROID_DEVICE_NO_JAVA
-#include <android-base/logging.h>
-#else
 #include <media/stagefright/foundation/ADebug.h>
-#endif
 
 #include <cstring>
 #include <fcntl.h>
@@ -49,11 +41,7 @@ RunLoop::RunLoop(std::string_view name)
     : RunLoop() {
     mName = name;
 
-#ifdef TARGET_ANDROID_DEVICE
-    mThread = android::createJavaThread([this]{ run(); });
-#else
     mThread = std::thread([this]{ run(); });
-#endif
 }
 
 RunLoop::~RunLoop() {

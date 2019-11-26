@@ -6,16 +6,11 @@
 #include <https/SSLSocket.h>
 #include <https/Support.h>
 #include <media/stagefright/foundation/ADebug.h>
-#include <utils/KeyStore.h>
 
 #include <sys/socket.h>
 #include <unistd.h>
 
 #include <sstream>
-
-#if defined(TARGET_ANDROID_DEVICE) && defined(TARGET_ANDROID)
-#error Only one of TARGET_ANDROID or TARGET_ANDROID_DEVICE may be specified
-#endif
 
 static int gDTLSInstanceIndex;
 
@@ -242,10 +237,6 @@ void DTLS::doTheThing(int res) {
                 << err
                 << " ("
                 << SSL_state_string_long(mSSL)
-#if !defined(TARGET_ANDROID) && !defined(TARGET_ANDROID_DEVICE)
-                << ", "
-                << SSL_rstate_string_long(mSSL)
-#endif
                 << ")";
         }
     }
