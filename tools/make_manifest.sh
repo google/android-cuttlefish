@@ -70,18 +70,7 @@ addKVToManifest() {
 }
 
 addShaToManifest() {
-	key="Sha"
-	cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common"
-	Sha=`git rev-parse HEAD`
-	cd -
-	cd "${ANDROID_BUILD_TOP}/external/u-boot"
-	Sha="$Sha,`git rev-parse HEAD`"
-	cd -
-	cd "${ANDROID_BUILD_TOP}/external/arm-trusted-firmware"
-	Sha="$Sha,`git rev-parse HEAD`"
-	cd -
-
-	addKVToManifest "${key}" "${Sha}"
+	addKVToManifest "Sha" `./gen_sha.sh`
 }
 
 addPathToManifest() {
