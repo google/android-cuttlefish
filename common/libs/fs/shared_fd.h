@@ -40,7 +40,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "common/libs/auto_resources/auto_resources.h"
 #include "vm_sockets.h"
 
 /**

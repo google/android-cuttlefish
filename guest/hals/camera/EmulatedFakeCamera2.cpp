@@ -32,11 +32,18 @@
 #include "EmulatedCameraFactory.h"
 #include "EmulatedFakeCamera2.h"
 #include "GrallocModule.h"
-#include "common/libs/auto_resources/auto_resources.h"
 
 #define ERROR_CAMERA_NOT_PRESENT -EPIPE
 
 #define CAMERA2_EXT_TRIGGER_TESTING_DISCONNECT 0xFFFFFFFF
+
+template <typename T, size_t N>
+char (&ArraySizeHelper(T (&array)[N]))[N];
+
+template <typename T, size_t N>
+char (&ArraySizeHelper(const T (&array)[N]))[N];
+
+#define arraysize(array) (sizeof(ArraySizeHelper(array)))
 
 namespace android {
 

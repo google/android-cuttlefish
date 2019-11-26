@@ -46,7 +46,6 @@ cc_binary_host {
         "cdisk_spec",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "cuttlefish_auto_resources",
         "libbase",
         "libnl",
         "libprotobuf-cpp-full",

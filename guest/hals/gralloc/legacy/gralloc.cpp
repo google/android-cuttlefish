@@ -35,7 +35,6 @@
 #include <hardware/hardware.h>
 #include <hardware/gralloc.h>
 
-#include "common/libs/auto_resources/auto_resources.h"
 #include "gralloc_vsoc_priv.h"
 #include "region_registry.h"
 

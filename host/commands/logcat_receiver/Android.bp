@@ -26,7 +26,6 @@ cc_binary_host {
         "libcuttlefish_fs",
         "liblog",
         "libcuttlefish_utils",
-        "cuttlefish_auto_resources",
     ],
     static_libs: [
         "libcuttlefish_host_config",

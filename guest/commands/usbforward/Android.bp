@@ -22,7 +22,6 @@ cc_binary {
         "transport_request.cpp",
     ],
     shared_libs: [
-        "cuttlefish_auto_resources",
         "libcuttlefish_fs",
         "libusb",
         "libbase",
