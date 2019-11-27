@@ -147,7 +147,6 @@ const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerBinary = "config_server_binary";
 
 const char* kRunTombstoneReceiver = "enable_tombstone_logger";
-const char* kTombstoneReceiverPort = "tombstone_logger_port";
 const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 const char* kBootloader = "bootloader";
@@ -746,10 +745,6 @@ void CuttlefishConfig::set_tombstone_receiver_binary(const std::string& e2e_test
   (*dictionary_)[kTombstoneReceiverBinary] = e2e_test_binary;
 }
 
-void CuttlefishConfig::set_tombstone_receiver_port(int port) {
-  (*dictionary_)[kTombstoneReceiverPort] = port;
-}
-
 bool CuttlefishConfig::use_bootloader() const {
   return (*dictionary_)[kUseBootloader].asBool();
 }
@@ -772,10 +767,6 @@ void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
 
 std::string CuttlefishConfig::boot_slot() const {
   return (*dictionary_)[kBootSlot].asString();
-}
-
-int CuttlefishConfig::tombstone_receiver_port() const {
-  return (*dictionary_)[kTombstoneReceiverPort].asInt();
 }
 
 std::string CuttlefishConfig::touch_socket_path() const {
@@ -827,7 +818,7 @@ void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
   for (const auto& arg : android::base::Split(extra_cmdline, " ")) {
     args_json_obj.append(arg);
   }
-  (*dictionary_)[kExtraKernelCmdline] = args_json_obj;
+  (*dictionary_)[kExtraKernelCmdline] = extra_cmdline;
 }
 std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
   std::vector<std::string> cmdline;
