@@ -302,16 +302,6 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   if (config.logcat_mode() == cvd::kLogcatVsockMode) {
     kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", config.logcat_vsock_port()));
   }
-  if (config.enable_tombstone_receiver()) {
-    kernel_cmdline.push_back("androidboot.tombstone_transmit=1");
-    kernel_cmdline.push_back(concat(
-        "androidboot.vsock_tombstone_port=",
-        config.tombstone_receiver_port()));
-    // TODO (b/128842613) populate a cid flag to read the host CID during
-    // runtime
-  } else {
-    kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
-  }
   kernel_cmdline.push_back(concat(
       "androidboot.cuttlefish_config_server_port=", config.config_server_port()));
   kernel_cmdline.push_back(concat(
@@ -357,6 +347,15 @@ std::vector<std::string> KernelCommandLineFromVnc(const VncServerPorts& vnc_port
                                  *vnc_ports.keyboard_server_vsock_port));
   }
   return kernel_args;
+}
+std::vector<std::string> KernelCommandLineFromTombstone(const TombstoneReceiverPorts& tombstone) {
+  if (!tombstone.server_vsock_port) {
+    return { "androidboot.tombstone_transmit=0" };
+  }
+  return {
+    "androidboot.tombstone_transmit=1",
+    concat("androidboot.vsock_tombstone_port=", *tombstone.server_vsock_port),
+  };
 }
 
 }  // namespace
@@ -489,7 +488,8 @@ int main(int argc, char** argv) {
 
   LaunchConfigServer(*config, &process_monitor);
 
-  LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
+  auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
+  auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
 
   LaunchUsbServerIfEnabled(*config, &process_monitor);
 
@@ -502,6 +502,8 @@ int main(int argc, char** argv) {
 
   auto kernel_args = KernelCommandLineFromConfig(*config);
   kernel_args.insert(kernel_args.end(), vnc_kernel_args.begin(), vnc_kernel_args.end());
+  kernel_args.insert(kernel_args.end(), tombstone_kernel_args.begin(),
+                     tombstone_kernel_args.end());
 
   // Start the guest VM
   vm_manager->WithFrontend(vnc_kernel_args.size() > 0);
