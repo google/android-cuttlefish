@@ -294,9 +294,6 @@ class CuttlefishConfig {
   void set_tombstone_receiver_binary(const std::string& binary);
   std::string tombstone_receiver_binary() const;
 
-  void set_tombstone_receiver_port(int port);
-  int tombstone_receiver_port() const;
-
   void set_use_bootloader(bool use_bootloader);
   bool use_bootloader() const;
 
