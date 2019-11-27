@@ -157,6 +157,7 @@ class SharedFD {
   static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
   static SharedFD SocketSeqPacketClient(const char* name);
   static SharedFD VsockServer(unsigned int port, int type);
+  static SharedFD VsockServer(int type);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
   static SharedFD TimerFD(int clock, int flags);
 
@@ -290,6 +291,22 @@ class FileInstance {
       errno_ = errno;
     }
     return rval;
+  }
+
+  int GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
+    errno = 0;
+    int rval = TEMP_FAILURE_RETRY(getsockname(fd_, addr, addrlen));
+    if (rval == -1) {
+      errno_ = errno;
+    }
+    return rval;
+  }
+
+  unsigned int VsockServerPort() {
+    struct sockaddr_vm vm_socket;
+    socklen_t length = sizeof(vm_socket);
+    GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
+    return vm_socket.svm_port;
   }
 
   void Identify(const char* identity);

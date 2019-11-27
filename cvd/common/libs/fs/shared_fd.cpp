@@ -421,6 +421,10 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type) {
   return vsock;
 }
 
+SharedFD SharedFD::VsockServer(int type) {
+  return VsockServer(VMADDR_PORT_ANY, type);
+}
+
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   auto vsock = cvd::SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
