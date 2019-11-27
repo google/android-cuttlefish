@@ -142,6 +142,8 @@ scan_for_boot_part=part list mmc ${devnum} -bootable devplist; env exists devpli
 find_script=if test -e mmc ${devnum}:${distro_bootpart} /boot/boot.scr; then echo Found U-Boot script /boot/boot.scr; run run_scr; fi
 run_scr=load mmc ${devnum}:${distro_bootpart} ${scriptaddr} /boot/boot.scr; source ${scriptaddr}
 EOF
+	script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+	echo "Sha=`${script_dir}/gen_sha.sh --kernel ${KERNEL_DIR}`" >> ${tmpfile}
 	${ANDROID_HOST_OUT}/bin/mkenvimage -s 32768 -o ${bootenv} - < ${tmpfile}
 fi
 
