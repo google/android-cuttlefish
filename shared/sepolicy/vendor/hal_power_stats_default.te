@@ -1,0 +1,1 @@
+r_dir_file(hal_power_stats_default, sysfs_iio_devices) # Needed to traverse nonexistent iio devices tree
