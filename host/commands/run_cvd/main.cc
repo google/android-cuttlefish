@@ -302,9 +302,6 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   if (config.logcat_mode() == cvd::kLogcatVsockMode) {
     kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", config.logcat_vsock_port()));
   }
-  if (config.enable_vnc_server()) {
-    kernel_cmdline.push_back(concat("androidboot.vsock_frames_port=", config.frames_vsock_port()));
-  }
   if (config.enable_tombstone_receiver()) {
     kernel_cmdline.push_back("androidboot.tombstone_transmit=1");
     kernel_cmdline.push_back(concat(
@@ -328,11 +325,6 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     }
     kernel_cmdline.push_back(concat("androidboot.slot_suffix=", slot_suffix));
   }
-  if (config.vm_manager() == vm_manager::QemuManager::name()) {
-    kernel_cmdline.push_back(concat("androidboot.vsock_touch_port=", config.touch_socket_port()));
-    kernel_cmdline.push_back(concat(
-        "androidboot.vsock_keyboard_port=", config.keyboard_socket_port()));
-  }
   kernel_cmdline.push_back(concat("loop.max_part=", config.loop_max_part()));
   if (config.guest_enforce_security()) {
     kernel_cmdline.push_back("enforcing=1");
@@ -349,6 +341,22 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
+}
+std::vector<std::string> KernelCommandLineFromVnc(const VncServerPorts& vnc_ports) {
+  std::vector<std::string> kernel_args;
+  if (vnc_ports.frames_server_vsock_port) {
+    kernel_args.push_back(concat("androidboot.vsock_frames_port=",
+                                 *vnc_ports.frames_server_vsock_port));
+  }
+  if (vnc_ports.touch_server_vsock_port) {
+    kernel_args.push_back(concat("androidboot.vsock_touch_port=",
+                                 *vnc_ports.touch_server_vsock_port));
+  }
+  if (vnc_ports.keyboard_server_vsock_port) {
+    kernel_args.push_back(concat("androidboot.vsock_keyboard_port=",
+                                 *vnc_ports.keyboard_server_vsock_port));
+  }
+  return kernel_args;
 }
 
 }  // namespace
@@ -472,6 +480,8 @@ int main(int argc, char** argv) {
   cvd::SharedFD adbd_events_pipe = event_pipes[1];
   event_pipes.clear();
 
+  std::set<std::string> extra_kernel_cmdline;
+
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
 
@@ -486,12 +496,15 @@ int main(int argc, char** argv) {
   // The vnc server needs to be launched after the ivserver because it connects
   // to it when using qemu. It needs to launch before the VMM because it serves
   // on several sockets (input devices, vsock frame server) when using crosvm.
-  auto frontend_enabled = LaunchVNCServerIfEnabled(
+  auto vnc_server_config = LaunchVNCServerIfEnabled(
       *config, &process_monitor, GetOnSubprocessExitCallback(*config));
+  auto vnc_kernel_args = KernelCommandLineFromVnc(vnc_server_config);
+
+  auto kernel_args = KernelCommandLineFromConfig(*config);
+  kernel_args.insert(kernel_args.end(), vnc_kernel_args.begin(), vnc_kernel_args.end());
 
   // Start the guest VM
-  vm_manager->WithFrontend(frontend_enabled);
-  auto kernel_args = KernelCommandLineFromConfig(*config);
+  vm_manager->WithFrontend(vnc_kernel_args.size() > 0);
   vm_manager->WithKernelCommandLine(android::base::Join(kernel_args, " "));
   auto vmm_commands = vm_manager->StartCommands();
   for (auto& vmm_cmd: vmm_commands) {
