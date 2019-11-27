@@ -30,6 +30,7 @@
 #include <thread>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 
 #include "common/libs/fs/shared_select.h"
@@ -126,7 +127,7 @@ void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
-std::vector<cvd::Command> QemuManager::StartCommands(bool /*with_frontend*/) {
+std::vector<cvd::Command> QemuManager::StartCommands() {
   // Set the config values in the environment
   LogAndSetEnv("qemu_binary", config_->qemu_binary());
   LogAndSetEnv("instance_name", config_->instance_name());
@@ -137,7 +138,7 @@ std::vector<cvd::Command> QemuManager::StartCommands(bool /*with_frontend*/) {
   LogAndSetEnv("kernel_image_path", config_->GetKernelImageToUse());
   LogAndSetEnv("gdb_flag", config_->gdb_flag());
   LogAndSetEnv("ramdisk_image_path", config_->final_ramdisk_path());
-  LogAndSetEnv("kernel_cmdline", config_->kernel_cmdline_as_string());
+  LogAndSetEnv("kernel_cmdline", kernel_cmdline_);
   LogAndSetEnv("virtual_disk_paths", JoinString(config_->virtual_disk_paths(),
                                                 ";"));
   LogAndSetEnv("wifi_tap_name", config_->wifi_tap_name());

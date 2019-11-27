@@ -416,7 +416,9 @@ int main(int argc, char** argv) {
       *config, &process_monitor, GetOnSubprocessExitCallback(*config));
 
   // Start the guest VM
-  auto vmm_commands = vm_manager->StartCommands(frontend_enabled);
+  vm_manager->WithFrontend(frontend_enabled);
+  vm_manager->WithKernelCommandLine(config->kernel_cmdline_as_string());
+  auto vmm_commands = vm_manager->StartCommands();
   for (auto& vmm_cmd: vmm_commands) {
       process_monitor.StartSubprocess(std::move(vmm_cmd),
                                       GetOnSubprocessExitCallback(*config));

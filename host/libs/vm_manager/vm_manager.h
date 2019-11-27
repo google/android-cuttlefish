@@ -16,6 +16,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -42,11 +43,14 @@ class VmManager {
 
   virtual ~VmManager() = default;
 
+  virtual void WithFrontend(bool);
+  virtual void WithKernelCommandLine(const std::string&);
+
   // Starts the VMM. It will usually build a command and pass it to the
   // command_starter function, although it may start more than one. The
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
-  virtual std::vector<cvd::Command> StartCommands(bool with_frontend) = 0;
+  virtual std::vector<cvd::Command> StartCommands() = 0;
 
   virtual bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const;
@@ -58,6 +62,9 @@ class VmManager {
 
   const vsoc::CuttlefishConfig* config_;
   VmManager(const vsoc::CuttlefishConfig* config);
+
+  bool frontend_enabled_;
+  std::string kernel_cmdline_;
 
  private:
   struct VmManagerHelper {
