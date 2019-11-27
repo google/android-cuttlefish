@@ -4,7 +4,7 @@
 #include <https/HTTPRequestResponse.h>
 #include <https/Support.h>
 
-#include <media/stagefright/foundation/base64.h>
+#include <glog/logging.h>
 
 #include <iostream>
 #include <map>
@@ -282,7 +282,7 @@ void HTTPServer::handleWebSocketRequest(
     CHECK_EQ(res, 1);
 
     std::string acceptKey;
-    android::encodeBase64(digest, sizeof(digest), &acceptKey);
+    encodeBase64(digest, sizeof(digest), &acceptKey);
 
     (*responseHeaders)["Sec-WebSocket-Accept"] = acceptKey;
 

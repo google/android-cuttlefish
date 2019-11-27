@@ -1,7 +1,6 @@
 #include <https/BufferedSocket.h>
 
 #include <cassert>
-#include <sys/socket.h>
 #include <unistd.h>
 
 BufferedSocket::BufferedSocket(std::shared_ptr<RunLoop> rl, int sock)
