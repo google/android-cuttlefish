@@ -154,4 +154,13 @@ bool VmManager::ValidateHostConfiguration(
   auto linux_ver_4_8 = VmManager::LinuxVersionAtLeast4_8(config_commands);
   return in_kvm && in_cvdnetwork && linux_ver_4_8;
 }
+
+void VmManager::WithFrontend(bool enabled) {
+  frontend_enabled_ = enabled;
+}
+
+void VmManager::WithKernelCommandLine(const std::string& kernel_cmdline) {
+  kernel_cmdline_ = kernel_cmdline;
+}
+
 }  // namespace vm_manager

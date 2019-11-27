@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 
 #include "common/libs/utils/network.h"
@@ -94,7 +95,7 @@ void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
-std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
+std::vector<cvd::Command> CrosvmManager::StartCommands() {
   cvd::Command crosvm_cmd(config_->crosvm_binary(), [](cvd::Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
@@ -120,13 +121,13 @@ std::vector<cvd::Command> CrosvmManager::StartCommands(bool with_frontend) {
   crosvm_cmd.AddParameter("--null-audio");
   crosvm_cmd.AddParameter("--mem=", config_->memory_mb());
   crosvm_cmd.AddParameter("--cpus=", config_->cpus());
-  crosvm_cmd.AddParameter("--params=", config_->kernel_cmdline_as_string());
+  crosvm_cmd.AddParameter("--params=", kernel_cmdline_);
   for (const auto& disk : config_->virtual_disk_paths()) {
     crosvm_cmd.AddParameter("--rwdisk=", disk);
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));
 
-  if (with_frontend) {
+  if (frontend_enabled_) {
     crosvm_cmd.AddParameter("--single-touch=", config_->touch_socket_path(),
                             ":", config_->x_res(), ":", config_->y_res());
     crosvm_cmd.AddParameter("--keyboard=", config_->keyboard_socket_path());
