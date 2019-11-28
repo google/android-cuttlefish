@@ -85,5 +85,6 @@
 /vendor/lib(64)?/android\.hardware\.health@2\.1-impl-cuttlefish  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/gralloc.cutf_ashmem.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/gralloc.minigbm.so  u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/hw/vulkan.pastel.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libcuttlefish_fs.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/vsoc_lib.so  u:object_r:same_process_hal_file:s0
