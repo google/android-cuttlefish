@@ -78,6 +78,7 @@ bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
     config->add_kernel_cmdline(
         "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
     config->add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
+    config->add_kernel_cmdline("androidboot.hardware.vulkan=pastel");
     return true;
   }
   return false;
