@@ -94,6 +94,9 @@ extern "C" {
  *                    RIL_REQUEST_ENABLE_MODEM
  *                    RIL_REQUEST_EMERGENCY_DIAL
  *                    RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS
+ *                    RIL_REQUEST_ENABLE_UICC_APPLICATIONS
+ *                    RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
+ *                    RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -6595,6 +6598,50 @@ typedef struct {
  *   RadioError:RADIO_NOT_AVAILABLE
  */
 #define RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5 155
+
+/**
+ * RIL_REQUEST_ENABLE_UICC_APPLICATIONS
+ *
+ * Enable or disable uicc applications.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  SIM_ABSENT
+ *  INTERNAL_ERR
+ *  REQUEST_NOT_SUPPORTED
+ */
+#define RIL_REQUEST_ENABLE_UICC_APPLICATIONS 156
+
+/**
+ * RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
+ *
+ * Whether uicc applications are enabled.
+ *
+ * Response: a boolean of enable or not.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  SIM_ABSENT
+ *  INTERNAL_ERR
+ *  REQUEST_NOT_SUPPORTED
+ */
+#define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 157
+
+/**
+ * RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT
+ *
+ * Whether disabling / enabling uicc applications is supported
+ *
+ * Response: a boolean of whether it's supported.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  INTERNAL_ERR
+ */
+#define RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT 158
 
 /***********************************************************************/
 
