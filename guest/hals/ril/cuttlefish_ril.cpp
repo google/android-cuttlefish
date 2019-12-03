@@ -2264,13 +2264,6 @@ static void request_get_modem_stack_status(int /*request*/, RIL_Token t) {
   return;
 }
 
-static void request_set_signal_strength_reporting_criteria_1_5(int /*request*/, void* /*data*/,
-                                                               size_t /*datalen*/, RIL_Token t) {
-  ALOGV("request_set_signal_strength_reporting_criteria_1_5 - void");
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-  return;
-}
-
 static void request_enable_modem(int /*request*/, RIL_Token t) {
   ALOGV("Enabling modem - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2279,6 +2272,26 @@ static void request_enable_modem(int /*request*/, RIL_Token t) {
 
 static void request_set_system_selection_channels(int /*request*/, RIL_Token t) {
   ALOGV("request_set_system_selection_channels - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+// New functions after Q
+static void request_set_signal_strength_reporting_criteria_1_5(int /*request*/, void* /*data*/,
+                                                               size_t /*datalen*/, RIL_Token t) {
+  ALOGV("request_set_signal_strength_reporting_criteria_1_5 - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_set_system_selection_channels_1_5(int /*request*/, RIL_Token t) {
+  ALOGV("request_set_system_selection_channels_1_5 - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_start_network_scan_1_5(RIL_Token t) {
+  ALOGV("request_start_network_scan_1_5");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
@@ -2502,7 +2515,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_IMS_SEND_SMS:
       request_ims_send_SMS(data, datalen, t);
       break;
-
     case RIL_REQUEST_SET_INITIAL_ATTACH_APN:
       ALOGW("INITIAL ATTACH APN");
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2514,9 +2526,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_START_NETWORK_SCAN4:
       request_start_network_scan4(t);
-      break;
-    case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5:
-      request_set_signal_strength_reporting_criteria_1_5(request, data, datalen, t);
       break;
     case RIL_REQUEST_GET_MODEM_STACK_STATUS:
       request_get_modem_stack_status(request, t);
@@ -2569,6 +2578,11 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_EXIT_EMERGENCY_CALLBACK_MODE:
       request_exit_emergency_mode(data, datalen, t);
       break;
+
+// New requests after Q.
+    case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5:
+      request_set_signal_strength_reporting_criteria_1_5(request, data, datalen, t);
+      break;
     case RIL_REQUEST_ENABLE_UICC_APPLICATIONS:
       request_enable_uicc_applications(request, data, datalen, t);
       break;
@@ -2577,6 +2591,12 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT:
       request_can_toggle_uicc_applications_enablement(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5:
+      request_set_system_selection_channels_1_5(request, t);
+      break;
+    case RIL_REQUEST_START_NETWORK_SCAN_1_5:
+      request_start_network_scan_1_5(t);
       break;
     default:
       ALOGE("Request %d not supported.", request);
