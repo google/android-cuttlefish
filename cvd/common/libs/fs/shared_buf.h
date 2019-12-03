@@ -52,4 +52,14 @@ ssize_t ReadExact(SharedFD fd, std::string* buf);
  */
 ssize_t WriteAll(SharedFD fd, const std::string& buf);
 
+/**
+ * Writes to fd until writing all bytes in buf.
+ *
+ * On a successful write, returns buf.size().
+ *
+ * If a write error is encountered, returns -1. Some data may have already been
+ * written to fd at that point.
+ */
+ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf);
+
 } // namespace cvd
