@@ -21,9 +21,11 @@ cc_binary {
     static_libs: [
         "libcuttlefish_fs_product",
         "libgflags",
-        "liblog",
         "libbase",
         "libcutils",
+    ],
+    shared_libs: [
+        "liblog",
     ],
     stl: "libc++_static",
     header_libs: [
