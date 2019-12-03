@@ -102,6 +102,7 @@ static const std::string gSimPUK = "11223344";
 static int gSimPINAttempts = 0;
 static const int gSimPINAttemptsMax = 3;
 static SIM_Status gSimStatus = SIM_NOT_READY;
+static bool areUiccApplicationsEnabled = true;
 
 // SetUpNetworkInterface configures IP and Broadcast addresses on a RIL
 // controlled network interface.
@@ -1211,6 +1212,40 @@ static void request_cdma_get_subscription_source(int /*request*/,
 
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &gCdmaSubscriptionType,
                                  sizeof(gCdmaSubscriptionType));
+}
+
+static void request_enable_uicc_applications(int /*request*/, void* data,
+                                             size_t datalen,
+                                             RIL_Token t) {
+  ALOGV("Enable uicc applications.");
+
+  if (data == NULL || datalen != sizeof(int)) {
+    gce_ril_env->OnRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
+    return;
+  }
+
+  bool enable = *(int *)(data) != 0;
+
+  ALOGV("areUiccApplicationsEnabled change from %d to %d", areUiccApplicationsEnabled, enable);
+
+  areUiccApplicationsEnabled = enable;
+
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+}
+
+static void request_are_uicc_applications_enabled(int /*request*/, void* /*data*/,
+                                                  size_t /*datalen*/,
+                                                  RIL_Token t) {
+  ALOGV("Getting whether uicc applications are enabled.");
+
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &areUiccApplicationsEnabled, sizeof(bool));
+}
+
+static void request_can_toggle_uicc_applications_enablement(int /*request*/, void* /*data*/,
+                                                             size_t /*datalen*/, RIL_Token t) {
+  ALOGV("Getting can toggle uicc applications enablement.");
+
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
 static void request_cdma_set_subscription_source(int /*request*/, void* data,
@@ -2533,6 +2568,15 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_EXIT_EMERGENCY_CALLBACK_MODE:
       request_exit_emergency_mode(data, datalen, t);
+      break;
+    case RIL_REQUEST_ENABLE_UICC_APPLICATIONS:
+      request_enable_uicc_applications(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED:
+      request_are_uicc_applications_enabled(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT:
+      request_can_toggle_uicc_applications_enablement(request, data, datalen, t);
       break;
     default:
       ALOGE("Request %d not supported.", request);
