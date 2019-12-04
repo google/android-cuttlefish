@@ -50,7 +50,7 @@ void hexdump(const void *_data, size_t size) {
 }
 
 static char encode6Bit(unsigned x) {
-  static char base64[] = 
+  static char base64[] =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
   return base64[x & 63];
 }

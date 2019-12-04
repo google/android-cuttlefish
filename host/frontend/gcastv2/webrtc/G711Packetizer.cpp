@@ -26,7 +26,7 @@ void G711Packetizer::run() {
     auto weak_this = std::weak_ptr<G711Packetizer>(shared_from_this());
 
     mAudioSource->setCallback(
-            [weak_this](const sp<ABuffer> &accessUnit) {
+            [weak_this](const std::shared_ptr<ABuffer> &accessUnit) {
                 auto me = weak_this.lock();
                 if (me) {
                     me->mRunLoop->post(
@@ -38,7 +38,7 @@ void G711Packetizer::run() {
     mAudioSource->start();
 }
 
-void G711Packetizer::onFrame(const sp<ABuffer> &accessUnit) {
+void G711Packetizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
     int64_t timeUs;
     CHECK(accessUnit->meta()->findInt64("timeUs", &timeUs));
 
@@ -60,7 +60,7 @@ void G711Packetizer::onFrame(const sp<ABuffer> &accessUnit) {
     packetize(accessUnit, timeUs);
 }
 
-void G711Packetizer::packetize(const sp<ABuffer> &accessUnit, int64_t timeUs) {
+void G711Packetizer::packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs) {
     LOG(VERBOSE) << "Received G711 frame of size " << accessUnit->size();
 
     const uint8_t PT = (mMode == Mode::ALAW) ? 8 : 0;

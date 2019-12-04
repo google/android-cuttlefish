@@ -71,8 +71,8 @@ void AMessage::freeItem(Item *item) {
         case kTypeMessage:
         case kTypeBuffer:
         {
-            if (item->u.refValue != NULL) {
-                item->u.refValue->decStrong(this);
+            if (item->refValue) {
+                item->refValue.reset();
             }
             break;
         }
@@ -154,28 +154,25 @@ void AMessage::setString(
     item->u.stringValue = new std::string(s, len < 0 ? strlen(s) : len);
 }
 
-void AMessage::setObject(const char *name, const sp<RefBase> &obj) {
+void AMessage::setObject(const char *name, const std::shared_ptr<void> &obj) {
     Item *item = allocateItem(name);
     item->mType = kTypeObject;
 
-    if (obj != NULL) { obj->incStrong(this); }
-    item->u.refValue = obj.get();
+    item->refValue = obj;
 }
 
-void AMessage::setMessage(const char *name, const sp<AMessage> &obj) {
+void AMessage::setMessage(const char *name, const std::shared_ptr<AMessage> &obj) {
     Item *item = allocateItem(name);
     item->mType = kTypeMessage;
 
-    if (obj != NULL) { obj->incStrong(this); }
-    item->u.refValue = obj.get();
+    item->refValue = obj;
 }
 
-void AMessage::setBuffer(const char *name, const sp<ABuffer> &obj) {
+void AMessage::setBuffer(const char *name, const std::shared_ptr<ABuffer> &obj) {
     Item *item = allocateItem(name);
     item->mType = kTypeBuffer;
 
-    if (obj != NULL) { obj->incStrong(this); }
-    item->u.refValue = obj.get();
+    item->refValue = obj;
 }
 
 bool AMessage::findString(const char *name, std::string *value) const {
@@ -187,41 +184,41 @@ bool AMessage::findString(const char *name, std::string *value) const {
     return false;
 }
 
-bool AMessage::findObject(const char *name, sp<RefBase> *obj) const {
+bool AMessage::findObject(const char *name, std::shared_ptr<void> *obj) const {
     const Item *item = findItem(name, kTypeObject);
     if (item) {
-        *obj = item->u.refValue;
+        *obj = item->refValue;
         return true;
     }
     return false;
 }
 
-bool AMessage::findMessage(const char *name, sp<AMessage> *obj) const {
+bool AMessage::findMessage(const char *name, std::shared_ptr<AMessage> *obj) const {
     const Item *item = findItem(name, kTypeMessage);
     if (item) {
-        *obj = static_cast<AMessage *>(item->u.refValue);
+        *obj = std::static_pointer_cast<AMessage>(item->refValue);
         return true;
     }
     return false;
 }
 
-bool AMessage::findBuffer(const char *name, sp<ABuffer> *obj) const {
+bool AMessage::findBuffer(const char *name, std::shared_ptr<ABuffer> *obj) const {
     const Item *item = findItem(name, kTypeBuffer);
     if (item) {
-        *obj = static_cast<ABuffer *>(item->u.refValue);
+        *obj = std::static_pointer_cast<ABuffer>(item->refValue);
         return true;
     }
     return false;
 }
 
-void AMessage::post(int64_t delayUs) {
+void AMessage::post(std::shared_ptr<AMessage> msg, int64_t delayUs) {
     extern ALooperRoster gLooperRoster;
 
-    gLooperRoster.postMessage(this, delayUs);
+    gLooperRoster.postMessage(msg, delayUs);
 }
 
-sp<AMessage> AMessage::dup() const {
-    sp<AMessage> msg = new AMessage(mWhat, mTarget);
+std::shared_ptr<AMessage> AMessage::dup() const {
+    std::shared_ptr<AMessage> msg(new AMessage(mWhat, mTarget));
     msg->mNumItems = mNumItems;
 
     for (size_t i = 0; i < mNumItems; ++i) {
@@ -230,6 +227,7 @@ sp<AMessage> AMessage::dup() const {
 
         to->mName = from->mName;
         to->mType = from->mType;
+        to->refValue = from->refValue;
 
         switch (from->mType) {
             case kTypeString:
@@ -242,8 +240,6 @@ sp<AMessage> AMessage::dup() const {
             case kTypeMessage:
             case kTypeBuffer:
             {
-                to->u.refValue = from->u.refValue;
-                to->u.refValue->incStrong(this);
                 break;
             }
 
@@ -333,11 +329,11 @@ std::string AMessage::debugString(size_t indent) const {
                 break;
             case kTypeObject:
                 tmp = StringPrintf(
-                        "RefBase *%s = %p", item.mName, item.u.refValue);
+                        "Object *%s = %p", item.mName, item.refValue.get());
                 break;
             case kTypeBuffer:
             {
-                sp<ABuffer> buffer = static_cast<ABuffer *>(item.u.refValue);
+                std::shared_ptr<ABuffer> buffer = std::static_pointer_cast<ABuffer>(item.refValue);
 
                 if (buffer != NULL && buffer->data() != NULL && buffer->size() <= 1024) {
                     tmp = StringPrintf("Buffer %s = {\n", item.mName);
@@ -354,8 +350,8 @@ std::string AMessage::debugString(size_t indent) const {
                 tmp = StringPrintf(
                         "AMessage %s = %s",
                         item.mName,
-                        static_cast<AMessage *>(
-                            item.u.refValue)->debugString(
+                        std::static_pointer_cast<AMessage>(
+                            item.refValue)->debugString(
                                 indent + strlen(item.mName) + 14).c_str());
                 break;
             default:

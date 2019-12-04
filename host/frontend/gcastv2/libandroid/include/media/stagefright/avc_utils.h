@@ -37,7 +37,7 @@ enum {
 };
 
 void FindAVCDimensions(
-        const sp<ABuffer> &seqParamSet, int32_t *width, int32_t *height);
+        const std::shared_ptr<ABuffer> &seqParamSet, int32_t *width, int32_t *height);
 
 unsigned parseUE(ABitReader *br);
 
@@ -47,13 +47,13 @@ status_t getNextNALUnit(
         bool startCodeFollows = false);
 
 struct MetaData;
-sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit);
+std::shared_ptr<MetaData> MakeAVCCodecSpecificData(const std::shared_ptr<ABuffer> &accessUnit);
 
-bool IsIDR(const sp<ABuffer> &accessUnit);
+bool IsIDR(const std::shared_ptr<ABuffer> &accessUnit);
 
 const char *AVCProfileToString(uint8_t profile);
 
-sp<MetaData> MakeAACCodecSpecificData(
+std::shared_ptr<MetaData> MakeAACCodecSpecificData(
         unsigned profile, unsigned sampling_freq_index,
         unsigned channel_configuration);
 

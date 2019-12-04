@@ -4,8 +4,10 @@
 
 #include <stdio.h>
 
+#include <memory>
+
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
+#include <media/stagefright/foundation/ABase.h>
 
 namespace android {
 
@@ -14,19 +16,19 @@ struct AMessage;
 struct AnotherPacketSource;
 struct ATSParser;
 
-struct NuMediaExtractor : public RefBase {
+struct NuMediaExtractor {
     NuMediaExtractor();
 
     status_t setDataSource(const char *path);
 
     size_t countTracks() const;
-    status_t getTrackFormat(size_t index, sp<AMessage> *format) const;
+    status_t getTrackFormat(size_t index, std::shared_ptr<AMessage> *format) const;
 
     status_t selectTrack(size_t index);
 
     status_t getSampleTime(int64_t *timeUs);
     status_t getSampleTrackIndex(size_t *index);
-    status_t readSampleData(sp<ABuffer> accessUnit);
+    status_t readSampleData(std::shared_ptr<ABuffer> accessUnit);
 
     status_t advance();
 
@@ -40,16 +42,16 @@ private:
     };
 
     uint32_t mFlags;
-    sp<ATSParser> mParser;
+    std::shared_ptr<ATSParser> mParser;
     FILE *mFile;
 
-    sp<AnotherPacketSource> mAudioSource;
-    sp<AnotherPacketSource> mVideoSource;
+    std::shared_ptr<AnotherPacketSource> mAudioSource;
+    std::shared_ptr<AnotherPacketSource> mVideoSource;
     size_t mNumTracks;
     ssize_t mAudioTrackIndex;
     ssize_t mVideoTrackIndex;
 
-    sp<ABuffer> mNextBuffer[2];
+    std::shared_ptr<ABuffer> mNextBuffer[2];
     status_t mFinalResult[2];
     ssize_t mNextIndex;
 

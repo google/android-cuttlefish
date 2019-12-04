@@ -48,8 +48,8 @@ ABuffer::~ABuffer() {
         }
     }
 
-    if (mFarewell != NULL) {
-        mFarewell->post();
+    if (mFarewell) {
+        AMessage::post(mFarewell);
     }
 }
 
@@ -61,13 +61,13 @@ void ABuffer::setRange(size_t offset, size_t size) {
     mRangeLength = size;
 }
 
-void ABuffer::setFarewellMessage(const sp<AMessage> msg) {
+void ABuffer::setFarewellMessage(const std::shared_ptr<AMessage> msg) {
     mFarewell = msg;
 }
 
-sp<AMessage> ABuffer::meta() {
-    if (mMeta == NULL) {
-        mMeta = new AMessage;
+std::shared_ptr<AMessage> ABuffer::meta() {
+    if (!mMeta) {
+        mMeta.reset(new AMessage);
     }
     return mMeta;
 }

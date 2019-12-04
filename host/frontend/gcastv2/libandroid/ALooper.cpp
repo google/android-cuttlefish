@@ -39,7 +39,6 @@ struct ALooper::LooperThread : public Thread {
         return mLooper->loop();
     }
 
-protected:
     virtual ~LooperThread() {}
 
 private:
@@ -66,10 +65,10 @@ ALooper::~ALooper() {
     stop();
 }
 
-ALooper::handler_id ALooper::registerHandler(const sp<AHandler> &handler) {
-    return gLooperRoster.registerHandler(this, handler);
+ALooper::handler_id ALooper::registerHandler(std::shared_ptr<ALooper> looper, 
+                                             const std::shared_ptr<AHandler> &handler) {
+    return gLooperRoster.registerHandler(looper, handler);
 }
-
 void ALooper::unregisterHandler(handler_id handlerID) {
     gLooperRoster.unregisterHandler(handlerID);
 }
@@ -98,18 +97,18 @@ status_t ALooper::start(bool runOnCallingThread) {
         return INVALID_OPERATION;
     }
 
-    mThread = new LooperThread(this);
+    mThread.reset(new LooperThread(this));
 
     status_t err = mThread->run("ALooper");
     if (err != OK) {
-        mThread.clear();
+        mThread.reset();
     }
 
     return err;
 }
 
 status_t ALooper::stop() {
-    sp<LooperThread> thread;
+    std::shared_ptr<LooperThread> thread;
     bool runningLocally;
 
     {
@@ -117,7 +116,7 @@ status_t ALooper::stop() {
 
         thread = mThread;
         runningLocally = mRunningLocally;
-        mThread.clear();
+        mThread.reset();
         mRunningLocally = false;
     }
 
@@ -134,7 +133,7 @@ status_t ALooper::stop() {
     return OK;
 }
 
-void ALooper::post(const sp<AMessage> &msg, int64_t delayUs) {
+void ALooper::post(const std::shared_ptr<AMessage> &msg, int64_t delayUs) {
     Mutex::Autolock autoLock(mLock);
 
     int64_t whenUs;

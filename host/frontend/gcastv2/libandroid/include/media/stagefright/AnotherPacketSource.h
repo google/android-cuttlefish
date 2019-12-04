@@ -30,13 +30,13 @@ namespace android {
 struct ABuffer;
 
 struct AnotherPacketSource : public MediaSource {
-    AnotherPacketSource(const sp<MetaData> &meta);
+    AnotherPacketSource(const std::shared_ptr<MetaData> &meta);
 
-    void setFormat(const sp<MetaData> &meta);
+    void setFormat(const std::shared_ptr<MetaData> &meta);
 
     virtual status_t start(MetaData *params = NULL);
     virtual status_t stop();
-    virtual sp<MetaData> getFormat();
+    virtual std::shared_ptr<MetaData> getFormat();
 
     virtual status_t read(
             MediaBuffer **buffer, const ReadOptions *options = NULL);
@@ -49,18 +49,17 @@ struct AnotherPacketSource : public MediaSource {
 
     status_t nextBufferTime(int64_t *timeUs);
 
-    void queueAccessUnit(const sp<ABuffer> &buffer);
+    void queueAccessUnit(const std::shared_ptr<ABuffer> &buffer);
 
     void queueDiscontinuity(
-            ATSParser::DiscontinuityType type, const sp<AMessage> &extra);
+            ATSParser::DiscontinuityType type, const std::shared_ptr<AMessage> &extra);
 
     void signalEOS(status_t result);
 
-    status_t dequeueAccessUnit(sp<ABuffer> *buffer);
+    status_t dequeueAccessUnit(std::shared_ptr<ABuffer> *buffer);
 
     bool isFinished(int64_t duration) const;
 
-protected:
     virtual ~AnotherPacketSource();
 
 private:
@@ -68,9 +67,9 @@ private:
     Condition mCondition;
 
     bool mIsAudio;
-    sp<MetaData> mFormat;
+    std::shared_ptr<MetaData> mFormat;
     int64_t mLastQueuedTimeUs;
-    std::list<sp<ABuffer>> mBuffers;
+    std::list<std::shared_ptr<ABuffer>> mBuffers;
     status_t mEOSResult;
 
     bool wasFormatChange(int32_t discontinuityType) const;

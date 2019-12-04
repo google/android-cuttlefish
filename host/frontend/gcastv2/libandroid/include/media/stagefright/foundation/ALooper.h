@@ -21,24 +21,25 @@
 #include "ABase.h"
 
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
 #include <utils/threads.h>
 
 #include <deque>
+#include <memory>
 
 namespace android {
 
 struct AHandler;
 struct AMessage;
 
-struct ALooper : public RefBase {
+struct ALooper {
     typedef int32_t event_id;
     typedef int32_t handler_id;
 
     ALooper();
 
-    handler_id registerHandler(const sp<AHandler> &handler);
-    void unregisterHandler(handler_id handlerID);
+    static handler_id registerHandler(std::shared_ptr<ALooper> looper, 
+                                      const std::shared_ptr<AHandler> &handler);
+    static void unregisterHandler(handler_id handlerID);
 
     status_t start(bool runOnCallingThread = false);
     status_t stop();
@@ -47,7 +48,6 @@ struct ALooper : public RefBase {
 
     static int64_t GetNowUs();
 
-protected:
     virtual ~ALooper();
 
 private:
@@ -55,7 +55,7 @@ private:
 
     struct Event {
         int64_t mWhenUs;
-        sp<AMessage> mMessage;
+        std::shared_ptr<AMessage> mMessage;
     };
 
     Mutex mLock;
@@ -64,10 +64,10 @@ private:
     std::deque<Event> mEventQueue;
 
     struct LooperThread;
-    sp<LooperThread> mThread;
+    std::shared_ptr<LooperThread> mThread;
     bool mRunningLocally;
 
-    void post(const sp<AMessage> &msg, int64_t delayUs);
+    void post(const std::shared_ptr<AMessage> &msg, int64_t delayUs);
     bool loop();
 
     DISALLOW_EVIL_CONSTRUCTORS(ALooper);

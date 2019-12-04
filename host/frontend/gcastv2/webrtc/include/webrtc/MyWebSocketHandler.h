@@ -31,7 +31,6 @@ struct MyWebSocketHandler
             uint8_t headerByte, const uint8_t *msg, size_t len) override;
 
 private:
-    template<class T> using sp = android::sp<T>;
     using JSONObject = android::JSONObject;
 
     enum OptionBits : uint32_t {

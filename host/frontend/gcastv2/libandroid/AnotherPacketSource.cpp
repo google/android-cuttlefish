@@ -29,7 +29,7 @@ namespace android {
 
 const int64_t kNearEOSMarkUs = 2000000ll; // 2 secs
 
-AnotherPacketSource::AnotherPacketSource(const sp<MetaData> &meta)
+AnotherPacketSource::AnotherPacketSource(const std::shared_ptr<MetaData> &meta)
     : mIsAudio(false),
       mFormat(meta),
       mLastQueuedTimeUs(0),
@@ -44,7 +44,7 @@ AnotherPacketSource::AnotherPacketSource(const sp<MetaData> &meta)
     }
 }
 
-void AnotherPacketSource::setFormat(const sp<MetaData> &meta) {
+void AnotherPacketSource::setFormat(const std::shared_ptr<MetaData> &meta) {
     CHECK(mFormat == NULL);
     mFormat = meta;
 }
@@ -60,12 +60,12 @@ status_t AnotherPacketSource::stop() {
     return OK;
 }
 
-sp<MetaData> AnotherPacketSource::getFormat() {
+std::shared_ptr<MetaData> AnotherPacketSource::getFormat() {
     return mFormat;
 }
 
-status_t AnotherPacketSource::dequeueAccessUnit(sp<ABuffer> *buffer) {
-    buffer->clear();
+status_t AnotherPacketSource::dequeueAccessUnit(std::shared_ptr<ABuffer> *buffer) {
+    buffer->reset();
 
     Mutex::Autolock autoLock(mLock);
     while (mEOSResult == OK && mBuffers.empty()) {
@@ -79,7 +79,7 @@ status_t AnotherPacketSource::dequeueAccessUnit(sp<ABuffer> *buffer) {
         int32_t discontinuity;
         if ((*buffer)->meta()->findInt32("discontinuity", &discontinuity)) {
             if (wasFormatChange(discontinuity)) {
-                mFormat.clear();
+                mFormat.reset();
             }
 
             return INFO_DISCONTINUITY;
@@ -101,13 +101,13 @@ status_t AnotherPacketSource::read(
     }
 
     if (!mBuffers.empty()) {
-        const sp<ABuffer> buffer = *mBuffers.begin();
+        const std::shared_ptr<ABuffer> buffer = *mBuffers.begin();
         mBuffers.erase(mBuffers.begin());
 
         int32_t discontinuity;
         if (buffer->meta()->findInt32("discontinuity", &discontinuity)) {
             if (wasFormatChange(discontinuity)) {
-                mFormat.clear();
+                mFormat.reset();
             }
 
             return INFO_DISCONTINUITY;
@@ -137,7 +137,7 @@ bool AnotherPacketSource::wasFormatChange(
     return (discontinuityType & ATSParser::DISCONTINUITY_VIDEO_FORMAT) != 0;
 }
 
-void AnotherPacketSource::queueAccessUnit(const sp<ABuffer> &buffer) {
+void AnotherPacketSource::queueAccessUnit(const std::shared_ptr<ABuffer> &buffer) {
     int32_t damaged;
     if (buffer->meta()->findInt32("damaged", &damaged) && damaged) {
         // LOG(VERBOSE) << "discarding damaged AU";
@@ -154,13 +154,13 @@ void AnotherPacketSource::queueAccessUnit(const sp<ABuffer> &buffer) {
 
 void AnotherPacketSource::queueDiscontinuity(
         ATSParser::DiscontinuityType type,
-        const sp<AMessage> &extra) {
+        const std::shared_ptr<AMessage> &extra) {
     Mutex::Autolock autoLock(mLock);
 
     // Leave only discontinuities in the queue.
     auto it = mBuffers.begin();
     while (it != mBuffers.end()) {
-        sp<ABuffer> oldBuffer = *it;
+        std::shared_ptr<ABuffer> oldBuffer = *it;
 
         int32_t oldDiscontinuityType;
         if (!oldBuffer->meta()->findInt32(
@@ -175,7 +175,7 @@ void AnotherPacketSource::queueDiscontinuity(
     mEOSResult = OK;
     mLastQueuedTimeUs = 0;
 
-    sp<ABuffer> buffer = new ABuffer(0);
+    std::shared_ptr<ABuffer> buffer(new ABuffer(0));
     buffer->meta()->setInt32("discontinuity", static_cast<int32_t>(type));
     buffer->meta()->setMessage("extra", extra);
 
@@ -215,7 +215,7 @@ int64_t AnotherPacketSource::getBufferedDurationUs(status_t *finalResult) {
 
     auto it = mBuffers.begin();
     while (it != mBuffers.end()) {
-        const sp<ABuffer> &buffer = *it;
+        const std::shared_ptr<ABuffer> &buffer = *it;
 
         int64_t timeUs;
         if (buffer->meta()->findInt64("timeUs", &timeUs)) {
@@ -244,7 +244,7 @@ status_t AnotherPacketSource::nextBufferTime(int64_t *timeUs) {
         return mEOSResult != OK ? mEOSResult : -EWOULDBLOCK;
     }
 
-    sp<ABuffer> buffer = *mBuffers.begin();
+    std::shared_ptr<ABuffer> buffer = *mBuffers.begin();
     CHECK(buffer->meta()->findInt64("timeUs", timeUs));
 
     return OK;

@@ -8,7 +8,7 @@ struct StreamingSink {
     explicit StreamingSink() = default;
     virtual ~StreamingSink() = default;
 
-    virtual void onAccessUnit(const sp<ABuffer> &accessUnit) = 0;
+    virtual void onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit) = 0;
 };
 
 }  // namespace android

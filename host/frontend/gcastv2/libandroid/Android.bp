@@ -31,7 +31,6 @@ cc_library_static {
         "avc_utils.cpp",
         "hexdump.cpp",
         "ParsedMessage.cpp",
-        "RefBase.cpp",
         "TSPacketizer.cpp",
     ],
     defaults: ["cuttlefish_host_only"],

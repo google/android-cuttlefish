@@ -111,10 +111,10 @@ struct AudioSource::Encoder {
     virtual void reset() = 0;
 
     void setFrameCallback(
-            std::function<void(const sp<ABuffer> &)> onFrameFn);
+            std::function<void(const std::shared_ptr<ABuffer> &)> onFrameFn);
 
 protected:
-    std::function<void(const sp<ABuffer> &)> mOnFrameFn;
+    std::function<void(const std::shared_ptr<ABuffer> &)> mOnFrameFn;
 };
 
 AudioSource::Encoder::Encoder()
@@ -122,7 +122,7 @@ AudioSource::Encoder::Encoder()
 }
 
 void AudioSource::Encoder::setFrameCallback(
-        std::function<void(const sp<ABuffer> &)> onFrameFn) {
+        std::function<void(const std::shared_ptr<ABuffer> &)> onFrameFn) {
     mOnFrameFn = onFrameFn;
 }
 
@@ -342,7 +342,7 @@ void AudioSource::OPUSEncoder::encode(const void *_data, size_t size) {
 
         static constexpr size_t kMaxPacketSize = 8192;
 
-        sp<ABuffer> outBuffer = new ABuffer(kMaxPacketSize);
+        std::shared_ptr<ABuffer> outBuffer(new ABuffer(kMaxPacketSize));
 
         auto outSize = opus_encode(
                 mImpl,
@@ -442,7 +442,7 @@ private:
 
     size_t mChannelCount;
 
-    sp<ABuffer> mOutputFrame;
+    std::shared_ptr<ABuffer> mOutputFrame;
     Downsampler mDownSampler;
 
     void doEncode(const int16_t *src, size_t numFrames);
@@ -521,7 +521,7 @@ void AudioSource::G711Encoder::encode(const void *_data, size_t size) {
         mChannelCount = hdr.frame_size / sizeof(int16_t);
 
         // mono, 8-bit output samples.
-        mOutputFrame = new ABuffer(kNumFramesPerBuffer);
+        mOutputFrame.reset(new ABuffer(kNumFramesPerBuffer));
     }
 
     const size_t offset = sizeof(gce_audio_message);
@@ -663,7 +663,7 @@ AudioSource::AudioSource(Format format, bool useADTSFraming)
             TRESPASS();
     }
 
-    mEncoder->setFrameCallback([this](const sp<ABuffer> &accessUnit) {
+    mEncoder->setFrameCallback([this](const std::shared_ptr<ABuffer> &accessUnit) {
         StreamingSource::onAccessUnit(accessUnit);
     });
 
@@ -678,7 +678,7 @@ status_t AudioSource::initCheck() const {
     return mInitCheck;
 }
 
-sp<AMessage> AudioSource::getFormat() const {
+std::shared_ptr<AMessage> AudioSource::getFormat() const {
     return mFormat;
 }
 
