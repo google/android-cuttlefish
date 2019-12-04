@@ -8,7 +8,10 @@ cuttlefish-common (0.9.10) UNRELEASED; urgency=medium
   [ A. Cody Schuffelen ]
   * Add missing libusb-1.0-0 dependency
 
- -- Cody Schuffelen <schuffelen@google.com>  Mon, 04 Nov 2019 18:54:57 -0800
+  [ Jason Macnak ]
+  * Add missing dnsmasq-base dependency
+
+ -- Jason Macnak <natsu@google.com>  Wed, 04 Dec 2019 19:33:25 -0800
 
 cuttlefish-common (0.9.9) stable; urgency=medium
 
@@ -25,7 +28,7 @@ cuttlefish-common (0.9.8) stable; urgency=medium
   * Remove Debian adb package
 
   [ Julien Desprez ]
-  * Update default number of cvd account to 10 
+  * Update default number of cvd account to 10
 
  -- Cody Schuffelen <schuffelen@google.com>  Thu, 01 Aug 2019 14:54:42 -0700
 
