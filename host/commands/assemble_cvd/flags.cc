@@ -34,7 +34,7 @@ DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
             "'always_create'.");
 DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
-DEFINE_string(blank_data_image_fmt, "f2fs",
+DEFINE_string(blank_data_image_fmt, "ext4",
               "The fs format for the blank data image. Used with mkfs.");
 DEFINE_string(qemu_gdb, "",
               "Debug flag to pass to qemu. e.g. -qemu_gdb=tcp::1234");
