@@ -86,9 +86,6 @@ class CuttlefishConfig {
   std::string x_display() const;
   void set_x_display(const std::string& address);
 
-  std::string hardware_name() const;
-  void set_hardware_name(const std::string& name);
-
   std::string serial_number() const;
   void set_serial_number(const std::string& serial_number);
 
