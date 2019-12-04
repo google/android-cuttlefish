@@ -72,7 +72,6 @@ const char* kVmManager = "vm_manager";
 const char* const kGpuMode = "gpu_mode";
 const char* const kWaylandSocket = "wayland_socket";
 const char* const kXDisplay = "x_display";
-const char* kHardwareName = "hardware_name";
 const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
@@ -211,13 +210,6 @@ std::string CuttlefishConfig::x_display() const {
 }
 void CuttlefishConfig::set_x_display(const std::string& address) {
   (*dictionary_)[kXDisplay] = address;
-}
-
-std::string CuttlefishConfig::hardware_name() const {
-  return (*dictionary_)[kHardwareName].asString();
-}
-void CuttlefishConfig::set_hardware_name(const std::string& name) {
-  (*dictionary_)[kHardwareName] = name;
 }
 
 std::string CuttlefishConfig::serial_number() const {
