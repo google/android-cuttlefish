@@ -7,11 +7,12 @@ cuttlefish-common (0.9.10) UNRELEASED; urgency=medium
 
   [ A. Cody Schuffelen ]
   * Add missing libusb-1.0-0 dependency
+  * Install f2fs-tools.
 
   [ Jason Macnak ]
   * Add missing dnsmasq-base dependency
 
- -- Jason Macnak <natsu@google.com>  Wed, 04 Dec 2019 19:33:25 -0800
+ -- Cody Schuffelen <schuffelen@google.com>  Wed, 04 Dec 2019 12:20:28 -0800
 
 cuttlefish-common (0.9.9) stable; urgency=medium
 
