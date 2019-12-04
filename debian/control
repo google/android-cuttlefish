@@ -15,6 +15,7 @@ Depends:
  binfmt-support [!amd64],
  bridge-utils,
  dnsmasq-base,
+ f2fs-tools,
  libarchive-tools | bsdtar,
  libc6,
  libc6:amd64 [!amd64],
