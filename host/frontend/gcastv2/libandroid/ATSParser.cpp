@@ -45,7 +45,7 @@ namespace android {
 
 static const size_t kTSPacketSize = 188;
 
-struct ATSParser::Program : public RefBase {
+struct ATSParser::Program {
     Program(ATSParser *parser, unsigned programNumber, unsigned programMapPID);
 
     bool parsePSISection(
@@ -57,11 +57,11 @@ struct ATSParser::Program : public RefBase {
             ABitReader *br, status_t *err);
 
     void signalDiscontinuity(
-            DiscontinuityType type, const sp<AMessage> &extra);
+            DiscontinuityType type, const std::shared_ptr<AMessage> &extra);
 
     void signalEOS(status_t finalResult);
 
-    sp<AnotherPacketSource> getSource(SourceType type);
+    std::shared_ptr<AnotherPacketSource> getSource(SourceType type);
 
     int64_t convertPTSToTimestamp(uint64_t PTS);
 
@@ -87,7 +87,7 @@ private:
     ATSParser *mParser;
     unsigned mProgramNumber;
     unsigned mProgramMapPID;
-    std::map<unsigned, sp<Stream>> mStreams;
+    std::map<unsigned, std::shared_ptr<Stream>> mStreams;
     bool mFirstPTSValid;
     uint64_t mFirstPTS;
 
@@ -96,7 +96,7 @@ private:
     DISALLOW_EVIL_CONSTRUCTORS(Program);
 };
 
-struct ATSParser::Stream : public RefBase {
+struct ATSParser::Stream {
     Stream(Program *program,
            unsigned elementaryPID,
            unsigned streamType,
@@ -112,13 +112,12 @@ struct ATSParser::Stream : public RefBase {
             ABitReader *br);
 
     void signalDiscontinuity(
-            DiscontinuityType type, const sp<AMessage> &extra);
+            DiscontinuityType type, const std::shared_ptr<AMessage> &extra);
 
     void signalEOS(status_t finalResult);
 
-    sp<AnotherPacketSource> getSource(SourceType type);
+    std::shared_ptr<AnotherPacketSource> getSource(SourceType type);
 
-protected:
     virtual ~Stream();
 
 private:
@@ -128,8 +127,8 @@ private:
     unsigned mPCR_PID;
     int32_t mExpectedContinuityCounter;
 
-    sp<ABuffer> mBuffer;
-    sp<AnotherPacketSource> mSource;
+    std::shared_ptr<ABuffer> mBuffer;
+    std::shared_ptr<AnotherPacketSource> mSource;
     bool mPayloadStarted;
 
     uint64_t mPrevPTS;
@@ -143,7 +142,7 @@ private:
             unsigned PTS_DTS_flags, uint64_t PTS, uint64_t DTS,
             const uint8_t *data, size_t size);
 
-    void extractAACFrames(const sp<ABuffer> &buffer);
+    void extractAACFrames(const std::shared_ptr<ABuffer> &buffer);
 
     bool isAudio() const;
     bool isVideo() const;
@@ -151,7 +150,7 @@ private:
     DISALLOW_EVIL_CONSTRUCTORS(Stream);
 };
 
-struct ATSParser::PSISection : public RefBase {
+struct ATSParser::PSISection {
     PSISection();
 
     status_t append(const void *data, size_t size);
@@ -163,11 +162,10 @@ struct ATSParser::PSISection : public RefBase {
     const uint8_t *data() const;
     size_t size() const;
 
-protected:
     virtual ~PSISection();
 
 private:
-    sp<ABuffer> mBuffer;
+    std::shared_ptr<ABuffer> mBuffer;
 
     DISALLOW_EVIL_CONSTRUCTORS(PSISection);
 };
@@ -215,7 +213,7 @@ bool ATSParser::Program::parsePID(
 }
 
 void ATSParser::Program::signalDiscontinuity(
-        DiscontinuityType type, const sp<AMessage> &extra) {
+        DiscontinuityType type, const std::shared_ptr<AMessage> &extra) {
     for (const auto &pair : mStreams) {
         pair.second->signalDiscontinuity(type, extra);
     }
@@ -340,8 +338,8 @@ status_t ATSParser::Program::parseProgramMap(ABitReader *br) {
             const StreamInfo &info1 = infos.at(0);
             const StreamInfo &info2 = infos.at(1);
 
-            sp<Stream> s1 = mStreams.begin()->second;
-            sp<Stream> s2 = (++mStreams.begin())->second;
+            std::shared_ptr<Stream> s1 = mStreams.begin()->second;
+            std::shared_ptr<Stream> s2 = (++mStreams.begin())->second;
 
             bool caseA =
                 info1.mPID == s1->pid() && info1.mType == s2->type()
@@ -374,8 +372,8 @@ status_t ATSParser::Program::parseProgramMap(ABitReader *br) {
     for (const StreamInfo &info : infos) {
         auto it = mStreams.find(info.mPID);
         if (it == mStreams.end()) {
-            sp<Stream> stream = new Stream(
-                    this, info.mPID, info.mType, PCR_PID);
+            std::shared_ptr<Stream> stream(new Stream(
+                    this, info.mPID, info.mType, PCR_PID));
 
             mStreams[info.mPID] = stream;
         }
@@ -384,11 +382,11 @@ status_t ATSParser::Program::parseProgramMap(ABitReader *br) {
     return OK;
 }
 
-sp<AnotherPacketSource> ATSParser::Program::getSource(SourceType type) {
+std::shared_ptr<AnotherPacketSource> ATSParser::Program::getSource(SourceType type) {
     size_t index = (type == AUDIO) ? 0 : 0;
 
     for (const auto &pair : mStreams) {
-        sp<AnotherPacketSource> source = pair.second->getSource(type);
+        std::shared_ptr<AnotherPacketSource> source = pair.second->getSource(type);
         if (source != NULL) {
             if (index == 0) {
                 return source;
@@ -484,7 +482,7 @@ ATSParser::Stream::Stream(
     ALOGV("new stream PID 0x%02x, type 0x%02x", elementaryPID, streamType);
 
     if (mQueue != NULL) {
-        mBuffer = new ABuffer(192 * 1024);
+        mBuffer.reset(new ABuffer(192 * 1024));
         mBuffer->setRange(0, 0);
     }
 }
@@ -544,7 +542,7 @@ status_t ATSParser::Stream::parse(
 
         ALOGI("resizing buffer to %ld bytes", neededSize);
 
-        sp<ABuffer> newBuffer = new ABuffer(neededSize);
+        std::shared_ptr<ABuffer> newBuffer(new ABuffer(neededSize));
         memcpy(newBuffer->data(), mBuffer->data(), mBuffer->size());
         newBuffer->setRange(0, mBuffer->size());
         mBuffer = newBuffer;
@@ -583,7 +581,7 @@ bool ATSParser::Stream::isAudio() const {
 }
 
 void ATSParser::Stream::signalDiscontinuity(
-        DiscontinuityType type, const sp<AMessage> &extra) {
+        DiscontinuityType type, const std::shared_ptr<AMessage> &extra) {
     mExpectedContinuityCounter = -1;
 
     if (mQueue == NULL) {
@@ -815,16 +813,16 @@ void ATSParser::Stream::onPayloadData(
         return;
     }
 
-    sp<ABuffer> accessUnit;
+    std::shared_ptr<ABuffer> accessUnit;
     while ((accessUnit = mQueue->dequeueAccessUnit()) != NULL) {
         if (mSource == NULL) {
-            sp<MetaData> meta = mQueue->getFormat();
+            std::shared_ptr<MetaData> meta = mQueue->getFormat();
 
             if (meta != NULL) {
                 ALOGV("Stream PID 0x%08x of type 0x%02x now has data.",
                      mElementaryPID, mStreamType);
 
-                mSource = new AnotherPacketSource(meta);
+                mSource.reset(new AnotherPacketSource(meta));
                 mSource->queueAccessUnit(accessUnit);
             }
         } else if (mQueue->getFormat() != NULL) {
@@ -840,7 +838,7 @@ void ATSParser::Stream::onPayloadData(
     }
 }
 
-sp<AnotherPacketSource> ATSParser::Stream::getSource(SourceType type) {
+std::shared_ptr<AnotherPacketSource> ATSParser::Stream::getSource(SourceType type) {
     switch (type) {
         case VIDEO:
         {
@@ -874,7 +872,7 @@ ATSParser::ATSParser(uint32_t flags)
       mTimeOffsetUs(0ll),
       mNumTSPacketsParsed(0),
       mNumPCRs(0) {
-    mPSISections[0 /* PID */] = new PSISection;
+    mPSISections[0 /* PID */].reset(new PSISection);
 }
 
 ATSParser::~ATSParser() {
@@ -888,7 +886,7 @@ status_t ATSParser::feedTSPacket(const void *data, size_t size) {
 }
 
 void ATSParser::signalDiscontinuity(
-        DiscontinuityType type, const sp<AMessage> &extra) {
+        DiscontinuityType type, const std::shared_ptr<AMessage> &extra) {
     if (type == DISCONTINUITY_ABSOLUTE_TIME) {
         int64_t timeUs;
         CHECK(extra->findInt64("timeUs", &timeUs));
@@ -967,12 +965,12 @@ void ATSParser::parseProgramAssociationTable(ABitReader *br) {
             }
 
             if (!found) {
-                mPrograms.push_back(
-                        new Program(this, program_number, programMapPID));
+                mPrograms.push_back(std::make_shared<Program>(
+                    this, program_number, programMapPID));
             }
 
             if (mPSISections.find(programMapPID) == mPSISections.end()) {
-                mPSISections[programMapPID] = new PSISection;
+                mPSISections[programMapPID].reset(new PSISection);
             }
         }
     }
@@ -987,7 +985,7 @@ status_t ATSParser::parsePID(
     auto it = mPSISections.find(PID);
 
     if (it != mPSISections.end()) {
-        const sp<PSISection> &section = it->second;
+        const std::shared_ptr<PSISection> &section = it->second;
 
         if (payload_unit_start_indicator) {
             CHECK(section->isEmpty());
@@ -1154,7 +1152,7 @@ status_t ATSParser::parseTS(ABitReader *br) {
     return err;
 }
 
-sp<AnotherPacketSource> ATSParser::getSource(SourceType type) {
+std::shared_ptr<AnotherPacketSource> ATSParser::getSource(SourceType type) {
     int which = -1;  // any
 
     for (const auto &program : mPrograms) {
@@ -1162,7 +1160,7 @@ sp<AnotherPacketSource> ATSParser::getSource(SourceType type) {
             continue;
         }
 
-        sp<AnotherPacketSource> source = program->getSource(type);
+        std::shared_ptr<AnotherPacketSource> source = program->getSource(type);
 
         if (source != NULL) {
             return source;
@@ -1213,7 +1211,7 @@ status_t ATSParser::PSISection::append(const void *data, size_t size) {
 
         newCapacity = (newCapacity + 1023) & ~1023;
 
-        sp<ABuffer> newBuffer = new ABuffer(newCapacity);
+        std::shared_ptr<ABuffer> newBuffer(new ABuffer(newCapacity));
 
         if (mBuffer != NULL) {
             memcpy(newBuffer->data(), mBuffer->data(), mBuffer->size());

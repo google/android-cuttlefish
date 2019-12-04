@@ -26,6 +26,9 @@
 #include <media/stagefright/MediaErrors.h>
 
 namespace android {
+namespace {
+    const char kIndent[] = "                                        ";
+}
 
 // static
 ssize_t JSONValue::Parse(const char *data, size_t size, JSONValue *out) {
@@ -39,7 +42,7 @@ ssize_t JSONValue::Parse(const char *data, size_t size, JSONValue *out) {
     }
 
     if (data[offset] == '[') {
-        sp<JSONArray> array = new JSONArray;
+        std::shared_ptr<JSONArray> array(new JSONArray);
         ++offset;
 
         for (;;) {
@@ -86,7 +89,7 @@ ssize_t JSONValue::Parse(const char *data, size_t size, JSONValue *out) {
 
         return offset;
     } else if (data[offset] == '{') {
-        sp<JSONObject> obj = new JSONObject;
+        std::shared_ptr<JSONObject> obj(new JSONObject);
         ++offset;
 
         for (;;) {
@@ -330,6 +333,7 @@ JSONValue &JSONValue::operator=(const JSONValue &other) {
         unset();
         mType = other.mType;
         mValue = other.mValue;
+        mObjectOrArray = other.mObjectOrArray;
 
         switch (mType) {
             case TYPE_STRING:
@@ -337,9 +341,6 @@ JSONValue &JSONValue::operator=(const JSONValue &other) {
                 break;
             case TYPE_OBJECT:
             case TYPE_ARRAY:
-                mValue.mObjectOrArray->incStrong(this);
-                break;
-
             default:
                 break;
         }
@@ -383,21 +384,21 @@ bool JSONValue::getBoolean(bool *value) const {
     return true;
 }
 
-bool JSONValue::getObject(sp<JSONObject> *value) const {
+bool JSONValue::getObject(std::shared_ptr<JSONObject> *value) const {
     if (mType != TYPE_OBJECT) {
         return false;
     }
 
-    *value = static_cast<JSONObject *>(mValue.mObjectOrArray);
+    *value = std::static_pointer_cast<JSONObject>(mObjectOrArray);
     return true;
 }
 
-bool JSONValue::getArray(sp<JSONArray> *value) const {
+bool JSONValue::getArray(std::shared_ptr<JSONArray> *value) const {
     if (mType != TYPE_ARRAY) {
         return false;
     }
 
-    *value = static_cast<JSONArray *>(mValue.mObjectOrArray);
+    *value = std::static_pointer_cast<JSONArray>(mObjectOrArray);
     return true;
 }
 
@@ -422,20 +423,18 @@ void JSONValue::setBoolean(bool value) {
     mType = TYPE_BOOLEAN;
 }
 
-void JSONValue::setObject(const sp<JSONObject> &obj) {
+void JSONValue::setObject(std::shared_ptr<JSONObject> obj) {
     unset();
 
-    mValue.mObjectOrArray = obj.get();
-    mValue.mObjectOrArray->incStrong(this);
+    mObjectOrArray = obj;
 
     mType = TYPE_OBJECT;
 }
 
-void JSONValue::setArray(const sp<JSONArray> &array) {
+void JSONValue::setArray(std::shared_ptr<JSONArray> array) {
     unset();
 
-    mValue.mObjectOrArray = array.get();
-    mValue.mObjectOrArray->incStrong(this);
+    mObjectOrArray = array;
 
     mType = TYPE_ARRAY;
 }
@@ -447,7 +446,7 @@ void JSONValue::unset() {
             break;
         case TYPE_OBJECT:
         case TYPE_ARRAY:
-            mValue.mObjectOrArray->decStrong(this);
+            mObjectOrArray.reset();
             break;
 
         default:
@@ -496,7 +495,6 @@ static void EscapeString(const char *in, size_t inSize, std::string *out) {
 }
 
 std::string JSONValue::toString(size_t depth, bool indentFirstLine) const {
-    static const char kIndent[] = "                                        ";
 
     std::string out;
 
@@ -535,7 +533,7 @@ std::string JSONValue::toString(size_t depth, bool indentFirstLine) const {
         case TYPE_ARRAY:
         {
             out = (mType == TYPE_OBJECT) ? "{\n" : "[\n";
-            out.append(mValue.mObjectOrArray->internalToString(depth + 1, true));
+            out.append(mObjectOrArray->internalToString(depth + 1, true));
             out.append("\n");
             out.append(kIndent, 2 * depth);
             out.append(mType == TYPE_OBJECT ? "}" : "]");
@@ -556,7 +554,7 @@ std::string JSONValue::toString(size_t depth, bool indentFirstLine) const {
 ////////////////////////////////////////////////////////////////////////////////
 
 // static
-sp<JSONCompound> JSONCompound::Parse(const char *data, size_t size) {
+std::shared_ptr<JSONCompound> JSONCompound::Parse(const char *data, size_t size) {
     JSONValue value;
     ssize_t result = JSONValue::Parse(data, size, &value);
 
@@ -564,12 +562,12 @@ sp<JSONCompound> JSONCompound::Parse(const char *data, size_t size) {
         return NULL;
     }
 
-    sp<JSONObject> obj;
+    std::shared_ptr<JSONObject> obj;
     if (value.getObject(&obj)) {
         return obj;
     }
 
-    sp<JSONArray> array;
+    std::shared_ptr<JSONArray> array;
     if (value.getArray(&array)) {
         return array;
     }
@@ -578,14 +576,19 @@ sp<JSONCompound> JSONCompound::Parse(const char *data, size_t size) {
 }
 
 std::string JSONCompound::toString(size_t depth, bool indentFirstLine) const {
-    JSONValue val;
-    if (isObject()) {
-        val.setObject((JSONObject *)this);
-    } else {
-        val.setArray((JSONArray *)this);
-    }
+    std::string out;
 
-    return val.toString(depth, indentFirstLine);
+    if (indentFirstLine) {
+        out.insert(0, kIndent, 2 * depth);
+    }
+    
+    out = isObject() ? "{\n" : "[\n";
+    out.append(internalToString(depth + 1, true));
+    out.append("\n");
+    out.append(kIndent, 2 * depth);
+    out.append(isObject() ? "}" : "]");
+
+    return out;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -619,8 +622,6 @@ void JSONObject::remove(const char *key) {
 
 std::string JSONObject::internalToString(
         size_t depth, bool /* indentFirstLine */) const {
-    static const char kIndent[] = "                                        ";
-
     std::string out;
     for (auto it = mValues.begin(); it != mValues.end();) {
         const std::string &key = it->first;

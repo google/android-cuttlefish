@@ -9,25 +9,25 @@ StreamingSource::StreamingSource()
       mCallbackFn(nullptr) {
 }
 
-void StreamingSource::setNotify(const sp<AMessage> &notify) {
+void StreamingSource::setNotify(const std::shared_ptr<AMessage> &notify) {
     CHECK(!mCallbackFn);
     CHECK(notify);
     mNotify = notify;
 }
 
-void StreamingSource::setCallback(std::function<void(const sp<ABuffer> &)> cb) {
+void StreamingSource::setCallback(std::function<void(const std::shared_ptr<ABuffer> &)> cb) {
     CHECK(!mNotify);
     CHECK(cb);
     mCallbackFn = cb;
 }
 
-void StreamingSource::onAccessUnit(const sp<ABuffer> &accessUnit) {
+void StreamingSource::onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit) {
     if (mCallbackFn) {
         mCallbackFn(accessUnit);
     } else {
-        sp<AMessage> notify = mNotify->dup();
+        std::shared_ptr<AMessage> notify = mNotify->dup();
         notify->setBuffer("accessUnit", accessUnit);
-        notify->post();
+        AMessage::post(notify);
     }
 }
 

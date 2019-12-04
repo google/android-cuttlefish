@@ -56,13 +56,13 @@ uint64_t hton64(uint64_t x) {
 }
 
 status_t convertMetaDataToMessage(
-        const sp<MetaData> &meta, sp<AMessage> *format) {
-    format->clear();
+        const std::shared_ptr<MetaData> &meta, std::shared_ptr<AMessage> *format) {
+    format->reset();
 
     const char *mime;
     CHECK(meta->findCString(kKeyMIMEType, &mime));
 
-    sp<AMessage> msg = new AMessage;
+    std::shared_ptr<AMessage> msg(new AMessage);
     msg->setString("mime", mime);
 
     if (!strncasecmp("video/", mime, 6)) {
@@ -114,7 +114,7 @@ status_t convertMetaDataToMessage(
         ptr += 6;
         size -= 6;
 
-        sp<ABuffer> buffer = new ABuffer(1024);
+        std::shared_ptr<ABuffer> buffer(new ABuffer(1024));
         buffer->setRange(0, 0);
 
         for (size_t i = 0; i < numSeqParameterSets; ++i) {
@@ -139,7 +139,7 @@ status_t convertMetaDataToMessage(
 
         msg->setBuffer("csd-0", buffer);
 
-        buffer = new ABuffer(1024);
+        buffer.reset(new ABuffer(1024));
         buffer->setRange(0, 0);
 
         CHECK(size >= 1);

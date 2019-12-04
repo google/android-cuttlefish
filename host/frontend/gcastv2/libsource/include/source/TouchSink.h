@@ -17,7 +17,7 @@ struct TouchSink
 
     void start();
 
-    void onAccessUnit(const sp<ABuffer> &accessUnit) override;
+    void onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit) override;
 
 private:
     std::shared_ptr<RunLoop> mRunLoop;

@@ -24,7 +24,7 @@ void OpusPacketizer::run() {
     auto weak_this = std::weak_ptr<OpusPacketizer>(shared_from_this());
 
     mAudioSource->setCallback(
-            [weak_this](const sp<ABuffer> &accessUnit) {
+            [weak_this](const std::shared_ptr<ABuffer> &accessUnit) {
                 auto me = weak_this.lock();
                 if (me) {
                     me->mRunLoop->post(
@@ -36,7 +36,7 @@ void OpusPacketizer::run() {
     mAudioSource->start();
 }
 
-void OpusPacketizer::onFrame(const sp<ABuffer> &accessUnit) {
+void OpusPacketizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
     int64_t timeUs;
     CHECK(accessUnit->meta()->findInt64("timeUs", &timeUs));
 
@@ -58,7 +58,7 @@ void OpusPacketizer::onFrame(const sp<ABuffer> &accessUnit) {
     packetize(accessUnit, timeUs);
 }
 
-void OpusPacketizer::packetize(const sp<ABuffer> &accessUnit, int64_t timeUs) {
+void OpusPacketizer::packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs) {
     LOG(VERBOSE) << "Received Opus frame of size " << accessUnit->size();
 
     static constexpr uint8_t PT = 98;

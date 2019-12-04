@@ -26,9 +26,9 @@
 namespace android {
 
 // static
-sp<ParsedMessage> ParsedMessage::Parse(
+std::shared_ptr<ParsedMessage> ParsedMessage::Parse(
         const char *data, size_t size, bool noMoreData, size_t *length) {
-    sp<ParsedMessage> msg = new ParsedMessage;
+    std::shared_ptr<ParsedMessage> msg(new ParsedMessage);
     ssize_t res = msg->parse(data, size, noMoreData);
 
     if (res < 0) {

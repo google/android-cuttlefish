@@ -28,17 +28,17 @@ struct ALooperRoster {
     ALooperRoster();
 
     ALooper::handler_id registerHandler(
-            const sp<ALooper> looper, const sp<AHandler> &handler);
+            const std::shared_ptr<ALooper> looper, const std::shared_ptr<AHandler> &handler);
 
     void unregisterHandler(ALooper::handler_id handlerID);
 
-    void postMessage(const sp<AMessage> &msg, int64_t delayUs = 0);
-    void deliverMessage(const sp<AMessage> &msg);
+    void postMessage(const std::shared_ptr<AMessage> &msg, int64_t delayUs = 0);
+    void deliverMessage(const std::shared_ptr<AMessage> &msg);
 
 private:
     struct HandlerInfo {
-        sp<ALooper> mLooper;
-        wp<AHandler> mHandler;
+        std::shared_ptr<ALooper> mLooper;
+        std::weak_ptr<AHandler> mHandler;
     };
 
     Mutex mLock;

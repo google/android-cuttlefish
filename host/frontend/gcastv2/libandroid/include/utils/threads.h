@@ -8,13 +8,14 @@
 #include <sys/time.h>
 
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
 
 #include <pthread.h>
 
+#include <memory>
+
 namespace android {
 
-struct Thread : public RefBase {
+struct Thread {
     Thread()
         : mThread(0)
     {

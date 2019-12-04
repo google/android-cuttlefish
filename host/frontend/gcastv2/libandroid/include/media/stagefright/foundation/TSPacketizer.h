@@ -20,8 +20,8 @@
 
 #include <media/stagefright/foundation/ABase.h>
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
 
+#include <memory>
 #include <vector>
 
 namespace android {
@@ -29,19 +29,19 @@ namespace android {
 struct ABuffer;
 struct AMessage;
 
-struct TSPacketizer : public RefBase {
+struct TSPacketizer {
     TSPacketizer();
 
     // Returns trackIndex or error.
-    ssize_t addTrack(const sp<AMessage> &format);
+    ssize_t addTrack(const std::shared_ptr<AMessage> &format);
 
     enum {
         EMIT_PAT_AND_PMT = 1,
         EMIT_PCR         = 2,
     };
     status_t packetize(
-            size_t trackIndex, const sp<ABuffer> &accessUnit,
-            sp<ABuffer> *packets,
+            size_t trackIndex, const std::shared_ptr<ABuffer> &accessUnit,
+            std::shared_ptr<ABuffer> *packets,
             uint32_t flags);
 
 protected:
@@ -55,7 +55,7 @@ private:
 
     struct Track;
 
-    std::vector<sp<Track>> mTracks;
+    std::vector<std::shared_ptr<Track>> mTracks;
 
     unsigned mPATContinuityCounter;
     unsigned mPMTContinuityCounter;

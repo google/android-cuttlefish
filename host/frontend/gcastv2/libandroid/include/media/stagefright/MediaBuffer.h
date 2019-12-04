@@ -13,9 +13,9 @@ struct MediaBuffer {
         : mBuffer(new ABuffer(size)) {
     }
 
-    sp<MetaData> meta_data() {
-        if (mMeta == NULL) {
-            mMeta = new MetaData;
+    std::shared_ptr<MetaData> meta_data() {
+        if (!mMeta) {
+            mMeta.reset(new MetaData);
         }
 
         return mMeta;
@@ -26,8 +26,8 @@ struct MediaBuffer {
     }
 
 private:
-    sp<ABuffer> mBuffer;
-    sp<MetaData> mMeta;
+    std::shared_ptr<ABuffer> mBuffer;
+    std::shared_ptr<MetaData> mMeta;
 
     DISALLOW_EVIL_CONSTRUCTORS(MediaBuffer);
 };

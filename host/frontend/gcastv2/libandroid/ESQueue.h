@@ -20,9 +20,9 @@
 
 #include <media/stagefright/foundation/ABase.h>
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
 
 #include <list>
+#include <memory>
 
 namespace android {
 
@@ -48,9 +48,9 @@ struct ElementaryStreamQueue {
     status_t appendData(const void *data, size_t size, int64_t timeUs);
     void clear(bool clearFormat);
 
-    sp<ABuffer> dequeueAccessUnit();
+    std::shared_ptr<ABuffer> dequeueAccessUnit();
 
-    sp<MetaData> getFormat();
+    std::shared_ptr<MetaData> getFormat();
 
 private:
     struct RangeInfo {
@@ -61,17 +61,17 @@ private:
     Mode mMode;
     uint32_t mFlags;
 
-    sp<ABuffer> mBuffer;
+    std::shared_ptr<ABuffer> mBuffer;
     std::list<RangeInfo> mRangeInfos;
 
-    sp<MetaData> mFormat;
+    std::shared_ptr<MetaData> mFormat;
 
-    sp<ABuffer> dequeueAccessUnitH264();
-    sp<ABuffer> dequeueAccessUnitAAC();
-    sp<ABuffer> dequeueAccessUnitMPEGAudio();
-    sp<ABuffer> dequeueAccessUnitMPEGVideo();
-    sp<ABuffer> dequeueAccessUnitMPEG4Video();
-    sp<ABuffer> dequeueAccessUnitPCMAudio();
+    std::shared_ptr<ABuffer> dequeueAccessUnitH264();
+    std::shared_ptr<ABuffer> dequeueAccessUnitAAC();
+    std::shared_ptr<ABuffer> dequeueAccessUnitMPEGAudio();
+    std::shared_ptr<ABuffer> dequeueAccessUnitMPEGVideo();
+    std::shared_ptr<ABuffer> dequeueAccessUnitMPEG4Video();
+    std::shared_ptr<ABuffer> dequeueAccessUnitPCMAudio();
 
     // consume a logical (compressed) access unit of size "size",
     // returns its timestamp in us (or -1 if no time information).

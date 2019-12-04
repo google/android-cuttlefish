@@ -20,13 +20,13 @@
 
 #include "ALooper.h"
 
-#include <utils/RefBase.h>
+#include <memory>
 
 namespace android {
 
 struct AMessage;
 
-struct AHandler : public RefBase {
+struct AHandler {
     AHandler()
         : mID(0) {
     }
@@ -40,7 +40,7 @@ struct AHandler : public RefBase {
     }
 
 protected:
-    virtual void onMessageReceived(const sp<AMessage> &msg) = 0;
+    virtual void onMessageReceived(const std::shared_ptr<AMessage> &msg) = 0;
 
 private:
     friend struct ALooperRoster;
