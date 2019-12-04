@@ -14,6 +14,7 @@ Architecture: any
 Depends:
  binfmt-support [!amd64],
  bridge-utils,
+ dnsmasq-base,
  libarchive-tools | bsdtar,
  libc6,
  libc6:amd64 [!amd64],
