@@ -264,7 +264,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@2.0-service
+    android.hardware.gnss@2.1-service
 
 # Health
 PRODUCT_PACKAGES += \
