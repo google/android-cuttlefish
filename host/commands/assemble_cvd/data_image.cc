@@ -15,9 +15,9 @@ const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
 
 bool ForceFsckImage(const char* data_image) {
-  int fsck_status = cvd::execute({"/sbin/fsck.f2fs", "-y", "-f", data_image});
+  int fsck_status = cvd::execute({"/sbin/e2fsck", "-y", "-f", data_image});
   if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
-    LOG(ERROR) << "`fsck.f2fs -y -f " << data_image << "` failed with code "
+    LOG(ERROR) << "`e2fsck -y -f " << data_image << "` failed with code "
                << fsck_status;
     return false;
   }
@@ -46,9 +46,9 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
     if (!fsck_success) {
       return false;
     }
-    int resize_status = cvd::execute({"/sbin/resize.f2fs", data_image});
+    int resize_status = cvd::execute({"/sbin/resize2fs", data_image});
     if (resize_status != 0) {
-      LOG(ERROR) << "`resize.f2fs " << data_image << "` failed with code "
+      LOG(ERROR) << "`resize2fs " << data_image << "` failed with code "
                  << resize_status;
       return false;
     }
