@@ -55,16 +55,8 @@ DEFINE_string(kernel_decompresser_executable,
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
 DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
-DEFINE_string(androidboot_console, "ttyS1",
-              "Console device for the Android framework");
-DEFINE_string(
-    hardware_name, "",
-    "The codename of the device's hardware, one of {cutf_ivsh, cutf_cvm}");
-DEFINE_string(guest_security, "selinux",
-              "The security module to use in the guest");
 DEFINE_bool(guest_enforce_security, true,
-            "Whether to run in enforcing mode (non permissive). Ignored if "
-            "-guest_security is empty.");
+            "Whether to run in enforcing mode (non permissive).");
 DEFINE_bool(guest_audit_security, true,
             "Whether to log security audits.");
 DEFINE_string(boot_image, "",
@@ -329,42 +321,28 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.add_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
-  tmp_config_obj.add_kernel_cmdline("init=/init");
   tmp_config_obj.add_kernel_cmdline(
       concat("androidboot.serialno=", FLAGS_serial_number));
-  tmp_config_obj.add_kernel_cmdline("mac80211_hwsim.radios=0");
   tmp_config_obj.add_kernel_cmdline(concat("androidboot.lcd_density=", FLAGS_dpi));
   tmp_config_obj.add_kernel_cmdline(
       concat("androidboot.setupwizard_mode=", FLAGS_setupwizard_mode));
   tmp_config_obj.add_kernel_cmdline(concat("loop.max_part=", FLAGS_loop_max_part));
-  if (!FLAGS_androidboot_console.empty()) {
-    tmp_config_obj.add_kernel_cmdline(
-        concat("androidboot.console=", FLAGS_androidboot_console));
-  }
-  if (!FLAGS_hardware_name.empty()) {
-    tmp_config_obj.add_kernel_cmdline(
-        concat("androidboot.hardware=", FLAGS_hardware_name));
-  }
   if (FLAGS_logcat_mode == cvd::kLogcatVsockMode) {
     tmp_config_obj.add_kernel_cmdline(concat("androidboot.vsock_logcat_port=",
                                              FLAGS_logcat_vsock_port));
   }
   tmp_config_obj.add_kernel_cmdline(concat("androidboot.cuttlefish_config_server_port=",
                                            FLAGS_config_server_port));
-  tmp_config_obj.set_hardware_name(FLAGS_hardware_name);
-  if (!FLAGS_guest_security.empty()) {
-    tmp_config_obj.add_kernel_cmdline(concat("security=", FLAGS_guest_security));
-    if (FLAGS_guest_enforce_security) {
-      tmp_config_obj.add_kernel_cmdline("enforcing=1");
-    } else {
-      tmp_config_obj.add_kernel_cmdline("enforcing=0");
-      tmp_config_obj.add_kernel_cmdline("androidboot.selinux=permissive");
-    }
-    if (FLAGS_guest_audit_security) {
-      tmp_config_obj.add_kernel_cmdline("audit=1");
-    } else {
-      tmp_config_obj.add_kernel_cmdline("audit=0");
-    }
+  if (FLAGS_guest_enforce_security) {
+    tmp_config_obj.add_kernel_cmdline("enforcing=1");
+  } else {
+    tmp_config_obj.add_kernel_cmdline("enforcing=0");
+    tmp_config_obj.add_kernel_cmdline("androidboot.selinux=permissive");
+  }
+  if (FLAGS_guest_audit_security) {
+    tmp_config_obj.add_kernel_cmdline("audit=1");
+  } else {
+    tmp_config_obj.add_kernel_cmdline("audit=0");
   }
   if (FLAGS_extra_kernel_cmdline.size()) {
     tmp_config_obj.add_kernel_cmdline(FLAGS_extra_kernel_cmdline);
@@ -374,9 +352,6 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
-
-  // Boot as recovery is set so normal boot needs to be forced every boot
-  tmp_config_obj.add_kernel_cmdline("androidboot.force_normal_boot=1");
 
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
@@ -525,9 +500,6 @@ void SetDefaultFlagsForQemu() {
   SetCommandLineOptionWithMode("instance_dir",
                                default_instance_dir.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  // TODO(b/144111429): Consolidate to one hardware name
-  SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // TODO(b/144119457) Use the serial port.
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -544,9 +516,6 @@ void SetDefaultFlagsForCrosvm() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("x_display",
                                getenv("DISPLAY"),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  // TODO(b/144111429): Consolidate to one hardware name
-  SetCommandLineOptionWithMode("hardware_name", "cutf_cvm",
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
