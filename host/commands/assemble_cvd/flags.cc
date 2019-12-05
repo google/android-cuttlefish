@@ -164,8 +164,6 @@ DEFINE_string(logcat_receiver_binary,
               "Binary for the logcat server");
 DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
-DEFINE_int32(logcat_vsock_port, vsoc::GetPerInstanceDefault(5620),
-             "The port for logcat over vsock");
 DEFINE_string(config_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/config_server"),
               "Binary for the configuration server");
@@ -388,7 +386,6 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
-  tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
 
   tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
   tmp_config_obj.set_tombstone_receiver_binary(FLAGS_tombstone_receiver_binary);
