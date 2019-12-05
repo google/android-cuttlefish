@@ -134,12 +134,6 @@ class CuttlefishConfig {
   bool use_unpacked_kernel() const;
   void set_use_unpacked_kernel(bool use_unpacked_kernel);
 
-  std::set<std::string> kernel_cmdline() const;
-  void set_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
-  void add_kernel_cmdline(const std::string& arg);
-  void add_kernel_cmdline(const std::set<std::string>& kernel_cmdline);
-  std::string kernel_cmdline_as_string() const;
-
   std::string gdb_flag() const;
   void set_gdb_flag(const std::string& gdb);
 
@@ -323,6 +317,21 @@ class CuttlefishConfig {
 
   void set_keyboard_socket_port(int keyboard_socket_port);
   int keyboard_socket_port() const;
+
+  void set_loop_max_part(int loop_max_part);
+  int loop_max_part() const;
+
+  void set_guest_enforce_security(bool guest_enforce_security);
+  bool guest_enforce_security() const;
+
+  void set_guest_audit_security(bool guest_audit_security);
+  bool guest_audit_security() const;
+
+  void set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline);
+  std::vector<std::string> boot_image_kernel_cmdline() const;
+
+  void set_extra_kernel_cmdline(std::string extra_cmdline);
+  std::vector<std::string> extra_kernel_cmdline() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;

@@ -26,6 +26,7 @@
 #include <sstream>
 #include <string>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 #include <json/json.h>
 
@@ -87,7 +88,6 @@ const char* kUseUnpackedKernel = "use_unpacked_kernel";
 const char* kDecompressedKernelImagePath = "decompressed_kernel_image_path";
 const char* kDecompressKernel = "decompress_kernel";
 const char* kGdbFlag = "gdb_flag";
-const char* kKernelCmdline = "kernel_cmdline";
 const char* kRamdiskImagePath = "ramdisk_image_path";
 const char* kInitramfsPath = "initramfs_path";
 const char* kFinalRamdiskPath = "final_ramdisk_path";
@@ -158,6 +158,12 @@ const char* kBootSlot = "boot_slot";
 
 const char* kTouchSocketPort = "touch_socket_port";
 const char* kKeyboardSocketPort = "keyboard_socket_port";
+
+const char* kLoopMaxPart = "loop_max_part";
+const char* kGuestEnforceSecurity = "guest_enforce_security";
+const char* kGuestAuditSecurity = "guest_audit_security";
+const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
+const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 
 }  // namespace
 
@@ -297,49 +303,6 @@ std::string CuttlefishConfig::gdb_flag() const {
 
 void CuttlefishConfig::set_gdb_flag(const std::string& device) {
   (*dictionary_)[kGdbFlag] = device;
-}
-
-std::set<std::string> CuttlefishConfig::kernel_cmdline() const {
-  std::set<std::string> args_set;
-  auto args_json_obj = (*dictionary_)[kKernelCmdline];
-  std::transform(args_json_obj.begin(), args_json_obj.end(),
-                 std::inserter(args_set, args_set.begin()),
-                 [](const Json::Value& it) { return it.asString(); });
-  return args_set;
-}
-void CuttlefishConfig::set_kernel_cmdline(
-    const std::set<std::string>& kernel_cmdline) {
-  Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : kernel_cmdline) {
-    args_json_obj.append(arg);
-  }
-  (*dictionary_)[kKernelCmdline] = args_json_obj;
-}
-void CuttlefishConfig::add_kernel_cmdline(
-    const std::set<std::string>& extra_args) {
-  std::set<std::string> cmdline = kernel_cmdline();
-  for (const auto& arg : extra_args) {
-    if (cmdline.count(arg)) {
-      LOG(ERROR) << "Kernel argument " << arg << " is duplicated";
-    }
-    cmdline.insert(arg);
-  }
-  set_kernel_cmdline(cmdline);
-}
-void CuttlefishConfig::add_kernel_cmdline(const std::string& kernel_cmdline) {
-  std::stringstream args_stream(kernel_cmdline);
-  std::set<std::string> kernel_cmdline_set;
-  using is_iter = std::istream_iterator<std::string>;
-  std::copy(is_iter(args_stream), is_iter(),
-            std::inserter(kernel_cmdline_set, kernel_cmdline_set.begin()));
-  add_kernel_cmdline(kernel_cmdline_set);
-}
-std::string CuttlefishConfig::kernel_cmdline_as_string() const {
-  auto args_set = kernel_cmdline();
-  std::stringstream output;
-  std::copy(args_set.begin(), args_set.end(),
-            std::ostream_iterator<std::string>(output, " "));
-  return output.str();
 }
 
 std::string CuttlefishConfig::ramdisk_image_path() const {
@@ -849,6 +812,57 @@ void CuttlefishConfig::set_keyboard_socket_port(int port) {
 
 int CuttlefishConfig::keyboard_socket_port() const {
   return (*dictionary_)[kKeyboardSocketPort].asInt();
+}
+
+void CuttlefishConfig::set_loop_max_part(int loop_max_part) {
+  (*dictionary_)[kLoopMaxPart] = loop_max_part;
+}
+int CuttlefishConfig::loop_max_part() const {
+  return (*dictionary_)[kLoopMaxPart].asInt();
+}
+
+void CuttlefishConfig::set_guest_enforce_security(bool guest_enforce_security) {
+  (*dictionary_)[kGuestEnforceSecurity] = guest_enforce_security;
+}
+bool CuttlefishConfig::guest_enforce_security() const {
+  return (*dictionary_)[kGuestEnforceSecurity].asBool();
+}
+
+void CuttlefishConfig::set_guest_audit_security(bool guest_audit_security) {
+  (*dictionary_)[kGuestAuditSecurity] = guest_audit_security;
+}
+bool CuttlefishConfig::guest_audit_security() const {
+  return (*dictionary_)[kGuestAuditSecurity].asBool();
+}
+
+void CuttlefishConfig::set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(boot_image_kernel_cmdline, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kBootImageKernelCmdline] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::boot_image_kernel_cmdline() const {
+  std::vector<std::string> cmdline;
+  for (const Json::Value& arg : (*dictionary_)[kBootImageKernelCmdline]) {
+    cmdline.push_back(arg.asString());
+  }
+  return cmdline;
+}
+
+void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(extra_cmdline, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kExtraKernelCmdline] = extra_cmdline;
+}
+std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
+  std::vector<std::string> cmdline;
+  for (const Json::Value& arg : (*dictionary_)[kExtraKernelCmdline]) {
+    cmdline.push_back(arg.asString());
+  }
+  return cmdline;
 }
 
 // Creates the (initially empty) config object and populates it with values from
