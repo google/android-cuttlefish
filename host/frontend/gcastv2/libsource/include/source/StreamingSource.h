@@ -17,10 +17,11 @@
 #pragma once
 
 #include <utils/Errors.h>
+#include <media/stagefright/foundation/ADebug.h>
+#include <media/stagefright/foundation/ABuffer.h>
 
+#include <cinttypes>
 #include <memory>
-
-#include <media/stagefright/foundation/AMessage.h>
 
 namespace android {
 
@@ -34,14 +35,7 @@ struct StreamingSource {
 
     virtual status_t initCheck() const = 0;
 
-    void setNotify(const std::shared_ptr<AMessage> &notify);
     void setCallback(std::function<void(const std::shared_ptr<ABuffer> &)> cb);
-
-    virtual void setParameters(const std::shared_ptr<AMessage> &params) {
-        (void)params;
-    }
-
-    virtual std::shared_ptr<AMessage> getFormat() const = 0;
 
     virtual status_t start() = 0;
     virtual status_t stop() = 0;
@@ -58,7 +52,6 @@ protected:
     void onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit);
 
 private:
-    std::shared_ptr<AMessage> mNotify;
     std::function<void(const std::shared_ptr<ABuffer> &)> mCallbackFn;
 };
 

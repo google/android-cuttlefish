@@ -5,7 +5,6 @@
 #include <webrtc/RTPSocketHandler.h>
 
 #include <https/SafeCallbackable.h>
-#include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/Utils.h>
 
 using namespace android;
