@@ -15,6 +15,9 @@
  */
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "host/libs/vm_manager/vm_manager.h"
 
 #include "common/libs/fs/shared_fd.h"
@@ -26,8 +29,8 @@ namespace vm_manager {
 class QemuManager : public VmManager {
  public:
   static const std::string name();
-  static bool ConfigureGpu(vsoc::CuttlefishConfig* config);
-  static void ConfigureBootDevices(vsoc::CuttlefishConfig* config);
+  static std::vector<std::string> ConfigureGpu(const std::string& gpu_mode);
+  static std::vector<std::string> ConfigureBootDevices();
 
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;

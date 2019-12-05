@@ -15,6 +15,9 @@
  */
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "host/libs/vm_manager/vm_manager.h"
 
 #include "common/libs/fs/shared_fd.h"
@@ -28,8 +31,8 @@ class CrosvmManager : public VmManager {
  public:
   static const std::string name();
   static bool EnsureInstanceDirExists(const std::string& instance_dir);
-  static bool ConfigureGpu(vsoc::CuttlefishConfig* config);
-  static void ConfigureBootDevices(vsoc::CuttlefishConfig* config);
+  static std::vector<std::string> ConfigureGpu(const std::string& gpu_mode);
+  static std::vector<std::string> ConfigureBootDevices();
 
   CrosvmManager(const vsoc::CuttlefishConfig* config);
   virtual ~CrosvmManager() = default;

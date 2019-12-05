@@ -48,11 +48,11 @@ std::map<std::string, VmManager::VmManagerHelper>
               return GetManagerSingleton<QemuManager>(config);
             },
             []() { return vsoc::HostSupportsQemuCli(); },
-            [](vsoc::CuttlefishConfig* c) {
-              return QemuManager::ConfigureGpu(c);
+            [](const std::string& gpu_mode) {
+              return QemuManager::ConfigureGpu(gpu_mode);
             },
-            [](vsoc::CuttlefishConfig* c) {
-              return QemuManager::ConfigureBootDevices(c);
+            []() {
+              return QemuManager::ConfigureBootDevices();
             }
           },
         },
@@ -64,11 +64,11 @@ std::map<std::string, VmManager::VmManagerHelper>
             },
             // Same as Qemu for the time being
             []() { return vsoc::HostSupportsQemuCli(); },
-            [](vsoc::CuttlefishConfig* c) {
-              return CrosvmManager::ConfigureGpu(c);
+            [](const std::string& gpu_mode) {
+              return CrosvmManager::ConfigureGpu(gpu_mode);
             },
-            [](vsoc::CuttlefishConfig* c) {
-              return CrosvmManager::ConfigureBootDevices(c);
+            []() {
+              return CrosvmManager::ConfigureBootDevices();
             }
           }
         }
@@ -92,20 +92,22 @@ bool VmManager::IsVmManagerSupported(const std::string& name) {
          vm_manager_helpers_[name].support_checker();
 }
 
-bool VmManager::ConfigureGpuMode(vsoc::CuttlefishConfig* config) {
-  auto it = vm_manager_helpers_.find(config->vm_manager());
+std::vector<std::string> VmManager::ConfigureGpuMode(
+    const std::string& vmm_name, const std::string& gpu_mode) {
+  auto it = vm_manager_helpers_.find(vmm_name);
   if (it == vm_manager_helpers_.end()) {
-    return false;
+    return {};
   }
-  return it->second.configure_gpu_mode(config);
+  return it->second.configure_gpu_mode(gpu_mode);
 }
 
-void VmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
-  auto it = vm_manager_helpers_.find(config->vm_manager());
+std::vector<std::string> VmManager::ConfigureBootDevices(
+    const std::string& vmm_name) {
+  auto it = vm_manager_helpers_.find(vmm_name);
   if (it == vm_manager_helpers_.end()) {
-    return;
+    return {};
   }
-  it->second.configure_boot_devices(config);
+  return it->second.configure_boot_devices();
 }
 
 std::vector<std::string> VmManager::GetValidNames() {
