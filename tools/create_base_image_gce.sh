@@ -53,14 +53,57 @@ sudo chroot /mnt/image /usr/bin/apt update
 sudo chroot /mnt/image /usr/bin/apt install -y "${tmp_debs[@]}"
 # install tools dependencies
 sudo chroot /mnt/image /usr/bin/apt install -y openjdk-11-jre
-sudo chroot /mnt/image /usr/bin/apt install -y unzip bzip2
+sudo chroot /mnt/image /usr/bin/apt install -y unzip bzip2 lzop
 sudo chroot /mnt/image /usr/bin/apt install -y aapt
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
+
+
+# Install GPU driver dependencies
+sudo chroot /mnt/image /usr/bin/apt install -y gcc
+sudo chroot /mnt/image /usr/bin/apt install -y linux-source
+sudo chroot /mnt/image /usr/bin/apt install -y linux-headers-`uname -r`
+sudo chroot /mnt/image /usr/bin/apt install -y make
+
+# Download the latest GPU driver installer
+gsutil cp \
+  $(gsutil ls gs://nvidia-drivers-us-public/GRID/GRID*/*-Linux-x86_64-*.run \
+    | sort \
+    | tail -n 1) \
+  /mnt/image/tmp/nvidia-driver-installer.run
+
+# Make GPU driver installer executable
+chmod +x /mnt/image/tmp/nvidia-driver-installer.run
+
+# Install the latest GPU driver with default options and the dispatch libs
+sudo chroot /mnt/image /tmp/nvidia-driver-installer.run \
+  --silent \
+  --install-libglvnd
+
+# Cleanup after install
+rm /mnt/image/tmp/nvidia-driver-installer.run
+
+# Verify
+query_nvidia() {
+  sudo chroot /mnt/image nvidia-smi --format=csv,noheader --query-gpu="$@"
+}
+
+if [[ $(query_nvidia "count") != "1" ]]; then
+  echo "Failed to detect GPU."
+  exit 1
+fi
+
+if [[ $(query_nvidia "driver_version") == "" ]]; then
+  echo "Failed to detect GPU driver."
+  exit 1
+fi
+
+
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf
 
 # Skip unmounting:
 #  Sometimes systemd starts, making it hard to unmount
 #  In any case we'll unmount cleanly when the instance shuts down
+
 echo IMAGE_WAS_CREATED
