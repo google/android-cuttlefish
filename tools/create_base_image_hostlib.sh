@@ -22,12 +22,12 @@ DEFINE_string dest_project "$(gcloud config get-value project)" \
   "Project to use for the new image" "p"
 DEFINE_string launch_instance "" \
   "Name of the instance to launch with the new image" "l"
-DEFINE_string source_image_family debian-9 "Image familty to use as the base" \
-  "s"
+DEFINE_string source_image_family "debian-10" \
+  "Image familty to use as the base" "s"
 DEFINE_string source_image_project debian-cloud \
   "Project holding the base image" "m"
 DEFINE_string repository_url \
-  https://github.com/google/android-cuttlefish.git \
+  "https://github.com/google/android-cuttlefish.git" \
   "URL to the repository with host changes" "u"
 DEFINE_string repository_branch master \
   "Branch to check out" "b"
@@ -102,6 +102,8 @@ main() {
     --image-family="${FLAGS_source_image_family}" \
     --image-project="${FLAGS_source_image_project}" \
     --boot-disk-size=200GiB \
+    --accelerator="type=nvidia-tesla-p100-vws,count=1" \
+    --maintenance-policy=TERMINATE \
     "${FLAGS_build_instance}"
   wait_for_instance "${PZ[@]}" "${FLAGS_build_instance}"
   # Ubuntu tends to mount the wrong disk as root, so help it by waiting until
@@ -133,6 +135,8 @@ main() {
       --image="${FLAGS_dest_image}" \
       --machine-type=n1-standard-4 \
       --scopes storage-ro \
+      --accelerator="type=nvidia-tesla-p100-vws,count=1" \
+      --maintenance-policy=TERMINATE \
       "${FLAGS_launch_instance}"
   fi
   cat <<EOF
