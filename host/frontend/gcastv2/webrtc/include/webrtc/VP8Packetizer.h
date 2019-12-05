@@ -4,7 +4,6 @@
 
 #include <https/RunLoop.h>
 #include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/NuMediaExtractor.h>
 #include <source/StreamingSource.h>
 
 #include <memory>

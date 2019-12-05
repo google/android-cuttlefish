@@ -17,7 +17,6 @@ struct ServerState {
     using StreamingSink = android::StreamingSink;
 
     enum class VideoFormat {
-        H264,
         VP8,
     };
     explicit ServerState(

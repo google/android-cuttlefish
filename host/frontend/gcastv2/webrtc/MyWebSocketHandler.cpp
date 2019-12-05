@@ -123,12 +123,7 @@ int MyWebSocketHandler::handleMessage(
 
         // Video track (mid = 0)
 
-        std::string videoEncodingSpecific =
-            (mServerState->videoFormat() == ServerState::VideoFormat::H264) ?
-"a=rtpmap:96 H264/90000\r\n"
-"a=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\n"
-            :
-"a=rtpmap:96 VP8/90000\r\n";
+        std::string videoEncodingSpecific = "a=rtpmap:96 VP8/90000\r\n";
 
         videoEncodingSpecific +=
 "a=rtcp-fb:96 ccm fir\r\n"

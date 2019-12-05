@@ -29,8 +29,6 @@ STATIC_LIBS := libandroid.a libhttps.a
 
 SRCS := \
     DTLS.cpp                            \
-    H264Assembler.cpp                   \
-    H264Packetizer.cpp                  \
     MyWebSocketHandler.cpp              \
     RTPReceiver.cpp                     \
     RTPSender.cpp                       \

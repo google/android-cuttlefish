@@ -1,12 +1,11 @@
 #include <source/FrameBufferSource.h>
 
 #include <algorithm>
+#include <chrono>
 
 #include <media/stagefright/Utils.h>
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/foundation/AMessage.h>
-#include <media/stagefright/foundation/TSPacketizer.h>
 #include <libyuv/convert.h>
 
 #include "host/libs/config/cuttlefish_config.h"
@@ -15,15 +14,18 @@
 #include "vpx/vpx_codec.h"
 #include "vpx/vp8cx.h"
 
-#if ENABLE_H264
-#include "x264/x264.h"
-#endif
-
 #include <gflags/gflags.h>
 
 #define ENABLE_LOGGING          0
 
 namespace android {
+
+namespace {
+    int64_t GetNowUs() {
+        auto now = std::chrono::steady_clock::now().time_since_epoch();
+        return std::chrono::duration_cast<std::chrono::microseconds>(now).count();
+    }
+}
 
 struct FrameBufferSource::Encoder {
     Encoder() = default;
@@ -32,227 +34,7 @@ struct FrameBufferSource::Encoder {
     virtual void forceIDRFrame() = 0;
     virtual bool isForcingIDRFrame() const = 0;
     virtual std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) = 0;
-
-    virtual std::shared_ptr<AMessage> getFormat() const = 0;
 };
-
-////////////////////////////////////////////////////////////////////////////////
-
-#if ENABLE_H264
-
-struct FrameBufferSource::H264Encoder : public FrameBufferSource::Encoder {
-    H264Encoder(int width, int height, int rateHz);
-    ~H264Encoder() override;
-
-    void forceIDRFrame() override;
-    bool isForcingIDRFrame() const override;
-    std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) override;
-
-    std::shared_ptr<AMessage> getFormat() const override;
-
-private:
-    std::shared_ptr<AMessage> mFormat;
-
-    x264_param_t mParams;
-    x264_picture_t mPicIn, mPicOut;
-    x264_t *mImpl;
-
-    int mWidth, mHeight;
-    int32_t mNumFrames;
-
-    int mSizeY, mSizeUV;
-
-    std::atomic<bool> mForceIDRFrame;
-
-    void *mI420Data;
-
-#if ENABLE_LOGGING
-    std::shared_ptr<TSPacketizer> mPacketizer;
-    FILE *mFile;
-#endif
-};
-
-static std::shared_ptr<ABuffer> copy(const void *data, size_t size) {
-    std::shared_ptr<ABuffer> buffer(new ABuffer(size));
-    memcpy(buffer->data(), data, size);
-    return buffer;
-}
-
-FrameBufferSource::H264Encoder::H264Encoder(int width, int height, int rateHz)
-    : mImpl(nullptr),
-      mWidth(width),
-      mHeight(height),
-      mNumFrames(0),
-      mForceIDRFrame(false),
-      mI420Data(nullptr)
-#if ENABLE_LOGGING
-      ,mFile(fopen("/tmp/log.ts", "wb"))
-#endif
-{
-    CHECK((width & 1) == 0);
-    CHECK((height & 1) == 0);
-    mSizeY = width * height;
-    mSizeUV = (width / 2) * (height / 2);
-    size_t totalSize = mSizeY + 2 * mSizeUV;
-    mI420Data = malloc(totalSize);
-
-    x264_param_default_preset(&mParams, "ultrafast", "zerolatency");
-
-    mParams.i_threads = 4;
-    mParams.i_width = width;
-    mParams.i_height = height;
-    mParams.i_fps_num = rateHz;
-    mParams.i_fps_den = 1;
-    mParams.i_bitdepth = 8;
-    mParams.b_vfr_input = 0;
-    mParams.b_repeat_headers = 1;
-    mParams.b_annexb = 1;
-
-    int csp = X264_CSP_I420;
-
-    mParams.i_csp = csp;
-
-    x264_param_apply_fastfirstpass(&mParams);
-    x264_param_apply_profile(&mParams, "main");
-
-    x264_picture_alloc(
-            &mPicOut, csp, mParams.i_width, mParams.i_height);
-
-    x264_picture_init(&mPicIn);
-    mPicIn.img.i_csp = csp;
-
-    mPicIn.img.i_stride[0] = width;
-    mPicIn.img.i_stride[1] = width / 2;
-    mPicIn.img.i_stride[2] = width / 2;
-    mPicIn.img.i_plane = 3;
-
-    mImpl = x264_encoder_open(&mParams);
-    CHECK(mImpl);
-
-    x264_nal_t *headers;
-    int numNalUnits;
-    /* int size = */x264_encoder_headers(mImpl, &headers, &numNalUnits);
-
-    mFormat.reset(new AMessage);
-    mFormat->setString("mime", MEDIA_MIMETYPE_VIDEO_AVC);
-    mFormat->setInt32("width", width);
-    mFormat->setInt32("height", height);
-
-    for (int i = 0; i < numNalUnits; ++i) {
-        std::shared_ptr<ABuffer> csd = copy(headers[i].p_payload, headers[i].i_payload);
-        mFormat->setBuffer(StringPrintf("csd-%d", i).c_str(), csd);
-    }
-
-    LOG(INFO) << "Format is " << mFormat->debugString().c_str();
-
-#if ENABLE_LOGGING
-    mPacketizer.reset(new TSPacketizer);
-
-    ssize_t videoTrackIndex = mPacketizer->addTrack(mFormat);
-    LOG(INFO) << "Created video track index " << videoTrackIndex;
-#endif
-}
-
-FrameBufferSource::H264Encoder::~H264Encoder() {
-    // x264_picture_clean(&mPicOut);
-
-    x264_encoder_close(mImpl);
-    mImpl = nullptr;
-
-    free(mI420Data);
-
-#if ENABLE_LOGGING
-    if (mFile) {
-        fclose(mFile);
-        mFile = nullptr;
-    }
-#endif
-}
-
-void FrameBufferSource::H264Encoder::forceIDRFrame() {
-    mForceIDRFrame = true;
-}
-
-bool FrameBufferSource::H264Encoder::isForcingIDRFrame() const {
-    return mForceIDRFrame;
-}
-
-std::shared_ptr<AMessage> FrameBufferSource::H264Encoder::getFormat() const {
-    return mFormat;
-}
-
-std::shared_ptr<ABuffer> FrameBufferSource::H264Encoder::encode(
-        const void *frame, int64_t timeUs) {
-    if (frame) {
-        // If we don't get a new frame, we'll just repeat the previously
-        // YUV-converted frame again.
-
-        mPicIn.img.plane[0] = (uint8_t *)mI420Data;
-        mPicIn.img.plane[1] = (uint8_t *)mI420Data + mSizeY;
-        mPicIn.img.plane[2] = (uint8_t *)mI420Data + mSizeY + mSizeUV;
-
-        libyuv::ABGRToI420(
-                static_cast<const uint8_t *>(frame),
-                mWidth * 4,
-                mPicIn.img.plane[0],
-                mWidth,
-                mPicIn.img.plane[1],
-                mWidth / 2,
-                mPicIn.img.plane[2],
-                mWidth / 2,
-                mWidth,
-                mHeight);
-    }
-
-    if (mForceIDRFrame.exchange(false)) {
-        mPicIn.i_type = X264_TYPE_IDR;
-    } else {
-        mPicIn.i_type = X264_TYPE_AUTO;
-    }
-
-    x264_nal_t *nals;
-    int numNalUnits;
-
-    int size = x264_encoder_encode(
-            mImpl, &nals, &numNalUnits, &mPicIn, &mPicOut);
-
-    // LOG(INFO) << "encoded frame of size " << size;
-
-    std::shared_ptr<ABuffer> accessUnit = copy(nals[0].p_payload, size);
-    accessUnit->meta()->setInt64("timeUs", timeUs);
-
-#if ENABLE_LOGGING
-    std::shared_ptr<ABuffer> packets;
-    uint32_t flags = 0;
-
-    if (mNumFrames == 0) {
-        flags |= TSPacketizer::EMIT_PAT_AND_PMT;
-    }
-
-    if ((mNumFrames % 10) == 0) {
-        flags |= TSPacketizer::EMIT_PCR;
-    }
-
-    status_t err = mPacketizer->packetize(
-            0 /* trackIndex */,
-            accessUnit,
-            &packets,
-            flags);
-
-    CHECK(err == OK);
-
-    if (mFile) {
-        fwrite(packets->data(), 1, packets->size(), mFile);
-        fflush(mFile);
-    }
-#endif
-
-    ++mNumFrames;
-
-    return accessUnit;
-}
-
-#endif  // ENABLE_H264
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -264,8 +46,6 @@ struct FrameBufferSource::VPXEncoder : public FrameBufferSource::Encoder {
     bool isForcingIDRFrame() const override;
 
     std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) override;
-
-    std::shared_ptr<AMessage> getFormat() const override;
 
 private:
     int mWidth, mHeight, mRefreshRateHz;
@@ -282,8 +62,6 @@ private:
     std::atomic<bool> mForceIDRFrame;
     bool mFirstFrame;
     int64_t mLastTimeUs;
-
-    std::shared_ptr<AMessage> mFormat;
 };
 
 static int GetCPUCoreCount() {
@@ -349,11 +127,6 @@ FrameBufferSource::VPXEncoder::VPXEncoder(int width, int height, int rateHz)
 
     res = vpx_codec_control(mCodecContext.get(), VP8E_SET_TOKEN_PARTITIONS, 0);
     CHECK_EQ(res, VPX_CODEC_OK);
-
-    mFormat.reset(new AMessage);
-    mFormat->setString("mime", MEDIA_MIMETYPE_VIDEO_VP8);
-    mFormat->setInt32("width", width);
-    mFormat->setInt32("height", height);
 }
 
 FrameBufferSource::VPXEncoder::~VPXEncoder() {
@@ -462,10 +235,6 @@ std::shared_ptr<ABuffer> FrameBufferSource::VPXEncoder::encode(
     return accessUnit;
 }
 
-std::shared_ptr<AMessage> FrameBufferSource::VPXEncoder::getFormat() const {
-    return mFormat;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 FrameBufferSource::FrameBufferSource(Format format)
@@ -488,40 +257,6 @@ status_t FrameBufferSource::initCheck() const {
     return mInitCheck;
 }
 
-void FrameBufferSource::setParameters(const std::shared_ptr<AMessage> &params) {
-    std::string mime;
-    if (params != nullptr && params->findString("mime", &mime)) {
-        if (!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_VIDEO_VP8)) {
-            mFormat = Format::VP8;
-#if ENABLE_H264
-        } else if (!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_VIDEO_AVC)) {
-            mFormat = Format::H264;
-#endif
-        } else {
-            LOG(WARNING)
-                << "Unknown video encoding mime type requested: '"
-                << mime
-                << "', ignoring.";
-        }
-    }
-}
-
-std::shared_ptr<AMessage> FrameBufferSource::getFormat() const {
-    // We're not using the encoder's format (although it will be identical),
-    // because the encoder may not have been instantiated just yet.
-
-    std::shared_ptr<AMessage> format(new AMessage);
-    format->setString(
-            "mime",
-            mFormat == Format::H264
-                ? MEDIA_MIMETYPE_VIDEO_AVC : MEDIA_MIMETYPE_VIDEO_VP8);
-
-    format->setInt32("width", mScreenWidth);
-    format->setInt32("height", mScreenHeight);
-
-    return format;
-}
-
 status_t FrameBufferSource::start() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
@@ -530,16 +265,6 @@ status_t FrameBufferSource::start() {
     }
 
     switch (mFormat) {
-#if ENABLE_H264
-        case Format::H264:
-        {
-            mEncoder.reset(
-                    new H264Encoder(mScreenWidth, mScreenHeight, mScreenRate));
-
-            break;
-        }
-#endif
-
         case Format::VP8:
         {
             mEncoder.reset(
@@ -635,7 +360,7 @@ void FrameBufferSource::injectFrame(const void *data, size_t size) {
         return;
     }
 
-    std::shared_ptr<ABuffer> accessUnit = mEncoder->encode(data, ALooper::GetNowUs());
+    std::shared_ptr<ABuffer> accessUnit = mEncoder->encode(data, GetNowUs());
 
     StreamingSource::onAccessUnit(accessUnit);
 }
