@@ -277,6 +277,80 @@ std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
   return config.PerInstancePath("cuttlefish_config.json");
 }
 
+template<typename T>
+void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
+  destination->insert(destination->end(), source.begin(), source.end());
+}
+
+template<typename S, typename T>
+static std::string concat(const S& s, const T& t) {
+  std::ostringstream os;
+  os << s << t;
+  return os.str();
+}
+
+std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfig& config) {
+  std::vector<std::string> kernel_cmdline;
+
+  AppendVector(&kernel_cmdline, config.boot_image_kernel_cmdline());
+  AppendVector(&kernel_cmdline,
+               vm_manager::VmManager::ConfigureGpuMode(config.vm_manager(), config.gpu_mode()));
+  AppendVector(&kernel_cmdline, vm_manager::VmManager::ConfigureBootDevices(config.vm_manager()));
+
+  kernel_cmdline.push_back(concat("androidboot.serialno=", config.serial_number()));
+  kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
+  if (config.logcat_mode() == cvd::kLogcatVsockMode) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", config.logcat_vsock_port()));
+  }
+  if (config.enable_vnc_server()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_frames_port=", config.frames_vsock_port()));
+  }
+  if (config.enable_tombstone_receiver()) {
+    kernel_cmdline.push_back("androidboot.tombstone_transmit=1");
+    kernel_cmdline.push_back(concat(
+        "androidboot.vsock_tombstone_port=",
+        config.tombstone_receiver_port()));
+    // TODO (b/128842613) populate a cid flag to read the host CID during
+    // runtime
+  } else {
+    kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
+  }
+  kernel_cmdline.push_back(concat(
+      "androidboot.cuttlefish_config_server_port=", config.config_server_port()));
+  kernel_cmdline.push_back(concat(
+      "androidboot.setupwizard_mode=", config.setupwizard_mode()));
+  if (!config.use_bootloader()) {
+    std::string slot_suffix;
+    if (config.boot_slot().empty()) {
+      slot_suffix = "_a";
+    } else {
+      slot_suffix = "_" + config.boot_slot();
+    }
+    kernel_cmdline.push_back(concat("androidboot.slot_suffix=", slot_suffix));
+  }
+  if (config.vm_manager() == vm_manager::QemuManager::name()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_touch_port=", config.touch_socket_port()));
+    kernel_cmdline.push_back(concat(
+        "androidboot.vsock_keyboard_port=", config.keyboard_socket_port()));
+  }
+  kernel_cmdline.push_back(concat("loop.max_part=", config.loop_max_part()));
+  if (config.guest_enforce_security()) {
+    kernel_cmdline.push_back("enforcing=1");
+  } else {
+    kernel_cmdline.push_back("enforcing=0");
+    kernel_cmdline.push_back("androidboot.selinux=permissive");
+  }
+  if (config.guest_audit_security()) {
+    kernel_cmdline.push_back("audit=1");
+  } else {
+    kernel_cmdline.push_back("audit=0");
+  }
+
+  AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
+
+  return kernel_cmdline;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -417,7 +491,8 @@ int main(int argc, char** argv) {
 
   // Start the guest VM
   vm_manager->WithFrontend(frontend_enabled);
-  vm_manager->WithKernelCommandLine(config->kernel_cmdline_as_string());
+  auto kernel_args = KernelCommandLineFromConfig(*config);
+  vm_manager->WithKernelCommandLine(android::base::Join(kernel_args, " "));
   auto vmm_commands = vm_manager->StartCommands();
   for (auto& vmm_cmd: vmm_commands) {
       process_monitor.StartSubprocess(std::move(vmm_cmd),

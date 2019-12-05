@@ -63,33 +63,33 @@ bool Stop() {
 
 const std::string CrosvmManager::name() { return "crosvm"; }
 
-bool CrosvmManager::ConfigureGpu(vsoc::CuttlefishConfig* config) {
+std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode) {
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  if (config->gpu_mode() == vsoc::kGpuModeDrmVirgl) {
-    config->add_kernel_cmdline("androidboot.hardware.gralloc=minigbm");
-    config->add_kernel_cmdline("androidboot.hardware.hwcomposer=drm_minigbm");
-    config->add_kernel_cmdline("androidboot.hardware.egl=mesa");
-    return true;
+  if (gpu_mode == vsoc::kGpuModeDrmVirgl) {
+    return {
+      "androidboot.hardware.gralloc=minigbm",
+      "androidboot.hardware.hwcomposer=drm_minigbm",
+      "androidboot.hardware.egl=mesa",
+    };
   }
-  if (config->gpu_mode() == vsoc::kGpuModeGuestSwiftshader) {
-    config->add_kernel_cmdline("androidboot.hardware.gralloc=cutf_ashmem");
-    config->add_kernel_cmdline(
-        "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
-    config->add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
-    config->add_kernel_cmdline("androidboot.hardware.vulkan=pastel");
-    return true;
+  if (gpu_mode == vsoc::kGpuModeGuestSwiftshader) {
+    return {
+        "androidboot.hardware.gralloc=cutf_ashmem",
+        "androidboot.hardware.hwcomposer=cutf_cvm_ashmem",
+        "androidboot.hardware.egl=swiftshader",
+        "androidboot.hardware.vulkan=pastel",
+    };
   }
-  return false;
+  return {};
 }
 
-void CrosvmManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
+std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
   // PCI domain 0, bus 0, device 1, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
-  config->add_kernel_cmdline(
-      "androidboot.boot_devices=pci0000:00/0000:00:01.0");
+  return { "androidboot.boot_devices=pci0000:00/0000:00:01.0" };
 }
 
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)

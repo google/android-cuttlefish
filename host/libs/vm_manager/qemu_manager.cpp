@@ -101,27 +101,26 @@ bool Stop() {
 
 const std::string QemuManager::name() { return "qemu_cli"; }
 
-bool QemuManager::ConfigureGpu(vsoc::CuttlefishConfig *config) {
-  if (config->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
-    return false;
+std::vector<std::string> QemuManager::ConfigureGpu(const std::string& gpu_mode) {
+  if (gpu_mode != vsoc::kGpuModeGuestSwiftshader) {
+    return {};
   }
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  config->add_kernel_cmdline("androidboot.hardware.gralloc=cutf_ashmem");
-  config->add_kernel_cmdline(
-      "androidboot.hardware.hwcomposer=cutf_cvm_ashmem");
-  config->add_kernel_cmdline("androidboot.hardware.egl=swiftshader");
-  config->add_kernel_cmdline("androidboot.hardware.vulkan=pastel");
-  return true;
+  return {
+      "androidboot.hardware.gralloc=cutf_ashmem",
+      "androidboot.hardware.hwcomposer=cutf_cvm_ashmem",
+      "androidboot.hardware.egl=swiftshader",
+      "androidboot.hardware.vulkan=pastel",
+  };
 }
 
-void QemuManager::ConfigureBootDevices(vsoc::CuttlefishConfig* config) {
+std::vector<std::string> QemuManager::ConfigureBootDevices() {
   // PCI domain 0, bus 0, device 3, function 0
   // This is controlled with 'addr=0x3' in cf_qemu.sh
-  config->add_kernel_cmdline(
-    "androidboot.boot_devices=pci0000:00/0000:00:03.0");
+  return { "androidboot.boot_devices=pci0000:00/0000:00:03.0" };
 }
 
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
