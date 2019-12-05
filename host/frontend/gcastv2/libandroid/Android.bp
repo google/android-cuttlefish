@@ -25,7 +25,6 @@ cc_library_static {
         "AnotherPacketSource.cpp",
         "ATSParser.cpp",
         "ESQueue.cpp",
-        "JSONObject.cpp",
         "NuMediaExtractor.cpp",
         "Utils.cpp",
         "avc_utils.cpp",
