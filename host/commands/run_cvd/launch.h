@@ -15,8 +15,6 @@ std::vector <cvd::SharedFD> LaunchKernelLogMonitor(
     unsigned int number_of_event_pipes);
 void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                    cvd::ProcessMonitor* process_monitor);
-void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
-                        cvd::ProcessMonitor* process_monitor);
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
                               cvd::ProcessMonitor* process_monitor);
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
@@ -40,3 +38,9 @@ struct TombstoneReceiverPorts {
 };
 TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
     const vsoc::CuttlefishConfig& config, cvd::ProcessMonitor* process_monitor);
+
+struct ConfigServerPorts {
+  std::optional<int> server_vsock_port;
+};
+ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+                                     cvd::ProcessMonitor* process_monitor);

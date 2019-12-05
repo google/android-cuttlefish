@@ -169,8 +169,6 @@ DEFINE_int32(logcat_vsock_port, vsoc::GetPerInstanceDefault(5620),
 DEFINE_string(config_server_binary,
               vsoc::DefaultHostArtifactsPath("bin/config_server"),
               "Binary for the configuration server");
-DEFINE_int32(config_server_port, vsoc::GetPerInstanceDefault(4680),
-             "The (vsock) port for the configuration server");
 DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
             "both the guest and the host");
 DEFINE_string(tombstone_receiver_binary,
@@ -391,7 +389,6 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
-  tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
 
   tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
   tmp_config_obj.set_tombstone_receiver_binary(FLAGS_tombstone_receiver_binary);

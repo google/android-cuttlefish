@@ -406,7 +406,8 @@ int main(int argc, char** argv) {
 
   LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
 
-  LaunchConfigServer(*config, &process_monitor);
+  auto config_server = LaunchConfigServer(*config, &process_monitor);
+  auto config_server_args = KernelCommandLineFromConfigServer(config_server);
 
   auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
@@ -424,6 +425,7 @@ int main(int argc, char** argv) {
   kernel_args.insert(kernel_args.end(), vnc_kernel_args.begin(), vnc_kernel_args.end());
   kernel_args.insert(kernel_args.end(), tombstone_kernel_args.begin(),
                      tombstone_kernel_args.end());
+  kernel_args.insert(kernel_args.end(), config_server_args.begin(), config_server_args.end());
 
   // Start the guest VM
   vm_manager->WithFrontend(vnc_kernel_args.size() > 0);

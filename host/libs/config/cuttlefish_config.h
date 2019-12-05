@@ -285,9 +285,6 @@ class CuttlefishConfig {
   void set_logcat_vsock_port(int port);
   int logcat_vsock_port() const;
 
-  void set_config_server_port(int port);
-  int config_server_port() const;
-
   void set_enable_tombstone_receiver(bool enable_tombstone_receiver);
   bool enable_tombstone_receiver() const;
 

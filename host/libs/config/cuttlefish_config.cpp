@@ -142,7 +142,6 @@ const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
 const char* kLogcatMode = "logcat_mode";
 const char* kLogcatVsockPort = "logcat_vsock_port";
-const char* kConfigServerPort = "config_server_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerBinary = "config_server_binary";
 
@@ -703,14 +702,6 @@ void CuttlefishConfig::set_logcat_vsock_port(int port) {
 
 int CuttlefishConfig::logcat_vsock_port() const {
   return (*dictionary_)[kLogcatVsockPort].asInt();
-}
-
-void CuttlefishConfig::set_config_server_port(int port) {
-  (*dictionary_)[kConfigServerPort] = port;
-}
-
-int CuttlefishConfig::config_server_port() const {
-  return (*dictionary_)[kConfigServerPort].asInt();
 }
 
 void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
