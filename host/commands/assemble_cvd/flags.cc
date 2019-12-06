@@ -49,9 +49,6 @@ DEFINE_string(kernel_path, "",
 DEFINE_string(initramfs_path, "", "Path to the initramfs");
 DEFINE_bool(decompress_kernel, false,
             "Whether to decompress the kernel image.");
-DEFINE_string(kernel_decompresser_executable,
-              vsoc::DefaultHostArtifactsPath("bin/extract-vmlinux"),
-             "Path to the extract-vmlinux executable.");
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
 DEFINE_int32(loop_max_part, 7, "Maximum number of loop partitions");
@@ -99,23 +96,8 @@ DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
 DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
-DEFINE_string(vnc_server_binary,
-              vsoc::DefaultHostArtifactsPath("bin/vnc_server"),
-              "Location of the vnc server binary.");
-DEFINE_string(virtual_usb_manager_binary,
-              vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"),
-              "Location of the virtual usb manager binary.");
-DEFINE_string(kernel_log_monitor_binary,
-              vsoc::DefaultHostArtifactsPath("bin/kernel_log_monitor"),
-              "Location of the log monitor binary.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
-DEFINE_string(socket_forward_proxy_binary,
-              vsoc::DefaultHostArtifactsPath("bin/socket_forward_proxy"),
-              "Location of the socket_forward_proxy binary.");
-DEFINE_string(socket_vsock_proxy_binary,
-              vsoc::DefaultHostArtifactsPath("bin/socket_vsock_proxy"),
-              "Location of the socket_vsock_proxy binary.");
 DEFINE_string(adb_mode, "vsock_half_tunnel",
               "Mode for ADB connection. Can be 'usb' for USB forwarding, "
               "'tunnel' for a TCP connection tunneled through VSoC, "
@@ -127,10 +109,6 @@ DEFINE_string(adb_mode, "vsock_half_tunnel",
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with -adb_mode=tunnel or vsock_tunnel");
-DEFINE_string(adb_connector_binary,
-              vsoc::DefaultHostArtifactsPath("bin/adb_connector"),
-              "Location of the adb_connector binary. Only relevant if "
-              "-run_adb_connector is true");
 DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
 DEFINE_string(wifi_tap_name, GetPerInstanceDefault("cvd-wtap-"),
               "The name of the tap interface to use for wifi");
@@ -155,23 +133,11 @@ DEFINE_string(qemu_binary,
 DEFINE_string(crosvm_binary,
               vsoc::DefaultHostArtifactsPath("bin/crosvm"),
               "The Crosvm binary to use");
-DEFINE_string(console_forwarder_binary,
-              vsoc::DefaultHostArtifactsPath("bin/console_forwarder"),
-              "The Console Forwarder binary to use");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_string(logcat_receiver_binary,
-              vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"),
-              "Binary for the logcat server");
 DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
-DEFINE_string(config_server_binary,
-              vsoc::DefaultHostArtifactsPath("bin/config_server"),
-              "Binary for the configuration server");
 DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
             "both the guest and the host");
-DEFINE_string(tombstone_receiver_binary,
-              vsoc::DefaultHostArtifactsPath("bin/tombstone_receiver"),
-              "Binary for the tombstone server");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -342,8 +308,10 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
   tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
   tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
-  tmp_config_obj.set_logcat_receiver_binary(FLAGS_logcat_receiver_binary);
-  tmp_config_obj.set_config_server_binary(FLAGS_config_server_binary);
+  tmp_config_obj.set_logcat_receiver_binary(
+      vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"));
+  tmp_config_obj.set_config_server_binary(
+      vsoc::DefaultHostArtifactsPath("bin/config_server"));
   tmp_config_obj.set_launcher_log_path(
       tmp_config_obj.PerInstancePath("launcher.log"));
   tmp_config_obj.set_launcher_monitor_socket_path(
@@ -360,21 +328,24 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
-  tmp_config_obj.set_console_forwarder_binary(FLAGS_console_forwarder_binary);
-  tmp_config_obj.set_kernel_log_monitor_binary(FLAGS_kernel_log_monitor_binary);
+  tmp_config_obj.set_console_forwarder_binary(
+      vsoc::DefaultHostArtifactsPath("bin/console_forwarder"));
+  tmp_config_obj.set_kernel_log_monitor_binary(
+      vsoc::DefaultHostArtifactsPath("bin/kernel_log_monitor"));
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
-  tmp_config_obj.set_vnc_server_binary(FLAGS_vnc_server_binary);
+  tmp_config_obj.set_vnc_server_binary(
+      vsoc::DefaultHostArtifactsPath("bin/vnc_server"));
   tmp_config_obj.set_vnc_server_port(FLAGS_vnc_server_port);
 
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
   tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
-  tmp_config_obj.set_adb_connector_binary(FLAGS_adb_connector_binary);
+  tmp_config_obj.set_adb_connector_binary(
+      vsoc::DefaultHostArtifactsPath("bin/adb_connector"));
   tmp_config_obj.set_virtual_usb_manager_binary(
-      FLAGS_virtual_usb_manager_binary);
-  tmp_config_obj.set_socket_forward_proxy_binary(
-      FLAGS_socket_forward_proxy_binary);
-  tmp_config_obj.set_socket_vsock_proxy_binary(FLAGS_socket_vsock_proxy_binary);
+      vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"));
+  tmp_config_obj.set_socket_vsock_proxy_binary(
+      vsoc::DefaultHostArtifactsPath("bin/socket_vsock_proxy"));
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
@@ -388,7 +359,8 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
 
   tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
-  tmp_config_obj.set_tombstone_receiver_binary(FLAGS_tombstone_receiver_binary);
+  tmp_config_obj.set_tombstone_receiver_binary(
+      vsoc::DefaultHostArtifactsPath("bin/tombstone_receiver"));
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
@@ -490,7 +462,7 @@ bool CleanPriorFiles() {
 }
 
 bool DecompressKernel(const std::string& src, const std::string& dst) {
-  cvd::Command decomp_cmd(FLAGS_kernel_decompresser_executable);
+  cvd::Command decomp_cmd(vsoc::DefaultHostArtifactsPath("bin/extract-vmlinux"));
   decomp_cmd.AddParameter(src);
   auto output_file = cvd::SharedFD::Creat(dst.c_str(), 0666);
   if (!output_file->IsOpen()) {
