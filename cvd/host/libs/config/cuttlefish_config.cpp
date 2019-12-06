@@ -131,7 +131,6 @@ const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
 const char* kVirtualUsbManagerBinary = "virtual_usb_manager_binary";
-const char* kSocketForwardProxyBinary = "socket_forward_proxy_binary";
 const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
 
 const char* kRunAsDaemon = "run_as_daemon";
@@ -635,15 +634,6 @@ std::string CuttlefishConfig::virtual_usb_manager_binary() const {
 void CuttlefishConfig::set_virtual_usb_manager_binary(
     const std::string& virtual_usb_manager_binary) {
   (*dictionary_)[kVirtualUsbManagerBinary] = virtual_usb_manager_binary;
-}
-
-std::string CuttlefishConfig::socket_forward_proxy_binary() const {
-  return (*dictionary_)[kSocketForwardProxyBinary].asString();
-}
-
-void CuttlefishConfig::set_socket_forward_proxy_binary(
-    const std::string& socket_forward_proxy_binary) {
-  (*dictionary_)[kSocketForwardProxyBinary] = socket_forward_proxy_binary;
 }
 
 std::string CuttlefishConfig::socket_vsock_proxy_binary() const {
