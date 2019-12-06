@@ -1,4 +1,5 @@
 #############################
 # Product files
 #
+/product/bin/suspend_blocker     u:object_r:suspend_blocker_exec:s0
 /product/bin/tombstone_transmit  u:object_r:tombstone_transmit_exec:s0

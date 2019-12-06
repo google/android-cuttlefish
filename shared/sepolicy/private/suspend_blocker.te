@@ -1,0 +1,6 @@
+type suspend_blocker, domain, coredomain;
+type suspend_blocker_exec, exec_type, file_type;
+
+init_daemon_domain(suspend_blocker);
+
+wakelock_use(suspend_blocker);
