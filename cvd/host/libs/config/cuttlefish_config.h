@@ -261,9 +261,6 @@ class CuttlefishConfig {
   void set_virtual_usb_manager_binary(const std::string& binary);
   std::string virtual_usb_manager_binary() const;
 
-  void set_socket_forward_proxy_binary(const std::string& binary);
-  std::string socket_forward_proxy_binary() const;
-
   void set_socket_vsock_proxy_binary(const std::string& binary);
   std::string socket_vsock_proxy_binary() const;
 
