@@ -85,7 +85,7 @@ static const std::set<std::string> kKnownMissing = {
     "android.hardware.weaver@1.0",
     "android.hardware.wifi@1.3",
     "android.hardware.wifi@1.4",
-    "android.hardware.wifi.hostapd@1.1",
+    "android.hardware.wifi.hostapd@1.2",
     "android.hardware.wifi.offload@1.0",
     "android.hidl.base@1.0",
     "android.hidl.memory.token@1.0",
