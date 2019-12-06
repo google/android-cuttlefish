@@ -43,7 +43,6 @@ DEFINE_int32(x_res, 720, "Width of the screen in pixels");
 DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
 DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
 DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
-DEFINE_int32(num_screen_buffers, 3, "The number of screen buffers");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(initramfs_path, "", "Path to the initramfs");
@@ -234,7 +233,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
   tmp_config_obj.set_x_res(FLAGS_x_res);
   tmp_config_obj.set_y_res(FLAGS_y_res);
-  tmp_config_obj.set_num_screen_buffers(FLAGS_num_screen_buffers);
   tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
