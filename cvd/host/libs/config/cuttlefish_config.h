@@ -104,9 +104,6 @@ class CuttlefishConfig {
   int y_res() const;
   void set_y_res(int y_res);
 
-  int num_screen_buffers() const;
-  void set_num_screen_buffers(int num_screen_buffers);
-
   int refresh_rate_hz() const;
   void set_refresh_rate_hz(int refresh_rate_hz);
 

@@ -80,7 +80,6 @@ const char* kMemoryMb = "memory_mb";
 const char* kDpi = "dpi";
 const char* kXRes = "x_res";
 const char* kYRes = "y_res";
-const char* kNumScreenBuffers = "num_screen_buffers";
 const char* kRefreshRateHz = "refresh_rate_hz";
 
 const char* kKernelImagePath = "kernel_image_path";
@@ -235,13 +234,6 @@ void CuttlefishConfig::set_x_res(int x_res) { (*dictionary_)[kXRes] = x_res; }
 
 int CuttlefishConfig::y_res() const { return (*dictionary_)[kYRes].asInt(); }
 void CuttlefishConfig::set_y_res(int y_res) { (*dictionary_)[kYRes] = y_res; }
-
-int CuttlefishConfig::num_screen_buffers() const {
-  return (*dictionary_)[kNumScreenBuffers].asInt();
-}
-void CuttlefishConfig::set_num_screen_buffers(int num_screen_buffers) {
-  (*dictionary_)[kNumScreenBuffers] = num_screen_buffers;
-}
 
 int CuttlefishConfig::refresh_rate_hz() const {
   return (*dictionary_)[kRefreshRateHz].asInt();
