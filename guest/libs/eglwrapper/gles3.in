@@ -1,0 +1,559 @@
+GL_ENTRY(void, glActiveTexture, GLenum texture)
+GL_ENTRY(void, glAttachShader, GLuint program, GLuint shader)
+GL_ENTRY(void, glBindAttribLocation, GLuint program, GLuint index, const GLchar* name)
+GL_ENTRY(void, glBindBuffer, GLenum target, GLuint buffer)
+GL_ENTRY(void, glBindFramebuffer, GLenum target, GLuint framebuffer)
+GL_ENTRY(void, glBindRenderbuffer, GLenum target, GLuint renderbuffer)
+GL_ENTRY(void, glBindTexture, GLenum target, GLuint texture)
+GL_ENTRY(void, glBlendColor, GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+GL_ENTRY(void, glBlendEquation,  GLenum mode )
+GL_ENTRY(void, glBlendEquationSeparate, GLenum modeRGB, GLenum modeAlpha)
+GL_ENTRY(void, glBlendFunc, GLenum sfactor, GLenum dfactor)
+GL_ENTRY(void, glBlendFuncSeparate, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
+GL_ENTRY(void, glBufferData, GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
+GL_ENTRY(void, glBufferSubData, GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
+GL_ENTRY(GLenum, glCheckFramebufferStatus, GLenum target)
+GL_ENTRY(void, glClear, GLbitfield mask)
+GL_ENTRY(void, glClearColor, GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
+GL_ENTRY(void, glClearDepthf, GLclampf depth)
+GL_ENTRY(void, glClearStencil, GLint s)
+GL_ENTRY(void, glColorMask, GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
+GL_ENTRY(void, glCompileShader, GLuint shader)
+GL_ENTRY(void, glCompressedTexImage2D, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data)
+GL_ENTRY(void, glCompressedTexSubImage2D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data)
+GL_ENTRY(void, glCopyTexImage2D, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
+GL_ENTRY(void, glCopyTexSubImage2D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+GL_ENTRY(GLuint, glCreateProgram, void)
+GL_ENTRY(GLuint, glCreateShader, GLenum type)
+GL_ENTRY(void, glCullFace, GLenum mode)
+GL_ENTRY(void, glDeleteBuffers, GLsizei n, const GLuint* buffers)
+GL_ENTRY(void, glDeleteFramebuffers, GLsizei n, const GLuint* framebuffers)
+GL_ENTRY(void, glDeleteProgram, GLuint program)
+GL_ENTRY(void, glDeleteRenderbuffers, GLsizei n, const GLuint* renderbuffers)
+GL_ENTRY(void, glDeleteShader, GLuint shader)
+GL_ENTRY(void, glDeleteTextures, GLsizei n, const GLuint* textures)
+GL_ENTRY(void, glDepthFunc, GLenum func)
+GL_ENTRY(void, glDepthMask, GLboolean flag)
+GL_ENTRY(void, glDepthRangef, GLclampf zNear, GLclampf zFar)
+GL_ENTRY(void, glDetachShader, GLuint program, GLuint shader)
+GL_ENTRY(void, glDisable, GLenum cap)
+GL_ENTRY(void, glDisableVertexAttribArray, GLuint index)
+GL_ENTRY(void, glDrawArrays, GLenum mode, GLint first, GLsizei count)
+GL_ENTRY(void, glDrawElements, GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
+GL_ENTRY(void, glEnable, GLenum cap)
+GL_ENTRY(void, glEnableVertexAttribArray, GLuint index)
+GL_ENTRY(void, glFinish, void)
+GL_ENTRY(void, glFlush, void)
+GL_ENTRY(void, glFramebufferRenderbuffer, GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+GL_ENTRY(void, glFramebufferTexture2D, GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+GL_ENTRY(void, glFrontFace, GLenum mode)
+GL_ENTRY(void, glGenBuffers, GLsizei n, GLuint* buffers)
+GL_ENTRY(void, glGenerateMipmap, GLenum target)
+GL_ENTRY(void, glGenFramebuffers, GLsizei n, GLuint* framebuffers)
+GL_ENTRY(void, glGenRenderbuffers, GLsizei n, GLuint* renderbuffers)
+GL_ENTRY(void, glGenTextures, GLsizei n, GLuint* textures)
+GL_ENTRY(void, glGetActiveAttrib, GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
+GL_ENTRY(void, glGetActiveUniform, GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
+GL_ENTRY(void, glGetAttachedShaders, GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
+GL_ENTRY(int, glGetAttribLocation, GLuint program, const GLchar* name)
+GL_ENTRY(void, glGetBooleanv, GLenum pname, GLboolean* params)
+GL_ENTRY(void, glGetBufferParameteriv, GLenum target, GLenum pname, GLint* params)
+GL_ENTRY(GLenum, glGetError, void)
+GL_ENTRY(void, glGetFloatv, GLenum pname, GLfloat* params)
+GL_ENTRY(void, glGetFramebufferAttachmentParameteriv, GLenum target, GLenum attachment, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetIntegerv, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetProgramiv, GLuint program, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetProgramInfoLog, GLuint program, GLsizei bufsize, GLsizei* length, GLchar* infolog)
+GL_ENTRY(void, glGetRenderbufferParameteriv, GLenum target, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetShaderiv, GLuint shader, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetShaderInfoLog, GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* infolog)
+GL_ENTRY(void, glGetShaderPrecisionFormat, GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
+GL_ENTRY(void, glGetShaderSource, GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* source)
+GL_ENTRY(const GLubyte*, glGetString, GLenum name)
+GL_ENTRY(void, glGetTexParameterfv, GLenum target, GLenum pname, GLfloat* params)
+GL_ENTRY(void, glGetTexParameteriv, GLenum target, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetUniformfv, GLuint program, GLint location, GLfloat* params)
+GL_ENTRY(void, glGetUniformiv, GLuint program, GLint location, GLint* params)
+GL_ENTRY(int, glGetUniformLocation, GLuint program, const GLchar* name)
+GL_ENTRY(void, glGetVertexAttribfv, GLuint index, GLenum pname, GLfloat* params)
+GL_ENTRY(void, glGetVertexAttribiv, GLuint index, GLenum pname, GLint* params)
+GL_ENTRY(void, glGetVertexAttribPointerv, GLuint index, GLenum pname, GLvoid** pointer)
+GL_ENTRY(void, glHint, GLenum target, GLenum mode)
+GL_ENTRY(GLboolean, glIsBuffer, GLuint buffer)
+GL_ENTRY(GLboolean, glIsEnabled, GLenum cap)
+GL_ENTRY(GLboolean, glIsFramebuffer, GLuint framebuffer)
+GL_ENTRY(GLboolean, glIsProgram, GLuint program)
+GL_ENTRY(GLboolean, glIsRenderbuffer, GLuint renderbuffer)
+GL_ENTRY(GLboolean, glIsShader, GLuint shader)
+GL_ENTRY(GLboolean, glIsTexture, GLuint texture)
+GL_ENTRY(void, glLineWidth, GLfloat width)
+GL_ENTRY(void, glLinkProgram, GLuint program)
+GL_ENTRY(void, glPixelStorei, GLenum pname, GLint param)
+GL_ENTRY(void, glPolygonOffset, GLfloat factor, GLfloat units)
+GL_ENTRY(void, glReadPixels, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels)
+GL_ENTRY(void, glReleaseShaderCompiler, void)
+GL_ENTRY(void, glRenderbufferStorage, GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+GL_ENTRY(void, glSampleCoverage, GLclampf value, GLboolean invert)
+GL_ENTRY(void, glScissor, GLint x, GLint y, GLsizei width, GLsizei height)
+GL_ENTRY(void, glShaderBinary, GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)
+GL_ENTRY(void, glShaderSource, GLuint shader, GLsizei count, const GLchar*const* string, const GLint* length)
+GL_ENTRY(void, glStencilFunc, GLenum func, GLint ref, GLuint mask)
+GL_ENTRY(void, glStencilFuncSeparate, GLenum face, GLenum func, GLint ref, GLuint mask)
+GL_ENTRY(void, glStencilMask, GLuint mask)
+GL_ENTRY(void, glStencilMaskSeparate, GLenum face, GLuint mask)
+GL_ENTRY(void, glStencilOp, GLenum fail, GLenum zfail, GLenum zpass)
+GL_ENTRY(void, glStencilOpSeparate, GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
+GL_ENTRY(void, glTexImage2D, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+GL_ENTRY(void, glTexParameterf, GLenum target, GLenum pname, GLfloat param)
+GL_ENTRY(void, glTexParameterfv, GLenum target, GLenum pname, const GLfloat* params)
+GL_ENTRY(void, glTexParameteri, GLenum target, GLenum pname, GLint param)
+GL_ENTRY(void, glTexParameteriv, GLenum target, GLenum pname, const GLint* params)
+GL_ENTRY(void, glTexSubImage2D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
+GL_ENTRY(void, glUniform1f, GLint location, GLfloat x)
+GL_ENTRY(void, glUniform1fv, GLint location, GLsizei count, const GLfloat* v)
+GL_ENTRY(void, glUniform1i, GLint location, GLint x)
+GL_ENTRY(void, glUniform1iv, GLint location, GLsizei count, const GLint* v)
+GL_ENTRY(void, glUniform2f, GLint location, GLfloat x, GLfloat y)
+GL_ENTRY(void, glUniform2fv, GLint location, GLsizei count, const GLfloat* v)
+GL_ENTRY(void, glUniform2i, GLint location, GLint x, GLint y)
+GL_ENTRY(void, glUniform2iv, GLint location, GLsizei count, const GLint* v)
+GL_ENTRY(void, glUniform3f, GLint location, GLfloat x, GLfloat y, GLfloat z)
+GL_ENTRY(void, glUniform3fv, GLint location, GLsizei count, const GLfloat* v)
+GL_ENTRY(void, glUniform3i, GLint location, GLint x, GLint y, GLint z)
+GL_ENTRY(void, glUniform3iv, GLint location, GLsizei count, const GLint* v)
+GL_ENTRY(void, glUniform4f, GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+GL_ENTRY(void, glUniform4fv, GLint location, GLsizei count, const GLfloat* v)
+GL_ENTRY(void, glUniform4i, GLint location, GLint x, GLint y, GLint z, GLint w)
+GL_ENTRY(void, glUniform4iv, GLint location, GLsizei count, const GLint* v)
+GL_ENTRY(void, glUniformMatrix2fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+GL_ENTRY(void, glUniformMatrix3fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+GL_ENTRY(void, glUniformMatrix4fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+GL_ENTRY(void, glUseProgram, GLuint program)
+GL_ENTRY(void, glValidateProgram, GLuint program)
+GL_ENTRY(void, glVertexAttrib1f, GLuint indx, GLfloat x)
+GL_ENTRY(void, glVertexAttrib1fv, GLuint indx, const GLfloat* values)
+GL_ENTRY(void, glVertexAttrib2f, GLuint indx, GLfloat x, GLfloat y)
+GL_ENTRY(void, glVertexAttrib2fv, GLuint indx, const GLfloat* values)
+GL_ENTRY(void, glVertexAttrib3f, GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+GL_ENTRY(void, glVertexAttrib3fv, GLuint indx, const GLfloat* values)
+GL_ENTRY(void, glVertexAttrib4f, GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+GL_ENTRY(void, glVertexAttrib4fv, GLuint indx, const GLfloat* values)
+GL_ENTRY(void, glVertexAttribPointer, GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr)
+GL_ENTRY(void, glViewport, GLint x, GLint y, GLsizei width, GLsizei height)
+GL_ENTRY(void, glEGLImageTargetTexture2DOES, GLenum target, GLeglImageOES image)
+GL_ENTRY(void, glEGLImageTargetRenderbufferStorageOES, GLenum target, GLeglImageOES image)
+GL_ENTRY(void, glGetProgramBinaryOES, GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, GLvoid *binary)
+GL_ENTRY(void, glProgramBinaryOES, GLuint program, GLenum binaryFormat, const GLvoid *binary, GLint length)
+GL_ENTRY(void*, glMapBufferOES, GLenum target, GLenum access)
+GL_ENTRY(GLboolean, glUnmapBufferOES, GLenum target)
+#GL_ENTRY(void, glGetBufferPointervOES, GLenum target, GLenum pname, GLvoid** params)
+GL_ENTRY(void, glTexImage3DOES, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+GL_ENTRY(void, glTexSubImage3DOES, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels)
+GL_ENTRY(void, glCopyTexSubImage3DOES, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+GL_ENTRY(void, glCompressedTexImage3DOES, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* data)
+GL_ENTRY(void, glCompressedTexSubImage3DOES, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data)
+GL_ENTRY(void, glFramebufferTexture3DOES, GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset)
+GL_ENTRY(void, glBindVertexArrayOES, GLuint array)
+GL_ENTRY(void, glDeleteVertexArraysOES, GLsizei n, const GLuint *arrays)
+GL_ENTRY(void, glGenVertexArraysOES, GLsizei n, GLuint *arrays)
+GL_ENTRY(GLboolean, glIsVertexArrayOES, GLuint array)
+GL_ENTRY(void, glDiscardFramebufferEXT, GLenum target, GLsizei numAttachments, const GLenum *attachments)
+GL_ENTRY(void, glMultiDrawArraysEXT, GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount)
+GL_ENTRY(void, glMultiDrawElementsEXT, GLenum mode, const GLsizei *count, GLenum type, const GLvoid*const* indices, GLsizei primcount)
+
+#not supported
+GL_ENTRY(void, glGetPerfMonitorGroupsAMD, GLint *numGroups, GLsizei groupsSize, GLuint *groups)
+GL_ENTRY(void, glGetPerfMonitorCountersAMD, GLuint group, GLint *numCounters, GLint *maxActiveCounters, GLsizei counterSize, GLuint *counters)
+GL_ENTRY(void, glGetPerfMonitorGroupStringAMD, GLuint group, GLsizei bufSize, GLsizei *length, GLchar *groupString)
+GL_ENTRY(void, glGetPerfMonitorCounterStringAMD, GLuint group, GLuint counter, GLsizei bufSize, GLsizei *length, GLchar *counterString)
+GL_ENTRY(void, glGetPerfMonitorCounterInfoAMD, GLuint group, GLuint counter, GLenum pname, GLvoid *data)
+GL_ENTRY(void, glGenPerfMonitorsAMD, GLsizei n, GLuint *monitors)
+GL_ENTRY(void, glDeletePerfMonitorsAMD, GLsizei n, GLuint *monitors)
+GL_ENTRY(void, glSelectPerfMonitorCountersAMD, GLuint monitor, GLboolean enable, GLuint group, GLint numCounters, GLuint *countersList)
+GL_ENTRY(void, glBeginPerfMonitorAMD, GLuint monitor)
+GL_ENTRY(void, glEndPerfMonitorAMD, GLuint monitor)
+GL_ENTRY(void, glGetPerfMonitorCounterDataAMD, GLuint monitor, GLenum pname, GLsizei dataSize, GLuint *data, GLint *bytesWritten)
+
+GL_ENTRY(void, glRenderbufferStorageMultisampleIMG, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+GL_ENTRY(void, glFramebufferTexture2DMultisampleIMG, GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLsizei samples)
+GL_ENTRY(void, glDeleteFencesNV, GLsizei n, const GLuint *fences)
+GL_ENTRY(void, glGenFencesNV, GLsizei n, GLuint *fences)
+GL_ENTRY(GLboolean, glIsFenceNV, GLuint fence)
+GL_ENTRY(GLboolean, glTestFenceNV, GLuint fence)
+GL_ENTRY(void, glGetFenceivNV, GLuint fence, GLenum pname, GLint *params)
+GL_ENTRY(void, glFinishFenceNV, GLuint fence)
+GL_ENTRY(void, glSetFenceNV, GLuint fence, GLenum condition)
+GL_ENTRY(void, glCoverageMaskNV, GLboolean mask)
+GL_ENTRY(void, glCoverageOperationNV, GLenum operation)
+GL_ENTRY(void, glGetDriverControlsQCOM, GLint *num, GLsizei size, GLuint *driverControls)
+GL_ENTRY(void, glGetDriverControlStringQCOM, GLuint driverControl, GLsizei bufSize, GLsizei *length, GLchar *driverControlString)
+GL_ENTRY(void, glEnableDriverControlQCOM, GLuint driverControl)
+GL_ENTRY(void, glDisableDriverControlQCOM, GLuint driverControl)
+GL_ENTRY(void, glExtGetTexturesQCOM, GLuint *textures, GLint maxTextures, GLint *numTextures)
+GL_ENTRY(void, glExtGetBuffersQCOM, GLuint *buffers, GLint maxBuffers, GLint *numBuffers)
+GL_ENTRY(void, glExtGetRenderbuffersQCOM, GLuint *renderbuffers, GLint maxRenderbuffers, GLint *numRenderbuffers)
+GL_ENTRY(void, glExtGetFramebuffersQCOM, GLuint *framebuffers, GLint maxFramebuffers, GLint *numFramebuffers)
+GL_ENTRY(void, glExtGetTexLevelParameterivQCOM, GLuint texture, GLenum face, GLint level, GLenum pname, GLint *params)
+GL_ENTRY(void, glExtTexObjectStateOverrideiQCOM, GLenum target, GLenum pname, GLint param)
+GL_ENTRY(void, glExtGetTexSubImageQCOM, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLvoid *texels)
+GL_ENTRY(void, glExtGetBufferPointervQCOM, GLenum target, GLvoidptr *params)
+GL_ENTRY(void, glExtGetShadersQCOM, GLuint *shaders, GLint maxShaders, GLint *numShaders)
+GL_ENTRY(void, glExtGetProgramsQCOM, GLuint *programs, GLint maxPrograms, GLint *numPrograms)
+GL_ENTRY(GLboolean, glExtIsProgramBinaryQCOM, GLuint program)
+GL_ENTRY(void, glExtGetProgramBinarySourceQCOM, GLuint program, GLenum shadertype, GLchar *source, GLint *length)
+GL_ENTRY(void, glStartTilingQCOM, GLuint x, GLuint y, GLuint width, GLuint height, GLbitfield preserveMask)
+GL_ENTRY(void, glEndTilingQCOM, GLbitfield preserveMask)
+
+# add-ons for GLES 2
+GL_ENTRY(void, glVertexAttribPointerData, GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride,  void * data, GLuint datalen)
+GL_ENTRY(void, glVertexAttribPointerOffset, GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride,  GLuint offset)
+GL_ENTRY(void, glDrawElementsOffset, GLenum mode, GLsizei count, GLenum type, GLuint offset)
+GL_ENTRY(void, glDrawElementsData, GLenum mode, GLsizei count, GLenum type, void *data, GLuint datalen)
+GL_ENTRY(void, glGetCompressedTextureFormats, int count, GLint *formats)
+GL_ENTRY(void, glShaderString, GLuint shader, const GLchar* string, GLsizei len)
+GL_ENTRY(int, glFinishRoundTrip, void)
+
+# GLES 3.0 ApiGen .in
+
+# Changes to existing API:
+
+## New formats: Need to update all validation code to handle GLES 3.x-specific formats.
+## Primitive restart (close to already implemented in guest encoder, but can be tricky to validate in the middle of all the other draw validation going on)
+## Texture compression with ETC2 (already implemented)
+
+# New API calls - listed in approximate decreasing order of complexity
+
+# Vertex Array Objects
+## Before anything else, move GL calls out of sendVertexAttributes() in encoder,
+## or we will get this wrong, as we currently delay glEnableVertexAttribArray/ glVertexAttribPointer
+## until right before glDrawElements/Arrays.
+## This means moving those attribpointer calls out,
+## AND preserving the index range validation behavior that happens
+## just before glDrawElements/Arrays.
+GL_ENTRY(void, glGenVertexArrays, GLsizei n, GLuint* arrays)
+GL_ENTRY(void, glBindVertexArray, GLuint array)
+GL_ENTRY(void, glDeleteVertexArrays, GLsizei n, const GLuint *arrays)
+GL_ENTRY(GLboolean, glIsVertexArray, GLuint array)
+
+# New buffer operationarrays Mapping needs different encoding interface: copy from host on map, and copy to host (and host GPU pointer) on unmap or flush.
+## Proposed:
+GL_ENTRY(void*, glMapBufferRange, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access)
+GL_ENTRY(GLboolean, glUnmapBuffer, GLenum target)
+GL_ENTRY(void, glFlushMappedBufferRange, GLenum target, GLintptr offset, GLsizeiptr length)
+GL_ENTRY(void, glMapBufferRangeAEMU, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, void* mapped)
+GL_ENTRY(void, glUnmapBufferAEMU, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, void* guest_buffer, GLboolean* out_res)
+GL_ENTRY(void, glFlushMappedBufferRangeAEMU, GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access, void* guest_buffer)
+## It seems we can use glUnmapBuffer and glFlushMappedBufferRange as synchronization points
+## to update the host with the new buffer contents:
+## glMapBufferRange / glUnmapBuffer:
+## Guest:                    | Encoder:                           | Host:
+## void* x = glMapBuffer...  |                                    |          
+##                           | glMapBufferRangeAEMU_enc...        |                                             
+##                           |                                    | void* hostptr = glMapBufferRange...
+##                           |                                    | memcpy(mapped, hostptr, sz)
+##                           | stream->readback(mapped, sz)       |                            
+##                           | glMapBufferRangeAEMU_enc exit      |                            
+## x holds host GPU contents |                                    |          
+## <operations on x>         |                                    |           
+## glUnmapBuffer...          |                                    |           
+##                           | glUnmapBufferAEMU_enc...           |           
+##                           | stream->writeFully(x, sz)          |           
+##                           |                                    | memcpy(hostptr, x, sz)
+##                           |                                    | glUnmapBuffer
+## glMapBufferRange / glFlushMappedBufferRange:
+## Guest:                    | Encoder:                           | Host:
+## void* x = glMapBuffer...  |                                    |          
+##                           | glMapBufferRangeAEMU_enc...        |                                             
+##                           |                                    | void* hostptr = glMapBufferRange...
+##                           |                                    | memcpy(mapped, hostptr, sz)
+##                           | stream->readback(mapped, sz)       |                            
+##                           | glMapBufferRangeAEMU_enc exit      |                            
+## x holds host GPU contents |                                    |          
+## <operations on x>         |                                    |           
+## glFlushMappedBufferRange..|                                    |           
+##                           | glFlushMappedBufferRangeAEMU...    |           
+##                           | stream->writeFully(flushedrange... |           
+##                           |                                    | memcpy(hostptr + offset, flushedrange, length)
+##                           |                                    | glFlushMappedBufferRange
+## Make sure to store the binded range when mapped, I bet there is some dEQP test that checks this sort of thing :)
+
+## PBOs need to be delivered differently to the host.
+GL_ENTRY(void, glReadPixelsOffsetAEMU, GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLuint offset)
+GL_ENTRY(void, glCompressedTexImage2DOffsetAEMU, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, GLuint offset)
+GL_ENTRY(void, glCompressedTexSubImage2DOffsetAEMU, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, GLuint offset)
+GL_ENTRY(void, glTexImage2DOffsetAEMU, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, GLuint offset)
+GL_ENTRY(void, glTexSubImage2DOffsetAEMU, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, GLuint offset)
+
+GL_ENTRY(void, glBindBufferRange, GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size)
+GL_ENTRY(void, glBindBufferBase, GLenum target, GLuint index, GLuint buffer)
+## No need to consider mapped buffers here as that is a GL_INVALID_OPERATION :)
+GL_ENTRY(void, glCopyBufferSubData, GLenum readtarget, GLenum writetarget, GLintptr readoffset, GLintptr writeoffset, GLsizeiptr size);
+
+## These buffer clears don't involve anything that can be mapped, so we are OK.
+GL_ENTRY(void, glClearBufferiv, GLenum buffer, GLint drawBuffer, const GLint * value)
+GL_ENTRY(void, glClearBufferuiv, GLenum buffer, GLint drawBuffer, const GLuint * value)
+GL_ENTRY(void, glClearBufferfv, GLenum buffer, GLint drawBuffer, const GLfloat * value)
+GL_ENTRY(void, glClearBufferfi, GLenum buffer, GLint drawBuffer, GLfloat depth, GLint stencil)
+
+## Reads (not writes) mapped state only, so shouldn't be sent to host.
+GL_ENTRY(void, glGetBufferParameteri64v, GLenum target, GLenum value, GLint64 * data)
+
+# Get current mapped buffer pointer. Shouldn't be sent to host.
+GL_ENTRY(void, glGetBufferPointerv, GLenum target, GLenum pname, GLvoid** params)
+
+# UBOs
+## Share group processing needed for all of these, as the program is an argument.
+## Validation is bound (heh) to be tricky
+GL_ENTRY(void, glUniformBlockBinding, GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding)
+
+GL_ENTRY(GLuint, glGetUniformBlockIndex, GLuint program, const GLchar *uniformBlockName)
+
+# Assume uniformNames packed into 1 buffer on the guest.
+GL_ENTRY(void, glGetUniformIndices, GLuint program, GLsizei uniformCount, const GLchar*const* uniformNames, GLuint* uniformIndices)
+GL_ENTRY(void, glGetUniformIndicesAEMU, GLuint program, GLsizei uniformCount, const GLchar *packedUniformNames, GLsizei packedLen, GLuint *uniformIndices)
+
+GL_ENTRY(void, glGetActiveUniformBlockiv, GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params)
+GL_ENTRY(void, glGetActiveUniformBlockName, GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName)
+
+# More uniform setters
+GL_ENTRY(void, glUniform1ui, GLint location, GLuint v0)
+GL_ENTRY(void, glUniform2ui, GLint location, GLuint v0, GLuint v1)
+GL_ENTRY(void, glUniform3ui, GLint location, GLuint v0, GLuint v1, GLuint v2)
+GL_ENTRY(void, glUniform4ui, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
+GL_ENTRY(void, glUniform1uiv, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glUniform2uiv, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glUniform3uiv, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glUniform4uiv, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glUniformMatrix2x3fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glUniformMatrix3x2fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glUniformMatrix2x4fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glUniformMatrix4x2fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glUniformMatrix3x4fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glUniformMatrix4x3fv, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+
+# Need share group processing for these gets
+GL_ENTRY(void, glGetUniformuiv, GLuint program, GLint location, GLuint *params)
+GL_ENTRY(void, glGetActiveUniformsiv, GLuint program, GLsizei uniformCount, const GLuint *uniformIndices, GLenum pname, GLint *params)
+
+# More vertex attribute setters / queries
+GL_ENTRY(void, glVertexAttribI4i, GLuint index, GLint v0, GLint v1, GLint v2, GLint v3)
+GL_ENTRY(void, glVertexAttribI4ui, GLuint index, GLuint v0, GLuint v1, GLuint v2, GLuint v3)
+GL_ENTRY(void, glVertexAttribI4iv, GLuint index, const GLint *v)
+GL_ENTRY(void, glVertexAttribI4uiv, GLuint index, const GLuint *v)
+GL_ENTRY(void, glVertexAttribIPointer, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+GL_ENTRY(void, glVertexAttribIPointerOffsetAEMU, GLuint index, GLint size, GLenum type, GLsizei stride, GLuint offset)
+GL_ENTRY(void, glVertexAttribIPointerDataAEMU, GLuint index, GLint size, GLenum type, GLsizei stride, void* data, GLuint datalen)
+GL_ENTRY(void, glGetVertexAttribIiv, GLuint index, GLenum pname, GLint *params)
+GL_ENTRY(void, glGetVertexAttribIuiv, GLuint index, GLenum pname, GLuint *params)
+
+# Instanced draws
+GL_ENTRY(void, glVertexAttribDivisor, GLuint index, GLuint divisor)
+GL_ENTRY(void, glDrawArraysInstanced, GLenum mode, GLint first, GLsizei count, GLsizei primcount)
+
+GL_ENTRY(void, glDrawElementsInstanced, GLenum mode, GLsizei count, GLenum type, const void * indices, GLsizei primcount)
+GL_ENTRY(void, glDrawElementsInstancedDataAEMU, GLenum mode, GLsizei count, GLenum type, const void * indices, GLsizei primcount, GLsizei datalen)
+GL_ENTRY(void, glDrawElementsInstancedOffsetAEMU, GLenum mode, GLsizei count, GLenum type, GLuint offset, GLsizei primcount)
+
+
+# Draw with known index range
+GL_ENTRY(void, glDrawRangeElements, GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices)
+GL_ENTRY(void, glDrawRangeElementsDataAEMU, GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid * indices, GLsizei datalen)
+GL_ENTRY(void, glDrawRangeElementsOffsetAEMU, GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, GLuint offset)
+
+# Sync - mostly implemented on host, just need encoder part
+GL_ENTRY(GLsync, glFenceSync, GLenum condition, GLbitfield flags)
+GL_ENTRY(GLenum, glClientWaitSync, GLsync wait_on, GLbitfield flags, GLuint64 timeout)
+GL_ENTRY(void, glWaitSync, GLsync wait_on, GLbitfield flags, GLuint64 timeout)
+GL_ENTRY(void, glDeleteSync, GLsync to_delete)
+GL_ENTRY(GLboolean, glIsSync, GLsync sync)
+GL_ENTRY(void, glGetSynciv, GLsync sync, GLenum pname, GLsizei bufSize, GLsizei *length, GLint *values)
+
+GL_ENTRY(uint64_t, glFenceSyncAEMU, GLenum condition, GLbitfield flags)
+GL_ENTRY(GLenum, glClientWaitSyncAEMU, uint64_t wait_on, GLbitfield flags, GLuint64 timeout)
+GL_ENTRY(void, glWaitSyncAEMU, uint64_t wait_on, GLbitfield flags, GLuint64 timeout)
+GL_ENTRY(void, glDeleteSyncAEMU, uint64_t to_delete)
+GL_ENTRY(GLboolean, glIsSyncAEMU, uint64_t sync)
+GL_ENTRY(void, glGetSyncivAEMU, uint64_t sync, GLenum pname, GLsizei bufSize, GLsizei *length, GLint *values)
+
+# MRT / MSAA render buffer
+GL_ENTRY(void, glDrawBuffers, GLsizei n, const GLenum *bufs);
+GL_ENTRY(void, glReadBuffer, GLenum src);
+GL_ENTRY(void, glBlitFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+
+# Not even implemented in host driver if < OpenGL 4.3.
+# But we should call this anyway if the function is available.
+GL_ENTRY(void, glInvalidateFramebuffer, GLenum target, GLsizei numAttachments, const GLenum *attachments)
+GL_ENTRY(void, glInvalidateSubFramebuffer, GLenum target, GLsizei numAttachments, const GLenum *attachments, GLint x, GLint y, GLsizei width, GLsizei height)
+
+GL_ENTRY(void, glFramebufferTextureLayer, GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
+GL_ENTRY(void, glRenderbufferStorageMultisample, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
+GL_ENTRY(void, glTexStorage2D, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
+GL_ENTRY(void, glGetInternalformativ, GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint *params)
+
+# Transform feedback - share group processing in the last two
+GL_ENTRY(void, glBeginTransformFeedback, GLenum primitiveMode)
+GL_ENTRY(void, glEndTransformFeedback, void)
+GL_ENTRY(void, glGenTransformFeedbacks, GLsizei n, GLuint *ids)
+GL_ENTRY(void, glDeleteTransformFeedbacks, GLsizei n, const GLuint *ids)
+GL_ENTRY(void, glBindTransformFeedback, GLenum target, GLuint id)
+GL_ENTRY(void, glPauseTransformFeedback, void)
+GL_ENTRY(void, glResumeTransformFeedback, void)
+GL_ENTRY(GLboolean, glIsTransformFeedback, GLuint id)
+GL_ENTRY(void, glTransformFeedbackVaryings, GLuint program, GLsizei count, const GLchar*const* varyings, GLenum bufferMode)
+GL_ENTRY(void, glTransformFeedbackVaryingsAEMU, GLuint program, GLsizei count, const char* packedVaryings, GLuint packedVaryingsLen, GLenum bufferMode)
+GL_ENTRY(void, glGetTransformFeedbackVarying, GLuint program, GLuint index, GLsizei bufSize, GLsizei * length, GLsizei * size, GLenum * type, char * name)
+
+# Sampler objects
+GL_ENTRY(void, glGenSamplers, GLsizei n, GLuint *samplers)
+GL_ENTRY(void, glDeleteSamplers, GLsizei n, const GLuint * samplers)
+GL_ENTRY(void, glBindSampler, GLuint unit, GLuint sampler)
+GL_ENTRY(void, glSamplerParameterf, GLuint sampler, GLenum pname, GLfloat param)
+GL_ENTRY(void, glSamplerParameteri, GLuint sampler, GLenum pname, GLint param)
+GL_ENTRY(void, glSamplerParameterfv, GLuint sampler, GLenum pname, const GLfloat * params)
+GL_ENTRY(void, glSamplerParameteriv, GLuint sampler, GLenum pname, const GLint * params)
+GL_ENTRY(void, glGetSamplerParameterfv, GLuint sampler, GLenum pname, GLfloat * params)
+GL_ENTRY(void, glGetSamplerParameteriv, GLuint sampler, GLenum pname, GLint * params)
+GL_ENTRY(GLboolean, glIsSampler, GLuint sampler)
+
+# Query objects
+GL_ENTRY(void, glGenQueries, GLsizei n, GLuint * queries)
+GL_ENTRY(void, glDeleteQueries, GLsizei n, const GLuint * queries)
+GL_ENTRY(void, glBeginQuery, GLenum target, GLuint query)
+GL_ENTRY(void, glEndQuery, GLenum target)
+GL_ENTRY(void, glGetQueryiv, GLenum target, GLenum pname, GLint * params)
+GL_ENTRY(void, glGetQueryObjectuiv, GLuint query, GLenum pname, GLuint * params)
+GL_ENTRY(GLboolean, glIsQuery, GLuint query)
+
+# Shader binary objects - need share group processing
+GL_ENTRY(void, glProgramParameteri, GLuint program, GLenum pname, GLint value)
+GL_ENTRY(void, glProgramBinary, GLuint program, GLenum binaryFormat, const void *binary, GLsizei length)
+GL_ENTRY(void, glGetProgramBinary, GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary)
+
+# New glGets - need share group processing for program object
+GL_ENTRY(GLint, glGetFragDataLocation, GLuint program, const char * name)
+GL_ENTRY(void, glGetInteger64v, GLenum pname, GLint64 * data)
+GL_ENTRY(void, glGetIntegeri_v, GLenum target, GLuint index, GLint * data)
+GL_ENTRY(void, glGetInteger64i_v, GLenum target, GLuint index, GLint64 * data)
+
+# Array/3D textures
+GL_ENTRY(void, glTexImage3D, GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data)
+GL_ENTRY(void, glTexImage3DOffsetAEMU, GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, GLuint offset)
+GL_ENTRY(void, glTexStorage3D, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+GL_ENTRY(void, glTexSubImage3D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * data);
+GL_ENTRY(void, glTexSubImage3DOffsetAEMU, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLuint offset);
+GL_ENTRY(void, glCompressedTexImage3D, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid * data)
+GL_ENTRY(void, glCompressedTexImage3DOffsetAEMU, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, GLuint offset)
+GL_ENTRY(void, glCompressedTexSubImage3D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid * data);
+GL_ENTRY(void, glCompressedTexSubImage3DOffsetAEMU, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, GLuint data);
+GL_ENTRY(void, glCopyTexSubImage3D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+
+# glGetStringi
+GL_ENTRY(const GLubyte*, glGetStringi, GLenum name, GLuint index);
+
+# GLES 3.1:
+
+# New get
+GL_ENTRY(void, glGetBooleani_v, GLenum target, GLuint index, GLboolean * data)
+
+# Memory barriers
+GL_ENTRY(void, glMemoryBarrier, GLbitfield barriers);
+GL_ENTRY(void, glMemoryBarrierByRegion, GLbitfield barriers);
+
+# Program pipelines - may require adding a new shared object type!
+GL_ENTRY(void, glGenProgramPipelines, GLsizei n, GLuint *pipelines)
+GL_ENTRY(void, glDeleteProgramPipelines, GLsizei n, const GLuint *pipelines)
+GL_ENTRY(void, glBindProgramPipeline, GLuint pipeline)
+
+GL_ENTRY(void, glGetProgramPipelineiv, GLuint pipeline, GLenum pname, GLint *params)
+GL_ENTRY(void, glGetProgramPipelineInfoLog, GLuint pipeline, GLsizei bufSize, GLsizei *length, GLchar *infoLog)
+
+GL_ENTRY(void, glValidateProgramPipeline, GLuint pipeline)
+GL_ENTRY(GLboolean, glIsProgramPipeline, GLuint pipeline);
+GL_ENTRY(void, glUseProgramStages, GLuint pipeline, GLbitfield stages, GLuint program)
+
+# Separable shader programs - may need to change how program objects are represented and shared!
+GL_ENTRY(void, glActiveShaderProgram, GLuint pipeline, GLuint program);
+GL_ENTRY(GLuint, glCreateShaderProgramv, GLenum type, GLsizei count, const char ** strings)
+GL_ENTRY(GLuint, glCreateShaderProgramvAEMU, GLenum type, GLsizei count, const char *packedStrings, GLuint packedLen)
+# Uniforms should work easily if any program object representation problems are solved.
+GL_ENTRY(void, glProgramUniform1f, GLuint program, GLint location, GLfloat v0)
+GL_ENTRY(void, glProgramUniform2f, GLuint program, GLint location, GLfloat v0, GLfloat v1)
+GL_ENTRY(void, glProgramUniform3f, GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2)
+GL_ENTRY(void, glProgramUniform4f, GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3)
+GL_ENTRY(void, glProgramUniform1i, GLuint program, GLint location, GLint v0)
+GL_ENTRY(void, glProgramUniform2i, GLuint program, GLint location, GLint v0, GLint v1)
+GL_ENTRY(void, glProgramUniform3i, GLuint program, GLint location, GLint v0, GLint v1, GLint v2)
+GL_ENTRY(void, glProgramUniform4i, GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3)
+GL_ENTRY(void, glProgramUniform1ui, GLuint program, GLint location, GLuint v0)
+GL_ENTRY(void, glProgramUniform2ui, GLuint program, GLint location, GLint v0, GLuint v1)
+GL_ENTRY(void, glProgramUniform3ui, GLuint program, GLint location, GLint v0, GLint v1, GLuint v2)
+GL_ENTRY(void, glProgramUniform4ui, GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLuint v3)
+GL_ENTRY(void, glProgramUniform1fv, GLuint program, GLint location, GLsizei count, const GLfloat *value)
+GL_ENTRY(void, glProgramUniform2fv, GLuint program, GLint location, GLsizei count, const GLfloat *value)
+GL_ENTRY(void, glProgramUniform3fv, GLuint program, GLint location, GLsizei count, const GLfloat *value)
+GL_ENTRY(void, glProgramUniform4fv, GLuint program, GLint location, GLsizei count, const GLfloat *value)
+GL_ENTRY(void, glProgramUniform1iv, GLuint program, GLint location, GLsizei count, const GLint *value)
+GL_ENTRY(void, glProgramUniform2iv, GLuint program, GLint location, GLsizei count, const GLint *value)
+GL_ENTRY(void, glProgramUniform3iv, GLuint program, GLint location, GLsizei count, const GLint *value)
+GL_ENTRY(void, glProgramUniform4iv, GLuint program, GLint location, GLsizei count, const GLint *value)
+GL_ENTRY(void, glProgramUniform1uiv, GLuint program, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glProgramUniform2uiv, GLuint program, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glProgramUniform3uiv, GLuint program, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glProgramUniform4uiv, GLuint program, GLint location, GLsizei count, const GLuint *value)
+GL_ENTRY(void, glProgramUniformMatrix2fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix3fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix4fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix2x3fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix3x2fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix2x4fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix4x2fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix3x4fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+GL_ENTRY(void, glProgramUniformMatrix4x3fv, GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value)
+
+# Depending on whether ANGLE shader translator supports ES 3.1, this might require us to enhance the ANGLE shader translator by a LOT.
+GL_ENTRY(void, glGetProgramInterfaceiv, GLuint program, GLenum programInterface, GLenum pname, GLint * params)
+GL_ENTRY(void, glGetProgramResourceiv, GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum * props, GLsizei bufSize, GLsizei * length, GLint * params)
+GL_ENTRY(GLuint, glGetProgramResourceIndex, GLuint program, GLenum programInterface, const char * name)
+GL_ENTRY(GLint, glGetProgramResourceLocation, GLuint program, GLenum programInterface, const char * name)
+GL_ENTRY(void, glGetProgramResourceName, GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei * length, char * name)
+ 
+# Compute shaders. Should just work if everything else does.
+GL_ENTRY(void, glBindImageTexture, GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format)
+GL_ENTRY(void, glDispatchCompute, GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
+
+### This is an indirect call and the |indirect| field could be a GPU pointer.
+### We will need to make sure that |indirect| is updated to the latest version if so,
+### and probably manage a running set of GPU pointers on the host
+### that the guest is using.
+GL_ENTRY(void, glDispatchComputeIndirect, GLintptr indirect)
+
+# Separate vertex format / buffer binding
+### Requires us tp really clean up how draws work in the encoder currently.
+GL_ENTRY(void, glBindVertexBuffer, GLuint bindingindex, GLuint buffer, GLintptr offset, GLintptr stride)
+GL_ENTRY(void, glVertexAttribBinding, GLuint attribindex, GLuint bindingindex);
+GL_ENTRY(void, glVertexAttribFormat, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset)
+GL_ENTRY(void, glVertexAttribIFormat, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset)
+GL_ENTRY(void, glVertexBindingDivisor, GLuint bindingindex, GLuint divisor)
+
+# Indirect draws
+### Again, if |indirect| is a GPU pointer, we need to synchronize it before calling.
+GL_ENTRY(void, glDrawArraysIndirect, GLenum mode, const void * indirect)
+GL_ENTRY(void, glDrawArraysIndirectDataAEMU, GLenum mode, const void *indirect, GLuint datalen)
+GL_ENTRY(void, glDrawArraysIndirectOffsetAEMU, GLenum mode, GLuint offset)
+GL_ENTRY(void, glDrawElementsIndirect, GLenum mode, GLenum type, const void * indirect)
+GL_ENTRY(void, glDrawElementsIndirectDataAEMU, GLenum mode, GLenum type, const void *indirect, GLuint datalen)
+GL_ENTRY(void, glDrawElementsIndirectOffsetAEMU, GLenum mode, GLenum type, GLuint offset)
+
+# Multisampling
+GL_ENTRY(void, glTexStorage2DMultisample, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+GL_ENTRY(void, glSampleMaski, GLuint maskNumber, GLbitfield mask)
+GL_ENTRY(void, glGetMultisamplefv, GLenum pname, GLuint index, GLfloat *val)
+
+# New framebuffer parameters
+GL_ENTRY(void, glFramebufferParameteri, GLenum target, GLenum pname, GLint param)
+GL_ENTRY(void, glGetFramebufferParameteriv, GLenum target, GLenum pname, GLint * params)
+
+# Texture LOD queries    
+# Already used in Translator's validations, just need encoder.
+GL_ENTRY(void, glGetTexLevelParameterfv, GLenum target, GLint level, GLenum pname, GLfloat * params)
+GL_ENTRY(void, glGetTexLevelParameteriv, GLenum target, GLint level, GLenum pname, GLint * params)
