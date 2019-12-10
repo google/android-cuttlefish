@@ -11,3 +11,9 @@ service tombstone_transmit /product/bin/tombstone_transmit
     group system
     user root
     disabled
+
+# TODO: disable this service once cuttlefish implements system suspend
+service suspend_blocker /product/bin/suspend_blocker
+    class main
+    group system
+    user root
