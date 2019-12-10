@@ -60,7 +60,7 @@ emulator_camera_static_libraries += libyuv
 endif
 
 emulator_camera_c_includes := \
-    device/google/cuttlefish_common \
+    device/google/cuttlefish \
     frameworks/native/include/media/hardware \
     $(call include-path-for, camera) \
 

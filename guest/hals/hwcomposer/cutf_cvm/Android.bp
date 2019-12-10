@@ -23,7 +23,7 @@ cc_library_shared {
         "hwcomposer.cpp",
     ],
     include_dirs: [
-        "device/google/cuttlefish_common",
+        "device/google/cuttlefish",
     ],
     export_include_dirs: ["."],
     static_libs: [
