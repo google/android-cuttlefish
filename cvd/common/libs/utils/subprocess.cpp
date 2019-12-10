@@ -66,79 +66,6 @@ void do_redirects(
   }
 }
 
-cvd::Subprocess subprocess_impl(
-    const char* const* command, const char* const* envp,
-    const std::map<cvd::Subprocess::StdIOChannel, int>& redirects,
-    const std::map<cvd::SharedFD, int>& inherited_fds, bool with_control_socket,
-    cvd::SubprocessStopper stopper, bool in_group = false, bool verbose = false,
-    bool exit_with_parent = true) {
-  // The parent socket will get closed on the child on the call to exec, the
-  // child socket will be closed on the parent when this function returns and no
-  // references to the fd are left
-  cvd::SharedFD parent_socket, child_socket;
-  if (with_control_socket) {
-    if (!cvd::SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &parent_socket,
-                                   &child_socket)) {
-      LOG(ERROR) << "Unable to create control socket pair: " << strerror(errno);
-      return cvd::Subprocess(-1, {});
-    }
-    // Remove FD_CLOEXEC from the child socket, ensure the parent has it
-    child_socket->Fcntl(F_SETFD, 0);
-    parent_socket->Fcntl(F_SETFD, FD_CLOEXEC);
-  }
-
-  if (!validate_redirects(redirects, inherited_fds)) {
-    return cvd::Subprocess(-1, {});
-  }
-
-  pid_t pid = fork();
-  if (!pid) {
-    if (exit_with_parent) {
-      prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
-    }
-
-    do_redirects(redirects);
-    if (in_group) {
-      // This call should never fail (see SETPGID(2))
-      if (setpgid(0, 0) != 0) {
-        auto error = errno;
-        LOG(ERROR) << "setpgid failed (" << strerror(error) << ")";
-      }
-    }
-    for (const auto& entry : inherited_fds) {
-      if (fcntl(entry.second, F_SETFD, 0)) {
-        int error_num = errno;
-        LOG(ERROR) << "fcntl failed: " << strerror(error_num);
-      }
-    }
-    int rval;
-    // If envp is NULL, the current process's environment is used as the
-    // environment of the child process. To force an empty emvironment for
-    // the child process pass the address of a pointer to NULL
-    if (envp == NULL) {
-      rval = execv(command[0], const_cast<char* const*>(command));
-    } else {
-      rval = execve(command[0], const_cast<char* const*>(command),
-                    const_cast<char* const*>(envp));
-    }
-    // No need for an if: if exec worked it wouldn't have returned
-    LOG(ERROR) << "exec of " << command[0] << " failed (" << strerror(errno)
-               << ")";
-    exit(rval);
-  }
-  if (pid == -1) {
-    LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
-  }
-  if (verbose) {
-    LOG(INFO) << "Started (pid: " << pid << "): " << command[0];
-    int i = 1;
-    while (command[i]) {
-      LOG(INFO) << command[i++];
-    }
-  }
-  return cvd::Subprocess(pid, parent_socket, stopper);
-}
-
 std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   std::vector<const char*> ret = {};
   for (const auto& str : vect) {
@@ -295,24 +222,74 @@ bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                        cvd::SharedFD::Dup(static_cast<int>(parent_channel)));
 }
 
-Subprocess Command::StartHelper(SubprocessOptions options) const {
-  auto cmd = ToCharPointers(command_);
-  if (use_parent_env_) {
-    return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
-                           options.WithControlSocket(), subprocess_stopper_,
-                           options.InGroup(), options.Verbose(),
-                           options.ExitWithParent());
-  } else {
-    auto envp = ToCharPointers(env_);
-    return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
-                           options.WithControlSocket(), subprocess_stopper_,
-                           options.InGroup(), options.Verbose(),
-                           options.ExitWithParent());
-  }
-}
-
 Subprocess Command::Start(SubprocessOptions options) const {
-  return StartHelper(options);
+  auto cmd = ToCharPointers(command_);
+  // The parent socket will get closed on the child on the call to exec, the
+  // child socket will be closed on the parent when this function returns and no
+  // references to the fd are left
+  SharedFD parent_socket, child_socket;
+  if (options.WithControlSocket()) {
+    if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &parent_socket,
+                              &child_socket)) {
+      LOG(ERROR) << "Unable to create control socket pair: " << strerror(errno);
+      return Subprocess(-1, {});
+    }
+    // Remove FD_CLOEXEC from the child socket, ensure the parent has it
+    child_socket->Fcntl(F_SETFD, 0);
+    parent_socket->Fcntl(F_SETFD, FD_CLOEXEC);
+  }
+
+  if (!validate_redirects(redirects_, inherited_fds_)) {
+    return Subprocess(-1, {});
+  }
+
+  pid_t pid = fork();
+  if (!pid) {
+    if (options.ExitWithParent()) {
+      prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
+    }
+
+    do_redirects(redirects_);
+    if (options.InGroup()) {
+      // This call should never fail (see SETPGID(2))
+      if (setpgid(0, 0) != 0) {
+        auto error = errno;
+        LOG(ERROR) << "setpgid failed (" << strerror(error) << ")";
+      }
+    }
+    for (const auto& entry : inherited_fds_) {
+      if (fcntl(entry.second, F_SETFD, 0)) {
+        int error_num = errno;
+        LOG(ERROR) << "fcntl failed: " << strerror(error_num);
+      }
+    }
+    int rval;
+    // If use_parent_env_ is false, the current process's environment is used as
+    // the environment of the child process. To force an empty emvironment for
+    // the child process pass the address of a pointer to NULL
+    if (use_parent_env_) {
+      rval = execv(cmd[0], const_cast<char* const*>(cmd.data()));
+    } else {
+      auto envp = ToCharPointers(env_);
+      rval = execve(cmd[0], const_cast<char* const*>(cmd.data()),
+                    const_cast<char* const*>(envp.data()));
+    }
+    // No need for an if: if exec worked it wouldn't have returned
+    LOG(ERROR) << "exec of " << cmd[0] << " failed (" << strerror(errno)
+               << ")";
+    exit(rval);
+  }
+  if (pid == -1) {
+    LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
+  }
+  if (options.Verbose()) {
+    LOG(INFO) << "Started (pid: " << pid << "): " << cmd[0];
+    int i = 1;
+    while (cmd[i]) {
+      LOG(INFO) << cmd[i++];
+    }
+  }
+  return Subprocess(pid, parent_socket, subprocess_stopper_);
 }
 
 // A class that waits for threads to exit in its destructor.
