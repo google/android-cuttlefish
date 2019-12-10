@@ -118,8 +118,10 @@ class Command {
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
   Command(const std::string& executable,
-          SubprocessStopper stopper = KillSubprocess)
-      : subprocess_stopper_(stopper), verbose_(true) {
+          SubprocessStopper stopper = KillSubprocess,
+          bool exit_with_parent = true)
+      : subprocess_stopper_(stopper), verbose_(true),
+        exit_with_parent_(exit_with_parent) {
     command_.push_back(executable);
   }
   Command(Command&&) = default;
@@ -159,6 +161,7 @@ class Command {
                      Subprocess::StdIOChannel parent_channel);
 
   void SetVerbose(bool verbose);
+  void SetExitWithParent(bool exit_with_parent);
 
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances. If
@@ -185,6 +188,7 @@ class Command {
   std::vector<std::string> env_{};
   SubprocessStopper subprocess_stopper_;
   bool verbose_;
+  bool exit_with_parent_;
 };
 
 /*
