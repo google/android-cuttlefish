@@ -1,0 +1,8 @@
+{
+  "presubmit": [
+    {
+      "name": "cuttlefish_thread_test",
+      "host": true
+    }
+  ]
+}
