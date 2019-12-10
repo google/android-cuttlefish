@@ -26,7 +26,9 @@
 #include <common/libs/fs/shared_fd.h>
 
 namespace cvd {
+class Command;
 class Subprocess;
+class SubprocessOptions;
 using SubprocessStopper = std::function<bool(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
 bool KillSubprocess(Subprocess* subprocess);
@@ -200,8 +202,6 @@ class Command {
   }
 
  private:
-  Subprocess StartHelper(SubprocessOptions options) const;
-
   std::vector<std::string> command_;
   std::map<cvd::SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
