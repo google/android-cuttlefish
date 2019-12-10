@@ -1,0 +1,8 @@
+{
+  "presubmit": [
+    {
+      "name": "cuttlefish_simulated_buffer_test",
+      "host": true
+    }
+  ]
+}
