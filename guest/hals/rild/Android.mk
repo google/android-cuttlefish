@@ -27,7 +27,7 @@ LOCAL_SHARED_LIBRARIES := \
     libril-cuttlefish-fork
 
 LOCAL_C_INCLUDES += \
-    device/google/cuttlefish_common
+    device/google/cuttlefish
 
 # Temporary hack for broken vendor RILs.
 LOCAL_WHOLE_STATIC_LIBRARIES := \

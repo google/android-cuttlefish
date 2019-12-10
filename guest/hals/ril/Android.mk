@@ -30,7 +30,7 @@ LOCAL_SHARED_LIBRARIES := \
   libcuttlefish_device_config \
 
 LOCAL_C_INCLUDES := \
-    device/google/cuttlefish_common \
+    device/google/cuttlefish \
     device/google/cuttlefish_kernel
 
 LOCAL_CFLAGS += \
