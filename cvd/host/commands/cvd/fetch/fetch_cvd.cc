@@ -311,6 +311,10 @@ int main(int argc, char** argv) {
         LOG(FATAL) << "Could not download images for " << default_build;
       }
       desparse(target_dir + "/userdata.img");
+      LOG(INFO) << "Adding img-zip files for default build";
+      for (auto& file : image_files) {
+        LOG(INFO) << file;
+      }
       AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, image_files, &config);
     }
     if (FLAGS_system_build != "" || FLAGS_download_target_files_zip) {
@@ -323,6 +327,7 @@ int main(int argc, char** argv) {
       if (target_files.empty()) {
         LOG(FATAL) << "Could not download target files for " << default_build;
       }
+      LOG(INFO) << "Adding target files for default build";
       AddFilesToConfig(cvd::FileSource::DEFAULT_BUILD, default_build, target_files, &config);
     }
 
@@ -330,6 +335,7 @@ int main(int argc, char** argv) {
       auto system_build = ArgumentToBuild(&build_api, FLAGS_system_build,
                                           DEFAULT_BUILD_TARGET,
                                           retry_period);
+      bool system_in_img_zip = true;
       if (FLAGS_download_img_zip) {
         std::vector<std::string> image_files =
             download_images(&build_api, system_build, target_dir, {"system.img"});
@@ -337,7 +343,9 @@ int main(int argc, char** argv) {
           LOG(INFO) << "Could not find system image for " << system_build
                     << "in the img zip. Assuming a super image build, which will "
                     << "get the super image from the target zip.";
+          system_in_img_zip = false;
         } else {
+          LOG(INFO) << "Adding img-zip files for system build";
           AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, image_files,
                            &config, true);
         }
@@ -350,8 +358,36 @@ int main(int argc, char** argv) {
           download_target_files(&build_api, system_build, system_target_dir);
       if (target_files.empty()) {
         LOG(FATAL) << "Could not download target files for " << system_build;
+        return -1;
       }
       AddFilesToConfig(cvd::FileSource::SYSTEM_BUILD, system_build, target_files, &config);
+      if (!system_in_img_zip) {
+        std::vector<std::string> wanted_images = {"IMAGES/system.img", "IMAGES/product.img"};
+        auto images = ExtractImages(target_files[0], target_dir, wanted_images);
+        if (images.size() != 2) {
+          LOG(FATAL) << "Could not get system.img, product.img from target zip";
+          return -1;
+        }
+        std::string extracted_system = target_dir + "/IMAGES/system.img";
+        std::string target_system = target_dir + "/system.img";
+        if (rename(extracted_system.c_str(), target_system.c_str())) {
+          int error_num = errno;
+          LOG(FATAL) << "Could not replace system.img in target directory: "
+              << strerror(error_num);
+          return -1;
+        }
+        std::string extracted_product = target_dir + "/IMAGES/product.img";
+        std::string target_product = target_dir + "/product.img";
+        if (rename(extracted_product.c_str(), target_product.c_str())) {
+          int error_num = errno;
+          LOG(FATAL) << "Could not replace product.img in target directory"
+              << strerror(error_num);
+          return -1;
+        }
+        // This should technically call AddFilesToConfig with the produced files,
+        // but it will conflict with the ones produced from the default system image
+        // and pie doesn't care about the produced file list anyway.
+      }
     }
 
     if (FLAGS_kernel_build != "") {
