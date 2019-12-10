@@ -79,6 +79,7 @@ PRODUCT_PACKAGES += \
     tombstone_transmit \
     vsock_logcat \
     tombstone_producer \
+    suspend_blocker \
 
 #
 # Packages for AOSP-available stuff we use from the framework
