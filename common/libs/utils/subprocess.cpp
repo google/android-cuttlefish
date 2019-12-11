@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -69,7 +70,8 @@ cvd::Subprocess subprocess_impl(
     const char* const* command, const char* const* envp,
     const std::map<cvd::Subprocess::StdIOChannel, int>& redirects,
     const std::map<cvd::SharedFD, int>& inherited_fds, bool with_control_socket,
-    cvd::SubprocessStopper stopper, bool in_group = false, bool verbose = false) {
+    cvd::SubprocessStopper stopper, bool in_group = false, bool verbose = false,
+    bool exit_with_parent = true) {
   // The parent socket will get closed on the child on the call to exec, the
   // child socket will be closed on the parent when this function returns and no
   // references to the fd are left
@@ -91,6 +93,10 @@ cvd::Subprocess subprocess_impl(
 
   pid_t pid = fork();
   if (!pid) {
+    if (exit_with_parent) {
+      prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
+    }
+
     do_redirects(redirects);
     if (in_group) {
       // This call should never fail (see SETPGID(2))
@@ -293,17 +299,21 @@ void Command::SetVerbose(bool verbose) {
   verbose_ = verbose;
 }
 
+void Command::SetExitWithParent(bool exit_with_parent) {
+  exit_with_parent_ = exit_with_parent;
+}
+
 Subprocess Command::StartHelper(bool with_control_socket, bool in_group) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
     return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
                            with_control_socket, subprocess_stopper_, in_group,
-                           verbose_);
+                           verbose_, exit_with_parent_);
   } else {
     auto envp = ToCharPointers(env_);
     return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
                            with_control_socket, subprocess_stopper_, in_group,
-                           verbose_);
+                           verbose_, exit_with_parent_);
   }
 }
 
