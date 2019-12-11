@@ -518,7 +518,7 @@ bool DecompressKernel(const std::string& src, const std::string& dst) {
     return false;
   }
   decomp_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, output_file);
-  auto decomp_proc = decomp_cmd.Start(false);
+  auto decomp_proc = decomp_cmd.Start();
   return decomp_proc.Started() && decomp_proc.Wait() == 0;
 }
 
