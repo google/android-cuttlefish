@@ -303,26 +303,30 @@ void Command::SetExitWithParent(bool exit_with_parent) {
   exit_with_parent_ = exit_with_parent;
 }
 
-Subprocess Command::StartHelper(bool with_control_socket, bool in_group) const {
+void Command::SetWithControlSocket(bool with_control_socket) {
+  with_control_socket_ = with_control_socket;
+}
+
+Subprocess Command::StartHelper(bool in_group) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
     return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
-                           with_control_socket, subprocess_stopper_, in_group,
+                           with_control_socket_, subprocess_stopper_, in_group,
                            verbose_, exit_with_parent_);
   } else {
     auto envp = ToCharPointers(env_);
     return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
-                           with_control_socket, subprocess_stopper_, in_group,
+                           with_control_socket_, subprocess_stopper_, in_group,
                            verbose_, exit_with_parent_);
   }
 }
 
-Subprocess Command::Start(bool with_control_socket) const {
-  return StartHelper(with_control_socket, false);
+Subprocess Command::Start() const {
+  return StartHelper(false);
 }
 
-Subprocess Command::StartInGroup(bool with_control_socket) const {
-  return StartHelper(with_control_socket, true);
+Subprocess Command::StartInGroup() const {
+  return StartHelper(true);
 }
 
 // A class that waits for threads to exit in its destructor.

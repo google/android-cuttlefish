@@ -121,7 +121,7 @@ class Command {
           SubprocessStopper stopper = KillSubprocess,
           bool exit_with_parent = true)
       : subprocess_stopper_(stopper), verbose_(true),
-        exit_with_parent_(exit_with_parent) {
+        exit_with_parent_(exit_with_parent), with_control_socket_(false) {
     command_.push_back(executable);
   }
   Command(Command&&) = default;
@@ -162,15 +162,15 @@ class Command {
 
   void SetVerbose(bool verbose);
   void SetExitWithParent(bool exit_with_parent);
+  // If with_control_socket is true the returned Subprocess instance will have a
+  // sharedFD that enables communication with the child process.
+  void SetWithControlSocket(bool with_control_socket);
 
   // Starts execution of the command. This method can be called multiple times,
-  // effectively staring multiple (possibly concurrent) instances. If
-  // with_control_socket is true the returned Subprocess instance will have a
-  // sharedFD that enables communication with the child process.
-  Subprocess Start(bool with_control_socket = false) const;
-  // Same as Start(bool), but the subprocess runs as head of its own process
-  // group.
-  Subprocess StartInGroup(bool with_control_socket = false) const;
+  // effectively staring multiple (possibly concurrent) instances.
+  Subprocess Start() const;
+  // Same as Start(), but the subprocess runs as head of its own process group.
+  Subprocess StartInGroup() const;
 
   std::string GetShortName() const {
     // This is safe because the constructor guarantees the name of the binary to
@@ -179,7 +179,7 @@ class Command {
   }
 
  private:
-  Subprocess StartHelper(bool with_control_socket, bool in_group) const;
+  Subprocess StartHelper(bool in_group) const;
 
   std::vector<std::string> command_;
   std::map<cvd::SharedFD, int> inherited_fds_{};
@@ -189,6 +189,7 @@ class Command {
   SubprocessStopper subprocess_stopper_;
   bool verbose_;
   bool exit_with_parent_;
+  bool with_control_socket_;
 };
 
 /*
