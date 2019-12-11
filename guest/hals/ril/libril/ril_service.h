@@ -798,10 +798,6 @@ int areUiccApplicationsEnabledResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responselen);
 
-int canToggleUiccApplicationsEnablementResponse(int slotId,
-                                            int responseType, int serial, RIL_Errno e,
-                                            void *response, size_t responselen);
-
 pthread_rwlock_t * getRadioServiceRwlock(int slotId);
 
 void setNitzTimeReceived(int slotId, long timeReceived);
