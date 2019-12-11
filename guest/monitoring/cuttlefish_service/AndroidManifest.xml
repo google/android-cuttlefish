@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.google.gce.gceservice"
+    android:sharedUserId="android.uid.system">
+
+    <uses-sdk android:minSdkVersion="5" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
+    <uses-permission android:name="android.permission.DUMP" />
+
+    <application
+        android:label="GceService"
+        android:allowBackup="false">
+
+        <receiver android:name=".GceBroadcastReceiver">
+            <intent-filter android:priority="1000">
+                <!--
+                   Do not register for other events here.
+                   Use GceService.registerBroadcastReceivers() instead.
+                -->
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name=".GceService">
+            <intent-filter>
+                <action android:name="com.android.google.gce.gceservice.CONFIGURE" />
+                <action android:name="com.android.google.gce.gceservice.CONNECTIVITY_CHANGE" />
+                <action android:name="com.android.google.gce.gceservice.BLUETOOTH_CHANGED" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
