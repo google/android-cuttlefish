@@ -172,6 +172,5 @@
     {RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5, radio_1_5::setSignalStrengthReportingCriteriaResponse_1_5},
     {RIL_REQUEST_ENABLE_UICC_APPLICATIONS, radio_1_5::enableUiccApplicationsResponse},
     {RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED, radio_1_5::areUiccApplicationsEnabledResponse},
-    {RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT, radio_1_5::canToggleUiccApplicationsEnablementResponse},
     {RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5, radio_1_5::setSystemSelectionChannelsResponse_1_5},
     {RIL_REQUEST_START_NETWORK_SCAN_1_5, radio_1_5::startNetworkScanResponse_1_5},
