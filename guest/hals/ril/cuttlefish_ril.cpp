@@ -1241,13 +1241,6 @@ static void request_are_uicc_applications_enabled(int /*request*/, void* /*data*
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &areUiccApplicationsEnabled, sizeof(bool));
 }
 
-static void request_can_toggle_uicc_applications_enablement(int /*request*/, void* /*data*/,
-                                                             size_t /*datalen*/, RIL_Token t) {
-  ALOGV("Getting can toggle uicc applications enablement.");
-
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-}
-
 static void request_cdma_set_subscription_source(int /*request*/, void* data,
                                                  size_t /*datalen*/,
                                                  RIL_Token t) {
@@ -2588,9 +2581,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED:
       request_are_uicc_applications_enabled(request, data, datalen, t);
-      break;
-    case RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT:
-      request_can_toggle_uicc_applications_enablement(request, data, datalen, t);
       break;
     case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5:
       request_set_system_selection_channels_1_5(request, t);

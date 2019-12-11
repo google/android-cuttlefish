@@ -96,7 +96,6 @@ extern "C" {
  *                    RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS
  *                    RIL_REQUEST_ENABLE_UICC_APPLICATIONS
  *                    RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
- *                    RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -6671,20 +6670,6 @@ typedef struct {
 #define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 157
 
 /**
- * RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT
- *
- * Whether disabling / enabling uicc applications is supported
- *
- * Response: a boolean of whether it's supported.
- *
- * Valid errors:
- *  SUCCESS
- *  RADIO_NOT_AVAILABLE
- *  INTERNAL_ERR
- */
-#define RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT 158
-
-/**
  * Specify which bands modem's background scan must act on.
  * If specifyChannels is true, it only scans bands specified in specifiers.
  * If specifyChannels is false, it scans all bands.
@@ -6699,7 +6684,7 @@ typedef struct {
  *  INVALID_ARGUMENTS
  *
  */
-#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5 159
+#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5 158
 
 /**
  * RIL_REQUEST_START_NETWORK_SCAN5
@@ -6721,7 +6706,7 @@ typedef struct {
  *  INVALID_ARGUMENTS
  *
  */
-#define RIL_REQUEST_START_NETWORK_SCAN_1_5 160
+#define RIL_REQUEST_START_NETWORK_SCAN_1_5 159
 
 /***********************************************************************/
 

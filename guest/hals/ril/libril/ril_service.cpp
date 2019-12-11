@@ -537,7 +537,6 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
             const ::android::hardware::radio::V1_5::AccessNetwork accessNetwork);
     Return<void> enableUiccApplications(int32_t serial, bool detach);
     Return<void> areUiccApplicationsEnabled(int32_t serial);
-    Return<void> canToggleUiccApplicationsEnablement(int32_t serial);
     Return<void> setSystemSelectionChannels_1_5(int32_t serial, bool specifyChannels,
             const hidl_vec<::android::hardware::radio::V1_5::RadioAccessSpecifier>& specifiers);
     Return<void> startNetworkScan_1_5(int32_t serial,
@@ -3604,14 +3603,6 @@ Return<void> RadioImpl_1_5::areUiccApplicationsEnabled(int32_t serial) {
     RLOGD("areUiccApplicationsEnabled: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED);
-    return Void();
-}
-
-Return<void> RadioImpl_1_5::canToggleUiccApplicationsEnablement(int32_t serial) {
-#if VDBG
-    RLOGD("canToggleUiccApplicationsEnablement: serial %d.", serial);
-#endif
-    dispatchVoid(serial, mSlotId, RIL_REQUEST_CAN_TOGGLE_UICC_APPLICATIONS_ENABLEMENT);
     return Void();
 }
 
@@ -7898,28 +7889,6 @@ int radio_1_5::areUiccApplicationsEnabledResponse(int slotId, int responseType, 
     Return<void> retStatus =
             radioService[slotId]->mRadioResponseV1_5->areUiccApplicationsEnabledResponse(
             responseInfo, enable);
-    radioService[slotId]->checkReturnStatus(retStatus);
-    return 0;
-}
-
-int radio_1_5::canToggleUiccApplicationsEnablementResponse(int slotId, int responseType,
-                                                       int serial, RIL_Errno e,
-                                                       void *response, size_t responseLen) {
-#if VDBG
-    RLOGD("%s(): %d", __FUNCTION__, serial);
-#endif
-    RadioResponseInfo responseInfo = {};
-    populateResponseInfo(responseInfo, serial, responseType, e);
-
-    // If we don't have a radio service, there's nothing we can do
-    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
-        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
-        return 0;
-    }
-
-    Return<void> retStatus =
-            radioService[slotId]->mRadioResponseV1_5->canToggleUiccApplicationsEnablementResponse(
-            responseInfo, true);
     radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
