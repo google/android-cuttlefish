@@ -295,38 +295,24 @@ bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                        cvd::SharedFD::Dup(static_cast<int>(parent_channel)));
 }
 
-void Command::SetVerbose(bool verbose) {
-  verbose_ = verbose;
-}
-
-void Command::SetExitWithParent(bool exit_with_parent) {
-  exit_with_parent_ = exit_with_parent;
-}
-
-void Command::SetWithControlSocket(bool with_control_socket) {
-  with_control_socket_ = with_control_socket;
-}
-
-Subprocess Command::StartHelper(bool in_group) const {
+Subprocess Command::StartHelper(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
   if (use_parent_env_) {
     return subprocess_impl(cmd.data(), nullptr, redirects_, inherited_fds_,
-                           with_control_socket_, subprocess_stopper_, in_group,
-                           verbose_, exit_with_parent_);
+                           options.WithControlSocket(), subprocess_stopper_,
+                           options.InGroup(), options.Verbose(),
+                           options.ExitWithParent());
   } else {
     auto envp = ToCharPointers(env_);
     return subprocess_impl(cmd.data(), envp.data(), redirects_, inherited_fds_,
-                           with_control_socket_, subprocess_stopper_, in_group,
-                           verbose_, exit_with_parent_);
+                           options.WithControlSocket(), subprocess_stopper_,
+                           options.InGroup(), options.Verbose(),
+                           options.ExitWithParent());
   }
 }
 
-Subprocess Command::Start() const {
-  return StartHelper(false);
-}
-
-Subprocess Command::StartInGroup() const {
-  return StartHelper(true);
+Subprocess Command::Start(SubprocessOptions options) const {
+  return StartHelper(options);
 }
 
 // A class that waits for threads to exit in its destructor.
@@ -343,8 +329,9 @@ public:
   }
 };
 
-int RunWithManagedStdio(cvd::Command&& cmd_tmp, const std::string* stdin,
-                        std::string* stdout, std::string* stderr) {
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
+                        std::string* stdout, std::string* stderr,
+                        SubprocessOptions options) {
   /*
    * The order of these declarations is necessary for safety. If the function
    * returns at any point, the cvd::Command will be destroyed first, closing all
@@ -421,7 +408,7 @@ int RunWithManagedStdio(cvd::Command&& cmd_tmp, const std::string* stdin,
     });
   }
 
-  auto subprocess = cmd.Start();
+  auto subprocess = cmd.Start(options);
   if (!subprocess.Started()) {
     return -1;
   }
