@@ -1,0 +1,23 @@
+char* 32 0x%08x
+void* 32 0x%08x
+
+EGLconstcharptr 32 0x%08x
+EGLenum 32 0x%08x
+EGLint 32 %d
+EGLint* 32 0x%08x
+
+EGLBoolean 8 %d
+EGLClientBuffer 32 0x%08x
+EGLConfig 32 0x%08x
+EGLConfig* 32 0x%08x
+EGLContext 32 0x%08x
+EGLDisplay 32 0x%08x
+EGLImageKHR 32 0x%08x
+EGLNativeDisplayType 32 0x%08x
+EGLNativePixmapType 32 0x%08x
+EGLNativeWindowType 32 0x%08x
+EGLSurface 32 0x%08x
+EGLSyncKHR 32 0x%08x
+EGLTimeKHR 64 %llu
+
+__eglMustCastToProperFunctionPointerType 32 0x%08x
