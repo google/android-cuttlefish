@@ -49,7 +49,7 @@ LOCAL_STATIC_LIBRARIES := \
     libprotobuf-c-nano-enable_malloc \
 
 LOCAL_C_INCLUDES += \
-    device/google/cuttlefish_common \
+    device/google/cuttlefish \
     hardware/include \
     external/nanopb-c \
     hardware/ril/include \

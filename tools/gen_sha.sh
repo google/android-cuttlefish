@@ -29,7 +29,7 @@ if [ -z ${FLAGS_kernel} ]; then
 	exit 1
 fi
 
-cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common"
+cd "${ANDROID_BUILD_TOP}/device/google/cuttlefish"
 Sha=`git rev-parse HEAD`
 cd - >/dev/null
 cd "${ANDROID_BUILD_TOP}/external/u-boot"

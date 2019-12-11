@@ -25,7 +25,7 @@ endif
 LOCAL_MULTILIB := first
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_C_INCLUDES := device/google/cuttlefish_common
+LOCAL_C_INCLUDES := device/google/cuttlefish
 LOCAL_HEADER_LIBRARIES := libhardware_headers
 LOCAL_SHARED_LIBRARIES := liblog libcutils
 LOCAL_SRC_FILES := lights_vsoc.c
