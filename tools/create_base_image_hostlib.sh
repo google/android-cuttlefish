@@ -73,7 +73,7 @@ main() {
     "cuttlefish-common_${FLAGS_version}"
   popd
   source_files=(
-    "${ANDROID_BUILD_TOP}/device/google/cuttlefish_common/tools/create_base_image_gce.sh"
+    "${ANDROID_BUILD_TOP}/device/google/cuttlefish/tools/create_base_image_gce.sh"
     ${scratch_dir}/*
   )
   if [[ -n "${INTERNAL_extra_source}" ]]; then
