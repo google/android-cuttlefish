@@ -299,21 +299,11 @@ bool InitializeCuttlefishConfiguration(
         tmp_config_obj.PerInstanceInternalPath("usb-ip"));
   }
 
-  tmp_config_obj.set_kernel_log_pipe_name(
-      tmp_config_obj.PerInstanceInternalPath("kernel-log-pipe"));
-  tmp_config_obj.set_console_pipe_name(
-      tmp_config_obj.PerInstanceInternalPath("console-pipe"));
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
-  tmp_config_obj.set_console_path(tmp_config_obj.PerInstancePath("console"));
-  tmp_config_obj.set_logcat_path(tmp_config_obj.PerInstancePath("logcat"));
   tmp_config_obj.set_logcat_receiver_binary(
       vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"));
   tmp_config_obj.set_config_server_binary(
       vsoc::DefaultHostArtifactsPath("bin/config_server"));
-  tmp_config_obj.set_launcher_log_path(
-      tmp_config_obj.PerInstancePath("launcher.log"));
-  tmp_config_obj.set_launcher_monitor_socket_path(
-      tmp_config_obj.PerInstancePath("launcher_monitor.sock"));
 
   tmp_config_obj.set_mobile_bridge_name(FLAGS_mobile_interface);
   tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);

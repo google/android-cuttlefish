@@ -96,13 +96,7 @@ const char* kVirtualDiskPaths = "virtual_disk_paths";
 const char* kUsbV1SocketName = "usb_v1_socket_name";
 const char* kVhciPort = "vhci_port";
 const char* kUsbIpSocketName = "usb_ip_socket_name";
-const char* kKernelLogPipeName = "kernel_log_pipe_name";
-const char* kConsolePipeName = "console_pipe_name";
 const char* kDeprecatedBootCompleted = "deprecated_boot_completed";
-const char* kConsolePath = "console_path";
-const char* kLogcatPath = "logcat_path";
-const char* kLauncherLogPath = "launcher_log_path";
-const char* kLauncherMonitorPath = "launcher_monitor_socket";
 
 const char* kMobileBridgeName = "mobile_bridge_name";
 const char* kMobileTapName = "mobile_tap_name";
@@ -361,19 +355,11 @@ void CuttlefishConfig::set_usb_ip_socket_name(
 }
 
 std::string CuttlefishConfig::kernel_log_pipe_name() const {
-  return (*dictionary_)[kKernelLogPipeName].asString();
-}
-void CuttlefishConfig::set_kernel_log_pipe_name(
-    const std::string& kernel_log_pipe_name) {
-  (*dictionary_)[kKernelLogPipeName] = kernel_log_pipe_name;
+  return cvd::AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
 
 std::string CuttlefishConfig::console_pipe_name() const {
-  return (*dictionary_)[kConsolePipeName].asString();
-}
-void CuttlefishConfig::set_console_pipe_name(
-    const std::string& console_pipe_name) {
-  SetPath(kConsolePipeName, console_pipe_name);
+  return cvd::AbsolutePath(PerInstanceInternalPath("console-pipe"));
 }
 
 bool CuttlefishConfig::deprecated_boot_completed() const {
@@ -385,33 +371,19 @@ void CuttlefishConfig::set_deprecated_boot_completed(
 }
 
 std::string CuttlefishConfig::console_path() const {
-  return (*dictionary_)[kConsolePath].asString();
-}
-void CuttlefishConfig::set_console_path(const std::string& console_path) {
-  SetPath(kConsolePath, console_path);
+  return cvd::AbsolutePath(PerInstancePath("console"));
 }
 
 std::string CuttlefishConfig::logcat_path() const {
-  return (*dictionary_)[kLogcatPath].asString();
-}
-void CuttlefishConfig::set_logcat_path(const std::string& logcat_path) {
-  SetPath(kLogcatPath, logcat_path);
+  return cvd::AbsolutePath(PerInstancePath("logcat"));
 }
 
 std::string CuttlefishConfig::launcher_monitor_socket_path() const {
-  return (*dictionary_)[kLauncherMonitorPath].asString();
-}
-void CuttlefishConfig::set_launcher_monitor_socket_path(
-    const std::string& launcher_monitor_path) {
-  SetPath(kLauncherMonitorPath, launcher_monitor_path);
+  return cvd::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
 }
 
 std::string CuttlefishConfig::launcher_log_path() const {
-  return (*dictionary_)[kLauncherLogPath].asString();
-}
-void CuttlefishConfig::set_launcher_log_path(
-    const std::string& launcher_log_path) {
-  (*dictionary_)[kLauncherLogPath] = launcher_log_path;
+  return cvd::AbsolutePath(PerInstancePath("launcher.log"));
 }
 
 std::string CuttlefishConfig::mobile_bridge_name() const {
