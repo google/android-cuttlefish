@@ -288,9 +288,6 @@ class CuttlefishConfig {
   void set_config_server_port(int port);
   int config_server_port() const;
 
-  void set_frames_vsock_port(int port);
-  int frames_vsock_port() const;
-
   void set_enable_tombstone_receiver(bool enable_tombstone_receiver);
   bool enable_tombstone_receiver() const;
 
@@ -311,12 +308,6 @@ class CuttlefishConfig {
 
   std::string touch_socket_path() const;
   std::string keyboard_socket_path() const;
-
-  void set_touch_socket_port(int touch_socket_port);
-  int touch_socket_port() const;
-
-  void set_keyboard_socket_port(int keyboard_socket_port);
-  int keyboard_socket_port() const;
 
   void set_loop_max_part(int loop_max_part);
   int loop_max_part() const;
