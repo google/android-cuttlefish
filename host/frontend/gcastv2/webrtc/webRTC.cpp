@@ -12,7 +12,6 @@
 #include <https/SSLSocket.h>
 #include <https/Support.h>
 #include <media/stagefright/foundation/hexdump.h>
-#include <media/stagefright/Utils.h>
 
 #include <iostream>
 #include <unordered_map>

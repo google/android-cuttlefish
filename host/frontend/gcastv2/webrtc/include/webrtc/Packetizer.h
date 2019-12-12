@@ -1,6 +1,5 @@
 #pragma once
 
-#include <utils/Errors.h>
 #include <stdint.h>
 
 #include <memory>
@@ -14,7 +13,7 @@ struct Packetizer {
 
     virtual void run() = 0;
     virtual uint32_t rtpNow() const = 0;
-    virtual android::status_t requestIDRFrame() = 0;
+    virtual int32_t requestIDRFrame() = 0;
 
     void queueRTPDatagram(std::vector<uint8_t> *packet);
 

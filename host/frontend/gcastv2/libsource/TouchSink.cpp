@@ -2,8 +2,8 @@
 
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/foundation/ADebug.h>
+
+#include <android-base/logging.h>
 
 #include <linux/input.h>
 #include <linux/uinput.h>
@@ -124,50 +124,21 @@ void TouchSink::onServerConnection() {
             makeSafeCallback(this, &TouchSink::onServerConnection));
 }
 
-void TouchSink::onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit) {
-    const int32_t *data =
-        reinterpret_cast<const int32_t *>(accessUnit->data());
 
-    if (accessUnit->size() == 3 * sizeof(int32_t)) {
-        // Legacy: Single Touch Emulation.
-
-        bool down = data[0] != 0;
-        int x = data[1];
-        int y = data[2];
-
-        LOG(VERBOSE)
-            << "Received touch (down="
-            << down
-            << ", x="
-            << x
-            << ", y="
-            << y;
-
-        send_event_(x, y, down);
-        return;
-    }
-
-    CHECK_EQ(accessUnit->size(), 5 * sizeof(int32_t));
-
-    int id = data[0];
-    bool initialDown = data[1] != 0;
-    int x = data[2];
-    int y = data[3];
-    int slot = data[4];
+void TouchSink::onAccessUnit(const std::shared_ptr<InputEvent> &accessUnit) {
+    bool down = accessUnit->down != 0;
+    int x = accessUnit->x;
+    int y = accessUnit->y;
 
     LOG(VERBOSE)
-        << "Received touch (id="
-        << id
-        << ", initialDown="
-        << initialDown
+        << "Received touch (down="
+        << down
         << ", x="
         << x
         << ", y="
-        << y
-        << ", slot="
-        << slot;
+        << y;
 
-    send_mt_event_(id, x, y, initialDown, slot);
+    send_event_(x, y, down);
 }
 
 void TouchSink::sendRawEvents(const void* evt_buffer, size_t size) {

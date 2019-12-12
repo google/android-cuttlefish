@@ -1,19 +1,17 @@
 #include <source/StreamingSource.h>
 
-#include <media/stagefright/foundation/ADebug.h>
-
 namespace android {
 
 StreamingSource::StreamingSource()
     : mCallbackFn(nullptr) {
 }
 
-void StreamingSource::setCallback(std::function<void(const std::shared_ptr<ABuffer> &)> cb) {
+void StreamingSource::setCallback(std::function<void(const std::shared_ptr<SBuffer> &)> cb) {
     CHECK(cb);
     mCallbackFn = cb;
 }
 
-void StreamingSource::onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit) {
+void StreamingSource::onAccessUnit(const std::shared_ptr<SBuffer> &accessUnit) {
     if (mCallbackFn) {
         mCallbackFn(accessUnit);
     }
