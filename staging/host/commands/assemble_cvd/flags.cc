@@ -171,8 +171,6 @@ DEFINE_string(config_server_binary,
               "Binary for the configuration server");
 DEFINE_int32(config_server_port, vsoc::GetPerInstanceDefault(4680),
              "The (vsock) port for the configuration server");
-DEFINE_int32(frames_vsock_port, vsoc::GetPerInstanceDefault(5580),
-             "The vsock port to receive frames from the guest on");
 DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
             "both the guest and the host");
 DEFINE_string(tombstone_receiver_binary,
@@ -180,10 +178,6 @@ DEFINE_string(tombstone_receiver_binary,
               "Binary for the tombstone server");
 DEFINE_int32(tombstone_receiver_port, vsoc::GetPerInstanceDefault(5630),
              "The vsock port for tombstones");
-DEFINE_int32(keyboard_server_port, GetPerInstanceDefault(5540),
-             "The port on which the vsock keyboard server should listen");
-DEFINE_int32(touch_server_port, GetPerInstanceDefault(5640),
-             "The port on which the vsock touch server should listen");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -400,14 +394,10 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
   tmp_config_obj.set_logcat_vsock_port(FLAGS_logcat_vsock_port);
   tmp_config_obj.set_config_server_port(FLAGS_config_server_port);
-  tmp_config_obj.set_frames_vsock_port(FLAGS_frames_vsock_port);
 
   tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
   tmp_config_obj.set_tombstone_receiver_port(FLAGS_tombstone_receiver_port);
   tmp_config_obj.set_tombstone_receiver_binary(FLAGS_tombstone_receiver_binary);
-
-  tmp_config_obj.set_touch_socket_port(FLAGS_touch_server_port);
-  tmp_config_obj.set_keyboard_socket_port(FLAGS_keyboard_server_port);
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);

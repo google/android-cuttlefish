@@ -143,7 +143,6 @@ const char* kBlankDataImageFmt = "blank_data_image_fmt";
 const char* kLogcatMode = "logcat_mode";
 const char* kLogcatVsockPort = "logcat_vsock_port";
 const char* kConfigServerPort = "config_server_port";
-const char* kFramesVsockPort = "frames_vsock_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerBinary = "config_server_binary";
 
@@ -155,9 +154,6 @@ const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
 
 const char* kBootSlot = "boot_slot";
-
-const char* kTouchSocketPort = "touch_socket_port";
-const char* kKeyboardSocketPort = "keyboard_socket_port";
 
 const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
@@ -718,14 +714,6 @@ int CuttlefishConfig::config_server_port() const {
   return (*dictionary_)[kConfigServerPort].asInt();
 }
 
-void CuttlefishConfig::set_frames_vsock_port(int port) {
-  (*dictionary_)[kFramesVsockPort] = port;
-}
-
-int CuttlefishConfig::frames_vsock_port() const {
-  return (*dictionary_)[kFramesVsockPort].asInt();
-}
-
 void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
   SetPath(kLogcatReceiverBinary, binary);
 }
@@ -796,22 +784,6 @@ std::string CuttlefishConfig::touch_socket_path() const {
 
 std::string CuttlefishConfig::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
-}
-
-void CuttlefishConfig::set_touch_socket_port(int port) {
-  (*dictionary_)[kTouchSocketPort] = port;
-}
-
-int CuttlefishConfig::touch_socket_port() const {
-  return (*dictionary_)[kTouchSocketPort].asInt();
-}
-
-void CuttlefishConfig::set_keyboard_socket_port(int port) {
-  (*dictionary_)[kKeyboardSocketPort] = port;
-}
-
-int CuttlefishConfig::keyboard_socket_port() const {
-  return (*dictionary_)[kKeyboardSocketPort].asInt();
 }
 
 void CuttlefishConfig::set_loop_max_part(int loop_max_part) {
