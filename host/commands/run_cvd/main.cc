@@ -159,13 +159,7 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
   }
   std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
                            config.PerInstancePath(".") + "\"\n";
-  config_env += "export ANDROID_SERIAL=";
-  if (config.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
-    config_env += config.serial_number();
-  } else {
-    config_env += config.adb_ip_and_port();
-  }
-  config_env += "\n";
+  config_env += "export ANDROID_SERIAL=" + config.adb_ip_and_port() + "\n";
   env->Write(config_env.c_str(), config_env.size());
   return true;
 }
@@ -412,8 +406,6 @@ int main(int argc, char** argv) {
 
   auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
-
-  LaunchUsbServerIfEnabled(*config, &process_monitor);
 
   // The vnc server needs to be launched after the ivserver because it connects
   // to it when using qemu. It needs to launch before the VMM because it serves

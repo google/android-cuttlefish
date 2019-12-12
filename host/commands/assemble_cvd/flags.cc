@@ -98,17 +98,15 @@ DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(adb_mode, "vsock_half_tunnel",
-              "Mode for ADB connection. Can be 'usb' for USB forwarding, "
-              "'tunnel' for a TCP connection tunneled through VSoC, "
+              "Mode for ADB connection."
               "'vsock_tunnel' for a TCP connection tunneled through vsock, "
               "'native_vsock' for a  direct connection to the guest ADB over "
               "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
               "the guest ADB server, or a comma separated list of types as in "
-              "'usb,tunnel'");
+              "'native_vsock,vsock_half_tunnel'");
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with -adb_mode=tunnel or vsock_tunnel");
-DEFINE_int32(vhci_port, GetPerInstanceDefault(0), "VHCI port to use for usb");
 DEFINE_string(wifi_tap_name, GetPerInstanceDefault("cvd-wtap-"),
               "The name of the tap interface to use for wifi");
 DEFINE_int32(vsock_guest_cid,
@@ -291,14 +289,6 @@ bool InitializeCuttlefishConfiguration(
     }
   }
 
-  if (tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
-    tmp_config_obj.set_usb_v1_socket_name(
-        tmp_config_obj.PerInstanceInternalPath("usb-v1"));
-    tmp_config_obj.set_vhci_port(FLAGS_vhci_port);
-    tmp_config_obj.set_usb_ip_socket_name(
-        tmp_config_obj.PerInstanceInternalPath("usb-ip"));
-  }
-
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
   tmp_config_obj.set_logcat_receiver_binary(
       vsoc::DefaultHostArtifactsPath("bin/logcat_receiver"));
@@ -330,8 +320,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
   tmp_config_obj.set_adb_connector_binary(
       vsoc::DefaultHostArtifactsPath("bin/adb_connector"));
-  tmp_config_obj.set_virtual_usb_manager_binary(
-      vsoc::DefaultHostArtifactsPath("bin/virtual_usb_manager"));
   tmp_config_obj.set_socket_vsock_proxy_binary(
       vsoc::DefaultHostArtifactsPath("bin/socket_vsock_proxy"));
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
@@ -339,10 +327,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
   tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
-
-  if(tmp_config_obj.adb_mode().count(vsoc::AdbMode::Usb) == 0) {
-    tmp_config_obj.disable_usb_adb();
-  }
 
   tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
 

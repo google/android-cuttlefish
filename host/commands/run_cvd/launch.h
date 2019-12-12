@@ -13,8 +13,6 @@ std::vector <cvd::SharedFD> LaunchKernelLogMonitor(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     unsigned int number_of_event_pipes);
-void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
-                              cvd::ProcessMonitor* process_monitor);
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config,
                                  cvd::SharedFD adbd_events_pipe);
