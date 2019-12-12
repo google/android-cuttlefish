@@ -42,7 +42,6 @@ enum class AdbMode {
   VsockTunnel,
   VsockHalfTunnel,
   NativeVsock,
-  Usb,
   Unknown,
 };
 
@@ -63,11 +62,6 @@ class CuttlefishConfig {
   std::string PerInstanceInternalPath(const char* file_name) const;
 
   std::string instance_name() const;
-
-  void disable_usb_adb() {
-    // This seems to be the way usb is being disbled in the launcher
-    set_usb_v1_socket_name("");
-  }
 
   std::string instance_dir() const;
   void set_instance_dir(const std::string& instance_dir);
@@ -149,17 +143,6 @@ class CuttlefishConfig {
 
   std::vector<std::string> virtual_disk_paths() const;
   void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
-
-  // The name of the socket that will be used to forward access to USB gadget.
-  // This is for V1 of the USB bus.
-  std::string usb_v1_socket_name() const;
-  void set_usb_v1_socket_name(const std::string& usb_v1_socket_name);
-
-  int vhci_port() const;
-  void set_vhci_port(int vhci_port);
-
-  std::string usb_ip_socket_name() const;
-  void set_usb_ip_socket_name(const std::string& usb_ip_socket_name);
 
   std::string kernel_log_pipe_name() const;
 
@@ -247,9 +230,6 @@ class CuttlefishConfig {
 
   void set_adb_connector_binary(const std::string& adb_connector_binary);
   std::string adb_connector_binary() const;
-
-  void set_virtual_usb_manager_binary(const std::string& binary);
-  std::string virtual_usb_manager_binary() const;
 
   void set_socket_vsock_proxy_binary(const std::string& binary);
   std::string socket_vsock_proxy_binary() const;
