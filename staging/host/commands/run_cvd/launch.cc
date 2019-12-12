@@ -210,60 +210,63 @@ cvd::SharedFD CreateUnixVncInputServer(const std::string& path) {
   return server;
 }
 
-cvd::SharedFD CreateVsockVncInputServer(int port) {
-  auto server = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
-  if (!server->IsOpen()) {
-    LOG(ERROR) << "Unable to create vsock input server: "
-               << server->StrError();
-    return cvd::SharedFD();
+VncServerPorts LaunchVNCServerIfEnabled(
+    const vsoc::CuttlefishConfig& config,
+    cvd::ProcessMonitor* process_monitor,
+    std::function<bool(MonitorEntry*)> callback) {
+  VncServerPorts server_ret;
+  if (!config.enable_vnc_server()) {
+    return {};
   }
-  return server;
-}
-
-bool LaunchVNCServerIfEnabled(const vsoc::CuttlefishConfig& config,
-                              cvd::ProcessMonitor* process_monitor,
-                              std::function<bool(MonitorEntry*)> callback) {
-  if (config.enable_vnc_server()) {
-    // Launch the vnc server, don't wait for it to complete
-    auto port_options = "-port=" + std::to_string(config.vnc_server_port());
-    cvd::Command vnc_server(config.vnc_server_binary());
-    vnc_server.AddParameter(port_options);
-    if (config.vm_manager() == vm_manager::QemuManager::name()) {
-      vnc_server.AddParameter("-write_virtio_input");
-    }
-    // When the ivserver is not enabled, the vnc touch_server needs to serve
-    // on sockets and send input events to whoever connects to it (the VMM).
-    auto touch_server =
-        config.vm_manager() == vm_manager::CrosvmManager::name()
-            ? CreateUnixVncInputServer(config.touch_socket_path())
-            : CreateVsockVncInputServer(config.touch_socket_port());
-    if (!touch_server->IsOpen()) {
-      return false;
-    }
-    vnc_server.AddParameter("-touch_fd=", touch_server);
-
-    auto keyboard_server =
-        config.vm_manager() == vm_manager::CrosvmManager::name()
-            ? CreateUnixVncInputServer(config.keyboard_socket_path())
-            : CreateVsockVncInputServer(config.keyboard_socket_port());
-    if (!keyboard_server->IsOpen()) {
-      return false;
-    }
-    vnc_server.AddParameter("-keyboard_fd=", keyboard_server);
-    // TODO(b/128852363): This should be handled through the wayland mock
-    //  instead.
-    // Additionally it receives the frame updates from a virtual socket
-    // instead
-    auto frames_server =
-        cvd::SharedFD::VsockServer(config.frames_vsock_port(), SOCK_STREAM);
-    if (!frames_server->IsOpen()) {
-      return false;
-    }
-    vnc_server.AddParameter("-frame_server_fd=", frames_server);
-    process_monitor->StartSubprocess(std::move(vnc_server), callback);
-    return true;
+  std::set<std::string> extra_kernel_args;
+  // Launch the vnc server, don't wait for it to complete
+  auto port_options = "-port=" + std::to_string(config.vnc_server_port());
+  cvd::Command vnc_server(config.vnc_server_binary());
+  vnc_server.AddParameter(port_options);
+  if (config.vm_manager() == vm_manager::QemuManager::name()) {
+    vnc_server.AddParameter("-write_virtio_input");
   }
-  return false;
+  // When the ivserver is not enabled, the vnc touch_server needs to serve
+  // on sockets and send input events to whoever connects to it (the VMM).
+  cvd::SharedFD touch_server;
+  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
+    touch_server = CreateUnixVncInputServer(config.touch_socket_path());
+  } else {
+    touch_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+    server_ret.touch_server_vsock_port = touch_server->VsockServerPort();
+  }
+  if (!touch_server->IsOpen()) {
+    LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
+    return {};
+  }
+  vnc_server.AddParameter("-touch_fd=", touch_server);
+
+  cvd::SharedFD keyboard_server;
+  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
+    keyboard_server = CreateUnixVncInputServer(config.keyboard_socket_path());
+  } else {
+    keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+    server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
+  }
+  if (!keyboard_server->IsOpen()) {
+    LOG(ERROR) << "Could not open keyboard server: " << keyboard_server->StrError();
+    return {};
+  }
+  vnc_server.AddParameter("-keyboard_fd=", keyboard_server);
+  // TODO(b/128852363): This should be handled through the wayland mock
+  //  instead.
+  // Additionally it receives the frame updates from a virtual socket
+  // instead
+  auto frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+  server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
+  if (!frames_server->IsOpen()) {
+    LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();
+    return {};
+  }
+  vnc_server.AddParameter("-frame_server_fd=", frames_server);
+  process_monitor->StartSubprocess(std::move(vnc_server), callback);
+
+  return server_ret;
 }
 
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,

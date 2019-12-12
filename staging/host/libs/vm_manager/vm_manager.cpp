@@ -44,32 +44,20 @@ std::map<std::string, VmManager::VmManagerHelper>
         {
           QemuManager::name(),
           {
-            [](const vsoc::CuttlefishConfig* config) {
-              return GetManagerSingleton<QemuManager>(config);
-            },
-            []() { return vsoc::HostSupportsQemuCli(); },
-            [](const std::string& gpu_mode) {
-              return QemuManager::ConfigureGpu(gpu_mode);
-            },
-            []() {
-              return QemuManager::ConfigureBootDevices();
-            }
+            GetManagerSingleton<QemuManager>,
+            vsoc::HostSupportsQemuCli,
+            QemuManager::ConfigureGpu,
+            QemuManager::ConfigureBootDevices,
           },
         },
         {
           CrosvmManager::name(),
           {
-            [](const vsoc::CuttlefishConfig* config) {
-              return GetManagerSingleton<CrosvmManager>(config);
-            },
+            GetManagerSingleton<CrosvmManager>,
             // Same as Qemu for the time being
-            []() { return vsoc::HostSupportsQemuCli(); },
-            [](const std::string& gpu_mode) {
-              return CrosvmManager::ConfigureGpu(gpu_mode);
-            },
-            []() {
-              return CrosvmManager::ConfigureBootDevices();
-            }
+            vsoc::HostSupportsQemuCli,
+            CrosvmManager::ConfigureGpu,
+            CrosvmManager::ConfigureBootDevices,
           }
         }
     };
