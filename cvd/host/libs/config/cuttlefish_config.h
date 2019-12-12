@@ -162,19 +162,15 @@ class CuttlefishConfig {
   void set_usb_ip_socket_name(const std::string& usb_ip_socket_name);
 
   std::string kernel_log_pipe_name() const;
-  void set_kernel_log_pipe_name(const std::string& kernel_log_pipe_name);
 
   std::string console_pipe_name() const;
-  void set_console_pipe_name(const std::string& console_pipe_name);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
 
   std::string console_path() const;
-  void set_console_path(const std::string& console_path);
 
   std::string logcat_path() const;
-  void set_logcat_path(const std::string& logcat_path);
 
   std::string logcat_receiver_binary() const;
   void set_logcat_receiver_binary(const std::string& binary);
@@ -183,11 +179,8 @@ class CuttlefishConfig {
   void set_config_server_binary(const std::string& binary);
 
   std::string launcher_log_path() const;
-  void set_launcher_log_path(const std::string& launcher_log_path);
 
   std::string launcher_monitor_socket_path() const;
-  void set_launcher_monitor_socket_path(
-      const std::string& launhcer_monitor_path);
 
   std::string mobile_bridge_name() const;
   void set_mobile_bridge_name(const std::string& mobile_bridge_name);
