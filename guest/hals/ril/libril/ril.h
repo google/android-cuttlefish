@@ -2040,6 +2040,8 @@ typedef enum {
     RIL_APN_TYPE_EMERGENCY    = 0x200,        // APN type for Emergency PDN. This is not an IA apn,
                                               // but is used for access to carrier services in an
                                               // emergency call situation.
+    RIL_APN_TYPE_MCX          = 0x400,        // APN type for Mission Critical Service
+    RIL_APN_TYPE_XCAP         = 0x800,        // APN type for XCAP
     RIL_APN_TYPE_ALL          = 0xFFFFFFFF    // All APN types
 } RIL_ApnTypes;
 

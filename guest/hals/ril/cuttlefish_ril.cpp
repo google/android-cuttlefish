@@ -2269,7 +2269,7 @@ static void request_set_system_selection_channels(int /*request*/, RIL_Token t) 
   return;
 }
 
-// New functions after Q
+// New functions after Q.
 static void request_set_signal_strength_reporting_criteria_1_5(int /*request*/, void* /*data*/,
                                                                size_t /*datalen*/, RIL_Token t) {
   ALOGV("request_set_signal_strength_reporting_criteria_1_5 - void");
