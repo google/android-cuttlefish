@@ -3,7 +3,7 @@
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
 
-#include <media/stagefright/foundation/ADebug.h>
+#include <android-base/logging.h>
 
 HostToGuestComms::HostToGuestComms(
         std::shared_ptr<RunLoop> runLoop,

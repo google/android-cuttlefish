@@ -6,7 +6,6 @@
 
 #include <memory>
 
-#include <media/stagefright/foundation/ABuffer.h>
 #include <source/StreamingSource.h>
 
 struct OpusPacketizer
@@ -20,10 +19,10 @@ struct OpusPacketizer
 
     void run() override;
     uint32_t rtpNow() const override;
-    android::status_t requestIDRFrame() override;
+    int32_t requestIDRFrame() override;
 
 private:
-    using ABuffer = android::ABuffer;
+    using SBuffer = android::SBuffer;
 
     std::shared_ptr<RunLoop> mRunLoop;
 
@@ -35,9 +34,9 @@ private:
     int64_t mStartTimeMedia;
     bool mFirstInTalkspurt;
 
-    void onFrame(const std::shared_ptr<ABuffer> &accessUnit);
+    void onFrame(const std::shared_ptr<SBuffer> &accessUnit);
 
-    void packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs);
+    void packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs);
 };
 
 

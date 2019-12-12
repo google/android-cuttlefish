@@ -1,8 +1,5 @@
 #include <source/AudioSource.h>
 
-#include <media/stagefright/MediaDefs.h>
-#include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/foundation/hexdump.h>
 #include <libyuv/convert.h>
 
 #include <system/audio.h>
@@ -104,15 +101,15 @@ struct AudioSource::Encoder {
     explicit Encoder();
     virtual ~Encoder() = default;
 
-    virtual status_t initCheck() const = 0;
+    virtual int32_t initCheck() const = 0;
     virtual void encode(const void *data, size_t size) = 0;
     virtual void reset() = 0;
 
     void setFrameCallback(
-            std::function<void(const std::shared_ptr<ABuffer> &)> onFrameFn);
+            std::function<void(const std::shared_ptr<SBuffer> &)> onFrameFn);
 
 protected:
-    std::function<void(const std::shared_ptr<ABuffer> &)> mOnFrameFn;
+    std::function<void(const std::shared_ptr<SBuffer> &)> mOnFrameFn;
 };
 
 AudioSource::Encoder::Encoder()
@@ -120,7 +117,7 @@ AudioSource::Encoder::Encoder()
 }
 
 void AudioSource::Encoder::setFrameCallback(
-        std::function<void(const std::shared_ptr<ABuffer> &)> onFrameFn) {
+        std::function<void(const std::shared_ptr<SBuffer> &)> onFrameFn) {
     mOnFrameFn = onFrameFn;
 }
 
@@ -173,7 +170,7 @@ struct AudioSource::OPUSEncoder : public AudioSource::Encoder {
     explicit OPUSEncoder();
     ~OPUSEncoder() override;
 
-    status_t initCheck() const override;
+    int32_t initCheck() const override;
 
     OPUSEncoder(const OPUSEncoder &) = delete;
     OPUSEncoder &operator=(const OPUSEncoder &) = delete;
@@ -182,7 +179,7 @@ struct AudioSource::OPUSEncoder : public AudioSource::Encoder {
     void reset() override;
 
 private:
-    status_t mInitCheck;
+    int32_t mInitCheck;
 
     gce_audio_message mPrevHeader;
     bool mPrevHeaderValid;
@@ -197,18 +194,18 @@ private:
 };
 
 AudioSource::OPUSEncoder::OPUSEncoder()
-    : mInitCheck(NO_INIT),
+    : mInitCheck(-ENODEV),
       mImpl(nullptr),
       mLogFile(nullptr) {
     reset();
-    mInitCheck = OK;
+    mInitCheck = 0;
 }
 
 AudioSource::OPUSEncoder::~OPUSEncoder() {
     reset();
 }
 
-status_t AudioSource::OPUSEncoder::initCheck() const {
+int32_t AudioSource::OPUSEncoder::initCheck() const {
     return mInitCheck;
 }
 
@@ -340,7 +337,7 @@ void AudioSource::OPUSEncoder::encode(const void *_data, size_t size) {
 
         static constexpr size_t kMaxPacketSize = 8192;
 
-        std::shared_ptr<ABuffer> outBuffer(new ABuffer(kMaxPacketSize));
+        std::shared_ptr<SBuffer> outBuffer(new SBuffer(kMaxPacketSize));
 
         auto outSize = opus_encode(
                 mImpl,
@@ -351,9 +348,9 @@ void AudioSource::OPUSEncoder::encode(const void *_data, size_t size) {
 
         CHECK_GT(outSize, 0);
 
-        outBuffer->setRange(0, outSize);
+        outBuffer->resize(outSize);
 
-        outBuffer->meta()->setInt64("timeUs", timeUs);
+        outBuffer->time_us(timeUs);
 
         mUpSampler->drain(copyFrames);
 
@@ -421,7 +418,7 @@ struct AudioSource::G711Encoder : public AudioSource::Encoder {
 
     explicit G711Encoder(Mode mode);
 
-    status_t initCheck() const override;
+    int32_t initCheck() const override;
 
     G711Encoder(const G711Encoder &) = delete;
     G711Encoder &operator=(const G711Encoder &) = delete;
@@ -432,7 +429,7 @@ struct AudioSource::G711Encoder : public AudioSource::Encoder {
 private:
     static constexpr size_t kNumFramesPerBuffer = 512;
 
-    status_t mInitCheck;
+    int32_t mInitCheck;
     Mode mMode;
 
     gce_audio_message mPrevHeader;
@@ -440,20 +437,20 @@ private:
 
     size_t mChannelCount;
 
-    std::shared_ptr<ABuffer> mOutputFrame;
+    std::shared_ptr<SBuffer> mOutputFrame;
     Downsampler mDownSampler;
 
     void doEncode(const int16_t *src, size_t numFrames);
 };
 
 AudioSource::G711Encoder::G711Encoder(Mode mode)
-    : mInitCheck(NO_INIT),
+    : mInitCheck(-ENODEV),
       mMode(mode) {
     reset();
-    mInitCheck = OK;
+    mInitCheck = 0;
 }
 
-status_t AudioSource::G711Encoder::initCheck() const {
+int32_t AudioSource::G711Encoder::initCheck() const {
     return mInitCheck;
 }
 
@@ -519,7 +516,7 @@ void AudioSource::G711Encoder::encode(const void *_data, size_t size) {
         mChannelCount = hdr.frame_size / sizeof(int16_t);
 
         // mono, 8-bit output samples.
-        mOutputFrame.reset(new ABuffer(kNumFramesPerBuffer));
+        mOutputFrame.reset(new SBuffer(kNumFramesPerBuffer));
     }
 
     const size_t offset = sizeof(gce_audio_message);
@@ -530,7 +527,7 @@ void AudioSource::G711Encoder::encode(const void *_data, size_t size) {
     while (mDownSampler.numFramesAvailable() >= kNumFramesPerBuffer) {
         doEncode(mDownSampler.data(), kNumFramesPerBuffer);
 
-        mOutputFrame->meta()->setInt64("timeUs", timeUs);
+        mOutputFrame->time_us(timeUs);
 
         mDownSampler.drain(kNumFramesPerBuffer);
 
@@ -623,14 +620,14 @@ void AudioSource::G711Encoder::doEncode(const int16_t *src, size_t numFrames) {
         }
 
         default:
-            TRESPASS();
+            LOG(FATAL) << "Should not be here.";
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
 AudioSource::AudioSource(Format format, bool useADTSFraming)
-    : mInitCheck(NO_INIT),
+    : mInitCheck(-ENODEV),
       mState(STOPPED)
 #if SIMULATE_AUDIO
       ,mPhase(0)
@@ -658,29 +655,29 @@ AudioSource::AudioSource(Format format, bool useADTSFraming)
         }
 
         default:
-            TRESPASS();
+            LOG(FATAL) << "Should not be here.";
     }
 
-    mEncoder->setFrameCallback([this](const std::shared_ptr<ABuffer> &accessUnit) {
+    mEncoder->setFrameCallback([this](const std::shared_ptr<SBuffer> &accessUnit) {
         StreamingSource::onAccessUnit(accessUnit);
     });
 
-    mInitCheck = OK;
+    mInitCheck = 0;
 }
 
 AudioSource::~AudioSource() {
     stop();
 }
 
-status_t AudioSource::initCheck() const {
+int32_t AudioSource::initCheck() const {
     return mInitCheck;
 }
 
-status_t AudioSource::start() {
+int32_t AudioSource::start() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
     if (mState != STOPPED) {
-        return OK;
+        return 0;
     }
 
     mEncoder->reset();
@@ -783,14 +780,14 @@ status_t AudioSource::start() {
     */
 #endif  // SIMULATE_AUDIO
 
-    return OK;
+    return 0;
 }
 
-status_t AudioSource::stop() {
+int32_t AudioSource::stop() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
     if (mState == STOPPED) {
-        return OK;
+        return 0;
     }
 
     mState = STOPPING;
@@ -802,11 +799,11 @@ status_t AudioSource::stop() {
 
     mState = STOPPED;
 
-    return OK;
+    return 0;
 }
 
-status_t AudioSource::requestIDRFrame() {
-    return OK;
+int32_t AudioSource::requestIDRFrame() {
+    return 0;
 }
 
 void AudioSource::inject(const void *data, size_t size) {

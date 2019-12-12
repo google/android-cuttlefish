@@ -1,6 +1,6 @@
 #include <webrtc/RTPSession.h>
 
-#include <media/stagefright/foundation/ADebug.h>
+#include <android-base/logging.h>
 
 #include <sstream>
 

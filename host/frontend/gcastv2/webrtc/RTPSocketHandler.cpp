@@ -2,12 +2,12 @@
 
 #include <webrtc/MyWebSocketHandler.h>
 #include <webrtc/STUNMessage.h>
+#include <Utils.h>
 
 #include <https/PlainSocket.h>
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/Utils.h>
+#include <android-base/logging.h>
 
 #include <netdb.h>
 #include <netinet/in.h>
@@ -249,7 +249,7 @@ void RTPSocketHandler::onReceive() {
                 if (!out.empty()) {
                     out += ":";
                 }
-                out += android::StringPrintf("%02x", ipHost[i]);
+                out += StringPrintf("%02x", ipHost[i]);
 
                 ipHost[i] ^= response.data()[4 + i];
             }

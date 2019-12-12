@@ -16,14 +16,57 @@
 
 #pragma once
 
-#include <utils/Errors.h>
-#include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/foundation/ABuffer.h>
+#include <android-base/logging.h>
 
 #include <cinttypes>
 #include <memory>
+#include <vector>
 
 namespace android {
+
+class SBuffer {
+public:
+    SBuffer() = delete;
+    SBuffer(const SBuffer&) = delete;
+    SBuffer(SBuffer&&) = default;
+    explicit SBuffer(std::size_t size)
+        : buffer_(size, 0), time_us_(0) {}
+    
+    SBuffer& operator=(const SBuffer&) = delete;
+    SBuffer& operator=(SBuffer&&) = default;
+
+    std::size_t capacity() const {
+        return buffer_.capacity();
+    }
+
+    std::size_t size() const {
+        return buffer_.size();
+    }
+
+    void resize(std::size_t size) {
+        buffer_.resize(size);
+    }
+
+    uint8_t* data() {
+        return buffer_.data();
+    }
+    
+    const uint8_t* data() const {
+        return buffer_.data();
+    }
+
+    int64_t time_us() const {
+        return time_us_;
+    }
+
+    void time_us(int64_t time_us) {
+        time_us_ = time_us;
+    }
+private:
+    std::vector<uint8_t> buffer_;
+    int64_t time_us_;
+
+};
 
 struct StreamingSource {
     explicit StreamingSource();
@@ -33,26 +76,26 @@ struct StreamingSource {
 
     virtual ~StreamingSource() = default;
 
-    virtual status_t initCheck() const = 0;
+    virtual int32_t initCheck() const = 0;
 
-    void setCallback(std::function<void(const std::shared_ptr<ABuffer> &)> cb);
+    void setCallback(std::function<void(const std::shared_ptr<SBuffer> &)> cb);
 
-    virtual status_t start() = 0;
-    virtual status_t stop() = 0;
+    virtual int32_t start() = 0;
+    virtual int32_t stop() = 0;
 
     virtual bool canPause() { return false; }
-    virtual status_t pause() { return -EINVAL; }
-    virtual status_t resume() { return -EINVAL; }
+    virtual int32_t pause() { return -EINVAL; }
+    virtual int32_t resume() { return -EINVAL; }
 
     virtual bool paused() const { return false; }
 
-    virtual status_t requestIDRFrame() = 0;
+    virtual int32_t requestIDRFrame() = 0;
 
 protected:
-    void onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit);
+    void onAccessUnit(const std::shared_ptr<SBuffer> &accessUnit);
 
 private:
-    std::function<void(const std::shared_ptr<ABuffer> &)> mCallbackFn;
+    std::function<void(const std::shared_ptr<SBuffer> &)> mCallbackFn;
 };
 
 }  // namespace android

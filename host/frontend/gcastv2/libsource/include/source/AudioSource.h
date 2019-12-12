@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <media/stagefright/foundation/ABuffer.h>
 #include <source/StreamingSource.h>
 
 #include <memory>
@@ -49,12 +48,12 @@ struct AudioSource : public StreamingSource {
 
     ~AudioSource() override;
 
-    status_t initCheck() const override;
+    int32_t initCheck() const override;
 
-    status_t start() override;
-    status_t stop() override;
+    int32_t start() override;
+    int32_t stop() override;
 
-    status_t requestIDRFrame() override;
+    int32_t requestIDRFrame() override;
 
     void inject(const void *data, size_t size);
 
@@ -70,7 +69,7 @@ private:
     struct OPUSEncoder;
     struct G711Encoder;
 
-    status_t mInitCheck;
+    int32_t mInitCheck;
     State mState;
     std::unique_ptr<Encoder> mEncoder;
 
