@@ -35,7 +35,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 # Properties that are not vendor-specific. These will go in the product
 # partition, instead of the vendor partition, and do not need vendor
 # sepolicy
-PRODUCT_PRODUCT_PROPERTIES := \
+PRODUCT_PRODUCT_PROPERTIES += \
     persist.adb.tcp.port=5555 \
     persist.traced.enable=1 \
     ro.com.google.locationfeatures=1 \
