@@ -57,6 +57,9 @@ class CuttlefishConfig {
   // processes by passing the --config_file option.
   bool SaveToFile(const std::string& file) const;
 
+  std::string assembly_dir() const;
+  void set_assembly_dir(const std::string& assembly_dir);
+
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
