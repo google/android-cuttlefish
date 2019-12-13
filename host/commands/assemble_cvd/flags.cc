@@ -72,7 +72,11 @@ DEFINE_string(mobile_tap_name, ForCurrentInstance("cvd-mtap-"),
               "The name of the tap interface to use for mobile");
 DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
-DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
+DEFINE_string(assembly_dir,
+              cvd::StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
+              "A directory to put generated files common between instances");
+DEFINE_string(instance_dir,
+              cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
               "A directory to put all instance specific files");
 DEFINE_string(
     vm_manager, vm_manager::CrosvmManager::name(),
@@ -231,6 +235,7 @@ bool InitializeCuttlefishConfiguration(
   CHECK(NumStreamers() <= 1);
 
   vsoc::CuttlefishConfig tmp_config_obj;
+  tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
   auto instance = tmp_config_obj.ForDefaultInstance();
   auto instance_const = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
       .ForDefaultInstance();
@@ -406,22 +411,12 @@ bool InitializeCuttlefishConfiguration(
 }
 
 void SetDefaultFlagsForQemu() {
-  auto default_instance_dir =
-      cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
-  SetCommandLineOptionWithMode("instance_dir",
-                               default_instance_dir.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // TODO(b/144119457) Use the serial port.
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
 void SetDefaultFlagsForCrosvm() {
-  auto default_instance_dir =
-      cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
-  SetCommandLineOptionWithMode("instance_dir",
-                               default_instance_dir.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
@@ -458,6 +453,8 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
 bool CleanPriorFiles() {
   // Everything on the instance directory
   std::string prior_files = FLAGS_instance_dir + "/*";
+  // Everything in the assembly directory
+  prior_files += " " + FLAGS_assembly_dir + "/*";
   // The environment file
   prior_files += " " + GetCuttlefishEnvPath();
   // The global link to the config file
@@ -596,6 +593,15 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   if (!CleanPriorFiles()) {
     LOG(ERROR) << "Failed to clean prior files";
     exit(AssemblerExitCodes::kPrioFilesCleanupError);
+  }
+  // Create assembly directory if it doesn't exist.
+  if (!cvd::DirectoryExists(FLAGS_assembly_dir.c_str())) {
+    LOG(INFO) << "Setting up " << FLAGS_assembly_dir;
+    if (mkdir(FLAGS_assembly_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+      LOG(ERROR) << "Failed to create assembly directory: "
+                 << FLAGS_assembly_dir << ". Error: " << errno;
+      exit(AssemblerExitCodes::kAssemblyDirCreationError);
+    }
   }
   // Create instance directory if it doesn't exist.
   if (!cvd::DirectoryExists(FLAGS_instance_dir.c_str())) {

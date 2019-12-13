@@ -68,6 +68,7 @@ int InstanceFromEnvironment() {
 }
 
 const char* kInstances = "instances";
+const char* kAssemblyDir = "assembly_dir";
 const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
@@ -175,6 +176,14 @@ Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
 
 const Json::Value* CuttlefishConfig::InstanceSpecific::Dictionary() const {
   return &(*config_->dictionary_)[kInstances][id_];
+}
+
+std::string CuttlefishConfig::assembly_dir() const {
+  return (*dictionary_)[kAssemblyDir].asString();
+}
+void CuttlefishConfig::set_assembly_dir(
+    const std::string& assembly_dir) {
+  (*dictionary_)[kAssemblyDir] = assembly_dir;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_dir() const {
