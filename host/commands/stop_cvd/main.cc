@@ -63,7 +63,7 @@ std::set<pid_t> GetCandidateProcessGroups() {
   // Add files in the internal directory
   cmd += ((" " + instance_dir + "/") + vsoc::kInternalDirName) + "/*";
   // Add the shared memory file
-  cmd += " " + vsoc::GetPerInstanceDefault("/dev/shm/cvd-");
+  cmd += " " + vsoc::ForCurrentInstance("/dev/shm/cvd-");
   std::shared_ptr<FILE> cmd_out(popen(cmd.c_str(), "r"), pclose);
   if (!cmd_out) {
     LOG(ERROR) << "Unable to execute '" << cmd << "': " << strerror(errno);

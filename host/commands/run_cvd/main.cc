@@ -58,7 +58,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
-using vsoc::GetPerInstanceDefault;
+using vsoc::ForCurrentInstance;
 using cvd::RunnerExitCodes;
 
 namespace {
@@ -161,7 +161,8 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
   }
   std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
                            config.PerInstancePath(".") + "\"\n";
-  config_env += "export ANDROID_SERIAL=" + config.adb_ip_and_port() + "\n";
+  auto instance = config.ForDefaultInstance();
+  config_env += "export ANDROID_SERIAL=" + instance.adb_ip_and_port() + "\n";
   env->Write(config_env.c_str(), config_env.size());
   return true;
 }
@@ -316,6 +317,7 @@ int main(int argc, char** argv) {
   }
 
   auto config = vsoc::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
 
   auto runner_log_path = config->PerInstancePath("run_cvd.log");
   stderr_tee.SetFile(cvd::SharedFD::Creat(runner_log_path.c_str(), 0755));
@@ -333,10 +335,10 @@ int main(int argc, char** argv) {
   }
 
   auto used_tap_devices = cvd::TapInterfacesInUse();
-  if (used_tap_devices.count(config->wifi_tap_name())) {
+  if (used_tap_devices.count(instance.wifi_tap_name())) {
     LOG(ERROR) << "Wifi TAP device already in use";
     return RunnerExitCodes::kTapDeviceInUse;
-  } else if (used_tap_devices.count(config->mobile_tap_name())) {
+  } else if (used_tap_devices.count(instance.mobile_tap_name())) {
     LOG(ERROR) << "Mobile TAP device already in use";
     return RunnerExitCodes::kTapDeviceInUse;
   }

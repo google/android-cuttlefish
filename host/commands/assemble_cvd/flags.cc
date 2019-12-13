@@ -20,7 +20,7 @@
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
-using vsoc::GetPerInstanceDefault;
+using vsoc::ForCurrentInstance;
 using cvd::AssemblerExitCodes;
 
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
@@ -66,11 +66,11 @@ DEFINE_string(vendor_boot_image, "",
               "be vendor_boot.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-DEFINE_string(mobile_interface, GetPerInstanceDefault("cvd-mbr-"),
+DEFINE_string(mobile_interface, ForCurrentInstance("cvd-mbr-"),
               "Network interface to use for mobile networking");
-DEFINE_string(mobile_tap_name, GetPerInstanceDefault("cvd-mtap-"),
+DEFINE_string(mobile_tap_name, ForCurrentInstance("cvd-mtap-"),
               "The name of the tap interface to use for mobile");
-DEFINE_string(serial_number, GetPerInstanceDefault("CUTTLEFISHCVD"),
+DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
 DEFINE_string(instance_dir, "", // default handled on ParseCommandLine
               "A directory to put all instance specific files");
@@ -117,7 +117,7 @@ DEFINE_bool(
         false,
         "If enabled, exposes local adb service through a websocket.");
 
-DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
+DEFINE_int32(vnc_server_port, ForCurrentInstance(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(adb_mode, "vsock_half_tunnel",
               "Mode for ADB connection."
@@ -129,13 +129,13 @@ DEFINE_string(adb_mode, "vsock_half_tunnel",
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with -adb_mode=tunnel or vsock_tunnel");
-DEFINE_string(wifi_tap_name, GetPerInstanceDefault("cvd-wtap-"),
+DEFINE_string(wifi_tap_name, ForCurrentInstance("cvd-wtap-"),
               "The name of the tap interface to use for wifi");
 DEFINE_int32(vsock_guest_cid,
              vsoc::GetDefaultPerInstanceVsockCid(),
              "Guest identifier for vsock. Disabled if under 3.");
 
-DEFINE_string(uuid, vsoc::GetPerInstanceDefault(vsoc::kDefaultUuidPrefix),
+DEFINE_string(uuid, vsoc::ForCurrentInstance(vsoc::kDefaultUuidPrefix),
               "UUID to use for the device. Random if not specified");
 DEFINE_bool(daemon, false,
             "Run cuttlefish in background, the launcher exits on boot "
@@ -214,7 +214,7 @@ std::string GetCuttlefishEnvPath() {
 
 int GetHostPort() {
   constexpr int kFirstHostPort = 6520;
-  return vsoc::GetPerInstanceDefault(kFirstHostPort);
+  return vsoc::ForCurrentInstance(kFirstHostPort);
 }
 
 int NumStreamers() {
@@ -231,6 +231,7 @@ bool InitializeCuttlefishConfiguration(
   CHECK(NumStreamers() <= 1);
 
   vsoc::CuttlefishConfig tmp_config_obj;
+  auto instance = tmp_config_obj.ForDefaultInstance();
   // Set this first so that calls to PerInstancePath below are correct
   tmp_config_obj.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
@@ -250,7 +251,7 @@ bool InitializeCuttlefishConfiguration(
     return false;
   }
 
-  tmp_config_obj.set_serial_number(FLAGS_serial_number);
+  instance.set_serial_number(FLAGS_serial_number);
 
   tmp_config_obj.set_cpus(FLAGS_cpus);
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
@@ -263,10 +264,10 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
-  tmp_config_obj.set_host_port(GetHostPort());
-  tmp_config_obj.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
+  instance.set_host_port(GetHostPort());
+  instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
 
-  tmp_config_obj.set_device_title(FLAGS_device_title);
+  instance.set_device_title(FLAGS_device_title);
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   if (foreign_kernel.size()) {
@@ -324,14 +325,14 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_config_server_binary(
       vsoc::DefaultHostArtifactsPath("bin/config_server"));
 
-  tmp_config_obj.set_mobile_bridge_name(FLAGS_mobile_interface);
-  tmp_config_obj.set_mobile_tap_name(FLAGS_mobile_tap_name);
+  instance.set_mobile_bridge_name(FLAGS_mobile_interface);
+  instance.set_mobile_tap_name(FLAGS_mobile_tap_name);
 
-  tmp_config_obj.set_wifi_tap_name(FLAGS_wifi_tap_name);
+  instance.set_wifi_tap_name(FLAGS_wifi_tap_name);
 
-  tmp_config_obj.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
+  instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
 
-  tmp_config_obj.set_uuid(FLAGS_uuid);
+  instance.set_uuid(FLAGS_uuid);
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
@@ -343,7 +344,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
   tmp_config_obj.set_vnc_server_binary(
       vsoc::DefaultHostArtifactsPath("bin/vnc_server"));
-  tmp_config_obj.set_vnc_server_port(FLAGS_vnc_server_port);
+  instance.set_vnc_server_port(FLAGS_vnc_server_port);
 
   tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
   tmp_config_obj.set_webrtc_binary(

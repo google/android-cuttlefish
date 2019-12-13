@@ -96,6 +96,7 @@ CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
 std::vector<cvd::Command> CrosvmManager::StartCommands() {
+  auto instance = config_->ForDefaultInstance();
   cvd::Command crosvm_cmd(config_->crosvm_binary(), [](cvd::Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
@@ -131,14 +132,14 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
     crosvm_cmd.AddParameter("--keyboard=", config_->keyboard_socket_path());
   }
 
-  AddTapFdParameter(&crosvm_cmd, config_->wifi_tap_name());
-  AddTapFdParameter(&crosvm_cmd, config_->mobile_tap_name());
+  AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
+  AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
   // TODO remove this (use crosvm's seccomp files)
   crosvm_cmd.AddParameter("--disable-sandbox");
 
-  if (config_->vsock_guest_cid() >= 2) {
-    crosvm_cmd.AddParameter("--cid=", config_->vsock_guest_cid());
+  if (instance.vsock_guest_cid() >= 2) {
+    crosvm_cmd.AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
   // Redirect the first serial port with the kernel logs to the appropriate file
