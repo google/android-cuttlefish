@@ -57,15 +57,6 @@ class CuttlefishConfig {
   // processes by passing the --config_file option.
   bool SaveToFile(const std::string& file) const;
 
-  // Returns the path to a file with the given name in the instance directory..
-  std::string PerInstancePath(const char* file_name) const;
-  std::string PerInstanceInternalPath(const char* file_name) const;
-
-  std::string instance_dir() const;
-  void set_instance_dir(const std::string& instance_dir);
-
-  std::string instance_internal_dir() const;
-
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
@@ -142,26 +133,14 @@ class CuttlefishConfig {
   std::vector<std::string> virtual_disk_paths() const;
   void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
 
-  std::string kernel_log_pipe_name() const;
-
-  std::string console_pipe_name() const;
-
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
-
-  std::string console_path() const;
-
-  std::string logcat_path() const;
 
   std::string logcat_receiver_binary() const;
   void set_logcat_receiver_binary(const std::string& binary);
 
   std::string config_server_binary() const;
   void set_config_server_binary(const std::string& binary);
-
-  std::string launcher_log_path() const;
-
-  std::string launcher_monitor_socket_path() const;
 
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
@@ -248,10 +227,6 @@ class CuttlefishConfig {
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
-  std::string touch_socket_path() const;
-  std::string keyboard_socket_path() const;
-  std::string frames_socket_path() const;
-
   void set_loop_max_part(int loop_max_part);
   int loop_max_part() const;
 
@@ -310,6 +285,30 @@ class CuttlefishConfig {
     int vsock_guest_cid() const;
     std::string uuid() const;
     std::string instance_name() const;
+
+    // Returns the path to a file with the given name in the instance directory..
+    std::string PerInstancePath(const char* file_name) const;
+    std::string PerInstanceInternalPath(const char* file_name) const;
+
+    std::string instance_dir() const;
+
+    std::string instance_internal_dir() const;
+
+    std::string touch_socket_path() const;
+    std::string keyboard_socket_path() const;
+    std::string frames_socket_path() const;
+
+    std::string console_path() const;
+
+    std::string logcat_path() const;
+
+    std::string kernel_log_pipe_name() const;
+
+    std::string console_pipe_name() const;
+
+    std::string launcher_log_path() const;
+
+    std::string launcher_monitor_socket_path() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -337,6 +336,7 @@ class CuttlefishConfig {
     void set_wifi_tap_name(const std::string& wifi_tap_name);
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
+    void set_instance_dir(const std::string& instance_dir);
   };
 
  private:

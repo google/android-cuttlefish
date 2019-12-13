@@ -181,7 +181,9 @@ bool RebuildSuperImage(const cvd::FetcherConfig& fetcher_config,
     LOG(ERROR) << "Unable to find system target zip file.";
     return false;
   }
-  std::string combined_target_path = config.PerInstanceInternalPath("target_combined");
+  auto instance = config.ForDefaultInstance();
+  // TODO(schuffelen): Use cuttlefish_assembly
+  std::string combined_target_path = instance.PerInstanceInternalPath("target_combined");
   // TODO(schuffelen): Use otatools/bin/merge_target_files
   if (!CombineTargetZipFiles(default_target_zip, system_target_zip,
                              combined_target_path)) {

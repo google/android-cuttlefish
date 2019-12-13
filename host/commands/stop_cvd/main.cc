@@ -108,12 +108,13 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   auto config = vsoc::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
     return FallBackStop();
   }
 
-  auto monitor_path = config->launcher_monitor_socket_path();
+  auto monitor_path = instance.launcher_monitor_socket_path();
   if (monitor_path.empty()) {
     LOG(ERROR) << "No path to launcher monitor found";
     return FallBackStop();

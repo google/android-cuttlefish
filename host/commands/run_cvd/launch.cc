@@ -84,6 +84,7 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
   cvd::SharedFD touch_server;
   cvd::SharedFD keyboard_server;
 
+  auto instance = config.ForDefaultInstance();
   if (config.vm_manager() == vm_manager::QemuManager::name()) {
     cmd->AddParameter("-write_virtio_input");
 
@@ -93,8 +94,8 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
     keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
     server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
   } else {
-    touch_server = CreateUnixInputServer(config.touch_socket_path());
-    keyboard_server = CreateUnixInputServer(config.keyboard_socket_path());
+    touch_server = CreateUnixInputServer(instance.touch_socket_path());
+    keyboard_server = CreateUnixInputServer(instance.keyboard_socket_path());
   }
   if (!touch_server->IsOpen()) {
     LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
@@ -110,7 +111,7 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
 
   cvd::SharedFD frames_server;
   if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl) {
-    frames_server = CreateUnixInputServer(config.frames_socket_path());
+    frames_server = CreateUnixInputServer(instance.frames_socket_path());
   } else {
     frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
     server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
@@ -133,7 +134,8 @@ std::vector<cvd::SharedFD> LaunchKernelLogMonitor(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     unsigned int number_of_event_pipes) {
-  auto log_name = config.kernel_log_pipe_name();
+  auto instance = config.ForDefaultInstance();
+  auto log_name = instance.kernel_log_pipe_name();
   if (mkfifo(log_name.c_str(), 0600) != 0) {
     LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
                << strerror(errno);
@@ -212,8 +214,9 @@ TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
   if (!config.enable_tombstone_receiver()) {
     return {};
   }
+  auto instance = config.ForDefaultInstance();
 
-  std::string tombstoneDir = config.PerInstancePath("tombstones");
+  std::string tombstoneDir = instance.PerInstancePath("tombstones");
   if (!cvd::DirectoryExists(tombstoneDir.c_str())) {
     LOG(INFO) << "Setting up " << tombstoneDir;
     if (mkdir(tombstoneDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <

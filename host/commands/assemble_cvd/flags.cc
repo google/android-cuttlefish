@@ -232,8 +232,10 @@ bool InitializeCuttlefishConfiguration(
 
   vsoc::CuttlefishConfig tmp_config_obj;
   auto instance = tmp_config_obj.ForDefaultInstance();
+  auto instance_const = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
+      .ForDefaultInstance();
   // Set this first so that calls to PerInstancePath below are correct
-  tmp_config_obj.set_instance_dir(FLAGS_instance_dir);
+  instance.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
     LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
     return false;
@@ -274,18 +276,21 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.set_kernel_image_path(foreign_kernel);
     tmp_config_obj.set_use_unpacked_kernel(false);
   } else {
+    // TODO(schuffelen): Put this in cuttlefish_assembly
     tmp_config_obj.set_kernel_image_path(
-        tmp_config_obj.PerInstancePath(kKernelDefaultPath.c_str()));
+        instance_const.PerInstancePath(kKernelDefaultPath.c_str()));
     tmp_config_obj.set_use_unpacked_kernel(true);
   }
   tmp_config_obj.set_decompress_kernel(FLAGS_decompress_kernel);
   if (FLAGS_decompress_kernel) {
+    // TODO(schuffelen): Put this in cuttlefish_assembly
     tmp_config_obj.set_decompressed_kernel_image_path(
-        tmp_config_obj.PerInstancePath("vmlinux"));
+        instance_const.PerInstancePath("vmlinux"));
   }
 
-  auto ramdisk_path = tmp_config_obj.PerInstancePath("ramdisk.img");
-  auto vendor_ramdisk_path = tmp_config_obj.PerInstancePath("vendor_ramdisk.img");
+  // TODO(schuffelen): Put this in cuttlefish_assembly
+  auto ramdisk_path = instance_const.PerInstancePath("ramdisk.img");
+  auto vendor_ramdisk_path = instance_const.PerInstancePath("vendor_ramdisk.img");
   if (!boot_image_unpacker.HasRamdiskImage()) {
     LOG(INFO) << "A ramdisk is required, but the boot image did not have one.";
     return false;
@@ -568,8 +573,9 @@ void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     LOG(FATAL) << "asked to create composite disk, but path was empty";
   }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
-    std::string header_path = config.PerInstancePath("gpt_header.img");
-    std::string footer_path = config.PerInstancePath("gpt_footer.img");
+    auto instance = config.ForDefaultInstance();
+    std::string header_path = instance.PerInstancePath("gpt_header.img");
+    std::string footer_path = instance.PerInstancePath("gpt_footer.img");
     create_composite_disk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
   } else {
     aggregate_image(disk_config(), FLAGS_composite_disk);
@@ -720,5 +726,6 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
 }
 
 std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
-  return config.PerInstancePath("cuttlefish_config.json");
+  return config.ForDefaultInstance()
+      .PerInstancePath("cuttlefish_config.json");
 }
