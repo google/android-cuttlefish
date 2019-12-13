@@ -177,14 +177,15 @@ const Json::Value* CuttlefishConfig::InstanceSpecific::Dictionary() const {
   return &(*config_->dictionary_)[kInstances][id_];
 }
 
-std::string CuttlefishConfig::instance_dir() const {
-  return (*dictionary_)[kInstanceDir].asString();
+std::string CuttlefishConfig::InstanceSpecific::instance_dir() const {
+  return (*Dictionary())[kInstanceDir].asString();
 }
-void CuttlefishConfig::set_instance_dir(const std::string& instance_dir) {
-  (*dictionary_)[kInstanceDir] = instance_dir;
+void CuttlefishConfig::MutableInstanceSpecific::set_instance_dir(
+    const std::string& instance_dir) {
+  (*Dictionary())[kInstanceDir] = instance_dir;
 }
 
-std::string CuttlefishConfig::instance_internal_dir() const {
+std::string CuttlefishConfig::InstanceSpecific::instance_internal_dir() const {
   return PerInstancePath(kInternalDirName);
 }
 
@@ -346,11 +347,11 @@ void CuttlefishConfig::set_virtual_disk_paths(
   (*dictionary_)[kVirtualDiskPaths] = virtual_disks_json_obj;
 }
 
-std::string CuttlefishConfig::kernel_log_pipe_name() const {
+std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
   return cvd::AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
 
-std::string CuttlefishConfig::console_pipe_name() const {
+std::string CuttlefishConfig::InstanceSpecific::console_pipe_name() const {
   return cvd::AbsolutePath(PerInstanceInternalPath("console-pipe"));
 }
 
@@ -362,19 +363,20 @@ void CuttlefishConfig::set_deprecated_boot_completed(
   (*dictionary_)[kDeprecatedBootCompleted] = deprecated_boot_completed;
 }
 
-std::string CuttlefishConfig::console_path() const {
+std::string CuttlefishConfig::InstanceSpecific::console_path() const {
   return cvd::AbsolutePath(PerInstancePath("console"));
 }
 
-std::string CuttlefishConfig::logcat_path() const {
+std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
   return cvd::AbsolutePath(PerInstancePath("logcat"));
 }
 
-std::string CuttlefishConfig::launcher_monitor_socket_path() const {
+std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
+    const {
   return cvd::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
 }
 
-std::string CuttlefishConfig::launcher_log_path() const {
+std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return cvd::AbsolutePath(PerInstancePath("launcher.log"));
 }
 
@@ -734,15 +736,15 @@ std::string CuttlefishConfig::webrtc_certs_dir() const {
   return (*dictionary_)[kWebRTCCertsDir].asString();
 }
 
-std::string CuttlefishConfig::touch_socket_path() const {
+std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
   return PerInstanceInternalPath("touch.sock");
 }
 
-std::string CuttlefishConfig::keyboard_socket_path() const {
+std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
 }
 
-std::string CuttlefishConfig::frames_socket_path() const {
+std::string CuttlefishConfig::InstanceSpecific::frames_socket_path() const {
   return PerInstanceInternalPath("frames.sock");
 }
 
@@ -856,11 +858,12 @@ bool CuttlefishConfig::SaveToFile(const std::string& file) const {
   return !ofs.fail();
 }
 
-std::string CuttlefishConfig::PerInstancePath(const char* file_name) const {
+std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
+    const char* file_name) const {
   return (instance_dir() + "/") + file_name;
 }
 
-std::string CuttlefishConfig::PerInstanceInternalPath(
+std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
     const char* file_name) const {
   if (file_name[0] == '\0') {
     // Don't append a / if file_name is empty.
