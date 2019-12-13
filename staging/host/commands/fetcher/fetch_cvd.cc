@@ -23,6 +23,7 @@
 #include "gflags/gflags.h"
 #include <glog/logging.h>
 
+#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
@@ -390,15 +391,9 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  if (chdir(target_dir.c_str()) != 0) {
-    int error_num = errno;
-    LOG(FATAL) << "Could not change directory to \"" << target_dir << "\"."
-        << "errno was " << error_num << " \"" << strerror(error_num) << "\"";
-  }
-
   // Ignore return code. We want to make sure there is no running instance,
   // and stop_cvd will exit with an error code if there is already no running instance.
-  cvd::Command stop_cmd("bin/stop_cvd");
+  cvd::Command stop_cmd(target_dir + "/bin/stop_cvd");
   stop_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
                          cvd::Subprocess::StdIOChannel::kStdErr);
   stop_cmd.Start().Wait();
@@ -406,9 +401,35 @@ int main(int argc, char** argv) {
   // gflags::ParseCommandLineFlags will remove fetch_cvd's flags from this.
   // This depends the remove_flags argument (3rd) is "true".
 
+  auto filelist_fd = cvd::SharedFD::MemfdCreate("files_list");
+  if (!filelist_fd->IsOpen()) {
+    LOG(FATAL) << "Unable to create temp file to write file list. "
+               << filelist_fd->StrError() << " (" << filelist_fd->GetErrno() << ")";
+  }
+
+  for (const auto& file : config.get_cvd_files()) {
+    std::string file_entry = file.second.file_path + "\n";
+    auto chars_written = filelist_fd->Write(file_entry.c_str(), file_entry.size());
+    if (chars_written != file_entry.size()) {
+      LOG(FATAL) << "Unable to write entry to file list. Expected to write "
+                 << file_entry.size() << " but wrote " << chars_written << ". "
+                 << filelist_fd->StrError() << " (" << filelist_fd->GetErrno() << ")";
+    }
+  }
+  auto seek_result = filelist_fd->LSeek(0, SEEK_SET);
+  if (seek_result != 0) {
+    LOG(FATAL) << "Unable to seek on file list file. Expected 0, received " << seek_result
+               << filelist_fd->StrError() << " (" << filelist_fd->GetErrno() << ")";
+  }
+
+  if (filelist_fd->UNMANAGED_Dup2(0) == -1) {
+    LOG(FATAL) << "Unable to set file list to stdin. "
+               << filelist_fd->StrError() << " (" << filelist_fd->GetErrno() << ")";
+  }
+
   // TODO(b/139199114): Go into assemble_cvd when the interface is stable and implemented.
 
-  std::string next_stage = "bin/launch_cvd";
+  std::string next_stage = target_dir + "/bin/launch_cvd";
   std::vector<const char*> next_stage_argv = {"launch_cvd"};
   LOG(INFO) << "Running " << next_stage;
   for (int i = 1; i < argc; i++) {
