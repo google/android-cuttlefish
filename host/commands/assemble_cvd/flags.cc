@@ -237,8 +237,6 @@ bool InitializeCuttlefishConfiguration(
   vsoc::CuttlefishConfig tmp_config_obj;
   tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
   auto instance = tmp_config_obj.ForDefaultInstance();
-  auto instance_const = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
-      .ForDefaultInstance();
   // Set this first so that calls to PerInstancePath below are correct
   instance.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
@@ -281,21 +279,18 @@ bool InitializeCuttlefishConfiguration(
     tmp_config_obj.set_kernel_image_path(foreign_kernel);
     tmp_config_obj.set_use_unpacked_kernel(false);
   } else {
-    // TODO(schuffelen): Put this in cuttlefish_assembly
     tmp_config_obj.set_kernel_image_path(
-        instance_const.PerInstancePath(kKernelDefaultPath.c_str()));
+        tmp_config_obj.AssemblyPath(kKernelDefaultPath.c_str()));
     tmp_config_obj.set_use_unpacked_kernel(true);
   }
   tmp_config_obj.set_decompress_kernel(FLAGS_decompress_kernel);
   if (FLAGS_decompress_kernel) {
-    // TODO(schuffelen): Put this in cuttlefish_assembly
     tmp_config_obj.set_decompressed_kernel_image_path(
-        instance_const.PerInstancePath("vmlinux"));
+        tmp_config_obj.AssemblyPath("vmlinux"));
   }
 
-  // TODO(schuffelen): Put this in cuttlefish_assembly
-  auto ramdisk_path = instance_const.PerInstancePath("ramdisk.img");
-  auto vendor_ramdisk_path = instance_const.PerInstancePath("vendor_ramdisk.img");
+  auto ramdisk_path = tmp_config_obj.AssemblyPath("ramdisk.img");
+  auto vendor_ramdisk_path = tmp_config_obj.AssemblyPath("vendor_ramdisk.img");
   if (!boot_image_unpacker.HasRamdiskImage()) {
     LOG(INFO) << "A ramdisk is required, but the boot image did not have one.";
     return false;
