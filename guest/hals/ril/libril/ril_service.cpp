@@ -119,6 +119,9 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
 void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
         ::android::hardware::radio::V1_4::SetupDataCallResult& dcResult);
 
+void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+        ::android::hardware::radio::V1_5::SetupDataCallResult& dcResult);
+
 void convertRilDataCallListToHal(void *response, size_t responseLen,
         hidl_vec<SetupDataCallResult>& dcResultList);
 
@@ -545,7 +548,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
             ::android::hardware::radio::V1_5::AccessNetwork accessNetwork,
             const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo,
             bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason reason,
-            const hidl_vec<hidl_string>& addresses, const hidl_vec<hidl_string>& dnses);
+            const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& addresses,
+            const hidl_vec<hidl_string>& dnses);
     Return<void> setInitialAttachApn_1_5(int32_t serial,
             const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo);
     Return<void> setDataProfile_1_5(int32_t serial,
@@ -3667,7 +3671,8 @@ Return<void> RadioImpl_1_5::setupDataCall_1_5(int32_t serial ,
         ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */,
         const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo,
         bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason /* reason */,
-        const hidl_vec<hidl_string>& /* addresses */, const hidl_vec<hidl_string>& /* dnses */) {
+        const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& /* addresses */,
+        const hidl_vec<hidl_string>& /* dnses */) {
 
 #if VDBG
     RLOGD("setupDataCall_1_5: serial %d", serial);
@@ -4956,7 +4961,7 @@ int radio_1_5::setupDataCallResponse(int slotId,
     if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
-        ::android::hardware::radio::V1_4::SetupDataCallResult result;
+        ::android::hardware::radio::V1_5::SetupDataCallResult result;
         if (response == NULL || (responseLen % sizeof(RIL_Data_Call_Response_v11)) != 0) {
             if (response != NULL) {
                 RLOGE("setupDataCallResponse_1_5: Invalid response");
@@ -4965,7 +4970,7 @@ int radio_1_5::setupDataCallResponse(int slotId,
             result.cause = ::android::hardware::radio::V1_4::DataCallFailCause::ERROR_UNSPECIFIED;
             result.type = ::android::hardware::radio::V1_4::PdpProtocolType::UNKNOWN;
             result.ifname = hidl_string();
-            result.addresses = hidl_vec<hidl_string>();
+            result.addresses = hidl_vec<::android::hardware::radio::V1_5::LinkAddress>();
             result.dnses = hidl_vec<hidl_string>();
             result.gateways = hidl_vec<hidl_string>();
             result.pcscf = hidl_vec<hidl_string>();
@@ -8461,6 +8466,34 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
     dcResult.type = convertToPdpProtocolType(convertCharPtrToHidlString(dcResponse->type));
     dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
     dcResult.addresses = split(convertCharPtrToHidlString(dcResponse->addresses));
+    dcResult.dnses = split(convertCharPtrToHidlString(dcResponse->dnses));
+    dcResult.gateways = split(convertCharPtrToHidlString(dcResponse->gateways));
+    dcResult.pcscf = split(convertCharPtrToHidlString(dcResponse->pcscf));
+    dcResult.mtu = dcResponse->mtu;
+}
+
+void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+        ::android::hardware::radio::V1_5::SetupDataCallResult& dcResult) {
+    dcResult.cause = (::android::hardware::radio::V1_4::DataCallFailCause) dcResponse->status;
+    dcResult.suggestedRetryTime = dcResponse->suggestedRetryTime;
+    dcResult.cid = dcResponse->cid;
+    dcResult.active = (::android::hardware::radio::V1_4::DataConnActiveStatus)dcResponse->active;
+    dcResult.type = convertToPdpProtocolType(convertCharPtrToHidlString(dcResponse->type));
+    dcResult.ifname = convertCharPtrToHidlString(dcResponse->ifname);
+
+    std::vector<::android::hardware::radio::V1_5::LinkAddress> linkAddresses;
+    std::stringstream ss(static_cast<std::string>(dcResponse->addresses));
+    std::string tok;
+    while(getline(ss, tok, ' ')) {
+        ::android::hardware::radio::V1_5::LinkAddress la;
+        la.address = hidl_string(tok);
+        la.properties = 0;
+        la.deprecatedTime = 0;
+        la.expiredTime = 0;
+        linkAddresses.push_back(la);
+    }
+
+    dcResult.addresses = linkAddresses;
     dcResult.dnses = split(convertCharPtrToHidlString(dcResponse->dnses));
     dcResult.gateways = split(convertCharPtrToHidlString(dcResponse->gateways));
     dcResult.pcscf = split(convertCharPtrToHidlString(dcResponse->pcscf));
