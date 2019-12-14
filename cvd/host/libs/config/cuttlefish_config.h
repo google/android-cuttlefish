@@ -60,6 +60,8 @@ class CuttlefishConfig {
   std::string assembly_dir() const;
   void set_assembly_dir(const std::string& assembly_dir);
 
+  std::string AssemblyPath(const std::string&) const;
+
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
