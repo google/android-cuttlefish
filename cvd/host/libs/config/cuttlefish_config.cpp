@@ -181,8 +181,7 @@ const Json::Value* CuttlefishConfig::InstanceSpecific::Dictionary() const {
 std::string CuttlefishConfig::assembly_dir() const {
   return (*dictionary_)[kAssemblyDir].asString();
 }
-void CuttlefishConfig::set_assembly_dir(
-    const std::string& assembly_dir) {
+void CuttlefishConfig::set_assembly_dir(const std::string& assembly_dir) {
   (*dictionary_)[kAssemblyDir] = assembly_dir;
 }
 
@@ -865,6 +864,11 @@ bool CuttlefishConfig::SaveToFile(const std::string& file) const {
   }
   ofs << *dictionary_;
   return !ofs.fail();
+}
+
+std::string CuttlefishConfig::AssemblyPath(
+    const std::string& file_name) const {
+  return cvd::AbsolutePath(assembly_dir() + "/" + file_name);
 }
 
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
