@@ -216,6 +216,10 @@ std::string GetCuttlefishEnvPath() {
   return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
 }
 
+std::string GetLegacyConfigFilePath(const vsoc::CuttlefishConfig& config) {
+  return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
+}
+
 int GetHostPort() {
   constexpr int kFirstHostPort = 6520;
   return vsoc::ForCurrentInstance(kFirstHostPort);
@@ -393,6 +397,11 @@ bool InitializeCuttlefishConfiguration(
   // Save the config object before starting any host process
   if (!tmp_config_obj.SaveToFile(config_file)) {
     LOG(ERROR) << "Unable to save config object";
+    return false;
+  }
+  auto legacy_config_file = GetLegacyConfigFilePath(tmp_config_obj);
+  if (!tmp_config_obj.SaveToFile(legacy_config_file)) {
+    LOG(ERROR) << "Unable to save legacy config object";
     return false;
   }
   setenv(vsoc::kCuttlefishConfigEnvVarName, config_file.c_str(), true);
@@ -727,6 +736,5 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
 }
 
 std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
-  return config.ForDefaultInstance()
-      .PerInstancePath("cuttlefish_config.json");
+  return config.AssemblyPath("cuttlefish_config.json");
 }
