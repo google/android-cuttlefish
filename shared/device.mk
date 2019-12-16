@@ -37,7 +37,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 # sepolicy
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.adb.tcp.port=5555 \
-    persist.traced.enable=1 \
     ro.com.google.locationfeatures=1 \
 
 # Explanation of specific properties:
