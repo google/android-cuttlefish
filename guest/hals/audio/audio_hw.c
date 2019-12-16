@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include <log/log.h>
+#include <cutils/list.h>
 #include <cutils/str_parms.h>
 
 #include <hardware/hardware.h>
@@ -52,10 +53,13 @@
 #define IN_PERIOD_COUNT 4
 
 struct generic_audio_device {
-    struct audio_hw_device device; // Constant after init
+    struct audio_hw_device device;          // Constant after init
     pthread_mutex_t lock;
-    bool mic_mute;                 // Proteced by this->lock
-    struct mixer* mixer;           // Proteced by this->lock
+    bool mic_mute;                          // Protected by this->lock
+    struct mixer* mixer;                    // Protected by this->lock
+    struct listnode out_streams;            // Record for output streams, protected by this->lock
+    struct listnode in_streams;             // Record for input streams, protected by this->lock
+    audio_patch_handle_t next_patch_handle; // Protected by this->lock
 };
 
 /* If not NULL, this is a pointer to the fallback module.
@@ -172,13 +176,14 @@ static size_t audio_vbuffer_read (audio_vbuffer_t * audio_vbuffer, void * buffer
 }
 
 struct generic_stream_out {
-    struct audio_stream_out stream;   // Constant after init
+    struct audio_stream_out stream;                 // Constant after init
     pthread_mutex_t lock;
-    struct generic_audio_device *dev; // Constant after init
-    audio_devices_t device;           // Protected by this->lock
-    struct audio_config req_config;   // Constant after init
-    struct pcm_config pcm_config;     // Constant after init
-    audio_vbuffer_t buffer;           // Constant after init
+    struct generic_audio_device *dev;               // Constant after init
+    uint32_t num_devices;                           // Protected by this->lock
+    audio_devices_t devices[AUDIO_PATCH_PORTS_MAX]; // Protected by this->lock
+    struct audio_config req_config;                 // Constant after init
+    struct pcm_config pcm_config;                   // Constant after init
+    audio_vbuffer_t buffer;                         // Constant after init
 
     // Time & Position Keeping
     bool standby;                      // Protected by this->lock
@@ -194,6 +199,11 @@ struct generic_stream_out {
     pthread_cond_t worker_wake;       // Protected by this->lock
     bool worker_standby;              // Protected by this->lock
     bool worker_exit;                 // Protected by this->lock
+
+    audio_io_handle_t handle;          // Constant after init
+    audio_patch_handle_t patch_handle; // Protected by this->dev->lock
+
+    struct listnode stream_node;       // Protected by this->dev->lock
 };
 
 struct generic_stream_in {
@@ -219,6 +229,11 @@ struct generic_stream_in {
     pthread_cond_t worker_wake;       // Protected by this->lock
     bool worker_standby;              // Protected by this->lock
     bool worker_exit;                 // Protected by this->lock
+
+    audio_io_handle_t handle;          // Constant after init
+    audio_patch_handle_t patch_handle; // Protected by this->dev->lock
+
+    struct listnode stream_node;       // Protected by this->dev->lock
 };
 
 static struct pcm_config pcm_config_out = {
@@ -290,29 +305,32 @@ static int out_dump(const struct audio_stream *stream, int fd)
                 "\t\tbuffer size: %zu\n"
                 "\t\tchannel mask: %08x\n"
                 "\t\tformat: %d\n"
-                "\t\tdevice: %08x\n"
-                "\t\taudio dev: %p\n\n",
+                "\t\tdevice(s): ",
                 out_get_sample_rate(stream),
                 out_get_buffer_size(stream),
                 out_get_channels(stream),
-                out_get_format(stream),
-                out->device,
-                out->dev);
+                out_get_format(stream));
+    if (out->num_devices == 0) {
+        dprintf(fd, "%08x\n", AUDIO_DEVICE_NONE);
+    } else {
+        for (uint32_t i = 0; i < out->num_devices; i++) {
+            if (i != 0) {
+                dprintf(fd, ", ");
+            }
+            dprintf(fd, "%08x", out->devices[i]);
+        }
+        dprintf(fd, "\n");
+    }
+    dprintf(fd, "\t\taudio dev: %p\n\n", out->dev);
     pthread_mutex_unlock(&out->lock);
     return 0;
 }
 
 static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
 {
-    struct generic_stream_out *out = (struct generic_stream_out *)stream;
     struct str_parms *parms;
     char value[32];
-    int ret = -EINVAL;
     int success;
-    long val;
-    char *end;
-    bool new_device_req = false;
-    int new_device;
 
     if (kvpairs == NULL || kvpairs[0] == 0) {
         return 0;
@@ -320,28 +338,16 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     parms = str_parms_create_str(kvpairs);
     success = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
             value, sizeof(value));
-    if (success >= 0) {
-        errno = 0;
-        val = strtol(value, &end, 10);
-        if ((errno == 0) && (end != NULL) && (*end == '\0') && ((int)val == val)) {
-            new_device_req = true;
-            new_device = (int)val;
-            ret = 0;
-        }
-    }
-    str_parms_destroy(parms);
-    if (ret != 0) {
-        ALOGD("%s: Unsupported parameter %s", __FUNCTION__, kvpairs);
-        return ret;
-    }
+    // As the hal version is 3.0, it must not use set parameters API to set audio devices.
+    // Instead, it should use create_audio_patch API.
+    assert(("Must not use set parameters API to set audio devices", success < 0));
 
-    // Try applying change requests
-    pthread_mutex_lock(&out->lock);
-    if (new_device_req) {
-        out->device = new_device;
-    }
-    pthread_mutex_unlock(&out->lock);
-    return ret;
+    str_parms_destroy(parms);
+
+    ALOGW("%s(), unsupported parameter %s", __func__, kvpairs);
+    // There is not any key supported for set_parameters API.
+    // Return error when there is non-null value passed in.
+    return -EINVAL;
 }
 
 static char * out_get_parameters(const struct audio_stream *stream, const char *keys)
@@ -357,7 +363,11 @@ static char * out_get_parameters(const struct audio_stream *stream, const char *
     ret = str_parms_get_str(query, AUDIO_PARAMETER_STREAM_ROUTING, value, sizeof(value));
     if (ret >= 0) {
         pthread_mutex_lock(&out->lock);
-        str_parms_add_int(reply, AUDIO_PARAMETER_STREAM_ROUTING, out->device);
+        audio_devices_t device = AUDIO_DEVICE_NONE;
+        for (uint32_t i = 0; i < out->num_devices; i++) {
+            device |= out->devices[i];
+        }
+        str_parms_add_int(reply, AUDIO_PARAMETER_STREAM_ROUTING, device);
         pthread_mutex_unlock(&out->lock);
         get = true;
     }
@@ -834,15 +844,9 @@ static int in_dump(const struct audio_stream *stream, int fd)
 
 static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
 {
-    struct generic_stream_in *in = (struct generic_stream_in *)stream;
     struct str_parms *parms;
     char value[32];
-    int ret = -EINVAL;
     int success;
-    long val;
-    char *end;
-    bool new_device_req = false;
-    int new_device;
 
     if (kvpairs == NULL || kvpairs[0] == 0) {
         return 0;
@@ -850,28 +854,16 @@ static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
     parms = str_parms_create_str(kvpairs);
     success = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
             value, sizeof(value));
-    if (success >= 0) {
-        errno = 0;
-        val = strtol(value, &end, 10);
-        if ((errno == 0) && (end != NULL) && (*end == '\0') && ((int)val == val)) {
-            new_device_req = true;
-            new_device = (int)val;
-            ret = 0;
-        }
-    }
-    str_parms_destroy(parms);
-    if (ret != 0) {
-        ALOGD("%s: Unsupported parameter %s", __FUNCTION__, kvpairs);
-        return ret;
-    }
+    // As the hal version is 3.0, it must not use set parameters API to set audio device.
+    // Instead, it should use create_audio_patch API.
+    assert(("Must not use set parameters API to set audio devices", success < 0));
 
-    // Try applying change requests
-    pthread_mutex_lock(&in->lock);
-    if (new_device_req) {
-        in->device = new_device;
-    }
-    pthread_mutex_unlock(&in->lock);
-    return ret;
+    str_parms_destroy(parms);
+
+    ALOGW("%s(), unsupported parameter %s", __func__, kvpairs);
+    // There is not any key supported for set_parameters API.
+    // Return error when there is non-null value passed in.
+    return -EINVAL;
 }
 
 static char * in_get_parameters(const struct audio_stream *stream,
@@ -1222,9 +1214,13 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
     out->stream.get_presentation_position = out_get_presentation_position;
     out->stream.get_next_write_timestamp = out_get_next_write_timestamp;
 
+    out->handle = handle;
+
     pthread_mutex_init(&out->lock, (const pthread_mutexattr_t *) NULL);
     out->dev = adev;
-    out->device = devices;
+    // Only 1 device is expected despite the argument being named 'devices'
+    out->num_devices = 1;
+    out->devices[0] = devices;
     memcpy(&out->req_config, config, sizeof(struct audio_config));
     memcpy(&out->pcm_config, &pcm_config_out, sizeof(struct pcm_config));
     out->pcm_config.rate = config->sample_rate;
@@ -1250,12 +1246,31 @@ static int adev_open_output_stream(struct audio_hw_device *dev,
         pthread_create(&out->worker_thread, NULL, out_write_worker, out);
 
     }
-    *stream_out = &out->stream;
 
+    pthread_mutex_lock(&adev->lock);
+    list_add_tail(&adev->out_streams, &out->stream_node);
+    pthread_mutex_unlock(&adev->lock);
+
+    *stream_out = &out->stream;
 
 error:
 
     return ret;
+}
+
+// This must be called with adev->lock held.
+struct generic_stream_out *get_stream_out_by_io_handle_l(
+        struct generic_audio_device *adev, audio_io_handle_t handle) {
+    struct listnode *node;
+
+    list_for_each(node, &adev->out_streams) {
+        struct generic_stream_out *out = node_to_item(
+                node, struct generic_stream_out, stream_node);
+        if (out->handle == handle) {
+            return out;
+        }
+    }
+    return NULL;
 }
 
 static void adev_close_output_stream(struct audio_hw_device *dev,
@@ -1272,6 +1287,11 @@ static void adev_close_output_stream(struct audio_hw_device *dev,
     pthread_join(out->worker_thread, NULL);
     pthread_mutex_destroy(&out->lock);
     audio_vbuffer_destroy(&out->buffer);
+
+    struct generic_audio_device *adev = (struct generic_audio_device *) dev;
+    pthread_mutex_lock(&adev->lock);
+    list_remove(&out->stream_node);
+    pthread_mutex_unlock(&adev->lock);
     free(stream);
 }
 
@@ -1348,6 +1368,20 @@ static size_t adev_get_input_buffer_size(const struct audio_hw_device *dev,
     return get_input_buffer_size(config->sample_rate, config->format, config->channel_mask);
 }
 
+// This must be called with adev->lock held.
+struct generic_stream_in *get_stream_in_by_io_handle_l(
+        struct generic_audio_device *adev, audio_io_handle_t handle) {
+    struct listnode *node;
+
+    list_for_each(node, &adev->in_streams) {
+        struct generic_stream_in *in = node_to_item(
+                node, struct generic_stream_in, stream_node);
+        if (in->handle == handle) {
+            return in;
+        }
+    }
+    return NULL;
+}
 
 static void adev_close_input_stream(struct audio_hw_device *dev,
                                    struct audio_stream_in *stream)
@@ -1368,6 +1402,11 @@ static void adev_close_input_stream(struct audio_hw_device *dev,
 
     pthread_mutex_destroy(&in->lock);
     audio_vbuffer_destroy(&in->buffer);
+
+    struct generic_audio_device *adev = (struct generic_audio_device *) dev;
+    pthread_mutex_lock(&adev->lock);
+    list_remove(&in->stream_node);
+    pthread_mutex_unlock(&adev->lock);
     free(stream);
 }
 
@@ -1442,6 +1481,11 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
         in->worker_exit = false;
         pthread_create(&in->worker_thread, NULL, in_read_worker, in);
     }
+    in->handle = handle;
+
+    pthread_mutex_lock(&adev->lock);
+    list_add_tail(&adev->in_streams, &in->stream_node);
+    pthread_mutex_unlock(&adev->lock);
 
     *stream_in = &in->stream;
 
@@ -1497,6 +1541,159 @@ static int adev_get_microphones(const audio_hw_device_t *dev,
     return 0;
 }
 
+static int adev_create_audio_patch(struct audio_hw_device *dev,
+                                   unsigned int num_sources,
+                                   const struct audio_port_config *sources,
+                                   unsigned int num_sinks,
+                                   const struct audio_port_config *sinks,
+                                   audio_patch_handle_t *handle) {
+    if (num_sources != 1 || num_sinks == 0 || num_sinks > AUDIO_PATCH_PORTS_MAX) {
+        return -EINVAL;
+    }
+
+    if (sources[0].type == AUDIO_PORT_TYPE_DEVICE) {
+        // If source is a device, the number of sinks should be 1.
+        if (num_sinks != 1 || sinks[0].type != AUDIO_PORT_TYPE_MIX) {
+            return -EINVAL;
+        }
+    } else if (sources[0].type == AUDIO_PORT_TYPE_MIX) {
+        // If source is a mix, all sinks should be device.
+        for (unsigned int i = 0; i < num_sinks; i++) {
+            if (sinks[i].type != AUDIO_PORT_TYPE_DEVICE) {
+                ALOGE("%s() invalid sink type %#x for mix source", __func__, sinks[i].type);
+                return -EINVAL;
+            }
+        }
+    } else {
+        // All other cases are invalid.
+        return -EINVAL;
+    }
+
+    struct generic_audio_device* adev = (struct generic_audio_device*) dev;
+    int ret = 0;
+    bool generatedPatchHandle = false;
+    pthread_mutex_lock(&adev->lock);
+    if (*handle == AUDIO_PATCH_HANDLE_NONE) {
+        *handle = ++adev->next_patch_handle;
+        generatedPatchHandle = true;
+    }
+
+    // Only handle patches for mix->devices and device->mix case.
+    if (sources[0].type == AUDIO_PORT_TYPE_DEVICE) {
+        struct generic_stream_in *in =
+                get_stream_in_by_io_handle_l(adev, sinks[0].ext.mix.handle);
+        if (in == NULL) {
+            ALOGE("%s()can not find stream with handle(%d)", __func__, sources[0].ext.mix.handle);
+            ret = -EINVAL;
+            goto error;
+        }
+
+        // Check if the patch handle match the recorded one if a valid patch handle is passed.
+        if (!generatedPatchHandle && in->patch_handle != *handle) {
+            ALOGE("%s() the patch handle(%d) does not match recorded one(%d) for stream "
+                  "with handle(%d) when creating audio patch for device->mix",
+                  __func__, *handle, in->patch_handle, in->handle);
+            ret = -EINVAL;
+            goto error;
+        }
+        pthread_mutex_lock(&in->lock);
+        in->device = sources[0].ext.device.type;
+        pthread_mutex_unlock(&in->lock);
+        in->patch_handle = *handle;
+    } else {
+        struct generic_stream_out *out =
+                get_stream_out_by_io_handle_l(adev, sources[0].ext.mix.handle);
+        if (out == NULL) {
+            ALOGE("%s()can not find stream with handle(%d)", __func__, sources[0].ext.mix.handle);
+            ret = -EINVAL;
+            goto error;
+        }
+
+        // Check if the patch handle match the recorded one if a valid patch handle is passed.
+        if (!generatedPatchHandle && out->patch_handle != *handle) {
+            ALOGE("%s() the patch handle(%d) does not match recorded one(%d) for stream "
+                  "with handle(%d) when creating audio patch for mix->device",
+                  __func__, *handle, out->patch_handle, out->handle);
+            ret = -EINVAL;
+            pthread_mutex_unlock(&out->lock);
+            goto error;
+        }
+        pthread_mutex_lock(&out->lock);
+        for (out->num_devices = 0; out->num_devices < num_sinks; out->num_devices++) {
+            out->devices[out->num_devices] = sinks[out->num_devices].ext.device.type;
+        }
+        pthread_mutex_unlock(&out->lock);
+        out->patch_handle = *handle;
+    }
+
+error:
+    if (ret != 0 && generatedPatchHandle) {
+        *handle = AUDIO_PATCH_HANDLE_NONE;
+    }
+    pthread_mutex_unlock(&adev->lock);
+    return 0;
+}
+
+// This must be called with adev->lock held.
+struct generic_stream_out *get_stream_out_by_patch_handle_l(
+        struct generic_audio_device *adev, audio_patch_handle_t patch_handle) {
+    struct listnode *node;
+
+    list_for_each(node, &adev->out_streams) {
+        struct generic_stream_out *out = node_to_item(
+                node, struct generic_stream_out, stream_node);
+        if (out->patch_handle == patch_handle) {
+            return out;
+        }
+    }
+    return NULL;
+}
+
+// This must be called with adev->lock held.
+struct generic_stream_in *get_stream_in_by_patch_handle_l(
+        struct generic_audio_device *adev, audio_patch_handle_t patch_handle) {
+    struct listnode *node;
+
+    list_for_each(node, &adev->in_streams) {
+        struct generic_stream_in *in = node_to_item(
+                node, struct generic_stream_in, stream_node);
+        if (in->patch_handle == patch_handle) {
+            return in;
+        }
+    }
+    return NULL;
+}
+
+static int adev_release_audio_patch(struct audio_hw_device *dev,
+                                    audio_patch_handle_t patch_handle) {
+    struct generic_audio_device *adev = (struct generic_audio_device *) dev;
+
+    pthread_mutex_lock(&adev->lock);
+    struct generic_stream_out *out = get_stream_out_by_patch_handle_l(adev, patch_handle);
+    if (out != NULL) {
+        pthread_mutex_lock(&out->lock);
+        out->num_devices = 0;
+        memset(out->devices, 0, sizeof(out->devices));
+        pthread_mutex_unlock(&out->lock);
+        out->patch_handle = AUDIO_PATCH_HANDLE_NONE;
+        pthread_mutex_unlock(&adev->lock);
+        return 0;
+    }
+    struct generic_stream_in *in = get_stream_in_by_patch_handle_l(adev, patch_handle);
+    if (in != NULL) {
+        pthread_mutex_lock(&in->lock);
+        in->device = AUDIO_DEVICE_NONE;
+        pthread_mutex_unlock(&in->lock);
+        in->patch_handle = AUDIO_PATCH_HANDLE_NONE;
+        pthread_mutex_unlock(&adev->lock);
+        return 0;
+    }
+
+    pthread_mutex_unlock(&adev->lock);
+    ALOGW("%s() cannot find stream for patch handle: %d", __func__, patch_handle);
+    return -EINVAL;
+}
+
 static int adev_close(hw_device_t *dev)
 {
     struct generic_audio_device *adev = (struct generic_audio_device *)dev;
@@ -1545,7 +1742,7 @@ static int adev_open(const hw_module_t* module, const char* name,
     pthread_mutex_init(&adev->lock, (const pthread_mutexattr_t *) NULL);
 
     adev->device.common.tag = HARDWARE_DEVICE_TAG;
-    adev->device.common.version = AUDIO_DEVICE_API_VERSION_2_0;
+    adev->device.common.version = AUDIO_DEVICE_API_VERSION_3_0;
     adev->device.common.module = (struct hw_module_t *) module;
     adev->device.common.close = adev_close;
 
@@ -1567,8 +1764,14 @@ static int adev_open(const hw_module_t* module, const char* name,
     adev->device.close_input_stream = adev_close_input_stream;
     adev->device.dump = adev_dump;
     adev->device.get_microphones = adev_get_microphones;
+    adev->device.create_audio_patch = adev_create_audio_patch;
+    adev->device.release_audio_patch = adev_release_audio_patch;
 
     *device = &adev->device.common;
+
+    adev->next_patch_handle = AUDIO_PATCH_HANDLE_NONE;
+    list_init(&adev->out_streams);
+    list_init(&adev->in_streams);
 
     adev->mixer = mixer_open(PCM_CARD);
     struct mixer_ctl *ctl;
