@@ -574,9 +574,8 @@ void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     LOG(FATAL) << "asked to create composite disk, but path was empty";
   }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
-    auto instance = config.ForDefaultInstance();
-    std::string header_path = instance.PerInstancePath("gpt_header.img");
-    std::string footer_path = instance.PerInstancePath("gpt_footer.img");
+    std::string header_path = config.AssemblyPath("gpt_header.img");
+    std::string footer_path = config.AssemblyPath("gpt_footer.img");
     create_composite_disk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
   } else {
     aggregate_image(disk_config(), FLAGS_composite_disk);
