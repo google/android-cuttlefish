@@ -827,7 +827,7 @@ void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
   for (const auto& arg : android::base::Split(extra_cmdline, " ")) {
     args_json_obj.append(arg);
   }
-  (*dictionary_)[kExtraKernelCmdline] = extra_cmdline;
+  (*dictionary_)[kExtraKernelCmdline] = args_json_obj;
 }
 std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
   std::vector<std::string> cmdline;
