@@ -28,12 +28,15 @@ scp *.img vsoc-01@$CF:~/
 
 You can boot Cuttlefish from the container as follows:
 
-	ssh vsoc-01@$CF -L localhost:6520:127.0.0.1:6520 -L localhost:6444:127.0.0.1:6444 -- bin/launch_cvd -cpus 4 -memory_mb 4096
+```bash
+ssh vsoc-01@$CF -L localhost:6520:127.0.0.1:6520 -L localhost:6444:127.0.0.1:6444
+bin/launch_cvd -cpus 4 -memory_mb 4096
+```
 
 The above example launches Cuttlefish with 4 cores and 4GB of RAM, while also setting up an SSH tunnel that allows you to connect to Cuttlefish via ADB and VNC from outside the container:
 
 ```bash
-adb connect localhost:6250
+adb connect localhost:6520
 adb shell
 ```
 
