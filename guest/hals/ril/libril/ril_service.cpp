@@ -550,6 +550,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
             const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo);
     Return<void> setDataProfile_1_5(int32_t serial,
             const hidl_vec<::android::hardware::radio::V1_5::DataProfileInfo>& profiles);
+    Return<void> setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
+            bool preferredForEmergencyCall);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3604,6 +3606,16 @@ Return<void> RadioImpl_1_5::enableUiccApplications(int32_t serial, bool enable) 
     RLOGD("enableUiccApplications: serial %d enable %d", serial, enable);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_ENABLE_UICC_APPLICATIONS, 1, BOOL_TO_INT(enable));
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
+                                          bool preferredForEmergencyCall) {
+#if VDBG
+    RLOGD("setRadioPower_1_5: serial %d powerOn %d forEmergency %d preferredForEmergencyCall %d",
+        serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_RADIO_POWER_1_5);
     return Void();
 }
 
@@ -8067,6 +8079,27 @@ int radio_1_5::startNetworkScanResponse_1_5(int slotId, int responseType, int se
     } else {
         RLOGE("startNetworkScanResponse: radioService[%d]->mRadioResponseV1_5 == NULL", slotId);
     }
+    return 0;
+}
+
+int radio_1_5::setRadioPowerResponse_1_5(int slotId, int responseType, int serial, RIL_Errno e,
+                                         void* /* response */, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    RadioResponseInfo responseInfo = {};
+    populateResponseInfo(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_5 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_5 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_5->setRadioPowerResponse_1_5(
+            responseInfo);
+    radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
 

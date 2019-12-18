@@ -2289,6 +2289,12 @@ static void request_start_network_scan_1_5(RIL_Token t) {
   return;
 }
 
+static void request_set_radio_power_1_5(RIL_Token t) {
+  ALOGV("request_set_radio_power_1_5");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
 static void gce_ril_on_request(int request, void* data, size_t datalen,
                                RIL_Token t) {
   // Ignore all requests except RIL_REQUEST_GET_SIM_STATUS
@@ -2587,6 +2593,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_START_NETWORK_SCAN_1_5:
       request_start_network_scan_1_5(t);
+      break;
+    case RIL_REQUEST_SET_RADIO_POWER_1_5:
+      request_set_radio_power_1_5(t);
       break;
     default:
       ALOGE("Request %d not supported.", request);
