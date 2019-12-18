@@ -1,0 +1,67 @@
+// Copyright (C) 2018 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_library_static {
+    name: "libandroidglue",
+    host_supported: true,
+    srcs: [
+        "AAtomizer.cpp",
+        "ABitReader.cpp",
+        "ABuffer.cpp",
+        "ALooper.cpp",
+        "ALooperRoster.cpp",
+        "AMessage.cpp",
+        "ANetworkSession.cpp",
+        "AnotherPacketSource.cpp",
+        "ATSParser.cpp",
+        "ESQueue.cpp",
+        "FileSource.cpp",
+        "JSONObject.cpp",
+        "KeyStore.cpp",
+        "MyScopedByteArray.cpp",
+        "MyScopedUTF8String.cpp",
+        "NuMediaExtractor.cpp",
+        "Utils.cpp",
+        "avc_utils.cpp",
+        "base64.cpp",
+        "hexdump.cpp",
+        "ParsedMessage.cpp",
+        "RefBase.cpp",
+        "TSPacketizer.cpp",
+    ],
+    target: {
+        host: {
+            cflags: [
+                "-DTARGET_ANDROID",
+            ],
+        },
+        android: {
+            cflags: [
+                "-DTARGET_ANDROID_DEVICE",
+            ],
+            srcs: [
+                "ADebug.cpp",
+                "JavaThread.cpp",
+                "MyAndroidRuntime.cpp",
+                "MyJNIHelpers.cpp",
+            ],
+        },
+    },
+    shared_libs: [
+        "libbase",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+}
+
