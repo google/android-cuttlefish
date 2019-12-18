@@ -174,3 +174,4 @@
     {RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED, radio_1_5::areUiccApplicationsEnabledResponse},
     {RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5, radio_1_5::setSystemSelectionChannelsResponse_1_5},
     {RIL_REQUEST_START_NETWORK_SCAN_1_5, radio_1_5::startNetworkScanResponse_1_5},
+    {RIL_REQUEST_SET_RADIO_POWER_1_5, radio_1_5::setRadioPowerResponse_1_5},
