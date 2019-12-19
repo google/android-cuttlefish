@@ -1,6 +1,6 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster
+FROM debian:buster-slim
 
 ENV container docker
 ENV LC_ALL C
@@ -27,7 +27,9 @@ CMD ["/lib/systemd/systemd"]
 RUN apt update \
     && apt install -y apt-utils sudo vim dpkg-dev devscripts gawk coreutils \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
-       net-tools rsyslog qemu-system-x86 equivs
+       net-tools rsyslog equivs # qemu-system-x86
+
+RUN dpkg -l
 
 COPY . /root/android-cuttlefish/
 
