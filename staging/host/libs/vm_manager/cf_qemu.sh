@@ -159,13 +159,6 @@ if [[ -n "${ramdisk_image_path}" ]]; then
   args+=(-initrd "${ramdisk_image_path}")
 fi
 
-if [[ -n "${usb_v1_socket_name}" ]]; then
-  args+=(
-      -chardev "socket,id=charchannel1,path=${usb_v1_socket_name:-${default_internal_dir}/usb-v1}"
-      -device "virtserialport,bus=virtio-serial0.0,nr=2,chardev=charchannel1,id=channel1,name=cf-gadget-usb-v1"
-  )
-fi
-
 if [[ ${vsock_guest_cid:-0} -gt 2 ]]; then
   args+=(-device "vhost-vsock-pci,guest-cid=${vsock_guest_cid}")
 fi

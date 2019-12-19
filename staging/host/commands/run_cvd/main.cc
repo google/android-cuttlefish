@@ -159,13 +159,7 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
   }
   std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
                            config.PerInstancePath(".") + "\"\n";
-  config_env += "export ANDROID_SERIAL=";
-  if (config.adb_mode().count(vsoc::AdbMode::Usb) > 0) {
-    config_env += config.serial_number();
-  } else {
-    config_env += config.adb_ip_and_port();
-  }
-  config_env += "\n";
+  config_env += "export ANDROID_SERIAL=" + config.adb_ip_and_port() + "\n";
   env->Write(config_env.c_str(), config_env.size());
   return true;
 }
@@ -404,14 +398,14 @@ int main(int argc, char** argv) {
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
 
-  LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
+  auto logcat_server = LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
+  auto logcat_server_args = KernelCommandLineFromLogcatServer(logcat_server);
 
-  LaunchConfigServer(*config, &process_monitor);
+  auto config_server = LaunchConfigServer(*config, &process_monitor);
+  auto config_server_args = KernelCommandLineFromConfigServer(config_server);
 
   auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
-
-  LaunchUsbServerIfEnabled(*config, &process_monitor);
 
   // The vnc server needs to be launched after the ivserver because it connects
   // to it when using qemu. It needs to launch before the VMM because it serves
@@ -424,6 +418,8 @@ int main(int argc, char** argv) {
   kernel_args.insert(kernel_args.end(), vnc_kernel_args.begin(), vnc_kernel_args.end());
   kernel_args.insert(kernel_args.end(), tombstone_kernel_args.begin(),
                      tombstone_kernel_args.end());
+  kernel_args.insert(kernel_args.end(), config_server_args.begin(), config_server_args.end());
+  kernel_args.insert(kernel_args.end(), logcat_server_args.begin(), logcat_server_args.end());
 
   // Start the guest VM
   vm_manager->WithFrontend(vnc_kernel_args.size() > 0);
