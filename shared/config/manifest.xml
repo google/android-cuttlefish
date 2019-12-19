@@ -17,6 +17,7 @@
 */
 -->
 <manifest version="1.0" type="device" target-level="4">
+    <kernel  target-level="5" />
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
