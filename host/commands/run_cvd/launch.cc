@@ -149,10 +149,10 @@ void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
                                    GetOnSubprocessExitCallback(config));
 }
 
-void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
-                                      cvd::ProcessMonitor* process_monitor) {
+TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
+    const vsoc::CuttlefishConfig& config, cvd::ProcessMonitor* process_monitor) {
   if (!config.enable_tombstone_receiver()) {
-    return;
+    return {};
   }
 
   std::string tombstoneDir = config.PerInstancePath("tombstones");
@@ -163,15 +163,16 @@ void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
       LOG(ERROR) << "Failed to create tombstone directory: " << tombstoneDir
                  << ". Error: " << errno;
       exit(RunnerExitCodes::kTombstoneDirCreationError);
+      return {};
     }
   }
 
-  auto port = config.tombstone_receiver_port();
-  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create tombstone server socket: "
                << socket->StrError();
     std::exit(RunnerExitCodes::kTombstoneServerError);
+    return {};
   }
   cvd::Command cmd(config.tombstone_receiver_binary());
   cmd.AddParameter("-server_fd=", socket);
@@ -179,6 +180,7 @@ void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
 
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
+  return { socket->VsockServerPort() };
 }
 
 void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
