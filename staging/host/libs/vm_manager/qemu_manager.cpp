@@ -146,7 +146,6 @@ std::vector<cvd::Command> QemuManager::StartCommands() {
                config_->kernel_log_pipe_name());
   LogAndSetEnv("console_path", config_->console_path());
   LogAndSetEnv("logcat_path", config_->logcat_path());
-  LogAndSetEnv("usb_v1_socket_name", config_->usb_v1_socket_name());
   LogAndSetEnv("vsock_guest_cid", std::to_string(config_->vsock_guest_cid()));
   LogAndSetEnv("logcat_mode", config_->logcat_mode());
   LogAndSetEnv("use_bootloader", config_->use_bootloader() ? "true" : "false");
