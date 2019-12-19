@@ -20,6 +20,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <variant>
 
 #include "credential_source.h"
 #include "curl_wrapper.h"
@@ -35,6 +36,7 @@ class Artifact {
   unsigned int crc32;
 public:
   Artifact(const Json::Value&);
+  Artifact(const std::string& name) : name(name) {}
 
   const std::string& Name() const { return name; }
   size_t Size() const { return size; }
@@ -58,6 +60,23 @@ struct DeviceBuild {
 
 std::ostream& operator<<(std::ostream&, const DeviceBuild&);
 
+struct DirectoryBuild {
+  // TODO(schuffelen): Support local builds other than "eng"
+  DirectoryBuild(const std::vector<std::string>& paths,
+                 const std::string& target)
+      : paths(paths), target(target), id("eng") {}
+
+  std::vector<std::string> paths;
+  std::string target;
+  std::string id;
+};
+
+std::ostream& operator<<(std::ostream&, const DirectoryBuild&);
+
+using Build = std::variant<DeviceBuild, DirectoryBuild>;
+
+std::ostream& operator<<(std::ostream&, const Build&);
+
 class BuildApi {
   CurlWrapper curl;
   std::unique_ptr<CredentialSource> credential_source;
@@ -76,8 +95,24 @@ public:
 
   bool ArtifactToFile(const DeviceBuild& build, const std::string& artifact,
                       const std::string& path);
+
+  std::vector<Artifact> Artifacts(const DirectoryBuild&);
+
+  bool ArtifactToFile(const DirectoryBuild& build, const std::string& artifact,
+                      const std::string& path);
+
+  std::vector<Artifact> Artifacts(const Build& build) {
+    return std::visit([this](auto&& arg) { return Artifacts(arg); }, build);
+  }
+
+  bool ArtifactToFile(const Build& build, const std::string& artifact,
+                      const std::string& path) {
+    return std::visit([this, &artifact, &path](auto&& arg) {
+      return ArtifactToFile(arg, artifact, path);
+    }, build);
+  }
 };
 
-DeviceBuild ArgumentToBuild(BuildApi* api, const std::string& arg,
-                            const std::string& default_build_target,
-                            const std::chrono::seconds& retry_period);
+Build ArgumentToBuild(BuildApi* api, const std::string& arg,
+                      const std::string& default_build_target,
+                      const std::chrono::seconds& retry_period);
