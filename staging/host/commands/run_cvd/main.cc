@@ -46,6 +46,7 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
+#include "host/commands/run_cvd/kernel_args.h"
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/process_monitor.h"
@@ -277,88 +278,6 @@ std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
   return config.PerInstancePath("cuttlefish_config.json");
 }
 
-template<typename T>
-void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
-  destination->insert(destination->end(), source.begin(), source.end());
-}
-
-template<typename S, typename T>
-static std::string concat(const S& s, const T& t) {
-  std::ostringstream os;
-  os << s << t;
-  return os.str();
-}
-
-std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfig& config) {
-  std::vector<std::string> kernel_cmdline;
-
-  AppendVector(&kernel_cmdline, config.boot_image_kernel_cmdline());
-  AppendVector(&kernel_cmdline,
-               vm_manager::VmManager::ConfigureGpuMode(config.vm_manager(), config.gpu_mode()));
-  AppendVector(&kernel_cmdline, vm_manager::VmManager::ConfigureBootDevices(config.vm_manager()));
-
-  kernel_cmdline.push_back(concat("androidboot.serialno=", config.serial_number()));
-  kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
-  if (config.logcat_mode() == cvd::kLogcatVsockMode) {
-    kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", config.logcat_vsock_port()));
-  }
-  if (config.enable_tombstone_receiver()) {
-    kernel_cmdline.push_back("androidboot.tombstone_transmit=1");
-    kernel_cmdline.push_back(concat(
-        "androidboot.vsock_tombstone_port=",
-        config.tombstone_receiver_port()));
-    // TODO (b/128842613) populate a cid flag to read the host CID during
-    // runtime
-  } else {
-    kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
-  }
-  kernel_cmdline.push_back(concat(
-      "androidboot.cuttlefish_config_server_port=", config.config_server_port()));
-  kernel_cmdline.push_back(concat(
-      "androidboot.setupwizard_mode=", config.setupwizard_mode()));
-  if (!config.use_bootloader()) {
-    std::string slot_suffix;
-    if (config.boot_slot().empty()) {
-      slot_suffix = "_a";
-    } else {
-      slot_suffix = "_" + config.boot_slot();
-    }
-    kernel_cmdline.push_back(concat("androidboot.slot_suffix=", slot_suffix));
-  }
-  kernel_cmdline.push_back(concat("loop.max_part=", config.loop_max_part()));
-  if (config.guest_enforce_security()) {
-    kernel_cmdline.push_back("enforcing=1");
-  } else {
-    kernel_cmdline.push_back("enforcing=0");
-    kernel_cmdline.push_back("androidboot.selinux=permissive");
-  }
-  if (config.guest_audit_security()) {
-    kernel_cmdline.push_back("audit=1");
-  } else {
-    kernel_cmdline.push_back("audit=0");
-  }
-
-  AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
-
-  return kernel_cmdline;
-}
-std::vector<std::string> KernelCommandLineFromVnc(const VncServerPorts& vnc_ports) {
-  std::vector<std::string> kernel_args;
-  if (vnc_ports.frames_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_frames_port=",
-                                 *vnc_ports.frames_server_vsock_port));
-  }
-  if (vnc_ports.touch_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_touch_port=",
-                                 *vnc_ports.touch_server_vsock_port));
-  }
-  if (vnc_ports.keyboard_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_keyboard_port=",
-                                 *vnc_ports.keyboard_server_vsock_port));
-  }
-  return kernel_args;
-}
-
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -489,7 +408,8 @@ int main(int argc, char** argv) {
 
   LaunchConfigServer(*config, &process_monitor);
 
-  LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
+  auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
+  auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
 
   LaunchUsbServerIfEnabled(*config, &process_monitor);
 
@@ -502,6 +422,8 @@ int main(int argc, char** argv) {
 
   auto kernel_args = KernelCommandLineFromConfig(*config);
   kernel_args.insert(kernel_args.end(), vnc_kernel_args.begin(), vnc_kernel_args.end());
+  kernel_args.insert(kernel_args.end(), tombstone_kernel_args.begin(),
+                     tombstone_kernel_args.end());
 
   // Start the guest VM
   vm_manager->WithFrontend(vnc_kernel_args.size() > 0);

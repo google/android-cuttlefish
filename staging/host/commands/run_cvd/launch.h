@@ -24,8 +24,6 @@ void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  cvd::SharedFD adbd_events_pipe);
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
-void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
-                                      cvd::ProcessMonitor* process_monitor);
 
 struct VncServerPorts {
   std::optional<int> frames_server_vsock_port;
@@ -36,3 +34,9 @@ VncServerPorts LaunchVNCServerIfEnabled(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     std::function<bool(cvd::MonitorEntry*)> callback);
+
+struct TombstoneReceiverPorts {
+  std::optional<int> server_vsock_port;
+};
+TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
+    const vsoc::CuttlefishConfig& config, cvd::ProcessMonitor* process_monitor);
