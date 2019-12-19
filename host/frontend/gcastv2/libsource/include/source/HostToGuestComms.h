@@ -26,6 +26,12 @@ struct HostToGuestComms : std::enable_shared_from_this<HostToGuestComms> {
             uint16_t port,
             ReceiveCb onReceive);
 
+    explicit HostToGuestComms(
+            std::shared_ptr<RunLoop> runLoop,
+            bool isServer,
+            int fd,
+            ReceiveCb onReceive);
+
     ~HostToGuestComms();
 
     void start();

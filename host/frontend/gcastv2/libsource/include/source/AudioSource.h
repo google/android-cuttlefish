@@ -76,8 +76,6 @@ private:
 
     status_t mInitCheck;
     State mState;
-    AudioDataRegionView *mRegionView;
-    std::unique_ptr<vsoc::RegionWorker> mRegionWorker;
     std::unique_ptr<Encoder> mEncoder;
 
     sp<AMessage> mFormat;

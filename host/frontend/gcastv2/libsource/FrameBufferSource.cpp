@@ -9,8 +9,6 @@
 #include <media/stagefright/foundation/TSPacketizer.h>
 #include <libyuv/convert.h>
 
-#include "common/vsoc/lib/screen_region_view.h"
-
 #include "host/libs/config/cuttlefish_config.h"
 
 #include "vpx/vpx_encoder.h"
@@ -474,21 +472,11 @@ FrameBufferSource::FrameBufferSource(Format format)
     : mInitCheck(NO_INIT),
       mState(STOPPED),
       mFormat(format),
-      mRegionView(nullptr),
       mScreenWidth(0),
       mScreenHeight(0),
       mScreenDpi(0),
       mScreenRate(0),
       mOnFrameFn(nullptr) {
-    auto config = vsoc::CuttlefishConfig::Get();
-    if (config->enable_ivserver()) {
-        mRegionView = ScreenRegionView::GetInstance(vsoc::GetDomain().c_str());
-
-        mScreenWidth = mRegionView->x_res();
-        mScreenHeight = mRegionView->y_res();
-        mScreenRate = mRegionView->refresh_rate_hz();
-    }
-
     mInitCheck = OK;
 }
 
@@ -564,87 +552,6 @@ status_t FrameBufferSource::start() {
             TRESPASS();
     }
 
-    auto config = vsoc::CuttlefishConfig::Get();
-    if (config->enable_ivserver()) {
-        mEncoder->forceIDRFrame();
-
-        mThread.reset(
-                new std::thread([this]{
-#if 0
-                    // Wait for about 1.5 frame durations to get a new frame,
-                    // then repeat the previous frame if we haven't done that
-                    // already.
-                    const int64_t kMaxFrameDelayNs =
-                        1500000000ll / mRegionView->refresh_rate_hz();
-#else
-                    // Deliver frames at about 30fps.
-                    const int64_t kMaxFrameDelayNs = 1000000000ll / 30;
-#endif
-
-                    LOG(INFO)
-                        << "RegionView claims to run at "
-                        << mRegionView->refresh_rate_hz() << " Hz.";
-
-                    bool repeatLastFrame = false;
-
-                    uint32_t prevSeqNum;
-                    while (mState != STOPPING) {
-                        struct timespec absTimeLimit;
-                        vsoc::RegionView::GetFutureTime(
-                                kMaxFrameDelayNs /* ns_from_now */, &absTimeLimit);
-
-                        int bufferIndex = mRegionView->WaitForNewFrameSince(
-                                &prevSeqNum, nullptr /* stats */, &absTimeLimit);
-
-                        const uint8_t *frame = nullptr;
-
-                        if (bufferIndex == -ETIMEDOUT) {
-                            LOG(VERBOSE) << "FrameBufferSource read timed out";
-
-                            if (repeatLastFrame) {
-                                LOG(VERBOSE) << "Repeating previous frame.";
-                            }
-                        } else if (bufferIndex >= 0) {
-                            CHECK_GE(bufferIndex, 0);
-
-                            frame = static_cast<uint8_t *>(
-                                    mRegionView->GetBuffer(bufferIndex));
-
-                            repeatLastFrame = true;
-                        } else {
-                            LOG(ERROR)
-                                << "WaitForNewFrameSince returned "
-                                << bufferIndex
-                                << " ("
-                                << strerror(-bufferIndex)
-                                << ")";
-
-                            continue;
-                        }
-
-                        if (mState == RUNNING
-                                && (frame
-                                    || repeatLastFrame
-                                    || mEncoder->isForcingIDRFrame())) {
-
-                            sp<ABuffer> accessUnit =
-                                mEncoder->encode(frame, ALooper::GetNowUs());
-
-                            if (accessUnit == nullptr) {
-                                continue;
-                            }
-
-                            StreamingSource::onAccessUnit(accessUnit);
-
-                            if (!frame) {
-                                // Only repeat the previous frame at most once.
-                                repeatLastFrame = false;
-                            }
-                        }
-                    }
-                }));
-    }
-
     mState = RUNNING;
 
     return OK;
@@ -658,11 +565,6 @@ status_t FrameBufferSource::stop() {
     }
 
     mState = STOPPING;
-
-    if (mThread) {
-        mThread->join();
-        mThread.reset();
-    }
 
     mState = STOPPED;
 
