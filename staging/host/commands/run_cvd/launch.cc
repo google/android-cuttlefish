@@ -53,10 +53,6 @@ bool AdbVsockConnectorEnabled(const vsoc::CuttlefishConfig& config) {
       && AdbModeEnabled(config, vsoc::AdbMode::NativeVsock);
 }
 
-bool AdbUsbEnabled(const vsoc::CuttlefishConfig& config) {
-  return AdbModeEnabled(config, vsoc::AdbMode::Usb);
-}
-
 cvd::OnSocketReadyCb GetOnSubprocessExitCallback(
     const vsoc::CuttlefishConfig& config) {
   if (config.restart_subprocesses()) {
@@ -116,13 +112,12 @@ std::vector<cvd::SharedFD> LaunchKernelLogMonitor(
   return ret;
 }
 
-void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
-                                   cvd::ProcessMonitor* process_monitor) {
+LogcatServerPorts LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                                cvd::ProcessMonitor* process_monitor) {
   if (!LogcatReceiverEnabled(config)) {
-    return;
+    return {};
   }
-  auto port = config.logcat_vsock_port();
-  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create logcat server socket: "
                << socket->StrError();
@@ -132,12 +127,12 @@ void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
   cmd.AddParameter("-server_fd=", socket);
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
+  return { socket->VsockServerPort() };
 }
 
-void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
-                        cvd::ProcessMonitor* process_monitor) {
-  auto port = config.config_server_port();
-  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+                                     cvd::ProcessMonitor* process_monitor) {
+  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create configuration server socket: "
                << socket->StrError();
@@ -147,6 +142,7 @@ void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
   cmd.AddParameter("-server_fd=", socket);
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
+  return { socket->VsockServerPort() };
 }
 
 TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
@@ -181,25 +177,6 @@ TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
   return { socket->VsockServerPort() };
-}
-
-void LaunchUsbServerIfEnabled(const vsoc::CuttlefishConfig& config,
-                              cvd::ProcessMonitor* process_monitor) {
-  if (!AdbUsbEnabled(config)) {
-    return;
-  }
-  auto socket_name = config.usb_v1_socket_name();
-  auto usb_v1_server = cvd::SharedFD::SocketLocalServer(
-      socket_name.c_str(), false, SOCK_STREAM, 0666);
-  if (!usb_v1_server->IsOpen()) {
-    LOG(ERROR) << "Unable to create USB v1 server socket: "
-               << usb_v1_server->StrError();
-    std::exit(cvd::RunnerExitCodes::kUsbV1SocketError);
-  }
-  cvd::Command usb_server(config.virtual_usb_manager_binary());
-  usb_server.AddParameter("-usb_v1_fd=", usb_v1_server);
-  process_monitor->StartSubprocess(std::move(usb_server),
-                                   GetOnSubprocessExitCallback(config));
 }
 
 cvd::SharedFD CreateUnixVncInputServer(const std::string& path) {
