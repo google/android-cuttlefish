@@ -1,25 +1,79 @@
-#include <source/CVMTouchSink.h>
+#include <source/TouchSink.h>
 
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/AMessage.h>
 
+#include <linux/input.h>
+#include <linux/uinput.h>
+
 #include <sys/socket.h>
 
 namespace android {
 
-CVMTouchSink::CVMTouchSink(std::shared_ptr<RunLoop> runLoop, int serverFd)
+namespace {
+// TODO de-dup this from vnc server and here
+struct virtio_input_event {
+  uint16_t type;
+  uint16_t code;
+  int32_t value;
+};
+
+template <typename T>
+void SendEvent(int32_t x, int32_t y, int32_t down,
+               std::function<void(const void*, size_t)> sender) {
+  std::vector<T> events = {{.type = EV_ABS, .code = ABS_X, .value = x},
+                           {.type = EV_ABS, .code = ABS_Y, .value = y},
+                           {.type = EV_KEY, .code = BTN_TOUCH, .value = down},
+                           {.type = EV_SYN, .code = 0, .value = 0}};
+  sender(events.data(), events.size() * sizeof(T));
+}
+
+template <typename T>
+void SendMTEvent(int32_t /* id */, int32_t x, int32_t y, int32_t initial_down,
+                 int32_t /* slot */,
+                 std::function<void(const void*, size_t)> sender) {
+  // TODO(b/124121375): multitouch
+  SendEvent<T>(x, y, initial_down, sender);
+}
+}
+
+TouchSink::TouchSink(std::shared_ptr<RunLoop> runLoop, int serverFd,
+                     bool write_virtio_input)
     : mRunLoop(runLoop),
       mServerFd(serverFd),
       mClientFd(-1),
       mSendPending(false) {
-    if (mServerFd >= 0) {
-        makeFdNonblocking(mServerFd);
-    }
+  if (mServerFd >= 0) {
+    makeFdNonblocking(mServerFd);
+  }
+  if (write_virtio_input) {
+    send_event_ = [this](int32_t x, int32_t y, bool down) {
+      SendEvent<virtio_input_event>(
+          x, y, down, [this](const void* b, size_t l) { sendRawEvents(b, l); });
+    };
+    send_mt_event_ = [this](int32_t id, int32_t x, int32_t y, bool initialDown,
+                            int32_t slot) {
+      SendMTEvent<virtio_input_event>(
+          id, x, y, initialDown, slot,
+          [this](const void* b, size_t l) { sendRawEvents(b, l); });
+    };
+  } else {
+    send_event_ = [this](int32_t x, int32_t y, bool down) {
+      SendEvent<input_event>(
+          x, y, down, [this](const void* b, size_t l) { sendRawEvents(b, l); });
+    };
+    send_mt_event_ = [this](int32_t id, int32_t x, int32_t y, bool initialDown,
+                            int32_t slot) {
+      SendMTEvent<input_event>(
+          id, x, y, initialDown, slot,
+          [this](const void* b, size_t l) { sendRawEvents(b, l); });
+    };
+  }
 }
 
-CVMTouchSink::~CVMTouchSink() {
+TouchSink::~TouchSink() {
     if (mClientFd >= 0) {
         mRunLoop->cancelSocket(mClientFd);
 
@@ -35,17 +89,17 @@ CVMTouchSink::~CVMTouchSink() {
     }
 }
 
-void CVMTouchSink::start() {
+void TouchSink::start() {
     if (mServerFd < 0) {
         return;
     }
 
     mRunLoop->postSocketRecv(
             mServerFd,
-            makeSafeCallback(this, &CVMTouchSink::onServerConnection));
+            makeSafeCallback(this, &TouchSink::onServerConnection));
 }
 
-void CVMTouchSink::onServerConnection() {
+void TouchSink::onServerConnection() {
     int s = accept(mServerFd, nullptr, nullptr);
 
     if (s >= 0) {
@@ -66,23 +120,10 @@ void CVMTouchSink::onServerConnection() {
 
     mRunLoop->postSocketRecv(
             mServerFd,
-            makeSafeCallback(this, &CVMTouchSink::onServerConnection));
+            makeSafeCallback(this, &TouchSink::onServerConnection));
 }
 
-static void AddInputEvent(
-        std::vector<input_event> *events,
-        uint16_t type,
-        uint16_t code,
-        int32_t value) {
-    input_event ev;
-    ev.type = type;
-    ev.code = code;
-    ev.value = value;
-
-    events->push_back(ev);
-}
-
-void CVMTouchSink::onAccessUnit(const sp<ABuffer> &accessUnit) {
+void TouchSink::onAccessUnit(const sp<ABuffer> &accessUnit) {
     const int32_t *data =
         reinterpret_cast<const int32_t *>(accessUnit->data());
 
@@ -101,13 +142,7 @@ void CVMTouchSink::onAccessUnit(const sp<ABuffer> &accessUnit) {
             << ", y="
             << y;
 
-        std::vector<input_event> events;
-        AddInputEvent(&events, EV_ABS, ABS_X, x);
-        AddInputEvent(&events, EV_ABS, ABS_Y, y);
-        AddInputEvent(&events, EV_KEY, BTN_TOUCH, down);
-        AddInputEvent(&events, EV_SYN, 0, 0);
-
-        sendEvents(events);
+        send_event_(x, y, down);
         return;
     }
 
@@ -131,36 +166,11 @@ void CVMTouchSink::onAccessUnit(const sp<ABuffer> &accessUnit) {
         << ", slot="
         << slot;
 
-    std::vector<input_event> events;
-
-#if 0
-    AddInputEvent(&events, EV_ABS, ABS_MT_SLOT, slot);
-
-    if (id < 0 || initialDown) {
-        AddInputEvent(&events, EV_ABS, ABS_MT_TRACKING_ID, id);
-        AddInputEvent(&events, EV_KEY, BTN_TOUCH, initialDown);
-    }
-
-    if (id >= 0) {
-        AddInputEvent(&events, EV_ABS, ABS_MT_POSITION_X, x);
-        AddInputEvent(&events, EV_ABS, ABS_MT_POSITION_Y, y);
-    }
-
-    AddInputEvent(&events, EV_SYN, SYN_REPORT, 0);
-#else
-    AddInputEvent(&events, EV_ABS, ABS_X, x);
-    AddInputEvent(&events, EV_ABS, ABS_Y, y);
-    AddInputEvent(&events, EV_KEY, BTN_TOUCH, id >= 0);
-    AddInputEvent(&events, EV_SYN, 0, 0);
-#endif
-
-    sendEvents(events);
+    send_mt_event_(id, x, y, initialDown, slot);
 }
 
-void CVMTouchSink::sendEvents(const std::vector<input_event> &events) {
-    if (events.empty()) {
-        return;
-    }
+void TouchSink::sendRawEvents(const void* evt_buffer, size_t size) {
+    if (size <= 0) return;
 
     std::lock_guard autoLock(mLock);
 
@@ -168,22 +178,20 @@ void CVMTouchSink::sendEvents(const std::vector<input_event> &events) {
         return;
     }
 
-    auto size = events.size() * sizeof(input_event);
-
     size_t offset = mOutBuffer.size();
     mOutBuffer.resize(offset + size);
-    memcpy(mOutBuffer.data() + offset, events.data(), size);
+    memcpy(mOutBuffer.data() + offset, evt_buffer, size);
 
     if (!mSendPending) {
         mSendPending = true;
 
         mRunLoop->postSocketSend(
                 mClientFd,
-                makeSafeCallback(this, &CVMTouchSink::onSocketSend));
+                makeSafeCallback(this, &TouchSink::onSocketSend));
     }
 }
 
-void CVMTouchSink::onSocketSend() {
+void TouchSink::onSocketSend() {
     std::lock_guard autoLock(mLock);
 
     CHECK(mSendPending);
@@ -221,7 +229,7 @@ void CVMTouchSink::onSocketSend() {
         mSendPending = true;
         mRunLoop->postSocketSend(
                 mClientFd,
-                makeSafeCallback(this, &CVMTouchSink::onSocketSend));
+                makeSafeCallback(this, &TouchSink::onSocketSend));
     }
 }
 

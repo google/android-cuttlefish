@@ -26,19 +26,11 @@
 
 #define ENABLE_H264     0
 
-namespace vsoc {
-    namespace screen {
-        class ScreenRegionView;
-    }
-}
-
 namespace android {
 
 struct ABuffer;
 
 struct FrameBufferSource : public StreamingSource {
-    using ScreenRegionView = vsoc::screen::ScreenRegionView;
-
     enum class Format {
         H264,
         VP8,
@@ -87,11 +79,9 @@ private:
     status_t mInitCheck;
     State mState;
     Format mFormat;
-    ScreenRegionView *mRegionView;
     std::unique_ptr<Encoder> mEncoder;
 
     std::mutex mLock;
-    std::unique_ptr<std::thread> mThread;
 
     int32_t mScreenWidth, mScreenHeight, mScreenDpi, mScreenRate;
 
