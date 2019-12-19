@@ -82,7 +82,9 @@ static std::string get_next_tombstone_path_blocking(int fd) {
   return ret_value + i->name;
 }
 
-DEFINE_uint32(port, property_get_int32("ro.boot.vsock_tombstone_port", 0),
+DEFINE_uint32(port,
+              static_cast<uint32_t>(
+                  property_get_int64("ro.boot.vsock_tombstone_port", 0)),
               "VSOCK port to send tombstones to");
 DEFINE_uint32(cid, 2, "VSOCK CID to send logcat output to");
 #define TOMBSTONE_BUFFER_SIZE (1024)
