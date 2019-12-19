@@ -39,15 +39,9 @@ RUN cd /root/android-cuttlefish \
 RUN apt-get clean \
     && rm -rf /root/android-cuttlefish
 
-RUN groupadd kvm
-
 RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -G kvm,cvdnetwork \
     && passwd -d vsoc-01 \
-    && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
-    && echo 'sudo chmod ug+rw /dev/kvm' >> /home/vsoc-01/.bashrc \
-    && echo 'sudo chmod ug+rw /dev/vhost-vsock' >> /home/vsoc-01/.bashrc \
-    && echo 'sudo chown root.kvm /dev/kvm' >> /home/vsoc-01/.bashrc \
-    && echo 'sudo chown root.cvdnetwork /dev/vhost-vsock' >> /home/vsoc-01/.bashrc
+    && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthentication yes/g' /etc/ssh/sshd_config \
     && sed -i -r -e 's/^#{0,1}\s*PermitEmptyPasswords\s+(yes|no)/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config \

@@ -150,6 +150,14 @@ start() {
       create_legacy_interfaces $i
       create_interfaces $i
     done
+    # When running inside a privileged container, set the ownership and access
+    # of these device nodes.
+    if test -f /.dockerenv; then
+      chown root.kvm /dev/kvm
+      chown root.cvdnetwork /dev/vhost-vsock
+      chmod ug+rw /dev/kvm
+      chmod ug+rw /dev/vhost-vsock
+    fi
 }
 
 stop() {
