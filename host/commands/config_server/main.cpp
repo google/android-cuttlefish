@@ -23,25 +23,17 @@
 
 DEFINE_int32(
     server_fd, -1,
-    "File descriptor to an already created vsock server. If negative a new "
-    "server will be created at the port specified on the config file");
+    "File descriptor to an already created vsock server. Must be specified.");
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  CHECK(vsoc::CuttlefishConfig::Get()) << "Could not open config";
 
-  cvd::SharedFD server_fd;
-  if (FLAGS_server_fd < 0) {
-    unsigned int port = config->config_server_port();
-    server_fd = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
-  } else {
-    server_fd = cvd::SharedFD::Dup(FLAGS_server_fd);
-    close(FLAGS_server_fd);
-  }
+  cvd::SharedFD server_fd = cvd::SharedFD::Dup(FLAGS_server_fd);
 
-  CHECK(server_fd->IsOpen()) << "Error creating or inheriting logcat server: "
+  CHECK(server_fd->IsOpen()) << "Inheriting logcat server: "
                              << server_fd->StrError();
 
   auto device_config = cvd::DeviceConfig::Get();
