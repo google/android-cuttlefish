@@ -23,7 +23,6 @@
 #include <sstream>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/config/cuttlefish_config.h"
 
 DEFINE_int32(
     server_fd, -1,
@@ -59,21 +58,13 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
-  cvd::SharedFD server_fd;
+  cvd::SharedFD server_fd = cvd::SharedFD::Dup(FLAGS_server_fd);
+  close(FLAGS_server_fd);
 
-  if (FLAGS_server_fd < 0) {
-    unsigned int port = config->tombstone_receiver_port();
-    server_fd = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
-  } else {
-    server_fd = cvd::SharedFD::Dup(FLAGS_server_fd);
-    close(FLAGS_server_fd);
-  }
-
-  CHECK(server_fd->IsOpen()) << "Error creating/inheriting tombstone server: "
+  CHECK(server_fd->IsOpen()) << "Error inheriting tombstone server: "
                              << server_fd->StrError();
   LOG(INFO) << "Host is starting server on port "
-            << config->tombstone_receiver_port();
+            << server_fd->VsockServerPort();
 
   // Server loop
   while (true) {
