@@ -47,10 +47,7 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   kernel_cmdline.push_back(concat("androidboot.serialno=", config.serial_number()));
   kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
   if (config.logcat_mode() == cvd::kLogcatVsockMode) {
-    kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", config.logcat_vsock_port()));
   }
-  kernel_cmdline.push_back(concat(
-      "androidboot.cuttlefish_config_server_port=", config.config_server_port()));
   kernel_cmdline.push_back(concat(
       "androidboot.setupwizard_mode=", config.setupwizard_mode()));
   if (!config.use_bootloader()) {
@@ -104,5 +101,23 @@ std::vector<std::string> KernelCommandLineFromTombstone(const TombstoneReceiverP
   return {
     "androidboot.tombstone_transmit=1",
     concat("androidboot.vsock_tombstone_port=", *tombstone.server_vsock_port),
+  };
+}
+
+std::vector<std::string> KernelCommandLineFromConfigServer(const ConfigServerPorts& config_server) {
+  if (!config_server.server_vsock_port) {
+    return {};
+  }
+  return {
+    concat("androidboot.cuttlefish_config_server_port=", *config_server.server_vsock_port),
+  };
+}
+
+std::vector<std::string> KernelCommandLineFromLogcatServer(const LogcatServerPorts& logcat_server) {
+  if (!logcat_server.server_vsock_port) {
+    return {};
+  }
+  return {
+    concat("androidboot.vsock_logcat_port=", *logcat_server.server_vsock_port),
   };
 }
