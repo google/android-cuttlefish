@@ -195,6 +195,10 @@ int setNetworkSelectionModeManualResponse(int slotId,
                                          int responseType, int serial, RIL_Errno e, void *response,
                                          size_t responselen);
 
+int setNetworkSelectionModeManualResponse_1_5(int slotId,
+                                             int responseType, int serial, RIL_Errno e,
+                                             void *response, size_t responselen);
+
 int getAvailableNetworksResponse(int slotId,
                                 int responseType, int serial, RIL_Errno e, void *response,
                                 size_t responselen);
