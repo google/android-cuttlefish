@@ -68,8 +68,10 @@ ProcessMonitor::ProcessMonitor() {
 }
 
 void ProcessMonitor::StartSubprocess(Command cmd, OnSocketReadyCb callback) {
-  cmd.SetWithControlSocket(true);
-  auto proc = cmd.StartInGroup();
+  cvd::SubprocessOptions options;
+  options.InGroup(true);
+  options.WithControlSocket(true);
+  auto proc = cmd.Start(options);
   if (!proc.Started()) {
     LOG(ERROR) << "Failed to start process";
     return;
@@ -152,7 +154,9 @@ bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {
     LOG(INFO) << "subprocess " << entry->cmd->GetShortName() << " (" << wait_ret
               << ") has exited for unknown reasons";
   }
-  entry->proc.reset(new Subprocess(entry->cmd->Start()));
+  cvd::SubprocessOptions options;
+  options.WithControlSocket(true);
+  entry->proc.reset(new Subprocess(entry->cmd->Start(options)));
   return true;
 }
 

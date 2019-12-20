@@ -26,7 +26,9 @@
 #include <common/libs/fs/shared_fd.h>
 
 namespace cvd {
+class Command;
 class Subprocess;
+class SubprocessOptions;
 using SubprocessStopper = std::function<bool(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
 bool KillSubprocess(Subprocess* subprocess);
@@ -76,6 +78,37 @@ class Subprocess {
   SubprocessStopper stopper_;
 };
 
+class SubprocessOptions {
+  bool with_control_socket_;
+  bool verbose_;
+  bool exit_with_parent_;
+  bool in_group_;
+public:
+  SubprocessOptions() : with_control_socket_(false), verbose_(true),
+                        exit_with_parent_(true) {}
+
+  // If with_control_socket is true the Subprocess instance will have a SharedFD
+  // that enables communication with the child process.
+  void WithControlSocket(bool with_control_socket) {
+    with_control_socket_ = with_control_socket;
+  }
+  void Verbose(bool verbose) {
+    verbose_ = verbose;
+  }
+  void ExitWithParent(bool exit_with_parent) {
+    exit_with_parent_ = exit_with_parent;
+  }
+  // The subprocess runs as head of its own process group.
+  void InGroup(bool in_group) {
+    in_group_ = in_group;
+  }
+
+  bool WithControlSocket() const { return with_control_socket_; }
+  bool Verbose() const { return verbose_; }
+  bool ExitWithParent() const { return exit_with_parent_; }
+  bool InGroup() const { return in_group_; }
+};
+
 // An executable command. Multiple subprocesses can be started from the same
 // command object. This class owns any file descriptors that the subprocess
 // should inherit.
@@ -118,10 +151,8 @@ class Command {
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
   Command(const std::string& executable,
-          SubprocessStopper stopper = KillSubprocess,
-          bool exit_with_parent = true)
-      : subprocess_stopper_(stopper), verbose_(true),
-        exit_with_parent_(exit_with_parent), with_control_socket_(false) {
+          SubprocessStopper stopper = KillSubprocess)
+      : subprocess_stopper_(stopper) {
     command_.push_back(executable);
   }
   Command(Command&&) = default;
@@ -160,17 +191,9 @@ class Command {
   bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                      Subprocess::StdIOChannel parent_channel);
 
-  void SetVerbose(bool verbose);
-  void SetExitWithParent(bool exit_with_parent);
-  // If with_control_socket is true the returned Subprocess instance will have a
-  // sharedFD that enables communication with the child process.
-  void SetWithControlSocket(bool with_control_socket);
-
   // Starts execution of the command. This method can be called multiple times,
   // effectively staring multiple (possibly concurrent) instances.
-  Subprocess Start() const;
-  // Same as Start(), but the subprocess runs as head of its own process group.
-  Subprocess StartInGroup() const;
+  Subprocess Start(SubprocessOptions options = SubprocessOptions()) const;
 
   std::string GetShortName() const {
     // This is safe because the constructor guarantees the name of the binary to
@@ -179,17 +202,12 @@ class Command {
   }
 
  private:
-  Subprocess StartHelper(bool in_group) const;
-
   std::vector<std::string> command_;
   std::map<cvd::SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   bool use_parent_env_ = true;
   std::vector<std::string> env_{};
   SubprocessStopper subprocess_stopper_;
-  bool verbose_;
-  bool exit_with_parent_;
-  bool with_control_socket_;
 };
 
 /*
@@ -205,7 +223,8 @@ class Command {
  * signal, the return value will be negative.
  */
 int RunWithManagedStdio(cvd::Command&& command, const std::string* stdin,
-                        std::string* stdout, std::string* stderr);
+                        std::string* stdout, std::string* stderr,
+                        SubprocessOptions options = SubprocessOptions());
 
 // Convenience wrapper around Command and Subprocess class, allows to easily
 // execute a command and wait for it to complete. The version without the env
