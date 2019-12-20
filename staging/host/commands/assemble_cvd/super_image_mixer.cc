@@ -44,8 +44,8 @@ std::string TargetFilesZip(const cvd::FetcherConfig& fetcher_config,
     if (file_info.source != source) {
       continue;
     }
-    std::string expected_filename = "target_files-" + file_iter.second.build_id + ".zip";
-    if (!android::base::EndsWith(file_path, expected_filename)) {
+    std::string expected_filename = "target_files-" + file_iter.second.build_id;
+    if (file_path.find(expected_filename) != std::string::npos) {
       continue;
     }
     return file_path;;
