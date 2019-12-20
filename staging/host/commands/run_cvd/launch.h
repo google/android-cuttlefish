@@ -20,9 +20,9 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
 
 struct VncServerPorts {
-  std::optional<int> frames_server_vsock_port;
-  std::optional<int> touch_server_vsock_port;
-  std::optional<int> keyboard_server_vsock_port;
+  std::optional<unsigned int> frames_server_vsock_port;
+  std::optional<unsigned int> touch_server_vsock_port;
+  std::optional<unsigned int> keyboard_server_vsock_port;
 };
 VncServerPorts LaunchVNCServerIfEnabled(
     const vsoc::CuttlefishConfig& config,
@@ -30,19 +30,19 @@ VncServerPorts LaunchVNCServerIfEnabled(
     std::function<bool(cvd::MonitorEntry*)> callback);
 
 struct TombstoneReceiverPorts {
-  std::optional<int> server_vsock_port;
+  std::optional<unsigned int> server_vsock_port;
 };
 TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
     const vsoc::CuttlefishConfig& config, cvd::ProcessMonitor* process_monitor);
 
 struct ConfigServerPorts {
-  std::optional<int> server_vsock_port;
+  std::optional<unsigned int> server_vsock_port;
 };
 ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
                                      cvd::ProcessMonitor* process_monitor);
 
 struct LogcatServerPorts {
-  std::optional<int> server_vsock_port;
+  std::optional<unsigned int> server_vsock_port;
 };
 LogcatServerPorts LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                                 cvd::ProcessMonitor* process_monitor);
