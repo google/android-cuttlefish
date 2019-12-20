@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "vsock_hwc"
+
 #include "guest/hals/hwcomposer/cutf_cvm/vsocket_screen_view.h"
 
 #include <cutils/properties.h>
@@ -54,17 +56,19 @@ void VsocketScreenView::GetScreenParameters() {
   y_res_ = device_config->screen_y_res();
   dpi_ = device_config->screen_dpi();
   refresh_rate_ = device_config->screen_refresh_rate();
+  ALOGI("Received screen parameters: res=%dx%d, dpi=%d, freq=%d", x_res_,
+        y_res_, dpi_, refresh_rate_);
 }
 
 bool VsocketScreenView::ConnectToScreenServer() {
-  auto vsock_frames_port = property_get_int32("ro.boot.vsock_frames_port", -1);
+  auto vsock_frames_port = property_get_int64("ro.boot.vsock_frames_port", -1);
   if (vsock_frames_port <= 0) {
     ALOGI("No screen server configured, operating on headless mode");
     return false;
   }
 
-  screen_server_ =
-      cvd::SharedFD::VsockClient(2, vsock_frames_port, SOCK_STREAM);
+  screen_server_ = cvd::SharedFD::VsockClient(
+      2, static_cast<unsigned int>(vsock_frames_port), SOCK_STREAM);
   if (!screen_server_->IsOpen()) {
     ALOGE("Unable to connect to screen server: %s", screen_server_->StrError());
     return false;

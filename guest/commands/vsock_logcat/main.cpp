@@ -34,8 +34,10 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
-DEFINE_uint32(port, property_get_int32("ro.boot.vsock_logcat_port", 0),
-              "VSOCK port to send logcat output to");
+DEFINE_uint32(
+    port,
+    static_cast<uint32_t>(property_get_int64("ro.boot.vsock_logcat_port", 0)),
+    "VSOCK port to send logcat output to");
 DEFINE_uint32(cid, 2, "VSOCK CID to send logcat output to");
 DEFINE_string(pipe_name, "/dev/cf_logcat_pipe",
               "The path for the named pipe logcat will write to");
