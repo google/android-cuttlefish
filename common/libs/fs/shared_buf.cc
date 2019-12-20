@@ -28,6 +28,22 @@ namespace {
 
 const size_t BUFF_SIZE = 1 << 14;
 
+static ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
+  size_t total_written = 0;
+  ssize_t written = 0;
+  while ((written = fd->Write((void*)&(buf[total_written]), size - total_written)) > 0) {
+    if (written < 0) {
+      errno = fd->GetErrno();
+      return written;
+    }
+    total_written += written;
+    if (total_written == size) {
+      break;
+    }
+  }
+  return total_written;
+}
+
 } // namespace
 
 ssize_t ReadAll(SharedFD fd, std::string* buf) {
@@ -63,19 +79,11 @@ ssize_t ReadExact(SharedFD fd, std::string* buf) {
 }
 
 ssize_t WriteAll(SharedFD fd, const std::string& buf) {
-  size_t total_written = 0;
-  ssize_t written = 0;
-  while ((written = fd->Write((void*)&(buf[total_written]), buf.size() - total_written)) > 0) {
-    if (written < 0) {
-      errno = fd->GetErrno();
-      return written;
-    }
-    total_written += written;
-    if (total_written == buf.size()) {
-      break;
-    }
-  }
-  return total_written;
+  return WriteAll(fd, buf.data(), buf.size());
+}
+
+ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf) {
+  return WriteAll(fd, buf.data(), buf.size());
 }
 
 } // namespace cvd
