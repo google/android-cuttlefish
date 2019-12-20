@@ -15,12 +15,18 @@
 
 #include "build_api.h"
 
+#include <dirent.h>
+#include <unistd.h>
+
 #include <chrono>
 #include <set>
 #include <string>
 #include <thread>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
+
+#include "common/libs/utils/files.h"
 
 namespace {
 
@@ -54,6 +60,16 @@ Artifact::Artifact(const Json::Value& json_artifact) {
 
 std::ostream& operator<<(std::ostream& out, const DeviceBuild& build) {
   return out << "(id=\"" << build.id << "\", target=\"" << build.target << "\")";
+}
+
+std::ostream& operator<<(std::ostream& out, const DirectoryBuild& build) {
+  auto paths = android::base::Join(build.paths, ":");
+  return out << "(paths=\"" << paths << "\", target=\"" << build.target << "\")";
+}
+
+std::ostream& operator<<(std::ostream& out, const Build& build) {
+  std::visit([&out](auto&& arg) { out << arg; }, build);
+  return out;
 }
 
 BuildApi::BuildApi(std::unique_ptr<CredentialSource> credential_source)
@@ -108,6 +124,26 @@ std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
   return artifacts;
 }
 
+struct CloseDir {
+  void operator()(DIR* dir) {
+    closedir(dir);
+  }
+};
+
+using UniqueDir = std::unique_ptr<DIR, CloseDir>;
+
+std::vector<Artifact> BuildApi::Artifacts(const DirectoryBuild& build) {
+  std::vector<Artifact> artifacts;
+  for (const auto& path : build.paths) {
+    auto dir = UniqueDir(opendir(path.c_str()));
+    CHECK(dir != nullptr) << "Could not read files from \"" << path << "\"";
+    for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
+      artifacts.emplace_back(std::string(entity->d_name));
+    }
+  }
+  return artifacts;
+}
+
 bool BuildApi::ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path) {
@@ -116,9 +152,35 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
   return curl.DownloadToFile(url, path, Headers());
 }
 
-DeviceBuild ArgumentToBuild(BuildApi* build_api, const std::string& arg,
-                            const std::string& default_build_target,
-                            const std::chrono::seconds& retry_period) {
+bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
+                              const std::string& artifact,
+                              const std::string& destination) {
+  for (const auto& path : build.paths) {
+    auto source = path + "/" + artifact;
+    if (!cvd::FileExists(source)) {
+      continue;
+    }
+    unlink(destination.c_str());
+    if (symlink(source.c_str(), destination.c_str())) {
+      int error_num = errno;
+      LOG(ERROR) << "Could not create symlink from " << source << " to "
+                  << destination << ": " << strerror(error_num);
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
+                      const std::string& default_build_target,
+                      const std::chrono::seconds& retry_period) {
+  if (arg.find(":") != std::string::npos) {
+    std::vector<std::string> dirs = android::base::Split(arg, ":");
+    std::string id = dirs.back();
+    dirs.pop_back();
+    return DirectoryBuild(dirs, id);
+  }
   size_t slash_pos = arg.find('/');
   if (slash_pos != std::string::npos
         && arg.find('/', slash_pos + 1) != std::string::npos) {
