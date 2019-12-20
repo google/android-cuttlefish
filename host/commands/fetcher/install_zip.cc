@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <glog/logging.h>
 
 #include "common/libs/utils/archive.h"
@@ -77,8 +78,14 @@ std::vector<std::string> ExtractImages(const std::string& archive_file,
       extraction_success = false;
     }
   }
-  for (auto& file : files) {
-    file = target_directory + "/" + file;
+  auto it = files.begin();
+  while (it != files.end()) {
+    if (*it == "" || android::base::EndsWith(*it, "/")) {
+      it = files.erase(it);
+    } else {
+      *it = target_directory + "/" + *it;
+      it++;
+    }
   }
   return extraction_success ? files : std::vector<std::string>{};
 }
