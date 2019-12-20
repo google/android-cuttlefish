@@ -42,6 +42,7 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
+#include "common/libs/fs/tee.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
@@ -291,6 +292,8 @@ int main(int argc, char** argv) {
     }
   }
 
+  cvd::TeeStderrToFile stderr_tee;
+
   std::string input_files_str;
   {
     auto input_fd = cvd::SharedFD::Dup(0);
@@ -312,6 +315,9 @@ int main(int argc, char** argv) {
   }
 
   auto config = vsoc::CuttlefishConfig::Get();
+
+  auto runner_log_path = config->PerInstancePath("run_cvd.log");
+  stderr_tee.SetFile(cvd::SharedFD::Creat(runner_log_path.c_str(), 0755));
 
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
