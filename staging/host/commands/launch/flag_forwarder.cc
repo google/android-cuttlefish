@@ -235,11 +235,13 @@ FlagForwarder::FlagForwarder(std::set<std::string> subprocesses)
 
   for (const auto& subprocess : subprocesses_) {
     cvd::Command cmd(subprocess);
-    cmd.SetVerbose(false);
     cmd.AddParameter("--helpxml");
     std::string helpxml_input, helpxml_output, helpxml_error;
+    cvd::SubprocessOptions options;
+    options.Verbose(false);
     int helpxml_ret = cvd::RunWithManagedStdio(std::move(cmd), &helpxml_input,
-                                               &helpxml_output, &helpxml_error);
+                                               &helpxml_output, &helpxml_error,
+                                               options);
     if (helpxml_ret != 1) {
       LOG(FATAL) << subprocess << " --helpxml returned unexpected response "
                  << helpxml_ret << ". Stderr was " << helpxml_error;
@@ -272,7 +274,6 @@ void FlagForwarder::UpdateFlagDefaults() const {
 
   for (const auto& subprocess : subprocesses_) {
     cvd::Command cmd(subprocess);
-    cmd.SetVerbose(false);
     std::vector<std::string> invocation = {subprocess};
     for (const auto& flag : ArgvForSubprocess(subprocess)) {
       cmd.AddParameter(flag);
@@ -289,8 +290,11 @@ void FlagForwarder::UpdateFlagDefaults() const {
     // Ensure this is set on by putting it at the end.
     cmd.AddParameter("--helpxml");
     std::string helpxml_input, helpxml_output, helpxml_error;
+    cvd::SubprocessOptions options;
+    options.Verbose(false);
     int helpxml_ret = cvd::RunWithManagedStdio(std::move(cmd), &helpxml_input,
-                                               &helpxml_output, &helpxml_error);
+                                               &helpxml_output, &helpxml_error,
+                                               options);
     if (helpxml_ret != 1) {
       LOG(FATAL) << subprocess << " --helpxml returned unexpected response "
                  << helpxml_ret << ". Stderr was " << helpxml_error;
