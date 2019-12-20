@@ -32,14 +32,15 @@ static constexpr int kRetryDelaySeconds = 5;
 
 bool GetRawFromServer(DeviceConfig::RawData* data) {
   auto port_property = "ro.boot.cuttlefish_config_server_port";
-  auto port = property_get_int32(port_property, -1);
+  auto port = property_get_int64(port_property, -1);
   if (port < 0) {
     LOG(ERROR) << "Unable to get config server port from property: " <<
         port_property;
     return false;
   }
   auto config_server =
-      cvd::SharedFD::VsockClient(2 /*host cid*/, port, SOCK_STREAM);
+      cvd::SharedFD::VsockClient(2 /*host cid*/,
+                                 static_cast<unsigned int>(port), SOCK_STREAM);
   if (!config_server->IsOpen()) {
     LOG(ERROR) << "Unable to connect to config server: "
                << config_server->StrError();
