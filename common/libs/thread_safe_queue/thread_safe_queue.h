@@ -50,6 +50,14 @@ class ThreadSafeQueue {
     return t;
   }
 
+  QueueImpl PopAll() {
+    std::unique_lock<std::mutex> guard(m_);
+    while (items_.empty()) {
+      new_item_.wait(guard);
+    }
+    return std::move(items_);
+  }
+
   void Push(T&& t) {
     std::lock_guard<std::mutex> guard(m_);
     DropItemsIfAtCapacity();
