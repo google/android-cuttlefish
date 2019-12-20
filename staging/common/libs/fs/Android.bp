@@ -18,6 +18,7 @@ cc_library {
     srcs: [
         "shared_buf.cc",
         "shared_fd.cpp",
+        "tee.cpp",
     ],
     shared: {
         shared_libs: [
@@ -46,6 +47,7 @@ cc_library_static {
     srcs: [
         "shared_buf.cc",
         "shared_fd.cpp",
+        "tee.cpp",
     ],
     shared_libs: [
         "libbase",
