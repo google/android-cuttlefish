@@ -45,6 +45,7 @@
 #include "common/libs/fs/tee.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
 #include "host/commands/run_cvd/kernel_args.h"
@@ -329,6 +330,15 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Unable to change dir into instance directory ("
                << config->instance_dir() << "): " << strerror(error);
     return RunnerExitCodes::kInstanceDirCreationError;
+  }
+
+  auto used_tap_devices = cvd::TapInterfacesInUse();
+  if (used_tap_devices.count(config->wifi_tap_name())) {
+    LOG(ERROR) << "Wifi TAP device already in use";
+    return RunnerExitCodes::kTapDeviceInUse;
+  } else if (used_tap_devices.count(config->mobile_tap_name())) {
+    LOG(ERROR) << "Mobile TAP device already in use";
+    return RunnerExitCodes::kTapDeviceInUse;
   }
 
   auto vm_manager = vm_manager::VmManager::Get(config->vm_manager(), config);
