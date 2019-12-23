@@ -20,7 +20,10 @@
 #include <linux/if_tun.h>
 #include <string.h>
 
+#include <android-base/strings.h>
 #include "common/libs/glog/logging.h"
+
+#include "common/libs/utils/subprocess.h"
 
 namespace cvd {
 namespace {
@@ -73,5 +76,23 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
   tap_fd->Ioctl(TUNSETVNETHDRSZ, &len);
 
   return tap_fd;
+}
+
+std::set<std::string> TapInterfacesInUse() {
+  Command cmd("/bin/bash");
+  cmd.AddParameter("-c");
+  cmd.AddParameter("egrep -h -e \"^iff:.*\" /proc/*/fdinfo/*");
+  std::string stdin, stdout, stderr;
+  RunWithManagedStdio(std::move(cmd), &stdin, &stdout, &stderr);
+  auto lines = android::base::Split(stdout, "\n");
+  std::set<std::string> tap_interfaces;
+  for (const auto& line : lines) {
+    if (!android::base::StartsWith(line, "iff:\t")) {
+      LOG(ERROR) << "Unexpected line \"" << line << "\"";
+      continue;
+    }
+    tap_interfaces.insert(line.substr(std::string("iff:\t").size()));
+  }
+  return tap_interfaces;
 }
 }  // namespace cvd
