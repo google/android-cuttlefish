@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <set>
 #include <string>
 
 #include "common/libs/fs/shared_fd.h"
@@ -24,4 +25,7 @@ namespace cvd {
 // user needs CAP_NET_ADMIN to create such interfaces or be the owner to connect
 // to one.
 SharedFD OpenTapInterface(const std::string& interface_name);
+
+// Returns a list of TAP devices that have open file descriptors
+std::set<std::string> TapInterfacesInUse();
 }
