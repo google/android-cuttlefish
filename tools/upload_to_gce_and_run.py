@@ -8,55 +8,50 @@ import os
 import subprocess
 
 
+def gcloud_ssh(args):
+  command = 'gcloud compute ssh %s@%s ' % (args.user, args.instance)
+  if args.zone:
+    command += '--zone=%s ' % args.zone
+  return command
+
+
 def upload_artifacts(args):
   dir = os.getcwd()
   try:
     os.chdir(args.image_dir)
     images = glob.glob('*.img')
     if len(images) == 0:
-      raise OSError('File not found: %s' + image_pat)
+      raise OSError('No images found in: %s' + args.image_dir)
     subprocess.check_call(
-      'tar -c -f - --lzop -S ' + ' '.join(images) +
-        ' | gcloud compute ssh %s@%s -- tar -x -f - --lzop -S' % (
-          args.user,
-          args.instance),
-      shell=True)
+        'tar -c -f - --lzop -S ' + ' '.join(images) +
+        ' | ' +
+        gcloud_ssh(args) + '-- tar -x -f - --lzop -S',
+        shell=True)
   finally:
     os.chdir(dir)
 
   host_package = os.path.join(args.host_dir, 'cvd-host_package.tar.gz')
-  # host_package
   subprocess.check_call(
-      'gcloud compute ssh %s@%s -- tar -x -z -f - < %s' % (
-          args.user,
-          args.instance,
-          host_package),
+      gcloud_ssh(args) + '-- tar -x -z -f - < %s' % host_package,
       shell=True)
 
 
 def launch_cvd(args):
+  launch_cvd_args = ''
   if args.data_image:
-    subprocess.check_call(
-        'gcloud compute ssh %s@%s -- bin/launch_cvd --data-image %s '
-        '--data-policy create_if_missing --blank-data-image-mb %d' % (
-            args.user,
-            args.instance,
-            args.data_image,
-            args.blank_data_image_mb),
-        shell=True)
-  else:
-    subprocess.check_call(
-        'gcloud compute ssh %s@%s -- bin/launch_cvd' % (
-            args.user,
-            args.instance),
-        shell=True)
+    launch_cvd_args = (
+      '--data-image %s '
+      '--data-policy create_if_missing '
+      '--blank-data-image-mb %d ' % (args.data_image, args.blank_data_image_mb))
+
+  subprocess.check_call(
+      gcloud_ssh(args) + '-- ./bin/launch_cvd ' + launch_cvd_args,
+      shell=True)
 
 
 def stop_cvd(args):
   subprocess.call(
-      'gcloud compute ssh %s@%s -- bin/stop_cvd' % (
-          args.user,
-          args.instance),
+      gcloud_ssh(args) + '-- ./bin/stop_cvd',
       shell=True)
 
 
@@ -76,6 +71,9 @@ def main():
   parser.add_argument(
       '-instance', type=str, required=True,
       help='instance to update')
+  parser.add_argument(
+      '-zone', type=str, default=None,
+      help='zone containing the instance')
   parser.add_argument(
       '-user', type=str, default='vsoc-01',
       help='user to update on the instance')
