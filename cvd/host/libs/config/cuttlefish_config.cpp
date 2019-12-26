@@ -71,6 +71,8 @@ const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
 const char* const kGpuMode = "gpu_mode";
+const char* const kWaylandSocket = "wayland_socket";
+const char* const kXDisplay = "x_display";
 const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
@@ -141,6 +143,7 @@ const char* kBootSlot = "boot_slot";
 const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
 const char* kGuestAuditSecurity = "guest_audit_security";
+const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 
@@ -180,6 +183,21 @@ std::string CuttlefishConfig::gpu_mode() const {
 }
 void CuttlefishConfig::set_gpu_mode(const std::string& name) {
   (*dictionary_)[kGpuMode] = name;
+}
+
+std::string CuttlefishConfig::wayland_socket() const {
+  // Don't use SetPath here: the path is already fully formed.
+  return (*dictionary_)[kWaylandSocket].asString();
+}
+void CuttlefishConfig::set_wayland_socket(const std::string& path) {
+  (*dictionary_)[kWaylandSocket] = path;
+}
+
+std::string CuttlefishConfig::x_display() const {
+  return (*dictionary_)[kXDisplay].asString();
+}
+void CuttlefishConfig::set_x_display(const std::string& address) {
+  (*dictionary_)[kXDisplay] = address;
 }
 
 std::string CuttlefishConfig::serial_number() const {
@@ -656,10 +674,6 @@ std::string CuttlefishConfig::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
 }
 
-std::string CuttlefishConfig::frames_socket_path() const {
-  return PerInstanceInternalPath("frames.sock");
-}
-
 void CuttlefishConfig::set_loop_max_part(int loop_max_part) {
   (*dictionary_)[kLoopMaxPart] = loop_max_part;
 }
@@ -679,6 +693,13 @@ void CuttlefishConfig::set_guest_audit_security(bool guest_audit_security) {
 }
 bool CuttlefishConfig::guest_audit_security() const {
   return (*dictionary_)[kGuestAuditSecurity].asBool();
+}
+
+void CuttlefishConfig::set_guest_force_normal_boot(bool guest_force_normal_boot) {
+  (*dictionary_)[kGuestForceNormalBoot] = guest_force_normal_boot;
+}
+bool CuttlefishConfig::guest_force_normal_boot() const {
+  return (*dictionary_)[kGuestForceNormalBoot].asBool();
 }
 
 void CuttlefishConfig::set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline) {
