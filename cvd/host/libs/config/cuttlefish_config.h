@@ -74,6 +74,12 @@ class CuttlefishConfig {
   std::string gpu_mode() const;
   void set_gpu_mode(const std::string& name);
 
+  std::string wayland_socket() const;
+  void set_wayland_socket(const std::string& path);
+
+  std::string x_display() const;
+  void set_x_display(const std::string& address);
+
   std::string serial_number() const;
   void set_serial_number(const std::string& serial_number);
 
@@ -260,7 +266,6 @@ class CuttlefishConfig {
 
   std::string touch_socket_path() const;
   std::string keyboard_socket_path() const;
-  std::string frames_socket_path() const;
 
   void set_loop_max_part(int loop_max_part);
   int loop_max_part() const;
@@ -270,6 +275,9 @@ class CuttlefishConfig {
 
   void set_guest_audit_security(bool guest_audit_security);
   bool guest_audit_security() const;
+
+  void set_guest_force_normal_boot(bool guest_force_normal_boot);
+  bool guest_force_normal_boot() const;
 
   void set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline);
   std::vector<std::string> boot_image_kernel_cmdline() const;
