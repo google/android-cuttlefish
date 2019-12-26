@@ -1,7 +1,0 @@
-# This file should contain entries specific to crosvm only, for common entries
-# use common file instead.
-import /vendor/etc/init/hw/init.common.rc
-
-# TODO add crosvm specific stuff here
-# logcat and kernel logs on vsockets instead of serial port would be good
-# examples
