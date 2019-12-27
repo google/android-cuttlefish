@@ -106,14 +106,12 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   });
   crosvm_cmd.AddParameter("run");
 
-  if (config_->gpu_mode() != vsoc::kGpuModeGuestSwiftshader) {
-    crosvm_cmd.AddParameter("--gpu");
-    if (config_->wayland_socket().size()) {
-      crosvm_cmd.AddParameter("--wayland-sock=", config_->wayland_socket());
-    }
-    if (config_->x_display().size()) {
-      crosvm_cmd.AddParameter("--x-display=", config_->x_display());
-    }
+  if (config_->gpu_mode() == vsoc::kGpuModeDrmVirgl) {
+    crosvm_cmd.AddParameter("--gpu=",
+                            "width=", config_->x_res(), ",",
+                            "height=", config_->y_res(), ",",
+                            "egl=true,surfaceless=true,glx=false,gles=false");
+    crosvm_cmd.AddParameter("--wayland-sock=", config_->frames_socket_path());
   }
   if (!config_->final_ramdisk_path().empty()) {
     crosvm_cmd.AddParameter("--initrd=", config_->final_ramdisk_path());

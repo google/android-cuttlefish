@@ -158,7 +158,12 @@ class WaylandScreenConnector : public ScreenConnector {
 }  // namespace
 
 ScreenConnector* ScreenConnector::Get() {
-  return new SocketBasedScreenConnector();
+  auto config = vsoc::CuttlefishConfig::Get();
+  if (config->gpu_mode() == vsoc::kGpuModeDrmVirgl) {
+    return new WaylandScreenConnector();
+  } else {
+    return new SocketBasedScreenConnector();
+  }
 }
 
 }  // namespace vnc
