@@ -16,5 +16,6 @@
 subdirs = [
     "adb_connection_maintainer",
     "config",
+    "wayland",
     "vm_manager",
 ]
