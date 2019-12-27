@@ -26,7 +26,9 @@ struct ImagePartition {
 
 void aggregate_image(const std::vector<ImagePartition>& partitions,
                      const std::string& output_path);
-void create_composite_disk(std::vector<ImagePartition> partitions,
-                           const std::string& header_file,
-                           const std::string& footer_file,
-                           const std::string& output_path);
+void create_composite_disk_and_overlay(const std::string& crosvm_path,
+                                       std::vector<ImagePartition> partitions,
+                                       const std::string& header_file,
+                                       const std::string& footer_file,
+                                       const std::string& output_composite_path,
+                                       const std::string& output_overlay_path);

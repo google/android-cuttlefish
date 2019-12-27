@@ -221,6 +221,19 @@ void bpttool_make_disk_image(const std::vector<ImagePartition>& partitions,
   }
 }
 
+void CreateQcowOverlay(const std::string& crosvm_path,
+                       const std::string& backing_file,
+                       const std::string& output_overlay_path) {
+  cvd::Command crosvm_qcow2_cmd(crosvm_path);
+  crosvm_qcow2_cmd.AddParameter("create_qcow2");
+  crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
+  crosvm_qcow2_cmd.AddParameter(output_overlay_path);
+  int success = crosvm_qcow2_cmd.Start().Wait();
+  if (success != 0) {
+    LOG(FATAL) << "Unable to run crosvm create_qcow2. Exited with status " << success;
+  }
+}
+
 } // namespace
 
 void aggregate_image(const std::vector<ImagePartition>& partitions,
@@ -231,18 +244,21 @@ void aggregate_image(const std::vector<ImagePartition>& partitions,
   bpttool_make_disk_image(partitions, table_fd, output_path);
 };
 
-void create_composite_disk(std::vector<ImagePartition> partitions,
-                           const std::string& header_file,
-                           const std::string& footer_file,
-                           const std::string& output_path) {
+void create_composite_disk_and_overlay(const std::string& crosvm_path,
+                                       std::vector<ImagePartition> partitions,
+                                       const std::string& header_file,
+                                       const std::string& footer_file,
+                                       const std::string& output_composite_path,
+                                       const std::string& output_overlay_path) {
   auto bpttool_input_json = bpttool_input(partitions);
   auto table_fd = bpttool_make_table(json_to_fd(bpttool_input_json));
   auto table = fd_to_json(table_fd);
   auto partition_table_fd = bpttool_make_partition_table(json_to_fd(bpttool_input_json));
   CreateGptFiles(partition_table_fd, header_file, footer_file);
   auto composite_proto = MakeCompositeDiskSpec(table, partitions, header_file, footer_file);
-  std::ofstream output(output_path.c_str(), std::ios::binary | std::ios::trunc);
-  output << "composite_disk\x1d";
-  composite_proto.SerializeToOstream(&output);
-  output.flush();
+  std::ofstream composite(output_composite_path.c_str(), std::ios::binary | std::ios::trunc);
+  composite << "composite_disk\x1d";
+  composite_proto.SerializeToOstream(&composite);
+  composite.flush();
+  CreateQcowOverlay(crosvm_path, output_composite_path, output_overlay_path);
 }
