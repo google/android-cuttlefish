@@ -71,8 +71,6 @@ const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
 const char* const kGpuMode = "gpu_mode";
-const char* const kWaylandSocket = "wayland_socket";
-const char* const kXDisplay = "x_display";
 const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
@@ -183,21 +181,6 @@ std::string CuttlefishConfig::gpu_mode() const {
 }
 void CuttlefishConfig::set_gpu_mode(const std::string& name) {
   (*dictionary_)[kGpuMode] = name;
-}
-
-std::string CuttlefishConfig::wayland_socket() const {
-  // Don't use SetPath here: the path is already fully formed.
-  return (*dictionary_)[kWaylandSocket].asString();
-}
-void CuttlefishConfig::set_wayland_socket(const std::string& path) {
-  (*dictionary_)[kWaylandSocket] = path;
-}
-
-std::string CuttlefishConfig::x_display() const {
-  return (*dictionary_)[kXDisplay].asString();
-}
-void CuttlefishConfig::set_x_display(const std::string& address) {
-  (*dictionary_)[kXDisplay] = address;
 }
 
 std::string CuttlefishConfig::serial_number() const {
@@ -672,6 +655,10 @@ std::string CuttlefishConfig::touch_socket_path() const {
 
 std::string CuttlefishConfig::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
+}
+
+std::string CuttlefishConfig::frames_socket_path() const {
+  return PerInstanceInternalPath("frames.sock");
 }
 
 void CuttlefishConfig::set_loop_max_part(int loop_max_part) {
