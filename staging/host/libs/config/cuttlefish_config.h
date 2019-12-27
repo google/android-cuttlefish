@@ -271,6 +271,9 @@ class CuttlefishConfig {
   void set_guest_audit_security(bool guest_audit_security);
   bool guest_audit_security() const;
 
+  void set_guest_force_normal_boot(bool guest_force_normal_boot);
+  bool guest_force_normal_boot() const;
+
   void set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline);
   std::vector<std::string> boot_image_kernel_cmdline() const;
 

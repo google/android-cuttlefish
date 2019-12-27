@@ -71,6 +71,9 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   } else {
     kernel_cmdline.push_back("audit=0");
   }
+  if (config.guest_force_normal_boot()) {
+    kernel_cmdline.push_back("androidboot.force_normal_boot=1");
+  }
 
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 

@@ -55,6 +55,8 @@ DEFINE_bool(guest_enforce_security, true,
             "Whether to run in enforcing mode (non permissive).");
 DEFINE_bool(guest_audit_security, true,
             "Whether to log security audits.");
+DEFINE_bool(guest_force_normal_boot, true,
+            "Whether to force the boot sequence to skip recovery.");
 DEFINE_string(boot_image, "",
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
@@ -260,6 +262,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_loop_max_part(FLAGS_loop_max_part);
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
+  tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
   tmp_config_obj.set_virtual_disk_paths({FLAGS_composite_disk});
