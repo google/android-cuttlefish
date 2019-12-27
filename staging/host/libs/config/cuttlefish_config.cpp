@@ -141,6 +141,7 @@ const char* kBootSlot = "boot_slot";
 const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
 const char* kGuestAuditSecurity = "guest_audit_security";
+const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 
@@ -679,6 +680,13 @@ void CuttlefishConfig::set_guest_audit_security(bool guest_audit_security) {
 }
 bool CuttlefishConfig::guest_audit_security() const {
   return (*dictionary_)[kGuestAuditSecurity].asBool();
+}
+
+void CuttlefishConfig::set_guest_force_normal_boot(bool guest_force_normal_boot) {
+  (*dictionary_)[kGuestForceNormalBoot] = guest_force_normal_boot;
+}
+bool CuttlefishConfig::guest_force_normal_boot() const {
+  return (*dictionary_)[kGuestForceNormalBoot].asBool();
 }
 
 void CuttlefishConfig::set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline) {
