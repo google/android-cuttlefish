@@ -438,7 +438,7 @@ int main(int argc, char** argv) {
   kernel_args.insert(kernel_args.end(), logcat_server_args.begin(), logcat_server_args.end());
 
   // Start the guest VM
-  vm_manager->WithFrontend(vnc_kernel_args.size() > 0);
+  vm_manager->WithFrontend(vnc_server_config.launched);
   vm_manager->WithKernelCommandLine(android::base::Join(kernel_args, " "));
   auto vmm_commands = vm_manager->StartCommands();
   for (auto& vmm_cmd: vmm_commands) {
