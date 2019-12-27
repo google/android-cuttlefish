@@ -34,12 +34,17 @@ cc_binary_host {
         "libcuttlefish_utils",
         "cuttlefish_tcp_socket",
         "libbase",
+        "liblog",
     ],
     static_libs: [
         "libcuttlefish_host_config",
+        "libcuttlefish_wayland_server",
+        "libffi",
         "libjsoncpp",
         "libjpeg",
         "libgflags",
+        "libwayland_server",
+        "libwayland_extension_server_protocols",
     ],
     defaults: ["cuttlefish_host_only"],
 }
