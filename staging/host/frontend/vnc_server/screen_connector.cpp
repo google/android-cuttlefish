@@ -24,6 +24,7 @@
 #include <gflags/gflags.h>
 
 #include "host/frontend/vnc_server/vnc_utils.h"
+#include "host/libs/wayland/wayland_server.h"
 
 DEFINE_int32(frame_server_fd, -1, "");
 
@@ -31,6 +32,7 @@ namespace cvd {
 namespace vnc {
 
 namespace {
+
 // TODO(b/128852363): Substitute with one based on memory shared with the
 //  wayland mock
 class SocketBasedScreenConnector : public ScreenConnector {
@@ -39,7 +41,18 @@ class SocketBasedScreenConnector : public ScreenConnector {
     screen_server_thread_ = std::thread([this]() { ServerLoop(); });
   }
 
-  int WaitForNewFrameSince(std::uint32_t* seq_num) override {
+  bool OnFrameAfter(std::uint32_t frame_number,
+                    const FrameCallback& frame_callback) override {
+    int buffer_idx = WaitForNewFrameSince(&frame_number);
+    void* buffer = GetBuffer(buffer_idx);
+    frame_callback(frame_number, reinterpret_cast<uint8_t*>(buffer));
+    return true;
+  }
+
+ private:
+  static constexpr int NUM_BUFFERS_ = 4;
+
+  int WaitForNewFrameSince(std::uint32_t* seq_num) {
     std::unique_lock<std::mutex> lock(new_frame_mtx_);
     while (seq_num_ == *seq_num) {
       new_frame_cond_var_.wait(lock);
@@ -48,14 +61,11 @@ class SocketBasedScreenConnector : public ScreenConnector {
     return newest_buffer_;
   }
 
-  void* GetBuffer(int buffer_idx) override {
+  void* GetBuffer(int buffer_idx) {
     if (buffer_idx < 0) return nullptr;
     buffer_idx %= NUM_BUFFERS_;
     return &buffer_[buffer_idx * ScreenSizeInBytes()];
   }
-
- private:
-  static constexpr int NUM_BUFFERS_ = 4;
 
   void ServerLoop() {
     if (FLAGS_frame_server_fd < 0) {
@@ -120,6 +130,31 @@ class SocketBasedScreenConnector : public ScreenConnector {
   std::mutex new_frame_mtx_;
   std::thread screen_server_thread_;
 };
+
+class WaylandScreenConnector : public ScreenConnector {
+ public:
+  WaylandScreenConnector() {
+    int wayland_fd = fcntl(FLAGS_frame_server_fd, F_DUPFD_CLOEXEC, 3);
+    CHECK(wayland_fd != -1) << "Unable to dup server, errno " << errno;
+    close(FLAGS_frame_server_fd);
+
+    server_.reset(new wayland::WaylandServer(wayland_fd));
+  }
+
+  bool OnFrameAfter(std::uint32_t frame_number,
+                    const FrameCallback& frame_callback) override {
+    std::future<void> frame_callback_completed_future =
+      server_->OnFrameAfter(frame_number, frame_callback);
+
+    frame_callback_completed_future.get();
+
+    return true;
+  }
+
+ private:
+  std::unique_ptr<wayland::WaylandServer> server_;
+};
+
 }  // namespace
 
 ScreenConnector* ScreenConnector::Get() {
