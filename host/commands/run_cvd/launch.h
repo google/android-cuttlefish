@@ -19,12 +19,13 @@ void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
 
-struct VncServerPorts {
+struct VncServerLaunchResult {
+  bool launched = false;
   std::optional<unsigned int> frames_server_vsock_port;
   std::optional<unsigned int> touch_server_vsock_port;
   std::optional<unsigned int> keyboard_server_vsock_port;
 };
-VncServerPorts LaunchVNCServerIfEnabled(
+VncServerLaunchResult LaunchVNCServerIfEnabled(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     std::function<bool(cvd::MonitorEntry*)> callback);
