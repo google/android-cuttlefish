@@ -157,8 +157,6 @@ BOARD_KERNEL_CMDLINE += init=/init
 BOARD_KERNEL_CMDLINE += androidboot.hardware=cutf_cvm
 BOARD_KERNEL_CMDLINE += security=selinux
 BOARD_KERNEL_CMDLINE += androidboot.console=ttyS1
-# Boot as recovery is set so normal boot needs to be forced every boot
-BOARD_KERNEL_CMDLINE += androidboot.force_normal_boot=1
 
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_BOOT_HEADER_VERSION := 3
