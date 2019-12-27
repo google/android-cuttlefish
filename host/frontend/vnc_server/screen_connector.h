@@ -17,9 +17,13 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 
 namespace cvd {
 namespace vnc {
+
+using FrameCallback = std::function<void(std::uint32_t /*frame_number*/,
+                                         std::uint8_t* /*frame_pixels*/)>;
 
 class ScreenConnector {
  public:
@@ -27,8 +31,10 @@ class ScreenConnector {
 
   virtual ~ScreenConnector() = default;
 
-  virtual int WaitForNewFrameSince(std::uint32_t* seq_num) = 0;
-  virtual void* GetBuffer(int buffer_idx) = 0;
+  // Runs the given callback on the next available frame after the given
+  // frame number and returns true if successful.
+  virtual bool OnFrameAfter(std::uint32_t frame_number,
+                            const FrameCallback& frame_callback) = 0;
 
  protected:
   ScreenConnector() = default;
