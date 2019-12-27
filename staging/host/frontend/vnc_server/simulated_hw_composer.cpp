@@ -68,16 +68,14 @@ void SimulatedHWComposer::EraseHalfOfElements(
 }
 
 void SimulatedHWComposer::MakeStripes() {
-  std::uint32_t previous_seq_num{};
+  std::uint32_t previous_frame_number = 0;
   auto screen_height = ActualScreenHeight();
   Message raw_screen;
   std::uint64_t stripe_seq_num = 1;
-  while (!closed()) {
-    bb_->WaitForAtLeastOneClientConnection();
-    int buffer_idx = screen_connector_->WaitForNewFrameSince(&previous_seq_num);
-    const char* frame_start =
-        static_cast<char*>(screen_connector_->GetBuffer(buffer_idx));
-    raw_screen.assign(frame_start, frame_start + ScreenSizeInBytes());
+
+  const FrameCallback frame_callback = [&](uint32_t frame_number,
+                                           uint8_t* frame_pixels) {
+    raw_screen.assign(frame_pixels, frame_pixels + ScreenSizeInBytes());
 
     for (int i = 0; i < kNumStripes; ++i) {
       ++stripe_seq_num;
@@ -98,7 +96,7 @@ void SimulatedHWComposer::MakeStripes() {
       // on klp
       Stripe s{};
       s.index = i;
-      s.frame_id = previous_seq_num;
+      s.frame_id = frame_number;
       s.x = 0;
       s.y = y;
       s.width = ActualScreenWidth();
@@ -109,6 +107,14 @@ void SimulatedHWComposer::MakeStripes() {
       s.orientation = ScreenOrientation::Portrait;
       stripes_.Push(std::move(s));
     }
+
+    previous_frame_number = frame_number;
+  };
+
+  while (!closed()) {
+    bb_->WaitForAtLeastOneClientConnection();
+
+    screen_connector_->OnFrameAfter(previous_frame_number, frame_callback);
   }
 }
 
