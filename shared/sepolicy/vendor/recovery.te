@@ -1,3 +1,16 @@
-allow recovery gpu_device:chr_file rw_file_perms;
+# Allow minui access to /dev/dri/card0
+allow recovery gpu_device:dir search;
+allow recovery graphics_device:chr_file rw_file_perms;
 
+# Allow sideload from file pushed to fake /sdcard
 allow recovery appdomain_tmpfs:file r_file_perms;
+
+# Seen during 'Wipe data/factory reset'
+allow recovery cache_block_device:blk_file rw_file_perms;
+allow recovery devpts:chr_file rw_file_perms;
+allow recovery kmsg_device:chr_file { getattr w_file_perms };
+# Note: fsetid checks are triggered when creating a file in a directory with
+# the setgid bit set to determine if the file should inherit setgid. In this
+# case, setgid on the file is undesirable so we should just suppress the
+# denial.
+dontaudit recovery self:global_capability_class_set fsetid;
