@@ -1,3 +1,0 @@
-# This file should contain entries specific to crosvm only, for common entries
-# use common file instead.
-import /init.recovery.common.rc
