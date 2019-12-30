@@ -1,5 +1,6 @@
 genfscon sysfs /bus/iio/devices u:object_r:sysfs_iio_devices:s0
-genfscon sysfs /devices/pnp0/00:00/rtc  u:object_r:sysfs_rtc:s0 # qemu virtual rtc
+genfscon sysfs /devices/pnp0/00:00/rtc  u:object_r:sysfs_rtc:s0 # qemu x86 virtual rtc
+genfscon sysfs /devices/platform/2000.rtc/rtc  u:object_r:sysfs_rtc:s0 # crosvm arm64 virtual rtc
 genfscon sysfs /devices/platform/rtc-test.0/rtc/rtc0/hctosys u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc1/hctosys u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.2/rtc/rtc2/hctosys u:object_r:sysfs_rtc:s0
