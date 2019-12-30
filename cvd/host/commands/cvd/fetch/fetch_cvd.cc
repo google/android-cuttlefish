@@ -94,12 +94,12 @@ std::vector<std::string> download_images(BuildApi* build_api,
   auto artifacts = build_api->Artifacts(build);
   std::string img_zip_name = TargetBuildZipFromArtifacts(build, "img", artifacts);
   if (img_zip_name.size() == 0) {
-    LOG(FATAL) << "Target " << build << " did not have an img zip";
+    LOG(ERROR) << "Target " << build << " did not have an img zip";
     return {};
   }
   std::string local_path = target_directory + "/" + img_zip_name;
   if (!build_api->ArtifactToFile(build, img_zip_name, local_path)) {
-    LOG(FATAL) << "Unable to download " << build << ":" << img_zip_name << " to "
+    LOG(ERROR) << "Unable to download " << build << ":" << img_zip_name << " to "
                << local_path;
     return {};
   }
@@ -127,12 +127,12 @@ std::vector<std::string> download_target_files(BuildApi* build_api,
   auto artifacts = build_api->Artifacts(build);
   std::string target_zip = TargetBuildZipFromArtifacts(build, "target_files", artifacts);
   if (target_zip.size() == 0) {
-    LOG(FATAL) << "Target " << build << " did not have a target files zip";
+    LOG(ERROR) << "Target " << build << " did not have a target files zip";
     return {};
   }
   std::string local_path = target_directory + "/" + target_zip;
   if (!build_api->ArtifactToFile(build, target_zip, local_path)) {
-    LOG(FATAL) << "Unable to download " << build << ":" << target_zip << " to "
+    LOG(ERROR) << "Unable to download " << build << ":" << target_zip << " to "
                << local_path;
     return {};
   }
@@ -148,20 +148,20 @@ std::vector<std::string> download_host_package(BuildApi* build_api,
     has_host_package |= artifact.Name() == HOST_TOOLS;
   }
   if (!has_host_package) {
-    LOG(FATAL) << "Target " << build << " did not have " << HOST_TOOLS;
+    LOG(ERROR) << "Target " << build << " did not have " << HOST_TOOLS;
     return {};
   }
   std::string local_path = target_directory + "/" + HOST_TOOLS;
 
   if (!build_api->ArtifactToFile(build, HOST_TOOLS, local_path)) {
-    LOG(FATAL) << "Unable to download " << build << ":" << HOST_TOOLS << " to "
+    LOG(ERROR) << "Unable to download " << build << ":" << HOST_TOOLS << " to "
                << local_path;
     return {};
   }
 
   cvd::Archive archive(local_path);
   if (!archive.ExtractAll(target_directory)) {
-    LOG(FATAL) << "Could not extract " << local_path;
+    LOG(ERROR) << "Could not extract " << local_path;
     return {};
   }
   std::vector<std::string> files = archive.Contents();
@@ -212,12 +212,12 @@ std::vector<std::string> download_ota_tools(BuildApi* build_api,
 
   std::string otatools_dir = target_directory + OTA_TOOLS_DIR;
   if (!cvd::DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
-    LOG(FATAL) << "Could not create " << otatools_dir;
+    LOG(ERROR) << "Could not create " << otatools_dir;
     return {};
   }
   cvd::Archive archive(local_path);
   if (!archive.ExtractAll(otatools_dir)) {
-    LOG(FATAL) << "Could not extract " << local_path;
+    LOG(ERROR) << "Could not extract " << local_path;
     return {};
   }
   std::vector<std::string> files = archive.Contents();
