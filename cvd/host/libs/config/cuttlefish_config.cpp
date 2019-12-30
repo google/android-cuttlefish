@@ -163,6 +163,7 @@ namespace vsoc {
 
 const char* const kGpuModeGuestSwiftshader = "guest_swiftshader";
 const char* const kGpuModeDrmVirgl = "drm_virgl";
+const char* const kGpuModeGfxStream = "gfxstream";
 
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
