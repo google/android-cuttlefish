@@ -42,6 +42,9 @@ std::vector<std::string> ExtractImages(const std::string& archive_file,
   bool extraction_success = true;
   std::vector<std::string> files =
       images.size() > 0 ? images : archive.Contents();
+  for (auto it = files.begin(); it != files.end();) {
+    it = (*it == "" || android::base::EndsWith(*it, "/")) ? files.erase(it) : ++it;
+  }
   for (const auto& file : files) {
     if (file.find(".img") == std::string::npos) {
       continue;
@@ -76,15 +79,6 @@ std::vector<std::string> ExtractImages(const std::string& archive_file,
     if (rename_ret != 0) {
       LOG(ERROR) << "Unable to rename deflated version of " << file;
       extraction_success = false;
-    }
-  }
-  auto it = files.begin();
-  while (it != files.end()) {
-    if (*it == "" || android::base::EndsWith(*it, "/")) {
-      it = files.erase(it);
-    } else {
-      *it = target_directory + "/" + *it;
-      it++;
     }
   }
   return extraction_success ? files : std::vector<std::string>{};
