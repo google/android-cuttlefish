@@ -556,6 +556,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
             const hidl_vec<::android::hardware::radio::V1_5::DataProfileInfo>& profiles);
     Return<void> setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
             bool preferredForEmergencyCall);
+    Return<void> setIndicationFilter_1_5(int32_t serial,
+            hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> indicationFilter);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3761,6 +3763,15 @@ Return<void> RadioImpl_1_5::setDataProfile_1_5(int32_t  serial ,
         RLOGE("setDataProfileResponse: radioService[%d]->mRadioResponse == NULL", mSlotId);
     }
 
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::setIndicationFilter_1_5(int32_t /* serial */,
+        hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> /* indicationFilter */) {
+    // TODO implement
+#if VDBG
+    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+#endif
     return Void();
 }
 
@@ -8107,6 +8118,29 @@ int radio_1_5::setRadioPowerResponse_1_5(int slotId, int responseType, int seria
     radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
+
+int radio_1_5::setIndicationFilterResponse_1_5(int slotId,
+                              int responseType, int serial, RIL_Errno e,
+                              void *response, size_t responselen) {
+#if VDBG
+    RLOGD("setIndicationFilterResponse_1_5: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_5->
+                        setIndicationFilterResponse_1_5(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("setIndicationFilterResponse_1_5: radioService[%d]->mRadioResponse == NULL",
+                slotId);
+    }
+
+    return 0;
+}
+
 
 /***************************************************************************************************
  * INDICATION FUNCTIONS
