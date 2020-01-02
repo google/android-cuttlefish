@@ -558,6 +558,7 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
             bool preferredForEmergencyCall);
     Return<void> setIndicationFilter_1_5(int32_t serial,
             hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> indicationFilter);
+    Return<void> getBarringInfo(int32_t serial);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3768,6 +3769,14 @@ Return<void> RadioImpl_1_5::setDataProfile_1_5(int32_t  serial ,
 
 Return<void> RadioImpl_1_5::setIndicationFilter_1_5(int32_t /* serial */,
         hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> /* indicationFilter */) {
+    // TODO implement
+#if VDBG
+    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+#endif
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::getBarringInfo(int32_t /* serial */) {
     // TODO implement
 #if VDBG
     RLOGE("[%04d]< %s", serial, "Method is not implemented");
@@ -8141,6 +8150,28 @@ int radio_1_5::setIndicationFilterResponse_1_5(int slotId,
     return 0;
 }
 
+int radio_1_5::getBarringInfoResponse(int slotId,
+                              int responseType, int serial, RIL_Errno e,
+                              void *response, size_t responselen) {
+#if VDBG
+    RLOGD("getBarringInfoResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        hidl_vec<::android::hardware::radio::V1_5::BarringInfo> barringInfo;
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_5->
+                        getBarringInfoResponse(responseInfo, barringInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("getBarringInfoResponse: radioService[%d]->mRadioResponse == NULL",
+                slotId);
+    }
+
+    return 0;
+}
 
 /***************************************************************************************************
  * INDICATION FUNCTIONS
