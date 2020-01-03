@@ -471,32 +471,33 @@ EOF
  WantedBy=multi-user.target
 EOF
 
-	echo "Creating cleanup script..."
-	cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
-#!/bin/bash
-echo "Installing cuttlefish-common package..."
-echo "nameserver 8.8.8.8" > /etc/resolv.conf
-MAC=`ip link | grep eth0 -A1 | grep ether | sed 's/.*\(..:..:..:..:..:..\) .*/\1/' | tr -d :`
-sed -i " 1 s/.*/& rockpi-${MAC}/" /etc/hosts
-sudo hostnamectl set-hostname "rockpi-${MAC}"
+	umount ${mntdir}/sys
+	umount ${mntdir}/dev
+	umount ${mntdir}/proc
 
+	chroot ${mntdir} /bin/bash << "EOT"
+echo "Installing cuttlefish-common package..."
 dpkg --add-architecture amd64
-until ping -c1 ftp.debian.org; do sleep 1; done
-ntpdate time.google.com
-while true; do
-	apt-get -o Acquire::Check-Valid-Until=false update
-	if [ $? != 0 ]; then sleep 1; continue; fi
-	apt-get install -y -f libc6:amd64 qemu-user-static
-	if [ $? != 0 ]; then sleep 1; continue; fi
-	break
-done
+apt-get update
+apt-get install -y -f libc6:amd64 qemu-user-static
 cd /home/vsoc-01/android-cuttlefish
 dpkg-buildpackage -d -uc -us
 apt-get install -y -f ../cuttlefish-common_*_arm64.deb
 apt-get clean
+
 usermod -aG cvdnetwork vsoc-01
 chmod 660 /dev/vhost-vsock
 chown root:cvdnetwork /dev/vhost-vsock
+rm -rf /home/vsoc-01/*
+EOT
+
+	echo "Creating cleanup script..."
+	cat > ${mntdir}/usr/local/bin/install-cleanup << "EOF"
+#!/bin/bash
+echo "nameserver 8.8.8.8" > /etc/resolv.conf
+MAC=`ip link | grep eth0 -A1 | grep ether | sed 's/.*\(..:..:..:..:..:..\) .*/\1/' | tr -d :`
+sed -i " 1 s/.*/& rockpi-${MAC}/" /etc/hosts
+sudo hostnamectl set-hostname "rockpi-${MAC}"
 
 rm /etc/machine-id
 rm /var/lib/dbus/machine-id
@@ -521,9 +522,6 @@ mkimage -A arm -O linux -T ramdisk -C none -a 0 -e 0 -n uInitrd -d /boot/initrd.
 ln -s /boot/uInitrd-5.2.0 /boot/uInitrd
 EOT
 
-	umount ${mntdir}/sys
-	umount ${mntdir}/dev
-	umount ${mntdir}/proc
 	umount ${mntdir}
 
 	# Turn on journaling
