@@ -19,13 +19,13 @@ void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config);
 
-struct VncServerLaunchResult {
+struct StreamerLaunchResult {
   bool launched = false;
   std::optional<unsigned int> frames_server_vsock_port;
   std::optional<unsigned int> touch_server_vsock_port;
   std::optional<unsigned int> keyboard_server_vsock_port;
 };
-VncServerLaunchResult LaunchVNCServerIfEnabled(
+StreamerLaunchResult LaunchVNCServer(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     std::function<bool(cvd::MonitorEntry*)> callback);
@@ -47,3 +47,6 @@ struct LogcatServerPorts {
 };
 LogcatServerPorts LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                                 cvd::ProcessMonitor* process_monitor);
+
+StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
+                                  const vsoc::CuttlefishConfig& config);
