@@ -216,6 +216,21 @@ class CuttlefishConfig {
   void set_vnc_server_binary(const std::string& vnc_server_binary);
   std::string vnc_server_binary() const;
 
+  void set_enable_webrtc(bool enable_webrtc);
+  bool enable_webrtc() const;
+
+  void set_webrtc_binary(const std::string& webrtc_binary);
+  std::string webrtc_binary() const;
+
+  void set_webrtc_assets_dir(const std::string& webrtc_binary);
+  std::string webrtc_assets_dir() const;
+
+  void set_webrtc_public_ip(const std::string& webrtc_public_ip);
+  std::string webrtc_public_ip() const;
+
+  void set_webrtc_enable_adb_websocket(bool enable);
+  bool webrtc_enable_adb_websocket() const;
+
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
 
@@ -279,6 +294,12 @@ class CuttlefishConfig {
 
   void set_extra_kernel_cmdline(std::string extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
+
+  void set_webrtc_certs_dir(const std::string& certs_dir);
+  std::string webrtc_certs_dir() const;
+
+  void set_dialog_certs_dir(const std::string& certs_dir);
+  std::string dialog_certs_dir() const;
 
  private:
   std::unique_ptr<Json::Value> dictionary_;

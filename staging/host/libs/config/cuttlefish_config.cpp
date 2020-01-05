@@ -115,6 +115,12 @@ const char* kEnableVncServer = "enable_vnc_server";
 const char* kVncServerBinary = "vnc_server_binary";
 const char* kVncServerPort = "vnc_server_port";
 
+const char* kEnableWebRTC = "enable_webrtc";
+const char* kWebRTCBinary = "webrtc_binary";
+const char* kWebRTCAssetsDir = "webrtc_assets_dir";
+const char* kWebRTCPublicIP = "webrtc_public_ip";
+const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
+
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
@@ -132,6 +138,8 @@ const char* kConfigServerBinary = "config_server_binary";
 
 const char* kRunTombstoneReceiver = "enable_tombstone_logger";
 const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
+
+const char* kWebRTCCertsDir = "webrtc_certs_dir";
 
 const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
@@ -519,6 +527,47 @@ void CuttlefishConfig::set_vnc_server_port(int vnc_server_port) {
   (*dictionary_)[kVncServerPort] = vnc_server_port;
 }
 
+void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
+  (*dictionary_)[kEnableWebRTC] = enable_webrtc;
+}
+
+bool CuttlefishConfig::enable_webrtc() const {
+  return (*dictionary_)[kEnableWebRTC].asBool();
+}
+
+void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
+  (*dictionary_)[kWebRTCBinary] = webrtc_binary;
+}
+
+std::string CuttlefishConfig::webrtc_binary() const {
+  return (*dictionary_)[kWebRTCBinary].asString();
+}
+
+void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
+  (*dictionary_)[kWebRTCAssetsDir] = webrtc_assets_dir;
+}
+
+std::string CuttlefishConfig::webrtc_assets_dir() const {
+  return (*dictionary_)[kWebRTCAssetsDir].asString();
+}
+
+void CuttlefishConfig::set_webrtc_public_ip(
+        const std::string& webrtc_public_ip) {
+  (*dictionary_)[kWebRTCPublicIP] = webrtc_public_ip;
+}
+
+std::string CuttlefishConfig::webrtc_public_ip() const {
+  return (*dictionary_)[kWebRTCPublicIP].asString();
+}
+
+void CuttlefishConfig::set_webrtc_enable_adb_websocket(bool enable) {
+    (*dictionary_)[kWebRTCEnableADBWebSocket] = enable;
+}
+
+bool CuttlefishConfig::webrtc_enable_adb_websocket() const {
+    return (*dictionary_)[kWebRTCEnableADBWebSocket].asBool();
+}
+
 bool CuttlefishConfig::restart_subprocesses() const {
   return (*dictionary_)[kRestartSubprocesses].asBool();
 }
@@ -647,6 +696,14 @@ void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
 
 std::string CuttlefishConfig::boot_slot() const {
   return (*dictionary_)[kBootSlot].asString();
+}
+
+void CuttlefishConfig::set_webrtc_certs_dir(const std::string& certs_dir) {
+  (*dictionary_)[kWebRTCCertsDir] = certs_dir;
+}
+
+std::string CuttlefishConfig::webrtc_certs_dir() const {
+  return (*dictionary_)[kWebRTCCertsDir].asString();
 }
 
 std::string CuttlefishConfig::touch_socket_path() const {

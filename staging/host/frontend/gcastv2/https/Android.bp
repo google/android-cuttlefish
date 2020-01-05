@@ -1,0 +1,31 @@
+cc_library_static {
+    name: "libhttps",
+    host_supported: true,
+    srcs: [
+        "BaseConnection.cpp",
+        "BufferedSocket.cpp",
+        "ClientSocket.cpp",
+        "HTTPClientConnection.cpp",
+        "HTTPRequestResponse.cpp",
+        "HTTPServer.cpp",
+        "PlainSocket.cpp",
+        "SSLSocket.cpp",
+        "ServerSocket.cpp",
+        "WebSocketHandler.cpp",
+        "RunLoop.cpp",
+        "Support.cpp",
+    ],
+    defaults: ["cuttlefish_host_only"],
+    header_libs: [
+	"cuttlefish_glog",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcrypto",
+        "libssl",
+	"liblog",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+}
+

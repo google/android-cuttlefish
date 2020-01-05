@@ -1,0 +1,19 @@
+<script>
+
+var sock = new WebSocket("wss://localhost:8443/control", "protocolOne");
+
+sock.onopen = function(event) {
+    // Close connection after 5 secs.
+    // setTimeout(function() { sock.close(); }, 5000);
+
+    sock.send("Here's some sample text");
+}
+
+sock.onmessage = function(event) {
+    console.log(event.data);
+}
+
+</script>
+
+<h1>Test</h1>
+
