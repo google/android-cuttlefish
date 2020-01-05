@@ -1,0 +1,5 @@
+Test using
+
+    curl --cacert certs/server.crt https://localhost:443/
+
+
