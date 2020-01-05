@@ -80,19 +80,20 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   return kernel_cmdline;
 }
 
-std::vector<std::string> KernelCommandLineFromVnc(const VncServerLaunchResult& vnc_launch) {
+std::vector<std::string> KernelCommandLineFromStreamer(
+    const StreamerLaunchResult& streamer_launch) {
   std::vector<std::string> kernel_args;
-  if (vnc_launch.frames_server_vsock_port) {
+  if (streamer_launch.frames_server_vsock_port) {
     kernel_args.push_back(concat("androidboot.vsock_frames_port=",
-                                 *vnc_launch.frames_server_vsock_port));
+                                 *streamer_launch.frames_server_vsock_port));
   }
-  if (vnc_launch.touch_server_vsock_port) {
+  if (streamer_launch.touch_server_vsock_port) {
     kernel_args.push_back(concat("androidboot.vsock_touch_port=",
-                                 *vnc_launch.touch_server_vsock_port));
+                                 *streamer_launch.touch_server_vsock_port));
   }
-  if (vnc_launch.keyboard_server_vsock_port) {
+  if (streamer_launch.keyboard_server_vsock_port) {
     kernel_args.push_back(concat("androidboot.vsock_keyboard_port=",
-                                 *vnc_launch.keyboard_server_vsock_port));
+                                 *streamer_launch.keyboard_server_vsock_port));
   }
   return kernel_args;
 }

@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>My WebRTC Playground</title>
+
+        <link rel="stylesheet" type="text/css" href="style.css" >
+    </head>
+
+    <body>
+        <button id="receiveButton">Receive Media</button>
+        <hr>
+        <section class="noscroll">
+            <div class="one" >
+                <video id="video" autoplay controls width="360" height="720" style="touch-action:none" ></video>
+            </div>
+
+            <div class="two" >
+                <textarea id="logcat" rows="55" cols="120" readonly >
+                </textarea>
+            </div>
+        </section>
+
+        <script src="js/receive.js"></script>
+        <script src="js/logcat.js"></script>
+    </body>
+
+</html>
+
