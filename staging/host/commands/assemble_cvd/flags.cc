@@ -1,5 +1,6 @@
 #include "host/commands/assemble_cvd/flags.h"
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 
@@ -92,7 +93,30 @@ DEFINE_string(composite_disk, "", "Location of the composite disk image. "
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
-DEFINE_bool(start_vnc_server, true, "Whether to start the vnc server process.");
+DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process.");
+
+DEFINE_bool(start_webrtc, false, "Whether to start the webrtc process.");
+
+DEFINE_string(
+        webrtc_assets_dir,
+        vsoc::DefaultHostArtifactsPath("usr/share/webrtc/assets"),
+        "Path to WebRTC webpage assets.");
+
+DEFINE_string(
+        webrtc_certs_dir,
+        vsoc::DefaultHostArtifactsPath("usr/share/webrtc/certs"),
+        "Path to WebRTC certificates directory.");
+
+DEFINE_string(
+        webrtc_public_ip,
+        "127.0.0.1",
+        "Public IPv4 address of your server, a.b.c.d format");
+
+DEFINE_bool(
+        webrtc_enable_adb_websocket,
+        false,
+        "If enabled, exposes local adb service through a websocket.");
+
 DEFINE_int32(vnc_server_port, GetPerInstanceDefault(6444),
              "The port on which the vnc server should listen");
 DEFINE_string(adb_mode, "vsock_half_tunnel",
@@ -193,11 +217,19 @@ int GetHostPort() {
   return vsoc::GetPerInstanceDefault(kFirstHostPort);
 }
 
+int NumStreamers() {
+  auto start_flags = {FLAGS_start_vnc_server, FLAGS_start_webrtc};
+  return std::count(start_flags.begin(), start_flags.end(), true);
+}
+
 // Initializes the config object and saves it to file. It doesn't return it, all
 // further uses of the config should happen through the singleton
 bool InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker,
     const cvd::FetcherConfig& fetcher_config) {
+  // At most one streamer can be started.
+  CHECK(NumStreamers() <= 1);
+
   vsoc::CuttlefishConfig tmp_config_obj;
   // Set this first so that calls to PerInstancePath below are correct
   tmp_config_obj.set_instance_dir(FLAGS_instance_dir);
@@ -313,6 +345,16 @@ bool InitializeCuttlefishConfiguration(
       vsoc::DefaultHostArtifactsPath("bin/vnc_server"));
   tmp_config_obj.set_vnc_server_port(FLAGS_vnc_server_port);
 
+  tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
+  tmp_config_obj.set_webrtc_binary(
+      vsoc::DefaultHostArtifactsPath("bin/webRTC"));
+  tmp_config_obj.set_webrtc_assets_dir(FLAGS_webrtc_assets_dir);
+  tmp_config_obj.set_webrtc_public_ip(FLAGS_webrtc_public_ip);
+  tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
+
+  tmp_config_obj.set_webrtc_enable_adb_websocket(
+          FLAGS_webrtc_enable_adb_websocket);
+
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
   tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
   tmp_config_obj.set_adb_connector_binary(
@@ -389,6 +431,13 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
     std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
               << std::endl;
     invalid_manager = true;
+  }
+  if (NumStreamers() == 0) {
+    // This makes the vnc server the default streamer unless the user requests
+    // another via a --star_<streamer> flag, while at the same time it's
+    // possible to run without any streamer by setting --start_vnc_server=false.
+    SetCommandLineOptionWithMode("start_vnc_server", "true",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   google::HandleCommandLineHelpFlags();
   if (invalid_manager) {
