@@ -20,6 +20,7 @@
 #include <glog/logging.h>
 #include "host/frontend/vnc_server/jpeg_compressor.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
+#include "host/libs/screen_connector/screen_connector.h"
 
 using cvd::vnc::JpegCompressor;
 
@@ -31,7 +32,7 @@ void InitCinfo(jpeg_compress_struct* cinfo, jpeg_error_mgr* err,
 
   cinfo->image_width = width;
   cinfo->image_height = height;
-  cinfo->input_components = cvd::vnc::BytesPerPixel();
+  cinfo->input_components = cvd::ScreenConnector::BytesPerPixel();
   cinfo->in_color_space = JCS_EXT_RGBX;
 
   jpeg_set_defaults(cinfo);
@@ -57,7 +58,7 @@ cvd::Message JpegCompressor::Compress(const Message& frame,
     auto row = static_cast<JSAMPROW>(const_cast<std::uint8_t*>(
         &frame[(y * stride) +
                (cinfo.next_scanline * stride) +
-               (x * BytesPerPixel())]));
+               (x * cvd::ScreenConnector::BytesPerPixel())]));
     jpeg_write_scanlines(&cinfo, &row, 1);
   }
   jpeg_finish_compress(&cinfo);

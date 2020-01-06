@@ -19,15 +19,17 @@
 #include <cstdint>
 #include <functional>
 
+#include "common/libs/utils/size_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
+
 namespace cvd {
-namespace vnc {
 
 using FrameCallback = std::function<void(std::uint32_t /*frame_number*/,
                                          std::uint8_t* /*frame_pixels*/)>;
 
 class ScreenConnector {
  public:
-  static ScreenConnector* Get();
+  static ScreenConnector* Get(int frames_fd);
 
   virtual ~ScreenConnector() = default;
 
@@ -36,9 +38,28 @@ class ScreenConnector {
   virtual bool OnFrameAfter(std::uint32_t frame_number,
                             const FrameCallback& frame_callback) = 0;
 
+  static inline constexpr int BytesPerPixel() {
+      return sizeof(int32_t);
+  }
+
+  static inline int ScreenHeight() {
+      return vsoc::CuttlefishConfig::Get()->y_res();
+  }
+
+  static inline int ScreenWidth() {
+      return vsoc::CuttlefishConfig::Get()->x_res();
+  }
+
+  static inline int ScreenStride() {
+      return AlignToPowerOf2(ScreenWidth() * BytesPerPixel(), 4);
+  }
+
+  static inline int ScreenSizeInBytes() {
+      return ScreenStride() * ScreenHeight() * BytesPerPixel();
+  }
+
  protected:
   ScreenConnector() = default;
 };
 
-}  // namespace vnc
 }  // namespace cvd

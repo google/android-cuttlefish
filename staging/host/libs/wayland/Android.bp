@@ -32,7 +32,6 @@ cc_library_host_static {
     static_libs: [
         "libdrm",
         "libffi",
-        "libgflags",
         "libwayland_server",
         "libwayland_extension_server_protocols",
     ],
