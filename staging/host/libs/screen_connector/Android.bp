@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,38 +13,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
-    name: "vnc_server",
+cc_library_host_static {
+    name: "libcuttlefish_screen_connector",
     srcs: [
-        "blackboard.cpp",
-        "frame_buffer_watcher.cpp",
-        "jpeg_compressor.cpp",
-        "main.cpp",
-        "simulated_hw_composer.cpp",
-        "virtual_inputs.cpp",
-        "vnc_client_connection.cpp",
-        "vnc_server.cpp",
+        "screen_connector.cpp",
+        "socket_based_screen_connector.cpp",
+        "wayland_screen_connector.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     shared_libs: [
         "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "cuttlefish_tcp_socket",
         "libbase",
         "liblog",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libcuttlefish_screen_connector",
+        "libcuttlefish_utils",
         "libcuttlefish_wayland_server",
-        "libffi",
         "libjsoncpp",
-        "libjpeg",
-        "libgflags",
-        "libwayland_server",
-        "libwayland_extension_server_protocols",
     ],
     defaults: ["cuttlefish_host_only"],
 }
