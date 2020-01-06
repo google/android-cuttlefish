@@ -63,28 +63,5 @@ struct Stripe {
   ScreenOrientation orientation{};
 };
 
-inline constexpr int BytesPerPixel() {
-  return sizeof(uint32_t);
-}
-
-// The width of the screen regardless of orientation. Does not change.
-inline int ActualScreenWidth() {
-  return vsoc::CuttlefishConfig::Get()->x_res();
-}
-
-// The length of the screen stride regardless of orientation. Does not change.
-inline int ActualScreenStride() {
-  return AlignToPowerOf2(ActualScreenWidth() * BytesPerPixel(), 4);
-}
-
-// The height of the screen regardless of orientation. Does not change.
-inline int ActualScreenHeight() {
-  return vsoc::CuttlefishConfig::Get()->y_res();
-}
-
-inline int ScreenSizeInBytes() {
-  return ActualScreenWidth() * ActualScreenHeight() * BytesPerPixel();
-}
-
 }  // namespace vnc
 }  // namespace cvd

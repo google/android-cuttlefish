@@ -27,6 +27,7 @@
 
 #include <glog/logging.h>
 #include "host/frontend/vnc_server/vnc_utils.h"
+#include "host/libs/screen_connector/screen_connector.h"
 
 using cvd::vnc::FrameBufferWatcher;
 
@@ -70,17 +71,17 @@ cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
   Message rotated(raw.size(), 0xAA);
   for (std::uint16_t i = 0; i < w; ++i) {
     for (std::uint16_t j = 0; j < h; ++j) {
-      size_t to = (i * h + j) * BytesPerPixel();
-      size_t from = (w - (i + 1)) * BytesPerPixel() + s * j;
+      size_t to = (i * h + j) * ScreenConnector::BytesPerPixel();
+      size_t from = (w - (i + 1)) * ScreenConnector::BytesPerPixel() + s * j;
       CHECK(from < raw.size());
       CHECK(to < rotated.size());
-      std::memcpy(&rotated[to], &raw[from], BytesPerPixel());
+      std::memcpy(&rotated[to], &raw[from], ScreenConnector::BytesPerPixel());
     }
   }
   std::swap(stripe.x, stripe.y);
   std::swap(stripe.width, stripe.height);
   // The new stride after rotating is the height, as it is not aligned again.
-  stripe.stride = stripe.width * BytesPerPixel();
+  stripe.stride = stripe.width * ScreenConnector::BytesPerPixel();
   stripe.raw_data = std::move(rotated);
   stripe.orientation = ScreenOrientation::Landscape;
   return stripe;
