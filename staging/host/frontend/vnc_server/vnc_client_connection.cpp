@@ -37,6 +37,7 @@
 #include "host/frontend/vnc_server/mocks.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/screen_connector/screen_connector.h"
 
 using cvd::Message;
 using cvd::vnc::Stripe;
@@ -475,7 +476,7 @@ void VncClientConnection::HandlePointerEvent() {
     std::lock_guard<std::mutex> guard(m_);
     if (current_orientation_ == ScreenOrientation::Landscape) {
       std::tie(x_pos, y_pos) =
-          std::make_pair(ActualScreenWidth() - y_pos, x_pos);
+          std::make_pair(ScreenConnector::ScreenWidth() - y_pos, x_pos);
     }
   }
   virtual_inputs_->HandlePointerEvent(button_mask, x_pos, y_pos);
@@ -505,14 +506,14 @@ VncClientConnection::Coordinates VncClientConnection::CoordinatesForOrientation(
 
 int VncClientConnection::ScreenWidth() const {
   return current_orientation_ == ScreenOrientation::Portrait
-             ? ActualScreenWidth()
-             : ActualScreenHeight();
+             ? ScreenConnector::ScreenWidth()
+             : ScreenConnector::ScreenHeight();
 }
 
 int VncClientConnection::ScreenHeight() const {
   return current_orientation_ == ScreenOrientation::Portrait
-             ? ActualScreenHeight()
-             : ActualScreenWidth();
+             ? ScreenConnector::ScreenHeight()
+             : ScreenConnector::ScreenWidth();
 }
 
 void VncClientConnection::SetScreenOrientation(ScreenOrientation orientation) {
