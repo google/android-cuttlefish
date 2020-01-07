@@ -248,8 +248,8 @@ int MyWebSocketHandler::handleMessage(
         sp<ABuffer> accessUnit = new ABuffer(3 * sizeof(int32_t));
         int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
         data[0] = down;
-        data[1] = (x * 720) / 360;
-        data[2] = (y * 1440) / 720;
+        data[1] = x;
+        data[2] = y;
 
         mTouchSink->onAccessUnit(accessUnit);
     } else if (type == "inject-multi-touch") {
@@ -276,8 +276,8 @@ int MyWebSocketHandler::handleMessage(
         int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
         data[0] = id;
         data[1] = (initialDown != 0);
-        data[2] = (x * 720) / 360;
-        data[3] = (y * 1440) / 720;
+        data[2] = x;
+        data[3] = y;
         data[4] = slot;
 
         mTouchSink->onAccessUnit(accessUnit);
