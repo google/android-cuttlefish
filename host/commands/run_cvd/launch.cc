@@ -61,6 +61,64 @@ cvd::OnSocketReadyCb GetOnSubprocessExitCallback(
     return cvd::ProcessMonitor::DoNotMonitorCb;
   }
 }
+
+cvd::SharedFD CreateUnixInputServer(const std::string& path) {
+  auto server = cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM, 0666);
+  if (!server->IsOpen()) {
+    LOG(ERROR) << "Unable to create unix input server: "
+               << server->StrError();
+    return cvd::SharedFD();
+  }
+  return server;
+}
+
+// Creates the frame and input sockets and add the relevant arguments to the vnc
+// server and webrtc commands
+StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
+                                           const vsoc::CuttlefishConfig& config) {
+  StreamerLaunchResult server_ret;
+  cvd::SharedFD touch_server;
+  cvd::SharedFD keyboard_server;
+
+  if (config.vm_manager() == vm_manager::QemuManager::name()) {
+    cmd->AddParameter("-write_virtio_input");
+
+    touch_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+    server_ret.touch_server_vsock_port = touch_server->VsockServerPort();
+
+    keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+    server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
+  } else {
+    touch_server = CreateUnixInputServer(config.touch_socket_path());
+    keyboard_server = CreateUnixInputServer(config.keyboard_socket_path());
+  }
+  if (!touch_server->IsOpen()) {
+    LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
+    return {};
+  }
+  cmd->AddParameter("-touch_fd=", touch_server);
+
+  if (!keyboard_server->IsOpen()) {
+    LOG(ERROR) << "Could not open keyboard server: " << keyboard_server->StrError();
+    return {};
+  }
+  cmd->AddParameter("-keyboard_fd=", keyboard_server);
+
+  cvd::SharedFD frames_server;
+  if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl) {
+    frames_server = CreateUnixInputServer(config.frames_socket_path());
+  } else {
+    frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+    server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
+  }
+  if (!frames_server->IsOpen()) {
+    LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();
+    return {};
+  }
+  cmd->AddParameter("-frame_server_fd=", frames_server);
+  return server_ret;
+}
+
 } // namespace
 
 bool LogcatReceiverEnabled(const vsoc::CuttlefishConfig& config) {
@@ -179,76 +237,17 @@ TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
   return { socket->VsockServerPort() };
 }
 
-cvd::SharedFD CreateUnixVncInputServer(const std::string& path) {
-  auto server = cvd::SharedFD::SocketLocalServer(path.c_str(), false, SOCK_STREAM, 0666);
-  if (!server->IsOpen()) {
-    LOG(ERROR) << "Unable to create unix input server: "
-               << server->StrError();
-    return cvd::SharedFD();
-  }
-  return server;
-}
-
-VncServerLaunchResult LaunchVNCServerIfEnabled(
+StreamerLaunchResult LaunchVNCServer(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     std::function<bool(MonitorEntry*)> callback) {
-  VncServerLaunchResult server_ret;
-  if (!config.enable_vnc_server()) {
-    return {};
-  }
-  std::set<std::string> extra_kernel_args;
   // Launch the vnc server, don't wait for it to complete
   auto port_options = "-port=" + std::to_string(config.vnc_server_port());
   cvd::Command vnc_server(config.vnc_server_binary());
   vnc_server.AddParameter(port_options);
-  if (config.vm_manager() == vm_manager::QemuManager::name()) {
-    vnc_server.AddParameter("-write_virtio_input");
-  }
-  // When the ivserver is not enabled, the vnc touch_server needs to serve
-  // on sockets and send input events to whoever connects to it (the VMM).
-  cvd::SharedFD touch_server;
-  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
-    touch_server = CreateUnixVncInputServer(config.touch_socket_path());
-  } else {
-    touch_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.touch_server_vsock_port = touch_server->VsockServerPort();
-  }
-  if (!touch_server->IsOpen()) {
-    LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
-    return {};
-  }
-  vnc_server.AddParameter("-touch_fd=", touch_server);
 
-  cvd::SharedFD keyboard_server;
-  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
-    keyboard_server = CreateUnixVncInputServer(config.keyboard_socket_path());
-  } else {
-    keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
-  }
-  if (!keyboard_server->IsOpen()) {
-    LOG(ERROR) << "Could not open keyboard server: " << keyboard_server->StrError();
-    return {};
-  }
-  vnc_server.AddParameter("-keyboard_fd=", keyboard_server);
+  auto server_ret = CreateStreamerServers(&vnc_server, config);
 
-  // TODO(b/128852363): This should be handled through the wayland mock
-  //  instead.
-  // Additionally it receives the frame updates from a virtual socket
-  // instead
-  cvd::SharedFD frames_server;
-  if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl) {
-    frames_server = CreateUnixVncInputServer(config.frames_socket_path());
-  } else {
-    frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
-  }
-  if (!frames_server->IsOpen()) {
-    LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();
-    return {};
-  }
-  vnc_server.AddParameter("-frame_server_fd=", frames_server);
   process_monitor->StartSubprocess(std::move(vnc_server), callback);
   server_ret.launched = true;
   return server_ret;
@@ -278,6 +277,30 @@ void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
     process_monitor->StartSubprocess(std::move(adb_connector),
                                      GetOnSubprocessExitCallback(config));
   }
+}
+
+StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
+                                  const vsoc::CuttlefishConfig& config) {
+  cvd::Command webrtc(config.webrtc_binary());
+
+  if (!config.webrtc_certs_dir().empty()) {
+      webrtc.AddParameter("--certs_dir=", config.webrtc_certs_dir());
+  }
+
+  webrtc.AddParameter("--public_ip=", config.webrtc_public_ip());
+  webrtc.AddParameter("--assets_dir=", config.webrtc_assets_dir());
+
+  auto server_ret = CreateStreamerServers(&webrtc, config);
+
+  if (config.webrtc_enable_adb_websocket()) {
+      webrtc.AddParameter("--adb=", config.adb_ip_and_port());
+  }
+
+  process_monitor->StartSubprocess(std::move(webrtc),
+                                   GetOnSubprocessExitCallback(config));
+  server_ret.launched = true;
+
+  return server_ret;
 }
 
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,

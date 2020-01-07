@@ -3,18 +3,17 @@
 #include <https/RunLoop.h>
 #include <source/StreamingSink.h>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
-#include <linux/input.h>
-#include <linux/uinput.h>
-
 namespace android {
 
-struct CVMTouchSink
-    : public StreamingSink, public std::enable_shared_from_this<CVMTouchSink> {
-    explicit CVMTouchSink(std::shared_ptr<RunLoop> runLoop, int serverFd);
-    ~CVMTouchSink() override;
+struct TouchSink
+    : public StreamingSink, public std::enable_shared_from_this<TouchSink> {
+    explicit TouchSink(std::shared_ptr<RunLoop> runLoop, int serverFd,
+                       bool write_virtio_input);
+    ~TouchSink() override;
 
     void start();
 
@@ -30,10 +29,13 @@ private:
     std::vector<uint8_t> mOutBuffer;
     bool mSendPending;
 
+    std::function<void(int32_t, int32_t, bool)> send_event_;
+    std::function<void(int32_t, int32_t, int32_t, bool, int32_t)> send_mt_event_;
+
     void onServerConnection();
     void onSocketSend();
 
-    void sendEvents(const std::vector<input_event> &events);
+    void sendRawEvents(const void* evt_buffer, size_t length);
 };
 
 }  // namespace android
