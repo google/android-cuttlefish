@@ -1,0 +1,22 @@
+body,
+html {
+#    position: fixed;
+}
+
+.noscroll {
+    touch-action: none;
+}
+
+.one {
+    float: left;
+}
+
+.two {
+}
+
+#logcat {
+    display: none;
+    font-family: monospace;
+    padding: 10px;
+}
+
