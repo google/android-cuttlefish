@@ -1,0 +1,103 @@
+/*
+ * Copyright 2018, The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include <source/StreamingSource.h>
+
+#include <media/stagefright/foundation/AMessage.h>
+
+#include <functional>
+#include <memory>
+#include <thread>
+
+#define ENABLE_H264     0
+
+namespace vsoc {
+    namespace screen {
+        class ScreenRegionView;
+    }
+}
+
+namespace android {
+
+struct ABuffer;
+
+struct FrameBufferSource : public StreamingSource {
+    using ScreenRegionView = vsoc::screen::ScreenRegionView;
+
+    enum class Format {
+        H264,
+        VP8,
+    };
+
+    explicit FrameBufferSource(Format format);
+
+    FrameBufferSource(const FrameBufferSource &) = delete;
+    FrameBufferSource &operator=(const FrameBufferSource &) = delete;
+
+    ~FrameBufferSource() override;
+
+    status_t initCheck() const override;
+
+    void setParameters(const sp<AMessage> &params) override;
+
+    sp<AMessage> getFormat() const override;
+
+    status_t start() override;
+    status_t stop() override;
+
+    status_t pause() override;
+    status_t resume() override;
+
+    bool paused() const override;
+
+    status_t requestIDRFrame() override;
+
+    void setScreenParams(const int32_t screenParams[4]);
+    void injectFrame(const void *data, size_t size);
+
+private:
+    enum State {
+        STOPPING,
+        STOPPED,
+        RUNNING,
+        PAUSED
+    };
+
+    struct Encoder;
+#if ENABLE_H264
+    struct H264Encoder;
+#endif
+    struct VPXEncoder;
+
+    status_t mInitCheck;
+    State mState;
+    Format mFormat;
+    ScreenRegionView *mRegionView;
+    std::unique_ptr<Encoder> mEncoder;
+
+    std::mutex mLock;
+    std::unique_ptr<std::thread> mThread;
+
+    int32_t mScreenWidth, mScreenHeight, mScreenDpi, mScreenRate;
+
+    std::function<void(const sp<ABuffer> &)> mOnFrameFn;
+};
+
+}  // namespace android
+
+

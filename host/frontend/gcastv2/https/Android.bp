@@ -1,0 +1,58 @@
+cc_library_static {
+    name: "libhttps",
+    host_supported: true,
+    srcs: [
+        "BaseConnection.cpp",
+        "BufferedSocket.cpp",
+        "ClientSocket.cpp",
+        "HTTPClientConnection.cpp",
+        "HTTPRequestResponse.cpp",
+        "HTTPServer.cpp",
+        "PlainSocket.cpp",
+        "SSLSocket.cpp",
+        "ServerSocket.cpp",
+        "WebSocketHandler.cpp",
+        "RunLoop.cpp",
+        "Support.cpp",
+    ],
+    target: {
+    	host: {
+	     cflags: [
+                "-DTARGET_ANDROID",
+            ],
+	},
+	android: {
+	    cflags: [
+                "-DTARGET_ANDROID_DEVICE",
+            ],
+	    },
+    },
+    static_libs: [
+        "libandroidglue",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcrypto",
+        "libssl",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+}
+
+cc_library_static {
+    name: "librunloop_device_nojava",
+    vendor_available: true,
+    srcs: [
+        "RunLoop.cpp",
+        "Support.cpp",
+    ],
+    cflags: [
+        "-DTARGET_ANDROID_DEVICE_NO_JAVA",
+    ],
+    shared_libs: [
+        "libbase",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+}
+

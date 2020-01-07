@@ -1,0 +1,98 @@
+cc_library_static {
+    name: "libwebrtc",
+    host_supported: true,
+    srcs: [
+        "AdbWebSocketHandler.cpp",
+        "DTLS.cpp",
+        "G711Packetizer.cpp",
+// "H264Packetizer.cpp",
+        "MyWebSocketHandler.cpp",
+        "OpusPacketizer.cpp",
+        "Packetizer.cpp",
+        "RTPSender.cpp",
+        "RTPSession.cpp",
+        "RTPSocketHandler.cpp",
+        "SCTPHandler.cpp",
+        "SDP.cpp",
+        "ServerState.cpp",
+        "STUNMessage.cpp",
+        "Utils.cpp",
+        "VP8Packetizer.cpp",
+    ],
+    target: {
+        host: {
+            cflags: [
+                "-DTARGET_ANDROID",
+            ],
+            static_libs: [
+                "libcuttlefish_host_config",
+                "libgflags",
+                "libjsoncpp",
+                "libsource",
+            ],
+            shared_libs: [
+                "libbase",
+            ],
+            header_libs: [
+                "cuttlefish_common_headers",
+                "cuttlefish_kernel_headers",
+            ],
+        },
+        android: {
+            enabled: false,
+        },
+    },
+    arch: {
+        x86: {
+            enabled: false,
+        }
+    },
+    static_libs: [
+        "libandroidglue",
+        "libhttps",
+        "libsrtp2",
+    ],
+    shared_libs: [
+        "libssl",
+    ],
+    local_include_dirs: ["include"],
+    export_include_dirs: ["include"],
+}
+
+cc_binary_host {
+    name: "webRTC",
+    srcs: [
+        "webRTC.cpp",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcrypto",
+        "libcuttlefish_utils",
+        "libFraunhoferAAC",
+        "libopus",
+        "libssl",
+        "libvpx",
+// "libx264",
+        "libyuv",
+    ],
+    static_libs: [
+        "libandroidglue",
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libhttps",
+        "libjsoncpp",
+        "libsource",
+        "libsrtp2",
+        "libwebrtc",
+    ],
+    cpp_std: "experimental",
+    cflags: [
+        "-DTARGET_ANDROID",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
+
+
