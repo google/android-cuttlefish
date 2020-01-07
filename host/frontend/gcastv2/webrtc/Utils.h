@@ -15,3 +15,5 @@ void SET_U16(void *_dst, uint16_t x);
 void SET_U32(void *_dst, uint32_t x);
 
 uint32_t computeCrc32(const void *_data, size_t size);
+
+std::string StringPrintf(const char *format, ...);

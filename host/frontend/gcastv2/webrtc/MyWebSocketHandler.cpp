@@ -2,16 +2,14 @@
 
 #include "Utils.h"
 
-#include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/hexdump.h>
-#include <media/stagefright/Utils.h>
 
 #include <json/json.h>
 
 #include <netdb.h>
 #include <openssl/rand.h>
 
-using android::ABuffer;
+using android::InputEvent;
 
 MyWebSocketHandler::MyWebSocketHandler(
         std::shared_ptr<RunLoop> runLoop,
@@ -234,11 +232,7 @@ int MyWebSocketHandler::handleMessage(
         LOG(VERBOSE)
             << "set-mouse-position(" << down << ", " << x << ", " << y << ")";
 
-        std::shared_ptr<ABuffer> accessUnit(new ABuffer(3 * sizeof(int32_t)));
-        int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
-        data[0] = down;
-        data[1] = x;
-        data[2] = y;
+        std::shared_ptr<InputEvent> accessUnit(new InputEvent(down, x, y));
 
         mTouchSink->onAccessUnit(accessUnit);
     } else if (type == "inject-multi-touch") {
@@ -265,13 +259,17 @@ int MyWebSocketHandler::handleMessage(
             << ", slot="
             << slot;
 
-        std::shared_ptr<ABuffer> accessUnit(new ABuffer(5 * sizeof(int32_t)));
-        int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
-        data[0] = id;
-        data[1] = (initialDown != 0);
-        data[2] = x;
-        data[3] = y;
-        data[4] = slot;
+        std::shared_ptr<InputEvent> accessUnit(new InputEvent(initialDown != 0, x, y));
+        accessUnit->down = (initialDown != 0);
+        accessUnit->x = x;
+        accessUnit->y = y;
+        // TODO(jemoreira): revive for multitouch
+        // int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
+        // data[0] = id;
+        // data[1] = (initialDown != 0);
+        // data[2] = x;
+        // data[3] = y;
+        // data[4] = slot;
 
         mTouchSink->onAccessUnit(accessUnit);
     }

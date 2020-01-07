@@ -26,6 +26,23 @@ bool StartsWith(const std::string &s, const std::string &prefix) {
     return s.find(prefix) == 0;
 }
 
+std::string StringPrintf(const char *format, ...) {
+    va_list ap;
+    va_start(ap, format);
+
+    char *buffer;
+    (void)vasprintf(&buffer, format, ap);
+
+    va_end(ap);
+
+    std::string result(buffer);
+
+    free(buffer);
+    buffer = NULL;
+
+    return result;
+}
+
 void SET_U16(void *_dst, uint16_t x) {
     uint8_t *dst = static_cast<uint8_t *>(_dst);
     dst[0] = x >> 8;

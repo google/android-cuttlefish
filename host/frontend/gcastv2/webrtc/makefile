@@ -8,7 +8,6 @@ TARGET := webRTC
 
 C++FLAGS := \
     -I../https/include                  \
-    -I../new2/libandroid/include        \
 
 C++FLAGS += -O0 -g -Wall -Wextra -DTARGET_MAC=1
 
@@ -25,7 +24,7 @@ LDFLAGS += -L/usr/local/opt/openssl/lib -lssl -lcrypto
 C++FLAGS += -I/usr/local/opt/srtp/include
 LDFLAGS += -L/usr/local/opt/srtp/lib -lsrtp2
 
-STATIC_LIBS := libandroid.a libhttps.a
+STATIC_LIBS := libhttps.a
 
 SRCS := \
     DTLS.cpp                            \
@@ -41,4 +40,3 @@ include ../build/build_executable
 include ../build/clear
 
 include ../https/local.mak
-include ../new2/libandroid/local.mak

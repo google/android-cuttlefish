@@ -3,7 +3,6 @@
 #include "Packetizer.h"
 
 #include <https/RunLoop.h>
-#include <media/stagefright/foundation/ABuffer.h>
 #include <source/StreamingSource.h>
 
 #include <memory>
@@ -21,10 +20,10 @@ struct VP8Packetizer
 
     void run() override;
     uint32_t rtpNow() const override;
-    android::status_t requestIDRFrame() override;
+    int32_t requestIDRFrame() override;
 
 private:
-    using ABuffer = android::ABuffer;
+    using SBuffer = android::SBuffer;
 
     std::shared_ptr<RunLoop> mRunLoop;
 
@@ -35,8 +34,8 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> mStartTimeReal;
     int64_t mStartTimeMedia;
 
-    void onFrame(const std::shared_ptr<ABuffer> &accessUnit);
+    void onFrame(const std::shared_ptr<SBuffer> &accessUnit);
 
-    void packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs);
+    void packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs);
 };
 

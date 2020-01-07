@@ -31,7 +31,6 @@ cc_library_host_static {
         "libvpx",
     ],
     static_libs: [
-        "libandroidglue",
         "libcuttlefish_host_config",
         "libgflags",
         "libhttps",

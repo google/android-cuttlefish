@@ -4,9 +4,10 @@
 
 #include <https/BaseConnection.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/ADebug.h>
+
+#include <android-base/logging.h>
+
 #include <media/stagefright/foundation/hexdump.h>
-#include <media/stagefright/Utils.h>
 
 #include <unistd.h>
 
@@ -91,7 +92,7 @@ ssize_t AdbWebSocketHandler::AdbConnection::processClientRequest(
     LOG(VERBOSE)
         << "AdbConnection::processClientRequest (size = " << size << ")";
 
-    // android::hexdump(data, size);
+    // hexdump(data, size);
 
     size_t payloadLength;
     int err = verifyAdbHeader(data, size, &payloadLength);
@@ -202,9 +203,9 @@ int AdbWebSocketHandler::handleMessage(
         uint8_t headerByte, const uint8_t *msg, size_t len) {
     LOG(VERBOSE)
         << "headerByte = "
-        << android::StringPrintf("0x%02x", (unsigned)headerByte);
+        << StringPrintf("0x%02x", (unsigned)headerByte);
 
-    // android::hexdump(msg, len);
+    // hexdump(msg, len);
 
     if (!(headerByte & 0x80)) {
         // I only want to receive whole messages here, not fragments.

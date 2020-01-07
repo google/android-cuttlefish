@@ -5,15 +5,11 @@
 #include <webrtc/RTPSocketHandler.h>
 
 #include <https/SafeCallbackable.h>
+#include <https/Support.h>
 #include <media/stagefright/foundation/hexdump.h>
-#include <media/stagefright/Utils.h>
 
 #include <random>
 #include <unordered_set>
-
-using android::U16_AT;
-using android::U32_AT;
-using android::StringPrintf;
 
 #define SIMULATE_PACKET_LOSS    0
 
@@ -47,7 +43,7 @@ void RTPSender::addRetransInfo(
 
 int RTPSender::injectRTCP(uint8_t *data, size_t size) {
     // LOG(INFO) << "RTPSender::injectRTCP";
-    // android::hexdump(data, size);
+    // hexdump(data, size);
 
     while (size > 0) {
         if (size < 8) {
@@ -183,7 +179,7 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
                 default:
                 {
                     LOG(WARNING) << "RTPSender::processRTCP unhandled RTPFB.";
-                    android::hexdump(data, size);
+                    hexdump(data, size);
                     break;
                 }
             }
@@ -237,7 +233,7 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
                 default:
                 {
                     LOG(WARNING) << "RTPSender::processRTCP unhandled PSFB.";
-                    android::hexdump(data, size);
+                    hexdump(data, size);
                     break;
                 }
             }
@@ -305,7 +301,7 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
         default:
         {
             LOG(WARNING) << "RTPSender::processRTCP unhandled packet type.";
-            android::hexdump(data, size);
+            hexdump(data, size);
         }
     }
 
@@ -429,7 +425,7 @@ void RTPSender::queueSR(uint32_t localSSRC) {
     // appendSDES(&buffer, localSSRC);
 
     // LOG(INFO) << "RTPSender::queueSR";
-    // android::hexdump(buffer.data(), buffer.size());
+    // hexdump(buffer.data(), buffer.size());
 
     mParent->queueRTCPDatagram(buffer.data(), buffer.size());
 }

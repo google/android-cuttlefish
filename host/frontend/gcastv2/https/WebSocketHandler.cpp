@@ -6,19 +6,6 @@
 #include <iostream>
 #include <sstream>
 
-// TODO (jemoreira): this is duplicated from libandroid, fix!!!
-static uint16_t U16_AT(const uint8_t *ptr) {
-    return ptr[0] << 8 | ptr[1];
-}
-
-static uint32_t U32_AT(const uint8_t *ptr) {
-    return ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-}
-
-static uint64_t U64_AT(const uint8_t *ptr) {
-    return ((uint64_t)U32_AT(ptr)) << 32 | U32_AT(ptr + 4);
-}
-
 ssize_t WebSocketHandler::handleRequest(
         uint8_t *data, size_t size, bool isEOS) {
     (void)isEOS;
