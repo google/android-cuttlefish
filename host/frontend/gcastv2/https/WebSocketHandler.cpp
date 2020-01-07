@@ -4,8 +4,20 @@
 #include <https/Support.h>
 
 #include <iostream>
-#include <media/stagefright/Utils.h>
 #include <sstream>
+
+// TODO (jemoreira): this is duplicated from libandroid, fix!!!
+static uint16_t U16_AT(const uint8_t *ptr) {
+    return ptr[0] << 8 | ptr[1];
+}
+
+static uint32_t U32_AT(const uint8_t *ptr) {
+    return ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
+}
+
+static uint64_t U64_AT(const uint8_t *ptr) {
+    return ((uint64_t)U32_AT(ptr)) << 32 | U32_AT(ptr + 4);
+}
 
 ssize_t WebSocketHandler::handleRequest(
         uint8_t *data, size_t size, bool isEOS) {
@@ -28,14 +40,14 @@ ssize_t WebSocketHandler::handleRequest(
                 break;
             }
 
-            payloadLen = android::U16_AT(&packet[packetOffset]);
+            payloadLen = U16_AT(&packet[packetOffset]);
             packetOffset += 2;
         } else if (payloadLen == 127) {
             if (packetOffset + 7 >= avail) {
                 break;
             }
 
-            payloadLen = android::U64_AT(&packet[packetOffset]);
+            payloadLen = U64_AT(&packet[packetOffset]);
             packetOffset += 8;
         }
 
@@ -45,7 +57,7 @@ ssize_t WebSocketHandler::handleRequest(
                 break;
             }
 
-            mask = android::U32_AT(&packet[packetOffset]);
+            mask = U32_AT(&packet[packetOffset]);
             packetOffset += 4;
         }
 

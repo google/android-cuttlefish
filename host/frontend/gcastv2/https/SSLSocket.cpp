@@ -2,10 +2,11 @@
 
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/ADebug.h>
+#include <glog/logging.h>
 #include <sstream>
 #include <sys/socket.h>
-#include <utils/KeyStore.h>
+
+#define TRESPASS()      LOG(FATAL) << "Should not be here."
 
 // static
 void SSLSocket::Init() {

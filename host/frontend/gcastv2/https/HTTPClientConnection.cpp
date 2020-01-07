@@ -8,8 +8,7 @@
 
 #include <https/Support.h>
 
-#include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/foundation/JSONObject.h>
+#include <glog/logging.h>
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -207,12 +206,7 @@ bool HTTPClientConnection::handleResponse(bool isEOS) {
                         queueOutputData(data, size);
                     });
 
-            using android::sp;
-            using android::JSONObject;
-            sp<JSONObject> jsonRequest = new JSONObject;
-            jsonRequest->setString("message", "Hello, world!");
-
-            const std::string msg = jsonRequest->toString();
+            const std::string msg = "\"message\":\"Hellow, world!\"";
             mWebSocketHandler->sendMessage(msg.c_str(), msg.size());
 
             return false;

@@ -3,9 +3,6 @@
 #include <https/SafeCallbackable.h>
 #include <https/PlainSocket.h>
 
-#include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/foundation/hexdump.h>
-
 BaseConnection::BaseConnection(std::shared_ptr<RunLoop> runLoop, int sock)
     : mRunLoop(runLoop),
       mSocket(std::make_unique<PlainSocket>(mRunLoop, sock)),
