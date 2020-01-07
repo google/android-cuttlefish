@@ -31,9 +31,9 @@ struct FrameBufferSource::Encoder {
 
     virtual void forceIDRFrame() = 0;
     virtual bool isForcingIDRFrame() const = 0;
-    virtual sp<ABuffer> encode(const void *frame, int64_t timeUs) = 0;
+    virtual std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) = 0;
 
-    virtual sp<AMessage> getFormat() const = 0;
+    virtual std::shared_ptr<AMessage> getFormat() const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,12 +46,12 @@ struct FrameBufferSource::H264Encoder : public FrameBufferSource::Encoder {
 
     void forceIDRFrame() override;
     bool isForcingIDRFrame() const override;
-    sp<ABuffer> encode(const void *frame, int64_t timeUs) override;
+    std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) override;
 
-    sp<AMessage> getFormat() const override;
+    std::shared_ptr<AMessage> getFormat() const override;
 
 private:
-    sp<AMessage> mFormat;
+    std::shared_ptr<AMessage> mFormat;
 
     x264_param_t mParams;
     x264_picture_t mPicIn, mPicOut;
@@ -67,13 +67,13 @@ private:
     void *mI420Data;
 
 #if ENABLE_LOGGING
-    sp<TSPacketizer> mPacketizer;
+    std::shared_ptr<TSPacketizer> mPacketizer;
     FILE *mFile;
 #endif
 };
 
-static sp<ABuffer> copy(const void *data, size_t size) {
-    sp<ABuffer> buffer = new ABuffer(size);
+static std::shared_ptr<ABuffer> copy(const void *data, size_t size) {
+    std::shared_ptr<ABuffer> buffer(new ABuffer(size));
     memcpy(buffer->data(), data, size);
     return buffer;
 }
@@ -133,20 +133,20 @@ FrameBufferSource::H264Encoder::H264Encoder(int width, int height, int rateHz)
     int numNalUnits;
     /* int size = */x264_encoder_headers(mImpl, &headers, &numNalUnits);
 
-    mFormat = new AMessage;
+    mFormat.reset(new AMessage);
     mFormat->setString("mime", MEDIA_MIMETYPE_VIDEO_AVC);
     mFormat->setInt32("width", width);
     mFormat->setInt32("height", height);
 
     for (int i = 0; i < numNalUnits; ++i) {
-        sp<ABuffer> csd = copy(headers[i].p_payload, headers[i].i_payload);
+        std::shared_ptr<ABuffer> csd = copy(headers[i].p_payload, headers[i].i_payload);
         mFormat->setBuffer(StringPrintf("csd-%d", i).c_str(), csd);
     }
 
     LOG(INFO) << "Format is " << mFormat->debugString().c_str();
 
 #if ENABLE_LOGGING
-    mPacketizer = new TSPacketizer;
+    mPacketizer.reset(new TSPacketizer);
 
     ssize_t videoTrackIndex = mPacketizer->addTrack(mFormat);
     LOG(INFO) << "Created video track index " << videoTrackIndex;
@@ -177,11 +177,11 @@ bool FrameBufferSource::H264Encoder::isForcingIDRFrame() const {
     return mForceIDRFrame;
 }
 
-sp<AMessage> FrameBufferSource::H264Encoder::getFormat() const {
+std::shared_ptr<AMessage> FrameBufferSource::H264Encoder::getFormat() const {
     return mFormat;
 }
 
-sp<ABuffer> FrameBufferSource::H264Encoder::encode(
+std::shared_ptr<ABuffer> FrameBufferSource::H264Encoder::encode(
         const void *frame, int64_t timeUs) {
     if (frame) {
         // If we don't get a new frame, we'll just repeat the previously
@@ -218,11 +218,11 @@ sp<ABuffer> FrameBufferSource::H264Encoder::encode(
 
     // LOG(INFO) << "encoded frame of size " << size;
 
-    sp<ABuffer> accessUnit = copy(nals[0].p_payload, size);
+    std::shared_ptr<ABuffer> accessUnit = copy(nals[0].p_payload, size);
     accessUnit->meta()->setInt64("timeUs", timeUs);
 
 #if ENABLE_LOGGING
-    sp<ABuffer> packets;
+    std::shared_ptr<ABuffer> packets;
     uint32_t flags = 0;
 
     if (mNumFrames == 0) {
@@ -263,9 +263,9 @@ struct FrameBufferSource::VPXEncoder : public FrameBufferSource::Encoder {
     void forceIDRFrame() override;
     bool isForcingIDRFrame() const override;
 
-    sp<ABuffer> encode(const void *frame, int64_t timeUs) override;
+    std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) override;
 
-    sp<AMessage> getFormat() const override;
+    std::shared_ptr<AMessage> getFormat() const override;
 
 private:
     int mWidth, mHeight, mRefreshRateHz;
@@ -283,7 +283,7 @@ private:
     bool mFirstFrame;
     int64_t mLastTimeUs;
 
-    sp<AMessage> mFormat;
+    std::shared_ptr<AMessage> mFormat;
 };
 
 static int GetCPUCoreCount() {
@@ -350,7 +350,7 @@ FrameBufferSource::VPXEncoder::VPXEncoder(int width, int height, int rateHz)
     res = vpx_codec_control(mCodecContext.get(), VP8E_SET_TOKEN_PARTITIONS, 0);
     CHECK_EQ(res, VPX_CODEC_OK);
 
-    mFormat = new AMessage;
+    mFormat.reset(new AMessage);
     mFormat->setString("mime", MEDIA_MIMETYPE_VIDEO_VP8);
     mFormat->setInt32("width", width);
     mFormat->setInt32("height", height);
@@ -369,7 +369,7 @@ bool FrameBufferSource::VPXEncoder::isForcingIDRFrame() const {
     return mForceIDRFrame;
 }
 
-sp<ABuffer> FrameBufferSource::VPXEncoder::encode(
+std::shared_ptr<ABuffer> FrameBufferSource::VPXEncoder::encode(
         const void *frame, int64_t timeUs) {
     uint8_t *yPlane = static_cast<uint8_t *>(mI420Data);
     uint8_t *uPlane = yPlane + mSizeY;
@@ -429,7 +429,7 @@ sp<ABuffer> FrameBufferSource::VPXEncoder::encode(
     vpx_codec_iter_t iter = nullptr;
     const vpx_codec_cx_pkt_t *packet;
 
-    sp<ABuffer> accessUnit;
+    std::shared_ptr<ABuffer> accessUnit;
 
     while ((packet = vpx_codec_get_cx_data(mCodecContext.get(), &iter)) != nullptr) {
         if (packet->kind == VPX_CODEC_CX_FRAME_PKT) {
@@ -445,7 +445,7 @@ sp<ABuffer> FrameBufferSource::VPXEncoder::encode(
                 return nullptr;
             }
 
-            accessUnit = new ABuffer(packet->data.frame.sz);
+            accessUnit.reset(new ABuffer(packet->data.frame.sz));
 
             memcpy(accessUnit->data(),
                    packet->data.frame.buf,
@@ -462,7 +462,7 @@ sp<ABuffer> FrameBufferSource::VPXEncoder::encode(
     return accessUnit;
 }
 
-sp<AMessage> FrameBufferSource::VPXEncoder::getFormat() const {
+std::shared_ptr<AMessage> FrameBufferSource::VPXEncoder::getFormat() const {
     return mFormat;
 }
 
@@ -488,7 +488,7 @@ status_t FrameBufferSource::initCheck() const {
     return mInitCheck;
 }
 
-void FrameBufferSource::setParameters(const sp<AMessage> &params) {
+void FrameBufferSource::setParameters(const std::shared_ptr<AMessage> &params) {
     std::string mime;
     if (params != nullptr && params->findString("mime", &mime)) {
         if (!strcasecmp(mime.c_str(), MEDIA_MIMETYPE_VIDEO_VP8)) {
@@ -506,11 +506,11 @@ void FrameBufferSource::setParameters(const sp<AMessage> &params) {
     }
 }
 
-sp<AMessage> FrameBufferSource::getFormat() const {
+std::shared_ptr<AMessage> FrameBufferSource::getFormat() const {
     // We're not using the encoder's format (although it will be identical),
     // because the encoder may not have been instantiated just yet.
 
-    sp<AMessage> format = new AMessage;
+    std::shared_ptr<AMessage> format(new AMessage);
     format->setString(
             "mime",
             mFormat == Format::H264
@@ -635,7 +635,7 @@ void FrameBufferSource::injectFrame(const void *data, size_t size) {
         return;
     }
 
-    sp<ABuffer> accessUnit = mEncoder->encode(data, ALooper::GetNowUs());
+    std::shared_ptr<ABuffer> accessUnit = mEncoder->encode(data, ALooper::GetNowUs());
 
     StreamingSource::onAccessUnit(accessUnit);
 }

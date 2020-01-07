@@ -28,7 +28,7 @@ void VP8Packetizer::run() {
     auto weak_this = std::weak_ptr<VP8Packetizer>(shared_from_this());
 
     mFrameBufferSource->setCallback(
-            [weak_this](const sp<ABuffer> &accessUnit) {
+            [weak_this](const std::shared_ptr<ABuffer> &accessUnit) {
                 auto me = weak_this.lock();
                 if (me) {
                     me->mRunLoop->post(
@@ -40,7 +40,7 @@ void VP8Packetizer::run() {
     mFrameBufferSource->start();
 }
 
-void VP8Packetizer::onFrame(const sp<ABuffer> &accessUnit) {
+void VP8Packetizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
     int64_t timeUs;
     CHECK(accessUnit->meta()->findInt64("timeUs", &timeUs));
 
@@ -62,7 +62,7 @@ void VP8Packetizer::onFrame(const sp<ABuffer> &accessUnit) {
     packetize(accessUnit, timeUs);
 }
 
-void VP8Packetizer::packetize(const sp<ABuffer> &accessUnit, int64_t timeUs) {
+void VP8Packetizer::packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs) {
     static constexpr uint8_t PT = 96;
     static constexpr uint32_t SSRC = 0xdeadbeef;
 

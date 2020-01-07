@@ -22,9 +22,9 @@
 
 #include <media/stagefright/foundation/ABase.h>
 #include <media/stagefright/foundation/AMessage.h>
-#include <utils/RefBase.h>
 
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace android {
@@ -33,7 +33,7 @@ struct ABitReader;
 struct ABuffer;
 struct AnotherPacketSource;
 
-struct ATSParser : public RefBase {
+struct ATSParser {
     enum DiscontinuityType {
         DISCONTINUITY_NONE              = 0,
         DISCONTINUITY_TIME              = 1,
@@ -69,7 +69,7 @@ struct ATSParser : public RefBase {
     status_t feedTSPacket(const void *data, size_t size);
 
     void signalDiscontinuity(
-            DiscontinuityType type, const sp<AMessage> &extra);
+            DiscontinuityType type, const std::shared_ptr<AMessage> &extra);
 
     void signalEOS(status_t finalResult);
 
@@ -77,7 +77,7 @@ struct ATSParser : public RefBase {
         VIDEO,
         AUDIO
     };
-    sp<AnotherPacketSource> getSource(SourceType type);
+    std::shared_ptr<AnotherPacketSource> getSource(SourceType type);
 
     bool PTSTimeDeltaEstablished();
 
@@ -94,7 +94,6 @@ struct ATSParser : public RefBase {
         STREAMTYPE_PCM_AUDIO            = 0x83,
     };
 
-protected:
     virtual ~ATSParser();
 
 private:
@@ -103,10 +102,10 @@ private:
     struct PSISection;
 
     uint32_t mFlags;
-    std::vector<sp<Program>> mPrograms;
+    std::vector<std::shared_ptr<Program>> mPrograms;
 
     // Keyed by PID
-    std::map<unsigned, sp<PSISection> > mPSISections;
+    std::map<unsigned, std::shared_ptr<PSISection> > mPSISections;
 
     int64_t mAbsoluteTimeAnchorUs;
 

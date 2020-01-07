@@ -10,7 +10,6 @@
 #include <netdb.h>
 #include <openssl/rand.h>
 
-template<class T> using sp = android::sp<T>;
 using android::JSONValue;
 using android::JSONObject;
 using android::ABuffer;
@@ -44,7 +43,7 @@ int MyWebSocketHandler::handleMessage(
         return -EINVAL;
     }
 
-    sp<JSONObject> obj;
+    std::shared_ptr<JSONObject> obj;
     if (!json.getObject(&obj)) {
         return -EINVAL;
     }
@@ -57,7 +56,7 @@ int MyWebSocketHandler::handleMessage(
     }
 
     if (type == "greeting") {
-        sp<JSONObject> reply = new JSONObject;
+        std::shared_ptr<JSONObject> reply(new JSONObject);
         reply->setString("type", "hello");
         reply->setString("reply", "Right back at ya!");
 
@@ -215,7 +214,7 @@ int MyWebSocketHandler::handleMessage(
 "a=fmtp:webrtc-datachannel max-message-size=65536\r\n";
         }
 
-        sp<JSONObject> reply = new JSONObject;
+        std::shared_ptr<JSONObject> reply(new JSONObject);
         reply->setString("type", "offer");
         reply->setString("sdp", ss.str());
 
@@ -228,7 +227,7 @@ int MyWebSocketHandler::handleMessage(
         bool success = getCandidate(mid);
 
         if (!success) {
-            sp<JSONObject> reply = new JSONObject;
+            std::shared_ptr<JSONObject> reply(new JSONObject);
             reply->setString("type", "ice-candidate");
 
             auto replyAsString = reply->toString();
@@ -245,7 +244,7 @@ int MyWebSocketHandler::handleMessage(
         LOG(VERBOSE)
             << "set-mouse-position(" << down << ", " << x << ", " << y << ")";
 
-        sp<ABuffer> accessUnit = new ABuffer(3 * sizeof(int32_t));
+        std::shared_ptr<ABuffer> accessUnit(new ABuffer(3 * sizeof(int32_t)));
         int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
         data[0] = down;
         data[1] = x;
@@ -272,7 +271,7 @@ int MyWebSocketHandler::handleMessage(
             << ", slot="
             << slot;
 
-        sp<ABuffer> accessUnit = new ABuffer(5 * sizeof(int32_t));
+        std::shared_ptr<ABuffer> accessUnit(new ABuffer(5 * sizeof(int32_t)));
         int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
         data[0] = id;
         data[1] = (initialDown != 0);
@@ -384,7 +383,7 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
 
     auto rtp = mRTPs.back();
 
-    sp<JSONObject> reply = new JSONObject;
+    std::shared_ptr<JSONObject> reply(new JSONObject);
     reply->setString("type", "ice-candidate");
 
     auto localIPString = rtp->getLocalIPString();

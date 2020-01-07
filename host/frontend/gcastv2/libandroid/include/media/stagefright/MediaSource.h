@@ -3,14 +3,15 @@
 #define ANDROID_MEDIASOURCE_H_
 
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
+
+#include <memory>
 
 namespace android {
 
 struct MediaBuffer;
 struct MetaData;
 
-struct MediaSource : public RefBase {
+struct MediaSource {
     struct ReadOptions {
     };
 
@@ -18,12 +19,11 @@ struct MediaSource : public RefBase {
 
     virtual status_t start(MetaData *params = NULL) = 0;
     virtual status_t stop() = 0;
-    virtual sp<MetaData> getFormat() = 0;
+    virtual std::shared_ptr<MetaData> getFormat() = 0;
 
     virtual status_t read(
             MediaBuffer **out, const ReadOptions *params = NULL) = 0;
 
-protected:
     virtual ~MediaSource() {}
 
 private:

@@ -123,7 +123,7 @@ void TouchSink::onServerConnection() {
             makeSafeCallback(this, &TouchSink::onServerConnection));
 }
 
-void TouchSink::onAccessUnit(const sp<ABuffer> &accessUnit) {
+void TouchSink::onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit) {
     const int32_t *data =
         reinterpret_cast<const int32_t *>(accessUnit->data());
 

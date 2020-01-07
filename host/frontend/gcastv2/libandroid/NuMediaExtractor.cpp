@@ -52,11 +52,11 @@ status_t NuMediaExtractor::setDataSource(const char *path) {
     }
 
     if (mAudioSource != NULL && mAudioSource->getFormat() == NULL) {
-        mAudioSource.clear();
+        mAudioSource.reset();
     }
 
     if (mVideoSource != NULL && mVideoSource->getFormat() == NULL) {
-        mVideoSource.clear();
+        mVideoSource.reset();
     }
 
     mNumTracks = 0;
@@ -77,10 +77,10 @@ size_t NuMediaExtractor::countTracks() const {
 }
 
 status_t NuMediaExtractor::getTrackFormat(
-        size_t index, sp<AMessage> *format) const {
+        size_t index, std::shared_ptr<AMessage> *format) const {
     CHECK_LT(index, mNumTracks);
 
-    sp<MetaData> meta;
+    std::shared_ptr<MetaData> meta;
     if ((ssize_t)index == mAudioTrackIndex) {
         meta = mAudioSource->getFormat();
     } else {
@@ -126,7 +126,7 @@ status_t NuMediaExtractor::getSampleTrackIndex(size_t *index) {
     return OK;
 }
 
-status_t NuMediaExtractor::readSampleData(sp<ABuffer> accessUnit) {
+status_t NuMediaExtractor::readSampleData(std::shared_ptr<ABuffer> accessUnit) {
     fetchSamples();
 
     if (mNextIndex < 0) {
@@ -147,7 +147,7 @@ status_t NuMediaExtractor::advance() {
         return ERROR_END_OF_STREAM;
     }
 
-    mNextBuffer[mNextIndex].clear();
+    mNextBuffer[mNextIndex].reset();
     mNextIndex = -1;
 
     return OK;

@@ -51,7 +51,7 @@ struct AudioSource : public StreamingSource {
 
     status_t initCheck() const override;
 
-    sp<AMessage> getFormat() const override;
+    std::shared_ptr<AMessage> getFormat() const override;
 
     status_t start() override;
     status_t stop() override;
@@ -76,7 +76,7 @@ private:
     State mState;
     std::unique_ptr<Encoder> mEncoder;
 
-    sp<AMessage> mFormat;
+    std::shared_ptr<AMessage> mFormat;
 
     std::mutex mLock;
     std::unique_ptr<std::thread> mThread;

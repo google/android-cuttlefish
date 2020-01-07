@@ -18,18 +18,17 @@
 
 #define A_MESSAGE_H_
 
-#include <utils/RefBase.h>
-
 #include "ABase.h"
 #include "ALooper.h"
 
+#include <memory>
 #include <string>
 
 namespace android {
 
 struct ABuffer;
 
-struct AMessage : public RefBase {
+struct AMessage {
     explicit AMessage(uint32_t what = 0, ALooper::handler_id target = 0);
 
     AMessage(const AMessage &) = delete;
@@ -48,9 +47,9 @@ struct AMessage : public RefBase {
     void setDouble(const char *name, double value);
     void setPointer(const char *name, void *value);
     void setString(const char *name, const char *s, ssize_t len = -1);
-    void setObject(const char *name, const sp<RefBase> &obj);
-    void setMessage(const char *name, const sp<AMessage> &obj);
-    void setBuffer(const char *name, const sp<ABuffer> &obj);
+    void setObject(const char *name, const std::shared_ptr<void> &obj);
+    void setMessage(const char *name, const std::shared_ptr<AMessage> &obj);
+    void setBuffer(const char *name, const std::shared_ptr<ABuffer> &obj);
 
     bool findInt32(const char *name, int32_t *value) const;
     bool findInt64(const char *name, int64_t *value) const;
@@ -59,13 +58,13 @@ struct AMessage : public RefBase {
     bool findDouble(const char *name, double *value) const;
     bool findPointer(const char *name, void **value) const;
     bool findString(const char *name, std::string *value) const;
-    bool findObject(const char *name, sp<RefBase> *obj) const;
-    bool findMessage(const char *name, sp<AMessage> *obj) const;
-    bool findBuffer(const char *name, sp<ABuffer> *obj) const;
+    bool findObject(const char *name, std::shared_ptr<void> *obj) const;
+    bool findMessage(const char *name, std::shared_ptr<AMessage> *obj) const;
+    bool findBuffer(const char *name, std::shared_ptr<ABuffer> *obj) const;
 
-    void post(int64_t delayUs = 0);
+    static void post(std::shared_ptr<AMessage> msg, int64_t delayUs = 0);
 
-    sp<AMessage> dup() const;
+    std::shared_ptr<AMessage> dup() const;
 
     std::string debugString(size_t indent = 0) const;
 
@@ -85,7 +84,6 @@ struct AMessage : public RefBase {
     };
     const char *getEntryNameAt(size_t i, Type *type) const;
 
-protected:
     virtual ~AMessage();
 
 private:
@@ -100,9 +98,9 @@ private:
             float floatValue;
             double doubleValue;
             void *ptrValue;
-            RefBase *refValue;
             std::string *stringValue;
         } u;
+        std::shared_ptr<void> refValue;
         const char *mName;
         Type mType;
     };

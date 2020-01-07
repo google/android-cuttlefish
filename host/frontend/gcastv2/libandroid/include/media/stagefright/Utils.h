@@ -20,8 +20,8 @@
 
 #include <stdint.h>
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
 
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -44,9 +44,9 @@ uint64_t hton64(uint64_t x);
 struct MetaData;
 struct AMessage;
 status_t convertMetaDataToMessage(
-                const sp<MetaData> &meta, sp<AMessage> *format);
+                const std::shared_ptr<MetaData> &meta, std::shared_ptr<AMessage> *format);
 void convertMessageToMetaData(
-                const sp<AMessage> &format, sp<MetaData> &meta);
+                const std::shared_ptr<AMessage> &format, std::shared_ptr<MetaData> &meta);
 
 std::string MakeUserAgent();
 

@@ -35,8 +35,8 @@
 
 namespace android {
 
-struct TSPacketizer::Track : public RefBase {
-    Track(const sp<AMessage> &format,
+struct TSPacketizer::Track {
+    Track(const std::shared_ptr<AMessage> &format,
           unsigned PID, unsigned streamType, unsigned streamID);
 
     unsigned PID() const;
@@ -52,14 +52,13 @@ struct TSPacketizer::Track : public RefBase {
     bool isH264() const;
     bool lacksADTSHeader() const;
 
-    sp<ABuffer> prependCSD(const sp<ABuffer> &accessUnit) const;
-    sp<ABuffer> prependADTSHeader(const sp<ABuffer> &accessUnit) const;
+    std::shared_ptr<ABuffer> prependCSD(const std::shared_ptr<ABuffer> &accessUnit) const;
+    std::shared_ptr<ABuffer> prependADTSHeader(const std::shared_ptr<ABuffer> &accessUnit) const;
 
-protected:
     virtual ~Track();
 
 private:
-    sp<AMessage> mFormat;
+    std::shared_ptr<AMessage> mFormat;
 
     unsigned mPID;
     unsigned mStreamType;
@@ -67,13 +66,13 @@ private:
     unsigned mContinuityCounter;
 
     std::string mMIME;
-    std::vector<sp<ABuffer>> mCSD;
+    std::vector<std::shared_ptr<ABuffer>> mCSD;
 
     DISALLOW_EVIL_CONSTRUCTORS(Track);
 };
 
 TSPacketizer::Track::Track(
-        const sp<AMessage> &format,
+        const std::shared_ptr<AMessage> &format,
         unsigned PID, unsigned streamType, unsigned streamID)
     : mFormat(format),
       mPID(PID),
@@ -85,7 +84,7 @@ TSPacketizer::Track::Track(
     if (!strcasecmp(mMIME.c_str(), MEDIA_MIMETYPE_VIDEO_AVC)
             || !strcasecmp(mMIME.c_str(), MEDIA_MIMETYPE_AUDIO_AAC)) {
         for (size_t i = 0;; ++i) {
-            sp<ABuffer> csd;
+            std::shared_ptr<ABuffer> csd;
             if (!format->findBuffer(StringPrintf("csd-%d", i).c_str(), &csd)) {
                 break;
             }
@@ -145,14 +144,14 @@ bool TSPacketizer::Track::lacksADTSHeader() const {
     return true;
 }
 
-sp<ABuffer> TSPacketizer::Track::prependCSD(
-        const sp<ABuffer> &accessUnit) const {
+std::shared_ptr<ABuffer> TSPacketizer::Track::prependCSD(
+        const std::shared_ptr<ABuffer> &accessUnit) const {
     size_t size = 0;
     for (const auto &csd : mCSD) {
         size += csd->size();
     }
 
-    sp<ABuffer> dup = new ABuffer(accessUnit->size() + size);
+    std::shared_ptr<ABuffer> dup(new ABuffer(accessUnit->size() + size));
     size_t offset = 0;
     for (const auto &csd : mCSD) {
         memcpy(dup->data() + offset, csd->data(), csd->size());
@@ -164,15 +163,15 @@ sp<ABuffer> TSPacketizer::Track::prependCSD(
     return dup;
 }
 
-sp<ABuffer> TSPacketizer::Track::prependADTSHeader(
-        const sp<ABuffer> &accessUnit) const {
+std::shared_ptr<ABuffer> TSPacketizer::Track::prependADTSHeader(
+        const std::shared_ptr<ABuffer> &accessUnit) const {
     CHECK_EQ(mCSD.size(), 1u);
 
     const uint8_t *codec_specific_data = mCSD[0]->data();
 
     const uint32_t aac_frame_length = static_cast<uint32_t>(accessUnit->size() + 7);
 
-    sp<ABuffer> dup = new ABuffer(aac_frame_length);
+    std::shared_ptr<ABuffer> dup(new ABuffer(aac_frame_length));
 
     unsigned profile = (codec_specific_data[0] >> 3) - 1;
 
@@ -219,7 +218,7 @@ TSPacketizer::TSPacketizer()
 TSPacketizer::~TSPacketizer() {
 }
 
-ssize_t TSPacketizer::addTrack(const sp<AMessage> &format) {
+ssize_t TSPacketizer::addTrack(const std::shared_ptr<AMessage> &format) {
     std::string mime;
     CHECK(format->findString("mime", &mime));
 
@@ -269,7 +268,7 @@ ssize_t TSPacketizer::addTrack(const sp<AMessage> &format) {
         return -ERANGE;
     }
 
-    sp<Track> track = new Track(format, PID, streamType, streamID);
+    std::shared_ptr<Track> track(new Track(format, PID, streamType, streamID));
     size_t index = mTracks.size();
     mTracks.push_back(track);
     return index;
@@ -277,12 +276,12 @@ ssize_t TSPacketizer::addTrack(const sp<AMessage> &format) {
 
 status_t TSPacketizer::packetize(
         size_t trackIndex,
-        const sp<ABuffer> &_accessUnit,
-        sp<ABuffer> *packets,
+        const std::shared_ptr<ABuffer> &_accessUnit,
+        std::shared_ptr<ABuffer> *packets,
         uint32_t flags) {
-    sp<ABuffer> accessUnit = _accessUnit;
+    std::shared_ptr<ABuffer> accessUnit = _accessUnit;
 
-    packets->clear();
+    packets->reset();
 
     if (trackIndex >= mTracks.size()) {
         return -ERANGE;
@@ -291,7 +290,7 @@ status_t TSPacketizer::packetize(
     int64_t timeUs;
     CHECK(accessUnit->meta()->findInt64("timeUs", &timeUs));
 
-    const sp<Track> &track = mTracks[trackIndex];
+    const std::shared_ptr<Track> &track = mTracks[trackIndex];
 
     if (track->isH264()) {
         if (IsIDR(accessUnit)) {
@@ -352,7 +351,7 @@ status_t TSPacketizer::packetize(
         ++numTSPackets;
     }
 
-    sp<ABuffer> buffer = new ABuffer(numTSPackets * 188);
+    std::shared_ptr<ABuffer> buffer(new ABuffer(numTSPackets * 188));
     uint8_t *packetDataStart = buffer->data();
 
     if (flags & EMIT_PAT_AND_PMT) {
@@ -481,7 +480,7 @@ status_t TSPacketizer::packetize(
         *ptr++ = 0x00;
 
         for (size_t i = 0; i < mTracks.size(); ++i) {
-            const sp<Track> &track = mTracks[i];
+            const std::shared_ptr<Track> &track = mTracks[i];
 
             *ptr++ = track->streamType();
             *ptr++ = 0xe0 | (track->PID() >> 8);

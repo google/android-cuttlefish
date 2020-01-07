@@ -23,17 +23,17 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include <utils/RefBase.h>
+#include <memory>
 
 namespace android {
 
 struct AMessage;
 
-struct ABuffer : public RefBase {
+struct ABuffer {
     ABuffer(size_t capacity);
     ABuffer(void *data, size_t capacity);
 
-    void setFarewellMessage(const sp<AMessage> msg);
+    void setFarewellMessage(const std::shared_ptr<AMessage> msg);
 
     uint8_t *base() { return (uint8_t *)mData; }
     uint8_t *data() { return (uint8_t *)mData + mRangeOffset; }
@@ -46,16 +46,15 @@ struct ABuffer : public RefBase {
     void setInt32Data(int32_t data) { mInt32Data = data; }
     int32_t int32Data() const { return mInt32Data; }
 
-    sp<AMessage> meta();
+    std::shared_ptr<AMessage> meta();
 
     void reserve(size_t size);
 
-protected:
     virtual ~ABuffer();
 
 private:
-    sp<AMessage> mFarewell;
-    sp<AMessage> mMeta;
+    std::shared_ptr<AMessage> mFarewell;
+    std::shared_ptr<AMessage> mMeta;
 
     void *mData;
     size_t mCapacity;

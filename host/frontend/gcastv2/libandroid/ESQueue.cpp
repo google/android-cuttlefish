@@ -41,7 +41,7 @@ ElementaryStreamQueue::ElementaryStreamQueue(Mode mode, uint32_t flags)
       mFlags(flags) {
 }
 
-sp<MetaData> ElementaryStreamQueue::getFormat() {
+std::shared_ptr<MetaData> ElementaryStreamQueue::getFormat() {
     return mFormat;
 }
 
@@ -53,7 +53,7 @@ void ElementaryStreamQueue::clear(bool clearFormat) {
     mRangeInfos.clear();
 
     if (clearFormat) {
-        mFormat.clear();
+        mFormat.reset();
     }
 }
 
@@ -250,7 +250,7 @@ status_t ElementaryStreamQueue::appendData(
 
         ALOGV("resizing buffer to size %d", neededSize);
 
-        sp<ABuffer> buffer = new ABuffer(neededSize);
+        std::shared_ptr<ABuffer> buffer(new ABuffer(neededSize));
         if (mBuffer != NULL) {
             memcpy(buffer->data(), mBuffer->data(), mBuffer->size());
             buffer->setRange(0, mBuffer->size());
@@ -273,7 +273,7 @@ status_t ElementaryStreamQueue::appendData(
     return OK;
 }
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnit() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnit() {
     if ((mFlags & kFlag_AlignedData) && mMode == H264) {
         if (mRangeInfos.empty()) {
             return NULL;
@@ -282,7 +282,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnit() {
         RangeInfo info = *mRangeInfos.begin();
         mRangeInfos.erase(mRangeInfos.begin());
 
-        sp<ABuffer> accessUnit = new ABuffer(info.mLength);
+        std::shared_ptr<ABuffer> accessUnit(new ABuffer(info.mLength));
         memcpy(accessUnit->data(), mBuffer->data(), info.mLength);
         accessUnit->meta()->setInt64("timeUs", info.mTimestampUs);
 
@@ -316,7 +316,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnit() {
     }
 }
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitPCMAudio() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnitPCMAudio() {
     if (mBuffer->size() < 4) {
         return NULL;
     }
@@ -332,8 +332,8 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitPCMAudio() {
     CHECK_EQ(audio_sampling_frequency, 2u);  // 48kHz
     CHECK_EQ(num_channels, 1u);  // stereo!
 
-    if (mFormat == NULL) {
-        mFormat = new MetaData;
+    if (!mFormat) {
+        mFormat.reset(new MetaData);
         mFormat->setCString(kKeyMIMEType, MEDIA_MIMETYPE_AUDIO_RAW);
         mFormat->setInt32(kKeyChannelCount, 2);
         mFormat->setInt32(kKeySampleRate, 48000);
@@ -348,7 +348,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitPCMAudio() {
         return NULL;
     }
 
-    sp<ABuffer> accessUnit = new ABuffer(payloadSize);
+    std::shared_ptr<ABuffer> accessUnit(new ABuffer(payloadSize));
     memcpy(accessUnit->data(), mBuffer->data() + 4, payloadSize);
 
     int64_t timeUs = fetchTimestamp(payloadSize + 4);
@@ -370,7 +370,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitPCMAudio() {
     return accessUnit;
 }
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitAAC() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnitAAC() {
     int64_t timeUs = 0ll;
 
     size_t offset = 0;
@@ -445,7 +445,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitAAC() {
         return NULL;
     }
 
-    sp<ABuffer> accessUnit = new ABuffer(offset);
+    std::shared_ptr<ABuffer> accessUnit(new ABuffer(offset));
     memcpy(accessUnit->data(), mBuffer->data(), offset);
 
     memmove(mBuffer->data(), mBuffer->data() + offset,
@@ -499,7 +499,7 @@ struct NALPosition {
     size_t nalSize;
 };
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
     const uint8_t *data = mBuffer->data();
 
     size_t size = mBuffer->size();
@@ -542,7 +542,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
             // the current one, separated by 0x00 0x00 0x00 0x01 startcodes.
 
             size_t auSize = 4 * nals.size() + totalSize;
-            sp<ABuffer> accessUnit = new ABuffer(auSize);
+            std::shared_ptr<ABuffer> accessUnit(new ABuffer(auSize));
 
 #if !LOG_NDEBUG
             std::string out;
@@ -608,7 +608,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitH264() {
     return NULL;
 }
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGAudio() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGAudio() {
     const uint8_t *data = mBuffer->data();
     size_t size = mBuffer->size();
 
@@ -630,7 +630,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGAudio() {
 
     unsigned layer = 4 - ((header >> 17) & 3);
 
-    sp<ABuffer> accessUnit = new ABuffer(frameSize);
+    std::shared_ptr<ABuffer> accessUnit(new ABuffer(frameSize));
     memcpy(accessUnit->data(), data, frameSize);
 
     memmove(mBuffer->data(),
@@ -644,8 +644,8 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGAudio() {
 
     accessUnit->meta()->setInt64("timeUs", timeUs);
 
-    if (mFormat == NULL) {
-        mFormat = new MetaData;
+    if (!mFormat) {
+        mFormat.reset(new MetaData);
 
         switch (layer) {
             case 1:
@@ -682,8 +682,8 @@ static void EncodeSize14(uint8_t **_ptr, size_t size) {
     *_ptr = ptr;
 }
 
-static sp<ABuffer> MakeMPEGVideoESDS(const sp<ABuffer> &csd) {
-    sp<ABuffer> esds = new ABuffer(csd->size() + 25);
+static std::shared_ptr<ABuffer> MakeMPEGVideoESDS(const std::shared_ptr<ABuffer> &csd) {
+    std::shared_ptr<ABuffer> esds(new ABuffer(csd->size() + 25));
 
     uint8_t *ptr = esds->data();
     *ptr++ = 0x03;
@@ -711,7 +711,7 @@ static sp<ABuffer> MakeMPEGVideoESDS(const sp<ABuffer> &csd) {
     return esds;
 }
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGVideo() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGVideo() {
     const uint8_t *data = mBuffer->data();
     size_t size = mBuffer->size();
 
@@ -743,7 +743,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGVideo() {
                 || (pprevStartCode == 0xb3 && prevStartCode == 0xb5)) {
             // seqHeader without/with extension
 
-            if (mFormat == NULL) {
+            if (!mFormat) {
                 CHECK_GE(size, 7u);
 
                 unsigned width =
@@ -752,14 +752,14 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGVideo() {
                 unsigned height =
                     ((data[5] & 0x0f) << 8) | data[6];
 
-                mFormat = new MetaData;
+                mFormat.reset(new MetaData);
                 mFormat->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_MPEG2);
                 mFormat->setInt32(kKeyWidth, width);
                 mFormat->setInt32(kKeyHeight, height);
 
                 ALOGI("found MPEG2 video codec config (%d x %d)", width, height);
 
-                sp<ABuffer> csd = new ABuffer(offset);
+                std::shared_ptr<ABuffer> csd(new ABuffer(offset));
                 memcpy(csd->data(), data, offset);
 
                 memmove(mBuffer->data(),
@@ -773,7 +773,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGVideo() {
 
                 // hexdump(csd->data(), csd->size());
 
-                sp<ABuffer> esds = MakeMPEGVideoESDS(csd);
+                std::shared_ptr<ABuffer> esds = MakeMPEGVideoESDS(csd);
                 mFormat->setData(
                         kKeyESDS, kTypeESDS, esds->data(), esds->size());
 
@@ -787,7 +787,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEGVideo() {
             if (!sawPictureStart) {
                 sawPictureStart = true;
             } else {
-                sp<ABuffer> accessUnit = new ABuffer(offset);
+                std::shared_ptr<ABuffer> accessUnit(new ABuffer(offset));
                 memcpy(accessUnit->data(), data, offset);
 
                 memmove(mBuffer->data(),
@@ -842,7 +842,7 @@ static ssize_t getNextChunkSize(
     return -EAGAIN;
 }
 
-sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEG4Video() {
+std::shared_ptr<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEG4Video() {
     uint8_t *data = mBuffer->data();
     size_t size = mBuffer->size();
 
@@ -916,7 +916,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEG4Video() {
                 if (chunkType == 0xb3 || chunkType == 0xb6) {
                     // group of VOP or VOP start.
 
-                    mFormat = new MetaData;
+                    mFormat.reset(new MetaData);
                     mFormat->setCString(
                             kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_MPEG4);
 
@@ -926,12 +926,12 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEG4Video() {
                     ALOGI("found MPEG4 video codec config (%d x %d)",
                          width, height);
 
-                    sp<ABuffer> csd = new ABuffer(offset);
+                    std::shared_ptr<ABuffer> csd(new ABuffer(offset));
                     memcpy(csd->data(), data, offset);
 
                     // hexdump(csd->data(), csd->size());
 
-                    sp<ABuffer> esds = MakeMPEGVideoESDS(csd);
+                    std::shared_ptr<ABuffer> esds = MakeMPEGVideoESDS(csd);
                     mFormat->setData(
                             kKeyESDS, kTypeESDS,
                             esds->data(), esds->size());
@@ -948,7 +948,7 @@ sp<ABuffer> ElementaryStreamQueue::dequeueAccessUnitMPEG4Video() {
                 if (chunkType == 0xb6) {
                     offset += chunkSize;
 
-                    sp<ABuffer> accessUnit = new ABuffer(offset);
+                    std::shared_ptr<ABuffer> accessUnit(new ABuffer(offset));
                     memcpy(accessUnit->data(), data, offset);
 
                     memmove(data, &data[offset], size - offset);
