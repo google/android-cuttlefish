@@ -16,13 +16,12 @@ cc_library_host_static {
     name: "libsource",
     srcs: [
         "AudioSource.cpp",
-        "CVMTouchSink.cpp",
+        "TouchSink.cpp",
         "DisplayListsSource.cpp",
         "FrameBufferSource.cpp",
         "HostToGuestComms.cpp",
         "StreamingSource.cpp",
         "TouchSource.cpp",
-        "VSOCTouchSink.cpp",
     ],
     header_libs: [
         "cuttlefish_glog",

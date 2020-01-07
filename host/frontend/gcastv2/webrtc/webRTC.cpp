@@ -35,6 +35,8 @@ DEFINE_string(
 
 DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
+DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
+DEFINE_bool(write_virtio_input, false, "Whether to send input events in virtio format.");
 
 DEFINE_string(adb, "", "Interface:port of local adb service.");
 #endif

@@ -1,8 +1,5 @@
 #include <source/AudioSource.h>
 
-#include "common/vsoc/lib/circqueue_impl.h"
-#include "common/vsoc/lib/vsoc_audio_message.h"
-
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/AMessage.h>
@@ -10,7 +7,8 @@
 #include <media/stagefright/foundation/hexdump.h>
 #include <libyuv/convert.h>
 
-#include "common/vsoc/lib/audio_data_region_view.h"
+#include <system/audio.h>
+
 #include "host/libs/config/cuttlefish_config.h"
 
 #include <aacenc_lib.h>
@@ -23,6 +21,88 @@
 #define LOG_AUDIO       0
 
 namespace android {
+
+namespace {
+
+// These definitions are deleted in master, copying here temporarily
+typedef uint32_t size32_t;
+
+struct timespec32 {
+  uint32_t tv_sec;
+  uint32_t tv_nsec;
+
+  timespec32() = default;
+
+  timespec32(const timespec &from)
+      : tv_sec(from.tv_sec),
+        tv_nsec(from.tv_nsec) {
+  }
+};
+
+struct gce_audio_message {
+//  static const size32_t kMaxAudioFrameLen = 65536;
+  enum message_t {
+    UNKNOWN = 0,
+    DATA_SAMPLES = 1,
+    OPEN_INPUT_STREAM = 2,
+    OPEN_OUTPUT_STREAM = 3,
+    CLOSE_INPUT_STREAM = 4,
+    CLOSE_OUTPUT_STREAM = 5,
+    CONTROL_PAUSE = 100
+  };
+  // Size of the header + data. Used to frame when we're on TCP.
+  size32_t total_size;
+  // Size of the audio header
+  size32_t header_size;
+  message_t message_type;
+  // Identifier for the stream.
+  uint32_t stream_number;
+  // HAL assigned frame number, starts from 0.
+  int64_t frame_num;
+  // MONOTONIC_TIME when these frames were presented to the HAL.
+  timespec32 time_presented;
+  // Sample rate from the audio configuration.
+  uint32_t frame_rate;
+  // Channel mask from the audio configuration.
+  audio_channel_mask_t channel_mask;
+  // Format from the audio configuration.
+  audio_format_t format;
+  // Size of each frame in bytes.
+  size32_t frame_size;
+  // Number of frames that were presented to the HAL.
+  size32_t num_frames_presented;
+  // Number of frames that the HAL accepted.
+  //   For blocking audio this will be the same as num_frames.
+  //   For non-blocking audio this may be less.
+  size32_t num_frames_accepted;
+  // Count of the number of packets that were dropped because they would
+  // have blocked the HAL or exceeded the maximum message size.
+  size32_t num_packets_dropped;
+  // Count of the number of packets that were shortened to fit within
+  // kMaxAudioFrameLen.
+  size32_t num_packets_shortened;
+  // num_frames_presented (not num_frames_accepted) will follow here.
+
+  gce_audio_message() :
+      total_size(sizeof(gce_audio_message)),
+      header_size(sizeof(gce_audio_message)),
+      message_type(UNKNOWN),
+      stream_number(0),
+      frame_num(0),
+      frame_rate(0),
+      channel_mask(0),
+      format(AUDIO_FORMAT_DEFAULT),
+      frame_size(0),
+      num_frames_presented(0),
+      num_frames_accepted(0),
+      num_packets_dropped(0),
+      num_packets_shortened(0) {
+    time_presented.tv_sec = 0;
+    time_presented.tv_nsec = 0;
+  }
+};
+  
+}
 
 struct AudioSource::Encoder {
     explicit Encoder();
@@ -890,18 +970,11 @@ void AudioSource::G711Encoder::doEncode(const int16_t *src, size_t numFrames) {
 
 AudioSource::AudioSource(Format format, bool useADTSFraming)
     : mInitCheck(NO_INIT),
-      mState(STOPPED),
-      mRegionView(nullptr)
+      mState(STOPPED)
 #if SIMULATE_AUDIO
       ,mPhase(0)
 #endif
 {
-    auto config = vsoc::CuttlefishConfig::Get();
-    if (config->enable_ivserver()) {
-        mRegionView = AudioDataRegionView::GetInstance(vsoc::GetDomain().c_str());
-        mRegionWorker = mRegionView->StartWorker();
-    }
-
     switch (format) {
         case Format::AAC:
         {
@@ -1026,6 +1099,7 @@ status_t AudioSource::start() {
                 }
             }));
 #else
+/*
     if (mRegionView) {
         mThread.reset(
                 new std::thread([this]{
@@ -1034,7 +1108,7 @@ status_t AudioSource::start() {
 
                         struct timespec absTimeLimit;
                         vsoc::RegionView::GetFutureTime(
-                                1000000000ll /* ns_from_now */, &absTimeLimit);
+                                1000000000ll ns_from_now, &absTimeLimit);
 
                         intptr_t res = mRegionView->data()->audio_queue.Read(
                                 mRegionView,
@@ -1055,6 +1129,7 @@ status_t AudioSource::start() {
                     }
             }));
     }
+    */
 #endif  // SIMULATE_AUDIO
 
     return OK;

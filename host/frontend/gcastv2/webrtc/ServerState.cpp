@@ -6,15 +6,16 @@
 
 #ifdef TARGET_ANDROID
 #include <source/AudioSource.h>
-#include <source/CVMTouchSink.h>
+#include <source/TouchSink.h>
 #include <source/FrameBufferSource.h>
-#include <source/VSOCTouchSink.h>
 
 #include "host/libs/config/cuttlefish_config.h"
 
 #include <gflags/gflags.h>
 
 DECLARE_int32(touch_fd);
+DECLARE_int32(frame_server_fd);
+DECLARE_bool(write_virtio_input);
 #endif
 
 #ifdef TARGET_ANDROID_DEVICE
@@ -72,71 +73,79 @@ ServerState::ServerState(
     mFrameBufferSource =
         std::make_shared<android::FrameBufferSource>(fbSourceFormat);
 
-    if (!config->enable_ivserver()) {
+    if (FLAGS_frame_server_fd < 0) {
         mFrameBufferComms = std::make_shared<HostToGuestComms>(
-                mRunLoop,
-                true /* isServer */,
-                VMADDR_CID_HOST,
-                HostToGuestComms::kPortVideo,
-                [this](const void *data, size_t size) {
-                    LOG(VERBOSE)
-                        << "Received packet of "
-                        << size
-                        << " bytes of data from hwcomposer HAL.";
+            mRunLoop,
+            true /* isServer */,
+            VMADDR_CID_HOST,
+            HostToGuestComms::kPortVideo,
+            [this](const void *data, size_t size) {
+                LOG(VERBOSE)
+                    << "Received packet of "
+                    << size
+                    << " bytes of data from hwcomposer HAL.";
 
-                    static_cast<android::FrameBufferSource *>(
-                            mFrameBufferSource.get())->injectFrame(data, size);
-                });
+                static_cast<android::FrameBufferSource *>(
+                        mFrameBufferSource.get())->injectFrame(data, size);
+            });
+    } else {
+        mFrameBufferComms = std::make_shared<HostToGuestComms>(
+            mRunLoop,
+            true /* isServer */,
+            FLAGS_frame_server_fd,
+            [this](const void *data, size_t size) {
+                LOG(VERBOSE)
+                    << "Received packet of "
+                    << size
+                    << " bytes of data from hwcomposer HAL.";
 
-        mFrameBufferComms->start();
-
-        int32_t screenParams[4];
-        screenParams[0] = config->x_res();
-        screenParams[1] = config->y_res();
-        screenParams[2] = config->dpi();
-        screenParams[3] = config->refresh_rate_hz();
-
-        mFrameBufferComms->send(
-                screenParams, sizeof(screenParams), false /* addFraming */);
-
-        static_cast<android::FrameBufferSource *>(
-                mFrameBufferSource.get())->setScreenParams(screenParams);
+                static_cast<android::FrameBufferSource *>(
+                        mFrameBufferSource.get())->injectFrame(data, size);
+            });
     }
+
+    mFrameBufferComms->start();
+
+    int32_t screenParams[4];
+    screenParams[0] = config->x_res();
+    screenParams[1] = config->y_res();
+    screenParams[2] = config->dpi();
+    screenParams[3] = config->refresh_rate_hz();
+
+    mFrameBufferComms->send(
+            screenParams, sizeof(screenParams), false /* addFraming */);
+
+    static_cast<android::FrameBufferSource *>(
+            mFrameBufferSource.get())->setScreenParams(screenParams);
 
     mAudioSource = std::make_shared<android::AudioSource>(
             android::AudioSource::Format::OPUS);
 
-    if (!config->enable_ivserver()) {
-        mAudioComms = std::make_shared<HostToGuestComms>(
-                mRunLoop,
-                true /* isServer */,
-                VMADDR_CID_HOST,
-                HostToGuestComms::kPortAudio,
-                [this](const void *data, size_t size) {
-                    LOG(VERBOSE)
-                        << "Received packet of "
-                        << size
-                        << " bytes of data from audio HAL.";
+    mAudioComms = std::make_shared<HostToGuestComms>(
+            mRunLoop,
+            true /* isServer */,
+            VMADDR_CID_HOST,
+            HostToGuestComms::kPortAudio,
+            [this](const void *data, size_t size) {
+                LOG(VERBOSE)
+                    << "Received packet of "
+                    << size
+                    << " bytes of data from audio HAL.";
 
-                    static_cast<android::AudioSource *>(
-                            mAudioSource.get())->inject(data, size);
-                });
+                static_cast<android::AudioSource *>(
+                        mAudioSource.get())->inject(data, size);
+            });
 
-        mAudioComms->start();
-    }
+    mAudioComms->start();
+    
+    CHECK_GE(FLAGS_touch_fd, 0);
 
-    if (config->enable_ivserver()) {
-        mTouchSink = std::make_shared<android::VSOCTouchSink>();
-    } else {
-        CHECK_GE(FLAGS_touch_fd, 0);
+    auto touchSink =
+        std::make_shared<android::TouchSink>(mRunLoop, FLAGS_touch_fd, FLAGS_write_virtio_input);
 
-        auto touchSink =
-            std::make_shared<android::CVMTouchSink>(mRunLoop, FLAGS_touch_fd);
+    touchSink->start();
 
-        touchSink->start();
-
-        mTouchSink = touchSink;
-    }
+    mTouchSink = touchSink;
 #else
     mLooper = new ALooper;
     mLooper->start();

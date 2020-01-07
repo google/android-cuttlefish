@@ -16,6 +16,27 @@
 HostToGuestComms::HostToGuestComms(
         std::shared_ptr<RunLoop> runLoop,
         bool isServer,
+        int fd,
+        ReceiveCb onReceive)
+    : mRunLoop(runLoop),
+      mIsServer(isServer),
+      mOnReceive(onReceive),
+      mServerSock(-1),
+      mSock(-1),
+      mInBufferLen(0),
+      mSendPending(false),
+      mConnected(false) {
+    makeFdNonblocking(fd);
+    if (mIsServer) {
+        mServerSock = fd;
+    } else {
+        mSock = fd;
+    }
+}
+
+HostToGuestComms::HostToGuestComms(
+        std::shared_ptr<RunLoop> runLoop,
+        bool isServer,
         uint32_t cid,
         uint16_t port,
         ReceiveCb onReceive)
