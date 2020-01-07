@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <chrono>
 
-#include <media/stagefright/Utils.h>
-#include <media/stagefright/MediaDefs.h>
-#include <media/stagefright/foundation/ABuffer.h>
 #include <libyuv/convert.h>
 
 #include "host/libs/config/cuttlefish_config.h"
@@ -33,7 +30,7 @@ struct FrameBufferSource::Encoder {
 
     virtual void forceIDRFrame() = 0;
     virtual bool isForcingIDRFrame() const = 0;
-    virtual std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) = 0;
+    virtual std::shared_ptr<SBuffer> encode(const void *frame, int64_t timeUs) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,7 +42,7 @@ struct FrameBufferSource::VPXEncoder : public FrameBufferSource::Encoder {
     void forceIDRFrame() override;
     bool isForcingIDRFrame() const override;
 
-    std::shared_ptr<ABuffer> encode(const void *frame, int64_t timeUs) override;
+    std::shared_ptr<SBuffer> encode(const void *frame, int64_t timeUs) override;
 
 private:
     int mWidth, mHeight, mRefreshRateHz;
@@ -142,7 +139,7 @@ bool FrameBufferSource::VPXEncoder::isForcingIDRFrame() const {
     return mForceIDRFrame;
 }
 
-std::shared_ptr<ABuffer> FrameBufferSource::VPXEncoder::encode(
+std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encode(
         const void *frame, int64_t timeUs) {
     uint8_t *yPlane = static_cast<uint8_t *>(mI420Data);
     uint8_t *uPlane = yPlane + mSizeY;
@@ -202,7 +199,7 @@ std::shared_ptr<ABuffer> FrameBufferSource::VPXEncoder::encode(
     vpx_codec_iter_t iter = nullptr;
     const vpx_codec_cx_pkt_t *packet;
 
-    std::shared_ptr<ABuffer> accessUnit;
+    std::shared_ptr<SBuffer> accessUnit;
 
     while ((packet = vpx_codec_get_cx_data(mCodecContext.get(), &iter)) != nullptr) {
         if (packet->kind == VPX_CODEC_CX_FRAME_PKT) {
@@ -218,13 +215,13 @@ std::shared_ptr<ABuffer> FrameBufferSource::VPXEncoder::encode(
                 return nullptr;
             }
 
-            accessUnit.reset(new ABuffer(packet->data.frame.sz));
+            accessUnit.reset(new SBuffer(packet->data.frame.sz));
 
             memcpy(accessUnit->data(),
                    packet->data.frame.buf,
                    packet->data.frame.sz);
 
-            accessUnit->meta()->setInt64("timeUs", timeUs);
+            accessUnit->time_us(timeUs);
         } else {
             LOG(INFO)
                 << "vpx_codec_encode returned a packet of type "
@@ -238,7 +235,7 @@ std::shared_ptr<ABuffer> FrameBufferSource::VPXEncoder::encode(
 ////////////////////////////////////////////////////////////////////////////////
 
 FrameBufferSource::FrameBufferSource(Format format)
-    : mInitCheck(NO_INIT),
+    : mInitCheck(-ENODEV),
       mState(STOPPED),
       mFormat(format),
       mScreenWidth(0),
@@ -246,22 +243,22 @@ FrameBufferSource::FrameBufferSource(Format format)
       mScreenDpi(0),
       mScreenRate(0),
       mOnFrameFn(nullptr) {
-    mInitCheck = OK;
+    mInitCheck = 0;
 }
 
 FrameBufferSource::~FrameBufferSource() {
     stop();
 }
 
-status_t FrameBufferSource::initCheck() const {
+int32_t FrameBufferSource::initCheck() const {
     return mInitCheck;
 }
 
-status_t FrameBufferSource::start() {
+int32_t FrameBufferSource::start() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
     if (mState != STOPPED) {
-        return OK;
+        return 0;
     }
 
     switch (mFormat) {
@@ -274,19 +271,19 @@ status_t FrameBufferSource::start() {
         }
 
         default:
-            TRESPASS();
+            LOG(FATAL) << "Should not be here.";
     }
 
     mState = RUNNING;
 
-    return OK;
+    return 0;
 }
 
-status_t FrameBufferSource::stop() {
+int32_t FrameBufferSource::stop() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
     if (mState == STOPPED) {
-        return OK;
+        return 0;
     }
 
     mState = STOPPING;
@@ -295,53 +292,53 @@ status_t FrameBufferSource::stop() {
 
     mEncoder.reset();
 
-    return OK;
+    return 0;
 }
 
-status_t FrameBufferSource::pause() {
+int32_t FrameBufferSource::pause() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
     if (mState == PAUSED) {
-        return OK;
+        return 0;
     }
 
     if (mState != RUNNING) {
-        return INVALID_OPERATION;
+        return -EINVAL;
     }
 
     mState = PAUSED;
 
     LOG(VERBOSE) << "Now paused.";
 
-    return OK;
+    return 0;
 }
 
-status_t FrameBufferSource::resume() {
+int32_t FrameBufferSource::resume() {
     std::lock_guard<std::mutex> autoLock(mLock);
 
     if (mState == RUNNING) {
-        return OK;
+        return 0;
     }
 
     if (mState != PAUSED) {
-        return INVALID_OPERATION;
+        return -EINVAL;
     }
 
     mState = RUNNING;
 
     LOG(VERBOSE) << "Now running.";
 
-    return OK;
+    return 0;
 }
 
 bool FrameBufferSource::paused() const {
     return mState == PAUSED;
 }
 
-status_t FrameBufferSource::requestIDRFrame() {
+int32_t FrameBufferSource::requestIDRFrame() {
     mEncoder->forceIDRFrame();
 
-    return OK;
+    return 0;
 }
 
 void FrameBufferSource::setScreenParams(const int32_t screenParams[4]) {
@@ -360,7 +357,7 @@ void FrameBufferSource::injectFrame(const void *data, size_t size) {
         return;
     }
 
-    std::shared_ptr<ABuffer> accessUnit = mEncoder->encode(data, GetNowUs());
+    std::shared_ptr<SBuffer> accessUnit = mEncoder->encode(data, GetNowUs());
 
     StreamingSource::onAccessUnit(accessUnit);
 }

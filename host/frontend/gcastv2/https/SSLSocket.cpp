@@ -6,8 +6,6 @@
 #include <sstream>
 #include <sys/socket.h>
 
-#define TRESPASS()      LOG(FATAL) << "Should not be here."
-
 // static
 void SSLSocket::Init() {
     SSL_library_init();
@@ -318,7 +316,7 @@ void SSLSocket::queueOutputDataFromSSL() {
         } else if (BIO_should_retry(mBioW)) {
             continue;
         } else {
-            TRESPASS();
+            LOG(FATAL) << "Should not be here.";
         }
     } while (n > 0);
 }
@@ -357,7 +355,7 @@ void SSLSocket::sendOutputData() {
                 break;
             }
 
-            TRESPASS();
+            LOG(FATAL) << "Should not be here.";
         }
 
         offset += static_cast<size_t>(n);
@@ -461,7 +459,7 @@ void SSLSocket::drainOutputBufferPlain() {
                     mEOS = true;
                     mFinalErrno = ECONNREFUSED;
 
-                    TRESPASS();
+                    LOG(FATAL) << "Should not be here.";
                     return;
                 }
 
@@ -469,7 +467,7 @@ void SSLSocket::drainOutputBufferPlain() {
                     break;
 
                 default:
-                    TRESPASS();
+                    LOG(FATAL) << "Should not be here.";
             }
 
             CHECK(SSL_is_init_finished(mSSL.get()));

@@ -47,7 +47,7 @@ ServerState::ServerState(
             fbSourceFormat = android::FrameBufferSource::Format::VP8;
             break;
         default:
-            TRESPASS();
+            LOG(FATAL) << "Should not be here.";
     }
 
     mFrameBufferSource =
@@ -137,7 +137,7 @@ std::shared_ptr<Packetizer> ServerState::getVideoPacketizer() {
             }
 
             default:
-                TRESPASS();
+                LOG(FATAL) << "Should not be here.";
         }
 
         packetizer->run();

@@ -5,7 +5,6 @@
 #include <webrtc/RTPSocketHandler.h>
 
 #include <https/SafeCallbackable.h>
-#include <media/stagefright/Utils.h>
 
 using namespace android;
 
@@ -25,7 +24,7 @@ void G711Packetizer::run() {
     auto weak_this = std::weak_ptr<G711Packetizer>(shared_from_this());
 
     mAudioSource->setCallback(
-            [weak_this](const std::shared_ptr<ABuffer> &accessUnit) {
+            [weak_this](const std::shared_ptr<SBuffer> &accessUnit) {
                 auto me = weak_this.lock();
                 if (me) {
                     me->mRunLoop->post(
@@ -37,9 +36,9 @@ void G711Packetizer::run() {
     mAudioSource->start();
 }
 
-void G711Packetizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
-    int64_t timeUs;
-    CHECK(accessUnit->meta()->findInt64("timeUs", &timeUs));
+void G711Packetizer::onFrame(const std::shared_ptr<SBuffer> &accessUnit) {
+    int64_t timeUs = accessUnit->time_us();
+    CHECK(timeUs);
 
     auto now = std::chrono::steady_clock::now();
 
@@ -59,7 +58,7 @@ void G711Packetizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
     packetize(accessUnit, timeUs);
 }
 
-void G711Packetizer::packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs) {
+void G711Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs) {
     LOG(VERBOSE) << "Received G711 frame of size " << accessUnit->size();
 
     const uint8_t PT = (mMode == Mode::ALAW) ? 8 : 0;
@@ -113,7 +112,7 @@ uint32_t G711Packetizer::rtpNow() const {
     return (us_since_start * 8) / 1000;
 }
 
-android::status_t G711Packetizer::requestIDRFrame() {
+int32_t G711Packetizer::requestIDRFrame() {
     return mAudioSource->requestIDRFrame();
 }
 

@@ -3,8 +3,7 @@
 #include "Utils.h"
 
 #include <https/Support.h>
-#include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/Utils.h>
+#include <android-base/logging.h>
 
 #include <arpa/inet.h>
 
@@ -175,7 +174,7 @@ void STUNMessage::dump(std::optional<std::string_view> password) const {
     } else {
         std::cout
             << "Unknown message type "
-            << android::StringPrintf("0x%04x", messageType);
+            << StringPrintf("0x%04x", messageType);
     }
 
     std::cout << std::endl;
@@ -209,13 +208,13 @@ void STUNMessage::dump(std::optional<std::string_view> password) const {
             if (attrType <= 0x7fff) {
                 std::cout
                     << "Unknown mandatory attribute type "
-                    << android::StringPrintf("0x%04x", attrType)
+                    << StringPrintf("0x%04x", attrType)
                     << ":"
                     << std::endl;
             } else {
                 std::cout
                     << "Unknown optional attribute type "
-                    << android::StringPrintf("0x%04x", attrType)
+                    << StringPrintf("0x%04x", attrType)
                     << ":"
                     << std::endl;
             }

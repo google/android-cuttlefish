@@ -4,11 +4,8 @@
 
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/Utils.h>
 
-using android::U16_AT;
-using android::U32_AT;
+#include <android-base/logging.h>
 
 SCTPHandler::SCTPHandler(
         std::shared_ptr<RunLoop> runLoop,
@@ -48,8 +45,8 @@ int SCTPHandler::inject(uint8_t *data, size_t size) {
     if (checkSumIn != checkSum) {
         LOG(WARNING)
             << "SCTPHandler::inject checksum invalid."
-            << " (in: " << android::StringPrintf("0x%08x", checkSumIn) << ", "
-            << "computed: " << android::StringPrintf("0x%08x", checkSum) << ")";
+            << " (in: " << StringPrintf("0x%08x", checkSumIn) << ", "
+            << "computed: " << StringPrintf("0x%08x", checkSum) << ")";
 
         return -EINVAL;
     }

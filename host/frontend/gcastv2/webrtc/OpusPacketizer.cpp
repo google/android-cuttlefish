@@ -5,7 +5,6 @@
 #include <webrtc/RTPSocketHandler.h>
 
 #include <https/SafeCallbackable.h>
-#include <media/stagefright/Utils.h>
 
 using namespace android;
 
@@ -23,7 +22,7 @@ void OpusPacketizer::run() {
     auto weak_this = std::weak_ptr<OpusPacketizer>(shared_from_this());
 
     mAudioSource->setCallback(
-            [weak_this](const std::shared_ptr<ABuffer> &accessUnit) {
+            [weak_this](const std::shared_ptr<SBuffer> &accessUnit) {
                 auto me = weak_this.lock();
                 if (me) {
                     me->mRunLoop->post(
@@ -35,9 +34,9 @@ void OpusPacketizer::run() {
     mAudioSource->start();
 }
 
-void OpusPacketizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
-    int64_t timeUs;
-    CHECK(accessUnit->meta()->findInt64("timeUs", &timeUs));
+void OpusPacketizer::onFrame(const std::shared_ptr<SBuffer> &accessUnit) {
+    int64_t timeUs = accessUnit->time_us();
+    CHECK(timeUs);
 
     auto now = std::chrono::steady_clock::now();
 
@@ -57,7 +56,7 @@ void OpusPacketizer::onFrame(const std::shared_ptr<ABuffer> &accessUnit) {
     packetize(accessUnit, timeUs);
 }
 
-void OpusPacketizer::packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs) {
+void OpusPacketizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs) {
     LOG(VERBOSE) << "Received Opus frame of size " << accessUnit->size();
 
     static constexpr uint8_t PT = 98;
@@ -111,7 +110,7 @@ uint32_t OpusPacketizer::rtpNow() const {
     return (us_since_start * 48) / 1000;
 }
 
-android::status_t OpusPacketizer::requestIDRFrame() {
+int32_t OpusPacketizer::requestIDRFrame() {
     return mAudioSource->requestIDRFrame();
 }
 

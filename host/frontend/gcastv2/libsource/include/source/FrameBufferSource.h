@@ -24,8 +24,6 @@
 
 namespace android {
 
-struct ABuffer;
-
 struct FrameBufferSource : public StreamingSource {
     enum class Format {
         VP8,
@@ -38,17 +36,17 @@ struct FrameBufferSource : public StreamingSource {
 
     ~FrameBufferSource() override;
 
-    status_t initCheck() const override;
+    int32_t initCheck() const override;
 
-    status_t start() override;
-    status_t stop() override;
+    int32_t start() override;
+    int32_t stop() override;
 
-    status_t pause() override;
-    status_t resume() override;
+    int32_t pause() override;
+    int32_t resume() override;
 
     bool paused() const override;
 
-    status_t requestIDRFrame() override;
+    int32_t requestIDRFrame() override;
 
     void setScreenParams(const int32_t screenParams[4]);
     void injectFrame(const void *data, size_t size);
@@ -64,7 +62,7 @@ private:
     struct Encoder;
     struct VPXEncoder;
 
-    status_t mInitCheck;
+    int32_t mInitCheck;
     State mState;
     Format mFormat;
     std::unique_ptr<Encoder> mEncoder;
@@ -73,7 +71,7 @@ private:
 
     int32_t mScreenWidth, mScreenHeight, mScreenDpi, mScreenRate;
 
-    std::function<void(const std::shared_ptr<ABuffer> &)> mOnFrameFn;
+    std::function<void(const std::shared_ptr<SBuffer> &)> mOnFrameFn;
 };
 
 }  // namespace android

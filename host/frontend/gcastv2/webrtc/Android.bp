@@ -18,7 +18,6 @@ cc_library_static {
         "VP8Packetizer.cpp",
     ],
     static_libs: [
-        "libandroidglue",
         "libhttps",
         "libsrtp2",
         "libcuttlefish_host_config",
@@ -57,7 +56,6 @@ cc_binary_host {
         "libyuv",
     ],
     static_libs: [
-        "libandroidglue",
         "libcuttlefish_host_config",
         "libgflags",
         "libhttps",
