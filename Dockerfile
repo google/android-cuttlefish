@@ -1,6 +1,6 @@
 # This file is based on https://hub.docker.com/r/jrei/systemd-debian/.
 
-FROM debian:buster
+FROM debian:buster-slim
 
 ENV container docker
 ENV LC_ALL C
@@ -27,7 +27,9 @@ CMD ["/lib/systemd/systemd"]
 RUN apt update \
     && apt install -y apt-utils sudo vim dpkg-dev devscripts gawk coreutils \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
-       net-tools rsyslog qemu-system-x86 equivs
+       net-tools rsyslog equivs # qemu-system-x86
+
+RUN dpkg -l
 
 COPY . /root/android-cuttlefish/
 
@@ -39,15 +41,9 @@ RUN cd /root/android-cuttlefish \
 RUN apt-get clean \
     && rm -rf /root/android-cuttlefish
 
-RUN groupadd kvm
-
 RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -G kvm,cvdnetwork \
     && passwd -d vsoc-01 \
-    && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
-    && echo 'sudo chmod ug+rw /dev/kvm' >> /home/vsoc-01/.bashrc \
-    && echo 'sudo chmod ug+rw /dev/vhost-vsock' >> /home/vsoc-01/.bashrc \
-    && echo 'sudo chown root.kvm /dev/kvm' >> /home/vsoc-01/.bashrc \
-    && echo 'sudo chown root.cvdnetwork /dev/vhost-vsock' >> /home/vsoc-01/.bashrc
+    && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthentication yes/g' /etc/ssh/sshd_config \
     && sed -i -r -e 's/^#{0,1}\s*PermitEmptyPasswords\s+(yes|no)/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config \
