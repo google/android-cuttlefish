@@ -15,17 +15,17 @@
  */
 
 #include <media/stagefright/foundation/ABase.h>
-#include <utils/RefBase.h>
 
 #include <map>
+#include <memory>
 #include <string>
 
 namespace android {
 
 // Encapsulates an "HTTP/RTSP style" response, i.e. a status line,
 // key/value pairs making up the headers and an optional body/content.
-struct ParsedMessage : public RefBase {
-    static sp<ParsedMessage> Parse(
+struct ParsedMessage {
+    static std::shared_ptr<ParsedMessage> Parse(
             const char *data, size_t size, bool noMoreData, size_t *length);
 
     bool findString(const char *name, std::string *value) const;
@@ -44,8 +44,6 @@ struct ParsedMessage : public RefBase {
     static bool GetInt32Attribute(
             const char *s, const char *key, int32_t *value);
 
-
-protected:
     virtual ~ParsedMessage();
 
 private:

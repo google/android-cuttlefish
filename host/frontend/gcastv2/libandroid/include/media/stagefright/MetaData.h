@@ -4,7 +4,8 @@
 
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/AMessage.h>
-#include <utils/RefBase.h>
+
+#include <memory>
 
 namespace android {
 
@@ -25,7 +26,7 @@ enum {
   kTypeESDS = 'esds'
 };
 
-struct MetaData : public RefBase {
+struct MetaData {
     MetaData()
         : mMessage(new AMessage) {
     }
@@ -76,7 +77,7 @@ struct MetaData : public RefBase {
         std::string tmp;
         tmp.append(std::to_string(key));
 
-        sp<ABuffer> buffer = new ABuffer(size);
+        std::shared_ptr<ABuffer> buffer(new ABuffer(size));
         buffer->meta()->setInt32("type", type);
         memcpy(buffer->data(), data, size);
 
@@ -88,12 +89,12 @@ struct MetaData : public RefBase {
         std::string tmp;
         tmp.append(std::to_string(key));
 
-        sp<RefBase> obj;
+        std::shared_ptr<void> obj;
         if (!mMessage->findObject(tmp.c_str(), &obj)) {
             return false;
         }
 
-        sp<ABuffer> buffer = static_cast<ABuffer *>(obj.get());
+        std::shared_ptr<ABuffer> buffer = std::static_pointer_cast<ABuffer>(obj);
         CHECK(buffer->meta()->findInt32("type", (int32_t *)type));
         *data = buffer->data();
         *size = buffer->size();
@@ -101,11 +102,10 @@ struct MetaData : public RefBase {
         return true;
     }
 
-protected:
     virtual ~MetaData() {}
 
 private:
-    sp<AMessage> mMessage;
+    std::shared_ptr<AMessage> mMessage;
 
     DISALLOW_EVIL_CONSTRUCTORS(MetaData);
 };

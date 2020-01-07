@@ -23,7 +23,6 @@ struct OpusPacketizer
     android::status_t requestIDRFrame() override;
 
 private:
-    template<class T> using sp = android::sp<T>;
     using ABuffer = android::ABuffer;
 
     std::shared_ptr<RunLoop> mRunLoop;
@@ -36,9 +35,9 @@ private:
     int64_t mStartTimeMedia;
     bool mFirstInTalkspurt;
 
-    void onFrame(const sp<ABuffer> &accessUnit);
+    void onFrame(const std::shared_ptr<ABuffer> &accessUnit);
 
-    void packetize(const sp<ABuffer> &accessUnit, int64_t timeUs);
+    void packetize(const std::shared_ptr<ABuffer> &accessUnit, int64_t timeUs);
 };
 
 

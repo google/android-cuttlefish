@@ -41,7 +41,7 @@ unsigned parseUE(ABitReader *br) {
 
 // Determine video dimensions from the sequence parameterset.
 void FindAVCDimensions(
-        const sp<ABuffer> &seqParamSet, int32_t *width, int32_t *height) {
+        const std::shared_ptr<ABuffer> &seqParamSet, int32_t *width, int32_t *height) {
     ABitReader br(seqParamSet->data() + 1, seqParamSet->size() - 1);
 
     unsigned profile_idc = br.getBits(8);
@@ -206,12 +206,12 @@ status_t getNextNALUnit(
     return OK;
 }
 
-static sp<ABuffer> FindNAL(const uint8_t *data, size_t size, unsigned nalType) {
+static std::shared_ptr<ABuffer> FindNAL(const uint8_t *data, size_t size, unsigned nalType) {
     const uint8_t *nalStart;
     size_t nalSize;
     while (getNextNALUnit(&data, &size, &nalStart, &nalSize, true) == OK) {
         if ((nalStart[0] & 0x1f) == nalType) {
-            sp<ABuffer> buffer = new ABuffer(nalSize);
+            std::shared_ptr<ABuffer> buffer(new ABuffer(nalSize));
             memcpy(buffer->data(), nalStart, nalSize);
             return buffer;
         }
@@ -242,11 +242,11 @@ const char *AVCProfileToString(uint8_t profile) {
     }
 }
 
-sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit) {
+std::shared_ptr<MetaData> MakeAVCCodecSpecificData(const std::shared_ptr<ABuffer> &accessUnit) {
     const uint8_t *data = accessUnit->data();
     size_t size = accessUnit->size();
 
-    sp<ABuffer> seqParamSet = FindNAL(data, size, 7);
+    std::shared_ptr<ABuffer> seqParamSet = FindNAL(data, size, 7);
     if (seqParamSet == NULL) {
         return NULL;
     }
@@ -254,7 +254,7 @@ sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit) {
     int32_t width, height;
     FindAVCDimensions(seqParamSet, &width, &height);
 
-    sp<ABuffer> picParamSet = FindNAL(data, size, 8);
+    std::shared_ptr<ABuffer> picParamSet = FindNAL(data, size, 8);
     CHECK(picParamSet != NULL);
 
     size_t csdSize =
@@ -262,7 +262,7 @@ sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit) {
         + 2 * 1 + seqParamSet->size()
         + 1 + 2 * 1 + picParamSet->size();
 
-    sp<ABuffer> csd = new ABuffer(csdSize);
+    std::shared_ptr<ABuffer> csd(new ABuffer(csdSize));
     uint8_t *out = csd->data();
 
     *out++ = 0x01;  // configurationVersion
@@ -286,7 +286,7 @@ sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit) {
     *out++ = picParamSet->size() & 0xff;
     memcpy(out, picParamSet->data(), picParamSet->size());
 
-    sp<MetaData> meta = new MetaData;
+    std::shared_ptr<MetaData> meta(new MetaData);
     meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_VIDEO_AVC);
 
     meta->setData(kKeyAVCC, 0, csd->data(), csd->size());
@@ -299,7 +299,7 @@ sp<MetaData> MakeAVCCodecSpecificData(const sp<ABuffer> &accessUnit) {
     return meta;
 }
 
-bool IsIDR(const sp<ABuffer> &buffer) {
+bool IsIDR(const std::shared_ptr<ABuffer> &buffer) {
     const uint8_t *data = buffer->data();
     size_t size = buffer->size();
 
@@ -321,10 +321,10 @@ bool IsIDR(const sp<ABuffer> &buffer) {
     return foundIDR;
 }
 
-sp<MetaData> MakeAACCodecSpecificData(
+std::shared_ptr<MetaData> MakeAACCodecSpecificData(
         unsigned profile, unsigned sampling_freq_index,
         unsigned channel_configuration) {
-    sp<MetaData> meta = new MetaData;
+    std::shared_ptr<MetaData> meta(new MetaData);
     meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_AUDIO_AAC);
 
     CHECK_LE(sampling_freq_index, 11u);
@@ -354,7 +354,7 @@ sp<MetaData> MakeAACCodecSpecificData(
         // f - samplingFreqIndex
         // c - channelConfig
     };
-    sp<ABuffer> csd = new ABuffer(sizeof(kStaticESDS) + 2);
+    std::shared_ptr<ABuffer> csd(new ABuffer(sizeof(kStaticESDS) + 2));
     memcpy(csd->data(), kStaticESDS, sizeof(kStaticESDS));
 
     csd->data()[sizeof(kStaticESDS)] =

@@ -31,7 +31,7 @@ ALooperRoster::ALooperRoster()
 }
 
 ALooper::handler_id ALooperRoster::registerHandler(
-        const sp<ALooper> looper, const sp<AHandler> &handler) {
+        const std::shared_ptr<ALooper> looper, const std::shared_ptr<AHandler> &handler) {
     Mutex::Autolock autoLock(mLock);
 
     if (handler->id() != 0) {
@@ -43,7 +43,7 @@ ALooper::handler_id ALooperRoster::registerHandler(
 
     HandlerInfo info;
     info.mLooper = looper;
-    info.mHandler = handler.get();
+    info.mHandler = handler;
     ALooper::handler_id handlerID = mNextHandlerID++;
     mHandlers[handlerID] = info;
 
@@ -59,7 +59,7 @@ void ALooperRoster::unregisterHandler(ALooper::handler_id handlerID) {
     CHECK(it != mHandlers.end());
 
     const HandlerInfo &info = it->second;
-    sp<AHandler> handler = info.mHandler.promote();
+    std::shared_ptr<AHandler> handler = info.mHandler.lock();
 
     if (handler != NULL) {
         handler->setID(0);
@@ -69,7 +69,7 @@ void ALooperRoster::unregisterHandler(ALooper::handler_id handlerID) {
 }
 
 void ALooperRoster::postMessage(
-        const sp<AMessage> &msg, int64_t delayUs) {
+        const std::shared_ptr<AMessage> &msg, int64_t delayUs) {
     Mutex::Autolock autoLock(mLock);
 
     auto it = mHandlers.find(msg->target());
@@ -83,8 +83,8 @@ void ALooperRoster::postMessage(
     info.mLooper->post(msg, delayUs);
 }
 
-void ALooperRoster::deliverMessage(const sp<AMessage> &msg) {
-    sp<AHandler> handler;
+void ALooperRoster::deliverMessage(const std::shared_ptr<AMessage> &msg) {
+    std::shared_ptr<AHandler> handler;
 
     {
         Mutex::Autolock autoLock(mLock);
@@ -97,9 +97,9 @@ void ALooperRoster::deliverMessage(const sp<AMessage> &msg) {
         }
 
         const HandlerInfo &info = it->second;
-        handler = info.mHandler.promote();
+        handler = info.mHandler.lock();
 
-        if (handler == NULL) {
+        if (!handler) {
             mHandlers.erase(it);
             return;
         }

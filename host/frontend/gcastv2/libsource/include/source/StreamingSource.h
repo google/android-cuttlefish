@@ -17,7 +17,8 @@
 #pragma once
 
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
+
+#include <memory>
 
 #include <media/stagefright/foundation/AMessage.h>
 
@@ -33,14 +34,14 @@ struct StreamingSource {
 
     virtual status_t initCheck() const = 0;
 
-    void setNotify(const sp<AMessage> &notify);
-    void setCallback(std::function<void(const sp<ABuffer> &)> cb);
+    void setNotify(const std::shared_ptr<AMessage> &notify);
+    void setCallback(std::function<void(const std::shared_ptr<ABuffer> &)> cb);
 
-    virtual void setParameters(const sp<AMessage> &params) {
+    virtual void setParameters(const std::shared_ptr<AMessage> &params) {
         (void)params;
     }
 
-    virtual sp<AMessage> getFormat() const = 0;
+    virtual std::shared_ptr<AMessage> getFormat() const = 0;
 
     virtual status_t start() = 0;
     virtual status_t stop() = 0;
@@ -54,11 +55,11 @@ struct StreamingSource {
     virtual status_t requestIDRFrame() = 0;
 
 protected:
-    void onAccessUnit(const sp<ABuffer> &accessUnit);
+    void onAccessUnit(const std::shared_ptr<ABuffer> &accessUnit);
 
 private:
-    sp<AMessage> mNotify;
-    std::function<void(const sp<ABuffer> &)> mCallbackFn;
+    std::shared_ptr<AMessage> mNotify;
+    std::function<void(const std::shared_ptr<ABuffer> &)> mCallbackFn;
 };
 
 }  // namespace android

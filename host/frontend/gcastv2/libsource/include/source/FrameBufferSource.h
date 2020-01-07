@@ -45,9 +45,9 @@ struct FrameBufferSource : public StreamingSource {
 
     status_t initCheck() const override;
 
-    void setParameters(const sp<AMessage> &params) override;
+    void setParameters(const std::shared_ptr<AMessage> &params) override;
 
-    sp<AMessage> getFormat() const override;
+    std::shared_ptr<AMessage> getFormat() const override;
 
     status_t start() override;
     status_t stop() override;
@@ -71,9 +71,6 @@ private:
     };
 
     struct Encoder;
-#if ENABLE_H264
-    struct H264Encoder;
-#endif
     struct VPXEncoder;
 
     status_t mInitCheck;
@@ -85,7 +82,7 @@ private:
 
     int32_t mScreenWidth, mScreenHeight, mScreenDpi, mScreenRate;
 
-    std::function<void(const sp<ABuffer> &)> mOnFrameFn;
+    std::function<void(const std::shared_ptr<ABuffer> &)> mOnFrameFn;
 };
 
 }  // namespace android

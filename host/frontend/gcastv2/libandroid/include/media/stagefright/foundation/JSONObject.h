@@ -20,9 +20,9 @@
 
 #include <media/stagefright/foundation/ABase.h>
 #include <utils/Errors.h>
-#include <utils/RefBase.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -55,14 +55,14 @@ struct JSONValue {
     bool getInt32(int32_t *value) const;
     bool getString(std::string *value) const;
     bool getBoolean(bool *value) const;
-    bool getObject(sp<JSONObject> *value) const;
-    bool getArray(sp<JSONArray> *value) const;
+    bool getObject(std::shared_ptr<JSONObject> *value) const;
+    bool getArray(std::shared_ptr<JSONArray> *value) const;
 
     void setInt32(int32_t value);
     void setString(std::string_view value);
     void setBoolean(bool value);
-    void setObject(const sp<JSONObject> &obj);
-    void setArray(const sp<JSONArray> &array);
+    void setObject(std::shared_ptr<JSONObject> obj);
+    void setArray(std::shared_ptr<JSONArray> array);
     void unset();  // i.e. setNull()
 
     std::string toString(size_t depth = 0, bool indentFirstLine = true) const;
@@ -74,23 +74,23 @@ private:
         int32_t mInt32;
         std::string *mString;
         bool mBoolean;
-        JSONCompound *mObjectOrArray;
     } mValue;
+    std::shared_ptr<JSONCompound> mObjectOrArray;
 };
 
-struct JSONCompound : public RefBase {
+struct JSONCompound {
     JSONCompound(const JSONCompound &) = delete;
     JSONCompound &operator=(const JSONCompound &) = delete;
 
-    static sp<JSONCompound> Parse(const char *data, size_t size);
+    static std::shared_ptr<JSONCompound> Parse(const char *data, size_t size);
 
     std::string toString(size_t depth = 0, bool indentFirstLine = true) const;
 
     virtual bool isObject() const = 0;
 
-protected:
     virtual ~JSONCompound() {}
 
+protected:
     virtual std::string internalToString(
             size_t depth, bool indentFirstLine) const = 0;
 
@@ -134,21 +134,21 @@ struct JSONBase : public JSONCompound {
         return value.getBoolean(out);
     }
 
-    bool getObject(KEY key, sp<JSONObject> *obj) const {
+    bool getObject(KEY key, std::shared_ptr<JSONObject> *obj) const {
         PREAMBLE()
         return value.getObject(obj);
     }
 
-    bool getArray(KEY key, sp<JSONArray> *obj) const {
+    bool getArray(KEY key, std::shared_ptr<JSONArray> *obj) const {
         PREAMBLE()
         return value.getArray(obj);
     }
 
 #undef PREAMBLE
 
-protected:
     virtual ~JSONBase() {}
 
+protected:
     virtual bool getValue(KEY key, JSONValue *value) const = 0;
 };
 
@@ -179,13 +179,13 @@ struct JSONObject : public JSONBase<const char *> {
         setValue(key, val);
     }
 
-    void setObject(const char *key, const sp<JSONObject> &obj) {
+    void setObject(const char *key, const std::shared_ptr<JSONObject> &obj) {
         JSONValue val;
         val.setObject(obj);
         setValue(key, val);
     }
 
-    void setArray(const char *key, const sp<JSONArray> &obj) {
+    void setArray(const char *key, const std::shared_ptr<JSONArray> &obj) {
         JSONValue val;
         val.setArray(obj);
         setValue(key, val);
@@ -193,9 +193,9 @@ struct JSONObject : public JSONBase<const char *> {
 
     void remove(const char *key);
 
-protected:
     virtual ~JSONObject();
 
+protected:
     virtual bool getValue(const char *key, JSONValue *value) const;
     virtual std::string internalToString(size_t depth, bool indentFirstLine) const;
 
@@ -231,21 +231,21 @@ struct JSONArray : public JSONBase<size_t> {
         addValue(val);
     }
 
-    void addObject(const sp<JSONObject> &obj) {
+    void addObject(const std::shared_ptr<JSONObject> &obj) {
         JSONValue val;
         val.setObject(obj);
         addValue(val);
     }
 
-    void addArray(const sp<JSONArray> &obj) {
+    void addArray(const std::shared_ptr<JSONArray> &obj) {
         JSONValue val;
         val.setArray(obj);
         addValue(val);
     }
 
-protected:
     virtual ~JSONArray();
 
+protected:
     virtual bool getValue(size_t key, JSONValue *value) const;
     virtual std::string internalToString(size_t depth, bool indentFirstLine) const;
 
