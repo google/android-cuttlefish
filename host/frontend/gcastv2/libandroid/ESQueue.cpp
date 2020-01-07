@@ -128,11 +128,6 @@ status_t ElementaryStreamQueue::appendData(
             case H264:
             case MPEG_VIDEO:
             {
-#if 0
-                if (size < 4 || memcmp("\x00\x00\x00\x01", data, 4)) {
-                    return ERROR_MALFORMED;
-                }
-#else
                 uint8_t *ptr = (uint8_t *)data;
 
                 ssize_t startOffset = -1;
@@ -155,17 +150,11 @@ status_t ElementaryStreamQueue::appendData(
 
                 data = &ptr[startOffset];
                 size -= startOffset;
-#endif
                 break;
             }
 
             case MPEG4_VIDEO:
             {
-#if 0
-                if (size < 3 || memcmp("\x00\x00\x01", data, 3)) {
-                    return ERROR_MALFORMED;
-                }
-#else
                 uint8_t *ptr = (uint8_t *)data;
 
                 ssize_t startOffset = -1;
@@ -188,7 +177,6 @@ status_t ElementaryStreamQueue::appendData(
 
                 data = &ptr[startOffset];
                 size -= startOffset;
-#endif
                 break;
             }
 
@@ -196,11 +184,6 @@ status_t ElementaryStreamQueue::appendData(
             {
                 uint8_t *ptr = (uint8_t *)data;
 
-#if 0
-                if (size < 2 || ptr[0] != 0xff || (ptr[1] >> 4) != 0x0f) {
-                    return ERROR_MALFORMED;
-                }
-#else
                 ssize_t startOffset = -1;
                 for (size_t i = 0; i < size; ++i) {
                     if (IsSeeminglyValidADTSHeader(&ptr[i], size - i)) {
@@ -220,7 +203,6 @@ status_t ElementaryStreamQueue::appendData(
 
                 data = &ptr[startOffset];
                 size -= startOffset;
-#endif
                 break;
             }
 
@@ -287,12 +269,6 @@ status_t ElementaryStreamQueue::appendData(
     info.mTimestampUs = timeUs;
     mRangeInfos.push_back(info);
 
-#if 0
-    if (mMode == AAC) {
-        ALOGI("size = %d, timeUs = %.2f secs", size, timeUs / 1E6);
-        hexdump(data, size);
-    }
-#endif
 
     return OK;
 }

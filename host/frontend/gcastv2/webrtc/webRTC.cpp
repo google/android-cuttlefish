@@ -17,7 +17,6 @@
 #include <iostream>
 #include <unordered_map>
 
-#if defined(TARGET_ANDROID)
 #include <gflags/gflags.h>
 
 DEFINE_string(
@@ -39,15 +38,9 @@ DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
 DEFINE_bool(write_virtio_input, false, "Whether to send input events in virtio format.");
 
 DEFINE_string(adb, "", "Interface:port of local adb service.");
-#endif
 
 int main(int argc, char **argv) {
-#if defined(TARGET_ANDROID)
     ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-#else
-    (void)argc;
-    (void)argv;
-#endif
 
     SSLSocket::Init();
     DTLS::Init();
@@ -57,7 +50,6 @@ int main(int argc, char **argv) {
     auto state = std::make_shared<ServerState>(
             runLoop, ServerState::VideoFormat::VP8);
 
-#if 1
     auto port = 8443;  // Change to 8080 to use plain http instead of https.
 
     auto httpd = std::make_shared<HTTPServer>(
@@ -91,7 +83,6 @@ int main(int argc, char **argv) {
                 return std::make_pair(0 /* OK */, handler);
             });
 
-#if defined(TARGET_ANDROID)
     if (!FLAGS_adb.empty()) {
         httpd->addWebSocketHandlerFactory(
                 "/control_adb",
@@ -104,60 +95,8 @@ int main(int argc, char **argv) {
                     return std::make_pair(0 /* OK */, handler);
                 });
     }
-#endif
 
     httpd->run();
-#else
-    uint16_t receiverPort = 63843;
-    std::string receiverUFrag = "N1NB";
-    std::string receiverPassword = "deadbeef";
-
-    uint16_t senderPort = 63844;
-    std::string senderUFrag = "ABCD";
-    std::string senderPassword = "wooops";
-
-    auto sender = std::make_shared<RTPSocketHandler>(
-            runLoop,
-            RTPSocketHandler::Mode::CONTROLLER,
-            AF_INET,
-            senderPort,
-            false /* isChrome */);
-
-    sender->addSession(
-            senderUFrag,
-            senderPassword,
-            receiverUFrag,
-            receiverPassword);
-
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    addr.sin_port = htons(senderPort);
-
-    sockaddr_storage senderAddr;
-    memcpy(&senderAddr, &addr, sizeof(addr));
-
-    auto receiver = std::make_shared<RTPSocketHandler>(
-            runLoop,
-            RTPSocketHandler::Mode::CONTROLLEE,
-            AF_INET,
-            receiverPort,
-            false /* isChrome */);
-
-    receiver->addSession(
-            receiverUFrag,
-            receiverPassword,
-            senderUFrag,
-            senderPassword,
-            senderAddr);
-
-    sender->run();
-    receiver->run();
-
-    receiver->kick();
-#endif
-
     runLoop->run();
 
     return 0;
