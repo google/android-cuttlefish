@@ -18,13 +18,9 @@
 
 #include <source/StreamingSource.h>
 
-#include <media/stagefright/foundation/AMessage.h>
-
 #include <functional>
 #include <memory>
 #include <thread>
-
-#define ENABLE_H264     0
 
 namespace android {
 
@@ -32,7 +28,6 @@ struct ABuffer;
 
 struct FrameBufferSource : public StreamingSource {
     enum class Format {
-        H264,
         VP8,
     };
 
@@ -44,10 +39,6 @@ struct FrameBufferSource : public StreamingSource {
     ~FrameBufferSource() override;
 
     status_t initCheck() const override;
-
-    void setParameters(const std::shared_ptr<AMessage> &params) override;
-
-    std::shared_ptr<AMessage> getFormat() const override;
 
     status_t start() override;
     status_t stop() override;

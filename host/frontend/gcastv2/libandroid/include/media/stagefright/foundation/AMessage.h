@@ -19,7 +19,6 @@
 #define A_MESSAGE_H_
 
 #include "ABase.h"
-#include "ALooper.h"
 
 #include <memory>
 #include <string>
@@ -29,16 +28,13 @@ namespace android {
 struct ABuffer;
 
 struct AMessage {
-    explicit AMessage(uint32_t what = 0, ALooper::handler_id target = 0);
+    explicit AMessage(uint32_t what = 0);
 
     AMessage(const AMessage &) = delete;
     AMessage &operator=(const AMessage &) = delete;
 
     void setWhat(uint32_t what);
     uint32_t what() const;
-
-    void setTarget(ALooper::handler_id target);
-    ALooper::handler_id target() const;
 
     void setInt32(const char *name, int32_t value);
     void setInt64(const char *name, int64_t value);
@@ -61,8 +57,6 @@ struct AMessage {
     bool findObject(const char *name, std::shared_ptr<void> *obj) const;
     bool findMessage(const char *name, std::shared_ptr<AMessage> *obj) const;
     bool findBuffer(const char *name, std::shared_ptr<ABuffer> *obj) const;
-
-    static void post(std::shared_ptr<AMessage> msg, int64_t delayUs = 0);
 
     std::shared_ptr<AMessage> dup() const;
 
@@ -88,7 +82,6 @@ struct AMessage {
 
 private:
     uint32_t mWhat;
-    ALooper::handler_id mTarget;
 
     struct Item {
         union {

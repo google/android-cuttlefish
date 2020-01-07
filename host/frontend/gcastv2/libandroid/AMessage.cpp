@@ -20,14 +20,12 @@
 #include <media/stagefright/foundation/AAtomizer.h>
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/foundation/ALooperRoster.h>
 #include <media/stagefright/foundation/hexdump.h>
 
 namespace android {
 
-AMessage::AMessage(uint32_t what, ALooper::handler_id target)
+AMessage::AMessage(uint32_t what)
     : mWhat(what),
-      mTarget(target),
       mNumItems(0) {
 }
 
@@ -41,14 +39,6 @@ void AMessage::setWhat(uint32_t what) {
 
 uint32_t AMessage::what() const {
     return mWhat;
-}
-
-void AMessage::setTarget(ALooper::handler_id handlerID) {
-    mTarget = handlerID;
-}
-
-ALooper::handler_id AMessage::target() const {
-    return mTarget;
 }
 
 void AMessage::clear() {
@@ -211,14 +201,8 @@ bool AMessage::findBuffer(const char *name, std::shared_ptr<ABuffer> *obj) const
     return false;
 }
 
-void AMessage::post(std::shared_ptr<AMessage> msg, int64_t delayUs) {
-    extern ALooperRoster gLooperRoster;
-
-    gLooperRoster.postMessage(msg, delayUs);
-}
-
 std::shared_ptr<AMessage> AMessage::dup() const {
-    std::shared_ptr<AMessage> msg(new AMessage(mWhat, mTarget));
+    std::shared_ptr<AMessage> msg(new AMessage(mWhat));
     msg->mNumItems = mNumItems;
 
     for (size_t i = 0; i < mNumItems; ++i) {
@@ -286,12 +270,6 @@ std::string AMessage::debugString(size_t indent) const {
         tmp = StringPrintf("0x%08x", mWhat);
     }
     s.append(tmp);
-
-    if (mTarget != 0) {
-        tmp = StringPrintf(", target = %d", mTarget);
-        s.append(tmp);
-    }
-    s.append(") = {\n");
 
     for (size_t i = 0; i < mNumItems; ++i) {
         const Item &item = mItems[i];

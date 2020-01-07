@@ -15,8 +15,6 @@ DECLARE_int32(touch_fd);
 DECLARE_int32(frame_server_fd);
 DECLARE_bool(write_virtio_input);
 
-#define ENABLE_H264     0
-
 ServerState::ServerState(
         std::shared_ptr<RunLoop> runLoop, VideoFormat videoFormat)
     :
@@ -45,9 +43,6 @@ ServerState::ServerState(
 
     android::FrameBufferSource::Format fbSourceFormat;
     switch (videoFormat) {
-        case VideoFormat::H264:
-            fbSourceFormat = android::FrameBufferSource::Format::H264;
-            break;
         case VideoFormat::VP8:
             fbSourceFormat = android::FrameBufferSource::Format::VP8;
             break;
@@ -134,15 +129,6 @@ std::shared_ptr<Packetizer> ServerState::getVideoPacketizer() {
     auto packetizer = mVideoPacketizer.lock();
     if (!packetizer) {
         switch (mVideoFormat) {
-#if ENABLE_H264
-            case VideoFormat::H264:
-            {
-                packetizer = std::make_shared<H264Packetizer>(
-                        mRunLoop, mFrameBufferSource);
-                break;
-            }
-#endif
-
             case VideoFormat::VP8:
             {
                 packetizer = std::make_shared<VP8Packetizer>(
