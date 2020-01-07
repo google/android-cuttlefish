@@ -53,39 +53,6 @@ ServerState::ServerState(
     mFrameBufferSource =
         std::make_shared<android::FrameBufferSource>(fbSourceFormat);
 
-    if (FLAGS_frame_server_fd < 0) {
-        mFrameBufferComms = std::make_shared<HostToGuestComms>(
-            mRunLoop,
-            true /* isServer */,
-            VMADDR_CID_HOST,
-            HostToGuestComms::kPortVideo,
-            [this](const void *data, size_t size) {
-                LOG(VERBOSE)
-                    << "Received packet of "
-                    << size
-                    << " bytes of data from hwcomposer HAL.";
-
-                static_cast<android::FrameBufferSource *>(
-                        mFrameBufferSource.get())->injectFrame(data, size);
-            });
-    } else {
-        mFrameBufferComms = std::make_shared<HostToGuestComms>(
-            mRunLoop,
-            true /* isServer */,
-            FLAGS_frame_server_fd,
-            [this](const void *data, size_t size) {
-                LOG(VERBOSE)
-                    << "Received packet of "
-                    << size
-                    << " bytes of data from hwcomposer HAL.";
-
-                static_cast<android::FrameBufferSource *>(
-                        mFrameBufferSource.get())->injectFrame(data, size);
-            });
-    }
-
-    mFrameBufferComms->start();
-
     int32_t screenParams[4];
     screenParams[0] = config->x_res();
     screenParams[1] = config->y_res();
@@ -94,6 +61,11 @@ ServerState::ServerState(
 
     static_cast<android::FrameBufferSource *>(
             mFrameBufferSource.get())->setScreenParams(screenParams);
+
+    mScreenConnector = std::shared_ptr<cvd::ScreenConnector>(
+        cvd::ScreenConnector::Get(FLAGS_frame_server_fd));
+    mScreenConnectorMonitor.reset(
+        new std::thread([this]() { MonitorScreenConnector(); }));
 
     mAudioSource = std::make_shared<android::AudioSource>(
             android::AudioSource::Format::OPUS);
@@ -123,6 +95,21 @@ ServerState::ServerState(
     touchSink->start();
 
     mTouchSink = touchSink;
+}
+
+void ServerState::MonitorScreenConnector() {
+    std::uint32_t last_frame = 0;
+    while (true) {
+      mScreenConnector->OnFrameAfter(last_frame, [this, &last_frame](
+                                                     std::uint32_t frame_num,
+                                                     std::uint8_t *data) {
+        mRunLoop->postAndAwait([this, data]() {
+          static_cast<android::FrameBufferSource *>(mFrameBufferSource.get())
+              ->injectFrame(data, cvd::ScreenConnector::ScreenSizeInBytes());
+        });
+        last_frame = frame_num;
+      });
+    }
 }
 
 std::shared_ptr<Packetizer> ServerState::getVideoPacketizer() {

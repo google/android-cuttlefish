@@ -9,6 +9,9 @@
 #include <iostream>
 #include <unistd.h>
 
+#include <mutex>
+#include <condition_variable>
+
 bool RunLoop::QueueElem::operator<=(const QueueElem &other) const {
     if (mWhen) {
         if (other.mWhen) {
@@ -70,6 +73,35 @@ RunLoop::Token RunLoop::post(AsyncFunction fn) {
     insert({ std::nullopt, fn, token });
 
     return token;
+}
+
+bool RunLoop::postAndAwait(AsyncFunction fn) {
+    if (isCurrentThread()) {
+        // To wait from the runloop's thread would cause deadlock
+        post(fn);
+        return false;
+    }
+
+    std::mutex mtx;
+    bool ran = false;
+    std::condition_variable cond_var;
+
+    post([&cond_var, &mtx, &ran, fn](){
+        fn();
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            ran = true;
+            // Notify while holding the mutex, otherwise the condition variable
+            // could be destroyed before the call to notify_all.
+            cond_var.notify_all();
+        }
+    });
+
+    {
+        std::unique_lock<std::mutex> lock(mtx);
+        cond_var.wait(lock, [&ran](){ return ran;});
+    }
+    return ran;
 }
 
 RunLoop::Token RunLoop::postWithDelay(

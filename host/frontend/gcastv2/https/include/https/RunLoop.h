@@ -35,6 +35,12 @@ struct RunLoop {
     typedef int32_t Token;
 
     Token post(AsyncFunction fn);
+    // Post a callback to the run loop and wait for it to be executed. Returns
+    // whether it actually waited for the execution to happen (if posted from
+    // the same run loop's thread it won't wait to avoid a deadlock).
+    // WARNING: This function can cause the calling thread to wait forever if
+    // the run loop is stopped.
+    bool postAndAwait(AsyncFunction fn);
 
     Token postWithDelay(
             std::chrono::steady_clock::duration delay, AsyncFunction fn);
