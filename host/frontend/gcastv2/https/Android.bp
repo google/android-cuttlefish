@@ -15,18 +15,7 @@ cc_library_static {
         "RunLoop.cpp",
         "Support.cpp",
     ],
-    target: {
-    	host: {
-	     cflags: [
-                "-DTARGET_ANDROID",
-            ],
-	},
-	android: {
-	    cflags: [
-                "-DTARGET_ANDROID_DEVICE",
-            ],
-	    },
-    },
+    defaults: ["cuttlefish_host_only"],
     static_libs: [
         "libandroidglue",
     ],
@@ -34,23 +23,6 @@ cc_library_static {
         "libbase",
         "libcrypto",
         "libssl",
-    ],
-    local_include_dirs: ["include"],
-    export_include_dirs: ["include"],
-}
-
-cc_library_static {
-    name: "librunloop_device_nojava",
-    vendor_available: true,
-    srcs: [
-        "RunLoop.cpp",
-        "Support.cpp",
-    ],
-    cflags: [
-        "-DTARGET_ANDROID_DEVICE_NO_JAVA",
-    ],
-    shared_libs: [
-        "libbase",
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],

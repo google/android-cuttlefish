@@ -1,10 +1,8 @@
 #include <webrtc/ServerState.h>
 
-#include <webrtc/H264Packetizer.h>
 #include <webrtc/OpusPacketizer.h>
 #include <webrtc/VP8Packetizer.h>
 
-#ifdef TARGET_ANDROID
 #include <source/AudioSource.h>
 #include <source/TouchSink.h>
 #include <source/FrameBufferSource.h>
@@ -16,32 +14,19 @@
 DECLARE_int32(touch_fd);
 DECLARE_int32(frame_server_fd);
 DECLARE_bool(write_virtio_input);
-#endif
-
-#ifdef TARGET_ANDROID_DEVICE
-#include <source/DeviceFrameBufferSource.h>
-#include <source/DeviceTouchSink.h>
-#endif
 
 #define ENABLE_H264     0
 
 ServerState::ServerState(
-#ifdef TARGET_ANDROID_DEVICE
-        const sp<MyContext> &context,
-#endif
         std::shared_ptr<RunLoop> runLoop, VideoFormat videoFormat)
     :
-#ifdef TARGET_ANDROID_DEVICE
-        mContext(context),
-#endif
-        mRunLoop(runLoop),
+      mRunLoop(runLoop),
       mVideoFormat(videoFormat) {
 
     // This is the list of ports we currently instruct the firewall to open.
     mAvailablePorts.insert(
             { 15550, 15551, 15552, 15553, 15554, 15555, 15556, 15557 });
 
-#ifdef TARGET_ANDROID
     auto config = vsoc::CuttlefishConfig::Get();
 
     mHostToGuestComms = std::make_shared<HostToGuestComms>(
@@ -112,9 +97,6 @@ ServerState::ServerState(
     screenParams[2] = config->dpi();
     screenParams[3] = config->refresh_rate_hz();
 
-    mFrameBufferComms->send(
-            screenParams, sizeof(screenParams), false /* addFraming */);
-
     static_cast<android::FrameBufferSource *>(
             mFrameBufferSource.get())->setScreenParams(screenParams);
 
@@ -146,25 +128,6 @@ ServerState::ServerState(
     touchSink->start();
 
     mTouchSink = touchSink;
-#else
-    mLooper = new ALooper;
-    mLooper->start();
-
-    mFrameBufferSource = std::make_shared<android::DeviceFrameBufferSource>(
-            mContext,
-            mLooper,
-            android::DeviceFrameBufferSource::Type::VP8);
-
-    mAudioLooper = new ALooper;
-    mAudioLooper->start();
-
-    mAudioSource = std::make_shared<android::DeviceFrameBufferSource>(
-            mContext,
-            mAudioLooper,
-            android::DeviceFrameBufferSource::Type::OPUS);
-
-    mTouchSink = std::make_shared<android::DeviceTouchSink>();
-#endif
 }
 
 std::shared_ptr<Packetizer> ServerState::getVideoPacketizer() {
@@ -248,7 +211,6 @@ std::shared_ptr<android::StreamingSink> ServerState::getTouchSink() {
     return mTouchSink;
 }
 
-#ifdef TARGET_ANDROID
 void ServerState::changeResolution(
         int32_t width, int32_t height, int32_t densityDpi) {
     LOG(INFO)
@@ -317,5 +279,3 @@ void ServerState::changeResolution(
 
     mHostToGuestComms->send(packet.get(), totalSize);
 }
-
-#endif  // defined(TARGET_ANDROID)

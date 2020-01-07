@@ -40,39 +40,6 @@ void SET_U32(void *_dst, uint32_t x) {
     dst[3] = x & 0xff;
 }
 
-#if 0
-static uint32_t crc32ForByte(uint32_t x) {
-    for (size_t i = 0; i < 8; ++i) {
-        if (x & 1) {
-            x = 0xedb88320 ^ (x >> 1);
-        } else {
-            x >>= 1;
-        }
-    }
-
-    return x;
-}
-
-uint32_t computeCrc32(const void *_data, size_t size) {
-    static uint32_t kTable[256];
-    if (!kTable[0]) {
-        for (size_t i = 0; i < 256; ++i) {
-            kTable[i] = crc32ForByte(i);
-        }
-    }
-
-    const uint8_t *data = static_cast<const uint8_t *>(_data);
-
-    uint32_t crc32 = 0xffffffff;
-    for (size_t i = 0; i < size; ++i) {
-        uint8_t x = data[i];
-
-        crc32 = (crc32 >> 8) ^ kTable[(crc32 & 0xff) ^ x];
-    }
-
-    return ~crc32;
-}
-#else
 static const uint32_t crc32_tab[] = {
     0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
     0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
@@ -126,15 +93,8 @@ uint32_t computeCrc32(const void *_data, size_t size) {
 
     for (size_t i = 0; i < size; ++i) {
         uint32_t lkp = crc32_tab[(crc ^ data[i]) & 0xFF];
-#if 0
-        bool wlm2009_stupid_crc32_typo = false;
-        if (lkp == 0x8bbeb8ea && wlm2009_stupid_crc32_typo) {
-            lkp = 0x8bbe8ea;
-        }
-#endif
         crc =  lkp ^ (crc >> 8);
     }
 
     return crc ^ 0xffffffff;
 }
-#endif

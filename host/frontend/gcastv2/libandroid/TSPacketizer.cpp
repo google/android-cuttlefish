@@ -526,11 +526,7 @@ status_t TSPacketizer::packetize(
         // reserved = b111111
         // program_clock_reference_extension = b?????????
 
-#if 0
-        int64_t nowUs = ALooper::GetNowUs();
-#else
         int64_t nowUs = timeUs;
-#endif
 
         uint64_t PCR = nowUs * 27;  // PCR based on a 27MHz clock
         uint64_t PCR_base = PCR / 300;

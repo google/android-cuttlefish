@@ -47,117 +47,18 @@ SSLSocket::SSLSocket(
     SSL_set_bio(mSSL.get(), mBioR, mBioW);
 }
 
-#ifdef TARGET_ANDROID_DEVICE
-
-static bool isResourcePath(const std::string &path, std::string *name) {
-    static const char *const kPrefix = "keystore:";
-    static const size_t kPrefixLen = strlen(kPrefix);
-
-    if (path.substr(0, kPrefixLen) != kPrefix) {
-        return false;
-    }
-
-    *name = path.substr(kPrefixLen);
-
-    return true;
-}
-
-#endif
-
 bool SSLSocket::useCertificate(const std::string &path) {
-#ifdef TARGET_ANDROID_DEVICE
-    std::string name;
-    if (isResourcePath(path, &name)) {
-        std::vector<uint8_t> data;
-        if (!getCertificateOrKey(name, &data)) {
-            return false;
-        }
-
-        std::unique_ptr<BIO, std::function<void(BIO *)>> cbio(
-                BIO_new_mem_buf(data.data(), data.size()), BIO_free);
-
-        X509 *cert = PEM_read_bio_X509(cbio.get(), nullptr, 0, nullptr);
-
-        return cert != nullptr && 1 == SSL_use_certificate(mSSL.get(), cert);
-    }
-#endif
-
     return 1 == SSL_use_certificate_file(
                 mSSL.get(), path.c_str(), SSL_FILETYPE_PEM);
 }
 
 bool SSLSocket::usePrivateKey(const std::string &path) {
-#ifdef TARGET_ANDROID_DEVICE
-    std::string name;
-    if (isResourcePath(path, &name)) {
-        std::vector<uint8_t> data;
-        if (!getCertificateOrKey(name, &data)) {
-            return false;
-        }
-
-        std::unique_ptr<BIO, std::function<void(BIO *)>> cbio(
-                BIO_new_mem_buf(data.data(), data.size()), BIO_free);
-
-        RSA *key = PEM_read_bio_RSAPrivateKey(cbio.get(), nullptr, 0, nullptr);
-
-        return key != nullptr
-            && 1 == SSL_use_RSAPrivateKey(mSSL.get(), key)
-            && 1 == SSL_check_private_key(mSSL.get());
-    }
-#endif
-
     return 1 == SSL_use_PrivateKey_file(
             mSSL.get(), path.c_str(), SSL_FILETYPE_PEM)
         && 1 == SSL_check_private_key(mSSL.get());
 }
 
 bool SSLSocket::useTrustedCertificates(const std::string &path) {
-#ifdef TARGET_ANDROID_DEVICE
-    std::string name;
-    if (isResourcePath(path, &name)) {
-        std::vector<uint8_t> data;
-        if (!getCertificateOrKey(name, &data)) {
-            return false;
-        }
-
-        std::unique_ptr<BIO, std::function<void(BIO *)>> cbio(
-                BIO_new_mem_buf(data.data(), data.size()), BIO_free);
-
-        // Shamelessly stolen from
-        // https://stackoverflow.com/questions/3810058/
-        //   read-certificate-files-from-memory-instead-of-a-file-using-openssl
-
-        X509_STORE *cts = SSL_CTX_get_cert_store(mCtx.get());
-
-        if (!cts) {
-            return false;
-        }
-
-        STACK_OF(X509_INFO) *info =
-            PEM_X509_INFO_read_bio(cbio.get(), nullptr, nullptr, nullptr);
-
-        if (!info) {
-            return false;
-        }
-
-        for (int i = 0; i < sk_X509_INFO_num(info); ++i) {
-            X509_INFO *tmp = sk_X509_INFO_value(info, i);
-
-            if (tmp->x509) {
-                X509_STORE_add_cert(cts, tmp->x509);
-            }
-
-            if (tmp->crl) {
-                X509_STORE_add_crl(cts, tmp->crl);
-            }
-        }
-
-        sk_X509_INFO_pop_free(info, X509_INFO_free);
-
-        return true;
-    }
-#endif
-
     return 1 == SSL_CTX_load_verify_locations(
             mCtx.get(),
             path.c_str(),

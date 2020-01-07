@@ -1,11 +1,9 @@
 cc_library_static {
     name: "libwebrtc",
-    host_supported: true,
     srcs: [
         "AdbWebSocketHandler.cpp",
         "DTLS.cpp",
         "G711Packetizer.cpp",
-// "H264Packetizer.cpp",
         "MyWebSocketHandler.cpp",
         "OpusPacketizer.cpp",
         "Packetizer.cpp",
@@ -19,42 +17,24 @@ cc_library_static {
         "Utils.cpp",
         "VP8Packetizer.cpp",
     ],
-    target: {
-        host: {
-            cflags: [
-                "-DTARGET_ANDROID",
-            ],
-            static_libs: [
-                "libcuttlefish_host_config",
-                "libgflags",
-                "libjsoncpp",
-                "libsource",
-            ],
-            shared_libs: [
-                "libbase",
-            ],
-            header_libs: [
-                "cuttlefish_common_headers",
-                "cuttlefish_kernel_headers",
-            ],
-        },
-        android: {
-            enabled: false,
-        },
-    },
-    arch: {
-        x86: {
-            enabled: false,
-        }
-    },
     static_libs: [
         "libandroidglue",
         "libhttps",
         "libsrtp2",
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libjsoncpp",
+        "libsource",
     ],
     shared_libs: [
         "libssl",
+        "libbase",
     ],
+    header_libs: [
+        "cuttlefish_common_headers",
+        "cuttlefish_kernel_headers",
+    ],
+    defaults: ["cuttlefish_host_only"],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
 }
@@ -71,11 +51,9 @@ cc_binary_host {
         "libbase",
         "libcrypto",
         "libcuttlefish_utils",
-        "libFraunhoferAAC",
         "libopus",
         "libssl",
         "libvpx",
-// "libx264",
         "libyuv",
     ],
     static_libs: [
@@ -89,9 +67,6 @@ cc_binary_host {
         "libwebrtc",
     ],
     cpp_std: "experimental",
-    cflags: [
-        "-DTARGET_ANDROID",
-    ],
     defaults: ["cuttlefish_host_only"],
 }
 

@@ -1,17 +1,9 @@
-#ifdef TARGET_ANDROID_DEVICE_NO_JAVA
-#include "HostToGuestComms.h"
-#else
 #include <source/HostToGuestComms.h>
-#endif
 
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
 
-#ifdef TARGET_ANDROID_DEVICE_NO_JAVA
-#include <android-base/logging.h>
-#else
 #include <media/stagefright/foundation/ADebug.h>
-#endif
 
 HostToGuestComms::HostToGuestComms(
         std::shared_ptr<RunLoop> runLoop,

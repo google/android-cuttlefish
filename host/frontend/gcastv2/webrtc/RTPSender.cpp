@@ -106,11 +106,6 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
     static constexpr uint8_t PSFB = 206;
     static constexpr uint8_t XR = 207;  // RFC 3611
 
-#if 0
-    LOG(INFO) << "RTPSender::processRTCP";
-    android::hexdump(data, size);
-#endif
-
     unsigned PT = data[1];
 
     switch (PT) {

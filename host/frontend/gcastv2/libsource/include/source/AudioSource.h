@@ -37,12 +37,11 @@ struct AudioSource : public StreamingSource {
     using AudioDataRegionView = vsoc::audio_data::AudioDataRegionView;
 
     enum class Format {
-        AAC,
         OPUS,
         G711_ALAW,
         G711_ULAW,
     };
-    // ADTS framing is only supported for Format::AAC.
+    // ADTS framing is only supported for AAC.
     explicit AudioSource(Format format, bool useADTSFraming = false);
 
     AudioSource(const AudioSource &) = delete;
@@ -70,7 +69,6 @@ private:
     };
 
     struct Encoder;
-    struct AACEncoder;
     struct OPUSEncoder;
     struct G711Encoder;
 

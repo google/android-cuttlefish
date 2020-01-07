@@ -16,15 +16,9 @@
 #include <iostream>
 #include <set>
 
-#if defined(TARGET_ANDROID)
 #include <gflags/gflags.h>
 
 DECLARE_string(public_ip);
-#endif
-
-#ifdef TARGET_ANDROID_DEVICE
-#include <ifaddrs.h>
-#endif
 
 static socklen_t getSockAddrLen(const sockaddr_storage &addr) {
     switch (addr.ss_family) {
@@ -114,70 +108,6 @@ RTPSocketHandler::RTPSocketHandler(
     }
 }
 
-#ifdef TARGET_ANDROID_DEVICE
-static std::string getSockAddrHostName(const sockaddr *addr) {
-    char buffer[256];
-
-    switch (addr->sa_family) {
-        case AF_INET:
-        {
-            auto addrV4 = reinterpret_cast<const sockaddr_in *>(addr);
-
-            auto out = inet_ntop(
-                    AF_INET, &addrV4->sin_addr, buffer, sizeof(buffer));
-
-            CHECK(out);
-            break;
-        }
-
-        case AF_INET6:
-        {
-            auto addrV6 = reinterpret_cast<const sockaddr_in6 *>(addr);
-
-            auto out = inet_ntop(
-                    AF_INET6, &addrV6->sin6_addr, buffer, sizeof(buffer));
-
-            CHECK(out);
-            break;
-        }
-
-        default:
-            CHECK(!"Should not be here.");
-    }
-
-    return buffer;
-}
-
-static std::string getWifiInterfaceAddress(int family) {
-    ifaddrs *tmp;
-    if (getifaddrs(&tmp)) {
-        LOG(ERROR)
-            << "getifaddrs return error "
-            << errno
-            << " ("
-            << strerror(errno)
-            << ")";
-
-        return "127.0.0.1";
-    }
-
-    std::unique_ptr<ifaddrs, std::function<void(ifaddrs *)>> ifaces(
-            tmp, freeifaddrs);
-
-    for (tmp = ifaces.get(); tmp; tmp = tmp->ifa_next) {
-        if (strcmp(tmp->ifa_name, "wlan0")
-                || tmp->ifa_addr->sa_family != family) {
-            continue;
-        }
-
-        return getSockAddrHostName(tmp->ifa_addr);
-    }
-
-    LOG(WARNING) << "getWifiInterfaceAddress did not find a 'wlan0' interface.";
-    return "127.0.0.1";
-}
-#endif
-
 uint16_t RTPSocketHandler::getLocalPort() const {
     return mLocalPort;
 }
@@ -187,54 +117,7 @@ std::string RTPSocketHandler::getLocalUFrag() const {
 }
 
 std::string RTPSocketHandler::getLocalIPString() const {
-#if 0
-    sockaddr_storage addr;
-    socklen_t addrLen = sizeof(addr);
-
-    int res = getsockname(
-            mSocket->fd(), reinterpret_cast<sockaddr *>(&addr), &addrLen);
-
-    CHECK(!res);
-
-    char buffer[256];
-
-    switch (addr.ss_family) {
-        case AF_INET:
-        {
-            sockaddr_in addrV4;
-            memcpy(&addrV4, &addr, sizeof(addrV4));
-
-            auto out = inet_ntop(AF_INET, &addrV4.sin_addr, buffer, sizeof(buffer));
-            CHECK(out);
-
-            return "100.122.57.45";  // XXX
-            break;
-        }
-
-        case AF_INET6:
-        {
-            sockaddr_in6 addrV6;
-            memcpy(&addrV6, &addr, sizeof(addrV6));
-
-            auto out = inet_ntop(AF_INET6, &addrV6.sin6_addr, buffer, sizeof(buffer));
-            CHECK(out);
-
-            return "2620::1000:1610:b5d5:7493:a307:ca94";  // XXX
-            break;
-        }
-
-        default:
-            CHECK(!"Should not be here.");
-    }
-
-    return std::string(buffer);
-#elif defined(TARGET_ANDROID)
     return FLAGS_public_ip;
-#elif defined(TARGET_ANDROID_DEVICE)
-    return getWifiInterfaceAddress(AF_INET);
-#else
-    return "127.0.0.1";
-#endif
 }
 
 void RTPSocketHandler::run() {
@@ -251,12 +134,6 @@ void RTPSocketHandler::onReceive() {
 
     auto n = mSocket->recvfrom(
             data, buffer.size(), reinterpret_cast<sockaddr *>(&addr), &addrLen);
-
-#if 0
-    std::cout << "========================================" << std::endl;
-
-    hexdump(data, n);
-#endif
 
     STUNMessage msg(data, n);
     if (!msg.isValid()) {
@@ -608,11 +485,6 @@ void RTPSocketHandler::notifyDTLSConnected() {
 }
 
 int RTPSocketHandler::onSRTPReceive(uint8_t *data, size_t size) {
-#if 0
-    LOG(INFO) << "onSRTPReceive";
-    hexdump(data, size);
-#endif
-
     if (size < 2) {
         return -EINVAL;
     }
@@ -623,11 +495,6 @@ int RTPSocketHandler::onSRTPReceive(uint8_t *data, size_t size) {
     }
 
     auto outSize = mDTLS->unprotect(data, size, false /* isRTP */);
-
-#if 0
-    LOG(INFO) << "After srtp_unprotect_rtcp" << ":";
-    hexdump(data, outSize);
-#endif
 
     auto err = mRTPSender->injectRTCP(data, outSize);
     if (err) {
