@@ -4,14 +4,13 @@
 
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/hexdump.h>
-#include <media/stagefright/foundation/JSONObject.h>
 #include <media/stagefright/Utils.h>
+
+#include <json/json.h>
 
 #include <netdb.h>
 #include <openssl/rand.h>
 
-using android::JSONValue;
-using android::JSONObject;
 using android::ABuffer;
 
 MyWebSocketHandler::MyWebSocketHandler(
@@ -37,35 +36,31 @@ int MyWebSocketHandler::handleMessage(
         uint8_t /* headerByte */, const uint8_t *msg, size_t len) {
     // android::hexdump(msg, len);
 
-    JSONValue json;
-    if (JSONValue::Parse(
-                reinterpret_cast<const char *>(msg), len, &json) < 0) {
+    Json::Value obj;
+    Json::Reader json_reader;
+    Json::FastWriter json_writer;
+    auto str = reinterpret_cast<const char *>(msg);
+    if (!json_reader.parse(str, str + len, obj) < 0) {
         return -EINVAL;
     }
 
-    std::shared_ptr<JSONObject> obj;
-    if (!json.getObject(&obj)) {
+    LOG(VERBOSE) << obj.toStyledString();
+
+    if (!obj.isMember("type")) {
         return -EINVAL;
     }
-
-    LOG(VERBOSE) << obj->toString();
-
-    std::string type;
-    if (!obj->getString("type", &type)) {
-        return -EINVAL;
-    }
+    std::string type = obj["type"].asString();
 
     if (type == "greeting") {
-        std::shared_ptr<JSONObject> reply(new JSONObject);
-        reply->setString("type", "hello");
-        reply->setString("reply", "Right back at ya!");
+        Json::Value reply;
+        reply["type"] = "hello";
+        reply["reply"] = "Right back at ya!";
 
-        auto replyAsString = reply->toString();
+        auto replyAsString = json_writer.write(reply);
         sendMessage(replyAsString.c_str(), replyAsString.size());
 
-        std::string value;
-        if (obj->getString("path", &value)) {
-            parseOptions(value);
+        if (obj.isMember("path")) {
+            parseOptions(obj["path"].asString());
         }
 
         if (mOptions & OptionBits::useSingleCertificateForAllTracks) {
@@ -74,12 +69,11 @@ int MyWebSocketHandler::handleMessage(
 
         prepareSessions();
     } else if (type == "set-remote-desc") {
-        std::string value;
-        if (!obj->getString("sdp", &value)) {
+        if (!obj.isMember("sdp")) {
             return -EINVAL;
         }
 
-        int err = mOfferedSDP.setTo(value);
+        int err = mOfferedSDP.setTo(obj["sdp"].asString());
 
         if (err) {
             LOG(ERROR) << "Offered SDP could not be parsed (" << err << ")";
@@ -214,32 +208,33 @@ int MyWebSocketHandler::handleMessage(
 "a=fmtp:webrtc-datachannel max-message-size=65536\r\n";
         }
 
-        std::shared_ptr<JSONObject> reply(new JSONObject);
-        reply->setString("type", "offer");
-        reply->setString("sdp", ss.str());
+        Json::Value reply;
+        reply["type"] = "offer";
+        reply["sdp"] = ss.str();
 
-        auto replyAsString = reply->toString();
+        auto replyAsString = json_writer.write(reply);
         sendMessage(replyAsString.c_str(), replyAsString.size());
     } else if (type == "get-ice-candidate") {
-        int32_t mid;
-        CHECK(obj->getInt32("mid", &mid));
+        CHECK(obj.isMember("mid"));
+        int32_t mid = obj["mid"].asInt();
 
         bool success = getCandidate(mid);
 
         if (!success) {
-            std::shared_ptr<JSONObject> reply(new JSONObject);
-            reply->setString("type", "ice-candidate");
+            Json::Value reply;
+            reply["type"] = "ice-candidate";
 
-            auto replyAsString = reply->toString();
+            auto replyAsString = json_writer.write(reply);
             sendMessage(replyAsString.c_str(), replyAsString.size());
         }
     } else if (type == "set-mouse-position") {
-        int32_t down;
-        CHECK(obj->getInt32("down", &down));
+        CHECK(obj.isMember("down"));
+        int32_t down = obj["down"].asInt();
 
-        int32_t x, y;
-        CHECK(obj->getInt32("x", &x));
-        CHECK(obj->getInt32("y", &y));
+        CHECK(obj.isMember("x"));
+        CHECK(obj.isMember("y"));
+        int32_t x = obj["x"].asInt();
+        int32_t y = obj["y"].asInt();
 
         LOG(VERBOSE)
             << "set-mouse-position(" << down << ", " << x << ", " << y << ")";
@@ -252,12 +247,16 @@ int MyWebSocketHandler::handleMessage(
 
         mTouchSink->onAccessUnit(accessUnit);
     } else if (type == "inject-multi-touch") {
-        int32_t id, initialDown, x, y, slot;
-        CHECK(obj->getInt32("id", &id));
-        CHECK(obj->getInt32("initialDown", &initialDown));
-        CHECK(obj->getInt32("x", &x));
-        CHECK(obj->getInt32("y", &y));
-        CHECK(obj->getInt32("slot", &slot));
+        CHECK(obj.isMember("id"));
+        CHECK(obj.isMember("initialDown"));
+        CHECK(obj.isMember("x"));
+        CHECK(obj.isMember("y"));
+        CHECK(obj.isMember("slot"));
+        int32_t id = obj["id"].asInt();
+        int32_t initialDown = obj["initialDown"].asInt();
+        int32_t x = obj["x"].asInt();
+        int32_t y = obj["y"].asInt();
+        int32_t slot = obj["slot"].asInt();
 
         LOG(VERBOSE)
             << "inject-multi-touch id="
@@ -383,24 +382,24 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
 
     auto rtp = mRTPs.back();
 
-    std::shared_ptr<JSONObject> reply(new JSONObject);
-    reply->setString("type", "ice-candidate");
+    Json::Value reply;
+    reply["type"] = "ice-candidate";
 
     auto localIPString = rtp->getLocalIPString();
 
     // see rfc8445, 5.1.2.1. for the derivation of "2122121471" below.
-    reply->setString(
-            "candidate",
+    reply["candidate"] =
                 "candidate:0 1 UDP 2122121471 "
                 + localIPString
                 + " "
                 + std::to_string(rtp->getLocalPort())
                 + " typ host generation 0 ufrag "
-                + rtp->getLocalUFrag());
+                + rtp->getLocalUFrag();
 
-    reply->setInt32("mlineIndex", mlineIndex);
+    reply["mlineIndex"] = static_cast<Json::UInt64>(mlineIndex);
 
-    auto replyAsString = reply->toString();
+    Json::FastWriter json_writer;
+    auto replyAsString = json_writer.write(reply);
     sendMessage(replyAsString.c_str(), replyAsString.size());
 
     return true;

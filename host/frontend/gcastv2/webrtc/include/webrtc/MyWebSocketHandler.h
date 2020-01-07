@@ -7,7 +7,6 @@
 
 #include <https/WebSocketHandler.h>
 #include <https/RunLoop.h>
-#include <media/stagefright/foundation/JSONObject.h>
 #include <source/StreamingSink.h>
 
 #include <memory>
@@ -31,8 +30,6 @@ struct MyWebSocketHandler
             uint8_t headerByte, const uint8_t *msg, size_t len) override;
 
 private:
-    using JSONObject = android::JSONObject;
-
     enum OptionBits : uint32_t {
         disableAudio                        = 1,
         bundleTracks                        = 2,
