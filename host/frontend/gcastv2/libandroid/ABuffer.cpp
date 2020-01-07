@@ -17,7 +17,6 @@
 #include <media/stagefright/foundation/ABuffer.h>
 
 #include <media/stagefright/foundation/ADebug.h>
-#include <media/stagefright/foundation/ALooper.h>
 #include <media/stagefright/foundation/AMessage.h>
 
 namespace android {
@@ -26,30 +25,13 @@ ABuffer::ABuffer(size_t capacity)
     : mData(malloc(capacity)),
       mCapacity(capacity),
       mRangeOffset(0),
-      mRangeLength(capacity),
-      mInt32Data(0),
-      mOwnsData(true) {
-}
-
-ABuffer::ABuffer(void *data, size_t capacity)
-    : mData(data),
-      mCapacity(capacity),
-      mRangeOffset(0),
-      mRangeLength(capacity),
-      mInt32Data(0),
-      mOwnsData(false) {
+      mRangeLength(capacity) {
 }
 
 ABuffer::~ABuffer() {
-    if (mOwnsData) {
-        if (mData != NULL) {
-            free(mData);
-            mData = NULL;
-        }
-    }
-
-    if (mFarewell) {
-        AMessage::post(mFarewell);
+    if (mData != NULL) {
+        free(mData);
+        mData = NULL;
     }
 }
 
@@ -61,10 +43,6 @@ void ABuffer::setRange(size_t offset, size_t size) {
     mRangeLength = size;
 }
 
-void ABuffer::setFarewellMessage(const std::shared_ptr<AMessage> msg) {
-    mFarewell = msg;
-}
-
 std::shared_ptr<AMessage> ABuffer::meta() {
     if (!mMeta) {
         mMeta.reset(new AMessage);
@@ -73,8 +51,6 @@ std::shared_ptr<AMessage> ABuffer::meta() {
 }
 
 void ABuffer::reserve(size_t size) {
-    CHECK(mOwnsData);
-
     if (mCapacity >= size) {
         return;
     }

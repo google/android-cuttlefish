@@ -2,8 +2,6 @@
 
 #include <media/stagefright/MediaDefs.h>
 #include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/foundation/AMessage.h>
-#include <media/stagefright/foundation/TSPacketizer.h>
 #include <media/stagefright/foundation/hexdump.h>
 #include <libyuv/convert.h>
 
@@ -676,10 +674,6 @@ AudioSource::~AudioSource() {
 
 status_t AudioSource::initCheck() const {
     return mInitCheck;
-}
-
-std::shared_ptr<AMessage> AudioSource::getFormat() const {
-    return mFormat;
 }
 
 status_t AudioSource::start() {

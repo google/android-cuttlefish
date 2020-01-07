@@ -3,12 +3,13 @@
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
 #include <media/stagefright/foundation/ABuffer.h>
-#include <media/stagefright/foundation/AMessage.h>
+#include <media/stagefright/foundation/ADebug.h>
 
 #include <linux/input.h>
 #include <linux/uinput.h>
 
 #include <sys/socket.h>
+#include <unistd.h>
 
 namespace android {
 
