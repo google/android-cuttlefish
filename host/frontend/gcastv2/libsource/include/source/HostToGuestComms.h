@@ -26,9 +26,6 @@
 struct HostToGuestComms : std::enable_shared_from_this<HostToGuestComms> {
     using ReceiveCb = std::function<void(const void *data, size_t size)>;
 
-    // Used to communicate with the guest userspace "RemoterService".
-    static constexpr uint16_t kPortMain = 8555;
-
     // Used to carry updated framebuffers from guest to host.
     static constexpr uint16_t kPortVideo = 5580;
 

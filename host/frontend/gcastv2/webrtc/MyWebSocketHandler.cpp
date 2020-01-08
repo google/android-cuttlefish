@@ -346,7 +346,6 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
         // Only allocate a local port once if we bundle tracks.
 
         auto localPort = mServerState->acquirePort();
-
         if (!localPort) {
             return false;
         }
