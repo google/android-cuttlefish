@@ -55,7 +55,7 @@ class ScreenConnector {
   }
 
   static inline int ScreenSizeInBytes() {
-      return ScreenStride() * ScreenHeight() * BytesPerPixel();
+      return ScreenStride() * ScreenHeight();
   }
 
  protected:
