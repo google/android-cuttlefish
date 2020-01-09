@@ -18,8 +18,6 @@
 
 #include "Utils.h"
 
-#include <media/stagefright/foundation/hexdump.h>
-
 #include <json/json.h>
 
 #include <netdb.h>
