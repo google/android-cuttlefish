@@ -9,7 +9,7 @@
 */
 -->
 <!-- Android Auto Embedded specific HALs-->
-<manifest version="1.0" type="device" target-level="4">
+<manifest version="1.0" type="device" target-level="5">
     <hal format="hidl">
         <name>android.hardware.automotive.audiocontrol</name>
         <transport>hwbinder</transport>
