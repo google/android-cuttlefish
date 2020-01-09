@@ -22,7 +22,6 @@
 
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/hexdump.h>
 
 #include <random>
 #include <unordered_set>
