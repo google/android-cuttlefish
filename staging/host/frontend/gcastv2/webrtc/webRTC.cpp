@@ -27,7 +27,6 @@
 #include <https/SafeCallbackable.h>
 #include <https/SSLSocket.h>
 #include <https/Support.h>
-#include <media/stagefright/foundation/hexdump.h>
 
 #include <iostream>
 #include <unordered_map>
