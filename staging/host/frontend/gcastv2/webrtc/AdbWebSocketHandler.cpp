@@ -23,8 +23,6 @@
 
 #include <android-base/logging.h>
 
-#include <media/stagefright/foundation/hexdump.h>
-
 #include <unistd.h>
 
 using namespace android;
