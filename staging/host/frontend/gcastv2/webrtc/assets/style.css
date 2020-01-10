@@ -1,4 +1,6 @@
-body,
+body {
+    background-color:black
+},
 html {
 #    position: fixed;
 }
