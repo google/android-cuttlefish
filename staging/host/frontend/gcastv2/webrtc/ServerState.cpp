@@ -37,10 +37,6 @@ ServerState::ServerState(
       mRunLoop(runLoop),
       mVideoFormat(videoFormat) {
 
-    // This is the list of ports we currently instruct the firewall to open.
-    mAvailablePorts.insert(
-            { 15550, 15551, 15552, 15553, 15554, 15555, 15556, 15557 });
-
     auto config = vsoc::CuttlefishConfig::Get();
 
     android::FrameBufferSource::Format fbSourceFormat;
@@ -160,26 +156,6 @@ size_t ServerState::acquireHandlerId() {
 
 void ServerState::releaseHandlerId(size_t id) {
     CHECK_EQ(mAllocatedHandlerIds.erase(id), 1);
-}
-
-uint16_t ServerState::acquirePort() {
-    std::lock_guard autoLock(mPortLock);
-
-    if (mAvailablePorts.empty()) {
-        return 0;
-    }
-
-    uint16_t port = *mAvailablePorts.begin();
-    mAvailablePorts.erase(mAvailablePorts.begin());
-
-    return port;
-}
-
-void ServerState::releasePort(uint16_t port) {
-    CHECK(port);
-
-    std::lock_guard autoLock(mPortLock);
-    mAvailablePorts.insert(port);
 }
 
 std::shared_ptr<android::StreamingSink> ServerState::getTouchSink() {

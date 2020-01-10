@@ -37,10 +37,6 @@ MyWebSocketHandler::MyWebSocketHandler(
 }
 
 MyWebSocketHandler::~MyWebSocketHandler() {
-    for (auto rtp : mRTPs) {
-        mServerState->releasePort(rtp->getLocalPort());
-    }
-
     mServerState->releaseHandlerId(mId);
 }
 
@@ -343,11 +339,6 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
     if (!(mOptions & OptionBits::bundleTracks) || mRTPs.empty()) {
         // Only allocate a local port once if we bundle tracks.
 
-        auto localPort = mServerState->acquirePort();
-        if (!localPort) {
-            return false;
-        }
-
         size_t sessionIndex = mlineIndex;
 
         uint32_t trackMask = 0;
@@ -377,7 +368,6 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
                 mRunLoop,
                 mServerState,
                 PF_INET,
-                localPort,
                 trackMask,
                 session);
 
