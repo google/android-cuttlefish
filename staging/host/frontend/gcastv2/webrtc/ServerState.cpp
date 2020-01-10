@@ -43,20 +43,6 @@ ServerState::ServerState(
 
     auto config = vsoc::CuttlefishConfig::Get();
 
-    mHostToGuestComms = std::make_shared<HostToGuestComms>(
-            mRunLoop,
-            false /* isServer */,
-            vsoc::GetDefaultPerInstanceVsockCid(),
-            HostToGuestComms::kPortMain,
-            [](const void *data, size_t size) {
-                (void)data;
-                LOG(VERBOSE) << "Received " << size << " bytes from guest.";
-            });
-
-    mHostToGuestComms->start();
-
-    changeResolution(1440 /* width */, 2880 /* height */, 524 /* dpi */);
-
     android::FrameBufferSource::Format fbSourceFormat;
     switch (videoFormat) {
         case VideoFormat::VP8:
@@ -198,73 +184,4 @@ void ServerState::releasePort(uint16_t port) {
 
 std::shared_ptr<android::StreamingSink> ServerState::getTouchSink() {
     return mTouchSink;
-}
-
-void ServerState::changeResolution(
-        int32_t width, int32_t height, int32_t densityDpi) {
-    LOG(INFO)
-        << "Requested dimensions: "
-        << width
-        << "x"
-        << height
-        << " @"
-        << densityDpi
-        << " dpi";
-
-    /* Arguments "width", "height" and "densityDpi" need to be matched to the
-     * native screen dimensions specified as "launch_cvd" arguments "x_res"
-     * and "y_res".
-     */
-
-    auto config = vsoc::CuttlefishConfig::Get();
-    const int nativeWidth = config->x_res();
-    const int nativeHeight = config->y_res();
-
-    const float ratio = (float)width / (float)height;
-    int32_t outWidth = nativeWidth;
-    int32_t outHeight = (int32_t)((float)outWidth / ratio);
-
-    if (outHeight > nativeHeight) {
-        outHeight = nativeHeight;
-        outWidth = (int32_t)((float)outHeight * ratio);
-    }
-
-    const int32_t outDensity =
-        (int32_t)((float)densityDpi * (float)outWidth / (float)width);
-
-    LOG(INFO)
-        << "Scaled dimensions: "
-        << outWidth
-        << "x"
-        << outHeight
-        << " @"
-        << outDensity
-        << " dpi";
-
-    enum class PacketType : uint8_t {
-        CHANGE_RESOLUTION = 6,
-    };
-
-    static constexpr size_t totalSize =
-        sizeof(PacketType) + 3 * sizeof(int32_t);
-
-    std::unique_ptr<uint8_t[]> packet(new uint8_t[totalSize]);
-    size_t offset = 0;
-
-    auto append = [ptr = packet.get(), &offset](
-            const void *data, size_t len) {
-        CHECK_LE(offset + len, totalSize);
-        memcpy(ptr + offset, data, len);
-        offset += len;
-    };
-
-    static constexpr PacketType type = PacketType::CHANGE_RESOLUTION;
-    append(&type, sizeof(type));
-    append(&outWidth, sizeof(outWidth));
-    append(&outHeight, sizeof(outHeight));
-    append(&outDensity, sizeof(outDensity));
-
-    CHECK_EQ(offset, totalSize);
-
-    mHostToGuestComms->send(packet.get(), totalSize);
 }
