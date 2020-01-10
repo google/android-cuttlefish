@@ -67,7 +67,6 @@ private:
 
     std::shared_ptr<StreamingSource> mAudioSource;
 
-    std::shared_ptr<HostToGuestComms> mHostToGuestComms;
     std::shared_ptr<HostToGuestComms> mAudioComms;
     std::shared_ptr<cvd::ScreenConnector> mScreenConnector;
     std::shared_ptr<std::thread> mScreenConnectorMonitor;
@@ -79,6 +78,5 @@ private:
     std::mutex mPortLock;
     std::set<uint16_t> mAvailablePorts;
 
-    void changeResolution(int32_t width, int32_t height, int32_t densityDpi);
     void MonitorScreenConnector();
 };
