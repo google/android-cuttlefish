@@ -287,6 +287,7 @@ StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
       webrtc.AddParameter("--certs_dir=", config.webrtc_certs_dir());
   }
 
+  webrtc.AddParameter("--http_server_port=", vsoc::GetPerInstanceDefault(8443));
   webrtc.AddParameter("--public_ip=", config.webrtc_public_ip());
   webrtc.AddParameter("--assets_dir=", config.webrtc_assets_dir());
 
