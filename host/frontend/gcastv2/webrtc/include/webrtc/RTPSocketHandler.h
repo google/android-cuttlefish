@@ -44,7 +44,6 @@ struct RTPSocketHandler
             std::shared_ptr<RunLoop> runLoop,
             std::shared_ptr<ServerState> serverState,
             int domain,
-            uint16_t port,
             uint32_t trackMask,
             std::shared_ptr<RTPSession> session);
 
