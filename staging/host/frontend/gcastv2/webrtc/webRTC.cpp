@@ -33,6 +33,8 @@
 
 #include <gflags/gflags.h>
 
+DEFINE_int32(http_server_port, 8443, "The port for the http server.");
+DEFINE_bool(use_secure_http, true, "Whether to use HTTPS or HTTP.");
 DEFINE_string(
         public_ip,
         "0.0.0.0",
@@ -64,15 +66,15 @@ int main(int argc, char **argv) {
     auto state = std::make_shared<ServerState>(
             runLoop, ServerState::VideoFormat::VP8);
 
-    auto port = 8443;  // Change to 8080 to use plain http instead of https.
+    auto port = FLAGS_http_server_port;
 
     auto httpd = std::make_shared<HTTPServer>(
             runLoop,
             "0.0.0.0",
             port,
-            port == 8080
-                ? ServerSocket::TransportType::TCP
-                : ServerSocket::TransportType::TLS,
+            FLAGS_use_secure_http
+                ? ServerSocket::TransportType::TLS
+                : ServerSocket::TransportType::TCP,
             FLAGS_certs_dir + "/server.crt",
             FLAGS_certs_dir + "/server.key");
 
