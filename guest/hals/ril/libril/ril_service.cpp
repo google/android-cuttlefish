@@ -9963,7 +9963,7 @@ void radio_1_5::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
         RLOGD("registerService: starting android::hardware::radio::V1_5::IRadio %s for slot %d",
                 serviceNames[i], i);
         android::status_t status = radioService[i]->registerAsService(serviceNames[i]);
-        assert(status == android::OK);
+        LOG_ALWAYS_FATAL_IF(status != android::OK, "status %d", status);
 
         RLOGD("registerService: OemHook is enabled = %s", kOemHookEnabled ? "true" : "false");
         if (kOemHookEnabled) {
