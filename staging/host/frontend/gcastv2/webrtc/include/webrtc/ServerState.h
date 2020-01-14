@@ -22,7 +22,8 @@
 
 #include <source/HostToGuestComms.h>
 
-#include <source/StreamingSink.h>
+#include <source/KeyboardSink.h>
+#include <source/TouchSink.h>
 #include <source/StreamingSource.h>
 
 #include <memory>
@@ -32,7 +33,8 @@
 #include <host/libs/screen_connector/screen_connector.h>
 
 struct ServerState {
-    using StreamingSink = android::StreamingSink;
+    using TouchSink = android::TouchSink;
+    using KeyboardSink = android::KeyboardSink;
 
     enum class VideoFormat {
         VP8,
@@ -43,7 +45,8 @@ struct ServerState {
 
     std::shared_ptr<Packetizer> getVideoPacketizer();
     std::shared_ptr<Packetizer> getAudioPacketizer();
-    std::shared_ptr<StreamingSink> getTouchSink();
+    std::shared_ptr<TouchSink> getTouchSink();
+    std::shared_ptr<KeyboardSink> getKeyboardSink();
 
     VideoFormat videoFormat() const { return mVideoFormat; }
 
@@ -68,7 +71,8 @@ private:
     std::shared_ptr<cvd::ScreenConnector> mScreenConnector;
     std::shared_ptr<std::thread> mScreenConnectorMonitor;
 
-    std::shared_ptr<StreamingSink> mTouchSink;
+    std::shared_ptr<TouchSink> mTouchSink;
+    std::shared_ptr<KeyboardSink> mKeyboardSink;
 
     std::set<size_t> mAllocatedHandlerIds;
 

@@ -23,7 +23,8 @@
 
 #include <https/WebSocketHandler.h>
 #include <https/RunLoop.h>
-#include <source/StreamingSink.h>
+#include <source/KeyboardSink.h>
+#include <source/TouchSink.h>
 
 #include <memory>
 #include <optional>
@@ -53,7 +54,8 @@ private:
         useSingleCertificateForAllTracks    = 8,
     };
 
-    using StreamingSink = android::StreamingSink;
+    using TouchSink = android::TouchSink;
+    using KeyboardSink = android::KeyboardSink;
 
     std::shared_ptr<RunLoop> mRunLoop;
     std::shared_ptr<ServerState> mServerState;
@@ -68,7 +70,8 @@ private:
     SDP mOfferedSDP;
     std::vector<std::shared_ptr<RTPSocketHandler>> mRTPs;
 
-    std::shared_ptr<StreamingSink> mTouchSink;
+    std::shared_ptr<TouchSink> mTouchSink;
+    std::shared_ptr<KeyboardSink> mKeyboardSink;
 
     std::pair<std::shared_ptr<X509>, std::shared_ptr<EVP_PKEY>>
         mCertificateAndKey;

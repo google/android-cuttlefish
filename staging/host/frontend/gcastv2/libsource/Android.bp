@@ -16,6 +16,8 @@ cc_library_host_static {
     name: "libsource",
     srcs: [
         "AudioSource.cpp",
+        "InputSink.cpp",
+        "KeyboardSink.cpp",
         "TouchSink.cpp",
         "FrameBufferSource.cpp",
         "HostToGuestComms.cpp",
