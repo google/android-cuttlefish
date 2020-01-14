@@ -22,3 +22,8 @@ html {
     padding: 10px;
 }
 
+button.selected {
+    background-color: #aaaaaa;
+    border-style: solid;
+    border-color: #aaaaaa;
+}

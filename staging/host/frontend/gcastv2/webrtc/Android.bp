@@ -19,6 +19,7 @@ cc_library_static {
         "AdbWebSocketHandler.cpp",
         "DTLS.cpp",
         "G711Packetizer.cpp",
+        "Keyboard.cpp",
         "MyWebSocketHandler.cpp",
         "OpusPacketizer.cpp",
         "Packetizer.cpp",
