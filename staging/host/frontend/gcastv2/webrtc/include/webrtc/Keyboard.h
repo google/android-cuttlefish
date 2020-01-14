@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,6 @@
 #pragma once
 
 #include <cinttypes>
-#include <memory>
+#include <string>
 
-namespace android {
-
-// TODO(jemoreira): add support for multitouch
-struct InputEvent{
-    InputEvent(int32_t down, int32_t x, int32_t y) : down(down), x(x), y(y) {}
-    int32_t down;
-    int32_t x;
-    int32_t y;
-};
-
-struct StreamingSink {
-    explicit StreamingSink() = default;
-    virtual ~StreamingSink() = default;
-
-    virtual void onAccessUnit(const std::shared_ptr<InputEvent> &accessUnit) = 0;
-};
-
-}  // namespace android
-
+uint16_t DomKeyCodeToLinux(const std::string& dom_key_code);

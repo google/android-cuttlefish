@@ -27,6 +27,7 @@
 
 #include <gflags/gflags.h>
 
+DECLARE_int32(keyboard_fd);
 DECLARE_int32(touch_fd);
 DECLARE_int32(frame_server_fd);
 DECLARE_bool(write_virtio_input);
@@ -84,15 +85,22 @@ ServerState::ServerState(
             });
 
     mAudioComms->start();
-    
+
     CHECK_GE(FLAGS_touch_fd, 0);
 
-    auto touchSink =
-        std::make_shared<android::TouchSink>(mRunLoop, FLAGS_touch_fd, FLAGS_write_virtio_input);
+    auto touchSink = std::make_shared<android::TouchSink>(
+        mRunLoop, FLAGS_touch_fd, FLAGS_write_virtio_input);
 
     touchSink->start();
 
     mTouchSink = touchSink;
+
+    auto keyboardSink = std::make_shared<android::KeyboardSink>(
+        mRunLoop, FLAGS_keyboard_fd, FLAGS_write_virtio_input);
+
+    keyboardSink->start();
+
+    mKeyboardSink = keyboardSink;
 }
 
 void ServerState::MonitorScreenConnector() {
@@ -158,6 +166,10 @@ void ServerState::releaseHandlerId(size_t id) {
     CHECK_EQ(mAllocatedHandlerIds.erase(id), 1);
 }
 
-std::shared_ptr<android::StreamingSink> ServerState::getTouchSink() {
+std::shared_ptr<android::TouchSink> ServerState::getTouchSink() {
     return mTouchSink;
+}
+
+std::shared_ptr<android::KeyboardSink> ServerState::getKeyboardSink() {
+    return mKeyboardSink;
 }
