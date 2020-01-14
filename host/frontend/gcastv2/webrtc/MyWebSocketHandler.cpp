@@ -23,7 +23,7 @@
 #include <netdb.h>
 #include <openssl/rand.h>
 
-using android::InputEvent;
+#include <webrtc/Keyboard.h>
 
 MyWebSocketHandler::MyWebSocketHandler(
         std::shared_ptr<RunLoop> runLoop,
@@ -33,7 +33,8 @@ MyWebSocketHandler::MyWebSocketHandler(
       mServerState(serverState),
       mId(handlerId),
       mOptions(OptionBits::useSingleCertificateForAllTracks),
-      mTouchSink(mServerState->getTouchSink()) {
+      mTouchSink(mServerState->getTouchSink()),
+      mKeyboardSink(mServerState->getKeyboardSink()) {
 }
 
 MyWebSocketHandler::~MyWebSocketHandler() {
@@ -242,9 +243,7 @@ int MyWebSocketHandler::handleMessage(
         LOG(VERBOSE)
             << "set-mouse-position(" << down << ", " << x << ", " << y << ")";
 
-        std::shared_ptr<InputEvent> accessUnit(new InputEvent(down, x, y));
-
-        mTouchSink->onAccessUnit(accessUnit);
+        mTouchSink->injectTouchEvent(x, y, down != 0);
     } else if (type == "inject-multi-touch") {
         CHECK(obj.isMember("id"));
         CHECK(obj.isMember("initialDown"));
@@ -269,19 +268,14 @@ int MyWebSocketHandler::handleMessage(
             << ", slot="
             << slot;
 
-        std::shared_ptr<InputEvent> accessUnit(new InputEvent(initialDown != 0, x, y));
-        accessUnit->down = (initialDown != 0);
-        accessUnit->x = x;
-        accessUnit->y = y;
-        // TODO(jemoreira): revive for multitouch
-        // int32_t *data = reinterpret_cast<int32_t *>(accessUnit->data());
-        // data[0] = id;
-        // data[1] = (initialDown != 0);
-        // data[2] = x;
-        // data[3] = y;
-        // data[4] = slot;
-
-        mTouchSink->onAccessUnit(accessUnit);
+        mTouchSink->injectMultiTouchEvent(id, slot, x, y, initialDown);
+    } else if (type == "key-event") {
+        CHECK(obj.isMember("event_type"));
+        auto down = obj["event_type"].asString() == std::string("keydown");
+        CHECK(obj.isMember("keycode"));
+        auto code = DomKeyCodeToLinux(obj["keycode"].asString());
+        CHECK(code);
+        mKeyboardSink->injectEvent(down, code);
     }
 
     return 0;
