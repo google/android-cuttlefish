@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,26 @@
 
 #pragma once
 
-#include <https/RunLoop.h>
-
+#include <cinttypes>
 #include <memory>
 
+#include <https/RunLoop.h>
 #include <source/InputSink.h>
 
 namespace android {
 
-struct TouchSink {
-    explicit TouchSink(std::shared_ptr<RunLoop> runLoop, int serverFd,
-                       bool write_virtio_input);
-    ~TouchSink() = default;
+struct KeyboardSink {
+  explicit KeyboardSink(std::shared_ptr<RunLoop> runLoop, int serverFd,
+                        bool write_virtio_input);
+  ~KeyboardSink() = default;
 
-    void start() {sink_->start();}
+  void start() {sink_->start();}
 
-    void injectTouchEvent(int32_t x, int32_t y, bool down);
-    void injectMultiTouchEvent(int32_t id, int32_t slot, int32_t x, int32_t y,
-                               bool initialDown);
+  void injectEvent(bool down, uint16_t code);
 
-   private:
-    std::shared_ptr<InputSink> sink_;
+ private:
+  std::shared_ptr<InputSink> sink_;
 };
 
 }  // namespace android
-
 
