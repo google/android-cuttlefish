@@ -2,6 +2,8 @@
 
 const receiveButton = document.getElementById('receiveButton');
 receiveButton.addEventListener('click', onReceive);
+const keyboardCaptureButton = document.getElementById('keyboardCaptureBtn');
+keyboardCaptureButton.addEventListener('click', onKeyboardCaptureClick);
 
 const videoElement = document.getElementById('video');
 
@@ -45,6 +47,17 @@ function handleDataChannelStatusChange(event) {
 
 function handleDataChannelMessage(event) {
     console.log('handleDataChannelMessage data="' + event.data + '"');
+}
+
+function onKeyboardCaptureClick(e) {
+    const selectedClass = 'selected';
+    if (keyboardCaptureButton.classList.contains(selectedClass)) {
+        stopKeyboardTracking();
+        keyboardCaptureButton.classList.remove(selectedClass);
+    } else {
+        startKeyboardTracking();
+        keyboardCaptureButton.classList.add(selectedClass);
+    }
 }
 
 async function onReceive() {
@@ -401,6 +414,16 @@ function stopMouseTracking() {
     }
 }
 
+function startKeyboardTracking() {
+    document.addEventListener('keydown', onKeyEvent);
+    document.addEventListener('keyup', onKeyEvent);
+}
+
+function stopKeyboardTracking() {
+    document.removeEventListener('keydown', onKeyEvent);
+    document.removeEventListener('keyup', onKeyEvent);
+}
+
 function onStartDrag(e) {
     e.preventDefault();
 
@@ -467,3 +490,7 @@ function sendMouseUpdate(down, e) {
         +   '}');
 }
 
+function onKeyEvent(e) {
+    e.preventDefault();
+    ws.send('{"type": "key-event","keycode": "'+e.code+'", "event_type": "'+e.type+'"}');
+}
