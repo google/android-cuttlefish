@@ -26,6 +26,7 @@ static const std::set<std::string> kKnownMissing = {
     "android.frameworks.cameraservice.device@2.0",
     "android.frameworks.vr.composer@1.0",
     "android.frameworks.vr.composer@2.0",
+    "android.frameworks.automotive.display@1.0",
     "android.hardware.audio@2.0",
     "android.hardware.audio@4.0",
     "android.hardware.audio@6.0",
