@@ -262,6 +262,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.health.storage@1.0-service.cuttlefish
 
+# Identity Credential
+PRODUCT_PACKAGES += \
+    android.hardware.identity@1.0-service.example
+
 # Input Classifier HAL
 PRODUCT_PACKAGES += \
     android.hardware.input.classifier@1.0-service.default
