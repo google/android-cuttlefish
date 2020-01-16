@@ -119,7 +119,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
 void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
         ::android::hardware::radio::V1_4::SetupDataCallResult& dcResult);
 
-void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+void convertRilDataCallToHal(RIL_Data_Call_Response_v12 *dcResponse,
         ::android::hardware::radio::V1_5::SetupDataCallResult& dcResult);
 
 void convertRilDataCallListToHal(void *response, size_t responseLen,
@@ -3692,17 +3692,18 @@ Return<void> RadioImpl_1_5::setupDataCall_1_5(int32_t serial ,
     }
     dispatchStrings(serial, mSlotId, RIL_REQUEST_SETUP_DATA_CALL, true, 15,
         std::to_string((int) RadioTechnology::UNKNOWN + 2).c_str(),
-        std::to_string((int) dataProfileInfo.base.profileId).c_str(),
-        dataProfileInfo.base.apn.c_str(),
-        dataProfileInfo.base.user.c_str(),
-        dataProfileInfo.base.password.c_str(),
-        std::to_string((int) dataProfileInfo.base.authType).c_str(),
-        getProtocolString(dataProfileInfo.base.protocol),
-        getProtocolString(dataProfileInfo.base.roamingProtocol),
+        std::to_string((int) dataProfileInfo.profileId).c_str(),
+        dataProfileInfo.apn.c_str(),
+        dataProfileInfo.user.c_str(),
+        dataProfileInfo.password.c_str(),
+        std::to_string((int) dataProfileInfo.authType).c_str(),
+        getProtocolString(dataProfileInfo.protocol),
+        getProtocolString(dataProfileInfo.roamingProtocol),
         std::to_string(dataProfileInfo.supportedApnTypesBitmap).c_str(),
-        std::to_string(dataProfileInfo.base.bearerBitmap).c_str(),
-        dataProfileInfo.base.persistent ? "1" : "0",
-        std::to_string(dataProfileInfo.base.mtu).c_str(),
+        std::to_string(dataProfileInfo.bearerBitmap).c_str(),
+        dataProfileInfo.persistent ? "1" : "0",
+        std::to_string(dataProfileInfo.mtuV4).c_str(),
+        std::to_string(dataProfileInfo.mtuV6).c_str(),
         mvnoTypeStr,
         "302720x94",
         roamingAllowed ? "1" : "0");
@@ -4995,7 +4996,7 @@ int radio_1_5::setupDataCallResponse(int slotId,
             result.gateways = hidl_vec<hidl_string>();
             result.pcscf = hidl_vec<hidl_string>();
         } else {
-            convertRilDataCallToHal((RIL_Data_Call_Response_v11 *) response, result);
+            convertRilDataCallToHal((RIL_Data_Call_Response_v12 *) response, result);
         }
 
         Return<void> retStatus = radioService[slotId]->mRadioResponseV1_5->setupDataCallResponse_1_5(
@@ -8537,7 +8538,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
     dcResult.mtu = dcResponse->mtu;
 }
 
-void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
+void convertRilDataCallToHal(RIL_Data_Call_Response_v12 *dcResponse,
         ::android::hardware::radio::V1_5::SetupDataCallResult& dcResult) {
     dcResult.cause = (::android::hardware::radio::V1_4::DataCallFailCause) dcResponse->status;
     dcResult.suggestedRetryTime = dcResponse->suggestedRetryTime;
@@ -8562,7 +8563,8 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
     dcResult.dnses = split(convertCharPtrToHidlString(dcResponse->dnses));
     dcResult.gateways = split(convertCharPtrToHidlString(dcResponse->gateways));
     dcResult.pcscf = split(convertCharPtrToHidlString(dcResponse->pcscf));
-    dcResult.mtu = dcResponse->mtu;
+    dcResult.mtuV4 = dcResponse->mtuV4;
+    dcResult.mtuV6 = dcResponse->mtuV6;
 }
 
 
