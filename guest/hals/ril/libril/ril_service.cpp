@@ -347,6 +347,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
 
     Return<void> sendCdmaSms(int32_t serial, const CdmaSmsMessage& sms);
 
+    Return<void> sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms);
+
     Return<void> acknowledgeLastIncomingCdmaSms(int32_t serial,
             const CdmaSmsAck& smsAck);
 
@@ -1893,6 +1895,22 @@ Return<void> RadioImpl_1_5::sendCdmaSms(int32_t serial, const CdmaSmsMessage& sm
     RLOGD("sendCdmaSms: serial %d", serial);
 #endif
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_CDMA_SEND_SMS);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    RIL_CDMA_SMS_Message rcsm = {};
+    constructCdmaSms(rcsm, sms);
+
+    CALL_ONREQUEST(pRI->pCI->requestNumber, &rcsm, sizeof(rcsm), pRI, mSlotId);
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms) {
+#if VDBG
+    RLOGD("sendCdmaSms: serial %d", serial);
+#endif
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE);
     if (pRI == NULL) {
         return Void();
     }
@@ -6341,6 +6359,28 @@ int radio_1_5::sendCdmaSmsResponse(int slotId,
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("sendCdmaSmsResponse: radioService[%d]->mRadioResponse == NULL", slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_5::sendCdmaSmsExpectMoreResponse(int slotId,
+                              int responseType, int serial, RIL_Errno e, void *response,
+                              size_t responseLen) {
+#if VDBG
+    RLOGD("sendCdmaSmsExpectMoreResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        SendSmsResult result = makeSendSmsResult(responseInfo, serial, responseType, e, response,
+                responseLen);
+
+        Return<void> retStatus
+                = radioService[slotId]->mRadioResponseV1_5->sendCdmaSmsExpectMoreResponse(responseInfo, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("sendCdmaSmsExpectMoreResponse: radioService[%d]->mRadioResponse == NULL", slotId);
     }
 
     return 0;

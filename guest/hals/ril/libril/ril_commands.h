@@ -175,3 +175,4 @@
     {RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5, radio_1_5::setSystemSelectionChannelsResponse_1_5},
     {RIL_REQUEST_START_NETWORK_SCAN_1_5, radio_1_5::startNetworkScanResponse_1_5},
     {RIL_REQUEST_SET_RADIO_POWER_1_5, radio_1_5::setRadioPowerResponse_1_5},
+    {RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE, radio_1_5::sendCdmaSmsExpectMoreResponse}
