@@ -8,3 +8,4 @@ hal_server_domain(hal_drm_clearkey, hal_drm)
 
 vndbinder_use(hal_drm_clearkey);
 
+allow hal_drm_clearkey hal_allocator_server:fd use;
