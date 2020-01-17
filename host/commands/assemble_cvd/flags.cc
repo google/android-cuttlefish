@@ -462,15 +462,8 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   return ResolveInstanceFiles();
 }
 
-bool CleanPriorFiles() {
-  // Everything on the instance directory
-  std::string prior_files = FLAGS_instance_dir + "/*";
-  // Everything in the assembly directory
-  prior_files += " " + FLAGS_assembly_dir + "/*";
-  // The environment file
-  prior_files += " " + GetCuttlefishEnvPath();
-  // The global link to the config file
-  prior_files += " " + vsoc::GetGlobalConfigFileLink();
+bool CleanPriorFiles(const std::vector<std::string>& paths) {
+  std::string prior_files = android::base::Join(paths, " ");
   LOG(INFO) << "Assuming prior files of " << prior_files;
   std::string lsof_cmd = "lsof -t " + prior_files + " >/dev/null 2>&1";
   int rval = std::system(lsof_cmd.c_str());
@@ -486,6 +479,20 @@ bool CleanPriorFiles() {
     return false;
   }
   return true;
+}
+
+bool CleanPriorFiles() {
+  std::vector<std::string> paths = {
+    // Everything on the instance directory
+    FLAGS_instance_dir + "/*",
+    // Everything in the assembly directory
+    FLAGS_assembly_dir + "/*",
+    // The environment file
+    GetCuttlefishEnvPath(),
+    // The global link to the config file
+    vsoc::GetGlobalConfigFileLink(),
+  };
+  return CleanPriorFiles(paths);
 }
 
 bool DecompressKernel(const std::string& src, const std::string& dst) {
