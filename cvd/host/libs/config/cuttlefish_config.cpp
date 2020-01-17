@@ -894,12 +894,25 @@ std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
   return ForCurrentInstance("cvd-");
 }
 
-CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForDefaultInstance() {
-  return MutableInstanceSpecific(this, std::to_string(GetInstance()));
+CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(int num) {
+  return MutableInstanceSpecific(this, std::to_string(num));
+}
+
+CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForInstance(int num) const {
+  return InstanceSpecific(this, std::to_string(num));
 }
 
 CuttlefishConfig::InstanceSpecific CuttlefishConfig::ForDefaultInstance() const {
   return InstanceSpecific(this, std::to_string(GetInstance()));
+}
+
+std::vector<CuttlefishConfig::InstanceSpecific> CuttlefishConfig::Instances() const {
+  const auto& json = (*dictionary_)[kInstances];
+  std::vector<CuttlefishConfig::InstanceSpecific> instances;
+  for (const auto& name : json.getMemberNames()) {
+    instances.push_back(CuttlefishConfig::InstanceSpecific(this, name));
+  }
+  return instances;
 }
 
 int GetInstance() {
