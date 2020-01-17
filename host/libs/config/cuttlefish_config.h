@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <set>
+#include <vector>
 
 namespace Json {
 class Value;
@@ -256,21 +257,22 @@ class CuttlefishConfig {
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
-  MutableInstanceSpecific ForDefaultInstance();
+  MutableInstanceSpecific ForInstance(int instance_num);
+  InstanceSpecific ForInstance(int instance_num) const;
   InstanceSpecific ForDefaultInstance() const;
+
+  std::vector<InstanceSpecific> Instances() const;
 
   // A view into an existing CuttlefishConfig object for a particular instance.
   class InstanceSpecific {
     const CuttlefishConfig* config_;
     std::string id_;
+    friend InstanceSpecific CuttlefishConfig::ForInstance(int num) const;
     friend InstanceSpecific CuttlefishConfig::ForDefaultInstance() const;
+    friend std::vector<InstanceSpecific> CuttlefishConfig::Instances() const;
 
     InstanceSpecific(const CuttlefishConfig* config, const std::string& id)
         : config_(config), id_(id) {}
-    InstanceSpecific(const InstanceSpecific&) = delete;
-    InstanceSpecific(InstanceSpecific&&) = delete;
-    InstanceSpecific& operator=(const InstanceSpecific&) = delete;
-    InstanceSpecific& operator=(InstanceSpecific&&) = delete;
 
     Json::Value* Dictionary();
     const Json::Value* Dictionary() const;
@@ -320,14 +322,10 @@ class CuttlefishConfig {
   class MutableInstanceSpecific {
     CuttlefishConfig* config_;
     std::string id_;
-    friend MutableInstanceSpecific CuttlefishConfig::ForDefaultInstance();
+    friend MutableInstanceSpecific CuttlefishConfig::ForInstance(int num);
 
     MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id)
         : config_(config), id_(id) {}
-    MutableInstanceSpecific(const MutableInstanceSpecific&) = delete;
-    MutableInstanceSpecific(MutableInstanceSpecific&&) = delete;
-    MutableInstanceSpecific& operator=(const MutableInstanceSpecific&) = delete;
-    MutableInstanceSpecific& operator=(MutableInstanceSpecific&&) = delete;
 
     Json::Value* Dictionary();
   public:
@@ -347,9 +345,6 @@ class CuttlefishConfig {
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
-
-  InstanceSpecific ForInstance(int instance_num);
-  const InstanceSpecific ForInstance(int instance_num) const;
 
   void SetPath(const std::string& key, const std::string& path);
   bool LoadFromFile(const char* file);
