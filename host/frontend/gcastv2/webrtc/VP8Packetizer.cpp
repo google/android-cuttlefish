@@ -28,54 +28,7 @@ using namespace android;
 VP8Packetizer::VP8Packetizer(
         std::shared_ptr<RunLoop> runLoop,
         std::shared_ptr<StreamingSource> frameBufferSource)
-    : mRunLoop(runLoop),
-      mFrameBufferSource(frameBufferSource),
-      mNumSamplesRead(0),
-      mStartTimeMedia(0) {
-}
-
-VP8Packetizer::~VP8Packetizer() {
-    if (mFrameBufferSource) {
-        mFrameBufferSource->stop();
-    }
-}
-
-void VP8Packetizer::run() {
-    auto weak_this = std::weak_ptr<VP8Packetizer>(shared_from_this());
-
-    mFrameBufferSource->setCallback(
-            [weak_this](const std::shared_ptr<SBuffer> &accessUnit) {
-                auto me = weak_this.lock();
-                if (me) {
-                    me->mRunLoop->post(
-                            makeSafeCallback(
-                                me.get(), &VP8Packetizer::onFrame, accessUnit));
-                }
-            });
-
-    mFrameBufferSource->start();
-}
-
-void VP8Packetizer::onFrame(const std::shared_ptr<SBuffer> &accessUnit) {
-    int64_t timeUs = accessUnit->time_us();
-    CHECK(timeUs);
-
-    auto now = std::chrono::steady_clock::now();
-
-    if (mNumSamplesRead == 0) {
-        mStartTimeMedia = timeUs;
-        mStartTimeReal = now;
-    }
-
-    ++mNumSamplesRead;
-
-    LOG(VERBOSE)
-        << "got accessUnit of size "
-        << accessUnit->size()
-        << " at time "
-        << timeUs;
-
-    packetize(accessUnit, timeUs);
+    : Packetizer(runLoop, frameBufferSource) {
 }
 
 void VP8Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs) {
@@ -91,7 +44,7 @@ void VP8Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_
     const uint8_t *src = accessUnit->data();
     size_t srcSize = accessUnit->size();
 
-    uint32_t rtpTime = ((timeUs - mStartTimeMedia) * 9) / 100;
+    uint32_t rtpTime = ((timeUs - mediaStartTime()) * 9) / 100;
 
     LOG(VERBOSE) << "got accessUnit of size " << srcSize;
 
@@ -136,21 +89,5 @@ void VP8Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_
 }
 
 uint32_t VP8Packetizer::rtpNow() const {
-    if (mNumSamplesRead == 0) {
-        return 0;
-    }
-
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceStart = now - mStartTimeReal;
-
-    auto us_since_start =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-                timeSinceStart).count();
-
-    return (us_since_start * 9) / 100;
+    return (timeSinceStart() * 90) / 1000;
 }
-
-int32_t VP8Packetizer::requestIDRFrame() {
-    return mFrameBufferSource->requestIDRFrame();
-}
-
