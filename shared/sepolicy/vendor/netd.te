@@ -1,5 +1,0 @@
-# Don't log denials to do with loading kernel modules.
-# These are currently for modules such as
-# netdev-dummy0, dummy0, net-pf-16-proto-5.
-dontaudit netd self:capability sys_module;
-dontaudit netd kernel:system module_request;
