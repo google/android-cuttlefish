@@ -29,6 +29,7 @@ cc_library_static {
         "SCTPHandler.cpp",
         "SDP.cpp",
         "ServerState.cpp",
+        "STUNClient.cpp",
         "STUNMessage.cpp",
         "Utils.cpp",
         "VP8Packetizer.cpp",
