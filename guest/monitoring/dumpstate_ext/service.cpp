@@ -20,8 +20,8 @@
 
 using ::android::OK;
 using ::android::hardware::configureRpcThreadpool;
-using ::android::hardware::dumpstate::V1_0::IDumpstateDevice;
-using ::android::hardware::dumpstate::V1_0::implementation::DumpstateDevice;
+using ::android::hardware::dumpstate::V1_1::IDumpstateDevice;
+using ::android::hardware::dumpstate::V1_1::implementation::DumpstateDevice;
 using ::android::hardware::joinRpcThreadpool;
 using ::android::sp;
 

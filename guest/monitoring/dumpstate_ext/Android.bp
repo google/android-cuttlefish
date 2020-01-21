@@ -14,13 +14,14 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.dumpstate@1.0-service.cuttlefish",
+    name: "android.hardware.dumpstate@1.1-service.cuttlefish",
     srcs: [
         "dumpstate_device.cpp",
         "service.cpp",
     ],
     shared_libs: [
         "android.hardware.dumpstate@1.0",
+        "android.hardware.dumpstate@1.1",
         "libbase",
         "libcutils",
         "libdumpstateutil",
@@ -33,7 +34,7 @@ cc_binary {
     ],
     relative_install_path: "hw",
     init_rc: [
-        "android.hardware.dumpstate@1.0-service.cuttlefish.rc",
+        "android.hardware.dumpstate@1.1-service.cuttlefish.rc",
     ],
     defaults: ["cuttlefish_guest_only"]
 }
