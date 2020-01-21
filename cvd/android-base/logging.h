@@ -85,7 +85,7 @@ enum LogSeverity {
   INFO,
   WARNING,
   ERROR,
-  FATAL_WITHOUT_ABORT,  // For loggability tests, this is considered identical to FATAL.
+  FATAL_WITHOUT_ABORT,
   FATAL,
 };
 
@@ -93,8 +93,6 @@ enum LogId {
   DEFAULT,
   MAIN,
   SYSTEM,
-  RADIO,
-  CRASH,
 };
 
 using LogFunction = std::function<void(LogId, LogSeverity, const char*, const char*,
@@ -211,8 +209,8 @@ struct LogAbortAfterFullExpr {
 #define ABORT_AFTER_LOG_FATAL_EXPR(x) ABORT_AFTER_LOG_EXPR_IF(true, x)
 
 // Defines whether the given severity will be logged or silently swallowed.
-#define WOULD_LOG(severity)                                                              \
-  (UNLIKELY(::android::base::ShouldLog(SEVERITY_LAMBDA(severity), _LOG_TAG_INTERNAL)) || \
+#define WOULD_LOG(severity) \
+  (UNLIKELY((SEVERITY_LAMBDA(severity)) >= ::android::base::GetMinimumLogSeverity()) || \
    MUST_LOG_MESSAGE(severity))
 
 // Get an ostream that can be used for logging at the given severity and to the default
@@ -444,9 +442,6 @@ LogSeverity GetMinimumLogSeverity();
 // Set the minimum severity level for logging, returning the old severity.
 LogSeverity SetMinimumLogSeverity(LogSeverity new_severity);
 
-// Return whether or not a log message with the associated tag should be logged.
-bool ShouldLog(LogSeverity severity, const char* tag);
-
 // Allows to temporarily change the minimum severity level for logging.
 class ScopedLogSeverity {
  public:
@@ -465,9 +460,6 @@ namespace std {  // NOLINT(cert-dcl58-cpp)
 // Emit a warning of ostream<< with std::string*. The intention was most likely to print *string.
 //
 // Note: for this to work, we need to have this in a namespace.
-// Note: lots of ifdef magic to make this work with Clang (platform) vs GCC (windows tools)
-// Note: using diagnose_if(true) under Clang and nothing under GCC/mingw as there is no common
-//       attribute support.
 // Note: using a pragma because "-Wgcc-compat" (included in "-Weverything") complains about
 //       diagnose_if.
 // Note: to print the pointer, use "<< static_cast<const void*>(string_pointer)" instead.
@@ -477,8 +469,8 @@ namespace std {  // NOLINT(cert-dcl58-cpp)
 #pragma clang diagnostic ignored "-Wgcc-compat"
 #define OSTREAM_STRING_POINTER_USAGE_WARNING \
     __attribute__((diagnose_if(true, "Unexpected logging of string pointer", "warning")))
-inline std::ostream& operator<<(std::ostream& stream, const std::string* string_pointer)
-    OSTREAM_STRING_POINTER_USAGE_WARNING {
+inline OSTREAM_STRING_POINTER_USAGE_WARNING
+std::ostream& operator<<(std::ostream& stream, const std::string* string_pointer) {
   return stream << static_cast<const void*>(string_pointer);
 }
 #pragma clang diagnostic pop
