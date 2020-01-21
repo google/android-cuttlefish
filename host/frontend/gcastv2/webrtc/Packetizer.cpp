@@ -38,6 +38,7 @@ void Packetizer::queueRTPDatagram(std::vector<uint8_t> *packet) {
         auto sender = it->lock();
         if (!sender) {
             it = mSenders.erase(it);
+            mStreamingSource->notifyStreamConsumerDisconnected();
             continue;
         }
 
@@ -48,6 +49,12 @@ void Packetizer::queueRTPDatagram(std::vector<uint8_t> *packet) {
 
 void Packetizer::addSender(std::shared_ptr<RTPSender> sender) {
     mSenders.push_back(sender);
+    auto weak_source = std::weak_ptr<StreamingSource>(mStreamingSource);
+    mRunLoop->post([weak_source](){
+        auto source = weak_source.lock();
+        if (!source) return;
+        source->notifyNewStreamConsumer();
+    });
 }
 
 int32_t Packetizer::requestIDRFrame() {
@@ -71,6 +78,10 @@ void Packetizer::run() {
 }
 
 void Packetizer::onFrame(const std::shared_ptr<android::SBuffer>& accessUnit) {
+    if (!accessUnit) {
+        LOG(WARNING) << "Received invalid buffer in " << __FUNCTION__;
+        return;
+    }
     int64_t timeUs = accessUnit->time_us();
     CHECK(timeUs);
 
