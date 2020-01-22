@@ -27,49 +27,8 @@ using namespace android;
 OpusPacketizer::OpusPacketizer(
         std::shared_ptr<RunLoop> runLoop,
         std::shared_ptr<StreamingSource> audioSource)
-    : mRunLoop(runLoop),
-      mAudioSource(audioSource),
-      mNumSamplesRead(0),
-      mStartTimeMedia(0),
+    : Packetizer(runLoop, audioSource),
       mFirstInTalkspurt(true) {
-}
-
-void OpusPacketizer::run() {
-    auto weak_this = std::weak_ptr<OpusPacketizer>(shared_from_this());
-
-    mAudioSource->setCallback(
-            [weak_this](const std::shared_ptr<SBuffer> &accessUnit) {
-                auto me = weak_this.lock();
-                if (me) {
-                    me->mRunLoop->post(
-                            makeSafeCallback(
-                                me.get(), &OpusPacketizer::onFrame, accessUnit));
-                }
-            });
-
-    mAudioSource->start();
-}
-
-void OpusPacketizer::onFrame(const std::shared_ptr<SBuffer> &accessUnit) {
-    int64_t timeUs = accessUnit->time_us();
-    CHECK(timeUs);
-
-    auto now = std::chrono::steady_clock::now();
-
-    if (mNumSamplesRead == 0) {
-        mStartTimeMedia = timeUs;
-        mStartTimeReal = now;
-    }
-
-    ++mNumSamplesRead;
-
-    LOG(VERBOSE)
-        << "got accessUnit of size "
-        << accessUnit->size()
-        << " at time "
-        << timeUs;
-
-    packetize(accessUnit, timeUs);
 }
 
 void OpusPacketizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs) {
@@ -87,7 +46,7 @@ void OpusPacketizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64
     const uint8_t *audioData = accessUnit->data();
     size_t size = accessUnit->size();
 
-    uint32_t rtpTime = ((timeUs - mStartTimeMedia) * 48) / 1000;
+    uint32_t rtpTime = ((timeUs - mediaStartTime()) * 48) / 1000;
 
     CHECK_LE(12 + size, kMaxSRTPPayloadSize);
 
@@ -112,21 +71,5 @@ void OpusPacketizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64
 }
 
 uint32_t OpusPacketizer::rtpNow() const {
-    if (mNumSamplesRead == 0) {
-        return 0;
-    }
-
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceStart = now - mStartTimeReal;
-
-    auto us_since_start =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-                timeSinceStart).count();
-
-    return (us_since_start * 48) / 1000;
+    return (timeSinceStart() * 48) / 1000;
 }
-
-int32_t OpusPacketizer::requestIDRFrame() {
-    return mAudioSource->requestIDRFrame();
-}
-

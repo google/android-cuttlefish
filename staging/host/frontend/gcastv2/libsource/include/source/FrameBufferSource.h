@@ -47,6 +47,8 @@ struct FrameBufferSource : public StreamingSource {
     bool paused() const override;
 
     int32_t requestIDRFrame() override;
+    void notifyNewStreamConsumer() override;
+    void notifyStreamConsumerDisconnected() override;
 
     void setScreenParams(const int32_t screenParams[4]);
     void injectFrame(const void *data, size_t size);
@@ -69,7 +71,7 @@ private:
 
     std::mutex mLock;
 
-    int32_t mScreenWidth, mScreenHeight, mScreenDpi, mScreenRate;
+    int32_t mScreenWidth, mScreenHeight, mScreenDpi, mScreenRate, mNumConsumers;
 
     std::function<void(const std::shared_ptr<SBuffer> &)> mOnFrameFn;
 };
