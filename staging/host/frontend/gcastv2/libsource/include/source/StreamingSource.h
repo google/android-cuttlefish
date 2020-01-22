@@ -90,6 +90,8 @@ struct StreamingSource {
     virtual bool paused() const { return false; }
 
     virtual int32_t requestIDRFrame() = 0;
+    virtual void notifyNewStreamConsumer() = 0;
+    virtual void notifyStreamConsumerDisconnected() = 0;
 
 protected:
     void onAccessUnit(const std::shared_ptr<SBuffer> &accessUnit);

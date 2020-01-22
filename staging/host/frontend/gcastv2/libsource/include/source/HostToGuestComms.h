@@ -26,12 +26,6 @@
 struct HostToGuestComms : std::enable_shared_from_this<HostToGuestComms> {
     using ReceiveCb = std::function<void(const void *data, size_t size)>;
 
-    // Used to carry updated framebuffers from guest to host.
-    static constexpr uint16_t kPortVideo = 5580;
-
-    // Used to carry audio data from guest to host.
-    static constexpr uint16_t kPortAudio = 8556;
-
     explicit HostToGuestComms(
             std::shared_ptr<RunLoop> runLoop,
             bool isServer,

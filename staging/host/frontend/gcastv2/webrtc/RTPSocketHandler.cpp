@@ -131,14 +131,10 @@ RTPSocketHandler::RTPSocketHandler(
         mRTPSender->addSource(0xcafeb0b0);
 
         mRTPSender->addRetransInfo(0xdeadbeef, 96, 0xcafeb0b0, 97);
-
-        videoPacketizer->addSender(mRTPSender);
     }
 
     if (trackMask & TRACK_AUDIO) {
         mRTPSender->addSource(0x8badf00d);
-
-        audioPacketizer->addSender(mRTPSender);
     }
 }
 
@@ -509,6 +505,14 @@ void RTPSocketHandler::notifyDTLSConnected() {
     LOG(INFO) << "TDLS says that it's now connected.";
 
     mDTLSConnected = true;
+
+    if (mTrackMask & TRACK_VIDEO) {
+        mServerState->getVideoPacketizer()->addSender(mRTPSender);
+    }
+
+    if (mTrackMask & TRACK_AUDIO) {
+        mServerState->getAudioPacketizer()->addSender(mRTPSender);
+    }
 
     if (mTrackMask & TRACK_DATA) {
         mSCTPHandler = std::make_shared<SCTPHandler>(mRunLoop, mDTLS);
