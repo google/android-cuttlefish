@@ -33,8 +33,6 @@ let videoStream;
 
 let mouseIsDown = false;
 
-const run_locally = false;
-
 const is_chrome = navigator.userAgent.indexOf("Chrome") !== -1;
 
 function handleDataChannelStatusChange(event) {
@@ -66,54 +64,32 @@ async function onReceive() {
 
     init_logcat();
 
-    if (!run_locally) {
-        const wsProtocol = (location.protocol == "http:") ? "ws:" : "wss:";
+    const wsProtocol = (location.protocol == "http:") ? "ws:" : "wss:";
 
-        ws = new WebSocket(wsProtocol + "//" + location.host + "/control");
-        ws.onopen = function() {
-            console.log("onopen");
-            ws.send('{\r\n'
-                +     '"type": "greeting",\r\n'
-                +     '"message": "Hello, world!",\r\n'
-                +     '"path": "' + location.pathname + location.search + '"\r\n'
-                +   '}');
-        };
-        ws.onmessage = function(e) {
-            console.log("onmessage " + e.data);
+    ws = new WebSocket(wsProtocol + "//" + location.host + "/control");
+    ws.onopen = function() {
+        console.log("onopen");
+        ws.send('{\r\n'
+            +     '"type": "greeting",\r\n'
+            +     '"message": "Hello, world!",\r\n'
+            +     '"path": "' + location.pathname + location.search + '"\r\n'
+            +   '}');
+    };
+    ws.onmessage = function(e) {
+        console.log("onmessage " + e.data);
 
-            let data = JSON.parse(e.data);
-            if (data.type == "hello") {
-                kickoff();
-            } else if (data.type == "offer" && offerResolve) {
-                offerResolve(data.sdp);
-                offerResolve = undefined;
-            } else if (data.type == "ice-candidate" && iceCandidateResolve) {
-                iceCandidateResolve(data);
+        let data = JSON.parse(e.data);
+        if (data.type == "hello") {
+            kickoff();
+        } else if (data.type == "offer" && offerResolve) {
+            offerResolve(data.sdp);
+            offerResolve = undefined;
+        } else if (data.type == "ice-candidate" && iceCandidateResolve) {
+            iceCandidateResolve(data);
 
-                iceCandidateResolve = undefined;
-            }
-        };
-    }
-
-    if (run_locally) {
-        pc1 = new RTCPeerConnection();
-        console.log('got pc1=' + pc1);
-
-        pc1.addEventListener(
-            'icecandidate', e => onIceCandidate(pc1, e));
-
-        pc1.addEventListener(
-            'iceconnectionstatechange', e => onIceStateChange(pc1, e));
-
-        const stream =
-            await navigator.mediaDevices.getUserMedia(
-                {
-                    audio: true,
-                    video: { width: 1280, height: 720 },
-                });
-
-        stream.getTracks().forEach(track => pc1.addTrack(track, stream));
-    }
+            iceCandidateResolve = undefined;
+        }
+    };
 
     pc2 = new RTCPeerConnection();
     console.log('got pc2=' + pc2);
@@ -135,27 +111,13 @@ async function onReceive() {
     dataChannel.onopen = handleDataChannelStatusChange;
     dataChannel.onclose = handleDataChannelStatusChange;
     dataChannel.onmessage = handleDataChannelMessage;
-
-    if (run_locally) {
-        kickoff();
-    }
 }
 
 async function kickoff() {
     console.log('createOffer start');
 
     try {
-        var offer;
-
-        if (run_locally) {
-            const offerOptions = {
-                offerToReceiveAudio: 0,
-                offerToReceiveVideo: 1
-            };
-            offer = await pc1.createOffer(offerOptions);
-        } else {
-            offer = await getWsOffer();
-        }
+        var offer = await getWsOffer();
         await onCreateOfferSuccess(offer);
     } catch (e) {
         console.log('createOffer FAILED ');
@@ -175,11 +137,7 @@ async function onCreateOfferSuccess(desc) {
     console.log('setRemoteDescription pc2 successful.');
 
     try {
-        if (run_locally) {
-            await pc1.setLocalDescription(desc);
-        } else {
-            setWsLocalDescription(desc);
-        }
+        setWsLocalDescription(desc);
     } catch (e) {
         console.log('setLocalDescription pc1 FAILED');
         return;
@@ -301,11 +259,7 @@ async function onCreateAnswerSuccess(desc) {
     console.log('setLocalDescription pc2 successful.');
 
     try {
-        if (run_locally) {
-            await pc1.setRemoteDescription(desc);
-        } else {
-            setWsRemoteDescription(desc);
-        }
+        setWsRemoteDescription(desc);
     } catch (e) {
         console.log('setRemoteDescription pc1 FAILED');
         return;
@@ -313,13 +267,11 @@ async function onCreateAnswerSuccess(desc) {
 
     console.log('setRemoteDescription pc1 successful.');
 
-    if (!run_locally) {
-        if (!await addRemoteIceCandidate(0)) {
-            return;
-        }
-        await addRemoteIceCandidate(1);
-        await addRemoteIceCandidate(2);  // XXX
+    if (!await addRemoteIceCandidate(0)) {
+        return;
     }
+    await addRemoteIceCandidate(1);
+    await addRemoteIceCandidate(2);
 }
 
 function getPcName(pc) {
