@@ -54,6 +54,8 @@ struct AudioSource : public StreamingSource {
     int32_t stop() override;
 
     int32_t requestIDRFrame() override;
+    void notifyNewStreamConsumer() override {}
+    void notifyStreamConsumerDisconnected() override {}
 
     void inject(const void *data, size_t size);
 

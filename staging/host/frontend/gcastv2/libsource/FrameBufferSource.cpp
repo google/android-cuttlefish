@@ -46,7 +46,9 @@ struct FrameBufferSource::Encoder {
 
     virtual void forceIDRFrame() = 0;
     virtual bool isForcingIDRFrame() const = 0;
-    virtual std::shared_ptr<SBuffer> encode(const void *frame, int64_t timeUs) = 0;
+
+    virtual void storeFrame(const void* frame) = 0;
+    virtual std::shared_ptr<SBuffer> encodeStoredFrame(int64_t timeUs) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -58,7 +60,8 @@ struct FrameBufferSource::VPXEncoder : public FrameBufferSource::Encoder {
     void forceIDRFrame() override;
     bool isForcingIDRFrame() const override;
 
-    std::shared_ptr<SBuffer> encode(const void *frame, int64_t timeUs) override;
+    void storeFrame(const void* frame) override;
+    std::shared_ptr<SBuffer> encodeStoredFrame(int64_t timeUs) override;
 
 private:
     int mWidth, mHeight, mRefreshRateHz;
@@ -74,6 +77,7 @@ private:
 
     std::atomic<bool> mForceIDRFrame;
     bool mFirstFrame;
+    bool mStoredFrame;
     int64_t mLastTimeUs;
 };
 
@@ -98,6 +102,7 @@ FrameBufferSource::VPXEncoder::VPXEncoder(int width, int height, int rateHz)
       mCodecContext(nullptr, vpx_codec_destroy),
       mForceIDRFrame(false),
       mFirstFrame(true),
+      mStoredFrame(false),
       mLastTimeUs(0) {
 
     CHECK((width & 1) == 0);
@@ -155,8 +160,7 @@ bool FrameBufferSource::VPXEncoder::isForcingIDRFrame() const {
     return mForceIDRFrame;
 }
 
-std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encode(
-        const void *frame, int64_t timeUs) {
+void FrameBufferSource::VPXEncoder::storeFrame(const void *frame) {
     uint8_t *yPlane = static_cast<uint8_t *>(mI420Data);
     uint8_t *uPlane = yPlane + mSizeY;
     uint8_t *vPlane = uPlane + mSizeUV;
@@ -172,15 +176,18 @@ std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encode(
             mWidth / 2,
             mWidth,
             mHeight);
+    mStoredFrame = true;
+}
 
+std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encodeStoredFrame(
+        int64_t timeUs) {
+    if (!mStoredFrame) {
+        return nullptr;
+    }
     vpx_image_t raw_frame;
-    vpx_img_wrap(
-            &raw_frame,
-            VPX_IMG_FMT_I420,
-            mWidth,
-            mHeight,
-            2 /* stride_align */,
-            yPlane);
+    vpx_img_wrap(&raw_frame, VPX_IMG_FMT_I420, mWidth, mHeight,
+                 2 /* stride_align */,
+                 reinterpret_cast<unsigned char *>(mI420Data));
 
     vpx_enc_frame_flags_t flags = 0;
 
@@ -217,7 +224,8 @@ std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encode(
 
     std::shared_ptr<SBuffer> accessUnit;
 
-    while ((packet = vpx_codec_get_cx_data(mCodecContext.get(), &iter)) != nullptr) {
+    while ((packet = vpx_codec_get_cx_data(mCodecContext.get(), &iter)) !=
+            nullptr) {
         if (packet->kind == VPX_CODEC_CX_FRAME_PKT) {
             LOG(VERBOSE)
                 << "vpx_codec_encode returned packet of size "
@@ -258,6 +266,7 @@ FrameBufferSource::FrameBufferSource(Format format)
       mScreenHeight(0),
       mScreenDpi(0),
       mScreenRate(0),
+      mNumConsumers(0),
       mOnFrameFn(nullptr) {
     mInitCheck = 0;
 }
@@ -369,13 +378,38 @@ void FrameBufferSource::injectFrame(const void *data, size_t size) {
     (void)size;
 
     std::lock_guard<std::mutex> autoLock(mLock);
-    if (/* noone is listening || */ mState != State::RUNNING) {
+    if (mState != State::RUNNING) {
         return;
     }
 
-    std::shared_ptr<SBuffer> accessUnit = mEncoder->encode(data, GetNowUs());
+    mEncoder->storeFrame(data);
+    // Only encode and forward the frame when there are consumers connected
+    if (mNumConsumers) {
+        auto accessUnit = mEncoder->encodeStoredFrame(GetNowUs());
+        StreamingSource::onAccessUnit(accessUnit);
+    }
+}
+
+void FrameBufferSource::notifyNewStreamConsumer() {
+    std::lock_guard<std::mutex> autoLock(mLock);
+    ++mNumConsumers;
+    if (mState != State::RUNNING) {
+        return;
+    }
+
+    mEncoder->forceIDRFrame();
+    auto accessUnit = mEncoder->encodeStoredFrame(GetNowUs());
+    if (!accessUnit) {
+        // nullptr means there isn't a stored frame to encode.
+        return;
+    }
 
     StreamingSource::onAccessUnit(accessUnit);
+}
+
+void FrameBufferSource::notifyStreamConsumerDisconnected() {
+    std::lock_guard<std::mutex> autoLock(mLock);
+    --mNumConsumers;
 }
 
 }  // namespace android
