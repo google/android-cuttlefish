@@ -28,50 +28,9 @@ G711Packetizer::G711Packetizer(
         Mode mode,
         std::shared_ptr<RunLoop> runLoop,
         std::shared_ptr<StreamingSource> audioSource)
-    : mMode(mode),
-      mRunLoop(runLoop),
-      mAudioSource(audioSource),
-      mNumSamplesRead(0),
-      mStartTimeMedia(0),
+    : Packetizer(runLoop, audioSource),
+      mMode(mode),
       mFirstInTalkspurt(true) {
-}
-
-void G711Packetizer::run() {
-    auto weak_this = std::weak_ptr<G711Packetizer>(shared_from_this());
-
-    mAudioSource->setCallback(
-            [weak_this](const std::shared_ptr<SBuffer> &accessUnit) {
-                auto me = weak_this.lock();
-                if (me) {
-                    me->mRunLoop->post(
-                            makeSafeCallback(
-                                me.get(), &G711Packetizer::onFrame, accessUnit));
-                }
-            });
-
-    mAudioSource->start();
-}
-
-void G711Packetizer::onFrame(const std::shared_ptr<SBuffer> &accessUnit) {
-    int64_t timeUs = accessUnit->time_us();
-    CHECK(timeUs);
-
-    auto now = std::chrono::steady_clock::now();
-
-    if (mNumSamplesRead == 0) {
-        mStartTimeMedia = timeUs;
-        mStartTimeReal = now;
-    }
-
-    ++mNumSamplesRead;
-
-    LOG(VERBOSE)
-        << "got accessUnit of size "
-        << accessUnit->size()
-        << " at time "
-        << timeUs;
-
-    packetize(accessUnit, timeUs);
 }
 
 void G711Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64_t timeUs) {
@@ -89,7 +48,7 @@ void G711Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64
     const uint8_t *audioData = accessUnit->data();
     size_t size = accessUnit->size();
 
-    uint32_t rtpTime = ((timeUs - mStartTimeMedia) * 8) / 1000;
+    uint32_t rtpTime = ((timeUs - mediaStartTime()) * 8) / 1000;
 
     CHECK_LE(12 + size, kMaxSRTPPayloadSize);
 
@@ -114,21 +73,5 @@ void G711Packetizer::packetize(const std::shared_ptr<SBuffer> &accessUnit, int64
 }
 
 uint32_t G711Packetizer::rtpNow() const {
-    if (mNumSamplesRead == 0) {
-        return 0;
-    }
-
-    auto now = std::chrono::steady_clock::now();
-    auto timeSinceStart = now - mStartTimeReal;
-
-    auto us_since_start =
-        std::chrono::duration_cast<std::chrono::microseconds>(
-                timeSinceStart).count();
-
-    return (us_since_start * 8) / 1000;
+    return (timeSinceStart() * 8) / 1000;
 }
-
-int32_t G711Packetizer::requestIDRFrame() {
-    return mAudioSource->requestIDRFrame();
-}
-

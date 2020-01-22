@@ -69,23 +69,6 @@ ServerState::ServerState(
     mAudioSource = std::make_shared<android::AudioSource>(
             android::AudioSource::Format::OPUS);
 
-    mAudioComms = std::make_shared<HostToGuestComms>(
-            mRunLoop,
-            true /* isServer */,
-            VMADDR_CID_HOST,
-            HostToGuestComms::kPortAudio,
-            [this](const void *data, size_t size) {
-                LOG(VERBOSE)
-                    << "Received packet of "
-                    << size
-                    << " bytes of data from audio HAL.";
-
-                static_cast<android::AudioSource *>(
-                        mAudioSource.get())->inject(data, size);
-            });
-
-    mAudioComms->start();
-
     CHECK_GE(FLAGS_touch_fd, 0);
 
     auto touchSink = std::make_shared<android::TouchSink>(
