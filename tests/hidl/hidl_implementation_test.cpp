@@ -34,6 +34,7 @@ static const std::set<std::string> kKnownMissing = {
     "android.hardware.audio.effect@4.0",
     "android.hardware.audio.effect@6.0",
     "android.hardware.automotive.audiocontrol@1.0",
+    "android.hardware.automotive.audiocontrol@2.0",
     "android.hardware.automotive.can@1.0",
     "android.hardware.automotive.evs@1.0",
     "android.hardware.automotive.evs@1.1",
