@@ -18,23 +18,49 @@
 
 #include <stdint.h>
 
+#include <chrono>
 #include <memory>
 #include <vector>
 
+#include <https/RunLoop.h>
+#include <source/StreamingSource.h>
+
 struct RTPSender;
 
-struct Packetizer {
-    explicit Packetizer() = default;
-    virtual ~Packetizer() = default;
+struct Packetizer : public std::enable_shared_from_this<Packetizer> {
 
-    virtual void run() = 0;
-    virtual uint32_t rtpNow() const = 0;
-    virtual int32_t requestIDRFrame() = 0;
+  using StreamingSource = android::StreamingSource;
 
-    void queueRTPDatagram(std::vector<uint8_t> *packet);
+  explicit Packetizer(std::shared_ptr<RunLoop> runLoop,
+                      std::shared_ptr<StreamingSource> source);
+  virtual ~Packetizer();
 
-    void addSender(std::shared_ptr<RTPSender> sender);
+  virtual void run();
+  virtual uint32_t rtpNow() const = 0;
+  int32_t requestIDRFrame();
 
-private:
-    std::vector<std::weak_ptr<RTPSender>> mSenders;
+  virtual void queueRTPDatagram(std::vector<uint8_t> *packet);
+
+  virtual void addSender(std::shared_ptr<RTPSender> sender);
+
+  virtual void onFrame(const std::shared_ptr<android::SBuffer>& accessUnit);
+
+ protected:
+  virtual void packetize(const std::shared_ptr<android::SBuffer>& accessUnit,
+                         int64_t timeUs) = 0;
+
+  uint32_t timeSinceStart() const;
+
+  int64_t mediaStartTime() const { return mStartTimeMedia; }
+
+ private:
+  size_t mNumSamplesRead;
+  std::chrono::time_point<std::chrono::steady_clock> mStartTimeReal;
+  int64_t mStartTimeMedia;
+
+  std::shared_ptr<RunLoop> mRunLoop;
+
+  std::shared_ptr<StreamingSource> mStreamingSource;
+
+  std::vector<std::weak_ptr<RTPSender>> mSenders;
 };
