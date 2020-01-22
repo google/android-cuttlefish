@@ -37,6 +37,11 @@ DEFINE_string variant master \
 
 SSH_FLAGS=(${INTERNAL_IP})
 
+fatal_echo() {
+  echo "$1"
+  exit 1
+}
+
 wait_for_instance() {
   alive=""
   while [[ -z "${alive}" ]]; do
@@ -96,13 +101,16 @@ main() {
     --image-family="${FLAGS_source_image_family}" \
     --image-project="${FLAGS_source_image_project}" \
     "${FLAGS_dest_image}"
+  local gpu_type="nvidia-tesla-p100-vws"
+  gcloud compute accelerator-types describe "${gpu_type}" "${PZ[@]}" || \
+    fatal_echo "Please use a zone with ${gpu_type} GPUs available."
   gcloud compute instances create \
     "${PZ[@]}" \
     --machine-type=n1-standard-16 \
     --image-family="${FLAGS_source_image_family}" \
     --image-project="${FLAGS_source_image_project}" \
     --boot-disk-size=200GiB \
-    --accelerator="type=nvidia-tesla-p100-vws,count=1" \
+    --accelerator="type=${gpu_type},count=1" \
     --maintenance-policy=TERMINATE \
     "${FLAGS_build_instance}"
   wait_for_instance "${PZ[@]}" "${FLAGS_build_instance}"
@@ -135,7 +143,7 @@ main() {
       --image="${FLAGS_dest_image}" \
       --machine-type=n1-standard-4 \
       --scopes storage-ro \
-      --accelerator="type=nvidia-tesla-p100-vws,count=1" \
+      --accelerator="type=${gpu_type},count=1" \
       --maintenance-policy=TERMINATE \
       "${FLAGS_launch_instance}"
   fi
