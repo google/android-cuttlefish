@@ -67,12 +67,17 @@ async function onReceive() {
     const wsProtocol = (location.protocol == "http:") ? "ws:" : "wss:";
 
     ws = new WebSocket(wsProtocol + "//" + location.host + "/control");
+    // temporarily disable audio to free ports in the server since it's only
+    // producing silence anyways.
+    var search = location.search + "&disable_audio=1";
+    search = '?' + search.substr(1);
+
     ws.onopen = function() {
         console.log("onopen");
         ws.send('{\r\n'
             +     '"type": "greeting",\r\n'
             +     '"message": "Hello, world!",\r\n'
-            +     '"path": "' + location.pathname + location.search + '"\r\n'
+            +     '"path": "' + location.pathname + search + '"\r\n'
             +   '}');
     };
     ws.onmessage = function(e) {
