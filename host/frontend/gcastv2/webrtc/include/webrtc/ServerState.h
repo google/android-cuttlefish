@@ -67,7 +67,6 @@ private:
 
     std::shared_ptr<StreamingSource> mAudioSource;
 
-    std::shared_ptr<HostToGuestComms> mAudioComms;
     std::shared_ptr<cvd::ScreenConnector> mScreenConnector;
     std::shared_ptr<std::thread> mScreenConnectorMonitor;
 
