@@ -40,6 +40,7 @@ static const std::set<std::string> kKnownMissing = {
     "android.hardware.automotive.vehicle@2.0",
     "android.hardware.biometrics.face@1.1", /* b/122264410 */
     "android.hardware.biometrics.fingerprint@2.1",
+    "android.hardware.biometrics.fingerprint@2.2",
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
