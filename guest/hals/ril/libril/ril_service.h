@@ -54,6 +54,10 @@ int supplyNetworkDepersonalizationResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
                                           void *response, size_t responselen);
 
+int supplySimDepersonalizationResponse(int slotId,
+                                          int responseType, int serial, RIL_Errno e,
+                                          void *response, size_t responselen);
+
 int getCurrentCallsResponse(int slotId,
                            int responseType, int serial, RIL_Errno e, void *response,
                            size_t responselen);
