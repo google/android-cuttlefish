@@ -83,7 +83,8 @@ void SetCuttlefishConfigEnv() {
 
 int main(int argc, char* argv[]) {
   SetCuttlefishConfigEnv();
-  auto instance = vsoc::CuttlefishConfig::Get()->adb_device_name();
+  auto instance = vsoc::CuttlefishConfig::Get()
+      ->ForDefaultInstance().adb_device_name();
   std::string adb_path = CuttlefishFindAdb();
 
   std::vector<char*> new_argv = {
