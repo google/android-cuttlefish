@@ -6767,6 +6767,46 @@ typedef struct {
  */
 #define RIL_REQUEST_SET_RADIO_POWER_1_5 160
 
+/**
+ * RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
+ *
+ * Send a CDMA SMS message
+ *
+ * "data" is const RIL_CDMA_SMS_Message *
+ *
+ * "response" is a const RIL_SMS_Response *
+ *
+ * Based on the return error, caller decides to resend if sending sms
+ * fails. The CDMA error class is derived as follows,
+ * SUCCESS is error class 0 (no error)
+ * SMS_SEND_FAIL_RETRY is error class 2 (temporary failure)
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  SMS_SEND_FAIL_RETRY
+ *  NETWORK_REJECT
+ *  INVALID_STATE
+ *  INVALID_ARGUMENTS
+ *  NO_MEMORY
+ *  REQUEST_RATE_LIMITED
+ *  INVALID_SMS_FORMAT
+ *  SYSTEM_ERR
+ *  FDN_CHECK_FAILURE
+ *  MODEM_ERR
+ *  NETWORK_ERR
+ *  ENCODING_ERR
+ *  INVALID_SMSC_ADDRESS
+ *  OPERATION_NOT_ALLOWED
+ *  NO_RESOURCES
+ *  CANCELLED
+ *  REQUEST_NOT_SUPPORTED
+ *  MODE_NOT_SUPPORTED
+ *  SIM_ABSENT
+ *
+ */
+#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 162
+
 /***********************************************************************/
 
 /**
