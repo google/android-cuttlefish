@@ -170,6 +170,10 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
 
     Return<void> supplyNetworkDepersonalization(int32_t serial, const hidl_string& netPin);
 
+    Return<void> supplySimDepersonalization(int32_t serial,
+                                            ::android::hardware::radio::V1_5::PersoSubstate persoType,
+                                            const hidl_string& controlKey);
+
     Return<void> getCurrentCalls(int32_t serial);
 
     Return<void> dial(int32_t serial, const Dial& dialInfo);
@@ -1036,6 +1040,17 @@ Return<void> RadioImpl_1_5::supplyNetworkDepersonalization(int32_t serial,
 #endif
     dispatchStrings(serial, mSlotId, RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION, true,
             1, netPin.c_str());
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::supplySimDepersonalization(int32_t serial,
+                                                       ::android::hardware::radio::V1_5::PersoSubstate persoType,
+                                                       const hidl_string& controlKey) {
+#if VDBG
+    RLOGD("supplySimDepersonalization: serial %d", serial);
+#endif
+    dispatchStrings(serial, mSlotId, RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION, true,
+            1, controlKey.c_str());
     return Void();
 }
 
@@ -4154,6 +4169,37 @@ int radio_1_5::supplyNetworkDepersonalizationResponse(int slotId,
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("supplyNetworkDepersonalizationResponse: radioService[%d]->mRadioResponse == "
+                "NULL", slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_5::supplySimDepersonalizationResponse(int slotId,
+                                                 int responseType, int serial, RIL_Errno e,
+                                                 void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("supplySimDepersonalizationResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        int persoType = -1, remainingRetries = -1;
+        int numInts = responseLen / sizeof(int);
+        if (response == NULL || numInts != 2) {
+            RLOGE("getClirResponse Invalid response: NULL");
+            if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+        } else {
+            int *pInt = (int *) response;
+            persoType = pInt[0];
+            remainingRetries = pInt[1];
+        }
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_5->
+                supplySimDepersonalizationResponse(responseInfo, (::android::hardware::radio::V1_5::PersoSubstate) persoType,
+                                                   remainingRetries);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("supplySimDepersonalizationResponse: radioService[%d]->mRadioResponseV1_5 == "
                 "NULL", slotId);
     }
 

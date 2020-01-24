@@ -6807,6 +6807,33 @@ typedef struct {
  */
 #define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 162
 
+/**
+ * RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
+ *
+ * Requests that sim personlization be deactivated
+ *
+ * "data" is const char **
+ * ((const char **)(data))[0]] is  sim depersonlization code
+ *
+ * "response" is int *
+ * ((int *)response)[0] is the number of retries remaining,
+ * or -1 if number of retries are infinite.
+ *
+ * Valid errors:
+ *
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE (radio resetting)
+ *  PASSWORD_INCORRECT
+ *  SIM_ABSENT (code is invalid)
+ *  INTERNAL_ERR
+ *  NO_MEMORY
+ *  NO_RESOURCES
+ *  CANCELLED
+ *  REQUEST_NOT_SUPPORTED
+ */
+
+#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 161
+
 /***********************************************************************/
 
 /**
