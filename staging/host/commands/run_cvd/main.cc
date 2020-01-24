@@ -58,7 +58,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
-using vsoc::GetPerInstanceDefault;
+using vsoc::ForCurrentInstance;
 using cvd::RunnerExitCodes;
 
 namespace {
@@ -159,9 +159,10 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
     LOG(ERROR) << "Unable to create cuttlefish.env file";
     return false;
   }
+  auto instance = config.ForDefaultInstance();
   std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
-                           config.PerInstancePath(".") + "\"\n";
-  config_env += "export ANDROID_SERIAL=" + config.adb_ip_and_port() + "\n";
+                           instance.PerInstancePath(".") + "\"\n";
+  config_env += "export ANDROID_SERIAL=" + instance.adb_ip_and_port() + "\n";
   env->Write(config_env.c_str(), config_env.size());
   return true;
 }
@@ -169,6 +170,7 @@ bool WriteCuttlefishEnvironment(const vsoc::CuttlefishConfig& config) {
 // Forks and returns the write end of a pipe to the child process. The parent
 // process waits for boot events to come through the pipe and exits accordingly.
 cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
   cvd::SharedFD read_end, write_end;
   if (!cvd::SharedFD::Pipe(&read_end, &write_end)) {
     LOG(ERROR) << "Unable to create pipe";
@@ -205,7 +207,7 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
     // Redirect standard I/O
-    auto log_path = config.launcher_log_path();
+    auto log_path = instance.launcher_log_path();
     auto log =
         cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -271,7 +273,8 @@ void ServerLoop(cvd::SharedFD server,
 }
 
 std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
-  return config.PerInstancePath("cuttlefish_config.json");
+  auto instance = config.ForDefaultInstance();
+  return instance.PerInstancePath("cuttlefish_config.json");
 }
 
 }  // namespace
@@ -316,27 +319,28 @@ int main(int argc, char** argv) {
   }
 
   auto config = vsoc::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
 
-  auto runner_log_path = config->PerInstancePath("run_cvd.log");
+  auto runner_log_path = instance.PerInstancePath("run_cvd.log");
   stderr_tee.SetFile(cvd::SharedFD::Creat(runner_log_path.c_str(), 0755));
 
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
   // find the running processes when it can't establish a communication with the
   // launcher.
-  auto chdir_ret = chdir(config->instance_dir().c_str());
+  auto chdir_ret = chdir(instance.instance_dir().c_str());
   if (chdir_ret != 0) {
     auto error = errno;
     LOG(ERROR) << "Unable to change dir into instance directory ("
-               << config->instance_dir() << "): " << strerror(error);
+               << instance.instance_dir() << "): " << strerror(error);
     return RunnerExitCodes::kInstanceDirCreationError;
   }
 
   auto used_tap_devices = cvd::TapInterfacesInUse();
-  if (used_tap_devices.count(config->wifi_tap_name())) {
+  if (used_tap_devices.count(instance.wifi_tap_name())) {
     LOG(ERROR) << "Wifi TAP device already in use";
     return RunnerExitCodes::kTapDeviceInUse;
-  } else if (used_tap_devices.count(config->mobile_tap_name())) {
+  } else if (used_tap_devices.count(instance.mobile_tap_name())) {
     LOG(ERROR) << "Mobile TAP device already in use";
     return RunnerExitCodes::kTapDeviceInUse;
   }
@@ -362,16 +366,16 @@ int main(int argc, char** argv) {
 
   LOG(INFO) << "The following files contain useful debugging information:";
   if (config->run_as_daemon()) {
-    LOG(INFO) << "  Launcher log: " << config->launcher_log_path();
+    LOG(INFO) << "  Launcher log: " << instance.launcher_log_path();
   }
-  LOG(INFO) << "  Android's logcat output: " << config->logcat_path();
-  LOG(INFO) << "  Kernel log: " << config->PerInstancePath("kernel.log");
+  LOG(INFO) << "  Android's logcat output: " << instance.logcat_path();
+  LOG(INFO) << "  Kernel log: " << instance.PerInstancePath("kernel.log");
   LOG(INFO) << "  Instance configuration: " << GetConfigFilePath(*config);
   LOG(INFO) << "  Instance environment: " << config->cuttlefish_env_path();
   LOG(INFO) << "To access the console run: socat file:$(tty),raw,echo=0 "
-            << config->console_path();
+            << instance.console_path();
 
-  auto launcher_monitor_path = config->launcher_monitor_socket_path();
+  auto launcher_monitor_path = instance.launcher_monitor_socket_path();
   auto launcher_monitor_socket = cvd::SharedFD::SocketLocalServer(
       launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
   if (!launcher_monitor_socket->IsOpen()) {

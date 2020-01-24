@@ -37,6 +37,7 @@ static std::string concat(const S& s, const T& t) {
 }
 
 std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
   std::vector<std::string> kernel_cmdline;
 
   AppendVector(&kernel_cmdline, config.boot_image_kernel_cmdline());
@@ -44,7 +45,7 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
                vm_manager::VmManager::ConfigureGpuMode(config.vm_manager(), config.gpu_mode()));
   AppendVector(&kernel_cmdline, vm_manager::VmManager::ConfigureBootDevices(config.vm_manager()));
 
-  kernel_cmdline.push_back(concat("androidboot.serialno=", config.serial_number()));
+  kernel_cmdline.push_back(concat("androidboot.serialno=", instance.serial_number()));
   kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
   if (config.logcat_mode() == cvd::kLogcatVsockMode) {
   }

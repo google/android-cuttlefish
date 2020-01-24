@@ -59,7 +59,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  auto monitor_path = config->launcher_monitor_socket_path();
+  auto instance = config->ForDefaultInstance();
+  auto monitor_path = instance.launcher_monitor_socket_path();
   if (monitor_path.empty()) {
     LOG(ERROR) << "No path to launcher monitor found";
     return 2;

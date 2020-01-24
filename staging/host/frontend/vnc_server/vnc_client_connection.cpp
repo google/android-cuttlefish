@@ -89,8 +89,9 @@ constexpr size_t kClientCutTextLength = 7;  // more bytes follow
 
 std::string HostName() {
   auto config = vsoc::CuttlefishConfig::Get();
-  return !config || config->device_title().empty() ? std::string{"localhost"}
-                                                   : config->device_title();
+  auto instance = config->ForDefaultInstance();
+  return !config || instance.device_title().empty() ? std::string{"localhost"}
+                                                    : instance.device_title();
 }
 
 std::uint16_t uint16_tAt(const void* p) {

@@ -76,10 +76,11 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Unable to get config object";
     return 1;
   }
+  auto instance = config->ForDefaultInstance();
 
   cvd::SharedFD pipe;
   if (FLAGS_log_pipe_fd < 0) {
-    auto log_name = config->kernel_log_pipe_name();
+    auto log_name = instance.kernel_log_pipe_name();
     pipe = cvd::SharedFD::Open(log_name.c_str(), O_RDONLY);
   } else {
     pipe = cvd::SharedFD::Dup(FLAGS_log_pipe_fd);
@@ -91,7 +92,7 @@ int main(int argc, char** argv) {
     return 2;
   }
 
-  monitor::KernelLogServer klog{pipe, config->PerInstancePath("kernel.log"),
+  monitor::KernelLogServer klog{pipe, instance.PerInstancePath("kernel.log"),
                                 config->deprecated_boot_completed()};
 
   for (auto subscriber_fd: subscriber_fds) {

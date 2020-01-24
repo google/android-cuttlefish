@@ -19,12 +19,14 @@ using cvd::MonitorEntry;
 namespace {
 
 std::string GetAdbConnectorTcpArg(const vsoc::CuttlefishConfig& config) {
-  return std::string{"127.0.0.1:"} + std::to_string(config.host_port());
+  auto instance = config.ForDefaultInstance();
+  return std::string{"127.0.0.1:"} + std::to_string(instance.host_port());
 }
 
 std::string GetAdbConnectorVsockArg(const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
   return std::string{"vsock:"}
-      + std::to_string(config.vsock_guest_cid())
+      + std::to_string(instance.vsock_guest_cid())
       + std::string{":5555"};
 }
 
@@ -33,12 +35,14 @@ bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, vsoc::AdbMode mode) {
 }
 
 bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
-  return config.vsock_guest_cid() > 2
+  auto instance = config.ForDefaultInstance();
+  return instance.vsock_guest_cid() > 2
       && AdbModeEnabled(config, vsoc::AdbMode::VsockTunnel);
 }
 
 bool AdbVsockHalfTunnelEnabled(const vsoc::CuttlefishConfig& config) {
-  return config.vsock_guest_cid() > 2
+  auto instance = config.ForDefaultInstance();
+  return instance.vsock_guest_cid() > 2
       && AdbModeEnabled(config, vsoc::AdbMode::VsockHalfTunnel);
 }
 
@@ -80,6 +84,7 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
   cvd::SharedFD touch_server;
   cvd::SharedFD keyboard_server;
 
+  auto instance = config.ForDefaultInstance();
   if (config.vm_manager() == vm_manager::QemuManager::name()) {
     cmd->AddParameter("-write_virtio_input");
 
@@ -89,8 +94,8 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
     keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
     server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
   } else {
-    touch_server = CreateUnixInputServer(config.touch_socket_path());
-    keyboard_server = CreateUnixInputServer(config.keyboard_socket_path());
+    touch_server = CreateUnixInputServer(instance.touch_socket_path());
+    keyboard_server = CreateUnixInputServer(instance.keyboard_socket_path());
   }
   if (!touch_server->IsOpen()) {
     LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
@@ -106,7 +111,7 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
 
   cvd::SharedFD frames_server;
   if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl) {
-    frames_server = CreateUnixInputServer(config.frames_socket_path());
+    frames_server = CreateUnixInputServer(instance.frames_socket_path());
   } else {
     frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
     server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
@@ -129,7 +134,8 @@ std::vector<cvd::SharedFD> LaunchKernelLogMonitor(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     unsigned int number_of_event_pipes) {
-  auto log_name = config.kernel_log_pipe_name();
+  auto instance = config.ForDefaultInstance();
+  auto log_name = instance.kernel_log_pipe_name();
   if (mkfifo(log_name.c_str(), 0600) != 0) {
     LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
                << strerror(errno);
@@ -208,8 +214,9 @@ TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
   if (!config.enable_tombstone_receiver()) {
     return {};
   }
+  auto instance = config.ForDefaultInstance();
 
-  std::string tombstoneDir = config.PerInstancePath("tombstones");
+  std::string tombstoneDir = instance.PerInstancePath("tombstones");
   if (!cvd::DirectoryExists(tombstoneDir.c_str())) {
     LOG(INFO) << "Setting up " << tombstoneDir;
     if (mkdir(tombstoneDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
@@ -241,8 +248,9 @@ StreamerLaunchResult LaunchVNCServer(
     const vsoc::CuttlefishConfig& config,
     cvd::ProcessMonitor* process_monitor,
     std::function<bool(MonitorEntry*)> callback) {
+  auto instance = config.ForDefaultInstance();
   // Launch the vnc server, don't wait for it to complete
-  auto port_options = "-port=" + std::to_string(config.vnc_server_port());
+  auto port_options = "-port=" + std::to_string(instance.vnc_server_port());
   cvd::Command vnc_server(config.vnc_server_binary());
   vnc_server.AddParameter(port_options);
 
@@ -287,14 +295,15 @@ StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
       webrtc.AddParameter("--certs_dir=", config.webrtc_certs_dir());
   }
 
-  webrtc.AddParameter("--http_server_port=", vsoc::GetPerInstanceDefault(8443));
+  webrtc.AddParameter("--http_server_port=", vsoc::ForCurrentInstance(8443));
   webrtc.AddParameter("--public_ip=", config.webrtc_public_ip());
   webrtc.AddParameter("--assets_dir=", config.webrtc_assets_dir());
 
   auto server_ret = CreateStreamerServers(&webrtc, config);
 
   if (config.webrtc_enable_adb_websocket()) {
-      webrtc.AddParameter("--adb=", config.adb_ip_and_port());
+      auto instance = config.ForDefaultInstance();
+      webrtc.AddParameter("--adb=", instance.adb_ip_and_port());
   }
 
   process_monitor->StartSubprocess(std::move(webrtc),
@@ -306,13 +315,14 @@ StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
 
 void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
   if (AdbVsockTunnelEnabled(config)) {
     cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
     adb_tunnel.AddParameter("--vsock_port=6520");
     adb_tunnel.AddParameter(
-        std::string{"--tcp_port="} + std::to_string(config.host_port()));
+        std::string{"--tcp_port="} + std::to_string(instance.host_port()));
     adb_tunnel.AddParameter(std::string{"--vsock_guest_cid="} +
-                            std::to_string(config.vsock_guest_cid()));
+                            std::to_string(instance.vsock_guest_cid()));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
                                      GetOnSubprocessExitCallback(config));
   }
@@ -320,9 +330,9 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
     cvd::Command adb_tunnel(config.socket_vsock_proxy_binary());
     adb_tunnel.AddParameter("--vsock_port=5555");
     adb_tunnel.AddParameter(
-        std::string{"--tcp_port="} + std::to_string(config.host_port()));
+        std::string{"--tcp_port="} + std::to_string(instance.host_port()));
     adb_tunnel.AddParameter(std::string{"--vsock_guest_cid="} +
-                            std::to_string(config.vsock_guest_cid()));
+                            std::to_string(instance.vsock_guest_cid()));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
                                      GetOnSubprocessExitCallback(config));
   }
