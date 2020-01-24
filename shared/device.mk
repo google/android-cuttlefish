@@ -225,6 +225,12 @@ PRODUCT_PACKAGES += \
     android.hardware.soundtrigger@2.3-impl \
 
 #
+# BiometricsFace HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.biometrics.face@1.1-service.example
+
+#
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
