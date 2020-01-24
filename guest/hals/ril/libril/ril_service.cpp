@@ -8650,8 +8650,8 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v12 *dcResponse,
         ::android::hardware::radio::V1_5::LinkAddress la;
         la.address = hidl_string(tok);
         la.properties = 0;
-        la.deprecatedTime = 0;
-        la.expiredTime = 0;
+        la.deprecationTime = 0;
+        la.expirationTime = 0;
         linkAddresses.push_back(la);
     }
 
