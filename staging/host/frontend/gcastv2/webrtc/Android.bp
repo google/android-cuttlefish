@@ -55,7 +55,6 @@ cc_library_static {
     ],
     header_libs: [
         "cuttlefish_common_headers",
-        "cuttlefish_kernel_headers",
     ],
     defaults: ["cuttlefish_host_only"],
     local_include_dirs: ["include"],
