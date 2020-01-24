@@ -54,7 +54,6 @@ cc_defaults {
     gnu_extensions: false,
     header_libs: [
         "cuttlefish_common_headers",
-        "cuttlefish_kernel_headers",
     ],
     target: {
         host: {
@@ -77,7 +76,6 @@ cc_defaults {
     gnu_extensions: false,
     header_libs: [
         "cuttlefish_common_headers_product",
-        "cuttlefish_kernel_headers_product",
     ],
     target: {
         host: {
