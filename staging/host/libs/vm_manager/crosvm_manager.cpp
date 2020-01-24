@@ -35,7 +35,8 @@ namespace vm_manager {
 namespace {
 
 std::string GetControlSocketPath(const vsoc::CuttlefishConfig* config) {
-  return config->PerInstanceInternalPath("crosvm_control.sock");
+  return config->ForDefaultInstance()
+      .PerInstanceInternalPath("crosvm_control.sock");
 }
 
 void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
@@ -96,6 +97,7 @@ CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
     : VmManager(config) {}
 
 std::vector<cvd::Command> CrosvmManager::StartCommands() {
+  auto instance = config_->ForDefaultInstance();
   cvd::Command crosvm_cmd(config_->crosvm_binary(), [](cvd::Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
@@ -111,7 +113,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
                             "width=", config_->x_res(), ",",
                             "height=", config_->y_res(), ",",
                             "egl=true,surfaceless=true,glx=false,gles=false");
-    crosvm_cmd.AddParameter("--wayland-sock=", config_->frames_socket_path());
+    crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
   if (!config_->final_ramdisk_path().empty()) {
     crosvm_cmd.AddParameter("--initrd=", config_->final_ramdisk_path());
@@ -126,24 +128,24 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));
 
   if (frontend_enabled_) {
-    crosvm_cmd.AddParameter("--single-touch=", config_->touch_socket_path(),
+    crosvm_cmd.AddParameter("--single-touch=", instance.touch_socket_path(),
                             ":", config_->x_res(), ":", config_->y_res());
-    crosvm_cmd.AddParameter("--keyboard=", config_->keyboard_socket_path());
+    crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
 
-  AddTapFdParameter(&crosvm_cmd, config_->wifi_tap_name());
-  AddTapFdParameter(&crosvm_cmd, config_->mobile_tap_name());
+  AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
+  AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
   // TODO remove this (use crosvm's seccomp files)
   crosvm_cmd.AddParameter("--disable-sandbox");
 
-  if (config_->vsock_guest_cid() >= 2) {
-    crosvm_cmd.AddParameter("--cid=", config_->vsock_guest_cid());
+  if (instance.vsock_guest_cid() >= 2) {
+    crosvm_cmd.AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
   // Redirect the first serial port with the kernel logs to the appropriate file
   crosvm_cmd.AddParameter("--serial=num=1,type=file,path=",
-                          config_->kernel_log_pipe_name(), ",console=true");
+                          instance.kernel_log_pipe_name(), ",console=true");
 
   // Redirect standard input to a pipe for the console forwarder host process
   // to handle.
@@ -153,7 +155,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
                << console_in_rd->StrError();
     return {};
   }
-  auto console_pipe_name = config_->console_pipe_name();
+  auto console_pipe_name = instance.console_pipe_name();
   if (mkfifo(console_pipe_name.c_str(), 0660) != 0) {
     auto error = errno;
     LOG(ERROR) << "Failed to create console fifo for crosvm: "

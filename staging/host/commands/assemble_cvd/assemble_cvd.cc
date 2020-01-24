@@ -74,8 +74,9 @@ int main(int argc, char** argv) {
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
   auto config = InitFilesystemAndCreateConfig(&argc, &argv, FindFetcherConfig(input_files));
+  auto instance = config->ForDefaultInstance();
 
-  auto assembler_log_path = config->PerInstancePath("assemble_cvd.log");
+  auto assembler_log_path = instance.PerInstancePath("assemble_cvd.log");
   stderr_tee.SetFile(cvd::SharedFD::Creat(assembler_log_path.c_str(), 0755));
 
   std::cout << GetConfigFilePath(*config) << "\n";
