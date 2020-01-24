@@ -36,8 +36,7 @@ LOCAL_SRC_FILES := $(VSOC_GRALLOC_COMMON_SRC_FILES)
 
 LOCAL_CFLAGS := $(VSOC_GRALLOC_COMMON_CFLAGS)
 LOCAL_C_INCLUDES := \
-    device/google/cuttlefish \
-    device/google/cuttlefish_kernel
+    device/google/cuttlefish
 
 LOCAL_HEADER_LIBRARIES := \
     libhardware_headers
