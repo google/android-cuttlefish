@@ -138,8 +138,9 @@ std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
 
 bool DeviceConfig::InitializeNetworkConfiguration(
     const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
   NetConfig netconfig;
-  if (!netconfig.ObtainConfig(config.mobile_bridge_name())) {
+  if (!netconfig.ObtainConfig(instance.mobile_bridge_name())) {
     LOG(ERROR) << "Unable to obtain the network configuration";
     return false;
   }
