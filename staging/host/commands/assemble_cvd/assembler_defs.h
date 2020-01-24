@@ -44,6 +44,7 @@ enum AssemblerExitCodes : int {
   kTombstoneServerError = 20,
   kTombstoneDirCreationError = 21,
   kInitRamFsConcatError = 22,
+  kAssemblyDirCreationError = 23,
 };
 
 }  // namespace cvd
