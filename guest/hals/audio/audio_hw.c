@@ -331,6 +331,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct str_parms *parms;
     char value[32];
     int success;
+    int ret = -EINVAL;
 
     if (kvpairs == NULL || kvpairs[0] == 0) {
         return 0;
@@ -342,12 +343,19 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
     // Instead, it should use create_audio_patch API.
     assert(("Must not use set parameters API to set audio devices", success < 0));
 
+    if (str_parms_has_key(parms, AUDIO_PARAMETER_STREAM_FORMAT)) {
+        // match the return value of out_set_format
+        ret = -ENOSYS;
+    }
+
     str_parms_destroy(parms);
 
-    ALOGW("%s(), unsupported parameter %s", __func__, kvpairs);
-    // There is not any key supported for set_parameters API.
-    // Return error when there is non-null value passed in.
-    return -EINVAL;
+    if (ret == -EINVAL) {
+        ALOGW("%s(), unsupported parameter %s", __func__, kvpairs);
+        // There is not any key supported for set_parameters API.
+        // Return error when there is non-null value passed in.
+    }
+    return ret;
 }
 
 static char * out_get_parameters(const struct audio_stream *stream, const char *keys)
@@ -847,6 +855,7 @@ static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
     struct str_parms *parms;
     char value[32];
     int success;
+    int ret = -EINVAL;
 
     if (kvpairs == NULL || kvpairs[0] == 0) {
         return 0;
@@ -858,12 +867,19 @@ static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
     // Instead, it should use create_audio_patch API.
     assert(("Must not use set parameters API to set audio devices", success < 0));
 
+    if (str_parms_has_key(parms, AUDIO_PARAMETER_STREAM_FORMAT)) {
+        // match the return value of in_set_format
+        ret = -ENOSYS;
+    }
+
     str_parms_destroy(parms);
 
-    ALOGW("%s(), unsupported parameter %s", __func__, kvpairs);
-    // There is not any key supported for set_parameters API.
-    // Return error when there is non-null value passed in.
-    return -EINVAL;
+    if (ret == -EINVAL) {
+        ALOGW("%s(), unsupported parameter %s", __func__, kvpairs);
+        // There is not any key supported for set_parameters API.
+        // Return error when there is non-null value passed in.
+    }
+    return ret;
 }
 
 static char * in_get_parameters(const struct audio_stream *stream,
