@@ -136,6 +136,8 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
+  crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
+
   // TODO remove this (use crosvm's seccomp files)
   crosvm_cmd.AddParameter("--disable-sandbox");
 
