@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "android.hardware.health@2.0-service.cuttlefish"
+#define LOG_TAG "android.hardware.health@2.1-service.cuttlefish"
 
 #include <memory>
 #include <string_view>
@@ -26,6 +26,8 @@ using ::android::sp;
 using ::android::hardware::Return;
 using ::android::hardware::Void;
 using ::android::hardware::health::InitHealthdConfig;
+using ::android::hardware::health::V1_0::BatteryStatus;
+using ::android::hardware::health::V2_0::Result;
 using ::android::hardware::health::V2_1::IHealth;
 using namespace std::literals;
 
@@ -34,10 +36,20 @@ namespace hardware {
 namespace health {
 namespace V2_1 {
 namespace implementation {
+
+// Health HAL implementation for cuttlefish. Note that in this implementation, cuttlefish
+// pretends to be a device with a battery being charged. Implementations on real devices
+// should not insert these fake values. For example, a battery-less device should report
+// batteryPresent = false and batteryStatus = UNKNOWN.
+
 class HealthImpl : public Health {
  public:
   HealthImpl(std::unique_ptr<healthd_config>&& config)
     : Health(std::move(config)) {}
+    Return<void> getChargeCounter(getChargeCounter_cb _hidl_cb) override;
+    Return<void> getCurrentNow(getCurrentNow_cb _hidl_cb) override;
+    Return<void> getCapacity(getCapacity_cb _hidl_cb) override;
+    Return<void> getChargeStatus(getChargeStatus_cb _hidl_cb) override;
  protected:
   void UpdateHealthInfo(HealthInfo* health_info) override;
 };
@@ -60,6 +72,26 @@ void HealthImpl::UpdateHealthInfo(HealthInfo* health_info) {
   battery_props->batteryFullCharge = 4000000;
   battery_props->batteryChargeCounter = 1900000;
   battery_props->batteryTechnology = "Li-ion";
+}
+
+Return<void> HealthImpl::getChargeCounter(getChargeCounter_cb _hidl_cb) {
+  _hidl_cb(Result::SUCCESS, 1900000);
+  return Void();
+}
+
+Return<void> HealthImpl::getCurrentNow(getCurrentNow_cb _hidl_cb) {
+  _hidl_cb(Result::SUCCESS, 400000);
+  return Void();
+}
+
+Return<void> HealthImpl::getCapacity(getCapacity_cb _hidl_cb) {
+  _hidl_cb(Result::SUCCESS, 85);
+  return Void();
+}
+
+Return<void> HealthImpl::getChargeStatus(getChargeStatus_cb _hidl_cb) {
+  _hidl_cb(Result::SUCCESS, BatteryStatus::CHARGING);
+  return Void();
 }
 
 }  // namespace implementation
