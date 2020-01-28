@@ -371,6 +371,10 @@ void CuttlefishConfig::set_deprecated_boot_completed(
   (*dictionary_)[kDeprecatedBootCompleted] = deprecated_boot_completed;
 }
 
+std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
+  return cvd::AbsolutePath(PerInstancePath("access-kregistry"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::console_path() const {
   return cvd::AbsolutePath(PerInstancePath("console"));
 }
