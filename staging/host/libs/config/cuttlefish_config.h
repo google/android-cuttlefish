@@ -303,6 +303,8 @@ class CuttlefishConfig {
     std::string keyboard_socket_path() const;
     std::string frames_socket_path() const;
 
+    std::string access_kregistry_path() const;
+
     std::string console_path() const;
 
     std::string logcat_path() const;
