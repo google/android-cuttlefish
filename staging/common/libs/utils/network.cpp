@@ -87,6 +87,9 @@ std::set<std::string> TapInterfacesInUse() {
   auto lines = android::base::Split(stdout, "\n");
   std::set<std::string> tap_interfaces;
   for (const auto& line : lines) {
+    if (line == "") {
+      continue;
+    }
     if (!android::base::StartsWith(line, "iff:\t")) {
       LOG(ERROR) << "Unexpected line \"" << line << "\"";
       continue;
