@@ -8,3 +8,6 @@
 
 # media.codec2
 /dev/ion 0664 system system
+
+# resume-on-reboot
+/dev/block/pmem0 0770 system system
