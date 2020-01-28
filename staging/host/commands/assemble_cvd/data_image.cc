@@ -62,13 +62,15 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
 } // namespace
 
 void CreateBlankImage(
-    const std::string& image, int image_mb, const std::string& image_fmt) {
+    const std::string& image, int block_count, const std::string& image_fmt,
+    const std::string& block_size) {
   LOG(INFO) << "Creating " << image;
   std::string of = "of=";
   of += image;
   std::string count = "count=";
-  count += std::to_string(image_mb);
-  cvd::execute({"/bin/dd", "if=/dev/zero", of, "bs=1M", count});
+  count += std::to_string(block_count);
+  std::string bs = "bs=" + block_size;
+  cvd::execute({"/bin/dd", "if=/dev/zero", of, bs, count});
   if (image_fmt != "none") {
     cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
   }
