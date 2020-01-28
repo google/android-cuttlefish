@@ -25,6 +25,37 @@
 
 #include <webrtc/Keyboard.h>
 
+namespace {
+
+// helper method to ensure a json object has the required fields convertible
+// to the appropriate types.
+bool validateJsonObject(
+    const Json::Value &obj, const std::string &type,
+    const std::vector<std::pair<std::string, Json::ValueType>> &fields,
+    std::function<void(const std::string&)> onError) {
+    for (const auto &field_spec : fields) {
+        const auto &field_name = field_spec.first;
+        auto field_type = field_spec.second;
+        if (!(obj.isMember(field_name) &&
+            obj[field_name].isConvertibleTo(field_type))) {
+            std::string error_msg = "Expected a field named '";
+            error_msg += field_name + "' of type '";
+            error_msg += std::to_string(field_type);
+            error_msg += "'";
+            if (!type.empty()) {
+                error_msg += " in message of type '" + type + "'";
+            }
+            error_msg += ".";
+            LOG(WARNING) << error_msg;
+            onError(error_msg);
+            return false;
+        }
+    }
+    return true;
+}
+
+} // namespace
+
 MyWebSocketHandler::MyWebSocketHandler(
         std::shared_ptr<RunLoop> runLoop,
         std::shared_ptr<ServerState> serverState,
@@ -55,7 +86,14 @@ int MyWebSocketHandler::handleMessage(
 
     LOG(VERBOSE) << obj.toStyledString();
 
-    if (!obj.isMember("type")) {
+    auto sendMessageOnError =
+        [this](const std::string &error_msg) {
+          auto reply = "{\"error\": \"" + error_msg + "\"}";
+          sendMessage(reply.c_str(), reply.size());
+        };
+
+    if (!validateJsonObject(obj, "", {{"type", Json::ValueType::stringValue}},
+                            sendMessageOnError)) {
         return -EINVAL;
     }
     std::string type = obj["type"].asString();
@@ -78,7 +116,9 @@ int MyWebSocketHandler::handleMessage(
 
         prepareSessions();
     } else if (type == "set-remote-desc") {
-        if (!obj.isMember("sdp")) {
+        if (!validateJsonObject(obj, type,
+                                {{"sdp", Json::ValueType::stringValue}},
+                                sendMessageOnError)) {
             return -EINVAL;
         }
 
@@ -219,7 +259,10 @@ int MyWebSocketHandler::handleMessage(
         auto replyAsString = json_writer.write(reply);
         sendMessage(replyAsString.c_str(), replyAsString.size());
     } else if (type == "get-ice-candidate") {
-        CHECK(obj.isMember("mid"));
+        if (!validateJsonObject(obj, type, {{"mid", Json::ValueType::intValue}},
+                                sendMessageOnError)) {
+            return -EINVAL;
+        }
         int32_t mid = obj["mid"].asInt();
 
         bool success = getCandidate(mid);
@@ -232,11 +275,13 @@ int MyWebSocketHandler::handleMessage(
             sendMessage(replyAsString.c_str(), replyAsString.size());
         }
     } else if (type == "set-mouse-position") {
-        CHECK(obj.isMember("down"));
+        if (!validateJsonObject(obj, type, {{"down", Json::ValueType::intValue},
+                                            {"x", Json::ValueType::intValue},
+                                            {"y", Json::ValueType::intValue}},
+                                sendMessageOnError)) {
+            return -EINVAL;
+        }
         int32_t down = obj["down"].asInt();
-
-        CHECK(obj.isMember("x"));
-        CHECK(obj.isMember("y"));
         int32_t x = obj["x"].asInt();
         int32_t y = obj["y"].asInt();
 
@@ -245,11 +290,14 @@ int MyWebSocketHandler::handleMessage(
 
         mTouchSink->injectTouchEvent(x, y, down != 0);
     } else if (type == "inject-multi-touch") {
-        CHECK(obj.isMember("id"));
-        CHECK(obj.isMember("initialDown"));
-        CHECK(obj.isMember("x"));
-        CHECK(obj.isMember("y"));
-        CHECK(obj.isMember("slot"));
+        if (!validateJsonObject(obj, type, {{"id", Json::ValueType::intValue},
+                                            {"initialDown", Json::ValueType::intValue},
+                                            {"x", Json::ValueType::intValue},
+                                            {"y", Json::ValueType::intValue},
+                                            {"slot", Json::ValueType::intValue}},
+                                sendMessageOnError)) {
+            return -EINVAL;
+        }
         int32_t id = obj["id"].asInt();
         int32_t initialDown = obj["initialDown"].asInt();
         int32_t x = obj["x"].asInt();
@@ -270,11 +318,13 @@ int MyWebSocketHandler::handleMessage(
 
         mTouchSink->injectMultiTouchEvent(id, slot, x, y, initialDown);
     } else if (type == "key-event") {
-        CHECK(obj.isMember("event_type"));
+        if (!validateJsonObject(obj, type, {{"event_type", Json::ValueType::stringValue},
+                                            {"keycode", Json::ValueType::stringValue}},
+                                sendMessageOnError)) {
+            return -EINVAL;
+        }
         auto down = obj["event_type"].asString() == std::string("keydown");
-        CHECK(obj.isMember("keycode"));
         auto code = DomKeyCodeToLinux(obj["keycode"].asString());
-        CHECK(code);
         mKeyboardSink->injectEvent(down, code);
     }
 
