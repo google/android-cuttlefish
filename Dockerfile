@@ -29,14 +29,24 @@ RUN apt update \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
        net-tools rsyslog equivs # qemu-system-x86
 
-RUN dpkg -l
+RUN apt install -y dialog
+
+
+SHELL ["/bin/bash", "-c"]
+
+RUN if test $(uname -m) == aarch64; then \
+	    dpkg --add-architecture amd64 \
+	    && apt update \
+	    && apt install -y libc6:amd64 \
+	    && apt install -y qemu qemu-user qemu-user-static binfmt-support; \
+    fi
 
 COPY . /root/android-cuttlefish/
 
 RUN cd /root/android-cuttlefish \
     && yes | sudo mk-build-deps -i -r -B \
     && dpkg-buildpackage -uc -us \
-    && apt install -y -f ../cuttlefish-common_*_amd64.deb
+    && apt install -y -f ../cuttlefish-common_*.deb
 
 RUN apt-get clean \
     && rm -rf /root/android-cuttlefish
