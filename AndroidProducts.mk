@@ -15,6 +15,7 @@
 #
 
 PRODUCT_MAKEFILES := \
+	aosp_cf_arm64_auto:$(LOCAL_DIR)/vsoc_arm64/auto/aosp_cf.mk \
 	aosp_cf_arm64_phone:$(LOCAL_DIR)/vsoc_arm64/phone/aosp_cf.mk \
 	aosp_cf_x86_64_phone:$(LOCAL_DIR)/vsoc_x86_64/phone/aosp_cf.mk \
 	aosp_cf_x86_auto:$(LOCAL_DIR)/vsoc_x86/auto/device.mk \
@@ -26,6 +27,7 @@ PRODUCT_MAKEFILES := \
 	aosp_cf_x86_tv:$(LOCAL_DIR)/vsoc_x86/tv/device.mk
 
 COMMON_LUNCH_CHOICES := \
+	aosp_cf_arm64_auto-userdebug \
 	aosp_cf_arm64_phone-userdebug \
 	aosp_cf_x86_64_phone-userdebug \
 	aosp_cf_x86_auto-userdebug \
