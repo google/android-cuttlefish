@@ -565,6 +565,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
     Return<void> setIndicationFilter_1_5(int32_t serial,
             hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> indicationFilter);
     Return<void> getBarringInfo(int32_t serial);
+    Return<void> getVoiceRegistrationState_1_5(int32_t serial);
+    Return<void> getDataRegistrationState_1_5(int32_t serial);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -1182,6 +1184,22 @@ Return<void> RadioImpl_1_5::getVoiceRegistrationState(int32_t serial) {
 }
 
 Return<void> RadioImpl_1_5::getDataRegistrationState(int32_t serial) {
+#if VDBG
+    RLOGD("getDataRegistrationState: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_DATA_REGISTRATION_STATE);
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::getVoiceRegistrationState_1_5(int32_t serial) {
+#if VDBG
+    RLOGD("getVoiceRegistrationState: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_VOICE_REGISTRATION_STATE);
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::getDataRegistrationState_1_5(int32_t serial) {
 #if VDBG
     RLOGD("getDataRegistrationState: serial %d", serial);
 #endif
@@ -4880,7 +4898,7 @@ int radio_1_5::getDataRegistrationStateResponse(int slotId,
                 if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
             } else {
                 dataRegResponse.regState = (RegState) dataRegState->regState;
-                dataRegResponse.rat = dataRegState->rat;;
+                dataRegResponse.rat = dataRegState->rat;
                 dataRegResponse.reasonDataDenied = dataRegState->reasonDataDenied;
                 dataRegResponse.maxDataCalls = dataRegState->maxDataCalls;
                 fillCellIdentityResponse(dataRegResponse.cellIdentity, dataRegState->cellIdentity);
@@ -4888,8 +4906,8 @@ int radio_1_5::getDataRegistrationStateResponse(int slotId,
         }
 
         Return<void> retStatus =
-                radioService[slotId]->mRadioResponse->getDataRegistrationStateResponse(responseInfo,
-                dataRegResponse);
+                radioService[slotId]->mRadioResponse->getDataRegistrationStateResponse(
+                        responseInfo, dataRegResponse);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("getDataRegistrationStateResponse: radioService[%d]->mRadioResponse == NULL",
