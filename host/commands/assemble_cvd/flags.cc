@@ -712,6 +712,11 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
   }
 
+  if (!cvd::FileExists(config->ForDefaultInstance().access_kregistry_path())) {
+    CreateBlankImage(config->ForDefaultInstance().access_kregistry_path(), 1,
+                     "none", "64K");
+  }
+
   if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
     if (!RebuildSuperImage(fetcher_config, *config, FLAGS_super_image)) {
       LOG(ERROR) << "Super image rebuilding requested but could not be completed.";

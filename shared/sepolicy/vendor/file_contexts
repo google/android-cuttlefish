@@ -17,6 +17,7 @@
 /dev/block/pci/pci0000:00/0000:00:03\.0/by-name/userdata u:object_r:userdata_block_device:s0
 /dev/block/pci/pci0000:00/0000:00:03\.0/by-name/cache u:object_r:cache_block_device:s0
 
+/dev/block/pmem0  u:object_r:rebootescrow_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/dri u:object_r:gpu_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
