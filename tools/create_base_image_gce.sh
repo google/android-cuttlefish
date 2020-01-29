@@ -55,6 +55,7 @@ sudo chroot /mnt/image /usr/bin/apt install -y "${tmp_debs[@]}"
 sudo chroot /mnt/image /usr/bin/apt install -y openjdk-11-jre
 sudo chroot /mnt/image /usr/bin/apt install -y unzip bzip2 lzop
 sudo chroot /mnt/image /usr/bin/apt install -y aapt
+sudo chroot /mnt/image /usr/bin/apt install -y screen # needed by tradefed
 
 sudo chroot /mnt/image /usr/bin/find /home -ls
 
