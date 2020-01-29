@@ -567,6 +567,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
     Return<void> getBarringInfo(int32_t serial);
     Return<void> getVoiceRegistrationState_1_5(int32_t serial);
     Return<void> getDataRegistrationState_1_5(int32_t serial);
+    Return<void> setNetworkSelectionModeManual_1_5(int32_t serial,
+            const hidl_string& operatorNumeric, V1_5::RadioAccessNetworks ran);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3833,6 +3835,15 @@ Return<void> RadioImpl_1_5::getBarringInfo(int32_t /* serial */) {
 #if VDBG
     RLOGE("[%04d]< %s", serial, "Method is not implemented");
 #endif
+    return Void();
+}
+
+Return<void> RadioImpl_1_5::setNetworkSelectionModeManual_1_5(int32_t serial,
+        const hidl_string& operatorNumeric, V1_5::RadioAccessNetworks ran) {
+#if VDBG
+    RLOGD("setNetworkSelectionModeManual_1_5: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL);
     return Void();
 }
 
@@ -8273,6 +8284,33 @@ int radio_1_5::getBarringInfoResponse(int slotId,
     } else {
         RLOGE("getBarringInfoResponse: radioService[%d]->mRadioResponse == NULL",
                 slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_5::setNetworkSelectionModeManualResponse_1_5(int slotId,
+                             int responseType, int serial, RIL_Errno e,
+                             void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("setNetworkSelectionModeManualResponse_1_5: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_5
+                ->setNetworkSelectionModeManualResponse_1_5(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        Return<void> retStatus = radioService[slotId]->mRadioResponse
+                ->setNetworkSelectionModeManualResponse(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("acceptCallResponse: radioService[%d]->setNetworkSelectionModeManualResponse_1_5 "
+                "== NULL", slotId);
     }
 
     return 0;
