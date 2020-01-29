@@ -1,5 +1,7 @@
 #include "host/commands/assemble_cvd/flags.h"
 
+#include <sys/statvfs.h>
+
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -569,17 +571,54 @@ bool ConcatRamdisks(const std::string& new_ramdisk_path, const std::string& ramd
   return true;
 }
 
-void CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
+off_t AvailableSpaceAtPath(const std::string& path) {
+  struct statvfs vfs;
+  if (statvfs(path.c_str(), &vfs) != 0) {
+    int error_num = errno;
+    LOG(ERROR) << "Could not find space available at " << path << ", error was "
+               << strerror(error_num);
+    return 0;
+  }
+  return vfs.f_bsize * vfs.f_bavail; // block size * free blocks for unprivileged users
+}
+
+off_t USERDATA_IMAGE_RESERVED = 4l * (1l << 30l); // 4 GiB
+off_t AGGREGATE_IMAGE_RESERVED = 12l * (1l << 30l); // 12 GiB
+
+bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
   if (FLAGS_composite_disk.empty()) {
-    LOG(FATAL) << "asked to create composite disk, but path was empty";
+    LOG(ERROR) << "asked to create composite disk, but path was empty";
+    return false;
+  }
+  if (!cvd::SharedFD::Open(FLAGS_composite_disk.c_str(), O_WRONLY | O_CREAT, 0644)->IsOpen()) {
+    LOG(ERROR) << "Could not ensure " << FLAGS_composite_disk << " exists";
+    return false;
   }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
+    auto existing_size = cvd::FileSize(FLAGS_data_image);
+    auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
+    if (available_space < USERDATA_IMAGE_RESERVED - existing_size) {
+      // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a separate machine
+      LOG(ERROR) << "Not enough space in fs containing " << FLAGS_data_image;
+      LOG(ERROR) << "Wanted " << (USERDATA_IMAGE_RESERVED - existing_size);
+      LOG(ERROR) << "Got " << available_space;
+      return false;
+    }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
     create_composite_disk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
   } else {
+    auto existing_size = cvd::FileSize(FLAGS_composite_disk);
+    auto available_space = AvailableSpaceAtPath(FLAGS_composite_disk);
+    if (available_space < AGGREGATE_IMAGE_RESERVED - existing_size) {
+      LOG(ERROR) << "Not enough space to create " << FLAGS_composite_disk;
+      LOG(ERROR) << "Wanted " << (AGGREGATE_IMAGE_RESERVED - existing_size);
+      LOG(ERROR) << "Got " << available_space;
+      return false;
+    }
     aggregate_image(disk_config(), FLAGS_composite_disk);
   }
+  return true;
 }
 
 } // namespace
@@ -725,7 +764,9 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   }
 
   if (ShouldCreateCompositeDisk()) {
-    CreateCompositeDisk(*config);
+    if (!CreateCompositeDisk(*config)) {
+      exit(cvd::kDiskSpaceError);
+    }
   }
 
   // Check that the files exist
