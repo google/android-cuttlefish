@@ -175,21 +175,6 @@ std::vector<std::string> download_host_package(BuildApi* build_api,
   return files;
 }
 
-bool desparse(const std::string& file) {
-  LOG(INFO) << "Unsparsing " << file;
-  cvd::Command dd_cmd("/bin/dd");
-  dd_cmd.AddParameter("if=", file);
-  dd_cmd.AddParameter("of=", file);
-  dd_cmd.AddParameter("conv=notrunc");
-  dd_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                       cvd::Subprocess::StdIOChannel::kStdErr);
-  if (dd_cmd.Start().Wait() != 0) {
-    LOG(ERROR) << "Could not unsparse " << file;
-    return false;
-  }
-  return true;
-}
-
 std::vector<std::string> download_ota_tools(BuildApi* build_api,
                                             const Build& build,
                                             const std::string& target_directory) {
@@ -310,7 +295,6 @@ int main(int argc, char** argv) {
       if (image_files.empty()) {
         LOG(FATAL) << "Could not download images for " << default_build;
       }
-      desparse(target_dir + "/userdata.img");
       LOG(INFO) << "Adding img-zip files for default build";
       for (auto& file : image_files) {
         LOG(INFO) << file;
