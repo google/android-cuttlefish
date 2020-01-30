@@ -32,6 +32,11 @@ The container's IP address can be found as follows:
 
 	CF=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cuttlefish)
 
+Alternatively, you can both create (if it hasn't been created) and set up CF for
+a container using this script:
+
+	source start.sh <name> # <name> defaults to cuttlefish
+
 You can then provision the container with a cuttlefish image as described, for example, using [these instructions on AOSP](https://android.googlesource.com/device/google/cuttlefish/), you can follow the steps to obtain a prebuilt image of Cuttlefish (start from step #2, since the container already took care of it). Once you've obtained the image at step #8, you can copy it to your container as follows:
 
 ```bash
