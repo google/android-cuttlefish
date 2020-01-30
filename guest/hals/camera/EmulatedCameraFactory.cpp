@@ -63,7 +63,7 @@ EmulatedCameraFactory::EmulatedCameraFactory()
 
 EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(
     size_t cameraId) {
-  ::cvd::LockGuard< ::cvd::Mutex> lock(mEmulatedCamerasMutex);
+  std::lock_guard lock(mEmulatedCamerasMutex);
 
   if (cameraId >= getEmulatedCameraNum()) {
     ALOGE("%s: Invalid camera ID: %zu", __FUNCTION__, cameraId);
