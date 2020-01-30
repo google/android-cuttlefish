@@ -80,13 +80,6 @@ extern "C" {
  *                    RIL_REQUEST_SET_SIM_CARD_POWER,
  *                    RIL_REQUEST_SET_CARRIER_INFO_IMSI_ENCRYPTION,
  *                    RIL_UNSOL_CARRIER_INFO_IMSI_ENCRYPTION
- *                    The new parameters for RIL_REQUEST_SETUP_DATA_CALL,
- *                    Updated data structures: RIL_DataProfileInfo_v15, RIL_InitialAttachApn_v15
- *                    New data structure RIL_DataRegistrationStateResponse,
- *                    RIL_VoiceRegistrationStateResponse same is
- *                    used in RIL_REQUEST_DATA_REGISTRATION_STATE and
- *                    RIL_REQUEST_VOICE_REGISTRATION_STATE respectively.
- *                    New data structure RIL_OpenChannelParams.
  *                    RIL_REQUEST_START_NETWORK_SCAN
  *                    RIL_REQUEST_STOP_NETWORK_SCAN
  *                    RIL_UNSOL_NETWORK_SCAN_RESULT
@@ -94,8 +87,18 @@ extern "C" {
  *                    RIL_REQUEST_ENABLE_MODEM
  *                    RIL_REQUEST_EMERGENCY_DIAL
  *                    RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS
+ *                    RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA
  *                    RIL_REQUEST_ENABLE_UICC_APPLICATIONS
  *                    RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
+ *                    RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
+ *                    RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
+ *                    The new parameters for RIL_REQUEST_SETUP_DATA_CALL,
+ *                    Updated data structures: RIL_DataProfileInfo_v15, RIL_InitialAttachApn_v15,
+ *                    RIL_Data_Call_Response_v12.
+ *                    New data structure RIL_DataRegistrationStateResponse, RIL_OpenChannelParams,
+ *                    RIL_VoiceRegistrationStateResponse same is
+ *                    used in RIL_REQUEST_DATA_REGISTRATION_STATE and
+ *                    RIL_REQUEST_VOICE_REGISTRATION_STATE respectively.
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -6451,28 +6454,6 @@ typedef struct {
 #define RIL_REQUEST_STOP_KEEPALIVE 145
 
 /**
- * RIL_REQUEST_START_NETWORK_SCAN4
- *
- * Starts a new network scan
- *
- * Request to start a network scan with specified radio access networks with frequency bands and/or
- * channels.
- *
- * "data" is a const RIL_NetworkScanRequest *.
- * "response" is NULL
- *
- * Valid errors:
- *  SUCCESS
- *  RADIO_NOT_AVAILABLE
- *  DEVICE_IN_USE
- *  INTERNAL_ERR
- *  MODEM_ERR
- *  INVALID_ARGUMENTS
- *
- */
-#define RIL_REQUEST_START_NETWORK_SCAN4 146
-
-/**
  * RIL_REQUEST_GET_MODEM_STACK_STATUS
  *
  * Request status of a logical modem
@@ -6483,7 +6464,7 @@ typedef struct {
  *  MODEM_ERR
  *
  */
-#define RIL_REQUEST_GET_MODEM_STACK_STATUS 147
+#define RIL_REQUEST_GET_MODEM_STACK_STATUS 146
 
 /**
  * @param info Response info struct containing response type, serial no. and error
@@ -6498,7 +6479,7 @@ typedef struct {
  *   RadioError:REQUEST_NOT_SUPPORTED
  *   RadioError:NO_RESOURCES
  */
-#define RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP 148
+#define RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP 147
 
 /**
  * Callback of IRadio.setPreferredNetworkTypeBitmap(int, bitfield<RadioAccessFamily>)
@@ -6516,7 +6497,7 @@ typedef struct {
  *   RadioError:REQUEST_NOT_SUPPORTED
  *   RadioError:NO_RESOURCES
  */
-#define RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP 149
+#define RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP 148
 
 /**
  * RIL_REQUEST_EMERGENCY_DIAL
@@ -6568,7 +6549,7 @@ typedef struct {
  *  ABORTED
  *  INVALID_MODEM_STATE
  */
-#define RIL_REQUEST_EMERGENCY_DIAL 150
+#define RIL_REQUEST_EMERGENCY_DIAL 149
 
 /**
  * Specify which bands modem's background scan must act on.
@@ -6584,7 +6565,7 @@ typedef struct {
  *  INTERNAL_ERR
  *
  */
-#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS 151
+#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS 150
 
 /**
  * RIL_REQUEST_ENABLE_MODEM
@@ -6597,58 +6578,11 @@ typedef struct {
  *  MODEM_ERR
  *
  */
-#define RIL_REQUEST_ENABLE_MODEM 152
+#define RIL_REQUEST_ENABLE_MODEM 151
 
 /**
- * RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4
+ * RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA
  *
- * Set carrier restrictions. Expected modem behavior:
- *  If never receives this command:
- *  - Must allow all carriers
- *  Receives this command:
- *  - Only allow carriers specified in carriers. The restriction persists across power cycles
- *    and FDR. If a present SIM is allowed, modem must not reload the SIM. If a present SIM is
- *    *not* allowed, modem must detach from the registered network and only keep emergency
- *    service, and notify Android SIM refresh reset with new SIM state being
- *    CardState:RESTRICTED. Emergency service must be enabled.
- *
- * "data" is const RIL_CarrierRestrictionsWithPriority *
- * A list of allowed carriers and possibly a list of excluded carriers with the priority and
- * multisim policy.
- *
- * Valid errors:
- *  RIL_E_SUCCESS
- *  RIL_E_INVALID_ARGUMENTS
- *  RIL_E_RADIO_NOT_AVAILABLE
- *  RIL_E_REQUEST_NOT_SUPPORTED
- *  INTERNAL_ERR
- *  NO_MEMORY
- *  NO_RESOURCES
- *  CANCELLED
- */
-#define RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4 153
-
-/**
- * RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4
- *
- * Gets the carrier restrictions.
- *
- * "data" is NULL
- *
- * "response" is const RIL_CarrierRestrictionsWithPriority *.
- *
- * Valid errors:
- *  RIL_E_SUCCESS
- *  RIL_E_RADIO_NOT_AVAILABLE
- *  RIL_E_REQUEST_NOT_SUPPORTED
- *  INTERNAL_ERR
- *  NO_MEMORY
- *  NO_RESOURCES
- *  CANCELLED
- */
-#define RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4 154
-
-/**
  * Sets the signal strength reporting criteria.
  *
  * The resulting reporting rules are the AND of all the supplied criteria. For each RAN
@@ -6681,7 +6615,7 @@ typedef struct {
  *   RadioError:INVALID_ARGUMENTS
  *   RadioError:RADIO_NOT_AVAILABLE
  */
-#define RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5 155
+#define RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA 152
 
 /**
  * RIL_REQUEST_ENABLE_UICC_APPLICATIONS
@@ -6695,7 +6629,7 @@ typedef struct {
  *  INTERNAL_ERR
  *  REQUEST_NOT_SUPPORTED
  */
-#define RIL_REQUEST_ENABLE_UICC_APPLICATIONS 156
+#define RIL_REQUEST_ENABLE_UICC_APPLICATIONS 153
 
 /**
  * RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
@@ -6711,50 +6645,10 @@ typedef struct {
  *  INTERNAL_ERR
  *  REQUEST_NOT_SUPPORTED
  */
-#define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 157
+#define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 154
 
 /**
- * Specify which bands modem's background scan must act on.
- * If specifyChannels is true, it only scans bands specified in specifiers.
- * If specifyChannels is false, it scans all bands.
- *
- * For example, CBRS is only on LTE band 48. By specifying this band,
- * modem saves more power.
- *
- * Valid errors:
- *  SUCCESS
- *  RADIO_NOT_AVAILABLE
- *  INTERNAL_ERR
- *  INVALID_ARGUMENTS
- *
- */
-#define RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5 158
-
-/**
- * RIL_REQUEST_START_NETWORK_SCAN5
- *
- * Starts a new network scan
- *
- * Request to start a network scan with specified radio access networks with frequency bands and/or
- * channels.
- *
- * "data" is a const RIL_NetworkScanRequest *.
- * "response" is NULL
- *
- * Valid errors:
- *  SUCCESS
- *  RADIO_NOT_AVAILABLE
- *  DEVICE_IN_USE
- *  INTERNAL_ERR
- *  MODEM_ERR
- *  INVALID_ARGUMENTS
- *
- */
-#define RIL_REQUEST_START_NETWORK_SCAN_1_5 159
-
-
-/**
- * RIL_REQUEST_SET_RADIO_POWER_1_5
+ * RIL_REQUEST_SET_RADIO_POWER
  *
  * Turn on or off radio power. It can also specify whether turning on radio power is to place an
  * emergency call and whether the call will be placed on this logical modem.
@@ -6765,7 +6659,34 @@ typedef struct {
  *  INVALID_ARGUMENTS
  *
  */
-#define RIL_REQUEST_SET_RADIO_POWER_1_5 160
+#define RIL_REQUEST_SET_RADIO_POWER 155
+
+/**
+ * RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
+ *
+ * Requests that sim personlization be deactivated
+ *
+ * "data" is const char **
+ * ((const char **)(data))[0]] is  sim depersonlization code
+ *
+ * "response" is int *
+ * ((int *)response)[0] is the number of retries remaining,
+ * or -1 if number of retries are infinite.
+ *
+ * Valid errors:
+ *
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE (radio resetting)
+ *  PASSWORD_INCORRECT
+ *  SIM_ABSENT (code is invalid)
+ *  INTERNAL_ERR
+ *  NO_MEMORY
+ *  NO_RESOURCES
+ *  CANCELLED
+ *  REQUEST_NOT_SUPPORTED
+ */
+
+#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 156
 
 /**
  * RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
@@ -6803,36 +6724,8 @@ typedef struct {
  *  REQUEST_NOT_SUPPORTED
  *  MODE_NOT_SUPPORTED
  *  SIM_ABSENT
- *
  */
-#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 162
-
-/**
- * RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
- *
- * Requests that sim personlization be deactivated
- *
- * "data" is const char **
- * ((const char **)(data))[0]] is  sim depersonlization code
- *
- * "response" is int *
- * ((int *)response)[0] is the number of retries remaining,
- * or -1 if number of retries are infinite.
- *
- * Valid errors:
- *
- *  SUCCESS
- *  RADIO_NOT_AVAILABLE (radio resetting)
- *  PASSWORD_INCORRECT
- *  SIM_ABSENT (code is invalid)
- *  INTERNAL_ERR
- *  NO_MEMORY
- *  NO_RESOURCES
- *  CANCELLED
- *  REQUEST_NOT_SUPPORTED
- */
-
-#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 161
+#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 157
 
 /***********************************************************************/
 
