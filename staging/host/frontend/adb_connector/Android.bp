@@ -16,13 +16,13 @@
 cc_binary_host {
     name: "adb_connector",
     srcs: [
+        "adb_connection_maintainer.cpp",
         "main.cpp"
     ],
     header_libs: [
         "cuttlefish_glog",
     ],
     static_libs: [
-        "libadb_connection_maintainer",
         "libgflags",
     ],
     shared_libs: [
