@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include <algorithm>
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -29,8 +30,6 @@
 
 #include "guest/hals/hwcomposer/common/geometry_utils.h"
 
-using cvd::LockGuard;
-using cvd::Mutex;
 using cvd::time::Microseconds;
 using cvd::time::MonotonicTimePoint;
 using cvd::time::Nanoseconds;
@@ -126,7 +125,7 @@ void StatsKeeper::RecordSetStart() {
 
 void StatsKeeper::RecordSetEnd() {
   last_composition_stats_.set_end = MonotonicTimePoint::Now();
-  LockGuard<Mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   num_set_calls_++;
   while (!raw_composition_data_.empty() &&
          period_length_ < last_composition_stats_.set_end -
@@ -189,7 +188,7 @@ void StatsKeeper::RecordSetEnd() {
 }
 
 void StatsKeeper::SynchronizedDump(char* buffer, int buffer_size) const {
-  LockGuard<Mutex> lock(mutex_);
+  std::lock_guard lock(mutex_);
   int chars_written = 0;
 // Make sure there is enough space to write the next line
 #define bprintf(...)                                                           \
