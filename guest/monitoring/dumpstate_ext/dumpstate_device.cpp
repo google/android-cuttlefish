@@ -15,19 +15,26 @@
  */
 #include "guest/monitoring/dumpstate_ext/dumpstate_device.h"
 
-#include <log/log.h>
 #include <DumpstateUtil.h>
+#include <log/log.h>
 
 using android::os::dumpstate::DumpFileToFd;
 
 namespace android {
 namespace hardware {
 namespace dumpstate {
-namespace V1_0 {
+namespace V1_1 {
 namespace implementation {
 
 // Methods from ::android::hardware::dumpstate::V1_0::IDumpstateDevice follow.
 Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
+  return dumpstateBoard_1_1(handle, DumpstateMode::DEFAULT, 30 * 1000 /* timeoutMillis */);
+}
+
+// Methods from ::android::hardware::dumpstate::V1_1::IDumpstateDevice follow.
+Return<void> DumpstateDevice::dumpstateBoard_1_1(const hidl_handle& handle,
+                                                 DumpstateMode mode,
+                                                 uint64_t /* timeoutMillis */) {
   if (handle == nullptr || handle->numFds < 1) {
     ALOGE("no FDs\n");
     return Void();
@@ -39,13 +46,23 @@ Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
     return Void();
   }
 
+  if (mode < DumpstateMode::FULL || mode > DumpstateMode::DEFAULT) {
+    ALOGE("Invalid mode: %d\n", mode);
+    return Status::fromExceptionCode(Status::EX_ILLEGAL_ARGUMENT);
+  }
+
   DumpFileToFd(fd, "GCE INITIAL METADATA", "/initial.metadata");
 
   return Void();
 }
 
+Return<bool> DumpstateDevice::setDeviceLoggingEnabled(bool /* enable */) {
+  // Unsupported operation.
+  return false;
+}
+
 }  // namespace implementation
-}  // namespace V1_0
+}  // namespace V1_1
 }  // namespace dumpstate
 }  // namespace hardware
 }  // namespace android
