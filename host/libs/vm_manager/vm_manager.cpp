@@ -117,7 +117,7 @@ bool VmManager::UserInGroup(const std::string& group,
   return true;
 }
 
-bool VmManager::LinuxVersionAtLeast4_8(std::vector<std::string>* config_commands) {
+std::pair<int,int> VmManager::GetLinuxVersion() {
   struct utsname info;
   if (!uname(&info)) {
     char* digit = strtok(info.release, "+.-");
@@ -125,24 +125,57 @@ bool VmManager::LinuxVersionAtLeast4_8(std::vector<std::string>* config_commands
     if (digit) {
       digit = strtok(NULL, "+.-");
       int minor = atoi(digit);
-      if (major > 4 || (major == 4 && minor >= 8)) {
-        return true;
-      }
+      return std::pair<int,int>{major, minor};
     }
   }
-  LOG(ERROR) << "Kernel version must be >=4.8";
-  config_commands->push_back("# Please upgrade your kernel to >=4.8");
+  LOG(ERROR) << "Failed to detect Linux kernel version";
+  return invalid_linux_version;
+}
+
+bool VmManager::LinuxVersionAtLeast(std::vector<std::string>* config_commands,
+                                    const std::pair<int,int>& version,
+                                    int major, int minor) {
+  if (version.first > major ||
+      (version.first == major && version.second >= minor)) {
+    return true;
+  }
+
+  LOG(ERROR) << "Kernel version must be >=" << major << "." << minor
+             << ", have " << version.first << "." << version.second;
+  config_commands->push_back("# Please upgrade your kernel to >=" +
+                             std::to_string(major) + "." +
+                             std::to_string(minor));
   return false;
 }
 
 bool VmManager::ValidateHostConfiguration(
     std::vector<std::string>* config_commands) const {
+  // if we can't detect the kernel version, just fail
+  auto version = VmManager::GetLinuxVersion();
+  if (version == invalid_linux_version) {
+    return false;
+  }
+
   // the check for cvdnetwork needs to happen even if the user is not in kvm, so
   // we can't just say UserInGroup("kvm") && UserInGroup("cvdnetwork")
-  auto in_kvm = VmManager::UserInGroup("kvm", config_commands);
   auto in_cvdnetwork = VmManager::UserInGroup("cvdnetwork", config_commands);
-  auto linux_ver_4_8 = VmManager::LinuxVersionAtLeast4_8(config_commands);
-  return in_kvm && in_cvdnetwork && linux_ver_4_8;
+
+  // if we're in the virtaccess group this is likely to be a CrOS environment.
+  auto is_cros = cvd::InGroup("virtaccess");
+  if (is_cros) {
+    // relax the minimum kernel requirement slightly, as chromeos-4.4 has the
+    // needed backports to enable vhost_vsock
+    auto linux_ver_4_4 =
+      VmManager::LinuxVersionAtLeast(config_commands, version, 4, 4);
+    return in_cvdnetwork && linux_ver_4_4;
+  } else {
+    // this is regular Linux, so use the Debian group name and be more
+    // conservative with the kernel version check.
+    auto in_kvm = VmManager::UserInGroup("kvm", config_commands);
+    auto linux_ver_4_8 =
+      VmManager::LinuxVersionAtLeast(config_commands, version, 4, 8);
+    return in_cvdnetwork && in_kvm && linux_ver_4_8;
+  }
 }
 
 void VmManager::WithFrontend(bool enabled) {

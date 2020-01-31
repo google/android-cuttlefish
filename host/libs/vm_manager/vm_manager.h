@@ -60,7 +60,12 @@ class VmManager {
  protected:
   static bool UserInGroup(const std::string& group,
                           std::vector<std::string>* config_commands);
-  static bool LinuxVersionAtLeast4_8(std::vector<std::string>* config_commands);
+  static constexpr std::pair<int,int> invalid_linux_version =
+    std::pair<int,int>();
+  static std::pair<int,int> GetLinuxVersion();
+  static bool LinuxVersionAtLeast(std::vector<std::string>* config_commands,
+                                  const std::pair<int,int>& version,
+                                  int major, int minor);
 
   const vsoc::CuttlefishConfig* config_;
   VmManager(const vsoc::CuttlefishConfig* config);
