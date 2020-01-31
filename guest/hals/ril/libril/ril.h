@@ -2139,10 +2139,12 @@ typedef enum {
 } RIL_ScanType;
 
 typedef enum {
-    GERAN = 0x01,   // GSM EDGE Radio Access Network
-    UTRAN = 0x02,   // Universal Terrestrial Radio Access Network
-    EUTRAN = 0x03,  // Evolved Universal Terrestrial Radio Access Network
-    NGRAN = 0x04,   // Next-Generation Radio Access Network
+    UNKNOWN = 0x00,     // Unknown Radio Access Network
+    GERAN = 0x01,       // GSM EDGE Radio Access Network
+    UTRAN = 0x02,       // Universal Terrestrial Radio Access Network
+    EUTRAN = 0x03,      // Evolved Universal Terrestrial Radio Access Network
+    NGRAN = 0x04,       // Next-Generation Radio Access Network
+    CDMA2000 = 0x05,    // CDMA 2000 Radio AccessNetwork
 } RIL_RadioAccessNetworks;
 
 typedef enum {
