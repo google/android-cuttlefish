@@ -62,7 +62,8 @@ cc_binary_host {
     defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }
 
-sh_binary_host {
+python_binary_host {
     name: "cf_bpttool",
-    src: "cf_bpttool",
+    srcs: [ "cf_bpttool.py" ],
+    defaults: ["py2_only"],
 }
