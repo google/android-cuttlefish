@@ -48,7 +48,6 @@
 #############################
 # Vendor files
 #
-/vendor/bin/usbforward  u:object_r:usbforward_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
 /vendor/bin/vsock_logcat  u:object_r:vsock_logcat_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0

@@ -68,7 +68,6 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 #
 PRODUCT_PACKAGES += \
     socket_vsock_proxy \
-    usbforward \
     CuttlefishService \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
