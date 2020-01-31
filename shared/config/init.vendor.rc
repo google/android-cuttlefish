@@ -8,7 +8,6 @@ on early-init
     chown system system /dev/gce
 
     mount tracefs tracefs /sys/kernel/tracing
-    chmod 0755 /sys/kernel/tracing
 
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.hardware.egl ${ro.boot.hardware.egl}
