@@ -57,7 +57,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
     vendor.rild.libpath=libcuttlefish-ril.so \
 
 # vehicle HAL
-PRODUCT_PACKAGES += android.hardware.automotive.vehicle@2.0-service
+ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
+    LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@2.0-service
+endif
+PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
