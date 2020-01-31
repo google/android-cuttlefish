@@ -86,26 +86,6 @@ int memfd_create_wrapper(const char* name, unsigned int flags) {
 
 namespace cvd {
 
-bool FileInstance::CopyFrom(FileInstance& in) {
-  std::vector<char> buffer(8192);
-  while (true) {
-    ssize_t num_read = in.Read(buffer.data(), buffer.size());
-    if (!num_read) {
-      return true;
-    }
-    if (num_read == -1) {
-      return false;
-    }
-    if (num_read > 0) {
-      if (Write(buffer.data(), num_read) != num_read) {
-        // The caller will have to log an appropriate message.
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   std::vector<char> buffer(8192);
   while (length > 0) {
@@ -141,16 +121,6 @@ void FileInstance::Close() {
     }
   }
   fd_ = -1;
-}
-
-void FileInstance::Identify(const char* identity) {
-  std::stringstream identity_stream;
-  identity_stream << "fd=" << fd_ << " @" << this << " is " << identity;
-  identity_ = identity_stream.str();
-  std::stringstream message;
-  message << __FUNCTION__ << ": " << identity_;
-  std::string message_str = message.str();
-  Log(message_str.c_str());
 }
 
 bool FileInstance::IsSet(fd_set* in) const {
@@ -232,23 +202,6 @@ static void MakeAddress(const char* name, bool abstract,
   *len = namelen + offsetof(struct sockaddr_un, sun_path) + 1;
 }
 
-SharedFD SharedFD::SocketSeqPacketServer(const char* name, mode_t mode) {
-  return SocketLocalServer(name, false, SOCK_SEQPACKET, mode);
-}
-
-SharedFD SharedFD::SocketSeqPacketClient(const char* name) {
-  return SocketLocalClient(name, false, SOCK_SEQPACKET);
-}
-
-SharedFD SharedFD::TimerFD(int clock, int flags) {
-  int fd = timerfd_create(clock, flags);
-  if (fd == -1) {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
-  } else {
-    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
-  }
-}
-
 SharedFD SharedFD::Accept(const FileInstance& listener, struct sockaddr* addr,
                           socklen_t* addrlen) {
   return SharedFD(
@@ -278,11 +231,6 @@ bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
 
 SharedFD SharedFD::Event(int initval, int flags) {
   int fd = eventfd(initval, flags);
-  return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
-}
-
-SharedFD SharedFD::Epoll(int flags) {
-  int fd = epoll_create1(flags);
   return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
 

@@ -66,26 +66,6 @@ namespace cvd {
 class FileInstance;
 
 /**
- * Describes the fields in msghdr that are honored by the *MsgAndFDs
- * calls.
- */
-struct InbandMessageHeader {
-  void* msg_name;
-  socklen_t msg_namelen;
-  struct iovec* msg_iov;
-  size_t msg_iovlen;
-  int msg_flags;
-
-  void Convert(struct msghdr* dest) const {
-    dest->msg_name = msg_name;
-    dest->msg_namelen = msg_namelen;
-    dest->msg_iov = msg_iov;
-    dest->msg_iovlen = msg_iovlen;
-    dest->msg_flags = msg_flags;
-  }
-};
-
-/**
  * Counted reference to a FileInstance.
  *
  * This is also the place where most new FileInstances are created. The creation
@@ -137,14 +117,12 @@ class SharedFD {
                          socklen_t* addrlen);
   static SharedFD Accept(const FileInstance& listener);
   static SharedFD Dup(int unmanaged_fd);
-  static SharedFD GetControlSocket(const char* name);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
   static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
   static SharedFD Creat(const char* pathname, mode_t mode);
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
-  static SharedFD Epoll(int flags = 0);
   static SharedFD MemfdCreate(const char* name, unsigned int flags = 0);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
@@ -155,12 +133,9 @@ class SharedFD {
   static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
   static SharedFD SocketLocalServer(int port, int type);
-  static SharedFD SocketSeqPacketServer(const char* name, mode_t mode);
-  static SharedFD SocketSeqPacketClient(const char* name);
   static SharedFD VsockServer(unsigned int port, int type);
   static SharedFD VsockServer(int type);
   static SharedFD VsockClient(unsigned int cid, unsigned int port, int type);
-  static SharedFD TimerFD(int clock, int flags);
 
   bool operator==(const SharedFD& rhs) const { return value_ == rhs.value_; }
 
@@ -231,7 +206,6 @@ class FileInstance {
   // Otherwise an error will be set either on this file or the input.
   // The non-const reference is needed to avoid binding this to a particular
   // reference type.
-  bool CopyFrom(FileInstance& in);
   bool CopyFrom(FileInstance& in, size_t length);
 
   int UNMANAGED_Dup() {
@@ -248,27 +222,6 @@ class FileInstance {
     return rval;
   }
 
-  int EpollCtl(int op, cvd::SharedFD new_fd, struct epoll_event* event) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(epoll_ctl(fd_, op, new_fd->fd_, event));
-    errno_ = errno;
-    return rval;
-  }
-
-  int EpollWait(struct epoll_event* events, int maxevents, int timeout) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(epoll_wait(fd_, events, maxevents, timeout));
-    errno_ = errno;
-    return rval;
-  }
-
-  int Fchown(uid_t owner, gid_t group) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(fchown(fd_, owner, group));
-    errno_ = errno;
-    return rval;
-  }
-
   int Fcntl(int command, int value) {
     errno = 0;
     int rval = TEMP_FAILURE_RETRY(fcntl(fd_, command, value));
@@ -276,23 +229,7 @@ class FileInstance {
     return rval;
   }
 
-  int Fstat(struct stat* buf) {
-    errno = 0;
-    int rval = TEMP_FAILURE_RETRY(fstat(fd_, buf));
-    errno_ = errno;
-    return rval;
-  }
-
   int GetErrno() const { return errno_; }
-
-  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
-    errno = 0;
-    int rval = getsockopt(fd_, level, optname, optval, optlen);
-    if (rval == -1) {
-      errno_ = errno;
-    }
-    return rval;
-  }
 
   int GetSockName(struct sockaddr* addr, socklen_t* addrlen) {
     errno = 0;
@@ -309,8 +246,6 @@ class FileInstance {
     GetSockName(reinterpret_cast<struct sockaddr*>(&vm_socket), &length);
     return vm_socket.svm_port;
   }
-
-  void Identify(const char* identity);
 
   int Ioctl(int request, void* val = nullptr) {
     errno = 0;
@@ -340,32 +275,9 @@ class FileInstance {
     return rval;
   }
 
-  void* Mmap(void* addr, size_t length, int prot, int flags, off_t offset) {
-    errno = 0;
-    void* rval = mmap(addr, length, prot, flags, fd_, offset);
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t Pread(void* buf, size_t count, off_t offset) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(pread(fd_, buf, count, offset));
-    errno_ = errno;
-    return rval;
-  }
-
   ssize_t Recv(void* buf, size_t len, int flags) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(recv(fd_, buf, len, flags));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t RecvFrom(void* buf, size_t len, int flags, struct sockaddr* src_addr,
-                   socklen_t* addr_len) {
-    errno = 0;
-    ssize_t rval =
-        TEMP_FAILURE_RETRY(recvfrom(fd_, buf, len, flags, src_addr, addr_len));
     errno_ = errno;
     return rval;
   }
@@ -374,36 +286,6 @@ class FileInstance {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(recvmsg(fd_, msg, flags));
     errno_ = errno;
-    return rval;
-  }
-
-  template <size_t SZ>
-  ssize_t RecvMsgAndFDs(const struct InbandMessageHeader& msg_in, int flags,
-                        SharedFD (*new_fds)[SZ]) {
-    // We need to make some modifications to land the fds. Make it clear
-    // that there are no updates to the msg being passed in during this call.
-    struct msghdr msg;
-    msg_in.Convert(&msg);
-    union {
-      char buffer[CMSG_SPACE(SZ * sizeof(int))];
-      struct cmsghdr this_aligns_buffer;
-    } u;
-    msg.msg_control = u.buffer;
-    msg.msg_controllen = sizeof(u.buffer);
-
-    cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_len = CMSG_LEN(SZ * sizeof(int));
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type = SCM_RIGHTS;
-    int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (size_t i = 0; i < SZ; ++i) {
-      fd_array[i] = -1;
-    }
-    ssize_t rval = RecvMsg(&msg, flags);
-    for (size_t i = 0; i < SZ; ++i) {
-      (*new_fds)[i] =
-          std::shared_ptr<FileInstance>(new FileInstance(fd_array[i], errno));
-    }
     return rval;
   }
 
@@ -428,41 +310,9 @@ class FileInstance {
     return rval;
   }
 
-  template <size_t SZ>
-  ssize_t SendMsgAndFDs(const struct InbandMessageHeader& msg_in, int flags,
-                        const SharedFD (&fds)[SZ]) {
-    struct msghdr msg;
-    msg_in.Convert(&msg);
-    union {
-      char buffer[CMSG_SPACE(SZ * sizeof(int))];
-      struct cmsghdr this_aligns_buffer;
-    } u;
-    msg.msg_control = u.buffer;
-    msg.msg_controllen = sizeof(u.buffer);
-
-    cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
-    cmsg->cmsg_len = CMSG_LEN(SZ * sizeof(int));
-    cmsg->cmsg_level = SOL_SOCKET;
-    cmsg->cmsg_type = SCM_RIGHTS;
-    int* fd_array = reinterpret_cast<int*>(CMSG_DATA(cmsg));
-    for (size_t i = 0; i < SZ; ++i) {
-      fd_array[i] = fds[i]->fd_;
-    }
-    return SendMsg(&msg, flags);
-  }
-
   int Shutdown(int how) {
     errno = 0;
     int rval = shutdown(fd_, how);
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t SendTo(const void* buf, size_t len, int flags,
-                 const struct sockaddr* dest_addr, socklen_t addrlen) {
-    errno = 0;
-    ssize_t rval =
-        TEMP_FAILURE_RETRY(sendto(fd_, buf, len, flags, dest_addr, addrlen));
     errno_ = errno;
     return rval;
   }
@@ -492,21 +342,6 @@ class FileInstance {
     return strerror_buf_;
   }
 
-  int TimerGet(struct itimerspec* curr_value) {
-    errno = 0;
-    int rval = timerfd_gettime(fd_, curr_value);
-    errno_ = errno;
-    return rval;
-  }
-
-  int TimerSet(int flags, const struct itimerspec* new_value,
-               struct itimerspec* old_value) {
-    errno = 0;
-    int rval = timerfd_settime(fd_, flags, new_value, old_value);
-    errno_ = errno;
-    return rval;
-  }
-
   ssize_t Truncate(off_t length) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
@@ -517,13 +352,6 @@ class FileInstance {
   ssize_t Write(const void* buf, size_t count) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(write(fd_, buf, count));
-    errno_ = errno;
-    return rval;
-  }
-
-  ssize_t WriteV(struct iovec* iov, int iovcount) {
-    errno = 0;
-    ssize_t rval = TEMP_FAILURE_RETRY(writev(fd_, iov, iovcount));
     errno_ = errno;
     return rval;
   }
