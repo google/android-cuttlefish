@@ -16,7 +16,6 @@
 subdirs = [
   "vsock_logcat",
   "ip_link_add",
-  "usbforward",
   "vport_trigger",
   "vsoc_input_service",
 ]

@@ -17,12 +17,14 @@
 #ifndef HW_EMULATOR_CAMERA_EMULATED_CAMERA_FACTORY_H
 #define HW_EMULATOR_CAMERA_EMULATED_CAMERA_FACTORY_H
 
+#include <mutex>
+
 #include <utils/RefBase.h>
 
 #include <utils/Vector.h>
 #include "CameraConfiguration.h"
 #include "EmulatedBaseCamera.h"
-#include "common/libs/threads/cuttlefish_thread.h"
+#include "common/libs/threads/thread_annotations.h"
 
 namespace android {
 
@@ -167,7 +169,7 @@ class EmulatedCameraFactory {
   Vector<EmulatedBaseCamera*> mEmulatedCameras;
 
   /* Guards access to mEmulatedCameras. */
-  cvd::Mutex mEmulatedCamerasMutex;
+  std::mutex mEmulatedCamerasMutex;
 
   /* Camera callbacks (for status changing) */
   const camera_module_callbacks_t* mCallbacks;

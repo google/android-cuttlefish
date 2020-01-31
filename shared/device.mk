@@ -66,7 +66,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
 #
 PRODUCT_PACKAGES += \
     socket_vsock_proxy \
-    usbforward \
     CuttlefishService \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
