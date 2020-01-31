@@ -16,11 +16,11 @@
  */
 
 #include <deque>
+#include <mutex>
 #include <set>
 
 #include <android-base/thread_annotations.h>
 
-#include "common/libs/threads/cuttlefish_thread.h"
 #include "common/libs/time/monotonic_time.h"
 
 #include "guest/hals/hwcomposer/common/base_composer.h"
@@ -143,7 +143,7 @@ class StatsKeeper {
   int64_t total_invisible_area GUARDED_BY(mutex_);
 
   // Controls access to data from past compositions.
-  mutable cvd::Mutex mutex_;
+  mutable std::mutex mutex_;
 };
 
 class WrappedScreenView : public ScreenView {
