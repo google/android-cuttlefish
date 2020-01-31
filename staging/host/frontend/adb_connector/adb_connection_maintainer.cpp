@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/libs/adb_connection_maintainer/adb_connection_maintainer.h"
+#include "host/frontend/adb_connector/adb_connection_maintainer.h"
 
 namespace {
 
