@@ -46,9 +46,8 @@ std::string TargetFilesZip(const cvd::FetcherConfig& fetcher_config,
     }
     std::string expected_filename = "target_files-" + file_iter.second.build_id;
     if (file_path.find(expected_filename) != std::string::npos) {
-      continue;
+      return file_path;
     }
-    return file_path;;
   }
   return "";
 }
