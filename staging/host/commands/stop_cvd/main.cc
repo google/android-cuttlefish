@@ -52,7 +52,7 @@ DEFINE_int32(wait_for_launcher, 5,
 namespace {
 // Gets a set of the possible process groups of a previous launch
 std::set<pid_t> GetCandidateProcessGroups() {
-  std::string cmd = "fuser";
+  std::string cmd = "lsof -t 2>/dev/null";
   // Add the instance directory
   auto instance_dir = cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime";
   cmd += " " + instance_dir;
