@@ -44,8 +44,6 @@ static const std::set<std::string> kKnownMissing = {
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
-    "android.hardware.camera.provider@2.5",
-    "android.hardware.camera.provider@2.6",
     "android.hardware.cas.native@1.0",
     "android.hardware.confirmationui@1.0",
     "android.hardware.contexthub@1.0",

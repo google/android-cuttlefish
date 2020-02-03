@@ -85,17 +85,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- TODO (b/130078384): -->
-    <hal format="hidl">
-        <name>android.hardware.camera.provider</name>
-        <transport>hwbinder</transport>
-        <impl level="generic"></impl>
-        <version>2.4</version>
-        <interface>
-            <name>ICameraProvider</name>
-            <instance>internal/0</instance>
-        </interface>
-    </hal>
     <hal format="hidl">
         <name>android.hardware.configstore</name>
         <transport>hwbinder</transport>
