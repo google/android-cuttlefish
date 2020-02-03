@@ -1214,33 +1214,6 @@ static void request_cdma_get_subscription_source(int /*request*/,
                                  sizeof(gCdmaSubscriptionType));
 }
 
-static void request_enable_uicc_applications(int /*request*/, void* data,
-                                             size_t datalen,
-                                             RIL_Token t) {
-  ALOGV("Enable uicc applications.");
-
-  if (data == NULL || datalen != sizeof(int)) {
-    gce_ril_env->OnRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
-    return;
-  }
-
-  bool enable = *(int *)(data) != 0;
-
-  ALOGV("areUiccApplicationsEnabled change from %d to %d", areUiccApplicationsEnabled, enable);
-
-  areUiccApplicationsEnabled = enable;
-
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-}
-
-static void request_are_uicc_applications_enabled(int /*request*/, void* /*data*/,
-                                                  size_t /*datalen*/,
-                                                  RIL_Token t) {
-  ALOGV("Getting whether uicc applications are enabled.");
-
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &areUiccApplicationsEnabled, sizeof(bool));
-}
-
 static void request_cdma_set_subscription_source(int /*request*/, void* data,
                                                  size_t /*datalen*/,
                                                  RIL_Token t) {
@@ -1383,20 +1356,6 @@ static void request_exit_emergency_mode(void* /*data*/, size_t /*datalen*/,
   ALOGV("Exiting emergency callback mode.");
 
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-}
-
-static void request_set_carrier_restrictions4(void* /*data*/,
-                                              size_t /*datalen*/,
-                                              RIL_Token t) {
-  ALOGV("Set carrier restrictions is not supported");
-  // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
-  gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
-}
-
-static void request_get_carrier_restrictions4(RIL_Token t) {
-  ALOGV("Get carrier restrictions is not supported");
-  // Carrier restrictions are not supported on cuttlefish, as they are specific for locked devices
-  gce_ril_env->OnRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
 }
 
 static RIL_RadioState gce_ril_current_state() {
@@ -2207,12 +2166,6 @@ static void request_start_network_scan(RIL_Token t) {
   return;
 }
 
-static void request_start_network_scan4(RIL_Token t) {
-  ALOGV("Scanning network 1.4");
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-  return;
-}
-
 static void request_set_preferred_network_type_bitmap(int /*request*/, void* data,
                                                size_t /*datalen*/,
                                                RIL_Token t) {
@@ -2270,27 +2223,54 @@ static void request_set_system_selection_channels(int /*request*/, RIL_Token t) 
 }
 
 // New functions after Q.
-static void request_set_signal_strength_reporting_criteria_1_5(int /*request*/, void* /*data*/,
-                                                               size_t /*datalen*/, RIL_Token t) {
-  ALOGV("request_set_signal_strength_reporting_criteria_1_5 - void");
+static void request_set_signal_strength_reporting_criteria(int /*request*/, void* /*data*/,
+                                                           size_t /*datalen*/, RIL_Token t) {
+    ALOGV("request_set_signal_strength_reporting_criteria - void");
+    gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+    return;
+}
+
+static void request_enable_uicc_applications(int /*request*/, void* data,
+                                             size_t datalen,
+                                             RIL_Token t) {
+  ALOGV("Enable uicc applications.");
+
+  if (data == NULL || datalen != sizeof(int)) {
+    gce_ril_env->OnRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
+    return;
+  }
+
+  bool enable = *(int *)(data) != 0;
+
+  ALOGV("areUiccApplicationsEnabled change from %d to %d", areUiccApplicationsEnabled, enable);
+
+  areUiccApplicationsEnabled = enable;
+
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+}
+
+static void request_are_uicc_applications_enabled(int /*request*/, void* /*data*/,
+                                                  size_t /*datalen*/,
+                                                  RIL_Token t) {
+  ALOGV("Getting whether uicc applications are enabled.");
+
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &areUiccApplicationsEnabled, sizeof(bool));
+}
+
+static void request_set_radio_power(RIL_Token t) {
+  ALOGV("request_set_radio_power - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
 
-static void request_set_system_selection_channels_1_5(int /*request*/, RIL_Token t) {
-  ALOGV("request_set_system_selection_channels_1_5 - void");
+static void request_enter_sim_depersonalization(RIL_Token t) {
+  ALOGV("request_enter_sim_depersonalization - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
 
-static void request_start_network_scan_1_5(RIL_Token t) {
-  ALOGV("request_start_network_scan_1_5");
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-  return;
-}
-
-static void request_set_radio_power_1_5(RIL_Token t) {
-  ALOGV("request_set_radio_power_1_5");
+static void request_cdma_send_sms_expect_more(RIL_Token t) {
+  ALOGV("request_cdma_send_sms_expect_more - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
   return;
 }
@@ -2523,9 +2503,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_START_NETWORK_SCAN:
       request_start_network_scan(t);
       break;
-    case RIL_REQUEST_START_NETWORK_SCAN4:
-      request_start_network_scan4(t);
-      break;
     case RIL_REQUEST_GET_MODEM_STACK_STATUS:
       request_get_modem_stack_status(request, t);
       break;
@@ -2546,12 +2523,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS:
       request_set_system_selection_channels(request, t);
-      break;
-    case RIL_REQUEST_SET_CARRIER_RESTRICTIONS_1_4:
-      request_set_carrier_restrictions4(data, datalen, t);
-      break;
-    case RIL_REQUEST_GET_CARRIER_RESTRICTIONS_1_4:
-      request_get_carrier_restrictions4(t);
       break;
     case RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING:
       gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2579,8 +2550,8 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
 
 // New requests after Q.
-    case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA_1_5:
-      request_set_signal_strength_reporting_criteria_1_5(request, data, datalen, t);
+    case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA:
+      request_set_signal_strength_reporting_criteria(request, data, datalen, t);
       break;
     case RIL_REQUEST_ENABLE_UICC_APPLICATIONS:
       request_enable_uicc_applications(request, data, datalen, t);
@@ -2588,14 +2559,14 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
     case RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED:
       request_are_uicc_applications_enabled(request, data, datalen, t);
       break;
-    case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS_1_5:
-      request_set_system_selection_channels_1_5(request, t);
+    case RIL_REQUEST_SET_RADIO_POWER:
+      request_set_radio_power(t);
       break;
-    case RIL_REQUEST_START_NETWORK_SCAN_1_5:
-      request_start_network_scan_1_5(t);
+    case RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION:
+      request_enter_sim_depersonalization(t);
       break;
-    case RIL_REQUEST_SET_RADIO_POWER_1_5:
-      request_set_radio_power_1_5(t);
+    case RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE:
+      request_cdma_send_sms_expect_more(t);
       break;
     default:
       ALOGE("Request %d not supported.", request);
