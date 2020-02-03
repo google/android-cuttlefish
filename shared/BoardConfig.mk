@@ -129,10 +129,6 @@ STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
 INIT_BOOTCHART := true
 
-# Need this so that the application's loop on reading input can be synchronized
-# with HW VSYNC
-TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
-
 # Settings for dhcpcd-6.8.2.
 DHCPCD_USE_IPV6 := no
 DHCPCD_USE_DBUS := no
