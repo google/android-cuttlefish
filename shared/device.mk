@@ -106,7 +106,22 @@ PRODUCT_PACKAGES += \
 
 # GL implementation for virgl
 PRODUCT_PACKAGES += \
-    libGLES_mesa
+    libGLES_mesa \
+
+# GL/Vk implementation for gfxstream
+PRODUCT_PACKAGES += \
+    vulkan.ranchu \
+    hwcomposer.ranchu \
+    libandroidemu \
+    libOpenglCodecCommon \
+    libOpenglSystemCommon \
+    libGLESv1_CM_emulation \
+    lib_renderControl_enc \
+    libEGL_emulation \
+    libGLESv2_enc \
+    libvulkan_enc \
+    libGLESv2_emulation \
+    libGLESv1_enc
 
 #
 # Packages for the Vulkan implementation
