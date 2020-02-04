@@ -140,7 +140,7 @@ std::vector<cvd::Command> QemuManager::StartCommands() {
   LogAndSetEnv("gdb_flag", config_->gdb_flag());
   LogAndSetEnv("ramdisk_image_path", config_->final_ramdisk_path());
   LogAndSetEnv("kernel_cmdline", kernel_cmdline_);
-  LogAndSetEnv("virtual_disk_paths", JoinString(config_->virtual_disk_paths(),
+  LogAndSetEnv("virtual_disk_paths", JoinString(instance.virtual_disk_paths(),
                                                 ";"));
   LogAndSetEnv("wifi_tap_name", instance.wifi_tap_name());
   LogAndSetEnv("mobile_tap_name", instance.mobile_tap_name());
