@@ -372,29 +372,33 @@ bool InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
-  auto instance = tmp_config_obj.ForDefaultInstance();
-  auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
-      .ForDefaultInstance();
-  // Set this first so that calls to PerInstancePath below are correct
-  instance.set_instance_dir(FLAGS_instance_dir);
-  instance.set_serial_number(FLAGS_serial_number);
+  std::vector<int> instance_nums = {vsoc::GetInstance()};
 
-  instance.set_mobile_bridge_name(FLAGS_mobile_interface);
-  instance.set_mobile_tap_name(FLAGS_mobile_tap_name);
+  for (const auto& num : instance_nums) {
+    auto instance = tmp_config_obj.ForInstance(num);
+    auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
+        .ForInstance(num);
+    // Set this first so that calls to PerInstancePath below are correct
+    instance.set_instance_dir(FLAGS_instance_dir);
+    instance.set_serial_number(FLAGS_serial_number);
 
-  instance.set_wifi_tap_name(FLAGS_wifi_tap_name);
+    instance.set_mobile_bridge_name(FLAGS_mobile_interface);
+    instance.set_mobile_tap_name(FLAGS_mobile_tap_name);
 
-  instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
+    instance.set_wifi_tap_name(FLAGS_wifi_tap_name);
 
-  instance.set_uuid(FLAGS_uuid);
+    instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
 
-  instance.set_vnc_server_port(FLAGS_vnc_server_port);
-  instance.set_host_port(GetHostPort());
-  instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
+    instance.set_uuid(FLAGS_uuid);
 
-  instance.set_device_title(FLAGS_device_title);
+    instance.set_vnc_server_port(FLAGS_vnc_server_port);
+    instance.set_host_port(GetHostPort());
+    instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
 
-  instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
+    instance.set_device_title(FLAGS_device_title);
+
+    instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
+  }
 
   auto config_file = GetConfigFilePath(tmp_config_obj);
   auto config_link = vsoc::GetGlobalConfigFileLink();
@@ -609,8 +613,10 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
     CreateCompositeDisk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
-    auto overlay_path = config.ForDefaultInstance().PerInstancePath("overlay.img");
-    CreateQcowOverlay(config.crosvm_binary(), FLAGS_composite_disk, overlay_path);
+    for (auto instance : config.Instances()) {
+      auto overlay_path = config.ForDefaultInstance().PerInstancePath("overlay.img");
+      CreateQcowOverlay(config.crosvm_binary(), FLAGS_composite_disk, overlay_path);
+    }
   } else {
     auto existing_size = cvd::FileSize(FLAGS_composite_disk);
     auto available_space = AvailableSpaceAtPath(FLAGS_composite_disk);
@@ -773,12 +779,13 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     }
   }
 
-  auto instance = config->ForDefaultInstance();
-  // Check that the files exist
-  for (const auto& file : instance.virtual_disk_paths()) {
-    if (!file.empty() && !cvd::FileHasContent(file.c_str())) {
-      LOG(ERROR) << "File not found: " << file;
-      exit(cvd::kCuttlefishConfigurationInitError);
+  for (auto instance : config->Instances()) {
+    // Check that the files exist
+    for (const auto& file : instance.virtual_disk_paths()) {
+      if (!file.empty() && !cvd::FileHasContent(file.c_str())) {
+        LOG(ERROR) << "File not found: " << file;
+        exit(cvd::kCuttlefishConfigurationInitError);
+      }
     }
   }
 
