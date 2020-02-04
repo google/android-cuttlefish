@@ -68,10 +68,6 @@ DEFINE_string(vendor_boot_image, "",
               "be vendor_boot.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
-DEFINE_string(mobile_interface, ForCurrentInstance("cvd-mbr-"),
-              "Network interface to use for mobile networking");
-DEFINE_string(mobile_tap_name, ForCurrentInstance("cvd-mtap-"),
-              "The name of the tap interface to use for mobile");
 DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
 DEFINE_string(assembly_dir,
@@ -98,7 +94,10 @@ DEFINE_string(composite_disk, "", "Location of the composite disk image. ");
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
             " Will be deprecated soon.");
-DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process.");
+DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process. "
+                                     "The VNC server runs at port 6443 + i for "
+                                     "the vsoc-i user or CUTTLEFISH_INSTANCE=i, "
+                                     "starting from 1.");
 
 DEFINE_bool(start_webrtc, false, "Whether to start the webrtc process.");
 
@@ -122,8 +121,6 @@ DEFINE_bool(
         false,
         "If enabled, exposes local adb service through a websocket.");
 
-DEFINE_int32(vnc_server_port, ForCurrentInstance(6444),
-             "The port on which the vnc server should listen");
 DEFINE_string(adb_mode, "vsock_half_tunnel",
               "Mode for ADB connection."
               "'vsock_tunnel' for a TCP connection tunneled through vsock, "
@@ -134,11 +131,6 @@ DEFINE_string(adb_mode, "vsock_half_tunnel",
 DEFINE_bool(run_adb_connector, true,
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with -adb_mode=tunnel or vsock_tunnel");
-DEFINE_string(wifi_tap_name, ForCurrentInstance("cvd-wtap-"),
-              "The name of the tap interface to use for wifi");
-DEFINE_int32(vsock_guest_cid,
-             vsoc::GetDefaultPerInstanceVsockCid(),
-             "Guest identifier for vsock. Disabled if under 3.");
 
 DEFINE_string(uuid, vsoc::ForCurrentInstance(vsoc::kDefaultUuidPrefix),
               "UUID to use for the device. Random if not specified");
@@ -221,14 +213,15 @@ std::string GetLegacyConfigFilePath(const vsoc::CuttlefishConfig& config) {
   return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
 }
 
-int GetHostPort() {
-  constexpr int kFirstHostPort = 6520;
-  return vsoc::ForCurrentInstance(kFirstHostPort);
-}
-
 int NumStreamers() {
   auto start_flags = {FLAGS_start_vnc_server, FLAGS_start_webrtc};
   return std::count(start_flags.begin(), start_flags.end(), true);
+}
+
+std::string StrForInstance(const std::string& prefix, int num) {
+  std::ostringstream stream;
+  stream << prefix << std::setfill('0') << std::setw(2) << num;
+  return stream.str();
 }
 
 // Initializes the config object and saves it to file. It doesn't return it, all
@@ -375,21 +368,21 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
         .ForInstance(num);
     // Set this first so that calls to PerInstancePath below are correct
-    instance.set_instance_dir(FLAGS_instance_dir);
-    instance.set_serial_number(FLAGS_serial_number);
+    instance.set_instance_dir(FLAGS_instance_dir + "." + std::to_string(num));
+    instance.set_serial_number(FLAGS_serial_number + std::to_string(num));
 
-    instance.set_mobile_bridge_name(FLAGS_mobile_interface);
-    instance.set_mobile_tap_name(FLAGS_mobile_tap_name);
+    instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
+    instance.set_mobile_tap_name(StrForInstance("cvd-mtap-", num));
 
-    instance.set_wifi_tap_name(FLAGS_wifi_tap_name);
+    instance.set_wifi_tap_name(StrForInstance("cvd-wtap-", num));
 
-    instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
+    instance.set_vsock_guest_cid(3 + num - 1);
 
     instance.set_uuid(FLAGS_uuid);
 
-    instance.set_vnc_server_port(FLAGS_vnc_server_port);
-    instance.set_host_port(GetHostPort());
-    instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
+    instance.set_vnc_server_port(6444 + num - 1);
+    instance.set_host_port(6520 + num - 1);
+    instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
 
     instance.set_device_title(FLAGS_device_title);
 
@@ -483,8 +476,6 @@ bool CleanPriorFiles(const std::vector<std::string>& paths) {
 
 bool CleanPriorFiles(const vsoc::CuttlefishConfig& config) {
   std::vector<std::string> paths = {
-    // Everything on the instance directory
-    FLAGS_instance_dir + "/*",
     // Everything in the assembly directory
     FLAGS_assembly_dir + "/*",
     // The environment file
@@ -675,7 +666,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.
       if (!cvd::DirectoryExists(instance.instance_dir().c_str())) {
-        LOG(INFO) << "Setting up " << FLAGS_instance_dir;
+        LOG(INFO) << "Setting up " << FLAGS_instance_dir << ".N";
         if (mkdir(instance.instance_dir().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
           LOG(ERROR) << "Failed to create instance directory: "
                     << FLAGS_instance_dir << ". Error: " << errno;
