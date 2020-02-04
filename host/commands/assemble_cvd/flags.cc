@@ -607,9 +607,9 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
+    CreateCompositeDisk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
     auto overlay_path = config.ForDefaultInstance().PerInstancePath("overlay.img");
-    create_composite_disk_and_overlay(config.crosvm_binary(), disk_config(), header_path,
-                                      footer_path, FLAGS_composite_disk, overlay_path);
+    CreateQcowOverlay(config.crosvm_binary(), FLAGS_composite_disk, overlay_path);
   } else {
     auto existing_size = cvd::FileSize(FLAGS_composite_disk);
     auto available_space = AvailableSpaceAtPath(FLAGS_composite_disk);
@@ -619,7 +619,7 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
       LOG(ERROR) << "Got " << available_space;
       return false;
     }
-    aggregate_image(disk_config(), FLAGS_composite_disk);
+    AggregateImage(disk_config(), FLAGS_composite_disk);
   }
   return true;
 }
