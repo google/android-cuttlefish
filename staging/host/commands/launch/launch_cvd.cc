@@ -39,6 +39,7 @@
  */
 DEFINE_bool(run_file_discovery, true,
             "Whether to run file discovery or get input files from stdin.");
+DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
 
 namespace {
 
@@ -95,8 +96,8 @@ int main(int argc, char** argv) {
 
   gflags::HandleCommandLineHelpFlags();
 
-  cvd::SharedFD assembler_stdout, runner_stdin;
-  cvd::SharedFD::Pipe(&runner_stdin, &assembler_stdout);
+  cvd::SharedFD assembler_stdout, assembler_stdout_capture;
+  cvd::SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
 
   cvd::SharedFD launcher_report, assembler_stdin;
   bool should_generate_report = FLAGS_run_file_discovery;
@@ -109,11 +110,16 @@ int main(int argc, char** argv) {
   auto assemble_proc = StartAssembler(std::move(assembler_stdin),
                                       std::move(assembler_stdout),
                                       forwarder.ArgvForSubprocess(kAssemblerBin));
-  auto run_proc = StartRunner(std::move(runner_stdin),
-                              forwarder.ArgvForSubprocess(kRunnerBin));
 
   if (should_generate_report) {
     WriteFiles(AvailableFilesReport(), std::move(launcher_report));
+  }
+
+  std::string assembler_output;
+  if (cvd::ReadAll(assembler_stdout_capture, &assembler_output) < 0) {
+    int error_num = errno;
+    LOG(ERROR) << "Read error getting output from assemble_cvd: " << strerror(error_num);
+    return -1;
   }
 
   auto assemble_ret = assemble_proc.Wait();
@@ -124,11 +130,32 @@ int main(int argc, char** argv) {
     LOG(INFO) << "assemble_cvd exited successfully.";
   }
 
-  auto run_ret = run_proc.Wait();
-  if (run_ret != 0) {
-    LOG(ERROR) << "run_cvd returned " << run_ret;
-  } else {
-    LOG(INFO) << "run_cvd exited successfully.";
+  std::vector<cvd::Subprocess> runners;
+  for (int i = 0; i < FLAGS_num_instances; i++) {
+    cvd::SharedFD runner_stdin_in, runner_stdin_out;
+    cvd::SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
+    std::string instance_name = std::to_string(i + vsoc::GetInstance());
+    setenv("CUTTLEFISH_INSTANCE", instance_name.c_str(), /* overwrite */ 1);
+
+    auto run_proc = StartRunner(std::move(runner_stdin_out),
+                                forwarder.ArgvForSubprocess(kRunnerBin));
+    runners.push_back(std::move(run_proc));
+    if (cvd::WriteAll(runner_stdin_in, assembler_output) < 0) {
+      int error_num = errno;
+      LOG(ERROR) << "Could not write to run_cvd: " << strerror(error_num);
+      return -1;
+    }
   }
-  return run_ret;
+
+  bool run_cvd_failure = false;
+  for (auto& run_proc : runners) {
+    auto run_ret = run_proc.Wait();
+    if (run_ret != 0) {
+      run_cvd_failure = true;
+      LOG(ERROR) << "run_cvd returned " << run_ret;
+    } else {
+      LOG(INFO) << "run_cvd exited successfully.";
+    }
+  }
+  return run_cvd_failure ? -1 : 0;
 }
