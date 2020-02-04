@@ -386,4 +386,5 @@ bool HostSupportsVsock();
 // GPU modes
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
+extern const char* const kGpuModeGfxStream;
 }  // namespace vsoc
