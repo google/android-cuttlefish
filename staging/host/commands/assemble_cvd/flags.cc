@@ -1,6 +1,10 @@
 #include "host/commands/assemble_cvd/flags.h"
 
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <iostream>
@@ -161,6 +165,11 @@ DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
              "bootloader. It will default to 'a' if empty and not using a "
              "bootloader.");
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
+DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
+                          "possible. i.e., if --noresume is passed, the disk "
+                          "will be reset to the state it was initially launched "
+                          "in. This flag is ignored if the underlying partition "
+                          "images have been updated since the first launch.");
 
 namespace {
 
@@ -459,8 +468,77 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   return ResolveInstanceFiles();
 }
 
-bool CleanPriorFiles(const std::vector<std::string>& paths) {
-  std::string prior_files = android::base::Join(paths, " ");
+std::string cpp_basename(const std::string& str) {
+  char* copy = strdup(str.c_str()); // basename may modify its argument
+  std::string ret(basename(copy));
+  free(copy);
+  return ret;
+}
+
+bool CleanPriorFiles(const std::string& path, const std::set<std::string>& preserving) {
+  if (preserving.count(cpp_basename(path))) {
+    LOG(INFO) << "Preserving: " << path;
+    return true;
+  }
+  struct stat statbuf;
+  if (lstat(path.c_str(), &statbuf) < 0) {
+    int error_num = errno;
+    if (error_num == ENOENT) {
+      return true;
+    } else {
+      LOG(ERROR) << "Could not stat \"" << path << "\": " << strerror(error_num);
+      return false;
+    }
+  }
+  if ((statbuf.st_mode & S_IFMT) != S_IFDIR) {
+    LOG(INFO) << "Deleting: " << path;
+    if (unlink(path.c_str()) < 0) {
+      int error_num = errno;
+      LOG(ERROR) << "Could not unlink \"" << path << "\", error was " << strerror(error_num);
+      return false;
+    }
+    return true;
+  }
+  std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
+  if (!dir) {
+    int error_num = errno;
+    LOG(ERROR) << "Could not clean \"" << path << "\": error was " << strerror(error_num);
+    return false;
+  }
+  for (auto entity = readdir(dir.get()); entity != nullptr; entity = readdir(dir.get())) {
+    std::string entity_name(entity->d_name);
+    if (entity_name == "." || entity_name == "..") {
+      continue;
+    }
+    std::string entity_path = path + "/" + entity_name;
+    if (!CleanPriorFiles(entity_path.c_str(), preserving)) {
+      return false;
+    }
+  }
+  if (rmdir(path.c_str()) < 0) {
+    if (!(errno == EEXIST || errno == ENOTEMPTY)) {
+      // If EEXIST or ENOTEMPTY, probably because a file was preserved
+      int error_num = errno;
+      LOG(ERROR) << "Could not rmdir \"" << path << "\", error was " << strerror(error_num);
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CleanPriorFiles(const std::vector<std::string>& paths, const std::set<std::string>& preserving) {
+  std::string prior_files;
+  for (auto path : paths) {
+    struct stat statbuf;
+    if (stat(path.c_str(), &statbuf) < 0 && errno != ENOENT) {
+      // If ENOENT, it doesn't exist yet, so there is no work to do'
+      int error_num = errno;
+      LOG(ERROR) << "Could not stat \"" << path << "\": " << strerror(error_num);
+      return false;
+    }
+    bool is_directory = (statbuf.st_mode & S_IFMT) == S_IFDIR;
+    prior_files += (is_directory ? (path + "/*") : path) + " ";
+  }
   LOG(INFO) << "Assuming prior files of " << prior_files;
   std::string lsof_cmd = "lsof -t " + prior_files + " >/dev/null 2>&1";
   int rval = std::system(lsof_cmd.c_str());
@@ -469,19 +547,19 @@ bool CleanPriorFiles(const std::vector<std::string>& paths) {
     LOG(ERROR) << "Clean aborted: files are in use";
     return false;
   }
-  std::string clean_command = "rm -rf " + prior_files;
-  rval = std::system(clean_command.c_str());
-  if (WEXITSTATUS(rval) != 0) {
-    LOG(ERROR) << "Remove of files failed";
-    return false;
+  for (const auto& path : paths) {
+    if (!CleanPriorFiles(path, preserving)) {
+      LOG(ERROR) << "Remove of file under \"" << path << "\" failed";
+      return false;
+    }
   }
   return true;
 }
 
-bool CleanPriorFiles(const vsoc::CuttlefishConfig& config) {
+bool CleanPriorFiles(const vsoc::CuttlefishConfig& config, const std::set<std::string>& preserving) {
   std::vector<std::string> paths = {
     // Everything in the assembly directory
-    FLAGS_assembly_dir + "/*",
+    FLAGS_assembly_dir,
     // The environment file
     GetCuttlefishEnvPath(),
     // The global link to the config file
@@ -490,7 +568,7 @@ bool CleanPriorFiles(const vsoc::CuttlefishConfig& config) {
   for (const auto& instance : config.Instances()) {
     paths.push_back(instance.instance_dir());
   }
-  return CleanPriorFiles(paths);
+  return CleanPriorFiles(paths, preserving);
 }
 
 bool DecompressKernel(const std::string& src, const std::string& dst) {
@@ -548,23 +626,20 @@ std::vector<ImagePartition> disk_config() {
   return partitions;
 }
 
-bool ShouldCreateCompositeDisk() {
-  if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
-    // The crosvm implementation is very fast to rebuild but also more brittle due to being split
-    // into multiple files. The QEMU implementation is slow to build, but completely self-contained
-    // at that point. Therefore, always rebuild on crosvm but check if it is necessary for QEMU.
-    return true;
-  }
-  auto composite_age = cvd::FileModificationTime(FLAGS_composite_disk);
+std::chrono::system_clock::time_point LastUpdatedInputDisk() {
+  std::chrono::system_clock::time_point ret;
   for (auto& partition : disk_config()) {
-    auto partition_age = cvd::FileModificationTime(partition.image_file_path);
-    if (partition_age >= composite_age) {
-      LOG(INFO) << "composite disk age was \"" << std::chrono::system_clock::to_time_t(composite_age) << "\", "
-                << "partition age was \"" << std::chrono::system_clock::to_time_t(partition_age) << "\"";
-      return true;
+    auto partition_mod_time = cvd::FileModificationTime(partition.image_file_path);
+    if (partition_mod_time > ret) {
+      ret = partition_mod_time;
     }
   }
-  return false;
+  return ret;
+}
+
+bool ShouldCreateCompositeDisk() {
+  auto composite_age = cvd::FileModificationTime(FLAGS_composite_disk);
+  return composite_age < LastUpdatedInputDisk();
 }
 
 bool ConcatRamdisks(const std::string& new_ramdisk_path, const std::string& ramdisk_a_path,
@@ -618,10 +693,6 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
     CreateCompositeDisk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
-    for (auto instance : config.Instances()) {
-      auto overlay_path = instance.PerInstancePath("overlay.img");
-      CreateQcowOverlay(config.crosvm_binary(), FLAGS_composite_disk, overlay_path);
-    }
   } else {
     auto existing_size = cvd::FileSize(FLAGS_composite_disk);
     auto available_space = AvailableSpaceAtPath(FLAGS_composite_disk);
@@ -654,14 +725,27 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     // two operations, as those will assume they can read the config object from
     // disk.
     auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config);
-    if (!CleanPriorFiles(config)) {
+    std::set<std::string> preserving;
+    if (FLAGS_resume && ShouldCreateCompositeDisk()) {
+      LOG(WARNING) << "Requested resuming a previous session (the default behavior) "
+                   << "but the base images have changed under the overlay, making the "
+                   << "overlay incompatible. Wiping the overlay files.";
+    } else if (FLAGS_resume && !ShouldCreateCompositeDisk()) {
+      preserving.insert("overlay.img");
+      preserving.insert("gpt_header.img");
+      preserving.insert("gpt_footer.img");
+      preserving.insert("composite.img");
+      preserving.insert("access-kregistry");
+    }
+    if (!CleanPriorFiles(config, preserving)) {
       LOG(ERROR) << "Failed to clean prior files";
       exit(AssemblerExitCodes::kPrioFilesCleanupError);
     }
     // Create assembly directory if it doesn't exist.
     if (!cvd::DirectoryExists(FLAGS_assembly_dir.c_str())) {
       LOG(INFO) << "Setting up " << FLAGS_assembly_dir;
-      if (mkdir(FLAGS_assembly_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+      if (mkdir(FLAGS_assembly_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+          && errno != EEXIST) {
         LOG(ERROR) << "Failed to create assembly directory: "
                   << FLAGS_assembly_dir << ". Error: " << errno;
         exit(AssemblerExitCodes::kAssemblyDirCreationError);
@@ -671,7 +755,8 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
       // Create instance directory if it doesn't exist.
       if (!cvd::DirectoryExists(instance.instance_dir().c_str())) {
         LOG(INFO) << "Setting up " << FLAGS_instance_dir << ".N";
-        if (mkdir(instance.instance_dir().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+        if (mkdir(instance.instance_dir().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+            && errno != EEXIST) {
           LOG(ERROR) << "Failed to create instance directory: "
                     << FLAGS_instance_dir << ". Error: " << errno;
           exit(AssemblerExitCodes::kInstanceDirCreationError);
@@ -679,8 +764,8 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
       }
       auto internal_dir = instance.instance_dir() + "/" + vsoc::kInternalDirName;
       if (!cvd::DirectoryExists(internal_dir)) {
-        if (mkdir(internal_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-            0) {
+        if (mkdir(internal_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+           && errno != EEXIST) {
           LOG(ERROR) << "Failed to create internal instance directory: "
                     << internal_dir << ". Error: " << errno;
           exit(AssemblerExitCodes::kInstanceDirCreationError);
@@ -787,6 +872,19 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   if (ShouldCreateCompositeDisk()) {
     if (!CreateCompositeDisk(*config)) {
       exit(cvd::kDiskSpaceError);
+    }
+  }
+
+  for (auto instance : config->Instances()) {
+    auto overlay_path = instance.PerInstancePath("overlay.img");
+    if (!cvd::FileExists(overlay_path) || ShouldCreateCompositeDisk() || !FLAGS_resume
+        || cvd::FileModificationTime(overlay_path) < cvd::FileModificationTime(FLAGS_composite_disk)) {
+      if (FLAGS_resume) {
+        LOG(WARNING) << "Requested to continue an existing session, but the overlay was "
+                     << "newer than its underlying composite disk. Wiping the overlay.";
+      }
+      CreateQcowOverlay(config->crosvm_binary(), FLAGS_composite_disk, overlay_path);
+      CreateBlankImage(instance.access_kregistry_path(), 1, "none", "64K");
     }
   }
 
