@@ -38,7 +38,7 @@ const int GPT_FOOTER_SIZE = 512 * 33;
 
 const std::string BPTTOOL_FILE_PATH = "bin/cf_bpttool";
 
-Json::Value bpttool_input(const std::vector<ImagePartition>& partitions) {
+Json::Value BpttoolInput(const std::vector<ImagePartition>& partitions) {
   std::vector<off_t> file_sizes;
   off_t total_size = 20 << 20; // 20 MB for padding
   for (auto& partition : partitions) {
@@ -65,7 +65,7 @@ Json::Value bpttool_input(const std::vector<ImagePartition>& partitions) {
   return bpttool_input_json;
 }
 
-std::string create_file(size_t len) {
+std::string CreateFile(size_t len) {
   char file_template[] = "/tmp/diskXXXXXX";
   int fd = mkstemp(file_template);
   if (fd < 0) {
@@ -97,7 +97,7 @@ CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
   for (auto& bpt_partition: bpt_file["partitions"]) {
     if (bpt_partition["offset"].asUInt64() != previous_end) {
       ComponentDisk* component = disk.add_component_disks();
-      component->set_file_path(create_file(bpt_partition["offset"].asUInt64() - previous_end));
+      component->set_file_path(CreateFile(bpt_partition["offset"].asUInt64() - previous_end));
       component->set_offset(previous_end);
     }
     ComponentDisk* component = disk.add_component_disks();
@@ -113,7 +113,7 @@ CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
   size_t footer_start = bpt_file["settings"]["disk_size"].asUInt64() - GPT_FOOTER_SIZE;
   if (footer_start != previous_end) {
     ComponentDisk* component = disk.add_component_disks();
-    component->set_file_path(create_file(footer_start - previous_end));
+    component->set_file_path(CreateFile(footer_start - previous_end));
     component->set_offset(previous_end);
   }
   ComponentDisk* footer = disk.add_component_disks();
@@ -123,7 +123,7 @@ CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
   return disk;
 }
 
-cvd::SharedFD json_to_fd(const Json::Value& json) {
+cvd::SharedFD JsonToFd(const Json::Value& json) {
   Json::FastWriter json_writer;
   std::string json_string = json_writer.write(json);
   cvd::SharedFD pipe[2];
@@ -137,7 +137,7 @@ cvd::SharedFD json_to_fd(const Json::Value& json) {
   return pipe[0];
 }
 
-Json::Value fd_to_json(cvd::SharedFD fd) {
+Json::Value FdToJson(cvd::SharedFD fd) {
   std::string contents;
   cvd::ReadAll(fd, &contents);
   Json::Reader reader;
@@ -148,7 +148,7 @@ Json::Value fd_to_json(cvd::SharedFD fd) {
   return json;
 }
 
-cvd::SharedFD bpttool_make_table(const cvd::SharedFD& input) {
+cvd::SharedFD BpttoolMakeTable(const cvd::SharedFD& input) {
   auto bpttool_path = vsoc::DefaultHostArtifactsPath(BPTTOOL_FILE_PATH);
   cvd::Command bpttool_cmd(bpttool_path);
   bpttool_cmd.AddParameter("make_table");
@@ -165,7 +165,7 @@ cvd::SharedFD bpttool_make_table(const cvd::SharedFD& input) {
   return output_pipe[0];
 }
 
-cvd::SharedFD bpttool_make_partition_table(cvd::SharedFD input) {
+cvd::SharedFD BpttoolMakePartitionTable(cvd::SharedFD input) {
   auto bpttool_path = vsoc::DefaultHostArtifactsPath(BPTTOOL_FILE_PATH);
   cvd::Command bpttool_cmd(bpttool_path);
   bpttool_cmd.AddParameter("make_table");
@@ -203,8 +203,8 @@ void CreateGptFiles(cvd::SharedFD gpt, const std::string& header_file,
   }
 }
 
-void bpttool_make_disk_image(const std::vector<ImagePartition>& partitions,
-                             cvd::SharedFD table, const std::string& output) {
+void BptToolMakeDiskImage(const std::vector<ImagePartition>& partitions,
+                          cvd::SharedFD table, const std::string& output) {
   auto bpttool_path = vsoc::DefaultHostArtifactsPath(BPTTOOL_FILE_PATH);
   cvd::Command bpttool_cmd(bpttool_path);
   bpttool_cmd.AddParameter("make_disk_image");
@@ -221,6 +221,32 @@ void bpttool_make_disk_image(const std::vector<ImagePartition>& partitions,
   }
 }
 
+} // namespace
+
+void AggregateImage(const std::vector<ImagePartition>& partitions,
+                    const std::string& output_path) {
+  auto bpttool_input_json = BpttoolInput(partitions);
+  auto input_json_fd = JsonToFd(bpttool_input_json);
+  auto table_fd = BpttoolMakeTable(input_json_fd);
+  BptToolMakeDiskImage(partitions, table_fd, output_path);
+};
+
+void CreateCompositeDisk(std::vector<ImagePartition> partitions,
+                         const std::string& header_file,
+                         const std::string& footer_file,
+                         const std::string& output_composite_path) {
+  auto bpttool_input_json = BpttoolInput(partitions);
+  auto table_fd = BpttoolMakeTable(JsonToFd(bpttool_input_json));
+  auto table = FdToJson(table_fd);
+  auto partition_table_fd = BpttoolMakePartitionTable(JsonToFd(bpttool_input_json));
+  CreateGptFiles(partition_table_fd, header_file, footer_file);
+  auto composite_proto = MakeCompositeDiskSpec(table, partitions, header_file, footer_file);
+  std::ofstream composite(output_composite_path.c_str(), std::ios::binary | std::ios::trunc);
+  composite << "composite_disk\x1d";
+  composite_proto.SerializeToOstream(&composite);
+  composite.flush();
+}
+
 void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path) {
@@ -232,33 +258,4 @@ void CreateQcowOverlay(const std::string& crosvm_path,
   if (success != 0) {
     LOG(FATAL) << "Unable to run crosvm create_qcow2. Exited with status " << success;
   }
-}
-
-} // namespace
-
-void aggregate_image(const std::vector<ImagePartition>& partitions,
-                     const std::string& output_path) {
-  auto bpttool_input_json = bpttool_input(partitions);
-  auto input_json_fd = json_to_fd(bpttool_input_json);
-  auto table_fd = bpttool_make_table(input_json_fd);
-  bpttool_make_disk_image(partitions, table_fd, output_path);
-};
-
-void create_composite_disk_and_overlay(const std::string& crosvm_path,
-                                       std::vector<ImagePartition> partitions,
-                                       const std::string& header_file,
-                                       const std::string& footer_file,
-                                       const std::string& output_composite_path,
-                                       const std::string& output_overlay_path) {
-  auto bpttool_input_json = bpttool_input(partitions);
-  auto table_fd = bpttool_make_table(json_to_fd(bpttool_input_json));
-  auto table = fd_to_json(table_fd);
-  auto partition_table_fd = bpttool_make_partition_table(json_to_fd(bpttool_input_json));
-  CreateGptFiles(partition_table_fd, header_file, footer_file);
-  auto composite_proto = MakeCompositeDiskSpec(table, partitions, header_file, footer_file);
-  std::ofstream composite(output_composite_path.c_str(), std::ios::binary | std::ios::trunc);
-  composite << "composite_disk\x1d";
-  composite_proto.SerializeToOstream(&composite);
-  composite.flush();
-  CreateQcowOverlay(crosvm_path, output_composite_path, output_overlay_path);
 }
