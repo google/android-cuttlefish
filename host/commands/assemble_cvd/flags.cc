@@ -233,7 +233,7 @@ int NumStreamers() {
 
 // Initializes the config object and saves it to file. It doesn't return it, all
 // further uses of the config should happen through the singleton
-bool InitializeCuttlefishConfiguration(
+vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     const cvd::BootImageUnpacker& boot_image_unpacker,
     const cvd::FetcherConfig& fetcher_config) {
   // At most one streamer can be started.
@@ -242,20 +242,17 @@ bool InitializeCuttlefishConfiguration(
   vsoc::CuttlefishConfig tmp_config_obj;
   tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
-    LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
-    return false;
+    LOG(FATAL) << "Invalid vm_manager: " << FLAGS_vm_manager;
   }
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
-    LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
-    return false;
+    LOG(FATAL) << "Invalid vm_manager: " << FLAGS_vm_manager;
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
   tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
   if (vm_manager::VmManager::ConfigureGpuMode(tmp_config_obj.vm_manager(),
                                               tmp_config_obj.gpu_mode()).empty()) {
-    LOG(ERROR) << "Invalid gpu_mode=" << FLAGS_gpu_mode <<
+    LOG(FATAL) << "Invalid gpu_mode=" << FLAGS_gpu_mode <<
                " does not work with vm_manager=" << FLAGS_vm_manager;
-    return false;
   }
 
   tmp_config_obj.set_cpus(FLAGS_cpus);
@@ -288,8 +285,7 @@ bool InitializeCuttlefishConfiguration(
   auto ramdisk_path = tmp_config_obj.AssemblyPath("ramdisk.img");
   auto vendor_ramdisk_path = tmp_config_obj.AssemblyPath("vendor_ramdisk.img");
   if (!boot_image_unpacker.HasRamdiskImage()) {
-    LOG(INFO) << "A ramdisk is required, but the boot image did not have one.";
-    return false;
+    LOG(FATAL) << "A ramdisk is required, but the boot image did not have one.";
   }
 
   tmp_config_obj.set_boot_image_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
@@ -400,6 +396,10 @@ bool InitializeCuttlefishConfiguration(
     instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
   }
 
+  return tmp_config_obj;
+}
+
+bool SaveConfig(const vsoc::CuttlefishConfig& tmp_config_obj) {
   auto config_file = GetConfigFilePath(tmp_config_obj);
   auto config_link = vsoc::GetGlobalConfigFileLink();
   // Save the config object before starting any host process
@@ -481,7 +481,7 @@ bool CleanPriorFiles(const std::vector<std::string>& paths) {
   return true;
 }
 
-bool CleanPriorFiles() {
+bool CleanPriorFiles(const vsoc::CuttlefishConfig& config) {
   std::vector<std::string> paths = {
     // Everything on the instance directory
     FLAGS_instance_dir + "/*",
@@ -492,6 +492,9 @@ bool CleanPriorFiles() {
     // The global link to the config file
     vsoc::GetGlobalConfigFileLink(),
   };
+  for (const auto& instance : config.Instances()) {
+    paths.push_back(instance.instance_dir());
+  }
   return CleanPriorFiles(paths);
 }
 
@@ -647,38 +650,51 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     exit(AssemblerExitCodes::kArgumentParsingError);
   }
 
-  // Clean up prior files before saving the config file (doing it after would
-  // delete it)
-  if (!CleanPriorFiles()) {
-    LOG(ERROR) << "Failed to clean prior files";
-    exit(AssemblerExitCodes::kPrioFilesCleanupError);
-  }
-  // Create assembly directory if it doesn't exist.
-  if (!cvd::DirectoryExists(FLAGS_assembly_dir.c_str())) {
-    LOG(INFO) << "Setting up " << FLAGS_assembly_dir;
-    if (mkdir(FLAGS_assembly_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
-      LOG(ERROR) << "Failed to create assembly directory: "
-                 << FLAGS_assembly_dir << ". Error: " << errno;
-      exit(AssemblerExitCodes::kAssemblyDirCreationError);
+  auto boot_img_unpacker =
+    cvd::BootImageUnpacker::FromImages(FLAGS_boot_image,
+                                      FLAGS_vendor_boot_image);
+  {
+    // The config object is created here, but only exists in memory until the
+    // SaveConfig line below. Don't launch cuttlefish subprocesses between these
+    // two operations, as those will assume they can read the config object from
+    // disk.
+    auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config);
+    if (!CleanPriorFiles(config)) {
+      LOG(ERROR) << "Failed to clean prior files";
+      exit(AssemblerExitCodes::kPrioFilesCleanupError);
     }
-  }
-  // Create instance directory if it doesn't exist.
-  if (!cvd::DirectoryExists(FLAGS_instance_dir.c_str())) {
-    LOG(INFO) << "Setting up " << FLAGS_instance_dir;
-    if (mkdir(FLAGS_instance_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
-      LOG(ERROR) << "Failed to create instance directory: "
-                 << FLAGS_instance_dir << ". Error: " << errno;
-      exit(AssemblerExitCodes::kInstanceDirCreationError);
+    // Create assembly directory if it doesn't exist.
+    if (!cvd::DirectoryExists(FLAGS_assembly_dir.c_str())) {
+      LOG(INFO) << "Setting up " << FLAGS_assembly_dir;
+      if (mkdir(FLAGS_assembly_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+        LOG(ERROR) << "Failed to create assembly directory: "
+                  << FLAGS_assembly_dir << ". Error: " << errno;
+        exit(AssemblerExitCodes::kAssemblyDirCreationError);
+      }
     }
-  }
-
-  auto internal_dir = FLAGS_instance_dir + "/" + vsoc::kInternalDirName;
-  if (!cvd::DirectoryExists(internal_dir)) {
-    if (mkdir(internal_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
-        0) {
-      LOG(ERROR) << "Failed to create internal instance directory: "
-                 << internal_dir << ". Error: " << errno;
-      exit(AssemblerExitCodes::kInstanceDirCreationError);
+    for (const auto& instance : config.Instances()) {
+      // Create instance directory if it doesn't exist.
+      if (!cvd::DirectoryExists(instance.instance_dir().c_str())) {
+        LOG(INFO) << "Setting up " << FLAGS_instance_dir;
+        if (mkdir(instance.instance_dir().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+          LOG(ERROR) << "Failed to create instance directory: "
+                    << FLAGS_instance_dir << ". Error: " << errno;
+          exit(AssemblerExitCodes::kInstanceDirCreationError);
+        }
+      }
+      auto internal_dir = instance.instance_dir() + "/" + vsoc::kInternalDirName;
+      if (!cvd::DirectoryExists(internal_dir)) {
+        if (mkdir(internal_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
+            0) {
+          LOG(ERROR) << "Failed to create internal instance directory: "
+                    << internal_dir << ". Error: " << errno;
+          exit(AssemblerExitCodes::kInstanceDirCreationError);
+        }
+      }
+    }
+    if (!SaveConfig(config)) {
+      LOG(ERROR) << "Failed to initialize configuration";
+      exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
     }
   }
 
@@ -692,14 +708,6 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
-  auto boot_img_unpacker =
-    cvd::BootImageUnpacker::FromImages(FLAGS_boot_image,
-                                       FLAGS_vendor_boot_image);
-
-  if (!InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config)) {
-    LOG(ERROR) << "Failed to initialize configuration";
-    exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
-  }
   // Do this early so that the config object is ready for anything that needs it
   auto config = vsoc::CuttlefishConfig::Get();
   if (!config) {
@@ -768,9 +776,10 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
   }
 
-  if (!cvd::FileExists(config->ForDefaultInstance().access_kregistry_path())) {
-    CreateBlankImage(config->ForDefaultInstance().access_kregistry_path(), 1,
-                     "none", "64K");
+  for (const auto& instance : config->Instances()) {
+    if (!cvd::FileExists(instance.access_kregistry_path())) {
+      CreateBlankImage(instance.access_kregistry_path(), 1, "none", "64K");
+    }
   }
 
   if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
