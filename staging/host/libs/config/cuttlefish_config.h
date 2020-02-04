@@ -52,7 +52,9 @@ class CuttlefishConfig {
   static const CuttlefishConfig* Get();
 
   CuttlefishConfig();
+  CuttlefishConfig(CuttlefishConfig&&);
   ~CuttlefishConfig();
+  CuttlefishConfig& operator=(CuttlefishConfig&&);
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
