@@ -843,7 +843,10 @@ std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
 CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {}
 // Can't use '= default' on the header because the compiler complains of
 // Json::Value being an incomplete type
-CuttlefishConfig::~CuttlefishConfig() {}
+CuttlefishConfig::~CuttlefishConfig() = default;
+
+CuttlefishConfig::CuttlefishConfig(CuttlefishConfig&&) = default;
+CuttlefishConfig& CuttlefishConfig::operator=(CuttlefishConfig&&) = default;
 
 bool CuttlefishConfig::LoadFromFile(const char* file) {
   auto real_file_path = cvd::AbsolutePath(file);
