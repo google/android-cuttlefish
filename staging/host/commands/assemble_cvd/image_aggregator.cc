@@ -16,6 +16,11 @@
 
 #include "host/commands/assemble_cvd/image_aggregator.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+
 #include <fstream>
 #include <string>
 #include <vector>
@@ -243,10 +248,46 @@ void BptToolMakeDiskImage(const std::vector<ImagePartition>& partitions,
   }
 }
 
+void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
+  for (const auto& partition : partitions) {
+    auto file = cvd::SharedFD::Open(partition.image_file_path.c_str(), O_RDONLY);
+    if (!file->IsOpen()) {
+      LOG(FATAL) << "Could not open \"" << partition.image_file_path
+                  << "\": " << file->StrError();
+      break;
+    }
+    int fd = file->UNMANAGED_Dup();
+    auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
+    if (!sparse) {
+      close(fd);
+      continue;
+    }
+    LOG(INFO) << "Desparsing " << partition.image_file_path;
+    std::string out_file_name = partition.image_file_path + ".desparse";
+    auto out_file = cvd::SharedFD::Open(out_file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC,
+                                        S_IRUSR | S_IWUSR | S_IRGRP);
+    int write_fd = out_file->UNMANAGED_Dup();
+    int write_status = sparse_file_write(sparse, write_fd, /* gz */ false,
+                                         /* sparse */ false, /* crc */ false);
+    if (write_status < 0) {
+      LOG(FATAL) << "Failed to desparse \"" << partition.image_file_path << "\": " << write_status;
+    }
+    close(write_fd);
+    if (rename(out_file_name.c_str(), partition.image_file_path.c_str()) < 0) {
+      int error_num = errno;
+      LOG(FATAL) << "Could not move \"" << out_file_name << "\" to \""
+                 << partition.image_file_path << "\": " << strerror(error_num);
+    }
+    sparse_file_destroy(sparse);
+    close(fd);
+  }
+}
+
 } // namespace
 
 void AggregateImage(const std::vector<ImagePartition>& partitions,
                     const std::string& output_path) {
+  DeAndroidSparse(partitions);
   auto bpttool_input_json = BpttoolInput(partitions);
   auto input_json_fd = JsonToFd(bpttool_input_json);
   auto table_fd = BpttoolMakeTable(input_json_fd);
