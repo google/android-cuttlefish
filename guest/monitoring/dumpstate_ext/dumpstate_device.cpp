@@ -16,7 +16,10 @@
 #include "guest/monitoring/dumpstate_ext/dumpstate_device.h"
 
 #include <DumpstateUtil.h>
+#include <android-base/properties.h>
 #include <log/log.h>
+
+#define DEVICE_LOGGING_PROPERTY "persist.vendor.logging_enabled"
 
 using android::os::dumpstate::DumpFileToFd;
 
@@ -28,37 +31,51 @@ namespace implementation {
 
 // Methods from ::android::hardware::dumpstate::V1_0::IDumpstateDevice follow.
 Return<void> DumpstateDevice::dumpstateBoard(const hidl_handle& handle) {
-  return dumpstateBoard_1_1(handle, DumpstateMode::DEFAULT, 30 * 1000 /* timeoutMillis */);
+  // Ignore return value, just return an empty status.
+  dumpstateBoard_1_1(handle, DumpstateMode::DEFAULT, 30 * 1000 /* timeoutMillis */);
+  return Void();
 }
 
 // Methods from ::android::hardware::dumpstate::V1_1::IDumpstateDevice follow.
-Return<void> DumpstateDevice::dumpstateBoard_1_1(const hidl_handle& handle,
-                                                 DumpstateMode mode,
-                                                 uint64_t /* timeoutMillis */) {
+Return<DumpstateStatus> DumpstateDevice::dumpstateBoard_1_1(const hidl_handle& handle,
+                                                            DumpstateMode mode,
+                                                            uint64_t /* timeoutMillis */) {
   if (handle == nullptr || handle->numFds < 1) {
-    ALOGE("no FDs\n");
-    return Void();
+    ALOGE("No FDs\n");
+    return DumpstateStatus::ILLEGAL_ARGUMENT;
   }
 
   int fd = handle->data[0];
   if (fd < 0) {
-    ALOGE("invalid FD: %d\n", handle->data[0]);
-    return Void();
+    ALOGE("Invalid FD: %d\n", fd);
+    return DumpstateStatus::ILLEGAL_ARGUMENT;
   }
 
-  if (mode < DumpstateMode::FULL || mode > DumpstateMode::DEFAULT) {
+  if (mode == DumpstateMode::WEAR) {
+    // We aren't a Wear device. Mostly just for variety in our return values for testing purposes.
+    ALOGE("Unsupported mode: %d\n", mode);
+    return DumpstateStatus::UNSUPPORTED_MODE;
+  } else if (mode < DumpstateMode::FULL || mode > DumpstateMode::DEFAULT) {
     ALOGE("Invalid mode: %d\n", mode);
-    return Status::fromExceptionCode(Status::EX_ILLEGAL_ARGUMENT);
+    return DumpstateStatus::ILLEGAL_ARGUMENT;
+  }
+
+  if (!::android::base::GetBoolProperty(DEVICE_LOGGING_PROPERTY, false)) {
+    return DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED;
   }
 
   DumpFileToFd(fd, "GCE INITIAL METADATA", "/initial.metadata");
 
+  return DumpstateStatus::OK;
+}
+
+Return<void> DumpstateDevice::setDeviceLoggingEnabled(bool enable) {
+  ::android::base::SetProperty(DEVICE_LOGGING_PROPERTY, enable ? "true" : "false");
   return Void();
 }
 
-Return<bool> DumpstateDevice::setDeviceLoggingEnabled(bool /* enable */) {
-  // Unsupported operation.
-  return false;
+Return<bool> DumpstateDevice::getDeviceLoggingEnabled() {
+  return ::android::base::GetBoolProperty(DEVICE_LOGGING_PROPERTY, false);
 }
 
 }  // namespace implementation
