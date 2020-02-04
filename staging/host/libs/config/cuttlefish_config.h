@@ -135,9 +135,6 @@ class CuttlefishConfig {
   void set_vendor_ramdisk_image_path(const std::string&
     vendor_ramdisk_image_path);
 
-  std::vector<std::string> virtual_disk_paths() const;
-  void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
-
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
 
@@ -290,6 +287,7 @@ class CuttlefishConfig {
     int vsock_guest_cid() const;
     std::string uuid() const;
     std::string instance_name() const;
+    std::vector<std::string> virtual_disk_paths() const;
 
     // Returns the path to a file with the given name in the instance directory..
     std::string PerInstancePath(const char* file_name) const;
@@ -344,6 +342,7 @@ class CuttlefishConfig {
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
     void set_instance_dir(const std::string& instance_dir);
+    void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
   };
 
  private:

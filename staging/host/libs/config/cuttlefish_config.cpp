@@ -338,21 +338,21 @@ void CuttlefishConfig::set_vendor_ramdisk_image_path(
   SetPath(kVendorRamdiskImagePath, vendor_ramdisk_image_path);
 }
 
-std::vector<std::string> CuttlefishConfig::virtual_disk_paths() const {
+std::vector<std::string> CuttlefishConfig::InstanceSpecific::virtual_disk_paths() const {
   std::vector<std::string> virtual_disks;
-  auto virtual_disks_json_obj = (*dictionary_)[kVirtualDiskPaths];
+  auto virtual_disks_json_obj = (*Dictionary())[kVirtualDiskPaths];
   for (const auto& disk : virtual_disks_json_obj) {
     virtual_disks.push_back(disk.asString());
   }
   return virtual_disks;
 }
-void CuttlefishConfig::set_virtual_disk_paths(
+void CuttlefishConfig::MutableInstanceSpecific::set_virtual_disk_paths(
     const std::vector<std::string>& virtual_disk_paths) {
   Json::Value virtual_disks_json_obj(Json::arrayValue);
   for (const auto& arg : virtual_disk_paths) {
     virtual_disks_json_obj.append(arg);
   }
-  (*dictionary_)[kVirtualDiskPaths] = virtual_disks_json_obj;
+  (*Dictionary())[kVirtualDiskPaths] = virtual_disks_json_obj;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
