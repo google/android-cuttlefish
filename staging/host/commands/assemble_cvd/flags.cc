@@ -160,6 +160,7 @@ DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
              "the slot will be chosen based on the misc partition if using a "
              "bootloader. It will default to 'a' if empty and not using a "
              "bootloader.");
+DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
 
 namespace {
 
@@ -361,7 +362,10 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
-  std::vector<int> instance_nums = {vsoc::GetInstance()};
+  std::vector<int> instance_nums;
+  for (int i = 0; i < FLAGS_num_instances; i++) {
+    instance_nums.push_back(vsoc::GetInstance() + i);
+  }
 
   for (const auto& num : instance_nums) {
     auto instance = tmp_config_obj.ForInstance(num);
@@ -615,7 +619,7 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
     CreateCompositeDisk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
     for (auto instance : config.Instances()) {
-      auto overlay_path = config.ForDefaultInstance().PerInstancePath("overlay.img");
+      auto overlay_path = instance.PerInstancePath("overlay.img");
       CreateQcowOverlay(config.crosvm_binary(), FLAGS_composite_disk, overlay_path);
     }
   } else {
