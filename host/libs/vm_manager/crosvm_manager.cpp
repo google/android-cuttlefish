@@ -84,6 +84,15 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
         "androidboot.hardware.vulkan=pastel",
     };
   }
+  if (gpu_mode == vsoc::kGpuModeGfxStream) {
+    return {
+        "androidboot.hardware.gralloc=minigbm",
+        "androidboot.hardware.hwcomposer=ranchu",
+        "androidboot.hardware.egl=emulation",
+        "androidboot.hardware.vulkan=ranchu",
+        "androidboot.hardware.gltransport=virtio-gpu-pipe",
+    };
+  }
   return {};
 }
 
@@ -108,8 +117,12 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   });
   crosvm_cmd.AddParameter("run");
 
-  if (config_->gpu_mode() == vsoc::kGpuModeDrmVirgl) {
-    crosvm_cmd.AddParameter("--gpu=",
+  auto gpu_mode = config_->gpu_mode();
+
+  if (gpu_mode == vsoc::kGpuModeDrmVirgl ||
+      gpu_mode == vsoc::kGpuModeGfxStream) {
+    crosvm_cmd.AddParameter(gpu_mode == vsoc::kGpuModeGfxStream ?
+                                "--gpu=gfxstream," : "--gpu=",
                             "width=", config_->x_res(), ",",
                             "height=", config_->y_res(), ",",
                             "egl=true,surfaceless=true,glx=false,gles=false");
