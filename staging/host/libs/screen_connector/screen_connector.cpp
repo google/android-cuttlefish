@@ -26,7 +26,8 @@ namespace cvd {
 
 ScreenConnector* ScreenConnector::Get(int frames_fd) {
   auto config = vsoc::CuttlefishConfig::Get();
-  if (config->gpu_mode() == vsoc::kGpuModeDrmVirgl) {
+  if (config->gpu_mode() == vsoc::kGpuModeDrmVirgl ||
+      config->gpu_mode() == vsoc::kGpuModeGfxStream) {
     return new WaylandScreenConnector(frames_fd);
   } else if (config->gpu_mode() == vsoc::kGpuModeGuestSwiftshader) {
     return new SocketBasedScreenConnector(frames_fd);
