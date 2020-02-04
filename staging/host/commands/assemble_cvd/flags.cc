@@ -94,7 +94,6 @@ DEFINE_string(misc_image, "",
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
 DEFINE_string(composite_disk, "", "Location of the composite disk image. ");
-DEFINE_string(overlay_disk, "", "Location of the overlay disk.");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -205,9 +204,6 @@ bool ResolveInstanceFiles() {
   std::string default_composite_disk = FLAGS_system_image_dir + "/composite.img";
   SetCommandLineOptionWithMode("composite_disk", default_composite_disk.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_overlay_disk = FLAGS_system_image_dir + "/overlay.img";
-  SetCommandLineOptionWithMode("overlay_disk", default_overlay_disk.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_vendor_boot_image = FLAGS_system_image_dir
                                         + "/vendor_boot.img";
   SetCommandLineOptionWithMode("vendor_boot_image",
@@ -246,6 +242,8 @@ bool InitializeCuttlefishConfiguration(
   vsoc::CuttlefishConfig tmp_config_obj;
   tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
   auto instance = tmp_config_obj.ForDefaultInstance();
+  auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
+      .ForDefaultInstance();
   // Set this first so that calls to PerInstancePath below are correct
   instance.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
@@ -312,7 +310,7 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
-  tmp_config_obj.set_virtual_disk_paths({FLAGS_overlay_disk});
+  instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
@@ -597,9 +595,6 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     LOG(ERROR) << "Could not ensure " << FLAGS_composite_disk << " exists";
     return false;
   }
-  if (FLAGS_overlay_disk.empty()) {
-    LOG(FATAL) << "asked to create overlay disk, but path was empty";
-  }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
     auto existing_size = cvd::FileSize(FLAGS_data_image);
     auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
@@ -612,8 +607,9 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
+    auto overlay_path = config.ForDefaultInstance().PerInstancePath("overlay.img");
     create_composite_disk_and_overlay(config.crosvm_binary(), disk_config(), header_path,
-                                      footer_path, FLAGS_composite_disk, FLAGS_overlay_disk);
+                                      footer_path, FLAGS_composite_disk, overlay_path);
   } else {
     auto existing_size = cvd::FileSize(FLAGS_composite_disk);
     auto available_space = AvailableSpaceAtPath(FLAGS_composite_disk);
@@ -776,8 +772,9 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     }
   }
 
+  auto instance = config->ForDefaultInstance();
   // Check that the files exist
-  for (const auto& file : config->virtual_disk_paths()) {
+  for (const auto& file : instance.virtual_disk_paths()) {
     if (!file.empty() && !cvd::FileHasContent(file.c_str())) {
       LOG(ERROR) << "File not found: " << file;
       exit(cvd::kCuttlefishConfigurationInitError);
