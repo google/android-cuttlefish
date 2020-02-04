@@ -568,6 +568,7 @@ bool CleanPriorFiles(const vsoc::CuttlefishConfig& config, const std::set<std::s
   for (const auto& instance : config.Instances()) {
     paths.push_back(instance.instance_dir());
   }
+  paths.push_back(FLAGS_instance_dir);
   return CleanPriorFiles(paths, preserving);
 }
 
@@ -776,6 +777,12 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
       LOG(ERROR) << "Failed to initialize configuration";
       exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
     }
+  }
+
+  std::string first_instance = FLAGS_instance_dir + "." + std::to_string(vsoc::GetInstance());
+  if (symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()) < 0) {
+    LOG(ERROR) << "Could not symlink \"" << first_instance << "\" to \"" << FLAGS_instance_dir << "\"";
+    exit(cvd::kCuttlefishConfigurationInitError);
   }
 
   if (!cvd::FileHasContent(FLAGS_boot_image)) {
