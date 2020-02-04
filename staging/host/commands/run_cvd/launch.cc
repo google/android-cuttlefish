@@ -110,7 +110,8 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
   cmd->AddParameter("-keyboard_fd=", keyboard_server);
 
   cvd::SharedFD frames_server;
-  if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl) {
+  if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl ||
+      config.gpu_mode() == vsoc::kGpuModeGfxStream) {
     frames_server = CreateUnixInputServer(instance.frames_socket_path());
   } else {
     frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
