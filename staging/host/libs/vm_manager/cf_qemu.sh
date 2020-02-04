@@ -105,7 +105,7 @@ for virtual_disk in "${virtual_disk_array[@]}"; do
     bootindex=""
   fi
   args+=(
-    -drive "file=${virtual_disk},format=raw,if=none,id=drive-virtio-disk${virtual_disk_index},aio=threads"
+    -drive "file=${virtual_disk},format=qcow2,if=none,id=drive-virtio-disk${virtual_disk_index},aio=threads"
     -device "virtio-blk-pci,scsi=off,drive=drive-virtio-disk${virtual_disk_index},id=virtio-disk${virtual_disk_index}${bootindex}"
   )
   virtual_disk_index=$((virtual_disk_index + 1))
