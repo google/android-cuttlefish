@@ -241,11 +241,6 @@ bool InitializeCuttlefishConfiguration(
 
   vsoc::CuttlefishConfig tmp_config_obj;
   tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
-  auto instance = tmp_config_obj.ForDefaultInstance();
-  auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
-      .ForDefaultInstance();
-  // Set this first so that calls to PerInstancePath below are correct
-  instance.set_instance_dir(FLAGS_instance_dir);
   if (!vm_manager::VmManager::IsValidName(FLAGS_vm_manager)) {
     LOG(ERROR) << "Invalid vm_manager: " << FLAGS_vm_manager;
     return false;
@@ -263,8 +258,6 @@ bool InitializeCuttlefishConfiguration(
     return false;
   }
 
-  instance.set_serial_number(FLAGS_serial_number);
-
   tmp_config_obj.set_cpus(FLAGS_cpus);
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
@@ -276,10 +269,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
-  instance.set_host_port(GetHostPort());
-  instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
-
-  instance.set_device_title(FLAGS_device_title);
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   if (foreign_kernel.size()) {
@@ -310,8 +299,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
-  instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
-
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
 
@@ -337,15 +324,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_config_server_binary(
       vsoc::DefaultHostArtifactsPath("bin/config_server"));
 
-  instance.set_mobile_bridge_name(FLAGS_mobile_interface);
-  instance.set_mobile_tap_name(FLAGS_mobile_tap_name);
-
-  instance.set_wifi_tap_name(FLAGS_wifi_tap_name);
-
-  instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
-
-  instance.set_uuid(FLAGS_uuid);
-
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_console_forwarder_binary(
@@ -356,7 +334,6 @@ bool InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
   tmp_config_obj.set_vnc_server_binary(
       vsoc::DefaultHostArtifactsPath("bin/vnc_server"));
-  instance.set_vnc_server_port(FLAGS_vnc_server_port);
 
   tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
   tmp_config_obj.set_webrtc_binary(
@@ -394,6 +371,30 @@ bool InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
+
+  auto instance = tmp_config_obj.ForDefaultInstance();
+  auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
+      .ForDefaultInstance();
+  // Set this first so that calls to PerInstancePath below are correct
+  instance.set_instance_dir(FLAGS_instance_dir);
+  instance.set_serial_number(FLAGS_serial_number);
+
+  instance.set_mobile_bridge_name(FLAGS_mobile_interface);
+  instance.set_mobile_tap_name(FLAGS_mobile_tap_name);
+
+  instance.set_wifi_tap_name(FLAGS_wifi_tap_name);
+
+  instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid);
+
+  instance.set_uuid(FLAGS_uuid);
+
+  instance.set_vnc_server_port(FLAGS_vnc_server_port);
+  instance.set_host_port(GetHostPort());
+  instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(GetHostPort()));
+
+  instance.set_device_title(FLAGS_device_title);
+
+  instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
 
   auto config_file = GetConfigFilePath(tmp_config_obj);
   auto config_link = vsoc::GetGlobalConfigFileLink();
