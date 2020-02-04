@@ -23,6 +23,7 @@
 #include <glog/logging.h>
 #include <json/json.h>
 #include <google/protobuf/text_format.h>
+#include <sparse/sparse.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -42,11 +43,32 @@ Json::Value BpttoolInput(const std::vector<ImagePartition>& partitions) {
   std::vector<off_t> file_sizes;
   off_t total_size = 20 << 20; // 20 MB for padding
   for (auto& partition : partitions) {
-    off_t partition_file_size = cvd::FileSize(partition.image_file_path);
-    if (partition_file_size == 0) {
-      LOG(FATAL) << "Expected partition file \"" << partition.image_file_path
-                 << "\" but it was missing";
+    LOG(INFO) << "Examining " << partition.label;
+    auto file = cvd::SharedFD::Open(partition.image_file_path.c_str(), O_RDONLY);
+    if (!file->IsOpen()) {
+      LOG(FATAL) << "Could not open \"" << partition.image_file_path
+                 << "\": " << file->StrError();
+      break;
     }
+    int fd = file->UNMANAGED_Dup();
+    auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
+    off_t partition_file_size = 0;
+    if (sparse) {
+      partition_file_size = sparse_file_len(sparse, /* sparse */ false,
+                                            /* crc */ true);
+      sparse_file_destroy(sparse);
+      close(fd);
+      LOG(INFO) << "was sparse";
+    } else {
+      partition_file_size = cvd::FileSize(partition.image_file_path);
+      if (partition_file_size == 0) {
+        LOG(FATAL) << "Could not get file size of \"" << partition.image_file_path
+                  << "\"";
+        break;
+      }
+      LOG(INFO) << "was not sparse";
+    }
+    LOG(INFO) << "size was " << partition_file_size;
     total_size += partition_file_size;
     file_sizes.push_back(partition_file_size);
   }
