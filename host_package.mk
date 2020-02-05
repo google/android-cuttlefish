@@ -51,7 +51,6 @@ cvd_host_executables := \
     webRTC \
 
 cvd_host_tests := \
-    cuttlefish_thread_test \
     monotonic_time_test \
     cuttlefish_net_tests \
 
