@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <set>
+#include <vector>
 
 namespace Json {
 class Value;
@@ -51,7 +52,9 @@ class CuttlefishConfig {
   static const CuttlefishConfig* Get();
 
   CuttlefishConfig();
+  CuttlefishConfig(CuttlefishConfig&&);
   ~CuttlefishConfig();
+  CuttlefishConfig& operator=(CuttlefishConfig&&);
 
   // Saves the configuration object in a file, it can then be read in other
   // processes by passing the --config_file option.
@@ -134,9 +137,6 @@ class CuttlefishConfig {
   std::string vendor_ramdisk_image_path() const;
   void set_vendor_ramdisk_image_path(const std::string&
     vendor_ramdisk_image_path);
-
-  std::vector<std::string> virtual_disk_paths() const;
-  void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
@@ -259,21 +259,22 @@ class CuttlefishConfig {
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
-  MutableInstanceSpecific ForDefaultInstance();
+  MutableInstanceSpecific ForInstance(int instance_num);
+  InstanceSpecific ForInstance(int instance_num) const;
   InstanceSpecific ForDefaultInstance() const;
+
+  std::vector<InstanceSpecific> Instances() const;
 
   // A view into an existing CuttlefishConfig object for a particular instance.
   class InstanceSpecific {
     const CuttlefishConfig* config_;
     std::string id_;
+    friend InstanceSpecific CuttlefishConfig::ForInstance(int num) const;
     friend InstanceSpecific CuttlefishConfig::ForDefaultInstance() const;
+    friend std::vector<InstanceSpecific> CuttlefishConfig::Instances() const;
 
     InstanceSpecific(const CuttlefishConfig* config, const std::string& id)
         : config_(config), id_(id) {}
-    InstanceSpecific(const InstanceSpecific&) = delete;
-    InstanceSpecific(InstanceSpecific&&) = delete;
-    InstanceSpecific& operator=(const InstanceSpecific&) = delete;
-    InstanceSpecific& operator=(InstanceSpecific&&) = delete;
 
     Json::Value* Dictionary();
     const Json::Value* Dictionary() const;
@@ -290,6 +291,7 @@ class CuttlefishConfig {
     int vsock_guest_cid() const;
     std::string uuid() const;
     std::string instance_name() const;
+    std::vector<std::string> virtual_disk_paths() const;
 
     // Returns the path to a file with the given name in the instance directory..
     std::string PerInstancePath(const char* file_name) const;
@@ -322,14 +324,10 @@ class CuttlefishConfig {
   class MutableInstanceSpecific {
     CuttlefishConfig* config_;
     std::string id_;
-    friend MutableInstanceSpecific CuttlefishConfig::ForDefaultInstance();
+    friend MutableInstanceSpecific CuttlefishConfig::ForInstance(int num);
 
     MutableInstanceSpecific(CuttlefishConfig* config, const std::string& id)
         : config_(config), id_(id) {}
-    MutableInstanceSpecific(const MutableInstanceSpecific&) = delete;
-    MutableInstanceSpecific(MutableInstanceSpecific&&) = delete;
-    MutableInstanceSpecific& operator=(const MutableInstanceSpecific&) = delete;
-    MutableInstanceSpecific& operator=(MutableInstanceSpecific&&) = delete;
 
     Json::Value* Dictionary();
   public:
@@ -344,13 +342,11 @@ class CuttlefishConfig {
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
     void set_instance_dir(const std::string& instance_dir);
+    void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
   };
 
  private:
   std::unique_ptr<Json::Value> dictionary_;
-
-  InstanceSpecific ForInstance(int instance_num);
-  const InstanceSpecific ForInstance(int instance_num) const;
 
   void SetPath(const std::string& key, const std::string& path);
   bool LoadFromFile(const char* file);
