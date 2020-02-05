@@ -53,7 +53,6 @@ cc_binary_host {
         "libz",
     ],
     static_libs: [
-        "libsparse",
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
         "libgflags",
