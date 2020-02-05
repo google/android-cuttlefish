@@ -1,6 +1,6 @@
 cc_test {
-    name: "hidl_implementation_test",
-    srcs: ["hidl_implementation_test.cpp"],
+    name: "hal_implementation_test",
+    srcs: ["hal_implementation_test.cpp"],
     static_libs: [
         "libhidlmetadata",
         "libhidl-gen-utils",
