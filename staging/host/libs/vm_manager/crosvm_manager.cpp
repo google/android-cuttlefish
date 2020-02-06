@@ -135,7 +135,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--mem=", config_->memory_mb());
   crosvm_cmd.AddParameter("--cpus=", config_->cpus());
   crosvm_cmd.AddParameter("--params=", kernel_cmdline_);
-  for (const auto& disk : config_->virtual_disk_paths()) {
+  for (const auto& disk : instance.virtual_disk_paths()) {
     crosvm_cmd.AddParameter("--rwdisk=", disk);
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));

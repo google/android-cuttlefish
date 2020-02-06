@@ -24,9 +24,12 @@ struct ImagePartition {
   std::string image_file_path;
 };
 
-void aggregate_image(const std::vector<ImagePartition>& partitions,
-                     const std::string& output_path);
-void create_composite_disk(std::vector<ImagePartition> partitions,
-                           const std::string& header_file,
-                           const std::string& footer_file,
-                           const std::string& output_path);
+void AggregateImage(const std::vector<ImagePartition>& partitions,
+                    const std::string& output_path);
+void CreateCompositeDisk(std::vector<ImagePartition> partitions,
+                         const std::string& header_file,
+                         const std::string& footer_file,
+                         const std::string& output_composite_path);
+void CreateQcowOverlay(const std::string& crosvm_path,
+                       const std::string& backing_file,
+                       const std::string& output_overlay_path);
