@@ -49,6 +49,9 @@ cvd_host_executables := \
     run_cvd \
     cvd_status \
     webRTC \
+    fsck.f2fs \
+    resize.f2fs \
+    make_f2fs \
 
 cvd_host_tests := \
     monotonic_time_test \
