@@ -125,7 +125,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
                                 "--gpu=gfxstream," : "--gpu=",
                             "width=", config_->x_res(), ",",
                             "height=", config_->y_res(), ",",
-                            "egl=true,surfaceless=true,glx=false,gles=false");
+                            "egl=true,surfaceless=true,glx=false,gles=true");
     crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
   if (!config_->final_ramdisk_path().empty()) {
