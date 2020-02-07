@@ -49,7 +49,7 @@ static const std::set<std::string> kKnownMissing = {
     "android.hardware.contexthub@1.0",
     "android.hardware.configstore@1.1", // deprecated, see b/149050985, b/149050733
     "android.hardware.fastboot@1.0",
-    "android.hardware.gnss.measurement_corrections@1.1", /* is sub-interface of gnss */
+    "android.hardware.gnss.measurement_corrections@1.1", // is sub-interface of gnss
     "android.hardware.gnss.visibility_control@1.0",
     "android.hardware.graphics.allocator@3.0",
     "android.hardware.graphics.allocator@4.0",
