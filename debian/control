@@ -16,6 +16,7 @@ Depends:
  bridge-utils,
  dnsmasq-base,
  f2fs-tools,
+ iptables,
  libarchive-tools | bsdtar,
  libc6,
  libc6:amd64 [!amd64],
