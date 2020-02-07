@@ -1,0 +1,1 @@
+allow vold kernel:system module_request;
