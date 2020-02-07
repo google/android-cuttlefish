@@ -15,7 +15,7 @@ const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
 
 bool ForceFsckImage(const char* data_image) {
-  int fsck_status = cvd::execute({"/sbin/fsck.f2fs", "-y", "-f", data_image});
+  int fsck_status = cvd::execute({"bin/fsck.f2fs", "-y", "-f", data_image});
   if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
     LOG(ERROR) << "`fsck.f2fs -y -f " << data_image << "` failed with code "
                << fsck_status;
@@ -46,7 +46,7 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
     if (!fsck_success) {
       return false;
     }
-    int resize_status = cvd::execute({"/sbin/resize.f2fs", data_image});
+    int resize_status = cvd::execute({"bin/resize.f2fs", data_image});
     if (resize_status != 0) {
       LOG(ERROR) << "`resize.f2fs " << data_image << "` failed with code "
                  << resize_status;
@@ -72,7 +72,7 @@ void CreateBlankImage(
   std::string bs = "bs=" + block_size;
   cvd::execute({"/bin/dd", "if=/dev/zero", of, bs, count});
   if (image_fmt != "none") {
-    cvd::execute({"/sbin/mkfs", "-t", image_fmt, image}, {"PATH=/sbin"});
+    cvd::execute({"bin/make_f2fs", "-t", image_fmt, image}, {"PATH=bin"});
   }
 }
 
