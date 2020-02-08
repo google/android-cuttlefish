@@ -879,6 +879,10 @@ std::string CuttlefishConfig::AssemblyPath(
   return cvd::AbsolutePath(assembly_dir() + "/" + file_name);
 }
 
+std::string CuttlefishConfig::composite_disk_path() const {
+  return AssemblyPath("composite.img");
+}
+
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
     const char* file_name) const {
   return (instance_dir() + "/") + file_name;
