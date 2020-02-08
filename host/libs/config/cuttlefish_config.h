@@ -65,6 +65,8 @@ class CuttlefishConfig {
 
   std::string AssemblyPath(const std::string&) const;
 
+  std::string composite_disk_path() const;
+
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
