@@ -93,7 +93,6 @@ DEFINE_string(super_image, "", "Location of the super partition image.");
 DEFINE_string(misc_image, "",
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
-DEFINE_string(composite_disk, "", "Location of the composite disk image. ");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -202,9 +201,6 @@ bool ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_misc_image = FLAGS_system_image_dir + "/misc.img";
   SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_composite_disk = FLAGS_system_image_dir + "/composite.img";
-  SetCommandLineOptionWithMode("composite_disk", default_composite_disk.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_vendor_boot_image = FLAGS_system_image_dir
                                         + "/vendor_boot.img";
@@ -638,8 +634,11 @@ std::chrono::system_clock::time_point LastUpdatedInputDisk() {
   return ret;
 }
 
-bool ShouldCreateCompositeDisk() {
-  auto composite_age = cvd::FileModificationTime(FLAGS_composite_disk);
+bool ShouldCreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
+  if (!cvd::FileExists(config.composite_disk_path())) {
+    return true;
+  }
+  auto composite_age = cvd::FileModificationTime(config.composite_disk_path());
   return composite_age < LastUpdatedInputDisk();
 }
 
@@ -673,12 +672,8 @@ off_t USERDATA_IMAGE_RESERVED = 4l * (1l << 30l); // 4 GiB
 off_t AGGREGATE_IMAGE_RESERVED = 12l * (1l << 30l); // 12 GiB
 
 bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
-  if (FLAGS_composite_disk.empty()) {
-    LOG(ERROR) << "asked to create composite disk, but path was empty";
-    return false;
-  }
-  if (!cvd::SharedFD::Open(FLAGS_composite_disk.c_str(), O_WRONLY | O_CREAT, 0644)->IsOpen()) {
-    LOG(ERROR) << "Could not ensure " << FLAGS_composite_disk << " exists";
+  if (!cvd::SharedFD::Open(config.composite_disk_path().c_str(), O_WRONLY | O_CREAT, 0644)->IsOpen()) {
+    LOG(ERROR) << "Could not ensure " << config.composite_disk_path() << " exists";
     return false;
   }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
@@ -693,17 +688,17 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
-    CreateCompositeDisk(disk_config(), header_path, footer_path, FLAGS_composite_disk);
+    CreateCompositeDisk(disk_config(), header_path, footer_path, config.composite_disk_path());
   } else {
-    auto existing_size = cvd::FileSize(FLAGS_composite_disk);
-    auto available_space = AvailableSpaceAtPath(FLAGS_composite_disk);
+    auto existing_size = cvd::FileSize(config.composite_disk_path());
+    auto available_space = AvailableSpaceAtPath(config.composite_disk_path());
     if (available_space < AGGREGATE_IMAGE_RESERVED - existing_size) {
-      LOG(ERROR) << "Not enough space to create " << FLAGS_composite_disk;
+      LOG(ERROR) << "Not enough space to create " << config.composite_disk_path();
       LOG(ERROR) << "Wanted " << (AGGREGATE_IMAGE_RESERVED - existing_size);
       LOG(ERROR) << "Got " << available_space;
       return false;
     }
-    AggregateImage(disk_config(), FLAGS_composite_disk);
+    AggregateImage(disk_config(), config.composite_disk_path());
   }
   return true;
 }
@@ -727,11 +722,11 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     // disk.
     auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config);
     std::set<std::string> preserving;
-    if (FLAGS_resume && ShouldCreateCompositeDisk()) {
+    if (FLAGS_resume && ShouldCreateCompositeDisk(config)) {
       LOG(WARNING) << "Requested resuming a previous session (the default behavior) "
                    << "but the base images have changed under the overlay, making the "
                    << "overlay incompatible. Wiping the overlay files.";
-    } else if (FLAGS_resume && !ShouldCreateCompositeDisk()) {
+    } else if (FLAGS_resume && !ShouldCreateCompositeDisk(config)) {
       preserving.insert("overlay.img");
       preserving.insert("gpt_header.img");
       preserving.insert("gpt_footer.img");
@@ -876,7 +871,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     }
   }
 
-  if (ShouldCreateCompositeDisk()) {
+  if (ShouldCreateCompositeDisk(*config)) {
     if (!CreateCompositeDisk(*config)) {
       exit(cvd::kDiskSpaceError);
     }
@@ -884,13 +879,13 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
 
   for (auto instance : config->Instances()) {
     auto overlay_path = instance.PerInstancePath("overlay.img");
-    if (!cvd::FileExists(overlay_path) || ShouldCreateCompositeDisk() || !FLAGS_resume
-        || cvd::FileModificationTime(overlay_path) < cvd::FileModificationTime(FLAGS_composite_disk)) {
+    if (!cvd::FileExists(overlay_path) || ShouldCreateCompositeDisk(*config) || !FLAGS_resume
+        || cvd::FileModificationTime(overlay_path) < cvd::FileModificationTime(config->composite_disk_path())) {
       if (FLAGS_resume) {
         LOG(WARNING) << "Requested to continue an existing session, but the overlay was "
                      << "newer than its underlying composite disk. Wiping the overlay.";
       }
-      CreateQcowOverlay(config->crosvm_binary(), FLAGS_composite_disk, overlay_path);
+      CreateQcowOverlay(config->crosvm_binary(), config->composite_disk_path(), overlay_path);
       CreateBlankImage(instance.access_kregistry_path(), 1, "none", "64K");
     }
   }
