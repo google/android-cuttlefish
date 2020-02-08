@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <aidl/metadata.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <gtest/gtest.h>
 #include <hidl/metadata.h>
 #include <hidl-util/FQName.h>
@@ -21,7 +23,7 @@
 
 using namespace android;
 
-static const std::set<std::string> kKnownMissing = {
+static const std::set<std::string> kKnownMissingHidl = {
     "android.frameworks.bufferhub@1.0",
     "android.frameworks.cameraservice.device@2.0",
     "android.frameworks.vr.composer@1.0",
@@ -92,8 +94,16 @@ static const std::set<std::string> kKnownMissing = {
     "android.hidl.memory.token@1.0",
 };
 
+static const std::set<std::string> kKnownMissingAidl = {
+    "android.hardware.light.ILights",
+
+    // types-only packages, which never expect a default implementation
+    "android.hardware.common.NativeHandle",
+    "android.hardware.graphics.common.ExtendableType",
+};
+
 // AOSP packages which are never considered
-static bool isPackageWhitelist(const FQName& name) {
+static bool isHidlPackageWhitelist(const FQName& name) {
     static std::vector<std::string> gAospExclude = {
         // packages not implemented now that we never expect to be implemented
         "android.hardware.tests",
@@ -108,22 +118,22 @@ static bool isPackageWhitelist(const FQName& name) {
     return false;
 }
 
-static bool isAospInterface(const FQName& name) {
-    static std::vector<std::string> gAospPackages = {
+static bool isAospHidlInterface(const FQName& name) {
+    static const std::vector<std::string> kAospPackages = {
         "android.hidl",
         "android.hardware",
         "android.frameworks",
         "android.system",
     };
-    for (const std::string& package : gAospPackages) {
-        if (name.inPackage(package) && !isPackageWhitelist(name)) {
+    for (const std::string& package : kAospPackages) {
+        if (name.inPackage(package) && !isHidlPackageWhitelist(name)) {
             return true;
         }
     }
     return false;
 }
 
-static std::set<FQName> allTreeInterfaces() {
+static std::set<FQName> allTreeHidlInterfaces() {
     std::set<FQName> ret;
     for (const auto& iface : HidlInterfaceMetadata::all()) {
         FQName f;
@@ -133,11 +143,10 @@ static std::set<FQName> allTreeInterfaces() {
     return ret;
 }
 
-static std::set<FQName> allManifestInstances() {
+static std::set<FQName> allHidlManifestInterfaces() {
     std::set<FQName> ret;
     auto setInserter = [&] (const vintf::ManifestInstance& i) -> bool {
         if (i.format() != vintf::HalFormat::HIDL) {
-            std::cout << "[ WARNING  ] Not checking non-HIDL instance: " << i.description() << std::endl;
             return true;  // continue
         }
         ret.insert(i.getFqInstance().getFqName());
@@ -148,18 +157,37 @@ static std::set<FQName> allManifestInstances() {
     return ret;
 }
 
-TEST(Hidl, IsAospDevice) {
-    for (const FQName& name : allManifestInstances()) {
-        EXPECT_TRUE(isAospInterface(name)) << name.string();
+static bool isAospAidlInterface(const std::string& name) {
+    return base::StartsWith(name, "android.") &&
+        !base::StartsWith(name, "android.automotive.");
+}
+
+static std::set<std::string> allAidlManifestInterfaces() {
+    std::set<std::string> ret;
+    auto setInserter = [&] (const vintf::ManifestInstance& i) -> bool {
+        if (i.format() != vintf::HalFormat::AIDL) {
+            return true;  // continue
+        }
+        ret.insert(i.package() + "." + i.interface());
+        return true;  // continue
+    };
+    vintf::VintfObject::GetDeviceHalManifest()->forEachInstance(setInserter);
+    vintf::VintfObject::GetFrameworkHalManifest()->forEachInstance(setInserter);
+    return ret;
+}
+
+TEST(Hal, AllHidlInterfacesAreInAosp) {
+    for (const FQName& name : allHidlManifestInterfaces()) {
+        EXPECT_TRUE(isAospHidlInterface(name)) << name.string();
     }
 }
 
-TEST(Hidl, InterfacesImplemented) {
+TEST(Hal, HidlInterfacesImplemented) {
     // instances -> major version -> minor versions
     std::map<std::string, std::map<size_t, std::set<size_t>>> unimplemented;
 
-    for (const FQName& f : allTreeInterfaces()) {
-        if (!isAospInterface(f)) continue;
+    for (const FQName& f : allTreeHidlInterfaces()) {
+        if (!isAospHidlInterface(f)) continue;
 
         unimplemented[f.package()][f.getPackageMajorVersion()].insert(f.getPackageMinorVersion());
     }
@@ -167,11 +195,12 @@ TEST(Hidl, InterfacesImplemented) {
     // we'll be removing items from this which we know are missing
     // in order to be left with those elements which we thought we
     // knew were missing but are actually present
-    std::set<std::string> thoughtMissing = kKnownMissing;
+    std::set<std::string> thoughtMissing = kKnownMissingHidl;
 
-    for (const FQName& f : allManifestInstances()) {
+    for (const FQName& f : allHidlManifestInterfaces()) {
         if (thoughtMissing.erase(f.getPackageAndVersion().string()) > 0) {
-             std::cout << "[ WARNING  ] Instance in missing list, but available: " << f.string() << std::endl;
+             std::cout << "[ WARNING  ] Instance in missing list, but available: "
+                       << f.string() << std::endl;
         }
 
         std::set<size_t>& minors = unimplemented[f.package()][f.getPackageMajorVersion()];
@@ -200,6 +229,53 @@ TEST(Hidl, InterfacesImplemented) {
     }
 
     for (const std::string& missing : thoughtMissing) {
-        std::cout << "[ WARNING  ] Instance in missing list, and cannot find it anywhere: " << missing << std::endl;
+        std::cout << "[ WARNING  ] Instance in missing list and cannot find it anywhere: "
+                  << missing << std::endl;
+    }
+}
+
+TEST(Hal, AllAidlInterfacesAreInAosp) {
+    for (const std::string& name : allAidlManifestInterfaces()) {
+        EXPECT_TRUE(isAospAidlInterface(name)) << name;
+    }
+}
+
+TEST(Hal, AidlInterfacesImplemented) {
+    std::set<std::string> manifest = allAidlManifestInterfaces();
+    std::set<std::string> thoughtMissing = kKnownMissingAidl;
+
+    for (const auto& iface : AidlInterfaceMetadata::all()) {
+        ASSERT_FALSE(iface.types.empty()) << iface.name;  // sanity
+        if (!isAospAidlInterface(iface.name)) continue;
+        if (iface.stability != "vintf") continue;
+
+        bool hasRegistration = false;
+        bool knownMissing = false;
+        for (const std::string& type : iface.types) {
+            if (manifest.erase(type) > 0) hasRegistration = true;
+            if (thoughtMissing.erase(type) > 0) knownMissing = true;
+        }
+
+        if (knownMissing) {
+            if (hasRegistration) {
+                std::cout << "[ WARNING  ] Interface in missing list, but available: " << iface.name
+                          << " which declares the following types:\n    "
+                          << base::Join(iface.types, "\n    ") << std::endl;
+            }
+
+            continue;
+        }
+
+        EXPECT_TRUE(hasRegistration) << iface.name << " which declares the following types:\n    "
+            << base::Join(iface.types, "\n    ") << std::endl;
+    }
+
+    for (const std::string& iface : thoughtMissing) {
+        std::cout << "[ WARNING  ] Interface in manifest list and cannot find it anywhere: "
+                  << iface << std::endl;
+    }
+
+    for (const std::string& iface : manifest) {
+        std::cout << "[ WARNING  ] Can't find manifest entry in tree: " << iface << std::endl;
     }
 }
