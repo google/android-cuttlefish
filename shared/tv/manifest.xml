@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="4">
+<manifest version="1.0" type="device" target-level="5">
      <!-- FIXME: Implement tv.cec HAL
      <hal format="hidl">
         <name>android.hardware.tv.cec</name>

@@ -20,10 +20,17 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/updatable_apex.mk)
 # Enable userspace reboot
 $(call inherit-product, $(SRC_TARGET_DIR)/product/userspace_reboot.mk)
 
-PRODUCT_SHIPPING_API_LEVEL := 29
+PRODUCT_SHIPPING_API_LEVEL := 30
 PRODUCT_BUILD_BOOT_IMAGE := true
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
+
+# [b/148163848] Disable product enforcement only for qt-qpr1-dev-plus-aosp
+# branch. It is not merged down to master branch.
+# As qt-qpr1-dev-plus-aosp branch has qt based vendor modules that are not
+# ready for the product enforcement, we may not enable it in this branch.
+PRODUCT_USE_PRODUCT_VNDK_OVERRIDE := false
+OVERRIDE_PRODUCT_ENFORCE_PRODUCT_PARTITION_INTERFACE := false
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
