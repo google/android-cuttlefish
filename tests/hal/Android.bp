@@ -2,6 +2,7 @@ cc_test {
     name: "hal_implementation_test",
     srcs: ["hal_implementation_test.cpp"],
     static_libs: [
+        "libaidlmetadata",
         "libhidlmetadata",
         "libhidl-gen-utils",
     ],
