@@ -69,19 +69,28 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
-  if (gpu_mode == vsoc::kGpuModeDrmVirgl) {
-    return {
-      "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=drm_minigbm",
-      "androidboot.hardware.egl=mesa",
-    };
-  }
   if (gpu_mode == vsoc::kGpuModeGuestSwiftshader) {
     return {
         "androidboot.hardware.gralloc=cutf_ashmem",
         "androidboot.hardware.hwcomposer=cutf_cvm_ashmem",
         "androidboot.hardware.egl=swiftshader",
         "androidboot.hardware.vulkan=pastel",
+    };
+  }
+
+  // Try to load the Nvidia modeset kernel module. Running Crosvm with Nvidia's EGL library on a
+  // fresh machine after a boot will fail because the Nvidia EGL library will fork to run the
+  // nvidia-modprobe command and the main Crosvm process will abort after receiving the exit signal
+  // of the forked child which is interpreted as a failure.
+  cvd::Command modprobe_cmd("/usr/bin/nvidia-modprobe");
+  modprobe_cmd.AddParameter("--modeset");
+  modprobe_cmd.Start().Wait();
+
+  if (gpu_mode == vsoc::kGpuModeDrmVirgl) {
+    return {
+      "androidboot.hardware.gralloc=minigbm",
+      "androidboot.hardware.hwcomposer=drm_minigbm",
+      "androidboot.hardware.egl=mesa",
     };
   }
   if (gpu_mode == vsoc::kGpuModeGfxStream) {
