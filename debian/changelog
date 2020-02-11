@@ -3,7 +3,10 @@ cuttlefish-common (0.9.11) UNRELEASED; urgency=medium
   [ Jorge E. Moreira ]
   * Explicitly depend on iptables
 
- -- Jorge E. Moreira <jemoreira@google.com> Thu, 06 Feb 2020 16:52:24 -0800
+  [ Jason Macnak ]
+  * Load nvidia-modeset kernel module in cuttlefish-common.init
+
+ -- Jason Macnak <natsu@google.com> Tue, 11 Feb 2020 14:56:24 -0800
 
 cuttlefish-common (0.9.10) UNRELEASED; urgency=medium
 
