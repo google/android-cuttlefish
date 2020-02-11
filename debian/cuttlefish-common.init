@@ -158,6 +158,8 @@ start() {
       chmod ug+rw /dev/kvm
       chmod ug+rw /dev/vhost-vsock
     fi
+    # Try to preload the Nvidia modeset kernel module.
+    /usr/bin/nvidia-modprobe --modeset || /bin/true
 }
 
 stop() {
