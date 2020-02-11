@@ -88,6 +88,7 @@ extern "C" {
  *                    RIL_REQUEST_EMERGENCY_DIAL
  *                    RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS
  *                    RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA
+ *                    RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA
  *                    RIL_REQUEST_ENABLE_UICC_APPLICATIONS
  *                    RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
  *                    RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
@@ -6618,6 +6619,23 @@ typedef struct {
 #define RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA 152
 
 /**
+ * RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA
+ *
+ * Sets the link capacity reporting criteria. The resulting reporting criteria are the AND of
+ * all the supplied criteria.
+ *
+ * Note: Reporting criteria ust be individually set for each RAN. If unset, reporting criteria
+ * for that RAN are implementation-defined.
+ *
+ * Valid errors returned:
+ *   RadioError:NONE
+ *   RadioError:INVALID_ARGUMENTS
+ *   RadioError:RADIO_NOT_AVAILABLE
+ *   RadioError:INTERNAL_ERR
+ */
+#define RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA 153
+
+/**
  * RIL_REQUEST_ENABLE_UICC_APPLICATIONS
  *
  * Enable or disable uicc applications.
@@ -6629,7 +6647,7 @@ typedef struct {
  *  INTERNAL_ERR
  *  REQUEST_NOT_SUPPORTED
  */
-#define RIL_REQUEST_ENABLE_UICC_APPLICATIONS 153
+#define RIL_REQUEST_ENABLE_UICC_APPLICATIONS 154
 
 /**
  * RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
@@ -6645,7 +6663,7 @@ typedef struct {
  *  INTERNAL_ERR
  *  REQUEST_NOT_SUPPORTED
  */
-#define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 154
+#define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 155
 
 /**
  * RIL_REQUEST_SET_RADIO_POWER
@@ -6659,7 +6677,7 @@ typedef struct {
  *  INVALID_ARGUMENTS
  *
  */
-#define RIL_REQUEST_SET_RADIO_POWER 155
+#define RIL_REQUEST_SET_RADIO_POWER 156
 
 /**
  * RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
@@ -6686,7 +6704,7 @@ typedef struct {
  *  REQUEST_NOT_SUPPORTED
  */
 
-#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 156
+#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 157
 
 /**
  * RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
@@ -6725,7 +6743,7 @@ typedef struct {
  *  MODE_NOT_SUPPORTED
  *  SIM_ABSENT
  */
-#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 157
+#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 158
 
 /***********************************************************************/
 
