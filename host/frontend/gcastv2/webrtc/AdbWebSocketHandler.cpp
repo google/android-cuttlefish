@@ -161,7 +161,7 @@ void AdbWebSocketHandler::run() {
 }
 
 int AdbWebSocketHandler::setupSocket(const std::string &adb_host_and_port) {
-    auto colonPos = adb_host_and_port.find(":");
+    auto colonPos = adb_host_and_port.find(':');
     if (colonPos == std::string::npos) {
         return -EINVAL;
     }
