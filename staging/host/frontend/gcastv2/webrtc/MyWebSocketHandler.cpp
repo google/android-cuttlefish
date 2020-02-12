@@ -577,7 +577,7 @@ MyWebSocketHandler::CreateDTLSCertificateAndKey() {
 }
 
 void MyWebSocketHandler::parseOptions(const std::string &pathAndQuery) {
-    auto separatorPos = pathAndQuery.find("?");
+    auto separatorPos = pathAndQuery.find('?');
 
     if (separatorPos == std::string::npos) {
         return;
@@ -587,7 +587,7 @@ void MyWebSocketHandler::parseOptions(const std::string &pathAndQuery) {
     for (auto name : components) {
         bool boolValue = true;
 
-        separatorPos = name.find("=");
+        separatorPos = name.find('=');
         if (separatorPos != std::string::npos) {
             boolValue = false;
 
