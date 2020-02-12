@@ -166,7 +166,7 @@ int DTLS::OnVerifyPeerCertificate(int /* ok */, X509_STORE_CTX *ctx) {
         return 0;
     }
 
-    auto spacePos = me->mRemoteFingerprint.find(" ");
+    auto spacePos = me->mRemoteFingerprint.find(' ');
     CHECK(spacePos != std::string::npos);
     auto digestName = me->mRemoteFingerprint.substr(0, spacePos);
     CHECK(!strcasecmp(digestName.c_str(), "sha-256"));

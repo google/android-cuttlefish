@@ -73,7 +73,7 @@ std::string TargetBuildZipFromArtifacts(
     const Build& build, const std::string& name,
     const std::vector<Artifact>& artifacts) {
   std::string target = std::visit([](auto&& arg) { return arg.target; }, build);
-  size_t dash_pos = target.find("-");
+  size_t dash_pos = target.find('-');
   if (dash_pos != std::string::npos) {
     target.replace(dash_pos, target.size() - dash_pos, "");
   }

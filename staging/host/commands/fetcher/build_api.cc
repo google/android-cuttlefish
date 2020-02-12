@@ -175,7 +175,7 @@ bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
 Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
                       const std::string& default_build_target,
                       const std::chrono::seconds& retry_period) {
-  if (arg.find(":") != std::string::npos) {
+  if (arg.find(':') != std::string::npos) {
     std::vector<std::string> dirs = android::base::Split(arg, ":");
     std::string id = dirs.back();
     dirs.pop_back();
