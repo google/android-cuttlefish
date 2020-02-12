@@ -313,9 +313,7 @@ PRODUCT_PACKAGES += \
 # Lights
 #
 PRODUCT_PACKAGES += \
-    lights.cutf \
-    android.hardware.light@2.0-impl \
-    android.hardware.light@2.0-service
+    android.hardware.lights-service.example \
 
 #
 # Keymaster HAL
