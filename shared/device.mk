@@ -288,7 +288,7 @@ PRODUCT_PACKAGES += \
 
 # Identity Credential
 PRODUCT_PACKAGES += \
-    android.hardware.identity@1.0-service.example
+    android.hardware.identity-service.example
 
 # Input Classifier HAL
 PRODUCT_PACKAGES += \

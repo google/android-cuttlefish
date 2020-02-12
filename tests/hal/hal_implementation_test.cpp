@@ -100,6 +100,13 @@ static const std::set<std::string> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
     "android.hardware.common.NativeHandle",
     "android.hardware.graphics.common.ExtendableType",
+
+    // These KeyMaster types are in an AIDL types-only HAL because they're used
+    // by the Identity Credential AIDL HAL. Remove this when fully porting
+    // KeyMaster to AIDL.
+    "android.hardware.keymaster.HardwareAuthToken",
+    "android.hardware.keymaster.HardwareAuthenticatorType",
+    "android.hardware.keymaster.Timestamp",
 };
 
 // AOSP packages which are never considered
