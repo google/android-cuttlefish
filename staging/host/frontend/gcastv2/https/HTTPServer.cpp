@@ -99,7 +99,7 @@ bool HTTPServer::handleSingleRequest(
 
         std::string query;
 
-        auto separatorPos = path.find("?");
+        auto separatorPos = path.find('?');
         if (separatorPos != std::string::npos) {
             query = path.substr(separatorPos);
             path.erase(separatorPos);
