@@ -45,8 +45,8 @@ struct DumpstateDevice : public IDumpstateDevice {
   Return<DumpstateStatus> dumpstateBoard_1_1(const hidl_handle& h,
                                              DumpstateMode mode,
                                              uint64_t timeoutMillis) override;
-  Return<void> setDeviceLoggingEnabled(bool enable) override;
-  Return<bool> getDeviceLoggingEnabled() override;
+  Return<void> setVerboseLoggingEnabled(bool enable) override;
+  Return<bool> getVerboseLoggingEnabled() override;
 };
 
 }  // namespace implementation
