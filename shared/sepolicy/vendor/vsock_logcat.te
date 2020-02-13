@@ -12,6 +12,6 @@ set_prop(vsock_logcat, vsock_logcat_status_prop)
 
 allow vsock_logcat device:dir w_dir_perms;
 allow vsock_logcat device:fifo_file create_file_perms;
-allow vsock_logcat kmsg_device:chr_file write;
+allow vsock_logcat kmsg_device:chr_file rw_file_perms;
 allow vsock_logcat self:capability net_admin;
 allow vsock_logcat self:{ socket vsock_socket } create_socket_perms_no_ioctl;
