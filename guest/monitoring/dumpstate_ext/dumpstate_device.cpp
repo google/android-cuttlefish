@@ -19,7 +19,7 @@
 #include <android-base/properties.h>
 #include <log/log.h>
 
-#define DEVICE_LOGGING_PROPERTY "persist.vendor.logging_enabled"
+#define VERBOSE_LOGGING_PROPERTY "persist.vendor.verbose_logging_enabled"
 
 using android::os::dumpstate::DumpFileToFd;
 
@@ -60,22 +60,20 @@ Return<DumpstateStatus> DumpstateDevice::dumpstateBoard_1_1(const hidl_handle& h
     return DumpstateStatus::ILLEGAL_ARGUMENT;
   }
 
-  if (!::android::base::GetBoolProperty(DEVICE_LOGGING_PROPERTY, false)) {
-    return DumpstateStatus::DEVICE_LOGGING_NOT_ENABLED;
-  }
-
   DumpFileToFd(fd, "GCE INITIAL METADATA", "/initial.metadata");
 
+  // Do not include any of the user's private information before checking if verbose logging is
+  // enabled.
   return DumpstateStatus::OK;
 }
 
-Return<void> DumpstateDevice::setDeviceLoggingEnabled(bool enable) {
-  ::android::base::SetProperty(DEVICE_LOGGING_PROPERTY, enable ? "true" : "false");
+Return<void> DumpstateDevice::setVerboseLoggingEnabled(bool enable) {
+  ::android::base::SetProperty(VERBOSE_LOGGING_PROPERTY, enable ? "true" : "false");
   return Void();
 }
 
-Return<bool> DumpstateDevice::getDeviceLoggingEnabled() {
-  return ::android::base::GetBoolProperty(DEVICE_LOGGING_PROPERTY, false);
+Return<bool> DumpstateDevice::getVerboseLoggingEnabled() {
+  return ::android::base::GetBoolProperty(VERBOSE_LOGGING_PROPERTY, false);
 }
 
 }  // namespace implementation
