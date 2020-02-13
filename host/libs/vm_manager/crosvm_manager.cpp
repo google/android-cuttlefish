@@ -96,7 +96,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
   if (gpu_mode == vsoc::kGpuModeGfxStream) {
     return {
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=ranchu",
+        "androidboot.hardware.hwcomposer=drm_minigbm",
         "androidboot.hardware.egl=emulation",
         "androidboot.hardware.vulkan=ranchu",
         "androidboot.hardware.gltransport=virtio-gpu-pipe",
