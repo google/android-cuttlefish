@@ -16,7 +16,7 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="4">
+<manifest version="1.0" type="device" target-level="5">
     <kernel  target-level="5" />
     <hal format="hidl">
         <name>android.hardware.audio</name>
@@ -93,15 +93,6 @@
         <interface>
             <name>ICameraProvider</name>
             <instance>legacy/0</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>android.hardware.configstore</name>
-        <transport>hwbinder</transport>
-        <version>1.1</version>
-        <interface>
-            <name>ISurfaceFlingerConfigs</name>
-            <instance>default</instance>
         </interface>
     </hal>
     <!-- TODO (b/130078386):
