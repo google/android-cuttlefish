@@ -38,7 +38,9 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 
+#include <sstream>
 #include <string>
+#include <vector>
 
 #include <cutils/compiler.h>
 #include <cutils/properties.h>
@@ -74,6 +76,14 @@ struct cvd_hwc_composer_device_1_t {
   hwc_composer_device_1_t base;
   hwc_composer_device_data_t vsync_data;
   cvd::BaseComposer* composer;
+};
+
+struct external_display_config_t {
+  uint64_t physicalId;
+  uint32_t width;
+  uint32_t height;
+  uint32_t dpi;
+  uint32_t flags;
 };
 
 namespace {
@@ -275,21 +285,80 @@ bool IsValidComposition(int num_layers, hwc_layer_1_t* layers, bool on_set) {
   return true;
 }
 
+// Note predefined "hwservicemanager." is used to avoid adding new selinux rules
+#define EXTERANL_DISPLAY_PROP "hwservicemanager.external.displays"
+
+// return 0 for successful
+// return < 0 if failed
+int GetExternalDisplayConfigs(std::vector<struct external_display_config_t>* configs) {
+  // this guest property, hwservicemanager.external.displays,
+  // specifies multi-display info, with comma (,) as separator
+  // each display has the following info:
+  //   physicalId,width,height,dpi,flags
+  // several displays can be provided, e.g., following has 2 displays:
+  // setprop hwservicemanager.external.displays 1,1200,800,120,0,2,1200,800,120,0
+  std::vector<uint64_t> values;
+  char displays_value[PROPERTY_VALUE_MAX] = "";
+  property_get(EXTERANL_DISPLAY_PROP, displays_value, "");
+  bool valid = displays_value[0] != '\0';
+  if (valid) {
+      char *p = displays_value;
+      while (*p) {
+          if (!isdigit(*p) && *p != ',' && *p != ' ') {
+              valid = false;
+              break;
+          }
+          p++;
+      }
+  }
+  if (!valid) {
+      // no external displays are specified
+      ALOGE("%s: Invalid syntax for the value of system prop: %s, value: %s",
+          __FUNCTION__, EXTERANL_DISPLAY_PROP, displays_value);
+      return 0;
+  }
+  // parse all int values to a vector
+  std::istringstream stream(displays_value);
+  for (uint64_t id; stream >> id;) {
+      values.push_back(id);
+      if (stream.peek() == ',')
+          stream.ignore();
+  }
+  // each display has 5 values
+  if ((values.size() % 5) != 0) {
+      ALOGE("%s: Invalid value for system property: %s", __FUNCTION__, EXTERANL_DISPLAY_PROP);
+      return -1;
+  }
+  while (!values.empty()) {
+      struct external_display_config_t config;
+      config.physicalId = values[0];
+      config.width = values[1];
+      config.height = values[2];
+      config.dpi = values[3];
+      config.flags = values[4];
+      values.erase(values.begin(), values.begin() + 5);
+      configs->push_back(config);
+  }
+  return 0;
+}
+
 }  // namespace
 
 static int cvd_hwc_prepare(hwc_composer_device_1_t* dev, size_t numDisplays,
                            hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
-  hwc_display_contents_1_t* list = displays[HWC_DISPLAY_PRIMARY];
+  for (int disp = 0; disp < numDisplays; ++disp) {
+    hwc_display_contents_1_t* list = displays[disp];
 
-  if (!list) return 0;
-  if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], false)) {
-    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
-    return -1;
-  }
-  reinterpret_cast<cvd_hwc_composer_device_1_t*>(dev)->composer->PrepareLayers(
+    if (!list) return 0;
+    if (!IsValidComposition(list->numHwLayers, &list->hwLayers[0], false)) {
+      LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
+      return -1;
+    }
+    reinterpret_cast<cvd_hwc_composer_device_1_t*>(dev)->composer->PrepareLayers(
       list->numHwLayers, &list->hwLayers[0]);
+  }
   return 0;
 }
 
@@ -297,38 +366,43 @@ static int cvd_hwc_set(hwc_composer_device_1_t* dev, size_t numDisplays,
                        hwc_display_contents_1_t** displays) {
   if (!numDisplays || !displays) return 0;
 
-  hwc_display_contents_1_t* contents = displays[HWC_DISPLAY_PRIMARY];
-  if (!contents) return 0;
+  int retval = -1;
+  for (int disp = 0; disp < numDisplays; ++disp) {
+    hwc_display_contents_1_t* contents = displays[disp];
+    if (!contents) return 0;
 
-  hwc_layer_1_t* layers = &contents->hwLayers[0];
-  if (contents->numHwLayers == 1 &&
+    hwc_layer_1_t* layers = &contents->hwLayers[0];
+    if (contents->numHwLayers == 1 &&
       layers[0].compositionType == HWC_FRAMEBUFFER_TARGET) {
-    ALOGW("Received request for empty composition, treating as valid noop");
-    return 0;
-  }
-  if (!IsValidComposition(contents->numHwLayers, layers, true)) {
-    LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
-    return -1;
-  }
-  int retval =
-      reinterpret_cast<cvd_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
-          contents->numHwLayers, layers);
-
-  int closedFds = 0;
-  for (size_t index = 0; index < contents->numHwLayers; ++index) {
-    if (layers[index].acquireFenceFd != -1) {
-      close(layers[index].acquireFenceFd);
-      layers[index].acquireFenceFd = -1;
-      ++closedFds;
+      ALOGW("Received request for empty composition, treating as valid noop");
+      return 0;
     }
-  }
-  if (closedFds) {
-    ALOGI("Saw %zu layers, closed=%d", contents->numHwLayers, closedFds);
+    if (!IsValidComposition(contents->numHwLayers, layers, true)) {
+      LOG_ALWAYS_FATAL("%s: Invalid composition requested", __FUNCTION__);
+      return -1;
+    }
+    retval =
+        reinterpret_cast<cvd_hwc_composer_device_1_t*>(dev)->composer->SetLayers(
+            contents->numHwLayers, layers);
+    if (retval != 0) break;
+
+    int closedFds = 0;
+    for (size_t index = 0; index < contents->numHwLayers; ++index) {
+      if (layers[index].acquireFenceFd != -1) {
+        close(layers[index].acquireFenceFd);
+        layers[index].acquireFenceFd = -1;
+        ++closedFds;
+      }
+    }
+    if (closedFds) {
+      ALOGI("Saw %zu layers, closed=%d", contents->numHwLayers, closedFds);
+    }
+
+    // TODO(ghartman): This should be set before returning. On the next set it
+    // should be signalled when we load the new frame.
+    contents->retireFenceFd = -1;
   }
 
-  // TODO(ghartman): This should be set before returning. On the next set it
-  // should be signalled when we load the new frame.
-  contents->retireFenceFd = -1;
   return retval;
 }
 
@@ -337,6 +411,14 @@ static void cvd_hwc_register_procs(hwc_composer_device_1_t* dev,
   struct cvd_hwc_composer_device_1_t* pdev =
       (struct cvd_hwc_composer_device_1_t*)dev;
   pdev->vsync_data.procs = procs;
+  if (procs) {
+      std::vector<struct external_display_config_t> configs;
+      int res = GetExternalDisplayConfigs(&configs);
+      if (res == 0 && !configs.empty()) {
+          // configs will be used in the future
+          procs->hotplug(procs, HWC_DISPLAY_EXTERNAL, 1);
+      }
+  }
 }
 
 static int cvd_hwc_query(hwc_composer_device_1_t* dev, int what, int* value) {
@@ -368,7 +450,7 @@ static int cvd_hwc_event_control(hwc_composer_device_1_t* /*dev*/, int /*dpy*/,
 }
 
 static int cvd_hwc_blank(hwc_composer_device_1_t* /*dev*/, int disp, int /*blank*/) {
-  if (!IS_PRIMARY_DISPLAY(disp)) return -EINVAL;
+  if (!IS_PRIMARY_DISPLAY(disp) && !IS_EXTERNAL_DISPLAY(disp)) return -EINVAL;
   return 0;
 }
 
@@ -381,7 +463,7 @@ static int cvd_hwc_get_display_configs(hwc_composer_device_1_t* /*dev*/, int dis
                                        uint32_t* configs, size_t* numConfigs) {
   if (*numConfigs == 0) return 0;
 
-  if (IS_PRIMARY_DISPLAY(disp)) {
+  if (IS_PRIMARY_DISPLAY(disp) || IS_EXTERNAL_DISPLAY(disp)) {
     configs[0] = 0;
     *numConfigs = 1;
     return 0;
@@ -419,8 +501,7 @@ static int cvd_hwc_get_display_attributes(hwc_composer_device_1_t* dev, int disp
                                           int32_t* values) {
   struct cvd_hwc_composer_device_1_t* pdev =
       (struct cvd_hwc_composer_device_1_t*)dev;
-
-  if (!IS_PRIMARY_DISPLAY(disp)) {
+  if (!IS_PRIMARY_DISPLAY(disp) && !IS_EXTERNAL_DISPLAY(disp)) {
     ALOGE("unknown display type %u", disp);
     return -EINVAL;
   }

@@ -24,6 +24,7 @@
 
 #define IS_TARGET_FRAMEBUFFER(x) ((x) == HWC_FRAMEBUFFER_TARGET)
 #define IS_PRIMARY_DISPLAY(x) ((x) == HWC_DISPLAY_PRIMARY)
+#define IS_EXTERNAL_DISPLAY(x) ((x) == HWC_DISPLAY_EXTERNAL)
 
 namespace cvd {
 int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
