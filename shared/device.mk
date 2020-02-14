@@ -254,6 +254,12 @@ PRODUCT_PACKAGES += \
     android.hardware.biometrics.face@1.1-service.example
 
 #
+# Contexthub HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.contexthub@1.1-service.mock
+
+#
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
