@@ -64,6 +64,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.health@1.0",
     "android.hardware.ir@1.0",
     "android.hardware.keymaster@3.0",
+    "android.hardware.light@2.0",
     "android.hardware.media.bufferpool@1.0",
     "android.hardware.media.bufferpool@2.0",
     "android.hardware.memtrack@1.0",
@@ -95,8 +96,6 @@ static const std::set<std::string> kKnownMissingHidl = {
 };
 
 static const std::set<std::string> kKnownMissingAidl = {
-    "android.hardware.light.ILights",
-
     // types-only packages, which never expect a default implementation
     "android.hardware.common.NativeHandle",
     "android.hardware.graphics.common.ExtendableType",
