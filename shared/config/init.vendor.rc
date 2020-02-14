@@ -80,6 +80,9 @@ on post-fs
 on post-fs-data
     start vport_trigger
 
+    mkdir /data/vendor/modem_dump 0777 system system
+    mkdir /data/vendor/radio 0777 system system
+
 
 on late-fs
     # Wait for keymaster

@@ -1,0 +1,15 @@
+type logger_app, domain;
+
+# Taken from bonito-sepolicy:
+# https://cs.android.com/android/_/android/device/google/bonito-sepolicy/+/5396ef0aa04dc69ed04ecbc7f55eacf2a76b040b:vendor/qcom/common/logger_app.te;drc=dd2c2053296b0c00b5ef103adcabb8cd82eb0045
+userdebug_or_eng(`
+  app_domain(logger_app)
+  net_domain(logger_app)
+
+  allow logger_app app_api_service:service_manager find;
+  allow logger_app surfaceflinger_service:service_manager find;
+  allow logger_app radio_vendor_data_file:file create_file_perms;
+  allow logger_app radio_vendor_data_file:file rw_file_perms;
+  allow logger_app radio_vendor_data_file:dir create_dir_perms;
+  allow logger_app radio_vendor_data_file:dir rw_dir_perms;
+')
