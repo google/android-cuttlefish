@@ -1,2 +1,3 @@
 # Ramdump app
 user=_app seinfo=platform name=com.android.ramdump domain=ramdump_app type=app_data_file levelFrom=all
+user=_app seinfo=platform name=com.android.pixellogger domain=logger_app type=app_data_file levelFrom=all
