@@ -25,98 +25,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #endif
 
-struct Header {
-  std::uint32_t payload_length;
-  enum MessageType : std::uint32_t {
-    DATA = 0,
-    BEGIN,
-    END,
-    RECV_CLOSED,  // indicate that this side's receive end is closed
-    RESTART,
-  };
-  MessageType message_type;
-};
-
 constexpr std::size_t kMaxPacketSize = 8192;
-constexpr std::size_t kMaxPayloadSize = kMaxPacketSize - sizeof(Header);
-
-struct Packet {
- private:
-  Header header_;
-  using Payload = char[kMaxPayloadSize];
-  Payload payload_data_;
-
-  static constexpr Packet MakePacket(Header::MessageType type) {
-    Packet packet{};
-    packet.header_.message_type = type;
-    return packet;
-  }
-
- public:
-  // port is only revelant on the host-side.
-  static Packet MakeBegin(std::uint16_t port);
-
-  static constexpr Packet MakeEnd() { return MakePacket(Header::END); }
-
-  static constexpr Packet MakeRecvClosed() {
-    return MakePacket(Header::RECV_CLOSED);
-  }
-
-  static constexpr Packet MakeRestart() { return MakePacket(Header::RESTART); }
-
-  // NOTE payload and payload_length must still be set.
-  static constexpr Packet MakeData() { return MakePacket(Header::DATA); }
-
-  bool empty() const { return IsData() && header_.payload_length == 0; }
-
-  void set_payload_length(std::uint32_t length) {
-    CHECK_LE(length, sizeof payload_data_);
-    header_.payload_length = length;
-  }
-
-  Payload& payload() { return payload_data_; }
-
-  const Payload& payload() const { return payload_data_; }
-
-  constexpr std::uint32_t payload_length() const {
-    return header_.payload_length;
-  }
-
-  constexpr bool IsBegin() const {
-    return header_.message_type == Header::BEGIN;
-  }
-
-  constexpr bool IsEnd() const { return header_.message_type == Header::END; }
-
-  constexpr bool IsData() const { return header_.message_type == Header::DATA; }
-
-  constexpr bool IsRecvClosed() const {
-    return header_.message_type == Header::RECV_CLOSED;
-  }
-
-  constexpr bool IsRestart() const {
-    return header_.message_type == Header::RESTART;
-  }
-
-  constexpr std::uint16_t port() const {
-    CHECK(IsBegin());
-    std::uint16_t port_number{};
-    CHECK_EQ(payload_length(), sizeof port_number);
-    std::memcpy(&port_number, payload(), sizeof port_number);
-    return port_number;
-  }
-
-  char* raw_data() { return reinterpret_cast<char*>(this); }
-
-  const char* raw_data() const { return reinterpret_cast<const char*>(this); }
-
-  constexpr size_t raw_data_length() const {
-    return payload_length() + sizeof header_;
-  }
-};
-
-static_assert(sizeof(Packet) == kMaxPacketSize, "");
-static_assert(std::is_pod<Packet>{}, "");
 
 DEFINE_uint32(tcp_port, 0, "TCP port (server on host, client on guest)");
 DEFINE_uint32(vsock_port, 0, "vsock port (client on host, server on guest");
@@ -140,15 +49,15 @@ class SocketSender {
     }
   }
 
-  ssize_t SendAll(const Packet& packet) {
+  ssize_t SendAll(const std::vector<char>& packet) {
     ssize_t written{};
-    while (written < static_cast<ssize_t>(packet.payload_length())) {
+    while (written < static_cast<ssize_t>(packet.size())) {
       if (!socket_->IsOpen()) {
         return -1;
       }
       auto just_written =
-          socket_->Send(packet.payload() + written,
-                        packet.payload_length() - written, MSG_NOSIGNAL);
+          socket_->Send(packet.data() + written,
+                        packet.size() - written, MSG_NOSIGNAL);
       if (just_written <= 0) {
         LOG(INFO) << "Couldn't write to client: "
                   << strerror(socket_->GetErrno());
@@ -174,12 +83,12 @@ class SocketReceiver {
   SocketReceiver& operator=(const SocketReceiver&) = delete;
 
   // *packet will be empty if Read returns 0 or error
-  void Recv(Packet* packet) {
-    auto size = socket_->Read(packet->payload(), sizeof packet->payload());
+  void Recv(std::vector<char>* packet) {
+    auto size = socket_->Read(packet->data(), packet->size());
     if (size < 0) {
       size = 0;
     }
-    packet->set_payload_length(size);
+    packet->resize(size);
   }
 
  private:
@@ -189,7 +98,7 @@ class SocketReceiver {
 void SocketToVsock(SocketReceiver socket_receiver,
                    SocketSender vsock_sender) {
   while (true) {
-    auto packet = Packet::MakeData();
+    std::vector<char> packet(kMaxPacketSize, '\0');
     socket_receiver.Recv(&packet);
     if (packet.empty() || vsock_sender.SendAll(packet) < 0) {
       break;
@@ -200,10 +109,9 @@ void SocketToVsock(SocketReceiver socket_receiver,
 
 void VsockToSocket(SocketSender socket_sender,
                    SocketReceiver vsock_receiver) {
-  auto packet = Packet::MakeData();
+  std::vector<char> packet(kMaxPacketSize, '\0');
   while (true) {
     vsock_receiver.Recv(&packet);
-    CHECK(packet.IsData());
     if (packet.empty()) {
       break;
     }
