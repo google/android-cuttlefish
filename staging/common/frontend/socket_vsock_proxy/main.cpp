@@ -21,15 +21,15 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-#ifdef CUTTLEFISH_HOST
-#include "host/libs/config/cuttlefish_config.h"
-#endif
-
 constexpr std::size_t kMaxPacketSize = 8192;
 
-DEFINE_uint32(tcp_port, 0, "TCP port (server on host, client on guest)");
-DEFINE_uint32(vsock_port, 0, "vsock port (client on host, server on guest");
-DEFINE_uint32(vsock_guest_cid, 0, "Guest identifier");
+DEFINE_string(server, "",
+              "The type of server to host, `vsock` or `tcp`. When hosting a server "
+              "of one type, the proxy will take inbound connections of this type and "
+              "make outbound connections of the other type.");
+DEFINE_uint32(tcp_port, 0, "TCP port");
+DEFINE_uint32(vsock_port, 0, "vsock port");
+DEFINE_uint32(vsock_cid, 0, "Vsock cid to initiate connections to");
 
 namespace {
 // Sends packets, Shutdown(SHUT_WR) on destruction
@@ -132,9 +132,8 @@ void HandleConnection(cvd::SharedFD vsock,
   socket_to_vsock.join();
 }
 
-#ifdef CUTTLEFISH_HOST
-[[noreturn]] void host() {
-  LOG(INFO) << "starting server on " << FLAGS_tcp_port << " for vsock port "
+[[noreturn]] void TcpServer() {
+  LOG(INFO) << "starting TCP server on " << FLAGS_tcp_port << " for vsock port "
             << FLAGS_vsock_port;
   auto server = cvd::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_tcp_port;
@@ -144,10 +143,10 @@ void HandleConnection(cvd::SharedFD vsock,
     auto client_socket = cvd::SharedFD::Accept(*server);
     CHECK(client_socket->IsOpen()) << "error creating client socket";
     cvd::SharedFD vsock_socket = cvd::SharedFD::VsockClient(
-        FLAGS_vsock_guest_cid, FLAGS_vsock_port, SOCK_STREAM);
+        FLAGS_vsock_cid, FLAGS_vsock_port, SOCK_STREAM);
     if (vsock_socket->IsOpen()) {
       last_failure_reason = 0;
-      LOG(INFO) << "Connected to vsock:" << FLAGS_vsock_guest_cid << ":"
+      LOG(INFO) << "Connected to vsock:" << FLAGS_vsock_cid << ":"
                 << FLAGS_vsock_port;
     } else {
       // Don't log if the previous connection failed with the same error
@@ -164,7 +163,6 @@ void HandleConnection(cvd::SharedFD vsock,
   }
 }
 
-#else
 cvd::SharedFD OpenSocketConnection() {
   while (true) {
     auto sock = cvd::SharedFD::SocketLocalClient(FLAGS_tcp_port, SOCK_STREAM);
@@ -188,9 +186,8 @@ bool socketErrorIsRecoverable(int error) {
   }
 }
 
-[[noreturn]] void guest() {
-  LOG(INFO) << "Starting guest mainloop";
-  LOG(INFO) << "starting server on " << FLAGS_vsock_port;
+[[noreturn]] void VsockServer() {
+  LOG(INFO) << "Starting vsock server on " << FLAGS_vsock_port;
   cvd::SharedFD vsock;
   do {
     vsock = cvd::SharedFD::VsockServer(FLAGS_vsock_port, SOCK_STREAM);
@@ -213,7 +210,6 @@ bool socketErrorIsRecoverable(int error) {
   }
 }
 
-#endif
 }  // namespace
 
 int main(int argc, char* argv[]) {
@@ -221,10 +217,12 @@ int main(int argc, char* argv[]) {
 
   CHECK(FLAGS_tcp_port != 0) << "Must specify -tcp_port flag";
   CHECK(FLAGS_vsock_port != 0) << "Must specify -vsock_port flag";
-#ifdef CUTTLEFISH_HOST
-  CHECK(FLAGS_vsock_guest_cid != 0) << "Must specify -vsock_guest_cid flag";
-  host();
-#else
-  guest();
-#endif
+  if (FLAGS_server == "tcp") {
+    CHECK(FLAGS_vsock_cid != 0) << "Must specify -vsock_cid flag";
+    TcpServer();
+  } else if (FLAGS_server == "vsock") {
+    VsockServer();
+  } else {
+    LOG(FATAL) << "Unknown server type: " << FLAGS_server;
+  }
 }
