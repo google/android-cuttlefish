@@ -51,13 +51,25 @@ Return<DumpstateStatus> DumpstateDevice::dumpstateBoard_1_1(const hidl_handle& h
     return DumpstateStatus::ILLEGAL_ARGUMENT;
   }
 
+  bool isModeValid = false;
+  for (const auto dumpstateMode : hidl_enum_range<DumpstateMode>()) {
+    isModeValid |= (dumpstateMode == mode);
+  }
+  if (!isModeValid) {
+    ALOGE("Invalid mode: %d\n", mode);
+    return DumpstateStatus::ILLEGAL_ARGUMENT;
+  }
+
   if (mode == DumpstateMode::WEAR) {
     // We aren't a Wear device. Mostly just for variety in our return values for testing purposes.
     ALOGE("Unsupported mode: %d\n", mode);
     return DumpstateStatus::UNSUPPORTED_MODE;
-  } else if (mode < DumpstateMode::FULL || mode > DumpstateMode::DEFAULT) {
-    ALOGE("Invalid mode: %d\n", mode);
-    return DumpstateStatus::ILLEGAL_ARGUMENT;
+  }
+
+  if (mode == DumpstateMode::PROTO) {
+    // We don't support dumping a protobuf yet.
+    ALOGE("Unsupported mode: %d\n", mode);
+    return DumpstateStatus::UNSUPPORTED_MODE;
   }
 
   DumpFileToFd(fd, "GCE INITIAL METADATA", "/initial.metadata");
