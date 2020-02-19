@@ -54,6 +54,7 @@ struct InputSink : public std::enable_shared_from_this<InputSink> {
   bool mWriteVirtioInput;
 
   void onServerConnection();
+  void onSocketRecv();
   void onSocketSend();
 
   void sendRawEvents(const void* evt_buffer, size_t length);
