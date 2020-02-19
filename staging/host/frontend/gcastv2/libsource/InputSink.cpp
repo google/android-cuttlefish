@@ -123,6 +123,8 @@ void InputSink::onServerConnection() {
       makeFdNonblocking(s);
 
       mClientFd = s;
+      mRunLoop->postSocketRecv(
+        mClientFd, makeSafeCallback(this, &InputSink::onSocketRecv));
     }
   }
 
@@ -148,6 +150,27 @@ void InputSink::sendRawEvents(const void* evt_buffer, size_t size) {
 
     mRunLoop->postSocketSend(mClientFd,
                              makeSafeCallback(this, &InputSink::onSocketSend));
+  }
+}
+
+void InputSink::onSocketRecv() {
+  if (mClientFd < 0) return;
+
+  char buff[512];
+  auto n = recv(mClientFd, buff, sizeof(buff), 0 /* flags */);
+  if (n > 0) {
+    LOG(INFO) << "Discarding " << n << " bytes received from the input device.";
+    mRunLoop->postSocketRecv(
+        mClientFd, makeSafeCallback(this, &InputSink::onSocketRecv));
+  } else {
+    // Client disconnected
+    if (n < 0) {
+      auto errno_save = errno;
+      LOG(ERROR) << "Error receiving from socket: " << strerror(errno_save);
+    }
+    mRunLoop->cancelSocket(mClientFd);
+    close(mClientFd);
+    mClientFd = -1;
   }
 }
 
