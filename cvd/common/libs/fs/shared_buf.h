@@ -43,6 +43,16 @@ ssize_t ReadAll(SharedFD fd, std::string* buf);
 ssize_t ReadExact(SharedFD fd, std::string* buf);
 
 /**
+ * Reads from fd until reading buf->size() bytes or errors.
+ *
+ * On a successful read, returns buf->size().
+ *
+ * If a read error is encountered, returns -1. buf will contain any data read
+ * up until that point and errno will be set.
+ */
+ssize_t ReadExact(SharedFD fd, std::vector<char>* buf);
+
+/**
  * Writes to fd until writing all bytes in buf.
  *
  * On a successful write, returns buf.size().
