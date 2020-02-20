@@ -5,9 +5,9 @@ receiveButton.addEventListener('click', onReceive);
 const keyboardCaptureButton = document.getElementById('keyboardCaptureBtn');
 keyboardCaptureButton.addEventListener('click', onKeyboardCaptureClick);
 
-const videoElement = document.getElementById('video');
+const deviceScreen = document.getElementById('deviceScreen');
 
-videoElement.addEventListener("click", onInitialClick);
+deviceScreen.addEventListener("click", onInitialClick);
 
 function onInitialClick(e) {
     // This stupid thing makes sure that we disable controls after the first click...
@@ -15,8 +15,8 @@ function onInitialClick(e) {
     // because these days user-interaction is required to enable audio playback...
     console.log("onInitialClick");
 
-    videoElement.controls = false;
-    videoElement.removeEventListener("click", onInitialClick);
+    deviceScreen.controls = false;
+    deviceScreen.removeEventListener("click", onInitialClick);
 }
 
 let pc1;
@@ -316,7 +316,7 @@ async function onIceStateChange(pc, e) {
         'onIceStateChange ' + getPcName(pc) + " '" + pc.iceConnectionState + "'");
 
     if (pc.iceConnectionState == "connected") {
-        videoElement.srcObject = videoStream;
+        deviceScreen.srcObject = videoStream;
 
         startMouseTracking()
     } else if (pc.iceConnectionState == "disconnected") {
@@ -341,33 +341,33 @@ async function onGotRemoteStream(e) {
 
 function startMouseTracking() {
     if (window.PointerEvent) {
-        videoElement.addEventListener("pointerdown", onStartDrag);
-        videoElement.addEventListener("pointermove", onContinueDrag);
-        videoElement.addEventListener("pointerup", onEndDrag);
+        deviceScreen.addEventListener("pointerdown", onStartDrag);
+        deviceScreen.addEventListener("pointermove", onContinueDrag);
+        deviceScreen.addEventListener("pointerup", onEndDrag);
     } else if (window.TouchEvent) {
-        videoElement.addEventListener("touchstart", onStartDrag);
-        videoElement.addEventListener("touchmove", onContinueDrag);
-        videoElement.addEventListener("touchend", onEndDrag);
+        deviceScreen.addEventListener("touchstart", onStartDrag);
+        deviceScreen.addEventListener("touchmove", onContinueDrag);
+        deviceScreen.addEventListener("touchend", onEndDrag);
     } else if (window.MouseEvent) {
-        videoElement.addEventListener("mousedown", onStartDrag);
-        videoElement.addEventListener("mousemove", onContinueDrag);
-        videoElement.addEventListener("mouseup", onEndDrag);
+        deviceScreen.addEventListener("mousedown", onStartDrag);
+        deviceScreen.addEventListener("mousemove", onContinueDrag);
+        deviceScreen.addEventListener("mouseup", onEndDrag);
     }
 }
 
 function stopMouseTracking() {
     if (window.PointerEvent) {
-        videoElement.removeEventListener("pointerdown", onStartDrag);
-        videoElement.removeEventListener("pointermove", onContinueDrag);
-        videoElement.removeEventListener("pointerup", onEndDrag);
+        deviceScreen.removeEventListener("pointerdown", onStartDrag);
+        deviceScreen.removeEventListener("pointermove", onContinueDrag);
+        deviceScreen.removeEventListener("pointerup", onEndDrag);
     } else if (window.TouchEvent) {
-        videoElement.removeEventListener("touchstart", onStartDrag);
-        videoElement.removeEventListener("touchmove", onContinueDrag);
-        videoElement.removeEventListener("touchend", onEndDrag);
+        deviceScreen.removeEventListener("touchstart", onStartDrag);
+        deviceScreen.removeEventListener("touchmove", onContinueDrag);
+        deviceScreen.removeEventListener("touchend", onEndDrag);
     } else if (window.MouseEvent) {
-        videoElement.removeEventListener("mousedown", onStartDrag);
-        videoElement.removeEventListener("mousemove", onContinueDrag);
-        videoElement.removeEventListener("mouseup", onEndDrag);
+        deviceScreen.removeEventListener("mousedown", onStartDrag);
+        deviceScreen.removeEventListener("mousemove", onContinueDrag);
+        deviceScreen.removeEventListener("mouseup", onEndDrag);
     }
 }
 
@@ -412,10 +412,10 @@ function sendMouseUpdate(down, e) {
     var x = e.offsetX;
     var y = e.offsetY;
 
-    const videoWidth = videoElement.videoWidth;
-    const videoHeight = videoElement.videoHeight;
-    const elementWidth = videoElement.width;
-    const elementHeight = videoElement.height;
+    const videoWidth = deviceScreen.videoWidth;
+    const videoHeight = deviceScreen.videoHeight;
+    const elementWidth = deviceScreen.width;
+    const elementHeight = deviceScreen.height;
 
     // vh*ew > eh*vw? then scale h instead of w
     const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
