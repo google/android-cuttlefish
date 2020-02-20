@@ -88,8 +88,9 @@ cvd_host_shared_libraries := \
 webrtc_assets := \
     index.html \
     style.css \
-    js/receive.js \
     js/logcat.js \
+    js/receive.js \
+    js/viewpane.js \
 
 webrtc_certs := \
     server.crt \
