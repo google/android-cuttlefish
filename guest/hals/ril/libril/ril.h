@@ -116,6 +116,7 @@ extern "C" {
 #define MAX_BANDS 8
 #define MAX_CHANNELS 32
 #define MAX_RADIO_ACCESS_NETWORKS 8
+#define MAX_BROADCAST_SMS_CONFIG_INFO 25
 
 
 typedef void * RIL_Token;
