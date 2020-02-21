@@ -123,16 +123,23 @@ prebuilt_usr_share_host {
 }
 
 prebuilt_usr_share_host {
-    name: "webrtc_receive.js",
-    src: "assets/js/receive.js",
-    filename: "receive.js",
+    name: "webrtc_viewpane.js",
+    src: "assets/js/viewpane.js",
+    filename: "viewpane.js",
     sub_dir: "webrtc/assets/js",
 }
 
 prebuilt_usr_share_host {
-    name: "webrtc_viewpane.js",
-    src: "assets/js/viewpane.js",
-    filename: "viewpane.js",
+    name: "webrtc_cf.js",
+    src: "assets/js/cf_webrtc.js",
+    filename: "cf_webrtc.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_app.js",
+    src: "assets/js/app.js",
+    filename: "app.js",
     sub_dir: "webrtc/assets/js",
 }
 

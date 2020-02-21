@@ -89,8 +89,9 @@ webrtc_assets := \
     index.html \
     style.css \
     js/logcat.js \
-    js/receive.js \
+    js/app.js \
     js/viewpane.js \
+    js/cf_webrtc.js \
 
 webrtc_certs := \
     server.crt \
