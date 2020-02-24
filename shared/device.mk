@@ -27,6 +27,7 @@ DISABLE_RILD_OEM_HOOK := true
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
+    odm \
     product \
     system \
     system_ext \
