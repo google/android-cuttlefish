@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,17 +13,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "adbshell",
-    "fetch_cvd",
-    "launch",
-    "stop_cvd",
-    "ivserver",
-    "virtual_usb_manager",
-    "kernel_log_monitor",
-    "config_server",
-    "console_forwarder",
-    "run_cvd",
-    "assemble_cvd",
-    "tpm_simulator_manager",
-]
+cc_binary_host {
+    name: "tpm_simulator_manager",
+    srcs: [
+        "tpm_simulator_manager.cpp",
+    ],
+    header_libs: [
+        "cuttlefish_glog",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libcuttlefish_vm_manager",
+        "libjsoncpp",
+        "libgflags",
+        "libxml2",
+    ],
+    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
+}
