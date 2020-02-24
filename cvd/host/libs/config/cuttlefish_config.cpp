@@ -27,7 +27,7 @@
 #include <string>
 
 #include <android-base/strings.h>
-#include <android-base/logging.h>
+#include <glog/logging.h>
 #include <json/json.h>
 
 #include "common/libs/utils/environment.h"
@@ -110,7 +110,6 @@ const char* kHostPort = "host_port";
 const char* kTpmPort = "tpm_port";
 const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
-const char* kTpmDevice = "tpm_device";
 
 const char* kQemuBinary = "qemu_binary";
 const char* kCrosvmBinary = "crosvm_binary";
@@ -121,9 +120,6 @@ const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
 const char* kEnableVncServer = "enable_vnc_server";
 const char* kVncServerBinary = "vnc_server_binary";
 const char* kVncServerPort = "vnc_server_port";
-
-const char* kEnableSandbox = "enable_sandbox";
-const char* kSeccompPolicyDir = "seccomp_policy_dir";
 
 const char* kEnableWebRTC = "enable_webrtc";
 const char* kWebRTCBinary = "webrtc_binary";
@@ -155,9 +151,6 @@ const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
 
 const char* kBootSlot = "boot_slot";
-
-const char* kEnableMetrics = "enable_metrics";
-const char* kMetricsBinary = "metrics_binary";
 
 const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
@@ -552,14 +545,6 @@ void CuttlefishConfig::set_tpm_binary(const std::string& tpm_binary) {
   (*dictionary_)[kTpmBinary] = tpm_binary;
 }
 
-std::string CuttlefishConfig::tpm_device() const {
-  return (*dictionary_)[kTpmDevice].asString();
-}
-
-void CuttlefishConfig::set_tpm_device(const std::string& tpm_device) {
-  (*dictionary_)[kTpmDevice] = tpm_device;
-}
-
 std::string CuttlefishConfig::console_forwarder_binary() const {
   return (*dictionary_)[kConsoleForwarderBinary].asString();
 }
@@ -601,26 +586,6 @@ int CuttlefishConfig::InstanceSpecific::vnc_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_server_port) {
   (*Dictionary())[kVncServerPort] = vnc_server_port;
-}
-
-void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
-  (*dictionary_)[kEnableSandbox] = enable_sandbox;
-}
-
-bool CuttlefishConfig::enable_sandbox() const {
-  return (*dictionary_)[kEnableSandbox].asBool();
-}
-
-void CuttlefishConfig::set_seccomp_policy_dir(const std::string& seccomp_policy_dir) {
-  if (seccomp_policy_dir.empty()) {
-    (*dictionary_)[kSeccompPolicyDir] = seccomp_policy_dir;
-    return;
-  }
-  SetPath(kSeccompPolicyDir, seccomp_policy_dir);
-}
-
-std::string CuttlefishConfig::seccomp_policy_dir() const {
-  return (*dictionary_)[kSeccompPolicyDir].asString();
 }
 
 void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
@@ -842,34 +807,6 @@ bool CuttlefishConfig::guest_force_normal_boot() const {
   return (*dictionary_)[kGuestForceNormalBoot].asBool();
 }
 
-void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
-  (*dictionary_)[kEnableMetrics] = kUnknown;
-  if (!enable_metrics.empty()) {
-    switch (enable_metrics.at(0)) {
-      case 'y':
-      case 'Y':
-        (*dictionary_)[kEnableMetrics] = kYes;
-        break;
-      case 'n':
-      case 'N':
-        (*dictionary_)[kEnableMetrics] = kNo;
-        break;
-    }
-  }
-}
-
-CuttlefishConfig::Answer CuttlefishConfig::enable_metrics() const {
-  return (CuttlefishConfig::Answer)(*dictionary_)[kEnableMetrics].asInt();
-}
-
-void CuttlefishConfig::set_metrics_binary(const std::string& metrics_binary) {
-  (*dictionary_)[kMetricsBinary] = metrics_binary;
-}
-
-std::string CuttlefishConfig::metrics_binary() const {
-  return (*dictionary_)[kMetricsBinary].asString();
-}
-
 void CuttlefishConfig::set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
   for (const auto& arg : android::base::Split(boot_image_kernel_cmdline, " ")) {
@@ -920,13 +857,6 @@ std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
 /*static*/ const CuttlefishConfig* CuttlefishConfig::Get() {
   static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
   return config.get();
-}
-
-/*static*/ bool CuttlefishConfig::ConfigExists() {
-  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
-                                             vsoc::GetGlobalConfigFileLink());
-  auto real_file_path = cvd::AbsolutePath(config_file_path.c_str());
-  return cvd::FileExists(real_file_path);
 }
 
 CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {}
