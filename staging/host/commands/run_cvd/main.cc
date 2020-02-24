@@ -427,6 +427,9 @@ int main(int argc, char** argv) {
   auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
 
+  auto tpm_server = LaunchTpm(&process_monitor, *config);
+  auto tpm_kernel_args = KernelCommandLineFromTpm(tpm_server);
+
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
   StreamerLaunchResult streamer_config;
@@ -447,6 +450,7 @@ int main(int argc, char** argv) {
                      tombstone_kernel_args.end());
   kernel_args.insert(kernel_args.end(), config_server_args.begin(), config_server_args.end());
   kernel_args.insert(kernel_args.end(), logcat_server_args.begin(), logcat_server_args.end());
+  kernel_args.insert(kernel_args.end(), tpm_kernel_args.begin(), tpm_kernel_args.end());
 
   // Start the guest VM
   vm_manager->WithFrontend(streamer_config.launched);

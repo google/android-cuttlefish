@@ -340,3 +340,24 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
                                      GetOnSubprocessExitCallback(config));
   }
 }
+
+TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
+                   const vsoc::CuttlefishConfig& config) {
+  if (config.tpm_binary() == "") {
+    return TpmPorts{};
+  }
+  int port = config.ForDefaultInstance().tpm_port();
+  cvd::Command tpm_command(
+      vsoc::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
+  tpm_command.AddParameter("-port=", port);
+  process_monitor->StartSubprocess(std::move(tpm_command),
+                                   GetOnSubprocessExitCallback(config));
+
+  cvd::Command proxy_command(config.socket_vsock_proxy_binary());
+  proxy_command.AddParameter("--server=vsock");
+  proxy_command.AddParameter("--tcp_port=", port);
+  proxy_command.AddParameter("--vsock_port=", port);
+  process_monitor->StartSubprocess(std::move(proxy_command),
+                                   GetOnSubprocessExitCallback(config));
+  return TpmPorts{port};
+}
