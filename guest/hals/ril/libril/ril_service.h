@@ -767,6 +767,9 @@ int setSystemSelectionChannelsResponse(int slotId,
 int setSignalStrengthReportingCriteriaResponse(int slotId, int responseType, int serial,
                                                RIL_Errno e, void *response, size_t responselen);
 
+int setLinkCapacityReportingCriteriaResponse(int slotId, int responseType, int serial,
+                                             RIL_Errno e, void *response, size_t responselen);
+
 int enableUiccApplicationsResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responselen);

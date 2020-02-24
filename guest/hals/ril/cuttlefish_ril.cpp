@@ -2225,9 +2225,16 @@ static void request_set_system_selection_channels(int /*request*/, RIL_Token t) 
 // New functions after Q.
 static void request_set_signal_strength_reporting_criteria(int /*request*/, void* /*data*/,
                                                            size_t /*datalen*/, RIL_Token t) {
-    ALOGV("request_set_signal_strength_reporting_criteria - void");
-    gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-    return;
+  ALOGV("request_set_signal_strength_reporting_criteria - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
+}
+
+static void request_set_link_capacity_reporting_criteria(int /*request*/, void* /*data*/,
+                                                         size_t /*datalen*/, RIL_Token t) {
+  ALOGV("request_set_link_capacity_reporting_criteria - void");
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+  return;
 }
 
 static void request_enable_uicc_applications(int /*request*/, void* data,
@@ -2552,6 +2559,9 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
 // New requests after Q.
     case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA:
       request_set_signal_strength_reporting_criteria(request, data, datalen, t);
+      break;
+    case RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA:
+      request_set_link_capacity_reporting_criteria(request, data, datalen, t);
       break;
     case RIL_REQUEST_ENABLE_UICC_APPLICATIONS:
       request_enable_uicc_applications(request, data, datalen, t);
