@@ -152,6 +152,7 @@ DEFINE_string(qemu_binary,
 DEFINE_string(crosvm_binary,
               vsoc::DefaultHostArtifactsPath("bin/crosvm"),
               "The Crosvm binary to use");
+DEFINE_string(tpm_binary, "", "The TPM simulator to use. Disabled if empty.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
@@ -321,6 +322,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
+  tmp_config_obj.set_tpm_binary(FLAGS_tpm_binary);
   tmp_config_obj.set_console_forwarder_binary(
       vsoc::DefaultHostArtifactsPath("bin/console_forwarder"));
   tmp_config_obj.set_kernel_log_monitor_binary(
@@ -392,6 +394,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_vnc_server_port(6444 + num - 1);
     instance.set_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
+    instance.set_tpm_port(2321 + num - 1);
 
     instance.set_device_title(FLAGS_device_title);
 
