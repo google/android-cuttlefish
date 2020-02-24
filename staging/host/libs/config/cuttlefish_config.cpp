@@ -107,11 +107,13 @@ const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
 const char* kAdbMode = "adb_mode";
 const char* kHostPort = "host_port";
+const char* kTpmPort = "tpm_port";
 const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
 
 const char* kQemuBinary = "qemu_binary";
 const char* kCrosvmBinary = "crosvm_binary";
+const char* kTpmBinary = "tpm_binary";
 const char* kConsoleForwarderBinary = "console_forwarder_binary";
 const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
 
@@ -477,6 +479,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_host_port(int host_port) {
   (*Dictionary())[kHostPort] = host_port;
 }
 
+int CuttlefishConfig::InstanceSpecific::tpm_port() const {
+  return (*Dictionary())[kTpmPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_tpm_port(int tpm_port) {
+  (*Dictionary())[kTpmPort] = tpm_port;
+}
+
 std::string CuttlefishConfig::InstanceSpecific::adb_ip_and_port() const {
   return (*Dictionary())[kAdbIPAndPort].asString();
 }
@@ -525,6 +535,14 @@ std::string CuttlefishConfig::crosvm_binary() const {
 
 void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
+}
+
+std::string CuttlefishConfig::tpm_binary() const {
+  return (*dictionary_)[kTpmBinary].asString();
+}
+
+void CuttlefishConfig::set_tpm_binary(const std::string& tpm_binary) {
+  (*dictionary_)[kTpmBinary] = tpm_binary;
 }
 
 std::string CuttlefishConfig::console_forwarder_binary() const {

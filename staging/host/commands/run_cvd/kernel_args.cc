@@ -126,3 +126,12 @@ std::vector<std::string> KernelCommandLineFromLogcatServer(const LogcatServerPor
     concat("androidboot.vsock_logcat_port=", *logcat_server.server_vsock_port),
   };
 }
+
+std::vector<std::string> KernelCommandLineFromTpm(const TpmPorts& tpm) {
+  if (!tpm.server_vsock_port) {
+    return {};
+  }
+  return {
+    concat("androidboot.tpm_vsock_port=", *tpm.server_vsock_port),
+  };
+}
