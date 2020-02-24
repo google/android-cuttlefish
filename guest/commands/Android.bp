@@ -18,4 +18,5 @@ subdirs = [
   "ip_link_add",
   "vport_trigger",
   "vsoc_input_service",
+  "vtpm_manager",
 ]

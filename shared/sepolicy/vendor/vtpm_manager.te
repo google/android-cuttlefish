@@ -1,0 +1,13 @@
+type vtpm_manager, domain;
+type vtpm_manager_exec, exec_type, vendor_file_type, file_type;
+type vtpm_manager_port_prop, property_type;
+type vtpm_manager_status_prop, property_type;
+
+init_daemon_domain(vtpm_manager)
+
+type vtpm_creation_device, dev_type;
+allow vtpm_manager vtpm_creation_device:{ file chr_file blk_file } rw_file_perms;
+allow vtpm_manager tmpfs:chr_file { create setattr unlink rw_file_perms write };
+
+allow vtpm_manager self:capability {net_admin sys_admin};
+allow vtpm_manager self:{ socket vsock_socket } create_socket_perms_no_ioctl;
