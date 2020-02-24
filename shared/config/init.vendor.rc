@@ -8,6 +8,7 @@ on early-init
     chown system system /dev/gce
 
     mount tracefs tracefs /sys/kernel/tracing
+    mount securityfs securityfs /sys/kernel/security
 
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.hardware.egl ${ro.boot.hardware.egl}
@@ -144,6 +145,15 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat 
     class main
     user root
     disabled
+
+
+on property:ro.boot.tpm_vsock_port=*
+  enable vtpm_manager
+
+service vtpm_manager /vendor/bin/vtpm_manager -tpm_vsock_port=${ro.boot.tpm_vsock_port}
+  class main
+  user root
+  disabled
 
 
 on property:ro.boot.vsock_logcat_port=*
