@@ -167,6 +167,7 @@
     {RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS, radio_1_5::setSystemSelectionChannelsResponse},
     {RIL_REQUEST_ENABLE_MODEM, radio_1_5::enableModemResponse},
     {RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA, radio_1_5::setSignalStrengthReportingCriteriaResponse},
+    {RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA, radio_1_5::setLinkCapacityReportingCriteriaResponse},
     {RIL_REQUEST_ENABLE_UICC_APPLICATIONS, radio_1_5::enableUiccApplicationsResponse},
     {RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED, radio_1_5::areUiccApplicationsEnabledResponse},
     {RIL_REQUEST_SET_RADIO_POWER, radio_1_5::setRadioPowerResponse},
