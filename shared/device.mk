@@ -85,6 +85,7 @@ PRODUCT_PACKAGES += \
     vsock_logcat \
     tombstone_producer \
     suspend_blocker \
+    vtpm_manager \
 
 #
 # Packages for AOSP-available stuff we use from the framework
