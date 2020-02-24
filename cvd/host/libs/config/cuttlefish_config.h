@@ -37,7 +37,7 @@ constexpr char kMobileNetworkConnectedMessage[] =
 constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 constexpr char kInternalDirName[] = "internal";
-constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
+
 
 enum class AdbMode {
   VsockTunnel,
@@ -50,7 +50,6 @@ enum class AdbMode {
 class CuttlefishConfig {
  public:
   static const CuttlefishConfig* Get();
-  static bool ConfigExists();
 
   CuttlefishConfig();
   CuttlefishConfig(CuttlefishConfig&&);
@@ -168,9 +167,6 @@ class CuttlefishConfig {
   void set_tpm_binary(const std::string& tpm_binary);
   std::string tpm_binary() const;
 
-  void set_tpm_device(const std::string& tpm_device);
-  std::string tpm_device() const;
-
   void set_console_forwarder_binary(const std::string& crosvm_binary);
   std::string console_forwarder_binary() const;
 
@@ -184,19 +180,13 @@ class CuttlefishConfig {
   void set_vnc_server_binary(const std::string& vnc_server_binary);
   std::string vnc_server_binary() const;
 
-  void set_enable_sandbox(const bool enable_sandbox);
-  bool enable_sandbox() const;
-
-  void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
-  std::string seccomp_policy_dir() const;
-
   void set_enable_webrtc(bool enable_webrtc);
   bool enable_webrtc() const;
 
   void set_webrtc_binary(const std::string& webrtc_binary);
   std::string webrtc_binary() const;
 
-  void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
+  void set_webrtc_assets_dir(const std::string& webrtc_binary);
   std::string webrtc_assets_dir() const;
 
   void set_webrtc_public_ip(const std::string& webrtc_public_ip);
@@ -258,18 +248,6 @@ class CuttlefishConfig {
 
   void set_guest_force_normal_boot(bool guest_force_normal_boot);
   bool guest_force_normal_boot() const;
-
-  enum Answer {
-    kUnknown = 0,
-    kYes,
-    kNo,
-  };
-
-  void set_enable_metrics(std::string enable_metrics);
-  CuttlefishConfig::Answer enable_metrics() const;
-
-  void set_metrics_binary(const std::string& metrics_binary);
-  std::string metrics_binary() const;
 
   void set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline);
   std::vector<std::string> boot_image_kernel_cmdline() const;
