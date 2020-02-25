@@ -42,3 +42,6 @@ TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 
 BUILD_BROKEN_DUP_RULES := true
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/5.4-x86_64/*.ko)
+
+# TODO(b/149410031): temporarily exclude sdcardfs
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(filter-out %/sdcardfs.ko,$(BOARD_VENDOR_RAMDISK_KERNEL_MODULES))
