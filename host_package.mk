@@ -90,7 +90,6 @@ webrtc_assets := \
     style.css \
     js/logcat.js \
     js/app.js \
-    js/viewpane.js \
     js/cf_webrtc.js \
 
 webrtc_certs := \

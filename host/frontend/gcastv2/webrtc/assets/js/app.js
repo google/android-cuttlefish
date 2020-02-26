@@ -141,8 +141,8 @@ function sendMouseUpdate(down, e) {
     // TODO get the device's screen resolution from the device config, not the video stream
     const videoWidth = deviceScreen.videoWidth;
     const videoHeight = deviceScreen.videoHeight;
-    const elementWidth = deviceScreen.width;
-    const elementHeight = deviceScreen.height;
+    const elementWidth = deviceScreen.offsetWidth;
+    const elementHeight = deviceScreen.offsetHeight;
 
     // vh*ew > eh*vw? then scale h instead of w
     const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
