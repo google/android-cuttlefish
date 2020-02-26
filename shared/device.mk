@@ -122,7 +122,6 @@ PRODUCT_PACKAGES += \
 # GL/Vk implementation for gfxstream
 PRODUCT_PACKAGES += \
     vulkan.ranchu \
-    hwcomposer.ranchu \
     libandroidemu \
     libOpenglCodecCommon \
     libOpenglSystemCommon \
