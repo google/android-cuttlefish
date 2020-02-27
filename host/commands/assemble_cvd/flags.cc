@@ -691,7 +691,9 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
-    CreateCompositeDisk(disk_config(), header_path, footer_path, config.composite_disk_path());
+    std::string tmp_prefix = config.AssemblyPath("disk_hole/disk");
+    CreateCompositeDisk(disk_config(), tmp_prefix, header_path, footer_path,
+                        config.composite_disk_path());
   } else {
     auto existing_size = cvd::FileSize(config.composite_disk_path());
     auto available_space = AvailableSpaceAtPath(config.composite_disk_path());
@@ -735,6 +737,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("gpt_footer.img");
       preserving.insert("composite.img");
       preserving.insert("access-kregistry");
+      preserving.insert("disk_hole");
     }
     if (!CleanPriorFiles(config, preserving)) {
       LOG(ERROR) << "Failed to clean prior files";
@@ -747,6 +750,16 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
           && errno != EEXIST) {
         LOG(ERROR) << "Failed to create assembly directory: "
                   << FLAGS_assembly_dir << ". Error: " << errno;
+        exit(AssemblerExitCodes::kAssemblyDirCreationError);
+      }
+    }
+    std::string disk_hole_dir = FLAGS_assembly_dir + "/disk_hole";
+    if (!cvd::DirectoryExists(disk_hole_dir.c_str())) {
+      LOG(INFO) << "Setting up " << disk_hole_dir << "/disk_hole";
+      if (mkdir(disk_hole_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+          && errno != EEXIST) {
+        LOG(ERROR) << "Failed to create assembly directory: "
+                  << disk_hole_dir << ". Error: " << errno;
         exit(AssemblerExitCodes::kAssemblyDirCreationError);
       }
     }
