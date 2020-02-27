@@ -92,9 +92,13 @@ Json::Value BpttoolInput(const std::vector<ImagePartition>& partitions) {
   return bpttool_input_json;
 }
 
-std::string CreateFile(size_t len) {
-  char file_template[] = "/tmp/diskXXXXXX";
-  int fd = mkstemp(file_template);
+std::string CreateFile(const std::string& path_prefix, const std::size_t len) {
+  std::string file_template = path_prefix + "XXXXXX";
+  char* file_template_cstr = (char*) malloc(file_template.size() + 1);
+  strncpy(file_template_cstr, file_template.c_str(), file_template.size() + 1);
+  int fd = mkstemp(file_template_cstr);
+  file_template = std::string(file_template_cstr);
+  free(file_template_cstr);
   if (fd < 0) {
     LOG(FATAL) << "not able to create disk hole temp file";
   }
@@ -108,11 +112,12 @@ std::string CreateFile(size_t len) {
     }
   }
   close(fd);
-  return std::string(file_template);
+  return file_template;
 }
 
 CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
                                     const std::vector<ImagePartition>& partitions,
+                                    const std::string& tmp_path_prefix,
                                     const std::string& header_file,
                                     const std::string& footer_file) {
   CompositeDisk disk;
@@ -124,7 +129,8 @@ CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
   for (auto& bpt_partition: bpt_file["partitions"]) {
     if (bpt_partition["offset"].asUInt64() != previous_end) {
       ComponentDisk* component = disk.add_component_disks();
-      component->set_file_path(CreateFile(bpt_partition["offset"].asUInt64() - previous_end));
+      std::size_t length = bpt_partition["offset"].asUInt64() - previous_end;
+      component->set_file_path(CreateFile(tmp_path_prefix, length));
       component->set_offset(previous_end);
     }
     ComponentDisk* component = disk.add_component_disks();
@@ -140,7 +146,7 @@ CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
   size_t footer_start = bpt_file["settings"]["disk_size"].asUInt64() - GPT_FOOTER_SIZE;
   if (footer_start != previous_end) {
     ComponentDisk* component = disk.add_component_disks();
-    component->set_file_path(CreateFile(footer_start - previous_end));
+    component->set_file_path(CreateFile(tmp_path_prefix, footer_start - previous_end));
     component->set_offset(previous_end);
   }
   ComponentDisk* footer = disk.add_component_disks();
@@ -295,6 +301,7 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
 };
 
 void CreateCompositeDisk(std::vector<ImagePartition> partitions,
+                         const std::string& tmp_path_prefix,
                          const std::string& header_file,
                          const std::string& footer_file,
                          const std::string& output_composite_path) {
@@ -303,7 +310,8 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
   auto table = FdToJson(table_fd);
   auto partition_table_fd = BpttoolMakePartitionTable(JsonToFd(bpttool_input_json));
   CreateGptFiles(partition_table_fd, header_file, footer_file);
-  auto composite_proto = MakeCompositeDiskSpec(table, partitions, header_file, footer_file);
+  auto composite_proto = MakeCompositeDiskSpec(table, partitions, tmp_path_prefix,
+                                               header_file, footer_file);
   std::ofstream composite(output_composite_path.c_str(), std::ios::binary | std::ios::trunc);
   composite << "composite_disk\x1d";
   composite_proto.SerializeToOstream(&composite);
