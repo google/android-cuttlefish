@@ -22,7 +22,7 @@
 
 #include <cerrno>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 using cvd::ClientSocket;
 using cvd::ServerSocket;
