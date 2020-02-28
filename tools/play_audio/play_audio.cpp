@@ -17,7 +17,7 @@
 #include "client_socket.h"
 #include "sdl_wrapper.h"
 
-#include "glog/logging.h"
+#include "android-base/logging.h"
 #include "gflags/gflags.h"
 #include "opuscpp/opus_wrapper.h"
 #include <SDL2/SDL.h>

@@ -20,7 +20,7 @@
 #include <https/HTTPRequestResponse.h>
 #include <https/Support.h>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include <iostream>
 #include <map>

@@ -16,7 +16,7 @@
  */
 #include "client_socket.h"
 
-#include "glog/logging.h"
+#include "android-base/logging.h"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
