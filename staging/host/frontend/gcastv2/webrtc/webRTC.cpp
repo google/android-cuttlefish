@@ -153,14 +153,16 @@ int main(int argc, char **argv) {
 
     const std::string index_html = FLAGS_assets_dir + "/index.html";
     const std::string logcat_js = FLAGS_assets_dir + "/js/logcat.js";
-    const std::string receive_js = FLAGS_assets_dir + "/js/receive.js";
+    const std::string app_js = FLAGS_assets_dir + "/js/app.js";
     const std::string viewpane_js = FLAGS_assets_dir + "/js/viewpane.js";
+    const std::string cf_webrtc_js = FLAGS_assets_dir + "/js/cf_webrtc.js";
     const std::string style_css = FLAGS_assets_dir + "/style.css";
 
     httpd->addStaticFile("/index.html", index_html.c_str());
     httpd->addStaticFile("/js/logcat.js", logcat_js.c_str());
-    httpd->addStaticFile("/js/receive.js", receive_js.c_str());
+    httpd->addStaticFile("/js/app.js", app_js.c_str());
     httpd->addStaticFile("/js/viewpane.js", viewpane_js.c_str());
+    httpd->addStaticFile("/js/cf_webrtc.js", cf_webrtc_js.c_str());
     httpd->addStaticFile("/style.css", style_css.c_str());
 
     httpd->addWebSocketHandlerFactory(

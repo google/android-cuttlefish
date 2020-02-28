@@ -160,4 +160,3 @@ function init_logcat() {
     };
     adb_ws.onmessage = adbOnMessage;
 }
-
