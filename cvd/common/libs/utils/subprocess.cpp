@@ -32,15 +32,14 @@
 
 #include "common/libs/fs/shared_buf.h"
 
-namespace cuttlefish {
 namespace {
 
 // If a redirected-to file descriptor was already closed, it's possible that
 // some inherited file descriptor duped to this file descriptor and the redirect
 // would override that. This function makes sure that doesn't happen.
 bool validate_redirects(
-    const std::map<Subprocess::StdIOChannel, int>& redirects,
-    const std::map<SharedFD, int>& inherited_fds) {
+    const std::map<cvd::Subprocess::StdIOChannel, int>& redirects,
+    const std::map<cvd::SharedFD, int>& inherited_fds) {
   // Add the redirected IO channels to a set as integers. This allows converting
   // the enum values into integers instead of the other way around.
   std::set<int> int_redirects;
@@ -58,7 +57,8 @@ bool validate_redirects(
   return true;
 }
 
-void do_redirects(const std::map<Subprocess::StdIOChannel, int>& redirects) {
+void do_redirects(
+    const std::map<cvd::Subprocess::StdIOChannel, int>& redirects) {
   for (const auto& entry : redirects) {
     auto std_channel = static_cast<int>(entry.first);
     auto fd = entry.second;
@@ -74,30 +74,29 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   ret.push_back(NULL);
   return ret;
 }
-
-void UnsetEnvironment(const std::unordered_set<std::string>& unenv) {
-  for (auto it = unenv.cbegin(); it != unenv.cend(); ++it) {
-    unsetenv(it->c_str());
-  }
-}
 }  // namespace
+namespace cvd {
 
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
       started_(subprocess.started_),
+      control_socket_(subprocess.control_socket_),
       stopper_(subprocess.stopper_) {
   // Make sure the moved object no longer controls this subprocess
   subprocess.pid_ = -1;
   subprocess.started_ = false;
+  subprocess.control_socket_ = SharedFD();
 }
 
 Subprocess& Subprocess::operator=(Subprocess&& other) {
   pid_ = other.pid_;
   started_ = other.started_;
+  control_socket_ = other.control_socket_;
   stopper_ = other.stopper_;
 
   other.pid_ = -1;
   other.started_ = false;
+  other.control_socket_ = SharedFD();
   return *this;
 }
 
@@ -143,7 +142,7 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
   return retval;
 }
 
-StopperResult KillSubprocess(Subprocess* subprocess) {
+bool KillSubprocess(Subprocess* subprocess) {
   auto pid = subprocess->pid();
   if (pid > 0) {
     auto pgid = getpgid(pid);
@@ -155,15 +154,21 @@ StopperResult KillSubprocess(Subprocess* subprocess) {
       // to the process and not a (non-existent) group
     }
     bool is_group_head = pid == pgid;
-    auto kill_ret = (is_group_head ? killpg : kill)(pid, SIGKILL);
-    if (kill_ret == 0) {
-      return StopperResult::kStopSuccess;
+    if (is_group_head) {
+      return killpg(pid, SIGKILL) == 0;
+    } else {
+      return kill(pid, SIGKILL) == 0;
     }
-    auto kill_cmd = is_group_head ? "killpg(" : "kill(";
-    PLOG(ERROR) << kill_cmd << pid << ", SIGKILL) failed: ";
-    return StopperResult::kStopFailure;
   }
-  return StopperResult::kStopSuccess;
+  return true;
+}
+Command::ParameterBuilder::~ParameterBuilder() { Build(); }
+void Command::ParameterBuilder::Build() {
+  auto param = stream_.str();
+  stream_ = std::stringstream();
+  if (param.size()) {
+    cmd_->AddParameter(param);
+  }
 }
 
 Command::~Command() {
@@ -177,37 +182,62 @@ Command::~Command() {
   }
 }
 
-void Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
+bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   int fd;
   if (inherited_fds_.count(shared_fd)) {
     fd = inherited_fds_[shared_fd];
   } else {
     fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
-    CHECK(fd >= 0) << "Could not acquire a new file descriptor: "
-                   << shared_fd->StrError();
+    if (fd < 0) {
+      LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
+      return false;
+    }
     inherited_fds_[shared_fd] = fd;
   }
   *stream << fd;
+  return true;
 }
 
-void Command::RedirectStdIO(Subprocess::StdIOChannel channel,
-                            SharedFD shared_fd) {
-  CHECK(shared_fd->IsOpen());
-  CHECK(redirects_.count(channel) == 0)
-      << "Attempted multiple redirections of fd: " << static_cast<int>(channel);
+bool Command::RedirectStdIO(cvd::Subprocess::StdIOChannel channel,
+                            cvd::SharedFD shared_fd) {
+  if (!shared_fd->IsOpen()) {
+    return false;
+  }
+  if (redirects_.count(channel)) {
+    LOG(ERROR) << "Attempted multiple redirections of fd: "
+               << static_cast<int>(channel);
+    return false;
+  }
   auto dup_fd = shared_fd->Fcntl(F_DUPFD_CLOEXEC, 3);
-  CHECK(dup_fd >= 0) << "Could not acquire a new file descriptor: "
-                     << shared_fd->StrError();
+  if (dup_fd < 0) {
+    LOG(ERROR) << "Could not acquire a new file descriptor: " << shared_fd->StrError();
+    return false;
+  }
   redirects_[channel] = dup_fd;
+  return true;
 }
-void Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
+bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                             Subprocess::StdIOChannel parent_channel) {
   return RedirectStdIO(subprocess_channel,
-                       SharedFD::Dup(static_cast<int>(parent_channel)));
+                       cvd::SharedFD::Dup(static_cast<int>(parent_channel)));
 }
 
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
+  // The parent socket will get closed on the child on the call to exec, the
+  // child socket will be closed on the parent when this function returns and no
+  // references to the fd are left
+  SharedFD parent_socket, child_socket;
+  if (options.WithControlSocket()) {
+    if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &parent_socket,
+                              &child_socket)) {
+      LOG(ERROR) << "Unable to create control socket pair: " << strerror(errno);
+      return Subprocess(-1, {});
+    }
+    // Remove FD_CLOEXEC from the child socket, ensure the parent has it
+    child_socket->Fcntl(F_SETFD, 0);
+    parent_socket->Fcntl(F_SETFD, FD_CLOEXEC);
+  }
 
   if (!validate_redirects(redirects_, inherited_fds_)) {
     return Subprocess(-1, {});
@@ -238,11 +268,10 @@ Subprocess Command::Start(SubprocessOptions options) const {
     // the environment of the child process. To force an empty emvironment for
     // the child process pass the address of a pointer to NULL
     if (use_parent_env_) {
-      UnsetEnvironment(unenv_);
-      rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
+      rval = execv(cmd[0], const_cast<char* const*>(cmd.data()));
     } else {
       auto envp = ToCharPointers(env_);
-      rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+      rval = execve(cmd[0], const_cast<char* const*>(cmd.data()),
                     const_cast<char* const*>(envp.data()));
     }
     // No need for an if: if exec worked it wouldn't have returned
@@ -253,18 +282,14 @@ Subprocess Command::Start(SubprocessOptions options) const {
   if (pid == -1) {
     LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
   }
-  if (options.Verbose()) { // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
-    LOG(DEBUG) << "Started (pid: " << pid << "): " << cmd[0];
-    for (int i = 1; cmd[i]; i++) {
-      LOG(DEBUG) << cmd[i];
-    }
-  } else {
-    LOG(VERBOSE) << "Started (pid: " << pid << "): " << cmd[0];
-    for (int i = 1; cmd[i]; i++) {
-      LOG(VERBOSE) << cmd[i];
+  if (options.Verbose()) {
+    LOG(INFO) << "Started (pid: " << pid << "): " << cmd[0];
+    int i = 1;
+    while (cmd[i]) {
+      LOG(INFO) << cmd[i++];
     }
   }
-  return Subprocess(pid, subprocess_stopper_);
+  return Subprocess(pid, parent_socket, subprocess_stopper_);
 }
 
 // A class that waits for threads to exit in its destructor.
@@ -281,12 +306,12 @@ public:
   }
 };
 
-int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
-                        std::string* stdout_str, std::string* stderr_str,
+int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
+                        std::string* stdout, std::string* stderr,
                         SubprocessOptions options) {
   /*
    * The order of these declarations is necessary for safety. If the function
-   * returns at any point, the Command will be destroyed first, closing all
+   * returns at any point, the cvd::Command will be destroyed first, closing all
    * of its references to SharedFDs. This will cause the thread internals to fail
    * their reads or writes. The ThreadJoiner then waits for the threads to
    * complete, as running the destructor of an active std::thread crashes the
@@ -297,50 +322,62 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
    */
   std::thread stdin_thread, stdout_thread, stderr_thread;
   ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
-  Command cmd = std::move(cmd_tmp);
+  cvd::Command cmd = std::move(cmd_tmp);
   bool io_error = false;
-  if (stdin_str != nullptr) {
-    SharedFD pipe_read, pipe_write;
-    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
+  if (stdin != nullptr) {
+    cvd::SharedFD pipe_read, pipe_write;
+    if (!cvd::SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to write the stdin of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read);
-    stdin_thread = std::thread([pipe_write, stdin_str, &io_error]() {
-      int written = WriteAll(pipe_write, *stdin_str);
+    if (!cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, pipe_read)) {
+      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
+                << "\", was already set.";
+      return -1;
+    }
+    stdin_thread = std::thread([pipe_write, stdin, &io_error]() {
+      int written = cvd::WriteAll(pipe_write, *stdin);
       if (written < 0) {
         io_error = true;
         LOG(ERROR) << "Error in writing stdin to process";
       }
     });
   }
-  if (stdout_str != nullptr) {
-    SharedFD pipe_read, pipe_write;
-    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
+  if (stdout != nullptr) {
+    cvd::SharedFD pipe_read, pipe_write;
+    if (!cvd::SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stdout of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write);
-    stdout_thread = std::thread([pipe_read, stdout_str, &io_error]() {
-      int read = ReadAll(pipe_read, stdout_str);
+    if (!cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, pipe_write)) {
+      LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
+                << "\", was already set.";
+      return -1;
+    }
+    stdout_thread = std::thread([pipe_read, stdout, &io_error]() {
+      int read = cvd::ReadAll(pipe_read, stdout);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stdout from process";
       }
     });
   }
-  if (stderr_str != nullptr) {
-    SharedFD pipe_read, pipe_write;
-    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
+  if (stderr != nullptr) {
+    cvd::SharedFD pipe_read, pipe_write;
+    if (!cvd::SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stderr of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write);
-    stderr_thread = std::thread([pipe_read, stderr_str, &io_error]() {
-      int read = ReadAll(pipe_read, stderr_str);
+    if (!cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdErr, pipe_write)) {
+      LOG(ERROR) << "Could not set stderr of \"" << cmd.GetShortName()
+                << "\", was already set.";
+      return -1;
+    }
+    stderr_thread = std::thread([pipe_read, stderr, &io_error]() {
+      int read = cvd::ReadAll(pipe_read, stderr);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stderr from process";
@@ -352,11 +389,10 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
   if (!subprocess.Started()) {
     return -1;
   }
-  auto cmd_short_name = cmd.GetShortName();
   {
     // Force the destructor to run by moving it into a smaller scope.
     // This is necessary to close the write end of the pipe.
-    Command forceDelete = std::move(cmd);
+    cvd::Command forceDelete = std::move(cmd);
   }
   int wstatus;
   subprocess.Wait(&wstatus, 0);
@@ -368,7 +404,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin_str,
     auto join_threads = std::move(thread_joiner);
   }
   if (io_error) {
-    LOG(ERROR) << "IO error communicating with " << cmd_short_name;
+    LOG(ERROR) << "IO error communicating with " << cmd.GetShortName();
     return -1;
   }
   return WEXITSTATUS(wstatus);
@@ -399,4 +435,4 @@ int execute(const std::vector<std::string>& command) {
   return subprocess.Wait();
 }
 
-}  // namespace cuttlefish
+}  // namespace cvd
