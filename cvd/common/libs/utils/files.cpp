@@ -22,17 +22,11 @@
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
-#include <fstream>
-#include <libgen.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <dirent.h>
-#include <vector>
 
-#include "common/libs/fs/shared_fd.h"
-
-namespace cuttlefish {
+namespace cvd {
 
 bool FileExists(const std::string& path) {
   struct stat st;
@@ -41,19 +35,6 @@ bool FileExists(const std::string& path) {
 
 bool FileHasContent(const std::string& path) {
   return FileSize(path) > 0;
-}
-
-std::vector<std::string> DirectoryContents(const std::string& path) {
-  std::vector<std::string> ret;
-  std::unique_ptr<DIR, int(*)(DIR*)> dir(opendir(path.c_str()), closedir);
-  CHECK(dir != nullptr) << "Could not read from dir \"" << path << "\"";
-  if (dir) {
-    struct dirent *ent;
-    while ((ent = readdir(dir.get()))) {
-      ret.push_back(ent->d_name);
-    }
-  }
-  return ret;
 }
 
 bool DirectoryExists(const std::string& path) {
@@ -67,37 +48,12 @@ bool DirectoryExists(const std::string& path) {
   return true;
 }
 
-bool IsDirectoryEmpty(const std::string& path) {
-  auto direc = ::opendir(path.c_str());
-  if (!direc) {
-    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
-               << " as it failed to be open" << std::endl;
-    return false;
-  }
-
-  decltype(::readdir(direc)) sub = nullptr;
-  int cnt {0};
-  while ( (sub = ::readdir(direc)) ) {
-    cnt++;
-    if (cnt > 2) {
-    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
-               << " as it exists but not empty" << std::endl;
-      return false;
-    }
-  }
-  return true;
-}
-
 std::string AbsolutePath(const std::string& path) {
   if (path.empty()) {
     return {};
   }
   if (path[0] == '/') {
     return path;
-  }
-  if (path[0] == '~') {
-    LOG(WARNING) << "Tilde expansion in path " << path <<" is not supported";
-    return {};
   }
 
   std::array<char, PATH_MAX> buffer{};
@@ -127,31 +83,9 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
   return std::chrono::system_clock::time_point(seconds);
 }
 
-bool RenameFile(const std::string& old_name, const std::string& new_name) {
-  LOG(DEBUG) << "Renaming " << old_name << " to " << new_name;
-  if(rename(old_name.c_str(), new_name.c_str())) {
-    LOG(ERROR) << "File rename failed due to " << strerror(errno);
-    return false;
-  }
-
-  return true;
-}
-
 bool RemoveFile(const std::string& file) {
-  LOG(DEBUG) << "Removing " << file;
+  LOG(INFO) << "Removing " << file;
   return remove(file.c_str()) == 0;
-}
-
-
-std::string ReadFile(const std::string& file) {
-  std::string contents;
-  std::ifstream in(file, std::ios::in | std::ios::binary);
-  in.seekg(0, std::ios::end);
-  contents.resize(in.tellg());
-  in.seekg(0, std::ios::beg);
-  in.read(&contents[0], contents.size());
-  in.close();
-  return(contents);
 }
 
 std::string CurrentDirectory() {
@@ -161,65 +95,4 @@ std::string CurrentDirectory() {
   return ret;
 }
 
-FileSizes SparseFileSizes(const std::string& path) {
-  auto fd = SharedFD::Open(path, O_RDONLY);
-  if (!fd->IsOpen()) {
-    LOG(ERROR) << "Could not open \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t farthest_seek = fd->LSeek(0, SEEK_END);
-  LOG(VERBOSE) << "Farthest seek: " << farthest_seek;
-  if (farthest_seek == -1) {
-    LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-    return {};
-  }
-  off_t data_bytes = 0;
-  off_t offset = 0;
-  while (offset < farthest_seek) {
-    off_t new_offset = fd->LSeek(offset, SEEK_HOLE);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      data_bytes += new_offset - offset;
-      offset = new_offset;
-    }
-    if (offset >= farthest_seek) {
-      break;
-    }
-    new_offset = fd->LSeek(offset, SEEK_DATA);
-    if (new_offset == -1) {
-      // ENXIO is returned when there are no more blocks of this type coming.
-      if (fd->GetErrno() == ENXIO) {
-        break;
-      } else {
-        LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
-        return {};
-      }
-    } else {
-      offset = new_offset;
-    }
-  }
-  return (FileSizes) { .sparse_size = farthest_seek, .disk_size = data_bytes };
-}
-
-std::string cpp_basename(const std::string& str) {
-  char* copy = strdup(str.c_str()); // basename may modify its argument
-  std::string ret(basename(copy));
-  free(copy);
-  return ret;
-}
-
-std::string cpp_dirname(const std::string& str) {
-  char* copy = strdup(str.c_str()); // dirname may modify its argument
-  std::string ret(dirname(copy));
-  free(copy);
-  return ret;
-}
-
-}  // namespace cuttlefish
+}  // namespace cvd
