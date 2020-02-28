@@ -106,8 +106,8 @@ int MyWebSocketHandler::handleMessage(
         auto replyAsString = json_writer.write(reply);
         sendMessage(replyAsString.c_str(), replyAsString.size());
 
-        if (obj.isMember("path")) {
-            parseOptions(obj["path"].asString());
+        if (obj.isMember("options")) {
+            parseOptions(obj["options"]);
         }
 
         if (mOptions & OptionBits::useSingleCertificateForAllTracks) {
@@ -115,7 +115,7 @@ int MyWebSocketHandler::handleMessage(
         }
 
         prepareSessions();
-    } else if (type == "set-remote-desc") {
+    } else if (type == "set-client-desc") {
         if (!validateJsonObject(obj, type,
                                 {{"sdp", Json::ValueType::stringValue}},
                                 sendMessageOnError)) {
@@ -576,40 +576,18 @@ MyWebSocketHandler::CreateDTLSCertificateAndKey() {
     return std::make_pair(x509, pkey);
 }
 
-void MyWebSocketHandler::parseOptions(const std::string &pathAndQuery) {
-    auto separatorPos = pathAndQuery.find('?');
-
-    if (separatorPos == std::string::npos) {
-        return;
+void MyWebSocketHandler::parseOptions(const Json::Value& options) {
+    if (options.isMember("disable_audio") && options["disable_audio"].isBool()) {
+        auto mask = OptionBits::disableAudio;
+        mOptions = (mOptions & ~mask) | (options["disable_audio"].asBool() ? mask : 0);
     }
-
-    auto components = SplitString(pathAndQuery.substr(separatorPos + 1), '&');
-    for (auto name : components) {
-        bool boolValue = true;
-
-        separatorPos = name.find('=');
-        if (separatorPos != std::string::npos) {
-            boolValue = false;
-
-            auto value = name.substr(separatorPos + 1);
-            name.erase(separatorPos);
-
-            boolValue =
-                !strcasecmp("true", value.c_str())
-                    || !strcasecmp("yes", value.c_str())
-                    || value == "1";
-        }
-
-        if (name == "disable_audio") {
-            auto mask = OptionBits::disableAudio;
-            mOptions = (mOptions & ~mask) | (boolValue ? mask : 0);
-        } else if (name == "bundle_tracks" && boolValue) {
-            auto mask = OptionBits::bundleTracks;
-            mOptions = (mOptions & ~mask) | (boolValue ? mask : 0);
-        } else if (name == "enable_data" && boolValue) {
-            auto mask = OptionBits::enableData;
-            mOptions = (mOptions & ~mask) | (boolValue ? mask : 0);
-        }
+    if (options.isMember("bundle_tracks") && options["bundle_tracks"].isBool()) {
+        auto mask = OptionBits::bundleTracks;
+        mOptions = (mOptions & ~mask) | (options["bundle_tracks"].asBool() ? mask : 0);
+    }
+    if (options.isMember("enable_data") && options["enable_data"].isBool()) {
+        auto mask = OptionBits::enableData;
+        mOptions = (mOptions & ~mask) | (options["enable_data"].asBool() ? mask : 0);
     }
 }
 
