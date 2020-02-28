@@ -16,7 +16,7 @@
 
 #include "common/libs/utils/files.h"
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include <array>
 #include <climits>

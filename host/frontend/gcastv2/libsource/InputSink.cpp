@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <https/SafeCallbackable.h>
 #include <https/Support.h>
 
