@@ -281,7 +281,7 @@ load mmc ${devnum}:${distro_bootpart} 0x04000000 /boot/uInitrd
 load mmc ${devnum}:${distro_bootpart} 0x01f00000 /boot/dtb/rockchip/rk3399-rock-pi-4.dtb
 setenv finduuid "part uuid mmc ${devnum}:${distro_bootpart} uuid"
 run finduuid
-setenv bootargs "earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 loglevel=7 root=PARTUUID=${uuid} rootwait rootfstype=ext4 sdhci.debug_quirks=0x20000000"
+setenv bootargs "earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 loglevel=7 root=PARTUUID=${uuid} rootwait rootfstype=ext4 sdhci.debug_quirks=0x20000000 of_devlink=0"
 booti 0x02080000 0x04000000 0x01f00000
 EOF
 	${ANDROID_HOST_OUT}/bin/mkimage \
