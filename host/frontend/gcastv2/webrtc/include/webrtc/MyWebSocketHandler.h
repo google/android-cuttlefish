@@ -93,7 +93,7 @@ private:
 
     std::pair<std::string, std::string> createUniqueUFragAndPassword();
 
-    void parseOptions(const std::string &pathAndQuery);
+    void parseOptions(const Json::Value& options);
     size_t countTracks() const;
 
     void prepareSessions();
