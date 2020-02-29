@@ -29,6 +29,7 @@ TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
+    odm \
     product \
     system \
     system_ext \
