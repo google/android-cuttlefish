@@ -456,7 +456,7 @@ src_dev=mmcblk0
 dest_dev=mmcblk1
 part_num=p5
 
-if [ -e /dev/mmcblk0p5 ]; then
+if [ -e /dev/mmcblk0p5 ] && [ -e /dev/mmcblk1p5 ]; then
 	led 1
 
 	sgdisk -Z -a1 /dev/${dest_dev}
