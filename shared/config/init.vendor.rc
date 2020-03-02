@@ -43,10 +43,6 @@ on init
     chmod 0664 /dev/cpuctl/background/tasks
     chmod 0664 /dev/cpuctl/top-app/tasks
     chmod 0664 /dev/cpuctl/rt/tasks
-    write /dev/cpuctl/foreground/cpu.rt_runtime_us 950000
-    write /dev/cpuctl/background/cpu.rt_runtime_us 950000
-    write /dev/cpuctl/top-app/cpu.rt_runtime_us 950000
-    write /dev/cpuctl/rt/cpu.rt_runtime_us 950000
 
 
 on fs
