@@ -23,6 +23,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/subprocess.h"
 
 DEFINE_int32(port, 0, "The port to run the TPM simulator on. Consumes the next "
                       "port as well for platform commands.");
@@ -49,12 +50,23 @@ int main(int argc, char** argv) {
   CHECK(config) << "Unable to get config object";
 
   // Assumes linked on the host with glibc
-  std::string command = "stdbuf -oL " + config->tpm_binary() + " " + std::to_string(FLAGS_port);
+  cvd::Command simulator_cmd("/usr/bin/stdbuf");
+  simulator_cmd.AddParameter("-oL");
+  simulator_cmd.AddParameter(config->tpm_binary());
+  simulator_cmd.AddParameter(FLAGS_port);
 
-  LOG(INFO) << "Running: " << command;
+  cvd::SharedFD sim_stdout_in, sim_stdout_out;
+  CHECK(cvd::SharedFD::Pipe(&sim_stdout_out, &sim_stdout_in))
+      << "Unable to open pipe for stdout: " << strerror(errno);
+  simulator_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, sim_stdout_in);
 
-  auto tpm_subprocess = popen(command.c_str(), "r");
-  CHECK(tpm_subprocess) << "Not able to launch TPM subprocess";
+  auto tpm_subprocess = simulator_cmd.Start();
+
+  sim_stdout_in->Close();
+
+  std::unique_ptr<FILE, int(*)(FILE*)> stdout_file(
+      fdopen(sim_stdout_out->UNMANAGED_Dup(), "r"), &fclose);
+  sim_stdout_out->Close();
 
   bool command_server = false;
   bool platform_server = false;
@@ -62,8 +74,9 @@ int main(int argc, char** argv) {
 
   char* lineptr = nullptr;
   size_t size = 0;
-  while (getline(&lineptr, &size, tpm_subprocess) >= 0) {
+  while (getline(&lineptr, &size, stdout_file.get()) >= 0) {
     std::string line(lineptr);
+    line = line.substr(0, line.size() - 1);
     if (HasSubstrings(line, {"TPM", "command", "server", "listening", "on", "port"})) {
       command_server = true;
     }
@@ -88,7 +101,5 @@ int main(int argc, char** argv) {
   }
   free(lineptr);
 
-  LOG(INFO) << "TPM2 simulator stdout closed";
-
-  return pclose(tpm_subprocess);
+  return tpm_subprocess.Wait() ? 0 : 1;
 }
