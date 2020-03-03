@@ -13,12 +13,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-subdirs = [
-    "common",
-    "guest",
-    "host",
-]
-
 cc_library_headers {
     name: "cuttlefish_common_headers",
     vendor: true,
