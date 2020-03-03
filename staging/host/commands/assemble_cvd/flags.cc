@@ -738,6 +738,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("composite.img");
       preserving.insert("access-kregistry");
       preserving.insert("disk_hole");
+      preserving.insert("NVChip");
     }
     if (!CleanPriorFiles(config, preserving)) {
       LOG(ERROR) << "Failed to clean prior files";
