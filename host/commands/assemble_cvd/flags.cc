@@ -170,6 +170,8 @@ DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
                           "will be reset to the state it was initially launched "
                           "in. This flag is ignored if the underlying partition "
                           "images have been updated since the first launch.");
+DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
+            "statistics for metrics collection and analysis.");
 
 namespace {
 
@@ -362,6 +364,10 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
+
+  tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
+  tmp_config_obj.set_metrics_binary(
+      vsoc::DefaultHostArtifactsPath("bin/metrics"));
 
   if (!FLAGS_boot_slot.empty()) {
       tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
