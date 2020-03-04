@@ -140,3 +140,7 @@ uint32_t U32LE_AT(const uint8_t *ptr) {
 uint64_t U64LE_AT(const uint8_t *ptr) {
     return ((uint64_t)U32LE_AT(ptr + 4)) << 32 | U32LE_AT(ptr);
 }
+
+std::string STR_AT(const uint8_t *ptr, size_t size) {
+  return std::string((const char*)ptr, size);
+}

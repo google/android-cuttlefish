@@ -29,8 +29,7 @@ SCTPHandler::SCTPHandler(
     : mRunLoop(runLoop),
       mDTLS(dtls),
       mInitiateTag(0),
-      mSendingTSN(0),
-      mSentGreeting(false) {
+      mSendingTSN(0) {
 }
 
 void SCTPHandler::run() {
@@ -119,6 +118,21 @@ DEBUG_ONLY(
     }
 
     return 0;
+}
+
+void SCTPHandler::onDataChannel(
+        const std::string &channel_label,
+        std::function<void(std::shared_ptr<DataChannelStream>)> cb) {
+    on_data_channel_callbacks_[channel_label] = cb;
+    for (auto stream_it : this->streams_) {
+        auto stream = stream_it.second;
+        if (stream->IsDataChannel()) {
+            auto data_channel = std::static_pointer_cast<DataChannelStream>(stream);
+            if (data_channel->label() == channel_label) {
+                cb(data_channel);
+            }
+        }
+    }
 }
 
 int SCTPHandler::processChunk(
@@ -256,6 +270,31 @@ DEBUG_ONLY(
                 return -EINVAL;
             }
 
+            auto stream_id = U16_AT(&data[8]);
+            auto stream_sn = U16_AT(&data[10]);
+            if (streams_.count(stream_id) == 0) {
+                if (stream_sn != 0) {
+                    LOG(ERROR) << "Received non-first sequence number ("
+                            << stream_sn << ") of previously unknown stream ("
+                            << stream_id << ")";
+                    break;
+                }
+                auto stream = streams_[stream_id] = std::shared_ptr<SCTPStream>(
+                    SCTPStream::CreateStream(data, size));
+                // Inject the first packet before checking the label!!!
+                stream->InjectPacket(data, size);
+                if (stream->IsDataChannel()) {
+                    auto data_channel =
+                        std::static_pointer_cast<DataChannelStream>(stream);
+                    auto label = data_channel->label();
+                    if (on_data_channel_callbacks_.count(label)) {
+                        on_data_channel_callbacks_[label](data_channel);
+                    }
+                }
+            } else {
+                streams_[stream_id]->InjectPacket(data, size);
+            }
+
             auto TSN = U32_AT(&data[4]);
 
             uint8_t out[12 + 16];
@@ -293,18 +332,6 @@ DEBUG_ONLY(
 )
 
             mDTLS->writeApplicationData(out, sizeof(out));
-
-            if (!mSentGreeting) {
-                mRunLoop->postWithDelay(
-                        std::chrono::seconds(1),
-                        makeSafeCallback(
-                            this,
-                            &SCTPHandler::onSendGreeting,
-                            srcPort,
-                            (size_t)0 /* index */));
-
-                mSentGreeting = true;
-            }
             break;
         }
 
@@ -363,89 +390,6 @@ DEBUG_ONLY(
     }
 
     return 0;
-}
-
-void SCTPHandler::onSendGreeting(uint16_t srcPort, size_t index) {
-    static constexpr uint8_t DATA = 0;
-    // static constexpr uint8_t PPID_WEBRTC_CONTROL = 0x32;
-    static constexpr uint8_t PPID_WEBRTC_STRING  = 0x33;
-
-    std::string message;
-    if (index == 0) {
-        message = "Howdy! How's y'all doin?";
-    } else {
-        message = "But wait... There's more!";
-    }
-
-    size_t pad = message.size() % 4;
-    if (pad) {
-        pad = 4 - pad;
-    }
-
-    std::vector<uint8_t> outVec(12 + 16 + message.size() + pad);
-
-    uint8_t *out = outVec.data();
-    SET_U16(&out[0], 5000);
-    SET_U16(&out[2], srcPort);
-    SET_U32(&out[4], mInitiateTag);
-    SET_U32(&out[8], 0x00000000);  // Checksum: to be filled in below.
-
-    size_t offset = 12;
-    out[offset++] = DATA;
-    out[offset++] = 0x03;  // both Beginning and End of user message.
-
-    SET_U16(&out[offset], outVec.size() - 12 - pad);
-    offset += 2;
-
-    SET_U32(&out[offset], mSendingTSN);  // TSN
-    offset += 4;
-
-    ++mSendingTSN;
-
-    SET_U16(&out[offset], 0);  // Stream Identifier
-    offset += 2;
-
-    SET_U16(&out[offset], index);  // Stream Sequence Number
-    offset += 2;
-
-    SET_U32(&out[offset], PPID_WEBRTC_STRING);  // Payload Protocol Identifier
-    offset += 4;
-
-    // https://tools.ietf.org/html/draft-ietf-rtcweb-data-protocol-08#section-5.1
-    // https://tools.ietf.org/html/draft-ietf-rtcweb-data-channel-11#section-6.5
-
-    // DATA(payload protocol=0x32 (50, WebRTC Control), sequence 0)
-    // 03 00 00 00 00 00 00 00  ........
-    // 00 0c 00 00 64 61 74 61  ....data
-    // 2d 63 68 61 6e 6e 65 6c  -channel
-
-    // DATA(payload protocol=0x33 (51, WebRTC String), sequence 1)
-    // "Hello, world!"
-
-    memcpy(&out[offset], message.data(), message.size());
-    offset += message.size();
-
-    memset(&out[offset], 0x00, pad);
-    offset += pad;
-
-    CHECK_EQ(offset, outVec.size());
-
-    SET_U32(&out[8], crc32c(out, outVec.size()));
-
-    LOG(INFO) << "Sending SCTP DATA:";
-    hexdump(out, outVec.size());
-
-    mDTLS->writeApplicationData(out, outVec.size());
-
-    if (index == 0) {
-        mRunLoop->postWithDelay(
-                std::chrono::seconds(3),
-                makeSafeCallback(
-                    this,
-                    &SCTPHandler::onSendGreeting,
-                    srcPort,
-                    (size_t)1 /* index */));
-    }
 }
 
 static const uint32_t crc_c[256] = {
