@@ -30,6 +30,17 @@
 
 . /lib/lsb/init-functions
 
+if [ -f /etc/default/cuttlefish-common ]; then
+    . /etc/default/cuttlefish-common
+fi
+
+if [ -z "${dns_servers}" ]; then
+    dns_servers="8.8.8.8,8.8.4.4"
+fi
+if [ -z "${dns6_servers}" ]; then
+    dns6_servers="2001:4860:4860::8888,2001:4860:4860::8844"
+fi
+
 num_cvd_accounts=10
 
 create_legacy_interface() {
@@ -88,12 +99,15 @@ create_interface() {
     /sbin/iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 
     /usr/sbin/dnsmasq \
+    --port=0 \
     --strict-order \
     --except-interface=lo \
     --interface="${bridge}" \
     --listen-address="${gateway}" \
     --bind-interfaces \
     --dhcp-range="${dhcp_range}" \
+    --dhcp-option="option:dns-server,${dns_servers}" \
+    --dhcp-option="option6:dns-server,${dns6_servers}" \
     --conf-file="" \
     --pid-file=/var/run/cuttlefish-dnsmasq-"${bridge}".pid \
     --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
