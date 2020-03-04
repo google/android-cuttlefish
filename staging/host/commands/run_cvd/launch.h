@@ -57,3 +57,6 @@ struct TpmPorts {
 
 TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
                    const vsoc::CuttlefishConfig& config);
+
+void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
+                                  const vsoc::CuttlefishConfig& config);
