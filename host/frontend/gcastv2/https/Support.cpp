@@ -33,36 +33,41 @@ void makeFdNonblocking(int fd) {
 void hexdump(const void *_data, size_t size) {
   const uint8_t *data = static_cast<const uint8_t *>(_data);
 
+  fprintf(stderr, "\n");
+
   size_t offset = 0;
   while (offset < size) {
-    printf("%08zx: ", offset);
+    fprintf(stderr, "%08zx: ", offset);
 
     for (size_t col = 0; col < 16; ++col) {
       if (offset + col < size) {
-        printf("%02x ", data[offset + col]);
+        fprintf(stderr, "%02x ", data[offset + col]);
       } else {
-        printf("   ");
+        fprintf(stderr, "   ");
       }
 
       if (col == 7) {
-        printf(" ");
+        fprintf(stderr, " ");
       }
     }
 
-    printf(" ");
+    fprintf(stderr, " ");
 
     for (size_t col = 0; col < 16; ++col) {
       if (offset + col < size && isprint(data[offset + col])) {
-        printf("%c", data[offset + col]);
+        fprintf(stderr, "%c", data[offset + col]);
       } else if (offset + col < size) {
-        printf(".");
+        fprintf(stderr, ".");
       }
     }
 
-    printf("\n");
+    fprintf(stderr, "\n");
 
     offset += 16;
   }
+
+  fprintf(stderr, "\n");
+
 }
 
 static char encode6Bit(unsigned x) {
