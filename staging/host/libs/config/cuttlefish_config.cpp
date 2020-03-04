@@ -152,6 +152,9 @@ const char* kUseBootloader = "use_bootloader";
 
 const char* kBootSlot = "boot_slot";
 
+const char* kEnableMetrics = "enable_metrics";
+const char* kMetricsBinary = "metrics_binary";
+
 const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
 const char* kGuestAuditSecurity = "guest_audit_security";
@@ -807,6 +810,34 @@ bool CuttlefishConfig::guest_force_normal_boot() const {
   return (*dictionary_)[kGuestForceNormalBoot].asBool();
 }
 
+void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
+  (*dictionary_)[kEnableMetrics] = kUnknown;
+  if (!enable_metrics.empty()) {
+    switch (enable_metrics.at(0)) {
+      case 'y':
+      case 'Y':
+        (*dictionary_)[kEnableMetrics] = kYes;
+        break;
+      case 'n':
+      case 'N':
+        (*dictionary_)[kEnableMetrics] = kNo;
+        break;
+    }
+  }
+}
+
+CuttlefishConfig::Answer CuttlefishConfig::enable_metrics() const {
+  return (CuttlefishConfig::Answer)(*dictionary_)[kEnableMetrics].asInt();
+}
+
+void CuttlefishConfig::set_metrics_binary(const std::string& metrics_binary) {
+  (*dictionary_)[kMetricsBinary] = metrics_binary;
+}
+
+std::string CuttlefishConfig::metrics_binary() const {
+  return (*dictionary_)[kMetricsBinary].asString();
+}
+
 void CuttlefishConfig::set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
   for (const auto& arg : android::base::Split(boot_image_kernel_cmdline, " ")) {
@@ -857,6 +888,13 @@ std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
 /*static*/ const CuttlefishConfig* CuttlefishConfig::Get() {
   static std::shared_ptr<CuttlefishConfig> config(BuildConfigImpl());
   return config.get();
+}
+
+/*static*/ bool CuttlefishConfig::ConfigExists() {
+  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
+                                             vsoc::GetGlobalConfigFileLink());
+  auto real_file_path = cvd::AbsolutePath(config_file_path.c_str());
+  return cvd::FileExists(real_file_path);
 }
 
 CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {}
