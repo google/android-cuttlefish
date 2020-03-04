@@ -361,3 +361,11 @@ TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
                                    GetOnSubprocessExitCallback(config));
   return TpmPorts{port};
 }
+
+void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
+                                  const vsoc::CuttlefishConfig& config) {
+  cvd::Command metrics(config.metrics_binary());
+
+  process_monitor->StartSubprocess(std::move(metrics),
+                                   GetOnSubprocessExitCallback(config));
+}

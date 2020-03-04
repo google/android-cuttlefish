@@ -13,7 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -40,6 +42,8 @@
 DEFINE_bool(run_file_discovery, true,
             "Whether to run file discovery or get input files from stdin.");
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
+DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
+            "statistics for metrics collection and analysis.");
 
 namespace {
 
@@ -83,6 +87,31 @@ void WriteFiles(cvd::FetcherConfig fetcher_config, cvd::SharedFD out) {
   }
 }
 
+std::string ValidateMetricsConfirmation(std::string use_metrics) {
+  if (use_metrics == "") {
+    if (vsoc::CuttlefishConfig::ConfigExists()) {
+      auto config = vsoc::CuttlefishConfig::Get();
+      if (config) {
+        if (config->enable_metrics() == vsoc::CuttlefishConfig::kYes) {
+          use_metrics = "y";
+        } else if (config->enable_metrics() == vsoc::CuttlefishConfig::kNo) {
+          use_metrics = "n";
+        }
+      }
+    }
+  }
+  if (use_metrics == "y") {
+    std::cout << "===================================================================\n";
+    std::cout << "NOTICE:\n\n";
+    std::cout << "We collect usage statistics in accordance with our\n"
+                 "Content Licenses (https://source.android.com/setup/start/licenses),\n"
+                 "Contributor License Agreement (https://cla.developers.google.com/),\n"
+                 "Privacy Policy (https://policies.google.com/privacy) and\n"
+                 "Terms of Service (https://policies.google.com/terms).\n";
+    std::cout << "===================================================================\n\n";
+  }
+  return use_metrics;
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -95,6 +124,9 @@ int main(int argc, char** argv) {
   forwarder.UpdateFlagDefaults();
 
   gflags::HandleCommandLineHelpFlags();
+
+  auto use_metrics = FLAGS_report_anonymous_usage_stats;
+  FLAGS_report_anonymous_usage_stats = ValidateMetricsConfirmation(use_metrics);
 
   cvd::SharedFD assembler_stdout, assembler_stdout_capture;
   cvd::SharedFD::Pipe(&assembler_stdout_capture, &assembler_stdout);
