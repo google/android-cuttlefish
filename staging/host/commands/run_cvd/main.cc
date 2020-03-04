@@ -407,6 +407,10 @@ int main(int argc, char** argv) {
   // Monitor and restart host processes supporting the CVD
   cvd::ProcessMonitor process_monitor;
 
+  if (config->enable_metrics() == vsoc::CuttlefishConfig::kYes) {
+    LaunchMetrics(&process_monitor, *config);
+  }
+
   auto event_pipes =
       LaunchKernelLogMonitor(*config, &process_monitor, 2);
   cvd::SharedFD boot_events_pipe = event_pipes[0];
