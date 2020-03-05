@@ -18,9 +18,6 @@ cc_library_shared {
     srcs: [
         "device_config.cpp",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libbase",
         "liblog",

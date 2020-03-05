@@ -23,9 +23,6 @@ cc_library_host_static {
         "HostToGuestComms.cpp",
         "StreamingSource.cpp",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libbase",
         "libyuv",
