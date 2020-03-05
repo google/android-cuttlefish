@@ -16,7 +16,7 @@
 
 #include "host/frontend/vnc_server/vnc_server.h"
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/frontend/vnc_server/blackboard.h"
 #include "host/frontend/vnc_server/frame_buffer_watcher.h"
