@@ -73,7 +73,9 @@ void CreateBlankImage(
   count += std::to_string(block_count);
   std::string bs = "bs=" + block_size;
   cvd::execute({"/bin/dd", "if=/dev/zero", of, bs, count});
-  if (image_fmt != "none") {
+  if (image_fmt == "ext4") {
+    cvd::execute({"/sbin/mkfs.ext4", image});
+  } else if (image_fmt != "none") {
     auto make_f2fs_path = vsoc::DefaultHostArtifactsPath("bin/make_f2fs");
     cvd::execute({make_f2fs_path, "-t", image_fmt, image, "-g", "android"});
   }
