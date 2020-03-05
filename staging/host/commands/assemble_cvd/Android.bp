@@ -40,7 +40,6 @@ cc_binary_host {
     ],
     header_libs: [
         "bootimg_headers",
-        "cuttlefish_glog",
     ],
     shared_libs: [
         "cdisk_spec",

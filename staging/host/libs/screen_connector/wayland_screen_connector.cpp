@@ -21,7 +21,7 @@
 
 #include <future>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "host/libs/wayland/wayland_server.h"
 

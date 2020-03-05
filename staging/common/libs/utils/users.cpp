@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 namespace {
 gid_t GroupIdFromName(const std::string& group_name) {

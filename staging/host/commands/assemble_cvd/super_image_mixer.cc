@@ -23,7 +23,7 @@
 #include <memory>
 
 #include <android-base/strings.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"

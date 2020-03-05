@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <sys/utsname.h>
 
 #include "common/libs/utils/users.h"

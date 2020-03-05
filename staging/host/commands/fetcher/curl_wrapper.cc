@@ -19,7 +19,7 @@
 #include <string>
 #include <stdio.h>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include <curl/curl.h>
 #include <json/json.h>

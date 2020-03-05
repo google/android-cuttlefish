@@ -19,9 +19,6 @@ cc_library_host_static {
         "cuttlefish_config.cpp",
         "fetcher_config.cpp",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",

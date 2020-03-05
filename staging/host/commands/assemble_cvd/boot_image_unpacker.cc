@@ -22,7 +22,7 @@
 #include <sstream>
 
 #include <bootimg.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "common/libs/utils/subprocess.h"
 
