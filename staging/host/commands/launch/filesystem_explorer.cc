@@ -22,7 +22,7 @@
 #include <errno.h>
 #include <sys/types.h>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/environment.h"

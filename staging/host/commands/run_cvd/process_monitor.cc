@@ -24,7 +24,7 @@
 
 #include <map>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "common/libs/fs/shared_select.h"
 #include "host/commands/run_cvd/process_monitor.h"

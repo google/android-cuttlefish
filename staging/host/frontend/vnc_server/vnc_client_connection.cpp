@@ -31,7 +31,7 @@
 #include <vector>
 
 #include <gflags/gflags.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"

@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "common/libs/glog/logging.h"
+#include "android-base/logging.h"
 #include "common/libs/fs/shared_select.h"
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
