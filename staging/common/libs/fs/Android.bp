@@ -62,7 +62,6 @@ cc_test_host {
     srcs: [
         "shared_fd_test.cpp",
     ],
-    header_libs: ["cuttlefish_glog"],
     shared_libs: [
         "libcuttlefish_fs",
         "libbase",

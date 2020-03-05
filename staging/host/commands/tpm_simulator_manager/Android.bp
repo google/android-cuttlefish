@@ -18,9 +18,6 @@ cc_binary_host {
     srcs: [
         "tpm_simulator_manager.cpp",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",

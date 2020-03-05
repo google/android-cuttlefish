@@ -21,7 +21,7 @@
 #include <https/SafeCallbackable.h>
 #include <https/ServerSocket.h>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include <cstdlib>
 

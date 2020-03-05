@@ -19,7 +19,7 @@
 #include <sstream>
 #include <type_traits>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 namespace cvd {
 

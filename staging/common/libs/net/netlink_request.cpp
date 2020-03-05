@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "common/libs/glog/logging.h"
+#include "android-base/logging.h"
 
 namespace cvd {
 namespace {

@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include <android-base/strings.h>
-#include "common/libs/glog/logging.h"
+#include "android-base/logging.h"
 
 #include "common/libs/utils/subprocess.h"
 

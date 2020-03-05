@@ -31,7 +31,6 @@ cc_test_host {
     srcs: [
         "netlink_request_test.cpp",
     ],
-    header_libs: ["cuttlefish_glog"],
     shared_libs: [
         "libcuttlefish_fs",
         "cuttlefish_net",
