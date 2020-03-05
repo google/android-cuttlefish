@@ -873,7 +873,8 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   }
 
   // Create data if necessary
-  if (!ApplyDataImagePolicy(*config, FLAGS_data_image)) {
+  DataImageResult dataImageResult = ApplyDataImagePolicy(*config, FLAGS_data_image);
+  if (dataImageResult == DataImageResult::Error) {
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
@@ -894,7 +895,9 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     }
   }
 
-  if (ShouldCreateCompositeDisk(*config)) {
+  bool oldCompositeDisk = ShouldCreateCompositeDisk(*config);
+  bool newDataImage = dataImageResult == DataImageResult::FileUpdated;
+  if (oldCompositeDisk || newDataImage) {
     if (!CreateCompositeDisk(*config)) {
       exit(cvd::kDiskSpaceError);
     }
@@ -902,8 +905,10 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
 
   for (auto instance : config->Instances()) {
     auto overlay_path = instance.PerInstancePath("overlay.img");
-    if (!cvd::FileExists(overlay_path) || ShouldCreateCompositeDisk(*config) || !FLAGS_resume
-        || cvd::FileModificationTime(overlay_path) < cvd::FileModificationTime(config->composite_disk_path())) {
+    bool missingOverlay = !cvd::FileExists(overlay_path);
+    bool newOverlay = cvd::FileModificationTime(overlay_path)
+        < cvd::FileModificationTime(config->composite_disk_path());
+    if (missingOverlay || oldCompositeDisk || !FLAGS_resume || newDataImage || newOverlay) {
       if (FLAGS_resume) {
         LOG(WARNING) << "Requested to continue an existing session, but the overlay was "
                      << "newer than its underlying composite disk. Wiping the overlay.";
