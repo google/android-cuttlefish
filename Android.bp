@@ -27,22 +27,6 @@ cc_library_headers {
     host_supported: true,
 }
 
-// TODO(b/67435044) Update the include paths and remove this
-cc_library_headers {
-    name: "cuttlefish_glog",
-    vendor: true,
-    export_include_dirs: ["common/libs"],
-    host_supported: true,
-}
-
-// TODO(b/67435044) Update the include paths and remove this
-cc_library_headers {
-    name: "cuttlefish_glog_product",
-    product_specific: true,
-    export_include_dirs: ["common/libs"],
-    host_supported: true,
-}
-
 cc_defaults {
     name: "cuttlefish_base",
     gnu_extensions: false,

@@ -16,7 +16,7 @@
 
 #include "virtual_device_base.h"
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
