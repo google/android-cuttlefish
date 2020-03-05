@@ -23,8 +23,5 @@ cc_library_shared {
         "libcuttlefish_fs",
         "liblog",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     defaults: ["cuttlefish_host_and_guest"],
 }

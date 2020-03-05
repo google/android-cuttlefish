@@ -19,9 +19,6 @@ cc_binary_host {
         "adb_connection_maintainer.cpp",
         "main.cpp"
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     static_libs: [
         "libgflags",
     ],

@@ -17,7 +17,7 @@
 #include <stdio.h>  // stdio.h must appear before jpeglib.h
 #include <jpeglib.h>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include "host/frontend/vnc_server/jpeg_compressor.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/screen_connector/screen_connector.h"

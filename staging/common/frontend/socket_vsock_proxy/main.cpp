@@ -16,7 +16,7 @@
 
 #include <set>
 #include <thread>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_fd.h"

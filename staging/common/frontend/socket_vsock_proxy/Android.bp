@@ -27,9 +27,6 @@ cc_binary {
     static_libs: [
         "libgflags",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     target: {
         host: {
             static_libs: [

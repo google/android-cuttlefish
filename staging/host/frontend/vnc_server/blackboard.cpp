@@ -20,7 +20,7 @@
 #include <utility>
 
 #include <gflags/gflags.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include "host/frontend/vnc_server/frame_buffer_watcher.h"
 
 DEFINE_bool(debug_blackboard, false,

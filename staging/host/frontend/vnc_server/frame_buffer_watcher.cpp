@@ -25,7 +25,7 @@
 #include <thread>
 #include <utility>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/screen_connector/screen_connector.h"
 

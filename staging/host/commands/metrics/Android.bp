@@ -18,9 +18,6 @@ cc_binary_host {
     srcs: [
         "metrics.cc",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",

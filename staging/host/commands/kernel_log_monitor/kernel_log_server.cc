@@ -19,7 +19,7 @@
 #include <map>
 #include <utility>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <netinet/in.h>
 #include "common/libs/fs/shared_select.h"
 #include "host/libs/config/cuttlefish_config.h"

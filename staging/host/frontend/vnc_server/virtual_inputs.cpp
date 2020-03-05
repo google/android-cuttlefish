@@ -16,7 +16,7 @@
 
 #include "host/frontend/vnc_server/virtual_inputs.h"
 #include <gflags/gflags.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <linux/input.h>
 #include <linux/uinput.h>
 

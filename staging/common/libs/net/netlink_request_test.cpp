@@ -19,7 +19,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include <iostream>
 #include <memory>

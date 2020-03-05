@@ -15,7 +15,7 @@
  */
 
 #include <arpa/inet.h>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <ifaddrs.h>
 #include <stdio.h>
 #include <string.h>

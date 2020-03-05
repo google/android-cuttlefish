@@ -31,9 +31,6 @@ cc_library_static {
         "Support.cpp",
     ],
     defaults: ["cuttlefish_host_only"],
-    header_libs: [
-	"cuttlefish_glog",
-    ],
     shared_libs: [
         "libbase",
         "libcrypto",
