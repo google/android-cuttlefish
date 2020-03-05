@@ -201,7 +201,7 @@ bool HTTPClientConnection::handleResponse(bool isEOS) {
             << ", "
             << response.getStatusMessage();
 
-        hexdump(mInBuffer.data(), len);
+        LOG(INFO) << hexdump(mInBuffer.data(), len);
 
         mInBuffer.erase(mInBuffer.begin(), mInBuffer.begin() + len);
         mInBufferLen -= len;
@@ -210,7 +210,7 @@ bool HTTPClientConnection::handleResponse(bool isEOS) {
         LOG(VERBOSE) << "contentLength = " << contentLength;
         assert(mInBufferLen >= contentLength);
 
-        hexdump(mInBuffer.data(), contentLength);
+        LOG(INFO) << hexdump(mInBuffer.data(), contentLength);
         mInBuffer.clear();
 
         if (response.getStatusCode() == 101) {
