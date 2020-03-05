@@ -79,6 +79,7 @@ private:
     bool mFirstFrame;
     bool mStoredFrame;
     int64_t mLastTimeUs;
+    int64_t mFirstTimeUs;
 };
 
 static int GetCPUCoreCount() {
@@ -103,7 +104,8 @@ FrameBufferSource::VPXEncoder::VPXEncoder(int width, int height, int rateHz)
       mForceIDRFrame(false),
       mFirstFrame(true),
       mStoredFrame(false),
-      mLastTimeUs(0) {
+      mLastTimeUs(0),
+      mFirstTimeUs(0) {
 
     CHECK((width & 1) == 0);
     CHECK((height & 1) == 0);
@@ -197,6 +199,11 @@ std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encodeStoredFrame(
 
     uint32_t frameDuration;
 
+    if (mFirstFrame) {
+        mFirstTimeUs = timeUs;
+    }
+    auto timeStamp = timeUs - mFirstTimeUs;
+
     if (!mFirstFrame) {
         frameDuration = timeUs - mLastTimeUs;
     } else {
@@ -209,7 +216,7 @@ std::shared_ptr<SBuffer> FrameBufferSource::VPXEncoder::encodeStoredFrame(
     auto res = vpx_codec_encode(
             mCodecContext.get(),
             &raw_frame,
-            timeUs,
+            timeStamp,
             frameDuration,
             flags,
             VPX_DL_REALTIME);
