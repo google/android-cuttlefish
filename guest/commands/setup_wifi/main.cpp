@@ -25,7 +25,7 @@
 #include "common/libs/net/netlink_request.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
-#include "common/libs/glog/logging.h"
+#include "android-base/logging.h"
 
 // TODO(schuffelen): Merge this with the ip_link_add binary.
 int CreateWifiWrapper(const std::string& source,

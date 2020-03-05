@@ -28,7 +28,7 @@
 #include <set>
 #include <thread>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
 
