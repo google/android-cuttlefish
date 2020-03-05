@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 #include <json/json.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>

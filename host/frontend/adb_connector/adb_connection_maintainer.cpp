@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include <unistd.h>
 

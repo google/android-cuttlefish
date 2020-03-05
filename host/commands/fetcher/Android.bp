@@ -22,9 +22,6 @@ cc_binary_host {
         "fetch_cvd.cc",
         "install_zip.cc",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     stl: "libc++_static",
     static_libs: [
         "libbase",
