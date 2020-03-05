@@ -20,9 +20,6 @@ cc_library_host_static {
         "socket_based_screen_connector.cpp",
         "wayland_screen_connector.cpp",
     ],
-    header_libs: [
-        "cuttlefish_glog",
-    ],
     shared_libs: [
         "libcuttlefish_fs",
         "libbase",

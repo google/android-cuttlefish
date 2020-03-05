@@ -16,7 +16,7 @@
 
 #include "host/libs/screen_connector/screen_connector.h"
 
-#include <glog/logging.h>
+#include <android-base/logging.h>
 
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/screen_connector/socket_based_screen_connector.h"
