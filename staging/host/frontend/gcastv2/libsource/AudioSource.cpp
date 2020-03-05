@@ -110,7 +110,7 @@ struct gce_audio_message {
     time_presented.tv_nsec = 0;
   }
 };
-  
+
 }
 
 struct AudioSource::Encoder {

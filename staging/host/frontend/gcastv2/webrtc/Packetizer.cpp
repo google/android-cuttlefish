@@ -83,7 +83,6 @@ void Packetizer::onFrame(const std::shared_ptr<android::SBuffer>& accessUnit) {
         return;
     }
     int64_t timeUs = accessUnit->time_us();
-    CHECK(timeUs);
 
     auto now = std::chrono::steady_clock::now();
 
@@ -104,7 +103,7 @@ void Packetizer::onFrame(const std::shared_ptr<android::SBuffer>& accessUnit) {
 }
 
 uint32_t Packetizer::timeSinceStart() const {
-    if (mNumSamplesRead) return 0;
+    if (mNumSamplesRead == 0) return 0;
 
     auto now = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::microseconds>(now -
