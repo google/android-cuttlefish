@@ -23,8 +23,6 @@
 #include <netdb.h>
 #include <openssl/rand.h>
 
-#include <webrtc/Keyboard.h>
-
 namespace {
 
 // helper method to ensure a json object has the required fields convertible
@@ -63,7 +61,8 @@ MyWebSocketHandler::MyWebSocketHandler(
     : mRunLoop(runLoop),
       mServerState(serverState),
       mId(handlerId),
-      mOptions(OptionBits::useSingleCertificateForAllTracks),
+      mOptions(OptionBits::useSingleCertificateForAllTracks
+              | OptionBits::enableData),
       mTouchSink(mServerState->getTouchSink()),
       mKeyboardSink(mServerState->getKeyboardSink()) {
 }
@@ -274,58 +273,6 @@ int MyWebSocketHandler::handleMessage(
             auto replyAsString = json_writer.write(reply);
             sendMessage(replyAsString.c_str(), replyAsString.size());
         }
-    } else if (type == "set-mouse-position") {
-        if (!validateJsonObject(obj, type, {{"down", Json::ValueType::intValue},
-                                            {"x", Json::ValueType::intValue},
-                                            {"y", Json::ValueType::intValue}},
-                                sendMessageOnError)) {
-            return -EINVAL;
-        }
-        int32_t down = obj["down"].asInt();
-        int32_t x = obj["x"].asInt();
-        int32_t y = obj["y"].asInt();
-
-        LOG(VERBOSE)
-            << "set-mouse-position(" << down << ", " << x << ", " << y << ")";
-
-        mTouchSink->injectTouchEvent(x, y, down != 0);
-    } else if (type == "inject-multi-touch") {
-        if (!validateJsonObject(obj, type, {{"id", Json::ValueType::intValue},
-                                            {"initialDown", Json::ValueType::intValue},
-                                            {"x", Json::ValueType::intValue},
-                                            {"y", Json::ValueType::intValue},
-                                            {"slot", Json::ValueType::intValue}},
-                                sendMessageOnError)) {
-            return -EINVAL;
-        }
-        int32_t id = obj["id"].asInt();
-        int32_t initialDown = obj["initialDown"].asInt();
-        int32_t x = obj["x"].asInt();
-        int32_t y = obj["y"].asInt();
-        int32_t slot = obj["slot"].asInt();
-
-        LOG(VERBOSE)
-            << "inject-multi-touch id="
-            << id
-            << ", initialDown="
-            << initialDown
-            << ", x="
-            << x
-            << ", y="
-            << y
-            << ", slot="
-            << slot;
-
-        mTouchSink->injectMultiTouchEvent(id, slot, x, y, initialDown);
-    } else if (type == "key-event") {
-        if (!validateJsonObject(obj, type, {{"event_type", Json::ValueType::stringValue},
-                                            {"keycode", Json::ValueType::stringValue}},
-                                sendMessageOnError)) {
-            return -EINVAL;
-        }
-        auto down = obj["event_type"].asString() == std::string("keydown");
-        auto code = DomKeyCodeToLinux(obj["keycode"].asString());
-        mKeyboardSink->injectEvent(down, code);
     }
 
     return 0;
