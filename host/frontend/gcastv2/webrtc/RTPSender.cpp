@@ -57,8 +57,8 @@ void RTPSender::addRetransInfo(
 }
 
 int RTPSender::injectRTCP(uint8_t *data, size_t size) {
-    // LOG(INFO) << "RTPSender::injectRTCP";
-    // hexdump(data, size);
+    LOG(VERBOSE) << "RTPSender::injectRTCP";
+    LOG(VERBOSE) << hexdump(data, size);
 
     while (size > 0) {
         if (size < 8) {
@@ -194,7 +194,7 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
                 default:
                 {
                     LOG(WARNING) << "RTPSender::processRTCP unhandled RTPFB.";
-                    hexdump(data, size);
+                    LOG(INFO) << hexdump(data, size);
                     break;
                 }
             }
@@ -248,7 +248,7 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
                 default:
                 {
                     LOG(WARNING) << "RTPSender::processRTCP unhandled PSFB.";
-                    hexdump(data, size);
+                    LOG(INFO) << hexdump(data, size);
                     break;
                 }
             }
@@ -316,7 +316,7 @@ int RTPSender::processRTCP(const uint8_t *data, size_t size) {
         default:
         {
             LOG(WARNING) << "RTPSender::processRTCP unhandled packet type.";
-            hexdump(data, size);
+            LOG(INFO) << hexdump(data, size);
         }
     }
 
@@ -439,14 +439,14 @@ void RTPSender::queueSR(uint32_t localSSRC) {
     appendSR(&buffer, localSSRC);
     // appendSDES(&buffer, localSSRC);
 
-    // LOG(INFO) << "RTPSender::queueSR";
-    // hexdump(buffer.data(), buffer.size());
+    LOG(VERBOSE) << "RTPSender::queueSR";
+    LOG(VERBOSE) << hexdump(buffer.data(), buffer.size());
 
     mParent->queueRTCPDatagram(buffer.data(), buffer.size());
 }
 
 void RTPSender::sendSR(uint32_t localSSRC) {
-    // LOG(INFO) << "sending SR.";
+    LOG(VERBOSE) << "sending SR.";
     queueSR(localSSRC);
 
     mRunLoop->postWithDelay(

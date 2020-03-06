@@ -21,7 +21,11 @@
 #include <cstdio>
 #include <ctype.h>
 #include <fcntl.h>
+#include <iomanip>
+#include <ios>
+#include <iostream>
 #include <sys/errno.h>
+#include <sstream>
 
 void makeFdNonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
@@ -30,44 +34,41 @@ void makeFdNonblocking(int fd) {
     assert(res >= 0);
 }
 
-void hexdump(const void *_data, size_t size) {
+std::string hexdump(const void* _data, size_t size) {
+  std::stringstream ss;
   const uint8_t *data = static_cast<const uint8_t *>(_data);
-
-  fprintf(stderr, "\n");
 
   size_t offset = 0;
   while (offset < size) {
-    fprintf(stderr, "%08zx: ", offset);
+    ss << "0x" << std::hex << std::setw(8) << std::setfill('0') << offset << ": ";
 
     for (size_t col = 0; col < 16; ++col) {
       if (offset + col < size) {
-        fprintf(stderr, "%02x ", data[offset + col]);
+        ss << std::setw(2) << static_cast<int>(data[offset + col]) << " ";
       } else {
-        fprintf(stderr, "   ");
+        ss << "   ";
       }
 
       if (col == 7) {
-        fprintf(stderr, " ");
+        ss <<  " ";
       }
     }
 
-    fprintf(stderr, " ");
+    ss << " ";
 
     for (size_t col = 0; col < 16; ++col) {
       if (offset + col < size && isprint(data[offset + col])) {
-        fprintf(stderr, "%c", data[offset + col]);
+        ss << static_cast<char>(data[offset + col]);
       } else if (offset + col < size) {
-        fprintf(stderr, ".");
+        ss << ".";
       }
     }
 
-    fprintf(stderr, "\n");
+    ss << std::endl;
 
     offset += 16;
   }
-
-  fprintf(stderr, "\n");
-
+  return ss.str();
 }
 
 static char encode6Bit(unsigned x) {
