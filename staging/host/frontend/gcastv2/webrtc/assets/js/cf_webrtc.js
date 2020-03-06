@@ -1,8 +1,28 @@
+function createInputDataChannelPromise(pc) {
+  console.log("creating data channel");
+  let inputChannel = pc.createDataChannel('input-channel');
+  return new Promise((resolve, reject) => {
+    inputChannel.onopen = (event) => {
+      resolve(inputChannel);
+    };
+    inputChannel.onclose = () => {
+      console.log(
+          'handleDataChannelStatusChange state=' + dataChannel.readyState);
+    };
+    inputChannel.onmessage = (msg) => {
+      console.log('handleDataChannelMessage data="' + msg.data + '"');
+    };
+    inputChannel.onerror = err => {
+      reject(err);
+    };
+  });
+}
+
 class DeviceConnection {
-  constructor(pc, control, dataChannel, videoStreams) {
+  constructor(pc, control) {
     this._pc = pc;
     this._control = control;
-    this._dataChannel = dataChannel;
+    this._inputChannelPr = createInputDataChannelPromise(pc);
     this._videoStreams = [];
 
     // Apparently, the only way to obtain the track and the stream at the
@@ -27,16 +47,35 @@ class DeviceConnection {
     return this._videoStreams[displayNum];
   }
 
-  async sendMousePosition(x, y, down) {
-    return this._control.sendMousePosition(x, y, down);
+  _sendJsonInput(evt) {
+    this._inputChannelPr = this._inputChannelPr.then(inputChannel => {
+      inputChannel.send(JSON.stringify(evt));
+      return inputChannel;
+    });
   }
 
-  async sendMultiTouch(id, x, y, initialDown, slot) {
-    return this._control.sendMultiTouch(id, x, y, initialDown, slot);
+  sendMousePosition(x, y, down) {
+    this._sendJsonInput({
+      type: 'mouse',
+      down: down ? 1 : 0,
+      x,
+      y,
+    });
   }
 
-  async sendKeyEvent(code, type) {
-    return this._control.sendKeyEvent(code, type);
+  sendMultiTouch(id, x, y, initialDown, slot) {
+    this._sendJsonInput({
+      type: 'multi-touch',
+      id,
+      x,
+      y,
+      initialDown: initialDown ? 1 : 0,
+      slot,
+    });
+  }
+
+  sendKeyEvent(code, type) {
+    this._sendJsonInput({type: 'keyboard', keycode: code, event_type: type});
   }
 
   disconnect() {
@@ -57,7 +96,6 @@ class WebRTCControl {
     wsProtocol = 'wss',
     wsPath = '',
     disable_audio = false,
-    enable_data = false,
     bundle_tracks = false
   }) {
     /*
@@ -83,7 +121,6 @@ class WebRTCControl {
     this._options = {
       disable_audio,
       bundle_tracks,
-      enable_data,
     };
 
     this._promiseResolvers = {};
@@ -206,31 +243,6 @@ class WebRTCControl {
 
     return result;
   }
-
-  // TODO(b/150183757) these should go through data channel instead, then there
-  // will be no need for the control object to be accessible from this class.
-  async sendMousePosition(x, y, down) {
-    return this._wsSendJson({
-      type: 'set-mouse-position',
-      down: down ? 1 : 0,
-      x,
-      y,
-    });
-  }
-  async sendMultiTouch(id, x, y, initialDown, slot) {
-    return this._wsSendJson({
-      type: 'inject-multi-touch',
-      id,
-      x,
-      y,
-      initialDown: initialDown ? 1 : 0,
-      slot,
-    });
-  }
-  async sendKeyEvent(code, type) {
-    return this._wsSendJson(
-        {type: 'key-event', keycode: code, event_type: type});
-  }
 }
 
 function createPeerConnection() {
@@ -252,29 +264,10 @@ function createPeerConnection() {
   return pc;
 }
 
-function createDataChannel(pc) {
-  let dataChannel = pc.createDataChannel('data-channel');
-  dataChannel.onopen = (event) => {
-    console.log(
-        'handleDataChannelStatusChange state=' + dataChannel.readyState);
-    dataChannel.send('Hello, world!');
-  };
-  dataChannel.onclose = () => {
-    console.log(
-        'handleDataChannelStatusChange state=' + dataChannel.readyState);
-  };
-  dataChannel.onmessage = () => {
-    console.log('handleDataChannelMessage data="' + event.data + '"');
-  };
-  return dataChannel;
-}
-
 export async function Connect(deviceId, options) {
   let control = new WebRTCControl(deviceId, options);
   let pc = createPeerConnection();
-  let dataChannel = createDataChannel(pc);
-
-  let deviceConnection = new DeviceConnection(pc, control, dataChannel);
+  let deviceConnection = new DeviceConnection(pc, control);
   try {
     let greetResponse = await control.greet();
     console.log('Greeting response: ', greetResponse);
