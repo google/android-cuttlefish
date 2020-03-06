@@ -5,11 +5,24 @@ is provided in the AOSP tree:
 
 https://android.googlesource.com/device/google/cuttlefish_common/+/master/tools/create_base_image.sh
 
-The Docker image can be built as follows:
+First, install docker and git:
 
+```bash
+	curl https://get.docker.com | sh
+	sudo apt install -y git
+```
+
+Then the Docker image can be built, either directly from github:
+
+	docker build -t cuttlefish https://github.com/google/android-cuttlefish.git
+
+or via cloning it first, and then building locally (if you'd like to make changes):
+
+```bash
 	git clone https://github.com/google/android-cuttlefish.git
 	cd android-cuttlefish
-	docker build -t cuttlefish https://github.com/google/android-cuttlefish.git
+	docker build -t cuttlefish .
+```
 
 To create a container form this image:
 
@@ -18,6 +31,11 @@ To create a container form this image:
 The container's IP address can be found as follows:
 
 	CF=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cuttlefish)
+
+Alternatively, you can both create (if it hasn't been created) and set up CF for
+a container using this script:
+
+	source start.sh <name> # <name> defaults to cuttlefish
 
 You can then provision the container with a cuttlefish image as described, for example, using [these instructions on AOSP](https://android.googlesource.com/device/google/cuttlefish/), you can follow the steps to obtain a prebuilt image of Cuttlefish (start from step #2, since the container already took care of it). Once you've obtained the image at step #8, you can copy it to your container as follows:
 
