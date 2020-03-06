@@ -1,0 +1,9 @@
+# defaults for cuttlefish-common
+
+# A comma separated list of IPv4 addresses used by cuttlefish guests
+# to resolve domain names. There must be no spaces after the commas.
+#dns_servers=8.8.8.8,8.8.4.4
+
+# A comma separated list of IPv6 addresses used by cuttlefish guests
+# to resolve domain names. There must be no spaces after the commas.
+#dns6_servers=2001:4860:4860::8888,2001:4860:4860::8844
