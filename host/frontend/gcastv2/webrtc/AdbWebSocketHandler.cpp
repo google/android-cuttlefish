@@ -106,7 +106,7 @@ ssize_t AdbWebSocketHandler::AdbConnection::processClientRequest(
     LOG(VERBOSE)
         << "AdbConnection::processClientRequest (size = " << size << ")";
 
-    // hexdump(data, size);
+    LOG(VERBOSE) << hexdump(data, size);
 
     size_t payloadLength;
     int err = verifyAdbHeader(data, size, &payloadLength);
@@ -219,7 +219,7 @@ int AdbWebSocketHandler::handleMessage(
         << "headerByte = "
         << StringPrintf("0x%02x", (unsigned)headerByte);
 
-    // hexdump(msg, len);
+    LOG(VERBOSE) << hexdump(msg, len);
 
     if (!(headerByte & 0x80)) {
         // I only want to receive whole messages here, not fragments.

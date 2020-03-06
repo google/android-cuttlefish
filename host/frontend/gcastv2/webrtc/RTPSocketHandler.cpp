@@ -102,7 +102,7 @@ static void ProcessInputEvent(std::shared_ptr<ServerState> server_state,
     auto str = reinterpret_cast<const char *>(msg);
     if (!json_reader.parse(str, str + size, evt) < 0) {
         LOG(ERROR) << "Received invalid JSON object in input channel:";
-        hexdump(msg, size);
+        LOG(INFO) << hexdump(msg, size);
         return;
     }
     if (!evt.isMember("type") || !evt["type"].isString()) {
@@ -269,7 +269,7 @@ void RTPSocketHandler::onReceive() {
 
             if (err == -EINVAL) {
                 LOG(VERBOSE) << "Sending to DTLS instead:";
-                // hexdump(data, n);
+                LOG(VERBOSE) << hexdump(data, n);
 
                 onDTLSReceive(data, static_cast<size_t>(n));
 
@@ -378,7 +378,7 @@ void RTPSocketHandler::onReceive() {
                 ipHost[i] ^= response.data()[4 + i];
             }
 
-            // LOG(INFO) << "IP6 = " << out;
+            LOG(VERBOSE) << "IP6 = " << out;
 
             for (size_t i = 0; i < 16; ++i) {
                 attr[4 + i] = ipHost[15 - i];
