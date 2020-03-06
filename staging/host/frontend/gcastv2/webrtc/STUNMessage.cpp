@@ -238,7 +238,7 @@ void STUNMessage::dump(std::optional<std::string_view> password) const {
             std::cout << "attribute '" << it->second << "':" << std::endl;
         }
 
-        hexdump(&data[offset + 4], attrLength);
+        LOG(INFO) << hexdump(&data[offset + 4], attrLength);
 
         if (attrType == 8 /* MESSAGE_INTEGRITY */) {
             if (attrLength != 20) {
@@ -330,7 +330,7 @@ bool STUNMessage::verifyFingerprint(size_t offset) const {
 
     uint32_t crc32 = htonl(computeCrc32(copy.data(), offset) ^ 0x5354554e);
 
-    // hexdump(&crc32, 4);
+    LOG(VERBOSE) << hexdump(&crc32, 4);
 
     return !memcmp(&crc32, &mData[offset + 4], 4);
 }
