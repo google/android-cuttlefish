@@ -16,6 +16,7 @@
 
 #include <webrtc/RTPSocketHandler.h>
 
+#include <webrtc/Keyboard.h>
 #include <webrtc/MyWebSocketHandler.h>
 #include <webrtc/STUNMessage.h>
 #include <Utils.h>
@@ -31,6 +32,8 @@
 #include <cstring>
 #include <iostream>
 #include <set>
+
+#include <json/json.h>
 
 #include <gflags/gflags.h>
 
@@ -89,6 +92,97 @@ static int acquirePort(int sockfd, int domain) {
     }
 
     return -1;
+}
+
+static void ProcessInputEvent(std::shared_ptr<ServerState> server_state,
+                              const uint8_t* msg, size_t size) {
+    // TODO(jemoreira) consider binary protocol to avoid JSON parsing overhead
+    Json::Value evt;
+    Json::Reader json_reader;
+    auto str = reinterpret_cast<const char *>(msg);
+    if (!json_reader.parse(str, str + size, evt) < 0) {
+        LOG(ERROR) << "Received invalid JSON object in input channel:";
+        hexdump(msg, size);
+        return;
+    }
+    if (!evt.isMember("type") || !evt["type"].isString()) {
+        LOG(ERROR) << "Input event doesn't have a valid 'type' field";
+        return;
+    }
+    auto event_type = evt["type"].asString();
+    if (event_type == "mouse") {
+        if (!evt.isMember("down") || !evt["down"].isInt()) {
+            LOG(ERROR) << "Integer field 'down' is required for events of type "
+                       << event_type;
+            return;
+        }
+        if (!evt.isMember("x") || !evt["x"].isInt()) {
+            LOG(ERROR) << "Integer field 'x' is required for events of type "
+                       << event_type;
+            return;
+        }
+        if (!evt.isMember("y") || !evt["y"].isInt()) {
+            LOG(ERROR) << "Integer field 'y' is required for events of type "
+                       << event_type;
+            return;
+        }
+        int32_t down = evt["down"].asInt();
+        int32_t x = evt["x"].asInt();
+        int32_t y = evt["y"].asInt();
+
+        server_state->getTouchSink()->injectTouchEvent(x, y, down != 0);
+    } else if (event_type == "multi-touch") {
+        if (!evt.isMember("id") || !evt["id"].isInt()) {
+            LOG(ERROR) << "Integer field 'id' is required for events of type "
+                       << event_type;
+            return;
+        }
+        if (!evt.isMember("initialDown") || !evt["initialDown"].isInt()) {
+            LOG(ERROR) << "Integer field 'initialDown' is required for events "
+                       << "of type " << event_type;
+            return;
+        }
+        if (!evt.isMember("x") || !evt["x"].isInt()) {
+            LOG(ERROR) << "Integer field 'x' is required for events of type "
+                       << event_type;
+            return;
+        }
+        if (!evt.isMember("y") || !evt["y"].isInt()) {
+            LOG(ERROR) << "Integer field 'y' is required for events of type "
+                       << event_type;
+            return;
+        }
+        if (!evt.isMember("slot") || !evt["slot"].isInt()) {
+            LOG(ERROR) << "Integer field 'slot' is required for events of type "
+                       << event_type;
+            return;
+        }
+        int32_t id = evt["id"].asInt();
+        int32_t initialDown = evt["initialDown"].asInt();
+        int32_t x = evt["x"].asInt();
+        int32_t y = evt["y"].asInt();
+        int32_t slot = evt["slot"].asInt();
+
+        server_state->getTouchSink()->injectMultiTouchEvent(id, slot, x, y,
+                                                            initialDown);
+    } else if (event_type == "keyboard") {
+        if (!evt.isMember("event_type") || !evt["event_type"].isString()) {
+            LOG(ERROR) << "String field 'event_type' is required for events of "
+                       << "type " << event_type;
+            return;
+        }
+        if (!evt.isMember("keycode") || !evt["keycode"].isString()) {
+            LOG(ERROR) << "String field 'keycode' is required for events of "
+                       << "type " << event_type;
+            return;
+        }
+        auto down = evt["event_type"].asString() == std::string("keydown");
+        auto code = DomKeyCodeToLinux(evt["keycode"].asString());
+        server_state->getKeyboardSink()->injectEvent(down, code);
+    } else {
+        LOG(ERROR) << "Unrecognized event type: " << event_type;
+        return;
+    }
 }
 
 RTPSocketHandler::RTPSocketHandler(
@@ -516,6 +610,15 @@ void RTPSocketHandler::notifyDTLSConnected() {
 
     if (mTrackMask & TRACK_DATA) {
         mSCTPHandler = std::make_shared<SCTPHandler>(mRunLoop, mDTLS);
+        auto server_state = mServerState;
+        mSCTPHandler->onDataChannel(
+            "input-channel",
+            [server_state](std::shared_ptr<DataChannelStream> data_channel) {
+              data_channel->OnMessage(
+                  [server_state](const uint8_t *data, size_t size) {
+                    ProcessInputEvent(server_state, data, size);
+                  });
+            });
         mSCTPHandler->run();
     }
 
