@@ -79,6 +79,7 @@
         <permission name="android.permission.RECEIVE_SMS" fixed="false"/>
         <permission name="android.permission.RECORD_AUDIO" fixed="false"/>
         <permission name="android.permission.SEND_SMS" fixed="false"/>
+        <permission name="android.permission.READ_CALENDAR" fixed="false"/>
         <!-- For Top Gear -->
         <permission name="android.permission.PROCESS_OUTGOING_CALLS" fixed="false"/>
         <permission name="android.permission.READ_SMS" fixed="false"/>
