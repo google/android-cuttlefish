@@ -344,8 +344,8 @@ void DTLS::getKeyingMaterial() {
 
     CHECK_EQ(res, 1);
 
-    // LOG(INFO) << "keying material:";
-    // hexdump(material, sizeof(material));
+    LOG(VERBOSE) << "keying material:";
+    LOG(VERBOSE) << hexdump(material, sizeof(material));
 
     size_t offset = 0;
     const uint8_t *clientKey = &material[offset];

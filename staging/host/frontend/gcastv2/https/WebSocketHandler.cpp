@@ -110,7 +110,7 @@ int WebSocketHandler::handleMessage(
         << ")"
         << std::endl;
 
-    hexdump(msg, len);
+    std::cerr << hexdump(msg, len);
 
     const uint8_t opcode = headerByte & 0x0f;
     if (opcode == 8) {

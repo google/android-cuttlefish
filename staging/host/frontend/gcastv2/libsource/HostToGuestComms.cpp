@@ -256,7 +256,7 @@ void HostToGuestComms::drainInBuffer() {
         }
 
         if (mOnReceive) {
-            // LOG(INFO) << "Dispatching packet of size " << packetLen;
+            LOG(VERBOSE) << "Dispatching packet of size " << packetLen;
 
             mOnReceive(mInBuffer.data() + sizeof(packetLen), packetLen);
         }
