@@ -36,11 +36,8 @@ void SCTPHandler::run() {
 }
 
 int SCTPHandler::inject(uint8_t *data, size_t size) {
-DEBUG_ONLY(
-    LOG(INFO)
-        << "Received SCTP datagram of size " << size << ":";
-    hexdump(data, size);
-)
+    LOG(VERBOSE) << "Received SCTP datagram of size " << size << ":";
+    LOG(VERBOSE) << hexdump(data, size);
 
     if (size < 12) {
         // Need at least the common header.
@@ -218,10 +215,8 @@ int SCTPHandler::processChunk(
 
             SET_U32(&out[8], crc32c(out, sizeof(out)));
 
-DEBUG_ONLY(
-            LOG(INFO) << "Sending SCTP INIT_ACK:";
-            hexdump(out, sizeof(out));
-)
+            LOG(VERBOSE) << "Sending SCTP INIT_ACK:";
+            LOG(VERBOSE) << hexdump(out, sizeof(out));
 
             mDTLS->writeApplicationData(out, sizeof(out));
             break;
@@ -253,10 +248,8 @@ DEBUG_ONLY(
 
             SET_U32(&out[8], crc32c(out, sizeof(out)));
 
-DEBUG_ONLY(
-            LOG(INFO) << "Sending SCTP COOKIE_ACK:";
-            hexdump(out, sizeof(out));
-)
+            LOG(VERBOSE) << "Sending SCTP COOKIE_ACK:";
+            LOG(VERBOSE) << hexdump(out, sizeof(out));
 
             mDTLS->writeApplicationData(out, sizeof(out));
             break;
@@ -326,10 +319,8 @@ DEBUG_ONLY(
 
             SET_U32(&out[8], crc32c(out, sizeof(out)));
 
-DEBUG_ONLY(
-            LOG(INFO) << "Sending SCTP SACK:";
-            hexdump(out, sizeof(out));
-)
+            LOG(VERBOSE) << "Sending SCTP SACK:";
+            LOG(VERBOSE) << hexdump(out, sizeof(out));
 
             mDTLS->writeApplicationData(out, sizeof(out));
             break;
@@ -376,10 +367,8 @@ DEBUG_ONLY(
 
             SET_U32(&out[8], crc32c(out, outVec.size()));
 
-DEBUG_ONLY(
-            LOG(INFO) << "Sending SCTP HEARTBEAT_ACK:";
-            hexdump(out, outVec.size());
-)
+            LOG(VERBOSE) << "Sending SCTP HEARTBEAT_ACK:";
+            LOG(VERBOSE) << hexdump(out, outVec.size());
 
             mDTLS->writeApplicationData(out, outVec.size());
             break;
