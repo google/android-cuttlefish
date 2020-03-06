@@ -19,6 +19,7 @@
 
 namespace cvd {
 
+bool AdbDisconnect(const std::string& address);
 void EstablishAndMaintainConnection(std::string address,
                                     std::atomic<bool>* parent_alive);
 

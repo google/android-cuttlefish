@@ -28,6 +28,8 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/adb_connector/adb_connection_maintainer.h"
 
+extern bool parent_alive;
+
 namespace {
 
 std::string MakeMessage(const std::string& user_message) {
@@ -130,10 +132,6 @@ bool AdbConnect(const std::string& address) {
   return AdbSendMessage(MakeConnectMessage(address));
 }
 
-bool AdbDisconnect(const std::string& address) {
-  return AdbSendMessage(MakeDisconnectMessage(address));
-}
-
 bool IsInteger(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(),
                                      [](char c) { return std::isdigit(c); });
@@ -194,7 +192,8 @@ void EstablishConnection(const std::string& address) {
   sleep(kAdbCommandGapTime);
 }
 
-void WaitForAdbDisconnection(const std::string& address) {
+void WaitForAdbDisconnection(const std::string& address,
+                             std::atomic<bool>* parent_alive) {
   // adb daemon doesn't seem to handle quick, successive messages well. The
   // sleeps stabilize the communication.
   LOG(INFO) << "Watching for disconnect on " << address;
@@ -218,19 +217,25 @@ void WaitForAdbDisconnection(const std::string& address) {
     LOG(DEBUG) << "device on " << address << " uptime " << uptime;
     sleep(kAdbCommandGapTime);
   }
-  LOG(INFO) << "Sending adb disconnect";
-  if (!AdbDisconnect(address)) {
-    LOG(ERROR) << "Failed to send adb disconnect";
+  if (parent_alive->load()) {
+    LOG(INFO) << "Sending adb disconnect";
+    if (!cvd::AdbDisconnect(address)) {
+      LOG(ERROR) << "Failed to send adb disconnect";
+    }
+    sleep(kAdbCommandGapTime);
   }
-  sleep(kAdbCommandGapTime);
 }
 
 }  // namespace
+
+bool cvd::AdbDisconnect(const std::string& address) {
+  return AdbSendMessage(MakeDisconnectMessage(address));
+}
 
 void cvd::EstablishAndMaintainConnection(std::string address,
                                          std::atomic<bool>* parent_alive) {
   while (parent_alive->load()) {
     EstablishConnection(address);
-    WaitForAdbDisconnection(address);
+    WaitForAdbDisconnection(address, parent_alive);
   }
 }
