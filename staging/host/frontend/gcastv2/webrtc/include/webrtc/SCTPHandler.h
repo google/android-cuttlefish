@@ -17,10 +17,13 @@
 #pragma once
 
 #include <webrtc/DTLS.h>
+#include <webrtc/SCTPStream.h>
 
 #include <https/RunLoop.h>
 
+#include <functional>
 #include <memory>
+#include <string>
 
 struct SCTPHandler : public std::enable_shared_from_this<SCTPHandler> {
     explicit SCTPHandler(
@@ -31,13 +34,20 @@ struct SCTPHandler : public std::enable_shared_from_this<SCTPHandler> {
 
     int inject(uint8_t *data, size_t size);
 
+    void onDataChannel(
+        const std::string &channel_label,
+        std::function<void(std::shared_ptr<DataChannelStream>)> cb);
+
 private:
     std::shared_ptr<RunLoop> mRunLoop;
     std::shared_ptr<DTLS> mDTLS;
+    std::map<uint16_t, std::shared_ptr<SCTPStream>> streams_;
+    std::map<std::string,
+             std::function<void(std::shared_ptr<DataChannelStream>)>>
+        on_data_channel_callbacks_;
 
     uint32_t mInitiateTag;
     uint32_t mSendingTSN;
-    bool mSentGreeting;
 
     int processChunk(
             uint16_t srcPort,
@@ -47,6 +57,4 @@ private:
             bool lastChunk);
 
     static uint32_t crc32c(const uint8_t *data, size_t size);
-
-    void onSendGreeting(uint16_t srcPort, size_t index);
 };
