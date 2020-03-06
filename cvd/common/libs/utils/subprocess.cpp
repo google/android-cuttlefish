@@ -74,6 +74,28 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   ret.push_back(NULL);
   return ret;
 }
+
+bool SignalSubprocess(cvd::Subprocess* subprocess, int signum) {
+  auto pid = subprocess->pid();
+  if (pid > 0) {
+    auto pgid = getpgid(pid);
+    if (pgid < 0) {
+      auto error = errno;
+      LOG(WARNING) << "Error obtaining process group id of process with pid="
+                   << pid << ": " << strerror(error);
+      // Send the kill signal anyways, because pgid will be -1 it will be sent
+      // to the process and not a (non-existent) group
+    }
+    bool is_group_head = pid == pgid;
+    if (is_group_head) {
+      return killpg(pid, signum) == 0;
+    } else {
+      return kill(pid, signum) == 0;
+    }
+  }
+  return true;
+}
+
 }  // namespace
 namespace cvd {
 
@@ -143,25 +165,14 @@ pid_t Subprocess::Wait(int* wstatus, int options) {
 }
 
 bool KillSubprocess(Subprocess* subprocess) {
-  auto pid = subprocess->pid();
-  if (pid > 0) {
-    auto pgid = getpgid(pid);
-    if (pgid < 0) {
-      auto error = errno;
-      LOG(WARNING) << "Error obtaining process group id of process with pid="
-                   << pid << ": " << strerror(error);
-      // Send the kill signal anyways, because pgid will be -1 it will be sent
-      // to the process and not a (non-existent) group
-    }
-    bool is_group_head = pid == pgid;
-    if (is_group_head) {
-      return killpg(pid, SIGKILL) == 0;
-    } else {
-      return kill(pid, SIGKILL) == 0;
-    }
-  }
-  return true;
+  return SignalSubprocess(subprocess, SIGKILL);
 }
+
+bool HangupSubprocess(Subprocess* subprocess) {
+  return SignalSubprocess(subprocess, SIGHUP);
+}
+
+
 Command::ParameterBuilder::~ParameterBuilder() { Build(); }
 void Command::ParameterBuilder::Build() {
   auto param = stream_.str();
@@ -389,7 +400,6 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
   if (!subprocess.Started()) {
     return -1;
   }
-  auto cmd_short_name = cmd.GetShortName();
   {
     // Force the destructor to run by moving it into a smaller scope.
     // This is necessary to close the write end of the pipe.
@@ -405,7 +415,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
     auto join_threads = std::move(thread_joiner);
   }
   if (io_error) {
-    LOG(ERROR) << "IO error communicating with " << cmd_short_name;
+    LOG(ERROR) << "IO error communicating with " << cmd.GetShortName();
     return -1;
   }
   return WEXITSTATUS(wstatus);
