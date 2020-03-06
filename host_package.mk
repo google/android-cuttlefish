@@ -33,6 +33,7 @@ cvd_host_executables := \
     console_forwarder \
     crosvm \
     cvd_status \
+    detect_graphics \
     extract-vmlinux \
     fsck.f2fs \
     gnss_grpc_proxy \
