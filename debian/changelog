@@ -1,12 +1,4 @@
-cuttlefish-common (0.9.12) stable; urgency=medium
-
-  [ Alistair Delva ]
-  * Disable masquerading of DNS lookups
-  * Added /etc/default/cuttlefish-common config file
-
- -- Alistair Delva <adelva@google.com> Tue, 03 Mar 2020 03:18:25 -0800
-
-cuttlefish-common (0.9.11) stable; urgency=medium
+cuttlefish-common (0.9.13) UNRELEASED; urgency=medium
 
   [ Jorge E. Moreira ]
   * Explicitly depend on iptables
@@ -14,9 +6,13 @@ cuttlefish-common (0.9.11) stable; urgency=medium
   [ Jason Macnak ]
   * Load nvidia-modeset kernel module in cuttlefish-common.init
 
- -- Jason Macnak <natsu@google.com> Tue, 11 Feb 2020 14:56:24 -0800
+  [ Alistair Delva ]
+  * Disable masquerading of DNS lookups
+  * Added /etc/default/cuttlefish-common config file
 
-cuttlefish-common (0.9.10) stable; urgency=medium
+ -- Alistair Delva <adelva@google.com> Tue, 03 Mar 2020 03:18:25 -0800
+
+cuttlefish-common (0.9.12) stable; urgency=medium
 
   [ Tristan Muntsinger ]
   * Add in required dependencies for arm64 buster
@@ -31,6 +27,10 @@ cuttlefish-common (0.9.10) stable; urgency=medium
   * Add missing dnsmasq-base dependency
 
  -- Cody Schuffelen <schuffelen@google.com>  Wed, 04 Dec 2019 12:20:28 -0800
+
+cuttlefish-common (0.9.11) stable; urgency=medium
+
+cuttlefish-common (0.9.10) stable; urgency=medium
 
 cuttlefish-common (0.9.9) stable; urgency=medium
 
