@@ -389,6 +389,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
   if (!subprocess.Started()) {
     return -1;
   }
+  auto cmd_short_name = cmd.GetShortName();
   {
     // Force the destructor to run by moving it into a smaller scope.
     // This is necessary to close the write end of the pipe.
@@ -404,7 +405,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
     auto join_threads = std::move(thread_joiner);
   }
   if (io_error) {
-    LOG(ERROR) << "IO error communicating with " << cmd.GetShortName();
+    LOG(ERROR) << "IO error communicating with " << cmd_short_name;
     return -1;
   }
   return WEXITSTATUS(wstatus);
