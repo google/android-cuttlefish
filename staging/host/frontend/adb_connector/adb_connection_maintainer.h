@@ -15,8 +15,12 @@
  */
 #pragma once
 
+#include <atomic>
+
 namespace cvd {
 
-[[noreturn]] void EstablishAndMaintainConnection(std::string address);
+bool AdbDisconnect(const std::string& address);
+void EstablishAndMaintainConnection(std::string address,
+                                    std::atomic<bool>* parent_alive);
 
 }  // namespace cvd
