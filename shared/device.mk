@@ -226,8 +226,8 @@ PRODUCT_PACKAGES += \
     hwcomposer.cutf_cvm_ashmem \
     hwcomposer.cutf_hwc2 \
     hwcomposer-stats \
-    android.hardware.graphics.composer@2.3-impl \
-    android.hardware.graphics.composer@2.3-service
+    android.hardware.graphics.composer@2.2-impl \
+    android.hardware.graphics.composer@2.2-service
 
 #
 # Gralloc HAL
