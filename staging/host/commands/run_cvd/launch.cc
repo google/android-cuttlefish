@@ -341,11 +341,8 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
   }
 }
 
-TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
-                   const vsoc::CuttlefishConfig& config) {
-  if (config.tpm_binary() == "") {
-    return TpmPorts{};
-  }
+TpmPorts LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
+                            const vsoc::CuttlefishConfig& config) {
   int port = config.ForDefaultInstance().tpm_port();
   cvd::Command tpm_command(
       vsoc::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
@@ -368,4 +365,37 @@ void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
 
   process_monitor->StartSubprocess(std::move(metrics),
                                    GetOnSubprocessExitCallback(config));
+}
+
+TpmPorts LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
+                              const vsoc::CuttlefishConfig& config) {
+  auto server = cvd::SharedFD::VsockServer(SOCK_STREAM);
+  if (!server->IsOpen()) {
+    LOG(ERROR) << "Unable to create tpm passthrough server: "
+               << server->StrError();
+    std::exit(RunnerExitCodes::kTpmPassthroughError);
+  }
+  cvd::Command tpm_command(
+      vsoc::DefaultHostArtifactsPath("bin/vtpm_passthrough"));
+  tpm_command.AddParameter("-server_fd=", server);
+  tpm_command.AddParameter("-device=", config.tpm_device());
+
+  process_monitor->StartSubprocess(std::move(tpm_command),
+                                   GetOnSubprocessExitCallback(config));
+
+  return TpmPorts{server->VsockServerPort()};
+}
+
+TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
+                   const vsoc::CuttlefishConfig& config) {
+  if (config.tpm_device() != "") {
+    if (config.tpm_binary() != "") {
+      LOG(WARNING) << "Both -tpm_device and -tpm_binary were set. Using -tpm_device.";
+    }
+    return LaunchTpmPassthrough(process_monitor, config);
+  } else if (config.tpm_binary() != "") {
+    return LaunchTpmSimulator(process_monitor, config);
+  } else {
+    return TpmPorts{};
+  }
 }
