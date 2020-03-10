@@ -110,6 +110,7 @@ const char* kHostPort = "host_port";
 const char* kTpmPort = "tpm_port";
 const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kSetupWizardMode = "setupwizard_mode";
+const char* kTpmDevice = "tpm_device";
 
 const char* kQemuBinary = "qemu_binary";
 const char* kCrosvmBinary = "crosvm_binary";
@@ -546,6 +547,14 @@ std::string CuttlefishConfig::tpm_binary() const {
 
 void CuttlefishConfig::set_tpm_binary(const std::string& tpm_binary) {
   (*dictionary_)[kTpmBinary] = tpm_binary;
+}
+
+std::string CuttlefishConfig::tpm_device() const {
+  return (*dictionary_)[kTpmDevice].asString();
+}
+
+void CuttlefishConfig::set_tpm_device(const std::string& tpm_device) {
+  (*dictionary_)[kTpmDevice] = tpm_device;
 }
 
 std::string CuttlefishConfig::console_forwarder_binary() const {
