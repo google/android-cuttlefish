@@ -168,6 +168,9 @@ class CuttlefishConfig {
   void set_tpm_binary(const std::string& tpm_binary);
   std::string tpm_binary() const;
 
+  void set_tpm_device(const std::string& tpm_device);
+  std::string tpm_device() const;
+
   void set_console_forwarder_binary(const std::string& crosvm_binary);
   std::string console_forwarder_binary() const;
 
