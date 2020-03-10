@@ -45,6 +45,7 @@ enum RunnerExitCodes : int {
   kTombstoneDirCreationError = 21,
   kInitRamFsConcatError = 22,
   kTapDeviceInUse = 23,
+  kTpmPassthroughError = 24,
 };
 
 // Actions supported by the launcher server

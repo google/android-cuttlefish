@@ -153,6 +153,7 @@ DEFINE_string(crosvm_binary,
               vsoc::DefaultHostArtifactsPath("bin/crosvm"),
               "The Crosvm binary to use");
 DEFINE_string(tpm_binary, "", "The TPM simulator to use. Disabled if empty.");
+DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
@@ -325,6 +326,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_tpm_binary(FLAGS_tpm_binary);
+  tmp_config_obj.set_tpm_device(FLAGS_tpm_device);
   tmp_config_obj.set_console_forwarder_binary(
       vsoc::DefaultHostArtifactsPath("bin/console_forwarder"));
   tmp_config_obj.set_kernel_log_monitor_binary(
