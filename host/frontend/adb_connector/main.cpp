@@ -118,10 +118,6 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  for (auto address : ParseAddressList(FLAGS_addresses)) {
-    cvd::AdbDisconnect(address);
-  }
-
   LOG(INFO) << "Waiting for threads";
 
   for (auto& thread : threads) {
