@@ -166,7 +166,7 @@ function sendMouseUpdate(down, e) {
     x = videoScaling * x / elementScaling;
     y = videoScaling * y / elementScaling;
 
-    deviceConnection.sendMousePosition(Math.trunc(x), Math.trunc(y), down);
+    deviceConnection.sendMousePosition({x: Math.trunc(x), y: Math.trunc(y), down});
 }
 
 function onKeyEvent(e) {
