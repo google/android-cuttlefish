@@ -54,6 +54,7 @@ cvd_host_executables := \
     resize.f2fs \
     make_f2fs \
     tpm_simulator_manager \
+    vtpm_passthrough \
 
 cvd_host_tests := \
     monotonic_time_test \
