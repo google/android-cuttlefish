@@ -265,7 +265,7 @@ StreamerLaunchResult LaunchVNCServer(
 void LaunchAdbConnectorIfEnabled(cvd::ProcessMonitor* process_monitor,
                                  const vsoc::CuttlefishConfig& config,
                                  cvd::SharedFD adbd_events_pipe) {
-  cvd::Command adb_connector(config.adb_connector_binary(), cvd::HangupSubprocess);
+  cvd::Command adb_connector(config.adb_connector_binary());
   adb_connector.AddParameter("-adbd_events_fd=", adbd_events_pipe);
   std::set<std::string> addresses;
 
