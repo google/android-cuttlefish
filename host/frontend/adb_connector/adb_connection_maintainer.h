@@ -15,11 +15,8 @@
  */
 #pragma once
 
-#include <atomic>
-
 namespace cvd {
 
-void EstablishAndMaintainConnection(std::string address,
-                                    std::atomic<bool>* parent_alive);
+[[noreturn]] void EstablishAndMaintainConnection(std::string address);
 
 }  // namespace cvd

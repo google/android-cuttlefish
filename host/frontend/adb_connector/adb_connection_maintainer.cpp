@@ -22,7 +22,6 @@
 #include <vector>
 #include <android-base/logging.h>
 
-#include <signal.h>
 #include <unistd.h>
 
 #include "common/libs/fs/shared_fd.h"
@@ -50,7 +49,7 @@ std::string MakeConnectMessage(const std::string& address) {
 }
 
 std::string MakeDisconnectMessage(const std::string& address) {
-  return MakeMessage("host:disconnect:" + address);
+  return MakeMessage("host:connect:" + address);
 }
 
 // returns true if successfully sent the whole message
@@ -58,13 +57,11 @@ bool SendAll(cvd::SharedFD sock, const std::string& msg) {
   ssize_t total_written{};
   while (total_written < static_cast<ssize_t>(msg.size())) {
     if (!sock->IsOpen()) {
-      LOG(DEBUG) << "Failed to write: socket not open";
       return false;
     }
     auto just_written = sock->Send(msg.c_str() + total_written,
                                    msg.size() - total_written, MSG_NOSIGNAL);
     if (just_written <= 0) {
-      LOG(DEBUG) << "Failed to write: " << sock->StrError();
       return false;
     }
     total_written += just_written;
@@ -78,7 +75,7 @@ std::string RecvAll(cvd::SharedFD sock, const size_t count) {
   while (total_read < count) {
     auto just_read = sock->Read(data.get() + total_read, count - total_read);
     if (just_read <= 0) {
-      LOG(WARNING) << "adb daemon socket closed early: " << sock->StrError();
+      LOG(WARNING) << "adb daemon socket closed early";
       return {};
     }
     total_read += just_read;
@@ -98,32 +95,18 @@ constexpr int kAdbDaemonPort = 5037;
 
 bool AdbSendMessage(cvd::SharedFD sock, const std::string& message) {
   if (!sock->IsOpen()) {
-    LOG(WARNING) << "adb socket is not open";
     return false;
   }
   if (!SendAll(sock, message)) {
     LOG(WARNING) << "failed to send all bytes to adb daemon";
     return false;
   }
-  auto response = RecvAll(sock, kAdbStatusResponseLength);
-  if (response != kAdbOkayStatusResponse) {
-    LOG(WARNING) << "adb returned " << response;
-    return false;
-  }
-  return true;
+  return RecvAll(sock, kAdbStatusResponseLength) == kAdbOkayStatusResponse;
 }
 
 bool AdbSendMessage(const std::string& message) {
   auto sock = cvd::SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
-  if (!AdbSendMessage(sock, message)) {
-    std::string response_length_str = RecvAll(sock, 4);
-    int size;
-    sscanf(response_length_str.c_str(), "%04x", &size);
-    std::string response_message = RecvAll(sock, size);
-    LOG(ERROR) << "ADB gave error: " << response_message;
-    return false;
-  }
-  return true;
+  return AdbSendMessage(sock, message);
 }
 
 bool AdbConnect(const std::string& address) {
@@ -219,17 +202,14 @@ void WaitForAdbDisconnection(const std::string& address) {
     sleep(kAdbCommandGapTime);
   }
   LOG(INFO) << "Sending adb disconnect";
-  if (!AdbDisconnect(address)) {
-    LOG(ERROR) << "Failed to send adb disconnect";
-  }
+  AdbDisconnect(address);
   sleep(kAdbCommandGapTime);
 }
 
 }  // namespace
 
-void cvd::EstablishAndMaintainConnection(std::string address,
-                                         std::atomic<bool>* parent_alive) {
-  while (parent_alive->load()) {
+[[noreturn]] void cvd::EstablishAndMaintainConnection(std::string address) {
+  while (true) {
     EstablishConnection(address);
     WaitForAdbDisconnection(address);
   }
