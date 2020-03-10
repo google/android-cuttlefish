@@ -32,8 +32,6 @@ class SubprocessOptions;
 using SubprocessStopper = std::function<bool(Subprocess*)>;
 // Kills a process by sending it the SIGKILL signal.
 bool KillSubprocess(Subprocess* subprocess);
-// Notifies a process should exit by sending it the SIGHUP signal.
-bool HangupSubprocess(Subprocess* subprocess);
 
 // Keeps track of a running (sub)process. Allows to wait for its completion.
 // It's an error to wait twice for the same subprocess.
