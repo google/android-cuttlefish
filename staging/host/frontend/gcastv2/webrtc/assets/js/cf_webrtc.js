@@ -54,7 +54,7 @@ class DeviceConnection {
     });
   }
 
-  sendMousePosition(x, y, down) {
+  sendMousePosition({x, y, down, display = 0}) {
     this._sendJsonInput({
       type: 'mouse',
       down: down ? 1 : 0,
@@ -63,7 +63,7 @@ class DeviceConnection {
     });
   }
 
-  sendMultiTouch(id, x, y, initialDown, slot) {
+  sendMultiTouch({id, x, y, initialDown, slot, display = 0}) {
     this._sendJsonInput({
       type: 'multi-touch',
       id,
