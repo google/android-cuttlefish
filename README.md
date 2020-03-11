@@ -29,11 +29,11 @@ tar xvf /path/to/cvd-host_package.tar.gz
 unzip /path/to/aosp_cf_x86_phone-img-xxxxxx.zip
 ```
 
-8. Launch cuttlefish with:
+9. Launch cuttlefish with:
 
    `$ HOME=$PWD ./bin/launch_cvd`
 
-9. Stop cuttlefish with:
+10. Stop cuttlefish with:
 
    `$ HOME=$PWD ./bin/stop_cvd`
 
