@@ -167,7 +167,8 @@ static std::set<FQName> allHidlManifestInterfaces() {
 static bool isAospAidlInterface(const std::string& name) {
     return base::StartsWith(name, "android.") &&
         !base::StartsWith(name, "android.automotive.") &&
-        !base::StartsWith(name, "android.hardware.automotive.");
+        !base::StartsWith(name, "android.hardware.automotive.") &&
+        !base::StartsWith(name, "android.hardware.tests.");
 }
 
 static std::set<std::string> allAidlManifestInterfaces() {
