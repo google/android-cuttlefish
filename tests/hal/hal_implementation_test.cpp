@@ -168,7 +168,8 @@ static std::set<FQName> allHidlManifestInterfaces() {
 static bool isAospAidlInterface(const std::string& name) {
     return base::StartsWith(name, "android.") &&
         !base::StartsWith(name, "android.automotive.") &&
-        !base::StartsWith(name, "android.hardware.automotive.");
+        !base::StartsWith(name, "android.hardware.automotive.") &&
+        !base::StartsWith(name, "android.hardware.tests.");
 }
 
 static std::set<std::string> allAidlManifestInterfaces() {
@@ -255,7 +256,7 @@ TEST(Hal, AidlInterfacesImplemented) {
 
     for (const auto& iface : AidlInterfaceMetadata::all()) {
         ASSERT_FALSE(iface.types.empty()) << iface.name;  // sanity
-        if (!isAospAidlInterface(iface.name)) continue;
+        if (std::none_of(iface.types.begin(), iface.types.end(), isAospAidlInterface)) continue;
         if (iface.stability != "vintf") continue;
 
         bool hasRegistration = false;
