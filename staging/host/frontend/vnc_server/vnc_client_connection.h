@@ -151,20 +151,22 @@ class VncClientConnection {
 
   PixelFormat pixel_format_ GUARDED_BY(m_) = {
       std::uint8_t{32},  // bits per pixel
-      std::uint8_t{8},   // depth
-      std::uint8_t{},    // big_endian
-      std::uint8_t{},    // true_color
-      std::uint16_t{},   // red_max, (maxes not used when true color flag is 0)
-      std::uint16_t{},   // green_max
-      std::uint16_t{},   // blue_max
-      std::uint8_t{},  // red_shift (shifts not used when true color flag is 0)
-      std::uint8_t{},  // green_shift
-      std::uint8_t{},  // blue_shift
+      std::uint8_t{24},   // depth
+      std::uint8_t{0},    // big_endian
+      std::uint8_t{1},    // true_color
+      std::uint16_t{0xff},   // red_max, (maxes not used when true color flag is 0)
+      std::uint16_t{0xff},   // green_max
+      std::uint16_t{0xff},   // blue_max
+      std::uint8_t{0},  // red_shift (shifts not used when true color flag is 0)
+      std::uint8_t{8},  // green_shift
+      std::uint8_t{16},  // blue_shift
   };
 
   bool supports_desktop_size_encoding_ = false;
   ScreenOrientation current_orientation_ GUARDED_BY(m_) =
       ScreenOrientation::Portrait;
+
+  bool client_is_old_ = false;
 };
 
 }  // namespace vnc
