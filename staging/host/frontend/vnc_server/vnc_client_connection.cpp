@@ -195,12 +195,22 @@ bool VncClientConnection::closed() {
 
 void VncClientConnection::SetupProtocol() {
   static constexpr char kRFBVersion[] = "RFB 003.008\n";
+  static constexpr char kRFBVersionOld[] = "RFB 003.003\n";
   static constexpr auto kVersionLen = (sizeof kRFBVersion) - 1;
   client_.SendNoSignal(reinterpret_cast<const std::uint8_t*>(kRFBVersion),
                        kVersionLen);
   auto client_protocol = client_.Recv(kVersionLen);
   if (std::memcmp(&client_protocol[0], kRFBVersion,
                   std::min(kVersionLen, client_protocol.size())) != 0) {
+    if (!std::memcmp(
+                &client_protocol[0],
+                kRFBVersionOld,
+                std::min(kVersionLen, client_protocol.size()))) {
+        // We'll deal with V3.3 as well.
+        client_is_old_ = true;
+        return;
+    }
+
     client_protocol.push_back('\0');
     LOG(ERROR) << "vnc client wants a different protocol: "
                << reinterpret_cast<const char*>(&client_protocol[0]);
@@ -208,6 +218,23 @@ void VncClientConnection::SetupProtocol() {
 }
 
 void VncClientConnection::SetupSecurityType() {
+  if (client_is_old_) {
+    static constexpr std::uint8_t kVNCSecurity[4] = { 0x00, 0x00, 0x00, 0x02 };
+    client_.SendNoSignal(kVNCSecurity);
+
+    static constexpr std::uint8_t kChallenge[16] =
+        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+    client_.SendNoSignal(kChallenge);
+
+    auto clientResponse = client_.Recv(16);
+    (void)clientResponse;  // Accept any response, we're not interested in actual security.
+
+    static constexpr std::uint8_t kSuccess[4] = { 0x00, 0x00, 0x00, 0x00 };
+    client_.SendNoSignal(kSuccess);
+    return;
+  }
+
   static constexpr std::uint8_t kNoneSecurity = 0x1;
   // The first '0x1' indicates the number of items that follow
   static constexpr std::uint8_t kOnlyNoneSecurity[] = {0x01, kNoneSecurity};
