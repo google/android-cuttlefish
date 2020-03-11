@@ -255,7 +255,7 @@ TEST(Hal, AidlInterfacesImplemented) {
 
     for (const auto& iface : AidlInterfaceMetadata::all()) {
         ASSERT_FALSE(iface.types.empty()) << iface.name;  // sanity
-        if (!isAospAidlInterface(iface.name)) continue;
+        if (std::none_of(iface.types.begin(), iface.types.end(), isAospAidlInterface)) continue;
         if (iface.stability != "vintf") continue;
 
         bool hasRegistration = false;
