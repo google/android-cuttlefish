@@ -8149,10 +8149,11 @@ int radio_1_5::getBarringInfoResponse(int slotId,
     if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
+        ::android::hardware::radio::V1_5::CellIdentity cellIdentity;
         hidl_vec<::android::hardware::radio::V1_5::BarringInfo> barringInfo;
         Return<void> retStatus
                 = radioService[slotId]->mRadioResponseV1_5->
-                        getBarringInfoResponse(responseInfo, barringInfo);
+                        getBarringInfoResponse(responseInfo, cellIdentity, barringInfo);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("getBarringInfoResponse: radioService[%d]->mRadioResponse == NULL",
