@@ -52,6 +52,7 @@ private:
         bundleTracks                        = 2,
         enableData                          = 4,
         useSingleCertificateForAllTracks    = 8,
+        useTCP                              = 16,
     };
 
     using TouchSink = android::TouchSink;
