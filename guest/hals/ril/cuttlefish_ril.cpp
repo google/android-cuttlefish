@@ -2264,12 +2264,6 @@ static void request_are_uicc_applications_enabled(int /*request*/, void* /*data*
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, &areUiccApplicationsEnabled, sizeof(bool));
 }
 
-static void request_set_radio_power(RIL_Token t) {
-  ALOGV("request_set_radio_power - void");
-  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
-  return;
-}
-
 static void request_enter_sim_depersonalization(RIL_Token t) {
   ALOGV("request_enter_sim_depersonalization - void");
   gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
@@ -2568,9 +2562,6 @@ static void gce_ril_on_request(int request, void* data, size_t datalen,
       break;
     case RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED:
       request_are_uicc_applications_enabled(request, data, datalen, t);
-      break;
-    case RIL_REQUEST_SET_RADIO_POWER:
-      request_set_radio_power(t);
       break;
     case RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION:
       request_enter_sim_depersonalization(t);
