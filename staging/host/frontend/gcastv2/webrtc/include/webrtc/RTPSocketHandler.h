@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <https/BufferedSocket.h>
+#include <https/PlainSocket.h>
 #include <https/RunLoop.h>
 #include <webrtc/DTLS.h>
 #include <webrtc/RTPSender.h>
@@ -40,9 +40,15 @@ struct RTPSocketHandler
     static constexpr uint32_t TRACK_AUDIO = 2;
     static constexpr uint32_t TRACK_DATA  = 4;
 
+    enum class TransportType {
+        UDP,
+        TCP,
+    };
+
     explicit RTPSocketHandler(
             std::shared_ptr<RunLoop> runLoop,
             std::shared_ptr<ServerState> serverState,
+            TransportType type,
             int domain,
             uint32_t trackMask,
             std::shared_ptr<RTPSession> session);
@@ -78,6 +84,7 @@ private:
 
     std::shared_ptr<RunLoop> mRunLoop;
     std::shared_ptr<ServerState> mServerState;
+    TransportType mTransportType;
     uint16_t mLocalPort;
     uint32_t mTrackMask;
     std::shared_ptr<RTPSession> mSession;
@@ -92,6 +99,16 @@ private:
 
     std::shared_ptr<RTPSender> mRTPSender;
 
+    // for TransportType TCP:
+    std::shared_ptr<PlainSocket> mServerSocket;
+    sockaddr_storage mClientAddr;
+    socklen_t mClientAddrLen;
+
+    std::vector<uint8_t> mInBuffer;
+    size_t mInBufferLength;
+
+    std::vector<uint8_t> mOutBuffer;
+
     void onReceive();
     void onDTLSReceive(const uint8_t *data, size_t size);
 
@@ -103,6 +120,18 @@ private:
     void drainOutQueue();
 
     int onSRTPReceive(uint8_t *data, size_t size);
+
+    void onTCPConnect();
+    void onTCPReceive();
+
+    void onPacketReceived(
+            const sockaddr_storage &addr,
+            socklen_t addrLen,
+            uint8_t *data,
+            size_t size);
+
+    void queueTCPOutputPacket(const uint8_t *data, size_t size);
+    void sendTCPOutputData();
 };
 
 
