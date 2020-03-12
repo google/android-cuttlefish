@@ -27,7 +27,7 @@ Depends:
  libx11-6,
  libxext6,
  net-tools,
- python,
+ python2,
  qemu-user-static [!amd64],
  ${misc:Depends}
 Description: Cuttlefish Android Virtual Device companion package.
