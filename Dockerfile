@@ -41,6 +41,19 @@ RUN if test $(uname -m) == aarch64; then \
 	    && apt install -y qemu qemu-user qemu-user-static binfmt-support; \
     fi
 
+RUN if test $(uname -m) == x86_64; then \
+	apt install -y pciutils; \
+	if test $(lspci | grep -i vga | grep -icw nvidia) -gt 0; then \
+		apt install -y software-properties-common; \
+		apt-add-repository contrib; \
+		apt-add-repository non-free; \
+		apt update; \
+		apt install -y nvidia-detect; \
+		nvidia-detect; \
+		apt install -y nvidia-driver; \
+	fi; \
+    fi
+
 COPY . /root/android-cuttlefish/
 
 RUN cd /root/android-cuttlefish \
