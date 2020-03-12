@@ -170,6 +170,5 @@
     {RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA, radio_1_5::setLinkCapacityReportingCriteriaResponse},
     {RIL_REQUEST_ENABLE_UICC_APPLICATIONS, radio_1_5::enableUiccApplicationsResponse},
     {RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED, radio_1_5::areUiccApplicationsEnabledResponse},
-    {RIL_REQUEST_SET_RADIO_POWER, radio_1_5::setRadioPowerResponse},
     {RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION, radio_1_5::supplySimDepersonalizationResponse},
     {RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE, radio_1_5::sendCdmaSmsExpectMoreResponse}

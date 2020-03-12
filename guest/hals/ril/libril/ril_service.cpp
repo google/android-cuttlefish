@@ -3559,7 +3559,7 @@ Return<void> RadioImpl_1_5::setRadioPower_1_5(int32_t serial, bool powerOn, bool
     RLOGD("setRadioPower_1_5: serial %d powerOn %d forEmergency %d preferredForEmergencyCall %d",
         serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
 #endif
-    dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_RADIO_POWER);
+    dispatchInts(serial, mSlotId, RIL_REQUEST_RADIO_POWER, 1, BOOL_TO_INT(powerOn));
     return Void();
 }
 
