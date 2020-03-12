@@ -6667,20 +6667,6 @@ typedef struct {
 #define RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED 155
 
 /**
- * RIL_REQUEST_SET_RADIO_POWER
- *
- * Turn on or off radio power. It can also specify whether turning on radio power is to place an
- * emergency call and whether the call will be placed on this logical modem.
- *
- * Valid errors:
- *  SUCCESS
- *  INTERNAL_ERR
- *  INVALID_ARGUMENTS
- *
- */
-#define RIL_REQUEST_SET_RADIO_POWER 156
-
-/**
  * RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
  *
  * Requests that sim personlization be deactivated
@@ -6705,7 +6691,7 @@ typedef struct {
  *  REQUEST_NOT_SUPPORTED
  */
 
-#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 157
+#define RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION 156
 
 /**
  * RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
@@ -6744,7 +6730,7 @@ typedef struct {
  *  MODE_NOT_SUPPORTED
  *  SIM_ABSENT
  */
-#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 158
+#define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 157
 
 /***********************************************************************/
 
