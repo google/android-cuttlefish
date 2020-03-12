@@ -42,6 +42,7 @@ DECLARE_string(public_ip);
 // These are the ports we currently open in the firewall (15550..15557)
 static constexpr int kPortRangeBegin = 15550;
 static constexpr int kPortRangeEnd = 15558;
+static constexpr int kPortRangeEndTcp = 15551;
 
 static socklen_t getSockAddrLen(const sockaddr_storage &addr) {
     switch (addr.ss_family) {
@@ -55,7 +56,7 @@ static socklen_t getSockAddrLen(const sockaddr_storage &addr) {
     }
 }
 
-static int acquirePort(int sockfd, int domain) {
+static int acquirePort(int sockfd, int domain, bool tcp) {
     sockaddr_storage addr;
     uint16_t* port_ptr;
 
@@ -88,6 +89,10 @@ static int acquirePort(int sockfd, int domain) {
         if (errno != EADDRINUSE) {
             return -1;
         }
+        // for now, limit to one client / one tcp port to minimize
+        // complexity for using WebRTC over TCP over ssh tunnels
+        if (tcp && port == kPortRangeEndTcp)
+            break;
         // else try the next port
     }
 
@@ -188,23 +193,45 @@ static void ProcessInputEvent(std::shared_ptr<ServerState> server_state,
 RTPSocketHandler::RTPSocketHandler(
         std::shared_ptr<RunLoop> runLoop,
         std::shared_ptr<ServerState> serverState,
+        TransportType transportType,
         int domain,
         uint32_t trackMask,
         std::shared_ptr<RTPSession> session)
     : mRunLoop(runLoop),
       mServerState(serverState),
+      mTransportType(transportType),
       mTrackMask(trackMask),
       mSession(session),
       mSendPending(false),
-      mDTLSConnected(false) {
-    int sock = socket(domain, SOCK_DGRAM, 0);
+      mDTLSConnected(false),
+      mInBufferLength(0) {
+    bool tcp = mTransportType == TransportType::TCP;
+
+    int sock = socket(domain, tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
+
+    if (tcp) {
+        static constexpr int yes = 1;
+        auto res = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+        CHECK(!res);
+    }
 
     makeFdNonblocking(sock);
-    mSocket = std::make_shared<PlainSocket>(mRunLoop, sock);
 
-    mLocalPort = acquirePort(sock, domain);
+    mLocalPort = acquirePort(sock, domain, tcp);
 
     CHECK(mLocalPort > 0);
+
+    if (tcp) {
+        auto res = listen(sock, 4);
+        CHECK(!res);
+    }
+
+    auto tmp = std::make_shared<PlainSocket>(mRunLoop, sock);
+    if (tcp) {
+        mServerSocket = tmp;
+    } else {
+        mSocket = tmp;
+    }
 
     auto videoPacketizer =
         (trackMask & TRACK_VIDEO)
@@ -245,7 +272,76 @@ std::string RTPSocketHandler::getLocalIPString() const {
 }
 
 void RTPSocketHandler::run() {
-    mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onReceive));
+    if (mTransportType == TransportType::TCP) {
+        mServerSocket->postRecv(
+                makeSafeCallback(this, &RTPSocketHandler::onTCPConnect));
+    } else {
+        mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onReceive));
+    }
+}
+
+void RTPSocketHandler::onTCPConnect() {
+    int sock = accept(mServerSocket->fd(), nullptr, 0);
+
+    if (sock < 0) {
+        LOG(ERROR) << "RTPSocketHandler: Failed to accept client";
+        mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onTCPConnect));
+        return;
+    }
+
+    LOG(INFO) << "RTPSocketHandler: Accepted client";
+
+    makeFdNonblocking(sock);
+
+    mClientAddrLen = sizeof(mClientAddr);
+
+    int res = getpeername(
+            sock, reinterpret_cast<sockaddr *>(&mClientAddr), &mClientAddrLen);
+
+    CHECK(!res);
+
+    mSocket = std::make_shared<PlainSocket>(mRunLoop, sock);
+
+    mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onTCPReceive));
+}
+
+void RTPSocketHandler::onTCPReceive() {
+    mInBuffer.resize(mInBuffer.size() + 8192);
+
+    auto n = mSocket->recv(
+            mInBuffer.data() + mInBufferLength, mInBuffer.size() - mInBufferLength);
+
+    if (n == 0) {
+        LOG(INFO) << "Client disconnected.";
+        return;
+    }
+
+    mInBufferLength += n;
+
+    size_t offset = 0;
+    while (offset + 1 < mInBufferLength) {
+        auto packetLength = U16_AT(mInBuffer.data() + offset);
+        offset += 2;
+
+        if (offset + packetLength > mInBufferLength) {
+            break;
+        }
+
+        onPacketReceived(
+                mClientAddr,
+                mClientAddrLen,
+                mInBuffer.data() + offset,
+                packetLength);
+
+        offset += packetLength;
+    }
+
+    if (offset > 0) {
+        mInBuffer.erase(mInBuffer.begin(), mInBuffer.begin() + offset);
+        mInBufferLength -= offset;
+    }
+
+    mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onTCPReceive));
 }
 
 void RTPSocketHandler::onReceive() {
@@ -258,6 +354,22 @@ void RTPSocketHandler::onReceive() {
 
     auto n = mSocket->recvfrom(
             data, buffer.size(), reinterpret_cast<sockaddr *>(&addr), &addrLen);
+
+    onPacketReceived(addr, addrLen, data, n);
+
+    mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onReceive));
+}
+
+void RTPSocketHandler::onPacketReceived(
+        const sockaddr_storage &addr,
+        socklen_t addrLen,
+        uint8_t *data,
+        size_t n) {
+#if 0
+    std::cout << "========================================" << std::endl;
+
+    hexdump(data, n);
+#endif
 
     STUNMessage msg(data, n);
     if (!msg.isValid()) {
@@ -297,7 +409,6 @@ void RTPSocketHandler::onReceive() {
             onDTLSReceive(data, static_cast<size_t>(n));
         }
 
-        run();
         return;
     }
 
@@ -306,7 +417,6 @@ void RTPSocketHandler::onReceive() {
 
         if (!matchesSession(msg)) {
             LOG(WARNING) << "Unknown session or no USERNAME.";
-            run();
             return;
         }
 
@@ -393,15 +503,7 @@ void RTPSocketHandler::onReceive() {
 
         // response.dump(answerPassword);
 
-        auto res =
-            mSocket->sendto(
-                    response.data(),
-                    response.size(),
-                    reinterpret_cast<const sockaddr *>(&addr),
-                    addrLen);
-
-        CHECK_GT(res, 0);
-        CHECK_EQ(static_cast<size_t>(res), response.size());
+        queueDatagram(addr, response.data(), response.size());
 
         if (!mSession->isActive()) {
             mSession->setRemoteAddress(addr);
@@ -430,8 +532,6 @@ void RTPSocketHandler::onReceive() {
             mDTLS->connect(mSession->remoteAddress());
         }
     }
-
-    run();
 }
 
 bool RTPSocketHandler::matchesSession(const STUNMessage &msg) const {
@@ -528,6 +628,22 @@ const sockaddr_storage &RTPSocketHandler::Datagram::remoteAddress() const {
 
 void RTPSocketHandler::queueDatagram(
         const sockaddr_storage &addr, const void *data, size_t size) {
+    if (mTransportType == TransportType::TCP) {
+        std::vector copy(
+                static_cast<const uint8_t *>(data),
+                static_cast<const uint8_t *>(data) + size);
+
+        mRunLoop->post(
+                makeSafeCallback<RTPSocketHandler>(
+                    this,
+                    [copy](RTPSocketHandler *me) {
+                        // addr is ignored and assumed to be the connected endpoint's.
+                        me->queueTCPOutputPacket(copy.data(), copy.size());
+                    }));
+
+        return;
+    }
+
     auto datagram = std::make_shared<Datagram>(addr, data, size);
 
     CHECK_LE(size, RTPSocketHandler::kMaxUDPPayloadSize);
@@ -542,6 +658,58 @@ void RTPSocketHandler::queueDatagram(
                         me->scheduleDrainOutQueue();
                     }
                 }));
+}
+
+void RTPSocketHandler::queueTCPOutputPacket(const uint8_t *data, size_t size) {
+    uint8_t framing[2];
+    framing[0] = size >> 8;
+    framing[1] = size & 0xff;
+
+    std::copy(framing, framing + sizeof(framing), std::back_inserter(mOutBuffer));
+    std::copy(data, data + size, std::back_inserter(mOutBuffer));
+
+    if (!mSendPending) {
+        mSendPending = true;
+
+        mSocket->postSend(
+                makeSafeCallback(this, &RTPSocketHandler::sendTCPOutputData));
+    }
+}
+
+void RTPSocketHandler::sendTCPOutputData() {
+    mSendPending = false;
+
+    const size_t size = mOutBuffer.size();
+    size_t offset = 0;
+
+    bool disconnected = false;
+
+    while (offset < size) {
+        auto n = mSocket->send(mOutBuffer.data() + offset, size - offset);
+
+        if (n < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+
+            LOG(FATAL) << "Should not be here.";
+        } else if (n == 0) {
+            offset = size;
+            disconnected = true;
+            break;
+        }
+
+        offset += static_cast<size_t>(n);
+    }
+
+    mOutBuffer.erase(mOutBuffer.begin(), mOutBuffer.begin() + offset);
+
+    if (!mOutBuffer.empty() && !disconnected) {
+        mSendPending = true;
+
+        mSocket->postSend(
+                makeSafeCallback(this, &RTPSocketHandler::sendTCPOutputData));
+    }
 }
 
 void RTPSocketHandler::scheduleDrainOutQueue() {

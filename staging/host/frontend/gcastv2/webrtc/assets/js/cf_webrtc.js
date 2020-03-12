@@ -96,7 +96,8 @@ class WebRTCControl {
     wsProtocol = 'wss',
     wsPath = '',
     disable_audio = false,
-    bundle_tracks = false
+    bundle_tracks = false,
+    use_tcp = true,
   }) {
     /*
      * Private attributes:
@@ -121,6 +122,7 @@ class WebRTCControl {
     this._options = {
       disable_audio,
       bundle_tracks,
+      use_tcp,
     };
 
     this._promiseResolvers = {};
