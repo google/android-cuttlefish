@@ -180,7 +180,9 @@ int MyWebSocketHandler::handleMessage(
 "a=rtcp-fb:96 nack pli\r\n";
 
         ss <<
-"m=video 9 UDP/TLS/RTP/SAVPF 96 97\r\n"
+"m=video 9 "
+<< ((mOptions & OptionBits::useTCP) ? "TCP" : "UDP")
+<< "/TLS/RTP/SAVPF 96 97\r\n"
 "c=IN IP4 0.0.0.0\r\n"
 "a=rtcp:9 IN IP4 0.0.0.0\r\n";
 
@@ -211,7 +213,9 @@ int MyWebSocketHandler::handleMessage(
 
         if (!(mOptions & OptionBits::disableAudio)) {
             ss <<
-"m=audio 9 UDP/TLS/RTP/SAVPF 98\r\n"
+"m=audio 9 "
+<< ((mOptions & OptionBits::useTCP) ? "TCP" : "UDP")
+<< "/TLS/RTP/SAVPF 98\r\n"
 "c=IN IP4 0.0.0.0\r\n"
 "a=rtcp:9 IN IP4 0.0.0.0\r\n";
 
@@ -237,7 +241,9 @@ int MyWebSocketHandler::handleMessage(
 
         if (mOptions & OptionBits::enableData) {
             ss <<
-"m=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n"
+"m=application 9 "
+<< ((mOptions & OptionBits::useTCP) ? "TCP" : "UDP")
+<< "/DTLS/SCTP webrtc-datachannel\r\n"
 "c=IN IP4 0.0.0.0\r\n"
 "a=sctp-port:5000\r\n";
 
@@ -411,6 +417,9 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
         auto rtp = std::make_shared<RTPSocketHandler>(
                 mRunLoop,
                 mServerState,
+                (mOptions & OptionBits::useTCP)
+                    ? RTPSocketHandler::TransportType::TCP
+                    : RTPSocketHandler::TransportType::UDP,
                 PF_INET,
                 trackMask,
                 session);
@@ -427,15 +436,25 @@ bool MyWebSocketHandler::getCandidate(int32_t mid) {
 
     auto localIPString = rtp->getLocalIPString();
 
-    // see rfc8445, 5.1.2.1. for the derivation of "2122121471" below.
-    reply["candidate"] =
-                "candidate:0 1 UDP 2122121471 "
-                + localIPString
-                + " "
-                + std::to_string(rtp->getLocalPort())
-                + " typ host generation 0 ufrag "
-                + rtp->getLocalUFrag();
+    std::stringstream ss;
+    ss << "candidate:0 1 ";
 
+    if (mOptions & OptionBits::useTCP) {
+        ss << "tcp";
+    } else {
+        ss << "UDP";
+    }
+
+    // see rfc8445, 5.1.2.1. for the derivation of "2122121471" below.
+    ss << " 2122121471 " << localIPString << " " << rtp->getLocalPort() << " typ host ";
+
+    if (mOptions & OptionBits::useTCP) {
+        ss << "tcptype passive ";
+    }
+
+    ss << "generation 0 ufrag " << rtp->getLocalUFrag();
+
+    reply["candidate"] = ss.str();
     reply["mlineIndex"] = static_cast<Json::UInt64>(mlineIndex);
 
     Json::FastWriter json_writer;
@@ -608,6 +627,9 @@ void MyWebSocketHandler::parseOptions(const std::string &pathAndQuery) {
             mOptions = (mOptions & ~mask) | (boolValue ? mask : 0);
         } else if (name == "enable_data" && boolValue) {
             auto mask = OptionBits::enableData;
+            mOptions = (mOptions & ~mask) | (boolValue ? mask : 0);
+        } else if (name == "use_tcp" && boolValue) {
+            auto mask = OptionBits::useTCP;
             mOptions = (mOptions & ~mask) | (boolValue ? mask : 0);
         }
     }
