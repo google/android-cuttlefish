@@ -24,6 +24,7 @@ namespace cvd {
 bool FileExists(const std::string& path);
 bool FileHasContent(const std::string& path);
 bool DirectoryExists(const std::string& path);
+bool IsDirectoryEmpty(const std::string& path);
 off_t FileSize(const std::string& path);
 bool RemoveFile(const std::string& file);
 std::chrono::system_clock::time_point FileModificationTime(const std::string& path);
