@@ -6,6 +6,13 @@ ENV container docker
 ENV LC_ALL C
 ENV DEBIAN_FRONTEND noninteractive
 
+# Set up the user have the same UID as user creating the container.  This is
+# important when we map the (container) user's home directory as a docker volume.
+
+ARG UID
+
+USER root
+
 RUN apt-get update \
     && apt-get install -y systemd \
     && apt-get clean \
@@ -64,7 +71,9 @@ RUN cd /root/android-cuttlefish \
 RUN apt-get clean \
     && rm -rf /root/android-cuttlefish
 
-RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -G kvm,cvdnetwork \
+VOLUME [ "/home/vsoc-01" ]
+
+RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -u $UID -G kvm,cvdnetwork \
     && passwd -d vsoc-01 \
     && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
