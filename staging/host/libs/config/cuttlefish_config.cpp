@@ -122,6 +122,9 @@ const char* kEnableVncServer = "enable_vnc_server";
 const char* kVncServerBinary = "vnc_server_binary";
 const char* kVncServerPort = "vnc_server_port";
 
+const char* kEnableSandbox = "enable_sandbox";
+const char* kSeccompPolicyDir = "seccomp_policy_dir";
+
 const char* kEnableWebRTC = "enable_webrtc";
 const char* kWebRTCBinary = "webrtc_binary";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
@@ -598,6 +601,26 @@ int CuttlefishConfig::InstanceSpecific::vnc_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_server_port) {
   (*Dictionary())[kVncServerPort] = vnc_server_port;
+}
+
+void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
+  (*dictionary_)[kEnableSandbox] = enable_sandbox;
+}
+
+bool CuttlefishConfig::enable_sandbox() const {
+  return (*dictionary_)[kEnableSandbox].asBool();
+}
+
+void CuttlefishConfig::set_seccomp_policy_dir(const std::string& seccomp_policy_dir) {
+  if (seccomp_policy_dir.empty()) {
+    (*dictionary_)[kSeccompPolicyDir] = seccomp_policy_dir;
+    return;
+  }
+  SetPath(kSeccompPolicyDir, seccomp_policy_dir);
+}
+
+std::string CuttlefishConfig::seccomp_policy_dir() const {
+  return (*dictionary_)[kSeccompPolicyDir].asString();
 }
 
 void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
