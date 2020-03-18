@@ -164,18 +164,13 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
 
   if (config_->enable_sandbox()) {
-    bool var_empty_exists = true;
     const bool seccomp_exists = cvd::DirectoryExists(config_->seccomp_policy_dir());
     const std::string& var_empty_dir = vsoc::kCrosvmVarEmptyDir;
-    if (!cvd::DirectoryExists(var_empty_dir)) {
-      // mkdir returns 0 on success
-      var_empty_exists = (::mkdir(var_empty_dir.c_str(), 0755) == 0);
-    }
-
-    if (!var_empty_exists || !seccomp_exists) {
-      LOG(FATAL) << "Either " << var_empty_dir << " does not exist or "
-                 << "Seccomp-policy-dir, " << config_->seccomp_policy_dir()
-                 << " does not exist." << std::endl;
+    const bool var_empty_available = cvd::DirectoryExists(var_empty_dir);
+    if (!var_empty_available || !seccomp_exists) {
+      LOG(FATAL) << var_empty_dir << " is not an existing, empty directory."
+                 << "seccomp-policy-dir, " << config_->seccomp_policy_dir()
+                 << " does not exist " << std::endl;
       return {};
     }
     crosvm_cmd.AddParameter("--seccomp-policy-dir=", config_->seccomp_policy_dir());
