@@ -37,7 +37,7 @@ constexpr char kMobileNetworkConnectedMessage[] =
 constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 constexpr char kInternalDirName[] = "internal";
-
+constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 
 enum class AdbMode {
   VsockTunnel,
@@ -184,13 +184,19 @@ class CuttlefishConfig {
   void set_vnc_server_binary(const std::string& vnc_server_binary);
   std::string vnc_server_binary() const;
 
+  void set_enable_sandbox(const bool enable_sandbox);
+  bool enable_sandbox() const;
+
+  void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
+  std::string seccomp_policy_dir() const;
+
   void set_enable_webrtc(bool enable_webrtc);
   bool enable_webrtc() const;
 
   void set_webrtc_binary(const std::string& webrtc_binary);
   std::string webrtc_binary() const;
 
-  void set_webrtc_assets_dir(const std::string& webrtc_binary);
+  void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
 
   void set_webrtc_public_ip(const std::string& webrtc_public_ip);
