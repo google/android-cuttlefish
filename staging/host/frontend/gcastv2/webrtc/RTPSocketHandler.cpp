@@ -308,8 +308,24 @@ void RTPSocketHandler::onTCPConnect() {
 void RTPSocketHandler::onTCPReceive() {
     mInBuffer.resize(mInBuffer.size() + 8192);
 
-    auto n = mSocket->recv(
-            mInBuffer.data() + mInBufferLength, mInBuffer.size() - mInBufferLength);
+    ssize_t n;
+    do {
+        n = mSocket->recv(
+            mInBuffer.data() + mInBufferLength,
+            mInBuffer.size() - mInBufferLength);
+
+    } while (n < 0 && (errno == EINTR));
+
+    if (n < 0) {
+        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            mSocket->postRecv(
+                    makeSafeCallback(this, &RTPSocketHandler::onTCPReceive));
+
+            return;
+        }
+
+        CHECK(!"Should not be here.");
+    }
 
     if (n == 0) {
         LOG(INFO) << "Client disconnected.";
@@ -321,11 +337,12 @@ void RTPSocketHandler::onTCPReceive() {
     size_t offset = 0;
     while (offset + 1 < mInBufferLength) {
         auto packetLength = U16_AT(mInBuffer.data() + offset);
-        offset += 2;
 
-        if (offset + packetLength > mInBufferLength) {
+        if (offset + 2 + packetLength > mInBufferLength) {
             break;
         }
+
+        offset += 2;
 
         onPacketReceived(
                 mClientAddr,
@@ -628,6 +645,7 @@ const sockaddr_storage &RTPSocketHandler::Datagram::remoteAddress() const {
 
 void RTPSocketHandler::queueDatagram(
         const sockaddr_storage &addr, const void *data, size_t size) {
+
     if (mTransportType == TransportType::TCP) {
         std::vector copy(
                 static_cast<const uint8_t *>(data),
@@ -661,6 +679,8 @@ void RTPSocketHandler::queueDatagram(
 }
 
 void RTPSocketHandler::queueTCPOutputPacket(const uint8_t *data, size_t size) {
+    CHECK_LE(size, 0xffffu);
+
     uint8_t framing[2];
     framing[0] = size >> 8;
     framing[1] = size & 0xff;
