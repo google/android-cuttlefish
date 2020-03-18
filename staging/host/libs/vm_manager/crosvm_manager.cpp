@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <cassert>
 #include <string>
 #include <vector>
 
@@ -27,6 +28,7 @@
 
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
+#include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
@@ -161,8 +163,25 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
 
   crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
 
-  // TODO remove this (use crosvm's seccomp files)
-  crosvm_cmd.AddParameter("--disable-sandbox");
+  if (config_->enable_sandbox()) {
+    bool var_empty_exists = true;
+    const bool seccomp_exists = cvd::DirectoryExists(config_->seccomp_policy_dir());
+    const std::string& var_empty_dir = vsoc::kCrosvmVarEmptyDir;
+    if (!cvd::DirectoryExists(var_empty_dir)) {
+      // mkdir returns 0 on success
+      var_empty_exists = (::mkdir(var_empty_dir.c_str(), 0755) == 0);
+    }
+
+    if (!var_empty_exists || !seccomp_exists) {
+      LOG(FATAL) << "Either " << var_empty_dir << " does not exist or "
+                 << "Seccomp-policy-dir, " << config_->seccomp_policy_dir()
+                 << " does not exist." << std::endl;
+      return {};
+    }
+    crosvm_cmd.AddParameter("--seccomp-policy-dir=", config_->seccomp_policy_dir());
+  } else {
+    crosvm_cmd.AddParameter("--disable-sandbox");
+  }
 
   if (instance.vsock_guest_cid() >= 2) {
     crosvm_cmd.AddParameter("--cid=", instance.vsock_guest_cid());

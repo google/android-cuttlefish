@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 
 namespace cvd {
 
@@ -44,6 +45,27 @@ bool DirectoryExists(const std::string& path) {
   }
   if ((st.st_mode & S_IFMT) != S_IFDIR) {
     return false;
+  }
+  return true;
+}
+
+bool IsDirectoryEmpty(const std::string& path) {
+  auto direc = ::opendir(path.c_str());
+  if (!direc) {
+    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
+               << " as it failed to be open" << std::endl;
+    return false;
+  }
+
+  decltype(::readdir(direc)) sub = nullptr;
+  int cnt {0};
+  while ( (sub = ::readdir(direc)) ) {
+    cnt++;
+    if (cnt > 2) {
+    LOG(ERROR) << "IsDirectoryEmpty test failed with " << path
+               << " as it exists but not empty" << std::endl;
+      return false;
+    }
   }
   return true;
 }
