@@ -7,7 +7,6 @@ logpersist device file b/143108875
 platform_app radio_prop property_service b/140284352
 priv_app proc_net file b/124422390
 shell adbd vsock_socket b/131904985
-system_app default_android_hwservice hwservice_manager b/151863140
 system_server system_server process b/65201432
 vendor_init kernel system b/130424539
 zygote ramdump_app process b/139558100
