@@ -100,7 +100,8 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
       }
     }
   }
-  if (use_metrics == "y") {
+  char ch = !use_metrics.empty() ? tolower(use_metrics.at(0)) : -1;
+  if (ch != 'n') {
     std::cout << "===================================================================\n";
     std::cout << "NOTICE:\n\n";
     std::cout << "We collect usage statistics in accordance with our\n"
@@ -109,8 +110,29 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
                  "Privacy Policy (https://policies.google.com/privacy) and\n"
                  "Terms of Service (https://policies.google.com/terms).\n";
     std::cout << "===================================================================\n\n";
+    if (use_metrics.empty()) {
+      std::cout << "Do you accept anonymous usage statistics reporting (Y/n)?: ";
+    }
   }
-  return use_metrics;
+  for (;;) {
+    switch (ch) {
+      case 0:
+      case '\r':
+      case '\n':
+      case 'y':
+        return "y";
+      case 'n':
+        return "n";
+      default:
+        std::cout << "Must accept/reject anonymous usage statistics reporting (Y/n): ";
+        FALLTHROUGH_INTENDED;
+      case -1:
+        std::cin.get(ch);
+        ch = tolower(ch);
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+  }
+  return "";
 }
 } // namespace
 
