@@ -1,1 +1,2 @@
+allow system_app hal_wlc_hwservice:hwservice_manager find;
 gpu_access(system_app)
