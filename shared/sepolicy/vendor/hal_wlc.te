@@ -1,0 +1,6 @@
+type hal_wlc, domain;
+type hal_wlc_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(hal_wlc)
+
+add_hwservice(hal_wlc, hal_wlc_hwservice)
