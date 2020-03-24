@@ -94,6 +94,6 @@ RUN pushd android-cuttlefish; \
     done; \
     echo "### DONE INSTALLING DEPENDENCIES"; \
     dpkg -C; \
-    popd; \
+    popd
 
 

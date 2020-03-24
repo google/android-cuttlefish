@@ -1,6 +1,13 @@
 #!/bin/bash
 
+source "shflags"
+
+DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor"
+
+FLAGS "$@" || exit 1
+
 set -o errexit
+set -u
 # set -x
 
 function detect_gpu {
@@ -12,7 +19,15 @@ function detect_gpu {
   done
 }
 
-OEM=$(detect_gpu)
+
+OEM=
+if [[ ${FLAGS_detect_gpu} -eq ${FLAGS_TRUE} ]]; then
+  OEM=$(detect_gpu)
+else
+  echo "###"
+  echo "### Building without physical-GPU support"
+  echo "###"
+fi
 
 if [ -n "${OEM}" ]; then
   echo "###"
