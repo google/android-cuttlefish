@@ -3,7 +3,22 @@
 set -o errexit
 # set -x
 
-OEM=nvidia
+function detect_gpu {
+  local completions=$(compgen -G gpu/*)
+  for completion in ${completions}; do
+    if ${completion}/probe.sh; then
+      echo "${completion//gpu\/}"
+    fi
+  done
+}
+
+OEM=$(detect_gpu)
+
+if [ -n "${OEM}" ]; then
+  echo "###"
+  echo "### GPU is ${OEM}"
+  echo "###"
+fi
 
 source utils.sh
 
@@ -56,8 +71,7 @@ function build_docker_image {
 
   local -a docker_targets=("cuttlefish-softgpu")
 
-  if test $(uname -m) == x86_64; then
-    if test $(lspci | grep -i vga | grep -icw ${OEM}) -gt 0; then
+  if [ -n "${OEM}" ]; then
       rm -f deps.txt equivs.txt ignore-depends-for-*.txt
       rm -f gpu/${OEM}/driver.txt
       mkdir -p "gpu/${OEM}/driver-deps"
@@ -72,7 +86,6 @@ function build_docker_image {
       done
       mv -t gpu/${OEM}/driver-deps/ deps.txt equivs.txt ignore-depends-for-*.txt
       docker_targets+=("cuttlefish-hwgpu")
-    fi
   fi
 
   for target in "${docker_targets[@]}"; do

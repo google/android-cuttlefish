@@ -76,29 +76,24 @@ FROM cuttlefish-softgpu AS cuttlefish-hwgpu
 
 ARG OEM
 
-RUN if test $(uname -m) == x86_64; then \
-      apt-get install --no-install-recommends -y pciutils; \
-      if test $(lspci | grep -i vga | grep -icw ${OEM}) -gt 0; then \
-        pushd android-cuttlefish; \
-        gpu/${OEM}/prep.sh; \
-        echo "### INSTALLING STUB DEPENDENCIES"; \
-        cat gpu/${OEM}/driver-deps/equivs.txt | while read -e NAME VER OP; do \
-	  echo "### INSTALL STUB ${NAME} ${VER}"; \
-          ./equivs.sh "${NAME}" "${VER//:/%3a}" "${OP}"; \
-	done; \
-        echo "### DONE INSTALLING STUB DEPENDENCIES"; \
-        echo "### INSTALLING DEPENDENCIES"; \
-        cat gpu/${OEM}/driver.txt | while read -e NAME VER; do \
-	  if [ -z "${VER}" ]; then \
-	    VER=_; \
-	  fi; \
-	  echo "### INSTALL ${NAME} ${VER}"; \
-          ./install-deps.sh _ _ "${NAME}" "${VER}" eq "gpu/${OEM}/filter-in-deps.sh" ./install-deps.sh "gpu/${OEM}/driver-deps"; \
-	done; \
-        echo "### DONE INSTALLING DEPENDENCIES"; \
-	dpkg -C; \
-	popd; \
+RUN pushd android-cuttlefish; \
+    gpu/${OEM}/prep.sh; \
+    echo "### INSTALLING STUB DEPENDENCIES"; \
+    cat gpu/${OEM}/driver-deps/equivs.txt | while read -e NAME VER OP; do \
+      echo "### INSTALL STUB ${NAME} ${VER}"; \
+      ./equivs.sh "${NAME}" "${VER//:/%3a}" "${OP}"; \
+    done; \
+    echo "### DONE INSTALLING STUB DEPENDENCIES"; \
+    echo "### INSTALLING DEPENDENCIES"; \
+    cat gpu/${OEM}/driver.txt | while read -e NAME VER; do \
+      if [ -z "${VER}" ]; then \
+        VER=_; \
       fi; \
-    fi
+      echo "### INSTALL ${NAME} ${VER}"; \
+      ./install-deps.sh _ _ "${NAME}" "${VER}" eq "gpu/${OEM}/filter-in-deps.sh" ./install-deps.sh "gpu/${OEM}/driver-deps"; \
+    done; \
+    echo "### DONE INSTALLING DEPENDENCIES"; \
+    dpkg -C; \
+    popd; \
 
 
