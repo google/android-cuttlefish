@@ -167,3 +167,42 @@ function parse_name_version {
     ${process} ${parent} ${parent_version} ${name} ${version} ${op} ${filter} ${process} $*
   fi
 }
+
+# $1 = package name
+# $2 = package version
+# $3 = filter script
+# $4 = process script
+# $@ = dependency string from dpkg-query
+# END = if present, everything following that is passed as additional context to
+#       the callback functions and scripts
+function parse_dpkg_dependencies {
+  local name=$1
+  local package_version=$2
+  local filter=$3
+  local process=$4
+  shift 4
+
+  local -a args=( "$@" )
+set +o errexit # i hate bash
+  let i=0
+set -o errexit
+  for el in "${args[@]}"; do
+     [[ "${el}" == 'END' ]] && break
+set +o errexit
+     let i++
+set -o errexit
+  done
+
+  local -a PACKAGES
+  local OPTION_PKG
+  local -a ELEMENTS
+
+  IFS=',' read -ra PACKAGES <<< "${args[@]:0:${i}}"
+  for OPTION_PKG in "${PACKAGES[@]}"; do
+    IFS='|' read -ra OPTIONS <<< "${OPTION_PKG}"
+    for OPTION in "${OPTIONS[@]}"; do
+      IFS=' ' read -ra ELEMENTS <<< "$OPTION"
+      parse_name_version "${name}" "${package_version}" "${filter}" "${process}" "${ELEMENTS[@]}" "${args[@]:${i}}"
+    done
+  done
+}

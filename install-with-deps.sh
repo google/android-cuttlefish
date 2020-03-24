@@ -27,19 +27,12 @@ function walk_one_level {
     package_version=_
   fi
 
-  local -a PACKAGES
-  local OPTION_PKG
-  local -a ELEMENTS
-
-  IFS=',' read -ra PACKAGES <<< $(get_depends_from_deb ${deb})
-
-  for OPTION_PKG in "${PACKAGES[@]}"; do
-    IFS='|' read -ra OPTIONS <<< "${OPTION_PKG}"
-    for OPTION in "${OPTIONS[@]}"; do
-      IFS=' ' read -ra ELEMENTS <<< "$OPTION"
-      parse_name_version ${name} ${package_version} ${filter} ./install-deps.sh "${ELEMENTS[@]}" "END" "${path}"
-    done
-  done
+  parse_dpkg_dependencies "${name}" \
+                          "${package_version}" \
+                          "${filter}" \
+                          ./install-deps.sh \
+                          "$(get_depends_from_deb ${deb})" \
+                          "END" "${path}"
 }
 
 walk_one_level $*

@@ -17,26 +17,21 @@ set -u
 source utils.sh
 
 function parse_deps {
-  package=$1
-  package_and_arch=$(add_arch "${package}")
-  package_version=$(dpkg-query -W -f='${Version}' "${package_and_arch}")
+  local package=$1
+  local filter=$2
+  local process=$3
+
+  local package_and_arch=$(add_arch "${package}")
+  local package_version=$(dpkg-query -W -f='${Version}' "${package_and_arch}")
   if [ -z "${package_version}" ]; then
     package_version=_
   fi
 
-  local -a PACKAGES
-  local OPTION_PKG
-  local -a ELEMENTS
-
-  IFS=',' read -ra PACKAGES <<< $(get_depends_from_package ${package_and_arch})
-
-  for OPTION_PKG in "${PACKAGES[@]}"; do
-    IFS='|' read -ra OPTIONS <<< "${OPTION_PKG}"
-    for OPTION in "${OPTIONS[@]}"; do
-      IFS=' ' read -ra ELEMENTS <<< "$OPTION"
-      parse_name_version ${package} ${package_version} $2 $3 "${ELEMENTS[@]}"
-    done
-  done
+  parse_dpkg_dependencies "${package}" \
+                          "${package_version}" \
+                          "${filter}" \
+                          "${process}" \
+                          "$(get_depends_from_package ${package_and_arch})"
 }
 
 parse_deps $*
