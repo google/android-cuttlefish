@@ -95,7 +95,7 @@ RUN if test $(uname -m) == x86_64; then \
 	  echo "### INSTALL ${NAME} ${VER}"; \
           ./install-deps.sh _ _ "${NAME}" "${VER}" eq "gpu/${OEM}/filter-in-deps.sh" ./install-deps.sh "gpu/${OEM}/driver-deps"; \
 	done; \
-        echo "### INSTALLING DEPENDENCIES"; \
+        echo "### DONE INSTALLING DEPENDENCIES"; \
 	dpkg -C; \
 	popd; \
       fi; \
