@@ -15,7 +15,7 @@ function process_one {
   local oem=$2
 
   echo "Building dependency graph for ${stem}"
-  ./walk-deps.sh _ _ ${stem} _ _ ./${oem}/filter-in-deps.sh ./walk-deps.sh
+  ./walk-deps.sh _ _ ${stem} _ _ ./gpu/${oem}/filter-in-deps.sh ./walk-deps.sh
   echo "Done"
 
   local package_and_arch=$(add_arch ${stem})
@@ -25,7 +25,7 @@ function process_one {
   set +o errexit # apt download may fail
   echo "Extracting debian packages for ${stem}"
   cat deps.txt | while read -e pkg version; do
-    pushd ${OEM}/driver-deps 1>/dev/null
+    pushd gpu/${OEM}/driver-deps 1>/dev/null
     if [ -z "$(compgen -G ${pkg}_${version//:/%3a}_\*.deb)" ]; then
       echo "Attempting to download debian package for ${pkg} version ${version}."
       if ! apt-get download ${pkg}=${version} 1>/dev/null; then
@@ -49,7 +49,7 @@ function process_one {
   echo "Done"
   set -o errexit
 
-  ./parse-deps.sh "${stem}" "./${oem}/filter-out-deps.sh" "./write-equivs.sh"
+  ./parse-deps.sh "${stem}" "./gpu/${oem}/filter-out-deps.sh" "./write-equivs.sh"
 }
 
 function build_docker_image {
@@ -59,18 +59,18 @@ function build_docker_image {
   if test $(uname -m) == x86_64; then
     if test $(lspci | grep -i vga | grep -icw ${OEM}) -gt 0; then
       rm -f deps.txt equivs.txt ignore-depends-for-*.txt
-      rm -f ${OEM}/driver.txt
-      mkdir -p "${OEM}/driver-deps"
-      ${OEM}/driver.sh ${OEM}/filter-in-deps.sh | while read -e stem version; do
+      rm -f gpu/${OEM}/driver.txt
+      mkdir -p "gpu/${OEM}/driver-deps"
+      gpu/${OEM}/driver.sh gpu/${OEM}/filter-in-deps.sh | while read -e stem version; do
         if [ -n "$(is_installed ${stem})" ]; then
           echo '###'
           echo "### ${stem}"
           echo '###'
-          echo ${stem} ${version} >> ${OEM}/driver.txt
+          echo ${stem} ${version} >> gpu/${OEM}/driver.txt
           process_one ${stem} ${OEM}
         fi
       done
-      mv -t ${OEM}/driver-deps/ deps.txt equivs.txt ignore-depends-for-*.txt
+      mv -t gpu/${OEM}/driver-deps/ deps.txt equivs.txt ignore-depends-for-*.txt
       docker_targets+=("cuttlefish-hwgpu")
     fi
   fi
@@ -85,7 +85,7 @@ function build_docker_image {
   done
 
   # don't nuke the cache
-  # rm -fv ${OEM}/driver-deps
+  # rm -fv gpu/${OEM}/driver-deps
 }
 
 build_docker_image $*

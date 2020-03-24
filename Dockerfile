@@ -80,20 +80,20 @@ RUN if test $(uname -m) == x86_64; then \
       apt-get install --no-install-recommends -y pciutils; \
       if test $(lspci | grep -i vga | grep -icw ${OEM}) -gt 0; then \
         pushd android-cuttlefish; \
-        ${OEM}/prep.sh; \
+        gpu/${OEM}/prep.sh; \
         echo "### INSTALLING STUB DEPENDENCIES"; \
-        cat ${OEM}/driver-deps/equivs.txt | while read -e NAME VER OP; do \
+        cat gpu/${OEM}/driver-deps/equivs.txt | while read -e NAME VER OP; do \
 	  echo "### INSTALL STUB ${NAME} ${VER}"; \
           ./equivs.sh "${NAME}" "${VER//:/%3a}" "${OP}"; \
 	done; \
         echo "### DONE INSTALLING STUB DEPENDENCIES"; \
         echo "### INSTALLING DEPENDENCIES"; \
-        cat ${OEM}/driver.txt | while read -e NAME VER; do \
+        cat gpu/${OEM}/driver.txt | while read -e NAME VER; do \
 	  if [ -z "${VER}" ]; then \
 	    VER=_; \
 	  fi; \
 	  echo "### INSTALL ${NAME} ${VER}"; \
-          ./install-deps.sh _ _ "${NAME}" "${VER}" eq "${OEM}/filter-in-deps.sh" ./install-deps.sh "${OEM}/driver-deps"; \
+          ./install-deps.sh _ _ "${NAME}" "${VER}" eq "gpu/${OEM}/filter-in-deps.sh" ./install-deps.sh "gpu/${OEM}/driver-deps"; \
 	done; \
         echo "### INSTALLING DEPENDENCIES"; \
 	dpkg -C; \
