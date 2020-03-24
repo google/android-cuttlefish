@@ -70,11 +70,15 @@ RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthenti
     && sed -i -r -e 's/^#{0,1}\s*ChallengeResponseAuthentication\s+(yes|no)/ChallengeResponseAuthentication no/g' /etc/ssh/sshd_config \
     && sed -i -r -e 's/^#{0,1}\s*UsePAM\s+(yes|no)/UsePAM no/g' /etc/ssh/sshd_config
 
+WORKDIR /home/vsoc-01
+
 FROM cuttlefish-softgpu AS cuttlefish-hwgpu
 
 # RUN apt-get upgrade -y
 
 ARG OEM
+
+WORKDIR /root
 
 RUN pushd android-cuttlefish; \
     gpu/${OEM}/prep.sh; \
@@ -96,4 +100,4 @@ RUN pushd android-cuttlefish; \
     dpkg -C; \
     popd
 
-
+WORKDIR /home/vsoc-01
