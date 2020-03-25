@@ -64,6 +64,7 @@ cvd_host_executables := \
     make_f2fs \
     tpm_simulator_manager \
     vtpm_passthrough \
+    ms-tpm-20-ref \
     lz4
 
 cvd_host_tests := \
