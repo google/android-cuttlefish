@@ -281,7 +281,7 @@ PRODUCT_PACKAGES += \
 # Dumpstate HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.dumpstate@1.1-service.cuttlefish
+    android.hardware.dumpstate@1.1-service.example
 
 #
 # Camera

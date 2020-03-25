@@ -64,7 +64,6 @@
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service-lazy\.clearkey  u:object_r:hal_drm_clearkey_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service-lazy\.widevine  u:object_r:hal_drm_widevine_exec:s0
-/vendor/bin/hw/android\.hardware\.dumpstate@1\.1-service\.cuttlefish  u:object_r:hal_dumpstate_impl_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health\.storage@1\.0-service\.cuttlefish u:object_r:hal_health_storage_default_exec:s0
 /vendor/bin/hw/android\.hardware\.lights-service\.example u:object_r:hal_light_default_exec:s0
