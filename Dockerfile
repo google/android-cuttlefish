@@ -59,8 +59,6 @@ RUN cd /root/android-cuttlefish \
 
 RUN apt-get clean
 
-VOLUME [ "/home/vsoc-01" ]
-
 RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -u $UID -G kvm,cvdnetwork \
     && passwd -d vsoc-01 \
     && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
@@ -71,6 +69,8 @@ RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthenti
     && sed -i -r -e 's/^#{0,1}\s*UsePAM\s+(yes|no)/UsePAM no/g' /etc/ssh/sshd_config
 
 WORKDIR /home/vsoc-01
+
+VOLUME [ "/home/vsoc-01" ]
 
 FROM cuttlefish-softgpu AS cuttlefish-hwgpu
 
