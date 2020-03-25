@@ -1,6 +1,5 @@
 bt.rootcanal_mac_address  u:object_r:hal_bluetooth_sim_prop:s0
 bt.rootcanal_test_console  u:object_r:hal_bluetooth_sim_prop:s0
-persist.vendor.verbose_logging_enabled  u:object_r:hal_dumpstate_prop:s0
 qemu.sf.back_camera_caps  u:object_r:hal_camera_prop:s0
 qemu.sf.front_camera_caps  u:object_r:hal_camera_prop:s0
 qemu.sf.fake_camera  u:object_r:hal_camera_prop:s0

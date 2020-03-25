@@ -1,9 +1,0 @@
-type hal_dumpstate_impl, domain;
-type hal_dumpstate_impl_exec, exec_type, vendor_file_type, file_type;
-type hal_dumpstate_prop, property_type;
-
-hal_server_domain(hal_dumpstate_impl, hal_dumpstate)
-
-init_daemon_domain(hal_dumpstate_impl)
-
-set_prop(hal_dumpstate_impl, hal_dumpstate_prop)
