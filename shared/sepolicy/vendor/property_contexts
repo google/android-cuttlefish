@@ -22,4 +22,5 @@ vendor.vsock_logcat_status  u:object_r:vsock_logcat_status_prop:s0
 hwc.drm.device u:object_r:cf_graphics_config_prop:s0 exact string
 hwc.drm.exclude_non_hwfb_imports u:object_r:cf_graphics_config_prop:s0 exact int
 hwc.drm.primary_display_order u:object_r:cf_graphics_config_prop:s0 exact string
+hwc.drm.scale_with_gpu u:object_r:cf_graphics_config_prop:s0 exact int
 hwc.drm.use_overlay_planes u:object_r:cf_graphics_config_prop:s0 exact int
