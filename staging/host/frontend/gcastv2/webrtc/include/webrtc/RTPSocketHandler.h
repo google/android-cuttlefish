@@ -107,7 +107,8 @@ private:
     std::vector<uint8_t> mInBuffer;
     size_t mInBufferLength;
 
-    std::vector<uint8_t> mOutBuffer;
+    std::shared_ptr<std::vector<uint8_t>> mTcpOutBuffer;
+    std::deque<std::shared_ptr<std::vector<uint8_t>>> mTcpOutBufferQueue;
 
     void onReceive();
     void onDTLSReceive(const uint8_t *data, size_t size);
@@ -133,5 +134,3 @@ private:
     void queueTCPOutputPacket(const uint8_t *data, size_t size);
     void sendTCPOutputData();
 };
-
-
