@@ -278,8 +278,10 @@ PRODUCT_PACKAGES += \
 #
 # Dumpstate HAL
 #
-PRODUCT_PACKAGES += \
-    android.hardware.dumpstate@1.1-service.example
+ifeq ($(LOCAL_DUMPSTATE_PRODUCT_PACKAGE),)
+    LOCAL_DUMPSTATE_PRODUCT_PACKAGE := android.hardware.dumpstate@1.1-service.example
+endif
+PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 
 #
 # Camera
