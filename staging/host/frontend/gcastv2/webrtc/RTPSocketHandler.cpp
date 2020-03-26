@@ -29,6 +29,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <set>
@@ -43,6 +44,7 @@ DECLARE_string(public_ip);
 static constexpr int kPortRangeBegin = 15550;
 static constexpr int kPortRangeEnd = 15558;
 static constexpr int kPortRangeEndTcp = 15551;
+static constexpr size_t kTcpSendMaxTransmitSize = 10000;
 
 static socklen_t getSockAddrLen(const sockaddr_storage &addr) {
     switch (addr.ss_family) {
@@ -681,12 +683,20 @@ void RTPSocketHandler::queueDatagram(
 void RTPSocketHandler::queueTCPOutputPacket(const uint8_t *data, size_t size) {
     CHECK_LE(size, 0xffffu);
 
+    if (!mTcpOutBuffer.get()) {
+      mTcpOutBuffer = std::make_shared<std::vector<uint8_t>>();
+    }
+
+    if (mTcpOutBuffer->size() + size > kTcpSendMaxTransmitSize) {
+      mTcpOutBufferQueue.push_back(mTcpOutBuffer);
+      mTcpOutBuffer = std::make_shared<std::vector<uint8_t>>();
+    }
+
     uint8_t framing[2];
     framing[0] = size >> 8;
     framing[1] = size & 0xff;
-
-    std::copy(framing, framing + sizeof(framing), std::back_inserter(mOutBuffer));
-    std::copy(data, data + size, std::back_inserter(mOutBuffer));
+    std::copy(framing, framing + sizeof(framing), std::back_inserter(*mTcpOutBuffer));
+    std::copy(data, data + size, std::back_inserter(*mTcpOutBuffer));
 
     if (!mSendPending) {
         mSendPending = true;
@@ -699,20 +709,30 @@ void RTPSocketHandler::queueTCPOutputPacket(const uint8_t *data, size_t size) {
 void RTPSocketHandler::sendTCPOutputData() {
     mSendPending = false;
 
-    const size_t size = mOutBuffer.size();
-    size_t offset = 0;
+    std::shared_ptr<std::vector<uint8_t>> buf;
+    if (!mTcpOutBufferQueue.empty()) {
+      buf = mTcpOutBufferQueue.front();
+      mTcpOutBufferQueue.pop_front();
+    } else {
+      buf = mTcpOutBuffer;
+    }
 
+    if (!buf.get()) {
+      return;
+    }
+
+    const size_t size = buf->size();
+    size_t offset = 0;
     bool disconnected = false;
 
     while (offset < size) {
-        auto n = mSocket->send(mOutBuffer.data() + offset, size - offset);
-
+        auto n = mSocket->send(buf->data() + offset, size - offset);
         if (n < 0) {
             if (errno == EINTR) {
                 continue;
             }
 
-            LOG(FATAL) << "Should not be here.";
+            LOG(FATAL) << "Error sending: "<<strerror(errno);
         } else if (n == 0) {
             offset = size;
             disconnected = true;
@@ -721,10 +741,9 @@ void RTPSocketHandler::sendTCPOutputData() {
 
         offset += static_cast<size_t>(n);
     }
+    buf->erase(buf->begin(), buf->begin() + offset);
 
-    mOutBuffer.erase(mOutBuffer.begin(), mOutBuffer.begin() + offset);
-
-    if (!mOutBuffer.empty() && !disconnected) {
+    if ((!mTcpOutBufferQueue.empty() || !buf->empty()) && !disconnected) {
         mSendPending = true;
 
         mSocket->postSend(
