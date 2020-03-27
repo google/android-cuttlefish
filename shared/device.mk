@@ -27,6 +27,8 @@ DISABLE_RILD_OEM_HOOK := true
 
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
 
+TARGET_VULKAN_SUPPORT ?= true
+
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     odm \
@@ -120,9 +122,18 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libGLES_mesa \
 
-# GL/Vk implementation for gfxstream
+#
+# Packages for the Vulkan implementation
+#
+ifeq ($(TARGET_VULKAN_SUPPORT),true)
 PRODUCT_PACKAGES += \
     vulkan.ranchu \
+    libvulkan_enc \
+    vulkan.pastel
+endif
+
+# GL/Vk implementation for gfxstream
+PRODUCT_PACKAGES += \
     hwcomposer.ranchu \
     libandroidemu \
     libOpenglCodecCommon \
@@ -131,15 +142,8 @@ PRODUCT_PACKAGES += \
     lib_renderControl_enc \
     libEGL_emulation \
     libGLESv2_enc \
-    libvulkan_enc \
     libGLESv2_emulation \
     libGLESv1_enc
-
-#
-# Packages for the Vulkan implementation
-#
-PRODUCT_PACKAGES += \
-    vulkan.pastel
 
 #
 # Packages for testing
@@ -193,16 +197,20 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml \
     frameworks/native/data/etc/android.hardware.touchscreen.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.software.app_widgets.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.app_widgets.xml \
-    frameworks/native/data/etc/android.software.vulkan.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:vendor/etc/bluetooth/controller_properties.json \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
     device/google/cuttlefish/shared/config/fstab:$(TARGET_COPY_OUT_RAMDISK)/fstab.cutf_cvm \
     device/google/cuttlefish/shared/config/fstab:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.cutf_cvm \
     device/google/cuttlefish/shared/config/fstab:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.cutf_cvm \
+
+ifeq ($(TARGET_VULKAN_SUPPORT),true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
+    frameworks/native/data/etc/android.software.vulkan.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml
+endif
 
 # Packages for HAL implementations
 
