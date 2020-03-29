@@ -26,6 +26,7 @@
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/files.h"
@@ -111,7 +112,11 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
 std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
   // PCI domain 0, bus 0, device 1, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
-  return { "androidboot.boot_devices=pci0000:00/0000:00:01.0" };
+  if (cvd::HostArch() == "x86_64") {
+    return { "androidboot.boot_devices=pci0000:00/0000:00:01.0" };
+  } else {
+    return { "androidboot.boot_devices=10000.pci" };
+  }
 }
 
 CrosvmManager::CrosvmManager(const vsoc::CuttlefishConfig* config)
@@ -161,7 +166,9 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
-  crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
+  if (cvd::HostArch() == "x86_64") {
+    crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
+  }
 
   if (config_->enable_sandbox()) {
     const bool seccomp_exists = cvd::DirectoryExists(config_->seccomp_policy_dir());
