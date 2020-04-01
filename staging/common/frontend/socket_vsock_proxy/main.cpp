@@ -49,15 +49,15 @@ class SocketSender {
     }
   }
 
-  ssize_t SendAll(const std::vector<char>& packet) {
+  ssize_t SendAll(const char* packet, ssize_t length) {
     ssize_t written{};
-    while (written < static_cast<ssize_t>(packet.size())) {
+    while (written < length) {
       if (!socket_->IsOpen()) {
         return -1;
       }
       auto just_written =
-          socket_->Send(packet.data() + written,
-                        packet.size() - written, MSG_NOSIGNAL);
+          socket_->Send(packet + written,
+                        length - written, MSG_NOSIGNAL);
       if (just_written <= 0) {
         LOG(INFO) << "Couldn't write to client: "
                   << strerror(socket_->GetErrno());
@@ -82,13 +82,14 @@ class SocketReceiver {
   SocketReceiver(const SocketReceiver&&) = delete;
   SocketReceiver& operator=(const SocketReceiver&) = delete;
 
-  // *packet will be empty if Read returns 0 or error
-  void Recv(std::vector<char>* packet) {
-    auto size = socket_->Read(packet->data(), packet->size());
+  // return value will be 0 if Read returns 0 or error
+  ssize_t Recv(char* packet, ssize_t length) {
+    auto size = socket_->Read(packet, length);
     if (size < 0) {
       size = 0;
     }
-    packet->resize(size);
+
+    return size;
   }
 
  private:
@@ -97,10 +98,11 @@ class SocketReceiver {
 
 void SocketToVsock(SocketReceiver socket_receiver,
                    SocketSender vsock_sender) {
+  char packet[kMaxPacketSize] = {};
+
   while (true) {
-    std::vector<char> packet(kMaxPacketSize, '\0');
-    socket_receiver.Recv(&packet);
-    if (packet.empty() || vsock_sender.SendAll(packet) < 0) {
+    ssize_t length = socket_receiver.Recv(packet, kMaxPacketSize);
+    if (length == 0 || vsock_sender.SendAll(packet, length) < 0) {
       break;
     }
   }
@@ -109,13 +111,14 @@ void SocketToVsock(SocketReceiver socket_receiver,
 
 void VsockToSocket(SocketSender socket_sender,
                    SocketReceiver vsock_receiver) {
-  std::vector<char> packet(kMaxPacketSize, '\0');
+  char packet[kMaxPacketSize] = {};
+
   while (true) {
-    vsock_receiver.Recv(&packet);
-    if (packet.empty()) {
+    ssize_t length = vsock_receiver.Recv(packet, kMaxPacketSize);
+    if (length == 0) {
       break;
     }
-    if (socket_sender.SendAll(packet) < 0) {
+    if (socket_sender.SendAll(packet, length) < 0) {
       break;
     }
   }
