@@ -13,4 +13,5 @@
 /dev/block/pmem0 0770 system system
 
 # vtpm
-/dev/tpm0 0660 root root
+/dev/tpm0 0000 root root
+/dev/tpmrm0 000 system system
