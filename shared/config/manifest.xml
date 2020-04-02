@@ -16,8 +16,8 @@
 ** limitations under the License.
 */
 -->
-<manifest version="1.0" type="device" target-level="5">
-    <kernel  target-level="5" />
+<manifest version="1.0" type="device" target-level="6">
+    <kernel target-level="6" />
     <hal format="hidl">
         <name>android.hardware.audio</name>
         <transport>hwbinder</transport>
