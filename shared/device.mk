@@ -331,8 +331,11 @@ PRODUCT_PACKAGES += \
 #
 # Sensors
 #
+ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
+       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors@2.1-service.mock
+endif
 PRODUCT_PACKAGES += \
-    android.hardware.sensors@2.1-service.mock
+    $(LOCAL_SENSOR_PRODUCT_PACKAGE)
 #
 # Thermal (mock)
 #
