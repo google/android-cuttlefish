@@ -64,6 +64,7 @@
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/hw/libcuttlefish-rild  u:object_r:libcuttlefish_rild_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.6-service-google u:object_r:hal_camera_default_exec:s0
+/vendor/bin/hw/android\.hardware\.camera\.provider@2\.6-service-google-lazy u:object_r:hal_camera_default_exec:s0
 /vendor/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock  u:object_r:hal_power_stats_default_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.1-service\.sim  u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.contexthub@1\.1-service\.mock  u:object_r:hal_contexthub_default_exec:s0
