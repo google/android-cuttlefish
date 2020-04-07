@@ -42,7 +42,8 @@ std::string GetControlSocketPath(const vsoc::CuttlefishConfig* config) {
       .PerInstanceInternalPath("crosvm_control.sock");
 }
 
-void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
+cvd::SharedFD AddTapFdParameter(cvd::Command* crosvm_cmd,
+                                const std::string& tap_name) {
   auto tap_fd = cvd::OpenTapInterface(tap_name);
   if (tap_fd->IsOpen()) {
     crosvm_cmd->AddParameter("--tap-fd=", tap_fd);
@@ -50,6 +51,27 @@ void AddTapFdParameter(cvd::Command* crosvm_cmd, const std::string& tap_name) {
     LOG(ERROR) << "Unable to connect to " << tap_name << ": "
                << tap_fd->StrError();
   }
+  return tap_fd;
+}
+
+bool ReleaseDhcpLeases(const std::string& lease_path, cvd::SharedFD tap_fd) {
+  auto lease_file_fd = cvd::SharedFD::Open(lease_path, O_RDONLY);
+  if (!lease_file_fd->IsOpen()) {
+    LOG(ERROR) << "Could not open leases file \"" << lease_path << '"';
+    return false;
+  }
+  bool success = true;
+  auto dhcp_leases = cvd::ParseDnsmasqLeases(lease_file_fd);
+  for (auto& lease : dhcp_leases) {
+    std::uint8_t dhcp_server_ip[] = {192, 168, 96, (std::uint8_t) (vsoc::ForCurrentInstance(1) * 4 - 3)};
+    if (!cvd::ReleaseDhcp4(tap_fd, lease.mac_address, lease.ip_address, dhcp_server_ip)) {
+      LOG(ERROR) << "Failed to release " << lease;
+      success = false;
+    } else {
+      LOG(INFO) << "Successfully dropped " << lease;
+    }
+  }
+  return success;
 }
 
 bool Stop() {
@@ -162,7 +184,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
 
-  AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
+  auto wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
   if (cvd::HostArch() == "x86_64") {
@@ -232,6 +254,16 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
 
   // This needs to be the last parameter
   crosvm_cmd.AddParameter(config_->GetKernelImageToUse());
+
+  // TODO(schuffelen): QEMU also needs this and this is not the best place for
+  // this code. Find a better place to put it.
+  auto lease_file =
+      vsoc::ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-")
+      + ".leases";
+  if (!ReleaseDhcpLeases(lease_file, wifi_tap)) {
+    LOG(ERROR) << "Failed to release wifi DHCP leases. Connecting to the wifi "
+               << "network may not work.";
+  }
 
   std::vector<cvd::Command> ret;
   ret.push_back(std::move(crosvm_cmd));
