@@ -17,6 +17,7 @@
 cc_binary {
     name: "vtpm_manager",
     srcs: [
+        "commands.cpp",
         "main.cpp",
     ],
     shared_libs: [
@@ -24,6 +25,7 @@ cc_binary {
         "libcutils",
         "libcuttlefish_fs",
         "liblog",
+        "tpm2-tss2-rc",
     ],
     static_libs: [
         "libgflags",
