@@ -19,6 +19,7 @@
 #include <linux/types.h>
 #include <linux/vtpm_proxy.h>
 #include <sys/sysmacros.h>
+#include <tss2/tss2_rc.h>
 
 #include <future>
 
@@ -28,6 +29,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "guest/commands/vtpm_manager/commands.h"
 
 DEFINE_uint32(tpm_vsock_port, 0, "vsock port to connect to for the TPM");
 
@@ -48,6 +50,9 @@ bool ReadResponseLoop(cvd::SharedFD in_fd, cvd::SharedFD out_fd) {
     std::uint32_t response_size = be32toh(*reinterpret_cast<std::uint32_t*>(response_size_bytes.data()));
     message.resize(response_size, '\0');
     CHECK(cvd::ReadExact(in_fd, &message) == response_size) << "Could not read response message";
+    auto header = reinterpret_cast<tpm_message_header*>(message.data());
+    auto host_rc = betoh32(header->ordinal);
+    LOG(DEBUG) << "TPM response was: \"" << Tss2_RC_Decode(host_rc) << "\" (" << host_rc << ")";
     std::vector<char> response_bytes(4, 0);
     CHECK(cvd::ReadExact(in_fd, &response_bytes) == 4) << "Could not read parity response";
     CHECK(cvd::WriteAll(out_fd, message) == message.size()) << "Could not forward message to vTPM";
@@ -81,6 +86,7 @@ bool SendCommandLoop(cvd::SharedFD in_fd, cvd::SharedFD out_fd) {
     }
     message.resize(data_length, 0);
     auto header = reinterpret_cast<tpm_message_header*>(message.data());
+    LOG(DEBUG) << "Received TPM command " << TpmCommandName(betoh32(header->ordinal));
     if (header->ordinal == htobe32(TPM2_CC_SET_LOCALITY)) { // "Driver command"
       locality = *reinterpret_cast<unsigned char*>(header + 1);
       header->ordinal = htobe32(locality);
@@ -95,7 +101,8 @@ bool SendCommandLoop(cvd::SharedFD in_fd, cvd::SharedFD out_fd) {
 }
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  setenv("ANDROID_LOG_TAGS", "*:v", 1);
+  ::android::base::InitLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(FLAGS_tpm_vsock_port != 0) <<  "Need a value for -tpm_vsock_port";
@@ -115,7 +122,7 @@ int main(int argc, char** argv) {
   CHECK(device_fd->IsOpen()) << device_fd->StrError();
   close(vtpm_creation.fd);
 
-  LOG(ERROR) << "major was " << vtpm_creation.major << " minor was " << vtpm_creation.minor;
+  LOG(VERBOSE) << "major was " << vtpm_creation.major << " minor was " << vtpm_creation.minor;
 
   auto proxy_to_device = std::async(std::launch::async, ReadResponseLoop, proxy, device_fd);
   auto device_to_proxy = std::async(std::launch::async, SendCommandLoop, device_fd, proxy);
