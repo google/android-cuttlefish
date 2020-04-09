@@ -20,7 +20,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <android-base/logging.h>
+#include <glog/logging.h>
 
 #include "common/libs/utils/subprocess.h"
 
@@ -71,6 +71,23 @@ bool Archive::ExtractFiles(const std::vector<std::string>& to_extract,
     LOG(ERROR) << "bsdtar extraction on \"" << file << "\" returned " << bsdtar_ret;
   }
   return bsdtar_ret == 0;
+}
+
+std::string Archive::ExtractToMemory(const std::string& path) {
+  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
+  bsdtar_cmd.AddParameter("-xf");
+  bsdtar_cmd.AddParameter(file);
+  bsdtar_cmd.AddParameter("-O");
+  bsdtar_cmd.AddParameter(path);
+  std::string stdout, stderr;
+  auto ret = RunWithManagedStdio(std::move(bsdtar_cmd), nullptr, &stdout,
+                                 nullptr);
+  if (ret != 0) {
+    LOG(ERROR) << "Could not extract \"" << path << "\" from \"" << file
+               << "\" to memory.";
+    return "";
+  }
+  return stdout;
 }
 
 } // namespace cvd
