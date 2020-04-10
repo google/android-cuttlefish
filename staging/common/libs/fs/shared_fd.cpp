@@ -234,8 +234,8 @@ SharedFD SharedFD::Event(int initval, int flags) {
   return std::shared_ptr<FileInstance>(new FileInstance(fd, errno));
 }
 
-SharedFD SharedFD::MemfdCreate(const char* name, unsigned int flags) {
-  int fd = memfd_create_wrapper(name, flags);
+SharedFD SharedFD::MemfdCreate(const std::string& name, unsigned int flags) {
+  int fd = memfd_create_wrapper(name.c_str(), flags);
   int error_num = errno;
   return std::shared_ptr<FileInstance>(new FileInstance(fd, error_num));
 }
@@ -252,8 +252,8 @@ bool SharedFD::SocketPair(int domain, int type, int protocol,
   return false;
 }
 
-SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
-  int fd = TEMP_FAILURE_RETRY(open(path, flags, mode));
+SharedFD SharedFD::Open(const std::string& path, int flags, mode_t mode) {
+  int fd = TEMP_FAILURE_RETRY(open(path.c_str(), flags, mode));
   if (fd == -1) {
     return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
   } else {
@@ -261,7 +261,7 @@ SharedFD SharedFD::Open(const char* path, int flags, mode_t mode) {
   }
 }
 
-SharedFD SharedFD::Creat(const char* path, mode_t mode) {
+SharedFD SharedFD::Creat(const std::string& path, mode_t mode) {
   return SharedFD::Open(path, O_CREAT|O_WRONLY|O_TRUNC, mode);
 }
 
@@ -278,11 +278,11 @@ SharedFD SharedFD::ErrorFD(int error) {
   return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(-1, error)));
 }
 
-SharedFD SharedFD::SocketLocalClient(const char* name, bool abstract,
+SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type) {
   struct sockaddr_un addr;
   socklen_t addrlen;
-  MakeAddress(name, abstract, &addr, &addrlen);
+  MakeAddress(name.c_str(), abstract, &addr, &addrlen);
   SharedFD rval = SharedFD::Socket(PF_UNIX, in_type, 0);
   if (!rval->IsOpen()) {
     return rval;
@@ -337,15 +337,15 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
   return rval;
 }
 
-SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
+SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
                                      int in_type, mode_t mode) {
   // DO NOT UNLINK addr.sun_path. It does NOT have to be null-terminated.
   // See man 7 unix for more details.
-  if (!abstract) (void)unlink(name);
+  if (!abstract) (void)unlink(name.c_str());
 
   struct sockaddr_un addr;
   socklen_t addrlen;
-  MakeAddress(name, abstract, &addr, &addrlen);
+  MakeAddress(name.c_str(), abstract, &addr, &addrlen);
   SharedFD rval = SharedFD::Socket(PF_UNIX, in_type, 0);
   if (!rval->IsOpen()) {
     return rval;
@@ -374,7 +374,7 @@ SharedFD SharedFD::SocketLocalServer(const char* name, bool abstract,
   }
 
   if (!abstract) {
-    if (TEMP_FAILURE_RETRY(chmod(name, mode)) == -1) {
+    if (TEMP_FAILURE_RETRY(chmod(name.c_str(), mode)) == -1) {
       LOG(ERROR) << "chmod failed: " << strerror(errno);
       // However, continue since we do have a listening socket
     }
