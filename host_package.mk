@@ -16,6 +16,7 @@ lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 webrtc_files_path := usr/share/webrtc
 x86_64_seccomp_files_path := usr/share/cuttlefish/x86_64-linux-gnu/seccomp
+aarch64_seccomp_files_path := usr/share/cuttlefish/aarch64-linux-gnu/seccomp
 
 cvd_host_executables := \
     adb \
@@ -133,6 +134,26 @@ x86_64_seccomp_files := \
     wl_device.policy \
     xhci.policy \
 
+aarch64_seccomp_files := \
+    9p_device.policy \
+    balloon_device.policy \
+    block_device.policy \
+    common_device.policy \
+    cras_audio_device.policy \
+    fs_device.policy \
+    gpu_device.policy \
+    input_device.policy \
+    net_device.policy \
+    null_audio_device.policy \
+    pmem_device.policy \
+    rng_device.policy \
+    serial.policy \
+    tpm_device.policy \
+    vhost_net_device.policy \
+    vhost_vsock_device.policy \
+    wl_device.policy \
+    xhci.policy \
+
 cvd_host_webrtc_files := \
     $(addprefix assets/,$(webrtc_assets)) \
     $(addprefix certs/,$(webrtc_certs)) \
@@ -143,6 +164,7 @@ cvd_host_package_files := \
      $(foreach test,$(cvd_host_tests), ${tests_path}/$(test)/$(test)) \
      $(addprefix $(webrtc_files_path)/,$(cvd_host_webrtc_files)) \
      $(addprefix $(x86_64_seccomp_files_path)/,$(x86_64_seccomp_files)) \
+     $(addprefix $(aarch64_seccomp_files_path)/,$(aarch64_seccomp_files)) \
 
 $(cvd_host_package_tar): PRIVATE_FILES := $(cvd_host_package_files)
 $(cvd_host_package_tar): $(addprefix $(HOST_OUT)/,$(cvd_host_package_files))
