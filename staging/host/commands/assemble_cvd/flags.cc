@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <set>
 
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
@@ -478,7 +479,8 @@ void SetDefaultFlagsForCrosvm() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // for now, we support only x86_64 by default
   bool default_enable_sandbox = false;
-  if (cvd::HostArch() == "x86_64") {
+  std::set<const std::string> supported_archs{std::string("x86_64"), std::string("aarch64")};
+  if (supported_archs.find(cvd::HostArch()) != supported_archs.end()) {
     default_enable_sandbox =
         [](const std::string& var_empty) -> bool {
           if (cvd::DirectoryExists(var_empty)) {
