@@ -18,6 +18,7 @@
 
 #include <android-base/logging.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
