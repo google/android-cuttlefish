@@ -65,12 +65,14 @@ if [[ "${qemu_binary##*/}" = "qemu-system-aarch64" ]]; then
   # On ARM, the early console can be PCI, and ISA is not supported
   kernel_console_serial="pci-serial"
   machine="virt,gic_version=2"
+  romfile=",romfile="
   cpu=cortex-a53
 else
   # On x86, the early console must be ISA, not PCI, so we start to get kernel
   # messages as soon as possible. ISA devices do not have 'addr' assignments.
   kernel_console_serial="isa-serial"
   machine="pc-i440fx-2.8,accel=kvm"
+  romfile=
   cpu=host
 fi
 
@@ -113,9 +115,9 @@ done
 
 args+=(
     -netdev "tap,id=hostnet0,ifname=${wifi_tap_name:-${default_wifi_tap_name}},script=no,downscript=no"
-    -device "virtio-net-pci,netdev=hostnet0,id=net0"
+    -device "virtio-net-pci,netdev=hostnet0,id=net0${romfile}"
     -netdev "tap,id=hostnet1,ifname=${mobile_tap_name:-${default_mobile_tap_name}},script=no,downscript=no"
-    -device "virtio-net-pci,netdev=hostnet1,id=net1"
+    -device "virtio-net-pci,netdev=hostnet1,id=net1${romfile}"
     -device "virtio-balloon-pci,id=balloon0"
     -object "rng-random,id=objrng0,filename=/dev/urandom"
     -device "virtio-rng-pci,rng=objrng0,id=rng0,max-bytes=1024,period=2000"
