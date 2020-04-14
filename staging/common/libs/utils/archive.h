@@ -31,6 +31,7 @@ public:
   bool ExtractAll(const std::string& target_directory = ".");
   bool ExtractFiles(const std::vector<std::string>& files,
                     const std::string& target_directory = ".");
+  std::string ExtractToMemory(const std::string& path);
 };
 
 } // namespace cvd
