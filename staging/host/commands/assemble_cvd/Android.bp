@@ -36,6 +36,7 @@ cc_binary_host {
         "data_image.cc",
         "flags.cc",
         "image_aggregator.cc",
+        "misc_info.cc",
         "super_image_mixer.cc",
     ],
     header_libs: [
