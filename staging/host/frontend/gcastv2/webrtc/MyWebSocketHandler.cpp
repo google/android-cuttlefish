@@ -72,7 +72,7 @@ MyWebSocketHandler::~MyWebSocketHandler() {
 }
 
 int MyWebSocketHandler::handleMessage(
-        uint8_t /* headerByte */, const uint8_t *msg, size_t len) {
+        uint8_t /*headerByte*/, const uint8_t *msg, size_t len) {
     // android::hexdump(msg, len);
 
     Json::Value obj;

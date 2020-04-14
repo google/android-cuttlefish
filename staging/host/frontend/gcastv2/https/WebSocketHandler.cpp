@@ -22,6 +22,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <string.h>
+
 ssize_t WebSocketHandler::handleRequest(
         uint8_t *data, size_t size, bool isEOS) {
     (void)isEOS;
@@ -74,7 +76,16 @@ ssize_t WebSocketHandler::handleRequest(
             }
         }
 
-        int err = handleMessage(headerByte, &packet[packetOffset], payloadLen);
+        int err = 0;
+        bool is_control_frame = (headerByte & 0x08) != 0;
+        if (is_control_frame) {
+          uint8_t opcode = headerByte & 0x0f;
+          if (opcode == 0x9 /*ping*/) {
+            sendMessage(&packet[packetOffset], payloadLen, SendMode::pong);
+          }
+        } else {
+          err = handleMessage(headerByte, &packet[packetOffset], payloadLen);
+        }
 
         offset += packetOffset + payloadLen;
 
@@ -136,6 +147,7 @@ int WebSocketHandler::sendMessage(
         0x1,  // text
         0x2,  // binary
         0x8,  // closeConnection
+        0xa,  // pong
     };
 
     auto opcode = kOpCodeBySendMode[static_cast<uint8_t>(mode)];

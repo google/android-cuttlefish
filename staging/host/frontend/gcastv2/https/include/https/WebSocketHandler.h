@@ -42,6 +42,7 @@ struct WebSocketHandler {
         text,
         binary,
         closeConnection,
+        pong,
     };
     int sendMessage(
             const void *data, size_t size, SendMode mode = SendMode::text);
