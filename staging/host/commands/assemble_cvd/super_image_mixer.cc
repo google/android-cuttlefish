@@ -25,9 +25,11 @@
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/archive.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/assemble_cvd/misc_info.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 
@@ -56,6 +58,7 @@ const std::string kMiscInfoPath = "META/misc_info.txt";
 const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/boot.img",
   "IMAGES/cache.img",
+  "IMAGES/odm.img",
   "IMAGES/recovery.img",
   "IMAGES/userdata.img",
   "IMAGES/vendor.img",
@@ -81,14 +84,53 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
     LOG(ERROR) << "Could not create directory " << output_path;
     return false;
   }
+  std::string output_meta = output_path + "/META";
+  if (mkdir(output_meta.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0) {
+    LOG(ERROR) << "Could not create directory " << output_meta;
+    return false;
+  }
 
   if (std::find(default_target_contents.begin(), default_target_contents.end(), kMiscInfoPath)
       == default_target_contents.end()) {
     LOG(ERROR) << "Default target files zip does not have " << kMiscInfoPath;
     return false;
   }
-  if (!default_target_archive.ExtractFiles({kMiscInfoPath}, output_path)) {
-    LOG(ERROR) << "Failed to write misc info to output directory";
+  if (std::find(system_target_contents.begin(), system_target_contents.end(), kMiscInfoPath)
+      == system_target_contents.end()) {
+    LOG(ERROR) << "System target files zip does not have " << kMiscInfoPath;
+    return false;
+  }
+  const auto default_misc =
+      ParseMiscInfo(default_target_archive.ExtractToMemory(kMiscInfoPath));
+  if (default_misc.size() == 0) {
+    LOG(ERROR) << "Could not read the default misc_info.txt file.";
+    return false;
+  }
+  const auto system_misc =
+      ParseMiscInfo(system_target_archive.ExtractToMemory(kMiscInfoPath));
+  if (system_misc.size() == 0) {
+    LOG(ERROR) << "Could not read the system misc_info.txt file.";
+    return false;
+  }
+  auto output_misc = default_misc;
+  auto system_super_partitions = SuperPartitionComponents(system_misc);
+  if (std::find(system_super_partitions.begin(), system_super_partitions.end(),
+                "odm") == system_super_partitions.end()) {
+    // odm is not one of the partitions skipped by the system check
+    system_super_partitions.push_back("odm");
+  }
+  SetSuperPartitionComponents(system_super_partitions, &output_misc);
+  auto misc_output_path = output_path + "/" + kMiscInfoPath;
+  cvd::SharedFD misc_output_file =
+      cvd::SharedFD::Creat(misc_output_path.c_str(), 0644);
+  if (!misc_output_file->IsOpen()) {
+    LOG(ERROR) << "Failed to open output misc file: "
+               << misc_output_file->StrError();
+    return false;
+  }
+  if (cvd::WriteAll(misc_output_file, WriteMiscInfo(output_misc)) < 0) {
+    LOG(ERROR) << "Failed to write output misc file contents: "
+               << misc_output_file->StrError();
     return false;
   }
 
