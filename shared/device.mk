@@ -315,9 +315,12 @@ PRODUCT_PACKAGES += \
     android.hardware.gnss@2.1-service
 
 # Health
-PRODUCT_PACKAGES += \
+ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
+    LOCAL_HEALTH_PRODUCT_PACKAGE := \
     android.hardware.health@2.1-impl-cuttlefish \
     android.hardware.health@2.1-service
+endif
+PRODUCT_PACKAGES += $(LOCAL_HEALTH_PRODUCT_PACKAGE)
 
 # Health Storage
 PRODUCT_PACKAGES += \
