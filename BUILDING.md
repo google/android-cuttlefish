@@ -64,6 +64,19 @@ obtained the image at step #8, you can copy it to your container as follows:
 ssh vsoc-01@${ip_cuttlefish} -- 'tar xzvf -' < cvd-host_package.tar.gz
 scp *.img vsoc-01@${ip_cuttlefish}:~/
 ```
+As an aid, if you would like to fetch the latest Cuttlefish build from AOSP:
+
+```bash
+ssh vsoc-01@${ip_cuttlefish} -- './download-aosp $(uname -m)'
+```
+
+Note that if you want to run Cuttlefish built for x86, you will probably have to
+invoke ./download-aosp with the argument 'x86', since your machine will most
+likely be 'x86_64':
+
+```bash
+ssh vsoc-01@${ip_cuttlefish} -- './download-aosp x86'
+```
 
 # Launching Cuttlefish inside a container
 
@@ -79,7 +92,7 @@ with WebRTC support, 4GB of RAM and 4 CPUs:
 ```bash
 source setup.sh
 cvd_docker_create cf1
-# download images to cf1...
+ssh vsoc-01@$ip_cf1 -- './download-aosp $(uname -m)'
 cvd_launch_cf1 --start_webrtc --cpus 4 --memory_mb 4096
 ```
 

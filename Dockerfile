@@ -55,7 +55,12 @@ COPY . android-cuttlefish/
 RUN cd /root/android-cuttlefish \
     && yes | sudo mk-build-deps -i -r -B \
     && dpkg-buildpackage -uc -us \
-    && apt-get install --no-install-recommends -y -f ../cuttlefish-common_*.deb
+    && apt-get install --no-install-recommends -y -f ../cuttlefish-common_*.deb \
+    && rm -rvf ../cuttlefish-common_*.deb \
+    && cd .. \
+    && rm -rvf android-cuttlefish
+
+RUN apt-get install -y curl wget unzip
 
 RUN apt-get clean
 
@@ -69,6 +74,8 @@ RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthenti
     && sed -i -r -e 's/^#{0,1}\s*UsePAM\s+(yes|no)/UsePAM no/g' /etc/ssh/sshd_config
 
 WORKDIR /home/vsoc-01
+
+COPY --chown=vsoc-01 download-aosp.sh .
 
 VOLUME [ "/home/vsoc-01" ]
 
