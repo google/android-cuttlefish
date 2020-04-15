@@ -15,6 +15,8 @@
 #
 
 DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
+PRODUCT_MANIFEST_FILES += device/google/cuttlefish/shared/config/product_manifest.xml
+SYSTEM_EXT_MANIFEST_FILES += device/google/cuttlefish/shared/config/system_ext_manifest.xml
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/telephony_vendor.mk)
