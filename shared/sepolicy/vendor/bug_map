@@ -1,7 +1,6 @@
 gsid gsid capability b/146356992
 init system_lib_file dir b/133444385
 init system_lib_file file b/133444385
-kernel kernel system b/130424539
 logpersist logpersist capability b/132911257
 logpersist device file b/143108875
 migrate_legacy_obb_data dalvikcache_data_file file b/152338071
@@ -9,5 +8,4 @@ platform_app radio_prop property_service b/140284352
 priv_app proc_net file b/124422390
 shell adbd vsock_socket b/131904985
 system_server system_server process b/65201432
-vendor_init kernel system b/130424539
 zygote ramdump_app process b/139558100
