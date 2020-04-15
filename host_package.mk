@@ -29,7 +29,6 @@ cvd_host_executables := \
     stop_cvd \
     vnc_server \
     cf_qemu.sh \
-    cf_bpttool \
     kernel_log_monitor \
     extract-vmlinux \
     crosvm \
