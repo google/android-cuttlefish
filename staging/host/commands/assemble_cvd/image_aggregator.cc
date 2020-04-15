@@ -29,6 +29,8 @@
 #include <json/json.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>
+#include <uuid.h>
+#include <zlib.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -39,230 +41,243 @@
 
 namespace {
 
-const int GPT_HEADER_SIZE = 512 * 34;
-const int GPT_FOOTER_SIZE = 512 * 33;
+constexpr int SECTOR_SIZE = 512;
+constexpr int GPT_NUM_PARTITIONS = 128;
 
-const std::string BPTTOOL_FILE_PATH = "bin/cf_bpttool";
+struct __attribute__((packed)) MbrPartitionEntry {
+  std::uint8_t status;
+  std::uint8_t begin_chs[3];
+  std::uint8_t partition_type;
+  std::uint8_t end_chs[3];
+  std::uint32_t first_lba;
+  std::uint32_t num_sectors;
+};
 
-Json::Value BpttoolInput(const std::vector<ImagePartition>& partitions) {
-  std::vector<off_t> file_sizes;
-  off_t total_size = 20 << 20; // 20 MB for padding
-  for (auto& partition : partitions) {
-    LOG(INFO) << "Examining " << partition.label;
-    auto file = cvd::SharedFD::Open(partition.image_file_path.c_str(), O_RDONLY);
-    if (!file->IsOpen()) {
-      LOG(FATAL) << "Could not open \"" << partition.image_file_path
-                 << "\": " << file->StrError();
-      break;
-    }
-    int fd = file->UNMANAGED_Dup();
-    auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
-    off_t partition_file_size = 0;
-    if (sparse) {
-      partition_file_size = sparse_file_len(sparse, /* sparse */ false,
-                                            /* crc */ true);
-      sparse_file_destroy(sparse);
-      close(fd);
-      LOG(INFO) << "was sparse";
-    } else {
-      partition_file_size = cvd::FileSize(partition.image_file_path);
-      if (partition_file_size == 0) {
-        LOG(FATAL) << "Could not get file size of \"" << partition.image_file_path
-                  << "\"";
-        break;
-      }
-      LOG(INFO) << "was not sparse";
-    }
-    LOG(INFO) << "size was " << partition_file_size;
-    total_size += partition_file_size;
-    file_sizes.push_back(partition_file_size);
-  }
-  Json::Value bpttool_input_json;
-  bpttool_input_json["settings"] = Json::Value();
-  bpttool_input_json["settings"]["disk_size"] = (Json::Int64) total_size;
-  bpttool_input_json["partitions"] = Json::Value(Json::arrayValue);
-  for (size_t i = 0; i < partitions.size(); i++) {
-    Json::Value partition_json;
-    partition_json["label"] = partitions[i].label;
-    partition_json["size"] = (Json::Int64) file_sizes[i];
-    partition_json["guid"] = "auto";
-    partition_json["type_guid"] = "linux_fs";
-    bpttool_input_json["partitions"].append(partition_json);
-  }
-  return bpttool_input_json;
+struct __attribute__((packed)) MasterBootRecord {
+  std::uint8_t bootstrap_code[446];
+  MbrPartitionEntry partitions[4];
+  std::uint8_t boot_signature[2];
+};
+
+static_assert(sizeof(MasterBootRecord) == SECTOR_SIZE);
+
+MasterBootRecord ProtectiveMbr(std::uint64_t size) {
+  MasterBootRecord mbr = {
+    .partitions =  {{
+      .partition_type = 0xEE,
+      .first_lba = 1,
+      .num_sectors = (std::uint32_t) size / SECTOR_SIZE,
+    }},
+    .boot_signature = { 0x55, 0xAA },
+  };
+  return mbr;
 }
 
-std::string CreateFile(const std::string& path_prefix, const std::size_t len) {
-  std::string file_template = path_prefix + "XXXXXX";
-  char* file_template_cstr = (char*) malloc(file_template.size() + 1);
-  strncpy(file_template_cstr, file_template.c_str(), file_template.size() + 1);
-  int fd = mkstemp(file_template_cstr);
-  file_template = std::string(file_template_cstr);
-  free(file_template_cstr);
-  if (fd < 0) {
-    LOG(FATAL) << "not able to create disk hole temp file";
-  }
-  char data[4096];
-  for (size_t i = 0; i < sizeof(data); i++) {
-    data[i] = '\0';
-  }
-  for (size_t i = 0; i < len + 2 * sizeof(data); i+= sizeof(data)) {
-    if (write(fd, data, sizeof(data)) < (ssize_t) sizeof(data)) {
-      LOG(FATAL) << "not able to write to disk hole temp file";
-    }
-  }
+struct __attribute__((packed)) GptHeader {
+  std::uint8_t signature[8];
+  std::uint8_t revision[4];
+  std::uint32_t header_size;
+  std::uint32_t header_crc32;
+  std::uint32_t reserved;
+  std::uint64_t current_lba;
+  std::uint64_t backup_lba;
+  std::uint64_t first_usable_lba;
+  std::uint64_t last_usable_lba;
+  std::uint8_t disk_guid[16];
+  std::uint64_t partition_entries_lba;
+  std::uint32_t num_partition_entries;
+  std::uint32_t partition_entry_size;
+  std::uint32_t partition_entries_crc32;
+};
+
+static_assert(sizeof(GptHeader) == 92);
+
+struct __attribute__((packed)) GptPartitionEntry {
+  std::uint8_t partition_type_guid[16];
+  std::uint8_t unique_partition_guid[16];
+  std::uint64_t first_lba;
+  std::uint64_t last_lba;
+  std::uint64_t attributes;
+  std::uint16_t partition_name[36]; // UTF-16LE
+};
+
+static_assert(sizeof(GptPartitionEntry) == 128);
+
+struct __attribute__((packed)) GptBeginning {
+  MasterBootRecord protective_mbr;
+  GptHeader header;
+  std::uint8_t header_padding[420];
+  GptPartitionEntry entries[GPT_NUM_PARTITIONS];
+  std::uint8_t partition_alignment[3072];
+};
+
+static_assert(sizeof(GptBeginning) == SECTOR_SIZE * 40);
+
+struct __attribute__((packed)) GptEnd {
+  GptPartitionEntry entries[GPT_NUM_PARTITIONS];
+  GptHeader footer;
+  std::uint8_t footer_padding[420];
+};
+
+static_assert(sizeof(GptEnd) == SECTOR_SIZE * 33);
+
+struct PartitionInfo {
+  ImagePartition source;
+  std::uint64_t size;
+  std::uint64_t offset;
+};
+
+std::uint64_t UnsparsedSize(const std::string& file_path) {
+  auto fd = open(file_path.c_str(), O_RDONLY);
+  CHECK(fd >= 0) << "Could not open \"" << file_path << "\""
+                 << strerror(errno);
+  auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
+  auto size =
+      sparse ? sparse_file_len(sparse, false, true) : cvd::FileSize(file_path);
   close(fd);
-  return file_template;
+  return size;
 }
 
-CompositeDisk MakeCompositeDiskSpec(const Json::Value& bpt_file,
-                                    const std::vector<ImagePartition>& partitions,
-                                    const std::string& tmp_path_prefix,
-                                    const std::string& header_file,
-                                    const std::string& footer_file) {
-  CompositeDisk disk;
-  disk.set_version(1);
-  ComponentDisk* header = disk.add_component_disks();
-  header->set_file_path(header_file);
-  header->set_offset(0);
-  size_t previous_end = GPT_HEADER_SIZE;
-  for (auto& bpt_partition: bpt_file["partitions"]) {
-    if (bpt_partition["offset"].asUInt64() != previous_end) {
+void u16cpy(std::uint16_t* dest, std::uint16_t* src, std::size_t size) {
+  while (size > 0 && *src) {
+    *dest = *src;
+    dest++;
+    src++;
+    size--;
+  }
+  if (size > 0) {
+    *dest = 0;
+  }
+}
+
+class CompositeDiskBuilder {
+private:
+  std::vector<PartitionInfo> partitions_;
+  std::uint64_t next_disk_offset_;
+public:
+  CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
+
+  void AppendDisk(ImagePartition source) {
+    auto size = UnsparsedSize(source.image_file_path);
+    partitions_.push_back(PartitionInfo {
+      .source = source,
+      .size = size,
+      .offset = next_disk_offset_,
+    });
+    next_disk_offset_ += size;
+  }
+
+  CompositeDisk MakeCompositeDiskSpec(const std::string& header_file,
+                                      const std::string& footer_file) const {
+    CompositeDisk disk;
+    disk.set_version(1);
+    disk.set_length(next_disk_offset_ + sizeof(GptEnd));
+
+    ComponentDisk* header = disk.add_component_disks();
+    header->set_file_path(header_file);
+    header->set_offset(0);
+
+    for (auto& partition : partitions_) {
       ComponentDisk* component = disk.add_component_disks();
-      std::size_t length = bpt_partition["offset"].asUInt64() - previous_end;
-      component->set_file_path(CreateFile(tmp_path_prefix, length));
-      component->set_offset(previous_end);
+      component->set_file_path(partition.source.image_file_path);
+      component->set_offset(partition.offset);
+      component->set_read_write_capability(ReadWriteCapability::READ_WRITE);
     }
-    ComponentDisk* component = disk.add_component_disks();
-    for (auto& partition : partitions) {
-      if (bpt_partition["label"] == partition.label) {
-        component->set_file_path(partition.image_file_path);
+
+    ComponentDisk* footer = disk.add_component_disks();
+    footer->set_file_path(footer_file);
+    footer->set_offset(next_disk_offset_);
+
+    return disk;
+  }
+
+  GptBeginning Beginning() const {
+    if (partitions_.size() > GPT_NUM_PARTITIONS) {
+      LOG(FATAL) << "Too many partitions: " << partitions_.size();
+      return {};
+    }
+    GptBeginning gpt = {
+      .protective_mbr = ProtectiveMbr(next_disk_offset_ + sizeof(GptEnd)),
+      .header = {
+        .signature = {'E', 'F', 'I', ' ', 'P', 'A', 'R', 'T'},
+        .revision = {0, 0, 1, 0},
+        .header_size = sizeof(GptHeader),
+        .current_lba = 1,
+        .backup_lba = (next_disk_offset_ + sizeof(GptEnd)) / SECTOR_SIZE,
+        .first_usable_lba = sizeof(GptBeginning) / SECTOR_SIZE,
+        .last_usable_lba = (next_disk_offset_ - SECTOR_SIZE) / SECTOR_SIZE,
+        .partition_entries_lba = 2,
+        .num_partition_entries = GPT_NUM_PARTITIONS,
+        .partition_entry_size = sizeof(GptPartitionEntry),
+      },
+    };
+    uuid_generate(gpt.header.disk_guid);
+    for (std::size_t i = 0; i < partitions_.size(); i++) {
+      const auto& partition = partitions_[i];
+      gpt.entries[i] = GptPartitionEntry {
+        .first_lba = partition.offset / SECTOR_SIZE,
+        .last_lba = (partition.offset + partition.size - SECTOR_SIZE) / SECTOR_SIZE,
+      };
+      uuid_generate(gpt.entries[i].unique_partition_guid);
+      // The right uuid is technically 0FC63DAF-8483-4772-8E79-3D69D8477DE4.
+      // Due to some endianness mismatch in e2fsprogs uuid vs GPT, this rearranged
+      // one makes the right uuid type appear in gdisk.
+      if (uuid_parse("AF3DC60F-8384-7247-8E79-3D69D8477DE4", // linux_fs
+                    gpt.entries[i].partition_type_guid)) {
+        LOG(FATAL) << "Could not parse linux_fs uuid";
       }
+      std::u16string wide_name(partitions_[i].source.label.begin(),
+                              partitions_[i].source.label.end());
+      u16cpy((std::uint16_t*) gpt.entries[i].partition_name,
+            (std::uint16_t*) wide_name.c_str(), 36);
     }
-    component->set_offset(bpt_partition["offset"].asUInt64());
-    component->set_read_write_capability(ReadWriteCapability::READ_WRITE);
-    previous_end = bpt_partition["offset"].asUInt64() + bpt_partition["size"].asUInt64();
+    // Not sure these are right, but it works for bpttool
+    gpt.header.partition_entries_crc32 =
+        crc32(0, (std::uint8_t*) gpt.entries,
+              GPT_NUM_PARTITIONS * sizeof(GptPartitionEntry));
+    gpt.header.header_crc32 =
+        crc32(0, (std::uint8_t*) &gpt.header, sizeof(GptHeader));
+    return gpt;
   }
-  size_t footer_start = bpt_file["settings"]["disk_size"].asUInt64() - GPT_FOOTER_SIZE;
-  if (footer_start != previous_end) {
-    ComponentDisk* component = disk.add_component_disks();
-    component->set_file_path(CreateFile(tmp_path_prefix, footer_start - previous_end));
-    component->set_offset(previous_end);
+
+  GptEnd End(const GptBeginning& head) const {
+    GptEnd gpt;
+    std::memcpy((void*) gpt.entries, (void*) head.entries, 128 * 128);
+    gpt.footer = head.header;
+    gpt.footer.partition_entries_lba = next_disk_offset_ / SECTOR_SIZE;
+    std::swap(gpt.footer.current_lba, gpt.footer.backup_lba);
+    gpt.footer.header_crc32 = 0;
+    gpt.footer.header_crc32 =
+        crc32(0, (std::uint8_t*) &gpt.footer, sizeof(GptHeader));
+    return gpt;
   }
-  ComponentDisk* footer = disk.add_component_disks();
-  footer->set_file_path(footer_file);
-  footer->set_offset(bpt_file["settings"]["disk_size"].asUInt64() - GPT_FOOTER_SIZE);
-  disk.set_length(bpt_file["settings"]["disk_size"].asUInt64());
-  return disk;
+};
+
+bool WriteBeginning(cvd::SharedFD out, const GptBeginning& beginning) {
+  std::string begin_str((const char*) &beginning, sizeof(GptBeginning));
+  if (cvd::WriteAll(out, begin_str) != begin_str.size()) {
+    LOG(ERROR) << "Could not write GPT beginning: " << out->StrError();
+    return false;
+  }
+  return true;
 }
 
-cvd::SharedFD JsonToFd(const Json::Value& json) {
-  Json::FastWriter json_writer;
-  std::string json_string = json_writer.write(json);
-  cvd::SharedFD pipe[2];
-  cvd::SharedFD::Pipe(&pipe[0], &pipe[1]);
-  int written = pipe[1]->Write(json_string.c_str(), json_string.size());
-  if (written < 0) {
-    LOG(FATAL) << "Failed to write to pipe, errno is " << pipe[0]->GetErrno();
-  } else if (written < (int) json_string.size()) {
-    LOG(FATAL) << "Failed to write full json to pipe, only did " << written;
+bool WriteEnd(cvd::SharedFD out, const GptEnd& end) {
+  std::string begin_str((const char*) &end, sizeof(GptEnd));
+  if (cvd::WriteAll(out, begin_str) != begin_str.size()) {
+    LOG(ERROR) << "Could not write GPT end: " << out->StrError();
+    return false;
   }
-  return pipe[0];
-}
-
-Json::Value FdToJson(cvd::SharedFD fd) {
-  std::string contents;
-  cvd::ReadAll(fd, &contents);
-  Json::Reader reader;
-  Json::Value json;
-  if (!reader.parse(contents, json)) {
-    LOG(FATAL) << "Could not parse json: " << reader.getFormattedErrorMessages();
-  }
-  return json;
-}
-
-cvd::SharedFD BpttoolMakeTable(const cvd::SharedFD& input) {
-  auto bpttool_path = vsoc::DefaultHostArtifactsPath(BPTTOOL_FILE_PATH);
-  cvd::Command bpttool_cmd(bpttool_path);
-  bpttool_cmd.AddParameter("make_table");
-  bpttool_cmd.AddParameter("--input=/dev/stdin");
-  bpttool_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, input);
-  bpttool_cmd.AddParameter("--output_json=/dev/stdout");
-  cvd::SharedFD output_pipe[2];
-  cvd::SharedFD::Pipe(&output_pipe[0], &output_pipe[1]);
-  bpttool_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, output_pipe[1]);
-  int success = bpttool_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(FATAL) << "Unable to run bpttool. Exited with status " << success;
-  }
-  return output_pipe[0];
-}
-
-cvd::SharedFD BpttoolMakePartitionTable(cvd::SharedFD input) {
-  auto bpttool_path = vsoc::DefaultHostArtifactsPath(BPTTOOL_FILE_PATH);
-  cvd::Command bpttool_cmd(bpttool_path);
-  bpttool_cmd.AddParameter("make_table");
-  bpttool_cmd.AddParameter("--input=/dev/stdin");
-  bpttool_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, input);
-  bpttool_cmd.AddParameter("--output_gpt=/dev/stdout");
-  cvd::SharedFD output_pipe[2];
-  cvd::SharedFD::Pipe(&output_pipe[0], &output_pipe[1]);
-  bpttool_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, output_pipe[1]);
-  int success = bpttool_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(FATAL) << "Unable to run bpttool. Exited with status " << success;
-  }
-  return output_pipe[0];
-}
-
-void CreateGptFiles(cvd::SharedFD gpt, const std::string& header_file,
-                    const std::string& footer_file) {
-  std::string content;
-  content.resize(GPT_HEADER_SIZE);
-  if (cvd::ReadExact(gpt, &content) < GPT_HEADER_SIZE) {
-    LOG(FATAL) << "Unable to run read full gpt. Errno is " << gpt->GetErrno();
-  }
-  auto header_fd = cvd::SharedFD::Open(header_file.c_str(), O_CREAT | O_RDWR, 0755);
-  if (cvd::WriteAll(header_fd, content) < GPT_HEADER_SIZE) {
-    LOG(FATAL) << "Unable to run write full gpt. Errno is " << gpt->GetErrno();
-  }
-  content.resize(GPT_FOOTER_SIZE);
-  if (cvd::ReadExact(gpt, &content) < GPT_FOOTER_SIZE) {
-    LOG(FATAL) << "Unable to run read full gpt. Errno is " << gpt->GetErrno();
-  }
-  auto footer_fd = cvd::SharedFD::Open(footer_file.c_str(), O_CREAT | O_RDWR, 0755);
-  if (cvd::WriteAll(footer_fd, content) < GPT_FOOTER_SIZE) {
-    LOG(FATAL) << "Unable to run write full gpt. Errno is " << gpt->GetErrno();
-  }
-}
-
-void BptToolMakeDiskImage(const std::vector<ImagePartition>& partitions,
-                          cvd::SharedFD table, const std::string& output) {
-  auto bpttool_path = vsoc::DefaultHostArtifactsPath(BPTTOOL_FILE_PATH);
-  cvd::Command bpttool_cmd(bpttool_path);
-  bpttool_cmd.AddParameter("make_disk_image");
-  bpttool_cmd.AddParameter("--input=/dev/stdin");
-  bpttool_cmd.AddParameter("--output=", cvd::AbsolutePath(output));
-  bpttool_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdIn, table);
-  for (auto& partition : partitions) {
-    auto abs_path = cvd::AbsolutePath(partition.image_file_path);
-    bpttool_cmd.AddParameter("--image=" + partition.label + ":" + abs_path);
-  }
-  int success = bpttool_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(FATAL) << "Unable to run bpttool. Exited with status " << success;
-  }
+  return true;
 }
 
 void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
   for (const auto& partition : partitions) {
-    auto file = cvd::SharedFD::Open(partition.image_file_path.c_str(), O_RDONLY);
-    if (!file->IsOpen()) {
-      LOG(FATAL) << "Could not open \"" << partition.image_file_path
-                  << "\": " << file->StrError();
+    auto fd = open(partition.image_file_path.c_str(), O_RDONLY);
+    if (fd < 0) {
+      PLOG(FATAL) << "Could not open \"" << partition.image_file_path;
       break;
     }
-    int fd = file->UNMANAGED_Dup();
     auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
     if (!sparse) {
       close(fd);
@@ -270,9 +285,11 @@ void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
     }
     LOG(INFO) << "Desparsing " << partition.image_file_path;
     std::string out_file_name = partition.image_file_path + ".desparse";
-    auto out_file = cvd::SharedFD::Open(out_file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC,
-                                        S_IRUSR | S_IWUSR | S_IRGRP);
-    int write_fd = out_file->UNMANAGED_Dup();
+    auto write_fd = open(out_file_name.c_str(), O_RDWR | O_CREAT | O_TRUNC,
+                         S_IRUSR | S_IWUSR | S_IRGRP);
+    if (write_fd < 0) {
+      PLOG(FATAL) << "Could not open " << out_file_name;
+    }
     int write_status = sparse_file_write(sparse, write_fd, /* gz */ false,
                                          /* sparse */ false, /* crc */ false);
     if (write_status < 0) {
@@ -294,25 +311,52 @@ void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
 void AggregateImage(const std::vector<ImagePartition>& partitions,
                     const std::string& output_path) {
   DeAndroidSparse(partitions);
-  auto bpttool_input_json = BpttoolInput(partitions);
-  auto input_json_fd = JsonToFd(bpttool_input_json);
-  auto table_fd = BpttoolMakeTable(input_json_fd);
-  BptToolMakeDiskImage(partitions, table_fd, output_path);
+  CompositeDiskBuilder builder;
+  for (auto& disk : partitions) {
+    builder.AppendDisk(disk);
+  }
+  auto output = cvd::SharedFD::Creat(output_path, 0600);
+  auto beginning = builder.Beginning();
+  if (!WriteBeginning(output, beginning)) {
+    LOG(FATAL) << "Could not write GPT beginning to \"" << output_path
+               << "\": " << output->StrError();
+  }
+  for (auto& disk : partitions) {
+    auto disk_fd = cvd::SharedFD::Open(disk.image_file_path, O_RDONLY);
+    auto file_size = cvd::FileSize(disk.image_file_path);
+    if (!output->CopyFrom(*disk_fd, file_size)) {
+      LOG(FATAL) << "Could not copy from \"" << disk.image_file_path
+                 << "\" to \"" << output_path << "\": " << output->StrError();
+    }
+  }
+  if (!WriteEnd(output, builder.End(beginning))) {
+    LOG(FATAL) << "Could not write GPT end to \"" << output_path
+               << "\": " << output->StrError();
+  }
 };
 
 void CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                         const std::string& tmp_path_prefix,
                          const std::string& header_file,
                          const std::string& footer_file,
                          const std::string& output_composite_path) {
-  auto bpttool_input_json = BpttoolInput(partitions);
-  auto table_fd = BpttoolMakeTable(JsonToFd(bpttool_input_json));
-  auto table = FdToJson(table_fd);
-  auto partition_table_fd = BpttoolMakePartitionTable(JsonToFd(bpttool_input_json));
-  CreateGptFiles(partition_table_fd, header_file, footer_file);
-  auto composite_proto = MakeCompositeDiskSpec(table, partitions, tmp_path_prefix,
-                                               header_file, footer_file);
-  std::ofstream composite(output_composite_path.c_str(), std::ios::binary | std::ios::trunc);
+  CompositeDiskBuilder builder;
+  for (auto& disk : partitions) {
+    builder.AppendDisk(disk);
+  }
+  auto header = cvd::SharedFD::Creat(header_file, 0600);
+  auto beginning = builder.Beginning();
+  if (!WriteBeginning(header, beginning)) {
+    LOG(FATAL) << "Could not write GPT beginning to \"" << header_file
+               << "\": " << header->StrError();
+  }
+  auto footer = cvd::SharedFD::Creat(footer_file, 0600);
+  if (!WriteEnd(footer, builder.End(beginning))) {
+    LOG(FATAL) << "Could not write GPT end to \"" << footer_file
+               << "\": " << footer->StrError();
+  }
+  auto composite_proto = builder.MakeCompositeDiskSpec(header_file, footer_file);
+  std::ofstream composite(output_composite_path.c_str(),
+                          std::ios::binary | std::ios::trunc);
   composite << "composite_disk\x1d";
   composite_proto.SerializeToOstream(&composite);
   composite.flush();
