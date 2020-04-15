@@ -750,8 +750,7 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
     }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
-    std::string tmp_prefix = config.AssemblyPath("disk_hole/disk");
-    CreateCompositeDisk(disk_config(), tmp_prefix, header_path, footer_path,
+    CreateCompositeDisk(disk_config(), header_path, footer_path,
                         config.composite_disk_path());
   } else {
     auto existing_size = cvd::FileSize(config.composite_disk_path());
