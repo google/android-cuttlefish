@@ -6,6 +6,10 @@ DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor"
 
 FLAGS "$@" || exit 1
 
+if [ ${FLAGS_help} -eq ${FLAGS_TRUE} ]; then
+  exit 0
+fi
+
 set -o errexit
 set -u
 # set -x
