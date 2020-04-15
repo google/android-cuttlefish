@@ -27,7 +27,6 @@ struct ImagePartition {
 void AggregateImage(const std::vector<ImagePartition>& partitions,
                     const std::string& output_path);
 void CreateCompositeDisk(std::vector<ImagePartition> partitions,
-                         const std::string& tmp_path_prefix,
                          const std::string& header_file,
                          const std::string& footer_file,
                          const std::string& output_composite_path);
