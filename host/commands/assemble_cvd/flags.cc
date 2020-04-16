@@ -436,6 +436,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
     instance.set_tpm_port(2321 + num - 1);
+    instance.set_tombstone_receiver_port(6600 + num - 1);
 
     instance.set_device_title(FLAGS_device_title);
 

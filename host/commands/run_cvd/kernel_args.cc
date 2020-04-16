@@ -76,6 +76,13 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back("androidboot.force_normal_boot=1");
   }
 
+  if (config.enable_tombstone_receiver() && instance.tombstone_receiver_port()) {
+    kernel_cmdline.push_back("androidboot.tombstone_transmit=1");
+    kernel_cmdline.push_back(concat("androidboot.vsock_tombstone_port=", instance.tombstone_receiver_port()));
+  } else {
+    kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
+  }
+
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
@@ -97,16 +104,6 @@ std::vector<std::string> KernelCommandLineFromStreamer(
                                  *streamer_launch.keyboard_server_vsock_port));
   }
   return kernel_args;
-}
-
-std::vector<std::string> KernelCommandLineFromTombstone(const TombstoneReceiverPorts& tombstone) {
-  if (!tombstone.server_vsock_port) {
-    return { "androidboot.tombstone_transmit=0" };
-  }
-  return {
-    "androidboot.tombstone_transmit=1",
-    concat("androidboot.vsock_tombstone_port=", *tombstone.server_vsock_port),
-  };
 }
 
 std::vector<std::string> KernelCommandLineFromConfigServer(const ConfigServerPorts& config_server) {
