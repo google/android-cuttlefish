@@ -36,7 +36,7 @@ MiscInfo ParseMiscInfo(const std::string& misc_info_contents) {
     // Not using android::base::Split here to only capture the first =
     auto key = android::base::Trim(line.substr(0, eq_pos));
     auto value = android::base::Trim(line.substr(eq_pos + 1));
-    if (misc_info.find(key) != misc_info.end()) {
+    if (misc_info.find(key) != misc_info.end() && misc_info[key] != value) {
       LOG(ERROR) << "Duplicate key: \"" << key << "\". First value: \""
                  << misc_info[key] << "\", Second value: \"" << value << "\"";
       return {};
