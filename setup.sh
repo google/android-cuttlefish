@@ -41,7 +41,7 @@ function help_on_container_start {
   local name=$1
 
   echo "Log into container ${name} with ssh:"
-  echo "    ssh vsoc-01@$ip_${name}"
+  echo "    ssh vsoc-01@ip_${name}"
   echo "Log into container ${name} with docker:"
   echo "    docker exec -it --user vsoc-01 $(cvd_get_id ${name}) /bin/bash"
   echo "Start Cuttlefish: $(__gen_start_func_name ${name})"
@@ -49,9 +49,6 @@ function help_on_container_start {
   echo "Delete container ${name}:"
   [[ "${name}" == 'cuttlefish' ]] && echo "    cvd_docker_rm"
   [[ "${name}" != 'cuttlefish' ]] && echo "    cvd_docker_rm ${name}"
-
-  echo
-  help_on_sourcing
 }
 
 function cvd_docker_create {
@@ -87,6 +84,8 @@ function cvd_docker_create {
 
     __gen_funcs ${name}
     help_on_container_start ${name}
+    echo
+    help_on_sourcing
   else
     echo "Container ${name} exists";
     if [ $(docker inspect -f "{{.State.Running}}" ${name}) != 'true' ]; then
@@ -95,6 +94,8 @@ function cvd_docker_create {
       echo "Container ${name} is already running.";
       __gen_funcs ${name}
       help_on_container_start ${name}
+      echo
+      help_on_sourcing
     fi
   fi
 }
