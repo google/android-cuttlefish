@@ -143,6 +143,7 @@ const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
 const char* kLogcatMode = "logcat_mode";
+const char* kLogcatPort = "logcat_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerBinary = "config_server_binary";
 
@@ -610,6 +611,14 @@ int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::logcat_port() const {
+  return (*Dictionary())[kLogcatPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_logcat_port(int logcat_port) {
+  (*Dictionary())[kLogcatPort] = logcat_port;
 }
 
 void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
