@@ -492,6 +492,13 @@ void SetDefaultFlagsForCrosvm() {
           return (::mkdir(var_empty.c_str(), 0755) == 0);
         }(vsoc::kCrosvmVarEmptyDir);
   }
+
+  // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
+  // auto-enabling sandbox when gpu is enabled (b/152323505).
+  if (FLAGS_gpu_mode != vsoc::kGpuModeGuestSwiftshader) {
+    default_enable_sandbox = false;
+  }
+
   SetCommandLineOptionWithMode("enable_sandbox",
                                (default_enable_sandbox ? "true" : "false"),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
