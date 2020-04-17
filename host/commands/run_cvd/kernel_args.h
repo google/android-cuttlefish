@@ -23,4 +23,3 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfig& config);
-std::vector<std::string> KernelCommandLineFromStreamer(const StreamerLaunchResult& vnc_config);

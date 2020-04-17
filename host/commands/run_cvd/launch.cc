@@ -88,11 +88,11 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
   if (config.vm_manager() == vm_manager::QemuManager::name()) {
     cmd->AddParameter("-write_virtio_input");
 
-    touch_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.touch_server_vsock_port = touch_server->VsockServerPort();
-
-    keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
+    touch_server = cvd::SharedFD::VsockServer(instance.touch_server_port(),
+                                              SOCK_STREAM);
+    keyboard_server =
+        cvd::SharedFD::VsockServer(instance.keyboard_server_port(),
+                                   SOCK_STREAM);
   } else {
     touch_server = CreateUnixInputServer(instance.touch_socket_path());
     keyboard_server = CreateUnixInputServer(instance.keyboard_socket_path());
@@ -114,8 +114,8 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
       config.gpu_mode() == vsoc::kGpuModeGfxStream) {
     frames_server = CreateUnixInputServer(instance.frames_socket_path());
   } else {
-    frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
+    frames_server = cvd::SharedFD::VsockServer(instance.frames_server_port(),
+                                               SOCK_STREAM);
   }
   if (!frames_server->IsOpen()) {
     LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();

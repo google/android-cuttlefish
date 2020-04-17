@@ -307,11 +307,29 @@ class CuttlefishConfig {
     const Json::Value* Dictionary() const;
   public:
     std::string serial_number() const;
+    // If any of the following port numbers is 0, the relevant service is not
+    // running on the guest.
+
+    // Port number to connect to vnc server on the host
     int vnc_server_port() const;
+    // Port number to connect to the tombstone receiver on the host
     int tombstone_receiver_port() const;
+    // Port number to connect to the logcat receiver on the host
     int logcat_port() const;
+    // Port number to connect to the config server on the host
     int config_server_port() const;
+    // Port number to connect to the keyboard server on the host. (Only
+    // operational if QEMU is the vmm.)
+    int keyboard_server_port() const;
+    // Port number to connect to the touch server on the host. (Only
+    // operational if QEMU is the vmm.)
+    int touch_server_port() const;
+    // Port number to connect to the frame server on the host. (Only
+    // operational if using swiftshader as the GPU.)
+    int frames_server_port() const;
+    // Port number to connect to the adb server on the host
     int host_port() const;
+    // Port number to connect to the tpm server on the host
     int tpm_port() const;
     std::string adb_ip_and_port() const;
     std::string adb_device_name() const;
@@ -367,6 +385,9 @@ class CuttlefishConfig {
     void set_tombstone_receiver_port(int tombstone_receiver_port);
     void set_logcat_port(int logcat_port);
     void set_config_server_port(int config_server_port);
+    void set_frames_server_port(int config_server_port);
+    void set_touch_server_port(int config_server_port);
+    void set_keyboard_server_port(int config_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);

@@ -95,25 +95,19 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back(concat("androidboot.tpm_vsock_port=", instance.tpm_port()));
   }
 
+  if (instance.keyboard_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_keyboard_port=", instance.keyboard_server_port()));
+  }
+
+  if (instance.touch_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_touch_port=", instance.touch_server_port()));
+  }
+
+  if (instance.frames_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_frames_port=", instance.frames_server_port()));
+  }
+
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
-}
-
-std::vector<std::string> KernelCommandLineFromStreamer(
-    const StreamerLaunchResult& streamer_launch) {
-  std::vector<std::string> kernel_args;
-  if (streamer_launch.frames_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_frames_port=",
-                                 *streamer_launch.frames_server_vsock_port));
-  }
-  if (streamer_launch.touch_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_touch_port=",
-                                 *streamer_launch.touch_server_vsock_port));
-  }
-  if (streamer_launch.keyboard_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_keyboard_port=",
-                                 *streamer_launch.keyboard_server_vsock_port));
-  }
-  return kernel_args;
 }

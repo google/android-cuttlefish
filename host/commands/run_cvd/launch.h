@@ -21,9 +21,6 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
 
 struct StreamerLaunchResult {
   bool launched = false;
-  std::optional<unsigned int> frames_server_vsock_port;
-  std::optional<unsigned int> touch_server_vsock_port;
-  std::optional<unsigned int> keyboard_server_vsock_port;
 };
 StreamerLaunchResult LaunchVNCServer(
     const vsoc::CuttlefishConfig& config,
