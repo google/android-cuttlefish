@@ -83,6 +83,10 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
   }
 
+  if (config.logcat_mode() == cvd::kLogcatVsockMode && instance.logcat_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", instance.logcat_port()));
+  }
+
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
@@ -112,15 +116,6 @@ std::vector<std::string> KernelCommandLineFromConfigServer(const ConfigServerPor
   }
   return {
     concat("androidboot.cuttlefish_config_server_port=", *config_server.server_vsock_port),
-  };
-}
-
-std::vector<std::string> KernelCommandLineFromLogcatServer(const LogcatServerPorts& logcat_server) {
-  if (!logcat_server.server_vsock_port) {
-    return {};
-  }
-  return {
-    concat("androidboot.vsock_logcat_port=", *logcat_server.server_vsock_port),
   };
 }
 

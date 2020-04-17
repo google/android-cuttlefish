@@ -422,8 +422,7 @@ int main(int argc, char** argv) {
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
 
-  auto logcat_server = LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
-  auto logcat_server_args = KernelCommandLineFromLogcatServer(logcat_server);
+  LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
 
   auto config_server = LaunchConfigServer(*config, &process_monitor);
   auto config_server_args = KernelCommandLineFromConfigServer(config_server);
@@ -450,7 +449,6 @@ int main(int argc, char** argv) {
   kernel_args.insert(kernel_args.end(), streamer_kernel_args.begin(),
                      streamer_kernel_args.end());
   kernel_args.insert(kernel_args.end(), config_server_args.begin(), config_server_args.end());
-  kernel_args.insert(kernel_args.end(), logcat_server_args.begin(), logcat_server_args.end());
   kernel_args.insert(kernel_args.end(), tpm_kernel_args.begin(), tpm_kernel_args.end());
 
   // Start the guest VM

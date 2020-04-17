@@ -25,5 +25,4 @@
 std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfig& config);
 std::vector<std::string> KernelCommandLineFromStreamer(const StreamerLaunchResult& vnc_config);
 std::vector<std::string> KernelCommandLineFromConfigServer(const ConfigServerPorts& config_server);
-std::vector<std::string> KernelCommandLineFromLogcatServer(const LogcatServerPorts& config_server);
 std::vector<std::string> KernelCommandLineFromTpm(const TpmPorts& tpm);
