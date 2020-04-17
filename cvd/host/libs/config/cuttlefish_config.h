@@ -310,6 +310,7 @@ class CuttlefishConfig {
     int vnc_server_port() const;
     int tombstone_receiver_port() const;
     int logcat_port() const;
+    int config_server_port() const;
     int host_port() const;
     int tpm_port() const;
     std::string adb_ip_and_port() const;
@@ -365,6 +366,7 @@ class CuttlefishConfig {
     void set_vnc_server_port(int vnc_server_port);
     void set_tombstone_receiver_port(int tombstone_receiver_port);
     void set_logcat_port(int logcat_port);
+    void set_config_server_port(int config_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
