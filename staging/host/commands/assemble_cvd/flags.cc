@@ -730,37 +730,39 @@ off_t AvailableSpaceAtPath(const std::string& path) {
   return vfs.f_bsize * vfs.f_bavail; // block size * free blocks for unprivileged users
 }
 
-off_t USERDATA_IMAGE_RESERVED = 4l * (1l << 30l); // 4 GiB
-off_t AGGREGATE_IMAGE_RESERVED = 12l * (1l << 30l); // 12 GiB
-
 bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
   if (!cvd::SharedFD::Open(config.composite_disk_path().c_str(), O_WRONLY | O_CREAT, 0644)->IsOpen()) {
     LOG(ERROR) << "Could not ensure " << config.composite_disk_path() << " exists";
     return false;
   }
   if (FLAGS_vm_manager == vm_manager::CrosvmManager::name()) {
-    auto existing_size = cvd::FileSize(FLAGS_data_image);
+    // Check if filling in the sparse image would run out of disk space.
+    auto existing_sizes = cvd::SparseFileSizes(FLAGS_data_image);
+    if (existing_sizes.sparse_size == 0 && existing_sizes.disk_size == 0) {
+      LOG(ERROR) << "Unable to determine size of \"" << FLAGS_data_image
+                 << "\". Does this file exist?";
+    }
     auto available_space = AvailableSpaceAtPath(FLAGS_data_image);
-    if (available_space < USERDATA_IMAGE_RESERVED - existing_size) {
+    if (available_space < existing_sizes.sparse_size - existing_sizes.disk_size) {
       // TODO(schuffelen): Duplicate this check in run_cvd when it can run on a separate machine
-      LOG(ERROR) << "Not enough space in fs containing " << FLAGS_data_image;
-      LOG(ERROR) << "Wanted " << (USERDATA_IMAGE_RESERVED - existing_size);
+      LOG(ERROR) << "Not enough space remaining in fs containing " << FLAGS_data_image;
+      LOG(ERROR) << "Wanted " << (existing_sizes.sparse_size - existing_sizes.disk_size);
       LOG(ERROR) << "Got " << available_space;
       return false;
+    } else {
+      LOG(INFO) << "Available space: " << available_space;
+      LOG(INFO) << "Sparse size of \"" << FLAGS_data_image << "\": "
+                << existing_sizes.sparse_size;
+      LOG(INFO) << "Disk size of \"" << FLAGS_data_image << "\": "
+                << existing_sizes.disk_size;
     }
     std::string header_path = config.AssemblyPath("gpt_header.img");
     std::string footer_path = config.AssemblyPath("gpt_footer.img");
     CreateCompositeDisk(disk_config(), header_path, footer_path,
                         config.composite_disk_path());
   } else {
-    auto existing_size = cvd::FileSize(config.composite_disk_path());
-    auto available_space = AvailableSpaceAtPath(config.composite_disk_path());
-    if (available_space < AGGREGATE_IMAGE_RESERVED - existing_size) {
-      LOG(ERROR) << "Not enough space to create " << config.composite_disk_path();
-      LOG(ERROR) << "Wanted " << (AGGREGATE_IMAGE_RESERVED - existing_size);
-      LOG(ERROR) << "Got " << available_space;
-      return false;
-    }
+    // If this doesn't fit into the disk, it will fail while aggregating. The
+    // aggregator doesn't maintain any sparse attributes.
     AggregateImage(disk_config(), config.composite_disk_path());
   }
   return true;
