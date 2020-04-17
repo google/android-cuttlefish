@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python2.7
 #
 # Copyright (C) 2018 The Android Open Source Project
 #
