@@ -169,6 +169,9 @@ const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 
+const char* kFramesServerPort = "frames_server_port";
+const char* kTouchServerPort = "touch_server_port";
+const char* kKeyboardServerPort = "keyboard_server_port";
 }  // namespace
 
 namespace vsoc {
@@ -604,6 +607,30 @@ int CuttlefishConfig::InstanceSpecific::vnc_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_server_port) {
   (*Dictionary())[kVncServerPort] = vnc_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::frames_server_port() const {
+  return (*Dictionary())[kFramesServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_frames_server_port(int frames_server_port) {
+  (*Dictionary())[kFramesServerPort] = frames_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::touch_server_port() const {
+  return (*Dictionary())[kTouchServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_touch_server_port(int touch_server_port) {
+  (*Dictionary())[kTouchServerPort] = touch_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::keyboard_server_port() const {
+  return (*Dictionary())[kKeyboardServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_keyboard_server_port(int keyboard_server_port) {
+  (*Dictionary())[kKeyboardServerPort] = keyboard_server_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
