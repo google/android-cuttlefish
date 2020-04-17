@@ -346,9 +346,11 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
   }
 }
 
-TpmPorts LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
-                            const vsoc::CuttlefishConfig& config) {
-  int port = config.ForDefaultInstance().tpm_port();
+void LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
+                   const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
+  auto port = instance.tpm_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
   cvd::Command tpm_command(
       vsoc::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
   tpm_command.AddParameter("-port=", port);
@@ -361,7 +363,6 @@ TpmPorts LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
   proxy_command.AddParameter("--vsock_port=", port);
   process_monitor->StartSubprocess(std::move(proxy_command),
                                    GetOnSubprocessExitCallback(config));
-  return TpmPorts{port};
 }
 
 void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
@@ -372,8 +373,8 @@ void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
                                    GetOnSubprocessExitCallback(config));
 }
 
-TpmPorts LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
-                              const vsoc::CuttlefishConfig& config) {
+void LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
+                          const vsoc::CuttlefishConfig& config) {
   auto server = cvd::SharedFD::VsockServer(SOCK_STREAM);
   if (!server->IsOpen()) {
     LOG(ERROR) << "Unable to create tpm passthrough server: "
@@ -387,20 +388,16 @@ TpmPorts LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
 
   process_monitor->StartSubprocess(std::move(tpm_command),
                                    GetOnSubprocessExitCallback(config));
-
-  return TpmPorts{server->VsockServerPort()};
 }
 
-TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
-                   const vsoc::CuttlefishConfig& config) {
+void LaunchTpm(cvd::ProcessMonitor* process_monitor,
+               const vsoc::CuttlefishConfig& config) {
   if (config.tpm_device() != "") {
     if (config.tpm_binary() != "") {
       LOG(WARNING) << "Both -tpm_device and -tpm_binary were set. Using -tpm_device.";
     }
-    return LaunchTpmPassthrough(process_monitor, config);
+    LaunchTpmPassthrough(process_monitor, config);
   } else if (config.tpm_binary() != "") {
-    return LaunchTpmSimulator(process_monitor, config);
-  } else {
-    return TpmPorts{};
+    LaunchTpmSimulator(process_monitor, config);
   }
 }
