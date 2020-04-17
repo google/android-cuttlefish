@@ -34,12 +34,8 @@ void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                       cvd::ProcessMonitor* process_monitor);
 void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
                                    cvd::ProcessMonitor* process_monitor);
-
-struct ConfigServerPorts {
-  std::optional<unsigned int> server_vsock_port;
-};
-ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
-                                     cvd::ProcessMonitor* process_monitor);
+void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+                        cvd::ProcessMonitor* process_monitor);
 
 StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
                                   const vsoc::CuttlefishConfig& config);

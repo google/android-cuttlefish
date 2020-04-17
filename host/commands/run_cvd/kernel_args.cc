@@ -87,6 +87,10 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", instance.logcat_port()));
   }
 
+  if (instance.config_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.cuttlefish_config_server_port=", instance.config_server_port()));
+  }
+
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
@@ -108,15 +112,6 @@ std::vector<std::string> KernelCommandLineFromStreamer(
                                  *streamer_launch.keyboard_server_vsock_port));
   }
   return kernel_args;
-}
-
-std::vector<std::string> KernelCommandLineFromConfigServer(const ConfigServerPorts& config_server) {
-  if (!config_server.server_vsock_port) {
-    return {};
-  }
-  return {
-    concat("androidboot.cuttlefish_config_server_port=", *config_server.server_vsock_port),
-  };
 }
 
 std::vector<std::string> KernelCommandLineFromTpm(const TpmPorts& tpm) {

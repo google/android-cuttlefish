@@ -197,9 +197,11 @@ void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
   return;
 }
 
-ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
-                                     cvd::ProcessMonitor* process_monitor) {
-  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
+void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+                        cvd::ProcessMonitor* process_monitor) {
+  auto instance = config.ForDefaultInstance();
+  auto port = instance.config_server_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create configuration server socket: "
                << socket->StrError();
@@ -209,7 +211,7 @@ ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
   cmd.AddParameter("-server_fd=", socket);
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
-  return { socket->VsockServerPort() };
+  return;
 }
 
 void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
