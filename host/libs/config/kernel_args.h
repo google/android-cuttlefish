@@ -19,7 +19,6 @@
 #include <string>
 #include <vector>
 
-#include "host/commands/run_cvd/launch.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfig& config);

@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/kernel_args.h"
+#include "host/libs/config/kernel_args.h"
 
 #include <string>
 #include <vector>
 
-#include "host/commands/run_cvd/launch.h"
-#include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -47,8 +45,6 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
 
   kernel_cmdline.push_back(concat("androidboot.serialno=", instance.serial_number()));
   kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
-  if (config.logcat_mode() == cvd::kLogcatVsockMode) {
-  }
   kernel_cmdline.push_back(concat(
       "androidboot.setupwizard_mode=", config.setupwizard_mode()));
   if (!config.use_bootloader()) {

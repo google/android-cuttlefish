@@ -24,6 +24,11 @@ namespace Json {
 class Value;
 }
 
+namespace cvd {
+constexpr char kLogcatSerialMode[] = "serial";
+constexpr char kLogcatVsockMode[] = "vsock";
+}
+
 namespace vsoc {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
