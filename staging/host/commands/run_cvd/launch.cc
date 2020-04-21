@@ -88,11 +88,11 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
   if (config.vm_manager() == vm_manager::QemuManager::name()) {
     cmd->AddParameter("-write_virtio_input");
 
-    touch_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.touch_server_vsock_port = touch_server->VsockServerPort();
-
-    keyboard_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.keyboard_server_vsock_port = keyboard_server->VsockServerPort();
+    touch_server = cvd::SharedFD::VsockServer(instance.touch_server_port(),
+                                              SOCK_STREAM);
+    keyboard_server =
+        cvd::SharedFD::VsockServer(instance.keyboard_server_port(),
+                                   SOCK_STREAM);
   } else {
     touch_server = CreateUnixInputServer(instance.touch_socket_path());
     keyboard_server = CreateUnixInputServer(instance.keyboard_socket_path());
@@ -114,8 +114,8 @@ StreamerLaunchResult CreateStreamerServers(cvd::Command* cmd,
       config.gpu_mode() == vsoc::kGpuModeGfxStream) {
     frames_server = CreateUnixInputServer(instance.frames_socket_path());
   } else {
-    frames_server = cvd::SharedFD::VsockServer(SOCK_STREAM);
-    server_ret.frames_server_vsock_port = frames_server->VsockServerPort();
+    frames_server = cvd::SharedFD::VsockServer(instance.frames_server_port(),
+                                               SOCK_STREAM);
   }
   if (!frames_server->IsOpen()) {
     LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();
@@ -177,12 +177,14 @@ std::vector<cvd::SharedFD> LaunchKernelLogMonitor(
   return ret;
 }
 
-LogcatServerPorts LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
-                                                cvd::ProcessMonitor* process_monitor) {
+void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                   cvd::ProcessMonitor* process_monitor) {
   if (!LogcatReceiverEnabled(config)) {
-    return {};
+    return;
   }
-  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
+  auto instance = config.ForDefaultInstance();
+  auto port = instance.logcat_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create logcat server socket: "
                << socket->StrError();
@@ -192,12 +194,14 @@ LogcatServerPorts LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& co
   cmd.AddParameter("-server_fd=", socket);
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
-  return { socket->VsockServerPort() };
+  return;
 }
 
-ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
-                                     cvd::ProcessMonitor* process_monitor) {
-  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
+void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+                        cvd::ProcessMonitor* process_monitor) {
+  auto instance = config.ForDefaultInstance();
+  auto port = instance.config_server_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create configuration server socket: "
                << socket->StrError();
@@ -207,13 +211,13 @@ ConfigServerPorts LaunchConfigServer(const vsoc::CuttlefishConfig& config,
   cmd.AddParameter("-server_fd=", socket);
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
-  return { socket->VsockServerPort() };
+  return;
 }
 
-TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
-    const vsoc::CuttlefishConfig& config, cvd::ProcessMonitor* process_monitor) {
+void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+                                      cvd::ProcessMonitor* process_monitor) {
   if (!config.enable_tombstone_receiver()) {
-    return {};
+    return;
   }
   auto instance = config.ForDefaultInstance();
 
@@ -225,16 +229,17 @@ TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
       LOG(ERROR) << "Failed to create tombstone directory: " << tombstoneDir
                  << ". Error: " << errno;
       exit(RunnerExitCodes::kTombstoneDirCreationError);
-      return {};
+      return;
     }
   }
 
-  auto socket = cvd::SharedFD::VsockServer(SOCK_STREAM);
+  auto port = instance.tombstone_receiver_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
   if (!socket->IsOpen()) {
     LOG(ERROR) << "Unable to create tombstone server socket: "
                << socket->StrError();
     std::exit(RunnerExitCodes::kTombstoneServerError);
-    return {};
+    return;
   }
   cvd::Command cmd(config.tombstone_receiver_binary());
   cmd.AddParameter("-server_fd=", socket);
@@ -242,7 +247,7 @@ TombstoneReceiverPorts LaunchTombstoneReceiverIfEnabled(
 
   process_monitor->StartSubprocess(std::move(cmd),
                                    GetOnSubprocessExitCallback(config));
-  return { socket->VsockServerPort() };
+  return;
 }
 
 StreamerLaunchResult LaunchVNCServer(
@@ -341,9 +346,11 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
   }
 }
 
-TpmPorts LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
-                            const vsoc::CuttlefishConfig& config) {
-  int port = config.ForDefaultInstance().tpm_port();
+void LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
+                   const vsoc::CuttlefishConfig& config) {
+  auto instance = config.ForDefaultInstance();
+  auto port = instance.tpm_port();
+  auto socket = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
   cvd::Command tpm_command(
       vsoc::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
   tpm_command.AddParameter("-port=", port);
@@ -356,7 +363,6 @@ TpmPorts LaunchTpmSimulator(cvd::ProcessMonitor* process_monitor,
   proxy_command.AddParameter("--vsock_port=", port);
   process_monitor->StartSubprocess(std::move(proxy_command),
                                    GetOnSubprocessExitCallback(config));
-  return TpmPorts{port};
 }
 
 void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
@@ -367,8 +373,8 @@ void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
                                    GetOnSubprocessExitCallback(config));
 }
 
-TpmPorts LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
-                              const vsoc::CuttlefishConfig& config) {
+void LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
+                          const vsoc::CuttlefishConfig& config) {
   auto server = cvd::SharedFD::VsockServer(SOCK_STREAM);
   if (!server->IsOpen()) {
     LOG(ERROR) << "Unable to create tpm passthrough server: "
@@ -382,20 +388,16 @@ TpmPorts LaunchTpmPassthrough(cvd::ProcessMonitor* process_monitor,
 
   process_monitor->StartSubprocess(std::move(tpm_command),
                                    GetOnSubprocessExitCallback(config));
-
-  return TpmPorts{server->VsockServerPort()};
 }
 
-TpmPorts LaunchTpm(cvd::ProcessMonitor* process_monitor,
-                   const vsoc::CuttlefishConfig& config) {
+void LaunchTpm(cvd::ProcessMonitor* process_monitor,
+               const vsoc::CuttlefishConfig& config) {
   if (config.tpm_device() != "") {
     if (config.tpm_binary() != "") {
       LOG(WARNING) << "Both -tpm_device and -tpm_binary were set. Using -tpm_device.";
     }
-    return LaunchTpmPassthrough(process_monitor, config);
+    LaunchTpmPassthrough(process_monitor, config);
   } else if (config.tpm_binary() != "") {
-    return LaunchTpmSimulator(process_monitor, config);
-  } else {
-    return TpmPorts{};
+    LaunchTpmSimulator(process_monitor, config);
   }
 }
