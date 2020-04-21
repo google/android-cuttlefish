@@ -72,6 +72,8 @@ int main(int argc, char** argv) {
   bool platform_server = false;
   bool sent_init = false;
 
+  cvd::SharedFD client; // Hold this connection open for the process lifetime.
+
   char* lineptr = nullptr;
   size_t size = 0;
   while (getline(&lineptr, &size, stdout_file.get()) >= 0) {
@@ -84,7 +86,7 @@ int main(int argc, char** argv) {
       platform_server = true;
     }
     if (command_server && platform_server && !sent_init) {
-      auto client = cvd::SharedFD::SocketLocalClient(FLAGS_port + 1, SOCK_STREAM);
+      client = cvd::SharedFD::SocketLocalClient(FLAGS_port + 1, SOCK_STREAM);
       std::vector<char> command_bytes(4, 0);
       *reinterpret_cast<std::uint32_t*>(command_bytes.data()) = htobe32(1); // TPM_SIGNAL_POWER_ON
       CHECK(cvd::WriteAll(client, command_bytes) == 4) << "Could not send TPM_SIGNAL_POWER_ON";
