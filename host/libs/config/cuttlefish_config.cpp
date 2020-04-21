@@ -143,11 +143,14 @@ const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
 const char* kLogcatMode = "logcat_mode";
+const char* kLogcatPort = "logcat_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
+const char* kConfigServerPort = "config_server_port";
 const char* kConfigServerBinary = "config_server_binary";
 
 const char* kRunTombstoneReceiver = "enable_tombstone_logger";
 const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
+const char* kTombstoneReceiverPort = "tombstone_receiver_port";
 
 const char* kWebRTCCertsDir = "webrtc_certs_dir";
 
@@ -166,6 +169,9 @@ const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 
+const char* kFramesServerPort = "frames_server_port";
+const char* kTouchServerPort = "touch_server_port";
+const char* kKeyboardServerPort = "keyboard_server_port";
 }  // namespace
 
 namespace vsoc {
@@ -601,6 +607,54 @@ int CuttlefishConfig::InstanceSpecific::vnc_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_server_port) {
   (*Dictionary())[kVncServerPort] = vnc_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::frames_server_port() const {
+  return (*Dictionary())[kFramesServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_frames_server_port(int frames_server_port) {
+  (*Dictionary())[kFramesServerPort] = frames_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::touch_server_port() const {
+  return (*Dictionary())[kTouchServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_touch_server_port(int touch_server_port) {
+  (*Dictionary())[kTouchServerPort] = touch_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::keyboard_server_port() const {
+  return (*Dictionary())[kKeyboardServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_keyboard_server_port(int keyboard_server_port) {
+  (*Dictionary())[kKeyboardServerPort] = keyboard_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
+  return (*Dictionary())[kTombstoneReceiverPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
+  (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::logcat_port() const {
+  return (*Dictionary())[kLogcatPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_logcat_port(int logcat_port) {
+  (*Dictionary())[kLogcatPort] = logcat_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::config_server_port() const {
+  return (*Dictionary())[kConfigServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_config_server_port(int config_server_port) {
+  (*Dictionary())[kConfigServerPort] = config_server_port;
 }
 
 void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
