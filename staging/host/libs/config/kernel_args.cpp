@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-#include "host/commands/run_cvd/kernel_args.h"
+#include "host/libs/config/kernel_args.h"
 
 #include <string>
 #include <vector>
 
-#include "host/commands/run_cvd/launch.h"
-#include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -47,8 +45,6 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
 
   kernel_cmdline.push_back(concat("androidboot.serialno=", instance.serial_number()));
   kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
-  if (config.logcat_mode() == cvd::kLogcatVsockMode) {
-  }
   kernel_cmdline.push_back(concat(
       "androidboot.setupwizard_mode=", config.setupwizard_mode()));
   if (!config.use_bootloader()) {
@@ -76,62 +72,38 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back("androidboot.force_normal_boot=1");
   }
 
+  if (config.enable_tombstone_receiver() && instance.tombstone_receiver_port()) {
+    kernel_cmdline.push_back("androidboot.tombstone_transmit=1");
+    kernel_cmdline.push_back(concat("androidboot.vsock_tombstone_port=", instance.tombstone_receiver_port()));
+  } else {
+    kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
+  }
+
+  if (config.logcat_mode() == cvd::kLogcatVsockMode && instance.logcat_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", instance.logcat_port()));
+  }
+
+  if (instance.config_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.cuttlefish_config_server_port=", instance.config_server_port()));
+  }
+
+  if (instance.tpm_port()) {
+    kernel_cmdline.push_back(concat("androidboot.tpm_vsock_port=", instance.tpm_port()));
+  }
+
+  if (instance.keyboard_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_keyboard_port=", instance.keyboard_server_port()));
+  }
+
+  if (instance.touch_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_touch_port=", instance.touch_server_port()));
+  }
+
+  if (instance.frames_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vsock_frames_port=", instance.frames_server_port()));
+  }
+
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
-}
-
-std::vector<std::string> KernelCommandLineFromStreamer(
-    const StreamerLaunchResult& streamer_launch) {
-  std::vector<std::string> kernel_args;
-  if (streamer_launch.frames_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_frames_port=",
-                                 *streamer_launch.frames_server_vsock_port));
-  }
-  if (streamer_launch.touch_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_touch_port=",
-                                 *streamer_launch.touch_server_vsock_port));
-  }
-  if (streamer_launch.keyboard_server_vsock_port) {
-    kernel_args.push_back(concat("androidboot.vsock_keyboard_port=",
-                                 *streamer_launch.keyboard_server_vsock_port));
-  }
-  return kernel_args;
-}
-
-std::vector<std::string> KernelCommandLineFromTombstone(const TombstoneReceiverPorts& tombstone) {
-  if (!tombstone.server_vsock_port) {
-    return { "androidboot.tombstone_transmit=0" };
-  }
-  return {
-    "androidboot.tombstone_transmit=1",
-    concat("androidboot.vsock_tombstone_port=", *tombstone.server_vsock_port),
-  };
-}
-
-std::vector<std::string> KernelCommandLineFromConfigServer(const ConfigServerPorts& config_server) {
-  if (!config_server.server_vsock_port) {
-    return {};
-  }
-  return {
-    concat("androidboot.cuttlefish_config_server_port=", *config_server.server_vsock_port),
-  };
-}
-
-std::vector<std::string> KernelCommandLineFromLogcatServer(const LogcatServerPorts& logcat_server) {
-  if (!logcat_server.server_vsock_port) {
-    return {};
-  }
-  return {
-    concat("androidboot.vsock_logcat_port=", *logcat_server.server_vsock_port),
-  };
-}
-
-std::vector<std::string> KernelCommandLineFromTpm(const TpmPorts& tpm) {
-  if (!tpm.server_vsock_port) {
-    return {};
-  }
-  return {
-    concat("androidboot.tpm_vsock_port=", *tpm.server_vsock_port),
-  };
 }
