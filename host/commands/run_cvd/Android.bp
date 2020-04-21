@@ -16,7 +16,6 @@
 cc_binary_host {
     name: "run_cvd",
     srcs: [
-        "kernel_args.cc",
         "launch.cc",
         "main.cc",
         "process_monitor.cc",

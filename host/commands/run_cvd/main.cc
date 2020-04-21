@@ -48,11 +48,11 @@
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
-#include "host/commands/run_cvd/kernel_args.h"
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/kernel_args.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include <host/libs/vm_manager/crosvm_manager.h>
 #include "host/libs/vm_manager/vm_manager.h"
@@ -417,22 +417,13 @@ int main(int argc, char** argv) {
   cvd::SharedFD adbd_events_pipe = event_pipes[1];
   event_pipes.clear();
 
-  std::set<std::string> extra_kernel_cmdline;
-
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
                             boot_state_machine);
 
-  auto logcat_server = LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
-  auto logcat_server_args = KernelCommandLineFromLogcatServer(logcat_server);
-
-  auto config_server = LaunchConfigServer(*config, &process_monitor);
-  auto config_server_args = KernelCommandLineFromConfigServer(config_server);
-
-  auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
-  auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
-
-  auto tpm_server = LaunchTpm(&process_monitor, *config);
-  auto tpm_kernel_args = KernelCommandLineFromTpm(tpm_server);
+  LaunchLogcatReceiverIfEnabled(*config, &process_monitor);
+  LaunchConfigServer(*config, &process_monitor);
+  LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
+  LaunchTpm(&process_monitor, *config);
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
@@ -445,16 +436,7 @@ int main(int argc, char** argv) {
     streamer_config = LaunchWebRTC(&process_monitor, *config);
   }
 
-  auto streamer_kernel_args = KernelCommandLineFromStreamer(streamer_config);
-
   auto kernel_args = KernelCommandLineFromConfig(*config);
-  kernel_args.insert(kernel_args.end(), streamer_kernel_args.begin(),
-                     streamer_kernel_args.end());
-  kernel_args.insert(kernel_args.end(), tombstone_kernel_args.begin(),
-                     tombstone_kernel_args.end());
-  kernel_args.insert(kernel_args.end(), config_server_args.begin(), config_server_args.end());
-  kernel_args.insert(kernel_args.end(), logcat_server_args.begin(), logcat_server_args.end());
-  kernel_args.insert(kernel_args.end(), tpm_kernel_args.begin(), tpm_kernel_args.end());
 
   // Start the guest VM
   vm_manager->WithFrontend(streamer_config.launched);

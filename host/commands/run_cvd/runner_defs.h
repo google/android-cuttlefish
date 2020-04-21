@@ -17,9 +17,6 @@
 
 namespace cvd {
 
-constexpr char kLogcatSerialMode[] = "serial";
-constexpr char kLogcatVsockMode[] = "vsock";
-
 enum RunnerExitCodes : int {
   kSuccess = 0,
   kArgumentParsingError = 1,
