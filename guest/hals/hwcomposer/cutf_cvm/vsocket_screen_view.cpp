@@ -106,6 +106,10 @@ void VsocketScreenView::BroadcastLoop() {
     auto buff = static_cast<char*>(GetBuffer(current_offset));
     while (size > 0) {
       auto written = screen_server_->Write(buff, size);
+      if (written == -1) {
+        ALOGE("Broadcaster thread failed to write frame: %s", strerror(errno));
+        break;
+      }
       size -= written;
       buff += written;
     }
