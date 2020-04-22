@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/*
+ * GUID Partition Table and Composite Disk generation code.
+ */
+
 #include "host/commands/assemble_cvd/image_aggregator.h"
 
 #include <sys/types.h>
@@ -61,6 +65,12 @@ struct __attribute__((packed)) MasterBootRecord {
 
 static_assert(sizeof(MasterBootRecord) == SECTOR_SIZE);
 
+/**
+ * Creates a "Protective" Master Boot Record Partition Table header. The GUID
+ * Partition Table Specification recommends putting this on the first sector
+ * of the disk, to protect against old disk formatting tools from misidentifying
+ * the GUID Partition Table later and doing the wrong thing.
+ */
 MasterBootRecord ProtectiveMbr(std::uint64_t size) {
   MasterBootRecord mbr = {
     .partitions =  {{
@@ -127,6 +137,17 @@ struct PartitionInfo {
   std::uint64_t offset;
 };
 
+/*
+ * Returns the file size of `file_path`. If `file_path` is an Android-Sparse
+ * file, returns the file size it would have after being converted to a raw
+ * file.
+ *
+ * Android-Sparse is a file format invented by Android that optimizes for
+ * chunks of zeroes or repeated data. The Android build system can produce
+ * sparse files to save on size of disk files after they are extracted from a
+ * disk file, as the imag eflashing process also can handle Android-Sparse
+ * images.
+ */
 std::uint64_t UnsparsedSize(const std::string& file_path) {
   auto fd = open(file_path.c_str(), O_RDONLY);
   CHECK(fd >= 0) << "Could not open \"" << file_path << "\""
@@ -138,6 +159,9 @@ std::uint64_t UnsparsedSize(const std::string& file_path) {
   return size;
 }
 
+/*
+ * strncpy equivalent for u16 data. GPT disks use UTF16-LE for disk labels.
+ */
 void u16cpy(std::uint16_t* dest, std::uint16_t* src, std::size_t size) {
   while (size > 0 && *src) {
     *dest = *src;
@@ -150,6 +174,10 @@ void u16cpy(std::uint16_t* dest, std::uint16_t* src, std::size_t size) {
   }
 }
 
+/**
+ * Incremental builder class for producing partition tables. Add partitions
+ * one-by-one, then produce specification files
+ */
 class CompositeDiskBuilder {
 private:
   std::vector<PartitionInfo> partitions_;
@@ -167,6 +195,11 @@ public:
     next_disk_offset_ += size;
   }
 
+  /**
+   * Generates a composite disk specification file, assuming that `header_file`
+   * and `footer_file` will be populated with the contents of `Beginning()` and
+   * `End()`.
+   */
   CompositeDisk MakeCompositeDiskSpec(const std::string& header_file,
                                       const std::string& footer_file) const {
     CompositeDisk disk;
@@ -191,6 +224,13 @@ public:
     return disk;
   }
 
+  /*
+   * Returns a GUID Partition Table header structure for all the disks that have
+   * been added with `AppendDisk`. Includes a protective Master Boot Record.
+   *
+   * This method is not deterministic: some data is generated such as the disk
+   * uuids.
+   */
   GptBeginning Beginning() const {
     if (partitions_.size() > GPT_NUM_PARTITIONS) {
       LOG(FATAL) << "Too many partitions: " << partitions_.size();
@@ -216,7 +256,8 @@ public:
       const auto& partition = partitions_[i];
       gpt.entries[i] = GptPartitionEntry {
         .first_lba = partition.offset / SECTOR_SIZE,
-        .last_lba = (partition.offset + partition.size - SECTOR_SIZE) / SECTOR_SIZE,
+        .last_lba = (partition.offset + partition.size - SECTOR_SIZE)
+                    / SECTOR_SIZE,
       };
       uuid_generate(gpt.entries[i].unique_partition_guid);
       // The right uuid is technically 0FC63DAF-8483-4772-8E79-3D69D8477DE4.
@@ -240,6 +281,9 @@ public:
     return gpt;
   }
 
+  /**
+   * Generates a GUID Partition Table footer that matches the header in `head`.
+   */
   GptEnd End(const GptBeginning& head) const {
     GptEnd gpt;
     std::memcpy((void*) gpt.entries, (void*) head.entries, 128 * 128);
@@ -271,6 +315,18 @@ bool WriteEnd(cvd::SharedFD out, const GptEnd& end) {
   return true;
 }
 
+/**
+ * Converts any Android-Sparse image files in `partitions` to raw image files.
+ *
+ * Android-Sparse is a file format invented by Android that optimizes for
+ * chunks of zeroes or repeated data. The Android build system can produce
+ * sparse files to save on size of disk files after they are extracted from a
+ * disk file, as the imag eflashing process also can handle Android-Sparse
+ * images.
+ *
+ * crosvm has read-only support for Android-Sparse files, but QEMU does not
+ * support them.
+ */
 void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
   for (const auto& partition : partitions) {
     auto fd = open(partition.image_file_path.c_str(), O_RDONLY);
@@ -293,7 +349,8 @@ void DeAndroidSparse(const std::vector<ImagePartition>& partitions) {
     int write_status = sparse_file_write(sparse, write_fd, /* gz */ false,
                                          /* sparse */ false, /* crc */ false);
     if (write_status < 0) {
-      LOG(FATAL) << "Failed to desparse \"" << partition.image_file_path << "\": " << write_status;
+      LOG(FATAL) << "Failed to desparse \"" << partition.image_file_path
+                 << "\": " << write_status;
     }
     close(write_fd);
     if (rename(out_file_name.c_str(), partition.image_file_path.c_str()) < 0) {
