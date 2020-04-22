@@ -86,15 +86,9 @@ class DeviceConnection {
 }
 
 
-const GREETING_MSG_TYPE = 'hello';
-const OFFER_MSG_TYPE = 'offer';
-const ICE_CANDIDATE_MSG_TYPE = 'ice-candidate';
-
-
 class WebRTCControl {
-  constructor(deviceId, {
-    wsProtocol = 'wss',
-    wsPath = '',
+  constructor({
+    wsUrl = '',
     disable_audio = false,
     bundle_tracks = false,
     use_tcp = true,
@@ -104,19 +98,12 @@ class WebRTCControl {
      *
      * _options
      *
-     * _promiseResolvers = {
-     *    [GREETING_MSG_TYPE]: function to resolve the greeting response promise
-     *
-     *    [OFFER_MSG_TYPE]: function to resolve the offer promise
-     *
-     *    [ICE_CANDIDATE_MSG_TYPE]: function to resolve the ice candidate
-     * promise
-     * }
-     *
      * _wsPromise: promises the underlying websocket, should resolve when the
      *             socket passes to OPEN state, will be rejecte/replaced by a
      *             rejected promise if an error is detected on the socket.
      *
+     * _onOffer
+     * _onIceCandidate
      */
 
     this._options = {
@@ -128,10 +115,9 @@ class WebRTCControl {
     this._promiseResolvers = {};
 
     this._wsPromise = new Promise((resolve, reject) => {
-      const wsUrl = `${wsProtocol}//${wsPath}`;
       let ws = new WebSocket(wsUrl);
       ws.onopen = () => {
-        console.info('Websocket connected');
+        console.info(`Connected to ${wsUrl}`);
         resolve(ws);
       };
       ws.onerror = evt => {
@@ -149,57 +135,90 @@ class WebRTCControl {
   }
 
   _onWebsocketMessage(message) {
-    const type = message.type;
-    if (!(type in this._promiseResolvers)) {
-      console.warn(`Unexpected message of type: ${type}`);
+    const type = message.message_type;
+    if (message.error) {
+      console.error(message.error);
       return;
     }
-    this._promiseResolvers[type](message);
-    delete this._promiseResolvers[type];
+    switch (type) {
+      case 'config':
+        this._infra_config = message;
+        break;
+      case 'device_info':
+        if (this._on_device_available) {
+          this._on_device_available(message.device_info);
+          delete this._on_device_available;
+        } else {
+          console.error('Received unsolicited device info');
+        }
+        break;
+      case 'device_msg':
+        this._onDeviceMessage(message.payload);
+        break;
+      default:
+        console.error('Unrecognized message type from server: ', type);
+        console.error(message);
+    }
+  }
+
+  _onDeviceMessage(message) {
+    let type = message.type;
+    switch(type) {
+      case 'offer':
+        if (this._onOffer) {
+          this._onOffer({type: 'offer', sdp: message.sdp});
+        } else {
+          console.error('Receive offer, but nothing is wating for it');
+        }
+        break;
+      case 'ice-candidate':
+        if (this._onIceCandidate) {
+          this._onIceCandidate(new RTCIceCandidate({
+            sdpMid: message.mid,
+            sdpMLineIndex: message.mLineIndex,
+            candidate: message.candidate}));
+        } else {
+          console.error('Received ice candidate but nothing is waiting for it');
+        }
+        break;
+      default:
+        console.error('Unrecognized message type from device: ', type);
+    }
   }
 
   async _wsSendJson(obj) {
     let ws = await this._wsPromise;
     return ws.send(JSON.stringify(obj));
   }
+  async _sendToDevice(payload) {
+    this._wsSendJson({message_type: 'forward', payload});
+  }
 
-  /**
-   * Send a greeting to the device, returns a promise of a greeting response.
-   */
-  async greet() {
-    console.log('greet');
+  onOffer(cb) {
+    this._onOffer = cb;
+  }
+
+  onIceCandidate(cb) {
+    this._onIceCandidate = cb;
+  }
+
+  async requestDevice(device_id) {
     return new Promise((resolve, reject) => {
-      if (GREETING_MSG_TYPE in this._promiseResolvers) {
-        const msg = 'Greeting already sent and not yet responded';
-        console.error(msg);
-        throw new Error(msg);
-      }
-      this._promiseResolvers[GREETING_MSG_TYPE] = resolve;
-
+      this._on_device_available = (deviceInfo) => resolve({
+        deviceInfo,
+        infraConfig: this._infra_config,
+      });
       this._wsSendJson({
-        type: 'greeting',
-        message: 'Hello, world!',
-        options: this._options,
+        message_type: 'connect',
+        device_id,
       });
     });
   }
 
-  /**
-   * Sends an offer request to the device, returns a promise of an offer.
-   */
-  async requestOffer() {
-    console.log('requestOffer');
-    return new Promise((resolve, reject) => {
-      if (OFFER_MSG_TYPE in this._promiseResolvers) {
-        const msg = 'Offer already requested and not yet received';
-        console.error(msg);
-        throw new Error(msg);
-      }
-      this._promiseResolvers[OFFER_MSG_TYPE] = resolve;
-
-      const is_chrome = navigator.userAgent.indexOf('Chrome') !== -1;
-      this._wsSendJson({type: 'request-offer', is_chrome: is_chrome ? 1 : 0});
-    });
+  ConnectDevice() {
+    console.log('ConnectDevice');
+    const is_chrome = navigator.userAgent.indexOf('Chrome') !== -1;
+    this._sendToDevice({type: 'request-offer', options: this.options,is_chrome: is_chrome ? 1 : 0});
   }
 
   /**
@@ -207,96 +226,89 @@ class WebRTCControl {
    */
   async sendClientDescription(desc) {
     console.log('sendClientDescription');
-    this._wsSendJson({type: 'set-client-desc', sdp: desc.sdp});
+    this._sendToDevice({type: 'answer', sdp: desc.sdp});
   }
 
   /**
-   * Request an ICE candidate from the device. Returns a promise of an ice
-   * candidate.
+   * Sends an ICE candidate to the device
    */
-  async requestICECandidate(mid) {
-    console.log(`requestICECandidate(${mid})`);
-    if (ICE_CANDIDATE_MSG_TYPE in this._promiseResolvers) {
-      const msg = 'An ice candidate request is already pending';
-      console.error(msg);
-      throw new Error(msg);
-    }
-
-    let iceCandidatePromise = new Promise((resolve, reject) => {
-      this._promiseResolvers[ICE_CANDIDATE_MSG_TYPE] = resolve;
-    });
-    this._wsSendJson({type: 'get-ice-candidate', mid: mid});
-
-    let reply = await iceCandidatePromise;
-    console.log('got reply: ', reply);
-
-    if (reply == undefined || reply.candidate == undefined) {
-      console.warn('Undefined reply or candidate');
-      return null;
-    }
-
-    const replyCandidate = reply.candidate;
-    const mlineIndex = reply.mlineIndex;
-
-    const result = new RTCIceCandidate(
-        {sdpMid: mid, sdpMLineIndex: mlineIndex, candidate: replyCandidate});
-
-    console.log('got result: ', result);
-
-    return result;
+  async sendIceCandidate(candidate) {
+    this._sendToDevice({type: 'ice-candidate', candidate});
   }
 }
 
-function createPeerConnection() {
-  let pc = new RTCPeerConnection();
-  console.log('got pc2=', pc);
+function createPeerConnection(infra_config) {
+  let pc_config = {iceServers:[]};
+  for (const stun of infra_config.ice_servers) {
+    pc_config.iceServers.push({urls: 'stun:' + stun});
+  }
+  let pc = new RTCPeerConnection(pc_config);
 
-  pc.addEventListener('icecandidate', e => {
-    console.log('pc.onIceCandidate: ', e.candidate);
+  pc.addEventListener('icecandidate', evt => {
+    console.log('Local ICE Candidate: ', evt.candidate);
   });
-
-  pc.addEventListener(
-      'iceconnectionstatechange',
-      e => console.log(`Ice State Change: ${pc.iceConnectionState}`));
-
-  pc.addEventListener('connectionstatechange', e => {
-    console.log('connection state = ' + pc.connectionState);
+  pc.addEventListener('iceconnectionstatechange', evt => {
+    console.log(`ICE State Change: ${pc.iceConnectionState}`);
   });
-
+  pc.addEventListener('connectionstatechange', evt =>
+    console.log(`WebRTC Connection State Change: ${pc.connectionState}`));
   return pc;
 }
 
 export async function Connect(deviceId, options) {
-  let control = new WebRTCControl(deviceId, options);
-  let pc = createPeerConnection();
-  let deviceConnection = new DeviceConnection(pc, control);
-  try {
-    let greetResponse = await control.greet();
-    console.log('Greeting response: ', greetResponse);
-    // TODO(jemoreira): get the description from the device
-    deviceConnection.description = {};
-
-    let desc = await control.requestOffer();
-    console.log('Offer: ', desc);
-    await pc.setRemoteDescription(desc);
-
-    let answer = await pc.createAnswer();
-    console.log('Answer: ', answer);
-    // nest then() calls here to have easy access to the answer
-    await pc.setLocalDescription(answer);
-
-    await control.sendClientDescription(answer);
-
-    for (let mid = 0; mid < 3; ++mid) {
-      let iceCandidate = await control.requestICECandidate(mid);
-      console.log(`ICE Candidate[${mid}]: `, iceCandidate);
-      if (iceCandidate) await pc.addIceCandidate(iceCandidate);
-    }
-
-    console.log('WebRTC connection established');
-    return deviceConnection;
-  } catch (e) {
-    console.error('Error establishing WebRTC connection: ', e);
-    throw e;
+  let control = new WebRTCControl(options);
+  let requestRet = await control.requestDevice(deviceId);
+  let deviceInfo = requestRet.deviceInfo;
+  let infraConfig = requestRet.infraConfig;
+  console.log("Device available:");
+  console.log(deviceInfo);
+  let pc_config = {
+    iceServers: []
   };
+  if (infraConfig.ice_servers && infraConfig.ice_servers.length > 0) {
+    for (const server of infraConfig.ice_servers) {
+      pc_config.iceServers.push(server);
+    }
+  }
+  let pc = createPeerConnection(infraConfig, control);
+  let deviceConnection = new DeviceConnection(pc, control);
+  deviceConnection.description = deviceInfo;
+  async function acceptOfferAndReplyAnswer(offer) {
+    try {
+      await pc.setRemoteDescription(offer);
+      let answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await control.sendClientDescription(answer);
+    } catch(e) {
+      console.error('Error establishing WebRTC connection: ', e)
+      throw e;
+    }
+  }
+  control.onOffer(desc => {
+      console.log('Offer: ', desc);
+      acceptOfferAndReplyAnswer(desc);
+  });
+  control.onIceCandidate(iceCandidate => {
+    console.log(`Remote ICE Candidate: `, iceCandidate);
+    pc.addIceCandidate(iceCandidate);
+  });
+
+  pc.addEventListener('icecandidate',
+                      evt => {
+                        if (evt.candidate)
+                          control.sendIceCandidate(evt.candidate);
+                      });
+  let connected_promise = new Promise((resolve, reject) => {
+    pc.addEventListener('connectionstatechange', evt => {
+      let state = pc.connectionState;
+      if (state == 'connected') {
+        resolve(deviceConnection);
+      } else if (state == 'failed') {
+        reject(evt);
+      }
+    });
+  });
+  control.ConnectDevice();
+
+  return connected_promise;
 }
