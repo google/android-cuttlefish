@@ -187,9 +187,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   auto wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
-  if (cvd::HostArch() == "x86_64") {
-    crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
-  }
+  crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
 
   if (config_->enable_sandbox()) {
     const bool seccomp_exists = cvd::DirectoryExists(config_->seccomp_policy_dir());
