@@ -41,6 +41,7 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_PACKAGES += \
     libcuttlefish-ril \
+    libcuttlefish-ril-2 \
     libcuttlefish-rild
 
 PRODUCT_COPY_FILES += \
