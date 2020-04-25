@@ -133,7 +133,7 @@ static bool isAospHidlInterface(const FQName& name) {
         "android.system",
     };
     for (const std::string& package : kAospPackages) {
-        if (name.inPackage(package) && !isHidlPackageWhitelist(name)) {
+        if (name.inPackage(package)) {
             return true;
         }
     }
@@ -197,6 +197,7 @@ TEST(Hal, HidlInterfacesImplemented) {
 
     for (const FQName& f : allTreeHidlInterfaces()) {
         if (!isAospHidlInterface(f)) continue;
+        if (isHidlPackageWhitelist(f)) continue;
 
         unimplemented[f.package()][f.getPackageMajorVersion()].insert(f.getPackageMinorVersion());
     }
