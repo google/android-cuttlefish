@@ -39,6 +39,10 @@ struct ClientHandler : public std::enable_shared_from_this<ClientHandler> {
 
   void HandleMessage(const Json::Value& client_message);
 
+  void OnConnectionTimeOut(std::function<void()> cb) {
+    on_connection_timeout_cb_ = cb;
+  }
+
  private:
   enum OptionBits : uint32_t {
     disableAudio = 1,
@@ -69,6 +73,8 @@ struct ClientHandler : public std::enable_shared_from_this<ClientHandler> {
 
   std::pair<std::shared_ptr<X509>, std::shared_ptr<EVP_PKEY>>
       mCertificateAndKey;
+
+  std::function<void()> on_connection_timeout_cb_ = []{};
 
   void LogAndReplyError(const std::string& error_msg) const ;
 

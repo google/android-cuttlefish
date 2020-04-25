@@ -23,6 +23,8 @@
 #include <netdb.h>
 #include <openssl/rand.h>
 
+#include "https/SafeCallbackable.h"
+
 namespace {
 
 // helper method to ensure a json object has the required fields convertible
@@ -342,9 +344,15 @@ bool ClientHandler::GatherAndSendCandidate(int32_t mid) {
                 trackMask,
                 session);
 
-        rtp->run();
-
         mRTPs.push_back(rtp);
+        rtp->OnParticipantTimeOut([this]{
+          mRunLoop->post(makeSafeCallback<ClientHandler>(
+            this,
+            [](ClientHandler *me) {
+                me->on_connection_timeout_cb_();
+            }));
+        });
+        rtp->run();
     }
 
     auto rtp = mRTPs.back();
