@@ -20,10 +20,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.util.Log;
 
-import com.android.google.gce.gceservice.GceService;
 
 public class GceBroadcastReceiver extends BroadcastReceiver {
     private static final String LOG_TAG = "GceBroadcastReceiver";
@@ -32,7 +30,7 @@ public class GceBroadcastReceiver extends BroadcastReceiver {
     private void reportIntent(Context context, String intentType) {
         Intent intent = new Intent(context, GceService.class);
         intent.setAction(intentType);
-        context.startService(intent);
+        context.startForegroundService(intent);
     }
 
 
