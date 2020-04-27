@@ -23,14 +23,19 @@ class DeviceConnection {
     this._pc = pc;
     this._control = control;
     this._inputChannelPr = createInputDataChannelPromise(pc);
-    this._videoStreams = [];
+    this._streams = {};
+    this._streamPromiseResolvers = {};
 
-    // Apparently, the only way to obtain the track and the stream at the
-    // same time is by subscribing to this event.
     pc.addEventListener('track', e => {
       console.log('Got remote stream: ', e);
-      if (e.track.kind === 'video') {
-        this._videoStreams.push(e.streams[0]);
+      for (const stream of e.streams) {
+        this._streams[stream.id] = stream;
+        if (this._streamPromiseResolvers[stream.id]) {
+          for (let resolver of this._streamPromiseResolvers[stream.id]) {
+            resolver();
+          }
+          delete this._streamPromiseResolvers[stream.id];
+        }
       }
     });
   }
@@ -43,8 +48,17 @@ class DeviceConnection {
     return this._description;
   }
 
-  getVideoStream(displayNum = 0) {
-    return this._videoStreams[displayNum];
+  getStream(stream_id) {
+    return new Promise((resolve, reject) => {
+      if (this._streams[stream_id]) {
+        resolve(this._streams[stream_id]);
+      } else {
+        if (!this._streamPromiseResolvers[stream_id]) {
+          this._streamPromiseResolvers[stream_id] = [];
+        }
+        this._streamPromiseResolvers[stream_id].push(resolve);
+      }
+    });
   }
 
   _sendJsonInput(evt) {

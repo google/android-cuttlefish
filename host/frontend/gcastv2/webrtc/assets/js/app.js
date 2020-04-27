@@ -41,11 +41,14 @@ function ConnectToDevice(device_id) {
     .then(webrtcModule => webrtcModule.Connect(device_id, options))
     .then(devConn => {
       deviceConnection = devConn;
-      videoStream = devConn.getVideoStream(0);
-      deviceScreen.srcObject = videoStream;
       // TODO(b/143667633): get multiple display configuration from the
       // description object
       console.log(deviceConnection.description);
+      let stream_id = devConn.description.displays[0].stream_id;
+      devConn.getStream(stream_id).then(stream => {
+        videoStream = stream;
+        deviceScreen.srcObject = videoStream;
+      }).catch(e => console.error('Unable to get display stream: ', e));
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
   });
 
