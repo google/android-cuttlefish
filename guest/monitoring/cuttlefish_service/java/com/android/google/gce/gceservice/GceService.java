@@ -15,13 +15,16 @@
  */
 package com.android.google.gce.gceservice;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.util.Log;
-import android.os.Binder;
 import android.os.IBinder;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
@@ -37,11 +40,12 @@ public class GceService extends Service {
     public static final String INTENT_ACTION_CONFIGURE = "com.android.google.gce.gceservice.CONFIGURE";
     public static final String INTENT_ACTION_NETWORK_CHANGED = "com.android.google.gce.gceservice.NETWORK_CHANGED";
     public static final String INTENT_ACTION_BLUETOOTH_CHANGED = "com.android.google.gce.gceservice.BLUETOOTH_CHANGED";
-    private static final int NETWORK_OR_BOOT_TIMEOUT = 30;
+    private static final String NOTIFICATION_CHANNEL_ID = "cuttlefish-service";
+    private static final String NOTIFICATION_CHANNEL_NAME = "Cuttlefish Service";
+    private static final int NOTIFICATION_ID = 1;
 
     private final JobExecutor mExecutor = new JobExecutor();
     private final LocationServicesManager mLocationServices = new LocationServicesManager(this);
-    private final PackageVerifierManager mPackageVerifier = new PackageVerifierManager(this);
     private final PackageVerificationConsentEnforcer mConsentEnforcer = new PackageVerificationConsentEnforcer(this);
     private final BootReporter mBootReporter = new BootReporter();
     private final GceBroadcastReceiver mBroadcastReceiver = new GceBroadcastReceiver();
@@ -66,7 +70,6 @@ public class GceService extends Service {
             mWifiManager = new GceWifiManager(this, mBootReporter, mExecutor);
 
             mExecutor.schedule(mLocationServices);
-            mExecutor.schedule(mPackageVerifier);
             mExecutor.schedule(mConsentEnforcer);
             mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
@@ -77,10 +80,19 @@ public class GceService extends Service {
 
             mExecutor.schedule(mBootReporter,
                     mLocationServices.getLocationServicesReady(),
-                    mPackageVerifier.getPackageVerifierReady(),
                     mBluetoothChecker.getEnabled()
                     // mTombstoneChecker.getTombstoneResult()
                     );
+
+            NotificationManager notificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel =
+                    new NotificationChannel(
+                            NOTIFICATION_CHANNEL_ID,
+                            NOTIFICATION_CHANNEL_NAME,
+                            NotificationManager.IMPORTANCE_LOW);
+            notificationManager.createNotificationChannel(channel);
+
         } catch (Exception e) {
             Log.e(LOG_TAG, "Exception caught", e);
         }
@@ -120,6 +132,15 @@ public class GceService extends Service {
             Log.e(LOG_TAG, "Missing intent action.");
         }
 
+        Notification notification =
+                new Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                        .setAutoCancel(true)
+                        .setContentTitle("Cuttlefish service is running.")
+                        .setSmallIcon(android.R.drawable.ic_dialog_info)
+                        .setTimeoutAfter(10000)
+                        .build();
+        startForeground(NOTIFICATION_ID, notification);
+
         if (INTENT_ACTION_CONFIGURE.equals(mMostRecentAction)) {
             mExecutor.schedule(mConnChecker);
         } else if (INTENT_ACTION_NETWORK_CHANGED.equals(mMostRecentAction)) {
@@ -128,8 +149,15 @@ public class GceService extends Service {
             mExecutor.schedule(mBluetoothChecker);
         }
 
+        stopForeground(Service.STOP_FOREGROUND_DETACH);
+
         /* If anything goes wrong, make sure we receive intent again. */
         return Service.START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        unregisterReceiver(mBroadcastReceiver);
     }
 
     /** Dump the virtual device state
@@ -145,8 +173,6 @@ public class GceService extends Service {
         pw.println("Current system service state:");
         pw.println("  Location service ready: "
             + mLocationServices.getLocationServicesReady().isDone());
-        pw.println("  Package verifier ready: "
-            + mPackageVerifier.getPackageVerifierReady().isDone());
         pw.println("  Network connected: " + mConnChecker.getConnected().isDone());
         pw.println("  WiFi configured: " + mWifiManager.getWifiReady().isDone());
         pw.println("  Bluetooth enabled: " + mBluetoothChecker.getEnabled().isDone());
