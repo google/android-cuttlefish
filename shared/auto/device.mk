@@ -65,6 +65,12 @@ PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
+# AudioControl HAL
+ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
+    LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE := android.hardware.automotive.audiocontrol@1.0-service
+endif
+PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
+
 # DRM HAL
 PRODUCT_PACKAGES += android.hardware.drm@1.3-service.clearkey
 
