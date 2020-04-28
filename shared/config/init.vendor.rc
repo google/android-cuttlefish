@@ -10,6 +10,10 @@ on early-init
     mount tracefs tracefs /sys/kernel/tracing
     mount securityfs securityfs /sys/kernel/security
 
+    # For KCOV
+    mount debugfs debugfs /sys/kernel/debug
+    chmod 0755 /sys/kernel/debug
+
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.hardware.egl ${ro.boot.hardware.egl}
     setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
