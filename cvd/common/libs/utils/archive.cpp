@@ -20,7 +20,7 @@
 #include <vector>
 
 #include <android-base/strings.h>
-#include <android-base/logging.h>
+#include <glog/logging.h>
 
 #include "common/libs/utils/subprocess.h"
 
