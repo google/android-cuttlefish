@@ -15,12 +15,12 @@
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_CERTIFICATE := platform
 LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $(call all-java-files-under, java)
 LOCAL_STATIC_JAVA_LIBRARIES := guava
 LOCAL_PACKAGE_NAME := CuttlefishService
 LOCAL_SDK_VERSION := 28
+LOCAL_PRIVILEGED_MODULE := true
 LOCAL_PROGUARD_FLAGS := -include build/core/proguard.flags
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 LOCAL_PROGUARD_ENABLED := obfuscation
