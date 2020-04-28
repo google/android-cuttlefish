@@ -1,3 +1,84 @@
+// Javascript provides atob() and btoa() for base64 encoding and decoding, but
+// those don't work with binary data.
+class Base64 {
+  static base64Array = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  static encode(buffer) {
+    let data = new Uint8Array(buffer);
+    let size = data.length;
+    let ret = '';
+    let i = 0;
+    for (; i < size - size%3; i += 3) {
+      let x1 = data[i];
+      let x2 = data[i+1];
+      let x3 = data[i+2];
+
+      let accum = (x1 * 256 + x2 ) * 256 + x3;
+      ret += this.base64Array[(accum  >> 18) % 64];
+      ret += this.base64Array[(accum  >> 12) % 64];
+      ret += this.base64Array[(accum >> 6) % 64];
+      ret += this.base64Array[accum % 64];
+    }
+    switch (size % 3) {
+      case 1:
+        ret += this.base64Array[data[i] >> 2];
+        ret += this.base64Array[(data[i] % 4)*16];
+        ret += '==';
+        break;
+      case 2:
+        ret += this.base64Array[data[i] >> 2];
+        ret += this.base64Array[(data[i] % 4)*16 + (data[i+1] >> 4)];
+        ret += this.base64Array[(data[i] % 16) * 4];
+        ret += '=';
+        break;
+      default:
+        break;
+    }
+    return ret;
+  }
+  static decode(str) {
+    if ((str.length % 4) != 0) {
+      throw "Invalid base 64";
+    }
+    let n = str.length;
+    let padding = 0;
+    if (n >= 1 && str[n-1] === '=') {
+      padding = 1;
+      if (n >= 2 && str[n-2] == '=') {
+        padding = 2;
+      }
+    }
+    let outLen = (3 * n / 4) - padding;
+    let out = new Uint8Array(outLen);
+
+    let j = 0;
+    let accum = 0;
+    for (let i = 0; i < n; i++) {
+      let value = this.base64Array.indexOf(str[i]);
+      if (str[i] === '=') {
+        if (i < n - padding) {
+          throw 'Invalid base 64';
+        }
+        value = 0;
+      } else if (value < 0) {
+        throw "Invalid base 64 char: " + str[i];
+      }
+      accum = accum * 64 + value;
+      if (((i+1)%4) == 0) {
+        out[j++] = accum >> 16;
+        if (j < outLen) {
+          out[j++] = (accum  >> 8) % 256;
+        }
+        if (j < outLen) {
+          out[j++] = accum % 256;
+        }
+        accum = 0;
+      }
+    }
+
+    return out.buffer;
+  }
+}
+
 function createInputDataChannelPromise(pc) {
   console.log("creating data channel");
   let inputChannel = pc.createDataChannel('input-channel');
@@ -96,7 +177,17 @@ class DeviceConnection {
     this._pc.close();
   }
 
-  // TODO(b/148086548) adb
+  // Sends binary data directly to the in-device adb daemon (skipping the host)
+  sendAdbMessage(msg) {
+    // TODO(b/148086548) send over data channel instead of websocket
+    this._control.sendAdbMessage(Base64.encode(msg));
+  }
+
+  // Provide a callback to receive data from the in-device adb daemon
+  onAdbMessage(cb) {
+    // TODO(b/148086548) send over data channel instead of websocket
+    this._control.onAdbMessage(msg => cb(Base64.decode(msg)));
+  }
 }
 
 
@@ -141,7 +232,6 @@ class WebRTCControl {
         this._wsPromise = Promise.reject(new Error(evt));
       };
       ws.onmessage = e => {
-        console.log('onmessage ' + e.data);
         let data = JSON.parse(e.data);
         this._onWebsocketMessage(data);
       };
@@ -193,6 +283,11 @@ class WebRTCControl {
             candidate: message.candidate}));
         } else {
           console.error('Received ice candidate but nothing is waiting for it');
+        }
+        break;
+      case 'adb-message':
+        if (this._onAdbMessage) {
+          this._onAdbMessage(message.payload);
         }
         break;
       default:
@@ -248,6 +343,14 @@ class WebRTCControl {
    */
   async sendIceCandidate(candidate) {
     this._sendToDevice({type: 'ice-candidate', candidate});
+  }
+
+  sendAdbMessage(msg) {
+    this._sendToDevice({type: 'adb-message', payload: msg});
+  }
+
+  onAdbMessage(cb) {
+    this._onAdbMessage = cb;
   }
 }
 

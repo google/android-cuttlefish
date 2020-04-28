@@ -16,6 +16,8 @@
 
 #include <webrtc/client_handler.h>
 
+#include <vector>
+
 #include "Utils.h"
 
 #include <json/json.h>
@@ -24,6 +26,7 @@
 #include <openssl/rand.h>
 
 #include "https/SafeCallbackable.h"
+#include "https/Support.h"
 
 namespace {
 
@@ -66,6 +69,24 @@ ClientHandler::ClientHandler(
       sendToClient_(send_to_client_cb),
       mTouchSink(mServerState->getTouchSink()),
       mKeyboardSink(mServerState->getKeyboardSink()) {
+}
+
+std::shared_ptr<AdbHandler> ClientHandler::adb_handler() {
+  if (!adb_handler_) {
+    auto config = vsoc::CuttlefishConfig::Get();
+    adb_handler_.reset(
+        new AdbHandler(mRunLoop, config->ForDefaultInstance().adb_ip_and_port(),
+                       [this](const uint8_t *msg, size_t length) {
+                         std::string base64_msg;
+                         encodeBase64(msg, length, &base64_msg);
+                         Json::Value reply;
+                         reply["type"] = "adb-message";
+                         reply["payload"] = base64_msg;
+                         sendToClient_(reply);
+                       }));
+    adb_handler_->run();
+  }
+  return adb_handler_;
 }
 
 void ClientHandler::LogAndReplyError(const std::string& error_msg) const {
@@ -133,6 +154,18 @@ void ClientHandler::HandleMessage(const Json::Value& message) {
         LOG(INFO) << "Sent " << mid << " ICE candidates";
     } else if (type == "ice-candidate") {
       LOG(INFO) << "Received ice candidate from client, ignoring";
+    } else if (type == "adb-message") {
+      if (!message.isMember("payload") || !message["payload"].isString()) {
+        LOG(ERROR) << "adb-message has invalid payload";
+        return;
+      }
+      auto base64_msg = message["payload"].asString();
+      std::vector<uint8_t> raw_msg;
+      if (!decodeBase64(base64_msg, &raw_msg)) {
+        LOG(ERROR) << "Invalid base64 string in adb-message";
+        return;
+      }
+      adb_handler()->handleMessage(raw_msg.data(), raw_msg.size());
     } else {
         LogAndReplyError("Unknown type: " + type);
         return;

@@ -23,7 +23,11 @@ function ConnectToDevice(device_id) {
   let mouseIsDown = false;
   let deviceConnection;
 
-  // init_logcat();
+  let logcatBtn = document.getElementById('showLogcatBtn');
+  logcatBtn.onclick = ev => {
+    init_logcat(deviceConnection);
+    logcatBtn.remove();
+  };
 
   let options = {
     // temporarily disable audio to free ports in the server since it's only

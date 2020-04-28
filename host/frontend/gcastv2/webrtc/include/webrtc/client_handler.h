@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <webrtc/AdbHandler.h>
 #include <webrtc/RTPSession.h>
 #include <webrtc/RTPSocketHandler.h>
 #include <webrtc/SDP.h>
@@ -75,6 +76,9 @@ struct ClientHandler : public std::enable_shared_from_this<ClientHandler> {
       mCertificateAndKey;
 
   std::function<void()> on_connection_timeout_cb_ = []{};
+  std::shared_ptr<AdbHandler> adb_handler_;
+
+  std::shared_ptr<AdbHandler> adb_handler();
 
   void LogAndReplyError(const std::string& error_msg) const ;
 

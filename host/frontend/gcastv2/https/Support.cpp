@@ -118,6 +118,66 @@ void encodeBase64(const void *_data, size_t size, std::string *out) {
     }
 }
 
+bool decodeBase64(const std::string& s, std::vector<uint8_t>* buffer) {
+    if ((s.size() % 4) != 0) {
+        return false;
+    }
+
+    size_t n = s.size();
+    size_t padding = 0;
+    if (n >= 1 && s[n - 1] == '=') {
+        padding = 1;
+
+        if (n >= 2 && s[n - 2] == '=') {
+            padding = 2;
+        }
+    }
+
+    size_t outLen = 3 * s.size() / 4 - padding;
+
+    buffer->resize(outLen);
+
+    uint8_t *out = buffer->data();
+    size_t j = 0;
+    uint32_t accum = 0;
+    for (size_t i = 0; i < n; ++i) {
+        char c = s[i];
+        unsigned value;
+        if (c >= 'A' && c <= 'Z') {
+            value = c - 'A';
+        } else if (c >= 'a' && c <= 'z') {
+            value = 26 + c - 'a';
+        } else if (c >= '0' && c <= '9') {
+            value = 52 + c - '0';
+        } else if (c == '+') {
+            value = 62;
+        } else if (c == '/') {
+            value = 63;
+        } else if (c != '=') {
+            return false;
+        } else {
+            if (i < n - padding) {
+                return false;
+            }
+
+            value = 0;
+        }
+
+        accum = (accum << 6) | value;
+
+        if (((i + 1) % 4) == 0) {
+            out[j++] = (accum >> 16);
+
+            if (j < outLen) { out[j++] = (accum >> 8) & 0xff; }
+            if (j < outLen) { out[j++] = accum & 0xff; }
+
+            accum = 0;
+        }
+    }
+
+    return true;
+}
+
 uint16_t U16_AT(const uint8_t *ptr) {
     return ptr[0] << 8 | ptr[1];
 }

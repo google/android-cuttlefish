@@ -16,7 +16,7 @@
 cc_library_static {
     name: "libwebrtc",
     srcs: [
-        "AdbWebSocketHandler.cpp",
+        "AdbHandler.cpp",
         "DTLS.cpp",
         "G711Packetizer.cpp",
         "Keyboard.cpp",
