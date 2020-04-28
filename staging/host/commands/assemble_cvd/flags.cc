@@ -679,26 +679,6 @@ namespace {
 std::vector<ImagePartition> disk_config() {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition {
-    .label = "misc",
-    .image_file_path = FLAGS_misc_image,
-  });
-  partitions.push_back(ImagePartition {
-    .label = "boot_a",
-    .image_file_path = FLAGS_boot_image,
-  });
-  partitions.push_back(ImagePartition {
-    .label = "boot_b",
-    .image_file_path = FLAGS_boot_image,
-  });
-  partitions.push_back(ImagePartition {
-    .label = "vendor_boot_a",
-    .image_file_path = FLAGS_vendor_boot_image,
-  });
-  partitions.push_back(ImagePartition {
-    .label = "vendor_boot_b",
-    .image_file_path = FLAGS_vendor_boot_image,
-  });
-  partitions.push_back(ImagePartition {
     .label = "super",
     .image_file_path = FLAGS_super_image,
   });
@@ -713,6 +693,14 @@ std::vector<ImagePartition> disk_config() {
   partitions.push_back(ImagePartition {
     .label = "metadata",
     .image_file_path = FLAGS_metadata_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "boot",
+    .image_file_path = FLAGS_boot_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "misc",
+    .image_file_path = FLAGS_misc_image
   });
   return partitions;
 }
