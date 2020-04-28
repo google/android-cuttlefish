@@ -82,6 +82,8 @@ ssize_t WebSocketHandler::handleRequest(
           uint8_t opcode = headerByte & 0x0f;
           if (opcode == 0x9 /*ping*/) {
             sendMessage(&packet[packetOffset], payloadLen, SendMode::pong);
+          } else if (opcode == 0x8 /*close*/) {
+            return -1;
           }
         } else {
           err = handleMessage(headerByte, &packet[packetOffset], payloadLen);
