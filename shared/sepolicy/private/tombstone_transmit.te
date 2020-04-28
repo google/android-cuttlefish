@@ -1,5 +1,5 @@
 type tombstone_transmit, domain, coredomain;
-type tombstone_transmit_exec, exec_type, file_type;
+type tombstone_transmit_exec, exec_type, system_file_type, file_type;
 
 init_daemon_domain(tombstone_transmit);
 
