@@ -36,11 +36,10 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
     return true;
   } else {
     off_t raw_target = static_cast<off_t>(data_image_mb) << 20;
-    int truncate_status =
-        cvd::SharedFD::Open(data_image, O_RDWR)->Truncate(raw_target);
-    if (truncate_status != 0) {
+    auto fd = cvd::SharedFD::Open(data_image, O_RDWR);
+    if (fd->Truncate(raw_target) != 0) {
       LOG(ERROR) << "`truncate --size=" << data_image_mb << "M "
-                  << data_image << "` failed with code " << truncate_status;
+                  << data_image << "` failed:" << fd->StrError();
       return false;
     }
     bool fsck_success = ForceFsckImage(data_image);
