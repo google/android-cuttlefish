@@ -243,7 +243,7 @@ public:
         .revision = {0, 0, 1, 0},
         .header_size = sizeof(GptHeader),
         .current_lba = 1,
-        .backup_lba = (next_disk_offset_ + sizeof(GptEnd)) / SECTOR_SIZE,
+        .backup_lba = (next_disk_offset_ + sizeof(GptEnd)) / SECTOR_SIZE - 1,
         .first_usable_lba = sizeof(GptBeginning) / SECTOR_SIZE,
         .last_usable_lba = (next_disk_offset_ - SECTOR_SIZE) / SECTOR_SIZE,
         .partition_entries_lba = 2,
