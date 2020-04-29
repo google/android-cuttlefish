@@ -10,15 +10,6 @@
 -->
 <!-- Android Auto Embedded specific HALs-->
 <manifest version="1.0" type="device">
-    <hal format="hidl">
-        <name>android.hardware.automotive.audiocontrol</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IAudioControl</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <!-- FIXME: Implement automotive.evs HAL
     <hal format="hidl">
         <name>android.hardware.automotive.evs</name>
