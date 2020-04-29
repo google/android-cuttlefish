@@ -5,3 +5,7 @@ vndbinder_use(hal_camera_default)
 hal_client_domain(hal_camera_default, hal_graphics_allocator)
 
 get_prop(hal_camera_default, hal_camera_prop)
+
+# For camera hal to talk with sensor service
+binder_call(hal_camera_default, sensor_service_server)
+binder_call(sensor_service_server, hal_camera_default)
