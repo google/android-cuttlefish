@@ -195,6 +195,12 @@ public:
     next_disk_offset_ += size;
   }
 
+  std::uint64_t DiskSize() const {
+    std::uint64_t align = 1 << 16; // 64k alignment
+    std::uint64_t val = next_disk_offset_ + sizeof(GptEnd);
+    return ((val + (align - 1)) / align) * align;
+  }
+
   /**
    * Generates a composite disk specification file, assuming that `header_file`
    * and `footer_file` will be populated with the contents of `Beginning()` and
@@ -204,7 +210,7 @@ public:
                                       const std::string& footer_file) const {
     CompositeDisk disk;
     disk.set_version(1);
-    disk.set_length(next_disk_offset_ + sizeof(GptEnd));
+    disk.set_length(DiskSize());
 
     ComponentDisk* header = disk.add_component_disks();
     header->set_file_path(header_file);
@@ -237,7 +243,7 @@ public:
       return {};
     }
     GptBeginning gpt = {
-      .protective_mbr = ProtectiveMbr(next_disk_offset_ + sizeof(GptEnd)),
+      .protective_mbr = ProtectiveMbr(DiskSize()),
       .header = {
         .signature = {'E', 'F', 'I', ' ', 'P', 'A', 'R', 'T'},
         .revision = {0, 0, 1, 0},
@@ -306,9 +312,10 @@ bool WriteBeginning(cvd::SharedFD out, const GptBeginning& beginning) {
   return true;
 }
 
-bool WriteEnd(cvd::SharedFD out, const GptEnd& end) {
-  std::string begin_str((const char*) &end, sizeof(GptEnd));
-  if (cvd::WriteAll(out, begin_str) != begin_str.size()) {
+bool WriteEnd(cvd::SharedFD out, const GptEnd& end, std::int64_t padding) {
+  std::string end_str((const char*) &end, sizeof(GptEnd));
+  end_str.resize(end_str.size() + padding, '\0');
+  if (cvd::WriteAll(out, end_str) != end_str.size()) {
     LOG(ERROR) << "Could not write GPT end: " << out->StrError();
     return false;
   }
@@ -386,7 +393,9 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
                  << "\" to \"" << output_path << "\": " << output->StrError();
     }
   }
-  if (!WriteEnd(output, builder.End(beginning))) {
+  std::uint64_t padding =
+      builder.DiskSize() - ((beginning.header.backup_lba + 1) * SECTOR_SIZE);
+  if (!WriteEnd(output, builder.End(beginning), padding)) {
     LOG(FATAL) << "Could not write GPT end to \"" << output_path
                << "\": " << output->StrError();
   }
@@ -407,7 +416,9 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                << "\": " << header->StrError();
   }
   auto footer = cvd::SharedFD::Creat(footer_file, 0600);
-  if (!WriteEnd(footer, builder.End(beginning))) {
+  std::uint64_t padding =
+      builder.DiskSize() - ((beginning.header.backup_lba + 1) * SECTOR_SIZE);
+  if (!WriteEnd(footer, builder.End(beginning), padding)) {
     LOG(FATAL) << "Could not write GPT end to \"" << footer_file
                << "\": " << footer->StrError();
   }
