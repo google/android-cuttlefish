@@ -83,6 +83,9 @@ PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
 # aes-256-heh default is not supported in standard kernels.
 PRODUCT_PROPERTY_OVERRIDES += ro.crypto.volume.filenames_mode=aes-256-cts
 
+# Copy preopted files from system_b on first boot
+PRODUCT_PROPERTY_OVERRIDES += ro.cp_system_other_odex=1
+
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 
