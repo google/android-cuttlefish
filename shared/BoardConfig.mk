@@ -21,9 +21,6 @@
 include build/make/target/board/BoardConfigMainlineCommon.mk
 
 # Reset CF unsupported settings
-TARGET_NO_RECOVERY := false
-BOARD_USES_SYSTEM_OTHER_ODEX :=
-WITH_DEXPREOPT := true
 BOARD_AVB_ENABLE := false
 
 
