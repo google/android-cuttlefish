@@ -22,13 +22,15 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
-
 namespace {
 
 const size_t BUFF_SIZE = 1 << 14;
 
-static ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
+} // namespace
+
+namespace cvd {
+
+ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;
   ssize_t written = 0;
   while ((written = fd->Write((void*)&(buf[total_written]), size - total_written)) > 0) {
@@ -59,8 +61,6 @@ ssize_t ReadExact(SharedFD fd, char* buf, size_t size) {
   }
   return total_read;
 }
-
-} // namespace
 
 ssize_t ReadAll(SharedFD fd, std::string* buf) {
   char buff[BUFF_SIZE];
