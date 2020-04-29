@@ -44,32 +44,39 @@ unsigned char locality = 0;
 bool ReadResponseLoop(cvd::SharedFD in_fd, cvd::SharedFD out_fd) {
   std::vector<char> message;
   while (true) {
-    std::vector<char> response_size_bytes(4, 0);
-    CHECK(cvd::ReadExact(in_fd, &response_size_bytes) == 4) << "Could not read response size";
+    std::uint32_t response_size;
+    CHECK(cvd::ReadExactBinary(in_fd, &response_size) == 4)
+        << "Could not read response size";
     // the tpm simulator writes 4 extra bytes at the end of the message.
-    std::uint32_t response_size = be32toh(*reinterpret_cast<std::uint32_t*>(response_size_bytes.data()));
+    response_size = be32toh(response_size);
     message.resize(response_size, '\0');
-    CHECK(cvd::ReadExact(in_fd, &message) == response_size) << "Could not read response message";
+    CHECK(cvd::ReadExact(in_fd, &message) == response_size)
+        << "Could not read response message";
     auto header = reinterpret_cast<tpm_message_header*>(message.data());
     auto host_rc = betoh32(header->ordinal);
-    LOG(DEBUG) << "TPM response was: \"" << Tss2_RC_Decode(host_rc) << "\" (" << host_rc << ")";
+    LOG(DEBUG) << "TPM response was: \"" << Tss2_RC_Decode(host_rc) << "\" ("
+               << host_rc << ")";
     std::vector<char> response_bytes(4, 0);
-    CHECK(cvd::ReadExact(in_fd, &response_bytes) == 4) << "Could not read parity response";
-    CHECK(cvd::WriteAll(out_fd, message) == message.size()) << "Could not forward message to vTPM";
+    CHECK(cvd::ReadExact(in_fd, &response_bytes) == 4)
+        << "Could not read parity response";
+    CHECK(cvd::WriteAll(out_fd, message) == message.size())
+        << "Could not forward message to vTPM";
   }
 }
 
 void SendCommand(cvd::SharedFD out_fd, std::vector<char> command) {
   // TODO(schuffelen): Implement this logic on the host.
   // TPM2 simulator command protocol.
-  std::vector<char> command_bytes(4, 0);
-  *reinterpret_cast<std::uint32_t*>(command_bytes.data()) = htobe32(8); // TPM_SEND_COMMAND
-  CHECK(cvd::WriteAll(out_fd, command_bytes) == 4) << "Could not send TPM_SEND_COMMAND";
-  CHECK(cvd::WriteAll(out_fd, std::vector<char>{(char)locality}) == 1) << "Could not send locality";
-  std::vector<char> length_bytes(4, 0);
-  *reinterpret_cast<std::uint32_t*>(length_bytes.data()) = htobe32(command.size());
-  CHECK(cvd::WriteAll(out_fd, length_bytes) == 4) << "Could not send command length";
-  CHECK(cvd::WriteAll(out_fd, command) == command.size()) << "Could not write TPM message";
+  std::uint32_t command_num = htobe32(8); // TPM_SEND_COMMAND
+  CHECK(cvd::WriteAllBinary(out_fd, &command_num) == 4)
+      << "Could not send TPM_SEND_COMMAND";
+  CHECK(cvd::WriteAllBinary(out_fd, (char*)&locality) == 1)
+      << "Could not send locality";
+  std::uint32_t length = htobe32(command.size());
+  CHECK(cvd::WriteAllBinary(out_fd, &length) == 4)
+      << "Could not send command length";
+  CHECK(cvd::WriteAll(out_fd, command) == command.size())
+      << "Could not write TPM message";
 }
 
 bool SendCommandLoop(cvd::SharedFD in_fd, cvd::SharedFD out_fd) {
@@ -80,19 +87,21 @@ bool SendCommandLoop(cvd::SharedFD in_fd, cvd::SharedFD out_fd) {
     // is not large enough.
     // https://github.com/torvalds/linux/blob/407e9ef72476e64937ebec44cc835e03a25fb408/drivers/char/tpm/tpm_vtpm_proxy.c#L98
     while ((data_length = in_fd->Read(message.data(), message.size())) < 0) {
-      CHECK(in_fd->GetErrno() == EIO) << "Error in reading TPM command from kernel: "
-                                      << in_fd->StrError();
+      CHECK(in_fd->GetErrno() == EIO) << "Error in reading TPM command from "
+                                      << "kernel: " << in_fd->StrError();
       message.resize((message.size() + 1) * 2, '\0');
     }
     message.resize(data_length, 0);
     auto header = reinterpret_cast<tpm_message_header*>(message.data());
-    LOG(DEBUG) << "Received TPM command " << TpmCommandName(betoh32(header->ordinal));
+    LOG(DEBUG) << "Received TPM command "
+               << TpmCommandName(betoh32(header->ordinal));
     if (header->ordinal == htobe32(TPM2_CC_SET_LOCALITY)) { // "Driver command"
       locality = *reinterpret_cast<unsigned char*>(header + 1);
       header->ordinal = htobe32(locality);
       header->length = htobe32(sizeof(tpm_message_header));
       message.resize(sizeof(tpm_message_header), '\0');
-      CHECK(cvd::WriteAll(in_fd, message) == message.size()) << "Could not write TPM message";
+      CHECK(cvd::WriteAll(in_fd, message) == message.size())
+          << "Could not write TPM message";
     } else {
       SendCommand(out_fd, message);
     }
