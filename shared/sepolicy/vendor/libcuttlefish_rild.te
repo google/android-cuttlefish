@@ -5,8 +5,6 @@ init_daemon_domain(libcuttlefish_rild)
 
 hal_server_domain(libcuttlefish_rild, hal_telephony)
 
-allow libcuttlefish_rild libcuttlefish_rild_device:chr_file rw_file_perms;
-
 # Failing to create these sockets appears to be non-fatal
 net_domain(libcuttlefish_rild)
 
