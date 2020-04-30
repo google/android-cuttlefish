@@ -1,7 +1,6 @@
 type vsock_frames_port_prop, property_type;
 
 allow hal_graphics_composer_server hal_graphics_allocator_default_tmpfs:file read;
-allow hal_graphics_composer_server region_screen_device:chr_file rw_file_perms;
 allow hal_graphics_composer_server self:{ socket vsock_socket } create_socket_perms_no_ioctl;
 gpu_access(hal_graphics_composer_server)
 
