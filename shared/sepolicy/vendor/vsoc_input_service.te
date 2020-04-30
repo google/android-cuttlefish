@@ -8,11 +8,6 @@ init_daemon_domain(vsoc_input_service)
 # I/O with /dev/uinput
 allow vsoc_input_service uhid_device:chr_file rw_file_perms;
 
-# Framebuffer I/O (needed to obtain the screen size)
-allow vsoc_input_service region_screen_device:chr_file rw_file_perms;
-
-allow vsoc_input_service input_events_device:chr_file rw_file_perms;
-
 net_domain(vsoc_input_service)
 
 get_prop(vsoc_input_service, cuttlefish_config_server_port_prop)

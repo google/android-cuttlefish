@@ -32,14 +32,6 @@
 /dev/dri u:object_r:gpu_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
 /dev/dri/renderD128  u:object_r:gpu_device:s0
-/dev/e2e_managed  u:object_r:region_e2e_test_device:s0
-/dev/e2e_manager  u:object_r:region_e2e_test_device:s0
-/dev/e2e_primary  u:object_r:region_e2e_test_device:s0
-/dev/e2e_secondary  u:object_r:region_e2e_test_device:s0
-/dev/input_events  u:object_r:input_events_device:s0
-/dev/ril  u:object_r:libcuttlefish_rild_device:s0
-/dev/screen  u:object_r:region_screen_device:s0
-/dev/socket_forward  u:object_r:socket_forward_device:s0
 /dev/vport[0-9]p[0-9]*  u:object_r:virtual_serial_device:s0
 /dev/vtpmx  u:object_r:vtpm_creation_device:s0
 /dev/tpmrm0  u:object_r:tpm_resource_manager:s0
