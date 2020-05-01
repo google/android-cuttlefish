@@ -33,5 +33,8 @@ cc_binary_host {
         "libxml2",
         "libjsoncpp",
     ],
+    required: [
+        "mkenvimage",
+    ],
     defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }

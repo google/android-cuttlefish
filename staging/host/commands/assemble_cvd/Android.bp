@@ -32,6 +32,7 @@ cc_binary_host {
     name: "assemble_cvd",
     srcs: [
         "assemble_cvd.cc",
+        "boot_config.cc",
         "boot_image_unpacker.cc",
         "data_image.cc",
         "flags.cc",
