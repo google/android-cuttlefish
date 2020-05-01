@@ -64,7 +64,8 @@ cvd_host_executables := \
     tpm_simulator_manager \
     vtpm_passthrough \
     ms-tpm-20-ref \
-    lz4
+    lz4 \
+    mkenvimage
 
 cvd_host_tests := \
     monotonic_time_test \
