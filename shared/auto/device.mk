@@ -80,6 +80,10 @@ PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhaldump \
     canhalsend
 
+PRODUCT_PACKAGES += \
+    libcuttlefish-ril \
+    libcuttlefish-rild
+
 # DRM Properities
 PRODUCT_PROPERTY_OVERRIDES += \
     drm.service.enabled=true
