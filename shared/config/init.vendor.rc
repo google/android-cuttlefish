@@ -7,8 +7,6 @@ on early-init
     mkdir /dev/gce 0750
     chown system system /dev/gce
 
-    mount tracefs tracefs /sys/kernel/tracing
-
     # For KCOV
     mount debugfs debugfs /sys/kernel/debug
     chmod 0755 /sys/kernel/debug
