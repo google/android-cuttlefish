@@ -213,7 +213,7 @@ class StatsKeepingComposer : public BaseComposer {
 
   void FinalizeStatsAndGet(CompositionStats* stats) {
     stats_keeper_.RecordSetEnd();
-    stats_keeper_.GetLastCompositionStats(&stats);
+    stats_keeper_.GetLastCompositionStats(stats);
   }
 
  private:
