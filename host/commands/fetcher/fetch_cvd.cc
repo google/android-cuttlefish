@@ -322,11 +322,12 @@ int main(int argc, char** argv) {
       bool system_in_img_zip = true;
       if (FLAGS_download_img_zip) {
         std::vector<std::string> image_files =
-            download_images(&build_api, system_build, target_dir, {"system.img"});
+            download_images(&build_api, system_build, target_dir,
+                            {"system.img", "product.img"});
         if (image_files.empty()) {
           LOG(INFO) << "Could not find system image for " << system_build
                     << "in the img zip. Assuming a super image build, which will "
-                    << "get the super image from the target zip.";
+                    << "get the system image from the target zip.";
           system_in_img_zip = false;
         } else {
           LOG(INFO) << "Adding img-zip files for system build";
@@ -367,6 +368,17 @@ int main(int argc, char** argv) {
           LOG(FATAL) << "Could not replace product.img in target directory"
               << strerror(error_num);
           return -1;
+        }
+        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system_ext.img"})
+            != std::vector<std::string>{}) {
+          std::string extracted_system_ext = target_dir + "/IMAGES/system_ext.img";
+          std::string target_system_ext = target_dir + "/system_ext.img";
+          if (rename(extracted_system_ext.c_str(), target_system_ext.c_str())) {
+            int error_num = errno;
+            LOG(FATAL) << "Could not move system_ext.img in target directory: "
+                       << strerror(error_num);
+            return -1;
+          }
         }
         // This should technically call AddFilesToConfig with the produced files,
         // but it will conflict with the ones produced from the default system image
