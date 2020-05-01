@@ -22,6 +22,7 @@
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -107,9 +108,31 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
   return std::chrono::system_clock::time_point(seconds);
 }
 
+bool RenameFile(const std::string& old_name, const std::string& new_name) {
+  LOG(INFO) << "Renaming " << old_name << " to " << new_name;
+  if(rename(old_name.c_str(), new_name.c_str())) {
+    LOG(ERROR) << "File rename failed due to " << strerror(errno);
+    return false;
+  }
+
+  return true;
+}
+
 bool RemoveFile(const std::string& file) {
   LOG(INFO) << "Removing " << file;
   return remove(file.c_str()) == 0;
+}
+
+
+std::string ReadFile(const std::string& file) {
+  std::string contents;
+  std::ifstream in(file, std::ios::in | std::ios::binary);
+  in.seekg(0, std::ios::end);
+  contents.resize(in.tellg());
+  in.seekg(0, std::ios::beg);
+  in.read(&contents[0], contents.size());
+  in.close();
+  return(contents);
 }
 
 std::string CurrentDirectory() {
