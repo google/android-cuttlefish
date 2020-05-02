@@ -1,1 +1,3 @@
 gpu_access(platform_app)
+
+allow platform_app broadcastradio_service:service_manager find;
