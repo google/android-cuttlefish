@@ -1095,8 +1095,7 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
   return (cvd::StringFromEnv("ANDROID_PRODUCT_OUT",
-                             cvd::StringFromEnv("HOME", ".")) +
-          "/") +
+                             cvd::StringFromEnv("HOME", "."))) +
          file_name;
 }
 
