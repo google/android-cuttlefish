@@ -1,2 +1,3 @@
 # Device types
+type ab_block_device, dev_type;
 type virtual_serial_device, dev_type;
