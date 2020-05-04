@@ -255,6 +255,7 @@ bool ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_boot_env_image = FLAGS_system_image_dir + "/env.img";
   SetCommandLineOptionWithMode("boot_env_image", default_boot_env_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_vbmeta_image = FLAGS_system_image_dir + "/vbmeta.img";
   SetCommandLineOptionWithMode("vbmeta_image", default_vbmeta_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -352,6 +353,8 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
+  tmp_config_obj.set_vbmeta_image_path(FLAGS_vbmeta_image);
+  tmp_config_obj.set_vbmeta_system_image_path(FLAGS_vbmeta_system_image);
 
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
