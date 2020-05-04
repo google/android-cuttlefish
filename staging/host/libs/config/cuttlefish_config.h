@@ -146,6 +146,12 @@ class CuttlefishConfig {
   void set_vendor_ramdisk_image_path(const std::string&
     vendor_ramdisk_image_path);
 
+  std::string vbmeta_image_path() const;
+  void set_vbmeta_image_path(const std::string& vbmeta_image_path);
+
+  std::string vbmeta_system_image_path() const;
+  void set_vbmeta_system_image_path(const std::string& vbmeta_system_image_path);
+
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
 
