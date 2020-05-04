@@ -104,8 +104,6 @@ DEFINE_string(super_image, "", "Location of the super partition image.");
 DEFINE_string(misc_image, "",
               "Location of the misc partition image. If the image does not "
               "exist, a blank new misc partition image is created.");
-DEFINE_string(uboot_env, "",
-              "Location of the u-boot.env.");
 DEFINE_string(boot_env_image, "",
               "Location of the boot environment image. If the image does not "
               "exist, a default boot environment image is created.");
@@ -254,9 +252,6 @@ bool ResolveInstanceFiles() {
                                         + "/vendor_boot.img";
   SetCommandLineOptionWithMode("vendor_boot_image",
                                default_vendor_boot_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_uboot_env = FLAGS_system_image_dir + "/u-boot.env";
-  SetCommandLineOptionWithMode("uboot_env", default_uboot_env.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_boot_env_image = FLAGS_system_image_dir + "/env.img";
   SetCommandLineOptionWithMode("boot_env_image", default_boot_env_image.c_str(),
@@ -1020,7 +1015,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   }
 
   // Create boot_config if necessary
-  if (!InitBootloaderEnvPartition(*config, FLAGS_uboot_env, FLAGS_boot_env_image)) {
+  if (!InitBootloaderEnvPartition(*config, FLAGS_boot_env_image)) {
     exit(cvd::kCuttlefishConfigurationInitError);
   }
 
