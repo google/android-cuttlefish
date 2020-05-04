@@ -19,5 +19,4 @@
 #include <host/libs/config/cuttlefish_config.h>
 
 bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
-                                const std::string& uboot_env_path,
                                 const std::string& boot_env_image_path);
