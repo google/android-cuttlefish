@@ -436,7 +436,6 @@ std::string GetGlobalConfigFileLink();
 std::string ForCurrentInstance(const char* prefix);
 int ForCurrentInstance(int base);
 
-std::string GetDefaultPerInstanceDir();
 std::string GetDefaultMempath();
 int GetDefaultPerInstanceVsockCid();
 
