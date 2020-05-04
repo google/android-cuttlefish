@@ -28,6 +28,9 @@
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
+// Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
+#define VBMETA_MAX_SIZE 65536ul
+
 using vsoc::ForCurrentInstance;
 using cvd::AssemblerExitCodes;
 
@@ -72,6 +75,12 @@ DEFINE_string(boot_image, "",
 DEFINE_string(vendor_boot_image, "",
               "Location of cuttlefish vendor boot image. If empty it is assumed to "
               "be vendor_boot.img in the directory specified by -system_image_dir.");
+DEFINE_string(vbmeta_image, "",
+              "Location of cuttlefish vbmeta image. If empty it is assumed to "
+              "be vbmeta.img in the directory specified by -system_image_dir.");
+DEFINE_string(vbmeta_system_image, "",
+              "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
+              "be vbmeta_system.img in the directory specified by -system_image_dir.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
@@ -246,6 +255,13 @@ bool ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_boot_env_image = FLAGS_system_image_dir + "/env.img";
   SetCommandLineOptionWithMode("boot_env_image", default_boot_env_image.c_str(),
+  std::string default_vbmeta_image = FLAGS_system_image_dir + "/vbmeta.img";
+  SetCommandLineOptionWithMode("vbmeta_image", default_vbmeta_image.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_vbmeta_system_image = FLAGS_system_image_dir
+                                          + "/vbmeta_system.img";
+  SetCommandLineOptionWithMode("vbmeta_system_image",
+                               default_vbmeta_system_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
@@ -714,6 +730,22 @@ std::vector<ImagePartition> disk_config() {
     .image_file_path = FLAGS_vendor_boot_image,
   });
   partitions.push_back(ImagePartition {
+    .label = "vbmeta_a",
+    .image_file_path = FLAGS_vbmeta_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "vbmeta_b",
+    .image_file_path = FLAGS_vbmeta_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "vbmeta_system_a",
+    .image_file_path = FLAGS_vbmeta_system_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "vbmeta_system_b",
+    .image_file_path = FLAGS_vbmeta_system_image,
+  });
+  partitions.push_back(ImagePartition {
     .label = "super",
     .image_file_path = FLAGS_super_image,
   });
@@ -991,6 +1023,19 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
   for (const auto& instance : config->Instances()) {
     if (!cvd::FileExists(instance.access_kregistry_path())) {
       CreateBlankImage(instance.access_kregistry_path(), 2, "none", "1M");
+    }
+  }
+
+  // libavb expects to be able to read the maximum vbmeta size, so we must
+  // provide a partition which matches this or the read will fail
+  for (const auto& vbmeta_image : { FLAGS_vbmeta_image, FLAGS_vbmeta_system_image }) {
+    if (cvd::FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
+      auto fd = cvd::SharedFD::Open(vbmeta_image, O_RDWR);
+      if (fd->Truncate(VBMETA_MAX_SIZE) != 0) {
+        LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " "
+                   << vbmeta_image << "` failed: " << fd->StrError();
+        exit(cvd::kCuttlefishConfigurationInitError);
+      }
     }
   }
 
