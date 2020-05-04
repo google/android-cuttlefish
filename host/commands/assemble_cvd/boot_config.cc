@@ -59,11 +59,11 @@ size_t WriteEnvironment(const vsoc::CuttlefishConfig& config,
 
 
 bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
-                                const std::string& output_path) {
-  auto tmp_output_path = output_path + ".tmp";
-  auto env_file = vsoc::GetDefaultPerInstanceDir() + "/u-boot.env";
-  if(!WriteEnvironment(config, env_file)) {
-    LOG(ERROR) << "Unable to write out plaintext env.";
+                                const std::string& uboot_env_path,
+                                const std::string& boot_env_image_path) {
+  auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
+  if(!WriteEnvironment(config, uboot_env_path)) {
+    LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path << ".'";
     return false;
   }
 
@@ -72,22 +72,22 @@ bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
   cmd.AddParameter("-s");
   cmd.AddParameter("4096");
   cmd.AddParameter("-o");
-  cmd.AddParameter(tmp_output_path);
-  cmd.AddParameter(env_file);
+  cmd.AddParameter(tmp_boot_env_image_path);
+  cmd.AddParameter(uboot_env_path);
   int success = cmd.Start().Wait();
   if (success != 0) {
     LOG(ERROR) << "Unable to run mkenvimage. Exited with status " << success;
     return false;
   }
 
-  if(!cvd::FileExists(output_path) || cvd::ReadFile(output_path) != cvd::ReadFile(tmp_output_path)) {
-    if(!cvd::RenameFile(tmp_output_path, output_path)) {
+  if(!cvd::FileExists(boot_env_image_path) || cvd::ReadFile(boot_env_image_path) != cvd::ReadFile(tmp_boot_env_image_path)) {
+    if(!cvd::RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
       LOG(ERROR) << "Unable to delete the old env image.";
       return false;
     }
     LOG(INFO) << "Updated bootloader environment image.";
   } else {
-    cvd::RemoveFile(tmp_output_path);
+    cvd::RemoveFile(tmp_boot_env_image_path);
   }
 
   return true;
