@@ -1098,12 +1098,6 @@ std::string ForCurrentInstance(const char* prefix) {
 }
 int ForCurrentInstance(int base) { return base + GetInstance() - 1; }
 
-std::string GetDefaultPerInstanceDir() {
-  std::ostringstream stream;
-  stream << std::getenv("HOME") << "/cuttlefish_runtime";
-  return stream.str();
-}
-
 int GetDefaultPerInstanceVsockCid() {
   constexpr int kFirstGuestCid = 3;
   return vsoc::HostSupportsVsock() ? ForCurrentInstance(kFirstGuestCid) : 0;
