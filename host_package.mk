@@ -54,6 +54,7 @@ cvd_host_executables := \
     run_cvd \
     cvd_status \
     webRTC \
+    webrtc_sig_server \
     metrics \
     fsck.f2fs \
     resize.f2fs \
