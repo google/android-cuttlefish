@@ -26,7 +26,6 @@ cvd_host_executables := \
     adb_connector \
     stop_cvd \
     vnc_server \
-    cf_qemu.sh \
     cf_bpttool \
     kernel_log_monitor \
     extract-vmlinux \
