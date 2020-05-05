@@ -176,5 +176,8 @@ BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_BOOT_HEADER_VERSION := 3
 BOARD_USES_RECOVERY_AS_BOOT := true
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
-PRODUCT_COPY_FILES += device/google/cuttlefish/dtb.img:dtb.img
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/dtb.img:dtb.img \
+    device/google/cuttlefish/required_images:required_images \
+
 BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
