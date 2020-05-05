@@ -1,0 +1,49 @@
+//
+// Copyright (C) 2020 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_library_headers {
+    name: "webrtc_signaling_headers",
+    export_include_dirs: ["./constants"],
+    host_supported: true,
+}
+
+cc_binary_host {
+    name: "webrtc_sig_server",
+    srcs: [
+        "client_handler.cpp",
+        "device_registry.cpp",
+        "device_handler.cpp",
+        "server_config.cpp",
+        "server.cpp",
+        "signal_handler.cpp",
+    ],
+    header_libs: [
+      "webrtc_signaling_headers",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libcrypto",
+        "libssl",
+        "libcuttlefish_fs",
+    ],
+    static_libs: [
+        "libgflags",
+        "libjsoncpp",
+        "libhttps",
+        "libwebrtc",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
