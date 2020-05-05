@@ -25,6 +25,7 @@ cc_binary_host {
         "client_handler.cpp",
         "device_registry.cpp",
         "device_handler.cpp",
+        "device_list_handler.cpp",
         "server_config.cpp",
         "server.cpp",
         "signal_handler.cpp",
