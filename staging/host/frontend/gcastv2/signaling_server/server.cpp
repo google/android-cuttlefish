@@ -32,8 +32,9 @@
 #include "host/frontend/gcastv2/webrtc/include/webrtc/STUNMessage.h"
 
 #include "host/frontend/gcastv2/signaling_server/client_handler.h"
-#include "host/frontend/gcastv2/signaling_server/device_registry.h"
 #include "host/frontend/gcastv2/signaling_server/device_handler.h"
+#include "host/frontend/gcastv2/signaling_server/device_list_handler.h"
+#include "host/frontend/gcastv2/signaling_server/device_registry.h"
 #include "host/frontend/gcastv2/signaling_server/server_config.h"
 
 DEFINE_int32(http_server_port, 8443, "The port for the http server.");
@@ -106,6 +107,13 @@ int main(int argc, char **argv) {
         return std::make_pair(0, std::make_shared<cvd::ClientHandler>(
                                      &device_registry, server_config));
       });
+
+  // This is non-standard utility endpoint, it's the simplest way for clients to
+  // obtain the ids of registered devices.
+  httpd->addWebSocketHandlerFactory("/list_devices", [&device_registry] {
+    return std::make_pair(
+        0, std::make_shared<cvd::DeviceListHandler>(device_registry));
+  });
 
   httpd->run();
   run_loop->run();
