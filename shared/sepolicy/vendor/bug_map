@@ -1,4 +1,3 @@
-gsid gsid capability b/146356992
 init system_lib_file dir b/133444385
 init system_lib_file file b/133444385
 logpersist logpersist capability b/132911257
