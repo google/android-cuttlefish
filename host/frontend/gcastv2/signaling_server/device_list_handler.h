@@ -15,31 +15,24 @@
 
 #pragma once
 
-#include <cinttypes>
-
-#include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include <json/json.h>
 
+#include "host/frontend/gcastv2/https/include/https/WebSocketHandler.h"
+#include "host/frontend/gcastv2/signaling_server/device_registry.h"
+
 namespace cvd {
 
-class DeviceHandler;
-
-class DeviceRegistry {
+class DeviceListHandler : public WebSocketHandler {
  public:
-  bool RegisterDevice(const std::string& device_id,
-                      std::weak_ptr<DeviceHandler> device_handler);
-  void UnRegisterDevice(const std::string& device_id);
+  DeviceListHandler(const DeviceRegistry& registry);
 
-  std::shared_ptr<DeviceHandler> GetDevice(const std::string& device_id);
-
-  std::vector<std::string> ListDeviceIds() const;
+ protected:
+  int handleMessage(uint8_t, const uint8_t*, size_t) override;
 
  private:
-  std::map<std::string, std::weak_ptr<DeviceHandler>> devices_;
+  const DeviceRegistry& registry_;
 };
-
 }  // namespace cvd
