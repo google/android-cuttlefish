@@ -30,9 +30,6 @@
 void makeFdNonblocking(int fd);
 std::string hexdump(const void *_data, size_t size);
 
-void encodeBase64(const void *_data, size_t size, std::string *out);
-bool decodeBase64(const std::string& data, std::vector<uint8_t>* buffer);
-
 uint16_t U16_AT(const uint8_t *ptr);
 uint32_t U32_AT(const uint8_t *ptr);
 uint64_t U64_AT(const uint8_t *ptr);
