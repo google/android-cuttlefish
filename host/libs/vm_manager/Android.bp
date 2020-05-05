@@ -36,8 +36,3 @@ cc_library_host_static {
     ],
     defaults: ["cuttlefish_host_only"],
 }
-
-sh_binary_host {
-    name: "cf_qemu.sh",
-    src: "cf_qemu.sh",
-}
