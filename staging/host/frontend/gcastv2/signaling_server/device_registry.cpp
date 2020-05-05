@@ -60,4 +60,12 @@ std::shared_ptr<DeviceHandler> DeviceRegistry::GetDevice(
   return device_handler;
 }
 
+std::vector<std::string> DeviceRegistry::ListDeviceIds() const {
+  std::vector<std::string> ret;
+  for (const auto& entry: devices_) {
+    ret.push_back(entry.first);
+  }
+  return ret;
+}
+
 }  // namespace cvd
