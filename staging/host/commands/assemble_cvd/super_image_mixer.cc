@@ -61,6 +61,7 @@ const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/odm.img",
   "IMAGES/recovery.img",
   "IMAGES/userdata.img",
+  "IMAGES/vbmeta.img",
   "IMAGES/vendor.img",
 };
 
