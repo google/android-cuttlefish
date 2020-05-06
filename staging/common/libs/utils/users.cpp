@@ -45,7 +45,7 @@ gid_t GroupIdFromName(const std::string& group_name) {
     if (grp_p != nullptr) {
       return grp.gr_gid;
     } else {
-      LOG(ERROR) << "Group " << group_name << " does not exist";
+      // Caller may be checking with non-existent group name
       return -1;
     }
   } else {
