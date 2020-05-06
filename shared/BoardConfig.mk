@@ -49,6 +49,9 @@ BOARD_USES_ODMIMAGE := true
 BOARD_ODMIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_ODM := odm
 
+# FIXME: Remove this once we generate the vbmeta digest correctly
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flag 2
+
 # Enable chained vbmeta for system image mixing
 BOARD_AVB_VBMETA_SYSTEM := product system system_ext
 BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := external/avb/test/data/testkey_rsa2048.pem

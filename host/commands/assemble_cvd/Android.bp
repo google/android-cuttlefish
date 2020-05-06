@@ -61,7 +61,6 @@ cc_binary_host {
         "libgflags",
         "libxml2",
         "libjsoncpp",
-        "libavb",
     ],
     defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }
