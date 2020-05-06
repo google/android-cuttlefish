@@ -3,4 +3,5 @@ cache.img
 super.img
 userdata.img
 vbmeta.img
+vbmeta_system.img
 vendor_boot.img
