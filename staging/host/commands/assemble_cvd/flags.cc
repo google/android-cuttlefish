@@ -353,8 +353,6 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
-  tmp_config_obj.set_vbmeta_image_path(FLAGS_vbmeta_image);
-  tmp_config_obj.set_vbmeta_system_image_path(FLAGS_vbmeta_system_image);
 
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;

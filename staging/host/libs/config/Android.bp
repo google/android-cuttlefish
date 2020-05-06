@@ -29,7 +29,6 @@ cc_library_host_static {
     static_libs: [
         "libxml2",
         "libjsoncpp",
-        "libavb",
     ],
     defaults: ["cuttlefish_host_only"],
 }
