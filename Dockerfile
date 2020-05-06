@@ -53,7 +53,7 @@ RUN if test $(uname -m) == aarch64; then \
 COPY . android-cuttlefish/
 
 RUN cd /root/android-cuttlefish \
-    && yes | sudo mk-build-deps -i -r -B \
+    && yes | sudo -E mk-build-deps -i -r -B \
     && dpkg-buildpackage -uc -us \
     && apt-get install --no-install-recommends -y -f ../cuttlefish-common_*.deb \
     && rm -rvf ../cuttlefish-common_*.deb \
