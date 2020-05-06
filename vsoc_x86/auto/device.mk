@@ -21,3 +21,8 @@ PRODUCT_NAME := aosp_cf_x86_auto
 PRODUCT_DEVICE := vsoc_x86
 PRODUCT_MODEL := Cuttlefish x86 auto
 PRODUCT_PACKAGE_OVERLAYS += device/google/cuttlefish/vsoc_x86/auto/overlay
+
+
+# Whitelisted packages per user type
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/vsoc_x86/auto/preinstalled-packages-product-car-cuttlefish.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/sysconfig/preinstalled-packages-product-car-cuttlefish.xml
