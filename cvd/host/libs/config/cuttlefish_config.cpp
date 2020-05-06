@@ -1081,12 +1081,6 @@ std::string ForCurrentInstance(const char* prefix) {
 }
 int ForCurrentInstance(int base) { return base + GetInstance() - 1; }
 
-std::string GetDefaultPerInstanceDir() {
-  std::ostringstream stream;
-  stream << std::getenv("HOME") << "/cuttlefish_runtime";
-  return stream.str();
-}
-
 int GetDefaultPerInstanceVsockCid() {
   constexpr int kFirstGuestCid = 3;
   return vsoc::HostSupportsVsock() ? ForCurrentInstance(kFirstGuestCid) : 0;
@@ -1101,8 +1095,7 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
   return (cvd::StringFromEnv("ANDROID_PRODUCT_OUT",
-                             cvd::StringFromEnv("HOME", ".")) +
-          "/") +
+                             cvd::StringFromEnv("HOME", "."))) +
          file_name;
 }
 
