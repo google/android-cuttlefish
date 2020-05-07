@@ -6,7 +6,11 @@
     </head>
 
     <body>
-        <button id="receiveButton">Receive Media</button>
+      <section id='device_selector'>
+        <h1>Available devices <span id='refresh_list'>&#8635;</span></h1>
+        <ul id="device_list"></ul>
+      </section>
+      <section id='device_connection'>
         <button id="keyboardCaptureBtn">Capture Keyboard</button>
         <hr>
         <section class="noscroll">
@@ -19,6 +23,7 @@
                 </textarea>
             </div>
         </section>
+      </section>
 
         <script src="js/logcat.js"></script>
         <script src="js/cf_webrtc.js" type="module"></script>

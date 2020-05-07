@@ -17,7 +17,6 @@
 #include <webrtc/RTPSocketHandler.h>
 
 #include <webrtc/Keyboard.h>
-#include <webrtc/MyWebSocketHandler.h>
 #include <webrtc/STUNMessage.h>
 #include <Utils.h>
 
@@ -270,7 +269,7 @@ std::string RTPSocketHandler::getLocalUFrag() const {
 }
 
 std::string RTPSocketHandler::getLocalIPString() const {
-    return FLAGS_public_ip;
+    return mServerState->public_ip();
 }
 
 void RTPSocketHandler::run() {
