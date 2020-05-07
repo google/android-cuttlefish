@@ -54,6 +54,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
+    ro.com.android.dataroaming=true \
     vendor.rild.libpath=libcuttlefish-ril.so \
 
 # vehicle HAL
