@@ -153,6 +153,13 @@ const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 const char* kTombstoneReceiverPort = "tombstone_receiver_port";
 
 const char* kWebRTCCertsDir = "webrtc_certs_dir";
+const char* kSigServerBinary = "webrtc_sig_server_binary";
+const char* kSigServerPort = "webrtc_sig_server_port";
+const char* kSigServerAddress = "webrtc_sig_server_addr";
+const char* kSigServerPath = "webrtc_sig_server_path";
+const char* kSigServerStrict = "webrtc_sig_server_strict";
+const char* kWebrtcDeviceId = "webrtc_device_id";
+const char* kStartSigServer = "webrtc_start_sig_server";
 
 const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
@@ -854,6 +861,64 @@ void CuttlefishConfig::set_webrtc_certs_dir(const std::string& certs_dir) {
 
 std::string CuttlefishConfig::webrtc_certs_dir() const {
   return (*dictionary_)[kWebRTCCertsDir].asString();
+}
+
+void CuttlefishConfig::set_sig_server_binary(const std::string& binary) {
+  SetPath(kSigServerBinary, binary);
+}
+
+std::string CuttlefishConfig::sig_server_binary() const {
+  return (*dictionary_)[kSigServerBinary].asString();
+}
+
+void CuttlefishConfig::set_sig_server_port(int port) {
+  (*dictionary_)[kSigServerPort] = port;
+}
+
+int CuttlefishConfig::sig_server_port() const {
+  return (*dictionary_)[kSigServerPort].asInt();
+}
+
+void CuttlefishConfig::set_sig_server_address(const std::string& addr) {
+  (*dictionary_)[kSigServerAddress] = addr;
+}
+
+std::string CuttlefishConfig::sig_server_address() const {
+  return (*dictionary_)[kSigServerAddress].asString();
+}
+
+void CuttlefishConfig::set_sig_server_path(const std::string& path) {
+  // Don't use SetPath here, it's a URL path not a file system path
+  (*dictionary_)[kSigServerPath] = path;
+}
+
+std::string CuttlefishConfig::sig_server_path() const {
+  return (*dictionary_)[kSigServerPath].asString();
+}
+
+void CuttlefishConfig::set_sig_server_strict(bool strict) {
+  (*dictionary_)[kSigServerStrict] = strict;
+}
+
+bool CuttlefishConfig::sig_server_strict() const {
+  return (*dictionary_)[kSigServerStrict].asBool();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
+    const std::string& id) {
+  (*Dictionary())[kWebrtcDeviceId] = id;
+}
+
+std::string CuttlefishConfig::InstanceSpecific::webrtc_device_id() const {
+  return (*Dictionary())[kWebrtcDeviceId].asString();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_start_webrtc_signaling_server(bool start) {
+  (*Dictionary())[kStartSigServer] = start;
+}
+
+bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
+  return (*Dictionary())[kStartSigServer].asBool();
 }
 
 std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
