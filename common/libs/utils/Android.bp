@@ -23,17 +23,22 @@ cc_library {
         "files.cpp",
         "users.cpp",
         "network.cpp",
+        "base64.cpp",
     ],
     shared: {
         shared_libs: [
             "libbase",
             "libcuttlefish_fs",
+            "libcrypto",
         ],
     },
     static: {
         static_libs: [
             "libbase",
             "libcuttlefish_fs",
+        ],
+        shared_libs: [
+          "libcrypto", // libcrypto_static is not accessible from all targets
         ],
     },
     defaults: ["cuttlefish_host_and_guest"],
