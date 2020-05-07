@@ -52,17 +52,13 @@ enum keymaster_command : uint32_t {
     KM_IMPORT_WRAPPED_KEY           = (25 << KEYMASTER_REQ_SHIFT),
 };
 
-#ifdef __ANDROID__
-
 /**
  * keymaster_message - Serial header for communicating with KM server
  * @cmd: the command, one of keymaster_command.
  * @payload: start of the serialized command specific payload
  */
 struct keymaster_message {
-    uint32_t cmd;
+    keymaster_command cmd;
+    uint32_t payload_size;
     uint8_t payload[0];
 };
-
-#endif
-
