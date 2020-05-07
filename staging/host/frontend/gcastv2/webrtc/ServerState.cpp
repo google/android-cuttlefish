@@ -136,19 +136,6 @@ std::shared_ptr<Packetizer> ServerState::getAudioPacketizer() {
     return packetizer;
 }
 
-size_t ServerState::acquireHandlerId() {
-    size_t id = 0;
-    while (!mAllocatedHandlerIds.insert(id).second) {
-        ++id;
-    }
-
-    return id;
-}
-
-void ServerState::releaseHandlerId(size_t id) {
-    CHECK_EQ(mAllocatedHandlerIds.erase(id), 1);
-}
-
 std::shared_ptr<android::TouchSink> ServerState::getTouchSink() {
     return mTouchSink;
 }

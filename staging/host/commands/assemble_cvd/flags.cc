@@ -142,7 +142,7 @@ DEFINE_string(seccomp_policy_dir,
               vsoc::DefaultHostArtifactsPath(kSeccompDir),
               "With sandbox'ed crosvm, overrieds the security comp policy directory");
 
-DEFINE_bool(start_webrtc, false, "[Experimental] Whether to start the webrtc process.");
+DEFINE_bool(start_webrtc, false, "Whether to start the webrtc process.");
 
 DEFINE_string(
         webrtc_assets_dir,
@@ -163,6 +163,35 @@ DEFINE_bool(
         webrtc_enable_adb_websocket,
         false,
         "[Experimental] If enabled, exposes local adb service through a websocket.");
+
+DEFINE_bool(
+    start_webrtc_sig_server, false,
+    "Whether to start the webrtc signaling server. This option only applies to "
+    "the first instance, if multiple instances are launched they'll share the "
+    "same signaling server, which is owned by the first one.");
+
+DEFINE_string(webrtc_sig_server_addr, "127.0.0.1",
+              "The address of the webrtc signaling server.");
+
+DEFINE_int32(
+    webrtc_sig_server_port, 443,
+    "The port of the signaling server if started outside of this launch. If "
+    "-start_webrtc_sig_server is given it will choose 8443+instance_num1-1 and "
+    "this parameter is ignored.");
+
+DEFINE_string(webrtc_sig_server_path, "/register_device",
+              "The path section of the URL where the device should be "
+              "registered with the signaling server.");
+
+DEFINE_bool(verify_sig_server_certificate, false,
+            "Whether to verify the signaling server's certificate with a "
+            "trusted signing authority (Disallow self signed certificates).");
+
+DEFINE_string(
+    webrtc_device_id, "cvd-{num}",
+    "The for the device to register with the signaling server. Every "
+    "appearance of the substring '{num}' in the device id will be substituted "
+    "with the instance number to support multiple instances");
 
 DEFINE_string(adb_mode, "vsock_half_tunnel",
               "Mode for ADB connection."
@@ -399,6 +428,13 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_assets_dir(FLAGS_webrtc_assets_dir);
   tmp_config_obj.set_webrtc_public_ip(FLAGS_webrtc_public_ip);
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
+  tmp_config_obj.set_sig_server_binary(
+      vsoc::DefaultHostArtifactsPath("bin/webrtc_sig_server"));
+  // Note: This will be overridden if the sig server is started by us
+  tmp_config_obj.set_sig_server_port(FLAGS_webrtc_sig_server_port);
+  tmp_config_obj.set_sig_server_address(FLAGS_webrtc_sig_server_addr);
+  tmp_config_obj.set_sig_server_path(FLAGS_webrtc_sig_server_path);
+  tmp_config_obj.set_sig_server_strict(FLAGS_verify_sig_server_certificate);
 
   tmp_config_obj.set_webrtc_enable_adb_websocket(
           FLAGS_webrtc_enable_adb_websocket);
@@ -439,6 +475,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance_nums.push_back(vsoc::GetInstance() + i);
   }
 
+  bool is_first_instance = true;
   for (const auto& num : instance_nums) {
     auto instance = tmp_config_obj.ForInstance(num);
     auto const_instance = const_cast<const vsoc::CuttlefishConfig&>(tmp_config_obj)
@@ -477,6 +514,29 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_device_title(FLAGS_device_title);
 
     instance.set_virtual_disk_paths({const_instance.PerInstancePath("overlay.img")});
+
+    instance.set_start_webrtc_signaling_server(false);
+
+    if (FLAGS_webrtc_device_id.empty()) {
+      // Use the instance's name as a default
+      instance.set_webrtc_device_id(const_instance.instance_name());
+    } else {
+      std::string device_id = FLAGS_webrtc_device_id;
+      size_t pos;
+      while ((pos = device_id.find("{num}")) != std::string::npos) {
+        device_id.replace(pos, strlen("{num}"), std::to_string(num));
+      }
+      instance.set_webrtc_device_id(device_id);
+    }
+    if (FLAGS_start_webrtc_sig_server && is_first_instance) {
+      auto port = 8443 + num - 1;
+      // Change the signaling server port for all instances
+      tmp_config_obj.set_sig_server_port(port);
+      instance.set_start_webrtc_signaling_server(true);
+    } else {
+      instance.set_start_webrtc_signaling_server(false);
+    }
+    is_first_instance = false;
   }
 
   return tmp_config_obj;
@@ -560,6 +620,11 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
     SetCommandLineOptionWithMode("start_vnc_server", "true",
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
+  // The default for starting signaling server is whether or not webrt is to be
+  // started.
+  SetCommandLineOptionWithMode("start_webrtc_sig_server",
+                               FLAGS_start_webrtc ? "true" : "false",
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   google::HandleCommandLineHelpFlags();
   if (invalid_manager) {
     return false;
