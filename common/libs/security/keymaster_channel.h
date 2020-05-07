@@ -16,14 +16,33 @@
 
 #pragma once
 
+#include "keymaster/android_keymaster_messages.h"
 #include "keymaster/serializable.h"
 
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/security/keymaster_ipc.h"
 
 #include <memory>
 
+namespace keymaster {
+
+/**
+ * keymaster_message - Serial header for communicating with KM server
+ * @cmd: the command, one of AndroidKeymasterCommand.
+ * @payload: start of the serialized command specific payload
+ */
+struct keymaster_message {
+    AndroidKeymasterCommand cmd : 31;
+    bool is_response : 1;
+    uint32_t payload_size;
+    uint8_t payload[0];
+};
+
+} // namespace keymaster
+
 namespace cvd {
+
+using keymaster::AndroidKeymasterCommand;
+using keymaster::keymaster_message;
 
 /**
  * A destroyer for keymaster_message instances created with
@@ -43,7 +62,7 @@ using ManagedKeymasterMessage =
  * `payload_size`.
  */
 ManagedKeymasterMessage CreateKeymasterMessage(
-    keymaster_command command, size_t payload_size);
+    AndroidKeymasterCommand command, bool is_response, size_t payload_size);
 
 /*
  * Interface for communication channels that synchronously communicate Keymaster
@@ -52,11 +71,15 @@ ManagedKeymasterMessage CreateKeymasterMessage(
 class KeymasterChannel {
 private:
   SharedFD channel_;
+  bool SendMessage(AndroidKeymasterCommand command, bool response,
+                   const keymaster::Serializable& message);
 public:
   KeymasterChannel(SharedFD channel);
 
-  bool SendMessage(keymaster_command command,
+  bool SendRequest(AndroidKeymasterCommand command,
                    const keymaster::Serializable& message);
+  bool SendResponse(AndroidKeymasterCommand command,
+                    const keymaster::Serializable& message);
   ManagedKeymasterMessage ReceiveMessage();
 };
 
