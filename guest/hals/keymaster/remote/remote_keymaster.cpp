@@ -16,15 +16,42 @@
 
 #include "remote_keymaster.h"
 
-#include <cutils/log.h>
+#include <android-base/logging.h>
 #include <keymaster/android_keymaster_messages.h>
 #include <keymaster/keymaster_configuration.h>
 #include "common/libs/security/keymaster_ipc.h"
 
 namespace keymaster {
 
-int RemoteKeymaster::Initialize() {
-    // TODO(schuffelen): Connect to the remote side.
+RemoteKeymaster::RemoteKeymaster(cvd::KeymasterChannel* channel)
+    : channel_(channel) {}
+
+RemoteKeymaster::~RemoteKeymaster() {
+}
+
+void RemoteKeymaster::ForwardCommand(enum keymaster_command command, const Serializable& req,
+                                     KeymasterResponse* rsp) {
+    if (!channel_->SendMessage(command, req)) {
+        LOG(ERROR) << "Failed to send keymaster message: " << command;
+        rsp->error = KM_ERROR_UNKNOWN_ERROR;
+        return;
+    }
+    auto response = channel_->ReceiveMessage();
+    if (!response) {
+        LOG(ERROR) << "Failed to receive keymaster response: " << command;
+        rsp->error = KM_ERROR_UNKNOWN_ERROR;
+        return;
+    }
+    const uint8_t* buffer = response->payload;
+    const uint8_t* buffer_end = response->payload + response->payload_size;
+    if (!rsp->Deserialize(&buffer, buffer_end)) {
+        LOG(ERROR) << "Failed to deserialize keymaster response: " << command;
+        rsp->error = KM_ERROR_UNKNOWN_ERROR;
+        return;
+    }
+}
+
+bool RemoteKeymaster::Initialize() {
 
     ConfigureRequest req;
     req.os_version = GetOsVersion();
@@ -34,30 +61,11 @@ int RemoteKeymaster::Initialize() {
     Configure(req, &rsp);
 
     if (rsp.error != KM_ERROR_OK) {
-        ALOGE("Failed to configure keymaster %d", rsp.error);
-        return -1;
+        LOG(ERROR) << "Failed to configure keymaster: " << rsp.error;
+        return false;
     }
 
-    return 0;
-}
-
-RemoteKeymaster::RemoteKeymaster() {}
-
-RemoteKeymaster::~RemoteKeymaster() {
-    // TODO(schuffelen): Disconnect from the remote side.
-}
-
-static void ForwardCommand(enum keymaster_command command, const Serializable& req,
-                           KeymasterResponse* rsp) {
-    keymaster_error_t err = KM_ERROR_OK;
-    // TODO(schuffelen): Send the message to the remote side.
-    (void) command;
-    (void) req;
-    (void) rsp;
-    if (err != KM_ERROR_OK) {
-        ALOGE("Failed to send cmd %d err: %d", command, err);
-        rsp->error = err;
-    }
+    return true;
 }
 
 void RemoteKeymaster::GetVersion(const GetVersionRequest& request, GetVersionResponse* response) {
