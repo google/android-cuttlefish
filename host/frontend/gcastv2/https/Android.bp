@@ -35,9 +35,9 @@ cc_library_static {
         "libbase",
         "libcrypto",
         "libssl",
-	"liblog",
+        "liblog",
+        "libcuttlefish_utils",
     ],
     local_include_dirs: ["include"],
     export_include_dirs: ["include"],
 }
-
