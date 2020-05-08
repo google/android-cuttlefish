@@ -16,12 +16,17 @@
 
 #include <webrtc/client_handler.h>
 
+#include <vector>
+
 #include "Utils.h"
 
 #include <json/json.h>
 
 #include <netdb.h>
 #include <openssl/rand.h>
+
+#include "https/SafeCallbackable.h"
+#include "common/libs/utils/base64.h"
 
 namespace {
 
@@ -64,6 +69,24 @@ ClientHandler::ClientHandler(
       sendToClient_(send_to_client_cb),
       mTouchSink(mServerState->getTouchSink()),
       mKeyboardSink(mServerState->getKeyboardSink()) {
+}
+
+std::shared_ptr<AdbHandler> ClientHandler::adb_handler() {
+  if (!adb_handler_) {
+    auto config = vsoc::CuttlefishConfig::Get();
+    adb_handler_.reset(
+        new AdbHandler(mRunLoop, config->ForDefaultInstance().adb_ip_and_port(),
+                       [this](const uint8_t *msg, size_t length) {
+                         std::string base64_msg;
+                         cvd::EncodeBase64(msg, length, &base64_msg);
+                         Json::Value reply;
+                         reply["type"] = "adb-message";
+                         reply["payload"] = base64_msg;
+                         sendToClient_(reply);
+                       }));
+    adb_handler_->run();
+  }
+  return adb_handler_;
 }
 
 void ClientHandler::LogAndReplyError(const std::string& error_msg) const {
@@ -131,6 +154,18 @@ void ClientHandler::HandleMessage(const Json::Value& message) {
         LOG(INFO) << "Sent " << mid << " ICE candidates";
     } else if (type == "ice-candidate") {
       LOG(INFO) << "Received ice candidate from client, ignoring";
+    } else if (type == "adb-message") {
+      if (!message.isMember("payload") || !message["payload"].isString()) {
+        LOG(ERROR) << "adb-message has invalid payload";
+        return;
+      }
+      auto base64_msg = message["payload"].asString();
+      std::vector<uint8_t> raw_msg;
+      if (!cvd::DecodeBase64(base64_msg, &raw_msg)) {
+        LOG(ERROR) << "Invalid base64 string in adb-message";
+        return;
+      }
+      adb_handler()->handleMessage(raw_msg.data(), raw_msg.size());
     } else {
         LogAndReplyError("Unknown type: " + type);
         return;
@@ -144,7 +179,7 @@ std::string ClientHandler::BuildOffer() {
         "o=- 7794515898627856655 2 IN IP4 127.0.0.1\r\n"
         "s=-\r\n"
         "t=0 0\r\n"
-        "a=msid-semantic: WMS pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw\r\n";
+        "a=msid-semantic: WMS display_0\r\n";
 
   bool bundled = false;
 
@@ -198,14 +233,14 @@ std::string ClientHandler::BuildOffer() {
         "a=fmtp:97 apt=96\r\n"
         "a=ssrc-group:FID 3735928559 3405689008\r\n"
         "a=ssrc:3735928559 cname:myWebRTP\r\n"
-        "a=ssrc:3735928559 msid:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw "
+        "a=ssrc:3735928559 msid:display_0 "
         "61843855-edd7-4ca9-be79-4e3ccc6cc035\r\n"
-        "a=ssrc:3735928559 mslabel:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw\r\n"
+        "a=ssrc:3735928559 mslabel:display_0\r\n"
         "a=ssrc:3735928559 label:61843855-edd7-4ca9-be79-4e3ccc6cc035\r\n"
         "a=ssrc:3405689008 cname:myWebRTP\r\n"
-        "a=ssrc:3405689008 msid:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw "
+        "a=ssrc:3405689008 msid:display_0 "
         "61843855-edd7-4ca9-be79-4e3ccc6cc035\r\n"
-        "a=ssrc:3405689008 mslabel:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw\r\n"
+        "a=ssrc:3405689008 mslabel:display_0\r\n"
         "a=ssrc:3405689008 label:61843855-edd7-4ca9-be79-4e3ccc6cc035\r\n";
 
   if (!(mOptions & OptionBits::disableAudio)) {
@@ -221,7 +256,7 @@ std::string ClientHandler::BuildOffer() {
     ss << "a=setup:actpass\r\n"
           "a=mid:1\r\n"
           "a=sendonly\r\n"
-          "a=msid:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw "
+          "a=msid:display_0 "
           "61843856-edd7-4ca9-be79-4e3ccc6cc035\r\n"
           "a=rtcp-mux\r\n"
           "a=rtcp-rsize\r\n"
@@ -229,9 +264,9 @@ std::string ClientHandler::BuildOffer() {
           "a=fmtp:98 minptime=10;useinbandfec=1\r\n"
           "a=ssrc-group:FID 2343432205\r\n"
           "a=ssrc:2343432205 cname:myWebRTP\r\n"
-          "a=ssrc:2343432205 msid:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw "
+          "a=ssrc:2343432205 msid:display_0 "
           "61843856-edd7-4ca9-be79-4e3ccc6cc035\r\n"
-          "a=ssrc:2343432205 mslabel:pqWEULZNyLiJHA7lcwlUnbule9FJNk0pY0aw\r\n"
+          "a=ssrc:2343432205 mslabel:display_0\r\n"
           "a=ssrc:2343432205 label:61843856-edd7-4ca9-be79-4e3ccc6cc035\r\n";
   }
 
@@ -342,9 +377,15 @@ bool ClientHandler::GatherAndSendCandidate(int32_t mid) {
                 trackMask,
                 session);
 
-        rtp->run();
-
         mRTPs.push_back(rtp);
+        rtp->OnParticipantTimeOut([this]{
+          mRunLoop->post(makeSafeCallback<ClientHandler>(
+            this,
+            [](ClientHandler *me) {
+                me->on_connection_timeout_cb_();
+            }));
+        });
+        rtp->run();
     }
 
     auto rtp = mRTPs.back();

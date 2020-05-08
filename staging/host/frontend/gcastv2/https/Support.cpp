@@ -71,53 +71,6 @@ std::string hexdump(const void* _data, size_t size) {
   return ss.str();
 }
 
-static char encode6Bit(unsigned x) {
-  static char base64[] =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-  return base64[x & 63];
-}
-
-void encodeBase64(const void *_data, size_t size, std::string *out) {
-    out->clear();
-    out->reserve(((size+2)/3)*4);
-
-    const uint8_t *data = (const uint8_t *)_data;
-
-    size_t i;
-    for (i = 0; i < (size / 3) * 3; i += 3) {
-        uint8_t x1 = data[i];
-        uint8_t x2 = data[i + 1];
-        uint8_t x3 = data[i + 2];
-
-        out->append(1, encode6Bit(x1 >> 2));
-        out->append(1, encode6Bit((x1 << 4 | x2 >> 4) & 0x3f));
-        out->append(1, encode6Bit((x2 << 2 | x3 >> 6) & 0x3f));
-        out->append(1, encode6Bit(x3 & 0x3f));
-    }
-    switch (size % 3) {
-        case 0:
-            break;
-        case 2:
-        {
-            uint8_t x1 = data[i];
-            uint8_t x2 = data[i + 1];
-            out->append(1, encode6Bit(x1 >> 2));
-            out->append(1, encode6Bit((x1 << 4 | x2 >> 4) & 0x3f));
-            out->append(1, encode6Bit((x2 << 2) & 0x3f));
-            out->append(1, '=');
-            break;
-        }
-        default:
-        {
-            uint8_t x1 = data[i];
-            out->append(1, encode6Bit(x1 >> 2));
-            out->append(1, encode6Bit((x1 << 4) & 0x3f));
-            out->append("==");
-            break;
-        }
-    }
-}
-
 uint16_t U16_AT(const uint8_t *ptr) {
     return ptr[0] << 8 | ptr[1];
 }
