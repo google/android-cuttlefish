@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,14 @@
 
 #pragma once
 
-#include <sys/types.h>
-
+#include <cinttypes>
 #include <string>
 #include <vector>
 
-#ifdef NDEBUG
-#define DEBUG_ONLY(x)
-#else
-#define DEBUG_ONLY(x)   x
-#endif
+namespace cvd {
 
-void makeFdNonblocking(int fd);
-std::string hexdump(const void *_data, size_t size);
+bool EncodeBase64(const void* _data, size_t size, std::string* out);
 
-uint16_t U16_AT(const uint8_t *ptr);
-uint32_t U32_AT(const uint8_t *ptr);
-uint64_t U64_AT(const uint8_t *ptr);
+bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer);
 
-uint16_t U16LE_AT(const uint8_t *ptr);
-uint32_t U32LE_AT(const uint8_t *ptr);
-uint64_t U64LE_AT(const uint8_t *ptr);
-
-std::string STR_AT(const uint8_t *ptr, size_t size);
+}  // namespace cvd
