@@ -143,20 +143,15 @@ function adbOnMessage(ev) {
     }
 }
 
-function init_logcat() {
-    const wsProtocol = (location.protocol == "http:") ? "ws:" : "wss:";
-
-    adb_ws = new WebSocket(
-        wsProtocol + "//" + location.host + "/control_adb");
-
-    adb_ws.binaryType = "arraybuffer";
-
-    adb_ws.onopen = function() {
-        console.log("adb_ws: onopen");
-
-        adbOpenConnection();
-
-        logcat.style.display = "initial";
+function init_logcat(devConn) {
+    adb_ws = {
+      send: function(buffer) {
+        devConn.sendAdbMessage(buffer);
+      }
     };
-    adb_ws.onmessage = adbOnMessage;
+
+    logcat.style.display = "initial";
+    devConn.onAdbMessage(msg => adbOnMessage({data: msg}));
+
+    adbOpenConnection();
 }

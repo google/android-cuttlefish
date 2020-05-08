@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <webrtc/AdbWebSocketHandler.h>
+#include <webrtc/AdbHandler.h>
 
 #include "Utils.h"
 
@@ -27,26 +27,26 @@
 
 using namespace android;
 
-struct AdbWebSocketHandler::AdbConnection : public BaseConnection {
+struct AdbHandler::AdbConnection : public BaseConnection {
     explicit AdbConnection(
-            AdbWebSocketHandler *parent,
+            AdbHandler *parent,
             std::shared_ptr<RunLoop> runLoop,
             int sock);
 
     void send(const void *_data, size_t size);
 
 protected:
-    ssize_t processClientRequest(const void *data, size_t size) override;
+    long processClientRequest(const void *data, size_t size) override;
     void onDisconnect(int err) override;
 
 private:
-    AdbWebSocketHandler *mParent;
+    AdbHandler *mParent;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
 
-AdbWebSocketHandler::AdbConnection::AdbConnection(
-        AdbWebSocketHandler *parent,
+AdbHandler::AdbConnection::AdbConnection(
+        AdbHandler *parent,
         std::shared_ptr<RunLoop> runLoop,
         int sock)
     : BaseConnection(runLoop, sock),
@@ -99,7 +99,7 @@ static int verifyAdbHeader(
     return 0;
 }
 
-ssize_t AdbWebSocketHandler::AdbConnection::processClientRequest(
+long AdbHandler::AdbConnection::processClientRequest(
         const void *_data, size_t size) {
     auto data = static_cast<const uint8_t *>(_data);
 
@@ -115,32 +115,29 @@ ssize_t AdbWebSocketHandler::AdbConnection::processClientRequest(
         return err;
     }
 
-    mParent->sendMessage(
-            data, payloadLength + 24, WebSocketHandler::SendMode::binary);
-
+    mParent->send_to_client_(data, payloadLength + 24);
     return payloadLength + 24;
 }
 
-void AdbWebSocketHandler::AdbConnection::onDisconnect(int err) {
+void AdbHandler::AdbConnection::onDisconnect(int err) {
     LOG(INFO) << "AdbConnection::onDisconnect(err=" << err << ")";
 
-    mParent->sendMessage(
-            nullptr /* data */,
-            0 /* size */,
-            WebSocketHandler::SendMode::closeConnection);
+    mParent->send_to_client_(nullptr /* data */, 0 /* size */);
 }
 
-void AdbWebSocketHandler::AdbConnection::send(const void *_data, size_t size) {
+void AdbHandler::AdbConnection::send(const void *_data, size_t size) {
     BaseConnection::send(_data, size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
-AdbWebSocketHandler::AdbWebSocketHandler(
+AdbHandler::AdbHandler(
         std::shared_ptr<RunLoop> runLoop,
-        const std::string &adb_host_and_port)
+        const std::string &adb_host_and_port,
+        std::function<void(const uint8_t*, size_t)>  send_to_client)
     : mRunLoop(runLoop),
-      mSocket(-1) {
+      mSocket(-1),
+      send_to_client_(send_to_client) {
     LOG(INFO) << "Connecting to " << adb_host_and_port;
 
     auto err = setupSocket(adb_host_and_port);
@@ -149,18 +146,18 @@ AdbWebSocketHandler::AdbWebSocketHandler(
     mAdbConnection = std::make_shared<AdbConnection>(this, mRunLoop, mSocket);
 }
 
-AdbWebSocketHandler::~AdbWebSocketHandler() {
+AdbHandler::~AdbHandler() {
     if (mSocket >= 0) {
         close(mSocket);
         mSocket = -1;
     }
 }
 
-void AdbWebSocketHandler::run() {
+void AdbHandler::run() {
     mAdbConnection->run();
 }
 
-int AdbWebSocketHandler::setupSocket(const std::string &adb_host_and_port) {
+int AdbHandler::setupSocket(const std::string &adb_host_and_port) {
     auto colonPos = adb_host_and_port.find(':');
     if (colonPos == std::string::npos) {
         return -EINVAL;
@@ -213,47 +210,17 @@ bail:
     return err;
 }
 
-int AdbWebSocketHandler::handleMessage(
-        uint8_t headerByte, const uint8_t *msg, size_t len) {
-    LOG(VERBOSE)
-        << "headerByte = "
-        << StringPrintf("0x%02x", (unsigned)headerByte);
-
+void AdbHandler::handleMessage(const uint8_t *msg, size_t len) {
     LOG(VERBOSE) << hexdump(msg, len);
 
-    if (!(headerByte & 0x80)) {
-        // I only want to receive whole messages here, not fragments.
-        return -EINVAL;
+    size_t payloadLength;
+    int err = verifyAdbHeader(msg, len, &payloadLength);
+
+    if (err || len != 24 + payloadLength) {
+        LOG(ERROR) << "Not a valid adb message.";
+        return;
     }
 
-    auto opcode = headerByte & 0x1f;
-    switch (opcode) {
-        case 0x8:
-        {
-            // closeConnection.
-            break;
-        }
-
-        case 0x2:
-        {
-            // binary
-
-            size_t payloadLength;
-            int err = verifyAdbHeader(msg, len, &payloadLength);
-
-            if (err || len != 24 + payloadLength) {
-                LOG(ERROR) << "websocket message is not a valid adb message.";
-                return -EINVAL;
-            }
-
-            mAdbConnection->send(msg, len);
-            break;
-        }
-
-        default:
-            return -EINVAL;
-    }
-
-    return 0;
+    mAdbConnection->send(msg, len);
 }
 

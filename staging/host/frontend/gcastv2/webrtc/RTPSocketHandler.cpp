@@ -279,6 +279,23 @@ void RTPSocketHandler::run() {
     } else {
         mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onReceive));
     }
+    ScheduleTimeOutCheck();
+}
+
+void RTPSocketHandler::ScheduleTimeOutCheck() {
+    // RFC 3550 describes the timeout calculation, which for two participants
+    // boils down to M*5s, with M being a constant usually set to 5.
+    mRunLoop->postWithDelay(std::chrono::seconds(25),
+        makeSafeCallback<RTPSocketHandler>(
+            this,
+            [](RTPSocketHandler *me) {
+                bool timed_out = me->CheckParticipantTimeOut();
+                if (timed_out) {
+                  me->on_participant_time_out_();
+                } else {
+                  me->ScheduleTimeOutCheck();
+                }
+            }));
 }
 
 void RTPSocketHandler::onTCPConnect() {
@@ -378,17 +395,18 @@ void RTPSocketHandler::onReceive() {
     mSocket->postRecv(makeSafeCallback(this, &RTPSocketHandler::onReceive));
 }
 
+bool RTPSocketHandler::CheckParticipantTimeOut() {
+  bool previous_value = packet_received_since_last_check_;
+  packet_received_since_last_check_ = false;
+  return !previous_value;
+}
+
 void RTPSocketHandler::onPacketReceived(
         const sockaddr_storage &addr,
         socklen_t addrLen,
         uint8_t *data,
         size_t n) {
-#if 0
-    std::cout << "========================================" << std::endl;
-
-    hexdump(data, n);
-#endif
-
+    packet_received_since_last_check_ = true;
     STUNMessage msg(data, n);
     if (!msg.isValid()) {
         if (mDTLSConnected) {

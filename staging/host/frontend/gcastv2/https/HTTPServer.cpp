@@ -19,6 +19,7 @@
 #include <https/ClientSocket.h>
 #include <https/HTTPRequestResponse.h>
 #include <https/Support.h>
+#include "common/libs/utils/base64.h"
 
 #include <android-base/logging.h>
 
@@ -298,7 +299,7 @@ void HTTPServer::handleWebSocketRequest(
     CHECK_EQ(res, 1);
 
     std::string acceptKey;
-    encodeBase64(digest, sizeof(digest), &acceptKey);
+    cvd::EncodeBase64(digest, sizeof(digest), &acceptKey);
 
     (*responseHeaders)["Sec-WebSocket-Accept"] = acceptKey;
 

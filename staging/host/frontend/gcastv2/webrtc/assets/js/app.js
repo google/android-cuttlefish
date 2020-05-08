@@ -23,7 +23,11 @@ function ConnectToDevice(device_id) {
   let mouseIsDown = false;
   let deviceConnection;
 
-  // init_logcat();
+  let logcatBtn = document.getElementById('showLogcatBtn');
+  logcatBtn.onclick = ev => {
+    init_logcat(deviceConnection);
+    logcatBtn.remove();
+  };
 
   let options = {
     // temporarily disable audio to free ports in the server since it's only
@@ -41,11 +45,14 @@ function ConnectToDevice(device_id) {
     .then(webrtcModule => webrtcModule.Connect(device_id, options))
     .then(devConn => {
       deviceConnection = devConn;
-      videoStream = devConn.getVideoStream(0);
-      deviceScreen.srcObject = videoStream;
       // TODO(b/143667633): get multiple display configuration from the
       // description object
       console.log(deviceConnection.description);
+      let stream_id = devConn.description.displays[0].stream_id;
+      devConn.getStream(stream_id).then(stream => {
+        videoStream = stream;
+        deviceScreen.srcObject = videoStream;
+      }).catch(e => console.error('Unable to get display stream: ', e));
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
   });
 
