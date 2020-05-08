@@ -45,7 +45,7 @@ class NetConfig {
   std::string ril_broadcast;
 
   bool ObtainConfig(const std::string& interface) {
-    bool ret = ParseIntefaceAttributes(interface);
+    bool ret = ParseInterfaceAttributes(interface);
     LOG(INFO) << "Network config:";
     LOG(INFO) << "ipaddr = " << ril_ipaddr;
     LOG(INFO) << "gateway = " << ril_gateway;
@@ -56,7 +56,7 @@ class NetConfig {
   }
 
  private:
-  bool ParseIntefaceAttributes(struct ifaddrs* ifa) {
+  bool ParseInterfaceAttributes(struct ifaddrs* ifa) {
     struct sockaddr_in* sa;
     char* addr_str;
 
@@ -99,14 +99,14 @@ class NetConfig {
     return true;
   }
 
-  bool ParseIntefaceAttributes(const std::string& interface) {
+  bool ParseInterfaceAttributes(const std::string& interface) {
     struct ifaddrs *ifa_list{}, *ifa{};
     bool ret = false;
     getifaddrs(&ifa_list);
     for (ifa = ifa_list; ifa; ifa = ifa->ifa_next) {
       if (strcmp(ifa->ifa_name, interface.c_str()) == 0 &&
           ifa->ifa_addr->sa_family == AF_INET) {
-        ret = ParseIntefaceAttributes(ifa);
+        ret = ParseInterfaceAttributes(ifa);
         break;
       }
     }
