@@ -74,6 +74,16 @@ class NetConfig {
     this->ril_broadcast = strtok(addr_str, "\n");
     auto broadcast_s_addr = ntohl(sa->sin_addr.s_addr);
 
+    // Detect misconfigured network interfaces. All network interfaces must
+    // have a valid broadcast address set; if there is none set, glibc may
+    // return the interface address in the broadcast field. This causes
+    // no packets to be routed correctly from the guest.
+    if (this->ril_gateway == this->ril_broadcast) {
+      LOG(ERROR) << "Gateway and Broadcast addresses are the same on "
+                 << ifa->ifa_name << ", which is invalid.";
+      return false;
+    }
+
     // Netmask
     sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_netmask);
     this->ril_prefixlen = number_of_ones(sa->sin_addr.s_addr);
