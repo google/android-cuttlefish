@@ -67,6 +67,10 @@ struct RTPSocketHandler
 
     void notifyDTLSConnected();
 
+    void OnParticipantTimeOut(std::function<void()> cb) {
+      on_participant_time_out_ = cb;
+    }
+
 private:
     struct Datagram {
         explicit Datagram(
@@ -109,6 +113,11 @@ private:
 
     std::shared_ptr<std::vector<uint8_t>> mTcpOutBuffer;
     std::deque<std::shared_ptr<std::vector<uint8_t>>> mTcpOutBufferQueue;
+    bool packet_received_since_last_check_ = false;
+    std::function<void()> on_participant_time_out_ = []{}; // do nothing by default
+
+    void ScheduleTimeOutCheck();
+    bool CheckParticipantTimeOut();
 
     void onReceive();
     void onDTLSReceive(const uint8_t *data, size_t size);

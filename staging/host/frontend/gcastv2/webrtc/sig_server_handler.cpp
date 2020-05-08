@@ -247,6 +247,9 @@ void SigServerHandler::OnReceive(const uint8_t *data, size_t length,
             // WsConnection is thread safe
             SendJson(server_connection_, wrapper);
           }));
+      clients_[client_id]->OnConnectionTimeOut([this, client_id]{
+        clients_.erase(client_id);
+      });
     }
 
     auto client_handler = clients_[client_id];

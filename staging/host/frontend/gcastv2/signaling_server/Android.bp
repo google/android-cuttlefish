@@ -45,6 +45,7 @@ cc_binary_host {
         "libjsoncpp",
         "libhttps",
         "libwebrtc",
+        "libcuttlefish_utils",
     ],
     defaults: ["cuttlefish_host_only"],
 }

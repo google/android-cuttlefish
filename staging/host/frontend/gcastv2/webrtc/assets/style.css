@@ -52,3 +52,9 @@ section.noscroll div.one {
 #refresh_list {
     cursor: pointer;
 }
+
+#logcat {
+  color: #aaaaaa;
+  background-color: black;
+  margin-top: 40px;
+}
