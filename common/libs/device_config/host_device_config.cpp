@@ -46,12 +46,14 @@ class NetConfig {
 
   bool ObtainConfig(const std::string& interface) {
     bool ret = ParseInterfaceAttributes(interface);
-    LOG(INFO) << "Network config:";
-    LOG(INFO) << "ipaddr = " << ril_ipaddr;
-    LOG(INFO) << "gateway = " << ril_gateway;
-    LOG(INFO) << "dns = " << ril_dns;
-    LOG(INFO) << "broadcast = " << ril_broadcast;
-    LOG(INFO) << "prefix length = " << static_cast<int>(ril_prefixlen);
+    if (ret) {
+      LOG(INFO) << "Network config:";
+      LOG(INFO) << "ipaddr = " << ril_ipaddr;
+      LOG(INFO) << "gateway = " << ril_gateway;
+      LOG(INFO) << "dns = " << ril_dns;
+      LOG(INFO) << "broadcast = " << ril_broadcast;
+      LOG(INFO) << "prefix length = " << static_cast<int>(ril_prefixlen);
+    }
     return ret;
   }
 
@@ -140,9 +142,15 @@ bool DeviceConfig::InitializeNetworkConfiguration(
     const vsoc::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   NetConfig netconfig;
+  // Check the mobile bridge first; this was the traditional way we configured
+  // the mobile interface. If that fails, it probably means we are using a
+  // newer version of cuttlefish-common, and we can use the tap device
+  // directly instead.
   if (!netconfig.ObtainConfig(instance.mobile_bridge_name())) {
-    LOG(ERROR) << "Unable to obtain the network configuration";
-    return false;
+    if (!netconfig.ObtainConfig(instance.mobile_tap_name())) {
+      LOG(ERROR) << "Unable to obtain the network configuration";
+      return false;
+    }
   }
 
   auto res = snprintf(data_.ril.ipaddr, sizeof(data_.ril.ipaddr), "%s",
