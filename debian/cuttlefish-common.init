@@ -74,7 +74,7 @@ create_interface() {
       --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
       --dhcp-no-override
 
-    ip tuntap add dev "${tap}" mode tap group cvdnetwork
+    ip tuntap add dev "${tap}" mode tap group cvdnetwork vnet_hdr
     ip link set dev "${tap}" up
     ip link set dev "${tap}" master "${bridge}"
 }
