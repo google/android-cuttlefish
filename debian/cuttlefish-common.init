@@ -53,34 +53,34 @@ create_interface() {
     netmask="255.255.255.252"
     dhcp_range="${3}.$((4*$2 - 2)),${3}.$((4*$2 - 2))"
 
-    /sbin/brctl addbr "${bridge}"
-    /sbin/brctl stp "${bridge}" off
-    /sbin/brctl setfd "${bridge}" 0
-    /sbin/ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
+    brctl addbr "${bridge}"
+    brctl stp "${bridge}" off
+    brctl setfd "${bridge}" 0
+    ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
 
-    /sbin/iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 
-    /usr/sbin/dnsmasq \
-    --port=0 \
-    --strict-order \
-    --except-interface=lo \
-    --interface="${bridge}" \
-    --listen-address="${gateway}" \
-    --bind-interfaces \
-    --dhcp-range="${dhcp_range}" \
-    --dhcp-option="option:dns-server,${dns_servers}" \
-    --dhcp-option="option6:dns-server,${dns6_servers}" \
-    --conf-file="" \
-    --pid-file=/var/run/cuttlefish-dnsmasq-"${bridge}".pid \
-    --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
-    --dhcp-no-override
+    dnsmasq \
+      --port=0 \
+      --strict-order \
+      --except-interface=lo \
+      --interface="${bridge}" \
+      --listen-address="${gateway}" \
+      --bind-interfaces \
+      --dhcp-range="${dhcp_range}" \
+      --dhcp-option="option:dns-server,${dns_servers}" \
+      --dhcp-option="option6:dns-server,${dns6_servers}" \
+      --conf-file="" \
+      --pid-file=/var/run/cuttlefish-dnsmasq-"${bridge}".pid \
+      --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
+      --dhcp-no-override
 
     ip tuntap add dev "${tap}" mode tap group cvdnetwork
-    /sbin/ifconfig "${tap}" 0.0.0.0 up
-    /sbin/brctl addif "${bridge}" "${tap}"
+    ifconfig "${tap}" 0.0.0.0 up
+    brctl addif "${bridge}" "${tap}"
 }
 
-create_interfaces(){
+create_interfaces() {
     create_interface w $1 192.168.96
     create_interface m $1 192.168.97
 }
@@ -90,7 +90,7 @@ destroy_interface() {
     tap="$(printf cvd-${1}tap-%02d $2)"
     network="${3}.$((4*$2 - 4))/30"
 
-    /sbin/ifconfig "${tap}" down
+    ifconfig "${tap}" down
     ip link delete "${tap}"
 
     if [ -f /var/run/cuttlefish-dnsmasq-"${bridge}".pid ]; then
@@ -99,11 +99,11 @@ destroy_interface() {
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
 
-    /sbin/ifconfig "${bridge}" down
-    /sbin/brctl delbr "${bridge}"
+    ifconfig "${bridge}" down
+    brctl delbr "${bridge}"
 }
 
-destroy_interfaces(){
+destroy_interfaces() {
     # Use wtap/wbr and mtap/mbr for wifi and mobile network respectively to
     # avoid going over the interface name size limit
     destroy_interface w $1 192.168.96
@@ -114,29 +114,32 @@ destroy_interfaces(){
 start() {
     # Enable ip forwarding
     echo 1 >/proc/sys/net/ipv4/ip_forward
+
     for i in $(seq ${num_cvd_accounts}); do
-      create_interfaces $i
+        create_interfaces $i
     done
+
     # When running inside a privileged container, set the ownership and access
     # of these device nodes.
     if test -f /.dockerenv; then
-      chown root.kvm /dev/kvm
-      chown root.cvdnetwork /dev/vhost-vsock
-      chmod ug+rw /dev/kvm
-      chmod ug+rw /dev/vhost-vsock
+        chown root.kvm /dev/kvm
+        chown root.cvdnetwork /dev/vhost-vsock
+        chmod ug+rw /dev/kvm
+        chmod ug+rw /dev/vhost-vsock
     fi
+
     # Try to preload the Nvidia modeset kernel module.
     /usr/bin/nvidia-modprobe --modeset || /bin/true
 }
 
 stop() {
     for i in $(seq ${num_cvd_accounts}); do
-      destroy_interfaces $i
+        destroy_interfaces $i
     done
 }
 
 usage() {
-  echo $0: start\|stop
+    echo $0: start\|stop
 }
 
 if test $# != 1; then
