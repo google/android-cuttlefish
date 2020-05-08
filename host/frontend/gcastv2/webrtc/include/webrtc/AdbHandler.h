@@ -21,20 +21,19 @@
 
 #include <memory>
 
-struct AdbWebSocketHandler
-    : public WebSocketHandler,
-      public std::enable_shared_from_this<AdbWebSocketHandler> {
+struct AdbHandler :
+      public std::enable_shared_from_this<AdbHandler> {
 
-    explicit AdbWebSocketHandler(
+    explicit AdbHandler(
             std::shared_ptr<RunLoop> runLoop,
-            const std::string &adb_host_and_port);
+            const std::string &adb_host_and_port,
+            std::function<void(const uint8_t*, size_t)> send_to_client);
 
-    ~AdbWebSocketHandler() override;
+    ~AdbHandler();
 
     void run();
 
-    int handleMessage(
-            uint8_t headerByte, const uint8_t *msg, size_t len) override;
+    void handleMessage(const uint8_t *msg, size_t len);
 
 private:
     struct AdbConnection;
@@ -44,6 +43,7 @@ private:
 
     int mSocket;
 
+    std::function<void(const uint8_t*, size_t)> send_to_client_;
+
     int setupSocket(const std::string &adb_host_and_port);
 };
-
