@@ -16,7 +16,7 @@
 cc_library_static {
     name: "libwebrtc",
     srcs: [
-        "AdbWebSocketHandler.cpp",
+        "AdbHandler.cpp",
         "DTLS.cpp",
         "G711Packetizer.cpp",
         "Keyboard.cpp",
@@ -55,7 +55,7 @@ cc_library_static {
         "libwayland_extension_server_protocols",
         "libwebsockets",
         "libcap",
-        "libcrypto",
+        "libcuttlefish_utils",
     ],
     shared_libs: [
         "libssl",
@@ -98,7 +98,6 @@ cc_binary_host {
         "libwayland_extension_server_protocols",
         "libwebsockets",
         "libcap",
-        "libcrypto",
     ],
     cpp_std: "experimental",
     defaults: ["cuttlefish_host_only"],

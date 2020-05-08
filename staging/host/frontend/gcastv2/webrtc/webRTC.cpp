@@ -21,7 +21,7 @@
 
 #include "Utils.h"
 
-#include <webrtc/AdbWebSocketHandler.h>
+#include <webrtc/AdbHandler.h>
 #include <webrtc/DTLS.h>
 #include <webrtc/RTPSocketHandler.h>
 #include <webrtc/ServerState.h>
@@ -81,6 +81,7 @@ int main(int argc, char **argv) {
 
   sig_server_handler->Connect(sig_server_addr, sig_server_port, sig_server_path,
                               security);
+
   runLoop->run();
 
   return 0;
