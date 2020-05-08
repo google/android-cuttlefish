@@ -89,11 +89,9 @@ destroy_bridge() {
 
 # Create a tap interface (with no address)
 # $1 = tap name
-# $2 = bridge interface to add tap interface to
 create_tap() {
     ip tuntap add dev "${1}" mode tap group cvdnetwork vnet_hdr
     ip link set dev "${1}" up
-    ip link set dev "${1}" master "${2}"
 }
 
 # Destroy a tap interface
@@ -103,61 +101,81 @@ destroy_tap() {
     ip link delete "${1}"
 }
 
-# Creates a pair of bridge and tap interfaces
-create_interface() {
-    bridge="$(printf cvd-${1}br-%02d $2)"
-    tap="$(printf cvd-${1}tap-%02d $2)"
-    gateway="${3}.$((4*$2 - 3))"
+# Create a mobile tap interface
+# The tap device will have the IP address and DHCP server running on it, and
+# it will be added to a bridge with no address (for routing).
+# $1 = interface number
+# $2 = ip address base ("a.b.c")
+create_mobile_interface() {
+    tap="$(printf cvd-mtap-%02d $1)"
+    gateway="${2}.$((4*$1 - 3))"
     netmask="/30"
-    network="${3}.$((4*$2 - 4))${netmask}"
-    dhcp_range="${3}.$((4*$2 - 2)),${3}.$((4*$2 - 2))"
+    network="${2}.$((4*$1 - 4))${netmask}"
+    dhcp_range="${2}.$((4*$1 - 2)),${2}.$((4*$1 - 2))"
 
-    create_bridge "${bridge}"
-    ip addr add "${gateway}${netmask}" broadcast + dev "${bridge}"
-
+    create_tap "${tap}"
+    ip addr add "${gateway}${netmask}" broadcast + dev "${tap}"
     iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
-
-    start_dnsmasq "${bridge}" "${gateway}" "${dhcp_range}"
-
-    create_tap "${tap}" "${bridge}"
 }
 
-create_interfaces() {
-    create_interface w $1 192.168.96
-    create_interface m $1 192.168.97
-}
-
-destroy_interface() {
-    bridge="$(printf cvd-${1}br-%02d $2)"
-    tap="$(printf cvd-${1}tap-%02d $2)"
-    gateway="${3}.$((4*$2 - 3))"
+# Destroy a mobile tap interface
+# $1 = interface number
+# $2 = ip address base ("a.b.c")
+destroy_mobile_interface() {
+    tap="$(printf cvd-mtap-%02d $1)"
+    gateway="${2}.$((4*$1 - 3))"
     netmask="/30"
-    network="${3}.$((4*$2 - 4))${netmask}"
-
-    destroy_tap "${tap}"
-
-    stop_dnsmasq "${bridge}"
+    network="${2}.$((4*$1 - 4))${netmask}"
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+    ip addr del "${gateway}${netmask}" dev "${tap}"
+    destroy_tap "${tap}"
+}
 
+# Create many wireless tap devices on a single bridge
+# $1 = ip address base ("a.b.c")
+create_wireless_interfaces() {
+    bridge="cvd-wbr"
+    gateway="${1}.1"
+    netmask="/24"
+    network="${1}.0${netmask}"
+    dhcp_range="${1}.2,${1}.255"
+
+    create_bridge "${bridge}"
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-wtap-%02d $i)"
+        create_tap "${tap}"
+        ip link set dev "${tap}" master "${bridge}"
+    done
+    ip addr add "${gateway}${netmask}" broadcast + dev "${bridge}"
+    start_dnsmasq "${bridge}" "${gateway}" "${dhcp_range}"
+    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+}
+
+# Destroy many wireless tap devices and a single bridge
+# $1 = ip address base ("a.b.c")
+destroy_wireless_interfaces() {
+    bridge="cvd-wbr"
+    gateway="${1}.1"
+    netmask="/24"
+    network="${1}.0${netmask}"
+
+    iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+    stop_dnsmasq "${bridge}"
     ip addr del "${gateway}${netmask}" dev "${bridge}"
+    for i in $(seq ${num_cvd_accounts}); do
+        destroy_tap "$(printf cvd-wtap-%02d $i)"
+    done
     destroy_bridge "${bridge}"
 }
-
-destroy_interfaces() {
-    # Use wtap/wbr and mtap/mbr for wifi and mobile network respectively to
-    # avoid going over the interface name size limit
-    destroy_interface w $1 192.168.96
-    destroy_interface m $1 192.168.97
-}
-
 
 start() {
     # Enable ip forwarding
     echo 1 >/proc/sys/net/ipv4/ip_forward
 
+    create_wireless_interfaces 192.168.96
     for i in $(seq ${num_cvd_accounts}); do
-        create_interfaces $i
+        create_mobile_interface $i 192.168.97
     done
 
     # When running inside a privileged container, set the ownership and access
@@ -175,8 +193,9 @@ start() {
 
 stop() {
     for i in $(seq ${num_cvd_accounts}); do
-        destroy_interfaces $i
+        destroy_mobile_interface $i 192.168.97
     done
+    destroy_wireless_interfaces 192.168.96
 }
 
 usage() {
