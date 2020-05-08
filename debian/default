@@ -1,5 +1,8 @@
 # defaults for cuttlefish-common
 
+# Maximum number of concurrent CVDs runnable on this machine.
+#num_cvd_accounts=10
+
 # A comma separated list of IPv4 addresses used by cuttlefish guests
 # to resolve domain names. There must be no spaces after the commas.
 #dns_servers=8.8.8.8,8.8.4.4

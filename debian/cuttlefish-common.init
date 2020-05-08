@@ -34,14 +34,15 @@ if [ -f /etc/default/cuttlefish-common ]; then
     . /etc/default/cuttlefish-common
 fi
 
+if [ -z "${num_cvd_accounts}" ]; then
+    num_cvd_accounts=10
+fi
 if [ -z "${dns_servers}" ]; then
     dns_servers="8.8.8.8,8.8.4.4"
 fi
 if [ -z "${dns6_servers}" ]; then
     dns6_servers="2001:4860:4860::8888,2001:4860:4860::8844"
 fi
-
-num_cvd_accounts=10
 
 create_legacy_interface() {
   printf '<network>\n'
