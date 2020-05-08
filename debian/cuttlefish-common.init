@@ -49,14 +49,13 @@ create_interface() {
     bridge="$(printf cvd-${1}br-%02d $2)"
     tap="$(printf cvd-${1}tap-%02d $2)"
     gateway="${3}.$((4*$2 - 3))"
-    network="${3}.$((4*$2 - 4))/30"
-    netmask="255.255.255.252"
+    netmask="/30"
+    network="${3}.$((4*$2 - 4))${netmask}"
     dhcp_range="${3}.$((4*$2 - 2)),${3}.$((4*$2 - 2))"
 
-    brctl addbr "${bridge}"
-    brctl stp "${bridge}" off
-    brctl setfd "${bridge}" 0
-    ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
+    ip link add name "${bridge}" type bridge forward_delay 0 stp_state 0
+    ip addr add "${gateway}${netmask}" broadcast + dev "${bridge}"
+    ip link set dev "${bridge}" up
 
     iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 
@@ -76,8 +75,8 @@ create_interface() {
       --dhcp-no-override
 
     ip tuntap add dev "${tap}" mode tap group cvdnetwork
-    ifconfig "${tap}" 0.0.0.0 up
-    brctl addif "${bridge}" "${tap}"
+    ip link set dev "${tap}" up
+    ip link set dev "${tap}" master "${bridge}"
 }
 
 create_interfaces() {
@@ -88,9 +87,11 @@ create_interfaces() {
 destroy_interface() {
     bridge="$(printf cvd-${1}br-%02d $2)"
     tap="$(printf cvd-${1}tap-%02d $2)"
-    network="${3}.$((4*$2 - 4))/30"
+    gateway="${3}.$((4*$2 - 3))"
+    netmask="/30"
+    network="${3}.$((4*$2 - 4))${netmask}"
 
-    ifconfig "${tap}" down
+    ip link set dev "${tap}" down
     ip link delete "${tap}"
 
     if [ -f /var/run/cuttlefish-dnsmasq-"${bridge}".pid ]; then
@@ -99,8 +100,9 @@ destroy_interface() {
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
 
-    ifconfig "${bridge}" down
-    brctl delbr "${bridge}"
+    ip link set dev "${bridge}" down
+    ip addr del "${gateway}${netmask}" dev "${bridge}"
+    ip link delete "${bridge}"
 }
 
 destroy_interfaces() {
