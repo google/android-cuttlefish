@@ -44,6 +44,65 @@ if [ -z "${dns6_servers}" ]; then
     dns6_servers="2001:4860:4860::8888,2001:4860:4860::8844"
 fi
 
+# Start DHCP server on an interface
+# $1 = interface to bind to
+# $2 = listen address (gateway IP)
+# $3 = dhcp_range ("a.b.c.d,w.x.y.z")
+start_dnsmasq() {
+    dnsmasq \
+      --port=0 \
+      --strict-order \
+      --except-interface=lo \
+      --interface="${1}" \
+      --listen-address="${2}" \
+      --bind-interfaces \
+      --dhcp-range="${3}" \
+      --dhcp-option="option:dns-server,${dns_servers}" \
+      --dhcp-option="option6:dns-server,${dns6_servers}" \
+      --conf-file="" \
+      --pid-file=/var/run/cuttlefish-dnsmasq-"${1}".pid \
+      --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${1}".leases \
+      --dhcp-no-override
+}
+
+# Stop DHCP server on an interface
+# $1 = interface to stop on
+stop_dnsmasq() {
+    if [ -f /var/run/cuttlefish-dnsmasq-"${1}".pid ]; then
+        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)
+    fi
+}
+
+# Create a bridge interface (with no address)
+# $1 = bridge name
+create_bridge() {
+    ip link add name "${1}" type bridge forward_delay 0 stp_state 0
+    ip link set dev "${1}" up
+}
+
+# Destroy a bridge interface
+# $1 = bridge name
+destroy_bridge() {
+    ip link set dev "${1}" down
+    ip link delete "${1}"
+}
+
+# Create a tap interface (with no address)
+# $1 = tap name
+# $2 = bridge interface to add tap interface to
+create_tap() {
+    ip tuntap add dev "${1}" mode tap group cvdnetwork vnet_hdr
+    ip link set dev "${1}" up
+    ip link set dev "${1}" master "${2}"
+}
+
+# Destroy a tap interface
+# $1 = tap name
+destroy_tap() {
+    ip link set dev "${1}" down
+    ip link delete "${1}"
+}
+
 # Creates a pair of bridge and tap interfaces
 create_interface() {
     bridge="$(printf cvd-${1}br-%02d $2)"
@@ -53,30 +112,14 @@ create_interface() {
     network="${3}.$((4*$2 - 4))${netmask}"
     dhcp_range="${3}.$((4*$2 - 2)),${3}.$((4*$2 - 2))"
 
-    ip link add name "${bridge}" type bridge forward_delay 0 stp_state 0
+    create_bridge "${bridge}"
     ip addr add "${gateway}${netmask}" broadcast + dev "${bridge}"
-    ip link set dev "${bridge}" up
 
     iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
 
-    dnsmasq \
-      --port=0 \
-      --strict-order \
-      --except-interface=lo \
-      --interface="${bridge}" \
-      --listen-address="${gateway}" \
-      --bind-interfaces \
-      --dhcp-range="${dhcp_range}" \
-      --dhcp-option="option:dns-server,${dns_servers}" \
-      --dhcp-option="option6:dns-server,${dns6_servers}" \
-      --conf-file="" \
-      --pid-file=/var/run/cuttlefish-dnsmasq-"${bridge}".pid \
-      --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
-      --dhcp-no-override
+    start_dnsmasq "${bridge}" "${gateway}" "${dhcp_range}"
 
-    ip tuntap add dev "${tap}" mode tap group cvdnetwork vnet_hdr
-    ip link set dev "${tap}" up
-    ip link set dev "${tap}" master "${bridge}"
+    create_tap "${tap}" "${bridge}"
 }
 
 create_interfaces() {
@@ -91,18 +134,14 @@ destroy_interface() {
     netmask="/30"
     network="${3}.$((4*$2 - 4))${netmask}"
 
-    ip link set dev "${tap}" down
-    ip link delete "${tap}"
+    destroy_tap "${tap}"
 
-    if [ -f /var/run/cuttlefish-dnsmasq-"${bridge}".pid ]; then
-        kill $(cat /var/run/cuttlefish-dnsmasq-"${bridge}".pid)
-    fi
+    stop_dnsmasq "${bridge}"
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
 
-    ip link set dev "${bridge}" down
     ip addr del "${gateway}${netmask}" dev "${bridge}"
-    ip link delete "${bridge}"
+    destroy_bridge "${bridge}"
 }
 
 destroy_interfaces() {
