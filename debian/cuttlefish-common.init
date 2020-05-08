@@ -37,12 +37,28 @@ fi
 if [ -z "${num_cvd_accounts}" ]; then
     num_cvd_accounts=10
 fi
+if [ -z "${bridge_interface}" ]; then
+    bridge_interface=cvd-wbr
+fi
+if [ -z "${ipv4_bridge}" ]; then
+    ipv4_bridge=1
+fi
+if [ -z "${ipv6_bridge}" ]; then
+    ipv6_bridge=1
+fi
 if [ -z "${dns_servers}" ]; then
     dns_servers="8.8.8.8,8.8.4.4"
 fi
 if [ -z "${dns6_servers}" ]; then
     dns6_servers="2001:4860:4860::8888,2001:4860:4860::8844"
 fi
+
+# Newer distros prefer nft, but broute is not supported, so use
+# the legacy ebtables instead
+ebtables=$(which ebtables-legacy)
+# If there's no ebtables-legacy, it's probably an older distro,
+# and ebtables should support broute directly
+ebtables=${ebtables:-ebtables}
 
 # Start DHCP server on an interface
 # $1 = interface to bind to
@@ -71,20 +87,6 @@ stop_dnsmasq() {
     if [ -f /var/run/cuttlefish-dnsmasq-"${1}".pid ]; then
         kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)
     fi
-}
-
-# Create a bridge interface (with no address)
-# $1 = bridge name
-create_bridge() {
-    ip link add name "${1}" type bridge forward_delay 0 stp_state 0
-    ip link set dev "${1}" up
-}
-
-# Destroy a bridge interface
-# $1 = bridge name
-destroy_bridge() {
-    ip link set dev "${1}" down
-    ip link delete "${1}"
 }
 
 # Create a tap interface (with no address)
@@ -135,38 +137,66 @@ destroy_mobile_interface() {
 # Create many wireless tap devices on a single bridge
 # $1 = ip address base ("a.b.c")
 create_wireless_interfaces() {
-    bridge="cvd-wbr"
-    gateway="${1}.1"
-    netmask="/24"
-    network="${1}.0${netmask}"
-    dhcp_range="${1}.2,${1}.255"
-
-    create_bridge "${bridge}"
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        ip link add name "${bridge_interface}" \
+          type bridge forward_delay 0 stp_state 0
+        ip link set dev "${bridge_interface}" up
+    fi
     for i in $(seq ${num_cvd_accounts}); do
         tap="$(printf cvd-wtap-%02d $i)"
         create_tap "${tap}"
-        ip link set dev "${tap}" master "${bridge}"
+        ip link set dev "${tap}" master "${bridge_interface}"
+        if [ "${bridge_interface}" != "cvd-wbr" ]; then
+            if [ "$ipv4_bridge" != "1" ]; then
+                $ebtables -t broute -A BROUTING -p ipv4 --in-if  "${tap}" -j DROP
+                $ebtables -t filter -A FORWARD  -p ipv4 --out-if "${tap}" -j DROP
+            fi
+            if [ "$ipv6_bridge" != "1" ]; then
+                $ebtables -t broute -A BROUTING -p ipv6 --in-if  "${tap}" -j DROP
+                $ebtables -t filter -A FORWARD  -p ipv6 --out-if "${tap}" -j DROP
+            fi
+        fi
     done
-    ip addr add "${gateway}${netmask}" broadcast + dev "${bridge}"
-    start_dnsmasq "${bridge}" "${gateway}" "${dhcp_range}"
-    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        gateway="${1}.1"
+        netmask="/24"
+        network="${1}.0${netmask}"
+        dhcp_range="${1}.2,${1}.255"
+        ip addr add "${gateway}${netmask}" broadcast + dev "${bridge_interface}"
+        start_dnsmasq "${bridge_interface}" "${gateway}" "${dhcp_range}"
+        iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    fi
 }
 
 # Destroy many wireless tap devices and a single bridge
 # $1 = ip address base ("a.b.c")
 destroy_wireless_interfaces() {
-    bridge="cvd-wbr"
-    gateway="${1}.1"
-    netmask="/24"
-    network="${1}.0${netmask}"
-
-    iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
-    stop_dnsmasq "${bridge}"
-    ip addr del "${gateway}${netmask}" dev "${bridge}"
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        gateway="${1}.1"
+        netmask="/24"
+        network="${1}.0${netmask}"
+        iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+        stop_dnsmasq "${bridge_interface}"
+        ip addr del "${gateway}${netmask}" dev "${bridge_interface}"
+    fi
     for i in $(seq ${num_cvd_accounts}); do
-        destroy_tap "$(printf cvd-wtap-%02d $i)"
+        tap="$(printf cvd-wtap-%02d $i)"
+        if [ "${bridge_interface}" != "cvd-wbr" ]; then
+            if [ "$ipv4_bridge" != "1" ]; then
+                $ebtables -t filter -D FORWARD  -p ipv4 --out-if "${tap}" -j DROP
+                $ebtables -t broute -D BROUTING -p ipv4 --in-if  "${tap}" -j DROP
+            fi
+            if [ "$ipv6_bridge" != "1" ]; then
+                $ebtables -t filter -D FORWARD  -p ipv6 --out-if "${tap}" -j DROP
+                $ebtables -t broute -D BROUTING -p ipv6 --in-if  "${tap}" -j DROP
+            fi
+        fi
+        destroy_tap "${tap}"
     done
-    destroy_bridge "${bridge}"
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        ip link set dev "${bridge_interface}" down
+        ip link delete "${bridge_interface}"
+    fi
 }
 
 start() {
