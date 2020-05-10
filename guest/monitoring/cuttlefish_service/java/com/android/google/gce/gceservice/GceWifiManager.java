@@ -77,12 +77,6 @@ public class GceWifiManager extends JobBase {
         return mMonitorWifiJob.getWifiReady();
     }
 
-
-    /* Modifies Wifi state:
-     * - if wifi disable requested (state == false), simply turns off wifi.
-     * - if wifi enable requested (state == true), turns on wifi and arms the
-     *   connection timeout (see startWifiReconnectionTimeout).
-     */
     private class MonitorWifiJob extends JobBase {
         private final GceFuture<Boolean> mWifiReady =
                 new GceFuture<Boolean>("WIFI Ready");
