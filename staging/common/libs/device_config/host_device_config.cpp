@@ -45,18 +45,20 @@ class NetConfig {
   std::string ril_broadcast;
 
   bool ObtainConfig(const std::string& interface) {
-    bool ret = ParseIntefaceAttributes(interface);
-    LOG(INFO) << "Network config:";
-    LOG(INFO) << "ipaddr = " << ril_ipaddr;
-    LOG(INFO) << "gateway = " << ril_gateway;
-    LOG(INFO) << "dns = " << ril_dns;
-    LOG(INFO) << "broadcast = " << ril_broadcast;
-    LOG(INFO) << "prefix length = " << static_cast<int>(ril_prefixlen);
+    bool ret = ParseInterfaceAttributes(interface);
+    if (ret) {
+      LOG(INFO) << "Network config:";
+      LOG(INFO) << "ipaddr = " << ril_ipaddr;
+      LOG(INFO) << "gateway = " << ril_gateway;
+      LOG(INFO) << "dns = " << ril_dns;
+      LOG(INFO) << "broadcast = " << ril_broadcast;
+      LOG(INFO) << "prefix length = " << static_cast<int>(ril_prefixlen);
+    }
     return ret;
   }
 
  private:
-  bool ParseIntefaceAttributes(struct ifaddrs* ifa) {
+  bool ParseInterfaceAttributes(struct ifaddrs* ifa) {
     struct sockaddr_in* sa;
     char* addr_str;
 
@@ -71,6 +73,16 @@ class NetConfig {
     addr_str = inet_ntoa(sa->sin_addr);
     this->ril_broadcast = strtok(addr_str, "\n");
     auto broadcast_s_addr = ntohl(sa->sin_addr.s_addr);
+
+    // Detect misconfigured network interfaces. All network interfaces must
+    // have a valid broadcast address set; if there is none set, glibc may
+    // return the interface address in the broadcast field. This causes
+    // no packets to be routed correctly from the guest.
+    if (this->ril_gateway == this->ril_broadcast) {
+      LOG(ERROR) << "Gateway and Broadcast addresses are the same on "
+                 << ifa->ifa_name << ", which is invalid.";
+      return false;
+    }
 
     // Netmask
     sa = reinterpret_cast<sockaddr_in*>(ifa->ifa_netmask);
@@ -99,14 +111,14 @@ class NetConfig {
     return true;
   }
 
-  bool ParseIntefaceAttributes(const std::string& interface) {
+  bool ParseInterfaceAttributes(const std::string& interface) {
     struct ifaddrs *ifa_list{}, *ifa{};
     bool ret = false;
     getifaddrs(&ifa_list);
     for (ifa = ifa_list; ifa; ifa = ifa->ifa_next) {
       if (strcmp(ifa->ifa_name, interface.c_str()) == 0 &&
           ifa->ifa_addr->sa_family == AF_INET) {
-        ret = ParseIntefaceAttributes(ifa);
+        ret = ParseInterfaceAttributes(ifa);
         break;
       }
     }
@@ -140,9 +152,15 @@ bool DeviceConfig::InitializeNetworkConfiguration(
     const vsoc::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   NetConfig netconfig;
+  // Check the mobile bridge first; this was the traditional way we configured
+  // the mobile interface. If that fails, it probably means we are using a
+  // newer version of cuttlefish-common, and we can use the tap device
+  // directly instead.
   if (!netconfig.ObtainConfig(instance.mobile_bridge_name())) {
-    LOG(ERROR) << "Unable to obtain the network configuration";
-    return false;
+    if (!netconfig.ObtainConfig(instance.mobile_tap_name())) {
+      LOG(ERROR) << "Unable to obtain the network configuration";
+      return false;
+    }
   }
 
   auto res = snprintf(data_.ril.ipaddr, sizeof(data_.ril.ipaddr), "%s",
