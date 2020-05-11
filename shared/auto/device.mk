@@ -59,6 +59,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # vehicle HAL
 ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
     LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@2.0-service
+    BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy
 endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
