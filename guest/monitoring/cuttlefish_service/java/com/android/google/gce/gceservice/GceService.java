@@ -45,12 +45,9 @@ public class GceService extends Service {
     private static final int NOTIFICATION_ID = 1;
 
     private final JobExecutor mExecutor = new JobExecutor();
-    private final LocationServicesManager mLocationServices = new LocationServicesManager(this);
-    private final PackageVerificationConsentEnforcer mConsentEnforcer = new PackageVerificationConsentEnforcer(this);
     private final BootReporter mBootReporter = new BootReporter();
     private final GceBroadcastReceiver mBroadcastReceiver = new GceBroadcastReceiver();
     private final BluetoothChecker mBluetoothChecker = new BluetoothChecker();
-    private final TombstoneChecker mTombstoneChecker = new TombstoneChecker();
 
     private ConnectivityChecker mConnChecker;
     private GceWifiManager mWifiManager = null;
@@ -69,20 +66,11 @@ public class GceService extends Service {
             mConnChecker = new ConnectivityChecker(this, mBootReporter);
             mWifiManager = new GceWifiManager(this, mBootReporter, mExecutor);
 
-            mExecutor.schedule(mLocationServices);
-            mExecutor.schedule(mConsentEnforcer);
             mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
             mExecutor.schedule(mConnChecker);
-            // TODO(ender): TombstoneChecker is disabled, because we no longer have the code that
-            // produces /ts_snap.txt file. We need to rethink how TombstoneChecker should work.
-            // mExecutor.schedule(mTombstoneChecker);
 
-            mExecutor.schedule(mBootReporter,
-                    mLocationServices.getLocationServicesReady(),
-                    mBluetoothChecker.getEnabled()
-                    // mTombstoneChecker.getTombstoneResult()
-                    );
+            mExecutor.schedule(mBootReporter, mBluetoothChecker.getEnabled());
 
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -171,13 +159,9 @@ public class GceService extends Service {
         }
         pw.println("");
         pw.println("Current system service state:");
-        pw.println("  Location service ready: "
-            + mLocationServices.getLocationServicesReady().isDone());
         pw.println("  Network connected: " + mConnChecker.getConnected().isDone());
         pw.println("  WiFi configured: " + mWifiManager.getWifiReady().isDone());
         pw.println("  Bluetooth enabled: " + mBluetoothChecker.getEnabled().isDone());
-        pw.println("  Tombstone dropped (on boot): "
-            + !mTombstoneChecker.getTombstoneResult().isDone());
         pw.println("");
     }
 }
