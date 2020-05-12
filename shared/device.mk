@@ -76,6 +76,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
 
+# Codec 2.0 is unstable on x86
+PRODUCT_PROPERTY_OVERRIDES += \
+    debug.stagefright.ccodec=0
+
 # Enforce privapp-permissions whitelist.
 PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
 
