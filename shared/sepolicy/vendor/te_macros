@@ -3,7 +3,7 @@
 # Allow client_domain to communicate with the virgl GPU
 define(`gpu_access', `
 allow $1 gpu_device:dir { open read search };
-allow $1 gpu_device:chr_file { getattr read write };
+allow $1 gpu_device:chr_file { getattr ioctl map open read write };
 allow $1 graphics_device:chr_file { getattr };
 allow $1 sysfs_gpu:file { getattr open read };
 ')
