@@ -1,0 +1,2 @@
+# Allow system_server to kill vehicle HAL
+allow system_server hal_vehicle_server:process sigkill;
