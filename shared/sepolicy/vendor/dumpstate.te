@@ -1,0 +1,1 @@
+allow dumpstate hal_neuralnetworks_sample:process signal;
