@@ -61,9 +61,13 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
-
     <!-- Required in SettingHelperImpl to start settings with shell command.-->
     <install-in-user-type package="com.android.car.settings">
+        <install-in user-type="FULL" />
+        <install-in user-type="SYSTEM" />
+    </install-in-user-type>
+    <!-- Required for Wifi -->
+    <install-in-user-type package="com.android.networkstack">
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
@@ -210,9 +214,6 @@
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.musicfx">
-        <install-in user-type="FULL" />
-    </install-in-user-type>
-    <install-in-user-type package="com.android.networkstack">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.google.android.marvin.talkback">
