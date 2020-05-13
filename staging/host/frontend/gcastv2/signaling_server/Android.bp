@@ -49,3 +49,69 @@ cc_binary_host {
     ],
     defaults: ["cuttlefish_host_only"],
 }
+
+// TODO(jemoreira): Ideally these files should be in $HOST_OUT/webrtc but I
+// couldn't find a module type that would produce that, prebuilt_usr_share_host
+// is the next best thing for now.
+prebuilt_usr_share_host {
+    name: "webrtc_index.html",
+    src: "assets/index.html",
+    filename: "index.html",
+    sub_dir: "webrtc/assets",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_style.css",
+    src: "assets/style.css",
+    filename: "style.css",
+    sub_dir: "webrtc/assets",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_logcat.js",
+    src: "assets/js/logcat.js",
+    filename: "logcat.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_cf.js",
+    src: "assets/js/cf_webrtc.js",
+    filename: "cf_webrtc.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_app.js",
+    src: "assets/js/app.js",
+    filename: "app.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_server.crt",
+    src: "certs/server.crt",
+    filename: "server.crt",
+    sub_dir: "webrtc/certs",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_server.key",
+    src: "certs/server.key",
+    filename: "server.key",
+    sub_dir: "webrtc/certs",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_server.p12",
+    src: "certs/server.p12",
+    filename: "server.p12",
+    sub_dir: "webrtc/certs",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_trusted.pem",
+    src: "certs/trusted.pem",
+    filename: "trusted.pem",
+    sub_dir: "webrtc/certs",
+}
