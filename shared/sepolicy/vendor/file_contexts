@@ -79,8 +79,6 @@
 /vendor/bin/hw/android\.hardware\.lights-service\.example u:object_r:hal_light_default_exec:s0
 /vendor/bin/hw/android\.hardware\.neuralnetworks@1\.3-service-sample-.*   u:object_r:hal_neuralnetworks_sample_exec:s0
 /vendor/bin/hw/android\.hardware\.vibrator@1\.x-service\.example u:object_r:hal_vibrator_default_exec:s0
-/vendor/bin/hw/android\.hardware\.tv\.cec@1\.0-service\.mock u:object_r:hal_tv_cec_mock_exec:s0
-/vendor/bin/hw/android\.hardware\.tv\.tuner@1\.0-service u:object_r:hal_tv_tuner_default_exec:s0
 /vendor/bin/ip_link_add  u:object_r:ip_link_add_exec:s0
 /vendor/bin/setup_wifi  u:object_r:setup_wifi_exec:s0
 /vendor/bin/hw/android\.hardware\.sensors@2\.1-service\.mock  u:object_r:hal_sensors_default_exec:s0
@@ -90,7 +88,6 @@
 /vendor/bin/hw/android\.hardware\.rebootescrow-service\.default  u:object_r:hal_rebootescrow_default_exec:s0
 /vendor/bin/init\.insmod\.sh  u:object_r:init_insmod_sh_exec:s0
 
-/vendor/lib(64)?/cuttlefish_auto_resources.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libdrm.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libglapi.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/dri/.* u:object_r:same_process_hal_file:s0
