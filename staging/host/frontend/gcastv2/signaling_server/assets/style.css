@@ -53,6 +53,10 @@ section.noscroll div.one {
     cursor: pointer;
 }
 
+#device_list .device_entry button {
+    margin-left: 10px;
+}
+
 #logcat {
   color: #aaaaaa;
   background-color: black;
