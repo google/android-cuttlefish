@@ -20,6 +20,9 @@ DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/tv/manifest.xml
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_minimal.mk)
 $(call inherit-product, device/google/cuttlefish/shared/device.mk)
 
+# Extend cuttlefish common sepolicy with tv-specific functionality
+BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/tv/sepolicy/vendor
+
 PRODUCT_COPY_FILES += \
     device/google/atv/permissions/tv_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/tv_core_hardware.xml \
     frameworks/native/data/etc/android.hardware.bluetooth.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth.xml \
