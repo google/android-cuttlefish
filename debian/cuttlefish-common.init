@@ -34,6 +34,18 @@ if [ -f /etc/default/cuttlefish-common ]; then
     . /etc/default/cuttlefish-common
 fi
 
+if [ -z "${num_cvd_accounts}" ]; then
+    num_cvd_accounts=10
+fi
+if [ -z "${bridge_interface}" ]; then
+    bridge_interface=cvd-wbr
+fi
+if [ -z "${ipv4_bridge}" ]; then
+    ipv4_bridge=1
+fi
+if [ -z "${ipv6_bridge}" ]; then
+    ipv6_bridge=1
+fi
 if [ -z "${dns_servers}" ]; then
     dns_servers="8.8.8.8,8.8.4.4"
 fi
@@ -41,150 +53,183 @@ if [ -z "${dns6_servers}" ]; then
     dns6_servers="2001:4860:4860::8888,2001:4860:4860::8844"
 fi
 
-num_cvd_accounts=10
+# Newer distros prefer nft, but broute is not supported, so use
+# the legacy ebtables instead
+ebtables=$(which ebtables-legacy)
+# If there's no ebtables-legacy, it's probably an older distro,
+# and ebtables should support broute directly
+ebtables=${ebtables:-ebtables}
 
-create_legacy_interface() {
-  printf '<network>\n'
-  printf '  <name>cvd-%s-%02d</name>\n' "$2" $1
-  printf "  <forward mode='nat'>\n"
-  printf "    <nat>\n"
-  printf "      <port start='1024' end='65535'/>\n"
-  printf "    </nat>\n"
-  printf "  </forward>\n"
-  printf "  <bridge name='cvd-%s-%02d' stp='on' delay='0'/>\n" "$2" $1
-  printf "  <ip address='%s.%d' netmask='255.255.255.252'>\n" \
-    "$3" $(($1 * 4 - 3))
-  printf "    <dhcp>\n"
-  printf "      <range start='%s.%d' end='%s.%d'/>\n" \
-    "$3" $(($1 * 4 - 2)) "$3" $(($1 * 4 - 2))
-  printf "    </dhcp>\n"
-  printf "  </ip>\n"
-  printf "</network>\n"
+# Start DHCP server on an interface
+# $1 = interface to bind to
+# $2 = listen address (gateway IP)
+# $3 = dhcp_range ("a.b.c.d,w.x.y.z")
+start_dnsmasq() {
+    dnsmasq \
+      --port=0 \
+      --strict-order \
+      --except-interface=lo \
+      --interface="${1}" \
+      --listen-address="${2}" \
+      --bind-interfaces \
+      --dhcp-range="${3}" \
+      --dhcp-option="option:dns-server,${dns_servers}" \
+      --dhcp-option="option6:dns-server,${dns6_servers}" \
+      --conf-file="" \
+      --pid-file=/var/run/cuttlefish-dnsmasq-"${1}".pid \
+      --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${1}".leases \
+      --dhcp-no-override
 }
 
-create_legacy_mobile_interface() {
-  create_legacy_interface "$1" mobile 192.168.99
-}
-
-create_legacy_wifi_interface() {
-  create_legacy_interface "$1" wifi 192.168.98
-}
-
-create_legacy_interfaces() {
-    [ -f /usr/bin/virsh ] || return 1
-    create_legacy_mobile_interface $1 | /usr/bin/virsh net-create /dev/fd/0
-    create_legacy_wifi_interface $1 | /usr/bin/virsh net-create /dev/fd/0
-}
-
-destroy_legacy_interfaces() {
-    [ -f /usr/bin/virsh ] || return 1
-    /usr/bin/virsh net-destroy "$(printf cvd-mobile-%02d $1)"
-    /usr/bin/virsh net-destroy "$(printf cvd-wifi-%02d $1)"
-}
-
-# Creates a pair of bridge and tap interfaces
-create_interface() {
-    bridge="$(printf cvd-${1}br-%02d $2)"
-    tap="$(printf cvd-${1}tap-%02d $2)"
-    gateway="${3}.$((4*$2 - 3))"
-    network="${3}.$((4*$2 - 4))/30"
-    netmask="255.255.255.252"
-    dhcp_range="${3}.$((4*$2 - 2)),${3}.$((4*$2 - 2))"
-
-    /sbin/brctl addbr "${bridge}"
-    /sbin/brctl stp "${bridge}" off
-    /sbin/brctl setfd "${bridge}" 0
-    /sbin/ifconfig "${bridge}" "${gateway}" netmask "${netmask}" up
-
-    /sbin/iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
-
-    /usr/sbin/dnsmasq \
-    --port=0 \
-    --strict-order \
-    --except-interface=lo \
-    --interface="${bridge}" \
-    --listen-address="${gateway}" \
-    --bind-interfaces \
-    --dhcp-range="${dhcp_range}" \
-    --dhcp-option="option:dns-server,${dns_servers}" \
-    --dhcp-option="option6:dns-server,${dns6_servers}" \
-    --conf-file="" \
-    --pid-file=/var/run/cuttlefish-dnsmasq-"${bridge}".pid \
-    --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${bridge}".leases \
-    --dhcp-no-override
-
-    ip tuntap add dev "${tap}" mode tap group cvdnetwork
-    /sbin/ifconfig "${tap}" 0.0.0.0 up
-    /sbin/brctl addif "${bridge}" "${tap}"
-}
-
-create_interfaces(){
-    create_interface w $1 192.168.96
-    create_interface m $1 192.168.97
-}
-
-destroy_interface() {
-    bridge="$(printf cvd-${1}br-%02d $2)"
-    tap="$(printf cvd-${1}tap-%02d $2)"
-    network="${3}.$((4*$2 - 4))/30"
-
-    /sbin/ifconfig "${tap}" down
-    ip link delete "${tap}"
-
-    if [ -f /var/run/cuttlefish-dnsmasq-"${bridge}".pid ]; then
-        kill $(cat /var/run/cuttlefish-dnsmasq-"${bridge}".pid)
+# Stop DHCP server on an interface
+# $1 = interface to stop on
+stop_dnsmasq() {
+    if [ -f /var/run/cuttlefish-dnsmasq-"${1}".pid ]; then
+        kill $(cat /var/run/cuttlefish-dnsmasq-"${1}".pid)
     fi
+}
+
+# Create a tap interface (with no address)
+# $1 = tap name
+create_tap() {
+    ip tuntap add dev "${1}" mode tap group cvdnetwork vnet_hdr
+    ip link set dev "${1}" up
+}
+
+# Destroy a tap interface
+# $1 = tap name
+destroy_tap() {
+    ip link set dev "${1}" down
+    ip link delete "${1}"
+}
+
+# Create a mobile tap interface
+# The tap device will have the IP address and DHCP server running on it, and
+# it will be added to a bridge with no address (for routing).
+# $1 = interface number
+# $2 = ip address base ("a.b.c")
+create_mobile_interface() {
+    tap="$(printf cvd-mtap-%02d $1)"
+    gateway="${2}.$((4*$1 - 3))"
+    netmask="/30"
+    network="${2}.$((4*$1 - 4))${netmask}"
+    dhcp_range="${2}.$((4*$1 - 2)),${2}.$((4*$1 - 2))"
+
+    create_tap "${tap}"
+    ip addr add "${gateway}${netmask}" broadcast + dev "${tap}"
+    iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+}
+
+# Destroy a mobile tap interface
+# $1 = interface number
+# $2 = ip address base ("a.b.c")
+destroy_mobile_interface() {
+    tap="$(printf cvd-mtap-%02d $1)"
+    gateway="${2}.$((4*$1 - 3))"
+    netmask="/30"
+    network="${2}.$((4*$1 - 4))${netmask}"
 
     iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
-
-    /sbin/ifconfig "${bridge}" down
-    /sbin/brctl delbr "${bridge}"
+    ip addr del "${gateway}${netmask}" dev "${tap}"
+    destroy_tap "${tap}"
 }
 
-destroy_interfaces(){
-    # Use wtap/wbr and mtap/mbr for wifi and mobile network respectively to
-    # avoid going over the interface name size limit
-    destroy_interface w $1 192.168.96
-    destroy_interface m $1 192.168.97
+# Create many wireless tap devices on a single bridge
+# $1 = ip address base ("a.b.c")
+create_wireless_interfaces() {
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        ip link add name "${bridge_interface}" \
+          type bridge forward_delay 0 stp_state 0
+        ip link set dev "${bridge_interface}" up
+    fi
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-wtap-%02d $i)"
+        create_tap "${tap}"
+        ip link set dev "${tap}" master "${bridge_interface}"
+        if [ "${bridge_interface}" != "cvd-wbr" ]; then
+            if [ "$ipv4_bridge" != "1" ]; then
+                $ebtables -t broute -A BROUTING -p ipv4 --in-if  "${tap}" -j DROP
+                $ebtables -t filter -A FORWARD  -p ipv4 --out-if "${tap}" -j DROP
+            fi
+            if [ "$ipv6_bridge" != "1" ]; then
+                $ebtables -t broute -A BROUTING -p ipv6 --in-if  "${tap}" -j DROP
+                $ebtables -t filter -A FORWARD  -p ipv6 --out-if "${tap}" -j DROP
+            fi
+        fi
+    done
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        gateway="${1}.1"
+        netmask="/24"
+        network="${1}.0${netmask}"
+        dhcp_range="${1}.2,${1}.255"
+        ip addr add "${gateway}${netmask}" broadcast + dev "${bridge_interface}"
+        start_dnsmasq "${bridge_interface}" "${gateway}" "${dhcp_range}"
+        iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
+    fi
 }
 
+# Destroy many wireless tap devices and a single bridge
+# $1 = ip address base ("a.b.c")
+destroy_wireless_interfaces() {
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        gateway="${1}.1"
+        netmask="/24"
+        network="${1}.0${netmask}"
+        iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
+        stop_dnsmasq "${bridge_interface}"
+        ip addr del "${gateway}${netmask}" dev "${bridge_interface}"
+    fi
+    for i in $(seq ${num_cvd_accounts}); do
+        tap="$(printf cvd-wtap-%02d $i)"
+        if [ "${bridge_interface}" != "cvd-wbr" ]; then
+            if [ "$ipv4_bridge" != "1" ]; then
+                $ebtables -t filter -D FORWARD  -p ipv4 --out-if "${tap}" -j DROP
+                $ebtables -t broute -D BROUTING -p ipv4 --in-if  "${tap}" -j DROP
+            fi
+            if [ "$ipv6_bridge" != "1" ]; then
+                $ebtables -t filter -D FORWARD  -p ipv6 --out-if "${tap}" -j DROP
+                $ebtables -t broute -D BROUTING -p ipv6 --in-if  "${tap}" -j DROP
+            fi
+        fi
+        destroy_tap "${tap}"
+    done
+    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+        ip link set dev "${bridge_interface}" down
+        ip link delete "${bridge_interface}"
+    fi
+}
 
 start() {
-    # This has to be expressed in very basic shell syntax, so we can't
-    # use the typical array idiom.
-    for i in /sys/devices/platform/vhci_hcd/attach \
-      /sys/devices/platform/vhci_hcd/detach; do
-      if [ -f $i ]; then
-        USB_FILES="${USB_FILES} ${i}"
-      fi
-    done
     # Enable ip forwarding
     echo 1 >/proc/sys/net/ipv4/ip_forward
+
+    create_wireless_interfaces 192.168.96
     for i in $(seq ${num_cvd_accounts}); do
-      create_legacy_interfaces $i
-      create_interfaces $i
+        create_mobile_interface $i 192.168.97
     done
+
     # When running inside a privileged container, set the ownership and access
     # of these device nodes.
     if test -f /.dockerenv; then
-      chown root.kvm /dev/kvm
-      chown root.cvdnetwork /dev/vhost-vsock
-      chmod ug+rw /dev/kvm
-      chmod ug+rw /dev/vhost-vsock
+        chown root.kvm /dev/kvm
+        chown root.cvdnetwork /dev/vhost-vsock
+        chmod ug+rw /dev/kvm
+        chmod ug+rw /dev/vhost-vsock
     fi
+
     # Try to preload the Nvidia modeset kernel module.
     /usr/bin/nvidia-modprobe --modeset || /bin/true
 }
 
 stop() {
     for i in $(seq ${num_cvd_accounts}); do
-      destroy_legacy_interfaces $i
-      destroy_interfaces $i
+        destroy_mobile_interface $i 192.168.97
     done
+    destroy_wireless_interfaces 192.168.96
 }
 
 usage() {
-  echo $0: start\|stop
+    echo $0: start\|stop
 }
 
 if test $# != 1; then
