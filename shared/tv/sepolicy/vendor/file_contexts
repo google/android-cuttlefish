@@ -1,0 +1,2 @@
+/vendor/bin/hw/android\.hardware\.tv\.cec@1\.0-service\.mock u:object_r:hal_tv_cec_mock_exec:s0
+/vendor/bin/hw/android\.hardware\.tv\.tuner@1\.0-service u:object_r:hal_tv_tuner_default_exec:s0
