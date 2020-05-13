@@ -65,16 +65,9 @@ PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
-# DRM HAL
-PRODUCT_PACKAGES += android.hardware.drm@1.2-service.clearkey
-
 # GPS HAL
 PRODUCT_PACKAGES += \
     android.hardware.gnss@2.0-service
-
-# DRM Properities
-PRODUCT_PROPERTY_OVERRIDES += \
-    drm.service.enabled=true
 
 BOARD_IS_AUTOMOTIVE := true
 
