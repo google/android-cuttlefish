@@ -576,7 +576,7 @@ void SetDefaultFlagsForCrosvm() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // for now, we support only x86_64 by default
   bool default_enable_sandbox = false;
-  std::set<const std::string> supported_archs{std::string("x86_64"), std::string("aarch64")};
+  std::set<const std::string> supported_archs{std::string("x86_64")};
   if (supported_archs.find(cvd::HostArch()) != supported_archs.end()) {
     default_enable_sandbox =
         [](const std::string& var_empty) -> bool {
