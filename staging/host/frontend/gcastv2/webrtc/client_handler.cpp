@@ -149,9 +149,9 @@ void ClientHandler::HandleMessage(const Json::Value& message) {
                     getRemoteFingerprint(i));
         }
 
-        int32_t mid = 0;
-        while (GatherAndSendCandidate(mid)) mid++;
-        LOG(INFO) << "Sent " << mid << " ICE candidates";
+        for (int32_t mid = 0; mid < 3; mid++) {
+            GatherAndSendCandidate(mid);
+        }
     } else if (type == "ice-candidate") {
       LOG(INFO) << "Received ice candidate from client, ignoring";
     } else if (type == "adb-message") {

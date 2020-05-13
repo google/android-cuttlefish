@@ -327,7 +327,7 @@ class WebRTCControl {
   ConnectDevice() {
     console.log('ConnectDevice');
     const is_chrome = navigator.userAgent.indexOf('Chrome') !== -1;
-    this._sendToDevice({type: 'request-offer', options: this.options,is_chrome: is_chrome ? 1 : 0});
+    this._sendToDevice({type: 'request-offer', options: this._options, is_chrome: is_chrome ? 1 : 0});
   }
 
   /**
