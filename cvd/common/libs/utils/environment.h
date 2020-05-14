@@ -17,11 +17,11 @@
 
 #include <string>
 
-namespace cuttlefish {
+namespace cvd {
 
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval);
 
 std::string HostArch();
 
-}  // namespace cuttlefish
+}  // namespace cvd
