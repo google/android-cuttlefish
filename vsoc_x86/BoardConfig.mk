@@ -35,3 +35,8 @@ BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kerne
 
 # TODO(b/149410031): temporarily exclude sdcardfs
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES := $(filter-out %/sdcardfs.ko,$(BOARD_VENDOR_RAMDISK_KERNEL_MODULES))
+
+# TODO(b/156534160): Temporarily allow for the old style PRODUCT_COPY_FILES for ndk_translation_prebuilt
+ifeq ($(USE_NDK_TRANSLATION_BINARY),true)
+BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+endif
