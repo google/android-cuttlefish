@@ -320,6 +320,8 @@ class CuttlefishConfig {
     std::string launcher_log_path() const;
 
     std::string launcher_monitor_socket_path() const;
+
+    std::string sdcard_path() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
