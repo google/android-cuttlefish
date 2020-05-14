@@ -2,8 +2,12 @@
 
 #include <android-base/logging.h>
 
+#include "common/libs/fs/shared_buf.h"
+
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+
+#include "host/commands/assemble_cvd/mbr.h"
 
 namespace {
 const std::string kDataPolicyUseExisting = "use_existing";
@@ -65,19 +69,53 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
 void CreateBlankImage(
     const std::string& image, int num_mb, const std::string& image_fmt) {
   LOG(INFO) << "Creating " << image;
+
   off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
-  auto fd = cvd::SharedFD::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666);
-  if (fd->Truncate(image_size_bytes) != 0) {
-    LOG(ERROR) << "`truncate --size=" << num_mb << "M " << image
-               << "` failed:" << fd->StrError();
-    return;
+  // The newfs_msdos tool with the mandatory -C option will do the same
+  // as below to zero the image file, so we don't need to do it here
+  if (image_fmt != "sdcard") {
+    auto fd = cvd::SharedFD::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666);
+    if (fd->Truncate(image_size_bytes) != 0) {
+      LOG(ERROR) << "`truncate --size=" << num_mb << "M " << image
+                 << "` failed:" << fd->StrError();
+      return;
+    }
   }
-  fd->Close();
+
   if (image_fmt == "ext4") {
     cvd::execute({"/sbin/mkfs.ext4", image});
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = vsoc::DefaultHostArtifactsPath("bin/make_f2fs");
     cvd::execute({make_f2fs_path, "-t", image_fmt, image, "-g", "android"});
+  } else if (image_fmt == "sdcard") {
+    // Reserve 1MB in the image for the MBR and padding, to simulate what
+    // other OSes do by default when partitioning a drive
+    off_t offset_size_bytes = 1 << 20;
+    image_size_bytes -= offset_size_bytes;
+    off_t image_size_sectors = image_size_bytes / 512;
+    auto newfs_msdos_path = vsoc::DefaultHostArtifactsPath("bin/newfs_msdos");
+    cvd::execute({newfs_msdos_path, "-F", "32", "-m", "0xf8", "-a", "4088",
+                                    "-o", "0",  "-c", "8",    "-h", "255",
+                                    "-u", "63", "-S", "512",
+                                    "-s", std::to_string(image_size_sectors),
+                                    "-C", std::to_string(num_mb) + "M",
+                                    "-@", std::to_string(offset_size_bytes),
+                                    image});
+    // Write the MBR after the filesystem is formatted, as the formatting tools
+    // don't consistently preserve the image contents
+    MasterBootRecord mbr = {
+      .partitions = {{
+        .partition_type = 0xC,
+        .first_lba = (std::uint32_t) offset_size_bytes / SECTOR_SIZE,
+        .num_sectors = (std::uint32_t) image_size_bytes / SECTOR_SIZE,
+      }},
+      .boot_signature = { 0x55, 0xAA },
+    };
+    auto fd = cvd::SharedFD::Open(image, O_RDWR);
+    if (cvd::WriteAllBinary(fd, &mbr) != sizeof(MasterBootRecord)) {
+      LOG(ERROR) << "Writing MBR to " << image << " failed:" << fd->StrError();
+      return;
+    }
   } else if (image_fmt != "none") {
     LOG(WARNING) << "Unknown image format '" << image_fmt
                  << "' for " << image << ", treating as 'none'.";
