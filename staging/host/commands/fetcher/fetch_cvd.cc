@@ -72,13 +72,9 @@ const std::string OTA_TOOLS_DIR = "/otatools/";
 std::string TargetBuildZipFromArtifacts(
     const Build& build, const std::string& name,
     const std::vector<Artifact>& artifacts) {
-  std::string target = std::visit([](auto&& arg) { return arg.target; }, build);
-  size_t dash_pos = target.find('-');
-  if (dash_pos != std::string::npos) {
-    target.replace(dash_pos, target.size() - dash_pos, "");
-  }
+  std::string product = std::visit([](auto&& arg) { return arg.product; }, build);
   auto id = std::visit([](auto&& arg) { return arg.id; }, build);
-  auto match = target + "-" + name + "-" + id;
+  auto match = product + "-" + name + "-" + id;
   for (const auto& artifact : artifacts) {
     if (artifact.Name().find(match) != std::string::npos) {
       return artifact.Name();
