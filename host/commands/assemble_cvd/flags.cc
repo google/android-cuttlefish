@@ -275,8 +275,9 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
         tmp_config_obj.AssemblyPath(kKernelDefaultPath.c_str()));
     tmp_config_obj.set_use_unpacked_kernel(true);
   }
+
   tmp_config_obj.set_decompress_kernel(FLAGS_decompress_kernel);
-  if (FLAGS_decompress_kernel) {
+  if (tmp_config_obj.decompress_kernel()) {
     tmp_config_obj.set_decompressed_kernel_image_path(
         tmp_config_obj.AssemblyPath("vmlinux"));
   }
@@ -432,6 +433,16 @@ void SetDefaultFlagsForQemu() {
 
 void SetDefaultFlagsForCrosvm() {
   SetCommandLineOptionWithMode("logcat_mode", cvd::kLogcatVsockMode,
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+
+  // Crosvm requires a specific setting for kernel decompression; it must be
+  // on for aarch64 and off for x86, no other mode is supported.
+  bool decompress_kernel = false;
+  if (cvd::HostArch() == "aarch64") {
+    decompress_kernel = true;
+  }
+  SetCommandLineOptionWithMode("decompress_kernel",
+                               (decompress_kernel ? "true" : "false"),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
