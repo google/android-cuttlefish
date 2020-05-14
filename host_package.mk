@@ -63,7 +63,8 @@ cvd_host_executables := \
     vtpm_passthrough \
     ms-tpm-20-ref \
     lz4 \
-    mkenvimage
+    mkenvimage \
+    tapsetiff
 
 cvd_host_tests := \
     monotonic_time_test \
