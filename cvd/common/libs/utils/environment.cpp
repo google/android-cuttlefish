@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <iostream>
 
-namespace cuttlefish {
+namespace cvd {
 
 std::string StringFromEnv(const std::string& varname,
                           const std::string& defval) {
@@ -82,4 +82,4 @@ std::string HostArch() {
   return arch;
 }
 
-}  // namespace cuttlefish
+}  // namespace cvd
