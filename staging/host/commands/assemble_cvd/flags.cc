@@ -631,6 +631,12 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
     SetCommandLineOptionWithMode("start_vnc_server", "true",
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
+  // Various temporary workarounds for aarch64
+  if (cvd::HostArch() == "aarch64") {
+    SetCommandLineOptionWithMode("tpm_binary",
+                                 "",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
   // The default for starting signaling server is whether or not webrt is to be
   // started.
   SetCommandLineOptionWithMode("start_webrtc_sig_server",
