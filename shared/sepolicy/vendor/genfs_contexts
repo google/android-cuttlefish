@@ -7,9 +7,13 @@ genfscon sysfs /devices/pci0000:00/0000:00:0a.0/subsystem_vendor u:object_r:sysf
 genfscon sysfs /devices/pci0000:00/0000:00:0a.0/uevent u:object_r:sysfs_gpu:s0
 genfscon sysfs /devices/pci0000:00/0000:00:0a.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
+## x86 rtc_cmos on crosvm does not currently expose rtcN/hctosys
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
-genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc1/wakeup1 u:object_r:sysfs_wakeup:s0 # <= 5.5
-genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc1/alarmtimer.0.auto/wakeup/wakeup1 u:object_r:sysfs_wakeup:s0 # >5.5
+genfscon sysfs /devices/platform/rtc_cmos/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup1 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc1/wakeup2 u:object_r:sysfs_wakeup:s0 # <= 5.5
+genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc1/alarmtimer.0.auto/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0 # >5.5
+genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # crosvm (arm64)
 genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:07.0/virtio6/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
@@ -36,10 +40,12 @@ genfscon sysfs /devices/pnp0/00:00/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/pnp0/00:00/wakeup/wakeup13 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/pnp0/00:00/rtc/rtc0/wakeup14 u:object_r:sysfs_wakeup:s0 # <= 5.5
 genfscon sysfs /devices/pnp0/00:00/rtc/rtc0/alarmtimer.0.auto/wakeup/wakeup14 u:object_r:sysfs_wakeup:s0 # >5.5
-genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup15 u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup16 u:object_r:sysfs_wakeup:s0
+
+# common to qemu (x86) and crosvm (arm64)
+genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 
 # common on all platforms / vm managers
 genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
