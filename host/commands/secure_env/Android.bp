@@ -20,6 +20,7 @@ cc_binary_host {
         "keymaster_responder.cpp",
         "secure_env.cpp",
         "tpm_auth.cpp",
+        "tpm_hmac.cpp",
         "tpm_random_source.cpp",
         "tpm_resource_manager.cpp",
         "tpm_serialize.cpp",
