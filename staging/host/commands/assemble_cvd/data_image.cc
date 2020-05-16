@@ -63,20 +63,24 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
 } // namespace
 
 void CreateBlankImage(
-    const std::string& image, int block_count, const std::string& image_fmt,
-    const std::string& block_size) {
+    const std::string& image, int num_mb, const std::string& image_fmt) {
   LOG(INFO) << "Creating " << image;
-  std::string of = "of=";
-  of += image;
-  std::string count = "count=";
-  count += std::to_string(block_count);
-  std::string bs = "bs=" + block_size;
-  cvd::execute({"/bin/dd", "if=/dev/zero", of, bs, count});
+  off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
+  auto fd = cvd::SharedFD::Open(image, O_CREAT | O_TRUNC | O_RDWR, 0666);
+  if (fd->Truncate(image_size_bytes) != 0) {
+    LOG(ERROR) << "`truncate --size=" << num_mb << "M " << image
+               << "` failed:" << fd->StrError();
+    return;
+  }
+  fd->Close();
   if (image_fmt == "ext4") {
     cvd::execute({"/sbin/mkfs.ext4", image});
-  } else if (image_fmt != "none") {
+  } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = vsoc::DefaultHostArtifactsPath("bin/make_f2fs");
     cvd::execute({make_f2fs_path, "-t", image_fmt, image, "-g", "android"});
+  } else if (image_fmt != "none") {
+    LOG(WARNING) << "Unknown image format '" << image_fmt
+                 << "' for " << image << ", treating as 'none'.";
   }
 }
 
