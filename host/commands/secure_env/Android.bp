@@ -20,6 +20,7 @@ cc_binary_host {
         "secure_env.cpp",
         "tpm_auth.cpp",
         "tpm_random_source.cpp",
+        "tpm_resource_manager.cpp",
     ],
     shared_libs: [
         "libbase",
