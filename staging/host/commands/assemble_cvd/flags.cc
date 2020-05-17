@@ -246,6 +246,7 @@ DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
                           "images have been updated since the first launch.");
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
+DEFINE_string(ril_dns, "8.8.8.8", "DNS address of mobile network (RIL)");
 
 namespace {
 
@@ -472,6 +473,8 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
+
+  tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
 
   std::vector<int> instance_nums;
   for (int i = 0; i < FLAGS_num_instances; i++) {
