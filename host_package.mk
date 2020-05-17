@@ -64,7 +64,8 @@ cvd_host_executables := \
     ms-tpm-20-ref \
     lz4 \
     mkenvimage \
-    tapsetiff
+    tapsetiff \
+    newfs_msdos \
 
 cvd_host_tests := \
     monotonic_time_test \
