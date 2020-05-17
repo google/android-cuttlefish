@@ -394,6 +394,8 @@ class CuttlefishConfig {
 
     std::string launcher_monitor_socket_path() const;
 
+    std::string sdcard_path() const;
+
     // The device id the webrtc process should use to register with the
     // signaling server
     std::string webrtc_device_id() const;
