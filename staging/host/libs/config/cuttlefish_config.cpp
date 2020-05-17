@@ -179,6 +179,8 @@ const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 const char* kFramesServerPort = "frames_server_port";
 const char* kTouchServerPort = "touch_server_port";
 const char* kKeyboardServerPort = "keyboard_server_port";
+
+const char* kRilDns = "ril_dns";
 }  // namespace
 
 namespace vsoc {
@@ -1021,6 +1023,13 @@ std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
     cmdline.push_back(arg.asString());
   }
   return cmdline;
+}
+
+void CuttlefishConfig::set_ril_dns(const std::string& ril_dns) {
+  (*dictionary_)[kRilDns] = ril_dns;
+}
+std::string CuttlefishConfig::ril_dns()const {
+  return (*dictionary_)[kRilDns].asString();
 }
 
 // Creates the (initially empty) config object and populates it with values from
