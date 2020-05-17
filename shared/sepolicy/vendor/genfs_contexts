@@ -1,11 +1,11 @@
 # crosvm (x86)
-genfscon sysfs /devices/pci0000:00/0000:00:07.0/virtio6/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/pci0000:00/0000:00:08.0/virtio7/net u:object_r:sysfs_net:s0 # rmnet0
-genfscon sysfs /devices/pci0000:00/0000:00:0a.0/device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0a.0/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0a.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0a.0/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0a.0/vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/pci0000:00/0000:00:08.0/virtio7/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:09.0/virtio8/net u:object_r:sysfs_net:s0 # rmnet0
+genfscon sysfs /devices/pci0000:00/0000:00:0b.0/device u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/pci0000:00/0000:00:0b.0/subsystem_device u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/pci0000:00/0000:00:0b.0/subsystem_vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/pci0000:00/0000:00:0b.0/uevent u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/pci0000:00/0000:00:0b.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 ## x86 rtc_cmos on crosvm does not currently expose rtcN/hctosys
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
@@ -16,13 +16,13 @@ genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc1/alarmtimer.0.auto/wakeup/wa
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # crosvm (arm64)
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:07.0/virtio6/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:08.0/virtio7/net u:object_r:sysfs_net:s0 # rmnet0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0a.0/device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0a.0/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0a.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0a.0/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0a.0/vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:08.0/virtio7/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:09.0/virtio8/net u:object_r:sysfs_net:s0 # rmnet0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0b.0/device u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0b.0/subsystem_device u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0b.0/subsystem_vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0b.0/uevent u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0b.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
@@ -33,8 +33,8 @@ genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc2/alarmtimer.0.auto/wakeup/wa
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 
 # qemu (x86)
-genfscon sysfs /devices/pci0000:00/0000:00:04.0/virtio2/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/pci0000:00/0000:00:05.0/virtio3/net u:object_r:sysfs_net:s0 # rmnet0
+genfscon sysfs /devices/pci0000:00/0000:00:05.0/virtio3/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:06.0/virtio4/net u:object_r:sysfs_net:s0 # rmnet0
 # FIXME: Add sysfs_gpu labels for qemu
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:00/rtc u:object_r:sysfs_rtc:s0
