@@ -1,6 +1,5 @@
 on early-init
 #    loglevel 8
-    symlink /sdcard /storage/sdcard0
     mkdir /var/run 0755 root root
     mkdir /var/run/media 0755 media root
     mkdir /var/run/system 0755 system root
