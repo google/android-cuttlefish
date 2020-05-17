@@ -41,12 +41,13 @@ class NetConfig {
   uint8_t ril_prefixlen = -1;
   std::string ril_ipaddr;
   std::string ril_gateway;
-  std::string ril_dns = "8.8.8.8";
+  std::string ril_dns;
   std::string ril_broadcast;
 
-  bool ObtainConfig(const std::string& interface) {
+  bool ObtainConfig(const std::string& interface, const std::string& dns) {
     bool ret = ParseInterfaceAttributes(interface);
     if (ret) {
+      ril_dns = dns;
       LOG(INFO) << "Network config:";
       LOG(INFO) << "ipaddr = " << ril_ipaddr;
       LOG(INFO) << "gateway = " << ril_gateway;
@@ -156,8 +157,9 @@ bool DeviceConfig::InitializeNetworkConfiguration(
   // the mobile interface. If that fails, it probably means we are using a
   // newer version of cuttlefish-common, and we can use the tap device
   // directly instead.
-  if (!netconfig.ObtainConfig(instance.mobile_bridge_name())) {
-    if (!netconfig.ObtainConfig(instance.mobile_tap_name())) {
+  if (!netconfig.ObtainConfig(instance.mobile_bridge_name(),
+                              config.ril_dns())) {
+    if (!netconfig.ObtainConfig(instance.mobile_tap_name(), config.ril_dns())) {
       LOG(ERROR) << "Unable to obtain the network configuration";
       return false;
     }
