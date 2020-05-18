@@ -19,28 +19,33 @@ cc_library_shared {
     defaults: ["cuttlefish_guest_only"],
     vendor: true,
     srcs: [
-        "vsocket_screen_view.cpp",
         "hwcomposer.cpp",
+        "vsocket_screen_view.cpp",
     ],
     include_dirs: [
         "device/google/cuttlefish",
     ],
     export_include_dirs: ["."],
     static_libs: [
-        "libyuv_static", 
-        "hwcomposer_common"
+        "hwcomposer_common",
+        "libyuv_static",
     ],
     shared_libs: [
-        "liblog",
-        "libhardware",
+        "android.hardware.graphics.mapper@4.0",
         "libbase",
         "libcutils",
-        "libutils",
-        "libsync",
-        "libjpeg",
+        "libcuttlefish_device_config",
         "libcuttlefish_utils",
         "libcuttlefish_fs",
-        "libcuttlefish_device_config",
+        "libdrm",
+        "libgralloctypes",
+        "libhardware",
+        "libhidlbase",
+        "libjpeg",
+        "liblog",
+        "libminigbm",
+        "libsync",
+        "libutils",
     ],
 }
 
@@ -77,17 +82,20 @@ cc_library_shared {
     export_include_dirs: ["."],
 
     static_libs: [
+        "hwcomposer_common",
         "libyuv_static",
-        "hwcomposer_common"
     ],
 
     shared_libs: [
-        "libutils",
+        "android.hardware.graphics.mapper@4.0",
         "libcutils",
-        "liblog",
-        "libhardware",
+        "libcuttlefish_device_config",
         "libcuttlefish_utils",
         "libcuttlefish_fs",
-        "libcuttlefish_device_config",
+        "libgralloctypes",
+        "libhardware",
+        "libhidlbase",
+        "liblog",
+        "libutils",
     ],
 }
