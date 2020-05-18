@@ -19,38 +19,77 @@
 #include <string.h>
 
 #include <cutils/properties.h>
-#include <hardware/gralloc.h>
 #include <log/log.h>
-
-#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 
 namespace cvd {
 
 BaseComposer::BaseComposer(std::unique_ptr<ScreenView> screen_view)
-    : screen_view_(std::move(screen_view)) {
-  hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
-                reinterpret_cast<const hw_module_t**>(&gralloc_module_));
-}
+    : screen_view_(std::move(screen_view)), gralloc_() {}
 
 void BaseComposer::Dump(char* buff __unused, int buff_len __unused) {}
 
 int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
   auto buffer_id = screen_view_->NextBuffer();
   void* frame_buffer = screen_view_->GetBuffer(buffer_id);
-  const private_handle_t* p_handle =
-      reinterpret_cast<const private_handle_t*>(buffer_handle);
-  void* buffer;
-  int retval = gralloc_module_->lock(gralloc_module_, buffer_handle,
-                                     GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
-                                     p_handle->x_res, p_handle->y_res, &buffer);
-  if (retval != 0) {
-    ALOGE("Got error code %d from lock function", retval);
+
+  auto imported_buffer_opt = gralloc_.Import(buffer_handle);
+  if (!imported_buffer_opt) {
+    ALOGE("Failed to Import() framebuffer for post.");
     return -1;
   }
+  GrallocBuffer& imported_buffer = *imported_buffer_opt;
+
+  auto buffer_opt = imported_buffer.Lock();
+  if (!buffer_opt) {
+    ALOGE("Failed to Lock() framebuffer for post.");
+    return -1;
+  }
+
+  void* buffer = *buffer_opt;
   memcpy(frame_buffer, buffer, screen_view_->buffer_size());
+
+  imported_buffer.Unlock();
+
   screen_view_->Broadcast(buffer_id);
   return 0;
 }  // namespace cvd
+
+bool BaseComposer::IsValidLayer(const hwc_layer_1_t& layer) {
+  auto buffer_opt = gralloc_.Import(layer.handle);
+  if (!buffer_opt) {
+    ALOGE("Failed to import and validate layer buffer handle.");
+    return false;
+  }
+  GrallocBuffer& buffer = *buffer_opt;
+
+  auto buffer_width_opt = buffer.GetWidth();
+  if (!buffer_width_opt) {
+    ALOGE("Failed to get layer buffer width.");
+    return false;
+  }
+  uint32_t buffer_width = *buffer_width_opt;
+
+  auto buffer_height_opt = buffer.GetHeight();
+  if (!buffer_height_opt) {
+    ALOGE("Failed to get layer buffer height.");
+    return false;
+  }
+  uint32_t buffer_height = *buffer_height_opt;
+
+  if (layer.sourceCrop.left < 0 || layer.sourceCrop.top < 0 ||
+      layer.sourceCrop.right > buffer_width ||
+      layer.sourceCrop.bottom > buffer_height) {
+    ALOGE(
+        "%s: Invalid sourceCrop for buffer handle: sourceCrop = [left = %d, "
+        "right = %d, top = %d, bottom = %d], handle = [width = %d, height = "
+        "%d]",
+        __FUNCTION__, layer.sourceCrop.left, layer.sourceCrop.right,
+        layer.sourceCrop.top, layer.sourceCrop.bottom, buffer_width,
+        buffer_height);
+    return false;
+  }
+  return true;
+}
 
 int BaseComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
   // find unsupported overlays
