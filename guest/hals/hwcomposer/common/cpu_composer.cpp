@@ -21,13 +21,14 @@
 #include <utility>
 #include <vector>
 
+#include <drm_fourcc.h>
 #include <hardware/hwcomposer.h>
 #include <hardware/hwcomposer_defs.h>
 #include <libyuv.h>
 #include <log/log.h>
-#include <system/graphics.h>
 
 #include "common/libs/utils/size_utils.h"
+#include "guest/hals/hwcomposer/common/drm_utils.h"
 #include "guest/hals/hwcomposer/common/geometry_utils.h"
 
 namespace cvd {
@@ -61,59 +62,22 @@ typedef int (*ConverterFunction)(const BufferSpec& src, const BufferSpec& dst,
                                  bool v_flip);
 int DoCopy(const BufferSpec& src, const BufferSpec& dst, bool v_flip);
 int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip);
-ConverterFunction GetConverter(uint32_t format) {
-  switch (format) {
-    case HAL_PIXEL_FORMAT_RGBA_8888:
-    case HAL_PIXEL_FORMAT_RGBX_8888:
-    case HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED:
+
+ConverterFunction GetConverterForDrmFormat(uint32_t drm_format) {
+  switch (drm_format) {
+    case DRM_FORMAT_ABGR8888:
+    case DRM_FORMAT_XBGR8888:
       return &DoCopy;
-
-    case HAL_PIXEL_FORMAT_YV12:
+    case DRM_FORMAT_YVU420:
       return &ConvertFromYV12;
-
-    // Unsupported formats
-    // TODO(jemoreira): Conversion from these formats should be implemented as
-    // we find evidence of its usage.
-    // case HAL_PIXEL_FORMAT_BGRA_8888:
-
-    // case HAL_PIXEL_FORMAT_RGB_888:
-    // case HAL_PIXEL_FORMAT_RGB_565:
-
-    // case HAL_PIXEL_FORMAT_sRGB_A_8888:
-    // case HAL_PIXEL_FORMAT_sRGB_X_8888:
-
-    // case HAL_PIXEL_FORMAT_Y8:
-    // case HAL_PIXEL_FORMAT_Y16:
-
-    // case HAL_PIXEL_FORMAT_RAW_SENSOR:
-    // case HAL_PIXEL_FORMAT_BLOB:
-
-    // case HAL_PIXEL_FORMAT_YCbCr_420_888:
-    // case HAL_PIXEL_FORMAT_YCbCr_422_SP:
-    // case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-    // case HAL_PIXEL_FORMAT_YCbCr_422_I:
-    default:
-      ALOGW("Unsupported format: 0x%04x, returning null converter function",
-            format);
   }
-  return NULL;
+  ALOGW("Unsupported format: %d(%s), returning null converter",
+        drm_format, GetDrmFormatString(drm_format));
+  return nullptr;
 }
 
-// Whether we support a given format
-bool IsFormatSupported(uint32_t format) { return GetConverter(format) != NULL; }
-
-bool CanCompositeLayer(const hwc_layer_1_t& layer) {
-  if (layer.handle == NULL) {
-    ALOGW("%s received a layer with a null handler", __FUNCTION__);
-    return false;
-  }
-  int format = reinterpret_cast<const private_handle_t*>(layer.handle)->format;
-  if (!IsFormatSupported(format)) {
-    ALOGD("Unsupported pixel format: 0x%x, doing software composition instead",
-          format);
-    return false;
-  }
-  return true;
+bool IsDrmFormatSupported(uint32_t drm_format) {
+  return GetConverterForDrmFormat(drm_format) != nullptr;
 }
 
 /*******************************************************************************
@@ -140,66 +104,109 @@ bool GetVFlipFromTransform(uint32_t transform) {
 
 struct BufferSpec {
   uint8_t* buffer;
-  size_t size;
+  std::optional<android_ycbcr> buffer_ycbcr;
   int width;
   int height;
-  int stride;
   int crop_x;
   int crop_y;
   int crop_width;
   int crop_height;
-  uint32_t format;
+  uint32_t drm_format;
+  int stride_bytes;
+  int sample_bytes;
 
-  BufferSpec(uint8_t* buffer, size_t size, int width, int height, int stride)
+  BufferSpec(uint8_t* buffer,
+             std::optional<android_ycbcr> buffer_ycbcr,
+             int width,
+             int height,
+             int crop_x,
+             int crop_y,
+             int crop_width,
+             int crop_height,
+             uint32_t drm_format,
+             int stride_bytes,
+             int sample_bytes)
       : buffer(buffer),
-        size(size),
+        buffer_ycbcr(buffer_ycbcr),
         width(width),
         height(height),
-        stride(stride),
-        crop_x(0),
-        crop_y(0),
-        crop_width(width),
-        crop_height(height),
-        format(HAL_PIXEL_FORMAT_RGBA_8888) {}
+        crop_x(crop_x),
+        crop_y(crop_y),
+        crop_width(crop_width),
+        crop_height(crop_height),
+        drm_format(drm_format),
+        stride_bytes(stride_bytes),
+        sample_bytes(sample_bytes) {}
+
+  BufferSpec(uint8_t* buffer,
+             int width,
+             int height,
+             int stride_bytes)
+      : BufferSpec(buffer,
+                   /*buffer_ycbcr=*/std::nullopt,
+                   width,
+                   height,
+                   /*crop_x=*/0,
+                   /*crop_y=*/0,
+                   /*crop_width=*/width,
+                   /*crop_height=*/height,
+                   /*drm_format=*/DRM_FORMAT_ABGR8888,
+                   stride_bytes,
+                   /*sample_bytes=*/4) {}
+
 };
 
 int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
-  // use the stride in pixels as the source width
-  int stride_in_pixels = src.stride / formatToBytesPerPixel(src.format);
-
   // The following calculation of plane offsets and alignments are based on
   // swiftshader's Sampler::setTextureLevel() implementation
   // (Renderer/Sampler.cpp:225)
-  uint8_t* src_y = src.buffer;
-  int stride_y = stride_in_pixels;
-  uint8_t* src_v = src_y + stride_y * src.height;
-  int stride_v = cvd::AlignToPowerOf2(stride_y / 2, 4);
-  uint8_t* src_u = src_v + stride_v * src.height / 2;
-  int stride_u = cvd::AlignToPowerOf2(stride_y / 2, 4);
+
+  auto& src_buffer_ycbcr_opt = src.buffer_ycbcr;
+  if (!src_buffer_ycbcr_opt) {
+    ALOGE("%s called on non ycbcr buffer", __FUNCTION__);
+    return -1;
+  }
+  auto& src_buffer_ycbcr = *src_buffer_ycbcr_opt;
+
+  // The libyuv::I420ToARGB() function is for tri-planar.
+  if (src_buffer_ycbcr.chroma_step != 1) {
+    ALOGE("%s called with bad chroma step", __FUNCTION__);
+    return -1;
+  }
+
+  uint8_t* src_y = reinterpret_cast<uint8_t*>(src_buffer_ycbcr.y);
+  int stride_y = src_buffer_ycbcr.ystride;
+  uint8_t* src_u = reinterpret_cast<uint8_t*>(src_buffer_ycbcr.cb);
+  int stride_u = src_buffer_ycbcr.cstride;
+  uint8_t* src_v = reinterpret_cast<uint8_t*>(src_buffer_ycbcr.cr);
+  int stride_v = src_buffer_ycbcr.cstride;
 
   // Adjust for crop
   src_y += src.crop_y * stride_y + src.crop_x;
   src_v += (src.crop_y / 2) * stride_v + (src.crop_x / 2);
   src_u += (src.crop_y / 2) * stride_u + (src.crop_x / 2);
-  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride +
-                        dst.crop_x * formatToBytesPerPixel(dst.format);
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
+                        dst.crop_x * dst.sample_bytes;
 
   // YV12 is the same as I420, with the U and V planes swapped
-  return libyuv::I420ToARGB(src_y, stride_y, src_v, stride_v, src_u, stride_u,
-                            dst_buffer, dst.stride, dst.crop_width,
+  return libyuv::I420ToARGB(src_y, stride_y,
+                            src_v, stride_v,
+                            src_u, stride_u,
+                            dst_buffer, dst.stride_bytes,
+                            dst.crop_width,
                             v_flip ? -dst.crop_height : dst.crop_height);
 }
 
 int DoConversion(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
-  return (*GetConverter(src.format))(src, dst, v_flip);
+  return (*GetConverterForDrmFormat(src.drm_format))(src, dst, v_flip);
 }
 
 int DoCopy(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   // Point to the upper left corner of the crop rectangle
-  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride +
-                        src.crop_x * formatToBytesPerPixel(src.format);
-  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride +
-                        dst.crop_x * formatToBytesPerPixel(dst.format);
+  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride_bytes +
+                        src.crop_x * src.sample_bytes;
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
+                        dst.crop_x * dst.sample_bytes;
   int width = src.crop_width;
   int height = src.crop_height;
 
@@ -211,17 +218,19 @@ int DoCopy(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   // byte stream, while libyuv formats are named based on the order of those
   // pixel components in an integer written from left to right. So
   // libyuv::FOURCC_ARGB is equivalent to HAL_PIXEL_FORMAT_BGRA_8888.
-  return libyuv::ARGBCopy(src_buffer, src.stride, dst_buffer, dst.stride, width,
-                          height);
+  auto ret = libyuv::ARGBCopy(src_buffer, src.stride_bytes,
+                              dst_buffer, dst.stride_bytes,
+                              width, height);
+  return ret;
 }
 
 int DoRotation(const BufferSpec& src, const BufferSpec& dst,
                libyuv::RotationMode rotation, bool v_flip) {
   // Point to the upper left corner of the crop rectangles
-  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride +
-                        src.crop_x * formatToBytesPerPixel(src.format);
-  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride +
-                        dst.crop_x * formatToBytesPerPixel(dst.format);
+  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride_bytes +
+                        src.crop_x * src.sample_bytes;
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
+                        dst.crop_x * dst.sample_bytes;
   int width = src.crop_width;
   int height = src.crop_height;
 
@@ -229,16 +238,17 @@ int DoRotation(const BufferSpec& src, const BufferSpec& dst,
     height = -height;
   }
 
-  return libyuv::ARGBRotate(src_buffer, src.stride, dst_buffer, dst.stride,
+  return libyuv::ARGBRotate(src_buffer, src.stride_bytes,
+                            dst_buffer, dst.stride_bytes,
                             width, height, rotation);
 }
 
 int DoScaling(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   // Point to the upper left corner of the crop rectangles
-  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride +
-                        src.crop_x * formatToBytesPerPixel(src.format);
-  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride +
-                        dst.crop_x * formatToBytesPerPixel(dst.format);
+  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride_bytes +
+                        src.crop_x * src.sample_bytes;
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
+                        dst.crop_x * dst.sample_bytes;
   int src_width = src.crop_width;
   int src_height = src.crop_height;
   int dst_width = dst.crop_width;
@@ -248,36 +258,37 @@ int DoScaling(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
     src_height = -src_height;
   }
 
-  return libyuv::ARGBScale(src_buffer, src.stride, src_width, src_height,
-                           dst_buffer, dst.stride, dst_width, dst_height,
+  return libyuv::ARGBScale(src_buffer, src.stride_bytes, src_width, src_height,
+                           dst_buffer, dst.stride_bytes, dst_width, dst_height,
                            libyuv::kFilterBilinear);
 }
 
-int DoAttenuation(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
+int DoAttenuation(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   // Point to the upper left corner of the crop rectangles
-  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride +
-                        src.crop_x * formatToBytesPerPixel(src.format);
-  uint8_t* dst_buffer = dest.buffer + dest.crop_y * dest.stride +
-                        dest.crop_x * formatToBytesPerPixel(dest.format);
-  int width = dest.crop_width;
-  int height = dest.crop_height;
+  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride_bytes +
+                        src.crop_x * src.sample_bytes;
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
+                        dst.crop_x * dst.sample_bytes;
+  int width = dst.crop_width;
+  int height = dst.crop_height;
 
   if (v_flip) {
     height = -height;
   }
 
-  return libyuv::ARGBAttenuate(src_buffer, src.stride, dst_buffer, dest.stride,
+  return libyuv::ARGBAttenuate(src_buffer, src.stride_bytes,
+                               dst_buffer, dst.stride_bytes,
                                width, height);
 }
 
-int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
+int DoBlending(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   // Point to the upper left corner of the crop rectangles
-  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride +
-                        src.crop_x * formatToBytesPerPixel(src.format);
-  uint8_t* dst_buffer = dest.buffer + dest.crop_y * dest.stride +
-                        dest.crop_x * formatToBytesPerPixel(dest.format);
-  int width = dest.crop_width;
-  int height = dest.crop_height;
+  uint8_t* src_buffer = src.buffer + src.crop_y * src.stride_bytes +
+                        src.crop_x * src.sample_bytes;
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
+                        dst.crop_x * dst.sample_bytes;
+  int width = dst.crop_width;
+  int height = dst.crop_height;
 
   if (v_flip) {
     height = -height;
@@ -286,21 +297,127 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dest, bool v_flip) {
   // libyuv's ARGB format is hwcomposer's BGRA format, since blending only cares
   // for the position of alpha in the pixel and not the position of the colors
   // this function is perfectly usable.
-  return libyuv::ARGBBlend(src_buffer, src.stride, dst_buffer, dest.stride,
-                           dst_buffer, dest.stride, width, height);
+  return libyuv::ARGBBlend(src_buffer, src.stride_bytes,
+                           dst_buffer, dst.stride_bytes,
+                           dst_buffer, dst.stride_bytes,
+                           width, height);
+}
+
+std::optional<BufferSpec> GetBufferSpec(GrallocBuffer& buffer,
+                                        const hwc_rect_t& buffer_crop) {
+  auto buffer_format_opt = buffer.GetDrmFormat();
+  if (!buffer_format_opt) {
+    ALOGE("Failed to get gralloc buffer format.");
+    return std::nullopt;
+  }
+  uint32_t buffer_format = *buffer_format_opt;
+
+  auto buffer_width_opt = buffer.GetWidth();
+  if (!buffer_width_opt) {
+    ALOGE("Failed to get gralloc buffer width.");
+    return std::nullopt;
+  }
+  uint32_t buffer_width = *buffer_width_opt;
+
+  auto buffer_height_opt = buffer.GetHeight();
+  if (!buffer_height_opt) {
+    ALOGE("Failed to get gralloc buffer height.");
+    return std::nullopt;
+  }
+  uint32_t buffer_height = *buffer_height_opt;
+
+  uint8_t* buffer_data = nullptr;
+  uint32_t buffer_stride_bytes = 0;
+  std::optional<android_ycbcr> buffer_ycbcr_data;
+
+  if (buffer_format == DRM_FORMAT_NV12 ||
+      buffer_format == DRM_FORMAT_NV21 ||
+      buffer_format == DRM_FORMAT_YVU420) {
+    buffer_ycbcr_data = buffer.LockYCbCr();
+    if (!buffer_ycbcr_data) {
+      ALOGE("%s failed to lock gralloc buffer.", __FUNCTION__);
+      return std::nullopt;
+    }
+  } else {
+    auto buffer_data_opt = buffer.Lock();
+    if (!buffer_data_opt) {
+      ALOGE("%s failed to lock gralloc buffer.", __FUNCTION__);
+      return std::nullopt;
+    }
+    buffer_data = reinterpret_cast<uint8_t*>(*buffer_data_opt);
+
+    auto buffer_stride_bytes_opt = buffer.GetMonoPlanarStrideBytes();
+    if (!buffer_stride_bytes_opt) {
+      ALOGE("%s failed to get plane stride.", __FUNCTION__);
+      return std::nullopt;
+    }
+    buffer_stride_bytes = *buffer_stride_bytes_opt;
+  }
+
+  return BufferSpec(
+      buffer_data,
+      buffer_ycbcr_data,
+      buffer_width,
+      buffer_height,
+      buffer_crop.left,
+      buffer_crop.top,
+      buffer_crop.right - buffer_crop.left,
+      buffer_crop.bottom - buffer_crop.top,
+      buffer_format,
+      buffer_stride_bytes,
+      GetDrmFormatBytesPerPixel(buffer_format));
 }
 
 }  // namespace
+
+bool CpuComposer::CanCompositeLayer(const hwc_layer_1_t& layer) {
+  buffer_handle_t buffer_handle = layer.handle;
+  if (buffer_handle == nullptr) {
+    ALOGW("%s received a layer with a null handle", __FUNCTION__);
+    return false;
+  }
+
+  auto buffer_opt = gralloc_.Import(buffer_handle);
+  if (!buffer_opt) {
+    ALOGE("Failed to import layer buffer.");
+    return false;
+  }
+  GrallocBuffer& buffer = *buffer_opt;
+
+  auto buffer_format_opt = buffer.GetDrmFormat();
+  if (!buffer_format_opt) {
+    ALOGE("Failed to get layer buffer format.");
+    return false;
+  }
+  uint32_t buffer_format = *buffer_format_opt;
+
+  if (!IsDrmFormatSupported(buffer_format)) {
+    ALOGD("Unsupported pixel format: 0x%x, doing software composition instead",
+          buffer_format);
+    return false;
+  }
+  return true;
+}
 
 void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
-  const private_handle_t* src_priv_handle =
-      reinterpret_cast<const private_handle_t*>(src_layer->handle);
+  auto src_imported_buffer_opt = gralloc_.Import(src_layer->handle);
+  if (!src_imported_buffer_opt) {
+    ALOGE("Failed to import layer buffer.");
+    return;
+  }
+  GrallocBuffer& src_imported_buffer = *src_imported_buffer_opt;
+
+  auto src_layer_spec_opt = GetBufferSpec(src_imported_buffer, src_layer->sourceCrop);
+  if (!src_layer_spec_opt) {
+    return;
+  }
+  BufferSpec src_layer_spec = *src_layer_spec_opt;
 
   // TODO(jemoreira): Remove the hardcoded fomat.
-  bool needs_conversion = src_priv_handle->format != HAL_PIXEL_FORMAT_RGBX_8888;
+  bool needs_conversion = src_layer_spec.drm_format != DRM_FORMAT_XBGR8888;
   bool needs_scaling = LayerNeedsScaling(*src_layer);
   bool needs_rotation = rotation != libyuv::kRotate0;
   bool needs_transpose = needs_rotation && rotation != libyuv::kRotate180;
@@ -310,47 +427,21 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   bool needs_copy = !(needs_conversion || needs_scaling || needs_rotation ||
                       needs_vflip || needs_attenuation || needs_blending);
 
-  uint8_t* src_buffer;
   uint8_t* dst_buffer =
-      reinterpret_cast<uint8_t*>(screen_view_->GetBuffer(buffer_idx));
-  int retval = gralloc_module_->lock(
-      gralloc_module_, src_layer->handle, GRALLOC_USAGE_SW_READ_OFTEN, 0, 0,
-      src_priv_handle->x_res, src_priv_handle->y_res,
-      reinterpret_cast<void**>(&src_buffer));
-  if (retval) {
-    ALOGE("Got error code %d from lock function", retval);
-    return;
-  }
-  if (retval) {
-    ALOGE("Got error code %d from lock function", retval);
-    // TODO(jemoreira): Use a lock_guard-like object.
-    gralloc_module_->unlock(gralloc_module_, src_priv_handle);
-    return;
-  }
+    reinterpret_cast<uint8_t*>(screen_view_->GetBuffer(buffer_idx));
 
-  BufferSpec src_layer_spec(src_buffer, src_priv_handle->total_size,
-                            src_priv_handle->x_res, src_priv_handle->y_res,
-                            src_priv_handle->stride_in_pixels *
-                                formatToBytesPerPixel(src_priv_handle->format));
-  src_layer_spec.crop_x = src_layer->sourceCrop.left;
-  src_layer_spec.crop_y = src_layer->sourceCrop.top;
-  src_layer_spec.crop_width =
-      src_layer->sourceCrop.right - src_layer->sourceCrop.left;
-  src_layer_spec.crop_height =
-      src_layer->sourceCrop.bottom - src_layer->sourceCrop.top;
-  src_layer_spec.format = src_priv_handle->format;
-
-  BufferSpec dst_layer_spec(dst_buffer, screen_view_->buffer_size(),
-                            screen_view_->x_res(), screen_view_->y_res(),
-                            screen_view_->line_length());
-  dst_layer_spec.crop_x = src_layer->displayFrame.left;
-  dst_layer_spec.crop_y = src_layer->displayFrame.top;
-  dst_layer_spec.crop_width =
-      src_layer->displayFrame.right - src_layer->displayFrame.left;
-  dst_layer_spec.crop_height =
-      src_layer->displayFrame.bottom - src_layer->displayFrame.top;
-  // TODO(jemoreira): Remove the hardcoded fomat.
-  dst_layer_spec.format = HAL_PIXEL_FORMAT_RGBX_8888;
+  BufferSpec dst_layer_spec(
+      dst_buffer,
+      /*buffer_ycbcr=*/std::nullopt,
+      screen_view_->x_res(),
+      screen_view_->y_res(),
+      src_layer->displayFrame.left,
+      src_layer->displayFrame.top,
+      src_layer->displayFrame.right - src_layer->displayFrame.left,
+      src_layer->displayFrame.bottom - src_layer->displayFrame.top,
+      DRM_FORMAT_XBGR8888,
+      screen_view_->line_length(),
+      4);
 
   // Add the destination layer to the bottom of the buffer stack
   std::vector<BufferSpec> dest_buffer_stack(1, dst_layer_spec);
@@ -367,16 +458,20 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
                            (needs_attenuation ? 1 : 0) +
                            (needs_blending ? 1 : 0) + (needs_copy ? 1 : 0) - 1;
 
-  int x_res = src_layer->displayFrame.right - src_layer->displayFrame.left;
-  int y_res = src_layer->displayFrame.bottom - src_layer->displayFrame.top;
-  size_t output_frame_size =
-      x_res * cvd::AlignToPowerOf2(y_res * screen_view_->bytes_per_pixel(), 4);
-  while (needed_tmp_buffers > 0) {
-    BufferSpec tmp(
-        RotateTmpBuffer(needed_tmp_buffers), output_frame_size, x_res, y_res,
-        cvd::AlignToPowerOf2(x_res * screen_view_->bytes_per_pixel(), 4));
-    dest_buffer_stack.push_back(tmp);
-    needed_tmp_buffers--;
+  int tmp_buffer_width =
+      src_layer->displayFrame.right - src_layer->displayFrame.left;
+  int tmp_buffer_height =
+      src_layer->displayFrame.bottom - src_layer->displayFrame.top;
+  int tmp_buffer_stride_bytes =
+      cvd::AlignToPowerOf2(tmp_buffer_width * screen_view_->bytes_per_pixel(), 4);
+
+  for (int i = 0; i < needed_tmp_buffers; i++) {
+    BufferSpec tmp_buffer_spec(
+        RotateTmpBuffer(i),
+        tmp_buffer_width,
+        tmp_buffer_height,
+        tmp_buffer_stride_bytes);
+    dest_buffer_stack.push_back(tmp_buffer_spec);
   }
 
   // Conversion and scaling should always be the first operations, so that every
@@ -395,17 +490,16 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       // Make width and height match the crop sizes on the source
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
-      int dst_stride =
+      int dst_stride_bytes =
           cvd::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
-      size_t needed_size = dst_stride * src_height;
+      size_t needed_size = dst_stride_bytes * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
-      // Ajust the stride accordingly
-      dst_buffer_spec.stride = dst_stride;
+      // Adjust the stride accordingly
+      dst_buffer_spec.stride_bytes = dst_stride_bytes;
       // Crop sizes also need to be adjusted
       dst_buffer_spec.crop_width = src_width;
       dst_buffer_spec.crop_height = src_height;
-      dst_buffer_spec.size = needed_size;
       // crop_x and y are fine at 0, format is already set to match destination
 
       // In case of a scale, the source frame may be bigger than the default tmp
@@ -414,7 +508,8 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
         dst_buffer_spec.buffer = GetSpecialTmpBuffer(needed_size);
       }
     }
-    retval = DoConversion(src_layer_spec, dst_buffer_spec, needs_vflip);
+
+    int retval = DoConversion(src_layer_spec, dst_buffer_spec, needs_vflip);
     if (retval) {
       ALOGE("Got error code %d from DoConversion function", retval);
     }
@@ -435,10 +530,10 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       std::swap(dst_buffer_spec.crop_width, dst_buffer_spec.crop_height);
       // TODO (jemoreira): Aligment (To align here may cause the needed size to
       // be bigger than the buffer, so care should be taken)
-      dst_buffer_spec.stride =
+      dst_buffer_spec.stride_bytes =
           dst_buffer_spec.width * screen_view_->bytes_per_pixel();
     }
-    retval = DoScaling(src_layer_spec, dst_buffer_spec, needs_vflip);
+    int retval = DoScaling(src_layer_spec, dst_buffer_spec, needs_vflip);
     needs_vflip = false;
     if (retval) {
       ALOGE("Got error code %d from DoScaling function", retval);
@@ -448,8 +543,8 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   }
 
   if (needs_rotation) {
-    retval = DoRotation(src_layer_spec, dest_buffer_stack.back(), rotation,
-                        needs_vflip);
+    int retval = DoRotation(src_layer_spec, dest_buffer_stack.back(), rotation,
+                            needs_vflip);
     needs_vflip = false;
     if (retval) {
       ALOGE("Got error code %d from DoTransform function", retval);
@@ -459,8 +554,8 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   }
 
   if (needs_attenuation) {
-    retval =
-        DoAttenuation(src_layer_spec, dest_buffer_stack.back(), needs_vflip);
+    int retval = DoAttenuation(src_layer_spec, dest_buffer_stack.back(),
+                               needs_vflip);
     needs_vflip = false;
     if (retval) {
       ALOGE("Got error code %d from DoBlending function", retval);
@@ -470,7 +565,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   }
 
   if (needs_copy) {
-    retval = DoCopy(src_layer_spec, dest_buffer_stack.back(), needs_vflip);
+    int retval = DoCopy(src_layer_spec, dest_buffer_stack.back(), needs_vflip);
     needs_vflip = false;
     if (retval) {
       ALOGE("Got error code %d from DoBlending function", retval);
@@ -482,7 +577,8 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   // Blending (if needed) should always be the last operation, so that it reads
   // and writes in the destination layer and not some temporary buffer.
   if (needs_blending) {
-    retval = DoBlending(src_layer_spec, dest_buffer_stack.back(), needs_vflip);
+    int retval = DoBlending(src_layer_spec, dest_buffer_stack.back(),
+                            needs_vflip);
     needs_vflip = false;
     if (retval) {
       ALOGE("Got error code %d from DoBlending function", retval);
@@ -491,7 +587,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
     dest_buffer_stack.pop_back();
   }
 
-  gralloc_module_->unlock(gralloc_module_, src_priv_handle);
+  src_imported_buffer.Unlock();
 }
 
 /* static */ const int CpuComposer::kNumTmpBufferPieces = 2;
