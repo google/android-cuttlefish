@@ -24,6 +24,7 @@ cc_binary_host {
         "tpm_auth.cpp",
         "tpm_encrypt_decrypt.cpp",
         "tpm_hmac.cpp",
+        "tpm_key_blob_maker.cpp",
         "tpm_random_source.cpp",
         "tpm_resource_manager.cpp",
         "tpm_serialize.cpp",
