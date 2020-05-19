@@ -291,7 +291,7 @@ void RTPSocketHandler::ScheduleTimeOutCheck() {
             [](RTPSocketHandler *me) {
                 bool timed_out = me->CheckParticipantTimeOut();
                 if (timed_out) {
-                  me->on_participant_time_out_();
+                  me->on_participant_disconnected_();
                 } else {
                   me->ScheduleTimeOutCheck();
                 }
@@ -749,6 +749,13 @@ void RTPSocketHandler::sendTCPOutputData() {
                 continue;
             }
 
+            if (errno == EPIPE) {
+              LOG(ERROR) << "Lost connection to peer: " << strerror(EPIPE);
+              offset = size;
+              disconnected = true;
+              break;
+            }
+
             LOG(FATAL) << "Error sending: "<<strerror(errno);
         } else if (n == 0) {
             offset = size;
@@ -760,7 +767,12 @@ void RTPSocketHandler::sendTCPOutputData() {
     }
     buf->erase(buf->begin(), buf->begin() + offset);
 
-    if ((!mTcpOutBufferQueue.empty() || !buf->empty()) && !disconnected) {
+    if (disconnected) {
+      on_participant_disconnected_();
+      return;
+    }
+
+    if (!mTcpOutBufferQueue.empty() || !buf->empty()) {
         mSendPending = true;
 
         mSocket->postSend(
