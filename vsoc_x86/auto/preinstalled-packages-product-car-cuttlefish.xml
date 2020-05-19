@@ -125,8 +125,19 @@
     <install-in-user-type package="com.android.car.themeplayground">
         <install-in user-type="FULL" />
     </install-in-user-type>
-    <!-- TODO(b/144915994) Remove these com.android.theme.* pacakges-->
     <install-in-user-type package="com.android.theme.color.black">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.color.carbon">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon.pebble">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon.roundedrect">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon.vessel">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.theme.color.cinnamon">
@@ -138,6 +149,12 @@
     <install-in-user-type package="com.android.theme.color.ocean">
         <install-in user-type="FULL" />
     </install-in-user-type>
+    <install-in-user-type package="com.android.theme.color.palette">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.color.sand">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
     <install-in-user-type package="com.android.theme.color.space">
         <install-in user-type="FULL" />
     </install-in-user-type>
@@ -147,13 +164,22 @@
     <install-in-user-type package="com.android.theme.color.purple">
         <install-in user-type="FULL" />
     </install-in-user-type>
+    <install-in-user-type package="com.android.theme.font.kai">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
     <install-in-user-type package="com.android.theme.font.notoserifsource">
         <install-in user-type="FULL" />
     </install-in-user-type>
-    <install-in-user-type package="com.android.theme.icon.roundedrect">
+    <install-in-user-type package="com.android.theme.font.sam">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.font.victor">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.theme.icon.squircle">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon.taperedrect">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.theme.icon.teardrop">
@@ -189,6 +215,21 @@
     <install-in-user-type package="com.android.theme.icon_pack.filled.themepicker">
         <install-in user-type="FULL" />
     </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.kai.android">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.kai.launcher">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.kai.settings">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.kai.systemui">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.kai.themepicker">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
     <install-in-user-type package="com.android.theme.icon_pack.rounded.android">
         <install-in user-type="FULL" />
     </install-in-user-type>
@@ -201,10 +242,49 @@
     <install-in-user-type package="com.android.theme.icon_pack.rounded.systemui">
         <install-in user-type="FULL" />
     </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.sam.android">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.sam.launcher">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.sam.settings">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.sam.systemui">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.sam.themepicker">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.victor.android">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.victor.launcher">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.victor.settings">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.victor.systemui">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.icon_pack.victor.themepicker">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
     <install-in-user-type package="com.android.car.carlauncher">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.car.linkviewer">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.car.multidisplay">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+      <install-in-user-type package="com.android.car.voicecontrol">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.google.android.car.multidisplaytest">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.car.retaildemo">
@@ -237,5 +317,4 @@
     <install-in-user-type package="com.android.angle">
         <install-in user-type="FULL" />
     </install-in-user-type>
-
 </config>
