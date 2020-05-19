@@ -44,9 +44,9 @@ ssize_t PlainSocket::sendto(
         const sockaddr *addr,
         socklen_t addrLen) {
     if (!addr) {
-        return ::send(fd(), data, size, 0);
+        return ::send(fd(), data, size, MSG_NOSIGNAL);
     }
-    return ::sendto(fd(), data, size, 0, addr, addrLen);
+    return ::sendto(fd(), data, size, MSG_NOSIGNAL, addr, addrLen);
 }
 
 void PlainSocket::postFlush(RunLoop::AsyncFunction fn) {

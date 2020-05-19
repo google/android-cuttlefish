@@ -67,8 +67,8 @@ struct RTPSocketHandler
 
     void notifyDTLSConnected();
 
-    void OnParticipantTimeOut(std::function<void()> cb) {
-      on_participant_time_out_ = cb;
+    void OnParticipantDisconnected(std::function<void()> cb) {
+      on_participant_disconnected_ = cb;
     }
 
 private:
@@ -114,7 +114,7 @@ private:
     std::shared_ptr<std::vector<uint8_t>> mTcpOutBuffer;
     std::deque<std::shared_ptr<std::vector<uint8_t>>> mTcpOutBufferQueue;
     bool packet_received_since_last_check_ = false;
-    std::function<void()> on_participant_time_out_ = []{}; // do nothing by default
+    std::function<void()> on_participant_disconnected_ = []{}; // do nothing by default
 
     void ScheduleTimeOutCheck();
     bool CheckParticipantTimeOut();
