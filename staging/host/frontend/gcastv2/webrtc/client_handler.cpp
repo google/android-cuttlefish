@@ -378,11 +378,11 @@ bool ClientHandler::GatherAndSendCandidate(int32_t mid) {
                 session);
 
         mRTPs.push_back(rtp);
-        rtp->OnParticipantTimeOut([this]{
+        rtp->OnParticipantDisconnected([this]{
           mRunLoop->post(makeSafeCallback<ClientHandler>(
             this,
             [](ClientHandler *me) {
-                me->on_connection_timeout_cb_();
+                me->on_connection_closed_cb_();
             }));
         });
         rtp->run();
