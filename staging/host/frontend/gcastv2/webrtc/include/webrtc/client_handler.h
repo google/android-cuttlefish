@@ -40,8 +40,8 @@ struct ClientHandler : public std::enable_shared_from_this<ClientHandler> {
 
   void HandleMessage(const Json::Value& client_message);
 
-  void OnConnectionTimeOut(std::function<void()> cb) {
-    on_connection_timeout_cb_ = cb;
+  void OnConnectionClosed(std::function<void()> cb) {
+    on_connection_closed_cb_ = cb;
   }
 
  private:
@@ -75,7 +75,7 @@ struct ClientHandler : public std::enable_shared_from_this<ClientHandler> {
   std::pair<std::shared_ptr<X509>, std::shared_ptr<EVP_PKEY>>
       mCertificateAndKey;
 
-  std::function<void()> on_connection_timeout_cb_ = []{};
+  std::function<void()> on_connection_closed_cb_ = []{};
   std::shared_ptr<AdbHandler> adb_handler_;
 
   std::shared_ptr<AdbHandler> adb_handler();
