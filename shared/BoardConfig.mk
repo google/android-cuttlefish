@@ -79,9 +79,6 @@ TARGET_USERIMAGES_USE_F2FS := true
 BOARD_CACHEIMAGE_PARTITION_SIZE := 67108864
 BOARD_CACHEIMAGE_FILE_SYSTEM_TYPE := ext4
 
-# Use ext4 block sharing on read-only partitions
-BOARD_EXT4_SHARE_DUP_BLOCKS := true
-
 BOARD_GPU_DRIVERS := virgl
 
 # Enable goldfish's encoder.
