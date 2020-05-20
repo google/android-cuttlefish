@@ -43,6 +43,39 @@ ssize_t ReadAll(SharedFD fd, std::string* buf);
 ssize_t ReadExact(SharedFD fd, std::string* buf);
 
 /**
+ * Reads from fd until reading buf->size() bytes or errors.
+ *
+ * On a successful read, returns buf->size().
+ *
+ * If a read error is encountered, returns -1. buf will contain any data read
+ * up until that point and errno will be set.
+ */
+ssize_t ReadExact(SharedFD fd, std::vector<char>* buf);
+
+/**
+ * Reads from fd until reading `size` bytes or errors.
+ *
+ * On a successful read, returns buf->size().
+ *
+ * If a read error is encountered, returns -1. buf will contain any data read
+ * up until that point and errno will be set.
+ */
+ssize_t ReadExact(SharedFD fd, char* buf, size_t size);
+
+/*
+ * Reads from fd until reading `sizeof(T)` bytes or errors.
+ *
+ * On a successful read, returns `sizeof(T)`.
+ *
+ * If a read error is encountered, returns -1. buf will contain any data read
+ * up until that point and errno will be set.
+ */
+template<typename T>
+ssize_t ReadExactBinary(SharedFD fd, T* binary_data) {
+  return ReadExact(fd, (char*) binary_data, sizeof(*binary_data));
+}
+
+/**
  * Writes to fd until writing all bytes in buf.
  *
  * On a successful write, returns buf.size().
@@ -61,5 +94,28 @@ ssize_t WriteAll(SharedFD fd, const std::string& buf);
  * written to fd at that point.
  */
 ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf);
+
+/**
+ * Writes to fd until `size` bytes are written from `buf`.
+ *
+ * On a successful write, returns `size`.
+ *
+ * If a write error is encountered, returns -1. Some data may have already been
+ * written to fd at that point.
+ */
+ssize_t WriteAll(SharedFD fd, const char* buf, size_t size);
+
+/**
+ * Writes to fd until `sizeof(T)` bytes are written from binary_data.
+ *
+ * On a successful write, returns `sizeof(T)`.
+ *
+ * If a write error is encountered, returns -1. Some data may have already been
+ * written to fd at that point.
+ */
+template<typename T>
+ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
+  return WriteAll(fd, (const char*) binary_data, sizeof(*binary_data));
+}
 
 } // namespace cvd
