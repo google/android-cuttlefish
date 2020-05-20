@@ -393,6 +393,10 @@ std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
   return cvd::AbsolutePath(PerInstancePath("launcher.log"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
+  return cvd::AbsolutePath(PerInstancePath("sdcard.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
   return (*Dictionary())[kMobileBridgeName].asString();
 }

@@ -56,7 +56,8 @@ cvd_host_executables := \
     fsck.f2fs \
     resize.f2fs \
     make_f2fs \
-    tapsetiff
+    tapsetiff \
+    newfs_msdos \
 
 cvd_host_tests := \
     monotonic_time_test \
