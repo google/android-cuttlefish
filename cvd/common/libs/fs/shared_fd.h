@@ -61,7 +61,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cuttlefish {
+namespace cvd {
 
 class FileInstance;
 
@@ -119,19 +119,36 @@ class SharedFD {
   static SharedFD Dup(int unmanaged_fd);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
-  static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
-  static SharedFD Creat(const std::string& pathname, mode_t mode);
+  static SharedFD Open(const char* pathname, int flags, mode_t mode = 0);
+  static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0) {
+    return Open(pathname.c_str(), flags, mode);
+  }
+  static SharedFD Creat(const char* pathname, mode_t mode);
+  static SharedFD Creat(const std::string& pathname, mode_t mode) {
+    return Creat(pathname.c_str(), mode);
+  }
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
-  static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
+  static SharedFD MemfdCreate(const char* name, unsigned int flags = 0);
+  static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0) {
+    return MemfdCreate(name.c_str(), flags);
+  }
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
-  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
+  static SharedFD SocketLocalClient(const char* name, bool is_abstract,
                                     int in_type);
+  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
+                                    int in_type) {
+    return SocketLocalClient(name.c_str(), is_abstract, in_type);
+  }
   static SharedFD SocketLocalClient(int port, int type);
-  static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
+  static SharedFD SocketLocalServer(const char* name, bool is_abstract,
                                     int in_type, mode_t mode);
+  static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
+                                    int in_type, mode_t mode) {
+    return SocketLocalServer(name.c_str(), is_abstract, in_type, mode);
+  }
   static SharedFD SocketLocalServer(int port, int type);
   static SharedFD VsockServer(unsigned int port, int type);
   static SharedFD VsockServer(int type);
@@ -151,9 +168,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const FileInstance& operator*() const { return *value_; }
+  const cvd::FileInstance& operator*() const { return *value_; }
 
-  FileInstance& operator*() { return *value_; }
+  cvd::FileInstance& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);
@@ -259,25 +276,6 @@ class FileInstance {
   // in probably isn't modified, but the API spec doesn't have const.
   bool IsSet(fd_set* in) const;
 
-  /**
-   * Adds a hard link to a file descriptor, based on the current working
-   * directory of the process or to some absolute path.
-   *
-   * https://www.man7.org/linux/man-pages/man2/linkat.2.html
-   *
-   * Using this on a file opened with O_TMPFILE can link it into the filesystem.
-   */
-  // Used with O_TMPFILE files to attach them to the filesystem.
-  int LinkAtCwd(const std::string& path) {
-    std::string name = "/proc/self/fd/";
-    name += std::to_string(fd_);
-    errno = 0;
-    int rval = linkat(
-        -1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
-    errno_ = errno;
-    return rval;
-  }
-
   int Listen(int backlog) {
     errno = 0;
     int rval = listen(fd_, backlog);
@@ -345,13 +343,6 @@ class FileInstance {
     return rval;
   }
 
-  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
-    errno = 0;
-    int rval = getsockopt(fd_, level, optname, optval, optlen);
-    errno_ = errno;
-    return rval;
-  }
-
   const char* StrError() const {
     errno = 0;
     FileInstance* s = const_cast<FileInstance*>(this);
@@ -412,6 +403,6 @@ class FileInstance {
 
 inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace cuttlefish
+}  // namespace cvd
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
