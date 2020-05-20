@@ -34,6 +34,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/commands/assemble_cvd/mbr.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "device/google/cuttlefish/host/commands/assemble_cvd/cdisk_spec.pb.h"
 
