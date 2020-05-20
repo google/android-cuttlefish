@@ -871,7 +871,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
 
   for (const auto& instance : config->Instances()) {
     if (!cvd::FileExists(instance.access_kregistry_path())) {
-      CreateBlankImage(instance.access_kregistry_path(), 2, "none", "1M");
+      CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
     }
   }
 
@@ -897,7 +897,7 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
                      << "newer than its underlying composite disk. Wiping the overlay.";
       }
       CreateQcowOverlay(config->crosvm_binary(), config->composite_disk_path(), overlay_path);
-      CreateBlankImage(instance.access_kregistry_path(), 2, "none", "1M");
+      CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
     }
   }
 
