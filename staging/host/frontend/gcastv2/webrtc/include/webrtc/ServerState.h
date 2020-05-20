@@ -61,8 +61,10 @@ struct ServerState {
 
     VideoFormat mVideoFormat;
 
-    std::weak_ptr<Packetizer> mVideoPacketizer;
-    std::weak_ptr<Packetizer> mAudioPacketizer;
+    std::mutex mPacketizerLock;
+
+    std::shared_ptr<Packetizer> mVideoPacketizer;
+    std::shared_ptr<Packetizer> mAudioPacketizer;
 
     std::shared_ptr<StreamingSource> mFrameBufferSource;
 
