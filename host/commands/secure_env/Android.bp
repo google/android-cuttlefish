@@ -21,6 +21,7 @@ cc_binary_host {
         "tpm_auth.cpp",
         "tpm_random_source.cpp",
         "tpm_resource_manager.cpp",
+        "tpm_serialize.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -35,6 +36,7 @@ cc_binary_host {
         "libcutils",
         "libpuresoftkeymasterdevice_host",
         "tpm2-tss2-esys",
+        "tpm2-tss2-mu",
         "tpm2-tss2-rc",
     ],
     static_libs: [
