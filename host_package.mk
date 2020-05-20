@@ -98,6 +98,10 @@ cvd_host_shared_libraries := \
     libopus.so \
     libyuv.so \
     libjpeg.so \
+    libkeymaster_messages.so \
+    libkeymaster_portable.so \
+    libsoft_attestation_cert.so \
+    libcuttlefish_security.so \
 
 webrtc_assets := \
     index.html \
