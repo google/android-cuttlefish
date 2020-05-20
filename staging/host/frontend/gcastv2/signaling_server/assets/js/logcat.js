@@ -131,7 +131,8 @@ function adbOnMessage(ev) {
         {
             let payloadText = utf8Decoder.decode(array.slice(24));
 
-            logcat.value += payloadText;
+            // Limit to 100 lines
+            logcat.value = (logcat.value + payloadText).split('\n').slice(-100).join('\n');
 
             // Scroll to bottom
             logcat.scrollTop = logcat.scrollHeight;
