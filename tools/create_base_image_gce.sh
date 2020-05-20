@@ -99,6 +99,8 @@ if [[ $(query_nvidia "driver_version") == "" ]]; then
   exit 1
 fi
 
+# Vulkan loader
+sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1
 
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf
