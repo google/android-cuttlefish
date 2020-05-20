@@ -19,7 +19,7 @@
 #include <cutils/log.h>
 #include <keymaster/android_keymaster_messages.h>
 #include <keymaster/keymaster_configuration.h>
-#include "guest/hals/keymaster/remote/keymaster_ipc.h"
+#include "common/libs/security/keymaster_ipc.h"
 
 namespace keymaster {
 
