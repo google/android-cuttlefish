@@ -102,7 +102,8 @@ void ServerState::MonitorScreenConnector() {
 }
 
 std::shared_ptr<Packetizer> ServerState::getVideoPacketizer() {
-    auto packetizer = mVideoPacketizer.lock();
+    std::lock_guard<std::mutex> autoLock(mPacketizerLock);
+    std::shared_ptr<Packetizer> packetizer = mVideoPacketizer;
     if (!packetizer) {
         switch (mVideoFormat) {
             case VideoFormat::VP8:
@@ -125,7 +126,8 @@ std::shared_ptr<Packetizer> ServerState::getVideoPacketizer() {
 }
 
 std::shared_ptr<Packetizer> ServerState::getAudioPacketizer() {
-    auto packetizer = mAudioPacketizer.lock();
+    std::lock_guard<std::mutex> autoLock(mPacketizerLock);
+    std::shared_ptr packetizer = mAudioPacketizer;
     if (!packetizer) {
         packetizer = std::make_shared<OpusPacketizer>(mRunLoop, mAudioSource);
         packetizer->run();
