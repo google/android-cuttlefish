@@ -24,10 +24,11 @@
 namespace cvd {
 
 ManagedKeymasterMessage CreateKeymasterMessage(
-    keymaster_command command, size_t payload_size) {
+    AndroidKeymasterCommand command, bool is_response, size_t payload_size) {
   auto memory = new uint8_t[payload_size + sizeof(keymaster_message)];
   auto message = reinterpret_cast<keymaster_message*>(memory);
   message->cmd = command;
+  message->is_response = is_response;
   message->payload_size = payload_size;
   return ManagedKeymasterMessage(message);
 }
@@ -42,11 +43,23 @@ void KeymasterCommandDestroyer::operator()(keymaster_message* ptr) {
 KeymasterChannel::KeymasterChannel(SharedFD channel) : channel_(channel) {
 }
 
+bool KeymasterChannel::SendRequest(
+    AndroidKeymasterCommand command, const keymaster::Serializable& message) {
+  return SendMessage(command, false, message);
+}
+
+bool KeymasterChannel::SendResponse(
+    AndroidKeymasterCommand command, const keymaster::Serializable& message) {
+  return SendMessage(command, true, message);
+}
+
 bool KeymasterChannel::SendMessage(
-    keymaster_command command, const keymaster::Serializable& message) {
+    AndroidKeymasterCommand command,
+    bool is_response,
+    const keymaster::Serializable& message) {
   LOG(DEBUG) << "Sending message with id: " << command;
   auto payload_size = message.SerializedSize();
-  auto to_send = CreateKeymasterMessage(command, payload_size);
+  auto to_send = CreateKeymasterMessage(command, is_response, payload_size);
   message.Serialize(to_send->payload, to_send->payload + payload_size);
   auto write_size = payload_size + sizeof(keymaster_message);
   auto to_send_bytes = reinterpret_cast<const char*>(to_send.get());
@@ -67,8 +80,9 @@ ManagedKeymasterMessage KeymasterChannel::ReceiveMessage() {
     return {};
   }
   LOG(DEBUG) << "Received message with id: " << message_header.cmd;
-  auto message =
-      CreateKeymasterMessage(message_header.cmd, message_header.payload_size);
+  auto message = CreateKeymasterMessage(message_header.cmd,
+                                        message_header.is_response,
+                                        message_header.payload_size);
   auto message_bytes = reinterpret_cast<char*>(message->payload);
   read = cvd::ReadExact(channel_, message_bytes, message->payload_size);
   if (read != message->payload_size) {
