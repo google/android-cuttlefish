@@ -19,13 +19,20 @@
 
 #include <keymaster/android_keymaster_messages.h>
 
+#include "common/libs/security/keymaster_channel.h"
+
 namespace keymaster {
 
 class RemoteKeymaster {
+  private:
+    cvd::KeymasterChannel* channel_;
+
+    void ForwardCommand(enum keymaster_command command, const Serializable& req,
+                        KeymasterResponse* rsp);
   public:
-    RemoteKeymaster();
+    RemoteKeymaster(cvd::KeymasterChannel*);
     ~RemoteKeymaster();
-    int Initialize();
+    bool Initialize();
     void GetVersion(const GetVersionRequest& request, GetVersionResponse* response);
     void SupportedAlgorithms(const SupportedAlgorithmsRequest& request,
                              SupportedAlgorithmsResponse* response);
