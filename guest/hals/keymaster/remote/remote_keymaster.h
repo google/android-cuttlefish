@@ -27,8 +27,8 @@ class RemoteKeymaster {
   private:
     cvd::KeymasterChannel* channel_;
 
-    void ForwardCommand(enum keymaster_command command, const Serializable& req,
-                        KeymasterResponse* rsp);
+    void ForwardCommand(
+        AndroidKeymasterCommand command, const Serializable& req, KeymasterResponse* rsp);
   public:
     RemoteKeymaster(cvd::KeymasterChannel*);
     ~RemoteKeymaster();
