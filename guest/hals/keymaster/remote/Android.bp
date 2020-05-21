@@ -25,18 +25,24 @@ cc_binary {
         "remote_keymaster.cpp",
     ],
 
+    static_libs: [
+        "libgflags",
+    ],
+
     shared_libs: [
-        "liblog",
-        "libcutils",
-        "libdl",
+        "android.hardware.keymaster@4.0",
         "libbase",
-        "libutils",
+        "libcutils",
+        "libcuttlefish_fs",
+        "libcuttlefish_security",
+        "libdl",
         "libhardware",
         "libhidlbase",
-        "libtrusty",
-        "libkeymaster_messages",
         "libkeymaster4",
-        "android.hardware.keymaster@4.0"
+        "libkeymaster_messages",
+        "liblog",
+        "libtrusty",
+        "libutils",
     ],
 
     vintf_fragments: ["android.hardware.keymaster@4.0-service.remote.xml"],
