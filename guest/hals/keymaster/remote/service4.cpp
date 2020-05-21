@@ -17,17 +17,35 @@
 
 #include <android-base/logging.h>
 #include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
+#include <cutils/properties.h>
+#include <gflags/gflags.h>
 #include <hidl/HidlTransportSupport.h>
+
+#include "common/libs/fs/shared_fd.h"
+#include "common/libs/security/keymaster_channel.h"
 #include <guest/hals/keymaster/remote/remote_keymaster.h>
 #include <guest/hals/keymaster/remote/remote_keymaster4_device.h>
 
-int main() {
+DEFINE_uint32(
+    port,
+    static_cast<uint32_t>(property_get_int64("ro.boot.vsock_keymaster_port", 0)),
+    "virtio socket port to send keymaster commands to");
+
+int main(int argc, char** argv) {
+    ::android::base::InitLogging(argv);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
     ::android::hardware::configureRpcThreadpool(1, true);
-    auto remoteKeymaster = new keymaster::RemoteKeymaster();
-    int err = remoteKeymaster->Initialize();
-    if (err != 0) {
-        LOG(FATAL) << "Could not initialize RemoteKeymaster (" << err << ")";
-        return -1;
+
+    auto vsockFd = cvd::SharedFD::VsockClient(2, FLAGS_port, SOCK_STREAM);
+    if (!vsockFd->IsOpen()) {
+        LOG(FATAL) << "Could not connect to keymaster server: "
+                   << vsockFd->StrError();
+    }
+    cvd::KeymasterChannel keymasterChannel(vsockFd);
+    auto remoteKeymaster = new keymaster::RemoteKeymaster(&keymasterChannel);
+
+    if (!remoteKeymaster->Initialize()) {
+      LOG(FATAL) << "Could not initialize keymaster";
     }
 
     auto keymaster = new ::keymaster::V4_0::RemoteKeymaster4Device(remoteKeymaster);
