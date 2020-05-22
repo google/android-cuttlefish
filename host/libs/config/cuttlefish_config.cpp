@@ -181,6 +181,7 @@ const char* kTouchServerPort = "touch_server_port";
 const char* kKeyboardServerPort = "keyboard_server_port";
 
 const char* kRilDns = "ril_dns";
+const char* kKeymasterVsockPort = "keymaster_vsock_port";
 }  // namespace
 
 namespace vsoc {
@@ -644,6 +645,14 @@ int CuttlefishConfig::InstanceSpecific::keyboard_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_keyboard_server_port(int keyboard_server_port) {
   (*Dictionary())[kKeyboardServerPort] = keyboard_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::keymaster_vsock_port() const {
+  return (*Dictionary())[kKeymasterVsockPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_keymaster_vsock_port(int keymaster_vsock_port) {
+  (*Dictionary())[kKeymasterVsockPort] = keymaster_vsock_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
