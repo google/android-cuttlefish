@@ -361,6 +361,8 @@ class CuttlefishConfig {
     int host_port() const;
     // Port number to connect to the tpm server on the host
     int tpm_port() const;
+    // Port number to connect to the keymaster server on the host
+    int keymaster_vsock_port() const;
     std::string adb_ip_and_port() const;
     std::string adb_device_name() const;
     std::string device_title() const;
@@ -427,6 +429,7 @@ class CuttlefishConfig {
     void set_frames_server_port(int config_server_port);
     void set_touch_server_port(int config_server_port);
     void set_keyboard_server_port(int config_server_port);
+    void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
