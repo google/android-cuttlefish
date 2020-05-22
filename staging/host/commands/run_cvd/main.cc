@@ -424,6 +424,7 @@ int main(int argc, char** argv) {
   LaunchConfigServer(*config, &process_monitor);
   LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   LaunchTpm(&process_monitor, *config);
+  LaunchSecureEnvironment(&process_monitor, *config);
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
