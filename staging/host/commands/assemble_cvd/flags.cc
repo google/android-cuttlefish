@@ -515,6 +515,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_keyboard_server_port(7000 + num - 1);
       instance.set_touch_server_port(7100 + num - 1);
     }
+    instance.set_keymaster_vsock_port(7200 + num - 1);
 
     instance.set_device_title(FLAGS_device_title);
 

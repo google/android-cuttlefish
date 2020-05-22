@@ -413,3 +413,13 @@ void LaunchTpm(cvd::ProcessMonitor* process_monitor,
     LaunchTpmSimulator(process_monitor, config);
   }
 }
+
+void LaunchSecureEnvironment(cvd::ProcessMonitor* process_monitor,
+                             const vsoc::CuttlefishConfig& config) {
+  auto port = config.ForDefaultInstance().keymaster_vsock_port();
+  auto server = cvd::SharedFD::VsockServer(port, SOCK_STREAM);
+  cvd::Command command(vsoc::DefaultHostArtifactsPath("bin/secure_env"));
+  command.AddParameter("-keymaster_fd=", server);
+  process_monitor->StartSubprocess(std::move(command),
+                                   GetOnSubprocessExitCallback(config));
+}
