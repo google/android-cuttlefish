@@ -16,11 +16,13 @@
 cc_binary_host {
     name: "secure_env",
     srcs: [
+        "keymaster_responder.cpp",
         "secure_env.cpp",
     ],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_security",
         "libcuttlefish_utils",
         "libkeymaster_portable",
         "libkeymaster_messages",
@@ -28,9 +30,13 @@ cc_binary_host {
         "liblog",
         "libcrypto",
         "libcutils",
+        "libpuresoftkeymasterdevice_host",
     ],
     static_libs: [
         "libgflags",
     ],
     defaults: ["cuttlefish_host_only"],
+    cflags: [
+        "-fno-rtti", // Required for libkeymaster_portable
+    ],
 }
