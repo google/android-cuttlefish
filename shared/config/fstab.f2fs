@@ -1,5 +1,5 @@
-boot /boot emmc defaults recoveryonly,slotselect
-vendor_boot /vendor_boot emmc defaults recoveryonly,slotselect
+/dev/block/by-name/boot /boot emmc defaults recoveryonly,slotselect
+/dev/block/by-name/vendor_boot /vendor_boot emmc defaults recoveryonly,slotselect
 system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
 # Add all non-dynamic partitions except system, after this comment
 /dev/block/by-name/userdata /data f2fs nodev,noatime,nosuid,inlinecrypt,reserve_root=32768 latemount,wait,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,fsverity,keydirectory=/metadata/vold/metadata_encryption
