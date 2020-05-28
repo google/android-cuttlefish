@@ -680,14 +680,35 @@ static void request_answer_incoming(RIL_Token t) {
 
 static void request_combine_multiparty_call(void* /*data*/, size_t /*datalen*/,
                                             RIL_Token t) {
-  ALOGW("Conference calls are not supported.");
-  gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+  ALOGW("Combine a held call to conversation.");
+  for (std::map<int, CallState>::iterator iter = gActiveCalls.begin();
+       iter != gActiveCalls.end(); ++iter) {
+    if (!iter->second.isVoice) {
+      continue;
+    }
+    if (iter->second.isBackground()) {
+      iter->second.makeActive();
+      break;
+    }
+  }
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static void request_split_multiparty_call(void* /*data*/, size_t /*datalen*/,
+static void request_split_multiparty_call(void* data, size_t /*datalen*/,
                                           RIL_Token t) {
-  ALOGW("Conference calls are not supported.");
-  gce_ril_env->OnRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+  int index = *(int*)data;
+  ALOGW("Hold all active call except given call: %d", index);
+  for (std::map<int, CallState>::iterator iter = gActiveCalls.begin();
+    iter != gActiveCalls.end(); ++iter) {
+    if (!iter->second.isVoice) {
+      continue;
+    }
+    if (iter->second.isActive() && index != iter->first) {
+      iter->second.makeBackground();
+      break;
+    }
+  }
+  gce_ril_env->OnRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
 static void request_udub_on_incoming_calls(RIL_Token t) {
