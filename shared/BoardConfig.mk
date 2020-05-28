@@ -20,10 +20,6 @@
 
 include build/make/target/board/BoardConfigMainlineCommon.mk
 
-# Reset CF unsupported settings
-BOARD_AVB_ENABLE := false
-
-
 TARGET_BOOTLOADER_BOARD_NAME := cutf
 
 # Boot partition size: 32M
@@ -52,6 +48,16 @@ TARGET_COPY_OUT_SYSTEM_EXT := system_ext
 BOARD_USES_ODMIMAGE := true
 BOARD_ODMIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_ODM := odm
+
+# FIXME: Remove this once we generate the vbmeta digest correctly
+BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flag 2
+
+# Enable chained vbmeta for system image mixing
+BOARD_AVB_VBMETA_SYSTEM := product system system_ext
+BOARD_AVB_VBMETA_SYSTEM_KEY_PATH := external/avb/test/data/testkey_rsa2048.pem
+BOARD_AVB_VBMETA_SYSTEM_ALGORITHM := SHA256_RSA2048
+BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_VBMETA_SYSTEM_ROLLBACK_INDEX_LOCATION := 1
 
 BOARD_USES_GENERIC_AUDIO := false
 USE_CAMERA_STUB := true
