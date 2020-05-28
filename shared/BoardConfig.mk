@@ -152,7 +152,7 @@ DHCPCD_USE_SCRIPT := yes
 
 TARGET_RECOVERY_PIXEL_FORMAT := ABGR_8888
 TARGET_RECOVERY_UI_LIB := librecovery_ui_cuttlefish
-TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab
+TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.f2fs
 
 BOARD_SUPER_PARTITION_SIZE := 6442450944
 BOARD_SUPER_PARTITION_GROUPS := google_dynamic_partitions
@@ -171,6 +171,14 @@ BOARD_KERNEL_CMDLINE += init=/init
 BOARD_KERNEL_CMDLINE += androidboot.hardware=cutf_cvm
 BOARD_KERNEL_CMDLINE += security=selinux
 BOARD_KERNEL_CMDLINE += androidboot.console=ttyS1
+
+ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
+BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=f2fs
+endif
+
+ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),ext4)
+BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=ext4
+endif
 
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_BOOT_HEADER_VERSION := 3

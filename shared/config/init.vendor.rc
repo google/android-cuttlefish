@@ -50,7 +50,7 @@ on init
 
 on fs
     # Mount everything that does not require fsck
-    mount_all /vendor/etc/fstab.${ro.hardware} --early
+    mount_all --early
     restorecon_recursive /vendor
 
     start setup_wifi
@@ -88,7 +88,7 @@ on late-fs
     exec_start wait_for_keymaster
 
     # Mount RW partitions which need run fsck
-    mount_all /vendor/etc/fstab.${ro.hardware} --late
+    mount_all --late
 
     write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
