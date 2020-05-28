@@ -17,6 +17,7 @@ cc_binary_host {
     name: "secure_env",
     srcs: [
         "composite_serialization.cpp",
+        "encrypted_serializable.cpp",
         "hmac_serializable.cpp",
         "keymaster_responder.cpp",
         "secure_env.cpp",
