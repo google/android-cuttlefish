@@ -43,7 +43,6 @@ cc_library_shared {
         "libhidlbase",
         "libjpeg",
         "liblog",
-        "libminigbm",
         "libsync",
         "libutils",
     ],
