@@ -71,6 +71,11 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
+    <!-- Required when sysui queries for system user apps to handle the home intent -->
+    <install-in-user-type package="com.android.car.carlauncher">
+        <install-in user-type="FULL" />
+        <install-in user-type="SYSTEM" />
+    </install-in-user-type>
 
 <!--
   Apps that do need to run on SYSTEM and evaluated by package owner.
@@ -208,9 +213,6 @@
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.theme.icon_pack.rounded.systemui">
-        <install-in user-type="FULL" />
-    </install-in-user-type>
-    <install-in-user-type package="com.android.car.carlauncher">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.car.linkviewer">
