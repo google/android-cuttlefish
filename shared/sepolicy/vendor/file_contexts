@@ -71,6 +71,7 @@
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service-lazy\.clearkey  u:object_r:hal_drm_clearkey_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service\.widevine  u:object_r:hal_drm_widevine_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service-lazy\.widevine  u:object_r:hal_drm_widevine_exec:s0
+/vendor/bin/hw/android\.hardware\.graphics\.allocator@4\.0-service\.minigbm   u:object_r:hal_graphics_allocator_default_exec:s0
 /vendor/bin/hw/android\.hardware\.gatekeeper@1\.0-service\.software  u:object_r:hal_gatekeeper_default_exec:s0
 /vendor/bin/hw/android\.hardware\.health\.storage@1\.0-service\.cuttlefish u:object_r:hal_health_storage_default_exec:s0
 /vendor/bin/hw/android\.hardware\.lights-service\.example u:object_r:hal_light_default_exec:s0
@@ -88,10 +89,8 @@
 /vendor/lib(64)?/libdrm.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libglapi.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/dri/.* u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/hw/android\.hardware\.graphics\.mapper@2\.0-impl-2\.1\.so u:object_r:same_process_hal_file:s0
+/vendor/lib(64)?/hw/android\.hardware\.graphics\.mapper@4\.0-impl\.minigbm\.so u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/android\.hardware\.health@2\.0-impl-2\.1-cuttlefish\.so  u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/hw/gralloc.cutf_ashmem.so  u:object_r:same_process_hal_file:s0
-/vendor/lib(64)?/hw/gralloc.minigbm.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/hw/vulkan.pastel.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libcuttlefish_fs.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/vsoc_lib.so  u:object_r:same_process_hal_file:s0
