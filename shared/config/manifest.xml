@@ -106,11 +106,10 @@
         </interface>
     </hal>
     -->
-    <!-- TODO (b/130074193): -->
     <hal format="hidl">
         <name>android.hardware.graphics.allocator</name>
         <transport>hwbinder</transport>
-        <version>2.0</version>
+        <version>4.0</version>
         <interface>
             <name>IAllocator</name>
             <instance>default</instance>
@@ -126,11 +125,10 @@
             <instance>default</instance>
         </interface>
     </hal>
-    <!-- TODO (b/130076969): -->
     <hal format="hidl">
         <name>android.hardware.graphics.mapper</name>
         <transport arch="32+64">passthrough</transport>
-        <version>2.1</version>
+        <version>4.0</version>
         <interface>
             <name>IMapper</name>
             <instance>default</instance>
