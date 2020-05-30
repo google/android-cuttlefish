@@ -96,7 +96,7 @@ std::vector<std::string> QemuManager::ConfigureGpu(const std::string& gpu_mode) 
   // with properities lead to non-deterministic behavior while loading the
   // HALs.
   return {
-      "androidboot.hardware.gralloc=cutf_ashmem",
+      "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=cutf_cvm_ashmem",
       "androidboot.hardware.egl=swiftshader",
       "androidboot.hardware.vulkan=pastel",
@@ -198,6 +198,9 @@ std::vector<cvd::Command> QemuManager::StartCommands() {
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-balloon-pci,id=balloon0");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-gpu-pci,id=gpu0");
 
   qemu_cmd.AddParameter("-object");
   qemu_cmd.AddParameter("rng-random,id=objrng0,filename=/dev/urandom");
