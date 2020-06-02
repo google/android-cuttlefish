@@ -56,6 +56,10 @@ PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
 
+# system_other support
+PRODUCT_PACKAGES += \
+    cppreopts.sh \
+
 BOARD_IS_AUTOMOTIVE := true
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
