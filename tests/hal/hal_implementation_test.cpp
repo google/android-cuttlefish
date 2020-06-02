@@ -164,7 +164,8 @@ static bool isAospAidlInterface(const std::string& name) {
     return base::StartsWith(name, "android.") &&
         !base::StartsWith(name, "android.automotive.") &&
         !base::StartsWith(name, "android.hardware.automotive.") &&
-        !base::StartsWith(name, "android.hardware.tests.");
+        !base::StartsWith(name, "android.hardware.tests.") &&
+        !base::StartsWith(name, "android.aidl.tests");
 }
 
 static std::set<std::string> allAidlManifestInterfaces() {
