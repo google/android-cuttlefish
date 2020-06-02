@@ -1,12 +1,10 @@
 type vport_trigger, domain;
 type vport_trigger_exec, exec_type, vendor_file_type, file_type;
 
-type sys_cf_ser_prop, property_type;
 type vendor_ser_prop, property_type;
 
 init_daemon_domain(vport_trigger)
 
 r_dir_file(vport_trigger, sysfs_type)
 
-set_prop(vport_trigger, sys_cf_ser_prop)
 set_prop(vport_trigger, vendor_ser_prop)
