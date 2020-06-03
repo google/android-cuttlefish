@@ -64,6 +64,21 @@ const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/vbmeta.img",
   "IMAGES/vendor.img",
 };
+const std::set<std::string> kDefaultTargetBuildProp = {
+  "ODM/etc/build.prop",
+  "VENDOR/build.prop",
+};
+
+void FindImports(cvd::Archive* archive, const std::string& build_prop_file) {
+  auto contents = archive->ExtractToMemory(build_prop_file);
+  auto lines = android::base::Split(contents, "\n");
+  for (const auto& line : lines) {
+    auto parts = android::base::Split(line, " ");
+    if (parts.size() >= 2 && parts[0] == "import") {
+      LOG(INFO) << build_prop_file << ": " << line;
+    }
+  }
+}
 
 bool CombineTargetZipFiles(const std::string& default_target_zip,
                            const std::string& system_target_zip,
@@ -149,6 +164,19 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       return false;
     }
   }
+  for (const auto& name : default_target_contents) {
+    if (!android::base::EndsWith(name, "build.prop")) {
+      continue;
+    } else if (kDefaultTargetBuildProp.count(name) == 0) {
+      continue;
+    }
+    FindImports(&default_target_archive, name);
+    LOG(INFO) << "Writing " << name;
+    if (!default_target_archive.ExtractFiles({name}, output_path)) {
+      LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
+      return false;
+    }
+  }
 
   for (const auto& name : system_target_contents) {
     if (!android::base::StartsWith(name, "IMAGES/")) {
@@ -161,6 +189,19 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
     LOG(INFO) << "Writing " << name;
     if (!system_target_archive.ExtractFiles({name}, output_path)) {
       LOG(ERROR) << "Failed to extract " << name << " from the system target zip";
+      return false;
+    }
+  }
+  for (const auto& name : system_target_contents) {
+    if (!android::base::EndsWith(name, "build.prop")) {
+      continue;
+    } else if (kDefaultTargetBuildProp.count(name) > 0) {
+      continue;
+    }
+    FindImports(&default_target_archive, name);
+    LOG(INFO) << "Writing " << name;
+    if (!default_target_archive.ExtractFiles({name}, output_path)) {
+      LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
       return false;
     }
   }
