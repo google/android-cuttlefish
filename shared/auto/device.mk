@@ -73,6 +73,10 @@ PRODUCT_PACKAGES += \
     libcuttlefish-ril \
     libcuttlefish-rild
 
+# system_other support
+PRODUCT_PACKAGES += \
+    cppreopts.sh \
+
 BOARD_IS_AUTOMOTIVE := true
 
 $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_base.mk)
