@@ -423,3 +423,27 @@ void LaunchSecureEnvironment(cvd::ProcessMonitor* process_monitor,
   process_monitor->StartSubprocess(std::move(command),
                                    GetOnSubprocessExitCallback(config));
 }
+
+void LaunchVerhicleHalServerIfEnabled(const vsoc::CuttlefishConfig& config,
+                                                        cvd::ProcessMonitor* process_monitor) {
+    if (!config.enable_vehicle_hal_grpc_server()) {
+        return;
+    }
+
+    cvd::Command grpc_server(config.vehicle_hal_grpc_server_binary());
+    auto instance = config.ForDefaultInstance();
+
+    const unsigned vhal_server_cid = 2;
+    const unsigned vhal_server_port = instance.vehicle_hal_server_port();
+    const std::string vhal_server_power_state_file =
+        cvd::AbsolutePath(instance.PerInstancePath("power_state"));
+    const std::string vhal_server_power_state_socket =
+        cvd::AbsolutePath(instance.PerInstancePath("power_state_socket"));
+
+    grpc_server.AddParameter("--server_cid=", vhal_server_cid);
+    grpc_server.AddParameter("--server_port=", vhal_server_port);
+    grpc_server.AddParameter("--power_state_file=", vhal_server_power_state_file);
+    grpc_server.AddParameter("--power_state_socket=", vhal_server_power_state_socket);
+    process_monitor->StartSubprocess(std::move(grpc_server),
+                                     GetOnSubprocessExitCallback(config));
+}
