@@ -211,6 +211,12 @@ class CuttlefishConfig {
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
 
+  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
+  bool enable_vehicle_hal_grpc_server() const;
+
+  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
+  std::string vehicle_hal_grpc_server_binary() const;
+
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
 
@@ -358,6 +364,8 @@ class CuttlefishConfig {
     // Port number to connect to the frame server on the host. (Only
     // operational if using swiftshader as the GPU.)
     int frames_server_port() const;
+    // Port number to connect to the vehicle HAL server on the host
+    int vehicle_hal_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
     // Port number to connect to the tpm server on the host
@@ -436,6 +444,7 @@ class CuttlefishConfig {
     void set_touch_server_port(int config_server_port);
     void set_keyboard_server_port(int config_server_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
+    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);

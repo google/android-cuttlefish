@@ -45,3 +45,6 @@ void LaunchMetrics(cvd::ProcessMonitor* process_monitor,
 
 void LaunchSecureEnvironment(cvd::ProcessMonitor* process_monitor,
                              const vsoc::CuttlefishConfig& config);
+
+void LaunchVerhicleHalServerIfEnabled(const vsoc::CuttlefishConfig& config,
+                                      cvd::ProcessMonitor* process_monitor);
