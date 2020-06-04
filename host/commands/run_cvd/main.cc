@@ -427,6 +427,8 @@ int main(int argc, char** argv) {
   auto tombstone_server = LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   auto tombstone_kernel_args = KernelCommandLineFromTombstone(tombstone_server);
 
+  LaunchVerhicleHalServerIfEnabled(*config, &process_monitor);
+
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
   StreamerLaunchResult streamer_config;

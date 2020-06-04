@@ -169,6 +169,8 @@ DEFINE_string(logcat_mode, "", "How to send android's log messages from "
                                "guest to host. One of [serial, vsock]");
 DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
             "both the guest and the host");
+DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
+            "emulation gRPC server on the host");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -379,6 +381,10 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_tombstone_receiver_binary(
       vsoc::DefaultHostArtifactsPath("bin/tombstone_receiver"));
 
+  tmp_config_obj.set_enable_vehicle_hal_grpc_server(FLAGS_enable_vehicle_hal_grpc_server);
+  tmp_config_obj.set_vehicle_hal_grpc_server_binary(
+      vsoc::DefaultHostArtifactsPath("bin/android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"));
+
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
@@ -413,6 +419,8 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_vnc_server_port(6444 + num - 1);
     instance.set_host_port(6520 + num - 1);
     instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
+
+    instance.set_vehicle_hal_server_port(9210 + num - 1);
 
     instance.set_device_title(FLAGS_device_title);
 
