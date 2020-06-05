@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <array>
 #include <memory>
 #include <string>
 #include <set>
@@ -408,6 +409,9 @@ class CuttlefishConfig {
 
     // Whether this instance should start the webrtc signaling server
     bool start_webrtc_sig_server() const;
+
+    // Wifi MAC address inside the guest
+    std::array<unsigned char, 6> wifi_mac_address() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -443,6 +447,8 @@ class CuttlefishConfig {
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
+    // Wifi MAC address inside the guest
+    void set_wifi_mac_address(const std::array<unsigned char, 6>&);
   };
 
  private:
