@@ -95,6 +95,10 @@ void NetlinkRequest::AddAddrInfo(int32_t if_index, int prefix_len) {
   ad_info->ifa_index = if_index;
 }
 
+void NetlinkRequest::AddMacAddress(const std::array<unsigned char, 6>& address) {
+  AppendTag(IFLA_ADDRESS, address.data(), 6);
+}
+
 void NetlinkRequest::PushList(uint16_t type) {
   int length = request_.size();
   nlattr* list = AppendTag(type, NULL, 0);

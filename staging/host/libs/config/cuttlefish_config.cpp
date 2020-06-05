@@ -182,6 +182,7 @@ const char* kKeyboardServerPort = "keyboard_server_port";
 
 const char* kRilDns = "ril_dns";
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
+const char* kWifiMacAddress = "wifi_mac_address";
 }  // namespace
 
 namespace vsoc {
@@ -974,6 +975,28 @@ void CuttlefishConfig::set_guest_force_normal_boot(bool guest_force_normal_boot)
 }
 bool CuttlefishConfig::guest_force_normal_boot() const {
   return (*dictionary_)[kGuestForceNormalBoot].asBool();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_address(
+    const std::array<unsigned char, 6>& mac_address) {
+  Json::Value mac_address_obj(Json::arrayValue);
+  for (const auto& num : mac_address) {
+    mac_address_obj.append(num);
+  }
+  (*Dictionary())[kWifiMacAddress] = mac_address_obj;
+}
+
+std::array<unsigned char, 6> CuttlefishConfig::InstanceSpecific::wifi_mac_address() const {
+  std::array<unsigned char, 6> mac_address{0, 0, 0, 0, 0, 0};
+  auto mac_address_obj = (*Dictionary())[kWifiMacAddress];
+  if (mac_address_obj.size() != 6) {
+    LOG(ERROR) << kWifiMacAddress << " entry had wrong size";
+    return {};
+  }
+  for (int i = 0; i < 6; i++) {
+    mac_address[i] = mac_address_obj[i].asInt();
+  }
+  return mac_address;
 }
 
 void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
