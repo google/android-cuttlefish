@@ -12,6 +12,9 @@ allow init kernel:system module_request;
 allow init binfmt_miscfs:file w_file_perms;
 allow init proc:dir mounton;
 
+# init relabel vbmeta* symlinks
+allow init ab_block_device:lnk_file relabelto;
+
 # /mnt/sdcard -> /storage/self/primary symlink is deprecated. Ignore attempts to
 # create it. This denial is fixed in core policy in Android R aosp/943799.
 dontaudit init tmpfs:lnk_file create;
