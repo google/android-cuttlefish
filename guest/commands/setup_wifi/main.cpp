@@ -17,15 +17,34 @@
 #include <linux/rtnetlink.h>
 #include <net/if.h>
 
+#include <array>
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
 #include <string>
+
+#include "android-base/logging.h"
+#include <cutils/properties.h>
+#include <gflags/gflags.h>
 
 #include "common/libs/net/netlink_client.h"
 #include "common/libs/net/netlink_request.h"
 #include "common/libs/net/network_interface.h"
 #include "common/libs/net/network_interface_manager.h"
-#include "common/libs/glog/logging.h"
+
+DEFINE_string(mac_address, "", "mac address to use for wlan0");
+
+static std::array<unsigned char, 6> str_to_mac(const std::string& mac_str) {
+  std::array<unsigned char, 6> mac;
+  std::istringstream stream(mac_str);
+  for (int i = 0; i < 6; i++) {
+    int num;
+    stream >> std::hex >> num;
+    mac[i] = num;
+    stream.get();
+  }
+  return mac;
+}
 
 // TODO(schuffelen): Merge this with the ip_link_add binary.
 int CreateWifiWrapper(const std::string& source,
@@ -33,13 +52,32 @@ int CreateWifiWrapper(const std::string& source,
   auto factory = cvd::NetlinkClientFactory::Default();
   std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
 
+  LOG(INFO) << "Setting " << source << " mac address to " << FLAGS_mac_address;
+  int32_t index = if_nametoindex(source.c_str());
+  // Setting the address is available in RTM_SETLINK, but not RTM_NEWLINK.
+  // https://elixir.bootlin.com/linux/v5.4.44/source/net/core/rtnetlink.c#L2785
+  // https://elixir.bootlin.com/linux/v5.4.44/source/net/core/rtnetlink.c#L2460
+  // Setting the address seems to work better on the underlying ethernet device,
+  // and this mac address is inherited by the virt_wifi device.
+  cvd::NetlinkRequest fix_mac_request(
+      RTM_SETLINK, NLM_F_REQUEST|NLM_F_ACK|0x600);
+  fix_mac_request.Append(ifinfomsg {
+    .ifi_index = index,
+    .ifi_change = 0xFFFFFFFF,
+  });
+  fix_mac_request.AddMacAddress(str_to_mac(FLAGS_mac_address));
+  bool fix_mac = nl->Send(fix_mac_request);
+  if (!fix_mac) {
+    LOG(ERROR) << "setup_network: could not fix mac address";
+    return -5;
+  }
+
   // http://maz-programmersdiary.blogspot.com/2011/09/netlink-sockets.html
   cvd::NetlinkRequest link_add_request(RTM_NEWLINK,
                                        NLM_F_REQUEST|NLM_F_ACK|0x600);
   link_add_request.Append(ifinfomsg {
     .ifi_change = 0xFFFFFFFF,
   });
-  int32_t index = if_nametoindex(source.c_str());
   if (index == 0) {
     LOG(ERROR) << "setup_network: invalid interface name '" << source << "'\n";
     return -2;
@@ -93,7 +131,15 @@ int RenameNetwork(const std::string& name, const std::string& new_name) {
   return 0;
 }
 
-int main() {
+int main(int argc, char** argv) {
+  char wifi_address[PROPERTY_VALUE_MAX + 1];
+  property_get("ro.boot.wifi_mac_address", wifi_address, "");
+
+  SetCommandLineOptionWithMode("mac_address", wifi_address,
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+
   int renamed_eth0 = RenameNetwork("eth0", "buried_eth0");
   if (renamed_eth0 != 0) {
     return renamed_eth0;

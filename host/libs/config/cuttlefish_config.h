@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <array>
 #include <memory>
 #include <string>
 #include <set>
@@ -322,6 +323,9 @@ class CuttlefishConfig {
     std::string launcher_monitor_socket_path() const;
 
     std::string sdcard_path() const;
+
+    // Wifi MAC address inside the guest
+    std::array<unsigned char, 6> wifi_mac_address() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -347,6 +351,8 @@ class CuttlefishConfig {
     void set_uuid(const std::string& uuid);
     void set_instance_dir(const std::string& instance_dir);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
+    // Wifi MAC address inside the guest
+    void set_wifi_mac_address(const std::array<unsigned char, 6>&);
   };
 
  private:
