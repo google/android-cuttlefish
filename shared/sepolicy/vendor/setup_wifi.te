@@ -8,3 +8,7 @@ allow setup_wifi self:udp_socket { create ioctl };
 allow setup_wifi self:netlink_route_socket { bind create nlmsg_write read write };
 
 allow setup_wifi kernel:system module_request;
+
+type cuttlefish_wifi_mac_address, property_type;
+
+get_prop(setup_wifi, cuttlefish_wifi_mac_address)
