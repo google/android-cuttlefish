@@ -19,6 +19,7 @@
 #include <linux/netlink.h>
 #include <stddef.h>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -56,6 +57,9 @@ class NetlinkRequest {
 
   // Add an address info to a specific interface.
   void AddAddrInfo(int32_t if_index, int prefix_len = 24);
+
+  // Add an ethernet address/mac address
+  void AddMacAddress(const std::array<unsigned char, 6>& address);
 
   // Creates new list.
   // List mimmic recursive structures in a flat, contiuous representation.

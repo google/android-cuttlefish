@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <iostream>
 #include <fstream>
 #include <set>
@@ -523,6 +524,15 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
       const_instance.PerInstancePath("overlay.img"),
       const_instance.sdcard_path(),
     });
+
+    std::array<unsigned char, 6> mac_address;
+    mac_address[0] = 1 << 6; // locally administered
+    // TODO(schuffelen): Randomize these and preserve the state.
+    for (int i = 1; i < 5; i++) {
+      mac_address[i] = i;
+    }
+    mac_address[5] = num;
+    instance.set_wifi_mac_address(mac_address);
 
     instance.set_start_webrtc_signaling_server(false);
 
