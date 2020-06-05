@@ -20,6 +20,7 @@
 #include <optional>
 #include <vector>
 
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 #include <utils/StrongPointer.h>
@@ -116,6 +117,7 @@ class Gralloc {
   std::optional<uint32_t> GetMonoPlanarStrideBytes(buffer_handle_t);
 
   const gralloc_module_t* gralloc0_ = nullptr;
+  android::sp<android::hardware::graphics::mapper::V3_0::IMapper> gralloc3_;
 };
 
 }  // namespace cvd
