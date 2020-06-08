@@ -77,9 +77,6 @@ int main(int argc __unused, char *argv[] __unused) {
       std::string dev("/dev/" + dirname);
       std::string propname("vendor.ser." + content);
       property_set(propname.c_str(), dev.c_str());
-      // Property was renamed; this is for compatibility
-      std::string legacy_propname("sys.cf.ser." + content);
-      property_set(legacy_propname.c_str(), dev.c_str());
     }
   }
   return 0;
