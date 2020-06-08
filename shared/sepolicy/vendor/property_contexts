@@ -18,7 +18,6 @@ ro.boot.vsock_touch_port  u:object_r:cuttlefish_vsock_touch_port:s0
 ro.boot.wifi_mac_address  u:object_r:cuttlefish_wifi_mac_address:s0
 ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
 ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
-sys.cf.ser.  u:object_r:sys_cf_ser_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
 vendor.vsock_logcat_status  u:object_r:vsock_logcat_status_prop:s0
 hwc.drm.device u:object_r:cf_graphics_config_prop:s0 exact string
