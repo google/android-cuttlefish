@@ -118,7 +118,7 @@ on property:sys.boot_completed=1
 # persist.sys.zram_enabled becomes true after boot,
 # we don't want to run swapon_all at that time.
 on sys-boot-completed-set && property:persist.sys.zram_enabled=1
-    swapon_all /vendor/etc/${ro.boot.fstab_name}.${ro.hardware}
+    swapon_all
 
 service vendor.insmod_sh /vendor/bin/init.insmod.sh
     class main
