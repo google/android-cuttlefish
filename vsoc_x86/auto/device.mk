@@ -15,7 +15,7 @@
 #
 
 $(call inherit-product, device/google/cuttlefish/shared/auto/device.mk)
-$(call inherit-product, device/google/cuttlefish/vsoc_x86/device.mk)
+$(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 
 PRODUCT_NAME := aosp_cf_x86_auto
 PRODUCT_DEVICE := vsoc_x86
