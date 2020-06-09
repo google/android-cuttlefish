@@ -309,12 +309,15 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 #
 # Camera
 #
+ifeq ($(LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE),)
+    LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE := android.hardware.camera.provider@2.4-service
+endif
 PRODUCT_PACKAGES += \
     camera.cutf \
     camera.cutf.jpeg \
     camera.device@3.2-impl \
     android.hardware.camera.provider@2.4-impl \
-    android.hardware.camera.provider@2.4-service
+    $(LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE)
 
 #
 # Gatekeeper
