@@ -48,12 +48,12 @@ class NetConfig {
     bool ret = ParseInterfaceAttributes(interface);
     if (ret) {
       ril_dns = dns;
-      LOG(INFO) << "Network config:";
-      LOG(INFO) << "ipaddr = " << ril_ipaddr;
-      LOG(INFO) << "gateway = " << ril_gateway;
-      LOG(INFO) << "dns = " << ril_dns;
-      LOG(INFO) << "broadcast = " << ril_broadcast;
-      LOG(INFO) << "prefix length = " << static_cast<int>(ril_prefixlen);
+      LOG(DEBUG) << "Network config:";
+      LOG(DEBUG) << "ipaddr = " << ril_ipaddr;
+      LOG(DEBUG) << "gateway = " << ril_gateway;
+      LOG(DEBUG) << "dns = " << ril_dns;
+      LOG(DEBUG) << "broadcast = " << ril_broadcast;
+      LOG(DEBUG) << "prefix length = " << static_cast<int>(ril_prefixlen);
     }
     return ret;
   }
