@@ -1,0 +1,1 @@
+allow update_engine_common ab_block_device:blk_file rw_file_perms;
