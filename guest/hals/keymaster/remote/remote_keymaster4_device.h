@@ -15,16 +15,16 @@
  ** limitations under the License.
  */
 
-#ifndef keymaster_V4_0_RemoteKeymaster4Device_H_
-#define keymaster_V4_0_RemoteKeymaster4Device_H_
+#pragma once
 
 #include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
+#include <android/hardware/keymaster/4.1/IKeymasterDevice.h>
 #include <hidl/Status.h>
 #include "guest/hals/keymaster/remote/remote_keymaster.h"
 
 namespace keymaster {
 
-namespace V4_0 {
+namespace V4_1 {
 
 using ::android::sp;
 using ::android::hardware::hidl_vec;
@@ -34,7 +34,6 @@ using ::android::hardware::keymaster::V4_0::ErrorCode;
 using ::android::hardware::keymaster::V4_0::HardwareAuthenticatorType;
 using ::android::hardware::keymaster::V4_0::HardwareAuthToken;
 using ::android::hardware::keymaster::V4_0::HmacSharingParameters;
-using ::android::hardware::keymaster::V4_0::IKeymasterDevice;
 using ::android::hardware::keymaster::V4_0::KeyCharacteristics;
 using ::android::hardware::keymaster::V4_0::KeyFormat;
 using ::android::hardware::keymaster::V4_0::KeyParameter;
@@ -42,6 +41,9 @@ using ::android::hardware::keymaster::V4_0::KeyPurpose;
 using ::android::hardware::keymaster::V4_0::SecurityLevel;
 using ::android::hardware::keymaster::V4_0::Tag;
 using ::android::hardware::keymaster::V4_0::VerificationToken;
+using ::android::hardware::keymaster::V4_1::IKeymasterDevice;
+
+using ErrorCodeV41 = ::android::hardware::keymaster::V4_1::ErrorCode;
 
 class RemoteKeymaster4Device : public IKeymasterDevice {
   public:
@@ -95,11 +97,14 @@ class RemoteKeymaster4Device : public IKeymasterDevice {
                         const VerificationToken& verificationToken, finish_cb _hidl_cb) override;
     Return<ErrorCode> abort(uint64_t operationHandle) override;
 
+    // 4.1
+    Return<ErrorCodeV41> deviceLocked(
+        bool passwordOnly, const VerificationToken& verificationToken) override;
+    Return<ErrorCodeV41> earlyBootEnded() override;
+
   private:
     std::unique_ptr<::keymaster::RemoteKeymaster> impl_;
 };
 
-}  // namespace V4_0
+}  // namespace V4_1
 }  // namespace keymaster
-
-#endif  // keymaster_V4_0_RemoteKeymaster4Device_H_

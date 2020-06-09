@@ -16,7 +16,7 @@
 */
 
 #include <android-base/logging.h>
-#include <android/hardware/keymaster/4.0/IKeymasterDevice.h>
+#include <android/hardware/keymaster/4.1/IKeymasterDevice.h>
 #include <cutils/properties.h>
 #include <gflags/gflags.h>
 #include <hidl/HidlTransportSupport.h>
@@ -48,11 +48,11 @@ int main(int argc, char** argv) {
       LOG(FATAL) << "Could not initialize keymaster";
     }
 
-    auto keymaster = new ::keymaster::V4_0::RemoteKeymaster4Device(remoteKeymaster);
+    auto keymaster = new ::keymaster::V4_1::RemoteKeymaster4Device(remoteKeymaster);
 
     auto status = keymaster->registerAsService();
     if (status != android::OK) {
-        LOG(FATAL) << "Could not register service for Keymaster 4.0 (" << status << ")";
+        LOG(FATAL) << "Could not register service for Keymaster 4.1 (" << status << ")";
         return -1;
     }
 
