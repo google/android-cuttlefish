@@ -86,6 +86,8 @@ $(call inherit-product, packages/services/Car/car_product/build/car.mk)
 # Placed here due to b/110784510
 PRODUCT_BRAND := generic
 
+DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/auto/overlay
+
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
 
 TARGET_NO_TELEPHONY := true
