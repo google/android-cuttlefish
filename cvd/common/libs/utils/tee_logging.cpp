@@ -23,14 +23,13 @@
 #include <android-base/threads.h>
 
 #include "common/libs/fs/shared_buf.h"
-#include "common/libs/utils/environment.h"
 
 using android::base::GetThreadId;
 using android::base::FATAL;
 using android::base::LogSeverity;
 using android::base::StringPrintf;
 
-namespace cuttlefish {
+namespace cvd {
 
 static LogSeverity GuessSeverity(
     const std::string& env_var, LogSeverity default_value) {
@@ -41,7 +40,8 @@ static LogSeverity GuessSeverity(
   using android::base::ERROR;
   using android::base::FATAL_WITHOUT_ABORT;
   using android::base::FATAL;
-  std::string env_value = StringFromEnv(env_var, "");
+  char* env_cstr = getenv(env_var.c_str());
+  std::string env_value(env_cstr == nullptr ? "" : env_cstr);
   using android::base::EqualsIgnoreCase;
   if (EqualsIgnoreCase(env_value, "VERBOSE")
       || env_value == std::to_string((int) VERBOSE)) {
@@ -74,7 +74,7 @@ LogSeverity ConsoleSeverity() {
 }
 
 LogSeverity LogFileSeverity() {
-  return GuessSeverity("CF_FILE_SEVERITY", android::base::DEBUG);
+  return GuessSeverity("CF_FILE_SEVERITY", android::base::VERBOSE);
 }
 
 TeeLogger::TeeLogger(const std::vector<SeverityTarget>& destinations)
@@ -149,24 +149,6 @@ static std::string StderrOutputGenerator(const struct tm& now, int pid, uint64_t
   return output_string;
 }
 
-// TODO(schuffelen): Do something less primitive.
-static std::string StripColorCodes(const std::string& str) {
-  std::stringstream sstream;
-  bool in_color_code = false;
-  for (char c : str) {
-    if (c == '\033') {
-      in_color_code = true;
-    }
-    if (!in_color_code) {
-      sstream << c;
-    }
-    if (c == 'm') {
-      in_color_code = false;
-    }
-  }
-  return sstream.str();
-}
-
 void TeeLogger::operator()(
     android::base::LogId,
     android::base::LogSeverity severity,
@@ -174,23 +156,15 @@ void TeeLogger::operator()(
     const char* file,
     unsigned int line,
     const char* message) {
+  struct tm now;
+  time_t t = time(nullptr);
+  localtime_r(&t, &now);
+  auto output_string =
+      StderrOutputGenerator(
+          now, getpid(), GetThreadId(), severity, tag, file, line, message);
   for (const auto& destination : destinations_) {
-    std::string output_string;
-    if (destination.metadata_level == MetadataLevel::ONLY_MESSAGE) {
-      output_string = message + std::string("\n");
-    } else {
-      struct tm now;
-      time_t t = time(nullptr);
-      localtime_r(&t, &now);
-      output_string = StderrOutputGenerator(now, getpid(), GetThreadId(),
-                                            severity, tag, file, line, message);
-    }
     if (severity >= destination.severity) {
-      if (destination.target->IsATTY()) {
-        WriteAll(destination.target, output_string);
-      } else {
-        WriteAll(destination.target, StripColorCodes(output_string));
-      }
+      cvd::WriteAll(destination.target, output_string);
     }
   }
 }
@@ -200,15 +174,14 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   std::vector<SeverityTarget> log_severities;
   for (const auto& file : files) {
     auto log_file_fd =
-        SharedFD::Open(
+        cvd::SharedFD::Open(
           file,
           O_CREAT | O_WRONLY | O_APPEND,
           S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
     if (!log_file_fd->IsOpen()) {
       LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
     }
-    log_severities.push_back(
-        SeverityTarget{LogFileSeverity(), log_file_fd, MetadataLevel::FULL});
+    log_severities.push_back(SeverityTarget {LogFileSeverity(), log_file_fd});
   }
   return log_severities;
 }
@@ -219,10 +192,9 @@ TeeLogger LogToFiles(const std::vector<std::string>& files) {
 
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
-  log_severities.push_back(SeverityTarget{ConsoleSeverity(),
-                                          SharedFD::Dup(/* stderr */ 2),
-                                          MetadataLevel::ONLY_MESSAGE});
+  log_severities.push_back(
+      SeverityTarget {ConsoleSeverity(), SharedFD::Dup(/* stderr */ 2)});
   return TeeLogger(log_severities);
 }
 
-} // namespace cuttlefish
+} // namespace cvd
