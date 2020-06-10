@@ -87,6 +87,8 @@ ARG OEM
 
 WORKDIR /root
 
+COPY . android-cuttlefish/
+
 RUN pushd android-cuttlefish; \
     gpu/${OEM}/prep.sh; \
     echo "### INSTALLING STUB DEPENDENCIES"; \
