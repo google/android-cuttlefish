@@ -50,3 +50,4 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.gnss
 $(call add-clean-step, find $(PRODUCT_OUT)/vendor/bin/hw/ -type f -name "android.hardware.drm@*" -print0 | xargs -0 rm -f)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.graphics.allocator@4.0-service.minigbm.rc)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.graphics.allocator@4.0-service.minigbm)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.gnss@2.1-service)
