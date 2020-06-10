@@ -121,6 +121,8 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
   kernel_cmdline.push_back(concat("androidboot.wifi_mac_address=",
                                   mac_to_str(instance.wifi_mac_address())));
 
+  kernel_cmdline.push_back("androidboot.verifiedbootstate=orange");
+
   AppendVector(&kernel_cmdline, config.extra_kernel_cmdline());
 
   return kernel_cmdline;
