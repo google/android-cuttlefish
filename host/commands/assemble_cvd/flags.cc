@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include <algorithm>
 #include <array>
@@ -17,6 +18,7 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/data_image.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
@@ -791,11 +793,37 @@ bool CreateCompositeDisk(const vsoc::CuttlefishConfig& config) {
 
 } // namespace
 
+#ifndef O_TMPFILE
+# define O_TMPFILE (020000000 | O_DIRECTORY)
+#endif
+
 const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
     int* argc, char*** argv, cvd::FetcherConfig fetcher_config) {
   if (!ParseCommandLineFlags(argc, argv)) {
     LOG(ERROR) << "Failed to parse command arguments";
     exit(AssemblerExitCodes::kArgumentParsingError);
+  }
+
+  std::string assembly_dir_parent = cvd::AbsolutePath(FLAGS_assembly_dir);
+  while (assembly_dir_parent[assembly_dir_parent.size() - 1] == '/') {
+    assembly_dir_parent =
+        assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
+  }
+  assembly_dir_parent =
+      assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
+  auto log =
+      cvd::SharedFD::Open(
+          assembly_dir_parent,
+          O_WRONLY | O_TMPFILE,
+          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+  if (!log->IsOpen()) {
+    LOG(ERROR) << "Could not open O_TMPFILE precursor to assemble_cvd.log: "
+               << log->StrError();
+  } else {
+    android::base::SetLogger(cvd::TeeLogger({
+      {cvd::ConsoleSeverity(), cvd::SharedFD::Dup(2)},
+      {cvd::LogFileSeverity(), log},
+    }));
   }
 
   auto boot_img_unpacker =
@@ -833,6 +861,11 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
                   << FLAGS_assembly_dir << ". Error: " << errno;
         exit(AssemblerExitCodes::kAssemblyDirCreationError);
       }
+    }
+    if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
+      LOG(ERROR) << "Unable to persist assemble_cvd log at "
+                  << config.AssemblyPath("assemble_cvd.log")
+                  << ": " << log->StrError();
     }
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.

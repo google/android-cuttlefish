@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <host/libs/config/logging.h>
+
 #include "Utils.h"
 
 #include <webrtc/AdbWebSocketHandler.h>
@@ -66,6 +68,7 @@ DEFINE_string(
         "host:port of STUN server to use for public address resolution");
 
 int main(int argc, char **argv) {
+    cvd::DefaultSubprocessLogging(argv);
     ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     SSLSocket::Init();
