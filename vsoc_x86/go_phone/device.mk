@@ -15,7 +15,6 @@
 #
 
 $(call inherit-product, device/google/cuttlefish/shared/go/device.mk)
-$(call inherit-product, device/google/cuttlefish/vsoc_x86/phone/device.mk)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86/device.mk)
 
 PRODUCT_NAME := aosp_cf_x86_go_phone
