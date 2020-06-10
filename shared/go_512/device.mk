@@ -15,6 +15,7 @@
 #
 
 $(call inherit-product, build/target/product/go_defaults_512.mk)
+$(call inherit-product, device/google/cuttlefish/shared/phone/device.mk)
 
 # By default, enable zram; experiment can toggle the flag,
 # which takes effect on boot
