@@ -20,11 +20,14 @@ cc_binary_host {
         "main.cpp"
     ],
     static_libs: [
+        "libcuttlefish_host_config",
         "libgflags",
+        "libjsoncpp",
     ],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_utils",
         "liblog",
     ],
     defaults: ["cuttlefish_host_only"],
