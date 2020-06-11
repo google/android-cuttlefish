@@ -58,6 +58,7 @@ cvd_host_executables := \
     make_f2fs \
     tapsetiff \
     newfs_msdos \
+    log_tee \
 
 ifneq ($(wildcard device/google/trout),)
     cvd_host_executables += android.hardware.automotive.vehicle@2.0-virtualization-grpc-server
