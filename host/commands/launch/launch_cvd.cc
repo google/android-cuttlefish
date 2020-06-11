@@ -44,6 +44,10 @@ DEFINE_bool(run_file_discovery, true,
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
+DEFINE_int32(base_instance_num,
+             vsoc::GetInstance(),
+             "The instance number of the device created. When `-num_instances N`"
+             " is used, N instance numbers are claimed starting at this number.");
 
 namespace {
 
@@ -159,6 +163,9 @@ int main(int argc, char** argv) {
     cvd::SharedFD::Pipe(&assembler_stdin, &launcher_report);
   }
 
+  auto instance_num_str = std::to_string(FLAGS_base_instance_num);
+  setenv("CUTTLEFISH_INSTANCE", instance_num_str.c_str(), /* overwrite */ 0);
+
   // SharedFDs are std::move-d in to avoid dangling references.
   // Removing the std::move will probably make run_cvd hang as its stdin never closes.
   auto assemble_proc = StartAssembler(std::move(assembler_stdin),
@@ -188,7 +195,7 @@ int main(int argc, char** argv) {
   for (int i = 0; i < FLAGS_num_instances; i++) {
     cvd::SharedFD runner_stdin_in, runner_stdin_out;
     cvd::SharedFD::Pipe(&runner_stdin_out, &runner_stdin_in);
-    std::string instance_name = std::to_string(i + vsoc::GetInstance());
+    std::string instance_name = std::to_string(i + FLAGS_base_instance_num);
     setenv("CUTTLEFISH_INSTANCE", instance_name.c_str(), /* overwrite */ 1);
 
     auto run_proc = StartRunner(std::move(runner_stdin_out),
