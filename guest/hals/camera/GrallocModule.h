@@ -18,6 +18,9 @@
 
 #include <hardware/gralloc.h>
 
+#include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <utils/StrongPointer.h>
+
 class GrallocModule {
  public:
   static GrallocModule &getInstance() {
@@ -25,32 +28,23 @@ class GrallocModule {
     return instance;
   }
 
+  int import(buffer_handle_t handle, buffer_handle_t* imported_handle);
+
+  int release(buffer_handle_t handle);
+
   int lock(buffer_handle_t handle, int usage, int l, int t, int w, int h,
-           void **vaddr) {
-    return mModule->lock(mModule, handle, usage, l, t, w, h, vaddr);
-  }
-
-#ifdef GRALLOC_MODULE_API_VERSION_0_2
+           void **vaddr);
   int lock_ycbcr(buffer_handle_t handle, int usage, int l, int t, int w, int h,
-                 struct android_ycbcr *ycbcr) {
-    return mModule->lock_ycbcr(mModule, handle, usage, l, t, w, h, ycbcr);
-  }
-#endif
+                 struct android_ycbcr *ycbcr);
 
-  int unlock(buffer_handle_t handle) {
-    return mModule->unlock(mModule, handle);
-  }
+  int unlock(buffer_handle_t handle);
 
  private:
-  GrallocModule() {
-    const hw_module_t *module = NULL;
-    int ret = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
-    if (ret) {
-      ALOGE("%s: Failed to get gralloc module: %d", __FUNCTION__, ret);
-    }
-    mModule = reinterpret_cast<const gralloc_module_t *>(module);
-  }
-  const gralloc_module_t *mModule;
+  GrallocModule();
+
+  const gralloc_module_t *mGralloc0;
+
+  android::sp<android::hardware::graphics::mapper::V3_0::IMapper> mGralloc3;
 };
 
 #endif  // GUEST_HALS_CAMERA_GRALLOCMODULE_H_
