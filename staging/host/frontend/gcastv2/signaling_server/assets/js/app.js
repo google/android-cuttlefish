@@ -143,10 +143,14 @@ function ConnectToDevice(device_id, use_tcp) {
     var x = e.offsetX;
     var y = e.offsetY;
 
-    const videoWidth = deviceScreen.videoWidth;
-    const videoHeight = deviceScreen.videoHeight;
-    const elementWidth = deviceScreen.offsetWidth;
-    const elementHeight = deviceScreen.offsetHeight;
+    // Before the first video frame arrives there is no way to know width and
+    // height of the device's screen, so turn every click into a click at 0x0.
+    // A click at that position is not more dangerous than anywhere else since
+    // the user is clicking blind anyways.
+    const videoWidth = deviceScreen.videoWidth? deviceScreen.videoWidth: 1;
+    const videoHeight = deviceScreen.videoHeight? deviceScreen.videoHeight: 1;
+    const elementWidth = deviceScreen.offsetWidth? deviceScreen.offsetWidth: 1;
+    const elementHeight = deviceScreen.offsetHeight? deviceScreen.offsetHeight: 1;
 
     // vh*ew > eh*vw? then scale h instead of w
     const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
