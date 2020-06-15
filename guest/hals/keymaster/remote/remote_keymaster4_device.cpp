@@ -51,7 +51,7 @@ typedef ::android::hardware::keymaster::V3_0::Tag Tag3;
 using ::android::hardware::keymaster::V4_0::Constants;
 
 namespace keymaster {
-namespace V4_0 {
+namespace V4_1 {
 namespace {
 
 inline keymaster_tag_t legacy_enum_conversion(const Tag value) {
@@ -273,7 +273,7 @@ Return<void> RemoteKeymaster4Device::getHmacSharingParameters(
         getHmacSharingParameters_cb _hidl_cb) {
     const GetHmacSharingParametersResponse response = impl_->GetHmacSharingParameters();
     // response.params is not the same as the HIDL structure, we need to convert it
-    V4_0::HmacSharingParameters params;
+    HmacSharingParameters params;
     params.seed.setToExternal(const_cast<uint8_t*>(response.params.seed.data),
                               response.params.seed.data_length);
     static_assert(sizeof(response.params.nonce) == params.nonce.size(), "Nonce sizes don't match");
@@ -601,5 +601,32 @@ Return<ErrorCode> RemoteKeymaster4Device::abort(uint64_t operationHandle) {
 
     return legacy_enum_conversion(response.error);
 }
-}  // namespace V4_0
+
+Return<ErrorCodeV41> RemoteKeymaster4Device::deviceLocked(
+    bool passwordOnly, const VerificationToken& verificationToken) {
+    keymaster::VerificationToken internal_verification_token;
+    internal_verification_token.challenge = verificationToken.challenge;
+    internal_verification_token.timestamp = verificationToken.timestamp;
+    internal_verification_token.parameters_verified.Reinitialize(
+        KmParamSet(verificationToken.parametersVerified));
+    internal_verification_token.security_level =
+        static_cast<keymaster_security_level_t>(verificationToken.securityLevel);
+    internal_verification_token.mac =
+        KeymasterBlob(verificationToken.mac.data(), verificationToken.mac.size());
+
+    DeviceLockedRequest request(
+        passwordOnly, std::move(internal_verification_token));
+
+    auto response = impl_->DeviceLocked(request);
+
+    return ErrorCodeV41(response.error);
+}
+
+Return<ErrorCodeV41> RemoteKeymaster4Device::earlyBootEnded() {
+    auto response = impl_->EarlyBootEnded();
+
+    return ErrorCodeV41(response.error);
+}
+
+}  // namespace V4_1
 }  // namespace keymaster

@@ -199,4 +199,19 @@ VerifyAuthorizationResponse RemoteKeymaster::VerifyAuthorization(
     return response;
 }
 
+DeviceLockedResponse RemoteKeymaster::DeviceLocked(
+        const DeviceLockedRequest& request) {
+    DeviceLockedResponse response;
+    ForwardCommand(DEVICE_LOCKED, request, &response);
+    return response;
+}
+
+EarlyBootEndedResponse RemoteKeymaster::EarlyBootEnded() {
+    // Dummy empty buffer to allow ForwardCommand to have something to serialize
+    Buffer request;
+    EarlyBootEndedResponse response;
+    ForwardCommand(EARLY_BOOT_ENDED, request, &response);
+    return response;
+}
+
 }  // namespace keymaster

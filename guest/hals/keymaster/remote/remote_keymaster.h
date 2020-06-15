@@ -66,6 +66,8 @@ class RemoteKeymaster {
     GetHmacSharingParametersResponse GetHmacSharingParameters();
     ComputeSharedHmacResponse ComputeSharedHmac(const ComputeSharedHmacRequest& request);
     VerifyAuthorizationResponse VerifyAuthorization(const VerifyAuthorizationRequest& request);
+    DeviceLockedResponse DeviceLocked(const DeviceLockedRequest& request);
+    EarlyBootEndedResponse EarlyBootEnded();
 };
 
 }  // namespace keymaster
