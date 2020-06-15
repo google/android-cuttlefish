@@ -1,2 +1,0 @@
-service vendor.keymaster-4-0 /vendor/bin/hw/android.hardware.keymaster@4.0-service.remote
-    class early_hal
