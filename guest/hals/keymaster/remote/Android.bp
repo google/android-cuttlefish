@@ -14,11 +14,11 @@
 // limitations under the License.
 
 cc_binary {
-    name: "android.hardware.keymaster@4.0-service.remote",
+    name: "android.hardware.keymaster@4.1-service.remote",
     defaults: ["hidl_defaults", "cuttlefish_guest_only"],
     relative_install_path: "hw",
     vendor: true,
-    init_rc: ["android.hardware.keymaster@4.0-service.remote.rc"],
+    init_rc: ["android.hardware.keymaster@4.1-service.remote.rc"],
     srcs: [
         "service4.cpp",
         "remote_keymaster4_device.cpp",
@@ -30,7 +30,7 @@ cc_binary {
     ],
 
     shared_libs: [
-        "android.hardware.keymaster@4.0",
+        "android.hardware.keymaster@4.1",
         "libbase",
         "libcutils",
         "libcuttlefish_fs",
@@ -45,5 +45,5 @@ cc_binary {
         "libutils",
     ],
 
-    vintf_fragments: ["android.hardware.keymaster@4.0-service.remote.xml"],
+    vintf_fragments: ["android.hardware.keymaster@4.1-service.remote.xml"],
 }
