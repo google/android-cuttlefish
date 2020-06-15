@@ -11,6 +11,7 @@ ro.boot.lcd_density u:object_r:cf_graphics_config_prop:s0 exact int
 ro.boot.tpm_vsock_port  u:object_r:cuttlefish_vsock_tpm_port:s0
 ro.boot.vsock_frames_port  u:object_r:vsock_frames_port_prop:s0
 ro.boot.vsock_keyboard_port  u:object_r:cuttlefish_vsock_keyboard_port:s0
+ro.boot.vsock_keymaster_port  u:object_r:cuttlefish_vsock_keymaster_port:s0
 ro.boot.vsock_logcat_port  u:object_r:vsock_logcat_port_prop:s0
 ro.boot.vsock_touch_port  u:object_r:cuttlefish_vsock_touch_port:s0
 ro.boot.wifi_mac_address  u:object_r:cuttlefish_wifi_mac_address:s0
