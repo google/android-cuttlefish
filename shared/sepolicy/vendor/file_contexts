@@ -85,6 +85,7 @@
 /vendor/bin/hw/android\.hardware\.sensors@2\.1-service\.mock  u:object_r:hal_sensors_default_exec:s0
 /vendor/bin/hw/android\.hardware\.input\.classifier@1\.0-service.default  u:object_r:hal_input_classifier_default_exec:s0
 /vendor/bin/hw/android\.hardware\.thermal@2\.0-service\.mock  u:object_r:hal_thermal_default_exec:s0
+/vendor/bin/hw/android\.hardware\.keymaster@4\.0-service.remote  u:object_r:hal_keymaster_remote_exec:s0
 /vendor/bin/hw/android\.hardware\.authsecret@1\.0-service  u:object_r:hal_authsecret_default_exec:s0
 /vendor/bin/hw/android\.hardware\.rebootescrow-service\.default  u:object_r:hal_rebootescrow_default_exec:s0
 /vendor/bin/init\.insmod\.sh  u:object_r:init_insmod_sh_exec:s0
