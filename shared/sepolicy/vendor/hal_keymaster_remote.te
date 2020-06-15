@@ -1,0 +1,11 @@
+type hal_keymaster_remote, domain;
+hal_server_domain(hal_keymaster_remote, hal_keymaster)
+
+type hal_keymaster_remote_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_keymaster_remote)
+
+allow hal_keymaster_remote self:{ socket vsock_socket } create_socket_perms_no_ioctl;
+
+type cuttlefish_vsock_keymaster_port, property_type;
+
+get_prop(hal_keymaster_remote, cuttlefish_vsock_keymaster_port)

@@ -1,2 +1,5 @@
 service vendor.keymaster-4-0 /vendor/bin/hw/android.hardware.keymaster@4.0-service.remote
+    interface android.hardware.keymaster@4.0::IKeymasterDevice default
     class early_hal
+    user system
+    group system drmrpc
