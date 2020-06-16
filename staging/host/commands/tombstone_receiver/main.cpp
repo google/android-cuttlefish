@@ -49,7 +49,7 @@ static std::string next_tombstone_path() {
     num_tombstones_in_last_second = 0;
   }
 
-  LOG(INFO) << "Creating " << retval;
+  LOG(DEBUG) << "Creating " << retval;
   return retval;
 }
 
@@ -63,8 +63,8 @@ int main(int argc, char** argv) {
 
   CHECK(server_fd->IsOpen()) << "Error inheriting tombstone server: "
                              << server_fd->StrError();
-  LOG(INFO) << "Host is starting server on port "
-            << server_fd->VsockServerPort();
+  LOG(DEBUG) << "Host is starting server on port "
+             << server_fd->VsockServerPort();
 
   // Server loop
   while (true) {

@@ -59,8 +59,8 @@ class SocketSender {
           socket_->Send(packet + written,
                         length - written, MSG_NOSIGNAL);
       if (just_written <= 0) {
-        LOG(INFO) << "Couldn't write to client: "
-                  << strerror(socket_->GetErrno());
+        LOG(WARNING) << "Couldn't write to client: "
+                     << strerror(socket_->GetErrno());
         return just_written;
       }
       written += just_written;
@@ -106,7 +106,7 @@ void SocketToVsock(SocketReceiver socket_receiver,
       break;
     }
   }
-  LOG(INFO) << "Socket to vsock exiting";
+  LOG(DEBUG) << "Socket to vsock exiting";
 }
 
 void VsockToSocket(SocketSender socket_sender,
@@ -122,7 +122,7 @@ void VsockToSocket(SocketSender socket_sender,
       break;
     }
   }
-  LOG(INFO) << "Vsock to socket exiting";
+  LOG(DEBUG) << "Vsock to socket exiting";
 }
 
 // One thread for reading from shm and writing into a socket.
@@ -136,11 +136,11 @@ void HandleConnection(cvd::SharedFD vsock,
 }
 
 [[noreturn]] void TcpServer() {
-  LOG(INFO) << "starting TCP server on " << FLAGS_tcp_port << " for vsock port "
-            << FLAGS_vsock_port;
+  LOG(DEBUG) << "starting TCP server on " << FLAGS_tcp_port
+             << " for vsock port " << FLAGS_vsock_port;
   auto server = cvd::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
   CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_tcp_port;
-  LOG(INFO) << "Accepting client connections";
+  LOG(DEBUG) << "Accepting client connections";
   int last_failure_reason = 0;
   while (true) {
     auto client_socket = cvd::SharedFD::Accept(*server);
@@ -149,8 +149,8 @@ void HandleConnection(cvd::SharedFD vsock,
         FLAGS_vsock_cid, FLAGS_vsock_port, SOCK_STREAM);
     if (vsock_socket->IsOpen()) {
       last_failure_reason = 0;
-      LOG(INFO) << "Connected to vsock:" << FLAGS_vsock_cid << ":"
-                << FLAGS_vsock_port;
+      LOG(DEBUG) << "Connected to vsock:" << FLAGS_vsock_cid << ":"
+                 << FLAGS_vsock_port;
     } else {
       // Don't log if the previous connection failed with the same error
       if (last_failure_reason != vsock_socket->GetErrno()) {
@@ -190,7 +190,7 @@ bool socketErrorIsRecoverable(int error) {
 }
 
 [[noreturn]] void VsockServer() {
-  LOG(INFO) << "Starting vsock server on " << FLAGS_vsock_port;
+  LOG(DEBUG) << "Starting vsock server on " << FLAGS_vsock_port;
   cvd::SharedFD vsock;
   do {
     vsock = cvd::SharedFD::VsockServer(FLAGS_vsock_port, SOCK_STREAM);
@@ -201,10 +201,10 @@ bool socketErrorIsRecoverable(int error) {
   } while (!vsock->IsOpen());
   CHECK(vsock->IsOpen()) << "Could not start server on " << FLAGS_vsock_port;
   while (true) {
-    LOG(INFO) << "waiting for vsock connection";
+    LOG(DEBUG) << "waiting for vsock connection";
     auto vsock_client = cvd::SharedFD::Accept(*vsock);
     CHECK(vsock_client->IsOpen()) << "error creating vsock socket";
-    LOG(INFO) << "vsock socket accepted";
+    LOG(DEBUG) << "vsock socket accepted";
     auto client = OpenSocketConnection();
     CHECK(client->IsOpen()) << "error connecting to guest client";
     auto thread = std::thread(HandleConnection, std::move(vsock_client),
