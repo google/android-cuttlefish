@@ -45,11 +45,11 @@ int main(int argc, char** argv) {
   // Server loop
   while (true) {
     auto conn = cvd::SharedFD::Accept(*server_fd);
-    LOG(INFO) << "Connection received on configuration server";
+    LOG(DEBUG) << "Connection received on configuration server";
 
     bool succeeded = device_config->SendRawData(conn);
     if (succeeded) {
-      LOG(INFO) << "Successfully sent device configuration";
+      LOG(DEBUG) << "Successfully sent device configuration";
     } else {
       LOG(ERROR) << "Failed to send the device configuration: "
                  << conn->StrError();

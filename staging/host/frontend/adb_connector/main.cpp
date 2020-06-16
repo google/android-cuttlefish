@@ -69,7 +69,7 @@ void WaitForAdbdToBeStarted(int events_fd) {
       return;
     }
     if (event == monitor::BootEvent::AdbdStarted) {
-      LOG(INFO) << "Adbd has started in the guest, connecting adb";
+      LOG(DEBUG) << "Adbd has started in the guest, connecting adb";
       return;
     }
   }

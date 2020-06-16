@@ -163,7 +163,7 @@ bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {
 bool ProcessMonitor::DoNotMonitorCb(MonitorEntry*) { return false; }
 
 void ProcessMonitor::MonitorRoutine() {
-  LOG(INFO) << "Started monitoring subprocesses";
+  LOG(DEBUG) << "Started monitoring subprocesses";
   do {
     SharedFDSet read_set;
     read_set.Set(thread_comm_monitor_);

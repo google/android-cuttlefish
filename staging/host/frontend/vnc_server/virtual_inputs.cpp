@@ -319,7 +319,7 @@ class SocketVirtualInputs : public VirtualInputs {
     auto keyboard_server = cvd::SharedFD::Dup(FLAGS_keyboard_fd);
     close(FLAGS_keyboard_fd);
     FLAGS_keyboard_fd = -1;
-    LOG(INFO) << "Input socket host accepting connections...";
+    LOG(DEBUG) << "Input socket host accepting connections...";
 
     while (1) {
       cvd::SharedFDSet read_set;
@@ -330,11 +330,11 @@ class SocketVirtualInputs : public VirtualInputs {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         if (read_set.IsSet(touch_server)) {
           touch_socket_ = cvd::SharedFD::Accept(*touch_server);
-          LOG(INFO) << "connected to touch";
+          LOG(DEBUG) << "connected to touch";
         }
         if (read_set.IsSet(keyboard_server)) {
           keyboard_socket_ = cvd::SharedFD::Accept(*keyboard_server);
-          LOG(INFO) << "connected to keyboard";
+          LOG(DEBUG) << "connected to keyboard";
         }
       }
     }
