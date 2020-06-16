@@ -8,7 +8,7 @@
 # INTERNAL_IP can be set to --internal-ip run on a GCE instance
 # The instance will need --scope compute-rw
 
-source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
+source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
 
 DEFINE_string build_instance \
   "${USER}-build" "Instance name to create for the build" "i"
