@@ -27,6 +27,7 @@
 #include <common/libs/fs/shared_fd.h>
 #include <common/libs/fs/shared_select.h>
 #include <host/libs/config/cuttlefish_config.h>
+#include <host/libs/config/logging.h>
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 
 DEFINE_int32(log_pipe_fd, -1,
@@ -60,8 +61,14 @@ std::vector<cvd::SharedFD> SubscribersFromCmdline() {
 }
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cvd::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
+
+  auto config = vsoc::CuttlefishConfig::Get();
+
+  CHECK(config) << "Could not open cuttlefish config";
+
+  auto instance = config->ForDefaultInstance();
 
   auto subscriber_fds = SubscribersFromCmdline();
 
@@ -70,13 +77,6 @@ int main(int argc, char** argv) {
   }, old_action{};
   new_action.sa_handler = SIG_IGN;
   sigaction(SIGPIPE, &new_action, &old_action);
-
-  auto config = vsoc::CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Unable to get config object";
-    return 1;
-  }
-  auto instance = config->ForDefaultInstance();
 
   cvd::SharedFD pipe;
   if (FLAGS_log_pipe_fd < 0) {

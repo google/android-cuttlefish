@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/logging.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 
@@ -67,7 +68,7 @@ void HandleClient(cvd::SharedFD client, cvd::SharedFD device) {
 } // namespace
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cvd::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(!FLAGS_device.empty()) << "A device must be set.";
