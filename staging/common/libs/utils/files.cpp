@@ -109,7 +109,7 @@ std::chrono::system_clock::time_point FileModificationTime(const std::string& pa
 }
 
 bool RenameFile(const std::string& old_name, const std::string& new_name) {
-  LOG(INFO) << "Renaming " << old_name << " to " << new_name;
+  LOG(DEBUG) << "Renaming " << old_name << " to " << new_name;
   if(rename(old_name.c_str(), new_name.c_str())) {
     LOG(ERROR) << "File rename failed due to " << strerror(errno);
     return false;
@@ -119,7 +119,7 @@ bool RenameFile(const std::string& old_name, const std::string& new_name) {
 }
 
 bool RemoveFile(const std::string& file) {
-  LOG(INFO) << "Removing " << file;
+  LOG(DEBUG) << "Removing " << file;
   return remove(file.c_str()) == 0;
 }
 
@@ -149,7 +149,7 @@ FileSizes SparseFileSizes(const std::string& path) {
     return {};
   }
   off_t farthest_seek = fd->LSeek(0, SEEK_END);
-  LOG(INFO) << "Farthest seek: " << farthest_seek;
+  LOG(VERBOSE) << "Farthest seek: " << farthest_seek;
   if (farthest_seek == -1) {
     LOG(ERROR) << "Could not lseek in \"" << path << "\": " << fd->StrError();
     return {};

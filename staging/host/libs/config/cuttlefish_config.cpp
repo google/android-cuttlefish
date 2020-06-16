@@ -50,7 +50,7 @@ int InstanceFromEnvironment() {
     if (!instance_str || std::strncmp(instance_str, vsoc::kVsocUserPrefix,
                                       sizeof(vsoc::kVsocUserPrefix) - 1)) {
       // No user or we don't recognize this user
-      LOG(WARNING) << "No user or non-vsoc user, returning default config";
+      LOG(DEBUG) << "No user or non-vsoc user, returning default config";
       return kDefaultInstance;
     }
     instance_str += sizeof(vsoc::kVsocUserPrefix) - 1;
