@@ -33,7 +33,9 @@ cc_binary_host {
         "libpuresoftkeymasterdevice_host",
     ],
     static_libs: [
+        "libcuttlefish_host_config",
         "libgflags",
+        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_only"],
     cflags: [

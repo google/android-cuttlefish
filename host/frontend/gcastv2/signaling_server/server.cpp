@@ -37,6 +37,8 @@
 #include "host/frontend/gcastv2/signaling_server/device_registry.h"
 #include "host/frontend/gcastv2/signaling_server/server_config.h"
 
+#include "host/libs/config/logging.h"
+
 DEFINE_int32(http_server_port, 8443, "The port for the http server.");
 DEFINE_bool(use_secure_http, true, "Whether to use HTTPS or HTTP.");
 DEFINE_string(assets_dir, "webrtc",
@@ -71,8 +73,8 @@ void ServeStaticFiles(std::shared_ptr<HTTPServer> httpd) {
 }  // namespace
 
 int main(int argc, char **argv) {
+  cvd::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
 
   InitSSL();
 
