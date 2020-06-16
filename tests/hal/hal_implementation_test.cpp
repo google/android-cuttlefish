@@ -103,7 +103,7 @@ static const std::set<std::string> kKnownMissingAidl = {
 };
 
 // AOSP packages which are never considered
-static bool isHidlPackageWhitelist(const FQName& name) {
+static bool isHidlPackageConsidered(const FQName& name) {
     static std::vector<std::string> gAospExclude = {
         // packages not implemented now that we never expect to be implemented
         "android.hardware.tests",
@@ -112,10 +112,10 @@ static bool isHidlPackageWhitelist(const FQName& name) {
     };
     for (const std::string& package : gAospExclude) {
         if (name.inPackage(package)) {
-            return true;
+            return false;
         }
     }
-    return false;
+    return true;
 }
 
 static bool isAospHidlInterface(const FQName& name) {
@@ -191,7 +191,7 @@ TEST(Hal, HidlInterfacesImplemented) {
 
     for (const FQName& f : allTreeHidlInterfaces()) {
         if (!isAospHidlInterface(f)) continue;
-        if (isHidlPackageWhitelist(f)) continue;
+        if (!isHidlPackageConsidered(f)) continue;
 
         unimplemented[f.package()][f.getPackageMajorVersion()].insert(f.getPackageMinorVersion());
     }
