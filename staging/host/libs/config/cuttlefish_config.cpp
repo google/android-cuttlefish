@@ -1181,7 +1181,7 @@ int GetInstance() {
 }
 
 std::string GetGlobalConfigFileLink() {
-  return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish_config.json";
+  return DefaultHostArtifactsPath(".cuttlefish_config.json");
 }
 
 std::string ForCurrentInstance(const char* prefix) {

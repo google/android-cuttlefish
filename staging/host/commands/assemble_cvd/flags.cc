@@ -91,7 +91,7 @@ DEFINE_int32(memory_mb, 2048,
 DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
 DEFINE_string(assembly_dir,
-              cvd::StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
+              vsoc::DefaultHostArtifactsPath("cuttlefish_assembly"),
               "A directory to put generated files common between instances");
 DEFINE_string(instance_dir,
               cvd::StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
@@ -304,10 +304,6 @@ bool ResolveInstanceFiles() {
 
 std::string GetCuttlefishEnvPath() {
   return cvd::StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
-}
-
-std::string GetLegacyConfigFilePath(const vsoc::CuttlefishConfig& config) {
-  return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
 }
 
 int NumStreamers() {
@@ -571,10 +567,12 @@ bool SaveConfig(const vsoc::CuttlefishConfig& tmp_config_obj) {
     LOG(ERROR) << "Unable to save config object";
     return false;
   }
-  auto legacy_config_file = GetLegacyConfigFilePath(tmp_config_obj);
-  if (!tmp_config_obj.SaveToFile(legacy_config_file)) {
-    LOG(ERROR) << "Unable to save legacy config object";
-    return false;
+  for (auto instance : tmp_config_obj.Instances()) {
+    if (!tmp_config_obj.SaveToFile(
+        instance.PerInstancePath("cuttlefish_config.json"))) {
+      LOG(ERROR) << "Unable to save copy config object";
+      return false;
+    }
   }
   setenv(vsoc::kCuttlefishConfigEnvVarName, config_file.c_str(), true);
   if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
@@ -1057,6 +1055,12 @@ const vsoc::CuttlefishConfig* InitFilesystemAndCreateConfig(
                     << internal_dir << ". Error: " << errno;
           exit(AssemblerExitCodes::kInstanceDirCreationError);
         }
+      }
+      auto log_path = config.AssemblyPath("assemble_cvd.log");
+      auto instance_log_path = instance.PerInstancePath("assemble_cvd.log");
+      if (symlink(log_path.c_str(), instance_log_path.c_str())) {
+        LOG(WARNING) << "Unable to symlink " << log_path << " to "
+                     << instance_log_path;
       }
     }
     if (!SaveConfig(config)) {
