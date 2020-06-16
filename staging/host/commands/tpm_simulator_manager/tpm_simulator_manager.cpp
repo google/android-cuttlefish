@@ -21,6 +21,7 @@
 #include <android-base/logging.h>
 
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/logging.h"
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
@@ -42,7 +43,7 @@ bool HasSubstrings(const std::string& string, const std::vector<std::string>& su
 } // namespace
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv, android::base::StderrLogger);
+  cvd::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(FLAGS_port > 0) << "A port must be set";

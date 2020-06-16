@@ -42,12 +42,12 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
-#include "common/libs/fs/tee.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
+#include "common/libs/utils/tee_logging.h"
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/process_monitor.h"
@@ -209,12 +209,15 @@ cvd::SharedFD DaemonizeLauncher(const vsoc::CuttlefishConfig& config) {
     // Redirect standard I/O
     auto log_path = instance.launcher_log_path();
     auto log =
-        cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_TRUNC,
+        cvd::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_APPEND,
                             S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
     if (!log->IsOpen()) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
+    ::android::base::SetLogger(cvd::TeeLogger({
+      {cvd::LogFileSeverity(), log},
+    }));
     auto dev_null = cvd::SharedFD::Open("/dev/null", O_RDONLY);
     if (!dev_null->IsOpen()) {
       LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
@@ -280,6 +283,7 @@ std::string GetConfigFilePath(const vsoc::CuttlefishConfig& config) {
 }  // namespace
 
 int main(int argc, char** argv) {
+  setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
 
@@ -295,8 +299,6 @@ int main(int argc, char** argv) {
       return cvd::RunnerExitCodes::kInvalidHostConfiguration;
     }
   }
-
-  cvd::TeeStderrToFile stderr_tee;
 
   std::string input_files_str;
   {
@@ -321,8 +323,8 @@ int main(int argc, char** argv) {
   auto config = vsoc::CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
 
-  auto runner_log_path = instance.PerInstancePath("run_cvd.log");
-  stderr_tee.SetFile(cvd::SharedFD::Creat(runner_log_path.c_str(), 0755));
+  auto log_path = instance.launcher_log_path();
+  ::android::base::SetLogger(cvd::LogToStderrAndFiles({log_path}));
 
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
