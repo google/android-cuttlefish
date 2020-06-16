@@ -85,7 +85,7 @@ bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
       LOG(ERROR) << "Unable to delete the old env image.";
       return false;
     }
-    LOG(INFO) << "Updated bootloader environment image.";
+    LOG(DEBUG) << "Updated bootloader environment image.";
   } else {
     cvd::RemoveFile(tmp_boot_env_image_path);
   }
