@@ -35,9 +35,9 @@ VncServer::VncServer(int port, bool aggressive)
 
 void VncServer::MainLoop() {
   while (true) {
-    LOG(INFO) << "Awaiting connections";
+    LOG(DEBUG) << "Awaiting connections";
     auto connection = server_.Accept();
-    LOG(INFO) << "Accepted a client connection";
+    LOG(DEBUG) << "Accepted a client connection";
     StartClient(std::move(connection));
   }
 }
