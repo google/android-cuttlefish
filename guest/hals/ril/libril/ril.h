@@ -793,8 +793,8 @@ typedef struct {
 typedef struct {
   int32_t len_allowed_carriers;         /* length of array allowed_carriers */
   int32_t len_excluded_carriers;        /* length of array excluded_carriers */
-  RIL_Carrier * allowed_carriers;       /* whitelist for allowed carriers */
-  RIL_Carrier * excluded_carriers;      /* blacklist for explicitly excluded carriers
+  RIL_Carrier * allowed_carriers;       /* allowed carriers */
+  RIL_Carrier * excluded_carriers;      /* excluded carriers
                                          * which match allowed_carriers. Eg. allowed_carriers match
                                          * mcc/mnc, excluded_carriers has same mcc/mnc and gid1
                                          * is ABCD. It means except the carrier whose gid1 is ABCD,
@@ -812,8 +812,8 @@ typedef enum {
 typedef struct {
   int32_t len_allowed_carriers;         /* length of array allowed_carriers */
   int32_t len_excluded_carriers;        /* length of array excluded_carriers */
-  RIL_Carrier * allowed_carriers;       /* whitelist for allowed carriers */
-  RIL_Carrier * excluded_carriers;      /* blacklist for explicitly excluded carriers
+  RIL_Carrier * allowed_carriers;       /* allowed carriers */
+  RIL_Carrier * excluded_carriers;      /* explicitly excluded carriers
                                          * which match allowed_carriers. Eg. allowed_carriers match
                                          * mcc/mnc, excluded_carriers has same mcc/mnc and gid1
                                          * is ABCD. It means except the carrier whose gid1 is ABCD,
