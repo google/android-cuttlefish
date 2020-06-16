@@ -209,7 +209,7 @@ std::string FetcherConfig::FindCvdFileWithSuffix(const std::string& suffix) cons
       return file;
     }
   }
-  LOG(ERROR) << "Could not find file ending in " << suffix;
+  LOG(DEBUG) << "Could not find file ending in " << suffix;
   return "";
 }
 
