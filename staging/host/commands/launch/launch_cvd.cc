@@ -48,6 +48,8 @@ DEFINE_int32(base_instance_num,
              vsoc::GetInstance(),
              "The instance number of the device created. When `-num_instances N`"
              " is used, N instance numbers are claimed starting at this number.");
+DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE,"
+                                 "DEBUG,INFO,WARNING,ERROR");
 
 namespace {
 
@@ -150,6 +152,8 @@ int main(int argc, char** argv) {
   forwarder.UpdateFlagDefaults();
 
   gflags::HandleCommandLineHelpFlags();
+
+  setenv("CF_CONSOLE_SEVERITY", FLAGS_verbosity.c_str(), /* replace */ false);
 
   auto use_metrics = FLAGS_report_anonymous_usage_stats;
   FLAGS_report_anonymous_usage_stats = ValidateMetricsConfirmation(use_metrics);
