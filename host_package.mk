@@ -67,6 +67,7 @@ cvd_host_executables := \
     tapsetiff \
     newfs_msdos \
     secure_env \
+    log_tee \
 
 cvd_host_tests := \
     monotonic_time_test \
