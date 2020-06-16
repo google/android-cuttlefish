@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,21 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
-    name: "tombstone_receiver",
-    srcs: [
-        "main.cpp",
-    ],
-    shared_libs: [
-        "libbase",
-        "libcuttlefish_fs",
-        "liblog",
-        "libcuttlefish_utils",
-    ],
-    static_libs: [
-        "libcuttlefish_host_config",
-        "libjsoncpp",
-        "libgflags",
-    ],
-    defaults: ["cuttlefish_host_only"],
-}
+#pragma once
+
+namespace cvd {
+
+void DefaultSubprocessLogging(char* argv[]);
+
+} // namespace cvd

@@ -21,6 +21,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/security/keymaster_channel.h"
 #include "host/commands/secure_env/keymaster_responder.h"
+#include "host/libs/config/logging.h"
 
 // Copied from AndroidKeymaster4Device
 constexpr size_t kOperationTableSize = 16;
@@ -28,7 +29,7 @@ constexpr size_t kOperationTableSize = 16;
 DEFINE_int32(keymaster_fd, -1, "A file descriptor for keymaster communication");
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv);
+  cvd::DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::PureSoftKeymasterContext keymaster_context{
       KM_SECURITY_LEVEL_SOFTWARE};
