@@ -255,6 +255,21 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   console_cmd.AddParameter("--console_in_fd=", console_in_wr);
   console_cmd.AddParameter("--console_out_fd=", console_out_rd);
 
+  cvd::SharedFD log_out_rd, log_out_wr;
+  if (!cvd::SharedFD::Pipe(&log_out_rd, &log_out_wr)) {
+    LOG(ERROR) << "Failed to create log pipe for crosvm's stdout/stderr: "
+               << console_in_rd->StrError();
+    return {};
+  }
+  crosvm_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
+                           log_out_wr);
+  crosvm_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdErr,
+                           log_out_wr);
+
+  cvd::Command log_tee_cmd(vsoc::DefaultHostArtifactsPath("bin/log_tee"));
+  log_tee_cmd.AddParameter("--process_name=crosvm");
+  log_tee_cmd.AddParameter("--log_fd_in=", log_out_rd);
+
   // This needs to be the last parameter
   crosvm_cmd.AddParameter(config_->GetKernelImageToUse());
 
@@ -271,6 +286,7 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   std::vector<cvd::Command> ret;
   ret.push_back(std::move(crosvm_cmd));
   ret.push_back(std::move(console_cmd));
+  ret.push_back(std::move(log_tee_cmd));
   return ret;
 }
 
