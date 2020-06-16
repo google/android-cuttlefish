@@ -68,7 +68,7 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
 
 void CreateBlankImage(
     const std::string& image, int num_mb, const std::string& image_fmt) {
-  LOG(INFO) << "Creating " << image;
+  LOG(DEBUG) << "Creating " << image;
 
   off_t image_size_bytes = static_cast<off_t>(num_mb) << 20;
   // The newfs_msdos tool with the mandatory -C option will do the same
@@ -179,7 +179,7 @@ DataImageResult ApplyDataImagePolicy(const vsoc::CuttlefishConfig& config,
     bool success = ResizeImage(data_image.c_str(), config.blank_data_image_mb());
     return success ? DataImageResult::FileUpdated : DataImageResult::Error;
   } else {
-    LOG(INFO) << data_image << " exists. Not creating it.";
+    LOG(DEBUG) << data_image << " exists. Not creating it.";
     return DataImageResult::NoChange;
   }
 }
@@ -188,11 +188,11 @@ bool InitializeMiscImage(const std::string& misc_image) {
   bool misc_exists = cvd::FileHasContent(misc_image.c_str());
 
   if (misc_exists) {
-    LOG(INFO) << "misc partition image: use existing";
+    LOG(DEBUG) << "misc partition image: use existing";
     return true;
   }
 
-  LOG(INFO) << "misc partition image: creating empty";
+  LOG(DEBUG) << "misc partition image: creating empty";
   CreateBlankImage(misc_image, 1 /* mb */, "none");
   return true;
 }

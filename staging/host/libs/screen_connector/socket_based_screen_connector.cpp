@@ -65,7 +65,7 @@ void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
   int current_buffer = 0;
 
   while (1) {
-    LOG(INFO) << "Screen Connector accepting connections...";
+    LOG(DEBUG) << "Screen Connector accepting connections...";
     auto conn = SharedFD::Accept(*server);
     if (!conn->IsOpen()) {
       LOG(ERROR) << "Disconnected fd returned from accept";
