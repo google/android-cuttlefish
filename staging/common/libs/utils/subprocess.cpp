@@ -282,11 +282,15 @@ Subprocess Command::Start(SubprocessOptions options) const {
   if (pid == -1) {
     LOG(ERROR) << "fork failed (" << strerror(errno) << ")";
   }
-  if (options.Verbose()) {
-    LOG(INFO) << "Started (pid: " << pid << "): " << cmd[0];
-    int i = 1;
-    while (cmd[i]) {
-      LOG(INFO) << cmd[i++];
+  if (options.Verbose()) { // "more verbose", and LOG(DEBUG) > LOG(VERBOSE)
+    LOG(DEBUG) << "Started (pid: " << pid << "): " << cmd[0];
+    for (int i = 1; cmd[i]; i++) {
+      LOG(DEBUG) << cmd[i];
+    }
+  } else {
+    LOG(VERBOSE) << "Started (pid: " << pid << "): " << cmd[0];
+    for (int i = 1; cmd[i]; i++) {
+      LOG(VERBOSE) << cmd[i];
     }
   }
   return Subprocess(pid, parent_socket, subprocess_stopper_);
