@@ -24,6 +24,7 @@ cc_library {
         "users.cpp",
         "network.cpp",
         "base64.cpp",
+        "tee_logging.cpp",
     ],
     shared: {
         shared_libs: [
