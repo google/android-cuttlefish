@@ -193,6 +193,8 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
   crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
+  crosvm_cmd.AddParameter("--pstore=path=", instance.pstore_path(), ",size=",
+                          cvd::FileSize(instance.pstore_path()));
 
   if (config_->enable_sandbox()) {
     const bool seccomp_exists = cvd::DirectoryExists(config_->seccomp_policy_dir());
