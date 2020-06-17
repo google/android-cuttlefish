@@ -402,6 +402,10 @@ std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
   return cvd::AbsolutePath(PerInstancePath("access-kregistry"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
+  return cvd::AbsolutePath(PerInstancePath("pstore"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::console_path() const {
   return cvd::AbsolutePath(PerInstancePath("console"));
 }
