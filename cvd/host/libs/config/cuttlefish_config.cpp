@@ -132,10 +132,6 @@ const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCPublicIP = "webrtc_public_ip";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
-const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
-const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
-
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
@@ -189,6 +185,7 @@ const char* kRilDns = "ril_dns";
 const char* kKgdb = "kgdb";
 
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
+const char* kGatekeeperVsockPort = "gatekeeper_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
 }  // namespace
 
@@ -675,20 +672,20 @@ void CuttlefishConfig::MutableInstanceSpecific::set_keymaster_vsock_port(int key
   (*Dictionary())[kKeymasterVsockPort] = keymaster_vsock_port;
 }
 
+int CuttlefishConfig::InstanceSpecific::gatekeeper_vsock_port() const {
+  return (*Dictionary())[kGatekeeperVsockPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_gatekeeper_vsock_port(int gatekeeper_vsock_port) {
+  (*Dictionary())[kGatekeeperVsockPort] = gatekeeper_vsock_port;
+}
+
 int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
   return (*Dictionary())[kTombstoneReceiverPort].asInt();
 }
 
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
-}
-
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {
@@ -733,22 +730,6 @@ void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
 
 std::string CuttlefishConfig::webrtc_binary() const {
   return (*dictionary_)[kWebRTCBinary].asString();
-}
-
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
-}
-
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
