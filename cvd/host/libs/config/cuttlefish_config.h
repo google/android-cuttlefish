@@ -389,6 +389,8 @@ class CuttlefishConfig {
 
     std::string access_kregistry_path() const;
 
+    std::string pstore_path() const;
+
     std::string console_path() const;
 
     std::string logcat_path() const;
