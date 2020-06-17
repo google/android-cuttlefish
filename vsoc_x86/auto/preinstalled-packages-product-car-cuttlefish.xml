@@ -90,7 +90,6 @@
     <install-in-user-type package="com.android.car.goldilocks">
         <install-in user-type="FULL" />
     </install-in-user-type>
-
     <install-in-user-type package="com.android.car.speedbump">
         <install-in user-type="FULL" />
     </install-in-user-type>
@@ -130,10 +129,19 @@
     <install-in-user-type package="com.android.car.themeplayground">
         <install-in user-type="FULL" />
     </install-in-user-type>
+    <install-in-user-type package="com.android.theme.color.amethyst">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.color.aquamarine">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
     <install-in-user-type package="com.android.theme.color.black">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.theme.color.carbon">
+        <install-in user-type="FULL" />
+    </install-in-user-type>
+    <install-in-user-type package="com.android.theme.color.tangerine">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.theme.icon.pebble">
