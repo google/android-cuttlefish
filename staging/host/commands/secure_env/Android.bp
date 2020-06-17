@@ -18,6 +18,7 @@ cc_binary_host {
     srcs: [
         "keymaster_responder.cpp",
         "secure_env.cpp",
+        "tpm_random_source.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -31,6 +32,8 @@ cc_binary_host {
         "libcrypto",
         "libcutils",
         "libpuresoftkeymasterdevice_host",
+        "tpm2-tss2-esys",
+        "tpm2-tss2-rc",
     ],
     static_libs: [
         "libcuttlefish_host_config",
