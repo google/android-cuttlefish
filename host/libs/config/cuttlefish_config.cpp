@@ -185,6 +185,7 @@ const char* kRilDns = "ril_dns";
 const char* kKgdb = "kgdb";
 
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
+const char* kGatekeeperVsockPort = "gatekeeper_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
 }  // namespace
 
@@ -669,6 +670,14 @@ int CuttlefishConfig::InstanceSpecific::keymaster_vsock_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_keymaster_vsock_port(int keymaster_vsock_port) {
   (*Dictionary())[kKeymasterVsockPort] = keymaster_vsock_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::gatekeeper_vsock_port() const {
+  return (*Dictionary())[kGatekeeperVsockPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_gatekeeper_vsock_port(int gatekeeper_vsock_port) {
+  (*Dictionary())[kGatekeeperVsockPort] = gatekeeper_vsock_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
