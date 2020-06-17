@@ -15,6 +15,7 @@
 
 #include "super_image_mixer.h"
 
+#include <errno.h>
 #include <sys/stat.h>
 
 #include <algorithm>
@@ -176,6 +177,30 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
       return false;
     }
+    auto name_parts = android::base::Split(name, "/");
+    if (name_parts.size() < 2) {
+      LOG(WARNING) << name << " does not appear to have a partition";
+      continue;
+    }
+    auto etc_path = output_path + "/" + name_parts[0] + "/etc";
+    LOG(INFO) << "Creating directory " << etc_path;
+    if (mkdir(etc_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+        && errno != EEXIST) {
+      PLOG(ERROR) << "Could not mkdir " << etc_path;
+    }
+    std::string_view name_suffix(name.data(), name.size());
+    if (!android::base::ConsumePrefix(&name_suffix, name_parts[0] + "/")) {
+      LOG(ERROR) << name << " did not start with " << name_parts[0] + "/";
+      return false;
+    }
+    auto initial_path = output_path + "/" + name;
+    auto dest_path = output_path + "/" + name_parts[0] + "/etc/" +
+                     std::string(name_suffix);
+    LOG(INFO) << "Linking " << initial_path << " to " << dest_path;
+    if (link(initial_path.c_str(), dest_path.c_str())) {
+      PLOG(ERROR) << "Could not link " << initial_path << " to " << dest_path;
+      return false;
+    }
   }
 
   for (const auto& name : system_target_contents) {
@@ -198,10 +223,34 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
     } else if (kDefaultTargetBuildProp.count(name) > 0) {
       continue;
     }
-    FindImports(&default_target_archive, name);
+    FindImports(&system_target_archive, name);
     LOG(INFO) << "Writing " << name;
-    if (!default_target_archive.ExtractFiles({name}, output_path)) {
+    if (!system_target_archive.ExtractFiles({name}, output_path)) {
       LOG(ERROR) << "Failed to extract " << name << " from the default target zip";
+      return false;
+    }
+    auto name_parts = android::base::Split(name, "/");
+    if (name_parts.size() < 2) {
+      LOG(WARNING) << name << " does not appear to have a partition";
+      continue;
+    }
+    auto etc_path = output_path + "/" + name_parts[0] + "/etc";
+    LOG(INFO) << "Creating directory " << etc_path;
+    if (mkdir(etc_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+        && errno != EEXIST) {
+      PLOG(ERROR) << "Could not mkdir " << etc_path;
+    }
+    std::string_view name_suffix(name.data(), name.size());
+    if (!android::base::ConsumePrefix(&name_suffix, name_parts[0] + "/")) {
+      LOG(ERROR) << name << " did not start with " << name_parts[0] + "/";
+      return false;
+    }
+    auto initial_path = output_path + "/" + name;
+    auto dest_path = output_path + "/" + name_parts[0] + "/etc/" +
+                     std::string(name_suffix);
+    LOG(INFO) << "Linking " << initial_path << " to " << dest_path;
+    if (link(initial_path.c_str(), dest_path.c_str())) {
+      PLOG(ERROR) << "Could not link " << initial_path << " to " << dest_path;
       return false;
     }
   }
