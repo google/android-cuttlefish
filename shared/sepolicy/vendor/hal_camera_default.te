@@ -5,3 +5,5 @@ vndbinder_use(hal_camera_default)
 hal_client_domain(hal_camera_default, hal_graphics_allocator)
 
 get_prop(hal_camera_default, hal_camera_prop)
+
+gpu_access(hal_camera_default)
