@@ -1,2 +1,4 @@
 # Read GCE initial metadata file
 allow cameraserver initial_metadata_file:file r_file_perms;
+
+gpu_access(cameraserver)
