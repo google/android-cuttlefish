@@ -900,6 +900,11 @@ status_t EmulatedFakeCamera3::processCaptureRequest(
                 destBuf.format);
           res = INVALID_OPERATION;
         }
+      } else if (srcBuf.stream->format == HAL_PIXEL_FORMAT_BLOB) {
+        // All zero rectangle means lock the entire buffer.
+        res = GrallocModule::getInstance().lock(
+            *(destBuf.buffer), GRALLOC_USAGE_HW_CAMERA_WRITE, 0, 0, 0, 0,
+            (void **)&(destBuf.img));
       } else {
         res = GrallocModule::getInstance().lock(
             *(destBuf.buffer), GRALLOC_USAGE_HW_CAMERA_WRITE, 0, 0,
