@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
 
   ServiceStatus status;
 
-  auto log_fd = cvd::SharedFD::VsockClient(FLAGS_cid, FLAGS_port, SOCK_STREAM);
+  auto log_fd = cuttlefish::SharedFD::VsockClient(FLAGS_cid, FLAGS_port, SOCK_STREAM);
   if (!log_fd->IsOpen()) {
     std::ostringstream msg;
     msg << "Unable to connect to vsock:" << FLAGS_cid << ":" << FLAGS_port
@@ -117,9 +117,9 @@ int main(int argc, char** argv) {
                << ServiceStatus::kServiceStatusProperty;
   }
 
-  if (cvd::FileExists(FLAGS_pipe_name)) {
+  if (cuttlefish::FileExists(FLAGS_pipe_name)) {
     LOG(WARNING) << "The file " << FLAGS_pipe_name << " already exists. Deleting...";
-    cvd::RemoveFile(FLAGS_pipe_name);
+    cuttlefish::RemoveFile(FLAGS_pipe_name);
   }
   auto pipe = mkfifo(FLAGS_pipe_name.c_str(), 0600);
   if (pipe != 0) {
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
   }
   property_set("vendor.ser.cf-logcat", FLAGS_pipe_name.c_str());
   while (1) {
-    auto conn = cvd::SharedFD::Open(FLAGS_pipe_name.c_str(), O_RDONLY);
+    auto conn = cuttlefish::SharedFD::Open(FLAGS_pipe_name.c_str(), O_RDONLY);
     while (conn->IsOpen()) {
       char buff[4096];
       auto read = conn->Read(buff, sizeof(buff));

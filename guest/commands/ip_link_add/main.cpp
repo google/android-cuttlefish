@@ -39,11 +39,11 @@ int main(int argc, char *argv[]) {
     return -2;
   }
   const char *const new_name = argv[3];
-  auto factory = cvd::NetlinkClientFactory::Default();
-  std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
+  auto factory = cuttlefish::NetlinkClientFactory::Default();
+  std::unique_ptr<cuttlefish::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
 
   // http://maz-programmersdiary.blogspot.com/2011/09/netlink-sockets.html
-  cvd::NetlinkRequest link_add_request(RTM_NEWLINK, NLM_F_REQUEST|NLM_F_ACK|0x600);
+  cuttlefish::NetlinkRequest link_add_request(RTM_NEWLINK, NLM_F_REQUEST|NLM_F_ACK|0x600);
   link_add_request.Append(ifinfomsg {
     .ifi_change = 0xFFFFFFFF,
   });
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
   nl->Send(link_add_request);
 
-  cvd::NetlinkRequest bring_up_backing_request(RTM_SETLINK, NLM_F_REQUEST|NLM_F_ACK|0x600);
+  cuttlefish::NetlinkRequest bring_up_backing_request(RTM_SETLINK, NLM_F_REQUEST|NLM_F_ACK|0x600);
   bring_up_backing_request.Append(ifinfomsg {
     .ifi_index = index,
     .ifi_flags = IFF_UP,

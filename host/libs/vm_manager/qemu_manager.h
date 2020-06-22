@@ -35,7 +35,7 @@ class QemuManager : public VmManager {
   QemuManager(const vsoc::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
-  std::vector<cvd::Command> StartCommands() override;
+  std::vector<cuttlefish::Command> StartCommands() override;
 };
 
 }  // namespace vm_manager

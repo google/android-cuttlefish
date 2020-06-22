@@ -58,7 +58,7 @@ class EmulatedFakeCamera3 : public EmulatedCamera3,
    ***************************************************************************/
 
  public:
-  virtual status_t Initialize(const cvd::CameraDefinition &params);
+  virtual status_t Initialize(const cuttlefish::CameraDefinition &params);
 
   /****************************************************************************
    * Camera module API and generic hardware device API implementation
@@ -104,7 +104,7 @@ class EmulatedFakeCamera3 : public EmulatedCamera3,
   /**
    * Build the static info metadata buffer for this device
    */
-  status_t constructStaticInfo(const cvd::CameraDefinition &params);
+  status_t constructStaticInfo(const cuttlefish::CameraDefinition &params);
 
   /**
    * Run the fake 3A algorithms as needed. May override/modify settings

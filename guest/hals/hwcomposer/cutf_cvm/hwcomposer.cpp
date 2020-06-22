@@ -28,13 +28,13 @@
 
 static int hwc_open(const struct hw_module_t* module, const char* name,
                     struct hw_device_t** device) {
-  std::unique_ptr<cvd::ScreenView> screen_view(new cvd::VsocketScreenView());
+  std::unique_ptr<cuttlefish::ScreenView> screen_view(new cuttlefish::VsocketScreenView());
   if (!screen_view) {
     ALOGE("Failed to instantiate screen view");
     return -1;
   }
 
-  return cvd::cvd_hwc_open(std::move(screen_view), module, name, device);
+  return cuttlefish::cvd_hwc_open(std::move(screen_view), module, name, device);
 }
 
 static struct hw_module_methods_t hwc_module_methods = {

@@ -22,7 +22,7 @@
 
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 
 // libjpeg-turbo with jpeg_mem_dest (using memory as a destination) is funky.
@@ -49,4 +49,4 @@ class JpegCompressor {
 };
 
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish

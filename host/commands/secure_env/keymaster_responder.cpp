@@ -19,7 +19,7 @@
 #include <keymaster/android_keymaster_messages.h>
 
 KeymasterResponder::KeymasterResponder(
-    cvd::KeymasterChannel* channel, keymaster::AndroidKeymaster* keymaster)
+    cuttlefish::KeymasterChannel* channel, keymaster::AndroidKeymaster* keymaster)
     : channel_(channel), keymaster_(keymaster) {
 }
 

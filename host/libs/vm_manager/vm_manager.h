@@ -52,7 +52,7 @@ class VmManager {
   // command_starter function, although it may start more than one. The
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
-  virtual std::vector<cvd::Command> StartCommands() = 0;
+  virtual std::vector<cuttlefish::Command> StartCommands() = 0;
 
   virtual bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const;

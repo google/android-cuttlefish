@@ -25,7 +25,7 @@
 #include "common/libs/tcp_socket/tcp_socket.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 
 // TODO(haining) when the hwcomposer gives a sequence number type, use that
@@ -64,4 +64,4 @@ struct Stripe {
 };
 
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish
