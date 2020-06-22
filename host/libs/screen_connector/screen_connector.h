@@ -43,11 +43,11 @@ class ScreenConnector {
   }
 
   static inline int ScreenHeight() {
-      return vsoc::CuttlefishConfig::Get()->y_res();
+      return cuttlefish::CuttlefishConfig::Get()->y_res();
   }
 
   static inline int ScreenWidth() {
-      return vsoc::CuttlefishConfig::Get()->x_res();
+      return cuttlefish::CuttlefishConfig::Get()->x_res();
   }
 
   static inline int ScreenStride() {

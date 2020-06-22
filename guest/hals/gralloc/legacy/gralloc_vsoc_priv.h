@@ -43,7 +43,7 @@ struct android_ycbcr {
 };
 #endif
 
-namespace vsoc {
+namespace cuttlefish {
 namespace screen {
 
 struct ScreenRegionView {
@@ -258,9 +258,9 @@ static inline void formatToYcbcr(
 #ifdef GRALLOC_MODULE_API_VERSION_0_2
     case HAL_PIXEL_FORMAT_YCbCr_420_888:
 #endif
-      out->ystride = vsoc::screen::ScreenRegionView::align(width);
+      out->ystride = cuttlefish::screen::ScreenRegionView::align(width);
       out->cstride =
-          vsoc::screen::ScreenRegionView::align(out->ystride / 2);
+          cuttlefish::screen::ScreenRegionView::align(out->ystride / 2);
       out->chroma_step = 1;
       out->y = it;
       it += out->ystride * height;
@@ -295,17 +295,17 @@ static inline int formatToBytesPerFrame(int format, int w, int h) {
       y_size = strides.ystride * h;
       c_size = strides.cstride * h / 2;
       return (y_size + 2 * c_size +
-              vsoc::screen::ScreenRegionView::kSwiftShaderPadding);
+              cuttlefish::screen::ScreenRegionView::kSwiftShaderPadding);
     /*case HAL_PIXEL_FORMAT_RGBA_8888:
     case HAL_PIXEL_FORMAT_RGBX_8888:
     case HAL_PIXEL_FORMAT_BGRA_8888:
     case HAL_PIXEL_FORMAT_RGB_888:
     case HAL_PIXEL_FORMAT_RGB_565:*/
     default:
-      w16 = vsoc::screen::ScreenRegionView::align(w);
-      h16 = vsoc::screen::ScreenRegionView::align(h);
+      w16 = cuttlefish::screen::ScreenRegionView::align(w);
+      h16 = cuttlefish::screen::ScreenRegionView::align(h);
       return bytes_per_pixel * w16 * h16 +
-             vsoc::screen::ScreenRegionView::kSwiftShaderPadding;
+             cuttlefish::screen::ScreenRegionView::kSwiftShaderPadding;
   }
 }
 

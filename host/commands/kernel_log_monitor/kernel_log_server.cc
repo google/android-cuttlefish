@@ -33,12 +33,12 @@ static const std::map<std::string, std::string> kInformationalPatterns = {
 };
 
 static const std::map<std::string, monitor::BootEvent> kStageToEventMap = {
-    {vsoc::kBootStartedMessage, monitor::BootEvent::BootStarted},
-    {vsoc::kBootCompletedMessage, monitor::BootEvent::BootCompleted},
-    {vsoc::kBootFailedMessage, monitor::BootEvent::BootFailed},
-    {vsoc::kMobileNetworkConnectedMessage,
+    {cuttlefish::kBootStartedMessage, monitor::BootEvent::BootStarted},
+    {cuttlefish::kBootCompletedMessage, monitor::BootEvent::BootCompleted},
+    {cuttlefish::kBootFailedMessage, monitor::BootEvent::BootFailed},
+    {cuttlefish::kMobileNetworkConnectedMessage,
      monitor::BootEvent::MobileNetworkConnected},
-    {vsoc::kWifiConnectedMessage, monitor::BootEvent::WifiNetworkConnected},
+    {cuttlefish::kWifiConnectedMessage, monitor::BootEvent::WifiNetworkConnected},
     // TODO(b/131864854): Replace this with a string less likely to change
     {"init: starting service 'adbd'", monitor::BootEvent::AdbdStarted},
 };

@@ -29,12 +29,12 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/device_config/device_config.h"
 
-using vsoc::input_events::InputEvent;
-using vsoc_input_service::VirtualDeviceBase;
-using vsoc_input_service::VirtualKeyboard;
-using vsoc_input_service::VirtualPowerButton;
-using vsoc_input_service::VirtualTouchScreen;
-using vsoc_input_service::VSoCInputService;
+using cuttlefish::input_events::InputEvent;
+using cuttlefish_input_service::VirtualDeviceBase;
+using cuttlefish_input_service::VirtualKeyboard;
+using cuttlefish_input_service::VirtualPowerButton;
+using cuttlefish_input_service::VirtualTouchScreen;
+using cuttlefish_input_service::VSoCInputService;
 
 DEFINE_uint32(keyboard_port, 0, "keyboard vsock port");
 DEFINE_uint32(touch_port, 0, "keyboard vsock port");

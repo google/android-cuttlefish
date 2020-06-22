@@ -43,7 +43,7 @@ namespace vm_manager {
 
 namespace {
 
-std::string GetMonitorPath(const vsoc::CuttlefishConfig* config) {
+std::string GetMonitorPath(const cuttlefish::CuttlefishConfig* config) {
   return config->ForDefaultInstance()
       .PerInstanceInternalPath("qemu_monitor.sock");
 }
@@ -54,7 +54,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 }
 
 bool Stop() {
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   auto monitor_path = GetMonitorPath(config);
   auto monitor_sock = cuttlefish::SharedFD::SocketLocalClient(
       monitor_path.c_str(), false, SOCK_STREAM);
@@ -88,7 +88,7 @@ bool Stop() {
 const std::string QemuManager::name() { return "qemu_cli"; }
 
 std::vector<std::string> QemuManager::ConfigureGpu(const std::string& gpu_mode) {
-  if (gpu_mode != vsoc::kGpuModeGuestSwiftshader) {
+  if (gpu_mode != cuttlefish::kGpuModeGuestSwiftshader) {
     return {};
   }
   // Override the default HAL search paths in all cases. We do this because
@@ -109,7 +109,7 @@ std::vector<std::string> QemuManager::ConfigureBootDevices() {
   return { "androidboot.boot_devices=pci0000:00/0000:00:03.0" };
 }
 
-QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
+QemuManager::QemuManager(const cuttlefish::CuttlefishConfig* config)
   : VmManager(config) {}
 
 std::vector<cuttlefish::Command> QemuManager::StartCommands() {
