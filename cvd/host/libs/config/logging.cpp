@@ -27,7 +27,7 @@ namespace cuttlefish {
 void DefaultSubprocessLogging(char* argv[]) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 
