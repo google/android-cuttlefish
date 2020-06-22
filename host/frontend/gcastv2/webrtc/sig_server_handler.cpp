@@ -170,7 +170,7 @@ void SigServerHandler::Connect(const std::string &server_addr, int server_port,
 }
 
 void SigServerHandler::OnOpen() {
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   Json::Value register_obj;
   register_obj[cuttlefish::webrtc_signaling::kTypeField] =
       cuttlefish::webrtc_signaling::kRegisterType;

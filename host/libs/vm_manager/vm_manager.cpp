@@ -28,12 +28,12 @@
 
 namespace vm_manager {
 
-VmManager::VmManager(const vsoc::CuttlefishConfig* config)
+VmManager::VmManager(const cuttlefish::CuttlefishConfig* config)
     : config_(config) {}
 
 namespace{
 template <typename T>
-VmManager* GetManagerSingleton(const vsoc::CuttlefishConfig* config) {
+VmManager* GetManagerSingleton(const cuttlefish::CuttlefishConfig* config) {
   static std::shared_ptr<VmManager> vm_manager(new T(config));
   return vm_manager.get();
 }
@@ -45,7 +45,7 @@ std::map<std::string, VmManager::VmManagerHelper>
           QemuManager::name(),
           {
             GetManagerSingleton<QemuManager>,
-            vsoc::HostSupportsQemuCli,
+            cuttlefish::HostSupportsQemuCli,
             QemuManager::ConfigureGpu,
             QemuManager::ConfigureBootDevices,
           },
@@ -55,7 +55,7 @@ std::map<std::string, VmManager::VmManagerHelper>
           {
             GetManagerSingleton<CrosvmManager>,
             // Same as Qemu for the time being
-            vsoc::HostSupportsQemuCli,
+            cuttlefish::HostSupportsQemuCli,
             CrosvmManager::ConfigureGpu,
             CrosvmManager::ConfigureBootDevices,
           }
@@ -63,7 +63,7 @@ std::map<std::string, VmManager::VmManagerHelper>
     };
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
-                          const vsoc::CuttlefishConfig* config) {
+                          const cuttlefish::CuttlefishConfig* config) {
   if (VmManager::IsValidName(vm_manager_name)) {
     return vm_manager_helpers_[vm_manager_name].builder(config);
   }

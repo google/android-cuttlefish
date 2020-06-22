@@ -18,46 +18,46 @@ using cuttlefish::RunnerExitCodes;
 
 namespace {
 
-std::string GetAdbConnectorTcpArg(const vsoc::CuttlefishConfig& config) {
+std::string GetAdbConnectorTcpArg(const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   return std::string{"127.0.0.1:"} + std::to_string(instance.host_port());
 }
 
-std::string GetAdbConnectorVsockArg(const vsoc::CuttlefishConfig& config) {
+std::string GetAdbConnectorVsockArg(const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   return std::string{"vsock:"} + std::to_string(instance.vsock_guest_cid()) +
          std::string{":5555"};
 }
 
-bool AdbModeEnabled(const vsoc::CuttlefishConfig& config, vsoc::AdbMode mode) {
+bool AdbModeEnabled(const cuttlefish::CuttlefishConfig& config, cuttlefish::AdbMode mode) {
   return config.adb_mode().count(mode) > 0;
 }
 
-bool AdbVsockTunnelEnabled(const vsoc::CuttlefishConfig& config) {
+bool AdbVsockTunnelEnabled(const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   return instance.vsock_guest_cid() > 2 &&
-         AdbModeEnabled(config, vsoc::AdbMode::VsockTunnel);
+         AdbModeEnabled(config, cuttlefish::AdbMode::VsockTunnel);
 }
 
-bool AdbVsockHalfTunnelEnabled(const vsoc::CuttlefishConfig& config) {
+bool AdbVsockHalfTunnelEnabled(const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   return instance.vsock_guest_cid() > 2 &&
-         AdbModeEnabled(config, vsoc::AdbMode::VsockHalfTunnel);
+         AdbModeEnabled(config, cuttlefish::AdbMode::VsockHalfTunnel);
 }
 
-bool AdbTcpConnectorEnabled(const vsoc::CuttlefishConfig& config) {
+bool AdbTcpConnectorEnabled(const cuttlefish::CuttlefishConfig& config) {
   bool vsock_tunnel = AdbVsockTunnelEnabled(config);
   bool vsock_half_tunnel = AdbVsockHalfTunnelEnabled(config);
   return config.run_adb_connector() && (vsock_tunnel || vsock_half_tunnel);
 }
 
-bool AdbVsockConnectorEnabled(const vsoc::CuttlefishConfig& config) {
+bool AdbVsockConnectorEnabled(const cuttlefish::CuttlefishConfig& config) {
   return config.run_adb_connector() &&
-         AdbModeEnabled(config, vsoc::AdbMode::NativeVsock);
+         AdbModeEnabled(config, cuttlefish::AdbMode::NativeVsock);
 }
 
 cuttlefish::OnSocketReadyCb GetOnSubprocessExitCallback(
-    const vsoc::CuttlefishConfig& config) {
+    const cuttlefish::CuttlefishConfig& config) {
   if (config.restart_subprocesses()) {
     return cuttlefish::ProcessMonitor::RestartOnExitCb;
   } else {
@@ -78,7 +78,7 @@ cuttlefish::SharedFD CreateUnixInputServer(const std::string& path) {
 // Creates the frame and input sockets and add the relevant arguments to the vnc
 // server and webrtc commands
 StreamerLaunchResult CreateStreamerServers(
-    cuttlefish::Command* cmd, const vsoc::CuttlefishConfig& config) {
+    cuttlefish::Command* cmd, const cuttlefish::CuttlefishConfig& config) {
   StreamerLaunchResult server_ret;
   cuttlefish::SharedFD touch_server;
   cuttlefish::SharedFD keyboard_server;
@@ -110,8 +110,8 @@ StreamerLaunchResult CreateStreamerServers(
   cmd->AddParameter("-keyboard_fd=", keyboard_server);
 
   cuttlefish::SharedFD frames_server;
-  if (config.gpu_mode() == vsoc::kGpuModeDrmVirgl ||
-      config.gpu_mode() == vsoc::kGpuModeGfxStream) {
+  if (config.gpu_mode() == cuttlefish::kGpuModeDrmVirgl ||
+      config.gpu_mode() == cuttlefish::kGpuModeGfxStream) {
     frames_server = CreateUnixInputServer(instance.frames_socket_path());
   } else {
     frames_server = cuttlefish::SharedFD::VsockServer(instance.frames_server_port(),
@@ -127,12 +127,12 @@ StreamerLaunchResult CreateStreamerServers(
 
 }  // namespace
 
-bool LogcatReceiverEnabled(const vsoc::CuttlefishConfig& config) {
+bool LogcatReceiverEnabled(const cuttlefish::CuttlefishConfig& config) {
   return config.logcat_mode() == cuttlefish::kLogcatVsockMode;
 }
 
 std::vector<cuttlefish::SharedFD> LaunchKernelLogMonitor(
-    const vsoc::CuttlefishConfig& config, cuttlefish::ProcessMonitor* process_monitor,
+    const cuttlefish::CuttlefishConfig& config, cuttlefish::ProcessMonitor* process_monitor,
     unsigned int number_of_event_pipes) {
   auto instance = config.ForDefaultInstance();
   auto log_name = instance.kernel_log_pipe_name();
@@ -176,7 +176,7 @@ std::vector<cuttlefish::SharedFD> LaunchKernelLogMonitor(
   return ret;
 }
 
-void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+void LaunchLogcatReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                    cuttlefish::ProcessMonitor* process_monitor) {
   if (!LogcatReceiverEnabled(config)) {
     return;
@@ -196,7 +196,7 @@ void LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
   return;
 }
 
-void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
+void LaunchConfigServer(const cuttlefish::CuttlefishConfig& config,
                         cuttlefish::ProcessMonitor* process_monitor) {
   auto instance = config.ForDefaultInstance();
   auto port = instance.config_server_port();
@@ -213,7 +213,7 @@ void LaunchConfigServer(const vsoc::CuttlefishConfig& config,
   return;
 }
 
-void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
+void LaunchTombstoneReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                       cuttlefish::ProcessMonitor* process_monitor) {
   if (!config.enable_tombstone_receiver()) {
     return;
@@ -250,7 +250,7 @@ void LaunchTombstoneReceiverIfEnabled(const vsoc::CuttlefishConfig& config,
 }
 
 StreamerLaunchResult LaunchVNCServer(
-    const vsoc::CuttlefishConfig& config, cuttlefish::ProcessMonitor* process_monitor,
+    const cuttlefish::CuttlefishConfig& config, cuttlefish::ProcessMonitor* process_monitor,
     std::function<bool(MonitorEntry*)> callback) {
   auto instance = config.ForDefaultInstance();
   // Launch the vnc server, don't wait for it to complete
@@ -266,7 +266,7 @@ StreamerLaunchResult LaunchVNCServer(
 }
 
 void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
-                                 const vsoc::CuttlefishConfig& config,
+                                 const cuttlefish::CuttlefishConfig& config,
                                  cuttlefish::SharedFD adbd_events_pipe) {
   cuttlefish::Command adb_connector(config.adb_connector_binary());
   adb_connector.AddParameter("-adbd_events_fd=", adbd_events_pipe);
@@ -292,7 +292,7 @@ void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
-                                  const vsoc::CuttlefishConfig& config) {
+                                  const cuttlefish::CuttlefishConfig& config) {
   if (config.ForDefaultInstance().start_webrtc_sig_server()) {
     cuttlefish::Command sig_server(config.sig_server_binary());
     sig_server.AddParameter("-assets_dir=", config.webrtc_assets_dir());
@@ -331,7 +331,7 @@ StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
-                                     const vsoc::CuttlefishConfig& config) {
+                                     const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   if (AdbVsockTunnelEnabled(config)) {
     cuttlefish::Command adb_tunnel(config.socket_vsock_proxy_binary());
@@ -358,12 +358,12 @@ void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor
 }
 
 void LaunchTpmSimulator(cuttlefish::ProcessMonitor* process_monitor,
-                   const vsoc::CuttlefishConfig& config) {
+                   const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   auto port = instance.tpm_port();
   auto socket = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM);
   cuttlefish::Command tpm_command(
-      vsoc::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
+      cuttlefish::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
   tpm_command.AddParameter("-port=", port);
   process_monitor->StartSubprocess(std::move(tpm_command),
                                    GetOnSubprocessExitCallback(config));
@@ -377,7 +377,7 @@ void LaunchTpmSimulator(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
-                   const vsoc::CuttlefishConfig& config) {
+                   const cuttlefish::CuttlefishConfig& config) {
   cuttlefish::Command metrics(config.metrics_binary());
 
   process_monitor->StartSubprocess(std::move(metrics),
@@ -385,7 +385,7 @@ void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 void LaunchTpmPassthrough(cuttlefish::ProcessMonitor* process_monitor,
-                          const vsoc::CuttlefishConfig& config) {
+                          const cuttlefish::CuttlefishConfig& config) {
   auto server = cuttlefish::SharedFD::VsockServer(SOCK_STREAM);
   if (!server->IsOpen()) {
     LOG(ERROR) << "Unable to create tpm passthrough server: "
@@ -393,7 +393,7 @@ void LaunchTpmPassthrough(cuttlefish::ProcessMonitor* process_monitor,
     std::exit(RunnerExitCodes::kTpmPassthroughError);
   }
   cuttlefish::Command tpm_command(
-      vsoc::DefaultHostArtifactsPath("bin/vtpm_passthrough"));
+      cuttlefish::DefaultHostArtifactsPath("bin/vtpm_passthrough"));
   tpm_command.AddParameter("-server_fd=", server);
   tpm_command.AddParameter("-device=", config.tpm_device());
 
@@ -402,7 +402,7 @@ void LaunchTpmPassthrough(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
-               const vsoc::CuttlefishConfig& config) {
+               const cuttlefish::CuttlefishConfig& config) {
   if (config.tpm_device() != "") {
     if (config.tpm_binary() != "") {
       LOG(WARNING)
@@ -415,16 +415,16 @@ void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
-                             const vsoc::CuttlefishConfig& config) {
+                             const cuttlefish::CuttlefishConfig& config) {
   auto port = config.ForDefaultInstance().keymaster_vsock_port();
   auto server = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM);
-  cuttlefish::Command command(vsoc::DefaultHostArtifactsPath("bin/secure_env"));
+  cuttlefish::Command command(cuttlefish::DefaultHostArtifactsPath("bin/secure_env"));
   command.AddParameter("-keymaster_fd=", server);
   process_monitor->StartSubprocess(std::move(command),
                                    GetOnSubprocessExitCallback(config));
 }
 
-void LaunchVerhicleHalServerIfEnabled(const vsoc::CuttlefishConfig& config,
+void LaunchVerhicleHalServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                                         cuttlefish::ProcessMonitor* process_monitor) {
     if (!config.enable_vehicle_hal_grpc_server()) {
         return;

@@ -16,7 +16,7 @@
 
 #include "virtual_keyboard.h"
 
-namespace vsoc_input_service {
+namespace cuttlefish_input_service {
 
 VirtualKeyboard::VirtualKeyboard()
     : VirtualDeviceBase("VSoC keyboard", 0x6008) {}
@@ -63,4 +63,4 @@ const std::vector<const uint32_t>& VirtualKeyboard::GetKeys() const {
   return keys;
 }
 
-}  // namespace vsoc_input_service
+}  // namespace cuttlefish_input_service
