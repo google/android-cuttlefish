@@ -41,7 +41,7 @@ using MetadataType =
 // TODO(b/146515640): remove this.
 using cuttlefish_gralloc0_buffer_handle_t = private_handle_t;
 
-namespace cvd {
+namespace cuttlefish {
 
 Gralloc::Gralloc() {
   android::hardware::preloadPassthroughService<IMapper>();
@@ -526,4 +526,4 @@ std::optional<uint32_t> GrallocBuffer::GetMonoPlanarStrideBytes() {
   return std::nullopt;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

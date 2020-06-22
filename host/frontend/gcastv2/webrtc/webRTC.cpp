@@ -53,7 +53,7 @@ DEFINE_bool(write_virtio_input, false,
 DEFINE_string(adb, "", "Interface:port of local adb service.");
 
 int main(int argc, char **argv) {
-  cvd::DefaultSubprocessLogging(argv);
+  cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   SSLSocket::Init();

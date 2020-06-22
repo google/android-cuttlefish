@@ -24,7 +24,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "guest/hals/hwcomposer/common/screen_view.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class VsocketScreenView : public ScreenView {
  public:
@@ -48,7 +48,7 @@ class VsocketScreenView : public ScreenView {
   void BroadcastLoop();
 
   std::vector<char> inner_buffer_;
-  cvd::SharedFD screen_server_;
+  cuttlefish::SharedFD screen_server_;
   std::thread broadcast_thread_;
   int current_offset_ = 0;
   int current_seq_ = 0;
@@ -61,4 +61,4 @@ class VsocketScreenView : public ScreenView {
   int32_t refresh_rate_{60};
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

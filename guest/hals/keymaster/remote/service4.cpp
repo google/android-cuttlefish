@@ -36,12 +36,12 @@ int main(int argc, char** argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     ::android::hardware::configureRpcThreadpool(1, true);
 
-    auto vsockFd = cvd::SharedFD::VsockClient(2, FLAGS_port, SOCK_STREAM);
+    auto vsockFd = cuttlefish::SharedFD::VsockClient(2, FLAGS_port, SOCK_STREAM);
     if (!vsockFd->IsOpen()) {
         LOG(FATAL) << "Could not connect to keymaster server: "
                    << vsockFd->StrError();
     }
-    cvd::KeymasterChannel keymasterChannel(vsockFd);
+    cuttlefish::KeymasterChannel keymasterChannel(vsockFd);
     auto remoteKeymaster = new keymaster::RemoteKeymaster(&keymasterChannel);
 
     if (!remoteKeymaster->Initialize()) {

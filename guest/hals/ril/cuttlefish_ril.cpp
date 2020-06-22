@@ -56,7 +56,7 @@ typedef enum {
   RUIM_NETWORK_PERSONALIZATION = 11
 } SIM_Status;
 
-static std::unique_ptr<cvd::DeviceConfig> global_ril_config = nullptr;
+static std::unique_ptr<cuttlefish::DeviceConfig> global_ril_config = nullptr;
 
 static const struct RIL_Env* gce_ril_env;
 
@@ -109,11 +109,11 @@ static bool areUiccApplicationsEnabled = true;
 // This call returns true, if operation was successful.
 bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
                            const char* bcaddr) {
-  auto factory = cvd::NetlinkClientFactory::Default();
-  std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
-  std::unique_ptr<cvd::NetworkInterfaceManager> nm(
-      cvd::NetworkInterfaceManager::New(factory));
-  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open("rmnet0", "eth1"));
+  auto factory = cuttlefish::NetlinkClientFactory::Default();
+  std::unique_ptr<cuttlefish::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
+  std::unique_ptr<cuttlefish::NetworkInterfaceManager> nm(
+      cuttlefish::NetworkInterfaceManager::New(factory));
+  std::unique_ptr<cuttlefish::NetworkInterface> ni(nm->Open("rmnet0", "eth1"));
 
   if (ni) {
     ni->SetName("rmnet0");
@@ -131,7 +131,7 @@ bool SetUpNetworkInterface(const char* ipaddr, int prefixlen,
 // TearDownNetworkInterface disables network interface.
 // This call returns true, if operation was successful.
 bool TearDownNetworkInterface() {
-  auto nm(cvd::NetworkInterfaceManager::New(nullptr));
+  auto nm(cuttlefish::NetworkInterfaceManager::New(nullptr));
   auto ni(nm->Open("rmnet0", "eth1"));
 
   if (ni) {
@@ -2610,7 +2610,7 @@ const RIL_RadioFunctions* RIL_Init(const struct RIL_Env* env, int /*argc*/,
   time(&gce_ril_start_time);
   gce_ril_env = env;
 
-  global_ril_config = cvd::DeviceConfig::Get();
+  global_ril_config = cuttlefish::DeviceConfig::Get();
   if (!global_ril_config) {
     ALOGE("Failed to open device configuration!!!");
     return nullptr;

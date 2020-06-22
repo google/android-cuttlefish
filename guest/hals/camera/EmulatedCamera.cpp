@@ -88,7 +88,7 @@ EmulatedCamera::~EmulatedCamera() {}
  * Public API
  ***************************************************************************/
 
-status_t EmulatedCamera::Initialize(const cvd::CameraDefinition&) {
+status_t EmulatedCamera::Initialize(const cuttlefish::CameraDefinition&) {
   /* Preview formats supported by this HAL. */
   char preview_formats[1024];
   snprintf(preview_formats, sizeof(preview_formats), "%s,%s,%s",

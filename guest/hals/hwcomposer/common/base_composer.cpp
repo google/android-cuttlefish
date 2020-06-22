@@ -21,7 +21,7 @@
 #include <cutils/properties.h>
 #include <log/log.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 BaseComposer::BaseComposer(std::unique_ptr<ScreenView> screen_view)
     : screen_view_(std::move(screen_view)), gralloc_() {}
@@ -52,7 +52,7 @@ int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
 
   screen_view_->Broadcast(buffer_id);
   return 0;
-}  // namespace cvd
+}  // namespace cuttlefish
 
 bool BaseComposer::IsValidLayer(const hwc_layer_1_t& layer) {
   auto buffer_opt = gralloc_.Import(layer.handle);
@@ -111,4 +111,4 @@ int BaseComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   return -1;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

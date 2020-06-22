@@ -90,7 +90,7 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back("androidboot.tombstone_transmit=0");
   }
 
-  if (config.logcat_mode() == cvd::kLogcatVsockMode && instance.logcat_port()) {
+  if (config.logcat_mode() == cuttlefish::kLogcatVsockMode && instance.logcat_port()) {
     kernel_cmdline.push_back(concat("androidboot.vsock_logcat_port=", instance.logcat_port()));
   }
 

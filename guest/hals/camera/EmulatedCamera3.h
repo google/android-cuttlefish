@@ -84,7 +84,7 @@ class EmulatedCamera3 : public camera3_device, public EmulatedBaseCamera {
    ***************************************************************************/
 
  public:
-  virtual status_t Initialize(const cvd::CameraDefinition &params);
+  virtual status_t Initialize(const cuttlefish::CameraDefinition &params);
 
   /****************************************************************************
    * Camera module API and generic hardware device API implementation
