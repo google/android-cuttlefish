@@ -43,6 +43,8 @@
   <bool name="config_showNavigationBar" translatable="false">true</bool>
   <dimen name="config_viewConfigurationTouchSlop" translatable="false">12dp</dimen>
   <integer name="config_mobile_mtu" translatable="false">1460</integer>
+  <!--  Whether Multiuser UI should be shown -->
+  <bool name="config_enableMultiUserUI" translatable="false">true</bool>
   <!--  Maximum number of supported users -->
   <integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
 
