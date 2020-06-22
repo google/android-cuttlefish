@@ -198,7 +198,7 @@ const char* const kGpuModeGfxStream = "gfxstream";
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,
                                    const char* subpath) {
-  return cvd::StringFromEnv(environment_key, default_value) + "/" + subpath;
+  return cuttlefish::StringFromEnv(environment_key, default_value) + "/" + subpath;
 }
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
@@ -298,7 +298,7 @@ std::string CuttlefishConfig::kernel_image_path() const {
 void CuttlefishConfig::SetPath(const std::string& key,
                                const std::string& path) {
   if (!path.empty()) {
-    (*dictionary_)[key] = cvd::AbsolutePath(path);
+    (*dictionary_)[key] = cuttlefish::AbsolutePath(path);
   }
 }
 
@@ -387,11 +387,11 @@ void CuttlefishConfig::MutableInstanceSpecific::set_virtual_disk_paths(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
-  return cvd::AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::console_pipe_name() const {
-  return cvd::AbsolutePath(PerInstanceInternalPath("console-pipe"));
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-pipe"));
 }
 
 bool CuttlefishConfig::deprecated_boot_completed() const {
@@ -403,32 +403,32 @@ void CuttlefishConfig::set_deprecated_boot_completed(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
-  return cvd::AbsolutePath(PerInstancePath("access-kregistry"));
+  return cuttlefish::AbsolutePath(PerInstancePath("access-kregistry"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
-  return cvd::AbsolutePath(PerInstancePath("pstore"));
+  return cuttlefish::AbsolutePath(PerInstancePath("pstore"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::console_path() const {
-  return cvd::AbsolutePath(PerInstancePath("console"));
+  return cuttlefish::AbsolutePath(PerInstancePath("console"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
-  return cvd::AbsolutePath(PerInstancePath("logcat"));
+  return cuttlefish::AbsolutePath(PerInstancePath("logcat"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
     const {
-  return cvd::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
+  return cuttlefish::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
-  return cvd::AbsolutePath(PerInstancePath("launcher.log"));
+  return cuttlefish::AbsolutePath(PerInstancePath("launcher.log"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
-  return cvd::AbsolutePath(PerInstancePath("sdcard.img"));
+  return cuttlefish::AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
@@ -1100,7 +1100,7 @@ std::string CuttlefishConfig::ril_dns()const {
 // the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
 // Returns nullptr if there was an error loading from file
 /*static*/ CuttlefishConfig* CuttlefishConfig::BuildConfigImpl() {
-  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
+  auto config_file_path = cuttlefish::StringFromEnv(kCuttlefishConfigEnvVarName,
                                              vsoc::GetGlobalConfigFileLink());
   auto ret = new CuttlefishConfig();
   if (ret) {
@@ -1119,10 +1119,10 @@ std::string CuttlefishConfig::ril_dns()const {
 }
 
 /*static*/ bool CuttlefishConfig::ConfigExists() {
-  auto config_file_path = cvd::StringFromEnv(kCuttlefishConfigEnvVarName,
+  auto config_file_path = cuttlefish::StringFromEnv(kCuttlefishConfigEnvVarName,
                                              vsoc::GetGlobalConfigFileLink());
-  auto real_file_path = cvd::AbsolutePath(config_file_path.c_str());
-  return cvd::FileExists(real_file_path);
+  auto real_file_path = cuttlefish::AbsolutePath(config_file_path.c_str());
+  return cuttlefish::FileExists(real_file_path);
 }
 
 CuttlefishConfig::CuttlefishConfig() : dictionary_(new Json::Value()) {}
@@ -1134,7 +1134,7 @@ CuttlefishConfig::CuttlefishConfig(CuttlefishConfig&&) = default;
 CuttlefishConfig& CuttlefishConfig::operator=(CuttlefishConfig&&) = default;
 
 bool CuttlefishConfig::LoadFromFile(const char* file) {
-  auto real_file_path = cvd::AbsolutePath(file);
+  auto real_file_path = cuttlefish::AbsolutePath(file);
   if (real_file_path.empty()) {
     LOG(ERROR) << "Could not get real path for file " << file;
     return false;
@@ -1160,7 +1160,7 @@ bool CuttlefishConfig::SaveToFile(const std::string& file) const {
 
 std::string CuttlefishConfig::AssemblyPath(
     const std::string& file_name) const {
-  return cvd::AbsolutePath(assembly_dir() + "/" + file_name);
+  return cuttlefish::AbsolutePath(assembly_dir() + "/" + file_name);
 }
 
 std::string CuttlefishConfig::composite_disk_path() const {
@@ -1229,15 +1229,15 @@ int GetDefaultPerInstanceVsockCid() {
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (cvd::StringFromEnv("ANDROID_HOST_OUT",
-                             cvd::StringFromEnv("HOME", ".")) +
+  return (cuttlefish::StringFromEnv("ANDROID_HOST_OUT",
+                             cuttlefish::StringFromEnv("HOME", ".")) +
           "/") +
          file_name;
 }
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
-  return (cvd::StringFromEnv("ANDROID_PRODUCT_OUT",
-                             cvd::StringFromEnv("HOME", "."))) +
+  return (cuttlefish::StringFromEnv("ANDROID_PRODUCT_OUT",
+                             cuttlefish::StringFromEnv("HOME", "."))) +
          file_name;
 }
 

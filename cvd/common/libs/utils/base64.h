@@ -20,10 +20,10 @@
 #include <string>
 #include <vector>
 
-namespace cvd {
+namespace cuttlefish {
 
 bool EncodeBase64(const void* _data, size_t size, std::string* out);
 
 bool DecodeBase64(const std::string& data, std::vector<uint8_t>* buffer);
 
-}  // namespace cvd
+}  // namespace cuttlefish

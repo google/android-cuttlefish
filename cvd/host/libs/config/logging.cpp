@@ -22,7 +22,7 @@
 
 using android::base::SetLogger;
 
-namespace cvd {
+namespace cuttlefish {
 
 void DefaultSubprocessLogging(char* argv[]) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -40,4 +40,4 @@ void DefaultSubprocessLogging(char* argv[]) {
   }
 }
 
-} // namespace cvd
+} // namespace cuttlefish

@@ -24,7 +24,7 @@
 
 #include "common/libs/utils/subprocess.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 Archive::Archive(const std::string& file) : file(file) {
 }
@@ -33,11 +33,11 @@ Archive::~Archive() {
 }
 
 std::vector<std::string> Archive::Contents() {
-  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
+  cuttlefish::Command bsdtar_cmd("/usr/bin/bsdtar");
   bsdtar_cmd.AddParameter("-tf");
   bsdtar_cmd.AddParameter(file);
   std::string bsdtar_input, bsdtar_output;
-  auto bsdtar_ret = cvd::RunWithManagedStdio(std::move(bsdtar_cmd), &bsdtar_input,
+  auto bsdtar_ret = cuttlefish::RunWithManagedStdio(std::move(bsdtar_cmd), &bsdtar_input,
                                              &bsdtar_output, nullptr);
   if (bsdtar_ret != 0) {
     LOG(ERROR) << "`bsdtar -tf \"" << file << "\"` returned " << bsdtar_ret;
@@ -53,7 +53,7 @@ bool Archive::ExtractAll(const std::string& target_directory) {
 
 bool Archive::ExtractFiles(const std::vector<std::string>& to_extract,
                            const std::string& target_directory) {
-  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
+  cuttlefish::Command bsdtar_cmd("/usr/bin/bsdtar");
   bsdtar_cmd.AddParameter("-x");
   bsdtar_cmd.AddParameter("-v");
   bsdtar_cmd.AddParameter("-C");
@@ -64,8 +64,8 @@ bool Archive::ExtractFiles(const std::vector<std::string>& to_extract,
   for (const auto& extract : to_extract) {
     bsdtar_cmd.AddParameter(extract);
   }
-  bsdtar_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut,
-                           cvd::Subprocess::StdIOChannel::kStdErr);
+  bsdtar_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdOut,
+                           cuttlefish::Subprocess::StdIOChannel::kStdErr);
   auto bsdtar_ret = bsdtar_cmd.Start().Wait();
   if (bsdtar_ret != 0) {
     LOG(ERROR) << "bsdtar extraction on \"" << file << "\" returned " << bsdtar_ret;
@@ -74,7 +74,7 @@ bool Archive::ExtractFiles(const std::vector<std::string>& to_extract,
 }
 
 std::string Archive::ExtractToMemory(const std::string& path) {
-  cvd::Command bsdtar_cmd("/usr/bin/bsdtar");
+  cuttlefish::Command bsdtar_cmd("/usr/bin/bsdtar");
   bsdtar_cmd.AddParameter("-xf");
   bsdtar_cmd.AddParameter(file);
   bsdtar_cmd.AddParameter("-O");
@@ -90,4 +90,4 @@ std::string Archive::ExtractToMemory(const std::string& path) {
   return stdout;
 }
 
-} // namespace cvd
+} // namespace cuttlefish

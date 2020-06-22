@@ -25,7 +25,7 @@ namespace Json {
 class Value;
 }
 
-namespace cvd {
+namespace cuttlefish {
 constexpr char kLogcatSerialMode[] = "serial";
 constexpr char kLogcatVsockMode[] = "vsock";
 }

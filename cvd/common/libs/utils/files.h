@@ -20,7 +20,7 @@
 #include <chrono>
 #include <string>
 
-namespace cvd {
+namespace cuttlefish {
 bool FileExists(const std::string& path);
 bool FileHasContent(const std::string& path);
 bool DirectoryExists(const std::string& path);
@@ -43,4 +43,4 @@ struct FileSizes {
   off_t disk_size;
 };
 FileSizes SparseFileSizes(const std::string& path);
-}  // namespace cvd
+}  // namespace cuttlefish

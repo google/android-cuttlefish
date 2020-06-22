@@ -20,7 +20,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 /**
  * Reads from fd until it is closed or errors, storing all data in buf.
@@ -118,4 +118,4 @@ ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
   return WriteAll(fd, (const char*) binary_data, sizeof(*binary_data));
 }
 
-} // namespace cvd
+} // namespace cuttlefish
