@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = vsoc::CuttlefishConfig::Get();
 
   auto instance = config->ForDefaultInstance();
   auto path = instance.logcat_path();
