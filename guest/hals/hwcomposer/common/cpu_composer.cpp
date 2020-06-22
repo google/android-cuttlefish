@@ -31,7 +31,7 @@
 #include "guest/hals/hwcomposer/common/drm_utils.h"
 #include "guest/hals/hwcomposer/common/geometry_utils.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -463,7 +463,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   int tmp_buffer_height =
       src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   int tmp_buffer_stride_bytes =
-      cvd::AlignToPowerOf2(tmp_buffer_width * screen_view_->bytes_per_pixel(), 4);
+      cuttlefish::AlignToPowerOf2(tmp_buffer_width * screen_view_->bytes_per_pixel(), 4);
 
   for (int i = 0; i < needed_tmp_buffers; i++) {
     BufferSpec tmp_buffer_spec(
@@ -491,7 +491,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
       int dst_stride_bytes =
-          cvd::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
+          cuttlefish::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
       size_t needed_size = dst_stride_bytes * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
@@ -694,4 +694,4 @@ uint8_t* CpuComposer::GetSpecialTmpBuffer(size_t needed_size) {
   return &special_tmp_buffer_[0];
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

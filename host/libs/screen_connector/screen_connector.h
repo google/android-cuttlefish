@@ -22,7 +22,7 @@
 #include "common/libs/utils/size_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 using FrameCallback = std::function<void(std::uint32_t /*frame_number*/,
                                          std::uint8_t* /*frame_pixels*/)>;
@@ -62,4 +62,4 @@ class ScreenConnector {
   ScreenConnector() = default;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

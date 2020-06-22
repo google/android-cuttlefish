@@ -18,11 +18,11 @@
 
 #include <unistd.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 uint32_t AlignToPowerOf2(uint32_t val, uint8_t align_log) {
   uint32_t align = 1 << align_log;
   return ((val + (align - 1)) / align) * align;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

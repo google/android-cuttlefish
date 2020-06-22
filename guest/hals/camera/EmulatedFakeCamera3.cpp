@@ -101,7 +101,7 @@ EmulatedFakeCamera3::~EmulatedFakeCamera3() {
   }
 }
 
-status_t EmulatedFakeCamera3::Initialize(const cvd::CameraDefinition &params) {
+status_t EmulatedFakeCamera3::Initialize(const cuttlefish::CameraDefinition &params) {
   ALOGV("%s: E", __FUNCTION__);
   status_t res;
 
@@ -1077,7 +1077,7 @@ bool EmulatedFakeCamera3::hasCapability(AvailableCapabilities cap) {
 }
 
 status_t EmulatedFakeCamera3::constructStaticInfo(
-    const cvd::CameraDefinition &params) {
+    const cuttlefish::CameraDefinition &params) {
   CameraMetadata info;
   Vector<int32_t> availableCharacteristicsKeys;
   status_t res;

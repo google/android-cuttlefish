@@ -15,7 +15,7 @@
  */
 #pragma once
 
-namespace cvd {
+namespace cuttlefish {
 
 enum RunnerExitCodes : int {
   kSuccess = 0,
@@ -57,4 +57,4 @@ enum class LauncherResponse : char {
   kError = 'E',
   kUnknownAction = 'U',
 };
-}  // namespace cvd
+}  // namespace cuttlefish

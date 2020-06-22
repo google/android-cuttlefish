@@ -20,7 +20,7 @@
 
 #include <json/json.h>
 
-namespace cvd {
+namespace cuttlefish {
 class ServerConfig {
  public:
   ServerConfig(const std::vector<std::string>& stuns);
@@ -30,4 +30,4 @@ class ServerConfig {
  private:
   std::vector<std::string> stun_servers_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish
