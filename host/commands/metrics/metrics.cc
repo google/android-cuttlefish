@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
             {metrics_log_path, instance.launcher_log_path()}));
   }
 
-  if (config->enable_metrics() != vsoc::CuttlefishConfig::kYes) {
+  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::kYes) {
     LOG(ERROR) << "metrics not enabled, but metrics were launched.";
     return cuttlefish::MetricsExitCodes::kInvalidHostConfiguration;
   }

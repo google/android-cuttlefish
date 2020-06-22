@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
     return 1;

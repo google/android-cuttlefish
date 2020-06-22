@@ -19,7 +19,7 @@ const int FSCK_ERROR_CORRECTED = 1;
 const int FSCK_ERROR_CORRECTED_REQUIRES_REBOOT = 2;
 
 bool ForceFsckImage(const char* data_image) {
-  auto fsck_path = vsoc::DefaultHostArtifactsPath("bin/fsck.f2fs");
+  auto fsck_path = cuttlefish::DefaultHostArtifactsPath("bin/fsck.f2fs");
   int fsck_status = cuttlefish::execute({fsck_path, "-y", "-f", data_image});
   if (fsck_status & ~(FSCK_ERROR_CORRECTED|FSCK_ERROR_CORRECTED_REQUIRES_REBOOT)) {
     LOG(ERROR) << "`fsck.f2fs -y -f " << data_image << "` failed with code "
@@ -50,7 +50,7 @@ bool ResizeImage(const char* data_image, int data_image_mb) {
     if (!fsck_success) {
       return false;
     }
-    auto resize_path = vsoc::DefaultHostArtifactsPath("bin/resize.f2fs");
+    auto resize_path = cuttlefish::DefaultHostArtifactsPath("bin/resize.f2fs");
     int resize_status = cuttlefish::execute({resize_path, data_image});
     if (resize_status != 0) {
       LOG(ERROR) << "`resize.f2fs " << data_image << "` failed with code "
@@ -85,7 +85,7 @@ void CreateBlankImage(
   if (image_fmt == "ext4") {
     cuttlefish::execute({"/sbin/mkfs.ext4", image});
   } else if (image_fmt == "f2fs") {
-    auto make_f2fs_path = vsoc::DefaultHostArtifactsPath("bin/make_f2fs");
+    auto make_f2fs_path = cuttlefish::DefaultHostArtifactsPath("bin/make_f2fs");
     cuttlefish::execute({make_f2fs_path, "-t", image_fmt, image, "-g", "android"});
   } else if (image_fmt == "sdcard") {
     // Reserve 1MB in the image for the MBR and padding, to simulate what
@@ -93,7 +93,7 @@ void CreateBlankImage(
     off_t offset_size_bytes = 1 << 20;
     image_size_bytes -= offset_size_bytes;
     off_t image_size_sectors = image_size_bytes / 512;
-    auto newfs_msdos_path = vsoc::DefaultHostArtifactsPath("bin/newfs_msdos");
+    auto newfs_msdos_path = cuttlefish::DefaultHostArtifactsPath("bin/newfs_msdos");
     cuttlefish::execute({newfs_msdos_path, "-F", "32", "-m", "0xf8", "-a", "4088",
                                     "-o", "0",  "-c", "8",    "-h", "255",
                                     "-u", "63", "-S", "512",
@@ -122,7 +122,7 @@ void CreateBlankImage(
   }
 }
 
-DataImageResult ApplyDataImagePolicy(const vsoc::CuttlefishConfig& config,
+DataImageResult ApplyDataImagePolicy(const cuttlefish::CuttlefishConfig& config,
                                      const std::string& data_image) {
   bool data_exists = cuttlefish::FileHasContent(data_image.c_str());
   bool remove{};

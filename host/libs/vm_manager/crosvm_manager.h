@@ -34,7 +34,7 @@ class CrosvmManager : public VmManager {
   static std::vector<std::string> ConfigureGpu(const std::string& gpu_mode);
   static std::vector<std::string> ConfigureBootDevices();
 
-  CrosvmManager(const vsoc::CuttlefishConfig* config);
+  CrosvmManager(const cuttlefish::CuttlefishConfig* config);
   virtual ~CrosvmManager() = default;
 
   std::vector<cuttlefish::Command> StartCommands() override;
