@@ -15,8 +15,10 @@
  */
 #pragma once
 
-namespace cvd {
+#include <string>
 
-[[noreturn]] void EstablishAndMaintainConnection(std::string address);
+namespace cuttlefish {
 
-}  // namespace cvd
+bool InGroup(const std::string& group);
+
+}  // namespace cuttlefish
