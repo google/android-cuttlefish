@@ -23,7 +23,7 @@
 #include "host/frontend/gcastv2/https/include/https/WebSocketHandler.h"
 #include "host/frontend/gcastv2/signaling_server/device_registry.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class DeviceListHandler : public WebSocketHandler {
  public:
@@ -35,4 +35,4 @@ class DeviceListHandler : public WebSocketHandler {
  private:
   const DeviceRegistry& registry_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish

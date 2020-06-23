@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
     return 1;
@@ -65,14 +65,14 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "No path to launcher monitor found";
     return 2;
   }
-  auto monitor_socket = cvd::SharedFD::SocketLocalClient(monitor_path.c_str(),
+  auto monitor_socket = cuttlefish::SharedFD::SocketLocalClient(monitor_path.c_str(),
                                                          false, SOCK_STREAM);
   if (!monitor_socket->IsOpen()) {
     LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
                << ": " << monitor_socket->StrError();
     return 3;
   }
-  auto request = cvd::LauncherAction::kStatus;
+  auto request = cuttlefish::LauncherAction::kStatus;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
   if (bytes_sent < 0) {
     LOG(ERROR) << "Error sending launcher monitor the status command: "
@@ -80,10 +80,10 @@ int main(int argc, char** argv) {
     return 4;
   }
   // Perform a select with a timeout to guard against launcher hanging
-  cvd::SharedFDSet read_set;
+  cuttlefish::SharedFDSet read_set;
   read_set.Set(monitor_socket);
   struct timeval timeout = {FLAGS_wait_for_launcher, 0};
-  int selected = cvd::Select(&read_set, nullptr, nullptr,
+  int selected = cuttlefish::Select(&read_set, nullptr, nullptr,
                              FLAGS_wait_for_launcher <= 0 ? nullptr : &timeout);
   if (selected < 0){
     LOG(ERROR) << "Failed communication with the launcher monitor: "
@@ -94,14 +94,14 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
     return 6;
   }
-  cvd::LauncherResponse response;
+  cuttlefish::LauncherResponse response;
   auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
   if (bytes_recv < 0) {
     LOG(ERROR) << "Error receiving response from launcher monitor: "
                << monitor_socket->StrError();
     return 7;
   }
-  if (response != cvd::LauncherResponse::kSuccess) {
+  if (response != cuttlefish::LauncherResponse::kSuccess) {
     LOG(ERROR) << "Received '" << static_cast<char>(response)
                << "' response from launcher monitor";
     return 8;

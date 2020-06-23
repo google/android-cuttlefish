@@ -28,7 +28,7 @@
 #include <common/libs/fs/shared_select.h>
 #include <host/libs/config/cuttlefish_config.h>
 
-using cvd::vnc::VirtualInputs;
+using cuttlefish::vnc::VirtualInputs;
 
 DEFINE_int32(touch_fd, -1,
              "A fd for a socket where to accept touch connections");
@@ -49,24 +49,24 @@ struct virtio_input_event {
 };
 
 void AddKeyMappings(std::map<uint32_t, uint16_t>* key_mapping) {
-  (*key_mapping)[cvd::xk::AltLeft] = KEY_LEFTALT;
-  (*key_mapping)[cvd::xk::ControlLeft] = KEY_LEFTCTRL;
-  (*key_mapping)[cvd::xk::ShiftLeft] = KEY_LEFTSHIFT;
-  (*key_mapping)[cvd::xk::AltRight] = KEY_RIGHTALT;
-  (*key_mapping)[cvd::xk::ControlRight] = KEY_RIGHTCTRL;
-  (*key_mapping)[cvd::xk::ShiftRight] = KEY_RIGHTSHIFT;
-  (*key_mapping)[cvd::xk::MetaLeft] = KEY_LEFTMETA;
-  (*key_mapping)[cvd::xk::MetaRight] = KEY_RIGHTMETA;
-  (*key_mapping)[cvd::xk::MultiKey] = KEY_COMPOSE;
+  (*key_mapping)[cuttlefish::xk::AltLeft] = KEY_LEFTALT;
+  (*key_mapping)[cuttlefish::xk::ControlLeft] = KEY_LEFTCTRL;
+  (*key_mapping)[cuttlefish::xk::ShiftLeft] = KEY_LEFTSHIFT;
+  (*key_mapping)[cuttlefish::xk::AltRight] = KEY_RIGHTALT;
+  (*key_mapping)[cuttlefish::xk::ControlRight] = KEY_RIGHTCTRL;
+  (*key_mapping)[cuttlefish::xk::ShiftRight] = KEY_RIGHTSHIFT;
+  (*key_mapping)[cuttlefish::xk::MetaLeft] = KEY_LEFTMETA;
+  (*key_mapping)[cuttlefish::xk::MetaRight] = KEY_RIGHTMETA;
+  (*key_mapping)[cuttlefish::xk::MultiKey] = KEY_COMPOSE;
 
-  (*key_mapping)[cvd::xk::CapsLock] = KEY_CAPSLOCK;
-  (*key_mapping)[cvd::xk::NumLock] = KEY_NUMLOCK;
-  (*key_mapping)[cvd::xk::ScrollLock] = KEY_SCROLLLOCK;
+  (*key_mapping)[cuttlefish::xk::CapsLock] = KEY_CAPSLOCK;
+  (*key_mapping)[cuttlefish::xk::NumLock] = KEY_NUMLOCK;
+  (*key_mapping)[cuttlefish::xk::ScrollLock] = KEY_SCROLLLOCK;
 
-  (*key_mapping)[cvd::xk::BackSpace] = KEY_BACKSPACE;
-  (*key_mapping)[cvd::xk::Tab] = KEY_TAB;
-  (*key_mapping)[cvd::xk::Return] = KEY_ENTER;
-  (*key_mapping)[cvd::xk::Escape] = KEY_ESC;
+  (*key_mapping)[cuttlefish::xk::BackSpace] = KEY_BACKSPACE;
+  (*key_mapping)[cuttlefish::xk::Tab] = KEY_TAB;
+  (*key_mapping)[cuttlefish::xk::Return] = KEY_ENTER;
+  (*key_mapping)[cuttlefish::xk::Escape] = KEY_ESC;
 
   (*key_mapping)[' '] = KEY_SPACE;
   (*key_mapping)['!'] = KEY_1;
@@ -166,75 +166,75 @@ void AddKeyMappings(std::map<uint32_t, uint16_t>* key_mapping) {
   (*key_mapping)['}'] = KEY_RIGHTBRACE;
   (*key_mapping)['~'] = KEY_GRAVE;
 
-  (*key_mapping)[cvd::xk::F1] = KEY_F1;
-  (*key_mapping)[cvd::xk::F2] = KEY_F2;
-  (*key_mapping)[cvd::xk::F3] = KEY_F3;
-  (*key_mapping)[cvd::xk::F4] = KEY_F4;
-  (*key_mapping)[cvd::xk::F5] = KEY_F5;
-  (*key_mapping)[cvd::xk::F6] = KEY_F6;
-  (*key_mapping)[cvd::xk::F7] = KEY_F7;
-  (*key_mapping)[cvd::xk::F8] = KEY_F8;
-  (*key_mapping)[cvd::xk::F9] = KEY_F9;
-  (*key_mapping)[cvd::xk::F10] = KEY_F10;
-  (*key_mapping)[cvd::xk::F11] = KEY_F11;
-  (*key_mapping)[cvd::xk::F12] = KEY_F12;
-  (*key_mapping)[cvd::xk::F13] = KEY_F13;
-  (*key_mapping)[cvd::xk::F14] = KEY_F14;
-  (*key_mapping)[cvd::xk::F15] = KEY_F15;
-  (*key_mapping)[cvd::xk::F16] = KEY_F16;
-  (*key_mapping)[cvd::xk::F17] = KEY_F17;
-  (*key_mapping)[cvd::xk::F18] = KEY_F18;
-  (*key_mapping)[cvd::xk::F19] = KEY_F19;
-  (*key_mapping)[cvd::xk::F20] = KEY_F20;
-  (*key_mapping)[cvd::xk::F21] = KEY_F21;
-  (*key_mapping)[cvd::xk::F22] = KEY_F22;
-  (*key_mapping)[cvd::xk::F23] = KEY_F23;
-  (*key_mapping)[cvd::xk::F24] = KEY_F24;
+  (*key_mapping)[cuttlefish::xk::F1] = KEY_F1;
+  (*key_mapping)[cuttlefish::xk::F2] = KEY_F2;
+  (*key_mapping)[cuttlefish::xk::F3] = KEY_F3;
+  (*key_mapping)[cuttlefish::xk::F4] = KEY_F4;
+  (*key_mapping)[cuttlefish::xk::F5] = KEY_F5;
+  (*key_mapping)[cuttlefish::xk::F6] = KEY_F6;
+  (*key_mapping)[cuttlefish::xk::F7] = KEY_F7;
+  (*key_mapping)[cuttlefish::xk::F8] = KEY_F8;
+  (*key_mapping)[cuttlefish::xk::F9] = KEY_F9;
+  (*key_mapping)[cuttlefish::xk::F10] = KEY_F10;
+  (*key_mapping)[cuttlefish::xk::F11] = KEY_F11;
+  (*key_mapping)[cuttlefish::xk::F12] = KEY_F12;
+  (*key_mapping)[cuttlefish::xk::F13] = KEY_F13;
+  (*key_mapping)[cuttlefish::xk::F14] = KEY_F14;
+  (*key_mapping)[cuttlefish::xk::F15] = KEY_F15;
+  (*key_mapping)[cuttlefish::xk::F16] = KEY_F16;
+  (*key_mapping)[cuttlefish::xk::F17] = KEY_F17;
+  (*key_mapping)[cuttlefish::xk::F18] = KEY_F18;
+  (*key_mapping)[cuttlefish::xk::F19] = KEY_F19;
+  (*key_mapping)[cuttlefish::xk::F20] = KEY_F20;
+  (*key_mapping)[cuttlefish::xk::F21] = KEY_F21;
+  (*key_mapping)[cuttlefish::xk::F22] = KEY_F22;
+  (*key_mapping)[cuttlefish::xk::F23] = KEY_F23;
+  (*key_mapping)[cuttlefish::xk::F24] = KEY_F24;
 
-  (*key_mapping)[cvd::xk::Keypad0] = KEY_KP0;
-  (*key_mapping)[cvd::xk::Keypad1] = KEY_KP1;
-  (*key_mapping)[cvd::xk::Keypad2] = KEY_KP2;
-  (*key_mapping)[cvd::xk::Keypad3] = KEY_KP3;
-  (*key_mapping)[cvd::xk::Keypad4] = KEY_KP4;
-  (*key_mapping)[cvd::xk::Keypad5] = KEY_KP5;
-  (*key_mapping)[cvd::xk::Keypad6] = KEY_KP6;
-  (*key_mapping)[cvd::xk::Keypad7] = KEY_KP7;
-  (*key_mapping)[cvd::xk::Keypad8] = KEY_KP8;
-  (*key_mapping)[cvd::xk::Keypad9] = KEY_KP9;
-  (*key_mapping)[cvd::xk::KeypadMultiply] = KEY_KPASTERISK;
-  (*key_mapping)[cvd::xk::KeypadSubtract] = KEY_KPMINUS;
-  (*key_mapping)[cvd::xk::KeypadAdd] = KEY_KPPLUS;
-  (*key_mapping)[cvd::xk::KeypadDecimal] = KEY_KPDOT;
-  (*key_mapping)[cvd::xk::KeypadEnter] = KEY_KPENTER;
-  (*key_mapping)[cvd::xk::KeypadDivide] = KEY_KPSLASH;
-  (*key_mapping)[cvd::xk::KeypadEqual] = KEY_KPEQUAL;
-  (*key_mapping)[cvd::xk::PlusMinus] = KEY_KPPLUSMINUS;
+  (*key_mapping)[cuttlefish::xk::Keypad0] = KEY_KP0;
+  (*key_mapping)[cuttlefish::xk::Keypad1] = KEY_KP1;
+  (*key_mapping)[cuttlefish::xk::Keypad2] = KEY_KP2;
+  (*key_mapping)[cuttlefish::xk::Keypad3] = KEY_KP3;
+  (*key_mapping)[cuttlefish::xk::Keypad4] = KEY_KP4;
+  (*key_mapping)[cuttlefish::xk::Keypad5] = KEY_KP5;
+  (*key_mapping)[cuttlefish::xk::Keypad6] = KEY_KP6;
+  (*key_mapping)[cuttlefish::xk::Keypad7] = KEY_KP7;
+  (*key_mapping)[cuttlefish::xk::Keypad8] = KEY_KP8;
+  (*key_mapping)[cuttlefish::xk::Keypad9] = KEY_KP9;
+  (*key_mapping)[cuttlefish::xk::KeypadMultiply] = KEY_KPASTERISK;
+  (*key_mapping)[cuttlefish::xk::KeypadSubtract] = KEY_KPMINUS;
+  (*key_mapping)[cuttlefish::xk::KeypadAdd] = KEY_KPPLUS;
+  (*key_mapping)[cuttlefish::xk::KeypadDecimal] = KEY_KPDOT;
+  (*key_mapping)[cuttlefish::xk::KeypadEnter] = KEY_KPENTER;
+  (*key_mapping)[cuttlefish::xk::KeypadDivide] = KEY_KPSLASH;
+  (*key_mapping)[cuttlefish::xk::KeypadEqual] = KEY_KPEQUAL;
+  (*key_mapping)[cuttlefish::xk::PlusMinus] = KEY_KPPLUSMINUS;
 
-  (*key_mapping)[cvd::xk::SysReq] = KEY_SYSRQ;
-  (*key_mapping)[cvd::xk::LineFeed] = KEY_LINEFEED;
-  (*key_mapping)[cvd::xk::Home] = KEY_HOME;
-  (*key_mapping)[cvd::xk::Up] = KEY_UP;
-  (*key_mapping)[cvd::xk::PageUp] = KEY_PAGEUP;
-  (*key_mapping)[cvd::xk::Left] = KEY_LEFT;
-  (*key_mapping)[cvd::xk::Right] = KEY_RIGHT;
-  (*key_mapping)[cvd::xk::End] = KEY_END;
-  (*key_mapping)[cvd::xk::Down] = KEY_DOWN;
-  (*key_mapping)[cvd::xk::PageDown] = KEY_PAGEDOWN;
-  (*key_mapping)[cvd::xk::Insert] = KEY_INSERT;
-  (*key_mapping)[cvd::xk::Delete] = KEY_DELETE;
-  (*key_mapping)[cvd::xk::Pause] = KEY_PAUSE;
-  (*key_mapping)[cvd::xk::KeypadSeparator] = KEY_KPCOMMA;
-  (*key_mapping)[cvd::xk::Yen] = KEY_YEN;
-  (*key_mapping)[cvd::xk::Cancel] = KEY_STOP;
-  (*key_mapping)[cvd::xk::Redo] = KEY_AGAIN;
-  (*key_mapping)[cvd::xk::Undo] = KEY_UNDO;
-  (*key_mapping)[cvd::xk::Find] = KEY_FIND;
-  (*key_mapping)[cvd::xk::Print] = KEY_PRINT;
-  (*key_mapping)[cvd::xk::VolumeDown] = KEY_VOLUMEDOWN;
-  (*key_mapping)[cvd::xk::Mute] = KEY_MUTE;
-  (*key_mapping)[cvd::xk::VolumeUp] = KEY_VOLUMEUP;
-  (*key_mapping)[cvd::xk::Menu] = KEY_MENU;
-  (*key_mapping)[cvd::xk::VNCMenu] = KEY_MENU;
+  (*key_mapping)[cuttlefish::xk::SysReq] = KEY_SYSRQ;
+  (*key_mapping)[cuttlefish::xk::LineFeed] = KEY_LINEFEED;
+  (*key_mapping)[cuttlefish::xk::Home] = KEY_HOME;
+  (*key_mapping)[cuttlefish::xk::Up] = KEY_UP;
+  (*key_mapping)[cuttlefish::xk::PageUp] = KEY_PAGEUP;
+  (*key_mapping)[cuttlefish::xk::Left] = KEY_LEFT;
+  (*key_mapping)[cuttlefish::xk::Right] = KEY_RIGHT;
+  (*key_mapping)[cuttlefish::xk::End] = KEY_END;
+  (*key_mapping)[cuttlefish::xk::Down] = KEY_DOWN;
+  (*key_mapping)[cuttlefish::xk::PageDown] = KEY_PAGEDOWN;
+  (*key_mapping)[cuttlefish::xk::Insert] = KEY_INSERT;
+  (*key_mapping)[cuttlefish::xk::Delete] = KEY_DELETE;
+  (*key_mapping)[cuttlefish::xk::Pause] = KEY_PAUSE;
+  (*key_mapping)[cuttlefish::xk::KeypadSeparator] = KEY_KPCOMMA;
+  (*key_mapping)[cuttlefish::xk::Yen] = KEY_YEN;
+  (*key_mapping)[cuttlefish::xk::Cancel] = KEY_STOP;
+  (*key_mapping)[cuttlefish::xk::Redo] = KEY_AGAIN;
+  (*key_mapping)[cuttlefish::xk::Undo] = KEY_UNDO;
+  (*key_mapping)[cuttlefish::xk::Find] = KEY_FIND;
+  (*key_mapping)[cuttlefish::xk::Print] = KEY_PRINT;
+  (*key_mapping)[cuttlefish::xk::VolumeDown] = KEY_VOLUMEDOWN;
+  (*key_mapping)[cuttlefish::xk::Mute] = KEY_MUTE;
+  (*key_mapping)[cuttlefish::xk::VolumeUp] = KEY_VOLUMEUP;
+  (*key_mapping)[cuttlefish::xk::Menu] = KEY_MENU;
+  (*key_mapping)[cuttlefish::xk::VNCMenu] = KEY_MENU;
 }
 
 void InitInputEvent(struct input_event* evt, uint16_t type, uint16_t code,
@@ -280,7 +280,7 @@ class SocketVirtualInputs : public VirtualInputs {
 
  private:
   template<size_t num_events>
-  void SendEvents(cvd::SharedFD socket, struct input_event (&event_buffer)[num_events]) {
+  void SendEvents(cuttlefish::SharedFD socket, struct input_event (&event_buffer)[num_events]) {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (!socket->IsOpen()) {
       // This is unlikely as it would only happen between the start of the vnc
@@ -312,35 +312,35 @@ class SocketVirtualInputs : public VirtualInputs {
   }
 
   void ClientConnectorLoop() {
-    auto touch_server = cvd::SharedFD::Dup(FLAGS_touch_fd);
+    auto touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
     close(FLAGS_touch_fd);
     FLAGS_touch_fd = -1;
 
-    auto keyboard_server = cvd::SharedFD::Dup(FLAGS_keyboard_fd);
+    auto keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
     close(FLAGS_keyboard_fd);
     FLAGS_keyboard_fd = -1;
     LOG(DEBUG) << "Input socket host accepting connections...";
 
     while (1) {
-      cvd::SharedFDSet read_set;
+      cuttlefish::SharedFDSet read_set;
       read_set.Set(touch_server);
       read_set.Set(keyboard_server);
-      cvd::Select(&read_set, nullptr, nullptr, nullptr);
+      cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
       {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         if (read_set.IsSet(touch_server)) {
-          touch_socket_ = cvd::SharedFD::Accept(*touch_server);
+          touch_socket_ = cuttlefish::SharedFD::Accept(*touch_server);
           LOG(DEBUG) << "connected to touch";
         }
         if (read_set.IsSet(keyboard_server)) {
-          keyboard_socket_ = cvd::SharedFD::Accept(*keyboard_server);
+          keyboard_socket_ = cuttlefish::SharedFD::Accept(*keyboard_server);
           LOG(DEBUG) << "connected to keyboard";
         }
       }
     }
   }
-  cvd::SharedFD touch_socket_;
-  cvd::SharedFD keyboard_socket_;
+  cuttlefish::SharedFD touch_socket_;
+  cuttlefish::SharedFD keyboard_socket_;
   std::thread client_connector_;
   std::mutex socket_mutex_;
 };

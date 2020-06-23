@@ -46,7 +46,7 @@ using BootEventCallback = std::function<SubscriptionAction(BootEvent)>;
 // one connection.
 class KernelLogServer {
  public:
-  KernelLogServer(cvd::SharedFD pipe_fd,
+  KernelLogServer(cuttlefish::SharedFD pipe_fd,
                   const std::string& log_name,
                   bool deprecated_boot_completed);
 
@@ -54,11 +54,11 @@ class KernelLogServer {
 
   // BeforeSelect is Called right before Select() to populate interesting
   // SharedFDs.
-  void BeforeSelect(cvd::SharedFDSet* fd_read) const;
+  void BeforeSelect(cuttlefish::SharedFDSet* fd_read) const;
 
   // AfterSelect is Called right after Select() to detect and respond to changes
   // on affected SharedFDs.
-  void AfterSelect(const cvd::SharedFDSet& fd_read);
+  void AfterSelect(const cuttlefish::SharedFDSet& fd_read);
 
   void SubscribeToBootEvents(BootEventCallback callback);
  private:
@@ -66,8 +66,8 @@ class KernelLogServer {
   // Returns false, if client disconnected.
   bool HandleIncomingMessage();
 
-  cvd::SharedFD pipe_fd_;
-  cvd::SharedFD log_fd_;
+  cuttlefish::SharedFD pipe_fd_;
+  cuttlefish::SharedFD log_fd_;
   std::string line_;
   bool deprecated_boot_completed_;
   std::vector<BootEventCallback> subscribers_;

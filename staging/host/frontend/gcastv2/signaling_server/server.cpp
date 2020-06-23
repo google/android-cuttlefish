@@ -73,7 +73,7 @@ void ServeStaticFiles(std::shared_ptr<HTTPServer> httpd) {
 }  // namespace
 
 int main(int argc, char **argv) {
-  cvd::DefaultSubprocessLogging(argv);
+  cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   InitSSL();
@@ -95,18 +95,18 @@ int main(int argc, char **argv) {
 
   ServeStaticFiles(httpd);
 
-  cvd::ServerConfig server_config({FLAGS_stun_server});
-  cvd::DeviceRegistry device_registry;
+  cuttlefish::ServerConfig server_config({FLAGS_stun_server});
+  cuttlefish::DeviceRegistry device_registry;
 
   httpd->addWebSocketHandlerFactory(
       "/register_device", [&device_registry, &server_config] {
-        return std::make_pair(0, std::make_shared<cvd::DeviceHandler>(
+        return std::make_pair(0, std::make_shared<cuttlefish::DeviceHandler>(
                                      &device_registry, server_config));
       });
 
   httpd->addWebSocketHandlerFactory(
       "/connect_client", [&device_registry, &server_config] {
-        return std::make_pair(0, std::make_shared<cvd::ClientHandler>(
+        return std::make_pair(0, std::make_shared<cuttlefish::ClientHandler>(
                                      &device_registry, server_config));
       });
 
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
   // obtain the ids of registered devices.
   httpd->addWebSocketHandlerFactory("/list_devices", [&device_registry] {
     return std::make_pair(
-        0, std::make_shared<cvd::DeviceListHandler>(device_registry));
+        0, std::make_shared<cuttlefish::DeviceListHandler>(device_registry));
   });
 
   httpd->run();

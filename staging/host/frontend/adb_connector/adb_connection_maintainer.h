@@ -15,8 +15,8 @@
  */
 #pragma once
 
-namespace cvd {
+namespace cuttlefish {
 
 [[noreturn]] void EstablishAndMaintainConnection(std::string address);
 
-}  // namespace cvd
+}  // namespace cuttlefish

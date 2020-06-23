@@ -22,7 +22,7 @@
 
 #include "host/libs/wayland/wayland_server.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class WaylandScreenConnector : public ScreenConnector {
  public:

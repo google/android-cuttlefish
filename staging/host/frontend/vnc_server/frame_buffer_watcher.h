@@ -27,7 +27,7 @@
 #include "host/frontend/vnc_server/jpeg_compressor.h"
 #include "host/frontend/vnc_server/simulated_hw_composer.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 class FrameBufferWatcher {
  public:
@@ -73,4 +73,4 @@ class FrameBufferWatcher {
 };
 
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish

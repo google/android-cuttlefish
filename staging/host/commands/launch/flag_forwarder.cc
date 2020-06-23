@@ -234,12 +234,12 @@ FlagForwarder::FlagForwarder(std::set<std::string> subprocesses)
   std::map<std::string, std::string> flag_to_type = CurrentFlagsToTypes();
 
   for (const auto& subprocess : subprocesses_) {
-    cvd::Command cmd(subprocess);
+    cuttlefish::Command cmd(subprocess);
     cmd.AddParameter("--helpxml");
     std::string helpxml_input, helpxml_output, helpxml_error;
-    cvd::SubprocessOptions options;
+    cuttlefish::SubprocessOptions options;
     options.Verbose(false);
-    int helpxml_ret = cvd::RunWithManagedStdio(std::move(cmd), &helpxml_input,
+    int helpxml_ret = cuttlefish::RunWithManagedStdio(std::move(cmd), &helpxml_input,
                                                &helpxml_output, &helpxml_error,
                                                options);
     if (helpxml_ret != 1) {
@@ -273,7 +273,7 @@ FlagForwarder::~FlagForwarder() = default;
 void FlagForwarder::UpdateFlagDefaults() const {
 
   for (const auto& subprocess : subprocesses_) {
-    cvd::Command cmd(subprocess);
+    cuttlefish::Command cmd(subprocess);
     std::vector<std::string> invocation = {subprocess};
     for (const auto& flag : ArgvForSubprocess(subprocess)) {
       cmd.AddParameter(flag);
@@ -290,9 +290,9 @@ void FlagForwarder::UpdateFlagDefaults() const {
     // Ensure this is set on by putting it at the end.
     cmd.AddParameter("--helpxml");
     std::string helpxml_input, helpxml_output, helpxml_error;
-    cvd::SubprocessOptions options;
+    cuttlefish::SubprocessOptions options;
     options.Verbose(false);
-    int helpxml_ret = cvd::RunWithManagedStdio(std::move(cmd), &helpxml_input,
+    int helpxml_ret = cuttlefish::RunWithManagedStdio(std::move(cmd), &helpxml_input,
                                                &helpxml_output, &helpxml_error,
                                                options);
     if (helpxml_ret != 1) {

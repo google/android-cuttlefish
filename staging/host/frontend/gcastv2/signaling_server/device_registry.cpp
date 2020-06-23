@@ -19,7 +19,7 @@
 
 #include "host/frontend/gcastv2/signaling_server/device_handler.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 bool DeviceRegistry::RegisterDevice(
     const std::string& device_id,
@@ -68,4 +68,4 @@ std::vector<std::string> DeviceRegistry::ListDeviceIds() const {
   return ret;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

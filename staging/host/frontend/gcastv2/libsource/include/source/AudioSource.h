@@ -23,7 +23,7 @@
 
 #define SIMULATE_AUDIO          0
 
-namespace vsoc {
+namespace cuttlefish {
     class RegionWorker;
     namespace audio_data {
         class AudioDataRegionView;
@@ -33,7 +33,7 @@ namespace vsoc {
 namespace android {
 
 struct AudioSource : public StreamingSource {
-    using AudioDataRegionView = vsoc::audio_data::AudioDataRegionView;
+    using AudioDataRegionView = cuttlefish::audio_data::AudioDataRegionView;
 
     enum class Format {
         OPUS,

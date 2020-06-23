@@ -27,9 +27,9 @@ DEFINE_bool(agressive, false, "Whether to use agressive server");
 DEFINE_int32(port, 6444, "Port where to listen for connections");
 
 int main(int argc, char* argv[]) {
-  cvd::DefaultSubprocessLogging(argv);
+  cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  cvd::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
+  cuttlefish::vnc::VncServer vnc_server(FLAGS_port, FLAGS_agressive);
   vnc_server.MainLoop();
 }

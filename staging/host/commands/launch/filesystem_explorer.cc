@@ -28,10 +28,10 @@
 #include "common/libs/utils/environment.h"
 #include "host/libs/config/fetcher_config.h"
 
-cvd::FetcherConfig AvailableFilesReport() {
-  std::string current_directory = cvd::AbsolutePath(cvd::CurrentDirectory());
-  if (cvd::FileExists(current_directory + "/fetcher_config.json")) {
-    cvd::FetcherConfig config;
+cuttlefish::FetcherConfig AvailableFilesReport() {
+  std::string current_directory = cuttlefish::AbsolutePath(cuttlefish::CurrentDirectory());
+  if (cuttlefish::FileExists(current_directory + "/fetcher_config.json")) {
+    cuttlefish::FetcherConfig config;
     config.LoadFromFile(current_directory + "/fetcher_config.json");
     return config;
   }
@@ -39,16 +39,16 @@ cvd::FetcherConfig AvailableFilesReport() {
   std::set<std::string> files;
 
   std::string psuedo_fetcher_dir =
-      cvd::StringFromEnv("ANDROID_HOST_OUT",
-                         cvd::StringFromEnv("HOME", current_directory));
+      cuttlefish::StringFromEnv("ANDROID_HOST_OUT",
+                         cuttlefish::StringFromEnv("HOME", current_directory));
   std::string psuedo_fetcher_config =
       psuedo_fetcher_dir + "/launcher_pseudo_fetcher_config.json";
   files.insert(psuedo_fetcher_config);
 
-  cvd::FetcherConfig config;
+  cuttlefish::FetcherConfig config;
   config.RecordFlags();
   for (const auto& file : files) {
-    config.add_cvd_file(cvd::CvdFile(cvd::FileSource::LOCAL_FILE, "", "", file));
+    config.add_cvd_file(cuttlefish::CvdFile(cuttlefish::FileSource::LOCAL_FILE, "", "", file));
   }
   config.SaveToFile(psuedo_fetcher_config);
   return config;

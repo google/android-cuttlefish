@@ -25,7 +25,7 @@
 
 #include "host/libs/wayland/wayland_server.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 WaylandScreenConnector::WaylandScreenConnector(int frames_fd) {
   int wayland_fd = fcntl(frames_fd, F_DUPFD_CLOEXEC, 3);
@@ -45,4 +45,4 @@ bool WaylandScreenConnector::OnFrameAfter(
   return true;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

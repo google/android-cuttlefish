@@ -55,7 +55,7 @@ namespace {
 
 std::set<std::string> FallbackPaths() {
   std::set<std::string> paths;
-  std::string parent_path = cvd::StringFromEnv("HOME", ".");
+  std::string parent_path = cuttlefish::StringFromEnv("HOME", ".");
   paths.insert(parent_path + "/cuttlefish_assembly");
   paths.insert(parent_path + "/cuttlefish_assembly/*");
 
@@ -73,13 +73,13 @@ std::set<std::string> FallbackPaths() {
     // Add files in the tombstone directory
     paths.insert(instance_dir + "/tombstones/*");
     // Add files in the internal directory
-    paths.insert(instance_dir + "/" + std::string(vsoc::kInternalDirName) + "/*");
+    paths.insert(instance_dir + "/" + std::string(cuttlefish::kInternalDirName) + "/*");
   }
   return paths;
 }
 
-std::set<std::string> PathsForInstance(const vsoc::CuttlefishConfig& config,
-                                       const vsoc::CuttlefishConfig::InstanceSpecific instance) {
+std::set<std::string> PathsForInstance(const cuttlefish::CuttlefishConfig& config,
+                                       const cuttlefish::CuttlefishConfig::InstanceSpecific instance) {
   return {
     config.assembly_dir(),
     config.assembly_dir() + "/*",
@@ -138,20 +138,20 @@ int FallBackStop(const std::set<std::string>& paths) {
   return exit_code;
 }
 
-bool CleanStopInstance(const vsoc::CuttlefishConfig::InstanceSpecific& instance) {
+bool CleanStopInstance(const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   auto monitor_path = instance.launcher_monitor_socket_path();
   if (monitor_path.empty()) {
     LOG(ERROR) << "No path to launcher monitor found";
     return false;
   }
-  auto monitor_socket = cvd::SharedFD::SocketLocalClient(monitor_path.c_str(),
+  auto monitor_socket = cuttlefish::SharedFD::SocketLocalClient(monitor_path.c_str(),
                                                          false, SOCK_STREAM);
   if (!monitor_socket->IsOpen()) {
     LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
                << ": " << monitor_socket->StrError();
     return false;
   }
-  auto request = cvd::LauncherAction::kStop;
+  auto request = cuttlefish::LauncherAction::kStop;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
   if (bytes_sent < 0) {
     LOG(ERROR) << "Error sending launcher monitor the stop command: "
@@ -159,10 +159,10 @@ bool CleanStopInstance(const vsoc::CuttlefishConfig::InstanceSpecific& instance)
     return false;
   }
   // Perform a select with a timeout to guard against launcher hanging
-  cvd::SharedFDSet read_set;
+  cuttlefish::SharedFDSet read_set;
   read_set.Set(monitor_socket);
   struct timeval timeout = {FLAGS_wait_for_launcher, 0};
-  int selected = cvd::Select(&read_set, nullptr, nullptr,
+  int selected = cuttlefish::Select(&read_set, nullptr, nullptr,
                              FLAGS_wait_for_launcher <= 0 ? nullptr : &timeout);
   if (selected < 0){
     LOG(ERROR) << "Failed communication with the launcher monitor: "
@@ -173,14 +173,14 @@ bool CleanStopInstance(const vsoc::CuttlefishConfig::InstanceSpecific& instance)
     LOG(ERROR) << "Timeout expired waiting for launcher monitor to respond";
     return false;
   }
-  cvd::LauncherResponse response;
+  cuttlefish::LauncherResponse response;
   auto bytes_recv = monitor_socket->Recv(&response, sizeof(response), 0);
   if (bytes_recv < 0) {
     LOG(ERROR) << "Error receiving response from launcher monitor: "
                << monitor_socket->StrError();
     return false;
   }
-  if (response != cvd::LauncherResponse::kSuccess) {
+  if (response != cuttlefish::LauncherResponse::kSuccess) {
     LOG(ERROR) << "Received '" << static_cast<char>(response)
                << "' response from launcher monitor";
     return false;
@@ -189,8 +189,8 @@ bool CleanStopInstance(const vsoc::CuttlefishConfig::InstanceSpecific& instance)
   return true;
 }
 
-int StopInstance(const vsoc::CuttlefishConfig& config,
-                 const vsoc::CuttlefishConfig::InstanceSpecific& instance) {
+int StopInstance(const cuttlefish::CuttlefishConfig& config,
+                 const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   bool res = CleanStopInstance(instance);
   if (!res) {
     return FallBackStop(PathsForInstance(config, instance));
@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
     return FallBackStop(FallbackPaths());

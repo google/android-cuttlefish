@@ -299,7 +299,7 @@ void HTTPServer::handleWebSocketRequest(
     CHECK_EQ(res, 1);
 
     std::string acceptKey;
-    cvd::EncodeBase64(digest, sizeof(digest), &acceptKey);
+    cuttlefish::EncodeBase64(digest, sizeof(digest), &acceptKey);
 
     (*responseHeaders)["Sec-WebSocket-Accept"] = acceptKey;
 

@@ -24,13 +24,13 @@
 
 #include <android-base/logging.h>
 
-using cvd::ClientSocket;
-using cvd::ServerSocket;
+using cuttlefish::ClientSocket;
+using cuttlefish::ServerSocket;
 
 ClientSocket::ClientSocket(int port)
     : fd_(SharedFD::SocketLocalClient(port, SOCK_STREAM)) {}
 
-cvd::Message ClientSocket::RecvAny(std::size_t length) {
+cuttlefish::Message ClientSocket::RecvAny(std::size_t length) {
   Message buf(length);
   auto read_count = fd_->Read(buf.data(), buf.size());
   if (read_count < 0) {
@@ -45,7 +45,7 @@ bool ClientSocket::closed() const {
   return other_side_closed_;
 }
 
-cvd::Message ClientSocket::Recv(std::size_t length) {
+cuttlefish::Message ClientSocket::Recv(std::size_t length) {
   Message buf(length);
   ssize_t total_read = 0;
   while (total_read < static_cast<ssize_t>(length)) {
@@ -106,28 +106,28 @@ ClientSocket ServerSocket::Accept() {
   return ClientSocket{client};
 }
 
-void cvd::AppendInNetworkByteOrder(Message* msg, const std::uint8_t b) {
+void cuttlefish::AppendInNetworkByteOrder(Message* msg, const std::uint8_t b) {
   msg->push_back(b);
 }
 
-void cvd::AppendInNetworkByteOrder(Message* msg, const std::uint16_t s) {
+void cuttlefish::AppendInNetworkByteOrder(Message* msg, const std::uint16_t s) {
   const std::uint16_t n = htons(s);
   auto p = reinterpret_cast<const std::uint8_t*>(&n);
   msg->insert(msg->end(), p, p + sizeof n);
 }
 
-void cvd::AppendInNetworkByteOrder(Message* msg, const std::uint32_t w) {
+void cuttlefish::AppendInNetworkByteOrder(Message* msg, const std::uint32_t w) {
   const std::uint32_t n = htonl(w);
   auto p = reinterpret_cast<const std::uint8_t*>(&n);
   msg->insert(msg->end(), p, p + sizeof n);
 }
 
-void cvd::AppendInNetworkByteOrder(Message* msg, const std::int32_t w) {
+void cuttlefish::AppendInNetworkByteOrder(Message* msg, const std::int32_t w) {
   std::uint32_t u{};
   std::memcpy(&u, &w, sizeof u);
   AppendInNetworkByteOrder(msg, u);
 }
 
-void cvd::AppendInNetworkByteOrder(Message* msg, const std::string& str) {
+void cuttlefish::AppendInNetworkByteOrder(Message* msg, const std::string& str) {
   msg->insert(msg->end(), str.begin(), str.end());
 }

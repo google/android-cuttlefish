@@ -22,7 +22,7 @@
 #include <utility>
 #include <iterator>
 
-namespace cvd {
+namespace cuttlefish {
 // Simple queue with Push and Pop capabilities.
 // If the max_elements argument is passed to the constructor, and Push is called
 // when the queue holds max_elements items, the max_elements_handler is called
@@ -85,4 +85,4 @@ class ThreadSafeQueue {
   std::condition_variable new_item_;
   QueueImpl items_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish

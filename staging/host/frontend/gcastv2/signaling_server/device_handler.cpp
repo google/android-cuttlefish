@@ -20,7 +20,7 @@
 #include "host/frontend/gcastv2/signaling_server/client_handler.h"
 #include "host/frontend/gcastv2/signaling_server/constants/signaling_constants.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 DeviceHandler::DeviceHandler(DeviceRegistry* registry,
                              const ServerConfig& server_config)
@@ -112,4 +112,4 @@ void DeviceHandler::SendClientMessage(size_t client_id,
   Reply(msg);
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

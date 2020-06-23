@@ -29,7 +29,7 @@ constexpr size_t kOperationTableSize = 16;
 DEFINE_int32(keymaster_fd, -1, "A file descriptor for keymaster communication");
 
 int main(int argc, char** argv) {
-  cvd::DefaultSubprocessLogging(argv);
+  cuttlefish::DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   keymaster::PureSoftKeymasterContext keymaster_context{
       KM_SECURITY_LEVEL_SOFTWARE};
@@ -37,12 +37,12 @@ int main(int argc, char** argv) {
 
   CHECK(FLAGS_keymaster_fd != -1)
       << "TODO(schuffelen): Add keymaster_fd alternative";
-  auto server = cvd::SharedFD::Dup(FLAGS_keymaster_fd);
+  auto server = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd);
   CHECK(server->IsOpen()) << "Could not dup server fd: " << server->StrError();
   close(FLAGS_keymaster_fd);
-  auto conn = cvd::SharedFD::Accept(*server);
+  auto conn = cuttlefish::SharedFD::Accept(*server);
   CHECK(conn->IsOpen()) << "Unable to open connection: " << conn->StrError();
-  cvd::KeymasterChannel keymaster_channel(conn);
+  cuttlefish::KeymasterChannel keymaster_channel(conn);
 
   KeymasterResponder keymaster_responder(&keymaster_channel, &keymaster);
 
