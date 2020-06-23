@@ -25,7 +25,7 @@
 #include "guest/hals/hwcomposer/common/base_composer.h"
 #include "guest/hals/hwcomposer/common/hwcomposer.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class CpuComposer : public BaseComposer {
  public:
@@ -46,4 +46,4 @@ class CpuComposer : public BaseComposer {
   std::vector<uint8_t> special_tmp_buffer_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

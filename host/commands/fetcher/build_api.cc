@@ -172,7 +172,7 @@ bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
                               const std::string& destination) {
   for (const auto& path : build.paths) {
     auto source = path + "/" + artifact;
-    if (!cvd::FileExists(source)) {
+    if (!cuttlefish::FileExists(source)) {
       continue;
     }
     unlink(destination.c_str());

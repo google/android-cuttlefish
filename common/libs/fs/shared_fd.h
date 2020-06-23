@@ -61,7 +61,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cvd {
+namespace cuttlefish {
 
 class FileInstance;
 
@@ -151,9 +151,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const cvd::FileInstance& operator*() const { return *value_; }
+  const cuttlefish::FileInstance& operator*() const { return *value_; }
 
-  cvd::FileInstance& operator*() { return *value_; }
+  cuttlefish::FileInstance& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);
@@ -405,6 +405,6 @@ class FileInstance {
 
 inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace cvd
+}  // namespace cuttlefish
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_

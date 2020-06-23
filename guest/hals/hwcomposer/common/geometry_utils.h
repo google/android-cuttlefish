@@ -17,8 +17,8 @@
 
 #include "guest/hals/hwcomposer/common/hwcomposer.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 bool LayersOverlap(const hwc_layer_1_t& layer1, const hwc_layer_1_t& layer2);
 
-}  // namespace cvd
+}  // namespace cuttlefish

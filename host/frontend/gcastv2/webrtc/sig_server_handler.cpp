@@ -106,17 +106,17 @@ std::string FigureOutPublicIp(const std::string &stun_server) {
 }
 
 std::string StunServerFromConfig(const Json::Value &server_config) {
-  if (!server_config.isMember(cvd::webrtc_signaling::kServersField) ||
-      !server_config[cvd::webrtc_signaling::kServersField].isArray()) {
+  if (!server_config.isMember(cuttlefish::webrtc_signaling::kServersField) ||
+      !server_config[cuttlefish::webrtc_signaling::kServersField].isArray()) {
     return "";
   }
-  auto ice_servers = server_config[cvd::webrtc_signaling::kServersField];
+  auto ice_servers = server_config[cuttlefish::webrtc_signaling::kServersField];
   for (Json::ArrayIndex i = 0; i < ice_servers.size(); ++i) {
-    if (!ice_servers[i].isMember(cvd::webrtc_signaling::kUrlsField)) {
+    if (!ice_servers[i].isMember(cuttlefish::webrtc_signaling::kUrlsField)) {
       LOG(WARNING) << "Ice server received without a urls field";
       continue;
     }
-    auto url = ice_servers[i][cvd::webrtc_signaling::kUrlsField];
+    auto url = ice_servers[i][cuttlefish::webrtc_signaling::kUrlsField];
     if (url.isArray()) {
       if (url.size() == 0) {
         LOG(WARNING) << "Ice server received with empty urls field";
@@ -170,11 +170,11 @@ void SigServerHandler::Connect(const std::string &server_addr, int server_port,
 }
 
 void SigServerHandler::OnOpen() {
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   Json::Value register_obj;
-  register_obj[cvd::webrtc_signaling::kTypeField] =
-      cvd::webrtc_signaling::kRegisterType;
-  register_obj[cvd::webrtc_signaling::kDeviceIdField] =
+  register_obj[cuttlefish::webrtc_signaling::kTypeField] =
+      cuttlefish::webrtc_signaling::kRegisterType;
+  register_obj[cuttlefish::webrtc_signaling::kDeviceIdField] =
       device_id_.empty() ? config->ForDefaultInstance().instance_name()
                          : device_id_;
   Json::Value device_info;
@@ -189,7 +189,7 @@ void SigServerHandler::OnOpen() {
 
   displays.append(main_display);
   device_info[kDisplaysField] = displays;
-  register_obj[cvd::webrtc_signaling::kDeviceInfoField] = device_info;
+  register_obj[cuttlefish::webrtc_signaling::kDeviceInfoField] = device_info;
   SendJson(server_connection_, register_obj);
 }
 
@@ -211,38 +211,38 @@ void SigServerHandler::OnReceive(const uint8_t *data, size_t length,
                << "'";
     return;
   }
-  if (!server_message.isMember(cvd::webrtc_signaling::kTypeField) ||
-      !server_message[cvd::webrtc_signaling::kTypeField].isString()) {
+  if (!server_message.isMember(cuttlefish::webrtc_signaling::kTypeField) ||
+      !server_message[cuttlefish::webrtc_signaling::kTypeField].isString()) {
     LOG(ERROR) << "No message_type field from server";
     return;
   }
-  auto type = server_message[cvd::webrtc_signaling::kTypeField].asString();
-  if (type == cvd::webrtc_signaling::kConfigType) {
+  auto type = server_message[cuttlefish::webrtc_signaling::kTypeField].asString();
+  if (type == cuttlefish::webrtc_signaling::kConfigType) {
     auto stun_server = StunServerFromConfig(server_message);
     auto public_ip =
         stun_server.empty() ? FLAGS_public_ip : FigureOutPublicIp(stun_server);
     server_state_->SetPublicIp(public_ip);
-  } else if (type == cvd::webrtc_signaling::kClientMessageType) {
-    if (!server_message.isMember(cvd::webrtc_signaling::kClientIdField) ||
-        !server_message[cvd::webrtc_signaling::kClientIdField].isInt()) {
+  } else if (type == cuttlefish::webrtc_signaling::kClientMessageType) {
+    if (!server_message.isMember(cuttlefish::webrtc_signaling::kClientIdField) ||
+        !server_message[cuttlefish::webrtc_signaling::kClientIdField].isInt()) {
       LOG(ERROR) << "Client message received without valid client id";
       return;
     }
     auto client_id =
-        server_message[cvd::webrtc_signaling::kClientIdField].asInt();
-    if (!server_message.isMember(cvd::webrtc_signaling::kPayloadField)) {
+        server_message[cuttlefish::webrtc_signaling::kClientIdField].asInt();
+    if (!server_message.isMember(cuttlefish::webrtc_signaling::kPayloadField)) {
       LOG(ERROR) << "Received empty client message";
       return;
     }
-    auto client_message = server_message[cvd::webrtc_signaling::kPayloadField];
+    auto client_message = server_message[cuttlefish::webrtc_signaling::kPayloadField];
     if (clients_.count(client_id) == 0) {
       clients_[client_id].reset(new ClientHandler(
           server_state_, [this, client_id](const Json::Value &msg) {
             Json::Value wrapper;
-            wrapper[cvd::webrtc_signaling::kPayloadField] = msg;
-            wrapper[cvd::webrtc_signaling::kTypeField] =
-                cvd::webrtc_signaling::kForwardType;
-            wrapper[cvd::webrtc_signaling::kClientIdField] = client_id;
+            wrapper[cuttlefish::webrtc_signaling::kPayloadField] = msg;
+            wrapper[cuttlefish::webrtc_signaling::kTypeField] =
+                cuttlefish::webrtc_signaling::kForwardType;
+            wrapper[cuttlefish::webrtc_signaling::kClientIdField] = client_id;
             // This is safe to call from the webrtc runloop because
             // WsConnection is thread safe
             SendJson(server_connection_, wrapper);

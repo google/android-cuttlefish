@@ -51,7 +51,7 @@ class EmulatedBaseCamera {
    * Return:
    *  NO_ERROR on success, or an appropriate error status on failure.
    */
-  virtual status_t Initialize(const cvd::CameraDefinition& params) = 0;
+  virtual status_t Initialize(const cuttlefish::CameraDefinition& params) = 0;
 
   /****************************************************************************
    * Camera API implementation

@@ -16,7 +16,7 @@
 
 #include "virtual_power_button.h"
 
-namespace vsoc_input_service {
+namespace cuttlefish_input_service {
 
 VirtualPowerButton::VirtualPowerButton()
     : VirtualDeviceBase("VSoC power button", 0x6007) {}
@@ -30,4 +30,4 @@ const std::vector<const uint32_t>& VirtualPowerButton::GetKeys() const {
   return keys;
 }
 
-}  // namespace vsoc_input_service
+}  // namespace cuttlefish_input_service

@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace cvd {
+namespace cuttlefish {
 
 // Camera properties and features.
 struct CameraDefinition {
@@ -54,6 +54,6 @@ class CameraConfiguration {
   std::vector<CameraDefinition> cameras_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish
 
 #endif  // GUEST_HALS_CAMERA_CAMERACONFIGURATION_H_

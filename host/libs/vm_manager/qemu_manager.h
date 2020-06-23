@@ -32,10 +32,10 @@ class QemuManager : public VmManager {
   static std::vector<std::string> ConfigureGpu(const std::string& gpu_mode);
   static std::vector<std::string> ConfigureBootDevices();
 
-  QemuManager(const vsoc::CuttlefishConfig* config);
+  QemuManager(const cuttlefish::CuttlefishConfig* config);
   virtual ~QemuManager() = default;
 
-  std::vector<cvd::Command> StartCommands() override;
+  std::vector<cuttlefish::Command> StartCommands() override;
 };
 
 }  // namespace vm_manager
