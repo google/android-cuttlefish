@@ -872,6 +872,7 @@ status_t EmulatedFakeCamera3::processCaptureRequest(
     destBuf.stride = srcBuf.stream->width;
     destBuf.dataSpace = srcBuf.stream->data_space;
     destBuf.buffer = srcBuf.buffer;
+    destBuf.importedBuffer = NULL;
 
     if (destBuf.format == HAL_PIXEL_FORMAT_BLOB) {
       needJpeg = true;
@@ -884,13 +885,25 @@ status_t EmulatedFakeCamera3::processCaptureRequest(
       ALOGE("%s: Request %d: Buffer %zu: Fence timed out after %d ms",
             __FUNCTION__, frameNumber, i, kFenceTimeoutMs);
     }
+
     if (res == OK) {
+      res = GrallocModule::getInstance().import(*(destBuf.buffer),
+                                                &destBuf.importedBuffer);
+      if (res != OK) {
+        ALOGE("%s: Request %d: Buffer %zu: Unable to import buffer",
+              __FUNCTION__, frameNumber, i);
+      }
+    }
+
+    if (res == OK) {
+      const int usage = GRALLOC_USAGE_SW_WRITE_OFTEN |
+                        GRALLOC_USAGE_HW_CAMERA_WRITE;
       // Lock buffer for writing
       if (srcBuf.stream->format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
         if (destBuf.format == HAL_PIXEL_FORMAT_YCbCr_420_888) {
           android_ycbcr ycbcr = android_ycbcr();
           res = GrallocModule::getInstance().lock_ycbcr(
-              *(destBuf.buffer), GRALLOC_USAGE_HW_CAMERA_WRITE, 0, 0,
+              destBuf.importedBuffer, usage, 0, 0,
               destBuf.width, destBuf.height, &ycbcr);
           // This is only valid because we know that emulator's
           // YCbCr_420_888 is really contiguous NV21 under the hood
@@ -903,11 +916,10 @@ status_t EmulatedFakeCamera3::processCaptureRequest(
       } else if (srcBuf.stream->format == HAL_PIXEL_FORMAT_BLOB) {
         // All zero rectangle means lock the entire buffer.
         res = GrallocModule::getInstance().lock(
-            *(destBuf.buffer), GRALLOC_USAGE_HW_CAMERA_WRITE, 0, 0, 0, 0,
-            (void **)&(destBuf.img));
+            destBuf.importedBuffer, usage, 0, 0, 0, 0, (void **)&(destBuf.img));
       } else {
         res = GrallocModule::getInstance().lock(
-            *(destBuf.buffer), GRALLOC_USAGE_HW_CAMERA_WRITE, 0, 0,
+            destBuf.importedBuffer, usage, 0, 0,
             destBuf.width, destBuf.height, (void **)&(destBuf.img));
       }
       if (res != OK) {
@@ -917,11 +929,11 @@ status_t EmulatedFakeCamera3::processCaptureRequest(
     }
 
     if (res != OK) {
-      // Either waiting or locking failed. Unlock locked buffers and bail
-      // out.
+      // Either waiting or locking failed. Unlock and release locked buffers and
+      // bail out.
       for (size_t j = 0; j < i; j++) {
-        GrallocModule::getInstance().unlock(
-            *(request->output_buffers[i].buffer));
+        GrallocModule::getInstance().unlock((*sensorBuffers)[i].importedBuffer);
+        GrallocModule::getInstance().release((*sensorBuffers)[i].importedBuffer);
       }
       delete sensorBuffers;
       delete buffers;
@@ -2523,7 +2535,6 @@ bool EmulatedFakeCamera3::ReadoutThread::threadLoop() {
             strerror(-res), res);
       // fallthrough for cleanup
     }
-    GrallocModule::getInstance().unlock(*(buf->buffer));
 
     buf->status =
         goodBuffer ? CAMERA3_BUFFER_STATUS_OK : CAMERA3_BUFFER_STATUS_ERROR;
@@ -2614,6 +2625,10 @@ bool EmulatedFakeCamera3::ReadoutThread::threadLoop() {
   delete mCurrentRequest.buffers;
   mCurrentRequest.buffers = NULL;
   if (!needJpeg) {
+    for (StreamBuffer& sensorBuffer : *mCurrentRequest.sensorBuffers) {
+      GrallocModule::getInstance().unlock(sensorBuffer.importedBuffer);
+      GrallocModule::getInstance().release(sensorBuffer.importedBuffer);
+    }
     delete mCurrentRequest.sensorBuffers;
     mCurrentRequest.sensorBuffers = NULL;
   }
@@ -2626,7 +2641,8 @@ void EmulatedFakeCamera3::ReadoutThread::onJpegDone(
     const StreamBuffer &jpegBuffer, bool success) {
   Mutex::Autolock jl(mJpegLock);
 
-  GrallocModule::getInstance().unlock(*(jpegBuffer.buffer));
+  GrallocModule::getInstance().unlock(jpegBuffer.importedBuffer);
+  GrallocModule::getInstance().release(jpegBuffer.importedBuffer);
 
   mJpegHalBuffer.status =
       success ? CAMERA3_BUFFER_STATUS_OK : CAMERA3_BUFFER_STATUS_ERROR;

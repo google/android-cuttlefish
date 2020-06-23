@@ -1056,9 +1056,22 @@ bool EmulatedFakeCamera2::ConfigureThread::getBuffers() {
         return false;
       }
 
+      /* Import the buffer from the perspective of the graphics mapper */
+      res = GrallocModule::getInstance().import(*(b.buffer), &b.importedBuffer);
+      if (res != NO_ERROR) {
+        ALOGE("%s: grbuffer_mapper.import failure: %s (%d)",
+              __FUNCTION__, strerror(-res), res);
+        s.ops->cancel_buffer(s.ops, b.buffer);
+        mParent->signalError();
+        return false;
+      }
+
       /* Lock the buffer from the perspective of the graphics mapper */
+      const int usage = GRALLOC_USAGE_SW_WRITE_OFTEN |
+                        GRALLOC_USAGE_HW_CAMERA_WRITE;
+
       res = GrallocModule::getInstance().lock(
-          *(b.buffer), GRALLOC_USAGE_HW_CAMERA_WRITE, 0, 0, s.width, s.height,
+          b.importedBuffer, usage, 0, 0, s.width, s.height,
           (void **)&(b.img));
 
       if (res != NO_ERROR) {
@@ -1082,9 +1095,22 @@ bool EmulatedFakeCamera2::ConfigureThread::getBuffers() {
         return false;
       }
 
+      /* Import the buffer from the perspective of the graphics mapper */
+      res = GrallocModule::getInstance().import(*(b.buffer), &b.importedBuffer);
+      if (res != NO_ERROR) {
+        ALOGE("%s: grbuffer_mapper.import failure: %s (%d)",
+              __FUNCTION__, strerror(-res), res);
+        s.ops->release_buffer(s.ops, b.buffer);
+        mParent->signalError();
+        return false;
+      }
+
       /* Lock the buffer from the perspective of the graphics mapper */
+      const int usage = GRALLOC_USAGE_SW_READ_OFTEN |
+                        GRALLOC_USAGE_HW_CAMERA_READ;
+
       res = GrallocModule::getInstance().lock(
-          *(b.buffer), GRALLOC_USAGE_HW_CAMERA_READ, 0, 0, s.width, s.height,
+          b.importedBuffer, usage, 0, 0, s.width, s.height,
           (void **)&(b.img));
       if (res != NO_ERROR) {
         ALOGE("%s: grbuffer_mapper.lock failure: %s (%d)", __FUNCTION__,
@@ -1350,7 +1376,8 @@ bool EmulatedFakeCamera2::ReadoutThread::threadLoop() {
       } else {
         ALOGV("Readout:    Sending image buffer %zu (%p) to output stream %d",
               i, (void *)*(b.buffer), b.streamId);
-        GrallocModule::getInstance().unlock(*(b.buffer));
+        GrallocModule::getInstance().unlock(b.importedBuffer);
+        GrallocModule::getInstance().release(b.importedBuffer);
         const Stream &s = mParent->getStreamInfo(b.streamId);
         res = s.ops->enqueue_buffer(s.ops, captureTime, b.buffer);
         if (res != OK) {
@@ -1392,7 +1419,8 @@ void EmulatedFakeCamera2::ReadoutThread::onJpegDone(
   ALOGV("%s: Compression complete, pushing to stream %d", __FUNCTION__,
         jpegBuffer.streamId);
 
-  GrallocModule::getInstance().unlock(*(jpegBuffer.buffer));
+  GrallocModule::getInstance().unlock(jpegBuffer.importedBuffer);
+  GrallocModule::getInstance().release(jpegBuffer.importedBuffer);
   const Stream &s = mParent->getStreamInfo(jpegBuffer.streamId);
   s.ops->enqueue_buffer(s.ops, mJpegTimestamp, jpegBuffer.buffer);
 }
@@ -1400,7 +1428,8 @@ void EmulatedFakeCamera2::ReadoutThread::onJpegDone(
 void EmulatedFakeCamera2::ReadoutThread::onJpegInputDone(
     const StreamBuffer &inputBuffer) {
   status_t res;
-  GrallocModule::getInstance().unlock(*(inputBuffer.buffer));
+  GrallocModule::getInstance().unlock(inputBuffer.importedBuffer);
+  GrallocModule::getInstance().release(inputBuffer.importedBuffer);
   const ReprocessStream &s =
       mParent->getReprocessStreamInfo(-inputBuffer.streamId);
   res = s.ops->release_buffer(s.ops, inputBuffer.buffer);
