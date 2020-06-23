@@ -91,7 +91,6 @@ RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthenti
 WORKDIR /home/vsoc-01
 
 COPY --chown=vsoc-01 download-aosp.sh .
-COPY run_in_CMD.sh /root
 
 VOLUME [ "/home/vsoc-01" ]
 
