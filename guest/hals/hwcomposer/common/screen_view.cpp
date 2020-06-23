@@ -18,7 +18,7 @@
 
 #include "common/libs/utils/size_utils.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 int ScreenView::NextBuffer() {
   int num_buffers = this->num_buffers();
@@ -31,8 +31,8 @@ size_t ScreenView::buffer_size() const {
 }
 
 size_t ScreenView::line_length() const {
-  return cvd::AlignToPowerOf2(x_res() * bytes_per_pixel(), 4);
+  return cuttlefish::AlignToPowerOf2(x_res() * bytes_per_pixel(), 4);
 }
 
 int ScreenView::bytes_per_pixel() const { return 4; }
-}  // namespace cvd
+}  // namespace cuttlefish

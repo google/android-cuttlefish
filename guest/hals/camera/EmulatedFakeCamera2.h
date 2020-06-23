@@ -54,7 +54,7 @@ class EmulatedFakeCamera2 : public EmulatedCamera2 {
 
  public:
   /* Initializes EmulatedFakeCamera2 instance. */
-  status_t Initialize(const cvd::CameraDefinition &props);
+  status_t Initialize(const cuttlefish::CameraDefinition &props);
 
   /****************************************************************************
    * Camera Module API and generic hardware device API implementation

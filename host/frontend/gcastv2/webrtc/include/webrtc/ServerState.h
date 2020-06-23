@@ -70,7 +70,7 @@ struct ServerState {
 
     std::shared_ptr<StreamingSource> mAudioSource;
 
-    std::shared_ptr<cvd::ScreenConnector> mScreenConnector;
+    std::shared_ptr<cuttlefish::ScreenConnector> mScreenConnector;
     std::shared_ptr<std::thread> mScreenConnectorMonitor;
 
     std::shared_ptr<TouchSink> mTouchSink;

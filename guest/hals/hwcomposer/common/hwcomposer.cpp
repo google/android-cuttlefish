@@ -58,9 +58,9 @@
 #include "guest/hals/hwcomposer/common/hwcomposer.h"
 
 #ifdef USE_OLD_HWCOMPOSER
-typedef cvd::BaseComposer ComposerType;
+typedef cuttlefish::BaseComposer ComposerType;
 #else
-typedef cvd::CpuComposer ComposerType;
+typedef cuttlefish::CpuComposer ComposerType;
 #endif
 
 struct hwc_composer_device_data_t {
@@ -73,7 +73,7 @@ struct hwc_composer_device_data_t {
 struct cvd_hwc_composer_device_1_t {
   hwc_composer_device_1_t base;
   hwc_composer_device_data_t vsync_data;
-  cvd::BaseComposer* composer;
+  cuttlefish::BaseComposer* composer;
 };
 
 struct external_display_config_t {
@@ -506,7 +506,7 @@ static int cvd_hwc_close(hw_device_t* device) {
   return 0;
 }
 
-namespace cvd {
+namespace cuttlefish {
 
 int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
                  const struct hw_module_t* module, const char* name,
@@ -546,7 +546,7 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
   dev->base.getDisplayConfigs = cvd_hwc_get_display_configs;
   dev->base.getDisplayAttributes = cvd_hwc_get_display_attributes;
 #ifdef GATHER_STATS
-  dev->composer = new cvd::StatsKeepingComposer<ComposerType>(
+  dev->composer = new cuttlefish::StatsKeepingComposer<ComposerType>(
       dev->vsync_data.vsync_base_timestamp, std::move(screen_view));
 #else
   dev->composer = new ComposerType(std::move(screen_view));
@@ -571,4 +571,4 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
   return ret;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -21,7 +21,7 @@
 #include <string>
 #include "common/libs/net/netlink_request.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 // Abstraction of Netlink client class.
 class NetlinkClient {
@@ -50,6 +50,6 @@ class NetlinkClientFactory {
   virtual ~NetlinkClientFactory() = default;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish
 
 #endif  // COMMON_LIBS_NET_NETLINK_CLIENT_H_

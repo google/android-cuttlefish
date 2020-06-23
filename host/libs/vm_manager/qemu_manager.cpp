@@ -56,7 +56,7 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 bool Stop() {
   auto config = vsoc::CuttlefishConfig::Get();
   auto monitor_path = GetMonitorPath(config);
-  auto monitor_sock = cvd::SharedFD::SocketLocalClient(
+  auto monitor_sock = cuttlefish::SharedFD::SocketLocalClient(
       monitor_path.c_str(), false, SOCK_STREAM);
 
   if (!monitor_sock->IsOpen()) {
@@ -112,10 +112,10 @@ std::vector<std::string> QemuManager::ConfigureBootDevices() {
 QemuManager::QemuManager(const vsoc::CuttlefishConfig* config)
   : VmManager(config) {}
 
-std::vector<cvd::Command> QemuManager::StartCommands() {
+std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   auto instance = config_->ForDefaultInstance();
 
-  auto stop = [](cvd::Subprocess* proc) {
+  auto stop = [](cuttlefish::Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
       return true;
@@ -127,7 +127,7 @@ std::vector<cvd::Command> QemuManager::StartCommands() {
 
   bool is_arm = android::base::EndsWith(config_->qemu_binary(), "system-aarch64");
 
-  cvd::Command qemu_cmd(config_->qemu_binary(), stop);
+  cuttlefish::Command qemu_cmd(config_->qemu_binary(), stop);
   qemu_cmd.AddParameter("-name");
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
@@ -271,7 +271,7 @@ std::vector<cvd::Command> QemuManager::StartCommands() {
 
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
 
-  std::vector<cvd::Command> ret;
+  std::vector<cuttlefish::Command> ret;
   ret.push_back(std::move(qemu_cmd));
   return ret;
 }
