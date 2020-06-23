@@ -50,3 +50,6 @@ LogcatServerPorts LaunchLogcatReceiverIfEnabled(const vsoc::CuttlefishConfig& co
 
 StreamerLaunchResult LaunchWebRTC(cvd::ProcessMonitor* process_monitor,
                                   const vsoc::CuttlefishConfig& config);
+
+void LaunchVerhicleHalServerIfEnabled(const vsoc::CuttlefishConfig& config,
+                                      cvd::ProcessMonitor* process_monitor);
