@@ -73,7 +73,7 @@ std::vector<gid_t> GetSuplementaryGroups() {
 }
 }  // namespace
 
-bool cvd::InGroup(const std::string& group) {
+bool cuttlefish::InGroup(const std::string& group) {
   auto gid = GroupIdFromName(group);
   if (gid == static_cast<gid_t>(-1)) {
     return false;

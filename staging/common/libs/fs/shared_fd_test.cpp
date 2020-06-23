@@ -23,7 +23,7 @@
 
 #include <string>
 
-using cvd::SharedFD;
+using cuttlefish::SharedFD;
 
 char pipe_message[] = "Testing the pipe";
 

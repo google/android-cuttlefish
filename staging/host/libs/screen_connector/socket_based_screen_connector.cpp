@@ -20,7 +20,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 SocketBasedScreenConnector::SocketBasedScreenConnector(int frames_fd) {
 screen_server_thread_ =
@@ -102,4 +102,4 @@ void SocketBasedScreenConnector::BroadcastNewFrame(int buffer_idx) {
   }
   new_frame_cond_var_.notify_all();
 }
-} // namespace cvd
+} // namespace cuttlefish

@@ -29,7 +29,7 @@
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
-using cvd::vnc::FrameBufferWatcher;
+using cuttlefish::vnc::FrameBufferWatcher;
 
 FrameBufferWatcher::FrameBufferWatcher(BlackBoard* bb)
     : bb_{bb}, hwcomposer{bb_} {
@@ -60,7 +60,7 @@ bool FrameBufferWatcher::closed() const {
   return closed_;
 }
 
-cvd::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
+cuttlefish::vnc::Stripe FrameBufferWatcher::Rotated(Stripe stripe) {
   if (stripe.orientation == ScreenOrientation::Landscape) {
     LOG(FATAL) << "Rotating a landscape stripe, this is a mistake";
   }
@@ -92,7 +92,7 @@ bool FrameBufferWatcher::StripeIsDifferentFromPrevious(
   return Stripes(stripe.orientation)[stripe.index]->raw_data != stripe.raw_data;
 }
 
-cvd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
+cuttlefish::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
     ScreenOrientation orientation, const SeqNumberVec& seq_numbers) const {
   std::lock_guard<std::mutex> guard(stripes_lock_);
   const auto& stripes = Stripes(orientation);
@@ -106,12 +106,12 @@ cvd::vnc::StripePtrVec FrameBufferWatcher::StripesNewerThan(
   return new_stripes;
 }
 
-cvd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
+cuttlefish::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
     ScreenOrientation orientation) {
   return stripes_[static_cast<int>(orientation)];
 }
 
-const cvd::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
+const cuttlefish::vnc::StripePtrVec& FrameBufferWatcher::Stripes(
     ScreenOrientation orientation) const {
   return stripes_[static_cast<int>(orientation)];
 }

@@ -23,7 +23,7 @@
 
 #include "device_config.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -139,7 +139,7 @@ inline void CopyChars(char* dest, size_t size, const char* src) {
 }  // namespace
 
 std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   if (!config) return nullptr;
   std::unique_ptr<DeviceConfig> dev_config(new DeviceConfig());
   if (!dev_config->InitializeNetworkConfiguration(*config)) {
@@ -150,7 +150,7 @@ std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
 }
 
 bool DeviceConfig::InitializeNetworkConfiguration(
-    const vsoc::CuttlefishConfig& config) {
+    const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   NetConfig netconfig;
   // Check the mobile bridge first; this was the traditional way we configured
@@ -184,11 +184,11 @@ bool DeviceConfig::InitializeNetworkConfiguration(
 }
 
 void DeviceConfig::InitializeScreenConfiguration(
-    const vsoc::CuttlefishConfig& config) {
+    const cuttlefish::CuttlefishConfig& config) {
   data_.screen.x_res = config.x_res();
   data_.screen.y_res = config.y_res();
   data_.screen.dpi = config.dpi();
   data_.screen.refresh_rate = config.refresh_rate_hz();
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

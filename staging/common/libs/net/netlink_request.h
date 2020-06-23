@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace cvd {
+namespace cuttlefish {
 // Abstraction of Network link request.
 // Used to supply kernel with information about which interface needs to be
 // changed, and how.
@@ -108,5 +108,5 @@ class NetlinkRequest {
   NetlinkRequest(const NetlinkRequest&) = delete;
   NetlinkRequest& operator= (const NetlinkRequest&) = delete;
 };
-}  // namespace cvd
+}  // namespace cuttlefish
 #endif  // COMMON_LIBS_NET_NETLINK_REQUEST_H_

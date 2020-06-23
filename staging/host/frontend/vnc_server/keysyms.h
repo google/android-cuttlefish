@@ -18,7 +18,7 @@
 
 #include <cstdint>
 
-namespace cvd {
+namespace cuttlefish {
 namespace xk {
 
 constexpr uint32_t BackSpace = 0xff08, Tab = 0xff09, Return = 0xff0d,
@@ -51,4 +51,4 @@ constexpr uint32_t BackSpace = 0xff08, Tab = 0xff09, Return = 0xff0d,
                    VNCMenu = 0xffed;  // VNC seems to translate MENU to this
 
 }  // namespace xk
-}  // namespace cvd
+}  // namespace cuttlefish

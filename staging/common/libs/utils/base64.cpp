@@ -18,7 +18,7 @@
 
 #include <openssl/base64.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 bool EncodeBase64(const void *data, size_t size, std::string *out) {
   size_t enc_len = 0;
@@ -48,4 +48,4 @@ bool DecodeBase64(const std::string &data, std::vector<uint8_t> *buffer) {
                           data.size());
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

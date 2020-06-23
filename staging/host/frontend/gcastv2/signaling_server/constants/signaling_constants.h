@@ -15,7 +15,7 @@
 
 #pragma once
 
-namespace cvd {
+namespace cuttlefish {
 namespace webrtc_signaling {
 
 constexpr auto kTypeField = "message_type";
@@ -39,4 +39,4 @@ constexpr auto kClientMessageType = "client_msg";
 constexpr auto kDeviceMessageType = "device_msg";
 
 }  // namespace webrtc_signaling
-}  // namespace cvd
+}  // namespace cuttlefish

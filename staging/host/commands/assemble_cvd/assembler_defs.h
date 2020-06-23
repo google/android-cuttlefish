@@ -15,7 +15,7 @@
  */
 #pragma once
 
-namespace cvd {
+namespace cuttlefish {
 
 enum AssemblerExitCodes : int {
   kSuccess = 0,
@@ -45,4 +45,4 @@ enum AssemblerExitCodes : int {
   kDiskSpaceError = 24,
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

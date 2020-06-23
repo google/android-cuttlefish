@@ -22,7 +22,7 @@
 #include <cutils/properties.h>
 #include <android-base/logging.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -39,7 +39,7 @@ bool GetRawFromServer(DeviceConfig::RawData* data) {
     return false;
   }
   auto config_server =
-      cvd::SharedFD::VsockClient(2 /*host cid*/,
+      cuttlefish::SharedFD::VsockClient(2 /*host cid*/,
                                  static_cast<unsigned int>(port), SOCK_STREAM);
   if (!config_server->IsOpen()) {
     LOG(ERROR) << "Unable to connect to config server: "
@@ -87,4 +87,4 @@ DeviceConfig::DeviceConfig(const DeviceConfig::RawData& data) : data_(data) {
   generate_address_and_prefix();
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -30,7 +30,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 bool FileExists(const std::string& path) {
   struct stat st;
@@ -189,4 +189,4 @@ FileSizes SparseFileSizes(const std::string& path) {
   return (FileSizes) { .sparse_size = farthest_seek, .disk_size = data_bytes };
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

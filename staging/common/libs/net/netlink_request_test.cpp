@@ -28,7 +28,7 @@ using ::testing::ElementsAreArray;
 using ::testing::MatchResultListener;
 using ::testing::Return;
 
-namespace cvd {
+namespace cuttlefish {
 namespace {
 extern "C" void klog_write(int /* level */, const char* /* format */, ...) {}
 
@@ -130,7 +130,7 @@ TEST(NetlinkClientTest, BasicStringNode) {
 
   memcpy(&expected.text, kLongString, sizeof(kLongString));
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.AddString(kDummyTag, kLongString);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -146,7 +146,7 @@ TEST(NetlinkClientTest, BasicIntNode) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.AddInt(kDummyTag, kValue);
   EXPECT_THAT(request, RequestDataIs(&expected, sizeof(expected)));
 }
@@ -188,7 +188,7 @@ TEST(NetlinkClientTest, AllIntegerTypes) {
     uint8_t attr_padding_u8[3] = {0, 0, 0};
   } expected = {};
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.AddInt<int64_t>(kDummyTag, kValue);
   request.AddInt<int32_t>(kDummyTag + 1, kValue);
   request.AddInt<int16_t>(kDummyTag + 2, kValue);
@@ -215,7 +215,7 @@ TEST(NetlinkClientTest, SingleList) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kListTag);
   request.AddInt(kDummyTag, kValue);
   request.PopList();
@@ -240,7 +240,7 @@ TEST(NetlinkClientTest, NestedList) {
     const uint32_t attr_value = kValue;
   } expected;
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
   request.AddInt(kDummyTag, kValue);
@@ -272,7 +272,7 @@ TEST(NetlinkClientTest, ListSequence) {
     const uint32_t attr2_value = kValue2;
   } expected;
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.AddInt(kDummy1Tag, kValue1);
   request.PopList();
@@ -305,7 +305,7 @@ TEST(NetlinkClientTest, ComplexList) {
     const uint32_t attr2_value = kValue2;
   } expected;
 
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   request.PushList(kList1Tag);
   request.PushList(kList2Tag);
   request.AddInt(kDummy1Tag, kValue1);
@@ -317,7 +317,7 @@ TEST(NetlinkClientTest, ComplexList) {
 }
 
 TEST(NetlinkClientTest, SimpleNetlinkCreateHeader) {
-  cvd::NetlinkRequest request(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
+  cuttlefish::NetlinkRequest request(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
   constexpr char kValue[] = "random string";
   request.AddString(0, kValue);  // Have something to work with.
 
@@ -331,7 +331,7 @@ TEST(NetlinkClientTest, SimpleNetlinkCreateHeader) {
       NLM_F_ACK | NLM_F_CREATE | NLM_F_EXCL | NLM_F_REQUEST,
       base_seq));
 
-  cvd::NetlinkRequest request2(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
+  cuttlefish::NetlinkRequest request2(RTM_NEWLINK, NLM_F_CREATE | NLM_F_EXCL);
   request2.AddString(0, kValue);  // Have something to work with.
   EXPECT_THAT(request2, RequestHeaderIs(
       kMsgLength,
@@ -341,7 +341,7 @@ TEST(NetlinkClientTest, SimpleNetlinkCreateHeader) {
 }
 
 TEST(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
-  cvd::NetlinkRequest request(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request(RTM_SETLINK, 0);
   constexpr char kValue[] = "random string";
   request.AddString(0, kValue);  // Have something to work with.
 
@@ -352,10 +352,10 @@ TEST(NetlinkClientTest, SimpleNetlinkUpdateHeader) {
   EXPECT_THAT(request, RequestHeaderIs(
       kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, base_seq));
 
-  cvd::NetlinkRequest request2(RTM_SETLINK, 0);
+  cuttlefish::NetlinkRequest request2(RTM_SETLINK, 0);
   request2.AddString(0, kValue);  // Have something to work with.
   EXPECT_THAT(request2, RequestHeaderIs(
       kMsgLength, RTM_SETLINK, NLM_F_REQUEST | NLM_F_ACK, base_seq + 1));
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

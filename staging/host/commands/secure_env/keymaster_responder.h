@@ -21,10 +21,10 @@
 
 class KeymasterResponder {
 private:
-  cvd::KeymasterChannel* channel_;
+  cuttlefish::KeymasterChannel* channel_;
   keymaster::AndroidKeymaster* keymaster_;
 public:
-  KeymasterResponder(cvd::KeymasterChannel* channel,
+  KeymasterResponder(cuttlefish::KeymasterChannel* channel,
                      keymaster::AndroidKeymaster* keymaster);
 
   bool ProcessMessage();

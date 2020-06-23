@@ -19,7 +19,7 @@
 
 using android::base::StartsWith;
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
   constexpr auto kStunPrefix = "stun:";
@@ -40,4 +40,4 @@ Json::Value ServerConfig::ToJson() const {
   return server_config;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

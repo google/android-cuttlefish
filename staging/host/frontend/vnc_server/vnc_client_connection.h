@@ -30,7 +30,7 @@
 #include "host/frontend/vnc_server/virtual_inputs.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 
 class VncClientConnection {
@@ -170,4 +170,4 @@ class VncClientConnection {
 };
 
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish

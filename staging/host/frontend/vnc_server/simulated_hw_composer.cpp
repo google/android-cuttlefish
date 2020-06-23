@@ -23,7 +23,7 @@
 
 DEFINE_int32(frame_server_fd, -1, "");
 
-using cvd::vnc::SimulatedHWComposer;
+using cuttlefish::vnc::SimulatedHWComposer;
 
 SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
     :
@@ -41,7 +41,7 @@ SimulatedHWComposer::~SimulatedHWComposer() {
   stripe_maker_.join();
 }
 
-cvd::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
+cuttlefish::vnc::Stripe SimulatedHWComposer::GetNewStripe() {
   auto s = stripes_.Pop();
 #ifdef FUZZ_TEST_VNC
   if (random_(engine_)) {
