@@ -21,7 +21,7 @@
 #include <map>
 #include <mutex>
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 
 class VirtualInputs {
@@ -41,4 +41,4 @@ class VirtualInputs {
 };
 
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish

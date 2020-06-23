@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
 
     if(ts_path.empty()) {continue;}
 
-    auto log_fd = cvd::SharedFD::VsockClient(FLAGS_cid, FLAGS_port,
+    auto log_fd = cuttlefish::SharedFD::VsockClient(FLAGS_cid, FLAGS_port,
       SOCK_STREAM);
 
     std::ifstream ifs(ts_path);

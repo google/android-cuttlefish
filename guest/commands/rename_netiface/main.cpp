@@ -35,11 +35,11 @@ int main(int argc, char *argv[]) {
     return -2;
   }
   const char *const new_name = argv[2];
-  auto factory = cvd::NetlinkClientFactory::Default();
-  std::unique_ptr<cvd::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
-  std::unique_ptr<cvd::NetworkInterfaceManager> nm(
-      cvd::NetworkInterfaceManager::New(factory));
-  std::unique_ptr<cvd::NetworkInterface> ni(nm->Open(new_name, name));
+  auto factory = cuttlefish::NetlinkClientFactory::Default();
+  std::unique_ptr<cuttlefish::NetlinkClient> nl(factory->New(NETLINK_ROUTE));
+  std::unique_ptr<cuttlefish::NetworkInterfaceManager> nm(
+      cuttlefish::NetworkInterfaceManager::New(factory));
+  std::unique_ptr<cuttlefish::NetworkInterface> ni(nm->Open(new_name, name));
   bool res = false;
   if (ni) {
     ni->SetName(new_name);

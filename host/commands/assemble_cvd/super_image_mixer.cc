@@ -36,11 +36,11 @@
 
 namespace {
 
-using cvd::FileExists;
-using vsoc::DefaultHostArtifactsPath;
+using cuttlefish::FileExists;
+using cuttlefish::DefaultHostArtifactsPath;
 
-std::string TargetFilesZip(const cvd::FetcherConfig& fetcher_config,
-                           cvd::FileSource source) {
+std::string TargetFilesZip(const cuttlefish::FetcherConfig& fetcher_config,
+                           cuttlefish::FileSource source) {
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
     const auto& file_path = file_iter.first;
     const auto& file_info = file_iter.second;
@@ -72,7 +72,7 @@ const std::set<std::string> kDefaultTargetBuildProp = {
   "VENDOR/etc/build.prop",
 };
 
-void FindImports(cvd::Archive* archive, const std::string& build_prop_file) {
+void FindImports(cuttlefish::Archive* archive, const std::string& build_prop_file) {
   auto contents = archive->ExtractToMemory(build_prop_file);
   auto lines = android::base::Split(contents, "\n");
   for (const auto& line : lines) {
@@ -86,8 +86,8 @@ void FindImports(cvd::Archive* archive, const std::string& build_prop_file) {
 bool CombineTargetZipFiles(const std::string& default_target_zip,
                            const std::string& system_target_zip,
                            const std::string& output_path) {
-  cvd::Archive default_target_archive(default_target_zip);
-  cvd::Archive system_target_archive(system_target_zip);
+  cuttlefish::Archive default_target_archive(default_target_zip);
+  cuttlefish::Archive system_target_archive(system_target_zip);
 
   auto default_target_contents = default_target_archive.Contents();
   if (default_target_contents.size() == 0) {
@@ -140,14 +140,14 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
   }
   SetSuperPartitionComponents(system_super_partitions, &output_misc);
   auto misc_output_path = output_path + "/" + kMiscInfoPath;
-  cvd::SharedFD misc_output_file =
-      cvd::SharedFD::Creat(misc_output_path.c_str(), 0644);
+  cuttlefish::SharedFD misc_output_file =
+      cuttlefish::SharedFD::Creat(misc_output_path.c_str(), 0644);
   if (!misc_output_file->IsOpen()) {
     LOG(ERROR) << "Failed to open output misc file: "
                << misc_output_file->StrError();
     return false;
   }
-  if (cvd::WriteAll(misc_output_file, WriteMiscInfo(output_misc)) < 0) {
+  if (cuttlefish::WriteAll(misc_output_file, WriteMiscInfo(output_misc)) < 0) {
     LOG(ERROR) << "Failed to write output misc file contents: "
                << misc_output_file->StrError();
     return false;
@@ -228,7 +228,7 @@ bool BuildSuperImage(const std::string& combined_target_zip,
     LOG(ERROR) << "Could not find otatools";
     return false;
   }
-  return cvd::execute({
+  return cuttlefish::execute({
     build_super_image_binary,
     "--path=" + otatools_path,
     combined_target_zip,
@@ -238,31 +238,31 @@ bool BuildSuperImage(const std::string& combined_target_zip,
 
 } // namespace
 
-bool SuperImageNeedsRebuilding(const cvd::FetcherConfig& fetcher_config,
-                               const vsoc::CuttlefishConfig&) {
+bool SuperImageNeedsRebuilding(const cuttlefish::FetcherConfig& fetcher_config,
+                               const cuttlefish::CuttlefishConfig&) {
   bool has_default_build = false;
   bool has_system_build = false;
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
-    if (file_iter.second.source == cvd::FileSource::DEFAULT_BUILD) {
+    if (file_iter.second.source == cuttlefish::FileSource::DEFAULT_BUILD) {
       has_default_build = true;
-    } else if (file_iter.second.source == cvd::FileSource::SYSTEM_BUILD) {
+    } else if (file_iter.second.source == cuttlefish::FileSource::SYSTEM_BUILD) {
       has_system_build = true;
     }
   }
   return has_default_build && has_system_build;
 }
 
-bool RebuildSuperImage(const cvd::FetcherConfig& fetcher_config,
-                       const vsoc::CuttlefishConfig& config,
+bool RebuildSuperImage(const cuttlefish::FetcherConfig& fetcher_config,
+                       const cuttlefish::CuttlefishConfig& config,
                        const std::string& output_path) {
   std::string default_target_zip =
-      TargetFilesZip(fetcher_config, cvd::FileSource::DEFAULT_BUILD);
+      TargetFilesZip(fetcher_config, cuttlefish::FileSource::DEFAULT_BUILD);
   if (default_target_zip == "") {
     LOG(ERROR) << "Unable to find default target zip file.";
     return false;
   }
   std::string system_target_zip =
-      TargetFilesZip(fetcher_config, cvd::FileSource::SYSTEM_BUILD);
+      TargetFilesZip(fetcher_config, cuttlefish::FileSource::SYSTEM_BUILD);
   if (system_target_zip == "") {
     LOG(ERROR) << "Unable to find system target zip file.";
     return false;

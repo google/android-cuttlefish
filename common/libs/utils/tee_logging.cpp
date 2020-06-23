@@ -29,7 +29,7 @@ using android::base::FATAL;
 using android::base::LogSeverity;
 using android::base::StringPrintf;
 
-namespace cvd {
+namespace cuttlefish {
 
 static LogSeverity GuessSeverity(
     const std::string& env_var, LogSeverity default_value) {
@@ -164,7 +164,7 @@ void TeeLogger::operator()(
           now, getpid(), GetThreadId(), severity, tag, file, line, message);
   for (const auto& destination : destinations_) {
     if (severity >= destination.severity) {
-      cvd::WriteAll(destination.target, output_string);
+      cuttlefish::WriteAll(destination.target, output_string);
     }
   }
 }
@@ -174,7 +174,7 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   std::vector<SeverityTarget> log_severities;
   for (const auto& file : files) {
     auto log_file_fd =
-        cvd::SharedFD::Open(
+        cuttlefish::SharedFD::Open(
           file,
           O_CREAT | O_WRONLY | O_APPEND,
           S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -197,4 +197,4 @@ TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files) {
   return TeeLogger(log_severities);
 }
 
-} // namespace cvd
+} // namespace cuttlefish

@@ -22,7 +22,7 @@
 #include "guest/hals/hwcomposer/common/hwcomposer.h"
 #include "guest/hals/hwcomposer/common/screen_view.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class BaseComposer {
  public:
@@ -50,4 +50,4 @@ class BaseComposer {
   // Returns buffer offset or negative on error.
   int PostFrameBufferTarget(buffer_handle_t handle);
 };
-}  // namespace cvd
+}  // namespace cuttlefish

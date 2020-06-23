@@ -27,7 +27,7 @@
 #include <host/libs/config/cuttlefish_config.h>
 #endif
 
-namespace cvd {
+namespace cuttlefish {
 
 class DeviceConfig {
  public:
@@ -57,7 +57,7 @@ class DeviceConfig {
 
   static std::unique_ptr<DeviceConfig> Get();
 
-  bool SendRawData(cvd::SharedFD fd);
+  bool SendRawData(cuttlefish::SharedFD fd);
 
   const char* ril_address_and_prefix() const {
     return ril_address_and_prefix_.c_str();
@@ -76,8 +76,8 @@ class DeviceConfig {
   void generate_address_and_prefix();
 #ifdef CUTTLEFISH_HOST
   DeviceConfig() = default;
-  bool InitializeNetworkConfiguration(const vsoc::CuttlefishConfig& config);
-  void InitializeScreenConfiguration(const vsoc::CuttlefishConfig& config);
+  bool InitializeNetworkConfiguration(const cuttlefish::CuttlefishConfig& config);
+  void InitializeScreenConfiguration(const cuttlefish::CuttlefishConfig& config);
 #else
   explicit DeviceConfig(const RawData& data);
 #endif
@@ -86,4 +86,4 @@ class DeviceConfig {
   std::string ril_address_and_prefix_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

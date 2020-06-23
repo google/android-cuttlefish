@@ -17,7 +17,7 @@
 
 #include <cstdlib>
 
-namespace cvd {
+namespace cuttlefish {
 
 const char* GetDrmFormatString(uint32_t drm_format);
 
@@ -25,4 +25,4 @@ int GetDrmFormatBytesPerPixel(uint32_t drm_format);
 
 int GetDrmFormatFromHalFormat(int hal_format);
 
-}  // namespace cvd
+}  // namespace cuttlefish
