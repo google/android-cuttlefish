@@ -19,6 +19,7 @@ webrtc_files_path := usr/share/webrtc
 cvd_host_executables := \
     adb \
     adbshell \
+    android.hardware.automotive.vehicle@2.0-virtualization-grpc-server \
     launch_cvd \
     lpmake \
     lpunpack \
