@@ -29,7 +29,7 @@
 #include "host/frontend/vnc_server/vnc_client_connection.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 
 class VncServer {
@@ -54,4 +54,4 @@ class VncServer {
 };
 
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish

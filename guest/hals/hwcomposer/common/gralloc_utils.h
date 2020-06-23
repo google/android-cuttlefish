@@ -26,7 +26,7 @@
 #include <system/graphics.h>
 #include <utils/StrongPointer.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 class Gralloc;
 
@@ -131,4 +131,4 @@ class Gralloc {
   android::sp<android::hardware::graphics::mapper::V4_0::IMapper> gralloc4_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -25,7 +25,7 @@
 #include "host/frontend/gcastv2/signaling_server/server_config.h"
 #include "host/frontend/gcastv2/signaling_server/signal_handler.h"
 
-namespace cvd {
+namespace cuttlefish {
 class DeviceHandler;
 class ClientHandler : public SignalHandler,
                       public std::enable_shared_from_this<ClientHandler> {
@@ -45,4 +45,4 @@ class ClientHandler : public SignalHandler,
   // them.
   size_t client_id_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish

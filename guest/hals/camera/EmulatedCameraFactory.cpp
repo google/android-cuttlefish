@@ -44,7 +44,7 @@ EmulatedCameraFactory::EmulatedCameraFactory()
     : mCallbacks(NULL)
 {
   mCameraConfiguration.Init();
-  const std::vector<cvd::CameraDefinition>& cameras =
+  const std::vector<cuttlefish::CameraDefinition>& cameras =
       mCameraConfiguration.cameras();
   for (size_t camera_index = 0; camera_index < cameras.size(); ++camera_index) {
     mCameraDefinitions.push(cameras[camera_index]);
@@ -74,22 +74,22 @@ EmulatedBaseCamera* EmulatedCameraFactory::getOrCreateFakeCamera(
     return mEmulatedCameras[cameraId];
   }
 
-  const cvd::CameraDefinition& definition = mCameraDefinitions[cameraId];
+  const cuttlefish::CameraDefinition& definition = mCameraDefinitions[cameraId];
   bool is_back_facing =
-      (definition.orientation == cvd::CameraDefinition::kBack);
+      (definition.orientation == cuttlefish::CameraDefinition::kBack);
 
   EmulatedBaseCamera* camera;
   /* Create, and initialize the fake camera */
   switch (definition.hal_version) {
-    case cvd::CameraDefinition::kHalV1:
+    case cuttlefish::CameraDefinition::kHalV1:
       camera = new EmulatedFakeCamera(cameraId, is_back_facing,
                                       &HAL_MODULE_INFO_SYM.common);
       break;
-    case cvd::CameraDefinition::kHalV2:
+    case cuttlefish::CameraDefinition::kHalV2:
       camera = new EmulatedFakeCamera2(cameraId, is_back_facing,
                                        &HAL_MODULE_INFO_SYM.common);
       break;
-    case cvd::CameraDefinition::kHalV3:
+    case cuttlefish::CameraDefinition::kHalV3:
       camera = new EmulatedFakeCamera3(cameraId, is_back_facing,
                                        &HAL_MODULE_INFO_SYM.common);
       break;

@@ -29,7 +29,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "host/commands/run_cvd/process_monitor.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -68,7 +68,7 @@ ProcessMonitor::ProcessMonitor() {
 }
 
 void ProcessMonitor::StartSubprocess(Command cmd, OnSocketReadyCb callback) {
-  cvd::SubprocessOptions options;
+  cuttlefish::SubprocessOptions options;
   options.InGroup(true);
   options.WithControlSocket(true);
   auto proc = cmd.Start(options);
@@ -154,7 +154,7 @@ bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {
     LOG(INFO) << "subprocess " << entry->cmd->GetShortName() << " (" << wait_ret
               << ") has exited for unknown reasons";
   }
-  cvd::SubprocessOptions options;
+  cuttlefish::SubprocessOptions options;
   options.WithControlSocket(true);
   entry->proc.reset(new Subprocess(entry->cmd->Start(options)));
   return true;
@@ -182,7 +182,7 @@ void ProcessMonitor::MonitorRoutine() {
     // We can't call select while holding the lock as it would lead to a
     // deadlock (restarter thread waiting for notifications from main thread,
     // main thread waiting for the lock)
-    int num_fds = cvd::Select(&read_set, nullptr, nullptr, nullptr);
+    int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
       LOG(ERROR) << "Select call returned error on restarter thread: "
                  << strerror(errno);
@@ -217,4 +217,4 @@ void ProcessMonitor::MonitorRoutine() {
   } while (true);
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -15,7 +15,7 @@
 
 #include "host/frontend/gcastv2/signaling_server/device_list_handler.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 DeviceListHandler::DeviceListHandler(const DeviceRegistry& registry)
     : registry_(registry) {}
@@ -35,4 +35,4 @@ int DeviceListHandler::handleMessage(uint8_t /*header_byte*/,
   return -1;  // disconnect
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

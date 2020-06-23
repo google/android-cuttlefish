@@ -20,7 +20,7 @@
 #include <log/log.h>
 #include <system/graphics.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 const char* GetDrmFormatString(uint32_t drm_format) {
   switch (drm_format) {
@@ -177,4 +177,4 @@ int GetDrmFormatFromHalFormat(int hal_format) {
   return 0;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

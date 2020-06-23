@@ -39,7 +39,7 @@ struct keymaster_message {
 
 } // namespace keymaster
 
-namespace cvd {
+namespace cuttlefish {
 
 using keymaster::AndroidKeymasterCommand;
 using keymaster::keymaster_message;
@@ -83,4 +83,4 @@ public:
   ManagedKeymasterMessage ReceiveMessage();
 };
 
-} // namespace cvd
+} // namespace cuttlefish

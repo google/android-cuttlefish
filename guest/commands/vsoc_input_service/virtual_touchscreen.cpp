@@ -16,7 +16,7 @@
 
 #include "virtual_touchscreen.h"
 
-namespace vsoc_input_service {
+namespace cuttlefish_input_service {
 
 const std::vector<const uint32_t>& VirtualTouchScreen::GetEventTypes() const {
   static const std::vector<const uint32_t> evt_types{EV_ABS, EV_KEY};
@@ -43,4 +43,4 @@ VirtualTouchScreen::VirtualTouchScreen(uint32_t width, uint32_t height)
   dev_.absmax[ABS_Y] = height;
 }
 
-}  // namespace vsoc_input_service
+}  // namespace cuttlefish_input_service
