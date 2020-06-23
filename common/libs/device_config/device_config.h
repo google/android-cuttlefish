@@ -76,8 +76,8 @@ class DeviceConfig {
   void generate_address_and_prefix();
 #ifdef CUTTLEFISH_HOST
   DeviceConfig() = default;
-  bool InitializeNetworkConfiguration(const vsoc::CuttlefishConfig& config);
-  void InitializeScreenConfiguration(const vsoc::CuttlefishConfig& config);
+  bool InitializeNetworkConfiguration(const cuttlefish::CuttlefishConfig& config);
+  void InitializeScreenConfiguration(const cuttlefish::CuttlefishConfig& config);
 #else
   explicit DeviceConfig(const RawData& data);
 #endif

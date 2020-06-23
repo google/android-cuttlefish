@@ -25,7 +25,7 @@
 
 #include "log/log.h"
 
-using vsoc_input_service::VirtualDeviceBase;
+using cuttlefish_input_service::VirtualDeviceBase;
 
 namespace {
 
