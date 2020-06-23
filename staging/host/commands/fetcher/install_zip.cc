@@ -29,7 +29,7 @@
 std::vector<std::string> ExtractImages(const std::string& archive_file,
                                        const std::string& target_directory,
                                        const std::vector<std::string>& images) {
-  cvd::Archive archive(archive_file);
+  cuttlefish::Archive archive(archive_file);
   bool extracted =
       images.size() > 0
           ? archive.ExtractFiles(images, target_directory)

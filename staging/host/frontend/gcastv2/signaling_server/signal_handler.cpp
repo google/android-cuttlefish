@@ -20,7 +20,7 @@
 
 #include "host/frontend/gcastv2/signaling_server/constants/signaling_constants.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 SignalHandler::SignalHandler(DeviceRegistry* registry,
                              const ServerConfig& server_config)
@@ -76,4 +76,4 @@ void SignalHandler::Reply(const Json::Value& json) {
   sendMessage(replyAsString.c_str(), replyAsString.size());
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

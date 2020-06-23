@@ -39,10 +39,10 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
-using cvd::Message;
-using cvd::vnc::Stripe;
-using cvd::vnc::StripePtrVec;
-using cvd::vnc::VncClientConnection;
+using cuttlefish::Message;
+using cuttlefish::vnc::Stripe;
+using cuttlefish::vnc::StripePtrVec;
+using cuttlefish::vnc::VncClientConnection;
 
 struct ScreenRegionView {
   using Pixel = uint32_t;
@@ -88,7 +88,7 @@ constexpr size_t kPointerEventLength = 5;
 constexpr size_t kClientCutTextLength = 7;  // more bytes follow
 
 std::string HostName() {
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
   return !config || instance.device_title().empty() ? std::string{"localhost"}
                                                     : instance.device_title();
@@ -130,7 +130,7 @@ std::uint32_t GreenVal(std::uint32_t pixel) {
          ((0x1 << ScreenRegionView::kGreenBits) - 1);
 }
 }  // namespace
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 bool operator==(const VncClientConnection::FrameBufferUpdateRequest& lhs,
                 const VncClientConnection::FrameBufferUpdateRequest& rhs) {
@@ -143,7 +143,7 @@ bool operator!=(const VncClientConnection::FrameBufferUpdateRequest& lhs,
   return !(lhs == rhs);
 }
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish
 
 VncClientConnection::VncClientConnection(
     ClientSocket client, std::shared_ptr<VirtualInputs> virtual_inputs,
@@ -258,7 +258,7 @@ void VncClientConnection::GetClientInit() {
 void VncClientConnection::SendServerInit() {
   const std::string server_name = HostName();
   std::lock_guard<std::mutex> guard(m_);
-  auto server_init = cvd::CreateMessage(
+  auto server_init = cuttlefish::CreateMessage(
       static_cast<std::uint16_t>(ScreenWidth()),
       static_cast<std::uint16_t>(ScreenHeight()), pixel_format_.bits_per_pixel,
       pixel_format_.depth, pixel_format_.big_endian, pixel_format_.true_color,
@@ -272,7 +272,7 @@ void VncClientConnection::SendServerInit() {
 
 Message VncClientConnection::MakeFrameBufferUpdateHeader(
     std::uint16_t num_stripes) {
-  return cvd::CreateMessage(std::uint8_t{0},  // message-type
+  return cuttlefish::CreateMessage(std::uint8_t{0},  // message-type
                             std::uint8_t{},   // padding
                             std::uint16_t{num_stripes});
 }
@@ -280,7 +280,7 @@ Message VncClientConnection::MakeFrameBufferUpdateHeader(
 void VncClientConnection::AppendRawStripeHeader(Message* frame_buffer_update,
                                                 const Stripe& stripe) {
   static constexpr int32_t kRawEncoding = 0;
-  cvd::AppendToMessage(frame_buffer_update, std::uint16_t{stripe.x},
+  cuttlefish::AppendToMessage(frame_buffer_update, std::uint16_t{stripe.x},
                        std::uint16_t{stripe.y}, std::uint16_t{stripe.width},
                        std::uint16_t{stripe.height}, kRawEncoding);
 }
@@ -292,11 +292,11 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
   constexpr size_t kJpegSizeThreeByteMax = 4194303;
 
   if (jpeg_size <= kJpegSizeOneByteMax) {
-    cvd::AppendToMessage(frame_buffer_update,
+    cuttlefish::AppendToMessage(frame_buffer_update,
                          static_cast<std::uint8_t>(jpeg_size));
   } else if (jpeg_size <= kJpegSizeTwoByteMax) {
     auto sz = static_cast<std::uint32_t>(jpeg_size);
-    cvd::AppendToMessage(frame_buffer_update,
+    cuttlefish::AppendToMessage(frame_buffer_update,
                          static_cast<std::uint8_t>((sz & 0x7F) | 0x80),
                          static_cast<std::uint8_t>((sz >> 7) & 0xFF));
   } else {
@@ -305,7 +305,7 @@ void VncClientConnection::AppendJpegSize(Message* frame_buffer_update,
                  << kJpegSizeThreeByteMax;
     }
     const auto sz = static_cast<std::uint32_t>(jpeg_size);
-    cvd::AppendToMessage(frame_buffer_update,
+    cuttlefish::AppendToMessage(frame_buffer_update,
                          static_cast<std::uint8_t>((sz & 0x7F) | 0x80),
                          static_cast<std::uint8_t>(((sz >> 7) & 0x7F) | 0x80),
                          static_cast<std::uint8_t>((sz >> 14) & 0xFF));
@@ -353,7 +353,7 @@ Message VncClientConnection::MakeRawFrameBufferUpdate(
 void VncClientConnection::AppendJpegStripeHeader(Message* frame_buffer_update,
                                                  const Stripe& stripe) {
   static constexpr std::uint8_t kJpegEncoding = 0x90;
-  cvd::AppendToMessage(frame_buffer_update, stripe.x, stripe.y, stripe.width,
+  cuttlefish::AppendToMessage(frame_buffer_update, stripe.x, stripe.y, stripe.width,
                        stripe.height, kTightEncoding, kJpegEncoding);
   AppendJpegSize(frame_buffer_update, stripe.jpeg_data.size());
 }
@@ -411,7 +411,7 @@ void VncClientConnection::FrameBufferUpdateRequestHandler(bool aggressive) {
 
 void VncClientConnection::SendDesktopSizeUpdate() {
   static constexpr int32_t kDesktopSizeEncoding = -223;
-  client_.SendNoSignal(cvd::CreateMessage(
+  client_.SendNoSignal(cuttlefish::CreateMessage(
       std::uint8_t{0},   // message-type,
       std::uint8_t{},    // padding
       std::uint16_t{1},  // one pseudo rectangle
@@ -574,13 +574,13 @@ bool VncClientConnection::RotateIfIsRotationCommand(std::uint32_t key) {
     return false;
   }
   switch (key) {
-    case cvd::xk::Right:
-    case cvd::xk::F12:
+    case cuttlefish::xk::Right:
+    case cuttlefish::xk::F12:
       DLOG(INFO) << "switching to portrait";
       SetScreenOrientation(ScreenOrientation::Portrait);
       break;
-    case cvd::xk::Left:
-    case cvd::xk::F11:
+    case cuttlefish::xk::Left:
+    case cuttlefish::xk::F11:
       DLOG(INFO) << "switching to landscape";
       SetScreenOrientation(ScreenOrientation::Landscape);
       break;
@@ -599,18 +599,18 @@ void VncClientConnection::HandleKeyEvent() {
   auto key = uint32_tAt(&msg[3]);
   bool key_down = msg[0];
   switch (key) {
-    case cvd::xk::ControlLeft:
-    case cvd::xk::ControlRight:
+    case cuttlefish::xk::ControlLeft:
+    case cuttlefish::xk::ControlRight:
       control_key_down_ = key_down;
       break;
-    case cvd::xk::MetaLeft:
-    case cvd::xk::MetaRight:
+    case cuttlefish::xk::MetaLeft:
+    case cuttlefish::xk::MetaRight:
       meta_key_down_ = key_down;
       break;
-    case cvd::xk::F5:
-      key = cvd::xk::Menu;
+    case cuttlefish::xk::F5:
+      key = cuttlefish::xk::Menu;
       break;
-    case cvd::xk::F7:
+    case cuttlefish::xk::F7:
       virtual_inputs_->PressPowerButton(key_down);
       return;
     default:

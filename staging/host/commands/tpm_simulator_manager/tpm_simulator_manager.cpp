@@ -43,23 +43,23 @@ bool HasSubstrings(const std::string& string, const std::vector<std::string>& su
 } // namespace
 
 int main(int argc, char** argv) {
-  cvd::DefaultSubprocessLogging(argv);
+  cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(FLAGS_port > 0) << "A port must be set";
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Unable to get config object";
 
   // Assumes linked on the host with glibc
-  cvd::Command simulator_cmd("/usr/bin/stdbuf");
+  cuttlefish::Command simulator_cmd("/usr/bin/stdbuf");
   simulator_cmd.AddParameter("-oL");
   simulator_cmd.AddParameter(config->tpm_binary());
   simulator_cmd.AddParameter(FLAGS_port);
 
-  cvd::SharedFD sim_stdout_in, sim_stdout_out;
-  CHECK(cvd::SharedFD::Pipe(&sim_stdout_out, &sim_stdout_in))
+  cuttlefish::SharedFD sim_stdout_in, sim_stdout_out;
+  CHECK(cuttlefish::SharedFD::Pipe(&sim_stdout_out, &sim_stdout_in))
       << "Unable to open pipe for stdout: " << strerror(errno);
-  simulator_cmd.RedirectStdIO(cvd::Subprocess::StdIOChannel::kStdOut, sim_stdout_in);
+  simulator_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdOut, sim_stdout_in);
 
   auto tpm_subprocess = simulator_cmd.Start();
 
@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
   bool platform_server = false;
   bool sent_init = false;
 
-  cvd::SharedFD client; // Hold this connection open for the process lifetime.
+  cuttlefish::SharedFD client; // Hold this connection open for the process lifetime.
 
   char* lineptr = nullptr;
   size_t size = 0;
@@ -87,18 +87,18 @@ int main(int argc, char** argv) {
       platform_server = true;
     }
     if (command_server && platform_server && !sent_init) {
-      client = cvd::SharedFD::SocketLocalClient(FLAGS_port + 1, SOCK_STREAM);
+      client = cuttlefish::SharedFD::SocketLocalClient(FLAGS_port + 1, SOCK_STREAM);
       std::uint32_t command = htobe32(1); // TPM_SIGNAL_POWER_ON
-      CHECK(cvd::WriteAllBinary(client, &command) == 4)
+      CHECK(cuttlefish::WriteAllBinary(client, &command) == 4)
           << "Could not send TPM_SIGNAL_POWER_ON";
       std::uint32_t response;
-      CHECK(cvd::ReadExactBinary(client, &response) == 4)
+      CHECK(cuttlefish::ReadExactBinary(client, &response) == 4)
           << "Could not read parity response";
 
       command = htobe32(11); // TPM_SIGNAL_NV_ON
-      CHECK(cvd::WriteAllBinary(client, &command) == 4)
+      CHECK(cuttlefish::WriteAllBinary(client, &command) == 4)
           << "Could not send TPM_SIGNAL_NV_ON";
-      CHECK(cvd::ReadExactBinary(client, &response) == 4)
+      CHECK(cuttlefish::ReadExactBinary(client, &response) == 4)
           << "Could not read parity response";
 
       sent_init = true;

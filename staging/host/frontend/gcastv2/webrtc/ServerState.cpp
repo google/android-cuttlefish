@@ -38,7 +38,7 @@ ServerState::ServerState(
       mRunLoop(runLoop),
       mVideoFormat(videoFormat) {
 
-    auto config = vsoc::CuttlefishConfig::Get();
+    auto config = cuttlefish::CuttlefishConfig::Get();
 
     android::FrameBufferSource::Format fbSourceFormat;
     switch (videoFormat) {
@@ -61,8 +61,8 @@ ServerState::ServerState(
     static_cast<android::FrameBufferSource *>(
             mFrameBufferSource.get())->setScreenParams(screenParams);
 
-    mScreenConnector = std::shared_ptr<cvd::ScreenConnector>(
-        cvd::ScreenConnector::Get(FLAGS_frame_server_fd));
+    mScreenConnector = std::shared_ptr<cuttlefish::ScreenConnector>(
+        cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd));
     mScreenConnectorMonitor.reset(
         new std::thread([this]() { MonitorScreenConnector(); }));
 
@@ -94,7 +94,7 @@ void ServerState::MonitorScreenConnector() {
                                                      std::uint8_t *data) {
         mRunLoop->postAndAwait([this, data]() {
           static_cast<android::FrameBufferSource *>(mFrameBufferSource.get())
-              ->injectFrame(data, cvd::ScreenConnector::ScreenSizeInBytes());
+              ->injectFrame(data, cuttlefish::ScreenConnector::ScreenSizeInBytes());
         });
         last_frame = frame_num;
       });

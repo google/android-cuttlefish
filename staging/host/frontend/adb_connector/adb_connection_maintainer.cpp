@@ -53,7 +53,7 @@ std::string MakeDisconnectMessage(const std::string& address) {
 }
 
 // returns true if successfully sent the whole message
-bool SendAll(cvd::SharedFD sock, const std::string& msg) {
+bool SendAll(cuttlefish::SharedFD sock, const std::string& msg) {
   ssize_t total_written{};
   while (total_written < static_cast<ssize_t>(msg.size())) {
     if (!sock->IsOpen()) {
@@ -69,7 +69,7 @@ bool SendAll(cvd::SharedFD sock, const std::string& msg) {
   return true;
 }
 
-std::string RecvAll(cvd::SharedFD sock, const size_t count) {
+std::string RecvAll(cuttlefish::SharedFD sock, const size_t count) {
   size_t total_read{};
   std::unique_ptr<char[]> data(new char[count]);
   while (total_read < count) {
@@ -93,7 +93,7 @@ constexpr std::size_t kAdbMessageLengthLength = 4;
 
 constexpr int kAdbDaemonPort = 5037;
 
-bool AdbSendMessage(cvd::SharedFD sock, const std::string& message) {
+bool AdbSendMessage(cuttlefish::SharedFD sock, const std::string& message) {
   if (!sock->IsOpen()) {
     return false;
   }
@@ -105,7 +105,7 @@ bool AdbSendMessage(cvd::SharedFD sock, const std::string& message) {
 }
 
 bool AdbSendMessage(const std::string& message) {
-  auto sock = cvd::SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
+  auto sock = cuttlefish::SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
   return AdbSendMessage(sock, message);
 }
 
@@ -123,7 +123,7 @@ bool IsInteger(const std::string& str) {
 }
 
 // assumes the OKAY/FAIL status has already been read
-std::string RecvAdbResponse(cvd::SharedFD sock) {
+std::string RecvAdbResponse(cuttlefish::SharedFD sock) {
   auto length_as_hex_str = RecvAll(sock, kAdbMessageLengthLength);
   if (!IsInteger(length_as_hex_str)) {
     return {};
@@ -134,7 +134,7 @@ std::string RecvAdbResponse(cvd::SharedFD sock) {
 
 // Returns a negative value if uptime result couldn't be read for
 // any reason.
-int RecvUptimeResult(cvd::SharedFD sock) {
+int RecvUptimeResult(cuttlefish::SharedFD sock) {
   std::vector<char> uptime_vec{};
   std::vector<char> just_read(16);
   do {
@@ -182,7 +182,7 @@ void WaitForAdbDisconnection(const std::string& address) {
   // sleeps stabilize the communication.
   LOG(DEBUG) << "Watching for disconnect on " << address;
   while (true) {
-    auto sock = cvd::SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
+    auto sock = cuttlefish::SharedFD::SocketLocalClient(kAdbDaemonPort, SOCK_STREAM);
     if (!AdbSendMessage(sock, MakeTransportMessage(address))) {
       LOG(WARNING) << "transport message failed, response body: "
                    << RecvAdbResponse(sock);
@@ -208,7 +208,7 @@ void WaitForAdbDisconnection(const std::string& address) {
 
 }  // namespace
 
-[[noreturn]] void cvd::EstablishAndMaintainConnection(std::string address) {
+[[noreturn]] void cuttlefish::EstablishAndMaintainConnection(std::string address) {
   while (true) {
     EstablishConnection(address);
     WaitForAdbDisconnection(address);
