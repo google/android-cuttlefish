@@ -22,7 +22,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace cuttlefish {
 // Creates, or connects to if it already exists, a tap network interface. The
 // user needs CAP_NET_ADMIN to create such interfaces or be the owner to connect
 // to one.

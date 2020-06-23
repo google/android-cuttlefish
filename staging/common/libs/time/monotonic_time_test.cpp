@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include <algorithm>
 
-using cvd::time::TimeDifference;
+using cuttlefish::time::TimeDifference;
 
 class MonotonicTimeTest : public ::testing::Test {
  public:

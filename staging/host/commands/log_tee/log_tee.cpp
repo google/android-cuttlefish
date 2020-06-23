@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
   CHECK(FLAGS_log_fd_in >= 0) << "-log_fd_in is required";
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 
@@ -38,13 +38,13 @@ int main(int argc, char** argv) {
 
   if (config->run_as_daemon()) {
     android::base::SetLogger(
-        cvd::LogToFiles({instance.launcher_log_path()}));
+        cuttlefish::LogToFiles({instance.launcher_log_path()}));
   } else {
     android::base::SetLogger(
-        cvd::LogToStderrAndFiles({instance.launcher_log_path()}));
+        cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()}));
   }
 
-  auto log_fd = cvd::SharedFD::Dup(FLAGS_log_fd_in);
+  auto log_fd = cuttlefish::SharedFD::Dup(FLAGS_log_fd_in);
   CHECK(log_fd->IsOpen()) << "Failed to dup log_fd_in: " <<  log_fd->StrError();
   close(FLAGS_log_fd_in);
 

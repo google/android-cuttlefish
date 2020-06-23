@@ -22,14 +22,14 @@
 #include "host/libs/screen_connector/socket_based_screen_connector.h"
 #include "host/libs/screen_connector/wayland_screen_connector.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 ScreenConnector* ScreenConnector::Get(int frames_fd) {
-  auto config = vsoc::CuttlefishConfig::Get();
-  if (config->gpu_mode() == vsoc::kGpuModeDrmVirgl ||
-      config->gpu_mode() == vsoc::kGpuModeGfxStream) {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  if (config->gpu_mode() == cuttlefish::kGpuModeDrmVirgl ||
+      config->gpu_mode() == cuttlefish::kGpuModeGfxStream) {
     return new WaylandScreenConnector(frames_fd);
-  } else if (config->gpu_mode() == vsoc::kGpuModeGuestSwiftshader) {
+  } else if (config->gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
     return new SocketBasedScreenConnector(frames_fd);
   } else {
       LOG(ERROR) << "Invalid gpu mode: " << config->gpu_mode();
@@ -37,4 +37,4 @@ ScreenConnector* ScreenConnector::Get(int frames_fd) {
   }
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

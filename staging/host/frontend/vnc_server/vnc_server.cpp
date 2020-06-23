@@ -25,7 +25,7 @@
 #include "host/frontend/vnc_server/vnc_client_connection.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
-using cvd::vnc::VncServer;
+using cuttlefish::vnc::VncServer;
 
 VncServer::VncServer(int port, bool aggressive)
     : server_(port),

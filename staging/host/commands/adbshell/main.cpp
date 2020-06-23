@@ -57,7 +57,7 @@ std::string VsocUser() {
 
   std::string cvd_prefix = "cvd-";
   if (user.find(cvd_prefix) == 0) {
-    user.replace(0, cvd_prefix.size(), vsoc::kVsocUserPrefix);
+    user.replace(0, cvd_prefix.size(), cuttlefish::kVsocUserPrefix);
   }
   return user;
 }
@@ -76,14 +76,14 @@ std::string CuttlefishFindAdb() {
 }
 
 void SetCuttlefishConfigEnv() {
-  setenv(vsoc::kCuttlefishConfigEnvVarName, CuttlefishConfigLocation().c_str(),
+  setenv(cuttlefish::kCuttlefishConfigEnvVarName, CuttlefishConfigLocation().c_str(),
          true);
 }
 }  // namespace
 
 int main(int argc, char* argv[]) {
   SetCuttlefishConfigEnv();
-  auto instance = vsoc::CuttlefishConfig::Get()
+  auto instance = cuttlefish::CuttlefishConfig::Get()
       ->ForDefaultInstance().adb_device_name();
   std::string adb_path = CuttlefishFindAdb();
 
