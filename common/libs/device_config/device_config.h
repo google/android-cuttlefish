@@ -27,7 +27,7 @@
 #include <host/libs/config/cuttlefish_config.h>
 #endif
 
-namespace cvd {
+namespace cuttlefish {
 
 class DeviceConfig {
  public:
@@ -57,7 +57,7 @@ class DeviceConfig {
 
   static std::unique_ptr<DeviceConfig> Get();
 
-  bool SendRawData(cvd::SharedFD fd);
+  bool SendRawData(cuttlefish::SharedFD fd);
 
   const char* ril_address_and_prefix() const {
     return ril_address_and_prefix_.c_str();
@@ -86,4 +86,4 @@ class DeviceConfig {
   std::string ril_address_and_prefix_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

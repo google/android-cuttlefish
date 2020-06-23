@@ -24,7 +24,7 @@
 #include <json/reader.h>
 #include <stdlib.h>
 
-namespace cvd {
+namespace cuttlefish {
 namespace {
 ////////////////////// Device Personality keys //////////////////////
 //
@@ -297,4 +297,4 @@ bool CameraConfiguration::Init() {
   return ConfigureCameras(root, &cameras_);
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

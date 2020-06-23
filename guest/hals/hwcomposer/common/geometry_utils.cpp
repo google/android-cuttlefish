@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace cvd {
+namespace cuttlefish {
 
 bool LayersOverlap(const hwc_layer_1_t& layer1, const hwc_layer_1_t& layer2) {
   int left1 = layer1.displayFrame.left;
@@ -38,4 +38,4 @@ bool LayersOverlap(const hwc_layer_1_t& layer1, const hwc_layer_1_t& layer2) {
   return overlap_x && overlap_y;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -24,7 +24,7 @@
 
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 BaseComposer::BaseComposer(std::unique_ptr<ScreenView> screen_view)
     : screen_view_(std::move(screen_view)) {
@@ -50,7 +50,7 @@ int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
   memcpy(frame_buffer, buffer, screen_view_->buffer_size());
   screen_view_->Broadcast(buffer_id);
   return 0;
-}  // namespace cvd
+}  // namespace cuttlefish
 
 int BaseComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
   // find unsupported overlays
@@ -72,4 +72,4 @@ int BaseComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   return -1;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -68,7 +68,7 @@ bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
   }
 
   auto mkimage_path = vsoc::DefaultHostArtifactsPath("bin/mkenvimage");
-  cvd::Command cmd(mkimage_path);
+  cuttlefish::Command cmd(mkimage_path);
   cmd.AddParameter("-s");
   cmd.AddParameter("4096");
   cmd.AddParameter("-o");
@@ -80,14 +80,14 @@ bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
     return false;
   }
 
-  if(!cvd::FileExists(boot_env_image_path) || cvd::ReadFile(boot_env_image_path) != cvd::ReadFile(tmp_boot_env_image_path)) {
-    if(!cvd::RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
+  if(!cuttlefish::FileExists(boot_env_image_path) || cuttlefish::ReadFile(boot_env_image_path) != cuttlefish::ReadFile(tmp_boot_env_image_path)) {
+    if(!cuttlefish::RenameFile(tmp_boot_env_image_path, boot_env_image_path)) {
       LOG(ERROR) << "Unable to delete the old env image.";
       return false;
     }
     LOG(DEBUG) << "Updated bootloader environment image.";
   } else {
-    cvd::RemoveFile(tmp_boot_env_image_path);
+    cuttlefish::RemoveFile(tmp_boot_env_image_path);
   }
 
   return true;

@@ -30,7 +30,7 @@
 #include "common/libs/utils/size_utils.h"
 #include "guest/hals/hwcomposer/common/geometry_utils.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -173,9 +173,9 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   uint8_t* src_y = src.buffer;
   int stride_y = stride_in_pixels;
   uint8_t* src_v = src_y + stride_y * src.height;
-  int stride_v = cvd::AlignToPowerOf2(stride_y / 2, 4);
+  int stride_v = cuttlefish::AlignToPowerOf2(stride_y / 2, 4);
   uint8_t* src_u = src_v + stride_v * src.height / 2;
-  int stride_u = cvd::AlignToPowerOf2(stride_y / 2, 4);
+  int stride_u = cuttlefish::AlignToPowerOf2(stride_y / 2, 4);
 
   // Adjust for crop
   src_y += src.crop_y * stride_y + src.crop_x;
@@ -370,11 +370,11 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   int x_res = src_layer->displayFrame.right - src_layer->displayFrame.left;
   int y_res = src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   size_t output_frame_size =
-      x_res * cvd::AlignToPowerOf2(y_res * screen_view_->bytes_per_pixel(), 4);
+      x_res * cuttlefish::AlignToPowerOf2(y_res * screen_view_->bytes_per_pixel(), 4);
   while (needed_tmp_buffers > 0) {
     BufferSpec tmp(
         RotateTmpBuffer(needed_tmp_buffers), output_frame_size, x_res, y_res,
-        cvd::AlignToPowerOf2(x_res * screen_view_->bytes_per_pixel(), 4));
+        cuttlefish::AlignToPowerOf2(x_res * screen_view_->bytes_per_pixel(), 4));
     dest_buffer_stack.push_back(tmp);
     needed_tmp_buffers--;
   }
@@ -396,7 +396,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
       int dst_stride =
-          cvd::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
+          cuttlefish::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
       size_t needed_size = dst_stride * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
@@ -598,4 +598,4 @@ uint8_t* CpuComposer::GetSpecialTmpBuffer(size_t needed_size) {
   return &special_tmp_buffer_[0];
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

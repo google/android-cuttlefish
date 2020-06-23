@@ -78,7 +78,7 @@ std::shared_ptr<AdbHandler> ClientHandler::adb_handler() {
         new AdbHandler(mRunLoop, config->ForDefaultInstance().adb_ip_and_port(),
                        [this](const uint8_t *msg, size_t length) {
                          std::string base64_msg;
-                         cvd::EncodeBase64(msg, length, &base64_msg);
+                         cuttlefish::EncodeBase64(msg, length, &base64_msg);
                          Json::Value reply;
                          reply["type"] = "adb-message";
                          reply["payload"] = base64_msg;
@@ -161,7 +161,7 @@ void ClientHandler::HandleMessage(const Json::Value& message) {
       }
       auto base64_msg = message["payload"].asString();
       std::vector<uint8_t> raw_msg;
-      if (!cvd::DecodeBase64(base64_msg, &raw_msg)) {
+      if (!cuttlefish::DecodeBase64(base64_msg, &raw_msg)) {
         LOG(ERROR) << "Invalid base64 string in adb-message";
         return;
       }

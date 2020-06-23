@@ -24,7 +24,7 @@
 
 #include <json/json.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 class DeviceHandler;
 
@@ -42,4 +42,4 @@ class DeviceRegistry {
   std::map<std::string, std::weak_ptr<DeviceHandler>> devices_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

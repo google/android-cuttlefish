@@ -25,12 +25,12 @@ namespace keymaster {
 
 class RemoteKeymaster {
   private:
-    cvd::KeymasterChannel* channel_;
+    cuttlefish::KeymasterChannel* channel_;
 
     void ForwardCommand(
         AndroidKeymasterCommand command, const Serializable& req, KeymasterResponse* rsp);
   public:
-    RemoteKeymaster(cvd::KeymasterChannel*);
+    RemoteKeymaster(cuttlefish::KeymasterChannel*);
     ~RemoteKeymaster();
     bool Initialize();
     void GetVersion(const GetVersionRequest& request, GetVersionResponse* response);
