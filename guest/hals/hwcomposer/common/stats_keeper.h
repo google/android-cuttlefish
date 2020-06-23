@@ -26,14 +26,14 @@
 #include "guest/hals/hwcomposer/common/base_composer.h"
 #include "guest/hals/hwcomposer/common/hwcomposer.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class CompositionData {
  public:
-  CompositionData(cvd::time::MonotonicTimePoint time_point, int num_prepares,
+  CompositionData(cuttlefish::time::MonotonicTimePoint time_point, int num_prepares,
                   int num_layers, int num_hwcomposited_layers,
-                  cvd::time::Nanoseconds prepare_time,
-                  cvd::time::Nanoseconds set_calls_time)
+                  cuttlefish::time::Nanoseconds prepare_time,
+                  cuttlefish::time::Nanoseconds set_calls_time)
       : time_point_(time_point),
         num_prepare_calls_(num_prepares),
         num_layers_(num_layers),
@@ -41,7 +41,7 @@ class CompositionData {
         prepare_time_(prepare_time),
         set_calls_time_(set_calls_time) {}
 
-  cvd::time::MonotonicTimePoint time_point() const { return time_point_; }
+  cuttlefish::time::MonotonicTimePoint time_point() const { return time_point_; }
 
   int num_prepare_calls() const { return num_prepare_calls_; }
 
@@ -49,25 +49,25 @@ class CompositionData {
 
   int num_hwcomposited_layers() const { return num_hwcomposited_layers_; }
 
-  cvd::time::Nanoseconds prepare_time() const { return prepare_time_; }
+  cuttlefish::time::Nanoseconds prepare_time() const { return prepare_time_; }
 
-  cvd::time::Nanoseconds set_calls_time() const { return set_calls_time_; }
+  cuttlefish::time::Nanoseconds set_calls_time() const { return set_calls_time_; }
 
  private:
-  cvd::time::MonotonicTimePoint time_point_;
+  cuttlefish::time::MonotonicTimePoint time_point_;
   int num_prepare_calls_;
   int num_layers_;
   int num_hwcomposited_layers_;
-  cvd::time::Nanoseconds prepare_time_;
-  cvd::time::Nanoseconds set_calls_time_;
+  cuttlefish::time::Nanoseconds prepare_time_;
+  cuttlefish::time::Nanoseconds set_calls_time_;
 };
 
 struct HWCCompositionStats {
-  cvd::time::MonotonicTimePoint prepare_start;
-  cvd::time::MonotonicTimePoint prepare_end;
-  cvd::time::MonotonicTimePoint set_start;
-  cvd::time::MonotonicTimePoint set_end;
-  cvd::time::MonotonicTimePoint last_vsync;
+  cuttlefish::time::MonotonicTimePoint prepare_start;
+  cuttlefish::time::MonotonicTimePoint prepare_end;
+  cuttlefish::time::MonotonicTimePoint set_start;
+  cuttlefish::time::MonotonicTimePoint set_end;
+  cuttlefish::time::MonotonicTimePoint last_vsync;
   // There may be more than one call to prepare, the timestamps are with regards
   // to the last one (the one that precedes the set call)
   int num_prepare_calls;
@@ -80,7 +80,7 @@ class StatsKeeper {
  public:
   // The timespan parameter indicates for how long we keep stats about the past
   // compositions.
-  StatsKeeper(cvd::time::TimeDifference timespan, int64_t vsync_base,
+  StatsKeeper(cuttlefish::time::TimeDifference timespan, int64_t vsync_base,
               int32_t vsync_period);
   StatsKeeper();
   ~StatsKeeper();
@@ -102,7 +102,7 @@ class StatsKeeper {
   void SynchronizedDump(char* buffer, int buffer_size) const EXCLUDES(mutex_);
 
  private:
-  cvd::time::TimeDifference period_length_;
+  cuttlefish::time::TimeDifference period_length_;
 
   // Base and period of the VSYNC signal, allows to accurately calculate the
   // time of the last vsync broadcast.
@@ -121,14 +121,14 @@ class StatsKeeper {
   int num_hwcomposited_layers_ GUARDED_BY(mutex_);
   int num_prepare_calls_ GUARDED_BY(mutex_);
   int num_set_calls_ GUARDED_BY(mutex_);
-  cvd::time::Nanoseconds prepare_call_total_time_ GUARDED_BY(mutex_);
-  cvd::time::Nanoseconds set_call_total_time_ GUARDED_BY(mutex_);
+  cuttlefish::time::Nanoseconds prepare_call_total_time_ GUARDED_BY(mutex_);
+  cuttlefish::time::Nanoseconds set_call_total_time_ GUARDED_BY(mutex_);
   // These are kept in multisets to be able to calculate mins and maxs of
   // changing sets of (not necessarily different) values.
   std::multiset<int> prepare_calls_per_set_calls_ GUARDED_BY(mutex_);
   std::multiset<int> layers_per_compositions_ GUARDED_BY(mutex_);
-  std::multiset<cvd::time::Nanoseconds> prepare_call_times_ GUARDED_BY(mutex_);
-  std::multiset<cvd::time::Nanoseconds> set_call_times_ GUARDED_BY(mutex_);
+  std::multiset<cuttlefish::time::Nanoseconds> prepare_call_times_ GUARDED_BY(mutex_);
+  std::multiset<cuttlefish::time::Nanoseconds> set_call_times_ GUARDED_BY(mutex_);
   std::multiset<int64_t> set_call_times_per_hwcomposited_layer_ns_
       GUARDED_BY(mutex_);
 
@@ -191,7 +191,7 @@ class StatsKeepingComposer : public BaseComposer {
                                             [this](CompositionStats* stats) {
                                               FinalizeStatsAndGet(stats);
                                             }))),
-        stats_keeper_(cvd::time::TimeDifference(cvd::time::Seconds(10), 1),
+        stats_keeper_(cuttlefish::time::TimeDifference(cuttlefish::time::Seconds(10), 1),
                       vsync_base_timestamp, 1e9 / composer_.refresh_rate()) {}
   virtual ~StatsKeepingComposer() = default;
 
@@ -221,4 +221,4 @@ class StatsKeepingComposer : public BaseComposer {
   StatsKeeper stats_keeper_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

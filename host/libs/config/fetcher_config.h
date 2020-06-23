@@ -23,7 +23,7 @@ namespace Json {
 class Value;
 }
 
-namespace cvd {
+namespace cuttlefish {
 
 // Order in enum is not guaranteed to be stable, serialized as a string.
 enum FileSource {
@@ -82,4 +82,4 @@ public:
   std::string FindCvdFileWithSuffix(const std::string& suffix) const;
 };
 
-} // namespace cvd
+} // namespace cuttlefish

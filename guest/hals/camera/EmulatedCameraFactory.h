@@ -178,8 +178,8 @@ class EmulatedCameraFactory {
   sp<EmulatedCameraHotplugThread> mHotplugThread;
 
   /* Back- and front camera properties accessed from the vsoc device. */
-  cvd::CameraConfiguration mCameraConfiguration;
-  Vector<cvd::CameraDefinition> mCameraDefinitions;
+  cuttlefish::CameraConfiguration mCameraConfiguration;
+  Vector<cuttlefish::CameraDefinition> mCameraDefinitions;
 
  public:
   /* Contains device open entry point, as required by HAL API. */

@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 struct CompositionStats {
   uint32_t num_prepare_calls;
@@ -59,4 +59,4 @@ class ScreenView {
  private:
   int last_buffer_ = 0;
 };
-}  // namespace cvd
+}  // namespace cuttlefish

@@ -61,7 +61,7 @@ bool VSoCInputService::SetUpDevices() {
     return false;
   }
 
-  auto config = cvd::DeviceConfig::Get();
+  auto config = cuttlefish::DeviceConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to open device config";
     return false;
@@ -77,12 +77,12 @@ bool VSoCInputService::SetUpDevices() {
 }
 
 bool VSoCInputService::ProcessEvents() {
-  cvd::SharedFD keyboard_fd;
-  cvd::SharedFD touch_fd;
+  cuttlefish::SharedFD keyboard_fd;
+  cuttlefish::SharedFD touch_fd;
 
   LOG(INFO) << "Connecting to the keyboard at " << FLAGS_keyboard_port;
   if (FLAGS_keyboard_port) {
-    keyboard_fd = cvd::SharedFD::VsockClient(2, FLAGS_keyboard_port, SOCK_STREAM);
+    keyboard_fd = cuttlefish::SharedFD::VsockClient(2, FLAGS_keyboard_port, SOCK_STREAM);
     if (!keyboard_fd->IsOpen()) {
       LOG(ERROR) << "Could not connect to the keyboard at vsock:2:" << FLAGS_keyboard_port;
     }
@@ -90,7 +90,7 @@ bool VSoCInputService::ProcessEvents() {
   }
   LOG(INFO) << "Connecting to the touchscreen at " << FLAGS_keyboard_port;
   if (FLAGS_touch_port) {
-    touch_fd = cvd::SharedFD::VsockClient(2, FLAGS_touch_port, SOCK_STREAM);
+    touch_fd = cuttlefish::SharedFD::VsockClient(2, FLAGS_touch_port, SOCK_STREAM);
     if (!touch_fd->IsOpen()) {
       LOG(ERROR) << "Could not connect to the touch at vsock:2:" << FLAGS_touch_port;
     }
