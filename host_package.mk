@@ -21,6 +21,7 @@ aarch64_seccomp_files_path := usr/share/cuttlefish/aarch64-linux-gnu/seccomp
 cvd_host_executables := \
     adb \
     adbshell \
+    android.hardware.automotive.vehicle@2.0-virtualization-grpc-server \
     launch_cvd \
     lpmake \
     lpunpack \
