@@ -17,7 +17,7 @@
 
 #include "virtual_device_base.h"
 
-namespace vsoc_input_service {
+namespace cuttlefish_input_service {
 
 class VirtualPowerButton : public VirtualDeviceBase {
  public:
@@ -28,4 +28,4 @@ class VirtualPowerButton : public VirtualDeviceBase {
   const std::vector<const uint32_t>& GetKeys() const override;
 };
 
-}  // namespace vsoc_input_service
+}  // namespace cuttlefish_input_service

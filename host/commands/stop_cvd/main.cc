@@ -73,13 +73,13 @@ std::set<std::string> FallbackPaths() {
     // Add files in the tombstone directory
     paths.insert(instance_dir + "/tombstones/*");
     // Add files in the internal directory
-    paths.insert(instance_dir + "/" + std::string(vsoc::kInternalDirName) + "/*");
+    paths.insert(instance_dir + "/" + std::string(cuttlefish::kInternalDirName) + "/*");
   }
   return paths;
 }
 
-std::set<std::string> PathsForInstance(const vsoc::CuttlefishConfig& config,
-                                       const vsoc::CuttlefishConfig::InstanceSpecific instance) {
+std::set<std::string> PathsForInstance(const cuttlefish::CuttlefishConfig& config,
+                                       const cuttlefish::CuttlefishConfig::InstanceSpecific instance) {
   return {
     config.assembly_dir(),
     config.assembly_dir() + "/*",
@@ -138,7 +138,7 @@ int FallBackStop(const std::set<std::string>& paths) {
   return exit_code;
 }
 
-bool CleanStopInstance(const vsoc::CuttlefishConfig::InstanceSpecific& instance) {
+bool CleanStopInstance(const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   auto monitor_path = instance.launcher_monitor_socket_path();
   if (monitor_path.empty()) {
     LOG(ERROR) << "No path to launcher monitor found";
@@ -189,8 +189,8 @@ bool CleanStopInstance(const vsoc::CuttlefishConfig::InstanceSpecific& instance)
   return true;
 }
 
-int StopInstance(const vsoc::CuttlefishConfig& config,
-                 const vsoc::CuttlefishConfig::InstanceSpecific& instance) {
+int StopInstance(const cuttlefish::CuttlefishConfig& config,
+                 const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   bool res = CleanStopInstance(instance);
   if (!res) {
     return FallBackStop(PathsForInstance(config, instance));
@@ -204,7 +204,7 @@ int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Failed to obtain config object";
     return FallBackStop(FallbackPaths());

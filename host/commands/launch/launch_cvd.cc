@@ -45,7 +45,7 @@ DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
 DEFINE_int32(base_instance_num,
-             vsoc::GetInstance(),
+             cuttlefish::GetInstance(),
              "The instance number of the device created. When `-num_instances N`"
              " is used, N instance numbers are claimed starting at this number.");
 DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE,"
@@ -53,8 +53,8 @@ DEFINE_string(verbosity, "INFO", "Console logging verbosity. Options are VERBOSE
 
 namespace {
 
-std::string kAssemblerBin = vsoc::DefaultHostArtifactsPath("bin/assemble_cvd");
-std::string kRunnerBin = vsoc::DefaultHostArtifactsPath("bin/run_cvd");
+std::string kAssemblerBin = cuttlefish::DefaultHostArtifactsPath("bin/assemble_cvd");
+std::string kRunnerBin = cuttlefish::DefaultHostArtifactsPath("bin/run_cvd");
 
 cuttlefish::Subprocess StartAssembler(cuttlefish::SharedFD assembler_stdin,
                                cuttlefish::SharedFD assembler_stdout,
@@ -95,12 +95,12 @@ void WriteFiles(cuttlefish::FetcherConfig fetcher_config, cuttlefish::SharedFD o
 
 std::string ValidateMetricsConfirmation(std::string use_metrics) {
   if (use_metrics == "") {
-    if (vsoc::CuttlefishConfig::ConfigExists()) {
-      auto config = vsoc::CuttlefishConfig::Get();
+    if (cuttlefish::CuttlefishConfig::ConfigExists()) {
+      auto config = cuttlefish::CuttlefishConfig::Get();
       if (config) {
-        if (config->enable_metrics() == vsoc::CuttlefishConfig::kYes) {
+        if (config->enable_metrics() == cuttlefish::CuttlefishConfig::kYes) {
           use_metrics = "y";
-        } else if (config->enable_metrics() == vsoc::CuttlefishConfig::kNo) {
+        } else if (config->enable_metrics() == cuttlefish::CuttlefishConfig::kNo) {
           use_metrics = "n";
         }
       }

@@ -38,7 +38,7 @@ ServerState::ServerState(
       mRunLoop(runLoop),
       mVideoFormat(videoFormat) {
 
-    auto config = vsoc::CuttlefishConfig::Get();
+    auto config = cuttlefish::CuttlefishConfig::Get();
 
     android::FrameBufferSource::Format fbSourceFormat;
     switch (videoFormat) {

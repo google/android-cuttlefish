@@ -37,7 +37,7 @@
 namespace {
 
 using cuttlefish::FileExists;
-using vsoc::DefaultHostArtifactsPath;
+using cuttlefish::DefaultHostArtifactsPath;
 
 std::string TargetFilesZip(const cuttlefish::FetcherConfig& fetcher_config,
                            cuttlefish::FileSource source) {
@@ -239,7 +239,7 @@ bool BuildSuperImage(const std::string& combined_target_zip,
 } // namespace
 
 bool SuperImageNeedsRebuilding(const cuttlefish::FetcherConfig& fetcher_config,
-                               const vsoc::CuttlefishConfig&) {
+                               const cuttlefish::CuttlefishConfig&) {
   bool has_default_build = false;
   bool has_system_build = false;
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
@@ -253,7 +253,7 @@ bool SuperImageNeedsRebuilding(const cuttlefish::FetcherConfig& fetcher_config,
 }
 
 bool RebuildSuperImage(const cuttlefish::FetcherConfig& fetcher_config,
-                       const vsoc::CuttlefishConfig& config,
+                       const cuttlefish::CuttlefishConfig& config,
                        const std::string& output_path) {
   std::string default_target_zip =
       TargetFilesZip(fetcher_config, cuttlefish::FileSource::DEFAULT_BUILD);
