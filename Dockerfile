@@ -54,6 +54,9 @@ RUN if test $(uname -m) == aarch64; then \
 # to share X with the local docker host
 RUN apt-get install -y xterm
 
+# to run cuttlefish docker in foreground, and test via webrtc/VNC
+RUN apt-get install -y tigervnc-viewer firefox-esr
+
 COPY . android-cuttlefish/
 
 RUN cd /root/android-cuttlefish \
