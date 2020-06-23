@@ -26,6 +26,7 @@ emulator_camera_cflags += \
     -Werror
 
 emulator_camera_shared_libraries := \
+    android.hardware.graphics.mapper@3.0 \
     libbase \
     libbinder \
     libexif \
@@ -36,7 +37,8 @@ emulator_camera_shared_libraries := \
     libdl \
     libjpeg \
     libcamera_metadata \
-    libhardware
+    libhardware \
+    libhidlbase
 
 ifeq (0, $(shell test $(PLATFORM_SDK_VERSION) -lt 27; echo $$?))
 emulator_camera_shared_libraries += libcamera_client
@@ -74,6 +76,7 @@ emulator_camera_src := \
 		EmulatedFakeCamera.cpp \
 		EmulatedFakeCameraDevice.cpp \
 		Exif.cpp \
+		GrallocModule.cpp \
 		Thumbnail.cpp \
 		Converters.cpp \
 		PreviewWindow.cpp \
