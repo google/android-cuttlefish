@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 

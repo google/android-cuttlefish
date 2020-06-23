@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
 
   CHECK(FLAGS_log_fd_in >= 0) << "-log_fd_in is required";
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 

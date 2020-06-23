@@ -73,7 +73,7 @@ ClientHandler::ClientHandler(
 
 std::shared_ptr<AdbHandler> ClientHandler::adb_handler() {
   if (!adb_handler_) {
-    auto config = vsoc::CuttlefishConfig::Get();
+    auto config = cuttlefish::CuttlefishConfig::Get();
     adb_handler_.reset(
         new AdbHandler(mRunLoop, config->ForDefaultInstance().adb_ip_and_port(),
                        [this](const uint8_t *msg, size_t length) {

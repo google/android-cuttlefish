@@ -32,7 +32,7 @@
 
 namespace {
 
-size_t WriteEnvironment(const vsoc::CuttlefishConfig& config,
+size_t WriteEnvironment(const cuttlefish::CuttlefishConfig& config,
                         const std::string& env_path) {
   std::ostringstream env;
   auto kernel_args = KernelCommandLineFromConfig(config);
@@ -58,7 +58,7 @@ size_t WriteEnvironment(const vsoc::CuttlefishConfig& config,
 }  // namespace
 
 
-bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
+bool InitBootloaderEnvPartition(const cuttlefish::CuttlefishConfig& config,
                                 const std::string& boot_env_image_path) {
   auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
   auto uboot_env_path = config.AssemblyPath("u-boot.env");
@@ -67,7 +67,7 @@ bool InitBootloaderEnvPartition(const vsoc::CuttlefishConfig& config,
     return false;
   }
 
-  auto mkimage_path = vsoc::DefaultHostArtifactsPath("bin/mkenvimage");
+  auto mkimage_path = cuttlefish::DefaultHostArtifactsPath("bin/mkenvimage");
   cuttlefish::Command cmd(mkimage_path);
   cmd.AddParameter("-s");
   cmd.AddParameter("4096");

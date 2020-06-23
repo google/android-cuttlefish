@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(FLAGS_port > 0) << "A port must be set";
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
   CHECK(config) << "Unable to get config object";
 
   // Assumes linked on the host with glibc

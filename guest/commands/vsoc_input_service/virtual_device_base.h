@@ -22,7 +22,7 @@
 #include <functional>
 #include <vector>
 
-namespace vsoc_input_service {
+namespace cuttlefish_input_service {
 
 class VirtualDeviceBase {
  public:
@@ -48,4 +48,4 @@ class VirtualDeviceBase {
   int fd_ = -1;
 };
 
-}  // namespace vsoc_input_service
+}  // namespace cuttlefish_input_service

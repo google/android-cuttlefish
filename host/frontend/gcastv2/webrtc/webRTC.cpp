@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
   SSLSocket::Init();
   DTLS::Init();
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   auto sig_server_addr = config->sig_server_address();
   auto sig_server_port = config->sig_server_port();
