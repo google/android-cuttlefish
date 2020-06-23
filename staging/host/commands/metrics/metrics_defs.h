@@ -15,7 +15,7 @@
  */
 #pragma once
 
-namespace cvd {
+namespace cuttlefish {
 
 enum MetricsExitCodes : int {
   kSuccess=0,
@@ -23,4 +23,4 @@ enum MetricsExitCodes : int {
   kInvalidHostConfiguration=2,
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

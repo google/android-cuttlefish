@@ -25,7 +25,7 @@
 #include <thread>
 #include <vector>
 
-namespace cvd {
+namespace cuttlefish {
 
 class SocketBasedScreenConnector : public ScreenConnector {
  public:
@@ -51,4 +51,4 @@ class SocketBasedScreenConnector : public ScreenConnector {
   std::thread screen_server_thread_;
 };
 
-} // namespace cvd
+} // namespace cuttlefish

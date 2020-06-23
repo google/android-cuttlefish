@@ -24,7 +24,7 @@
 #include "host/frontend/gcastv2/signaling_server/device_registry.h"
 #include "host/frontend/gcastv2/signaling_server/server_config.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class SignalHandler : public WebSocketHandler {
  protected:
@@ -44,4 +44,4 @@ class SignalHandler : public WebSocketHandler {
   DeviceRegistry* registry_;
   const ServerConfig& server_config_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish

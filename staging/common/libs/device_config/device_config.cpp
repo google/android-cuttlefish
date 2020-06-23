@@ -21,7 +21,7 @@
 
 #include <android-base/logging.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 // TODO(jemoreira): Endianness when on arm64 guest and x86 host is a problem
 // Raw data is sent through a vsocket from host to guest, this assert tries to
@@ -38,7 +38,7 @@ static constexpr auto kDataSize = sizeof(DeviceConfig::RawData);
 
 }  // namespace
 
-bool DeviceConfig::SendRawData(cvd::SharedFD fd) {
+bool DeviceConfig::SendRawData(cuttlefish::SharedFD fd) {
   std::size_t sent = 0;
   auto buffer = reinterpret_cast<uint8_t*>(&data_);
   while (sent < kDataSize) {
@@ -58,4 +58,4 @@ void DeviceConfig::generate_address_and_prefix() {
   ril_address_and_prefix_ = ss.str();
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

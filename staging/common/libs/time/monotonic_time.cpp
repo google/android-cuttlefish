@@ -15,7 +15,7 @@
  */
 #include "common/libs/time/monotonic_time.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace time {
 MonotonicTimePointFactory* MonotonicTimePointFactory::GetInstance() {
   static MonotonicTimePointFactory factory;
@@ -23,4 +23,4 @@ MonotonicTimePointFactory* MonotonicTimePointFactory::GetInstance() {
   return &factory;
 }
 }  // namespace time
-}  // namespace cvd
+}  // namespace cuttlefish

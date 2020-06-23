@@ -26,7 +26,7 @@
 #include "host/frontend/gcastv2/signaling_server/server_config.h"
 #include "host/frontend/gcastv2/signaling_server/signal_handler.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 class ClientHandler;
 
@@ -53,4 +53,4 @@ class DeviceHandler
   Json::Value device_info_;
   std::vector<std::weak_ptr<ClientHandler>> clients_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish

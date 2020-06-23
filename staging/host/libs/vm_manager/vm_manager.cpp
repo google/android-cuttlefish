@@ -28,12 +28,12 @@
 
 namespace vm_manager {
 
-VmManager::VmManager(const vsoc::CuttlefishConfig* config)
+VmManager::VmManager(const cuttlefish::CuttlefishConfig* config)
     : config_(config) {}
 
 namespace{
 template <typename T>
-VmManager* GetManagerSingleton(const vsoc::CuttlefishConfig* config) {
+VmManager* GetManagerSingleton(const cuttlefish::CuttlefishConfig* config) {
   static std::shared_ptr<VmManager> vm_manager(new T(config));
   return vm_manager.get();
 }
@@ -45,7 +45,7 @@ std::map<std::string, VmManager::VmManagerHelper>
           QemuManager::name(),
           {
             GetManagerSingleton<QemuManager>,
-            vsoc::HostSupportsQemuCli,
+            cuttlefish::HostSupportsQemuCli,
             QemuManager::ConfigureGpu,
             QemuManager::ConfigureBootDevices,
           },
@@ -55,7 +55,7 @@ std::map<std::string, VmManager::VmManagerHelper>
           {
             GetManagerSingleton<CrosvmManager>,
             // Same as Qemu for the time being
-            vsoc::HostSupportsQemuCli,
+            cuttlefish::HostSupportsQemuCli,
             CrosvmManager::ConfigureGpu,
             CrosvmManager::ConfigureBootDevices,
           }
@@ -63,7 +63,7 @@ std::map<std::string, VmManager::VmManagerHelper>
     };
 
 VmManager* VmManager::Get(const std::string& vm_manager_name,
-                          const vsoc::CuttlefishConfig* config) {
+                          const cuttlefish::CuttlefishConfig* config) {
   if (VmManager::IsValidName(vm_manager_name)) {
     return vm_manager_helpers_[vm_manager_name].builder(config);
   }
@@ -108,7 +108,7 @@ std::vector<std::string> VmManager::GetValidNames() {
 
 bool VmManager::UserInGroup(const std::string& group,
                             std::vector<std::string>* config_commands) {
-  if (!cvd::InGroup(group)) {
+  if (!cuttlefish::InGroup(group)) {
     LOG(ERROR) << "User must be a member of " << group;
     config_commands->push_back("# Add your user to the " + group + " group:");
     config_commands->push_back("sudo usermod -aG " + group + " $USER");
@@ -161,7 +161,7 @@ bool VmManager::ValidateHostConfiguration(
   auto in_cvdnetwork = VmManager::UserInGroup("cvdnetwork", config_commands);
 
   // if we're in the virtaccess group this is likely to be a CrOS environment.
-  auto is_cros = cvd::InGroup("virtaccess");
+  auto is_cros = cuttlefish::InGroup("virtaccess");
   if (is_cros) {
     // relax the minimum kernel requirement slightly, as chromeos-4.4 has the
     // needed backports to enable vhost_vsock

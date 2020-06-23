@@ -22,7 +22,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 // Unpacks the boot image and extracts kernel, ramdisk and kernel arguments
 class BootImageUnpacker {
@@ -85,4 +85,4 @@ class BootImageUnpacker {
   bool ExtractVendorRamdiskImage(const std::string& path) const;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

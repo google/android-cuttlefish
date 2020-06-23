@@ -24,11 +24,11 @@
 // machine is started.
 // To add initializers for more regions declare here, implement in its own
 // source file and call from PreLaunchInitializers::Initialize().
-void InitializeScreenRegion(const vsoc::CuttlefishConfig& config);
+void InitializeScreenRegion(const cuttlefish::CuttlefishConfig& config);
 
 class PreLaunchInitializers {
  public:
-  static void Initialize(const vsoc::CuttlefishConfig& config) {
+  static void Initialize(const cuttlefish::CuttlefishConfig& config) {
     InitializeScreenRegion(config);
   }
 };

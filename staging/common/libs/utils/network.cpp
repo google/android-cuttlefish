@@ -33,12 +33,12 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/subprocess.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace {
 
 static std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (cvd::StringFromEnv("ANDROID_HOST_OUT",
-                             cvd::StringFromEnv("HOME", ".")) +
+  return (cuttlefish::StringFromEnv("ANDROID_HOST_OUT",
+                             cuttlefish::StringFromEnv("HOME", ".")) +
           "/") +
          file_name;
 }
@@ -97,16 +97,16 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
     return tap_fd;
   }
 
-  if (cvd::HostArch() == "aarch64") {
+  if (cuttlefish::HostArch() == "aarch64") {
     auto tapsetiff_path = DefaultHostArtifactsPath("bin/tapsetiff");
-    cvd::Command cmd(tapsetiff_path);
+    cuttlefish::Command cmd(tapsetiff_path);
     cmd.AddParameter(tap_fd);
     cmd.AddParameter(interface_name.c_str());
     int ret = cmd.Start().Wait();
     if (ret != 0) {
       LOG(ERROR) << "Unable to run tapsetiff.py. Exited with status " << ret;
       tap_fd->Close();
-      return cvd::SharedFD();
+      return cuttlefish::SharedFD();
     }
   } else {
     struct ifreq ifr;
@@ -119,7 +119,7 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
       LOG(ERROR) << "Unable to connect to " << interface_name
                  << " tap interface: " << tap_fd->StrError();
       tap_fd->Close();
-      return cvd::SharedFD();
+      return cuttlefish::SharedFD();
     }
 
     // The interface's configuration may have been modified or just not set
@@ -311,4 +311,4 @@ bool ReleaseDhcp4(SharedFD tap, const std::uint8_t mac_address[6],
   return true;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

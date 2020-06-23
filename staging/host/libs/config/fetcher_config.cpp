@@ -27,7 +27,7 @@
 
 #include "common/libs/utils/files.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -110,7 +110,7 @@ bool FetcherConfig::SaveToFile(const std::string& file) const {
 }
 
 bool FetcherConfig::LoadFromFile(const std::string& file) {
-  auto real_file_path = cvd::AbsolutePath(file);
+  auto real_file_path = cuttlefish::AbsolutePath(file);
   if (real_file_path.empty()) {
     LOG(ERROR) << "Could not get real path for file " << file;
     return false;
@@ -213,4 +213,4 @@ std::string FetcherConfig::FindCvdFileWithSuffix(const std::string& suffix) cons
   return "";
 }
 
-} // namespace cvd
+} // namespace cuttlefish

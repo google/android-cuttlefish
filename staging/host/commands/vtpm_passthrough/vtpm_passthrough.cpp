@@ -31,36 +31,36 @@ DEFINE_int32(server_fd, -1, "A server file descriptor to accept guest tpm "
 
 namespace {
 
-void HandleClient(cvd::SharedFD client, cvd::SharedFD device) {
+void HandleClient(cuttlefish::SharedFD client, cuttlefish::SharedFD device) {
   while (true) {
     // TPM2 simulator command protocol.
     std::vector<char> command_bytes(4, 0);
-    CHECK(cvd::ReadExact(client, &command_bytes) == 4) << "Could not receive TPM_SEND_COMMAND";
+    CHECK(cuttlefish::ReadExact(client, &command_bytes) == 4) << "Could not receive TPM_SEND_COMMAND";
     std::uint32_t command_received =
         betoh32(*reinterpret_cast<std::uint32_t*>(command_bytes.data()));
     CHECK(command_received == 8)
         << "Command received was not TPM_SEND_COMMAND, instead got " << command_received;
     std::vector<char> locality {0};
-    CHECK(cvd::ReadExact(client, &locality) == 1) << "Could not receive locality";
+    CHECK(cuttlefish::ReadExact(client, &locality) == 1) << "Could not receive locality";
     std::vector<char> length_bytes(4, 0);
-    CHECK(cvd::ReadExact(client, &length_bytes) == 4) << "Could not receive command length";
+    CHECK(cuttlefish::ReadExact(client, &length_bytes) == 4) << "Could not receive command length";
     std::vector<char> command(betoh32(*reinterpret_cast<std::uint32_t*>(length_bytes.data())), 0);
-    CHECK(cvd::ReadExact(client, &command) == command.size()) << "Could not read TPM message";
+    CHECK(cuttlefish::ReadExact(client, &command) == command.size()) << "Could not read TPM message";
 
     CHECK(device->Write(command.data(), command.size()) == command.size())
         << "Could not write TPM command to host device: " << device->StrError();
 
     std::string tpm_response;
-    CHECK(cvd::ReadAll(device, &tpm_response) >= 0)
+    CHECK(cuttlefish::ReadAll(device, &tpm_response) >= 0)
         << "host TPM gave an IO error: " << device->StrError();
 
     *reinterpret_cast<std::uint32_t*>(length_bytes.data()) = htobe32(tpm_response.size());
-    CHECK(cvd::WriteAll(client, length_bytes) == 4)
+    CHECK(cuttlefish::WriteAll(client, length_bytes) == 4)
         << "Could not send response length: " << client->StrError();
-    CHECK(cvd::WriteAll(client, tpm_response) == tpm_response.size())
+    CHECK(cuttlefish::WriteAll(client, tpm_response) == tpm_response.size())
         << "Could not send response message: " << client->StrError();
     std::vector<char> parity = {0, 0, 0, 0};
-    CHECK(cvd::WriteAll(client, parity) == 4)
+    CHECK(cuttlefish::WriteAll(client, parity) == 4)
         << "Could not send parity bytes: " << client->StrError();
   }
 }
@@ -68,21 +68,21 @@ void HandleClient(cvd::SharedFD client, cvd::SharedFD device) {
 } // namespace
 
 int main(int argc, char** argv) {
-  cvd::DefaultSubprocessLogging(argv);
+  cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
   CHECK(!FLAGS_device.empty()) << "A device must be set.";
   CHECK(FLAGS_server_fd > -1) << "A server fd must be given.";
 
-  auto server = cvd::SharedFD::Dup(FLAGS_server_fd);
+  auto server = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
   close(FLAGS_server_fd);
   CHECK(server->IsOpen()) << "Could not dup vsock server fd: " << server->StrError();
 
-  auto device = cvd::SharedFD::Open(FLAGS_device.c_str(), O_RDWR);
+  auto device = cuttlefish::SharedFD::Open(FLAGS_device.c_str(), O_RDWR);
   CHECK(device->IsOpen()) << "Could not open " << FLAGS_device << ": " << device->StrError();
 
   while (true) {
-    auto client = cvd::SharedFD::Accept(*server);
+    auto client = cuttlefish::SharedFD::Accept(*server);
     CHECK(client->IsOpen()) << "Could not accept TPM client: " << client->StrError();
     HandleClient(client, device);
   }

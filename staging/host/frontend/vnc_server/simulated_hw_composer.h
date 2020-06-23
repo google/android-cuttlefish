@@ -28,7 +28,7 @@
 #include "host/frontend/vnc_server/blackboard.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
-namespace cvd {
+namespace cuttlefish {
 namespace vnc {
 class SimulatedHWComposer {
  public:
@@ -63,4 +63,4 @@ class SimulatedHWComposer {
   std::shared_ptr<ScreenConnector> screen_connector_;
 };
 }  // namespace vnc
-}  // namespace cvd
+}  // namespace cuttlefish

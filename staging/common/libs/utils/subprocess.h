@@ -25,7 +25,7 @@
 
 #include <common/libs/fs/shared_fd.h>
 
-namespace cvd {
+namespace cuttlefish {
 class Command;
 class Subprocess;
 class SubprocessOptions;
@@ -143,7 +143,7 @@ class Command {
     void Build();
 
    private:
-    cvd::Command* cmd_;
+    cuttlefish::Command* cmd_;
     std::stringstream stream_;
   };
 
@@ -187,7 +187,7 @@ class Command {
   ParameterBuilder GetParameterBuilder() { return ParameterBuilder(this); }
 
   // Redirects the standard IO of the command.
-  bool RedirectStdIO(Subprocess::StdIOChannel channel, cvd::SharedFD shared_fd);
+  bool RedirectStdIO(Subprocess::StdIOChannel channel, cuttlefish::SharedFD shared_fd);
   bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                      Subprocess::StdIOChannel parent_channel);
 
@@ -203,7 +203,7 @@ class Command {
 
  private:
   std::vector<std::string> command_;
-  std::map<cvd::SharedFD, int> inherited_fds_{};
+  std::map<cuttlefish::SharedFD, int> inherited_fds_{};
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   bool use_parent_env_ = true;
   std::vector<std::string> env_{};
@@ -211,7 +211,7 @@ class Command {
 };
 
 /*
- * Consumes a cvd::Command and runs it, optionally managing the stdio channels.
+ * Consumes a cuttlefish::Command and runs it, optionally managing the stdio channels.
  *
  * If `stdin` is set, the subprocess stdin will be pipe providing its contents.
  * If `stdout` is set, the subprocess stdout will be captured and saved to it.
@@ -222,7 +222,7 @@ class Command {
  * If some setup fails, `command` fails to start, or `command` exits due to a
  * signal, the return value will be negative.
  */
-int RunWithManagedStdio(cvd::Command&& command, const std::string* stdin,
+int RunWithManagedStdio(cuttlefish::Command&& command, const std::string* stdin,
                         std::string* stdout, std::string* stderr,
                         SubprocessOptions options = SubprocessOptions());
 
@@ -234,4 +234,4 @@ int execute(const std::vector<std::string>& command,
             const std::vector<std::string>& env);
 int execute(const std::vector<std::string>& command);
 
-}  // namespace cvd
+}  // namespace cuttlefish

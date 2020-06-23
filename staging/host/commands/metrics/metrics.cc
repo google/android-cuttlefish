@@ -21,13 +21,13 @@
 #include "host/commands/metrics/metrics_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-using cvd::MetricsExitCodes;
+using cuttlefish::MetricsExitCodes;
 
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto config = vsoc::CuttlefishConfig::Get();
+  auto config = cuttlefish::CuttlefishConfig::Get();
 
   CHECK(config) << "Could not open cuttlefish config";
 
@@ -36,21 +36,21 @@ int main(int argc, char** argv) {
 
   if (config->run_as_daemon()) {
     android::base::SetLogger(
-        cvd::LogToFiles({metrics_log_path, instance.launcher_log_path()}));
+        cuttlefish::LogToFiles({metrics_log_path, instance.launcher_log_path()}));
   } else {
     android::base::SetLogger(
-        cvd::LogToStderrAndFiles(
+        cuttlefish::LogToStderrAndFiles(
             {metrics_log_path, instance.launcher_log_path()}));
   }
 
-  if (config->enable_metrics() != vsoc::CuttlefishConfig::kYes) {
+  if (config->enable_metrics() != cuttlefish::CuttlefishConfig::kYes) {
     LOG(ERROR) << "metrics not enabled, but metrics were launched.";
-    return cvd::MetricsExitCodes::kInvalidHostConfiguration;
+    return cuttlefish::MetricsExitCodes::kInvalidHostConfiguration;
   }
 
   while (true) {
     // do nothing
     sleep(std::numeric_limits<unsigned int>::max());
   }
-  return cvd::MetricsExitCodes::kMetricsError;
+  return cuttlefish::MetricsExitCodes::kMetricsError;
 }

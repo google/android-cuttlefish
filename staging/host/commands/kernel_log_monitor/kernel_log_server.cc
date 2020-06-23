@@ -24,7 +24,7 @@
 #include "common/libs/fs/shared_select.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-using cvd::SharedFD;
+using cuttlefish::SharedFD;
 
 namespace {
 static const std::map<std::string, std::string> kInformationalPatterns = {
@@ -33,12 +33,12 @@ static const std::map<std::string, std::string> kInformationalPatterns = {
 };
 
 static const std::map<std::string, monitor::BootEvent> kStageToEventMap = {
-    {vsoc::kBootStartedMessage, monitor::BootEvent::BootStarted},
-    {vsoc::kBootCompletedMessage, monitor::BootEvent::BootCompleted},
-    {vsoc::kBootFailedMessage, monitor::BootEvent::BootFailed},
-    {vsoc::kMobileNetworkConnectedMessage,
+    {cuttlefish::kBootStartedMessage, monitor::BootEvent::BootStarted},
+    {cuttlefish::kBootCompletedMessage, monitor::BootEvent::BootCompleted},
+    {cuttlefish::kBootFailedMessage, monitor::BootEvent::BootFailed},
+    {cuttlefish::kMobileNetworkConnectedMessage,
      monitor::BootEvent::MobileNetworkConnected},
-    {vsoc::kWifiConnectedMessage, monitor::BootEvent::WifiNetworkConnected},
+    {cuttlefish::kWifiConnectedMessage, monitor::BootEvent::WifiNetworkConnected},
     // TODO(b/131864854): Replace this with a string less likely to change
     {"init: starting service 'adbd'", monitor::BootEvent::AdbdStarted},
 };
@@ -66,18 +66,18 @@ void ProcessSubscriptions(
 }  // namespace
 
 namespace monitor {
-KernelLogServer::KernelLogServer(cvd::SharedFD pipe_fd,
+KernelLogServer::KernelLogServer(cuttlefish::SharedFD pipe_fd,
                                  const std::string& log_name,
                                  bool deprecated_boot_completed)
     : pipe_fd_(pipe_fd),
-      log_fd_(cvd::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR, 0666)),
+      log_fd_(cuttlefish::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR, 0666)),
       deprecated_boot_completed_(deprecated_boot_completed) {}
 
-void KernelLogServer::BeforeSelect(cvd::SharedFDSet* fd_read) const {
+void KernelLogServer::BeforeSelect(cuttlefish::SharedFDSet* fd_read) const {
   fd_read->Set(pipe_fd_);
 }
 
-void KernelLogServer::AfterSelect(const cvd::SharedFDSet& fd_read) {
+void KernelLogServer::AfterSelect(const cuttlefish::SharedFDSet& fd_read) {
   if (fd_read.IsSet(pipe_fd_)) {
     HandleIncomingMessage();
   }

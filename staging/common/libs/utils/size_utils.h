@@ -17,9 +17,9 @@
 
 #include <stdint.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 // Returns the smallest multiple of 2^align_log greater than or equal to val.
 uint32_t AlignToPowerOf2(uint32_t val, uint8_t align_log);
 
-}  // namespace cvd
+}  // namespace cuttlefish

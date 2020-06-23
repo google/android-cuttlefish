@@ -25,7 +25,7 @@
 #include <mutex>
 #include <vector>
 
-namespace cvd {
+namespace cuttlefish {
 using Message = std::vector<std::uint8_t>;
 
 class ServerSocket;
@@ -63,9 +63,9 @@ class ClientSocket {
 
  private:
   friend ServerSocket;
-  explicit ClientSocket(cvd::SharedFD fd) : fd_(fd) {}
+  explicit ClientSocket(cuttlefish::SharedFD fd) : fd_(fd) {}
 
-  cvd::SharedFD fd_;
+  cuttlefish::SharedFD fd_;
   bool other_side_closed_{};
   mutable std::mutex closed_lock_;
   std::mutex send_lock_;
@@ -81,7 +81,7 @@ class ServerSocket {
   ClientSocket Accept();
 
  private:
-  cvd::SharedFD fd_;
+  cuttlefish::SharedFD fd_;
 };
 
 void AppendInNetworkByteOrder(Message* msg, const std::uint8_t b);
@@ -105,4 +105,4 @@ Message CreateMessage(Ts... vals) {
   return m;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

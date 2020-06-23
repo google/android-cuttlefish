@@ -22,7 +22,7 @@
 
 #include <common/libs/utils/subprocess.h>
 
-namespace cvd {
+namespace cuttlefish {
 
 struct MonitorEntry;
 using OnSocketReadyCb = std::function<bool(MonitorEntry*)>;
@@ -57,9 +57,9 @@ class ProcessMonitor {
 
   std::vector<MonitorEntry> monitored_processes_;
   // Used for communication with the restarter thread
-  cvd::SharedFD thread_comm_main_, thread_comm_monitor_;
+  cuttlefish::SharedFD thread_comm_main_, thread_comm_monitor_;
   std::thread monitor_thread_;
   // Protects access to the monitored_processes_
   std::mutex processes_mutex_;
 };
-}  // namespace cvd
+}  // namespace cuttlefish
