@@ -273,7 +273,11 @@ std::vector<cvd::Command> CrosvmManager::StartCommands() {
   log_tee_cmd.AddParameter("--log_fd_in=", log_out_rd);
 
   // This needs to be the last parameter
-  crosvm_cmd.AddParameter(config_->GetKernelImageToUse());
+  if (config_->use_bootloader()) {
+    crosvm_cmd.AddParameter("--bios=", config_->bootloader());
+  } else {
+    crosvm_cmd.AddParameter(config_->GetKernelImageToUse());
+  }
 
   // TODO(schuffelen): QEMU also needs this and this is not the best place for
   // this code. Find a better place to put it.
