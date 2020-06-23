@@ -125,6 +125,10 @@ const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCPublicIP = "webrtc_public_ip";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
+const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
+const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
+const char* kVehicleHalServerPort = "vehicle_hal_server_port";
+
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
@@ -575,6 +579,14 @@ void CuttlefishConfig::MutableInstanceSpecific::set_vnc_server_port(int vnc_serv
   (*Dictionary())[kVncServerPort] = vnc_server_port;
 }
 
+int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
+  return (*Dictionary())[kVehicleHalServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
+  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
+}
+
 void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
   (*dictionary_)[kEnableWebRTC] = enable_webrtc;
 }
@@ -589,6 +601,22 @@ void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
 
 std::string CuttlefishConfig::webrtc_binary() const {
   return (*dictionary_)[kWebRTCBinary].asString();
+}
+
+void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+
+bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
+  return (*dictionary_)[kEnableVehicleHalServer].asBool();
+}
+
+void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
+  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
+}
+
+std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
+  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
