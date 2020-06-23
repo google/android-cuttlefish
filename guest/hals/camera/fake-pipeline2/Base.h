@@ -38,6 +38,7 @@ struct StreamBuffer {
   uint32_t dataSpace;
   uint32_t stride;
   buffer_handle_t *buffer;
+  buffer_handle_t importedBuffer;
   uint8_t *img;
 };
 typedef Vector<StreamBuffer> Buffers;
