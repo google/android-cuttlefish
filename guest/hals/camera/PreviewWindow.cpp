@@ -146,8 +146,18 @@ void PreviewWindow::onNextFrameAvailable(const void* /*frame*/,
 
   /* Now let the graphics framework to lock the buffer, and provide
    * us with the framebuffer data address. */
+  buffer_handle_t importedBuffer = NULL;
+  res = GrallocModule::getInstance().import(*buffer, &importedBuffer);
+  if (res != NO_ERROR) {
+    ALOGE("%s: gralloc.import failure: %d -> %s", __FUNCTION__, res,
+          strerror(res));
+    mPreviewWindow->cancel_buffer(mPreviewWindow, buffer);
+    return;
+  }
+
   void* img = NULL;
-  res = GrallocModule::getInstance().lock(*buffer, GRALLOC_USAGE_SW_WRITE_OFTEN,
+  res = GrallocModule::getInstance().lock(importedBuffer,
+                                          GRALLOC_USAGE_SW_WRITE_OFTEN,
                                           0, 0, mPreviewFrameWidth,
                                           mPreviewFrameHeight, &img);
   if (res != NO_ERROR) {
@@ -168,7 +178,8 @@ void PreviewWindow::onNextFrameAvailable(const void* /*frame*/,
     ALOGE("%s: Unable to obtain preview frame: %d", __FUNCTION__, res);
     mPreviewWindow->cancel_buffer(mPreviewWindow, buffer);
   }
-  GrallocModule::getInstance().unlock(*buffer);
+  GrallocModule::getInstance().unlock(importedBuffer);
+  GrallocModule::getInstance().release(importedBuffer);
 }
 
 /***************************************************************************

@@ -47,11 +47,4 @@ class HWERoutineTracker {
 /* Logs an execution of a routine / method. */
 #define LOGRE() HWERoutineTracker hwertracker_##__LINE__(__FUNCTION__)
 
-/*
- * min / max macros
- */
-
-#define min(a, b) (((a) < (b)) ? (a) : (b))
-#define max(a, b) (((a) > (b)) ? (a) : (b))
-
 #endif /* HW_EMULATOR_CAMERA_EMULATED_CAMERA_COMMON_H */
