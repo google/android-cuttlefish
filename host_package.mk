@@ -107,6 +107,12 @@ cvd_host_shared_libraries := \
     libkeymaster_portable.so \
     libsoft_attestation_cert.so \
     libcuttlefish_security.so \
+    tpm2-tss2-esys.so \
+    tpm2-tss2-mu.so \
+    tpm2-tss2-rc.so \
+    tpm2-tss2-sys.so \
+    tpm2-tss2-tcti.so \
+    tpm2-tss2-util.so \
 
 webrtc_assets := \
     index.html \
