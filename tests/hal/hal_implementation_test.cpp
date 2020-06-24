@@ -41,7 +41,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.automotive.evs@1.1",
     "android.hardware.automotive.sv@1.0",
     "android.hardware.automotive.vehicle@2.0",
-    "android.hardware.biometrics.fingerprint@2.2",
+    "android.hardware.biometrics.fingerprint@2.3",
     "android.hardware.bluetooth.a2dp@1.0",
     "android.hardware.broadcastradio@1.1",
     "android.hardware.broadcastradio@2.0",
