@@ -20,6 +20,8 @@
 
 #include "curl_wrapper.h"
 
+namespace cuttlefish {
+
 class CredentialSource {
 public:
   virtual ~CredentialSource() = default;
@@ -50,3 +52,5 @@ public:
 
   static std::unique_ptr<CredentialSource> make(const std::string& credential);
 };
+
+}
