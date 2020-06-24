@@ -31,9 +31,11 @@ DEFINE_int32(keymaster_fd, -1, "A file descriptor for keymaster communication");
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
-  keymaster::PureSoftKeymasterContext keymaster_context{
-      KM_SECURITY_LEVEL_SOFTWARE};
-  keymaster::AndroidKeymaster keymaster{&keymaster_context, kOperationTableSize};
+  // keymaster::AndroidKeymaster puts the given pointer into a UniquePtr,
+  // taking ownership.
+  keymaster::PureSoftKeymasterContext* keymaster_context
+      = new keymaster::PureSoftKeymasterContext(KM_SECURITY_LEVEL_SOFTWARE);
+  keymaster::AndroidKeymaster keymaster{keymaster_context, kOperationTableSize};
 
   CHECK(FLAGS_keymaster_fd != -1)
       << "TODO(schuffelen): Add keymaster_fd alternative";
