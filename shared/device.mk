@@ -325,7 +325,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@2.1-service
+    android.hardware.gnss@3.0-service
 
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
