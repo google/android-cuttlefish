@@ -18,6 +18,7 @@ cc_binary_host {
     srcs: [
         "keymaster_responder.cpp",
         "secure_env.cpp",
+        "tpm_auth.cpp",
         "tpm_random_source.cpp",
     ],
     shared_libs: [
