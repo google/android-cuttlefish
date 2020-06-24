@@ -25,6 +25,8 @@
 #include "credential_source.h"
 #include "curl_wrapper.h"
 
+namespace cuttlefish {
+
 class Artifact {
   std::string name;
   size_t size;
@@ -119,3 +121,5 @@ public:
 Build ArgumentToBuild(BuildApi* api, const std::string& arg,
                       const std::string& default_build_target,
                       const std::chrono::seconds& retry_period);
+
+} // namespace cuttlefish
