@@ -343,7 +343,8 @@ void LaunchSocketVsockProxyIfEnabled(cvd::ProcessMonitor* process_monitor,
 
 void LaunchVerhicleHalServerIfEnabled(const vsoc::CuttlefishConfig& config,
                                                         cvd::ProcessMonitor* process_monitor) {
-    if (!config.enable_vehicle_hal_grpc_server()) {
+    if (!config.enable_vehicle_hal_grpc_server() &&
+        !cvd::FileExists(config.vehicle_hal_grpc_server_binary())) {
         return;
     }
 
