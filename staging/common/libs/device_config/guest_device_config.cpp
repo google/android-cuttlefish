@@ -39,8 +39,8 @@ bool GetRawFromServer(DeviceConfig::RawData* data) {
     return false;
   }
   auto config_server =
-      cuttlefish::SharedFD::VsockClient(2 /*host cid*/,
-                                 static_cast<unsigned int>(port), SOCK_STREAM);
+      SharedFD::VsockClient(2 /*host cid*/,
+                            static_cast<unsigned int>(port), SOCK_STREAM);
   if (!config_server->IsOpen()) {
     LOG(ERROR) << "Unable to connect to config server: "
                << config_server->StrError();

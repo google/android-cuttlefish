@@ -63,9 +63,9 @@ class ClientSocket {
 
  private:
   friend ServerSocket;
-  explicit ClientSocket(cuttlefish::SharedFD fd) : fd_(fd) {}
+  explicit ClientSocket(SharedFD fd) : fd_(fd) {}
 
-  cuttlefish::SharedFD fd_;
+  SharedFD fd_;
   bool other_side_closed_{};
   mutable std::mutex closed_lock_;
   std::mutex send_lock_;
@@ -81,7 +81,7 @@ class ServerSocket {
   ClientSocket Accept();
 
  private:
-  cuttlefish::SharedFD fd_;
+  SharedFD fd_;
 };
 
 void AppendInNetworkByteOrder(Message* msg, const std::uint8_t b);

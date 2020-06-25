@@ -32,14 +32,15 @@
 
 #include "common/libs/fs/shared_buf.h"
 
+namespace cuttlefish {
 namespace {
 
 // If a redirected-to file descriptor was already closed, it's possible that
 // some inherited file descriptor duped to this file descriptor and the redirect
 // would override that. This function makes sure that doesn't happen.
 bool validate_redirects(
-    const std::map<cuttlefish::Subprocess::StdIOChannel, int>& redirects,
-    const std::map<cuttlefish::SharedFD, int>& inherited_fds) {
+    const std::map<Subprocess::StdIOChannel, int>& redirects,
+    const std::map<SharedFD, int>& inherited_fds) {
   // Add the redirected IO channels to a set as integers. This allows converting
   // the enum values into integers instead of the other way around.
   std::set<int> int_redirects;
@@ -57,8 +58,7 @@ bool validate_redirects(
   return true;
 }
 
-void do_redirects(
-    const std::map<cuttlefish::Subprocess::StdIOChannel, int>& redirects) {
+void do_redirects(const std::map<Subprocess::StdIOChannel, int>& redirects) {
   for (const auto& entry : redirects) {
     auto std_channel = static_cast<int>(entry.first);
     auto fd = entry.second;
@@ -75,7 +75,6 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   return ret;
 }
 }  // namespace
-namespace cuttlefish {
 
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
@@ -198,8 +197,8 @@ bool Command::BuildParameter(std::stringstream* stream, SharedFD shared_fd) {
   return true;
 }
 
-bool Command::RedirectStdIO(cuttlefish::Subprocess::StdIOChannel channel,
-                            cuttlefish::SharedFD shared_fd) {
+bool Command::RedirectStdIO(Subprocess::StdIOChannel channel,
+                            SharedFD shared_fd) {
   if (!shared_fd->IsOpen()) {
     return false;
   }
@@ -219,7 +218,7 @@ bool Command::RedirectStdIO(cuttlefish::Subprocess::StdIOChannel channel,
 bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
                             Subprocess::StdIOChannel parent_channel) {
   return RedirectStdIO(subprocess_channel,
-                       cuttlefish::SharedFD::Dup(static_cast<int>(parent_channel)));
+                       SharedFD::Dup(static_cast<int>(parent_channel)));
 }
 
 Subprocess Command::Start(SubprocessOptions options) const {
@@ -315,7 +314,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
                         SubprocessOptions options) {
   /*
    * The order of these declarations is necessary for safety. If the function
-   * returns at any point, the cuttlefish::Command will be destroyed first, closing all
+   * returns at any point, the Command will be destroyed first, closing all
    * of its references to SharedFDs. This will cause the thread internals to fail
    * their reads or writes. The ThreadJoiner then waits for the threads to
    * complete, as running the destructor of an active std::thread crashes the
@@ -326,22 +325,22 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
    */
   std::thread stdin_thread, stdout_thread, stderr_thread;
   ThreadJoiner thread_joiner({&stdin_thread, &stdout_thread, &stderr_thread});
-  cuttlefish::Command cmd = std::move(cmd_tmp);
+  Command cmd = std::move(cmd_tmp);
   bool io_error = false;
   if (stdin != nullptr) {
-    cuttlefish::SharedFD pipe_read, pipe_write;
-    if (!cuttlefish::SharedFD::Pipe(&pipe_read, &pipe_write)) {
+    SharedFD pipe_read, pipe_write;
+    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to write the stdin of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn, pipe_read)) {
+    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdIn, pipe_read)) {
       LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
                 << "\", was already set.";
       return -1;
     }
     stdin_thread = std::thread([pipe_write, stdin, &io_error]() {
-      int written = cuttlefish::WriteAll(pipe_write, *stdin);
+      int written = WriteAll(pipe_write, *stdin);
       if (written < 0) {
         io_error = true;
         LOG(ERROR) << "Error in writing stdin to process";
@@ -349,19 +348,19 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
     });
   }
   if (stdout != nullptr) {
-    cuttlefish::SharedFD pipe_read, pipe_write;
-    if (!cuttlefish::SharedFD::Pipe(&pipe_read, &pipe_write)) {
+    SharedFD pipe_read, pipe_write;
+    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stdout of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdOut, pipe_write)) {
+    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, pipe_write)) {
       LOG(ERROR) << "Could not set stdout of \"" << cmd.GetShortName()
                 << "\", was already set.";
       return -1;
     }
     stdout_thread = std::thread([pipe_read, stdout, &io_error]() {
-      int read = cuttlefish::ReadAll(pipe_read, stdout);
+      int read = ReadAll(pipe_read, stdout);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stdout from process";
@@ -369,19 +368,19 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
     });
   }
   if (stderr != nullptr) {
-    cuttlefish::SharedFD pipe_read, pipe_write;
-    if (!cuttlefish::SharedFD::Pipe(&pipe_read, &pipe_write)) {
+    SharedFD pipe_read, pipe_write;
+    if (!SharedFD::Pipe(&pipe_read, &pipe_write)) {
       LOG(ERROR) << "Could not create a pipe to read the stderr of \""
                 << cmd.GetShortName() << "\"";
       return -1;
     }
-    if (!cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdErr, pipe_write)) {
+    if (!cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, pipe_write)) {
       LOG(ERROR) << "Could not set stderr of \"" << cmd.GetShortName()
                 << "\", was already set.";
       return -1;
     }
     stderr_thread = std::thread([pipe_read, stderr, &io_error]() {
-      int read = cuttlefish::ReadAll(pipe_read, stderr);
+      int read = ReadAll(pipe_read, stderr);
       if (read < 0) {
         io_error = true;
         LOG(ERROR) << "Error in reading stderr from process";
@@ -397,7 +396,7 @@ int RunWithManagedStdio(Command&& cmd_tmp, const std::string* stdin,
   {
     // Force the destructor to run by moving it into a smaller scope.
     // This is necessary to close the write end of the pipe.
-    cuttlefish::Command forceDelete = std::move(cmd);
+    Command forceDelete = std::move(cmd);
   }
   int wstatus;
   subprocess.Wait(&wstatus, 0);
