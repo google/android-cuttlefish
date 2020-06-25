@@ -57,7 +57,7 @@ class DeviceConfig {
 
   static std::unique_ptr<DeviceConfig> Get();
 
-  bool SendRawData(cuttlefish::SharedFD fd);
+  bool SendRawData(SharedFD fd);
 
   const char* ril_address_and_prefix() const {
     return ril_address_and_prefix_.c_str();
@@ -76,8 +76,8 @@ class DeviceConfig {
   void generate_address_and_prefix();
 #ifdef CUTTLEFISH_HOST
   DeviceConfig() = default;
-  bool InitializeNetworkConfiguration(const cuttlefish::CuttlefishConfig& config);
-  void InitializeScreenConfiguration(const cuttlefish::CuttlefishConfig& config);
+  bool InitializeNetworkConfiguration(const CuttlefishConfig& config);
+  void InitializeScreenConfiguration(const CuttlefishConfig& config);
 #else
   explicit DeviceConfig(const RawData& data);
 #endif

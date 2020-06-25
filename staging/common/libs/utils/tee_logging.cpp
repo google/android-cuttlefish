@@ -164,7 +164,7 @@ void TeeLogger::operator()(
           now, getpid(), GetThreadId(), severity, tag, file, line, message);
   for (const auto& destination : destinations_) {
     if (severity >= destination.severity) {
-      cuttlefish::WriteAll(destination.target, output_string);
+      WriteAll(destination.target, output_string);
     }
   }
 }
@@ -174,7 +174,7 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
   std::vector<SeverityTarget> log_severities;
   for (const auto& file : files) {
     auto log_file_fd =
-        cuttlefish::SharedFD::Open(
+        SharedFD::Open(
           file,
           O_CREAT | O_WRONLY | O_APPEND,
           S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
