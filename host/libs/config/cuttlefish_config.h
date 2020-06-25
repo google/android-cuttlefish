@@ -477,6 +477,9 @@ std::string GetGlobalConfigFileLink();
 std::string ForCurrentInstance(const char* prefix);
 int ForCurrentInstance(int base);
 
+// Returns a random serial number appeneded to a given prefix.
+std::string RandomSerialNumber(const std::string& prefix);
+
 std::string GetDefaultMempath();
 int GetDefaultPerInstanceVsockCid();
 
