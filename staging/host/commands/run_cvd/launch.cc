@@ -426,7 +426,8 @@ void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
 
 void LaunchVerhicleHalServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                                         cuttlefish::ProcessMonitor* process_monitor) {
-    if (!config.enable_vehicle_hal_grpc_server()) {
+    if (!config.enable_vehicle_hal_grpc_server() ||
+        !cuttlefish::FileExists(config.vehicle_hal_grpc_server_binary())) {
         return;
     }
 
