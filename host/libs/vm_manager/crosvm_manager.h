@@ -23,6 +23,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 
+namespace cuttlefish {
 namespace vm_manager {
 
 // Starts a guest VM with crosvm. It requires the host package to support the
@@ -40,4 +41,6 @@ class CrosvmManager : public VmManager {
   std::vector<cuttlefish::Command> StartCommands() override;
 };
 
-}  // namespace vm_manager
+} // namespace vm_manager
+} // namespace cuttlefish
+
