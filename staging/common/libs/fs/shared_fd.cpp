@@ -32,8 +32,9 @@
 
 // #define ENABLE_GCE_SHARED_FD_LOGGING 1
 
+namespace cuttlefish {
+
 namespace {
-using cuttlefish::SharedFDSet;
 
 void MarkAll(const SharedFDSet& input, fd_set* dest, int* max_index) {
   for (SharedFDSet::const_iterator it = input.begin(); it != input.end();
@@ -83,8 +84,6 @@ int memfd_create_wrapper(const char* name, unsigned int flags) {
 }
 
 }  // namespace
-
-namespace cuttlefish {
 
 bool FileInstance::CopyFrom(FileInstance& in, size_t length) {
   std::vector<char> buffer(8192);
@@ -383,7 +382,7 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 }
 
 SharedFD SharedFD::VsockServer(unsigned int port, int type) {
-  auto vsock = cuttlefish::SharedFD::Socket(AF_VSOCK, type, 0);
+  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
   }
@@ -410,7 +409,7 @@ SharedFD SharedFD::VsockServer(int type) {
 }
 
 SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
-  auto vsock = cuttlefish::SharedFD::Socket(AF_VSOCK, type, 0);
+  auto vsock = SharedFD::Socket(AF_VSOCK, type, 0);
   if (!vsock->IsOpen()) {
     return vsock;
   }

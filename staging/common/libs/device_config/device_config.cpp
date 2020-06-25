@@ -38,7 +38,7 @@ static constexpr auto kDataSize = sizeof(DeviceConfig::RawData);
 
 }  // namespace
 
-bool DeviceConfig::SendRawData(cuttlefish::SharedFD fd) {
+bool DeviceConfig::SendRawData(SharedFD fd) {
   std::size_t sent = 0;
   auto buffer = reinterpret_cast<uint8_t*>(&data_);
   while (sent < kDataSize) {
