@@ -28,6 +28,7 @@
 
 #include "common/libs/utils/files.h"
 
+namespace cuttlefish {
 namespace {
 
 const std::string BUILD_API =
@@ -172,7 +173,7 @@ bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
                               const std::string& destination) {
   for (const auto& path : build.paths) {
     auto source = path + "/" + artifact;
-    if (!cuttlefish::FileExists(source)) {
+    if (!FileExists(source)) {
       continue;
     }
     unlink(destination.c_str());
@@ -231,3 +232,5 @@ Build ArgumentToBuild(BuildApi* build_api, const std::string& arg,
   proposed_build.product = build_api->ProductName(proposed_build);
   return proposed_build;
 }
+
+} // namespace cuttlefish
