@@ -24,6 +24,7 @@
 #include <curl/curl.h>
 #include <json/json.h>
 
+namespace cuttlefish {
 namespace {
 
 size_t file_write_callback(char *ptr, size_t, size_t nmemb, void *userdata) {
@@ -153,4 +154,6 @@ Json::Value CurlWrapper::DownloadToJson(const std::string& url,
     json["response"] = contents;
   }
   return json;
+}
+
 }
