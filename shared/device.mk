@@ -172,6 +172,11 @@ DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 # pick up every density resources.
 
 #
+# Common manifest for all targets
+#
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
+
+#
 # General files
 #
 PRODUCT_COPY_FILES += \
