@@ -116,6 +116,7 @@ cvd_host_shared_libraries := \
     tpm2-tss2-sys.so \
     tpm2-tss2-tcti.so \
     tpm2-tss2-util.so \
+    ms-tpm-20-ref-lib.so \
 
 webrtc_assets := \
     index.html \
