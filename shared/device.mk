@@ -82,9 +82,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
 
-# Codec 2.0 is unstable on x86
+ifeq ($(LOCAL_ENABLE_CODEC2),)
+# Codec 2.0 is unstable on x86; disable it
 PRODUCT_PROPERTY_OVERRIDES += \
     debug.stagefright.ccodec=0
+# Codec 1.0 requires the OMX services
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/shared/config/android.hardware.media.omx@1.0.xml
+endif
 
 # Enforce privapp permissions control.
 PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
