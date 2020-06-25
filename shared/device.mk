@@ -439,6 +439,9 @@ PRODUCT_EXTRA_VNDK_VERSIONS := 28 29
 
 PRODUCT_SOONG_NAMESPACES += external/mesa3d
 
+#for Confirmation UI
+PRODUCT_SOONG_NAMESPACES += vendor/google_devices/common/proprietary/confirmatioui_hal
+
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.running_without_sync_framework=true
