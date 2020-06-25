@@ -16,10 +16,16 @@
 cc_binary_host {
     name: "secure_env",
     srcs: [
+        "composite_serialization.cpp",
+        "hmac_serializable.cpp",
         "keymaster_responder.cpp",
         "secure_env.cpp",
         "tpm_auth.cpp",
+        "tpm_encrypt_decrypt.cpp",
+        "tpm_hmac.cpp",
         "tpm_random_source.cpp",
+        "tpm_resource_manager.cpp",
+        "tpm_serialize.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -34,6 +40,7 @@ cc_binary_host {
         "libcutils",
         "libpuresoftkeymasterdevice_host",
         "tpm2-tss2-esys",
+        "tpm2-tss2-mu",
         "tpm2-tss2-rc",
     ],
     static_libs: [
