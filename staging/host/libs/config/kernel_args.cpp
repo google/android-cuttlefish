@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -110,7 +111,8 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
     kernel_cmdline.push_back(concat("androidboot.vsock_touch_port=", instance.touch_server_port()));
   }
 
-  if (config.enable_vehicle_hal_grpc_server() && instance.vehicle_hal_server_port()) {
+  if (config.enable_vehicle_hal_grpc_server() && instance.vehicle_hal_server_port() &&
+      cuttlefish::FileExists(config.vehicle_hal_grpc_server_binary())) {
     constexpr int vehicle_hal_server_cid = 2;
     kernel_cmdline.push_back(concat("androidboot.vendor.vehiclehal.server.cid=", vehicle_hal_server_cid));
     kernel_cmdline.push_back(concat("androidboot.vendor.vehiclehal.server.port=", instance.vehicle_hal_server_port()));
