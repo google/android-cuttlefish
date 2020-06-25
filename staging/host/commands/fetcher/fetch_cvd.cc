@@ -41,6 +41,8 @@ const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_phone-userdebug";
 
 }
 
+using cuttlefish::CurrentDirectory;
+
 DEFINE_string(default_build, DEFAULT_BRANCH + "/" + DEFAULT_BUILD_TARGET,
               "source for the cuttlefish build to use (vendor.img + host)");
 DEFINE_string(system_build, "", "source for system.img and product.img");
@@ -52,12 +54,13 @@ DEFINE_bool(download_target_files_zip, false, "Whether to fetch the "
                                               "-target_files-*.zip file.");
 
 DEFINE_string(credential_source, "", "Build API credential source");
-DEFINE_string(directory, cuttlefish::CurrentDirectory(), "Target directory to fetch "
-                                                  "files into");
+DEFINE_string(directory, CurrentDirectory(), "Target directory to fetch "
+                                             "files into");
 DEFINE_bool(run_next_stage, false, "Continue running the device through the next stage.");
 DEFINE_string(wait_retry_period, "20", "Retry period for pending builds given "
                                        "in seconds. Set to 0 to not wait.");
 
+namespace cuttlefish {
 namespace {
 
 const std::string HOST_TOOLS = "cvd-host_package.tar.gz";
@@ -155,7 +158,7 @@ std::vector<std::string> download_host_package(BuildApi* build_api,
     return {};
   }
 
-  cuttlefish::Archive archive(local_path);
+  Archive archive(local_path);
   if (!archive.ExtractAll(target_directory)) {
     LOG(ERROR) << "Could not extract " << local_path;
     return {};
@@ -192,11 +195,11 @@ std::vector<std::string> download_ota_tools(BuildApi* build_api,
   }
 
   std::string otatools_dir = target_directory + OTA_TOOLS_DIR;
-  if (!cuttlefish::DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
+  if (!DirectoryExists(otatools_dir) && mkdir(otatools_dir.c_str(), 0777) != 0) {
     LOG(ERROR) << "Could not create " << otatools_dir;
     return {};
   }
-  cuttlefish::Archive archive(local_path);
+  Archive archive(local_path);
   if (!archive.ExtractAll(otatools_dir)) {
     LOG(ERROR) << "Could not extract " << local_path;
     return {};
@@ -209,14 +212,14 @@ std::vector<std::string> download_ota_tools(BuildApi* build_api,
   return files;
 }
 
-void AddFilesToConfig(cuttlefish::FileSource purpose, const Build& build,
-                      const std::vector<std::string>& paths, cuttlefish::FetcherConfig* config,
+void AddFilesToConfig(FileSource purpose, const Build& build,
+                      const std::vector<std::string>& paths, FetcherConfig* config,
                       bool override_entry = false) {
   for (const std::string& path : paths) {
     // TODO(schuffelen): Do better for local builds here.
     auto id = std::visit([](auto&& arg) { return arg.id; }, build);
     auto target = std::visit([](auto&& arg) { return arg.target; }, build);
-    cuttlefish::CvdFile file(purpose, id, target, path);
+    CvdFile file(purpose, id, target, path);
     bool added = config->add_cvd_file(file, override_entry);
     if (!added) {
       LOG(ERROR) << "Duplicate file " << file;
@@ -237,16 +240,16 @@ std::string USAGE_MESSAGE =
 
 } // namespace
 
-int main(int argc, char** argv) {
+int FetchCvdMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   gflags::SetUsageMessage(USAGE_MESSAGE);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  cuttlefish::FetcherConfig config;
+  FetcherConfig config;
   config.RecordFlags();
 
-  std::string target_dir = cuttlefish::AbsolutePath(FLAGS_directory);
-  if (!cuttlefish::DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
+  std::string target_dir = AbsolutePath(FLAGS_directory);
+  if (!DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << target_dir;
   }
   std::chrono::seconds retry_period(std::stoi(FLAGS_wait_retry_period));
@@ -270,7 +273,7 @@ int main(int argc, char** argv) {
     if (host_package_files.empty()) {
       LOG(FATAL) << "Could not download host package for " << default_build;
     }
-    AddFilesToConfig(cuttlefish::FileSource::DEFAULT_BUILD, default_build, host_package_files, &config);
+    AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, host_package_files, &config);
 
     if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
       auto ota_build = default_build;
@@ -283,7 +286,7 @@ int main(int argc, char** argv) {
       if (ota_tools_files.empty()) {
         LOG(FATAL) << "Could not download ota tools for " << ota_build;
       }
-      AddFilesToConfig(cuttlefish::FileSource::DEFAULT_BUILD, default_build, ota_tools_files, &config);
+      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, ota_tools_files, &config);
     }
     if (FLAGS_download_img_zip) {
       std::vector<std::string> image_files =
@@ -295,7 +298,7 @@ int main(int argc, char** argv) {
       for (auto& file : image_files) {
         LOG(INFO) << file;
       }
-      AddFilesToConfig(cuttlefish::FileSource::DEFAULT_BUILD, default_build, image_files, &config);
+      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, image_files, &config);
     }
     if (FLAGS_system_build != "" || FLAGS_download_target_files_zip) {
       std::string default_target_dir = target_dir + "/default";
@@ -308,7 +311,7 @@ int main(int argc, char** argv) {
         LOG(FATAL) << "Could not download target files for " << default_build;
       }
       LOG(INFO) << "Adding target files for default build";
-      AddFilesToConfig(cuttlefish::FileSource::DEFAULT_BUILD, default_build, target_files, &config);
+      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, target_files, &config);
     }
 
     if (FLAGS_system_build != "") {
@@ -327,7 +330,7 @@ int main(int argc, char** argv) {
           system_in_img_zip = false;
         } else {
           LOG(INFO) << "Adding img-zip files for system build";
-          AddFilesToConfig(cuttlefish::FileSource::SYSTEM_BUILD, system_build, image_files,
+          AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build, image_files,
                            &config, true);
         }
       }
@@ -341,7 +344,7 @@ int main(int argc, char** argv) {
         LOG(FATAL) << "Could not download target files for " << system_build;
         return -1;
       }
-      AddFilesToConfig(cuttlefish::FileSource::SYSTEM_BUILD, system_build, target_files, &config);
+      AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build, target_files, &config);
       if (!system_in_img_zip) {
         std::vector<std::string> wanted_images = {"IMAGES/system.img", "IMAGES/product.img"};
         auto images = ExtractImages(target_files[0], target_dir, wanted_images);
@@ -399,7 +402,7 @@ int main(int argc, char** argv) {
 
       std::string local_path = target_dir + "/kernel";
       if (build_api.ArtifactToFile(kernel_build, "bzImage", local_path)) {
-        AddFilesToConfig(cuttlefish::FileSource::KERNEL_BUILD, kernel_build, {local_path}, &config);
+        AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build, {local_path}, &config);
       } else {
         LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
             << local_path;
@@ -415,7 +418,7 @@ int main(int argc, char** argv) {
           LOG(FATAL) << "Could not download " << kernel_build << ":initramfs.img to "
                      << target_dir + "/initramfs.img";
         }
-        AddFilesToConfig(cuttlefish::FileSource::KERNEL_BUILD, kernel_build,
+        AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
                          {target_dir + "/initramfs.img"}, &config);
       }
     }
@@ -426,7 +429,7 @@ int main(int argc, char** argv) {
   // their own build id. So it's unclear which build number fetch_cvd itself was built at.
   // https://android.googlesource.com/platform/build/+/979c9f3/Changes.md#build_number
   std::string fetcher_path = target_dir + "/fetcher_config.json";
-  AddFilesToConfig(cuttlefish::GENERATED, DeviceBuild("", ""), {fetcher_path}, &config);
+  AddFilesToConfig(GENERATED, DeviceBuild("", ""), {fetcher_path}, &config);
   config.SaveToFile(fetcher_path);
 
   for (const auto& file : config.get_cvd_files()) {
@@ -440,15 +443,15 @@ int main(int argc, char** argv) {
 
   // Ignore return code. We want to make sure there is no running instance,
   // and stop_cvd will exit with an error code if there is already no running instance.
-  cuttlefish::Command stop_cmd(target_dir + "/bin/stop_cvd");
-  stop_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdOut,
-                         cuttlefish::Subprocess::StdIOChannel::kStdErr);
+  Command stop_cmd(target_dir + "/bin/stop_cvd");
+  stop_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut,
+                         Subprocess::StdIOChannel::kStdErr);
   stop_cmd.Start().Wait();
 
   // gflags::ParseCommandLineFlags will remove fetch_cvd's flags from this.
   // This depends the remove_flags argument (3rd) is "true".
 
-  auto filelist_fd = cuttlefish::SharedFD::MemfdCreate("files_list");
+  auto filelist_fd = SharedFD::MemfdCreate("files_list");
   if (!filelist_fd->IsOpen()) {
     LOG(FATAL) << "Unable to create temp file to write file list. "
                << filelist_fd->StrError() << " (" << filelist_fd->GetErrno() << ")";
@@ -487,4 +490,12 @@ int main(int argc, char** argv) {
   execv(next_stage.c_str(), const_cast<char* const*>(next_stage_argv.data()));
   int error = errno;
   LOG(FATAL) << "execv returned with errno " << error << ":" << strerror(error);
+
+  return -1;
+}
+
+} // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::FetchCvdMain(argc, argv);
 }
