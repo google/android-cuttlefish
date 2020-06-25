@@ -151,9 +151,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const cuttlefish::FileInstance& operator*() const { return *value_; }
+  const FileInstance& operator*() const { return *value_; }
 
-  cuttlefish::FileInstance& operator*() { return *value_; }
+  FileInstance& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);

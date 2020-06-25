@@ -63,7 +63,7 @@ bool KeymasterChannel::SendMessage(
   message.Serialize(to_send->payload, to_send->payload + payload_size);
   auto write_size = payload_size + sizeof(keymaster_message);
   auto to_send_bytes = reinterpret_cast<const char*>(to_send.get());
-  auto written = cuttlefish::WriteAll(channel_, to_send_bytes, write_size);
+  auto written = WriteAll(channel_, to_send_bytes, write_size);
   if (written == -1) {
     LOG(ERROR) << "Could not write Keymaster Message: " << channel_->StrError();
   }
@@ -72,7 +72,7 @@ bool KeymasterChannel::SendMessage(
 
 ManagedKeymasterMessage KeymasterChannel::ReceiveMessage() {
   struct keymaster_message message_header;
-  auto read = cuttlefish::ReadExactBinary(channel_, &message_header);
+  auto read = ReadExactBinary(channel_, &message_header);
   if (read != sizeof(keymaster_message)) {
     LOG(ERROR) << "Expected " << sizeof(keymaster_message) << ", received "
                << read;
@@ -84,7 +84,7 @@ ManagedKeymasterMessage KeymasterChannel::ReceiveMessage() {
                                         message_header.is_response,
                                         message_header.payload_size);
   auto message_bytes = reinterpret_cast<char*>(message->payload);
-  read = cuttlefish::ReadExact(channel_, message_bytes, message->payload_size);
+  read = ReadExact(channel_, message_bytes, message->payload_size);
   if (read != message->payload_size) {
     LOG(ERROR) << "Could not read Keymaster Message: " << channel_->StrError();
     return {};
