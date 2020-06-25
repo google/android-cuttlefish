@@ -22,13 +22,13 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 
+namespace cuttlefish {
+
 namespace {
 
 const size_t BUFF_SIZE = 1 << 14;
 
 } // namespace
-
-namespace cuttlefish {
 
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;

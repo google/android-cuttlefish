@@ -29,7 +29,7 @@ android::base::LogSeverity LogFileSeverity();
 
 struct SeverityTarget {
   android::base::LogSeverity severity;
-  cuttlefish::SharedFD target;
+  SharedFD target;
 };
 
 class TeeLogger {
