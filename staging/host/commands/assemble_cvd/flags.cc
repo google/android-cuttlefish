@@ -35,6 +35,7 @@
 #define VBMETA_MAX_SIZE 65536ul
 
 using cuttlefish::ForCurrentInstance;
+using cuttlefish::RandomSerialNumber;
 using cuttlefish::AssemblerExitCodes;
 
 DEFINE_string(cache_image, "", "Location of the cache partition image.");
@@ -90,6 +91,8 @@ DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
+DEFINE_bool(use_random_serial, false,
+            "Whether to use random serial for the device.");
 DEFINE_string(assembly_dir,
               cuttlefish::DefaultHostArtifactsPath("cuttlefish_assembly"),
               "A directory to put generated files common between instances");
@@ -492,7 +495,11 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
         .ForInstance(num);
     // Set this first so that calls to PerInstancePath below are correct
     instance.set_instance_dir(FLAGS_instance_dir + "." + std::to_string(num));
-    instance.set_serial_number(FLAGS_serial_number + std::to_string(num));
+    if(FLAGS_use_random_serial){
+      instance.set_serial_number(RandomSerialNumber("CFCVD" + std::to_string(num)));
+    } else {
+      instance.set_serial_number(FLAGS_serial_number + std::to_string(num));
+    }
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
     instance.set_mobile_tap_name(StrForInstance("cvd-mtap-", num));
