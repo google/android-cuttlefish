@@ -19,7 +19,6 @@ webrtc_files_path := usr/share/webrtc
 cvd_host_executables := \
     adb \
     adbshell \
-    android.hardware.automotive.vehicle@2.0-virtualization-grpc-server \
     launch_cvd \
     lpmake \
     lpunpack \
@@ -59,6 +58,10 @@ cvd_host_executables := \
     make_f2fs \
     tapsetiff \
     newfs_msdos \
+
+ifneq ($(wildcard device/google/trout),)
+    cvd_host_executables += android.hardware.automotive.vehicle@2.0-virtualization-grpc-server
+endif
 
 cvd_host_tests := \
     monotonic_time_test \
