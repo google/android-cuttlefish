@@ -4,7 +4,7 @@ system /system ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slots
 # Add all non-dynamic partitions except system, after this comment
 /dev/block/by-name/userdata /data ext4 nodev,noatime,nosuid,errors=panic wait,fileencryption=aes-256-xts:aes-256-cts,fsverity
 /dev/block/by-name/cache /cache ext4 nodev,noatime,nosuid,errors=panic wait
-/dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable,first_stage_mount
+/dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable,first_stage_mount,check
 /dev/block/by-name/misc /misc emmc defaults defaults
 # Add all dynamic partitions except system, after this comment
 odm /odm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
