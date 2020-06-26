@@ -25,7 +25,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> OneshotHmac(
     TpmResourceManager* resource_manager,
     ESYS_TR key_handle,
     TpmAuth auth,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size) {
   if (data_size  > TPM2_MAX_DIGEST_BUFFER) {
     LOG(ERROR) << "Logic error: OneshotSign called with data_size "
@@ -62,7 +62,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
     TpmResourceManager* resource_manager,
     ESYS_TR key_handle,
     TpmAuth key_auth,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size) {
   // TODO(schuffelen): Pipeline commands where possible.
   TPM2B_AUTH sequence_auth;
@@ -148,7 +148,7 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     TpmResourceManager* resource_manager,
     ESYS_TR key_handle,
     TpmAuth auth,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size) {
   auto fn = data_size > TPM2_MAX_DIGEST_BUFFER ? SegmentedHmac : OneshotHmac;
   return fn(resource_manager, key_handle, auth, data, data_size);
