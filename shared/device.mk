@@ -75,9 +75,14 @@ PRODUCT_PROPERTY_OVERRIDES += \
 PRODUCT_PROPERTY_OVERRIDES += \
     wlan.driver.status=ok
 
-# Codec 2.0 is unstable on x86
+ifeq ($(LOCAL_ENABLE_CODEC2),)
+# Codec 2.0 is unstable on x86; disable it
 PRODUCT_PROPERTY_OVERRIDES += \
     debug.stagefright.ccodec=0
+# Codec 1.0 requires the OMX services
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/shared/config/android.hardware.media.omx@1.0.xml
+endif
 
 # Enforce privapp permissions control.
 PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
@@ -167,6 +172,11 @@ PRODUCT_PACKAGES += \
 DEVICE_PACKAGE_OVERLAYS := device/google/cuttlefish/shared/overlay
 # PRODUCT_AAPT_CONFIG and PRODUCT_AAPT_PREF_CONFIG are intentionally not set to
 # pick up every density resources.
+
+#
+# Common manifest for all targets
+#
+DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest.xml
 
 #
 # General files
@@ -273,8 +283,8 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     audio.primary.cutf \
     audio.r_submix.default \
-    android.hardware.audio@6.0-impl:32 \
-    android.hardware.audio.effect@6.0-impl:32 \
+    android.hardware.audio@6.0-impl \
+    android.hardware.audio.effect@6.0-impl \
     android.hardware.audio@2.0-service \
     android.hardware.soundtrigger@2.3-impl \
 
