@@ -47,5 +47,5 @@ UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
     TpmResourceManager* resource_manager,
     ESYS_TR key_handle,
     TpmAuth auth,
-    uint8_t* data,
+    const uint8_t* data,
     size_t data_size);
