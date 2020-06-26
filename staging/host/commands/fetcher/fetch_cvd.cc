@@ -346,28 +346,31 @@ int FetchCvdMain(int argc, char** argv) {
       }
       AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build, target_files, &config);
       if (!system_in_img_zip) {
-        std::vector<std::string> wanted_images = {"IMAGES/system.img", "IMAGES/product.img"};
-        auto images = ExtractImages(target_files[0], target_dir, wanted_images);
-        if (images.size() != 2) {
-          LOG(FATAL) << "Could not get system.img, product.img from target zip";
+        if (ExtractImages(target_files[0], target_dir, {"IMAGES/system.img"})
+            != std::vector<std::string>{}) {
+          std::string extracted_system = target_dir + "/IMAGES/system.img";
+          std::string target_system = target_dir + "/system.img";
+          if (rename(extracted_system.c_str(), target_system.c_str())) {
+            int error_num = errno;
+            LOG(FATAL) << "Could not replace system.img in target directory: "
+                       << strerror(error_num);
+            return -1;
+          }
+	} else {
+          LOG(FATAL) << "Could not get system.img from the target zip";
           return -1;
         }
-        std::string extracted_system = target_dir + "/IMAGES/system.img";
-        std::string target_system = target_dir + "/system.img";
-        if (rename(extracted_system.c_str(), target_system.c_str())) {
-          int error_num = errno;
-          LOG(FATAL) << "Could not replace system.img in target directory: "
-              << strerror(error_num);
-          return -1;
-        }
-        std::string extracted_product = target_dir + "/IMAGES/product.img";
-        std::string target_product = target_dir + "/product.img";
-        if (rename(extracted_product.c_str(), target_product.c_str())) {
-          int error_num = errno;
-          LOG(FATAL) << "Could not replace product.img in target directory"
-              << strerror(error_num);
-          return -1;
-        }
+	if (ExtractImages(target_files[0], target_dir, {"IMAGES/product.img"})
+	  != std::vector<std::string>{}) {
+          std::string extracted_product = target_dir + "/IMAGES/product.img";
+          std::string target_product = target_dir + "/product.img";
+          if (rename(extracted_product.c_str(), target_product.c_str())) {
+            int error_num = errno;
+            LOG(FATAL) << "Could not replace product.img in target directory"
+                       << strerror(error_num);
+            return -1;
+          }
+	}
         if (ExtractImages(target_files[0], target_dir, {"IMAGES/system_ext.img"})
             != std::vector<std::string>{}) {
           std::string extracted_system_ext = target_dir + "/IMAGES/system_ext.img";
