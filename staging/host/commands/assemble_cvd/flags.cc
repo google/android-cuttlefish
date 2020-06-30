@@ -1223,7 +1223,7 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
         < cuttlefish::FileModificationTime(config->composite_disk_path());
     if (missingOverlay || oldCompositeDisk || !FLAGS_resume || newDataImage || newOverlay) {
       if (FLAGS_resume) {
-        LOG(INFO) << "Requested to continue an existing session, (the default)"
+        LOG(INFO) << "Requested to continue an existing session, (the default) "
                   << "but the disk files have become out of date. Wiping the "
                   << "old session files and starting a new session.";
       }
