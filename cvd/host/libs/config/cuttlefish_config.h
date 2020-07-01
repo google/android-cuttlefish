@@ -197,17 +197,8 @@ class CuttlefishConfig {
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
 
-  void set_webrtc_public_ip(const std::string& webrtc_public_ip);
-  std::string webrtc_public_ip() const;
-
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
-
-  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
-  bool enable_vehicle_hal_grpc_server() const;
-
-  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
-  std::string vehicle_hal_grpc_server_binary() const;
 
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
@@ -294,6 +285,14 @@ class CuttlefishConfig {
   void set_sig_server_port(int port);
   int sig_server_port() const;
 
+  // The range of UDP ports available for webrtc sessions.
+  void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
+  std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
+
+  // The range of TCP ports available for webrtc sessions.
+  void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
+  std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
+
   // The address of the signaling server
   void set_sig_server_address(const std::string& addr);
   std::string sig_server_address() const;
@@ -358,8 +357,6 @@ class CuttlefishConfig {
     // Port number to connect to the frame server on the host. (Only
     // operational if using swiftshader as the GPU.)
     int frames_server_port() const;
-    // Port number to connect to the vehicle HAL server on the host
-    int vehicle_hal_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
     // Port number to connect to the tpm server on the host
@@ -443,7 +440,6 @@ class CuttlefishConfig {
     void set_keyboard_server_port(int config_server_port);
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
-    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
