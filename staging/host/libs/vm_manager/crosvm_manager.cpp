@@ -279,14 +279,19 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
     crosvm_cmd.AddParameter(config_->GetKernelImageToUse());
   }
 
-  // TODO(schuffelen): QEMU also needs this and this is not the best place for
-  // this code. Find a better place to put it.
-  auto lease_file =
-      cuttlefish::ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-")
-      + ".leases";
-  if (!ReleaseDhcpLeases(lease_file, wifi_tap)) {
-    LOG(ERROR) << "Failed to release wifi DHCP leases. Connecting to the wifi "
-               << "network may not work.";
+  // Only run the leases workaround if we are not using the new network
+  // bridge architecture - in that case, we have a wider DHCP address
+  // space and stale leases should be much less of an issue
+  if (!cuttlefish::FileExists("/var/run/cuttlefish-dnsmasq-cvd-wbr.leases")) {
+    // TODO(schuffelen): QEMU also needs this and this is not the best place for
+    // this code. Find a better place to put it.
+    auto lease_file =
+        cuttlefish::ForCurrentInstance("/var/run/cuttlefish-dnsmasq-cvd-wbr-")
+        + ".leases";
+    if (!ReleaseDhcpLeases(lease_file, wifi_tap)) {
+      LOG(ERROR) << "Failed to release wifi DHCP leases. Connecting to the wifi "
+                 << "network may not work.";
+    }
   }
 
   std::vector<cuttlefish::Command> ret;
