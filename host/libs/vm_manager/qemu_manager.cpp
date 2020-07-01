@@ -138,8 +138,8 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("-m");
   qemu_cmd.AddParameter(config_->memory_mb());
 
-  qemu_cmd.AddParameter("-realtime");
-  qemu_cmd.AddParameter("mlock=off");
+  qemu_cmd.AddParameter("-overcommit");
+  qemu_cmd.AddParameter("mem-lock=off");
 
   qemu_cmd.AddParameter("-smp");
   qemu_cmd.AddParameter(config_->cpus(), ",sockets=", config_->cpus(),
