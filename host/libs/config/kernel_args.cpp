@@ -68,10 +68,7 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
     kernel_cmdline.push_back(concat("androidboot.slot_suffix=", slot_suffix));
   }
   kernel_cmdline.push_back(concat("loop.max_part=", config.loop_max_part()));
-  if (config.guest_enforce_security()) {
-    kernel_cmdline.push_back("enforcing=1");
-  } else {
-    kernel_cmdline.push_back("enforcing=0");
+  if (!config.guest_enforce_security()) {
     kernel_cmdline.push_back("androidboot.selinux=permissive");
   }
   if (config.guest_audit_security()) {

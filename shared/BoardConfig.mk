@@ -171,7 +171,6 @@ BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 
 BOARD_KERNEL_CMDLINE += init=/init
 BOARD_KERNEL_CMDLINE += androidboot.hardware=cutf_cvm
-BOARD_KERNEL_CMDLINE += security=selinux
 BOARD_KERNEL_CMDLINE += androidboot.console=ttyS1
 
 ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
