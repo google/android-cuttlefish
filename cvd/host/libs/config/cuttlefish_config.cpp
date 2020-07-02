@@ -132,10 +132,6 @@ const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCPublicIP = "webrtc_public_ip";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
-const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
-const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
-
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
@@ -180,6 +176,7 @@ const char* kGuestAuditSecurity = "guest_audit_security";
 const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
+const char* kVmManagerKernelCmdline = "vm_manager_kernel_cmdline";
 
 const char* kFramesServerPort = "frames_server_port";
 const char* kTouchServerPort = "touch_server_port";
@@ -673,14 +670,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int 
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
 }
 
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
-}
-
 int CuttlefishConfig::InstanceSpecific::logcat_port() const {
   return (*Dictionary())[kLogcatPort].asInt();
 }
@@ -731,22 +720,6 @@ void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
 
 std::string CuttlefishConfig::webrtc_binary() const {
   return (*dictionary_)[kWebRTCBinary].asString();
-}
-
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
-}
-
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
@@ -1085,6 +1058,21 @@ void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
 std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
   std::vector<std::string> cmdline;
   for (const Json::Value& arg : (*dictionary_)[kExtraKernelCmdline]) {
+    cmdline.push_back(arg.asString());
+  }
+  return cmdline;
+}
+
+void CuttlefishConfig::set_vm_manager_kernel_cmdline(std::string vm_manager_cmdline) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(vm_manager_cmdline, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kVmManagerKernelCmdline] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::vm_manager_kernel_cmdline() const {
+  std::vector<std::string> cmdline;
+  for (const Json::Value& arg : (*dictionary_)[kVmManagerKernelCmdline]) {
     cmdline.push_back(arg.asString());
   }
   return cmdline;
