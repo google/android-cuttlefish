@@ -1,47 +1,4 @@
 {
-  "Attributes": [
-    {
-      "Name": "LowCapacityCPUs",
-      "Controller": "cpuset",
-      "File": "background/cpus"
-    },
-    {
-      "Name": "HighCapacityCPUs",
-      "Controller": "cpuset",
-      "File": "foreground/cpus"
-    },
-    {
-      "Name": "MaxCapacityCPUs",
-      "Controller": "cpuset",
-      "File": "top-app/cpus"
-    },
-    {
-      "Name": "MemLimit",
-      "Controller": "memory",
-      "File": "memory.limit_in_bytes"
-    },
-    {
-      "Name": "MemSoftLimit",
-      "Controller": "memory",
-      "File": "memory.soft_limit_in_bytes"
-    },
-    {
-      "Name": "MemSwappiness",
-      "Controller": "memory",
-      "File": "memory.swappiness"
-    },
-    {
-      "Name": "UClampMin",
-      "Controller": "cpu",
-      "File": "cpu.uclamp.min"
-    },
-    {
-      "Name": "UClampMax",
-      "Controller": "cpu",
-      "File": "cpu.uclamp.max"
-    }
-  ],
-
   "Profiles": [
     {
       "Name": "HighEnergySaving",
