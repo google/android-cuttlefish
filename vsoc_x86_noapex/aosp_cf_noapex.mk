@@ -17,7 +17,7 @@
 # Order of this and the following statements is important.
 # Putting this first in the list takes precedence over the one inherited from
 # aosp_cf.
-PRODUCT_PROPERTY_OVERRIDES += ro.apex.updatable=false
+OVERRIDE_TARGET_FLATTEN_APEX := true
 
 $(call inherit-product, device/google/cuttlefish/vsoc_x86/phone/aosp_cf.mk)
 
