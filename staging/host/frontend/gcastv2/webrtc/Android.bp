@@ -14,7 +14,7 @@
 // limitations under the License.
 
 cc_library_static {
-    name: "libwebrtc",
+    name: "libwebrtc_cf",
     srcs: [
         "AdbHandler.cpp",
         "DTLS.cpp",
@@ -91,7 +91,7 @@ cc_binary_host {
         "libjsoncpp",
         "libsource",
         "libsrtp2",
-        "libwebrtc",
+        "libwebrtc_cf",
         "libdrm",
         "libffi",
         "libwayland_server",
