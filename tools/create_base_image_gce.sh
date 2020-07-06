@@ -102,6 +102,10 @@ fi
 # Vulkan loader
 sudo chroot /mnt/image /usr/bin/apt install -y libvulkan1
 
+# Wayland-server needed to have Nvidia driver fail gracefully when attemping to
+# use the EGL API on GCE instances without a GPU.
+sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0
+
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf
 
