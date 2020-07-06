@@ -1,1 +1,6 @@
+#!/bin/sh
+set -e
+
 remove-shell /usr/bin/adbshell
+
+#DEBHELPER#
