@@ -38,7 +38,7 @@
 /dev/dri u:object_r:gpu_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
 /dev/dri/renderD128  u:object_r:gpu_device:s0
-/dev/vport[0-9]p[0-9]*  u:object_r:virtual_serial_device:s0
+/dev/hvc[0-9]*  u:object_r:serial_device:s0
 /dev/vtpmx  u:object_r:vtpm_creation_device:s0
 /dev/tpmrm0  u:object_r:tpm_resource_manager:s0
 
