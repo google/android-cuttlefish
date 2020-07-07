@@ -230,6 +230,7 @@
         </interface>
     </hal>
     -->
+    <!--
     <hal format="hidl">
         <name>android.hardware.soundtrigger</name>
         <transport>hwbinder</transport>
@@ -239,6 +240,7 @@
             <instance>default</instance>
         </interface>
     </hal>
+    -->
     <!-- TODO (b/130079321):
     <hal format="hidl">
         <name>android.hardware.tetheroffload.config</name>
