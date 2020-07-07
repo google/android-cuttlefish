@@ -25,6 +25,7 @@
 #include <iterator>
 #include <sstream>
 #include <string>
+#include <time.h>
 
 #include <android-base/strings.h>
 #include <glog/logging.h>
@@ -993,6 +994,16 @@ std::string ForCurrentInstance(const char* prefix) {
   return stream.str();
 }
 int ForCurrentInstance(int base) { return base + GetInstance() - 1; }
+
+std::string RandomSerialNumber(const std::string& prefix) {
+  const char hex_characters[] = "0123456789ABCDEF";
+  std::srand(time(0));
+  char str[10];
+  for(int i=0; i<10; i++){
+    str[i] = hex_characters[rand() % strlen(hex_characters)];
+  }
+  return prefix + str;
+}
 
 std::string GetDefaultPerInstanceDir() {
   std::ostringstream stream;
