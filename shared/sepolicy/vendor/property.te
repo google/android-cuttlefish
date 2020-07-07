@@ -1,1 +1,2 @@
 type cuttlefish_config_server_port_prop, property_type;
+type vendor_ser_prop, property_type;

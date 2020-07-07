@@ -107,7 +107,6 @@ PRODUCT_PACKAGES += \
     CuttlefishService \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
-    vport_trigger \
     rename_netiface \
     ip_link_add \
     setup_wifi \

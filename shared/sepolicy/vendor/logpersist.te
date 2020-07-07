@@ -1,5 +1,5 @@
 # Output to virtual serial console. Needed because seriallogging daemon
-# runs logcat and directs its output to vportXpY or cf_logcat_pipe under
+# runs logcat and directs its output to hvcX or cf_logcat_pipe under
 # the /dev filesystem.
 allow logpersist device:dir r_dir_perms;
 allow logpersist device:fifo_file ra_file_perms;
