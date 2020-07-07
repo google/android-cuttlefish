@@ -77,8 +77,6 @@ on post-fs
 
 
 on post-fs-data
-    start vport_trigger
-
     mkdir /data/vendor/modem_dump 0777 system system
     mkdir /data/vendor/radio 0777 system system
 
@@ -128,10 +126,6 @@ service vendor.insmod_sh /vendor/bin/init.insmod.sh
     oneshot
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server=vsock -tcp_port=5555 -vsock_port=6520
-
-
-service vport_trigger /vendor/bin/vport_trigger
-    oneshot
 
 
 on property:vendor.ser.cf-logcat=*
