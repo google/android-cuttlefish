@@ -138,8 +138,8 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("-m");
   qemu_cmd.AddParameter(config_->memory_mb());
 
-  qemu_cmd.AddParameter("-realtime");
-  qemu_cmd.AddParameter("mlock=off");
+  qemu_cmd.AddParameter("-overcommit");
+  qemu_cmd.AddParameter("mem-lock=off");
 
   qemu_cmd.AddParameter("-smp");
   qemu_cmd.AddParameter(config_->cpus(), ",sockets=", config_->cpus(),
@@ -172,10 +172,11 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   for (size_t i = 0; i < instance.virtual_disk_paths().size(); i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
+    auto format = i == 0 ? "" : ",format=raw";
     auto disk = instance.virtual_disk_paths()[i];
     qemu_cmd.AddParameter("-drive");
     qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
-                          ",aio=threads");
+                          ",aio=threads", format);
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("virtio-blk-pci,scsi=off,drive=drive-virtio-disk", i,
                           ",id=virtio-disk", i, bootindex);
