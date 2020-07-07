@@ -62,7 +62,6 @@
 /vendor/bin/vsock_logcat  u:object_r:vsock_logcat_exec:s0
 /vendor/bin/vtpm_manager  u:object_r:vtpm_manager_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
-/vendor/bin/vport_trigger  u:object_r:vport_trigger_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/hw/libcuttlefish-rild  u:object_r:libcuttlefish_rild_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.6-service-google u:object_r:hal_camera_default_exec:s0
