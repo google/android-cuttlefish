@@ -136,6 +136,11 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
     // odm is not one of the partitions skipped by the system check
     system_super_partitions.push_back("odm");
   }
+  if (std::find(system_super_partitions.begin(), system_super_partitions.end(),
+                "vendor") == system_super_partitions.end()) {
+    // vendor is always required, but may be missing from the system partitions
+    system_super_partitions.push_back("vendor");
+  }
   SetSuperPartitionComponents(system_super_partitions, &output_misc);
   auto misc_output_path = output_path + "/" + kMiscInfoPath;
   cuttlefish::SharedFD misc_output_file =
