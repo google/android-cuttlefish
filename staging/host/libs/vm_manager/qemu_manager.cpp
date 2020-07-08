@@ -104,9 +104,8 @@ std::vector<std::string> QemuManager::ConfigureGpu(const std::string& gpu_mode) 
 }
 
 std::vector<std::string> QemuManager::ConfigureBootDevices() {
-  // PCI domain 0, bus 0, device 3, function 0
-  // This is controlled with 'addr=0x3' in cf_qemu.sh
-  return { "androidboot.boot_devices=pci0000:00/0000:00:03.0" };
+  // PCI domain 0, bus 0, device 4, function 0
+  return { "androidboot.boot_devices=pci0000:00/0000:00:04.0" };
 }
 
 QemuManager::QemuManager(const cuttlefish::CuttlefishConfig* config)
@@ -167,8 +166,62 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("-append");
   qemu_cmd.AddParameter(kernel_cmdline_);
 
+  qemu_cmd.AddParameter("-chardev");
+  qemu_cmd.AddParameter("socket,id=charmonitor,path=", GetMonitorPath(config_),
+                        ",server,nowait");
+
+  qemu_cmd.AddParameter("-mon");
+  qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
+
+  qemu_cmd.AddParameter("-chardev");
+  qemu_cmd.AddParameter("file,id=earlycon,path=",
+                        instance.kernel_log_pipe_name(), ",append=on");
+
+  // On ARM, -serial will imply an AMBA pl011 serial port. On x86, -serial
+  // will imply an ISA serial port. We have set up earlycon for each of these
+  // port types, so the setting here should match
+  qemu_cmd.AddParameter("-serial");
+  qemu_cmd.AddParameter("chardev:earlycon");
+
+  // This sets up the HVC (virtio-serial / virtio-console) port for the kernel
+  // logging. This will take over the earlycon logging when the module is
+  // loaded. Give it the first nr, so it gets /dev/hvc0.
+  qemu_cmd.AddParameter("-chardev");
+  qemu_cmd.AddParameter("file,id=hvc0,path=",
+                        instance.kernel_log_pipe_name(), ",append=on");
+
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-serial-pci,id=virtio-serial0");
+  qemu_cmd.AddParameter("virtio-serial-pci,max_ports=1,id=virtio-serial0");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtconsole,bus=virtio-serial0.0,chardev=hvc0");
+
+  // This handles the Android interactive serial console - /dev/hvc1
+
+  qemu_cmd.AddParameter("-chardev");
+  qemu_cmd.AddParameter("socket,id=hvc1,path=", instance.console_path(),
+                        ",server,nowait");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-serial-pci,max_ports=1,id=virtio-serial1");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtconsole,bus=virtio-serial1.0,chardev=hvc1");
+
+  // If configured, this handles logcat forwarding to the host via serial
+  // (instead of vsocket) - /dev/hvc2
+
+  if (config_->logcat_mode() == "serial") {
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("file,id=hvc2,path=", instance.logcat_path(),
+                          ",append=on");
+
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("virtio-serial-pci,max_ports=1,id=virtio-serial2");
+
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("virtconsole,bus=virtio-serial2.0,chardev=hvc2");
+  }
 
   for (size_t i = 0; i < instance.virtual_disk_paths().size(); i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
@@ -222,41 +275,6 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   if (config_->use_bootloader()) {
     qemu_cmd.AddParameter("-bios");
     qemu_cmd.AddParameter(config_->bootloader());
-  }
-
-  qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("socket,id=charmonitor,path=", GetMonitorPath(config_),
-                        ",server,nowait");
-
-  qemu_cmd.AddParameter("-mon");
-  qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
-
-  qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("file,id=charserial0,path=",
-                        instance.kernel_log_pipe_name(), ",append=on");
-
-  qemu_cmd.AddParameter("-device");
-  // On ARM, the early console can be PCI, and ISA is not supported
-  // On x86, the early console must be ISA, not PCI, so we start to get kernel
-  // messages as soon as possible. ISA devices do not have 'addr' assignments.
-  auto kernel_console_serial = is_arm ? "pci-serial" : "isa-serial";
-  qemu_cmd.AddParameter(kernel_console_serial, ",chardev=charserial0,id=serial0");
-
-  qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("socket,id=charserial1,path=", instance.console_path(),
-                        ",server,nowait");
-
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter(kernel_console_serial, ",chardev=charserial1,id=serial1");
-
-  if (config_->logcat_mode() == "serial") {
-    qemu_cmd.AddParameter("-chardev");
-    qemu_cmd.AddParameter("file,id=charchannel0,path=", instance.logcat_path(),
-                          ",append=on");
-
-    qemu_cmd.AddParameter("-device");
-    qemu_cmd.AddParameter("virtserialport,bus=virtio-serial0.0,nr=1,",
-                          "chardev=charchannel0,id=channel0,name=cf-logcat");
   }
 
   if (config_->gdb_flag().size() > 0) {

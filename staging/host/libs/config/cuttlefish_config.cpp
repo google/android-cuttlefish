@@ -180,6 +180,7 @@ const char* kGuestAuditSecurity = "guest_audit_security";
 const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
+const char* kVmManagerKernelCmdline = "vm_manager_kernel_cmdline";
 
 const char* kFramesServerPort = "frames_server_port";
 const char* kTouchServerPort = "touch_server_port";
@@ -1085,6 +1086,21 @@ void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
 std::vector<std::string> CuttlefishConfig::extra_kernel_cmdline() const {
   std::vector<std::string> cmdline;
   for (const Json::Value& arg : (*dictionary_)[kExtraKernelCmdline]) {
+    cmdline.push_back(arg.asString());
+  }
+  return cmdline;
+}
+
+void CuttlefishConfig::set_vm_manager_kernel_cmdline(std::string vm_manager_cmdline) {
+  Json::Value args_json_obj(Json::arrayValue);
+  for (const auto& arg : android::base::Split(vm_manager_cmdline, " ")) {
+    args_json_obj.append(arg);
+  }
+  (*dictionary_)[kVmManagerKernelCmdline] = args_json_obj;
+}
+std::vector<std::string> CuttlefishConfig::vm_manager_kernel_cmdline() const {
+  std::vector<std::string> cmdline;
+  for (const Json::Value& arg : (*dictionary_)[kVmManagerKernelCmdline]) {
     cmdline.push_back(arg.asString());
   }
   return cmdline;
