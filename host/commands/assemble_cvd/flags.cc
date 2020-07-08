@@ -524,7 +524,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
     instance.set_tpm_port(2321 + (num * 2) - 2);
     instance.set_tombstone_receiver_port(6600 + num - 1);
-    instance.set_logcat_port(6700 + num - 1);
     instance.set_config_server_port(6800 + num - 1);
 
     if (FLAGS_gpu_mode != cuttlefish::kGpuModeDrmVirgl &&
