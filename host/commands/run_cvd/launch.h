@@ -29,8 +29,8 @@ StreamerLaunchResult LaunchVNCServer(
 
 void LaunchTombstoneReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                       cuttlefish::ProcessMonitor* process_monitor);
-void LaunchLogcatReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
-                                   cuttlefish::ProcessMonitor* process_monitor);
+void LaunchLogcatReceiver(const cuttlefish::CuttlefishConfig& config,
+                          cuttlefish::ProcessMonitor* process_monitor);
 void LaunchConfigServer(const cuttlefish::CuttlefishConfig& config,
                         cuttlefish::ProcessMonitor* process_monitor);
 
