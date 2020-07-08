@@ -3,15 +3,15 @@
 #
 
 # crosvm (x86) block devices
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/misc u:object_r:misc_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/boot_[ab] u:object_r:boot_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/vbmeta_[ab] u:object_r:ab_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/vbmeta_system_[ab] u:object_r:ab_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/super u:object_r:super_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/userdata u:object_r:userdata_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/cache u:object_r:cache_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:01\.0/by-name/metadata u:object_r:metadata_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/misc u:object_r:misc_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/boot_[ab] u:object_r:boot_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/vbmeta_[ab] u:object_r:ab_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/vbmeta_system_[ab] u:object_r:ab_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/super u:object_r:super_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/userdata u:object_r:userdata_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/cache u:object_r:cache_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/metadata u:object_r:metadata_block_device:s0
 # crosvm (arm64) block devices
 /dev/block/platform/10000.pci/by-name/misc u:object_r:misc_block_device:s0
 /dev/block/platform/10000.pci/by-name/boot_[ab] u:object_r:boot_block_device:s0
@@ -23,15 +23,15 @@
 /dev/block/platform/10000.pci/by-name/cache u:object_r:cache_block_device:s0
 /dev/block/platform/10000.pci/by-name/metadata u:object_r:metadata_block_device:s0
 # qemu block devices
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/misc u:object_r:misc_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/boot_[ab] u:object_r:boot_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/vbmeta_[ab] u:object_r:ab_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/vbmeta_system_[ab] u:object_r:ab_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/super u:object_r:super_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/userdata u:object_r:userdata_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/cache u:object_r:cache_block_device:s0
-/dev/block/pci/pci0000:00/0000:00:03\.0/by-name/metadata u:object_r:metadata_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/misc u:object_r:misc_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/boot_[ab] u:object_r:boot_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/vendor_boot_[ab] u:object_r:boot_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/vbmeta_[ab] u:object_r:ab_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/vbmeta_system_[ab] u:object_r:ab_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/super u:object_r:super_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/userdata u:object_r:userdata_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/cache u:object_r:cache_block_device:s0
+/dev/block/pci/pci0000:00/0000:00:04\.0/by-name/metadata u:object_r:metadata_block_device:s0
 
 /dev/block/pmem0  u:object_r:rebootescrow_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
