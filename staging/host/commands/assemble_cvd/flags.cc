@@ -791,6 +791,9 @@ bool CleanPriorFiles(const cuttlefish::CuttlefishConfig& config, const std::set<
 bool DecompressKernel(const std::string& src, const std::string& dst) {
   cuttlefish::Command decomp_cmd(cuttlefish::DefaultHostArtifactsPath("bin/extract-vmlinux"));
   decomp_cmd.AddParameter(src);
+  std::string current_path = getenv("PATH") == nullptr ? "" : getenv("PATH");
+  std::string bin_folder = cuttlefish::DefaultHostArtifactsPath("bin");
+  decomp_cmd.SetEnvironment({"PATH=" + current_path + ":" + bin_folder});
   auto output_file = cuttlefish::SharedFD::Creat(dst.c_str(), 0666);
   if (!output_file->IsOpen()) {
     LOG(ERROR) << "Unable to create decompressed image file: "
