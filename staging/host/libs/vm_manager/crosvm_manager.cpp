@@ -135,7 +135,7 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
   // PCI domain 0, bus 0, device 1, function 0
   // TODO There is no way to control this assignment with crosvm (yet)
   if (cuttlefish::HostArch() == "x86_64") {
-    return { "androidboot.boot_devices=pci0000:00/0000:00:01.0" };
+    return { "androidboot.boot_devices=pci0000:00/0000:00:03.0" };
   } else {
     return { "androidboot.boot_devices=10000.pci" };
   }
@@ -215,8 +215,15 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
     crosvm_cmd.AddParameter("--cid=", instance.vsock_guest_cid());
   }
 
-  // Redirect the first serial port with the kernel logs to the appropriate file
+  // Use an 8250 UART (ISA or platform device) for earlycon, as the
+  // virtio-console driver may not be available for early messages
   crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
+                          instance.kernel_log_pipe_name(), ",earlycon=true");
+
+  // Use a virtio-console instance for the main kernel console. All
+  // messages will switch from earlycon to virtio-console after the driver
+  // is loaded, and crosvm will append to the kernel log automatically
+  crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=1,type=file,path=",
                           instance.kernel_log_pipe_name(), ",console=true");
 
   // Redirect standard input to a pipe for the console forwarder host process
@@ -248,7 +255,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // crosvm. A file (named pipe) is used here instead of stdout to ensure only
   // the serial port output is received by the console forwarder as crosvm may
   // print other messages to stdout.
-  crosvm_cmd.AddParameter("--serial=hardware=serial,num=2,type=file,path=",
+  crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=file,path=",
                           console_pipe_name, ",stdin=true");
 
   crosvm_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn,
