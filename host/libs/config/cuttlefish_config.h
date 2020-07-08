@@ -289,6 +289,9 @@ class CuttlefishConfig {
   void set_extra_kernel_cmdline(std::string extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
+  void set_vm_manager_kernel_cmdline(std::string vm_manager_cmdline);
+  std::vector<std::string> vm_manager_kernel_cmdline() const;
+
   // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
   std::string webrtc_certs_dir() const;
