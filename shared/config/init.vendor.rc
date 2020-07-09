@@ -128,15 +128,10 @@ service vendor.insmod_sh /vendor/bin/init.insmod.sh
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server=vsock -tcp_port=5555 -vsock_port=6520
 
 
-on property:vendor.ser.cf-logcat=*
-    symlink ${vendor.ser.cf-logcat} /dev/cf-logcat
-    enable seriallogging
-
-
-service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/cf-logcat *:V
+service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
     class main
-    user root
-    disabled
+    user logd
+    group root logd
 
 
 on property:ro.boot.tpm_vsock_port=*
@@ -147,15 +142,6 @@ service vtpm_manager /vendor/bin/vtpm_manager -tpm_vsock_port=${ro.boot.tpm_vsoc
   user root
   disabled
 
-
-on property:ro.boot.vsock_logcat_port=*
-   enable vsock_logcat
-
-
-service vsock_logcat /vendor/bin/vsock_logcat
-    class main
-    user root
-    disabled
 
 service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.vsock_touch_port} -keyboard_port=${ro.boot.vsock_keyboard_port}
     group root uhid
