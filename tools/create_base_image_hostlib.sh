@@ -29,10 +29,8 @@ DEFINE_string source_image_project debian-cloud \
 DEFINE_string repository_url \
   "https://github.com/google/android-cuttlefish.git" \
   "URL to the repository with host changes" "u"
-DEFINE_string repository_branch master \
+DEFINE_string repository_branch main \
   "Branch to check out" "b"
-DEFINE_string variant master \
-  "Variant to build: generally master or stable"
 
 
 SSH_FLAGS=(${INTERNAL_IP})
