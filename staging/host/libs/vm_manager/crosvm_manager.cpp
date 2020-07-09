@@ -33,6 +33,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
+namespace cuttlefish {
 namespace vm_manager {
 
 namespace {
@@ -308,4 +309,6 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   return ret;
 }
 
-}  // namespace vm_manager
+} // namespace vm_manager
+} // namespace cuttlefish
+
