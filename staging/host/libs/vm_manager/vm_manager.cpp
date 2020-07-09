@@ -26,6 +26,7 @@
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 
+namespace cuttlefish {
 namespace vm_manager {
 
 VmManager::VmManager(const cuttlefish::CuttlefishConfig* config)
@@ -37,7 +38,7 @@ VmManager* GetManagerSingleton(const cuttlefish::CuttlefishConfig* config) {
   static std::shared_ptr<VmManager> vm_manager(new T(config));
   return vm_manager.get();
 }
-}
+} // namespace
 
 std::map<std::string, VmManager::VmManagerHelper>
     VmManager::vm_manager_helpers_ = {
@@ -186,4 +187,6 @@ void VmManager::WithKernelCommandLine(const std::string& kernel_cmdline) {
   kernel_cmdline_ = kernel_cmdline;
 }
 
-}  // namespace vm_manager
+} // namespace vm_manager
+} // namespace cuttlefish
+

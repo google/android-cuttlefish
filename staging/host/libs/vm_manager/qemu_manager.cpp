@@ -39,8 +39,8 @@
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
 
+namespace cuttlefish {
 namespace vm_manager {
-
 namespace {
 
 std::string GetMonitorPath(const cuttlefish::CuttlefishConfig* config) {
@@ -295,4 +295,6 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   return ret;
 }
 
-}  // namespace vm_manager
+} // namespace vm_manager
+} // namespace cuttlefish
+

@@ -60,6 +60,7 @@
 
 using cuttlefish::ForCurrentInstance;
 using cuttlefish::RunnerExitCodes;
+using cuttlefish::vm_manager::VmManager;
 
 namespace {
 
@@ -353,7 +354,7 @@ int main(int argc, char** argv) {
     return RunnerExitCodes::kTapDeviceInUse;
   }
 
-  auto vm_manager = vm_manager::VmManager::Get(config->vm_manager(), config);
+  auto vm_manager = VmManager::Get(config->vm_manager(), config);
 
   // Check host configuration
   std::vector<std::string> config_commands;
