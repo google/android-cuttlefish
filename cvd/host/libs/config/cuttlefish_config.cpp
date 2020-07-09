@@ -132,10 +132,6 @@ const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCPublicIP = "webrtc_public_ip";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
-const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
-const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
-
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 const char* kAdbConnectorBinary = "adb_connector_binary";
@@ -147,6 +143,7 @@ const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
+const char* kLogcatPort = "logcat_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerPort = "config_server_port";
 const char* kConfigServerBinary = "config_server_binary";
@@ -185,6 +182,9 @@ const char* kTouchServerPort = "touch_server_port";
 const char* kKeyboardServerPort = "keyboard_server_port";
 
 const char* kRilDns = "ril_dns";
+
+const char* kKgdb = "kgdb";
+
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
 }  // namespace
@@ -392,10 +392,6 @@ std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
 
 std::string CuttlefishConfig::InstanceSpecific::console_pipe_name() const {
   return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-pipe"));
-}
-
-std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("logcat-pipe"));
 }
 
 bool CuttlefishConfig::deprecated_boot_completed() const {
@@ -676,12 +672,12 @@ void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int 
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
 }
 
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
+int CuttlefishConfig::InstanceSpecific::logcat_port() const {
+  return (*Dictionary())[kLogcatPort].asInt();
 }
 
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
+void CuttlefishConfig::MutableInstanceSpecific::set_logcat_port(int logcat_port) {
+  (*Dictionary())[kLogcatPort] = logcat_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {
@@ -726,22 +722,6 @@ void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
 
 std::string CuttlefishConfig::webrtc_binary() const {
   return (*dictionary_)[kWebRTCBinary].asString();
-}
-
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
-}
-
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
@@ -1094,8 +1074,15 @@ std::vector<std::string> CuttlefishConfig::vm_manager_kernel_cmdline() const {
 void CuttlefishConfig::set_ril_dns(const std::string& ril_dns) {
   (*dictionary_)[kRilDns] = ril_dns;
 }
-std::string CuttlefishConfig::ril_dns()const {
+std::string CuttlefishConfig::ril_dns() const {
   return (*dictionary_)[kRilDns].asString();
+}
+
+void CuttlefishConfig::set_kgdb(bool kgdb) {
+  (*dictionary_)[kKgdb] = kgdb;
+}
+bool CuttlefishConfig::kgdb() const {
+  return (*dictionary_)[kKgdb].asBool();
 }
 
 // Creates the (initially empty) config object and populates it with values from
