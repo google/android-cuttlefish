@@ -1,7 +1,5 @@
 init system_lib_file dir b/133444385
 init system_lib_file file b/133444385
-logpersist logpersist capability b/132911257
-logpersist device file b/143108875
 migrate_legacy_obb_data dalvikcache_data_file file b/152338071
 shell adbd vsock_socket b/131904985
 system_server system_server process b/65201432
