@@ -236,8 +236,6 @@ DEFINE_string(tpm_binary, "",
               "The TPM simulator to use. Disabled if empty.");
 DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_string(logcat_mode, "", "How to send android's log messages from "
-                               "guest to host. One of [serial, vsock]");
 DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
             "both the guest and the host");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
@@ -480,8 +478,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
   tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
 
-  tmp_config_obj.set_logcat_mode(FLAGS_logcat_mode);
-
   tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
   tmp_config_obj.set_tombstone_receiver_binary(
       cuttlefish::DefaultHostArtifactsPath("bin/tombstone_receiver"));
@@ -621,14 +617,10 @@ bool SaveConfig(const cuttlefish::CuttlefishConfig& tmp_config_obj) {
 }
 
 void SetDefaultFlagsForQemu() {
-  // TODO(b/144119457) Use the serial port.
-  SetCommandLineOptionWithMode("logcat_mode", cuttlefish::kLogcatVsockMode,
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  // for now, we don't set non-default options for QEMU
 }
 
 void SetDefaultFlagsForCrosvm() {
-  SetCommandLineOptionWithMode("logcat_mode", cuttlefish::kLogcatVsockMode,
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   // for now, we support only x86_64 by default
   bool default_enable_sandbox = false;
   std::set<const std::string> supported_archs{std::string("x86_64")};
