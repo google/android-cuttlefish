@@ -71,6 +71,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.radio.config@1.2",
     "android.hardware.radio.deprecated@1.0",
     "android.hardware.renderscript@1.0",
+    "android.hardware.soundtrigger@2.3",
     "android.hardware.secure_element@1.2",
     "android.hardware.sensors@1.0",
     "android.hardware.tetheroffload.config@1.0",
