@@ -24,6 +24,7 @@
 #include <common/libs/utils/subprocess.h>
 #include <host/libs/config/cuttlefish_config.h>
 
+namespace cuttlefish {
 namespace vm_manager {
 
 // Superclass of every guest VM manager. It provides a static getter that
@@ -86,4 +87,6 @@ class VmManager {
   static std::map<std::string, VmManagerHelper> vm_manager_helpers_;
 };
 
-}  // namespace vm_manager
+} // namespace vm_manager
+} // namespace cuttlefish
+

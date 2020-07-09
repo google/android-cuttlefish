@@ -15,6 +15,7 @@
 
 using cuttlefish::MonitorEntry;
 using cuttlefish::RunnerExitCodes;
+using cuttlefish::vm_manager::QemuManager;
 
 namespace {
 
@@ -84,7 +85,7 @@ StreamerLaunchResult CreateStreamerServers(
   cuttlefish::SharedFD keyboard_server;
 
   auto instance = config.ForDefaultInstance();
-  if (config.vm_manager() == vm_manager::QemuManager::name()) {
+  if (config.vm_manager() == QemuManager::name()) {
     cmd->AddParameter("-write_virtio_input");
 
     touch_server = cuttlefish::SharedFD::VsockServer(instance.touch_server_port(),
