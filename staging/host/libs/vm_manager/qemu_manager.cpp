@@ -211,7 +211,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   // If configured, this handles logcat forwarding to the host via serial
   // (instead of vsocket) - /dev/hvc2
 
-  if (config_->logcat_mode() == "serial") {
+  if (0) {
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("file,id=hvc2,path=", instance.logcat_path(),
                           ",append=on");

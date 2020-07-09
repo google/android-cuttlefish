@@ -128,10 +128,6 @@ StreamerLaunchResult CreateStreamerServers(
 
 }  // namespace
 
-bool LogcatReceiverEnabled(const cuttlefish::CuttlefishConfig& config) {
-  return config.logcat_mode() == cuttlefish::kLogcatVsockMode;
-}
-
 std::vector<cuttlefish::SharedFD> LaunchKernelLogMonitor(
     const cuttlefish::CuttlefishConfig& config, cuttlefish::ProcessMonitor* process_monitor,
     unsigned int number_of_event_pipes) {
@@ -177,11 +173,8 @@ std::vector<cuttlefish::SharedFD> LaunchKernelLogMonitor(
   return ret;
 }
 
-void LaunchLogcatReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
-                                   cuttlefish::ProcessMonitor* process_monitor) {
-  if (!LogcatReceiverEnabled(config)) {
-    return;
-  }
+void LaunchLogcatReceiver(const cuttlefish::CuttlefishConfig& config,
+                          cuttlefish::ProcessMonitor* process_monitor) {
   auto instance = config.ForDefaultInstance();
   auto port = instance.logcat_port();
   auto socket = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM);

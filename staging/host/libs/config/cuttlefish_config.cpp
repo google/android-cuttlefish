@@ -147,7 +147,6 @@ const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
-const char* kLogcatMode = "logcat_mode";
 const char* kLogcatPort = "logcat_port";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerPort = "config_server_port";
@@ -838,15 +837,6 @@ std::string CuttlefishConfig::blank_data_image_fmt() const {
 
 void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
   (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
-}
-
-
-void CuttlefishConfig::set_logcat_mode(const std::string& mode) {
-  (*dictionary_)[kLogcatMode] = mode;
-}
-
-std::string CuttlefishConfig::logcat_mode() const {
-  return (*dictionary_)[kLogcatMode].asString();
 }
 
 void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
