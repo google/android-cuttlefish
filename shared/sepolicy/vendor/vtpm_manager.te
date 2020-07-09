@@ -7,8 +7,6 @@ init_daemon_domain(vtpm_manager)
 
 type cuttlefish_vsock_tpm_port, property_type;
 
-get_prop(vsock_logcat, cuttlefish_vsock_tpm_port)
-
 type vtpm_creation_device, dev_type;
 allow vtpm_manager vtpm_creation_device:{ file chr_file blk_file } rw_file_perms;
 allow vtpm_manager tmpfs:chr_file { create setattr unlink rw_file_perms write };
