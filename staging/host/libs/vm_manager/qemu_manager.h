@@ -22,6 +22,7 @@
 
 #include "common/libs/fs/shared_fd.h"
 
+namespace cuttlefish {
 namespace vm_manager {
 
 // Starts a guest VM using the qemu command directly. It requires the host
@@ -38,4 +39,6 @@ class QemuManager : public VmManager {
   std::vector<cuttlefish::Command> StartCommands() override;
 };
 
-}  // namespace vm_manager
+} // namespace vm_manager
+} // namespace cuttlefish
+
