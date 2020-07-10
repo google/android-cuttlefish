@@ -28,15 +28,18 @@ cc_library_static {
         "stats_keeper.cpp",
     ],
     static_libs: [
+        "libminigbm_gralloc",
         "libyuv_static",
     ],
     header_libs: ["libhardware_headers"],
     shared_libs: [
+        "android.hardware.graphics.mapper@3.0",
         "libbase",
         "libcutils",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libdrm",
+        "libhidlbase",
         "libjpeg",
         "liblog",
         "libsync",
