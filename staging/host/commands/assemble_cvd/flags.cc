@@ -255,6 +255,9 @@ DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
 DEFINE_string(ril_dns, "8.8.8.8", "DNS address of mobile network (RIL)");
+DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel "
+                         "with kgdb/kdb. The kernel must have been built with "
+                         "kgdb support.");
 
 namespace {
 
@@ -388,24 +391,35 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
-  // crosvm sets up the console= earlycon= flags for us, but QEMU does not.
-  // Set them explicitly here to match how we will configure the VM manager
+  std::string console_cmdline = "";
   if (FLAGS_vm_manager == QemuManager::name()) {
-    std::string console_cmdline = "console=hvc0 ";
+    // crosvm sets up the console= earlycon= flags for us, but QEMU does not.
+    // Set them explicitly here to match how we will configure the VM manager
+    console_cmdline += "console=hvc0";
     if (cuttlefish::HostArch() == "aarch64") {
       // To update the pl011 address:
       // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
       // $ dtc -O dts -o virt.dts -I dtb virt.dtb
       // In the virt.dts file, look for a uart node
-      console_cmdline += "earlycon=pl011,mmio32,0x9000000";
+      console_cmdline += " earlycon=pl011,mmio32,0x9000000";
+      if (FLAGS_kgdb) {
+        console_cmdline += " androidboot.console=ttyAMA0 kgdboc=ttyAMA0";
+      }
     } else {
       // To update the uart8250 address:
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
       // Only 'io' mode works; mmio and mmio32 do not
-      console_cmdline += "earlycon=uart8250,io,0x3f8";
+      console_cmdline += " earlycon=uart8250,io,0x3f8";
+      if (FLAGS_kgdb) {
+        console_cmdline += " androidboot.console=ttyS0 kgdboc=ttyS0";
+      }
     }
-    tmp_config_obj.set_vm_manager_kernel_cmdline(console_cmdline);
+  } else {
+    if (FLAGS_kgdb) {
+      console_cmdline += "androidboot.console=ttyS0 kgdboc=ttyS0";
+    }
   }
+  tmp_config_obj.set_vm_manager_kernel_cmdline(console_cmdline);
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
@@ -500,6 +514,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
   tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
+
+  tmp_config_obj.set_kgdb(FLAGS_kgdb);
 
   std::vector<int> instance_nums;
   for (int i = 0; i < FLAGS_num_instances; i++) {
