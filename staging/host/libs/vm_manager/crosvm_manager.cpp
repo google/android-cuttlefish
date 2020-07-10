@@ -218,8 +218,12 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
 
   // Use an 8250 UART (ISA or platform device) for earlycon, as the
   // virtio-console driver may not be available for early messages
-  crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
-                          instance.kernel_log_pipe_name(), ",earlycon=true");
+  // In kgdb mode, earlycon is an interactive console, and so early
+  // dmesg will go there instead of the kernel.log
+  if (!config_->kgdb()) {
+    crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
+                            instance.kernel_log_pipe_name(), ",earlycon=true");
+  }
 
   // Use a virtio-console instance for the main kernel console. All
   // messages will switch from earlycon to virtio-console after the driver
@@ -256,8 +260,19 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // crosvm. A file (named pipe) is used here instead of stdout to ensure only
   // the serial port output is received by the console forwarder as crosvm may
   // print other messages to stdout.
-  crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=file,path=",
-                          console_pipe_name, ",stdin=true");
+  if (config_->kgdb()) {
+    crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
+                            console_pipe_name, ",earlycon=true,stdin=true");
+    // In kgdb mode, we have the interactive console on ttyS0 (both Android's
+    // console and kdb), so we can disable the virtio-console port usually
+    // allocated to Android's serial console, and redirect it to a sink. This
+    // ensures that that the PCI device assignments (and thus sepolicy) don't
+    // have to change
+    crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=sink");
+  } else {
+    crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=file,path=",
+                            console_pipe_name, ",stdin=true");
+  }
 
   crosvm_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn,
                            console_in_rd);

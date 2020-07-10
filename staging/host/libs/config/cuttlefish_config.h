@@ -320,6 +320,10 @@ class CuttlefishConfig {
   void set_ril_dns(const std::string& ril_dns);
   std::string ril_dns() const;
 
+  // KGDB configuration for kernel debugging
+  void set_kgdb(bool kgdb);
+  bool kgdb() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
