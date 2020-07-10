@@ -185,6 +185,9 @@ const char* kTouchServerPort = "touch_server_port";
 const char* kKeyboardServerPort = "keyboard_server_port";
 
 const char* kRilDns = "ril_dns";
+
+const char* kKgdb = "kgdb";
+
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
 }  // namespace
@@ -1094,8 +1097,15 @@ std::vector<std::string> CuttlefishConfig::vm_manager_kernel_cmdline() const {
 void CuttlefishConfig::set_ril_dns(const std::string& ril_dns) {
   (*dictionary_)[kRilDns] = ril_dns;
 }
-std::string CuttlefishConfig::ril_dns()const {
+std::string CuttlefishConfig::ril_dns() const {
   return (*dictionary_)[kRilDns].asString();
+}
+
+void CuttlefishConfig::set_kgdb(bool kgdb) {
+  (*dictionary_)[kKgdb] = kgdb;
+}
+bool CuttlefishConfig::kgdb() const {
+  return (*dictionary_)[kKgdb].asBool();
 }
 
 // Creates the (initially empty) config object and populates it with values from

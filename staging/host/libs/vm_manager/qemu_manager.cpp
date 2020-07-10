@@ -173,9 +173,17 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("-mon");
   qemu_cmd.AddParameter("chardev=charmonitor,id=monitor,mode=control");
 
-  qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("file,id=earlycon,path=",
-                        instance.kernel_log_pipe_name(), ",append=on");
+  // In kgdb mode, earlycon is an interactive console, and so early
+  // dmesg will go there instead of the kernel.log
+  if (config_->kgdb()) {
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("socket,id=earlycon,path=",
+                          instance.console_path(), ",server,nowait");
+  } else {
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("file,id=earlycon,path=",
+                          instance.kernel_log_pipe_name(), ",append=on");
+  }
 
   // On ARM, -serial will imply an AMBA pl011 serial port. On x86, -serial
   // will imply an ISA serial port. We have set up earlycon for each of these
@@ -198,9 +206,19 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   // This handles the Android interactive serial console - /dev/hvc1
 
-  qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("socket,id=hvc1,path=", instance.console_path(),
-                        ",server,nowait");
+  // In kgdb mode, we have the interactive console on ttyS0 (both Android's
+  // console and kdb), so we can disable the virtio-console port usually
+  // allocated to Android's serial console, and redirect it to a sink. This
+  // ensures that that the PCI device assignments (and thus sepolicy) don't
+  // have to change
+  if (config_->kgdb()) {
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("null,id=hvc1");
+  } else {
+    qemu_cmd.AddParameter("-chardev");
+    qemu_cmd.AddParameter("socket,id=hvc1,path=", instance.console_path(),
+                          ",server,nowait");
+  }
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-serial-pci,max_ports=1,id=virtio-serial1");
