@@ -345,6 +345,13 @@ class FileInstance {
     return rval;
   }
 
+  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
+    errno = 0;
+    int rval = getsockopt(fd_, level, optname, optval, optlen);
+    errno_ = errno;
+    return rval;
+  }
+
   const char* StrError() const {
     errno = 0;
     FileInstance* s = const_cast<FileInstance*>(this);
