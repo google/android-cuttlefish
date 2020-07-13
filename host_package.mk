@@ -21,6 +21,8 @@ modem_simulator_path := etc/modem_simulator
 
 cvd_host_executables := \
     adb \
+    allocd \
+    allocd_client \
     adbshell \
     launch_cvd \
     lpmake \
