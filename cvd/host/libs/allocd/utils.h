@@ -28,12 +28,37 @@
 
 namespace cuttlefish {
 
-static constexpr int send_flags = 0;
-static constexpr int recv_flags = 0;
+constexpr char kDefaultLocation[] =
+    "/var/run/cuttlefish/cuttlefish_allocd.sock";
 
-// returns true if successfully sent the whole message
+// Default flags for send and receive.
+static constexpr int kSendFlags = 0;
+static constexpr int kRecvFlags = 0;
+
+/// Sends a Json value over client_socket
+///
+/// returns true if successfully sent the whole JSON object
+/// returns false otherwise
 bool SendJsonMsg(cuttlefish::SharedFD client_socket, const Json::Value& resp);
 
+/// Receives a single Json value over client_socket
+///
+/// The returned option will contain the JSON object when successful,
+/// or an std::nullopt if an error is reported
 std::optional<Json::Value> RecvJsonMsg(cuttlefish::SharedFD client_socket);
+
+// Helper functions mapping between Enum types and std::string
+
+RequestType StrToReqTy(const std::string& req);
+
+std::string ReqTyToStr(RequestType req_ty);
+
+IfaceType StrToIfaceTy(const std::string& iface);
+
+std::string IfaceTyToStr(IfaceType iface);
+
+RequestStatus StrToStatus(const std::string& st);
+
+std::string StatusToStr(RequestStatus st);
 
 }  // namespace cuttlefish
