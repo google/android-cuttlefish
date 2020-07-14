@@ -39,7 +39,8 @@ AB_OTA_PARTITIONS += \
     system_ext \
     vbmeta \
     vbmeta_system \
-    vendor
+    vendor \
+    vendor_dlkm \
 
 # Enable Virtual A/B
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
