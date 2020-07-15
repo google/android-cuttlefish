@@ -1,0 +1,8 @@
+{
+  "presubmit": [
+    {
+      "name": "modem_simulator_test",
+      "host": true
+    }
+  ]
+}
