@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <add-resource name="numeric_to_operator" type="array"/>
+    <string-array name="numeric_to_operator">
+        <item numeric="46000">China Mobile=CMCC</item>
+        <item numeric="46001">China UNICOM=UNICOM</item>
+        <item numeric="46002">China Mobile=CMCC</item>
+        <item numeric="46003">China Telecom=CT</item>
+        <item numeric="46004">China Mobile=CMCC</item>
+        <item numeric="46005">China Telecom=CT</item>
+        <item numeric="46006">China UNICOM=UNICOM</item>
+        <item numeric="46007">China Mobile=CMCC</item>
+        <item numeric="46008">China Mobile=CMCC</item>
+        <item numeric="46009">China UNICOM=UNICOM</item>
+        <item numeric="46011">China Telecom=CT</item>
+    </string-array>
+</resources>
