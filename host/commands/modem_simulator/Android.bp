@@ -1,0 +1,91 @@
+//
+// Copyright (C) 2020 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_defaults {
+    name: "modem_simulator_base",
+    srcs: [
+        "channel_monitor.cpp",
+        "thread_looper.cpp",
+        "command_parser.cpp",
+        "modem_simulator.cpp",
+        "modem_service.cpp",
+        "sim_service.cpp",
+        "network_service.cpp",
+        "misc_service.cpp",
+        "call_service.cpp",
+        "data_service.cpp",
+        "sms_service.cpp",
+        "sup_service.cpp",
+        "stk_service.cpp",
+        "pdu_parser.cpp",
+        "nvram_config.cpp"
+    ],
+    shared_libs: [
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libbase",
+        "libnl",
+        "libcuttlefish_device_config",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libgflags",
+        "libjsoncpp",
+        "libtinyxml2",
+    ],
+    cflags: ["-Werror", "-Wall", "-fexceptions"],
+    defaults: ["cuttlefish_host_only"],
+}
+
+cc_binary_host {
+    name: "modem_simulator",
+    srcs: [
+        "main.cpp"
+    ],
+    defaults: ["modem_simulator_base"],
+}
+
+prebuilt_etc_host {
+    name: "iccprofile_for_sim0.xml",
+    src: "files/iccprofile_for_sim0.xml",
+    filename: "iccprofile_for_sim0.xml",
+    sub_dir: "modem_simulator/files",
+}
+
+prebuilt_etc_host {
+    name: "numeric_operator.xml",
+    src: "files/numeric_operator.xml",
+    filename: "numeric_operator.xml",
+    sub_dir: "modem_simulator/files",
+}
+
+cc_test {
+    name: "modem_simulator_test",
+    srcs: [
+        "unittest/main_test.cpp",
+        "unittest/service_test.cpp",
+        "unittest/command_parser_test.cpp",
+        "unittest/pdu_parser_test.cpp",
+    ],
+    include_dirs: [
+        "device/google/cuttlefish/host/commands",
+    ],
+    defaults: ["modem_simulator_base"],
+    test_suites: ["general-tests"],
+    host_supported: true,
+    whole_static_libs: [
+        "libc++fs"
+    ],
+}
