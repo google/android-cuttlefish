@@ -69,6 +69,7 @@ cvd_host_tests := \
 
 cvd_host_shared_libraries := \
     libbase.so \
+    libcutils.so \
     libcuttlefish_fs.so \
     libcuttlefish_utils.so \
     cuttlefish_tcp_socket.so \
