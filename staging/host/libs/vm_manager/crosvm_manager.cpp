@@ -220,7 +220,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // virtio-console driver may not be available for early messages
   // In kgdb mode, earlycon is an interactive console, and so early
   // dmesg will go there instead of the kernel.log
-  if (!config_->kgdb()) {
+  if (!(config_->use_bootloader() || config_->kgdb())) {
     crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
                             instance.kernel_log_pipe_name(), ",earlycon=true");
   }
@@ -260,7 +260,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // crosvm. A file (named pipe) is used here instead of stdout to ensure only
   // the serial port output is received by the console forwarder as crosvm may
   // print other messages to stdout.
-  if (config_->kgdb()) {
+  if (config_->kgdb() || config_->use_bootloader()) {
     crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
                             console_pipe_name, ",earlycon=true,stdin=true");
     // In kgdb mode, we have the interactive console on ttyS0 (both Android's

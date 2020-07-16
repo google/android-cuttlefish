@@ -175,7 +175,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   // In kgdb mode, earlycon is an interactive console, and so early
   // dmesg will go there instead of the kernel.log
-  if (config_->kgdb()) {
+  if (config_->kgdb() || config_->use_bootloader()) {
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("socket,id=earlycon,path=",
                           instance.console_path(), ",server,nowait");
@@ -211,7 +211,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   // allocated to Android's serial console, and redirect it to a sink. This
   // ensures that that the PCI device assignments (and thus sepolicy) don't
   // have to change
-  if (config_->kgdb()) {
+  if (config_->kgdb() || config_->use_bootloader()) {
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("null,id=hvc1");
   } else {
