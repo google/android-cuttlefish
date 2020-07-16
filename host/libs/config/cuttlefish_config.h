@@ -399,7 +399,7 @@ class CuttlefishConfig {
 
     std::string kernel_log_pipe_name() const;
 
-    std::string console_pipe_name() const;
+    std::string console_out_pipe_name() const;
 
     std::string logcat_pipe_name() const;
 
