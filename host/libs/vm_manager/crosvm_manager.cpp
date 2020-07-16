@@ -239,8 +239,8 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
                << console_in_rd->StrError();
     return {};
   }
-  auto console_pipe_name = instance.console_pipe_name();
-  if (mkfifo(console_pipe_name.c_str(), 0660) != 0) {
+  auto console_out_pipe_name = instance.console_out_pipe_name();
+  if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
     auto error = errno;
     LOG(ERROR) << "Failed to create console fifo for crosvm: "
                << strerror(error);
@@ -250,7 +250,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // This fd will only be read from, but it's open with write access as well to
   // keep the pipe open in case the subprocesses exit.
   cuttlefish::SharedFD console_out_rd =
-      cuttlefish::SharedFD::Open(console_pipe_name.c_str(), O_RDWR);
+      cuttlefish::SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
   if (!console_out_rd->IsOpen()) {
     LOG(ERROR) << "Failed to open console fifo for reads: "
                << console_out_rd->StrError();
@@ -262,7 +262,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // print other messages to stdout.
   if (config_->kgdb() || config_->use_bootloader()) {
     crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
-                            console_pipe_name, ",earlycon=true,stdin=true");
+                            console_out_pipe_name, ",earlycon=true,stdin=true");
     // In kgdb mode, we have the interactive console on ttyS0 (both Android's
     // console and kdb), so we can disable the virtio-console port usually
     // allocated to Android's serial console, and redirect it to a sink. This
@@ -271,7 +271,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
     crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=sink");
   } else {
     crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=file,path=",
-                            console_pipe_name, ",stdin=true");
+                            console_out_pipe_name, ",stdin=true");
   }
 
   crosvm_cmd.RedirectStdIO(cuttlefish::Subprocess::StdIOChannel::kStdIn,
