@@ -17,6 +17,7 @@ cc_library_host_static {
     name: "libcuttlefish_host_config",
     srcs: [
         "cuttlefish_config.cpp",
+        "data_image.cpp",
         "fetcher_config.cpp",
         "kernel_args.cpp",
         "logging.cpp",
