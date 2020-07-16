@@ -20,7 +20,6 @@ $(call inherit-product, device/google/cuttlefish/shared/phone/device.mk)
 # By default, enable zram; experiment can toggle the flag,
 # which takes effect on boot
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.statsd.enable=true \
     pm.dexopt.downgrade_after_inactive_days=10 \
     pm.dexopt.shared=quicken \
     dalvik.vm.heapgrowthlimit=128m \
