@@ -131,7 +131,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
   qemu_cmd.AddParameter("-machine");
-  auto machine = is_arm ? "virt,gic_version=2" : "pc-i440fx-2.8,accel=kvm";
+  auto machine = is_arm ? "virt,gic-version=2" : "pc-i440fx-2.8,accel=kvm";
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
   qemu_cmd.AddParameter("-m");
@@ -255,16 +255,15 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("tap,id=hostnet0,ifname=", instance.wifi_tap_name(),
                         ",script=no,downscript=no");
 
-  auto romfile = is_arm ? ",romfile" : "";
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet0,id=net0", romfile);
+  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet0,id=net0");
 
   qemu_cmd.AddParameter("-netdev");
   qemu_cmd.AddParameter("tap,id=hostnet1,ifname=", instance.mobile_tap_name(),
                         ",script=no,downscript=no");
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet1,id=net1", romfile);
+  qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet1,id=net1");
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-balloon-pci-non-transitional,id=balloon0");
