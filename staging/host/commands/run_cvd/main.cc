@@ -52,6 +52,7 @@
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/data_image.h"
 #include "host/libs/config/kernel_args.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include <host/libs/vm_manager/crosvm_manager.h>
@@ -242,6 +243,70 @@ cuttlefish::SharedFD DaemonizeLauncher(const cuttlefish::CuttlefishConfig& confi
   }
 }
 
+bool CreateQcowOverlay(const std::string& crosvm_path,
+                       const std::string& backing_file,
+                       const std::string& output_overlay_path) {
+  cuttlefish::Command crosvm_qcow2_cmd(crosvm_path);
+  crosvm_qcow2_cmd.AddParameter("create_qcow2");
+  crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
+  crosvm_qcow2_cmd.AddParameter(output_overlay_path);
+  int success = crosvm_qcow2_cmd.Start().Wait();
+  if (success != 0) {
+    LOG(ERROR) << "Unable to run crosvm create_qcow2. Exited with status " << success;
+    return false;
+  }
+  return true;
+}
+
+bool PowerwashFiles() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "Could not load the config.";
+    return false;
+  }
+  using cuttlefish::CreateBlankImage;
+  auto instance = config->ForDefaultInstance();
+
+  // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
+  auto kernel_log_pipe = instance.kernel_log_pipe_name();
+  unlink(kernel_log_pipe.c_str());
+
+  auto console_in_pipe = instance.console_in_pipe_name();
+  unlink(console_in_pipe.c_str());
+
+  auto console_out_pipe = instance.console_out_pipe_name();
+  unlink(console_out_pipe.c_str());
+
+  auto logcat_pipe = instance.logcat_pipe_name();
+  unlink(logcat_pipe.c_str());
+
+// TODO(schuffelen): Clean up duplication with assemble_cvd
+  auto kregistry_path = instance.access_kregistry_path();
+  unlink(kregistry_path.c_str());
+  CreateBlankImage(kregistry_path, 2 /* mb */, "none");
+
+  auto pstore_path = instance.pstore_path();
+  unlink(pstore_path.c_str());
+  CreateBlankImage(pstore_path, 2 /* mb */, "none");
+
+  auto sdcard_path = instance.sdcard_path();
+  auto sdcard_size = cuttlefish::FileSize(sdcard_path);
+  unlink(sdcard_path.c_str());
+  // round up
+  auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
+  LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
+  CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
+
+  auto overlay_path = instance.PerInstancePath("overlay.img");
+  unlink(overlay_path.c_str());
+  if (!CreateQcowOverlay(
+      config->crosvm_binary(), config->composite_disk_path(), overlay_path)) {
+    LOG(ERROR) << "CreateQcowOverlay failed";
+    return false;
+  }
+  return true;
+}
+
 void ServerLoop(cuttlefish::SharedFD server,
                 cuttlefish::ProcessMonitor* process_monitor) {
   while (true) {
@@ -263,6 +328,45 @@ void ServerLoop(cuttlefish::SharedFD server,
         case cuttlefish::LauncherAction::kStatus: {
           // TODO(schuffelen): Return more information on a side channel
           auto response = cuttlefish::LauncherResponse::kSuccess;
+          client->Write(&response, sizeof(response));
+          break;
+        }
+        case cuttlefish::LauncherAction::kPowerwash: {
+          LOG(INFO) << "Received a Powerwash request from the monitor socket";
+          if (!process_monitor->StopMonitoredProcesses()) {
+            LOG(ERROR) << "Stopping processes failed.";
+            auto response = cuttlefish::LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+            break;
+          }
+          if (!PowerwashFiles()) {
+            LOG(ERROR) << "Powerwashing files failed.";
+            auto response = cuttlefish::LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+            break;
+          }
+          auto response = cuttlefish::LauncherResponse::kSuccess;
+          client->Write(&response, sizeof(response));
+
+          auto config = cuttlefish::CuttlefishConfig::Get();
+          auto config_path = config->AssemblyPath("cuttlefish_config.json");
+          auto followup_stdin =
+              cuttlefish::SharedFD::MemfdCreate("pseudo_stdin");
+          cuttlefish::WriteAll(followup_stdin, config_path + "\n");
+          followup_stdin->LSeek(0, SEEK_SET);
+          followup_stdin->UNMANAGED_Dup2(0);
+
+          auto argv_vec = gflags::GetArgvs();
+          char** argv = new char*[argv_vec.size() + 1];
+          for (size_t i = 0; i < argv_vec.size(); i++) {
+            argv[i] = argv_vec[i].data();
+          }
+          argv[argv_vec.size()] = nullptr;
+
+          execv("/proc/self/exe", argv);
+          // execve should not return, so something went wrong.
+          PLOG(ERROR) << "execv returned: ";
+          response = cuttlefish::LauncherResponse::kError;
           client->Write(&response, sizeof(response));
           break;
         }
