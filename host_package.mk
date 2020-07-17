@@ -54,6 +54,7 @@ cvd_host_executables := \
     assemble_cvd \
     run_cvd \
     cvd_status \
+    powerwash_cvd \
     webRTC \
     webrtc_sig_server \
     metrics \
