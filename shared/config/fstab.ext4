@@ -12,6 +12,7 @@ product /product ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slo
 system_ext /system_ext ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
 vendor /vendor ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb=vbmeta
 vendor_dlkm /vendor_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
+odm_dlkm /odm_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,slotselect,avb
 /dev/block/zram0 none swap defaults zramsize=75%
 /tmp /sdcard none defaults,bind recoveryonly
 /devices/*/block/vdb auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata

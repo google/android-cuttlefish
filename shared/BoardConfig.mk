@@ -54,6 +54,11 @@ BOARD_USES_VENDOR_DLKMIMAGE := true
 BOARD_VENDOR_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
 TARGET_COPY_OUT_VENDOR_DLKM := vendor_dlkm
 
+# Build a separate odm_dlkm partition
+BOARD_USES_ODM_DLKMIMAGE := true
+BOARD_ODM_DLKMIMAGE_FILE_SYSTEM_TYPE := ext4
+TARGET_COPY_OUT_ODM_DLKM := odm_dlkm
+
 # FIXME: Remove this once we generate the vbmeta digest correctly
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flag 2
 
@@ -161,7 +166,7 @@ TARGET_RECOVERY_FSTAB ?= device/google/cuttlefish/shared/config/fstab.f2fs
 
 BOARD_SUPER_PARTITION_SIZE := 6442450944
 BOARD_SUPER_PARTITION_GROUPS := google_dynamic_partitions
-BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := odm product system system_ext vendor vendor_dlkm
+BOARD_GOOGLE_DYNAMIC_PARTITIONS_PARTITION_LIST := odm product system system_ext vendor vendor_dlkm odm_dlkm
 BOARD_GOOGLE_DYNAMIC_PARTITIONS_SIZE := 6442450944
 BOARD_BUILD_SUPER_IMAGE_BY_DEFAULT := true
 BOARD_SUPER_IMAGE_IN_UPDATE_PACKAGE := true
