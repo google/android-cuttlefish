@@ -45,6 +45,19 @@ genfscon sysfs /devices/pnp0/00:00/rtc/rtc0/alarmtimer.0.auto/wakeup/wakeup14 u:
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup15 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup16 u:object_r:sysfs_wakeup:s0
 
+# qemu (arm64)
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:06.0/virtio5/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:07.0/virtio6/net u:object_r:sysfs_net:s0 # rmnet0
+# FIXME: Add sysfs_gpu labels for qemu
+## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
+genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
+## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
+genfscon sysfs /devices/platform/9010000.pl031/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
+genfscon sysfs /devices/platform/9010000.pl031/rtc/rtc0/wakeup1 u:object_r:sysfs_wakeup:s0 # <= 5.5
+genfscon sysfs /devices/platform/9010000.pl031/rtc/rtc0/alarmtimer.0.auto/wakeup/wakeup1 u:object_r:sysfs_wakeup:s0 # >5.5
+genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
+#genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
+
 # common on all platforms / vm managers
 genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.1/rtc u:object_r:sysfs_rtc:s0
