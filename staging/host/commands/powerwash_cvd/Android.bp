@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2018 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,24 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
-    name: "libcuttlefish_host_config",
+cc_binary_host {
+    name: "powerwash_cvd",
     srcs: [
-        "cuttlefish_config.cpp",
-        "data_image.cpp",
-        "fetcher_config.cpp",
-        "kernel_args.cpp",
-        "logging.cpp",
+        "powerwash_cvd.cc",
     ],
     shared_libs: [
+        "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libbase",
-        "libgflags",
     ],
     static_libs: [
-        "libxml2",
+        "libcuttlefish_host_config",
+        "libcuttlefish_vm_manager",
         "libjsoncpp",
+        "libgflags",
+        "libxml2",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }
