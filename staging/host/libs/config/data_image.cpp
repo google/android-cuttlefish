@@ -1,4 +1,4 @@
-#include "host/commands/assemble_cvd/data_image.h"
+#include "host/libs/config/data_image.h"
 
 #include <android-base/logging.h>
 
@@ -7,7 +7,9 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 
-#include "host/commands/assemble_cvd/mbr.h"
+#include "host/libs/config/mbr.h"
+
+namespace cuttlefish {
 
 namespace {
 const std::string kDataPolicyUseExisting = "use_existing";
@@ -196,3 +198,5 @@ bool InitializeMiscImage(const std::string& misc_image) {
   CreateBlankImage(misc_image, 1 /* mb */, "none");
   return true;
 }
+
+} // namespace cuttlefish
