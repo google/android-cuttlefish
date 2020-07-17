@@ -96,7 +96,11 @@ static const std::set<std::string> kKnownMissingHidl = {
 static const std::set<std::string> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
     "android.hardware.common.NativeHandle",
+    "android.hardware.graphics.common.BufferUsage",
     "android.hardware.graphics.common.ExtendableType",
+    "android.hardware.graphics.common.HardwareBuffer",
+    "android.hardware.graphics.common.HardwareBufferDescription",
+    "android.hardware.graphics.common.PixelFormat",
 
     // These KeyMaster types are in an AIDL types-only HAL because they're used
     // by the Identity Credential AIDL HAL. Remove this when fully porting
