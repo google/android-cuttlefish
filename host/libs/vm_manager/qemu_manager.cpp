@@ -126,6 +126,8 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   bool is_arm = android::base::EndsWith(config_->qemu_binary(), "system-aarch64");
 
+  auto access_kregistry_size_bytes = cuttlefish::FileSize(instance.access_kregistry_path());
+
   cuttlefish::Command qemu_cmd(config_->qemu_binary(), stop);
   qemu_cmd.AddParameter("-name");
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
@@ -135,7 +137,8 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
   qemu_cmd.AddParameter("-m");
-  qemu_cmd.AddParameter(config_->memory_mb());
+  qemu_cmd.AddParameter(config_->memory_mb(), "M,maxmem=", config_->memory_mb() +
+                        access_kregistry_size_bytes / 1024 / 1024, "M");
 
   qemu_cmd.AddParameter("-overcommit");
   qemu_cmd.AddParameter("mem-lock=off");
@@ -250,6 +253,14 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
     qemu_cmd.AddParameter("virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
                           ",id=virtio-disk", i, bootindex);
   }
+
+  qemu_cmd.AddParameter("-object");
+  qemu_cmd.AddParameter("memory-backend-file,id=objpmem0,share,mem-path=",
+                        instance.access_kregistry_path(), ",size=",
+                        access_kregistry_size_bytes);
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-pmem-pci,disable-legacy=on,memdev=objpmem0,id=pmem0");
 
   qemu_cmd.AddParameter("-object");
   qemu_cmd.AddParameter("rng-random,id=objrng0,filename=/dev/urandom");
