@@ -381,8 +381,7 @@ int main(int argc, char** argv) {
   LOG(INFO) << "  Kernel log: " << instance.PerInstancePath("kernel.log");
   LOG(INFO) << "  Instance configuration: " << GetConfigFilePath(*config);
   LOG(INFO) << "  Instance environment: " << config->cuttlefish_env_path();
-  LOG(INFO) << "To access the console run: socat file:$(tty),raw,echo=0 "
-            << instance.console_path();
+  LOG(INFO) << "To access the console run: screen " << instance.console_path();
 
   auto launcher_monitor_path = instance.launcher_monitor_socket_path();
   auto launcher_monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
