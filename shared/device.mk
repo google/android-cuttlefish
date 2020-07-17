@@ -36,6 +36,7 @@ TARGET_VULKAN_SUPPORT ?= true
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
     odm \
+    odm_dlkm \
     product \
     system \
     system_ext \
