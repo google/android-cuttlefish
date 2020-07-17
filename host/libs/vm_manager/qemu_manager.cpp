@@ -127,18 +127,23 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   bool is_arm = android::base::EndsWith(config_->qemu_binary(), "system-aarch64");
 
   auto access_kregistry_size_bytes = cuttlefish::FileSize(instance.access_kregistry_path());
+  auto pstore_size_bytes = cuttlefish::FileSize(instance.pstore_path());
 
   cuttlefish::Command qemu_cmd(config_->qemu_binary(), stop);
   qemu_cmd.AddParameter("-name");
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
   qemu_cmd.AddParameter("-machine");
-  auto machine = is_arm ? "virt,gic-version=2" : "pc-i440fx-2.8,accel=kvm";
+  auto machine = is_arm ? "virt,gic-version=2" : "pc-i440fx-2.8,accel=kvm,nvdimm=on";
   qemu_cmd.AddParameter(machine, ",usb=off,dump-guest-core=off");
 
   qemu_cmd.AddParameter("-m");
-  qemu_cmd.AddParameter(config_->memory_mb(), "M,maxmem=", config_->memory_mb() +
-                        access_kregistry_size_bytes / 1024 / 1024, "M");
+  auto maxmem = config_->memory_mb() +
+                access_kregistry_size_bytes / 1024 / 1024 +
+                (is_arm ? 0 : pstore_size_bytes / 1024 / 1024);
+  auto slots = is_arm ? "" : ",slots=2";
+  qemu_cmd.AddParameter("size=", config_->memory_mb(), "M",
+                        ",maxmem=", maxmem, "M", slots);
 
   qemu_cmd.AddParameter("-overcommit");
   qemu_cmd.AddParameter("mem-lock=off");
@@ -254,13 +259,25 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
                           ",id=virtio-disk", i, bootindex);
   }
 
+  if (!is_arm) {
+    // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
+    // As we will pass this to ramoops, define this region first so it is always
+    // located at this address. This is currently x86 only.
+    qemu_cmd.AddParameter("-object");
+    qemu_cmd.AddParameter("memory-backend-file,id=objpmem0,share,mem-path=",
+                          instance.pstore_path(), ",size=", pstore_size_bytes);
+
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("nvdimm,memdev=objpmem0,id=ramoops");
+  }
+
   qemu_cmd.AddParameter("-object");
-  qemu_cmd.AddParameter("memory-backend-file,id=objpmem0,share,mem-path=",
+  qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share,mem-path=",
                         instance.access_kregistry_path(), ",size=",
                         access_kregistry_size_bytes);
 
   qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-pmem-pci,disable-legacy=on,memdev=objpmem0,id=pmem0");
+  qemu_cmd.AddParameter("virtio-pmem-pci,disable-legacy=on,memdev=objpmem1,id=pmem0");
 
   qemu_cmd.AddParameter("-object");
   qemu_cmd.AddParameter("rng-random,id=objrng0,filename=/dev/urandom");
