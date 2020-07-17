@@ -4,6 +4,8 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 
+namespace cuttlefish {
+
 enum class DataImageResult {
   Error,
   NoChange,
@@ -15,3 +17,5 @@ DataImageResult ApplyDataImagePolicy(const cuttlefish::CuttlefishConfig& config,
 bool InitializeMiscImage(const std::string& misc_image);
 void CreateBlankImage(
     const std::string& image, int num_mb, const std::string& image_fmt);
+
+} // namespace cuttlefish
