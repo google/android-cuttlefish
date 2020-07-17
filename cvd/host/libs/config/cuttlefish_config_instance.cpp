@@ -36,6 +36,9 @@ const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
+const char* kSessionId = "session_id";
+const char* kUseAllocd = "use_allocd";
+
 const char* kUuid = "uuid";
 const char* kModemSimulatorPorts = "modem_simulator_ports";
 
@@ -45,7 +48,6 @@ const char* kAdbIPAndPort = "adb_ip_and_port";
 
 const char* kConfigServerPort = "config_server_port";
 const char* kVncServerPort = "vnc_server_port";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
 const char* kTombstoneReceiverPort = "tombstone_receiver_port";
 
 const char* kWebrtcDeviceId = "webrtc_device_id";
@@ -184,6 +186,24 @@ void CuttlefishConfig::MutableInstanceSpecific::set_wifi_tap_name(
   (*Dictionary())[kWifiTapName] = wifi_tap_name;
 }
 
+bool CuttlefishConfig::InstanceSpecific::use_allocd() const {
+  return (*Dictionary())[kUseAllocd].asBool();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_use_allocd(
+    bool use_allocd) {
+  (*Dictionary())[kUseAllocd] = use_allocd;
+}
+
+uint32_t CuttlefishConfig::InstanceSpecific::session_id() const {
+  return (*Dictionary())[kSessionId].asUInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_session_id(
+    uint32_t session_id) {
+  (*Dictionary())[kSessionId] = session_id;
+}
+
 int CuttlefishConfig::InstanceSpecific::vsock_guest_cid() const {
   return (*Dictionary())[kVsockGuestCid].asInt();
 }
@@ -296,14 +316,6 @@ int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
-}
-
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {
