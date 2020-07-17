@@ -31,11 +31,13 @@ bool MobileIface::ReleaseResource() {
 }
 
 bool WirelessIface::AcquireResource() {
-  return CreateWirelessIface(GetName(), has_ipv4_, has_ipv6_);
+  return CreateWirelessIface(GetName(), has_ipv4_, has_ipv6_,
+                             use_ebtables_legacy_);
 }
 
 bool WirelessIface::ReleaseResource() {
-  return DestroyWirelessIface(GetName(), has_ipv4_, has_ipv6_);
+  return DestroyWirelessIface(GetName(), has_ipv4_, has_ipv6_,
+                              use_ebtables_legacy_);
 }
 
 }  // namespace cuttlefish

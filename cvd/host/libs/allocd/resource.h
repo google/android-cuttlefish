@@ -73,9 +73,6 @@ class MobileIface : public StaticResource {
  private:
   uint16_t iface_id_;
   std::string ipaddr_;
-  // bool has_gateway_;
-  // bool has_iptable_;
-  // bool has_tap;
 };
 
 class WirelessIface : public StaticResource {
@@ -95,15 +92,23 @@ class WirelessIface : public StaticResource {
   uint16_t GetIfaceId() { return iface_id_; }
   std::string GetIpAddr() { return ipaddr_; }
 
+  void SetHasIpv4(bool ipv4) { has_ipv4_ = ipv4; }
+  void SetHasIpv6(bool ipv6) { has_ipv6_ = ipv6; }
+  void SetUseEbtablesLegacy(bool use_legacy) {
+    use_ebtables_legacy_ = use_legacy;
+  }
+
+  bool GetHasIpv4() { return has_ipv4_; }
+  bool GetHasIpv6() { return has_ipv6_; }
+  bool GetUseEbtablesLegacy() { return use_ebtables_legacy_; }
+
  private:
   static constexpr char kNetmask[] = "/24";
   uint16_t iface_id_;
   std::string ipaddr_;
   bool has_ipv4_ = true;
   bool has_ipv6_ = true;
-  // bool has_gateway_;
-  // bool has_iptable_;
-  // bool has_tap;
+  bool use_ebtables_legacy_ = false;
 };
 
 }  // namespace cuttlefish
