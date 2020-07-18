@@ -17,6 +17,7 @@ cc_library {
     name: "libcuttlefish_security",
     defaults: ["hidl_defaults", "cuttlefish_host_and_guest"],
     srcs: [
+        "gatekeeper_channel.cpp",
         "keymaster_channel.cpp",
     ],
     header_libs: [
@@ -25,6 +26,7 @@ cc_library {
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libgatekeeper",
         "libkeymaster_messages",
         "liblog",
     ],
