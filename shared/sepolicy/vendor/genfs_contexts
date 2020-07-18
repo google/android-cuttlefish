@@ -33,8 +33,8 @@ genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc2/alarmtimer.0.auto/wakeup/wa
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 
 # qemu (x86)
-genfscon sysfs /devices/pci0000:00/0000:00:07.0/virtio5/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/pci0000:00/0000:00:08.0/virtio6/net u:object_r:sysfs_net:s0 # rmnet0
+genfscon sysfs /devices/pci0000:00/0000:00:09.0/virtio7/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
+genfscon sysfs /devices/pci0000:00/0000:00:0a.0/virtio8/net u:object_r:sysfs_net:s0 # rmnet0
 # FIXME: Add sysfs_gpu labels for qemu
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:00/rtc u:object_r:sysfs_rtc:s0
@@ -46,8 +46,8 @@ genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup15 u:object_r:sysfs_wak
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup16 u:object_r:sysfs_wakeup:s0
 
 # qemu (arm64)
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:06.0/virtio5/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:07.0/virtio6/net u:object_r:sysfs_net:s0 # rmnet0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:08.0/virtio7/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:09.0/virtio8/net u:object_r:sysfs_net:s0 # rmnet0
 # FIXME: Add sysfs_gpu labels for qemu
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
