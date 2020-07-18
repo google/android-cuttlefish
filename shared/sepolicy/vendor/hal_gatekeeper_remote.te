@@ -1,0 +1,11 @@
+type hal_gatekeeper_remote, domain;
+hal_server_domain(hal_gatekeeper_remote, hal_gatekeeper)
+
+type hal_gatekeeper_remote_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_gatekeeper_remote)
+
+allow hal_gatekeeper_remote self:{ socket vsock_socket } create_socket_perms_no_ioctl;
+
+type cuttlefish_vsock_gatekeeper_port, property_type;
+
+get_prop(hal_gatekeeper_remote, cuttlefish_vsock_gatekeeper_port)
