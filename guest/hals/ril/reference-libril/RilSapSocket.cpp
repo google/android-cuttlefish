@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <sap_service.h>
-#include <guest/hals/ril/libril/ril.h>
+#include <guest/hals/ril/reference-libril/ril.h>
 
 static RilSapSocket::RilSapSocketList *head = NULL;
 

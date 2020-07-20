@@ -52,7 +52,7 @@ static char s_ATBuffer[MAX_AT_RESPONSE+1];
 static char *s_ATBufferCur = s_ATBuffer;
 
 #if AT_DEBUG
-void  AT_DUMP(const char*  prefix, const char*  buff, int  len)
+void  AT_DUMP(const char*  prefix __unused, const char*  buff, int  len)
 {
     if (len < 0)
         len = strlen(buff);
@@ -747,10 +747,8 @@ static int at_send_command_full (const char *command, ATCommandType type,
         /* cannot be called from reader thread */
         return AT_ERROR_INVALID_THREAD;
     }
-    inEmulator = isInEmulator();
-    if (inEmulator) {
-        pthread_mutex_lock(&s_writeMutex);
-    }
+
+    pthread_mutex_lock(&s_writeMutex);
     pthread_mutex_lock(&s_commandmutex);
 
     err = at_send_command_full_nolock(command, type,
@@ -758,9 +756,8 @@ static int at_send_command_full (const char *command, ATCommandType type,
                     timeoutMsec, pp_outResponse);
 
     pthread_mutex_unlock(&s_commandmutex);
-    if (inEmulator) {
-        pthread_mutex_unlock(&s_writeMutex);
-    }
+    pthread_mutex_unlock(&s_writeMutex);
+
 
     if (err == AT_ERROR_TIMEOUT && s_onTimeout != NULL) {
         s_onTimeout();
