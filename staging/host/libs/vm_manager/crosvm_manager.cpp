@@ -126,7 +126,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
         "androidboot.hardware.hwcomposer=drm_minigbm",
         "androidboot.hardware.egl=emulation",
         "androidboot.hardware.vulkan=ranchu",
-        "androidboot.hardware.gltransport=virtio-gpu-pipe",
+        "androidboot.hardware.gltransport=virtio-gpu-asg",
     };
   }
   return {};
