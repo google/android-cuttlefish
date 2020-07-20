@@ -10,6 +10,7 @@ ENV DEBIAN_FRONTEND noninteractive
 # important when we map the (container) user's home directory as a docker volume.
 
 ARG UID
+ARG DO_BUILD_ANDROID
 
 USER root
 WORKDIR /root
@@ -50,6 +51,12 @@ RUN if test $(uname -m) == aarch64; then \
 	    && apt-get install --no-install-recommends -y qemu qemu-user qemu-user-static binfmt-support; \
     fi
 
+# to share X with the local docker host
+RUN apt-get install -y xterm
+
+# to run cuttlefish docker in foreground, and test via webrtc/VNC
+RUN apt-get install -y tigervnc-viewer firefox-esr
+
 COPY . android-cuttlefish/
 
 RUN cd /root/android-cuttlefish \
@@ -61,6 +68,14 @@ RUN cd /root/android-cuttlefish \
     && rm -rvf android-cuttlefish
 
 RUN apt-get install -y curl wget unzip
+RUN if echo $DO_BUILD_ANDROID | grep "true" > /dev/null 2>&1; then \
+       apt-get install -y libncurses5 libncurses5-dev zip subversion rsync; \
+       mkdir /repo-bin; \
+       curl https://storage.googleapis.com/git-repo-downloads/repo > /repo-bin/repo; \
+       chmod a+x /repo-bin/repo; \
+    fi
+
+ENV PATH=$PATH:/repo-bin
 
 RUN apt-get clean
 

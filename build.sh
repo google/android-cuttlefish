@@ -2,7 +2,8 @@
 
 source "shflags"
 
-DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor"
+DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor on Debian-based Distros in the whitelist"
+DEFINE_boolean build_android_from_src false "Container to also build Android from the source"
 
 FLAGS "$@" || exit 1
 
@@ -23,10 +24,16 @@ function detect_gpu {
   done
 }
 
-
 OEM=
 if [[ ${FLAGS_detect_gpu} -eq ${FLAGS_TRUE} ]]; then
-  OEM=$(detect_gpu)
+  if which dpkg-query > /dev/null 2>&1; then
+    OEM=$(detect_gpu)
+  else
+    echo "### The Cuttlefish Docker with Physical-GPU support is recommended only on Debian/Ubuntu hosts"
+    echo "### If this is Debian/Ubuntu, make dpkg-query available for the host"
+    echo "### If not Debian/Ubuntu, consider to add --nodetect_gpu so the Cuttlefish Docker container runs with softgpu"
+    exit 1
+  fi
 else
   echo "###"
   echo "### Building without physical-GPU support"
@@ -107,13 +114,18 @@ function build_docker_image {
       docker_targets+=("cuttlefish-hwgpu")
   fi
 
+  local build_android="false"
+  if [[ ${FLAGS_build_android_from_src} -eq ${FLAGS_TRUE} ]]; then
+    build_android="true"
+  fi
   for target in "${docker_targets[@]}"; do
     docker build \
         --target "${target}" \
          -t 'cuttlefish' \
         "${PWD}" \
         --build-arg UID="${UID}" \
-        --build-arg OEM="${OEM}"
+        --build-arg OEM="${OEM}" \
+        --build-arg DO_BUILD_ANDROID="${build_android}"
   done
 
   # don't nuke the cache
