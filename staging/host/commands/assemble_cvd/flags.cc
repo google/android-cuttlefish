@@ -394,35 +394,48 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
-  std::string console_cmdline = "";
-  if (FLAGS_vm_manager == QemuManager::name()) {
-    // crosvm sets up the console= earlycon= flags for us, but QEMU does not.
-    // Set them explicitly here to match how we will configure the VM manager
-    console_cmdline += "console=hvc0";
+  std::string vm_manager_cmdline = "";
+  if (FLAGS_vm_manager == QemuManager::name() || FLAGS_use_bootloader) {
+    // crosvm sets up the console= earlycon= pci= reboot= panic= flags for us if
+    // booting straight to the kernel, but QEMU and the bootlaoder via crosvm does not.
+    vm_manager_cmdline += "console=hvc0 pci=noacpi reboot=k panic=-1";
     if (cuttlefish::HostArch() == "aarch64") {
-      // To update the pl011 address:
-      // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
-      // $ dtc -O dts -o virt.dts -I dtb virt.dtb
-      // In the virt.dts file, look for a uart node
-      console_cmdline += " earlycon=pl011,mmio32,0x9000000";
-      if (FLAGS_kgdb) {
-        console_cmdline += " androidboot.console=ttyAMA0 kgdboc=ttyAMA0";
+      if (FLAGS_vm_manager == QemuManager::name()) {
+        // To update the pl011 address:
+        // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
+        // $ dtc -O dts -o virt.dts -I dtb virt.dtb
+        // In the virt.dts file, look for a uart node
+        vm_manager_cmdline += " earlycon=pl011,mmio32,0x9000000";
+      } else {
+        // Crosvm ARM only supports earlycon uart over mmio.
+        vm_manager_cmdline += " earlycon=uart8250,mmio,0x3f8";
       }
     } else {
       // To update the uart8250 address:
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
       // Only 'io' mode works; mmio and mmio32 do not
-      console_cmdline += " earlycon=uart8250,io,0x3f8";
-      if (FLAGS_kgdb) {
-        console_cmdline += " androidboot.console=ttyS0 kgdboc=ttyS0";
-      }
-    }
-  } else {
-    if (FLAGS_kgdb) {
-      console_cmdline += "androidboot.console=ttyS0 kgdboc=ttyS0";
+      vm_manager_cmdline += " earlycon=uart8250,io,0x3f8";
     }
   }
-  tmp_config_obj.set_vm_manager_kernel_cmdline(console_cmdline);
+
+  if (FLAGS_kgdb) {
+    vm_manager_cmdline += " kgdboc_earlycon kgdbcon";
+    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
+    if (FLAGS_vm_manager == QemuManager::name() && cuttlefish::HostArch() == "aarch64") {
+      vm_manager_cmdline += " androidboot.console=ttyAMA0 kgdboc=ttyAMA0";
+    } else {
+      vm_manager_cmdline += " androidboot.console=ttyS0 kgdboc=ttyS0";
+    }
+  } else if (FLAGS_use_bootloader) {
+    // However, if the bootloader is enabled, virtio console can't
+    // be used since uboot doesn't support it.
+    vm_manager_cmdline += " androidboot.console=ttyS1";
+  } else {
+    // If kgdb is disabled, the Android serial console spawns on a
+    // virtio-console port
+    vm_manager_cmdline += " androidboot.console=hvc1";
+  }
+  tmp_config_obj.set_vm_manager_kernel_cmdline(vm_manager_cmdline);
 
   tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
   tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
