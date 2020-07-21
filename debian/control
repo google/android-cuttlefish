@@ -1,46 +1,44 @@
 Source: cuttlefish-common
-Maintainer: Cuttlefish Team <https://android-review.googlesource.com/#/c/platform/device/google/cuttlefish>
+Maintainer: Cuttlefish Team
 Section: misc
 Priority: optional
-Standards-Version: 3.9.2
-Build-Depends:
- cdbs,
- config-package-dev (>= 4.5~),
- debhelper (>= 9),
- gcc
+Build-Depends: config-package-dev,
+               debhelper-compat (= 12)
+Standards-Version: 4.5.0
 
 Package: cuttlefish-common
 Architecture: any
-Depends:
- binfmt-support [!amd64],
- bridge-utils,
- dnsmasq-base,
- f2fs-tools,
- iptables,
- libarchive-tools | bsdtar,
- libc6,
- libc6:amd64 [!amd64],
- libdrm2,
- libfdt1,
- libusb-1.0-0,
- libwayland-client0,
- libx11-6,
- libxext6,
- net-tools,
- python2.7,
- qemu-user-static [!amd64],
- ${misc:Depends}
-Description: Cuttlefish Android Virtual Device companion package.
+Depends: binfmt-support [!amd64],
+         bridge-utils,
+         dnsmasq-base,
+         f2fs-tools,
+         iptables,
+         libarchive-tools | bsdtar,
+         libdrm2,
+         libfdt1,
+         libusb-1.0-0,
+         libwayland-client0,
+         libx11-6,
+         libxext6,
+         lsb-base,
+         net-tools,
+         python2.7,
+         qemu-user-static [!amd64],
+         ${misc:Depends},
+         ${shlibs:Depends}
+Pre-Depends: ${misc:Pre-Depends}
+Description: Cuttlefish Android Virtual Device companion package
  Contains set of tools and binaries required to boot up and manage
  Cuttlefish Android Virtual Device that are used in all deployments.
 
 Package: cuttlefish-integration
 Architecture: any
-Depends:
- cuttlefish-common,
- libc6,
- ${misc:Depends}
-Provides: ${diverted-files}
+Depends: cuttlefish-common,
+         ${shlibs:Depends},
+         ${misc:Depends}
+Pre-Depends: ${misc:Pre-Depends}
 Conflicts: ${diverted-files}
-Description: Configuration and utilities for Android cuttlefish devices
- running on Google Compute Engine. Not intended for use on developer machines.
+Provides: ${diverted-files}
+Description: Utilities for Android cuttlefish devices in the cloud
+ Configuration and utilities for Android cuttlefish devices running on
+ Google Compute Engine. Not intended for use on developer machines.
