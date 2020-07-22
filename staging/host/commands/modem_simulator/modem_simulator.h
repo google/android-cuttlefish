@@ -25,7 +25,7 @@ namespace cuttlefish {
 class ModemSimulator {
  public:
   ModemSimulator(int32_t modem_id);
-  ~ModemSimulator() = default;
+  ~ModemSimulator();
 
   ModemSimulator(const ModemSimulator&) = delete;
   ModemSimulator& operator=(const ModemSimulator&) = delete;
@@ -44,7 +44,7 @@ class ModemSimulator {
  private:
   int32_t modem_id_;
   std::unique_ptr<ChannelMonitor> channel_monitor_;
-  ThreadLooper* thread_looper_;
+  std::unique_ptr<ThreadLooper> thread_looper_;
 
   std::map<ModemServiceType, std::unique_ptr<ModemService>> modem_services_;
 
