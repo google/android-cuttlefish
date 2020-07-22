@@ -13,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/sim_service.h"
+
 #include <tinyxml2.h>
 
-#include "host/libs/config/cuttlefish_config.h"
 #include "common/libs/utils/files.h"
-
-#include "sim_service.h"
-#include "network_service.h"
-#include "pdu_parser.h"
+#include "host/commands/modem_simulator/device_config.h"
+#include "host/commands/modem_simulator/network_service.h"
+#include "host/commands/modem_simulator/pdu_parser.h"
 
 namespace cuttlefish {
 
@@ -359,9 +359,8 @@ void SimService::InitializeSimFileSystemAndSimState() {
   ss << "iccprofile_for_sim" << service_id_ << ".xml";
   auto icc_profile_name = ss.str();
 
-  auto config = cuttlefish::CuttlefishConfig::Get();
-  auto instance = config->ForDefaultInstance();
-  auto icc_profile_path = instance.PerInstancePath(icc_profile_name.c_str());
+  auto icc_profile_path = cuttlefish::modem::DeviceConfig::PerInstancePath(
+      icc_profile_name.c_str());
   std::string file = icc_profile_path;
 
   if (!cuttlefish::FileExists(icc_profile_path) ||
@@ -370,7 +369,8 @@ void SimService::InitializeSimFileSystemAndSimState() {
     ss.str("");
     ss << "etc/modem_simulator/files/iccprofile_for_sim" << service_id_ << ".xml";
 
-    auto etc_file_path = cuttlefish::DefaultHostArtifactsPath(ss.str());
+    auto etc_file_path =
+        cuttlefish::modem::DeviceConfig::DefaultHostArtifactsPath(ss.str());
     if (!cuttlefish::FileExists(etc_file_path) || !cuttlefish::FileHasContent(etc_file_path)) {
       sim_status_ = SIM_STATUS_ABSENT;
       return;
@@ -579,6 +579,8 @@ void SimService::SavePinStateToIccProfile() {
     puk2_code->SetText(pin2_status_.puk_.c_str());
   }
 
+  ss.clear();
+  ss.str("");
   ss << pin2_status_.pin_remaining_times_;
 
   auto pin2_remaining_times = pin_profile->FirstChildElement("PIN2REMAINTIMES");
