@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-#include <sstream>
+#include "host/commands/modem_simulator/command_parser.h"
 
-#include "command_parser.h"
+#include <sstream>
+#include <string>
 
 namespace cuttlefish {
 

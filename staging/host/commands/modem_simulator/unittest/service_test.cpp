@@ -22,9 +22,9 @@
 
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
+#include "host/commands/modem_simulator/channel_monitor.h"
+#include "host/commands/modem_simulator/modem_simulator.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "modem_simulator/channel_monitor.h"
-#include "modem_simulator/modem_simulator.h"
 namespace fs = std::filesystem;
 
 static const char *myiccfile =
