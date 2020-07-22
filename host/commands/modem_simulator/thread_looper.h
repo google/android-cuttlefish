@@ -26,12 +26,10 @@
 namespace cuttlefish {
 
 template <typename T>
-std::function<void()> makeSafeCallback(std::weak_ptr<T> weak_me,
-                                       std::function<void(T *)> f) {
-  return [f, weak_me] {
-    auto me = weak_me.lock();
+std::function<void()> makeSafeCallback(T *me, std::function<void(T *)> f) {
+  return [f, me] {
     if (me) {
-        f(me.get());
+      f(me);
     }
   };
 }
@@ -39,14 +37,14 @@ std::function<void()> makeSafeCallback(std::weak_ptr<T> weak_me,
 template<typename T, typename... Params>
 std::function<void()> makeSafeCallback(
     T *obj, void (T::*f)(const Params&...), const Params&... params) {
-  return makeSafeCallback<T>(obj->weak_from_this(),
+  return makeSafeCallback<T>(obj,
                              [f, params...](T *me) { (me->*f)(params...); });
 }
 
 template<typename T, typename... Params>
 std::function<void()> makeSafeCallback(
       T *obj, void (T::*f)(Params...), const Params&... params) {
-  return makeSafeCallback<T>(obj->weak_from_this(),
+  return makeSafeCallback<T>(obj,
                              [f, params...](T *me) { (me->*f)(params...); });
 }
 
@@ -63,6 +61,8 @@ class ThreadLooper {
 
   Serial Post(Callback cb);
   Serial PostWithDelay(std::chrono::steady_clock::duration delay, Callback cb);
+
+  void Stop();
 
   // Returns true if matching event was canceled.
   bool CancelSerial(Serial serial);
