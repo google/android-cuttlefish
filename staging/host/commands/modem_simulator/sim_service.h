@@ -17,7 +17,7 @@
 
 #include <tinyxml2.h>
 
-#include "modem_service.h"
+#include "host/commands/modem_simulator/modem_service.h"
 
 namespace cuttlefish {
 

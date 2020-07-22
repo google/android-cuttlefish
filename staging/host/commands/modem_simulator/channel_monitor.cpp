@@ -14,12 +14,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
+#include "host/commands/modem_simulator/channel_monitor.h"
 
 #include <android-base/strings.h>
 
-#include "channel_monitor.h"
-#include "modem_simulator.h"
+#include <algorithm>
+
+#include "host/commands/modem_simulator/modem_simulator.h"
 
 namespace cuttlefish {
 
@@ -75,8 +76,10 @@ void ChannelMonitor::SetRemoteClient(cuttlefish::SharedFD client, bool is_accept
     remote_client->first_read_command_ = true;
     ReadCommand(*remote_client);
   }
+
   remote_client->first_read_command_ = false;
   remote_clients_.push_back(std::move(remote_client));
+  LOG(DEBUG) << "added one remote client";
 
   // Trigger monitor loop
   if (write_pipe_->IsOpen()) {
@@ -92,6 +95,7 @@ void ChannelMonitor::AcceptIncomingConnection() {
     LOG(ERROR) << "Error accepting connection on socket: " << client_fd->StrError();
   } else {
     auto client = std::make_unique<Client>(client_fd);
+    LOG(DEBUG) << "added one RIL client";
     clients_.push_back(std::move(client));
     if (clients_.size() == 1) {
       // The first connected client default to be the unsolicited commands channel
@@ -182,11 +186,12 @@ void ChannelMonitor::CloseRemoteConnection(cuttlefish::SharedFD client) {
   for (; iter != remote_clients_.end(); ++iter) {
     if (iter->get()->client_fd == client) {
       iter->get()->client_fd->Close();
-      remote_clients_.erase(iter);
+      iter->get()->is_valid = false;
 
       // Trigger monitor loop
       if (write_pipe_->IsOpen()) {
         write_pipe_->Write("OK", sizeof("OK"));
+        LOG(DEBUG) << "asking to remove clients";
       } else {
         LOG(ERROR) << "Pipe created fail, can't trigger monitor loop";
       }
@@ -202,7 +207,20 @@ ChannelMonitor::~ChannelMonitor() {
   }
 
   if (monitor_thread_.joinable()) {
+    LOG(DEBUG) << "waiting for monitor thread to join";
     monitor_thread_.join();
+  }
+}
+
+static void removeInvalidClients(std::vector<std::unique_ptr<Client>>& clients) {
+  auto iter = clients.begin();
+  for (; iter != clients.end();) {
+    if (iter->get()->is_valid) {
+      ++iter;
+    } else {
+      LOG(DEBUG) << "removed 1 client";
+      iter = clients.erase(iter);
+    }
   }
 }
 
@@ -212,10 +230,10 @@ void ChannelMonitor::MonitorLoop() {
     read_set.Set(server_);
     read_set.Set(read_pipe_);
     for (auto& client: clients_) {
-      read_set.Set(client->client_fd);
+      if (client->is_valid) read_set.Set(client->client_fd);
     }
     for (auto& client: remote_clients_) {
-      read_set.Set(client->client_fd);
+      if (client->is_valid) read_set.Set(client->client_fd);
     }
     int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
     if (num_fds < 0) {
@@ -228,12 +246,14 @@ void ChannelMonitor::MonitorLoop() {
       }
       if (read_set.IsSet(read_pipe_)) {
         std::string buf(2, ' ');
-        read_pipe_->Read(buf.data(), buf.size());
-        if (buf == "KO") {
-          // should exit now
+        read_pipe_->Read(buf.data(), buf.size());  // Empty pipe
+        if (buf == std::string("KO")) {
           LOG(DEBUG) << "requested to exit now";
           break;
         }
+        // clean the lists
+        removeInvalidClients(clients_);
+        removeInvalidClients(remote_clients_);
       }
       for (auto& client : clients_) {
         if (read_set.IsSet(client->client_fd)) {

@@ -15,10 +15,13 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
-#include <deque>
-#include <mutex>
 #include <condition_variable>
+#include <deque>
+#include <functional>
+#include <mutex>
+#include <thread>
 
 namespace cuttlefish {
 

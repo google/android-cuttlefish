@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "modem_service.h"
+#include "host/commands/modem_simulator/modem_service.h"
 
 namespace cuttlefish {
 
@@ -35,9 +35,16 @@ class DataService : public ModemService, public std::enable_shared_from_this<Dat
   void HandleEnterDataState(const Client& client, const std::string& command);
   void HandleReadDynamicParam(const Client& client, const std::string& command);
 
+  void onUpdatePhysicalChannelconfigs(int modem_tech, int freq,
+                                      int cellBandwidthDownlink);
+
  private:
   std::vector<CommandHandler> InitializeCommandHandlers();
   void InitializeServiceState();
+  void sendOnePhysChanCfgUpdate(int status, int bandwidth, int rat, int freq,
+                                int id);
+  void updatePhysicalChannelconfigs(int modem_tech, int freq,
+                                    int cellBandwidthDownlink, int count);
 
   struct PDPContext {
     enum CidState {ACTIVE, NO_ACTIVE};

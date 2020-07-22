@@ -13,17 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/modem_simulator.h"
+
 #include <memory>
 
-#include "modem_simulator.h"
-#include "network_service.h"
-#include "misc_service.h"
-#include "call_service.h"
-#include "sim_service.h"
-#include "data_service.h"
-#include "sms_service.h"
-#include "sup_service.h"
-#include "stk_service.h"
+#include "host/commands/modem_simulator/call_service.h"
+#include "host/commands/modem_simulator/data_service.h"
+#include "host/commands/modem_simulator/misc_service.h"
+#include "host/commands/modem_simulator/network_service.h"
+#include "host/commands/modem_simulator/sim_service.h"
+#include "host/commands/modem_simulator/sms_service.h"
+#include "host/commands/modem_simulator/stk_service.h"
+#include "host/commands/modem_simulator/sup_service.h"
 
 namespace cuttlefish {
 
@@ -63,7 +64,8 @@ void ModemSimulator::RegisterModemService() {
   auto supservice = std::make_unique<SupService>(
       modem_id_, channel_monitor_.get(), thread_looper_);
 
-  netservice->SetupDependency(miscservice.get(), simservice.get());
+  netservice->SetupDependency(miscservice.get(), simservice.get(),
+                              dataservice.get());
   simservice->SetupDependency(netservice.get());
   callservice->SetupDependency(simservice.get(), netservice.get());
   stkservice->SetupDependency(simservice.get());

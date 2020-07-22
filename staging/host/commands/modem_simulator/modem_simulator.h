@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include "channel_monitor.h"
-#include "thread_looper.h"
-#include "modem_service.h"
-#include "nvram_config.h"
+#include "host/commands/modem_simulator/channel_monitor.h"
+#include "host/commands/modem_simulator/modem_service.h"
+#include "host/commands/modem_simulator/nvram_config.h"
+#include "host/commands/modem_simulator/thread_looper.h"
 
 namespace cuttlefish {
 
