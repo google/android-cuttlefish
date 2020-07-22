@@ -31,6 +31,13 @@ namespace cuttlefish {
 ModemSimulator::ModemSimulator(int32_t modem_id)
     : modem_id_(modem_id), thread_looper_(new ThreadLooper()) {}
 
+ModemSimulator::~ModemSimulator() {
+  // this will stop the looper so all the callbacks
+  // will be gone;
+  thread_looper_->Stop();
+  modem_services_.clear();
+}
+
 void ModemSimulator::LoadNvramConfig() {
   auto nvram_config = NvramConfig::Get();
   if (!nvram_config) {
@@ -48,21 +55,21 @@ void ModemSimulator::Initialize(
 
 void ModemSimulator::RegisterModemService() {
   auto netservice = std::make_unique<NetworkService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto simservice = std::make_unique<SimService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto miscservice = std::make_unique<MiscService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto callservice = std::make_unique<CallService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto stkservice = std::make_unique<StkService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto smsservice = std::make_unique<SmsService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto dataservice = std::make_unique<DataService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto supservice = std::make_unique<SupService>(
-      modem_id_, channel_monitor_.get(), thread_looper_);
+      modem_id_, channel_monitor_.get(), thread_looper_.get());
 
   netservice->SetupDependency(miscservice.get(), simservice.get(),
                               dataservice.get());
