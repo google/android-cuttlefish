@@ -19,6 +19,7 @@
 #include <json/json.h>
 
 #include <fstream>
+#include <mutex>
 #include <sstream>
 
 #include "common/libs/utils/files.h"
