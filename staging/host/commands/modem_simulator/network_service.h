@@ -17,9 +17,10 @@
 
 #include <ctime>
 
-#include "modem_service.h"
-#include "misc_service.h"
-#include "sim_service.h"
+#include "host/commands/modem_simulator/data_service.h"
+#include "host/commands/modem_simulator/misc_service.h"
+#include "host/commands/modem_simulator/modem_service.h"
+#include "host/commands/modem_simulator/sim_service.h"
 
 namespace cuttlefish {
 
@@ -32,7 +33,7 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   NetworkService(const NetworkService &) = delete;
   NetworkService &operator=(const NetworkService &) = delete;
 
-  void SetupDependency(MiscService* misc, SimService* sim);
+  void SetupDependency(MiscService* misc, SimService* sim, DataService* data);
 
   void HandleRadioPowerReq(const Client& client);
   void HandleRadioPower(const Client& client, std::string& command);
@@ -47,6 +48,11 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   void HandleQuerySupportedTechs(const Client& client);
   void HandleSetPreferredNetworkType(const Client& client, std::string& command);
   void HandleNetworkRegistration(cuttlefish::SharedFD client, std::string& command);
+
+  void HandleReceiveRemoteVoiceDataReg(const Client& client,
+                                       std::string& command);
+  void HandleReceiveRemoteCTEC(const Client& client, std::string& command);
+  void HandleReceiveRemoteSignal(const Client& client, std::string& command);
 
   void OnSimStatusChanged(SimService::SimStatus sim_status);
   void OnVoiceRegisterStateChanged();
@@ -74,10 +80,13 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   bool IsHasNetwork();
   void UpdateRegisterState(RegistrationState state);
   void AdjustSignalStrengthValue(int& value, const std::pair<int, int>& range);
+  void SetSignalStrengthValue(int& value, const std::pair<int, int>& range,
+                              double percentd);
   std::string GetSignalStrength();
 
-  MiscService* misc_service_;
-  SimService* sim_service_;
+  MiscService* misc_service_ = nullptr;
+  SimService* sim_service_ = nullptr;
+  DataService* data_service_ = nullptr;
 
   enum RadioState : int32_t {
     RADIO_STATE_OFF,

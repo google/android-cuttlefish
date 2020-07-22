@@ -15,8 +15,9 @@
 
 #pragma once
 
-#include <vector>
+#include <mutex>
 #include <thread>
+#include <vector>
 
 #include "common/libs/fs/shared_select.h"
 
@@ -45,6 +46,7 @@ class Client {
   std::string incomplete_command;
   std::mutex write_mutex;
   bool first_read_command_;  // Only used when ClientType::REMOTE
+  bool is_valid = true;
 
   Client() = default;
   ~Client() = default;

@@ -24,8 +24,8 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/modem_simulator/modem_simulator.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "modem_simulator.h"
 
 // we can start multiple modems simultaneously; each modem
 // will listent to one server fd for incoming sms/phone call

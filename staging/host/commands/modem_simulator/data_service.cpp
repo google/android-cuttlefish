@@ -13,15 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/data_service.h"
+
 #include <android-base/strings.h>
 
-#include "common/libs/device_config/device_config.h"
-
-#include "data_service.h"
+#include "host/commands/modem_simulator/device_config.h"
 
 namespace cuttlefish {
-
-static std::unique_ptr<cuttlefish::DeviceConfig> data_connet_config_ = nullptr;
 
 DataService::DataService(int32_t service_id, ChannelMonitor* channel_monitor,
                          ThreadLooper* thread_looper)
@@ -78,10 +76,6 @@ std::vector<CommandHandler> DataService::InitializeCommandHandlers() {
 
 void DataService::InitializeServiceState() {
   // Initialize data connection config
-  data_connet_config_ = cuttlefish::DeviceConfig::Get();
-  if (!data_connet_config_) {
-    LOG(ERROR) << "Failed to open device configuration!";
-  }
 }
 
 /**
@@ -160,17 +154,10 @@ void DataService::HandlePDPContext(const Client& client,
 
   std::string ip_type(cmd.GetNextStr(','));
   std::string apn(cmd.GetNextStr(','));
-  std::string address = "10.0.2.15/24";
-  std::string dnses = "8.8.8.8";
-  std::string gateways = "10.0.2.2";
 
-  if (data_connet_config_) {
-    address = data_connet_config_->ril_address_and_prefix();
-    dnses = data_connet_config_->ril_dns();
-    gateways = data_connet_config_->ril_gateway();
-  } else {
-    LOG(ERROR) << "Device connect configuration is nullptr !";
-  }
+  auto address = cuttlefish::modem::DeviceConfig::ril_address_and_prefix();
+  auto dnses = cuttlefish::modem::DeviceConfig::ril_dns();
+  auto gateways = cuttlefish::modem::DeviceConfig::ril_gateway();
 
   PDPContext pdp_context = {cid,
                             PDPContext::ACTIVE,
@@ -312,6 +299,46 @@ void DataService::HandleReadDynamicParam(const Client& client,
   }
 
   client.SendCommandResponse(responses);
+}
+
+void DataService::sendOnePhysChanCfgUpdate(int status, int bandwidth, int rat,
+                                           int freq, int id) {
+  std::stringstream ss;
+  ss << "%CGFPCCFG: " << status << "," << bandwidth << "," << rat << "," << freq
+     << "," << id;
+  SendUnsolicitedCommand(ss.str());
+}
+
+void DataService::onUpdatePhysicalChannelconfigs(int modem_tech, int freq,
+                                                 int cellBandwidthDownlink) {
+  updatePhysicalChannelconfigs(modem_tech, freq, cellBandwidthDownlink, 3);
+}
+
+void DataService::updatePhysicalChannelconfigs(int modem_tech, int freq,
+                                               int cellBandwidthDownlink,
+                                               int count) {
+  if (count <= 0) {
+    return;
+  }
+
+  const int PRIMARY_SERVING = 1;
+  const int SECONDARY_SERVING = 2;
+
+  for (const auto& iter : pdp_context_) {
+    if (iter.state == PDPContext::ACTIVE) {
+      sendOnePhysChanCfgUpdate(PRIMARY_SERVING, cellBandwidthDownlink,
+                               modem_tech, freq, iter.cid);
+      sendOnePhysChanCfgUpdate(SECONDARY_SERVING, cellBandwidthDownlink,
+                               modem_tech, freq, iter.cid);
+    }
+  }
+
+  // call again after 1 sec delay
+  count--;
+  thread_looper_->PostWithDelay(
+      std::chrono::seconds(1),
+      makeSafeCallback(this, &DataService::updatePhysicalChannelconfigs,
+                       modem_tech, freq, cellBandwidthDownlink, count));
 }
 
 }  // namespace cuttlefish

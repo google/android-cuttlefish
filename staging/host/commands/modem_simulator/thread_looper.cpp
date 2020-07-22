@@ -13,11 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <thread>
+#include "host/commands/modem_simulator/thread_looper.h"
 
 #include <android-base/logging.h>
-
-#include "thread_looper.h"
 
 namespace cuttlefish {
 

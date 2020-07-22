@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sup_service.h"
+#include "host/commands/modem_simulator/sup_service.h"
 
 namespace cuttlefish {
 

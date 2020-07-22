@@ -15,14 +15,14 @@
 
 #pragma once
 
-#include <map>
-#include <functional>
-
 #include <android-base/logging.h>
 
-#include "channel_monitor.h"
-#include "thread_looper.h"
-#include "command_parser.h"
+#include <functional>
+#include <map>
+
+#include "host/commands/modem_simulator/channel_monitor.h"
+#include "host/commands/modem_simulator/command_parser.h"
+#include "host/commands/modem_simulator/thread_looper.h"
 
 namespace cuttlefish {
 

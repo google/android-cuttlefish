@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/misc_service.h"
+
 #include <ctime>
 #include <iomanip>
-
-#include "misc_service.h"
 
 namespace cuttlefish {
 
