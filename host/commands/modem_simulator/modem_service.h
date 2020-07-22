@@ -19,6 +19,7 @@
 
 #include <functional>
 #include <map>
+#include <optional>
 
 #include "host/commands/modem_simulator/channel_monitor.h"
 #include "host/commands/modem_simulator/command_parser.h"
