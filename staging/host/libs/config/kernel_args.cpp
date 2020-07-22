@@ -120,6 +120,8 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
 
   kernel_cmdline.push_back(concat("androidboot.vsock_keymaster_port=",
                                   instance.keymaster_vsock_port()));
+  kernel_cmdline.push_back(concat("androidboot.vsock_gatekeeper_port=",
+                                  instance.gatekeeper_vsock_port()));
 
   // TODO(b/158131610): Set this in crosvm instead
   kernel_cmdline.push_back(concat("androidboot.wifi_mac_address=",

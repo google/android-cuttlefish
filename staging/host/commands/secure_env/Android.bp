@@ -18,6 +18,7 @@ cc_binary_host {
     srcs: [
         "composite_serialization.cpp",
         "encrypted_serializable.cpp",
+        "gatekeeper_responder.cpp",
         "hmac_serializable.cpp",
         "in_process_tpm.cpp",
         "keymaster_responder.cpp",
@@ -37,6 +38,7 @@ cc_binary_host {
         "libcuttlefish_fs",
         "libcuttlefish_security",
         "libcuttlefish_utils",
+        "libgatekeeper",
         "libkeymaster_portable",
         "libkeymaster_messages",
         "libsoft_attestation_cert",
@@ -53,6 +55,7 @@ cc_binary_host {
         "libcuttlefish_host_config",
         "libgflags",
         "libjsoncpp",
+        "libscrypt_static",
     ],
     defaults: ["cuttlefish_host_only"],
     cflags: [
