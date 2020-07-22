@@ -13,15 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/pdu_parser.h"
+
 #include <unistd.h>
 
+#include <algorithm>
 #include <ctime>
-#include <string>
 #include <iomanip>
 #include <sstream>
-#include <algorithm>
-
-#include "pdu_parser.h"
+#include <string>
 
 namespace cuttlefish {
 

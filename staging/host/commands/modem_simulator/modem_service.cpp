@@ -13,9 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/libs/config/cuttlefish_config.h"
+#include "host/commands/modem_simulator/modem_service.h"
 
-#include "modem_service.h"
+#include <cstring>
+
+#include "host/commands/modem_simulator/device_config.h"
 
 namespace cuttlefish {
 
@@ -134,9 +136,7 @@ void ModemService::CloseRemoteConnection(cuttlefish::SharedFD remote_client) {
 }
 
 std::string ModemService::GetHostPort() {
-  auto config = cuttlefish::CuttlefishConfig::Get();
-  auto instance = config->ForDefaultInstance();
-  auto host_port = instance.host_port();
+  auto host_port = cuttlefish::modem::DeviceConfig::host_port();
   std::stringstream ss;
   ss << host_port;
   return ss.str();

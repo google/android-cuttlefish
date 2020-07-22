@@ -13,15 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/network_service.h"
+
 #include <map>
 #include <sstream>
 
-#include "host/libs/config/cuttlefish_config.h"
 #include "common/libs/utils/files.h"
-
-#include "network_service.h"
-#include "thread_looper.h"
-#include "nvram_config.h"
+#include "host/commands/modem_simulator/device_config.h"
+#include "host/commands/modem_simulator/nvram_config.h"
+#include "host/commands/modem_simulator/thread_looper.h"
 
 namespace cuttlefish {
 
@@ -99,6 +99,18 @@ std::vector<CommandHandler> NetworkService::InitializeCommandHandlers() {
                      [this](const Client& client, std::string& cmd) {
                        this->HandleSetPreferredNetworkType(client, cmd);
                      }),
+      CommandHandler("+REMOTECTEC",
+                     [this](const Client& client, std::string& cmd) {
+                       this->HandleReceiveRemoteCTEC(client, cmd);
+                     }),
+      CommandHandler("+REMOTESIGNAL",
+                     [this](const Client& client, std::string& cmd) {
+                       this->HandleReceiveRemoteSignal(client, cmd);
+                     }),
+      CommandHandler("+REMOTEREG",
+                     [this](const Client& client, std::string& cmd) {
+                       this->HandleReceiveRemoteVoiceDataReg(client, cmd);
+                     }),
   };
   return (command_handlers);
 }
@@ -174,7 +186,8 @@ void NetworkService::InitializeSimOperator() {
 
   {
     const char *operator_numeric_xml = "etc/modem_simulator/files/numeric_operator.xml";
-    auto file = cuttlefish::DefaultHostArtifactsPath(operator_numeric_xml);
+    auto file = cuttlefish::modem::DeviceConfig::DefaultHostArtifactsPath(
+        operator_numeric_xml);
     if (!cuttlefish::FileExists(file) || !cuttlefish::FileHasContent(file)) {
       return;
     }
@@ -215,9 +228,11 @@ void NetworkService::InitializeSimOperator() {
   InitializeNetworkOperator();
 }
 
-void NetworkService::SetupDependency(MiscService* misc, SimService* sim) {
+void NetworkService::SetupDependency(MiscService* misc, SimService* sim,
+                                     DataService* data) {
   misc_service_ = misc;
   sim_service_ = sim;
+  data_service_ = data;
   InitializeSimOperator();
 }
 
@@ -313,6 +328,13 @@ bool NetworkService::WakeupFromSleep() {
   time_t now = time(0);
   const bool wakeup_from_sleep = (now > android_last_signal_time_ + 120);
   return wakeup_from_sleep;
+}
+
+void NetworkService::SetSignalStrengthValue(int& value,
+                                            const std::pair<int, int>& range,
+                                            double percentd) {
+  value = range.first + percentd * (range.second - range.first);
+  AdjustSignalStrengthValue(value, range);
 }
 
 void NetworkService::AdjustSignalStrengthValue(int& value,
@@ -928,6 +950,18 @@ void NetworkService::UpdateRegisterState(RegistrationState state ) {
   OnVoiceRegisterStateChanged();
   OnDataRegisterStateChanged();
   OnSignalStrengthChanged();
+
+  int cellBandwidthDownlink = 5000;
+  const int UNKNOWN = 0;
+  const int MMWAVE = 4;
+  int freq = UNKNOWN;
+  if (current_network_mode_ == M_MODEM_TECH_NR) {
+    freq = MMWAVE;
+    cellBandwidthDownlink = 50000;
+  }
+
+  data_service_->onUpdatePhysicalChannelconfigs(current_network_mode_, freq,
+                                                cellBandwidthDownlink);
 }
 
 /* AT+CTEC=current,preferred */
@@ -1086,6 +1120,93 @@ std::string NetworkService::GetSignalStrength() {
                  << signal_strength_.nr_csi_rsrq << ","
                  << signal_strength_.nr_csi_sinr;;
   return ss.str();
+}
+
+/* AT+REMOTEREG: state*/
+void NetworkService::HandleReceiveRemoteVoiceDataReg(const Client& client,
+                                                     std::string& command) {
+  (void)client;
+  std::stringstream ss;
+  std::string states = command.substr(std::string("AT+REMOTEREG:").size());
+  int stated = std::stoi(states, nullptr, 10);
+
+  UpdateRegisterState(NET_REGISTRATION_UNREGISTERED);
+  signal_strength_.Reset();
+
+  thread_looper_->PostWithDelay(
+      std::chrono::seconds(1),
+      makeSafeCallback(this, &NetworkService::UpdateRegisterState,
+                       (cuttlefish::NetworkService::RegistrationState)stated));
+}
+
+/* AT+REMOTECTEC: ctec */
+void NetworkService::HandleReceiveRemoteCTEC(const Client& client,
+                                             std::string& command) {
+  (void)client;
+  LOG(DEBUG) << "calling ctec from remote";
+  std::stringstream ss;
+  std::string types = command.substr(std::string("AT+REMOTECTEC: ").size());
+  int preferred_mask_new = std::stoi(types, nullptr, 10);
+
+  if (preferred_mask_new != preferred_network_mode_) {
+    preferred_network_mode_ = preferred_mask_new;
+  }
+  auto current_network_mode_new =
+      (ModemTechnology)getModemTechFromPrefer(preferred_mask_new);
+  if (current_network_mode_new != current_network_mode_) {
+    current_network_mode_ = current_network_mode_new;
+    auto saved_state = voice_registration_status_.registration_state;
+    UpdateRegisterState(NET_REGISTRATION_UNREGISTERED);
+    signal_strength_.Reset();
+
+    ss << "+CTEC: " << current_network_mode_;
+
+    thread_looper_->PostWithDelay(
+        std::chrono::seconds(1),
+        makeSafeCallback(this, &NetworkService::UpdateRegisterState,
+                         saved_state));
+  }
+}
+
+/* AT+REMOTESIGNAL: percent */
+void NetworkService::HandleReceiveRemoteSignal(const Client& client,
+                                               std::string& command) {
+  (void)client;
+  std::stringstream ss;
+  std::string percents = command.substr(std::string("AT+REMOTESIGNAL:").size());
+  double percentd = std::stoi(percents, nullptr, 10) / 100.0;
+
+  switch (current_network_mode_) {
+    case M_MODEM_TECH_GSM:
+      SetSignalStrengthValue(signal_strength_.gsm_rssi, kGSMSignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_CDMA:
+      SetSignalStrengthValue(signal_strength_.cdma_dbm, kCDMASignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_EVDO:
+      SetSignalStrengthValue(signal_strength_.evdo_dbm, kEVDOSignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_LTE:
+      SetSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_WCDMA:
+      SetSignalStrengthValue(signal_strength_.wcdma_rssi, kWCDMASignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_NR:
+      SetSignalStrengthValue(signal_strength_.nr_ss_rsrp, kNRSignalStrength,
+                             percentd);
+      break;
+    default:
+      break;
+  }
+
+  auto command2 = GetSignalStrength();
+  SendUnsolicitedCommand(command2);
 }
 
 void NetworkService::OnSignalStrengthChanged() {
