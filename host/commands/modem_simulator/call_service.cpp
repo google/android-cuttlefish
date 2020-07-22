@@ -215,10 +215,9 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
     auto call_token = std::make_pair(index, call_status.number);
     call_status.timeout_serial = thread_looper_->PostWithDelay(
         std::chrono::minutes(1),
-        makeSafeCallback<CallService>(
-            weak_from_this(), [call_token](CallService* me) {
-              me->TimerWaitingRemoteCallResponse(call_token);
-            }));
+        makeSafeCallback<CallService>(this, [call_token](CallService* me) {
+          me->TimerWaitingRemoteCallResponse(call_token);
+        }));
 
     active_calls_[index] = call_status;
   } else {
