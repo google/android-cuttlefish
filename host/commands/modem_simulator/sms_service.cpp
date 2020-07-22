@@ -13,8 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sms_service.h"
-#include "pdu_parser.h"
+#include "host/commands/modem_simulator/sms_service.h"
+
+#include "host/commands/modem_simulator/pdu_parser.h"
 
 namespace cuttlefish {
 
