@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include "host/commands/modem_simulator/pdu_parser.h"
 
-#include "modem_simulator/pdu_parser.h"
+#include <gtest/gtest.h>
 
 TEST(PDUParserTest, IsValidPDU_true) {
   std::string pdu = "0001000D91688118109844F0000017AFD7903AB55A9BBA69D639D4ADCBF99E3DCCAE9701";
