@@ -30,6 +30,7 @@ cc_defaults {
         "sup_service.cpp",
         "stk_service.cpp",
         "pdu_parser.cpp",
+        "cf_device_config.cpp",
         "nvram_config.cpp"
     ],
     shared_libs: [

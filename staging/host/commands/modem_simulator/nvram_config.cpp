@@ -13,18 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "host/commands/modem_simulator/nvram_config.h"
+
+#include <android-base/logging.h>
+#include <json/json.h>
+
 #include <fstream>
 #include <sstream>
 
-#include <json/json.h>
-#include <gflags/gflags.h>
-#include <android-base/logging.h>
-
-#include "host/libs/config/cuttlefish_config.h"
 #include "common/libs/utils/files.h"
-
-#include "nvram_config.h"
-
+#include "host/commands/modem_simulator/device_config.h"
 
 namespace cuttlefish {
 
@@ -48,9 +46,8 @@ const bool  kDefaultEmergencyMode         = false;
  * Returns nullptr if there was an error loading from file
  */
 NvramConfig* NvramConfig::BuildConfigImpl(size_t num_instances) {
-  auto config = cuttlefish::CuttlefishConfig::Get();
-  auto instance = config->ForDefaultInstance();
-  auto nvram_config_path = instance.PerInstancePath("modem_nvram.json");
+  auto nvram_config_path =
+      cuttlefish::modem::DeviceConfig::PerInstancePath("modem_nvram.json");
 
   auto ret = new NvramConfig(num_instances);
   if (ret) {
@@ -102,9 +99,8 @@ NvramConfig::InstanceSpecific NvramConfig::ForInstance(int num) const {
 }
 
 std::string NvramConfig::ConfigFileLocation() const {
-  auto cf_instance_num = cuttlefish::CuttlefishConfig::Get();
-  auto instance = cf_instance_num->ForDefaultInstance();
-  return cuttlefish::AbsolutePath(instance.PerInstancePath("modem_nvram.json"));
+  return cuttlefish::AbsolutePath(
+      cuttlefish::modem::DeviceConfig::PerInstancePath("modem_nvram.json"));
 }
 
 bool NvramConfig::LoadFromFile(const char* file) {

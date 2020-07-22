@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include "host/commands/modem_simulator/command_parser.h"
 
-#include "modem_simulator/command_parser.h"
+#include <gtest/gtest.h>
 
 TEST(CommandParserUnitTest, SkipPrefix) {
   std::string command = "AT+SPUSATENVECMD=\"D3078202018190014E\"";
