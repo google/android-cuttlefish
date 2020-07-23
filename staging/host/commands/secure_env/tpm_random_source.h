@@ -29,6 +29,8 @@ public:
 
   keymaster_error_t GenerateRandom(
       uint8_t* buffer, size_t length) const override;
+
+  keymaster_error_t AddRngEntropy(const uint8_t*, size_t) const;
 private:
   ESYS_CONTEXT* esys_;
 };
