@@ -174,9 +174,38 @@ static keymaster_error_t SplitEnforcedProperties(
     const keymaster::AuthorizationSet& key_description,
     keymaster::AuthorizationSet* hw_enforced,
     keymaster::AuthorizationSet* sw_enforced) {
-  // TODO(schuffelen): Put the things we enforce in hw_enforced.
-  (void) hw_enforced;
-  *sw_enforced = key_description;
+  for (auto& entry : key_description) {
+    switch (entry.tag) {
+      case KM_TAG_PURPOSE:
+      case KM_TAG_ALGORITHM:
+      case KM_TAG_KEY_SIZE:
+      case KM_TAG_RSA_PUBLIC_EXPONENT:
+      case KM_TAG_BLOB_USAGE_REQUIREMENTS:
+      case KM_TAG_DIGEST:
+      case KM_TAG_PADDING:
+      case KM_TAG_BLOCK_MODE:
+      case KM_TAG_MIN_SECONDS_BETWEEN_OPS:
+      case KM_TAG_MAX_USES_PER_BOOT:
+      case KM_TAG_USER_SECURE_ID:
+      case KM_TAG_NO_AUTH_REQUIRED:
+      case KM_TAG_AUTH_TIMEOUT:
+      case KM_TAG_CALLER_NONCE:
+      case KM_TAG_MIN_MAC_LENGTH:
+      case KM_TAG_KDF:
+      case KM_TAG_EC_CURVE:
+      case KM_TAG_ECIES_SINGLE_HASH_MODE:
+      case KM_TAG_USER_AUTH_TYPE:
+      case KM_TAG_ORIGIN:
+      case KM_TAG_OS_VERSION:
+      case KM_TAG_OS_PATCHLEVEL:
+      case KM_TAG_EARLY_BOOT_ONLY:
+      case KM_TAG_UNLOCKED_DEVICE_REQUIRED:
+        hw_enforced->push_back(entry);
+        break;
+      default:
+        sw_enforced->push_back(entry);
+    }
+  }
   return KM_ERROR_OK;
 }
 

@@ -16,13 +16,17 @@
 #include "tpm_keymaster_context.h"
 
 #include <android-base/logging.h>
+#include <keymaster/contexts/soft_attestation_cert.h>
 #include <keymaster/km_openssl/aes_key.h>
+#include <keymaster/km_openssl/attestation_utils.h>
+#include <keymaster/km_openssl/asymmetric_key.h>
 #include <keymaster/km_openssl/ec_key_factory.h>
 #include <keymaster/km_openssl/hmac_key.h>
 #include <keymaster/km_openssl/rsa_key_factory.h>
 #include <keymaster/km_openssl/soft_keymaster_enforcement.h>
 #include <keymaster/km_openssl/triple_des_key.h>
 
+#include "host/commands/secure_env/tpm_attestation_record.h"
 #include "host/commands/secure_env/tpm_random_source.h"
 #include "host/commands/secure_env/tpm_key_blob_maker.h"
 
@@ -35,7 +39,8 @@ TpmKeymasterContext::TpmKeymasterContext(TpmResourceManager* resource_manager)
     : resource_manager_(resource_manager)
     , key_blob_maker_(new TpmKeyBlobMaker(resource_manager_))
     , random_source_(new TpmRandomSource(resource_manager_->Esys()))
-    , enforcement_(new keymaster::SoftKeymasterEnforcement(64, 64)) {
+    , enforcement_(new keymaster::SoftKeymasterEnforcement(64, 64))
+    , attestation_context_(new TpmAttestationRecordContext()) {
   // TODO(b/155697375): Replace SoftKeymasterEnforcement
   key_factories_.emplace(
       KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(key_blob_maker_.get()));
@@ -257,12 +262,45 @@ keymaster::KeymasterEnforcement* TpmKeymasterContext::enforcement_policy() {
   return enforcement_.get();
 }
 
+// Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/contexts/pure_soft_keymaster_context.cpp;l=261;drc=8367d5351c4d417a11f49b12394b63a413faa02d
+
 keymaster_error_t TpmKeymasterContext::GenerateAttestation(
-    const keymaster::Key&,
-    const AuthorizationSet&,
-    keymaster::CertChainPtr*) const {
-  LOG(ERROR) << "TODO(b/155697200): Implement GenerateAttestation";
-  return KM_ERROR_UNIMPLEMENTED;
+    const keymaster::Key& key,
+    const AuthorizationSet& attest_params,
+    keymaster::CertChainPtr* cert_chain) const {
+  LOG(INFO) << "TODO(b/155697200): Link attestation back to the TPM";
+  keymaster_error_t error = KM_ERROR_OK;
+  keymaster_algorithm_t key_algorithm;
+  if (!key.authorizations().GetTagValue(keymaster::TAG_ALGORITHM, &key_algorithm)) {
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+
+  if ((key_algorithm != KM_ALGORITHM_RSA && key_algorithm != KM_ALGORITHM_EC)) {
+    return KM_ERROR_INCOMPATIBLE_ALGORITHM;
+  }
+
+  // We have established that the given key has the correct algorithm, and
+  // because this is the TpmKeymasterContext we can assume that the Key is an
+  // AsymmetricKey. So we can downcast.
+  const keymaster::AsymmetricKey& asymmetric_key =
+      static_cast<const keymaster::AsymmetricKey&>(key);
+
+  auto attestation_chain = keymaster::getAttestationChain(key_algorithm, &error);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  auto attestation_key = keymaster::getAttestationKey(key_algorithm, &error);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  return keymaster::generate_attestation(
+      asymmetric_key, attest_params,
+      *attestation_chain,
+      *attestation_key,
+      *attestation_context_,
+      cert_chain);
 }
 
 keymaster_error_t TpmKeymasterContext::UnwrapKey(
