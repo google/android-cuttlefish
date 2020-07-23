@@ -415,6 +415,17 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
       // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
       // Only 'io' mode works; mmio and mmio32 do not
       vm_manager_cmdline += " earlycon=uart8250,io,0x3f8";
+
+      if (FLAGS_vm_manager == QemuManager::name()) {
+        // crosvm sets up the ramoops.xx= flags for us, but QEMU does not.
+        // See external/crosvm/x86_64/src/lib.rs
+        // this feature is not supported on aarch64
+        vm_manager_cmdline += " ramoops.mem_address=0x100000000";
+        vm_manager_cmdline += " ramoops.mem_size=0x200000";
+        vm_manager_cmdline += " ramoops.console_size=0x80000";
+        vm_manager_cmdline += " ramoops.record_size=0x80000";
+        vm_manager_cmdline += " ramoops.dump_oops=1";
+      }
     }
   }
 
