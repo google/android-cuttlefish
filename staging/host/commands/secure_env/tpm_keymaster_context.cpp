@@ -157,9 +157,8 @@ keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
 }
 
 keymaster_error_t TpmKeymasterContext::AddRngEntropy(
-    const uint8_t*, size_t) const {
-  LOG(ERROR) << "TODO(b/155697375): Implement AddRngEntropy";
-  return KM_ERROR_UNIMPLEMENTED;
+    const uint8_t* buffer, size_t size) const {
+  return random_source_->AddRngEntropy(buffer, size);
 }
 
 keymaster::KeymasterEnforcement* TpmKeymasterContext::enforcement_policy() {
