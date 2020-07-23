@@ -56,10 +56,11 @@ function help_on_sourcing {
 function help_on_container_start {
   local name=$1
 
-  echo "Log into container ${name} with ssh:"
-  echo "    ssh vsoc-01@ip_${name}"
-  echo "Log into container ${name} with docker:"
-  echo "    docker exec -it --user vsoc-01 $(cvd_get_id ${name}) /bin/bash"
+  echo "Log into container ${name}: $(__gen_login_func_name ${name})"
+#  echo "Log into container ${name} with ssh:"
+#  echo "    ssh vsoc-01@\${ip_${name}"}
+#  echo "Log into container ${name} with docker:"
+#  echo "    docker exec -it --user vsoc-01 $(cvd_get_id ${name}) /bin/bash"
   echo "Start Cuttlefish: $(__gen_start_func_name ${name})"
   echo "Stop Cuttlefish: $(__gen_stop_func_name ${name})"
   echo "Delete container ${name}:"
@@ -225,10 +226,16 @@ function cvd_docker_rm {
     echo "Cleaning up homedir ${homedir}."
     rm -rf ${homedir}
     unset $(__gen_start_func_name ${name})
+    unset $(__gen_login_func_name ${name})
     unset $(__gen_stop_func_name ${name})
   else
     echo "Nothing to stop: container ${name} does not exist."
   fi
+}
+
+function __gen_login_func_name {
+  local name=$1
+  echo -n "cvd_login_${name}"
 }
 
 function __gen_start_func_name {
@@ -245,18 +252,25 @@ function __gen_stop_func_name {
 function __gen_funcs {
   local name=$1
 
+  local login_func
   local start_func
   local stop_func
 
-  read -r -d '' start_func <<EOF
-function $(__gen_start_func_name ${name}) {
+  read -r -d '' login_func <<EOF
+function $(__gen_login_func_name ${name}) {
   ssh \
     -L8443:localhost:8443 \
     -L6520:localhost:6520 \
     -L6444:localhost:6444 \
     -L15550:localhost:15550 -L15551:localhost:15551 \
-    vsoc-01@$(cvd_get_ip ${name}) -- ./bin/launch_cvd "\$@";
+    vsoc-01@$(cvd_get_ip ${name}) -- "\$@";
 #  docker exec -it --user vsoc-01 "${name}" ./bin/launch_cvd "$@";
+}
+EOF
+
+  read -r -d '' start_func <<EOF
+function $(__gen_start_func_name ${name}) {
+  $(__gen_login_func_name ${name}) ./bin/launch_cvd "\$@"
 }
 EOF
 
@@ -266,12 +280,14 @@ function $(__gen_stop_func_name ${name}) {
 }
 EOF
 
+  eval "${login_func}"
   eval "${start_func}"
   eval "${stop_func}"
   eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
 
-  echo "To start ${name}, call $(__gen_start_func_name ${name})"
-  echo "To stop ${name}, call $(__gen_stop_func_name ${name})"
+  echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
+  echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
+  echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
 }
 
 help_on_sourcing
