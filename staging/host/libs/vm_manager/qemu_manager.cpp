@@ -127,7 +127,18 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   bool is_arm = android::base::EndsWith(config_->qemu_binary(), "system-aarch64");
 
   auto access_kregistry_size_bytes = cuttlefish::FileSize(instance.access_kregistry_path());
+  if (access_kregistry_size_bytes & (1024 * 1024 - 1)) {
+      LOG(FATAL) << instance.access_kregistry_path() <<  " file size ("
+                 << access_kregistry_size_bytes << ") not a multiple of 1MB";
+      return {};
+  }
+
   auto pstore_size_bytes = cuttlefish::FileSize(instance.pstore_path());
+  if (pstore_size_bytes & (1024 * 1024 - 1)) {
+      LOG(FATAL) << instance.pstore_path() <<  " file size ("
+                 << pstore_size_bytes << ") not a multiple of 1MB";
+      return {};
+  }
 
   cuttlefish::Command qemu_cmd(config_->qemu_binary(), stop);
   qemu_cmd.AddParameter("-name");
