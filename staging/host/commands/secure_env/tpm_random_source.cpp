@@ -56,3 +56,44 @@ keymaster_error_t TpmRandomSource::GenerateRandom(
   Esys_Free(generated);
   return KM_ERROR_OK;
 }
+
+// From TPM2_StirRandom specification.
+static int MAX_STIR_RANDOM_BUFFER_SIZE = 128;
+
+keymaster_error_t TpmRandomSource::AddRngEntropy(
+    const uint8_t* buffer, size_t size) const {
+  TPM2B_SENSITIVE_DATA in_data;
+  while (size > MAX_STIR_RANDOM_BUFFER_SIZE) {
+    memcpy(in_data.buffer, buffer, MAX_STIR_RANDOM_BUFFER_SIZE);
+    in_data.size = MAX_STIR_RANDOM_BUFFER_SIZE;
+    buffer += MAX_STIR_RANDOM_BUFFER_SIZE;
+    size -= MAX_STIR_RANDOM_BUFFER_SIZE;
+    auto rc = Esys_StirRandom(
+        esys_,
+        ESYS_TR_NONE,
+        ESYS_TR_NONE,
+        ESYS_TR_NONE,
+        &in_data);
+    if (rc != TSS2_RC_SUCCESS) {
+      LOG(ERROR) << "Esys_StirRandom failed with " << rc << "("
+                 << Tss2_RC_Decode(rc) << ")";
+      return KM_ERROR_UNKNOWN_ERROR;
+    }
+  }
+  if (size == 0) {
+    return KM_ERROR_OK;
+  }
+  memcpy(in_data.buffer, buffer, size);
+  auto rc = Esys_StirRandom(
+      esys_,
+      ESYS_TR_NONE,
+      ESYS_TR_NONE,
+      ESYS_TR_NONE,
+      &in_data);
+  if (rc != TSS2_RC_SUCCESS) {
+    LOG(ERROR) << "Esys_StirRandom failed with " << rc << "("
+                << Tss2_RC_Decode(rc) << ")";
+    return KM_ERROR_UNKNOWN_ERROR;
+  }
+  return KM_ERROR_OK;
+}
