@@ -104,12 +104,104 @@ const keymaster_algorithm_t* TpmKeymasterContext::GetSupportedAlgorithms(
   return supported_algorithms_.data();
 }
 
+// Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=44;drc=master
+
+static bool UpgradeIntegerTag(
+    keymaster_tag_t tag,
+    uint32_t value,
+    AuthorizationSet* set,
+    bool* set_changed) {
+  int index = set->find(tag);
+  if (index == -1) {
+    keymaster_key_param_t param;
+    param.tag = tag;
+    param.integer = value;
+    set->push_back(param);
+    *set_changed = true;
+    return true;
+  }
+
+  if (set->params[index].integer > value) {
+    return false;
+  }
+
+  if (set->params[index].integer != value) {
+    set->params[index].integer = value;
+    *set_changed = true;
+  }
+  return true;
+}
+
+// Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/key_blob_utils/software_keyblobs.cpp;l=310;drc=master
+
 keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
-    const KeymasterKeyBlob&,
-    const AuthorizationSet&,
-    KeymasterKeyBlob*) const {
-  LOG(ERROR) << "TODO(b/155697375): Implement UpgradeKeyBlob";
-  return KM_ERROR_UNIMPLEMENTED;
+    const KeymasterKeyBlob& blob_to_upgrade,
+    const AuthorizationSet& upgrade_params,
+    KeymasterKeyBlob* upgraded_key) const {
+  keymaster::UniquePtr<keymaster::Key> key;
+  auto error = ParseKeyBlob(blob_to_upgrade, upgrade_params, &key);
+  if (error != KM_ERROR_OK) {
+    return error;
+  }
+
+  bool set_changed = false;
+
+  if (os_version_ == 0) {
+    // We need to allow "upgrading" OS version to zero, to support upgrading
+    // from proper numbered releases to unnumbered development and preview
+    // releases.
+
+    int key_os_version_pos = key->sw_enforced().find(keymaster::TAG_OS_VERSION);
+    if (key_os_version_pos != -1) {
+      uint32_t key_os_version = key->sw_enforced()[key_os_version_pos].integer;
+      if (key_os_version != 0) {
+        key->sw_enforced()[key_os_version_pos].integer = os_version_;
+        set_changed = true;
+      }
+    }
+  }
+
+  auto update_os = UpgradeIntegerTag(
+      keymaster::TAG_OS_VERSION,
+      os_version_,
+      &key->sw_enforced(),
+      &set_changed);
+
+  auto update_patchlevel = UpgradeIntegerTag(
+      keymaster::TAG_OS_PATCHLEVEL,
+      os_patchlevel_,
+      &key->sw_enforced(),
+      &set_changed);
+
+  if (!update_os || !update_patchlevel) {
+    // One of the version fields would have been a downgrade. Not allowed.
+    return KM_ERROR_INVALID_ARGUMENT;
+  }
+
+  if (!set_changed) {
+    // Don't need an upgrade.
+    return KM_ERROR_OK;
+  }
+
+  AuthorizationSet combined_authorization;
+  combined_authorization.Union(key->hw_enforced());
+  combined_authorization.Union(key->sw_enforced());
+
+  keymaster_key_origin_t origin = KM_ORIGIN_UNKNOWN;
+  if (!combined_authorization.GetTagValue(keymaster::TAG_ORIGIN, &origin)) {
+    LOG(WARNING) << "Key converted with unknown origin";
+  }
+
+  AuthorizationSet output_hw_enforced;
+  AuthorizationSet output_sw_enforced;
+
+  return key_blob_maker_->CreateKeyBlob(
+      combined_authorization,
+      origin,
+      key->key_material(),
+      upgraded_key,
+      &output_hw_enforced,
+      &output_sw_enforced);
 }
 
 keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
