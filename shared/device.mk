@@ -280,12 +280,15 @@ PRODUCT_PACKAGES += \
 #
 # Audio HAL
 #
-PRODUCT_PACKAGES += \
+ifeq ($(LOCAL_AUDIO_PRODUCT_PACKAGE),)
+LOCAL_AUDIO_PRODUCT_PACKAGE := \
     audio.primary.cutf \
     audio.r_submix.default \
     android.hardware.audio@6.0-impl \
     android.hardware.audio.effect@6.0-impl \
-    android.hardware.audio@2.0-service \
+    android.hardware.audio@2.0-service
+endif
+PRODUCT_PACKAGES += $(LOCAL_AUDIO_PRODUCT_PACKAGE)
 
 #
 # BiometricsFace HAL
