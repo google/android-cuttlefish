@@ -49,52 +49,6 @@ AdbHandler::AdbConnection::AdbConnection(AdbHandler *parent,
                                          int sock)
     : BaseConnection(runLoop, sock), mParent(parent) {}
 
-// Thanks for calling it a crc32, adb documentation!
-static uint32_t computeNotACrc32(const void *_data, size_t size) {
-  auto data = static_cast<const uint8_t *>(_data);
-  uint32_t sum = 0;
-  for (size_t i = 0; i < size; ++i) {
-    sum += data[i];
-  }
-
-  return sum;
-}
-
-static int verifyAdbHeader(const void *_data, size_t size,
-                           size_t *_payloadLength) {
-  auto data = static_cast<const uint8_t *>(_data);
-
-  *_payloadLength = 0;
-
-  if (size < 24) {
-    return -EAGAIN;
-  }
-
-  uint32_t command = U32LE_AT(data);
-  uint32_t magic = U32LE_AT(data + 20);
-
-  if (command != (magic ^ 0xffffffff)) {
-    return -EINVAL;
-  }
-
-  uint32_t payloadLength = U32LE_AT(data + 12);
-
-  if (size < 24 + payloadLength) {
-    return -EAGAIN;
-  }
-
-  auto payloadCrc = U32LE_AT(data + 16);
-  auto crc32 = computeNotACrc32(data + 24, payloadLength);
-
-  if (payloadCrc != crc32) {
-    return -EINVAL;
-  }
-
-  *_payloadLength = payloadLength;
-
-  return 0;
-}
-
 long AdbHandler::AdbConnection::processClientRequest(const void *_data,
                                                      size_t size) {
   auto data = static_cast<const uint8_t *>(_data);
@@ -103,15 +57,8 @@ long AdbHandler::AdbConnection::processClientRequest(const void *_data,
 
   LOG(VERBOSE) << hexdump(data, size);
 
-  size_t payloadLength;
-  int err = verifyAdbHeader(data, size, &payloadLength);
-
-  if (err) {
-    return err;
-  }
-
-  mParent->send_to_client_(data, payloadLength + 24);
-  return payloadLength + 24;
+  mParent->send_to_client_(data, size);
+  return size;
 }
 
 void AdbHandler::AdbConnection::onDisconnect(int err) {
@@ -201,14 +148,6 @@ bail:
 
 void AdbHandler::handleMessage(const uint8_t *msg, size_t len) {
   LOG(VERBOSE) << hexdump(msg, len);
-
-  size_t payloadLength;
-  int err = verifyAdbHeader(msg, len, &payloadLength);
-
-  if (err || len != 24 + payloadLength) {
-    LOG(ERROR) << "Invalid adb message received.";
-    return;
-  }
 
   mAdbConnection->send(msg, len);
 }
