@@ -77,60 +77,57 @@ function is_absolute_path {
 }
 
 function cvd_docker_create {
-  local OPTIND
-  local op
-  local val
-  local OPTARG
-
-  local name_=""
+  local name=""
   local foreground="false"
   local with_host_x="false"
   local need_help="false"
   local share_home="false"
   local -a shared_home_subdirs=()
 
-  while getopts ":m:n:-:hfx" op; do
-    # n | --name=cuttlefish | --name jellyfish
-    # f | --foreground
-    # x | --with_host_x
-    # m | --share_home dir1
-    # h | --help
-    if [[ $op == '-' ]]; then
-      case "${OPTARG}" in
-        *=* )
-          val=${OPTARG#*=}
-          op=${OPTARG%=$val}
-          OPTARG=${val}
-          ;;
-        *)
-          op=${OPTARG}
-          val=${!OPTIND}
-          if [[ -n $val ]] && [[ ${val:0:1} != '-' ]]; then
-            OPTARG=${val}
-            OPTIND=$(( OPTIND + 1 ))
-            echo $op
-            echo $OPTARG
-          fi
-          ;;
-      esac
-    fi
-    case "$op" in
-      n | name ) name_=${OPTARG}
-        ;;
-      f | foreground ) foreground="true"
-        ;;
-      x | with_host_x )
-        with_host_x="true"
-        foreground="true"
-        ;;
-      m | share_home )
-        share_home="true"
-        shared_home_subdirs+=("${OPTARG}")
-        ;;
-      h | help ) need_help="true"
-        ;;
-      ? ) need_help="true"
-        ;;
+  # n | --name=cuttlefish | --name jellyfish
+  # f | --foreground
+  # x | --with_host_x
+  # m | --share_home dir1
+  # h | --help
+
+  local params
+  params=$(getopt -o 'n:m:sxh' -l 'name:,share_home:,singleshot,with_host_x,help' --name "$0" -- "$@") || return
+  eval set -- "${params}"
+  unset params
+  while true; do
+    case "$1" in
+    -n|--name)
+      name=$2
+      shift 2
+      ;;
+    -m|--share_home)
+      share_home="true"
+      shared_home_subdirs+=("$2")
+      echo "ADD $2 TO DIRS"
+      shift 2
+      ;;
+    -f|--foreground)
+      foreground="true"
+      shift
+      ;;
+    -x|--with_host_x)
+      with_host_x="true"
+      foreground="true"
+      shift
+      ;;
+   -h|--help)
+      need_help="true"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Not implemented: $1" >&2
+      need_help="true"
+      break
+      ;;
     esac
   done
 
@@ -139,11 +136,12 @@ function cvd_docker_create {
     return
   fi
 
-  # for backward compatibility:
-  [[ -n ${!OPTIND} ]] && name_="${!OPTIND}"
+  local -a _rest=($@)
+  [[ -z ${name} ]] && name="${_rest[0]}"
+  unset _rest
 
-  local name="$(cvd_get_id $name_)"
-  local container="$(cvd_exists $name_)"
+  local name="$(cvd_get_id $name)"
+  local container="$(cvd_exists $name)"
 
   local -a home_volume=()
   if [[ -z "${container}" ]]; then
