@@ -205,12 +205,24 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
     KeymasterKeyBlob* blob,
     AuthorizationSet* hw_enforced,
     AuthorizationSet* sw_enforced) const {
-  (void) origin; // TODO(schuffelen): Figure out how this is used
+  std::set<keymaster_tag_t> protected_tags = {
+    KM_TAG_ROOT_OF_TRUST,
+    KM_TAG_ORIGIN,
+    KM_TAG_OS_VERSION,
+    KM_TAG_OS_PATCHLEVEL,
+  };
+  for (auto tag : protected_tags) {
+    if (key_description.Contains(tag)) {
+      return KM_ERROR_INVALID_TAG;
+    }
+  }
   auto rc =
       SplitEnforcedProperties(key_description, hw_enforced, sw_enforced);
   if (rc != KM_ERROR_OK) {
     return rc;
   }
+  hw_enforced->push_back(keymaster::TAG_ORIGIN, origin);
+  // TODO(schuffelen): Set the os level and patch level.
   keymaster::Buffer key_material_buffer(
       key_material.key_material, key_material.key_material_size);
   CompositeSerializable sensitive_material(
