@@ -85,10 +85,8 @@ function JoinArrays(arr1, arr2) {
   return arr;
 }
 
-function adbOnMessage(ev) {
-    // console.log("adb_ws: onmessage (" + ev.data.byteLength + " bytes)");
-
-    let arrayBuffer = ev.data;
+function adbOnMessage(arrayBuffer) {
+    // console.log("adb_ws: onmessage (" + arrayBuffer.byteLength + " bytes)");
     array = JoinArrays(array, new Uint8Array(arrayBuffer));
 
     while (array.length > 0) {
@@ -164,7 +162,7 @@ function init_logcat(devConn) {
     };
 
     logcat.style.display = "initial";
-    devConn.onAdbMessage(msg => adbOnMessage({data: msg}));
+    devConn.onAdbMessage(msg => adbOnMessage(msg));
 
     adbOpenConnection();
 }
