@@ -287,9 +287,9 @@ function cvd_docker_rm {
     docker rm -f ${name}
     echo "Cleaning up homedir ${homedir}."
     rm -rf ${homedir}
-    unset $(__gen_start_func_name ${name})
-    unset $(__gen_login_func_name ${name})
-    unset $(__gen_stop_func_name ${name})
+    unset -f $(__gen_start_func_name ${name})
+    unset -f $(__gen_login_func_name ${name})
+    unset -f $(__gen_stop_func_name ${name})
   else
     echo "Nothing to stop: container ${name} does not exist."
   fi
