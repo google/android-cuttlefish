@@ -44,6 +44,7 @@ LOCAL_SHARED_LIBRARIES := \
     android.hardware.radio@1.3 \
     android.hardware.radio@1.4 \
     android.hardware.radio@1.5 \
+    android.hardware.radio@1.6 \
 
 LOCAL_STATIC_LIBRARIES := \
     libprotobuf-c-nano-enable_malloc \

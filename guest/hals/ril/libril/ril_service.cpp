@@ -16,10 +16,10 @@
 
 #define LOG_TAG "RILC"
 
-#include <android/hardware/radio/1.5/IRadio.h>
-#include <android/hardware/radio/1.5/IRadioResponse.h>
-#include <android/hardware/radio/1.5/IRadioIndication.h>
-#include <android/hardware/radio/1.5/types.h>
+#include <android/hardware/radio/1.6/IRadio.h>
+#include <android/hardware/radio/1.6/IRadioResponse.h>
+#include <android/hardware/radio/1.6/IRadioIndication.h>
+#include <android/hardware/radio/1.6/types.h>
 
 #include <android/hardware/radio/deprecated/1.0/IOemHook.h>
 
@@ -72,18 +72,18 @@ constexpr bool kOemHookEnabled = true;
 RIL_RadioFunctions *s_vendorFunctions = NULL;
 static CommandInfo *s_commands;
 
-struct RadioImpl_1_5;
+struct RadioImpl_1_6;
 struct OemHookImpl;
 
 #if (SIM_COUNT >= 2)
-sp<RadioImpl_1_5> radioService[SIM_COUNT];
+sp<RadioImpl_1_6> radioService[SIM_COUNT];
 sp<OemHookImpl> oemHookService[SIM_COUNT];
 int64_t nitzTimeReceived[SIM_COUNT];
 // counter used for synchronization. It is incremented every time response callbacks are updated.
 volatile int32_t mCounterRadio[SIM_COUNT];
 volatile int32_t mCounterOemHook[SIM_COUNT];
 #else
-sp<RadioImpl_1_5> radioService[1];
+sp<RadioImpl_1_6> radioService[1];
 sp<OemHookImpl> oemHookService[1];
 int64_t nitzTimeReceived[1];
 // counter used for synchronization. It is incremented every time response callbacks are updated.
@@ -130,7 +130,7 @@ void convertRilCellInfoListToHal(void *response, size_t responseLen, hidl_vec<Ce
 void populateResponseInfo(RadioResponseInfo& responseInfo, int serial, int responseType,
                          RIL_Errno e);
 
-struct RadioImpl_1_5 : public V1_5::IRadio {
+struct RadioImpl_1_6 : public V1_6::IRadio {
     int32_t mSlotId;
     sp<IRadioResponse> mRadioResponse;
     sp<IRadioIndication> mRadioIndication;
@@ -142,6 +142,8 @@ struct RadioImpl_1_5 : public V1_5::IRadio {
     sp<V1_4::IRadioIndication> mRadioIndicationV1_4;
     sp<V1_5::IRadioResponse> mRadioResponseV1_5;
     sp<V1_5::IRadioIndication> mRadioIndicationV1_5;
+    sp<V1_6::IRadioResponse> mRadioResponseV1_6;
+    sp<V1_6::IRadioIndication> mRadioIndicationV1_6;
 
     Return<void> setResponseFunctions(
             const ::android::sp<IRadioResponse>& radioResponse,
@@ -871,7 +873,7 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
         // note the current counter to avoid overwriting updates made by another thread before
         // write lock is acquired.
         int counter = isRadioService ? mCounterRadio[slotId] : mCounterOemHook[slotId];
-        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(slotId);
+        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(slotId);
         int ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
         assert(ret == 0);
 
@@ -892,6 +894,8 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
                 radioService[slotId]->mRadioIndicationV1_4 = NULL;
                 radioService[slotId]->mRadioResponseV1_5 = NULL;
                 radioService[slotId]->mRadioIndicationV1_5 = NULL;
+                radioService[slotId]->mRadioResponseV1_6 = NULL;
+                radioService[slotId]->mRadioIndicationV1_6 = NULL;
             } else {
                 oemHookService[slotId]->mOemHookResponse = NULL;
                 oemHookService[slotId]->mOemHookIndication = NULL;
@@ -912,21 +916,28 @@ void checkReturnStatus(int32_t slotId, Return<void>& ret, bool isRadioService) {
     }
 }
 
-void RadioImpl_1_5::checkReturnStatus(Return<void>& ret) {
+void RadioImpl_1_6::checkReturnStatus(Return<void>& ret) {
     ::checkReturnStatus(mSlotId, ret, true);
 }
 
-Return<void> RadioImpl_1_5::setResponseFunctions(
+Return<void> RadioImpl_1_6::setResponseFunctions(
         const ::android::sp<IRadioResponse>& radioResponseParam,
         const ::android::sp<IRadioIndication>& radioIndicationParam) {
     RLOGD("setResponseFunctions");
 
-    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(mSlotId);
+    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(mSlotId);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
     assert(ret == 0);
 
     mRadioResponse = radioResponseParam;
     mRadioIndication = radioIndicationParam;
+
+   mRadioResponseV1_6 = V1_6::IRadioResponse::castFrom(mRadioResponse).withDefault(nullptr);
+   mRadioIndicationV1_6 = V1_6::IRadioIndication::castFrom(mRadioIndication).withDefault(nullptr);
+   if (mRadioResponseV1_6 == nullptr || mRadioIndicationV1_6 == nullptr) {
+       mRadioResponseV1_6 = nullptr;
+       mRadioIndicationV1_6 = nullptr;
+   }
 
    mRadioResponseV1_5 = V1_5::IRadioResponse::castFrom(mRadioResponse).withDefault(nullptr);
    mRadioIndicationV1_5 = V1_5::IRadioIndication::castFrom(mRadioIndication).withDefault(nullptr);
@@ -967,7 +978,7 @@ Return<void> RadioImpl_1_5::setResponseFunctions(
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getIccCardStatus(int32_t serial) {
+Return<void> RadioImpl_1_6::getIccCardStatus(int32_t serial) {
 #if VDBG
     RLOGD("getIccCardStatus: serial %d", serial);
 #endif
@@ -975,7 +986,7 @@ Return<void> RadioImpl_1_5::getIccCardStatus(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::supplyIccPinForApp(int32_t serial, const hidl_string& pin,
+Return<void> RadioImpl_1_6::supplyIccPinForApp(int32_t serial, const hidl_string& pin,
         const hidl_string& aid) {
 #if VDBG
     RLOGD("supplyIccPinForApp: serial %d", serial);
@@ -985,7 +996,7 @@ Return<void> RadioImpl_1_5::supplyIccPinForApp(int32_t serial, const hidl_string
     return Void();
 }
 
-Return<void> RadioImpl_1_5::supplyIccPukForApp(int32_t serial, const hidl_string& puk,
+Return<void> RadioImpl_1_6::supplyIccPukForApp(int32_t serial, const hidl_string& puk,
                                            const hidl_string& pin, const hidl_string& aid) {
 #if VDBG
     RLOGD("supplyIccPukForApp: serial %d", serial);
@@ -995,7 +1006,7 @@ Return<void> RadioImpl_1_5::supplyIccPukForApp(int32_t serial, const hidl_string
     return Void();
 }
 
-Return<void> RadioImpl_1_5::supplyIccPin2ForApp(int32_t serial, const hidl_string& pin2,
+Return<void> RadioImpl_1_6::supplyIccPin2ForApp(int32_t serial, const hidl_string& pin2,
                                             const hidl_string& aid) {
 #if VDBG
     RLOGD("supplyIccPin2ForApp: serial %d", serial);
@@ -1005,7 +1016,7 @@ Return<void> RadioImpl_1_5::supplyIccPin2ForApp(int32_t serial, const hidl_strin
     return Void();
 }
 
-Return<void> RadioImpl_1_5::supplyIccPuk2ForApp(int32_t serial, const hidl_string& puk2,
+Return<void> RadioImpl_1_6::supplyIccPuk2ForApp(int32_t serial, const hidl_string& puk2,
                                             const hidl_string& pin2, const hidl_string& aid) {
 #if VDBG
     RLOGD("supplyIccPuk2ForApp: serial %d", serial);
@@ -1015,7 +1026,7 @@ Return<void> RadioImpl_1_5::supplyIccPuk2ForApp(int32_t serial, const hidl_strin
     return Void();
 }
 
-Return<void> RadioImpl_1_5::changeIccPinForApp(int32_t serial, const hidl_string& oldPin,
+Return<void> RadioImpl_1_6::changeIccPinForApp(int32_t serial, const hidl_string& oldPin,
                                            const hidl_string& newPin, const hidl_string& aid) {
 #if VDBG
     RLOGD("changeIccPinForApp: serial %d", serial);
@@ -1025,7 +1036,7 @@ Return<void> RadioImpl_1_5::changeIccPinForApp(int32_t serial, const hidl_string
     return Void();
 }
 
-Return<void> RadioImpl_1_5::changeIccPin2ForApp(int32_t serial, const hidl_string& oldPin2,
+Return<void> RadioImpl_1_6::changeIccPin2ForApp(int32_t serial, const hidl_string& oldPin2,
                                             const hidl_string& newPin2, const hidl_string& aid) {
 #if VDBG
     RLOGD("changeIccPin2ForApp: serial %d", serial);
@@ -1035,7 +1046,7 @@ Return<void> RadioImpl_1_5::changeIccPin2ForApp(int32_t serial, const hidl_strin
     return Void();
 }
 
-Return<void> RadioImpl_1_5::supplyNetworkDepersonalization(int32_t serial,
+Return<void> RadioImpl_1_6::supplyNetworkDepersonalization(int32_t serial,
                                                        const hidl_string& netPin) {
 #if VDBG
     RLOGD("supplyNetworkDepersonalization: serial %d", serial);
@@ -1045,7 +1056,7 @@ Return<void> RadioImpl_1_5::supplyNetworkDepersonalization(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCurrentCalls(int32_t serial) {
+Return<void> RadioImpl_1_6::getCurrentCalls(int32_t serial) {
 #if VDBG
     RLOGD("getCurrentCalls: serial %d", serial);
 #endif
@@ -1053,7 +1064,7 @@ Return<void> RadioImpl_1_5::getCurrentCalls(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::dial(int32_t serial, const Dial& dialInfo) {
+Return<void> RadioImpl_1_6::dial(int32_t serial, const Dial& dialInfo) {
 #if VDBG
     RLOGD("dial: serial %d", serial);
 #endif
@@ -1095,7 +1106,7 @@ Return<void> RadioImpl_1_5::dial(int32_t serial, const Dial& dialInfo) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getImsiForApp(int32_t serial, const hidl_string& aid) {
+Return<void> RadioImpl_1_6::getImsiForApp(int32_t serial, const hidl_string& aid) {
 #if VDBG
     RLOGD("getImsiForApp: serial %d", serial);
 #endif
@@ -1104,7 +1115,7 @@ Return<void> RadioImpl_1_5::getImsiForApp(int32_t serial, const hidl_string& aid
     return Void();
 }
 
-Return<void> RadioImpl_1_5::hangup(int32_t serial, int32_t gsmIndex) {
+Return<void> RadioImpl_1_6::hangup(int32_t serial, int32_t gsmIndex) {
 #if VDBG
     RLOGD("hangup: serial %d", serial);
 #endif
@@ -1112,7 +1123,7 @@ Return<void> RadioImpl_1_5::hangup(int32_t serial, int32_t gsmIndex) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::hangupWaitingOrBackground(int32_t serial) {
+Return<void> RadioImpl_1_6::hangupWaitingOrBackground(int32_t serial) {
 #if VDBG
     RLOGD("hangupWaitingOrBackground: serial %d", serial);
 #endif
@@ -1120,7 +1131,7 @@ Return<void> RadioImpl_1_5::hangupWaitingOrBackground(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::hangupForegroundResumeBackground(int32_t serial) {
+Return<void> RadioImpl_1_6::hangupForegroundResumeBackground(int32_t serial) {
 #if VDBG
     RLOGD("hangupForegroundResumeBackground: serial %d", serial);
 #endif
@@ -1128,7 +1139,7 @@ Return<void> RadioImpl_1_5::hangupForegroundResumeBackground(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::switchWaitingOrHoldingAndActive(int32_t serial) {
+Return<void> RadioImpl_1_6::switchWaitingOrHoldingAndActive(int32_t serial) {
 #if VDBG
     RLOGD("switchWaitingOrHoldingAndActive: serial %d", serial);
 #endif
@@ -1136,7 +1147,7 @@ Return<void> RadioImpl_1_5::switchWaitingOrHoldingAndActive(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::conference(int32_t serial) {
+Return<void> RadioImpl_1_6::conference(int32_t serial) {
 #if VDBG
     RLOGD("conference: serial %d", serial);
 #endif
@@ -1144,7 +1155,7 @@ Return<void> RadioImpl_1_5::conference(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::rejectCall(int32_t serial) {
+Return<void> RadioImpl_1_6::rejectCall(int32_t serial) {
 #if VDBG
     RLOGD("rejectCall: serial %d", serial);
 #endif
@@ -1152,7 +1163,7 @@ Return<void> RadioImpl_1_5::rejectCall(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getLastCallFailCause(int32_t serial) {
+Return<void> RadioImpl_1_6::getLastCallFailCause(int32_t serial) {
 #if VDBG
     RLOGD("getLastCallFailCause: serial %d", serial);
 #endif
@@ -1160,7 +1171,7 @@ Return<void> RadioImpl_1_5::getLastCallFailCause(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getSignalStrength(int32_t serial) {
+Return<void> RadioImpl_1_6::getSignalStrength(int32_t serial) {
 #if VDBG
     RLOGD("getSignalStrength: serial %d", serial);
 #endif
@@ -1168,7 +1179,7 @@ Return<void> RadioImpl_1_5::getSignalStrength(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getVoiceRegistrationState(int32_t serial) {
+Return<void> RadioImpl_1_6::getVoiceRegistrationState(int32_t serial) {
 #if VDBG
     RLOGD("getVoiceRegistrationState: serial %d", serial);
 #endif
@@ -1176,7 +1187,7 @@ Return<void> RadioImpl_1_5::getVoiceRegistrationState(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getDataRegistrationState(int32_t serial) {
+Return<void> RadioImpl_1_6::getDataRegistrationState(int32_t serial) {
 #if VDBG
     RLOGD("getDataRegistrationState: serial %d", serial);
 #endif
@@ -1184,7 +1195,7 @@ Return<void> RadioImpl_1_5::getDataRegistrationState(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getOperator(int32_t serial) {
+Return<void> RadioImpl_1_6::getOperator(int32_t serial) {
 #if VDBG
     RLOGD("getOperator: serial %d", serial);
 #endif
@@ -1192,7 +1203,7 @@ Return<void> RadioImpl_1_5::getOperator(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setRadioPower(int32_t serial, bool on) {
+Return<void> RadioImpl_1_6::setRadioPower(int32_t serial, bool on) {
 #if VDBG
     RLOGD("setRadioPower: serial %d on %d", serial, on);
 #endif
@@ -1200,7 +1211,7 @@ Return<void> RadioImpl_1_5::setRadioPower(int32_t serial, bool on) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendDtmf(int32_t serial, const hidl_string& s) {
+Return<void> RadioImpl_1_6::sendDtmf(int32_t serial, const hidl_string& s) {
 #if VDBG
     RLOGD("sendDtmf: serial %d", serial);
 #endif
@@ -1208,7 +1219,7 @@ Return<void> RadioImpl_1_5::sendDtmf(int32_t serial, const hidl_string& s) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendSms(int32_t serial, const GsmSmsMessage& message) {
+Return<void> RadioImpl_1_6::sendSms(int32_t serial, const GsmSmsMessage& message) {
 #if VDBG
     RLOGD("sendSms: serial %d", serial);
 #endif
@@ -1217,7 +1228,7 @@ Return<void> RadioImpl_1_5::sendSms(int32_t serial, const GsmSmsMessage& message
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendSMSExpectMore(int32_t serial, const GsmSmsMessage& message) {
+Return<void> RadioImpl_1_6::sendSMSExpectMore(int32_t serial, const GsmSmsMessage& message) {
 #if VDBG
     RLOGD("sendSMSExpectMore: serial %d", serial);
 #endif
@@ -1244,7 +1255,7 @@ static bool convertMvnoTypeToString(MvnoType type, char *&str) {
     return false;
 }
 
-Return<void> RadioImpl_1_5::setupDataCall(int32_t serial, RadioTechnology radioTechnology,
+Return<void> RadioImpl_1_6::setupDataCall(int32_t serial, RadioTechnology radioTechnology,
                                       const DataProfileInfo& dataProfileInfo, bool modemCognitive,
                                       bool roamingAllowed, bool isRoaming) {
 
@@ -1300,7 +1311,7 @@ Return<void> RadioImpl_1_5::setupDataCall(int32_t serial, RadioTechnology radioT
     return Void();
 }
 
-Return<void> RadioImpl_1_5::iccIOForApp(int32_t serial, const IccIo& iccIo) {
+Return<void> RadioImpl_1_6::iccIOForApp(int32_t serial, const IccIo& iccIo) {
 #if VDBG
     RLOGD("iccIOForApp: serial %d", serial);
 #endif
@@ -1342,7 +1353,7 @@ Return<void> RadioImpl_1_5::iccIOForApp(int32_t serial, const IccIo& iccIo) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendUssd(int32_t serial, const hidl_string& ussd) {
+Return<void> RadioImpl_1_6::sendUssd(int32_t serial, const hidl_string& ussd) {
 #if VDBG
     RLOGD("sendUssd: serial %d", serial);
 #endif
@@ -1350,7 +1361,7 @@ Return<void> RadioImpl_1_5::sendUssd(int32_t serial, const hidl_string& ussd) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::cancelPendingUssd(int32_t serial) {
+Return<void> RadioImpl_1_6::cancelPendingUssd(int32_t serial) {
 #if VDBG
     RLOGD("cancelPendingUssd: serial %d", serial);
 #endif
@@ -1358,7 +1369,7 @@ Return<void> RadioImpl_1_5::cancelPendingUssd(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getClir(int32_t serial) {
+Return<void> RadioImpl_1_6::getClir(int32_t serial) {
 #if VDBG
     RLOGD("getClir: serial %d", serial);
 #endif
@@ -1366,7 +1377,7 @@ Return<void> RadioImpl_1_5::getClir(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setClir(int32_t serial, int32_t status) {
+Return<void> RadioImpl_1_6::setClir(int32_t serial, int32_t status) {
 #if VDBG
     RLOGD("setClir: serial %d", serial);
 #endif
@@ -1374,7 +1385,7 @@ Return<void> RadioImpl_1_5::setClir(int32_t serial, int32_t status) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCallForwardStatus(int32_t serial, const CallForwardInfo& callInfo) {
+Return<void> RadioImpl_1_6::getCallForwardStatus(int32_t serial, const CallForwardInfo& callInfo) {
 #if VDBG
     RLOGD("getCallForwardStatus: serial %d", serial);
 #endif
@@ -1383,7 +1394,7 @@ Return<void> RadioImpl_1_5::getCallForwardStatus(int32_t serial, const CallForwa
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCallForward(int32_t serial, const CallForwardInfo& callInfo) {
+Return<void> RadioImpl_1_6::setCallForward(int32_t serial, const CallForwardInfo& callInfo) {
 #if VDBG
     RLOGD("setCallForward: serial %d", serial);
 #endif
@@ -1392,7 +1403,7 @@ Return<void> RadioImpl_1_5::setCallForward(int32_t serial, const CallForwardInfo
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCallWaiting(int32_t serial, int32_t serviceClass) {
+Return<void> RadioImpl_1_6::getCallWaiting(int32_t serial, int32_t serviceClass) {
 #if VDBG
     RLOGD("getCallWaiting: serial %d", serial);
 #endif
@@ -1400,7 +1411,7 @@ Return<void> RadioImpl_1_5::getCallWaiting(int32_t serial, int32_t serviceClass)
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCallWaiting(int32_t serial, bool enable, int32_t serviceClass) {
+Return<void> RadioImpl_1_6::setCallWaiting(int32_t serial, bool enable, int32_t serviceClass) {
 #if VDBG
     RLOGD("setCallWaiting: serial %d", serial);
 #endif
@@ -1409,7 +1420,7 @@ Return<void> RadioImpl_1_5::setCallWaiting(int32_t serial, bool enable, int32_t 
     return Void();
 }
 
-Return<void> RadioImpl_1_5::acknowledgeLastIncomingGsmSms(int32_t serial,
+Return<void> RadioImpl_1_6::acknowledgeLastIncomingGsmSms(int32_t serial,
                                                       bool success, SmsAcknowledgeFailCause cause) {
 #if VDBG
     RLOGD("acknowledgeLastIncomingGsmSms: serial %d", serial);
@@ -1419,7 +1430,7 @@ Return<void> RadioImpl_1_5::acknowledgeLastIncomingGsmSms(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::acceptCall(int32_t serial) {
+Return<void> RadioImpl_1_6::acceptCall(int32_t serial) {
 #if VDBG
     RLOGD("acceptCall: serial %d", serial);
 #endif
@@ -1427,7 +1438,7 @@ Return<void> RadioImpl_1_5::acceptCall(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::deactivateDataCall(int32_t serial,
+Return<void> RadioImpl_1_6::deactivateDataCall(int32_t serial,
                                            int32_t cid, bool reasonRadioShutDown) {
 #if VDBG
     RLOGD("deactivateDataCall: serial %d", serial);
@@ -1437,7 +1448,7 @@ Return<void> RadioImpl_1_5::deactivateDataCall(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getFacilityLockForApp(int32_t serial, const hidl_string& facility,
+Return<void> RadioImpl_1_6::getFacilityLockForApp(int32_t serial, const hidl_string& facility,
                                               const hidl_string& password, int32_t serviceClass,
                                               const hidl_string& appId) {
 #if VDBG
@@ -1449,7 +1460,7 @@ Return<void> RadioImpl_1_5::getFacilityLockForApp(int32_t serial, const hidl_str
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setFacilityLockForApp(int32_t serial, const hidl_string& facility,
+Return<void> RadioImpl_1_6::setFacilityLockForApp(int32_t serial, const hidl_string& facility,
                                               bool lockState, const hidl_string& password,
                                               int32_t serviceClass, const hidl_string& appId) {
 #if VDBG
@@ -1461,7 +1472,7 @@ Return<void> RadioImpl_1_5::setFacilityLockForApp(int32_t serial, const hidl_str
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setBarringPassword(int32_t serial, const hidl_string& facility,
+Return<void> RadioImpl_1_6::setBarringPassword(int32_t serial, const hidl_string& facility,
                                            const hidl_string& oldPassword,
                                            const hidl_string& newPassword) {
 #if VDBG
@@ -1472,7 +1483,7 @@ Return<void> RadioImpl_1_5::setBarringPassword(int32_t serial, const hidl_string
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getNetworkSelectionMode(int32_t serial) {
+Return<void> RadioImpl_1_6::getNetworkSelectionMode(int32_t serial) {
 #if VDBG
     RLOGD("getNetworkSelectionMode: serial %d", serial);
 #endif
@@ -1480,7 +1491,7 @@ Return<void> RadioImpl_1_5::getNetworkSelectionMode(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setNetworkSelectionModeAutomatic(int32_t serial) {
+Return<void> RadioImpl_1_6::setNetworkSelectionModeAutomatic(int32_t serial) {
 #if VDBG
     RLOGD("setNetworkSelectionModeAutomatic: serial %d", serial);
 #endif
@@ -1488,7 +1499,7 @@ Return<void> RadioImpl_1_5::setNetworkSelectionModeAutomatic(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setNetworkSelectionModeManual(int32_t serial,
+Return<void> RadioImpl_1_6::setNetworkSelectionModeManual(int32_t serial,
                                                       const hidl_string& operatorNumeric) {
 #if VDBG
     RLOGD("setNetworkSelectionModeManual: serial %d", serial);
@@ -1498,7 +1509,7 @@ Return<void> RadioImpl_1_5::setNetworkSelectionModeManual(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getAvailableNetworks(int32_t serial) {
+Return<void> RadioImpl_1_6::getAvailableNetworks(int32_t serial) {
 #if VDBG
     RLOGD("getAvailableNetworks: serial %d", serial);
 #endif
@@ -1506,7 +1517,7 @@ Return<void> RadioImpl_1_5::getAvailableNetworks(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::startNetworkScan(int32_t serial, const V1_1::NetworkScanRequest& request) {
+Return<void> RadioImpl_1_6::startNetworkScan(int32_t serial, const V1_1::NetworkScanRequest& request) {
 #if VDBG
     RLOGD("startNetworkScan: serial %d", serial);
 #endif
@@ -1572,7 +1583,7 @@ Return<void> RadioImpl_1_5::startNetworkScan(int32_t serial, const V1_1::Network
     return Void();
 }
 
-Return<void> RadioImpl_1_5::stopNetworkScan(int32_t serial) {
+Return<void> RadioImpl_1_6::stopNetworkScan(int32_t serial) {
 #if VDBG
     RLOGD("stopNetworkScan: serial %d", serial);
 #endif
@@ -1580,7 +1591,7 @@ Return<void> RadioImpl_1_5::stopNetworkScan(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::startDtmf(int32_t serial, const hidl_string& s) {
+Return<void> RadioImpl_1_6::startDtmf(int32_t serial, const hidl_string& s) {
 #if VDBG
     RLOGD("startDtmf: serial %d", serial);
 #endif
@@ -1589,7 +1600,7 @@ Return<void> RadioImpl_1_5::startDtmf(int32_t serial, const hidl_string& s) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::stopDtmf(int32_t serial) {
+Return<void> RadioImpl_1_6::stopDtmf(int32_t serial) {
 #if VDBG
     RLOGD("stopDtmf: serial %d", serial);
 #endif
@@ -1597,7 +1608,7 @@ Return<void> RadioImpl_1_5::stopDtmf(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getBasebandVersion(int32_t serial) {
+Return<void> RadioImpl_1_6::getBasebandVersion(int32_t serial) {
 #if VDBG
     RLOGD("getBasebandVersion: serial %d", serial);
 #endif
@@ -1605,7 +1616,7 @@ Return<void> RadioImpl_1_5::getBasebandVersion(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::separateConnection(int32_t serial, int32_t gsmIndex) {
+Return<void> RadioImpl_1_6::separateConnection(int32_t serial, int32_t gsmIndex) {
 #if VDBG
     RLOGD("separateConnection: serial %d", serial);
 #endif
@@ -1613,7 +1624,7 @@ Return<void> RadioImpl_1_5::separateConnection(int32_t serial, int32_t gsmIndex)
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setMute(int32_t serial, bool enable) {
+Return<void> RadioImpl_1_6::setMute(int32_t serial, bool enable) {
 #if VDBG
     RLOGD("setMute: serial %d", serial);
 #endif
@@ -1621,7 +1632,7 @@ Return<void> RadioImpl_1_5::setMute(int32_t serial, bool enable) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getMute(int32_t serial) {
+Return<void> RadioImpl_1_6::getMute(int32_t serial) {
 #if VDBG
     RLOGD("getMute: serial %d", serial);
 #endif
@@ -1629,7 +1640,7 @@ Return<void> RadioImpl_1_5::getMute(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getClip(int32_t serial) {
+Return<void> RadioImpl_1_6::getClip(int32_t serial) {
 #if VDBG
     RLOGD("getClip: serial %d", serial);
 #endif
@@ -1637,7 +1648,7 @@ Return<void> RadioImpl_1_5::getClip(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getDataCallList(int32_t serial) {
+Return<void> RadioImpl_1_6::getDataCallList(int32_t serial) {
 #if VDBG
     RLOGD("getDataCallList: serial %d", serial);
 #endif
@@ -1645,7 +1656,7 @@ Return<void> RadioImpl_1_5::getDataCallList(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setSuppServiceNotifications(int32_t serial, bool enable) {
+Return<void> RadioImpl_1_6::setSuppServiceNotifications(int32_t serial, bool enable) {
 #if VDBG
     RLOGD("setSuppServiceNotifications: serial %d", serial);
 #endif
@@ -1654,7 +1665,7 @@ Return<void> RadioImpl_1_5::setSuppServiceNotifications(int32_t serial, bool ena
     return Void();
 }
 
-Return<void> RadioImpl_1_5::writeSmsToSim(int32_t serial, const SmsWriteArgs& smsWriteArgs) {
+Return<void> RadioImpl_1_6::writeSmsToSim(int32_t serial, const SmsWriteArgs& smsWriteArgs) {
 #if VDBG
     RLOGD("writeSmsToSim: serial %d", serial);
 #endif
@@ -1682,7 +1693,7 @@ Return<void> RadioImpl_1_5::writeSmsToSim(int32_t serial, const SmsWriteArgs& sm
     return Void();
 }
 
-Return<void> RadioImpl_1_5::deleteSmsOnSim(int32_t serial, int32_t index) {
+Return<void> RadioImpl_1_6::deleteSmsOnSim(int32_t serial, int32_t index) {
 #if VDBG
     RLOGD("deleteSmsOnSim: serial %d", serial);
 #endif
@@ -1690,7 +1701,7 @@ Return<void> RadioImpl_1_5::deleteSmsOnSim(int32_t serial, int32_t index) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setBandMode(int32_t serial, RadioBandMode mode) {
+Return<void> RadioImpl_1_6::setBandMode(int32_t serial, RadioBandMode mode) {
 #if VDBG
     RLOGD("setBandMode: serial %d", serial);
 #endif
@@ -1698,7 +1709,7 @@ Return<void> RadioImpl_1_5::setBandMode(int32_t serial, RadioBandMode mode) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getAvailableBandModes(int32_t serial) {
+Return<void> RadioImpl_1_6::getAvailableBandModes(int32_t serial) {
 #if VDBG
     RLOGD("getAvailableBandModes: serial %d", serial);
 #endif
@@ -1706,7 +1717,7 @@ Return<void> RadioImpl_1_5::getAvailableBandModes(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendEnvelope(int32_t serial, const hidl_string& command) {
+Return<void> RadioImpl_1_6::sendEnvelope(int32_t serial, const hidl_string& command) {
 #if VDBG
     RLOGD("sendEnvelope: serial %d", serial);
 #endif
@@ -1715,7 +1726,7 @@ Return<void> RadioImpl_1_5::sendEnvelope(int32_t serial, const hidl_string& comm
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendTerminalResponseToSim(int32_t serial,
+Return<void> RadioImpl_1_6::sendTerminalResponseToSim(int32_t serial,
                                                   const hidl_string& commandResponse) {
 #if VDBG
     RLOGD("sendTerminalResponseToSim: serial %d", serial);
@@ -1725,7 +1736,7 @@ Return<void> RadioImpl_1_5::sendTerminalResponseToSim(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::handleStkCallSetupRequestFromSim(int32_t serial, bool accept) {
+Return<void> RadioImpl_1_6::handleStkCallSetupRequestFromSim(int32_t serial, bool accept) {
 #if VDBG
     RLOGD("handleStkCallSetupRequestFromSim: serial %d", serial);
 #endif
@@ -1734,7 +1745,7 @@ Return<void> RadioImpl_1_5::handleStkCallSetupRequestFromSim(int32_t serial, boo
     return Void();
 }
 
-Return<void> RadioImpl_1_5::explicitCallTransfer(int32_t serial) {
+Return<void> RadioImpl_1_6::explicitCallTransfer(int32_t serial) {
 #if VDBG
     RLOGD("explicitCallTransfer: serial %d", serial);
 #endif
@@ -1742,7 +1753,7 @@ Return<void> RadioImpl_1_5::explicitCallTransfer(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setPreferredNetworkType(int32_t serial, PreferredNetworkType nwType) {
+Return<void> RadioImpl_1_6::setPreferredNetworkType(int32_t serial, PreferredNetworkType nwType) {
 #if VDBG
     RLOGD("setPreferredNetworkType: serial %d", serial);
 #endif
@@ -1750,7 +1761,7 @@ Return<void> RadioImpl_1_5::setPreferredNetworkType(int32_t serial, PreferredNet
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getPreferredNetworkType(int32_t serial) {
+Return<void> RadioImpl_1_6::getPreferredNetworkType(int32_t serial) {
 #if VDBG
     RLOGD("getPreferredNetworkType: serial %d", serial);
 #endif
@@ -1758,7 +1769,7 @@ Return<void> RadioImpl_1_5::getPreferredNetworkType(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getNeighboringCids(int32_t serial) {
+Return<void> RadioImpl_1_6::getNeighboringCids(int32_t serial) {
 #if VDBG
     RLOGD("getNeighboringCids: serial %d", serial);
 #endif
@@ -1766,7 +1777,7 @@ Return<void> RadioImpl_1_5::getNeighboringCids(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setLocationUpdates(int32_t serial, bool enable) {
+Return<void> RadioImpl_1_6::setLocationUpdates(int32_t serial, bool enable) {
 #if VDBG
     RLOGD("setLocationUpdates: serial %d", serial);
 #endif
@@ -1774,7 +1785,7 @@ Return<void> RadioImpl_1_5::setLocationUpdates(int32_t serial, bool enable) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCdmaSubscriptionSource(int32_t serial, CdmaSubscriptionSource cdmaSub) {
+Return<void> RadioImpl_1_6::setCdmaSubscriptionSource(int32_t serial, CdmaSubscriptionSource cdmaSub) {
 #if VDBG
     RLOGD("setCdmaSubscriptionSource: serial %d", serial);
 #endif
@@ -1782,7 +1793,7 @@ Return<void> RadioImpl_1_5::setCdmaSubscriptionSource(int32_t serial, CdmaSubscr
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCdmaRoamingPreference(int32_t serial, CdmaRoamingType type) {
+Return<void> RadioImpl_1_6::setCdmaRoamingPreference(int32_t serial, CdmaRoamingType type) {
 #if VDBG
     RLOGD("setCdmaRoamingPreference: serial %d", serial);
 #endif
@@ -1790,7 +1801,7 @@ Return<void> RadioImpl_1_5::setCdmaRoamingPreference(int32_t serial, CdmaRoaming
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCdmaRoamingPreference(int32_t serial) {
+Return<void> RadioImpl_1_6::getCdmaRoamingPreference(int32_t serial) {
 #if VDBG
     RLOGD("getCdmaRoamingPreference: serial %d", serial);
 #endif
@@ -1798,7 +1809,7 @@ Return<void> RadioImpl_1_5::getCdmaRoamingPreference(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setTTYMode(int32_t serial, TtyMode mode) {
+Return<void> RadioImpl_1_6::setTTYMode(int32_t serial, TtyMode mode) {
 #if VDBG
     RLOGD("setTTYMode: serial %d", serial);
 #endif
@@ -1806,7 +1817,7 @@ Return<void> RadioImpl_1_5::setTTYMode(int32_t serial, TtyMode mode) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getTTYMode(int32_t serial) {
+Return<void> RadioImpl_1_6::getTTYMode(int32_t serial) {
 #if VDBG
     RLOGD("getTTYMode: serial %d", serial);
 #endif
@@ -1814,7 +1825,7 @@ Return<void> RadioImpl_1_5::getTTYMode(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setPreferredVoicePrivacy(int32_t serial, bool enable) {
+Return<void> RadioImpl_1_6::setPreferredVoicePrivacy(int32_t serial, bool enable) {
 #if VDBG
     RLOGD("setPreferredVoicePrivacy: serial %d", serial);
 #endif
@@ -1823,7 +1834,7 @@ Return<void> RadioImpl_1_5::setPreferredVoicePrivacy(int32_t serial, bool enable
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getPreferredVoicePrivacy(int32_t serial) {
+Return<void> RadioImpl_1_6::getPreferredVoicePrivacy(int32_t serial) {
 #if VDBG
     RLOGD("getPreferredVoicePrivacy: serial %d", serial);
 #endif
@@ -1831,7 +1842,7 @@ Return<void> RadioImpl_1_5::getPreferredVoicePrivacy(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendCDMAFeatureCode(int32_t serial, const hidl_string& featureCode) {
+Return<void> RadioImpl_1_6::sendCDMAFeatureCode(int32_t serial, const hidl_string& featureCode) {
 #if VDBG
     RLOGD("sendCDMAFeatureCode: serial %d", serial);
 #endif
@@ -1840,7 +1851,7 @@ Return<void> RadioImpl_1_5::sendCDMAFeatureCode(int32_t serial, const hidl_strin
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendBurstDtmf(int32_t serial, const hidl_string& dtmf, int32_t on,
+Return<void> RadioImpl_1_6::sendBurstDtmf(int32_t serial, const hidl_string& dtmf, int32_t on,
                                       int32_t off) {
 #if VDBG
     RLOGD("sendBurstDtmf: serial %d", serial);
@@ -1882,7 +1893,7 @@ void constructCdmaSms(RIL_CDMA_SMS_Message &rcsm, const CdmaSmsMessage& sms) {
     }
 }
 
-Return<void> RadioImpl_1_5::sendCdmaSms(int32_t serial, const CdmaSmsMessage& sms) {
+Return<void> RadioImpl_1_6::sendCdmaSms(int32_t serial, const CdmaSmsMessage& sms) {
 #if VDBG
     RLOGD("sendCdmaSms: serial %d", serial);
 #endif
@@ -1898,7 +1909,7 @@ Return<void> RadioImpl_1_5::sendCdmaSms(int32_t serial, const CdmaSmsMessage& sm
     return Void();
 }
 
-Return<void> RadioImpl_1_5::acknowledgeLastIncomingCdmaSms(int32_t serial, const CdmaSmsAck& smsAck) {
+Return<void> RadioImpl_1_6::acknowledgeLastIncomingCdmaSms(int32_t serial, const CdmaSmsAck& smsAck) {
 #if VDBG
     RLOGD("acknowledgeLastIncomingCdmaSms: serial %d", serial);
 #endif
@@ -1916,7 +1927,7 @@ Return<void> RadioImpl_1_5::acknowledgeLastIncomingCdmaSms(int32_t serial, const
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getGsmBroadcastConfig(int32_t serial) {
+Return<void> RadioImpl_1_6::getGsmBroadcastConfig(int32_t serial) {
 #if VDBG
     RLOGD("getGsmBroadcastConfig: serial %d", serial);
 #endif
@@ -1924,7 +1935,7 @@ Return<void> RadioImpl_1_5::getGsmBroadcastConfig(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setGsmBroadcastConfig(int32_t serial,
+Return<void> RadioImpl_1_6::setGsmBroadcastConfig(int32_t serial,
                                               const hidl_vec<GsmBroadcastSmsConfigInfo>&
                                               configInfo) {
 #if VDBG
@@ -1960,7 +1971,7 @@ Return<void> RadioImpl_1_5::setGsmBroadcastConfig(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setGsmBroadcastActivation(int32_t serial, bool activate) {
+Return<void> RadioImpl_1_6::setGsmBroadcastActivation(int32_t serial, bool activate) {
 #if VDBG
     RLOGD("setGsmBroadcastActivation: serial %d", serial);
 #endif
@@ -1969,7 +1980,7 @@ Return<void> RadioImpl_1_5::setGsmBroadcastActivation(int32_t serial, bool activ
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCdmaBroadcastConfig(int32_t serial) {
+Return<void> RadioImpl_1_6::getCdmaBroadcastConfig(int32_t serial) {
 #if VDBG
     RLOGD("getCdmaBroadcastConfig: serial %d", serial);
 #endif
@@ -1977,7 +1988,7 @@ Return<void> RadioImpl_1_5::getCdmaBroadcastConfig(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCdmaBroadcastConfig(int32_t serial,
+Return<void> RadioImpl_1_6::setCdmaBroadcastConfig(int32_t serial,
                                                const hidl_vec<CdmaBroadcastSmsConfigInfo>&
                                                configInfo) {
 #if VDBG
@@ -2011,7 +2022,7 @@ Return<void> RadioImpl_1_5::setCdmaBroadcastConfig(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCdmaBroadcastActivation(int32_t serial, bool activate) {
+Return<void> RadioImpl_1_6::setCdmaBroadcastActivation(int32_t serial, bool activate) {
 #if VDBG
     RLOGD("setCdmaBroadcastActivation: serial %d", serial);
 #endif
@@ -2020,7 +2031,7 @@ Return<void> RadioImpl_1_5::setCdmaBroadcastActivation(int32_t serial, bool acti
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCDMASubscription(int32_t serial) {
+Return<void> RadioImpl_1_6::getCDMASubscription(int32_t serial) {
 #if VDBG
     RLOGD("getCDMASubscription: serial %d", serial);
 #endif
@@ -2028,7 +2039,7 @@ Return<void> RadioImpl_1_5::getCDMASubscription(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::writeSmsToRuim(int32_t serial, const CdmaSmsWriteArgs& cdmaSms) {
+Return<void> RadioImpl_1_6::writeSmsToRuim(int32_t serial, const CdmaSmsWriteArgs& cdmaSms) {
 #if VDBG
     RLOGD("writeSmsToRuim: serial %d", serial);
 #endif
@@ -2046,7 +2057,7 @@ Return<void> RadioImpl_1_5::writeSmsToRuim(int32_t serial, const CdmaSmsWriteArg
     return Void();
 }
 
-Return<void> RadioImpl_1_5::deleteSmsOnRuim(int32_t serial, int32_t index) {
+Return<void> RadioImpl_1_6::deleteSmsOnRuim(int32_t serial, int32_t index) {
 #if VDBG
     RLOGD("deleteSmsOnRuim: serial %d", serial);
 #endif
@@ -2054,7 +2065,7 @@ Return<void> RadioImpl_1_5::deleteSmsOnRuim(int32_t serial, int32_t index) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getDeviceIdentity(int32_t serial) {
+Return<void> RadioImpl_1_6::getDeviceIdentity(int32_t serial) {
 #if VDBG
     RLOGD("getDeviceIdentity: serial %d", serial);
 #endif
@@ -2062,7 +2073,7 @@ Return<void> RadioImpl_1_5::getDeviceIdentity(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::exitEmergencyCallbackMode(int32_t serial) {
+Return<void> RadioImpl_1_6::exitEmergencyCallbackMode(int32_t serial) {
 #if VDBG
     RLOGD("exitEmergencyCallbackMode: serial %d", serial);
 #endif
@@ -2070,7 +2081,7 @@ Return<void> RadioImpl_1_5::exitEmergencyCallbackMode(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getSmscAddress(int32_t serial) {
+Return<void> RadioImpl_1_6::getSmscAddress(int32_t serial) {
 #if VDBG
     RLOGD("getSmscAddress: serial %d", serial);
 #endif
@@ -2078,7 +2089,7 @@ Return<void> RadioImpl_1_5::getSmscAddress(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setSmscAddress(int32_t serial, const hidl_string& smsc) {
+Return<void> RadioImpl_1_6::setSmscAddress(int32_t serial, const hidl_string& smsc) {
 #if VDBG
     RLOGD("setSmscAddress: serial %d", serial);
 #endif
@@ -2087,7 +2098,7 @@ Return<void> RadioImpl_1_5::setSmscAddress(int32_t serial, const hidl_string& sm
     return Void();
 }
 
-Return<void> RadioImpl_1_5::reportSmsMemoryStatus(int32_t serial, bool available) {
+Return<void> RadioImpl_1_6::reportSmsMemoryStatus(int32_t serial, bool available) {
 #if VDBG
     RLOGD("reportSmsMemoryStatus: serial %d", serial);
 #endif
@@ -2096,7 +2107,7 @@ Return<void> RadioImpl_1_5::reportSmsMemoryStatus(int32_t serial, bool available
     return Void();
 }
 
-Return<void> RadioImpl_1_5::reportStkServiceIsRunning(int32_t serial) {
+Return<void> RadioImpl_1_6::reportStkServiceIsRunning(int32_t serial) {
 #if VDBG
     RLOGD("reportStkServiceIsRunning: serial %d", serial);
 #endif
@@ -2104,7 +2115,7 @@ Return<void> RadioImpl_1_5::reportStkServiceIsRunning(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCdmaSubscriptionSource(int32_t serial) {
+Return<void> RadioImpl_1_6::getCdmaSubscriptionSource(int32_t serial) {
 #if VDBG
     RLOGD("getCdmaSubscriptionSource: serial %d", serial);
 #endif
@@ -2112,7 +2123,7 @@ Return<void> RadioImpl_1_5::getCdmaSubscriptionSource(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::requestIsimAuthentication(int32_t serial, const hidl_string& challenge) {
+Return<void> RadioImpl_1_6::requestIsimAuthentication(int32_t serial, const hidl_string& challenge) {
 #if VDBG
     RLOGD("requestIsimAuthentication: serial %d", serial);
 #endif
@@ -2121,7 +2132,7 @@ Return<void> RadioImpl_1_5::requestIsimAuthentication(int32_t serial, const hidl
     return Void();
 }
 
-Return<void> RadioImpl_1_5::acknowledgeIncomingGsmSmsWithPdu(int32_t serial, bool success,
+Return<void> RadioImpl_1_6::acknowledgeIncomingGsmSmsWithPdu(int32_t serial, bool success,
                                                          const hidl_string& ackPdu) {
 #if VDBG
     RLOGD("acknowledgeIncomingGsmSmsWithPdu: serial %d", serial);
@@ -2131,7 +2142,7 @@ Return<void> RadioImpl_1_5::acknowledgeIncomingGsmSmsWithPdu(int32_t serial, boo
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendEnvelopeWithStatus(int32_t serial, const hidl_string& contents) {
+Return<void> RadioImpl_1_6::sendEnvelopeWithStatus(int32_t serial, const hidl_string& contents) {
 #if VDBG
     RLOGD("sendEnvelopeWithStatus: serial %d", serial);
 #endif
@@ -2140,7 +2151,7 @@ Return<void> RadioImpl_1_5::sendEnvelopeWithStatus(int32_t serial, const hidl_st
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getVoiceRadioTechnology(int32_t serial) {
+Return<void> RadioImpl_1_6::getVoiceRadioTechnology(int32_t serial) {
 #if VDBG
     RLOGD("getVoiceRadioTechnology: serial %d", serial);
 #endif
@@ -2148,7 +2159,7 @@ Return<void> RadioImpl_1_5::getVoiceRadioTechnology(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getCellInfoList(int32_t serial) {
+Return<void> RadioImpl_1_6::getCellInfoList(int32_t serial) {
 #if VDBG
     RLOGD("getCellInfoList: serial %d", serial);
 #endif
@@ -2156,7 +2167,7 @@ Return<void> RadioImpl_1_5::getCellInfoList(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCellInfoListRate(int32_t serial, int32_t rate) {
+Return<void> RadioImpl_1_6::setCellInfoListRate(int32_t serial, int32_t rate) {
 #if VDBG
     RLOGD("setCellInfoListRate: serial %d", serial);
 #endif
@@ -2164,7 +2175,7 @@ Return<void> RadioImpl_1_5::setCellInfoListRate(int32_t serial, int32_t rate) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setInitialAttachApn(int32_t serial, const DataProfileInfo& dataProfileInfo,
+Return<void> RadioImpl_1_6::setInitialAttachApn(int32_t serial, const DataProfileInfo& dataProfileInfo,
                                             bool modemCognitive, bool isRoaming) {
 #if VDBG
     RLOGD("setInitialAttachApn: serial %d", serial);
@@ -2253,7 +2264,7 @@ Return<void> RadioImpl_1_5::setInitialAttachApn(int32_t serial, const DataProfil
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getImsRegistrationState(int32_t serial) {
+Return<void> RadioImpl_1_6::getImsRegistrationState(int32_t serial) {
 #if VDBG
     RLOGD("getImsRegistrationState: serial %d", serial);
 #endif
@@ -2350,7 +2361,7 @@ bool dispatchImsCdmaSms(const ImsSmsMessage& message, RequestInfo *pRI) {
     return true;
 }
 
-Return<void> RadioImpl_1_5::sendImsSms(int32_t serial, const ImsSmsMessage& message) {
+Return<void> RadioImpl_1_6::sendImsSms(int32_t serial, const ImsSmsMessage& message) {
 #if VDBG
     RLOGD("sendImsSms: serial %d", serial);
 #endif
@@ -2373,7 +2384,7 @@ Return<void> RadioImpl_1_5::sendImsSms(int32_t serial, const ImsSmsMessage& mess
     return Void();
 }
 
-Return<void> RadioImpl_1_5::iccTransmitApduBasicChannel(int32_t serial, const SimApdu& message) {
+Return<void> RadioImpl_1_6::iccTransmitApduBasicChannel(int32_t serial, const SimApdu& message) {
 #if VDBG
     RLOGD("iccTransmitApduBasicChannel: serial %d", serial);
 #endif
@@ -2381,7 +2392,7 @@ Return<void> RadioImpl_1_5::iccTransmitApduBasicChannel(int32_t serial, const Si
     return Void();
 }
 
-Return<void> RadioImpl_1_5::iccOpenLogicalChannel(int32_t serial, const hidl_string& aid, int32_t p2) {
+Return<void> RadioImpl_1_6::iccOpenLogicalChannel(int32_t serial, const hidl_string& aid, int32_t p2) {
 #if VDBG
     RLOGD("iccOpenLogicalChannel: serial %d", serial);
 #endif
@@ -2408,7 +2419,7 @@ Return<void> RadioImpl_1_5::iccOpenLogicalChannel(int32_t serial, const hidl_str
     return Void();
 }
 
-Return<void> RadioImpl_1_5::iccCloseLogicalChannel(int32_t serial, int32_t channelId) {
+Return<void> RadioImpl_1_6::iccCloseLogicalChannel(int32_t serial, int32_t channelId) {
 #if VDBG
     RLOGD("iccCloseLogicalChannel: serial %d", serial);
 #endif
@@ -2416,7 +2427,7 @@ Return<void> RadioImpl_1_5::iccCloseLogicalChannel(int32_t serial, int32_t chann
     return Void();
 }
 
-Return<void> RadioImpl_1_5::iccTransmitApduLogicalChannel(int32_t serial, const SimApdu& message) {
+Return<void> RadioImpl_1_6::iccTransmitApduLogicalChannel(int32_t serial, const SimApdu& message) {
 #if VDBG
     RLOGD("iccTransmitApduLogicalChannel: serial %d", serial);
 #endif
@@ -2424,7 +2435,7 @@ Return<void> RadioImpl_1_5::iccTransmitApduLogicalChannel(int32_t serial, const 
     return Void();
 }
 
-Return<void> RadioImpl_1_5::nvReadItem(int32_t serial, NvItem itemId) {
+Return<void> RadioImpl_1_6::nvReadItem(int32_t serial, NvItem itemId) {
 #if VDBG
     RLOGD("nvReadItem: serial %d", serial);
 #endif
@@ -2440,7 +2451,7 @@ Return<void> RadioImpl_1_5::nvReadItem(int32_t serial, NvItem itemId) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::nvWriteItem(int32_t serial, const NvWriteItem& item) {
+Return<void> RadioImpl_1_6::nvWriteItem(int32_t serial, const NvWriteItem& item) {
 #if VDBG
     RLOGD("nvWriteItem: serial %d", serial);
 #endif
@@ -2463,7 +2474,7 @@ Return<void> RadioImpl_1_5::nvWriteItem(int32_t serial, const NvWriteItem& item)
     return Void();
 }
 
-Return<void> RadioImpl_1_5::nvWriteCdmaPrl(int32_t serial, const hidl_vec<uint8_t>& prl) {
+Return<void> RadioImpl_1_6::nvWriteCdmaPrl(int32_t serial, const hidl_vec<uint8_t>& prl) {
 #if VDBG
     RLOGD("nvWriteCdmaPrl: serial %d", serial);
 #endif
@@ -2471,7 +2482,7 @@ Return<void> RadioImpl_1_5::nvWriteCdmaPrl(int32_t serial, const hidl_vec<uint8_
     return Void();
 }
 
-Return<void> RadioImpl_1_5::nvResetConfig(int32_t serial, ResetNvType resetType) {
+Return<void> RadioImpl_1_6::nvResetConfig(int32_t serial, ResetNvType resetType) {
     int rilResetType = -1;
 #if VDBG
     RLOGD("nvResetConfig: serial %d", serial);
@@ -2497,7 +2508,7 @@ Return<void> RadioImpl_1_5::nvResetConfig(int32_t serial, ResetNvType resetType)
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setUiccSubscription(int32_t serial, const SelectUiccSub& uiccSub) {
+Return<void> RadioImpl_1_6::setUiccSubscription(int32_t serial, const SelectUiccSub& uiccSub) {
 #if VDBG
     RLOGD("setUiccSubscription: serial %d", serial);
 #endif
@@ -2518,7 +2529,7 @@ Return<void> RadioImpl_1_5::setUiccSubscription(int32_t serial, const SelectUicc
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setDataAllowed(int32_t serial, bool allow) {
+Return<void> RadioImpl_1_6::setDataAllowed(int32_t serial, bool allow) {
 #if VDBG
     RLOGD("setDataAllowed: serial %d", serial);
 #endif
@@ -2526,7 +2537,7 @@ Return<void> RadioImpl_1_5::setDataAllowed(int32_t serial, bool allow) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getHardwareConfig(int32_t serial) {
+Return<void> RadioImpl_1_6::getHardwareConfig(int32_t serial) {
 #if VDBG
     RLOGD("getHardwareConfig: serial %d", serial);
 #endif
@@ -2535,7 +2546,7 @@ Return<void> RadioImpl_1_5::getHardwareConfig(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::requestIccSimAuthentication(int32_t serial, int32_t authContext,
+Return<void> RadioImpl_1_6::requestIccSimAuthentication(int32_t serial, int32_t authContext,
         const hidl_string& authData, const hidl_string& aid) {
 #if VDBG
     RLOGD("requestIccSimAuthentication: serial %d", serial);
@@ -2598,7 +2609,7 @@ void freeSetDataProfileData(int numProfiles, T *dataProfiles, T **dataProfilePtr
     free(dataProfilePtrs);
 }
 
-Return<void> RadioImpl_1_5::setDataProfile(int32_t serial, const hidl_vec<DataProfileInfo>& profiles,
+Return<void> RadioImpl_1_6::setDataProfile(int32_t serial, const hidl_vec<DataProfileInfo>& profiles,
                                        bool isRoaming) {
 #if VDBG
     RLOGD("setDataProfile: serial %d", serial);
@@ -2760,7 +2771,7 @@ Return<void> RadioImpl_1_5::setDataProfile(int32_t serial, const hidl_vec<DataPr
     return Void();
 }
 
-Return<void> RadioImpl_1_5::requestShutdown(int32_t serial) {
+Return<void> RadioImpl_1_6::requestShutdown(int32_t serial) {
 #if VDBG
     RLOGD("requestShutdown: serial %d", serial);
 #endif
@@ -2768,7 +2779,7 @@ Return<void> RadioImpl_1_5::requestShutdown(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getRadioCapability(int32_t serial) {
+Return<void> RadioImpl_1_6::getRadioCapability(int32_t serial) {
 #if VDBG
     RLOGD("getRadioCapability: serial %d", serial);
 #endif
@@ -2776,7 +2787,7 @@ Return<void> RadioImpl_1_5::getRadioCapability(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setRadioCapability(int32_t serial, const RadioCapability& rc) {
+Return<void> RadioImpl_1_6::setRadioCapability(int32_t serial, const RadioCapability& rc) {
 #if VDBG
     RLOGD("setRadioCapability: serial %d", serial);
 #endif
@@ -2799,7 +2810,7 @@ Return<void> RadioImpl_1_5::setRadioCapability(int32_t serial, const RadioCapabi
     return Void();
 }
 
-Return<void> RadioImpl_1_5::startLceService(int32_t serial, int32_t reportInterval, bool pullMode) {
+Return<void> RadioImpl_1_6::startLceService(int32_t serial, int32_t reportInterval, bool pullMode) {
 #if VDBG
     RLOGD("startLceService: serial %d", serial);
 #endif
@@ -2808,7 +2819,7 @@ Return<void> RadioImpl_1_5::startLceService(int32_t serial, int32_t reportInterv
     return Void();
 }
 
-Return<void> RadioImpl_1_5::stopLceService(int32_t serial) {
+Return<void> RadioImpl_1_6::stopLceService(int32_t serial) {
 #if VDBG
     RLOGD("stopLceService: serial %d", serial);
 #endif
@@ -2816,7 +2827,7 @@ Return<void> RadioImpl_1_5::stopLceService(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::pullLceData(int32_t serial) {
+Return<void> RadioImpl_1_6::pullLceData(int32_t serial) {
 #if VDBG
     RLOGD("pullLceData: serial %d", serial);
 #endif
@@ -2824,7 +2835,7 @@ Return<void> RadioImpl_1_5::pullLceData(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getModemActivityInfo(int32_t serial) {
+Return<void> RadioImpl_1_6::getModemActivityInfo(int32_t serial) {
 #if VDBG
     RLOGD("getModemActivityInfo: serial %d", serial);
 #endif
@@ -2896,7 +2907,7 @@ void freeCarrierRestrictions(RIL_CarrierRestrictions &request) {
     }
 }
 
-Return<void> RadioImpl_1_5::setAllowedCarriers(int32_t serial, bool allAllowed,
+Return<void> RadioImpl_1_6::setAllowedCarriers(int32_t serial, bool allAllowed,
                                            const CarrierRestrictions& carriers) {
 #if VDBG
     RLOGD("setAllowedCarriers: serial %d", serial);
@@ -2920,7 +2931,7 @@ Return<void> RadioImpl_1_5::setAllowedCarriers(int32_t serial, bool allAllowed,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getAllowedCarriers(int32_t serial) {
+Return<void> RadioImpl_1_6::getAllowedCarriers(int32_t serial) {
 #if VDBG
     RLOGD("getAllowedCarriers: serial %d", serial);
 #endif
@@ -2928,7 +2939,7 @@ Return<void> RadioImpl_1_5::getAllowedCarriers(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendDeviceState(int32_t serial, DeviceStateType deviceStateType,
+Return<void> RadioImpl_1_6::sendDeviceState(int32_t serial, DeviceStateType deviceStateType,
                                         bool state) {
 #if VDBG
     RLOGD("sendDeviceState: serial %d", serial);
@@ -2949,7 +2960,7 @@ Return<void> RadioImpl_1_5::sendDeviceState(int32_t serial, DeviceStateType devi
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setIndicationFilter(int32_t serial, int32_t indicationFilter) {
+Return<void> RadioImpl_1_6::setIndicationFilter(int32_t serial, int32_t indicationFilter) {
 #if VDBG
     RLOGD("setIndicationFilter: serial %d", serial);
 #endif
@@ -2963,7 +2974,7 @@ Return<void> RadioImpl_1_5::setIndicationFilter(int32_t serial, int32_t indicati
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setSimCardPower(int32_t serial, bool powerUp) {
+Return<void> RadioImpl_1_6::setSimCardPower(int32_t serial, bool powerUp) {
 #if VDBG
     RLOGD("setSimCardPower: serial %d", serial);
 #endif
@@ -2971,7 +2982,7 @@ Return<void> RadioImpl_1_5::setSimCardPower(int32_t serial, bool powerUp) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setSimCardPower_1_1(int32_t serial, const V1_1::CardPowerState state) {
+Return<void> RadioImpl_1_6::setSimCardPower_1_1(int32_t serial, const V1_1::CardPowerState state) {
 #if VDBG
     RLOGD("setSimCardPower_1_1: serial %d state %d", serial, state);
 #endif
@@ -2979,7 +2990,7 @@ Return<void> RadioImpl_1_5::setSimCardPower_1_1(int32_t serial, const V1_1::Card
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setCarrierInfoForImsiEncryption(int32_t serial,
+Return<void> RadioImpl_1_6::setCarrierInfoForImsiEncryption(int32_t serial,
         const V1_1::ImsiEncryptionInfo& data) {
 #if VDBG
     RLOGD("setCarrierInfoForImsiEncryption: serial %d", serial);
@@ -3013,7 +3024,7 @@ Return<void> RadioImpl_1_5::setCarrierInfoForImsiEncryption(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::startKeepalive(int32_t serial, const V1_1::KeepaliveRequest& keepalive) {
+Return<void> RadioImpl_1_6::startKeepalive(int32_t serial, const V1_1::KeepaliveRequest& keepalive) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
 #endif
@@ -3062,7 +3073,7 @@ Return<void> RadioImpl_1_5::startKeepalive(int32_t serial, const V1_1::Keepalive
     return Void();
 }
 
-Return<void> RadioImpl_1_5::stopKeepalive(int32_t serial, int32_t sessionHandle) {
+Return<void> RadioImpl_1_6::stopKeepalive(int32_t serial, int32_t sessionHandle) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
 #endif
@@ -3075,7 +3086,7 @@ Return<void> RadioImpl_1_5::stopKeepalive(int32_t serial, int32_t sessionHandle)
     return Void();
 }
 
-Return<void> RadioImpl_1_5::responseAcknowledgement() {
+Return<void> RadioImpl_1_6::responseAcknowledgement() {
     android::releaseWakeLock();
     return Void();
 }
@@ -3169,7 +3180,7 @@ int prepareNetworkScanRequest_1_2(RIL_NetworkScanRequest &scan_request,
     return 0;
 }
 
-Return<void> RadioImpl_1_5::startNetworkScan_1_2(int32_t serial,
+Return<void> RadioImpl_1_6::startNetworkScan_1_2(int32_t serial,
         const ::android::hardware::radio::V1_2::NetworkScanRequest& request) {
 #if VDBG
     RLOGD("startNetworkScan_1_2: serial %d", serial);
@@ -3192,7 +3203,7 @@ Return<void> RadioImpl_1_5::startNetworkScan_1_2(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setIndicationFilter_1_2(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setIndicationFilter_1_2(int32_t /* serial */,
         hidl_bitfield<::android::hardware::radio::V1_2::IndicationFilter> /* indicationFilter */) {
     // TODO implement
 #if VDBG
@@ -3201,7 +3212,7 @@ Return<void> RadioImpl_1_5::setIndicationFilter_1_2(int32_t /* serial */,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setSignalStrengthReportingCriteria(int32_t /* serial */,
         int32_t /* hysteresisMs */, int32_t /* hysteresisDb */,
         const hidl_vec<int32_t>& /* thresholdsDbm */,
         ::android::hardware::radio::V1_2::AccessNetwork /* accessNetwork */) {
@@ -3212,7 +3223,7 @@ Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria(int32_t /* serial
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setLinkCapacityReportingCriteria(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setLinkCapacityReportingCriteria(int32_t /* serial */,
         int32_t /* hysteresisMs */, int32_t /* hysteresisDlKbps */, int32_t /* hysteresisUlKbps */,
         const hidl_vec<int32_t>& /* thresholdsDownlinkKbps */,
         const hidl_vec<int32_t>& /* thresholdsUplinkKbps */,
@@ -3224,7 +3235,7 @@ Return<void> RadioImpl_1_5::setLinkCapacityReportingCriteria(int32_t /* serial *
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setupDataCall_1_2(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setupDataCall_1_2(int32_t /* serial */,
         ::android::hardware::radio::V1_2::AccessNetwork /* accessNetwork */,
         const ::android::hardware::radio::V1_0::DataProfileInfo& /* dataProfileInfo */,
         bool /* modemCognitive */, bool /* roamingAllowed */, bool /* isRoaming */,
@@ -3237,7 +3248,7 @@ Return<void> RadioImpl_1_5::setupDataCall_1_2(int32_t /* serial */,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::deactivateDataCall_1_2(int32_t serial, int32_t cid,
+Return<void> RadioImpl_1_6::deactivateDataCall_1_2(int32_t serial, int32_t cid,
         ::android::hardware::radio::V1_2::DataRequestReason reason) {
 #if VDBG
     RLOGD("deactivateDataCall_1_2: serial %d", serial);
@@ -3248,7 +3259,7 @@ Return<void> RadioImpl_1_5::deactivateDataCall_1_2(int32_t serial, int32_t cid,
 }
 
 // Methods from ::android::hardware::radio::V1_3::IRadio follow.
-Return<void> RadioImpl_1_5::setSystemSelectionChannels(int32_t serial, bool /* specifyChannels */,
+Return<void> RadioImpl_1_6::setSystemSelectionChannels(int32_t serial, bool /* specifyChannels */,
         const hidl_vec<::android::hardware::radio::V1_1::RadioAccessSpecifier>& /* specifiers */) {
 #if VDBG
     RLOGD("setSystemSelectionChannels: serial %d", serial);
@@ -3257,7 +3268,7 @@ Return<void> RadioImpl_1_5::setSystemSelectionChannels(int32_t serial, bool /* s
     return Void();
 }
 
-Return<void> RadioImpl_1_5::enableModem(int32_t serial, bool /* on */) {
+Return<void> RadioImpl_1_6::enableModem(int32_t serial, bool /* on */) {
 #if VDBG
     RLOGE("enableModem: serial = %d, enable = %s", serial, on);
 #endif
@@ -3265,7 +3276,7 @@ Return<void> RadioImpl_1_5::enableModem(int32_t serial, bool /* on */) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getModemStackStatus(int32_t serial) {
+Return<void> RadioImpl_1_6::getModemStackStatus(int32_t serial) {
 #if VDBG
     RLOGD("getModemStackStatus: serial %d", serial);
 #endif
@@ -3293,7 +3304,7 @@ const char * getProtocolString(const ::android::hardware::radio::V1_4::PdpProtoc
 }
 
 // Methods from ::android::hardware::radio::V1_4::IRadio follow.
-Return<void> RadioImpl_1_5::setAllowedCarriers_1_4(int32_t  serial,
+Return<void> RadioImpl_1_6::setAllowedCarriers_1_4(int32_t  serial,
         const V1_4::CarrierRestrictionsWithPriority& carriers,
         V1_4::SimLockMultiSimPolicy multiSimPolicy) {
 #if VDBG
@@ -3329,7 +3340,7 @@ Return<void> RadioImpl_1_5::setAllowedCarriers_1_4(int32_t  serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getAllowedCarriers_1_4(int32_t serial) {
+Return<void> RadioImpl_1_6::getAllowedCarriers_1_4(int32_t serial) {
 #if VDBG
     RLOGD("getAllowedCarriers_1_4: serial %d", serial);
 #endif
@@ -3337,7 +3348,7 @@ Return<void> RadioImpl_1_5::getAllowedCarriers_1_4(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setupDataCall_1_4(int32_t serial ,
+Return<void> RadioImpl_1_6::setupDataCall_1_4(int32_t serial ,
         ::android::hardware::radio::V1_4::AccessNetwork /* accessNetwork */,
         const ::android::hardware::radio::V1_4::DataProfileInfo& dataProfileInfo,
         bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason /* reason */,
@@ -3375,7 +3386,7 @@ Return<void> RadioImpl_1_5::setupDataCall_1_4(int32_t serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setInitialAttachApn_1_4(int32_t  serial ,
+Return<void> RadioImpl_1_6::setInitialAttachApn_1_4(int32_t  serial ,
         const ::android::hardware::radio::V1_4::DataProfileInfo& dataProfileInfo) {
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
             RIL_REQUEST_SET_INITIAL_ATTACH_APN);
@@ -3401,7 +3412,7 @@ Return<void> RadioImpl_1_5::setInitialAttachApn_1_4(int32_t  serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setDataProfile_1_4(int32_t  serial ,
+Return<void> RadioImpl_1_6::setDataProfile_1_4(int32_t  serial ,
         const hidl_vec<::android::hardware::radio::V1_4::DataProfileInfo>& /* profiles */) {
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
             RIL_REQUEST_SET_DATA_PROFILE);
@@ -3427,7 +3438,7 @@ Return<void> RadioImpl_1_5::setDataProfile_1_4(int32_t  serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::emergencyDial(int32_t serial,
+Return<void> RadioImpl_1_6::emergencyDial(int32_t serial,
         const ::android::hardware::radio::V1_0::Dial& dialInfo,
         hidl_bitfield<android::hardware::radio::V1_4::EmergencyServiceCategory> /* categories */,
         const hidl_vec<hidl_string>& /* urns */,
@@ -3475,7 +3486,7 @@ Return<void> RadioImpl_1_5::emergencyDial(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::startNetworkScan_1_4(int32_t serial,
+Return<void> RadioImpl_1_6::startNetworkScan_1_4(int32_t serial,
         const ::android::hardware::radio::V1_2::NetworkScanRequest& request) {
 #if VDBG
     RLOGD("startNetworkScan_1_4: serial %d", serial);
@@ -3498,7 +3509,7 @@ Return<void> RadioImpl_1_5::startNetworkScan_1_4(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getPreferredNetworkTypeBitmap(int32_t serial ) {
+Return<void> RadioImpl_1_6::getPreferredNetworkTypeBitmap(int32_t serial ) {
 #if VDBG
     RLOGD("getPreferredNetworkTypeBitmap: serial %d", serial);
 #endif
@@ -3506,7 +3517,7 @@ Return<void> RadioImpl_1_5::getPreferredNetworkTypeBitmap(int32_t serial ) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setPreferredNetworkTypeBitmap(
+Return<void> RadioImpl_1_6::setPreferredNetworkTypeBitmap(
         int32_t serial, hidl_bitfield<RadioAccessFamily> networkTypeBitmap) {
 #if VDBG
     RLOGD("setPreferredNetworkTypeBitmap: serial %d", serial);
@@ -3515,7 +3526,7 @@ Return<void> RadioImpl_1_5::setPreferredNetworkTypeBitmap(
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getSignalStrength_1_4(int32_t serial) {
+Return<void> RadioImpl_1_6::getSignalStrength_1_4(int32_t serial) {
 #if VDBG
     RLOGD("getSignalStrength_1_4: serial %d", serial);
 #endif
@@ -3524,7 +3535,7 @@ Return<void> RadioImpl_1_5::getSignalStrength_1_4(int32_t serial) {
 }
 
 // Methods from ::android::hardware::radio::V1_5::IRadio follow.
-Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria_1_5(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setSignalStrengthReportingCriteria_1_5(int32_t /* serial */,
         const ::android::hardware::radio::V1_5::SignalThresholdInfo& /* signalThresholdInfo */,
         const ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */) {
     // TODO implement
@@ -3534,7 +3545,7 @@ Return<void> RadioImpl_1_5::setSignalStrengthReportingCriteria_1_5(int32_t /* se
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setLinkCapacityReportingCriteria_1_5(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setLinkCapacityReportingCriteria_1_5(int32_t /* serial */,
         int32_t /* hysteresisMs */, int32_t /* hysteresisDlKbps */, int32_t /* hysteresisUlKbps */,
         const hidl_vec<int32_t>& /* thresholdsDownlinkKbps */,
         const hidl_vec<int32_t>& /* thresholdsUplinkKbps */,
@@ -3546,7 +3557,7 @@ Return<void> RadioImpl_1_5::setLinkCapacityReportingCriteria_1_5(int32_t /* seri
     return Void();
 }
 
-Return<void> RadioImpl_1_5::enableUiccApplications(int32_t serial, bool enable) {
+Return<void> RadioImpl_1_6::enableUiccApplications(int32_t serial, bool enable) {
 #if VDBG
     RLOGD("enableUiccApplications: serial %d enable %d", serial, enable);
 #endif
@@ -3554,17 +3565,17 @@ Return<void> RadioImpl_1_5::enableUiccApplications(int32_t serial, bool enable) 
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
+Return<void> RadioImpl_1_6::setRadioPower_1_5(int32_t serial, bool powerOn, bool forEmergencyCall,
                                           bool preferredForEmergencyCall) {
 #if VDBG
-    RLOGD("setRadioPower_1_5: serial %d powerOn %d forEmergency %d preferredForEmergencyCall %d",
+    RLOGD("setRadioPower_1_6: serial %d powerOn %d forEmergency %d preferredForEmergencyCall %d",
         serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_RADIO_POWER, 1, BOOL_TO_INT(powerOn));
     return Void();
 }
 
-Return<void> RadioImpl_1_5::areUiccApplicationsEnabled(int32_t serial) {
+Return<void> RadioImpl_1_6::areUiccApplicationsEnabled(int32_t serial) {
 #if VDBG
     RLOGD("areUiccApplicationsEnabled: serial %d", serial);
 #endif
@@ -3572,7 +3583,7 @@ Return<void> RadioImpl_1_5::areUiccApplicationsEnabled(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getVoiceRegistrationState_1_5(int32_t serial) {
+Return<void> RadioImpl_1_6::getVoiceRegistrationState_1_5(int32_t serial) {
 #if VDBG
     RLOGD("getVoiceRegistrationState: serial %d", serial);
 #endif
@@ -3580,7 +3591,7 @@ Return<void> RadioImpl_1_5::getVoiceRegistrationState_1_5(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getDataRegistrationState_1_5(int32_t serial) {
+Return<void> RadioImpl_1_6::getDataRegistrationState_1_5(int32_t serial) {
 #if VDBG
     RLOGD("getDataRegistrationState: serial %d", serial);
 #endif
@@ -3588,10 +3599,10 @@ Return<void> RadioImpl_1_5::getDataRegistrationState_1_5(int32_t serial) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setSystemSelectionChannels_1_5(int32_t serial,
+Return<void> RadioImpl_1_6::setSystemSelectionChannels_1_5(int32_t serial,
         bool /* specifyChannels */, const hidl_vec<V1_5::RadioAccessSpecifier>& /* specifiers */) {
 #if VDBG
-    RLOGD("setSystemSelectionChannels_1_5: serial %d", serial);
+    RLOGD("setSystemSelectionChannels_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS);
     return Void();
@@ -3682,10 +3693,10 @@ int prepareNetworkScanRequest_1_5(RIL_NetworkScanRequest &scan_request,
     return 0;
 }
 
-Return<void> RadioImpl_1_5::startNetworkScan_1_5(int32_t serial,
+Return<void> RadioImpl_1_6::startNetworkScan_1_5(int32_t serial,
         const ::android::hardware::radio::V1_5::NetworkScanRequest& request) {
 #if VDBG
-    RLOGD("startNetworkScan_1_5: serial %d", serial);
+    RLOGD("startNetworkScan_1_6: serial %d", serial);
 #endif
 
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_START_NETWORK_SCAN);
@@ -3705,7 +3716,7 @@ Return<void> RadioImpl_1_5::startNetworkScan_1_5(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setupDataCall_1_5(int32_t serial ,
+Return<void> RadioImpl_1_6::setupDataCall_1_5(int32_t serial ,
         ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */,
         const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo,
         bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason /* reason */,
@@ -3713,7 +3724,7 @@ Return<void> RadioImpl_1_5::setupDataCall_1_5(int32_t serial ,
         const hidl_vec<hidl_string>& /* dnses */) {
 
 #if VDBG
-    RLOGD("setupDataCall_1_5: serial %d", serial);
+    RLOGD("setupDataCall_1_6: serial %d", serial);
 #endif
 
     char *mvnoTypeStr = NULL;
@@ -3745,7 +3756,7 @@ Return<void> RadioImpl_1_5::setupDataCall_1_5(int32_t serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setInitialAttachApn_1_5(int32_t  serial ,
+Return<void> RadioImpl_1_6::setInitialAttachApn_1_5(int32_t  serial ,
         const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo) {
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
             RIL_REQUEST_SET_INITIAL_ATTACH_APN);
@@ -3774,7 +3785,7 @@ Return<void> RadioImpl_1_5::setInitialAttachApn_1_5(int32_t  serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setDataProfile_1_5(int32_t  serial ,
+Return<void> RadioImpl_1_6::setDataProfile_1_5(int32_t  serial ,
         const hidl_vec<::android::hardware::radio::V1_5::DataProfileInfo>& /* profiles */) {
     RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
             RIL_REQUEST_SET_DATA_PROFILE);
@@ -3803,7 +3814,7 @@ Return<void> RadioImpl_1_5::setDataProfile_1_5(int32_t  serial ,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setIndicationFilter_1_5(int32_t /* serial */,
+Return<void> RadioImpl_1_6::setIndicationFilter_1_5(int32_t /* serial */,
         hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> /* indicationFilter */) {
     // TODO implement
 #if VDBG
@@ -3812,7 +3823,7 @@ Return<void> RadioImpl_1_5::setIndicationFilter_1_5(int32_t /* serial */,
     return Void();
 }
 
-Return<void> RadioImpl_1_5::getBarringInfo(int32_t /* serial */) {
+Return<void> RadioImpl_1_6::getBarringInfo(int32_t /* serial */) {
     // TODO implement
 #if VDBG
     RLOGE("[%04d]< %s", serial, "Method is not implemented");
@@ -3820,16 +3831,16 @@ Return<void> RadioImpl_1_5::getBarringInfo(int32_t /* serial */) {
     return Void();
 }
 
-Return<void> RadioImpl_1_5::setNetworkSelectionModeManual_1_5(int32_t serial,
+Return<void> RadioImpl_1_6::setNetworkSelectionModeManual_1_5(int32_t serial,
         const hidl_string& operatorNumeric, V1_5::RadioAccessNetworks ran) {
 #if VDBG
-    RLOGD("setNetworkSelectionModeManual_1_5: serial %d", serial);
+    RLOGD("setNetworkSelectionModeManual_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL);
     return Void();
 }
 
-Return<void> RadioImpl_1_5::sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms) {
+Return<void> RadioImpl_1_6::sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms) {
 #if VDBG
     RLOGD("sendCdmaSmsExpectMore: serial %d", serial);
 #endif
@@ -3846,7 +3857,7 @@ Return<void> RadioImpl_1_5::sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsM
     return Void();
 }
 
-Return<void> RadioImpl_1_5::supplySimDepersonalization(int32_t serial,
+Return<void> RadioImpl_1_6::supplySimDepersonalization(int32_t serial,
         V1_5::PersoSubstate persoType, const hidl_string& controlKey) {
 #if VDBG
     RLOGD("supplySimDepersonalization: serial %d", serial);
@@ -3864,7 +3875,7 @@ Return<void> OemHookImpl::setResponseFunctions(
     RLOGD("OemHookImpl::setResponseFunctions");
 #endif
 
-    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(mSlotId);
+    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(mSlotId);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
     assert(ret == 0);
 
@@ -3901,7 +3912,7 @@ Return<void> OemHookImpl::sendRequestStrings(int32_t serial,
  * responses for those requests coming back from the vendor code.
  **************************************************************************************************/
 
-void radio_1_5::acknowledgeRequest(int slotId, int serial) {
+void radio_1_6::acknowledgeRequest(int slotId, int serial) {
     if (radioService[slotId]->mRadioResponse != NULL) {
         Return<void> retStatus = radioService[slotId]->mRadioResponse->acknowledgeRequest(serial);
         radioService[slotId]->checkReturnStatus(retStatus);
@@ -3958,7 +3969,7 @@ int responseInt(RadioResponseInfo& responseInfo, int serial, int responseType, R
     return ret;
 }
 
-int radio_1_5::getIccCardStatusResponse(int slotId,
+int radio_1_6::getIccCardStatusResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
     if (radioService[slotId]->mRadioResponseV1_4 != NULL
@@ -4036,7 +4047,7 @@ int radio_1_5::getIccCardStatusResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::supplyIccPinForAppResponse(int slotId,
+int radio_1_6::supplyIccPinForAppResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -4058,7 +4069,7 @@ int radio_1_5::supplyIccPinForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::supplyIccPukForAppResponse(int slotId,
+int radio_1_6::supplyIccPukForAppResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -4079,7 +4090,7 @@ int radio_1_5::supplyIccPukForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::supplyIccPin2ForAppResponse(int slotId,
+int radio_1_6::supplyIccPin2ForAppResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -4100,7 +4111,7 @@ int radio_1_5::supplyIccPin2ForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::supplyIccPuk2ForAppResponse(int slotId,
+int radio_1_6::supplyIccPuk2ForAppResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -4121,7 +4132,7 @@ int radio_1_5::supplyIccPuk2ForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::changeIccPinForAppResponse(int slotId,
+int radio_1_6::changeIccPinForAppResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -4142,7 +4153,7 @@ int radio_1_5::changeIccPinForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::changeIccPin2ForAppResponse(int slotId,
+int radio_1_6::changeIccPin2ForAppResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -4163,7 +4174,7 @@ int radio_1_5::changeIccPin2ForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::supplyNetworkDepersonalizationResponse(int slotId,
+int radio_1_6::supplyNetworkDepersonalizationResponse(int slotId,
                                                  int responseType, int serial, RIL_Errno e,
                                                  void *response, size_t responseLen) {
 #if VDBG
@@ -4184,7 +4195,7 @@ int radio_1_5::supplyNetworkDepersonalizationResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCurrentCallsResponse(int slotId,
+int radio_1_6::getCurrentCallsResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -4242,7 +4253,7 @@ int radio_1_5::getCurrentCallsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::dialResponse(int slotId,
+int radio_1_6::dialResponse(int slotId,
                        int responseType, int serial, RIL_Errno e, void *response,
                        size_t responseLen) {
 #if VDBG
@@ -4261,7 +4272,7 @@ int radio_1_5::dialResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getIMSIForAppResponse(int slotId,
+int radio_1_6::getIMSIForAppResponse(int slotId,
                                 int responseType, int serial, RIL_Errno e, void *response,
                                 size_t responseLen) {
 #if VDBG
@@ -4282,7 +4293,7 @@ int radio_1_5::getIMSIForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::hangupConnectionResponse(int slotId,
+int radio_1_6::hangupConnectionResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
 #if VDBG
@@ -4303,7 +4314,7 @@ int radio_1_5::hangupConnectionResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::hangupWaitingOrBackgroundResponse(int slotId,
+int radio_1_6::hangupWaitingOrBackgroundResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -4325,7 +4336,7 @@ int radio_1_5::hangupWaitingOrBackgroundResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::hangupForegroundResumeBackgroundResponse(int slotId, int responseType, int serial,
+int radio_1_6::hangupForegroundResumeBackgroundResponse(int slotId, int responseType, int serial,
                                                     RIL_Errno e, void *response,
                                                     size_t responseLen) {
 #if VDBG
@@ -4347,7 +4358,7 @@ int radio_1_5::hangupForegroundResumeBackgroundResponse(int slotId, int response
     return 0;
 }
 
-int radio_1_5::switchWaitingOrHoldingAndActiveResponse(int slotId, int responseType, int serial,
+int radio_1_6::switchWaitingOrHoldingAndActiveResponse(int slotId, int responseType, int serial,
                                                    RIL_Errno e, void *response,
                                                    size_t responseLen) {
 #if VDBG
@@ -4369,7 +4380,7 @@ int radio_1_5::switchWaitingOrHoldingAndActiveResponse(int slotId, int responseT
     return 0;
 }
 
-int radio_1_5::conferenceResponse(int slotId, int responseType,
+int radio_1_6::conferenceResponse(int slotId, int responseType,
                              int serial, RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("conferenceResponse: serial %d", serial);
@@ -4389,7 +4400,7 @@ int radio_1_5::conferenceResponse(int slotId, int responseType,
     return 0;
 }
 
-int radio_1_5::rejectCallResponse(int slotId, int responseType,
+int radio_1_6::rejectCallResponse(int slotId, int responseType,
                              int serial, RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("rejectCallResponse: serial %d", serial);
@@ -4409,7 +4420,7 @@ int radio_1_5::rejectCallResponse(int slotId, int responseType,
     return 0;
 }
 
-int radio_1_5::getLastCallFailCauseResponse(int slotId,
+int radio_1_6::getLastCallFailCauseResponse(int slotId,
                                        int responseType, int serial, RIL_Errno e, void *response,
                                        size_t responseLen) {
 #if VDBG
@@ -4448,7 +4459,7 @@ int radio_1_5::getLastCallFailCauseResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getSignalStrengthResponse(int slotId,
+int radio_1_6::getSignalStrengthResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -4787,7 +4798,7 @@ void fillCellIdentityFromDataRegStateResponseString(CellIdentity &cellIdentity,
     fillCellIdentityResponse(cellIdentity, rilCellIdentity);
 }
 
-int radio_1_5::getVoiceRegistrationStateResponse(int slotId,
+int radio_1_6::getVoiceRegistrationStateResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -4851,7 +4862,7 @@ int radio_1_5::getVoiceRegistrationStateResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getDataRegistrationStateResponse(int slotId,
+int radio_1_6::getDataRegistrationStateResponse(int slotId,
                                            int responseType, int serial, RIL_Errno e,
                                            void *response, size_t responseLen) {
 #if VDBG
@@ -4907,7 +4918,7 @@ int radio_1_5::getDataRegistrationStateResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getOperatorResponse(int slotId,
+int radio_1_6::getOperatorResponse(int slotId,
                               int responseType, int serial, RIL_Errno e, void *response,
                               size_t responseLen) {
 #if VDBG
@@ -4942,7 +4953,7 @@ int radio_1_5::getOperatorResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setRadioPowerResponse(int slotId,
+int radio_1_6::setRadioPowerResponse(int slotId,
                                 int responseType, int serial, RIL_Errno e, void *response,
                                 size_t responseLen) {
 #if VDBG
@@ -4966,7 +4977,7 @@ int radio_1_5::setRadioPowerResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendDtmfResponse(int slotId,
+int radio_1_6::sendDtmfResponse(int slotId,
                            int responseType, int serial, RIL_Errno e, void *response,
                            size_t responseLen) {
 #if VDBG
@@ -5005,7 +5016,7 @@ SendSmsResult makeSendSmsResult(RadioResponseInfo& responseInfo, int serial, int
     return result;
 }
 
-int radio_1_5::sendSmsResponse(int slotId,
+int radio_1_6::sendSmsResponse(int slotId,
                           int responseType, int serial, RIL_Errno e, void *response,
                           size_t responseLen) {
 #if VDBG
@@ -5027,7 +5038,7 @@ int radio_1_5::sendSmsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendSMSExpectMoreResponse(int slotId,
+int radio_1_6::sendSMSExpectMoreResponse(int slotId,
                                     int responseType, int serial, RIL_Errno e, void *response,
                                     size_t responseLen) {
 #if VDBG
@@ -5049,7 +5060,7 @@ int radio_1_5::sendSMSExpectMoreResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setupDataCallResponse(int slotId,
+int radio_1_6::setupDataCallResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e, void *response,
                                  size_t responseLen) {
 #if VDBG
@@ -5150,7 +5161,7 @@ IccIoResult responseIccIo(RadioResponseInfo& responseInfo, int serial, int respo
     return result;
 }
 
-int radio_1_5::iccIOForAppResponse(int slotId,
+int radio_1_6::iccIOForAppResponse(int slotId,
                       int responseType, int serial, RIL_Errno e, void *response,
                       size_t responseLen) {
 #if VDBG
@@ -5172,7 +5183,7 @@ int radio_1_5::iccIOForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendUssdResponse(int slotId,
+int radio_1_6::sendUssdResponse(int slotId,
                            int responseType, int serial, RIL_Errno e, void *response,
                            size_t responseLen) {
 #if VDBG
@@ -5193,7 +5204,7 @@ int radio_1_5::sendUssdResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::cancelPendingUssdResponse(int slotId,
+int radio_1_6::cancelPendingUssdResponse(int slotId,
                                     int responseType, int serial, RIL_Errno e, void *response,
                                     size_t responseLen) {
 #if VDBG
@@ -5214,7 +5225,7 @@ int radio_1_5::cancelPendingUssdResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getClirResponse(int slotId,
+int radio_1_6::getClirResponse(int slotId,
                               int responseType, int serial, RIL_Errno e, void *response,
                               size_t responseLen) {
 #if VDBG
@@ -5244,7 +5255,7 @@ int radio_1_5::getClirResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setClirResponse(int slotId,
+int radio_1_6::setClirResponse(int slotId,
                           int responseType, int serial, RIL_Errno e, void *response,
                           size_t responseLen) {
 #if VDBG
@@ -5264,7 +5275,7 @@ int radio_1_5::setClirResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCallForwardStatusResponse(int slotId,
+int radio_1_6::getCallForwardStatusResponse(int slotId,
                                        int responseType, int serial, RIL_Errno e,
                                        void *response, size_t responseLen) {
 #if VDBG
@@ -5305,7 +5316,7 @@ int radio_1_5::getCallForwardStatusResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCallForwardResponse(int slotId,
+int radio_1_6::setCallForwardResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e, void *response,
                                  size_t responseLen) {
 #if VDBG
@@ -5325,7 +5336,7 @@ int radio_1_5::setCallForwardResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCallWaitingResponse(int slotId,
+int radio_1_6::getCallWaitingResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e, void *response,
                                  size_t responseLen) {
 #if VDBG
@@ -5356,7 +5367,7 @@ int radio_1_5::getCallWaitingResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCallWaitingResponse(int slotId,
+int radio_1_6::setCallWaitingResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e, void *response,
                                  size_t responseLen) {
 #if VDBG
@@ -5376,7 +5387,7 @@ int radio_1_5::setCallWaitingResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::acknowledgeLastIncomingGsmSmsResponse(int slotId,
+int radio_1_6::acknowledgeLastIncomingGsmSmsResponse(int slotId,
                                                 int responseType, int serial, RIL_Errno e,
                                                 void *response, size_t responseLen) {
 #if VDBG
@@ -5398,7 +5409,7 @@ int radio_1_5::acknowledgeLastIncomingGsmSmsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::acceptCallResponse(int slotId,
+int radio_1_6::acceptCallResponse(int slotId,
                              int responseType, int serial, RIL_Errno e,
                              void *response, size_t responseLen) {
 #if VDBG
@@ -5419,7 +5430,7 @@ int radio_1_5::acceptCallResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::deactivateDataCallResponse(int slotId,
+int radio_1_6::deactivateDataCallResponse(int slotId,
                                                 int responseType, int serial, RIL_Errno e,
                                                 void *response, size_t responseLen) {
 #if VDBG
@@ -5440,7 +5451,7 @@ int radio_1_5::deactivateDataCallResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getFacilityLockForAppResponse(int slotId,
+int radio_1_6::getFacilityLockForAppResponse(int slotId,
                                         int responseType, int serial, RIL_Errno e,
                                         void *response, size_t responseLen) {
 #if VDBG
@@ -5461,7 +5472,7 @@ int radio_1_5::getFacilityLockForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setFacilityLockForAppResponse(int slotId,
+int radio_1_6::setFacilityLockForAppResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -5483,7 +5494,7 @@ int radio_1_5::setFacilityLockForAppResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setBarringPasswordResponse(int slotId,
+int radio_1_6::setBarringPasswordResponse(int slotId,
                              int responseType, int serial, RIL_Errno e,
                              void *response, size_t responseLen) {
 #if VDBG
@@ -5504,7 +5515,7 @@ int radio_1_5::setBarringPasswordResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getNetworkSelectionModeResponse(int slotId,
+int radio_1_6::getNetworkSelectionModeResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e, void *response,
                                           size_t responseLen) {
 #if VDBG
@@ -5535,7 +5546,7 @@ int radio_1_5::getNetworkSelectionModeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setNetworkSelectionModeAutomaticResponse(int slotId, int responseType, int serial,
+int radio_1_6::setNetworkSelectionModeAutomaticResponse(int slotId, int responseType, int serial,
                                                     RIL_Errno e, void *response,
                                                     size_t responseLen) {
 #if VDBG
@@ -5557,7 +5568,7 @@ int radio_1_5::setNetworkSelectionModeAutomaticResponse(int slotId, int response
     return 0;
 }
 
-int radio_1_5::setNetworkSelectionModeManualResponse(int slotId,
+int radio_1_6::setNetworkSelectionModeManualResponse(int slotId,
                              int responseType, int serial, RIL_Errno e,
                              void *response, size_t responseLen) {
 #if VDBG
@@ -5596,7 +5607,7 @@ int convertOperatorStatusToInt(const char *str) {
     }
 }
 
-int radio_1_5::getAvailableNetworksResponse(int slotId,
+int radio_1_6::getAvailableNetworksResponse(int slotId,
                               int responseType, int serial, RIL_Errno e, void *response,
                               size_t responseLen) {
 #if VDBG
@@ -5639,7 +5650,7 @@ int radio_1_5::getAvailableNetworksResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::startDtmfResponse(int slotId,
+int radio_1_6::startDtmfResponse(int slotId,
                             int responseType, int serial, RIL_Errno e,
                             void *response, size_t responseLen) {
 #if VDBG
@@ -5659,7 +5670,7 @@ int radio_1_5::startDtmfResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::stopDtmfResponse(int slotId,
+int radio_1_6::stopDtmfResponse(int slotId,
                            int responseType, int serial, RIL_Errno e,
                            void *response, size_t responseLen) {
 #if VDBG
@@ -5679,7 +5690,7 @@ int radio_1_5::stopDtmfResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getBasebandVersionResponse(int slotId,
+int radio_1_6::getBasebandVersionResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -5700,7 +5711,7 @@ int radio_1_5::getBasebandVersionResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::separateConnectionResponse(int slotId,
+int radio_1_6::separateConnectionResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -5721,7 +5732,7 @@ int radio_1_5::separateConnectionResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setMuteResponse(int slotId,
+int radio_1_6::setMuteResponse(int slotId,
                           int responseType, int serial, RIL_Errno e,
                           void *response, size_t responseLen) {
 #if VDBG
@@ -5741,7 +5752,7 @@ int radio_1_5::setMuteResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getMuteResponse(int slotId,
+int radio_1_6::getMuteResponse(int slotId,
                           int responseType, int serial, RIL_Errno e, void *response,
                           size_t responseLen) {
 #if VDBG
@@ -5769,7 +5780,7 @@ int radio_1_5::getMuteResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getClipResponse(int slotId,
+int radio_1_6::getClipResponse(int slotId,
                           int responseType, int serial, RIL_Errno e,
                           void *response, size_t responseLen) {
 #if VDBG
@@ -5789,7 +5800,7 @@ int radio_1_5::getClipResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getDataCallListResponse(int slotId,
+int radio_1_6::getDataCallListResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
 #if VDBG
@@ -5819,7 +5830,7 @@ int radio_1_5::getDataCallListResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setSuppServiceNotificationsResponse(int slotId,
+int radio_1_6::setSuppServiceNotificationsResponse(int slotId,
                                               int responseType, int serial, RIL_Errno e,
                                               void *response, size_t responseLen) {
 #if VDBG
@@ -5841,7 +5852,7 @@ int radio_1_5::setSuppServiceNotificationsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::deleteSmsOnSimResponse(int slotId,
+int radio_1_6::deleteSmsOnSimResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -5861,7 +5872,7 @@ int radio_1_5::deleteSmsOnSimResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setBandModeResponse(int slotId,
+int radio_1_6::setBandModeResponse(int slotId,
                               int responseType, int serial, RIL_Errno e,
                               void *response, size_t responseLen) {
 #if VDBG
@@ -5881,7 +5892,7 @@ int radio_1_5::setBandModeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::writeSmsToSimResponse(int slotId,
+int radio_1_6::writeSmsToSimResponse(int slotId,
                                 int responseType, int serial, RIL_Errno e,
                                 void *response, size_t responseLen) {
 #if VDBG
@@ -5901,7 +5912,7 @@ int radio_1_5::writeSmsToSimResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getAvailableBandModesResponse(int slotId,
+int radio_1_6::getAvailableBandModesResponse(int slotId,
                                         int responseType, int serial, RIL_Errno e, void *response,
                                         size_t responseLen) {
 #if VDBG
@@ -5935,7 +5946,7 @@ int radio_1_5::getAvailableBandModesResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendEnvelopeResponse(int slotId,
+int radio_1_6::sendEnvelopeResponse(int slotId,
                                int responseType, int serial, RIL_Errno e,
                                void *response, size_t responseLen) {
 #if VDBG
@@ -5956,7 +5967,7 @@ int radio_1_5::sendEnvelopeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendTerminalResponseToSimResponse(int slotId,
+int radio_1_6::sendTerminalResponseToSimResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -5978,7 +5989,7 @@ int radio_1_5::sendTerminalResponseToSimResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::handleStkCallSetupRequestFromSimResponse(int slotId,
+int radio_1_6::handleStkCallSetupRequestFromSimResponse(int slotId,
                                                    int responseType, int serial,
                                                    RIL_Errno e, void *response,
                                                    size_t responseLen) {
@@ -6001,7 +6012,7 @@ int radio_1_5::handleStkCallSetupRequestFromSimResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::explicitCallTransferResponse(int slotId,
+int radio_1_6::explicitCallTransferResponse(int slotId,
                                        int responseType, int serial, RIL_Errno e,
                                        void *response, size_t responseLen) {
 #if VDBG
@@ -6022,7 +6033,7 @@ int radio_1_5::explicitCallTransferResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setPreferredNetworkTypeResponse(int slotId,
+int radio_1_6::setPreferredNetworkTypeResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6045,7 +6056,7 @@ int radio_1_5::setPreferredNetworkTypeResponse(int slotId,
 }
 
 
-int radio_1_5::getPreferredNetworkTypeResponse(int slotId,
+int radio_1_6::getPreferredNetworkTypeResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
                                           void *response, size_t responseLen) {
 #if VDBG
@@ -6067,7 +6078,7 @@ int radio_1_5::getPreferredNetworkTypeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setPreferredNetworkTypeBitmapResponse(int slotId,
+int radio_1_6::setPreferredNetworkTypeBitmapResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6090,7 +6101,7 @@ int radio_1_5::setPreferredNetworkTypeBitmapResponse(int slotId,
 }
 
 
-int radio_1_5::getPreferredNetworkTypeBitmapResponse(int slotId,
+int radio_1_6::getPreferredNetworkTypeBitmapResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
                                           void *response, size_t responseLen) {
 #if VDBG
@@ -6114,7 +6125,7 @@ int radio_1_5::getPreferredNetworkTypeBitmapResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getNeighboringCidsResponse(int slotId,
+int radio_1_6::getNeighboringCidsResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -6152,7 +6163,7 @@ int radio_1_5::getNeighboringCidsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setLocationUpdatesResponse(int slotId,
+int radio_1_6::setLocationUpdatesResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -6173,7 +6184,7 @@ int radio_1_5::setLocationUpdatesResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCdmaSubscriptionSourceResponse(int slotId,
+int radio_1_6::setCdmaSubscriptionSourceResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6195,7 +6206,7 @@ int radio_1_5::setCdmaSubscriptionSourceResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCdmaRoamingPreferenceResponse(int slotId,
+int radio_1_6::setCdmaRoamingPreferenceResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6217,7 +6228,7 @@ int radio_1_5::setCdmaRoamingPreferenceResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCdmaRoamingPreferenceResponse(int slotId,
+int radio_1_6::getCdmaRoamingPreferenceResponse(int slotId,
                                            int responseType, int serial, RIL_Errno e,
                                            void *response, size_t responseLen) {
 #if VDBG
@@ -6239,7 +6250,7 @@ int radio_1_5::getCdmaRoamingPreferenceResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setTTYModeResponse(int slotId,
+int radio_1_6::setTTYModeResponse(int slotId,
                              int responseType, int serial, RIL_Errno e,
                              void *response, size_t responseLen) {
 #if VDBG
@@ -6259,7 +6270,7 @@ int radio_1_5::setTTYModeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getTTYModeResponse(int slotId,
+int radio_1_6::getTTYModeResponse(int slotId,
                              int responseType, int serial, RIL_Errno e,
                              void *response, size_t responseLen) {
 #if VDBG
@@ -6280,7 +6291,7 @@ int radio_1_5::getTTYModeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setPreferredVoicePrivacyResponse(int slotId,
+int radio_1_6::setPreferredVoicePrivacyResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6302,7 +6313,7 @@ int radio_1_5::setPreferredVoicePrivacyResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getPreferredVoicePrivacyResponse(int slotId,
+int radio_1_6::getPreferredVoicePrivacyResponse(int slotId,
                                            int responseType, int serial, RIL_Errno e,
                                            void *response, size_t responseLen) {
 #if VDBG
@@ -6333,7 +6344,7 @@ int radio_1_5::getPreferredVoicePrivacyResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendCDMAFeatureCodeResponse(int slotId,
+int radio_1_6::sendCDMAFeatureCodeResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6354,7 +6365,7 @@ int radio_1_5::sendCDMAFeatureCodeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendBurstDtmfResponse(int slotId,
+int radio_1_6::sendBurstDtmfResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6374,7 +6385,7 @@ int radio_1_5::sendBurstDtmfResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendCdmaSmsResponse(int slotId,
+int radio_1_6::sendCdmaSmsResponse(int slotId,
                               int responseType, int serial, RIL_Errno e, void *response,
                               size_t responseLen) {
 #if VDBG
@@ -6396,7 +6407,7 @@ int radio_1_5::sendCdmaSmsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::acknowledgeLastIncomingCdmaSmsResponse(int slotId,
+int radio_1_6::acknowledgeLastIncomingCdmaSmsResponse(int slotId,
                                                  int responseType, int serial, RIL_Errno e,
                                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6418,7 +6429,7 @@ int radio_1_5::acknowledgeLastIncomingCdmaSmsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getGsmBroadcastConfigResponse(int slotId,
+int radio_1_6::getGsmBroadcastConfigResponse(int slotId,
                                         int responseType, int serial, RIL_Errno e,
                                         void *response, size_t responseLen) {
 #if VDBG
@@ -6460,7 +6471,7 @@ int radio_1_5::getGsmBroadcastConfigResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setGsmBroadcastConfigResponse(int slotId,
+int radio_1_6::setGsmBroadcastConfigResponse(int slotId,
                                         int responseType, int serial, RIL_Errno e,
                                         void *response, size_t responseLen) {
 #if VDBG
@@ -6481,7 +6492,7 @@ int radio_1_5::setGsmBroadcastConfigResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setGsmBroadcastActivationResponse(int slotId,
+int radio_1_6::setGsmBroadcastActivationResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -6503,7 +6514,7 @@ int radio_1_5::setGsmBroadcastActivationResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCdmaBroadcastConfigResponse(int slotId,
+int radio_1_6::getCdmaBroadcastConfigResponse(int slotId,
                                          int responseType, int serial, RIL_Errno e,
                                          void *response, size_t responseLen) {
 #if VDBG
@@ -6543,7 +6554,7 @@ int radio_1_5::getCdmaBroadcastConfigResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCdmaBroadcastConfigResponse(int slotId,
+int radio_1_6::setCdmaBroadcastConfigResponse(int slotId,
                                          int responseType, int serial, RIL_Errno e,
                                          void *response, size_t responseLen) {
 #if VDBG
@@ -6565,7 +6576,7 @@ int radio_1_5::setCdmaBroadcastConfigResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCdmaBroadcastActivationResponse(int slotId,
+int radio_1_6::setCdmaBroadcastActivationResponse(int slotId,
                                              int responseType, int serial, RIL_Errno e,
                                              void *response, size_t responseLen) {
 #if VDBG
@@ -6587,7 +6598,7 @@ int radio_1_5::setCdmaBroadcastActivationResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCDMASubscriptionResponse(int slotId,
+int radio_1_6::getCDMASubscriptionResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e, void *response,
                                       size_t responseLen) {
 #if VDBG
@@ -6627,7 +6638,7 @@ int radio_1_5::getCDMASubscriptionResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::writeSmsToRuimResponse(int slotId,
+int radio_1_6::writeSmsToRuimResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -6647,7 +6658,7 @@ int radio_1_5::writeSmsToRuimResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::deleteSmsOnRuimResponse(int slotId,
+int radio_1_6::deleteSmsOnRuimResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -6667,7 +6678,7 @@ int radio_1_5::deleteSmsOnRuimResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getDeviceIdentityResponse(int slotId,
+int radio_1_6::getDeviceIdentityResponse(int slotId,
                                     int responseType, int serial, RIL_Errno e, void *response,
                                     size_t responseLen) {
 #if VDBG
@@ -6705,7 +6716,7 @@ int radio_1_5::getDeviceIdentityResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::exitEmergencyCallbackModeResponse(int slotId,
+int radio_1_6::exitEmergencyCallbackModeResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -6727,7 +6738,7 @@ int radio_1_5::exitEmergencyCallbackModeResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getSmscAddressResponse(int slotId,
+int radio_1_6::getSmscAddressResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -6748,7 +6759,7 @@ int radio_1_5::getSmscAddressResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setSmscAddressResponse(int slotId,
+int radio_1_6::setSmscAddressResponse(int slotId,
                                              int responseType, int serial, RIL_Errno e,
                                              void *response, size_t responseLen) {
 #if VDBG
@@ -6768,7 +6779,7 @@ int radio_1_5::setSmscAddressResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::reportSmsMemoryStatusResponse(int slotId,
+int radio_1_6::reportSmsMemoryStatusResponse(int slotId,
                                         int responseType, int serial, RIL_Errno e,
                                         void *response, size_t responseLen) {
 #if VDBG
@@ -6789,7 +6800,7 @@ int radio_1_5::reportSmsMemoryStatusResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::reportStkServiceIsRunningResponse(int slotId,
+int radio_1_6::reportStkServiceIsRunningResponse(int slotId,
                                              int responseType, int serial, RIL_Errno e,
                                              void *response, size_t responseLen) {
 #if VDBG
@@ -6810,7 +6821,7 @@ int radio_1_5::reportStkServiceIsRunningResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCdmaSubscriptionSourceResponse(int slotId,
+int radio_1_6::getCdmaSubscriptionSourceResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -6832,7 +6843,7 @@ int radio_1_5::getCdmaSubscriptionSourceResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::requestIsimAuthenticationResponse(int slotId,
+int radio_1_6::requestIsimAuthenticationResponse(int slotId,
                                             int responseType, int serial, RIL_Errno e,
                                             void *response, size_t responseLen) {
 #if VDBG
@@ -6855,7 +6866,7 @@ int radio_1_5::requestIsimAuthenticationResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::acknowledgeIncomingGsmSmsWithPduResponse(int slotId,
+int radio_1_6::acknowledgeIncomingGsmSmsWithPduResponse(int slotId,
                                                    int responseType,
                                                    int serial, RIL_Errno e, void *response,
                                                    size_t responseLen) {
@@ -6878,7 +6889,7 @@ int radio_1_5::acknowledgeIncomingGsmSmsWithPduResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendEnvelopeWithStatusResponse(int slotId,
+int radio_1_6::sendEnvelopeWithStatusResponse(int slotId,
                                          int responseType, int serial, RIL_Errno e, void *response,
                                          size_t responseLen) {
 #if VDBG
@@ -6902,7 +6913,7 @@ int radio_1_5::sendEnvelopeWithStatusResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getVoiceRadioTechnologyResponse(int slotId,
+int radio_1_6::getVoiceRadioTechnologyResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
                                           void *response, size_t responseLen) {
 #if VDBG
@@ -6924,7 +6935,7 @@ int radio_1_5::getVoiceRadioTechnologyResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getCellInfoListResponse(int slotId,
+int radio_1_6::getCellInfoListResponse(int slotId,
                                    int responseType,
                                    int serial, RIL_Errno e, void *response,
                                    size_t responseLen) {
@@ -6955,7 +6966,7 @@ int radio_1_5::getCellInfoListResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCellInfoListRateResponse(int slotId,
+int radio_1_6::setCellInfoListRateResponse(int slotId,
                                        int responseType,
                                        int serial, RIL_Errno e, void *response,
                                        size_t responseLen) {
@@ -6977,7 +6988,7 @@ int radio_1_5::setCellInfoListRateResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setInitialAttachApnResponse(int slotId,
+int radio_1_6::setInitialAttachApnResponse(int slotId,
                                        int responseType, int serial, RIL_Errno e,
                                        void *response, size_t responseLen) {
 #if VDBG
@@ -7004,7 +7015,7 @@ int radio_1_5::setInitialAttachApnResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getImsRegistrationStateResponse(int slotId,
+int radio_1_6::getImsRegistrationStateResponse(int slotId,
                                            int responseType, int serial, RIL_Errno e,
                                            void *response, size_t responseLen) {
 #if VDBG
@@ -7037,7 +7048,7 @@ int radio_1_5::getImsRegistrationStateResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendImsSmsResponse(int slotId,
+int radio_1_6::sendImsSmsResponse(int slotId,
                               int responseType, int serial, RIL_Errno e, void *response,
                               size_t responseLen) {
 #if VDBG
@@ -7059,7 +7070,7 @@ int radio_1_5::sendImsSmsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::iccTransmitApduBasicChannelResponse(int slotId,
+int radio_1_6::iccTransmitApduBasicChannelResponse(int slotId,
                                                int responseType, int serial, RIL_Errno e,
                                                void *response, size_t responseLen) {
 #if VDBG
@@ -7083,7 +7094,7 @@ int radio_1_5::iccTransmitApduBasicChannelResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::iccOpenLogicalChannelResponse(int slotId,
+int radio_1_6::iccOpenLogicalChannelResponse(int slotId,
                                          int responseType, int serial, RIL_Errno e, void *response,
                                          size_t responseLen) {
 #if VDBG
@@ -7121,7 +7132,7 @@ int radio_1_5::iccOpenLogicalChannelResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::iccCloseLogicalChannelResponse(int slotId,
+int radio_1_6::iccCloseLogicalChannelResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
                                           void *response, size_t responseLen) {
 #if VDBG
@@ -7143,7 +7154,7 @@ int radio_1_5::iccCloseLogicalChannelResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::iccTransmitApduLogicalChannelResponse(int slotId,
+int radio_1_6::iccTransmitApduLogicalChannelResponse(int slotId,
                                                  int responseType, int serial, RIL_Errno e,
                                                  void *response, size_t responseLen) {
 #if VDBG
@@ -7167,7 +7178,7 @@ int radio_1_5::iccTransmitApduLogicalChannelResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::nvReadItemResponse(int slotId,
+int radio_1_6::nvReadItemResponse(int slotId,
                               int responseType, int serial, RIL_Errno e,
                               void *response, size_t responseLen) {
 #if VDBG
@@ -7188,7 +7199,7 @@ int radio_1_5::nvReadItemResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::nvWriteItemResponse(int slotId,
+int radio_1_6::nvWriteItemResponse(int slotId,
                                int responseType, int serial, RIL_Errno e,
                                void *response, size_t responseLen) {
 #if VDBG
@@ -7208,7 +7219,7 @@ int radio_1_5::nvWriteItemResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::nvWriteCdmaPrlResponse(int slotId,
+int radio_1_6::nvWriteCdmaPrlResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -7228,7 +7239,7 @@ int radio_1_5::nvWriteCdmaPrlResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::nvResetConfigResponse(int slotId,
+int radio_1_6::nvResetConfigResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
@@ -7248,7 +7259,7 @@ int radio_1_5::nvResetConfigResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setUiccSubscriptionResponse(int slotId,
+int radio_1_6::setUiccSubscriptionResponse(int slotId,
                                        int responseType, int serial, RIL_Errno e,
                                        void *response, size_t responseLen) {
 #if VDBG
@@ -7269,7 +7280,7 @@ int radio_1_5::setUiccSubscriptionResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setDataAllowedResponse(int slotId,
+int radio_1_6::setDataAllowedResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -7289,7 +7300,7 @@ int radio_1_5::setDataAllowedResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getHardwareConfigResponse(int slotId,
+int radio_1_6::getHardwareConfigResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -7319,7 +7330,7 @@ int radio_1_5::getHardwareConfigResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::requestIccSimAuthenticationResponse(int slotId,
+int radio_1_6::requestIccSimAuthenticationResponse(int slotId,
                                                int responseType, int serial, RIL_Errno e,
                                                void *response, size_t responseLen) {
 #if VDBG
@@ -7343,7 +7354,7 @@ int radio_1_5::requestIccSimAuthenticationResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setDataProfileResponse(int slotId,
+int radio_1_6::setDataProfileResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -7369,7 +7380,7 @@ int radio_1_5::setDataProfileResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::requestShutdownResponse(int slotId,
+int radio_1_6::requestShutdownResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -7402,7 +7413,7 @@ void responseRadioCapability(RadioResponseInfo& responseInfo, int serial,
     }
 }
 
-int radio_1_5::getRadioCapabilityResponse(int slotId,
+int radio_1_6::getRadioCapabilityResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -7424,7 +7435,7 @@ int radio_1_5::getRadioCapabilityResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setRadioCapabilityResponse(int slotId,
+int radio_1_6::setRadioCapabilityResponse(int slotId,
                                      int responseType, int serial, RIL_Errno e,
                                      void *response, size_t responseLen) {
 #if VDBG
@@ -7462,7 +7473,7 @@ LceStatusInfo responseLceStatusInfo(RadioResponseInfo& responseInfo, int serial,
     return result;
 }
 
-int radio_1_5::startLceServiceResponse(int slotId,
+int radio_1_6::startLceServiceResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
 #if VDBG
@@ -7485,7 +7496,7 @@ int radio_1_5::startLceServiceResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::stopLceServiceResponse(int slotId,
+int radio_1_6::stopLceServiceResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -7508,7 +7519,7 @@ int radio_1_5::stopLceServiceResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::pullLceDataResponse(int slotId,
+int radio_1_6::pullLceDataResponse(int slotId,
                                int responseType, int serial, RIL_Errno e,
                                void *response, size_t responseLen) {
 #if VDBG
@@ -7537,7 +7548,7 @@ int radio_1_5::pullLceDataResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::getModemActivityInfoResponse(int slotId,
+int radio_1_6::getModemActivityInfoResponse(int slotId,
                                         int responseType, int serial, RIL_Errno e,
                                         void *response, size_t responseLen) {
 #if VDBG
@@ -7573,7 +7584,7 @@ int radio_1_5::getModemActivityInfoResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setAllowedCarriersResponse(int slotId,
+int radio_1_6::setAllowedCarriersResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -7625,7 +7636,7 @@ void prepareCarrierRestrictionsResponse(hidl_vec<Carrier>& allowedCarriers,
     }
 }
 
-int radio_1_5::getAllowedCarriersResponse(int slotId,
+int radio_1_6::getAllowedCarriersResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -7702,7 +7713,7 @@ int radio_1_5::getAllowedCarriersResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendDeviceStateResponse(int slotId,
+int radio_1_6::sendDeviceStateResponse(int slotId,
                               int responseType, int serial, RIL_Errno e,
                               void *response, size_t responselen) {
 #if VDBG
@@ -7722,7 +7733,7 @@ int radio_1_5::sendDeviceStateResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setCarrierInfoForImsiEncryptionResponse(int slotId,
+int radio_1_6::setCarrierInfoForImsiEncryptionResponse(int slotId,
                                int responseType, int serial, RIL_Errno e,
                                void *response, size_t responseLen) {
     RLOGD("setCarrierInfoForImsiEncryptionResponse: serial %d", serial);
@@ -7739,7 +7750,7 @@ int radio_1_5::setCarrierInfoForImsiEncryptionResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setIndicationFilterResponse(int slotId,
+int radio_1_6::setIndicationFilterResponse(int slotId,
                               int responseType, int serial, RIL_Errno e,
                               void *response, size_t responselen) {
 #if VDBG
@@ -7763,7 +7774,7 @@ int radio_1_5::setIndicationFilterResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setSimCardPowerResponse(int slotId,
+int radio_1_6::setSimCardPowerResponse(int slotId,
                                    int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
 #if VDBG
@@ -7792,7 +7803,7 @@ int radio_1_5::setSimCardPowerResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::startNetworkScanResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::startNetworkScanResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                     void *response, size_t responseLen) {
 #if VDBG
     RLOGD("startNetworkScanResponse: serial %d", serial);
@@ -7800,8 +7811,8 @@ int radio_1_5::startNetworkScanResponse(int slotId, int responseType, int serial
     RadioResponseInfo responseInfo = {};
     populateResponseInfo(responseInfo, serial, responseType, e);
 
-    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
-        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_5
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
                 ->startNetworkScanResponse_1_5(responseInfo);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else if (radioService[slotId]->mRadioResponseV1_4 != NULL) {
@@ -7819,7 +7830,7 @@ int radio_1_5::startNetworkScanResponse(int slotId, int responseType, int serial
     return 0;
 }
 
-int radio_1_5::stopNetworkScanResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::stopNetworkScanResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                    void *response, size_t responseLen) {
 #if VDBG
     RLOGD("stopNetworkScanResponse: serial %d", serial);
@@ -7838,7 +7849,7 @@ int radio_1_5::stopNetworkScanResponse(int slotId, int responseType, int serial,
     return 0;
 }
 
-int radio_1_5::emergencyDialResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::emergencyDialResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                     void *response, size_t responseLen) {
 #if VDBG
     RLOGD("emergencyDialResponse: serial %d", serial);
@@ -7862,7 +7873,7 @@ void convertRilKeepaliveStatusToHal(const RIL_KeepaliveStatus *rilStatus,
     halStatus.code = static_cast<V1_1::KeepaliveStatusCode>(rilStatus->code);
 }
 
-int radio_1_5::startKeepaliveResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::startKeepaliveResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                     void *response, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -7890,7 +7901,7 @@ int radio_1_5::startKeepaliveResponse(int slotId, int responseType, int serial, 
     return 0;
 }
 
-int radio_1_5::stopKeepaliveResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::stopKeepaliveResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                     void *response, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -7910,7 +7921,7 @@ int radio_1_5::stopKeepaliveResponse(int slotId, int responseType, int serial, R
     return 0;
 }
 
-int radio_1_5::getModemStackStatusResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::getModemStackStatusResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                     void *response, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -7931,7 +7942,7 @@ int radio_1_5::getModemStackStatusResponse(int slotId, int responseType, int ser
     return 0;
 }
 
-int radio_1_5::enableModemResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::enableModemResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                     void *response, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -7951,7 +7962,7 @@ int radio_1_5::enableModemResponse(int slotId, int responseType, int serial, RIL
     return 0;
 }
 
-int radio_1_5::sendRequestRawResponse(int slotId,
+int radio_1_6::sendRequestRawResponse(int slotId,
                                   int responseType, int serial, RIL_Errno e,
                                   void *response, size_t responseLen) {
 #if VDBG
@@ -7982,7 +7993,7 @@ int radio_1_5::sendRequestRawResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendRequestStringsResponse(int slotId,
+int radio_1_6::sendRequestStringsResponse(int slotId,
                                       int responseType, int serial, RIL_Errno e,
                                       void *response, size_t responseLen) {
 #if VDBG
@@ -8019,7 +8030,7 @@ int radio_1_5::sendRequestStringsResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::setSystemSelectionChannelsResponse(int slotId, int responseType, int serial,
+int radio_1_6::setSystemSelectionChannelsResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* /* response */, size_t responseLen) {
 #if VDBG
     RLOGD("setSystemSelectionChannelsResponse: serial %d", serial);
@@ -8043,7 +8054,7 @@ int radio_1_5::setSystemSelectionChannelsResponse(int slotId, int responseType, 
     return 0;
 }
 
-int radio_1_5::setSignalStrengthReportingCriteriaResponse(int slotId, int responseType, int serial,
+int radio_1_6::setSignalStrengthReportingCriteriaResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* /* response */, size_t responseLen) {
 #if VDBG
     RLOGD("setSignalStrengthReportingCriteriaResponse: serial %d", serial);
@@ -8067,7 +8078,7 @@ int radio_1_5::setSignalStrengthReportingCriteriaResponse(int slotId, int respon
     return 0;
 }
 
-int radio_1_5::setLinkCapacityReportingCriteriaResponse(int slotId, int responseType, int serial,
+int radio_1_6::setLinkCapacityReportingCriteriaResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* /* response */, size_t responseLen) {
 #if VDBG
     RLOGD("setLinkCapacityReportingCriteriaResponse: serial %d", serial);
@@ -8091,7 +8102,7 @@ int radio_1_5::setLinkCapacityReportingCriteriaResponse(int slotId, int response
     return 0;
 }
 
-int radio_1_5::enableUiccApplicationsResponse(int slotId, int responseType, int serial,
+int radio_1_6::enableUiccApplicationsResponse(int slotId, int responseType, int serial,
                                     RIL_Errno e, void* /* response */, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -8112,7 +8123,7 @@ int radio_1_5::enableUiccApplicationsResponse(int slotId, int responseType, int 
     return 0;
 }
 
-int radio_1_5::areUiccApplicationsEnabledResponse(int slotId, int responseType, int serial,
+int radio_1_6::areUiccApplicationsEnabledResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* response, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -8140,7 +8151,7 @@ int radio_1_5::areUiccApplicationsEnabledResponse(int slotId, int responseType, 
     return 0;
 }
 
-int radio_1_5::getBarringInfoResponse(int slotId,
+int radio_1_6::getBarringInfoResponse(int slotId,
                               int responseType, int serial, RIL_Errno e,
                               void *response, size_t responselen) {
 #if VDBG
@@ -8164,7 +8175,7 @@ int radio_1_5::getBarringInfoResponse(int slotId,
     return 0;
 }
 
-int radio_1_5::sendCdmaSmsExpectMoreResponse(int slotId, int responseType, int serial, RIL_Errno e,
+int radio_1_6::sendCdmaSmsExpectMoreResponse(int slotId, int responseType, int serial, RIL_Errno e,
                                              void *response, size_t responseLen) {
 #if VDBG
     RLOGD("sendCdmaSmsExpectMoreResponse: serial %d", serial);
@@ -8185,7 +8196,7 @@ int radio_1_5::sendCdmaSmsExpectMoreResponse(int slotId, int responseType, int s
     return 0;
 }
 
-int radio_1_5::supplySimDepersonalizationResponse(int slotId, int responseType, int serial,
+int radio_1_6::supplySimDepersonalizationResponse(int slotId, int responseType, int serial,
                                                   RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("supplySimDepersonalizationResponse: serial %d", serial);
@@ -8226,7 +8237,7 @@ RadioIndicationType convertIntToRadioIndicationType(int indicationType) {
             (RadioIndicationType::UNSOLICITED_ACK_EXP);
 }
 
-int radio_1_5::radioStateChangedInd(int slotId,
+int radio_1_6::radioStateChangedInd(int slotId,
                                  int indicationType, int token, RIL_Errno e, void *response,
                                  size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8243,7 +8254,7 @@ int radio_1_5::radioStateChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::callStateChangedInd(int slotId,
+int radio_1_6::callStateChangedInd(int slotId,
                                int indicationType, int token, RIL_Errno e, void *response,
                                size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8260,7 +8271,7 @@ int radio_1_5::callStateChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::networkStateChangedInd(int slotId,
+int radio_1_6::networkStateChangedInd(int slotId,
                                   int indicationType, int token, RIL_Errno e, void *response,
                                   size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8314,7 +8325,7 @@ uint8_t * convertHexStringToBytes(void *response, size_t responseLen) {
     return bytes;
 }
 
-int radio_1_5::newSmsInd(int slotId, int indicationType,
+int radio_1_6::newSmsInd(int slotId, int indicationType,
                      int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen == 0) {
@@ -8344,7 +8355,7 @@ int radio_1_5::newSmsInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::newSmsStatusReportInd(int slotId,
+int radio_1_6::newSmsStatusReportInd(int slotId,
                                  int indicationType, int token, RIL_Errno e, void *response,
                                  size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8375,7 +8386,7 @@ int radio_1_5::newSmsStatusReportInd(int slotId,
     return 0;
 }
 
-int radio_1_5::newSmsOnSimInd(int slotId, int indicationType,
+int radio_1_6::newSmsOnSimInd(int slotId, int indicationType,
                           int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen != sizeof(int)) {
@@ -8396,7 +8407,7 @@ int radio_1_5::newSmsOnSimInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::onUssdInd(int slotId, int indicationType,
+int radio_1_6::onUssdInd(int slotId, int indicationType,
                      int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen != 2 * sizeof(char *)) {
@@ -8420,7 +8431,7 @@ int radio_1_5::onUssdInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::nitzTimeReceivedInd(int slotId,
+int radio_1_6::nitzTimeReceivedInd(int slotId,
                                int indicationType, int token, RIL_Errno e, void *response,
                                size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8492,7 +8503,7 @@ void convertRilSignalStrengthToHal(void *response, size_t responseLen,
     signalStrength.tdScdma.rscp = rilSignalStrength->TD_SCDMA_SignalStrength.rscp;
 }
 
-int radio_1_5::currentSignalStrengthInd(int slotId,
+int radio_1_6::currentSignalStrengthInd(int slotId,
                                     int indicationType, int token, RIL_Errno e,
                                     void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8620,7 +8631,7 @@ void convertRilDataCallListToHal(void *response, size_t responseLen,
     }
 }
 
-int radio_1_5::dataCallListChangedInd(int slotId,
+int radio_1_6::dataCallListChangedInd(int slotId,
                                   int indicationType, int token, RIL_Errno e, void *response,
                                   size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8644,7 +8655,7 @@ int radio_1_5::dataCallListChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::suppSvcNotifyInd(int slotId, int indicationType,
+int radio_1_6::suppSvcNotifyInd(int slotId, int indicationType,
                             int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen != sizeof(RIL_SuppSvcNotification)) {
@@ -8674,7 +8685,7 @@ int radio_1_5::suppSvcNotifyInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::stkSessionEndInd(int slotId, int indicationType,
+int radio_1_6::stkSessionEndInd(int slotId, int indicationType,
                             int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
 #if VDBG
@@ -8690,7 +8701,7 @@ int radio_1_5::stkSessionEndInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::stkProactiveCommandInd(int slotId,
+int radio_1_6::stkProactiveCommandInd(int slotId,
                                   int indicationType, int token, RIL_Errno e, void *response,
                                   size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8712,7 +8723,7 @@ int radio_1_5::stkProactiveCommandInd(int slotId,
     return 0;
 }
 
-int radio_1_5::stkEventNotifyInd(int slotId, int indicationType,
+int radio_1_6::stkEventNotifyInd(int slotId, int indicationType,
                              int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen == 0) {
@@ -8733,7 +8744,7 @@ int radio_1_5::stkEventNotifyInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::stkCallSetupInd(int slotId, int indicationType,
+int radio_1_6::stkCallSetupInd(int slotId, int indicationType,
                            int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen != sizeof(int)) {
@@ -8754,7 +8765,7 @@ int radio_1_5::stkCallSetupInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::simSmsStorageFullInd(int slotId,
+int radio_1_6::simSmsStorageFullInd(int slotId,
                                 int indicationType, int token, RIL_Errno e, void *response,
                                 size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8771,7 +8782,7 @@ int radio_1_5::simSmsStorageFullInd(int slotId,
     return 0;
 }
 
-int radio_1_5::simRefreshInd(int slotId, int indicationType,
+int radio_1_6::simRefreshInd(int slotId, int indicationType,
                          int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen != sizeof(RIL_SimRefreshResponse_v7)) {
@@ -8807,7 +8818,7 @@ void convertRilCdmaSignalInfoRecordToHal(RIL_CDMA_SignalInfoRecord *signalInfoRe
     record.signal = signalInfoRecord->signal;
 }
 
-int radio_1_5::callRingInd(int slotId, int indicationType,
+int radio_1_6::callRingInd(int slotId, int indicationType,
                        int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         bool isGsm;
@@ -8836,7 +8847,7 @@ int radio_1_5::callRingInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::simStatusChangedInd(int slotId,
+int radio_1_6::simStatusChangedInd(int slotId,
                                int indicationType, int token, RIL_Errno e, void *response,
                                size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8853,7 +8864,7 @@ int radio_1_5::simStatusChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaNewSmsInd(int slotId, int indicationType,
+int radio_1_6::cdmaNewSmsInd(int slotId, int indicationType,
                          int token, RIL_Errno e, void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
         if (response == NULL || responseLen != sizeof(RIL_CDMA_SMS_Message)) {
@@ -8901,7 +8912,7 @@ int radio_1_5::cdmaNewSmsInd(int slotId, int indicationType,
     return 0;
 }
 
-int radio_1_5::newBroadcastSmsInd(int slotId,
+int radio_1_6::newBroadcastSmsInd(int slotId,
                               int indicationType, int token, RIL_Errno e, void *response,
                               size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8925,7 +8936,7 @@ int radio_1_5::newBroadcastSmsInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaRuimSmsStorageFullInd(int slotId,
+int radio_1_6::cdmaRuimSmsStorageFullInd(int slotId,
                                      int indicationType, int token, RIL_Errno e, void *response,
                                      size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8943,7 +8954,7 @@ int radio_1_5::cdmaRuimSmsStorageFullInd(int slotId,
     return 0;
 }
 
-int radio_1_5::restrictedStateChangedInd(int slotId,
+int radio_1_6::restrictedStateChangedInd(int slotId,
                                      int indicationType, int token, RIL_Errno e, void *response,
                                      size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8966,7 +8977,7 @@ int radio_1_5::restrictedStateChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::enterEmergencyCallbackModeInd(int slotId,
+int radio_1_6::enterEmergencyCallbackModeInd(int slotId,
                                          int indicationType, int token, RIL_Errno e, void *response,
                                          size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -8984,7 +8995,7 @@ int radio_1_5::enterEmergencyCallbackModeInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaCallWaitingInd(int slotId,
+int radio_1_6::cdmaCallWaitingInd(int slotId,
                               int indicationType, int token, RIL_Errno e, void *response,
                               size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9017,7 +9028,7 @@ int radio_1_5::cdmaCallWaitingInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaOtaProvisionStatusInd(int slotId,
+int radio_1_6::cdmaOtaProvisionStatusInd(int slotId,
                                      int indicationType, int token, RIL_Errno e, void *response,
                                      size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9040,7 +9051,7 @@ int radio_1_5::cdmaOtaProvisionStatusInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaInfoRecInd(int slotId,
+int radio_1_6::cdmaInfoRecInd(int slotId,
                           int indicationType, int token, RIL_Errno e, void *response,
                           size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9218,7 +9229,7 @@ int radio_1_5::cdmaInfoRecInd(int slotId,
     return 0;
 }
 
-int radio_1_5::indicateRingbackToneInd(int slotId,
+int radio_1_6::indicateRingbackToneInd(int slotId,
                                    int indicationType, int token, RIL_Errno e, void *response,
                                    size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9240,7 +9251,7 @@ int radio_1_5::indicateRingbackToneInd(int slotId,
     return 0;
 }
 
-int radio_1_5::resendIncallMuteInd(int slotId,
+int radio_1_6::resendIncallMuteInd(int slotId,
                                int indicationType, int token, RIL_Errno e, void *response,
                                size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9257,7 +9268,7 @@ int radio_1_5::resendIncallMuteInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaSubscriptionSourceChangedInd(int slotId,
+int radio_1_6::cdmaSubscriptionSourceChangedInd(int slotId,
                                             int indicationType, int token, RIL_Errno e,
                                             void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9281,7 +9292,7 @@ int radio_1_5::cdmaSubscriptionSourceChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::cdmaPrlChangedInd(int slotId,
+int radio_1_6::cdmaPrlChangedInd(int slotId,
                              int indicationType, int token, RIL_Errno e, void *response,
                              size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9303,7 +9314,7 @@ int radio_1_5::cdmaPrlChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::exitEmergencyCallbackModeInd(int slotId,
+int radio_1_6::exitEmergencyCallbackModeInd(int slotId,
                                         int indicationType, int token, RIL_Errno e, void *response,
                                         size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9321,7 +9332,7 @@ int radio_1_5::exitEmergencyCallbackModeInd(int slotId,
     return 0;
 }
 
-int radio_1_5::rilConnectedInd(int slotId,
+int radio_1_6::rilConnectedInd(int slotId,
                            int indicationType, int token, RIL_Errno e, void *response,
                            size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9336,7 +9347,7 @@ int radio_1_5::rilConnectedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::voiceRadioTechChangedInd(int slotId,
+int radio_1_6::voiceRadioTechChangedInd(int slotId,
                                     int indicationType, int token, RIL_Errno e, void *response,
                                     size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9505,7 +9516,7 @@ void convertRilCellInfoListToHal(void *response, size_t responseLen, hidl_vec<Ce
     }
 }
 
-int radio_1_5::cellInfoListInd(int slotId,
+int radio_1_6::cellInfoListInd(int slotId,
                            int indicationType, int token, RIL_Errno e, void *response,
                            size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9530,7 +9541,7 @@ int radio_1_5::cellInfoListInd(int slotId,
     return 0;
 }
 
-int radio_1_5::imsNetworkStateChangedInd(int slotId,
+int radio_1_6::imsNetworkStateChangedInd(int slotId,
                                      int indicationType, int token, RIL_Errno e, void *response,
                                      size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9548,7 +9559,7 @@ int radio_1_5::imsNetworkStateChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::subscriptionStatusChangedInd(int slotId,
+int radio_1_6::subscriptionStatusChangedInd(int slotId,
                                         int indicationType, int token, RIL_Errno e, void *response,
                                         size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9571,7 +9582,7 @@ int radio_1_5::subscriptionStatusChangedInd(int slotId,
     return 0;
 }
 
-int radio_1_5::srvccStateNotifyInd(int slotId,
+int radio_1_6::srvccStateNotifyInd(int slotId,
                                int indicationType, int token, RIL_Errno e, void *response,
                                size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9626,7 +9637,7 @@ void convertRilHardwareConfigListToHal(void *response, size_t responseLen,
     }
 }
 
-int radio_1_5::hardwareConfigChangedInd(int slotId,
+int radio_1_6::hardwareConfigChangedInd(int slotId,
                                     int indicationType, int token, RIL_Errno e, void *response,
                                     size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9662,7 +9673,7 @@ void convertRilRadioCapabilityToHal(void *response, size_t responseLen, RadioCap
     rc.status = (V1_0::RadioCapabilityStatus) rilRadioCapability->status;
 }
 
-int radio_1_5::radioCapabilityIndicationInd(int slotId,
+int radio_1_6::radioCapabilityIndicationInd(int slotId,
                                         int indicationType, int token, RIL_Errno e, void *response,
                                         size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9701,7 +9712,7 @@ bool isServiceTypeCfQuery(RIL_SsServiceType serType, RIL_SsRequestType reqType) 
     return false;
 }
 
-int radio_1_5::onSupplementaryServiceIndicationInd(int slotId,
+int radio_1_6::onSupplementaryServiceIndicationInd(int slotId,
                                                int indicationType, int token, RIL_Errno e,
                                                void *response, size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9781,7 +9792,7 @@ int radio_1_5::onSupplementaryServiceIndicationInd(int slotId,
     return 0;
 }
 
-int radio_1_5::stkCallControlAlphaNotifyInd(int slotId,
+int radio_1_6::stkCallControlAlphaNotifyInd(int slotId,
                                         int indicationType, int token, RIL_Errno e, void *response,
                                         size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9811,7 +9822,7 @@ void convertRilLceDataInfoToHal(void *response, size_t responseLen, LceDataInfo&
     lce.lceSuspended = rilLceDataInfo->lce_suspended;
 }
 
-int radio_1_5::lceDataInd(int slotId,
+int radio_1_6::lceDataInd(int slotId,
                       int indicationType, int token, RIL_Errno e, void *response,
                       size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9835,7 +9846,7 @@ int radio_1_5::lceDataInd(int slotId,
     return 0;
 }
 
-int radio_1_5::pcoDataInd(int slotId,
+int radio_1_6::pcoDataInd(int slotId,
                       int indicationType, int token, RIL_Errno e, void *response,
                       size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9864,7 +9875,7 @@ int radio_1_5::pcoDataInd(int slotId,
     return 0;
 }
 
-int radio_1_5::modemResetInd(int slotId,
+int radio_1_6::modemResetInd(int slotId,
                          int indicationType, int token, RIL_Errno e, void *response,
                          size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndication != NULL) {
@@ -9886,7 +9897,7 @@ int radio_1_5::modemResetInd(int slotId,
     return 0;
 }
 
-int radio_1_5::networkScanResultInd(int slotId,
+int radio_1_6::networkScanResultInd(int slotId,
                                 int indicationType, int token, RIL_Errno e, void *response,
                                 size_t responseLen) {
 #if VDBG
@@ -9922,7 +9933,7 @@ int radio_1_5::networkScanResultInd(int slotId,
     return 0;
 }
 
-int radio_1_5::carrierInfoForImsiEncryption(int slotId,
+int radio_1_6::carrierInfoForImsiEncryption(int slotId,
                                   int indicationType, int token, RIL_Errno e, void *response,
                                   size_t responseLen) {
     if (radioService[slotId] != NULL && radioService[slotId]->mRadioIndicationV1_4 != NULL) {
@@ -9942,7 +9953,7 @@ int radio_1_5::carrierInfoForImsiEncryption(int slotId,
     return 0;
 }
 
-int radio_1_5::keepaliveStatusInd(int slotId,
+int radio_1_6::keepaliveStatusInd(int slotId,
                          int indicationType, int token, RIL_Errno e, void *response,
                          size_t responseLen) {
 #if VDBG
@@ -9975,7 +9986,7 @@ int radio_1_5::keepaliveStatusInd(int slotId,
     return 0;
 }
 
-int radio_1_5::oemHookRawInd(int slotId,
+int radio_1_6::oemHookRawInd(int slotId,
                          int indicationType, int token, RIL_Errno e, void *response,
                          size_t responseLen) {
     if (!kOemHookEnabled) return 0;
@@ -10001,7 +10012,7 @@ int radio_1_5::oemHookRawInd(int slotId,
     return 0;
 }
 
-void radio_1_5::registerService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
+void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
     using namespace android::hardware;
     int simCount = 1;
     const char *serviceNames[] = {
@@ -10032,9 +10043,9 @@ void radio_1_5::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
 
         RLOGD("sim i = %d registering ...", i);
 
-        radioService[i] = new RadioImpl_1_5;
+        radioService[i] = new RadioImpl_1_6;
         radioService[i]->mSlotId = i;
-        RLOGD("registerService: starting android::hardware::radio::V1_5::IRadio %s for slot %d",
+        RLOGD("registerService: starting android::hardware::radio::V1_6::IRadio %s for slot %d",
                 serviceNames[i], i);
         android::status_t status = radioService[i]->registerAsService(serviceNames[i]);
         LOG_ALWAYS_FATAL_IF(status != android::OK, "status %d", status);
@@ -10055,7 +10066,7 @@ void rilc_thread_pool() {
     joinRpcThreadpool();
 }
 
-pthread_rwlock_t * radio_1_5::getRadioServiceRwlock(int slotId) {
+pthread_rwlock_t * radio_1_6::getRadioServiceRwlock(int slotId) {
     pthread_rwlock_t *radioServiceRwlockPtr = &radioServiceRwlock;
 
     #if (SIM_COUNT >= 2)
@@ -10072,6 +10083,6 @@ pthread_rwlock_t * radio_1_5::getRadioServiceRwlock(int slotId) {
 }
 
 // should acquire write lock for the corresponding service before calling this
-void radio_1_5::setNitzTimeReceived(int slotId, long timeReceived) {
+void radio_1_6::setNitzTimeReceived(int slotId, long timeReceived) {
     nitzTimeReceived[slotId] = timeReceived;
 }
