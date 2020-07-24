@@ -30,7 +30,7 @@ function help_on_container_create {
   echo "     Options:"
   echo "       -n | --name jellyfish        : override default name"
   echo "                                    : for backward compat, [NAME] will override this"
-  echo "       -f | --foreground            : run the container in foreground"
+  echo "       -s | --singleshot            : run the container in foreground"
   echo "                                    : otherwise, the container is created as a daemon"
   echo "       -x | --with_host_x           : run the container in foreground and"
   echo "                                    : share X of the docker host"
@@ -111,12 +111,7 @@ function setup_android_build_envs {
 }
 
 function cvd_docker_create {
-  local OPTIND
-  local op
-  local val
-  local OPTARG
-
-  local name_=""
+  local name=""
   local foreground="false"
   local with_host_x="false"
   local need_help="false"
@@ -125,53 +120,57 @@ function cvd_docker_create {
   local android_build_top="false"
   local to_build_top_dir="${ANDROID_BUILD_TOP}"
 
-  while getopts ":m:a:n:-:hfx" op; do
-    # n | --name=cuttlefish | --name jellyfish
-    # f | --foreground
-    # x | --with_host_x
-    # m | --share_dir dir1:dir2
-    # h | --help
-    # a | --android_build_top dir
-    if [[ $op == '-' ]]; then
-      case "${OPTARG}" in
-        *=* )
-          val=${OPTARG#*=}
-          op=${OPTARG%=$val}
-          OPTARG=${val}
-          ;;
-        *)
-          op=${OPTARG}
-          val=${!OPTIND}
-          if [[ -n $val ]] && [[ ${val:0:1} != '-' ]]; then
-            OPTARG=${val}
-            OPTIND=$(( OPTIND + 1 ))
-          fi
-          ;;
-      esac
-    fi
-    case "$op" in
-      n | name ) name_=${OPTARG}
-        ;;
-      f | foreground ) foreground="true"
-        ;;
-      x | with_host_x )
-        with_host_x="true"
-        foreground="true"
-        ;;
-      m | share_dir )
-        share_dir="true"
-        shared_dir_pairs+=("${OPTARG}")
-        ;;
-      a | android_build_top )
-        if [[ -z ${ANDROID_BUILD_TOP} ]]; then
-            android_build_top="true"
-            to_build_top_dir="${OPTARG}"
-        fi
-        ;;
-      h | help ) need_help="true"
-        ;;
-      ? ) need_help="true"
-        ;;
+  # n | --name=cuttlefish | --name jellyfish
+  # s | --singleshot
+  # x | --with_host_x
+  # m | --share_dir dir1:dir2
+  # a | --android_build_top dir
+  # h | --help
+
+  local params
+  params=$(getopt -o 'n:a:m:sxh' -l 'name:,android_build_top:,share_dir:,singleshot,with_host_x,help' --name "$0" -- "$@") || return
+  eval set -- "${params}"
+  unset params
+  while true; do
+    case "$1" in
+    -n|--name)
+      name=$2
+      shift 2
+      ;;
+    -m|--share_dir)
+      share_dir="true"
+      shared_dir_pairs+=("$2")
+      shift 2
+      ;;
+    -s|--singleshot)
+      foreground="true"
+      shift
+      ;;
+    -x|--with_host_x)
+      with_host_x="true"
+      foreground="true"
+      shift
+      ;;
+    -a|--android_build_top)
+      if [[ -z ${ANDROID_BUILD_TOP} ]]; then
+        android_build_top="true"
+        to_build_top_dir="$2"
+      fi
+      shift 2
+      ;;
+   -h|--help)
+      need_help="true"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      echo "Not implemented: $1" >&2
+      need_help="true"
+      break
+      ;;
     esac
   done
 
@@ -192,10 +191,12 @@ function cvd_docker_create {
   fi
 
   # for backward compatibility:
-  [[ -n ${!OPTIND} ]] && name_="${!OPTIND}"
+  local -a _rest=($@)
+  [[ -z ${name} ]] && name="${_rest[0]}"
+  unset _rest
 
-  local name="$(cvd_get_id $name_)"
-  local container="$(cvd_exists $name_)"
+  local name="$(cvd_get_id $name)"
+  local container="$(cvd_exists $name)"
 
   local -a volumes=()
   if [[ -z "${container}" ]]; then
