@@ -1,4 +1,4 @@
-cuttlefish-common (0.9.14) UNRELEASED; urgency=medium
+cuttlefish-common (0.9.14) stable; urgency=medium
 
   [ Jorge E. Moreira ]
   * Depend on Python 2.7 instead of Python 2
@@ -6,7 +6,7 @@ cuttlefish-common (0.9.14) UNRELEASED; urgency=medium
   [ Alistair Delva ]
   * Networking improvements to enable ipv4/ipv6 bridging
 
--- Jason Macnak <natsu@google.com> Thu, 21 May 2020 03:18:25 -0800
+ -- Jason Macnak <natsu@google.com> Thu, 09 Jul 2020 11:01:15 -0800
 
 cuttlefish-common (0.9.13) stable; urgency=medium
 
@@ -20,7 +20,7 @@ cuttlefish-common (0.9.13) stable; urgency=medium
   * Disable masquerading of DNS lookups
   * Added /etc/default/cuttlefish-common config file
 
- -- Alistair Delva <adelva@google.com> Tue, 03 Mar 2020 03:18:25 -0800
+ -- Alistair Delva <adelva@google.com>  Tue, 03 Mar 2020 03:18:25 -0800
 
 cuttlefish-common (0.9.12) stable; urgency=medium
 
@@ -37,6 +37,8 @@ cuttlefish-common (0.9.12) stable; urgency=medium
   * Add missing dnsmasq-base dependency
 
  -- Cody Schuffelen <schuffelen@google.com>  Wed, 04 Dec 2019 12:20:28 -0800
+
+Old Changelog:
 
 cuttlefish-common (0.9.11) stable; urgency=medium
 

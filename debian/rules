@@ -7,15 +7,19 @@
 # Keep it on until we know there's no outstanding problems with installation.
 # export DH_VERBOSE=1
 
-DEB_DISPLACE_EXTENSION = .cuttlefish
-DEB_DISPLACE_FILES_cuttlefish-integration += \
-	/etc/ssh/sshd_config
+# There's a bug here
+export DEB_BUILD_MAINT_OPTIONS=hardening=-format
 
-build:
-	make -C host/commands/adbshell
+include /usr/share/dpkg/buildflags.mk
 
-override_dh_auto_install:
-	install -m600 debian/default debian/cuttlefish-common/etc/default/cuttlefish-common
 
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/rules/config-package.mk
+%:
+	dh $@ --with=config-package
+
+SOURCE_DIR := host/commands/adbshell
+override_dh_auto_build:
+	cc -std=c99 -Wall -D_XOPEN_SOURCE $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(SOURCE_DIR)/adbshell.c -o $(SOURCE_DIR)/adbshell
+
+override_dh_auto_clean:
+	-rm -f $(SOURCE_DIR)/adbshell
+	dh_auto_clean
