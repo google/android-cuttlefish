@@ -30,10 +30,9 @@ function help_on_container_create {
   echo "     Options:"
   echo "       -n | --name jellyfish  : override default name"
   echo "                              : for backward compat, [NAME] will override this"
-  echo "       -f | --foreground      : run the container in foreground"
+  echo "       -s | --singleshot      : run the container, log in once, then delete it on logout"
   echo "                              : otherwise, the container is created as a daemon"
-  echo "       -x | --with_host_x     : run the container in foreground and"
-  echo "                              : share X of the docker host"
+  echo "       -x | --with_host_x     : share X of the docker host"
   echo "       -m | --share_home dir1 : share subdirectories of the host user's home"
   echo "                              : -m dir1 -m dir2 -m dir3 for multiple directories"
   echo "                              : dir1 should be an absolute path or relative path"
@@ -78,14 +77,14 @@ function is_absolute_path {
 
 function cvd_docker_create {
   local name=""
-  local foreground="false"
+  local singleshot="false"
   local with_host_x="false"
   local need_help="false"
   local share_home="false"
   local -a shared_home_subdirs=()
 
   # n | --name=cuttlefish | --name jellyfish
-  # f | --foreground
+  # s | --singleshot
   # x | --with_host_x
   # m | --share_home dir1
   # h | --help
@@ -102,23 +101,22 @@ function cvd_docker_create {
     -m|--share_home)
       share_home="true"
       shared_home_subdirs+=("$2")
-      echo "ADD $2 TO DIRS"
       shift 2
       ;;
-    -f|--foreground)
-      foreground="true"
+    -s|--singleshot)
+      singleshot="true"
       shift
       ;;
     -x|--with_host_x)
       with_host_x="true"
-      foreground="true"
+      singleshot="true"
       shift
       ;;
    -h|--help)
       need_help="true"
       shift
       ;;
-    --)
+   --)
       shift
       break
       ;;
@@ -187,7 +185,7 @@ function cvd_docker_create {
 
     __gen_funcs ${name}
 
-    if [[ "$foreground" == "true" ]]; then
+    if [[ "$singleshot" == "true" ]]; then
         docker exec -it --user vsoc-01 ${name} /bin/bash
         cvd_docker_rm ${name}
         return
