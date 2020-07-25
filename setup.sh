@@ -30,9 +30,9 @@ function help_on_container_create {
   echo "     Options:"
   echo "       -n | --name jellyfish        : override default name"
   echo "                                    : for backward compat, [NAME] will override this"
-  echo "       -s | --singleshot            : run the container in foreground"
+  echo "       -s | --singleshot            : run the container, log in once, then delete it on logout"
   echo "                                    : otherwise, the container is created as a daemon"
-  echo "       -x | --with_host_x           : run the container in foreground and"
+  echo "       -x | --with_host_x           : run the container in singleshot and"
   echo "                                    : share X of the docker host"
   echo "       -a | --android_build_top dir : equivalent as setting ANDROID_BUILD_TOP"
   echo "                                    : if ANDROID_BUILD_TOP is already set, the option is ignored"
@@ -112,7 +112,7 @@ function setup_android_build_envs {
 
 function cvd_docker_create {
   local name=""
-  local foreground="false"
+  local singleshot="false"
   local with_host_x="false"
   local need_help="false"
   local share_dir="false"
@@ -142,12 +142,12 @@ function cvd_docker_create {
       shift 2
       ;;
     -s|--singleshot)
-      foreground="true"
+      singleshot="true"
       shift
       ;;
     -x|--with_host_x)
       with_host_x="true"
-      foreground="true"
+      singleshot="true"
       shift
       ;;
     -a|--android_build_top)
@@ -161,7 +161,7 @@ function cvd_docker_create {
       need_help="true"
       shift
       ;;
-    --)
+   --)
       shift
       break
       ;;
@@ -252,7 +252,7 @@ function cvd_docker_create {
     local ip_addr_var_name="ip_${name}"
     declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
     export ${ip_addr_var_name}
-    if [[ "$foreground" == "true" ]]; then
+    if [[ "$singleshot" == "true" ]]; then
         docker exec -it --user vsoc-01 ${name} /bin/bash
         cvd_docker_rm ${name}
         return

@@ -40,7 +40,7 @@ cvd_docker_create -h
 The options include but are not limited to:
 1. pull the host packages and images from a host directory
 1. mount the host directories to the docker container: log directory, .gitconfig, etc
-1. run the docker container in foreground
+1. run the docker container, log in once, then delete it on logout
    1. have the guest applications (e.g. Cuttlefish) use the host X server
 
 ```bash
