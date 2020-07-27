@@ -67,6 +67,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 3.0
+#   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
 PRODUCT_PROPERTY_OVERRIDES += \
     tombstoned.max_tombstone_count=500 \
     vendor.bt.rootcanal_test_console=off \
@@ -78,6 +79,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.opengles.version=196608 \
     wifi.interface=wlan0 \
     persist.sys.zram_enabled=1 \
+    ro.hardware.keystore_desede=true \
     ro.rebootescrow.device=/dev/block/pmem0 \
 
 # Below is a list of properties we probably should get rid of.
