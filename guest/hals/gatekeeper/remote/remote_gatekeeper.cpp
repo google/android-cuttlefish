@@ -38,7 +38,7 @@ using ::gatekeeper::VerifyResponse;
 namespace gatekeeper {
 
 RemoteGateKeeperDevice::RemoteGateKeeperDevice(cuttlefish::GatekeeperChannel* channel)
-    : gatekeeper_channel_(channel) {
+    : gatekeeper_channel_(channel), error_(0) {
 }
 
 RemoteGateKeeperDevice::~RemoteGateKeeperDevice() {
@@ -57,11 +57,13 @@ Return<void> RemoteGateKeeperDevice::enroll(uint32_t uid,
                                             const hidl_vec<uint8_t>& desiredPassword,
                                             enroll_cb _hidl_cb) {
     if (error_ != 0) {
+        LOG(ERROR) << "Gatekeeper in invalid state";
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
         return {};
     }
 
     if (desiredPassword.size() == 0) {
+        LOG(ERROR) << "Desired password size is 0";
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
         return {};
     }
@@ -72,10 +74,13 @@ Return<void> RemoteGateKeeperDevice::enroll(uint32_t uid,
     EnrollResponse response;
     auto error = Send(request, &response);
     if (error != ERROR_NONE) {
+        LOG(ERROR) << "Enroll request gave error: " << error;
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
     } else if (response.error == ERROR_RETRY) {
+        LOG(ERROR) << "Enroll response has a retry error";
         _hidl_cb({GatekeeperStatusCode::ERROR_RETRY_TIMEOUT, response.retry_timeout, {}});
     } else if (response.error != ERROR_NONE) {
+        LOG(ERROR) << "Enroll response has an error: " << response.error;
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
     } else {
         hidl_vec<uint8_t> new_handle(response.enrolled_password_handle.Data<uint8_t>(),
@@ -91,11 +96,13 @@ Return<void> RemoteGateKeeperDevice::verify(
         const ::android::hardware::hidl_vec<uint8_t>& enrolledPasswordHandle,
         const ::android::hardware::hidl_vec<uint8_t>& providedPassword, verify_cb _hidl_cb) {
     if (error_ != 0) {
+        LOG(ERROR) << "Gatekeeper in invalid state";
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
         return {};
     }
 
     if (enrolledPasswordHandle.size() == 0) {
+        LOG(ERROR) << "Enrolled password size is 0";
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
         return {};
     }
@@ -106,10 +113,13 @@ Return<void> RemoteGateKeeperDevice::verify(
 
     auto error = Send(request, &response);
     if (error != ERROR_NONE) {
+        LOG(ERROR) << "Verify request gave error: " << error;
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
     } else if (response.error == ERROR_RETRY) {
+        LOG(ERROR) << "Verify request response gave retry error";
         _hidl_cb({GatekeeperStatusCode::ERROR_RETRY_TIMEOUT, response.retry_timeout, {}});
     } else if (response.error != ERROR_NONE) {
+        LOG(ERROR) << "Verify request response gave error: " << response.error;
         _hidl_cb({GatekeeperStatusCode::ERROR_GENERAL_FAILURE, 0, {}});
     } else {
         hidl_vec<uint8_t> auth_token(
@@ -124,11 +134,13 @@ Return<void> RemoteGateKeeperDevice::verify(
 }
 
 Return<void> RemoteGateKeeperDevice::deleteUser(uint32_t /*uid*/, deleteUser_cb _hidl_cb) {
+    LOG(ERROR) << "deleteUser is unimplemented";
     _hidl_cb({GatekeeperStatusCode::ERROR_NOT_IMPLEMENTED, 0, {}});
     return {};
 }
 
 Return<void> RemoteGateKeeperDevice::deleteAllUsers(deleteAllUsers_cb _hidl_cb) {
+    LOG(ERROR) << "deleteAllUsers is unimplemented";
     _hidl_cb({GatekeeperStatusCode::ERROR_NOT_IMPLEMENTED, 0, {}});
     return {};
 }
