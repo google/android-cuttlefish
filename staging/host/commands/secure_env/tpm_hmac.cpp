@@ -126,7 +126,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
       ESYS_TR_NONE,
       ESYS_TR_NONE,
       &buffer,
-      ESYS_TR_RH_NULL,
+      TPM2_RH_OWNER,
       &out_hmac,
       &validation);
   if (rc != TPM2_RC_SUCCESS) {
