@@ -23,6 +23,7 @@ cc_binary_host {
         "in_process_tpm.cpp",
         "keymaster_responder.cpp",
         "secure_env.cpp",
+        "tpm_attestation_record.cpp",
         "tpm_auth.cpp",
         "tpm_commands.cpp",
         "tpm_encrypt_decrypt.cpp",
