@@ -74,8 +74,6 @@ const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
 const char* const kGpuMode = "gpu_mode";
-const char* const kWaylandSocket = "wayland_socket";
-const char* const kXDisplay = "x_display";
 const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
@@ -131,10 +129,6 @@ const char* kWebRTCBinary = "webrtc_binary";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCPublicIP = "webrtc_public_ip";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
-
-const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
-const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
 
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
@@ -244,21 +238,6 @@ std::string CuttlefishConfig::gpu_mode() const {
 }
 void CuttlefishConfig::set_gpu_mode(const std::string& name) {
   (*dictionary_)[kGpuMode] = name;
-}
-
-std::string CuttlefishConfig::wayland_socket() const {
-  // Don't use SetPath here: the path is already fully formed.
-  return (*dictionary_)[kWaylandSocket].asString();
-}
-void CuttlefishConfig::set_wayland_socket(const std::string& path) {
-  (*dictionary_)[kWaylandSocket] = path;
-}
-
-std::string CuttlefishConfig::x_display() const {
-  return (*dictionary_)[kXDisplay].asString();
-}
-void CuttlefishConfig::set_x_display(const std::string& address) {
-  (*dictionary_)[kXDisplay] = address;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
@@ -692,14 +671,6 @@ void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int 
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
 }
 
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
-}
-
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {
   return (*Dictionary())[kConfigServerPort].asInt();
 }
@@ -742,22 +713,6 @@ void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
 
 std::string CuttlefishConfig::webrtc_binary() const {
   return (*dictionary_)[kWebRTCBinary].asString();
-}
-
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
-}
-
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
