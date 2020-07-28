@@ -20,3 +20,5 @@
 int strStartsWith(const char *line, const char *prefix);
 /** Returns true iff running this process in an emulator VM */
 bool isInEmulator(void);
+/** open the modem port inside emulator VM; -1 if fails */
+int qemu_open_modem_port();
