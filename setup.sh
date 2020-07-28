@@ -128,9 +128,8 @@ function cvd_docker_create {
   # h | --help
 
   local params
-  params=$(getopt -o 'n:a:m:sxh' -l 'name:,android_build_top:,share_dir:,singleshot,with_host_x,help' --name "$0" -- "$@") || return
+  if params=$(getopt -o 'n:a:m:sxh' -l 'name:,android_build_top:,share_dir:,singleshot,with_host_x,help' --name "$0" -- "$@"); then
   eval set -- "${params}"
-  unset params
   while true; do
     case "$1" in
     -n|--name)
@@ -166,13 +165,11 @@ function cvd_docker_create {
       shift
       break
       ;;
-    *)
-      echo "Not implemented: $1" >&2
-      need_help="true"
-      break
-      ;;
     esac
   done
+  else
+    need_help="true"
+  fi
 
   if [[ "${need_help}" == "true" ]]; then
     help_on_container_create
