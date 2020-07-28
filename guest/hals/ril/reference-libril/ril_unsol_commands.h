@@ -64,3 +64,5 @@
     {RIL_UNSOL_MODEM_RESTART, radio_1_5::modemResetInd, WAKE_PARTIAL},
     {RIL_UNSOL_CARRIER_INFO_IMSI_ENCRYPTION, radio_1_5::carrierInfoForImsiEncryption, WAKE_PARTIAL},
     {RIL_UNSOL_NETWORK_SCAN_RESULT, radio_1_5::networkScanResultInd, WAKE_PARTIAL},
+    {RIL_UNSOL_KEEPALIVE_STATUS, radio_1_5::keepaliveStatusInd, WAKE_PARTIAL},
+    {RIL_UNSOL_PHYSICAL_CHANNEL_CONFIGS, radio_1_5::reportPhysicalChannelConfigs, WAKE_PARTIAL},

@@ -16,6 +16,7 @@
 */
 #include <sys/system_properties.h>
 
+#include <fcntl.h>
 #include "misc.h"
 /** returns 1 if line starts with prefix, 0 if it does not */
 int strStartsWith(const char *line, const char *prefix)
@@ -37,4 +38,13 @@ bool isInEmulator(void) {
       inQemu = (__system_property_get("ro.kernel.qemu", propValue) != 0);
   }
   return inQemu == 1;
+}
+
+int qemu_open_modem_port() {
+    char propValue[PROP_VALUE_MAX];
+    if(__system_property_get("qemu.vport.modem", propValue) <= 0) {
+        return -1;
+    }
+    int fd = open(propValue, O_RDWR);
+    return fd;
 }
