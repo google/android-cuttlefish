@@ -19,6 +19,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <telephony/ril_cdma_sms.h>
 #include <telephony/ril_nv_items.h>
 #include <telephony/ril_msim.h>
@@ -272,7 +273,8 @@ typedef enum {
     RADIO_TECH_GSM = 16, // Only supports voice
     RADIO_TECH_TD_SCDMA = 17,
     RADIO_TECH_IWLAN = 18,
-    RADIO_TECH_LTE_CA = 19
+    RADIO_TECH_LTE_CA = 19,
+    RADIO_TECH_NR = 20
 } RIL_RadioTechnology;
 
 typedef enum {
@@ -294,7 +296,8 @@ typedef enum {
     RAF_HSPAP = (1 << RADIO_TECH_HSPAP),
     RAF_GSM = (1 << RADIO_TECH_GSM),
     RAF_TD_SCDMA = (1 << RADIO_TECH_TD_SCDMA),
-    RAF_LTE_CA = (1 << RADIO_TECH_LTE_CA)
+    RAF_LTE_CA = (1 << RADIO_TECH_LTE_CA),
+    RAF_NR = (1 << RADIO_TECH_NR)
 } RIL_RadioAccessFamily;
 
 typedef enum {
@@ -1208,6 +1211,37 @@ typedef struct
   RIL_AppStatus applications[RIL_CARD_MAX_APPS];
 } RIL_CardStatus_v6;
 
+typedef struct {
+    RIL_CardStatus_v6 base;
+
+    uint32_t physicalSlotId;
+    /**
+     * An Answer To Reset (ATR) is a message output by a Smart Card conforming to ISO/IEC 7816
+     * standards, following electrical reset of the card's chip. The ATR conveys information about
+     * the communication parameters proposed by the card, and the card's nature and state.
+     *
+     * This data is applicable only when cardState is CardState:PRESENT.
+     */
+    char *atr;
+    /**
+     * Integrated Circuit Card IDentifier (ICCID) is Unique Identifier of the SIM CARD. File is
+     * located in the SIM card at EFiccid (0x2FE2) as per ETSI 102.221. The ICCID is defined by
+     * the ITU-T recommendation E.118 ISO/IEC 7816.
+     *
+     * This data is applicable only when cardState is CardState:PRESENT.
+     */
+    char *iccid;
+} RIL_CardStatus_v1_2;
+
+typedef struct {
+    RIL_CardStatus_v1_2 base;
+    char *              eid;    /* The EID is the eUICC identifier. The EID shall be stored within the ECASD and can be
+                                 * retrieved by the Device at any time using the standard GlobalPlatform GET DATA command.
+                                 *
+                                 * This data is mandatory and applicable only when cardState is CardState:PRESENT and SIM card
+                                 * supports eUICC. */
+} RIL_CardStatus_v1_4;
+
 /** The result of a SIM refresh, returned in data[0] of RIL_UNSOL_SIM_REFRESH
  *      or as part of RIL_SimRefreshResponse_v7
  */
@@ -1335,7 +1369,6 @@ typedef struct {
                */
 } RIL_CDMA_SignalStrength;
 
-
 typedef struct {
     int dbm;  /* Valid values are positive integers.  This value is the actual RSSI value
                * multiplied by -1.  Example: If the actual RSSI is -75, then this response
@@ -1401,6 +1434,27 @@ typedef struct {
                   * Reference: 3GPP TS 25.123, section 9.1.1.1 */
 } RIL_TD_SCDMA_SignalStrength;
 
+typedef struct {
+  int32_t ssRsrp;   /* SS reference signal received power, multiplied by -1.
+                     * Reference: 3GPP TS 38.215.
+                     * Range [44, 140], INT_MAX means invalid/unreported. */
+  int32_t ssRsrq;   /* SS reference signal received quality, multiplied by -1.
+                     * Reference: 3GPP TS 38.215.
+                     * Range [3, 20], INT_MAX means invalid/unreported. */
+  int32_t ssSinr;   /* SS signal-to-noise and interference ratio.
+                     * Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+                     * Range [-23, 40], INT_MAX means invalid/unreported. */
+  int32_t csiRsrp;  /* CSI reference signal received power, multiplied by -1.
+                     * Reference: 3GPP TS 38.215.
+                     * Range [44, 140], INT_MAX means invalid/unreported. */
+  int32_t csiRsrq;  /* CSI reference signal received quality, multiplied by -1.
+                     * Reference: 3GPP TS 38.215.
+                     * Range [3, 20], INT_MAX means invalid/unreported. */
+  int32_t csiSinr;  /* CSI signal-to-noise and interference ratio.
+                     * Reference: 3GPP TS 138.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+                     * Range [-23, 40], INT_MAX means invalid/unreported. */
+} RIL_NR_SignalStrength;
+
 /* Deprecated, use RIL_SignalStrength_v6 */
 typedef struct {
     RIL_GW_SignalStrength   GW_SignalStrength;
@@ -1429,6 +1483,16 @@ typedef struct {
     RIL_LTE_SignalStrength_v8   LTE_SignalStrength;
     RIL_TD_SCDMA_SignalStrength TD_SCDMA_SignalStrength;
 } RIL_SignalStrength_v10;
+
+typedef struct {
+    RIL_GW_SignalStrength       GW_SignalStrength;
+    RIL_CDMA_SignalStrength     CDMA_SignalStrength;
+    RIL_EVDO_SignalStrength     EVDO_SignalStrength;
+    RIL_LTE_SignalStrength_v8   LTE_SignalStrength;
+    RIL_TD_SCDMA_SignalStrength TD_SCDMA_SignalStrength;
+    RIL_SignalStrengthWcdma     WCDMA_SignalStrength;
+    RIL_NR_SignalStrength       NR_SignalStrength;
+} RIL_SignalStrength_v12;
 
 typedef struct {
     int mcc;    /* 3-digit Mobile Country Code, 0..999, INT_MAX if unknown */
@@ -1517,6 +1581,28 @@ typedef struct {
     int cpid;    /* 8-bit Cell Parameters ID described in TS 25.331, 0..127, INT_MAX if unknown */
 } RIL_CellIdentityTdscdma;
 
+typedef struct  {
+    char alphaLong[32];   /* Long alpha Operator Name String or Enhanced Operator Name String.*/
+    char alphaShort[32];  /* Short alpha Operator Name String or Enhanced Operator Name String */
+} RIL_CellIdentityOperatorNames;
+
+typedef struct {
+    int mcc;           /* 3-digit Mobile Country Code, in range[0, 999]; This value must
+                        * be valid for registered or camped cells; INT_MAX means invalid/unreported. */
+    int mnc;           /* 2 or 3-digit Mobile Network Code, in range [0, 999], This value must be valid for
+                        * registered or camped cells; INT_MAX means invalid/unreported. */
+    uint64_t nci;      /* NR Cell Identity in range [0, 68719476735] (36 bits) described in 3GPP TS 38.331, which
+                        * unambiguously identifies a cell within a PLMN. This value must be valid for registered or
+                        * camped cells; LONG_MAX (2^63-1) means invalid/unreported.*/
+    uint32_t pci;      /* Physical cell id in range [0, 1007] described in 3GPP TS 38.331. This value must be valid. */
+    int32_t tac;       /* 16-bit tracking area code, INT_MAX means invalid/unreported. */
+    int32_t nrarfcn;   /* NR Absolute Radio Frequency Channel Number, in range [0, 3279165].
+                        * Reference: 3GPP TS 38.101-1 and 3GPP TS 38.101-2 section 5.4.2.1.
+                        * This value must be valid. */
+
+    RIL_CellIdentityOperatorNames operatorNames;
+} RIL_CellIdentityNr;
+
 typedef struct {
   RIL_CellIdentityGsm   cellIdentityGsm;
   RIL_GW_SignalStrength signalStrengthGsm;
@@ -1554,9 +1640,14 @@ typedef struct {
 } RIL_CellInfoLte_v12;
 
 typedef struct {
-  RIL_CellIdentityTdscdma cellIdentityTdscdma;
+  RIL_CellIdentityTdscdma     cellIdentityTdscdma;
   RIL_TD_SCDMA_SignalStrength signalStrengthTdscdma;
 } RIL_CellInfoTdscdma;
+
+typedef struct {
+  RIL_CellIdentityNr          cellidentity;
+  RIL_NR_SignalStrength       signalStrength;
+} RIL_CellInfoNr;
 
 // Must be the same as CellInfo.TYPE_XXX
 typedef enum {
@@ -1565,7 +1656,8 @@ typedef enum {
   RIL_CELL_INFO_TYPE_CDMA   = 2,
   RIL_CELL_INFO_TYPE_LTE    = 3,
   RIL_CELL_INFO_TYPE_WCDMA  = 4,
-  RIL_CELL_INFO_TYPE_TD_SCDMA  = 5
+  RIL_CELL_INFO_TYPE_TD_SCDMA  = 5,
+  RIL_CELL_INFO_TYPE_NR        = 6
 } RIL_CellInfoType;
 
 // Must be the same as CellInfo.TIMESTAMP_TYPE_XXX
@@ -1576,6 +1668,13 @@ typedef enum {
     RIL_TIMESTAMP_TYPE_OEM_RIL = 3,
     RIL_TIMESTAMP_TYPE_JAVA_RIL = 4,
 } RIL_TimeStampType;
+
+typedef enum {
+    CELL_CONNECTION_NONE = 0,           // Cell is not a serving cell.
+    CELL_CONNECTION_PRIMARY_SERVING,    // UE has connection to cell for signalling and
+                                        // possibly data (3GPP 36.331, 25.331).
+    CELL_CONNECTION_SECONDARY_SERVING,  // UE has connection to cell for data (3GPP 36.331, 25.331).
+} RIL_CellConnectionStatus;
 
 typedef struct {
   RIL_CellInfoType  cellInfoType;   /* cell type for selecting from union CellInfo */
@@ -1606,6 +1705,20 @@ typedef struct {
 } RIL_CellInfo_v12;
 
 typedef struct {
+  RIL_CellInfoType          cellInfoType;   /* cell type for selecting from union CellInfo */
+  int                       registered;     /* !0 if this cell is registered 0 if not registered */
+  RIL_CellConnectionStatus  connectionStatus;  /* Connection status for the cell. */
+  union {
+    RIL_CellInfoGsm_v12     gsm;
+    RIL_CellInfoCdma        cdma;
+    RIL_CellInfoLte_v12     lte;
+    RIL_CellInfoWcdma_v12   wcdma;
+    RIL_CellInfoTdscdma     tdscdma;
+    RIL_CellInfoNr          nr;
+  } CellInfo;
+} RIL_CellInfo_v16;
+
+typedef struct {
   RIL_CellInfoType  cellInfoType;   /* cell type for selecting from union CellInfo */
   union {
     RIL_CellIdentityGsm_v12 cellIdentityGsm;
@@ -1615,6 +1728,18 @@ typedef struct {
     RIL_CellIdentityCdma cellIdentityCdma;
   };
 }RIL_CellIdentity_v16;
+
+typedef struct {
+  RIL_CellInfoType  cellInfoType;   /* cell type for selecting from union CellInfo */
+  union {
+    RIL_CellIdentityGsm_v12 cellIdentityGsm;
+    RIL_CellIdentityWcdma_v12 cellIdentityWcdma;
+    RIL_CellIdentityLte_v12 cellIdentityLte;
+    RIL_CellIdentityTdscdma cellIdentityTdscdma;
+    RIL_CellIdentityCdma cellIdentityCdma;
+    RIL_CellIdentityNr cellIdentityNr;
+  };
+} RIL_CellIdentity_v20;
 
 typedef struct {
     RIL_RegState regState;                // Valid reg states are RIL_NOT_REG_AND_NOT_SEARCHING,
@@ -2152,6 +2277,11 @@ typedef enum {
     CDMA2000 = 0x05,    // CDMA 2000 Radio AccessNetwork
 } RIL_RadioAccessNetworks;
 
+typedef struct {
+  char *operatorNumeric;
+  RIL_RadioAccessNetworks act;
+} RIL_NetworkOperator;
+
 typedef enum {
     GERAN_BAND_T380 = 1,
     GERAN_BAND_T410 = 2,
@@ -2316,6 +2446,182 @@ typedef struct {
     RIL_CellInfo_v12* network_infos;    // List of network information
     RIL_Errno error;
 } RIL_NetworkScanResult;
+
+
+
+/*********************Structs and Enums Extended in 1.4************************/
+/**
+ * Defining Emergency Service Category as follows:
+ * - General emergency call, all categories;
+ * - Police;
+ * - Ambulance;
+ * - Fire Brigade;
+ * - Marine Guard;
+ * - Mountain Rescue;
+ * - Manually Initiated eCall (MIeC);
+ * - Automatically Initiated eCall (AIeC);
+ *
+ * Category UNSPECIFIED (General emergency call, all categories) indicates that no specific
+ * services are associated with this emergency number.
+ *
+ * Reference: 3gpp 22.101, Section 10 - Emergency Calls
+ */
+typedef enum {
+    CATEGORY_UNSPECIFIED     = 0,        /* General emergency call, all categories */
+    CATEGORY_POLICE          = 1 << 0,
+    CATEGORY_AMBULANCE       = 1 << 1,
+    CATEGORY_FIRE_BRIGADE    = 1 << 2,
+    CATEGORY_MARINE_GUARD    = 1 << 3,
+    CATEGORY_MOUNTAIN_RESCUE = 1 << 4,
+    CATEGORY_MIEC            = 1 << 5,  /* Manually Initiated eCall (MIeC) */
+    CATEGORY_AIEC            = 1 << 6,  /* Automatically Initiated eCall (AIeC) */
+} RIL_EmergencyServiceCategory;
+
+/**
+ * The source to tell where the corresponding @1.4::EmergencyNumber comes from.
+ * Reference: 3gpp 22.101, Section 10 - Emergency Calls
+ */
+typedef enum {
+    SOURCE_NETWORK_SIGNALING   = 1 << 0,   /* Indicates the number is from the network signal. */
+    SOURCE_SIM                 = 1 << 1,   /* Indicates the number is from the sim card. */
+    SOURCE_MODEM_CONFIG        = 1 << 2,   /* Indicates the number is from the modem config. */
+    SOURCE_DEFAULT             = 1 << 3,   /* Indicates the number is available as default.
+                                            * Per the reference, 112, 911 must always be available;
+                                            * additionally, 000, 08, 110, 999, 118 and 119 must be available
+                                            * when sim is not present. */
+} RIL_EmergencyNumberSource;
+
+/**
+ * Indicates how the implementation should handle the emergency call if it is required by Android.
+ */
+typedef enum {
+    ROUTING_UNKNOWN    = 0,  /* Indicates Android does not require how to handle
+                                   * the corresponding emergency call; it is decided by implementation. */
+    ROUTING_MERGENCY   = 1,  /* Indicates the implementation must handle the call through emergency routing. */
+    ROUTING_NORMAL     = 2,  /* Indicates the implementation must handle the call through normal call routing. */
+} RIL_EmergencyCallRouting;
+
+/**
+ * Emergency number contains information of number, one or more service category(s), zero or more
+ * emergency uniform resource names, mobile country code (mcc), mobile network country (mnc) and
+ * source(s) that indicate where it comes from.
+ *
+ * If the emergency number is associated with country, field ‘mcc’ must be provided, otherwise
+ * field ‘mcc’ must be an empty string. If the emergency number is associated with network
+ * operator, field ‘mcc’ and 'mnc' must be provided, otherwise field ‘mnc’ must be an empty
+ * string. If the emergency number is specified with emergency service category(s), field
+ * 'categories' must be provided, otherwise field 'categories' must be
+ * @1.4::EmergencyServiceCategories::UNSPECIFIED. If the emergency number is specified with
+ * emergency uniform resource names (URN), field 'urns' must be provided, otherwise field 'urns'
+ * must be an empty list.
+ *
+ * A unique EmergencyNumber has a unique combination of ‘number’, ‘mcc’, 'mnc', 'categories' and
+ * 'urns' fields. Multiple @1.4::EmergencyNumberSource should be merged into one 'sources' field
+ * via bitwise-OR combination for the same EmergencyNumber.
+ *
+ * Reference: 3gpp 22.101, Section 10 - Emergency Calls;
+ *            3gpp 23.167, Section 6 - Functional description;
+ *            3gpp 24.503, Section 5.1.6.8.1 - General;
+ *            RFC 5031
+ */
+typedef struct {
+    RIL_Dial                     dialInfo;
+    RIL_EmergencyServiceCategory categories; /* The bitfield of @1.4::EmergencyServiceCategory(s).
+                                              * See RIL_EmergencyServiceCategory for the value of each bit. */
+    uint32_t                     urnsNumber;
+    char **                      urns;       /* The list of emergency Uniform Resource Names (URN). */
+    RIL_EmergencyNumberSource    sources;    /* The bitfield of @1.4::EmergencyNumberSource(s).
+                                              * See RIL_EmergencyNumberSource for the value of each bit. */
+    RIL_EmergencyCallRouting     routing;
+    bool                         fromEmergencyDialer;
+} RIL_EmergencyDial;
+
+/******************************************************************************/
+/* Radio Config structure @{ */
+typedef enum {
+    /* Physical slot is inactive*/
+    SLOT_STATE_INACTIVE  = 0x00,
+    /* Physical slot is active */
+    SLOT_STATE_ACTIVE    = 0x01,
+} RIL_SlotState;
+
+typedef struct {
+    /* Card state in the physical slot*/
+    RIL_CardState cardState;
+    /* Slot state Active/Inactive */
+    RIL_SlotState slotState;
+    /**
+      * An Answer To Reset (ATR) is a message output by a Smart Card conforming to ISO/IEC 7816
+      * standards, following electrical reset of the card's chip. The ATR conveys information about
+      * the communication parameters proposed by the card, and the card's nature and state.
+      * This data is applicable only when cardState is CardState:PRESENT.
+      */
+    char* atr;
+    int logicalSlotId;
+    /**
+      * Integrated Circuit Card IDentifier (ICCID) is Unique Identifier of the SIM CARD. File is
+      * located in the SIM card at EFiccid (0x2FE2) as per ETSI 102.221. The ICCID is defined by
+      * the ITU-T recommendation E.118 ISO/IEC 7816.
+      * This data is applicable only when cardState is CardState:PRESENT.
+      */
+    char* iccid;
+} RIL_SimSlotStatus;
+
+typedef struct {
+    RIL_SimSlotStatus base;
+    /**
+      * The EID is the eUICC identifier. The EID shall be stored within the ECASD and can be
+      * retrieved by the Device at any time using the standard GlobalPlatform GET DATA command.
+      *
+      * This data is mandatory and applicable only when cardState is CardState:PRESENT and SIM card
+      * supports eUICC.
+      */
+    char* eid;
+} RIL_SimSlotStatus_V1_2;
+
+#define MAX_LOGICAL_MODEM_NUM 4
+
+typedef struct {
+    /* Logical modem ID. */
+    int modemId;
+} RIL_ModemInfo;
+
+typedef struct {
+    /**
+     * maxActiveData defines how many logical modems can have
+     * PS attached simultaneously. For example, for L+L modem it
+     * should be 2.
+     */
+    int maxActiveData;
+    /**
+     * maxActiveData defines how many logical modems can have
+     * internet PDN connections simultaneously. For example, for L+L
+     * DSDS modem it’s 1, and for DSDA modem it’s 2.
+     */
+    int maxActiveInternetData;
+    /**
+     * Whether modem supports both internet PDN up so
+     * that we can do ping test before tearing down the
+     * other one.
+     */
+    int isInternetLingeringSupported;
+    /**
+     * List of logical modem information.
+     */
+    RIL_ModemInfo logicalModemList[MAX_LOGICAL_MODEM_NUM];
+} RIL_PhoneCapability;
+
+typedef struct {
+    int numOfLiveModems;
+} RIL_ModemConfig;
+/* }@ */
+
+typedef enum {
+    DATA_REQ_REASOPN_NORMAL    = 0x01,  // The reason of the data request is normal
+    DATA_REQ_REASOPN_SHUTDOWN  = 0x02,  // The reason of the data request is device shutdown
+    DATA_REQ_REASOPN_HANDOVER  = 0x03,  // The reason of the data request is IWLAN data handover
+                                        // to another transport (e.g. from cellular to wifi or vise versa)
+} RIL_DataRequestReason;
 
 /**
  * RIL_REQUEST_GET_SIM_STATUS
@@ -6732,6 +7038,114 @@ typedef struct {
  */
 #define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 157
 
+#define RIL_REQUEST_LAST RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
+
+/***********************************************************************/
+
+/* Radio Config @{ */
+#define RIL_REQUEST_RADIO_CONFIG_BASE 600
+
+/**
+ * Get SIM Slot status.
+ *
+ * Request provides the slot status of all active and inactive SIM slots and whether card is
+ * present in the slots or not.
+ *
+ * @param serial Serial number of request.
+ *
+ * Response callback is IRadioConfigResponse.getSimSlotsStatusResponse()
+ */
+#define RIL_REQUEST_CONFIG_GET_SLOT_STATUS 601
+
+/**
+ * Set SIM Slot mapping.
+
+ * Maps the logical slots to the physical slots. Logical slot is the slot that is seen by modem.
+ * Physical slot is the actual physical slot. Request maps the physical slot to logical slot.
+ * Logical slots that are already mapped to the requested physical slot are not impacted.
+ *
+ * Example no. of logical slots 1 and physical slots 2:
+ * The only logical slot (index 0) can be mapped to first physical slot (value 0) or second
+ * physical slot(value 1), while the other physical slot remains unmapped and inactive.
+ * slotMap[0] = 1 or slotMap[0] = 0
+ *
+ * Example no. of logical slots 2 and physical slots 2:
+ * First logical slot (index 0) can be mapped to physical slot 1 or 2 and other logical slot
+ * can be mapped to other physical slot. Each logical slot must be mapped to a physical slot.
+ * slotMap[0] = 0 and slotMap[1] = 1 or slotMap[0] = 1 and slotMap[1] = 0
+ *
+ * @param serial Serial number of request
+ * @param slotMap Logical to physical slot mapping, size == no. of radio instances. Index is
+ *        mapping to logical slot and value to physical slot, need to provide all the slots
+ *        mapping when sending request in case of multi slot device.
+ *        EX: uint32_t slotMap[logical slot] = physical slot
+ *        index 0 is the first logical_slot number of logical slots is equal to number of Radio
+ *        instances and number of physical slots is equal to size of slotStatus in
+ *        getSimSlotsStatusResponse
+ *
+ * Response callback is IRadioConfigResponse.setSimSlotsMappingResponse()
+ */
+#define RIL_REQUEST_CONFIG_SET_SLOT_MAPPING 602
+
+/**
+ * Request current phone capability.
+ *
+ * @param serial Serial number of request.
+ *
+ * Response callback is IRadioResponse.getPhoneCapabilityResponse() which
+ * will return <@1.1::PhoneCapability>.
+ */
+#define RIL_REQUEST_CONFIG_GET_PHONE_CAPABILITY 603
+
+/**
+ * Set preferred data modem Id.
+ * In a multi-SIM device, notify modem layer which logical modem will be used primarily
+ * for data. It helps modem with resource optimization and decisions of what data connections
+ * should be satisfied.
+ *
+ * @param serial Serial number of request.
+ * @param modem Id the logical modem ID, which should match one of modem IDs returned
+ * from getPhoneCapability().
+ *
+ * Response callback is IRadioConfigResponse.setPreferredDataModemResponse()
+ */
+#define RIL_REQUEST_CONFIG_SET_PREFER_DATA_MODEM 604
+
+/**
+ * Set modems configurations by specifying the number of live modems (i.e modems that are
+ * enabled and actively working as part of a working telephony stack).
+ *
+ * Example: this interface can be used to switch to single/multi sim mode by specifying
+ * the number of live modems as 1, 2, etc
+ *
+ * Note: by setting the number of live modems in this API, that number of modems will
+ * subsequently get enabled/disabled
+ *
+ * @param serial serial number of request.
+ * @param modemsConfig ModemsConfig object including the number of live modems
+ *
+ * Response callback is IRadioResponse.setModemsConfigResponse()
+ */
+#define RIL_REQUEST_CONFIG_SET_MODEM_CONFIG 605
+
+/**
+ * Get modems configurations. This interface is used to get modem configurations
+ * which includes the number of live modems (i.e modems that are
+ * enabled and actively working as part of a working telephony stack)
+ *
+ * Note: in order to get the overall number of modems available on the phone,
+ * refer to getPhoneCapability API
+ *
+ * @param serial Serial number of request.
+ *
+ * Response callback is IRadioResponse.getModemsConfigResponse() which
+ * will return <@1.1::ModemsConfig>.
+ */
+#define RIL_REQUEST_CONFIG_GET_MODEM_CONFIG 606
+
+#define RIL_REQUEST_RADIO_CONFIG_LAST    RIL_REQUEST_CONFIG_GET_MODEM_CONFIG
+/* }@ */
+
 /***********************************************************************/
 
 /**
@@ -7415,6 +7829,22 @@ typedef struct {
  * "response" is a const RIL_KeepaliveStatus *
  */
 #define RIL_UNSOL_KEEPALIVE_STATUS 1050
+
+#define RIL_UNSOL_PHYSICAL_CHANNEL_CONFIGS 1051
+
+#define RIL_UNSOL_RESPONSE_LAST RIL_UNSOL_PHYSICAL_CHANNEL_CONFIGS
+
+/***********************************************************************/
+
+#define RIL_UNSOL_RESPONSE_RADIO_CONFIG_BASE 1100
+/**
+ * RIL_UNSOL_CONFIG_ICC_SLOT_STATUS
+ *
+ * "data" is the RIL_SimSlotStatus_V1_2 structure
+ */
+#define RIL_UNSOL_CONFIG_ICC_SLOT_STATUS 1052
+
+#define RIL_UNSOL_RESPONSE_RADIO_CONFIG_LAST RIL_UNSOL_CONFIG_ICC_SLOT_STATUS
 
 /***********************************************************************/
 

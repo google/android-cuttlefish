@@ -18,7 +18,7 @@
 #define LOG_TAG "RILC"
 
 #include <hardware_legacy/power.h>
-#include <guest/hals/ril/libril/ril.h>
+#include <guest/hals/ril/reference-libril/ril.h>
 #include <telephony/ril_cdma_sms.h>
 #include <cutils/sockets.h>
 #include <telephony/record_stream.h>
@@ -44,7 +44,7 @@
 #include <netinet/in.h>
 #include <cutils/properties.h>
 #include <RilSapSocket.h>
-#include <guest/hals/ril/libril/ril_service.h>
+#include <guest/hals/ril/reference-libril/ril_service.h>
 #include <sap_service.h>
 
 extern "C" void
@@ -182,12 +182,22 @@ static UserCallbackInfo * internalRequestTimedCallback
 
 /** Index == requestNumber */
 static CommandInfo s_commands[] = {
-#include "ril_commands.h"
+#include "./ril_commands.h"
 };
 
 static UnsolResponseInfo s_unsolResponses[] = {
-#include "ril_unsol_commands.h"
+#include "./ril_unsol_commands.h"
 };
+
+/* Radio Config Request @{ */
+static CommandInfo s_configCommands[] = {
+#include "./ril_config_commands.h"
+};
+
+static UnsolResponseInfo s_configUnsolResponses[] = {
+#include "./ril_config_unsol_commands.h"
+};
+/* }@ */
 
 char * RIL_getServiceName() {
     return ril_service_name;
@@ -195,7 +205,7 @@ char * RIL_getServiceName() {
 
 RequestInfo *
 addRequestToList(int serial, int slotId, int request) {
-    RequestInfo *pRI;
+    RequestInfo *pRI = nullptr;
     int ret;
     RIL_SOCKET_ID socket_id = (RIL_SOCKET_ID) slotId;
     /* Hook for current context */
@@ -231,6 +241,13 @@ addRequestToList(int serial, int slotId, int request) {
 
     pRI->token = serial;
     pRI->pCI = &(s_commands[request]);
+
+    if (request >= RIL_REQUEST_RADIO_CONFIG_BASE &&
+        request <= RIL_REQUEST_RADIO_CONFIG_LAST) {
+        request = request - RIL_REQUEST_RADIO_CONFIG_BASE;
+        pRI->pCI = &(s_configCommands[request]);
+    }
+
     pRI->socket_id = socket_id;
 
     ret = pthread_mutex_lock(pendingRequestsMutexHook);
@@ -458,6 +475,20 @@ RIL_register (const RIL_RadioFunctions *callbacks) {
 
     radio_1_5::registerService(&s_callbacks, s_commands);
     RLOGI("RILHIDL called registerService");
+
+    /* Radio Config Request @{ */
+    for (int i = 1; i < (int)NUM_ELEMS(s_configCommands); i++) {
+        assert(i == s_configCommands[i].requestNumber -
+            RIL_REQUEST_RADIO_CONFIG_BASE);
+    }
+
+    for (int i = 0; i < (int)NUM_ELEMS(s_configUnsolResponses); i++) {
+        assert(i == s_configUnsolResponses[i].requestNumber -
+            RIL_UNSOL_RESPONSE_RADIO_CONFIG_BASE);
+    }
+    radio_1_5::registerConfigService(&s_callbacks, s_configCommands);
+    /* }@ */
+
 
 }
 
@@ -732,6 +763,7 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
     int ret;
     bool shouldScheduleTimeout = false;
     RIL_SOCKET_ID soc_id = RIL_SOCKET_1;
+    UnsolResponseInfo *pURI = NULL;
 
 #if defined(ANDROID_MULTI_SIM)
     soc_id = socket_id;
@@ -746,10 +778,22 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
 
     unsolResponseIndex = unsolResponse - RIL_UNSOL_RESPONSE_BASE;
 
-    if ((unsolResponseIndex < 0)
-        || (unsolResponseIndex >= (int32_t)NUM_ELEMS(s_unsolResponses))) {
+    if ((unsolResponse < RIL_UNSOL_RESPONSE_BASE)
+        || (unsolResponse > RIL_UNSOL_RESPONSE_LAST
+                && unsolResponse < RIL_UNSOL_RESPONSE_RADIO_CONFIG_BASE)
+        || (unsolResponse > RIL_UNSOL_RESPONSE_RADIO_CONFIG_LAST)) {
         RLOGE("unsupported unsolicited response code %d", unsolResponse);
         return;
+    }
+
+    if (unsolResponse >= RIL_UNSOL_RESPONSE_BASE
+            && unsolResponse <= RIL_UNSOL_RESPONSE_LAST) {
+        unsolResponseIndex = unsolResponse - RIL_UNSOL_RESPONSE_BASE;
+        pURI = &(s_unsolResponses[unsolResponseIndex]);
+    } else if (unsolResponse >= RIL_UNSOL_RESPONSE_RADIO_CONFIG_BASE
+            && unsolResponse <= RIL_UNSOL_RESPONSE_RADIO_CONFIG_LAST) {
+        unsolResponseIndex = unsolResponse - RIL_UNSOL_RESPONSE_RADIO_CONFIG_BASE;
+        pURI = &(s_configUnsolResponses[unsolResponseIndex]);
     }
 
     // Grab a wake lock if needed for this reponse,
@@ -791,11 +835,9 @@ void RIL_onUnsolicitedResponse(int unsolResponse, const void *data,
         assert(rwlockRet == 0);
     }
 
-    if (s_unsolResponses[unsolResponseIndex].responseFunction) {
-        RLOGD("calling UNSOLICITED responseFunction for index %d", unsolResponseIndex);
-        ret = s_unsolResponses[unsolResponseIndex].responseFunction(
-                (int) soc_id, responseType, 0, RIL_E_SUCCESS, const_cast<void*>(data),
-                datalen);
+    if (pURI != NULL && pURI->responseFunction != NULL) {
+        ret = pURI->responseFunction((int) soc_id, responseType, 0, RIL_E_SUCCESS,
+                const_cast<void*>(data), datalen);
     } else {
         RLOGW("No call responseFunction defined for UNSOLICITED");
     }
@@ -1171,6 +1213,8 @@ requestToString(int request) {
         case RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA: return "SET_LINK_CAPACITY_REPORTING_CRITERIA";
         case RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION: return "ENTER_SIM_DEPERSONALIZATION";
         case RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE: return "CDMA_SEND_SMS_EXPECT_MORE";
+        case RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP: return "SET_PREFERRED_NETWORK_TYPE_BITMAP";
+        case RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP: return "GET_PREFERRED_NETWORK_TYPE_BITMAP";
         case RIL_RESPONSE_ACKNOWLEDGEMENT: return "RESPONSE_ACKNOWLEDGEMENT";
         case RIL_UNSOL_RESPONSE_RADIO_STATE_CHANGED: return "UNSOL_RESPONSE_RADIO_STATE_CHANGED";
         case RIL_UNSOL_RESPONSE_CALL_STATE_CHANGED: return "UNSOL_RESPONSE_CALL_STATE_CHANGED";
