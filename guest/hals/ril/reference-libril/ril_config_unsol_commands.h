@@ -1,6 +1,6 @@
-/* //device/system/reference-ril/at_tok.h
+/*
 **
-** Copyright 2006, The Android Open Source Project
+** Copyright 2020, The Android Open Source Project
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -14,19 +14,4 @@
 ** See the License for the specific language governing permissions and
 ** limitations under the License.
 */
-
-#ifndef AT_TOK_H
-#define AT_TOK_H 1
-
-int at_tok_start(char **p_cur);
-int at_tok_nextint(char **p_cur, int *p_out);
-int at_tok_nexthexint(char **p_cur, int *p_out);
-
-int at_tok_nextbool(char **p_cur, char *p_out);
-int at_tok_nextstr(char **p_cur, char **out);
-
-int at_tok_hasmore(char **p_cur);
-
-void skipNextComma(char **p_cur);
-
-#endif /*AT_TOK_H */
+    {RIL_UNSOL_CONFIG_ICC_SLOT_STATUS, radio_1_5::simSlotsStatusChanged, WAKE_PARTIAL},
