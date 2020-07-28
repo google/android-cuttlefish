@@ -80,12 +80,6 @@ class CuttlefishConfig {
   std::string gpu_mode() const;
   void set_gpu_mode(const std::string& name);
 
-  std::string wayland_socket() const;
-  void set_wayland_socket(const std::string& path);
-
-  std::string x_display() const;
-  void set_x_display(const std::string& address);
-
   int cpus() const;
   void set_cpus(int cpus);
 

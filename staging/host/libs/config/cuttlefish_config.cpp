@@ -74,8 +74,6 @@ const char* kSerialNumber = "serial_number";
 const char* kInstanceDir = "instance_dir";
 const char* kVmManager = "vm_manager";
 const char* const kGpuMode = "gpu_mode";
-const char* const kWaylandSocket = "wayland_socket";
-const char* const kXDisplay = "x_display";
 const char* kDeviceTitle = "device_title";
 
 const char* kCpus = "cpus";
@@ -244,21 +242,6 @@ std::string CuttlefishConfig::gpu_mode() const {
 }
 void CuttlefishConfig::set_gpu_mode(const std::string& name) {
   (*dictionary_)[kGpuMode] = name;
-}
-
-std::string CuttlefishConfig::wayland_socket() const {
-  // Don't use SetPath here: the path is already fully formed.
-  return (*dictionary_)[kWaylandSocket].asString();
-}
-void CuttlefishConfig::set_wayland_socket(const std::string& path) {
-  (*dictionary_)[kWaylandSocket] = path;
-}
-
-std::string CuttlefishConfig::x_display() const {
-  return (*dictionary_)[kXDisplay].asString();
-}
-void CuttlefishConfig::set_x_display(const std::string& address) {
-  (*dictionary_)[kXDisplay] = address;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::serial_number() const {
