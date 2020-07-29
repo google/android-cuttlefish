@@ -1130,6 +1130,15 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
           exit(AssemblerExitCodes::kInstanceDirCreationError);
         }
       }
+      auto shared_dir = instance.instance_dir() + "/" + cuttlefish::kSharedDirName;
+      if (!cuttlefish::DirectoryExists(shared_dir)) {
+         if (mkdir(shared_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+           && errno != EEXIST) {
+          LOG(ERROR) << "Failed to create shared instance directory: "
+                    << shared_dir << ". Error: " << errno;
+          exit(AssemblerExitCodes::kInstanceDirCreationError);
+        }
+     }
       auto log_path = config.AssemblyPath("assemble_cvd.log");
       auto instance_log_path = instance.PerInstancePath("assemble_cvd.log");
       if (symlink(log_path.c_str(), instance_log_path.c_str())) {
