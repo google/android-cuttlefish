@@ -40,7 +40,7 @@ DEFINE_int32(keymaster_fd, -1, "A file descriptor for keymaster communication");
 DEFINE_int32(gatekeeper_fd, -1, "A file descriptor for gatekeeper communication");
 
 DEFINE_string(keymaster_impl,
-              "software",
+              "in_process_tpm",
               "The keymaster implementation. "
               "\"in_process_tpm\" or \"software\"");
 
