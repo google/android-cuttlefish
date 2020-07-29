@@ -49,6 +49,8 @@ on init
 
 
 on fs
+    mkdir /mnt/vendor/shared 0770 system system
+
     # Mount everything that does not require fsck
     mount_all --early
     restorecon_recursive /vendor
