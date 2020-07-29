@@ -37,6 +37,7 @@ const char* kWifiTapName = "wifi_tap_name";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kUuid = "uuid";
+const char* kModemSimulatorPorts = "modem_simulator_ports";
 
 const char* kHostPort = "host_port";
 const char* kTpmPort = "tpm_port";
@@ -44,7 +45,6 @@ const char* kAdbIPAndPort = "adb_ip_and_port";
 
 const char* kConfigServerPort = "config_server_port";
 const char* kVncServerPort = "vnc_server_port";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
 const char* kTombstoneReceiverPort = "tombstone_receiver_port";
 
 const char* kWebrtcDeviceId = "webrtc_device_id";
@@ -140,6 +140,15 @@ std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
     const {
   return cuttlefish::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::modem_simulator_ports() const {
+  return (*Dictionary())[kModemSimulatorPorts].asString();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
+    const std::string& modem_simulator_ports) {
+  (*Dictionary())[kModemSimulatorPorts] = modem_simulator_ports;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
@@ -286,14 +295,6 @@ int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
-}
-
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {
