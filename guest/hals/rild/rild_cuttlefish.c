@@ -113,6 +113,7 @@ int main(int argc, char **argv) {
     char libPath[PROPERTY_VALUE_MAX];
     // flat to indicate if -- parameters are present
     unsigned char hasLibArgs = 0;
+    char port[PROPERTY_VALUE_MAX] = {0};
 
     int i;
     // ril/socket id received as -c parameter, otherwise set to 0
@@ -159,6 +160,11 @@ int main(int argc, char **argv) {
         }
     }
 
+    property_get("ro.boot.modem_simulator_ports", port, "");
+    if (strcmp(port, "") != 0) {
+      rilLibPath = "libcuttlefish-ril-2.so";
+    }
+
     dlHandle = dlopen(rilLibPath, RTLD_NOW);
 
     if (dlHandle == NULL) {
@@ -202,6 +208,11 @@ int main(int argc, char **argv) {
     rilArgv[argc++] = "-c";
     rilArgv[argc++] = (char*)clientId;
     RLOGD("RIL_Init argc = %d clientId = %s", argc, rilArgv[argc-1]);
+
+    if (strcmp(port, "")) {
+      rilArgv[argc++] = "-m";
+      rilArgv[argc++] = port;
+    }
 
     // Make sure there's a reasonable argv[0]
     rilArgv[0] = argv[0];
