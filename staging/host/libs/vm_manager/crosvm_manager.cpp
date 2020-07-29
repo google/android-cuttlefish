@@ -305,6 +305,13 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=3,type=file,path=",
                           instance.logcat_pipe_name());
 
+  // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
+  if (config_->enable_sandbox()) {
+    // Set up directory shared with virtiofs
+    crosvm_cmd.AddParameter("--shared-dir=", instance.PerInstancePath(cuttlefish::kSharedDirName),
+                            ":shared:type=fs");
+  }
+
   // This needs to be the last parameter
   if (config_->use_bootloader()) {
     crosvm_cmd.AddParameter("--bios=", config_->bootloader());

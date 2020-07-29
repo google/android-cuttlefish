@@ -74,6 +74,8 @@ std::set<std::string> FallbackPaths() {
     paths.insert(instance_dir + "/tombstones/*");
     // Add files in the internal directory
     paths.insert(instance_dir + "/" + std::string(cuttlefish::kInternalDirName) + "/*");
+    // Add files in the shared directory
+    paths.insert(instance_dir + "/" + std::string(cuttlefish::kSharedDirName) + "/*");
   }
   return paths;
 }
@@ -89,6 +91,8 @@ std::set<std::string> PathsForInstance(const cuttlefish::CuttlefishConfig& confi
     instance.PerInstancePath("tombstones/*"),
     instance.instance_internal_dir(),
     instance.PerInstanceInternalPath("*"),
+    instance.PerInstancePath(cuttlefish::kSharedDirName),
+    instance.PerInstancePath(cuttlefish::kSharedDirName) + "/*",
   };
 }
 

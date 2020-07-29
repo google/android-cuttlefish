@@ -43,6 +43,7 @@ constexpr char kMobileNetworkConnectedMessage[] =
 constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 constexpr char kInternalDirName[] = "internal";
+constexpr char kSharedDirName[] = "shared";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
 
 enum class AdbMode {
