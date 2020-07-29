@@ -16,3 +16,4 @@ odm_dlkm /odm_dlkm ext4 noatime,ro,errors=panic wait,logical,first_stage_mount,s
 /dev/block/zram0 none swap defaults zramsize=75%
 /tmp /sdcard none defaults,bind recoveryonly
 /devices/*/block/vdb auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
+shared /mnt/vendor/shared virtiofs nosuid,nodev,noatime nofail
