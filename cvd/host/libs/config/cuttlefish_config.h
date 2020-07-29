@@ -200,12 +200,6 @@ class CuttlefishConfig {
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
 
-  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
-  bool enable_vehicle_hal_grpc_server() const;
-
-  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
-  std::string vehicle_hal_grpc_server_binary() const;
-
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
 
@@ -321,6 +315,15 @@ class CuttlefishConfig {
   void set_kgdb(bool kgdb);
   bool kgdb() const;
 
+  void set_enable_modem_simulator(bool enable_modem_simulator);
+  bool enable_modem_simulator() const;
+
+  void set_modem_simulator_binary(const std::string& binary);
+  std::string modem_simulator_binary() const;
+
+  void set_modem_simulator_instance_number(int instance_numbers);
+  int modem_simulator_instance_number() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
@@ -363,8 +366,6 @@ class CuttlefishConfig {
     // Port number to connect to the frame server on the host. (Only
     // operational if using swiftshader as the GPU.)
     int frames_server_port() const;
-    // Port number to connect to the vehicle HAL server on the host
-    int vehicle_hal_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
     // Port number to connect to the tpm server on the host
@@ -417,6 +418,9 @@ class CuttlefishConfig {
 
     std::string sdcard_path() const;
 
+    // modem simulator related
+    std::string modem_simulator_ports() const;
+
     // The device id the webrtc process should use to register with the
     // signaling server
     std::string webrtc_device_id() const;
@@ -448,7 +452,6 @@ class CuttlefishConfig {
     void set_keyboard_server_port(int config_server_port);
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
-    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
@@ -459,6 +462,8 @@ class CuttlefishConfig {
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
     void set_instance_dir(const std::string& instance_dir);
+    // modem simulator related
+    void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
