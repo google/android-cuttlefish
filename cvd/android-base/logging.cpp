@@ -385,8 +385,8 @@ void InitLogging(char* argv[], LogFunction&& logger, AbortFunction&& aborter) {
         case 'f':
           SetMinimumLogSeverity(FATAL_WITHOUT_ABORT);
           continue;
-        // liblog will even suppress FATAL if you say 's' for silent, but that's
-        // crazy!
+        // liblog will even suppress FATAL if you say 's' for silent, but fatal should
+        // never be suppressed.
         case 's':
           SetMinimumLogSeverity(FATAL_WITHOUT_ABORT);
           continue;
