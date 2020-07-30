@@ -78,7 +78,7 @@ DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
 DEFINE_bool(use_random_serial, false,
             "Whether to use random serial for the device.");
 DEFINE_string(assembly_dir,
-              cuttlefish::DefaultHostArtifactsPath("cuttlefish_assembly"),
+              cuttlefish::StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
               "A directory to put generated files common between instances");
 DEFINE_string(instance_dir,
               cuttlefish::StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
@@ -261,6 +261,10 @@ std::pair<uint16_t, uint16_t> ParsePortRange(const std::string& flag) {
 
 std::string GetCuttlefishEnvPath() {
   return cuttlefish::StringFromEnv("HOME", ".") + "/.cuttlefish.sh";
+}
+
+std::string GetLegacyConfigFilePath(const cuttlefish::CuttlefishConfig& config) {
+  return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
 }
 
 int NumStreamers() {
@@ -591,12 +595,10 @@ bool SaveConfig(const cuttlefish::CuttlefishConfig& tmp_config_obj) {
     LOG(ERROR) << "Unable to save config object";
     return false;
   }
-  for (auto instance : tmp_config_obj.Instances()) {
-    if (!tmp_config_obj.SaveToFile(
-        instance.PerInstancePath("cuttlefish_config.json"))) {
-      LOG(ERROR) << "Unable to save copy config object";
-      return false;
-    }
+  auto legacy_config_file = GetLegacyConfigFilePath(tmp_config_obj);
+  if (!tmp_config_obj.SaveToFile(legacy_config_file)) {
+    LOG(ERROR) << "Unable to save legacy config object";
+    return false;
   }
   setenv(cuttlefish::kCuttlefishConfigEnvVarName, config_file.c_str(), true);
   if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
@@ -916,12 +918,6 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
                     << shared_dir << ". Error: " << errno;
           exit(AssemblerExitCodes::kInstanceDirCreationError);
         }
-     }
-      auto log_path = config.AssemblyPath("assemble_cvd.log");
-      auto instance_log_path = instance.PerInstancePath("assemble_cvd.log");
-      if (symlink(log_path.c_str(), instance_log_path.c_str())) {
-        LOG(WARNING) << "Unable to symlink " << log_path << " to "
-                     << instance_log_path;
       }
     }
     if (!SaveConfig(config)) {
