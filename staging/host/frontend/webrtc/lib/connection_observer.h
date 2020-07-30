@@ -15,6 +15,7 @@
  */
 
 #pragma once
+
 namespace cuttlefish {
 namespace webrtc_streaming {
 
