@@ -74,13 +74,13 @@ class Streamer {
       std::shared_ptr<ConnectionObserverFactory> factory);
   ~Streamer() = default;
 
-  std::shared_ptr<VideoSink> AddDisplay(
-      const std::string& label, int width, int height, int dpi,
-      bool touch_enabled);
+  std::shared_ptr<VideoSink> AddDisplay(const std::string& label, int width,
+                                        int height, int dpi,
+                                        bool touch_enabled);
 
-  // TODO (b/128328845): Implement audio
-  std::shared_ptr<webrtc::AudioSinkInterface> AddAudio(
-      const std::string& label);
+  // TODO (b/128328845): Implement audio, return a shared_ptr to a class
+  // equivalent to webrtc::AudioSinkInterface.
+  void AddAudio(const std::string& label);
 
   // Register with the operator.
   void Register(std::weak_ptr<OperatorObserver> operator_observer);
