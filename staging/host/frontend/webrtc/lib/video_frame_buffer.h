@@ -16,28 +16,24 @@
 
 #pragma once
 
-#include <mutex>
-
-#include "host/frontend/webrtc/cvd_video_frame_buffer.h"
-#include "host/frontend/webrtc/lib/video_sink.h"
-#include "host/libs/screen_connector/screen_connector.h"
+#include <cinttypes>
 
 namespace cuttlefish {
-class DisplayHandler {
+namespace webrtc_streaming {
+
+class VideoFrameBuffer {
  public:
-  DisplayHandler(
-      std::shared_ptr<webrtc_streaming::VideoSink> display_sink,
-      ScreenConnector* screen_connector);
-  ~DisplayHandler() = default;
+  virtual ~VideoFrameBuffer() = default;
 
-  [[noreturn]] void Loop();
-  void SendLastFrame();
-
- private:
-  std::shared_ptr<webrtc_streaming::VideoSink> display_sink_;
-  ScreenConnector* screen_connector_;
-  std::shared_ptr<webrtc_streaming::VideoFrameBuffer> last_buffer_;
-  std::mutex last_buffer_mutex_;
-  std::mutex next_frame_mutex_;
+  virtual int width() const = 0;
+  virtual int height() const = 0;
+  virtual int StrideY() const = 0;
+  virtual int StrideU() const = 0;
+  virtual int StrideV() const = 0;
+  virtual const uint8_t* DataY() const = 0;
+  virtual const uint8_t* DataU() const = 0;
+  virtual const uint8_t* DataV() const = 0;
 };
+
+}  // namespace webrtc_streaming
 }  // namespace cuttlefish

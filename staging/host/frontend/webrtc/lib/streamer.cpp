@@ -127,25 +127,24 @@ Streamer::Streamer(
       signal_thread_(std::move(signal_thread)),
       ws_observer_(new WsObserver(this)) {}
 
-std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>>
-Streamer::AddDisplay(const std::string& label, int width, int height, int dpi,
-                     bool touch_enabled) {
+std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
+                                                int width, int height, int dpi,
+                                                bool touch_enabled) {
   // Usually called from an application thread
-  return signal_thread_
-      ->Invoke<std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>>>(
-          RTC_FROM_HERE,
-          [this, &label, width, height, dpi, touch_enabled]()
-              -> std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>> {
-            if (displays_.count(label)) {
-              LOG(ERROR) << "Display with same label already exists: " << label;
-              return nullptr;
-            }
-            rtc::scoped_refptr<VideoTrackSourceImpl> source(
-                new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
-            displays_[label] = {width, height, dpi, touch_enabled, source};
-            return std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>>(
-                new VideoTrackSourceImplSinkWrapper(source));
-          });
+  return signal_thread_->Invoke<std::shared_ptr<VideoSink>>(
+      RTC_FROM_HERE,
+      [this, &label, width, height, dpi,
+       touch_enabled]() -> std::shared_ptr<VideoSink> {
+        if (displays_.count(label)) {
+          LOG(ERROR) << "Display with same label already exists: " << label;
+          return nullptr;
+        }
+        rtc::scoped_refptr<VideoTrackSourceImpl> source(
+            new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
+        displays_[label] = {width, height, dpi, touch_enabled, source};
+        return std::shared_ptr<VideoSink>(
+            new VideoTrackSourceImplSinkWrapper(source));
+      });
 }
 
 std::shared_ptr<webrtc::AudioSinkInterface> Streamer::AddAudio(
