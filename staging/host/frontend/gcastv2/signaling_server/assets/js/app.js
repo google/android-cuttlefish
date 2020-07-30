@@ -1,6 +1,6 @@
 'use strict';
 
-function ConnectToDevice(device_id, use_tcp) {
+function ConnectToDevice(device_id) {
   console.log('ConnectToDevice ', device_id);
   const keyboardCaptureButton = document.getElementById('keyboardCaptureBtn');
   keyboardCaptureButton.addEventListener('click', onKeyboardCaptureClick);
@@ -31,17 +31,9 @@ function ConnectToDevice(device_id, use_tcp) {
   };
 
   let options = {
-    // temporarily disable audio to free ports in the server since it's only
-    // producing silence anyways.
-    disable_audio: true,
     wsUrl: ((location.protocol == 'http:') ? 'ws://' : 'wss://') +
       location.host + '/connect_client',
-    use_tcp,
   };
-  let urlParams = new URLSearchParams(location.search);
-  for (const [key, value] of urlParams) {
-    options[key] = JSON.parse(value);
-  }
 
   import('./cf_webrtc.js')
     .then(webrtcModule => webrtcModule.Connect(device_id, options))
@@ -189,13 +181,13 @@ function ConnectToDevice(device_id, use_tcp) {
 
 /******************************************************************************/
 
-function ConnectDeviceCb(dev_id, use_tcp) {
+function ConnectDeviceCb(dev_id) {
   console.log('Connect: ' + dev_id);
   // Hide the device selection screen
   document.getElementById('device_selector').style.display = 'none';
   // Show the device control screen
   document.getElementById('device_connection').style.visibility = 'visible';
-  ConnectToDevice(dev_id, use_tcp);
+  ConnectToDevice(dev_id);
 }
 
 function ShowNewDeviceList(device_ids) {
@@ -204,10 +196,7 @@ function ShowNewDeviceList(device_ids) {
   for (const dev_id of device_ids) {
     ul.innerHTML += ('<li class="device_entry" title="Connect to ' + dev_id
                      + '">' + dev_id + '<button onclick="ConnectDeviceCb(\''
-                     + dev_id + '\', false)">Connect</button><button '
-                     + 'onclick="ConnectDeviceCb(\'' + dev_id + '\', true)"'
-                     + ' title="Useful when a proxy or firewall forbid UDP '
-                     + 'connections">Connect over TCP only</button></li>');
+                     + dev_id + '\')">Connect</button></li>');
   }
 }
 
