@@ -73,10 +73,10 @@ ValidationResult validateJsonObject(
   return {};
 }
 
-class MyCreateSessionDescriptionObserver
+class CvdCreateSessionDescriptionObserver
     : public webrtc::CreateSessionDescriptionObserver {
  public:
-  MyCreateSessionDescriptionObserver(
+  CvdCreateSessionDescriptionObserver(
       std::weak_ptr<ClientHandler> client_handler)
       : client_handler_(client_handler) {}
 
@@ -97,10 +97,10 @@ class MyCreateSessionDescriptionObserver
   std::weak_ptr<ClientHandler> client_handler_;
 };
 
-class MySetSessionDescriptionObserver
+class CvdSetSessionDescriptionObserver
     : public webrtc::SetSessionDescriptionObserver {
  public:
-  MySetSessionDescriptionObserver(std::weak_ptr<ClientHandler> client_handler)
+  CvdSetSessionDescriptionObserver(std::weak_ptr<ClientHandler> client_handler)
       : client_handler_(client_handler) {}
 
   void OnSuccess() override {
@@ -117,10 +117,11 @@ class MySetSessionDescriptionObserver
   std::weak_ptr<ClientHandler> client_handler_;
 };
 
-class MyOnSetRemoteDescription
+class CvdOnSetRemoteDescription
     : public webrtc::SetRemoteDescriptionObserverInterface {
  public:
-  MyOnSetRemoteDescription(std::function<void(webrtc::RTCError error)> on_error)
+  CvdOnSetRemoteDescription(
+      std::function<void(webrtc::RTCError error)> on_error)
       : on_error_(on_error) {}
 
   void OnSetRemoteDescriptionComplete(webrtc::RTCError error) override {
@@ -331,7 +332,7 @@ void ClientHandler::OnCreateSDPSuccess(
   peer_connection_->SetLocalDescription(
       // The peer connection wraps this raw pointer with a scoped_refptr, so
       // it's guaranteed to be deleted at some point
-      new rtc::RefCountedObject<MySetSessionDescriptionObserver>(
+      new rtc::RefCountedObject<CvdSetSessionDescriptionObserver>(
           weak_from_this()),
       desc);
   // The peer connection takes ownership of the description so it should not be
@@ -372,7 +373,7 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
     peer_connection_->CreateOffer(
         // No memory leak here because this is a ref counted objects and the
         // peer connection immediately wraps it with a scoped_refptr
-        new rtc::RefCountedObject<MyCreateSessionDescriptionObserver>(
+        new rtc::RefCountedObject<CvdCreateSessionDescriptionObserver>(
             weak_from_this()),
         webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
     // The created offer wil be sent to the client on
@@ -392,7 +393,7 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
       return;
     }
     rtc::scoped_refptr<webrtc::SetRemoteDescriptionObserverInterface> observer(
-        new rtc::RefCountedObject<MyOnSetRemoteDescription>(
+        new rtc::RefCountedObject<CvdOnSetRemoteDescription>(
             [this](webrtc::RTCError error) {
               if (!error.ok()) {
                 LogAndReplyError(error.message());
