@@ -75,7 +75,8 @@ std::unique_ptr<InputEventBuffer> GetEventBuffer() {
 class ConnectionObserverImpl
     : public cuttlefish::webrtc_streaming::ConnectionObserver {
  public:
-  ConnectionObserverImpl(cuttlefish::SharedFD touch_fd, cuttlefish::SharedFD keyboard_fd,
+  ConnectionObserverImpl(cuttlefish::SharedFD touch_fd,
+                         cuttlefish::SharedFD keyboard_fd,
                          std::weak_ptr<DisplayHandler> display_handler,
                          std::shared_ptr<RunLoop> run_loop)
       : touch_client_(touch_fd),
@@ -93,7 +94,7 @@ class ConnectionObserverImpl
       display_handler->SendLastFrame();
     }
   }
-  void OnTouchEvent(const std::string &display_label, int x, int y,
+  void OnTouchEvent(const std::string & /*display_label*/, int x, int y,
                     bool down) override {
     auto buffer = GetEventBuffer();
     if (!buffer) {
@@ -104,11 +105,13 @@ class ConnectionObserverImpl
     buffer->AddEvent(EV_ABS, ABS_Y, y);
     buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
     buffer->AddEvent(EV_SYN, 0, 0);
-    cuttlefish::WriteAll(touch_client_, reinterpret_cast<const char *>(buffer->data()),
-                  buffer->size());
+    cuttlefish::WriteAll(touch_client_,
+                         reinterpret_cast<const char *>(buffer->data()),
+                         buffer->size());
   }
-  void OnMultiTouchEvent(const std::string &display_label, int id, int slot,
-                         int x, int y, bool initialDown) override {
+  void OnMultiTouchEvent(const std::string &display_label, int /*id*/,
+                         int /*slot*/, int x, int y,
+                         bool initialDown) override {
     OnTouchEvent(display_label, x, y, initialDown);
   }
   void OnKeyboardEvent(uint16_t code, bool down) override {
@@ -120,15 +123,17 @@ class ConnectionObserverImpl
     buffer->AddEvent(EV_KEY, code, down);
     buffer->AddEvent(EV_SYN, 0, 0);
     cuttlefish::WriteAll(keyboard_client_,
-                  reinterpret_cast<const char *>(buffer->data()),
-                  buffer->size());
+                         reinterpret_cast<const char *>(buffer->data()),
+                         buffer->size());
   }
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
                             adb_message_sender) override {
     LOG(VERBOSE) << "Adb Channel open";
     adb_handler_.reset(new cuttlefish::webrtc_streaming::AdbHandler(
         run_loop_,
-        cuttlefish::CuttlefishConfig::Get()->ForDefaultInstance().adb_ip_and_port(),
+        cuttlefish::CuttlefishConfig::Get()
+            ->ForDefaultInstance()
+            .adb_ip_and_port(),
         adb_message_sender));
     adb_handler_->run();
   }
