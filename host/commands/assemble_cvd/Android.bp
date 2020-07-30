@@ -34,6 +34,7 @@ cc_binary_host {
         "assemble_cvd.cc",
         "boot_config.cc",
         "boot_image_unpacker.cc",
+        "disk_flags.cc",
         "flags.cc",
         "image_aggregator.cc",
         "misc_info.cc",
