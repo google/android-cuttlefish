@@ -313,14 +313,8 @@ StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
   // time.
 
   cuttlefish::Command webrtc(config.webrtc_binary());
-  webrtc.AddParameter("-public_ip=", config.webrtc_public_ip());
 
   auto server_ret = CreateStreamerServers(&webrtc, config);
-
-  if (config.webrtc_enable_adb_websocket()) {
-    auto instance = config.ForDefaultInstance();
-    webrtc.AddParameter("--adb=", instance.adb_ip_and_port());
-  }
 
   // TODO get from launcher params
   process_monitor->StartSubprocess(std::move(webrtc),
