@@ -1,0 +1,63 @@
+//
+// Copyright (C) 2020 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+cc_library_static {
+    name: "libcuttlefish_webrtc",
+    srcs: [
+        "lib/client_handler.cpp",
+        "lib/keyboard.cpp",
+        "lib/port_range_socket_factory.cpp",
+        "lib/streamer.cpp",
+        "lib/video_track_source_impl.cpp",
+        "lib/vp8only_encoder_factory.cpp",
+        "lib/ws_connection.cpp",
+    ],
+    cflags: [
+      // libwebrtc headers need this
+      "-Wno-unused-parameter",
+      "-DWEBRTC_POSIX",
+      "-DWEBRTC_LINUX",
+    ],
+    header_libs: [
+      "webrtc_signaling_headers",
+      "libabsl_headers",
+    ],
+    static_libs: [
+        "libhttps",
+        "libsrtp2",
+        "libcuttlefish_host_config",
+        "libcuttlefish_screen_connector",
+        "libcuttlefish_wayland_server",
+        "libgflags",
+        "libjsoncpp",
+        "libsource",
+        "libdrm",
+        "libffi",
+        "libwayland_server",
+        "libwayland_extension_server_protocols",
+        "libwebsockets",
+        "libcap",
+        "libcuttlefish_utils",
+        "libwebrtc",
+        "libabsl_base",
+        "libabsl_types",
+    ],
+    shared_libs: [
+        "libssl",
+        "libbase",
+        "libcuttlefish_fs",
+    ],
+    defaults: ["cuttlefish_host_only"],
+}
