@@ -20,6 +20,7 @@ function ConnectToDevice(device_id, use_tcp) {
   }
 
   let videoStream;
+  let display_label;
   let mouseIsDown = false;
   let deviceConnection;
 
@@ -52,6 +53,7 @@ function ConnectToDevice(device_id, use_tcp) {
       let stream_id = devConn.description.displays[0].stream_id;
       devConn.getStream(stream_id).then(stream => {
         videoStream = stream;
+        display_label = stream_id;
         deviceScreen.srcObject = videoStream;
       }).catch(e => console.error('Unable to get display stream: ', e));
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
@@ -175,7 +177,7 @@ function ConnectToDevice(device_id, use_tcp) {
     y = videoScaling * y / elementScaling;
 
     deviceConnection.sendMousePosition(
-        {x: Math.trunc(x), y: Math.trunc(y), down});
+        {x: Math.trunc(x), y: Math.trunc(y), down, display_label});
   }
 
   function onKeyEvent(e) {
