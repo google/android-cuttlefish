@@ -196,14 +196,9 @@ class DeviceConnection {
 class WebRTCControl {
   constructor({
     wsUrl = '',
-    disable_audio = false,
-    bundle_tracks = false,
-    use_tcp = true,
   }) {
     /*
      * Private attributes:
-     *
-     * _options
      *
      * _wsPromise: promises the underlying websocket, should resolve when the
      *             socket passes to OPEN state, will be rejecte/replaced by a
@@ -212,12 +207,6 @@ class WebRTCControl {
      * _onOffer
      * _onIceCandidate
      */
-
-    this._options = {
-      disable_audio,
-      bundle_tracks,
-      use_tcp,
-    };
 
     this._promiseResolvers = {};
 
@@ -328,8 +317,7 @@ class WebRTCControl {
 
   ConnectDevice() {
     console.log('ConnectDevice');
-    const is_chrome = navigator.userAgent.indexOf('Chrome') !== -1;
-    this._sendToDevice({type: 'request-offer', options: this._options, is_chrome: is_chrome ? 1 : 0});
+    this._sendToDevice({type: 'request-offer'});
   }
 
   /**
