@@ -70,12 +70,6 @@ cc_binary_host {
         "main.cpp",
         "cvd_video_frame_buffer.cpp",
     ],
-    cflags: [
-      // libwebrtc headers need this
-      "-Wno-unused-parameter",
-      "-DWEBRTC_POSIX",
-      "-DWEBRTC_LINUX",
-    ],
     header_libs: [
       "webrtc_signaling_headers",
       "libabsl_headers",
