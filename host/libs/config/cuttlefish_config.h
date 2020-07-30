@@ -197,9 +197,6 @@ class CuttlefishConfig {
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
 
-  void set_webrtc_public_ip(const std::string& webrtc_public_ip);
-  std::string webrtc_public_ip() const;
-
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
 
@@ -293,6 +290,14 @@ class CuttlefishConfig {
   // to bind to it and by the webrtc process to connect to and register itself
   void set_sig_server_port(int port);
   int sig_server_port() const;
+
+  // The range of UDP ports available for webrtc sessions.
+  void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
+  std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
+
+  // The range of TCP ports available for webrtc sessions.
+  void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
+  std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
 
   // The address of the signaling server
   void set_sig_server_address(const std::string& addr);
