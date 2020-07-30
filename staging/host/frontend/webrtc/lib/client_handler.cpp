@@ -25,7 +25,6 @@
 
 #include <android-base/logging.h>
 
-#include "common/libs/utils/base64.h"
 #include "host/frontend/webrtc/lib/keyboard.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "https/SafeCallbackable.h"
@@ -36,6 +35,7 @@ namespace webrtc_streaming {
 namespace {
 
 static constexpr auto kInputChannelLabel = "input-channel";
+static constexpr auto kAdbChannelLabel = "adb-channel";
 
 class ValidationResult {
  public:
@@ -158,7 +158,7 @@ void ClientHandler::InputHandler::OnMessage(const webrtc::DataBuffer &msg) {
 
   Json::Value evt;
   Json::Reader json_reader;
-  auto str = reinterpret_cast<const char *>(msg.data.cdata());
+  auto str = msg.data.cdata<char>();
   if (!json_reader.parse(str, str + size, evt) < 0) {
     LOG(ERROR) << "Received invalid JSON object over input channel";
     return;
@@ -223,6 +223,41 @@ void ClientHandler::InputHandler::OnMessage(const webrtc::DataBuffer &msg) {
     LOG(ERROR) << "Unrecognized event type: " << event_type;
     return;
   }
+}
+
+ClientHandler::AdbHandler::AdbHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> adb_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : adb_channel_(adb_channel), observer_(observer) {
+  adb_channel->RegisterObserver(this);
+}
+
+ClientHandler::AdbHandler::~AdbHandler() { adb_channel_->UnregisterObserver(); }
+
+void ClientHandler::AdbHandler::OnStateChange() {
+  LOG(VERBOSE) << "Input channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      adb_channel_->state());
+}
+
+void ClientHandler::AdbHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  // Report the adb channel as open on the first message received instead of at
+  // channel open, this avoids unnecessarily connecting to the adb daemon for
+  // clients that don't use ADB.
+  if (!channel_open_reported_) {
+    observer_->OnAdbChannelOpen([this](const uint8_t *msg, size_t size) {
+      webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size),
+                                true /*binary*/);
+      // TODO (jemoreira): When the SCTP channel is congested data channel
+      // messages are buffered up to 16MB, when the buffer is full the channel
+      // is abruptly closed. Keep track of the buffered data to avoid losing the
+      // adb data channel.
+      adb_channel_->Send(buffer);
+      return true;
+    });
+    channel_open_reported_ = true;
+  }
+  observer_->OnAdbMessage(msg.data.cdata(), msg.size());
 }
 
 std::shared_ptr<ClientHandler> ClientHandler::Create(
@@ -408,22 +443,6 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
                                           LogAndReplyError(error.message());
                                         }
                                       });
-  } else if (type == "adb-message") {
-    {
-      auto result = validateJsonObject(
-          message, type, {{"payload", Json::ValueType::stringValue}});
-      if (!result.ok()) {
-        LogAndReplyError(result.error());
-        return;
-      }
-    }
-    auto base64_msg = message["payload"].asString();
-    std::vector<uint8_t> raw_msg;
-    if (!cuttlefish::DecodeBase64(base64_msg, &raw_msg)) {
-      LOG(ERROR) << "Invalid base64 string in adb-message";
-      return;
-    }
-    observer_->OnAdbMessage(raw_msg.data(), raw_msg.size());
   } else {
     LogAndReplyError("Unknown client message type: " + type);
     return;
@@ -450,15 +469,6 @@ void ClientHandler::OnConnectionChange(
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
       observer_->OnConnected();
-      observer_->OnAdbChannelOpen([this](const uint8_t *msg, size_t size) {
-        std::string base64_msg;
-        cuttlefish::EncodeBase64(msg, size, &base64_msg);
-        Json::Value reply;
-        reply["type"] = "adb-message";
-        reply["payload"] = base64_msg;
-        send_to_client_(reply);
-        return true;
-      });
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": Connection disconnected";
@@ -496,6 +506,8 @@ void ClientHandler::OnDataChannel(
   auto label = data_channel->label();
   if (label == kInputChannelLabel) {
     input_handler_.reset(new InputHandler(data_channel, observer_));
+  } else if (label == kAdbChannelLabel) {
+    adb_handler_.reset(new AdbHandler(data_channel, observer_));
   } else {
     LOG(VERBOSE) << "Data channel connected: " << label;
     data_channels_.push_back(data_channel);
