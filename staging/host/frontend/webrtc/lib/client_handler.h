@@ -132,7 +132,8 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::function<void()> on_connection_closed_cb_;
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   std::vector<rtc::scoped_refptr<webrtc::DataChannelInterface>> data_channels_;
-  std::shared_ptr<InputHandler> input_handler_;
+  std::unique_ptr<InputHandler> input_handler_;
+  std::unique_ptr<AdbHandler> adb_handler_;
 };
 
 }  // namespace webrtc_streaming
