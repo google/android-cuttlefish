@@ -102,12 +102,19 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
     rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel_;
     std::shared_ptr<ConnectionObserver> observer_;
   };
-  enum OptionBits : uint32_t {
-    disableAudio = 1,
-    bundleTracks = 2,
-    enableData = 4,
-    useSingleCertificateForAllTracks = 8,
-    useTCP = 16,
+  class AdbHandler : public webrtc::DataChannelObserver {
+   public:
+    AdbHandler(rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel,
+                 std::shared_ptr<ConnectionObserver> observer);
+    ~AdbHandler() override;
+
+    void OnStateChange() override;
+    void OnMessage(const webrtc::DataBuffer& msg) override;
+
+   private:
+    rtc::scoped_refptr<webrtc::DataChannelInterface> adb_channel_;
+    std::shared_ptr<ConnectionObserver> observer_;
+    bool channel_open_reported_ = false;
   };
 
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
@@ -119,10 +126,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
 
   void LogAndReplyError(const std::string& error_msg) const;
 
-  void ParseOptions(const Json::Value& options);
-
   int client_id_;
-  uint32_t options_;
   std::shared_ptr<ConnectionObserver> observer_;
   std::function<void(const Json::Value&)> send_to_client_;
   std::function<void()> on_connection_closed_cb_;
