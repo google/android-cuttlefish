@@ -170,19 +170,17 @@ void ClientHandler::InputHandler::OnMessage(const webrtc::DataBuffer &msg) {
   }
   auto event_type = evt["type"].asString();
   if (event_type == "mouse") {
-    auto result = validateJsonObject(evt, "mouse",
-                                     {{"down", Json::ValueType::intValue},
-                                      {"x", Json::ValueType::intValue},
-                                      {"y", Json::ValueType::intValue}});
+    auto result =
+        validateJsonObject(evt, "mouse",
+                           {{"down", Json::ValueType::intValue},
+                            {"x", Json::ValueType::intValue},
+                            {"y", Json::ValueType::intValue},
+                            {"display_label", Json::ValueType::stringValue}});
     if (!result.ok()) {
       LOG(ERROR) << result.error();
       return;
     }
-    std::string label = "display_0";
-    if (evt.isMember("display_label") && evt["display_label"].isString()) {
-      // TODO (jemoreira) make this required
-      label = evt["display_label"].asString();
-    }
+    auto label = evt["display_label"].asString();
     int32_t down = evt["down"].asInt();
     int32_t x = evt["x"].asInt();
     int32_t y = evt["y"].asInt();
@@ -195,16 +193,13 @@ void ClientHandler::InputHandler::OnMessage(const webrtc::DataBuffer &msg) {
                             {"initialDown", Json::ValueType::intValue},
                             {"x", Json::ValueType::intValue},
                             {"y", Json::ValueType::intValue},
-                            {"slot", Json::ValueType::intValue}});
+                            {"slot", Json::ValueType::intValue},
+                            {"display_label", Json::ValueType::stringValue}});
     if (!result.ok()) {
       LOG(ERROR) << result.error();
       return;
     }
-    std::string label = "display_0";
-    if (evt.isMember("display_label") && evt["display_label"].isString()) {
-      // TODO (jemoreira) make this required
-      label = evt["display_label"].asString();
-    }
+    auto label = evt["display_label"].asString();
     int32_t id = evt["id"].asInt();
     int32_t initialDown = evt["initialDown"].asInt();
     int32_t x = evt["x"].asInt();
