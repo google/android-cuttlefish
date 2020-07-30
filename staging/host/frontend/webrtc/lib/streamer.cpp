@@ -147,11 +147,10 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
       });
 }
 
-std::shared_ptr<webrtc::AudioSinkInterface> Streamer::AddAudio(
+void Streamer::AddAudio(
     const std::string& label) {
-  // TODO (b/128328845): audio support
-  // Use signal_thread_->Invoke<>();
-  return nullptr;
+  // Usually called from an application thread
+  // TODO (b/128328845): audio support. Use signal_thread_->Invoke<>();
 }
 
 void Streamer::Register(std::weak_ptr<OperatorObserver> observer) {
