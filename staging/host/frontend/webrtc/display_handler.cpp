@@ -22,7 +22,7 @@
 
 namespace cuttlefish {
 DisplayHandler::DisplayHandler(
-    std::shared_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>> display_sink,
+    std::shared_ptr<webrtc_streaming::VideoSink> display_sink,
     ScreenConnector* screen_connector)
     : display_sink_(display_sink), screen_connector_(screen_connector) {}
 
@@ -32,9 +32,9 @@ DisplayHandler::DisplayHandler(
     auto have_frame = screen_connector_->OnFrameAfter(
         frame_num, [&frame_num, this](std::uint32_t fn, std::uint8_t* frame) {
           frame_num = fn;
-          auto buffer = new rtc::RefCountedObject<CvdVideoFrameBuffer>(
-              screen_connector_->ScreenWidth(),
-              screen_connector_->ScreenHeight());
+          std::shared_ptr<CvdVideoFrameBuffer> buffer(
+              new CvdVideoFrameBuffer(screen_connector_->ScreenWidth(),
+                                      screen_connector_->ScreenHeight()));
           libyuv::ABGRToI420(frame, screen_connector_->ScreenStride(),
                              buffer->DataY(), buffer->StrideY(),
                              buffer->DataU(), buffer->StrideU(),
@@ -43,7 +43,8 @@ DisplayHandler::DisplayHandler(
                              screen_connector_->ScreenHeight());
           {
             std::lock_guard<std::mutex> lock(last_buffer_mutex_);
-            last_buffer_ = buffer;
+            last_buffer_ =
+                std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buffer);
           }
         });
     if (have_frame) {
@@ -53,7 +54,7 @@ DisplayHandler::DisplayHandler(
 }
 
 void DisplayHandler::SendLastFrame() {
-  rtc::scoped_refptr<CvdVideoFrameBuffer> buffer;
+  std::shared_ptr<webrtc_streaming::VideoFrameBuffer> buffer;
   {
     std::lock_guard<std::mutex> lock(last_buffer_mutex_);
     buffer = last_buffer_;
@@ -71,11 +72,7 @@ void DisplayHandler::SendLastFrame() {
         std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now().time_since_epoch())
             .count();
-    auto video_frame = webrtc::VideoFrame::Builder()
-                           .set_video_frame_buffer(buffer)
-                           .set_timestamp_us(time_stamp)
-                           .build();
-    display_sink_->OnFrame(video_frame);
+    display_sink_->OnFrame(buffer, time_stamp);
   }
 }
 

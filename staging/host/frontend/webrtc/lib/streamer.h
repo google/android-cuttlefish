@@ -28,6 +28,7 @@
 #include <pc/video_track_source.h>
 
 #include "host/frontend/webrtc/lib/connection_observer.h"
+#include "host/frontend/webrtc/lib/video_sink.h"
 #include "host/frontend/webrtc/lib/ws_connection.h"
 
 namespace cuttlefish {
@@ -62,9 +63,6 @@ class OperatorObserver {
   // Called when an error is encountered in the connection to the operator.
   virtual void OnError() = 0;
 };
-
-// TODO (b/159941216): Wrap this type with a simpler class
-using VideoSink = rtc::VideoSinkInterface<webrtc::VideoFrame>;
 
 class Streamer {
  public:
