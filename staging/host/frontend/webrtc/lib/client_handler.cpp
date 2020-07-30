@@ -238,8 +238,6 @@ ClientHandler::ClientHandler(
     std::function<void(const Json::Value &)> send_to_client_cb,
     std::function<void()> on_connection_closed_cb)
     : client_id_(client_id),
-      options_(OptionBits::useSingleCertificateForAllTracks |
-               OptionBits::enableData),
       observer_(observer),
       send_to_client_(send_to_client_cb),
       on_connection_closed_cb_(on_connection_closed_cb) {}
@@ -336,10 +334,6 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
   }
   auto type = message["type"].asString();
   if (type == "request-offer") {
-    if (message.isMember("options")) {
-      ParseOptions(message["options"]);
-    }
-
     peer_connection_->CreateOffer(
         // No memory leak here because this is a ref counted objects and the
         // peer connection immediately wraps it with a scoped_refptr
@@ -444,30 +438,6 @@ void ClientHandler::Close() {
   // peer_connection_ has the same effect. The only alternative is to postpone
   // that operation until after the callback returns.
   on_connection_closed_cb_();
-}
-
-void ClientHandler::ParseOptions(const Json::Value &options) {
-  // TODO (jemoreira): remove the options from the client and here since there
-  // is no longer a use for them
-  if (options.isMember("disable_audio") && options["disable_audio"].isBool()) {
-    auto mask = OptionBits::disableAudio;
-    options_ =
-        (options_ & ~mask) | (options["disable_audio"].asBool() ? mask : 0);
-  }
-  if (options.isMember("bundle_tracks") && options["bundle_tracks"].isBool()) {
-    auto mask = OptionBits::bundleTracks;
-    options_ =
-        (options_ & ~mask) | (options["bundle_tracks"].asBool() ? mask : 0);
-  }
-  if (options.isMember("enable_data") && options["enable_data"].isBool()) {
-    auto mask = OptionBits::enableData;
-    options_ =
-        (options_ & ~mask) | (options["enable_data"].asBool() ? mask : 0);
-  }
-  if (options.isMember("use_tcp") && options["use_tcp"].isBool()) {
-    auto mask = OptionBits::useTCP;
-    options_ = (options_ & ~mask) | (options["use_tcp"].asBool() ? mask : 0);
-  }
 }
 
 void ClientHandler::OnConnectionChange(
