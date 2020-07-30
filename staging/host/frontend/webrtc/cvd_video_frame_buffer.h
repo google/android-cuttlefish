@@ -18,25 +18,22 @@
 
 #include <vector>
 
-#include <api/video/video_frame_buffer.h>
+#include "host/frontend/webrtc/lib/video_frame_buffer.h"
 
 namespace cuttlefish {
 
-class CvdVideoFrameBuffer : public webrtc::I420BufferInterface {
+class CvdVideoFrameBuffer : public webrtc_streaming::VideoFrameBuffer {
  public:
   CvdVideoFrameBuffer(int width, int height);
   ~CvdVideoFrameBuffer() override = default;
 
-  // From VideoFrameBuffer
   int width() const override;
   int height() const override;
 
-  // From class PlanarYuvBuffer
   int StrideY() const override;
   int StrideU() const override;
   int StrideV() const override;
 
-  // From class PlanarYuv8Buffer
   const uint8_t *DataY() const override;
   const uint8_t *DataU() const override;
   const uint8_t *DataV() const override;
