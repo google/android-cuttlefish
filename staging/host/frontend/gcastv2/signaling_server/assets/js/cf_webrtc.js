@@ -1,33 +1,43 @@
-function createDataChannelPromise(pc, label, onMessage) {
-  console.log("creating data channel: " + label);
+function createDataChannel(pc, label, onMessage) {
+  console.log('creating data channel: ' + label);
   let dataChannel = pc.createDataChannel(label);
-  return new Promise((resolve, reject) => {
-    dataChannel.onopen = (event) => {
-      resolve(dataChannel);
-    };
-    dataChannel.onclose = () => {
-      console.log(
-          'Data channel=' + label + ' state=' + dataChannel.readyState);
-    };
-    dataChannel.onmessage = onMessage? onMessage: (msg) => {
-      console.log('Data channel=' + label + ' data="' + msg.data + '"');
-    };
-    dataChannel.onerror = err => {
-      reject(err);
-    };
-  });
+  // Return an object with a send function like that of the dataChannel, but
+  // that only actually sends over the data channel once it has connected.
+  return {
+    channelPromise: new Promise((resolve, reject) => {
+      dataChannel.onopen = (event) => {
+        resolve(dataChannel);
+      };
+      dataChannel.onclose = () => {
+        console.log(
+            'Data channel=' + label + ' state=' + dataChannel.readyState);
+      };
+      dataChannel.onmessage = onMessage ? onMessage : (msg) => {
+        console.log('Data channel=' + label + ' data="' + msg.data + '"');
+      };
+      dataChannel.onerror = err => {
+        reject(err);
+      };
+    }),
+    send: function(msg) {
+      this.channelPromise = this.channelPromise.then(channel => {
+        channel.send(msg);
+        return channel;
+      })
+    },
+  };
 }
 
 class DeviceConnection {
   constructor(pc, control) {
     this._pc = pc;
     this._control = control;
-    this._inputChannelPr = createDataChannelPromise(pc, 'input-channel');
-    this._adbChannelPr = createDataChannelPromise(pc, 'adb-channel', (msg) => {
+    this._inputChannel = createDataChannel(pc, 'input-channel');
+    this._adbChannel = createDataChannel(pc, 'adb-channel', (msg) => {
       if (this._onAdbMessage) {
         this._onAdbMessage(msg.data);
       } else {
-        console.error("Received unexpected ADB message");
+        console.error('Received unexpected ADB message');
       }
     });
     this._streams = {};
@@ -69,10 +79,7 @@ class DeviceConnection {
   }
 
   _sendJsonInput(evt) {
-    this._inputChannelPr = this._inputChannelPr.then(inputChannel => {
-      inputChannel.send(JSON.stringify(evt));
-      return inputChannel;
-    });
+    this._inputChannel.send(JSON.stringify(evt));
   }
 
   sendMousePosition({x, y, down, display_label}) {
@@ -107,10 +114,7 @@ class DeviceConnection {
 
   // Sends binary data directly to the in-device adb daemon (skipping the host)
   sendAdbMessage(msg) {
-    this._adbChannelPr = this._adbChannelPr.then(adbChannel => {
-      adbChannel.send(msg);
-      return adbChannel;
-    });
+    this._adbChannel.send(msg);
   }
 
   // Provide a callback to receive data from the in-device adb daemon
@@ -185,7 +189,7 @@ class WebRTCControl {
 
   _onDeviceMessage(message) {
     let type = message.type;
-    switch(type) {
+    switch (type) {
       case 'offer':
         if (this._onOffer) {
           this._onOffer({type: 'offer', sdp: message.sdp});
@@ -198,7 +202,8 @@ class WebRTCControl {
           this._onIceCandidate(new RTCIceCandidate({
             sdpMid: message.mid,
             sdpMLineIndex: message.mLineIndex,
-            candidate: message.candidate}));
+            candidate: message.candidate
+          }));
         } else {
           console.error('Received ice candidate but nothing is waiting for it');
         }
@@ -259,7 +264,7 @@ class WebRTCControl {
 }
 
 function createPeerConnection(infra_config) {
-  let pc_config = {iceServers:[]};
+  let pc_config = {iceServers: []};
   for (const stun of infra_config.ice_servers) {
     pc_config.iceServers.push({urls: 'stun:' + stun});
   }
@@ -271,8 +276,10 @@ function createPeerConnection(infra_config) {
   pc.addEventListener('iceconnectionstatechange', evt => {
     console.log(`ICE State Change: ${pc.iceConnectionState}`);
   });
-  pc.addEventListener('connectionstatechange', evt =>
-    console.log(`WebRTC Connection State Change: ${pc.connectionState}`));
+  pc.addEventListener(
+      'connectionstatechange',
+      evt =>
+          console.log(`WebRTC Connection State Change: ${pc.connectionState}`));
   return pc;
 }
 
@@ -281,11 +288,9 @@ export async function Connect(deviceId, options) {
   let requestRet = await control.requestDevice(deviceId);
   let deviceInfo = requestRet.deviceInfo;
   let infraConfig = requestRet.infraConfig;
-  console.log("Device available:");
+  console.log('Device available:');
   console.log(deviceInfo);
-  let pc_config = {
-    iceServers: []
-  };
+  let pc_config = {iceServers: []};
   if (infraConfig.ice_servers && infraConfig.ice_servers.length > 0) {
     for (const server of infraConfig.ice_servers) {
       pc_config.iceServers.push(server);
@@ -300,25 +305,23 @@ export async function Connect(deviceId, options) {
       let answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       await control.sendClientDescription(answer);
-    } catch(e) {
+    } catch (e) {
       console.error('Error establishing WebRTC connection: ', e)
       throw e;
     }
   }
   control.onOffer(desc => {
-      console.log('Offer: ', desc);
-      acceptOfferAndReplyAnswer(desc);
+    console.log('Offer: ', desc);
+    acceptOfferAndReplyAnswer(desc);
   });
   control.onIceCandidate(iceCandidate => {
     console.log(`Remote ICE Candidate: `, iceCandidate);
     pc.addIceCandidate(iceCandidate);
   });
 
-  pc.addEventListener('icecandidate',
-                      evt => {
-                        if (evt.candidate)
-                          control.sendIceCandidate(evt.candidate);
-                      });
+  pc.addEventListener('icecandidate', evt => {
+    if (evt.candidate) control.sendIceCandidate(evt.candidate);
+  });
   let connected_promise = new Promise((resolve, reject) => {
     pc.addEventListener('connectionstatechange', evt => {
       let state = pc.connectionState;
