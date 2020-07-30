@@ -225,7 +225,7 @@ bool IsValidComposition(hwc_composer_device_1_t* dev, int num_layers,
     ALOGW("Received request for empty composition, treating as valid noop");
     return true;
   }
-  // The FRAMEBUFFER_TARGET layer needs to be sane only if
+  // The FRAMEBUFFER_TARGET layer needs to be reasonable only if
   // there is at least one layer marked HWC_FRAMEBUFFER or if there is no layer
   // marked HWC_OVERLAY (i.e some layers where composed with OpenGL, no layer
   // marked overlay or framebuffer means that surfaceflinger decided to go for
