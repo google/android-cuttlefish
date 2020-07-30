@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "Utils.h"
+#include "host/frontend/gcastv2/signaling_server/utils.h"
 
 std::vector<std::string> SplitString(const std::string &s, char c) {
     return SplitString(s, std::string(1 /* count */, c));
