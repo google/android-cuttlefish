@@ -436,11 +436,9 @@ std::shared_ptr<ClientHandler> StreamerImpl::CreateClientHandler(int client_id) 
 }
 
 void StreamerImpl::SendMessageToClient(int client_id, const Json::Value& msg) {
-  // TODO (b/148086548): Assert this is only called from signal thread once adb
-  // goes through data channel. There is no need to use post task or execute in
-  // the meantime because this code only accesses server_connection_ which is
-  // thread safe.
   LOG(VERBOSE) << "Sending to client: " << msg.toStyledString();
+  CHECK(signal_thread_->IsCurrent())
+      << __FUNCTION__ << " called from the wrong thread";
   Json::Value wrapper;
   wrapper[cuttlefish::webrtc_signaling::kPayloadField] = msg;
   wrapper[cuttlefish::webrtc_signaling::kTypeField] =
