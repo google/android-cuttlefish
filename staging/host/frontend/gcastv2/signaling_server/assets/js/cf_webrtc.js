@@ -149,16 +149,17 @@ class DeviceConnection {
     });
   }
 
-  sendMousePosition({x, y, down, display = 0}) {
+  sendMousePosition({x, y, down, display_label}) {
     this._sendJsonInput({
       type: 'mouse',
       down: down ? 1 : 0,
       x,
       y,
+      display_label,
     });
   }
 
-  sendMultiTouch({id, x, y, initialDown, slot, display = 0}) {
+  sendMultiTouch({id, x, y, initialDown, slot, display_label}) {
     this._sendJsonInput({
       type: 'multi-touch',
       id,
@@ -166,6 +167,7 @@ class DeviceConnection {
       y,
       initialDown: initialDown ? 1 : 0,
       slot,
+      display_label,
     });
   }
 
