@@ -31,8 +31,9 @@ using namespace cuttlefish;
 DEFINE_string(socket_path, kDefaultLocation, "Socket path");
 DEFINE_bool(id, false, "Request new UUID");
 DEFINE_bool(ifcreate, false, "Request a new Interface");
-DEFINE_string(ifdestroy, "", "Request an interface be destroyed");
 DEFINE_bool(shutdown, false, "Shutdown Resource Allocation Server");
+DEFINE_string(ifdestroy, "", "Request an interface be destroyed");
+DEFINE_uint32(ifid, -1, "Global Resource ID");
 
 int main(int argc, char* argv[]) {
   cuttlefish::DefaultSubprocessLogging(argv);
@@ -64,12 +65,22 @@ int main(int argc, char* argv[]) {
     std::cout << "New ID: " << resp["id"] << std::endl;
   }
 
+  Json::Value config;
+  Json::Value request_list;
+
   if (FLAGS_ifcreate) {
     Json::Value req;
     req["request_type"] = "create_interface";
     req["uid"] = geteuid();
     req["iface_type"] = "mtap";
-    SendJsonMsg(monitor_socket, req);
+    request_list.append(req);
+    req["iface_type"] = "wtap";
+
+    request_list.append(req);
+    config["config_request"]["request_list"] = request_list;
+
+    std::cout << config << "\n";
+    SendJsonMsg(monitor_socket, config);
 
     auto resp_opt = RecvJsonMsg(monitor_socket);
     if (!resp_opt.has_value()) {
@@ -85,11 +96,14 @@ int main(int argc, char* argv[]) {
     std::cout << resp["iface_name"] << std::endl;
   }
 
-  if (!FLAGS_ifdestroy.empty()) {
+  if (!FLAGS_ifdestroy.empty() && (FLAGS_ifid != -1)) {
     Json::Value req;
     req["request_type"] = "destroy_interface";
     req["iface_name"] = FLAGS_ifdestroy;
-    SendJsonMsg(monitor_socket, req);
+    req["global_id"] = FLAGS_ifid;
+    request_list.append(req);
+    config["config_request"]["request_list"] = request_list;
+    SendJsonMsg(monitor_socket, config);
 
     LOG(INFO) << "Request Interface : '" << FLAGS_ifdestroy << "' be removed";
 
@@ -112,7 +126,9 @@ int main(int argc, char* argv[]) {
     Json::Value req;
     req["request_type"] = "shutdown";
 
-    cuttlefish::SendJsonMsg(monitor_socket, req);
+    request_list.append(req);
+    config["config_request"]["request_list"] = request_list;
+    cuttlefish::SendJsonMsg(monitor_socket, config);
 
     auto resp_opt = cuttlefish::RecvJsonMsg(monitor_socket);
     if (!resp_opt.has_value()) {
@@ -122,6 +138,7 @@ int main(int argc, char* argv[]) {
 
     auto resp = resp_opt.value();
 
+    std::cout << resp << "\n";
     std::cout << "Shutdown operation: " << resp["request_status"] << std::endl;
   }
 
