@@ -68,7 +68,7 @@ cc_binary_host {
         "connection_observer.cpp",
         "display_handler.cpp",
         "main.cpp",
-        "video_frame_buffer.cpp",
+        "cvd_video_frame_buffer.cpp",
     ],
     cflags: [
       // libwebrtc headers need this
