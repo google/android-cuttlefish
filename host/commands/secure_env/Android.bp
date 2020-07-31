@@ -18,6 +18,7 @@ cc_binary_host {
     srcs: [
         "composite_serialization.cpp",
         "encrypted_serializable.cpp",
+        "fragile_tpm_storage.cpp",
         "gatekeeper_responder.cpp",
         "hmac_serializable.cpp",
         "in_process_tpm.cpp",
