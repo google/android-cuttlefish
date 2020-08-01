@@ -15,9 +15,9 @@
 ** limitations under the License.
 */
     {0, NULL},                   // none
-    {RIL_REQUEST_CONFIG_GET_SLOT_STATUS, radio_1_5::getSimSlotsStatusResponse},
-    {RIL_REQUEST_CONFIG_SET_SLOT_MAPPING, radio_1_5::setSimSlotsMappingResponse},
-    {RIL_REQUEST_CONFIG_GET_PHONE_CAPABILITY, radio_1_5::getPhoneCapabilityResponse},
-    {RIL_REQUEST_CONFIG_SET_PREFER_DATA_MODEM, radio_1_5::setPreferredDataModemResponse},
-    {RIL_REQUEST_CONFIG_SET_MODEM_CONFIG, radio_1_5::setModemsConfigResponse},
-    {RIL_REQUEST_CONFIG_GET_MODEM_CONFIG, radio_1_5::getModemsConfigResponse},
+    {RIL_REQUEST_CONFIG_GET_SLOT_STATUS, radio_1_6::getSimSlotsStatusResponse},
+    {RIL_REQUEST_CONFIG_SET_SLOT_MAPPING, radio_1_6::setSimSlotsMappingResponse},
+    {RIL_REQUEST_CONFIG_GET_PHONE_CAPABILITY, radio_1_6::getPhoneCapabilityResponse},
+    {RIL_REQUEST_CONFIG_SET_PREFER_DATA_MODEM, radio_1_6::setPreferredDataModemResponse},
+    {RIL_REQUEST_CONFIG_SET_MODEM_CONFIG, radio_1_6::setModemsConfigResponse},
+    {RIL_REQUEST_CONFIG_GET_MODEM_CONFIG, radio_1_6::getModemsConfigResponse},
