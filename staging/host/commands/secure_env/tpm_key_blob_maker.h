@@ -23,7 +23,7 @@
  * Encrypts key data using a TPM-resident key and signs it with a TPM-resident
  * key for privacy and integrity.
  *
- * This class is used to encrypt Key master data when it leaves the secure_env
+ * This class is used to encrypt KeyMint data when it leaves the secure_env
  * process, and is sent for storage to Android. When the data comes back, this
  * class decrypts it again for use in Keymaster and other HAL API calls.
  */
