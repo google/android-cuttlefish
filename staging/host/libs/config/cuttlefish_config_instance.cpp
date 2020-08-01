@@ -37,6 +37,7 @@ const char* kWifiTapName = "wifi_tap_name";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kUuid = "uuid";
+const char* kModemSimulatorPorts = "modem_simulator_ports";
 
 const char* kHostPort = "host_port";
 const char* kTpmPort = "tpm_port";
@@ -140,6 +141,15 @@ std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
     const {
   return cuttlefish::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::modem_simulator_ports() const {
+  return (*Dictionary())[kModemSimulatorPorts].asString();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
+    const std::string& modem_simulator_ports) {
+  (*Dictionary())[kModemSimulatorPorts] = modem_simulator_ports;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
