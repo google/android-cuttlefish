@@ -46,9 +46,9 @@ RemoteGateKeeperDevice::~RemoteGateKeeperDevice() {
 
 SizedBuffer hidl_vec2sized_buffer(const hidl_vec<uint8_t>& vec) {
     if (vec.size() == 0 || vec.size() > std::numeric_limits<uint32_t>::max()) return {};
-    auto dummy = new uint8_t[vec.size()];
-    std::copy(vec.begin(), vec.end(), dummy);
-    return {dummy, static_cast<uint32_t>(vec.size())};
+    auto unused = new uint8_t[vec.size()];
+    std::copy(vec.begin(), vec.end(), unused);
+    return {unused, static_cast<uint32_t>(vec.size())};
 }
 
 Return<void> RemoteGateKeeperDevice::enroll(uint32_t uid,

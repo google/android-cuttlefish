@@ -219,11 +219,11 @@ static bool getCameraParam(const CameraParameters& parameters,
                            int64_t* outValue) {
     const char* value = parameters.get(parameterKey);
     if (value) {
-        char dummy = 0;
+        char trailing = 0;
         // Attempt to scan an extra character and then make sure it was not
         // scanned by checking that the return value indicates only one item.
         // This way we fail on any trailing characters
-        if (sscanf(value, "%" SCNd64 "%c", outValue, &dummy) == 1) {
+        if (sscanf(value, "%" SCNd64 "%c", outValue, &trailing) == 1) {
             return true;
         }
     }

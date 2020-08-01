@@ -238,7 +238,7 @@ status_t EmulatedFakeCamera3::configureStreams(
   }
 
   /**
-   * Sanity-check input list.
+   * Validity-check input list.
    */
   if (streamList == NULL) {
     ALOGE("%s: NULL stream configuration", __FUNCTION__);
