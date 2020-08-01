@@ -43,6 +43,7 @@ enum RunnerExitCodes : int {
   kInitRamFsConcatError = 22,
   kTapDeviceInUse = 23,
   kTpmPassthroughError = 24,
+  kModemSimulatorServerError = 25,
 };
 
 // Actions supported by the launcher server
