@@ -14,4 +14,4 @@
 ** See the License for the specific language governing permissions and
 ** limitations under the License.
 */
-    {RIL_UNSOL_CONFIG_ICC_SLOT_STATUS, radio_1_5::simSlotsStatusChanged, WAKE_PARTIAL},
+    {RIL_UNSOL_CONFIG_ICC_SLOT_STATUS, radio_1_6::simSlotsStatusChanged, WAKE_PARTIAL},
