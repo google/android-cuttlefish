@@ -28,7 +28,7 @@ PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
 
 # [b/148163848] Disable product enforcement only for qt-qpr1-dev-plus-aosp
-# branch. It is not merged down to master branch.
+# branch. It is not merged down to main branch.
 # As qt-qpr1-dev-plus-aosp branch has qt based vendor modules that are not
 # ready for the product enforcement, we may not enable it in this branch.
 PRODUCT_USE_PRODUCT_VNDK_OVERRIDE := false
