@@ -144,9 +144,9 @@ void SetUpHandlingOfBootEvents(
     cuttlefish::ProcessMonitor* process_monitor, cuttlefish::SharedFD boot_events_pipe,
     std::shared_ptr<CvdBootStateMachine> state_machine) {
   process_monitor->MonitorExistingSubprocess(
-      // A dummy command, so logs are desciptive
+      // An unused command, so logs are desciptive
       cuttlefish::Command("boot_events_listener"),
-      // A dummy subprocess, with the boot events pipe as control socket
+      // An unused subprocess, with the boot events pipe as control socket
       cuttlefish::Subprocess(-1, boot_events_pipe),
       [boot_events_pipe, state_machine](cuttlefish::MonitorEntry*) {
         auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
