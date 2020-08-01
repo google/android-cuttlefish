@@ -240,6 +240,12 @@ DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel 
                          "with kgdb/kdb. The kernel must have been built with "
                          "kgdb support.");
 
+// by default, this modem-simulator is disabled
+DEFINE_bool(enable_modem_simulator, false,
+            "Enable the modem simulator to process RILD AT commands");
+DEFINE_int32(modem_simulator_count, 1,
+             "Modem simulator count corresponding to maximum sim number");
+
 namespace {
 
 const std::string kKernelDefaultPath = "kernel";
@@ -457,6 +463,12 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   auto udp_range  = ParsePortRange(FLAGS_udp_port_range);
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
+  tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator);
+  tmp_config_obj.set_modem_simulator_binary(
+      cuttlefish::DefaultHostArtifactsPath("bin/modem_simulator"));
+  tmp_config_obj.set_modem_simulator_instance_number(
+      FLAGS_modem_simulator_count);
+
   tmp_config_obj.set_webrtc_enable_adb_websocket(
           FLAGS_webrtc_enable_adb_websocket);
 
@@ -582,6 +594,14 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
       instance.set_start_webrtc_signaling_server(false);
     }
     is_first_instance = false;
+    std::stringstream ss;
+    auto base_port = 7200 + num - 2;
+    for (auto index = 0; index < FLAGS_modem_simulator_count; ++index) {
+      ss << base_port + 1 << ",";
+    }
+    std::string modem_simulator_ports = ss.str();
+    modem_simulator_ports.pop_back();
+    instance.set_modem_simulator_ports(modem_simulator_ports);
   }
 
   return tmp_config_obj;
@@ -860,6 +880,14 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("access-kregistry");
       preserving.insert("disk_hole");
       preserving.insert("NVChip");
+      preserving.insert("modem_nvram.json");
+      std::stringstream ss;
+      for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
+        ss.clear();
+        ss << "iccprofile_for_sim" << i << ".xml";
+        preserving.insert(ss.str());
+        ss.str("");
+      }
     }
     if (!CleanPriorFiles(config, preserving)) {
       LOG(ERROR) << "Failed to clean prior files";
