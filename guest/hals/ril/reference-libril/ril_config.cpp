@@ -98,7 +98,7 @@ struct RadioConfigImpl : public V1_1::IRadioConfig {
 Return<void> RadioConfigImpl::setResponseFunctions(
         const ::android::sp<V1_0::IRadioConfigResponse>& radioConfigResponse,
         const ::android::sp<V1_0::IRadioConfigIndication>& radioConfigIndication) {
-    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(RIL_SOCKET_1);
+    pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(RIL_SOCKET_1);
     int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
     assert(ret == 0);
 
@@ -231,7 +231,7 @@ Return<void> RadioConfigImpl::getModemsConfig(int32_t serial) {
     return Void();
 }
 
-void radio_1_5::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
+void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
     using namespace android::hardware;
     RLOGD("Entry %s", __FUNCTION__);
     const char *serviceNames = "default";
@@ -270,7 +270,7 @@ void checkReturnStatus(Return<void>& ret) {
         // note the current counter to avoid overwriting updates made by another thread before
         // write lock is acquired.
         int counter = mCounterRadioConfig;
-        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_5::getRadioServiceRwlock(0);
+        pthread_rwlock_t *radioServiceRwlockPtr = radio_1_6::getRadioServiceRwlock(0);
         int ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
         assert(ret == 0);
 
@@ -305,7 +305,7 @@ void RadioConfigImpl::checkReturnStatus_config(Return<void>& ret) {
     ::checkReturnStatus(ret);
 }
 
-int radio_1_5::getSimSlotsStatusResponse(int slotId, int responseType, int serial,
+int radio_1_6::getSimSlotsStatusResponse(int slotId, int responseType, int serial,
                                      RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("getSimSlotsResponse: serial %d", serial);
@@ -342,7 +342,7 @@ int radio_1_5::getSimSlotsStatusResponse(int slotId, int responseType, int seria
     return 0;
 }
 
-int radio_1_5::setSimSlotsMappingResponse(int slotId, int responseType, int serial,
+int radio_1_6::setSimSlotsMappingResponse(int slotId, int responseType, int serial,
                                       RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("setSimSlotsMappingResponse: serial %d", serial);
@@ -361,7 +361,7 @@ int radio_1_5::setSimSlotsMappingResponse(int slotId, int responseType, int seri
     return 0;
 }
 
-int radio_1_5::getPhoneCapabilityResponse(int slotId, int responseType, int serial,
+int radio_1_6::getPhoneCapabilityResponse(int slotId, int responseType, int serial,
                                       RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("getPhoneCapabilityResponse: serial %d", serial);
@@ -395,7 +395,7 @@ int radio_1_5::getPhoneCapabilityResponse(int slotId, int responseType, int seri
     return 0;
 }
 
-int radio_1_5::setPreferredDataModemResponse(int slotId, int responseType, int serial,
+int radio_1_6::setPreferredDataModemResponse(int slotId, int responseType, int serial,
                                          RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("setPreferredDataModemResponse: serial %d", serial);
@@ -414,7 +414,7 @@ int radio_1_5::setPreferredDataModemResponse(int slotId, int responseType, int s
     return 0;
 }
 
-int radio_1_5::setModemsConfigResponse(int slotId, int responseType, int serial,
+int radio_1_6::setModemsConfigResponse(int slotId, int responseType, int serial,
                                    RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("setModemsConfigResponse: serial %d", serial);
@@ -433,7 +433,7 @@ int radio_1_5::setModemsConfigResponse(int slotId, int responseType, int serial,
     return 0;
 }
 
-int radio_1_5::getModemsConfigResponse(int slotId, int responseType, int serial,
+int radio_1_6::getModemsConfigResponse(int slotId, int responseType, int serial,
                                    RIL_Errno e, void *response, size_t responseLen) {
 #if VDBG
     RLOGD("getModemsConfigResponse: serial %d", serial);
@@ -460,7 +460,7 @@ int radio_1_5::getModemsConfigResponse(int slotId, int responseType, int serial,
     return 0;
 }
 
-int radio_1_5::simSlotsStatusChanged(int slotId, int indicationType, int token, RIL_Errno e,
+int radio_1_6::simSlotsStatusChanged(int slotId, int indicationType, int token, RIL_Errno e,
                                  void *response, size_t responseLen) {
     if (radioConfigService != NULL &&
         (radioConfigService->mRadioConfigIndication != NULL ||
