@@ -13,6 +13,7 @@ ro.boot.vsock_frames_port  u:object_r:vsock_frames_port_prop:s0
 ro.boot.vsock_gatekeeper_port  u:object_r:cuttlefish_vsock_gatekeeper_port:s0
 ro.boot.vsock_keyboard_port  u:object_r:cuttlefish_vsock_keyboard_port:s0
 ro.boot.vsock_keymaster_port  u:object_r:cuttlefish_vsock_keymaster_port:s0
+ro.boot.modem_simulator_ports  u:object_r:cuttlefish_modem_simulator_ports:s0
 ro.boot.vsock_touch_port  u:object_r:cuttlefish_vsock_touch_port:s0
 ro.boot.wifi_mac_address  u:object_r:cuttlefish_wifi_mac_address:s0
 ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
