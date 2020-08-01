@@ -522,6 +522,7 @@ int main(int argc, char** argv) {
   if (config->enable_metrics() == cuttlefish::CuttlefishConfig::kYes) {
     LaunchMetrics(&process_monitor, *config);
   }
+  LaunchModemSimulatorIfEnabled(*config, &process_monitor);
 
   auto event_pipes =
       LaunchKernelLogMonitor(*config, &process_monitor, 2);
