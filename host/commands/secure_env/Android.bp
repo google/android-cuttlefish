@@ -22,6 +22,7 @@ cc_binary_host {
         "gatekeeper_responder.cpp",
         "hmac_serializable.cpp",
         "in_process_tpm.cpp",
+        "insecure_fallback_storage.cpp",
         "json_serializable.cpp",
         "keymaster_responder.cpp",
         "primary_key_builder.cpp",
