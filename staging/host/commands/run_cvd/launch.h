@@ -18,6 +18,8 @@ void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
                                  cuttlefish::SharedFD adbd_events_pipe);
 void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
                                  const cuttlefish::CuttlefishConfig& config);
+void LaunchModemSimulatorIfEnabled(const cuttlefish::CuttlefishConfig& config,
+                                   cuttlefish::ProcessMonitor* process_monitor);
 
 struct StreamerLaunchResult {
   bool launched = false;
