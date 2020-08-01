@@ -160,6 +160,11 @@ const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 const char* kVmManagerKernelCmdline = "vm_manager_kernel_cmdline";
 
+// modem simulator related
+const char* kRunModemSimulator = "enable_modem_simulator";
+const char* kModemSimulatorBinary = "modem_simulator_binary";
+const char* kModemSimulatorInstanceNumber = "modem_simulator_instance_number";
+
 const char* kRilDns = "ril_dns";
 
 const char* kKgdb = "kgdb";
@@ -687,6 +692,31 @@ void CuttlefishConfig::set_sig_server_strict(bool strict) {
 
 bool CuttlefishConfig::sig_server_strict() const {
   return (*dictionary_)[kSigServerStrict].asBool();
+}
+
+bool CuttlefishConfig::enable_modem_simulator() const {
+  return (*dictionary_)[kRunModemSimulator].asBool();
+}
+
+void CuttlefishConfig::set_enable_modem_simulator(bool enable_modem_simulator) {
+  (*dictionary_)[kRunModemSimulator] = enable_modem_simulator;
+}
+
+std::string CuttlefishConfig::modem_simulator_binary() const {
+  return (*dictionary_)[kModemSimulatorBinary].asString();
+}
+
+void CuttlefishConfig::set_modem_simulator_binary(const std::string& binary) {
+  (*dictionary_)[kModemSimulatorBinary] = binary;
+}
+
+void CuttlefishConfig::set_modem_simulator_instance_number(
+    int instance_number) {
+  (*dictionary_)[kModemSimulatorInstanceNumber] = instance_number;
+}
+
+int CuttlefishConfig::modem_simulator_instance_number() const {
+  return (*dictionary_)[kModemSimulatorInstanceNumber].asInt();
 }
 
 void CuttlefishConfig::set_loop_max_part(int loop_max_part) {

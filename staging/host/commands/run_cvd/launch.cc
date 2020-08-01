@@ -324,6 +324,94 @@ StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
   return server_ret;
 }
 
+bool StopModemSimulator() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = config->ForDefaultInstance();
+
+  std::string monitor_socket_name = "modem_simulator";
+  std::stringstream ss;
+  ss << instance.host_port();
+  monitor_socket_name.append(ss.str());
+  auto monitor_sock = cuttlefish::SharedFD::SocketLocalClient(
+      monitor_socket_name.c_str(), true, SOCK_STREAM);
+  if (!monitor_sock->IsOpen()) {
+    LOG(ERROR) << "The connection to modem simulator is closed";
+    return false;
+  }
+  std::string msg("STOP");
+  if (monitor_sock->Write(msg.data(), msg.size()) < 0) {
+    monitor_sock->Close();
+    LOG(ERROR) << "Failed to send 'STOP' to modem simulator";
+    return false;
+  }
+  char buf[64] = {0};
+  if (monitor_sock->Read(buf, sizeof(buf)) <= 0) {
+    monitor_sock->Close();
+    LOG(ERROR) << "Failed to read message from modem simulator";
+    return false;
+  }
+  if (strcmp(buf, "OK")) {
+    monitor_sock->Close();
+    LOG(ERROR) << "Read '" << buf << "' instead of 'OK' from modem simulator";
+    return false;
+  }
+
+  return true;
+}
+
+void LaunchModemSimulatorIfEnabled(
+    const cuttlefish::CuttlefishConfig& config,
+    cuttlefish::ProcessMonitor* process_monitor) {
+  if (!config.enable_modem_simulator()) {
+    LOG(DEBUG) << "Modem simulator not enabled";
+    return;
+  }
+
+  int instance_number = config.modem_simulator_instance_number();
+  if (instance_number > 3 /* max value */ || instance_number < 0) {
+    LOG(ERROR)
+        << "Modem simulator instance number should range between 1 and 3";
+    return;
+  }
+
+  cuttlefish::Command cmd(
+      config.modem_simulator_binary(), [](cuttlefish::Subprocess* proc) {
+        auto stopped = StopModemSimulator();
+        if (stopped) {
+          return true;
+        }
+        LOG(WARNING) << "Failed to stop modem simulator nicely, "
+                     << "attempting to KILL";
+        return KillSubprocess(proc);
+      });
+
+  auto instance = config.ForDefaultInstance();
+  auto ports = instance.modem_simulator_ports();
+  auto param_builder = cmd.GetParameterBuilder();
+  param_builder << "-server_fds=";
+  for (int i = 0; i < instance_number; ++i) {
+    auto pos = ports.find(',');
+    auto temp = (pos != std::string::npos) ? ports.substr(0, pos - 1) : ports;
+    auto port = std::stoi(temp);
+    ports = ports.substr(pos + 1);
+
+    auto socket = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM);
+    if (!socket->IsOpen()) {
+      LOG(ERROR) << "Unable to create modem simulator server socket: "
+                 << socket->StrError();
+      std::exit(RunnerExitCodes::kModemSimulatorServerError);
+    }
+    if (i > 0) {
+      param_builder << ",";
+    }
+    param_builder << socket;
+  }
+  param_builder.Build();
+
+  process_monitor->StartSubprocess(std::move(cmd),
+                                   GetOnSubprocessExitCallback(config));
+}
+
 void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
                                      const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
