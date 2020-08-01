@@ -178,7 +178,7 @@ void RemoteKeymaster::AbortOperation(const AbortOperationRequest& request,
 }
 
 GetHmacSharingParametersResponse RemoteKeymaster::GetHmacSharingParameters() {
-    // Dummy empty buffer to allow ForwardCommand to have something to serialize
+    // Unused empty buffer to allow ForwardCommand to have something to serialize
     Buffer request;
     GetHmacSharingParametersResponse response;
     ForwardCommand(GET_HMAC_SHARING_PARAMETERS, request, &response);
@@ -207,7 +207,7 @@ DeviceLockedResponse RemoteKeymaster::DeviceLocked(
 }
 
 EarlyBootEndedResponse RemoteKeymaster::EarlyBootEnded() {
-    // Dummy empty buffer to allow ForwardCommand to have something to serialize
+    // Unused empty buffer to allow ForwardCommand to have something to serialize
     Buffer request;
     EarlyBootEndedResponse response;
     ForwardCommand(EARLY_BOOT_ENDED, request, &response);
