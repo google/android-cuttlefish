@@ -16,7 +16,7 @@
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-source "${ANDROID_BUILD_TOP}/external/shflags/src/shflags"
+source "${ANDROID_BUILD_TOP}/external/shflags/shflags"
 
 DEFINE_boolean p1 \
 	false "Only generate/write the 1st partition (loader1)" "1"
