@@ -307,7 +307,7 @@ EOF
 	echo "Installing required packages..."
 	chroot ${mntdir} /bin/bash <<EOF
 apt-get update
-apt-get install -y -f initramfs-tools u-boot-tools network-manager openssh-server sudo man-db vim git dpkg-dev cdbs debhelper config-package-dev gdisk eject lzop binfmt-support ntpdate
+apt-get install -y -f initramfs-tools u-boot-tools network-manager openssh-server sudo man-db vim git dpkg-dev cdbs debhelper config-package-dev gdisk eject lzop binfmt-support ntpdate lsof
 EOF
 
 	echo "Turning on DHCP client..."
