@@ -18,6 +18,7 @@
 #include "gatekeeper/gatekeeper.h"
 #include "tss2/tss2_esys.h"
 
+#include "host/commands/secure_env/gatekeeper_storage.h"
 #include "host/commands/secure_env/tpm_random_source.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
@@ -27,7 +28,10 @@
  */
 class TpmGatekeeper : public gatekeeper::GateKeeper {
 public:
-  TpmGatekeeper(TpmResourceManager* resource_manager);
+  TpmGatekeeper(
+      TpmResourceManager* resource_manager,
+      GatekeeperStorage* secure_storage,
+      GatekeeperStorage* insecure_storage);
 
   bool GetAuthTokenKey(
       const uint8_t** auth_token_key, uint32_t* length) const override;
@@ -55,6 +59,11 @@ public:
 
   uint64_t GetMillisecondsSinceBoot() const override;
 
+  /**
+   * Retrieves the failure record for user `uid`, assuming a user secret value
+   * of `user_id`. If the secret value `user_id` is incorrect, the original
+   * secret `user_id` value will be lost and cannot be recovered.
+   */
   bool GetFailureRecord(
       uint32_t uid,
       gatekeeper::secure_id_t user_id,
@@ -70,5 +79,7 @@ public:
   bool IsHardwareBacked() const override;
 private:
   TpmResourceManager* resource_manager_;
+  GatekeeperStorage* secure_storage_;
+  GatekeeperStorage* insecure_storage_;
   TpmRandomSource random_source_;
 };
