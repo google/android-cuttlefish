@@ -95,6 +95,11 @@ std::vector<std::string> KernelCommandLineFromConfig(const vsoc::CuttlefishConfi
     kernel_cmdline.push_back(concat("androidboot.vendor.vehiclehal.server.port=", instance.vehicle_hal_server_port()));
   }
 
+  if (instance.audiocontrol_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vendor.audiocontrol.server.cid=", instance.vsock_guest_cid()));
+    kernel_cmdline.push_back(concat("androidboot.vendor.audiocontrol.server.port=", instance.audiocontrol_server_port()));
+  }
+
   // TODO(b/158131610): Set this in crosvm instead
   kernel_cmdline.push_back(concat("androidboot.wifi_mac_address=",
                                   mac_to_str(instance.wifi_mac_address())));
