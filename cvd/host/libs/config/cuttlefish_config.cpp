@@ -111,13 +111,13 @@ const char* kVncServerBinary = "vnc_server_binary";
 const char* kEnableSandbox = "enable_sandbox";
 const char* kSeccompPolicyDir = "seccomp_policy_dir";
 
+const char* kGnssGrpcProxyBinary = "gnss_grpc_proxy_binary";
+const char* kEnableGnssGrpcProxy = "enable_gnss_grpc_proxy";
+
 const char* kEnableWebRTC = "enable_webrtc";
 const char* kWebRTCBinary = "webrtc_binary";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
-
-const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
-const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
 
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
@@ -401,6 +401,23 @@ void CuttlefishConfig::set_console_forwarder_binary(
   (*dictionary_)[kConsoleForwarderBinary] = binary;
 }
 
+std::string CuttlefishConfig::gnss_grpc_proxy_binary() const {
+  return (*dictionary_)[kGnssGrpcProxyBinary].asString();
+}
+
+void CuttlefishConfig::set_gnss_grpc_proxy_binary(
+    const std::string& binary) {
+  (*dictionary_)[kGnssGrpcProxyBinary] = binary;
+}
+
+void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
+  (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
+}
+
+bool CuttlefishConfig::enable_gnss_grpc_proxy() const {
+  return (*dictionary_)[kEnableGnssGrpcProxy].asBool();
+}
+
 std::string CuttlefishConfig::kernel_log_monitor_binary() const {
   return (*dictionary_)[kKernelLogMonitorBinary].asString();
 }
@@ -461,22 +478,6 @@ void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
 
 std::string CuttlefishConfig::webrtc_binary() const {
   return (*dictionary_)[kWebRTCBinary].asString();
-}
-
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
-}
-
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
