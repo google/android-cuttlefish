@@ -48,7 +48,6 @@ const char* kAdbIPAndPort = "adb_ip_and_port";
 
 const char* kConfigServerPort = "config_server_port";
 const char* kVncServerPort = "vnc_server_port";
-const char* kVehicleHalServerPort = "vehicle_hal_server_port";
 const char* kTombstoneReceiverPort = "tombstone_receiver_port";
 
 const char* kWebrtcDeviceId = "webrtc_device_id";
@@ -61,6 +60,8 @@ const char* kKeyboardServerPort = "keyboard_server_port";
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
 const char* kGatekeeperVsockPort = "gatekeeper_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
+
+const char* kGnssGrpcProxyServerPort = "gnss_grpc_proxy_server_port";
 
 }  // namespace
 
@@ -119,6 +120,23 @@ std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
 
 std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
   return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-out-pipe"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss-in-pipe"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_out_pipe_name() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss-out-pipe"));
+}
+
+int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {
+  return (*Dictionary())[kGnssGrpcProxyServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_gnss_grpc_proxy_server_port(
+    int gnss_grpc_proxy_server_port) {
+  (*Dictionary())[kGnssGrpcProxyServerPort] = gnss_grpc_proxy_server_port;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
@@ -317,14 +335,6 @@ int CuttlefishConfig::InstanceSpecific::tombstone_receiver_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_tombstone_receiver_port(int tombstone_receiver_port) {
   (*Dictionary())[kTombstoneReceiverPort] = tombstone_receiver_port;
-}
-
-int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
-  return (*Dictionary())[kVehicleHalServerPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
-  (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {

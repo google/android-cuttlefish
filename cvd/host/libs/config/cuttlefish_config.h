@@ -202,12 +202,6 @@ class CuttlefishConfig {
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
 
-  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
-  bool enable_vehicle_hal_grpc_server() const;
-
-  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
-  std::string vehicle_hal_grpc_server_binary() const;
-
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
 
@@ -216,6 +210,12 @@ class CuttlefishConfig {
 
   void set_adb_connector_binary(const std::string& adb_connector_binary);
   std::string adb_connector_binary() const;
+
+  void set_gnss_grpc_proxy_binary(const std::string& binary);
+  std::string gnss_grpc_proxy_binary() const;
+
+  void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
+  bool enable_gnss_grpc_proxy() const;
 
   void set_socket_vsock_proxy_binary(const std::string& binary);
   std::string socket_vsock_proxy_binary() const;
@@ -374,10 +374,10 @@ class CuttlefishConfig {
     // Port number to connect to the frame server on the host. (Only
     // operational if using swiftshader as the GPU.)
     int frames_server_port() const;
-    // Port number to connect to the vehicle HAL server on the host
-    int vehicle_hal_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
+    // Port number to connect to the gnss grpc proxy server on the host
+    int gnss_grpc_proxy_server_port() const;
     // Port number to connect to the tpm server on the host
     int tpm_port() const;
     // Port number to connect to the gatekeeper server on the host
@@ -422,6 +422,9 @@ class CuttlefishConfig {
     std::string console_in_pipe_name() const;
     std::string console_out_pipe_name() const;
 
+    std::string gnss_in_pipe_name() const;
+    std::string gnss_out_pipe_name() const;
+
     std::string logcat_pipe_name() const;
 
     std::string launcher_log_path() const;
@@ -464,7 +467,6 @@ class CuttlefishConfig {
     void set_keyboard_server_port(int config_server_port);
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
-    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
@@ -484,6 +486,8 @@ class CuttlefishConfig {
     void set_start_webrtc_signaling_server(bool start);
     // Wifi MAC address inside the guest
     void set_wifi_mac_address(const std::array<unsigned char, 6>&);
+    // Gnss grpc proxy server port inside the host
+    void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
   };
 
  private:
