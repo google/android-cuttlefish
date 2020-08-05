@@ -397,7 +397,8 @@ void InitLogging(char* argv[], LogFunction&& logger, AbortFunction&& aborter) {
   }
 }
 
-void SetLogger(LogFunction&& logger) {
+LogFunction SetLogger(LogFunction&& logger) {
+  LogFunction old_logger = std::move(Logger());
   Logger() = std::move(logger);
 
   static auto& liblog_functions = GetLibLogFunctions();
@@ -410,9 +411,11 @@ void SetLogger(LogFunction&& logger) {
                log_message->message);
     });
   }
+  return old_logger;
 }
 
-void SetAborter(AbortFunction&& aborter) {
+AbortFunction SetAborter(AbortFunction&& aborter) {
+  AbortFunction old_aborter = std::move(Aborter());
   Aborter() = std::move(aborter);
 
   static auto& liblog_functions = GetLibLogFunctions();
@@ -420,6 +423,7 @@ void SetAborter(AbortFunction&& aborter) {
     liblog_functions->__android_log_set_aborter(
         [](const char* abort_message) { Aborter()(abort_message); });
   }
+  return old_aborter;
 }
 
 // This indirection greatly reduces the stack impact of having lots of
