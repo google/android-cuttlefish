@@ -52,6 +52,7 @@ cc_binary_host {
         "libprotobuf-cpp-full",
         "libziparchive",
         "libz",
+        "libcuttlefish_allocd_utils",
     ],
     static_libs: [
         "libext2_uuid",
