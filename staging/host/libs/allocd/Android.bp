@@ -37,7 +37,7 @@ cc_library {
             exclude_static_libs: ["liblog"],
         },
     },
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host_only"],
 }
 
 cc_binary {
