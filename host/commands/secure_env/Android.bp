@@ -22,6 +22,7 @@ cc_binary_host {
         "hmac_serializable.cpp",
         "in_process_tpm.cpp",
         "keymaster_responder.cpp",
+        "primary_key_builder.cpp",
         "secure_env.cpp",
         "tpm_attestation_record.cpp",
         "tpm_auth.cpp",
