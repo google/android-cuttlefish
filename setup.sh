@@ -37,6 +37,13 @@ function help_on_container_create {
 	echo "                              : for backward compat, [NAME] will override this"
 	echo "       -s | --singleshot      : run the container, log in once, then delete it on logout"
 	echo "                              : otherwise, the container is created as a daemon"
+	echo "       -A[/path] | --android[=/path]    : mount Android images from path (defaults to \$ANDROID_PRODUCT_OUT);"
+	echo "                              : requires -C to also be specified"
+	echo "                              : (Optional path argument must follow short-option name without intervening space;"
+	echo "                              :  it must follow long-option name followed by an '=' without intervening space)"
+	echo "       -C[/path] | --cuttlefish[=/path] : mount Cuttlefish host image from path (defaults to \$ANDROID_HOST_OUT/cvd-host_package.tar.gz)"
+	echo "                              : (Optional path argument must follow short-option name without intervening space;"
+	echo "                              :  it must follow long-option name followed by an '=' without intervening space)"
 	echo "       -x | --with_host_x     : share X of the docker host"
 	echo "       -m | --share_home dir1 : share subdirectories of the host user's home"
 	echo "                              : -m dir1 -m dir2 -m dir3 for multiple directories"
@@ -82,6 +89,8 @@ function is_absolute_path {
 
 function cvd_docker_create {
 	local name=""
+	local android=""
+	local cuttlefish=""
 	local singleshot="false"
 	local with_host_x="false"
 	local need_help="false"
@@ -95,7 +104,7 @@ function cvd_docker_create {
   # h | --help
 
   local params
-  if params=$(getopt -o 'n:m:sxh' -l 'name:,share_home:,singleshot,with_host_x,help' --name "$0" -- "$@"); then
+  if params=$(getopt -o 'n:m:A::C::sxh' -l 'name:,share_home:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
 	  while true; do
 		  case "$1" in
@@ -106,6 +115,43 @@ function cvd_docker_create {
 			  -m|--share_home)
 				  share_home="true"
 				  shared_home_subdirs+=("$2")
+				  shift 2
+				  ;;
+			  -A|--android)
+				  android=$2
+				  if [[ -z "${android}" ]]; then
+					  if [[ -v ANDROID_PRODUCT_OUT ]]; then
+						  android="${ANDROID_PRODUCT_OUT}"
+						  echo "Defaulting Android path to ${android}"
+						  if [[ ! -d "${ANDROID_PRODUCT_OUT}" ]]; then
+							  echo "Directory ANDROID_PRODUCT_OUT=${ANDROID_PRODUCT_OUT} does not exist, can't use as default." 1>&2
+							  need_help="true"
+						  fi
+					  fi
+				  fi
+				  if [[ ! -r "${android}" || ! -d "${android}" ]]; then
+					  echo "Directory \"${android}\" does not exist." 1>&2
+					  need_help="true"
+				  fi
+				  shift 2
+				  ;;
+			  -C|--cuttlefish)
+				  cuttlefish=$2
+				  if [[ -z "${cuttlefish}" ]]; then
+					  if [[ -v ANDROID_HOST_OUT ]]; then
+						  cuttlefish="${ANDROID_HOST_OUT}/cvd-host_package.tar.gz"
+						  echo "Defaulting Cuttlefish path to ${cuttlefish}"
+						  if [[ ! -r "${cuttlefish}" ]]; then
+							  echo "File ${cuttlefish} does not exist, can't use as default." 1>&2
+							  need_help="true"
+						  fi
+
+					  fi
+				  fi
+				  if [[ ! -r "${cuttlefish}" || ! -f "${cuttlefish}" ]]; then
+					  echo "File \"${cuttlefish}\" does not exist." 1>&2
+					  need_help="true"
+				  fi
 				  shift 2
 				  ;;
 			  -s|--singleshot)
@@ -135,6 +181,11 @@ function cvd_docker_create {
 	  need_help="true"
   fi
 
+  if [[ -n "${android}" && -z "${cuttlefish}" ]]; then
+	  echo "Option -A/--android requires option -C/--cuttlefish" 1>&2
+	  need_help="true"
+  fi
+
   if [[ "${need_help}" == "true" ]]; then
 	  help_on_container_create
 	  return
@@ -150,22 +201,25 @@ function cvd_docker_create {
   local -a home_volume=()
   if [[ -z "${container}" ]]; then
 	  echo "Container ${name} does not exist.";
-	  echo "Starting container ${name} from image cuttlefish.";
 
-	# If ANDROID_BUILD_TOP is set, we assume that the entire Android
-	# build environment is correctly configured.  We further assume
-	# that there is a valid $ANDROID_HOST_OUT/cvd-host_package.tar.gz
-	# and a set of Android images under $ANDROID_PRODUCT_OUT/*.img.
-
-	if [[ -v ANDROID_BUILD_TOP ]]; then
-		local home="$(mktemp -d)"
-		echo "Detected Android build environment.  Setting up in ${home}."
-		tar xz -C "${home}" -f "${ANDROID_HOST_OUT}"/cvd-host_package.tar.gz
-		for f in "${ANDROID_PRODUCT_OUT}"/*.img; do
-			home_volume+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
-		done
-		home_volume+=("-v ${home}:/home/vsoc-01:rw")
-	fi
+	  if [[ -f "${cuttlefish}" ]]; then
+		  local home="$(mktemp -d)"
+		  echo "Setting up Cuttlefish host image from ${cuttlefish} in ${home}."
+		  tar xz -C "${home}" -f "${cuttlefish}"
+	  fi
+	  if [[ -d "${android}" ]]; then
+		  echo "Setting up Android images from ${android} in ${home}."
+		  if [[ $(compgen -G "${android}"/*.img) != "${android}/*.img" ]]; then
+				for f in "${android}"/*.img; do
+					home_volume+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
+				done
+		  else
+			    echo "WARNING: No Android images in ${android}."
+		  fi
+	  fi
+	  if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
+		  home_volume+=("-v ${home}:/home/vsoc-01:rw")
+	  fi
 
 	if [[ $share_home == "true" ]]; then
 		local user_home=$(realpath $HOME)
@@ -186,6 +240,7 @@ function cvd_docker_create {
 		as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
 	fi
 
+	echo "Starting container ${name} from image cuttlefish.";
 	docker run -d ${as_host_x[@]} \
 		--name "${name}" -h "${name}" \
 		-p 8443:8443 \
