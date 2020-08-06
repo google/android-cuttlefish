@@ -78,3 +78,7 @@ section.noscroll div.one {
   background-color: black;
   margin-top: 40px;
 }
+
+#device_connection video {
+  touch-action: none;
+}

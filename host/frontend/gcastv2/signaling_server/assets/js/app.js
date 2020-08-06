@@ -209,10 +209,14 @@ function ConnectDeviceCb(dev_id) {
 function ShowNewDeviceList(device_ids) {
   let ul = document.getElementById('device_list');
   ul.innerHTML = "";
+  let count = 1;
   for (const dev_id of device_ids) {
+    const button_id = 'connect_' + count++;
     ul.innerHTML += ('<li class="device_entry" title="Connect to ' + dev_id
-                     + '">' + dev_id + '<button onclick="ConnectDeviceCb(\''
-                     + dev_id + '\')">Connect</button></li>');
+                     + '">' + dev_id + '<button id="' + button_id
+                     + '" >Connect</button></li>');
+    document.getElementById(button_id).addEventListener(
+        'click', evt => ConnectDeviceCb(dev_id));
   }
 }
 
@@ -232,4 +236,5 @@ function UpdateDeviceList() {
 // Get any devices that are already connected
 UpdateDeviceList();
 // Update the list at the user's request
-document.getElementById('refresh_list').onclick = evt => UpdateDeviceList();
+document.getElementById('refresh_list')
+    .addEventListener('click', evt => UpdateDeviceList());
