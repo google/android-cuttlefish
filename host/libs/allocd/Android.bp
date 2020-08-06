@@ -13,13 +13,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+cc_library {
+    name: "libcuttlefish_allocd_utils",
+    srcs: [
+        "utils.cpp",
+    ],
+    shared: {
+        shared_libs: [
+            "libbase",
+            "liblog",
+        ],
+    },
+    static: {
+        static_libs: [
+            "libbase",
+            "liblog",
+        ],
+    },
+    target: {
+        vendor: {
+            // Liblog does not have a vendor-static variant.
+            shared_libs: ["liblog"],
+            exclude_static_libs: ["liblog"],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest"],
+}
+
 cc_binary {
     name: "allocd",
     srcs: [
         "allocd.cpp",
         "alloc_utils.cpp",
-        "utils.cpp",
         "resource_manager.cpp",
+        "resource.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -32,9 +59,7 @@ cc_binary {
     ],
     target: {
         host: {
-            static_libs: [
-                "libjsoncpp",
-            ],
+            static_libs: ["libjsoncpp"],
         },
     },
     defaults: ["cuttlefish_host_only"],
