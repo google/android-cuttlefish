@@ -118,4 +118,23 @@ ssize_t WriteAllBinary(SharedFD fd, const T* binary_data) {
   return WriteAll(fd, (const char*) binary_data, sizeof(*binary_data));
 }
 
+/**
+ * Sends contents of msg through sock, checking for socket error conditions
+ *
+ * On successful Send, returns true
+ *
+ * If a Send error is encountered, returns false. Some data may have already
+ * been written to 'sock' at that point.
+ */
+bool SendAll(SharedFD sock, const std::string& msg);
+
+/**
+ * Receives 'count' bytes from sock, checking for socket error conditions
+ *
+ * On successful Recv, returns a string containing the received data
+ *
+ * If a Recv error is encountered, returns the empty string
+ */
+std::string RecvAll(SharedFD sock, const size_t count);
+
 } // namespace cuttlefish
