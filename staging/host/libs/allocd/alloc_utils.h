@@ -29,10 +29,8 @@
 
 namespace cuttlefish {
 
-
-// TODO (paulkirth): Need to have the name of the ebtables program set
-// somewhere, for now hardcode it, until resolved
 constexpr char kEbtablesName[] = "ebtables";
+constexpr char kEbtablesLegacyName[] = "ebtables-legacy";
 
 // Wireless network prefix
 constexpr char kWirelessIp[] = "192.168.96";
@@ -52,6 +50,7 @@ struct WirelessNetworkConfig {
   bool has_broute_ipv4 = false;
   bool has_broute_ipv6 = false;
   bool has_tap = false;
+  bool use_ebtables_legacy = false;
 };
 
 // struct for managing configuration state
@@ -76,24 +75,31 @@ bool DeleteIface(const std::string& name);
 bool CreateBridge(const std::string& name);
 bool DestroyBridge(const std::string& name);
 
-bool CreateEbtables(const std::string& name, bool use_ipv4);
-bool DestroyEbtables(const std::string& name, bool use_ipv4);
-bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add);
-bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add);
+bool CreateEbtables(const std::string& name, bool use_ipv,
+                    bool use_ebtables_legacy);
+bool DestroyEbtables(const std::string& name, bool use_ipv4,
+                     bool use_ebtables_legacy);
+bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add,
+                    bool use_ebtables_legacy);
+bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add,
+                    bool use_ebtables_legacy);
 
-bool CreateMobileIface(const std::string& name, uint16_t id, const std::string& ipaddr);
-bool DestroyMobileIface(const std::string& name, uint16_t id, const std::string& ipaddr);
+bool CreateMobileIface(const std::string& name, uint16_t id,
+                       const std::string& ipaddr);
+bool DestroyMobileIface(const std::string& name, uint16_t id,
+                        const std::string& ipaddr);
 
 bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                         bool has_ipv6_bridge);
+                         bool has_ipv6_bridge, bool use_ebtables_legacy);
 bool DestroyWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                          bool use_ipv6);
+                          bool use_ipv6, bool use_ebtables_legacy);
 void CleanupWirelessIface(const std::string& name,
                           const WirelessNetworkConfig& config);
 
 bool IptableConfig(const std::string& network, bool add);
 
-bool LinkTapToBridge(const std::string& tap_name, const std::string& bridge_name);
+bool LinkTapToBridge(const std::string& tap_name,
+                     const std::string& bridge_name);
 
 bool SetupBridgeGateway(const std::string& name, const std::string& ipaddr);
 void CleanupBridgeGateway(const std::string& name, const std::string& ipaddr,
@@ -102,8 +108,10 @@ void CleanupBridgeGateway(const std::string& name, const std::string& ipaddr,
 bool CreateWirelessBridgeIface(const std::string& name);
 bool DestroyWirelessBridgeIface(const std::string& name);
 
-bool AddGateway(const std::string& name, const std::string& gateway, const std::string& netmask);
-bool DestroyGateway(const std::string& name, const std::string& gateway, const std::string& netmask);
+bool AddGateway(const std::string& name, const std::string& gateway,
+                const std::string& netmask);
+bool DestroyGateway(const std::string& name, const std::string& gateway,
+                    const std::string& netmask);
 
 bool StartDnsmasq(const std::string& bridge_name, const std::string& gateway,
                   const std::string& dhcp_range);

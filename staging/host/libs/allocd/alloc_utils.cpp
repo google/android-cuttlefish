@@ -64,7 +64,7 @@ bool BringUpIface(const std::string& name) {
 }
 
 bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                         bool has_ipv6_bridge) {
+                         bool has_ipv6_bridge, bool use_ebtables_legacy) {
   // assume bridge exists
 
   WirelessNetworkConfig config{false, false, false};
@@ -86,7 +86,7 @@ bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
   }
 
   if (!has_ipv4_bridge) {
-    if (!CreateEbtables(name, true)) {
+    if (!CreateEbtables(name, true, use_ebtables_legacy)) {
       CleanupWirelessIface(name, config);
       return false;
     }
@@ -94,7 +94,7 @@ bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
   }
 
   if (!has_ipv6_bridge) {
-    if (CreateEbtables(name, false)) {
+    if (CreateEbtables(name, false, use_ebtables_legacy)) {
       CleanupWirelessIface(name, config);
       return false;
     }
@@ -145,7 +145,8 @@ bool CreateMobileIface(const std::string& name, uint16_t id,
   return true;
 }
 
-bool DestroyMobileIface(const std::string& name, uint16_t id, const std::string& ipaddr) {
+bool DestroyMobileIface(const std::string& name, uint16_t id,
+                        const std::string& ipaddr) {
   if (id > 63) {
     LOG(ERROR) << "ID exceeds maximum value to assign a netmask: " << id;
     return false;
@@ -160,7 +161,8 @@ bool DestroyMobileIface(const std::string& name, uint16_t id, const std::string&
   return DestroyIface(name);
 }
 
-bool AddGateway(const std::string& name, const std::string& gateway, const std::string& netmask) {
+bool AddGateway(const std::string& name, const std::string& gateway,
+                const std::string& netmask) {
   std::stringstream ss;
   ss << "ip addr add " << gateway << netmask << " broadcast + dev " << name;
   auto command = ss.str();
@@ -182,13 +184,13 @@ bool DestroyGateway(const std::string& name, const std::string& gateway,
 }
 
 bool DestroyWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                          bool has_ipv6_bridge) {
+                          bool has_ipv6_bridge, bool use_ebtables_legacy) {
   if (!has_ipv6_bridge) {
-    DestroyEbtables(name, false);
+    DestroyEbtables(name, false, use_ebtables_legacy);
   }
 
   if (!has_ipv4_bridge) {
-    DestroyEbtables(name, true);
+    DestroyEbtables(name, true, use_ebtables_legacy);
   }
 
   return DestroyIface(name);
@@ -197,11 +199,11 @@ bool DestroyWirelessIface(const std::string& name, bool has_ipv4_bridge,
 void CleanupWirelessIface(const std::string& name,
                           const WirelessNetworkConfig& config) {
   if (config.has_broute_ipv6) {
-    DestroyEbtables(name, false);
+    DestroyEbtables(name, false, config.use_ebtables_legacy);
   }
 
   if (config.has_broute_ipv4) {
-    DestroyEbtables(name, true);
+    DestroyEbtables(name, true, config.use_ebtables_legacy);
   }
 
   if (config.has_tap) {
@@ -209,17 +211,31 @@ void CleanupWirelessIface(const std::string& name,
   }
 }
 
-bool CreateEbtables(const std::string& name, bool use_ipv4) {
-  return EbtablesBroute(name, use_ipv4, true) &&
-         EbtablesFilter(name, use_ipv4, true);
+bool CreateEbtables(const std::string& name, bool use_ipv4,
+                    bool use_ebtables_legacy) {
+  return EbtablesBroute(name, use_ipv4, true, use_ebtables_legacy) &&
+         EbtablesFilter(name, use_ipv4, true, use_ebtables_legacy);
 }
-bool DestroyEbtables(const std::string& name, bool use_ipv4) {
-  return EbtablesBroute(name, use_ipv4, false) &&
-         EbtablesFilter(name, use_ipv4, false);
+
+bool DestroyEbtables(const std::string& name, bool use_ipv4,
+                     bool use_ebtables_legacy) {
+  return EbtablesBroute(name, use_ipv4, false, use_ebtables_legacy) &&
+         EbtablesFilter(name, use_ipv4, false, use_ebtables_legacy);
 }
-bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add) {
+
+bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add,
+                    bool use_ebtables_legacy) {
   std::stringstream ss;
-  ss << kEbtablesName << " -t broute " << (add ? "-A" : "-D") << " BROUTING -p "
+  // we don't know the name of the ebtables program, but since we're going to
+  // exec this program name, make sure they can only choose between the two
+  // options we currently support, and not something they can overwrite
+  if (use_ebtables_legacy) {
+    ss << kEbtablesLegacyName;
+  } else {
+    ss << kEbtablesName;
+  }
+
+  ss << " -t broute " << (add ? "-A" : "-D") << " BROUTING -p "
      << (use_ipv4 ? "ipv4" : "ipv6") << " --in-if " << name << " -j DROP";
   auto command = ss.str();
   int status = RunExternalCommand(command);
@@ -227,9 +243,16 @@ bool EbtablesBroute(const std::string& name, bool use_ipv4, bool add) {
   return status == 0;
 }
 
-bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add) {
+bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add,
+                    bool use_ebtables_legacy) {
   std::stringstream ss;
-  ss << kEbtablesName << " -t filter " << (add ? "-A" : "-D") << " FORWARD -p "
+  if (use_ebtables_legacy) {
+    ss << kEbtablesLegacyName;
+  } else {
+    ss << kEbtablesName;
+  }
+
+  ss << " -t filter " << (add ? "-A" : "-D") << " FORWARD -p "
      << (use_ipv4 ? "ipv4" : "ipv6") << " --out-if " << name << " -j DROP";
   auto command = ss.str();
   int status = RunExternalCommand(command);
@@ -237,7 +260,8 @@ bool EbtablesFilter(const std::string& name, bool use_ipv4, bool add) {
   return status == 0;
 }
 
-bool LinkTapToBridge(const std::string& tap_name, const std::string& bridge_name) {
+bool LinkTapToBridge(const std::string& tap_name,
+                     const std::string& bridge_name) {
   std::stringstream ss;
   ss << "ip link set dev " << tap_name << " master " << bridge_name;
   auto command = ss.str();
@@ -315,7 +339,8 @@ bool CreateBridge(const std::string& name) {
 
 bool DestroyBridge(const std::string& name) { return DeleteIface(name); }
 
-bool SetupBridgeGateway(const std::string& bridge_name, const std::string& ipaddr) {
+bool SetupBridgeGateway(const std::string& bridge_name,
+                        const std::string& ipaddr) {
   GatewayConfig config{false, false, false};
   auto gateway = ipaddr + ".1";
   auto netmask = "/24";
@@ -421,7 +446,7 @@ bool StopDnsmasq(const std::string& name) {
   return ret;
 }
 
-bool IptableConfig(std::string network, bool add) {
+bool IptableConfig(const std::string& network, bool add) {
   std::stringstream ss;
   ss << "iptables -t nat " << (add ? "-A" : "-D") << " POSTROUTING -s "
      << network << " -j MASQUERADE";
