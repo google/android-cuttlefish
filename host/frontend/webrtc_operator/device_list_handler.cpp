@@ -13,17 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/frontend/gcastv2/signaling_server/device_list_handler.h"
+#include "host/frontend/webrtc_operator/device_list_handler.h"
 
 namespace cuttlefish {
 
-DeviceListHandler::DeviceListHandler(const DeviceRegistry& registry)
-    : registry_(registry) {}
+DeviceListHandler::DeviceListHandler(struct lws* wsi,
+                                     const DeviceRegistry& registry)
+    : WebSocketHandler(wsi), registry_(registry) {}
 
-int DeviceListHandler::handleMessage(uint8_t /*header_byte*/,
-                                     const uint8_t* /*msg*/,
-                                     size_t /*len*/) {
-  // ignore the message, just send the reply
+void DeviceListHandler::OnReceive(const uint8_t* /*msg*/, size_t /*len*/,
+                                  bool /*binary*/) {
+  // Ignore the message, just send the reply
   Json::Value reply(Json::ValueType::arrayValue);
 
   for (const auto& id : registry_.ListDeviceIds()) {
@@ -31,8 +31,12 @@ int DeviceListHandler::handleMessage(uint8_t /*header_byte*/,
   }
   Json::FastWriter json_writer;
   auto replyAsString = json_writer.write(reply);
-  sendMessage(replyAsString.c_str(), replyAsString.size());
-  return -1;  // disconnect
+  EnqueueMessage(replyAsString.c_str(), replyAsString.size());
+  Close();
 }
+
+void DeviceListHandler::OnConnected() {}
+
+void DeviceListHandler::OnClosed() {}
 
 }  // namespace cuttlefish

@@ -13,48 +13,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/frontend/gcastv2/signaling_server/signal_handler.h"
+#include "host/frontend/webrtc_operator/signal_handler.h"
 
 #include <android-base/logging.h>
 #include <json/json.h>
 
-#include "host/frontend/gcastv2/signaling_server/constants/signaling_constants.h"
+#include "host/frontend/webrtc_operator/constants/signaling_constants.h"
 
 namespace cuttlefish {
 
-SignalHandler::SignalHandler(DeviceRegistry* registry,
+SignalHandler::SignalHandler(struct lws* wsi, DeviceRegistry* registry,
                              const ServerConfig& server_config)
-    : registry_(registry), server_config_(server_config) {}
+    : WebSocketHandler(wsi),
+      registry_(registry),
+      server_config_(server_config) {}
 
-bool SignalHandler::IsBinaryMessage(uint8_t header_byte) {
-  // https://tools.ietf.org/html/rfc6455#section-5.2
-  return (header_byte & 0x0f) == 0x02;
-}
+void SignalHandler::OnConnected() {}
 
-int SignalHandler::handleMessage(uint8_t header_byte, const uint8_t* msg,
-                                 size_t len) {
-  if (IsBinaryMessage(header_byte)) {
-    LOG(ERROR) << "Received a binary message";
-    return -EINVAL;
+void SignalHandler::OnReceive(const uint8_t* msg, size_t len, bool binary) {
+  if (binary) {
+    LogAndReplyError("Received a binary message");
+    Close();
+    return;
   }
   Json::Value json_message;
   Json::Reader json_reader;
   auto str = reinterpret_cast<const char*>(msg);
   if (!json_reader.parse(str, str + len, json_message)) {
-    LOG(ERROR) << "Received Invalid JSON";
+    LogAndReplyError("Received Invalid JSON");
     // Rate limiting would be a good idea here
-    return -EINVAL;
+    Close();
+    return;
   }
   if (!json_message.isMember(webrtc_signaling::kTypeField) ||
       !json_message[webrtc_signaling::kTypeField].isString()) {
     LogAndReplyError("Invalid message format: '" + std::string(msg, msg + len) +
                      "'");
     // Rate limiting would be a good idea here
-    return -EINVAL;
+    Close();
+    return;
   }
 
   auto type = json_message[webrtc_signaling::kTypeField].asString();
-  return handleMessage(type, json_message);
+  handleMessage(type, json_message);
 }
 
 void SignalHandler::SendServerConfig() {
@@ -67,13 +68,13 @@ void SignalHandler::SendServerConfig() {
 void SignalHandler::LogAndReplyError(const std::string& error_message) {
   LOG(ERROR) << error_message;
   auto reply_str = "{\"error\":\"" + error_message + "\"}";
-  sendMessage(reply_str.c_str(), reply_str.size());
+  EnqueueMessage(reply_str.c_str(), reply_str.size());
 }
 
 void SignalHandler::Reply(const Json::Value& json) {
   Json::FastWriter json_writer;
   auto replyAsString = json_writer.write(json);
-  sendMessage(replyAsString.c_str(), replyAsString.size());
+  EnqueueMessage(replyAsString.c_str(), replyAsString.size());
 }
 
 }  // namespace cuttlefish

@@ -20,17 +20,18 @@
 
 #include <json/json.h>
 
-#include "host/frontend/gcastv2/https/include/https/WebSocketHandler.h"
-#include "host/frontend/gcastv2/signaling_server/device_registry.h"
+#include "host/frontend/webrtc_operator/websocket_handler.h"
+#include "host/frontend/webrtc_operator/device_registry.h"
 
 namespace cuttlefish {
 
 class DeviceListHandler : public WebSocketHandler {
  public:
-  DeviceListHandler(const DeviceRegistry& registry);
+  DeviceListHandler(struct lws* wsi, const DeviceRegistry& registry);
 
- protected:
-  int handleMessage(uint8_t, const uint8_t*, size_t) override;
+  void OnReceive(const uint8_t* msg, size_t len, bool binary) override;
+  void OnConnected() override;
+  void OnClosed() override;
 
  private:
   const DeviceRegistry& registry_;

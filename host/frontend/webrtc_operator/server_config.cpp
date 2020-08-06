@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/frontend/gcastv2/signaling_server/server_config.h"
+#include "host/frontend/webrtc_operator/server_config.h"
 
 #include <android-base/strings.h>
 

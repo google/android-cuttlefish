@@ -20,7 +20,7 @@ cc_library_headers {
 }
 
 cc_binary_host {
-    name: "webrtc_sig_server",
+    name: "webrtc_operator",
     srcs: [
         "client_handler.cpp",
         "device_registry.cpp",
@@ -29,9 +29,10 @@ cc_binary_host {
         "server_config.cpp",
         "server.cpp",
         "signal_handler.cpp",
+        "websocket_handler.cpp",
     ],
     header_libs: [
-      "webrtc_signaling_headers",
+        "webrtc_signaling_headers",
     ],
     shared_libs: [
         "libbase",
@@ -41,11 +42,12 @@ cc_binary_host {
         "libcuttlefish_fs",
     ],
     static_libs: [
+        "libcap",
         "libgflags",
         "libjsoncpp",
-        "libhttps",
         "libcuttlefish_utils",
-        "libcuttlefish_host_config"
+        "libcuttlefish_host_config",
+        "libwebsockets",
     ],
     defaults: ["cuttlefish_host_only"],
 }

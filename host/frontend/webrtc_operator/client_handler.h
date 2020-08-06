@@ -20,25 +20,29 @@
 
 #include <json/json.h>
 
-#include "host/frontend/gcastv2/https/include/https/WebSocketHandler.h"
-#include "host/frontend/gcastv2/signaling_server/device_registry.h"
-#include "host/frontend/gcastv2/signaling_server/server_config.h"
-#include "host/frontend/gcastv2/signaling_server/signal_handler.h"
+#include "host/frontend/webrtc_operator/device_registry.h"
+#include "host/frontend/webrtc_operator/server_config.h"
+#include "host/frontend/webrtc_operator/signal_handler.h"
+#include "host/frontend/webrtc_operator/websocket_handler.h"
 
 namespace cuttlefish {
 class DeviceHandler;
 class ClientHandler : public SignalHandler,
                       public std::enable_shared_from_this<ClientHandler> {
  public:
-  ClientHandler(DeviceRegistry* registry, const ServerConfig& server_config);
+  ClientHandler(struct lws* wsi, DeviceRegistry* registry,
+                const ServerConfig& server_config);
   void SendDeviceMessage(const Json::Value& message);
+
+  void OnClosed() override;
+
  protected:
-  int handleMessage(const std::string& type,
+  void handleMessage(const std::string& type,
                     const Json::Value& message) override;
 
  private:
-  int handleConnectionRequest(const Json::Value& message);
-  int handleForward(const Json::Value& message);
+  void handleConnectionRequest(const Json::Value& message);
+  void handleForward(const Json::Value& message);
 
   std::weak_ptr<DeviceHandler> device_handler_;
   // The device handler assigns this to each client to be able to differentiate

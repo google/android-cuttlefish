@@ -20,22 +20,22 @@
 
 #include <json/json.h>
 
-#include "host/frontend/gcastv2/https/include/https/WebSocketHandler.h"
-#include "host/frontend/gcastv2/signaling_server/device_registry.h"
-#include "host/frontend/gcastv2/signaling_server/server_config.h"
+#include "host/frontend/webrtc_operator/device_registry.h"
+#include "host/frontend/webrtc_operator/server_config.h"
+#include "host/frontend/webrtc_operator/websocket_handler.h"
 
 namespace cuttlefish {
 
 class SignalHandler : public WebSocketHandler {
+ public:
+  void OnReceive(const uint8_t* msg, size_t len, bool binary) override;
+  void OnConnected() override;
  protected:
-  SignalHandler(DeviceRegistry* registry, const ServerConfig& server_config);
+  SignalHandler(struct lws* wsi, DeviceRegistry* registry,
+                const ServerConfig& server_config);
 
-  bool IsBinaryMessage(uint8_t header_byte);
-
-  int handleMessage(uint8_t header_byte, const uint8_t* msg,
-                    size_t len) override;
-  virtual int handleMessage(const std::string& message_type,
-                            const Json::Value& message) = 0;
+  virtual void handleMessage(const std::string& message_type,
+                             const Json::Value& message) = 0;
   void SendServerConfig();
 
   void LogAndReplyError(const std::string& message);

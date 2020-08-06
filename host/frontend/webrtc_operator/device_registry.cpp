@@ -13,11 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/frontend/gcastv2/signaling_server/device_registry.h"
+#include "host/frontend/webrtc_operator/device_registry.h"
 
 #include <android-base/logging.h>
 
-#include "host/frontend/gcastv2/signaling_server/device_handler.h"
+#include "host/frontend/webrtc_operator/device_handler.h"
 
 namespace cuttlefish {
 

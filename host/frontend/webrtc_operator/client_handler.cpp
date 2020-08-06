@@ -13,20 +13,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/frontend/gcastv2/signaling_server/client_handler.h"
+#include "host/frontend/webrtc_operator/client_handler.h"
 
 #include <android-base/logging.h>
 
-#include "host/frontend/gcastv2/signaling_server/constants/signaling_constants.h"
-#include "host/frontend/gcastv2/signaling_server/device_handler.h"
+#include "host/frontend/webrtc_operator/constants/signaling_constants.h"
+#include "host/frontend/webrtc_operator/device_handler.h"
 
 namespace cuttlefish {
 
-ClientHandler::ClientHandler(DeviceRegistry* registry,
+ClientHandler::ClientHandler(struct lws* wsi, DeviceRegistry* registry,
                              const ServerConfig& server_config)
-    : SignalHandler(registry, server_config),
+    : SignalHandler(wsi, registry, server_config),
       device_handler_(),
       client_id_(0) {}
+
+void ClientHandler::OnClosed() {}  // do nothing
 
 void ClientHandler::SendDeviceMessage(const Json::Value& device_message) {
   Json::Value message;
@@ -35,28 +37,29 @@ void ClientHandler::SendDeviceMessage(const Json::Value& device_message) {
   Reply(message);
 }
 
-int ClientHandler::handleMessage(const std::string& type,
-                                 const Json::Value& message) {
+void ClientHandler::handleMessage(const std::string& type,
+                                  const Json::Value& message) {
   if (type == webrtc_signaling::kConnectType) {
-    return handleConnectionRequest(message);
+    handleConnectionRequest(message);
   } else if (type == webrtc_signaling::kForwardType) {
-    return handleForward(message);
+    handleForward(message);
   } else {
     LogAndReplyError("Unknown message type: " + type);
-    return -1;
   }
 }
 
-int ClientHandler::handleConnectionRequest(const Json::Value& message) {
+void ClientHandler::handleConnectionRequest(const Json::Value& message) {
   if (client_id_ > 0) {
-    LOG(ERROR) << "Detected attempt to connect to multiple devices over same "
-                  "websocket";
-    return -EINVAL;
+    LogAndReplyError(
+        "Attempt to connect to multiple devices over same websocket");
+    Close();
+    return;
   }
   if (!message.isMember(webrtc_signaling::kDeviceIdField) ||
       !message[webrtc_signaling::kDeviceIdField].isString()) {
     LogAndReplyError("Invalid connection request: Missing device id");
-    return -EINVAL;
+    Close();
+    return;
   }
   auto device_id = message[webrtc_signaling::kDeviceIdField].asString();
   // Always send the server config back, even if the requested device is not
@@ -68,7 +71,8 @@ int ClientHandler::handleConnectionRequest(const Json::Value& message) {
   if (!device_handler) {
     LogAndReplyError("Connection failed: Device not found: '" + device_id +
                      "'");
-    return -1;
+    Close();
+    return;
   }
 
   client_id_ = device_handler->RegisterClient(shared_from_this());
@@ -79,27 +83,28 @@ int ClientHandler::handleConnectionRequest(const Json::Value& message) {
   device_info_reply[webrtc_signaling::kDeviceInfoField] =
       device_handler->device_info();
   Reply(device_info_reply);
-  return 0;
 }
 
-int ClientHandler::handleForward(const Json::Value& message) {
+void ClientHandler::handleForward(const Json::Value& message) {
   if (client_id_ == 0) {
     LogAndReplyError("Forward failed: No device asociated to client");
-    return 0;
+    Close();
+    return;
   }
   if (!message.isMember(webrtc_signaling::kPayloadField)) {
     LogAndReplyError("Forward failed: No payload present in message");
-    return 0;
+    Close();
+    return;
   }
   auto device_handler = device_handler_.lock();
   if (!device_handler) {
     LogAndReplyError("Forward failed: Device disconnected");
     // Disconnect this client since the device is gone
-    return -1;
+    Close();
+    return;
   }
   device_handler->SendClientMessage(client_id_,
                                     message[webrtc_signaling::kPayloadField]);
-  return 0;
 }
 
 }  // namespace cuttlefish

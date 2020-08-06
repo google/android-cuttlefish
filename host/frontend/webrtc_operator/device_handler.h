@@ -21,33 +21,35 @@
 
 #include <json/json.h>
 
-#include "host/frontend/gcastv2/https/include/https/WebSocketHandler.h"
-#include "host/frontend/gcastv2/signaling_server/device_registry.h"
-#include "host/frontend/gcastv2/signaling_server/server_config.h"
-#include "host/frontend/gcastv2/signaling_server/signal_handler.h"
+#include "host/frontend/webrtc_operator/device_registry.h"
+#include "host/frontend/webrtc_operator/server_config.h"
+#include "host/frontend/webrtc_operator/signal_handler.h"
+#include "host/frontend/webrtc_operator/websocket_handler.h"
 
 namespace cuttlefish {
 
 class ClientHandler;
 
-class DeviceHandler
-    : public SignalHandler,
-      public std::enable_shared_from_this<DeviceHandler> {
+class DeviceHandler : public SignalHandler,
+                      public std::enable_shared_from_this<DeviceHandler> {
  public:
-  DeviceHandler(DeviceRegistry* registry, const ServerConfig& server_config);
-  ~DeviceHandler() override;
+  DeviceHandler(struct lws* wsi, DeviceRegistry* registry,
+                const ServerConfig& server_config);
 
   Json::Value device_info() const { return device_info_; }
 
   size_t RegisterClient(std::shared_ptr<ClientHandler> client_handler);
   void SendClientMessage(size_t client_id, const Json::Value& message);
+
+  void OnClosed() override;
+
  protected:
-  int handleMessage(const std::string& type,
+  void handleMessage(const std::string& type,
                     const Json::Value& message) override;
 
  private:
-  int HandleRegistrationRequest(const Json::Value& message);
-  int HandleForward(const Json::Value& message);
+  void HandleRegistrationRequest(const Json::Value& message);
+  void HandleForward(const Json::Value& message);
 
   std::string device_id_;
   Json::Value device_info_;
