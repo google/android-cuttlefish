@@ -15,7 +15,9 @@
  */
 #pragma once
 
+#include <sys/types.h>
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <set>
@@ -388,6 +390,8 @@ class CuttlefishConfig {
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
+    uint32_t session_id() const;
+    bool use_allocd() const;
     int vsock_guest_cid() const;
     std::string uuid() const;
     std::string instance_name() const;
@@ -468,6 +472,8 @@ class CuttlefishConfig {
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
+    void set_session_id(uint32_t session_id);
+    void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
     void set_instance_dir(const std::string& instance_dir);

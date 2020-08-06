@@ -36,6 +36,9 @@ const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
+const char* kSessionId = "session_id";
+const char* kUseAllocd = "use_allocd";
+
 const char* kUuid = "uuid";
 const char* kModemSimulatorPorts = "modem_simulator_ports";
 
@@ -182,6 +185,24 @@ std::string CuttlefishConfig::InstanceSpecific::wifi_tap_name() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_wifi_tap_name(
     const std::string& wifi_tap_name) {
   (*Dictionary())[kWifiTapName] = wifi_tap_name;
+}
+
+bool CuttlefishConfig::InstanceSpecific::use_allocd() const {
+  return (*Dictionary())[kUseAllocd].asBool();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_use_allocd(
+    bool use_allocd) {
+  (*Dictionary())[kUseAllocd] = use_allocd;
+}
+
+uint32_t CuttlefishConfig::InstanceSpecific::session_id() const {
+  return (*Dictionary())[kSessionId].asUInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_session_id(
+    uint32_t session_id) {
+  (*Dictionary())[kSessionId] = session_id;
 }
 
 int CuttlefishConfig::InstanceSpecific::vsock_guest_cid() const {
