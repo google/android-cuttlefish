@@ -100,6 +100,8 @@ struct ResourceManager {
 
   void SetSocketLocation(const std::string& sock_name);
 
+  void SetUseEbtablesLegacy(bool use_legacy);
+
   void JsonServer();
 
  private:
@@ -146,6 +148,7 @@ struct ResourceManager {
   std::string location = kDefaultLocation;
   bool use_ipv4_bridge_ = true;
   bool use_ipv6_bridge_ = true;
+  bool use_ebtables_legacy_ = false;
   cuttlefish::SharedFD shutdown_socket_;
 };
 
