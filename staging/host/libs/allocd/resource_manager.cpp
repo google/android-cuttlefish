@@ -63,6 +63,10 @@ void ResourceManager::SetSocketLocation(const std::string& sock_name) {
   location = sock_name;
 }
 
+void ResourceManager::SetUseEbtablesLegacy(bool use_legacy) {
+  use_ebtables_legacy_ = use_legacy;
+}
+
 uint32_t ResourceManager::AllocateResourceID() {
   return global_resource_id_.fetch_add(1, std::memory_order_relaxed);
 }
@@ -73,30 +77,30 @@ uint32_t ResourceManager::AllocateSessionID() {
 
 bool ResourceManager::AddInterface(const std::string& iface, IfaceType ty,
                                    uint32_t resource_id, uid_t uid) {
-  bool didInsert = active_interfaces_.insert(iface).second;
   bool allocatedIface = false;
-
   std::shared_ptr<StaticResource> res = nullptr;
 
+  bool didInsert = active_interfaces_.insert(iface).second;
   if (didInsert) {
     const char* idp = iface.c_str() + (iface.size() - 3);
     int small_id = atoi(idp);
-    // allocatedIface = create_tap(iface);
     switch (ty) {
       case IfaceType::mtap: {
         res = std::make_shared<MobileIface>(iface, uid, small_id, resource_id,
                                             kMobileIp);
         allocatedIface = res->AcquireResource();
         pending_add_.insert({resource_id, res});
-        // allocatedIface = CreateMobileIface(iface, small_id, kMobileIp);
         break;
       }
       case IfaceType::wtap: {
-        res = std::make_shared<WirelessIface>(iface, uid, small_id, resource_id,
-                                              kMobileIp);
+        auto w = std::make_shared<WirelessIface>(iface, uid, small_id,
+                                                 resource_id, kMobileIp);
+        w->SetUseEbtablesLegacy(use_ebtables_legacy_);
+        w->SetHasIpv4(use_ipv4_bridge_);
+        w->SetHasIpv6(use_ipv6_bridge_);
+        res = w;
         allocatedIface = res->AcquireResource();
         pending_add_.insert({resource_id, res});
-        // allocatedIface = CreateWirelessIface(iface, use_ipv4_, use_ipv6_);
         break;
       }
       case IfaceType::wbr: {
@@ -135,8 +139,8 @@ bool ResourceManager::RemoveInterface(const std::string& iface, IfaceType ty) {
         break;
       }
       case IfaceType::wtap: {
-        removedIface =
-            DestroyWirelessIface(iface, use_ipv4_bridge_, use_ipv6_bridge_);
+        removedIface = DestroyWirelessIface(
+            iface, use_ipv4_bridge_, use_ipv6_bridge_, use_ebtables_legacy_);
         break;
       }
       case IfaceType::wbr: {
@@ -242,16 +246,15 @@ void ResourceManager::JsonServer() {
 
     Json::Value req_list = req["config_request"]["request_list"];
 
-    Json::ArrayIndex size = req_list.size();
-
     Json::Value config_response;
     Json::Value response_list;
+    Json::ArrayIndex req_list_size = req_list.size();
 
     // sentinel value, so we can populate the list of responses correctly
     // without trying to satisfy requests that will be aborted
     bool transaction_failed = false;
 
-    for (Json::ArrayIndex i = 0; i < size; ++i) {
+    for (Json::ArrayIndex i = 0; i < req_list_size; ++i) {
       LOG(INFO) << "Processing Request: " << i;
       auto req = req_list[i];
       auto req_ty_str = req["request_type"].asString();
@@ -272,7 +275,7 @@ void ResourceManager::JsonServer() {
           break;
         }
         case RequestType::Shutdown: {
-          if (i != 0 || size != 1) {
+          if (i != 0 || req_list_size != 1) {
             response["request_type"] = req_ty_str;
             response["request_status"] = "failed";
             response["error"] =
@@ -357,10 +360,10 @@ uid_t GetUserIDFromSock(SharedFD client_socket) {
 }
 
 bool ResourceManager::CheckCredentials(SharedFD client_socket, uid_t uid) {
-
   uid_t sock_uid = GetUserIDFromSock(client_socket);
 
   if (sock_uid == -1) {
+    LOG(WARNING) << "Invalid Socket UID: " << uid;
     return false;
   }
 
@@ -456,7 +459,6 @@ Json::Value ResourceManager::JsonHandleCreateInterfaceRequest(
     resp["error"] = "";
   }
 
-  // SendJsonMsg(client_socket, resp);
   return resp;
 }
 

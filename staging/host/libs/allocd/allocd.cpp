@@ -39,8 +39,8 @@
 #include "host/libs/allocd/resource_manager.h"
 #include "host/libs/config/logging.h"
 
-using namespace cuttlefish;
-DEFINE_string(socket_path, kDefaultLocation, "Socket path");
+DEFINE_string(socket_path, cuttlefish::kDefaultLocation, "Socket path");
+DEFINE_bool(ebtables_legacy, false, "use ebtables-legacy instead of ebtables");
 
 int main(int argc, char* argv[]) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
@@ -49,8 +49,9 @@ int main(int argc, char* argv[]) {
 
   cuttlefish::SharedFD FinalFD;
   {
-    ResourceManager m;
+    cuttlefish::ResourceManager m;
     m.SetSocketLocation(FLAGS_socket_path);
+    m.SetUseEbtablesLegacy(FLAGS_ebtables_legacy);
     m.JsonServer();
   }
 
