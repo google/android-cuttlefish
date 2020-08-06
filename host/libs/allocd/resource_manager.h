@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <sys/types.h>
+
 #include <atomic>
 #include <cstdint>
 #include <map>
@@ -27,8 +29,58 @@
 #include "host/libs/allocd/alloc_utils.h"
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/resource.h"
+#include "host/libs/allocd/utils.h"
 
 namespace cuttlefish {
+
+class Session {
+ public:
+  explicit Session(uint32_t session_id, uid_t uid)
+      : session_id_(session_id), uid_(uid) {}
+  ~Session() { ReleaseAllResources(); }
+
+  uint32_t GetSessionID() { return session_id_; }
+  uid_t GetUID() { return uid_; }
+
+  const std::set<std::string>& GetActiveInterfaces() {
+    return active_interfaces_;
+  }
+
+  void Insert(
+      const std::map<uint32_t, std::shared_ptr<StaticResource>>& resources) {
+    managed_resources_.insert(resources.begin(), resources.end());
+  }
+
+  bool ReleaseAllResources() {
+    bool success = true;
+    for (auto& res : managed_resources_) {
+      success &= res.second->ReleaseResource();
+    }
+    managed_resources_.clear();
+
+    return success;
+  }
+
+  bool ReleaseResource(uint32_t resource_id) {
+    auto it = managed_resources_.find(resource_id);
+    if (it == managed_resources_.end()) {
+      return false;
+    }
+
+    auto success = it->second->ReleaseResource();
+    if (success) {
+      managed_resources_.erase(it);
+    }
+
+    return success;
+  }
+
+ private:
+  uint32_t session_id_{};
+  uid_t uid_{};
+  std::set<std::string> active_interfaces_;
+  std::map<uint32_t, std::shared_ptr<StaticResource>> managed_resources_;
+};
 
 /* Manages static resources while the daemon is running.
  * When resources, such as network interfaces are requested the ResourceManager
@@ -51,11 +103,13 @@ struct ResourceManager {
   void JsonServer();
 
  private:
-  uint32_t AllocateID();
+  uint32_t AllocateResourceID();
+  uint32_t AllocateSessionID();
 
-  bool AddInterface(std::string iface, IfaceType ty, uint32_t id, uid_t uid);
+  bool AddInterface(const std::string& iface, IfaceType ty, uint32_t id,
+                    uid_t uid);
 
-  bool RemoveInterface(std::string iface, IfaceType ty);
+  bool RemoveInterface(const std::string& iface, IfaceType ty);
 
   bool ValidateRequest(const Json::Value& request);
 
@@ -63,15 +117,17 @@ struct ResourceManager {
 
   bool ValidateConfigRequest(const Json::Value& config);
 
-  Json::Value JsonHandleIdRequest(SharedFD client_socket);
+  Json::Value JsonHandleIdRequest();
 
   Json::Value JsonHandleShutdownRequest(SharedFD client_socket);
 
   Json::Value JsonHandleCreateInterfaceRequest(SharedFD client_socket,
                                                const Json::Value& request);
 
-  Json::Value JsonHandleDestroyInterfaceRequest(SharedFD client_socket,
-                                                const Json::Value& request);
+  Json::Value JsonHandleDestroyInterfaceRequest(const Json::Value& request);
+
+  Json::Value JsonHandleStopSessionRequest(const Json::Value& request,
+                                           uid_t uid);
 
   bool CheckCredentials(SharedFD client_socket, uid_t uid);
 
@@ -79,12 +135,13 @@ struct ResourceManager {
 
   void SetUseIpv6Bridge(bool ipv6) { use_ipv6_bridge_ = ipv6; }
 
-  std::optional<std::shared_ptr<StaticResource>> FindResource(uint32_t id);
+  std::optional<std::shared_ptr<Session>> FindSession(uint32_t id);
 
  private:
-  std::atomic_uint32_t global_id_ = 0;
+  std::atomic_uint32_t global_resource_id_ = 0;
+  std::atomic_uint32_t session_id_ = 0;
   std::set<std::string> active_interfaces_;
-  std::map<uint32_t, std::shared_ptr<StaticResource>> managed_resources_;
+  std::map<uint32_t, std::shared_ptr<Session>> managed_sessions_;
   std::map<uint32_t, std::shared_ptr<StaticResource>> pending_add_;
   std::string location = kDefaultLocation;
   bool use_ipv4_bridge_ = true;
