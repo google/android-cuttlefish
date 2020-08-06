@@ -155,7 +155,7 @@ function cvd_docker_create {
 					  with_host_x="true"
 				  else
 					  echo "Can't use host's X: DISPLAY is not set." 1>&2
-					  return
+					  need_help="true"
 				  fi
 				  shift
 				  ;;
