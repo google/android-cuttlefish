@@ -22,6 +22,8 @@ cc_library {
         shared_libs: [
             "libbase",
             "liblog",
+            "libcuttlefish_utils",
+            "libcuttlefish_fs",
         ],
     },
     static: {
@@ -31,6 +33,10 @@ cc_library {
         ],
     },
     target: {
+
+        host: {
+            static_libs: ["libjsoncpp"],
+        },
         vendor: {
             // Liblog does not have a vendor-static variant.
             shared_libs: ["liblog"],
@@ -52,6 +58,7 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_allocd_utils",
         "liblog",
     ],
     static_libs: [
@@ -69,11 +76,11 @@ cc_binary {
     name: "allocd_client",
     srcs: [
         "test/client.cpp",
-        "utils.cpp",
     ],
     shared_libs: [
         "libbase",
         "libcuttlefish_fs",
+        "libcuttlefish_allocd_utils",
         "libcuttlefish_utils",
         "liblog",
     ],
