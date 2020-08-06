@@ -32,8 +32,10 @@ DEFINE_string(socket_path, kDefaultLocation, "Socket path");
 DEFINE_bool(id, false, "Request new UUID");
 DEFINE_bool(ifcreate, false, "Request a new Interface");
 DEFINE_bool(shutdown, false, "Shutdown Resource Allocation Server");
+DEFINE_bool(stop_session, false, "Remove all resources from session");
 DEFINE_string(ifdestroy, "", "Request an interface be destroyed");
 DEFINE_uint32(ifid, -1, "Global Resource ID");
+DEFINE_uint32(session, -1, "Session ID");
 
 int main(int argc, char* argv[]) {
   cuttlefish::DefaultSubprocessLogging(argv);
@@ -42,7 +44,6 @@ int main(int argc, char* argv[]) {
   SharedFD monitor_socket = cuttlefish::SharedFD::SocketLocalClient(
       FLAGS_socket_path, false, SOCK_STREAM);
   if (!monitor_socket->IsOpen()) {
-    // LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
     LOG(ERROR) << "Unable to connect to launcher monitor on "
                << FLAGS_socket_path << ": " << monitor_socket->StrError();
     return 1;
@@ -96,11 +97,12 @@ int main(int argc, char* argv[]) {
     std::cout << resp["iface_name"] << std::endl;
   }
 
-  if (!FLAGS_ifdestroy.empty() && (FLAGS_ifid != -1)) {
+  if (!FLAGS_ifdestroy.empty() && (FLAGS_ifid != -1) && (FLAGS_session != -1)) {
     Json::Value req;
     req["request_type"] = "destroy_interface";
     req["iface_name"] = FLAGS_ifdestroy;
-    req["global_id"] = FLAGS_ifid;
+    req["resource_id"] = FLAGS_ifid;
+    req["session_id"] = FLAGS_session;
     request_list.append(req);
     config["config_request"]["request_list"] = request_list;
     SendJsonMsg(monitor_socket, config);
@@ -120,6 +122,28 @@ int main(int argc, char* argv[]) {
     std::cout << "Destroy Interface operation: " << resp["request_status"]
               << std::endl;
     std::cout << resp["iface_name"] << std::endl;
+  }
+
+  if (FLAGS_stop_session && (FLAGS_session != -1)) {
+    Json::Value req;
+    req["request_type"] = "stop_session";
+    req["session_id"] = FLAGS_session;
+    request_list.append(req);
+    config["config_request"]["request_list"] = request_list;
+    SendJsonMsg(monitor_socket, config);
+
+    LOG(INFO) << "Request Session : '" << FLAGS_session << "' be stopped";
+
+    auto resp_opt = RecvJsonMsg(monitor_socket);
+    if (!resp_opt.has_value()) {
+      std::cout << "Bad Response from server\n";
+      return -1;
+    }
+
+    auto resp = resp_opt.value();
+
+    std::cout << resp << "\n";
+    std::cout << "Stop Session operation: " << resp["config_status"];
   }
 
   if (FLAGS_shutdown) {
