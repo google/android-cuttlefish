@@ -18,11 +18,15 @@
 
 #include <atomic>
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
 #include <set>
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/libs/allocd/alloc_utils.h"
 #include "host/libs/allocd/request.h"
+#include "host/libs/allocd/resource.h"
 
 namespace cuttlefish {
 
@@ -49,34 +53,42 @@ struct ResourceManager {
  private:
   uint32_t AllocateID();
 
-  bool AddInterface(std::string iface, IfaceType ty);
+  bool AddInterface(std::string iface, IfaceType ty, uint32_t id, uid_t uid);
 
   bool RemoveInterface(std::string iface, IfaceType ty);
 
-  bool ValidateRequest(Json::Value& request);
+  bool ValidateRequest(const Json::Value& request);
 
-  void JsonHandleIdRequest(SharedFD client_socket);
+  bool ValidateRequestList(const Json::Value& config);
 
-  void JsonHandleShutdownRequest(SharedFD client_socket);
+  bool ValidateConfigRequest(const Json::Value& config);
 
-  void JsonHandleCreateInterfaceRequest(SharedFD client_socket,
-                                        Json::Value& request);
+  Json::Value JsonHandleIdRequest(SharedFD client_socket);
 
-  void JsonHandleDestroyInterfaceRequest(SharedFD client_socket,
-                                         Json::Value& request);
+  Json::Value JsonHandleShutdownRequest(SharedFD client_socket);
+
+  Json::Value JsonHandleCreateInterfaceRequest(SharedFD client_socket,
+                                               const Json::Value& request);
+
+  Json::Value JsonHandleDestroyInterfaceRequest(SharedFD client_socket,
+                                                const Json::Value& request);
 
   bool CheckCredentials(SharedFD client_socket, uid_t uid);
 
-  void SetUseIpv4(bool ipv4) { use_ipv4_ = ipv4; }
+  void SetUseIpv4Bridge(bool ipv4) { use_ipv4_bridge_ = ipv4; }
 
-  void SetUseIpv6(bool ipv6) { use_ipv6_ = ipv6; }
+  void SetUseIpv6Bridge(bool ipv6) { use_ipv6_bridge_ = ipv6; }
+
+  std::optional<std::shared_ptr<StaticResource>> FindResource(uint32_t id);
 
  private:
   std::atomic_uint32_t global_id_ = 0;
   std::set<std::string> active_interfaces_;
+  std::map<uint32_t, std::shared_ptr<StaticResource>> managed_resources_;
+  std::map<uint32_t, std::shared_ptr<StaticResource>> pending_add_;
   std::string location = kDefaultLocation;
-  bool use_ipv4_ = true;
-  bool use_ipv6_ = true;
+  bool use_ipv4_bridge_ = true;
+  bool use_ipv6_bridge_ = true;
   cuttlefish::SharedFD shutdown_socket_;
 };
 
