@@ -34,16 +34,23 @@
 #include "host/libs/allocd/alloc_utils.h"
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/utils.h"
+#include "json/forwards.h"
+#include "json/value.h"
 #include "json/writer.h"
 
 namespace cuttlefish {
 
+uid_t GetUserIDFromSock(SharedFD client_socket);
+
 ResourceManager::~ResourceManager() {
   bool success = true;
   for (auto iface : active_interfaces_) {
-    success &= DestroyTap(iface);
+    // success &= DestroyTap(iface);
   }
   active_interfaces_.clear();
+  for (auto& res : managed_resources_) {
+    success &= res.second->ReleaseResource();
+  }
 
   Json::Value resp;
   resp["request_type"] = "shutdown";
@@ -61,21 +68,32 @@ uint32_t ResourceManager::AllocateID() {
   return global_id_.fetch_add(1, std::memory_order_relaxed);
 }
 
-bool ResourceManager::AddInterface(std::string iface, IfaceType ty) {
+bool ResourceManager::AddInterface(std::string iface, IfaceType ty, uint32_t id,
+                                   uid_t uid) {
   bool didInsert = active_interfaces_.insert(iface).second;
-
   bool allocatedIface = false;
+
+  std::shared_ptr<StaticResource> res = nullptr;
+
   if (didInsert) {
+    const char* idp = iface.c_str() + (iface.size() - 3);
+    int small_id = atoi(idp);
     // allocatedIface = create_tap(iface);
     switch (ty) {
       case IfaceType::mtap: {
-        const char* idp = iface.c_str() + (iface.size() - 3);
-        int id = atoi(idp);
-        allocatedIface = CreateMobileIface(iface, id, kMobileIp);
+        res =
+            std::make_shared<MobileIface>(iface, uid, small_id, id, kMobileIp);
+        allocatedIface = res->AcquireResource();
+        pending_add_.insert({id, res});
+        // allocatedIface = CreateMobileIface(iface, small_id, kMobileIp);
         break;
       }
       case IfaceType::wtap: {
-        allocatedIface = CreateWirelessIface(iface, use_ipv4_, use_ipv6_);
+        res = std::make_shared<WirelessIface>(iface, uid, small_id, id,
+                                              kMobileIp);
+        allocatedIface = res->AcquireResource();
+        pending_add_.insert({id, res});
+        // allocatedIface = CreateWirelessIface(iface, use_ipv4_, use_ipv6_);
         break;
       }
       case IfaceType::wbr: {
@@ -92,7 +110,12 @@ bool ResourceManager::AddInterface(std::string iface, IfaceType ty) {
   if (didInsert && !allocatedIface) {
     LOG(WARNING) << "Failed to allocate interface: " << iface;
     active_interfaces_.erase(iface);
+    auto it = pending_add_.find(id);
+    it->second->ReleaseResource();
+    pending_add_.erase(it);
   }
+
+  LOG(INFO) << "Finish CreateInterface Request";
 
   return allocatedIface;
 }
@@ -101,7 +124,6 @@ bool ResourceManager::RemoveInterface(std::string iface, IfaceType ty) {
   bool isManagedIface = active_interfaces_.erase(iface) > 0;
   bool removedIface = false;
   if (isManagedIface) {
-    // success |= destroy_tap(iface);
     switch (ty) {
       case IfaceType::mtap: {
         const char* idp = iface.c_str() + (iface.size() - 3);
@@ -110,7 +132,8 @@ bool ResourceManager::RemoveInterface(std::string iface, IfaceType ty) {
         break;
       }
       case IfaceType::wtap: {
-        removedIface = DestroyWirelessIface(iface, use_ipv4_, use_ipv6_);
+        removedIface =
+            DestroyWirelessIface(iface, use_ipv4_bridge_, use_ipv6_bridge_);
         break;
       }
       case IfaceType::wbr: {
@@ -134,7 +157,42 @@ bool ResourceManager::RemoveInterface(std::string iface, IfaceType ty) {
   return isManagedIface;
 }
 
-bool ResourceManager::ValidateRequest(Json::Value& request) {
+bool ResourceManager::ValidateRequestList(const Json::Value& config) {
+  if (!config.isMember("request_list") || !config["request_list"].isArray()) {
+    LOG(WARNING) << "Request has invalid 'request_list' field";
+    return false;
+  }
+
+  auto request_list = config["request_list"];
+
+  Json::ArrayIndex size = request_list.size();
+  if (size == 0) {
+    LOG(WARNING) << "Request has empty 'request_list' field";
+    return false;
+  }
+
+  for (Json::ArrayIndex i = 0; i < size; ++i) {
+    if (!ValidateRequest(request_list[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool ResourceManager::ValidateConfigRequest(const Json::Value& config) {
+  if (!config.isMember("config_request") ||
+      !config["config_request"].isObject()) {
+    LOG(WARNING) << "Request has invalid 'config_request' field";
+    return false;
+  }
+
+  Json::Value config_request = config["config_request"];
+
+  return ValidateRequestList(config_request);
+}
+
+bool ResourceManager::ValidateRequest(const Json::Value& request) {
   if (!request.isMember("request_type") ||
       !request["request_type"].isString() ||
       StrToReqTy(request["request_type"].asString()) == RequestType::Invalid) {
@@ -175,34 +233,96 @@ void ResourceManager::JsonServer() {
 
     Json::Value req = req_opt.value();
 
-    if (!ValidateRequest(req)) {
+    if (!ValidateConfigRequest(req)) {
       continue;
     }
 
-    auto req_ty = StrToReqTy(req["request_type"].asString());
+    Json::Value req_list = req["config_request"]["request_list"];
 
-    switch (req_ty) {
-      case RequestType::ID: {
-        JsonHandleIdRequest(client_socket);
-        break;
+    Json::ArrayIndex size = req_list.size();
+
+    Json::Value config_response;
+    Json::Value response_list;
+
+    // sentinel value, so we can populate the list of responses correctly
+    // without trying to satisfy requests that will be aborted
+    bool transaction_failed = false;
+
+    for (Json::ArrayIndex i = 0; i < size; ++i) {
+      LOG(INFO) << "Processing Request: " << i;
+      auto req = req_list[i];
+      auto req_ty_str = req["request_type"].asString();
+      auto req_ty = StrToReqTy(req_ty_str);
+
+      Json::Value response;
+      if (transaction_failed) {
+        response["request_type"] = req_ty_str;
+        response["request_status"] = "pending";
+        response["error"] = "";
+        response_list.append(response);
+        continue;
       }
-      case RequestType::Shutdown: {
-        JsonHandleShutdownRequest(client_socket);
-        return;
+
+      switch (req_ty) {
+        case RequestType::ID: {
+          response = JsonHandleIdRequest(client_socket);
+          break;
+        }
+        case RequestType::Shutdown: {
+          if (i != 0 || size != 1) {
+            response["request_type"] = req_ty_str;
+            response["request_status"] = "failed";
+            response["error"] =
+                "Shutdown requests cannot be processed with other "
+                "configuration requests";
+            response_list.append(response);
+            break;
+          } else {
+            response = JsonHandleShutdownRequest(client_socket);
+            response_list.append(response);
+            // TODO (paulkirth): figure out how to perform shutdown w/ larger
+            // json
+            return;
+          }
+        }
+        case RequestType::CreateInterface: {
+          response = JsonHandleCreateInterfaceRequest(client_socket, req);
+          break;
+        }
+        case RequestType::DestroyInterface: {
+          response = JsonHandleDestroyInterfaceRequest(client_socket, req);
+          break;
+        }
+        case RequestType::Invalid: {
+          LOG(WARNING) << "Invalid Request Type: " << req["request_type"];
+          break;
+        }
       }
-      case RequestType::CreateInterface: {
-        JsonHandleCreateInterfaceRequest(client_socket, req);
-        break;
-      }
-      case RequestType::DestroyInterface: {
-        JsonHandleDestroyInterfaceRequest(client_socket, req);
-        break;
-      }
-      case RequestType::Invalid: {
-        LOG(WARNING) << "Invalid Request Type: " << req["request_type"];
-        break;
+
+      response_list.append(response);
+      if (!(response["request_status"].asString() == "success")) {
+        LOG(INFO) << "Request failed:" << req;
+        transaction_failed = true;
+        continue;
       }
     }
+
+    config_response["response_list"] = response_list;
+    config_response["config_status"] =
+        transaction_failed ? "failure" : "success";
+
+    if (!transaction_failed) {
+      // commit the resources
+      managed_resources_.insert(pending_add_.begin(), pending_add_.end());
+      pending_add_.clear();
+    } else {
+      // be sure to release anything we've acquired if the transaction failed
+      for (auto& droped_resource : pending_add_) {
+        droped_resource.second->ReleaseResource();
+      }
+    }
+
+    SendJsonMsg(client_socket, config_response);
     LOG(INFO) << "Closing connection to client";
     client_socket->Close();
   }
@@ -236,43 +356,60 @@ bool ResourceManager::CheckCredentials(SharedFD client_socket, uid_t uid) {
   return success;
 }
 
-void ResourceManager::JsonHandleIdRequest(SharedFD client_socket) {
+Json::Value ResourceManager::JsonHandleIdRequest(SharedFD client_socket) {
   Json::Value resp;
   resp["request_type"] = "allocate_id";
   resp["request_status"] = "success";
   resp["id"] = AllocateID();
-  SendJsonMsg(client_socket, resp);
+  // TODO(paulkirth): remove
+  if (client_socket->IsOpen()) {
+  }
+  return resp;
 }
 
-void ResourceManager::JsonHandleShutdownRequest(SharedFD client_socket) {
+Json::Value ResourceManager::JsonHandleShutdownRequest(SharedFD client_socket) {
   LOG(INFO) << "Received Shutdown Request";
   shutdown_socket_ = client_socket;
+
+  Json::Value resp;
+  resp["request_type"] = "shutdown";
+  resp["request_status"] = "pending";
+  resp["error"] = "";
+
+  return resp;
 }
 
-void ResourceManager::JsonHandleCreateInterfaceRequest(SharedFD client_socket,
-                                                       Json::Value& request) {
+Json::Value ResourceManager::JsonHandleCreateInterfaceRequest(
+    SharedFD client_socket, const Json::Value& request) {
   LOG(INFO) << "Received CreateInterface Request";
 
+  Json::Value resp;
+  resp["request_type"] = "create_interface";
+  resp["iface_name"] = "";
+  resp["request_status"] = "failure";
+  resp["error"] = "unknown";
+
   if (!request.isMember("uid") || !request["uid"].isUInt()) {
-    LOG(WARNING) << "Input event doesn't have a valid 'uid' field";
+    auto err_msg = "Input event doesn't have a valid 'uid' field";
+    LOG(WARNING) << err_msg;
+    resp["error"] = err_msg;
+    return resp;
   }
+
   if (!request.isMember("iface_type") || !request["iface_type"].isString()) {
-    LOG(WARNING) << "Input event doesn't have a valid 'iface_type' field";
+    auto err_msg = "Input event doesn't have a valid 'iface_type' field";
+    LOG(WARNING) << err_msg;
+    resp["error"] = err_msg;
+    return resp;
   }
 
   auto uid = request["uid"].asUInt();
 
-  const char* request_type = "request_type";
-  Json::Value resp;
-  resp[request_type] = "create_interface";
-  resp["iface_name"] = "";
-  resp["request_status"] = "failure";
-
   if (!CheckCredentials(client_socket, uid)) {
-    LOG(WARNING) << "Credential check failed";
-    resp["request_status"] = "failure";
-    SendJsonMsg(client_socket, resp);
-    return;
+    auto err_msg = "Credential check failed";
+    LOG(WARNING) << err_msg;
+    resp["error"] = err_msg;
+    return resp;
   }
 
   auto user_opt = GetUserName(uid);
@@ -280,40 +417,91 @@ void ResourceManager::JsonHandleCreateInterfaceRequest(SharedFD client_socket,
   bool addedIface = false;
   std::stringstream ss;
   if (!user_opt) {
-    LOG(WARNING) << "UserName could not be matched to UID, closing request";
+    auto err_msg = "UserName could not be matched to UID";
+    LOG(WARNING) << err_msg;
+    resp["error"] = err_msg;
+    return resp;
   } else {
     auto iface_ty_name = request["iface_type"].asString();
     auto iface_type = StrToIfaceTy(iface_ty_name);
-    // TODO (paulkirth): ID part of interface can only be 0-99, so maybe track
-    // in an array/bitset?
-    ss << "cvd-" << iface_ty_name << "-" << user_opt.value().substr(0, 4)
-       << std::setfill('0') << std::setw(2) << AllocateID() % 100;
-    addedIface = AddInterface(ss.str(), iface_type);
+    auto attempts = kMaxIfaceNameId;
+    do {
+      auto id = AllocateID();
+      resp["global_id"] = id;
+      ss << "cvd-" << iface_ty_name << "-" << user_opt.value().substr(0, 4)
+         << std::setfill('0') << std::setw(2) << (id % kMaxIfaceNameId);
+      addedIface = AddInterface(ss.str(), iface_type, id, uid);
+      --attempts;
+    } while (!addedIface && (attempts > 0));
   }
 
   if (addedIface) {
     resp["request_status"] = "success";
     resp["iface_name"] = ss.str();
+    resp["error"] = "";
   }
 
-  SendJsonMsg(client_socket, resp);
+  // SendJsonMsg(client_socket, resp);
+  return resp;
 }
 
-void ResourceManager::JsonHandleDestroyInterfaceRequest(SharedFD client_socket,
-                                                        Json::Value& request) {
-  if (!request.isMember("iface_name") || !request["iface_name"].isString()) {
-    LOG(WARNING) << "Input event doesn't have a valid 'iface_name' field";
-  }
-
-  LOG(INFO) << "Received DestroyInterface Request for "
-            << request["iface_name"].asString();
+Json::Value ResourceManager::JsonHandleDestroyInterfaceRequest(
+    SharedFD client_socket, const Json::Value& request) {
   Json::Value resp;
   resp["request_type"] = "destroy_interface";
-  auto iface_ty_name = request["iface_type"].asString();
-  auto iface_type = StrToIfaceTy(iface_ty_name);
-  auto success = RemoveInterface(iface_ty_name, iface_type);
-  resp["request_status"] = (success ? "success" : "failure");
-  SendJsonMsg(client_socket, resp);
+  resp["request_status"] = "failure";
+  if (!request.isMember("iface_name") || !request["iface_name"].isString()) {
+    auto err_msg = "Input event doesn't have a valid 'iface_name' field";
+    LOG(WARNING) << err_msg;
+    resp["error"] = err_msg;
+    return resp;
+  }
+
+  auto iface_name = request["iface_name"].asString();
+  LOG(INFO) << "Received DestroyInterface Request for " << iface_name;
+
+  auto global_id = request["global_id"].asUInt();
+
+  auto it = managed_resources_.find(global_id);
+  if (it == managed_resources_.end()) {
+    auto msg = "Interface not managed: " + iface_name;
+    LOG(WARNING) << msg;
+    resp["error"] = msg;
+    return resp;
+  }
+
+  // while we could wait to see if any acquisitions fail and delay releasing
+  // resources until they are all finished, this operation is inherently
+  // destructive, so should a release operation fail, there is no satisfactory
+  // method for aborting the transaction. Instead, we try to release the
+  // resource and then can signal to the rest of the transaction the failure
+  // state
+  auto success = it->second->ReleaseResource();
+
+  if (success) {
+    managed_resources_.erase(it);
+    resp["request_status"] = "success";
+  } else {
+    resp["error"] = "unknown, could not release resource";
+  }
+
+  // auto iface_ty_name = request["iface_type"].asString();
+  // auto iface_type = StrToIfaceTy(iface_ty_name);
+  // auto success = RemoveInterface(iface_name, iface_type);
+
+  if (client_socket->IsOpen()) {
+  }
+  return resp;
 }
 
+std::optional<std::shared_ptr<StaticResource>> ResourceManager::FindResource(
+    uint32_t id) {
+  auto it = managed_resources_.find(id);
+
+  if (it == managed_resources_.end()) {
+    return std::nullopt;
+  } else {
+    return it->second;
+  }
+}
 }  // namespace cuttlefish
