@@ -22,6 +22,7 @@ cc_binary_host {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_allocd_utils",
     ],
     static_libs: [
         "libcuttlefish_host_config",

@@ -44,6 +44,8 @@
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/environment.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/libs/allocd/request.h"
+#include "host/libs/allocd/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
@@ -204,6 +206,30 @@ int StopInstance(const cuttlefish::CuttlefishConfig& config,
 
 }  // anonymous namespace
 
+/// Send a StopSession request to allocd
+void ReleaseAllocdResources(cuttlefish::SharedFD allocd_sock,
+                            uint32_t session_id) {
+  if (!allocd_sock->IsOpen() || session_id == -1) {
+    return;
+  }
+  Json::Value config;
+  Json::Value request_list;
+  Json::Value req;
+  req["request_type"] =
+      cuttlefish::ReqTyToStr(cuttlefish::RequestType::StopSession);
+  req["session_id"] = session_id;
+  request_list.append(req);
+  config["config_request"]["request_list"] = request_list;
+  cuttlefish::SendJsonMsg(allocd_sock, config);
+  auto resp_opt = RecvJsonMsg(allocd_sock);
+  if (!resp_opt.has_value()) {
+    LOG(ERROR) << "Bad response from allocd";
+    return;
+  }
+  auto resp = resp_opt.value();
+  LOG(INFO) << "Stop Session operation: " << resp["config_status"];
+}
+
 int main(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
@@ -216,7 +242,22 @@ int main(int argc, char** argv) {
 
   int ret = 0;
   for (const auto& instance : config->Instances()) {
-    ret |= StopInstance(*config, instance);
+    auto session_id = instance.session_id();
+    int exit_status = StopInstance(*config, instance);
+    if (exit_status == 0 && instance.use_allocd()) {
+      // only release session resources if the instance was stopped
+      cuttlefish::SharedFD allocd_sock =
+          cuttlefish::SharedFD::SocketLocalClient(cuttlefish::kDefaultLocation,
+                                                  false, SOCK_STREAM);
+      if (!allocd_sock->IsOpen()) {
+        LOG(ERROR) << "Unable to connect to allocd on "
+                   << cuttlefish::kDefaultLocation << ": "
+                   << allocd_sock->StrError();
+      }
+
+      ReleaseAllocdResources(allocd_sock, session_id);
+    }
+    ret |= exit_status;
   }
 
   return ret;
