@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
