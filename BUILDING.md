@@ -93,7 +93,7 @@ with WebRTC support, 4GB of RAM and 4 CPUs:
 source setup.sh
 cvd_docker_create cf1
 ssh vsoc-01@$ip_cf1 -- './download-aosp $(uname -m)'
-cvd_launch_cf1 --start_webrtc --cpus 4 --memory_mb 4096
+cvd_start_cf1 --start_webrtc --cpus 4 --memory_mb 4096
 ```
 
 Once done, you stop cuttlefish as follows (in a new terminal)
