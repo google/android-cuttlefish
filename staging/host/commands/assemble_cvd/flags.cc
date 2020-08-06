@@ -1,32 +1,35 @@
 #include "host/commands/assemble_cvd/flags.h"
 
+#include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <dirent.h>
-#include <sys/types.h>
+#include <fcntl.h>
+#include <gflags/gflags.h>
+#include <json/json.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #include <algorithm>
 #include <array>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <optional>
 #include <regex>
 #include <set>
 #include <sstream>
 
-#include <android-base/strings.h>
-#include <gflags/gflags.h>
-#include <android-base/logging.h>
-
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
-#include "host/commands/assemble_cvd/assembler_defs.h"
+#include "host/libs/allocd/request.h"
+#include "host/libs/allocd/utils.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -97,6 +100,9 @@ DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process. "
                                      "The VNC server runs at port 6443 + i for "
                                      "the vsoc-i user or CUTTLEFISH_INSTANCE=i, "
                                      "starting from 1.");
+DEFINE_bool(use_allocd, false,
+            "Acquire static resources from the resource allocator daemon.");
+
 /**
  *
  * crosvm sandbox feature requires /var/empty and seccomp directory
@@ -516,21 +522,32 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   bool is_first_instance = true;
   for (const auto& num : instance_nums) {
+    auto iface_opt = AcquireIfaces(num);
+    if (!iface_opt.has_value()) {
+      LOG(FATAL) << "Failed to acquire network interfaces";
+    }
+
+    auto iface_config = iface_opt.value();
     auto instance = tmp_config_obj.ForInstance(num);
-    auto const_instance = const_cast<const cuttlefish::CuttlefishConfig&>(tmp_config_obj)
-        .ForInstance(num);
+    auto const_instance =
+        const_cast<const cuttlefish::CuttlefishConfig&>(tmp_config_obj)
+            .ForInstance(num);
     // Set this first so that calls to PerInstancePath below are correct
     instance.set_instance_dir(FLAGS_instance_dir + "." + std::to_string(num));
-    if(FLAGS_use_random_serial){
-      instance.set_serial_number(RandomSerialNumber("CFCVD" + std::to_string(num)));
+    instance.set_use_allocd(FLAGS_use_allocd);
+    if (FLAGS_use_random_serial) {
+      instance.set_serial_number(
+          RandomSerialNumber("CFCVD" + std::to_string(num)));
     } else {
       instance.set_serial_number(FLAGS_serial_number + std::to_string(num));
     }
 
-    instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
-    instance.set_mobile_tap_name(StrForInstance("cvd-mtap-", num));
+    instance.set_session_id(iface_config.mobile_tap.session_id);
 
-    instance.set_wifi_tap_name(StrForInstance("cvd-wtap-", num));
+    instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
+    instance.set_mobile_tap_name(iface_config.mobile_tap.name);
+
+    instance.set_wifi_tap_name(iface_config.wireless_tap.name);
 
     instance.set_vsock_guest_cid(3 + num - 1);
 
@@ -976,4 +993,118 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
 
 std::string GetConfigFilePath(const cuttlefish::CuttlefishConfig& config) {
   return config.AssemblyPath("cuttlefish_config.json");
+}
+
+std::optional<IfaceConfig> AcquireIfaces(int num) {
+  IfaceConfig config{};
+  if (!FLAGS_use_allocd) {
+    config.mobile_tap.name = StrForInstance("cvd-mtap-", num);
+    config.mobile_tap.resource_id = 0;
+    config.mobile_tap.session_id = 0;
+
+    config.wireless_tap.name = StrForInstance("cvd-wtap-", num);
+    config.wireless_tap.resource_id = 0;
+    config.wireless_tap.session_id = 0;
+    return config;
+  }
+  return RequestIfaces();
+}
+
+std::optional<IfaceConfig> RequestIfaces() {
+  IfaceConfig config{};
+
+  cuttlefish::SharedFD allocd_sock = cuttlefish::SharedFD::SocketLocalClient(
+      cuttlefish::kDefaultLocation, false, SOCK_STREAM);
+  if (!allocd_sock->IsOpen()) {
+    LOG(FATAL) << "Unable to connect to allocd on "
+               << cuttlefish::kDefaultLocation << ": "
+               << allocd_sock->StrError();
+    exit(cuttlefish::kAllocdConnectionError);
+  }
+
+  Json::Value resource_config;
+  Json::Value request_list;
+  Json::Value req;
+  req["request_type"] = "create_interface";
+  req["uid"] = geteuid();
+  req["iface_type"] = "mtap";
+  request_list.append(req);
+  req["iface_type"] = "wtap";
+  request_list.append(req);
+
+  resource_config["config_request"]["request_list"] = request_list;
+
+  if (!cuttlefish::SendJsonMsg(allocd_sock, resource_config)) {
+    LOG(FATAL) << "Failed to send JSON to allocd\n";
+    return std::nullopt;
+  }
+
+  auto resp_opt = cuttlefish::RecvJsonMsg(allocd_sock);
+  if (!resp_opt.has_value()) {
+    LOG(FATAL) << "Bad Response from allocd\n";
+    exit(cuttlefish::kAllocdConnectionError);
+  }
+  auto resp = resp_opt.value();
+
+  if (!resp.isMember("config_status") || !resp["config_status"].isString()) {
+    LOG(FATAL) << "Bad response from allocd: " << resp;
+    exit(cuttlefish::kAllocdConnectionError);
+  }
+
+  if (resp["config_status"].asString() !=
+      cuttlefish::StatusToStr(cuttlefish::RequestStatus::Success)) {
+    LOG(FATAL) << "Failed to allocate interfaces " << resp;
+    exit(cuttlefish::kAllocdConnectionError);
+  }
+
+  if (!resp.isMember("session_id") || !resp["session_id"].isUInt()) {
+    LOG(FATAL) << "Bad response from allocd: " << resp;
+    exit(cuttlefish::kAllocdConnectionError);
+  }
+  auto session_id = resp["session_id"].asUInt();
+
+  if (!resp.isMember("response_list") || !resp["response_list"].isArray()) {
+    LOG(FATAL) << "Bad response from allocd: " << resp;
+    exit(cuttlefish::kAllocdConnectionError);
+  }
+
+  Json::Value resp_list = resp["response_list"];
+  Json::Value mtap_resp;
+  Json::Value wifi_resp;
+  for (Json::Value::ArrayIndex i = 0; i != resp_list.size(); ++i) {
+    auto ty = cuttlefish::StrToIfaceTy(resp_list[i]["iface_type"].asString());
+
+    switch (ty) {
+      case cuttlefish::IfaceType::mtap: {
+        mtap_resp = resp_list[i];
+        break;
+      }
+      case cuttlefish::IfaceType::wtap: {
+        wifi_resp = resp_list[i];
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+
+  if (!mtap_resp.isMember("iface_type")) {
+    LOG(ERROR) << "Missing mtap response from allocd";
+    return std::nullopt;
+  }
+  if (!wifi_resp.isMember("iface_type")) {
+    LOG(ERROR) << "Missing wtap response from allocd";
+    return std::nullopt;
+  }
+
+  config.mobile_tap.name = mtap_resp["iface_name"].asString();
+  config.mobile_tap.resource_id = mtap_resp["resource_id"].asUInt();
+  config.mobile_tap.session_id = session_id;
+
+  config.wireless_tap.name = wifi_resp["iface_name"].asString();
+  config.wireless_tap.resource_id = wifi_resp["resource_id"].asUInt();
+  config.wireless_tap.session_id = session_id;
+
+  return config;
 }
