@@ -246,6 +246,8 @@ DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel 
                          "with kgdb/kdb. The kernel must have been built with "
                          "kgdb support.");
 
+DEFINE_bool(start_gnss_proxy, false, "Whether to start the gnss proxy.");
+
 // by default, this modem-simulator is disabled
 DEFINE_bool(enable_modem_simulator, false,
             "Enable the modem simulator to process RILD AT commands");
@@ -487,6 +489,10 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_blank_data_image_mb(FLAGS_blank_data_image_mb);
   tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
 
+  tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
+  tmp_config_obj.set_gnss_grpc_proxy_binary(
+    cuttlefish::DefaultHostArtifactsPath("bin/gnss_grpc_proxy"));
+
   tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
   tmp_config_obj.set_tombstone_receiver_binary(
       cuttlefish::DefaultHostArtifactsPath("bin/tombstone_receiver"));
@@ -569,6 +575,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     }
     instance.set_keymaster_vsock_port(7200 + num - 1);
     instance.set_gatekeeper_vsock_port(7300 + num - 1);
+    instance.set_gnss_grpc_proxy_server_port(7400 + num -1);
 
     instance.set_device_title(FLAGS_device_title);
 
