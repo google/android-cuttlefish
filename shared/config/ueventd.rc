@@ -18,3 +18,5 @@
 
 # seriallogging
 /dev/hvc2 0660 system logd
+
+/dev/gnss0 0664 system system
