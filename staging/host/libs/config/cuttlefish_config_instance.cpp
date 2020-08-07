@@ -62,6 +62,8 @@ const char* kKeymasterVsockPort = "keymaster_vsock_port";
 const char* kGatekeeperVsockPort = "gatekeeper_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
 
+const char* kGnssGrpcProxyServerPort = "gnss_grpc_proxy_server_port";
+
 }  // namespace
 
 Json::Value* CuttlefishConfig::MutableInstanceSpecific::Dictionary() {
@@ -119,6 +121,23 @@ std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
 
 std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
   return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-out-pipe"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss-in-pipe"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_out_pipe_name() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss-out-pipe"));
+}
+
+int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {
+  return (*Dictionary())[kGnssGrpcProxyServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_gnss_grpc_proxy_server_port(
+    int gnss_grpc_proxy_server_port) {
+  (*Dictionary())[kGnssGrpcProxyServerPort] = gnss_grpc_proxy_server_port;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
