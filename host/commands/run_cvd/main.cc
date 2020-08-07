@@ -537,6 +537,7 @@ int main(int argc, char** argv) {
   LaunchConfigServer(*config, &process_monitor);
   LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
   LaunchTpm(&process_monitor, *config);
+  LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
   LaunchSecureEnvironment(&process_monitor, *config);
 
   // The streamer needs to launch before the VMM because it serves on several

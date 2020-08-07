@@ -45,5 +45,8 @@ void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
 void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
                                   const cuttlefish::CuttlefishConfig& config);
 
+void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
+                                      cuttlefish::ProcessMonitor* process_monitor);
+
 void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
                              const cuttlefish::CuttlefishConfig& config);

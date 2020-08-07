@@ -211,6 +211,12 @@ class CuttlefishConfig {
   void set_adb_connector_binary(const std::string& adb_connector_binary);
   std::string adb_connector_binary() const;
 
+  void set_gnss_grpc_proxy_binary(const std::string& binary);
+  std::string gnss_grpc_proxy_binary() const;
+
+  void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
+  bool enable_gnss_grpc_proxy() const;
+
   void set_socket_vsock_proxy_binary(const std::string& binary);
   std::string socket_vsock_proxy_binary() const;
 
@@ -370,6 +376,8 @@ class CuttlefishConfig {
     int frames_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
+    // Port number to connect to the gnss grpc proxy server on the host
+    int gnss_grpc_proxy_server_port() const;
     // Port number to connect to the tpm server on the host
     int tpm_port() const;
     // Port number to connect to the gatekeeper server on the host
@@ -413,6 +421,9 @@ class CuttlefishConfig {
 
     std::string console_in_pipe_name() const;
     std::string console_out_pipe_name() const;
+
+    std::string gnss_in_pipe_name() const;
+    std::string gnss_out_pipe_name() const;
 
     std::string logcat_pipe_name() const;
 
@@ -475,6 +486,8 @@ class CuttlefishConfig {
     void set_start_webrtc_signaling_server(bool start);
     // Wifi MAC address inside the guest
     void set_wifi_mac_address(const std::array<unsigned char, 6>&);
+    // Gnss grpc proxy server port inside the host
+    void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
   };
 
  private:

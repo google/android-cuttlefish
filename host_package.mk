@@ -73,6 +73,7 @@ cvd_host_executables := \
     secure_env \
     log_tee \
     modem_simulator \
+    gnss_grpc_proxy \
 
 cvd_host_tests := \
     monotonic_time_test \
