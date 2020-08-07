@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package gnss_grpc_proxy;
+
+// The greeting service definition.
+service GnssGrpcProxy {
+  // Sends NmeaRequest
+  rpc SendNmea (SendNmeaRequest) returns (SendNmeaReply) {}
+}
+
+// The request message containing nmea
+message SendNmeaRequest {
+  string nmea = 1;
+}
+
+// The response message containing the return information
+message SendNmeaReply {
+  string reply = 1;
+}

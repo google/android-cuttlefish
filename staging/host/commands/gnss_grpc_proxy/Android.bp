@@ -1,0 +1,87 @@
+// Copyright (C) 2018 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+
+cc_binary_host {
+    name: "gnss_grpc_proxy",
+    srcs: [
+        "gnss_grpc_proxy.cpp",
+    ],
+    cflags: [
+        "-Wno-unused-parameter",
+        "-D_XOPEN_SOURCE",
+    ],
+    generated_headers: [
+        "GnssGrpcProxyStub_h",
+    ],
+    generated_sources: [
+        "GnssGrpcProxyStub_cc",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libprotobuf-cpp-full",
+        "libgrpc++_unsecure",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+        "libjsoncpp",
+        "libgflags",
+    ],
+    defaults: ["cuttlefish_host_only"],
+    include_dirs: [
+        "external/grpc-grpc/include",
+        "external/protobuf/src",
+    ],
+}
+
+filegroup {
+    name: "GnssGrpcProxyProto",
+    srcs: [
+        "gnss_grpc_proxy.proto",
+    ],
+}
+
+genrule {
+    name: "GnssGrpcProxyStub_h",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/gnss_grpc_proxy -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        ":GnssGrpcProxyProto",
+    ],
+    out: [
+        "gnss_grpc_proxy.grpc.pb.h",
+        "gnss_grpc_proxy.pb.h",
+    ],
+}
+
+genrule {
+    name: "GnssGrpcProxyStub_cc",
+    tools: [
+        "aprotoc",
+        "protoc-gen-grpc-cpp-plugin",
+    ],
+    cmd: "$(location aprotoc) -Idevice/google/cuttlefish/host/commands/gnss_grpc_proxy -Iexternal/protobuf/src --plugin=protoc-gen-grpc=$(location protoc-gen-grpc-cpp-plugin) $(in) --grpc_out=$(genDir) --cpp_out=$(genDir)",
+    srcs: [
+        ":GnssGrpcProxyProto",
+    ],
+    out: [
+        "gnss_grpc_proxy.grpc.pb.cc",
+        "gnss_grpc_proxy.pb.cc",
+    ],
+}
