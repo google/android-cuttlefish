@@ -496,6 +496,57 @@ void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
   }
 }
 
+void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
+                                      cuttlefish::ProcessMonitor* process_monitor) {
+    if (!config.enable_gnss_grpc_proxy() ||
+        !cuttlefish::FileExists(config.gnss_grpc_proxy_binary())) {
+        return;
+    }
+    cuttlefish::Command gnss_grpc_proxy_cmd(config.gnss_grpc_proxy_binary());
+    auto instance = config.ForDefaultInstance();
+    auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
+
+    auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
+
+    if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
+                << strerror(error);
+      return;
+    }
+
+    if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
+                << strerror(error);
+      return;
+    }
+    // These fds will only be read from or written to, but open them with
+    // read and write access to keep them open in case the subprocesses exit
+    cuttlefish::SharedFD gnss_grpc_proxy_in_wr =
+        cuttlefish::SharedFD::Open(gnss_in_pipe_name.c_str(), O_RDWR);
+    if (!gnss_grpc_proxy_in_wr->IsOpen()) {
+      LOG(ERROR) << "Failed to open gnss_grpc_proxy input fifo for writes: "
+                << gnss_grpc_proxy_in_wr->StrError();
+      return;
+    }
+    cuttlefish::SharedFD gnss_grpc_proxy_out_rd =
+        cuttlefish::SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
+    if (!gnss_grpc_proxy_out_rd->IsOpen()) {
+      LOG(ERROR) << "Failed to open gnss_grpc_proxy output fifo for reads: "
+                << gnss_grpc_proxy_out_rd->StrError();
+      return;
+    }
+
+    const unsigned gnss_grpc_proxy_server_port = instance.gnss_grpc_proxy_server_port();
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr);
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd);
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=", gnss_grpc_proxy_server_port);
+    process_monitor->StartSubprocess(std::move(gnss_grpc_proxy_cmd),
+                                     GetOnSubprocessExitCallback(config));
+
+}
+
 void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
                              const cuttlefish::CuttlefishConfig& config) {
   auto keymaster_port = config.ForDefaultInstance().keymaster_vsock_port();
