@@ -285,6 +285,18 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   console_cmd.AddParameter("--console_in_fd=", console_in_wr);
   console_cmd.AddParameter("--console_out_fd=", console_out_rd);
 
+
+  if (config_->enable_gnss_grpc_proxy()) {
+    auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
+    auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
+
+   
+ 
+    crosvm_cmd.AddParameter("--serial=hardware=serial,num=4,type=file,path=",
+                        gnss_out_pipe_name,
+                        ",input=", gnss_in_pipe_name);
+  }
+
   cuttlefish::SharedFD log_out_rd, log_out_wr;
   if (!cuttlefish::SharedFD::Pipe(&log_out_rd, &log_out_wr)) {
     LOG(ERROR) << "Failed to create log pipe for crosvm's stdout/stderr: "

@@ -57,6 +57,12 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
                VmManager::ConfigureGpuMode(config.vm_manager(), config.gpu_mode()));
   AppendVector(&kernel_cmdline, VmManager::ConfigureBootDevices(config.vm_manager()));
 
+  if (config.enable_gnss_grpc_proxy()) {
+    kernel_cmdline.push_back("gnss_cmdline.serdev=serial8250/serial0/serial0-0");
+    kernel_cmdline.push_back("gnss_cmdline.type=0");
+    kernel_cmdline.push_back("serdev_ttyport.pdev_tty_port=ttyS3");
+  }
+
   kernel_cmdline.push_back(concat("androidboot.serialno=", instance.serial_number()));
   kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
   kernel_cmdline.push_back(concat(
