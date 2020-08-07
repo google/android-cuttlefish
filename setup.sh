@@ -210,86 +210,86 @@ function cvd_docker_create {
 	  if [[ -d "${android}" ]]; then
 		  echo "Setting up Android images from ${android} in ${home}."
 		  if [[ $(compgen -G "${android}"/*.img) != "${android}/*.img" ]]; then
-				for f in "${android}"/*.img; do
-					home_volume+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
-				done
+			  for f in "${android}"/*.img; do
+				  home_volume+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
+			  done
 		  else
-			    echo "WARNING: No Android images in ${android}."
+			  echo "WARNING: No Android images in ${android}."
 		  fi
 	  fi
 	  if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
 		  home_volume+=("-v ${home}:/home/vsoc-01:rw")
 	  fi
 
-	if [[ $share_home == "true" ]]; then
-		local user_home=$(realpath $HOME)
-		for sub in "${shared_home_subdirs[@]}"; do
-			local subdir=${sub}
-			if ! is_absolute_path ${subdir}; then
-				subdir=${user_home}/${subdir}
-			fi
-			# mount /home/user/X to /home/vsoc-01/X
-			local dstdir=${subdir#$user_home/}
-			home_volume+=("-v ${subdir}:/home/vsoc-01/${dstdir}:rw")
-		done
-	fi
+	  if [[ $share_home == "true" ]]; then
+		  local user_home=$(realpath $HOME)
+		  for sub in "${shared_home_subdirs[@]}"; do
+			  local subdir=${sub}
+			  if ! is_absolute_path ${subdir}; then
+				  subdir=${user_home}/${subdir}
+			  fi
+			  # mount /home/user/X to /home/vsoc-01/X
+			  local dstdir=${subdir#$user_home/}
+			  home_volume+=("-v ${subdir}:/home/vsoc-01/${dstdir}:rw")
+		  done
+	  fi
 
-	local -a as_host_x=()
-	if [[ "$with_host_x" == "true" ]]; then
-		as_host_x+=("-e DISPLAY=$DISPLAY")
-		as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
-	fi
+	  local -a as_host_x=()
+	  if [[ "$with_host_x" == "true" ]]; then
+		  as_host_x+=("-e DISPLAY=$DISPLAY")
+		  as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
+	  fi
 
-	echo "Starting container ${name} from image cuttlefish.";
-	docker run -d ${as_host_x[@]} \
-		--name "${name}" -h "${name}" \
-		-p 8443:8443 \
-		-p 6250:6250 \
-		-p 15550:15550 \
-		-p 15551:15551 \
-		--privileged \
-		-v /sys/fs/cgroup:/sys/fs/cgroup:ro ${home_volume[@]} \
-		cuttlefish
+	  echo "Starting container ${name} from image cuttlefish.";
+	  docker run -d ${as_host_x[@]} \
+		  --name "${name}" -h "${name}" \
+		  -p 8443:8443 \
+		  -p 6250:6250 \
+		  -p 15550:15550 \
+		  -p 15551:15551 \
+		  --privileged \
+		  -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${home_volume[@]} \
+		  cuttlefish
 
-	echo "Waiting for ${name} to boot."
-	while true; do
-		if [[ -z "$(cvd_container_exists ${name})" ]]; then
-			echo "Container ${name}  does not exist yet.  Sleep 1 second"
-			sleep 1
-			continue
-		fi
-		if [[ -z "$(cvd_container_running ${name})" ]]; then
-			echo "Container ${name} is not running yet.  Sleep 1 second"
-			sleep 1
-			continue
-		fi
-		break
-	done
-	echo "Done waiting for ${name} to boot."
+	  echo "Waiting for ${name} to boot."
+	  while true; do
+		  if [[ -z "$(cvd_container_exists ${name})" ]]; then
+			  echo "Container ${name}  does not exist yet.  Sleep 1 second"
+			  sleep 1
+			  continue
+		  fi
+		  if [[ -z "$(cvd_container_running ${name})" ]]; then
+			  echo "Container ${name} is not running yet.  Sleep 1 second"
+			  sleep 1
+			  continue
+		  fi
+		  break
+	  done
+	  echo "Done waiting for ${name} to boot."
 
-	__gen_funcs ${name}
+	  __gen_funcs ${name}
 
-	if [[ "$singleshot" == "true" ]]; then
-		cvd_login_${name}
-		cvd_docker_rm ${name}
-		return
-	fi
+	  if [[ "$singleshot" == "true" ]]; then
+		  cvd_login_${name}
+		  cvd_docker_rm ${name}
+		  return
+	  fi
 
-	help_on_container_start ${name}
-	echo
-	help_on_sourcing
+	  help_on_container_start ${name}
+	  echo
+	  help_on_sourcing
 
-else
-	echo "Container ${name} exists";
-	if [[ -z "$(cvd_container_running ${name})" ]]; then
-		echo "Container ${name} is not running.";
-	else
-		echo "Container ${name} is already running.";
-		__gen_funcs ${name}
-		help_on_container_start ${name}
-		echo
-		help_on_sourcing
-	fi
+  else
+	  echo "Container ${name} exists";
+	  if [[ -z "$(cvd_container_running ${name})" ]]; then
+		  echo "Container ${name} is not running.";
+	  else
+		  echo "Container ${name} is already running.";
+		  __gen_funcs ${name}
+		  help_on_container_start ${name}
+		  echo
+		  help_on_sourcing
+	  fi
   fi
 }
 
