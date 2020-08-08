@@ -26,6 +26,25 @@ function cvd_get_ip {
 		echo $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${name}")
 	}
 
+function cvd_allocate_instance_id {
+	local -a ids=()
+	for instance in $(docker ps -aq --filter="ancestor=cuttlefish"); do
+		local id;
+		id=$(docker inspect -f '{{- printf "%s" .Config.Labels.cf_instance}}' "${instance}")
+		ids+=("${id}")
+	done
+	local sorted;
+	IFS=$'\n' sorted=($(sort -n <<<"${ids[*]}")); unset IFS
+	local prev=0
+	for id in ${sorted[@]}; do
+		if [[ "${prev}" -lt "${id}" ]]; then
+			break;
+		fi
+		prev="$((id+1))"
+	done
+	echo "${prev}"
+}
+
 function cvd_docker_list {
 	docker ps -a --filter="ancestor=cuttlefish"
 }
@@ -101,8 +120,6 @@ function cvd_docker_create {
 	local need_help="false"
 	local share_dir="false"
 	local -a shared_dir_pairs=()
-	local android_build_top="false"
-	local to_build_top_dir="${ANDROID_BUILD_TOP}"
 
     # s | --singleshot
     # x | --with_host_x
@@ -111,16 +128,16 @@ function cvd_docker_create {
     # C | --cuttlefish[=/PATH to host package file]
     # h | --help
 
-    local params
-    if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
-	    eval set -- "${params}"
-	    while true; do
-		    case "$1" in
-			    -m|--share_dir)
-				    share_dir="true"
-				    shared_dir_pairs+=("$2")
-				    shift 2
-				    ;;
+  local params
+  if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
+	  eval set -- "${params}"
+	  while true; do
+		  case "$1" in
+			  -m|--share_dir)
+				  share_dir="true"
+				  shared_dir_pairs+=("$2")
+				  shift 2
+				  ;;
 			  -A|--android)
 				  android=$2
 				  if [[ -z "${android}" ]]; then
@@ -253,15 +270,27 @@ function cvd_docker_create {
 		    as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
 	    fi
 
+        local cf_instance=$(cvd_allocate_instance_id)
+        if [ "${cf_instance}" -gt 7 ]; then
+                echo "Limit is maximum 8 Cuttlefish instances."
+                return
+        fi
+
+        echo "Starting container ${name} (id ${cf_instance}) from image cuttlefish.";
 	    docker run -d ${as_host_x[@]} \
-		       --name "${name}" -h "${name}" \
-		       -p 8443:8443 \
-		       -p 6250:6250 \
-		       -p 15550:15550 \
-		       -p 15551:15551 \
-		       --privileged \
-		       -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
-		       cuttlefish
+		        --name "${name}" -h "${name}" \
+                -l "cf_instance=${cf_instance}" \
+                -e CUTTLEFISH_INSTANCE="${cf_instance}" \
+                -p $((6443+cf_instance)):$((6443+cf_instance)) \
+                -p $((8443+cf_instance)):$((8443+cf_instance)) \
+                -p $((6250+cf_instance)):$((6250+cf_instance)) \
+                -p $((15550+cf_instance*2)):$((15550+cf_instance*2))/tcp \
+                -p $((15551+cf_instance*2)):$((15551+cf_instance*2))/tcp \
+                -p $((15550+cf_instance*2)):$((15550+cf_instance*2))/udp \
+                -p $((15551+cf_instance*2)):$((15551+cf_instance*2))/udp \
+		        --privileged \
+		        -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
+		        cuttlefish
 
 	    echo "Waiting for ${name} to boot."
 	    while true; do
@@ -284,11 +313,6 @@ function cvd_docker_create {
         local ip_addr_var_name="ip_${name}"
         declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
         export ${ip_addr_var_name}
-        if [[ "$singleshot" == "true" ]]; then
-            docker exec -it --user vsoc-01 ${name} /bin/bash
-            cvd_docker_rm ${name}
-            return
-        fi
 
 	    if [[ "$singleshot" == "true" ]]; then
 		    cvd_login_${name}
