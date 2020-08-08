@@ -21,7 +21,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
-#include "https/RunLoop.h"
 
 namespace cuttlefish {
 
@@ -41,8 +40,6 @@ class CfConnectionObserverFactory
   cuttlefish::SharedFD touch_fd_;
   cuttlefish::SharedFD keyboard_fd_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
-  std::shared_ptr<RunLoop> run_loop_;
-  std::thread run_loop_thread_;
 };
 
 }  // namespace cuttlefish

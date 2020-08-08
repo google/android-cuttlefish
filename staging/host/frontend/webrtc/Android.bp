@@ -35,7 +35,6 @@ cc_library_static {
       "libabsl_headers",
     ],
     static_libs: [
-        "libhttps",
         "libsrtp2",
         "libcuttlefish_host_config",
         "libcuttlefish_screen_connector",
@@ -97,7 +96,6 @@ cc_binary_host {
         "libevent",
         "libffi",
         "libgflags",
-        "libhttps",
         "libjsoncpp",
         "libopus",
         "libsrtp2",
