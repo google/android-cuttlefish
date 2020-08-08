@@ -16,36 +16,31 @@
 
 #pragma once
 
-#include <https/RunLoop.h>
-#include <https/WebSocketHandler.h>
-
 #include <memory>
+#include <thread>
+
+#include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-struct AdbHandler : public std::enable_shared_from_this<AdbHandler> {
-  explicit AdbHandler(
-      std::shared_ptr<RunLoop> runLoop, const std::string &adb_host_and_port,
+struct AdbHandler {
+  explicit AdbHandler(const std::string
+          &adb_host_and_port,
       std::function<void(const uint8_t *, size_t)> send_to_client);
 
   ~AdbHandler();
 
-  void run();
-
   void handleMessage(const uint8_t *msg, size_t len);
 
  private:
-  struct AdbConnection;
-
-  std::shared_ptr<RunLoop> mRunLoop;
-  std::shared_ptr<AdbConnection> mAdbConnection;
-
-  int mSocket;
 
   std::function<void(const uint8_t *, size_t)> send_to_client_;
 
-  int setupSocket(const std::string &adb_host_and_port);
+  void ReadLoop();
+
+  SharedFD adb_socket_;
+  std::thread read_thread_;
 };
 
 }  // namespace webrtc_streaming
