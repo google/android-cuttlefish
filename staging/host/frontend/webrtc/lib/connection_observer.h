@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <functional>
+
 namespace cuttlefish {
 namespace webrtc_streaming {
 
@@ -24,7 +26,8 @@ class ConnectionObserver {
   ConnectionObserver() = default;
   virtual ~ConnectionObserver() = default;
 
-  virtual void OnConnected() = 0;
+  virtual void OnConnected(
+      std::function<void(const uint8_t*, size_t, bool)> ctrl_msg_sender) = 0;
   virtual void OnTouchEvent(const std::string& display_label, int x, int y,
                             bool down) = 0;
   virtual void OnMultiTouchEvent(const std::string& label, int id, int slot,
@@ -33,6 +36,7 @@ class ConnectionObserver {
   virtual void OnAdbChannelOpen(
       std::function<bool(const uint8_t*, size_t)> adb_message_sender) = 0;
   virtual void OnAdbMessage(const uint8_t* msg, size_t size) = 0;
+  virtual void OnControlMessage(const uint8_t* msg, size_t size) = 0;
 };
 
 class ConnectionObserverFactory {

@@ -134,22 +134,72 @@ class CvdOnSetRemoteDescription
 
 }  // namespace
 
-ClientHandler::InputHandler::InputHandler(
+class InputChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  InputChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~InputChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+};
+
+class AdbChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  AdbChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> adb_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~AdbChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> adb_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+  bool channel_open_reported_ = false;
+};
+
+class ControlChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  ControlChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> control_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~ControlChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+  void Send(const uint8_t *msg, size_t size, bool binary);
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> control_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+};
+
+InputChannelHandler::InputChannelHandler(
     rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel,
     std::shared_ptr<ConnectionObserver> observer)
     : input_channel_(input_channel), observer_(observer) {
   input_channel->RegisterObserver(this);
 }
-ClientHandler::InputHandler::~InputHandler() {
+
+InputChannelHandler::~InputChannelHandler() {
   input_channel_->UnregisterObserver();
 }
-void ClientHandler::InputHandler::OnStateChange() {
+
+void InputChannelHandler::OnStateChange() {
   LOG(VERBOSE) << "Input channel state changed to "
                << webrtc::DataChannelInterface::DataStateString(
                       input_channel_->state());
 }
 
-void ClientHandler::InputHandler::OnMessage(const webrtc::DataBuffer &msg) {
+void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   if (msg.binary) {
     // TODO (jemoreira) consider binary protocol to avoid JSON parsing overhead
     LOG(ERROR) << "Received invalid (binary) data on input channel";
@@ -226,22 +276,22 @@ void ClientHandler::InputHandler::OnMessage(const webrtc::DataBuffer &msg) {
   }
 }
 
-ClientHandler::AdbHandler::AdbHandler(
+AdbChannelHandler::AdbChannelHandler(
     rtc::scoped_refptr<webrtc::DataChannelInterface> adb_channel,
     std::shared_ptr<ConnectionObserver> observer)
     : adb_channel_(adb_channel), observer_(observer) {
   adb_channel->RegisterObserver(this);
 }
 
-ClientHandler::AdbHandler::~AdbHandler() { adb_channel_->UnregisterObserver(); }
+AdbChannelHandler::~AdbChannelHandler() { adb_channel_->UnregisterObserver(); }
 
-void ClientHandler::AdbHandler::OnStateChange() {
-  LOG(VERBOSE) << "Input channel state changed to "
+void AdbChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "Adb channel state changed to "
                << webrtc::DataChannelInterface::DataStateString(
                       adb_channel_->state());
 }
 
-void ClientHandler::AdbHandler::OnMessage(const webrtc::DataBuffer &msg) {
+void AdbChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   // Report the adb channel as open on the first message received instead of at
   // channel open, this avoids unnecessarily connecting to the adb daemon for
   // clients that don't use ADB.
@@ -259,6 +309,32 @@ void ClientHandler::AdbHandler::OnMessage(const webrtc::DataBuffer &msg) {
     channel_open_reported_ = true;
   }
   observer_->OnAdbMessage(msg.data.cdata(), msg.size());
+}
+
+ControlChannelHandler::ControlChannelHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> control_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : control_channel_(control_channel), observer_(observer) {
+  control_channel->RegisterObserver(this);
+}
+
+ControlChannelHandler::~ControlChannelHandler() {
+  control_channel_->UnregisterObserver();
+}
+
+void ControlChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "Input channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      control_channel_->state());
+}
+
+void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  observer_->OnControlMessage(msg.data.cdata(), msg.size());
+}
+
+void ControlChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {
+  webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size), binary);
+  control_channel_->Send(buffer);
 }
 
 std::shared_ptr<ClientHandler> ClientHandler::Create(
@@ -288,17 +364,16 @@ bool ClientHandler::SetPeerConnection(
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection) {
   peer_connection_ = peer_connection;
 
-  // If no channel is created on the peer connection the generated offer won't
-  // have an entry for data channels which breaks input and adb.
-  // This channel has no use now, but could be used in the future to exchange
-  // control data between client and device without going through the signaling
-  // server.
+  // At least one data channel needs to be created on the side that makes the
+  // SDP offer (the device) for data channels to be enabled at all.
+  // This channel is meant to carry control commands from the client.
   auto control_channel = peer_connection_->CreateDataChannel(
       "device-control", nullptr /* config */);
   if (!control_channel) {
     LOG(ERROR) << "Failed to create control data channel";
     return false;
   }
+  control_handler_.reset(new ControlChannelHandler(control_channel, observer_));
   return true;
 }
 
@@ -469,7 +544,11 @@ void ClientHandler::OnConnectionChange(
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
-      observer_->OnConnected();
+      observer_->OnConnected(
+          [this](const uint8_t *msg, size_t size, bool binary) {
+            control_handler_->Send(msg, size, binary);
+            return true;
+          });
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kDisconnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": Connection disconnected";
@@ -506,9 +585,9 @@ void ClientHandler::OnDataChannel(
     rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) {
   auto label = data_channel->label();
   if (label == kInputChannelLabel) {
-    input_handler_.reset(new InputHandler(data_channel, observer_));
+    input_handler_.reset(new InputChannelHandler(data_channel, observer_));
   } else if (label == kAdbChannelLabel) {
-    adb_handler_.reset(new AdbHandler(data_channel, observer_));
+    adb_handler_.reset(new AdbChannelHandler(data_channel, observer_));
   } else {
     LOG(VERBOSE) << "Data channel connected: " << label;
     data_channels_.push_back(data_channel);
