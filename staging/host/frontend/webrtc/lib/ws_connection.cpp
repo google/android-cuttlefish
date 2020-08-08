@@ -115,7 +115,7 @@ void CreateConnectionCallback(lws_sorted_usec_list_t* sul);
 
 namespace {
 
-constexpr char kProtocolName[] = "lws-websocket-protocol";
+constexpr char kProtocolName[] = "cf-webrtc-device";
 constexpr int kBufferSize = 65536;
 
 const uint32_t backoff_ms[] = {1000, 2000, 3000, 4000, 5000};
@@ -383,7 +383,7 @@ void WsConnectionImpl::ConnectInner() {
       connect_info.ssl_connection = 0;
       break;
   }
-  connect_info.protocol = "UNNUSED";
+  connect_info.protocol = "webrtc-operator";
   connect_info.local_protocol_name = kProtocolName;
   connect_info.pwsi = &wsi_;
   connect_info.retry_and_idle_policy = &kRetry;
