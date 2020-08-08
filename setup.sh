@@ -78,6 +78,8 @@ function help_on_container_start {
 	echo "Delete container ${name}:"
 	[[ "${name}" == 'cuttlefish' ]] && echo "    cvd_docker_rm"
 	[[ "${name}" != 'cuttlefish' ]] && echo "    cvd_docker_rm ${name}"
+	echo "Delete all containers:"
+	echo "    cvd_docker_rm_all"
 }
 
 function is_absolute_path {
@@ -314,21 +316,32 @@ function cvd_docker_create {
 
 function cvd_docker_rm {
 	local name=${1:-cuttlefish}
-	local ip_addr_var_name="ip_${name}"
-    unset ${ip_addr_var_name}
+	while [ ! -z "${name}" ]; do
+        local ip_addr_var_name="ip_${name}"
+        unset ${ip_addr_var_name}
 
-	if [ -n "$(docker ps -q -a -f name=${name})" ]; then
-		homedir=$(docker inspect -f '{{range $mount:=.Mounts}}{{if and (eq .Destination "/home/vsoc-01") (eq .Type "bind")}}{{- printf "%q" $mount.Source}}{{end}}{{end}}' "${name}" | sed 's/"//g')
-		echo "Deleting container ${name}."
-		docker rm -f ${name}
-		echo "Cleaning up homedir ${homedir}."
-		rm -rf ${homedir}
-		unset -f $(__gen_start_func_name ${name})
-		unset -f $(__gen_login_func_name ${name})
-		unset -f $(__gen_stop_func_name ${name})
-	else
-		echo "Nothing to stop: container ${name} does not exist."
-	fi
+		if [ -n "$(docker ps -q -a -f name=${name})" ]; then
+			homedir=$(docker inspect -f '{{range $mount:=.Mounts}}{{if and (eq .Destination "/home/vsoc-01") (eq .Type "bind")}}{{- printf "%q" $mount.Source}}{{end}}{{end}}' "${name}" | sed 's/"//g')
+			echo "Deleting container ${name}."
+			docker rm -f ${name}
+			echo "Cleaning up homedir ${homedir}."
+			rm -rf ${homedir}
+			unset -f $(__gen_start_func_name ${name})
+			unset -f $(__gen_login_func_name ${name})
+			unset -f $(__gen_stop_func_name ${name})
+		else
+			echo "Nothing to stop: container ${name} does not exist."
+		fi
+		shift
+		name=$1
+	done
+}
+
+function cvd_docker_rm_all {
+	for c in $(docker ps -qa --filter="ancestor=cuttlefish"); do
+		local name=$(docker inspect -f '{{.Name}}' ${c})
+		cvd_docker_rm ${name}
+	done
 }
 
 function __gen_login_func_name {
