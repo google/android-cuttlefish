@@ -26,6 +26,25 @@ function cvd_get_ip {
 		echo $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${name}")
 	}
 
+function cvd_allocate_instance_id {
+	local -a ids=()
+	for instance in $(docker ps -aq --filter="ancestor=cuttlefish"); do
+		local id;
+		id=$(docker inspect -f '{{- printf "%s" .Config.Labels.cf_instance}}' "${instance}")
+		ids+=("${id}")
+	done
+	local sorted;
+	IFS=$'\n' sorted=($(sort -n <<<"${ids[*]}")); unset IFS
+	local prev=0
+	for id in ${sorted[@]}; do
+		if [[ "${prev}" -lt "${id}" ]]; then
+			break;
+		fi
+		prev="$((id+1))"
+	done
+	echo "${prev}"
+}
+
 function cvd_docker_list {
 	docker ps -a --filter="ancestor=cuttlefish"
 }
@@ -242,13 +261,24 @@ function cvd_docker_create {
 		  as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
 	  fi
 
-	  echo "Starting container ${name} from image cuttlefish.";
+	  local cf_instance=$(cvd_allocate_instance_id)
+	  if [ "${cf_instance}" -gt 7 ]; then
+		  echo "Limit is maximum 8 Cuttlefish instances."
+		  return
+	  fi
+
+	  echo "Starting container ${name} (id ${cf_instance}) from image cuttlefish.";
 	  docker run -d ${as_host_x[@]} \
 		  --name "${name}" -h "${name}" \
-		  -p 8443:8443 \
-		  -p 6250:6250 \
-		  -p 15550:15550 \
-		  -p 15551:15551 \
+		  -l "cf_instance=${cf_instance}" \
+		  -e CUTTLEFISH_INSTANCE="${cf_instance}" \
+		  -p $((6443+cf_instance)):$((6443+cf_instance)) \
+		  -p $((8443+cf_instance)):$((8443+cf_instance)) \
+		  -p $((6250+cf_instance)):$((6250+cf_instance)) \
+		  -p $((15550+cf_instance*2)):$((15550+cf_instance*2))/tcp \
+		  -p $((15551+cf_instance*2)):$((15551+cf_instance*2))/tcp \
+		  -p $((15550+cf_instance*2)):$((15550+cf_instance*2))/udp \
+		  -p $((15551+cf_instance*2)):$((15551+cf_instance*2))/udp \
 		  --privileged \
 		  -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${home_volume[@]} \
 		  cuttlefish
