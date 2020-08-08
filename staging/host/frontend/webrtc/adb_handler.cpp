@@ -18,9 +18,6 @@
 
 #include <unistd.h>
 
-#include <https/BaseConnection.h>
-#include <https/Support.h>
-
 #include <android-base/logging.h>
 
 using namespace android;
@@ -28,76 +25,12 @@ using namespace android;
 namespace cuttlefish {
 namespace webrtc_streaming {
 
-struct AdbHandler::AdbConnection : public BaseConnection {
-  explicit AdbConnection(AdbHandler *parent, std::shared_ptr<RunLoop> runLoop,
-                         int sock);
+namespace {
 
-  void send(const void *_data, size_t size);
-
- protected:
-  long processClientRequest(const void *data, size_t size) override;
-  void onDisconnect(int err) override;
-
- private:
-  AdbHandler *mParent;
-};
-
-////////////////////////////////////////////////////////////////////////////////
-
-AdbHandler::AdbConnection::AdbConnection(AdbHandler *parent,
-                                         std::shared_ptr<RunLoop> runLoop,
-                                         int sock)
-    : BaseConnection(runLoop, sock), mParent(parent) {}
-
-long AdbHandler::AdbConnection::processClientRequest(const void *_data,
-                                                     size_t size) {
-  auto data = static_cast<const uint8_t *>(_data);
-
-  LOG(VERBOSE) << "AdbConnection::processClientRequest (size = " << size << ")";
-
-  LOG(VERBOSE) << hexdump(data, size);
-
-  mParent->send_to_client_(data, size);
-  return size;
-}
-
-void AdbHandler::AdbConnection::onDisconnect(int err) {
-  LOG(VERBOSE) << "AdbConnection::onDisconnect(err=" << err << ")";
-
-  mParent->send_to_client_(nullptr /* data */, 0 /* size */);
-}
-
-void AdbHandler::AdbConnection::send(const void *_data, size_t size) {
-  BaseConnection::send(_data, size);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-AdbHandler::AdbHandler(
-    std::shared_ptr<RunLoop> runLoop, const std::string &adb_host_and_port,
-    std::function<void(const uint8_t *, size_t)> send_to_client)
-    : mRunLoop(runLoop), mSocket(-1), send_to_client_(send_to_client) {
-  LOG(VERBOSE) << "Connecting to " << adb_host_and_port;
-
-  auto err = setupSocket(adb_host_and_port);
-  CHECK(!err);
-
-  mAdbConnection = std::make_shared<AdbConnection>(this, mRunLoop, mSocket);
-}
-
-AdbHandler::~AdbHandler() {
-  if (mSocket >= 0) {
-    close(mSocket);
-    mSocket = -1;
-  }
-}
-
-void AdbHandler::run() { mAdbConnection->run(); }
-
-int AdbHandler::setupSocket(const std::string &adb_host_and_port) {
+SharedFD SetupAdbSocket(const std::string &adb_host_and_port) {
   auto colonPos = adb_host_and_port.find(':');
   if (colonPos == std::string::npos) {
-    return -EINVAL;
+    return SharedFD();
   }
 
   auto host = adb_host_and_port.substr(0, colonPos);
@@ -107,49 +40,41 @@ int AdbHandler::setupSocket(const std::string &adb_host_and_port) {
   unsigned long port = strtoul(portString, &end, 10);
 
   if (end == portString || *end != '\0' || port > 65535) {
-    return -EINVAL;
+    return SharedFD();
   }
 
-  int err;
+  return SharedFD::SocketLocalClient(port, SOCK_STREAM);
+}
 
-  int sock = socket(PF_INET, SOCK_STREAM, 0);
+}  // namespace
 
-  if (sock < 0) {
-    err = -errno;
-    goto bail;
+AdbHandler::AdbHandler(
+    const std::string &adb_host_and_port,
+    std::function<void(const uint8_t *, size_t)> send_to_client)
+    : send_to_client_(send_to_client),
+      adb_socket_(SetupAdbSocket(adb_host_and_port)),
+      read_thread_([this]() { ReadLoop(); }) {}
+
+AdbHandler::~AdbHandler() = default;
+
+void AdbHandler::ReadLoop() {
+  while (1) {
+    uint8_t buffer[4096];
+    auto read = adb_socket_->Read(buffer, sizeof(buffer));
+    send_to_client_(buffer, read);
   }
-
-  makeFdNonblocking(sock);
-
-  sockaddr_in addr;
-  memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
-  addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = inet_addr(host.c_str());
-  addr.sin_port = htons(port);
-
-  if (connect(sock, reinterpret_cast<const sockaddr *>(&addr), sizeof(addr)) <
-          0 &&
-      errno != EINPROGRESS) {
-    err = -errno;
-    goto bail2;
-  }
-
-  mSocket = sock;
-
-  return 0;
-
-bail2:
-  close(sock);
-  sock = -1;
-
-bail:
-  return err;
 }
 
 void AdbHandler::handleMessage(const uint8_t *msg, size_t len) {
-  LOG(VERBOSE) << hexdump(msg, len);
-
-  mAdbConnection->send(msg, len);
+  size_t sent = 0;
+  while (sent < len) {
+    auto this_sent = adb_socket_->Write(&msg[sent], len - sent);
+    if (this_sent < 0) {
+      LOG(FATAL) << "Error writing to adb socket: " << adb_socket_->StrError();
+      return;
+    }
+    sent += this_sent;
+  }
 }
 
 }  // namespace webrtc_streaming
