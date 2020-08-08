@@ -85,7 +85,8 @@ class ConnectionObserverImpl
         run_loop_(run_loop) {}
   virtual ~ConnectionObserverImpl() = default;
 
-  void OnConnected() override {
+  void OnConnected(std::function<void(const uint8_t *, size_t, bool)>
+                   /*ctrl_msg_sender*/) override {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
       // A long time may pass before the next frame comes up from the guest.
@@ -139,6 +140,9 @@ class ConnectionObserverImpl
   }
   void OnAdbMessage(const uint8_t *msg, size_t size) override {
     adb_handler_->handleMessage(msg, size);
+  }
+  void OnControlMessage(const uint8_t */*msg*/, size_t /*size*/) override {
+    // TODO (b/163078987): Respond to control commands from the clients
   }
 
  private:

@@ -33,6 +33,10 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
+class InputChannelHandler;
+class AdbChannelHandler;
+class ControlChannelHandler;
+
 class ClientHandler : public webrtc::PeerConnectionObserver,
                       public std::enable_shared_from_this<ClientHandler> {
  public:
@@ -89,34 +93,6 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
       rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
 
  private:
-  class InputHandler : public webrtc::DataChannelObserver {
-   public:
-    InputHandler(rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel,
-                 std::shared_ptr<ConnectionObserver> observer);
-    ~InputHandler() override;
-
-    void OnStateChange() override;
-    void OnMessage(const webrtc::DataBuffer& msg) override;
-
-   private:
-    rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel_;
-    std::shared_ptr<ConnectionObserver> observer_;
-  };
-  class AdbHandler : public webrtc::DataChannelObserver {
-   public:
-    AdbHandler(rtc::scoped_refptr<webrtc::DataChannelInterface> input_channel,
-                 std::shared_ptr<ConnectionObserver> observer);
-    ~AdbHandler() override;
-
-    void OnStateChange() override;
-    void OnMessage(const webrtc::DataBuffer& msg) override;
-
-   private:
-    rtc::scoped_refptr<webrtc::DataChannelInterface> adb_channel_;
-    std::shared_ptr<ConnectionObserver> observer_;
-    bool channel_open_reported_ = false;
-  };
-
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
                 std::function<void(const Json::Value&)> send_client_cb,
                 std::function<void()> on_connection_closed_cb);
@@ -132,8 +108,9 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::function<void()> on_connection_closed_cb_;
   rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
   std::vector<rtc::scoped_refptr<webrtc::DataChannelInterface>> data_channels_;
-  std::unique_ptr<InputHandler> input_handler_;
-  std::unique_ptr<AdbHandler> adb_handler_;
+  std::unique_ptr<InputChannelHandler> input_handler_;
+  std::unique_ptr<AdbChannelHandler> adb_handler_;
+  std::unique_ptr<ControlChannelHandler> control_handler_;
 };
 
 }  // namespace webrtc_streaming

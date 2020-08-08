@@ -44,6 +44,43 @@ function createDataChannel(pc, label, onMessage) {
   };
 }
 
+function awaitDataChannel(pc, label, onMessage) {
+  console.log('expecting data channel: ' + label);
+  // Return an object with a send function like that of the dataChannel, but
+  // that only actually sends over the data channel once it has connected.
+  return {
+    channelPromise: new Promise((resolve, reject) => {
+      let prev_ondatachannel = pc.ondatachannel;
+      pc.ondatachannel = ev => {
+        let dataChannel = ev.channel;
+        if (dataChannel.label == label) {
+          dataChannel.onopen = (event) => {
+            resolve(dataChannel);
+          };
+          dataChannel.onclose = () => {
+            console.log(
+                'Data channel=' + label + ' state=' + dataChannel.readyState);
+          };
+          dataChannel.onmessage = onMessage ? onMessage : (msg) => {
+            console.log('Data channel=' + label + ' data="' + msg.data + '"');
+          };
+          dataChannel.onerror = err => {
+            reject(err);
+          };
+        } else if (prev_ondatachannel) {
+          prev_ondatachannel(ev);
+        }
+      };
+    }),
+    send: function(msg) {
+      this.channelPromise = this.channelPromise.then(channel => {
+        channel.send(msg);
+        return channel;
+      })
+    },
+  };
+}
+
 class DeviceConnection {
   constructor(pc, control) {
     this._pc = pc;
@@ -52,6 +89,13 @@ class DeviceConnection {
     this._adbChannel = createDataChannel(pc, 'adb-channel', (msg) => {
       if (this._onAdbMessage) {
         this._onAdbMessage(msg.data);
+      } else {
+        console.error('Received unexpected ADB message');
+      }
+    });
+    this._controlChannel = awaitDataChannel(pc, 'device-control', (msg) => {
+      if (this._onControlMessage) {
+        this._onControlMessage(msg);
       } else {
         console.error('Received unexpected ADB message');
       }
@@ -138,6 +182,16 @@ class DeviceConnection {
   // Provide a callback to receive data from the in-device adb daemon
   onAdbMessage(cb) {
     this._onAdbMessage = cb;
+  }
+
+  // Send control commands to the device
+  sendControlMessage(msg) {
+    this._controlChannel.send(msg);
+  }
+
+  // Provide a callback to receive control-related comms from the device
+  onControlMessage(cb) {
+    this._onControlMessage = cb;
   }
 }
 
