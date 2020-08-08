@@ -77,12 +77,10 @@ class ConnectionObserverImpl
  public:
   ConnectionObserverImpl(cuttlefish::SharedFD touch_fd,
                          cuttlefish::SharedFD keyboard_fd,
-                         std::weak_ptr<DisplayHandler> display_handler,
-                         std::shared_ptr<RunLoop> run_loop)
+                         std::weak_ptr<DisplayHandler> display_handler)
       : touch_client_(touch_fd),
         keyboard_client_(keyboard_fd),
-        weak_display_handler_(display_handler),
-        run_loop_(run_loop) {}
+        weak_display_handler_(display_handler) {}
   virtual ~ConnectionObserverImpl() = default;
 
   void OnConnected(std::function<void(const uint8_t *, size_t, bool)>
@@ -131,12 +129,10 @@ class ConnectionObserverImpl
                             adb_message_sender) override {
     LOG(VERBOSE) << "Adb Channel open";
     adb_handler_.reset(new cuttlefish::webrtc_streaming::AdbHandler(
-        run_loop_,
         cuttlefish::CuttlefishConfig::Get()
             ->ForDefaultInstance()
             .adb_ip_and_port(),
         adb_message_sender));
-    adb_handler_->run();
   }
   void OnAdbMessage(const uint8_t *msg, size_t size) override {
     adb_handler_->handleMessage(msg, size);
@@ -150,21 +146,17 @@ class ConnectionObserverImpl
   cuttlefish::SharedFD keyboard_client_;
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
-  std::shared_ptr<RunLoop> run_loop_;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
     cuttlefish::SharedFD touch_fd, cuttlefish::SharedFD keyboard_fd)
-    : touch_fd_(touch_fd),
-      keyboard_fd_(keyboard_fd),
-      run_loop_(RunLoop::main()),
-      run_loop_thread_([this]() { run_loop_->run(); }) {}
+    : touch_fd_(touch_fd), keyboard_fd_(keyboard_fd) {}
 
 std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverImpl(touch_fd_, keyboard_fd_, weak_display_handler_,
-                                 run_loop_));
+      new ConnectionObserverImpl(touch_fd_, keyboard_fd_,
+                                 weak_display_handler_));
 }
 
 void CfConnectionObserverFactory::SetDisplayHandler(
