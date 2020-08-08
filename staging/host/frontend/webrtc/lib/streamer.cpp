@@ -32,7 +32,7 @@
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
-#include "host/frontend/gcastv2/signaling_server/constants/signaling_constants.h"
+#include "host/frontend/webrtc_operator/constants/signaling_constants.h"
 #include "host/frontend/webrtc/lib/client_handler.h"
 #include "host/frontend/webrtc/lib/port_range_socket_factory.h"
 #include "host/frontend/webrtc/lib/video_track_source_impl.h"
