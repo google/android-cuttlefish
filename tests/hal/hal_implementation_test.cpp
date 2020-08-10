@@ -87,7 +87,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.vr@1.0",
     "android.hardware.weaver@1.0",
     "android.hardware.wifi@1.5",
-    "android.hardware.wifi.hostapd@1.2",
+    "android.hardware.wifi.hostapd@1.3",
     "android.hardware.wifi.offload@1.0",
     "android.hidl.base@1.0",
     "android.hidl.memory.token@1.0",
