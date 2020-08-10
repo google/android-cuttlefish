@@ -75,7 +75,7 @@ class ConsoleForwarder {
       std::exit(-5);
     }
 
-    auto pty = posix_openpt(O_RDWR | O_NOCTTY);
+    auto pty = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (pty < 0) {
       LOG(ERROR) << "Failed to open a PTY: " << strerror(errno);
       std::exit(-6);
@@ -146,7 +146,11 @@ class ConsoleForwarder {
           bytes_written =
               fd->Write(buf_ptr->data() + bytes_written, bytes_to_write);
           if (bytes_written < 0) {
-            LOG(ERROR) << "Error writing to fd: " << fd->StrError();
+            // It is expected for writes to the PTY to fail if nothing is connected
+            if(fd->GetErrno() != EAGAIN) {
+              LOG(ERROR) << "Error writing to fd: " << fd->StrError();
+            }
+
             // Don't try to write from this buffer anymore, error handling will
             // be done on the reading thread (failed client will be
             // disconnected, on serial console failure this process will abort).
