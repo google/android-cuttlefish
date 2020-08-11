@@ -345,7 +345,7 @@ function cvd_docker_rm {
         unset ${ip_addr_var_name}
 
 		if [ -n "$(docker ps -q -a -f name=${name})" ]; then
-			homedir=$(docker inspect -f '{{range $mount:=.Mounts}}{{if and (eq .Destination "/home/vsoc-01") (eq .Type "bind")}}{{- printf "%q" $mount.Source}}{{end}}{{end}}' "${name}" | sed 's/"//g')
+			homedir=$(cvd_gethome_${name})
 			echo "Deleting container ${name}."
 			docker rm -f ${name}
 			echo "Cleaning up homedir ${homedir}."
@@ -364,7 +364,11 @@ function cvd_docker_rm {
 function cvd_docker_rm_all {
 	for c in $(docker ps -qa --filter="ancestor=cuttlefish"); do
 		local name=$(docker inspect -f '{{.Name}}' ${c})
-		cvd_docker_rm ${name}
+		if [ "${name:0:1}" == "/" ]; then
+			# slice off the leading slash
+			name=("${name:1}")
+		fi
+		cvd_docker_rm "${name}"
 	done
 }
 
@@ -383,6 +387,11 @@ function __gen_stop_func_name {
 	echo -n "cvd_stop_${name}"
 }
 
+function __gen_gethome_func_name {
+	local name=$1
+	echo -n "cvd_gethome_${name}"
+}
+
 # $1 = container name; must not be empty
 function __gen_funcs {
 	local name=$1
@@ -390,6 +399,7 @@ function __gen_funcs {
 	local login_func
 	local start_func
 	local stop_func
+	local gethome_func
 
 	read -r -d '' login_func <<EOF
 function $(__gen_login_func_name ${name}) {
@@ -421,15 +431,23 @@ function $(__gen_stop_func_name ${name}) {
 }
 EOF
 
+read -r -d '' gethome_func <<EOF
+function $(__gen_gethome_func_name ${name}) {
+  docker inspect -f '{{range \$mount:=.Mounts}}{{if and (eq .Destination "/home/vsoc-01") (eq .Type "bind")}}{{- printf "%q" \$mount.Source}}{{end}}{{end}}' "${name}" | sed 's/"//g'
+}
+EOF
+
 eval "${login_func}"
 eval "${start_func}"
 eval "${stop_func}"
+eval "${gethome_func}"
 eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
 
-if [[ "$singleshot" == "false" ]]; then 
+if [[ "$singleshot" == "false" ]]; then
     echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
     echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
     echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
+    echo "To get the home directory of container ${name}, call $(__gen_gethome_func_name ${name})"
 fi
 }
 
@@ -443,6 +461,9 @@ function cvd_clean_autogens() {
 		unset -f ${f}
 	done
 	for f in $(compgen -A function cvd_stop_); do
+		unset -f ${f}
+	done
+	for f in $(compgen -A function cvd_gethome_); do
 		unset -f ${f}
 	done
 }
