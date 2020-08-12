@@ -36,6 +36,9 @@ const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
+const char* kSessionId = "session_id";
+const char* kUseAllocd = "use_allocd";
+
 const char* kUuid = "uuid";
 const char* kModemSimulatorPorts = "modem_simulator_ports";
 
@@ -59,6 +62,8 @@ const char* kKeyboardServerPort = "keyboard_server_port";
 const char* kKeymasterVsockPort = "keymaster_vsock_port";
 const char* kGatekeeperVsockPort = "gatekeeper_vsock_port";
 const char* kWifiMacAddress = "wifi_mac_address";
+
+const char* kGnssGrpcProxyServerPort = "gnss_grpc_proxy_server_port";
 
 }  // namespace
 
@@ -117,6 +122,23 @@ std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
 
 std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
   return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-out-pipe"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss-in-pipe"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_out_pipe_name() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss-out-pipe"));
+}
+
+int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {
+  return (*Dictionary())[kGnssGrpcProxyServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_gnss_grpc_proxy_server_port(
+    int gnss_grpc_proxy_server_port) {
+  (*Dictionary())[kGnssGrpcProxyServerPort] = gnss_grpc_proxy_server_port;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
@@ -183,6 +205,24 @@ std::string CuttlefishConfig::InstanceSpecific::wifi_tap_name() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_wifi_tap_name(
     const std::string& wifi_tap_name) {
   (*Dictionary())[kWifiTapName] = wifi_tap_name;
+}
+
+bool CuttlefishConfig::InstanceSpecific::use_allocd() const {
+  return (*Dictionary())[kUseAllocd].asBool();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_use_allocd(
+    bool use_allocd) {
+  (*Dictionary())[kUseAllocd] = use_allocd;
+}
+
+uint32_t CuttlefishConfig::InstanceSpecific::session_id() const {
+  return (*Dictionary())[kSessionId].asUInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_session_id(
+    uint32_t session_id) {
+  (*Dictionary())[kSessionId] = session_id;
 }
 
 int CuttlefishConfig::InstanceSpecific::vsock_guest_cid() const {
