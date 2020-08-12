@@ -6,6 +6,9 @@ cuttlefish-common (0.9.14) UNRELEASED; urgency=medium
   [ Alistair Delva ]
   * Networking improvements to enable ipv4/ipv6 bridging
 
+  [ A. Cody Schuffelen ]
+  * Add missing runtime dependencies for crosvm
+
 -- Jason Macnak <natsu@google.com> Thu, 21 May 2020 03:18:25 -0800
 
 cuttlefish-common (0.9.13) stable; urgency=medium
