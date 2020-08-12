@@ -120,6 +120,11 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
     kernel_cmdline.push_back(concat("androidboot.vendor.vehiclehal.server.port=", instance.vehicle_hal_server_port()));
   }
 
+  if (instance.audiocontrol_server_port()) {
+    kernel_cmdline.push_back(concat("androidboot.vendor.audiocontrol.server.cid=", instance.vsock_guest_cid()));
+    kernel_cmdline.push_back(concat("androidboot.vendor.audiocontrol.server.port=", instance.audiocontrol_server_port()));
+  }
+
   if (instance.frames_server_port()) {
     kernel_cmdline.push_back(concat("androidboot.vsock_frames_port=", instance.frames_server_port()));
   }
