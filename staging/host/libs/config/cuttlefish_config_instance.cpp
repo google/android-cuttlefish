@@ -49,6 +49,7 @@ const char* kAdbIPAndPort = "adb_ip_and_port";
 const char* kConfigServerPort = "config_server_port";
 const char* kVncServerPort = "vnc_server_port";
 const char* kVehicleHalServerPort = "vehicle_hal_server_port";
+const char* kAudioControlServerPort = "audiocontrol_server_port";
 const char* kTombstoneReceiverPort = "tombstone_receiver_port";
 
 const char* kWebrtcDeviceId = "webrtc_device_id";
@@ -344,6 +345,14 @@ int CuttlefishConfig::InstanceSpecific::vehicle_hal_server_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_vehicle_hal_server_port(int vehicle_hal_server_port) {
   (*Dictionary())[kVehicleHalServerPort] = vehicle_hal_server_port;
+}
+
+int CuttlefishConfig::InstanceSpecific::audiocontrol_server_port() const {
+  return (*Dictionary())[kAudioControlServerPort].asInt();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_audiocontrol_server_port(int audiocontrol_server_port) {
+  (*Dictionary())[kAudioControlServerPort] = audiocontrol_server_port;
 }
 
 int CuttlefishConfig::InstanceSpecific::config_server_port() const {
