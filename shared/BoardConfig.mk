@@ -136,7 +136,7 @@ VSOC_TEST_LIBRARIES := libgmock_main_host libgtest_host libgmock_host
 VSOC_LIBCXX_STATIC := libc++_static
 VSOC_PROTOBUF_SHARED_LIB := libprotobuf-cpp-full
 
-CUTTLEFISH_LIBRIL_NAME := libril-cuttlefish-fork
+CUTTLEFISH_LIBRIL_NAME := libril-modem-lib
 ENABLE_CUTTLEFISH_RILD := true
 
 # TODO(ender): Remove all these once we stop depending on GCE code.

@@ -163,6 +163,7 @@ const char* kVmManagerKernelCmdline = "vm_manager_kernel_cmdline";
 const char* kRunModemSimulator = "enable_modem_simulator";
 const char* kModemSimulatorBinary = "modem_simulator_binary";
 const char* kModemSimulatorInstanceNumber = "modem_simulator_instance_number";
+const char* kModemSimulatorSimType = "modem_simulator_sim_type";
 
 const char* kRilDns = "ril_dns";
 
@@ -709,6 +710,14 @@ void CuttlefishConfig::set_modem_simulator_instance_number(
 
 int CuttlefishConfig::modem_simulator_instance_number() const {
   return (*dictionary_)[kModemSimulatorInstanceNumber].asInt();
+}
+
+void CuttlefishConfig::set_modem_simulator_sim_type(int sim_type) {
+  (*dictionary_)[kModemSimulatorSimType] = sim_type;
+}
+
+int CuttlefishConfig::modem_simulator_sim_type() const {
+  return (*dictionary_)[kModemSimulatorSimType].asInt();
 }
 
 void CuttlefishConfig::set_guest_enforce_security(bool guest_enforce_security) {
