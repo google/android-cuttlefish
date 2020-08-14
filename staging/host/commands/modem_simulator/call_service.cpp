@@ -15,6 +15,12 @@
 
 #include "host/commands/modem_simulator/call_service.h"
 
+#include <android-base/logging.h>
+
+#include <chrono>
+#include <iostream>
+#include <thread>
+
 #include "host/commands/modem_simulator/nvram_config.h"
 
 namespace cuttlefish {
@@ -236,7 +242,7 @@ void CallService::HandleDial(const Client& client, const std::string& command) {
   }
 
   client.SendCommandResponse("OK");
-  sleep(2);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
 }
 
 void CallService::SendCallStatusToRemote(CallStatus& call,

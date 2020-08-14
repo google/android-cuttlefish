@@ -15,6 +15,8 @@
 
 #include "host/commands/modem_simulator/modem_simulator.h"
 
+#include <android-base/logging.h>
+
 #include <memory>
 
 #include "host/commands/modem_simulator/call_service.h"

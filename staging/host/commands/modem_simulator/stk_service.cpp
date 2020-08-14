@@ -15,6 +15,7 @@
 
 #include "host/commands/modem_simulator/stk_service.h"
 
+#include <android-base/logging.h>
 namespace cuttlefish {
 
 StkService::StkService(int32_t service_id, ChannelMonitor* channel_monitor,

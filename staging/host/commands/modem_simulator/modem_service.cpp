@@ -15,6 +15,8 @@
 
 #include "host/commands/modem_simulator/modem_service.h"
 
+#include <android-base/logging.h>
+
 #include <cstring>
 
 #include "host/commands/modem_simulator/device_config.h"

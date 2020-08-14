@@ -16,6 +16,7 @@
 
 #include "host/commands/modem_simulator/channel_monitor.h"
 
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 
 #include <algorithm>
