@@ -238,7 +238,7 @@ void LaunchTombstoneReceiver(const cuttlefish::CuttlefishConfig& config,
     std::exit(RunnerExitCodes::kTombstoneServerError);
     return;
   }
-  cuttlefish::Command cmd(config.tombstone_receiver_binary());
+  cuttlefish::Command cmd(cuttlefish::TombstoneReceiverBinary());
   cmd.AddParameter("-server_fd=", socket);
   cmd.AddParameter("-tombstone_dir=", tombstoneDir);
 
@@ -458,7 +458,7 @@ void LaunchTpmSimulator(cuttlefish::ProcessMonitor* process_monitor,
 
 void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
                    const cuttlefish::CuttlefishConfig& config) {
-  cuttlefish::Command metrics(config.metrics_binary());
+  cuttlefish::Command metrics(cuttlefish::MetricsBinary());
 
   process_monitor->StartSubprocess(std::move(metrics),
                                    GetOnSubprocessExitCallback(config));
@@ -497,10 +497,10 @@ void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
 void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                       cuttlefish::ProcessMonitor* process_monitor) {
     if (!config.enable_gnss_grpc_proxy() ||
-        !cuttlefish::FileExists(config.gnss_grpc_proxy_binary())) {
+        !cuttlefish::FileExists(cuttlefish::GnssGrpcProxyBinary())) {
         return;
     }
-    cuttlefish::Command gnss_grpc_proxy_cmd(config.gnss_grpc_proxy_binary());
+    cuttlefish::Command gnss_grpc_proxy_cmd(cuttlefish::GnssGrpcProxyBinary());
     auto instance = config.ForDefaultInstance();
     auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
 

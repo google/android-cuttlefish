@@ -195,9 +195,6 @@ class CuttlefishConfig {
   void set_run_adb_connector(bool run_adb_connector);
   bool run_adb_connector() const;
 
-  void set_gnss_grpc_proxy_binary(const std::string& binary);
-  std::string gnss_grpc_proxy_binary() const;
-
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
 
@@ -212,9 +209,6 @@ class CuttlefishConfig {
 
   void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
   std::string blank_data_image_fmt() const;
-
-  void set_tombstone_receiver_binary(const std::string& binary);
-  std::string tombstone_receiver_binary() const;
 
   void set_use_bootloader(bool use_bootloader);
   bool use_bootloader() const;
