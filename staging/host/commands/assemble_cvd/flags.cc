@@ -223,8 +223,6 @@ DEFINE_string(tpm_binary, "",
               "The TPM simulator to use. Disabled if empty.");
 DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
-DEFINE_bool(enable_tombstone_receiver, true, "Enables the tombstone logger on "
-            "both the guest and the host");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
             "emulation gRPC server on the host");
 DEFINE_bool(use_bootloader, false, "Boots the device using a bootloader");
@@ -497,7 +495,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_gnss_grpc_proxy_binary(
     cuttlefish::DefaultHostArtifactsPath("bin/gnss_grpc_proxy"));
 
-  tmp_config_obj.set_enable_tombstone_receiver(FLAGS_enable_tombstone_receiver);
   tmp_config_obj.set_tombstone_receiver_binary(
       cuttlefish::DefaultHostArtifactsPath("bin/tombstone_receiver"));
 

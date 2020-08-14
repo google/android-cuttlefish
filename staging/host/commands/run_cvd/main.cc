@@ -535,7 +535,7 @@ int main(int argc, char** argv) {
 
   LaunchLogcatReceiver(*config, &process_monitor);
   LaunchConfigServer(*config, &process_monitor);
-  LaunchTombstoneReceiverIfEnabled(*config, &process_monitor);
+  LaunchTombstoneReceiver(*config, &process_monitor);
   LaunchTpm(&process_monitor, *config);
   LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
   LaunchSecureEnvironment(&process_monitor, *config);
