@@ -102,8 +102,6 @@ const char* kTpmDevice = "tpm_device";
 const char* kQemuBinary = "qemu_binary";
 const char* kCrosvmBinary = "crosvm_binary";
 const char* kTpmBinary = "tpm_binary";
-const char* kConsoleForwarderBinary = "console_forwarder_binary";
-const char* kKernelLogMonitorBinary = "kernel_log_monitor_binary";
 
 const char* kEnableVncServer = "enable_vnc_server";
 const char* kVncServerBinary = "vnc_server_binary";
@@ -390,15 +388,6 @@ void CuttlefishConfig::set_tpm_device(const std::string& tpm_device) {
   (*dictionary_)[kTpmDevice] = tpm_device;
 }
 
-std::string CuttlefishConfig::console_forwarder_binary() const {
-  return (*dictionary_)[kConsoleForwarderBinary].asString();
-}
-
-void CuttlefishConfig::set_console_forwarder_binary(
-    const std::string& binary) {
-  (*dictionary_)[kConsoleForwarderBinary] = binary;
-}
-
 std::string CuttlefishConfig::gnss_grpc_proxy_binary() const {
   return (*dictionary_)[kGnssGrpcProxyBinary].asString();
 }
@@ -414,15 +403,6 @@ void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_pr
 
 bool CuttlefishConfig::enable_gnss_grpc_proxy() const {
   return (*dictionary_)[kEnableGnssGrpcProxy].asBool();
-}
-
-std::string CuttlefishConfig::kernel_log_monitor_binary() const {
-  return (*dictionary_)[kKernelLogMonitorBinary].asString();
-}
-
-void CuttlefishConfig::set_kernel_log_monitor_binary(
-    const std::string& kernel_log_monitor_binary) {
-  (*dictionary_)[kKernelLogMonitorBinary] = kernel_log_monitor_binary;
 }
 
 bool CuttlefishConfig::enable_vnc_server() const {
