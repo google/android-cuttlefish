@@ -155,7 +155,6 @@ const char* kBootSlot = "boot_slot";
 const char* kEnableMetrics = "enable_metrics";
 const char* kMetricsBinary = "metrics_binary";
 
-const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
 const char* kGuestAuditSecurity = "guest_audit_security";
 const char* kGuestForceNormalBoot = "guest_force_normal_boot";
@@ -729,13 +728,6 @@ void CuttlefishConfig::set_modem_simulator_instance_number(
 
 int CuttlefishConfig::modem_simulator_instance_number() const {
   return (*dictionary_)[kModemSimulatorInstanceNumber].asInt();
-}
-
-void CuttlefishConfig::set_loop_max_part(int loop_max_part) {
-  (*dictionary_)[kLoopMaxPart] = loop_max_part;
-}
-int CuttlefishConfig::loop_max_part() const {
-  return (*dictionary_)[kLoopMaxPart].asInt();
 }
 
 void CuttlefishConfig::set_guest_enforce_security(bool guest_enforce_security) {
