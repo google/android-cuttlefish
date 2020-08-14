@@ -15,13 +15,13 @@
 
 #include "host/commands/modem_simulator/pdu_parser.h"
 
-#include <unistd.h>
-
 #include <algorithm>
+#include <chrono>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
+#include <thread>
 
 namespace cuttlefish {
 
@@ -166,7 +166,7 @@ std::string PDUParser::CreateStatuReport(int message_reference) {
 
   pdu += originator_address_;
   pdu += GetCurrentTimeStamp();
-  sleep(1);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   pdu += GetCurrentTimeStamp();
   pdu += "00"; /* "00" means that SMS have been sent successfully */
 
