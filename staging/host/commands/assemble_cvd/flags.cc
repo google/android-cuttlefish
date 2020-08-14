@@ -470,11 +470,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
 
   tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
-  tmp_config_obj.set_gnss_grpc_proxy_binary(
-    cuttlefish::DefaultHostArtifactsPath("bin/gnss_grpc_proxy"));
-
-  tmp_config_obj.set_tombstone_receiver_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/tombstone_receiver"));
 
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(FLAGS_enable_vehicle_hal_grpc_server);
   tmp_config_obj.set_vehicle_hal_grpc_server_binary(
@@ -484,8 +479,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
-  tmp_config_obj.set_metrics_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/metrics"));
 
   if (!FLAGS_boot_slot.empty()) {
       tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
