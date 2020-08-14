@@ -144,12 +144,6 @@ class CuttlefishConfig {
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
 
-  std::string logcat_receiver_binary() const;
-  void set_logcat_receiver_binary(const std::string& binary);
-
-  std::string config_server_binary() const;
-  void set_config_server_binary(const std::string& binary);
-
   void set_cuttlefish_env_path(const std::string& path);
   std::string cuttlefish_env_path() const;
 
