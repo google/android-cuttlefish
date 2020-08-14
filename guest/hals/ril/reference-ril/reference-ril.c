@@ -4795,6 +4795,12 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP:
             requestSetPreferredNetworkType(request, data, datalen, t);
             break;
+        case RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
+        case RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
         case RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE_BITMAP:
             requestGetPreferredNetworkType(request, data, datalen, t);
             break;
