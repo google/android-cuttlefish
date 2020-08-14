@@ -435,20 +435,14 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_tpm_device(FLAGS_tpm_device);
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
-  tmp_config_obj.set_vnc_server_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/vnc_server"));
 
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
   tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
-  tmp_config_obj.set_webrtc_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/webRTC"));
   tmp_config_obj.set_webrtc_assets_dir(FLAGS_webrtc_assets_dir);
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
-  tmp_config_obj.set_sig_server_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/webrtc_operator"));
   // Note: This will be overridden if the sig server is started by us
   tmp_config_obj.set_sig_server_port(FLAGS_webrtc_sig_server_port);
   tmp_config_obj.set_sig_server_address(FLAGS_webrtc_sig_server_addr);
