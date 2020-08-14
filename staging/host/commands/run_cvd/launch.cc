@@ -213,11 +213,8 @@ void LaunchConfigServer(const cuttlefish::CuttlefishConfig& config,
   return;
 }
 
-void LaunchTombstoneReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
-                                      cuttlefish::ProcessMonitor* process_monitor) {
-  if (!config.enable_tombstone_receiver()) {
-    return;
-  }
+void LaunchTombstoneReceiver(const cuttlefish::CuttlefishConfig& config,
+                             cuttlefish::ProcessMonitor* process_monitor) {
   auto instance = config.ForDefaultInstance();
 
   std::string tombstoneDir = instance.PerInstancePath("tombstones");

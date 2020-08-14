@@ -29,8 +29,8 @@ StreamerLaunchResult LaunchVNCServer(
     cuttlefish::ProcessMonitor* process_monitor,
     std::function<bool(cuttlefish::MonitorEntry*)> callback);
 
-void LaunchTombstoneReceiverIfEnabled(const cuttlefish::CuttlefishConfig& config,
-                                      cuttlefish::ProcessMonitor* process_monitor);
+void LaunchTombstoneReceiver(const cuttlefish::CuttlefishConfig& config,
+                             cuttlefish::ProcessMonitor* process_monitor);
 void LaunchLogcatReceiver(const cuttlefish::CuttlefishConfig& config,
                           cuttlefish::ProcessMonitor* process_monitor);
 void LaunchConfigServer(const cuttlefish::CuttlefishConfig& config,
