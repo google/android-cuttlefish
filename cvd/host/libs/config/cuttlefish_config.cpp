@@ -104,7 +104,6 @@ const char* kCrosvmBinary = "crosvm_binary";
 const char* kTpmBinary = "tpm_binary";
 
 const char* kEnableVncServer = "enable_vnc_server";
-const char* kVncServerBinary = "vnc_server_binary";
 
 const char* kEnableSandbox = "enable_sandbox";
 const char* kSeccompPolicyDir = "seccomp_policy_dir";
@@ -113,7 +112,6 @@ const char* kGnssGrpcProxyBinary = "gnss_grpc_proxy_binary";
 const char* kEnableGnssGrpcProxy = "enable_gnss_grpc_proxy";
 
 const char* kEnableWebRTC = "enable_webrtc";
-const char* kWebRTCBinary = "webrtc_binary";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
@@ -134,7 +132,6 @@ const char* kBlankDataImageFmt = "blank_data_image_fmt";
 const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 const char* kWebRTCCertsDir = "webrtc_certs_dir";
-const char* kSigServerBinary = "webrtc_sig_server_binary";
 const char* kSigServerPort = "webrtc_sig_server_port";
 const char* kSigServerAddress = "webrtc_sig_server_addr";
 const char* kSigServerPath = "webrtc_sig_server_path";
@@ -413,15 +410,6 @@ void CuttlefishConfig::set_enable_vnc_server(bool enable_vnc_server) {
   (*dictionary_)[kEnableVncServer] = enable_vnc_server;
 }
 
-std::string CuttlefishConfig::vnc_server_binary() const {
-  return (*dictionary_)[kVncServerBinary].asString();
-}
-
-void CuttlefishConfig::set_vnc_server_binary(
-    const std::string& vnc_server_binary) {
-  (*dictionary_)[kVncServerBinary] = vnc_server_binary;
-}
-
 void CuttlefishConfig::set_enable_sandbox(const bool enable_sandbox) {
   (*dictionary_)[kEnableSandbox] = enable_sandbox;
 }
@@ -448,14 +436,6 @@ void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
 
 bool CuttlefishConfig::enable_webrtc() const {
   return (*dictionary_)[kEnableWebRTC].asBool();
-}
-
-void CuttlefishConfig::set_webrtc_binary(const std::string& webrtc_binary) {
-  (*dictionary_)[kWebRTCBinary] = webrtc_binary;
-}
-
-std::string CuttlefishConfig::webrtc_binary() const {
-  return (*dictionary_)[kWebRTCBinary].asString();
 }
 
 void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
@@ -593,14 +573,6 @@ void CuttlefishConfig::set_webrtc_certs_dir(const std::string& certs_dir) {
 
 std::string CuttlefishConfig::webrtc_certs_dir() const {
   return (*dictionary_)[kWebRTCCertsDir].asString();
-}
-
-void CuttlefishConfig::set_sig_server_binary(const std::string& binary) {
-  SetPath(kSigServerBinary, binary);
-}
-
-std::string CuttlefishConfig::sig_server_binary() const {
-  return (*dictionary_)[kSigServerBinary].asString();
 }
 
 void CuttlefishConfig::set_sig_server_port(int port) {
