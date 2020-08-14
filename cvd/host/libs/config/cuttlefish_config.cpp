@@ -114,9 +114,6 @@ const char* kEnableWebRTC = "enable_webrtc";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
-const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
-const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
-
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 
@@ -142,6 +139,7 @@ const char* kBootSlot = "boot_slot";
 const char* kEnableMetrics = "enable_metrics";
 const char* kMetricsBinary = "metrics_binary";
 
+const char* kLoopMaxPart = "loop_max_part";
 const char* kGuestEnforceSecurity = "guest_enforce_security";
 const char* kGuestAuditSecurity = "guest_audit_security";
 const char* kGuestForceNormalBoot = "guest_force_normal_boot";
@@ -423,22 +421,6 @@ bool CuttlefishConfig::enable_webrtc() const {
   return (*dictionary_)[kEnableWebRTC].asBool();
 }
 
-void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
-  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
-}
-
-bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
-  return (*dictionary_)[kEnableVehicleHalServer].asBool();
-}
-
-void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
-  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
-}
-
-std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
-  return (*dictionary_)[kVehicleHalServerBinary].asString();
-}
-
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
   (*dictionary_)[kWebRTCAssetsDir] = webrtc_assets_dir;
 }
@@ -612,6 +594,13 @@ void CuttlefishConfig::set_modem_simulator_instance_number(
 
 int CuttlefishConfig::modem_simulator_instance_number() const {
   return (*dictionary_)[kModemSimulatorInstanceNumber].asInt();
+}
+
+void CuttlefishConfig::set_loop_max_part(int loop_max_part) {
+  (*dictionary_)[kLoopMaxPart] = loop_max_part;
+}
+int CuttlefishConfig::loop_max_part() const {
+  return (*dictionary_)[kLoopMaxPart].asInt();
 }
 
 void CuttlefishConfig::set_guest_enforce_security(bool guest_enforce_security) {
