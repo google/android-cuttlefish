@@ -13,9 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <string>
-
 #include <android-base/strings.h>
+
+#include <algorithm>
+#include <string>
 
 namespace cuttlefish {
 
