@@ -24,6 +24,14 @@ std::string ConfigServerBinary() {
   return DefaultHostArtifactsPath("bin/config_server");
 }
 
+std::string ConsoleForwarderBinary() {
+  return DefaultHostArtifactsPath("bin/console_forwarder");
+}
+
+std::string KernelLogMonitorBinary() {
+  return DefaultHostArtifactsPath("bin/kernel_log_monitor");
+}
+
 std::string LogcatReceiverBinary() {
   return DefaultHostArtifactsPath("bin/logcat_receiver");
 }
