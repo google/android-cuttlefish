@@ -40,7 +40,9 @@ size_t WriteEnvironment(const cuttlefish::CuttlefishConfig& config,
   if (!config.boot_slot().empty()) {
       env << "android_slot_suffix=_" << config.boot_slot() << '\0';
   }
-  env << "bootdevice=0:1" << '\0';
+  // Points to the misc partition.
+  // Note that the 0 index points to the GPT table.
+  env << "bootdevice=0:2" << '\0';
   env << "bootdelay=0" << '\0';
   env << "bootcmd=boot_android virtio -" << '\0';
   env << '\0';
