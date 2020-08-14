@@ -32,6 +32,10 @@ std::string ConsoleForwarderBinary() {
   return DefaultHostArtifactsPath("bin/console_forwarder");
 }
 
+std::string GnssGrpcProxyBinary() {
+  return DefaultHostArtifactsPath("bin/gnss_grpc_proxy");
+}
+
 std::string KernelLogMonitorBinary() {
   return DefaultHostArtifactsPath("bin/kernel_log_monitor");
 }
@@ -40,12 +44,20 @@ std::string LogcatReceiverBinary() {
   return DefaultHostArtifactsPath("bin/logcat_receiver");
 }
 
+std::string MetricsBinary() {
+  return DefaultHostArtifactsPath("bin/metrics");
+}
+
 std::string ModemSimulatorBinary() {
   return DefaultHostArtifactsPath("bin/modem_simulator");
 }
 
 std::string SocketVsockProxyBinary() {
   return DefaultHostArtifactsPath("bin/socket_vsock_proxy");
+}
+
+std::string TombstoneReceiverBinary() {
+  return DefaultHostArtifactsPath("bin/tombstone_receiver");
 }
 
 std::string WebRtcBinary() {
