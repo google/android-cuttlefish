@@ -133,7 +133,6 @@ const char* kBlankDataImageFmt = "blank_data_image_fmt";
 const char* kLogcatReceiverBinary = "logcat_receiver_binary";
 const char* kConfigServerBinary = "config_server_binary";
 
-const char* kRunTombstoneReceiver = "enable_tombstone_logger";
 const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 const char* kWebRTCCertsDir = "webrtc_certs_dir";
@@ -575,14 +574,6 @@ void CuttlefishConfig::set_config_server_binary(const std::string& binary) {
 
 std::string CuttlefishConfig::config_server_binary() const {
   return (*dictionary_)[kConfigServerBinary].asString();
-}
-
-bool CuttlefishConfig::enable_tombstone_receiver() const {
-  return (*dictionary_)[kRunTombstoneReceiver].asBool();
-}
-
-void CuttlefishConfig::set_enable_tombstone_receiver(bool enable_tombstone_receiver) {
-  (*dictionary_)[kRunTombstoneReceiver] = enable_tombstone_receiver;
 }
 
 std::string CuttlefishConfig::tombstone_receiver_binary() const {
