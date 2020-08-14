@@ -455,8 +455,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
   tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator);
-  tmp_config_obj.set_modem_simulator_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/modem_simulator"));
   tmp_config_obj.set_modem_simulator_instance_number(
       FLAGS_modem_simulator_count);
 
@@ -465,10 +463,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
   tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
-  tmp_config_obj.set_adb_connector_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/adb_connector"));
-  tmp_config_obj.set_socket_vsock_proxy_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/socket_vsock_proxy"));
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);

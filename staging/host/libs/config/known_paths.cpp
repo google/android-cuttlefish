@@ -20,6 +20,10 @@
 
 namespace cuttlefish {
 
+std::string AdbConnectorBinary() {
+  return DefaultHostArtifactsPath("bin/adb_connector");
+}
+
 std::string ConfigServerBinary() {
   return DefaultHostArtifactsPath("bin/config_server");
 }
@@ -34,6 +38,14 @@ std::string KernelLogMonitorBinary() {
 
 std::string LogcatReceiverBinary() {
   return DefaultHostArtifactsPath("bin/logcat_receiver");
+}
+
+std::string ModemSimulatorBinary() {
+  return DefaultHostArtifactsPath("bin/modem_simulator");
+}
+
+std::string SocketVsockProxyBinary() {
+  return DefaultHostArtifactsPath("bin/socket_vsock_proxy");
 }
 
 std::string WebRtcBinary() {

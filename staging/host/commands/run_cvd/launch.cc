@@ -266,7 +266,7 @@ StreamerLaunchResult LaunchVNCServer(
 void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
                                  const cuttlefish::CuttlefishConfig& config,
                                  cuttlefish::SharedFD adbd_events_pipe) {
-  cuttlefish::Command adb_connector(config.adb_connector_binary());
+  cuttlefish::Command adb_connector(cuttlefish::AdbConnectorBinary());
   adb_connector.AddParameter("-adbd_events_fd=", adbd_events_pipe);
   std::set<std::string> addresses;
 
@@ -373,7 +373,7 @@ void LaunchModemSimulatorIfEnabled(
   }
 
   cuttlefish::Command cmd(
-      config.modem_simulator_binary(), [](cuttlefish::Subprocess* proc) {
+      cuttlefish::ModemSimulatorBinary(), [](cuttlefish::Subprocess* proc) {
         auto stopped = StopModemSimulator();
         if (stopped) {
           return true;
@@ -414,7 +414,7 @@ void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor
                                      const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   if (AdbVsockTunnelEnabled(config)) {
-    cuttlefish::Command adb_tunnel(config.socket_vsock_proxy_binary());
+    cuttlefish::Command adb_tunnel(cuttlefish::SocketVsockProxyBinary());
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter("--vsock_port=6520");
     adb_tunnel.AddParameter(std::string{"--tcp_port="} +
@@ -425,7 +425,7 @@ void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor
                                      GetOnSubprocessExitCallback(config));
   }
   if (AdbVsockHalfTunnelEnabled(config)) {
-    cuttlefish::Command adb_tunnel(config.socket_vsock_proxy_binary());
+    cuttlefish::Command adb_tunnel(cuttlefish::SocketVsockProxyBinary());
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter("--vsock_port=5555");
     adb_tunnel.AddParameter(std::string{"--tcp_port="} +
@@ -448,7 +448,7 @@ void LaunchTpmSimulator(cuttlefish::ProcessMonitor* process_monitor,
   process_monitor->StartSubprocess(std::move(tpm_command),
                                    GetOnSubprocessExitCallback(config));
 
-  cuttlefish::Command proxy_command(config.socket_vsock_proxy_binary());
+  cuttlefish::Command proxy_command(cuttlefish::SocketVsockProxyBinary());
   proxy_command.AddParameter("--server=vsock");
   proxy_command.AddParameter("--tcp_port=", port);
   proxy_command.AddParameter("--vsock_port=", port);
