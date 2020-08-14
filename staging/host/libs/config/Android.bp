@@ -21,6 +21,7 @@ cc_library_host_static {
         "data_image.cpp",
         "fetcher_config.cpp",
         "kernel_args.cpp",
+        "known_paths.cpp",
         "logging.cpp",
     ],
     shared_libs: [
