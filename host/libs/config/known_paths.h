@@ -23,5 +23,8 @@ std::string ConfigServerBinary();
 std::string ConsoleForwarderBinary();
 std::string KernelLogMonitorBinary();
 std::string LogcatReceiverBinary();
+std::string WebRtcBinary();
+std::string WebRtcSigServerBinary();
+std::string VncServerBinary();
 
 } // namespace cuttlefish
