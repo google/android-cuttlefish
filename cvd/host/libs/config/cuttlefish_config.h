@@ -168,6 +168,9 @@ class CuttlefishConfig {
   void set_enable_vnc_server(bool enable_vnc_server);
   bool enable_vnc_server() const;
 
+  void set_vnc_server_binary(const std::string& vnc_server_binary);
+  std::string vnc_server_binary() const;
+
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
@@ -176,6 +179,9 @@ class CuttlefishConfig {
 
   void set_enable_webrtc(bool enable_webrtc);
   bool enable_webrtc() const;
+
+  void set_webrtc_binary(const std::string& webrtc_binary);
+  std::string webrtc_binary() const;
 
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
@@ -195,8 +201,17 @@ class CuttlefishConfig {
   void set_run_adb_connector(bool run_adb_connector);
   bool run_adb_connector() const;
 
+  void set_adb_connector_binary(const std::string& adb_connector_binary);
+  std::string adb_connector_binary() const;
+
+  void set_gnss_grpc_proxy_binary(const std::string& binary);
+  std::string gnss_grpc_proxy_binary() const;
+
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
+
+  void set_socket_vsock_proxy_binary(const std::string& binary);
+  std::string socket_vsock_proxy_binary() const;
 
   void set_run_as_daemon(bool run_as_daemon);
   bool run_as_daemon() const;
@@ -209,6 +224,9 @@ class CuttlefishConfig {
 
   void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
   std::string blank_data_image_fmt() const;
+
+  void set_tombstone_receiver_binary(const std::string& binary);
+  std::string tombstone_receiver_binary() const;
 
   void set_use_bootloader(bool use_bootloader);
   bool use_bootloader() const;
@@ -253,6 +271,10 @@ class CuttlefishConfig {
   void set_webrtc_certs_dir(const std::string& certs_dir);
   std::string webrtc_certs_dir() const;
 
+  // The path to the webrtc signaling server binary
+  void set_sig_server_binary(const std::string& sig_server_binary);
+  std::string sig_server_binary() const;
+
   // The port for the webrtc signaling server. It's used by the signaling server
   // to bind to it and by the webrtc process to connect to and register itself
   void set_sig_server_port(int port);
@@ -290,6 +312,9 @@ class CuttlefishConfig {
 
   void set_enable_modem_simulator(bool enable_modem_simulator);
   bool enable_modem_simulator() const;
+
+  void set_modem_simulator_binary(const std::string& binary);
+  std::string modem_simulator_binary() const;
 
   void set_modem_simulator_instance_number(int instance_numbers);
   int modem_simulator_instance_number() const;
@@ -338,8 +363,6 @@ class CuttlefishConfig {
     int frames_server_port() const;
     // Port number to connect to the vehicle HAL server on the host
     int vehicle_hal_server_port() const;
-    // Port number to connect to the audiocontrol server on the guest
-    int audiocontrol_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
     // Port number to connect to the gnss grpc proxy server on the host
@@ -434,7 +457,6 @@ class CuttlefishConfig {
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_vehicle_hal_server_port(int vehicle_server_port);
-    void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
