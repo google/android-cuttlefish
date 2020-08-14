@@ -31,6 +31,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
@@ -282,7 +283,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
                             console_out_pipe_name, ",input=", console_in_pipe_name);
   }
 
-  cuttlefish::Command console_cmd(config_->console_forwarder_binary());
+  cuttlefish::Command console_cmd(ConsoleForwarderBinary());
   console_cmd.AddParameter("--console_in_fd=", console_in_wr);
   console_cmd.AddParameter("--console_out_fd=", console_out_rd);
 
