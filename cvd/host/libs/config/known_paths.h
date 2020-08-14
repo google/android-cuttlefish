@@ -20,6 +20,8 @@
 namespace cuttlefish {
 
 std::string ConfigServerBinary();
+std::string ConsoleForwarderBinary();
+std::string KernelLogMonitorBinary();
 std::string LogcatReceiverBinary();
 
 } // namespace cuttlefish
