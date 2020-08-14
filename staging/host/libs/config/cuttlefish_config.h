@@ -168,9 +168,6 @@ class CuttlefishConfig {
   void set_enable_vnc_server(bool enable_vnc_server);
   bool enable_vnc_server() const;
 
-  void set_vnc_server_binary(const std::string& vnc_server_binary);
-  std::string vnc_server_binary() const;
-
   void set_enable_sandbox(const bool enable_sandbox);
   bool enable_sandbox() const;
 
@@ -179,9 +176,6 @@ class CuttlefishConfig {
 
   void set_enable_webrtc(bool enable_webrtc);
   bool enable_webrtc() const;
-
-  void set_webrtc_binary(const std::string& webrtc_binary);
-  std::string webrtc_binary() const;
 
   void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
   std::string webrtc_assets_dir() const;
@@ -270,10 +264,6 @@ class CuttlefishConfig {
   // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
   std::string webrtc_certs_dir() const;
-
-  // The path to the webrtc signaling server binary
-  void set_sig_server_binary(const std::string& sig_server_binary);
-  std::string sig_server_binary() const;
 
   // The port for the webrtc signaling server. It's used by the signaling server
   // to bind to it and by the webrtc process to connect to and register itself
