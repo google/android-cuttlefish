@@ -36,4 +36,16 @@ std::string LogcatReceiverBinary() {
   return DefaultHostArtifactsPath("bin/logcat_receiver");
 }
 
+std::string WebRtcBinary() {
+  return DefaultHostArtifactsPath("bin/webRTC");
+}
+
+std::string WebRtcSigServerBinary() {
+  return DefaultHostArtifactsPath("bin/webrtc_operator");
+}
+
+std::string VncServerBinary() {
+  return DefaultHostArtifactsPath("bin/vnc_server");
+}
+
 } // namespace cuttlefish
