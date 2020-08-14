@@ -15,6 +15,7 @@
 
 #include "host/commands/modem_simulator/sim_service.h"
 
+#include <android-base/logging.h>
 #include <tinyxml2.h>
 
 #include "common/libs/utils/files.h"
