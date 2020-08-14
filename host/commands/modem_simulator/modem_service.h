@@ -15,7 +15,6 @@
 
 #pragma once
 
-#include <android-base/logging.h>
 
 #include <functional>
 #include <map>
