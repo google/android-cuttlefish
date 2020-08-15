@@ -71,6 +71,11 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
+    <!-- Required for Wifi -->
+    <install-in-user-type package="com.android.networkstack.inprocess">
+        <install-in user-type="FULL" />
+        <install-in user-type="SYSTEM" />
+    </install-in-user-type>
     <!-- Required when sysui queries for system user apps to handle the home intent -->
     <install-in-user-type package="com.android.car.carlauncher">
         <install-in user-type="FULL" />
