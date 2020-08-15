@@ -250,9 +250,6 @@ class CuttlefishConfig {
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
-  void set_loop_max_part(int loop_max_part);
-  int loop_max_part() const;
-
   void set_guest_enforce_security(bool guest_enforce_security);
   bool guest_enforce_security() const;
 
