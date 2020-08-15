@@ -61,20 +61,17 @@ int main(int argc, char **argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto touch_fd = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
+  auto touch_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_touch_fd);
   CHECK(touch_fd->IsOpen()) << "Failed to dup touch fd: " << FLAGS_touch_fd;
-  close(FLAGS_touch_fd);
-  auto keyboard_fd = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
+  auto keyboard_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_keyboard_fd);
   CHECK(keyboard_fd->IsOpen())
       << "Failed to dup keyboard fd: " << FLAGS_keyboard_fd;
-  close(FLAGS_keyboard_fd);
 
   // Accepting on these sockets here means the device won't register with the
   // operator as soon as it could, but rather wait until crosvm's input devices
   // have been initialized. That's OK though, because without those devices
   // there is no meaningful interaction the user can have with the device.
-  auto keyboard_connector =
-      cuttlefish::KeyboardConnector::Create(keyboard_fd);
+  auto keyboard_connector = cuttlefish::KeyboardConnector::Create(keyboard_fd);
   CHECK(keyboard_connector) << "Failed to instantiate keyboard connector";
   auto touch_connector = cuttlefish::TouchConnector::Create(touch_fd);
   CHECK(touch_connector) << "Failed to instantiate touch connector";

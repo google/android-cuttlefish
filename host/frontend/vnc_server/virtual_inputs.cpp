@@ -257,13 +257,11 @@ class SocketVirtualInputs : public VirtualInputs {
 VirtualInputs::VirtualInputs() { AddKeyMappings(&keymapping_); }
 
 VirtualInputs* VirtualInputs::Get() {
-  auto touch_fd = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
+  auto touch_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_touch_fd);
   CHECK(touch_fd->IsOpen()) << "Failed to dup touch fd: " << FLAGS_touch_fd;
-  close(FLAGS_touch_fd);
-  auto keyboard_fd = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
+  auto keyboard_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_keyboard_fd);
   CHECK(keyboard_fd->IsOpen())
       << "Failed to dup keyboard fd: " << FLAGS_keyboard_fd;
-  close(FLAGS_keyboard_fd);
 
   return new SocketVirtualInputs(
       cuttlefish::TouchConnector::Create(touch_fd, FLAGS_write_virtio_input),
