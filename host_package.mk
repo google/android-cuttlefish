@@ -42,7 +42,6 @@ cvd_host_executables := \
     x86_64-linux-gnu/crosvm \
     x86_64-linux-gnu/libepoxy.so.0 \
     x86_64-linux-gnu/libgbm.so.1 \
-    x86_64-linux-gnu/libminijail.so \
     x86_64-linux-gnu/libvirglrenderer.so.1 \
     x86_64-linux-gnu/libc++.so.1 \
     x86_64-linux-gnu/libandroid-emu-shared.so \
@@ -131,6 +130,10 @@ cvd_host_shared_libraries := \
     libjsoncpp.so \
     libgrpc++.so \
     android.hardware.automotive.vehicle@2.0.so \
+    libepoxy.so \
+    libgbm.so \
+    libminijail.so \
+    libvirglrenderer.so \
 
 webrtc_assets := \
     index.html \
