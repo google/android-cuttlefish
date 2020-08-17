@@ -170,6 +170,11 @@ int main(int argc, char** argv) {
 
   struct lws_context_creation_info info;
   struct lws_context* context;
+  struct lws_protocol_vhost_options headers = {NULL, NULL,
+    "content-security-policy:",
+      "default-src 'self'; "
+      "style-src 'self' https://fonts.googleapis.com/; "
+      "font-src  https://fonts.gstatic.com/; "};
 
   memset(&info, 0, sizeof info);
   info.port = FLAGS_http_server_port;
@@ -177,7 +182,7 @@ int main(int argc, char** argv) {
   info.protocols = protocols;
   info.vhost_name = "localhost";
   info.ws_ping_pong_interval = 10;
-  info.options = LWS_SERVER_OPTION_HTTP_HEADERS_SECURITY_BEST_PRACTICES_ENFORCE;
+  info.headers = &headers;
   info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
   info.ssl_cert_filepath = cert_file.c_str();
   info.ssl_private_key_filepath = key_file.c_str();

@@ -19,6 +19,7 @@
         <title>My Virtual Device Playground</title>
 
         <link rel="stylesheet" type="text/css" href="style.css" >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     </head>
 
     <body>
@@ -27,23 +28,22 @@
         <ul id="device_list"></ul>
       </section>
       <section id='device_connection'>
-        <button id="keyboardCaptureBtn">Capture Keyboard</button>
-        <button id="showLogcatBtn">Show Logcat</button>
-        <hr>
-        <section class="noscroll">
-            <div class="one">
-                <video id="deviceScreen" autoplay ></video>
-            </div>
-
-            <div class="two" >
-                <textarea id="logcat" rows="55" cols="120" readonly >
-                </textarea>
-            </div>
-        </section>
+        <div id='device_view'>
+          <video id="deviceScreen" autoplay ></video>
+        </div>
+        <div id='control_view'>
+          <button id="keyboardCaptureBtn">Capture Keyboard</button>
+          <button id="showLogcatBtn">Show Logcat</button>
+          <hr>
+          <div id='control_panel'>
+            <h2>Device Controls</h2>
+          </div>
+          <textarea id="logcat" rows="55" cols="120" readonly ></textarea>
+        </div>
       </section>
 
-        <script src="js/logcat.js"></script>
-        <script src="js/cf_webrtc.js" type="module"></script>
-        <script src="js/app.js"></script>
+       <script src="js/logcat.js"></script>
+       <script src="js/cf_webrtc.js" type="module"></script>
+       <script src="js/app.js"></script>
     </body>
 </html>

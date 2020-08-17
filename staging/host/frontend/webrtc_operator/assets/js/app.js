@@ -46,6 +46,29 @@ function ConnectToDevice(device_id) {
     logcatBtn.remove();
   };
 
+  function createControlPanelButton(command, title, icon_name) {
+    let button = document.createElement('button');
+    document.getElementById('control_panel').appendChild(button);
+    button.title = title;
+    button.dataset.command = command;
+    // Capture mousedown/up/out commands instead of click to enable
+    // hold detection. mouseout is used to catch if the user moves the
+    // mouse outside the button while holding down.
+    button.addEventListener('mousedown', onControlPanelButton);
+    button.addEventListener('mouseup', onControlPanelButton);
+    button.addEventListener('mouseout', onControlPanelButton);
+    // Set the button image using Material Design icons.
+    // See http://google.github.io/material-design-icons
+    // and https://material.io/resources/icons
+    button.classList.add('material-icons');
+    button.innerHTML = icon_name;
+  }
+  createControlPanelButton('power', 'Power', 'power_settings_new');
+  // TODO(b/163628929): Add volume buttons.
+  //createControlPanelButton('volumemute', 'Volume Mute', 'volume_mute');
+  //createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
+  //createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
+
   let options = {
     wsUrl: ((location.protocol == 'http:') ? 'ws://' : 'wss://') +
       location.host + '/connect_client',
@@ -76,6 +99,17 @@ function ConnectToDevice(device_id) {
       startKeyboardTracking();
       keyboardCaptureButton.classList.add(selectedClass);
     }
+  }
+
+  function onControlPanelButton(e) {
+    if (e.type == 'mouseout' && e.which == 0) {
+      // Ignore mouseout events if no mouse button is pressed.
+      return;
+    }
+    deviceConnection.sendControlMessage(JSON.stringify({
+      command: e.target.dataset.command,
+      state: e.type == 'mousedown' ? "down" : "up",
+    }));
   }
 
   function startMouseTracking() {
