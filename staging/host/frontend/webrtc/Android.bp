@@ -20,6 +20,7 @@ cc_library_static {
         "lib/keyboard.cpp",
         "lib/port_range_socket_factory.cpp",
         "lib/streamer.cpp",
+        "lib/utils.cpp",
         "lib/video_track_source_impl.cpp",
         "lib/vp8only_encoder_factory.cpp",
         "lib/ws_connection.cpp",
