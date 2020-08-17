@@ -21,11 +21,14 @@
 #include <thread>
 #include <vector>
 
+#include <json/json.h>
+
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "host/frontend/webrtc/adb_handler.h"
+#include "host/frontend/webrtc/lib/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 DECLARE_bool(write_virtio_input);
@@ -137,8 +140,35 @@ class ConnectionObserverImpl
   void OnAdbMessage(const uint8_t *msg, size_t size) override {
     adb_handler_->handleMessage(msg, size);
   }
-  void OnControlMessage(const uint8_t */*msg*/, size_t /*size*/) override {
-    // TODO (b/163078987): Respond to control commands from the clients
+  void OnControlMessage(const uint8_t* msg, size_t size) override {
+    Json::Value evt;
+    Json::Reader json_reader;
+    if (!json_reader.parse(reinterpret_cast<const char*>(msg),
+                           reinterpret_cast<const char*>(msg + size),
+                           evt) < 0) {
+      LOG(ERROR) << "Received invalid JSON object over control channel";
+      return;
+    }
+    auto result =
+        webrtc_streaming::ValidationResult::ValidateJsonObject(evt, "command",
+                           {{"command", Json::ValueType::stringValue},
+                            {"state", Json::ValueType::stringValue}});
+    if (!result.ok()) {
+      LOG(ERROR) << result.error();
+      return;
+    }
+    auto command = evt["command"].asString();
+    auto state = evt["state"].asString();
+
+    LOG(VERBOSE) << "Control command: " << command << " (" << state << ")";
+    if (command == "power") {
+      OnKeyboardEvent(KEY_POWER, state == "down");
+    }
+    else {
+      LOG(WARNING) << "Unsupported control command: " << command << " (" << state << ")";
+      // TODO(b/163628929): Handle VOLUME commands.
+      // TODO(b/163081337): Handle custom commands.
+    }
   }
 
  private:
