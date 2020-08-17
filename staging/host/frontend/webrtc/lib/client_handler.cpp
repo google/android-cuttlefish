@@ -16,7 +16,6 @@
 
 #include "host/frontend/webrtc/lib/client_handler.h"
 
-#include <optional>
 #include <vector>
 
 #include <json/json.h>
@@ -26,6 +25,7 @@
 #include <android-base/logging.h>
 
 #include "host/frontend/webrtc/lib/keyboard.h"
+#include "host/frontend/webrtc/lib/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
@@ -35,42 +35,6 @@ namespace {
 
 static constexpr auto kInputChannelLabel = "input-channel";
 static constexpr auto kAdbChannelLabel = "adb-channel";
-
-class ValidationResult {
- public:
-  ValidationResult() = default;
-  ValidationResult(const std::string &error) : error_(error) {}
-
-  bool ok() const { return !error_.has_value(); }
-  std::string error() const { return error_.value_or(""); }
-
- private:
-  std::optional<std::string> error_;
-};
-
-// helper method to ensure a json object has the required fields convertible
-// to the appropriate types.
-ValidationResult validateJsonObject(
-    const Json::Value &obj, const std::string &type,
-    const std::map<std::string, Json::ValueType> &fields) {
-  for (const auto &field_spec : fields) {
-    const auto &field_name = field_spec.first;
-    auto field_type = field_spec.second;
-    if (!(obj.isMember(field_name) &&
-          obj[field_name].isConvertibleTo(field_type))) {
-      std::string error_msg = "Expected a field named '";
-      error_msg += field_name + "' of type '";
-      error_msg += std::to_string(field_type);
-      error_msg += "'";
-      if (!type.empty()) {
-        error_msg += " in message of type '" + type + "'";
-      }
-      error_msg += ".";
-      return {error_msg};
-    }
-  }
-  return {};
-}
 
 class CvdCreateSessionDescriptionObserver
     : public webrtc::CreateSessionDescriptionObserver {
@@ -221,7 +185,7 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   auto event_type = evt["type"].asString();
   if (event_type == "mouse") {
     auto result =
-        validateJsonObject(evt, "mouse",
+        ValidationResult::ValidateJsonObject(evt, "mouse",
                            {{"down", Json::ValueType::intValue},
                             {"x", Json::ValueType::intValue},
                             {"y", Json::ValueType::intValue},
@@ -238,7 +202,7 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     observer_->OnTouchEvent(label, x, y, down);
   } else if (event_type == "multi-touch") {
     auto result =
-        validateJsonObject(evt, "multi-touch",
+        ValidationResult::ValidateJsonObject(evt, "multi-touch",
                            {{"id", Json::ValueType::intValue},
                             {"initialDown", Json::ValueType::intValue},
                             {"x", Json::ValueType::intValue},
@@ -259,7 +223,7 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     observer_->OnMultiTouchEvent(label, id, slot, x, y, initialDown);
   } else if (event_type == "keyboard") {
     auto result =
-        validateJsonObject(evt, "keyboard",
+        ValidationResult::ValidateJsonObject(evt, "keyboard",
                            {{"event_type", Json::ValueType::stringValue},
                             {"keycode", Json::ValueType::stringValue}});
     if (!result.ok()) {
@@ -322,7 +286,7 @@ ControlChannelHandler::~ControlChannelHandler() {
 }
 
 void ControlChannelHandler::OnStateChange() {
-  LOG(VERBOSE) << "Input channel state changed to "
+  LOG(VERBOSE) << "Control channel state changed to "
                << webrtc::DataChannelInterface::DataStateString(
                       control_channel_->state());
 }
@@ -435,7 +399,7 @@ void ClientHandler::OnSetSDPFailure(webrtc::RTCError error) {
 
 void ClientHandler::HandleMessage(const Json::Value &message) {
   {
-    auto result = validateJsonObject(message, "",
+    auto result = ValidationResult::ValidateJsonObject(message, "",
                                      {{"type", Json::ValueType::stringValue}});
     if (!result.ok()) {
       LogAndReplyError(result.error());
@@ -453,7 +417,7 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
     // The created offer wil be sent to the client on
     // OnSuccess(webrtc::SessionDescriptionInterface* desc)
   } else if (type == "answer") {
-    auto result = validateJsonObject(message, type,
+    auto result = ValidationResult::ValidateJsonObject(message, type,
                                      {{"sdp", Json::ValueType::stringValue}});
     if (!result.ok()) {
       LogAndReplyError(result.error());
@@ -480,7 +444,7 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
 
   } else if (type == "ice-candidate") {
     {
-      auto result = validateJsonObject(
+      auto result = ValidationResult::ValidateJsonObject(
           message, type, {{"candidate", Json::ValueType::objectValue}});
       if (!result.ok()) {
         LogAndReplyError(result.error());
@@ -490,7 +454,8 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
     auto candidate_json = message["candidate"];
     {
       auto result =
-          validateJsonObject(candidate_json, "ice-candidate/candidate",
+          ValidationResult::ValidateJsonObject(candidate_json,
+                                               "ice-candidate/candidate",
                              {
                                  {"sdpMid", Json::ValueType::stringValue},
                                  {"candidate", Json::ValueType::stringValue},
