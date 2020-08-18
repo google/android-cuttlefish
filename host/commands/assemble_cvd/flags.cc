@@ -428,6 +428,7 @@ vsoc::CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
 
     instance.set_vehicle_hal_server_port(9210 + num - 1);
+    instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
 
     instance.set_device_title(FLAGS_device_title);
 
