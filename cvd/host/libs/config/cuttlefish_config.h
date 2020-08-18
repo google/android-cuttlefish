@@ -15,9 +15,7 @@
  */
 #pragma once
 
-#include <sys/types.h>
 #include <array>
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <set>
@@ -27,12 +25,7 @@ namespace Json {
 class Value;
 }
 
-namespace cuttlefish {
-constexpr char kLogcatSerialMode[] = "serial";
-constexpr char kLogcatVsockMode[] = "vsock";
-}
-
-namespace cuttlefish {
+namespace vsoc {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
@@ -45,8 +38,7 @@ constexpr char kMobileNetworkConnectedMessage[] =
 constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
 constexpr char kInternalDirName[] = "internal";
-constexpr char kSharedDirName[] = "shared";
-constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
+
 
 enum class AdbMode {
   VsockTunnel,
@@ -59,7 +51,6 @@ enum class AdbMode {
 class CuttlefishConfig {
  public:
   static const CuttlefishConfig* Get();
-  static bool ConfigExists();
 
   CuttlefishConfig();
   CuttlefishConfig(CuttlefishConfig&&);
@@ -82,6 +73,15 @@ class CuttlefishConfig {
 
   std::string gpu_mode() const;
   void set_gpu_mode(const std::string& name);
+
+  std::string serial_number() const;
+  void set_serial_number(const std::string& serial_number);
+
+  std::string wayland_socket() const;
+  void set_wayland_socket(const std::string& path);
+
+  std::string x_display() const;
+  void set_x_display(const std::string& address);
 
   int cpus() const;
   void set_cpus(int cpus);
@@ -165,12 +165,6 @@ class CuttlefishConfig {
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
 
-  void set_tpm_binary(const std::string& tpm_binary);
-  std::string tpm_binary() const;
-
-  void set_tpm_device(const std::string& tpm_device);
-  std::string tpm_device() const;
-
   void set_console_forwarder_binary(const std::string& crosvm_binary);
   std::string console_forwarder_binary() const;
 
@@ -184,20 +178,17 @@ class CuttlefishConfig {
   void set_vnc_server_binary(const std::string& vnc_server_binary);
   std::string vnc_server_binary() const;
 
-  void set_enable_sandbox(const bool enable_sandbox);
-  bool enable_sandbox() const;
-
-  void set_seccomp_policy_dir(const std::string& seccomp_policy_dir);
-  std::string seccomp_policy_dir() const;
-
   void set_enable_webrtc(bool enable_webrtc);
   bool enable_webrtc() const;
 
   void set_webrtc_binary(const std::string& webrtc_binary);
   std::string webrtc_binary() const;
 
-  void set_webrtc_assets_dir(const std::string& webrtc_assets_dir);
+  void set_webrtc_assets_dir(const std::string& webrtc_binary);
   std::string webrtc_assets_dir() const;
+
+  void set_webrtc_public_ip(const std::string& webrtc_public_ip);
+  std::string webrtc_public_ip() const;
 
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
@@ -217,12 +208,6 @@ class CuttlefishConfig {
   void set_adb_connector_binary(const std::string& adb_connector_binary);
   std::string adb_connector_binary() const;
 
-  void set_gnss_grpc_proxy_binary(const std::string& binary);
-  std::string gnss_grpc_proxy_binary() const;
-
-  void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
-  bool enable_gnss_grpc_proxy() const;
-
   void set_socket_vsock_proxy_binary(const std::string& binary);
   std::string socket_vsock_proxy_binary() const;
 
@@ -238,6 +223,12 @@ class CuttlefishConfig {
   void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
   std::string blank_data_image_fmt() const;
 
+  void set_logcat_mode(const std::string& mode);
+  std::string logcat_mode() const;
+
+  void set_enable_tombstone_receiver(bool enable_tombstone_receiver);
+  bool enable_tombstone_receiver() const;
+
   void set_tombstone_receiver_binary(const std::string& binary);
   std::string tombstone_receiver_binary() const;
 
@@ -250,6 +241,9 @@ class CuttlefishConfig {
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
+  void set_loop_max_part(int loop_max_part);
+  int loop_max_part() const;
+
   void set_guest_enforce_security(bool guest_enforce_security);
   bool guest_enforce_security() const;
 
@@ -259,78 +253,17 @@ class CuttlefishConfig {
   void set_guest_force_normal_boot(bool guest_force_normal_boot);
   bool guest_force_normal_boot() const;
 
-  enum Answer {
-    kUnknown = 0,
-    kYes,
-    kNo,
-  };
-
-  void set_enable_metrics(std::string enable_metrics);
-  CuttlefishConfig::Answer enable_metrics() const;
-
-  void set_metrics_binary(const std::string& metrics_binary);
-  std::string metrics_binary() const;
-
   void set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline);
   std::vector<std::string> boot_image_kernel_cmdline() const;
 
   void set_extra_kernel_cmdline(std::string extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
-  void set_vm_manager_kernel_cmdline(std::string vm_manager_cmdline);
-  std::vector<std::string> vm_manager_kernel_cmdline() const;
-
-  // A directory containing the SSL certificates for the signaling server
   void set_webrtc_certs_dir(const std::string& certs_dir);
   std::string webrtc_certs_dir() const;
 
-  // The path to the webrtc signaling server binary
-  void set_sig_server_binary(const std::string& sig_server_binary);
-  std::string sig_server_binary() const;
-
-  // The port for the webrtc signaling server. It's used by the signaling server
-  // to bind to it and by the webrtc process to connect to and register itself
-  void set_sig_server_port(int port);
-  int sig_server_port() const;
-
-  // The range of UDP ports available for webrtc sessions.
-  void set_webrtc_udp_port_range(std::pair<uint16_t, uint16_t> range);
-  std::pair<uint16_t, uint16_t> webrtc_udp_port_range() const;
-
-  // The range of TCP ports available for webrtc sessions.
-  void set_webrtc_tcp_port_range(std::pair<uint16_t, uint16_t> range);
-  std::pair<uint16_t, uint16_t> webrtc_tcp_port_range() const;
-
-  // The address of the signaling server
-  void set_sig_server_address(const std::string& addr);
-  std::string sig_server_address() const;
-
-  // The path section of the url where the webrtc process registers itself with
-  // the signaling server
-  void set_sig_server_path(const std::string& path);
-  std::string sig_server_path() const;
-
-  // Whether the webrtc process should attempt to verify the authenticity of the
-  // signaling server (reject self signed certificates)
-  void set_sig_server_strict(bool strict);
-  bool sig_server_strict() const;
-
-  // The dns address of mobile network (RIL)
-  void set_ril_dns(const std::string& ril_dns);
-  std::string ril_dns() const;
-
-  // KGDB configuration for kernel debugging
-  void set_kgdb(bool kgdb);
-  bool kgdb() const;
-
-  void set_enable_modem_simulator(bool enable_modem_simulator);
-  bool enable_modem_simulator() const;
-
-  void set_modem_simulator_binary(const std::string& binary);
-  std::string modem_simulator_binary() const;
-
-  void set_modem_simulator_instance_number(int instance_numbers);
-  int modem_simulator_instance_number() const;
+  void set_dialog_certs_dir(const std::string& certs_dir);
+  std::string dialog_certs_dir() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
@@ -356,46 +289,18 @@ class CuttlefishConfig {
     const Json::Value* Dictionary() const;
   public:
     std::string serial_number() const;
-    // If any of the following port numbers is 0, the relevant service is not
-    // running on the guest.
-
-    // Port number to connect to vnc server on the host
     int vnc_server_port() const;
-    // Port number to connect to the tombstone receiver on the host
-    int tombstone_receiver_port() const;
-    // Port number to connect to the config server on the host
-    int config_server_port() const;
-    // Port number to connect to the keyboard server on the host. (Only
-    // operational if QEMU is the vmm.)
-    int keyboard_server_port() const;
-    // Port number to connect to the touch server on the host. (Only
-    // operational if QEMU is the vmm.)
-    int touch_server_port() const;
-    // Port number to connect to the frame server on the host. (Only
-    // operational if using swiftshader as the GPU.)
-    int frames_server_port() const;
     // Port number to connect to the vehicle HAL server on the host
     int vehicle_hal_server_port() const;
     // Port number to connect to the audiocontrol server on the guest
     int audiocontrol_server_port() const;
-    // Port number to connect to the adb server on the host
     int host_port() const;
-    // Port number to connect to the gnss grpc proxy server on the host
-    int gnss_grpc_proxy_server_port() const;
-    // Port number to connect to the tpm server on the host
-    int tpm_port() const;
-    // Port number to connect to the gatekeeper server on the host
-    int gatekeeper_vsock_port() const;
-    // Port number to connect to the keymaster server on the host
-    int keymaster_vsock_port() const;
     std::string adb_ip_and_port() const;
     std::string adb_device_name() const;
     std::string device_title() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
-    uint32_t session_id() const;
-    bool use_allocd() const;
     int vsock_guest_cid() const;
     std::string uuid() const;
     std::string instance_name() const;
@@ -415,37 +320,19 @@ class CuttlefishConfig {
 
     std::string access_kregistry_path() const;
 
-    std::string pstore_path() const;
-
     std::string console_path() const;
 
     std::string logcat_path() const;
 
     std::string kernel_log_pipe_name() const;
 
-    std::string console_in_pipe_name() const;
-    std::string console_out_pipe_name() const;
-
-    std::string gnss_in_pipe_name() const;
-    std::string gnss_out_pipe_name() const;
-
-    std::string logcat_pipe_name() const;
+    std::string console_pipe_name() const;
 
     std::string launcher_log_path() const;
 
     std::string launcher_monitor_socket_path() const;
 
     std::string sdcard_path() const;
-
-    // modem simulator related
-    std::string modem_simulator_ports() const;
-
-    // The device id the webrtc process should use to register with the
-    // signaling server
-    std::string webrtc_device_id() const;
-
-    // Whether this instance should start the webrtc signaling server
-    bool start_webrtc_sig_server() const;
 
     // Wifi MAC address inside the guest
     std::array<unsigned char, 6> wifi_mac_address() const;
@@ -464,36 +351,20 @@ class CuttlefishConfig {
   public:
     void set_serial_number(const std::string& serial_number);
     void set_vnc_server_port(int vnc_server_port);
-    void set_tombstone_receiver_port(int tombstone_receiver_port);
-    void set_config_server_port(int config_server_port);
-    void set_frames_server_port(int config_server_port);
-    void set_touch_server_port(int config_server_port);
-    void set_keyboard_server_port(int config_server_port);
-    void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
-    void set_keymaster_vsock_port(int keymaster_vsock_port);
     void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_host_port(int host_port);
-    void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
     void set_device_title(const std::string& title);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
     void set_wifi_tap_name(const std::string& wifi_tap_name);
-    void set_session_id(uint32_t session_id);
-    void set_use_allocd(bool use_allocd);
     void set_vsock_guest_cid(int vsock_guest_cid);
     void set_uuid(const std::string& uuid);
     void set_instance_dir(const std::string& instance_dir);
-    // modem simulator related
-    void set_modem_simulator_ports(const std::string& modem_simulator_ports);
     void set_virtual_disk_paths(const std::vector<std::string>& disk_paths);
-    void set_webrtc_device_id(const std::string& id);
-    void set_start_webrtc_signaling_server(bool start);
     // Wifi MAC address inside the guest
     void set_wifi_mac_address(const std::array<unsigned char, 6>&);
-    // Gnss grpc proxy server port inside the host
-    void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
   };
 
  private:
@@ -520,9 +391,10 @@ std::string GetGlobalConfigFileLink();
 std::string ForCurrentInstance(const char* prefix);
 int ForCurrentInstance(int base);
 
-// Returns a random serial number appeneded to a given prefix.
+// Returns a random serial number appended to a given prefix.
 std::string RandomSerialNumber(const std::string& prefix);
 
+std::string GetDefaultPerInstanceDir();
 std::string GetDefaultMempath();
 int GetDefaultPerInstanceVsockCid();
 
@@ -540,4 +412,4 @@ bool HostSupportsVsock();
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;
-}  // namespace cuttlefish
+}  // namespace vsoc
