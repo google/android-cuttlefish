@@ -15,18 +15,14 @@
  */
 
 #include "host/frontend/vnc_server/virtual_inputs.h"
-#include <gflags/gflags.h>
 #include <android-base/logging.h>
+#include <gflags/gflags.h>
 #include <linux/input.h>
-#include <linux/uinput.h>
 
 #include <cstdint>
-#include <mutex>
-#include <thread>
 #include "keysyms.h"
 
-#include <common/libs/fs/shared_select.h>
-#include <host/libs/config/cuttlefish_config.h>
+#include <host/libs/input_connectors/input_connectors.h>
 
 using cuttlefish::vnc::VirtualInputs;
 
@@ -40,13 +36,6 @@ DEFINE_bool(write_virtio_input, false,
             "Whether to write the virtio_input struct over the socket");
 
 namespace {
-// Necessary to define here as the virtio_input.h header is not available
-// in the host glibc.
-struct virtio_input_event {
-  std::uint16_t type;
-  std::uint16_t code;
-  std::int32_t value;
-};
 
 void AddKeyMappings(std::map<uint32_t, uint16_t>* key_mapping) {
   (*key_mapping)[cuttlefish::xk::AltLeft] = KEY_LEFTALT;
@@ -237,116 +226,45 @@ void AddKeyMappings(std::map<uint32_t, uint16_t>* key_mapping) {
   (*key_mapping)[cuttlefish::xk::VNCMenu] = KEY_MENU;
 }
 
-void InitInputEvent(struct input_event* evt, uint16_t type, uint16_t code,
-                    int32_t value) {
-  evt->type = type;
-  evt->code = code;
-  evt->value = value;
-}
-
 }  // namespace
 
 class SocketVirtualInputs : public VirtualInputs {
  public:
-  SocketVirtualInputs()
-      : client_connector_([this]() { ClientConnectorLoop(); }) {}
+  SocketVirtualInputs(
+      std::unique_ptr<cuttlefish::TouchConnector> touch_connector,
+      std::unique_ptr<cuttlefish::KeyboardConnector> keyboard_connector)
+      : touch_connector_(std::move(touch_connector)),
+        keyboard_connector_(std::move(keyboard_connector)) {}
 
   void GenerateKeyPressEvent(int key_code, bool down) override {
-    struct input_event events[2];
-    InitInputEvent(&events[0], EV_KEY, keymapping_[key_code], down);
-    InitInputEvent(&events[1], EV_SYN, 0, 0);
-
-    SendEvents(keyboard_socket_, events);
+    keyboard_connector_->InjectKeyEvent(keymapping_[key_code], down);
   }
 
   void PressPowerButton(bool down) override {
-    struct input_event events[2];
-    InitInputEvent(&events[0], EV_KEY, KEY_POWER, down);
-    InitInputEvent(&events[1], EV_SYN, 0, 0);
-
-    SendEvents(keyboard_socket_, events);
+    keyboard_connector_->InjectKeyEvent(keymapping_[KEY_POWER], down);
   }
 
   void HandlePointerEvent(bool touch_down, int x, int y) override {
     // TODO(b/124121375): Use multitouch when available
-    struct input_event events[4];
-    InitInputEvent(&events[0], EV_ABS, ABS_X, x);
-    InitInputEvent(&events[1], EV_ABS, ABS_Y, y);
-    InitInputEvent(&events[2], EV_KEY, BTN_TOUCH, touch_down);
-    InitInputEvent(&events[3], EV_SYN, 0, 0);
-
-    SendEvents(touch_socket_, events);
+    touch_connector_->InjectTouchEvent(x, y, touch_down);
   }
 
  private:
-  template<size_t num_events>
-  void SendEvents(cuttlefish::SharedFD socket, struct input_event (&event_buffer)[num_events]) {
-    std::lock_guard<std::mutex> lock(socket_mutex_);
-    if (!socket->IsOpen()) {
-      // This is unlikely as it would only happen between the start of the vnc
-      // server and the connection of the VMM to the socket.
-      // If it happens, just drop the events as the VM is not yet ready to
-      // handle it.
-      return;
-    }
-
-    if (FLAGS_write_virtio_input) {
-      struct virtio_input_event virtio_events[num_events];
-      for (size_t i = 0; i < num_events; i++) {
-        virtio_events[i] = (struct virtio_input_event) {
-          .type = event_buffer[i].type,
-          .code = event_buffer[i].code,
-          .value = event_buffer[i].value,
-        };
-      }
-      auto ret = socket->Write(virtio_events, sizeof(virtio_events));
-      if (ret < 0) {
-        LOG(ERROR) << "Error sending input events: " << socket->StrError();
-      }
-    } else {
-      auto ret = socket->Write(event_buffer, sizeof(event_buffer));
-      if (ret < 0) {
-        LOG(ERROR) << "Error sending input events: " << socket->StrError();
-      }
-    }
-  }
-
-  void ClientConnectorLoop() {
-    auto touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
-    close(FLAGS_touch_fd);
-    FLAGS_touch_fd = -1;
-
-    auto keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
-    close(FLAGS_keyboard_fd);
-    FLAGS_keyboard_fd = -1;
-    LOG(DEBUG) << "Input socket host accepting connections...";
-
-    while (1) {
-      cuttlefish::SharedFDSet read_set;
-      read_set.Set(touch_server);
-      read_set.Set(keyboard_server);
-      cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
-      {
-        std::lock_guard<std::mutex> lock(socket_mutex_);
-        if (read_set.IsSet(touch_server)) {
-          touch_socket_ = cuttlefish::SharedFD::Accept(*touch_server);
-          LOG(DEBUG) << "connected to touch";
-        }
-        if (read_set.IsSet(keyboard_server)) {
-          keyboard_socket_ = cuttlefish::SharedFD::Accept(*keyboard_server);
-          LOG(DEBUG) << "connected to keyboard";
-        }
-      }
-    }
-  }
-  cuttlefish::SharedFD touch_socket_;
-  cuttlefish::SharedFD keyboard_socket_;
-  std::thread client_connector_;
-  std::mutex socket_mutex_;
+  std::unique_ptr<cuttlefish::TouchConnector> touch_connector_;
+  std::unique_ptr<cuttlefish::KeyboardConnector> keyboard_connector_;
 };
 
 VirtualInputs::VirtualInputs() { AddKeyMappings(&keymapping_); }
 
 VirtualInputs* VirtualInputs::Get() {
-  return new SocketVirtualInputs();
+  auto touch_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_touch_fd);
+  CHECK(touch_fd->IsOpen()) << "Failed to dup touch fd: " << FLAGS_touch_fd;
+  auto keyboard_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_keyboard_fd);
+  CHECK(keyboard_fd->IsOpen())
+      << "Failed to dup keyboard fd: " << FLAGS_keyboard_fd;
+
+  return new SocketVirtualInputs(
+      cuttlefish::TouchConnector::Create(touch_fd, FLAGS_write_virtio_input),
+      cuttlefish::KeyboardConnector::Create(keyboard_fd,
+                                            FLAGS_write_virtio_input));
 }
