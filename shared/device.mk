@@ -407,7 +407,7 @@ PRODUCT_PACKAGES += \
 # PowerStats HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.power.stats@1.0-service.mock
+    android.hardware.powerstats-service.example
 
 #
 # NeuralNetworks HAL
