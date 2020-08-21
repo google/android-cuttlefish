@@ -112,14 +112,17 @@ class GnssGrpcProxyServiceImpl final : public GnssGrpcProxy::Service {
 
 void RunServer() {
 
-  auto gnss_in = cuttlefish::SharedFD::DupAndClose(FLAGS_gnss_in_fd);
+  auto gnss_in = cuttlefish::SharedFD::Dup(FLAGS_gnss_in_fd);
+  close(FLAGS_gnss_in_fd);
   if (!gnss_in->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_gnss_in_fd << ": "
                << gnss_in->StrError();
     return;
   }
+  close(FLAGS_gnss_in_fd);
 
-  auto gnss_out = cuttlefish::SharedFD::DupAndClose(FLAGS_gnss_out_fd);
+  auto gnss_out = cuttlefish::SharedFD::Dup(FLAGS_gnss_out_fd);
+  close(FLAGS_gnss_out_fd);
   if (!gnss_out->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_gnss_out_fd << ": "
                << gnss_out->StrError();
