@@ -41,7 +41,7 @@ To list the Cuttlefish containers:
 cvd_docker_list
 ```
 
-There are two ways to provision a container (that is, to install the Cuttlefish
+There are three ways to provision a container (that is, to install the Cuttlefish
 and Android images on it.)
 
 If cvd_docker_create detects an [Android build
@@ -51,7 +51,31 @@ binary artifacts.  Assuming you have downloaded, set up, and built a Cuttlefish
 device and Android from the sources, and you call cvd_docker_create in the same
 terminal, you can jump ahead to launching Cuttlefish.
 
-If you either don't have the Android build environment or you want to provision
+If you do not have the Android build environment, alternatively, you
+can build Android and Cuttlefish with another docker container. We are
+offering a wrapper script for that. Say, the source is downloaded to
+$HOME/android-src, we can run these to commands to build Android from
+the source:
+```bash
+./build-android-with-docker.sh --help
+./build-android-with-docker.sh --android-src-mntptr "$HOME/android-src:/home/vsoc-01/build"
+```
+
+That does build Android and Cuttlefish, and save them where you
+downloaded the source. It does not, however, allow you to automatically jump ahead to launching
+Cuttlefish. We are improving the process but for now, these commands
+will prepare for running Cuttlefish with a container:
+```bash
+export ANDROID_BUILD_TOP=$HOME/android-src
+export ANDROID_PRODUCT_OUT=$(dirname `find $ANDROID_BUILD_TOP/out |
+egrep "*/boot\.img$"`)
+export ANDROID_HOST_OUT=$(dirname `find $ANDROID_BUILD_TOP/out/host/ |
+egrep "/bin/launch_cvd$")
+```
+After those commands, you can run the docker image and run the
+container.
+
+If you you want to provision
 the container with a prebuilt cuttlefish image for example, from [AOSP
 CI](htts://ci.android.com), you can follow the steps to [obtain a prebuilt image
 of Cuttlefish](https://android.googlesource.com/device/google/cuttlefish/)
