@@ -36,7 +36,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 #
 # All components inherited here go to vendor image
 #
-LOCAL_ENABLE_CODEC2 := true
+LOCAL_DISABLE_OMX := true
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
 #
