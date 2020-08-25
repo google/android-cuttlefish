@@ -133,9 +133,6 @@ const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
 
-const char* kLogcatReceiverBinary = "logcat_receiver_binary";
-const char* kConfigServerBinary = "config_server_binary";
-
 const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 const char* kWebRTCCertsDir = "webrtc_certs_dir";
@@ -576,22 +573,6 @@ std::string CuttlefishConfig::blank_data_image_fmt() const {
 
 void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
   (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
-}
-
-void CuttlefishConfig::set_logcat_receiver_binary(const std::string& binary) {
-  SetPath(kLogcatReceiverBinary, binary);
-}
-
-std::string CuttlefishConfig::logcat_receiver_binary() const {
-  return (*dictionary_)[kLogcatReceiverBinary].asString();
-}
-
-void CuttlefishConfig::set_config_server_binary(const std::string& binary) {
-  SetPath(kConfigServerBinary, binary);
-}
-
-std::string CuttlefishConfig::config_server_binary() const {
-  return (*dictionary_)[kConfigServerBinary].asString();
 }
 
 std::string CuttlefishConfig::tombstone_receiver_binary() const {
