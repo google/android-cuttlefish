@@ -117,8 +117,6 @@ const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
-const char* kAdbConnectorBinary = "adb_connector_binary";
-const char* kSocketVsockProxyBinary = "socket_vsock_proxy_binary";
 
 const char* kRunAsDaemon = "run_as_daemon";
 
@@ -153,7 +151,6 @@ const char* kVmManagerKernelCmdline = "vm_manager_kernel_cmdline";
 
 // modem simulator related
 const char* kRunModemSimulator = "enable_modem_simulator";
-const char* kModemSimulatorBinary = "modem_simulator_binary";
 const char* kModemSimulatorInstanceNumber = "modem_simulator_instance_number";
 
 const char* kRilDns = "ril_dns";
@@ -467,24 +464,6 @@ void CuttlefishConfig::set_run_adb_connector(bool run_adb_connector) {
   (*dictionary_)[kRunAdbConnector] = run_adb_connector;
 }
 
-std::string CuttlefishConfig::adb_connector_binary() const {
-  return (*dictionary_)[kAdbConnectorBinary].asString();
-}
-
-void CuttlefishConfig::set_adb_connector_binary(
-    const std::string& adb_connector_binary) {
-  (*dictionary_)[kAdbConnectorBinary] = adb_connector_binary;
-}
-
-std::string CuttlefishConfig::socket_vsock_proxy_binary() const {
-  return (*dictionary_)[kSocketVsockProxyBinary].asString();
-}
-
-void CuttlefishConfig::set_socket_vsock_proxy_binary(
-    const std::string& socket_vsock_proxy_binary) {
-  (*dictionary_)[kSocketVsockProxyBinary] = socket_vsock_proxy_binary;
-}
-
 bool CuttlefishConfig::run_as_daemon() const {
   return (*dictionary_)[kRunAsDaemon].asBool();
 }
@@ -625,14 +604,6 @@ bool CuttlefishConfig::enable_modem_simulator() const {
 
 void CuttlefishConfig::set_enable_modem_simulator(bool enable_modem_simulator) {
   (*dictionary_)[kRunModemSimulator] = enable_modem_simulator;
-}
-
-std::string CuttlefishConfig::modem_simulator_binary() const {
-  return (*dictionary_)[kModemSimulatorBinary].asString();
-}
-
-void CuttlefishConfig::set_modem_simulator_binary(const std::string& binary) {
-  (*dictionary_)[kModemSimulatorBinary] = binary;
 }
 
 void CuttlefishConfig::set_modem_simulator_instance_number(
