@@ -426,35 +426,21 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
-  tmp_config_obj.set_logcat_receiver_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/logcat_receiver"));
-  tmp_config_obj.set_config_server_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/config_server"));
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
   tmp_config_obj.set_tpm_binary(FLAGS_tpm_binary);
   tmp_config_obj.set_tpm_device(FLAGS_tpm_device);
-  tmp_config_obj.set_console_forwarder_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/console_forwarder"));
-  tmp_config_obj.set_kernel_log_monitor_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/kernel_log_monitor"));
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
-  tmp_config_obj.set_vnc_server_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/vnc_server"));
 
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
   tmp_config_obj.set_enable_webrtc(FLAGS_start_webrtc);
-  tmp_config_obj.set_webrtc_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/webRTC"));
   tmp_config_obj.set_webrtc_assets_dir(FLAGS_webrtc_assets_dir);
   tmp_config_obj.set_webrtc_certs_dir(FLAGS_webrtc_certs_dir);
-  tmp_config_obj.set_sig_server_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/webrtc_operator"));
   // Note: This will be overridden if the sig server is started by us
   tmp_config_obj.set_sig_server_port(FLAGS_webrtc_sig_server_port);
   tmp_config_obj.set_sig_server_address(FLAGS_webrtc_sig_server_addr);
@@ -467,8 +453,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
   tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator);
-  tmp_config_obj.set_modem_simulator_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/modem_simulator"));
   tmp_config_obj.set_modem_simulator_instance_number(
       FLAGS_modem_simulator_count);
 
@@ -477,10 +461,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_restart_subprocesses(FLAGS_restart_subprocesses);
   tmp_config_obj.set_run_adb_connector(FLAGS_run_adb_connector);
-  tmp_config_obj.set_adb_connector_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/adb_connector"));
-  tmp_config_obj.set_socket_vsock_proxy_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/socket_vsock_proxy"));
   tmp_config_obj.set_run_as_daemon(FLAGS_daemon);
 
   tmp_config_obj.set_data_policy(FLAGS_data_policy);
@@ -488,18 +468,11 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_blank_data_image_fmt(FLAGS_blank_data_image_fmt);
 
   tmp_config_obj.set_enable_gnss_grpc_proxy(FLAGS_start_gnss_proxy);
-  tmp_config_obj.set_gnss_grpc_proxy_binary(
-    cuttlefish::DefaultHostArtifactsPath("bin/gnss_grpc_proxy"));
-
-  tmp_config_obj.set_tombstone_receiver_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/tombstone_receiver"));
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
-  tmp_config_obj.set_metrics_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/metrics"));
 
   if (!FLAGS_boot_slot.empty()) {
       tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
