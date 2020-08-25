@@ -1,4 +1,4 @@
 # Vendor aware available type
-type vendor_aware_available_prop, property_type;
+vendor_restricted_prop(vendor_aware_available_prop)
 
-type vendor_radio_prop, property_type;
+vendor_restricted_prop(vendor_radio_prop)

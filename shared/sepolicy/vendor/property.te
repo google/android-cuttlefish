@@ -1,3 +1,3 @@
-type cuttlefish_config_server_port_prop, property_type;
-type vendor_ser_prop, property_type;
-type cuttlefish_modem_simulator_ports, property_type;
+vendor_restricted_prop(cuttlefish_config_server_port_prop)
+vendor_internal_prop(vendor_ser_prop)
+vendor_internal_prop(cuttlefish_modem_simulator_ports)
