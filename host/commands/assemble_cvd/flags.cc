@@ -426,10 +426,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   }
 
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
-  tmp_config_obj.set_logcat_receiver_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/logcat_receiver"));
-  tmp_config_obj.set_config_server_binary(
-      cuttlefish::DefaultHostArtifactsPath("bin/config_server"));
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
