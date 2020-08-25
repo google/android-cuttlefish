@@ -1,4 +1,4 @@
-type hal_camera_prop, property_type;
+vendor_restricted_prop(hal_camera_prop)
 
 vndbinder_use(hal_camera_default)
 
