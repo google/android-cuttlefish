@@ -183,23 +183,20 @@ class CuttlefishConfig {
   void set_webrtc_enable_adb_websocket(bool enable);
   bool webrtc_enable_adb_websocket() const;
 
+  void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
+  bool enable_vehicle_hal_grpc_server() const;
+
+  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
+  std::string vehicle_hal_grpc_server_binary() const;
+
   void set_restart_subprocesses(bool restart_subprocesses);
   bool restart_subprocesses() const;
 
   void set_run_adb_connector(bool run_adb_connector);
   bool run_adb_connector() const;
 
-  void set_adb_connector_binary(const std::string& adb_connector_binary);
-  std::string adb_connector_binary() const;
-
-  void set_gnss_grpc_proxy_binary(const std::string& binary);
-  std::string gnss_grpc_proxy_binary() const;
-
   void set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy);
   bool enable_gnss_grpc_proxy() const;
-
-  void set_socket_vsock_proxy_binary(const std::string& binary);
-  std::string socket_vsock_proxy_binary() const;
 
   void set_run_as_daemon(bool run_as_daemon);
   bool run_as_daemon() const;
@@ -212,9 +209,6 @@ class CuttlefishConfig {
 
   void set_blank_data_image_fmt(const std::string& blank_data_image_fmt);
   std::string blank_data_image_fmt() const;
-
-  void set_tombstone_receiver_binary(const std::string& binary);
-  std::string tombstone_receiver_binary() const;
 
   void set_use_bootloader(bool use_bootloader);
   bool use_bootloader() const;
@@ -297,9 +291,6 @@ class CuttlefishConfig {
   void set_enable_modem_simulator(bool enable_modem_simulator);
   bool enable_modem_simulator() const;
 
-  void set_modem_simulator_binary(const std::string& binary);
-  std::string modem_simulator_binary() const;
-
   void set_modem_simulator_instance_number(int instance_numbers);
   int modem_simulator_instance_number() const;
 
@@ -345,6 +336,8 @@ class CuttlefishConfig {
     // Port number to connect to the frame server on the host. (Only
     // operational if using swiftshader as the GPU.)
     int frames_server_port() const;
+    // Port number to connect to the vehicle HAL server on the host
+    int vehicle_hal_server_port() const;
     // Port number to connect to the adb server on the host
     int host_port() const;
     // Port number to connect to the gnss grpc proxy server on the host
@@ -438,6 +431,7 @@ class CuttlefishConfig {
     void set_keyboard_server_port(int config_server_port);
     void set_gatekeeper_vsock_port(int gatekeeper_vsock_port);
     void set_keymaster_vsock_port(int keymaster_vsock_port);
+    void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_host_port(int host_port);
     void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
