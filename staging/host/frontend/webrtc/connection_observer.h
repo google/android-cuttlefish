@@ -18,27 +18,27 @@
 
 #include <memory>
 
-#include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
+#include "host/libs/input_connectors/input_connectors.h"
 
 namespace cuttlefish {
 
 class CfConnectionObserverFactory
     : public cuttlefish::webrtc_streaming::ConnectionObserverFactory {
  public:
-  CfConnectionObserverFactory(cuttlefish::SharedFD touch_fd,
-                              cuttlefish::SharedFD keyboard_fd);
+  CfConnectionObserverFactory(std::shared_ptr<TouchConnector> touch_fd,
+                              std::shared_ptr<KeyboardConnector> keyboard_fd);
   ~CfConnectionObserverFactory() override = default;
 
-  std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver> CreateObserver()
-      override;
+  std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>
+  CreateObserver() override;
 
   void SetDisplayHandler(std::weak_ptr<DisplayHandler> display_handler);
 
  private:
-  cuttlefish::SharedFD touch_fd_;
-  cuttlefish::SharedFD keyboard_fd_;
+  std::shared_ptr<TouchConnector> touch_connector_;
+  std::shared_ptr<KeyboardConnector> keyboard_connector_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
 };
 

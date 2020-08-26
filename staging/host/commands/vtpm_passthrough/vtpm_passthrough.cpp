@@ -74,8 +74,7 @@ int main(int argc, char** argv) {
   CHECK(!FLAGS_device.empty()) << "A device must be set.";
   CHECK(FLAGS_server_fd > -1) << "A server fd must be given.";
 
-  auto server = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
-  close(FLAGS_server_fd);
+  auto server = cuttlefish::SharedFD::DupAndClose(FLAGS_server_fd);
   CHECK(server->IsOpen()) << "Could not dup vsock server fd: " << server->StrError();
 
   auto device = cuttlefish::SharedFD::Open(FLAGS_device.c_str(), O_RDWR);
