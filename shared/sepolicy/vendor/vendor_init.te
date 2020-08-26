@@ -1,6 +1,6 @@
-type vendor_init_radio_prop, property_type;
-type cf_graphics_config_prop, property_type;
-type cf_fstab_name_prop, property_type;
+vendor_internal_prop(vendor_init_radio_prop)
+vendor_internal_prop(cf_graphics_config_prop)
+vendor_internal_prop(cf_fstab_name_prop)
 
 allow vendor_init {
   audio_device
