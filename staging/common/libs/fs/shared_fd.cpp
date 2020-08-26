@@ -217,6 +217,14 @@ SharedFD SharedFD::Dup(int unmanaged_fd) {
   return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, error_num)));
 }
 
+SharedFD SharedFD::DupAndClose(int unmanaged_fd) {
+  auto ret = SharedFD::Dup(unmanaged_fd);
+  if (ret->IsOpen()) {
+    close(unmanaged_fd);
+  }
+  return ret;
+}
+
 bool SharedFD::Pipe(SharedFD* fd0, SharedFD* fd1) {
   int fds[2];
   int rval = pipe(fds);
