@@ -34,7 +34,8 @@ int main(int argc, char** argv) {
 
   CHECK(device_config) << "Could not open device config";
 
-  cuttlefish::SharedFD server_fd = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
+  cuttlefish::SharedFD server_fd =
+      cuttlefish::SharedFD::DupAndClose(FLAGS_server_fd);
 
   CHECK(server_fd->IsOpen()) << "Inheriting logcat server: "
                              << server_fd->StrError();
