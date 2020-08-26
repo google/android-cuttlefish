@@ -76,17 +76,6 @@ int main(int argc, char** argv) {
       LOG(FATAL) << "TPM2_Startup failed: " << Tss2_RC_Decode(rc)
                  << " (" << rc << ")";
     }
-    // TODO(schuffelen): Call this only on first boot.
-    rc = Esys_Clear(
-        esys.get(),
-        ESYS_TR_RH_PLATFORM,
-        ESYS_TR_PASSWORD,
-        ESYS_TR_NONE,
-        ESYS_TR_NONE);
-    if (rc != TPM2_RC_SUCCESS) {
-      LOG(FATAL) << "TPM2_Clear failed: " << Tss2_RC_Decode(rc)
-                 << " (" << rc << ")";
-    }
     resource_manager.reset(new TpmResourceManager(esys.get()));
     keymaster_context = new TpmKeymasterContext(resource_manager.get());
   } else {
