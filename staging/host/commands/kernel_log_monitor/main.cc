@@ -83,7 +83,8 @@ int main(int argc, char** argv) {
     auto log_name = instance.kernel_log_pipe_name();
     pipe = cuttlefish::SharedFD::Open(log_name.c_str(), O_RDONLY);
   } else {
-    pipe = cuttlefish::SharedFD::DupAndClose(FLAGS_log_pipe_fd);
+    pipe = cuttlefish::SharedFD::Dup(FLAGS_log_pipe_fd);
+    close(FLAGS_log_pipe_fd);
   }
 
   if (!pipe->IsOpen()) {

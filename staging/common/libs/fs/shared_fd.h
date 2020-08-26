@@ -117,9 +117,6 @@ class SharedFD {
                          socklen_t* addrlen);
   static SharedFD Accept(const FileInstance& listener);
   static SharedFD Dup(int unmanaged_fd);
-  // Same as Dup, but closes unmanaged_fd before returning (only if the dup()
-  // call succeeded)
-  static SharedFD DupAndClose(int unmanaged_fd);
   // All SharedFDs have the O_CLOEXEC flag after creation. To remove use the
   // Fcntl or Dup functions.
   static SharedFD Open(const std::string& pathname, int flags, mode_t mode = 0);
