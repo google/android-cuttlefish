@@ -44,8 +44,9 @@ int main(int argc, char** argv) {
         cuttlefish::LogToStderrAndFiles({instance.launcher_log_path()}));
   }
 
-  auto log_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_log_fd_in);
+  auto log_fd = cuttlefish::SharedFD::Dup(FLAGS_log_fd_in);
   CHECK(log_fd->IsOpen()) << "Failed to dup log_fd_in: " <<  log_fd->StrError();
+  close(FLAGS_log_fd_in);
 
   if (FLAGS_process_name.size() > 0) {
     android::base::SetDefaultTag(FLAGS_process_name);

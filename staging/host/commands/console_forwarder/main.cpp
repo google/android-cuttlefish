@@ -234,14 +234,17 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  auto console_in = cuttlefish::SharedFD::DupAndClose(FLAGS_console_in_fd);
+  auto console_in = cuttlefish::SharedFD::Dup(FLAGS_console_in_fd);
+  close(FLAGS_console_in_fd);
   if (!console_in->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_console_in_fd << ": "
                << console_in->StrError();
     return -2;
   }
+  close(FLAGS_console_in_fd);
 
-  auto console_out = cuttlefish::SharedFD::DupAndClose(FLAGS_console_out_fd);
+  auto console_out = cuttlefish::SharedFD::Dup(FLAGS_console_out_fd);
+  close(FLAGS_console_out_fd);
   if (!console_out->IsOpen()) {
     LOG(ERROR) << "Error dupping fd " << FLAGS_console_out_fd << ": "
                << console_out->StrError();

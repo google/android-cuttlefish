@@ -90,7 +90,6 @@ cc_binary_host {
         "libaom",
         "libcap",
         "libcuttlefish_host_config",
-        "libcuttlefish_input_connectors",
         "libcuttlefish_screen_connector",
         "libcuttlefish_utils",
         "libcuttlefish_wayland_server",
