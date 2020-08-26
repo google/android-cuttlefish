@@ -122,8 +122,14 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v11 *dcResponse,
 void convertRilDataCallToHal(RIL_Data_Call_Response_v12 *dcResponse,
         ::android::hardware::radio::V1_5::SetupDataCallResult& dcResult);
 
+void convertRilDataCallToHal(RIL_Data_Call_Response_v12 *dcResponse,
+        ::android::hardware::radio::V1_6::SetupDataCallResult& dcResult);
+
 void convertRilDataCallListToHal(void *response, size_t responseLen,
         hidl_vec<SetupDataCallResult>& dcResultList);
+
+void convertRilDataCallListToHal(void *response, size_t responseLen,
+        hidl_vec<::android::hardware::radio::V1_6::SetupDataCallResult>& dcResultList);
 
 void convertRilCellInfoListToHal(void *response, size_t responseLen, hidl_vec<CellInfo>& records);
 
@@ -573,6 +579,14 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms);
     Return<void> supplySimDepersonalization(int32_t serial, V1_5::PersoSubstate persoType,
                                             const hidl_string& controlKey);
+    // Methods from ::android::hardware::radio::V1_6::IRadio follow.
+    Return<void> getDataCallList_1_6(int32_t serial);
+    Return<void> setupDataCall_1_6(int32_t serial,
+            ::android::hardware::radio::V1_5::AccessNetwork accessNetwork,
+            const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo,
+            bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason reason,
+            const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& addresses,
+            const hidl_vec<hidl_string>& dnses);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -1651,6 +1665,14 @@ Return<void> RadioImpl_1_6::getClip(int32_t serial) {
 Return<void> RadioImpl_1_6::getDataCallList(int32_t serial) {
 #if VDBG
     RLOGD("getDataCallList: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_DATA_CALL_LIST);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::getDataCallList_1_6(int32_t serial) {
+#if VDBG
+    RLOGD("getDataCallList_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_DATA_CALL_LIST);
     return Void();
@@ -3724,6 +3746,46 @@ Return<void> RadioImpl_1_6::setupDataCall_1_5(int32_t serial ,
         const hidl_vec<hidl_string>& /* dnses */) {
 
 #if VDBG
+    RLOGD("setupDataCall_1_5: serial %d", serial);
+#endif
+
+    char *mvnoTypeStr = NULL;
+    if (!convertMvnoTypeToString(MvnoType::IMSI, mvnoTypeStr)) {
+        RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
+                RIL_REQUEST_SETUP_DATA_CALL);
+        if (pRI != NULL) {
+            sendErrorResponse(pRI, RIL_E_INVALID_ARGUMENTS);
+        }
+        return Void();
+    }
+    dispatchStrings(serial, mSlotId, RIL_REQUEST_SETUP_DATA_CALL, true, 15,
+        std::to_string((int) RadioTechnology::UNKNOWN + 2).c_str(),
+        std::to_string((int) dataProfileInfo.profileId).c_str(),
+        dataProfileInfo.apn.c_str(),
+        dataProfileInfo.user.c_str(),
+        dataProfileInfo.password.c_str(),
+        std::to_string((int) dataProfileInfo.authType).c_str(),
+        getProtocolString(dataProfileInfo.protocol),
+        getProtocolString(dataProfileInfo.roamingProtocol),
+        std::to_string(dataProfileInfo.supportedApnTypesBitmap).c_str(),
+        std::to_string(dataProfileInfo.bearerBitmap).c_str(),
+        dataProfileInfo.persistent ? "1" : "0",
+        std::to_string(dataProfileInfo.mtuV4).c_str(),
+        std::to_string(dataProfileInfo.mtuV6).c_str(),
+        mvnoTypeStr,
+        "302720x94",
+        roamingAllowed ? "1" : "0");
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::setupDataCall_1_6(int32_t serial ,
+        ::android::hardware::radio::V1_5::AccessNetwork /* accessNetwork */,
+        const ::android::hardware::radio::V1_5::DataProfileInfo& dataProfileInfo,
+        bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason /* reason */,
+        const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& /* addresses */,
+        const hidl_vec<hidl_string>& /* dnses */) {
+
+#if VDBG
     RLOGD("setupDataCall_1_6: serial %d", serial);
 #endif
 
@@ -5066,7 +5128,32 @@ int radio_1_6::setupDataCallResponse(int slotId,
 #if VDBG
     RLOGD("setupDataCallResponse: serial %d", serial);
 #endif
-    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        RadioResponseInfo responseInfo = {};
+        populateResponseInfo(responseInfo, serial, responseType, e);
+        ::android::hardware::radio::V1_5::SetupDataCallResult base;
+        ::android::hardware::radio::V1_6::SetupDataCallResult result;
+        if (response == NULL || (responseLen % sizeof(RIL_Data_Call_Response_v12)) != 0) {
+            if (response != NULL) {
+                RLOGE("setupDataCallResponse_1_6: Invalid response");
+                if (e == RIL_E_SUCCESS) responseInfo.error = RadioError::INVALID_RESPONSE;
+            }
+            base.cause = ::android::hardware::radio::V1_4::DataCallFailCause::ERROR_UNSPECIFIED;
+            base.type = ::android::hardware::radio::V1_4::PdpProtocolType::UNKNOWN;
+            base.ifname = hidl_string();
+            base.addresses = hidl_vec<::android::hardware::radio::V1_5::LinkAddress>();
+            base.dnses = hidl_vec<hidl_string>();
+            base.gateways = hidl_vec<hidl_string>();
+            base.pcscf = hidl_vec<hidl_string>();
+        } else {
+            convertRilDataCallToHal((RIL_Data_Call_Response_v12 *) response, base);
+        }
+        result.base = base;
+        result.qosSessions = hidl_vec<::android::hardware::radio::V1_6::QosSession>();
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6->setupDataCallResponse_1_6(
+                responseInfo, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
         RadioResponseInfo responseInfo = {};
         populateResponseInfo(responseInfo, serial, responseType, e);
         ::android::hardware::radio::V1_5::SetupDataCallResult result;
