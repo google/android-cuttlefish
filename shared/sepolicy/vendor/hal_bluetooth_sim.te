@@ -1,6 +1,6 @@
 type hal_bluetooth_sim, domain;
 type hal_bluetooth_sim_exec, exec_type, vendor_file_type, file_type;
-type hal_bluetooth_sim_prop, property_type;
+vendor_internal_prop(hal_bluetooth_sim_prop)
 
 hal_server_domain(hal_bluetooth_sim, hal_bluetooth)
 

@@ -1,7 +1,7 @@
 type vsoc_input_service, domain;
 type vsoc_input_service_exec, exec_type, vendor_file_type, file_type;
-type cuttlefish_vsock_keyboard_port, property_type;
-type cuttlefish_vsock_touch_port, property_type;
+vendor_internal_prop(cuttlefish_vsock_keyboard_port)
+vendor_internal_prop(cuttlefish_vsock_touch_port)
 
 init_daemon_domain(vsoc_input_service)
 
