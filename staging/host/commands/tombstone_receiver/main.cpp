@@ -59,8 +59,7 @@ int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  cuttlefish::SharedFD server_fd = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
-  close(FLAGS_server_fd);
+  cuttlefish::SharedFD server_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_server_fd);
 
   CHECK(server_fd->IsOpen()) << "Error inheriting tombstone server: "
                              << server_fd->StrError();

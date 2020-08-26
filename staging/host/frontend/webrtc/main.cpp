@@ -28,6 +28,7 @@
 #include "host/frontend/webrtc/lib/streamer.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
+#include "host/libs/input_connectors/input_connectors.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
@@ -41,7 +42,8 @@ using cuttlefish::DisplayHandler;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
 
-class CfOperatorObserver : public cuttlefish::webrtc_streaming::OperatorObserver {
+class CfOperatorObserver
+    : public cuttlefish::webrtc_streaming::OperatorObserver {
  public:
   virtual ~CfOperatorObserver() = default;
   virtual void OnRegistered() override {
@@ -59,20 +61,24 @@ int main(int argc, char **argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
-  auto keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
-  close(FLAGS_touch_fd);
-  close(FLAGS_keyboard_fd);
+  auto touch_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_touch_fd);
+  CHECK(touch_fd->IsOpen()) << "Failed to dup touch fd: " << FLAGS_touch_fd;
+  auto keyboard_fd = cuttlefish::SharedFD::DupAndClose(FLAGS_keyboard_fd);
+  CHECK(keyboard_fd->IsOpen())
+      << "Failed to dup keyboard fd: " << FLAGS_keyboard_fd;
+
   // Accepting on these sockets here means the device won't register with the
-  // operator as soon as it could, but rather wait until crosvm's input display
-  // devices have been initialized. That's OK though, because without those
-  // devices there is no meaningful interaction the user can have with the
-  // device.
-  auto touch_client = cuttlefish::SharedFD::Accept(*touch_server);
-  auto keyboard_client = cuttlefish::SharedFD::Accept(*keyboard_server);
+  // operator as soon as it could, but rather wait until crosvm's input devices
+  // have been initialized. That's OK though, because without those devices
+  // there is no meaningful interaction the user can have with the device.
+  auto keyboard_connector = cuttlefish::KeyboardConnector::Create(keyboard_fd);
+  CHECK(keyboard_connector) << "Failed to instantiate keyboard connector";
+  auto touch_connector = cuttlefish::TouchConnector::Create(touch_fd);
+  CHECK(touch_connector) << "Failed to instantiate touch connector";
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
-  auto screen_connector = cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd);
+  auto screen_connector =
+      cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd);
 
   StreamerConfig streamer_config;
 
@@ -89,7 +95,7 @@ int main(int argc, char **argv) {
           : WsConnection::Security::kAllowSelfSigned;
 
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      touch_client, keyboard_client);
+      std::move(touch_connector), std::move(keyboard_connector));
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
 
@@ -101,8 +107,8 @@ int main(int argc, char **argv) {
 
   observer_factory->SetDisplayHandler(display_handler);
 
-  std::shared_ptr<cuttlefish::webrtc_streaming::OperatorObserver> operator_observer(
-      new CfOperatorObserver());
+  std::shared_ptr<cuttlefish::webrtc_streaming::OperatorObserver>
+      operator_observer(new CfOperatorObserver());
   streamer->Register(operator_observer);
 
   display_handler->Loop();
