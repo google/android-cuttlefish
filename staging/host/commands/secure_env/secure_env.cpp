@@ -98,15 +98,17 @@ int main(int argc, char** argv) {
 
   CHECK(FLAGS_keymaster_fd != -1)
       << "TODO(schuffelen): Add keymaster_fd alternative";
-  auto keymaster_server = cuttlefish::SharedFD::DupAndClose(FLAGS_keymaster_fd);
+  auto keymaster_server = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd);
   CHECK(keymaster_server->IsOpen()) << "Could not dup server fd: "
                                     << keymaster_server->StrError();
+  close(FLAGS_keymaster_fd);
 
   CHECK(FLAGS_gatekeeper_fd != -1)
       << "TODO(schuffelen): Add gatekeeper_fd alternative";
-  auto gatekeeper_server = cuttlefish::SharedFD::DupAndClose(FLAGS_gatekeeper_fd);
+  auto gatekeeper_server = cuttlefish::SharedFD::Dup(FLAGS_gatekeeper_fd);
   CHECK(gatekeeper_server->IsOpen()) << "Could not dup server fd: "
                                      << gatekeeper_server->StrError();
+  close(FLAGS_gatekeeper_fd);
 
 
   std::thread keymaster_thread([&keymaster_server, &keymaster]() {

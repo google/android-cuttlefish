@@ -35,14 +35,54 @@ DECLARE_bool(write_virtio_input);
 
 namespace cuttlefish {
 
+// TODO (b/147511234): de-dup this from vnc server and here
+struct virtio_input_event {
+  uint16_t type;
+  uint16_t code;
+  int32_t value;
+};
+
+struct InputEventBuffer {
+  virtual ~InputEventBuffer() = default;
+  virtual void AddEvent(uint16_t type, uint16_t code, int32_t value) = 0;
+  virtual size_t size() const = 0;
+  virtual const void *data() const = 0;
+};
+
+template <typename T>
+struct InputEventBufferImpl : public InputEventBuffer {
+  InputEventBufferImpl() {
+    buffer_.reserve(6);  // 6 is usually enough
+  }
+  void AddEvent(uint16_t type, uint16_t code, int32_t value) override {
+    buffer_.push_back({.type = type, .code = code, .value = value});
+  }
+  T *data() { return buffer_.data(); }
+  const void *data() const override { return buffer_.data(); }
+  std::size_t size() const override { return buffer_.size() * sizeof(T); }
+
+ private:
+  std::vector<T> buffer_;
+};
+
+std::unique_ptr<InputEventBuffer> GetEventBuffer() {
+  if (FLAGS_write_virtio_input) {
+    return std::unique_ptr<InputEventBuffer>(
+        new InputEventBufferImpl<virtio_input_event>());
+  } else {
+    return std::unique_ptr<InputEventBuffer>(
+        new InputEventBufferImpl<input_event>());
+  }
+}
+
 class ConnectionObserverImpl
     : public cuttlefish::webrtc_streaming::ConnectionObserver {
  public:
-  ConnectionObserverImpl(std::shared_ptr<TouchConnector> touch_connector,
-                         std::shared_ptr<KeyboardConnector> keyboard_connector,
+  ConnectionObserverImpl(cuttlefish::SharedFD touch_fd,
+                         cuttlefish::SharedFD keyboard_fd,
                          std::weak_ptr<DisplayHandler> display_handler)
-      : touch_connector_(touch_connector),
-        keyboard_connector_(keyboard_connector),
+      : touch_client_(touch_fd),
+        keyboard_client_(keyboard_fd),
         weak_display_handler_(display_handler) {}
   virtual ~ConnectionObserverImpl() = default;
 
@@ -58,7 +98,18 @@ class ConnectionObserverImpl
   }
   void OnTouchEvent(const std::string & /*display_label*/, int x, int y,
                     bool down) override {
-    touch_connector_->InjectTouchEvent(x, y, down);
+    auto buffer = GetEventBuffer();
+    if (!buffer) {
+      LOG(ERROR) << "Failed to allocate event buffer";
+      return;
+    }
+    buffer->AddEvent(EV_ABS, ABS_X, x);
+    buffer->AddEvent(EV_ABS, ABS_Y, y);
+    buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
+    buffer->AddEvent(EV_SYN, 0, 0);
+    cuttlefish::WriteAll(touch_client_,
+                         reinterpret_cast<const char *>(buffer->data()),
+                         buffer->size());
   }
   void OnMultiTouchEvent(const std::string &display_label, int /*id*/,
                          int /*slot*/, int x, int y,
@@ -66,7 +117,16 @@ class ConnectionObserverImpl
     OnTouchEvent(display_label, x, y, initialDown);
   }
   void OnKeyboardEvent(uint16_t code, bool down) override {
-    keyboard_connector_->InjectKeyEvent(code, down);
+    auto buffer = GetEventBuffer();
+    if (!buffer) {
+      LOG(ERROR) << "Failed to allocate event buffer";
+      return;
+    }
+    buffer->AddEvent(EV_KEY, code, down);
+    buffer->AddEvent(EV_SYN, 0, 0);
+    cuttlefish::WriteAll(keyboard_client_,
+                         reinterpret_cast<const char *>(buffer->data()),
+                         buffer->size());
   }
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
                             adb_message_sender) override {
@@ -112,22 +172,20 @@ class ConnectionObserverImpl
   }
 
  private:
-  std::shared_ptr<TouchConnector> touch_connector_;
-  std::shared_ptr<KeyboardConnector> keyboard_connector_;
+  cuttlefish::SharedFD touch_client_;
+  cuttlefish::SharedFD keyboard_client_;
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
-    std::shared_ptr<TouchConnector> touch_connector,
-    std::shared_ptr<KeyboardConnector> keyboard_connector)
-    : touch_connector_(touch_connector),
-      keyboard_connector_(keyboard_connector) {}
+    cuttlefish::SharedFD touch_fd, cuttlefish::SharedFD keyboard_fd)
+    : touch_fd_(touch_fd), keyboard_fd_(keyboard_fd) {}
 
 std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverImpl(touch_connector_, keyboard_connector_,
+      new ConnectionObserverImpl(touch_fd_, keyboard_fd_,
                                  weak_display_handler_));
 }
 
