@@ -108,12 +108,14 @@ const char* kEnableVncServer = "enable_vnc_server";
 const char* kEnableSandbox = "enable_sandbox";
 const char* kSeccompPolicyDir = "seccomp_policy_dir";
 
-const char* kGnssGrpcProxyBinary = "gnss_grpc_proxy_binary";
 const char* kEnableGnssGrpcProxy = "enable_gnss_grpc_proxy";
 
 const char* kEnableWebRTC = "enable_webrtc";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
+
+const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
+const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
 
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
@@ -123,8 +125,6 @@ const char* kRunAsDaemon = "run_as_daemon";
 const char* kDataPolicy = "data_policy";
 const char* kBlankDataImageMb = "blank_data_image_mb";
 const char* kBlankDataImageFmt = "blank_data_image_fmt";
-
-const char* kTombstoneReceiverBinary = "tombstone_receiver_binary";
 
 const char* kWebRTCCertsDir = "webrtc_certs_dir";
 const char* kSigServerPort = "webrtc_sig_server_port";
@@ -379,15 +379,6 @@ void CuttlefishConfig::set_tpm_device(const std::string& tpm_device) {
   (*dictionary_)[kTpmDevice] = tpm_device;
 }
 
-std::string CuttlefishConfig::gnss_grpc_proxy_binary() const {
-  return (*dictionary_)[kGnssGrpcProxyBinary].asString();
-}
-
-void CuttlefishConfig::set_gnss_grpc_proxy_binary(
-    const std::string& binary) {
-  (*dictionary_)[kGnssGrpcProxyBinary] = binary;
-}
-
 void CuttlefishConfig::set_enable_gnss_grpc_proxy(const bool enable_gnss_grpc_proxy) {
   (*dictionary_)[kEnableGnssGrpcProxy] = enable_gnss_grpc_proxy;
 }
@@ -430,6 +421,22 @@ void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
 
 bool CuttlefishConfig::enable_webrtc() const {
   return (*dictionary_)[kEnableWebRTC].asBool();
+}
+
+void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+
+bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
+  return (*dictionary_)[kEnableVehicleHalServer].asBool();
+}
+
+void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
+  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
+}
+
+std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
+  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {
@@ -493,14 +500,6 @@ std::string CuttlefishConfig::blank_data_image_fmt() const {
 
 void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_image_fmt) {
   (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
-}
-
-std::string CuttlefishConfig::tombstone_receiver_binary() const {
-  return (*dictionary_)[kTombstoneReceiverBinary].asString();
-}
-
-void CuttlefishConfig::set_tombstone_receiver_binary(const std::string& e2e_test_binary) {
-  (*dictionary_)[kTombstoneReceiverBinary] = e2e_test_binary;
 }
 
 bool CuttlefishConfig::use_bootloader() const {
