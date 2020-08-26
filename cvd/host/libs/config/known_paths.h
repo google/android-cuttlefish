@@ -22,10 +22,13 @@ namespace cuttlefish {
 std::string AdbConnectorBinary();
 std::string ConfigServerBinary();
 std::string ConsoleForwarderBinary();
+std::string GnssGrpcProxyBinary();
 std::string KernelLogMonitorBinary();
 std::string LogcatReceiverBinary();
+std::string MetricsBinary();
 std::string ModemSimulatorBinary();
 std::string SocketVsockProxyBinary();
+std::string TombstoneReceiverBinary();
 std::string WebRtcBinary();
 std::string WebRtcSigServerBinary();
 std::string VncServerBinary();
