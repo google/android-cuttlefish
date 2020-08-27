@@ -60,7 +60,15 @@ RUN cd /root/android-cuttlefish \
     && cd .. \
     && rm -rvf android-cuttlefish
 
+# to share X with the local docker host
+RUN apt-get install -y xterm
+
 RUN apt-get install -y curl wget unzip
+
+# to run cuttlefish docker in foreground, and test via webrtc/VNC
+RUN apt-get install -y tigervnc-viewer
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN apt-get install -y ./google-chrome-stable_current_amd64.deb && rm -f ./google-chrome-stable_current_amd64.deb
 
 RUN apt-get clean
 
