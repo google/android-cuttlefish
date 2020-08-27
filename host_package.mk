@@ -15,8 +15,6 @@ bin_path := $(notdir $(HOST_OUT_EXECUTABLES))
 lib_path := $(notdir $(HOST_OUT_SHARED_LIBRARIES))
 tests_path := $(notdir $(HOST_OUT_NATIVE_TESTS))
 webrtc_files_path := usr/share/webrtc
-x86_64_seccomp_files_path := usr/share/cuttlefish/x86_64-linux-gnu/seccomp
-aarch64_seccomp_files_path := usr/share/cuttlefish/aarch64-linux-gnu/seccomp
 modem_simulator_path := etc/modem_simulator
 
 cvd_host_executables := \
@@ -40,10 +38,6 @@ cvd_host_executables := \
     aarch64-linux-gnu/libminijail.so \
     aarch64-linux-gnu/libvirglrenderer.so.1 \
     x86_64-linux-gnu/crosvm \
-    x86_64-linux-gnu/libepoxy.so.0 \
-    x86_64-linux-gnu/libgbm.so.1 \
-    x86_64-linux-gnu/libminijail.so \
-    x86_64-linux-gnu/libvirglrenderer.so.1 \
     x86_64-linux-gnu/libc++.so.1 \
     x86_64-linux-gnu/libandroid-emu-shared.so \
     x86_64-linux-gnu/libemugl_common.so \
@@ -131,6 +125,14 @@ cvd_host_shared_libraries := \
     libjsoncpp.so \
     libgrpc++.so \
     android.hardware.automotive.vehicle@2.0.so \
+    libcap.so \
+    libdrm.so \
+    libepoxy.so \
+    libfdt.so \
+    libgbm.so \
+    libminijail.so \
+    libvirglrenderer.so \
+    libwayland_client.so
 
 webrtc_assets := \
     index.html \
@@ -145,47 +147,6 @@ webrtc_certs := \
     server.p12 \
     trusted.pem \
 
-x86_64_seccomp_files := \
-    9p_device.policy \
-    balloon_device.policy \
-    block_device.policy \
-    common_device.policy \
-    cras_audio_device.policy \
-    fs_device.policy \
-    gpu_device.policy \
-    input_device.policy \
-    net_device.policy \
-    null_audio_device.policy \
-    pmem_device.policy \
-    rng_device.policy \
-    serial.policy \
-    tpm_device.policy \
-    vfio_device.policy \
-    vhost_net_device.policy \
-    vhost_vsock_device.policy \
-    wl_device.policy \
-    xhci.policy \
-
-aarch64_seccomp_files := \
-    9p_device.policy \
-    balloon_device.policy \
-    block_device.policy \
-    common_device.policy \
-    cras_audio_device.policy \
-    fs_device.policy \
-    gpu_device.policy \
-    input_device.policy \
-    net_device.policy \
-    null_audio_device.policy \
-    pmem_device.policy \
-    rng_device.policy \
-    serial.policy \
-    tpm_device.policy \
-    vhost_net_device.policy \
-    vhost_vsock_device.policy \
-    wl_device.policy \
-    xhci.policy \
-
 cvd_host_webrtc_files := \
     $(addprefix assets/,$(webrtc_assets)) \
     $(addprefix certs/,$(webrtc_certs)) \
@@ -194,14 +155,16 @@ modem_simulator_files := \
      iccprofile_for_sim0.xml \
      numeric_operator.xml \
 
+include external/crosvm/seccomp/host_package.mk
+
 cvd_host_package_files := \
      $(addprefix $(bin_path)/,$(cvd_host_executables)) \
      $(addprefix $(lib_path)/,$(cvd_host_shared_libraries)) \
      $(foreach test,$(cvd_host_tests), ${tests_path}/$(test)/$(test)) \
      $(addprefix $(webrtc_files_path)/,$(cvd_host_webrtc_files)) \
-     $(addprefix $(x86_64_seccomp_files_path)/,$(x86_64_seccomp_files)) \
-     $(addprefix $(aarch64_seccomp_files_path)/,$(aarch64_seccomp_files)) \
      $(addprefix $(modem_simulator_path)/files/,$(modem_simulator_files)) \
+     $(crosvm_inline_seccomp_policy_x86_64) \
+     $(crosvm_inline_seccomp_policy_aarch64) \
 
 $(cvd_host_package_tar): PRIVATE_FILES := $(cvd_host_package_files)
 $(cvd_host_package_tar): $(addprefix $(HOST_OUT)/,$(cvd_host_package_files))
