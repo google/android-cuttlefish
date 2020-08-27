@@ -17,19 +17,31 @@ cd android-cuttlefish
 ```
 # Starting and provisioning the container
 
+## Creating and deleting the container
+
 Set up your environment:
 
 ```bash
 source setup.sh # once in each terminal window
 ```
 
-To create a container:
+Create a container:
 
 ```bash
 cvd_docker_create <name> # <name defaults to cuttlefish>
 ```
 
-To stop and delete a container:
+Note that a few options are provided in creating the container:
+
+```bash
+cvd_docker_create -h
+```
+
+The options include but are not limited to:
+1. pull the host packages and images from a host directory
+1. mount the host directories to the docker container: log directory, .gitconfig, etc
+1. run the docker container in foreground
+   1. have the guest applications (e.g. Cuttlefish) use the host X server
 
 ```bash
 cvd_docker_rm <name> # <name defaults to cuttlefish>
@@ -41,8 +53,12 @@ To list the Cuttlefish containers:
 cvd_docker_list
 ```
 
+## Installing the Cuttlefish and Android images on it
+
 There are three ways to provision a container (that is, to install the Cuttlefish
 and Android images on it.)
+
+### Re-using a locally built Android
 
 If cvd_docker_create detects an [Android build
 environment](https://source.android.com/setup/build/building) that is set up to
@@ -51,30 +67,50 @@ binary artifacts.  Assuming you have downloaded, set up, and built a Cuttlefish
 device and Android from the sources, and you call cvd_docker_create in the same
 terminal, you can jump ahead to launching Cuttlefish.
 
+### Building Android from the source with build-android-with-docker.sh
+
 If you do not have the Android build environment, alternatively, you
-can build Android and Cuttlefish with another docker container. We are
-offering a wrapper script for that. Say, the source is downloaded to
-$HOME/android-src, we can run these to commands to build Android from
-the source:
+can build Android and Cuttlefish with
+build-android-with-docker.sh. This is a wrapper for another docker
+container dedicated to build Cuttlefish and Android from the source.
+
+The source could be downloaded by following the instructions
+[here](https://source.android.com/setup/build/downloading). Once repo
+sync is done, the source tree is ready for build.
+
+Say, the source is downloaded to $HOME/android-src. The following
+command will build the Android and Cuttlefish from the source.
+
 ```bash
-./build-android-with-docker.sh --help
 ./build-android-with-docker.sh --android-src-mntptr "$HOME/android-src:/home/vsoc-01/build"
 ```
 
-That does build Android and Cuttlefish, and save them where you
-downloaded the source. It does not, however, allow you to automatically jump ahead to launching
-Cuttlefish. We are improving the process but for now, these commands
-will prepare for running Cuttlefish with a container:
+For more detail:
 ```bash
-export ANDROID_BUILD_TOP=$HOME/android-src
-export ANDROID_PRODUCT_OUT=$(dirname `find $ANDROID_BUILD_TOP/out |
-egrep "*/boot\.img$"`)
-export ANDROID_HOST_OUT=$(dirname `find $ANDROID_BUILD_TOP/out/host/ |
-egrep "/bin/launch_cvd$")
+./build-android-with-docker.sh --help
 ```
-After those commands, you can run the docker image and run the
-container.
 
+Although the command will build Android and Cuttlefish, the docker
+contaienr cannot automatically detect the directory. The docker
+container depends on the ANDROID_BUILD_TOP environment variable. If
+Android was built locally, the variable is set. However, the build
+here is being done via another docker container, the environment
+variables are not set.
+
+To set the environment variable, there would be two options. Firstly,
+the variable could set explicitly:
+
+```bash
+export ANDROID_BUILD_TOP=$HOME/android-src # <Android top directory is $HOME/android-src>
+```
+
+Alternatively, -a option could be added to cvd\_docker\_create above:
+
+```bash
+cvd_docker_create -a $HOME/android-src <name> # <name defaults to cuttlefish>
+```
+
+### Using pre-built cuttlefish image
 If you you want to provision
 the container with a prebuilt cuttlefish image for example, from [AOSP
 CI](htts://ci.android.com), you can follow the steps to [obtain a prebuilt image
@@ -88,6 +124,7 @@ obtained the image at step #8, you can copy it to your container as follows:
 ssh vsoc-01@${ip_cuttlefish} -- 'tar xzvf -' < cvd-host_package.tar.gz
 scp *.img vsoc-01@${ip_cuttlefish}:~/
 ```
+
 As an aid, if you would like to fetch the latest Cuttlefish build from AOSP:
 
 ```bash
