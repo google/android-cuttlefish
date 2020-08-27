@@ -124,7 +124,7 @@ DEFINE_bool(enable_sandbox,
             "Enable crosvm sandbox. Use this when you are sure about what you are doing.");
 
 static const std::string kSeccompDir =
-    std::string("usr/share/cuttlefish/") + cuttlefish::HostArch() + "-linux-gnu/seccomp";
+    std::string("usr/share/crosvm/") + cuttlefish::HostArch() + "-linux-gnu/seccomp";
 DEFINE_string(seccomp_policy_dir,
               cuttlefish::DefaultHostArtifactsPath(kSeccompDir),
               "With sandbox'ed crosvm, overrieds the security comp policy directory");
