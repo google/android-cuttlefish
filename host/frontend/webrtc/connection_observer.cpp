@@ -163,10 +163,16 @@ class ConnectionObserverImpl
     LOG(VERBOSE) << "Control command: " << command << " (" << state << ")";
     if (command == "power") {
       OnKeyboardEvent(KEY_POWER, state == "down");
-    }
-    else {
+    } else if (command == "home") {
+      OnKeyboardEvent(KEY_HOMEPAGE, state == "down");
+    } else if (command == "volumemute") {
+      OnKeyboardEvent(KEY_MUTE, state == "down");
+    } else if (command == "volumedown") {
+      OnKeyboardEvent(KEY_VOLUMEDOWN, state == "down");
+    } else if (command == "volumeup") {
+      OnKeyboardEvent(KEY_VOLUMEUP, state == "down");
+    } else {
       LOG(WARNING) << "Unsupported control command: " << command << " (" << state << ")";
-      // TODO(b/163628929): Handle VOLUME commands.
       // TODO(b/163081337): Handle custom commands.
     }
   }
