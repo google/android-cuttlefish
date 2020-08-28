@@ -74,6 +74,8 @@ class Streamer {
                                                 int width, int height, int dpi,
                                                 bool touch_enabled) = 0;
 
+  virtual void SetHardwareSpecs(int cpus, int memory_mb) = 0;
+
   // TODO (b/128328845): Implement audio, return a shared_ptr to a class
   // equivalent to webrtc::AudioSinkInterface.
   virtual void AddAudio(const std::string& label) = 0;
