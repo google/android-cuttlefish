@@ -64,10 +64,10 @@ function ConnectToDevice(device_id) {
     button.innerHTML = icon_name;
   }
   createControlPanelButton('power', 'Power', 'power_settings_new');
-  // TODO(b/163628929): Add volume buttons.
-  //createControlPanelButton('volumemute', 'Volume Mute', 'volume_mute');
-  //createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
-  //createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
+  createControlPanelButton('home', 'Home', 'home');
+  createControlPanelButton('volumemute', 'Volume Mute', 'volume_mute');
+  createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
+  createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
 
   let options = {
     wsUrl: ((location.protocol == 'http:') ? 'ws://' : 'wss://') +
