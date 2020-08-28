@@ -30,6 +30,9 @@ TARGET_NATIVE_BRIDGE_ARCH_VARIANT := armv7-a-neon
 TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_ABI := armeabi-v7a armeabi
 
+TARGET_NO_BOOTLOADER := false
+BOARD_PREBUILT_BOOTLOADER := device/google/cuttlefish_prebuilts/bootloader/crosvm_x86_64/u-boot.rom
+
 BUILD_BROKEN_DUP_RULES := true
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/5.4-x86_64/*.ko)
 
