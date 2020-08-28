@@ -48,6 +48,7 @@ body {
 #control_view {
     text-align: left;
     padding: 10px;
+    min-width: 450px;
 }
 
 /* Screens >1000px place the device view on the left and the control
@@ -92,6 +93,17 @@ body {
     background-color: #c9c9c9;
 }
 
+#device_details {
+    font-family: 'Open Sans', sans-serif;
+    color: white;
+    background-color: #383838;
+    margin-top: 20px;
+    padding: 20px;
+    padding-top: 1px;
+}
+#device_details span {
+    white-space: pre;
+}
 
 #logcat {
     display: none;
