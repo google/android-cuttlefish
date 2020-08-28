@@ -88,7 +88,32 @@ function ConnectToDevice(device_id) {
         deviceScreen.srcObject = videoStream;
       }).catch(e => console.error('Unable to get display stream: ', e));
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
+      // TODO(b/163080005): Call updateDeviceDetails for any dynamic device
+      // details that may change after this initial connection.
+      updateDeviceDetails(deviceConnection.description);
   });
+
+  function updateDeviceDetails(deviceInfo) {
+    if (deviceInfo.hardware) {
+      let cpus = deviceInfo.hardware.cpus;
+      let memory_mb = deviceInfo.hardware.memory_mb;
+      updateDeviceDetails.hardwareDetails =
+          `CPUs - ${cpus}\nDevice RAM - ${memory_mb}mb`;
+    }
+    if (deviceInfo.displays) {
+      let dpi = deviceInfo.displays[0].dpi;
+      let x_res = deviceInfo.displays[0].x_res;
+      let y_res = deviceInfo.displays[0].y_res;
+      updateDeviceDetails.displayDetails =
+          `Display - ${x_res}x${y_res} (${dpi}DPI)`;
+    }
+    document.getElementById('device_details_hardware').textContent = [
+        updateDeviceDetails.hardwareDetails,
+        updateDeviceDetails.displayDetails,
+    ].join('\n');
+  }
+  updateDeviceDetails.hardwareDetails = '';
+  updateDeviceDetails.displayDetails = '';
 
   function onKeyboardCaptureClick(e) {
     const selectedClass = 'selected';
