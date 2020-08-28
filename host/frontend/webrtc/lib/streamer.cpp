@@ -48,6 +48,9 @@ constexpr auto kYResField = "y_res";
 constexpr auto kDpiField = "dpi";
 constexpr auto kIsTouchField = "is_touch";
 constexpr auto kDisplaysField = "displays";
+constexpr auto kCpusField = "cpus";
+constexpr auto kMemoryMbField = "memory_mb";
+constexpr auto kHardwareField = "hardware";
 
 void SendJson(WsConnection* ws_conn, const Json::Value& data) {
   Json::FastWriter json_writer;
@@ -90,6 +93,7 @@ class StreamerImpl : public Streamer {
   std::shared_ptr<VideoSink> AddDisplay(const std::string& label, int width,
                                         int height, int dpi,
                                         bool touch_enabled) override;
+  void SetHardwareSpecs(int cpus, int memory_mb) override;
   void AddAudio(const std::string& label) override;
   void Register(std::weak_ptr<OperatorObserver> operator_observer) override;
   void Unregister() override;
@@ -119,6 +123,10 @@ class StreamerImpl : public Streamer {
     int dpi;
     bool touch_enabled;
     rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
+  };
+  struct HardwareDescriptor {
+    int cpus;
+    int memory_mb;
   };
   // TODO (jemoreira): move to a place in common with the signaling server
   struct OperatorServerConfig {
@@ -154,6 +162,7 @@ class StreamerImpl : public Streamer {
   std::map<int, std::shared_ptr<ClientHandler>> clients_;
   std::shared_ptr<WsObserver> ws_observer_;
   std::weak_ptr<OperatorObserver> operator_observer_;
+  HardwareDescriptor hardware_;
 };
 
 StreamerImpl::StreamerImpl(
@@ -190,6 +199,11 @@ std::shared_ptr<VideoSink> StreamerImpl::AddDisplay(const std::string& label,
         return std::shared_ptr<VideoSink>(
             new VideoTrackSourceImplSinkWrapper(source));
       });
+}
+
+void StreamerImpl::SetHardwareSpecs(int cpus, int memory_mb) {
+  hardware_.cpus = cpus;
+  hardware_.memory_mb = memory_mb;
 }
 
 void StreamerImpl::AddAudio(const std::string& label) {
@@ -248,6 +262,10 @@ void StreamerImpl::OnOpen() {
       displays.append(display);
     }
     device_info[kDisplaysField] = displays;
+    Json::Value hardware;
+    hardware[kCpusField] = hardware_.cpus;
+    hardware[kMemoryMbField] = hardware_.memory_mb;
+    device_info[kHardwareField] = hardware;
     register_obj[cuttlefish::webrtc_signaling::kDeviceInfoField] = device_info;
     SendJson(server_connection_.get(), register_obj);
     // Do this last as OnRegistered() is user code and may take some time to
