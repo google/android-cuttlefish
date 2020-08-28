@@ -38,6 +38,7 @@ TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
+    boot \
     odm \
     odm_dlkm \
     product \
@@ -46,6 +47,7 @@ AB_OTA_PARTITIONS += \
     vbmeta \
     vbmeta_system \
     vendor \
+    vendor_boot \
     vendor_dlkm \
 
 # Enable Virtual A/B
