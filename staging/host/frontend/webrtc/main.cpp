@@ -101,6 +101,8 @@ int main(int argc, char **argv) {
 
   observer_factory->SetDisplayHandler(display_handler);
 
+  streamer->SetHardwareSpecs(cvd_config->cpus(), cvd_config->memory_mb());
+
   std::shared_ptr<cuttlefish::webrtc_streaming::OperatorObserver> operator_observer(
       new CfOperatorObserver());
   streamer->Register(operator_observer);
