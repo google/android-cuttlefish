@@ -18,6 +18,7 @@
 #include <endian.h>
 #include <stddef.h>
 
+#include <tss2/tss2_esys.h>
 #include <tss2/tss2_rc.h>
 
 #include "host/commands/secure_env/tpm_commands.h"
@@ -77,6 +78,36 @@ InProcessTpm::InProcessTpm() {
   }
   _rpc__Signal_PowerOn(false);
   _rpc__Signal_NvOn();
+
+  ESYS_CONTEXT* esys = nullptr;
+  auto rc = Esys_Initialize(&esys, TctiContext(), nullptr);
+  if (rc != TPM2_RC_SUCCESS) {
+    LOG(FATAL) << "Could not initialize esys: " << Tss2_RC_Decode(rc)
+               << " (" << rc << ")";
+  }
+
+  rc = Esys_Startup(esys, TPM2_SU_CLEAR);
+  if (rc != TPM2_RC_SUCCESS) {
+    LOG(FATAL) << "TPM2_Startup failed: " << Tss2_RC_Decode(rc)
+               << " (" << rc << ")";
+  }
+
+  TPM2B_AUTH auth = {};
+  Esys_TR_SetAuth(esys, ESYS_TR_RH_LOCKOUT, &auth);
+
+  rc = Esys_DictionaryAttackLockReset(
+    /* esysContext */ esys,
+    /* lockHandle */ ESYS_TR_RH_LOCKOUT,
+    /* shandle1 */ ESYS_TR_PASSWORD,
+    /* shandle2 */ ESYS_TR_NONE,
+    /* shandle3 */ ESYS_TR_NONE);
+
+  if (rc != TPM2_RC_SUCCESS) {
+    LOG(FATAL) << "Could not reset TPM lockout: " << Tss2_RC_Decode(rc)
+               << " (" << rc << ")";
+  }
+
+  Esys_Finalize(&esys);
 }
 
 InProcessTpm::~InProcessTpm() {
