@@ -75,6 +75,7 @@ DEFINE_int32(blank_metadata_image_mb, 16,
 DEFINE_int32(blank_sdcard_image_mb, 2048,
              "The size of the blank sdcard image to generate, MB.");
 
+DECLARE_string(bootloader);
 DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
@@ -121,6 +122,10 @@ bool ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("vbmeta_system_image",
                                default_vbmeta_system_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  std::string default_bootloader = FLAGS_system_image_dir + "/bootloader";
+  SetCommandLineOptionWithMode("bootloader",
+                               default_bootloader.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
@@ -160,6 +165,10 @@ static std::vector<ImagePartition> disk_config() {
   partitions.push_back(ImagePartition {
     .label = "misc",
     .image_file_path = FLAGS_misc_image,
+  });
+  partitions.push_back(ImagePartition {
+    .label = "bootloader",
+    .image_file_path = FLAGS_bootloader,
   });
   partitions.push_back(ImagePartition {
     .label = "boot_a",
@@ -406,6 +415,11 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
         exit(cuttlefish::kCuttlefishConfigurationInitError);
       }
     }
+  }
+
+  if (!cuttlefish::FileHasContent(FLAGS_bootloader)) {
+    LOG(ERROR) << "File not found: " << FLAGS_bootloader;
+    exit(cuttlefish::kCuttlefishConfigurationInitError);
   }
 
   if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
