@@ -33,6 +33,7 @@ enum FileSource {
   KERNEL_BUILD,
   LOCAL_FILE,
   GENERATED,
+  BOOTLOADER_BUILD,
 };
 
 /*
