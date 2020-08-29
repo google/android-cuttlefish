@@ -47,6 +47,7 @@ DEFINE_string(default_build, DEFAULT_BRANCH + "/" + DEFAULT_BUILD_TARGET,
               "source for the cuttlefish build to use (vendor.img + host)");
 DEFINE_string(system_build, "", "source for system.img and product.img");
 DEFINE_string(kernel_build, "", "source for the kernel or gki target");
+DEFINE_string(bootloader_build, "", "source for the bootloader target");
 DEFINE_string(otatools_build, "", "source for the host ota tools");
 
 DEFINE_bool(download_img_zip, true, "Whether to fetch the -img-*.zip file.");
@@ -423,6 +424,21 @@ int FetchCvdMain(int argc, char** argv) {
         }
         AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
                          {target_dir + "/initramfs.img"}, &config);
+      }
+    }
+
+    if (FLAGS_bootloader_build != "") {
+      auto bootloader_build = ArgumentToBuild(&build_api,
+                                              FLAGS_bootloader_build,
+                                              "u-boot_crosvm_x86_64",
+					      retry_period);
+
+      std::string local_path = target_dir + "/bootloader";
+      if (build_api.ArtifactToFile(bootloader_build, "u-boot.rom", local_path)) {
+        AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build, {local_path}, &config);
+      } else {
+        LOG(FATAL) << "Could not download " << bootloader_build << ":u-boot.rom to "
+            << local_path;
       }
     }
   }
