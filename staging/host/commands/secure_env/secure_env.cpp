@@ -71,11 +71,6 @@ int main(int argc, char** argv) {
                  << " (" << rc << ")";
     }
     esys.reset(esys_ptr);
-    rc = Esys_Startup(esys.get(), TPM2_SU_CLEAR);
-    if (rc != TPM2_RC_SUCCESS) {
-      LOG(FATAL) << "TPM2_Startup failed: " << Tss2_RC_Decode(rc)
-                 << " (" << rc << ")";
-    }
     resource_manager.reset(new TpmResourceManager(esys.get()));
     keymaster_context = new TpmKeymasterContext(resource_manager.get());
   } else {
