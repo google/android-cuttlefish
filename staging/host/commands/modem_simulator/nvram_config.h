@@ -23,11 +23,11 @@ namespace cuttlefish {
 class NvramConfig {
 
  public:
-  static void InitNvramConfigService(size_t num_instances);
+  static void InitNvramConfigService(size_t num_instances, int sim_type);
   static const NvramConfig* Get();
   static void SaveToFile();
 
-  NvramConfig(size_t num_instances);
+  NvramConfig(size_t num_instances, int sim_type);
   NvramConfig(NvramConfig&&);
   ~NvramConfig();
   NvramConfig& operator=(NvramConfig&&);
@@ -41,6 +41,8 @@ class NvramConfig {
   InstanceSpecific ForInstance(int instance_num) const;
 
   std::vector<InstanceSpecific> Instances() const;
+
+  int sim_type() const;
 
   // A view into an existing modem simulator object for a particular instance.
   class InstanceSpecific {
@@ -77,10 +79,11 @@ class NvramConfig {
  private:
   static std::unique_ptr<NvramConfig> s_nvram_config;
   size_t total_instances_;
+  int sim_type_;
   std::unique_ptr<Json::Value> dictionary_;
 
   bool LoadFromFile(const char* file);
-  static NvramConfig* BuildConfigImpl(size_t num_instances);
+  static NvramConfig* BuildConfigImpl(size_t num_instances, int sim_type);
 
   void InitDefaultNvramConfig();
 

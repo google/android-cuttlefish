@@ -383,6 +383,9 @@ void LaunchModemSimulatorIfEnabled(
         return KillSubprocess(proc);
       });
 
+  auto sim_type = config.modem_simulator_sim_type();
+  cmd.AddParameter(std::string{"-sim_type="} + std::to_string(sim_type));
+
   auto instance = config.ForDefaultInstance();
   auto ports = instance.modem_simulator_ports();
   auto param_builder = cmd.GetParameterBuilder();
