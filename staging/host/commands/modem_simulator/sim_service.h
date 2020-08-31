@@ -39,6 +39,7 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
   void HandleSIMStatusReq(const Client& client);
   void HandleChangeOrEnterPIN(const Client& client, const std::string& command);
   void HandleSIM_IO(const Client& client, const std::string& command);
+  void HandleCSIM_IO(const Client& client, const std::string& command);
   void HandleGetIMSI(const Client& client);
   void HandleGetIccId(const Client& client);
   void HandleFacilityLock(const Client& client, const std::string& command);
@@ -53,6 +54,8 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
   void HandleCdmaSubscriptionSource(const Client& client,
                                     const std::string& command);
   void HandleCdmaRoamingPreference(const Client& client,
+                                   const std::string& command);
+  void HandleSimAuthentication(const Client& client,
                                    const std::string& command);
 
   void SavePinStateToIccProfile();
@@ -259,6 +262,7 @@ class SimService : public ModemService, public std::enable_shared_from_this<SimS
       df_name(""), is_open(false), session_id(session_id) {};
   };
   std::vector<LogicalChannel> logical_channels_;
+  std::string last_file_id_;
 
   int cdma_subscription_source_;
   int cdma_roaming_preference_;
