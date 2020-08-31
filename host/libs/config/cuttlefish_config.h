@@ -294,6 +294,9 @@ class CuttlefishConfig {
   void set_modem_simulator_instance_number(int instance_numbers);
   int modem_simulator_instance_number() const;
 
+  void set_modem_simulator_sim_type(int sim_type);
+  int modem_simulator_sim_type() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 

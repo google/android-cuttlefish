@@ -120,6 +120,7 @@ extern "C" {
 #define MAX_RADIO_ACCESS_NETWORKS 8
 #define MAX_BROADCAST_SMS_CONFIG_INFO 25
 
+#define RIL_RADIO_ACCESS_SPECIFIER_MAX_SIZE 8
 
 typedef void * RIL_Token;
 
@@ -1242,6 +1243,81 @@ typedef struct {
                                  * supports eUICC. */
 } RIL_CardStatus_v1_4;
 
+typedef enum {
+    RIL_PERSOSUBSTATE_UNKNOWN_1_5                   = 0, /* initial state */
+    RIL_PERSOSUBSTATE_IN_PROGRESS_1_5               = 1, /* in between each lock transition */
+    RIL_PERSOSUBSTATE_READY_1_5                     = 2, /* when either SIM or RUIM Perso is finished
+                                                        since each app can only have 1 active perso
+                                                        involved */
+    RIL_PERSOSUBSTATE_SIM_NETWORK_1_5               = 3,
+    RIL_PERSOSUBSTATE_SIM_NETWORK_SUBSET_1_5        = 4,
+    RIL_PERSOSUBSTATE_SIM_CORPORATE_1_5             = 5,
+    RIL_PERSOSUBSTATE_SIM_SERVICE_PROVIDER_1_5      = 6,
+    RIL_PERSOSUBSTATE_SIM_SIM_1_5                   = 7,
+    RIL_PERSOSUBSTATE_SIM_NETWORK_PUK_1_5           = 8, /* The corresponding perso lock is blocked */
+    RIL_PERSOSUBSTATE_SIM_NETWORK_SUBSET_PUK_1_5    = 9,
+    RIL_PERSOSUBSTATE_SIM_CORPORATE_PUK_1_5         = 10,
+    RIL_PERSOSUBSTATE_SIM_SERVICE_PROVIDER_PUK_1_5  = 11,
+    RIL_PERSOSUBSTATE_SIM_SIM_PUK_1_5               = 12,
+    RIL_PERSOSUBSTATE_RUIM_NETWORK1_1_5             = 13,
+    RIL_PERSOSUBSTATE_RUIM_NETWORK2_1_5             = 14,
+    RIL_PERSOSUBSTATE_RUIM_HRPD_1_5                 = 15,
+    RIL_PERSOSUBSTATE_RUIM_CORPORATE_1_5            = 16,
+    RIL_PERSOSUBSTATE_RUIM_SERVICE_PROVIDER_1_5     = 17,
+    RIL_PERSOSUBSTATE_RUIM_RUIM_1_5                 = 18,
+    RIL_PERSOSUBSTATE_RUIM_NETWORK1_PUK_1_5         = 19, /* The corresponding perso lock is blocked */
+    RIL_PERSOSUBSTATE_RUIM_NETWORK2_PUK_1_5         = 20,
+    RIL_PERSOSUBSTATE_RUIM_HRPD_PUK_1_5             = 21,
+    RIL_PERSOSUBSTATE_RUIM_CORPORATE_PUK_1_5        = 22,
+    RIL_PERSOSUBSTATE_RUIM_SERVICE_PROVIDER_PUK_1_5 = 23,
+    RIL_PERSOSUBSTATE_RUIM_RUIM_PUK_1_5             = 24,
+    /**
+     * The device is personalized using the content of the Service Provider Name (SPN) in the SIM
+     * card.
+     */
+    RIL_PERSOSUBSTATE_SIM_SPN,
+    RIL_PERSOSUBSTATE_SIM_SPN_PUK,
+    /**
+     * Service Provider and Equivalent Home PLMN
+     * The device is personalized using both the content of the GID1 (equivalent to service provider
+     * personalization) and the content of the Equivalent Home PLMN (EHPLMN) in the SIM card.
+     * If the GID1 in the SIM is absent, then just the content of the Equivalent Home PLMN
+     * is matched.
+     */
+    RIL_PERSOSUBSTATE_SIM_SP_EHPLMN,
+    RIL_PERSOSUBSTATE_SIM_SP_EHPLMN_PUK,
+    /**
+     * Device is personalized using the first digits of the ICCID of the SIM card.
+     */
+    RIL_PERSOSUBSTATE_SIM_ICCID,
+    RIL_PERSOSUBSTATE_SIM_ICCID_PUK,
+    /**
+     * Device is personalized using the content of the IMPI in the ISIM.
+     */
+    RIL_PERSOSUBSTATE_SIM_IMPI,
+    RIL_PERSOSUBSTATE_SIM_IMPI_PUK,
+    /**
+      * Network Subset and Service Provider
+     * Device is personalized using both the content of GID1 (equivalent to service provider
+     * personalization) and the first digits of the IMSI (equivalent to network subset
+     * personalization).
+     */
+    RIL_PERSOSUBSTATE_SIM_NS_SP,
+    RIL_PERSOSUBSTATE_SIM_NS_SP_PUK,
+} RIL_PersoSubstateV1_5;
+
+typedef struct {
+    RIL_AppStatus base;
+    RIL_PersoSubstateV1_5 persoSubstate;
+} RIL_AppStatusV1_5;
+
+typedef struct {
+    RIL_CardStatus_v1_4 base;
+
+    /** size <= RadioConst::CARD_MAX_APPS */
+    RIL_AppStatusV1_5 applications[RIL_CARD_MAX_APPS];
+} RIL_CardStatus_v1_5;  // 1.5
+
 /** The result of a SIM refresh, returned in data[0] of RIL_UNSOL_SIM_REFRESH
  *      or as part of RIL_SimRefreshResponse_v7
  */
@@ -1494,6 +1570,102 @@ typedef struct {
     RIL_NR_SignalStrength       NR_SignalStrength;
 } RIL_SignalStrength_v12;
 
+/**
+ * Defining signal strength type.
+ */
+typedef enum {
+    /**
+     * Received Signal Strength Indication.
+     * Range: -113 dBm and -51 dBm
+     * Used RAN: GERAN, CDMA2000
+     * Reference: 3GPP TS 27.007 section 8.5.
+     */
+    RSSI = 1,
+    /**
+     * Received Signal Code Power.
+     * Range: -120 dBm to -25 dBm;
+     * Used RAN: UTRAN
+     * Reference: 3GPP TS 25.123, section 9.1.1.1
+     */
+    RSCP = 2,
+    /**
+     * Reference Signal Received Power.
+     * Range: -140 dBm to -44 dBm;
+     * Used RAN: EUTRAN
+     * Reference: 3GPP TS 36.133 9.1.4
+     */
+    RSRP = 3,
+    /**
+     * Reference Signal Received Quality
+     * Range: -34 dB to 3 dB;
+     * Used RAN: EUTRAN
+     * Reference: 3GPP TS 36.133 v12.6.0 section 9.1.7
+     */
+    RSRQ = 4,
+    /**
+     * Reference Signal Signal to Noise Ratio
+     * Range: -20 dB to 30 dB;
+     * Used RAN: EUTRAN
+     * Note: this field is optional; how to support it can be decided by the
+     * corresponding vendor. Though the response code is not enforced,
+     * vendor's implementation must ensure this interface not crashing.
+     */
+    RSSNR = 5,
+    /**
+     * 5G SS reference signal received power.
+     * Range: -140 dBm to -44 dBm.
+     * Used RAN: NGRAN
+     * Reference: 3GPP TS 38.215.
+     */
+    SSRSRP = 6,
+    /**
+     * 5G SS reference signal received quality.
+     * Range: -20 dB to -3 dB.
+     * Used RAN: NGRAN
+     * Reference: 3GPP TS 38.215.
+     */
+    SSRSRQ = 7,
+    /**
+     * 5G SS signal-to-noise and interference ratio.
+     * Range: -23 dB to 40 dB
+     * Used RAN: NGRAN
+     * Reference: 3GPP TS 38.215 section 5.1.*, 3GPP TS 38.133 section 10.1.16.1.
+     */
+    SSSINR = 8,
+} SignalMeasurementType;
+
+typedef enum {
+    RADIO_ACCESS_UNKNOWN = 0, /* Unknown access network */
+    RADIO_ACCESS_NET_GERAN = 1, /* GSM EDGE Radio Access Network */
+    RADIO_ACCESS_NET_UTRAN = 2, /* Universal Terrestrial Radio Access Network */
+    RADIO_ACCESS_NET_EUTRAN = 3, /* Evolved Universal Terrestrial Radio Access Network */
+    RADIO_ACCESS_NET_CDMA2000 = 4, /* CDMA 2000 network */
+    RADIO_ACCESS_NET_IWLAN = 5, /* Interworking Wireless LAN */
+    RADIO_ACCESS_NET_NGRAN = 6, /* Next-Generation Radio Access Network */
+/* the following definitions are extended in radio/1.4 */
+} RIL_RadioAccessNetworks_v1_5;
+
+typedef struct {
+    int32_t hysteresisMs;
+    int32_t hysteresisDb;
+    int32_t thresholdsDbmNumber;
+    int32_t *thresholdsDbm;
+    bool isEnabled;
+    SignalMeasurementType signalMeasurement;
+    RIL_RadioAccessNetworks_v1_5 accessNetwork;
+} RIL_SignalStrengthReportingCriteria_v1_5;
+
+typedef struct {
+    int32_t hysteresisMs;
+    int32_t hysteresisDlKbps;
+    int32_t hysteresisUlKbps;
+    int32_t thresholdsDownlinkKbpsLength;
+    int32_t *thresholdsDownlinkKbps;
+    int32_t thresholdsUplinkKbpsLength;
+    int32_t *thresholdsUplinkKbps;
+    RIL_RadioAccessNetworks_v1_5 accessNetwork;
+} RIL_LinkCapacityReportingCriteria;
+
 typedef struct {
     int mcc;    /* 3-digit Mobile Country Code, 0..999, INT_MAX if unknown */
     int mnc;    /* 2 or 3-digit Mobile Network Code, 0..999;
@@ -1742,6 +1914,89 @@ typedef struct {
 } RIL_CellIdentity_v20;
 
 typedef struct {
+    int mcc;    /* 3-digit Mobile Country Code, 0..999, INT_MAX if unknown */
+    int mnc;    /* 2 or 3-digit Mobile Network Code, 0..999, INT_MAX if unknown */
+    int mnc_digit;/*2 or 3-digit*/
+    int lac;    /* 16-bit Location Area Code, 0..65535, INT_MAX if unknown  */
+    int cid;    /* 16-bit GSM Cell Identity described in TS 27.007, 0..65535, INT_MAX if unknown  */
+    int arfcn;  /* 16-bit GSM Absolute RF channel number, INT_MAX if unknown */
+    uint8_t bsic;/* 6-bit Base Station Identity Code, 0xFF if unknown */
+
+    RIL_CellIdentityOperatorNames operatorNames;
+} RIL_CellIdentityGsm_v1_2;
+
+typedef struct {
+    int mcc;    /* 3-digit Mobile Country Code, 0..999, INT_MAX if unknown  */
+    int mnc;    /* 2 or 3-digit Mobile Network Code, 0..999, INT_MAX if unknown  */
+    int mnc_digit;/*2 or 3-digit*/
+    int lac;    /* 16-bit Location Area Code, 0..65535, INT_MAX if unknown  */
+    int cid;    /* 28-bit UMTS Cell Identity described in TS 25.331, 0..268435455, INT_MAX if unknown  */
+    int psc;    /* 9-bit UMTS Primary Scrambling Code described in TS 25.331, 0..511, INT_MAX if unknown */
+    int uarfcn; /* 16-bit UMTS Absolute RF Channel Number, INT_MAX if unknown */
+
+    RIL_CellIdentityOperatorNames operatorNames;
+} RIL_CellIdentityWcdma_v1_2;
+
+typedef struct {
+    int mcc;    /* 3-digit Mobile Country Code, 0..999, INT_MAX if unknown  */
+    int mnc;    /* 2 or 3-digit Mobile Network Code, 0..999, INT_MAX if unknown  */
+    int mnc_digit;/*2 or 3-digit*/
+    int ci;     /* 28-bit Cell Identity described in TS ???, INT_MAX if unknown */
+    int pci;    /* physical cell id 0..503; this value must be reported */
+    int tac;    /* 16-bit tracking area code, INT_MAX if unknown  */
+    int earfcn; /* 18-bit LTE Absolute RF Channel Number; this value must be reported */
+
+    RIL_CellIdentityOperatorNames operatorNames;
+    int32_t bandwidth;  /* Cell bandwidth, in kHz. */
+} RIL_CellIdentityLte_v1_2;
+
+typedef struct {
+    int mcc;    /* 3-digit Mobile Country Code, 0..999, INT_MAX if unknown  */
+    int mnc;    /* 2 or 3-digit Mobile Network Code, 0..999, INT_MAX if unknown  */
+    int mnc_digit;/*2 or 3-digit*/
+    int lac;    /* 16-bit Location Area Code, 0..65535, INT_MAX if unknown  */
+    int cid;    /* 28-bit UMTS Cell Identity described in TS 25.331, 0..268435455, INT_MAX if unknown  */
+    int cpid;    /* 8-bit Cell Parameters ID described in TS 25.331, 0..127, INT_MAX if unknown */
+
+    int32_t uarfcn;  /* 16-bit UMTS Absolute RF Channel Number defined in TS 25.102 5.4.4; this value must be valid. */
+    RIL_CellIdentityOperatorNames operatorNames;
+} RIL_CellIdentityTdscdma_v1_2;
+
+typedef struct {
+    int networkId;      /* Network Id 0..65535, INT_MAX if unknown */
+    int systemId;       /* CDMA System Id 0..32767, INT_MAX if unknown  */
+    int basestationId;  /* Base Station Id 0..65535, INT_MAX if unknown  */
+    int longitude;      /* Longitude is a decimal number as specified in 3GPP2 C.S0005-A v6.0.
+                         * It is represented in units of 0.25 seconds and ranges from -2592000
+                         * to 2592000, both values inclusive (corresponding to a range of -180
+                         * to +180 degrees). INT_MAX if unknown */
+
+    int latitude;       /* Latitude is a decimal number as specified in 3GPP2 C.S0005-A v6.0.
+                         * It is represented in units of 0.25 seconds and ranges from -1296000
+                         * to 1296000, both values inclusive (corresponding to a range of -90
+                         * to +90 degrees). INT_MAX if unknown */
+
+    RIL_CellIdentityOperatorNames operatorNames;
+} RIL_CellIdentityCdma_v1_2;
+
+typedef struct {
+    /**
+     * Cell type for selecting from union CellInfo.
+     * Only one of the below vectors must be of size 1 based on a
+     * valid CellInfoType and others must be of size 0.
+     * If cell info type is NONE, then all the vectors must be of size 0.
+     */
+    RIL_CellInfoType cellInfoType;
+    union {
+      RIL_CellIdentityGsm_v1_2 cellIdentityGsm;
+      RIL_CellIdentityWcdma_v1_2 cellIdentityWcdma;
+      RIL_CellIdentityLte_v1_2 cellIdentityLte;
+      RIL_CellIdentityTdscdma_v1_2 cellIdentityTdscdma;
+      RIL_CellIdentityCdma_v1_2 cellIdentityCdma;
+    };
+} RIL_CellIdentity_v1_2;
+
+typedef struct {
     RIL_RegState regState;                // Valid reg states are RIL_NOT_REG_AND_NOT_SEARCHING,
                                           // REG_HOME, RIL_NOT_REG_AND_SEARCHING, REG_DENIED,
                                           // UNKNOWN, REG_ROAMING defined in RegState
@@ -1800,7 +2055,6 @@ typedef struct {
                                           // 101 - Message not compatible with protocol state;
     RIL_CellIdentity_v16 cellIdentity;    // current cell information
 }RIL_VoiceRegistrationStateResponse;
-
 
 typedef struct {
     RIL_RegState regState;                // Valid reg states are RIL_NOT_REG_AND_NOT_SEARCHING,
@@ -2434,6 +2688,45 @@ typedef struct {
     RIL_RadioAccessSpecifier specifiers[MAX_RADIO_ACCESS_NETWORKS]; // Radio access networks
                                                                     // with bands/channels.
 } RIL_NetworkScanRequest;
+
+typedef struct {
+    RIL_RadioAccessNetworks_v1_5 radio_access_network; // The type of network to scan.
+    uint32_t bands_length; // Length of bands
+    union {
+        RIL_GeranBands geran_bands[MAX_BANDS];
+        RIL_UtranBands utran_bands[MAX_BANDS];
+        RIL_EutranBands eutran_bands[MAX_BANDS];
+        RIL_NgranBands ngran_bands[MAX_BANDS];
+    } bands;
+    uint32_t channels_length; // Length of channels
+    uint32_t channels[MAX_CHANNELS]; // Frequency channels to scan
+} RIL_RadioAccessSpecifier_v1_5;
+
+typedef struct {
+    RIL_ScanType type;
+
+    int32_t interval;
+
+    uint32_t specifiers_length;  // Length of specifiers
+
+    RIL_RadioAccessSpecifier_v1_5 specifiers[RIL_RADIO_ACCESS_SPECIFIER_MAX_SIZE];
+
+    int32_t maxSearchTime;
+
+    int32_t incrementalResults;
+
+    int32_t incrementalResultsPeriodicity;
+
+    uint32_t mccMncsNumbers;
+
+    char **mccMncs;
+} RIL_NetworkScanRequest_v1_5;
+
+typedef struct {
+    int                              specifyChannels;
+    uint32_t                         specifiers_length;  // Length of specifiers
+    RIL_RadioAccessSpecifier_v1_5    specifiers[RIL_RADIO_ACCESS_SPECIFIER_MAX_SIZE];  // Radio access networks with bands/channels.
+} RIL_SystemSelectionChannels_v1_5;
 
 typedef enum {
     PARTIAL = 0x01,   // The result contains a part of the scan results
@@ -7038,7 +7331,16 @@ typedef enum {
  */
 #define RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE 157
 
-#define RIL_REQUEST_LAST RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
+/**
+ * Get all the barring info for the current camped cell applicable to the current user.
+ *
+ * @param serial Serial number of request.
+ *
+ * Response callback is IRadioResponse.getBarringInfoResponse()
+ */
+#define RIL_REQUEST_GET_BARRING_INFO 158
+
+#define RIL_REQUEST_LAST RIL_REQUEST_GET_BARRING_INFO
 
 /***********************************************************************/
 

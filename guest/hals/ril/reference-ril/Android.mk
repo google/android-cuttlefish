@@ -10,10 +10,12 @@ LOCAL_SRC_FILES:= \
     reference-ril.c \
     atchannel.c \
     misc.c \
+    base64util.cpp \
     at_tok.c \
 
 LOCAL_SHARED_LIBRARIES := \
-    liblog libcutils libutils ${CUTTLEFISH_LIBRIL_NAME} librilutils libcuttlefish_fs
+    liblog libcutils libutils ${CUTTLEFISH_LIBRIL_NAME} librilutils libcuttlefish_utils \
+    libcuttlefish_fs
 
 LOCAL_STATIC_LIBRARIES := libqemu_pipe libbase
 
