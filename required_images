@@ -1,4 +1,5 @@
 boot.img
+bootloader
 cache.img
 super.img
 userdata.img
