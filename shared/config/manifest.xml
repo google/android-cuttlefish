@@ -213,7 +213,6 @@
         </interface>
         -->
     </hal>
-    <!-- TODO (b/130076972); enable this hal after modem-simulator is enabled
     <hal format="hidl">
         <name>android.hardware.radio.config</name>
         <transport>hwbinder</transport>
@@ -223,7 +222,6 @@
             <instance>default</instance>
         </interface>
     </hal>
-    -->
     <!-- TODO (b/130079239):
     <hal format="hidl">
         <name>android.hardware.secure_element</name>

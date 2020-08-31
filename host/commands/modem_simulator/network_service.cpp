@@ -987,7 +987,7 @@ void NetworkService::HandleSetPreferredNetworkType(const Client& client, std::st
 
     ss << "+CTEC: "<< current_network_mode_;
 
-    thread_looper_->PostWithDelay(std::chrono::seconds(1),
+    thread_looper_->PostWithDelay(std::chrono::milliseconds(200),
         makeSafeCallback(this, &NetworkService::UpdateRegisterState,
             NET_REGISTRATION_HOME));
   } else {
