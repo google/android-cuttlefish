@@ -77,7 +77,7 @@ class ModemServiceTest : public ::testing::Test {
     ASSERT_TRUE(ril_shared_fd->IsOpen());
     ASSERT_TRUE(modem_shared_fd->IsOpen());
 
-    NvramConfig::InitNvramConfigService(1);
+    NvramConfig::InitNvramConfigService(1, 1);
 
     ril_side_ = new Client(ril_shared_fd);
     modem_side_ = new Client(modem_shared_fd);
@@ -318,11 +318,11 @@ TEST_F(ModemServiceTest, FacilityLock) {
 }
 
 TEST_F(ModemServiceTest, OpenLogicalChannel) {
-  std::string command= "A00000015141434C00";
+  std::string command= "A000000063504B43532D3135";
   int firstChannel = openLogicalChannel(command);
   ASSERT_EQ(firstChannel, 1);
 
-  command= "A00000015144414300";
+  command= "A000000063504B43532D3135";
   int secondChannel = openLogicalChannel(command);
   ASSERT_GE(secondChannel, 1);
 
@@ -331,7 +331,7 @@ TEST_F(ModemServiceTest, OpenLogicalChannel) {
 }
 
 TEST_F(ModemServiceTest, CloseLogicalChannel) {
-  std::string command= "A00000015141434C00";
+  std::string command= "A000000063504B43532D3135";
   int channel = openLogicalChannel(command);
   ASSERT_EQ(channel, 1);
 
@@ -340,7 +340,7 @@ TEST_F(ModemServiceTest, CloseLogicalChannel) {
 }
 
 TEST_F(ModemServiceTest, TransmitLogicalChannel) {
-  std::string command= "A00000015144414300";
+  std::string command= "A000000063504B43532D3135";
   int channel = openLogicalChannel(command);
   ASSERT_EQ(channel, 1);
   command = "AT+CGLA=";
@@ -769,6 +769,6 @@ TEST_F(ModemServiceTest, GetIMEI) {
   ReadCommandResponse(response);
   ASSERT_EQ(response.size(), 2);
   const char *result = response[0].c_str();
-  const char *expect = "12345678902468";
+  const char *expect = "867400022047199";
   ASSERT_STREQ(result, expect);
 }
