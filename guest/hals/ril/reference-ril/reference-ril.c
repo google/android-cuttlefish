@@ -31,6 +31,7 @@
 #include <alloca.h>
 #include "atchannel.h"
 #include "at_tok.h"
+#include "base64util.h"
 #include "misc.h"
 #include <getopt.h>
 #include <sys/socket.h>
@@ -58,9 +59,19 @@ static void *noopRemoveWarning( void *a ) { return a; }
 
 /* pathname returned from RIL_REQUEST_SETUP_DATA_CALL / RIL_REQUEST_SETUP_DEFAULT_PDP */
 // This is used if Wifi is not supported, plain old eth0
+#ifdef CUTTLEFISH_ENABLE
+#define PPP_TTY_PATH_ETH0 "rmnet0"
+#else
 #define PPP_TTY_PATH_ETH0 "eth0"
+#endif
 // This is used if Wifi is supported to separate radio and wifi interface
 #define PPP_TTY_PATH_RADIO0 "radio0"
+
+// for sim
+#define AUTH_CONTEXT_EAP_SIM                    128
+#define AUTH_CONTEXT_EAP_AKA                    129
+#define SIM_AUTH_RESPONSE_SUCCESS               0
+#define SIM_AUTH_RESPONSE_SYNC_FAILURE          3
 
 // Default MTU value
 #define DEFAULT_MTU 1500
@@ -286,9 +297,10 @@ static void onCancel (RIL_Token t);
 static const char *getVersion();
 static int isRadioOn();
 static SIM_Status getSIMStatus();
-static int getCardStatus(RIL_CardStatus_v1_4 **pp_card_status);
-static void freeCardStatus(RIL_CardStatus_v1_4 *p_card_status);
+static int getCardStatus(RIL_CardStatus_v1_5 **pp_card_status);
+static void freeCardStatus(RIL_CardStatus_v1_5 *p_card_status);
 static void onDataCallListChanged(void *param);
+bool areUiccApplicationsEnabled = true;
 
 extern const char * requestToString(int request);
 extern uint8_t hexCharToInt(uint8_t c);
@@ -358,6 +370,7 @@ static int s_expectAnswer = 0;
 static int s_cell_info_rate_ms = INT_MAX;
 static int s_mcc = 0;
 static int s_mnc = 0;
+static int s_mncLength = 2;
 static int s_lac = 0;
 static int s_cid = 0;
 
@@ -420,6 +433,31 @@ static int clccStateToRILState(int state, RIL_CallState *p_state)
         case 4: *p_state = RIL_CALL_INCOMING; return 0;
         case 5: *p_state = RIL_CALL_WAITING;  return 0;
         default: return -1;
+    }
+}
+
+void convertBytesToHexString(char *bin_ptr, int length, unsigned char *hex_ptr) {
+    int i;
+    unsigned char tmp;
+
+    if (bin_ptr == NULL || hex_ptr == NULL) {
+        return;
+    }
+    for (i = 0; i < length; i++) {
+        tmp = (unsigned char)((bin_ptr[i] & 0xf0) >> 4);
+        if (tmp <= 9) {
+            *hex_ptr = (unsigned char)(tmp + '0');
+        } else {
+            *hex_ptr = (unsigned char)(tmp + 'A' - 10);
+        }
+        hex_ptr++;
+        tmp = (unsigned char)(bin_ptr[i] & 0x0f);
+        if (tmp <= 9) {
+            *hex_ptr = (unsigned char)(tmp + '0');
+        } else {
+            *hex_ptr = (unsigned char)(tmp + 'A' - 10);
+        }
+        hex_ptr++;
     }
 }
 
@@ -502,6 +540,42 @@ static int parseSimResponseLine(char* line, RIL_SIM_IO_Response* response) {
     }
     return 0;
 }
+
+#ifdef CUTTLEFISH_ENABLE
+static void set_Ip_Addr(const char *addr) {
+  RLOGD("%s %d setting ip addr %s on interface %s", __func__, __LINE__, addr,
+        PPP_TTY_PATH_ETH0);
+  struct ifreq request;
+  int status = 0;
+  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+  if (sock == -1) {
+    RLOGE("Failed to open interface socket: %s (%d)", strerror(errno), errno);
+    return;
+  }
+
+  memset(&request, 0, sizeof(request));
+  strncpy(request.ifr_name, PPP_TTY_PATH_ETH0, sizeof(request.ifr_name));
+  request.ifr_name[sizeof(request.ifr_name) - 1] = '\0';
+
+  char *myaddr = strdup(addr);
+  char *pch = NULL;
+  pch = strchr(myaddr, '/');
+  if (pch) {
+    *pch = '\0';
+  }
+
+  struct sockaddr_in *sin = (struct sockaddr_in *)&request.ifr_addr;
+  sin->sin_family = AF_INET;
+  sin->sin_addr.s_addr = inet_addr(myaddr);
+  if (ioctl(sock, SIOCSIFADDR, &request) < 0) {
+    RLOGE("%s: failed.", __func__);
+  }
+
+  close(sock);
+  free(myaddr);
+  RLOGD("%s %d done.", __func__, __LINE__);
+}
+#endif
 
 enum InterfaceState {
     kInterfaceUp,
@@ -838,6 +912,9 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
         int addresses_size = strlen(out) + 1;
         responses[i].addresses = alloca(addresses_size);
         strlcpy(responses[i].addresses, out, addresses_size);
+#ifdef CUTTLEFISH_ENABLE
+        set_Ip_Addr(responses[i].addresses);
+#endif
 
         if (isInEmulator()) {
             /* We are in the emulator - the dns servers are listed
@@ -1734,8 +1811,8 @@ static int mapNetworkRegistrationResponse(int in_response) {
     return out_response;
 }
 
-#define REG_STATE_LEN 15
-#define REG_DATA_STATE_LEN 6
+#define REG_STATE_LEN 18
+#define REG_DATA_STATE_LEN 14
 static void requestRegistrationState(int request, void *data __unused,
                                         size_t datalen __unused, RIL_Token t)
 {
@@ -1820,17 +1897,32 @@ static void requestRegistrationState(int request, void *data __unused,
      * 4th byte : Registration denial code
      * 5th byte : The max. number of simultaneous Data Calls
      */
-    if(request == RIL_REQUEST_DATA_REGISTRATION_STATE) {
+    if (request == RIL_REQUEST_DATA_REGISTRATION_STATE) {
         // asprintf(&responseStr[4], "3");
         // asprintf(&responseStr[5], "1");
+        asprintf(&responseStr[11], "%d", s_mcc);
+        asprintf(&responseStr[12], "%d", s_mnc);
+        if (s_mncLength == 2) {
+          asprintf(&responseStr[13], "%03d%02d", s_mcc, s_mnc);
+        } else {
+          asprintf(&responseStr[13], "%03d%03d", s_mcc, s_mnc);
+        }
+    } else {  // Voice
+        asprintf(&responseStr[15], "%d", s_mcc);
+        asprintf(&responseStr[16], "%d", s_mnc);
+        if (s_mncLength == 2) {
+          asprintf(&responseStr[17], "%03d%02d", s_mcc, s_mnc);
+        } else {
+          asprintf(&responseStr[17], "%03d%03d", s_mcc, s_mnc);
+        }
     }
+
 
     for (j = startfrom; j < numElements; j++) {
         if (!responseStr[i]) goto error;
     }
     free(registration);
     registration = NULL;
-
     RIL_onRequestComplete(t, RIL_E_SUCCESS, responseStr, numElements*sizeof(responseStr));
     for (j = 0; j < numElements; j++ ) {
         free(responseStr[j]);
@@ -1912,13 +2004,15 @@ static void requestOperator(void *data __unused, size_t datalen __unused, RIL_To
         // Simple assumption that mcc and mnc are 3 digits each
         int length = strlen(response[i]);
         if (length == 6) {
+            s_mncLength = 3;
             if (sscanf(response[i], "%3d%3d", &s_mcc, &s_mnc) != 2) {
                 RLOGE("requestOperator expected mccmnc to be 6 decimal digits");
             }
         } else if (length == 5) {
-          if (sscanf(response[i], "%3d%2d", &s_mcc, &s_mnc) != 2) {
-              RLOGE("requestOperator expected mccmnc to be 5 decimal digits");
-          }
+            s_mncLength = 2;
+            if (sscanf(response[i], "%3d%2d", &s_mcc, &s_mnc) != 2) {
+                RLOGE("requestOperator expected mccmnc to be 5 decimal digits");
+            }
         }
     }
 
@@ -1933,6 +2027,9 @@ static void requestOperator(void *data __unused, size_t datalen __unused, RIL_To
     return;
 error:
     RLOGE("requestOperator must not return error when radio is on");
+    s_mncLength = 0;
+    s_mcc = 0;
+    s_mnc = 0;
     RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
     at_response_free(p_response);
 }
@@ -1942,6 +2039,8 @@ static void requestCdmaSendSMS(void *data, size_t datalen, RIL_Token t)
     int err = 1; // Set to go to error:
     RIL_SMS_Response response;
     RIL_CDMA_SMS_Message* rcsm;
+
+    memset(&response, 0, sizeof(response));
 
     if (getSIMStatus() == SIM_ABSENT) {
         RIL_onRequestComplete(t, RIL_E_SIM_ABSENT, NULL, 0);
@@ -1965,7 +2064,6 @@ static void requestCdmaSendSMS(void *data, size_t datalen, RIL_Token t)
     // Cdma Send SMS implementation will go here:
     // But it is not implemented yet.
 
-    memset(&response, 0, sizeof(response));
     response.messageRef = 1;
     RIL_onRequestComplete(t, RIL_E_SUCCESS, &response, sizeof(response));
     return;
@@ -2090,43 +2188,143 @@ error2:
     RIL_onRequestComplete(t, RIL_E_SMS_SEND_FAIL_RETRY, &response, sizeof(response));
 }
 
-static void requestSimOpenChannel(void *data, size_t datalen, RIL_Token t)
-{
+/**
+ * Add for CTS test
+ * If open logical channel with AID NULL, this means open logical channel to MF.
+ * If there is P2 value, this P2 value is used for SELECT command.
+ * In addition, if SELECT command returns 61xx, GET RESPONSE command needs to send to get data.
+ */
+static int sendCmdAgainForOpenChannelWithP2( char *data,
+                                        int p2, int *response, int *rspLen) {
+    int len = 0;
+    int err = -1;
+    char *line = NULL;
+    char cmd[64] = {0};
+    RIL_Errno errType = RIL_E_GENERIC_FAILURE;
     ATResponse *p_response = NULL;
-    int32_t session_id;
-    int err;
-    char cmd[64];
-    char dummy;
-    char *line;
+    RIL_SIM_IO_Response sr;
 
-    // Max length is 16 bytes according to 3GPP spec 27.007 section 8.45
-    if (data == NULL || datalen == 0 || datalen > 16) {
-        ALOGE("Invalid data passed to requestSimOpenChannel");
-        RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
-        return;
+    memset(&sr, 0, sizeof(sr));
+    sscanf(data, "%2x", &(response[0]));  // response[0] is channel number
+
+    // Send SELECT command to MF
+    snprintf(cmd, sizeof(cmd), "AT+CGLA=%d,14,00A400%02X023F00", response[0],
+             p2);
+
+    err = at_send_command_singleline(cmd, "+CGLA:", &p_response);
+    if (err < 0) goto done;
+    if (p_response != NULL && p_response->success == 0) {
+        if (!strcmp(p_response->finalResponse, "+CME ERROR: 21") ||
+            !strcmp(p_response->finalResponse, "+CME ERROR: 50")) {
+            errType = RIL_E_GENERIC_FAILURE;
+        }
+        goto done;
     }
 
-    snprintf(cmd, sizeof(cmd), "AT+CCHO=%s", data);
+    line = p_response->p_intermediates->line;
 
-    err = at_send_command_numeric(cmd, &p_response);
+    if (at_tok_start(&line) < 0 || at_tok_nextint(&line, &len) < 0 ||
+        at_tok_nextstr(&line, &(sr.simResponse)) < 0) {
+        goto done;
+    }
+
+    sscanf(&(sr.simResponse[len - 4]), "%02x%02x", &(sr.sw1), &(sr.sw2));
+
+    if (sr.sw1 == 0x90 && sr.sw2 == 0x00) {  // 9000 is successful
+        int length = len / 2;
+        for (*rspLen = 1; *rspLen <= length; (*rspLen)++) {
+            sscanf(sr.simResponse, "%02x", &(response[*rspLen]));
+            sr.simResponse += 2;
+        }
+        errType = RIL_E_SUCCESS;
+    } else {  // close channel
+        snprintf(cmd, sizeof(cmd), "AT+CCHC=%d", response[0]);
+        at_send_command( cmd, NULL);
+    }
+
+done:
+    at_response_free(p_response);
+    return errType;
+}
+
+static void requestSimOpenChannel(void *data, size_t datalen, RIL_Token t)
+{
+    RIL_UNUSED_PARM(datalen);
+
+    ATResponse *p_response = NULL;
+    int response[260] = {0};
+    int responseLen = 1;
+    int32_t session_id;
+    int err;
+    char cmd[64] = {0};
+    char complex;
+    char *line = NULL;
+    int skip = 0;
+    char *statusWord = NULL;
+    int err_no = RIL_E_GENERIC_FAILURE;
+
+    RIL_OpenChannelParams *params = (RIL_OpenChannelParams *)data;
+
+    // Max length is 16 bytes according to 3GPP spec 27.007 section 8.45
+    if (params->aidPtr == NULL) {
+          err = at_send_command_singleline("AT+CSIM=10,\"0070000001\"", "+CSIM:", &p_response);
+    } else {
+        snprintf(cmd, sizeof(cmd), "AT+CCHO=%s", params->aidPtr);
+        err = at_send_command_numeric(cmd, &p_response);
+    }
+
     if (err < 0 || p_response == NULL || p_response->success == 0) {
         ALOGE("Error %d opening logical channel: %d",
               err, p_response ? p_response->success : 0);
-        RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
-        at_response_free(p_response);
-        return;
+        goto error;
     }
 
     // Ensure integer only by scanning for an extra char but expect one result
     line = p_response->p_intermediates->line;
-    if (sscanf(line, "%" SCNd32 "%c", &session_id, &dummy) != 1) {
-        ALOGE("Invalid AT response, expected integer, was '%s'", line);
-        RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    if (params->aidPtr == NULL) {
+
+        err = at_tok_start(&line);
+        if (err < 0) goto error;
+
+        err = at_tok_nextint(&line, &skip);
+        if (err < 0) goto error;
+
+        err = at_tok_nextstr(&line, &statusWord);
+        if (err < 0) goto error;
+
+        if (params->p2 < 0) {
+            int length = strlen(statusWord) / 2;
+            for (responseLen = 0; responseLen < length; responseLen++) {
+                sscanf(statusWord, "%02x", &(response[responseLen]));
+                statusWord += 2;
+            }
+            err_no = RIL_E_SUCCESS;
+        } else {
+            response[0] = 1;
+            err_no = sendCmdAgainForOpenChannelWithP2(statusWord,
+                                        params->p2, response, &responseLen);
+            if (err_no != RIL_E_SUCCESS) {
+                goto error;
+            }
+        }
+        RIL_onRequestComplete(t, err_no, response, responseLen * sizeof(int));
+        at_response_free(p_response);
         return;
+    } else {
+        if (sscanf(line, "%" SCNd32 "%c", &session_id, &complex) != 1) {
+           ALOGE("Invalid AT response, expected integer, was '%s'", line);
+           goto error;
+        }
     }
 
-    RIL_onRequestComplete(t, RIL_E_SUCCESS, &session_id, sizeof(&session_id));
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, &session_id, sizeof(session_id));
     at_response_free(p_response);
+    return;
+
+error:
+    RIL_onRequestComplete(t, err_no, NULL, 0);
+    at_response_free(p_response);
+    return;
 }
 
 static void requestSimCloseChannel(void *data, size_t datalen, RIL_Token t)
@@ -2158,7 +2356,6 @@ static void requestSimCloseChannel(void *data, size_t datalen, RIL_Token t)
         return;
     }
 
-
     RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 
     at_response_free(p_response);
@@ -2170,10 +2367,11 @@ static void requestSimTransmitApduChannel(void *data,
 {
     ATResponse *p_response = NULL;
     int err;
+    int len = 0;
     char *cmd;
-    char *line;
+    char *line = NULL;
     size_t cmd_size;
-    RIL_SIM_IO_Response sim_response;
+    RIL_SIM_IO_Response sr = {0};
     RIL_SIM_APDU *apdu = (RIL_SIM_APDU *)data;
 
     if (apdu == NULL || datalen != sizeof(RIL_SIM_APDU)) {
@@ -2186,26 +2384,226 @@ static void requestSimTransmitApduChannel(void *data,
              apdu->sessionid, cmd_size, apdu->cla, apdu->instruction,
              apdu->p1, apdu->p2, apdu->p3, apdu->data ? apdu->data : "");
 
-    err = at_send_command_singleline(cmd, "+CGLA", &p_response);
+    err = at_send_command_singleline(cmd, "+CGLA:", &p_response);
     free(cmd);
     if (err < 0 || p_response == NULL || p_response->success == 0) {
         ALOGE("Error %d transmitting APDU: %d",
               err, p_response ? p_response->success : 0);
-        RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
-        at_response_free(p_response);
-        return;
+        goto error;
     }
 
     line = p_response->p_intermediates->line;
-    err = parseSimResponseLine(line, &sim_response);
+    err = at_tok_start(&line);
+    if (err < 0) goto error;
 
-    if (err == 0) {
-        RIL_onRequestComplete(t, RIL_E_SUCCESS,
-                              &sim_response, sizeof(sim_response));
-    } else {
-        ALOGE("Error %d parsing SIM response line: %s", err, line);
-        RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    err = at_tok_nextint(&line, &len);
+    if (err < 0) goto error;
+
+    err = at_tok_nextstr(&line, &(sr.simResponse));
+    if (err < 0) goto error;
+
+    len = strlen(sr.simResponse);
+    if (len < 4) goto error;
+
+    sscanf(&(sr.simResponse[len - 4]), "%02x%02x", &(sr.sw1), &(sr.sw2));
+    sr.simResponse[len - 4] = '\0';
+
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, &sr, sizeof(sr));
+    at_response_free(p_response);
+    return;
+
+error:
+    RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    at_response_free(p_response);
+}
+
+static void requestSimAuthentication( char *authData, RIL_Token t) {
+    int err = -1, ret = 0;
+    int status = 0;
+    int binSimResponseLen = 0;
+    int randLen = 0, kcLen = 0, sresLen = 0;
+    char *cmd = NULL;
+    char *line = NULL;
+    char *rand = NULL;
+    char *kc = NULL, *sres = NULL;
+    unsigned char *binSimResponse = NULL;
+    unsigned char *binAuthData = NULL;
+    unsigned char *hexAuthData = NULL;
+    ATResponse *p_response = NULL;
+    RIL_SIM_IO_Response response;
+
+    memset(&response, 0, sizeof(response));
+    response.sw1 = 0x90;
+    response.sw2 = 0;
+
+    binAuthData  =
+            (unsigned char *)malloc(sizeof(char) * strlen(authData));
+    if (binAuthData == NULL) {
+        goto error;
     }
+    if(base64_decode(authData, binAuthData) <= 0) {
+        RLOGE("base64_decode failed %s %d", __func__, __LINE__);
+        goto error;
+    }
+    hexAuthData =
+            (unsigned char *)malloc(strlen(authData) * 2 + sizeof(char));
+    if (hexAuthData == NULL) {
+        goto error;
+    }
+    memset(hexAuthData, 0, strlen(authData) * 2 + sizeof(char));
+    convertBytesToHexString((char *)binAuthData, strlen(authData), hexAuthData);
+
+    randLen = binAuthData[0];
+    rand = (char *)malloc(sizeof(char) * (randLen * 2 + sizeof(char)));
+    if (rand == NULL) {
+        goto error;
+    }
+    memcpy(rand, hexAuthData + 2, randLen * 2);
+    memcpy(rand + randLen * 2, "\0", 1);
+
+    ret = asprintf(&cmd, "AT^MBAU=\"%s\"", rand);
+    if (ret < 0) {
+        RLOGE("Failed to asprintf");
+        goto error;
+    }
+    err = at_send_command_singleline( cmd, "^MBAU:", &p_response);
+    free(cmd);
+
+    if (err < 0 || p_response->success == 0) {
+        goto error;
+    } else {
+        line = p_response->p_intermediates->line;
+        err = at_tok_start(&line);
+        if (err < 0) goto error;
+
+        err = at_tok_nextint(&line, &status);
+        if (err < 0) goto error;
+
+        if (status == SIM_AUTH_RESPONSE_SUCCESS) {
+            err = at_tok_nextstr(&line, &kc);
+            if (err < 0) goto error;
+            kcLen = strlen(kc);
+
+            err = at_tok_nextstr(&line, &sres);
+            if (err < 0) goto error;
+            sresLen = strlen(sres);
+
+            // sresLen + sres + kcLen + kc + '\0'
+            binSimResponseLen = (kcLen + sresLen) / 2 + 3 * sizeof(char);
+            binSimResponse =
+                (unsigned char *)malloc(binSimResponseLen + sizeof(char));
+            if (binSimResponse == NULL) {
+                goto error;
+            }
+            memset(binSimResponse, 0, binSimResponseLen + sizeof(char));
+            // set sresLen and sres
+            binSimResponse[0] = (sresLen / 2) & 0xFF;
+            uint8_t *tmpBinSimResponse = convertHexStringToBytes(sres, sresLen);
+            //convertHexToBin(sres, sresLen, (char *)(binSimResponse + 1));
+            snprintf((char *)(binSimResponse + 1), sresLen / 2, "%s",
+                    tmpBinSimResponse);
+            free(tmpBinSimResponse);
+            tmpBinSimResponse = NULL;
+            // set kcLen and kc
+            binSimResponse[1 + sresLen / 2] = (kcLen / 2) & 0xFF;
+            tmpBinSimResponse = convertHexStringToBytes(kc, kcLen);
+            snprintf((char *)(binSimResponse + 1 + sresLen / 2 + 1),
+                     kcLen, "%s", tmpBinSimResponse);
+            free(tmpBinSimResponse);
+            tmpBinSimResponse = NULL;
+            response.simResponse =
+                    (char *)malloc(2 * binSimResponseLen + sizeof(char));
+            if (response.simResponse == NULL) {
+                goto error;
+            }
+            if(NULL == base64_encode(binSimResponse, response.simResponse,
+                    binSimResponse[0] + binSimResponse[1 + sresLen / 2] + 2)) {
+                RLOGE("Failed to call base64_encode %s %d", __func__, __LINE__);
+                goto error;
+            }
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, &response,
+                    sizeof(response));
+        } else {
+            goto error;
+        }
+    }
+    at_response_free(p_response);
+
+    free(binAuthData);
+    free(hexAuthData);
+    free(rand);
+    free(response.simResponse);
+    free(binSimResponse);
+    return;
+
+error:
+    free(binAuthData);
+    free(hexAuthData);
+    free(rand);
+    free(response.simResponse);
+    free(binSimResponse);
+
+    RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    at_response_free(p_response);
+}
+
+static void requestTransmitApduBasic( void *data, size_t datalen,
+                                      RIL_Token t) {
+    RIL_UNUSED_PARM(datalen);
+
+    int err, len;
+    int instruction = 0;
+    char *cmd = NULL;
+    char *line = NULL;
+    RIL_SIM_APDU *p_args = NULL;
+    ATResponse *p_response = NULL;
+    RIL_SIM_IO_Response sr;
+
+    memset(&sr, 0, sizeof(sr));
+
+    p_args = (RIL_SIM_APDU *)data;
+
+    if ((p_args->data == NULL) || (strlen(p_args->data) == 0)) {
+        if (p_args->p3 < 0) {
+            asprintf(&cmd, "AT+CSIM=%d,\"%02x%02x%02x%02x\"", 8, p_args->cla,
+                    p_args->instruction, p_args->p1, p_args->p2);
+        } else {
+            asprintf(&cmd, "AT+CSIM=%d,\"%02x%02x%02x%02x%02x\"", 10,
+                    p_args->cla, p_args->instruction, p_args->p1, p_args->p2,
+                    p_args->p3);
+        }
+    } else {
+        asprintf(&cmd, "AT+CSIM=%d,\"%02x%02x%02x%02x%02x%s\"",
+                10 + (int)strlen(p_args->data), p_args->cla,
+                p_args->instruction, p_args->p1, p_args->p2, p_args->p3,
+                p_args->data);
+    }
+    err = at_send_command_singleline(cmd, "+CSIM:", &p_response);
+    free(cmd);
+    if (err < 0 || p_response->success == 0) {
+        goto error;
+    }
+
+    line = p_response->p_intermediates->line;
+    err = at_tok_start(&line);
+    if (err < 0) goto error;
+
+    err = at_tok_nextint(&line, &len);
+    if (err < 0) goto error;
+
+    err = at_tok_nextstr(&line, &(sr.simResponse));
+    if (err < 0) goto error;
+
+    sscanf(&(sr.simResponse[len - 4]), "%02x%02x", &(sr.sw1), &(sr.sw2));
+    sr.simResponse[len - 4] = '\0';
+
+    instruction = p_args->instruction;
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, &sr, sizeof(sr));
+    at_response_free(p_response);
+    return;
+
+error:
+    RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
     at_response_free(p_response);
 }
 
@@ -2865,7 +3263,7 @@ static void requestGetMute(void *data, size_t datalen, RIL_Token t)
     char *line = NULL;
     ATResponse *p_response = NULL;
 
-    err = at_send_command_singleline("AT+CMUT?", "+CMUX:", &p_response);
+    err = at_send_command_singleline("AT+CMUT?", "+CMUT:", &p_response);
     if (err < 0 || p_response->success) {
         goto done;
     }
@@ -3593,7 +3991,7 @@ static void requestSetNetworlSelectionManual(void *data, RIL_Token t) {
             operator->operatorNumeric, operator->act);
     }
     err = at_send_command(cmd, &p_response);
-    if (err != 0 || p_response->success == 0) {
+    if (err < 0 || p_response->success == 0) {
         goto error;
     }
 
@@ -3602,7 +4000,12 @@ static void requestSetNetworlSelectionManual(void *data, RIL_Token t) {
     return;
 
 error:
-    RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    if (p_response != NULL &&
+        !strcmp(p_response->finalResponse, "+CME ERROR: 30")) {
+          RIL_onRequestComplete(t, RIL_E_RADIO_NOT_AVAILABLE, NULL, 0);
+    } else {
+        RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
+    }
     at_response_free(p_response);
 }
 
@@ -3859,7 +4262,7 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
 
     switch (request) {
         case RIL_REQUEST_GET_SIM_STATUS: {
-            RIL_CardStatus_v1_4 *p_card_status;
+            RIL_CardStatus_v1_5 *p_card_status;
             char *p_buffer;
             int buffer_size;
 
@@ -3969,6 +4372,21 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             break;
         case RIL_REQUEST_SIM_TRANSMIT_APDU_CHANNEL:
             requestSimTransmitApduChannel(data, datalen, t);
+            break;
+        case RIL_REQUEST_SIM_AUTHENTICATION: {
+            RIL_SimAuthentication *sim_auth = (RIL_SimAuthentication *)data;
+            if (sim_auth->authContext == AUTH_CONTEXT_EAP_AKA &&
+                sim_auth->authData != NULL) {
+            } else if (sim_auth->authContext == AUTH_CONTEXT_EAP_SIM &&
+                       sim_auth->authData != NULL) {
+                requestSimAuthentication(sim_auth->authData, t);
+            } else {
+                RIL_onRequestComplete(t, RIL_E_INVALID_ARGUMENTS, NULL, 0);
+            }
+            break;
+        }
+        case RIL_REQUEST_SIM_TRANSMIT_APDU_BASIC:
+            requestTransmitApduBasic(data, datalen, t);
             break;
         case RIL_REQUEST_SETUP_DATA_CALL:
             requestSetupDataCall(data, datalen, t);
@@ -4190,11 +4608,20 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             requestSetMute(data, datalen, t);
             break;
 
+        case RIL_REQUEST_QUERY_AVAILABLE_BAND_MODE: {
+          int size = 5;
+          int response[20] = {0};
+          for (int i = 1; i <= size; i++) {
+            response[i] = i - 1;
+          }
+          RIL_onRequestComplete(t, RIL_E_SUCCESS, response, (size + 1) * sizeof(int));
+          break;
+        }
+
         case RIL_REQUEST_SET_INITIAL_ATTACH_APN:
         case RIL_REQUEST_ALLOW_DATA:
         case RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION:
         case RIL_REQUEST_SET_BAND_MODE:
-        case RIL_REQUEST_QUERY_AVAILABLE_BAND_MODE:
         case RIL_REQUEST_GET_NEIGHBORING_CELL_IDS:
         case RIL_REQUEST_SET_LOCATION_UPDATES:
         case RIL_REQUEST_SET_TTY_MODE:
@@ -4350,10 +4777,10 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
             break;
 
         // New requests after P.
-        case RIL_REQUEST_START_NETWORK_SCAN:  // TODO
+        case RIL_REQUEST_START_NETWORK_SCAN:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
-        case RIL_REQUEST_GET_MODEM_STACK_STATUS:  // TODO
+        case RIL_REQUEST_GET_MODEM_STACK_STATUS:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
         case RIL_REQUEST_ENABLE_MODEM:
@@ -4414,7 +4841,27 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
-
+        case RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
+        case RIL_REQUEST_ENABLE_UICC_APPLICATIONS: {
+            if (data == NULL || datalen != sizeof(int)) {
+                RIL_onRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
+            }
+            areUiccApplicationsEnabled = *(int *)(data);
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
+        }
+        case RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, &areUiccApplicationsEnabled,
+                    sizeof(areUiccApplicationsEnabled));
+            break;
+        case RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
+        case RIL_REQUEST_GET_BARRING_INFO:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
         default:
             RLOGD("Request not supported. Tech: %d",TECH(sMdmInfo));
             RIL_onRequestComplete(t, RIL_E_REQUEST_NOT_SUPPORTED, NULL, 0);
@@ -4699,7 +5146,7 @@ error:
  * This must be freed using freeCardStatus.
  * @return: On success returns RIL_E_SUCCESS
  */
-static int getCardStatus(RIL_CardStatus_v1_4 **pp_card_status) {
+static int getCardStatus(RIL_CardStatus_v1_5 **pp_card_status) {
     static RIL_AppStatus app_status_array[] = {
         // SIM_ABSENT = 0
         { RIL_APPTYPE_UNKNOWN, RIL_APPSTATE_UNKNOWN, RIL_PERSOSUBSTATE_UNKNOWN,
@@ -4770,40 +5217,40 @@ static int getCardStatus(RIL_CardStatus_v1_4 **pp_card_status) {
     }
 
     // Allocate and initialize base card status.
-    RIL_CardStatus_v1_4 *p_card_status = calloc(1, sizeof(RIL_CardStatus_v1_4));
-    p_card_status->base.base.card_state = card_state;
-    p_card_status->base.base.universal_pin_state = RIL_PINSTATE_UNKNOWN;
-    p_card_status->base.base.gsm_umts_subscription_app_index = -1;
-    p_card_status->base.base.cdma_subscription_app_index = -1;
-    p_card_status->base.base.ims_subscription_app_index = -1;
-    p_card_status->base.base.num_applications = num_apps;
-    p_card_status->base.physicalSlotId = 0;
-    p_card_status->base.atr = NULL;
-    p_card_status->base.iccid = NULL;
-    p_card_status->eid = "";
+    RIL_CardStatus_v1_5 *p_card_status = calloc(1, sizeof(RIL_CardStatus_v1_5));
+    p_card_status->base.base.base.card_state = card_state;
+    p_card_status->base.base.base.universal_pin_state = RIL_PINSTATE_UNKNOWN;
+    p_card_status->base.base.base.gsm_umts_subscription_app_index = -1;
+    p_card_status->base.base.base.cdma_subscription_app_index = -1;
+    p_card_status->base.base.base.ims_subscription_app_index = -1;
+    p_card_status->base.base.base.num_applications = num_apps;
+    p_card_status->base.base.physicalSlotId = 0;
+    p_card_status->base.base.atr = NULL;
+    p_card_status->base.base.iccid = NULL;
+    p_card_status->base.eid = "";
     if (sim_status != SIM_ABSENT) {
-        p_card_status->base.iccid = (char *)calloc(64, sizeof(char));
-        getIccId(p_card_status->base.iccid, 64);
+        p_card_status->base.base.iccid = (char *)calloc(64, sizeof(char));
+        getIccId(p_card_status->base.base.iccid, 64);
     }
 
     // Initialize application status
     int i;
     for (i = 0; i < RIL_CARD_MAX_APPS; i++) {
-        p_card_status->base.base.applications[i] = app_status_array[SIM_ABSENT];
+        p_card_status->base.base.base.applications[i] = app_status_array[SIM_ABSENT];
     }
-
+    RLOGD("enter getCardStatus module, num_apps= %d",num_apps);
     // Pickup the appropriate application status
     // that reflects sim_status for gsm.
     if (num_apps != 0) {
-        p_card_status->base.base.num_applications = 3;
-        p_card_status->base.base.gsm_umts_subscription_app_index = 0;
-        p_card_status->base.base.cdma_subscription_app_index = 1;
-        p_card_status->base.base.ims_subscription_app_index = 2;
+        p_card_status->base.base.base.num_applications = 3;
+        p_card_status->base.base.base.gsm_umts_subscription_app_index = 0;
+        p_card_status->base.base.base.cdma_subscription_app_index = 1;
+        p_card_status->base.base.base.ims_subscription_app_index = 2;
 
         // Get the correct app status
-        p_card_status->base.base.applications[0] = app_status_array[sim_status];
-        p_card_status->base.base.applications[1] = app_status_array[sim_status + RUIM_ABSENT];
-        p_card_status->base.base.applications[2] = app_status_array[sim_status + ISIM_ABSENT];
+        p_card_status->base.base.base.applications[0] = app_status_array[sim_status];
+        p_card_status->base.base.base.applications[1] = app_status_array[sim_status + RUIM_ABSENT];
+        p_card_status->base.base.base.applications[2] = app_status_array[sim_status + ISIM_ABSENT];
     }
 
     *pp_card_status = p_card_status;
@@ -4813,11 +5260,11 @@ static int getCardStatus(RIL_CardStatus_v1_4 **pp_card_status) {
 /**
  * Free the card status returned by getCardStatus
  */
-static void freeCardStatus(RIL_CardStatus_v1_4 *p_card_status) {
+static void freeCardStatus(RIL_CardStatus_v1_5 *p_card_status) {
     if (p_card_status == NULL) {
         return;
     }
-    free(p_card_status->base.iccid);
+    free(p_card_status->base.base.iccid);
     free(p_card_status);
 }
 
