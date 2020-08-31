@@ -65,7 +65,7 @@ std::vector<CommandHandler> CallService::InitializeCommandHandlers() {
                      [this](const Client& client, std::string& cmd) {
                        this->HandleHangup(client, cmd);
                      }),
-      CommandHandler("+CMUT=",
+      CommandHandler("+CMUT",
                      [this](const Client& client, std::string& cmd) {
                        this->HandleMute(client, cmd);
                      }),
