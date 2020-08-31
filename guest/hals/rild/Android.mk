@@ -24,7 +24,7 @@ LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libdl \
     liblog \
-    libril-cuttlefish-fork
+    $(CUTTLEFISH_LIBRIL_NAME)
 
 LOCAL_C_INCLUDES += \
     device/google/cuttlefish
