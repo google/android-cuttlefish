@@ -114,7 +114,7 @@ bool PDUParser::DecodePDU(std::string& pdu) {
 /**
  * The PDU-Type of receiver
  * BIT      7    6    5    4    3    2    1    0
- * Param   RP  UDHI  SRI  －    －   MMS  MTI MTI
+ * Param   RP  UDHI  SRI   -    -   MMS  MTI MTI
  * When SRR bit is 1, it represents that SMS status report should be reported.
  */
 std::string PDUParser::CreatePDU() {
@@ -269,6 +269,10 @@ std::string PDUParser::GetCurrentTimeStamp() {
   auto t_gm_time = std::mktime(&gm_time);
 
   auto tzdiff = (int)std::difftime(t_local_time, t_gm_time) / (60 * 60);
+  if (tzdiff < 0) {
+      //TODO(bohu): hack, this should be properly encoded
+      tzdiff = -tzdiff;
+  }
 
   time_stamp += IntToHexString(local_time.tm_year % 100);
   time_stamp += IntToHexString(local_time.tm_mon + 1);

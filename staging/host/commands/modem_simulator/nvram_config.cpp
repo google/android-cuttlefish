@@ -33,6 +33,7 @@ const char* kOperatorNumeric      = "operator_numeric";
 const char* kModemTechnoloy       = "modem_technoloy";
 const char* kPreferredNetworkMode = "preferred_network_mode";
 const char* kEmergencyMode        = "emergency_mode";
+const char* kSimType              = "sim_type";
 
 const int   kDefaultNetworkSelectionMode  = 0;     // AUTOMATIC
 const std::string kDefaultOperatorNumeric = "";
@@ -46,11 +47,11 @@ const bool  kDefaultEmergencyMode         = false;
  * or uses the default value if the config file not exists,
  * Returns nullptr if there was an error loading from file
  */
-NvramConfig* NvramConfig::BuildConfigImpl(size_t num_instances) {
+NvramConfig* NvramConfig::BuildConfigImpl(size_t num_instances, int sim_type) {
   auto nvram_config_path =
       cuttlefish::modem::DeviceConfig::PerInstancePath("modem_nvram.json");
 
-  auto ret = new NvramConfig(num_instances);
+  auto ret = new NvramConfig(num_instances, sim_type);
   if (ret) {
     if (!cuttlefish::FileExists(nvram_config_path) ||
         !cuttlefish::FileHasContent(nvram_config_path.c_str())) {
@@ -68,11 +69,11 @@ NvramConfig* NvramConfig::BuildConfigImpl(size_t num_instances) {
 
 std::unique_ptr<NvramConfig> NvramConfig::s_nvram_config;
 
-void NvramConfig::InitNvramConfigService(size_t num_instances) {
+void NvramConfig::InitNvramConfigService(size_t num_instances, int sim_type) {
   static std::once_flag once_flag;
 
-  std::call_once(once_flag, [num_instances]() {
-    NvramConfig::s_nvram_config.reset(BuildConfigImpl(num_instances));
+  std::call_once(once_flag, [num_instances, sim_type]() {
+    NvramConfig::s_nvram_config.reset(BuildConfigImpl(num_instances, sim_type));
   });
 }
 
@@ -86,8 +87,10 @@ void NvramConfig::SaveToFile() {
   nvram_config->SaveToFile(nvram_config_file);
 }
 
-NvramConfig::NvramConfig(size_t num_instances)
-    : total_instances_(num_instances), dictionary_(new Json::Value()) {}
+NvramConfig::NvramConfig(size_t num_instances, int sim_type)
+    : total_instances_(num_instances),
+      sim_type_(sim_type),
+      dictionary_(new Json::Value()) {}
 // Can't use '= default' on the header because the compiler complains of
 // Json::Value being an incomplete type
 NvramConfig::~NvramConfig() = default;
@@ -187,6 +190,10 @@ bool NvramConfig::InstanceSpecific::emergency_mode() const {
 
 void NvramConfig::InstanceSpecific::set_emergency_mode(bool mode) {
   (*Dictionary())[kEmergencyMode] = mode;
+}
+
+int NvramConfig::sim_type() const {
+  return sim_type_;
 }
 
 }  // namespace cuttlefish

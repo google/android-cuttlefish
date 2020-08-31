@@ -31,6 +31,7 @@
 // will listent to one server fd for incoming sms/phone call
 // there should be at least 1 valid fd
 DEFINE_string(server_fds, "", "A comma separated list of file descriptors");
+DEFINE_int32(sim_type, 1, "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
 
 std::vector<cuttlefish::SharedFD> ServerFdsFromCmdline() {
   // Validate the parameter
@@ -70,7 +71,9 @@ int main(int argc, char** argv) {
     android::base::SetLogger(cuttlefish::LogToStderrAndFiles(log_files));
   }
 
-  LOG(INFO) << "Start modem simulator, server_fds: " << FLAGS_server_fds;
+  LOG(INFO) << "Start modem simulator, server_fds: " << FLAGS_server_fds
+            << ", Sim type: " << ((FLAGS_sim_type == 2) ?
+                "special for CtsCarrierApiTestCases" : "normal" );
 
   auto server_fds = ServerFdsFromCmdline();
   if (server_fds.empty()) {
@@ -78,7 +81,7 @@ int main(int argc, char** argv) {
     return -1;
   }
 
-  cuttlefish::NvramConfig::InitNvramConfigService(server_fds.size());
+  cuttlefish::NvramConfig::InitNvramConfigService(server_fds.size(), FLAGS_sim_type);
 
   // Don't get a SIGPIPE from the clients
   if (sigaction(SIGPIPE, nullptr, nullptr) != 0) {

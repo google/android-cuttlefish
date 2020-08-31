@@ -66,6 +66,13 @@ prebuilt_etc_host {
 }
 
 prebuilt_etc_host {
+    name: "iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
+    src: "files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
+    filename: "iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
+    sub_dir: "modem_simulator/files",
+}
+
+prebuilt_etc_host {
     name: "numeric_operator.xml",
     src: "files/numeric_operator.xml",
     filename: "numeric_operator.xml",
