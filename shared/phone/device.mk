@@ -26,6 +26,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
     vendor.rild.libpath=libcuttlefish-ril.so \
+    ro.telephony.default_network=9 \
 
 PRODUCT_PACKAGES += \
     MmsService \

@@ -153,6 +153,7 @@ cvd_host_webrtc_files := \
 
 modem_simulator_files := \
      iccprofile_for_sim0.xml \
+     iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml \
      numeric_operator.xml \
 
 include external/crosvm/seccomp/host_package.mk

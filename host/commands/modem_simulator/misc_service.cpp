@@ -70,7 +70,7 @@ std::vector<CommandHandler> MiscService::InitializeCommandHandlers() {
 }
 
 void MiscService::HandleGetIMEI(const Client& client, std::string& command) {
-  const std::string identityGsmImei = "12345678902468";
+  const std::string identityGsmImei = "867400022047199";
   const std::string identityGsmSvn = "01";
   const std::string information = "modem simulator";
 
