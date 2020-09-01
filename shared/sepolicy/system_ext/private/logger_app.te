@@ -12,4 +12,6 @@ userdebug_or_eng(`
   allow logger_app radio_vendor_data_file:file rw_file_perms;
   allow logger_app radio_vendor_data_file:dir create_dir_perms;
   allow logger_app radio_vendor_data_file:dir rw_dir_perms;
+
+  gpu_access(logger_app)
 ')

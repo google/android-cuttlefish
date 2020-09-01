@@ -177,4 +177,4 @@ int GetDrmFormatFromHalFormat(int hal_format) {
   return 0;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

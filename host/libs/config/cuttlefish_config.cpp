@@ -114,6 +114,9 @@ const char* kEnableWebRTC = "enable_webrtc";
 const char* kWebRTCAssetsDir = "webrtc_assets_dir";
 const char* kWebRTCEnableADBWebSocket = "webrtc_enable_adb_websocket";
 
+const char* kEnableVehicleHalServer = "enable_vehicle_hal_server";
+const char* kVehicleHalServerBinary = "vehicle_hal_server_binary";
+
 const char* kRestartSubprocesses = "restart_subprocesses";
 const char* kRunAdbConnector = "run_adb_connector";
 
@@ -419,6 +422,22 @@ void CuttlefishConfig::set_enable_webrtc(bool enable_webrtc) {
 
 bool CuttlefishConfig::enable_webrtc() const {
   return (*dictionary_)[kEnableWebRTC].asBool();
+}
+
+void CuttlefishConfig::set_enable_vehicle_hal_grpc_server(bool enable_vehicle_hal_grpc_server) {
+  (*dictionary_)[kEnableVehicleHalServer] = enable_vehicle_hal_grpc_server;
+}
+
+bool CuttlefishConfig::enable_vehicle_hal_grpc_server() const {
+  return (*dictionary_)[kEnableVehicleHalServer].asBool();
+}
+
+void CuttlefishConfig::set_vehicle_hal_grpc_server_binary(const std::string& vehicle_hal_server_binary) {
+  (*dictionary_)[kVehicleHalServerBinary] = vehicle_hal_server_binary;
+}
+
+std::string CuttlefishConfig::vehicle_hal_grpc_server_binary() const {
+  return (*dictionary_)[kVehicleHalServerBinary].asString();
 }
 
 void CuttlefishConfig::set_webrtc_assets_dir(const std::string& webrtc_assets_dir) {

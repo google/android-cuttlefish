@@ -50,3 +50,6 @@ void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& conf
 
 void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
                              const cuttlefish::CuttlefishConfig& config);
+
+void LaunchVerhicleHalServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
+                                      cuttlefish::ProcessMonitor* process_monitor);

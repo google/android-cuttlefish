@@ -539,6 +539,7 @@ int main(int argc, char** argv) {
   LaunchTpm(&process_monitor, *config);
   LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
   LaunchSecureEnvironment(&process_monitor, *config);
+  LaunchVerhicleHalServerIfEnabled(*config, &process_monitor);
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
