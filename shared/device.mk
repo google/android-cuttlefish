@@ -476,3 +476,16 @@ PRODUCT_SOONG_NAMESPACES += vendor/google_devices/common/proprietary/confirmatio
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.running_without_sync_framework=true
+
+# Set support one-handed mode
+ PRODUCT_PRODUCT_PROPERTIES += \
+    ro.support_one_handed_mode=true
+
+# Set one_handed_mode screen translate offset percentage
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.debug.one_handed_offset_percentage=50
+
+# Set one_handed_mode translate animation duration milliseconds
+PRODUCT_PRODUCT_PROPERTIES += \
+    persist.debug.one_handed_translate_animation_duration=300
+
