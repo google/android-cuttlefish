@@ -97,7 +97,7 @@ std::vector<std::string> QemuManager::ConfigureGpu(const std::string& gpu_mode) 
   // HALs.
   return {
       "androidboot.hardware.gralloc=minigbm",
-      "androidboot.hardware.hwcomposer=cutf_cvm_ashmem",
+      "androidboot.hardware.hwcomposer=cutf",
       "androidboot.hardware.egl=swiftshader",
       "androidboot.hardware.vulkan=pastel",
   };
