@@ -287,10 +287,14 @@ function cvd_docker_create {
                 -p $((6443+cf_instance)):$((6443+cf_instance)) \
                 -p $((8443+cf_instance)):$((8443+cf_instance)) \
                 -p $((6250+cf_instance)):$((6250+cf_instance)) \
-                -p $((15550+cf_instance*2)):$((15550+cf_instance*2))/tcp \
-                -p $((15551+cf_instance*2)):$((15551+cf_instance*2))/tcp \
-                -p $((15550+cf_instance*2)):$((15550+cf_instance*2))/udp \
-                -p $((15551+cf_instance*2)):$((15551+cf_instance*2))/udp \
+                -p $((15550+cf_instance*4)):$((15550+cf_instance*4))/tcp \
+                -p $((15551+cf_instance*4)):$((15551+cf_instance*4))/tcp \
+                -p $((15552+cf_instance*4)):$((15552+cf_instance*4))/tcp \
+                -p $((15553+cf_instance*4)):$((15553+cf_instance*4))/tcp \
+                -p $((15550+cf_instance*4)):$((15550+cf_instance*4))/udp \
+                -p $((15551+cf_instance*4)):$((15551+cf_instance*4))/udp \
+                -p $((15552+cf_instance*4)):$((15552+cf_instance*4))/udp \
+                -p $((15553+cf_instance*4)):$((15553+cf_instance*4))/udp \
 		        --privileged \
 		        -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
 		        cuttlefish
