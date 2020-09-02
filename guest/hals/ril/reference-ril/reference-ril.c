@@ -2213,7 +2213,7 @@ static int sendCmdAgainForOpenChannelWithP2( char *data,
 
     err = at_send_command_singleline(cmd, "+CGLA:", &p_response);
     if (err < 0) goto done;
-    if (p_response != NULL && p_response->success == 0) {
+    if (p_response->success == 0) {
         if (!strcmp(p_response->finalResponse, "+CME ERROR: 21") ||
             !strcmp(p_response->finalResponse, "+CME ERROR: 50")) {
             errType = RIL_E_GENERIC_FAILURE;
@@ -2437,7 +2437,7 @@ static void requestSimAuthentication( char *authData, RIL_Token t) {
     response.sw2 = 0;
 
     binAuthData  =
-            (unsigned char *)malloc(sizeof(char) * strlen(authData));
+            (unsigned char *)malloc(sizeof(*binAuthData) * strlen(authData));
     if (binAuthData == NULL) {
         goto error;
     }
@@ -4068,7 +4068,7 @@ static void requestStkSendEnvelope(void *data, RIL_Token t)
             alphaBytes = convertHexStringToBytes(alphaStr, strlen(alphaStr));
             RIL_onUnsolicitedResponse(RIL_UNSOL_STK_CC_ALPHA_NOTIFY, alphaBytes,
                                       strlen((char *)alphaBytes));
-            free(convertHexStringToBytes);
+            free(alphaBytes);
         }
     }
     at_response_free(p_response);
@@ -4456,7 +4456,7 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
                 break;
             }
             p_response = NULL;
-            err = at_send_command("AT+COPS=0", NULL);
+            err = at_send_command("AT+COPS=0", &p_response);
             if (err < 0 || p_response->success == 0) {
                 RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
             } else {
@@ -4847,6 +4847,7 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_ENABLE_UICC_APPLICATIONS: {
             if (data == NULL || datalen != sizeof(int)) {
                 RIL_onRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
+                break;
             }
             areUiccApplicationsEnabled = *(int *)(data);
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
