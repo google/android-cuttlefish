@@ -55,13 +55,22 @@ AdbHandler::AdbHandler(
       adb_socket_(SetupAdbSocket(adb_host_and_port)),
       read_thread_([this]() { ReadLoop(); }) {}
 
-AdbHandler::~AdbHandler() = default;
+AdbHandler::~AdbHandler() {
+        (*adb_socket_).Close();
+        read_thread_.join();
+}
 
 void AdbHandler::ReadLoop() {
   while (1) {
     uint8_t buffer[4096];
     auto read = adb_socket_->Read(buffer, sizeof(buffer));
-    send_to_client_(buffer, read);
+    if (read < 0) {
+      LOG(ERROR) << "Error on reading from ADB socket: " << strerror(adb_socket_->GetErrno());
+      break;
+    }
+    if (read) {
+      send_to_client_(buffer, read);
+    }
   }
 }
 
