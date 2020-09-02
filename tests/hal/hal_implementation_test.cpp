@@ -111,6 +111,13 @@ static const std::set<std::string> kKnownMissingAidl = {
     "android.hardware.keymaster.HardwareAuthToken",
     "android.hardware.keymaster.HardwareAuthenticatorType",
     "android.hardware.keymaster.Timestamp",
+
+    // These powerpolicy types are only used in Automotive.
+    "android.frameworks.automotive.powerpolicy.CarPowerPolicy",
+    "android.frameworks.automotive.powerpolicy.CarPowerPolicyFilter",
+    "android.frameworks.automotive.powerpolicy.ICarPowerPolicyChangeCallback",
+    "android.frameworks.automotive.powerpolicy.ICarPowerPolicyServer",
+    "android.frameworks.automotive.powerpolicy.PowerComponent",
 };
 
 // AOSP packages which are never considered
