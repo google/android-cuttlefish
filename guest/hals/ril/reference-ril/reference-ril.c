@@ -3773,7 +3773,7 @@ static void requestSetSmscAddress(void *data, size_t datalen, RIL_Token t)
     }
 
     if (data == NULL || strlen(data) == 0) {
-        RLOGE("SET_SMSC_ADDRESS invalid address: %s", data);
+        RLOGE("SET_SMSC_ADDRESS invalid address: %s", (char *)data);
         RIL_onRequestComplete(t, RIL_E_GENERIC_FAILURE, NULL, 0);
         return;
     }
