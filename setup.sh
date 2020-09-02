@@ -237,6 +237,9 @@ function cvd_docker_create {
 		  else
 			  echo "WARNING: No Android images in ${android}."
 		  fi
+		  if [ -f "${android}/bootloader" ]; then
+		      home_volume+=("-v ${android}/bootloader:/home/vsoc-01/bootloader:rw")
+		  fi
 	  fi
 	  if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
 		  home_volume+=("-v ${home}:/home/vsoc-01:rw")
