@@ -372,9 +372,9 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   std::string vm_manager_cmdline = "";
   if (FLAGS_vm_manager == QemuManager::name() || FLAGS_use_bootloader) {
-    // crosvm sets up the console= earlycon= pci= reboot= panic= flags for us if
-    // booting straight to the kernel, but QEMU and the bootlaoder via crosvm does not.
-    vm_manager_cmdline += "console=hvc0 pci=noacpi reboot=k panic=-1";
+    // crosvm sets up the console= earlycon= panic= flags for us if booting straight to
+    // the kernel, but QEMU and the bootloader via crosvm does not.
+    vm_manager_cmdline += "console=hvc0 panic=-1";
     if (cuttlefish::HostArch() == "aarch64") {
       if (FLAGS_vm_manager == QemuManager::name()) {
         // To update the pl011 address:
@@ -401,6 +401,9 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
         vm_manager_cmdline += " ramoops.console_size=0x80000";
         vm_manager_cmdline += " ramoops.record_size=0x80000";
         vm_manager_cmdline += " ramoops.dump_oops=1";
+      } else {
+        // crosvm requires these additional parameters on x86_64 in bootloader mode
+        vm_manager_cmdline += " pci=noacpi reboot=k";
       }
     }
   }
