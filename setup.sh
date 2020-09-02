@@ -33,22 +33,24 @@ function cvd_docker_list {
 function help_on_container_create {
 	echo "   cvd_docker_create <options> [NAME] # by default names 'cuttlefish'"
 	echo "     Options:"
-	echo "       -n | --name jellyfish        : override default name"
-	echo "                                    : for backward compat, [NAME] will override this"
-	echo "       -s | --singleshot            : run the container, log in once, then delete it on logout"
-	echo "                                    : otherwise, the container is created as a daemon"
-	echo "       -x | --with_host_x           : run the container in singleshot and"
-	echo "                                    : share X of the docker host"
-	echo "       -a | --android_build_top dir : equivalent as setting ANDROID_BUILD_TOP"
-	echo "                                    : if ANDROID_BUILD_TOP is already set, the option is ignored"
-	echo "                                    : dir should be the level directory of android tree"
-	echo "       -m | --share_dir dir1:dir2   : mount a host directory dir1 at dir2 of docker container"
-	echo "                                    : dir1 should be an absolute path or relative path to $PWD"
-	echo "                                    : dir2 should be an absolute path or relative path to /home/vsoc-01/"
-	echo "                                    : $HOME is not allowed as dir1"
-	echo "                                    : /home/vsoc-01 is not allowed as dir2"
-	echo "                                    : For multiple mounts, use multiple -m options per pair"
-	echo "       -h | --help                  : print this help message"
+	echo "       -s | --singleshot                : run the container, log in once, then delete it on logout"
+	echo "                                        : otherwise, the container is created as a daemon"
+	echo "       -x | --with_host_x               : run the container in singleshot and"
+	echo "                                        : share X of the docker host"
+	echo "       -A[/path] | --android[=/path]    : mount Android images from path (defaults to \$ANDROID_PRODUCT_OUT);"
+	echo "                                        : requires -C to also be specified"
+	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
+	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
+	echo "       -C[/path] | --cuttlefish[=/path] : mount Cuttlefish host image from path (defaults to \$ANDROID_HOST_OUT/cvd-host_package.tar.gz)"
+	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
+	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
+	echo "       -m | --share_dir dir1:dir2       : mount a host directory dir1 at dir2 of docker container"
+	echo "                                        : dir1 should be an absolute path or relative path to $PWD"
+	echo "                                        : dir2 should be an absolute path or relative path to /home/vsoc-01/"
+	echo "                                        : $HOME is not allowed as dir1"
+	echo "                                        : /home/vsoc-01 is not allowed as dir2"
+	echo "                                        : For multiple mounts, use multiple -m options per pair"
+	echo "       -h | --help                      : print this help message"
 	echo "        The optional [NAME] will override -n option for backward compatibility"
 }
 
@@ -86,38 +88,13 @@ function is_absolute_path {
 	return 1
 }
 
-# set up android_prod_out_dir, android_host_out_dir,
-# and android_build_top_dir
-#
-# based on the android_build_top_dir, the routine figures out
-# the rest, using find and egrep
-function setup_android_build_envs {
-  local -n android_build_top_dir_=$1
-  local -n android_host_out_dir_=$2
-  local -n android_prod_out_dir_=$3
-  android_build_top_dir_="$(realpath $4)"
 
-  local host_pkg_file=
-  if ! host_pkg_file="$(find "$android_build_top_dir_"/out/ -type f | egrep "/cvd-host_package\.tar\.gz$" | tail -1 2> /dev/null)"; then
-      echo "failed to search ANDROID_HOST_OUT directory"
-      echo "try to set it up manually"
-      exit 1
-  fi
-  android_host_out_dir_="$(dirname $host_pkg_file)"
-  android_host_out_dir_="$(realpath $android_host_out_dir_)"
-  local boot_img_file=
-  if ! boot_img_file="$(find "$android_build_top_dir_"/out/ -type f | egrep "/boot\.img$"  | tail -1 2> /dev/null)"; then
-      echo "failed to search ANDROID_PRODUCT_OUT directory"
-      echo "try to set it up manually"
-      exit 1
-  fi
-  android_prod_out_dir_="$(dirname $boot_img_file)"
-  android_prod_out_dir_="$(realpath $android_prod_out_dir_)"
-}
+singleshot="false"
 
 function cvd_docker_create {
 	local name=""
-	local singleshot="false"
+    local android=""
+    local cuttlefish=""
 	local with_host_x="false"
 	local need_help="false"
 	local share_dir="false"
@@ -125,188 +102,214 @@ function cvd_docker_create {
 	local android_build_top="false"
 	local to_build_top_dir="${ANDROID_BUILD_TOP}"
 
-  # n | --name=cuttlefish | --name jellyfish
-  # s | --singleshot
-  # x | --with_host_x
-  # m | --share_dir dir1:dir2
-  # a | --android_build_top dir
-  # h | --help
+    # s | --singleshot
+    # x | --with_host_x
+    # m | --share_dir dir1:dir2
+    # A | --android[=/PATH]
+    # C | --cuttlefish[=/PATH to host package file]
+    # h | --help
 
-  local params
-  if params=$(getopt -o 'n:a:m:sxh' -l 'name:,android_build_top:,share_dir:,singleshot,with_host_x,help' --name "$0" -- "$@"); then
-	  eval set -- "${params}"
-	  while true; do
-		  case "$1" in
-			  -n|--name)
-				  name=$2
-				  shift 2
-				  ;;
-			  -m|--share_dir)
-				  share_dir="true"
-				  shared_dir_pairs+=("$2")
-				  shift 2
-				  ;;
-			  -s|--singleshot)
-				  singleshot="true"
-				  shift
-				  ;;
-			  -x|--with_host_x)
-				  if [[ -n "${DISPLAY}" ]]; then
-					  with_host_x="true"
-				  else
-					  echo "Can't use host's X: DISPLAY is not set." 1>&2
+    local params
+    if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
+	    eval set -- "${params}"
+	    while true; do
+		    case "$1" in
+			    -m|--share_dir)
+				    share_dir="true"
+				    shared_dir_pairs+=("$2")
+				    shift 2
+				    ;;
+			  -A|--android)
+				  android=$2
+				  if [[ -z "${android}" ]]; then
+					  if [[ -v ANDROID_PRODUCT_OUT ]]; then
+						  android="${ANDROID_PRODUCT_OUT}"
+						  echo "Defaulting Android path to ${android}"
+						  if [[ ! -d "${ANDROID_PRODUCT_OUT}" ]]; then
+							  echo "Directory ANDROID_PRODUCT_OUT=${ANDROID_PRODUCT_OUT} does not exist, can't use as default." 1>&2
+							  need_help="true"
+						  fi
+					  fi
+				  fi
+				  if [[ ! -r "${android}" || ! -d "${android}" ]]; then
+					  echo "Directory \"${android}\" does not exist." 1>&2
 					  need_help="true"
 				  fi
-				  shift
+				  shift 2
 				  ;;
-			  -a|--android_build_top)
-				  if [[ -z ${ANDROID_BUILD_TOP} ]]; then
-					  android_build_top="true"
-                      to_build_top_dir="$2"
+			  -C|--cuttlefish)
+				  cuttlefish=$2
+				  if [[ -z "${cuttlefish}" ]]; then
+					  if [[ -v ANDROID_HOST_OUT ]]; then
+						  cuttlefish="${ANDROID_HOST_OUT}/cvd-host_package.tar.gz"
+						  echo "Defaulting Cuttlefish path to ${cuttlefish}"
+						  if [[ ! -r "${cuttlefish}" ]]; then
+							  echo "File ${cuttlefish} does not exist, can't use as default." 1>&2
+							  need_help="true"
+						  fi
+
+					  fi
+				  fi
+				  if [[ ! -r "${cuttlefish}" || ! -f "${cuttlefish}" ]]; then
+					  echo "File \"${cuttlefish}\" does not exist." 1>&2
+					  need_help="true"
 				  fi
 				  shift 2
 				  ;;
-			  -h|--help)
-				  need_help="true"
-				  shift
-				  ;;
-			  --)
-				  shift
-				  break
-				  ;;
-		  esac
-	  done
-  else
-	  need_help="true"
-  fi
-
-  if [[ "${need_help}" == "true" ]]; then
-	  help_on_container_create
-	  return
-  fi
-
-  local android_build_top_dir="${ANDROID_BUILD_TOP}"
-  local android_host_out_dir="${ANDROID_HOST_OUT}"
-  local android_prod_out_dir="${ANDROID_PRODUCT_OUT}"
-  if [[ "${android_build_top}" == "true" ]]; then
-      setup_android_build_envs \
-          android_build_top_dir \
-          android_host_out_dir \
-          android_prod_out_dir \
-          ${to_build_top_dir}
-  fi
-
-  # for backward compatibility:
-  local -a _rest=($@)
-  [[ -z ${name} ]] && name="${_rest[0]}"
-  unset _rest
-
-  local name="$(cvd_get_id $name)"
-  local container="$(cvd_container_exists $name)"
-
-  local -a volumes=()
-  if [[ -z "${container}" ]]; then
-	  echo "Container ${name} does not exist.";
-	  echo "Starting container ${name} from image cuttlefish.";
-
-	# if ANDROID_BUILD_TOP is given either via an env variable or commandline option,
-	# we will use the host package and images from there
-	#
-	if [[ -n "${android_build_top_dir}" ]]; then
-		local home="$(mktemp -d)"
-		echo "Detected Android build environment.  Setting up in ${home}."
-		tar xz -C "${home}" -f "${android_host_out_dir}"/cvd-host_package.tar.gz
-		for f in "${android_prod_out_dir}"/*.img; do
-			volumes+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
-		done
-		volumes+=("-v ${home}:/home/vsoc-01:rw")
-	fi
-
-	if [[ $share_dir == "true" ]]; then
-		local host_pwd=$(realpath "$PWD")
-        local guest_home="/home/vsoc-01"
-		for sub in "${shared_dir_pairs[@]}"; do
-			if ! echo ${sub} | egrep ":" > /dev/null; then
-                echo "${sub} is ill-formated. should be host_dir:mnt_dir"
-                echo "try $0 --help"
-            fi
-            local host_dir="$(echo $sub | cut -d ':' -f 1)"
-            local guest_dir="$(echo $sub | cut -d ':' -f 2)"
-            if ! is_absolute_path ${host_dir}; then
-                host_dir="${host_pwd}/${subdir}"
-            fi
-            if ! is_absolute_path ${guest_dir}; then
-                guest_dir="${guest_home}/${guest_dir}"
-            fi
-            volumes+=("-v ${host_dir}:${guest_dir}")
-		done
-	fi
-
-	local -a as_host_x=()
-	if [[ "$with_host_x" == "true" ]]; then
-		as_host_x+=("-e DISPLAY=$DISPLAY")
-		as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
-	fi
-
-	docker run -d ${as_host_x[@]} \
-		--name "${name}" -h "${name}" \
-		-p 8443:8443 \
-		-p 6250:6250 \
-		-p 15550:15550 \
-		-p 15551:15551 \
-		--privileged \
-		-v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
-		cuttlefish
-
-	echo "Waiting for ${name} to boot."
-	while true; do
-		if [[ -z "$(cvd_container_exists ${name})" ]]; then
-			echo "Container ${name}  does not exist yet.  Sleep 1 second"
-			sleep 1
-			continue
-		fi
-		if [[ -z "$(cvd_container_running ${name})" ]]; then
-			echo "Container ${name} is not running yet.  Sleep 1 second"
-			sleep 1
-			continue
-		fi
-		break
-	done
-	echo "Done waiting for ${name} to boot."
-
-	__gen_funcs ${name}
-    # define and export ip_${name} for the ip address
-    local ip_addr_var_name="ip_${name}"
-    declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
-    export ${ip_addr_var_name}
-    if [[ "$singleshot" == "true" ]]; then
-        docker exec -it --user vsoc-01 ${name} /bin/bash
-        cvd_docker_rm ${name}
-        return
+			    -s|--singleshot)
+				    singleshot="true"
+				    shift
+				    ;;
+			    -x|--with_host_x)
+				    if [[ -n "${DISPLAY}" ]]; then
+					    with_host_x="true"
+				    else
+					    echo "Can't use host's X: DISPLAY is not set." 1>&2
+					    need_help="true"
+				    fi
+				    shift
+				    ;;
+			    -h|--help)
+				    need_help="true"
+				    shift
+				    ;;
+			    --)
+				    shift
+				    break
+				    ;;
+		    esac
+	    done
+    else
+	    need_help="true"
     fi
 
-	if [[ "$singleshot" == "true" ]]; then
-		cvd_login_${name}
-		cvd_docker_rm ${name}
-		return
-	fi
+    if [[ -n "${android}" && -z "${cuttlefish}" ]]; then
+	    echo "Option -A/--android requires option -C/--cuttlefish" 1>&2
+	    need_help="true"
+    fi
 
-	help_on_container_start ${name}
-	echo
-	help_on_sourcing
+    if [[ "${need_help}" == "true" ]]; then
+	    help_on_container_create
+	    return
+    fi
 
-else
-	echo "Container ${name} exists";
-	if [[ -z "$(cvd_container_running ${name})" ]]; then
-		echo "Container ${name} is not running.";
-	else
-		echo "Container ${name} is already running.";
-		__gen_funcs ${name}
-		help_on_container_start ${name}
-		echo
-		help_on_sourcing
-	fi
-  fi
+    # for backward compatibility:
+    local -a _rest=($@)
+    name="${_rest[0]}"
+    unset _rest
+
+    local name="$(cvd_get_id $name)"
+    local container="$(cvd_container_exists $name)"
+
+    local -a volumes=()
+    if [[ -z "${container}" ]]; then
+	    echo "Container ${name} does not exist.";
+
+	    if [[ -f "${cuttlefish}" ]]; then
+		    local home="$(mktemp -d)"
+		    echo "Setting up Cuttlefish host image from ${cuttlefish} in ${home}."
+		    tar xz -C "${home}" -f "${cuttlefish}"
+	    fi
+	    if [[ -d "${android}" ]]; then
+		    echo "Setting up Android images from ${android} in ${home}."
+		    if [[ $(compgen -G "${android}"/*.img) != "${android}/*.img" ]]; then
+				for f in "${android}"/*.img; do
+					volumes+=("-v ${f}:/home/vsoc-01/$(basename ${f}):rw")
+				done
+		    else
+			    echo "WARNING: No Android images in ${android}."
+		    fi
+	    fi
+	    if [[ -f "${cuttlefish}" || -d "${android}" ]]; then
+		    volumes+=("-v ${home}:/home/vsoc-01:rw")
+	    fi
+
+        if [[ $share_dir == "true" ]]; then
+            local host_pwd=$(realpath "$PWD")
+            local guest_home="/home/vsoc-01"
+            for sub in "${shared_dir_pairs[@]}"; do
+                if ! echo ${sub} | egrep ":" > /dev/null; then
+                    echo "${sub} is ill-formated. should be host_dir:mnt_dir" 1>&2
+                    echo "try $0 --help" 1>&2
+                    exit 10
+                fi
+                local host_dir="$(echo $sub | cut -d ':' -f 1)"
+                local guest_dir="$(echo $sub | cut -d ':' -f 2)"
+                if ! is_absolute_path ${host_dir}; then
+                    host_dir="${host_pwd}/${subdir}"
+                fi
+                if ! is_absolute_path ${guest_dir}; then
+                    guest_dir="${guest_home}/${guest_dir}"
+                fi
+                volumes+=("-v ${host_dir}:${guest_dir}")
+            done
+        fi
+
+	    local -a as_host_x=()
+	    if [[ "$with_host_x" == "true" ]]; then
+		    as_host_x+=("-e DISPLAY=$DISPLAY")
+		    as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
+	    fi
+
+	    docker run -d ${as_host_x[@]} \
+		       --name "${name}" -h "${name}" \
+		       -p 8443:8443 \
+		       -p 6250:6250 \
+		       -p 15550:15550 \
+		       -p 15551:15551 \
+		       --privileged \
+		       -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
+		       cuttlefish
+
+	    echo "Waiting for ${name} to boot."
+	    while true; do
+		    if [[ -z "$(cvd_container_exists ${name})" ]]; then
+			    echo "Container ${name}  does not exist yet.  Sleep 1 second"
+			    sleep 1
+			    continue
+		    fi
+		    if [[ -z "$(cvd_container_running ${name})" ]]; then
+			    echo "Container ${name} is not running yet.  Sleep 1 second"
+			    sleep 1
+			    continue
+		    fi
+		    break
+	    done
+	    echo "Done waiting for ${name} to boot."
+
+	    __gen_funcs ${name}
+        # define and export ip_${name} for the ip address
+        local ip_addr_var_name="ip_${name}"
+        declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
+        export ${ip_addr_var_name}
+        if [[ "$singleshot" == "true" ]]; then
+            docker exec -it --user vsoc-01 ${name} /bin/bash
+            cvd_docker_rm ${name}
+            return
+        fi
+
+	    if [[ "$singleshot" == "true" ]]; then
+		    cvd_login_${name}
+		    cvd_docker_rm ${name}
+		    return
+	    fi
+
+	    help_on_container_start ${name}
+	    echo
+	    help_on_sourcing
+
+    else
+	    echo "Container ${name} exists";
+	    if [[ -z "$(cvd_container_running ${name})" ]]; then
+		    echo "Container ${name} is not running.";
+	    else
+		    echo "Container ${name} is already running.";
+		    __gen_funcs ${name}
+		    help_on_container_start ${name}
+		    echo
+		    help_on_sourcing
+	    fi
+    fi
 }
 
 function cvd_docker_rm {
@@ -386,9 +389,11 @@ eval "${start_func}"
 eval "${stop_func}"
 eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
 
-echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
-echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
-echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
+if [[ "$singleshot" == "false" ]]; then 
+    echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
+    echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
+    echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
+fi
 }
 
 help_on_sourcing
