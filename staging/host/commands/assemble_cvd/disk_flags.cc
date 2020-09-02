@@ -76,6 +76,7 @@ DEFINE_int32(blank_sdcard_image_mb, 2048,
              "The size of the blank sdcard image to generate, MB.");
 
 DECLARE_string(bootloader);
+DECLARE_bool(use_bootloader);
 DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
@@ -413,7 +414,7 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
     }
   }
 
-  if (!cuttlefish::FileHasContent(FLAGS_bootloader)) {
+  if (FLAGS_use_bootloader && !cuttlefish::FileHasContent(FLAGS_bootloader)) {
     LOG(ERROR) << "File not found: " << FLAGS_bootloader;
     exit(cuttlefish::kCuttlefishConfigurationInitError);
   }
