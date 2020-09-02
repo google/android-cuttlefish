@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
+cc_binary {
     name: "powerwash_cvd",
     srcs: [
         "powerwash_cvd.cc",
@@ -30,5 +30,5 @@ cc_binary_host {
         "libgflags",
         "libxml2",
     ],
-    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
 }
