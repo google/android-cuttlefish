@@ -144,8 +144,6 @@ function cvd_docker_create {
           if [[ -n $val ]] && [[ ${val:0:1} != '-' ]]; then
             OPTARG=${val}
             OPTIND=$(( OPTIND + 1 ))
-            echo $op
-            echo $OPTARG
           fi
           ;;
       esac
