@@ -121,7 +121,8 @@ cvd_host_shared_libraries := \
     libgbm.so \
     libminijail.so \
     libvirglrenderer.so \
-    libwayland_client.so
+    libwayland_client.so \
+    libxml2.so \
 
 webrtc_assets := \
     index.html \
