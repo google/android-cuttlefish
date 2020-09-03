@@ -56,7 +56,7 @@ void ModemSimulator::Initialize(
 }
 
 void ModemSimulator::RegisterModemService() {
-  auto netservice = std::make_unique<NetworkService>(
+  auto networkservice = std::make_unique<NetworkService>(
       modem_id_, channel_monitor_.get(), thread_looper_.get());
   auto simservice = std::make_unique<SimService>(
       modem_id_, channel_monitor_.get(), thread_looper_.get());
@@ -73,15 +73,19 @@ void ModemSimulator::RegisterModemService() {
   auto supservice = std::make_unique<SupService>(
       modem_id_, channel_monitor_.get(), thread_looper_.get());
 
-  netservice->SetupDependency(miscservice.get(), simservice.get(),
-                              dataservice.get());
-  simservice->SetupDependency(netservice.get());
-  callservice->SetupDependency(simservice.get(), netservice.get());
+  networkservice->SetupDependency(miscservice.get(), simservice.get(),
+                                  dataservice.get());
+  simservice->SetupDependency(networkservice.get());
+  callservice->SetupDependency(simservice.get(), networkservice.get());
   stkservice->SetupDependency(simservice.get());
   smsservice->SetupDependency(simservice.get());
 
+  sms_service_ = smsservice.get();
+  sim_service_ = simservice.get();
+  misc_service_ = miscservice.get();
+  network_service_ = networkservice.get();
   modem_services_[kSimService] = std::move(simservice);
-  modem_services_[kNetworkService] = std::move(netservice);
+  modem_services_[kNetworkService] = std::move(networkservice);
   modem_services_[kCallService] = std::move(callservice);
   modem_services_[kDataService] = std::move(dataservice);
   modem_services_[kSmsService] = std::move(smsservice);
@@ -91,15 +95,12 @@ void ModemSimulator::RegisterModemService() {
 }
 
 void ModemSimulator::DispatchCommand(const Client& client, std::string& command) {
-  auto iter = modem_services_.find(kSmsService);
-  if (iter != modem_services_.end()) {
-    auto sms_service =
-        dynamic_cast<SmsService*>(modem_services_[kSmsService].get());
-    if (sms_service->IsWaitingSmsPdu()) {
-      sms_service->HandleSendSMSPDU(client, command);
+  if (sms_service_) {
+    if (sms_service_->IsWaitingSmsPdu()) {
+      sms_service_->HandleSendSMSPDU(client, command);
       return;
-    } else if (sms_service->IsWaitingSmsToSim()) {
-      sms_service->HandleWriteSMSPduToSim(client, command);
+    } else if (sms_service_->IsWaitingSmsToSim()) {
+      sms_service_->HandleWriteSMSPduToSim(client, command);
       return;
     }
   }
@@ -119,38 +120,27 @@ void ModemSimulator::DispatchCommand(const Client& client, std::string& command)
 }
 
 void ModemSimulator::OnFirstClientConnected() {
-  auto iter = modem_services_.find(kMiscService);
-  if (iter != modem_services_.end()) {
-    auto misc_service =
-        dynamic_cast<MiscService*>(modem_services_[kMiscService].get());
-    misc_service->TimeUpdate();
+  if (misc_service_) {
+    misc_service_->TimeUpdate();
   }
 
-  iter = modem_services_.find(kNetworkService);
-  if (iter != modem_services_.end()) {
-    auto network_service =
-        dynamic_cast<NetworkService*>(modem_services_[kNetworkService].get());
-    network_service->OnVoiceRegisterStateChanged();
-    network_service->OnDataRegisterStateChanged();
+  if (network_service_) {
+    network_service_->OnVoiceRegisterStateChanged();
+    network_service_->OnDataRegisterStateChanged();
   }
 }
 
 void ModemSimulator::SaveModemState() {
-  auto iter = modem_services_.find(kSimService);
-  if (iter != modem_services_.end()) {
-    auto sim_service =
-        dynamic_cast<SimService*>(modem_services_[kSimService].get());
-    sim_service->SavePinStateToIccProfile();
-    sim_service->SaveFacilityLockToIccProfile();
+  if (sim_service_) {
+    sim_service_->SavePinStateToIccProfile();
+    sim_service_->SaveFacilityLockToIccProfile();
   }
 }
 
 bool ModemSimulator::IsWaitingSmsPdu() {
-  auto iter = modem_services_.find(kSmsService);
-  if (iter != modem_services_.end()) {
-    auto sms_service =
-        dynamic_cast<SmsService*>(modem_services_[kSmsService].get());
-    return (sms_service->IsWaitingSmsPdu() | sms_service->IsWaitingSmsToSim());
+  if (sms_service_) {
+    return (sms_service_->IsWaitingSmsPdu() |
+            sms_service_->IsWaitingSmsToSim());
   }
   return false;
 }
