@@ -24,12 +24,11 @@ cc_library_host_static {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
-        "libicuuc",
     ],
     static_libs: [
         "libxml2",
         "libcuttlefish_host_config",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
 }
