@@ -440,61 +440,12 @@ void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor
   }
 }
 
-void LaunchTpmSimulator(cuttlefish::ProcessMonitor* process_monitor,
-                   const cuttlefish::CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  auto port = instance.tpm_port();
-  auto socket = cuttlefish::SharedFD::VsockServer(port, SOCK_STREAM);
-  cuttlefish::Command tpm_command(
-      cuttlefish::DefaultHostArtifactsPath("bin/tpm_simulator_manager"));
-  tpm_command.AddParameter("-port=", port);
-  process_monitor->StartSubprocess(std::move(tpm_command),
-                                   GetOnSubprocessExitCallback(config));
-
-  cuttlefish::Command proxy_command(cuttlefish::SocketVsockProxyBinary());
-  proxy_command.AddParameter("--server=vsock");
-  proxy_command.AddParameter("--tcp_port=", port);
-  proxy_command.AddParameter("--vsock_port=", port);
-  process_monitor->StartSubprocess(std::move(proxy_command),
-                                   GetOnSubprocessExitCallback(config));
-}
-
 void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
                    const cuttlefish::CuttlefishConfig& config) {
   cuttlefish::Command metrics(cuttlefish::MetricsBinary());
 
   process_monitor->StartSubprocess(std::move(metrics),
                                    GetOnSubprocessExitCallback(config));
-}
-
-void LaunchTpmPassthrough(cuttlefish::ProcessMonitor* process_monitor,
-                          const cuttlefish::CuttlefishConfig& config) {
-  auto server = cuttlefish::SharedFD::VsockServer(SOCK_STREAM);
-  if (!server->IsOpen()) {
-    LOG(ERROR) << "Unable to create tpm passthrough server: "
-               << server->StrError();
-    std::exit(RunnerExitCodes::kTpmPassthroughError);
-  }
-  cuttlefish::Command tpm_command(
-      cuttlefish::DefaultHostArtifactsPath("bin/vtpm_passthrough"));
-  tpm_command.AddParameter("-server_fd=", server);
-  tpm_command.AddParameter("-device=", config.tpm_device());
-
-  process_monitor->StartSubprocess(std::move(tpm_command),
-                                   GetOnSubprocessExitCallback(config));
-}
-
-void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
-               const cuttlefish::CuttlefishConfig& config) {
-  if (config.tpm_device() != "") {
-    if (config.tpm_binary() != "") {
-      LOG(WARNING)
-          << "Both -tpm_device and -tpm_binary were set. Using -tpm_device.";
-    }
-    LaunchTpmPassthrough(process_monitor, config);
-  } else if (config.tpm_binary() != "") {
-    LaunchTpmSimulator(process_monitor, config);
-  }
 }
 
 void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
