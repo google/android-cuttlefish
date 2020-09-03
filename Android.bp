@@ -109,10 +109,13 @@ cc_defaults {
 
 cc_defaults {
     name: "cuttlefish_libicuuc",
-    shared_libs: [
-        "libicuuc",
-        "libandroidicu",
-    ],
+    target: {
+        host: {
+            shared_libs: [
+                "libicuuc",
+            ],
+        },
+    },
 }
 
 cc_defaults {
