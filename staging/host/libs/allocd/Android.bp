@@ -18,31 +18,15 @@ cc_library {
     srcs: [
         "utils.cpp",
     ],
-    shared: {
-        shared_libs: [
-            "libbase",
-            "liblog",
-            "libcuttlefish_utils",
-            "libcuttlefish_fs",
-        ],
-    },
-    static: {
-        static_libs: [
-            "libbase",
-            "liblog",
-        ],
-    },
-    target: {
-
-        host: {
-            static_libs: ["libjsoncpp"],
-        },
-        vendor: {
-            // Liblog does not have a vendor-static variant.
-            shared_libs: ["liblog"],
-            exclude_static_libs: ["liblog"],
-        },
-    },
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_utils",
+        "libcuttlefish_fs",
+        "liblog",
+    ],
+    static_libs: [
+        "libjsoncpp",
+    ],
     defaults: ["cuttlefish_host_only"],
 }
 
@@ -63,12 +47,8 @@ cc_binary {
     ],
     static_libs: [
         "libgflags",
+        "libjsoncpp",
     ],
-    target: {
-        host: {
-            static_libs: ["libjsoncpp"],
-        },
-    },
     defaults: ["cuttlefish_host_only"],
 }
 
@@ -79,21 +59,15 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
-        "libcuttlefish_fs",
         "libcuttlefish_allocd_utils",
+        "libcuttlefish_fs",
         "libcuttlefish_utils",
         "liblog",
     ],
     static_libs: [
+        "libcuttlefish_host_config",
         "libgflags",
+        "libjsoncpp",
     ],
-    target: {
-        host: {
-            static_libs: [
-                "libcuttlefish_host_config",
-                "libjsoncpp",
-            ],
-        },
-    },
     defaults: ["cuttlefish_host_only"],
 }
