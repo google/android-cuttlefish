@@ -57,8 +57,6 @@ cvd_host_executables := \
     fsck.f2fs \
     resize.f2fs \
     make_f2fs \
-    tpm_simulator_manager \
-    vtpm_passthrough \
     ms-tpm-20-ref \
     lz4 \
     mkenvimage \
