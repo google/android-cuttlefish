@@ -38,7 +38,7 @@ cc_test_host {
     ],
     static_libs: [
         "libgmock",
-        "libgtest_host",
+        "libgtest",
     ],
     defaults: ["cuttlefish_host_only"],
     test_suites: ["general-tests"],
