@@ -128,27 +128,8 @@ PRODUCT_PRIVATE_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/produc
 BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/google/cuttlefish/shared/sepolicy/system_ext/private
 # BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/google/cuttlefish/shared/sepolicy/system_ext/public
 
-VSOC_STLPORT_INCLUDES :=
-VSOC_STLPORT_LIBS :=
-VSOC_STLPORT_STATIC_LIBS :=
-VSOC_TEST_INCLUDES := external/googletest/googlemock/include external/googletest/googletest/include
-VSOC_TEST_LIBRARIES := libgmock_main_host libgtest_host libgmock_host
-VSOC_LIBCXX_STATIC := libc++_static
-VSOC_PROTOBUF_SHARED_LIB := libprotobuf-cpp-full
-
 CUTTLEFISH_LIBRIL_NAME := libril-modem-lib
 ENABLE_CUTTLEFISH_RILD := true
-
-# TODO(ender): Remove all these once we stop depending on GCE code.
-GCE_VERSION_CFLAGS := -DGCE_PLATFORM_SDK_VERSION=${PLATFORM_SDK_VERSION}
-GCE_STLPORT_INCLUDES := $(VSOC_STLPORT_INCLUDES)
-GCE_STLPORT_LIBS := $(VSOC_STLPORT_LIBS)
-GCE_STLPORT_STATIC_LIBS := $(VSOC_STLPORT_STATIC_LIBS)
-GCE_TEST_INCLUDES := $(VSOC_TEST_INCLUDES)
-GCE_TEST_LIBRARIES := $(VSOC_TEST_LIBRARIES)
-GCE_LIBCXX_STATIC := $(VSOC_LIBCXX_STATIC)
-GCE_PROTOBUF_SHARED_LIB := $(VSOC_PROTOBUF_SHARED_LIB)
-# TODO(ender): up till here.
 
 STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
