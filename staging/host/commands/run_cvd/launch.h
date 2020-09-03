@@ -39,9 +39,6 @@ void LaunchConfigServer(const cuttlefish::CuttlefishConfig& config,
 StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
                                   const cuttlefish::CuttlefishConfig& config);
 
-void LaunchTpm(cuttlefish::ProcessMonitor* process_monitor,
-               const cuttlefish::CuttlefishConfig& config);
-
 void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
                                   const cuttlefish::CuttlefishConfig& config);
 
