@@ -136,15 +136,6 @@ service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
     group root logd
 
 
-on property:ro.boot.tpm_vsock_port=*
-  enable vtpm_manager
-
-service vtpm_manager /vendor/bin/vtpm_manager -tpm_vsock_port=${ro.boot.tpm_vsock_port}
-  class main
-  user root
-  disabled
-
-
 service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.vsock_touch_port} -keyboard_port=${ro.boot.vsock_keyboard_port}
     group root uhid
     disabled
