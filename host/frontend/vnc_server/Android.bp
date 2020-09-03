@@ -30,6 +30,7 @@ cc_binary {
         "libcuttlefish_utils",
         "cuttlefish_tcp_socket",
         "libbase",
+        "libjsoncpp",
         "liblog",
     ],
     static_libs: [
@@ -37,7 +38,6 @@ cc_binary {
         "libcuttlefish_screen_connector",
         "libcuttlefish_wayland_server",
         "libffi",
-        "libjsoncpp",
         "libjpeg",
         "libgflags",
         "libwayland_server",

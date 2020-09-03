@@ -48,6 +48,7 @@ cc_binary {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
+        "libjsoncpp",
         "libnl",
         "libprotobuf-cpp-full",
         "libxml2",
@@ -61,7 +62,6 @@ cc_binary {
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
         "libgflags",
-        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
 }
