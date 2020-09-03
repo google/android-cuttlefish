@@ -22,6 +22,10 @@
 
 namespace cuttlefish {
 
+class SimService;
+class MiscService;
+class NetworkService;
+class SmsService;
 class ModemSimulator {
  public:
   ModemSimulator(int32_t modem_id);
@@ -45,6 +49,11 @@ class ModemSimulator {
   int32_t modem_id_;
   std::unique_ptr<ChannelMonitor> channel_monitor_;
   std::unique_ptr<ThreadLooper> thread_looper_;
+
+  SmsService* sms_service_{nullptr};
+  SimService* sim_service_{nullptr};
+  MiscService* misc_service_{nullptr};
+  NetworkService* network_service_{nullptr};
 
   std::map<ModemServiceType, std::unique_ptr<ModemService>> modem_services_;
 
