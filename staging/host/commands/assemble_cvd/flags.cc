@@ -101,6 +101,10 @@ DEFINE_bool(start_vnc_server, false, "Whether to start the vnc server process. "
                                      "starting from 1.");
 DEFINE_bool(use_allocd, false,
             "Acquire static resources from the resource allocator daemon.");
+DEFINE_bool(enable_minimal_mode, false,
+            "Only enable the minimum features to boot a cuttlefish device and "
+            "support minimal UI interactions.\nNote: Currently only supports "
+            "handheld/phone targets");
 
 /**
  *
@@ -475,7 +479,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   auto udp_range  = ParsePortRange(FLAGS_udp_port_range);
   tmp_config_obj.set_webrtc_udp_port_range(udp_range);
 
-  tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator);
+  tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator &&
+                                            !FLAGS_enable_minimal_mode);
   tmp_config_obj.set_modem_simulator_instance_number(
       FLAGS_modem_simulator_count);
   tmp_config_obj.set_modem_simulator_sim_type(FLAGS_modem_simulator_sim_type);
@@ -511,6 +516,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
 
   tmp_config_obj.set_kgdb(FLAGS_kgdb);
+  tmp_config_obj.set_enable_minimal_mode(FLAGS_enable_minimal_mode);
 
   std::vector<int> instance_nums;
   for (int i = 0; i < FLAGS_num_instances; i++) {

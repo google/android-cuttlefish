@@ -157,6 +157,9 @@ const char* kModemSimulatorSimType = "modem_simulator_sim_type";
 const char* kRilDns = "ril_dns";
 
 const char* kKgdb = "kgdb";
+
+const char* kEnableMinimalMode = "enable_minimal_mode";
+
 }  // namespace
 
 namespace cuttlefish {
@@ -729,6 +732,14 @@ void CuttlefishConfig::set_kgdb(bool kgdb) {
 }
 bool CuttlefishConfig::kgdb() const {
   return (*dictionary_)[kKgdb].asBool();
+}
+
+bool CuttlefishConfig::enable_minimal_mode() const {
+  return (*dictionary_)[kEnableMinimalMode].asBool();
+}
+
+void CuttlefishConfig::set_enable_minimal_mode(bool enable_minimal_mode) {
+  (*dictionary_)[kEnableMinimalMode] = enable_minimal_mode;
 }
 
 // Creates the (initially empty) config object and populates it with values from
