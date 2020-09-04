@@ -288,6 +288,10 @@ class CuttlefishConfig {
   void set_kgdb(bool kgdb);
   bool kgdb() const;
 
+  // Configuration flags for a minimal device
+  bool enable_minimal_mode() const;
+  void set_enable_minimal_mode(bool enable_minimal_mode);
+
   void set_enable_modem_simulator(bool enable_modem_simulator);
   bool enable_modem_simulator() const;
 
@@ -366,7 +370,8 @@ class CuttlefishConfig {
     std::string instance_name() const;
     std::vector<std::string> virtual_disk_paths() const;
 
-    // Returns the path to a file with the given name in the instance directory..
+    // Returns the path to a file with the given name in the instance
+    // directory..
     std::string PerInstancePath(const char* file_name) const;
     std::string PerInstanceInternalPath(const char* file_name) const;
 
