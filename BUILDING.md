@@ -39,8 +39,8 @@ cvd_docker_create -h
 
 The options include but are not limited to:
 1. pull the host packages and images from a host directory
-1. mount the host directories to the docker container: log directory, .gitconfig, etc
-1. run the docker container in foreground
+2. mount the host directories to the docker container: log directory, .gitconfig, etc
+3. run the docker container, log in once, then delete it on logout
    1. have the guest applications (e.g. Cuttlefish) use the host X server
 
 ```bash
@@ -65,7 +65,12 @@ environment](https://source.android.com/setup/build/building) that is set up to
 build Cuttlefish, it will automatically set up the container to point to all the
 binary artifacts.  Assuming you have downloaded, set up, and built a Cuttlefish
 device and Android from the sources, and you call cvd_docker_create in the same
-terminal, you can jump ahead to launching Cuttlefish.
+terminal, you can jump ahead to launching Cuttlefish by adding -A -C
+option to cvd_docker_create
+
+```
+cvd_docker_create -A -C <other options> <name>
+```
 
 ### Building Android from the source with build-android-with-docker.sh
 
@@ -91,23 +96,30 @@ For more detail:
 ```
 
 Although the command will build Android and Cuttlefish, the docker
-contaienr cannot automatically detect the directory. The docker
-container depends on the ANDROID_BUILD_TOP environment variable. If
-Android was built locally, the variable is set. However, the build
-here is being done via another docker container, the environment
-variables are not set.
+contaienr does not automatically detect the directory. To provision
+the docker container with the freshly built Android and Cuttlefish, we
+must give -C and -A options to specify the location of
+cvd-host_package.tar.gz and the ANDROID_PRODUCT_OUT directory,
+respectively.
 
-To set the environment variable, there would be two options. Firstly,
-the variable could set explicitly:
+Assuming that cvd-host_package.tar.gz file is in
+$HOME/android-src/out/host/linux-x86 and the ANDROID_PRODUCT_OUT is
+$HOME/android-src/out/target/product/vsoc_x86, the command would look like this:
+
 
 ```bash
-export ANDROID_BUILD_TOP=$HOME/android-src # <Android top directory is $HOME/android-src>
+cvd_docker_create -C $HOME/android-src/out/host/linux-x86 -A
+$HOME/android-src/out/target/product/vsoc_x86 <other options> <name>
 ```
 
-Alternatively, -a option could be added to cvd_docker_create above:
+Alternatively, you can manually set the two environment variables, and
+give -A -C with default values:
 
 ```bash
-cvd_docker_create -a $HOME/android-src <name> # <name defaults to cuttlefish>
+export
+ANDROID_PRODUCT_OUT=$HOME/android-src/out/target/product/vsoc_x86
+export ANDROID_HOST_OUT=$HOME/android-src/out/host/linux-x86
+cvd_docker_create -A -C $HOME/android-src <name>
 ```
 
 ### Using pre-built cuttlefish image

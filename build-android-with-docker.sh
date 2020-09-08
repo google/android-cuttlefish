@@ -45,14 +45,11 @@ FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
 # As FLAGS_ARGV is not the best for us to process, we convert it into a bash array
-# Especially, iterating over or passing FLAGS_ARGV may not work as expected for
-# an argument surrounded by "" and has space(s) inside: "a b c"
+# Especially, iterating over or passing FLAGS_ARGV may not work as expected
+# when an argument is surrounded by "" and has space(s) inside: "a b c"
 arg_list=()
 function parse_cmds() {
     # a finite state machine
-    # say, 'XXX' is a token. "${FLAGS_ARGV}" is a set of tokens
-    # separated by spaces
-    # we want the vector of the tokens, arg_list without ''
     local state="skip" # and 'record'
     local as_str="${FLAGS_ARGV}"
     local word=""
