@@ -21,8 +21,3 @@ ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
 vendor.bt.rootcanal_mac_address  u:object_r:hal_bluetooth_sim_prop:s0
 vendor.bt.rootcanal_test_console  u:object_r:hal_bluetooth_sim_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
-hwc.drm.device u:object_r:cf_graphics_config_prop:s0 exact string
-hwc.drm.exclude_non_hwfb_imports u:object_r:cf_graphics_config_prop:s0 exact int
-hwc.drm.primary_display_order u:object_r:cf_graphics_config_prop:s0 exact string
-hwc.drm.scale_with_gpu u:object_r:cf_graphics_config_prop:s0 exact int
-hwc.drm.use_overlay_planes u:object_r:cf_graphics_config_prop:s0 exact int
