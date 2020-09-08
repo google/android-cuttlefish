@@ -238,6 +238,22 @@ std::string PDUParser::IntToHexString(int value) {
   return std::to_string(lo) + std::to_string(hi);
 }
 
+std::string PDUParser::IntToHexStringTimeZoneDiff(int tzdiff_hour) {
+  // https://en.wikipedia.org/wiki/GSM_03.40
+  int delta = 0;
+  if (tzdiff_hour < 0) {
+    tzdiff_hour = -tzdiff_hour;
+    delta = 8;
+  }
+  const int tzdiff_quarter_hour = 4 * tzdiff_hour;
+  const int hi = tzdiff_quarter_hour / 10 + delta;
+  const int lo = tzdiff_quarter_hour % 10;
+  std::stringstream ss;
+  ss << std::hex << lo;
+  ss << std::hex << hi;
+  return ss.str();
+}
+
 std::string PDUParser::BCDToString(std::string& data) {
   std::string dst;
   if (data.empty()) {
@@ -269,10 +285,6 @@ std::string PDUParser::GetCurrentTimeStamp() {
   auto t_gm_time = std::mktime(&gm_time);
 
   auto tzdiff = (int)std::difftime(t_local_time, t_gm_time) / (60 * 60);
-  if (tzdiff < 0) {
-      //TODO(bohu): hack, this should be properly encoded
-      tzdiff = -tzdiff;
-  }
 
   time_stamp += IntToHexString(local_time.tm_year % 100);
   time_stamp += IntToHexString(local_time.tm_mon + 1);
@@ -280,7 +292,7 @@ std::string PDUParser::GetCurrentTimeStamp() {
   time_stamp += IntToHexString(local_time.tm_hour);
   time_stamp += IntToHexString(local_time.tm_min);
   time_stamp += IntToHexString(local_time.tm_sec);
-  time_stamp += IntToHexString(tzdiff);
+  time_stamp += IntToHexStringTimeZoneDiff(tzdiff);
 
   return time_stamp;
 }
