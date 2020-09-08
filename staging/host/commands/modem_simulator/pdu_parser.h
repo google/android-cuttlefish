@@ -38,6 +38,9 @@ class PDUParser {
   int Hex2ToByte(const std::string& hex);
   int HexCharToInt(char c);
   std::string IntToHexString(int value);
+
+  // special handling for time zone differance (to GMT)
+  std::string IntToHexStringTimeZoneDiff(int value);
   std::string GetCurrentTimeStamp();
 
   bool is_valid_pdu_;
