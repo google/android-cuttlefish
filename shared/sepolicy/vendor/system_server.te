@@ -6,3 +6,6 @@
 # allow execmem rule were added here.
 permissive system_server;
 gpu_access(system_server)
+
+# Cuttlefish is still using the legacy wifi HAL (pre-HIDL)
+get_prop(system_server, wifi_hal_prop)
