@@ -5,7 +5,7 @@
 1. Make sure virtualization with KVM is available.
 
    ```bash
-    grep -cw vmx /proc/cpuinfo
+    grep -c -w "vmx\|svm" /proc/cpuinfo
     ```
 
    This should return a non-zero value. If running on a cloud machine, this may
