@@ -27,22 +27,6 @@
 #include <cutils/native_handle.h>
 #include <log/log.h>
 
-#include <linux/fb.h>
-
-#ifndef GRALLOC_MODULE_API_VERSION_0_2
-// This structure will be defined in later releases of Android. Declare it
-// here to allow us to structure the code well.
-struct android_ycbcr {
-  void* y;
-  void* cb;
-  void* cr;
-  size_t ystride;
-  size_t cstride;
-  size_t chroma_step;
-  uint32_t reserved[8];
-};
-#endif
-
 namespace cuttlefish {
 namespace screen {
 
@@ -57,21 +41,9 @@ struct ScreenRegionView {
 }
 }
 
-/*****************************************************************************/
-
-struct private_handle_t;
-
 struct private_module_t {
   gralloc_module_t base;
 };
-
-/*****************************************************************************/
-
-struct priv_alloc_device_t {
-  alloc_device_t  device;
-};
-
-/*****************************************************************************/
 
 struct private_handle_t : public native_handle {
   // file-descriptors
@@ -87,78 +59,6 @@ struct private_handle_t : public native_handle {
   int     frame_offset;
   int     total_size;
   int     lock_level;
-
-  static inline int sNumInts() {
-    return (((sizeof(private_handle_t) - sizeof(native_handle_t))/sizeof(int)) - sNumFds);
-  }
-  static const int sNumFds = 1;
-  static const int sMagic = 0x3141592;
-
-  private_handle_t(int fd, int size, int format, int x_res, int y_res,
-                   int stride_in_pixels, int flags, int frame_offset = 0)
-      : fd(fd),
-        magic(sMagic),
-        flags(flags),
-        format(format),
-        x_res(x_res),
-        y_res(y_res),
-        stride_in_pixels(stride_in_pixels),
-        frame_offset(frame_offset),
-        total_size(size),
-        lock_level(0) {
-    version = sizeof(native_handle);
-    numInts = sNumInts();
-    numFds = sNumFds;
-  }
-
-  ~private_handle_t() {
-    magic = 0;
-  }
-
-  static int validate(const native_handle* h) {
-    const private_handle_t* hnd = (const private_handle_t*)h;
-    if (!h) {
-      ALOGE("invalid gralloc handle (at %p): NULL pointer", h);
-      return -EINVAL;
-    }
-    if (h->version != sizeof(native_handle)) {
-      ALOGE(
-          "invalid gralloc handle (at %p): Wrong version(observed: %d, "
-          "expected: %zu)",
-          h,
-          h->version,
-          sizeof(native_handle));
-      return -EINVAL;
-    }
-    if (h->numInts != sNumInts()) {
-      ALOGE(
-          "invalid gralloc handle (at %p): Wrong number of ints(observed: %d, "
-          "expected: %d)",
-          h,
-          h->numInts,
-          sNumInts());
-      return -EINVAL;
-    }
-    if (h->numFds != sNumFds) {
-      ALOGE(
-          "invalid gralloc handle (at %p): Wrong number of file "
-          "descriptors(observed: %d, expected: %d)",
-          h,
-          h->numFds,
-          sNumFds);
-      return -EINVAL;
-    }
-    if (hnd->magic != sMagic) {
-      ALOGE(
-          "invalid gralloc handle (at %p): Wrong magic number(observed: %d, "
-          "expected: %d)",
-          h,
-          hnd->magic,
-          sMagic);
-      return -EINVAL;
-    }
-    return 0;
-  }
 };
 
 
@@ -273,68 +173,3 @@ static inline void formatToYcbcr(
             __FUNCTION__, format, pixel_format_to_string(format));
   }
 }
-
-static inline int formatToBytesPerFrame(int format, int w, int h) {
-  int bytes_per_pixel = formatToBytesPerPixel(format);
-  int w16, h16;
-  int y_size, c_size;
-
-  switch (format) {
-    // BLOB is used to allocate buffers for JPEG formatted data. Bytes per pixel
-    // is 1, the desired buffer size is in w, and h should be 1. We refrain from
-    // adding additional padding, although the caller is likely to round
-    // up to a page size.
-    case HAL_PIXEL_FORMAT_BLOB:
-      return bytes_per_pixel * w * h;
-    case HAL_PIXEL_FORMAT_YV12:
-#ifdef GRALLOC_MODULE_API_VERSION_0_2
-    case HAL_PIXEL_FORMAT_YCbCr_420_888:
-#endif
-      android_ycbcr strides;
-      formatToYcbcr(format, w, h, NULL, &strides);
-      y_size = strides.ystride * h;
-      c_size = strides.cstride * h / 2;
-      return (y_size + 2 * c_size +
-              cuttlefish::screen::ScreenRegionView::kSwiftShaderPadding);
-    /*case HAL_PIXEL_FORMAT_RGBA_8888:
-    case HAL_PIXEL_FORMAT_RGBX_8888:
-    case HAL_PIXEL_FORMAT_BGRA_8888:
-    case HAL_PIXEL_FORMAT_RGB_888:
-    case HAL_PIXEL_FORMAT_RGB_565:*/
-    default:
-      w16 = cuttlefish::screen::ScreenRegionView::align(w);
-      h16 = cuttlefish::screen::ScreenRegionView::align(h);
-      return bytes_per_pixel * w16 * h16 +
-             cuttlefish::screen::ScreenRegionView::kSwiftShaderPadding;
-  }
-}
-
-int gralloc_lock(
-    gralloc_module_t const* module,
-    buffer_handle_t handle, int usage,
-    int l, int t, int w, int h,
-    void** vaddr);
-
-int gralloc_unlock(
-    gralloc_module_t const* module, buffer_handle_t handle);
-
-int gralloc_register_buffer(
-    gralloc_module_t const* module, buffer_handle_t handle);
-
-int gralloc_unregister_buffer(
-    gralloc_module_t const* module, buffer_handle_t handle);
-
-int gralloc_lock_ycbcr(
-    struct gralloc_module_t const* module,
-    buffer_handle_t handle, int usage,
-    int l, int t, int w, int h,
-    struct android_ycbcr *ycbcr);
-
-int32_t gralloc_get_transport_size(
-    struct gralloc_module_t const* module, buffer_handle_t handle,
-    uint32_t *outNumFds, uint32_t *outNumInts);
-
-int32_t gralloc_validate_buffer_size(
-    struct gralloc_module_t const* device, buffer_handle_t handle,
-    uint32_t w, uint32_t h, int32_t format, int usage,
-    uint32_t stride);

@@ -24,7 +24,7 @@
 #include <log/log.h>
 
 // TODO(b/146515640): remove this.
-#include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
+#include "guest/hals/hwcomposer/gralloc_vsoc_priv.h"
 #include "guest/hals/hwcomposer/drm_utils.h"
 
 using aidl::android::hardware::graphics::common::PlaneLayout;
