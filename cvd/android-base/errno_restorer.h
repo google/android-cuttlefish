@@ -30,7 +30,7 @@ class ErrnoRestorer {
   ~ErrnoRestorer() { errno = saved_errno_; }
 
   // Allow this object to be used as part of && operation.
-  operator bool() const { return true; }
+  explicit operator bool() const { return true; }
 
  private:
   const int saved_errno_;
