@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
+cc_binary {
     name: "config_server",
     srcs: [
         "main.cpp",
@@ -30,5 +30,5 @@ cc_binary_host {
         "libgflags",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }

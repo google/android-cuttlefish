@@ -27,7 +27,7 @@ cc_library {
     static_libs: [
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
 cc_binary {
@@ -49,7 +49,7 @@ cc_binary {
         "libgflags",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
 cc_binary {
@@ -69,5 +69,5 @@ cc_binary {
         "libgflags",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }

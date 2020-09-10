@@ -21,7 +21,7 @@ cc_library_shared {
     defaults: ["cuttlefish_host_and_guest"],
 }
 
-cc_test_host {
+cc_test {
     name: "monotonic_time_test",
     srcs: [
         "monotonic_time_test.cpp",
@@ -29,6 +29,6 @@ cc_test_host {
     shared_libs: [
         "cuttlefish_time",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
     test_suites: ["general-tests"],
 }

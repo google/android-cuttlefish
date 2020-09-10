@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
+cc_binary {
     name: "kernel_log_monitor",
     srcs: [
         "main.cc",
@@ -29,5 +29,5 @@ cc_binary_host {
         "libgflags",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
