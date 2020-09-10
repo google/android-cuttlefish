@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
 #include <keymaster/random_source.h>
 
 struct ESYS_CONTEXT;

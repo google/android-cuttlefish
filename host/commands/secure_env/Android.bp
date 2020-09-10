@@ -35,6 +35,7 @@ cc_binary_host {
         "tpm_hmac.cpp",
         "tpm_key_blob_maker.cpp",
         "tpm_keymaster_context.cpp",
+        "tpm_keymaster_enforcement.cpp",
         "tpm_random_source.cpp",
         "tpm_resource_manager.cpp",
         "tpm_serialize.cpp",
