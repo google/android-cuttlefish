@@ -33,6 +33,7 @@
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
 #include "host/commands/secure_env/tpm_keymaster_context.h"
+#include "host/commands/secure_env/tpm_keymaster_enforcement.h"
 #include "host/commands/secure_env/tpm_resource_manager.h"
 #include "host/libs/config/logging.h"
 
@@ -74,6 +75,29 @@ int main(int argc, char** argv) {
     resource_manager.reset(new TpmResourceManager(esys.get()));
   }
 
+  std::unique_ptr<GatekeeperStorage> secure_storage;
+  std::unique_ptr<GatekeeperStorage> insecure_storage;
+  std::unique_ptr<gatekeeper::GateKeeper> gatekeeper;
+  std::unique_ptr<keymaster::KeymasterEnforcement> keymaster_enforcement;
+  if (FLAGS_gatekeeper_impl == "software") {
+    gatekeeper.reset(new gatekeeper::SoftGateKeeper);
+    keymaster_enforcement.reset(
+        new keymaster::SoftKeymasterEnforcement(64, 64));
+  } else if (FLAGS_gatekeeper_impl == "in_process_tpm") {
+    secure_storage.reset(
+        new FragileTpmStorage(resource_manager.get(), "gatekeeper_secure"));
+    insecure_storage.reset(new InsecureFallbackStorage(
+        resource_manager.get(), "gatekeeper_insecure"));
+    TpmGatekeeper* tpm_gatekeeper =
+        new TpmGatekeeper(
+            resource_manager.get(),
+            secure_storage.get(),
+            insecure_storage.get());
+    gatekeeper.reset(tpm_gatekeeper);
+    keymaster_enforcement.reset(
+        new TpmKeymasterEnforcement(resource_manager.get(), tpm_gatekeeper));
+  }
+
   // keymaster::AndroidKeymaster puts the given pointer into a UniquePtr,
   // taking ownership.
   keymaster::KeymasterContext* keymaster_context;
@@ -81,30 +105,15 @@ int main(int argc, char** argv) {
     keymaster_context =
         new keymaster::PureSoftKeymasterContext(KM_SECURITY_LEVEL_SOFTWARE);
   } else if (FLAGS_keymaster_impl == "in_process_tpm") {
-    keymaster_context = new TpmKeymasterContext(resource_manager.get());
+    keymaster_context =
+        new TpmKeymasterContext(
+            resource_manager.get(), keymaster_enforcement.get());
   } else {
     LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymaster_impl;
     return -1;
   }
   keymaster::AndroidKeymaster keymaster{
       keymaster_context, kOperationTableSize};
-
-  std::unique_ptr<GatekeeperStorage> secure_storage;
-  std::unique_ptr<GatekeeperStorage> insecure_storage;
-  std::unique_ptr<gatekeeper::GateKeeper> gatekeeper;
-  if (FLAGS_gatekeeper_impl == "software") {
-    gatekeeper.reset(new gatekeeper::SoftGateKeeper);
-  } else if (FLAGS_gatekeeper_impl == "in_process_tpm") {
-    secure_storage.reset(
-        new FragileTpmStorage(resource_manager.get(), "gatekeeper_secure"));
-    insecure_storage.reset(new InsecureFallbackStorage(
-        resource_manager.get(), "gatekeeper_insecure"));
-    gatekeeper.reset(
-        new TpmGatekeeper(
-            resource_manager.get(),
-            secure_storage.get(),
-            insecure_storage.get()));
-  }
 
   CHECK(FLAGS_keymaster_fd != -1)
       << "TODO(schuffelen): Add keymaster_fd alternative";
