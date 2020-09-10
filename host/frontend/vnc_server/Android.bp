@@ -28,7 +28,6 @@ cc_binary {
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "cuttlefish_tcp_socket",
         "libbase",
         "libjsoncpp",
         "liblog",
