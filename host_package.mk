@@ -67,6 +67,10 @@ cvd_host_executables := \
     modem_simulator \
     gnss_grpc_proxy \
 
+ifneq ($(wildcard device/google/trout),)
+    cvd_host_executables += android.hardware.automotive.vehicle@2.0-virtualization-grpc-server
+endif
+
 cvd_host_tests := \
     monotonic_time_test \
     cuttlefish_net_tests \
@@ -114,6 +118,11 @@ cvd_host_shared_libraries := \
     tpm2-tss2-util.so \
     libgatekeeper.so \
     ms-tpm-20-ref-lib.so \
+    libhidlbase.so \
+    libutils.so \
+    libjsoncpp.so \
+    libgrpc++.so \
+    android.hardware.automotive.vehicle@2.0.so \
     libcap.so \
     libdrm.so \
     libepoxy.so \

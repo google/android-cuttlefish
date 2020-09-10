@@ -27,14 +27,11 @@ PRODUCT_BUILD_BOOT_IMAGE := true
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 DISABLE_RILD_OEM_HOOK := true
 
-# [b/148163848] Disable product enforcement only for qt-qpr1-dev-plus-aosp
-# branch. It is not merged down to main branch.
-# As qt-qpr1-dev-plus-aosp branch has qt based vendor modules that are not
-# ready for the product enforcement, we may not enable it in this branch.
-PRODUCT_USE_PRODUCT_VNDK_OVERRIDE := false
-OVERRIDE_PRODUCT_ENFORCE_PRODUCT_PARTITION_INTERFACE := false
+PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
 
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
+
+TARGET_VULKAN_SUPPORT ?= true
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
@@ -53,17 +50,14 @@ AB_OTA_PARTITIONS += \
 # Enable Virtual A/B
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota.mk)
 
-# Enable Scoped Storage related changes for f2fs
-ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
+# Enable Scoped Storage related
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
-endif
 
 # Properties that are not vendor-specific. These will go in the product
 # partition, instead of the vendor partition, and do not need vendor
 # sepolicy
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.adb.tcp.port=5555 \
-    persist.traced.enable=1 \
     ro.com.google.locationfeatures=1 \
 
 # Explanation of specific properties:
@@ -83,6 +77,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.zram_enabled=1 \
     ro.hardware.keystore_desede=true \
     ro.rebootescrow.device=/dev/block/pmem0 \
+    ro.incremental.enable=1 \
 
 # Below is a list of properties we probably should get rid of.
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -106,6 +101,10 @@ PRODUCT_PROPERTY_OVERRIDES += ro.cp_system_other_odex=1
 # DRM service opt-in
 PRODUCT_PROPERTY_OVERRIDES += drm.service.enabled=true
 
+PRODUCT_SOONG_NAMESPACES += hardware/google/camera
+PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
+
+#
 # Packages for various GCE-specific utilities
 #
 PRODUCT_PACKAGES += \
@@ -145,9 +144,19 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     libGLES_mesa \
 
-# GL/Vk implementation for gfxstream
+#
+# Packages for the Vulkan implementation
+#
+ifeq ($(TARGET_VULKAN_SUPPORT),true)
 PRODUCT_PACKAGES += \
     vulkan.ranchu \
+    libvulkan_enc \
+    vulkan.pastel
+endif
+
+# GL/Vk implementation for gfxstream
+PRODUCT_PACKAGES += \
+    hwcomposer.ranchu \
     libandroidemu \
     libOpenglCodecCommon \
     libOpenglSystemCommon \
@@ -155,15 +164,8 @@ PRODUCT_PACKAGES += \
     lib_renderControl_enc \
     libEGL_emulation \
     libGLESv2_enc \
-    libvulkan_enc \
     libGLESv2_emulation \
     libGLESv1_enc
-
-#
-# Packages for the Vulkan implementation
-#
-PRODUCT_PACKAGES += \
-    vulkan.pastel
 
 #
 # Packages for testing
@@ -191,13 +193,16 @@ ifneq ($(LOCAL_SENSOR_FILE_OVERRIDES),true)
         frameworks/native/data/etc/android.hardware.sensor.ambient_temperature.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.ambient_temperature.xml \
         frameworks/native/data/etc/android.hardware.sensor.barometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.barometer.xml \
         frameworks/native/data/etc/android.hardware.sensor.gyroscope.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.gyroscope.xml \
+        frameworks/native/data/etc/android.hardware.sensor.hinge_angle.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.hinge_angle.xml \
         frameworks/native/data/etc/android.hardware.sensor.light.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.light.xml \
         frameworks/native/data/etc/android.hardware.sensor.proximity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.proximity.xml \
         frameworks/native/data/etc/android.hardware.sensor.relative_humidity.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.relative_humidity.xml
 endif
 
 PRODUCT_COPY_FILES += \
-    device/google/cuttlefish/shared/config/camera_v3.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/camera.json \
+    hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_back.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_back.json \
+    hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_front.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_front.json \
+    hardware/google/camera/devices/EmulatedCamera/hwl/configs/emu_camera_depth.json:$(TARGET_COPY_OUT_VENDOR)/etc/config/emu_camera_depth.json \
     device/google/cuttlefish/shared/config/init.vendor.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw/init.cutf_cvm.rc \
     device/google/cuttlefish/shared/config/init.product.rc:$(TARGET_COPY_OUT_PRODUCT)/etc/init/init.rc \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_VENDOR)/ueventd.rc \
@@ -216,21 +221,20 @@ PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/surround_sound_configuration_5_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/surround_sound_configuration_5_0.xml \
     frameworks/native/data/etc/android.hardware.audio.low_latency.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.audio.low_latency.xml \
     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.bluetooth_le.xml \
+    frameworks/native/data/etc/android.hardware.camera.concurrent.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.concurrent.xml \
     frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.flash-autofocus.xml \
     frameworks/native/data/etc/android.hardware.camera.front.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.front.xml \
     frameworks/native/data/etc/android.hardware.camera.full.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.full.xml \
     frameworks/native/data/etc/android.hardware.camera.raw.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.camera.raw.xml \
     frameworks/native/data/etc/android.hardware.ethernet.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.ethernet.xml \
     frameworks/native/data/etc/android.hardware.location.gps.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.location.gps.xml \
+    frameworks/native/data/etc/android.hardware.reboot_escrow.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.reboot_escrow.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
     frameworks/native/data/etc/android.software.ipsec_tunnels.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.ipsec_tunnels.xml \
     frameworks/native/data/etc/android.software.sip.voip.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/android.software.verified_boot.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.verified_boot.xml \
-    frameworks/native/data/etc/android.software.vulkan.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:vendor/etc/bluetooth/controller_properties.json \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
     device/google/cuttlefish/shared/config/fstab.f2fs:$(TARGET_COPY_OUT_RAMDISK)/fstab.f2fs \
@@ -239,6 +243,13 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.ext4:$(TARGET_COPY_OUT_RAMDISK)/fstab.ext4 \
     device/google/cuttlefish/shared/config/fstab.ext4:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.ext4 \
     device/google/cuttlefish/shared/config/fstab.ext4:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.ext4
+
+ifeq ($(TARGET_VULKAN_SUPPORT),true)
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
+    frameworks/native/data/etc/android.software.vulkan.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml
+endif
 
 # Packages for HAL implementations
 
@@ -269,8 +280,8 @@ PRODUCT_PACKAGES += \
 # Gralloc HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.graphics.allocator@3.0-service.minigbm \
-    android.hardware.graphics.mapper@3.0-impl.minigbm
+    android.hardware.graphics.allocator@4.0-service.minigbm \
+    android.hardware.graphics.mapper@4.0-impl.minigbm
 
 #
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
@@ -301,13 +312,23 @@ PRODUCT_COPY_FILES += $(LOCAL_AUDIO_PRODUCT_COPY_FILES)
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS)
 
 #
+# BiometricsFace HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.biometrics.face@1.0-service.example
+
+#
+# Contexthub HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.contexthub@1.1-service.mock
+
+#
 # Drm HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.drm@1.0-impl \
-    android.hardware.drm@1.0-service \
-    android.hardware.drm@1.2-service.clearkey \
-    android.hardware.drm@1.2-service.widevine
+    android.hardware.drm@1.3-service.clearkey \
+    android.hardware.drm@1.3-service.widevine
 
 #
 # Dumpstate HAL
@@ -320,15 +341,10 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 #
 # Camera
 #
-ifeq ($(LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE),)
-    LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE := android.hardware.camera.provider@2.4-service
-endif
 PRODUCT_PACKAGES += \
-    camera.cutf \
-    camera.cutf.jpeg \
-    camera.device@3.2-impl \
-    android.hardware.camera.provider@2.4-impl \
-    $(LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE)
+    android.hardware.camera.provider@2.6-service-google \
+    libgooglecamerahwl_impl \
+    android.hardware.camera.provider@2.6-impl-google \
 
 #
 # Gatekeeper
@@ -343,7 +359,7 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@2.0-service
+    android.hardware.gnss@2.1-service
 
 # Health
 ifeq ($(LOCAL_HEALTH_PRODUCT_PACKAGE),)
@@ -369,7 +385,7 @@ PRODUCT_PACKAGES += \
 # Sensors
 #
 ifeq ($(LOCAL_SENSOR_PRODUCT_PACKAGE),)
-       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors@2.0-service.mock
+       LOCAL_SENSOR_PRODUCT_PACKAGE := android.hardware.sensors@2.1-service.mock
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_SENSOR_PRODUCT_PACKAGE)
@@ -431,6 +447,10 @@ PRODUCT_PACKAGES += \
     android.hardware.boot@1.1-impl.recovery \
     android.hardware.boot@1.1-service
 
+# RebootEscrow HAL
+PRODUCT_PACKAGES += \
+    android.hardware.rebootescrow-service.default
+
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
@@ -454,7 +474,7 @@ PRODUCT_COPY_FILES += \
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
 
-PRODUCT_EXTRA_VNDK_VERSIONS := 28 29
+PRODUCT_EXTRA_VNDK_VERSIONS := 28 29 30
 
 PRODUCT_SOONG_NAMESPACES += external/mesa3d
 

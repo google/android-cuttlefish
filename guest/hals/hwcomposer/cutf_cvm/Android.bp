@@ -28,17 +28,17 @@ cc_library_shared {
     export_include_dirs: ["."],
     static_libs: [
         "hwcomposer_common",
-        "libminigbm_gralloc",
         "libyuv_static",
     ],
     shared_libs: [
-        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
         "libbase",
         "libcutils",
         "libcuttlefish_device_config",
-        "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_fs",
         "libdrm",
+        "libgralloctypes",
         "libhardware",
         "libhidlbase",
         "libjpeg",
@@ -82,21 +82,19 @@ cc_library_shared {
 
     static_libs: [
         "hwcomposer_common",
-        "libminigbm_gralloc",
         "libyuv_static",
     ],
 
     shared_libs: [
-        "android.hardware.graphics.mapper@3.0",
+        "android.hardware.graphics.mapper@4.0",
         "libcutils",
         "libcuttlefish_device_config",
-        "libcuttlefish_fs",
         "libcuttlefish_utils",
-        "libdrm",
+        "libcuttlefish_fs",
+        "libgralloctypes",
         "libhardware",
         "libhidlbase",
         "liblog",
-        "libsync",
         "libutils",
     ],
 }

@@ -20,7 +20,8 @@
 #include <optional>
 #include <vector>
 
-#include <android/hardware/graphics/mapper/3.0/IMapper.h>
+#include <aidl/android/hardware/graphics/common/PlaneLayout.h>
+#include <android/hardware/graphics/mapper/4.0/IMapper.h>
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 #include <utils/StrongPointer.h>
@@ -29,9 +30,9 @@ namespace cuttlefish {
 
 class Gralloc;
 
-// A gralloc buffer that has been imported in the current process and
+// A gralloc 4.0 buffer that has been imported in the current process and
 // that will be released upon destruction. Users must ensure that the Gralloc
-// instance that this buffer is created with outlives this buffer.
+// instance that this buffer is created with out lives this buffer.
 class GrallocBuffer {
  public:
   GrallocBuffer(Gralloc* gralloc, buffer_handle_t buffer);
@@ -45,17 +46,11 @@ class GrallocBuffer {
 
   // Locks the buffer for reading and returns the mapped address if successful.
   // Fails and returns nullopt if the underlying buffer is a YCbCr buffer.
-  //
-  // TODO(b/159834777): wrap lock result into a RAII object that restricts
-  // usage of the mapped buffer to the lifetime of the RAII object.
   std::optional<void*> Lock();
 
   // Locks the buffer for reading and returns the mapped addresses and strides
   // of each plane if successful. Fails and returns nullopt if the underlying
   // buffer is not a YCbCr buffer.
-  //
-  // TODO(b/159834777): wrap lock result into a RAII object that restricts
-  // usage of the mapped buffer to the lifetime of the RAII object.
   std::optional<android_ycbcr> LockYCbCr();
 
   // Unlocks the buffer from reading.
@@ -70,6 +65,10 @@ class GrallocBuffer {
   std::optional<uint32_t> GetMonoPlanarStrideBytes();
 
  private:
+  std::optional<
+    std::vector<aidl::android::hardware::graphics::common::PlaneLayout>>
+  GetPlaneLayouts();
+
   void Release();
 
   Gralloc* gralloc_ = nullptr;
@@ -112,12 +111,24 @@ class Gralloc {
   // See GrallocBuffer::GetDrmFormat.
   std::optional<uint32_t> GetDrmFormat(buffer_handle_t buffer);
 
+  // See GrallocBuffer::GetPlaneLayouts.
+  std::optional<
+    std::vector<aidl::android::hardware::graphics::common::PlaneLayout>>
+  GetPlaneLayouts(buffer_handle_t buffer);
+
   // Returns the stride of the buffer if it is a single plane buffer or fails
   // and returns nullopt if the buffer is for a multi plane buffer.
   std::optional<uint32_t> GetMonoPlanarStrideBytes(buffer_handle_t);
 
+  // See GrallocBuffer::GetMetadata.
+  android::hardware::graphics::mapper::V4_0::Error GetMetadata(
+    buffer_handle_t buffer,
+    android::hardware::graphics::mapper::V4_0::IMapper::MetadataType type,
+    android::hardware::hidl_vec<uint8_t>* metadata);
+
   const gralloc_module_t* gralloc0_ = nullptr;
-  android::sp<android::hardware::graphics::mapper::V3_0::IMapper> gralloc3_;
+
+  android::sp<android::hardware::graphics::mapper::V4_0::IMapper> gralloc4_;
 };
 
-}  // namespace cvd
+}  // namespace cuttlefish

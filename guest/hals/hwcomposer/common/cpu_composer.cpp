@@ -157,6 +157,10 @@ struct BufferSpec {
 };
 
 int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
+  // The following calculation of plane offsets and alignments are based on
+  // swiftshader's Sampler::setTextureLevel() implementation
+  // (Renderer/Sampler.cpp:225)
+
   auto& src_buffer_ycbcr_opt = src.buffer_ycbcr;
   if (!src_buffer_ycbcr_opt) {
     ALOGE("%s called on non ycbcr buffer", __FUNCTION__);
@@ -181,8 +185,7 @@ int ConvertFromYV12(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
   src_y += src.crop_y * stride_y + src.crop_x;
   src_v += (src.crop_y / 2) * stride_v + (src.crop_x / 2);
   src_u += (src.crop_y / 2) * stride_u + (src.crop_x / 2);
-  uint8_t* dst_buffer = dst.buffer +
-                        dst.crop_y * dst.stride_bytes +
+  uint8_t* dst_buffer = dst.buffer + dst.crop_y * dst.stride_bytes +
                         dst.crop_x * dst.sample_bytes;
 
   // YV12 is the same as I420, with the U and V planes swapped
@@ -460,7 +463,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   int tmp_buffer_height =
       src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   int tmp_buffer_stride_bytes =
-      AlignToPowerOf2(tmp_buffer_width * screen_view_->bytes_per_pixel(), 4);
+      cuttlefish::AlignToPowerOf2(tmp_buffer_width * screen_view_->bytes_per_pixel(), 4);
 
   for (int i = 0; i < needed_tmp_buffers; i++) {
     BufferSpec tmp_buffer_spec(
@@ -488,7 +491,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
       int dst_stride_bytes =
-          AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
+          cuttlefish::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
       size_t needed_size = dst_stride_bytes * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;

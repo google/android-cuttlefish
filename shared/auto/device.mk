@@ -55,11 +55,28 @@ PRODUCT_PROPERTY_OVERRIDES += \
 # vehicle HAL
 ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
     LOCAL_VHAL_PRODUCT_PACKAGE := android.hardware.automotive.vehicle@2.0-service
+    BOARD_SEPOLICY_DIRS += device/google/cuttlefish/shared/auto/sepolicy/vhal
 endif
 PRODUCT_PACKAGES += $(LOCAL_VHAL_PRODUCT_PACKAGE)
 
 # Broadcast Radio
 PRODUCT_PACKAGES += android.hardware.broadcastradio@2.0-service
+
+# AudioControl HAL
+ifeq ($(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE),)
+    LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE := android.hardware.automotive.audiocontrol@2.0-service
+endif
+PRODUCT_PACKAGES += $(LOCAL_AUDIOCONTROL_HAL_PRODUCT_PACKAGE)
+
+# CAN bus HAL
+PRODUCT_PACKAGES += android.hardware.automotive.can@1.0-service
+PRODUCT_PACKAGES_DEBUG += canhalctrl \
+    canhaldump \
+    canhalsend
+
+PRODUCT_PACKAGES += \
+    libcuttlefish-ril \
+    libcuttlefish-rild
 
 # system_other support
 PRODUCT_PACKAGES += \

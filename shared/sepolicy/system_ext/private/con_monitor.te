@@ -1,0 +1,15 @@
+# ConnectivityMonitor app
+type con_monitor_app, domain;
+
+app_domain(con_monitor_app)
+
+set_prop(con_monitor_app, radio_prop)
+set_prop(con_monitor_app, vendor_radio_prop)
+userdebug_or_eng(`set_prop(con_monitor_app, dumpstate_options_prop)')
+allow con_monitor_app app_api_service:service_manager find;
+allow con_monitor_app radio_vendor_data_file:dir rw_dir_perms;
+allow con_monitor_app radio_vendor_data_file:file create_file_perms;
+allow con_monitor_app radio_service:service_manager find;
+allow con_monitor_app audioserver_service:service_manager find;
+hal_client_domain(con_monitor_app, hal_power_stats);
+

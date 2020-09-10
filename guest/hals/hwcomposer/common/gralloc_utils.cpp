@@ -16,34 +16,43 @@
 
 #include "guest/hals/hwcomposer/common/gralloc_utils.h"
 
+#include <aidl/android/hardware/graphics/common/PlaneLayoutComponent.h>
+#include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
 #include <drm_fourcc.h>
+#include <gralloctypes/Gralloc4.h>
+#include <hidl/ServiceManagement.h>
 #include <log/log.h>
 
-// TODO(b/146515640): remove these after upgrading to Gralloc 4.
-#include "cros_gralloc/cros_gralloc_handle.h"
-#include "cros_gralloc/cros_gralloc_helpers.h"
+// TODO(b/146515640): remove this.
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
 #include "guest/hals/hwcomposer/common/drm_utils.h"
 
-using android::hardware::graphics::common::V1_2::PixelFormat;
-using android::hardware::graphics::common::V1_0::BufferUsage;
+using aidl::android::hardware::graphics::common::PlaneLayout;
+using aidl::android::hardware::graphics::common::PlaneLayoutComponent;
+using aidl::android::hardware::graphics::common::PlaneLayoutComponentType;
+using android::hardware::graphics::common::V1_2::BufferUsage;
+using android::hardware::graphics::mapper::V4_0::Error;
+using android::hardware::graphics::mapper::V4_0::IMapper;
 using android::hardware::hidl_handle;
+using android::hardware::hidl_vec;
+using MetadataType =
+  android::hardware::graphics::mapper::V4_0::IMapper::MetadataType;
 
-// TODO(b/146515640): remove these after upgrading to Gralloc 4.
-using android::hardware::graphics::mapper::V3_0::YCbCrLayout;
+// TODO(b/146515640): remove this.
 using cuttlefish_gralloc0_buffer_handle_t = private_handle_t;
-using ErrorV3 = android::hardware::graphics::mapper::V3_0::Error;
-using IMapperV3 = android::hardware::graphics::mapper::V3_0::IMapper;
 
 namespace cuttlefish {
 
 Gralloc::Gralloc() {
-  gralloc3_ = IMapperV3::getService();
-  if (gralloc3_ != nullptr) {
-    ALOGE("%s using Gralloc3.", __FUNCTION__);
+  android::hardware::preloadPassthroughService<IMapper>();
+
+  gralloc4_ = IMapper::getService();
+  if (gralloc4_ != nullptr) {
+    ALOGE("%s using Gralloc4.", __FUNCTION__);
     return;
   }
-  ALOGE("%s Gralloc3 not available.", __FUNCTION__);
+  ALOGE("%s Gralloc4 not available.", __FUNCTION__);
+
 
   hw_get_module(GRALLOC_HARDWARE_MODULE_ID,
                 reinterpret_cast<const hw_module_t**>(&gralloc0_));
@@ -56,13 +65,50 @@ Gralloc::Gralloc() {
   ALOGE("%s No Grallocs available!", __FUNCTION__);
 }
 
+Error Gralloc::GetMetadata(buffer_handle_t buffer, MetadataType type,
+                           hidl_vec<uint8_t>* metadata) {
+  if (gralloc4_ == nullptr) {
+    ALOGE("%s Gralloc4 not available.", __FUNCTION__);
+    return Error::NO_RESOURCES;
+  }
+
+  if (metadata == nullptr) {
+    return Error::BAD_VALUE;
+  }
+
+  Error error = Error::NONE;
+
+  auto native_handle = const_cast<native_handle_t*>(buffer);
+
+  auto ret = gralloc4_->get(native_handle, type,
+                            [&](const auto& get_error, const auto& get_metadata) {
+                              error = get_error;
+                              *metadata = get_metadata;
+                            });
+
+  if (!ret.isOk()) {
+    error = Error::NO_RESOURCES;
+  }
+
+  if (error != Error::NONE) {
+    ALOGE("%s failed to get metadata %s", __FUNCTION__, type.name.c_str());
+  }
+  return error;
+}
+
 std::optional<uint32_t> Gralloc::GetWidth(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
-    cros_gralloc_handle_t gralloc3_buffer = cros_gralloc_convert_handle(buffer);
-    if (gralloc3_buffer == nullptr) {
+  if (gralloc4_ != nullptr) {
+    hidl_vec<uint8_t> encoded_width;
+
+    Error error = GetMetadata(buffer, android::gralloc4::MetadataType_Width,
+                              &encoded_width);
+    if (error != Error::NONE) {
       return std::nullopt;
     }
-    return gralloc3_buffer->width;
+
+    uint64_t width = 0;
+    android::gralloc4::decodeWidth(encoded_width, &width);
+    return static_cast<uint32_t>(width);
   }
   if (gralloc0_ != nullptr) {
     const cuttlefish_gralloc0_buffer_handle_t* gralloc0_buffer =
@@ -74,12 +120,18 @@ std::optional<uint32_t> Gralloc::GetWidth(buffer_handle_t buffer) {
 }
 
 std::optional<uint32_t> Gralloc::GetHeight(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
-    cros_gralloc_handle_t gralloc3_buffer = cros_gralloc_convert_handle(buffer);
-    if (gralloc3_buffer == nullptr) {
+  if (gralloc4_ != nullptr) {
+    hidl_vec<uint8_t> encoded_height;
+
+    Error error = GetMetadata(buffer, android::gralloc4::MetadataType_Height,
+                              &encoded_height);
+    if (error != Error::NONE) {
       return std::nullopt;
     }
-    return gralloc3_buffer->height;
+
+    uint64_t height = 0;
+    android::gralloc4::decodeHeight(encoded_height, &height);
+    return static_cast<uint32_t>(height);
   }
   if (gralloc0_ != nullptr) {
     const cuttlefish_gralloc0_buffer_handle_t* gralloc0_buffer =
@@ -91,12 +143,19 @@ std::optional<uint32_t> Gralloc::GetHeight(buffer_handle_t buffer) {
 }
 
 std::optional<uint32_t> Gralloc::GetDrmFormat(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
-    cros_gralloc_handle_t gralloc3_buffer = cros_gralloc_convert_handle(buffer);
-    if (gralloc3_buffer == nullptr) {
+  if (gralloc4_ != nullptr) {
+    hidl_vec<uint8_t> encoded_format;
+
+    Error error = GetMetadata(buffer,
+                              android::gralloc4::MetadataType_PixelFormatFourCC,
+                              &encoded_format);
+    if (error != Error::NONE) {
       return std::nullopt;
     }
-    return gralloc3_buffer->format;
+
+    uint32_t format = 0;
+    android::gralloc4::decodePixelFormatFourCC(encoded_format, &format);
+    return static_cast<uint32_t>(format);
   }
   if (gralloc0_ != nullptr) {
     const cuttlefish_gralloc0_buffer_handle_t* gralloc0_buffer =
@@ -107,14 +166,39 @@ std::optional<uint32_t> Gralloc::GetDrmFormat(buffer_handle_t buffer) {
   return std::nullopt;
 }
 
-std::optional<uint32_t> Gralloc::GetMonoPlanarStrideBytes(
+std::optional<std::vector<PlaneLayout>> Gralloc::GetPlaneLayouts(
     buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
-    cros_gralloc_handle_t gralloc3_buffer = cros_gralloc_convert_handle(buffer);
-    if (gralloc3_buffer == nullptr) {
+  if (gralloc4_ != nullptr) {
+    hidl_vec<uint8_t> encoded_layouts;
+
+    Error error = GetMetadata(buffer,
+                              android::gralloc4::MetadataType_PlaneLayouts,
+                              &encoded_layouts);
+    if (error != Error::NONE) {
       return std::nullopt;
     }
-    return gralloc3_buffer->strides[0];
+
+    std::vector<PlaneLayout> plane_layouts;
+    android::gralloc4::decodePlaneLayouts(encoded_layouts, &plane_layouts);
+    return plane_layouts;
+  }
+  return std::nullopt;
+}
+
+std::optional<uint32_t> Gralloc::GetMonoPlanarStrideBytes(
+    buffer_handle_t buffer) {
+  if (gralloc4_ != nullptr) {
+    auto plane_layouts_opt = GetPlaneLayouts(buffer);
+    if (!plane_layouts_opt) {
+      return std::nullopt;
+    }
+
+    std::vector<PlaneLayout>& plane_layouts = *plane_layouts_opt;
+    if (plane_layouts.size() != 1) {
+      return std::nullopt;
+    }
+
+    return static_cast<uint32_t>(plane_layouts[0].strideInBytes);
   }
   if (gralloc0_ != nullptr) {
     const cuttlefish_gralloc0_buffer_handle_t* gralloc0_buffer =
@@ -127,19 +211,20 @@ std::optional<uint32_t> Gralloc::GetMonoPlanarStrideBytes(
 }
 
 std::optional<GrallocBuffer> Gralloc::Import(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
+  if (gralloc4_ != nullptr) {
     buffer_handle_t imported_buffer;
 
-    ErrorV3 error;
-    auto ret = gralloc3_->importBuffer(buffer,
+    Error error;
+    auto ret = gralloc4_->importBuffer(buffer,
                                        [&](const auto& err, const auto& buf) {
-                                        error = err;
-                                        if (err == ErrorV3::NONE) {
-                                          imported_buffer =
-                                            static_cast<buffer_handle_t>(buf);
-                                        }
-                                       });
-    if (!ret.isOk() || error != ErrorV3::NONE) {
+                                         error = err;
+                                         if (err == Error::NONE) {
+                                           imported_buffer =
+                                             static_cast<buffer_handle_t>(buf);
+                                         }
+                                        });
+
+    if (!ret.isOk() || error != Error::NONE) {
       ALOGE("%s failed to import buffer", __FUNCTION__);
       return std::nullopt;
     }
@@ -152,9 +237,9 @@ std::optional<GrallocBuffer> Gralloc::Import(buffer_handle_t buffer) {
 }
 
 void Gralloc::Release(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
+  if (gralloc4_ != nullptr) {
     auto native_buffer = const_cast<native_handle_t*>(buffer);
-    auto ret = gralloc3_->freeBuffer(native_buffer);
+    auto ret = gralloc4_->freeBuffer(native_buffer);
 
     if (!ret.isOk()) {
       ALOGE("%s failed to release buffer", __FUNCTION__);
@@ -167,8 +252,8 @@ void Gralloc::Release(buffer_handle_t buffer) {
 }
 
 std::optional<void*> Gralloc::Lock(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
-    void* raw_buffer = const_cast<void*>(reinterpret_cast<const void*>(buffer));
+  if (gralloc4_ != nullptr) {
+    auto native_buffer = const_cast<native_handle_t*>(buffer);
 
     const auto buffer_usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN);
 
@@ -182,7 +267,7 @@ std::optional<void*> Gralloc::Lock(buffer_handle_t buffer) {
       return std::nullopt;
     }
 
-    IMapperV3::Rect buffer_region;
+    IMapper::Rect buffer_region;
     buffer_region.left = 0;
     buffer_region.top = 0;
     buffer_region.width = *width_opt;
@@ -191,25 +276,24 @@ std::optional<void*> Gralloc::Lock(buffer_handle_t buffer) {
     // Empty fence, lock immedietly.
     hidl_handle fence;
 
-    ErrorV3 error = ErrorV3::NONE;
+    Error error = Error::NONE;
     void* data = nullptr;
 
-    auto ret = gralloc3_->lock(raw_buffer, buffer_usage, buffer_region, fence,
+    auto ret = gralloc4_->lock(native_buffer, buffer_usage, buffer_region,
+                               fence,
                                [&](const auto& lock_error,
-                                   const auto& lock_data,
-                                   int32_t /*bytes_per_pixel*/,
-                                   int32_t /*bytes_per_stride*/) {
+                                   const auto& lock_data) {
                                  error = lock_error;
-                                 if (lock_error == ErrorV3::NONE) {
+                                 if (lock_error == Error::NONE) {
                                   data = lock_data;
                                 }
                                });
 
     if (!ret.isOk()) {
-      error = ErrorV3::NO_RESOURCES;
+      error = Error::NO_RESOURCES;
     }
 
-    if (error != ErrorV3::NONE) {
+    if (error != Error::NONE) {
       ALOGE("%s failed to lock buffer", __FUNCTION__);
       return std::nullopt;
     }
@@ -253,59 +337,60 @@ std::optional<android_ycbcr> Gralloc::LockYCbCr(buffer_handle_t buffer) {
     return std::nullopt;
   }
 
-  if (gralloc3_ != nullptr) {
-    void* raw_buffer = const_cast<void*>(reinterpret_cast<const void*>(buffer));
-
-    const auto buffer_usage = static_cast<uint64_t>(BufferUsage::CPU_READ_OFTEN);
-
-    auto width_opt = GetWidth(buffer);
-    if (!width_opt) {
-      return std::nullopt;
-    }
-
-    auto height_opt = GetHeight(buffer);
-    if (!height_opt) {
-      return std::nullopt;
-    }
-
-    IMapperV3::Rect buffer_region;
-    buffer_region.left = 0;
-    buffer_region.top = 0;
-    buffer_region.width = *width_opt;
-    buffer_region.height = *height_opt;
-
-    // Empty fence, lock immedietly.
-    hidl_handle fence;
-
-    ErrorV3 error = ErrorV3::NONE;
-    YCbCrLayout ycbcr = {};
-
-    auto ret = gralloc3_->lockYCbCr(
-      raw_buffer, buffer_usage, buffer_region, fence,
-      [&](const auto& lock_error,
-          const auto& lock_ycbcr) {
-         error = lock_error;
-         if (lock_error == ErrorV3::NONE) {
-          ycbcr = lock_ycbcr;
-        }
-       });
-
-    if (!ret.isOk()) {
-      error = ErrorV3::NO_RESOURCES;
-    }
-
-    if (error != ErrorV3::NONE) {
+  if (gralloc4_ != nullptr) {
+    auto lock_opt = Lock(buffer);
+    if (!lock_opt) {
       ALOGE("%s failed to lock buffer", __FUNCTION__);
       return std::nullopt;
     }
 
+    auto plane_layouts_opt = GetPlaneLayouts(buffer);
+    if (!plane_layouts_opt) {
+      ALOGE("%s failed to get plane layouts", __FUNCTION__);
+      return std::nullopt;
+    }
+
     android_ycbcr buffer_ycbcr;
-    buffer_ycbcr.y = ycbcr.y;
-    buffer_ycbcr.cb = ycbcr.cb;
-    buffer_ycbcr.cr = ycbcr.cr;
-    buffer_ycbcr.ystride = ycbcr.yStride;
-    buffer_ycbcr.cstride = ycbcr.cStride;
-    buffer_ycbcr.chroma_step = ycbcr.chromaStep;
+    buffer_ycbcr.y = nullptr;
+    buffer_ycbcr.cb = nullptr;
+    buffer_ycbcr.cr = nullptr;
+    buffer_ycbcr.ystride = 0;
+    buffer_ycbcr.cstride = 0;
+    buffer_ycbcr.chroma_step = 0;
+
+    for (const auto& plane_layout : *plane_layouts_opt) {
+      for (const auto& plane_layout_component : plane_layout.components) {
+        const auto& type = plane_layout_component.type;
+
+        if (!android::gralloc4::isStandardPlaneLayoutComponentType(type)) {
+          continue;
+        }
+
+        auto* component_data =
+          reinterpret_cast<uint8_t*>(*lock_opt) +
+          plane_layout.offsetInBytes +
+          plane_layout_component.offsetInBits / 8;
+
+        switch (static_cast<PlaneLayoutComponentType>(type.value)) {
+          case PlaneLayoutComponentType::Y:
+            buffer_ycbcr.y = component_data;
+            buffer_ycbcr.ystride = plane_layout.strideInBytes;
+            break;
+          case PlaneLayoutComponentType::CB:
+            buffer_ycbcr.cb = component_data;
+            buffer_ycbcr.cstride = plane_layout.strideInBytes;
+            buffer_ycbcr.chroma_step = plane_layout.sampleIncrementInBits / 8;
+            break;
+          case PlaneLayoutComponentType::CR:
+            buffer_ycbcr.cr = component_data;
+            buffer_ycbcr.cstride = plane_layout.strideInBytes;
+            buffer_ycbcr.chroma_step = plane_layout.sampleIncrementInBits / 8;
+            break;
+          default:
+            break;
+        }
+      }
+    }
 
     return buffer_ycbcr;
   }
@@ -332,18 +417,20 @@ std::optional<android_ycbcr> Gralloc::LockYCbCr(buffer_handle_t buffer) {
 }
 
 void Gralloc::Unlock(buffer_handle_t buffer) {
-  if (gralloc3_ != nullptr) {
+  if (gralloc4_ != nullptr) {
     auto native_handle = const_cast<native_handle_t*>(buffer);
 
-    ErrorV3 error = ErrorV3::NONE;
-    auto ret = gralloc3_->unlock(native_handle,
+    Error error = Error::NONE;
+    auto ret = gralloc4_->unlock(native_handle,
                                [&](const auto& unlock_error, const auto&) {
                                  error = unlock_error;
                                });
+
     if (!ret.isOk()) {
-      error = ErrorV3::NO_RESOURCES;
+      error = Error::NO_RESOURCES;
     }
-    if (error != ErrorV3::NONE) {
+
+    if (error != Error::NONE) {
       ALOGE("%s failed to unlock buffer", __FUNCTION__);
     }
     return;
@@ -390,7 +477,7 @@ std::optional<void*> GrallocBuffer::Lock() {
   return std::nullopt;
 }
 
-std::optional<android_ycbcr> GrallocBuffer::LockYCbCr() {
+ std::optional<android_ycbcr> GrallocBuffer::LockYCbCr() {
   if (gralloc_ && buffer_) {
     return gralloc_->LockYCbCr(buffer_);
   }
@@ -424,6 +511,14 @@ std::optional<uint32_t> GrallocBuffer::GetDrmFormat() {
   return std::nullopt;
 }
 
+std::optional<std::vector<PlaneLayout>>
+GrallocBuffer::GetPlaneLayouts() {
+  if (gralloc_ && buffer_) {
+    return gralloc_->GetPlaneLayouts(buffer_);
+  }
+  return std::nullopt;
+}
+
 std::optional<uint32_t> GrallocBuffer::GetMonoPlanarStrideBytes() {
   if (gralloc_ && buffer_) {
     return gralloc_->GetMonoPlanarStrideBytes(buffer_);
@@ -431,4 +526,4 @@ std::optional<uint32_t> GrallocBuffer::GetMonoPlanarStrideBytes() {
   return std::nullopt;
 }
 
-}  // namespace cvd
+}  // namespace cuttlefish

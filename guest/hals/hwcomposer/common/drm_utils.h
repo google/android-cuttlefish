@@ -25,4 +25,4 @@ int GetDrmFormatBytesPerPixel(uint32_t drm_format);
 
 int GetDrmFormatFromHalFormat(int hal_format);
 
-}  // namespace cvd
+}  // namespace cuttlefish
