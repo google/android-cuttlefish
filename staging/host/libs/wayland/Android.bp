@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
+cc_library_static {
     name: "libcuttlefish_wayland_server",
     srcs: [
         "wayland_compositor.cpp",
@@ -35,6 +35,6 @@ cc_library_host_static {
         "libwayland_server",
         "libwayland_extension_server_protocols",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 

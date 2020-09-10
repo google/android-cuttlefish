@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_shared {
+cc_library {
     name: "cdisk_spec",
     srcs: [
         "cdisk_spec.proto",
@@ -25,10 +25,10 @@ cc_library_host_shared {
             "external/protobuf/src",
         ],
     },
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
-cc_binary_host {
+cc_binary {
     name: "assemble_cvd",
     srcs: [
         "assemble_cvd.cc",
@@ -63,5 +63,5 @@ cc_binary_host {
         "libxml2",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
 }
