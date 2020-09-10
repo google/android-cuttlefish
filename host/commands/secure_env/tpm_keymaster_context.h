@@ -34,8 +34,8 @@ class TpmRandomSource;
  */
 class TpmKeymasterContext : public keymaster::KeymasterContext {
 private:
-  TpmResourceManager* resource_manager_;
-  keymaster::KeymasterEnforcement* enforcement_;
+  TpmResourceManager& resource_manager_;
+  keymaster::KeymasterEnforcement& enforcement_;
   std::unique_ptr<TpmKeyBlobMaker> key_blob_maker_;
   std::unique_ptr<TpmRandomSource> random_source_;
   std::unique_ptr<TpmAttestationRecordContext> attestation_context_;
@@ -44,7 +44,7 @@ private:
   uint32_t os_version_;
   uint32_t os_patchlevel_;
 public:
-  TpmKeymasterContext(TpmResourceManager*, keymaster::KeymasterEnforcement*);
+  TpmKeymasterContext(TpmResourceManager&, keymaster::KeymasterEnforcement&);
   ~TpmKeymasterContext() = default;
 
   keymaster_error_t SetSystemVersion(

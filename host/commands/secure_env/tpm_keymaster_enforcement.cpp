@@ -48,7 +48,7 @@ public:
 };
 
 TpmKeymasterEnforcement::TpmKeymasterEnforcement(
-    TpmResourceManager* resource_manager, TpmGatekeeper* gatekeeper)
+    TpmResourceManager& resource_manager, TpmGatekeeper& gatekeeper)
     : KeymasterEnforcement(64, 64),
       resource_manager_(resource_manager),
       gatekeeper_(gatekeeper) {
@@ -99,7 +99,7 @@ bool TpmKeymasterEnforcement::ValidateTokenSignature(
 
   const uint8_t *auth_token_key = nullptr;
   uint32_t auth_token_key_len = 0;
-  if (!gatekeeper_->GetAuthTokenKey(&auth_token_key, &auth_token_key_len)) {
+  if (!gatekeeper_.GetAuthTokenKey(&auth_token_key, &auth_token_key_len)) {
     LOG(WARNING) << "Unable to get gatekeeper auth token";
     return false;
   }
@@ -117,7 +117,7 @@ bool TpmKeymasterEnforcement::ValidateTokenSignature(
       "hw_auth_token_t does not appear to be packed");
 
 
-  gatekeeper_->ComputeSignature(
+  gatekeeper_.ComputeSignature(
       comparison_token.hmac,
       sizeof(comparison_token.hmac),
       auth_token_key,
@@ -134,7 +134,7 @@ keymaster_error_t TpmKeymasterEnforcement::GetHmacSharingParameters(
     HmacSharingParameters* params) {
   if (!have_saved_params_) {
     saved_params_.seed = {};
-    TpmRandomSource random_source{resource_manager_->Esys()};
+    TpmRandomSource random_source{resource_manager_.Esys()};
     auto rc =
         random_source.GenerateRandom(
             saved_params_.nonce, sizeof(saved_params_.nonce));

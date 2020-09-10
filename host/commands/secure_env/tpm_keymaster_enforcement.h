@@ -28,7 +28,7 @@
 class TpmKeymasterEnforcement : public keymaster::KeymasterEnforcement {
 public:
   TpmKeymasterEnforcement(
-      TpmResourceManager* resource_manager, TpmGatekeeper* gatekeeper);
+      TpmResourceManager& resource_manager, TpmGatekeeper& gatekeeper);
   ~TpmKeymasterEnforcement();
 
   bool activation_date_valid(uint64_t activation_date) const override;
@@ -54,8 +54,8 @@ public:
       keymaster::km_id_t* keyid) const override;
 
 private:
-  TpmResourceManager* resource_manager_;
-  TpmGatekeeper* gatekeeper_;
+  TpmResourceManager& resource_manager_;
+  TpmGatekeeper& gatekeeper_;
   bool have_saved_params_ = false;
   keymaster::HmacSharingParameters saved_params_;
 };

@@ -85,17 +85,14 @@ int main(int argc, char** argv) {
         new keymaster::SoftKeymasterEnforcement(64, 64));
   } else if (FLAGS_gatekeeper_impl == "in_process_tpm") {
     secure_storage.reset(
-        new FragileTpmStorage(resource_manager.get(), "gatekeeper_secure"));
-    insecure_storage.reset(new InsecureFallbackStorage(
-        resource_manager.get(), "gatekeeper_insecure"));
+        new FragileTpmStorage(*resource_manager, "gatekeeper_secure"));
+    insecure_storage.reset(
+        new InsecureFallbackStorage(*resource_manager, "gatekeeper_insecure"));
     TpmGatekeeper* tpm_gatekeeper =
-        new TpmGatekeeper(
-            resource_manager.get(),
-            secure_storage.get(),
-            insecure_storage.get());
+        new TpmGatekeeper(*resource_manager, *secure_storage, *insecure_storage);
     gatekeeper.reset(tpm_gatekeeper);
     keymaster_enforcement.reset(
-        new TpmKeymasterEnforcement(resource_manager.get(), tpm_gatekeeper));
+        new TpmKeymasterEnforcement(*resource_manager, *tpm_gatekeeper));
   }
 
   // keymaster::AndroidKeymaster puts the given pointer into a UniquePtr,
@@ -106,8 +103,7 @@ int main(int argc, char** argv) {
         new keymaster::PureSoftKeymasterContext(KM_SECURITY_LEVEL_SOFTWARE);
   } else if (FLAGS_keymaster_impl == "in_process_tpm") {
     keymaster_context =
-        new TpmKeymasterContext(
-            resource_manager.get(), keymaster_enforcement.get());
+        new TpmKeymasterContext(*resource_manager, *keymaster_enforcement);
   } else {
     LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymaster_impl;
     return -1;
@@ -137,7 +133,7 @@ int main(int argc, char** argv) {
                                       << keymaster_conn->StrError();
       cuttlefish::KeymasterChannel keymaster_channel(keymaster_conn);
 
-      KeymasterResponder keymaster_responder(&keymaster_channel, &keymaster);
+      KeymasterResponder keymaster_responder(keymaster_channel, keymaster);
 
       while (keymaster_responder.ProcessMessage()) {
       }
@@ -151,8 +147,7 @@ int main(int argc, char** argv) {
                                       << gatekeeper_conn->StrError();
       cuttlefish::GatekeeperChannel gatekeeper_channel(gatekeeper_conn);
 
-      GatekeeperResponder gatekeeper_responder(
-          &gatekeeper_channel, gatekeeper.get());
+      GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 
       while (gatekeeper_responder.ProcessMessage()) {
       }

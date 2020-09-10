@@ -28,7 +28,7 @@ static constexpr char kUniqueKey[] = "JsonSerializable";
 
 class JsonSerializable : public keymaster::Serializable {
 public:
-  JsonSerializable(Json::Value* json);
+  JsonSerializable(Json::Value& json);
 
   size_t SerializedSize() const override;
 
@@ -36,18 +36,18 @@ public:
 
   bool Deserialize(const uint8_t** buf_ptr, const uint8_t* buf_end) override;
 private:
-  Json::Value* json_;
+  Json::Value& json_;
 };
 
-JsonSerializable::JsonSerializable(Json::Value* json) : json_(json) {}
+JsonSerializable::JsonSerializable(Json::Value& json) : json_(json) {}
 
 size_t JsonSerializable::SerializedSize() const {
-  auto serialized = Json::FastWriter().write(*json_);
+  auto serialized = Json::FastWriter().write(json_);
   return serialized.size() + sizeof(uint32_t);
 }
 
 uint8_t* JsonSerializable::Serialize(uint8_t* buf, const uint8_t* end) const {
-  auto serialized = Json::FastWriter().write(*json_);
+  auto serialized = Json::FastWriter().write(json_);
   if (end - buf < serialized.size() + sizeof(uint32_t)) {
     LOG(ERROR) << "Not enough space to serialize json";
     return buf;
@@ -68,7 +68,7 @@ bool JsonSerializable::Deserialize(
   }
   auto doc_begin = reinterpret_cast<const char*>(json_bytes.get());
   auto doc_end = doc_begin + size;
-  success = Json::Reader().parse(doc_begin, doc_end, *json_);
+  success = Json::Reader().parse(doc_begin, doc_end, json_);
   if (!success) {
     LOG(ERROR) << "Failed to parse json";
     return false;
@@ -77,13 +77,13 @@ bool JsonSerializable::Deserialize(
 }
 
 bool WriteProtectedJsonToFile(
-    TpmResourceManager* resource_manager,
+    TpmResourceManager& resource_manager,
     const std::string& filename,
     Json::Value json) {
-  JsonSerializable sensitive_material(&json);
+  JsonSerializable sensitive_material(json);
   auto parent_key_fn = ParentKeyCreator(kUniqueKey);
   EncryptedSerializable encryption(
-      resource_manager, parent_key_fn, &sensitive_material);
+      resource_manager, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
   HmacSerializable sign_check(
       resource_manager, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
@@ -109,7 +109,7 @@ bool WriteProtectedJsonToFile(
 }
 
 Json::Value ReadProtectedJsonFromFile(
-    TpmResourceManager* resource_manager, const std::string& filename) {
+    TpmResourceManager& resource_manager, const std::string& filename) {
   std::ifstream file_stream(filename, std::ios::binary | std::ios::ate);
   std::streamsize size = file_stream.tellg();
   file_stream.seekg(0, std::ios::beg);
@@ -130,10 +130,10 @@ Json::Value ReadProtectedJsonFromFile(
   }
 
   Json::Value json;
-  JsonSerializable sensitive_material(&json);
+  JsonSerializable sensitive_material(json);
   auto parent_key_fn = ParentKeyCreator(kUniqueKey);
   EncryptedSerializable encryption(
-      resource_manager, parent_key_fn, &sensitive_material);
+      resource_manager, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
   HmacSerializable sign_check(
       resource_manager, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);

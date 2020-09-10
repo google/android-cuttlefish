@@ -27,15 +27,15 @@
 #include "host/commands/secure_env/primary_key_builder.h"
 #include "host/commands/secure_env/tpm_auth.h"
 #include "host/commands/secure_env/tpm_hmac.h"
+#include "host/commands/secure_env/tpm_random_source.h"
 
 TpmGatekeeper::TpmGatekeeper(
-    TpmResourceManager* resource_manager,
-    GatekeeperStorage* secure_storage,
-    GatekeeperStorage* insecure_storage)
+    TpmResourceManager& resource_manager,
+    GatekeeperStorage& secure_storage,
+    GatekeeperStorage& insecure_storage)
     : resource_manager_(resource_manager)
     , secure_storage_(secure_storage)
-    , insecure_storage_(insecure_storage)
-    , random_source_(resource_manager->Esys()) {
+    , insecure_storage_(insecure_storage) {
 }
 
 /*
@@ -80,7 +80,8 @@ void TpmGatekeeper::ComputePasswordSignature(
 
 void TpmGatekeeper::GetRandom(void* random, uint32_t requested_size) const {
   auto random_uint8 = reinterpret_cast<uint8_t*>(random);
-  random_source_.GenerateRandom(random_uint8, requested_size);
+  TpmRandomSource(resource_manager_.Esys())
+      .GenerateRandom(random_uint8, requested_size);
 }
 
 void TpmGatekeeper::ComputeSignature(
@@ -154,23 +155,23 @@ static std::optional<gatekeeper::failure_record_t> NvBufferToRecord(
 }
 
 static bool GetFailureRecordImpl(
-    GatekeeperStorage* storage,
+    GatekeeperStorage& storage,
     uint32_t uid,
     gatekeeper::secure_id_t secure_user_id,
     gatekeeper::failure_record_t *record) {
   Json::Value key{std::to_string(uid)}; // jsoncpp integer comparisons are janky
-  if (!storage->HasKey(key)) {
-    if (!storage->Allocate(key, sizeof(gatekeeper::failure_record_t))) {
+  if (!storage.HasKey(key)) {
+    if (!storage.Allocate(key, sizeof(gatekeeper::failure_record_t))) {
       LOG(ERROR) << "Allocation failed for user " << uid;
       return false;
     }
     auto buf = RecordToNvBuffer(DefaultRecord(secure_user_id));
-    if (!storage->Write(key, *buf)) {
+    if (!storage.Write(key, *buf)) {
       LOG(ERROR) << "Failed to write record for " << uid;
       return false;
     }
   }
-  auto record_read = storage->Read(key);
+  auto record_read = storage.Read(key);
   if (!record_read) {
     LOG(ERROR) << "Failed to read record for " << uid;
     return false;
@@ -186,7 +187,7 @@ static bool GetFailureRecordImpl(
   }
   LOG(DEBUG) << "User id mismatch for " << uid;
   auto buf = RecordToNvBuffer(DefaultRecord(secure_user_id));
-  if (!storage->Write(key, *buf)) {
+  if (!storage.Write(key, *buf)) {
     LOG(ERROR) << "Failed to write record for " << uid;
     return false;
   }
@@ -199,23 +200,23 @@ bool TpmGatekeeper::GetFailureRecord(
     gatekeeper::secure_id_t secure_user_id,
     gatekeeper::failure_record_t *record,
     bool secure) {
-  GatekeeperStorage* storage = secure ? secure_storage_ : insecure_storage_;
+  GatekeeperStorage& storage = secure ? secure_storage_ : insecure_storage_;
   return GetFailureRecordImpl(storage, uid, secure_user_id, record);
 }
 
 static bool WriteFailureRecordImpl(
-    GatekeeperStorage* storage,
+    GatekeeperStorage& storage,
     uint32_t uid,
     gatekeeper::failure_record_t* record) {
   Json::Value key{std::to_string(uid)}; // jsoncpp integer comparisons are janky
-  if (!storage->HasKey(key)) {
-    if (!storage->Allocate(key, sizeof(gatekeeper::failure_record_t))) {
+  if (!storage.HasKey(key)) {
+    if (!storage.Allocate(key, sizeof(gatekeeper::failure_record_t))) {
       LOG(ERROR) << "Allocation failed for user " << uid;
       return false;
     }
   }
   auto buf = RecordToNvBuffer(*record);
-  if (!storage->Write(key, *buf)) {
+  if (!storage.Write(key, *buf)) {
     LOG(ERROR) << "Failed to write record for " << uid;
     return false;
   }
@@ -224,14 +225,14 @@ static bool WriteFailureRecordImpl(
 
 bool TpmGatekeeper::ClearFailureRecord(
     uint32_t uid, gatekeeper::secure_id_t secure_user_id, bool secure) {
-  GatekeeperStorage* storage = secure ? secure_storage_ : insecure_storage_;
+  GatekeeperStorage& storage = secure ? secure_storage_ : insecure_storage_;
   gatekeeper::failure_record_t record = DefaultRecord(secure_user_id);
   return WriteFailureRecordImpl(storage, uid, &record);
 }
 
 bool TpmGatekeeper::WriteFailureRecord(
     uint32_t uid, gatekeeper::failure_record_t *record, bool secure) {
-  GatekeeperStorage* storage = secure ? secure_storage_ : insecure_storage_;
+  GatekeeperStorage& storage = secure ? secure_storage_ : insecure_storage_;
   return WriteFailureRecordImpl(storage, uid, record);
 }
 

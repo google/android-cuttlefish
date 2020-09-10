@@ -62,10 +62,10 @@ void PrimaryKeyBuilder::UniqueData(const std::string& data) {
 }
 
 TpmObjectSlot PrimaryKeyBuilder::CreateKey(
-    TpmResourceManager* resource_manager) {
+    TpmResourceManager& resource_manager) {
   TPM2B_AUTH authValue = {};
   auto rc =
-      Esys_TR_SetAuth(resource_manager->Esys(), ESYS_TR_RH_OWNER, &authValue);
+      Esys_TR_SetAuth(resource_manager.Esys(), ESYS_TR_RH_OWNER, &authValue);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_TR_SetAuth failed with return code " << rc
                << " (" << Tss2_RC_Decode(rc) << ")";
@@ -85,7 +85,7 @@ TpmObjectSlot PrimaryKeyBuilder::CreateKey(
 
   TPM2B_SENSITIVE_CREATE in_sensitive = {};
 
-  auto key_slot = resource_manager->ReserveSlot();
+  auto key_slot = resource_manager.ReserveSlot();
   if (!key_slot) {
     LOG(ERROR) << "No slots available";
     return {};
@@ -95,7 +95,7 @@ TpmObjectSlot PrimaryKeyBuilder::CreateKey(
   // Since this is a primary key, it's generated deterministically. It would
   // also be possible to generate this once and hold it in storage.
   rc = Esys_CreateLoaded(
-    /* esysContext */ resource_manager->Esys(),
+    /* esysContext */ resource_manager.Esys(),
     /* primaryHandle */ ESYS_TR_RH_OWNER,
     /* shandle1 */ ESYS_TR_PASSWORD,
     /* shandle2 */ ESYS_TR_NONE,
@@ -114,9 +114,9 @@ TpmObjectSlot PrimaryKeyBuilder::CreateKey(
   return key_slot;
 }
 
-std::function<TpmObjectSlot(TpmResourceManager*)>
+std::function<TpmObjectSlot(TpmResourceManager&)>
 SigningKeyCreator(const std::string& unique) {
-  return [unique](TpmResourceManager* resource_manager) {
+  return [unique](TpmResourceManager& resource_manager) {
     PrimaryKeyBuilder key_builder;
     key_builder.SigningKey();
     key_builder.UniqueData(unique);
@@ -124,9 +124,9 @@ SigningKeyCreator(const std::string& unique) {
   };
 }
 
-std::function<TpmObjectSlot(TpmResourceManager*)>
+std::function<TpmObjectSlot(TpmResourceManager&)>
 ParentKeyCreator(const std::string& unique) {
-  return [unique](TpmResourceManager* resource_manager) {
+  return [unique](TpmResourceManager& resource_manager) {
     PrimaryKeyBuilder key_builder;
     key_builder.ParentKey();
     key_builder.UniqueData(unique);

@@ -28,7 +28,7 @@ static constexpr char kKey[] = "key";
 static constexpr char kHandle[] = "handle";
 
 FragileTpmStorage::FragileTpmStorage(
-    TpmResourceManager* resource_manager, const std::string& index_file)
+    TpmResourceManager& resource_manager, const std::string& index_file)
     : resource_manager_(resource_manager), index_file_(index_file) {
   index_ = ReadProtectedJsonFromFile(resource_manager_, index_file);
   if (!index_.isMember(kEntries)
@@ -45,7 +45,7 @@ FragileTpmStorage::FragileTpmStorage(
 }
 
 TPM2_HANDLE FragileTpmStorage::GenerateRandomHandle() {
-  TpmRandomSource random_source{resource_manager_->Esys()};
+  TpmRandomSource random_source{resource_manager_.Esys()};
   TPM2_HANDLE handle = 0;
   random_source.GenerateRandom(
       reinterpret_cast<uint8_t*>(&handle), sizeof(handle));
@@ -79,10 +79,10 @@ bool FragileTpmStorage::Allocate(const Json::Value& key, uint16_t size) {
       }
     };
     TPM2B_AUTH auth = { .size = 0, .buffer = {} };
-    Esys_TR_SetAuth(resource_manager_->Esys(), ESYS_TR_RH_OWNER, &auth);
+    Esys_TR_SetAuth(resource_manager_.Esys(), ESYS_TR_RH_OWNER, &auth);
     ESYS_TR nv_handle;
     auto rc = Esys_NV_DefineSpace(
-      /* esysContext */ resource_manager_->Esys(),
+      /* esysContext */ resource_manager_.Esys(),
       /* authHandle */ ESYS_TR_RH_OWNER,
       /* shandle1 */ ESYS_TR_PASSWORD,
       /* shandle2 */ ESYS_TR_NONE,
@@ -94,7 +94,7 @@ bool FragileTpmStorage::Allocate(const Json::Value& key, uint16_t size) {
       LOG(VERBOSE) << "Esys_NV_DefineSpace failed with TPM2_RC_NV_DEFINED";
       continue;
     } else if (rc == TPM2_RC_SUCCESS) {
-      Esys_TR_Close(resource_manager_->Esys(), &nv_handle);
+      Esys_TR_Close(resource_manager_.Esys(), &nv_handle);
       break;
     } else {
       LOG(DEBUG) << "Esys_NV_DefineSpace failed with " << rc << ": "
@@ -143,12 +143,12 @@ std::unique_ptr<TPM2B_MAX_NV_BUFFER> FragileTpmStorage::Read(
     return {};
   }
   auto close_tr = [this](ESYS_TR* handle) {
-    Esys_TR_Close(resource_manager_->Esys(), handle);
+    Esys_TR_Close(resource_manager_.Esys(), handle);
     delete handle;
   };
   std::unique_ptr<ESYS_TR, decltype(close_tr)> nv_handle(new ESYS_TR, close_tr);
   auto rc = Esys_TR_FromTPMPublic(
-      /* esysContext */ resource_manager_->Esys(),
+      /* esysContext */ resource_manager_.Esys(),
       /* tpm_handle */ handle,
       /* optionalSession1 */ ESYS_TR_NONE,
       /* optionalSession2 */ ESYS_TR_NONE,
@@ -160,11 +160,11 @@ std::unique_ptr<TPM2B_MAX_NV_BUFFER> FragileTpmStorage::Read(
     return {};
   }
   TPM2B_AUTH auth = { .size = 0, .buffer = {} };
-  Esys_TR_SetAuth(resource_manager_->Esys(), *nv_handle, &auth);
+  Esys_TR_SetAuth(resource_manager_.Esys(), *nv_handle, &auth);
 
   TPM2B_NV_PUBLIC* public_area;
   rc = Esys_NV_ReadPublic(
-      /* esysContext */ resource_manager_->Esys(),
+      /* esysContext */ resource_manager_.Esys(),
       /* nvIndex */ *nv_handle,
       /* shandle1 */ ESYS_TR_NONE,
       /* shandle2 */ ESYS_TR_NONE,
@@ -180,7 +180,7 @@ std::unique_ptr<TPM2B_MAX_NV_BUFFER> FragileTpmStorage::Read(
       public_deleter(public_area, Esys_Free);
   TPM2B_MAX_NV_BUFFER* buffer = nullptr;
   rc = Esys_NV_Read(
-      /* esysContext */ resource_manager_->Esys(),
+      /* esysContext */ resource_manager_.Esys(),
       /* authHandle */ *nv_handle,
       /* nvIndex */ *nv_handle,
       /* shandle1 */ ESYS_TR_PASSWORD,
@@ -207,7 +207,7 @@ bool FragileTpmStorage::Write(
   }
   ESYS_TR nv_handle;
   auto rc = Esys_TR_FromTPMPublic(
-      /* esysContext */ resource_manager_->Esys(),
+      /* esysContext */ resource_manager_.Esys(),
       /* tpm_handle */ handle,
       /* optionalSession1 */ ESYS_TR_NONE,
       /* optionalSession2 */ ESYS_TR_NONE,
@@ -219,10 +219,10 @@ bool FragileTpmStorage::Write(
     return false;
   }
   TPM2B_AUTH auth = { .size = 0, .buffer = {} };
-  Esys_TR_SetAuth(resource_manager_->Esys(), nv_handle, &auth);
+  Esys_TR_SetAuth(resource_manager_.Esys(), nv_handle, &auth);
 
   rc = Esys_NV_Write(
-      /* esysContext */ resource_manager_->Esys(),
+      /* esysContext */ resource_manager_.Esys(),
       /* authHandle */ nv_handle,
       /* nvIndex */ nv_handle,
       /* shandle1 */ ESYS_TR_PASSWORD,
@@ -230,7 +230,7 @@ bool FragileTpmStorage::Write(
       /* shandle3 */ ESYS_TR_NONE,
       /* data */ &data,
       /* offset */ 0);
-  Esys_TR_Close(resource_manager_->Esys(), &nv_handle);
+  Esys_TR_Close(resource_manager_.Esys(), &nv_handle);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_NV_Write failed with return code " << rc
                << " (" << Tss2_RC_Decode(rc) << ")";

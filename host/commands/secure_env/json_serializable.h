@@ -20,6 +20,6 @@
 #include "host/commands/secure_env/tpm_resource_manager.h"
 
 bool WriteProtectedJsonToFile(
-    TpmResourceManager*, const std::string& filename, Json::Value);
+    TpmResourceManager&, const std::string& filename, Json::Value);
 Json::Value ReadProtectedJsonFromFile(
-    TpmResourceManager*, const std::string& filename);
+    TpmResourceManager&, const std::string& filename);

@@ -37,7 +37,7 @@
  */
 class InsecureFallbackStorage : public GatekeeperStorage {
 public:
-  InsecureFallbackStorage(TpmResourceManager*, const std::string& index_file);
+  InsecureFallbackStorage(TpmResourceManager&, const std::string& index_file);
   ~InsecureFallbackStorage() = default;
 
   bool Allocate(const Json::Value& key, uint16_t size) override;
@@ -50,7 +50,7 @@ private:
   Json::Value* GetEntry(const Json::Value& key);
   const Json::Value* GetEntry(const Json::Value& key) const;
 
-  TpmResourceManager* resource_manager_;
+  TpmResourceManager& resource_manager_;
   std::string index_file_;
   Json::Value index_;
 };

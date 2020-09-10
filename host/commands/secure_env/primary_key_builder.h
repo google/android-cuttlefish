@@ -30,13 +30,13 @@ public:
   void ParentKey();
   void UniqueData(const std::string&);
 
-  TpmObjectSlot CreateKey(TpmResourceManager*);
+  TpmObjectSlot CreateKey(TpmResourceManager&);
 private:
   TPMT_PUBLIC public_area_;
 };
 
-std::function<TpmObjectSlot(TpmResourceManager*)>
+std::function<TpmObjectSlot(TpmResourceManager&)>
 SigningKeyCreator(const std::string& unique);
 
-std::function<TpmObjectSlot(TpmResourceManager*)>
+std::function<TpmObjectSlot(TpmResourceManager&)>
 ParentKeyCreator(const std::string& unique);

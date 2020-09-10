@@ -28,7 +28,7 @@ static constexpr char kKey[] = "key";
 static constexpr char kValue[] = "value";
 
 InsecureFallbackStorage::InsecureFallbackStorage(
-    TpmResourceManager* resource_manager, const std::string& index_file)
+    TpmResourceManager& resource_manager, const std::string& index_file)
     : resource_manager_(resource_manager), index_file_(index_file) {
   index_ = ReadProtectedJsonFromFile(resource_manager_, index_file);
   if (!index_.isMember(kEntries)

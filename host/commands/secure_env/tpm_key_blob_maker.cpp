@@ -91,7 +91,7 @@ static KeymasterKeyBlob SerializableToKeyBlob(
 }
 
 
-TpmKeyBlobMaker::TpmKeyBlobMaker(TpmResourceManager* resource_manager)
+TpmKeyBlobMaker::TpmKeyBlobMaker(TpmResourceManager& resource_manager)
     : resource_manager_(resource_manager) {
 }
 
@@ -126,7 +126,7 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
       {&key_material_buffer, hw_enforced, sw_enforced});
   auto parent_key_fn = ParentKeyCreator(kUniqueKey);
   EncryptedSerializable encryption(
-      resource_manager_, parent_key_fn, &sensitive_material);
+      resource_manager_, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
   HmacSerializable sign_check(
       resource_manager_, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
@@ -150,7 +150,7 @@ keymaster_error_t TpmKeyBlobMaker::UnwrapKeyBlob(
       {&key_material_buffer, hw_enforced, sw_enforced});
   auto parent_key_fn = ParentKeyCreator(kUniqueKey);
   EncryptedSerializable encryption(
-      resource_manager_, parent_key_fn, &sensitive_material);
+      resource_manager_, parent_key_fn, sensitive_material);
   auto signing_key_fn = SigningKeyCreator(kUniqueKey);
   HmacSerializable sign_check(
       resource_manager_, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);

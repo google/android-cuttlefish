@@ -36,12 +36,12 @@ using keymaster::KeyFactory;
 using keymaster::OperationFactory;
 
 TpmKeymasterContext::TpmKeymasterContext(
-    TpmResourceManager* resource_manager,
-    keymaster::KeymasterEnforcement* enforcement)
+    TpmResourceManager& resource_manager,
+    keymaster::KeymasterEnforcement& enforcement)
     : resource_manager_(resource_manager)
     , enforcement_(enforcement)
     , key_blob_maker_(new TpmKeyBlobMaker(resource_manager_))
-    , random_source_(new TpmRandomSource(resource_manager_->Esys()))
+    , random_source_(new TpmRandomSource(resource_manager_.Esys()))
     , attestation_context_(new TpmAttestationRecordContext()) {
   key_factories_.emplace(
       KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(key_blob_maker_.get()));
@@ -260,7 +260,7 @@ keymaster_error_t TpmKeymasterContext::AddRngEntropy(
 }
 
 keymaster::KeymasterEnforcement* TpmKeymasterContext::enforcement_policy() {
-  return enforcement_;
+  return &enforcement_;
 }
 
 // Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/contexts/pure_soft_keymaster_context.cpp;l=261;drc=8367d5351c4d417a11f49b12394b63a413faa02d

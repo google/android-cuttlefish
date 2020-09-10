@@ -41,7 +41,7 @@
  */
 class FragileTpmStorage : public GatekeeperStorage {
 public:
-  FragileTpmStorage(TpmResourceManager*, const std::string& index_file);
+  FragileTpmStorage(TpmResourceManager&, const std::string& index_file);
   ~FragileTpmStorage() = default;
 
   bool Allocate(const Json::Value& key, uint16_t size) override;
@@ -54,7 +54,7 @@ private:
   TPM2_HANDLE GetHandle(const Json::Value& key) const;
   TPM2_HANDLE GenerateRandomHandle();
 
-  TpmResourceManager* resource_manager_;
+  TpmResourceManager& resource_manager_;
   std::string index_file_;
   Json::Value index_;
 };
