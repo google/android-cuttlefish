@@ -13,7 +13,7 @@
 // limitations under the License.
 
 
-cc_binary_host {
+cc_binary {
     name: "gnss_grpc_proxy",
     srcs: [
         "gnss_grpc_proxy.cpp",
@@ -40,7 +40,7 @@ cc_binary_host {
         "libjsoncpp",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
     include_dirs: [
         "external/grpc-grpc/include",
         "external/protobuf/src",

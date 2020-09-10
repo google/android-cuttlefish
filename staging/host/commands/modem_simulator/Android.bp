@@ -47,10 +47,10 @@ cc_defaults {
         "libtinyxml2",
     ],
     cflags: ["-Werror", "-Wall", "-fexceptions"],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
 
-cc_binary_host {
+cc_binary {
     name: "modem_simulator",
     srcs: [
         "main.cpp"
@@ -58,7 +58,7 @@ cc_binary_host {
     defaults: ["cuttlefish_host_and_guest", "modem_simulator_base"],
 }
 
-prebuilt_etc_host {
+prebuilt_etc {
     name: "iccprofile_for_sim0.xml",
     vendor: true,
     src: "files/iccprofile_for_sim0.xml",
@@ -66,7 +66,7 @@ prebuilt_etc_host {
     sub_dir: "modem_simulator/files",
 }
 
-prebuilt_etc_host {
+prebuilt_etc {
     name: "iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
     vendor: true,
     src: "files/iccprofile_for_sim0_for_CtsCarrierApiTestCases.xml",
@@ -74,7 +74,7 @@ prebuilt_etc_host {
     sub_dir: "modem_simulator/files",
 }
 
-prebuilt_etc_host {
+prebuilt_etc {
     name: "numeric_operator.xml",
     vendor: true,
     src: "files/numeric_operator.xml",
@@ -82,7 +82,7 @@ prebuilt_etc_host {
     sub_dir: "modem_simulator/files",
 }
 
-cc_test {
+cc_test_host {
     name: "modem_simulator_test",
     srcs: [
         "unittest/main_test.cpp",
@@ -93,7 +93,7 @@ cc_test {
     include_dirs: [
         "device/google/cuttlefish/host/commands",
     ],
-    defaults: ["cuttlefish_host_only", "modem_simulator_base"],
+    defaults: ["cuttlefish_host_and_guest", "modem_simulator_base"],
     test_suites: ["general-tests"],
     whole_static_libs: [
         "libc++fs"

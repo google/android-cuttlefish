@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
+cc_binary {
     name: "fetch_cvd",
     srcs: [
         "build_api.cc",
@@ -22,19 +22,38 @@ cc_binary_host {
         "fetch_cvd.cc",
         "install_zip.cc",
     ],
-    stl: "libc++_static",
     static_libs: [
-        "libbase",
         "libcuttlefish_host_config",
-        "libcuttlefish_fs",
-        "libcuttlefish_utils",
-        "libcurl",
-        "libcrypto",
         "libgflags",
-        "liblog",
-        "libssl",
-        "libz",
-        "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    target: {
+        host: {
+            stl: "libc++_static",
+            static_libs: [
+                "libbase",
+                "libcuttlefish_fs",
+                "libcuttlefish_utils",
+                "libcurl",
+                "libcrypto",
+                "liblog",
+                "libssl",
+                "libz",
+                "libjsoncpp",
+            ],
+        },
+        android: {
+            shared_libs: [
+                "libbase",
+                "libcuttlefish_fs",
+                "libcuttlefish_utils",
+                "libcurl",
+                "libcrypto",
+                "liblog",
+                "libssl",
+                "libz",
+                "libjsoncpp",
+            ],
+        },
+    },
+    defaults: ["cuttlefish_host_and_guest"],
 }
