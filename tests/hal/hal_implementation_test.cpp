@@ -98,26 +98,16 @@ static const std::set<std::string> kKnownMissingHidl = {
 
 static const std::set<std::string> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
-    "android.hardware.common.NativeHandle",
-    "android.hardware.graphics.common.BufferUsage",
-    "android.hardware.graphics.common.ExtendableType",
-    "android.hardware.graphics.common.HardwareBuffer",
-    "android.hardware.graphics.common.HardwareBufferDescription",
-    "android.hardware.graphics.common.PixelFormat",
+    "android.hardware.common.",
+    "android.hardware.graphics.common.",
 
     // These KeyMaster types are in an AIDL types-only HAL because they're used
     // by the Identity Credential AIDL HAL. Remove this when fully porting
     // KeyMaster to AIDL.
-    "android.hardware.keymaster.HardwareAuthToken",
-    "android.hardware.keymaster.HardwareAuthenticatorType",
-    "android.hardware.keymaster.Timestamp",
+    "android.hardware.keymaster.",
 
     // These powerpolicy types are only used in Automotive.
-    "android.frameworks.automotive.powerpolicy.CarPowerPolicy",
-    "android.frameworks.automotive.powerpolicy.CarPowerPolicyFilter",
-    "android.frameworks.automotive.powerpolicy.ICarPowerPolicyChangeCallback",
-    "android.frameworks.automotive.powerpolicy.ICarPowerPolicyServer",
-    "android.frameworks.automotive.powerpolicy.PowerComponent",
+    "android.frameworks.automotive.powerpolicy.",
 };
 
 // AOSP packages which are never considered
@@ -261,6 +251,13 @@ TEST(Hal, AllAidlInterfacesAreInAosp) {
     }
 }
 
+// android.hardware.foo.IFoo -> android.hardware.foo.
+std::string getAidlPackage(const std::string& aidlType) {
+    size_t lastDot = aidlType.rfind('.');
+    CHECK(lastDot != std::string::npos);
+    return aidlType.substr(0, lastDot + 1);
+}
+
 TEST(Hal, AidlInterfacesImplemented) {
     std::set<std::string> manifest = allAidlManifestInterfaces();
     std::set<std::string> thoughtMissing = kKnownMissingAidl;
@@ -274,7 +271,7 @@ TEST(Hal, AidlInterfacesImplemented) {
         bool knownMissing = false;
         for (const std::string& type : iface.types) {
             if (manifest.erase(type) > 0) hasRegistration = true;
-            if (thoughtMissing.erase(type) > 0) knownMissing = true;
+            if (thoughtMissing.erase(getAidlPackage(type)) > 0) knownMissing = true;
         }
 
         if (knownMissing) {
