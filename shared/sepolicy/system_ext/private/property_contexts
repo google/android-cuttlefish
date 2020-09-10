@@ -1,1 +1,11 @@
 ro.vendor.aware_available  u:object_r:vendor_aware_available_prop:s0
+persist.vendor.radio.RATE_ADAPT_ENABLE          u:object_r:vendor_radio_prop:s0
+persist.vendor.radio.ROTATION_ENABLE            u:object_r:vendor_radio_prop:s0
+persist.vendor.radio.VT_ENABLE                  u:object_r:vendor_radio_prop:s0
+persist.vendor.radio.VT_HYBRID_ENABLE           u:object_r:vendor_radio_prop:s0
+persist.vendor.radio.videopause.mode            u:object_r:vendor_radio_prop:s0
+persist.vendor.radio.smlog_switch               u:object_r:vendor_radio_prop:s0
+persist.radio.poweranomaly.start                u:object_r:vendor_radio_prop:s0
+persist.radio.lowpowermonitor.start             u:object_r:vendor_radio_prop:s0
+ro.vendor.radio.log_loc                         u:object_r:vendor_radio_prop:s0
+ro.vendor.radio.log_prefix                      u:object_r:vendor_radio_prop:s0

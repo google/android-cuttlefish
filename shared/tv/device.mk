@@ -32,5 +32,8 @@ PRODUCT_COPY_FILES += \
 # HDMI CEC HAL
 PRODUCT_PACKAGES += android.hardware.tv.cec@1.0-service.mock
 
+# Tuner HAL
+PRODUCT_PACKAGES += android.hardware.tv.tuner@1.0-service
+
 # Enabling managed profiles
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/tv/overlay

@@ -37,7 +37,6 @@
 #include <sync/sync.h>
 #include <sys/resource.h>
 #include <sys/time.h>
-#include <unistd.h>
 
 #include <sstream>
 #include <string>

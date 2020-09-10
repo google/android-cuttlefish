@@ -1,2 +1,4 @@
 # Vendor aware available type
 type vendor_aware_available_prop, property_type;
+
+type vendor_radio_prop, property_type;

@@ -37,8 +37,6 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 # All components inherited here go to vendor image
 #
 LOCAL_DISABLE_OMX := true
-LOCAL_CAMERAPROVIDER_PRODUCT_PACKAGE := \
-    android.hardware.camera.provider@2.4-service_64
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
 #
