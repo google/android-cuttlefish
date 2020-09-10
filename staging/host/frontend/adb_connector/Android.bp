@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary_host {
+cc_binary {
     name: "adb_connector",
     srcs: [
         "adb_connection_maintainer.cpp",
@@ -30,5 +30,5 @@ cc_binary_host {
         "libcuttlefish_utils",
         "liblog",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }

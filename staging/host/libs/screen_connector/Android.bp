@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_library_host_static {
+cc_library_static {
     name: "libcuttlefish_screen_connector",
     srcs: [
         "screen_connector.cpp",
@@ -31,5 +31,5 @@ cc_library_host_static {
         "libcuttlefish_wayland_server",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
 }
