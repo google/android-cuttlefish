@@ -26,7 +26,7 @@ cc_library_shared {
     defaults: ["cuttlefish_host_and_guest"],
 }
 
-cc_test_host {
+cc_test {
     name: "cuttlefish_net_tests",
     srcs: [
         "netlink_request_test.cpp",
@@ -40,6 +40,6 @@ cc_test_host {
         "libgmock",
         "libgtest",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_host_and_guest"],
     test_suites: ["general-tests"],
 }
