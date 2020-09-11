@@ -46,7 +46,6 @@ static std::array<unsigned char, 6> str_to_mac(const std::string& mac_str) {
   return mac;
 }
 
-// TODO(schuffelen): Merge this with the ip_link_add binary.
 int CreateWifiWrapper(const std::string& source,
                       const std::string& destination) {
   auto factory = cuttlefish::NetlinkClientFactory::Default();

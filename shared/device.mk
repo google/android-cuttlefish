@@ -111,7 +111,6 @@ PRODUCT_PACKAGES += \
     wpa_supplicant.vsoc.conf \
     vsoc_input_service \
     rename_netiface \
-    ip_link_add \
     setup_wifi \
     tombstone_transmit \
     tombstone_producer \
