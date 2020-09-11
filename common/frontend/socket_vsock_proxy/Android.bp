@@ -29,9 +29,11 @@ cc_binary {
     ],
     target: {
         host: {
+            shared_libs: [
+                "libjsoncpp",
+            ],
             static_libs: [
                 "libcuttlefish_host_config",
-                "libjsoncpp",
             ],
         },
     },

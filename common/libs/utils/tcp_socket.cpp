@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/libs/tcp_socket/tcp_socket.h"
+#include "common/libs/utils/tcp_socket.h"
 
 #include <netinet/in.h>
 #include <sys/socket.h>
