@@ -22,13 +22,13 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 
+namespace cuttlefish {
+
 namespace {
 
 const size_t BUFF_SIZE = 1 << 14;
 
 } // namespace
-
-namespace cvd {
 
 ssize_t WriteAll(SharedFD fd, const char* buf, size_t size) {
   size_t total_written = 0;
@@ -94,4 +94,36 @@ ssize_t WriteAll(SharedFD fd, const std::vector<char>& buf) {
   return WriteAll(fd, buf.data(), buf.size());
 }
 
-} // namespace cvd
+bool SendAll(SharedFD sock, const std::string& msg) {
+  ssize_t total_written{};
+  if (!sock->IsOpen()) {
+    return false;
+  }
+  while (total_written < static_cast<ssize_t>(msg.size())) {
+    auto just_written = sock->Send(msg.c_str() + total_written,
+                                   msg.size() - total_written, MSG_NOSIGNAL);
+    if (just_written <= 0) {
+      return false;
+    }
+    total_written += just_written;
+  }
+  return true;
+}
+
+std::string RecvAll(SharedFD sock, const size_t count) {
+  size_t total_read{};
+  if (!sock->IsOpen()) {
+    return {};
+  }
+  std::unique_ptr<char[]> data(new char[count]);
+  while (total_read < count) {
+    auto just_read = sock->Read(data.get() + total_read, count - total_read);
+    if (just_read <= 0) {
+      return {};
+    }
+    total_read += just_read;
+  }
+  return {data.get(), count};
+}
+
+} // namespace cuttlefish
