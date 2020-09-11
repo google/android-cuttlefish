@@ -247,7 +247,10 @@ function cvd_docker_create {
 	    fi
 
         if [[ $share_dir == "true" ]]; then
-            local host_pwd=$(realpath "$PWD")
+            # mount host_dir to guest_dir
+            # if host_dir is symlink, use the symlink path to calculate guest_dir
+            # however, mount the host actual target directory to the guest_dir
+            local host_pwd=$(realpath -s "$PWD")
             local guest_home="/home/vsoc-01"
             for sub in "${shared_dir_pairs[@]}"; do
                 if ! echo ${sub} | egrep ":" > /dev/null; then
@@ -263,6 +266,7 @@ function cvd_docker_create {
                 if ! is_absolute_path ${guest_dir}; then
                     guest_dir="${guest_home}/${guest_dir}"
                 fi
+                host_dir=${realpath $host_dir} # resolve symbolic link only on the host side
                 volumes+=("-v ${host_dir}:${guest_dir}")
             done
         fi
