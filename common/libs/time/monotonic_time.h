@@ -226,17 +226,6 @@ class MonotonicTimePoint {
   struct timespec ts_;
 };
 
-class MonotonicTimePointFactory {
- public:
-  static MonotonicTimePointFactory* GetInstance();
-
-  virtual ~MonotonicTimePointFactory() { }
-
-  virtual void FetchCurrentTime(MonotonicTimePoint* dest) const {
-    *dest = MonotonicTimePoint::Now();
-  }
-};
-
 class Seconds : public TimeDifference {
  public:
   explicit Seconds(const TimeDifference& difference) :
