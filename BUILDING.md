@@ -87,12 +87,48 @@ Say, the source is downloaded to $HOME/android-src. The following
 command will build the Android and Cuttlefish from the source.
 
 ```bash
-./build-android-with-docker.sh --android-src_mntptr "$HOME/android-src:/home/vsoc-01/build"
+./build-android-with-docker.sh --android_src_mnt "$HOME/android-src:/home/vsoc-01/build"
 ```
 
 For more detail:
 ```bash
 ./build-android-with-docker.sh --help
+```
+
+The build-android-with-docker.sh script also allows:
+1. running a docker guest command with arguments
+2. mounting a host script at docker container to run it with arguments
+3. passing another set of arguments to docker run at the same time
+4. as a showcase, just init, sync, and build with default
+   configurations
+
+Note that if arguments should be passed to the guest command or the
+host script, it should be done like this:
+```bash
+./build-android-with-docker.sh --android_src_mnt "$HOME/android-src:/home/vsoc-01/build" \
+    --op_mode=guest guest_program -- -a -b -c and more arguments
+
+```
+-- makes the following arguments like -a, -b, -c, arguments, rather
+than options to the ./build-android-with-docker script. Without --,
+getopt that internally implements cmdline parsing will be confused.
+
+Also, for --docker_run_opts, spaces are not allowed. Thus, for a short
+docker option with optional parameter, you should do as follows:
+```
+-vVALUE1:VALUE2
+```
+
+For a long docker run option with optional parameter, you should do
+like this:
+```
+--name=MYNAME
+```
+
+In summary, a docker_run_opts looks like:
+```bash
+--docker_run_opts="-vV1:V2,--name=MYNAME,--privileged,-a,-b"
+
 ```
 
 Although the command will build Android and Cuttlefish, the docker

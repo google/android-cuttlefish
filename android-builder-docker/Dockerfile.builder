@@ -23,7 +23,7 @@ RUN chmod a+x /repo-bin/repo
 ENV PATH=$PATH:/repo-bin
 
 RUN apt-get install --no-install-recommends -y apt-utils sudo vim dpkg-dev devscripts gawk coreutils
-RUN apt-get install -y openssh-server openssh-client
+RUN apt-get install -y procps
 SHELL ["/bin/bash", "-c"]
 RUN if test $(uname -m) == aarch64; then \
 	    dpkg --add-architecture amd64 \
@@ -36,13 +36,14 @@ RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -u $UID \
     && passwd -d vsoc-01 \
     && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthentication yes/g' /etc/ssh/sshd_config \
-    && sed -i -r -e 's/^#{0,1}\s*PermitEmptyPasswords\s+(yes|no)/PermitEmptyPasswords yes/g' /etc/ssh/sshd_config \
-    && sed -i -r -e 's/^#{0,1}\s*ChallengeResponseAuthentication\s+(yes|no)/ChallengeResponseAuthentication no/g' /etc/ssh/sshd_config \
-    && sed -i -r -e 's/^#{0,1}\s*UsePAM\s+(yes|no)/UsePAM no/g' /etc/ssh/sshd_config
-
 WORKDIR /home/vsoc-01
+
+RUN mkdir -p /home/vsoc-01/intrinsic_shells/bin
+COPY ./common_intrinsic.sh /home/vsoc-01/intrinsic_shells/bin/
+COPY ./run.sh /home/vsoc-01/intrinsic_shells/bin/
+
+RUN chmod +x /home/vsoc-01/intrinsic_shells/bin/*.sh
+
 # use sudo if root privilege is needed
 USER vsoc-01
 VOLUME [ "/home/vsoc-01" ]
-
