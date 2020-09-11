@@ -14,7 +14,7 @@
 // limitations under the License.
 
 cc_library {
-    name: "cdisk_spec",
+    name: "libcdisk_spec",
     srcs: [
         "cdisk_spec.proto",
     ],
@@ -44,24 +44,24 @@ cc_binary {
         "bootimg_headers",
     ],
     shared_libs: [
-        "cdisk_spec",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
+        "libjsoncpp",
         "libnl",
         "libprotobuf-cpp-full",
+        "libxml2",
         "libziparchive",
         "libz",
         "libcuttlefish_allocd_utils",
     ],
     static_libs: [
+        "libcdisk_spec",
         "libext2_uuid",
         "libsparse",
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
         "libgflags",
-        "libxml2",
-        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
 }

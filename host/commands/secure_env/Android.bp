@@ -40,6 +40,7 @@ cc_binary_host {
         "libcuttlefish_security",
         "libcuttlefish_utils",
         "libgatekeeper",
+        "libjsoncpp",
         "libkeymaster_portable",
         "libkeymaster_messages",
         "libsoft_attestation_cert",
@@ -55,7 +56,6 @@ cc_binary_host {
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
-        "libjsoncpp",
         "libscrypt_static",
     ],
     defaults: ["cuttlefish_host_only"],
