@@ -61,7 +61,7 @@
  * it makes it easier to convert existing code to SharedFDs and avoids the
  * possibility that new POSIX functionality will lead to large refactorings.
  */
-namespace cvd {
+namespace cuttlefish {
 
 class FileInstance;
 
@@ -151,9 +151,9 @@ class SharedFD {
 
   std::shared_ptr<FileInstance> operator->() const { return value_; }
 
-  const cvd::FileInstance& operator*() const { return *value_; }
+  const FileInstance& operator*() const { return *value_; }
 
-  cvd::FileInstance& operator*() { return *value_; }
+  FileInstance& operator*() { return *value_; }
 
  private:
   static SharedFD ErrorFD(int error);
@@ -259,6 +259,25 @@ class FileInstance {
   // in probably isn't modified, but the API spec doesn't have const.
   bool IsSet(fd_set* in) const;
 
+  /**
+   * Adds a hard link to a file descriptor, based on the current working
+   * directory of the process or to some absolute path.
+   *
+   * https://www.man7.org/linux/man-pages/man2/linkat.2.html
+   *
+   * Using this on a file opened with O_TMPFILE can link it into the filesystem.
+   */
+  // Used with O_TMPFILE files to attach them to the filesystem.
+  int LinkAtCwd(const std::string& path) {
+    std::string name = "/proc/self/fd/";
+    name += std::to_string(fd_);
+    errno = 0;
+    int rval = linkat(
+        -1, name.c_str(), AT_FDCWD, path.c_str(), AT_SYMLINK_FOLLOW);
+    errno_ = errno;
+    return rval;
+  }
+
   int Listen(int backlog) {
     errno = 0;
     int rval = listen(fd_, backlog);
@@ -326,6 +345,13 @@ class FileInstance {
     return rval;
   }
 
+  int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
+    errno = 0;
+    int rval = getsockopt(fd_, level, optname, optval, optlen);
+    errno_ = errno;
+    return rval;
+  }
+
   const char* StrError() const {
     errno = 0;
     FileInstance* s = const_cast<FileInstance*>(this);
@@ -386,6 +412,6 @@ class FileInstance {
 
 inline SharedFD::SharedFD() : value_(FileInstance::ClosedInstance()) {}
 
-}  // namespace cvd
+}  // namespace cuttlefish
 
 #endif  // CUTTLEFISH_COMMON_COMMON_LIBS_FS_SHARED_FD_H_
