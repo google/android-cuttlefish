@@ -18,9 +18,9 @@
 
 #include <memory>
 
-#include "guest/hals/hwcomposer/common/gralloc_utils.h"
-#include "guest/hals/hwcomposer/common/hwcomposer.h"
-#include "guest/hals/hwcomposer/common/screen_view.h"
+#include "guest/hals/hwcomposer/gralloc_utils.h"
+#include "guest/hals/hwcomposer/hwcomposer.h"
+#include "guest/hals/hwcomposer/screen_view.h"
 
 namespace cuttlefish {
 

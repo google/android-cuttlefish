@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/hals/hwcomposer/common/cpu_composer.h"
+#include "guest/hals/hwcomposer/cpu_composer.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -28,8 +28,8 @@
 #include <log/log.h>
 
 #include "common/libs/utils/size_utils.h"
-#include "guest/hals/hwcomposer/common/drm_utils.h"
-#include "guest/hals/hwcomposer/common/geometry_utils.h"
+#include "guest/hals/hwcomposer/drm_utils.h"
+#include "guest/hals/hwcomposer/geometry_utils.h"
 
 namespace cuttlefish {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/hals/hwcomposer/common/geometry_utils.h"
+#include "guest/hals/hwcomposer/geometry_utils.h"
 
 #include <algorithm>
 #include <utility>

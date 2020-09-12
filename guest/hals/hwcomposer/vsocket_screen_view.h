@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "common/libs/fs/shared_fd.h"
-#include "guest/hals/hwcomposer/common/screen_view.h"
+#include "guest/hals/hwcomposer/screen_view.h"
 
 namespace cuttlefish {
 
