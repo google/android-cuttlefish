@@ -21,8 +21,8 @@
 #include "host/commands/secure_env/tpm_hmac.h"
 
 HmacSerializable::HmacSerializable(
-    TpmResourceManager* resource_manager,
-    std::function<TpmObjectSlot(TpmResourceManager*)> signing_key_fn,
+    TpmResourceManager& resource_manager,
+    std::function<TpmObjectSlot(TpmResourceManager&)> signing_key_fn,
     uint32_t digest_size,
     Serializable* wrapped) :
     resource_manager_(resource_manager),
