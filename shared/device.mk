@@ -308,6 +308,12 @@ PRODUCT_PACKAGES += \
     android.hardware.biometrics.face@1.1-service.example
 
 #
+# BiometricsFingerprint HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.biometrics.fingerprint-service.example
+
+#
 # Contexthub HAL
 #
 PRODUCT_PACKAGES += \

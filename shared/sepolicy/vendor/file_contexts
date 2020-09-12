@@ -76,6 +76,7 @@
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.6-service-google u:object_r:hal_camera_default_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.6-service-google-lazy u:object_r:hal_camera_default_exec:s0
 /vendor/bin/hw/android\.hardware\.power\.stats@1\.0-service\.mock  u:object_r:hal_power_stats_default_exec:s0
+/vendor/bin/hw/android\.hardware\.biometrics\.fingerprint-service\.example u:object_r:hal_fingerprint_default_exec:s0
 /vendor/bin/hw/android\.hardware\.bluetooth@1\.1-service\.sim  u:object_r:hal_bluetooth_sim_exec:s0
 /vendor/bin/hw/android\.hardware\.contexthub@1\.1-service\.mock  u:object_r:hal_contexthub_default_exec:s0
 /vendor/bin/hw/android\.hardware\.drm@[0-9]+\.[0-9]+-service\.clearkey  u:object_r:hal_drm_clearkey_exec:s0
