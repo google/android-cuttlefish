@@ -270,6 +270,12 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
                           ",id=virtio-disk", i, bootindex);
   }
 
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-mouse-pci");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-keyboard-pci");
+
   if (!is_arm) {
     // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
     // As we will pass this to ramoops, define this region first so it is always
