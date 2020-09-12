@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
-#include <memory>
+#include "guest/hals/hwcomposer/screen_view.h"
 
-#include <hardware/hwcomposer.h>
-#include <hardware/hwcomposer_defs.h>
-
-#include "guest/hals/hwcomposer/common/screen_view.h"
-
-#define IS_TARGET_FRAMEBUFFER(x) ((x) == HWC_FRAMEBUFFER_TARGET)
-#define IS_PRIMARY_DISPLAY(x) ((x) == HWC_DISPLAY_PRIMARY)
-#define IS_EXTERNAL_DISPLAY(x) ((x) == HWC_DISPLAY_EXTERNAL)
+#include "common/libs/utils/size_utils.h"
 
 namespace cuttlefish {
-int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
-                 const struct hw_module_t* module, const char* name,
-                 struct hw_device_t** device);
+
+int ScreenView::NextBuffer() {
+  int num_buffers = this->num_buffers();
+  last_buffer_ = num_buffers > 0 ? (last_buffer_ + 1) % num_buffers : -1;
+  return last_buffer_;
+}
+
+size_t ScreenView::buffer_size() const {
+  return line_length() * y_res() + 4 /* swiftshader padding */;
+}
+
+size_t ScreenView::line_length() const {
+  return cuttlefish::AlignToPowerOf2(x_res() * bytes_per_pixel(), 4);
+}
+
+int ScreenView::bytes_per_pixel() const { return 4; }
 }  // namespace cuttlefish
