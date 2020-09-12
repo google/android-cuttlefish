@@ -88,19 +88,28 @@ bool Stop() {
 const std::string QemuManager::name() { return "qemu_cli"; }
 
 std::vector<std::string> QemuManager::ConfigureGpu(const std::string& gpu_mode) {
-  if (gpu_mode != cuttlefish::kGpuModeGuestSwiftshader) {
-    return {};
-  }
-  // Override the default HAL search paths in all cases. We do this because
-  // the HAL search path allows for fallbacks, and fallbacks in conjunction
-  // with properities lead to non-deterministic behavior while loading the
-  // HALs.
-  return {
+  if (gpu_mode == cuttlefish::kGpuModeGuestSwiftshader) {
+    // Override the default HAL search paths in all cases. We do this because
+    // the HAL search path allows for fallbacks, and fallbacks in conjunction
+    // with properities lead to non-deterministic behavior while loading the
+    // HALs.
+    return {
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=cutf",
       "androidboot.hardware.egl=swiftshader",
       "androidboot.hardware.vulkan=pastel",
-  };
+    };
+  }
+
+  if (gpu_mode == cuttlefish::kGpuModeDrmVirgl) {
+    return {
+      "androidboot.hardware.gralloc=minigbm",
+      "androidboot.hardware.hwcomposer=drm_minigbm",
+      "androidboot.hardware.egl=mesa",
+    };
+  }
+
+  return {};
 }
 
 std::vector<std::string> QemuManager::ConfigureBootDevices() {
@@ -165,9 +174,6 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   qemu_cmd.AddParameter("-uuid");
   qemu_cmd.AddParameter(instance.uuid());
-
-  qemu_cmd.AddParameter("-display");
-  qemu_cmd.AddParameter("none");
 
   qemu_cmd.AddParameter("-no-user-config");
   qemu_cmd.AddParameter("-nodefaults");
@@ -275,6 +281,17 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-keyboard-pci");
+
+  if (config_->gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
+    qemu_cmd.AddParameter("-display");
+    qemu_cmd.AddParameter("egl-headless");
+
+    qemu_cmd.AddParameter("-vnc");
+    qemu_cmd.AddParameter(":", instance.vnc_server_port() - 5900);
+  } else {
+    qemu_cmd.AddParameter("-display");
+    qemu_cmd.AddParameter("none");
+  }
 
   if (!is_arm) {
     // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
