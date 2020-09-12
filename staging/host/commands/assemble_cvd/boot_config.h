@@ -19,4 +19,4 @@
 #include <host/libs/config/cuttlefish_config.h>
 
 bool InitBootloaderEnvPartition(const cuttlefish::CuttlefishConfig& config,
-                                const std::string& boot_env_image_path);
+                                const cuttlefish::CuttlefishConfig::InstanceSpecific& instance);

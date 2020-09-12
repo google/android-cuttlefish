@@ -48,8 +48,8 @@ static std::string mac_to_str(const std::array<unsigned char, 6>& mac) {
   return stream.str();
 }
 
-std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
+std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::CuttlefishConfig& config,
+    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> kernel_cmdline;
 
   AppendVector(&kernel_cmdline, config.vm_manager_kernel_cmdline());
