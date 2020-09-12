@@ -32,7 +32,7 @@
 
 #include <gflags/gflags.h>
 #include <android-base/logging.h>
-#include "common/libs/tcp_socket/tcp_socket.h"
+#include "common/libs/utils/tcp_socket.h"
 #include "host/frontend/vnc_server/keysyms.h"
 #include "host/frontend/vnc_server/mocks.h"
 #include "host/frontend/vnc_server/vnc_utils.h"

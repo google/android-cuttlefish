@@ -20,12 +20,12 @@ cc_binary {
     ],
     shared_libs: [
         "libbase",
+        "libjsoncpp",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libjsoncpp",
         "libgflags",
     ],
     defaults: ["cuttlefish_host_and_guest"],

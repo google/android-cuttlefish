@@ -21,7 +21,7 @@
 #include <thread>
 #include <utility>
 
-#include "common/libs/tcp_socket/tcp_socket.h"
+#include "common/libs/utils/tcp_socket.h"
 #include "host/frontend/vnc_server/blackboard.h"
 #include "host/frontend/vnc_server/frame_buffer_watcher.h"
 #include "host/frontend/vnc_server/jpeg_compressor.h"
