@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/hals/hwcomposer/common/gralloc_utils.h"
+#include "guest/hals/hwcomposer/gralloc_utils.h"
 
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponent.h>
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
@@ -25,7 +25,7 @@
 
 // TODO(b/146515640): remove this.
 #include "guest/hals/gralloc/legacy/gralloc_vsoc_priv.h"
-#include "guest/hals/hwcomposer/common/drm_utils.h"
+#include "guest/hals/hwcomposer/drm_utils.h"
 
 using aidl::android::hardware::graphics::common::PlaneLayout;
 using aidl::android::hardware::graphics::common::PlaneLayoutComponent;

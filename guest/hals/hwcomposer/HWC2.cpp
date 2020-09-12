@@ -32,8 +32,8 @@
 #include <log/log.h>
 #include <utils/Trace.h>
 
-#include "guest/hals/hwcomposer/common/hwcomposer.h"
-#include "guest/hals/hwcomposer/cutf_cvm/vsocket_screen_view.h"
+#include "guest/hals/hwcomposer/hwcomposer.h"
+#include "guest/hals/hwcomposer/vsocket_screen_view.h"
 
 using namespace std::chrono_literals;
 

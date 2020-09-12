@@ -16,7 +16,7 @@
 
 #define LOG_TAG "vsock_hwc"
 
-#include "guest/hals/hwcomposer/cutf_cvm/vsocket_screen_view.h"
+#include "guest/hals/hwcomposer/vsocket_screen_view.h"
 
 #include <cutils/properties.h>
 #include <log/log.h>

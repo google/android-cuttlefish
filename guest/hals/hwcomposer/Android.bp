@@ -12,49 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 cc_library_shared {
-    name: "hwcomposer.cutf_cvm_ashmem",
-    relative_install_path: "hw",
-    defaults: ["cuttlefish_guest_only"],
-    vendor: true,
-    srcs: [
-        "hwcomposer.cpp",
-        "vsocket_screen_view.cpp",
-    ],
-    include_dirs: [
-        "device/google/cuttlefish",
-    ],
-    export_include_dirs: ["."],
-    static_libs: [
-        "hwcomposer_common",
-        "libyuv_static",
-    ],
-    shared_libs: [
-        "android.hardware.graphics.mapper@4.0",
-        "libbase",
-        "libcutils",
-        "libcuttlefish_device_config",
-        "libcuttlefish_utils",
-        "libcuttlefish_fs",
-        "libdrm",
-        "libgralloctypes",
-        "libhardware",
-        "libhidlbase",
-        "libjpeg",
-        "liblog",
-        "libsync",
-        "libutils",
-    ],
-}
-
-cc_library_shared {
-    name: "hwcomposer.cutf_hwc2",
+    name: "hwcomposer.cutf",
     relative_install_path: "hw",
     defaults: ["cuttlefish_guest_only"],
     vendor: true,
 
-    clang: true,
     cflags: [
         "-Wall",
         "-Werror",
@@ -69,8 +32,16 @@ cc_library_shared {
     ],
 
     srcs: [
+        "base_composer.cpp",
+        "cpu_composer.cpp",
+        "drm_utils.cpp",
+        "geometry_utils.cpp",
+        "gralloc_utils.cpp",
         "HWC2.cpp",
+        "hwcomposer.cpp",
         "MiniFence.cpp",
+        "screen_view.cpp",
+        "stats_keeper.cpp",
         "vsocket_screen_view.cpp",
     ],
 
@@ -80,21 +51,26 @@ cc_library_shared {
 
     export_include_dirs: ["."],
 
+    header_libs: ["libhardware_headers"],
+
     static_libs: [
-        "hwcomposer_common",
         "libyuv_static",
     ],
 
     shared_libs: [
         "android.hardware.graphics.mapper@4.0",
+        "libbase",
         "libcutils",
         "libcuttlefish_device_config",
         "libcuttlefish_utils",
         "libcuttlefish_fs",
+        "libdrm",
         "libgralloctypes",
         "libhardware",
         "libhidlbase",
+        "libjpeg",
         "liblog",
+        "libsync",
         "libutils",
     ],
 }

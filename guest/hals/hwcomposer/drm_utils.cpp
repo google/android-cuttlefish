@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/hals/hwcomposer/common/drm_utils.h"
+#include "guest/hals/hwcomposer/drm_utils.h"
 
 #include <drm_fourcc.h>
 #include <log/log.h>
