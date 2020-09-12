@@ -432,8 +432,12 @@ int main(int argc, char** argv) {
 
   {
     std::ofstream launcher_log_ofstream(log_path.c_str());
-    auto assemble_log = cuttlefish::ReadFile(config->AssemblyPath("assemble_cvd.log"));
-    launcher_log_ofstream << assemble_log;
+    auto assembly_path = config->AssemblyPath("assemble_cvd.log");
+    std::ifstream assembly_log_ifstream(assembly_path);
+    if (assembly_log_ifstream) {
+      auto assemble_log = cuttlefish::ReadFile(assembly_path);
+      launcher_log_ofstream << assemble_log;
+    }
   }
   ::android::base::SetLogger(cuttlefish::LogToStderrAndFiles({log_path}));
 
