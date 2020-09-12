@@ -21,11 +21,11 @@
 
 class GatekeeperResponder {
 private:
-  cuttlefish::GatekeeperChannel* channel_;
-  gatekeeper::GateKeeper* gatekeeper_;
+  cuttlefish::GatekeeperChannel& channel_;
+  gatekeeper::GateKeeper& gatekeeper_;
 public:
-  GatekeeperResponder(cuttlefish::GatekeeperChannel* channel,
-                      gatekeeper::GateKeeper* gatekeeper);
+  GatekeeperResponder(cuttlefish::GatekeeperChannel& channel,
+                      gatekeeper::GateKeeper& gatekeeper);
 
   bool ProcessMessage();
 };

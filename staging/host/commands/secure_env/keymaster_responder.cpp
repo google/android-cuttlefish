@@ -19,12 +19,12 @@
 #include <keymaster/android_keymaster_messages.h>
 
 KeymasterResponder::KeymasterResponder(
-    cuttlefish::KeymasterChannel* channel, keymaster::AndroidKeymaster* keymaster)
+    cuttlefish::KeymasterChannel& channel, keymaster::AndroidKeymaster& keymaster)
     : channel_(channel), keymaster_(keymaster) {
 }
 
 bool KeymasterResponder::ProcessMessage() {
-  auto request = channel_->ReceiveMessage();
+  auto request = channel_.ReceiveMessage();
   if (!request) {
     LOG(ERROR) << "Could not receive message";
     return false;
@@ -41,8 +41,8 @@ bool KeymasterResponder::ProcessMessage() {
         return false; \
       } \
       METHOD_NAME##Response response; \
-      keymaster_->METHOD_NAME(request, &response); \
-      return channel_->SendResponse(ENUM_NAME, response); \
+      keymaster_.METHOD_NAME(request, &response); \
+      return channel_.SendResponse(ENUM_NAME, response); \
     }
     HANDLE_MESSAGE(GENERATE_KEY, GenerateKey)
     HANDLE_MESSAGE(BEGIN_OPERATION, BeginOperation)
@@ -73,8 +73,8 @@ bool KeymasterResponder::ProcessMessage() {
         LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
         return false; \
       } \
-      auto response = keymaster_->METHOD_NAME(request); \
-      return channel_->SendResponse(ENUM_NAME, response); \
+      auto response = keymaster_.METHOD_NAME(request); \
+      return channel_.SendResponse(ENUM_NAME, response); \
     }
     HANDLE_MESSAGE(COMPUTE_SHARED_HMAC, ComputeSharedHmac)
     HANDLE_MESSAGE(VERIFY_AUTHORIZATION, VerifyAuthorization)
@@ -82,8 +82,8 @@ bool KeymasterResponder::ProcessMessage() {
 #undef HANDLE_MESSAGE
 #define HANDLE_MESSAGE(ENUM_NAME, METHOD_NAME) \
     case ENUM_NAME: {\
-      auto response = keymaster_->METHOD_NAME(); \
-      return channel_->SendResponse(ENUM_NAME, response); \
+      auto response = keymaster_.METHOD_NAME(); \
+      return channel_.SendResponse(ENUM_NAME, response); \
     }
     HANDLE_MESSAGE(GET_HMAC_SHARING_PARAMETERS, GetHmacSharingParameters)
     HANDLE_MESSAGE(EARLY_BOOT_ENDED, EarlyBootEnded)
@@ -95,8 +95,8 @@ bool KeymasterResponder::ProcessMessage() {
         return false;
       }
       AddEntropyResponse response;
-      keymaster_->AddRngEntropy(request, &response);
-      return channel_->SendResponse(ADD_RNG_ENTROPY, response);
+      keymaster_.AddRngEntropy(request, &response);
+      return channel_.SendResponse(ADD_RNG_ENTROPY, response);
     }
     case DESTROY_ATTESTATION_IDS: // Not defined in AndroidKeymaster?
       break;

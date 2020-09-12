@@ -24,22 +24,22 @@
 #include "host/commands/secure_env/tpm_serialize.h"
 
 EncryptedSerializable::EncryptedSerializable(
-    TpmResourceManager* resource_manager,
-    std::function<TpmObjectSlot(TpmResourceManager*)> parent_key_fn,
-    Serializable* wrapped) :
+    TpmResourceManager& resource_manager,
+    std::function<TpmObjectSlot(TpmResourceManager&)> parent_key_fn,
+    Serializable& wrapped) :
     resource_manager_(resource_manager),
     parent_key_fn_(parent_key_fn),
     wrapped_(wrapped) {
 }
 
 static bool CreateKey(
-    TpmResourceManager* resource_manager, // in
+    TpmResourceManager& resource_manager, // in
     ESYS_TR parent_key, // in
     TPM2B_PUBLIC* key_public_out, // out
     TPM2B_PRIVATE* key_private_out, // out
     TpmObjectSlot* key_slot_out) { // out
   TPM2B_AUTH authValue = {};
-  auto rc = Esys_TR_SetAuth(resource_manager->Esys(), parent_key, &authValue);
+  auto rc = Esys_TR_SetAuth(resource_manager.Esys(), parent_key, &authValue);
   if (rc != TSS2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_TR_SetAuth failed with return code " << rc
                << " (" << Tss2_RC_Decode(rc) << ")";
@@ -76,7 +76,7 @@ static bool CreateKey(
 
   TPM2B_SENSITIVE_CREATE in_sensitive = {};
 
-  auto key_slot = resource_manager->ReserveSlot();
+  auto key_slot = resource_manager.ReserveSlot();
   if (!key_slot) {
     LOG(ERROR) << "No slots available";
     return false;
@@ -87,7 +87,7 @@ static bool CreateKey(
   TPM2B_PRIVATE* key_private = nullptr;
   // TODO(schuffelen): Use Esys_Create when key_slot is NULL
   rc = Esys_CreateLoaded(
-    /* esysContext */ resource_manager->Esys(),
+    /* esysContext */ resource_manager.Esys(),
     /* primaryHandle */ parent_key,
     /* shandle1 */ ESYS_TR_PASSWORD,
     /* shandle2 */ ESYS_TR_NONE,
@@ -110,7 +110,7 @@ static bool CreateKey(
   Esys_Free(key_public);
   Esys_Free(key_private);
   if (key_slot_out) {
-    rc = Esys_TR_SetAuth(resource_manager->Esys(), raw_handle, &authValue);
+    rc = Esys_TR_SetAuth(resource_manager.Esys(), raw_handle, &authValue);
     if (rc != TSS2_RC_SUCCESS) {
       LOG(ERROR) << "Esys_TR_SetAuth failed with return code " << rc
                 << " (" << Tss2_RC_Decode(rc) << ")";
@@ -124,19 +124,19 @@ static bool CreateKey(
 }
 
 static TpmObjectSlot LoadKey(
-    TpmResourceManager* resource_manager,
+    TpmResourceManager& resource_manager,
     ESYS_TR parent_key,
     const TPM2B_PUBLIC* key_public,
     const TPM2B_PRIVATE* key_private) {
   // TODO
   ESYS_TR raw_handle;
-  auto key_slot = resource_manager->ReserveSlot();
+  auto key_slot = resource_manager.ReserveSlot();
   if (!key_slot) {
     LOG(ERROR) << "No slots available";
     return {};
   }
   auto rc = Esys_Load(
-      resource_manager->Esys(),
+      resource_manager.Esys(),
       parent_key,
       ESYS_TR_PASSWORD,
       ESYS_TR_NONE,
@@ -171,7 +171,7 @@ size_t EncryptedSerializable::SerializedSize() const {
   // Assumes all created keys will have the same size.
   SerializeTpmKeyPublic serialize_public(&key_public);
   SerializeTpmKeyPrivate serialize_private(&key_private);
-  auto encrypted_size = RoundUpToBlockSize(wrapped_->SerializedSize());
+  auto encrypted_size = RoundUpToBlockSize(wrapped_.SerializedSize());
   return serialize_public.SerializedSize()
     + serialize_private.SerializedSize()
     + sizeof(uint32_t)
@@ -195,19 +195,19 @@ uint8_t* EncryptedSerializable::Serialize(
     return buf;
   }
 
-  auto wrapped_size = wrapped_->SerializedSize();
+  auto wrapped_size = wrapped_.SerializedSize();
   auto encrypted_size = RoundUpToBlockSize(wrapped_size);
   std::vector<uint8_t> unencrypted(encrypted_size + 1, 0);
   auto unencrypted_buf = unencrypted.data();
   auto unencrypted_buf_end = unencrypted_buf + unencrypted.size();
-  auto next_buf = wrapped_->Serialize(unencrypted_buf, unencrypted_buf_end);
+  auto next_buf = wrapped_.Serialize(unencrypted_buf, unencrypted_buf_end);
   if (next_buf - unencrypted_buf != wrapped_size) {
     LOG(ERROR) << "Size mismatch on wrapped data";
     return buf;
   }
   std::vector<uint8_t> encrypted(encrypted_size, 0);
   if (!TpmEncrypt(
-      resource_manager_->Esys(),
+      resource_manager_.Esys(),
       key_slot->get(),
       TpmAuth(ESYS_TR_PASSWORD),
       unencrypted.data(),
@@ -276,7 +276,7 @@ bool EncryptedSerializable::Deserialize(
   }
   std::vector<uint8_t> decrypted_data(encrypted_size, 0);
   if (!TpmDecrypt(
-      resource_manager_->Esys(),
+      resource_manager_.Esys(),
       key_slot->get(),
       TpmAuth(ESYS_TR_PASSWORD),
       encrypted_data.data(),
@@ -287,7 +287,7 @@ bool EncryptedSerializable::Deserialize(
   }
   auto decrypted_buf = decrypted_data.data();
   auto decrypted_buf_end = decrypted_data.data() + wrapped_size;
-  if (!wrapped_->Deserialize(
+  if (!wrapped_.Deserialize(
       const_cast<const uint8_t **>(&decrypted_buf), decrypted_buf_end)) {
     LOG(ERROR) << "Failed to deserialize wrapped type";
     return false;

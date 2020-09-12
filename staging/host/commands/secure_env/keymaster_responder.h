@@ -21,11 +21,11 @@
 
 class KeymasterResponder {
 private:
-  cuttlefish::KeymasterChannel* channel_;
-  keymaster::AndroidKeymaster* keymaster_;
+  cuttlefish::KeymasterChannel& channel_;
+  keymaster::AndroidKeymaster& keymaster_;
 public:
-  KeymasterResponder(cuttlefish::KeymasterChannel* channel,
-                     keymaster::AndroidKeymaster* keymaster);
+  KeymasterResponder(cuttlefish::KeymasterChannel& channel,
+                     keymaster::AndroidKeymaster& keymaster);
 
   bool ProcessMessage();
 };

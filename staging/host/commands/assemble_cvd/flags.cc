@@ -911,6 +911,8 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("access-kregistry");
       preserving.insert("disk_hole");
       preserving.insert("NVChip");
+      preserving.insert("gatekeeper_secure");
+      preserving.insert("gatekeeper_insecure");
       preserving.insert("modem_nvram.json");
       std::stringstream ss;
       for (int i = 0; i < FLAGS_modem_simulator_count; i++) {

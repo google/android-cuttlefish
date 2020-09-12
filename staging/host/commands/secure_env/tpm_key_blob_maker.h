@@ -29,7 +29,7 @@
  */
 class TpmKeyBlobMaker : public keymaster::SoftwareKeyBlobMaker {
 public:
-  TpmKeyBlobMaker(TpmResourceManager* resource_manager);
+  TpmKeyBlobMaker(TpmResourceManager& resource_manager);
 
   keymaster_error_t CreateKeyBlob(
       const keymaster::AuthorizationSet& key_description,
@@ -56,5 +56,5 @@ public:
       keymaster::AuthorizationSet* sw_enforced,
       keymaster::KeymasterKeyBlob* key_material) const;
 private:
-  TpmResourceManager* resource_manager_;
+  TpmResourceManager& resource_manager_;
 };

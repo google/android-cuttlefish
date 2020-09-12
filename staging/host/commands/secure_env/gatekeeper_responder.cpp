@@ -19,12 +19,12 @@
 #include <gatekeeper/gatekeeper_messages.h>
 
 GatekeeperResponder::GatekeeperResponder(
-    cuttlefish::GatekeeperChannel* channel, gatekeeper::GateKeeper* gatekeeper)
+    cuttlefish::GatekeeperChannel& channel, gatekeeper::GateKeeper& gatekeeper)
     : channel_(channel), gatekeeper_(gatekeeper) {
 }
 
 bool GatekeeperResponder::ProcessMessage() {
-  auto request = channel_->ReceiveMessage();
+  auto request = channel_.ReceiveMessage();
   if (!request) {
     LOG(ERROR) << "Could not receive message";
     return false;
@@ -41,8 +41,8 @@ bool GatekeeperResponder::ProcessMessage() {
         return false;
       }
       EnrollResponse response;
-      gatekeeper_->Enroll(enroll_request, &response);
-      return channel_->SendResponse(ENROLL, response);
+      gatekeeper_.Enroll(enroll_request, &response);
+      return channel_.SendResponse(ENROLL, response);
     }
     case VERIFY: {
       VerifyRequest verify_request;
@@ -52,8 +52,8 @@ bool GatekeeperResponder::ProcessMessage() {
         return false;
       }
       VerifyResponse response;
-      gatekeeper_->Verify(verify_request, &response);
-      return channel_->SendResponse(VERIFY, response);
+      gatekeeper_.Verify(verify_request, &response);
+      return channel_.SendResponse(VERIFY, response);
     }
     default:
       LOG(ERROR) << "Unrecognized message id " << request->cmd;
