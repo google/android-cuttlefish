@@ -35,7 +35,11 @@ genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wake
 # qemu (x86)
 genfscon sysfs /devices/pci0000:00/0000:00:0c.0/virtio10/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
 genfscon sysfs /devices/pci0000:00/0000:00:0d.0/virtio11/net u:object_r:sysfs_net:s0 # rmnet0
-# FIXME: Add sysfs_gpu labels for qemu
+#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/device u:object_r:sysfs_gpu:s0
+#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/subsystem_device u:object_r:sysfs_gpu:s0
+#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/subsystem_vendor u:object_r:sysfs_gpu:s0
+#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/uevent u:object_r:sysfs_gpu:s0
+#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9][0-9]'
@@ -48,7 +52,11 @@ genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup22 u:object_r:sysfs_wak
 # qemu (arm64)
 genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0a.0/virtio10/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
 genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0b.0/virtio11/net u:object_r:sysfs_net:s0 # rmnet0
-# FIXME: Add sysfs_gpu labels for qemu
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/device u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/subsystem_device u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/subsystem_vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/uevent u:object_r:sysfs_gpu:s0
+genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'

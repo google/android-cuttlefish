@@ -568,12 +568,12 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     if (FLAGS_gpu_mode != cuttlefish::kGpuModeDrmVirgl &&
         FLAGS_gpu_mode != cuttlefish::kGpuModeGfxStream) {
       instance.set_frames_server_port(6900 + num - 1);
+      if (FLAGS_vm_manager == QemuManager::name()) {
+        instance.set_keyboard_server_port(7000 + num - 1);
+        instance.set_touch_server_port(7100 + num - 1);
+      }
     }
 
-    if (FLAGS_vm_manager == QemuManager::name()) {
-      instance.set_keyboard_server_port(7000 + num - 1);
-      instance.set_touch_server_port(7100 + num - 1);
-    }
     instance.set_keymaster_vsock_port(7200 + num - 1);
     instance.set_gatekeeper_vsock_port(7300 + num - 1);
     instance.set_gnss_grpc_proxy_server_port(7400 + num -1);
@@ -654,9 +654,25 @@ bool SaveConfig(const cuttlefish::CuttlefishConfig& tmp_config_obj) {
 
 void SetDefaultFlagsForQemu() {
   // for now, we don't set non-default options for QEMU
+  if (FLAGS_gpu_mode == cuttlefish::kGpuModeGuestSwiftshader &&
+      NumStreamers() == 0) {
+    // This makes the vnc server the default streamer unless the user requests
+    // another via a --star_<streamer> flag, while at the same time it's
+    // possible to run without any streamer by setting --start_vnc_server=false.
+    SetCommandLineOptionWithMode("start_vnc_server", "true",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
 }
 
 void SetDefaultFlagsForCrosvm() {
+  if (NumStreamers() == 0) {
+    // This makes the vnc server the default streamer unless the user requests
+    // another via a --star_<streamer> flag, while at the same time it's
+    // possible to run without any streamer by setting --start_vnc_server=false.
+    SetCommandLineOptionWithMode("start_vnc_server", "true",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
+
   // for now, we support only x86_64 by default
   bool default_enable_sandbox = false;
   std::set<const std::string> supported_archs{std::string("x86_64")};
@@ -705,13 +721,6 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
     std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
               << std::endl;
     invalid_manager = true;
-  }
-  if (NumStreamers() == 0) {
-    // This makes the vnc server the default streamer unless the user requests
-    // another via a --star_<streamer> flag, while at the same time it's
-    // possible to run without any streamer by setting --start_vnc_server=false.
-    SetCommandLineOptionWithMode("start_vnc_server", "true",
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   // Various temporary workarounds for aarch64
   if (cuttlefish::HostArch() == "aarch64") {
