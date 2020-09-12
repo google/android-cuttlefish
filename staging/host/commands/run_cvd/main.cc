@@ -300,7 +300,7 @@ bool PowerwashFiles() {
   auto overlay_path = instance.PerInstancePath("overlay.img");
   unlink(overlay_path.c_str());
   if (!CreateQcowOverlay(
-      config->crosvm_binary(), config->composite_disk_path(), overlay_path)) {
+      config->crosvm_binary(), instance.composite_disk_path(), overlay_path)) {
     LOG(ERROR) << "CreateQcowOverlay failed";
     return false;
   }
