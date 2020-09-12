@@ -162,6 +162,12 @@ std::vector<ImagePartition> disk_config(
     .label = "misc",
     .image_file_path = FLAGS_misc_image,
   });
+  if(FLAGS_use_bootloader) {
+    partitions.push_back(ImagePartition {
+      .label = "bootloader",
+      .image_file_path = FLAGS_bootloader,
+    });
+  }
   partitions.push_back(ImagePartition {
     .label = "boot_a",
     .image_file_path = FLAGS_boot_image,
