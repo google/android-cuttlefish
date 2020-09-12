@@ -44,7 +44,7 @@ using UniqueEsysPtr = std::unique_ptr<T, EsysDeleter>;
  * is used to check that the data has not been tampered with.
  */
 UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
-    TpmResourceManager* resource_manager,
+    TpmResourceManager& resource_manager,
     ESYS_TR key_handle,
     TpmAuth auth,
     const uint8_t* data,
