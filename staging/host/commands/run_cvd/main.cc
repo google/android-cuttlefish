@@ -555,7 +555,7 @@ int main(int argc, char** argv) {
     streamer_config = LaunchWebRTC(&process_monitor, *config);
   }
 
-  auto kernel_args = KernelCommandLineFromConfig(*config);
+  auto kernel_args = KernelCommandLineFromConfig(*config, config->ForDefaultInstance());
 
   // Start the guest VM
   vm_manager->WithFrontend(streamer_config.launched);

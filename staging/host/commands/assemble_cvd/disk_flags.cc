@@ -46,9 +46,6 @@ using cuttlefish::vm_manager::CrosvmManager;
 DEFINE_string(system_image_dir, cuttlefish::DefaultGuestImagePath(""),
               "Location of the system partition images.");
 
-DEFINE_string(boot_env_image, "",
-              "Location of the boot environment image. If the image does not "
-              "exist, a default boot environment image is created.");
 DEFINE_string(boot_image, "",
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
@@ -112,9 +109,6 @@ bool ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("vendor_boot_image",
                                default_vendor_boot_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_boot_env_image = FLAGS_system_image_dir + "/env.img";
-  SetCommandLineOptionWithMode("boot_env_image", default_boot_env_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_vbmeta_image = FLAGS_system_image_dir + "/vbmeta.img";
   SetCommandLineOptionWithMode("vbmeta_image", default_vbmeta_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
@@ -153,15 +147,16 @@ static bool DecompressKernel(const std::string& src, const std::string& dst) {
   return decomp_proc.Started() && decomp_proc.Wait() == 0;
 }
 
-static std::vector<ImagePartition> disk_config() {
+std::vector<ImagePartition> disk_config(
+    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
 
   // Note that if the positions of env or misc change, the environment for
   // u-boot must be updated as well (see boot_config.cc and
   // configs/cf-x86_defconfig in external/u-boot).
   partitions.push_back(ImagePartition {
-    .label = "env",
-    .image_file_path = FLAGS_boot_env_image,
+    .label = "uboot_env",
+    .image_file_path = instance.uboot_env_image_path(),
   });
   partitions.push_back(ImagePartition {
     .label = "misc",
@@ -218,9 +213,10 @@ static std::vector<ImagePartition> disk_config() {
   return partitions;
 }
 
-static std::chrono::system_clock::time_point LastUpdatedInputDisk() {
+static std::chrono::system_clock::time_point LastUpdatedInputDisk(
+    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   std::chrono::system_clock::time_point ret;
-  for (auto& partition : disk_config()) {
+  for (auto& partition : disk_config(instance)) {
     auto partition_mod_time = cuttlefish::FileModificationTime(partition.image_file_path);
     if (partition_mod_time > ret) {
       ret = partition_mod_time;
@@ -230,7 +226,18 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk() {
 }
 
 bool ShouldCreateAllCompositeDisks(const cuttlefish::CuttlefishConfig& config) {
-  std::chrono::system_clock::time_point youngest_disk_img = LastUpdatedInputDisk();
+  std::chrono::system_clock::time_point youngest_disk_img;
+  for (auto& partition : disk_config(config.ForDefaultInstance())) {
+    if(partition.label == "uboot_env") {
+      continue;
+    }
+
+    auto partition_mod_time = cuttlefish::FileModificationTime(partition.image_file_path);
+    if (partition_mod_time > youngest_disk_img) {
+      youngest_disk_img = partition_mod_time;
+    }
+  }
+
   // If the youngest partition img is younger than any composite disk, this fact implies that
   // the composite disks are all out of date and need to be reinitialized.
   for (auto& instance : config.Instances()) {
@@ -251,7 +258,7 @@ bool ShouldCreateCompositeDisk(const cuttlefish::CuttlefishConfig::InstanceSpeci
   }
 
   auto composite_age = cuttlefish::FileModificationTime(instance.composite_disk_path());
-  return composite_age < LastUpdatedInputDisk();
+  return composite_age < LastUpdatedInputDisk(instance);
 }
 
 static bool ConcatRamdisks(
@@ -312,11 +319,12 @@ bool CreateCompositeDisk(const cuttlefish::CuttlefishConfig& config,
     }
     std::string header_path = instance.PerInstancePath("gpt_header.img");
     std::string footer_path = instance.PerInstancePath("gpt_footer.img");
-    CreateCompositeDisk(disk_config(), header_path, footer_path, instance.composite_disk_path());
+    CreateCompositeDisk(disk_config(instance), header_path, footer_path,
+                        instance.composite_disk_path());
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(disk_config(), instance.composite_disk_path());
+    AggregateImage(disk_config(instance), instance.composite_disk_path());
   }
   return true;
 }
@@ -396,8 +404,10 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
   }
 
   // Create boot_config if necessary
-  if (!InitBootloaderEnvPartition(*config, FLAGS_boot_env_image)) {
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
+  for (auto instance : config->Instances()) {
+    if (!InitBootloaderEnvPartition(*config, instance)) {
+      exit(cuttlefish::kCuttlefishConfigurationInitError);
+    }
   }
 
   if (!cuttlefish::FileExists(FLAGS_metadata_image)) {
