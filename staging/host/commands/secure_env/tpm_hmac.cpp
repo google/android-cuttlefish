@@ -22,7 +22,7 @@
 
 /* For data large enough to fit in a single TPM2_HMAC call. */
 static UniqueEsysPtr<TPM2B_DIGEST> OneshotHmac(
-    TpmResourceManager* resource_manager,
+    TpmResourceManager& resource_manager,
     ESYS_TR key_handle,
     TpmAuth auth,
     const uint8_t* data,
@@ -38,7 +38,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> OneshotHmac(
   memcpy(buffer.buffer, data, data_size);
   TPM2B_DIGEST* out_hmac = nullptr;
   auto rc = Esys_HMAC(
-      resource_manager->Esys(),
+      resource_manager.Esys(),
       key_handle,
       auth.auth1(),
       auth.auth2(),
@@ -59,7 +59,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> OneshotHmac(
 
 /* For data too large to fit in a single TPM2_HMAC call. */
 static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
-    TpmResourceManager* resource_manager,
+    TpmResourceManager& resource_manager,
     ESYS_TR key_handle,
     TpmAuth key_auth,
     const uint8_t* data,
@@ -69,13 +69,13 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
   sequence_auth.size = sizeof(rand());
   *reinterpret_cast<decltype(rand())*>(sequence_auth.buffer) = rand();
   ESYS_TR sequence_handle;
-  auto slot = resource_manager->ReserveSlot();
+  auto slot = resource_manager.ReserveSlot();
   if (!slot) {
     LOG(ERROR) << "No slots available";
     return {};
   }
   auto rc = Esys_HMAC_Start(
-      resource_manager->Esys(),
+      resource_manager.Esys(),
       key_handle,
       key_auth.auth1(),
       key_auth.auth2(),
@@ -90,7 +90,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
   }
   slot->set(sequence_handle);
   rc = Esys_TR_SetAuth(
-      resource_manager->Esys(), sequence_handle, &sequence_auth);
+      resource_manager.Esys(), sequence_handle, &sequence_auth);
   if (rc != TPM2_RC_SUCCESS) {
     LOG(ERROR) << "Esys_TR_SetAuth failed: " << Tss2_RC_Decode(rc)
                << "(" << rc << ")";
@@ -103,7 +103,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
     memcpy(buffer.buffer, &data[hashed], TPM2_MAX_DIGEST_BUFFER);
     hashed += TPM2_MAX_DIGEST_BUFFER;
     rc = Esys_SequenceUpdate(
-        resource_manager->Esys(),
+        resource_manager.Esys(),
         sequence_handle,
         ESYS_TR_PASSWORD,
         ESYS_TR_NONE,
@@ -120,7 +120,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
   TPM2B_DIGEST* out_hmac = nullptr;
   TPMT_TK_HASHCHECK* validation = nullptr;
   rc = Esys_SequenceComplete(
-      resource_manager->Esys(),
+      resource_manager.Esys(),
       sequence_handle,
       ESYS_TR_PASSWORD,
       ESYS_TR_NONE,
@@ -145,7 +145,7 @@ static UniqueEsysPtr<TPM2B_DIGEST> SegmentedHmac(
 }
 
 UniqueEsysPtr<TPM2B_DIGEST> TpmHmac(
-    TpmResourceManager* resource_manager,
+    TpmResourceManager& resource_manager,
     ESYS_TR key_handle,
     TpmAuth auth,
     const uint8_t* data,

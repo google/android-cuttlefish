@@ -15,24 +15,11 @@
 
 #pragma once
 
-#include <keymaster/random_source.h>
+#include <json/json.h>
 
-struct ESYS_CONTEXT;
+#include "host/commands/secure_env/tpm_resource_manager.h"
 
-/**
- * Secure random number generator, pulling data from a TPM.
- *
- * RandomSource is used by the OpenSSL HMAC key and AES key implementations.
- */
-class TpmRandomSource : public keymaster::RandomSource {
-public:
-  TpmRandomSource(ESYS_CONTEXT* esys);
-  virtual ~TpmRandomSource() = default;
-
-  keymaster_error_t GenerateRandom(
-      uint8_t* buffer, size_t length) const override;
-
-  keymaster_error_t AddRngEntropy(const uint8_t*, size_t) const;
-private:
-  ESYS_CONTEXT* esys_;
-};
+bool WriteProtectedJsonToFile(
+    TpmResourceManager&, const std::string& filename, Json::Value);
+Json::Value ReadProtectedJsonFromFile(
+    TpmResourceManager&, const std::string& filename);

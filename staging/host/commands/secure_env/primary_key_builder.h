@@ -15,24 +15,28 @@
 
 #pragma once
 
-#include <keymaster/random_source.h>
+#include <functional>
+#include <string>
 
-struct ESYS_CONTEXT;
+#include <tss2/tss2_esys.h>
 
-/**
- * Secure random number generator, pulling data from a TPM.
- *
- * RandomSource is used by the OpenSSL HMAC key and AES key implementations.
- */
-class TpmRandomSource : public keymaster::RandomSource {
+#include "host/commands/secure_env/tpm_resource_manager.h"
+
+class PrimaryKeyBuilder {
 public:
-  TpmRandomSource(ESYS_CONTEXT* esys);
-  virtual ~TpmRandomSource() = default;
+  PrimaryKeyBuilder();
 
-  keymaster_error_t GenerateRandom(
-      uint8_t* buffer, size_t length) const override;
+  void SigningKey();
+  void ParentKey();
+  void UniqueData(const std::string&);
 
-  keymaster_error_t AddRngEntropy(const uint8_t*, size_t) const;
+  TpmObjectSlot CreateKey(TpmResourceManager&);
 private:
-  ESYS_CONTEXT* esys_;
+  TPMT_PUBLIC public_area_;
 };
+
+std::function<TpmObjectSlot(TpmResourceManager&)>
+SigningKeyCreator(const std::string& unique);
+
+std::function<TpmObjectSlot(TpmResourceManager&)>
+ParentKeyCreator(const std::string& unique);

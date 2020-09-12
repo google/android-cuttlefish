@@ -38,8 +38,8 @@
  */
 class HmacSerializable : public keymaster::Serializable {
 public:
-  HmacSerializable(TpmResourceManager*,
-                   std::function<TpmObjectSlot(TpmResourceManager*)>,
+  HmacSerializable(TpmResourceManager&,
+                   std::function<TpmObjectSlot(TpmResourceManager&)>,
                    uint32_t digest_size,
                    Serializable*);
 
@@ -47,8 +47,8 @@ public:
   uint8_t* Serialize(uint8_t* buf, const uint8_t* end) const override;
   bool Deserialize(const uint8_t** buf_ptr, const uint8_t* end) override;
 private:
-  TpmResourceManager* resource_manager_;
-  std::function<TpmObjectSlot(TpmResourceManager*)> signing_key_fn_;
+  TpmResourceManager& resource_manager_;
+  std::function<TpmObjectSlot(TpmResourceManager&)> signing_key_fn_;
   uint32_t digest_size_;
   keymaster::Serializable* wrapped_;
 };
