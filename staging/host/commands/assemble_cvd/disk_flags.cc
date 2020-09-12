@@ -229,11 +229,28 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk() {
   return ret;
 }
 
-bool ShouldCreateCompositeDisk(const cuttlefish::CuttlefishConfig& config) {
-  if (!cuttlefish::FileExists(config.composite_disk_path())) {
+bool ShouldCreateAllCompositeDisks(const cuttlefish::CuttlefishConfig& config) {
+  std::chrono::system_clock::time_point youngest_disk_img = LastUpdatedInputDisk();
+  // If the youngest partition img is younger than any composite disk, this fact implies that
+  // the composite disks are all out of date and need to be reinitialized.
+  for (auto& instance : config.Instances()) {
+    if (!cuttlefish::FileExists(instance.composite_disk_path())) {
+      continue;
+    }
+    if (youngest_disk_img > cuttlefish::FileModificationTime(instance.composite_disk_path())) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool ShouldCreateCompositeDisk(const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
+  if (!cuttlefish::FileExists(instance.composite_disk_path())) {
     return true;
   }
-  auto composite_age = cuttlefish::FileModificationTime(config.composite_disk_path());
+
+  auto composite_age = cuttlefish::FileModificationTime(instance.composite_disk_path());
   return composite_age < LastUpdatedInputDisk();
 }
 
@@ -265,9 +282,11 @@ static off_t AvailableSpaceAtPath(const std::string& path) {
   return vfs.f_bsize * vfs.f_bavail; // block size * free blocks for unprivileged users
 }
 
-bool CreateCompositeDisk(const cuttlefish::CuttlefishConfig& config) {
-  if (!cuttlefish::SharedFD::Open(config.composite_disk_path().c_str(), O_WRONLY | O_CREAT, 0644)->IsOpen()) {
-    LOG(ERROR) << "Could not ensure " << config.composite_disk_path() << " exists";
+bool CreateCompositeDisk(const cuttlefish::CuttlefishConfig& config,
+                         const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
+  if (!cuttlefish::SharedFD::Open(instance.composite_disk_path().c_str(),
+                                  O_WRONLY | O_CREAT, 0644)->IsOpen()) {
+    LOG(ERROR) << "Could not ensure " << instance.composite_disk_path() << " exists";
     return false;
   }
   if (config.vm_manager() == CrosvmManager::name()) {
@@ -291,14 +310,13 @@ bool CreateCompositeDisk(const cuttlefish::CuttlefishConfig& config) {
       LOG(DEBUG) << "Disk size of \"" << FLAGS_data_image << "\": "
                  << existing_sizes.disk_size;
     }
-    std::string header_path = config.AssemblyPath("gpt_header.img");
-    std::string footer_path = config.AssemblyPath("gpt_footer.img");
-    CreateCompositeDisk(disk_config(), header_path, footer_path,
-                        config.composite_disk_path());
+    std::string header_path = instance.PerInstancePath("gpt_header.img");
+    std::string footer_path = instance.PerInstancePath("gpt_footer.img");
+    CreateCompositeDisk(disk_config(), header_path, footer_path, instance.composite_disk_path());
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(disk_config(), config.composite_disk_path());
+    AggregateImage(disk_config(), instance.composite_disk_path());
   }
   return true;
 }
@@ -426,26 +444,25 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
     }
   }
 
-  bool oldCompositeDisk = ShouldCreateCompositeDisk(*config);
   bool newDataImage = dataImageResult == DataImageResult::FileUpdated;
-  if (oldCompositeDisk || newDataImage) {
-    if (!CreateCompositeDisk(*config)) {
-      exit(cuttlefish::kDiskSpaceError);
-    }
-  }
 
   for (auto instance : config->Instances()) {
+    bool oldCompositeDisk = ShouldCreateCompositeDisk(instance);
     auto overlay_path = instance.PerInstancePath("overlay.img");
     bool missingOverlay = !cuttlefish::FileExists(overlay_path);
     bool newOverlay = cuttlefish::FileModificationTime(overlay_path)
-        < cuttlefish::FileModificationTime(config->composite_disk_path());
+        < cuttlefish::FileModificationTime(instance.composite_disk_path());
     if (missingOverlay || oldCompositeDisk || !FLAGS_resume || newDataImage || newOverlay) {
       if (FLAGS_resume) {
         LOG(INFO) << "Requested to continue an existing session, (the default) "
                   << "but the disk files have become out of date. Wiping the "
-                  << "old session files and starting a new session.";
+                  << "old session files and starting a new session for device "
+                  << instance.serial_number();
       }
-      CreateQcowOverlay(config->crosvm_binary(), config->composite_disk_path(), overlay_path);
+      if (!CreateCompositeDisk(*config, instance)) {
+        exit(cuttlefish::kDiskSpaceError);
+      }
+      CreateQcowOverlay(config->crosvm_binary(), instance.composite_disk_path(), overlay_path);
       CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
       CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
     }
