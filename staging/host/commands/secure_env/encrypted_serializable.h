@@ -45,15 +45,15 @@
  */
 class EncryptedSerializable : public keymaster::Serializable {
 public:
-  EncryptedSerializable(TpmResourceManager*,
-                        std::function<TpmObjectSlot(TpmResourceManager*)>,
-                        Serializable*);
+  EncryptedSerializable(TpmResourceManager&,
+                        std::function<TpmObjectSlot(TpmResourceManager&)>,
+                        Serializable&);
 
   size_t SerializedSize() const override;
   uint8_t* Serialize(uint8_t* buf, const uint8_t* end) const override;
   bool Deserialize(const uint8_t** buf_ptr, const uint8_t* end) override;
 private:
-  TpmResourceManager* resource_manager_;
-  std::function<TpmObjectSlot(TpmResourceManager*)> parent_key_fn_;
-  keymaster::Serializable* wrapped_;
+  TpmResourceManager& resource_manager_;
+  std::function<TpmObjectSlot(TpmResourceManager&)> parent_key_fn_;
+  keymaster::Serializable& wrapped_;
 };
