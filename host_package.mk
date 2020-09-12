@@ -165,5 +165,5 @@ cvd_host_package_files := \
 
 $(cvd_host_package_tar): PRIVATE_FILES := $(cvd_host_package_files)
 $(cvd_host_package_tar): $(addprefix $(HOST_OUT)/,$(cvd_host_package_files))
-	$(hide) rm -rf $@ && tar Scfz $@.tmp -C $(HOST_OUT) $(PRIVATE_FILES)
+	$(hide) rm -rf $@ && tar Scfzh $@.tmp -C $(HOST_OUT) $(PRIVATE_FILES)
 	$(hide) mv $@.tmp $@
