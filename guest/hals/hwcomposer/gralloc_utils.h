@@ -126,8 +126,6 @@ class Gralloc {
     android::hardware::graphics::mapper::V4_0::IMapper::MetadataType type,
     android::hardware::hidl_vec<uint8_t>* metadata);
 
-  const gralloc_module_t* gralloc0_ = nullptr;
-
   android::sp<android::hardware::graphics::mapper::V4_0::IMapper> gralloc4_;
 };
 
