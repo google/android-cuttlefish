@@ -23,8 +23,8 @@
 
 #include "common/libs/time/monotonic_time.h"
 
-#include "guest/hals/hwcomposer/common/base_composer.h"
-#include "guest/hals/hwcomposer/common/hwcomposer.h"
+#include "guest/hals/hwcomposer/base_composer.h"
+#include "guest/hals/hwcomposer/hwcomposer.h"
 
 namespace cuttlefish {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/hals/hwcomposer/common/stats_keeper.h"
+#include "guest/hals/hwcomposer/stats_keeper.h"
 
 #include <inttypes.h>
 #include <stdint.h>
@@ -28,7 +28,7 @@
 
 #include <log/log.h>
 
-#include "guest/hals/hwcomposer/common/geometry_utils.h"
+#include "guest/hals/hwcomposer/geometry_utils.h"
 
 using cuttlefish::time::Microseconds;
 using cuttlefish::time::MonotonicTimePoint;
