@@ -33,9 +33,9 @@
 namespace {
 
 size_t WriteEnvironment(const cuttlefish::CuttlefishConfig& config,
+                        const std::vector<std::string>& kernel_args,
                         const std::string& env_path) {
   std::ostringstream env;
-  auto kernel_args = KernelCommandLineFromConfig(config);
   env << "bootargs=" << android::base::Join(kernel_args, " ") << '\0';
   if (!config.boot_slot().empty()) {
       env << "android_slot_suffix=_" << config.boot_slot() << '\0';
@@ -61,10 +61,12 @@ size_t WriteEnvironment(const cuttlefish::CuttlefishConfig& config,
 
 
 bool InitBootloaderEnvPartition(const cuttlefish::CuttlefishConfig& config,
-                                const std::string& boot_env_image_path) {
+                                const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
+  auto boot_env_image_path = instance.uboot_env_image_path();
   auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
-  auto uboot_env_path = config.AssemblyPath("u-boot.env");
-  if(!WriteEnvironment(config, uboot_env_path)) {
+  auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
+  auto kernel_args = KernelCommandLineFromConfig(config, instance);
+  if(!WriteEnvironment(config, kernel_args, uboot_env_path)) {
     LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path << ".'";
     return false;
   }
