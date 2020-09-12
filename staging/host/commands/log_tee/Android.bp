@@ -22,14 +22,14 @@ cc_binary {
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
+        "libjsoncpp",
         "libnl",
+        "libxml2",
     ],
     static_libs: [
         "libgflags",
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
-        "libxml2",
-        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
 }

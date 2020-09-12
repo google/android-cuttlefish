@@ -29,9 +29,11 @@ cc_library_shared {
             srcs: [
                 "host_device_config.cpp",
             ],
+            shared_libs: [
+                "libjsoncpp",
+            ],
             static_libs: [
                 "libcuttlefish_host_config",
-                "libjsoncpp",
             ],
         },
         android: {
