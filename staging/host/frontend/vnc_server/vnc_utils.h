@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "common/libs/utils/size_utils.h"
-#include "common/libs/tcp_socket/tcp_socket.h"
+#include "common/libs/utils/tcp_socket.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {

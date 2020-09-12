@@ -23,13 +23,13 @@ cc_library_static {
     shared_libs: [
         "libcuttlefish_fs",
         "libbase",
+        "libjsoncpp",
         "liblog",
     ],
     static_libs: [
         "libcuttlefish_host_config",
         "libcuttlefish_utils",
         "libcuttlefish_wayland_server",
-        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_and_guest"],
 }
