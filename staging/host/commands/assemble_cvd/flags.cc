@@ -743,15 +743,8 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   return ResolveInstanceFiles();
 }
 
-std::string cpp_basename(const std::string& str) {
-  char* copy = strdup(str.c_str()); // basename may modify its argument
-  std::string ret(basename(copy));
-  free(copy);
-  return ret;
-}
-
 bool CleanPriorFiles(const std::string& path, const std::set<std::string>& preserving) {
-  if (preserving.count(cpp_basename(path))) {
+  if (preserving.count(cuttlefish::cpp_basename(path))) {
     LOG(DEBUG) << "Preserving: " << path;
     return true;
   }
@@ -831,7 +824,7 @@ bool CleanPriorFiles(const std::vector<std::string>& paths, const std::set<std::
   return true;
 }
 
-bool CleanPriorFiles(const cuttlefish::CuttlefishConfig& config, const std::set<std::string>& preserving) {
+bool CleanPriorFiles(const std::set<std::string>& preserving) {
   std::vector<std::string> paths = {
     // Everything in the assembly directory
     FLAGS_assembly_dir,
@@ -840,8 +833,19 @@ bool CleanPriorFiles(const cuttlefish::CuttlefishConfig& config, const std::set<
     // The global link to the config file
     cuttlefish::GetGlobalConfigFileLink(),
   };
-  for (const auto& instance : config.Instances()) {
-    paths.push_back(instance.instance_dir());
+
+  std::string runtime_dir_parent =
+      cuttlefish::cpp_dirname(cuttlefish::AbsolutePath(FLAGS_instance_dir));
+  std::string runtime_dirs_basename =
+      cuttlefish::cpp_basename(cuttlefish::AbsolutePath(FLAGS_instance_dir));
+
+  std::regex instance_dir_regex("^.+\\.[1-9]\\d*$");
+  for (const auto& path : cuttlefish::DirectoryContents(runtime_dir_parent)) {
+    std::string absl_path = runtime_dir_parent + "/" + path;
+    if((path.rfind(runtime_dirs_basename, 0) == 0) && std::regex_match(path, instance_dir_regex) &&
+        cuttlefish::DirectoryExists(absl_path)) {
+      paths.push_back(absl_path);
+    }
   }
   paths.push_back(FLAGS_instance_dir);
   return CleanPriorFiles(paths, preserving);
@@ -898,11 +902,11 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
     // disk.
     auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config);
     std::set<std::string> preserving;
-    if (FLAGS_resume && ShouldCreateCompositeDisk(config)) {
+    if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
       LOG(INFO) << "Requested resuming a previous session (the default behavior) "
                 << "but the base images have changed under the overlay, making the "
                 << "overlay incompatible. Wiping the overlay files.";
-    } else if (FLAGS_resume && !ShouldCreateCompositeDisk(config)) {
+    } else if (FLAGS_resume && !ShouldCreateAllCompositeDisks(config)) {
       preserving.insert("overlay.img");
       preserving.insert("gpt_header.img");
       preserving.insert("gpt_footer.img");
@@ -922,7 +926,7 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    if (!CleanPriorFiles(config, preserving)) {
+    if (!CleanPriorFiles(preserving)) {
       LOG(ERROR) << "Failed to clean prior files";
       exit(AssemblerExitCodes::kPrioFilesCleanupError);
     }
