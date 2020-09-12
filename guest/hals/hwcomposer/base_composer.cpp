@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "guest/hals/hwcomposer/common/base_composer.h"
+#include "guest/hals/hwcomposer/base_composer.h"
 
 #include <string.h>
 

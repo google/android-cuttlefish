@@ -25,7 +25,7 @@
 #define LOG_TAG "hwc.cf_x86"
 #define HWC_REMOVE_DEPRECATED_VERSIONS 1
 
-#include "guest/hals/hwcomposer/common/hwcomposer.h"
+#include "guest/hals/hwcomposer/hwcomposer.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -52,10 +52,10 @@
 #include <utils/String8.h>
 #include <utils/Vector.h>
 
-#include "guest/hals/hwcomposer/common/base_composer.h"
-#include "guest/hals/hwcomposer/common/cpu_composer.h"
-#include "guest/hals/hwcomposer/common/geometry_utils.h"
-#include "guest/hals/hwcomposer/common/hwcomposer.h"
+#include "guest/hals/hwcomposer/base_composer.h"
+#include "guest/hals/hwcomposer/cpu_composer.h"
+#include "guest/hals/hwcomposer/geometry_utils.h"
+#include "guest/hals/hwcomposer/hwcomposer.h"
 
 #ifdef USE_OLD_HWCOMPOSER
 typedef cuttlefish::BaseComposer ComposerType;

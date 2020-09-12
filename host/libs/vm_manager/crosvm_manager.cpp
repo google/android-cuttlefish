@@ -99,7 +99,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
   if (gpu_mode == cuttlefish::kGpuModeGuestSwiftshader) {
     return {
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=cutf_hwc2",
+        "androidboot.hardware.hwcomposer=cutf",
         "androidboot.hardware.egl=swiftshader",
         "androidboot.hardware.vulkan=pastel",
     };
