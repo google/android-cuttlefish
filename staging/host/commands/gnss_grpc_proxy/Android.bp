@@ -32,12 +32,12 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libjsoncpp",
         "libprotobuf-cpp-full",
         "libgrpc++_unsecure",
     ],
     static_libs: [
         "libcuttlefish_host_config",
-        "libjsoncpp",
         "libgflags",
     ],
     defaults: ["cuttlefish_host_and_guest"],
