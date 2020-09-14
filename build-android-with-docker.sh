@@ -113,7 +113,7 @@ DEFINE_string instance_name \
               "cf_builder" \
               "default name of the docker container that builds Android"
 DEFINE_string docker_run_opts "" \
-              "$(multiline_helper 21 android_src_mnt_helper)"
+              "$(multiline_helper 21 docker_run_opts_helper)"
 
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
