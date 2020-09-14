@@ -368,6 +368,11 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
         google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
+  if(FLAGS_use_bootloader && FLAGS_vm_manager == CrosvmManager::name()) {
+    SetCommandLineOptionWithMode("enable_sandbox", "false",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
+
   tmp_config_obj.set_boot_image_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
