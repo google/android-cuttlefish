@@ -3,7 +3,7 @@ type tombstone_transmit_exec, exec_type, system_file_type, file_type;
 
 init_daemon_domain(tombstone_transmit);
 
-type vsock_tombstone_port_prop, property_type;
+product_internal_prop(vsock_tombstone_port_prop)
 get_prop(tombstone_transmit, vsock_tombstone_port_prop)
 
 allow tombstone_transmit self:capability net_admin;
