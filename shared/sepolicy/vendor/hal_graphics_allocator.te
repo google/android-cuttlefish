@@ -1,2 +1,0 @@
-# TODO(b/64158954): Remove/update these	rules once gralloc impl	changes
-allow hal_graphics_allocator_client hal_graphics_allocator_default_tmpfs:file read;
