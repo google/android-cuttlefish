@@ -305,13 +305,17 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
     qemu_cmd.AddParameter("nvdimm,memdev=objpmem0,id=ramoops");
   }
 
-  qemu_cmd.AddParameter("-object");
-  qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share,mem-path=",
-                        instance.access_kregistry_path(), ",size=",
-                        access_kregistry_size_bytes);
+  // QEMU does not implement virtio-pmem-pci for ARM64 yet; restore this
+  // when the device has been added
+  if (!is_arm) {
+    qemu_cmd.AddParameter("-object");
+    qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share,mem-path=",
+                          instance.access_kregistry_path(), ",size=",
+                          access_kregistry_size_bytes);
 
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-pmem-pci,disable-legacy=on,memdev=objpmem1,id=pmem0");
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("virtio-pmem-pci,disable-legacy=on,memdev=objpmem1,id=pmem0");
+  }
 
   qemu_cmd.AddParameter("-object");
   qemu_cmd.AddParameter("rng-random,id=objrng0,filename=/dev/urandom");
