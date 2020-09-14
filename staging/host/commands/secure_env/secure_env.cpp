@@ -49,7 +49,7 @@ DEFINE_string(keymaster_impl,
               "\"in_process_tpm\" or \"software\"");
 
 DEFINE_string(gatekeeper_impl,
-              "software",
+              "in_process_tpm",
               "The gatekeeper implementation. "
               "\"in_process_tpm\" or \"software\"");
 
