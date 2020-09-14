@@ -1,10 +1,5 @@
 on early-init
 #    loglevel 8
-    mkdir /var/run 0755 root root
-    mkdir /var/run/media 0755 media root
-    mkdir /var/run/system 0755 system root
-    mkdir /dev/gce 0750
-    chown system system /dev/gce
 
     mount securityfs securityfs /sys/kernel/security
 
@@ -24,9 +19,8 @@ on early-init
 on init
     # ZRAM setup
     write /sys/block/zram0/comp_algorithm lz4
-    #
+
     # EAS uclamp interfaces
-    #
     mkdir /dev/cpuctl/foreground
     mkdir /dev/cpuctl/background
     mkdir /dev/cpuctl/top-app
@@ -47,7 +41,6 @@ on init
     chmod 0664 /dev/cpuctl/top-app/tasks
     chmod 0664 /dev/cpuctl/rt/tasks
 
-
 on fs
     mkdir /mnt/vendor/shared 0770 system system
 
@@ -59,29 +52,16 @@ on fs
     # works around framework netiface enumeration issue
     start rename_eth1
 
-    # TODO(ender): Find better way to talk to serial port.
+    # So GceBootReporter can print to kmsg
     chmod 622 /dev/kmsg
-
-    # for GCE camera HAL
-    mkdir /var/media 0770 audio media
-
-    chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/group
-    chmod 0664 /sys/kernel/debug/ieee80211/phy1/hwsim/ps
-    chmod 0664 /sys/kernel/debug/ieee80211/phy0/rc/fixed_rate_idx
-    chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/group
-    chmod 0664 /sys/kernel/debug/ieee80211/phy0/hwsim/ps
-    chmod 0664 /sys/kernel/debug/ieee80211/phy1/rc/fixed_rate_idx
-
 
 on post-fs
     # set RLIMIT_MEMLOCK to 64MB
     setrlimit 8 67108864 67108864
 
-
 on post-fs-data
     mkdir /data/vendor/modem_dump 0777 system system
     mkdir /data/vendor/radio 0777 system system
-
 
 on late-fs
     # Wait for keymaster
@@ -92,7 +72,6 @@ on late-fs
 
     write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
-
 on boot
     chmod 0660 /dev/cpuctl
     mkdir /data/vendor/wifi 0770 wifi wifi
@@ -100,18 +79,14 @@ on boot
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_vsock_proxy
 
-
 service setup_wifi /vendor/bin/setup_wifi
     oneshot
-
 
 service rename_eth1 /vendor/bin/rename_netiface eth1 rmnet0
     oneshot
 
-
 on property:sys.boot_completed=1
     trigger sys-boot-completed-set
-
 
 # We want one opportunity per boot to enable zram, so we
 # use a trigger we fire from the above stanza. If
@@ -129,12 +104,10 @@ service vendor.insmod_sh /vendor/bin/init.insmod.sh
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server=vsock -tcp_port=5555 -vsock_port=6520
 
-
 service seriallogging /system/bin/logcat -b all -v threadtime -f /dev/hvc2 *:V
     class main
     user logd
     group root logd
-
 
 service vsoc_input_service /vendor/bin/vsoc_input_service -touch_port=${ro.boot.vsock_touch_port} -keyboard_port=${ro.boot.vsock_keyboard_port}
     group root uhid
@@ -157,7 +130,6 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant -g@android:wpa_wlan0
     group system wifi inet
     disabled
     oneshot
-
 
 service bugreport /system/bin/dumpstate -d -p -z
     class main
