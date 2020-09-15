@@ -388,6 +388,21 @@ std::string GetConfigFilePath(const cuttlefish::CuttlefishConfig& config) {
   return instance.PerInstancePath("cuttlefish_config.json");
 }
 
+void PrintStreamingInformation(const cuttlefish::CuttlefishConfig& config) {
+  if (config.ForDefaultInstance().start_webrtc_sig_server()) {
+    // TODO (jemoreira): Change this when webrtc is moved to the debian package.
+    LOG(INFO) << kGreenColor << "Point your browser to https://"
+              << config.sig_server_address() << ":" << config.sig_server_port()
+              << " to interact with the device." << kResetColor;
+  } else if (config.enable_vnc_server()) {
+    LOG(INFO) << kGreenColor << "VNC server started on port "
+              << config.ForDefaultInstance().vnc_server_port() << kResetColor;
+  }
+  // When WebRTC is enabled but an operator other than the one launched by
+  // run_cvd is used there is no way to know the url to which to point the
+  // browser to.
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -484,6 +499,11 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
+  PrintStreamingInformation(*config);
+
+  LOG(INFO) << kGreenColor << "To access the console run: screen "
+            << instance.console_path() << kResetColor;
+
   LOG(INFO) << kGreenColor
             << "The following files contain useful debugging information:"
             << kResetColor;
@@ -504,8 +524,6 @@ int main(int argc, char** argv) {
   LOG(INFO) << kGreenColor
             << "  Instance environment: " << config->cuttlefish_env_path()
             << kResetColor;
-  LOG(INFO) << kGreenColor << "To access the console run: screen "
-            << instance.console_path() << kResetColor;
 
   auto launcher_monitor_path = instance.launcher_monitor_socket_path();
   auto launcher_monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
