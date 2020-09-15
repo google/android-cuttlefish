@@ -349,8 +349,6 @@ class CuttlefishConfig {
     int host_port() const;
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
-    // Port number to connect to the tpm server on the host
-    int tpm_port() const;
     // Port number to connect to the gatekeeper server on the host
     int gatekeeper_vsock_port() const;
     // Port number to connect to the keymaster server on the host
@@ -446,7 +444,6 @@ class CuttlefishConfig {
     void set_vehicle_hal_server_port(int vehicle_server_port);
     void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_host_port(int host_port);
-    void set_tpm_port(int tpm_port);
     void set_adb_ip_and_port(const std::string& ip_port);
     void set_device_title(const std::string& title);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);

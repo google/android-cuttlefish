@@ -97,10 +97,6 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
     kernel_cmdline.push_back(concat("androidboot.cuttlefish_config_server_port=", instance.config_server_port()));
   }
 
-  if (config.tpm_binary() != "" && instance.tpm_port()) {
-    kernel_cmdline.push_back(concat("androidboot.tpm_vsock_port=", instance.tpm_port()));
-  }
-
   if (instance.keyboard_server_port()) {
     kernel_cmdline.push_back(concat("androidboot.vsock_keyboard_port=", instance.keyboard_server_port()));
   }
