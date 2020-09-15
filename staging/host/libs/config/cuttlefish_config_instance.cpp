@@ -43,7 +43,6 @@ const char* kUuid = "uuid";
 const char* kModemSimulatorPorts = "modem_simulator_ports";
 
 const char* kHostPort = "host_port";
-const char* kTpmPort = "tpm_port";
 const char* kAdbIPAndPort = "adb_ip_and_port";
 
 const char* kConfigServerPort = "config_server_port";
@@ -255,14 +254,6 @@ int CuttlefishConfig::InstanceSpecific::host_port() const {
 
 void CuttlefishConfig::MutableInstanceSpecific::set_host_port(int host_port) {
   (*Dictionary())[kHostPort] = host_port;
-}
-
-int CuttlefishConfig::InstanceSpecific::tpm_port() const {
-  return (*Dictionary())[kTpmPort].asInt();
-}
-
-void CuttlefishConfig::MutableInstanceSpecific::set_tpm_port(int tpm_port) {
-  (*Dictionary())[kTpmPort] = tpm_port;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::adb_ip_and_port() const {
