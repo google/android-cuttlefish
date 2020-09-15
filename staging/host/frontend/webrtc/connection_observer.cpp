@@ -165,6 +165,8 @@ class ConnectionObserverImpl
       OnKeyboardEvent(KEY_POWER, state == "down");
     } else if (command == "home") {
       OnKeyboardEvent(KEY_HOMEPAGE, state == "down");
+    } else if (command == "menu") {
+      OnKeyboardEvent(KEY_MENU, state == "down");
     } else if (command == "volumemute") {
       OnKeyboardEvent(KEY_MUTE, state == "down");
     } else if (command == "volumedown") {
