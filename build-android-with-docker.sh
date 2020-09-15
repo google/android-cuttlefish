@@ -4,18 +4,10 @@
 # and gives a bash shell inside the container, so that
 # the user can run source, lunch & m commands to build
 #
-# TODO: support commands like
-#   intrinsic commands: init, sync, build, img_build
-#   running a host script inside docker container
-#   running a guest command inside docker container
 
 # to print multi-lined helper for shflags
 function multiline_helper {
-    local aligner=''
-    for cnt in `seq 0 $1`; do
-        aligner+=' '
-    done
-
+    local aligner="$(printf '%*s' "$1")"
     local -n msgs=$2
     echo ${msgs[0]}
     for msg in "${msgs[@]:1}"; do
@@ -160,8 +152,8 @@ fi
 
 # global util function
 # 1: src dir, either symlink or dir
-# 2: to replace
-# 3: to be replaced
+# 2: substring to be gone
+# 3: substring to replace $2
 # echo the absolute path with $2 being replaced $3
 function calc_dst_dir() {
     local srcdir="$(realpath -s $1)"
