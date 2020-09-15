@@ -225,11 +225,12 @@ function string_to_array() {
     local what2parse="$1"
     local -n result=$2
     local delim=${3:-','}
-    local IFS=$delim
-    echo $what2parse
-    for opt in "$what2parse"; do
-        result+=("$opt")
-    done
+    local IFS=
+    while IFS=',' read -ra opts; do
+        for op in "${opts[@]}"; do
+            result+=("$op")
+        done
+    done <<< "$what2parse"
 }
 
 # build docker image when required
@@ -375,7 +376,7 @@ function run_cf_builder() {
     fi
     docker run --name="${FLAGS_instance_name}" \
            --privileged "${opt_rm[@]}" "${env_variables[@]}" \
-           "${mount_volumes[@]}" "${dck_opts[@]}" \
+           "${mount_volumes[@]}" "${dck_usr_opts[@]}" \
            -it ${cf_builder_img_name}:${cf_builder_img_tag} \
            ${cmd_to_docker} "${parms[@]}" # all parameters are passed to cmd_to_docker
 }
