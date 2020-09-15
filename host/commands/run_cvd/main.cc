@@ -65,6 +65,9 @@ using cuttlefish::vm_manager::VmManager;
 
 namespace {
 
+constexpr char kGreenColor[] = "\033[1;32m";
+constexpr char kResetColor[] = "\033[0m";
+
 cuttlefish::OnSocketReadyCb GetOnSubprocessExitCallback(
     const cuttlefish::CuttlefishConfig& config) {
   if (config.restart_subprocesses()) {
@@ -481,15 +484,28 @@ int main(int argc, char** argv) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
-  LOG(INFO) << "The following files contain useful debugging information:";
+  LOG(INFO) << kGreenColor
+            << "The following files contain useful debugging information:"
+            << kResetColor;
   if (config->run_as_daemon()) {
-    LOG(INFO) << "  Launcher log: " << instance.launcher_log_path();
+    LOG(INFO) << kGreenColor
+              << "  Launcher log: " << instance.launcher_log_path()
+              << kResetColor;
   }
-  LOG(INFO) << "  Android's logcat output: " << instance.logcat_path();
-  LOG(INFO) << "  Kernel log: " << instance.PerInstancePath("kernel.log");
-  LOG(INFO) << "  Instance configuration: " << GetConfigFilePath(*config);
-  LOG(INFO) << "  Instance environment: " << config->cuttlefish_env_path();
-  LOG(INFO) << "To access the console run: screen " << instance.console_path();
+  LOG(INFO) << kGreenColor
+            << "  Android's logcat output: " << instance.logcat_path()
+            << kResetColor;
+  LOG(INFO) << kGreenColor
+            << "  Kernel log: " << instance.PerInstancePath("kernel.log")
+            << kResetColor;
+  LOG(INFO) << kGreenColor
+            << "  Instance configuration: " << GetConfigFilePath(*config)
+            << kResetColor;
+  LOG(INFO) << kGreenColor
+            << "  Instance environment: " << config->cuttlefish_env_path()
+            << kResetColor;
+  LOG(INFO) << kGreenColor << "To access the console run: screen "
+            << instance.console_path() << kResetColor;
 
   auto launcher_monitor_path = instance.launcher_monitor_socket_path();
   auto launcher_monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
