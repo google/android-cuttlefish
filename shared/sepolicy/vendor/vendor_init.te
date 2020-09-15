@@ -1,17 +1,17 @@
 vendor_internal_prop(vendor_init_radio_prop)
-vendor_internal_prop(cf_graphics_config_prop)
-vendor_internal_prop(cf_fstab_name_prop)
+vendor_internal_prop(vendor_graphics_config_prop)
+vendor_internal_prop(vendor_fstab_name_prop)
 
 allow vendor_init {
   audio_device
 }:chr_file { getattr };
 
-set_prop(vendor_init, hal_bluetooth_sim_prop)
+set_prop(vendor_init, vendor_bt_rootcanal_prop)
 
 set_prop(vendor_init, vendor_init_radio_prop)
 
 get_prop(vendor_init, vendor_ser_prop)
 
-get_prop(vendor_init, cf_graphics_config_prop)
+get_prop(vendor_init, vendor_graphics_config_prop)
 
-get_prop(vendor_init, cf_fstab_name_prop)
+get_prop(vendor_init, vendor_fstab_name_prop)
