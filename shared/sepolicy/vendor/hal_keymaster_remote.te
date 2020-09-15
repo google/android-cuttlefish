@@ -6,6 +6,6 @@ init_daemon_domain(hal_keymaster_remote)
 
 allow hal_keymaster_remote self:{ socket vsock_socket } create_socket_perms_no_ioctl;
 
-vendor_internal_prop(cuttlefish_vsock_keymaster_port)
+vendor_internal_prop(vendor_vsock_keymaster_port_prop)
 
-get_prop(hal_keymaster_remote, cuttlefish_vsock_keymaster_port)
+get_prop(hal_keymaster_remote, vendor_vsock_keymaster_port_prop)

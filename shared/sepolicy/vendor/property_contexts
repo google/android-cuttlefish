@@ -1,20 +1,19 @@
-ro.boot.cuttlefish_config_server_port  u:object_r:cuttlefish_config_server_port_prop:s0
-ro.boot.fstab_name u:object_r:cf_fstab_name_prop:s0 exact string
-ro.boot.hardware.egl u:object_r:cf_graphics_config_prop:s0 exact string
-ro.boot.hardware.gralloc u:object_r:cf_graphics_config_prop:s0 exact string
-ro.boot.hardware.hwcomposer u:object_r:cf_graphics_config_prop:s0 exact string
-ro.boot.hardware.vulkan u:object_r:cf_graphics_config_prop:s0 exact string
-ro.boot.lcd_density u:object_r:cf_graphics_config_prop:s0 exact int
-ro.boot.tpm_vsock_port  u:object_r:cuttlefish_vsock_tpm_port:s0
-ro.boot.vsock_frames_port  u:object_r:vsock_frames_port_prop:s0
-ro.boot.vsock_gatekeeper_port  u:object_r:cuttlefish_vsock_gatekeeper_port:s0
-ro.boot.vsock_keyboard_port  u:object_r:cuttlefish_vsock_keyboard_port:s0
-ro.boot.vsock_keymaster_port  u:object_r:cuttlefish_vsock_keymaster_port:s0
-ro.boot.modem_simulator_ports  u:object_r:cuttlefish_modem_simulator_ports:s0
-ro.boot.vsock_touch_port  u:object_r:cuttlefish_vsock_touch_port:s0
-ro.boot.wifi_mac_address  u:object_r:cuttlefish_wifi_mac_address:s0
+ro.boot.cuttlefish_config_server_port  u:object_r:vendor_cuttlefish_config_server_port_prop:s0
+ro.boot.fstab_name u:object_r:vendor_fstab_name_prop:s0 exact string
+ro.boot.hardware.egl u:object_r:vendor_graphics_config_prop:s0 exact string
+ro.boot.hardware.gralloc u:object_r:vendor_graphics_config_prop:s0 exact string
+ro.boot.hardware.hwcomposer u:object_r:vendor_graphics_config_prop:s0 exact string
+ro.boot.hardware.vulkan u:object_r:vendor_graphics_config_prop:s0 exact string
+ro.boot.lcd_density u:object_r:vendor_graphics_config_prop:s0 exact int
+ro.boot.vsock_frames_port  u:object_r:vendor_vsock_frames_port_prop:s0
+ro.boot.vsock_gatekeeper_port  u:object_r:vendor_vsock_gatekeeper_port_prop:s0
+ro.boot.vsock_keyboard_port  u:object_r:vendor_vsock_keyboard_port:s0
+ro.boot.vsock_keymaster_port  u:object_r:vendor_vsock_keymaster_port_prop:s0
+ro.boot.modem_simulator_ports  u:object_r:vendor_modem_simulator_ports_prop:s0
+ro.boot.vsock_touch_port  u:object_r:vendor_vsock_touch_port:s0
+ro.boot.wifi_mac_address  u:object_r:vendor_wifi_mac_address:s0
 ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
 ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
-vendor.bt.rootcanal_mac_address  u:object_r:hal_bluetooth_sim_prop:s0
-vendor.bt.rootcanal_test_console  u:object_r:hal_bluetooth_sim_prop:s0
+vendor.bt.rootcanal_mac_address  u:object_r:vendor_bt_rootcanal_prop:s0
+vendor.bt.rootcanal_test_console  u:object_r:vendor_bt_rootcanal_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
