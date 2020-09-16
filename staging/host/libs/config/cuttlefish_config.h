@@ -506,6 +506,7 @@ bool HostSupportsQemuCli();
 bool HostSupportsVsock();
 
 // GPU modes
+extern const char* const kGpuModeAuto;
 extern const char* const kGpuModeGuestSwiftshader;
 extern const char* const kGpuModeDrmVirgl;
 extern const char* const kGpuModeGfxStream;

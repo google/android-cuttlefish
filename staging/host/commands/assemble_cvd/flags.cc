@@ -32,6 +32,7 @@
 #include "host/libs/allocd/utils.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/fetcher_config.h"
+#include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
@@ -88,9 +89,9 @@ DEFINE_string(instance_dir,
 DEFINE_string(
     vm_manager, CrosvmManager::name(),
     "What virtual machine manager to use, one of {qemu_cli, crosvm}");
-DEFINE_string(
-    gpu_mode, cuttlefish::kGpuModeGuestSwiftshader,
-    "What gpu configuration to use, one of {guest_swiftshader, drm_virgl}");
+DEFINE_string(gpu_mode, cuttlefish::kGpuModeAuto,
+              "What gpu configuration to use, one of {auto, drm_virgl, "
+              "gfxstream, guest_swiftshader}");
 
 DEFINE_bool(deprecated_boot_completed, false, "Log boot completed message to"
             " host kernel. This is only used during transition of our clients."
@@ -296,6 +297,43 @@ std::string StrForInstance(const std::string& prefix, int num) {
   return stream.str();
 }
 
+bool ShouldEnableAcceleratedRendering(
+    const cuttlefish::GraphicsAvailability& availability) {
+  return availability.has_egl &&
+         availability.has_egl_surfaceless_with_gles &&
+         availability.has_discrete_gpu;
+}
+
+// Runs cuttlefish::GetGraphicsAvailability() inside of a subprocess to ensure
+// that cuttlefish::GetGraphicsAvailability() can complete successfully without
+// crashing assemble_cvd. Configurations such as GCE instances without a GPU
+// but with GPU drivers for example have seen crashes.
+cuttlefish::GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
+  const std::string detect_graphics_bin =
+    cuttlefish::DefaultHostArtifactsPath("bin/detect_graphics");
+
+  cuttlefish::Command detect_graphics_cmd(detect_graphics_bin);
+
+  cuttlefish::SubprocessOptions detect_graphics_options;
+  detect_graphics_options.Verbose(false);
+
+  std::string detect_graphics_output;
+  std::string detect_graphics_error;
+  int ret = cuttlefish::RunWithManagedStdio(std::move(detect_graphics_cmd),
+                                            nullptr,
+                                            &detect_graphics_output,
+                                            &detect_graphics_error,
+                                            detect_graphics_options);
+  if (ret == 0) {
+    return cuttlefish::GetGraphicsAvailability();
+  }
+  LOG(VERBOSE) << "Subprocess for detect_graphics failed with "
+               << ret
+               << " : "
+               << detect_graphics_output;
+  return cuttlefish::GraphicsAvailability{};
+}
+
 // Initializes the config object and saves it to file. It doesn't return it, all
 // further uses of the config should happen through the singleton
 cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
@@ -310,7 +348,33 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     LOG(FATAL) << "Invalid vm_manager: " << FLAGS_vm_manager;
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
+
   tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
+  if (tmp_config_obj.gpu_mode() == cuttlefish::kGpuModeAuto) {
+    const cuttlefish::GraphicsAvailability graphics_availability =
+      GetGraphicsAvailabilityWithSubprocessCheck();
+
+    LOG(VERBOSE) << GetGraphicsAvailabilityString(graphics_availability);
+
+    if (ShouldEnableAcceleratedRendering(graphics_availability)) {
+      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
+                   "rendering support, enabling --gpu_mode=gfxstream.";
+      tmp_config_obj.set_gpu_mode(cuttlefish::kGpuModeGfxStream);
+    } else {
+      LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
+                   "accelerated rendering support, enabling "
+                   "--gpu_mode=guest_swiftshader.";
+      tmp_config_obj.set_gpu_mode(cuttlefish::kGpuModeGuestSwiftshader);
+    }
+  }
+  // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
+  // auto-enabling sandbox when gpu is enabled (b/152323505).
+  if (tmp_config_obj.gpu_mode() != cuttlefish::kGpuModeGuestSwiftshader) {
+    tmp_config_obj.set_enable_sandbox(false);
+  } else {
+    tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
+  }
+
   if (VmManager::ConfigureGpuMode(tmp_config_obj.vm_manager(),
                                   tmp_config_obj.gpu_mode()).empty()) {
     LOG(FATAL) << "Invalid gpu_mode=" << FLAGS_gpu_mode <<
@@ -465,8 +529,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_tpm_device(FLAGS_tpm_device);
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
-
-  tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
   tmp_config_obj.set_seccomp_policy_dir(FLAGS_seccomp_policy_dir);
 
@@ -691,12 +753,6 @@ void SetDefaultFlagsForCrosvm() {
           }
           return (::mkdir(var_empty.c_str(), 0755) == 0);
         }(cuttlefish::kCrosvmVarEmptyDir);
-  }
-
-  // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
-  // auto-enabling sandbox when gpu is enabled (b/152323505).
-  if (FLAGS_gpu_mode != cuttlefish::kGpuModeGuestSwiftshader) {
-    default_enable_sandbox = false;
   }
 
   SetCommandLineOptionWithMode("enable_sandbox",
