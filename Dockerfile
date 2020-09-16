@@ -34,12 +34,11 @@ VOLUME [ "/sys/fs/cgroup" ]
 
 CMD ["/lib/systemd/systemd"]
 
+# TODO: remove packages that were required solely by building .deb files
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y apt-utils sudo vim dpkg-dev devscripts gawk coreutils \
+    && apt-get install --no-install-recommends -y apt-utils sudo vim gawk coreutils \
        openssh-server openssh-client psmisc iptables iproute2 dnsmasq \
-       net-tools rsyslog equivs # qemu-system-x86
-
-RUN apt-get install --no-install-recommends -y dialog
+       net-tools rsyslog equivs equivs devscripts dpkg-dev dialog # qemu-system-x86
 
 SHELL ["/bin/bash", "-c"]
 
@@ -50,15 +49,12 @@ RUN if test $(uname -m) == aarch64; then \
 	    && apt-get install --no-install-recommends -y qemu qemu-user qemu-user-static binfmt-support; \
     fi
 
-COPY . android-cuttlefish/
+COPY ./out/*.deb ./android-cuttlefish/out/
 
-RUN cd /root/android-cuttlefish \
-    && yes | sudo mk-build-deps -i -r -B \
-    && dpkg-buildpackage -uc -us \
-    && apt-get install --no-install-recommends -y -f ../cuttlefish-common_*.deb \
-    && rm -rvf ../cuttlefish-common_*.deb \
-    && cd .. \
-    && rm -rvf android-cuttlefish
+RUN cd /root/android-cuttlefish/out \
+    && apt-get install --no-install-recommends -y -f ./cuttlefish-common_*.deb \
+    && rm -rvf ./cuttlefish-common_*.deb \
+    && cd /root
 
 # to share X with the local docker host
 RUN apt-get install -y xterm

@@ -3,6 +3,7 @@
 source "shflags"
 
 DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor"
+DEFINE_boolean rebuild_debs false "Forcefully rebuild deb packages. If false, builds only when missing."
 
 FLAGS "$@" || exit 1
 
@@ -120,4 +121,22 @@ function build_docker_image {
   # rm -fv gpu/${OEM}/driver-deps
 }
 
+function is_rebuild_debs() {
+  local -a required_packages=("cuttlefish-common" \
+                              "cuttlefish-integration" \
+                              "cuttlefish-integration-dbgsym")
+  if [[ ${FLAGS_rebuild_debs} -eq ${FLAGS_TRUE} ]]; then
+      return 0
+  fi
+  for comp in "${required_packages[@]}"; do
+      if ! ls -1 ./out | egrep $comp | egrep "*\.deb$" > /dev/null 2>&1; then
+          return 0
+      fi
+  done
+  return 1
+}
+
+if is_rebuild_debs; then
+    ./debs-builder-docker/build-debs-with-docker.sh
+fi
 build_docker_image $*
