@@ -106,6 +106,9 @@ DEFINE_bool(enable_minimal_mode, false,
             "Only enable the minimum features to boot a cuttlefish device and "
             "support minimal UI interactions.\nNote: Currently only supports "
             "handheld/phone targets");
+DEFINE_bool(pause_in_bootloader, false,
+            "Stop the bootflow in u-boot. You can continue the boot by connecting "
+            "to the device console and typing in \"boot\".");
 
 /**
  *
