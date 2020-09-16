@@ -24,11 +24,14 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <gflags/gflags.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
+
+DECLARE_bool(pause_in_bootloader);
 
 namespace {
 
@@ -43,7 +46,13 @@ size_t WriteEnvironment(const cuttlefish::CuttlefishConfig& config,
   // Points to the misc partition.
   // Note that the 0 index points to the GPT table.
   env << "bootdevice=0:2" << '\0';
-  env << "bootdelay=0" << '\0';
+
+  if(FLAGS_pause_in_bootloader) {
+    env << "bootdelay=-1" << '\0';
+  } else {
+    env << "bootdelay=0" << '\0';
+  }
+
   env << "bootcmd=boot_android virtio -" << '\0';
   env << '\0';
   std::string env_str = env.str();
