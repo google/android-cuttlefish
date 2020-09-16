@@ -4,18 +4,10 @@
 # and gives a bash shell inside the container, so that
 # the user can run source, lunch & m commands to build
 #
-# TODO: support commands like
-#   intrinsic commands: init, sync, build, img_build
-#   running a host script inside docker container
-#   running a guest command inside docker container
 
 # to print multi-lined helper for shflags
 function multiline_helper {
-    local aligner=''
-    for cnt in `seq 0 $1`; do
-        aligner+=' '
-    done
-
+    local aligner="$(printf '%*s' "$1")"
     local -n msgs=$2
     echo ${msgs[0]}
     for msg in "${msgs[@]:1}"; do
@@ -92,28 +84,28 @@ docker_run_opts_helper+=("  e.g. --rm,--privileged,-eENV,-vSRC:DIR,--name=MYNAME
 
 source "shflags"
 
-DEFINE_boolean rebuild_docker_img false "Rebuild cuttlefish-android-builder image" ""
-DEFINE_boolean share_gitconfig true "Allow the docker container to use the host gitconfig"
-DEFINE_boolean rm true "Pass --rm to docker run"
+DEFINE_boolean rebuild_docker_img false "Rebuild cuttlefish-android-builder image" "" "f"
+DEFINE_boolean share_gitconfig true "Allow the docker container to use the host gitconfig" "g"
+DEFINE_boolean rm true "Pass --rm to docker run" "r"
 DEFINE_string android_src_mnt \
               "" \
-              "$(multiline_helper 21 android_src_mnt_helper)"
+              "$(multiline_helper 21 android_src_mnt_helper)" "a"
 DEFINE_string op_mode \
               "bash" \
-              "$(multiline_helper 13 op_mode_helper)"
+              "$(multiline_helper 13 op_mode_helper)" "m"
 DEFINE_string lunch_target \
               "$default_lunch_target" \
-              "default lunch target used by the --op_mode=intrinsic only"
+              "default lunch target used by the --op_mode=intrinsic only" "l"
 DEFINE_string repo_src \
               "$default_repo_src" \
-              "default Android Repo source used by the --op_mode=intrinsic only"
+              "default Android Repo source used by the --op_mode=intrinsic only" "s"
 DEFINE_integer n_parallel "0" \
-               "default N for m/repo sync -j N. we use /proc/cpuinfo if 0"
+               "default N for m/repo sync -j N. we use /proc/cpuinfo if 0" "N"
 DEFINE_string instance_name \
               "cf_builder" \
-              "default name of the docker container that builds Android"
+              "default name of the docker container that builds Android" "n"
 DEFINE_string docker_run_opts "" \
-              "$(multiline_helper 21 docker_run_opts_helper)"
+              "$(multiline_helper 21 docker_run_opts_helper)" "d"
 
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
@@ -160,8 +152,8 @@ fi
 
 # global util function
 # 1: src dir, either symlink or dir
-# 2: to replace
-# 3: to be replaced
+# 2: substring to be gone
+# 3: substring to replace $2
 # echo the absolute path with $2 being replaced $3
 function calc_dst_dir() {
     local srcdir="$(realpath -s $1)"
@@ -233,11 +225,12 @@ function string_to_array() {
     local what2parse="$1"
     local -n result=$2
     local delim=${3:-','}
-    local IFS=$delim
-    echo $what2parse
-    for opt in "$what2parse"; do
-        result+=("$opt")
-    done
+    local IFS=
+    while IFS=',' read -ra opts; do
+        for op in "${opts[@]}"; do
+            result+=("$op")
+        done
+    done <<< "$what2parse"
 }
 
 # build docker image when required
@@ -383,7 +376,7 @@ function run_cf_builder() {
     fi
     docker run --name="${FLAGS_instance_name}" \
            --privileged "${opt_rm[@]}" "${env_variables[@]}" \
-           "${mount_volumes[@]}" "${dck_opts[@]}" \
+           "${mount_volumes[@]}" "${dck_usr_opts[@]}" \
            -it ${cf_builder_img_name}:${cf_builder_img_tag} \
            ${cmd_to_docker} "${parms[@]}" # all parameters are passed to cmd_to_docker
 }
