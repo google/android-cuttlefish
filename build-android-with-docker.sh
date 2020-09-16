@@ -89,10 +89,10 @@ DEFINE_boolean share_gitconfig true "Allow the docker container to use the host 
 DEFINE_boolean rm true "Pass --rm to docker run" "r"
 DEFINE_string android_src_mnt \
               "" \
-              "$(multiline_helper 21 android_src_mnt_helper)" "a"
+              "$(multiline_helper 25 android_src_mnt_helper)" "a"
 DEFINE_string op_mode \
               "bash" \
-              "$(multiline_helper 13 op_mode_helper)" "m"
+              "$(multiline_helper 17 op_mode_helper)" "m"
 DEFINE_string lunch_target \
               "$default_lunch_target" \
               "default lunch target used by the --op_mode=intrinsic only" "l"
@@ -105,7 +105,7 @@ DEFINE_string instance_name \
               "cf_builder" \
               "default name of the docker container that builds Android" "n"
 DEFINE_string docker_run_opts "" \
-              "$(multiline_helper 21 docker_run_opts_helper)" "d"
+              "$(multiline_helper 25 docker_run_opts_helper)" "d"
 
 FLAGS "$@" || exit 1
 eval set -- "${FLAGS_ARGV}"
