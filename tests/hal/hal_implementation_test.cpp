@@ -98,6 +98,7 @@ static const std::set<std::string> kKnownMissingHidl = {
 
 static const std::set<std::string> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
+    "android.hardware.biometrics.common.",
     "android.hardware.common.",
     "android.hardware.graphics.common.",
 
