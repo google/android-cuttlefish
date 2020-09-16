@@ -59,6 +59,7 @@ cc_binary {
         "libcdisk_spec",
         "libext2_uuid",
         "libsparse",
+        "libcuttlefish_graphics_detector",
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
         "libgflags",
