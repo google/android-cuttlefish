@@ -18,54 +18,55 @@ webrtc_files_path := usr/share/webrtc
 modem_simulator_path := etc/modem_simulator
 
 cvd_host_executables := \
-    adb \
-    allocd \
-    allocd_client \
-    adbshell \
-    launch_cvd \
-    lpmake \
-    lpunpack \
-    socket_vsock_proxy \
-    adb_connector \
-    stop_cvd \
-    vnc_server \
-    kernel_log_monitor \
-    extract-vmlinux \
-    crosvm \
     aarch64-linux-gnu/crosvm \
     aarch64-linux-gnu/libepoxy.so.0 \
     aarch64-linux-gnu/libgbm.so.1 \
     aarch64-linux-gnu/libminijail.so \
     aarch64-linux-gnu/libvirglrenderer.so.1 \
-    x86_64-linux-gnu/crosvm \
-    x86_64-linux-gnu/libc++.so.1 \
-    x86_64-linux-gnu/libandroid-emu-shared.so \
-    x86_64-linux-gnu/libemugl_common.so \
-    x86_64-linux-gnu/libOpenglRender.so \
-    x86_64-linux-gnu/libgfxstream_backend.so \
-    logcat_receiver \
-    config_server \
-    tombstone_receiver \
-    console_forwarder \
+    adb \
+    adb_connector \
+    adbshell \
+    allocd \
+    allocd_client \
     assemble_cvd \
-    run_cvd \
+    config_server \
+    console_forwarder \
+    crosvm \
     cvd_status \
+    detect_graphics \
+    extract-vmlinux \
+    fsck.f2fs \
+    gnss_grpc_proxy \
+    kernel_log_monitor \
+    launch_cvd \
+    log_tee \
+    logcat_receiver \
+    lpmake \
+    lpunpack \
+    lz4 \
+    make_f2fs \
+    metrics \
+    mkenvimage \
+    modem_simulator \
+    ms-tpm-20-ref \
+    newfs_msdos \
     powerwash_cvd \
+    resize.f2fs \
+    run_cvd \
+    secure_env \
+    socket_vsock_proxy \
+    stop_cvd \
+    tapsetiff \
+    tombstone_receiver \
+    vnc_server \
     webRTC \
     webrtc_operator \
-    metrics \
-    fsck.f2fs \
-    resize.f2fs \
-    make_f2fs \
-    ms-tpm-20-ref \
-    lz4 \
-    mkenvimage \
-    tapsetiff \
-    newfs_msdos \
-    secure_env \
-    log_tee \
-    modem_simulator \
-    gnss_grpc_proxy \
+    x86_64-linux-gnu/crosvm \
+    x86_64-linux-gnu/libOpenglRender.so \
+    x86_64-linux-gnu/libandroid-emu-shared.so \
+    x86_64-linux-gnu/libc++.so.1 \
+    x86_64-linux-gnu/libemugl_common.so \
+    x86_64-linux-gnu/libgfxstream_backend.so \
 
 ifneq ($(wildcard device/google/trout),)
     cvd_host_executables += android.hardware.automotive.vehicle@2.0-virtualization-grpc-server
@@ -76,66 +77,66 @@ cvd_host_tests := \
     modem_simulator_test \
 
 cvd_host_shared_libraries := \
-    libbase.so \
-    libcuttlefish_fs.so \
-    libcuttlefish_utils.so \
-    libcuttlefish_allocd_utils.so \
+    android.hardware.automotive.vehicle@2.0.so \
     cuttlefish_net.so \
-    liblog.so \
-    libnl.so \
+    libandroidicu-host.so \
+    libbase.so \
     libc++.so \
-    libcutils.so \
-    libpuresoftkeymasterdevice_host.so \
-    liblp.so \
-    libsparse-host.so \
+    libcap.so \
     libcrypto-host.so \
     libcrypto_utils.so \
-    libext4_utils.so \
-    libz-host.so \
-    libicuuc-host.so \
-    libicui18n-host.so \
-    libandroidicu-host.so \
+    libcutils.so \
+    libcuttlefish_allocd_utils.so \
     libcuttlefish_device_config.so \
-    libprotobuf-cpp-full.so \
-    libziparchive.so \
-    libvpx.so \
-    libssl-host.so \
-    libopus.so \
-    libyuv.so \
+    libcuttlefish_fs.so \
+    libcuttlefish_security.so \
+    libcuttlefish_utils.so \
+    libdrm.so \
+    libepoxy.so \
+    libext4_utils.so \
+    libfdt.so \
+    libgatekeeper.so \
+    libgbm.so \
+    libgrpc++.so \
+    libhidlbase.so \
+    libicui18n-host.so \
+    libicuuc-host.so \
     libjpeg.so \
+    libjsoncpp.so \
     libkeymaster_messages.so \
     libkeymaster_portable.so \
+    liblog.so \
+    liblp.so \
+    libminijail.so \
+    libnl.so \
+    libopus.so \
+    libprotobuf-cpp-full.so \
+    libpuresoftkeymasterdevice_host.so \
     libsoft_attestation_cert.so \
-    libcuttlefish_security.so \
+    libsparse-host.so \
+    libssl-host.so \
+    libutils.so \
+    libvirglrenderer.so \
+    libvpx.so \
+    libwayland_client.so \
+    libxml2.so \
+    libyuv.so \
+    libz-host.so \
+    libziparchive.so \
+    ms-tpm-20-ref-lib.so \
     tpm2-tss2-esys.so \
     tpm2-tss2-mu.so \
     tpm2-tss2-rc.so \
     tpm2-tss2-sys.so \
     tpm2-tss2-tcti.so \
     tpm2-tss2-util.so \
-    libgatekeeper.so \
-    ms-tpm-20-ref-lib.so \
-    libhidlbase.so \
-    libutils.so \
-    libjsoncpp.so \
-    libgrpc++.so \
-    android.hardware.automotive.vehicle@2.0.so \
-    libcap.so \
-    libdrm.so \
-    libepoxy.so \
-    libfdt.so \
-    libgbm.so \
-    libminijail.so \
-    libvirglrenderer.so \
-    libwayland_client.so \
-    libxml2.so \
 
 webrtc_assets := \
     index.html \
-    style.css \
-    js/logcat.js \
     js/app.js \
     js/cf_webrtc.js \
+    js/logcat.js \
+    style.css \
 
 webrtc_certs := \
     server.crt \
