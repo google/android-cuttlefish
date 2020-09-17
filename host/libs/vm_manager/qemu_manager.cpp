@@ -38,6 +38,7 @@
 #include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/users.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/known_paths.h"
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -200,21 +201,17 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
 
   // In kgdb mode, earlycon is an interactive console, and so early
   // dmesg will go there instead of the kernel.log
-  if (config_->console() && (config_->kgdb() || config_->use_bootloader())) {
-    qemu_cmd.AddParameter("-chardev");
-    qemu_cmd.AddParameter("socket,id=earlycon,path=",
-                          instance.console_path(), ",server,nowait");
-  } else {
+  if (!(config_->console() && (config_->kgdb() || config_->use_bootloader()))) {
     qemu_cmd.AddParameter("-chardev");
     qemu_cmd.AddParameter("file,id=earlycon,path=",
                           instance.kernel_log_pipe_name(), ",append=on");
-  }
 
-  // On ARM, -serial will imply an AMBA pl011 serial port. On x86, -serial
-  // will imply an ISA serial port. We have set up earlycon for each of these
-  // port types, so the setting here should match
-  qemu_cmd.AddParameter("-serial");
-  qemu_cmd.AddParameter("chardev:earlycon");
+    // On ARM, -serial will imply an AMBA pl011 serial port. On x86, -serial
+    // will imply an ISA serial port. We have set up earlycon for each of these
+    // port types, so the setting here should match
+    qemu_cmd.AddParameter("-serial");
+    qemu_cmd.AddParameter("chardev:earlycon");
+  }
 
   // This sets up the HVC (virtio-serial / virtio-console) port for the kernel
   // logging. This will take over the earlycon logging when the module is
@@ -232,11 +229,16 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   // This handles the Android interactive serial console - /dev/hvc1
 
   if (config_->console()) {
-    // stdin is the only currently supported way to write data to a serial port in
-    // crosvm. A file (named pipe) is used here instead of stdout to ensure only
-    // the serial port output is received by the console forwarder as crosvm may
-    // print other messages to stdout.
     if (config_->kgdb() || config_->use_bootloader()) {
+      qemu_cmd.AddParameter("-chardev");
+      qemu_cmd.AddParameter("pipe,id=earlycon,path=", instance.console_pipe_prefix());
+
+      // On ARM, -serial will imply an AMBA pl011 serial port. On x86, -serial
+      // will imply an ISA serial port. We have set up earlycon for each of these
+      // port types, so the setting here should match
+      qemu_cmd.AddParameter("-serial");
+      qemu_cmd.AddParameter("chardev:earlycon");
+
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
       // allocated to Android's serial console, and redirect it to a sink. This
@@ -246,9 +248,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
       qemu_cmd.AddParameter("null,id=hvc1");
     } else {
       qemu_cmd.AddParameter("-chardev");
-      qemu_cmd.AddParameter("socket,id=hvc1,path=", instance.console_path(),
-                            ",server,nowait");
-
+      qemu_cmd.AddParameter("pipe,id=hvc1,path=", instance.console_pipe_prefix());
     }
   } else {
     // as above, create a fake virtio-console 'sink' port when the serial
