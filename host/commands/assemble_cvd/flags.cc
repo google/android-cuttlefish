@@ -475,6 +475,11 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
       vm_manager_cmdline += " earlycon=uart8250,io,0x3f8";
 
       if (FLAGS_vm_manager == QemuManager::name()) {
+        // crosvm doesn't support ACPI PNP, but QEMU does. We need to disable
+        // it on QEMU so that the ISA serial ports aren't claimed by ACPI, so
+        // we can use serdev with platform devices instead
+        vm_manager_cmdline += " pnpacpi=off";
+
         // crosvm sets up the ramoops.xx= flags for us, but QEMU does not.
         // See external/crosvm/x86_64/src/lib.rs
         // this feature is not supported on aarch64
