@@ -115,12 +115,16 @@ std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
   return cuttlefish::AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::console_pipe_prefix() const {
+  return cuttlefish::AbsolutePath(PerInstanceInternalPath("console"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-in-pipe"));
+  return console_pipe_prefix() + ".in";
 }
 
 std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("console-out-pipe"));
+  return console_pipe_prefix() + ".out";
 }
 
 std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
