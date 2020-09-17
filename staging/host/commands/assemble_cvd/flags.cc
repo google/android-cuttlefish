@@ -360,9 +360,15 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     LOG(VERBOSE) << GetGraphicsAvailabilityString(graphics_availability);
 
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
-      LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
-                   "rendering support, enabling --gpu_mode=gfxstream.";
-      tmp_config_obj.set_gpu_mode(cuttlefish::kGpuModeGfxStream);
+        LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
+                     "rendering support.";
+      if (FLAGS_vm_manager == QemuManager::name()) {
+        LOG(INFO) << "Enabling --gpu_mode=drm_virgl.";
+        tmp_config_obj.set_gpu_mode(cuttlefish::kGpuModeDrmVirgl);
+      } else {
+        LOG(INFO) << "Enabling --gpu_mode=gfxstream.";
+        tmp_config_obj.set_gpu_mode(cuttlefish::kGpuModeGfxStream);
+      }
     } else {
       LOG(INFO) << "GPU auto mode: did not detect prerequisites for "
                    "accelerated rendering support, enabling "
