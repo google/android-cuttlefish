@@ -141,6 +141,7 @@ int main(int argc, char **argv) {
       touch_client, keyboard_client);
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
+  CHECK(streamer) << "Could not create streamer";
 
   auto display_0 = streamer->AddDisplay(
       "display_0", screen_connector->ScreenWidth(),
