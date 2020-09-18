@@ -381,15 +381,18 @@ void ClientHandler::OnCreateSDPSuccess(
   reply["type"] = "offer";
   reply["sdp"] = offer_str;
 
+  state_ = State::kAwaitingAnswer;
   send_to_client_(reply);
 }
 
 void ClientHandler::OnCreateSDPFailure(webrtc::RTCError error) {
+  state_ = State::kFailed;
   LogAndReplyError(error.message());
   Close();
 }
 
 void ClientHandler::OnSetSDPFailure(webrtc::RTCError error) {
+  state_ = State::kFailed;
   LogAndReplyError(error.message());
   LOG(ERROR) << "Error setting local description: Either there is a bug in "
                 "libwebrtc or the local description was (incorrectly) modified "
@@ -408,6 +411,14 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
   }
   auto type = message["type"].asString();
   if (type == "request-offer") {
+    // Can't check for state being different that kNew because renegotiation can
+    // start in any state after the answer is returned.
+    if (state_ == State::kCreatingOffer) {
+      // An offer has been requested already
+      LogAndReplyError("Multiple requests for offer received from single client");
+      return;
+    }
+    state_ = State::kCreatingOffer;
     peer_connection_->CreateOffer(
         // No memory leak here because this is a ref counted objects and the
         // peer connection immediately wraps it with a scoped_refptr
@@ -417,6 +428,10 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
     // The created offer wil be sent to the client on
     // OnSuccess(webrtc::SessionDescriptionInterface* desc)
   } else if (type == "answer") {
+    if (state_ != State::kAwaitingAnswer) {
+      LogAndReplyError("Received unexpected SDP answer");
+      return;
+    }
     auto result = ValidationResult::ValidateJsonObject(message, type,
                                      {{"sdp", Json::ValueType::stringValue}});
     if (!result.ok()) {
@@ -441,6 +456,7 @@ void ClientHandler::HandleMessage(const Json::Value &message) {
               }
             }));
     peer_connection_->SetRemoteDescription(std::move(remote_desc), observer);
+    state_ = State::kConnecting;
 
   } else if (type == "ice-candidate") {
     {
@@ -508,6 +524,7 @@ void ClientHandler::OnConnectionChange(
       break;
     case webrtc::PeerConnectionInterface::PeerConnectionState::kConnected:
       LOG(VERBOSE) << "Client " << client_id_ << ": WebRTC connected";
+      state_ = State::kConnected;
       observer_->OnConnected(
           [this](const uint8_t *msg, size_t size, bool binary) {
             control_handler_->Send(msg, size, binary);
@@ -559,6 +576,7 @@ void ClientHandler::OnDataChannel(
 }
 
 void ClientHandler::OnRenegotiationNeeded() {
+  state_ = State::kNew;
   LOG(VERBOSE) << "Client " << client_id_ << " needs renegotiation";
 }
 
@@ -620,6 +638,7 @@ void ClientHandler::OnStandardizedIceConnectionChange(
       LOG(DEBUG) << "ICE connection state: Completed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionFailed:
+      state_ = State::kFailed;
       LOG(DEBUG) << "ICE connection state: Failed";
       break;
     case webrtc::PeerConnectionInterface::kIceConnectionDisconnected:
