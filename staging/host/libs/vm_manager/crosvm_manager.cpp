@@ -259,7 +259,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   }
 
   if (config_->enable_gnss_grpc_proxy()) {
-    crosvm_cmd.AddParameter("--serial=hardware=serial,num=4,type=file,path=",
+    crosvm_cmd.AddParameter("--serial=hardware=serial,num=2,type=file,path=",
                             instance.gnss_out_pipe_name(), ",input=",
                             instance.gnss_in_pipe_name());
   }
