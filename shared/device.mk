@@ -480,3 +480,24 @@ PRODUCT_SOONG_NAMESPACES += external/mesa3d
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.running_without_sync_framework=true
+
+# b/143977934: Remove coverage allowlist after switching to Clang coverage.
+NATIVE_COVERAGE_PATHS := \
+    external/aac \
+    external/libaom \
+    external/libavc \
+    external/libgav1 \
+    external/libgsm \
+    external/libhevc \
+    external/libmpeg2 \
+    external/libopus \
+    external/libvpx \
+    external/libxaac \
+    external/rust \
+    external/sonivox \
+    external/tremolo \
+    frameworks/av \
+    frameworks/base/media \
+    frameworks/ml/nn \
+    packages/modules/DnsResolver \
+    system/netd
