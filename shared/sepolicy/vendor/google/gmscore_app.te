@@ -1,1 +1,3 @@
+get_prop(gmscore_app, vendor_camera_profiler_open_close_prop)
+
 gpu_access(gmscore_app)
