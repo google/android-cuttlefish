@@ -50,3 +50,6 @@ void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
 
 void LaunchVerhicleHalServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
                                       cuttlefish::ProcessMonitor* process_monitor);
+
+void LaunchConsoleForwarderIfEnabled(const cuttlefish::CuttlefishConfig& config,
+                                     cuttlefish::ProcessMonitor* process_monitor);
