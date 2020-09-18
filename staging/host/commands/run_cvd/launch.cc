@@ -449,17 +449,16 @@ void LaunchMetrics(cuttlefish::ProcessMonitor* process_monitor,
 }
 
 void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& config,
-                                      cuttlefish::ProcessMonitor* process_monitor) {
+                                        cuttlefish::ProcessMonitor* process_monitor) {
     if (!config.enable_gnss_grpc_proxy() ||
         !cuttlefish::FileExists(cuttlefish::GnssGrpcProxyBinary())) {
         return;
     }
+
     cuttlefish::Command gnss_grpc_proxy_cmd(cuttlefish::GnssGrpcProxyBinary());
     auto instance = config.ForDefaultInstance();
+
     auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
-
-    auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
-
     if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
       auto error = errno;
       LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
@@ -467,12 +466,14 @@ void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& conf
       return;
     }
 
+    auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
     if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
       auto error = errno;
       LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
                 << strerror(error);
       return;
     }
+
     // These fds will only be read from or written to, but open them with
     // read and write access to keep them open in case the subprocesses exit
     cuttlefish::SharedFD gnss_grpc_proxy_in_wr =
@@ -482,6 +483,7 @@ void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& conf
                 << gnss_grpc_proxy_in_wr->StrError();
       return;
     }
+
     cuttlefish::SharedFD gnss_grpc_proxy_out_rd =
         cuttlefish::SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
     if (!gnss_grpc_proxy_out_rd->IsOpen()) {
@@ -496,7 +498,6 @@ void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& conf
     gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=", gnss_grpc_proxy_server_port);
     process_monitor->StartSubprocess(std::move(gnss_grpc_proxy_cmd),
                                      GetOnSubprocessExitCallback(config));
-
 }
 
 void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
