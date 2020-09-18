@@ -507,11 +507,9 @@ int main(int argc, char** argv) {
   LOG(INFO) << kGreenColor
             << "The following files contain useful debugging information:"
             << kResetColor;
-  if (config->run_as_daemon()) {
-    LOG(INFO) << kGreenColor
-              << "  Launcher log: " << instance.launcher_log_path()
-              << kResetColor;
-  }
+  LOG(INFO) << kGreenColor
+            << "  Launcher log: " << instance.launcher_log_path()
+            << kResetColor;
   LOG(INFO) << kGreenColor
             << "  Android's logcat output: " << instance.logcat_path()
             << kResetColor;
