@@ -231,49 +231,15 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=1,type=file,path=",
                           instance.kernel_log_pipe_name(), ",console=true");
 
-  std::vector<cuttlefish::Command> ret;
-
   if (config_->console()) {
-    auto console_in_pipe_name = instance.console_in_pipe_name();
-    if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create console input fifo for crosvm: "
-                 << strerror(error);
-      return {};
-    }
-    auto console_out_pipe_name = instance.console_out_pipe_name();
-    if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create console output fifo for crosvm: "
-                 << strerror(error);
-      return {};
-    }
-
-    // These fds will only be read from or written to, but open them with
-    // read and write access to keep them open in case the subprocesses exit
-    cuttlefish::SharedFD console_in_wr =
-        cuttlefish::SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-    if (!console_in_wr->IsOpen()) {
-      LOG(ERROR) << "Failed to open console input fifo for writes: "
-                 << console_in_wr->StrError();
-      return {};
-    }
-    cuttlefish::SharedFD console_out_rd =
-        cuttlefish::SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-    if (!console_out_rd->IsOpen()) {
-      LOG(ERROR) << "Failed to open console output fifo for reads: "
-                 << console_out_rd->StrError();
-      return {};
-    }
-
     // stdin is the only currently supported way to write data to a serial port in
     // crosvm. A file (named pipe) is used here instead of stdout to ensure only
     // the serial port output is received by the console forwarder as crosvm may
     // print other messages to stdout.
     if (config_->kgdb() || config_->use_bootloader()) {
       crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
-                              console_out_pipe_name, ",input=", console_in_pipe_name,
-                              ",earlycon=true");
+                              instance.console_out_pipe_name(), ",input=",
+                              instance.console_in_pipe_name(), ",earlycon=true");
       // In kgdb mode, we have the interactive console on ttyS0 (both Android's
       // console and kdb), so we can disable the virtio-console port usually
       // allocated to Android's serial console, and redirect it to a sink. This
@@ -282,13 +248,9 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
       crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=sink");
     } else {
       crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=file,path=",
-                              console_out_pipe_name, ",input=", console_in_pipe_name);
+                              instance.console_out_pipe_name(), ",input=",
+                              instance.console_in_pipe_name());
     }
-
-    cuttlefish::Command console_cmd(ConsoleForwarderBinary());
-    console_cmd.AddParameter("--console_in_fd=", console_in_wr);
-    console_cmd.AddParameter("--console_out_fd=", console_out_rd);
-    ret.push_back(std::move(console_cmd));
   } else {
     // as above, create a fake virtio-console 'sink' port when the serial
     // console is disabled, so the PCI device ID assignments don't move
@@ -297,14 +259,9 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   }
 
   if (config_->enable_gnss_grpc_proxy()) {
-    auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
-    auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
-
-   
- 
     crosvm_cmd.AddParameter("--serial=hardware=serial,num=4,type=file,path=",
-                        gnss_out_pipe_name,
-                        ",input=", gnss_in_pipe_name);
+                            instance.gnss_out_pipe_name(), ",input=",
+                            instance.gnss_in_pipe_name());
   }
 
   cuttlefish::SharedFD log_out_rd, log_out_wr;
@@ -321,7 +278,6 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   cuttlefish::Command log_tee_cmd(cuttlefish::DefaultHostArtifactsPath("bin/log_tee"));
   log_tee_cmd.AddParameter("--process_name=crosvm");
   log_tee_cmd.AddParameter("--log_fd_in=", log_out_rd);
-  ret.push_back(std::move(log_tee_cmd));
 
   // Serial port for logcat, redirected to a pipe
   crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=3,type=file,path=",
@@ -356,8 +312,9 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
     }
   }
 
+  std::vector<cuttlefish::Command> ret;
   ret.push_back(std::move(crosvm_cmd));
-
+  ret.push_back(std::move(log_tee_cmd));
   return ret;
 }
 
