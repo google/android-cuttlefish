@@ -264,6 +264,14 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands() {
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtconsole,bus=virtio-serial1.0,chardev=hvc1");
 
+  if (config_->enable_gnss_grpc_proxy()) {
+      qemu_cmd.AddParameter("-chardev");
+      qemu_cmd.AddParameter("pipe,id=gnss,path=", instance.gnss_pipe_prefix());
+
+      qemu_cmd.AddParameter("-serial");
+      qemu_cmd.AddParameter("chardev:gnss");
+  }
+
   // If configured, this handles logcat forwarding to the host via serial
   // (instead of vsocket) - /dev/hvc2
 
