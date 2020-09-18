@@ -93,6 +93,14 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
       rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
 
  private:
+  enum class State {
+      kNew,
+      kCreatingOffer,
+      kAwaitingAnswer,
+      kConnecting,
+      kConnected,
+      kFailed,
+  };
   ClientHandler(int client_id, std::shared_ptr<ConnectionObserver> observer,
                 std::function<void(const Json::Value&)> send_client_cb,
                 std::function<void()> on_connection_closed_cb);
@@ -103,6 +111,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   void LogAndReplyError(const std::string& error_msg) const;
 
   int client_id_;
+  State state_ = State::kNew;
   std::shared_ptr<ConnectionObserver> observer_;
   std::function<void(const Json::Value&)> send_to_client_;
   std::function<void()> on_connection_closed_cb_;
