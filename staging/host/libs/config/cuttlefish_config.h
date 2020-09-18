@@ -286,6 +286,10 @@ class CuttlefishConfig {
   void set_kgdb(bool kgdb);
   bool kgdb() const;
 
+  // Serial console
+  void set_console(bool console);
+  bool console() const;
+
   // Configuration flags for a minimal device
   bool enable_minimal_mode() const;
   void set_enable_minimal_mode(bool enable_minimal_mode);

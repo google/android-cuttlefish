@@ -501,8 +501,14 @@ int main(int argc, char** argv) {
 
   PrintStreamingInformation(*config);
 
-  LOG(INFO) << kGreenColor << "To access the console run: screen "
-            << instance.console_path() << kResetColor;
+  if (config->console()) {
+    LOG(INFO) << kGreenColor << "To access the console run: screen "
+              << instance.console_path() << kResetColor;
+  } else {
+    LOG(INFO) << kGreenColor
+              << "Serial console is disabled; use -console=true to enable it"
+              << kResetColor;
+  }
 
   LOG(INFO) << kGreenColor
             << "The following files contain useful debugging information:"
