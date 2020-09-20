@@ -34,4 +34,3 @@ function build() {
 
 build
 [[ $is_mv_debs == "true" ]] && cp -f $cuttlefish_root/../*.deb ${outdir}/
-

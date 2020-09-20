@@ -29,3 +29,4 @@ RUN useradd -ms /bin/bash vsoc-01 -d /home/vsoc-01 -u $UID \
     && passwd -d vsoc-01 \
     && echo 'vsoc-01 ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
+RUN mkdir -p /home/vsoc-01/host/android-cuttlefish && chown -R vsoc-01 /home/vsoc-01

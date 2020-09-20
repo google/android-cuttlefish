@@ -3,7 +3,7 @@
 source "shflags"
 
 DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor"
-DEFINE_boolean rebuild_debs false "Forcefully rebuild deb packages. If false, builds only when missing."
+DEFINE_boolean rebuild_debs true "Rebuild deb packages. If false, builds only when any .deb is missing in ./out/"
 
 FLAGS "$@" || exit 1
 
@@ -137,6 +137,9 @@ function is_rebuild_debs() {
 }
 
 if is_rebuild_debs; then
-    ./debs-builder-docker/build-debs-with-docker.sh
+    echo "###"
+    echo "### Building ,deb Host packages"
+    echo "###"
+    ./debs-builder-docker/build-debs-with-docker.sh --noverbose
 fi
 build_docker_image $*
