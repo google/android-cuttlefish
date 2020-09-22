@@ -1,4 +1,3 @@
-vendor_internal_prop(vendor_init_radio_prop)
 vendor_internal_prop(vendor_graphics_config_prop)
 vendor_internal_prop(vendor_fstab_name_prop)
 
@@ -7,8 +6,6 @@ allow vendor_init {
 }:chr_file { getattr };
 
 set_prop(vendor_init, vendor_bt_rootcanal_prop)
-
-set_prop(vendor_init, vendor_init_radio_prop)
 
 get_prop(vendor_init, vendor_ser_prop)
 
