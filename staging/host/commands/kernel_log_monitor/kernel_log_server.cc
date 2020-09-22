@@ -70,7 +70,7 @@ KernelLogServer::KernelLogServer(cuttlefish::SharedFD pipe_fd,
                                  const std::string& log_name,
                                  bool deprecated_boot_completed)
     : pipe_fd_(pipe_fd),
-      log_fd_(cuttlefish::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR, 0666)),
+      log_fd_(cuttlefish::SharedFD::Open(log_name.c_str(), O_CREAT | O_RDWR | O_APPEND, 0666)),
       deprecated_boot_completed_(deprecated_boot_completed) {}
 
 void KernelLogServer::BeforeSelect(cuttlefish::SharedFDSet* fd_read) const {
