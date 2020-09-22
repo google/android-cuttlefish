@@ -1,8 +1,23 @@
 #!/bin/bash
 
+# tell if the distro is Debian
+function is_debian_distro {
+  if [[ -f /etc/debian_version ]]; then
+      return 0
+  fi
+  # debian based distro mostly have /etc/debian_version
+  # if ever not, use the whitelists
+  if ls -1 /etc/*release | egrep "(debian|buntu|mint)" > /dev/null 2>&1; then
+      return 0
+  fi
+  return 1
+}
+
 source "shflags"
 
-DEFINE_boolean detect_gpu true "Attempt to detect the GPU vendor"
+DEFINE_boolean detect_gpu \
+               "$(is_debian_distro && echo true || echo false)" \
+               "Attempt to detect the GPU vendor"
 DEFINE_boolean rebuild_debs true "Rebuild deb packages. If false, builds only when any .deb is missing in ./out/"
 
 FLAGS "$@" || exit 1
@@ -24,17 +39,21 @@ function detect_gpu {
   done
 }
 
-
 OEM=
 if [[ ${FLAGS_detect_gpu} -eq ${FLAGS_TRUE} ]]; then
-  OEM=$(detect_gpu)
-else
+  if is_debian_distro; then
+      OEM=$(detect_gpu)
+  else
+      echo "Warning: --detect_gpu works only on Debian-based systems"
+      echo
+  fi
+fi
+
+if [ -z "${OEM}" ]; then
   echo "###"
   echo "### Building without physical-GPU support"
   echo "###"
-fi
-
-if [ -n "${OEM}" ]; then
+else
   echo "###"
   echo "### GPU is ${OEM}"
   echo "###"
