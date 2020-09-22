@@ -60,10 +60,12 @@ const std::set<std::string> kDefaultTargetImages = {
   "IMAGES/boot.img",
   "IMAGES/cache.img",
   "IMAGES/odm.img",
+  "IMAGES/odm_dlkm.img",
   "IMAGES/recovery.img",
   "IMAGES/userdata.img",
   "IMAGES/vbmeta.img",
   "IMAGES/vendor.img",
+  "IMAGES/vendor_dlkm.img",
 };
 const std::set<std::string> kDefaultTargetBuildProp = {
   "ODM/build.prop",
@@ -133,15 +135,12 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
   }
   auto output_misc = default_misc;
   auto system_super_partitions = SuperPartitionComponents(system_misc);
-  if (std::find(system_super_partitions.begin(), system_super_partitions.end(),
-                "odm") == system_super_partitions.end()) {
-    // odm is not one of the partitions skipped by the system check
-    system_super_partitions.push_back("odm");
-  }
-  if (std::find(system_super_partitions.begin(), system_super_partitions.end(),
-                "vendor") == system_super_partitions.end()) {
-    // vendor is always required, but may be missing from the system partitions
-    system_super_partitions.push_back("vendor");
+  // Ensure specific skipped partitions end up in the misc_info.txt
+  for (auto partition : {"odm", "odm_dlkm", "vendor", "vendor_dlkm"}) {
+    if (std::find(system_super_partitions.begin(), system_super_partitions.end(),
+                  partition) == system_super_partitions.end()) {
+      system_super_partitions.push_back(partition);
+    }
   }
   SetSuperPartitionComponents(system_super_partitions, &output_misc);
   auto misc_output_path = output_path + "/" + kMiscInfoPath;
