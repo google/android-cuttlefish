@@ -493,6 +493,11 @@ PRODUCT_PACKAGES += \
 # GKI APEX
 PRODUCT_PACKAGES += com.android.gki.kmi_5_4_android12_0
 
+# Prevent GKI and boot image downgrades
+PRODUCT_PRODUCT_PROPERTIES += \
+    ro.build.ab_update.gki.prevent_downgrade_version=true \
+    ro.build.ab_update.gki.prevent_downgrade_spl=true \
+
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
