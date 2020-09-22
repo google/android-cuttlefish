@@ -81,7 +81,6 @@ docker_run_opts_helper=("passing arguments to docker run, not the guest/host scr
 docker_run_opts_helper+=("  comma separated, and no space is allowed.")
 docker_run_opts_helper+=("  e.g. --rm,--privileged,-eENV,-vSRC:DIR,--name=MYNAME")
 
-
 source "shflags"
 
 DEFINE_boolean rebuild_docker_img false "Rebuild cuttlefish-android-builder image" "" "f"
