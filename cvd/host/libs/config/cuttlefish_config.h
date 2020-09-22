@@ -323,6 +323,9 @@ class CuttlefishConfig {
   void set_ethernet(bool ethernet);
   bool ethernet() const;
 
+  void set_record_screen(bool record_screen);
+  bool record_screen() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
