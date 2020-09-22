@@ -13,8 +13,6 @@ ro.boot.vsock_keymaster_port  u:object_r:vendor_vsock_keymaster_port_prop:s0
 ro.boot.modem_simulator_ports  u:object_r:vendor_modem_simulator_ports_prop:s0
 ro.boot.vsock_touch_port  u:object_r:vendor_vsock_touch_port:s0
 ro.boot.wifi_mac_address  u:object_r:vendor_wifi_mac_address:s0
-ro.cdma.home.operator.alpha  u:object_r:vendor_init_radio_prop:s0
-ro.cdma.home.operator.numeric  u:object_r:vendor_init_radio_prop:s0
 vendor.bt.rootcanal_mac_address  u:object_r:vendor_bt_rootcanal_prop:s0
 vendor.bt.rootcanal_test_console  u:object_r:vendor_bt_rootcanal_prop:s0
 vendor.ser.  u:object_r:vendor_ser_prop:s0
