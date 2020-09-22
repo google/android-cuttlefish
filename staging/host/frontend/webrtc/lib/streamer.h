@@ -52,6 +52,7 @@ struct StreamerConfig {
 
 class OperatorObserver {
  public:
+  virtual ~OperatorObserver() = default;
   // Called when the websocket connection with the operator is established.
   virtual void OnRegistered() = 0;
   // Called when the websocket connection with the operator is closed.
