@@ -382,6 +382,13 @@ class FileInstance {
     return rval;
   }
 
+  bool IsATTY() {
+    errno = 0;
+    int rval = isatty(fd_);
+    errno_ = errno;
+    return rval;
+  }
+
  private:
   FileInstance(int fd, int in_errno) : fd_(fd), errno_(in_errno) {
     // Ensure every file descriptor managed by a FileInstance has the CLOEXEC
