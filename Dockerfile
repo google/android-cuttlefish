@@ -79,8 +79,6 @@ RUN sed -i -r -e 's/^#{0,1}\s*PasswordAuthentication\s+(yes|no)/PasswordAuthenti
 
 WORKDIR /home/vsoc-01
 
-COPY --chown=vsoc-01 download-aosp.sh .
-
 VOLUME [ "/home/vsoc-01" ]
 
 FROM cuttlefish-softgpu AS cuttlefish-hwgpu
