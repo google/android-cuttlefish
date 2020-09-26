@@ -128,8 +128,6 @@ function cvd_docker_create {
     # C | --cuttlefish[=/PATH to host package file]
     # h | --help
 
-  set -x
-
   local params
   if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
@@ -138,6 +136,12 @@ function cvd_docker_create {
 			  -m|--share_dir)
 				  share_dir="true"
 				  shared_dir_pairs+=("$2")
+				  for sub in "${shared_dir_pairs[@]}"; do
+					  if ! echo ${sub} | egrep ":" > /dev/null; then
+						  echo "Argument ${sub} to $1 is ill-formated, should be host_dir:mnt_dir" 1>&2
+						  need_help="true"
+					  fi
+				  done
 				  shift 2
 				  ;;
 			  -A|--android)
@@ -255,11 +259,6 @@ function cvd_docker_create {
             local host_pwd=$(realpath -s "$PWD")
             local guest_home="/home/vsoc-01"
             for sub in "${shared_dir_pairs[@]}"; do
-                if ! echo ${sub} | egrep ":" > /dev/null; then
-                    echo "${sub} is ill-formated. should be host_dir:mnt_dir" 1>&2
-                    echo "try $FUNCNAME --help" 1>&2
-                    return
-                fi
                 local host_dir="$(echo $sub | cut -d ':' -f 1)"
                 local guest_dir="$(echo $sub | cut -d ':' -f 2)"
                 if ! is_absolute_path ${host_dir}; then
