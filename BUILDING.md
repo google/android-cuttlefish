@@ -176,15 +176,18 @@ scp *.img vsoc-01@${ip_cuttlefish}:~/
 As an aid, if you would like to fetch the latest Cuttlefish build from AOSP:
 
 ```bash
-ssh vsoc-01@${ip_cuttlefish} -- './download-aosp $(uname -m)'
+ssh vsoc-01@${ip_cuttlefish} -- './download-aosp -A -C -a $(uname -m)'
 ```
 
+-A and -C respectively enable the download of Android images and the
+host package. -a indicates the architecture.
+
 Note that if you want to run Cuttlefish built for x86, you will probably have to
-invoke ./download-aosp with the argument 'x86', since your machine will most
+invoke ./download-aosp with the arguments -a 'x86', since your machine will most
 likely be 'x86_64':
 
 ```bash
-ssh vsoc-01@${ip_cuttlefish} -- './download-aosp x86'
+ssh vsoc-01@${ip_cuttlefish} -- './download-aosp  -A -C -a x86'
 ```
 
 # Launching Cuttlefish inside a container
