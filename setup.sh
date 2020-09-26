@@ -128,6 +128,8 @@ function cvd_docker_create {
     # C | --cuttlefish[=/PATH to host package file]
     # h | --help
 
+  set -x
+
   local params
   if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
@@ -266,7 +268,7 @@ function cvd_docker_create {
                 if ! is_absolute_path ${guest_dir}; then
                     guest_dir="${guest_home}/${guest_dir}"
                 fi
-                host_dir=${realpath $host_dir} # resolve symbolic link only on the host side
+                host_dir=$(realpath ${host_dir}) # resolve symbolic link only on the host side
                 volumes+=("-v ${host_dir}:${guest_dir}")
             done
         fi
