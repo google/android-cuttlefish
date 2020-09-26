@@ -255,8 +255,8 @@ function cvd_docker_create {
             for sub in "${shared_dir_pairs[@]}"; do
                 if ! echo ${sub} | egrep ":" > /dev/null; then
                     echo "${sub} is ill-formated. should be host_dir:mnt_dir" 1>&2
-                    echo "try $0 --help" 1>&2
-                    exit 10
+                    echo "try $FUNCNAME --help" 1>&2
+                    return
                 fi
                 local host_dir="$(echo $sub | cut -d ':' -f 1)"
                 local guest_dir="$(echo $sub | cut -d ':' -f 2)"
