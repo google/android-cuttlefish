@@ -220,7 +220,7 @@ function cvd_docker_create {
     local name="$(cvd_get_id $name)"
     local container="$(cvd_container_exists $name)"
 
-    local -a volumes=()
+	local -a volumes=("-v $(pwd)/download-aosp.sh:/home/vsoc-01/download-aosp.sh:ro")
     if [[ -z "${container}" ]]; then
 	    echo "Container ${name} does not exist.";
 
