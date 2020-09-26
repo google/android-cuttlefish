@@ -230,6 +230,12 @@ function cvd_docker_create {
     if [[ -z "${container}" ]]; then
 	    echo "Container ${name} does not exist.";
 
+        local cf_instance=$(cvd_allocate_instance_id)
+        if [ "${cf_instance}" -gt 7 ]; then
+                echo "Limit is maximum 8 Cuttlefish instances."
+                return
+        fi
+
 	    if [[ -f "${cuttlefish}" ]]; then
 		    local home="$(mktemp -d)"
 		    echo "Setting up Cuttlefish host image from ${cuttlefish} in ${home}."
@@ -277,12 +283,6 @@ function cvd_docker_create {
 		    as_host_x+=("-e DISPLAY=$DISPLAY")
 		    as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
 	    fi
-
-        local cf_instance=$(cvd_allocate_instance_id)
-        if [ "${cf_instance}" -gt 7 ]; then
-                echo "Limit is maximum 8 Cuttlefish instances."
-                return
-        fi
 
         echo "Starting container ${name} (id ${cf_instance}) from image cuttlefish.";
 	    docker run -d ${as_host_x[@]} \
