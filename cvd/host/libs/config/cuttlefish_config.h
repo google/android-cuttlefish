@@ -18,6 +18,7 @@
 #include <sys/types.h>
 #include <array>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <string>
 #include <set>
@@ -302,6 +303,9 @@ class CuttlefishConfig {
 
   void set_modem_simulator_sim_type(int sim_type);
   int modem_simulator_sim_type() const;
+
+  void set_host_tools_version(const std::map<std::string, uint32_t>&);
+  std::map<std::string, uint32_t> host_tools_version() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
