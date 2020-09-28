@@ -19,11 +19,14 @@ def upload_artifacts(args):
   dir = os.getcwd()
   try:
     os.chdir(args.image_dir)
-    images = glob.glob('*.img')
-    if len(images) == 0:
+    artifacts = []
+    artifact_patterns = ['*.img', 'bootloader']
+    for artifact_pattern in artifact_patterns:
+      artifacts.extend(glob.glob(artifact_pattern))
+    if len(artifacts) == 0:
       raise OSError('No images found in: %s' + args.image_dir)
     subprocess.check_call(
-        'tar -c -f - --lzop -S ' + ' '.join(images) +
+        'tar -c -f - --lzop -S ' + ' '.join(artifacts) +
         ' | ' +
         gcloud_ssh(args) + '-- tar -x -f - --lzop -S',
         shell=True)
