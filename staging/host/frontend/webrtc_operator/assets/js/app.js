@@ -270,11 +270,16 @@ function ShowNewDeviceList(device_ids) {
   let ul = document.getElementById('device_list');
   ul.innerHTML = "";
   let count = 1;
+  let device_to_button_map = {};
   for (const dev_id of device_ids) {
     const button_id = 'connect_' + count++;
     ul.innerHTML += ('<li class="device_entry" title="Connect to ' + dev_id
                      + '">' + dev_id + '<button id="' + button_id
                      + '" >Connect</button></li>');
+    device_to_button_map[dev_id] = button_id;
+  }
+
+  for (const [dev_id, button_id] of Object.entries(device_to_button_map)) {
     document.getElementById(button_id).addEventListener(
         'click', evt => ConnectDeviceCb(dev_id));
   }
