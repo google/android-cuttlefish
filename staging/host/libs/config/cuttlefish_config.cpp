@@ -162,6 +162,8 @@ const char* kEnableMinimalMode = "enable_minimal_mode";
 
 const char* kConsole = "console";
 
+const char* kHostToolsVersion = "host_tools_version";
+
 }  // namespace
 
 namespace cuttlefish {
@@ -627,6 +629,27 @@ void CuttlefishConfig::set_modem_simulator_sim_type(int sim_type) {
 
 int CuttlefishConfig::modem_simulator_sim_type() const {
   return (*dictionary_)[kModemSimulatorSimType].asInt();
+}
+
+void CuttlefishConfig::set_host_tools_version(
+    const std::map<std::string, uint32_t>& versions) {
+  Json::Value json(Json::objectValue);
+  for (const auto& [key, value] : versions) {
+    json[key] = value;
+  }
+  (*dictionary_)[kHostToolsVersion] = json;
+}
+
+std::map<std::string, uint32_t> CuttlefishConfig::host_tools_version() const {
+  if (!dictionary_->isMember(kHostToolsVersion)) {
+    return {};
+  }
+  std::map<std::string, uint32_t> versions;
+  const auto& elem = (*dictionary_)[kHostToolsVersion];
+  for (auto it = elem.begin(); it != elem.end(); it++) {
+    versions[it.key().asString()] = it->asUInt();
+  }
+  return versions;
 }
 
 void CuttlefishConfig::set_guest_enforce_security(bool guest_enforce_security) {

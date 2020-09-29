@@ -32,6 +32,7 @@
 #include "host/libs/allocd/utils.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/fetcher_config.h"
+#include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -567,6 +568,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
       tmp_config_obj.set_initramfs_path(foreign_ramdisk);
     }
   }
+
+  tmp_config_obj.set_host_tools_version(cuttlefish::HostToolsCrc());
 
   tmp_config_obj.set_deprecated_boot_completed(FLAGS_deprecated_boot_completed);
 
