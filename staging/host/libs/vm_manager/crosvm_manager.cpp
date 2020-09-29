@@ -105,14 +105,6 @@ std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode
     };
   }
 
-  // Try to load the Nvidia modeset kernel module. Running Crosvm with Nvidia's EGL library on a
-  // fresh machine after a boot will fail because the Nvidia EGL library will fork to run the
-  // nvidia-modprobe command and the main Crosvm process will abort after receiving the exit signal
-  // of the forked child which is interpreted as a failure.
-  cuttlefish::Command modprobe_cmd("/usr/bin/nvidia-modprobe");
-  modprobe_cmd.AddParameter("--modeset");
-  modprobe_cmd.Start().Wait();
-
   if (gpu_mode == cuttlefish::kGpuModeDrmVirgl) {
     return {
       "androidboot.hardware.gralloc=minigbm",
