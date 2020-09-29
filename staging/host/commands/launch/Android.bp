@@ -27,6 +27,7 @@ cc_binary {
         "libjsoncpp",
         "libnl",
         "libxml2",
+        "libz",
     ],
     static_libs: [
         "libcuttlefish_host_config",
