@@ -18,7 +18,6 @@
 #include <sys/types.h>
 #include <array>
 #include <cstdint>
-#include <map>
 #include <memory>
 #include <string>
 #include <set>
@@ -279,6 +278,11 @@ class CuttlefishConfig {
   void set_sig_server_strict(bool strict);
   bool sig_server_strict() const;
 
+  // A file containing http headers to include in the connection to the
+  // signaling server
+  void set_sig_server_headers_path(const std::string& path);
+  std::string sig_server_headers_path() const;
+
   // The dns address of mobile network (RIL)
   void set_ril_dns(const std::string& ril_dns);
   std::string ril_dns() const;
@@ -303,9 +307,6 @@ class CuttlefishConfig {
 
   void set_modem_simulator_sim_type(int sim_type);
   int modem_simulator_sim_type() const;
-
-  void set_host_tools_version(const std::map<std::string, uint32_t>&);
-  std::map<std::string, uint32_t> host_tools_version() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
