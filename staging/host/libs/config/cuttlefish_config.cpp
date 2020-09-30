@@ -133,6 +133,7 @@ const char* kSigServerPath = "webrtc_sig_server_path";
 const char* kSigServerStrict = "webrtc_sig_server_strict";
 const char* kWebrtcUdpPortRange = "webrtc_udp_port_range";
 const char* kWebrtcTcpPortRange = "webrtc_tcp_port_range";
+const char* kSigServerHeadersPath = "webrtc_sig_server_headers_path";
 
 const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
@@ -604,6 +605,14 @@ void CuttlefishConfig::set_sig_server_strict(bool strict) {
 
 bool CuttlefishConfig::sig_server_strict() const {
   return (*dictionary_)[kSigServerStrict].asBool();
+}
+
+void CuttlefishConfig::set_sig_server_headers_path(const std::string& path) {
+  SetPath(kSigServerHeadersPath, path);
+}
+
+std::string CuttlefishConfig::sig_server_headers_path() const {
+  return (*dictionary_)[kSigServerHeadersPath].asString();
 }
 
 bool CuttlefishConfig::enable_modem_simulator() const {
