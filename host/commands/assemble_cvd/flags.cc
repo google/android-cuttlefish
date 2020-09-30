@@ -45,7 +45,7 @@ using cuttlefish::RandomSerialNumber;
 using cuttlefish::AssemblerExitCodes;
 using cuttlefish::vm_manager::CrosvmManager;
 using cuttlefish::vm_manager::QemuManager;
-using cuttlefish::vm_manager::VmManager;
+using cuttlefish::vm_manager::GetVmManager;
 
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -355,7 +355,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   cuttlefish::CuttlefishConfig tmp_config_obj;
   tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
-  if (!VmManager::IsValidName(FLAGS_vm_manager)) {
+  auto vmm = GetVmManager(FLAGS_vm_manager);
+  if (!vmm) {
     LOG(FATAL) << "Invalid vm_manager: " << FLAGS_vm_manager;
   }
   tmp_config_obj.set_vm_manager(FLAGS_vm_manager);
@@ -402,8 +403,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
   }
 
-  if (VmManager::ConfigureGpuMode(tmp_config_obj.vm_manager(),
-                                  tmp_config_obj.gpu_mode()).empty()) {
+  if (vmm->ConfigureGpuMode(tmp_config_obj.gpu_mode()).empty()) {
     LOG(FATAL) << "Invalid gpu_mode=" << FLAGS_gpu_mode <<
                " does not work with vm_manager=" << FLAGS_vm_manager;
   }
