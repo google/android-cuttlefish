@@ -112,6 +112,7 @@ PRODUCT_PACKAGES += \
     cuttlefish_rotate \
     rename_netiface \
     setup_wifi \
+    shutdown_helper \
     socket_vsock_proxy \
     tombstone_transmit \
     tombstone_producer \
