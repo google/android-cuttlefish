@@ -64,7 +64,8 @@ class WsConnectionContext {
   virtual std::shared_ptr<WsConnection> CreateConnection(
       int port, const std::string& addr, const std::string& path,
       WsConnection::Security secure,
-      std::weak_ptr<WsConnectionObserver> observer) = 0;
+      std::weak_ptr<WsConnectionObserver> observer,
+      const std::vector<std::pair<std::string, std::string>>& headers = {}) = 0;
 
  protected:
   WsConnectionContext() = default;
