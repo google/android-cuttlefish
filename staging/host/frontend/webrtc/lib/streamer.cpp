@@ -224,7 +224,7 @@ void StreamerImpl::Register(std::weak_ptr<OperatorObserver> observer) {
     server_connection_ = ws_context->CreateConnection(
         config_.operator_server.port, config_.operator_server.addr,
         config_.operator_server.path, config_.operator_server.security,
-        ws_observer_);
+        ws_observer_, config_.operator_server.http_headers);
 
     CHECK(server_connection_) << "Unable to create websocket connection object";
 

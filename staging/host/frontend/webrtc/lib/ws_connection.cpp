@@ -28,10 +28,12 @@ class WsConnectionImpl : public WsConnection,
     std::weak_ptr<WsConnectionImpl> weak_this;
   };
 
-  WsConnectionImpl(int port, const std::string& addr, const std::string& path,
-                   Security secure,
-                   std::weak_ptr<WsConnectionObserver> observer,
-                   std::shared_ptr<WsConnectionContextImpl> context);
+  WsConnectionImpl(
+      int port, const std::string& addr, const std::string& path,
+      Security secure,
+      const std::vector<std::pair<std::string, std::string>>& headers,
+      std::weak_ptr<WsConnectionObserver> observer,
+      std::shared_ptr<WsConnectionContextImpl> context);
 
   ~WsConnectionImpl() override;
 
@@ -45,6 +47,8 @@ class WsConnectionImpl : public WsConnection,
   void OnOpen();
   void OnClose();
   void OnWriteable();
+
+  void AddHttpHeaders(unsigned char** p, unsigned char* end) const;
 
  private:
   struct WsBuffer {
@@ -69,6 +73,7 @@ class WsConnectionImpl : public WsConnection,
   const std::string addr_;
   const std::string path_;
   const Security security_;
+  const std::vector<std::pair<std::string, std::string>> headers_;
 
   std::weak_ptr<WsConnectionObserver> observer_;
 
@@ -90,7 +95,8 @@ class WsConnectionContextImpl
   std::shared_ptr<WsConnection> CreateConnection(
       int port, const std::string& addr, const std::string& path,
       WsConnection::Security secure,
-      std::weak_ptr<WsConnectionObserver> observer) override;
+      std::weak_ptr<WsConnectionObserver> observer,
+      const std::vector<std::pair<std::string, std::string>>& headers) override;
 
   void RememberConnection(void*, std::weak_ptr<WsConnectionImpl>);
   void ForgetConnection(void*);
@@ -175,9 +181,10 @@ void WsConnectionContextImpl::Start() {
 std::shared_ptr<WsConnection> WsConnectionContextImpl::CreateConnection(
     int port, const std::string& addr, const std::string& path,
     WsConnection::Security security,
-    std::weak_ptr<WsConnectionObserver> observer) {
+    std::weak_ptr<WsConnectionObserver> observer,
+    const std::vector<std::pair<std::string, std::string>>& headers) {
   return std::shared_ptr<WsConnection>(new WsConnectionImpl(
-      port, addr, path, security, observer, shared_from_this()));
+      port, addr, path, security, headers, observer, shared_from_this()));
 }
 
 std::shared_ptr<WsConnectionImpl> WsConnectionContextImpl::GetConnection(
@@ -210,12 +217,15 @@ void WsConnectionContextImpl::ForgetConnection(void* raw) {
 
 WsConnectionImpl::WsConnectionImpl(
     int port, const std::string& addr, const std::string& path,
-    Security security, std::weak_ptr<WsConnectionObserver> observer,
+    Security security,
+    const std::vector<std::pair<std::string, std::string>>& headers,
+    std::weak_ptr<WsConnectionObserver> observer,
     std::shared_ptr<WsConnectionContextImpl> context)
     : port_(port),
       addr_(addr),
       path_(path),
       security_(security),
+      headers_(headers),
       observer_(observer),
       context_(context) {}
 
@@ -231,6 +241,25 @@ void WsConnectionImpl::Connect() {
   extended_sul_.weak_this = weak_from_this();
   lws_sul_schedule(context_->lws_context(), 0, &extended_sul_.sul,
                    CreateConnectionCallback, 1);
+}
+
+void WsConnectionImpl::AddHttpHeaders(unsigned char** p,
+                                      unsigned char* end) const {
+  for (const auto& header_entry: headers_) {
+    const auto& name = header_entry.first;
+    const auto& value = header_entry.second;
+    auto res = lws_add_http_header_by_name(
+        wsi_, reinterpret_cast<const unsigned char*>(name.c_str()),
+        reinterpret_cast<const unsigned char*>(value.c_str()), value.size(), p,
+        end);
+    if (res != 0) {
+      LOG(ERROR) << "Unable to add header: " << name;
+    }
+  }
+  if (!headers_.empty()) {
+    // Let LWS know we added some headers.
+    lws_client_http_body_pending(wsi_, 1);
+  }
 }
 
 void WsConnectionImpl::OnError(const std::string& error) {
@@ -340,6 +369,20 @@ int LwsCallback(struct lws* wsi, enum lws_callback_reasons reason, void* user,
       return with_connection([](std::shared_ptr<WsConnectionImpl> connection) {
         connection->OnWriteable();
       });
+
+    case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
+      return with_connection(
+          [in, len](std::shared_ptr<WsConnectionImpl> connection) {
+            auto p = reinterpret_cast<unsigned char**>(in);
+            auto end = (*p) + len;
+            connection->AddHttpHeaders(p, end);
+          });
+
+    case LWS_CALLBACK_CLIENT_HTTP_WRITEABLE:
+      // This callback is only called when we add additional HTTP headers, let
+      // LWS know we're done modifying the HTTP request.
+      lws_client_http_body_pending(wsi, 0);
+      return 0;
 
     default:
       LOG(VERBOSE) << "Unhandled value: " << reason;
