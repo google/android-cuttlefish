@@ -29,6 +29,9 @@ keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
   LOG(DEBUG) << "TODO(schuffelen): Implement VerifyAndCopyDeviceIds";
   attestation->Difference(attestation_params);
   attestation->Union(attestation_params);
+  if (int index = attestation->find(keymaster::TAG_ATTESTATION_APPLICATION_ID)) {
+    attestation->erase(index);
+  }
   return KM_ERROR_OK;
 }
 
