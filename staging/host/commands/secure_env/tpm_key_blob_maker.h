@@ -55,6 +55,10 @@ public:
       keymaster::AuthorizationSet* hw_enforced,
       keymaster::AuthorizationSet* sw_enforced,
       keymaster::KeymasterKeyBlob* key_material) const;
+
+  keymaster_error_t SetSystemVersion(uint32_t os_version, uint32_t os_patchlevel);
 private:
   TpmResourceManager& resource_manager_;
+  uint32_t os_version_;
+  uint32_t os_patchlevel_;
 };
