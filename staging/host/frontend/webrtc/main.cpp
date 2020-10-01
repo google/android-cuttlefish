@@ -103,8 +103,10 @@ int main(int argc, char **argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
-  auto keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
+  cuttlefish::InputSockets input_sockets;
+
+  input_sockets.touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
+  input_sockets.keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
   close(FLAGS_touch_fd);
   close(FLAGS_keyboard_fd);
   // Accepting on these sockets here means the device won't register with the
@@ -112,8 +114,23 @@ int main(int argc, char **argv) {
   // devices have been initialized. That's OK though, because without those
   // devices there is no meaningful interaction the user can have with the
   // device.
-  auto touch_client = cuttlefish::SharedFD::Accept(*touch_server);
-  auto keyboard_client = cuttlefish::SharedFD::Accept(*keyboard_server);
+  input_sockets.touch_client =
+      cuttlefish::SharedFD::Accept(*input_sockets.touch_server);
+  input_sockets.keyboard_client =
+      cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
+
+  std::thread touch_accepter([&input_sockets](){
+    for (;;) {
+      input_sockets.touch_client =
+          cuttlefish::SharedFD::Accept(*input_sockets.touch_server);
+    }
+  });
+  std::thread keyboard_accepter([&input_sockets](){
+    for (;;) {
+      input_sockets.keyboard_client =
+          cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
+    }
+  });
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto screen_connector = cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd);
@@ -137,8 +154,7 @@ int main(int argc, char **argv) {
         ParseHttpHeaders(cvd_config->sig_server_headers_path());
   }
 
-  auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      touch_client, keyboard_client);
+  auto observer_factory = std::make_shared<CfConnectionObserverFactory>(input_sockets);
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
 
