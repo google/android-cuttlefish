@@ -78,11 +78,9 @@ std::unique_ptr<InputEventBuffer> GetEventBuffer() {
 class ConnectionObserverImpl
     : public cuttlefish::webrtc_streaming::ConnectionObserver {
  public:
-  ConnectionObserverImpl(cuttlefish::SharedFD touch_fd,
-                         cuttlefish::SharedFD keyboard_fd,
+  ConnectionObserverImpl(cuttlefish::InputSockets& input_sockets,
                          std::weak_ptr<DisplayHandler> display_handler)
-      : touch_client_(touch_fd),
-        keyboard_client_(keyboard_fd),
+      : input_sockets_(input_sockets),
         weak_display_handler_(display_handler) {}
   virtual ~ConnectionObserverImpl() = default;
 
@@ -107,7 +105,7 @@ class ConnectionObserverImpl
     buffer->AddEvent(EV_ABS, ABS_Y, y);
     buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
     buffer->AddEvent(EV_SYN, 0, 0);
-    cuttlefish::WriteAll(touch_client_,
+    cuttlefish::WriteAll(input_sockets_.touch_client,
                          reinterpret_cast<const char *>(buffer->data()),
                          buffer->size());
   }
@@ -124,7 +122,7 @@ class ConnectionObserverImpl
     }
     buffer->AddEvent(EV_KEY, code, down);
     buffer->AddEvent(EV_SYN, 0, 0);
-    cuttlefish::WriteAll(keyboard_client_,
+    cuttlefish::WriteAll(input_sockets_.keyboard_client,
                          reinterpret_cast<const char *>(buffer->data()),
                          buffer->size());
   }
@@ -180,20 +178,19 @@ class ConnectionObserverImpl
   }
 
  private:
-  cuttlefish::SharedFD touch_client_;
-  cuttlefish::SharedFD keyboard_client_;
+  cuttlefish::InputSockets& input_sockets_;
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
 };
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
-    cuttlefish::SharedFD touch_fd, cuttlefish::SharedFD keyboard_fd)
-    : touch_fd_(touch_fd), keyboard_fd_(keyboard_fd) {}
+    cuttlefish::InputSockets& input_sockets)
+    : input_sockets_(input_sockets) {}
 
 std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverImpl(touch_fd_, keyboard_fd_,
+      new ConnectionObserverImpl(input_sockets_,
                                  weak_display_handler_));
 }
 
