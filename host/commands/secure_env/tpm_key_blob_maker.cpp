@@ -119,7 +119,11 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
     return rc;
   }
   hw_enforced->push_back(keymaster::TAG_ORIGIN, origin);
-  // TODO(schuffelen): Set the os level and patch level.
+
+  // TODO(schuffelen): Set the os level and patch level properly.
+  hw_enforced->push_back(keymaster::TAG_OS_VERSION, os_version_);
+  hw_enforced->push_back(keymaster::TAG_OS_PATCHLEVEL, os_patchlevel_);
+
   keymaster::Buffer key_material_buffer(
       key_material.key_material, key_material.key_material_size);
   CompositeSerializable sensitive_material(
@@ -166,5 +170,13 @@ keymaster_error_t TpmKeyBlobMaker::UnwrapKeyBlob(
   }
   *key_material = KeymasterKeyBlob(
       key_material_buffer.peek_read(), key_material_buffer.available_read());
+  return KM_ERROR_OK;
+}
+
+keymaster_error_t TpmKeyBlobMaker::SetSystemVersion(
+    uint32_t os_version, uint32_t os_patchlevel) {
+  // TODO(b/155697375): Only accept new values of these from the bootloader
+  os_version_ = os_version;
+  os_patchlevel_ = os_patchlevel;
   return KM_ERROR_OK;
 }
