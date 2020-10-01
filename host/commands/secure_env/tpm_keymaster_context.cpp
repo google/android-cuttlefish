@@ -69,6 +69,7 @@ keymaster_error_t TpmKeymasterContext::SetSystemVersion(
   // TODO(b/155697375): Only accept new values of these from the bootloader
   os_version_ = os_version;
   os_patchlevel_ = os_patchlevel;
+  key_blob_maker_->SetSystemVersion(os_version, os_patchlevel);
   return KM_ERROR_OK;
 }
 
