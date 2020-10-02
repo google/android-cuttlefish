@@ -39,8 +39,8 @@ namespace vm_manager {
 
 namespace {
 
-std::string GetControlSocketPath(const cuttlefish::CuttlefishConfig* config) {
-  return config->ForDefaultInstance()
+std::string GetControlSocketPath(const cuttlefish::CuttlefishConfig& config) {
+  return config.ForDefaultInstance()
       .PerInstanceInternalPath("crosvm_control.sock");
 }
 
@@ -80,7 +80,7 @@ bool Stop() {
   auto config = cuttlefish::CuttlefishConfig::Get();
   cuttlefish::Command command(config->crosvm_binary());
   command.AddParameter("stop");
-  command.AddParameter(GetControlSocketPath(config));
+  command.AddParameter(GetControlSocketPath(*config));
 
   auto process = command.Start();
 
@@ -89,9 +89,14 @@ bool Stop() {
 
 }  // namespace
 
-const std::string CrosvmManager::name() { return "crosvm"; }
+/* static */ std::string CrosvmManager::name() { return "crosvm"; }
 
-std::vector<std::string> CrosvmManager::ConfigureGpu(const std::string& gpu_mode) {
+bool CrosvmManager::IsSupported() {
+  return HostSupportsQemuCli();
+}
+
+std::vector<std::string> CrosvmManager::ConfigureGpuMode(
+    const std::string& gpu_mode) {
   // Override the default HAL search paths in all cases. We do this because
   // the HAL search path allows for fallbacks, and fallbacks in conjunction
   // with properities lead to non-deterministic behavior while loading the
@@ -134,12 +139,12 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
   }
 }
 
-CrosvmManager::CrosvmManager(const cuttlefish::CuttlefishConfig* config)
-    : VmManager(config) {}
-
-std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
-  auto instance = config_->ForDefaultInstance();
-  cuttlefish::Command crosvm_cmd(config_->crosvm_binary(), [](cuttlefish::Subprocess* proc) {
+std::vector<cuttlefish::Command> CrosvmManager::StartCommands(
+    const CuttlefishConfig& config,
+    bool with_frontend,
+    const std::string& kernel_cmdline) {
+  auto instance = config.ForDefaultInstance();
+  cuttlefish::Command crosvm_cmd(config.crosvm_binary(), [](cuttlefish::Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
       return true;
@@ -149,36 +154,36 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   });
   crosvm_cmd.AddParameter("run");
 
-  auto gpu_mode = config_->gpu_mode();
+  auto gpu_mode = config.gpu_mode();
 
   if (gpu_mode == cuttlefish::kGpuModeGuestSwiftshader) {
     crosvm_cmd.AddParameter("--gpu=2D,",
-                            "width=", config_->x_res(), ",",
-                            "height=", config_->y_res());
+                            "width=", config.x_res(), ",",
+                            "height=", config.y_res());
   } else if (gpu_mode == cuttlefish::kGpuModeDrmVirgl ||
              gpu_mode == cuttlefish::kGpuModeGfxStream) {
     crosvm_cmd.AddParameter(gpu_mode == cuttlefish::kGpuModeGfxStream ?
                                 "--gpu=gfxstream," : "--gpu=",
-                            "width=", config_->x_res(), ",",
-                            "height=", config_->y_res(), ",",
+                            "width=", config.x_res(), ",",
+                            "height=", config.y_res(), ",",
                             "egl=true,surfaceless=true,glx=false,gles=true");
     crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
-  if (!config_->final_ramdisk_path().empty()) {
-    crosvm_cmd.AddParameter("--initrd=", config_->final_ramdisk_path());
+  if (!config.final_ramdisk_path().empty()) {
+    crosvm_cmd.AddParameter("--initrd=", config.final_ramdisk_path());
   }
   // crosvm_cmd.AddParameter("--null-audio");
-  crosvm_cmd.AddParameter("--mem=", config_->memory_mb());
-  crosvm_cmd.AddParameter("--cpus=", config_->cpus());
-  crosvm_cmd.AddParameter("--params=", kernel_cmdline_);
+  crosvm_cmd.AddParameter("--mem=", config.memory_mb());
+  crosvm_cmd.AddParameter("--cpus=", config.cpus());
+  crosvm_cmd.AddParameter("--params=", kernel_cmdline);
   for (const auto& disk : instance.virtual_disk_paths()) {
     crosvm_cmd.AddParameter("--rwdisk=", disk);
   }
-  crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config_));
+  crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config));
 
-  if (frontend_enabled_) {
+  if (with_frontend) {
     crosvm_cmd.AddParameter("--single-touch=", instance.touch_socket_path(),
-                            ":", config_->x_res(), ":", config_->y_res());
+                            ":", config.x_res(), ":", config.y_res());
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
 
@@ -189,17 +194,17 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--pstore=path=", instance.pstore_path(), ",size=",
                           cuttlefish::FileSize(instance.pstore_path()));
 
-  if (config_->enable_sandbox()) {
-    const bool seccomp_exists = cuttlefish::DirectoryExists(config_->seccomp_policy_dir());
+  if (config.enable_sandbox()) {
+    const bool seccomp_exists = cuttlefish::DirectoryExists(config.seccomp_policy_dir());
     const std::string& var_empty_dir = cuttlefish::kCrosvmVarEmptyDir;
     const bool var_empty_available = cuttlefish::DirectoryExists(var_empty_dir);
     if (!var_empty_available || !seccomp_exists) {
       LOG(FATAL) << var_empty_dir << " is not an existing, empty directory."
-                 << "seccomp-policy-dir, " << config_->seccomp_policy_dir()
+                 << "seccomp-policy-dir, " << config.seccomp_policy_dir()
                  << " does not exist " << std::endl;
       return {};
     }
-    crosvm_cmd.AddParameter("--seccomp-policy-dir=", config_->seccomp_policy_dir());
+    crosvm_cmd.AddParameter("--seccomp-policy-dir=", config.seccomp_policy_dir());
   } else {
     crosvm_cmd.AddParameter("--disable-sandbox");
   }
@@ -212,7 +217,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   // virtio-console driver may not be available for early messages
   // In kgdb mode, earlycon is an interactive console, and so early
   // dmesg will go there instead of the kernel.log
-  if (!(config_->console() && (config_->use_bootloader() || config_->kgdb()))) {
+  if (!(config.console() && (config.use_bootloader() || config.kgdb()))) {
     crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
                             instance.kernel_log_pipe_name(), ",earlycon=true");
   }
@@ -223,12 +228,12 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
   crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=1,type=file,path=",
                           instance.kernel_log_pipe_name(), ",console=true");
 
-  if (config_->console()) {
+  if (config.console()) {
     // stdin is the only currently supported way to write data to a serial port in
     // crosvm. A file (named pipe) is used here instead of stdout to ensure only
     // the serial port output is received by the console forwarder as crosvm may
     // print other messages to stdout.
-    if (config_->kgdb() || config_->use_bootloader()) {
+    if (config.kgdb() || config.use_bootloader()) {
       crosvm_cmd.AddParameter("--serial=hardware=serial,num=1,type=file,path=",
                               instance.console_out_pipe_name(), ",input=",
                               instance.console_in_pipe_name(), ",earlycon=true");
@@ -250,7 +255,7 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
     crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=2,type=sink");
   }
 
-  if (config_->enable_gnss_grpc_proxy()) {
+  if (config.enable_gnss_grpc_proxy()) {
     crosvm_cmd.AddParameter("--serial=hardware=serial,num=2,type=file,path=",
                             instance.gnss_out_pipe_name(), ",input=",
                             instance.gnss_in_pipe_name());
@@ -276,17 +281,17 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands() {
                           instance.logcat_pipe_name());
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
-  if (config_->enable_sandbox()) {
+  if (config.enable_sandbox()) {
     // Set up directory shared with virtiofs
     crosvm_cmd.AddParameter("--shared-dir=", instance.PerInstancePath(cuttlefish::kSharedDirName),
                             ":shared:type=fs");
   }
 
   // This needs to be the last parameter
-  if (config_->use_bootloader()) {
-    crosvm_cmd.AddParameter("--bios=", config_->bootloader());
+  if (config.use_bootloader()) {
+    crosvm_cmd.AddParameter("--bios=", config.bootloader());
   } else {
-    crosvm_cmd.AddParameter(config_->GetKernelImageToUse());
+    crosvm_cmd.AddParameter(config.GetKernelImageToUse());
   }
 
   // Only run the leases workaround if we are not using the new network
