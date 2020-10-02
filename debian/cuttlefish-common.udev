@@ -1,1 +1,2 @@
+ACTION=="add", KERNEL=="vhost-net", SUBSYSTEM=="misc", MODE="0660", GROUP="cvdnetwork"
 ACTION=="add", KERNEL=="vhost-vsock", SUBSYSTEM=="misc", MODE="0660", GROUP="cvdnetwork"
