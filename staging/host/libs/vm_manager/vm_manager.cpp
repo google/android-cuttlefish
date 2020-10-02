@@ -29,82 +29,22 @@
 namespace cuttlefish {
 namespace vm_manager {
 
-VmManager::VmManager(const cuttlefish::CuttlefishConfig* config)
-    : config_(config) {}
-
-namespace{
-template <typename T>
-VmManager* GetManagerSingleton(const cuttlefish::CuttlefishConfig* config) {
-  static std::shared_ptr<VmManager> vm_manager(new T(config));
-  return vm_manager.get();
-}
-} // namespace
-
-std::map<std::string, VmManager::VmManagerHelper>
-    VmManager::vm_manager_helpers_ = {
-        {
-          QemuManager::name(),
-          {
-            GetManagerSingleton<QemuManager>,
-            cuttlefish::HostSupportsQemuCli,
-            QemuManager::ConfigureGpu,
-            QemuManager::ConfigureBootDevices,
-          },
-        },
-        {
-          CrosvmManager::name(),
-          {
-            GetManagerSingleton<CrosvmManager>,
-            // Same as Qemu for the time being
-            cuttlefish::HostSupportsQemuCli,
-            CrosvmManager::ConfigureGpu,
-            CrosvmManager::ConfigureBootDevices,
-          }
-        }
-    };
-
-VmManager* VmManager::Get(const std::string& vm_manager_name,
-                          const cuttlefish::CuttlefishConfig* config) {
-  if (VmManager::IsValidName(vm_manager_name)) {
-    return vm_manager_helpers_[vm_manager_name].builder(config);
+std::unique_ptr<VmManager> GetVmManager(const std::string& name) {
+  std::unique_ptr<VmManager> vmm;
+  if (name == QemuManager::name()) {
+    vmm.reset(new QemuManager());
+  } else if (name == CrosvmManager::name()) {
+    vmm.reset(new CrosvmManager());
   }
-  LOG(ERROR) << "Requested invalid VmManager: " << vm_manager_name;
-  return nullptr;
-}
-
-bool VmManager::IsValidName(const std::string& name) {
-  return vm_manager_helpers_.count(name) > 0;
-}
-
-bool VmManager::IsVmManagerSupported(const std::string& name) {
-  return VmManager::IsValidName(name) &&
-         vm_manager_helpers_[name].support_checker();
-}
-
-std::vector<std::string> VmManager::ConfigureGpuMode(
-    const std::string& vmm_name, const std::string& gpu_mode) {
-  auto it = vm_manager_helpers_.find(vmm_name);
-  if (it == vm_manager_helpers_.end()) {
+  if (!vmm) {
+    LOG(ERROR) << "Invalid VM manager: " << name;
     return {};
   }
-  return it->second.configure_gpu_mode(gpu_mode);
-}
-
-std::vector<std::string> VmManager::ConfigureBootDevices(
-    const std::string& vmm_name) {
-  auto it = vm_manager_helpers_.find(vmm_name);
-  if (it == vm_manager_helpers_.end()) {
+  if (!vmm->IsSupported()) {
+    LOG(ERROR) << "VM manager " << name << " is not supported on this machine.";
     return {};
   }
-  return it->second.configure_boot_devices();
-}
-
-std::vector<std::string> VmManager::GetValidNames() {
-  std::vector<std::string> ret = {};
-  for (const auto& key_val: vm_manager_helpers_) {
-    ret.push_back(key_val.first);
-  }
-  return ret;
+  return vmm;
 }
 
 bool VmManager::UserInGroup(const std::string& group,
@@ -177,14 +117,6 @@ bool VmManager::ValidateHostConfiguration(
       VmManager::LinuxVersionAtLeast(config_commands, version, 4, 8);
     return in_cvdnetwork && in_kvm && linux_ver_4_8;
   }
-}
-
-void VmManager::WithFrontend(bool enabled) {
-  frontend_enabled_ = enabled;
-}
-
-void VmManager::WithKernelCommandLine(const std::string& kernel_cmdline) {
-  kernel_cmdline_ = kernel_cmdline;
 }
 
 } // namespace vm_manager
