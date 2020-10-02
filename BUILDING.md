@@ -1,11 +1,11 @@
 # Building the Docker image
 
-First, install docker and git, and modprobe vhost_vsock:
+First, install docker and git, and modprobe vhost_vsock and vhost_net:
 
 ```bash
 curl https://get.docker.com | sh
 sudo apt install -y git
-sudo modprobe vhost_vsock
+sudo modprobe vhost_vsock vhost_net
 ```
 
 Then the Docker image can be built as follows:
