@@ -20,6 +20,7 @@
 #include <thread>
 
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/fs/shared_select.h"
 
 namespace cuttlefish {
 namespace webrtc_streaming {
@@ -40,6 +41,8 @@ struct AdbHandler {
   void ReadLoop();
 
   SharedFD adb_socket_;
+  SharedFD shutdown_;
+  SharedFDSet read_set_;
   std::thread read_thread_;
 };
 
