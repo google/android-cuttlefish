@@ -53,23 +53,44 @@ AdbHandler::AdbHandler(
     std::function<void(const uint8_t *, size_t)> send_to_client)
     : send_to_client_(send_to_client),
       adb_socket_(SetupAdbSocket(adb_host_and_port)),
-      read_thread_([this]() { ReadLoop(); }) {}
+      shutdown_(SharedFD::Event(0,0))
+{
+    std::thread loop([this]() { ReadLoop(); });
+    read_thread_.swap(loop);
+}
+
 
 AdbHandler::~AdbHandler() {
-        (*adb_socket_).Close();
-        read_thread_.join();
+    // Send a message to the looper to shut down.
+    uint64_t v = 1;
+    shutdown_->Write(&v, sizeof(v));
+    // Shut down the socket as well.  Not srictly necessary.
+    adb_socket_->Shutdown(SHUT_RDWR);
+    read_thread_.join();
 }
 
 void AdbHandler::ReadLoop() {
   while (1) {
     uint8_t buffer[4096];
-    auto read = adb_socket_->Read(buffer, sizeof(buffer));
-    if (read < 0) {
-      LOG(ERROR) << "Error on reading from ADB socket: " << strerror(adb_socket_->GetErrno());
-      break;
+
+    read_set_.Set(shutdown_);
+    read_set_.Set(adb_socket_);
+    Select(&read_set_, nullptr, nullptr, nullptr);
+
+    if (read_set_.IsSet(adb_socket_)) {
+        auto read = adb_socket_->Read(buffer, sizeof(buffer));
+        if (read < 0) {
+            LOG(ERROR) << "Error on reading from ADB socket: " << strerror(adb_socket_->GetErrno());
+            break;
+        }
+        if (read) {
+            send_to_client_(buffer, read);
+        }
     }
-    if (read) {
-      send_to_client_(buffer, read);
+
+    if (read_set_.IsSet(shutdown_)) {
+        LOG(INFO) << "AdbHandler is shutting down.";
+        break;
     }
   }
 }
