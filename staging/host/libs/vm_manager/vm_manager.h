@@ -27,33 +27,24 @@
 namespace cuttlefish {
 namespace vm_manager {
 
-// Superclass of every guest VM manager. It provides a static getter that
-// returns the requested vm manager as a singleton.
+// Superclass of every guest VM manager.
 class VmManager {
  public:
-  // Returns the most suitable vm manager as a singleton. It may return nullptr
-  // if the requested vm manager is not supported by the current version of the
-  // host packages
-  static VmManager* Get(const std::string& vm_manager_name,
-                        const cuttlefish::CuttlefishConfig* config);
-  static bool IsValidName(const std::string& name);
-  static std::vector<std::string> ConfigureGpuMode(
-      const std::string& vmm_name, const std::string& gpu_mode);
-  static std::vector<std::string> ConfigureBootDevices(
-      const std::string& vmm_name);
-  static bool IsVmManagerSupported(const std::string& name);
-  static std::vector<std::string> GetValidNames();
-
+  VmManager() = default;
   virtual ~VmManager() = default;
 
-  virtual void WithFrontend(bool);
-  virtual void WithKernelCommandLine(const std::string&);
+  virtual bool IsSupported() = 0;
+  virtual std::vector<std::string> ConfigureGpuMode(const std::string&) = 0;
+  virtual std::vector<std::string> ConfigureBootDevices() = 0;
 
   // Starts the VMM. It will usually build a command and pass it to the
   // command_starter function, although it may start more than one. The
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
-  virtual std::vector<cuttlefish::Command> StartCommands() = 0;
+  virtual std::vector<cuttlefish::Command> StartCommands(
+      const CuttlefishConfig& config,
+      bool with_frontend,
+      const std::string& kernel_cmdline) = 0;
 
   virtual bool ValidateHostConfiguration(
       std::vector<std::string>* config_commands) const;
@@ -67,25 +58,9 @@ class VmManager {
   static bool LinuxVersionAtLeast(std::vector<std::string>* config_commands,
                                   const std::pair<int,int>& version,
                                   int major, int minor);
-
-  const cuttlefish::CuttlefishConfig* config_;
-  VmManager(const cuttlefish::CuttlefishConfig* config);
-
-  bool frontend_enabled_;
-  std::string kernel_cmdline_;
-
- private:
-  struct VmManagerHelper {
-    // The singleton implementation
-    std::function<VmManager*(const cuttlefish::CuttlefishConfig*)> builder;
-    // Whether the host packages support this vm manager
-    std::function<bool()> support_checker;
-    std::function<std::vector<std::string>(const std::string&)> configure_gpu_mode;
-    std::function<std::vector<std::string>()> configure_boot_devices;
-  };
-  // Asociates a vm manager helper to every valid vm manager name
-  static std::map<std::string, VmManagerHelper> vm_manager_helpers_;
 };
+
+std::unique_ptr<VmManager> GetVmManager(const std::string&);
 
 } // namespace vm_manager
 } // namespace cuttlefish

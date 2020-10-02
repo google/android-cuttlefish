@@ -29,14 +29,19 @@ namespace vm_manager {
 // package to support the qemu-cli capability.
 class QemuManager : public VmManager {
  public:
-  static const std::string name();
-  static std::vector<std::string> ConfigureGpu(const std::string& gpu_mode);
-  static std::vector<std::string> ConfigureBootDevices();
+  static std::string name();
 
-  QemuManager(const cuttlefish::CuttlefishConfig* config);
+  QemuManager() = default;
   virtual ~QemuManager() = default;
 
-  std::vector<cuttlefish::Command> StartCommands() override;
+  bool IsSupported() override;
+  std::vector<std::string> ConfigureGpuMode(const std::string&) override;
+  std::vector<std::string> ConfigureBootDevices() override;
+
+  std::vector<cuttlefish::Command> StartCommands(
+      const CuttlefishConfig& config,
+      bool with_frontend,
+      const std::string& kernel_cmdline) override;
 };
 
 } // namespace vm_manager
