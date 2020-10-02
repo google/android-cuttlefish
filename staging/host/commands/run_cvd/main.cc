@@ -61,7 +61,7 @@
 
 using cuttlefish::ForCurrentInstance;
 using cuttlefish::RunnerExitCodes;
-using cuttlefish::vm_manager::VmManager;
+using cuttlefish::vm_manager::GetVmManager;
 
 namespace {
 
@@ -480,7 +480,7 @@ int main(int argc, char** argv) {
     return RunnerExitCodes::kTapDeviceInUse;
   }
 
-  auto vm_manager = VmManager::Get(config->vm_manager(), config);
+  auto vm_manager = GetVmManager(config->vm_manager());
 
   // Check host configuration
   std::vector<std::string> config_commands;
@@ -597,9 +597,8 @@ int main(int argc, char** argv) {
   auto kernel_args = KernelCommandLineFromConfig(*config, config->ForDefaultInstance());
 
   // Start the guest VM
-  vm_manager->WithFrontend(streamer_config.launched);
-  vm_manager->WithKernelCommandLine(android::base::Join(kernel_args, " "));
-  auto vmm_commands = vm_manager->StartCommands();
+  auto vmm_commands = vm_manager->StartCommands(
+      *config, streamer_config.launched, android::base::Join(kernel_args, " "));
   for (auto& vmm_cmd: vmm_commands) {
       process_monitor.StartSubprocess(std::move(vmm_cmd),
                                       GetOnSubprocessExitCallback(*config));
