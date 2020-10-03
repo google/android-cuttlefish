@@ -28,6 +28,7 @@ using cuttlefish::SharedFD;
 
 namespace {
 static const std::map<std::string, std::string> kInformationalPatterns = {
+    {"U-Boot ", "GUEST_UBOOT_VERSION: "},
     {"] Linux version ", "GUEST_KERNEL_VERSION: "},
     {"GUEST_BUILD_FINGERPRINT: ", "GUEST_BUILD_FINGERPRINT: "},
 };
