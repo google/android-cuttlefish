@@ -294,6 +294,10 @@ std::vector<cuttlefish::Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter(config.GetKernelImageToUse());
   }
 
+  if (config.vhost_net()) {
+    crosvm_cmd.AddParameter("--vhost-net");
+  }
+
   // Only run the leases workaround if we are not using the new network
   // bridge architecture - in that case, we have a wider DHCP address
   // space and stale leases should be much less of an issue
