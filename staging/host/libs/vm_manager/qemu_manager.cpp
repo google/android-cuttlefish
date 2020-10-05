@@ -44,7 +44,7 @@ namespace cuttlefish {
 namespace vm_manager {
 namespace {
 
-std::string GetMonitorPath(const cuttlefish::CuttlefishConfig& config) {
+std::string GetMonitorPath(const CuttlefishConfig& config) {
   return config.ForDefaultInstance()
       .PerInstanceInternalPath("qemu_monitor.sock");
 }
@@ -55,9 +55,9 @@ void LogAndSetEnv(const char* key, const std::string& value) {
 }
 
 bool Stop() {
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = CuttlefishConfig::Get();
   auto monitor_path = GetMonitorPath(*config);
-  auto monitor_sock = cuttlefish::SharedFD::SocketLocalClient(
+  auto monitor_sock = SharedFD::SocketLocalClient(
       monitor_path.c_str(), false, SOCK_STREAM);
 
   if (!monitor_sock->IsOpen()) {
@@ -94,7 +94,7 @@ bool QemuManager::IsSupported() {
 
 std::vector<std::string> QemuManager::ConfigureGpuMode(
     const std::string& gpu_mode) {
-  if (gpu_mode == cuttlefish::kGpuModeGuestSwiftshader) {
+  if (gpu_mode == kGpuModeGuestSwiftshader) {
     // Override the default HAL search paths in all cases. We do this because
     // the HAL search path allows for fallbacks, and fallbacks in conjunction
     // with properities lead to non-deterministic behavior while loading the
@@ -107,7 +107,7 @@ std::vector<std::string> QemuManager::ConfigureGpuMode(
     };
   }
 
-  if (gpu_mode == cuttlefish::kGpuModeDrmVirgl) {
+  if (gpu_mode == kGpuModeDrmVirgl) {
     return {
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=drm_minigbm",
@@ -123,11 +123,11 @@ std::vector<std::string> QemuManager::ConfigureBootDevices() {
   return { "androidboot.boot_devices=pci0000:00/0000:00:05.0" };
 }
 
-std::vector<cuttlefish::Command> QemuManager::StartCommands(
+std::vector<Command> QemuManager::StartCommands(
     const CuttlefishConfig& config, bool, const std::string& kernel_cmdline) {
   auto instance = config.ForDefaultInstance();
 
-  auto stop = [](cuttlefish::Subprocess* proc) {
+  auto stop = [](Subprocess* proc) {
     auto stopped = Stop();
     if (stopped) {
       return true;
@@ -139,21 +139,21 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands(
 
   bool is_arm = android::base::EndsWith(config.qemu_binary(), "system-aarch64");
 
-  auto access_kregistry_size_bytes = cuttlefish::FileSize(instance.access_kregistry_path());
+  auto access_kregistry_size_bytes = FileSize(instance.access_kregistry_path());
   if (access_kregistry_size_bytes & (1024 * 1024 - 1)) {
       LOG(FATAL) << instance.access_kregistry_path() <<  " file size ("
                  << access_kregistry_size_bytes << ") not a multiple of 1MB";
       return {};
   }
 
-  auto pstore_size_bytes = cuttlefish::FileSize(instance.pstore_path());
+  auto pstore_size_bytes = FileSize(instance.pstore_path());
   if (pstore_size_bytes & (1024 * 1024 - 1)) {
       LOG(FATAL) << instance.pstore_path() <<  " file size ("
                  << pstore_size_bytes << ") not a multiple of 1MB";
       return {};
   }
 
-  cuttlefish::Command qemu_cmd(config.qemu_binary(), stop);
+  Command qemu_cmd(config.qemu_binary(), stop);
   qemu_cmd.AddParameter("-name");
   qemu_cmd.AddParameter("guest=", instance.instance_name(), ",debug-threads=on");
 
@@ -306,7 +306,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-keyboard-pci");
 
-  if (config.gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
+  if (config.gpu_mode() == kGpuModeDrmVirgl) {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("egl-headless");
 
@@ -396,7 +396,7 @@ std::vector<cuttlefish::Command> QemuManager::StartCommands(
 
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
 
-  std::vector<cuttlefish::Command> ret;
+  std::vector<Command> ret;
   ret.push_back(std::move(qemu_cmd));
   return ret;
 }
