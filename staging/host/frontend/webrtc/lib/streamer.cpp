@@ -79,75 +79,43 @@ std::unique_ptr<rtc::Thread> CreateAndStartThread(const std::string& name) {
   return thread;
 }
 
-class StreamerImpl : public Streamer {
- public:
-  StreamerImpl(const StreamerConfig& cfg,
-               rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-                   peer_connection_factory,
-               std::unique_ptr<rtc::Thread> network_thread,
-               std::unique_ptr<rtc::Thread> worker_thread,
-               std::unique_ptr<rtc::Thread> signal_thread,
-               std::shared_ptr<ConnectionObserverFactory> factory);
-  ~StreamerImpl() override = default;
+struct DisplayDescriptor {
+  int width;
+  int height;
+  int dpi;
+  bool touch_enabled;
+  rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
+};
 
-  std::shared_ptr<VideoSink> AddDisplay(const std::string& label, int width,
-                                        int height, int dpi,
-                                        bool touch_enabled) override;
-  void SetHardwareSpecs(int cpus, int memory_mb) override;
-  void AddAudio(const std::string& label) override;
-  void Register(std::weak_ptr<OperatorObserver> operator_observer) override;
-  void Unregister() override;
+struct HardwareDescriptor {
+  int cpus;
+  int memory_mb;
+};
 
- private:
-  // This allows the websocket observer methods to be private in Streamer.
-  class WsObserver : public WsConnectionObserver {
-   public:
-    WsObserver(StreamerImpl* streamer) : streamer_(streamer) {}
-    ~WsObserver() override = default;
+// TODO (jemoreira): move to a place in common with the signaling server
+struct OperatorServerConfig {
+  std::vector<webrtc::PeerConnectionInterface::IceServer> servers;
+};
 
-    void OnOpen() override { streamer_->OnOpen(); }
-    void OnClose() override { streamer_->OnClose(); }
-    void OnError(const std::string& error) override {
-      streamer_->OnError(error);
-    }
-    void OnReceive(const uint8_t* msg, size_t length, bool is_binary) override {
-      streamer_->OnReceive(msg, length, is_binary);
-    }
+}  // namespace
 
-   private:
-    StreamerImpl* streamer_;
-  };
-  struct DisplayDescriptor {
-    int width;
-    int height;
-    int dpi;
-    bool touch_enabled;
-    rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
-  };
-  struct HardwareDescriptor {
-    int cpus;
-    int memory_mb;
-  };
-  // TODO (jemoreira): move to a place in common with the signaling server
-  struct OperatorServerConfig {
-    std::vector<webrtc::PeerConnectionInterface::IceServer> servers;
-  };
-
+class Streamer::Impl : public WsConnectionObserver {
+public:
   std::shared_ptr<ClientHandler> CreateClientHandler(int client_id);
 
   void SendMessageToClient(int client_id, const Json::Value& msg);
   void DestroyClientHandler(int client_id);
 
-  // For use by WsObserver
-  void OnOpen();
-  void OnClose();
-  void OnError(const std::string& error);
-  void OnReceive(const uint8_t* msg, size_t length, bool is_binary);
+  // WsObserver
+  void OnOpen() override;
+  void OnClose() override;
+  void OnError(const std::string& error) override;
+  void OnReceive(const uint8_t* msg, size_t length, bool is_binary) override;
 
   void HandleConfigMessage(const Json::Value& msg);
   void HandleClientMessage(const Json::Value& server_message);
 
-  // All accesses to these variables happen from the signal_thread_, so there is
+  // All accesses to these variables happen from the signal_thread, so there is
   // no need for extra synchronization mechanisms (mutex)
   StreamerConfig config_;
   OperatorServerConfig operator_config_;
@@ -160,85 +128,114 @@ class StreamerImpl : public Streamer {
   std::unique_ptr<rtc::Thread> signal_thread_;
   std::map<std::string, DisplayDescriptor> displays_;
   std::map<int, std::shared_ptr<ClientHandler>> clients_;
-  std::shared_ptr<WsObserver> ws_observer_;
   std::weak_ptr<OperatorObserver> operator_observer_;
   HardwareDescriptor hardware_;
 };
 
-StreamerImpl::StreamerImpl(
-    const StreamerConfig& cfg,
-    rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface>
-        peer_connection_factory,
-    std::unique_ptr<rtc::Thread> network_thread,
-    std::unique_ptr<rtc::Thread> worker_thread,
-    std::unique_ptr<rtc::Thread> signal_thread,
-    std::shared_ptr<ConnectionObserverFactory> connection_observer_factory)
-    : config_(cfg),
-      connection_observer_factory_(connection_observer_factory),
-      peer_connection_factory_(peer_connection_factory),
-      network_thread_(std::move(network_thread)),
-      worker_thread_(std::move(worker_thread)),
-      signal_thread_(std::move(signal_thread)),
-      ws_observer_(new WsObserver(this)) {}
+Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
+    : impl_(std::move(impl)) {
+}
 
-std::shared_ptr<VideoSink> StreamerImpl::AddDisplay(const std::string& label,
+/* static */
+std::unique_ptr<Streamer> Streamer::Create(
+    const StreamerConfig& cfg,
+    std::shared_ptr<ConnectionObserverFactory> connection_observer_factory) {
+  std::unique_ptr<Streamer::Impl> impl(new Streamer::Impl);
+  impl->config_ = cfg;
+  impl->connection_observer_factory_ = connection_observer_factory;
+
+  impl->network_thread_ = CreateAndStartThread("network-thread");
+  impl->worker_thread_ = CreateAndStartThread("work-thread");
+  impl->signal_thread_ = CreateAndStartThread("signal-thread");
+  if (!impl->network_thread_ || !impl->worker_thread_ || !impl->signal_thread_) {
+    return nullptr;
+  }
+
+  impl->peer_connection_factory_ = webrtc::CreatePeerConnectionFactory(
+      impl->network_thread_.get(),
+      impl->worker_thread_.get(),
+      impl->signal_thread_.get(),
+      nullptr /* default_adm */ ,
+      webrtc::CreateBuiltinAudioEncoderFactory(),
+      webrtc::CreateBuiltinAudioDecoderFactory(),
+      std::make_unique<VP8OnlyEncoderFactory>(
+          webrtc::CreateBuiltinVideoEncoderFactory()),
+      webrtc::CreateBuiltinVideoDecoderFactory(),
+      nullptr /* audio_mixer */,
+      nullptr /* audio_processing */);
+
+  if (!impl->peer_connection_factory_) {
+    LOG(ERROR) << "Failed to create peer connection factory";
+    return nullptr;
+  }
+
+  webrtc::PeerConnectionFactoryInterface::Options options;
+  // By default the loopback network is ignored, but generating candidates for
+  // it is useful when using TCP port forwarding.
+  options.network_ignore_mask = 0;
+  impl->peer_connection_factory_->SetOptions(options);
+
+  return std::unique_ptr<Streamer>(new Streamer(std::move(impl)));
+}
+
+std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
                                                 int width, int height, int dpi,
                                                 bool touch_enabled) {
   // Usually called from an application thread
-  return signal_thread_->Invoke<std::shared_ptr<VideoSink>>(
+  return impl_->signal_thread_->Invoke<std::shared_ptr<VideoSink>>(
       RTC_FROM_HERE,
       [this, &label, width, height, dpi,
        touch_enabled]() -> std::shared_ptr<VideoSink> {
-        if (displays_.count(label)) {
+        if (impl_->displays_.count(label)) {
           LOG(ERROR) << "Display with same label already exists: " << label;
           return nullptr;
         }
         rtc::scoped_refptr<VideoTrackSourceImpl> source(
             new rtc::RefCountedObject<VideoTrackSourceImpl>(width, height));
-        displays_[label] = {width, height, dpi, touch_enabled, source};
+        impl_->displays_[label] = {width, height, dpi, touch_enabled, source};
         return std::shared_ptr<VideoSink>(
             new VideoTrackSourceImplSinkWrapper(source));
       });
 }
 
-void StreamerImpl::SetHardwareSpecs(int cpus, int memory_mb) {
-  hardware_.cpus = cpus;
-  hardware_.memory_mb = memory_mb;
+void Streamer::SetHardwareSpecs(int cpus, int memory_mb) {
+  impl_->hardware_.cpus = cpus;
+  impl_->hardware_.memory_mb = memory_mb;
 }
 
-void StreamerImpl::AddAudio(const std::string& label) {
+void Streamer::AddAudio(const std::string& label) {
   // Usually called from an application thread
   // TODO (b/128328845): audio support. Use signal_thread_->Invoke<>();
 }
 
-void StreamerImpl::Register(std::weak_ptr<OperatorObserver> observer) {
+void Streamer::Register(std::weak_ptr<OperatorObserver> observer) {
   // Usually called from an application thread
   // No need to block the calling thread on this, the observer will be notified
   // when the connection is established.
-  signal_thread_->PostTask(RTC_FROM_HERE, [this, observer]() {
-    operator_observer_ = observer;
+  impl_->signal_thread_->PostTask(RTC_FROM_HERE, [this, observer]() {
+    impl_->operator_observer_ = observer;
     // This can be a local variable since the connection object will keep a
     // reference to it.
     auto ws_context = WsConnectionContext::Create();
     CHECK(ws_context) << "Failed to create websocket context";
-    server_connection_ = ws_context->CreateConnection(
-        config_.operator_server.port, config_.operator_server.addr,
-        config_.operator_server.path, config_.operator_server.security,
-        ws_observer_, config_.operator_server.http_headers);
+    impl_->server_connection_ = ws_context->CreateConnection(
+        impl_->config_.operator_server.port, impl_->config_.operator_server.addr,
+        impl_->config_.operator_server.path, impl_->config_.operator_server.security,
+        impl_, impl_->config_.operator_server.http_headers);
 
-    CHECK(server_connection_) << "Unable to create websocket connection object";
+    CHECK(impl_->server_connection_) << "Unable to create websocket connection object";
 
-    server_connection_->Connect();
+    impl_->server_connection_->Connect();
   });
 }
 
-void StreamerImpl::Unregister() {
+void Streamer::Unregister() {
   // Usually called from an application thread.
-  signal_thread_->PostTask(RTC_FROM_HERE,
-                           [this]() { server_connection_.reset(); });
+  impl_->signal_thread_->PostTask(RTC_FROM_HERE,
+                                  [this]() { impl_->server_connection_.reset(); });
 }
 
-void StreamerImpl::OnOpen() {
+void Streamer::Impl::OnOpen() {
   // Called from the websocket thread.
   // Connected to operator.
   signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
@@ -277,7 +274,7 @@ void StreamerImpl::OnOpen() {
   });
 }
 
-void StreamerImpl::OnClose() {
+void Streamer::Impl::OnClose() {
   // Called from websocket thread
   // The operator shouldn't close the connection with the client, it's up to the
   // device to decide when to disconnect.
@@ -290,7 +287,7 @@ void StreamerImpl::OnClose() {
   });
 }
 
-void StreamerImpl::OnError(const std::string& error) {
+void Streamer::Impl::OnError(const std::string& error) {
   // Called from websocket thread.
   LOG(ERROR) << "Error on connection with the operator: " << error;
   signal_thread_->PostTask(RTC_FROM_HERE, [this]() {
@@ -301,7 +298,7 @@ void StreamerImpl::OnError(const std::string& error) {
   });
 }
 
-void StreamerImpl::HandleConfigMessage(const Json::Value& server_message) {
+void Streamer::Impl::HandleConfigMessage(const Json::Value& server_message) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
   if (server_message.isMember("ice_servers") &&
@@ -339,7 +336,7 @@ void StreamerImpl::HandleConfigMessage(const Json::Value& server_message) {
   }
 }
 
-void StreamerImpl::HandleClientMessage(const Json::Value& server_message) {
+void Streamer::Impl::HandleClientMessage(const Json::Value& server_message) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
   if (!server_message.isMember(cuttlefish::webrtc_signaling::kClientIdField) ||
@@ -369,7 +366,8 @@ void StreamerImpl::HandleClientMessage(const Json::Value& server_message) {
   client_handler->HandleMessage(client_message);
 }
 
-void StreamerImpl::OnReceive(const uint8_t* msg, size_t length, bool is_binary) {
+void Streamer::Impl::OnReceive(
+    const uint8_t* msg, size_t length, bool is_binary) {
   // Usually called from websocket thread.
   Json::Value server_message;
   // Once OnReceive returns the buffer can be destroyed/recycled at any time, so
@@ -407,7 +405,8 @@ void StreamerImpl::OnReceive(const uint8_t* msg, size_t length, bool is_binary) 
   });
 }
 
-std::shared_ptr<ClientHandler> StreamerImpl::CreateClientHandler(int client_id) {
+std::shared_ptr<ClientHandler> Streamer::Impl::CreateClientHandler(
+    int client_id) {
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
   auto observer = connection_observer_factory_->CreateObserver();
@@ -422,7 +421,8 @@ std::shared_ptr<ClientHandler> StreamerImpl::CreateClientHandler(int client_id) 
   webrtc::PeerConnectionInterface::RTCConfiguration config;
   config.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
   config.enable_dtls_srtp = true;
-  config.servers.insert(config.servers.end(), operator_config_.servers.begin(),
+  config.servers.insert(config.servers.end(),
+                        operator_config_.servers.begin(),
                         operator_config_.servers.end());
   webrtc::PeerConnectionDependencies dependencies(client_handler.get());
   // PortRangeSocketFactory's super class' constructor needs to be called on the
@@ -453,7 +453,7 @@ std::shared_ptr<ClientHandler> StreamerImpl::CreateClientHandler(int client_id) 
   return client_handler;
 }
 
-void StreamerImpl::SendMessageToClient(int client_id, const Json::Value& msg) {
+void Streamer::Impl::SendMessageToClient(int client_id, const Json::Value& msg) {
   LOG(VERBOSE) << "Sending to client: " << msg.toStyledString();
   CHECK(signal_thread_->IsCurrent())
       << __FUNCTION__ << " called from the wrong thread";
@@ -467,7 +467,7 @@ void StreamerImpl::SendMessageToClient(int client_id, const Json::Value& msg) {
   SendJson(server_connection_.get(), wrapper);
 }
 
-void StreamerImpl::DestroyClientHandler(int client_id) {
+void Streamer::Impl::DestroyClientHandler(int client_id) {
   // Usually called from signal thread, could be called from websocket thread or
   // an application thread.
   signal_thread_->PostTask(RTC_FROM_HERE, [this, client_id]() {
@@ -481,44 +481,6 @@ void StreamerImpl::DestroyClientHandler(int client_id) {
     // deadlock.
     clients_.erase(client_id);
   });
-}
-
-}  // namespace
-
-/* static */
-std::shared_ptr<Streamer> Streamer::Create(
-    const StreamerConfig& cfg,
-    std::shared_ptr<ConnectionObserverFactory> connection_observer_factory) {
-  auto network_thread = CreateAndStartThread("network-thread");
-  auto worker_thread = CreateAndStartThread("work-thread");
-  auto signal_thread = CreateAndStartThread("signal-thread");
-  if (!network_thread || !worker_thread || !signal_thread) {
-    return nullptr;
-  }
-
-  auto pc_factory = webrtc::CreatePeerConnectionFactory(
-      network_thread.get(), worker_thread.get(), signal_thread.get(),
-      nullptr /* default_adm */, webrtc::CreateBuiltinAudioEncoderFactory(),
-      webrtc::CreateBuiltinAudioDecoderFactory(),
-      std::make_unique<VP8OnlyEncoderFactory>(
-          webrtc::CreateBuiltinVideoEncoderFactory()),
-      webrtc::CreateBuiltinVideoDecoderFactory(), nullptr /* audio_mixer */,
-      nullptr /* audio_processing */);
-
-  if (!pc_factory) {
-    LOG(ERROR) << "Failed to create peer connection factory";
-    return nullptr;
-  }
-
-  webrtc::PeerConnectionFactoryInterface::Options options;
-  // By default the loopback network is ignored, but generating candidates for
-  // it is useful when using TCP port forwarding.
-  options.network_ignore_mask = 0;
-  pc_factory->SetOptions(options);
-
-  return std::shared_ptr<Streamer>(new StreamerImpl(
-      cfg, pc_factory, std::move(network_thread), std::move(worker_thread),
-      std::move(signal_thread), connection_observer_factory));
 }
 
 }  // namespace webrtc_streaming
