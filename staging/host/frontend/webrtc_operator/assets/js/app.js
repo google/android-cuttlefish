@@ -46,6 +46,28 @@ function ConnectToDevice(device_id) {
     logcatBtn.remove();
   };
 
+  function onControlMessage(message) {
+    let message_data = JSON.parse(message.data);
+    console.log(message_data)
+    let metadata = message_data.metadata;
+    if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
+      // TODO(b/165944524) Support all orientations.
+      if (metadata.rotation == 3) {
+        document.getElementById('device_view').classList.add('landscape');
+        document.getElementById('deviceScreen').classList.add('landscape');
+      } else {
+        document.getElementById('device_view').classList.remove('landscape');
+        document.getElementById('deviceScreen').classList.remove('landscape');
+      }
+
+      updateDeviceDisplayDetails({
+        dpi: metadata.dpi,
+        x_res: metadata.width,
+        y_res: metadata.height
+      });
+    }
+  }
+
   function createControlPanelButton(command, title, icon_name) {
     let button = document.createElement('button');
     document.getElementById('control_panel').appendChild(button);
@@ -89,32 +111,32 @@ function ConnectToDevice(device_id) {
         deviceScreen.srcObject = videoStream;
       }).catch(e => console.error('Unable to get display stream: ', e));
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
-      // TODO(b/163080005): Call updateDeviceDetails for any dynamic device
-      // details that may change after this initial connection.
-      updateDeviceDetails(deviceConnection.description);
+      updateDeviceHardwareDetails(deviceConnection.description.hardware);
+      updateDeviceDisplayDetails(deviceConnection.description.displays[0]);
+      deviceConnection.onControlMessage(msg => onControlMessage(msg));
   });
 
-  function updateDeviceDetails(deviceInfo) {
-    if (deviceInfo.hardware) {
-      let cpus = deviceInfo.hardware.cpus;
-      let memory_mb = deviceInfo.hardware.memory_mb;
-      updateDeviceDetails.hardwareDetails =
-          `CPUs - ${cpus}\nDevice RAM - ${memory_mb}mb`;
-    }
-    if (deviceInfo.displays) {
-      let dpi = deviceInfo.displays[0].dpi;
-      let x_res = deviceInfo.displays[0].x_res;
-      let y_res = deviceInfo.displays[0].y_res;
-      updateDeviceDetails.displayDetails =
-          `Display - ${x_res}x${y_res} (${dpi}DPI)`;
-    }
+  let hardwareDetails = '';
+  let displayDetails = '';
+  function updateDeviceDetailsText() {
     document.getElementById('device_details_hardware').textContent = [
-        updateDeviceDetails.hardwareDetails,
-        updateDeviceDetails.displayDetails,
+        hardwareDetails,
+        displayDetails,
     ].join('\n');
   }
-  updateDeviceDetails.hardwareDetails = '';
-  updateDeviceDetails.displayDetails = '';
+  function updateDeviceHardwareDetails(hardware) {
+    let cpus = hardware.cpus;
+    let memory_mb = hardware.memory_mb;
+    hardwareDetails = `CPUs - ${cpus}\nDevice RAM - ${memory_mb}mb`;
+    updateDeviceDetailsText();
+  }
+  function updateDeviceDisplayDetails(display) {
+    let dpi = display.dpi;
+    let x_res = display.x_res;
+    let y_res = display.y_res;
+    displayDetails = `Display - ${x_res}x${y_res} (${dpi}DPI)`;
+    updateDeviceDetailsText();
+  }
 
   function onKeyboardCaptureClick(e) {
     const selectedClass = 'selected';
