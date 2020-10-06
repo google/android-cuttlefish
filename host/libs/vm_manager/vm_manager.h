@@ -15,10 +15,7 @@
  */
 #pragma once
 
-#include <map>
-#include <set>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <common/libs/utils/subprocess.h>
@@ -30,7 +27,6 @@ namespace vm_manager {
 // Superclass of every guest VM manager.
 class VmManager {
  public:
-  VmManager() = default;
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;
@@ -45,19 +41,6 @@ class VmManager {
       const CuttlefishConfig& config,
       bool with_frontend,
       const std::string& kernel_cmdline) = 0;
-
-  virtual bool ValidateHostConfiguration(
-      std::vector<std::string>* config_commands) const;
-
- protected:
-  static bool UserInGroup(const std::string& group,
-                          std::vector<std::string>* config_commands);
-  static constexpr std::pair<int,int> invalid_linux_version =
-    std::pair<int,int>();
-  static std::pair<int,int> GetLinuxVersion();
-  static bool LinuxVersionAtLeast(std::vector<std::string>* config_commands,
-                                  const std::pair<int,int>& version,
-                                  int major, int minor);
 };
 
 std::unique_ptr<VmManager> GetVmManager(const std::string&);
