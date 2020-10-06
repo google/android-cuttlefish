@@ -22,12 +22,27 @@ cc_binary {
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_kernel_log_monitor_utils",
         "libbase",
         "libjsoncpp",
     ],
     static_libs: [
         "libcuttlefish_host_config",
         "libgflags",
+    ],
+    defaults: ["cuttlefish_host_and_guest"],
+}
+
+cc_library {
+    name: "libcuttlefish_kernel_log_monitor_utils",
+    srcs: [
+        "utils.cc",
+    ],
+    shared_libs: [
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+        "libbase",
+        "libjsoncpp",
     ],
     defaults: ["cuttlefish_host_and_guest"],
 }

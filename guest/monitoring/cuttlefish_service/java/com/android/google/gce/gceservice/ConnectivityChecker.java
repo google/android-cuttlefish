@@ -30,15 +30,15 @@ public class ConnectivityChecker extends JobBase {
         "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
 
     private final Context mContext;
-    private final BootReporter mBootReporter;
+    private final EventReporter mEventReporter;
     private final GceFuture<Boolean> mConnected = new GceFuture<Boolean>("Connectivity");
     // TODO(schuffelen): Figure out why this has to be static in order to not report 3 times.
     private static boolean reportedMobileConnectivity = false;
 
-    public ConnectivityChecker(Context context, BootReporter bootReporter) {
+    public ConnectivityChecker(Context context, EventReporter eventReporter) {
         super(LOG_TAG);
         mContext = context;
-        mBootReporter = bootReporter;
+        mEventReporter = eventReporter;
     }
 
 
@@ -57,7 +57,7 @@ public class ConnectivityChecker extends JobBase {
                 if (capabilities != null
                         && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
                         && !reportedMobileConnectivity) {
-                    mBootReporter.reportMessage(MOBILE_NETWORK_CONNECTED_MESSAGE);
+                    mEventReporter.reportMessage(MOBILE_NETWORK_CONNECTED_MESSAGE);
                     reportedMobileConnectivity = true;
                 }
             }
