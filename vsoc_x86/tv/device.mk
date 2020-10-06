@@ -19,4 +19,5 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 
 PRODUCT_NAME := aosp_cf_x86_tv
 PRODUCT_DEVICE := vsoc_x86
+PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86 tv
