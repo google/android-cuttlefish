@@ -313,6 +313,9 @@ class CuttlefishConfig {
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
 
+  void set_vhost_net(bool vhost_net);
+  bool vhost_net() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
