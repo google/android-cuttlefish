@@ -97,7 +97,7 @@ class DeviceConnection {
       if (this._onControlMessage) {
         this._onControlMessage(msg);
       } else {
-        console.error('Received unexpected ADB message');
+        console.error('Received unexpected Control message');
       }
     });
     this._streams = {};

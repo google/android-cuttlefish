@@ -34,7 +34,8 @@ struct InputSockets {
 class CfConnectionObserverFactory
     : public cuttlefish::webrtc_streaming::ConnectionObserverFactory {
  public:
-  CfConnectionObserverFactory(cuttlefish::InputSockets& input_sockets);
+  CfConnectionObserverFactory(cuttlefish::InputSockets& input_sockets,
+                              cuttlefish::SharedFD kernel_log_events_fd);
   ~CfConnectionObserverFactory() override = default;
 
   std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver> CreateObserver()
@@ -44,6 +45,7 @@ class CfConnectionObserverFactory
 
  private:
   cuttlefish::InputSockets& input_sockets_;
+  cuttlefish::SharedFD kernel_log_events_fd_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
 };
 
