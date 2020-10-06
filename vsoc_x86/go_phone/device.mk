@@ -19,5 +19,6 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/kernel.mk)
 
 PRODUCT_NAME := aosp_cf_x86_go_phone
 PRODUCT_DEVICE := vsoc_x86
+PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86 Go phone
 PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86/phone/overlay
