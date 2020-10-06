@@ -145,7 +145,6 @@ const char* kMetricsBinary = "metrics_binary";
 
 const char* kGuestEnforceSecurity = "guest_enforce_security";
 const char* kGuestAuditSecurity = "guest_audit_security";
-const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
 const char* kVmManagerKernelCmdline = "vm_manager_kernel_cmdline";
@@ -164,8 +163,6 @@ const char* kEnableMinimalMode = "enable_minimal_mode";
 const char* kConsole = "console";
 
 const char* kHostToolsVersion = "host_tools_version";
-
-const char* kVhostNet = "vhost_net";
 
 }  // namespace
 
@@ -677,13 +674,6 @@ bool CuttlefishConfig::guest_audit_security() const {
   return (*dictionary_)[kGuestAuditSecurity].asBool();
 }
 
-void CuttlefishConfig::set_guest_force_normal_boot(bool guest_force_normal_boot) {
-  (*dictionary_)[kGuestForceNormalBoot] = guest_force_normal_boot;
-}
-bool CuttlefishConfig::guest_force_normal_boot() const {
-  return (*dictionary_)[kGuestForceNormalBoot].asBool();
-}
-
 void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
   (*dictionary_)[kEnableMetrics] = kUnknown;
   if (!enable_metrics.empty()) {
@@ -784,13 +774,6 @@ void CuttlefishConfig::set_console(bool console) {
 }
 bool CuttlefishConfig::console() const {
   return (*dictionary_)[kConsole].asBool();
-}
-
-void CuttlefishConfig::set_vhost_net(bool vhost_net) {
-  (*dictionary_)[kVhostNet] = vhost_net;
-}
-bool CuttlefishConfig::vhost_net() const {
-  return (*dictionary_)[kVhostNet].asBool();
 }
 
 // Creates the (initially empty) config object and populates it with values from
