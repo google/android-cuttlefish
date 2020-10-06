@@ -26,6 +26,7 @@
 
 #include <unistd.h>
 #include <host/commands/kernel_log_monitor/kernel_log_server.h>
+#include <host/commands/kernel_log_monitor/utils.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/adb_connector/adb_connection_maintainer.h"
@@ -60,16 +61,16 @@ void WaitForAdbdToBeStarted(int events_fd) {
   auto evt_shared_fd = cuttlefish::SharedFD::Dup(events_fd);
   close(events_fd);
   while (evt_shared_fd->IsOpen()) {
-    monitor::BootEvent event;
-    auto bytes_read = evt_shared_fd->Read(&event, sizeof(event));
-    if (bytes_read != sizeof(event)) {
-      LOG(ERROR) << "Fail to read a complete event, read " << bytes_read
-                 << " bytes only instead of the expected " << sizeof(event);
+    std::optional<monitor::ReadEventResult> read_result =
+        monitor::ReadEvent(evt_shared_fd);
+    if (!read_result) {
+      LOG(ERROR) << "Failed to read a complete kernel log adb event.";
       // The file descriptor can't be trusted anymore, stop waiting and try to
       // connect
       return;
     }
-    if (event == monitor::BootEvent::AdbdStarted) {
+
+    if (read_result->event == monitor::Event::AdbdStarted) {
       LOG(DEBUG) << "Adbd has started in the guest, connecting adb";
       return;
     }

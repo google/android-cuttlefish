@@ -23,16 +23,20 @@ import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
+import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.util.Log;
 import android.os.IBinder;
+import android.view.Display;
+import android.view.WindowManager;
 import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.List;
 
 /**
  * Service is started by the BootCompletedReceiver at the end of Android Boot process.
- * Responsible for final configuration changes and emitting final BOOT_COMPLETED message.
+ * Responsible for emitting final BOOT_COMPLETED message and continued configuration changes.
  */
 public class GceService extends Service {
     private static final String LOG_TAG = "GceService";
@@ -45,13 +49,15 @@ public class GceService extends Service {
     private static final int NOTIFICATION_ID = 1;
 
     private final JobExecutor mExecutor = new JobExecutor();
-    private final BootReporter mBootReporter = new BootReporter();
+    private final EventReporter mEventReporter = new EventReporter();
     private final GceBroadcastReceiver mBroadcastReceiver = new GceBroadcastReceiver();
     private final BluetoothChecker mBluetoothChecker = new BluetoothChecker();
 
     private ConnectivityChecker mConnChecker;
     private GceWifiManager mWifiManager = null;
     private String mMostRecentAction = null;
+    private WindowManager mWindowManager;
+
 
     public GceService() {}
 
@@ -60,17 +66,18 @@ public class GceService extends Service {
     public void onCreate() {
         try {
             super.onCreate();
-            mBootReporter.reportBootStarted();
+            mEventReporter.reportBootStarted();
             registerBroadcastReceivers();
 
-            mConnChecker = new ConnectivityChecker(this, mBootReporter);
-            mWifiManager = new GceWifiManager(this, mBootReporter, mExecutor);
+            mWindowManager = getSystemService(WindowManager.class);
+            mConnChecker = new ConnectivityChecker(this, mEventReporter);
+            mWifiManager = new GceWifiManager(this, mEventReporter, mExecutor);
 
             mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
             mExecutor.schedule(mConnChecker);
 
-            mExecutor.schedule(mBootReporter, mBluetoothChecker.getEnabled());
+            mExecutor.schedule(mEventReporter, mBluetoothChecker.getEnabled());
 
             NotificationManager notificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -105,6 +112,17 @@ public class GceService extends Service {
         this.registerReceiver(mBroadcastReceiver, filter);
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+        Display display = mWindowManager.getDefaultDisplay();
+        Point screenBounds = new Point();
+        display.getRealSize(screenBounds);
+        int width = screenBounds.x;
+        int height = screenBounds.y;
+        mEventReporter.reportScreenChanged(width, height, config.densityDpi, display.getRotation());
+    }
+
 
     /** StartService entry point.
      */
@@ -127,6 +145,8 @@ public class GceService extends Service {
                         .setSmallIcon(android.R.drawable.ic_dialog_info)
                         .setTimeoutAfter(10000)
                         .build();
+        // Start in the Foreground (and do not stop) so that this service
+        // continues running and reporting events without being killed.
         startForeground(NOTIFICATION_ID, notification);
 
         if (INTENT_ACTION_CONFIGURE.equals(mMostRecentAction)) {
@@ -136,8 +156,6 @@ public class GceService extends Service {
         } else if (INTENT_ACTION_BLUETOOTH_CHANGED.equals(mMostRecentAction)) {
             mExecutor.schedule(mBluetoothChecker);
         }
-
-        stopForeground(Service.STOP_FOREGROUND_DETACH);
 
         /* If anything goes wrong, make sure we receive intent again. */
         return Service.START_STICKY;
@@ -152,8 +170,8 @@ public class GceService extends Service {
      */
     @Override
     protected void dump(FileDescriptor fd, PrintWriter pw, String[] args) {
-        pw.println("Boot reporter:");
-        List<String> messageList = mBootReporter.getMessageList();
+        pw.println("Virtual Device reporter:");
+        List<String> messageList = mEventReporter.getMessageList();
         for (int i = 0; i < messageList.size(); i++) {
             pw.println("  " + messageList.get(i));
         }

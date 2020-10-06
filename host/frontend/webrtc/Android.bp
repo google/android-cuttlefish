@@ -26,14 +26,14 @@ cc_library_static {
         "lib/ws_connection.cpp",
     ],
     cflags: [
-      // libwebrtc headers need this
-      "-Wno-unused-parameter",
-      "-DWEBRTC_POSIX",
-      "-DWEBRTC_LINUX",
+        // libwebrtc headers need this
+        "-Wno-unused-parameter",
+        "-DWEBRTC_POSIX",
+        "-DWEBRTC_LINUX",
     ],
     header_libs: [
-      "webrtc_signaling_headers",
-      "libabsl_headers",
+        "webrtc_signaling_headers",
+        "libabsl_headers",
     ],
     static_libs: [
         "libsrtp2",
@@ -66,13 +66,14 @@ cc_binary_host {
     srcs: [
         "adb_handler.cpp",
         "connection_observer.cpp",
-        "display_handler.cpp",
-        "main.cpp",
         "cvd_video_frame_buffer.cpp",
+        "display_handler.cpp",
+        "kernel_log_events_handler.cpp",
+        "main.cpp",
     ],
     header_libs: [
-      "webrtc_signaling_headers",
-      "libabsl_headers",
+        "webrtc_signaling_headers",
+        "libabsl_headers",
     ],
     static_libs: [
         "libabsl_base",
@@ -111,6 +112,7 @@ cc_binary_host {
         "libbase",
         "libcrypto",
         "libcuttlefish_fs",
+        "libcuttlefish_kernel_log_monitor_utils",
         "libjsoncpp",
         "libopus",
         "libssl",

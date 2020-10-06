@@ -27,13 +27,13 @@ import java.util.Calendar;
 import java.util.List;
 
 /**
- * Report boot status to console.
+ * Report virtual device boot status and other messages to console.
  *
  * This class sends messages to kernel log (and serial console) directly by
  * writing to /dev/kmsg.
  */
-public class BootReporter extends JobBase {
-    private static final String LOG_TAG = "GceBootReporter";
+public class EventReporter extends JobBase {
+    private static final String LOG_TAG = "GceEventReporter";
     private static final int KLOG_NOTICE = 5;
     private static final String KLOG_OUTPUT = "/dev/kmsg";
     private static final String KLOG_FORMAT = "<%d>%s: %s\n";
@@ -41,13 +41,14 @@ public class BootReporter extends JobBase {
     private static final String VIRTUAL_DEVICE_BOOT_PENDING = "VIRTUAL_DEVICE_BOOT_PENDING";
     private static final String VIRTUAL_DEVICE_BOOT_COMPLETED = "VIRTUAL_DEVICE_BOOT_COMPLETED";
     private static final String VIRTUAL_DEVICE_BOOT_FAILED = "VIRTUAL_DEVICE_BOOT_FAILED";
+    private static final String VIRTUAL_DEVICE_SCREEN_CHANGED = "VIRTUAL_DEVICE_SCREEN_CHANGED";
     private FileOutputStream mKmsgStream = null;
     private PrintWriter mKmsgWriter = null;
     private List<String> mMessageList = new ArrayList<String>();
 
 
     /** Constructor. */
-    public BootReporter() {
+    public EventReporter() {
         super(LOG_TAG);
 
         try {
@@ -120,6 +121,12 @@ public class BootReporter extends JobBase {
 
     public void reportBootStarted() {
         reportMessage(VIRTUAL_DEVICE_BOOT_STARTED);
+    }
+
+    public void reportScreenChanged(int width, int height, int dpi, int rotation) {
+        reportMessage(String.format("%s width=%d height=%d dpi=%d rotation=%d",
+              VIRTUAL_DEVICE_SCREEN_CHANGED,
+              width, height, dpi, rotation));
     }
 
     /** Get the list of reported messages so far.
