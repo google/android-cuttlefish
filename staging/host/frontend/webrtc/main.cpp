@@ -37,6 +37,7 @@
 DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
+DEFINE_int32(kernel_log_events_fd, -1, "An fd to listen on for kernel log events.");
 DEFINE_bool(write_virtio_input, false,
             "Whether to send input events in virtio format.");
 
@@ -132,6 +133,9 @@ int main(int argc, char **argv) {
     }
   });
 
+  auto kernel_log_events_client = cuttlefish::SharedFD::Dup(FLAGS_kernel_log_events_fd);
+  close(FLAGS_kernel_log_events_fd);
+
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto screen_connector = cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd);
 
@@ -154,7 +158,8 @@ int main(int argc, char **argv) {
         ParseHttpHeaders(cvd_config->sig_server_headers_path());
   }
 
-  auto observer_factory = std::make_shared<CfConnectionObserverFactory>(input_sockets);
+  auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
+      input_sockets, kernel_log_events_client);
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";
