@@ -28,6 +28,7 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_kernel_log_monitor_utils",
         "liblog",
     ],
     defaults: ["cuttlefish_host_and_guest"],

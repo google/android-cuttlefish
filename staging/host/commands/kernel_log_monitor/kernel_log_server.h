@@ -21,18 +21,21 @@
 #include <string>
 #include <vector>
 
+#include <json/json.h>
+
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/fs/shared_select.h"
 
 namespace monitor {
 
-enum BootEvent : int32_t {
+enum Event : int32_t {
   BootStarted = 0,
   BootCompleted = 1,
   BootFailed = 2,
   WifiNetworkConnected = 3,
   MobileNetworkConnected = 4,
   AdbdStarted = 5,
+  ScreenChanged = 6,
 };
 
 enum class SubscriptionAction {
@@ -40,10 +43,10 @@ enum class SubscriptionAction {
   CancelSubscription,
 };
 
-using BootEventCallback = std::function<SubscriptionAction(BootEvent)>;
+using EventCallback = std::function<SubscriptionAction(Json::Value)>;
 
-// KernelLogServer manages incoming kernel log connection from QEmu. Only accept
-// one connection.
+// KernelLogServer manages an incoming kernel log connection from the VMM.
+// Only accept one connection.
 class KernelLogServer {
  public:
   KernelLogServer(cuttlefish::SharedFD pipe_fd,
@@ -60,7 +63,8 @@ class KernelLogServer {
   // on affected SharedFDs.
   void AfterSelect(const cuttlefish::SharedFDSet& fd_read);
 
-  void SubscribeToBootEvents(BootEventCallback callback);
+  void SubscribeToEvents(EventCallback callback);
+
  private:
   // Respond to message from remote client.
   // Returns false, if client disconnected.
@@ -70,7 +74,7 @@ class KernelLogServer {
   cuttlefish::SharedFD log_fd_;
   std::string line_;
   bool deprecated_boot_completed_;
-  std::vector<BootEventCallback> subscribers_;
+  std::vector<EventCallback> subscribers_;
 
   KernelLogServer(const KernelLogServer&) = delete;
   KernelLogServer& operator=(const KernelLogServer&) = delete;
