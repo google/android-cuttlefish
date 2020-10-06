@@ -45,12 +45,14 @@ body {
     border-color: #aaaaaa;
 }
 
+#device_view {
+    transition: width 1s;
+}
 #control_view {
     text-align: left;
     padding: 10px;
     min-width: 450px;
 }
-
 /* Screens >1000px place the device view on the left and the control
  * view on the right. Other screens have deview view on top and control
  * view on bottom. */
@@ -63,11 +65,19 @@ body {
         float: left;
     }
 }
+#device_view.landscape {
+    width: 100vh;
+}
 
 #deviceScreen {
     max-width: 100%;
     max-height: 100%;
     touch-action: none;
+    transform-origin: bottom left;
+    transition: transform 1s;
+}
+#deviceScreen.landscape {
+    transform: rotateZ(90deg) translateX(-100vh);
 }
 
 #control_panel {
