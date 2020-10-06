@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <json/json.h>
+#include <json/writer.h>
 #include <netdb.h>
 #include <openssl/rand.h>
 
@@ -138,6 +139,7 @@ class ControlChannelHandler : public webrtc::DataChannelObserver {
   void OnStateChange() override;
   void OnMessage(const webrtc::DataBuffer &msg) override;
 
+  void Send(const Json::Value& message);
   void Send(const uint8_t *msg, size_t size, bool binary);
 
  private:
@@ -279,6 +281,10 @@ ControlChannelHandler::ControlChannelHandler(
     std::shared_ptr<ConnectionObserver> observer)
     : control_channel_(control_channel), observer_(observer) {
   control_channel->RegisterObserver(this);
+  observer_->OnControlChannelOpen([this](const Json::Value& message) {
+    this->Send(message);
+    return true;
+  });
 }
 
 ControlChannelHandler::~ControlChannelHandler() {
@@ -293,6 +299,13 @@ void ControlChannelHandler::OnStateChange() {
 
 void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   observer_->OnControlMessage(msg.data.cdata(), msg.size());
+}
+
+void ControlChannelHandler::Send(const Json::Value& message) {
+  Json::FastWriter writer;
+  std::string message_string = writer.write(message);
+  Send(reinterpret_cast<const uint8_t*>(message_string.c_str()),
+       message_string.size(), /*binary=*/false);
 }
 
 void ControlChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {

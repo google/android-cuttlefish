@@ -35,9 +35,9 @@
 #include <thread>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
-#include <android-base/logging.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
@@ -55,6 +55,7 @@
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/kernel_args.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/utils.h"
 #include <host/libs/vm_manager/crosvm_manager.h>
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
@@ -87,16 +88,18 @@ class CvdBootStateMachine {
 
   // Returns true if the machine is left in a final state
   bool OnBootEvtReceived(cuttlefish::SharedFD boot_events_pipe) {
-    monitor::BootEvent evt;
-    auto bytes_read = boot_events_pipe->Read(&evt, sizeof(evt));
-    if (bytes_read != sizeof(evt)) {
-      LOG(ERROR) << "Fail to read a complete event, read " << bytes_read
-                 << " bytes only instead of the expected " << sizeof(evt);
+    std::optional<monitor::ReadEventResult> read_result =
+        monitor::ReadEvent(boot_events_pipe);
+    if (!read_result) {
+      LOG(ERROR) << "Failed to read a complete kernel log boot event.";
       state_ |= kGuestBootFailed;
-    } else if (evt == monitor::BootEvent::BootCompleted) {
+      return MaybeWriteToForegroundLauncher();
+    }
+
+    if (read_result->event == monitor::Event::BootCompleted) {
       LOG(INFO) << "Virtual device booted successfully";
       state_ |= kGuestBootCompleted;
-    } else if (evt == monitor::BootEvent::BootFailed) {
+    } else if (read_result->event == monitor::Event::BootFailed) {
       LOG(ERROR) << "Virtual device failed to boot";
       state_ |= kGuestBootFailed;
     }  // Ignore the other signals
@@ -567,9 +570,10 @@ int main(int argc, char** argv) {
   LaunchModemSimulatorIfEnabled(*config, &process_monitor);
 
   auto event_pipes =
-      LaunchKernelLogMonitor(*config, &process_monitor, 2);
+      LaunchKernelLogMonitor(*config, &process_monitor, 3);
   cuttlefish::SharedFD boot_events_pipe = event_pipes[0];
   cuttlefish::SharedFD adbd_events_pipe = event_pipes[1];
+  cuttlefish::SharedFD webrtc_events_pipe = event_pipes[2];
   event_pipes.clear();
 
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
@@ -591,7 +595,7 @@ int main(int argc, char** argv) {
       *config, &process_monitor, GetOnSubprocessExitCallback(*config));
   }
   if (config->enable_webrtc()) {
-    streamer_config = LaunchWebRTC(&process_monitor, *config);
+    streamer_config = LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
   }
 
   auto kernel_args = KernelCommandLineFromConfig(*config, config->ForDefaultInstance());

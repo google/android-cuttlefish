@@ -23,6 +23,7 @@ cc_binary {
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_kernel_log_monitor_utils",
         "libbase",
         "libjsoncpp",
         "libnl",
@@ -33,5 +34,8 @@ cc_binary {
         "libcuttlefish_vm_manager",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
+    defaults: [
+        "cuttlefish_host_and_guest",
+        "cuttlefish_libicuuc",
+    ],
 }

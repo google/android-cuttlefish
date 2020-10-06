@@ -20,15 +20,17 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
-#include <android-base/logging.h>
+#include <json/json.h>
 
 #include <common/libs/fs/shared_fd.h>
 #include <common/libs/fs/shared_select.h>
 #include <host/libs/config/cuttlefish_config.h>
 #include <host/libs/config/logging.h>
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/utils.h"
 
 DEFINE_int32(log_pipe_fd, -1,
              "A file descriptor representing a (UNIX) socket from which to "
@@ -36,7 +38,7 @@ DEFINE_int32(log_pipe_fd, -1,
              "the instance configuration");
 DEFINE_string(subscriber_fds, "",
              "A comma separated list of file descriptors (most likely pipes) to"
-             " send boot events to.");
+             " send kernel log events to.");
 
 std::vector<cuttlefish::SharedFD> SubscribersFromCmdline() {
   // Validate the parameter
@@ -97,9 +99,8 @@ int main(int argc, char** argv) {
 
   for (auto subscriber_fd: subscriber_fds) {
     if (subscriber_fd->IsOpen()) {
-      klog.SubscribeToBootEvents([subscriber_fd](monitor::BootEvent evt) {
-        int retval = subscriber_fd->Write(&evt, sizeof(evt));
-        if (retval < 0) {
+      klog.SubscribeToEvents([subscriber_fd](Json::Value message) {
+        if (!monitor::WriteEvent(subscriber_fd, message)) {
           if (subscriber_fd->GetErrno() != EPIPE) {
             LOG(ERROR) << "Error while writing to pipe: "
                        << subscriber_fd->StrError();
