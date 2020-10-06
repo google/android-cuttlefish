@@ -270,6 +270,8 @@ DEFINE_int32(modem_simulator_sim_type, 1,
 
 DEFINE_bool(console, false, "Enable the serial console");
 
+DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
+
 namespace {
 
 const std::string kKernelDefaultPath = "kernel";
@@ -639,6 +641,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_ril_dns(FLAGS_ril_dns);
 
   tmp_config_obj.set_enable_minimal_mode(FLAGS_enable_minimal_mode);
+
+  tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
 
   std::vector<int> instance_nums;
   for (int i = 0; i < FLAGS_num_instances; i++) {
