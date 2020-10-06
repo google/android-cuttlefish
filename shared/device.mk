@@ -504,7 +504,7 @@ PRODUCT_PACKAGES += \
 # PowerStats HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.powerstats-service.example
+    android.hardware.power.stats-service.example
 
 #
 # NeuralNetworks HAL
