@@ -57,12 +57,14 @@
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include <host/libs/vm_manager/crosvm_manager.h>
+#include "host/libs/vm_manager/host_configuration.h"
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 using cuttlefish::ForCurrentInstance;
 using cuttlefish::RunnerExitCodes;
 using cuttlefish::vm_manager::GetVmManager;
+using cuttlefish::vm_manager::ValidateHostConfiguration;
 
 namespace {
 
@@ -487,7 +489,7 @@ int main(int argc, char** argv) {
 
   // Check host configuration
   std::vector<std::string> config_commands;
-  if (!vm_manager->ValidateHostConfiguration(&config_commands)) {
+  if (!ValidateHostConfiguration(&config_commands)) {
     LOG(ERROR) << "Validation of user configuration failed";
     std::cout << "Execute the following to correctly configure:" << std::endl;
     for (auto& command : config_commands) {
