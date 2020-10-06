@@ -18,6 +18,8 @@
 
 #include <functional>
 
+#include <json/json.h>
+
 namespace cuttlefish {
 namespace webrtc_streaming {
 
@@ -36,6 +38,8 @@ class ConnectionObserver {
   virtual void OnAdbChannelOpen(
       std::function<bool(const uint8_t*, size_t)> adb_message_sender) = 0;
   virtual void OnAdbMessage(const uint8_t* msg, size_t size) = 0;
+  virtual void OnControlChannelOpen(
+      std::function<bool(const Json::Value)> control_message_sender) = 0;
   virtual void OnControlMessage(const uint8_t* msg, size_t size) = 0;
 };
 
