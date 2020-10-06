@@ -165,6 +165,8 @@ const char* kConsole = "console";
 
 const char* kHostToolsVersion = "host_tools_version";
 
+const char* kVhostNet = "vhost_net";
+
 }  // namespace
 
 namespace cuttlefish {
@@ -782,6 +784,13 @@ void CuttlefishConfig::set_console(bool console) {
 }
 bool CuttlefishConfig::console() const {
   return (*dictionary_)[kConsole].asBool();
+}
+
+void CuttlefishConfig::set_vhost_net(bool vhost_net) {
+  (*dictionary_)[kVhostNet] = vhost_net;
+}
+bool CuttlefishConfig::vhost_net() const {
+  return (*dictionary_)[kVhostNet].asBool();
 }
 
 // Creates the (initially empty) config object and populates it with values from
