@@ -42,7 +42,7 @@ static const std::map<std::string, monitor::Event> kStageToEventMap = {
      monitor::Event::MobileNetworkConnected},
     {cuttlefish::kWifiConnectedMessage, monitor::Event::WifiNetworkConnected},
     // TODO(b/131864854): Replace this with a string less likely to change
-    {"init: starting service 'adbd'", monitor::Event::AdbdStarted},
+    {"init: starting service 'adbd'...", monitor::Event::AdbdStarted},
     {cuttlefish::kScreenChangedMessage, monitor::Event::ScreenChanged},
 };
 
@@ -129,11 +129,15 @@ bool KernelLogServer::HandleIncomingMessage() {
           Json::Value metadata;
           // Expect space-separated key=value pairs in the log message.
           const auto& fields = android::base::Split(
-              android::base::Trim(line_.substr(pos + stage.size())), " ");
-          if (fields.empty()) {
-            LOG(DEBUG) << "Kernel log has no fields for line: " << line_;
-          }
-          for (const auto& field : fields) {
+              line_.substr(pos + stage.size()), " ");
+          for (std::string field : fields) {
+            field = android::base::Trim(field);
+            if (field.empty()) {
+              // Expected; android::base::Split() always returns at least
+              // one (possibly empty) string.
+              LOG(DEBUG) << "Empty field for line: " << line_;
+              continue;
+            }
             const auto& keyvalue = android::base::Split(field, "=");
             if (keyvalue.size() != 2) {
               LOG(WARNING) << "Field is not in key=value format: " << field;
