@@ -23,7 +23,7 @@ LOCAL_SHARED_LIBRARIES := \
   liblog \
   libcutils \
   libutils \
-  ${CUTTLEFISH_LIBRIL_NAME} \
+  libril-modem-lib \
   libcuttlefish_fs \
   cuttlefish_net \
   libbase \
