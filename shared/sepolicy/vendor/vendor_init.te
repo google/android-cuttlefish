@@ -10,5 +10,6 @@ set_prop(vendor_init, vendor_bt_rootcanal_prop)
 get_prop(vendor_init, vendor_ser_prop)
 
 get_prop(vendor_init, vendor_graphics_config_prop)
+set_prop(vendor_init, graphics_config_prop)
 
 get_prop(vendor_init, vendor_fstab_name_prop)
