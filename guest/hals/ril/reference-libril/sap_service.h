@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 The Android Open Source Project
+ * Copyright (c) 2016 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-#pragma once
+#ifndef SAP_SERVICE_H
+#define SAP_SERVICE_H
 
-#define RIL_SHLIB
+#include <telephony/ril.h>
+#include <ril_internal.h>
+#include <RilSapSocket.h>
+#include <hardware/ril/librilutils/proto/sap-api.pb.h>
 
-#define LOG_TAG "CuttlefishRil"
+namespace sap {
 
-#include <log/log.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <sys/time.h>
+void registerService(const RIL_RadioFunctions *callbacks);
+void processResponse(MsgHeader *rsp, RilSapSocket *sapSocket);
+void processUnsolResponse(MsgHeader *rsp, RilSapSocket *sapSocket);
 
-#include <guest/hals/ril/reference-libril/ril.h>
+}   // namespace android
 
-#include <telephony/ril_cdma_sms.h>
+#endif  // RIL_SERVICE_H
