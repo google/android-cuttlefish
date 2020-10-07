@@ -103,7 +103,7 @@
     </exception>
 
     <exception package="com.google.android.apps.scone">
-        <!-- NLP Location access to determine proximity to country border -->
+        <!-- Location access to determine proximity to a CBRS network coverage area -->
         <permission name="android.permission.ACCESS_COARSE_LOCATION" fixed="false"/>
         <permission name="android.permission.ACCESS_BACKGROUND_LOCATION" fixed="false"/>
         <!-- Used to call ActivityTransition API for Smart OOS & Smart PNO -->
