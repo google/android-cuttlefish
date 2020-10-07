@@ -24,7 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <guest/hals/ril/libril/ril.h>
+#include <guest/hals/ril/reference-libril/ril.h>
 
 #define LOG_TAG "RILD"
 #include <log/log.h>
@@ -34,7 +34,7 @@
 #include <sys/prctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <guest/hals/ril/libril/ril_ex.h>
+#include <guest/hals/ril/reference-libril/ril_ex.h>
 
 #define LIB_PATH_PROPERTY   "vendor.rild.libpath"
 #define LIB_ARGS_PROPERTY   "vendor.rild.libargs"
