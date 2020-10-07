@@ -32,6 +32,7 @@
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <vulkan/vulkan.h>
 
 #include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/files.h"
@@ -100,6 +101,7 @@ std::vector<std::string> QemuManager::ConfigureGpuMode(
     // with properities lead to non-deterministic behavior while loading the
     // HALs.
     return {
+      "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=cutf",
       "androidboot.hardware.egl=swiftshader",
@@ -109,6 +111,7 @@ std::vector<std::string> QemuManager::ConfigureGpuMode(
 
   if (gpu_mode == kGpuModeDrmVirgl) {
     return {
+      "androidboot.cpuvulkan.version=0",
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=drm_minigbm",
       "androidboot.hardware.egl=mesa",
