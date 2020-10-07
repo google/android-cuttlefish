@@ -21,6 +21,9 @@ cc_library_static {
         "qemu_manager.cpp",
         "vm_manager.cpp",
     ],
+    header_libs: [
+        "vulkan_headers",
+    ],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",

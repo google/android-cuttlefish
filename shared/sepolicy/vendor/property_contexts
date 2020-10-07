@@ -1,4 +1,6 @@
 persist.camera. u:object_r:vendor_camera_prop:s0
+ro.boot.cpuvulkan.version  u:object_r:vendor_graphics_config_prop:s0 exact int
+ro.cpuvulkan.version  u:object_r:graphics_config_prop:s0 exact int
 ro.boot.cuttlefish_config_server_port  u:object_r:vendor_cuttlefish_config_server_port_prop:s0
 ro.boot.fstab_name u:object_r:vendor_fstab_name_prop:s0 exact string
 ro.boot.hardware.egl u:object_r:vendor_graphics_config_prop:s0 exact string
