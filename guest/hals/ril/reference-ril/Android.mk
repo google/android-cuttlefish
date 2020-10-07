@@ -1,8 +1,5 @@
 # Copyright 2006 The Android Open Source Project
 
-# XXX using libutils for simulator build only...
-#
-ifeq (libril-modem-lib,$(CUTTLEFISH_LIBRIL_NAME))
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
@@ -14,7 +11,7 @@ LOCAL_SRC_FILES:= \
     at_tok.c \
 
 LOCAL_SHARED_LIBRARIES := \
-    liblog libcutils libutils ${CUTTLEFISH_LIBRIL_NAME} librilutils libcuttlefish_utils \
+    liblog libcutils libutils libril-modem-lib librilutils libcuttlefish_utils \
     libcuttlefish_fs
 
 LOCAL_STATIC_LIBRARIES := libqemu_pipe libbase
@@ -46,4 +43,3 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_VENDOR_MODULE := true
 
 include $(BUILD_SHARED_LIBRARY)
-endif

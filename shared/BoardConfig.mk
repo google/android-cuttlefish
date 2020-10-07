@@ -128,9 +128,6 @@ PRODUCT_PRIVATE_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/produc
 BOARD_PLAT_PRIVATE_SEPOLICY_DIR += device/google/cuttlefish/shared/sepolicy/system_ext/private
 # BOARD_PLAT_PUBLIC_SEPOLICY_DIR += device/google/cuttlefish/shared/sepolicy/system_ext/public
 
-CUTTLEFISH_LIBRIL_NAME := libril-modem-lib
-ENABLE_CUTTLEFISH_RILD := true
-
 STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
 
 INIT_BOOTCHART := true
