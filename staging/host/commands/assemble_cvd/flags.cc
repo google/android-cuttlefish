@@ -73,8 +73,6 @@ DEFINE_bool(guest_enforce_security, true,
             "Whether to run in enforcing mode (non permissive).");
 DEFINE_bool(guest_audit_security, true,
             "Whether to log security audits.");
-DEFINE_bool(guest_force_normal_boot, true,
-            "Whether to force the boot sequence to skip recovery.");
 DEFINE_int32(memory_mb, 2048,
              "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, ForCurrentInstance("CUTTLEFISHCVD"),
@@ -469,7 +467,6 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_boot_image_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
-  tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
   std::string vm_manager_cmdline = "";
