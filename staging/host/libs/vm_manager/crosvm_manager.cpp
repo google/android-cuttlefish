@@ -25,6 +25,7 @@
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <vulkan/vulkan.h>
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/network.h"
@@ -103,6 +104,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
   // HALs.
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     return {
+        "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=cutf",
         "androidboot.hardware.egl=swiftshader",
@@ -112,6 +114,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
 
   if (gpu_mode == kGpuModeDrmVirgl) {
     return {
+      "androidboot.cpuvulkan.version=0",
       "androidboot.hardware.gralloc=minigbm",
       "androidboot.hardware.hwcomposer=drm_minigbm",
       "androidboot.hardware.egl=mesa",
@@ -119,6 +122,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
   }
   if (gpu_mode == kGpuModeGfxStream) {
     return {
+        "androidboot.cpuvulkan.version=0",
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=drm_minigbm",
         "androidboot.hardware.egl=emulation",
