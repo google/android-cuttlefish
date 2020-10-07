@@ -12,6 +12,7 @@ on early-init
     setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
     setprop ro.hardware.hwcomposer ${ro.boot.hardware.hwcomposer}
     setprop ro.hardware.vulkan ${ro.boot.hardware.vulkan}
+    setprop ro.cpuvulkan.version ${ro.boot.cpuvulkan.version}
 
     # start module load in the background
     start vendor.insmod_sh
