@@ -45,7 +45,6 @@ constexpr char kMobileNetworkConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
 constexpr char kWifiConnectedMessage[] =
     "VIRTUAL_DEVICE_NETWORK_WIFI_CONNECTED";
-constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
@@ -225,6 +224,9 @@ class CuttlefishConfig {
   void set_guest_audit_security(bool guest_audit_security);
   bool guest_audit_security() const;
 
+  void set_guest_force_normal_boot(bool guest_force_normal_boot);
+  bool guest_force_normal_boot() const;
+
   enum Answer {
     kUnknown = 0,
     kYes,
@@ -309,9 +311,6 @@ class CuttlefishConfig {
 
   void set_host_tools_version(const std::map<std::string, uint32_t>&);
   std::map<std::string, uint32_t> host_tools_version() const;
-
-  void set_vhost_net(bool vhost_net);
-  bool vhost_net() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;
