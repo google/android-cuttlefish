@@ -225,6 +225,9 @@ class CuttlefishConfig {
   void set_guest_audit_security(bool guest_audit_security);
   bool guest_audit_security() const;
 
+  void set_guest_force_normal_boot(bool guest_force_normal_boot);
+  bool guest_force_normal_boot() const;
+
   enum Answer {
     kUnknown = 0,
     kYes,
