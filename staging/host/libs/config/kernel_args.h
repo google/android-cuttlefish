@@ -21,5 +21,10 @@
 
 #include "host/libs/config/cuttlefish_config.h"
 
-std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::CuttlefishConfig& config,
-    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance);
+namespace cuttlefish {
+
+std::vector<std::string> KernelCommandLineFromConfig(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance);
+
+} // namespace cuttlefish
