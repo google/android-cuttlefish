@@ -317,7 +317,7 @@ PRODUCT_PACKAGES += \
 # Contexthub HAL
 #
 PRODUCT_PACKAGES += \
-    android.hardware.contexthub@1.1-service.mock
+    android.hardware.contexthub@1.2-service.mock
 
 #
 # Drm HAL
