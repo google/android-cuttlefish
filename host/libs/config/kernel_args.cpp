@@ -28,22 +28,26 @@
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
-using cuttlefish::vm_manager::CrosvmManager;
-using cuttlefish::vm_manager::QemuManager;
+namespace cuttlefish {
+
+using vm_manager::CrosvmManager;
+using vm_manager::QemuManager;
+
+namespace {
 
 template<typename T>
-static void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
+void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
   destination->insert(destination->end(), source.begin(), source.end());
 }
 
 template<typename S, typename T>
-static std::string concat(const S& s, const T& t) {
+std::string concat(const S& s, const T& t) {
   std::ostringstream os;
   os << s << t;
   return os.str();
 }
 
-static std::string mac_to_str(const std::array<unsigned char, 6>& mac) {
+std::string mac_to_str(const std::array<unsigned char, 6>& mac) {
   std::ostringstream stream;
   stream << std::hex << (int) mac[0];
   for (int i = 1; i < 6; i++) {
@@ -54,14 +58,13 @@ static std::string mac_to_str(const std::array<unsigned char, 6>& mac) {
 
 // TODO(schuffelen): Move more of this into host/libs/vm_manager, as a
 // substitute for the vm_manager comparisons.
-static std::vector<std::string> VmManagerKernelCmdline(
-    const cuttlefish::CuttlefishConfig& config) {
+std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) {
   std::vector<std::string> vm_manager_cmdline;
   if (config.vm_manager() == QemuManager::name() || config.use_bootloader()) {
     // crosvm sets up the console= earlycon= panic= flags for us if booting straight to
     // the kernel, but QEMU and the bootloader via crosvm does not.
     AppendVector(&vm_manager_cmdline, {"console=hvc0", "panic=-1"});
-    if (cuttlefish::HostArch() == "aarch64") {
+    if (HostArch() == "aarch64") {
       if (config.vm_manager() == QemuManager::name()) {
         // To update the pl011 address:
         // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
@@ -109,7 +112,7 @@ static std::vector<std::string> VmManagerKernelCmdline(
       console_dev = "hvc1";
     } else {
       // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
-      if (cuttlefish::HostArch() == "aarch64" && config.vm_manager() != CrosvmManager::name()) {
+      if (HostArch() == "aarch64" && config.vm_manager() != CrosvmManager::name()) {
         console_dev = "ttyAMA0";
       } else {
         console_dev = "ttyS0";
@@ -135,13 +138,16 @@ static std::vector<std::string> VmManagerKernelCmdline(
   return vm_manager_cmdline;
 }
 
-std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::CuttlefishConfig& config,
-    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
+} // namespace
+
+std::vector<std::string> KernelCommandLineFromConfig(
+    const CuttlefishConfig& config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> kernel_cmdline;
 
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
   AppendVector(&kernel_cmdline, config.boot_image_kernel_cmdline());
-  auto vmm = cuttlefish::vm_manager::GetVmManager(config.vm_manager());
+  auto vmm = vm_manager::GetVmManager(config.vm_manager());
   AppendVector(&kernel_cmdline, vmm->ConfigureGpuMode(config.gpu_mode()));
   AppendVector(&kernel_cmdline, vmm->ConfigureBootDevices());
 
@@ -193,7 +199,7 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
   }
 
   if (config.enable_vehicle_hal_grpc_server() && instance.vehicle_hal_server_port() &&
-      cuttlefish::FileExists(config.vehicle_hal_grpc_server_binary())) {
+      FileExists(config.vehicle_hal_grpc_server_binary())) {
     constexpr int vehicle_hal_server_cid = 2;
     kernel_cmdline.push_back(concat("androidboot.vendor.vehiclehal.server.cid=", vehicle_hal_server_cid));
     kernel_cmdline.push_back(concat("androidboot.vendor.vehiclehal.server.port=", instance.vehicle_hal_server_port()));
@@ -230,3 +236,5 @@ std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::Cuttlefis
 
   return kernel_cmdline;
 }
+
+} // namespace cuttlefish
