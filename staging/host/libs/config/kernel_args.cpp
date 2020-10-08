@@ -21,9 +21,15 @@
 #include <string>
 #include <vector>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
+
+using cuttlefish::vm_manager::CrosvmManager;
+using cuttlefish::vm_manager::QemuManager;
 
 template<typename T>
 static void AppendVector(std::vector<T>* destination, const std::vector<T>& source) {
@@ -46,11 +52,94 @@ static std::string mac_to_str(const std::array<unsigned char, 6>& mac) {
   return stream.str();
 }
 
+// TODO(schuffelen): Move more of this into host/libs/vm_manager, as a
+// substitute for the vm_manager comparisons.
+static std::vector<std::string> VmManagerKernelCmdline(
+    const cuttlefish::CuttlefishConfig& config) {
+  std::vector<std::string> vm_manager_cmdline;
+  if (config.vm_manager() == QemuManager::name() || config.use_bootloader()) {
+    // crosvm sets up the console= earlycon= panic= flags for us if booting straight to
+    // the kernel, but QEMU and the bootloader via crosvm does not.
+    AppendVector(&vm_manager_cmdline, {"console=hvc0", "panic=-1"});
+    if (cuttlefish::HostArch() == "aarch64") {
+      if (config.vm_manager() == QemuManager::name()) {
+        // To update the pl011 address:
+        // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
+        // $ dtc -O dts -o virt.dts -I dtb virt.dtb
+        // In the virt.dts file, look for a uart node
+        vm_manager_cmdline.push_back(" earlycon=pl011,mmio32,0x9000000");
+      } else {
+        // Crosvm ARM only supports earlycon uart over mmio.
+        vm_manager_cmdline.push_back(" earlycon=uart8250,mmio,0x3f8");
+      }
+    } else {
+      // To update the uart8250 address:
+      // $ qemu-system-x86_64 -kernel bzImage -serial stdio | grep ttyS0
+      // Only 'io' mode works; mmio and mmio32 do not
+      vm_manager_cmdline.push_back("earlycon=uart8250,io,0x3f8");
+
+      if (config.vm_manager() == QemuManager::name()) {
+        // crosvm doesn't support ACPI PNP, but QEMU does. We need to disable
+        // it on QEMU so that the ISA serial ports aren't claimed by ACPI, so
+        // we can use serdev with platform devices instead
+        vm_manager_cmdline.push_back("pnpacpi=off");
+
+        // crosvm sets up the ramoops.xx= flags for us, but QEMU does not.
+        // See external/crosvm/x86_64/src/lib.rs
+        // this feature is not supported on aarch64
+        vm_manager_cmdline.push_back("ramoops.mem_address=0x100000000");
+        vm_manager_cmdline.push_back("ramoops.mem_size=0x200000");
+        vm_manager_cmdline.push_back("ramoops.console_size=0x80000");
+        vm_manager_cmdline.push_back("ramoops.record_size=0x80000");
+        vm_manager_cmdline.push_back("ramoops.dump_oops=1");
+      } else {
+        // crosvm requires these additional parameters on x86_64 in bootloader mode
+        AppendVector(&vm_manager_cmdline, {"pci=noacpi", "reboot=k"});
+      }
+    }
+  }
+
+  if (config.console()) {
+    std::string console_dev;
+    auto can_use_virtio_console = !config.kgdb() && !config.use_bootloader();
+    if (can_use_virtio_console) {
+      // If kgdb and the bootloader are disabled, the Android serial console spawns on a
+      // virtio-console port. If the bootloader is enabled, virtio console can't be used
+      // since uboot doesn't support it.
+      console_dev = "hvc1";
+    } else {
+      // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
+      if (cuttlefish::HostArch() == "aarch64" && config.vm_manager() != CrosvmManager::name()) {
+        console_dev = "ttyAMA0";
+      } else {
+        console_dev = "ttyS0";
+      }
+    }
+
+    vm_manager_cmdline.push_back("androidboot.console=" + console_dev);
+    if (config.kgdb()) {
+      AppendVector(
+          &vm_manager_cmdline,
+          {"kgdboc_earlycon", "kgdbcon", "kgdboc=" + console_dev});
+    }
+  } else {
+    // Specify an invalid path under /dev, so the init process will disable the
+    // console service due to the console not being found. On physical devices,
+    // it is enough to not specify androidboot.console= *and* not specify the
+    // console= kernel command line parameter, because the console and kernel
+    // dmesg are muxed. However, on cuttlefish, we don't need to mux, and would
+    // prefer to retain the kernel dmesg logging, so we must work around init
+    // falling back to the check for /dev/console (which we'll always have).
+    vm_manager_cmdline.push_back("androidboot.console=invalid");
+  }
+  return vm_manager_cmdline;
+}
+
 std::vector<std::string> KernelCommandLineFromConfig(const cuttlefish::CuttlefishConfig& config,
     const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<std::string> kernel_cmdline;
 
-  AppendVector(&kernel_cmdline, config.vm_manager_kernel_cmdline());
+  AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
   AppendVector(&kernel_cmdline, config.boot_image_kernel_cmdline());
   auto vmm = cuttlefish::vm_manager::GetVmManager(config.vm_manager());
   AppendVector(&kernel_cmdline, vmm->ConfigureGpuMode(config.gpu_mode()));
