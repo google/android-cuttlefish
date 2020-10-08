@@ -600,7 +600,9 @@ int main(int argc, char** argv) {
     streamer_config = LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
   }
 
-  auto kernel_args = KernelCommandLineFromConfig(*config, config->ForDefaultInstance());
+  auto kernel_args =
+      cuttlefish::KernelCommandLineFromConfig(
+          *config, config->ForDefaultInstance());
 
   // Start the guest VM
   auto vmm_commands = vm_manager->StartCommands(
