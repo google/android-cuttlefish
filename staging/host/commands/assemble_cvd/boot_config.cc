@@ -74,7 +74,7 @@ bool InitBootloaderEnvPartition(const cuttlefish::CuttlefishConfig& config,
   auto boot_env_image_path = instance.uboot_env_image_path();
   auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
   auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
-  auto kernel_args = KernelCommandLineFromConfig(config, instance);
+  auto kernel_args = cuttlefish::KernelCommandLineFromConfig(config, instance);
   if(!WriteEnvironment(config, kernel_args, uboot_env_path)) {
     LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path << ".'";
     return false;
