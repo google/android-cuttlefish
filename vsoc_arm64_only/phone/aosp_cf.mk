@@ -39,6 +39,13 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 LOCAL_DISABLE_OMX := true
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
+# Nested virtualization support
+PRODUCT_PACKAGES += crosvm
+PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST := \
+    system/bin/crosvm \
+    system/lib64/libfdt.so \
+    system/lib64/%.dylib.so \
+
 #
 # Special settings for the target
 #
