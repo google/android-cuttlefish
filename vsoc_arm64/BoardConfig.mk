@@ -33,5 +33,5 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
 TARGET_TRANSLATE_2ND_ARCH := false
 
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-arm64/*.ko)
+    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/5.4-arm64/*.ko)
 endif
