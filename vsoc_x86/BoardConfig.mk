@@ -34,10 +34,7 @@ TARGET_NO_BOOTLOADER := false
 BOARD_PREBUILT_BOOTLOADER := device/google/cuttlefish_prebuilts/bootloader/crosvm_x86_64/u-boot.rom
 
 BUILD_BROKEN_DUP_RULES := true
-
-ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/5.4-x86_64/*.ko)
-endif
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_kernel/5.4-x86_64/*.ko)
 
 # TODO(b/156534160): Temporarily allow for the old style PRODUCT_COPY_FILES for ndk_translation_prebuilt
 ifeq ($(USE_NDK_TRANSLATION_BINARY),true)
