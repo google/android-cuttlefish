@@ -134,9 +134,9 @@ cvd_host_shared_libraries := \
 
 webrtc_assets := \
     index.html \
+    js/adb.js \
     js/app.js \
     js/cf_webrtc.js \
-    js/logcat.js \
     style.css \
 
 webrtc_certs := \
