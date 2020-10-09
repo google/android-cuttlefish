@@ -48,6 +48,11 @@ void KernelLogEventsHandler::ReadLoop() {
       break;
     }
 
+    if (read_result->event == monitor::Event::BootStarted) {
+      Json::Value message;
+      message["event"] = kBootStartedMessage;
+      send_to_client_(message);
+    }
     if (read_result->event == monitor::Event::ScreenChanged) {
       Json::Value message;
       message["event"] = kScreenChangedMessage;
