@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PRODUCT_COPY_FILES += kernel/prebuilts/5.4/arm64/kernel-5.4-lz4:kernel
+PRODUCT_COPY_FILES += device/google/cuttlefish_kernel/5.4-arm64/kernel:kernel
