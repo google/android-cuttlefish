@@ -114,12 +114,3 @@ body {
 #device_details span {
     white-space: pre;
 }
-
-#logcat {
-    display: none;
-    font-family: monospace;
-    padding: 10px;
-    color: #aaaaaa;
-    background-color: black;
-    margin-top: 40px;
-}
