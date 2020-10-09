@@ -356,7 +356,6 @@ PRODUCT_PACKAGES += \
 # GPS
 #
 PRODUCT_PACKAGES += \
-    android.hardware.gnss@3.0-service \
     android.hardware.gnss-service.example
 
 # Health

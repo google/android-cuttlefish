@@ -51,6 +51,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.confirmationui@1.0",
     "android.hardware.configstore@1.1", // deprecated, see b/149050985, b/149050733
     "android.hardware.fastboot@1.1",
+    "android.hardware.gnss@3.0", // see b/170506696
     "android.hardware.gnss.measurement_corrections@1.1", // is sub-interface of gnss
     "android.hardware.gnss.visibility_control@1.0",
     "android.hardware.graphics.allocator@2.0",
