@@ -40,16 +40,16 @@ function ConnectToDevice(device_id) {
   let mouseIsDown = false;
   let deviceConnection;
 
-  let logcatBtn = document.getElementById('showLogcatBtn');
-  logcatBtn.onclick = ev => {
-    init_logcat(deviceConnection);
-    logcatBtn.remove();
-  };
-
   function onControlMessage(message) {
     let message_data = JSON.parse(message.data);
     console.log(message_data)
     let metadata = message_data.metadata;
+    if (message_data.event == 'VIRTUAL_DEVICE_BOOT_STARTED') {
+      // Start the adb connection after receiving the BOOT_STARTED message.
+      // (This is after the adbd start message. Attempting to connect
+      // immediately after adbd starts causes issues.)
+      init_adb(deviceConnection);
+    }
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
       // TODO(b/165944524) Support all orientations.
       if (metadata.rotation == 3) {
@@ -68,7 +68,8 @@ function ConnectToDevice(device_id) {
     }
   }
 
-  function createControlPanelButton(command, title, icon_name) {
+  function createControlPanelButton(command, title, icon_name,
+      listener=onControlPanelButton) {
     let button = document.createElement('button');
     document.getElementById('control_panel').appendChild(button);
     button.title = title;
@@ -76,9 +77,9 @@ function ConnectToDevice(device_id) {
     // Capture mousedown/up/out commands instead of click to enable
     // hold detection. mouseout is used to catch if the user moves the
     // mouse outside the button while holding down.
-    button.addEventListener('mousedown', onControlPanelButton);
-    button.addEventListener('mouseup', onControlPanelButton);
-    button.addEventListener('mouseout', onControlPanelButton);
+    button.addEventListener('mousedown', listener);
+    button.addEventListener('mouseup', listener);
+    button.addEventListener('mouseout', listener);
     // Set the button image using Material Design icons.
     // See http://google.github.io/material-design-icons
     // and https://material.io/resources/icons
@@ -88,6 +89,7 @@ function ConnectToDevice(device_id) {
   createControlPanelButton('power', 'Power', 'power_settings_new');
   createControlPanelButton('home', 'Home', 'home');
   createControlPanelButton('menu', 'Menu', 'menu');
+  createControlPanelButton('rotate', 'Rotate', 'screen_rotation', onRotateButton);
   createControlPanelButton('volumemute', 'Volume Mute', 'volume_mute');
   createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
   createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
@@ -158,6 +160,18 @@ function ConnectToDevice(device_id) {
       command: e.target.dataset.command,
       state: e.type == 'mousedown' ? "down" : "up",
     }));
+  }
+
+  let orientation = 'portrait';
+  function onRotateButton(e) {
+    if (e.type == 'mousedown') {
+      if (orientation == 'portrait') {
+        orientation = 'landscape';
+      } else {
+        orientation = 'portrait';
+      }
+      adbShell('/vendor/bin/cuttlefish_rotate ' + orientation)
+    }
   }
 
   function startMouseTracking() {

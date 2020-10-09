@@ -15,7 +15,6 @@
  */
 
 let adb_ws;
-let logcat = document.getElementById('logcat');
 
 let utf8Encoder = new TextEncoder();
 let utf8Decoder = new TextDecoder();
@@ -78,8 +77,8 @@ function adbOpenConnection() {
     adb_ws.send(arrayBuffer);
 }
 
-function adbOpenChannel() {
-    let destination = utf8Encoder.encode("shell:logcat");
+function adbShell(command) {
+    let destination = utf8Encoder.encode("shell:" + command);
 
     let arrayBuffer = createAdbMessage(A_OPEN, kLocalChannelId, 0, destination);
     adb_ws.send(arrayBuffer);
@@ -132,35 +131,26 @@ function adbOnMessage(arrayBuffer) {
 
         if (payloadChecksum != checksum) {
             console.log("adb message checksum mismatch.");
-            return;
+            // This can happen if a shell command executes while another
+            // channel is receiving data.
         }
 
         switch (command) {
             case A_CNXN:
             {
-                console.log("connected.");
-
-                adbOpenChannel();
+                console.log("WebRTC adb connected.");
                 break;
             }
 
             case A_OKAY:
             {
                 let remoteId = getU32LE(array, 4);
-                console.log("channel created w/ remoteId " + remoteId);
+                console.log("WebRTC adb channel created w/ remoteId " + remoteId);
                 break;
             }
 
             case A_WRTE:
             {
-                let payloadText = utf8Decoder.decode(array.slice(24));
-
-                // Limit to 100 lines
-                logcat.value = (logcat.value + payloadText).split('\n').slice(-100).join('\n');
-
-                // Scroll to bottom
-                logcat.scrollTop = logcat.scrollHeight;
-
                 let remoteId = getU32LE(array, 4);
                 adbSendOkay(remoteId);
                 break;
@@ -170,14 +160,13 @@ function adbOnMessage(arrayBuffer) {
     }
 }
 
-function init_logcat(devConn) {
+function init_adb(devConn) {
     adb_ws = {
       send: function(buffer) {
         devConn.sendAdbMessage(buffer);
       }
     };
 
-    logcat.style.display = "initial";
     devConn.onAdbMessage(msg => adbOnMessage(msg));
 
     adbOpenConnection();
