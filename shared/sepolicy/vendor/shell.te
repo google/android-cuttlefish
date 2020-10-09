@@ -1,1 +1,2 @@
 allow shell serial_device:chr_file { getattr ioctl read write };
+allow shell cuttlefish_rotate_exec:file rx_file_perms;

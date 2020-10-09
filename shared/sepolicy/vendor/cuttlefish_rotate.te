@@ -1,0 +1,15 @@
+type cuttlefish_rotate, domain;
+type cuttlefish_rotate_exec, exec_type, vendor_file_type, file_type;
+
+# Switch to cuttlefish_rotate domain when executing from shell.
+domain_auto_trans(shell, cuttlefish_rotate_exec, cuttlefish_rotate)
+allow cuttlefish_rotate shell:fd use;
+
+# Allow cuttlefish_rotate to communicate over adb connection.
+allow cuttlefish_rotate adbd:fd use;
+allow cuttlefish_rotate adbd:unix_stream_socket { read write };
+# Needed to run the binary directly via adb socket.
+allow cuttlefish_rotate devpts:chr_file { read write };
+
+# Grant cuttlefish_rotate access to the ISensors HAL.
+hal_client_domain(cuttlefish_rotate, hal_sensors)
