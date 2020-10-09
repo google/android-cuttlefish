@@ -106,16 +106,17 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 # Packages for various GCE-specific utilities
 #
 PRODUCT_PACKAGES += \
-    socket_vsock_proxy \
     CuttlefishService \
-    wpa_supplicant.vsoc.conf \
-    vsoc_input_service \
+    cuttlefish_rotate \
     rename_netiface \
     setup_wifi \
+    socket_vsock_proxy \
     tombstone_transmit \
     tombstone_producer \
     suspend_blocker \
+    vsoc_input_service \
     vtpm_manager \
+    wpa_supplicant.vsoc.conf \
 
 #
 # Packages for AOSP-available stuff we use from the framework
