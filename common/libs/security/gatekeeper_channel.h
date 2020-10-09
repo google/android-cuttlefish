@@ -70,7 +70,7 @@ ManagedGatekeeperMessage CreateGatekeeperMessage(
  */
 class GatekeeperChannel {
 public:
-  GatekeeperChannel(SharedFD channel);
+  GatekeeperChannel(SharedFD input, SharedFD output);
 
   bool SendRequest(uint32_t command,
                    const gatekeeper::GateKeeperMessage& message);
@@ -78,7 +78,8 @@ public:
                     const gatekeeper::GateKeeperMessage& message);
   ManagedGatekeeperMessage ReceiveMessage();
 private:
-  SharedFD channel_;
+  SharedFD input_;
+  SharedFD output_;
   bool SendMessage(uint32_t command, bool response,
                    const gatekeeper::GateKeeperMessage& message);
 };

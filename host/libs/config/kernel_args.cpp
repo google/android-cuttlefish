@@ -214,12 +214,6 @@ std::vector<std::string> KernelCommandLineFromConfig(
     kernel_cmdline.push_back(concat("androidboot.vsock_frames_port=", instance.frames_server_port()));
   }
 
-  kernel_cmdline.push_back(concat("androidboot.vsock_keymaster_port=",
-                                  instance.keymaster_vsock_port()));
-
-  kernel_cmdline.push_back(concat("androidboot.vsock_gatekeeper_port=",
-                                  instance.gatekeeper_vsock_port()));
-
   if (config.enable_modem_simulator() &&
       instance.modem_simulator_ports() != "") {
     kernel_cmdline.push_back(concat("androidboot.modem_simulator_ports=",

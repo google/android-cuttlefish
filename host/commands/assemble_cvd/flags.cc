@@ -621,9 +621,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
       }
     }
 
-    instance.set_keymaster_vsock_port(7200 + num - 1);
-    instance.set_gatekeeper_vsock_port(7300 + num - 1);
-    instance.set_gnss_grpc_proxy_server_port(7400 + num -1);
+    instance.set_gnss_grpc_proxy_server_port(7200 + num -1);
 
     instance.set_device_title(FLAGS_device_title);
 
