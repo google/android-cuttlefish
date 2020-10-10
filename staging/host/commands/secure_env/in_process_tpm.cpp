@@ -43,31 +43,67 @@ struct __attribute__((__packed__)) tpm_message_header {
   uint32_t ordinal;
 };
 
-InProcessTpm* InProcessTpm::TpmFromContext(TSS2_TCTI_CONTEXT* context) {
-  auto offset = offsetof(InProcessTpm, tcti_context_);
-  char* context_char = reinterpret_cast<char*>(context);
-  return reinterpret_cast<InProcessTpm*>(context_char - offset);
-}
+struct InProcessTpm::Impl {
+  static Impl* FromContext(TSS2_TCTI_CONTEXT* context) {
+    auto offset = offsetof(Impl, tcti_context_);
+    char* context_char = reinterpret_cast<char*>(context);
+    return reinterpret_cast<Impl*>(context_char - offset);
+  }
 
-static TSS2_RC Transmit(
-    TSS2_TCTI_CONTEXT *context, size_t size, uint8_t const *command) {
-  return InProcessTpm::TpmFromContext(context)->Transmit(size, command);
-}
+  static TSS2_RC Transmit(
+      TSS2_TCTI_CONTEXT *context, size_t size, uint8_t const *command) {
+    auto impl = FromContext(context);
+    std::lock_guard lock(impl->queue_mutex_);
+    impl->command_queue_.emplace_back(command, command + size);
+    return TSS2_RC_SUCCESS;
+  }
 
-static TSS2_RC Receive(
-    TSS2_TCTI_CONTEXT *context,
-    size_t* size,
-    uint8_t* response,
-    int32_t timeout) {
-  return
-      InProcessTpm::TpmFromContext(context)->Receive(size, response, timeout);
-}
+  static TSS2_RC Receive(
+      TSS2_TCTI_CONTEXT *context,
+      size_t* size,
+      uint8_t* response,
+      int32_t /* timeout */) {
+    auto impl = FromContext(context);
+    // TODO(schuffelen): Use the timeout argument
+    std::vector<uint8_t> request;
+    {
+      std::lock_guard lock(impl->queue_mutex_);
+      if (impl->command_queue_.empty()) {
+        return TSS2_TCTI_RC_GENERAL_FAILURE;
+      }
+      request = std::move(impl->command_queue_.front());
+      impl->command_queue_.pop_front();
+    }
+    auto header = reinterpret_cast<tpm_message_header*>(request.data());
+    LOG(VERBOSE) << "Sending TPM command "
+                << TpmCommandName(be32toh(header->ordinal));
+    _IN_BUFFER input = {
+        .BufferSize = request.size(),
+        .Buffer = request.data(),
+    };
+    _OUT_BUFFER output = {
+        .BufferSize = (uint32_t) *size,
+        .Buffer = response,
+    };
+    _rpc__Send_Command(3, input, &output);
+    *size = output.BufferSize;
+    header = reinterpret_cast<tpm_message_header*>(response);
+    auto rc = be32toh(header->ordinal);
+    LOG(VERBOSE) << "Received TPM response " << Tss2_RC_Decode(rc)
+                << " (" << rc << ")";
+    return TSS2_RC_SUCCESS;
+  }
 
-InProcessTpm::InProcessTpm() {
-  tcti_context_.v1.magic = 0xFAD;
-  tcti_context_.v1.version = 1;
-  tcti_context_.v1.transmit = ::Transmit;
-  tcti_context_.v1.receive = ::Receive;
+  TSS2_TCTI_CONTEXT_COMMON_CURRENT tcti_context_;
+  std::list<std::vector<uint8_t>> command_queue_;
+  std::mutex queue_mutex_;
+};
+
+InProcessTpm::InProcessTpm() : impl_(new Impl()) {
+  impl_->tcti_context_.v1.magic = 0xFAD;
+  impl_->tcti_context_.v1.version = 1;
+  impl_->tcti_context_.v1.transmit = Impl::Transmit;
+  impl_->tcti_context_.v1.receive = Impl::Receive;
   _plat__NVEnable(NULL);
   if (_plat__NVNeedsManufacture()) {
     // Can't use android logging here due to a macro conflict with TPM internals
@@ -116,42 +152,5 @@ InProcessTpm::~InProcessTpm() {
 }
 
 TSS2_TCTI_CONTEXT* InProcessTpm::TctiContext() {
-  return reinterpret_cast<TSS2_TCTI_CONTEXT*>(&tcti_context_);
-}
-
-TSS2_RC InProcessTpm::Transmit(size_t size, uint8_t const* command) {
-  std::lock_guard lock(queue_mutex_);
-  command_queue_.emplace_back(command, command + size);
-  return TSS2_RC_SUCCESS;
-}
-
-TSS2_RC InProcessTpm::Receive(size_t* size, uint8_t* response, int32_t) {
-  // TODO(schuffelen): Use the timeout argument
-  std::vector<uint8_t> request;
-  {
-    std::lock_guard lock(queue_mutex_);
-    if (command_queue_.empty()) {
-      return TSS2_TCTI_RC_GENERAL_FAILURE;
-    }
-    request = std::move(command_queue_.front());
-    command_queue_.pop_front();
-  }
-  auto header = reinterpret_cast<tpm_message_header*>(request.data());
-  LOG(VERBOSE) << "Sending TPM command "
-               << TpmCommandName(be32toh(header->ordinal));
-  _IN_BUFFER input = {
-      .BufferSize = request.size(),
-      .Buffer = request.data(),
-  };
-  _OUT_BUFFER output = {
-      .BufferSize = (uint32_t) *size,
-      .Buffer = response,
-  };
-  _rpc__Send_Command(3, input, &output);
-  *size = output.BufferSize;
-  header = reinterpret_cast<tpm_message_header*>(response);
-  auto rc = be32toh(header->ordinal);
-  LOG(VERBOSE) << "Received TPM response " << Tss2_RC_Decode(rc)
-               << " (" << rc << ")";
-  return TSS2_RC_SUCCESS;
+  return reinterpret_cast<TSS2_TCTI_CONTEXT*>(&impl_->tcti_context_);
 }
