@@ -25,6 +25,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/security/gatekeeper_channel.h"
 #include "common/libs/security/keymaster_channel.h"
+#include "host/commands/secure_env/device_tpm.h"
 #include "host/commands/secure_env/fragile_tpm_storage.h"
 #include "host/commands/secure_env/gatekeeper_responder.h"
 #include "host/commands/secure_env/insecure_fallback_storage.h"
@@ -43,30 +44,41 @@ constexpr size_t kOperationTableSize = 16;
 DEFINE_int32(keymaster_fd, -1, "A file descriptor for keymaster communication");
 DEFINE_int32(gatekeeper_fd, -1, "A file descriptor for gatekeeper communication");
 
+DEFINE_string(tpm_impl,
+              "in_memory",
+              "The TPM implementation. \"in_memory\" or \"host_device\"");
+
 DEFINE_string(keymaster_impl,
-              "in_process_tpm",
-              "The keymaster implementation. "
-              "\"in_process_tpm\" or \"software\"");
+              "tpm",
+              "The keymaster implementation. \"tpm\" or \"software\"");
 
 DEFINE_string(gatekeeper_impl,
               "software",
-              "The gatekeeper implementation. "
-              "\"in_process_tpm\" or \"software\"");
+              "The gatekeeper implementation. \"tpm\" or \"software\"");
 
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  std::unique_ptr<InProcessTpm> in_process_tpm;
+  std::unique_ptr<Tpm> tpm;
+  if (FLAGS_tpm_impl == "in_memory") {
+    tpm.reset(new InProcessTpm());
+  } else if (FLAGS_tpm_impl == "host_device") {
+    tpm.reset(new DeviceTpm("/dev/tpm0"));
+  } else {
+    LOG(FATAL) << "Unknown TPM implementation: " << FLAGS_tpm_impl;
+  }
+
+  if (tpm->TctiContext() == nullptr) {
+    LOG(FATAL) << "Unable to connect to TPM implementation.";
+  }
+
   std::unique_ptr<TpmResourceManager> resource_manager;
   std::unique_ptr<ESYS_CONTEXT, void(*)(ESYS_CONTEXT*)> esys(
       nullptr, [](ESYS_CONTEXT* esys) { Esys_Finalize(&esys); });
-  if (FLAGS_keymaster_impl == "in_process_tpm"
-      || FLAGS_gatekeeper_impl == "in_process_tpm") {
-    in_process_tpm.reset(new InProcessTpm());
+  if (FLAGS_keymaster_impl == "tpm" || FLAGS_gatekeeper_impl == "tpm") {
     ESYS_CONTEXT* esys_ptr = nullptr;
-    auto rc =
-        Esys_Initialize(&esys_ptr, in_process_tpm->TctiContext(), nullptr);
+    auto rc = Esys_Initialize(&esys_ptr, tpm->TctiContext(), nullptr);
     if (rc != TPM2_RC_SUCCESS) {
       LOG(FATAL) << "Could not initialize esys: " << Tss2_RC_Decode(rc)
                  << " (" << rc << ")";
@@ -83,7 +95,7 @@ int main(int argc, char** argv) {
     gatekeeper.reset(new gatekeeper::SoftGateKeeper);
     keymaster_enforcement.reset(
         new keymaster::SoftKeymasterEnforcement(64, 64));
-  } else if (FLAGS_gatekeeper_impl == "in_process_tpm") {
+  } else if (FLAGS_gatekeeper_impl == "tpm") {
     secure_storage.reset(
         new FragileTpmStorage(*resource_manager, "gatekeeper_secure"));
     insecure_storage.reset(
@@ -101,7 +113,7 @@ int main(int argc, char** argv) {
   if (FLAGS_keymaster_impl == "software") {
     keymaster_context =
         new keymaster::PureSoftKeymasterContext(KM_SECURITY_LEVEL_SOFTWARE);
-  } else if (FLAGS_keymaster_impl == "in_process_tpm") {
+  } else if (FLAGS_keymaster_impl == "tpm") {
     keymaster_context =
         new TpmKeymasterContext(*resource_manager, *keymaster_enforcement);
   } else {
