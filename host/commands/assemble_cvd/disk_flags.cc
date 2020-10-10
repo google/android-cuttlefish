@@ -31,6 +31,7 @@
 #include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
+#include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 
@@ -162,7 +163,7 @@ std::vector<ImagePartition> disk_config(
     .label = "misc",
     .image_file_path = FLAGS_misc_image,
   });
-  if(FLAGS_use_bootloader) {
+  if (FLAGS_use_bootloader) {
     partitions.push_back(ImagePartition {
       .label = "bootloader",
       .image_file_path = FLAGS_bootloader,
@@ -234,7 +235,7 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk(
 bool ShouldCreateAllCompositeDisks(const cuttlefish::CuttlefishConfig& config) {
   std::chrono::system_clock::time_point youngest_disk_img;
   for (auto& partition : disk_config(config.ForDefaultInstance())) {
-    if(partition.label == "uboot_env") {
+    if (partition.label == "uboot_env") {
       continue;
     }
 
@@ -258,6 +259,40 @@ bool ShouldCreateAllCompositeDisks(const cuttlefish::CuttlefishConfig& config) {
   return false;
 }
 
+bool DoesCompositeMatchCurrentDiskConfig(
+    const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
+  std::string prior_disk_config_path = instance.PerInstancePath("disk_config.txt");
+  std::string current_disk_config_path = instance.PerInstancePath("disk_config.txt.tmp");
+  std::ostringstream disk_conf;
+  for (auto& partition : disk_config(instance)) {
+    disk_conf << partition.image_file_path << "\n";
+  }
+
+  {
+    // This file acts as a descriptor of the cuttlefish disk contents in a VMM agnostic way (VMMs
+    // used are QEMU and CrosVM at the time of writing). This file is used to determine if the
+    // disk config for the pending boot matches the disk from the past boot.
+    std::ofstream file_out(current_disk_config_path.c_str(), std::ios::binary);
+    file_out << disk_conf.str();
+    if (!file_out.good()) {
+      exit(cuttlefish::kDiskConfigVerificationError);
+    }
+  }
+
+  if (!cuttlefish::FileExists(prior_disk_config_path) ||
+      cuttlefish::ReadFile(prior_disk_config_path) != cuttlefish::ReadFile(current_disk_config_path)) {
+    if (!cuttlefish::RenameFile(current_disk_config_path, prior_disk_config_path)) {
+      LOG(ERROR) << "Unable to delete the old disk config descriptor";
+      exit(cuttlefish::kDiskConfigVerificationError);
+    }
+    LOG(DEBUG) << "Disk Config has changed since last boot. Regenerating composite disk.";
+    return false;
+  } else {
+    cuttlefish::RemoveFile(current_disk_config_path);
+    return true;
+  }
+}
+
 bool ShouldCreateCompositeDisk(const cuttlefish::CuttlefishConfig::InstanceSpecific& instance) {
   if (!cuttlefish::FileExists(instance.composite_disk_path())) {
     return true;
@@ -276,7 +311,7 @@ static bool ConcatRamdisks(
   std::ifstream ramdisk_a(ramdisk_a_path, std::ios_base::binary);
   std::ifstream ramdisk_b(ramdisk_b_path, std::ios_base::binary);
 
-  if(!new_ramdisk.is_open() || !ramdisk_a.is_open() || !ramdisk_b.is_open()) {
+  if (!new_ramdisk.is_open() || !ramdisk_a.is_open() || !ramdisk_b.is_open()) {
     return false;
   }
 
@@ -353,7 +388,8 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
     exit(cuttlefish::kCuttlefishConfigurationInitError);
   }
 
-  if (!boot_img_unpacker->Unpack(config->ramdisk_image_path(),
+  if (!FLAGS_use_bootloader &&
+      !boot_img_unpacker->Unpack(config->ramdisk_image_path(),
                                  config->vendor_ramdisk_image_path(),
                                  config->use_unpacked_kernel()
                                      ? config->kernel_image_path()
@@ -362,28 +398,53 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
     exit(AssemblerExitCodes::kBootImageUnpackError);
   }
 
-  // TODO(134522463) as part of the bootloader refactor, repack the vendor boot
-  // image and use the bootloader to load both the boot and vendor ramdisk.
-  // Until then, this hack to get gki modules into cuttlefish will suffice.
-
-  // If a vendor ramdisk comes in via this mechanism, let it supersede the one
-  // in the vendor boot image. This flag is what kernel presubmit testing uses
-  // to pass in the kernel ramdisk.
-
-  // If no kernel is passed in or an initramfs is made available, the default
-  // vendor boot ramdisk or the initramfs provided should be appended to the
-  // boot ramdisk. If a kernel IS provided with no initramfs, it is safe to
-  // safe to assume that the kernel was built with no modules and expects no
-  // modules for cf to run properly.
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
-  if(!foreign_kernel.size() || foreign_ramdisk.size()) {
+  std::string new_boot_image_path = config->AssemblyPath("boot_repacked.img");
+  std::string new_vendor_boot_image_path = config->AssemblyPath("vendor_boot_repacked.img");
+  if (FLAGS_use_bootloader && (foreign_kernel.size() || foreign_ramdisk.size())) {
+    // Repack the boot images if kernels and/or ramdisks are passed in.
+    if (foreign_kernel.size()) {
+      if (cuttlefish::RepackBootImage(foreign_kernel, FLAGS_boot_image, new_boot_image_path,
+          config->assembly_dir())) {
+        SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
+                                     google::FlagSettingMode::SET_FLAGS_DEFAULT);
+      } else {
+        LOG(ERROR) << "Failed to regenerate the boot image with the new kernel";
+        exit(AssemblerExitCodes::kBootImgRepackError);
+      }
+    }
+    if (foreign_ramdisk.size()) {
+      if (cuttlefish::RepackVendorBootImage(foreign_ramdisk, FLAGS_vendor_boot_image,
+                            new_vendor_boot_image_path, config->assembly_dir())) {
+        SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
+                                     google::FlagSettingMode::SET_FLAGS_DEFAULT);
+      } else {
+        LOG(ERROR) << "Failed to regenerate the vendor boot image with the new ramdisk";
+        exit(AssemblerExitCodes::kBootImgRepackError);
+      }
+    }
+    if (foreign_kernel.size() && !foreign_ramdisk.size()) {
+      if (cuttlefish::RepackVendorBootImageWithEmptyRamdisk(FLAGS_vendor_boot_image,
+          new_vendor_boot_image_path, config->assembly_dir())) {
+        SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
+                                     google::FlagSettingMode::SET_FLAGS_DEFAULT);
+      } else {
+        LOG(ERROR) << "Failed to regenerate the vendor boot image without a ramdisk";
+        exit(AssemblerExitCodes::kBootImgRepackError);
+      }
+    }
+  } else if (!FLAGS_use_bootloader && (!foreign_kernel.size() || foreign_ramdisk.size())) {
+    // This code path is taken when the virtual device kernel is launched
+    // directly by the hypervisor instead of the bootloader.
+    // This code path takes care of all the ramdisk processing that the
+    // bootloader normally does.
     const std::string& vendor_ramdisk_path =
       config->initramfs_path().size() ? config->initramfs_path()
                                       : config->vendor_ramdisk_image_path();
-    if(!ConcatRamdisks(config->final_ramdisk_path(),
+    if (!ConcatRamdisks(config->final_ramdisk_path(),
                        config->ramdisk_image_path(), vendor_ramdisk_path)) {
       LOG(ERROR) << "Failed to concatenate ramdisk and vendor ramdisk";
       exit(AssemblerExitCodes::kInitRamFsConcatError);
@@ -463,12 +524,14 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
   bool newDataImage = dataImageResult == DataImageResult::FileUpdated;
 
   for (auto instance : config->Instances()) {
+    bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(instance);
     bool oldCompositeDisk = ShouldCreateCompositeDisk(instance);
     auto overlay_path = instance.PerInstancePath("overlay.img");
     bool missingOverlay = !cuttlefish::FileExists(overlay_path);
     bool newOverlay = cuttlefish::FileModificationTime(overlay_path)
         < cuttlefish::FileModificationTime(instance.composite_disk_path());
-    if (missingOverlay || oldCompositeDisk || !FLAGS_resume || newDataImage || newOverlay) {
+    if (!compositeMatchesDiskConfig || missingOverlay || oldCompositeDisk || !FLAGS_resume ||
+        newDataImage || newOverlay) {
       if (FLAGS_resume) {
         LOG(INFO) << "Requested to continue an existing session, (the default) "
                   << "but the disk files have become out of date. Wiping the "
