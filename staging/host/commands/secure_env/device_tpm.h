@@ -15,33 +15,21 @@
 
 #pragma once
 
-#include <list>
-#include <mutex>
-#include <vector>
+#include <memory>
 
 #include <tss2/tss2_tcti.h>
 
 #include "host/commands/secure_env/tpm.h"
 
 /*
- * Exposes a TSS2_TCTI_CONTEXT for interacting with an in-process TPM simulator.
- *
- * TSS2_TCTI_CONTEXT is the abstraction for "communication channel to a TPM".
- * It is not safe to create more than one of these per process or per working
- * directory, as the TPM simulator implementation relies heavily on global
- * variables and files saved in the working directory.
- *
- * TODO(schuffelen): Consider moving this to a separate process with its own
- * working directory.
+ * Exposes a TSS2_TCTI_CONTEXT for interacting with a TPM device node.
  */
-class InProcessTpm : public Tpm {
+class DeviceTpm : public Tpm {
 public:
-  InProcessTpm();
-  ~InProcessTpm();
+  DeviceTpm(const std::string& path);
+  ~DeviceTpm() = default;
 
   TSS2_TCTI_CONTEXT* TctiContext() override;
 private:
-  struct Impl;
-
-  std::unique_ptr<Impl> impl_;
+  std::unique_ptr<TSS2_TCTI_CONTEXT, void(*)(TSS2_TCTI_CONTEXT*)> tpm_;
 };
