@@ -17,6 +17,7 @@ cc_binary_host {
     name: "secure_env",
     srcs: [
         "composite_serialization.cpp",
+        "device_tpm.cpp",
         "encrypted_serializable.cpp",
         "fragile_tpm_storage.cpp",
         "gatekeeper_responder.cpp",
@@ -58,6 +59,7 @@ cc_binary_host {
         "tpm2-tss2-esys",
         "tpm2-tss2-mu",
         "tpm2-tss2-rc",
+        "tpm2-tss2-tcti",
     ],
     static_libs: [
         "libcuttlefish_host_config",
