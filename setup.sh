@@ -289,9 +289,9 @@ function cvd_docker_create {
 		        --name "${name}" -h "${name}" \
                 -l "cf_instance=${cf_instance}" \
                 -e CUTTLEFISH_INSTANCE="${cf_instance}" \
-                -p $((6443+cf_instance)):$((6443+cf_instance)) \
+                -p $((6444+cf_instance)):$((6444+cf_instance)) \
                 -p $((8443+cf_instance)):$((8443+cf_instance)) \
-                -p $((6250+cf_instance)):$((6250+cf_instance)) \
+                -p $((6520+cf_instance)):$((6520+cf_instance)) \
                 -p $((15550+cf_instance*4)):$((15550+cf_instance*4))/tcp \
                 -p $((15551+cf_instance*4)):$((15551+cf_instance*4))/tcp \
                 -p $((15552+cf_instance*4)):$((15552+cf_instance*4))/tcp \
