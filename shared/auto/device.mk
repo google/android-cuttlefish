@@ -50,7 +50,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
     ro.com.android.dataroaming=true \
-    vendor.rild.libpath=libcuttlefish-ril.so \
 
 # vehicle HAL
 ifeq ($(LOCAL_VHAL_PRODUCT_PACKAGE),)
@@ -75,7 +74,7 @@ PRODUCT_PACKAGES_DEBUG += canhalctrl \
     canhalsend
 
 PRODUCT_PACKAGES += \
-    libcuttlefish-ril \
+    libcuttlefish-ril-2 \
     libcuttlefish-rild
 
 # system_other support
