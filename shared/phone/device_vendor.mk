@@ -31,7 +31,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
     ro.com.android.dataroaming=true \
-    vendor.rild.libpath=libcuttlefish-ril.so \
     ro.telephony.default_network=9 \
 
 # TODO: not existing anymore?
@@ -40,7 +39,6 @@ PRODUCT_PACKAGES += \
     PhoneService \
 
 PRODUCT_PACKAGES += \
-    libcuttlefish-ril \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
 
