@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <guest/hals/ril/reference-libril/ril_ex.h>
 
-#define LIB_PATH_PROPERTY   "vendor.rild.libpath"
 #define LIB_ARGS_PROPERTY   "vendor.rild.libargs"
 #define MAX_LIB_ARGS        16
 
@@ -109,8 +108,6 @@ int main(int argc, char **argv) {
 
     // functions returned by ril init function in vendor ril
     const RIL_RadioFunctions *funcs;
-    // lib path from rild.libpath property (if it's read)
-    char libPath[PROPERTY_VALUE_MAX];
     // flat to indicate if -- parameters are present
     unsigned char hasLibArgs = 0;
     char port[PROPERTY_VALUE_MAX] = {0};
@@ -150,18 +147,11 @@ int main(int argc, char **argv) {
                  clientId);
     }
 
-    if (rilLibPath == NULL) {
-        if ( 0 == property_get(LIB_PATH_PROPERTY, libPath, NULL)) {
-            // No lib sepcified on the command line, and nothing set in props.
-            // Assume "no-ril" case.
-            goto done;
-        } else {
-            rilLibPath = libPath;
-        }
-    }
-
     property_get("ro.boot.modem_simulator_ports", port, "");
-    if (strcmp(port, "") != 0) {
+    if (strcmp(port, "") == 0) {
+      // Assume "no-ril" case.
+      goto done;
+    } else {
       rilLibPath = "libcuttlefish-ril-2.so";
     }
 

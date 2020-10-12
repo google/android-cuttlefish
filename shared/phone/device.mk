@@ -25,7 +25,6 @@ PRODUCT_PROPERTY_OVERRIDES += \
     keyguard.no_require_sim=true \
     ro.cdma.home.operator.alpha=Android \
     ro.cdma.home.operator.numeric=302780 \
-    vendor.rild.libpath=libcuttlefish-ril.so \
     ro.telephony.default_network=9 \
 
 PRODUCT_PACKAGES += \
@@ -34,7 +33,6 @@ PRODUCT_PACKAGES += \
     PhoneService \
     Telecom \
     TeleService \
-    libcuttlefish-ril \
     libcuttlefish-ril-2 \
     libcuttlefish-rild
 
