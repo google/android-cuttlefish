@@ -400,9 +400,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
   // auto-enabling sandbox when gpu is enabled (b/152323505).
   if (tmp_config_obj.gpu_mode() != cuttlefish::kGpuModeGuestSwiftshader) {
-    tmp_config_obj.set_enable_sandbox(false);
-  } else {
-    tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
+    SetCommandLineOptionWithMode("enable_sandbox", "false",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
   if (vmm->ConfigureGpuMode(tmp_config_obj.gpu_mode()).empty()) {
@@ -466,6 +465,11 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
   tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
+
+  if (FLAGS_console) {
+    SetCommandLineOptionWithMode("enable_sandbox", "false",
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  }
 
   tmp_config_obj.set_console(FLAGS_console);
   tmp_config_obj.set_kgdb(FLAGS_console && FLAGS_kgdb);
@@ -661,6 +665,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
     modem_simulator_ports.pop_back();
     instance.set_modem_simulator_ports(modem_simulator_ports);
   }
+
+  tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
   return tmp_config_obj;
 }
