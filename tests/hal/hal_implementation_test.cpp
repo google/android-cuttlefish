@@ -100,6 +100,7 @@ static const std::set<std::string> kKnownMissingAidl = {
     // types-only packages, which never expect a default implementation
     "android.hardware.biometrics.common.",
     "android.hardware.common.",
+    "android.hardware.common.fmq.",
     "android.hardware.graphics.common.",
 
     // Temporarily add the keystore2 interface. The service implementation is
