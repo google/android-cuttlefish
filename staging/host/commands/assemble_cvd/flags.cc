@@ -272,6 +272,14 @@ DEFINE_bool(console, false, "Enable the serial console");
 
 DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
 
+DEFINE_int32(vsock_guest_cid,
+             cuttlefish::GetDefaultVsockCid(),
+             "Override vsock cid with this option if vsock cid the instance should be"
+             "separated from the instance number: e.g. cuttlefish instance inside a container."
+             "If --vsock_guest_cid=C --num_instances=N are given,"
+             "the vsock cid of the i th instance would be C + i where i is in [1, N]"
+             "If --num_instances is not given, the default value of N is used.");
+
 namespace {
 
 const std::string kKernelDefaultPath = "kernel";
@@ -559,13 +567,13 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
 
-  std::vector<int> instance_nums;
+  std::vector<int> num_instances;
   for (int i = 0; i < FLAGS_num_instances; i++) {
-    instance_nums.push_back(cuttlefish::GetInstance() + i);
+    num_instances.push_back(cuttlefish::GetInstance() + i);
   }
 
   bool is_first_instance = true;
-  for (const auto& num : instance_nums) {
+  for (const auto& num : num_instances) {
     auto iface_opt = AcquireIfaces(num);
     if (!iface_opt.has_value()) {
       LOG(FATAL) << "Failed to acquire network interfaces";
@@ -593,7 +601,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
     instance.set_wifi_tap_name(iface_config.wireless_tap.name);
 
-    instance.set_vsock_guest_cid(3 + num - 1);
+    instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid + num - cuttlefish::GetInstance());
 
     instance.set_uuid(FLAGS_uuid);
 
