@@ -870,6 +870,12 @@ int GetInstance() {
   return instance_id;
 }
 
+int GetDefaultVsockCid() {
+  // we assume that this function is used to configure CuttlefishConfig once
+  static const int default_vsock_cid = 3 + GetInstance() - 1;
+  return default_vsock_cid;
+}
+
 std::string GetGlobalConfigFileLink() {
   return cuttlefish::StringFromEnv("HOME", ".") + "/.cuttlefish_config.json";
 }
