@@ -49,7 +49,7 @@ std::string MakeConnectMessage(const std::string& address) {
 }
 
 std::string MakeDisconnectMessage(const std::string& address) {
-  return MakeMessage("host:connect:" + address);
+  return MakeMessage("host:disconnect:" + address);
 }
 
 // returns true if successfully sent the whole message
