@@ -435,7 +435,7 @@ int FetchCvdMain(int argc, char** argv) {
 
       std::string local_path = target_dir + "/bootloader";
       if (build_api.ArtifactToFile(bootloader_build, "u-boot.rom", local_path)) {
-        AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build, {local_path}, &config);
+        AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build, {local_path}, &config, true);
       } else {
         LOG(FATAL) << "Could not download " << bootloader_build << ":u-boot.rom to "
             << local_path;
