@@ -495,6 +495,11 @@ class CuttlefishConfig {
 // Returns the instance number as obtained from the CUTTLEFISH_INSTANCE
 // environment variable or the username.
 int GetInstance();
+
+// Returns default Vsock CID
+// by default, GetInstance() + 2
+int GetDefaultVsockCid();
+
 // Returns a path where the launhcer puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use
 std::string GetGlobalConfigFileLink();
