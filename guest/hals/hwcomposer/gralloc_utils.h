@@ -29,6 +29,34 @@
 namespace cuttlefish {
 
 class Gralloc;
+class GrallocBuffer;
+
+// An RAII object that will Unlock() a GrallocBuffer upon destruction.
+class GrallocBufferView {
+ public:
+  virtual ~GrallocBufferView();
+
+  GrallocBufferView(const GrallocBufferView& rhs) = delete;
+  GrallocBufferView& operator=(const GrallocBufferView& rhs) = delete;
+
+  GrallocBufferView(GrallocBufferView&& rhs);
+  GrallocBufferView& operator=(GrallocBufferView&& rhs);
+
+  const std::optional<void*> Get() const;
+
+  const std::optional<android_ycbcr>& GetYCbCr() const;
+
+ private:
+  friend class GrallocBuffer;
+  GrallocBufferView(GrallocBuffer* buffer, void* raw);
+  GrallocBufferView(GrallocBuffer* buffer, android_ycbcr raw);
+
+  // The GrallocBuffer that should be unlocked upon destruction of this object.
+  GrallocBuffer* gralloc_buffer_ = nullptr;
+
+  std::optional<void*> locked_;
+  std::optional<android_ycbcr> locked_ycbcr_;
+};
 
 // A gralloc 4.0 buffer that has been imported in the current process and
 // that will be released upon destruction. Users must ensure that the Gralloc
@@ -44,17 +72,8 @@ class GrallocBuffer {
   GrallocBuffer(GrallocBuffer&& rhs);
   GrallocBuffer& operator=(GrallocBuffer&& rhs);
 
-  // Locks the buffer for reading and returns the mapped address if successful.
-  // Fails and returns nullopt if the underlying buffer is a YCbCr buffer.
-  std::optional<void*> Lock();
-
-  // Locks the buffer for reading and returns the mapped addresses and strides
-  // of each plane if successful. Fails and returns nullopt if the underlying
-  // buffer is not a YCbCr buffer.
-  std::optional<android_ycbcr> LockYCbCr();
-
-  // Unlocks the buffer from reading.
-  void Unlock();
+  // Locks the buffer for reading and returns a view if successful.
+  std::optional<GrallocBufferView> Lock();
 
   std::optional<uint32_t> GetWidth();
   std::optional<uint32_t> GetHeight();
@@ -65,6 +84,12 @@ class GrallocBuffer {
   std::optional<uint32_t> GetMonoPlanarStrideBytes();
 
  private:
+  // Internal visibility for Unlock().
+  friend class GrallocBufferView;
+
+  // Unlocks the buffer from reading.
+  void Unlock();
+
   std::optional<
     std::vector<aidl::android::hardware::graphics::common::PlaneLayout>>
   GetPlaneLayouts();
