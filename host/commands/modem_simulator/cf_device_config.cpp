@@ -45,24 +45,31 @@ std::string DeviceConfig::DefaultHostArtifactsPath(const std::string& file) {
   return cuttlefish::DefaultHostArtifactsPath(file);
 }
 
-const char* DeviceConfig::ril_address_and_prefix() {
-  if (!cuttlefish::DeviceConfig::Get()) {
+std::string DeviceConfig::ril_address_and_prefix() {
+  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
+  if (!device_config_helper) {
       return "10.0.2.15/24";
   }
-  return cuttlefish::DeviceConfig::Get()->ril_address_and_prefix();
+  const auto& ril_config = device_config_helper->GetDeviceConfig().ril_config();
+  return ril_config.ipaddr() + "/" + std::to_string(ril_config.prefixlen());
 };
 
-const char* DeviceConfig::ril_gateway() {
-  if (!cuttlefish::DeviceConfig::Get()) {
+std::string DeviceConfig::ril_gateway() {
+  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
+  if (!device_config_helper) {
       return "10.0.2.2";
   }
-  return cuttlefish::DeviceConfig::Get()->ril_gateway();
+  const auto& ril_config = device_config_helper->GetDeviceConfig().ril_config();
+  return ril_config.gateway();
 }
-const char* DeviceConfig::ril_dns() {
-  if (!cuttlefish::DeviceConfig::Get()) {
+
+std::string DeviceConfig::ril_dns() {
+  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
+  if (!device_config_helper) {
       return "8.8.8.8";
   }
-  return cuttlefish::DeviceConfig::Get()->ril_dns();
+  const auto& ril_config = device_config_helper->GetDeviceConfig().ril_config();
+  return ril_config.dns();
 }
 
 }  // namespace modem

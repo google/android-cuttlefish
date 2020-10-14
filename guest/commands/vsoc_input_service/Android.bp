@@ -29,6 +29,7 @@ cc_binary {
     ],
     shared_libs: [
         "libcuttlefish_device_config",
+        "libcuttlefish_device_config_proto",
         "libcuttlefish_fs",
         "libbase",
         "liblog",
