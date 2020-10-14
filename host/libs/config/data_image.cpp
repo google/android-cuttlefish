@@ -88,7 +88,7 @@ void CreateBlankImage(
     cuttlefish::execute({"/sbin/mkfs.ext4", image});
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = cuttlefish::DefaultHostArtifactsPath("bin/make_f2fs");
-    cuttlefish::execute({make_f2fs_path, "-t", image_fmt, image,
+    cuttlefish::execute({make_f2fs_path, "-t", image_fmt, image, "-C", "utf8",
                          "-O", "compression,extra_attr", "-g", "android"});
   } else if (image_fmt == "sdcard") {
     // Reserve 1MB in the image for the MBR and padding, to simulate what
