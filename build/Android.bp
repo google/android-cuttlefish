@@ -133,4 +133,12 @@ cvd_host_package {
             commonDeps: cvd_host_seccomp_policy_arm64,
         },
     },
+    target: {
+        linux_bionic_x86_64: {
+            enabled: false,
+        },
+        darwin: {
+            enabled: false,
+        },
+    },
 }
