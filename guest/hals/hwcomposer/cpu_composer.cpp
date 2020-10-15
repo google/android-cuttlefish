@@ -303,8 +303,10 @@ int DoBlending(const BufferSpec& src, const BufferSpec& dst, bool v_flip) {
                            width, height);
 }
 
-std::optional<BufferSpec> GetBufferSpec(GrallocBuffer& buffer,
-                                        const hwc_rect_t& buffer_crop) {
+std::optional<BufferSpec> GetBufferSpec(
+    GrallocBuffer& buffer,
+    GrallocBufferView& buffer_view,
+    const hwc_rect_t& buffer_crop) {
   auto buffer_format_opt = buffer.GetDrmFormat();
   if (!buffer_format_opt) {
     ALOGE("Failed to get gralloc buffer format.");
@@ -333,13 +335,13 @@ std::optional<BufferSpec> GetBufferSpec(GrallocBuffer& buffer,
   if (buffer_format == DRM_FORMAT_NV12 ||
       buffer_format == DRM_FORMAT_NV21 ||
       buffer_format == DRM_FORMAT_YVU420) {
-    buffer_ycbcr_data = buffer.LockYCbCr();
+    buffer_ycbcr_data = buffer_view.GetYCbCr();
     if (!buffer_ycbcr_data) {
-      ALOGE("%s failed to lock gralloc buffer.", __FUNCTION__);
+      ALOGE("%s failed to get raw ycbcr from view.", __FUNCTION__);
       return std::nullopt;
     }
   } else {
-    auto buffer_data_opt = buffer.Lock();
+    auto buffer_data_opt = buffer_view.Get();
     if (!buffer_data_opt) {
       ALOGE("%s failed to lock gralloc buffer.", __FUNCTION__);
       return std::nullopt;
@@ -410,7 +412,16 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   }
   GrallocBuffer& src_imported_buffer = *src_imported_buffer_opt;
 
-  auto src_layer_spec_opt = GetBufferSpec(src_imported_buffer, src_layer->sourceCrop);
+  auto src_imported_buffer_view_opt = src_imported_buffer.Lock();
+  if (!src_imported_buffer_view_opt) {
+    ALOGE("Failed to lock import layer buffer.");
+    return;
+  }
+  GrallocBufferView& src_imported_buffer_view = *src_imported_buffer_view_opt;
+
+  auto src_layer_spec_opt = GetBufferSpec(src_imported_buffer,
+                                          src_imported_buffer_view,
+                                          src_layer->sourceCrop);
   if (!src_layer_spec_opt) {
     return;
   }
@@ -586,8 +597,6 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
     // Don't need to assign destination to source in the last one
     dest_buffer_stack.pop_back();
   }
-
-  src_imported_buffer.Unlock();
 }
 
 /* static */ const int CpuComposer::kNumTmpBufferPieces = 2;

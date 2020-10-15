@@ -39,16 +39,21 @@ int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
   }
   GrallocBuffer& imported_buffer = *imported_buffer_opt;
 
-  auto buffer_opt = imported_buffer.Lock();
-  if (!buffer_opt) {
+  auto buffer_view_opt = imported_buffer.Lock();
+  if (!buffer_view_opt) {
     ALOGE("Failed to Lock() framebuffer for post.");
+    return -1;
+  }
+  GrallocBufferView& buffer_view = *buffer_view_opt;
+
+  auto buffer_opt = buffer_view.Get();
+  if (!buffer_opt) {
+    ALOGE("Failed to get buffer from view for post.");
     return -1;
   }
 
   void* buffer = *buffer_opt;
   memcpy(frame_buffer, buffer, screen_view_->buffer_size());
-
-  imported_buffer.Unlock();
 
   screen_view_->Broadcast(buffer_id);
   return 0;
