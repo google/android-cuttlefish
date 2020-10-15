@@ -395,10 +395,10 @@ std::vector<Command> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-gdb");
     qemu_cmd.AddParameter(config.gdb_flag());
   }
-
-  qemu_cmd.AddParameter("-initrd");
-  qemu_cmd.AddParameter(config.final_ramdisk_path());
-
+  if (!config.use_bootloader()) {
+    qemu_cmd.AddParameter("-initrd");
+    qemu_cmd.AddParameter(config.final_ramdisk_path());
+  }
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
 
   std::vector<Command> ret;
