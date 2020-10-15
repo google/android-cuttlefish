@@ -172,7 +172,7 @@ std::vector<Command> CrosvmManager::StartCommands(
                             "egl=true,surfaceless=true,glx=false,gles=true");
     crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
-  if (!config.final_ramdisk_path().empty()) {
+  if (!config.use_bootloader() && !config.final_ramdisk_path().empty()) {
     crosvm_cmd.AddParameter("--initrd=", config.final_ramdisk_path());
   }
   // crosvm_cmd.AddParameter("--null-audio");
