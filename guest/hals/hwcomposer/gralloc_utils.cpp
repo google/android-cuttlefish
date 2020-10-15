@@ -399,19 +399,32 @@ void GrallocBuffer::Release() {
   }
 }
 
-std::optional<void*> GrallocBuffer::Lock() {
+std::optional<GrallocBufferView> GrallocBuffer::Lock() {
   if (gralloc_ && buffer_) {
-    return gralloc_->Lock(buffer_);
+    auto format_opt = GetDrmFormat();
+    if (!format_opt) {
+      ALOGE("%s failed to check format of buffer", __FUNCTION__);
+      return std::nullopt;
+    }
+    if (*format_opt != DRM_FORMAT_NV12 &&
+        *format_opt != DRM_FORMAT_NV21 &&
+        *format_opt != DRM_FORMAT_YVU420) {
+      auto locked_opt = gralloc_->Lock(buffer_);
+      if (!locked_opt) {
+        return std::nullopt;
+      }
+      return GrallocBufferView(this, *locked_opt);
+    } else {
+      auto locked_ycbcr_opt = gralloc_->LockYCbCr(buffer_);
+      if (!locked_ycbcr_opt) {
+        ALOGE("%s failed to lock ycbcr buffer", __FUNCTION__);
+        return std::nullopt;
+      }
+      return GrallocBufferView(this, *locked_ycbcr_opt);
+    }
   }
   return std::nullopt;
 }
-
- std::optional<android_ycbcr> GrallocBuffer::LockYCbCr() {
-  if (gralloc_ && buffer_) {
-    return gralloc_->LockYCbCr(buffer_);
-  }
-  return std::nullopt;
- }
 
 void GrallocBuffer::Unlock() {
   if (gralloc_ && buffer_) {
@@ -453,6 +466,37 @@ std::optional<uint32_t> GrallocBuffer::GetMonoPlanarStrideBytes() {
     return gralloc_->GetMonoPlanarStrideBytes(buffer_);
   }
   return std::nullopt;
+}
+
+GrallocBufferView::GrallocBufferView(GrallocBuffer* buffer, void* raw)
+  : gralloc_buffer_(buffer), locked_(raw) {}
+
+GrallocBufferView::GrallocBufferView(GrallocBuffer* buffer, android_ycbcr raw)
+  : gralloc_buffer_(buffer), locked_ycbcr_(raw) {}
+
+GrallocBufferView::~GrallocBufferView() {
+  if (gralloc_buffer_) {
+    gralloc_buffer_->Unlock();
+  }
+}
+
+GrallocBufferView::GrallocBufferView(GrallocBufferView&& rhs) {
+  *this = std::move(rhs);
+}
+
+GrallocBufferView& GrallocBufferView::operator=(GrallocBufferView&& rhs) {
+  gralloc_buffer_ = rhs.gralloc_buffer_;
+  locked_.swap(rhs.locked_);
+  locked_ycbcr_.swap(rhs.locked_ycbcr_);
+  return *this;
+}
+
+const std::optional<void*> GrallocBufferView::Get() const {
+  return locked_;
+}
+
+const std::optional<android_ycbcr>& GrallocBufferView::GetYCbCr() const {
+  return locked_ycbcr_;
 }
 
 }  // namespace cuttlefish
