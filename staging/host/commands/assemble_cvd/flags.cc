@@ -462,8 +462,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   // 3. If using a ramdisk or kernel besides the one in the boot.img - The boot.img
   //    doesn't get repackaged in this scenario currently. Once it does, bootloader
   //    boot will suppprt runtime selected kernels and/or ramdisks.
-  if (FLAGS_vm_manager == QemuManager::name() || cuttlefish::HostArch() == "aarch64" ||
-      foreign_ramdisk.size() || foreign_kernel.size()) {
+  if (FLAGS_vm_manager == QemuManager::name() || cuttlefish::HostArch() == "aarch64") {
     SetCommandLineOptionWithMode("use_bootloader", "false",
         google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
@@ -957,12 +956,15 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("composite.img");
       preserving.insert("sdcard.img");
       preserving.insert("uboot_env.img");
+      preserving.insert("boot_repacked.img");
+      preserving.insert("vendor_boot_repacked.img");
       preserving.insert("access-kregistry");
       preserving.insert("disk_hole");
       preserving.insert("NVChip");
       preserving.insert("gatekeeper_secure");
       preserving.insert("gatekeeper_insecure");
       preserving.insert("modem_nvram.json");
+      preserving.insert("disk_config.txt");
       std::stringstream ss;
       for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
         ss.clear();
