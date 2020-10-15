@@ -46,6 +46,7 @@ cvd_host_executables := \
     lz4 \
     make_f2fs \
     metrics \
+    mkbootimg \
     mkenvimage \
     modem_simulator \
     ms-tpm-20-ref \
@@ -58,6 +59,7 @@ cvd_host_executables := \
     stop_cvd \
     tapsetiff \
     tombstone_receiver \
+    unpack_bootimg \
     vnc_server \
     webRTC \
     webrtc_operator \
