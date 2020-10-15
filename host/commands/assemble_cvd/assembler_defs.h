@@ -44,6 +44,8 @@ enum AssemblerExitCodes : int {
   kAssemblyDirCreationError = 23,
   kDiskSpaceError = 24,
   kAllocdConnectionError = 25,
+  kBootImgRepackError = 26,
+  kDiskConfigVerificationError = 27,
 };
 
 }  // namespace cuttlefish
