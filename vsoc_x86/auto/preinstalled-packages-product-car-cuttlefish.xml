@@ -71,6 +71,11 @@
         <install-in user-type="FULL" />
         <install-in user-type="SYSTEM" />
     </install-in-user-type>
+    <!-- Required for Tethering -->
+    <install-in-user-type package="com.android.networkstack.tethering">
+        <install-in user-type="FULL" />
+        <install-in user-type="SYSTEM" />
+    </install-in-user-type>
     <!-- Required for Wifi -->
     <install-in-user-type package="com.android.networkstack.inprocess">
         <install-in user-type="FULL" />
@@ -162,9 +167,6 @@
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.google.android.apps.geo.autograph.vms.client.systemstate">
-        <install-in user-type="FULL" />
-    </install-in-user-type>
-    <install-in-user-type package="com.android.networkstack.tethering">
         <install-in user-type="FULL" />
     </install-in-user-type>
     <install-in-user-type package="com.android.smspush">
