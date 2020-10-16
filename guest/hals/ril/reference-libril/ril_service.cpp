@@ -139,6 +139,10 @@ void convertRilCellInfoListToHal_1_2(void *response, size_t responseLen, hidl_ve
 void populateResponseInfo(RadioResponseInfo& responseInfo, int serial, int responseType,
                          RIL_Errno e);
 
+void populateResponseInfo_1_6(
+    ::android::hardware::radio::V1_6::RadioResponseInfo &responseInfo,
+    int serial, int responseType, RIL_Errno e);
+
 struct RadioImpl_1_6 : public V1_6::IRadio {
     int32_t mSlotId;
     sp<IRadioResponse> mRadioResponse;
@@ -592,6 +596,11 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
             bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason reason,
             const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& addresses,
             const hidl_vec<hidl_string>& dnses);
+    Return<void> sendSms_1_6(int32_t serial, const GsmSmsMessage& message);
+    Return<void> sendSMSExpectMore_1_6(int32_t serial, const GsmSmsMessage& message);
+    Return<void> sendCdmaSms_1_6(int32_t serial, const CdmaSmsMessage& sms);
+    Return<void> sendCdmaSmsExpectMore_1_6(int32_t serial, const CdmaSmsMessage& sms);
+
 };
 
 struct OemHookImpl : public IOemHook {
@@ -1254,7 +1263,25 @@ Return<void> RadioImpl_1_6::sendSms(int32_t serial, const GsmSmsMessage& message
     return Void();
 }
 
+Return<void> RadioImpl_1_6::sendSms_1_6(int32_t serial, const GsmSmsMessage& message) {
+#if VDBG
+    RLOGD("sendSms: serial %d", serial);
+#endif
+    dispatchStrings(serial, mSlotId, RIL_REQUEST_SEND_SMS, false,
+            2, message.smscPdu.c_str(), message.pdu.c_str());
+    return Void();
+}
+
 Return<void> RadioImpl_1_6::sendSMSExpectMore(int32_t serial, const GsmSmsMessage& message) {
+#if VDBG
+    RLOGD("sendSMSExpectMore: serial %d", serial);
+#endif
+    dispatchStrings(serial, mSlotId, RIL_REQUEST_SEND_SMS_EXPECT_MORE, false,
+            2, message.smscPdu.c_str(), message.pdu.c_str());
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::sendSMSExpectMore_1_6(int32_t serial, const GsmSmsMessage& message) {
 #if VDBG
     RLOGD("sendSMSExpectMore: serial %d", serial);
 #endif
@@ -1941,6 +1968,22 @@ void constructCdmaSms(RIL_CDMA_SMS_Message &rcsm, const CdmaSmsMessage& sms) {
 }
 
 Return<void> RadioImpl_1_6::sendCdmaSms(int32_t serial, const CdmaSmsMessage& sms) {
+#if VDBG
+    RLOGD("sendCdmaSms: serial %d", serial);
+#endif
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_CDMA_SEND_SMS);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    RIL_CDMA_SMS_Message rcsm = {};
+    constructCdmaSms(rcsm, sms);
+
+    CALL_ONREQUEST(pRI->pCI->requestNumber, &rcsm, sizeof(rcsm), pRI, mSlotId);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::sendCdmaSms_1_6(int32_t serial, const CdmaSmsMessage& sms) {
 #if VDBG
     RLOGD("sendCdmaSms: serial %d", serial);
 #endif
@@ -4278,6 +4321,23 @@ Return<void> RadioImpl_1_6::sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsM
     return Void();
 }
 
+Return<void> RadioImpl_1_6::sendCdmaSmsExpectMore_1_6(int32_t serial, const CdmaSmsMessage& sms) {
+#if VDBG
+    RLOGD("sendCdmaSmsExpectMore: serial %d", serial);
+#endif
+    RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
+            RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE);
+    if (pRI == NULL) {
+        return Void();
+    }
+
+    RIL_CDMA_SMS_Message rcsm = {};
+    constructCdmaSms(rcsm, sms);
+
+    CALL_ONREQUEST(pRI->pCI->requestNumber, &rcsm, sizeof(rcsm), pRI, mSlotId);
+    return Void();
+}
+
 Return<void> RadioImpl_1_6::supplySimDepersonalization(int32_t serial,
         V1_5::PersoSubstate persoType, const hidl_string& controlKey) {
 #if VDBG
@@ -4354,6 +4414,21 @@ void populateResponseInfo(RadioResponseInfo& responseInfo, int serial, int respo
             break;
     }
     responseInfo.error = (RadioError) e;
+}
+
+void populateResponseInfo_1_6(
+    ::android::hardware::radio::V1_6::RadioResponseInfo &responseInfo,
+    int serial, int responseType, RIL_Errno e) {
+  responseInfo.serial = serial;
+  switch (responseType) {
+    case RESPONSE_SOLICITED:
+      responseInfo.type = RadioResponseType::SOLICITED;
+      break;
+    case RESPONSE_SOLICITED_ACK_EXP:
+      responseInfo.type = RadioResponseType::SOLICITED_ACK_EXP;
+      break;
+  }
+  responseInfo.error = (::android::hardware::radio::V1_6::RadioError)e;
 }
 
 int responseIntOrEmpty(RadioResponseInfo& responseInfo, int serial, int responseType, RIL_Errno e,
@@ -6158,6 +6233,27 @@ SendSmsResult makeSendSmsResult(RadioResponseInfo& responseInfo, int serial, int
     return result;
 }
 
+SendSmsResult makeSendSmsResult_1_6(
+        ::android::hardware::radio::V1_6::RadioResponseInfo &responseInfo, int serial,
+        int responseType, RIL_Errno e, void *response, size_t responseLen) {
+    populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+    SendSmsResult result = {};
+
+    if (response == NULL || responseLen != sizeof(RIL_SMS_Response)) {
+        RLOGE("Invalid response: NULL");
+        if (e == RIL_E_SUCCESS) {
+            responseInfo.error = ::android::hardware::radio::V1_6::RadioError::INVALID_RESPONSE;
+        }
+        result.ackPDU = hidl_string();
+    } else {
+        RIL_SMS_Response *resp = (RIL_SMS_Response *) response;
+        result.messageRef = resp->messageRef;
+        result.ackPDU = convertCharPtrToHidlString(resp->ackPDU);
+        result.errorCode = resp->errorCode;
+    }
+    return result;
+}
+
 int radio_1_6::sendSmsResponse(int slotId,
                           int responseType, int serial, RIL_Errno e, void *response,
                           size_t responseLen) {
@@ -6165,7 +6261,15 @@ int radio_1_6::sendSmsResponse(int slotId,
     RLOGD("sendSmsResponse: serial %d", serial);
 #endif
 
-    if (radioService[slotId]->mRadioResponse != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo_1_6 = {};
+        SendSmsResult result = makeSendSmsResult_1_6(responseInfo_1_6, serial, responseType, e, response,
+                responseLen);
+
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
+                ->sendSmsResponse_1_6(responseInfo_1_6, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL) {
         RadioResponseInfo responseInfo = {};
         SendSmsResult result = makeSendSmsResult(responseInfo, serial, responseType, e, response,
                 responseLen);
@@ -6187,7 +6291,15 @@ int radio_1_6::sendSMSExpectMoreResponse(int slotId,
     RLOGD("sendSMSExpectMoreResponse: serial %d", serial);
 #endif
 
-    if (radioService[slotId]->mRadioResponse != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo_1_6 = {};
+        SendSmsResult result = makeSendSmsResult_1_6(responseInfo_1_6, serial, responseType, e, response,
+                responseLen);
+
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
+                ->sendSMSExpectMoreResponse_1_6(responseInfo_1_6, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL) {
         RadioResponseInfo responseInfo = {};
         SendSmsResult result = makeSendSmsResult(responseInfo, serial, responseType, e, response,
                 responseLen);
@@ -7534,7 +7646,15 @@ int radio_1_6::sendCdmaSmsResponse(int slotId,
     RLOGD("sendCdmaSmsResponse: serial %d", serial);
 #endif
 
-    if (radioService[slotId]->mRadioResponse != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo_1_6 = {};
+        SendSmsResult result = makeSendSmsResult_1_6(responseInfo_1_6, serial, responseType, e,
+                response, responseLen);
+
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
+                ->sendCdmaSmsResponse_1_6(responseInfo_1_6, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponse != NULL) {
         RadioResponseInfo responseInfo = {};
         SendSmsResult result = makeSendSmsResult(responseInfo, serial, responseType, e, response,
                 responseLen);
@@ -9364,7 +9484,15 @@ int radio_1_6::sendCdmaSmsExpectMoreResponse(int slotId, int responseType, int s
     RLOGD("sendCdmaSmsExpectMoreResponse: serial %d", serial);
 #endif
 
-    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo_1_6 = {};
+        SendSmsResult result = makeSendSmsResult_1_6(responseInfo_1_6, serial, responseType, e,
+                response, responseLen);
+
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
+                ->sendCdmaSmsExpectMoreResponse_1_6(responseInfo_1_6, result);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
         RadioResponseInfo responseInfo = {};
         SendSmsResult result = makeSendSmsResult(responseInfo, serial, responseType, e, response,
                 responseLen);
