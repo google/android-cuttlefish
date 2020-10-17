@@ -112,11 +112,11 @@ void CuttlefishConfig::MutableInstanceSpecific::set_virtual_disk_paths(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::kernel_log_pipe_name() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
+  return AbsolutePath(PerInstanceInternalPath("kernel-log-pipe"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::console_pipe_prefix() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("console"));
+  return AbsolutePath(PerInstanceInternalPath("console"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::console_in_pipe_name() const {
@@ -128,7 +128,7 @@ std::string CuttlefishConfig::InstanceSpecific::console_out_pipe_name() const {
 }
 
 std::string CuttlefishConfig::InstanceSpecific::gnss_pipe_prefix() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("gnss"));
+  return AbsolutePath(PerInstanceInternalPath("gnss"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::gnss_in_pipe_name() const {
@@ -149,28 +149,28 @@ void CuttlefishConfig::MutableInstanceSpecific::set_gnss_grpc_proxy_server_port(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {
-  return cuttlefish::AbsolutePath(PerInstanceInternalPath("logcat-pipe"));
+  return AbsolutePath(PerInstanceInternalPath("logcat-pipe"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::access_kregistry_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("access-kregistry"));
+  return AbsolutePath(PerInstancePath("access-kregistry"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::pstore_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("pstore"));
+  return AbsolutePath(PerInstancePath("pstore"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::console_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("console"));
+  return AbsolutePath(PerInstancePath("console"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("logcat"));
+  return AbsolutePath(PerInstancePath("logcat"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_monitor_socket_path()
     const {
-  return cuttlefish::AbsolutePath(PerInstancePath("launcher_monitor.sock"));
+  return AbsolutePath(PerInstancePath("launcher_monitor.sock"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::modem_simulator_ports() const {
@@ -183,19 +183,19 @@ void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_ports(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::launcher_log_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("launcher.log"));
+  return AbsolutePath(PerInstancePath("launcher.log"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("sdcard.img"));
+  return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::composite_disk_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("composite.img"));
+  return AbsolutePath(PerInstancePath("composite.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
-  return cuttlefish::AbsolutePath(PerInstancePath("uboot_env.img"));
+  return AbsolutePath(PerInstancePath("uboot_env.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
