@@ -12,7 +12,7 @@ enum class DataImageResult {
   FileUpdated,
 };
 
-DataImageResult ApplyDataImagePolicy(const cuttlefish::CuttlefishConfig& config,
+DataImageResult ApplyDataImagePolicy(const CuttlefishConfig& config,
                                      const std::string& path);
 bool InitializeMiscImage(const std::string& misc_image);
 void CreateBlankImage(
