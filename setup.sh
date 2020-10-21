@@ -128,6 +128,7 @@ function cvd_docker_create {
     # C | --cuttlefish[=/PATH to host package file]
     # h | --help
 
+  singleshot="false" # could've been updated to "true" by previous cvd_docker_create
   local params
   if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
