@@ -23,6 +23,7 @@ function ConnectToDevice(device_id) {
 
   const deviceScreen = document.getElementById('deviceScreen');
   deviceScreen.addEventListener('click', onInitialClick);
+  const deviceView = document.getElementById('device_view');
 
   function onInitialClick(e) {
     // This stupid thing makes sure that we disable controls after the first
@@ -40,6 +41,8 @@ function ConnectToDevice(device_id) {
   let mouseIsDown = false;
   let deviceConnection;
 
+  let rotation = 0;
+  let screenHasBeenResized = false;
   function onControlMessage(message) {
     let message_data = JSON.parse(message.data);
     console.log(message_data)
@@ -51,14 +54,18 @@ function ConnectToDevice(device_id) {
       init_adb(deviceConnection);
     }
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
-      // TODO(b/165944524) Support all orientations.
-      if (metadata.rotation == 3) {
-        document.getElementById('device_view').classList.add('landscape');
-        document.getElementById('deviceScreen').classList.add('landscape');
+      if (metadata.rotation == rotation) {
+        // Screen resized.
+        // Set height and width directly to provided pixel values.
+        screenHasBeenResized = true;
+        deviceScreen.style.width = rotation == 0 ? metadata.width : metadata.height;
+        deviceScreen.style.height = rotation == 0 ? metadata.height : metadata.width;
       } else {
-        document.getElementById('device_view').classList.remove('landscape');
-        document.getElementById('deviceScreen').classList.remove('landscape');
+        // Screen rotated.
+        rotation = metadata.rotation;
       }
+
+      resizeDeviceView();
 
       updateDeviceDisplayDetails({
         dpi: metadata.dpi,
@@ -67,6 +74,42 @@ function ConnectToDevice(device_id) {
       });
     }
   }
+
+  function resizeDeviceView() {
+    if (screenHasBeenResized) {
+      // If the screen has been manually resized before, then we lose
+      // auto-scaling of screen size based on window size.
+      if (rotation == 0) {
+        deviceScreen.style.transform = null;
+      } else if (rotation == 1) {
+        deviceScreen.style.transform = `rotateZ(-90deg) translateY(-${deviceScreen.style.width})`;
+      }
+    } else {
+      // Auto-scale the screen based on window size.
+      // Max window width of 70%, allowing space for the control panel.
+      let ww = window.innerWidth * 0.7;
+      let wh = window.innerHeight;
+      let vw = rotation == 0 ? deviceScreen.videoWidth : deviceScreen.videoHeight;
+      let vh = rotation == 0 ? deviceScreen.videoHeight : deviceScreen.videoWidth;
+      let scaling = vw * wh > vh * ww ? ww / vw : wh / vh;
+      if (rotation == 0) {
+        deviceScreen.style.transform = null;
+        deviceScreen.style.width = vw * scaling;
+        deviceScreen.style.height = vh * scaling;
+      } else if (rotation == 1) {
+        deviceScreen.style.transform =
+            `rotateZ(-90deg) translateY(-${vh * scaling}px)`;
+        // When rotated, w and h are swapped.
+        deviceScreen.style.width = vh * scaling;
+        deviceScreen.style.height = vw * scaling;
+      }
+    }
+    // Set the deviceView size so that the control panel positions itself next
+    // to the screen correctly.
+    deviceView.style.width = rotation == 0 ? deviceScreen.style.width : deviceScreen.style.height;
+    deviceView.style.height= rotation == 0 ? deviceScreen.style.height : deviceScreen.style.width;
+  }
+  window.onresize = resizeDeviceView;
 
   function createControlPanelButton(command, title, icon_name,
       listener=onControlPanelButton) {
@@ -116,6 +159,12 @@ function ConnectToDevice(device_id) {
       updateDeviceHardwareDetails(deviceConnection.description.hardware);
       updateDeviceDisplayDetails(deviceConnection.description.displays[0]);
       deviceConnection.onControlMessage(msg => onControlMessage(msg));
+      // Start the screen as hidden. Only show when data is ready.
+      deviceScreen.style.visibility = 'hidden';
+      deviceScreen.addEventListener('loadeddata', (evt) => {
+        resizeDeviceView();
+        deviceScreen.style.visibility = 'visible';
+      });
   });
 
   let hardwareDetails = '';
@@ -162,15 +211,12 @@ function ConnectToDevice(device_id) {
     }));
   }
 
-  let orientation = 'portrait';
   function onRotateButton(e) {
+    // Attempt to init adb again, in case the initial connection failed.
+    // This succeeds immediately if already connected.
+    init_adb(deviceConnection);
     if (e.type == 'mousedown') {
-      if (orientation == 'portrait') {
-        orientation = 'landscape';
-      } else {
-        orientation = 'portrait';
-      }
-      adbShell('/vendor/bin/cuttlefish_rotate ' + orientation)
+      adbShell('/vendor/bin/cuttlefish_rotate ' + (rotation == 0 ? 'landscape' : 'portrait'))
     }
   }
 
@@ -249,36 +295,60 @@ function ConnectToDevice(device_id) {
     var x = e.offsetX;
     var y = e.offsetY;
 
-    // Before the first video frame arrives there is no way to know width and
-    // height of the device's screen, so turn every click into a click at 0x0.
-    // A click at that position is not more dangerous than anywhere else since
-    // the user is clicking blind anyways.
+    let elementWidth, elementHeight;
+    if (screenHasBeenResized) {
+      elementWidth = parseInt(deviceScreen.style.width, 10);
+      elementHeight = parseInt(deviceScreen.style.height, 10);
+    } else {
+      // Before the first video frame arrives there is no way to know width and
+      // height of the device's screen, so turn every click into a click at 0x0.
+      // A click at that position is not more dangerous than anywhere else since
+      // the user is clicking blind anyways.
+      elementWidth = deviceScreen.offsetWidth? deviceScreen.offsetWidth: 1;
+      elementHeight = deviceScreen.offsetHeight? deviceScreen.offsetHeight: 1;
+    }
     const videoWidth = deviceScreen.videoWidth? deviceScreen.videoWidth: 1;
     const videoHeight = deviceScreen.videoHeight? deviceScreen.videoHeight: 1;
-    const elementWidth = deviceScreen.offsetWidth? deviceScreen.offsetWidth: 1;
-    const elementHeight = deviceScreen.offsetHeight? deviceScreen.offsetHeight: 1;
 
-    // vh*ew > eh*vw? then scale h instead of w
-    const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
-    var elementScaling = 0, videoScaling = 0;
-    if (scaleHeight) {
-      elementScaling = elementHeight;
-      videoScaling = videoHeight;
+    // The screen uses the 'object-fit: cover' property in order to completely
+    // fill the element while maintaining the screen content's aspect ratio.
+    // Therefore:
+    // - If vh*ew > eh*vw, w is scaled so that content width == element width
+    // - Otherwise,        h is scaled so that content height == element height
+    const scaleWidth = videoHeight * elementWidth > videoWidth * elementHeight;
+
+    // Convert to coordinates relative to the video by scaling.
+    // (This matches the scaling used by 'object-fit: cover'.)
+    //
+    // This scaling is needed to translate from the in-browser x/y to the
+    // on-device x/y.
+    //   - When the device screen has not been resized, this is simple: scale
+    //     the coordinates based on the ratio between the input video size and
+    //     the in-browser size.
+    //   - When the device screen has been resized, this scaling is still needed
+    //     even though the in-browser size and device size are identical. This
+    //     is due to the way WindowManager handles a resized screen, resized via
+    //     `adb shell wm size`:
+    //       - The ABS_X and ABS_Y max values of the screen retain their
+    //         original values equal to the value set when launching the device
+    //         (which equals the video size here).
+    //       - The sent ABS_X and ABS_Y values need to be scaled based on the
+    //         ratio between the max size (video size) and in-browser size.
+    const scaling = scaleWidth ? videoWidth / elementWidth : videoHeight / elementHeight;
+    x = x * scaling;
+    y = y * scaling;
+
+    // Substract the offset produced by the difference in aspect ratio, if any.
+    if (scaleWidth) {
+      // Width was scaled, leaving excess content height, so subtract from y.
+      y -= (elementHeight * scaling - videoHeight) / 2;
     } else {
-      elementScaling = elementWidth;
-      videoScaling = videoWidth;
+      // Height was scaled, leaving excess content width, so subtract from x.
+      x -= (elementWidth * scaling - videoWidth) / 2;
     }
 
-    // Substract the offset produced by the difference in aspect ratio if any.
-    if (scaleHeight) {
-      x -= (elementWidth - elementScaling * videoWidth / videoScaling) / 2;
-    } else {
-      y -= (elementHeight - elementScaling * videoHeight / videoScaling) / 2;
-    }
-
-    // Convert to coordinates relative to the video
-    x = videoScaling * x / elementScaling;
-    y = videoScaling * y / elementScaling;
+    // NOTE: Rotation is handled automatically because the CSS rotation through
+    // transforms also rotates the coordinates of events on the object.
 
     deviceConnection.sendMousePosition(
         {x: Math.trunc(x), y: Math.trunc(y), down, display_label});

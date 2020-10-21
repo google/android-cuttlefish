@@ -161,6 +161,8 @@ function adbOnMessage(arrayBuffer) {
 }
 
 function init_adb(devConn) {
+    if (adb_ws) return;
+
     adb_ws = {
       send: function(buffer) {
         devConn.sendAdbMessage(buffer);
