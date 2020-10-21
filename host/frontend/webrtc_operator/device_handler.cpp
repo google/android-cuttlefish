@@ -88,7 +88,7 @@ void DeviceHandler::HandleForward(const Json::Value& message) {
     Close();
     return;
   }
-  if (client_id > clients_.size()) {
+  if (client_id <= 0 || client_id > clients_.size()) {
     LogAndReplyError("Forward failed: Unknown client " +
                      std::to_string(client_id));
     return;
