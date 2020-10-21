@@ -59,25 +59,17 @@ body {
 @media screen and (min-width: 1000px) {
     #device_view {
         float: left;
-        height: 100vh;
     }
     #control_view {
         float: left;
     }
 }
-#device_view.landscape {
-    width: 100vh;
-}
 
 #deviceScreen {
-    max-width: 100%;
-    max-height: 100%;
     touch-action: none;
-    transform-origin: bottom left;
+    transform-origin: top right;
     transition: transform 1s;
-}
-#deviceScreen.landscape {
-    transform: rotateZ(90deg) translateX(-100vh);
+    object-fit: cover;
 }
 
 #control_panel {

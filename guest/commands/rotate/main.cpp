@@ -76,7 +76,7 @@ void InjectOrientation(bool portrait) {
     event.u.vec3.x = 0;
     event.u.vec3.y = 9.2;
   } else {
-    event.u.vec3.x = -9.2;
+    event.u.vec3.x = 9.2;
     event.u.vec3.y = 0;
   }
   event.u.vec3.z = 3.5;
