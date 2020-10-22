@@ -142,7 +142,11 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
       system_super_partitions.push_back(partition);
     }
   }
-  SetSuperPartitionComponents(system_super_partitions, &output_misc);
+  if (!SetSuperPartitionComponents(system_super_partitions, &output_misc)) {
+    LOG(ERROR) << "Failed to update super partitions components for misc_info";
+    return false;
+  }
+
   auto misc_output_path = output_path + "/" + kMiscInfoPath;
   cuttlefish::SharedFD misc_output_file =
       cuttlefish::SharedFD::Creat(misc_output_path.c_str(), 0644);
