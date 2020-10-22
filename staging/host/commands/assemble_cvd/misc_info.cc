@@ -18,6 +18,7 @@
 #include <algorithm>
 
 #include <android-base/logging.h>
+#include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
 MiscInfo ParseMiscInfo(const std::string& misc_info_contents) {
@@ -70,11 +71,53 @@ std::vector<std::string> SuperPartitionComponents(const MiscInfo& info) {
   return components;
 }
 
-static const std::string kGoogleDynamicPartitions =
-    "super_google_dynamic_partitions_partition_list";
+static constexpr const char* kGoogleDynamicPartitions =
+    "google_dynamic_partitions";
+static constexpr const char* kSuperPartitionGroups = "super_partition_groups";
 
-void SetSuperPartitionComponents(const std::vector<std::string>& components,
+bool SetSuperPartitionComponents(const std::vector<std::string>& components,
                                  MiscInfo* misc_info) {
+  auto super_partition_groups = misc_info->find(kSuperPartitionGroups);
+  if (super_partition_groups == misc_info->end()) {
+    LOG(ERROR) << "Failed to find super partition groups in misc_info";
+    return false;
+  }
+
+  // Remove all existing update groups in misc_info
+  auto update_groups =
+      android::base::Split(super_partition_groups->second, " ");
+  for (const auto& group_name : update_groups) {
+    auto partition_list = android::base::StringPrintf("super_%s_partition_list",
+                                                      group_name.c_str());
+    auto partition_size =
+        android::base::StringPrintf("super_%s_group_size", group_name.c_str());
+    for (const auto& key : {partition_list, partition_size}) {
+      auto it = misc_info->find(key);
+      if (it == misc_info->end()) {
+        LOG(ERROR) << "Failed to find " << key << " in misc_info";
+        return false;
+      }
+      misc_info->erase(it);
+    }
+  }
+
+  // For merged target-file, put all dynamic partitions under the
+  // google_dynamic_partitions update group.
+  // TODO(xunchang) use different update groups for system and vendor images.
   (*misc_info)[kDynamicPartitions] = android::base::Join(components, " ");
-  (*misc_info)[kGoogleDynamicPartitions] = android::base::Join(components, " ");
+  (*misc_info)[kSuperPartitionGroups] = kGoogleDynamicPartitions;
+  std::string partitions_list_key = android::base::StringPrintf(
+      "super_%s_partition_list", kGoogleDynamicPartitions);
+  (*misc_info)[partitions_list_key] = android::base::Join(components, " ");
+
+  // Use the entire super partition as the group size
+  std::string group_size_key = android::base::StringPrintf(
+      "super_%s_group_size", kGoogleDynamicPartitions);
+  auto super_size_it = misc_info->find("super_partition_size");
+  if (super_size_it == misc_info->end()) {
+    LOG(ERROR) << "Failed to find super partition size";
+    return false;
+  }
+  (*misc_info)[group_size_key] = super_size_it->second;
+  return true;
 }
