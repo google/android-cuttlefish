@@ -600,7 +600,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> sendSMSExpectMore_1_6(int32_t serial, const GsmSmsMessage& message);
     Return<void> sendCdmaSms_1_6(int32_t serial, const CdmaSmsMessage& sms);
     Return<void> sendCdmaSmsExpectMore_1_6(int32_t serial, const CdmaSmsMessage& sms);
-
+    Return<void> setRadioPower_1_6(int32_t serial, bool powerOn, bool forEmergencyCall,
+            bool preferredForEmergencyCall);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3856,6 +3857,16 @@ Return<void> RadioImpl_1_6::setRadioPower_1_5(int32_t serial, bool powerOn, bool
     return Void();
 }
 
+Return<void> RadioImpl_1_6::setRadioPower_1_6(int32_t serial, bool powerOn, bool forEmergencyCall,
+                                          bool preferredForEmergencyCall) {
+#if VDBG
+    RLOGD("setRadioPower_1_6: serial %d powerOn %d forEmergency %d preferredForEmergencyCall %d",
+        serial, powerOn, forEmergencyCall, preferredForEmergencyCall);
+#endif
+    dispatchInts(serial, mSlotId, RIL_REQUEST_RADIO_POWER, 1, BOOL_TO_INT(powerOn));
+    return Void();
+}
+
 Return<void> RadioImpl_1_6::areUiccApplicationsEnabled(int32_t serial) {
 #if VDBG
     RLOGD("areUiccApplicationsEnabled: serial %d", serial);
@@ -6177,9 +6188,15 @@ int radio_1_6::setRadioPowerResponse(int slotId,
     RLOGD("setRadioPowerResponse: serial %d", serial);
 #endif
     RadioResponseInfo responseInfo = {};
+    ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo_1_6 = {};
     populateResponseInfo(responseInfo, serial, responseType, e);
+    populateResponseInfo_1_6(responseInfo_1_6, serial, responseType, e);
 
-    if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
+                ->setRadioPowerResponse_1_6(responseInfo_1_6);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else if (radioService[slotId]->mRadioResponseV1_5 != NULL) {
         Return<void> retStatus = radioService[slotId]->mRadioResponseV1_5
                 ->setRadioPowerResponse_1_5(responseInfo);
         radioService[slotId]->checkReturnStatus(retStatus);
