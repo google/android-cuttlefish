@@ -32,6 +32,15 @@
 /var/run/system(/.*)?  u:object_r:var_run_system_file:s0
 
 #############################
+# sys files
+# x86
+/sys/devices/pci0000:00/0000:00:[0-9a-fA-F]{2}\.0/virtio[0-9]+/net(/.*)? u:object_r:sysfs_net:s0
+# qemu (x86)
+/sys/devices/platform/10000.pci/pci0000:00/0000:00:[0-9a-fA-F]{2}\.0/virtio[0-9]+/net(/.*)? u:object_r:sysfs_net:s0
+# qemu (aarch64)
+/sys/devices/platform/4010000000.pcie/pci0000:00/0000:00:[0-9a-fA-F]{2}.0/virtio[0-9]+/net u:object_r:sysfs_net:s0
+
+#############################
 # Vendor files
 #
 /vendor/bin/cuttlefish_rotate   u:object_r:cuttlefish_rotate_exec:s0
