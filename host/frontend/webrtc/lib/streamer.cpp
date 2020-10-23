@@ -51,6 +51,11 @@ constexpr auto kDisplaysField = "displays";
 constexpr auto kCpusField = "cpus";
 constexpr auto kMemoryMbField = "memory_mb";
 constexpr auto kHardwareField = "hardware";
+constexpr auto kControlPanelButtonCommand = "command";
+constexpr auto kControlPanelButtonTitle = "title";
+constexpr auto kControlPanelButtonIconName = "icon_name";
+constexpr auto kControlPanelButtonShellCommand = "shell_command";
+constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 
 void SendJson(WsConnection* ws_conn, const Json::Value& data) {
   Json::FastWriter json_writer;
@@ -92,6 +97,13 @@ struct HardwareDescriptor {
   int memory_mb;
 };
 
+struct ControlPanelButtonDescriptor {
+  std::string command;
+  std::string title;
+  std::string icon_name;
+  std::optional<std::string> shell_command;
+};
+
 // TODO (jemoreira): move to a place in common with the signaling server
 struct OperatorServerConfig {
   std::vector<webrtc::PeerConnectionInterface::IceServer> servers;
@@ -130,6 +142,7 @@ public:
   std::map<int, std::shared_ptr<ClientHandler>> clients_;
   std::weak_ptr<OperatorObserver> operator_observer_;
   HardwareDescriptor hardware_;
+  std::vector<ControlPanelButtonDescriptor> custom_control_panel_buttons_;
 };
 
 Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
@@ -203,6 +216,15 @@ void Streamer::SetHardwareSpecs(int cpus, int memory_mb) {
   impl_->hardware_.memory_mb = memory_mb;
 }
 
+void Streamer::AddCustomControlPanelButton(
+    const std::string& command, const std::string& title,
+    const std::string& icon_name,
+    const std::optional<std::string>& shell_command) {
+  ControlPanelButtonDescriptor button = {command, title, icon_name,
+                                         shell_command};
+  impl_->custom_control_panel_buttons_.push_back(button);
+}
+
 void Streamer::AddAudio(const std::string& label) {
   // Usually called from an application thread
   // TODO (b/128328845): audio support. Use signal_thread_->Invoke<>();
@@ -263,6 +285,18 @@ void Streamer::Impl::OnOpen() {
     hardware[kCpusField] = hardware_.cpus;
     hardware[kMemoryMbField] = hardware_.memory_mb;
     device_info[kHardwareField] = hardware;
+    Json::Value custom_control_panel_buttons(Json::arrayValue);
+    for (const auto& button : custom_control_panel_buttons_) {
+      Json::Value button_entry;
+      button_entry[kControlPanelButtonCommand] = button.command;
+      button_entry[kControlPanelButtonTitle] = button.title;
+      button_entry[kControlPanelButtonIconName] = button.icon_name;
+      if (button.shell_command) {
+        button_entry[kControlPanelButtonShellCommand] = *(button.shell_command);
+      }
+      custom_control_panel_buttons.append(button_entry);
+    }
+    device_info[kCustomControlPanelButtonsField] = custom_control_panel_buttons;
     register_obj[cuttlefish::webrtc_signaling::kDeviceInfoField] = device_info;
     SendJson(server_connection_.get(), register_obj);
     // Do this last as OnRegistered() is user code and may take some time to
