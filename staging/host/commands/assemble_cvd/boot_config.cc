@@ -54,6 +54,7 @@ size_t WriteEnvironment(const cuttlefish::CuttlefishConfig& config,
   }
 
   env << "bootcmd=boot_android virtio -" << '\0';
+  env << "fdtaddr=0x40000000" << '\0';
   env << '\0';
   std::string env_str = env.str();
   std::ofstream file_out(env_path.c_str(), std::ios::binary);
