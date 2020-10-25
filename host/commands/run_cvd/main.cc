@@ -635,8 +635,8 @@ int main(int argc, char** argv) {
   }
 
   // Start other host processes
-  LaunchSocketVsockProxyIfEnabled(&process_monitor, *config);
-  LaunchAdbConnectorIfEnabled(&process_monitor, *config, adbd_events_pipe);
+  LaunchSocketVsockProxyIfEnabled(&process_monitor, *config, adbd_events_pipe);
+  LaunchAdbConnectorIfEnabled(&process_monitor, *config);
 
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
