@@ -296,7 +296,7 @@ SharedFD SharedFD::SocketLocalClient(int port, int type) {
   sockaddr_in addr{};
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if (!rval->IsOpen()) {
     return rval;
@@ -313,7 +313,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
   memset(&addr, 0, sizeof(addr));
   addr.sin_family = AF_INET;
   addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
   SharedFD rval = SharedFD::Socket(AF_INET, type, 0);
   if(!rval->IsOpen()) {
     return rval;
