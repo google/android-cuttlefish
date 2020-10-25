@@ -24,4 +24,6 @@ std::string StringFromEnv(const std::string& varname,
 
 std::string HostArch();
 
+bool IsRunningInContainer();
+
 }  // namespace cuttlefish
