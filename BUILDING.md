@@ -208,6 +208,18 @@ ssh vsoc-01@$ip_cf1 -- './download-aosp $(uname -m)'
 cvd_start_cf1 --start_webrtc --cpus 4 --memory_mb 4096
 ```
 
+As of now, cuttlefish is connecting the adb server inside the docker container by default. If it is intended to adb running outside, --norun_adb_connector should be given and connected manually:
+
+```bash
+cvd_start_cf --norun_adb_connector --start_webrtc --cpus 4 --memory_mb 4096
+```
+
+Following that, open a(nother) terminal, and type:
+
+```bash
+adb connect ip_cf1:6520
+```
+
 Once done, you stop cuttlefish as follows (in a new terminal)
 
 ```bash
@@ -221,12 +233,15 @@ variable $ip_cf1.
 
 # Connecting to Cuttlefish
 
-To connect to Cuttlefish using ADB and VNC from outside the container:
+## ADB
+
+To connect to Cuttlefish using ADB from outside the container:
 
 ```bash
 adb connect localhost:6520
 adb shell
 ```
+Please note that --norun_adb_connector should be given to the cvd_start_<name> command. 
 
 Or from the inside (assuming you had set up, provisioned, and booted a container
 called cf1):
@@ -235,12 +250,63 @@ called cf1):
 ssh vsoc-01@$ip_cf1 -- ./bin/adb -e shell
 ```
 
+## VNC
+
+Please note that VNC is not enabled by default. --start_vnc_server --nostart_webrtc should be given
+to cvd_start_<name>:
+
+```bash
+cvd_start_cf1 --nostart_webrtc --start_vnc_server --cpus 4 --memory_mb 4096
+```
+
+For now, cuttlefish VNC server is listening on 127.0.0.1:6444 or 6444+i port. That being said, VNC
+server that runs in a container is currently not reachable by a VNC client outside the container.
+
+These are being fixed. In the meantime, there are two ways to workaround: SSH tunneling and redirecting
+the VNC server to the host X server.
+
+### SSH Tunneling
+
+One way to avoid this is ssh tunneling:
+
+```bash
+source setup.sh
+ssh -L 7444:$ip_cf1:6444 vsoc-01@$ip_cf1
+```
+
+Follwing that, open a new terminal. VNC server is effectively listening to localhost:7444. 
+
 You can see the display using [VNC](https://android.googlesource.com/device/google/cuttlefish/#so-you-want-to-see-cuttlefish) as well. Follow the link to download the VNC viewer. Assuming you've saved it in your current working directory:
 
 ```bash
-java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=localhost -port=6444
+java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=localhost -port=7444
 ```
 
-Alternatively, if you launched Cuttlefish with the -start_webrtc option, you can
+### Redirecting VNC Client Inside Container to Host X Server
+
+Alternatively, you can run a VNC client inside the container, and redirect the X requests to the host X server.
+As a result, the VNC client will act as if it was the host desktop X application. In other words, the VNC client
+will paint its windows on the host desktop. For that, the container should have been created with -x option:
+
+```bash
+cvd_docker_create -x -A -C $HOME/android-src cf1
+```
+
+Once cuttlefish is launched, the following command from another terminal will launch a VNC client:
+
+```bash
+source setup.sh
+cvd_login_cf1 vncviewer
+```
+
+The client will ask the VNC server address to connect, and this is the value to be used:
+```bash
+127.0.0.1:6444
+```
+## WebRTC
+
+As an alternative to VNC, you can connect cuttlefish via webRTC. you can
 connect (on the same machine as the docker container) by pointing your browser
 at https://localhost:8443/
+
+If not reachable, please the same ssh tunneling described in the VNC section. 
