@@ -62,6 +62,7 @@ cc_library_shared {
         "libbase",
         "libcutils",
         "libcuttlefish_device_config",
+        "libcuttlefish_device_config_proto",
         "libcuttlefish_utils",
         "libcuttlefish_fs",
         "libdrm",
