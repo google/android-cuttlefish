@@ -35,3 +35,7 @@ TARGET_TRANSLATE_2ND_ARCH := false
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
     BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-arm64/*.ko)
 endif
+
+HOST_CROSS_OS=linux_bionic
+HOST_CROSS_ARCH=arm64
+HOST_CROSS_2ND_ARCH=
