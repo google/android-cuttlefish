@@ -1,3 +1,10 @@
+cuttlefish-common (0.9.15) stable; urgency=medium
+
+  [ Ram Muthiah ]
+  * Add QEMU to GCE package to enable QEMU CI testing
+
+ -- Ram Muthiah <rammuthiah@google.com>  Mon, 26 Oct 2020 10:53:54 -0700
+
 cuttlefish-common (0.9.14) stable; urgency=medium
 
   [ Jorge E. Moreira ]
