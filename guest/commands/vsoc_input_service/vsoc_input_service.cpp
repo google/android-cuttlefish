@@ -22,9 +22,9 @@
 
 #include <thread>
 
-#include <gflags/gflags.h>
-#include "log/log.h"
 #include <android-base/logging.h>
+#include <gflags/gflags.h>
+#include <log/log.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/device_config/device_config.h"
@@ -61,14 +61,19 @@ bool VSoCInputService::SetUpDevices() {
     return false;
   }
 
-  auto config = cuttlefish::DeviceConfig::Get();
-  if (!config) {
+  auto config_helper = cuttlefish::DeviceConfigHelper::Get();
+  if (!config_helper) {
     LOG(ERROR) << "Failed to open device config";
     return false;
   }
 
+  const auto& device_config = config_helper->GetDeviceConfig();
+  CHECK_GE(device_config.display_config_size(), 1);
+  const auto& display_config = device_config.display_config(0);
+
   virtual_touchscreen_.reset(
-      new VirtualTouchScreen(config->screen_x_res(), config->screen_y_res()));
+      new VirtualTouchScreen(display_config.width(),
+                             display_config.height()));
   if (!virtual_touchscreen_->SetUp()) {
     return false;
   }
