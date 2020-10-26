@@ -588,6 +588,9 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms);
     Return<void> supplySimDepersonalization(int32_t serial, V1_5::PersoSubstate persoType,
                                             const hidl_string& controlKey);
+    Return<void> enableNrDualConnectivity(int32_t serial,
+            V1_6::NrDualConnectivityState nrDualConnectivityState);
+    Return<void> isNrDualConnectivityEnabled(int32_t serial);
     // Methods from ::android::hardware::radio::V1_6::IRadio follow.
     Return<void> getDataCallList_1_6(int32_t serial);
     Return<void> setupDataCall_1_6(int32_t serial,
@@ -4356,6 +4359,24 @@ Return<void> RadioImpl_1_6::supplySimDepersonalization(int32_t serial,
 #endif
     dispatchStrings(serial, mSlotId, RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION, true, 1,
             controlKey.c_str());
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::enableNrDualConnectivity(int32_t serial,
+        V1_6::NrDualConnectivityState nrDualConnectivityState) {
+#if VDBG
+    RLOGD("enableNrDualConnectivity: serial %d enable %d", serial, enable);
+#endif
+    dispatchInts(serial, mSlotId, RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY, 1,
+            nrDualConnectivityState);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::isNrDualConnectivityEnabled(int32_t serial) {
+#if VDBG
+    RLOGD("isNrDualConnectivityEnabled: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED);
     return Void();
 }
 
@@ -9551,6 +9572,55 @@ int radio_1_6::supplySimDepersonalizationResponse(int slotId, int responseType, 
                 "NULL", slotId);
     }
 
+    return 0;
+}
+
+int radio_1_6::enableNrDualConnectivityResponse(int slotId, int responseType, int serial,
+                                    RIL_Errno e, void* /* response */, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    V1_6::RadioResponseInfo responseInfo = {};
+    populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_6 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_6 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_6->enableNrDualConnectivityResponse(
+            responseInfo);
+    radioService[slotId]->checkReturnStatus(retStatus);
+    return 0;
+}
+
+int radio_1_6::isNrDualConnectivityEnabledResponse(int slotId, int responseType, int serial,
+                                        RIL_Errno e, void* response, size_t responseLen) {
+#if VDBG
+    RLOGD("%s(): %d", __FUNCTION__, serial);
+#endif
+    V1_6::RadioResponseInfo responseInfo = {};
+    populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_6 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_6 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    bool enable = false;
+    if (response == NULL || responseLen != sizeof(bool)) {
+        RLOGE("isNrDualConnectivityEnabledResponseInvalid response.");
+    } else {
+        enable = (*((bool *) response));
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_6->isNrDualConnectivityEnabledResponse(
+            responseInfo, enable);
+    radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
 
