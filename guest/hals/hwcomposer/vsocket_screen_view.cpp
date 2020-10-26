@@ -18,6 +18,7 @@
 
 #include "guest/hals/hwcomposer/vsocket_screen_view.h"
 
+#include <android-base/logging.h>
 #include <cutils/properties.h>
 #include <log/log.h>
 
@@ -39,8 +40,8 @@ VsocketScreenView::~VsocketScreenView() {
 }
 
 void VsocketScreenView::GetScreenParameters() {
-  auto device_config = cuttlefish::DeviceConfig::Get();
-  if (!device_config) {
+  auto device_config_helper = DeviceConfigHelper::Get();
+  if (!device_config_helper) {
     ALOGI(
         "Failed to obtain device configuration from server, running in "
         "headless mode");
@@ -52,10 +53,15 @@ void VsocketScreenView::GetScreenParameters() {
     Broadcast(-1);
     return;
   }
-  x_res_ = device_config->screen_x_res();
-  y_res_ = device_config->screen_y_res();
-  dpi_ = device_config->screen_dpi();
-  refresh_rate_ = device_config->screen_refresh_rate();
+
+  const auto& device_config = device_config_helper->GetDeviceConfig();
+  CHECK_GE(device_config.display_config_size(), 1);
+  const auto& display_config = device_config.display_config(0);
+
+  x_res_ = display_config.width();
+  y_res_ = display_config.height();
+  dpi_ = display_config.dpi();
+  refresh_rate_ = display_config.refresh_rate_hz();
   ALOGI("Received screen parameters: res=%dx%d, dpi=%d, freq=%d", x_res_,
         y_res_, dpi_, refresh_rate_);
 }
