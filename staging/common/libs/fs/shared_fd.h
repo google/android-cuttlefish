@@ -375,6 +375,13 @@ class FileInstance {
     return strerror_buf_;
   }
 
+  void* MMap(void* addr, size_t length, int prot, int flags, off_t offset) {
+    errno = 0;
+    auto rval = mmap(addr, length, prot, flags, fd_, offset);
+    errno_ = errno;
+    return rval;
+  }
+
   ssize_t Truncate(off_t length) {
     errno = 0;
     ssize_t rval = TEMP_FAILURE_RETRY(ftruncate(fd_, length));
