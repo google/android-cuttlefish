@@ -16,74 +16,31 @@
 
 #pragma once
 
-#include <common/libs/fs/shared_fd.h>
-#include <stdint.h>
-
 #include <memory>
 #include <string>
 #include <vector>
 
+#include "common/libs/fs/shared_fd.h"
+#include "device/google/cuttlefish/common/libs/device_config/device_config.pb.h"
+
 #ifdef CUTTLEFISH_HOST
-#include <host/libs/config/cuttlefish_config.h>
+#include "host/libs/config/cuttlefish_config.h"
 #endif
 
 namespace cuttlefish {
 
-class DeviceConfig {
+class DeviceConfigHelper {
  public:
-  /**
-   * WARNING: Consider the possibility of different endianness between host and
-   * guest when adding fields of more than one byte to this struct:
-   * This struct is meant to be sent from host to guest so the binary
-   * representation must be the same. There is a static test that checks for
-   * alignment problems, but there is no such thing for endianness.
-   */
-  struct RawData {
-    struct {
-      char ipaddr[16];  // xxx.xxx.xxx.xxx\0 = 16 bytes
-      char gateway[16];
-      char dns[16];
-      char broadcast[16];
-      uint8_t prefixlen;
-      uint8_t reserved[3];
-    } ril;
-    struct {
-      int32_t x_res;
-      int32_t y_res;
-      int32_t dpi;
-      int32_t refresh_rate;
-    } screen;
-  };
+  static std::unique_ptr<DeviceConfigHelper> Get();
 
-  static std::unique_ptr<DeviceConfig> Get();
+  const DeviceConfig& GetDeviceConfig() const { return device_config_; }
 
-  bool SendRawData(SharedFD fd);
-
-  const char* ril_address_and_prefix() const {
-    return ril_address_and_prefix_.c_str();
-  };
-  const char* ril_ipaddr() const { return data_.ril.ipaddr; }
-  const char* ril_gateway() const { return data_.ril.gateway; }
-  const char* ril_dns() const { return data_.ril.dns; }
-  const char* ril_broadcast() const { return data_.ril.broadcast; }
-  int ril_prefixlen() const { return data_.ril.prefixlen; }
-  int32_t screen_x_res() { return data_.screen.x_res; }
-  int32_t screen_y_res() { return data_.screen.y_res; }
-  int32_t screen_dpi() { return data_.screen.dpi; }
-  int32_t screen_refresh_rate() { return data_.screen.refresh_rate; }
+  bool SendDeviceConfig(SharedFD fd);
 
  private:
-  void generate_address_and_prefix();
-#ifdef CUTTLEFISH_HOST
-  DeviceConfig() = default;
-  bool InitializeNetworkConfiguration(const CuttlefishConfig& config);
-  void InitializeScreenConfiguration(const CuttlefishConfig& config);
-#else
-  explicit DeviceConfig(const RawData& data);
-#endif
+  explicit DeviceConfigHelper(const DeviceConfig& device_config);
 
-  RawData data_;
-  std::string ril_address_and_prefix_;
+  DeviceConfig device_config_;
 };
 
 }  // namespace cuttlefish

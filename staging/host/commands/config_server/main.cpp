@@ -30,9 +30,9 @@ int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  auto device_config = cuttlefish::DeviceConfig::Get();
+  auto device_config_helper = cuttlefish::DeviceConfigHelper::Get();
 
-  CHECK(device_config) << "Could not open device config";
+  CHECK(device_config_helper) << "Could not open device config";
 
   cuttlefish::SharedFD server_fd = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
 
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     auto conn = cuttlefish::SharedFD::Accept(*server_fd);
     LOG(DEBUG) << "Connection received on configuration server";
 
-    bool succeeded = device_config->SendRawData(conn);
+    bool succeeded = device_config_helper->SendDeviceConfig(conn);
     if (succeeded) {
       LOG(DEBUG) << "Successfully sent device configuration";
     } else {

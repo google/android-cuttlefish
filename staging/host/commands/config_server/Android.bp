@@ -25,6 +25,8 @@ cc_binary {
         "liblog",
         "libcuttlefish_utils",
         "libcuttlefish_device_config",
+        "libcuttlefish_device_config_proto",
+        "libprotobuf-cpp-full"
     ],
     static_libs: [
         "libcuttlefish_host_config",
