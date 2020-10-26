@@ -128,67 +128,59 @@ class NetConfig {
   }
 };
 
-inline void CopyChars(char* dest, size_t size, const char* src) {
-  auto res = snprintf(dest, size, "%s", src);
-  if (res >= static_cast<int>(size)) {
-    LOG(ERROR) << "Longer(" << res << ") than expected(" << (size - 1)
-               << ") config string was truncated: " << dest;
-  }
-}
-
-}  // namespace
-
-std::unique_ptr<DeviceConfig> DeviceConfig::Get() {
-  auto config = CuttlefishConfig::Get();
-  if (!config) return nullptr;
-  std::unique_ptr<DeviceConfig> dev_config(new DeviceConfig());
-  if (!dev_config->InitializeNetworkConfiguration(*config)) {
-    return nullptr;
-  }
-  dev_config->InitializeScreenConfiguration(*config);
-  return dev_config;
-}
-
-bool DeviceConfig::InitializeNetworkConfiguration(
-    const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
+bool InitializeNetworkConfiguration(const CuttlefishConfig& cuttlefish_config,
+                                    DeviceConfig* device_config) {
+  auto instance = cuttlefish_config.ForDefaultInstance();
   NetConfig netconfig;
   // Check the mobile bridge first; this was the traditional way we configured
   // the mobile interface. If that fails, it probably means we are using a
   // newer version of cuttlefish-common, and we can use the tap device
   // directly instead.
   if (!netconfig.ObtainConfig(instance.mobile_bridge_name(),
-                              config.ril_dns())) {
-    if (!netconfig.ObtainConfig(instance.mobile_tap_name(), config.ril_dns())) {
+                              cuttlefish_config.ril_dns())) {
+    if (!netconfig.ObtainConfig(instance.mobile_tap_name(),
+                                cuttlefish_config.ril_dns())) {
       LOG(ERROR) << "Unable to obtain the network configuration";
       return false;
     }
   }
 
-  auto res = snprintf(data_.ril.ipaddr, sizeof(data_.ril.ipaddr), "%s",
-                      netconfig.ril_ipaddr.c_str());
-  if (res >= (int)sizeof(data_.ril.ipaddr)) {
-    LOG(ERROR) << "Longer than expected config string was truncated: "
-               << data_.ril.ipaddr;
-  }
-  CopyChars(data_.ril.gateway, sizeof(data_.ril.gateway),
-            netconfig.ril_gateway.c_str());
-  CopyChars(data_.ril.dns, sizeof(data_.ril.dns), netconfig.ril_dns.c_str());
-  CopyChars(data_.ril.broadcast, sizeof(data_.ril.broadcast),
-            netconfig.ril_broadcast.c_str());
-  data_.ril.prefixlen = netconfig.ril_prefixlen;
-
-  generate_address_and_prefix();
+  DeviceConfig::RILConfig* ril_config = device_config->mutable_ril_config();
+  ril_config->set_ipaddr(netconfig.ril_ipaddr);
+  ril_config->set_gateway(netconfig.ril_gateway);
+  ril_config->set_dns(netconfig.ril_dns);
+  ril_config->set_broadcast(netconfig.ril_broadcast);
+  ril_config->set_prefixlen(netconfig.ril_prefixlen);
 
   return true;
 }
 
-void DeviceConfig::InitializeScreenConfiguration(
-    const CuttlefishConfig& config) {
-  data_.screen.x_res = config.x_res();
-  data_.screen.y_res = config.y_res();
-  data_.screen.dpi = config.dpi();
-  data_.screen.refresh_rate = config.refresh_rate_hz();
+void InitializeScreenConfiguration(const CuttlefishConfig& cuttlefish_config,
+                                   DeviceConfig* device_config) {
+  DeviceConfig::DisplayConfig* display_config =
+    device_config->add_display_config();
+  display_config->set_width(cuttlefish_config.x_res());
+  display_config->set_height(cuttlefish_config.y_res());
+  display_config->set_dpi(cuttlefish_config.dpi());
+  display_config->set_refresh_rate_hz(cuttlefish_config.refresh_rate_hz());
+}
+
+}  // namespace
+
+std::unique_ptr<DeviceConfigHelper> DeviceConfigHelper::Get() {
+  auto cuttlefish_config = CuttlefishConfig::Get();
+  if (!cuttlefish_config) {
+    return nullptr;
+  }
+
+  DeviceConfig device_config;
+  if (!InitializeNetworkConfiguration(*cuttlefish_config, &device_config)) {
+    return nullptr;
+  }
+  InitializeScreenConfiguration(*cuttlefish_config, &device_config);
+
+  return std::unique_ptr<DeviceConfigHelper>(
+    new DeviceConfigHelper(device_config));
 }
 
 }  // namespace cuttlefish
