@@ -14,25 +14,28 @@
  * limitations under the License.
  */
 
-#pragma once
+syntax = "proto3";
 
-#include <string>
+package cuttlefish;
 
-// this file provide a few device (cvd or emulator) specific hooks for
-// modem-simulator
+message DeviceConfig {
 
-namespace cuttlefish {
-namespace modem {
+  message RILConfig {
+    string ipaddr = 1;
+    string gateway = 2;
+    string dns = 3;
+    string broadcast = 4;
+    int32 prefixlen = 5;
+  };
 
-class DeviceConfig {
- public:
-  static int host_port();
-  static std::string PerInstancePath(const char* file_name);
-  static std::string DefaultHostArtifactsPath(const std::string& file);
-  static std::string ril_address_and_prefix();
-  static std::string ril_gateway();
-  static std::string ril_dns();
-};
+  RILConfig ril_config = 1;
 
-}  // namespace modem
-}  // namespace cuttlefish
+  message DisplayConfig {
+    int32 width = 1;
+    int32 height = 2;
+    int32 dpi = 3;
+    int32 refresh_rate_hz = 4;
+  };
+
+  repeated DisplayConfig display_config = 2;
+}

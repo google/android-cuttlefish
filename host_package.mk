@@ -90,6 +90,7 @@ cvd_host_shared_libraries := \
     libcutils.so \
     libcuttlefish_allocd_utils.so \
     libcuttlefish_device_config.so \
+    libcuttlefish_device_config_proto.so \
     libcuttlefish_fs.so \
     libcuttlefish_kernel_log_monitor_utils.so \
     libcuttlefish_security.so \
