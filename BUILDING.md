@@ -241,7 +241,8 @@ To connect to Cuttlefish using ADB from outside the container:
 adb connect localhost:6520
 adb shell
 ```
-Please note that --norun_adb_connector should be given to the cvd_start_<name> command. 
+
+Please note that --norun_adb_connector should have been given to the cvd_start_<name> command. 
 
 Or from the inside (assuming you had set up, provisioned, and booted a container
 called cf1):
@@ -260,7 +261,7 @@ cvd_start_cf1 --nostart_webrtc --start_vnc_server --cpus 4 --memory_mb 4096
 ```
 
 For now, cuttlefish VNC server is listening on 127.0.0.1:6444 or 6444+i port. That being said, VNC
-server that runs in a container is currently not reachable by a VNC client outside the container.
+server that runs in a container is currently not reached by a VNC client outside the container.
 
 These are being fixed. In the meantime, there are two ways to workaround: SSH tunneling and redirecting
 the VNC server to the host X server.
@@ -309,4 +310,4 @@ As an alternative to VNC, you can connect cuttlefish via webRTC. you can
 connect (on the same machine as the docker container) by pointing your browser
 at https://localhost:8443/
 
-If not reachable, please the same ssh tunneling described in the VNC section. 
+WebRTC allows you to control cuttlefish inside the docker container without ssh tunnel.
