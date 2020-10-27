@@ -18,7 +18,10 @@
 # Common BoardConfig for all supported architectures.
 #
 
+# TODO(b/170639028): Back up TARGET_NO_BOOTLOADER
+__TARGET_NO_BOOTLOADER := $(TARGET_NO_BOOTLOADER)
 include build/make/target/board/BoardConfigMainlineCommon.mk
+TARGET_NO_BOOTLOADER := $(__TARGET_NO_BOOTLOADER)
 
 TARGET_BOOTLOADER_BOARD_NAME := cutf
 

@@ -30,9 +30,6 @@ TARGET_NATIVE_BRIDGE_ARCH_VARIANT := armv8-a
 TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
 TARGET_NATIVE_BRIDGE_ABI := arm64-v8a
 
-TARGET_NO_BOOTLOADER := false
-BOARD_PREBUILT_BOOTLOADER := device/google/cuttlefish_prebuilts/bootloader/crosvm_x86_64/u-boot.rom
-
 AUDIOSERVER_MULTILIB := first
 BUILD_BROKEN_DUP_RULES := true
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-x86_64/*.ko)
