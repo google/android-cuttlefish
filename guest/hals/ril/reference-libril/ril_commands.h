@@ -172,4 +172,6 @@
     {RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED, radio_1_6::areUiccApplicationsEnabledResponse},
     {RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION, radio_1_6::supplySimDepersonalizationResponse},
     {RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE, radio_1_6::sendCdmaSmsExpectMoreResponse},
-    {RIL_REQUEST_GET_BARRING_INFO, radio_1_6::getBarringInfoResponse}
+    {RIL_REQUEST_GET_BARRING_INFO, radio_1_6::getBarringInfoResponse},
+    {RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY, radio_1_6::enableNrDualConnectivityResponse},
+    {RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED, radio_1_6::isNrDualConnectivityEnabledResponse}
