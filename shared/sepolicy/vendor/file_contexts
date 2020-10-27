@@ -17,7 +17,11 @@
 /dev/dri u:object_r:gpu_device:s0
 /dev/dri/card0  u:object_r:graphics_device:s0
 /dev/dri/renderD128  u:object_r:gpu_device:s0
-/dev/hvc[0-9]*  u:object_r:serial_device:s0
+/dev/hvc0  u:object_r:serial_device:s0
+/dev/hvc1  u:object_r:serial_device:s0
+/dev/hvc2  u:object_r:serial_device:s0
+/dev/hvc3  u:object_r:keymaster_device:s0
+/dev/hvc4  u:object_r:gatekeeper_device:s0
 
 #############################
 # Root files

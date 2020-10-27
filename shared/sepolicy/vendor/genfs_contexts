@@ -9,11 +9,11 @@ genfscon sysfs $1/vendor u:object_r:sysfs_gpu:s0
 ')
 
 # crosvm (x86)
-cf_pci_gpu_device(/devices/pci0000:00/0000:00:0e.0)
+cf_pci_gpu_device(/devices/pci0000:00/0000:00:10.0)
 # crosvm (arm64)
-cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00/0000:00:0e.0)
+cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00/0000:00:10.0)
 # qemu (aarch64)
-cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0)
+cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00/0000:00:0e.0)
 
 popdef(`cf_pci_gpu_device')
 

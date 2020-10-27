@@ -9,9 +9,7 @@ ro.boot.hardware.hwcomposer u:object_r:vendor_graphics_config_prop:s0 exact stri
 ro.boot.hardware.vulkan u:object_r:vendor_graphics_config_prop:s0 exact string
 ro.boot.lcd_density u:object_r:vendor_graphics_config_prop:s0 exact int
 ro.boot.vsock_frames_port  u:object_r:vendor_vsock_frames_port_prop:s0
-ro.boot.vsock_gatekeeper_port  u:object_r:vendor_vsock_gatekeeper_port_prop:s0
 ro.boot.vsock_keyboard_port  u:object_r:vendor_vsock_keyboard_port:s0
-ro.boot.vsock_keymaster_port  u:object_r:vendor_vsock_keymaster_port_prop:s0
 ro.boot.modem_simulator_ports  u:object_r:vendor_modem_simulator_ports_prop:s0
 ro.boot.vsock_touch_port  u:object_r:vendor_vsock_touch_port:s0
 ro.boot.wifi_mac_address  u:object_r:vendor_wifi_mac_address:s0

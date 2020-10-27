@@ -30,30 +30,32 @@
 using android::hardware::gatekeeper::V1_0::IGatekeeper;
 using gatekeeper::RemoteGateKeeperDevice;
 
-DEFINE_uint32(
-    port,
-    static_cast<uint32_t>(property_get_int64("ro.boot.vsock_gatekeeper_port", 0)),
-    "virtio socket port to send gatekeeper commands to");
+const char device[] = "/dev/hvc4";
 
 int main(int argc, char** argv) {
-    ::android::base::InitLogging(argv);
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
-    ::android::hardware::configureRpcThreadpool(1, true /* willJoinThreadpool */);
+  ::android::base::InitLogging(argv);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  ::android::hardware::configureRpcThreadpool(1, true /* willJoinThreadpool */);
 
-    auto vsockFd = cuttlefish::SharedFD::VsockClient(2, FLAGS_port, SOCK_STREAM);
-    if (!vsockFd->IsOpen()) {
-        LOG(FATAL) << "Could not connect to keymaster server: "
-                   << vsockFd->StrError();
-    }
-    cuttlefish::GatekeeperChannel gatekeeperChannel(vsockFd);
+  auto fd = cuttlefish::SharedFD::Open(device, O_RDWR);
+  if (!fd->IsOpen()) {
+    LOG(FATAL) << "Could not connect to gatekeeper: " << fd->StrError();
+  }
 
-    android::sp<RemoteGateKeeperDevice> gatekeeper(
-        new RemoteGateKeeperDevice(&gatekeeperChannel));
-    auto status = gatekeeper->registerAsService();
-    if (status != android::OK) {
-        LOG(FATAL) << "Could not register service for Gatekeeper 1.0 (remote) (" << status << ")";
-    }
+  if (fd->SetTerminalRaw() < 0) {
+    LOG(FATAL) << "Could not make " << device << " a raw terminal: "
+                << fd->StrError();
+  }
 
-    android::hardware::joinRpcThreadpool();
-    return -1;  // Should never get here.
+  cuttlefish::GatekeeperChannel gatekeeperChannel(fd, fd);
+
+  android::sp<RemoteGateKeeperDevice> gatekeeper(
+    new RemoteGateKeeperDevice(&gatekeeperChannel));
+  auto status = gatekeeper->registerAsService();
+  if (status != android::OK) {
+    LOG(FATAL) << "Could not register service for Gatekeeper 1.0 (remote) (" << status << ")";
+  }
+
+  android::hardware::joinRpcThreadpool();
+  return -1;  // Should never get here.
 }

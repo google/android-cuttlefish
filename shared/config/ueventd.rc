@@ -19,4 +19,10 @@
 # seriallogging
 /dev/hvc2 0660 system logd
 
+# keymaster
+/dev/hvc3 0660 system system
+
+# gatekeeper
+/dev/hvc4 0660 system system
+
 /dev/gnss0 0664 system system
