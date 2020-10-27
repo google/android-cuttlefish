@@ -79,9 +79,8 @@ cuttlefish::SharedFD CreateUnixInputServer(const std::string& path) {
 
 // Creates the frame and input sockets and add the relevant arguments to the vnc
 // server and webrtc commands
-StreamerLaunchResult CreateStreamerServers(
+void CreateStreamerServers(
     cuttlefish::Command* cmd, const cuttlefish::CuttlefishConfig& config) {
-  StreamerLaunchResult server_ret;
   cuttlefish::SharedFD touch_server;
   cuttlefish::SharedFD keyboard_server;
 
@@ -100,14 +99,14 @@ StreamerLaunchResult CreateStreamerServers(
   }
   if (!touch_server->IsOpen()) {
     LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
-    return {};
+    return;
   }
   cmd->AddParameter("-touch_fd=", touch_server);
 
   if (!keyboard_server->IsOpen()) {
     LOG(ERROR) << "Could not open keyboard server: "
                << keyboard_server->StrError();
-    return {};
+    return;
   }
   cmd->AddParameter("-keyboard_fd=", keyboard_server);
 
@@ -121,10 +120,9 @@ StreamerLaunchResult CreateStreamerServers(
   }
   if (!frames_server->IsOpen()) {
     LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();
-    return {};
+    return;
   }
   cmd->AddParameter("-frame_server_fd=", frames_server);
-  return server_ret;
 }
 
 }  // namespace
@@ -247,7 +245,7 @@ void LaunchTombstoneReceiver(const cuttlefish::CuttlefishConfig& config,
   return;
 }
 
-StreamerLaunchResult LaunchVNCServer(
+void LaunchVNCServer(
     const cuttlefish::CuttlefishConfig& config, cuttlefish::ProcessMonitor* process_monitor,
     std::function<bool(MonitorEntry*)> callback) {
   auto instance = config.ForDefaultInstance();
@@ -256,11 +254,9 @@ StreamerLaunchResult LaunchVNCServer(
   cuttlefish::Command vnc_server(cuttlefish::VncServerBinary());
   vnc_server.AddParameter(port_options);
 
-  auto server_ret = CreateStreamerServers(&vnc_server, config);
+  CreateStreamerServers(&vnc_server, config);
 
   process_monitor->StartSubprocess(std::move(vnc_server), callback);
-  server_ret.launched = true;
-  return server_ret;
 }
 
 void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
@@ -289,9 +285,9 @@ void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
   }
 }
 
-StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
-                                  const cuttlefish::CuttlefishConfig& config,
-                                  cuttlefish::SharedFD kernel_log_events_pipe) {
+void LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
+                  const cuttlefish::CuttlefishConfig& config,
+                  cuttlefish::SharedFD kernel_log_events_pipe) {
   if (config.ForDefaultInstance().start_webrtc_sig_server()) {
     cuttlefish::Command sig_server(cuttlefish::WebRtcSigServerBinary());
     sig_server.AddParameter("-assets_dir=", config.webrtc_assets_dir());
@@ -313,15 +309,11 @@ StreamerLaunchResult LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
 
   cuttlefish::Command webrtc(cuttlefish::WebRtcBinary());
 
-  auto server_ret = CreateStreamerServers(&webrtc, config);
   webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe);
 
   // TODO get from launcher params
   process_monitor->StartSubprocess(std::move(webrtc),
                                    GetOnSubprocessExitCallback(config));
-  server_ret.launched = true;
-
-  return server_ret;
 }
 
 bool StopModemSimulator() {

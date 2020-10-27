@@ -614,13 +614,12 @@ int main(int argc, char** argv) {
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
-  StreamerLaunchResult streamer_config;
   if (config->enable_vnc_server()) {
-    streamer_config = LaunchVNCServer(
-      *config, &process_monitor, GetOnSubprocessExitCallback(*config));
+    LaunchVNCServer(
+        *config, &process_monitor, GetOnSubprocessExitCallback(*config));
   }
   if (config->enable_webrtc()) {
-    streamer_config = LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
+    LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
   }
 
   auto kernel_args =
@@ -629,7 +628,7 @@ int main(int argc, char** argv) {
 
   // Start the guest VM
   auto vmm_commands = vm_manager->StartCommands(
-      *config, streamer_config.launched, android::base::Join(kernel_args, " "));
+      *config, android::base::Join(kernel_args, " "));
   for (auto& vmm_cmd: vmm_commands) {
       process_monitor.StartSubprocess(std::move(vmm_cmd),
                                       GetOnSubprocessExitCallback(*config));
