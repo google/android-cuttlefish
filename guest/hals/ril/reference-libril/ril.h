@@ -101,6 +101,9 @@ extern "C" {
  *                    RIL_VoiceRegistrationStateResponse same is
  *                    used in RIL_REQUEST_DATA_REGISTRATION_STATE and
  *                    RIL_REQUEST_VOICE_REGISTRATION_STATE respectively.
+ * RIL_VERSION = 16 : New commands added:
+ *                    RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY
+ *                    RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -7340,7 +7343,35 @@ typedef enum {
  */
 #define RIL_REQUEST_GET_BARRING_INFO 158
 
-#define RIL_REQUEST_LAST RIL_REQUEST_GET_BARRING_INFO
+/**
+ * RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY
+ *
+ * Enable or disable E-UTRA-NR dual connectivity.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  SIM_ABSENT
+ *  INTERNAL_ERR
+ */
+#define RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY 159
+
+/**
+ * RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED
+ *
+ * Whether E-UTRA-NR dual connectivity is enabled.
+ *
+ * Response: a boolean of enable or not.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE
+ *  SIM_ABSENT
+ *  INTERNAL_ERR
+ */
+#define RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED 160
+
+#define RIL_REQUEST_LAST RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED
 
 /***********************************************************************/
 
