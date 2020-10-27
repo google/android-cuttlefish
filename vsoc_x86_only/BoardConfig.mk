@@ -25,7 +25,4 @@ TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
 TARGET_CPU_ABI := x86
 
-TARGET_NO_BOOTLOADER := false
-BOARD_PREBUILT_BOOTLOADER := device/google/cuttlefish_prebuilts/bootloader/crosvm_x86_64/u-boot.rom
-
 BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-i686/*.ko)
