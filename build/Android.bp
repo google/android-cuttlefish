@@ -147,6 +147,9 @@ cvd_host_package {
         },
     },
     target: {
+        linux_bionic: {
+            commonDeps: ["tzdata_host"],
+        },
         linux_bionic_x86_64: {
             enabled: false,
         },
