@@ -40,7 +40,6 @@ class QemuManager : public VmManager {
 
   std::vector<cuttlefish::Command> StartCommands(
       const CuttlefishConfig& config,
-      bool with_frontend,
       const std::string& kernel_cmdline) override;
 };
 
