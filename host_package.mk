@@ -172,3 +172,10 @@ $(cvd_host_package_tar): PRIVATE_FILES := $(cvd_host_package_files)
 $(cvd_host_package_tar): $(addprefix $(HOST_OUT)/,$(cvd_host_package_files))
 	$(hide) rm -rf $@ && tar Scfzh $@.tmp -C $(HOST_OUT) $(PRIVATE_FILES)
 	$(hide) mv $@.tmp $@
+
+soong_host_out := $(SOONG_HOST_OUT)
+ifeq ($(HOST_CROSS_OS)_$(HOST_CROSS_ARCH),linux_bionic_arm64)
+  soong_host_out := $(SOONG_OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)
+endif
+$(call dist-for-goals, dist_files,$(soong_host_out)/cvd_host_package.zip)
+soong_host_out :=

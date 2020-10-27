@@ -13,15 +13,16 @@ bootstrap_go_package {
 }
 
 cvd_host_tools = [
+    "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server",
     "adb",
     "adb_connector",
     "adbshell",
     "allocd",
     "allocd_client",
     "assemble_cvd",
+    "common_crosvm",
     "config_server",
     "console_forwarder",
-    "common_crosvm",
     "crosvm",
     "cvd_status",
     "detect_graphics",
@@ -30,6 +31,7 @@ cvd_host_tools = [
     "gnss_grpc_proxy",
     "kernel_log_monitor",
     "launch_cvd",
+    "libgrpc++",
     "log_tee",
     "logcat_receiver",
     "lpmake",
@@ -37,6 +39,7 @@ cvd_host_tools = [
     "lz4",
     "make_f2fs",
     "metrics",
+    "mkbootimg",
     "mkenvimage",
     "modem_simulator",
     "ms-tpm-20-ref",
@@ -48,6 +51,7 @@ cvd_host_tools = [
     "stop_cvd",
     "tapsetiff",
     "tombstone_receiver",
+    "unpack_bootimg",
     "vnc_server",
     "webRTC",
     "webrtc_operator",
@@ -118,6 +122,14 @@ cvd_host_seccomp_policy_arm64 = [
     "xhci.policy_aarch64",
 ]
 
+cvd_host_tools_x86_64 = [
+    "x86_64_linux_gnu_libandroid_emu_shared.so_for_crosvm",
+    "x86_64_linux_gnu_libc++.so.1_for_crosvm",
+    "x86_64_linux_gnu_libemugl_common.so_for_crosvm",
+    "x86_64_linux_gnu_libgfxstream_backend.so_for_crosvm",
+    "x86_64_linux_gnu_libOpenglRender.so_for_crosvm",
+]
+
 cvd_host_package {
     name: "cvd_host_package",
     deps: cvd_host_tools +
@@ -127,6 +139,7 @@ cvd_host_package {
 
     arch: {
         x86_64: {
+            deps: cvd_host_tools_x86_64,
             commonDeps: cvd_host_seccomp_policy_x86_64,
         },
         arm64: {
