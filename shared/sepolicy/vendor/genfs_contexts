@@ -1,11 +1,23 @@
+# arguments:
+# $1 = pci prefix
+pushdef(`cf_pci_gpu_device', `
+genfscon sysfs $1/device u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/subsystem_device u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/subsystem_vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/uevent u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/vendor u:object_r:sysfs_gpu:s0
+')
+
 # crosvm (x86)
-genfscon sysfs /devices/pci0000:00/0000:00:0b.0/virtio10/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/pci0000:00/0000:00:0c.0/virtio11/net u:object_r:sysfs_net:s0 # rmnet0
-genfscon sysfs /devices/pci0000:00/0000:00:0e.0/device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0e.0/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0e.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0e.0/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/pci0000:00/0000:00:0e.0/vendor u:object_r:sysfs_gpu:s0
+cf_pci_gpu_device(/devices/pci0000:00/0000:00:0e.0)
+# crosvm (arm64)
+cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00/0000:00:0e.0)
+# qemu (aarch64)
+cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0)
+
+popdef(`cf_pci_gpu_device')
+
+# crosvm (x86)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
@@ -16,13 +28,6 @@ genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wake
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # crosvm (arm64)
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0b.0/virtio9/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0c.0/virtio10/net u:object_r:sysfs_net:s0 # rmnet0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0e.0/device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0e.0/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0e.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0e.0/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/10000.pci/pci0000:00/0000:00:0e.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
@@ -33,13 +38,6 @@ genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc2/alarmtimer.0.auto/wakeup/wa
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 
 # qemu (x86)
-genfscon sysfs /devices/pci0000:00/0000:00:0c.0/virtio10/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/pci0000:00/0000:00:0d.0/virtio11/net u:object_r:sysfs_net:s0 # rmnet0
-#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/device u:object_r:sysfs_gpu:s0
-#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/subsystem_device u:object_r:sysfs_gpu:s0
-#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/uevent u:object_r:sysfs_gpu:s0
-#genfscon sysfs /devices/pci0000:00/0000:00:0e.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9][0-9]'
@@ -50,13 +48,6 @@ genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup21 u:object_r:sysfs_wak
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup22 u:object_r:sysfs_wakeup:s0
 
 # qemu (arm64)
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0a.0/virtio10/net u:object_r:sysfs_net:s0 # buried_eth0 & wlan0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0b.0/virtio11/net u:object_r:sysfs_net:s0 # rmnet0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs /devices/platform/4010000000.pcie/pci0000:00/0000:00:0c.0/vendor u:object_r:sysfs_gpu:s0
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
