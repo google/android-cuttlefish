@@ -187,6 +187,14 @@ int main(int argc, char** argv) {
   auto instance_num_str = std::to_string(FLAGS_base_instance_num);
   setenv("CUTTLEFISH_INSTANCE", instance_num_str.c_str(), /* overwrite */ 0);
 
+#if defined(__BIONIC__)
+  // These environment variables are needed in case when Bionic is used.
+  // b/171754977
+  setenv("ANDROID_DATA", cuttlefish::DefaultHostArtifactsPath("").c_str(), /* overwrite */ 0);
+  setenv("ANDROID_TZDATA_ROOT", cuttlefish::DefaultHostArtifactsPath("").c_str(), /* overwrite */ 0);
+  setenv("ANDROID_ROOT", cuttlefish::DefaultHostArtifactsPath("").c_str(), /* overwrite */ 0);
+#endif
+
   // SharedFDs are std::move-d in to avoid dangling references.
   // Removing the std::move will probably make run_cvd hang as its stdin never closes.
   auto assemble_proc = StartAssembler(std::move(assembler_stdin),
