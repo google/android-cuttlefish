@@ -177,5 +177,5 @@ soong_host_out := $(SOONG_HOST_OUT)
 ifeq ($(HOST_CROSS_OS)_$(HOST_CROSS_ARCH),linux_bionic_arm64)
   soong_host_out := $(SOONG_OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)
 endif
-$(call dist-for-goals, dist_files,$(soong_host_out)/cvd_host_package.zip)
+$(call dist-for-goals, dist_files,$(soong_host_out)/cvd_host_package.tar.gz)
 soong_host_out :=

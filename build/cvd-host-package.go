@@ -99,16 +99,33 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 	inputs = android.SortedUniquePaths(inputs)
 	commonInputs = android.SortedUniquePaths(commonInputs)
 
-	c.output = android.PathForModuleOut(ctx, "package.zip").OutputPath
 	builder := android.NewRuleBuilder()
+
+	tempZip := android.PathForModuleOut(ctx, "package.zip")
 	builder.Command().BuiltTool(ctx, "soong_zip").
 		FlagWithArg("-symlinks", "=false"). // do follow symlinks because cc_prebuilt_* have symlinks pointing the source path
-		FlagWithOutput("-o ", c.output).
+		FlagWithOutput("-o ", tempZip).
 		FlagWithArg("-C ", baseDir.String()).
 		FlagForEachInput("-f ", inputs).
 		FlagWithArg("-C ", commonBaseDir.String()).
 		FlagForEachInput("-f ", commonInputs)
+
+	// convert zip to tar.gz by unzipping it to a temp dir and gzipping the directory
+	c.output = android.PathForModuleOut(ctx, "package.tar.gz").OutputPath
+	tempDir := android.PathForModuleOut(ctx, ".temp").OutputPath
+	builder.Command().BuiltTool(ctx, "zipsync").
+		FlagWithOutput("-d ", tempDir).
+		Input(tempZip)
+	builder.Command().Text("tar Scfzh").
+		Output(c.output).
+		FlagWithArg("-C ", tempDir.String()).
+		Text(".")
+	builder.Command().Text("rm -rf").Text(tempDir.String())
+
+	builder.Temporary(tempZip)
+	builder.DeleteTemporaryFiles()
+
 	builder.Build(pctx, ctx, "cvd_host_package", fmt.Sprintf("Packaging %s", c.BaseModuleName()))
 
-	ctx.InstallFile(baseDir, c.BaseModuleName()+".zip", c.output)
+	ctx.InstallFile(baseDir, c.BaseModuleName()+".tar.gz", c.output)
 }
