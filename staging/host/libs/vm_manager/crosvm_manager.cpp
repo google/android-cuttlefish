@@ -144,9 +144,7 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
 }
 
 std::vector<Command> CrosvmManager::StartCommands(
-    const CuttlefishConfig& config,
-    bool with_frontend,
-    const std::string& kernel_cmdline) {
+    const CuttlefishConfig& config, const std::string& kernel_cmdline) {
   auto instance = config.ForDefaultInstance();
   Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
     auto stopped = Stop();
@@ -184,7 +182,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config));
 
-  if (with_frontend) {
+  if (config.enable_vnc_server() || config.enable_webrtc()) {
     crosvm_cmd.AddParameter("--single-touch=", instance.touch_socket_path(),
                             ":", config.x_res(), ":", config.y_res());
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
