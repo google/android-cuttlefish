@@ -309,6 +309,8 @@ void LaunchWebRTC(cuttlefish::ProcessMonitor* process_monitor,
 
   cuttlefish::Command webrtc(cuttlefish::WebRtcBinary());
 
+  CreateStreamerServers(&webrtc, config);
+
   webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe);
 
   // TODO get from launcher params
