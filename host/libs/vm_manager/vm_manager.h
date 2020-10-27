@@ -38,9 +38,7 @@ class VmManager {
   // command_starter function allows to customize the way vmm commands are
   // started/tracked/etc.
   virtual std::vector<cuttlefish::Command> StartCommands(
-      const CuttlefishConfig& config,
-      bool with_frontend,
-      const std::string& kernel_cmdline) = 0;
+      const CuttlefishConfig& config, const std::string& kernel_cmdline) = 0;
 };
 
 std::unique_ptr<VmManager> GetVmManager(const std::string&);

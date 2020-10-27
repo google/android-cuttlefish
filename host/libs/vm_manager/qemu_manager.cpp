@@ -127,7 +127,7 @@ std::vector<std::string> QemuManager::ConfigureBootDevices() {
 }
 
 std::vector<Command> QemuManager::StartCommands(
-    const CuttlefishConfig& config, bool, const std::string& kernel_cmdline) {
+    const CuttlefishConfig& config, const std::string& kernel_cmdline) {
   auto instance = config.ForDefaultInstance();
 
   auto stop = [](Subprocess* proc) {
