@@ -41,8 +41,10 @@
 // Copied from AndroidKeymaster4Device
 constexpr size_t kOperationTableSize = 16;
 
-DEFINE_int32(keymaster_fd, -1, "A file descriptor for keymaster communication");
-DEFINE_int32(gatekeeper_fd, -1, "A file descriptor for gatekeeper communication");
+DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
+DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
+DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
+DEFINE_int32(gatekeeper_fd_out, -1, "A pipe for gatekeeper communication");
 
 DEFINE_string(tpm_impl,
               "in_memory",
@@ -123,27 +125,34 @@ int main(int argc, char** argv) {
   keymaster::AndroidKeymaster keymaster{
       keymaster_context, kOperationTableSize};
 
-  CHECK(FLAGS_keymaster_fd != -1)
-      << "TODO(schuffelen): Add keymaster_fd alternative";
-  auto keymaster_server = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd);
-  CHECK(keymaster_server->IsOpen()) << "Could not dup server fd: "
-                                    << keymaster_server->StrError();
-  close(FLAGS_keymaster_fd);
+  CHECK(FLAGS_keymaster_fd_in != -1);
+  auto keymaster_in = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd_in);
+  CHECK(keymaster_in->IsOpen()) << "Could not dup input fd: "
+                                << keymaster_in->StrError();
+  close(FLAGS_keymaster_fd_in);
 
-  CHECK(FLAGS_gatekeeper_fd != -1)
-      << "TODO(schuffelen): Add gatekeeper_fd alternative";
-  auto gatekeeper_server = cuttlefish::SharedFD::Dup(FLAGS_gatekeeper_fd);
-  CHECK(gatekeeper_server->IsOpen()) << "Could not dup server fd: "
-                                     << gatekeeper_server->StrError();
-  close(FLAGS_gatekeeper_fd);
+  CHECK(FLAGS_keymaster_fd_out != -1);
+  auto keymaster_out = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd_out);
+  CHECK(keymaster_out->IsOpen()) << "Could not dup output fd: "
+                                 << keymaster_out->StrError();
+  close(FLAGS_keymaster_fd_out);
 
+  CHECK(FLAGS_gatekeeper_fd_in != -1);
+  auto gatekeeper_in = cuttlefish::SharedFD::Dup(FLAGS_gatekeeper_fd_in);
+  CHECK(gatekeeper_in->IsOpen()) << "Could not dup input fd: "
+                                << gatekeeper_in->StrError();
+  close(FLAGS_gatekeeper_fd_in);
 
-  std::thread keymaster_thread([&keymaster_server, &keymaster]() {
+  CHECK(FLAGS_gatekeeper_fd_out != -1);
+  auto gatekeeper_out = cuttlefish::SharedFD::Dup(FLAGS_gatekeeper_fd_out);
+  CHECK(gatekeeper_out->IsOpen()) << "Could not dup output fd: "
+                                  << keymaster_out->StrError();
+  close(FLAGS_gatekeeper_fd_out);
+
+  std::thread keymaster_thread([keymaster_in, keymaster_out, &keymaster]() {
     while (true) {
-      auto keymaster_conn = cuttlefish::SharedFD::Accept(*keymaster_server);
-      CHECK(keymaster_conn->IsOpen()) << "Unable to open connection: "
-                                      << keymaster_conn->StrError();
-      cuttlefish::KeymasterChannel keymaster_channel(keymaster_conn);
+      cuttlefish::KeymasterChannel keymaster_channel(
+          keymaster_in, keymaster_out);
 
       KeymasterResponder keymaster_responder(keymaster_channel, keymaster);
 
@@ -152,12 +161,10 @@ int main(int argc, char** argv) {
     }
   });
 
-  std::thread gatekeeper_thread([&gatekeeper_server, &gatekeeper]() {
+  std::thread gatekeeper_thread([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
     while (true) {
-      auto gatekeeper_conn = cuttlefish::SharedFD::Accept(*gatekeeper_server);
-      CHECK(gatekeeper_conn->IsOpen()) << "Unable to open connection: "
-                                      << gatekeeper_conn->StrError();
-      cuttlefish::GatekeeperChannel gatekeeper_channel(gatekeeper_conn);
+      cuttlefish::GatekeeperChannel gatekeeper_channel(
+          gatekeeper_in, gatekeeper_out);
 
       GatekeeperResponder gatekeeper_responder(gatekeeper_channel, *gatekeeper);
 
