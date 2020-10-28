@@ -40,7 +40,8 @@ void KeymasterCommandDestroyer::operator()(keymaster_message* ptr) {
   delete reinterpret_cast<uint8_t*>(ptr);
 }
 
-KeymasterChannel::KeymasterChannel(SharedFD channel) : channel_(channel) {
+KeymasterChannel::KeymasterChannel(SharedFD input, SharedFD output)
+    : input_(input), output_(output) {
 }
 
 bool KeymasterChannel::SendRequest(
@@ -57,36 +58,38 @@ bool KeymasterChannel::SendMessage(
     AndroidKeymasterCommand command,
     bool is_response,
     const keymaster::Serializable& message) {
-  LOG(DEBUG) << "Sending message with id: " << command;
   auto payload_size = message.SerializedSize();
+  LOG(DEBUG) << "Sending message with id: " << command
+             << " and size " << payload_size;
   auto to_send = CreateKeymasterMessage(command, is_response, payload_size);
   message.Serialize(to_send->payload, to_send->payload + payload_size);
   auto write_size = payload_size + sizeof(keymaster_message);
   auto to_send_bytes = reinterpret_cast<const char*>(to_send.get());
-  auto written = WriteAll(channel_, to_send_bytes, write_size);
-  if (written == -1) {
-    LOG(ERROR) << "Could not write Keymaster Message: " << channel_->StrError();
+  auto written = WriteAll(output_, to_send_bytes, write_size);
+  if (written != write_size) {
+    LOG(ERROR) << "Could not write Keymaster Message: " << output_->StrError();
   }
   return written == write_size;
 }
 
 ManagedKeymasterMessage KeymasterChannel::ReceiveMessage() {
   struct keymaster_message message_header;
-  auto read = ReadExactBinary(channel_, &message_header);
+  auto read = ReadExactBinary(input_, &message_header);
   if (read != sizeof(keymaster_message)) {
     LOG(ERROR) << "Expected " << sizeof(keymaster_message) << ", received "
                << read;
-    LOG(ERROR) << "Could not read Keymaster Message: " << channel_->StrError();
+    LOG(ERROR) << "Could not read Keymaster Message: " << input_->StrError();
     return {};
   }
-  LOG(DEBUG) << "Received message with id: " << message_header.cmd;
+  LOG(DEBUG) << "Received message with id: " << message_header.cmd
+             << " and size " << message_header.payload_size;
   auto message = CreateKeymasterMessage(message_header.cmd,
                                         message_header.is_response,
                                         message_header.payload_size);
   auto message_bytes = reinterpret_cast<char*>(message->payload);
-  read = ReadExact(channel_, message_bytes, message->payload_size);
+  read = ReadExact(input_, message_bytes, message->payload_size);
   if (read != message->payload_size) {
-    LOG(ERROR) << "Could not read Keymaster Message: " << channel_->StrError();
+    LOG(ERROR) << "Could not read Keymaster Message: " << input_->StrError();
     return {};
   }
   return message;
