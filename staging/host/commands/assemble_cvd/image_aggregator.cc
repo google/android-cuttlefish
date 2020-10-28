@@ -388,6 +388,7 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& header_file,
                          const std::string& footer_file,
                          const std::string& output_composite_path) {
+  LOG(DEBUG) << "Creating a composite disk at " << output_composite_path;
   CompositeDiskBuilder builder;
   for (auto& disk : partitions) {
     builder.AppendDisk(disk);
@@ -416,6 +417,7 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
 void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path) {
+  LOG(DEBUG) << "Creating a qcow2 overlay at " << output_overlay_path;
   cuttlefish::Command crosvm_qcow2_cmd(crosvm_path);
   crosvm_qcow2_cmd.AddParameter("create_qcow2");
   crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
