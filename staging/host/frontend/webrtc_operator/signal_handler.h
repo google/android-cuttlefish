@@ -22,7 +22,7 @@
 
 #include "host/frontend/webrtc_operator/device_registry.h"
 #include "host/frontend/webrtc_operator/server_config.h"
-#include "host/frontend/webrtc_operator/websocket_handler.h"
+#include "host/libs/websocket/websocket_handler.h"
 
 namespace cuttlefish {
 

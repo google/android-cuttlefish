@@ -24,7 +24,7 @@
 #include "host/frontend/webrtc_operator/device_registry.h"
 #include "host/frontend/webrtc_operator/server_config.h"
 #include "host/frontend/webrtc_operator/signal_handler.h"
-#include "host/frontend/webrtc_operator/websocket_handler.h"
+#include "host/libs/websocket/websocket_handler.h"
 
 namespace cuttlefish {
 
@@ -54,5 +54,16 @@ class DeviceHandler : public SignalHandler,
   std::string device_id_;
   Json::Value device_info_;
   std::vector<std::weak_ptr<ClientHandler>> clients_;
+};
+
+class DeviceHandlerFactory : public WebSocketHandlerFactory {
+ public:
+  DeviceHandlerFactory(DeviceRegistry* registry,
+                       const ServerConfig& server_config);
+  std::shared_ptr<WebSocketHandler> Build(struct lws* wsi) override;
+
+ private:
+  DeviceRegistry* registry_;
+  const ServerConfig& server_config_;
 };
 }  // namespace cuttlefish
