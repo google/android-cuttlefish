@@ -113,4 +113,13 @@ void DeviceHandler::SendClientMessage(size_t client_id,
   Reply(msg);
 }
 
+DeviceHandlerFactory::DeviceHandlerFactory(DeviceRegistry* registry,
+                                           const ServerConfig& server_config)
+  : registry_(registry),
+    server_config_(server_config) {}
+
+std::shared_ptr<WebSocketHandler> DeviceHandlerFactory::Build(struct lws* wsi) {
+  return std::shared_ptr<WebSocketHandler>(
+      new DeviceHandler(wsi, registry_, server_config_));
+}
 }  // namespace cuttlefish
