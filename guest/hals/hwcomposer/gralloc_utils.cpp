@@ -16,6 +16,8 @@
 
 #include "guest/hals/hwcomposer/gralloc_utils.h"
 
+#include <algorithm>
+
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponent.h>
 #include <aidl/android/hardware/graphics/common/PlaneLayoutComponentType.h>
 #include <drm_fourcc.h>
@@ -485,9 +487,9 @@ GrallocBufferView::GrallocBufferView(GrallocBufferView&& rhs) {
 }
 
 GrallocBufferView& GrallocBufferView::operator=(GrallocBufferView&& rhs) {
-  gralloc_buffer_ = rhs.gralloc_buffer_;
-  locked_.swap(rhs.locked_);
-  locked_ycbcr_.swap(rhs.locked_ycbcr_);
+  std::swap(gralloc_buffer_, rhs.gralloc_buffer_);
+  std::swap(locked_, rhs.locked_);
+  std::swap(locked_ycbcr_, rhs.locked_ycbcr_);
   return *this;
 }
 
