@@ -178,4 +178,5 @@
     {RIL_REQUEST_ALLOCATE_PDU_SESSION_ID, radio_1_6::allocatePduSessionIdResponse},
     {RIL_REQUEST_RELEASE_PDU_SESSION_ID, radio_1_6::releasePduSessionIdResponse},
     {RIL_REQUEST_BEGIN_HANDOVER, radio_1_6::beginHandoverResponse},
-    {RIL_REQUEST_CANCEL_HANDOVER, radio_1_6::cancelHandoverResponse}
+    {RIL_REQUEST_CANCEL_HANDOVER, radio_1_6::cancelHandoverResponse},
+    {RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP, radio_1_6::setAllowedNetworkTypeBitmapResponse}
