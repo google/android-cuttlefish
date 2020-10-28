@@ -363,10 +363,6 @@ class CuttlefishConfig {
     int host_port() const;
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
-    // Port number to connect to the gatekeeper server on the host
-    int gatekeeper_vsock_port() const;
-    // Port number to connect to the keymaster server on the host
-    int keymaster_vsock_port() const;
     std::string adb_ip_and_port() const;
     std::string adb_device_name() const;
     std::string device_title() const;

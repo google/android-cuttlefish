@@ -498,15 +498,33 @@ void LaunchGnssGrpcProxyServerIfEnabled(const cuttlefish::CuttlefishConfig& conf
 
 void LaunchSecureEnvironment(cuttlefish::ProcessMonitor* process_monitor,
                              const cuttlefish::CuttlefishConfig& config) {
-  auto keymaster_port = config.ForDefaultInstance().keymaster_vsock_port();
-  auto keymaster_server =
-      cuttlefish::SharedFD::VsockServer(keymaster_port, SOCK_STREAM);
-  auto gatekeeper_port = config.ForDefaultInstance().gatekeeper_vsock_port();
-  auto gatekeeper_server =
-      cuttlefish::SharedFD::VsockServer(gatekeeper_port, SOCK_STREAM);
+  auto instance = config.ForDefaultInstance();
+  std::vector<std::string> fifo_paths = {
+    instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
+    instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
+    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+  };
+  std::vector<cuttlefish::SharedFD> fifos;
+  for (const auto& path : fifo_paths) {
+    unlink(path.c_str());
+    if (mkfifo(path.c_str(), 0600) < 0) {
+      PLOG(ERROR) << "Could not create " << path;
+      return;
+    }
+    auto fd = cuttlefish::SharedFD::Open(path, O_RDWR);
+    if (!fd->IsOpen()) {
+      LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
+      return;
+    }
+    fifos.push_back(fd);
+  }
+
   cuttlefish::Command command(cuttlefish::DefaultHostArtifactsPath("bin/secure_env"));
-  command.AddParameter("-keymaster_fd=", keymaster_server);
-  command.AddParameter("-gatekeeper_fd=", gatekeeper_server);
+  command.AddParameter("-keymaster_fd_out=", fifos[0]);
+  command.AddParameter("-keymaster_fd_in=", fifos[1]);
+  command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
+  command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
   process_monitor->StartSubprocess(std::move(command),
                                    GetOnSubprocessExitCallback(config));
 }

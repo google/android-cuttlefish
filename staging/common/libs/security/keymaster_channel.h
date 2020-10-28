@@ -69,18 +69,19 @@ ManagedKeymasterMessage CreateKeymasterMessage(
  * IPC/RPC calls. Sends messages over a file descriptor.
  */
 class KeymasterChannel {
-private:
-  SharedFD channel_;
-  bool SendMessage(AndroidKeymasterCommand command, bool response,
-                   const keymaster::Serializable& message);
 public:
-  KeymasterChannel(SharedFD channel);
+  KeymasterChannel(SharedFD input, SharedFD output);
 
   bool SendRequest(AndroidKeymasterCommand command,
                    const keymaster::Serializable& message);
   bool SendResponse(AndroidKeymasterCommand command,
                     const keymaster::Serializable& message);
   ManagedKeymasterMessage ReceiveMessage();
+private:
+  SharedFD input_;
+  SharedFD output_;
+  bool SendMessage(AndroidKeymasterCommand command, bool response,
+                   const keymaster::Serializable& message);
 };
 
 } // namespace cuttlefish

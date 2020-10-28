@@ -42,7 +42,8 @@ void GatekeeperCommandDestroyer::operator()(GatekeeperRawMessage* ptr) {
   std::free(ptr);
 }
 
-GatekeeperChannel::GatekeeperChannel(SharedFD channel) : channel_(channel) {
+GatekeeperChannel::GatekeeperChannel(SharedFD input, SharedFD output)
+    : input_(input), output_(output) {
 }
 
 bool GatekeeperChannel::SendRequest(
@@ -65,20 +66,20 @@ bool GatekeeperChannel::SendMessage(
   message.Serialize(to_send->payload, to_send->payload + payload_size);
   auto write_size = payload_size + sizeof(GatekeeperRawMessage);
   auto to_send_bytes = reinterpret_cast<const char*>(to_send.get());
-  auto written = WriteAll(channel_, to_send_bytes, write_size);
+  auto written = WriteAll(output_, to_send_bytes, write_size);
   if (written == -1) {
-    LOG(ERROR) << "Could not write Gatekeeper Message: " << channel_->StrError();
+    LOG(ERROR) << "Could not write Gatekeeper Message: " << output_->StrError();
   }
   return written == write_size;
 }
 
 ManagedGatekeeperMessage GatekeeperChannel::ReceiveMessage() {
   struct GatekeeperRawMessage message_header;
-  auto read = ReadExactBinary(channel_, &message_header);
+  auto read = ReadExactBinary(input_, &message_header);
   if (read != sizeof(GatekeeperRawMessage)) {
     LOG(ERROR) << "Expected " << sizeof(GatekeeperRawMessage) << ", received "
                << read;
-    LOG(ERROR) << "Could not read Gatekeeper Message: " << channel_->StrError();
+    LOG(ERROR) << "Could not read Gatekeeper Message: " << input_->StrError();
     return {};
   }
   LOG(DEBUG) << "Received message with id: " << message_header.cmd;
@@ -86,9 +87,9 @@ ManagedGatekeeperMessage GatekeeperChannel::ReceiveMessage() {
                                          message_header.is_response,
                                          message_header.payload_size);
   auto message_bytes = reinterpret_cast<char*>(message->payload);
-  read = ReadExact(channel_, message_bytes, message->payload_size);
+  read = ReadExact(input_, message_bytes, message->payload_size);
   if (read != message->payload_size) {
-    LOG(ERROR) << "Could not read Gatekeeper Message: " << channel_->StrError();
+    LOG(ERROR) << "Could not read Gatekeeper Message: " << input_->StrError();
     return {};
   }
   return message;
