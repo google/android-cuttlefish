@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "host/frontend/webrtc_operator/websocket_handler.h"
+#include "host/libs/websocket/websocket_handler.h"
 
 #include <android-base/logging.h>
 #include <libwebsockets.h>

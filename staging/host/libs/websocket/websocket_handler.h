@@ -55,4 +55,10 @@ class WebSocketHandler {
   std::deque<WsBuffer> buffer_queue_;
 };
 
+class WebSocketHandlerFactory {
+ public:
+  virtual ~WebSocketHandlerFactory() = default;
+  virtual std::shared_ptr<WebSocketHandler> Build(struct lws* wsi) = 0;
+};
+
 }  // namespace cuttlefish
