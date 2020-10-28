@@ -39,4 +39,10 @@ void DeviceListHandler::OnConnected() {}
 
 void DeviceListHandler::OnClosed() {}
 
+DeviceListHandlerFactory::DeviceListHandlerFactory(const DeviceRegistry& registry)
+  : registry_(registry) {}
+
+std::shared_ptr<WebSocketHandler> DeviceListHandlerFactory::Build(struct lws* wsi) {
+  return std::shared_ptr<WebSocketHandler>(new DeviceListHandler(wsi, registry_));
+}
 }  // namespace cuttlefish

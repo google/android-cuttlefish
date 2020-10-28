@@ -20,7 +20,7 @@
 
 #include <json/json.h>
 
-#include "host/frontend/webrtc_operator/websocket_handler.h"
+#include "host/libs/websocket/websocket_handler.h"
 #include "host/frontend/webrtc_operator/device_registry.h"
 
 namespace cuttlefish {
@@ -32,6 +32,15 @@ class DeviceListHandler : public WebSocketHandler {
   void OnReceive(const uint8_t* msg, size_t len, bool binary) override;
   void OnConnected() override;
   void OnClosed() override;
+
+ private:
+  const DeviceRegistry& registry_;
+};
+
+class DeviceListHandlerFactory : public WebSocketHandlerFactory {
+ public:
+  DeviceListHandlerFactory(const DeviceRegistry& registry);
+  std::shared_ptr<WebSocketHandler> Build(struct lws* wsi) override;
 
  private:
   const DeviceRegistry& registry_;
