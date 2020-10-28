@@ -46,6 +46,10 @@ $(call inherit-product, device/google/cuttlefish/vsoc_x86_only/kernel.mk)
 #        http://u-boot.10912.n7.nabble.com/64-bit-x86-U-Boot-td244620.html)
 $(call inherit-product, device/google/cuttlefish/vsoc_x86_64/bootloader.mk)
 
+# Exclude features that are not available on AOSP devices.
+PRODUCT_COPY_FILES += \
+    frameworks/native/data/etc/aosp_excluded_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/aosp_excluded_hardware.xml
+
 PRODUCT_NAME := aosp_cf_x86_only_phone
 PRODUCT_DEVICE := vsoc_x86_only
 PRODUCT_MANUFACTURER := Google
