@@ -51,12 +51,20 @@ type dependencyTag struct{ blueprint.BaseDependencyTag }
 var cvdHostPackageDependencyTag = dependencyTag{}
 
 func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
-	ctx.AddVariationDependencies(nil, cvdHostPackageDependencyTag, c.properties.Deps...)
+	for _, dep := range c.properties.Deps {
+		if ctx.OtherModuleExists(dep) {
+			ctx.AddVariationDependencies(nil, cvdHostPackageDependencyTag, dep)
+		}
+	}
 	variations := []blueprint.Variation{
 		{Mutator: "os", Variation: ctx.Target().Os.String()},
 		{Mutator: "arch", Variation: android.Common.String()},
 	}
-	ctx.AddFarVariationDependencies(variations, cvdHostPackageDependencyTag, c.properties.CommonDeps...)
+	for _, dep := range c.properties.CommonDeps {
+		if ctx.OtherModuleExists(dep) {
+			ctx.AddFarVariationDependencies(variations, cvdHostPackageDependencyTag, dep)
+		}
+	}
 }
 
 var pctx = android.NewPackageContext("android/soong/cuttlefish")
