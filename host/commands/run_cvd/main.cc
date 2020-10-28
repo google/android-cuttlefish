@@ -286,17 +286,19 @@ bool PowerwashFiles() {
   auto instance = config->ForDefaultInstance();
 
   // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
-  auto kernel_log_pipe = instance.kernel_log_pipe_name();
-  unlink(kernel_log_pipe.c_str());
-
-  auto console_in_pipe = instance.console_in_pipe_name();
-  unlink(console_in_pipe.c_str());
-
-  auto console_out_pipe = instance.console_out_pipe_name();
-  unlink(console_out_pipe.c_str());
-
-  auto logcat_pipe = instance.logcat_pipe_name();
-  unlink(logcat_pipe.c_str());
+  std::vector<std::string> pipes = {
+    instance.kernel_log_pipe_name(),
+    instance.console_in_pipe_name(),
+    instance.console_out_pipe_name(),
+    instance.logcat_pipe_name(),
+    instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
+    instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
+    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+  };
+  for (const auto& pipe : pipes) {
+    unlink(pipe.c_str());
+  }
 
 // TODO(schuffelen): Clean up duplication with assemble_cvd
   auto kregistry_path = instance.access_kregistry_path();

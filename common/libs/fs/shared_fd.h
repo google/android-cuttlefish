@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 
 #include "vm_sockets.h"
@@ -355,6 +356,20 @@ class FileInstance {
   int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen) {
     errno = 0;
     int rval = getsockopt(fd_, level, optname, optval, optlen);
+    errno_ = errno;
+    return rval;
+  }
+
+  int SetTerminalRaw() {
+    errno = 0;
+    termios terminal_settings;
+    int rval = tcgetattr(fd_, &terminal_settings);
+    errno_ = errno;
+    if (rval < 0) {
+      return rval;
+    }
+    cfmakeraw(&terminal_settings);
+    rval = tcsetattr(fd_, TCSANOW, &terminal_settings);
     errno_ = errno;
     return rval;
   }
