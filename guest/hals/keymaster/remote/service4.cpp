@@ -26,36 +26,41 @@
 #include <guest/hals/keymaster/remote/remote_keymaster.h>
 #include <guest/hals/keymaster/remote/remote_keymaster4_device.h>
 
-DEFINE_uint32(
-    port,
-    static_cast<uint32_t>(property_get_int64("ro.boot.vsock_keymaster_port", 0)),
-    "virtio socket port to send keymaster commands to");
+const char device[] = "/dev/hvc3";
 
 int main(int argc, char** argv) {
-    ::android::base::InitLogging(argv);
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
-    ::android::hardware::configureRpcThreadpool(1, true);
+  ::android::base::InitLogging(argv);
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
+  ::android::hardware::configureRpcThreadpool(1, true);
 
-    auto vsockFd = cuttlefish::SharedFD::VsockClient(2, FLAGS_port, SOCK_STREAM);
-    if (!vsockFd->IsOpen()) {
-        LOG(FATAL) << "Could not connect to keymaster server: "
-                   << vsockFd->StrError();
-    }
-    cuttlefish::KeymasterChannel keymasterChannel(vsockFd);
-    auto remoteKeymaster = new keymaster::RemoteKeymaster(&keymasterChannel);
+  LOG(ERROR) << "Starting keymaster service4";
 
-    if (!remoteKeymaster->Initialize()) {
-      LOG(FATAL) << "Could not initialize keymaster";
-    }
+  auto fd = cuttlefish::SharedFD::Open(device, O_RDWR);
+  if (!fd->IsOpen()) {
+    LOG(FATAL) << "Could not connect to keymaster: " << fd->StrError();
+  }
 
-    auto keymaster = new ::keymaster::V4_1::RemoteKeymaster4Device(remoteKeymaster);
+  if (fd->SetTerminalRaw() < 0) {
+    LOG(FATAL) << "Could not make " << device << " a raw terminal: "
+                << fd->StrError();
+  }
 
-    auto status = keymaster->registerAsService();
-    if (status != android::OK) {
-        LOG(FATAL) << "Could not register service for Keymaster 4.1 (" << status << ")";
-        return -1;
-    }
+  cuttlefish::KeymasterChannel keymasterChannel(fd, fd);
 
-    android::hardware::joinRpcThreadpool();
-    return -1;  // Should never get here.
+  auto remoteKeymaster = new keymaster::RemoteKeymaster(&keymasterChannel);
+
+  if (!remoteKeymaster->Initialize()) {
+    LOG(FATAL) << "Could not initialize keymaster";
+  }
+
+  auto keymaster = new ::keymaster::V4_1::RemoteKeymaster4Device(remoteKeymaster);
+
+  auto status = keymaster->registerAsService();
+  if (status != android::OK) {
+    LOG(FATAL) << "Could not register service for Keymaster 4.1 (" << status << ")";
+    return -1;
+  }
+
+  android::hardware::joinRpcThreadpool();
+  return -1;  // Should never get here.
 }
