@@ -114,8 +114,12 @@ static const std::set<std::string> kKnownMissingAidl = {
     // KeyMaster to AIDL.
     "android.hardware.keymaster.",
 
-    // These powerpolicy types are only used in Automotive.
+    // These types are only used in Automotive.
+    "android.automotive.computepipe.registry.",
+    "android.automotive.computepipe.runner.",
+    "android.automotive.watchdog.",
     "android.frameworks.automotive.powerpolicy.",
+    "android.hardware.automotive.occupant_awareness.",
 };
 
 // AOSP packages which are never considered
@@ -175,8 +179,6 @@ static std::set<FQName> allHidlManifestInterfaces() {
 
 static bool isAospAidlInterface(const std::string& name) {
     return base::StartsWith(name, "android.") &&
-        !base::StartsWith(name, "android.automotive.") &&
-        !base::StartsWith(name, "android.hardware.automotive.") &&
         !base::StartsWith(name, "android.hardware.tests.") &&
         !base::StartsWith(name, "android.aidl.tests");
 }
