@@ -49,7 +49,7 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
-DEFINE_int32(wait_for_launcher, 15,
+DEFINE_int32(wait_for_launcher, 5,
              "How many seconds to wait for the launcher to respond to the stop "
              "command. A value of zero means wait indefinetly");
 
