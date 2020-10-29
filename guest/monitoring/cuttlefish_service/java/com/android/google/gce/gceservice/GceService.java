@@ -58,6 +58,10 @@ public class GceService extends Service {
     private String mMostRecentAction = null;
     private WindowManager mWindowManager;
 
+    private int mPreviousRotation;
+    private Point mPreviousScreenBounds;
+    private int mPreviousDpi;
+
 
     public GceService() {}
 
@@ -72,6 +76,10 @@ public class GceService extends Service {
             mWindowManager = getSystemService(WindowManager.class);
             mConnChecker = new ConnectivityChecker(this, mEventReporter);
             mWifiManager = new GceWifiManager(this, mEventReporter, mExecutor);
+
+            mPreviousRotation = getRotation();
+            mPreviousScreenBounds = getScreenBounds();
+            mPreviousDpi = getResources().getConfiguration().densityDpi;
 
             mExecutor.schedule(mWifiManager);
             mExecutor.schedule(mBluetoothChecker);
@@ -112,15 +120,40 @@ public class GceService extends Service {
         this.registerReceiver(mBroadcastReceiver, filter);
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration config) {
-        super.onConfigurationChanged(config);
+    private Point getScreenBounds() {
         Display display = mWindowManager.getDefaultDisplay();
         Point screenBounds = new Point();
         display.getRealSize(screenBounds);
+        return screenBounds;
+    }
+
+    private int getRotation() {
+      return mWindowManager.getDefaultDisplay().getRotation();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+
+        int rotation = getRotation();
+        Point screenBounds = getScreenBounds();
+        int dpi = config.densityDpi;
+        // NOTE: We cannot rely on config.diff(previous config) here because
+        // diff shows CONFIG_SCREEN_SIZE changes when changing between 3-button
+        // and gesture navigation. We only care about the display bounds.
+        if (rotation == mPreviousRotation &&
+            screenBounds.equals(mPreviousScreenBounds) &&
+            dpi == mPreviousDpi) {
+            return;
+        }
+
         int width = screenBounds.x;
         int height = screenBounds.y;
-        mEventReporter.reportScreenChanged(width, height, config.densityDpi, display.getRotation());
+        mEventReporter.reportScreenChanged(width, height, dpi, rotation);
+
+        mPreviousRotation = rotation;
+        mPreviousScreenBounds = screenBounds;
+        mPreviousDpi = dpi;
     }
 
 
