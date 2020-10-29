@@ -15,6 +15,7 @@
  */
 
 #include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -48,7 +49,7 @@ std::string HostArch() {
   cached = true;
 
   // good to check if uname exists and is executable
-  // or, guarantee uname is availabe by dependency list
+  // or, guarantee uname is available by dependency list
   FILE* pip = popen("uname -m", "r");
   if (!pip) {
     return std::string{};
@@ -80,6 +81,19 @@ std::string HostArch() {
   arch.erase(arch.find_last_not_of(whitespace) + 1); // r trim
   arch.erase(0, arch.find_first_not_of(whitespace)); // l trim
   return arch;
+}
+
+static bool IsRunningInDocker() {
+  // if /.dockerenv exists, it's inside a docker container
+  static std::string docker_env_path("/.dockerenv");
+  static bool ret =
+      FileExists(docker_env_path) || DirectoryExists(docker_env_path);
+  return ret;
+}
+
+bool IsRunningInContainer() {
+  // TODO: add more if we support other containers than docker
+  return IsRunningInDocker();
 }
 
 }  // namespace cuttlefish

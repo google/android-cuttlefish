@@ -35,9 +35,6 @@
 
 DEFINE_string(addresses, "", "Comma-separated list of addresses to "
                              "'adb connect' to");
-DEFINE_int32(adbd_events_fd, -1, "A file descriptor. If set it will wait for "
-                                 "AdbdStarted boot event from the kernel log "
-                                 "monitor before trying to connect adb");
 
 namespace {
 void LaunchConnectionMaintainerThread(const std::string& address) {
@@ -57,35 +54,12 @@ std::vector<std::string> ParseAddressList(std::string ports) {
   }
 }
 
-void WaitForAdbdToBeStarted(int events_fd) {
-  auto evt_shared_fd = cuttlefish::SharedFD::Dup(events_fd);
-  close(events_fd);
-  while (evt_shared_fd->IsOpen()) {
-    std::optional<monitor::ReadEventResult> read_result =
-        monitor::ReadEvent(evt_shared_fd);
-    if (!read_result) {
-      LOG(ERROR) << "Failed to read a complete kernel log adb event.";
-      // The file descriptor can't be trusted anymore, stop waiting and try to
-      // connect
-      return;
-    }
-
-    if (read_result->event == monitor::Event::AdbdStarted) {
-      LOG(DEBUG) << "Adbd has started in the guest, connecting adb";
-      return;
-    }
-  }
-}
 }  // namespace
 
 int main(int argc, char* argv[]) {
   cuttlefish::DefaultSubprocessLogging(argv);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   CHECK(!FLAGS_addresses.empty()) << "Must specify --addresses flag";
-
-  if (FLAGS_adbd_events_fd >= 0) {
-    WaitForAdbdToBeStarted(FLAGS_adbd_events_fd);
-  }
 
   for (auto address : ParseAddressList(FLAGS_addresses)) {
     LaunchConnectionMaintainerThread(address);
