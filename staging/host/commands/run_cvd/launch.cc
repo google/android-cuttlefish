@@ -260,10 +260,8 @@ void LaunchVNCServer(
 }
 
 void LaunchAdbConnectorIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
-                                 const cuttlefish::CuttlefishConfig& config,
-                                 cuttlefish::SharedFD adbd_events_pipe) {
+                                 const cuttlefish::CuttlefishConfig& config) {
   cuttlefish::Command adb_connector(cuttlefish::AdbConnectorBinary());
-  adb_connector.AddParameter("-adbd_events_fd=", adbd_events_pipe);
   std::set<std::string> addresses;
 
   if (AdbTcpConnectorEnabled(config)) {
@@ -410,10 +408,12 @@ void LaunchModemSimulatorIfEnabled(
 }
 
 void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor,
-                                     const cuttlefish::CuttlefishConfig& config) {
+                                     const cuttlefish::CuttlefishConfig& config,
+                                     cuttlefish::SharedFD adbd_events_pipe) {
   auto instance = config.ForDefaultInstance();
   if (AdbVsockTunnelEnabled(config)) {
     cuttlefish::Command adb_tunnel(cuttlefish::SocketVsockProxyBinary());
+    adb_tunnel.AddParameter("-adbd_events_fd=", adbd_events_pipe);
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter("--vsock_port=6520");
     adb_tunnel.AddParameter(std::string{"--tcp_port="} +
@@ -425,6 +425,7 @@ void LaunchSocketVsockProxyIfEnabled(cuttlefish::ProcessMonitor* process_monitor
   }
   if (AdbVsockHalfTunnelEnabled(config)) {
     cuttlefish::Command adb_tunnel(cuttlefish::SocketVsockProxyBinary());
+    adb_tunnel.AddParameter("-adbd_events_fd=", adbd_events_pipe);
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter("--vsock_port=5555");
     adb_tunnel.AddParameter(std::string{"--tcp_port="} +
