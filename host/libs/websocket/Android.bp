@@ -23,8 +23,10 @@ cc_library_host_static {
         "libbase",
         "liblog",
         "libssl",
+        "libcrypto",
     ],
     static_libs: [
+        "libcap",
         "libwebsockets",
     ],
     defaults: ["cuttlefish_host_only"],
