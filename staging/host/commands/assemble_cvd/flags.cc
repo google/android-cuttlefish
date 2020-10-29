@@ -152,7 +152,7 @@ DEFINE_string(
 
 DEFINE_string(
         webrtc_public_ip,
-        "127.0.0.1",
+        "0.0.0.0",
         "[Deprecated] Ignored, webrtc can figure out its IP address");
 
 DEFINE_bool(
@@ -166,7 +166,7 @@ DEFINE_bool(
     "the first instance, if multiple instances are launched they'll share the "
     "same signaling server, which is owned by the first one.");
 
-DEFINE_string(webrtc_sig_server_addr, "127.0.0.1",
+DEFINE_string(webrtc_sig_server_addr, "0.0.0.0",
               "The address of the webrtc signaling server.");
 
 DEFINE_int32(
@@ -606,7 +606,7 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
     instance.set_vnc_server_port(6444 + num - 1);
     instance.set_host_port(6520 + num - 1);
-    instance.set_adb_ip_and_port("127.0.0.1:" + std::to_string(6520 + num - 1));
+    instance.set_adb_ip_and_port("0.0.0.0:" + std::to_string(6520 + num - 1));
     instance.set_tombstone_receiver_port(6600 + num - 1);
     instance.set_vehicle_hal_server_port(9210 + num - 1);
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
