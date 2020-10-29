@@ -22,7 +22,7 @@ namespace {
 
 std::string GetAdbConnectorTcpArg(const cuttlefish::CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  return std::string{"127.0.0.1:"} + std::to_string(instance.host_port());
+  return std::string{"0.0.0.0:"} + std::to_string(instance.host_port());
 }
 
 std::string GetAdbConnectorVsockArg(const cuttlefish::CuttlefishConfig& config) {
