@@ -22,7 +22,6 @@
 /dev/hvc2  u:object_r:serial_device:s0
 /dev/hvc3  u:object_r:keymaster_device:s0
 /dev/hvc4  u:object_r:gatekeeper_device:s0
-/dev/hvc5  u:object_r:shutdown_helper_device:s0
 
 #############################
 # Root files
@@ -51,7 +50,6 @@
 /vendor/bin/cuttlefish_rotate   u:object_r:cuttlefish_rotate_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
-/vendor/bin/shutdown_helper  u:object_r:shutdown_helper_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/hw/libcuttlefish-rild  u:object_r:libcuttlefish_rild_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.6-service-google u:object_r:hal_camera_default_exec:s0
