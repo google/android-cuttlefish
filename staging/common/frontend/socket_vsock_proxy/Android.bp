@@ -22,6 +22,8 @@ cc_binary {
         "libbase",
         "libcuttlefish_fs",
         "libcuttlefish_utils",
+        "libcuttlefish_kernel_log_monitor_utils",
+        "libjsoncpp",
         "liblog",
     ],
     static_libs: [
@@ -29,9 +31,6 @@ cc_binary {
     ],
     target: {
         host: {
-            shared_libs: [
-                "libjsoncpp",
-            ],
             static_libs: [
                 "libcuttlefish_host_config",
             ],
