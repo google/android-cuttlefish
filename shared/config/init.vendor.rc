@@ -14,7 +14,6 @@ on early-init
     setprop ro.hardware.vulkan ${ro.boot.hardware.vulkan}
     setprop ro.cpuvulkan.version ${ro.boot.cpuvulkan.version}
 
-    start shutdown_helper
     # start module load in the background
     start vendor.insmod_sh
 
@@ -103,9 +102,6 @@ service vendor.insmod_sh /vendor/bin/init.insmod.sh
     group root system
     disabled
     oneshot
-
-service shutdown_helper /vendor/bin/shutdown_helper
-    group system
 
 service socket_vsock_proxy /vendor/bin/socket_vsock_proxy -server=vsock -tcp_port=5555 -vsock_port=6520
 
