@@ -27,8 +27,6 @@
 #include <android-base/logging.h>
 #include <vulkan/vulkan.h>
 
-#include "common/libs/fs/shared_buf.h"
-#include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/network.h"
 #include "common/libs/utils/subprocess.h"
@@ -79,7 +77,7 @@ bool ReleaseDhcpLeases(const std::string& lease_path, SharedFD tap_fd) {
   return success;
 }
 
-bool FallbackStop() {
+bool Stop() {
   auto config = CuttlefishConfig::Get();
   Command command(config->crosvm_binary());
   command.AddParameter("stop");
@@ -88,33 +86,6 @@ bool FallbackStop() {
   auto process = command.Start();
 
   return process.Wait() == 0;
-}
-
-bool Stop(SharedFD shutdown_helper_in, SharedFD shutdown_helper_out) {
-  // TODO(schuffelen): Put timeouts on these operations.
-
-  LOG(DEBUG) << "Waiting for initial shutdown message";
-
-  std::string initial = "_____";
-  int read = cuttlefish::ReadExact(shutdown_helper_out, &initial);
-  if (read != initial.size() && initial != "ready") {
-    LOG(ERROR) << "Failed to receive shutdown response";
-    return FallbackStop();
-  }
-
-  LOG(DEBUG) << "Requesting stop";
-
-  std::string to_write = "shutdown";
-  int written = cuttlefish::WriteAll(shutdown_helper_in, to_write);
-
-  if (written != to_write.size()) {
-    LOG(ERROR) << "Failed to send shutdown request";
-    return FallbackStop();
-  }
-
-  LOG(DEBUG) << "Waiting for crosvm process to exit";
-
-  return true;
 }
 
 }  // namespace
@@ -166,7 +137,7 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
   // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == "x86_64") {
     // PCI domain 0, bus 0, device 6, function 0
-    return { "androidboot.boot_devices=pci0000:00/0000:00:07.0" };
+    return { "androidboot.boot_devices=pci0000:00/0000:00:06.0" };
   } else {
     return { "androidboot.boot_devices=10000.pci" };
   }
@@ -175,45 +146,14 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices() {
 std::vector<Command> CrosvmManager::StartCommands(
     const CuttlefishConfig& config, const std::string& kernel_cmdline) {
   auto instance = config.ForDefaultInstance();
-
-  auto shutdown_helper_in_path =
-      instance.PerInstanceInternalPath("shutdown_helper_vm.in");
-  unlink(shutdown_helper_in_path.c_str());
-  if (mkfifo(shutdown_helper_in_path.c_str(), 0600) != 0) {
-    PLOG(ERROR) << "Could not create " << shutdown_helper_in_path;
-    return {};
-  }
-  auto shutdown_helper_in = SharedFD::Open(shutdown_helper_in_path, O_RDWR);
-  if (!shutdown_helper_in->IsOpen()) {
-    LOG(ERROR) << "Could not open " << shutdown_helper_in_path << ": "
-               << shutdown_helper_in->StrError();
-    return {};
-  }
-
-  auto shutdown_helper_out_path =
-      instance.PerInstanceInternalPath("shutdown_helper_vm.out");
-  unlink(shutdown_helper_out_path.c_str());
-  if (mkfifo(shutdown_helper_out_path.c_str(), 0600) != 0) {
-    PLOG(ERROR) << "Could not create " << shutdown_helper_out_path;
-    return {};
-  }
-  auto shutdown_helper_out = SharedFD::Open(shutdown_helper_out_path, O_RDWR);
-  if (!shutdown_helper_out->IsOpen()) {
-    LOG(ERROR) << "Could not open " << shutdown_helper_out_path << ": "
-               << shutdown_helper_out->StrError();
-    return {};
-  }
-
-  auto stop = [shutdown_helper_in, shutdown_helper_out](Subprocess* proc) {
-    auto stopped = Stop(shutdown_helper_in, shutdown_helper_out);
+  Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
+    auto stopped = Stop();
     if (stopped) {
       return true;
     }
     LOG(WARNING) << "Failed to stop VMM nicely, attempting to KILL";
     return KillSubprocess(proc);
-  };
-
-  Command crosvm_cmd(config.crosvm_binary(), stop);
+  });
   crosvm_cmd.AddParameter("run");
 
   auto gpu_mode = config.gpu_mode();
@@ -345,8 +285,6 @@ std::vector<Command> CrosvmManager::StartCommands(
   crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=5,type=file,",
                           "path=", instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
                           ",input=", instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"));
-  crosvm_cmd.AddParameter("--serial=hardware=virtio-console,num=6,type=file,",
-                          "path=", shutdown_helper_out_path, ",input=", shutdown_helper_in_path);
 
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
   if (config.enable_sandbox()) {

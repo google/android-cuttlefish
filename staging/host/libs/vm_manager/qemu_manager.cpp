@@ -123,7 +123,7 @@ std::vector<std::string> QemuManager::ConfigureGpuMode(
 
 std::vector<std::string> QemuManager::ConfigureBootDevices() {
   // PCI domain 0, bus 0, device 7, function 0
-  return { "androidboot.boot_devices=pci0000:00/0000:00:08.0" };
+  return { "androidboot.boot_devices=pci0000:00/0000:00:07.0" };
 }
 
 std::vector<Command> QemuManager::StartCommands(
@@ -310,16 +310,6 @@ std::vector<Command> QemuManager::StartCommands(
 
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtconsole,bus=virtio-serial4.0,chardev=hvc4");
-
-  // TODO(schuffelen): Make wait-for-shutdown work on qemu
-  qemu_cmd.AddParameter("-chardev");
-  qemu_cmd.AddParameter("sink,id=hvc5");
-
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-serial-pci-non-transitional,max_ports=1,id=virtio-serial5");
-
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtconsole,bus=virtio-serial2.0,chardev=hvc5");
 
   for (size_t i = 0; i < instance.virtual_disk_paths().size(); i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
