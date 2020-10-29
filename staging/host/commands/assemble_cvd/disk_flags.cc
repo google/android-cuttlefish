@@ -118,10 +118,6 @@ bool ResolveInstanceFiles() {
   SetCommandLineOptionWithMode("vbmeta_system_image",
                                default_vbmeta_system_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_bootloader = FLAGS_system_image_dir + "/bootloader";
-  SetCommandLineOptionWithMode("bootloader",
-                               default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
 }
