@@ -18,7 +18,6 @@
 
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
-#include <libwebsockets.h>
 
 #include "host/frontend/webrtc_operator/client_handler.h"
 #include "host/frontend/webrtc_operator/device_handler.h"
