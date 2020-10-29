@@ -211,7 +211,7 @@ DEFINE_string(adb_mode, "vsock_half_tunnel",
               "vsock, 'vsock_half_tunnel' for a TCP connection forwarded to "
               "the guest ADB server, or a comma separated list of types as in "
               "'native_vsock,vsock_half_tunnel'");
-DEFINE_bool(run_adb_connector, true,
+DEFINE_bool(run_adb_connector, !cuttlefish::IsRunningInContainer(),
             "Maintain adb connection by sending 'adb connect' commands to the "
             "server. Only relevant with -adb_mode=tunnel or vsock_tunnel");
 
