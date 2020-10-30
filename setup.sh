@@ -24,13 +24,18 @@ function cvd_get_ip {
 	local name="$(cvd_container_exists $1)"
 	[[ -n "${name}" ]] && \
 		echo $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "${name}")
-	}
+}
+
+function cvd_get_instance_id {
+    # $1 could be hash code or name for the container
+    echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.cf_instance}}' "$1")"
+}
 
 function cvd_allocate_instance_id {
 	local -a ids=()
 	for instance in $(docker ps -aq --filter="ancestor=cuttlefish"); do
 		local id;
-		id=$(docker inspect -f '{{- printf "%s" .Config.Labels.cf_instance}}' "${instance}")
+		id="$(cvd_get_instance_id "${instance}")"
 		ids+=("${id}")
 	done
 	local sorted;
@@ -50,7 +55,7 @@ function cvd_docker_list {
 }
 
 function help_on_container_create {
-	echo "   cvd_docker_create <options> [NAME] # by default names 'cuttlefish'"
+	echo "   cvd_docker_create <options> [NAME] # NAME is by default cuttlefish"
 	echo "     Options:"
 	echo "       -s | --singleshot                : run the container, log in once, then delete it on logout"
 	echo "                                        : otherwise, the container is created as a daemon"

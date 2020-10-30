@@ -19,6 +19,7 @@ DEFINE_boolean detect_gpu \
                "$(is_debian_distro && echo true || echo false)" \
                "Attempt to detect the GPU vendor"
 DEFINE_boolean rebuild_debs true "Rebuild deb packages. If false, builds only when any .deb is missing in ./out/"
+DEFINE_boolean rebuild_debs_verbose false "When rebuilding deb packages, show the progress in stdin."
 
 FLAGS "$@" || exit 1
 
@@ -155,10 +156,18 @@ function is_rebuild_debs() {
   return 1
 }
 
+function do_rebuild_debs() {
+  echo "###"
+  echo "### Building ,deb Host packages"
+  echo "###"
+  local verbosity="--noverbose"
+  if [[ ${FLAGS_rebuild_debs_verbose} -eq ${FLAGS_TRUE} ]]; then
+    verbosity="--verbose"
+  fi
+  ./debs-builder-docker/build-debs-with-docker.sh "${verbosity}"
+}
+
 if is_rebuild_debs; then
-    echo "###"
-    echo "### Building ,deb Host packages"
-    echo "###"
-    ./debs-builder-docker/build-debs-with-docker.sh --noverbose
+  do_rebuild_debs
 fi
 build_docker_image "$*"
