@@ -29,6 +29,7 @@ DISABLE_RILD_OEM_HOOK := true
 
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
 
+TARGET_RO_FILE_SYSTEM_TYPE ?= ext4
 TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
 PRODUCT_FS_COMPRESSION := 1
 
@@ -236,13 +237,25 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.verified_boot.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.verified_boot.xml \
     frameworks/native/data/etc/android.software.vulkan.deqp.level-2020-03-01.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.vulkan.deqp.level.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:vendor/etc/bluetooth/controller_properties.json \
-    device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
+    device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json
+
+ifeq ($(TARGET_RO_FILE_SYSTEM_TYPE),ext4)
+PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/fstab.f2fs:$(TARGET_COPY_OUT_RAMDISK)/fstab.f2fs \
     device/google/cuttlefish/shared/config/fstab.f2fs:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.f2fs \
     device/google/cuttlefish/shared/config/fstab.f2fs:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.f2fs \
     device/google/cuttlefish/shared/config/fstab.ext4:$(TARGET_COPY_OUT_RAMDISK)/fstab.ext4 \
     device/google/cuttlefish/shared/config/fstab.ext4:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.ext4 \
     device/google/cuttlefish/shared/config/fstab.ext4:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.ext4
+else
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish/shared/config/fstab-$(TARGET_RO_FILE_SYSTEM_TYPE).f2fs:$(TARGET_COPY_OUT_RAMDISK)/fstab.f2fs \
+    device/google/cuttlefish/shared/config/fstab-$(TARGET_RO_FILE_SYSTEM_TYPE).f2fs:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.f2fs \
+    device/google/cuttlefish/shared/config/fstab-$(TARGET_RO_FILE_SYSTEM_TYPE).f2fs:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.f2fs \
+    device/google/cuttlefish/shared/config/fstab-$(TARGET_RO_FILE_SYSTEM_TYPE).ext4:$(TARGET_COPY_OUT_RAMDISK)/fstab.ext4 \
+    device/google/cuttlefish/shared/config/fstab-$(TARGET_RO_FILE_SYSTEM_TYPE).ext4:$(TARGET_COPY_OUT_VENDOR)/etc/fstab.ext4 \
+    device/google/cuttlefish/shared/config/fstab-$(TARGET_RO_FILE_SYSTEM_TYPE).ext4:$(TARGET_COPY_OUT_RECOVERY)/root/first_stage_ramdisk/fstab.ext4
+endif
 
 # Packages for HAL implementations
 
