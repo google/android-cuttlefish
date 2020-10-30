@@ -131,7 +131,7 @@ cvd_host_tools_x86_64 = [
 ]
 
 cvd_host_package {
-    name: "cvd-host_package",
+    name: "cvd_host_package",
     deps: cvd_host_tools +
         cvd_host_tests,
     commonDeps: cvd_host_webrtc_assets +
