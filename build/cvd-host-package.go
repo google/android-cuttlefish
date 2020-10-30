@@ -122,7 +122,7 @@ func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) 
 	c.output = android.PathForModuleOut(ctx, "package.tar.gz").OutputPath
 	tempDir := android.PathForModuleOut(ctx, ".temp").OutputPath
 	builder.Command().BuiltTool(ctx, "zipsync").
-		FlagWithArg("-d ", tempDir.String()).
+		FlagWithOutput("-d ", tempDir).
 		Input(tempZip)
 	builder.Command().Text("tar Scfzh").
 		Output(c.output).
