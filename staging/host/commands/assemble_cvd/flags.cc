@@ -703,10 +703,10 @@ void SetDefaultFlagsForQemu() {
   // for now, we don't set non-default options for QEMU
   if (FLAGS_gpu_mode == cuttlefish::kGpuModeGuestSwiftshader &&
       NumStreamers() == 0) {
-    // This makes the vnc server the default streamer unless the user requests
+    // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
-    // possible to run without any streamer by setting --start_vnc_server=false.
-    SetCommandLineOptionWithMode("start_vnc_server", "true",
+    // possible to run without any streamer by setting --start_webrtc=false.
+    SetCommandLineOptionWithMode("start_webrtc", "true",
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
   std::string default_bootloader = FLAGS_system_image_dir + "/bootloader.qemu";
@@ -717,10 +717,10 @@ void SetDefaultFlagsForQemu() {
 
 void SetDefaultFlagsForCrosvm() {
   if (NumStreamers() == 0) {
-    // This makes the vnc server the default streamer unless the user requests
+    // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
-    // possible to run without any streamer by setting --start_vnc_server=false.
-    SetCommandLineOptionWithMode("start_vnc_server", "true",
+    // possible to run without any streamer by setting --start_webrtc=false.
+    SetCommandLineOptionWithMode("start_webrtc", "true",
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
