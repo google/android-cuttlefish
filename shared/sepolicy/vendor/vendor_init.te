@@ -1,5 +1,4 @@
 vendor_internal_prop(vendor_graphics_config_prop)
-vendor_internal_prop(vendor_fstab_name_prop)
 
 allow vendor_init {
   audio_device
@@ -11,5 +10,3 @@ get_prop(vendor_init, vendor_ser_prop)
 
 get_prop(vendor_init, vendor_graphics_config_prop)
 set_prop(vendor_init, graphics_config_prop)
-
-get_prop(vendor_init, vendor_fstab_name_prop)
