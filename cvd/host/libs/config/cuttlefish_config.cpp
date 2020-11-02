@@ -901,7 +901,7 @@ int GetDefaultPerInstanceVsockCid() {
 }
 
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
-  return (StringFromEnv("ANDROID_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
+  return (StringFromEnv("ANDROID_SOONG_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
          file_name;
 }
 
