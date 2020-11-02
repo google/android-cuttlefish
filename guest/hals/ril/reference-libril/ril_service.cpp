@@ -488,6 +488,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> setSimCardPower(int32_t serial, bool powerUp);
     Return<void> setSimCardPower_1_1(int32_t serial,
             const V1_1::CardPowerState state);
+    Return<void> setSimCardPower_1_6(int32_t serial,
+            const V1_1::CardPowerState state);
 
     Return<void> responseAcknowledgement();
 
@@ -3079,6 +3081,14 @@ Return<void> RadioImpl_1_6::setSimCardPower(int32_t serial, bool powerUp) {
 Return<void> RadioImpl_1_6::setSimCardPower_1_1(int32_t serial, const V1_1::CardPowerState state) {
 #if VDBG
     RLOGD("setSimCardPower_1_1: serial %d state %d", serial, state);
+#endif
+    dispatchInts(serial, mSlotId, RIL_REQUEST_SET_SIM_CARD_POWER, 1, state);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::setSimCardPower_1_6(int32_t serial, const V1_1::CardPowerState state) {
+#if VDBG
+    RLOGD("setSimCardPower_1_6: serial %d state %d", serial, state);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_SET_SIM_CARD_POWER, 1, state);
     return Void();
@@ -9137,23 +9147,33 @@ int radio_1_6::setSimCardPowerResponse(int slotId,
 #endif
 
     if (radioService[slotId]->mRadioResponse != NULL
-            || radioService[slotId]->mRadioResponseV1_1 != NULL) {
-        RadioResponseInfo responseInfo = {};
-        populateResponseInfo(responseInfo, serial, responseType, e);
-        if (radioService[slotId]->mRadioResponseV1_1 != NULL) {
+            || radioService[slotId]->mRadioResponseV1_1 != NULL
+            || radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+            ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo = {};
+            populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+            Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6->
+                    setSimCardPowerResponse_1_6(responseInfo);
+            radioService[slotId]->checkReturnStatus(retStatus);
+        } else if (radioService[slotId]->mRadioResponseV1_1 != NULL) {
+            RLOGD("setSimCardPowerResponse: radioService[%d]->mRadioResponseV1_6 == NULL", slotId);
+            RadioResponseInfo responseInfo = {};
+            populateResponseInfo(responseInfo, serial, responseType, e);
             Return<void> retStatus = radioService[slotId]->mRadioResponseV1_1->
                     setSimCardPowerResponse_1_1(responseInfo);
             radioService[slotId]->checkReturnStatus(retStatus);
         } else {
-            RLOGD("setSimCardPowerResponse: radioService[%d]->mRadioResponseV1_1 == NULL",
+            RLOGD("setSimCardPowerResponse: radioService[%d]->mRadioResponseV1_6 and V1_1 == NULL",
                     slotId);
-            Return<void> retStatus
-                    = radioService[slotId]->mRadioResponse->setSimCardPowerResponse(responseInfo);
+            RadioResponseInfo responseInfo = {};
+            populateResponseInfo(responseInfo, serial, responseType, e);
+            Return<void> retStatus = radioService[slotId]->mRadioResponse
+                    ->setSimCardPowerResponse(responseInfo);
             radioService[slotId]->checkReturnStatus(retStatus);
         }
     } else {
         RLOGE("setSimCardPowerResponse: radioService[%d]->mRadioResponse == NULL && "
-                "radioService[%d]->mRadioResponseV1_1 == NULL", slotId, slotId);
+                "radioService[%d]->mRadioResponseV1_1 and V1_6 == NULL", slotId, slotId);
     }
     return 0;
 }
