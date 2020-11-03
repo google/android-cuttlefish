@@ -192,11 +192,16 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-boot");
   qemu_cmd.AddParameter("strict=on");
 
-  qemu_cmd.AddParameter("-kernel");
-  qemu_cmd.AddParameter(config.GetKernelImageToUse());
+  if (!config.use_bootloader()) {
+    qemu_cmd.AddParameter("-kernel");
+    qemu_cmd.AddParameter(config.GetKernelImageToUse());
 
-  qemu_cmd.AddParameter("-append");
-  qemu_cmd.AddParameter(kernel_cmdline);
+    qemu_cmd.AddParameter("-initrd");
+    qemu_cmd.AddParameter(config.final_ramdisk_path());
+
+    qemu_cmd.AddParameter("-append");
+    qemu_cmd.AddParameter(kernel_cmdline);
+  }
 
   qemu_cmd.AddParameter("-chardev");
   qemu_cmd.AddParameter("socket,id=charmonitor,path=", GetMonitorPath(config),
@@ -415,10 +420,7 @@ std::vector<Command> QemuManager::StartCommands(
     qemu_cmd.AddParameter("-gdb");
     qemu_cmd.AddParameter(config.gdb_flag());
   }
-  if (!config.use_bootloader()) {
-    qemu_cmd.AddParameter("-initrd");
-    qemu_cmd.AddParameter(config.final_ramdisk_path());
-  }
+
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
 
   std::vector<Command> ret;
