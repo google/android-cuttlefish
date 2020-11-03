@@ -102,6 +102,7 @@ cvd_host_shared_libraries := \
     libgatekeeper.so \
     libgbm.so \
     libgrpc++.so \
+    libgrpc++_unsecure.so \
     libhidlbase.so \
     libicui18n-host.so \
     libicuuc-host.so \
