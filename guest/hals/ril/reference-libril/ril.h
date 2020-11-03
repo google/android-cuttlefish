@@ -108,7 +108,7 @@ extern "C" {
  *                    RIL_REQUEST_RELEASE_PDU_SESSION_ID
  *                    RIL_REQUEST_BEGIN_HANDOVER
  *                    RIL_REQUEST_CANCEL_HANDOVER
-
+ *                    RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -7415,7 +7415,29 @@ typedef enum {
  */
 #define RIL_REQUEST_CANCEL_HANDOVER 164
 
-#define RIL_REQUEST_LAST RIL_REQUEST_CANCEL_HANDOVER
+/**
+ * RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
+ *
+ * Instruct the radio to *only* accept the types of network provided. This
+ * is stronger than setPreferredNetworkType which is a suggestion.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE (radio resetting)
+ *  OPERATION_NOT_ALLOWED
+ *  MODE_NOT_SUPPORTED
+ *  NO_MEMORY
+ *  INTERNAL_ERR
+ *  SYSTEM_ERR
+ *  INVALID_ARGUMENTS
+ *  MODEM_ERR
+ *  REQUEST_NOT_SUPPORTED
+ *  NO_RESOURCES
+ *  CANCELLED
+ */
+#define RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP 165
+
+#define RIL_REQUEST_LAST RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
 
 /***********************************************************************/
 
