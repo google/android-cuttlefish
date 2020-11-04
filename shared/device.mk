@@ -480,6 +480,9 @@ PRODUCT_COPY_FILES += \
     device/google/cuttlefish/shared/config/cgroups.json:$(TARGET_COPY_OUT_RECOVERY)/root/vendor/etc/cgroups.json \
     device/google/cuttlefish/shared/config/ueventd.rc:$(TARGET_COPY_OUT_RECOVERY)/root/ueventd.cutf_cvm.rc \
 
+PRODUCT_PACKAGES += \
+    update_engine_sideload
+
 endif
 
 ifdef TARGET_DEDICATED_RECOVERY
