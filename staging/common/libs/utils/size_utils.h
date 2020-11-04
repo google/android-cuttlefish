@@ -20,6 +20,6 @@
 namespace cuttlefish {
 
 // Returns the smallest multiple of 2^align_log greater than or equal to val.
-uint32_t AlignToPowerOf2(uint32_t val, uint8_t align_log);
+uint64_t AlignToPowerOf2(uint64_t val, uint8_t align_log);
 
 }  // namespace cuttlefish
