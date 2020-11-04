@@ -31,6 +31,7 @@ cc_library {
 cc_binary {
     name: "assemble_cvd",
     srcs: [
+        "alloc.cc",
         "assemble_cvd.cc",
         "boot_config.cc",
         "boot_image_unpacker.cc",
