@@ -4,8 +4,6 @@ allow adbd unlabeled:{socket vsock_socket} rw_socket_perms_no_ioctl;
 allow adbd kernel:system module_request;
 
 recovery_only(`
-allow adbd tmpfs:dir w_dir_perms;
-allow adbd tmpfs:file create_file_perms;
 # TODO(b/130668487): Label the vsock sockets.
 allow su unlabeled:{ socket vsock_socket } rw_socket_perms_no_ioctl;
 ')
