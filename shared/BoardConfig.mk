@@ -31,9 +31,7 @@ BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE := $(TARGET_RO_FILE_SYSTEM_TYPE)
 # This is only used for OTA update packages. The image size on disk
 # will not change (as is it not a filesystem.)
 BOARD_BOOTIMAGE_PARTITION_SIZE := 67108864
-ifdef TARGET_DEDICATED_RECOVERY
 BOARD_RECOVERYIMAGE_PARTITION_SIZE := 67108864
-endif
 BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 67108864
 
 # Build a separate vendor.img partition
@@ -185,6 +183,7 @@ endif
 
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
 BOARD_BOOT_HEADER_VERSION := 3
+BOARD_USES_RECOVERY_AS_BOOT := true
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/dtb.img:dtb.img \
@@ -194,12 +193,3 @@ BOARD_BUILD_SYSTEM_ROOT_IMAGE := false
 
 # Cuttlefish doesn't support ramdump feature yet, exclude the ramdump debug tool.
 EXCLUDE_BUILD_RAMDUMP_UPLOADER_DEBUG_TOOL := true
-
-# GKI-related variables.
-BOARD_USES_GENERIC_KERNEL_IMAGE := true
-ifdef TARGET_DEDICATED_RECOVERY
-  BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE := true
-else
-  BOARD_MOVE_RECOVERY_RESOURCES_TO_VENDOR_BOOT := true
-endif
-BOARD_MOVE_GSI_AVB_KEYS_TO_VENDOR_BOOT := true
