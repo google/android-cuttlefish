@@ -39,12 +39,19 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/mbr.h"
 #include "device/google/cuttlefish/host/commands/assemble_cvd/cdisk_spec.pb.h"
 
 namespace {
+
+// Keep the full disk size a multiple of 64k, for crosvm's virtio_blk driver
+constexpr int DISK_SIZE_SHIFT = 16;
+
+// Keep all partitions 4k aligned, for host performance reasons
+constexpr int PARTITION_SIZE_SHIFT = 12;
 
 constexpr int GPT_NUM_PARTITIONS = 128;
 
@@ -169,19 +176,20 @@ public:
   CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
 
   void AppendDisk(ImagePartition source) {
-    auto size = UnsparsedSize(source.image_file_path);
+    auto size = cuttlefish::AlignToPowerOf2(UnsparsedSize(source.image_file_path),
+                                            PARTITION_SIZE_SHIFT);
     partitions_.push_back(PartitionInfo {
       .source = source,
       .size = size,
       .offset = next_disk_offset_,
     });
-    next_disk_offset_ += size;
+    next_disk_offset_ = cuttlefish::AlignToPowerOf2(next_disk_offset_ + size,
+                                                    PARTITION_SIZE_SHIFT);
   }
 
   std::uint64_t DiskSize() const {
-    std::uint64_t align = 1 << 16; // 64k alignment
     std::uint64_t val = next_disk_offset_ + sizeof(GptEnd);
-    return ((val + (align - 1)) / align) * align;
+    return cuttlefish::AlignToPowerOf2(val, DISK_SIZE_SHIFT);
   }
 
   /**
@@ -245,8 +253,7 @@ public:
       const auto& partition = partitions_[i];
       gpt.entries[i] = GptPartitionEntry {
         .first_lba = partition.offset / SECTOR_SIZE,
-        .last_lba = (partition.offset + partition.size - SECTOR_SIZE)
-                    / SECTOR_SIZE,
+        .last_lba = (partition.offset + partition.size) / SECTOR_SIZE - 1,
       };
       uuid_generate(gpt.entries[i].unique_partition_guid);
       // The right uuid is technically 0FC63DAF-8483-4772-8E79-3D69D8477DE4.
@@ -374,6 +381,16 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
     if (!output->CopyFrom(*disk_fd, file_size)) {
       LOG(FATAL) << "Could not copy from \"" << disk.image_file_path
                  << "\" to \"" << output_path << "\": " << output->StrError();
+    }
+    // Handle disk images that are not aligned to PARTITION_SIZE_SHIFT
+    std::uint64_t padding =
+        cuttlefish::AlignToPowerOf2(file_size, PARTITION_SIZE_SHIFT)
+        - file_size;
+    std::string padding_str;
+    padding_str.resize(padding, '\0');
+    if (cuttlefish::WriteAll(output, padding_str) != padding_str.size()) {
+      LOG(FATAL) << "Could not write partition padding to \"" << output_path
+                 << "\": " << output->StrError();
     }
   }
   std::uint64_t padding =
