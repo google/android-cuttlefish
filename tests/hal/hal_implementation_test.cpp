@@ -25,7 +25,7 @@ using namespace android;
 
 static const std::set<std::string> kKnownMissingHidl = {
     "android.frameworks.bufferhub@1.0",
-    "android.frameworks.cameraservice.device@2.0",
+    "android.frameworks.cameraservice.device@2.1",
     "android.frameworks.schedulerservice@1.0", // deprecated, see b/37226359
     "android.frameworks.vr.composer@1.0",
     "android.frameworks.vr.composer@2.0",
