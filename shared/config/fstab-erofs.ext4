@@ -12,5 +12,5 @@ product /product erofs ro wait,logical,first_stage_mount,slotselect,avb
 system_ext /system_ext erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
 vendor /vendor erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta
 /dev/block/zram0 none swap defaults zramsize=75%
-/tmp /sdcard none defaults,bind recoveryonly
+/dev/block/vdb1 /sdcard vfat defaults recoveryonly
 /devices/*/block/vdb auto auto defaults voldmanaged=sdcard1:auto,encryptable=userdata
