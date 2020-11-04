@@ -15,7 +15,8 @@
  */
 #pragma once
 
-constexpr int SECTOR_SIZE = 512;
+constexpr int SECTOR_SIZE_SHIFT = 9;
+constexpr int SECTOR_SIZE = 1 << SECTOR_SIZE_SHIFT;
 
 struct __attribute__((packed)) MbrPartitionEntry {
   std::uint8_t status;
