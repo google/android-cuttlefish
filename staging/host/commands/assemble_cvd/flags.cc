@@ -456,13 +456,9 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
 
-  // TODO(rammuthiah) Bootloader boot doesn't work in the following scenarions
-  // 1. Arm64 - On QEMU, there are some outstanding bugs in the boot image handling
-  //            to fix. On Crosvm, we have no implementation currently.
-  // 2. If using a ramdisk or kernel besides the one in the boot.img - The boot.img
-  //    doesn't get repackaged in this scenario currently. Once it does, bootloader
-  //    boot will suppprt runtime selected kernels and/or ramdisks.
-  if (cuttlefish::HostArch() == "aarch64") {
+  // TODO(rammuthiah) Bootloader boot doesn't work in the following scenarios:
+  // 1. Arm64 - On Crosvm, we have no implementation currently.
+  if (FLAGS_vm_manager == CrosvmManager::name() && cuttlefish::HostArch() == "aarch64") {
     SetCommandLineOptionWithMode("use_bootloader", "false",
         google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
