@@ -3,7 +3,8 @@ allow recovery gpu_device:dir search;
 allow recovery graphics_device:chr_file rw_file_perms;
 
 # Allow sideload from file pushed to fake /sdcard
-allow recovery appdomain_tmpfs:file r_file_perms;
+allow recovery vfat:dir r_dir_perms;
+allow recovery vfat:file r_file_perms;
 
 # Seen during 'Wipe data/factory reset'
 allow recovery cache_block_device:blk_file rw_file_perms;
