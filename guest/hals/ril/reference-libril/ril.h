@@ -109,6 +109,7 @@ extern "C" {
  *                    RIL_REQUEST_BEGIN_HANDOVER
  *                    RIL_REQUEST_CANCEL_HANDOVER
  *                    RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
+ *                    RIL_REQUEST_SET_DATA_THROTTLING
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -7437,7 +7438,23 @@ typedef enum {
  */
 #define RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP 165
 
-#define RIL_REQUEST_LAST RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
+/**
+* RIL_REQUEST_SET_DATA_THROTTLING
+*
+* Set the data throttling on device.
+*
+* Response: an int enum of type ThermalMitigationResult as defined in
+* android.telephony.Annotation.
+*
+* Valid errors:
+*  SUCCESS
+*  RADIO_NOT_AVAILABLE
+*  MODEM_ERR
+*  INVALID_ARGUMENTS
+*/
+#define RIL_REQUEST_SET_DATA_THROTTLING 166
+
+#define RIL_REQUEST_LAST RIL_REQUEST_SET_DATA_THROTTLING
 
 /***********************************************************************/
 
