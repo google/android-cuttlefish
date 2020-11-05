@@ -9,3 +9,4 @@
 const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
     int* argc, char*** argv, cuttlefish::FetcherConfig config);
 std::string GetConfigFilePath(const cuttlefish::CuttlefishConfig& config);
+std::string GetCuttlefishEnvPath();

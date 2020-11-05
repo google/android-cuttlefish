@@ -36,6 +36,7 @@ cc_binary {
         "boot_config.cc",
         "boot_image_unpacker.cc",
         "boot_image_utils.cc",
+        "clean.cc",
         "disk_flags.cc",
         "flags.cc",
         "image_aggregator.cc",
