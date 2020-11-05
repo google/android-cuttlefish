@@ -712,6 +712,25 @@ void SetDefaultFlagsForQemu() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
+bool EnsureDirectoryExists(const std::string& directory_path) {
+  if (!cuttlefish::DirectoryExists(directory_path)) {
+    LOG(DEBUG) << "Setting up " << directory_path;
+    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+        && errno != EEXIST) {
+      PLOG(ERROR) << "Failed to create dir: \"" << directory_path << "\" ";
+      return false;
+    }
+  }
+  return true;
+}
+
+void EnsureDirectoryExistsOrExit(
+    const std::string& directory_path, AssemblerExitCodes exit_code) {
+  if (!EnsureDirectoryExists(directory_path)) {
+    exit((int) exit_code);
+  }
+}
+
 void SetDefaultFlagsForCrosvm() {
   if (NumStreamers() == 0) {
     // This makes WebRTC the default streamer unless the user requests
@@ -731,11 +750,8 @@ void SetDefaultFlagsForCrosvm() {
     } else if (cuttlefish::FileExists(cuttlefish::kCrosvmVarEmptyDir)) {
       default_enable_sandbox = false;
     } else {
-      bool mkdir_success = mkdir(cuttlefish::kCrosvmVarEmptyDir, 0755) == 0;
-      if (!mkdir_success) {
-        PLOG(ERROR) << "Failed to create " << cuttlefish::kCrosvmVarEmptyDir;
-      }
-      default_enable_sandbox = mkdir_success;
+      default_enable_sandbox =
+          EnsureDirectoryExists(cuttlefish::kCrosvmVarEmptyDir);
     }
   }
 
@@ -876,59 +892,26 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
       exit(AssemblerExitCodes::kPrioFilesCleanupError);
     }
     // Create assembly directory if it doesn't exist.
-    if (!cuttlefish::DirectoryExists(FLAGS_assembly_dir.c_str())) {
-      LOG(DEBUG) << "Setting up " << FLAGS_assembly_dir;
-      if (mkdir(FLAGS_assembly_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-          && errno != EEXIST) {
-        LOG(ERROR) << "Failed to create assembly directory: "
-                  << FLAGS_assembly_dir << ". Error: " << errno;
-        exit(AssemblerExitCodes::kAssemblyDirCreationError);
-      }
-    }
+    EnsureDirectoryExistsOrExit(
+        FLAGS_assembly_dir, AssemblerExitCodes::kAssemblyDirCreationError);
     if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
                   << config.AssemblyPath("assemble_cvd.log")
                   << ": " << log->StrError();
     }
     std::string disk_hole_dir = FLAGS_assembly_dir + "/disk_hole";
-    if (!cuttlefish::DirectoryExists(disk_hole_dir.c_str())) {
-      LOG(DEBUG) << "Setting up " << disk_hole_dir << "/disk_hole";
-      if (mkdir(disk_hole_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-          && errno != EEXIST) {
-        LOG(ERROR) << "Failed to create assembly directory: "
-                  << disk_hole_dir << ". Error: " << errno;
-        exit(AssemblerExitCodes::kAssemblyDirCreationError);
-      }
-    }
+    EnsureDirectoryExistsOrExit(
+        disk_hole_dir, cuttlefish::kAssemblyDirCreationError);
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.
-      if (!cuttlefish::DirectoryExists(instance.instance_dir().c_str())) {
-        LOG(DEBUG) << "Setting up " << FLAGS_instance_dir << ".N";
-        if (mkdir(instance.instance_dir().c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-            && errno != EEXIST) {
-          LOG(ERROR) << "Failed to create instance directory: "
-                    << FLAGS_instance_dir << ". Error: " << errno;
-          exit(AssemblerExitCodes::kInstanceDirCreationError);
-        }
-      }
+      EnsureDirectoryExistsOrExit(
+          instance.instance_dir(), cuttlefish::kInstanceDirCreationError);
       auto internal_dir = instance.instance_dir() + "/" + cuttlefish::kInternalDirName;
-      if (!cuttlefish::DirectoryExists(internal_dir)) {
-        if (mkdir(internal_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-           && errno != EEXIST) {
-          LOG(ERROR) << "Failed to create internal instance directory: "
-                    << internal_dir << ". Error: " << errno;
-          exit(AssemblerExitCodes::kInstanceDirCreationError);
-        }
-      }
+      EnsureDirectoryExistsOrExit(
+          internal_dir, cuttlefish::kInstanceDirCreationError);
       auto shared_dir = instance.instance_dir() + "/" + cuttlefish::kSharedDirName;
-      if (!cuttlefish::DirectoryExists(shared_dir)) {
-         if (mkdir(shared_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-           && errno != EEXIST) {
-          LOG(ERROR) << "Failed to create shared instance directory: "
-                    << shared_dir << ". Error: " << errno;
-          exit(AssemblerExitCodes::kInstanceDirCreationError);
-        }
-      }
+      EnsureDirectoryExistsOrExit(
+          shared_dir, cuttlefish::kInstanceDirCreationError);
     }
     if (!SaveConfig(config)) {
       LOG(ERROR) << "Failed to initialize configuration";
