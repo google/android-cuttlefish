@@ -106,7 +106,7 @@ extern "C" {
  *                    RIL_REQUEST_IS_NR_DUAL_CONNECTIVITY_ENABLED
  *                    RIL_REQUEST_ALLOCATE_PDU_SESSION_ID
  *                    RIL_REQUEST_RELEASE_PDU_SESSION_ID
- *                    RIL_REQUEST_BEGIN_HANDOVER
+ *                    RIL_REQUEST_START_HANDOVER
  *                    RIL_REQUEST_CANCEL_HANDOVER
  *                    RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
  *                    RIL_REQUEST_SET_DATA_THROTTLING
@@ -7402,9 +7402,9 @@ typedef enum {
  * @param serial Serial number of request.
  * @param callId The unique identifier of the corresponding data call
  *
- * Response callback is IRadioResponse.beginHandoverResponse()
+ * Response callback is IRadioResponse.startHandoverResponse()
  */
-#define RIL_REQUEST_BEGIN_HANDOVER 163
+#define RIL_REQUEST_START_HANDOVER 163
 
 /**
  * Indicates that a handover has been cancelled
