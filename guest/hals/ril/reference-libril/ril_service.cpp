@@ -590,7 +590,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsMessage& sms);
     Return<void> supplySimDepersonalization(int32_t serial, V1_5::PersoSubstate persoType,
                                             const hidl_string& controlKey);
-    Return<void> enableNrDualConnectivity(int32_t serial,
+    Return<void> setNrDualConnectivityState(int32_t serial,
             V1_6::NrDualConnectivityState nrDualConnectivityState);
     Return<void> isNrDualConnectivityEnabled(int32_t serial);
     // Methods from ::android::hardware::radio::V1_6::IRadio follow.
@@ -4387,10 +4387,10 @@ Return<void> RadioImpl_1_6::supplySimDepersonalization(int32_t serial,
     return Void();
 }
 
-Return<void> RadioImpl_1_6::enableNrDualConnectivity(int32_t serial,
+Return<void> RadioImpl_1_6::setNrDualConnectivityState(int32_t serial,
         V1_6::NrDualConnectivityState nrDualConnectivityState) {
 #if VDBG
-    RLOGD("enableNrDualConnectivity: serial %d enable %d", serial, enable);
+    RLOGD("setNrDualConnectivityState: serial %d enable %d", serial, enable);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY, 1,
             nrDualConnectivityState);
@@ -9664,7 +9664,7 @@ int radio_1_6::supplySimDepersonalizationResponse(int slotId, int responseType, 
     return 0;
 }
 
-int radio_1_6::enableNrDualConnectivityResponse(int slotId, int responseType, int serial,
+int radio_1_6::setNrDualConnectivityStateResponse(int slotId, int responseType, int serial,
                                     RIL_Errno e, void* /* response */, size_t responseLen) {
 #if VDBG
     RLOGD("%s(): %d", __FUNCTION__, serial);
@@ -9679,7 +9679,7 @@ int radio_1_6::enableNrDualConnectivityResponse(int slotId, int responseType, in
     }
 
     Return<void> retStatus =
-            radioService[slotId]->mRadioResponseV1_6->enableNrDualConnectivityResponse(
+            radioService[slotId]->mRadioResponseV1_6->setNrDualConnectivityStateResponse(
             responseInfo);
     radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
