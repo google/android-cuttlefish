@@ -728,16 +728,18 @@ void SetDefaultFlagsForCrosvm() {
   bool default_enable_sandbox = false;
   std::set<const std::string> supported_archs{std::string("x86_64")};
   if (supported_archs.find(cuttlefish::HostArch()) != supported_archs.end()) {
-    default_enable_sandbox =
-        [](const std::string& var_empty) -> bool {
-          if (cuttlefish::DirectoryExists(var_empty)) {
-            return cuttlefish::IsDirectoryEmpty(var_empty);
-          }
-          if (cuttlefish::FileExists(var_empty)) {
-            return false;
-          }
-          return (::mkdir(var_empty.c_str(), 0755) == 0);
-        }(cuttlefish::kCrosvmVarEmptyDir);
+    if (cuttlefish::DirectoryExists(cuttlefish::kCrosvmVarEmptyDir)) {
+      default_enable_sandbox =
+          cuttlefish::IsDirectoryEmpty(cuttlefish::kCrosvmVarEmptyDir);
+    } else if (cuttlefish::FileExists(cuttlefish::kCrosvmVarEmptyDir)) {
+      default_enable_sandbox = false;
+    } else {
+      bool mkdir_success = mkdir(cuttlefish::kCrosvmVarEmptyDir, 0755) == 0;
+      if (!mkdir_success) {
+        PLOG(ERROR) << "Failed to create " << cuttlefish::kCrosvmVarEmptyDir;
+      }
+      default_enable_sandbox = mkdir_success;
+    }
   }
 
   SetCommandLineOptionWithMode("enable_sandbox",
