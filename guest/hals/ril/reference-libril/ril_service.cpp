@@ -611,6 +611,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> releasePduSessionId(int32_t serial, int32_t id);
     Return<void> beginHandover(int32_t serial, int32_t callId);
     Return<void> cancelHandover(int32_t serial, int32_t callId);
+    Return<void> setAllowedNetworkTypeBitmap(uint32_t serial,
+            hidl_bitfield<::android::hardware::radio::V1_4::RadioAccessFamily> networkTypeBitmap);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3753,6 +3755,15 @@ Return<void> RadioImpl_1_6::setPreferredNetworkTypeBitmap(
     RLOGD("setPreferredNetworkTypeBitmap: serial %d", serial);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP, 1, networkTypeBitmap);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::setAllowedNetworkTypeBitmap(
+        uint32_t serial, hidl_bitfield<RadioAccessFamily> networkTypeBitmap) {
+#if VDBG
+    RLOGD("setAllowedNetworkTypeBitmap: serial %d", serial);
+#endif
+    dispatchInts(serial, mSlotId, RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP, 1, networkTypeBitmap);
     return Void();
 }
 
@@ -7393,6 +7404,28 @@ int radio_1_6::setPreferredNetworkTypeResponse(int slotId,
     return 0;
 }
 
+int radio_1_6::setAllowedNetworkTypeBitmapResponse(int slotId,
+                                 int responseType, int serial, RIL_Errno e,
+                                 void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("setAllowedNetworkTypeBitmapResponse: serial %d", serial);
+#endif
+
+    V1_6::RadioResponseInfo responseInfo = {};
+    populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+
+    // If we don't have a radio service, there's nothing we can do
+    if (radioService[slotId]->mRadioResponseV1_6 == NULL) {
+        RLOGE("%s: radioService[%d]->mRadioResponseV1_6 == NULL", __FUNCTION__, slotId);
+        return 0;
+    }
+
+    Return<void> retStatus =
+            radioService[slotId]->mRadioResponseV1_6->setAllowedNetworkTypeBitmapResponse(
+            responseInfo);
+    radioService[slotId]->checkReturnStatus(retStatus);
+    return 0;
+}
 
 int radio_1_6::getPreferredNetworkTypeResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
