@@ -15,21 +15,20 @@
  */
 package com.android.cuttlefish.ril.tests;
 
+import static org.hamcrest.Matchers.greaterThan;
+
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
-import android.net.wifi.SupplicantState;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.support.test.InstrumentationRegistry;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import static org.hamcrest.Matchers.greaterThan;
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -38,7 +37,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.net.Socket;
-import java.util.List;
 
 /**
  * Tests used to validate E2E RIL functionality.
