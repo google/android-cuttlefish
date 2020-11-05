@@ -802,7 +802,7 @@ int allocatePduSessionIdResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* response, size_t responseLen);
 int releasePduSessionIdResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* response, size_t responseLen);
-int beginHandoverResponse(int slotId, int responseType, int serial,
+int startHandoverResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* response, size_t responseLen);
 int cancelHandoverResponse(int slotId, int responseType, int serial,
                                         RIL_Errno e, void* response, size_t responseLen);
