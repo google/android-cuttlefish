@@ -16,9 +16,13 @@
 package com.android.cuttlefish.tests;
 
 import com.android.tradefed.device.cloud.RemoteAndroidVirtualDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import java.io.File;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test powerwash function.
@@ -28,8 +32,10 @@ import java.io.File;
  *
  * <p>* The test logic relies on powerwash_cvd tool, so it can only run in a test lab setup.
  */
-public class PowerwashTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class PowerwashTest extends BaseHostJUnit4Test {
 
+    @Test
     public void testPowerwash() throws Exception {
         // Create a file in tmp directory
         final String tmpFile = "/data/local/tmp/powerwash_tmp";
@@ -40,19 +46,19 @@ public class PowerwashTest extends DeviceTestCase {
         getDevice().waitForDeviceAvailable();
         File file = getDevice().pullFile(tmpFile);
         if (file == null) {
-            fail("Setup failed: tmp file failed to persist after device reboot.");
+            Assert.fail("Setup failed: tmp file failed to persist after device reboot.");
         }
 
         if (getDevice() instanceof RemoteAndroidVirtualDevice) {
             ((RemoteAndroidVirtualDevice) getDevice()).powerwashGce();
         } else {
-            fail("This test only supports running in test lab setup.");
+            Assert.fail("This test only supports running in test lab setup.");
         }
 
         // Verify that the device is back online and pre-xisting file is gone.
         file = getDevice().pullFile(tmpFile);
         if (file != null) {
-            fail("Powerwash failed: pre-existing file still exists.");
+            Assert.fail("Powerwash failed: pre-existing file still exists.");
         }
     }
 }
