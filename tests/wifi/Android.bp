@@ -17,7 +17,7 @@ android_test {
     srcs: ["src/**/*.java"],
     libs: ["android.test.runner.stubs"],
     static_libs: [
-        "android-support-test",
+        "androidx.test.rules",
         "platform-test-annotations",
     ],
     sdk_version: "current",

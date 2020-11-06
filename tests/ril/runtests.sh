@@ -27,4 +27,4 @@ adb wait-for-device
 adb uninstall com.android.cuttlefish.ril.tests || true
 adb install -r -g "$OUT/data/app/CuttlefishRilTests/CuttlefishRilTests.apk"
 # optionally: -e class com.android.cuttlefish.ril.RilE2eTests#testName
-adb shell am instrument -w "$@" 'com.android.cuttlefish.ril.tests/android.support.test.runner.AndroidJUnitRunner'
+adb shell am instrument -w "$@" 'com.android.cuttlefish.ril.tests/androidx.test.runner.AndroidJUnitRunner'
