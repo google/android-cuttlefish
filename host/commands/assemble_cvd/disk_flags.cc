@@ -28,7 +28,6 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
-#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
@@ -38,7 +37,6 @@
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
 #define VBMETA_MAX_SIZE 65536ul
 
-using cuttlefish::AssemblerExitCodes;
 using cuttlefish::CreateBlankImage;
 using cuttlefish::DataImageResult;
 using cuttlefish::InitializeMiscImage;
@@ -270,17 +268,13 @@ bool DoesCompositeMatchCurrentDiskConfig(
     // disk config for the pending boot matches the disk from the past boot.
     std::ofstream file_out(current_disk_config_path.c_str(), std::ios::binary);
     file_out << disk_conf.str();
-    if (!file_out.good()) {
-      exit(cuttlefish::kDiskConfigVerificationError);
-    }
+    CHECK(file_out.good()) << "Disk config verification failed.";
   }
 
   if (!cuttlefish::FileExists(prior_disk_config_path) ||
       cuttlefish::ReadFile(prior_disk_config_path) != cuttlefish::ReadFile(current_disk_config_path)) {
-    if (!cuttlefish::RenameFile(current_disk_config_path, prior_disk_config_path)) {
-      LOG(ERROR) << "Unable to delete the old disk config descriptor";
-      exit(cuttlefish::kDiskConfigVerificationError);
-    }
+    CHECK(cuttlefish::RenameFile(current_disk_config_path, prior_disk_config_path))
+        << "Unable to delete the old disk config descriptor";
     LOG(DEBUG) << "Disk Config has changed since last boot. Regenerating composite disk.";
     return false;
   } else {
@@ -374,24 +368,19 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
                             const cuttlefish::CuttlefishConfig* config,
                             cuttlefish::BootImageUnpacker* boot_img_unpacker) {
 
-  if (!cuttlefish::FileHasContent(FLAGS_boot_image)) {
-    LOG(ERROR) << "File not found: " << FLAGS_boot_image;
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
-  }
+  CHECK(cuttlefish::FileHasContent(FLAGS_boot_image))
+      << "File not found: " << FLAGS_boot_image;
 
-  if (!cuttlefish::FileHasContent(FLAGS_vendor_boot_image)) {
-    LOG(ERROR) << "File not found: " << FLAGS_vendor_boot_image;
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
-  }
+  CHECK(cuttlefish::FileHasContent(FLAGS_vendor_boot_image))
+      << "File not found: " << FLAGS_vendor_boot_image;
 
-  if (!FLAGS_use_bootloader &&
-      !boot_img_unpacker->Unpack(config->ramdisk_image_path(),
-                                 config->vendor_ramdisk_image_path(),
-                                 config->use_unpacked_kernel()
-                                     ? config->kernel_image_path()
-                                     : "")) {
-    LOG(ERROR) << "Failed to unpack boot image";
-    exit(AssemblerExitCodes::kBootImageUnpackError);
+  if (!FLAGS_use_bootloader) {
+    auto success =
+        boot_img_unpacker->Unpack(
+            config->ramdisk_image_path(),
+            config->vendor_ramdisk_image_path(),
+            config->use_unpacked_kernel() ? config->kernel_image_path() : "");
+    CHECK(success) << "Failed to unpack boot image";
   }
 
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
@@ -403,34 +392,33 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
   if (FLAGS_use_bootloader && (foreign_kernel.size() || foreign_ramdisk.size())) {
     // Repack the boot images if kernels and/or ramdisks are passed in.
     if (foreign_kernel.size()) {
-      if (cuttlefish::RepackBootImage(foreign_kernel, FLAGS_boot_image, new_boot_image_path,
-          config->assembly_dir())) {
-        SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
-                                     google::FlagSettingMode::SET_FLAGS_DEFAULT);
-      } else {
-        LOG(ERROR) << "Failed to regenerate the boot image with the new kernel";
-        exit(AssemblerExitCodes::kBootImgRepackError);
-      }
+      bool success = cuttlefish::RepackBootImage(
+          foreign_kernel,
+          FLAGS_boot_image,
+          new_boot_image_path,
+          config->assembly_dir());
+      CHECK(success) << "Failed to regenerate the boot image with the new kernel";
+      SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
+                                    google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
     if (foreign_ramdisk.size()) {
-      if (cuttlefish::RepackVendorBootImage(foreign_ramdisk, FLAGS_vendor_boot_image,
-                            new_vendor_boot_image_path, config->assembly_dir())) {
-        SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
-                                     google::FlagSettingMode::SET_FLAGS_DEFAULT);
-      } else {
-        LOG(ERROR) << "Failed to regenerate the vendor boot image with the new ramdisk";
-        exit(AssemblerExitCodes::kBootImgRepackError);
-      }
+      bool success = cuttlefish::RepackVendorBootImage(
+          foreign_ramdisk,
+          FLAGS_vendor_boot_image,
+          new_vendor_boot_image_path,
+          config->assembly_dir());
+      CHECK(success) << "Failed to regenerate the vendor boot image with the new ramdisk";
+      SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
+                                   google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
     if (foreign_kernel.size() && !foreign_ramdisk.size()) {
-      if (cuttlefish::RepackVendorBootImageWithEmptyRamdisk(FLAGS_vendor_boot_image,
-          new_vendor_boot_image_path, config->assembly_dir())) {
-        SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
-                                     google::FlagSettingMode::SET_FLAGS_DEFAULT);
-      } else {
-        LOG(ERROR) << "Failed to regenerate the vendor boot image without a ramdisk";
-        exit(AssemblerExitCodes::kBootImgRepackError);
-      }
+      bool success =  cuttlefish::RepackVendorBootImageWithEmptyRamdisk(
+          FLAGS_vendor_boot_image,
+          new_vendor_boot_image_path,
+          config->assembly_dir());
+      CHECK(success) << "Failed to regenerate the vendor boot image without a ramdisk";
+      SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
+                                   google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
   } else if (!FLAGS_use_bootloader && (!foreign_kernel.size() || foreign_ramdisk.size())) {
     // This code path is taken when the virtual device kernel is launched
@@ -440,37 +428,30 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
     const std::string& vendor_ramdisk_path =
       config->initramfs_path().size() ? config->initramfs_path()
                                       : config->vendor_ramdisk_image_path();
-    if (!ConcatRamdisks(config->final_ramdisk_path(),
-                       config->ramdisk_image_path(), vendor_ramdisk_path)) {
-      LOG(ERROR) << "Failed to concatenate ramdisk and vendor ramdisk";
-      exit(AssemblerExitCodes::kInitRamFsConcatError);
-    }
+    bool success = ConcatRamdisks(
+        config->final_ramdisk_path(),
+        config->ramdisk_image_path(),
+        vendor_ramdisk_path);
+    CHECK(success) << "Failed to concatenate ramdisk and vendor ramdisk";
   }
 
   if (config->decompress_kernel()) {
-    if (!DecompressKernel(config->kernel_image_path(),
-        config->decompressed_kernel_image_path())) {
-      LOG(ERROR) << "Failed to decompress kernel";
-      exit(AssemblerExitCodes::kKernelDecompressError);
-    }
+    bool success = DecompressKernel(
+        config->kernel_image_path(), config->decompressed_kernel_image_path());
+    CHECK(success) << "Failed to decompress kernel";
   }
 
   // Create misc if necessary
-  if (!InitializeMiscImage(FLAGS_misc_image)) {
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
-  }
+  CHECK(InitializeMiscImage(FLAGS_misc_image)) << "Failed to create misc image";
 
   // Create data if necessary
   DataImageResult dataImageResult = ApplyDataImagePolicy(*config, FLAGS_data_image);
-  if (dataImageResult == DataImageResult::Error) {
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
-  }
+  CHECK(dataImageResult != DataImageResult::Error) << "Failed to set up userdata";
 
   // Create boot_config if necessary
   for (auto instance : config->Instances()) {
-    if (!InitBootloaderEnvPartition(*config, instance)) {
-      exit(cuttlefish::kCuttlefishConfigurationInitError);
-    }
+    CHECK(InitBootloaderEnvPartition(*config, instance))
+        << "Failed to create bootloader environment partition";
   }
 
   if (!cuttlefish::FileExists(FLAGS_metadata_image)) {
@@ -497,24 +478,20 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
   for (const auto& vbmeta_image : { FLAGS_vbmeta_image, FLAGS_vbmeta_system_image }) {
     if (cuttlefish::FileSize(vbmeta_image) != VBMETA_MAX_SIZE) {
       auto fd = cuttlefish::SharedFD::Open(vbmeta_image, O_RDWR);
-      if (fd->Truncate(VBMETA_MAX_SIZE) != 0) {
-        LOG(ERROR) << "`truncate --size=" << VBMETA_MAX_SIZE << " "
-                   << vbmeta_image << "` failed: " << fd->StrError();
-        exit(cuttlefish::kCuttlefishConfigurationInitError);
-      }
+      CHECK(fd->Truncate(VBMETA_MAX_SIZE) == 0)
+        << "`truncate --size=" << VBMETA_MAX_SIZE << " " << vbmeta_image << "` "
+        << "failed: " << fd->StrError();
     }
   }
 
-  if (FLAGS_use_bootloader && !cuttlefish::FileHasContent(FLAGS_bootloader)) {
-    LOG(ERROR) << "File not found: " << FLAGS_bootloader;
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
+  if (FLAGS_use_bootloader) {
+    CHECK(cuttlefish::FileHasContent(FLAGS_bootloader))
+        << "File not found: " << FLAGS_bootloader;
   }
 
   if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
-    if (!RebuildSuperImage(fetcher_config, *config, FLAGS_super_image)) {
-      LOG(ERROR) << "Super image rebuilding requested but could not be completed.";
-      exit(cuttlefish::kCuttlefishConfigurationInitError);
-    }
+    bool success = RebuildSuperImage(fetcher_config, *config, FLAGS_super_image);
+    CHECK(success) << "Super image rebuilding requested but could not be completed.";
   }
 
   bool newDataImage = dataImageResult == DataImageResult::FileUpdated;
@@ -534,9 +511,8 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
                   << "old session files and starting a new session for device "
                   << instance.serial_number();
       }
-      if (!CreateCompositeDisk(*config, instance)) {
-        exit(cuttlefish::kDiskSpaceError);
-      }
+      CHECK(CreateCompositeDisk(*config, instance))
+          << "Failed to create composite disk";
       CreateQcowOverlay(config->crosvm_binary(), instance.composite_disk_path(), overlay_path);
       CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
       CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
@@ -546,9 +522,8 @@ void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
   for (auto instance : config->Instances()) {
     // Check that the files exist
     for (const auto& file : instance.virtual_disk_paths()) {
-      if (!file.empty() && !cuttlefish::FileHasContent(file.c_str())) {
-        LOG(ERROR) << "File not found: " << file;
-        exit(cuttlefish::kCuttlefishConfigurationInitError);
+      if (!file.empty()) {
+        CHECK(cuttlefish::FileHasContent(file)) << "File not found: " << file;
       }
     }
   }
