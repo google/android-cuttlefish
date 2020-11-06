@@ -2,7 +2,7 @@
 /dev/block/by-name/vendor_boot /vendor_boot emmc defaults recoveryonly,slotselect
 system /system erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
 # Add all non-dynamic partitions except system, after this comment
-/dev/block/by-name/userdata /data ext4 nodev,noatime,nosuid,errors=panic latemount,wait,fileencryption=aes-256-xts:aes-256-cts,keydirectory=/metadata/vold/metadata_encryption
+/dev/block/by-name/userdata /data ext4 nodev,noatime,nosuid,errors=panic latemount,wait,check,quota,formattable,fileencryption=aes-256-xts:aes-256-cts,keydirectory=/metadata/vold/metadata_encryption,checkpoint=block
 /dev/block/by-name/cache /cache ext4 nodev,noatime,nosuid,errors=panic wait
 /dev/block/by-name/metadata /metadata ext4 nodev,noatime,nosuid,errors=panic wait,formattable,first_stage_mount,check
 /dev/block/by-name/misc /misc emmc defaults defaults
