@@ -46,12 +46,15 @@ class VsocketScreenView : public ScreenView {
   bool ConnectToScreenServer();
   void GetScreenParameters();
   void BroadcastLoop();
+  void ClientDetectorLoop();
+  bool SendFrame(int offset);
 
   std::vector<char> inner_buffer_;
   cuttlefish::SharedFD screen_server_;
   std::thread broadcast_thread_;
+  std::thread client_detector_thread_;
   int current_offset_ = 0;
-  int current_seq_ = 0;
+  unsigned int current_seq_ = 0;
   std::mutex mutex_;
   std::condition_variable cond_var_;
   bool running_ = true;
@@ -59,6 +62,7 @@ class VsocketScreenView : public ScreenView {
   int32_t y_res_{1280};
   int32_t dpi_{160};
   int32_t refresh_rate_{60};
+  bool send_frames_{false};
 };
 
 }  // namespace cuttlefish
