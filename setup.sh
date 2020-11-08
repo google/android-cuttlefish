@@ -3,6 +3,8 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
 	exit 1
 fi
 
+source "$(dirname ${BASH_SOURCE[0]})"/expose-port.sh
+
 # set -o errexit
 # set -x
 
@@ -29,6 +31,16 @@ function cvd_get_ip {
 function cvd_get_instance_id {
     # $1 could be hash code or name for the container
     echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.cf_instance}}' "$1")"
+}
+
+function cvd_get_vsock_guest_cid {
+    # $1 could be hash code or name for the container
+    echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.vsock_guest_cid}}' "$1")"
+}
+
+function cvd_get_n_cf_instances {
+    # $1 could be hash code or name for the container
+    echo "$(docker inspect -f '{{- printf "%s" .Config.Labels.n_cf_instances}}' "$1")"
 }
 
 function cvd_allocate_instance_id {
@@ -61,6 +73,13 @@ function help_on_container_create {
 	echo "                                        : otherwise, the container is created as a daemon"
 	echo "       -x | --with_host_x               : run the container in singleshot and"
 	echo "                                        : share X of the docker host"
+	echo "       -m | --share_dir dir1:dir2       : mount a host directory dir1 at dir2 of docker container"
+	echo "                                        : dir1 should be an absolute path or relative path to $PWD"
+	echo "                                        : dir2 should be an absolute path or relative path to /home/vsoc-01/"
+	echo "                                        : $HOME is not allowed as dir1"
+	echo "                                        : /home/vsoc-01 is not allowed as dir2"
+	echo "                                        : For multiple mounts, use multiple -m options per pair"
+	echo "       -n | --n_cf_instances            : maximum number of cuttlefish instances inside a container"
 	echo "       -A[/path] | --android[=/path]    : mount Android images from path (defaults to \$ANDROID_PRODUCT_OUT);"
 	echo "                                        : requires -C to also be specified"
 	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
@@ -68,14 +87,8 @@ function help_on_container_create {
 	echo "       -C[/path] | --cuttlefish[=/path] : mount Cuttlefish host image from path (defaults to \$ANDROID_HOST_OUT/cvd-host_package.tar.gz)"
 	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
 	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
-	echo "       -m | --share_dir dir1:dir2       : mount a host directory dir1 at dir2 of docker container"
-	echo "                                        : dir1 should be an absolute path or relative path to $PWD"
-	echo "                                        : dir2 should be an absolute path or relative path to /home/vsoc-01/"
-	echo "                                        : $HOME is not allowed as dir1"
-	echo "                                        : /home/vsoc-01 is not allowed as dir2"
-	echo "                                        : For multiple mounts, use multiple -m options per pair"
+	echo "       -v | --vsock_guest_cid           : facilitate the new vsock_guest_cid option"
 	echo "       -h | --help                      : print this help message"
-	echo "        The optional [NAME] will override -n option for backward compatibility"
 }
 
 function help_on_sourcing {
@@ -114,28 +127,32 @@ function is_absolute_path {
 	return 1
 }
 
-
 singleshot="false"
 
 function cvd_docker_create {
-	local name=""
-    local android=""
-    local cuttlefish=""
-	local with_host_x="false"
-	local need_help="false"
-	local share_dir="false"
-	local -a shared_dir_pairs=()
+  local name=""
+  local android=""
+  local cuttlefish=""
+  local with_host_x="false"
+  local need_help="false"
+  local share_dir="false"
+  local -a shared_dir_pairs=()
+  local vsock_guest_cid="false"
+  local n_cf_instances=1
 
-    # s | --singleshot
-    # x | --with_host_x
-    # m | --share_dir dir1:dir2
-    # A | --android[=/PATH]
-    # C | --cuttlefish[=/PATH to host package file]
-    # h | --help
+  # m | --share_dir dir1:dir2
+  # n | --n_cf_instances
+  # A | --android[=/PATH]
+  # C | --cuttlefish[=/PATH to host package file]
+  # s | --singleshot
+  # x | --with_host_x
+  # v | --vsock_guest_cid
+  # h | --help
 
   singleshot="false" # could've been updated to "true" by previous cvd_docker_create
+
   local params
-  if params=$(getopt -o 'm:A::C::sxh' -l 'share_dir:,android::,cuttlefish::,singleshot,with_host_x,help' --name "$0" -- "$@"); then
+  if params=$(getopt -o 'm:n:A::C::svxh' -l 'share_dir:,n_cf_instances:,android::,cuttlefish::,singleshot,vsock_guest_cid,with_host_x,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
 	  while true; do
 		  case "$1" in
@@ -148,6 +165,10 @@ function cvd_docker_create {
 						  need_help="true"
 					  fi
 				  done
+				  shift 2
+				  ;;
+              -n|--n_cf_instances)
+				  n_cf_instances=$2
 				  shift 2
 				  ;;
 			  -A|--android)
@@ -188,26 +209,30 @@ function cvd_docker_create {
 				  shift 2
 				  ;;
 			    -s|--singleshot)
-				    singleshot="true"
-				    shift
-				    ;;
+				  singleshot="true"
+				  shift
+				  ;;
 			    -x|--with_host_x)
-				    if [[ -n "${DISPLAY}" ]]; then
-					    with_host_x="true"
-				    else
-					    echo "Can't use host's X: DISPLAY is not set." 1>&2
-					    need_help="true"
-				    fi
-				    shift
-				    ;;
-			    -h|--help)
+				  if [[ -n "${DISPLAY}" ]]; then
+				    with_host_x="true"
+				  else
+				    echo "Can't use host's X: DISPLAY is not set." 1>&2
 				    need_help="true"
-				    shift
-				    ;;
+				  fi
+				  shift
+				  ;;
+			    -v|--vsock_guest_cid)
+				  vsock_guest_cid="true"
+				  shift 1
+				  ;;
+			    -h|--help)
+				  need_help="true"
+				  shift
+				  ;;
 			    --)
-				    shift
-				    break
-				    ;;
+				  shift
+				  break
+				  ;;
 		    esac
 	    done
     else
@@ -294,18 +319,8 @@ function cvd_docker_create {
 	    docker run -d ${as_host_x[@]} \
 		        --name "${name}" -h "${name}" \
                 -l "cf_instance=${cf_instance}" \
-                -e CUTTLEFISH_INSTANCE="${cf_instance}" \
-                -p $((6444+cf_instance)):$((6444+cf_instance)) \
-                -p $((8443+cf_instance)):$((8443+cf_instance)) \
-                -p $((6520+cf_instance)):$((6520+cf_instance)) \
-                -p $((15550+cf_instance*4)):$((15550+cf_instance*4))/tcp \
-                -p $((15551+cf_instance*4)):$((15551+cf_instance*4))/tcp \
-                -p $((15552+cf_instance*4)):$((15552+cf_instance*4))/tcp \
-                -p $((15553+cf_instance*4)):$((15553+cf_instance*4))/tcp \
-                -p $((15550+cf_instance*4)):$((15550+cf_instance*4))/udp \
-                -p $((15551+cf_instance*4)):$((15551+cf_instance*4))/udp \
-                -p $((15552+cf_instance*4)):$((15552+cf_instance*4))/udp \
-                -p $((15553+cf_instance*4)):$((15553+cf_instance*4))/udp \
+                -l "n_cf_instances=${n_cf_instances}" \
+                -l "vsock_guest_cid=${vsock_guest_cid}" \
 		        --privileged \
 		        -v /sys/fs/cgroup:/sys/fs/cgroup:ro ${volumes[@]} \
 		        cuttlefish
@@ -327,6 +342,7 @@ function cvd_docker_create {
 	    echo "Done waiting for ${name} to boot."
 
 	    __gen_funcs ${name}
+	    __gen_publish_funcs ${name}
         # define and export ip_${name} for the ip address
         local ip_addr_var_name="ip_${name}"
         declare ${ip_addr_var_name}="$(cvd_get_ip "${name}")"
@@ -349,6 +365,7 @@ function cvd_docker_create {
 	    else
 		    echo "Container ${name} is already running.";
 		    __gen_funcs ${name}
+		    __gen_publish_funcs ${name}
 		    help_on_container_start ${name}
 		    echo
 		    help_on_sourcing
@@ -368,6 +385,10 @@ function cvd_docker_rm {
 			docker rm -f ${name}
 			echo "Cleaning up homedir ${homedir}."
 			rm -rf ${homedir}
+			echo "Closing socat if any"
+			$(__gen_unpublish_func_name ${name})
+			unset $(__gen_unpublish_func_name ${name})
+			unset $(__gen_publish_func_name ${name})
 			unset -f $(__gen_start_func_name ${name})
 			unset -f $(__gen_login_func_name ${name})
 			unset -f $(__gen_stop_func_name ${name})
@@ -413,33 +434,31 @@ function __gen_gethome_func_name {
 # $1 = container name; must not be empty
 function __gen_funcs {
 	local name=$1
-
+	local instance_id=$(cvd_get_instance_id ${name})
+	local vcid_opt="--base_instance_num=${instance_id}"
 	local login_func
 	local start_func
 	local stop_func
 	local gethome_func
 
-	read -r -d '' login_func <<EOF
+	if [[ "$(cvd_get_vsock_guest_cid ${name})" == "true" ]]; then
+	  local cid=$((instance_id + 2))
+	  vcid_opt+=("--vsock_guest_cid=${cid}")
+	fi
+
+read -r -d '' login_func <<EOF
 function $(__gen_login_func_name ${name}) {
   local _cmd="/bin/bash"
   if [[ -n "\$@" ]]; then
 	_cmd="\$@"
   fi
   docker exec -it --user vsoc-01 "${name}" \${_cmd}
-#  ssh \
-#    -L8443:localhost:8443 \
-#    -L6520:localhost:6520 \
-#    -L6444:localhost:6444 \
-#    -L15550:localhost:15550 -L15551:localhost:15551 \
-#	\${_x} \
-#    vsoc-01@$(cvd_get_ip ${name}) \
-#	"\$@";
 }
 EOF
 
 read -r -d '' start_func <<EOF
 function $(__gen_start_func_name ${name}) {
-  $(__gen_login_func_name ${name}) ./bin/launch_cvd "\$@"
+  $(__gen_login_func_name ${name}) ./bin/launch_cvd "${vcid_opt}" "\$@"
 }
 EOF
 
@@ -455,18 +474,80 @@ function $(__gen_gethome_func_name ${name}) {
 }
 EOF
 
-eval "${login_func}"
-eval "${start_func}"
-eval "${stop_func}"
-eval "${gethome_func}"
-eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
+	eval "${login_func}"
+	eval "${start_func}"
+	eval "${stop_func}"
+	eval "${gethome_func}"
+	eval "export ip_${name}=$(cvd_get_ip $(cvd_get_id ${name}))"
 
-if [[ "$singleshot" == "false" ]]; then
-    echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
-    echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
-    echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
-    echo "To get the home directory of container ${name}, call $(__gen_gethome_func_name ${name})"
-fi
+	if [[ "$singleshot" == "true" ]]; then
+	  return
+	fi
+
+	echo "To log into container ${name} without starting Android, call $(__gen_login_func_name ${name})"
+	echo "To start Android in container ${name}, call $(__gen_start_func_name ${name})"
+	echo "To stop Android in container ${name}, call $(__gen_stop_func_name ${name})"
+	echo "To get the home directory of container ${name}, call $(__gen_gethome_func_name ${name})"
+}
+
+function __gen_publish_func_name {
+    local name=$1
+    echo -n "cvd_publish_${name}"
+}
+function __gen_unpublish_func_name {
+    local name=$1
+    echo -n "cvd_unpublish_${name}"
+}
+
+function __gen_publish_funcs {
+    local name=$1
+    local sz=$(cvd_get_n_cf_instances ${name})
+    local instance_id=$(cvd_get_instance_id ${name})
+    local host_offset_default=$((instance_id * sz))
+    local host_offset=${2:-$host_offset_default}
+    local guest_ip=$(cvd_get_ip ${name})
+    local guest_offset=0
+    local publish_func
+    local unpublish_func
+
+    if [[ "$(cvd_get_vsock_guest_cid ${name})" == "false" ]]; then
+        # use instance_num
+        guest_offset=${host_offset}
+    fi
+
+    #
+    # If not overriden, host offset port will be base + instance_id * sz
+    # that is, 6444(vnc) + instance_id * no. of MAX instances in a container
+    # Host port offset can be overriden when cvd_publish_${name} is invoked
+    #
+    # guest port offset is independent from host offset
+    # if vsock_guest_cid is given, the guest port offset is set to 0
+    # if not given, the guest ports depend on the --base_instance_num
+    # here, we assume that it is strongly recommended to be the same as instance_id
+    # Thus, the guest port offset is automatically adjusted by that assumption
+    #
+read -r -d '' publish_func <<EOF
+function $(__gen_publish_func_name ${name}) {
+  local h_offset=\${1:-$host_offset}
+  port_expose ${name} ${guest_ip} ${sz} \${h_offset} ${guest_offset}
+}
+EOF
+
+read -r -d '' unpublish_func <<EOF
+function $(__gen_unpublish_func_name ${name}) {
+  port_close $(cvd_get_ip ${name})
+}
+EOF
+
+    eval "${publish_func}"
+    eval "${unpublish_func}"
+    if [[ "$singleshot" == "true" ]]; then
+        return
+    fi
+    echo "To export ports to container ${name}, $(__gen_publish_func_name ${name}) [host offset]"
+    echo "      e.g. $(__gen_publish_func_name ${name}) 0, to make the host ports same as default cuttlefish ports"
+    echo "      e.g. $(__gen_publish_func_name ${name})    to automatically find host ports"
+    echo "To undo the exported ports for container ${name}, $(__gen_unpublish_func_name ${name})"
 }
 
 help_on_sourcing
