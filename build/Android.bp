@@ -146,21 +146,37 @@ cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
         cvd_host_tests,
-    commonDeps: cvd_host_webrtc_assets +
-        cvd_host_model_simulator_files,
+    multilib: {
+        common: {
+            deps: cvd_host_webrtc_assets +
+                cvd_host_model_simulator_files,
+        },
+    },
 
     arch: {
         x86_64: {
             deps: cvd_host_tools_x86_64,
-            commonDeps: cvd_host_seccomp_policy_x86_64,
+            multilib: {
+                common: {
+                    deps: cvd_host_seccomp_policy_x86_64,
+                },
+            },
         },
         arm64: {
-            commonDeps: cvd_host_seccomp_policy_arm64,
+            multilib: {
+                common: {
+                    deps: cvd_host_seccomp_policy_arm64,
+                },
+            },
         },
     },
     target: {
         linux_bionic: {
-            commonDeps: ["tzdata_host"],
+            multilib: {
+                common: {
+                    deps: ["tzdata_host"],
+                },
+            },
         },
         linux_bionic_x86_64: {
             enabled: false,
