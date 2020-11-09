@@ -2,6 +2,9 @@
   "postsubmit" : [
     {
       "name": "tombstone_transmit_tests"
+    },
+    {
+      "name": "RebootRecoveryTest"
     }
   ],
   "presubmit": [
