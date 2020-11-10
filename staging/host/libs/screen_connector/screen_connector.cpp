@@ -37,4 +37,7 @@ ScreenConnector* ScreenConnector::Get(int frames_fd) {
   }
 }
 
+// Ignore by default
+void ScreenConnector::ReportClientsConnected(bool /*have_clients*/) {}
+
 }  // namespace cuttlefish

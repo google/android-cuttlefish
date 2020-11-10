@@ -39,6 +39,8 @@ class SimulatedHWComposer {
 
   Stripe GetNewStripe();
 
+  void ReportClientsConnected();
+
   // NOTE not constexpr on purpose
   static int NumberOfStripes();
 
