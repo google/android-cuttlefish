@@ -9,7 +9,6 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
-#include "host/commands/run_cvd/pre_launch_initializers.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
