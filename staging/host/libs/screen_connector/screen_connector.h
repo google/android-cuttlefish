@@ -38,6 +38,9 @@ class ScreenConnector {
   virtual bool OnFrameAfter(std::uint32_t frame_number,
                             const FrameCallback& frame_callback) = 0;
 
+  // Let the screen connector know when there are clients connected
+  virtual void ReportClientsConnected(bool have_clients);
+
   static inline constexpr int BytesPerPixel() {
       return sizeof(int32_t);
   }
