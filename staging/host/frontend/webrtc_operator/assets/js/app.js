@@ -112,9 +112,10 @@ function ConnectToDevice(device_id) {
   window.onresize = resizeDeviceView;
 
   function createControlPanelButton(command, title, icon_name,
-      listener=onControlPanelButton) {
+      listener=onControlPanelButton,
+      parent_id='control_panel_default_buttons') {
     let button = document.createElement('button');
-    document.getElementById('control_panel').appendChild(button);
+    document.getElementById(parent_id).appendChild(button);
     button.title = title;
     button.dataset.command = command;
     // Capture mousedown/up/out commands instead of click to enable
@@ -158,6 +159,23 @@ function ConnectToDevice(device_id) {
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
       updateDeviceHardwareDetails(deviceConnection.description.hardware);
       updateDeviceDisplayDetails(deviceConnection.description.displays[0]);
+      if (deviceConnection.description.custom_control_panel_buttons.length == 0) {
+        document.getElementById('custom_controls_title').style.visibility = 'hidden';
+      } else {
+        for (const button of deviceConnection.description.custom_control_panel_buttons) {
+          if (button.shell_command) {
+            // This button's command is handled by sending an ADB shell command.
+            createControlPanelButton(button.command, button.title, button.icon_name,
+                e => onCustomShellButton(button.shell_command, e),
+                'control_panel_custom_buttons');
+          } else {
+            // This button's command is handled by custom action server.
+            createControlPanelButton(button.command, button.title, button.icon_name,
+                onControlPanelButton,
+                'control_panel_custom_buttons');
+          }
+        }
+      }
       deviceConnection.onControlMessage(msg => onControlMessage(msg));
       // Start the screen as hidden. Only show when data is ready.
       deviceScreen.style.visibility = 'hidden';
@@ -217,6 +235,14 @@ function ConnectToDevice(device_id) {
     init_adb(deviceConnection);
     if (e.type == 'mousedown') {
       adbShell('/vendor/bin/cuttlefish_rotate ' + (rotation == 0 ? 'landscape' : 'portrait'))
+    }
+  }
+  function onCustomShellButton(shell_command, e) {
+    // Attempt to init adb again, in case the initial connection failed.
+    // This succeeds immediately if already connected.
+    init_adb(deviceConnection);
+    if (e.type == 'mousedown') {
+      adbShell(shell_command);
     }
   }
 
