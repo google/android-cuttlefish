@@ -16,6 +16,7 @@ package cuttlefish
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/blueprint"
 
@@ -56,6 +57,7 @@ func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
 			ctx.AddVariationDependencies(nil, cvdHostPackageDependencyTag, dep)
 		}
 	}
+
 	variations := []blueprint.Variation{
 		{Mutator: "os", Variation: ctx.Target().Os.String()},
 		{Mutator: "arch", Variation: android.Common.String()},
@@ -63,6 +65,20 @@ func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
 	for _, dep := range c.properties.CommonDeps {
 		if ctx.OtherModuleExists(dep) {
 			ctx.AddFarVariationDependencies(variations, cvdHostPackageDependencyTag, dep)
+		}
+	}
+
+	// If cvd_custom_action_config is set, include custom action servers in the
+	// host package as specified by cvd_custom_action_servers.
+	customActionConfig := ctx.Config().VendorConfig("cvd").String("custom_action_config")
+	if customActionConfig != "" && ctx.OtherModuleExists(customActionConfig) {
+		ctx.AddVariationDependencies(variations, cvdHostPackageDependencyTag,
+			customActionConfig)
+		for _, dep := range strings.Split(
+			ctx.Config().VendorConfig("cvd").String("custom_action_servers"), " ") {
+			if ctx.OtherModuleExists(dep) {
+				ctx.AddVariationDependencies(nil, cvdHostPackageDependencyTag, dep)
+			}
 		}
 	}
 }

@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <libyuv.h>
 
@@ -38,6 +39,9 @@ DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
 DEFINE_int32(kernel_log_events_fd, -1, "An fd to listen on for kernel log events.");
+DEFINE_string(action_servers, "",
+              "A comma-separated list of server_name:fd pairs, "
+              "where each entry corresponds to one custom action server.");
 DEFINE_bool(write_virtio_input, false,
             "Whether to send input events in virtio format.");
 
@@ -173,6 +177,60 @@ int main(int argc, char **argv) {
   observer_factory->SetDisplayHandler(display_handler);
 
   streamer->SetHardwareSpecs(cvd_config->cpus(), cvd_config->memory_mb());
+
+  // Parse the -action_servers flag, storing a map of action server name -> fd
+  std::map<std::string, int> action_server_fds;
+  for (const std::string& action_server : android::base::Split(FLAGS_action_servers, ",")) {
+    if (action_server.empty()) {
+      continue;
+    }
+    const std::vector<std::string> server_and_fd = android::base::Split(action_server, ":");
+    CHECK(server_and_fd.size() == 2) << "Wrong format for action server flag: " << action_server;
+    std::string server = server_and_fd[0];
+    int fd = std::stoi(server_and_fd[1]);
+    action_server_fds[server] = fd;
+  }
+
+  for (const auto& custom_action : cvd_config->custom_actions()) {
+    if (custom_action.shell_command) {
+      if (custom_action.buttons.size() != 1) {
+        LOG(FATAL) << "Expected exactly one button for custom action command: "
+                   << *(custom_action.shell_command);
+      }
+      const auto button = custom_action.buttons[0];
+      streamer->AddCustomControlPanelButton(button.command, button.title,
+                                            button.icon_name,
+                                            custom_action.shell_command);
+    }
+    if (custom_action.server) {
+      if (action_server_fds.find(*(custom_action.server)) !=
+          action_server_fds.end()) {
+        LOG(INFO) << "Connecting to custom action server "
+                  << *(custom_action.server);
+
+        int fd = action_server_fds[*(custom_action.server)];
+        cuttlefish::SharedFD custom_action_server = cuttlefish::SharedFD::Dup(fd);
+        close(fd);
+
+        if (custom_action_server->IsOpen()) {
+          std::vector<std::string> commands_for_this_server;
+          for (const auto& button : custom_action.buttons) {
+            streamer->AddCustomControlPanelButton(button.command, button.title,
+                                                  button.icon_name);
+            commands_for_this_server.push_back(button.command);
+          }
+          observer_factory->AddCustomActionServer(custom_action_server,
+                                                  commands_for_this_server);
+        } else {
+          LOG(ERROR) << "Error connecting to custom action server: "
+                     << *(custom_action.server);
+        }
+      } else {
+        LOG(ERROR) << "Custom action server not provided as command line flag: "
+                   << *(custom_action.server);
+      }
+    }
+  }
 
   std::shared_ptr<cuttlefish::webrtc_streaming::OperatorObserver> operator_observer(
       new CfOperatorObserver());
