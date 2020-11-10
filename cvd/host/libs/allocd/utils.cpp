@@ -58,13 +58,17 @@ const std::map<std::string, IfaceType> StrToIfaceTyMap = {
     {"invalid", IfaceType::Invalid},
     {"mtap", IfaceType::mtap},
     {"wtap", IfaceType::wtap},
-    {"wbr", IfaceType::wbr}};
+    {"etap", IfaceType::etap},
+    {"wbr", IfaceType::wbr},
+    {"ebr", IfaceType::ebr}};
 
 const std::map<IfaceType, std::string> IfaceTyToStrMap = {
     {IfaceType::Invalid, "invalid"},
     {IfaceType::mtap, "mtap"},
     {IfaceType::wtap, "wtap"},
-    {IfaceType::wbr, "wbr"}};
+    {IfaceType::etap, "etap"},
+    {IfaceType::wbr, "wbr"},
+    {IfaceType::ebr, "ebr"}};
 
 const std::map<RequestStatus, std::string> ReqStatusToStrMap = {
     {RequestStatus::Invalid, "invalid"},
@@ -167,8 +171,12 @@ std::string IfaceTyToStr(IfaceType iface) {
       return "mtap";
     case IfaceType::wtap:
       return "wtap";
+    case IfaceType::etap:
+      return "etap";
     case IfaceType::wbr:
       return "wbr";
+    case IfaceType::ebr:
+      return "ebr";
   }
 }
 

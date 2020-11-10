@@ -45,7 +45,9 @@ enum class IfaceType : uint16_t {
   Invalid = 0,  // an invalid interface
   mtap,         // mobile tap
   wtap,         // wireless tap
-  wbr           // wireless bridge
+  etap,         // ethernet tap
+  wbr,          // wireless bridge
+  ebr           // ethernet bridge
 };
 
 enum class RequestStatus : uint16_t {
