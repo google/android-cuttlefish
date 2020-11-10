@@ -238,6 +238,10 @@ DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
             "emulation gRPC server on the host");
+DEFINE_string(custom_action_config, "",
+              "Path to a custom action config JSON. Defaults to the file provided by "
+              "build variable CVD_CUSTOM_ACTION_CONFIG. If this build variable "
+              "is empty then the custom action config will be empty as well.");
 DEFINE_bool(use_bootloader, true, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -544,6 +548,44 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(FLAGS_enable_vehicle_hal_grpc_server);
   tmp_config_obj.set_vehicle_hal_grpc_server_binary(
       cuttlefish::DefaultHostArtifactsPath("bin/android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"));
+
+  std::string custom_action_config;
+  if (!FLAGS_custom_action_config.empty()) {
+    custom_action_config = FLAGS_custom_action_config;
+  } else {
+    std::string custom_action_config_dir =
+        cuttlefish::DefaultHostArtifactsPath("etc/cvd_custom_action_config");
+    if (cuttlefish::DirectoryExists(custom_action_config_dir)) {
+      auto custom_action_configs = cuttlefish::DirectoryContents(
+          custom_action_config_dir);
+      // Two entries are always . and ..
+      if (custom_action_configs.size() > 3) {
+        LOG(ERROR) << "Expected at most one custom action config in "
+                   << custom_action_config_dir << ". Please delete extras.";
+      } else if (custom_action_configs.size() == 3) {
+        for (const auto& config : custom_action_configs) {
+          if (android::base::EndsWithIgnoreCase(config, ".json")) {
+            custom_action_config = custom_action_config_dir + "/" + config;
+          }
+        }
+      }
+    }
+  }
+  // Load the custom action config JSON.
+  if (custom_action_config != "") {
+    Json::Reader reader;
+    std::ifstream ifs(custom_action_config);
+    Json::Value dictionary;
+    if (!reader.parse(ifs, dictionary)) {
+      LOG(ERROR) << "Could not read custom actions config file " << custom_action_config
+                 << ": " << reader.getFormattedErrorMessages();
+    }
+    std::vector<cuttlefish::CustomActionConfig> custom_actions;
+    for (Json::Value custom_action : dictionary) {
+      custom_actions.push_back(cuttlefish::CustomActionConfig(custom_action));
+    }
+    tmp_config_obj.set_custom_actions(custom_actions);
+  }
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);

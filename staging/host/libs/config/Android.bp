@@ -16,6 +16,7 @@
 cc_library_static {
     name: "libcuttlefish_host_config",
     srcs: [
+        "custom_actions.cpp",
         "cuttlefish_config.cpp",
         "cuttlefish_config_instance.cpp",
         "data_image.cpp",
