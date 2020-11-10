@@ -5,6 +5,8 @@
 # the user can run source, lunch & m commands to build
 #
 
+SCRIPT_DIR=$(dirname ${BASH_SOURCE[0]})
+
 # to print multi-lined helper for shflags
 function multiline_helper {
     local aligner="$(printf '%*s' "$1")"
@@ -81,7 +83,7 @@ docker_run_opts_helper=("passing arguments to docker run, not the guest/host scr
 docker_run_opts_helper+=("  comma separated, and no space is allowed.")
 docker_run_opts_helper+=("  e.g. --rm,--privileged,-eENV,-vSRC:DIR,--name=MYNAME")
 
-source "shflags"
+source "${SCRIPT_DIR}/shflags"
 
 DEFINE_boolean rebuild_docker_img false "Rebuild cuttlefish-android-builder image" "" "f"
 DEFINE_boolean share_gitconfig true "Allow the docker container to use the host gitconfig" "g"
@@ -256,10 +258,10 @@ function build_image() {
                                       > /dev/null 2>&1; then
         >&2 echo "The target name in Dockerfile.builder must match $cf_builder_img_target"
     fi
-    docker build -f Dockerfile.builder \
+    docker build -f ${SCRIPT_DIR}/Dockerfile.builder \
            --target ${cf_builder_img_target} \
            -t ${cf_builder_img_name}:${cf_builder_img_tag} \
-           ${PWD} --build-arg UID=`id -u`
+           ${SCRIPT_DIR} --build-arg UID=`id -u`
     popd > /dev/null 2>&1
     err_code=$?
     if (( err_code != 0)); then
