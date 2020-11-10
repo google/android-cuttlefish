@@ -91,13 +91,19 @@ void VsocketScreenView::BroadcastLoop() {
         "Compositions will occur, but frames won't be sent anywhere");
     return;
   }
-  int current_seq = 0;
+  // The client detector thread needs to be started after the connection to the
+  // socket has been made
+  client_detector_thread_ = std::thread([this]() { ClientDetectorLoop(); });
+
+  unsigned int current_seq = 0;
+  unsigned int last_sent_seq = 0;
   int current_offset;
   ALOGI("Broadcaster thread loop starting");
   while (true) {
     {
       std::unique_lock<std::mutex> lock(mutex_);
-      while (running_ && current_seq == current_seq_) {
+      while (running_ && current_seq == current_seq_ &&
+             (!send_frames_ || last_sent_seq == current_seq)) {
         cond_var_.wait(lock);
       }
       if (!running_) {
@@ -107,17 +113,50 @@ void VsocketScreenView::BroadcastLoop() {
       current_offset = current_offset_;
       current_seq = current_seq_;
     }
-    int32_t size = buffer_size();
-    screen_server_->Write(&size, sizeof(size));
-    auto buff = static_cast<char*>(GetBuffer(current_offset));
-    while (size > 0) {
-      auto written = screen_server_->Write(buff, size);
-      if (written == -1) {
-        ALOGE("Broadcaster thread failed to write frame: %s", strerror(errno));
+    if (send_frames_ && last_sent_seq != current_seq) {
+      last_sent_seq = current_seq;
+      if (!SendFrame(current_offset)) {
         break;
       }
-      size -= written;
-      buff += written;
+    }
+  }
+}
+
+bool VsocketScreenView::SendFrame(int offset) {
+  int32_t size = buffer_size();
+  screen_server_->Write(&size, sizeof(size));
+  auto buff = static_cast<char*>(GetBuffer(offset));
+  while (size > 0) {
+    auto written = screen_server_->Write(buff, size);
+    if (written == -1) {
+      ALOGE("Broadcaster thread failed to write frame: %s",
+            screen_server_->StrError());
+      return false;
+    }
+    size -= written;
+    buff += written;
+  }
+  return true;
+}
+
+void VsocketScreenView::ClientDetectorLoop() {
+  char buffer[8];
+  while (running_) {
+    auto read = screen_server_->Read(buffer, sizeof(buffer));
+    if (read == -1) {
+      ALOGE("Client detector thread failed to read from screen server: %s",
+            screen_server_->StrError());
+      break;
+    }
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      // The last byte sent by the server indicates the presence of clients.
+      send_frames_ = read > 0 && buffer[read - 1];
+      cond_var_.notify_all();
+    }
+    if (read == 0) {
+      ALOGE("screen server closed!");
+      break;
     }
   }
 }
