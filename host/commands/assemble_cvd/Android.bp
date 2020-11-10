@@ -65,5 +65,8 @@ cc_binary {
         "libcuttlefish_vm_manager",
         "libgflags",
     ],
+    required: [
+        "lz4",
+    ],
     defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
 }
