@@ -85,12 +85,18 @@ class ConnectionObserverImpl
       : input_sockets_(input_sockets),
         kernel_log_events_client_(kernel_log_events_fd),
         weak_display_handler_(display_handler) {}
-  virtual ~ConnectionObserverImpl() = default;
+  virtual ~ConnectionObserverImpl() {
+    auto display_handler = weak_display_handler_.lock();
+    if (display_handler) {
+      display_handler->DecClientCount();
+    }
+  }
 
   void OnConnected(std::function<void(const uint8_t *, size_t, bool)>
                    /*ctrl_msg_sender*/) override {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
+      display_handler->IncClientCount();
       // A long time may pass before the next frame comes up from the guest.
       // Send the last one to avoid showing a black screen to the user during
       // that time.

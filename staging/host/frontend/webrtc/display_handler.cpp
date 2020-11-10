@@ -76,4 +76,18 @@ void DisplayHandler::SendLastFrame() {
   }
 }
 
+void DisplayHandler::IncClientCount() {
+  client_count_++;
+  if (client_count_ == 1) {
+    screen_connector_->ReportClientsConnected(true);
+  }
+}
+
+void DisplayHandler::DecClientCount() {
+  client_count_--;
+  if (client_count_ == 0) {
+    screen_connector_->ReportClientsConnected(false);
+  }
+}
+
 }  // namespace cuttlefish

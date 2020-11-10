@@ -53,7 +53,9 @@ void VncServer::StartClientThread(ClientSocket sock) {
   // data members. In the current setup, if the VncServer is destroyed with
   // clients still running, the clients will all be left with dangling
   // pointers.
+  frame_buffer_watcher_.IncClientCount();
   VncClientConnection client(std::move(sock), virtual_inputs_, &bb_,
                              aggressive_);
   client.StartSession();
+  frame_buffer_watcher_.DecClientCount();
 }
