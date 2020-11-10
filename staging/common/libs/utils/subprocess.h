@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/logging.h>
+
 #include <common/libs/fs/shared_fd.h>
 
 namespace cuttlefish {
@@ -179,6 +181,21 @@ class Command {
     std::stringstream ss;
     if (BuildParameter(&ss, args...)) {
       command_.push_back(ss.str());
+      return true;
+    }
+    return false;
+  }
+  // Similar to AddParameter, except the args are appended to the last (most
+  // recently-added) parameter in the command.
+  template <typename... Args>
+  bool AppendToLastParameter(Args... args) {
+    if (command_.empty()) {
+      LOG(ERROR) << "There is no parameter to append to.";
+      return false;
+    }
+    std::stringstream ss;
+    if (BuildParameter(&ss, args...)) {
+      command_[command_.size()-1] += ss.str();
       return true;
     }
     return false;

@@ -1,0 +1,24 @@
+cc_binary_host {
+    name: "cuttlefish_example_action_server",
+    srcs: ["main.cpp"],
+    defaults: [
+        "cuttlefish_host_only",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+        "libutils",
+        "libjsoncpp",
+        "libcuttlefish_fs",
+        "libcuttlefish_utils",
+    ],
+    static_libs: [
+        "libcuttlefish_host_config",
+    ],
+}
+
+prebuilt_etc_host {
+    name: "cuttlefish_example_action_config.json",
+    src: "custom_action_config.json",
+    sub_dir: "cvd_custom_action_config",
+}
