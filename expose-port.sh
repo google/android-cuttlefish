@@ -61,12 +61,9 @@ function port_expose() {
 
 function port_close() {
     local ip_addr=$1
-    local proc2kill="$(ps aux | egrep "$ip_addr" | egrep -v grep | cut -d ' ' -f 2)"
-    if [[ -z $proc2kill ]]; then
-        return
-    fi
-    local -a proc_ids=($proc2kill)
-    for pid in "${proc_ids[@]}"; do
+    local -a proc2kill=($(ps -t | egrep socat | egrep $1 | egrep -v grep | \
+                              egrep -o "^[[:space:]]+[0-9]+[[:space:]]"))
+    for pid in ${proc2kill[@]}; do
         kill -9 $pid
         wait $pid > /dev/null 2>&1
     done
