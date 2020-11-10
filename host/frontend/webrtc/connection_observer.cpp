@@ -18,6 +18,7 @@
 
 #include <linux/input.h>
 
+#include <map>
 #include <thread>
 #include <vector>
 
@@ -81,9 +82,12 @@ class ConnectionObserverImpl
  public:
   ConnectionObserverImpl(cuttlefish::InputSockets& input_sockets,
                          cuttlefish::SharedFD kernel_log_events_fd,
+                         std::map<std::string, cuttlefish::SharedFD>
+                             commands_to_custom_action_servers,
                          std::weak_ptr<DisplayHandler> display_handler)
       : input_sockets_(input_sockets),
         kernel_log_events_client_(kernel_log_events_fd),
+        commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler) {}
   virtual ~ConnectionObserverImpl() {
     auto display_handler = weak_display_handler_.lock();
@@ -187,6 +191,15 @@ class ConnectionObserverImpl
       OnKeyboardEvent(KEY_VOLUMEDOWN, state == "down");
     } else if (command == "volumeup") {
       OnKeyboardEvent(KEY_VOLUMEUP, state == "down");
+    } else if (commands_to_custom_action_servers_.find(command) !=
+               commands_to_custom_action_servers_.end()) {
+      // Simple protocol for commands forwarded to action servers:
+      //   - Always 128 bytes
+      //   - Format:   command:state
+      //   - Example:  my_button:down
+      std::string action_server_message = command + ":" + state;
+      cuttlefish::WriteAll(commands_to_custom_action_servers_[command],
+                           action_server_message.c_str(), 128);
     } else {
       LOG(WARNING) << "Unsupported control command: " << command << " (" << state << ")";
       // TODO(b/163081337): Handle custom commands.
@@ -198,6 +211,7 @@ class ConnectionObserverImpl
   cuttlefish::SharedFD kernel_log_events_client_;
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
   std::shared_ptr<cuttlefish::webrtc_streaming::KernelLogEventsHandler> kernel_log_events_handler_;
+  std::map<std::string, cuttlefish::SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
 };
 
@@ -212,7 +226,17 @@ CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
       new ConnectionObserverImpl(input_sockets_,
                                  kernel_log_events_fd_,
+                                 commands_to_custom_action_servers_,
                                  weak_display_handler_));
+}
+
+void CfConnectionObserverFactory::AddCustomActionServer(
+    cuttlefish::SharedFD custom_action_server_fd,
+    const std::vector<std::string>& commands) {
+  for (const std::string& command : commands) {
+    LOG(DEBUG) << "Action server is listening to command: " << command;
+    commands_to_custom_action_servers_[command] = custom_action_server_fd;
+  }
 }
 
 void CfConnectionObserverFactory::SetDisplayHandler(
