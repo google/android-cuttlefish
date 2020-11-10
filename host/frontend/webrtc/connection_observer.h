@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 
 #include "common/libs/fs/shared_fd.h"
@@ -41,11 +42,16 @@ class CfConnectionObserverFactory
   std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver> CreateObserver()
       override;
 
+  void AddCustomActionServer(cuttlefish::SharedFD custom_action_server_fd,
+                             const std::vector<std::string>& commands);
+
   void SetDisplayHandler(std::weak_ptr<DisplayHandler> display_handler);
 
  private:
   cuttlefish::InputSockets& input_sockets_;
   cuttlefish::SharedFD kernel_log_events_fd_;
+  std::map<std::string, cuttlefish::SharedFD>
+      commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
 };
 
