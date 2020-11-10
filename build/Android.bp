@@ -12,6 +12,18 @@ bootstrap_go_package {
     pluginFor: ["soong_build"],
 }
 
+// Allow cvd-host-package.go to read custom action config variables
+// from ctx.Config().VendorConfig("cvd")
+soong_config_module_type {
+    name: "cvd_host_package_customization",
+    module_type: "cvd_host_package",
+    config_namespace: "cvd",
+    value_variables: [
+        "custom_action_config",
+        "custom_action_servers",
+    ],
+}
+
 cvd_host_tools = [
     "android.hardware.automotive.vehicle@2.0-virtualization-grpc-server",
     "adb",
@@ -130,7 +142,7 @@ cvd_host_tools_x86_64 = [
     "x86_64_linux_gnu_libOpenglRender.so_for_crosvm",
 ]
 
-cvd_host_package {
+cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
         cvd_host_tests,
