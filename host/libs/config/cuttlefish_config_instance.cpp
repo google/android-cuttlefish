@@ -34,6 +34,7 @@ const char* kVirtualDiskPaths = "virtual_disk_paths";
 const char* kMobileBridgeName = "mobile_bridge_name";
 const char* kMobileTapName = "mobile_tap_name";
 const char* kWifiTapName = "wifi_tap_name";
+const char* kEthernetTapName = "ethernet_tap_name";
 const char* kVsockGuestCid = "vsock_guest_cid";
 
 const char* kSessionId = "session_id";
@@ -218,6 +219,14 @@ std::string CuttlefishConfig::InstanceSpecific::wifi_tap_name() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_wifi_tap_name(
     const std::string& wifi_tap_name) {
   (*Dictionary())[kWifiTapName] = wifi_tap_name;
+}
+
+std::string CuttlefishConfig::InstanceSpecific::ethernet_tap_name() const {
+  return (*Dictionary())[kEthernetTapName].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_ethernet_tap_name(
+    const std::string& ethernet_tap_name) {
+  (*Dictionary())[kEthernetTapName] = ethernet_tap_name;
 }
 
 bool CuttlefishConfig::InstanceSpecific::use_allocd() const {

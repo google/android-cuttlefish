@@ -85,16 +85,20 @@ bool ResourceManager::AddInterface(const std::string& iface, IfaceType ty,
     const char* idp = iface.c_str() + (iface.size() - 3);
     int small_id = atoi(idp);
     switch (ty) {
-      case IfaceType::mtap: {
+      case IfaceType::mtap:
         res = std::make_shared<MobileIface>(iface, uid, small_id, resource_id,
                                             kMobileIp);
         allocatedIface = res->AcquireResource();
         pending_add_.insert({resource_id, res});
         break;
-      }
       case IfaceType::wtap: {
-        auto w = std::make_shared<WirelessIface>(iface, uid, small_id,
-                                                 resource_id, kMobileIp);
+        // TODO (paulkirth): change this to cvd-wbr, to test w/ today's
+        // debian package, this is required since the number of wireless
+        // bridges provided by the debian package has gone from 10 down to
+        // 1, but our debian packages in cloudtop are not up to date
+        auto w = std::make_shared<EthernetIface>(iface, uid, small_id,
+                                                 resource_id, "cvd-wbr-01",
+                                                 kWirelessIp);
         w->SetUseEbtablesLegacy(use_ebtables_legacy_);
         w->SetHasIpv4(use_ipv4_bridge_);
         w->SetHasIpv6(use_ipv6_bridge_);
@@ -103,10 +107,22 @@ bool ResourceManager::AddInterface(const std::string& iface, IfaceType ty,
         pending_add_.insert({resource_id, res});
         break;
       }
-      case IfaceType::wbr: {
-        allocatedIface = CreateBridge(iface);
+      case IfaceType::etap: {
+        auto w = std::make_shared<EthernetIface>(iface, uid, small_id,
+                                                 resource_id, "cvd-ebr",
+                                                 kEthernetIp);
+        w->SetUseEbtablesLegacy(use_ebtables_legacy_);
+        w->SetHasIpv4(use_ipv4_bridge_);
+        w->SetHasIpv6(use_ipv6_bridge_);
+        res = w;
+        allocatedIface = res->AcquireResource();
+        pending_add_.insert({resource_id, res});
         break;
       }
+      case IfaceType::wbr:
+      case IfaceType::ebr:
+        allocatedIface = CreateBridge(iface);
+        break;
       case IfaceType::Invalid:
         break;
     }
@@ -138,15 +154,15 @@ bool ResourceManager::RemoveInterface(const std::string& iface, IfaceType ty) {
         removedIface = DestroyMobileIface(iface, id, kMobileIp);
         break;
       }
-      case IfaceType::wtap: {
-        removedIface = DestroyWirelessIface(
+      case IfaceType::wtap:
+      case IfaceType::etap:
+        removedIface = DestroyEthernetIface(
             iface, use_ipv4_bridge_, use_ipv6_bridge_, use_ebtables_legacy_);
         break;
-      }
-      case IfaceType::wbr: {
+      case IfaceType::wbr:
+      case IfaceType::ebr:
         removedIface = DestroyBridge(iface);
         break;
-      }
       case IfaceType::Invalid:
         break;
     }
