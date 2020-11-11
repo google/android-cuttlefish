@@ -286,6 +286,12 @@ std::vector<Command> CrosvmManager::StartCommands(
                           "path=", instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
                           ",input=", instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"));
 
+  // TODO(b/172286896): This is temporarily optional, but should be made
+  // unconditional and moved up to the other network devices area
+  if (config.ethernet()) {
+    AddTapFdParameter(&crosvm_cmd, instance.ethernet_tap_name());
+  }
+
   // TODO(b/162071003): virtiofs crashes without sandboxing, this should be fixed
   if (config.enable_sandbox()) {
     // Set up directory shared with virtiofs
