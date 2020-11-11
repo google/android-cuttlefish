@@ -61,25 +61,24 @@
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
-using cuttlefish::ForCurrentInstance;
-using cuttlefish::RunnerExitCodes;
-using cuttlefish::vm_manager::GetVmManager;
-using cuttlefish::vm_manager::ValidateHostConfiguration;
-
 DEFINE_int32(powerwash_notification_fd, -1,
              "A file descriptor to notify when boot completes.");
+
+namespace cuttlefish {
+
+using vm_manager::GetVmManager;
+using vm_manager::ValidateHostConfiguration;
 
 namespace {
 
 constexpr char kGreenColor[] = "\033[1;32m";
 constexpr char kResetColor[] = "\033[0m";
 
-cuttlefish::OnSocketReadyCb GetOnSubprocessExitCallback(
-    const cuttlefish::CuttlefishConfig& config) {
+OnSocketReadyCb GetOnSubprocessExitCallback(const CuttlefishConfig& config) {
   if (config.restart_subprocesses()) {
-    return cuttlefish::ProcessMonitor::RestartOnExitCb;
+    return ProcessMonitor::RestartOnExitCb;
   } else {
-    return cuttlefish::ProcessMonitor::DoNotMonitorCb;
+    return ProcessMonitor::DoNotMonitorCb;
   }
 }
 
@@ -88,14 +87,14 @@ cuttlefish::OnSocketReadyCb GetOnSubprocessExitCallback(
 // launcher process
 class CvdBootStateMachine {
  public:
-  CvdBootStateMachine(cuttlefish::SharedFD fg_launcher_pipe,
-                      cuttlefish::SharedFD powerwash_notification)
+  CvdBootStateMachine(SharedFD fg_launcher_pipe,
+                      SharedFD powerwash_notification)
       : fg_launcher_pipe_(fg_launcher_pipe)
       , powerwash_notification_(powerwash_notification)
       , state_(kBootStarted) {}
 
   // Returns true if the machine is left in a final state
-  bool OnBootEvtReceived(cuttlefish::SharedFD boot_events_pipe) {
+  bool OnBootEvtReceived(SharedFD boot_events_pipe) {
     std::optional<monitor::ReadEventResult> read_result =
         monitor::ReadEvent(boot_events_pipe);
     if (!read_result) {
@@ -124,23 +123,20 @@ class CvdBootStateMachine {
   }
 
  private:
-  void SendExitCode(cuttlefish::RunnerExitCodes exit_code,
-                    cuttlefish::SharedFD fd) {
+  void SendExitCode(RunnerExitCodes exit_code, SharedFD fd) {
     fd->Write(&exit_code, sizeof(exit_code));
     // The foreground process will exit after receiving the exit code, if we try
     // to write again we'll get a SIGPIPE
     fd->Close();
   }
   bool MaybeWriteNotification() {
-    std::vector<cuttlefish::SharedFD> fds =
-        {powerwash_notification_, fg_launcher_pipe_};
+    std::vector<SharedFD> fds = {powerwash_notification_, fg_launcher_pipe_};
     for (auto& fd : fds) {
       if (fd->IsOpen()) {
         if (BootCompleted()) {
-          SendExitCode(cuttlefish::RunnerExitCodes::kSuccess, fd);
+          SendExitCode(RunnerExitCodes::kSuccess, fd);
         } else if (state_ & kGuestBootFailed) {
-          SendExitCode(
-              cuttlefish::RunnerExitCodes::kVirtualDeviceBootFailed, fd);
+          SendExitCode(RunnerExitCodes::kVirtualDeviceBootFailed, fd);
         }
       }
     }
@@ -149,8 +145,8 @@ class CvdBootStateMachine {
     return BootCompleted() || (state_ & kGuestBootFailed);
   }
 
-  cuttlefish::SharedFD fg_launcher_pipe_;
-  cuttlefish::SharedFD powerwash_notification_;
+  SharedFD fg_launcher_pipe_;
+  SharedFD powerwash_notification_;
   int state_;
   static const int kBootStarted = 0;
   static const int kGuestBootCompleted = 1 << 0;
@@ -159,22 +155,22 @@ class CvdBootStateMachine {
 
 // Abuse the process monitor to make it call us back when boot events are ready
 void SetUpHandlingOfBootEvents(
-    cuttlefish::ProcessMonitor* process_monitor, cuttlefish::SharedFD boot_events_pipe,
+    ProcessMonitor* process_monitor, SharedFD boot_events_pipe,
     std::shared_ptr<CvdBootStateMachine> state_machine) {
   process_monitor->MonitorExistingSubprocess(
       // An unused command, so logs are desciptive
-      cuttlefish::Command("boot_events_listener"),
+      Command("boot_events_listener"),
       // An unused subprocess, with the boot events pipe as control socket
-      cuttlefish::Subprocess(-1, boot_events_pipe),
-      [boot_events_pipe, state_machine](cuttlefish::MonitorEntry*) {
+      Subprocess(-1, boot_events_pipe),
+      [boot_events_pipe, state_machine](MonitorEntry*) {
         auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
         return !sent_code;
       });
 }
 
-bool WriteCuttlefishEnvironment(const cuttlefish::CuttlefishConfig& config) {
-  auto env = cuttlefish::SharedFD::Open(config.cuttlefish_env_path().c_str(),
-                                 O_CREAT | O_RDWR, 0755);
+bool WriteCuttlefishEnvironment(const CuttlefishConfig& config) {
+  auto env = SharedFD::Open(config.cuttlefish_env_path().c_str(),
+                            O_CREAT | O_RDWR, 0755);
   if (!env->IsOpen()) {
     LOG(ERROR) << "Unable to create cuttlefish.env file";
     return false;
@@ -189,12 +185,12 @@ bool WriteCuttlefishEnvironment(const cuttlefish::CuttlefishConfig& config) {
 
 // Forks and returns the write end of a pipe to the child process. The parent
 // process waits for boot events to come through the pipe and exits accordingly.
-cuttlefish::SharedFD DaemonizeLauncher(const cuttlefish::CuttlefishConfig& config) {
+SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  cuttlefish::SharedFD read_end, write_end;
-  if (!cuttlefish::SharedFD::Pipe(&read_end, &write_end)) {
+  SharedFD read_end, write_end;
+  if (!SharedFD::Pipe(&read_end, &write_end)) {
     LOG(ERROR) << "Unable to create pipe";
-    return cuttlefish::SharedFD(); // a closed FD
+    return {}; // a closed FD
   }
   auto pid = fork();
   if (pid) {
@@ -215,9 +211,9 @@ cuttlefish::SharedFD DaemonizeLauncher(const cuttlefish::CuttlefishConfig& confi
       LOG(ERROR) << "Unexpected exit code: " << exit_code;
     }
     if (exit_code == RunnerExitCodes::kSuccess) {
-      LOG(INFO) << cuttlefish::kBootCompletedMessage;
+      LOG(INFO) << kBootCompletedMessage;
     } else {
-      LOG(INFO) << cuttlefish::kBootFailedMessage;
+      LOG(INFO) << kBootFailedMessage;
     }
     std::exit(exit_code);
   } else {
@@ -228,17 +224,14 @@ cuttlefish::SharedFD DaemonizeLauncher(const cuttlefish::CuttlefishConfig& confi
     }
     // Redirect standard I/O
     auto log_path = instance.launcher_log_path();
-    auto log =
-        cuttlefish::SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_APPEND,
-                            S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    auto log = SharedFD::Open(log_path.c_str(), O_CREAT | O_WRONLY | O_APPEND,
+                              S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
     if (!log->IsOpen()) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
-    ::android::base::SetLogger(cuttlefish::TeeLogger({
-      {cuttlefish::LogFileSeverity(), log},
-    }));
-    auto dev_null = cuttlefish::SharedFD::Open("/dev/null", O_RDONLY);
+    ::android::base::SetLogger(TeeLogger({{LogFileSeverity(), log}}));
+    auto dev_null = SharedFD::Open("/dev/null", O_RDONLY);
     if (!dev_null->IsOpen()) {
       LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
@@ -264,7 +257,7 @@ cuttlefish::SharedFD DaemonizeLauncher(const cuttlefish::CuttlefishConfig& confi
 bool CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path) {
-  cuttlefish::Command crosvm_qcow2_cmd(crosvm_path);
+  Command crosvm_qcow2_cmd(crosvm_path);
   crosvm_qcow2_cmd.AddParameter("create_qcow2");
   crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
   crosvm_qcow2_cmd.AddParameter(output_overlay_path);
@@ -277,12 +270,11 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
 }
 
 bool PowerwashFiles() {
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = CuttlefishConfig::Get();
   if (!config) {
     LOG(ERROR) << "Could not load the config.";
     return false;
   }
-  using cuttlefish::CreateBlankImage;
   auto instance = config->ForDefaultInstance();
 
   // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
@@ -310,7 +302,7 @@ bool PowerwashFiles() {
   CreateBlankImage(pstore_path, 2 /* mb */, "none");
 
   auto sdcard_path = instance.sdcard_path();
-  auto sdcard_size = cuttlefish::FileSize(sdcard_path);
+  auto sdcard_size = FileSize(sdcard_path);
   unlink(sdcard_path.c_str());
   // round up
   auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
@@ -327,52 +319,50 @@ bool PowerwashFiles() {
   return true;
 }
 
-void ServerLoop(cuttlefish::SharedFD server,
-                cuttlefish::ProcessMonitor* process_monitor) {
+void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
   while (true) {
     // TODO: use select to handle simultaneous connections.
-    auto client = cuttlefish::SharedFD::Accept(*server);
-    cuttlefish::LauncherAction action;
+    auto client = SharedFD::Accept(*server);
+    LauncherAction action;
     while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
       switch (action) {
-        case cuttlefish::LauncherAction::kStop:
+        case LauncherAction::kStop:
           if (process_monitor->StopMonitoredProcesses()) {
-            auto response = cuttlefish::LauncherResponse::kSuccess;
+            auto response = LauncherResponse::kSuccess;
             client->Write(&response, sizeof(response));
             std::exit(0);
           } else {
-            auto response = cuttlefish::LauncherResponse::kError;
+            auto response = LauncherResponse::kError;
             client->Write(&response, sizeof(response));
           }
           break;
-        case cuttlefish::LauncherAction::kStatus: {
+        case LauncherAction::kStatus: {
           // TODO(schuffelen): Return more information on a side channel
-          auto response = cuttlefish::LauncherResponse::kSuccess;
+          auto response = LauncherResponse::kSuccess;
           client->Write(&response, sizeof(response));
           break;
         }
-        case cuttlefish::LauncherAction::kPowerwash: {
+        case LauncherAction::kPowerwash: {
           LOG(INFO) << "Received a Powerwash request from the monitor socket";
           if (!process_monitor->StopMonitoredProcesses()) {
             LOG(ERROR) << "Stopping processes failed.";
-            auto response = cuttlefish::LauncherResponse::kError;
+            auto response = LauncherResponse::kError;
             client->Write(&response, sizeof(response));
             break;
           }
           if (!PowerwashFiles()) {
             LOG(ERROR) << "Powerwashing files failed.";
-            auto response = cuttlefish::LauncherResponse::kError;
+            auto response = LauncherResponse::kError;
             client->Write(&response, sizeof(response));
             break;
           }
-          auto response = cuttlefish::LauncherResponse::kSuccess;
+          auto response = LauncherResponse::kSuccess;
           client->Write(&response, sizeof(response));
 
-          auto config = cuttlefish::CuttlefishConfig::Get();
+          auto config = CuttlefishConfig::Get();
           auto config_path = config->AssemblyPath("cuttlefish_config.json");
-          auto followup_stdin =
-              cuttlefish::SharedFD::MemfdCreate("pseudo_stdin");
-          cuttlefish::WriteAll(followup_stdin, config_path + "\n");
+          auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
+          WriteAll(followup_stdin, config_path + "\n");
           followup_stdin->LSeek(0, SEEK_SET);
           followup_stdin->UNMANAGED_Dup2(0);
 
@@ -391,26 +381,26 @@ void ServerLoop(cuttlefish::SharedFD server,
           execv("/proc/self/exe", argv);
           // execve should not return, so something went wrong.
           PLOG(ERROR) << "execv returned: ";
-          response = cuttlefish::LauncherResponse::kError;
+          response = LauncherResponse::kError;
           client->Write(&response, sizeof(response));
           break;
         }
         default:
           LOG(ERROR) << "Unrecognized launcher action: "
                      << static_cast<char>(action);
-          auto response = cuttlefish::LauncherResponse::kError;
+          auto response = LauncherResponse::kError;
           client->Write(&response, sizeof(response));
       }
     }
   }
 }
 
-std::string GetConfigFilePath(const cuttlefish::CuttlefishConfig& config) {
+std::string GetConfigFilePath(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   return instance.PerInstancePath("cuttlefish_config.json");
 }
 
-void PrintStreamingInformation(const cuttlefish::CuttlefishConfig& config) {
+void PrintStreamingInformation(const CuttlefishConfig& config) {
   if (config.ForDefaultInstance().start_webrtc_sig_server()) {
     // TODO (jemoreira): Change this when webrtc is moved to the debian package.
     LOG(INFO) << kGreenColor << "Point your browser to https://"
@@ -427,7 +417,7 @@ void PrintStreamingInformation(const cuttlefish::CuttlefishConfig& config) {
 
 }  // namespace
 
-int main(int argc, char** argv) {
+int RunCvdMain(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, false);
@@ -435,20 +425,20 @@ int main(int argc, char** argv) {
   if (isatty(0)) {
     LOG(FATAL) << "stdin was a tty, expected to be passed the output of a previous stage. "
                << "Did you mean to run launch_cvd?";
-    return cuttlefish::RunnerExitCodes::kInvalidHostConfiguration;
+    return RunnerExitCodes::kInvalidHostConfiguration;
   } else {
     int error_num = errno;
     if (error_num == EBADF) {
       LOG(FATAL) << "stdin was not a valid file descriptor, expected to be passed the output "
                  << "of assemble_cvd. Did you mean to run launch_cvd?";
-      return cuttlefish::RunnerExitCodes::kInvalidHostConfiguration;
+      return RunnerExitCodes::kInvalidHostConfiguration;
     }
   }
 
   std::string input_files_str;
   {
-    auto input_fd = cuttlefish::SharedFD::Dup(0);
-    auto bytes_read = cuttlefish::ReadAll(input_fd, &input_files_str);
+    auto input_fd = SharedFD::Dup(0);
+    auto bytes_read = ReadAll(input_fd, &input_files_str);
     if (bytes_read < 0) {
       LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
     }
@@ -458,14 +448,14 @@ int main(int argc, char** argv) {
   for (const auto& file : input_files) {
     if (file.find("cuttlefish_config.json") != std::string::npos) {
       found_config = true;
-      setenv(cuttlefish::kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
+      setenv(kCuttlefishConfigEnvVarName, file.c_str(), /* overwrite */ false);
     }
   }
   if (!found_config) {
     return RunnerExitCodes::kCuttlefishConfigurationInitError;
   }
 
-  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto config = CuttlefishConfig::Get();
   auto instance = config->ForDefaultInstance();
 
   auto log_path = instance.launcher_log_path();
@@ -475,11 +465,11 @@ int main(int argc, char** argv) {
     auto assembly_path = config->AssemblyPath("assemble_cvd.log");
     std::ifstream assembly_log_ifstream(assembly_path);
     if (assembly_log_ifstream) {
-      auto assemble_log = cuttlefish::ReadFile(assembly_path);
+      auto assemble_log = ReadFile(assembly_path);
       launcher_log_ofstream << assemble_log;
     }
   }
-  ::android::base::SetLogger(cuttlefish::LogToStderrAndFiles({log_path}));
+  ::android::base::SetLogger(LogToStderrAndFiles({log_path}));
 
   // Change working directory to the instance directory as early as possible to
   // ensure all host processes have the same working dir. This helps stop_cvd
@@ -493,7 +483,7 @@ int main(int argc, char** argv) {
     return RunnerExitCodes::kInstanceDirCreationError;
   }
 
-  auto used_tap_devices = cuttlefish::TapInterfacesInUse();
+  auto used_tap_devices = TapInterfacesInUse();
   if (used_tap_devices.count(instance.wifi_tap_name())) {
     LOG(ERROR) << "Wifi TAP device already in use";
     return RunnerExitCodes::kTapDeviceInUse;
@@ -555,14 +545,14 @@ int main(int argc, char** argv) {
             << kResetColor;
 
   auto launcher_monitor_path = instance.launcher_monitor_socket_path();
-  auto launcher_monitor_socket = cuttlefish::SharedFD::SocketLocalServer(
+  auto launcher_monitor_socket = SharedFD::SocketLocalServer(
       launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
   if (!launcher_monitor_socket->IsOpen()) {
     LOG(ERROR) << "Error when opening launcher server: "
                << launcher_monitor_socket->StrError();
-    return cuttlefish::RunnerExitCodes::kMonitorCreationFailed;
+    return RunnerExitCodes::kMonitorCreationFailed;
   }
-  cuttlefish::SharedFD foreground_launcher_pipe;
+  SharedFD foreground_launcher_pipe;
   if (config->run_as_daemon()) {
     foreground_launcher_pipe = DaemonizeLauncher(*config);
     if (!foreground_launcher_pipe->IsOpen()) {
@@ -580,10 +570,9 @@ int main(int argc, char** argv) {
     }
   }
 
-  cuttlefish::SharedFD powerwash_notification;
+  SharedFD powerwash_notification;
   if (FLAGS_powerwash_notification_fd >= 0) {
-    powerwash_notification =
-        cuttlefish::SharedFD::Dup(FLAGS_powerwash_notification_fd);
+    powerwash_notification = SharedFD::Dup(FLAGS_powerwash_notification_fd);
     close(FLAGS_powerwash_notification_fd);
   }
 
@@ -592,18 +581,18 @@ int main(int argc, char** argv) {
           foreground_launcher_pipe, powerwash_notification);
 
   // Monitor and restart host processes supporting the CVD
-  cuttlefish::ProcessMonitor process_monitor;
+  ProcessMonitor process_monitor;
 
-  if (config->enable_metrics() == cuttlefish::CuttlefishConfig::kYes) {
+  if (config->enable_metrics() == CuttlefishConfig::kYes) {
     LaunchMetrics(&process_monitor, *config);
   }
   LaunchModemSimulatorIfEnabled(*config, &process_monitor);
 
   auto event_pipes =
       LaunchKernelLogMonitor(*config, &process_monitor, 3);
-  cuttlefish::SharedFD boot_events_pipe = event_pipes[0];
-  cuttlefish::SharedFD adbd_events_pipe = event_pipes[1];
-  cuttlefish::SharedFD webrtc_events_pipe = event_pipes[2];
+  SharedFD boot_events_pipe = event_pipes[0];
+  SharedFD adbd_events_pipe = event_pipes[1];
+  SharedFD webrtc_events_pipe = event_pipes[2];
   event_pipes.clear();
 
   SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
@@ -614,7 +603,7 @@ int main(int argc, char** argv) {
   LaunchTombstoneReceiver(*config, &process_monitor);
   LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
   LaunchSecureEnvironment(&process_monitor, *config);
-  LaunchVerhicleHalServerIfEnabled(*config, &process_monitor);
+  LaunchVehicleHalServerIfEnabled(*config, &process_monitor);
   LaunchConsoleForwarderIfEnabled(*config, &process_monitor);
 
   // The streamer needs to launch before the VMM because it serves on several
@@ -628,15 +617,14 @@ int main(int argc, char** argv) {
   }
 
   auto kernel_args =
-      cuttlefish::KernelCommandLineFromConfig(
-          *config, config->ForDefaultInstance());
+      KernelCommandLineFromConfig(*config, config->ForDefaultInstance());
 
   // Start the guest VM
   auto vmm_commands = vm_manager->StartCommands(
       *config, android::base::Join(kernel_args, " "));
   for (auto& vmm_cmd: vmm_commands) {
-      process_monitor.StartSubprocess(std::move(vmm_cmd),
-                                      GetOnSubprocessExitCallback(*config));
+    process_monitor.StartSubprocess(std::move(vmm_cmd),
+                                    GetOnSubprocessExitCallback(*config));
   }
 
   // Start other host processes
@@ -645,5 +633,11 @@ int main(int argc, char** argv) {
 
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
-  return cuttlefish::RunnerExitCodes::kServerError;
+  return RunnerExitCodes::kServerError;
+}
+
+} // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::RunCvdMain(argc, argv);
 }
