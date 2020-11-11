@@ -284,6 +284,8 @@ DEFINE_int32(vsock_guest_cid,
              "the vsock cid of the i th instance would be C + i where i is in [1, N]"
              "If --num_instances is not given, the default value of N is used.");
 
+DEFINE_bool(ethernet, false, "Enable Ethernet network interface");
+
 DECLARE_string(system_image_dir);
 
 namespace {
@@ -600,6 +602,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
 
+  tmp_config_obj.set_ethernet(FLAGS_ethernet);
+
   std::vector<int> num_instances;
   for (int i = 0; i < FLAGS_num_instances; i++) {
     num_instances.push_back(cuttlefish::GetInstance() + i);
@@ -636,8 +640,8 @@ cuttlefish::CuttlefishConfig InitializeCuttlefishConfiguration(
 
     instance.set_mobile_bridge_name(StrForInstance("cvd-mbr-", num));
     instance.set_mobile_tap_name(iface_config.mobile_tap.name);
-
     instance.set_wifi_tap_name(iface_config.wireless_tap.name);
+    instance.set_ethernet_tap_name(iface_config.ethernet_tap.name);
 
     instance.set_vsock_guest_cid(FLAGS_vsock_guest_cid + num - cuttlefish::GetInstance());
 

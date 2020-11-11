@@ -500,6 +500,9 @@ int main(int argc, char** argv) {
   } else if (used_tap_devices.count(instance.mobile_tap_name())) {
     LOG(ERROR) << "Mobile TAP device already in use";
     return RunnerExitCodes::kTapDeviceInUse;
+  } else if (config->ethernet() &&
+             used_tap_devices.count(instance.ethernet_tap_name())) {
+    LOG(ERROR) << "Ethernet TAP device already in use";
   }
 
   auto vm_manager = GetVmManager(config->vm_manager());
