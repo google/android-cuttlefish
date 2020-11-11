@@ -26,8 +26,8 @@ namespace cuttlefish {
 enum class ResourceType {
   Invalid = 0,
   MobileIface,
-  WirelessIface,
-  WirelessBridge
+  EthernetIface,
+  EthernetBridge,
 };
 
 class StaticResource {
@@ -75,21 +75,25 @@ class MobileIface : public StaticResource {
   std::string ipaddr_;
 };
 
-class WirelessIface : public StaticResource {
+class EthernetIface : public StaticResource {
  public:
-  WirelessIface() = default;
-  ~WirelessIface() = default;
+  EthernetIface() = default;
+  ~EthernetIface() = default;
 
-  WirelessIface(const std::string& name, uid_t uid, uint16_t iface_id,
-                uint32_t global_id, std::string ipaddr)
+  EthernetIface(const std::string& name, uid_t uid, uint16_t iface_id,
+                uint32_t global_id, std::string bridge_name,
+                std::string ipaddr)
       : StaticResource(name, uid, ResourceType::MobileIface, global_id),
         iface_id_(iface_id),
+        bridge_name_(bridge_name),
         ipaddr_(ipaddr) {}
 
   bool ReleaseResource() override;
   bool AcquireResource() override;
 
   uint16_t GetIfaceId() { return iface_id_; }
+
+  std::string GetBridgeName() { return bridge_name_; }
   std::string GetIpAddr() { return ipaddr_; }
 
   void SetHasIpv4(bool ipv4) { has_ipv4_ = ipv4; }
@@ -105,6 +109,7 @@ class WirelessIface : public StaticResource {
  private:
   static constexpr char kNetmask[] = "/24";
   uint16_t iface_id_;
+  std::string bridge_name_;
   std::string ipaddr_;
   bool has_ipv4_ = true;
   bool has_ipv6_ = true;

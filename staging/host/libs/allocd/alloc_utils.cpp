@@ -63,17 +63,13 @@ bool BringUpIface(const std::string& name) {
   return status == 0;
 }
 
-bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                         bool has_ipv6_bridge, bool use_ebtables_legacy) {
+bool CreateEthernetIface(const std::string& name, const std::string& bridge_name,
+                         bool has_ipv4_bridge, bool has_ipv6_bridge,
+                         bool use_ebtables_legacy) {
   // assume bridge exists
 
-  WirelessNetworkConfig config{false, false, false};
+  EthernetNetworkConfig config{false, false, false};
 
-  // TODO (paulkirth): change this to cvd-wbr, to test w/ today's debian
-  // package, this is required since the number of wireless bridges provided by
-  // the debian package has gone from 10 down to 1, but our debian packages in
-  // cloudtop are not up to date
-  auto bridge_name = "cvd-wbr-01";
   if (!CreateTap(name)) {
     return false;
   }
@@ -81,13 +77,13 @@ bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
   config.has_tap = true;
 
   if (!LinkTapToBridge(name, bridge_name)) {
-    CleanupWirelessIface(name, config);
+    CleanupEthernetIface(name, config);
     return false;
   }
 
   if (!has_ipv4_bridge) {
     if (!CreateEbtables(name, true, use_ebtables_legacy)) {
-      CleanupWirelessIface(name, config);
+      CleanupEthernetIface(name, config);
       return false;
     }
     config.has_broute_ipv4 = true;
@@ -95,7 +91,7 @@ bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
 
   if (!has_ipv6_bridge) {
     if (CreateEbtables(name, false, use_ebtables_legacy)) {
-      CleanupWirelessIface(name, config);
+      CleanupEthernetIface(name, config);
       return false;
     }
     config.has_broute_ipv6 = true;
@@ -183,7 +179,7 @@ bool DestroyGateway(const std::string& name, const std::string& gateway,
   return status == 0;
 }
 
-bool DestroyWirelessIface(const std::string& name, bool has_ipv4_bridge,
+bool DestroyEthernetIface(const std::string& name, bool has_ipv4_bridge,
                           bool has_ipv6_bridge, bool use_ebtables_legacy) {
   if (!has_ipv6_bridge) {
     DestroyEbtables(name, false, use_ebtables_legacy);
@@ -196,8 +192,8 @@ bool DestroyWirelessIface(const std::string& name, bool has_ipv4_bridge,
   return DestroyIface(name);
 }
 
-void CleanupWirelessIface(const std::string& name,
-                          const WirelessNetworkConfig& config) {
+void CleanupEthernetIface(const std::string& name,
+                          const EthernetNetworkConfig& config) {
   if (config.has_broute_ipv6) {
     DestroyEbtables(name, false, config.use_ebtables_legacy);
   }
@@ -458,12 +454,13 @@ bool IptableConfig(const std::string& network, bool add) {
   return status == 0;
 }
 
-bool CreateWirelessBridgeIface(const std::string& name) {
+bool CreateEthernetBridgeIface(const std::string& name,
+                               const std::string& ipaddr) {
   if (!CreateBridge(name)) {
     return false;
   }
 
-  if (!SetupBridgeGateway(name, kWirelessIp)) {
+  if (!SetupBridgeGateway(name, ipaddr)) {
     DestroyBridge(name);
     return false;
   }
@@ -471,12 +468,13 @@ bool CreateWirelessBridgeIface(const std::string& name) {
   return true;
 }
 
-bool DestroyWirelessBridgeIface(const std::string& name) {
+bool DestroyEthernetBridgeIface(const std::string& name,
+                                const std::string& ipaddr) {
   GatewayConfig config{true, true, true};
 
   // Don't need to check if removing some part of the config failed, we need to
   // remove the entire interface, so just ignore any error until the end
-  CleanupBridgeGateway(name, kWirelessIp, config);
+  CleanupBridgeGateway(name, ipaddr, config);
 
   return DestroyBridge(name);
 }

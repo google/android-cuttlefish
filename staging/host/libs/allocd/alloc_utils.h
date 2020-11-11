@@ -36,6 +36,8 @@ constexpr char kEbtablesLegacyName[] = "ebtables-legacy";
 constexpr char kWirelessIp[] = "192.168.96";
 // Mobile network prefix
 constexpr char kMobileIp[] = "192.168.97";
+// Ethernet network prefix
+constexpr char kEthernetIp[] = "192.168.98";
 // permission bits for socket
 constexpr int kSocketMode = 0666;
 
@@ -46,7 +48,7 @@ constexpr int kSocketMode = 0666;
 constexpr uint32_t kMaxIfaceNameId = 63;
 
 // struct for managing configuration state
-struct WirelessNetworkConfig {
+struct EthernetNetworkConfig {
   bool has_broute_ipv4 = false;
   bool has_broute_ipv6 = false;
   bool has_tap = false;
@@ -89,12 +91,14 @@ bool CreateMobileIface(const std::string& name, uint16_t id,
 bool DestroyMobileIface(const std::string& name, uint16_t id,
                         const std::string& ipaddr);
 
-bool CreateWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                         bool has_ipv6_bridge, bool use_ebtables_legacy);
-bool DestroyWirelessIface(const std::string& name, bool has_ipv4_bridge,
-                          bool use_ipv6, bool use_ebtables_legacy);
-void CleanupWirelessIface(const std::string& name,
-                          const WirelessNetworkConfig& config);
+bool CreateEthernetIface(const std::string& name, const std::string& bridge_name,
+                         bool has_ipv4_bridge, bool has_ipv6_bridge,
+                         bool use_ebtables_legacy);
+bool DestroyEthernetIface(const std::string& name,
+                          bool has_ipv4_bridge, bool use_ipv6,
+                          bool use_ebtables_legacy);
+void CleanupEthernetIface(const std::string& name,
+                          const EthernetNetworkConfig& config);
 
 bool IptableConfig(const std::string& network, bool add);
 
@@ -105,8 +109,10 @@ bool SetupBridgeGateway(const std::string& name, const std::string& ipaddr);
 void CleanupBridgeGateway(const std::string& name, const std::string& ipaddr,
                           const GatewayConfig& config);
 
-bool CreateWirelessBridgeIface(const std::string& name);
-bool DestroyWirelessBridgeIface(const std::string& name);
+bool CreateEthernetBridgeIface(const std::string& name,
+                               const std::string &ipaddr);
+bool DestroyEthernetBridgeIface(const std::string& name,
+                                const std::string &ipaddr);
 
 bool AddGateway(const std::string& name, const std::string& gateway,
                 const std::string& netmask);

@@ -28,6 +28,7 @@ struct IfaceData {
 struct IfaceConfig {
   IfaceData mobile_tap;
   IfaceData wireless_tap;
+  IfaceData ethernet_tap;
 };
 
 IfaceConfig DefaultNetworkInterfaces(int num);
