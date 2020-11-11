@@ -3,14 +3,15 @@
 # Maximum number of concurrent CVDs runnable on this machine.
 #num_cvd_accounts=10
 
-# Network bridge to use with the cuttlefish wifi tap devices. By default,
-# we will create and destroy a managed bridge called 'cvd-wbr' but all
-# interfaces comprising this bridge will be NAT'ed, and IPv6 will not
-# be configured. Setting a preconfigured bridge interface here (usually
-# with just one physical ethernet controller in it) suppresses bridge
-# management, and instead adds the cuttlefish wifi tap devices the
-# specified bridge. By specifying a network interface here, you can
-# disable IPv4 or IPv6 bridging with 'ipv4_bridge' and 'ipv6_bridge'.
+# Network bridge to use with the cuttlefish wifi and ethernet tap devices.
+# By default, we will create and destroy managed bridges called 'cvd-wbr'
+# and 'cvd-ebr' but all interfaces comprising these bridges will be
+# NAT'ed, and IPv6 will not be configured. Setting a preconfigured bridge
+# interface here (usually with just one physical ethernet controller in it)
+# suppresses bridge management, and instead adds the cuttlefish wifi and
+# ethernet tap devices to the specified bridge. By specifying a network
+# interface here, you can disable IPv4 or IPv6 bridging with 'ipv4_bridge'
+# and 'ipv6_bridge'.
 #bridge_interface=
 
 # IPv4 bridging. Defaults on. Requires 'bridge_interface' to be set,

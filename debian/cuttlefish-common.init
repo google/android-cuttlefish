@@ -34,23 +34,16 @@ if [ -f /etc/default/cuttlefish-common ]; then
     . /etc/default/cuttlefish-common
 fi
 
-if [ -z "${num_cvd_accounts}" ]; then
-    num_cvd_accounts=10
-fi
-if [ -z "${bridge_interface}" ]; then
-    bridge_interface=cvd-wbr
-fi
-if [ -z "${ipv4_bridge}" ]; then
-    ipv4_bridge=1
-fi
-if [ -z "${ipv6_bridge}" ]; then
-    ipv6_bridge=1
-fi
-if [ -z "${dns_servers}" ]; then
-    dns_servers="8.8.8.8,8.8.4.4"
-fi
-if [ -z "${dns6_servers}" ]; then
-    dns6_servers="2001:4860:4860::8888,2001:4860:4860::8844"
+num_cvd_accounts=${num_cvd_accounts:-10}
+wifi_bridge_interface=${bridge_interface:-cvd-wbr}
+ethernet_bridge_interface=${bridge_interface:-cvd-ebr}
+ipv4_bridge=${ipv4_bridge:-1}
+ipv6_bridge=${ipv4_bridge:-1}
+dns_servers=${dns_servers:-8.8.8.8,8.8.4.4}
+dns6_servers=${dns6_servers:-2001:4860:4860::8888,2001:4860:4860::8844}
+
+if [ -z ${bridge_interface} ]; then
+  create_bridges=1
 fi
 
 # Newer distros prefer nft, but broute is not supported, so use
@@ -134,19 +127,20 @@ destroy_mobile_interface() {
     destroy_tap "${tap}"
 }
 
-# Create many wireless tap devices on a single bridge
+# Create many tap devices on a single bridge (wifi or ethernet)
 # $1 = ip address base ("a.b.c")
-create_wireless_interfaces() {
-    if [ "${bridge_interface}" = "cvd-wbr" ]; then
-        ip link add name "${bridge_interface}" \
-          type bridge forward_delay 0 stp_state 0
-        ip link set dev "${bridge_interface}" up
+# $2 = bridge interface name
+# $3 = tap base name
+create_bridged_interfaces() {
+    if [ "${create_bridges}" = "1" ]; then
+        ip link add name "${2}" type bridge forward_delay 0 stp_state 0
+        ip link set dev "${2}" up
     fi
     for i in $(seq ${num_cvd_accounts}); do
-        tap="$(printf cvd-wtap-%02d $i)"
+        tap="$(printf ${3}-%02d $i)"
         create_tap "${tap}"
-        ip link set dev "${tap}" master "${bridge_interface}"
-        if [ "${bridge_interface}" != "cvd-wbr" ]; then
+        ip link set dev "${tap}" master "${2}"
+        if [ "${create_bridges}" != "1" ]; then
             if [ "$ipv4_bridge" != "1" ]; then
                 $ebtables -t broute -A BROUTING -p ipv4 --in-if  "${tap}" -j DROP
                 $ebtables -t filter -A FORWARD  -p ipv4 --out-if "${tap}" -j DROP
@@ -157,31 +151,33 @@ create_wireless_interfaces() {
             fi
         fi
     done
-    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+    if [ "${create_bridges}" = "1" ]; then
         gateway="${1}.1"
         netmask="/24"
         network="${1}.0${netmask}"
         dhcp_range="${1}.2,${1}.255"
-        ip addr add "${gateway}${netmask}" broadcast + dev "${bridge_interface}"
-        start_dnsmasq "${bridge_interface}" "${gateway}" "${dhcp_range}"
+        ip addr add "${gateway}${netmask}" broadcast + dev "${2}"
+        start_dnsmasq "${2}" "${gateway}" "${dhcp_range}"
         iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
     fi
 }
 
-# Destroy many wireless tap devices and a single bridge
+# Destroy many tap devices and a single bridge (wifi or ethernet)
 # $1 = ip address base ("a.b.c")
-destroy_wireless_interfaces() {
-    if [ "${bridge_interface}" = "cvd-wbr" ]; then
+# $2 = bridge interface name
+# $3 = tap base name
+destroy_bridged_interfaces() {
+    if [ "${create_bridges}" = "1" ]; then
         gateway="${1}.1"
         netmask="/24"
         network="${1}.0${netmask}"
         iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
-        stop_dnsmasq "${bridge_interface}"
-        ip addr del "${gateway}${netmask}" dev "${bridge_interface}"
+        stop_dnsmasq "${2}"
+        ip addr del "${gateway}${netmask}" dev "${2}"
     fi
     for i in $(seq ${num_cvd_accounts}); do
-        tap="$(printf cvd-wtap-%02d $i)"
-        if [ "${bridge_interface}" != "cvd-wbr" ]; then
+        tap="$(printf ${3}-%02d $i)"
+        if [ "${create_bridges}" != "1" ]; then
             if [ "$ipv4_bridge" != "1" ]; then
                 $ebtables -t filter -D FORWARD  -p ipv4 --out-if "${tap}" -j DROP
                 $ebtables -t broute -D BROUTING -p ipv4 --in-if  "${tap}" -j DROP
@@ -193,9 +189,9 @@ destroy_wireless_interfaces() {
         fi
         destroy_tap "${tap}"
     done
-    if [ "${bridge_interface}" = "cvd-wbr" ]; then
-        ip link set dev "${bridge_interface}" down
-        ip link delete "${bridge_interface}"
+    if [ "${create_bridges}" = "1" ]; then
+        ip link set dev "${2}" down
+        ip link delete "${2}"
     fi
 }
 
@@ -203,10 +199,11 @@ start() {
     # Enable ip forwarding
     echo 1 >/proc/sys/net/ipv4/ip_forward
 
-    create_wireless_interfaces 192.168.96
+    create_bridged_interfaces 192.168.96 ${wifi_bridge_interface} cvd-wtap
     for i in $(seq ${num_cvd_accounts}); do
         create_mobile_interface $i 192.168.97
     done
+    create_bridged_interfaces 192.168.98 ${ethernet_bridge_interface} cvd-etap
 
     # When running inside a privileged container, set the ownership and access
     # of these device nodes.
@@ -224,10 +221,11 @@ start() {
 }
 
 stop() {
+    destroy_bridged_interfaces 192.168.98 ${ethernet_bridge_interface} cvd-etap
     for i in $(seq ${num_cvd_accounts}); do
         destroy_mobile_interface $i 192.168.97
     done
-    destroy_wireless_interfaces 192.168.96
+    destroy_bridged_interfaces 192.168.96 ${wifi_bridge_interface} cvd-wtap
 }
 
 usage() {
