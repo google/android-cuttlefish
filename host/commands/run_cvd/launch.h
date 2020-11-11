@@ -52,8 +52,8 @@ void LaunchCustomActionServers(Command& webrtc_cmd,
                                ProcessMonitor* process_monitor,
                                const CuttlefishConfig& config);
 
-void LaunchVerhicleHalServerIfEnabled(const CuttlefishConfig& config,
-                                      ProcessMonitor* process_monitor);
+void LaunchVehicleHalServerIfEnabled(const CuttlefishConfig& config,
+                                     ProcessMonitor* process_monitor);
 
 void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
                                      ProcessMonitor* process_monitor);

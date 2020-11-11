@@ -600,7 +600,7 @@ int RunCvdMain(int argc, char** argv) {
   LaunchTombstoneReceiver(*config, &process_monitor);
   LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
   LaunchSecureEnvironment(&process_monitor, *config);
-  LaunchVerhicleHalServerIfEnabled(*config, &process_monitor);
+  LaunchVehicleHalServerIfEnabled(*config, &process_monitor);
   LaunchConsoleForwarderIfEnabled(*config, &process_monitor);
 
   // The streamer needs to launch before the VMM because it serves on several
@@ -620,8 +620,8 @@ int RunCvdMain(int argc, char** argv) {
   auto vmm_commands = vm_manager->StartCommands(
       *config, android::base::Join(kernel_args, " "));
   for (auto& vmm_cmd: vmm_commands) {
-      process_monitor.StartSubprocess(std::move(vmm_cmd),
-                                      GetOnSubprocessExitCallback(*config));
+    process_monitor.StartSubprocess(std::move(vmm_cmd),
+                                    GetOnSubprocessExitCallback(*config));
   }
 
   // Start other host processes

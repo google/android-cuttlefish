@@ -563,79 +563,79 @@ void LaunchCustomActionServers(Command& webrtc_cmd,
   }
 }
 
-void LaunchVerhicleHalServerIfEnabled(const CuttlefishConfig& config,
+void LaunchVehicleHalServerIfEnabled(const CuttlefishConfig& config,
                                       ProcessMonitor* process_monitor) {
-    if (!config.enable_vehicle_hal_grpc_server() ||
-        !FileExists(config.vehicle_hal_grpc_server_binary())) {
-        return;
-    }
+  if (!config.enable_vehicle_hal_grpc_server() ||
+    !FileExists(config.vehicle_hal_grpc_server_binary())) {
+    return;
+  }
 
-    Command grpc_server(config.vehicle_hal_grpc_server_binary());
-    auto instance = config.ForDefaultInstance();
+  Command grpc_server(config.vehicle_hal_grpc_server_binary());
+  auto instance = config.ForDefaultInstance();
 
-    const unsigned vhal_server_cid = 2;
-    const unsigned vhal_server_port = instance.vehicle_hal_server_port();
-    const std::string vhal_server_power_state_file =
-        AbsolutePath(instance.PerInstancePath("power_state"));
-    const std::string vhal_server_power_state_socket =
-        AbsolutePath(instance.PerInstancePath("power_state_socket"));
+  const unsigned vhal_server_cid = 2;
+  const unsigned vhal_server_port = instance.vehicle_hal_server_port();
+  const std::string vhal_server_power_state_file =
+      AbsolutePath(instance.PerInstancePath("power_state"));
+  const std::string vhal_server_power_state_socket =
+      AbsolutePath(instance.PerInstancePath("power_state_socket"));
 
-    grpc_server.AddParameter("--server_cid=", vhal_server_cid);
-    grpc_server.AddParameter("--server_port=", vhal_server_port);
-    grpc_server.AddParameter("--power_state_file=", vhal_server_power_state_file);
-    grpc_server.AddParameter("--power_state_socket=", vhal_server_power_state_socket);
-    process_monitor->StartSubprocess(std::move(grpc_server),
-                                     GetOnSubprocessExitCallback(config));
+  grpc_server.AddParameter("--server_cid=", vhal_server_cid);
+  grpc_server.AddParameter("--server_port=", vhal_server_port);
+  grpc_server.AddParameter("--power_state_file=", vhal_server_power_state_file);
+  grpc_server.AddParameter("--power_state_socket=", vhal_server_power_state_socket);
+  process_monitor->StartSubprocess(std::move(grpc_server),
+                                   GetOnSubprocessExitCallback(config));
 }
 
 void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
                                      ProcessMonitor* process_monitor)
 {
-    if (!config.console()) {
-        return;
-    }
+  if (!config.console()) {
+    return;
+  }
 
-    Command console_forwarder_cmd(ConsoleForwarderBinary());
-    auto instance = config.ForDefaultInstance();
+  Command console_forwarder_cmd(ConsoleForwarderBinary());
+  auto instance = config.ForDefaultInstance();
 
-    auto console_in_pipe_name = instance.console_in_pipe_name();
-    if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create console input fifo for crosvm: "
-                 << strerror(error);
-      return;
-    }
+  auto console_in_pipe_name = instance.console_in_pipe_name();
+  if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
+    auto error = errno;
+    LOG(ERROR) << "Failed to create console input fifo for crosvm: "
+               << strerror(error);
+    return;
+  }
 
-    auto console_out_pipe_name = instance.console_out_pipe_name();
-    if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create console output fifo for crosvm: "
-                 << strerror(error);
-      return;
-    }
+  auto console_out_pipe_name = instance.console_out_pipe_name();
+  if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
+    auto error = errno;
+    LOG(ERROR) << "Failed to create console output fifo for crosvm: "
+               << strerror(error);
+    return;
+  }
 
-    // These fds will only be read from or written to, but open them with
-    // read and write access to keep them open in case the subprocesses exit
-    SharedFD console_forwarder_in_wr =
-        SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-    if (!console_forwarder_in_wr->IsOpen()) {
-      LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
-                 << console_forwarder_in_wr->StrError();
-      return;
-    }
+  // These fds will only be read from or written to, but open them with
+  // read and write access to keep them open in case the subprocesses exit
+  SharedFD console_forwarder_in_wr =
+      SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
+  if (!console_forwarder_in_wr->IsOpen()) {
+    LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
+               << console_forwarder_in_wr->StrError();
+    return;
+  }
 
-    SharedFD console_forwarder_out_rd =
-        SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-    if (!console_forwarder_out_rd->IsOpen()) {
-      LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
-                 << console_forwarder_out_rd->StrError();
-      return;
-    }
+  SharedFD console_forwarder_out_rd =
+      SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
+  if (!console_forwarder_out_rd->IsOpen()) {
+    LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
+               << console_forwarder_out_rd->StrError();
+    return;
+  }
 
-    console_forwarder_cmd.AddParameter("--console_in_fd=", console_forwarder_in_wr);
-    console_forwarder_cmd.AddParameter("--console_out_fd=", console_forwarder_out_rd);
-    process_monitor->StartSubprocess(std::move(console_forwarder_cmd),
-                                     GetOnSubprocessExitCallback(config));
+  console_forwarder_cmd.AddParameter("--console_in_fd=", console_forwarder_in_wr);
+  console_forwarder_cmd.AddParameter("--console_out_fd=", console_forwarder_out_rd);
+  process_monitor->StartSubprocess(std::move(console_forwarder_cmd),
+                                   GetOnSubprocessExitCallback(config));
 
 }
 
