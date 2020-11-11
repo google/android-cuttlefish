@@ -411,6 +411,17 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("AC97");
 
+  // TODO(b/172286896): This is temporarily optional, but should be made
+  // unconditional and moved up to the other network devices area
+  if (config.ethernet()) {
+    qemu_cmd.AddParameter("-netdev");
+    qemu_cmd.AddParameter("tap,id=hostnet2,ifname=", instance.ethernet_tap_name(),
+                          ",script=no,downscript=no", vhost_net);
+
+    qemu_cmd.AddParameter("-device");
+    qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet2,id=net2");
+  }
+
   if (config.use_bootloader()) {
     qemu_cmd.AddParameter("-bios");
     qemu_cmd.AddParameter(config.bootloader());

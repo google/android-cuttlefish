@@ -30,13 +30,13 @@ bool MobileIface::ReleaseResource() {
   return DestroyMobileIface(GetName(), iface_id_, ipaddr_);
 }
 
-bool WirelessIface::AcquireResource() {
-  return CreateWirelessIface(GetName(), has_ipv4_, has_ipv6_,
+bool EthernetIface::AcquireResource() {
+  return CreateEthernetIface(GetName(), GetBridgeName(), has_ipv4_, has_ipv6_,
                              use_ebtables_legacy_);
 }
 
-bool WirelessIface::ReleaseResource() {
-  return DestroyWirelessIface(GetName(), has_ipv4_, has_ipv6_,
+bool EthernetIface::ReleaseResource() {
+  return DestroyEthernetIface(GetName(), has_ipv4_, has_ipv6_,
                               use_ebtables_legacy_);
 }
 

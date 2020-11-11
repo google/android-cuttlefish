@@ -168,6 +168,8 @@ const char* kHostToolsVersion = "host_tools_version";
 
 const char* kVhostNet = "vhost_net";
 
+const char* kEthernet = "ethernet";
+
 }  // namespace
 
 const char* const kGpuModeAuto = "auto";
@@ -791,6 +793,13 @@ void CuttlefishConfig::set_vhost_net(bool vhost_net) {
 }
 bool CuttlefishConfig::vhost_net() const {
   return (*dictionary_)[kVhostNet].asBool();
+}
+
+void CuttlefishConfig::set_ethernet(bool ethernet) {
+  (*dictionary_)[kEthernet] = ethernet;
+}
+bool CuttlefishConfig::ethernet() const {
+  return (*dictionary_)[kEthernet].asBool();
 }
 
 // Creates the (initially empty) config object and populates it with values from
