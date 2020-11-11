@@ -28,12 +28,15 @@ public class ConnectivityChecker extends JobBase {
     private static final String LOG_TAG = "GceConnChecker";
     private static final String MOBILE_NETWORK_CONNECTED_MESSAGE =
         "VIRTUAL_DEVICE_NETWORK_MOBILE_CONNECTED";
+    private static final String ETHERNET_NETWORK_CONNECTED_MESSAGE =
+        "VIRTUAL_DEVICE_NETWORK_ETHERNET_CONNECTED";
 
     private final Context mContext;
     private final EventReporter mEventReporter;
     private final GceFuture<Boolean> mConnected = new GceFuture<Boolean>("Connectivity");
     // TODO(schuffelen): Figure out why this has to be static in order to not report 3 times.
     private static boolean reportedMobileConnectivity = false;
+    private static boolean reportedEthernetConnectivity = false;
 
     public ConnectivityChecker(Context context, EventReporter eventReporter) {
         super(LOG_TAG);
@@ -54,11 +57,16 @@ public class ConnectivityChecker extends JobBase {
             NetworkInfo info = connManager.getNetworkInfo(network);
             if (info.isConnected()) {
                 NetworkCapabilities capabilities = connManager.getNetworkCapabilities(network);
-                if (capabilities != null
-                        && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-                        && !reportedMobileConnectivity) {
-                    mEventReporter.reportMessage(MOBILE_NETWORK_CONNECTED_MESSAGE);
-                    reportedMobileConnectivity = true;
+                if (capabilities != null) {
+                    if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+                            && !reportedMobileConnectivity) {
+                        mEventReporter.reportMessage(MOBILE_NETWORK_CONNECTED_MESSAGE);
+                        reportedMobileConnectivity = true;
+                    } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                                   && !reportedEthernetConnectivity) {
+                        mEventReporter.reportMessage(ETHERNET_NETWORK_CONNECTED_MESSAGE);
+                        reportedEthernetConnectivity = true;
+                    }
                 }
             }
         }
