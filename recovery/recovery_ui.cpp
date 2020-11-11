@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-#include <recovery_ui/device.h>
-#include <recovery_ui/screen_ui.h>
+#include <recovery_ui/ethernet_device.h>
+#include <recovery_ui/ethernet_ui.h>
 
-class CuttlefishRecoveryUI : public ScreenRecoveryUI {
+class CuttlefishRecoveryUI : public EthernetRecoveryUI {
   public:
-    CuttlefishRecoveryUI() : ScreenRecoveryUI() {}
-
     bool IsUsbConnected() override {
       return true;
     }
 };
 
 Device* make_device() {
-    return new Device(new CuttlefishRecoveryUI);
+    return new EthernetDevice(new CuttlefishRecoveryUI);
 }
