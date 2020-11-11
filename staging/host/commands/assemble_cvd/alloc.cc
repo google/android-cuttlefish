@@ -39,6 +39,11 @@ IfaceConfig DefaultNetworkInterfaces(int num) {
   config.wireless_tap.name = StrForInstance("cvd-wtap-", num);
   config.wireless_tap.resource_id = 0;
   config.wireless_tap.session_id = 0;
+
+  config.ethernet_tap.name = StrForInstance("cvd-etap-", num);
+  config.ethernet_tap.resource_id = 0;
+  config.ethernet_tap.session_id = 0;
+
   return config;
 }
 
@@ -62,6 +67,8 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   req["iface_type"] = "mtap";
   request_list.append(req);
   req["iface_type"] = "wtap";
+  request_list.append(req);
+  req["iface_type"] = "etap";
   request_list.append(req);
 
   resource_config["config_request"]["request_list"] = request_list;
@@ -102,7 +109,8 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
 
   Json::Value resp_list = resp["response_list"];
   Json::Value mtap_resp;
-  Json::Value wifi_resp;
+  Json::Value wtap_resp;
+  Json::Value etap_resp;
   for (Json::Value::ArrayIndex i = 0; i != resp_list.size(); ++i) {
     auto ty = cuttlefish::StrToIfaceTy(resp_list[i]["iface_type"].asString());
 
@@ -112,7 +120,11 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
         break;
       }
       case cuttlefish::IfaceType::wtap: {
-        wifi_resp = resp_list[i];
+        wtap_resp = resp_list[i];
+        break;
+      }
+      case cuttlefish::IfaceType::etap: {
+        etap_resp = resp_list[i];
         break;
       }
       default: {
@@ -125,8 +137,12 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
     LOG(ERROR) << "Missing mtap response from allocd";
     return std::nullopt;
   }
-  if (!wifi_resp.isMember("iface_type")) {
+  if (!wtap_resp.isMember("iface_type")) {
     LOG(ERROR) << "Missing wtap response from allocd";
+    return std::nullopt;
+  }
+  if (!etap_resp.isMember("iface_type")) {
+    LOG(ERROR) << "Missing etap response from allocd";
     return std::nullopt;
   }
 
@@ -134,9 +150,13 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   config.mobile_tap.resource_id = mtap_resp["resource_id"].asUInt();
   config.mobile_tap.session_id = session_id;
 
-  config.wireless_tap.name = wifi_resp["iface_name"].asString();
-  config.wireless_tap.resource_id = wifi_resp["resource_id"].asUInt();
+  config.wireless_tap.name = wtap_resp["iface_name"].asString();
+  config.wireless_tap.resource_id = wtap_resp["resource_id"].asUInt();
   config.wireless_tap.session_id = session_id;
+
+  config.ethernet_tap.name = etap_resp["iface_name"].asString();
+  config.ethernet_tap.resource_id = etap_resp["resource_id"].asUInt();
+  config.ethernet_tap.session_id = session_id;
 
   return config;
 }

@@ -36,6 +36,7 @@ enum Event : int32_t {
   MobileNetworkConnected = 4,
   AdbdStarted = 5,
   ScreenChanged = 6,
+  EthernetNetworkConnected = 7,
 };
 
 enum class SubscriptionAction {
