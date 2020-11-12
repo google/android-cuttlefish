@@ -23,12 +23,13 @@
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/fetcher_config.h"
 
+namespace cuttlefish {
 namespace {
 
 std::string kFetcherConfigFile = "fetcher_config.json";
 
-cuttlefish::FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
-  cuttlefish::FetcherConfig fetcher_config;
+FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
+  FetcherConfig fetcher_config;
   for (const auto& file : files) {
     auto expected_pos = file.size() - kFetcherConfigFile.size();
     if (file.rfind(kFetcherConfigFile) == expected_pos) {
@@ -43,7 +44,7 @@ cuttlefish::FetcherConfig FindFetcherConfig(const std::vector<std::string>& file
 
 } // namespace
 
-int main(int argc, char** argv) {
+int AssembleCvdMain(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
@@ -58,8 +59,8 @@ int main(int argc, char** argv) {
 
   std::string input_files_str;
   {
-    auto input_fd = cuttlefish::SharedFD::Dup(0);
-    auto bytes_read = cuttlefish::ReadAll(input_fd, &input_files_str);
+    auto input_fd = SharedFD::Dup(0);
+    auto bytes_read = ReadAll(input_fd, &input_files_str);
     CHECK(bytes_read >= 0)
         << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
   }
@@ -71,4 +72,10 @@ int main(int argc, char** argv) {
   std::cout << std::flush;
 
   return 0;
+}
+
+} // namespace cuttlefish
+
+int main(int argc, char** argv) {
+  return cuttlefish::AssembleCvdMain(argc, argv);
 }
