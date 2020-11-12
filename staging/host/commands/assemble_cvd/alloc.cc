@@ -20,7 +20,6 @@
 #include <sstream>
 
 #include "common/libs/fs/shared_fd.h"
-#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/utils.h"
 
@@ -52,12 +51,9 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
 
   cuttlefish::SharedFD allocd_sock = cuttlefish::SharedFD::SocketLocalClient(
       cuttlefish::kDefaultLocation, false, SOCK_STREAM);
-  if (!allocd_sock->IsOpen()) {
-    LOG(FATAL) << "Unable to connect to allocd on "
-               << cuttlefish::kDefaultLocation << ": "
-               << allocd_sock->StrError();
-    exit(cuttlefish::kAllocdConnectionError);
-  }
+  CHECK(allocd_sock->IsOpen())
+      << "Unable to connect to allocd on " << cuttlefish::kDefaultLocation
+      << ": " << allocd_sock->StrError();
 
   Json::Value resource_config;
   Json::Value request_list;
@@ -73,39 +69,27 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
 
   resource_config["config_request"]["request_list"] = request_list;
 
-  if (!cuttlefish::SendJsonMsg(allocd_sock, resource_config)) {
-    LOG(FATAL) << "Failed to send JSON to allocd\n";
-    return std::nullopt;
-  }
+  CHECK(cuttlefish::SendJsonMsg(allocd_sock, resource_config))
+      << "Failed to send JSON to allocd";
 
   auto resp_opt = cuttlefish::RecvJsonMsg(allocd_sock);
-  if (!resp_opt.has_value()) {
-    LOG(FATAL) << "Bad Response from allocd\n";
-    exit(cuttlefish::kAllocdConnectionError);
-  }
+  CHECK(resp_opt.has_value()) << "Bad response from allocd";
   auto resp = resp_opt.value();
 
-  if (!resp.isMember("config_status") || !resp["config_status"].isString()) {
-    LOG(FATAL) << "Bad response from allocd: " << resp;
-    exit(cuttlefish::kAllocdConnectionError);
-  }
+  CHECK(resp.isMember("config_status") && !resp["config_status"].isString())
+      << "Bad response from allocd: " << resp;
 
-  if (resp["config_status"].asString() !=
-      cuttlefish::StatusToStr(cuttlefish::RequestStatus::Success)) {
-    LOG(FATAL) << "Failed to allocate interfaces " << resp;
-    exit(cuttlefish::kAllocdConnectionError);
-  }
+  CHECK_EQ(
+      resp["config_status"].asString(),
+      cuttlefish::StatusToStr(cuttlefish::RequestStatus::Success))
+          <<"Failed to allocate interfaces " << resp;
 
-  if (!resp.isMember("session_id") || !resp["session_id"].isUInt()) {
-    LOG(FATAL) << "Bad response from allocd: " << resp;
-    exit(cuttlefish::kAllocdConnectionError);
-  }
+  CHECK(resp.isMember("session_id") && resp["session_id"].isUInt())
+      << "Bad response from allocd: " << resp;
   auto session_id = resp["session_id"].asUInt();
 
-  if (!resp.isMember("response_list") || !resp["response_list"].isArray()) {
-    LOG(FATAL) << "Bad response from allocd: " << resp;
-    exit(cuttlefish::kAllocdConnectionError);
-  }
+  CHECK(resp.isMember("response_list") && resp["response_list"].isArray())
+      << "Bad response from allocd: " << resp;
 
   Json::Value resp_list = resp["response_list"];
   Json::Value mtap_resp;
