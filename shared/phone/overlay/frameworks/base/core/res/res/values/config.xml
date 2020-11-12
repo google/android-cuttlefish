@@ -50,5 +50,8 @@
   <string name="config_mms_user_agent_profile_url" translatable="false">http://gsm.lge.com/html/gsm/Nexus5-M3.xml</string>
   <string name="config_wlan_data_service_package" translatable="false">com.android.ims</string>
   <string name="config_wlan_network_service_package" translatable="false">com.android.ims</string>
-
+  <!-- Restricting eth2 -->
+  <string-array translatable="false" name="config_ethernet_interfaces">
+    <item>eth2;11,12,14;;</item>
+  </string-array>
 </resources>

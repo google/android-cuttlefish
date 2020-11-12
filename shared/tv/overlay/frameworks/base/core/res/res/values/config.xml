@@ -17,4 +17,8 @@
 <resources>
     <!--  Maximum number of supported users -->
     <integer name="config_multiuserMaximumUsers">4</integer>
+    <!-- Restricting eth2 -->
+    <string-array translatable="false" name="config_ethernet_interfaces">
+        <item>eth2;11,12,14;;</item>
+    </string-array>
 </resources>
