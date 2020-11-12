@@ -23,6 +23,8 @@
 #include "host/libs/allocd/request.h"
 #include "host/libs/allocd/utils.h"
 
+namespace cuttlefish {
+
 static std::string StrForInstance(const std::string& prefix, int num) {
   std::ostringstream stream;
   stream << prefix << std::setfill('0') << std::setw(2) << num;
@@ -49,10 +51,10 @@ IfaceConfig DefaultNetworkInterfaces(int num) {
 std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   IfaceConfig config{};
 
-  cuttlefish::SharedFD allocd_sock = cuttlefish::SharedFD::SocketLocalClient(
-      cuttlefish::kDefaultLocation, false, SOCK_STREAM);
+  SharedFD allocd_sock = SharedFD::SocketLocalClient(
+      kDefaultLocation, false, SOCK_STREAM);
   CHECK(allocd_sock->IsOpen())
-      << "Unable to connect to allocd on " << cuttlefish::kDefaultLocation
+      << "Unable to connect to allocd on " << kDefaultLocation
       << ": " << allocd_sock->StrError();
 
   Json::Value resource_config;
@@ -69,10 +71,10 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
 
   resource_config["config_request"]["request_list"] = request_list;
 
-  CHECK(cuttlefish::SendJsonMsg(allocd_sock, resource_config))
+  CHECK(SendJsonMsg(allocd_sock, resource_config))
       << "Failed to send JSON to allocd";
 
-  auto resp_opt = cuttlefish::RecvJsonMsg(allocd_sock);
+  auto resp_opt = RecvJsonMsg(allocd_sock);
   CHECK(resp_opt.has_value()) << "Bad response from allocd";
   auto resp = resp_opt.value();
 
@@ -81,7 +83,7 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
 
   CHECK_EQ(
       resp["config_status"].asString(),
-      cuttlefish::StatusToStr(cuttlefish::RequestStatus::Success))
+      StatusToStr(RequestStatus::Success))
           <<"Failed to allocate interfaces " << resp;
 
   CHECK(resp.isMember("session_id") && resp["session_id"].isUInt())
@@ -96,18 +98,18 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   Json::Value wtap_resp;
   Json::Value etap_resp;
   for (Json::Value::ArrayIndex i = 0; i != resp_list.size(); ++i) {
-    auto ty = cuttlefish::StrToIfaceTy(resp_list[i]["iface_type"].asString());
+    auto ty = StrToIfaceTy(resp_list[i]["iface_type"].asString());
 
     switch (ty) {
-      case cuttlefish::IfaceType::mtap: {
+      case IfaceType::mtap: {
         mtap_resp = resp_list[i];
         break;
       }
-      case cuttlefish::IfaceType::wtap: {
+      case IfaceType::wtap: {
         wtap_resp = resp_list[i];
         break;
       }
-      case cuttlefish::IfaceType::etap: {
+      case IfaceType::etap: {
         etap_resp = resp_list[i];
         break;
       }
@@ -145,3 +147,4 @@ std::optional<IfaceConfig> AllocateNetworkInterfaces() {
   return config;
 }
 
+} // namespace cuttlefish
