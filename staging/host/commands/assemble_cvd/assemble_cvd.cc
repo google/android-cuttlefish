@@ -20,7 +20,6 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/fetcher_config.h"
 
@@ -48,26 +47,21 @@ int main(int argc, char** argv) {
   setenv("ANDROID_LOG_TAGS", "*:v", /* overwrite */ 0);
   ::android::base::InitLogging(argv, android::base::StderrLogger);
 
-  if (isatty(0)) {
-    LOG(FATAL) << "stdin was a tty, expected to be passed the output of a previous stage. "
-               << "Did you mean to run launch_cvd?";
-    return cuttlefish::AssemblerExitCodes::kInvalidHostConfiguration;
-  } else {
-    int error_num = errno;
-    if (error_num == EBADF) {
-      LOG(FATAL) << "stdin was not a valid file descriptor, expected to be passed the output "
-                 << "of launch_cvd. Did you mean to run launch_cvd?";
-      return cuttlefish::AssemblerExitCodes::kInvalidHostConfiguration;
-    }
-  }
+  int tty = isatty(0);
+  int error_num = errno;
+  CHECK_EQ(tty, 0)
+      << "stdin was a tty, expected to be passed the output of a previous stage. "
+      << "Did you mean to run launch_cvd?";
+  CHECK(error_num != EBADF)
+      << "stdin was not a valid file descriptor, expected to be passed the output "
+      << "of launch_cvd. Did you mean to run launch_cvd?";
 
   std::string input_files_str;
   {
     auto input_fd = cuttlefish::SharedFD::Dup(0);
     auto bytes_read = cuttlefish::ReadAll(input_fd, &input_files_str);
-    if (bytes_read < 0) {
-      LOG(FATAL) << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
-    }
+    CHECK(bytes_read >= 0)
+        << "Failed to read input files. Error was \"" << input_fd->StrError() << "\"";
   }
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
@@ -76,5 +70,5 @@ int main(int argc, char** argv) {
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
 
-  return cuttlefish::AssemblerExitCodes::kSuccess;
+  return 0;
 }
