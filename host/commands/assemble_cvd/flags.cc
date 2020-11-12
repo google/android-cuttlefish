@@ -2,12 +2,8 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
-#include <dirent.h>
-#include <fcntl.h>
 #include <gflags/gflags.h>
 #include <json/json.h>
-#include <sys/stat.h>
-#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -22,14 +18,11 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
-#include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/commands/assemble_cvd/image_aggregator.h"
-#include "host/libs/config/data_image.h"
 #include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
@@ -300,10 +293,6 @@ std::pair<uint16_t, uint16_t> ParsePortRange(const std::string& flag) {
   return port_range;
 }
 
-std::string GetLegacyConfigFilePath(const CuttlefishConfig& config) {
-  return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
-}
-
 int NumStreamers() {
   auto start_flags = {FLAGS_start_vnc_server, FLAGS_start_webrtc};
   return std::count(start_flags.begin(), start_flags.end(), true);
@@ -351,8 +340,8 @@ GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
   return GraphicsAvailability{};
 }
 
-// Initializes the config object and saves it to file. It doesn't return it, all
-// further uses of the config should happen through the singleton
+} // namespace
+
 CuttlefishConfig InitializeCuttlefishConfiguration(
     const BootImageUnpacker& boot_image_unpacker,
     const FetcherConfig& fetcher_config) {
@@ -708,29 +697,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
-bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
-  auto config_file = GetConfigFilePath(tmp_config_obj);
-  auto config_link = GetGlobalConfigFileLink();
-  // Save the config object before starting any host process
-  if (!tmp_config_obj.SaveToFile(config_file)) {
-    LOG(ERROR) << "Unable to save config object";
-    return false;
-  }
-  auto legacy_config_file = GetLegacyConfigFilePath(tmp_config_obj);
-  if (!tmp_config_obj.SaveToFile(legacy_config_file)) {
-    LOG(ERROR) << "Unable to save legacy config object";
-    return false;
-  }
-  setenv(kCuttlefishConfigEnvVarName, config_file.c_str(), true);
-  if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
-    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
-               << ": " << strerror(errno);
-    return false;
-  }
-
-  return true;
-}
-
 void SetDefaultFlagsForQemu() {
   // for now, we don't set non-default options for QEMU
   if (FLAGS_gpu_mode == kGpuModeGuestSwiftshader && NumStreamers() == 0) {
@@ -742,18 +708,6 @@ void SetDefaultFlagsForQemu() {
   std::string default_bootloader = FLAGS_system_image_dir + "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
-}
-
-bool EnsureDirectoryExists(const std::string& directory_path) {
-  if (!DirectoryExists(directory_path)) {
-    LOG(DEBUG) << "Setting up " << directory_path;
-    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
-        && errno != EEXIST) {
-      PLOG(ERROR) << "Failed to create dir: \"" << directory_path << "\" ";
-      return false;
-    }
-  }
-  return true;
 }
 
 void SetDefaultFlagsForCrosvm() {
@@ -825,120 +779,6 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   unsetenv(kCuttlefishConfigEnvVarName);
 
   return ResolveInstanceFiles();
-}
-
-void ValidateAdbModeFlag(const CuttlefishConfig& config) {
-  auto adb_modes = config.adb_mode();
-  adb_modes.erase(AdbMode::Unknown);
-  if (adb_modes.size() < 1) {
-    LOG(INFO) << "ADB not enabled";
-  }
-}
-
-} // namespace
-
-#ifndef O_TMPFILE
-# define O_TMPFILE (020000000 | O_DIRECTORY)
-#endif
-
-const CuttlefishConfig* InitFilesystemAndCreateConfig(
-    int* argc, char*** argv, FetcherConfig fetcher_config) {
-  CHECK(ParseCommandLineFlags(argc, argv)) << "Failed to parse arguments";
-
-  std::string assembly_dir_parent = AbsolutePath(FLAGS_assembly_dir);
-  while (assembly_dir_parent[assembly_dir_parent.size() - 1] == '/') {
-    assembly_dir_parent =
-        assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
-  }
-  assembly_dir_parent =
-      assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
-  auto log =
-      SharedFD::Open(
-          assembly_dir_parent,
-          O_WRONLY | O_TMPFILE,
-          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-  if (!log->IsOpen()) {
-    LOG(ERROR) << "Could not open O_TMPFILE precursor to assemble_cvd.log: "
-               << log->StrError();
-  } else {
-    android::base::SetLogger(TeeLogger({
-      {ConsoleSeverity(), SharedFD::Dup(2)},
-      {LogFileSeverity(), log},
-    }));
-  }
-
-  auto boot_img_unpacker = CreateBootImageUnpacker();
-  {
-    // The config object is created here, but only exists in memory until the
-    // SaveConfig line below. Don't launch cuttlefish subprocesses between these
-    // two operations, as those will assume they can read the config object from
-    // disk.
-    auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config);
-    std::set<std::string> preserving;
-    if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
-      LOG(INFO) << "Requested resuming a previous session (the default behavior) "
-                << "but the base images have changed under the overlay, making the "
-                << "overlay incompatible. Wiping the overlay files.";
-    } else if (FLAGS_resume && !ShouldCreateAllCompositeDisks(config)) {
-      preserving.insert("overlay.img");
-      preserving.insert("gpt_header.img");
-      preserving.insert("gpt_footer.img");
-      preserving.insert("composite.img");
-      preserving.insert("sdcard.img");
-      preserving.insert("uboot_env.img");
-      preserving.insert("boot_repacked.img");
-      preserving.insert("vendor_boot_repacked.img");
-      preserving.insert("access-kregistry");
-      preserving.insert("disk_hole");
-      preserving.insert("NVChip");
-      preserving.insert("gatekeeper_secure");
-      preserving.insert("gatekeeper_insecure");
-      preserving.insert("modem_nvram.json");
-      preserving.insert("disk_config.txt");
-      std::stringstream ss;
-      for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
-        ss.clear();
-        ss << "iccprofile_for_sim" << i << ".xml";
-        preserving.insert(ss.str());
-        ss.str("");
-      }
-    }
-    CHECK(CleanPriorFiles(preserving, FLAGS_assembly_dir, FLAGS_instance_dir))
-        << "Failed to clean prior files";
-
-    // Create assembly directory if it doesn't exist.
-    CHECK(EnsureDirectoryExists(FLAGS_assembly_dir));
-    if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
-      LOG(ERROR) << "Unable to persist assemble_cvd log at "
-                  << config.AssemblyPath("assemble_cvd.log")
-                  << ": " << log->StrError();
-    }
-    std::string disk_hole_dir = FLAGS_assembly_dir + "/disk_hole";
-    CHECK(EnsureDirectoryExists(disk_hole_dir));
-    for (const auto& instance : config.Instances()) {
-      // Create instance directory if it doesn't exist.
-      CHECK(EnsureDirectoryExists(instance.instance_dir()));
-      auto internal_dir = instance.instance_dir() + "/" + kInternalDirName;
-      CHECK(EnsureDirectoryExists(internal_dir));
-      auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
-      CHECK(EnsureDirectoryExists(shared_dir));
-    }
-    CHECK(SaveConfig(config)) << "Failed to initialize configuration";
-  }
-
-  std::string first_instance = FLAGS_instance_dir + "." + std::to_string(GetInstance());
-  CHECK_EQ(symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()), 0)
-      << "Could not symlink \"" << first_instance << "\" to \"" << FLAGS_instance_dir << "\"";
-
-  // Do this early so that the config object is ready for anything that needs it
-  auto config = CuttlefishConfig::Get();
-  CHECK(config) << "Failed to obtain config singleton";
-
-  ValidateAdbModeFlag(*config);
-
-  CreateDynamicDiskFiles(fetcher_config, config, boot_img_unpacker.get());
-
-  return config;
 }
 
 std::string GetConfigFilePath(const CuttlefishConfig& config) {
