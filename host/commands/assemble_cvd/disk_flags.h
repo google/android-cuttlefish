@@ -25,9 +25,13 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 
+namespace cuttlefish {
+
 bool ResolveInstanceFiles();
-std::unique_ptr<cuttlefish::BootImageUnpacker> CreateBootImageUnpacker();
-bool ShouldCreateAllCompositeDisks(const cuttlefish::CuttlefishConfig& config);
-void CreateDynamicDiskFiles(const cuttlefish::FetcherConfig& fetcher_config,
-                            const cuttlefish::CuttlefishConfig* config,
-                            cuttlefish::BootImageUnpacker* boot_img_unpacker);
+std::unique_ptr<BootImageUnpacker> CreateBootImageUnpacker();
+bool ShouldCreateAllCompositeDisks(const CuttlefishConfig& config);
+void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
+                            const CuttlefishConfig* config,
+                            BootImageUnpacker* boot_img_unpacker);
+
+} // namespace cuttlefish
