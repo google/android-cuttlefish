@@ -24,7 +24,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/alloc.h"
-#include "host/commands/assemble_cvd/assembler_defs.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/clean.h"
@@ -42,7 +41,6 @@ using cuttlefish::CreateBlankImage;
 using cuttlefish::DataImageResult;
 using cuttlefish::ForCurrentInstance;
 using cuttlefish::RandomSerialNumber;
-using cuttlefish::AssemblerExitCodes;
 using cuttlefish::vm_manager::CrosvmManager;
 using cuttlefish::vm_manager::QemuManager;
 using cuttlefish::vm_manager::GetVmManager;
@@ -770,13 +768,6 @@ bool EnsureDirectoryExists(const std::string& directory_path) {
   return true;
 }
 
-void EnsureDirectoryExistsOrExit(
-    const std::string& directory_path, AssemblerExitCodes exit_code) {
-  if (!EnsureDirectoryExists(directory_path)) {
-    exit((int) exit_code);
-  }
-}
-
 void SetDefaultFlagsForCrosvm() {
   if (NumStreamers() == 0) {
     // This makes WebRTC the default streamer unless the user requests
@@ -870,10 +861,7 @@ void ValidateAdbModeFlag(const cuttlefish::CuttlefishConfig& config) {
 
 const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
     int* argc, char*** argv, cuttlefish::FetcherConfig fetcher_config) {
-  if (!ParseCommandLineFlags(argc, argv)) {
-    LOG(ERROR) << "Failed to parse command arguments";
-    exit(AssemblerExitCodes::kArgumentParsingError);
-  }
+  CHECK(ParseCommandLineFlags(argc, argv)) << "Failed to parse arguments";
 
   std::string assembly_dir_parent = cuttlefish::AbsolutePath(FLAGS_assembly_dir);
   while (assembly_dir_parent[assembly_dir_parent.size() - 1] == '/') {
@@ -933,50 +921,36 @@ const cuttlefish::CuttlefishConfig* InitFilesystemAndCreateConfig(
         ss.str("");
       }
     }
-    if (!CleanPriorFiles(preserving, FLAGS_assembly_dir, FLAGS_instance_dir)) {
-      LOG(ERROR) << "Failed to clean prior files";
-      exit(AssemblerExitCodes::kPrioFilesCleanupError);
-    }
+    CHECK(CleanPriorFiles(preserving, FLAGS_assembly_dir, FLAGS_instance_dir))
+        << "Failed to clean prior files";
+
     // Create assembly directory if it doesn't exist.
-    EnsureDirectoryExistsOrExit(
-        FLAGS_assembly_dir, AssemblerExitCodes::kAssemblyDirCreationError);
+    CHECK(EnsureDirectoryExists(FLAGS_assembly_dir));
     if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
       LOG(ERROR) << "Unable to persist assemble_cvd log at "
                   << config.AssemblyPath("assemble_cvd.log")
                   << ": " << log->StrError();
     }
     std::string disk_hole_dir = FLAGS_assembly_dir + "/disk_hole";
-    EnsureDirectoryExistsOrExit(
-        disk_hole_dir, cuttlefish::kAssemblyDirCreationError);
+    CHECK(EnsureDirectoryExists(disk_hole_dir));
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.
-      EnsureDirectoryExistsOrExit(
-          instance.instance_dir(), cuttlefish::kInstanceDirCreationError);
+      CHECK(EnsureDirectoryExists(instance.instance_dir()));
       auto internal_dir = instance.instance_dir() + "/" + cuttlefish::kInternalDirName;
-      EnsureDirectoryExistsOrExit(
-          internal_dir, cuttlefish::kInstanceDirCreationError);
+      CHECK(EnsureDirectoryExists(internal_dir));
       auto shared_dir = instance.instance_dir() + "/" + cuttlefish::kSharedDirName;
-      EnsureDirectoryExistsOrExit(
-          shared_dir, cuttlefish::kInstanceDirCreationError);
+      CHECK(EnsureDirectoryExists(shared_dir));
     }
-    if (!SaveConfig(config)) {
-      LOG(ERROR) << "Failed to initialize configuration";
-      exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
-    }
+    CHECK(SaveConfig(config)) << "Failed to initialize configuration";
   }
 
   std::string first_instance = FLAGS_instance_dir + "." + std::to_string(cuttlefish::GetInstance());
-  if (symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()) < 0) {
-    LOG(ERROR) << "Could not symlink \"" << first_instance << "\" to \"" << FLAGS_instance_dir << "\"";
-    exit(cuttlefish::kCuttlefishConfigurationInitError);
-  }
+  CHECK_EQ(symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()), 0)
+      << "Could not symlink \"" << first_instance << "\" to \"" << FLAGS_instance_dir << "\"";
 
   // Do this early so that the config object is ready for anything that needs it
   auto config = cuttlefish::CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Failed to obtain config singleton";
-    exit(AssemblerExitCodes::kCuttlefishConfigurationInitError);
-  }
+  CHECK(config) << "Failed to obtain config singleton";
 
   ValidateAdbModeFlag(*config);
 
