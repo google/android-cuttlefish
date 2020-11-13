@@ -22,6 +22,8 @@
 #include <string>
 #include <vector>
 
+namespace cuttlefish {
+
 struct ImagePartition {
   std::string label;
   std::string image_file_path;
@@ -68,3 +70,5 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
 void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path);
+
+}

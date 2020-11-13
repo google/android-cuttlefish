@@ -27,10 +27,11 @@
 #include "host/commands/assemble_cvd/flags.h"
 #include "common/libs/utils/files.h"
 
+namespace cuttlefish {
 namespace {
 
 bool CleanPriorFiles(const std::string& path, const std::set<std::string>& preserving) {
-  if (preserving.count(cuttlefish::cpp_basename(path))) {
+  if (preserving.count(cpp_basename(path))) {
     LOG(DEBUG) << "Preserving: " << path;
     return true;
   }
@@ -122,22 +123,22 @@ bool CleanPriorFiles(
     // The environment file
     GetCuttlefishEnvPath(),
     // The global link to the config file
-    cuttlefish::GetGlobalConfigFileLink(),
+    GetGlobalConfigFileLink(),
   };
 
-  std::string runtime_dir_parent =
-      cuttlefish::cpp_dirname(cuttlefish::AbsolutePath(instance_dir));
-  std::string runtime_dirs_basename =
-      cuttlefish::cpp_basename(cuttlefish::AbsolutePath(instance_dir));
+  std::string runtime_dir_parent = cpp_dirname(AbsolutePath(instance_dir));
+  std::string runtime_dirs_basename = cpp_basename(AbsolutePath(instance_dir));
 
   std::regex instance_dir_regex("^.+\\.[1-9]\\d*$");
-  for (const auto& path : cuttlefish::DirectoryContents(runtime_dir_parent)) {
+  for (const auto& path : DirectoryContents(runtime_dir_parent)) {
     std::string absl_path = runtime_dir_parent + "/" + path;
     if((path.rfind(runtime_dirs_basename, 0) == 0) && std::regex_match(path, instance_dir_regex) &&
-        cuttlefish::DirectoryExists(absl_path)) {
+        DirectoryExists(absl_path)) {
       paths.push_back(absl_path);
     }
   }
   paths.push_back(instance_dir);
   return CleanPriorFiles(paths, preserving);
 }
+
+} // namespace cuttlefish

@@ -19,6 +19,8 @@
 #include <optional>
 #include <string>
 
+namespace cuttlefish {
+
 struct IfaceData {
   std::string name;
   uint32_t session_id;
@@ -35,3 +37,5 @@ IfaceConfig DefaultNetworkInterfaces(int num);
 
 // Acquires interfaces from the resource allocator daemon.
 std::optional<IfaceConfig> AllocateNetworkInterfaces();
+
+} // namespace cuttlefish
