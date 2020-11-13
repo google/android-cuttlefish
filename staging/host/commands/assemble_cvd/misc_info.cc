@@ -21,6 +21,8 @@
 #include <android-base/stringprintf.h>
 #include <android-base/strings.h>
 
+namespace cuttlefish {
+
 MiscInfo ParseMiscInfo(const std::string& misc_info_contents) {
   auto lines = android::base::Split(misc_info_contents, "\n");
   MiscInfo misc_info;
@@ -121,3 +123,5 @@ bool SetSuperPartitionComponents(const std::vector<std::string>& components,
   (*misc_info)[group_size_key] = super_size_it->second;
   return true;
 }
+
+} // namespace cuttlefish
