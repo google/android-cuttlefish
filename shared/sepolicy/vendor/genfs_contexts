@@ -14,6 +14,8 @@ cf_pci_gpu_device(/devices/pci0000:00/0000:00:10.0)
 cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00/0000:00:10.0)
 # qemu (aarch64)
 cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00/0000:00:0e.0)
+# qemu (arm)
+cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00/0000:00:0e.0)
 
 popdef(`cf_pci_gpu_device')
 
