@@ -18,5 +18,9 @@
 #include <string>
 #include <host/libs/config/cuttlefish_config.h>
 
-bool InitBootloaderEnvPartition(const cuttlefish::CuttlefishConfig& config,
-                                const cuttlefish::CuttlefishConfig::InstanceSpecific& instance);
+namespace cuttlefish {
+
+bool InitBootloaderEnvPartition(const CuttlefishConfig& config,
+                                const CuttlefishConfig::InstanceSpecific& instance);
+
+} // namespace cuttlefish
