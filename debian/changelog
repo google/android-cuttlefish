@@ -3,7 +3,10 @@ cuttlefish-common (0.9.17) stable; urgency=medium
   [ Alistair Delva ]
   * Networking improvements to support Ethernet interfaces
 
- -- Alistair Delva <adelva@google.com>  Tue, 10 Nov 2020 09:03:37 -0700
+  [ A. Cody Schuffelen ]
+  * Grant access to /dev/tpm for the secure environment code
+
+ -- Cody Schuffelen <schuffelen@google.com>  Fri, 13 Nov 2020 13:35:59 -0800
 
 cuttlefish-common (0.9.16) stable; urgency=medium
 
