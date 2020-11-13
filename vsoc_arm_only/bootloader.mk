@@ -1,5 +1,5 @@
 #
-# Copyright 2017 The Android Open-Source Project
+# Copyright (C) 2020 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,21 +14,9 @@
 # limitations under the License.
 #
 
-#
-# arm64 (64-bit only) target for Cuttlefish
-#
-
--include device/google/cuttlefish/shared/BoardConfig.mk
-
-TARGET_BOARD_PLATFORM := vsoc_arm64
-TARGET_ARCH := arm64
-TARGET_ARCH_VARIANT := armv8-a
-TARGET_CPU_ABI := arm64-v8a
-TARGET_CPU_VARIANT := cortex-a53
-
-AUDIOSERVER_MULTILIB := first
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-arm64/*.ko)
-
-HOST_CROSS_OS := linux_bionic
-HOST_CROSS_ARCH := arm64
-HOST_CROSS_2ND_ARCH :=
+TARGET_NO_BOOTLOADER := false
+# FIXME: Copying the QEMU bootloader for now, but this should be updated..
+BOARD_PREBUILT_BOOTLOADER := \
+    device/google/cuttlefish_prebuilts/bootloader/qemu_arm/u-boot.bin
+PRODUCT_COPY_FILES += \
+    device/google/cuttlefish_prebuilts/bootloader/qemu_arm/u-boot.bin:bootloader.qemu
