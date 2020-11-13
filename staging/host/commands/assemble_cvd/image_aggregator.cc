@@ -45,6 +45,7 @@
 #include "host/libs/config/mbr.h"
 #include "device/google/cuttlefish/host/commands/assemble_cvd/cdisk_spec.pb.h"
 
+namespace cuttlefish {
 namespace {
 
 // Keep the full disk size a multiple of 64k, for crosvm's virtio_blk driver
@@ -144,7 +145,7 @@ std::uint64_t UnsparsedSize(const std::string& file_path) {
                  << strerror(errno);
   auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
   auto size =
-      sparse ? sparse_file_len(sparse, false, true) : cuttlefish::FileSize(file_path);
+      sparse ? sparse_file_len(sparse, false, true) : FileSize(file_path);
   close(fd);
   return size;
 }
@@ -176,20 +177,20 @@ public:
   CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
 
   void AppendDisk(ImagePartition source) {
-    auto size = cuttlefish::AlignToPowerOf2(UnsparsedSize(source.image_file_path),
-                                            PARTITION_SIZE_SHIFT);
+    auto size = AlignToPowerOf2(UnsparsedSize(source.image_file_path),
+                                PARTITION_SIZE_SHIFT);
     partitions_.push_back(PartitionInfo {
       .source = source,
       .size = size,
       .offset = next_disk_offset_,
     });
-    next_disk_offset_ = cuttlefish::AlignToPowerOf2(next_disk_offset_ + size,
-                                                    PARTITION_SIZE_SHIFT);
+    next_disk_offset_ = AlignToPowerOf2(next_disk_offset_ + size,
+                                        PARTITION_SIZE_SHIFT);
   }
 
   std::uint64_t DiskSize() const {
     std::uint64_t val = next_disk_offset_ + sizeof(GptEnd);
-    return cuttlefish::AlignToPowerOf2(val, DISK_SIZE_SHIFT);
+    return AlignToPowerOf2(val, DISK_SIZE_SHIFT);
   }
 
   /**
@@ -293,19 +294,19 @@ public:
   }
 };
 
-bool WriteBeginning(cuttlefish::SharedFD out, const GptBeginning& beginning) {
+bool WriteBeginning(SharedFD out, const GptBeginning& beginning) {
   std::string begin_str((const char*) &beginning, sizeof(GptBeginning));
-  if (cuttlefish::WriteAll(out, begin_str) != begin_str.size()) {
+  if (WriteAll(out, begin_str) != begin_str.size()) {
     LOG(ERROR) << "Could not write GPT beginning: " << out->StrError();
     return false;
   }
   return true;
 }
 
-bool WriteEnd(cuttlefish::SharedFD out, const GptEnd& end, std::int64_t padding) {
+bool WriteEnd(SharedFD out, const GptEnd& end, std::int64_t padding) {
   std::string end_str((const char*) &end, sizeof(GptEnd));
   end_str.resize(end_str.size() + padding, '\0');
-  if (cuttlefish::WriteAll(out, end_str) != end_str.size()) {
+  if (WriteAll(out, end_str) != end_str.size()) {
     LOG(ERROR) << "Could not write GPT end: " << out->StrError();
     return false;
   }
@@ -369,26 +370,25 @@ void AggregateImage(const std::vector<ImagePartition>& partitions,
   for (auto& disk : partitions) {
     builder.AppendDisk(disk);
   }
-  auto output = cuttlefish::SharedFD::Creat(output_path, 0600);
+  auto output = SharedFD::Creat(output_path, 0600);
   auto beginning = builder.Beginning();
   if (!WriteBeginning(output, beginning)) {
     LOG(FATAL) << "Could not write GPT beginning to \"" << output_path
                << "\": " << output->StrError();
   }
   for (auto& disk : partitions) {
-    auto disk_fd = cuttlefish::SharedFD::Open(disk.image_file_path, O_RDONLY);
-    auto file_size = cuttlefish::FileSize(disk.image_file_path);
+    auto disk_fd = SharedFD::Open(disk.image_file_path, O_RDONLY);
+    auto file_size = FileSize(disk.image_file_path);
     if (!output->CopyFrom(*disk_fd, file_size)) {
       LOG(FATAL) << "Could not copy from \"" << disk.image_file_path
                  << "\" to \"" << output_path << "\": " << output->StrError();
     }
     // Handle disk images that are not aligned to PARTITION_SIZE_SHIFT
     std::uint64_t padding =
-        cuttlefish::AlignToPowerOf2(file_size, PARTITION_SIZE_SHIFT)
-        - file_size;
+        AlignToPowerOf2(file_size, PARTITION_SIZE_SHIFT) - file_size;
     std::string padding_str;
     padding_str.resize(padding, '\0');
-    if (cuttlefish::WriteAll(output, padding_str) != padding_str.size()) {
+    if (WriteAll(output, padding_str) != padding_str.size()) {
       LOG(FATAL) << "Could not write partition padding to \"" << output_path
                  << "\": " << output->StrError();
     }
@@ -409,13 +409,13 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
   for (auto& disk : partitions) {
     builder.AppendDisk(disk);
   }
-  auto header = cuttlefish::SharedFD::Creat(header_file, 0600);
+  auto header = SharedFD::Creat(header_file, 0600);
   auto beginning = builder.Beginning();
   if (!WriteBeginning(header, beginning)) {
     LOG(FATAL) << "Could not write GPT beginning to \"" << header_file
                << "\": " << header->StrError();
   }
-  auto footer = cuttlefish::SharedFD::Creat(footer_file, 0600);
+  auto footer = SharedFD::Creat(footer_file, 0600);
   std::uint64_t padding =
       builder.DiskSize() - ((beginning.header.backup_lba + 1) * SECTOR_SIZE);
   if (!WriteEnd(footer, builder.End(beginning), padding)) {
@@ -433,7 +433,7 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
 void CreateQcowOverlay(const std::string& crosvm_path,
                        const std::string& backing_file,
                        const std::string& output_overlay_path) {
-  cuttlefish::Command crosvm_qcow2_cmd(crosvm_path);
+  Command crosvm_qcow2_cmd(crosvm_path);
   crosvm_qcow2_cmd.AddParameter("create_qcow2");
   crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
   crosvm_qcow2_cmd.AddParameter(output_overlay_path);
@@ -442,3 +442,5 @@ void CreateQcowOverlay(const std::string& crosvm_path,
     LOG(FATAL) << "Unable to run crosvm create_qcow2. Exited with status " << success;
   }
 }
+
+} // namespace cuttlefish

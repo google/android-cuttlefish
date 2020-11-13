@@ -34,13 +34,11 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 
+namespace cuttlefish {
 namespace {
 
-using cuttlefish::FileExists;
-using cuttlefish::DefaultHostArtifactsPath;
-
-std::string TargetFilesZip(const cuttlefish::FetcherConfig& fetcher_config,
-                           cuttlefish::FileSource source) {
+std::string TargetFilesZip(const FetcherConfig& fetcher_config,
+                           FileSource source) {
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
     const auto& file_path = file_iter.first;
     const auto& file_info = file_iter.second;
@@ -74,7 +72,7 @@ const std::set<std::string> kDefaultTargetBuildProp = {
   "VENDOR/etc/build.prop",
 };
 
-void FindImports(cuttlefish::Archive* archive, const std::string& build_prop_file) {
+void FindImports(Archive* archive, const std::string& build_prop_file) {
   auto contents = archive->ExtractToMemory(build_prop_file);
   auto lines = android::base::Split(contents, "\n");
   for (const auto& line : lines) {
@@ -88,8 +86,8 @@ void FindImports(cuttlefish::Archive* archive, const std::string& build_prop_fil
 bool CombineTargetZipFiles(const std::string& default_target_zip,
                            const std::string& system_target_zip,
                            const std::string& output_path) {
-  cuttlefish::Archive default_target_archive(default_target_zip);
-  cuttlefish::Archive system_target_archive(system_target_zip);
+  Archive default_target_archive(default_target_zip);
+  Archive system_target_archive(system_target_zip);
 
   auto default_target_contents = default_target_archive.Contents();
   if (default_target_contents.size() == 0) {
@@ -148,14 +146,14 @@ bool CombineTargetZipFiles(const std::string& default_target_zip,
   }
 
   auto misc_output_path = output_path + "/" + kMiscInfoPath;
-  cuttlefish::SharedFD misc_output_file =
-      cuttlefish::SharedFD::Creat(misc_output_path.c_str(), 0644);
+  SharedFD misc_output_file =
+      SharedFD::Creat(misc_output_path.c_str(), 0644);
   if (!misc_output_file->IsOpen()) {
     LOG(ERROR) << "Failed to open output misc file: "
                << misc_output_file->StrError();
     return false;
   }
-  if (cuttlefish::WriteAll(misc_output_file, WriteMiscInfo(output_misc)) < 0) {
+  if (WriteAll(misc_output_file, WriteMiscInfo(output_misc)) < 0) {
     LOG(ERROR) << "Failed to write output misc file contents: "
                << misc_output_file->StrError();
     return false;
@@ -236,7 +234,7 @@ bool BuildSuperImage(const std::string& combined_target_zip,
     LOG(ERROR) << "Could not find otatools";
     return false;
   }
-  return cuttlefish::execute({
+  return execute({
     build_super_image_binary,
     "--path=" + otatools_path,
     combined_target_zip,
@@ -246,31 +244,31 @@ bool BuildSuperImage(const std::string& combined_target_zip,
 
 } // namespace
 
-bool SuperImageNeedsRebuilding(const cuttlefish::FetcherConfig& fetcher_config,
-                               const cuttlefish::CuttlefishConfig&) {
+bool SuperImageNeedsRebuilding(const FetcherConfig& fetcher_config,
+                               const CuttlefishConfig&) {
   bool has_default_build = false;
   bool has_system_build = false;
   for (const auto& file_iter : fetcher_config.get_cvd_files()) {
-    if (file_iter.second.source == cuttlefish::FileSource::DEFAULT_BUILD) {
+    if (file_iter.second.source == FileSource::DEFAULT_BUILD) {
       has_default_build = true;
-    } else if (file_iter.second.source == cuttlefish::FileSource::SYSTEM_BUILD) {
+    } else if (file_iter.second.source == FileSource::SYSTEM_BUILD) {
       has_system_build = true;
     }
   }
   return has_default_build && has_system_build;
 }
 
-bool RebuildSuperImage(const cuttlefish::FetcherConfig& fetcher_config,
-                       const cuttlefish::CuttlefishConfig& config,
+bool RebuildSuperImage(const FetcherConfig& fetcher_config,
+                       const CuttlefishConfig& config,
                        const std::string& output_path) {
   std::string default_target_zip =
-      TargetFilesZip(fetcher_config, cuttlefish::FileSource::DEFAULT_BUILD);
+      TargetFilesZip(fetcher_config, FileSource::DEFAULT_BUILD);
   if (default_target_zip == "") {
     LOG(ERROR) << "Unable to find default target zip file.";
     return false;
   }
   std::string system_target_zip =
-      TargetFilesZip(fetcher_config, cuttlefish::FileSource::SYSTEM_BUILD);
+      TargetFilesZip(fetcher_config, FileSource::SYSTEM_BUILD);
   if (system_target_zip == "") {
     LOG(ERROR) << "Unable to find system target zip file.";
     return false;
@@ -290,3 +288,5 @@ bool RebuildSuperImage(const cuttlefish::FetcherConfig& fetcher_config,
   }
   return success;
 }
+
+} // namespace cuttlefish

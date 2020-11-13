@@ -18,7 +18,11 @@
 #include <set>
 #include <string>
 
+namespace cuttlefish {
+
 bool CleanPriorFiles(
     const std::set<std::string>& preserving,
     const std::string& assembly_dir,
     const std::string& instance_dir);
+
+} // namespace cuttlefish
