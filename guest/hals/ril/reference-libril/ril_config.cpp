@@ -19,8 +19,12 @@
 
 #include <android/hardware/radio/config/1.1/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigResponse.h>
+#include <android/hardware/radio/config/1.3/IRadioConfigResponse.h>
+#include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigIndication.h>
 #include <android/hardware/radio/1.1/types.h>
+#include <android/hardware/radio/1.3/types.h>
+
 
 #include <ril.h>
 #include <guest/hals/ril/reference-libril/ril_service.h>
@@ -29,6 +33,7 @@
 using namespace android::hardware::radio::V1_0;
 using namespace android::hardware::radio::config;
 using namespace android::hardware::radio::config::V1_0;
+using namespace android::hardware::radio::config::V1_3;
 using ::android::hardware::configureRpcThreadpool;
 using ::android::hardware::joinRpcThreadpool;
 using ::android::hardware::Return;
@@ -58,6 +63,11 @@ volatile int32_t mCounterRadioConfig;
 
 extern void populateResponseInfo(RadioResponseInfo& responseInfo, int serial, int responseType,
                 RIL_Errno e);
+
+extern void populateResponseInfo_1_6(
+    ::android::hardware::radio::V1_6::RadioResponseInfo &responseInfo,
+    int serial, int responseType, RIL_Errno e);
+
 extern bool dispatchVoid(int serial, int slotId, int request);
 extern bool dispatchString(int serial, int slotId, int request, const char * str);
 extern bool dispatchStrings(int serial, int slotId, int request, bool allowEmpty,
@@ -69,13 +79,14 @@ extern RadioIndicationType convertIntToRadioIndicationType(int indicationType);
 
 extern bool isChangeSlotId(int serviceId, int slotId);
 
-struct RadioConfigImpl : public V1_1::IRadioConfig {
+struct RadioConfigImpl : public V1_3::IRadioConfig {
     int32_t mSlotId;
     sp<V1_0::IRadioConfigResponse> mRadioConfigResponse;
     sp<V1_0::IRadioConfigIndication> mRadioConfigIndication;
     sp<V1_1::IRadioConfigResponse> mRadioConfigResponseV1_1;
     sp<V1_2::IRadioConfigResponse> mRadioConfigResponseV1_2;
     sp<V1_2::IRadioConfigIndication> mRadioConfigIndicationV1_2;
+    sp<V1_3::IRadioConfigResponse> mRadioConfigResponseV1_3;
 
     Return<void> setResponseFunctions(
             const ::android::sp<V1_0::IRadioConfigResponse>& radioConfigResponse,
@@ -92,6 +103,8 @@ struct RadioConfigImpl : public V1_1::IRadioConfig {
     Return<void> setModemsConfig(int32_t serial, const V1_1::ModemsConfig& modemsConfig);
 
     Return<void> getModemsConfig(int32_t serial);
+
+    Return<void> getHalDeviceCapabilities(int32_t serial);
 
     void checkReturnStatus_config(Return<void>& ret);
 };
@@ -119,6 +132,12 @@ Return<void> RadioConfigImpl::setResponseFunctions(
     if (mRadioConfigResponseV1_2 == nullptr || mRadioConfigIndicationV1_2 == nullptr) {
         mRadioConfigResponseV1_2 = nullptr;
         mRadioConfigIndicationV1_2 = nullptr;
+    }
+
+    mRadioConfigResponseV1_3 =
+        V1_3::IRadioConfigResponse::castFrom(mRadioConfigResponse).withDefault(nullptr);
+    if (mRadioConfigResponseV1_3 == nullptr || mRadioConfigResponseV1_3 == nullptr) {
+        mRadioConfigResponseV1_3 = nullptr;
     }
 
     mCounterRadioConfig++;
@@ -231,6 +250,14 @@ Return<void> RadioConfigImpl::getModemsConfig(int32_t serial) {
     return Void();
 }
 
+Return<void> RadioConfigImpl::getHalDeviceCapabilities(int32_t serial) {
+#if VDBG
+    RLOGD("getHalDeviceCapabilities: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_CONFIG_GET_HAL_DEVICE_CAPABILITIES);
+    return Void();
+}
+
 void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
     using namespace android::hardware;
     RLOGD("Entry %s", __FUNCTION__);
@@ -252,6 +279,7 @@ void radio_1_6::registerConfigService(RIL_RadioFunctions *callbacks, CommandInfo
     radioConfigService->mRadioConfigIndication = NULL;
     radioConfigService->mRadioConfigResponseV1_1 = NULL;
     radioConfigService->mRadioConfigResponseV1_2 = NULL;
+    radioConfigService->mRadioConfigResponseV1_3 = NULL;
     radioConfigService->mRadioConfigIndicationV1_2 = NULL;
     android::status_t status = radioConfigService->registerAsService(serviceNames);
     RLOGD("registerConfigService registerService: status %d", status);
@@ -284,6 +312,7 @@ void checkReturnStatus(Return<void>& ret) {
             radioConfigService->mRadioConfigIndication = NULL;
             radioConfigService->mRadioConfigResponseV1_1 = NULL;
             radioConfigService->mRadioConfigResponseV1_2 = NULL;
+            radioConfigService->mRadioConfigResponseV1_3 = NULL;
             radioConfigService->mRadioConfigIndicationV1_2 = NULL;
             mCounterRadioConfig++;
         } else {
@@ -455,6 +484,27 @@ int radio_1_6::getModemsConfigResponse(int slotId, int responseType, int serial,
         radioConfigService->checkReturnStatus_config(retStatus);
     } else {
         RLOGE("getModemsConfigResponse: radioConfigService->mRadioConfigResponseV1_1 == NULL");
+    }
+
+    return 0;
+}
+
+int radio_1_6::getHalDeviceCapabilitiesResponse(int slotId, int responseType, int serial,
+                                   RIL_Errno e, void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("getHalDeviceCapabilitiesResponse: serial %d", serial);
+#endif
+
+    if (radioConfigService->mRadioConfigResponseV1_3 != NULL) {
+        ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo = {};
+        populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+
+        V1_3::HalDeviceCapabilities halCap = {};
+        Return<void> retStatus = radioConfigService->mRadioConfigResponseV1_3->getHalDeviceCapabilitiesResponse(
+                responseInfo, halCap);
+        radioConfigService->checkReturnStatus_config(retStatus);
+    } else {
+        RLOGE("getHalDeviceCapabilitiesResponse: radioConfigService->getHalDeviceCapabilities == NULL");
     }
 
     return 0;
