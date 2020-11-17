@@ -1,5 +1,5 @@
 #
-# includeed by setup.sh
+# included by setup.sh
 # utility functions for port publishing for docker
 #
 
