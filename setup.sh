@@ -573,4 +573,5 @@ unset -f cvd_clean_autogens
 
 for cf in $(docker ps -q -a --filter="ancestor=cuttlefish" --format "table {{.Names}}" | tail -n+2); do
 	__gen_funcs "${cf}"
+    __gen_publish_funcs "${cf}"
 done
