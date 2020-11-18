@@ -38,6 +38,7 @@ function ConnectToDevice(device_id) {
 
   let videoStream;
   let display_label;
+  let buttonsWaitingOnAdbConnection = [];
   let mouseIsDown = false;
   let deviceConnection;
 
@@ -52,6 +53,9 @@ function ConnectToDevice(device_id) {
       // (This is after the adbd start message. Attempting to connect
       // immediately after adbd starts causes issues.)
       init_adb(deviceConnection);
+      for (const button of buttonsWaitingOnAdbConnection) {
+          button.disabled = false;
+      }
     }
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
       if (metadata.rotation == rotation) {
@@ -129,11 +133,13 @@ function ConnectToDevice(device_id) {
     // and https://material.io/resources/icons
     button.classList.add('material-icons');
     button.innerHTML = icon_name;
+    return button;
   }
   createControlPanelButton('power', 'Power', 'power_settings_new');
   createControlPanelButton('home', 'Home', 'home');
   createControlPanelButton('menu', 'Menu', 'menu');
-  createControlPanelButton('rotate', 'Rotate', 'screen_rotation', onRotateButton);
+  buttonsWaitingOnAdbConnection.push(
+      createControlPanelButton('rotate', 'Rotate', 'screen_rotation', onRotateButton));
   createControlPanelButton('volumemute', 'Volume Mute', 'volume_mute');
   createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
   createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
@@ -165,9 +171,10 @@ function ConnectToDevice(device_id) {
         for (const button of deviceConnection.description.custom_control_panel_buttons) {
           if (button.shell_command) {
             // This button's command is handled by sending an ADB shell command.
-            createControlPanelButton(button.command, button.title, button.icon_name,
-                e => onCustomShellButton(button.shell_command, e),
-                'control_panel_custom_buttons');
+            buttonsWaitingOnAdbConnection.push(
+                createControlPanelButton(button.command, button.title, button.icon_name,
+                    e => onCustomShellButton(button.shell_command, e),
+                    'control_panel_custom_buttons'));
           } else {
             // This button's command is handled by custom action server.
             createControlPanelButton(button.command, button.title, button.icon_name,
@@ -175,6 +182,10 @@ function ConnectToDevice(device_id) {
                 'control_panel_custom_buttons');
           }
         }
+      }
+      // Buttons that require adb connection are disabled until VIRTUAL_DEVICE_BOOT_STARTED.
+      for (const button of buttonsWaitingOnAdbConnection) {
+        button.disabled = true;
       }
       deviceConnection.onControlMessage(msg => onControlMessage(msg));
       // Start the screen as hidden. Only show when data is ready.
