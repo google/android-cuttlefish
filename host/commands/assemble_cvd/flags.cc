@@ -69,10 +69,6 @@ DEFINE_string(serial_number, cuttlefish::ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
 DEFINE_bool(use_random_serial, false,
             "Whether to use random serial for the device.");
-DEFINE_string(assembly_dir, StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
-              "A directory to put generated files common between instances");
-DEFINE_string(instance_dir, StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
-              "A directory to put all instance specific files");
 DEFINE_string(
     vm_manager, CrosvmManager::name(),
     "What virtual machine manager to use, one of {qemu_cli, crosvm}");
@@ -231,11 +227,6 @@ DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
              "bootloader. It will default to 'a' if empty and not using a "
              "bootloader.");
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
-DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
-                          "possible. i.e., if --noresume is passed, the disk "
-                          "will be reset to the state it was initially launched "
-                          "in. This flag is ignored if the underlying partition "
-                          "images have been updated since the first launch.");
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
 DEFINE_string(ril_dns, "8.8.8.8", "DNS address of mobile network (RIL)");
@@ -248,8 +239,6 @@ DEFINE_bool(start_gnss_proxy, false, "Whether to start the gnss proxy.");
 // by default, this modem-simulator is disabled
 DEFINE_bool(enable_modem_simulator, true,
             "Enable the modem simulator to process RILD AT commands");
-DEFINE_int32(modem_simulator_count, 1,
-             "Modem simulator count corresponding to maximum sim number");
 // modem_simulator_sim_type=2 for test CtsCarrierApiTestCases
 DEFINE_int32(modem_simulator_sim_type, 1,
              "Sim type: 1 for normal, 2 for CtsCarrierApiTestCases");
@@ -343,13 +332,16 @@ GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
 } // namespace
 
 CuttlefishConfig InitializeCuttlefishConfiguration(
+    const std::string& assembly_dir,
+    const std::string& instance_dir,
+    int modem_simulator_count,
     const BootImageUnpacker& boot_image_unpacker,
     const FetcherConfig& fetcher_config) {
   // At most one streamer can be started.
   CHECK(NumStreamers() <= 1);
 
   CuttlefishConfig tmp_config_obj;
-  tmp_config_obj.set_assembly_dir(FLAGS_assembly_dir);
+  tmp_config_obj.set_assembly_dir(assembly_dir);
   auto vmm = GetVmManager(FLAGS_vm_manager);
   if (!vmm) {
     LOG(FATAL) << "Invalid vm_manager: " << FLAGS_vm_manager;
@@ -504,8 +496,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_modem_simulator(FLAGS_enable_modem_simulator &&
                                             !FLAGS_enable_minimal_mode);
-  tmp_config_obj.set_modem_simulator_instance_number(
-      FLAGS_modem_simulator_count);
+  tmp_config_obj.set_modem_simulator_instance_number(modem_simulator_count);
   tmp_config_obj.set_modem_simulator_sim_type(FLAGS_modem_simulator_sim_type);
 
   tmp_config_obj.set_webrtc_enable_adb_websocket(
@@ -605,7 +596,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
         const_cast<const CuttlefishConfig&>(tmp_config_obj)
             .ForInstance(num);
     // Set this first so that calls to PerInstancePath below are correct
-    instance.set_instance_dir(FLAGS_instance_dir + "." + std::to_string(num));
+    instance.set_instance_dir(instance_dir + "." + std::to_string(num));
     instance.set_use_allocd(FLAGS_use_allocd);
     if (FLAGS_use_random_serial) {
       instance.set_serial_number(
@@ -684,7 +675,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     is_first_instance = false;
     std::stringstream ss;
     auto base_port = 9200 + num - 2;
-    for (auto index = 0; index < FLAGS_modem_simulator_count; ++index) {
+    for (auto index = 0; index < modem_simulator_count; ++index) {
       ss << base_port + 1 << ",";
     }
     std::string modem_simulator_ports = ss.str();

@@ -21,6 +21,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/tee_logging.h"
 #include "host/commands/assemble_cvd/clean.h"
@@ -28,10 +29,19 @@
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/fetcher_config.h"
 
-DECLARE_string(assembly_dir);
-DECLARE_string(instance_dir);
-DECLARE_bool(resume);
-DECLARE_int32(modem_simulator_count);
+using cuttlefish::StringFromEnv;
+
+DEFINE_string(assembly_dir, StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
+              "A directory to put generated files common between instances");
+DEFINE_string(instance_dir, StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
+              "A directory to put all instance specific files");
+DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
+                          "possible. i.e., if --noresume is passed, the disk "
+                          "will be reset to the state it was initially launched "
+                          "in. This flag is ignored if the underlying partition "
+                          "images have been updated since the first launch.");
+DEFINE_int32(modem_simulator_count, 1,
+             "Modem simulator count corresponding to maximum sim number");
 
 namespace cuttlefish {
 namespace {
@@ -92,9 +102,7 @@ void ValidateAdbModeFlag(const CuttlefishConfig& config) {
 #endif
 
 const CuttlefishConfig* InitFilesystemAndCreateConfig(
-    int* argc, char*** argv, FetcherConfig fetcher_config) {
-  CHECK(ParseCommandLineFlags(argc, argv)) << "Failed to parse arguments";
-
+    FetcherConfig fetcher_config) {
   std::string assembly_dir_parent = AbsolutePath(FLAGS_assembly_dir);
   while (assembly_dir_parent[assembly_dir_parent.size() - 1] == '/') {
     assembly_dir_parent =
@@ -123,7 +131,12 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
     // two operations, as those will assume they can read the config object from
     // disk.
-    auto config = InitializeCuttlefishConfiguration(*boot_img_unpacker, fetcher_config);
+    auto config = InitializeCuttlefishConfiguration(
+        FLAGS_assembly_dir,
+        FLAGS_instance_dir,
+        FLAGS_modem_simulator_count,
+        *boot_img_unpacker,
+        fetcher_config);
     std::set<std::string> preserving;
     if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
       LOG(INFO) << "Requested resuming a previous session (the default behavior) "
@@ -215,7 +228,9 @@ int AssembleCvdMain(int argc, char** argv) {
   }
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
-  auto config = InitFilesystemAndCreateConfig(&argc, &argv, FindFetcherConfig(input_files));
+  CHECK(ParseCommandLineFlags(&argc, &argv)) << "Failed to parse arguments";
+
+  auto config = InitFilesystemAndCreateConfig(FindFetcherConfig(input_files));
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
