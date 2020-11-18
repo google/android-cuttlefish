@@ -40,6 +40,7 @@
 using cuttlefish::DefaultHostArtifactsPath;
 using cuttlefish::StringFromEnv;
 using cuttlefish::vm_manager::CrosvmManager;
+using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -403,8 +404,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   // Sepolicy rules need to be updated to support gpu mode. Temporarily disable
   // auto-enabling sandbox when gpu is enabled (b/152323505).
   if (tmp_config_obj.gpu_mode() != kGpuModeGuestSwiftshader) {
-    SetCommandLineOptionWithMode("enable_sandbox", "false",
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("enable_sandbox", "false", SET_FLAGS_DEFAULT);
   }
 
   if (vmm->ConfigureGpuMode(tmp_config_obj.gpu_mode()).empty()) {
@@ -452,8 +452,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   // TODO(rammuthiah) Bootloader boot doesn't work in the following scenarios:
   // 1. Arm64 - On Crosvm, we have no implementation currently.
   if (FLAGS_vm_manager == CrosvmManager::name() && HostArch() == "aarch64") {
-    SetCommandLineOptionWithMode("use_bootloader", "false",
-        google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("use_bootloader", "false", SET_FLAGS_DEFAULT);
   }
 
   tmp_config_obj.set_boot_image_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
@@ -463,8 +462,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
   if (FLAGS_console) {
-    SetCommandLineOptionWithMode("enable_sandbox", "false",
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("enable_sandbox", "false", SET_FLAGS_DEFAULT);
   }
 
   tmp_config_obj.set_console(FLAGS_console);
@@ -739,12 +737,11 @@ void SetDefaultFlagsForQemu() {
     // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
     // possible to run without any streamer by setting --start_webrtc=false.
-    SetCommandLineOptionWithMode("start_webrtc", "true",
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
   }
   std::string default_bootloader = FLAGS_system_image_dir + "/bootloader.qemu";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+                               SET_FLAGS_DEFAULT);
 }
 
 bool EnsureDirectoryExists(const std::string& directory_path) {
@@ -764,8 +761,7 @@ void SetDefaultFlagsForCrosvm() {
     // This makes WebRTC the default streamer unless the user requests
     // another via a --star_<streamer> flag, while at the same time it's
     // possible to run without any streamer by setting --start_webrtc=false.
-    SetCommandLineOptionWithMode("start_webrtc", "true",
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
   }
 
   // for now, we support only x86_64 by default
@@ -783,7 +779,7 @@ void SetDefaultFlagsForCrosvm() {
 
   SetCommandLineOptionWithMode("enable_sandbox",
                                (default_enable_sandbox ? "true" : "false"),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+                               SET_FLAGS_DEFAULT);
 
   // Crosvm requires a specific setting for kernel decompression; it must be
   // on for aarch64 and off for x86, no other mode is supported.
@@ -793,12 +789,11 @@ void SetDefaultFlagsForCrosvm() {
   }
   SetCommandLineOptionWithMode("decompress_kernel",
                                (decompress_kernel ? "true" : "false"),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+                               SET_FLAGS_DEFAULT);
 
   std::string default_bootloader = FLAGS_system_image_dir + "/bootloader";
-  SetCommandLineOptionWithMode("bootloader",
-                               default_bootloader.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+  SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
+                               SET_FLAGS_DEFAULT);
 }
 
 bool ParseCommandLineFlags(int* argc, char*** argv) {
@@ -815,14 +810,13 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
   }
   // Various temporary workarounds for aarch64
   if (HostArch() == "aarch64") {
-    SetCommandLineOptionWithMode("tpm_binary", "",
-                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
+    SetCommandLineOptionWithMode("tpm_binary", "", SET_FLAGS_DEFAULT);
   }
   // The default for starting signaling server is whether or not webrt is to be
   // started.
   SetCommandLineOptionWithMode("start_webrtc_sig_server",
                                FLAGS_start_webrtc ? "true" : "false",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+                               SET_FLAGS_DEFAULT);
   google::HandleCommandLineHelpFlags();
   if (invalid_manager) {
     return false;
