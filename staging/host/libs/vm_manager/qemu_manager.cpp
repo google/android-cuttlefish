@@ -422,6 +422,9 @@ std::vector<Command> QemuManager::StartCommands(
     qemu_cmd.AddParameter("virtio-net-pci-non-transitional,netdev=hostnet2,id=net2");
   }
 
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("qemu-xhci,id=xhci");
+
   if (config.use_bootloader()) {
     qemu_cmd.AddParameter("-bios");
     qemu_cmd.AddParameter(config.bootloader());
