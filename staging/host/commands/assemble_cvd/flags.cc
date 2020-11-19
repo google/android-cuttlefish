@@ -210,8 +210,6 @@ DEFINE_string(qemu_binary,
               "The qemu binary to use");
 DEFINE_string(crosvm_binary, DefaultHostArtifactsPath("bin/crosvm"),
               "The Crosvm binary to use");
-DEFINE_string(tpm_binary, "",
-              "The TPM simulator to use. Disabled if empty.");
 DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
 DEFINE_bool(enable_vehicle_hal_grpc_server, true, "Enables the vehicle HAL "
@@ -472,7 +470,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_qemu_binary(FLAGS_qemu_binary);
   tmp_config_obj.set_crosvm_binary(FLAGS_crosvm_binary);
-  tmp_config_obj.set_tpm_binary(FLAGS_tpm_binary);
   tmp_config_obj.set_tpm_device(FLAGS_tpm_device);
 
   tmp_config_obj.set_enable_vnc_server(FLAGS_start_vnc_server);
@@ -752,10 +749,6 @@ bool ParseCommandLineFlags(int* argc, char*** argv) {
     std::cerr << "Unknown Virtual Machine Manager: " << FLAGS_vm_manager
               << std::endl;
     invalid_manager = true;
-  }
-  // Various temporary workarounds for aarch64
-  if (HostArch() == "aarch64") {
-    SetCommandLineOptionWithMode("tpm_binary", "", SET_FLAGS_DEFAULT);
   }
   // The default for starting signaling server is whether or not webrt is to be
   // started.
