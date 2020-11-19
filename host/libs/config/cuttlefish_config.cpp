@@ -101,7 +101,6 @@ const char* kTpmDevice = "tpm_device";
 
 const char* kQemuBinary = "qemu_binary";
 const char* kCrosvmBinary = "crosvm_binary";
-const char* kTpmBinary = "tpm_binary";
 
 const char* kEnableVncServer = "enable_vnc_server";
 
@@ -374,14 +373,6 @@ std::string CuttlefishConfig::crosvm_binary() const {
 
 void CuttlefishConfig::set_crosvm_binary(const std::string& crosvm_binary) {
   (*dictionary_)[kCrosvmBinary] = crosvm_binary;
-}
-
-std::string CuttlefishConfig::tpm_binary() const {
-  return (*dictionary_)[kTpmBinary].asString();
-}
-
-void CuttlefishConfig::set_tpm_binary(const std::string& tpm_binary) {
-  (*dictionary_)[kTpmBinary] = tpm_binary;
 }
 
 std::string CuttlefishConfig::tpm_device() const {
