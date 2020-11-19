@@ -593,6 +593,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> setNrDualConnectivityState(int32_t serial,
             V1_6::NrDualConnectivityState nrDualConnectivityState);
     Return<void> isNrDualConnectivityEnabled(int32_t serial);
+
     // Methods from ::android::hardware::radio::V1_6::IRadio follow.
     Return<void> getDataCallList_1_6(int32_t serial);
     Return<void> setupDataCall_1_6(int32_t serial,
@@ -617,6 +618,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> setDataThrottling(int32_t serial,
             V1_6::DataThrottlingAction dataThrottlingAction,
             int32_t completionWindow);
+    Return<void> getSystemSelectionChannels(int32_t serial);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -4393,6 +4395,7 @@ Return<void> RadioImpl_1_6::sendCdmaSmsExpectMore(int32_t serial, const CdmaSmsM
     return Void();
 }
 
+// Methods from ::android::hardware::radio::V1_6::IRadio follow.
 Return<void> RadioImpl_1_6::sendCdmaSmsExpectMore_1_6(int32_t serial, const CdmaSmsMessage& sms) {
 #if VDBG
     RLOGD("sendCdmaSmsExpectMore: serial %d", serial);
@@ -4478,6 +4481,14 @@ Return<void> RadioImpl_1_6::setDataThrottling(int32_t serial, V1_6::DataThrottli
        dispatchInts(serial, mSlotId, RIL_REQUEST_SET_DATA_THROTTLING, 2,
           dataThrottlingAction, completionWindow);
        return Void();
+}
+
+Return<void> RadioImpl_1_6::getSystemSelectionChannels(int32_t serial) {
+#if VDBG
+    RLOGD("getSystemSelectionChannels: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS);
+    return Void();
 }
 
 // OEM hook methods:
@@ -9510,6 +9521,26 @@ int radio_1_6::setSystemSelectionChannelsResponse(int slotId, int responseType, 
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("setSystemSelectionChannelsResponse: radioService[%d]->mRadioResponse == NULL",
+                slotId);
+    }
+
+    return 0;
+}
+
+int radio_1_6::getSystemSelectionChannelsResponse(int slotId, int responseType, int serial,
+                                        RIL_Errno e, void* response, size_t responseLen) {
+#if VDBG
+    RLOGD("getSystemSelectionChannelsResponse: serial %d", serial);
+#endif
+    V1_6::RadioResponseInfo responseInfo = {};
+    populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+
+    if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
+                ->getSystemSelectionChannelsResponse(responseInfo);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("getSystemSelectionChannelsResponse: radioService[%d]->mRadioResponse == NULL",
                 slotId);
     }
 
