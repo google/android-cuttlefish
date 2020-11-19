@@ -401,7 +401,12 @@ bool CpuComposer::CanCompositeLayer(const hwc_layer_1_t& layer) {
   return true;
 }
 
-void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
+void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer,
+                                 std::uint8_t* dst_buffer,
+                                 std::uint32_t dst_width,
+                                 std::uint32_t dst_height,
+                                 std::uint32_t dst_stride_bytes,
+                                 std::uint32_t dst_bpp) {
   libyuv::RotationMode rotation =
       GetRotationFromTransform(src_layer->transform);
 
@@ -438,20 +443,17 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   bool needs_copy = !(needs_conversion || needs_scaling || needs_rotation ||
                       needs_vflip || needs_attenuation || needs_blending);
 
-  uint8_t* dst_buffer =
-    reinterpret_cast<uint8_t*>(screen_view_->GetBuffer(buffer_idx));
-
   BufferSpec dst_layer_spec(
       dst_buffer,
       /*buffer_ycbcr=*/std::nullopt,
-      screen_view_->x_res(),
-      screen_view_->y_res(),
+      dst_width,
+      dst_height,
       src_layer->displayFrame.left,
       src_layer->displayFrame.top,
       src_layer->displayFrame.right - src_layer->displayFrame.left,
       src_layer->displayFrame.bottom - src_layer->displayFrame.top,
       DRM_FORMAT_XBGR8888,
-      screen_view_->line_length(),
+      dst_stride_bytes,
       4);
 
   // Add the destination layer to the bottom of the buffer stack
@@ -474,11 +476,13 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
   int tmp_buffer_height =
       src_layer->displayFrame.bottom - src_layer->displayFrame.top;
   int tmp_buffer_stride_bytes =
-      cuttlefish::AlignToPowerOf2(tmp_buffer_width * screen_view_->bytes_per_pixel(), 4);
+      cuttlefish::AlignToPowerOf2(tmp_buffer_width * dst_bpp, 4);
+  int tmp_buffer_size_bytes =
+      tmp_buffer_height * tmp_buffer_stride_bytes;
 
   for (int i = 0; i < needed_tmp_buffers; i++) {
     BufferSpec tmp_buffer_spec(
-        RotateTmpBuffer(i),
+        GetRotatingTmpBuffer(tmp_buffer_size_bytes, i),
         tmp_buffer_width,
         tmp_buffer_height,
         tmp_buffer_stride_bytes);
@@ -502,7 +506,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       int src_width = src_layer_spec.crop_width;
       int src_height = src_layer_spec.crop_height;
       int dst_stride_bytes =
-          cuttlefish::AlignToPowerOf2(src_width * screen_view_->bytes_per_pixel(), 4);
+          cuttlefish::AlignToPowerOf2(src_width * dst_bpp, 4);
       size_t needed_size = dst_stride_bytes * src_height;
       dst_buffer_spec.width = src_width;
       dst_buffer_spec.height = src_height;
@@ -541,8 +545,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
       std::swap(dst_buffer_spec.crop_width, dst_buffer_spec.crop_height);
       // TODO (jemoreira): Aligment (To align here may cause the needed size to
       // be bigger than the buffer, so care should be taken)
-      dst_buffer_spec.stride_bytes =
-          dst_buffer_spec.width * screen_view_->bytes_per_pixel();
+      dst_buffer_spec.stride_bytes = dst_buffer_spec.width * dst_bpp;
     }
     int retval = DoScaling(src_layer_spec, dst_buffer_spec, needs_vflip);
     needs_vflip = false;
@@ -602,8 +605,7 @@ void CpuComposer::CompositeLayer(hwc_layer_1_t* src_layer, int buffer_idx) {
 /* static */ const int CpuComposer::kNumTmpBufferPieces = 2;
 
 CpuComposer::CpuComposer(std::unique_ptr<ScreenView> screen_view)
-    : BaseComposer(std::move(screen_view)),
-      tmp_buffer_(kNumTmpBufferPieces * screen_view_->buffer_size()) {}
+    : BaseComposer(std::move(screen_view)) {}
 
 int CpuComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
   int composited_layers_count = 0;
@@ -651,6 +653,14 @@ int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   int targetFbs = 0;
   int buffer_idx = screen_view_->NextBuffer();
 
+  const std::uint32_t display_number = 0;
+  std::uint8_t* dst_buffer =
+      reinterpret_cast<uint8_t*>(screen_view_->GetBuffer(buffer_idx));
+  std::uint32_t dst_width = ScreenView::ScreenWidth(display_number);
+  std::uint32_t dst_height = ScreenView::ScreenHeight(display_number);
+  std::uint32_t dst_stride_bytes = ScreenView::ScreenStrideBytes(display_number);
+  std::uint32_t dst_bpp = ScreenView::ScreenBytesPerPixel();
+
   // The framebuffer target layer should be composed if at least one layers was
   // marked HWC_FRAMEBUFFER or if it's the only layer in the composition
   // (unlikely)
@@ -671,7 +681,12 @@ int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   if (fb_target) {
     for (size_t idx = 0; idx < num_layers; idx++) {
       if (IS_TARGET_FRAMEBUFFER(layers[idx].compositionType)) {
-        CompositeLayer(&layers[idx], buffer_idx);
+        CompositeLayer(&layers[idx],
+                       dst_buffer,
+                       dst_width,
+                       dst_height,
+                       dst_stride_bytes,
+                       dst_bpp);
         break;
       }
     }
@@ -683,7 +698,12 @@ int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
     }
     if (layers[idx].compositionType == HWC_OVERLAY &&
         !(layers[idx].flags & HWC_SKIP_LAYER)) {
-      CompositeLayer(&layers[idx], buffer_idx);
+      CompositeLayer(&layers[idx],
+                       dst_buffer,
+                       dst_width,
+                       dst_height,
+                       dst_stride_bytes,
+                       dst_bpp);
     }
   }
   if (targetFbs != 1) {
@@ -693,9 +713,16 @@ int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   return 0;
 }
 
-uint8_t* CpuComposer::RotateTmpBuffer(unsigned int order) {
-  return &tmp_buffer_[(order % kNumTmpBufferPieces) * tmp_buffer_.size() /
-                      kNumTmpBufferPieces];
+uint8_t* CpuComposer::GetRotatingTmpBuffer(std::size_t needed_size,
+                                           std::uint32_t order) {
+  std::size_t total_needed_size = needed_size * kNumTmpBufferPieces;
+  if (tmp_buffer_.size() < total_needed_size) {
+    tmp_buffer_.resize(total_needed_size);
+  }
+
+  std::size_t buffer_index = order % kNumTmpBufferPieces;
+  std::size_t buffer_offset = buffer_index * needed_size;
+  return &tmp_buffer_[buffer_offset];
 }
 
 uint8_t* CpuComposer::GetSpecialTmpBuffer(size_t needed_size) {
