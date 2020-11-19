@@ -111,6 +111,7 @@ extern "C" {
  *                    RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
  *                    RIL_REQUEST_SET_DATA_THROTTLING
  *                    RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS
+ *                    RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -7466,7 +7467,28 @@ typedef enum {
  */
 #define RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS 167
 
-#define RIL_REQUEST_LAST RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS
+/**
+ * RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP
+ *
+ * Request previously set allowed network types from the radio.
+ *
+ * Valid errors:
+ *  SUCCESS
+ *  RADIO_NOT_AVAILABLE (radio resetting)
+ *  OPERATION_NOT_ALLOWED
+ *  MODE_NOT_SUPPORTED
+ *  NO_MEMORY
+ *  INTERNAL_ERR
+ *  SYSTEM_ERR
+ *  INVALID_ARGUMENTS
+ *  MODEM_ERR
+ *  REQUEST_NOT_SUPPORTED
+ *  NO_RESOURCES
+ *  CANCELLED
+ */
+#define RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP 168
+
+#define RIL_REQUEST_LAST RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP
 
 /***********************************************************************/
 
