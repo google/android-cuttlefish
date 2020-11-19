@@ -134,14 +134,6 @@ cvd_host_seccomp_policy_arm64 = [
     "xhci.policy_aarch64",
 ]
 
-cvd_host_tools_x86_64 = [
-    "x86_64_linux_gnu_libandroid_emu_shared.so_for_crosvm",
-    "x86_64_linux_gnu_libc++.so.1_for_crosvm",
-    "x86_64_linux_gnu_libemugl_common.so_for_crosvm",
-    "x86_64_linux_gnu_libgfxstream_backend.so_for_crosvm",
-    "x86_64_linux_gnu_libOpenglRender.so_for_crosvm",
-]
-
 cvd_host_package_customization {
     name: "cvd-host_package",
     deps: cvd_host_tools +
@@ -155,7 +147,6 @@ cvd_host_package_customization {
 
     arch: {
         x86_64: {
-            deps: cvd_host_tools_x86_64,
             multilib: {
                 common: {
                     deps: cvd_host_seccomp_policy_x86_64,
