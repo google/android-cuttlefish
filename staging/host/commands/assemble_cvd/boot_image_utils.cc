@@ -20,6 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <fstream>
 #include <sstream>
 
 #include <android-base/logging.h>
@@ -28,6 +29,9 @@
 #include "common/libs/utils/subprocess.h"
 
 const char TMP_EXTENSION[] = ".tmp";
+const char CPIO_EXT[] = ".cpio";
+const char TMP_RD_DIR[] = "stripped_ramdisk_dir";
+const char STRIPPED_RD[] = "stripped_ramdisk";
 namespace cuttlefish {
 namespace {
 std::string ExtractValue(const std::string& dictionary, const std::string& key) {
@@ -63,6 +67,44 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
   }
 
   return true;
+}
+
+void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
+                         const std::string& original_ramdisk_path,
+                         const std::string& new_ramdisk_path,
+                         const std::string& build_dir) {
+  int success = execute({"/bin/bash", "-c", DefaultHostArtifactsPath("bin/lz4") + " -c -d -l " +
+                        original_ramdisk_path + " > " + original_ramdisk_path + CPIO_EXT});
+  CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
+
+  success = mkdir((build_dir + "/" + TMP_RD_DIR).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  CHECK(success == 0) << "Could not mkdir \"" << TMP_RD_DIR << "\", error was " << strerror(errno);
+
+  success = execute({"/bin/bash", "-c", "(cd " + build_dir + "/" + TMP_RD_DIR +
+                     " && (while /usr/bin/cpio -id ; do :; done) < " +
+                     original_ramdisk_path + CPIO_EXT + ")"});
+  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
+
+  success = execute({"/bin/bash", "-c", "rm -rf " + build_dir + "/" + TMP_RD_DIR + "/lib/modules"});
+  CHECK(success == 0) << "Could not rmdir \"lib/modules\" in TMP_RD_DIR. Exited with status "
+                  << success;
+
+  const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
+  success = execute({"/bin/bash", "-c", "(cd " + build_dir + "/" + TMP_RD_DIR +
+                     " && find . | /usr/bin/cpio -H newc -o --quiet > " +
+                     stripped_ramdisk_path + CPIO_EXT + ")"});
+  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
+
+  success = execute({"/bin/bash", "-c", DefaultHostArtifactsPath("bin/lz4") +
+                     " -c -l -12 --favor-decSpeed " + stripped_ramdisk_path + CPIO_EXT + " > " +
+                     stripped_ramdisk_path});
+  CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
+
+  // Concatenates the stripped ramdisk and input ramdisk and places the result at new_ramdisk_path
+  std::ofstream final_rd(new_ramdisk_path, std::ios_base::binary | std::ios_base::trunc);
+  std::ifstream ramdisk_a(stripped_ramdisk_path, std::ios_base::binary);
+  std::ifstream ramdisk_b(kernel_modules_ramdisk_path, std::ios_base::binary);
+  final_rd << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
 }
 } // namespace
 
@@ -102,7 +144,7 @@ bool RepackBootImage(const std::string& new_kernel_path,
   return DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path);
 }
 
-bool RepackVendorBootImage(const std::string& new_ramdisk_path,
+bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
                            const std::string& vendor_boot_image_path,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& build_dir) {
@@ -125,6 +167,16 @@ bool RepackVendorBootImage(const std::string& new_ramdisk_path,
     LOG(ERROR) << "Unable to run unpack_bootimg. Exited with status " << success;
     return false;
   }
+
+  // TODO(b/173134558)
+  // The vendor boot generation below isn't deterministic. i.e. running the same vendor boot
+  // repack function twice with the same inputs will produce two differing vendor boot images.
+  // This is because the vendor boot ramdisk contains a few symlinks. These symlinks affect the
+  // ramdisk regeneration process and cause differing outputs each time (I still haven't figured
+  // out why).
+  std::string new_ramdisk_path = build_dir + "/vendor_ramdisk_repacked";
+  RepackVendorRamdisk(kernel_modules_ramdisk_path, build_dir + "/vendor_ramdisk",
+                      new_ramdisk_path, build_dir);
 
   std::string vendor_boot_params = ReadFile(build_dir + "/vendor_boot_params");
   auto kernel_cmdline = "\"" + ExtractValue(vendor_boot_params, "vendor command line args: ") + "\"";
