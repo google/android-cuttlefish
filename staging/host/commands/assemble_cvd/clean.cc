@@ -141,4 +141,16 @@ bool CleanPriorFiles(
   return CleanPriorFiles(paths, preserving);
 }
 
+bool EnsureDirectoryExists(const std::string& directory_path) {
+  if (!DirectoryExists(directory_path)) {
+    LOG(DEBUG) << "Setting up " << directory_path;
+    if (mkdir(directory_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0
+        && errno != EEXIST) {
+      PLOG(ERROR) << "Failed to create dir: \"" << directory_path << "\" ";
+      return false;
+    }
+  }
+  return true;
+}
+
 } // namespace cuttlefish
