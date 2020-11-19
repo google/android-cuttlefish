@@ -1,1 +1,3 @@
 allow dumpstate hal_neuralnetworks_sample:process signal;
+
+allow dumpstate system_data_file:dir w_dir_perms;
