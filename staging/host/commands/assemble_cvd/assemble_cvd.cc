@@ -17,11 +17,31 @@
 
 #include <android-base/strings.h>
 #include <android-base/logging.h>
+#include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/environment.h"
+#include "common/libs/utils/files.h"
+#include "common/libs/utils/tee_logging.h"
+#include "host/commands/assemble_cvd/clean.h"
+#include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/commands/assemble_cvd/flags.h"
 #include "host/libs/config/fetcher_config.h"
+
+using cuttlefish::StringFromEnv;
+
+DEFINE_string(assembly_dir, StringFromEnv("HOME", ".") + "/cuttlefish_assembly",
+              "A directory to put generated files common between instances");
+DEFINE_string(instance_dir, StringFromEnv("HOME", ".") + "/cuttlefish_runtime",
+              "A directory to put all instance specific files");
+DEFINE_bool(resume, true, "Resume using the disk from the last session, if "
+                          "possible. i.e., if --noresume is passed, the disk "
+                          "will be reset to the state it was initially launched "
+                          "in. This flag is ignored if the underlying partition "
+                          "images have been updated since the first launch.");
+DEFINE_int32(modem_simulator_count, 1,
+             "Modem simulator count corresponding to maximum sim number");
 
 namespace cuttlefish {
 namespace {
@@ -40,6 +60,148 @@ FetcherConfig FindFetcherConfig(const std::vector<std::string>& files) {
     }
   }
   return fetcher_config;
+}
+
+std::string GetLegacyConfigFilePath(const CuttlefishConfig& config) {
+  return config.ForDefaultInstance().PerInstancePath("cuttlefish_config.json");
+}
+
+bool SaveConfig(const CuttlefishConfig& tmp_config_obj) {
+  auto config_file = GetConfigFilePath(tmp_config_obj);
+  auto config_link = GetGlobalConfigFileLink();
+  // Save the config object before starting any host process
+  if (!tmp_config_obj.SaveToFile(config_file)) {
+    LOG(ERROR) << "Unable to save config object";
+    return false;
+  }
+  auto legacy_config_file = GetLegacyConfigFilePath(tmp_config_obj);
+  if (!tmp_config_obj.SaveToFile(legacy_config_file)) {
+    LOG(ERROR) << "Unable to save legacy config object";
+    return false;
+  }
+  setenv(kCuttlefishConfigEnvVarName, config_file.c_str(), true);
+  if (symlink(config_file.c_str(), config_link.c_str()) != 0) {
+    LOG(ERROR) << "Failed to create symlink to config file at " << config_link
+               << ": " << strerror(errno);
+    return false;
+  }
+
+  return true;
+}
+
+void ValidateAdbModeFlag(const CuttlefishConfig& config) {
+  auto adb_modes = config.adb_mode();
+  adb_modes.erase(AdbMode::Unknown);
+  if (adb_modes.size() < 1) {
+    LOG(INFO) << "ADB not enabled";
+  }
+}
+
+#ifndef O_TMPFILE
+# define O_TMPFILE (020000000 | O_DIRECTORY)
+#endif
+
+const CuttlefishConfig* InitFilesystemAndCreateConfig(
+    FetcherConfig fetcher_config) {
+  std::string assembly_dir_parent = AbsolutePath(FLAGS_assembly_dir);
+  while (assembly_dir_parent[assembly_dir_parent.size() - 1] == '/') {
+    assembly_dir_parent =
+        assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
+  }
+  assembly_dir_parent =
+      assembly_dir_parent.substr(0, FLAGS_assembly_dir.rfind('/'));
+  auto log =
+      SharedFD::Open(
+          assembly_dir_parent,
+          O_WRONLY | O_TMPFILE,
+          S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+  if (!log->IsOpen()) {
+    LOG(ERROR) << "Could not open O_TMPFILE precursor to assemble_cvd.log: "
+               << log->StrError();
+  } else {
+    android::base::SetLogger(TeeLogger({
+      {ConsoleSeverity(), SharedFD::Dup(2)},
+      {LogFileSeverity(), log},
+    }));
+  }
+
+  auto boot_img_unpacker = CreateBootImageUnpacker();
+  {
+    // The config object is created here, but only exists in memory until the
+    // SaveConfig line below. Don't launch cuttlefish subprocesses between these
+    // two operations, as those will assume they can read the config object from
+    // disk.
+    auto config = InitializeCuttlefishConfiguration(
+        FLAGS_assembly_dir,
+        FLAGS_instance_dir,
+        FLAGS_modem_simulator_count,
+        *boot_img_unpacker,
+        fetcher_config);
+    std::set<std::string> preserving;
+    if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
+      LOG(INFO) << "Requested resuming a previous session (the default behavior) "
+                << "but the base images have changed under the overlay, making the "
+                << "overlay incompatible. Wiping the overlay files.";
+    } else if (FLAGS_resume && !ShouldCreateAllCompositeDisks(config)) {
+      preserving.insert("overlay.img");
+      preserving.insert("gpt_header.img");
+      preserving.insert("gpt_footer.img");
+      preserving.insert("composite.img");
+      preserving.insert("sdcard.img");
+      preserving.insert("uboot_env.img");
+      preserving.insert("boot_repacked.img");
+      preserving.insert("vendor_boot_repacked.img");
+      preserving.insert("access-kregistry");
+      preserving.insert("disk_hole");
+      preserving.insert("NVChip");
+      preserving.insert("gatekeeper_secure");
+      preserving.insert("gatekeeper_insecure");
+      preserving.insert("modem_nvram.json");
+      preserving.insert("disk_config.txt");
+      std::stringstream ss;
+      for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
+        ss.clear();
+        ss << "iccprofile_for_sim" << i << ".xml";
+        preserving.insert(ss.str());
+        ss.str("");
+      }
+    }
+    CHECK(CleanPriorFiles(preserving, FLAGS_assembly_dir, FLAGS_instance_dir))
+        << "Failed to clean prior files";
+
+    // Create assembly directory if it doesn't exist.
+    CHECK(EnsureDirectoryExists(FLAGS_assembly_dir));
+    if (log->LinkAtCwd(config.AssemblyPath("assemble_cvd.log"))) {
+      LOG(ERROR) << "Unable to persist assemble_cvd log at "
+                  << config.AssemblyPath("assemble_cvd.log")
+                  << ": " << log->StrError();
+    }
+    std::string disk_hole_dir = FLAGS_assembly_dir + "/disk_hole";
+    CHECK(EnsureDirectoryExists(disk_hole_dir));
+    for (const auto& instance : config.Instances()) {
+      // Create instance directory if it doesn't exist.
+      CHECK(EnsureDirectoryExists(instance.instance_dir()));
+      auto internal_dir = instance.instance_dir() + "/" + kInternalDirName;
+      CHECK(EnsureDirectoryExists(internal_dir));
+      auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
+      CHECK(EnsureDirectoryExists(shared_dir));
+    }
+    CHECK(SaveConfig(config)) << "Failed to initialize configuration";
+  }
+
+  std::string first_instance = FLAGS_instance_dir + "." + std::to_string(GetInstance());
+  CHECK_EQ(symlink(first_instance.c_str(), FLAGS_instance_dir.c_str()), 0)
+      << "Could not symlink \"" << first_instance << "\" to \"" << FLAGS_instance_dir << "\"";
+
+  // Do this early so that the config object is ready for anything that needs it
+  auto config = CuttlefishConfig::Get();
+  CHECK(config) << "Failed to obtain config singleton";
+
+  ValidateAdbModeFlag(*config);
+
+  CreateDynamicDiskFiles(fetcher_config, config, boot_img_unpacker.get());
+
+  return config;
 }
 
 } // namespace
@@ -66,7 +228,9 @@ int AssembleCvdMain(int argc, char** argv) {
   }
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
-  auto config = InitFilesystemAndCreateConfig(&argc, &argv, FindFetcherConfig(input_files));
+  CHECK(ParseCommandLineFlags(&argc, &argv)) << "Failed to parse arguments";
+
+  auto config = InitFilesystemAndCreateConfig(FindFetcherConfig(input_files));
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;

@@ -25,4 +25,6 @@ bool CleanPriorFiles(
     const std::string& assembly_dir,
     const std::string& instance_dir);
 
+bool EnsureDirectoryExists(const std::string& directory_path);
+
 } // namespace cuttlefish
