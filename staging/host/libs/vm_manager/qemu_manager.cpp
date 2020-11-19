@@ -328,12 +328,6 @@ std::vector<Command> QemuManager::StartCommands(
                           ",id=virtio-disk", i, bootindex);
   }
 
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-mouse-pci");
-
-  qemu_cmd.AddParameter("-device");
-  qemu_cmd.AddParameter("virtio-keyboard-pci");
-
   if (config.gpu_mode() == kGpuModeDrmVirgl) {
     qemu_cmd.AddParameter("-display");
     qemu_cmd.AddParameter("egl-headless");
@@ -375,6 +369,12 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("virtio-rng-pci-non-transitional,rng=objrng0,id=rng0,",
                         "max-bytes=1024,period=2000");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-mouse-pci");
+
+  qemu_cmd.AddParameter("-device");
+  qemu_cmd.AddParameter("virtio-keyboard-pci");
 
   auto vhost_net = config.vhost_net() ? ",vhost=on" : "";
 
