@@ -763,9 +763,11 @@ int carrierInfoForImsiEncryption(int slotId,
                         int responseType, int serial, RIL_Errno e,
                         void *response, size_t responseLen);
 
-int setSystemSelectionChannelsResponse(int slotId,
-                               int responseType, int serial, RIL_Errno e,
-                               void *response, size_t responseLen);
+int setSystemSelectionChannelsResponse(int slotId, int responseType, int serial,
+                                       RIL_Errno e, void *response, size_t responseLen);
+
+int getSystemSelectionChannelsResponse(int slotId, int responseType, int serial,
+                                       RIL_Errno e, void *response, size_t responseLen);
 
 int setSignalStrengthReportingCriteriaResponse(int slotId, int responseType, int serial,
                                                RIL_Errno e, void *response, size_t responselen);
