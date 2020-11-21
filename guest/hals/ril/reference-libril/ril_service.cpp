@@ -617,7 +617,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
             hidl_bitfield<::android::hardware::radio::V1_4::RadioAccessFamily> networkTypeBitmap);
     Return<void> setDataThrottling(int32_t serial,
             V1_6::DataThrottlingAction dataThrottlingAction,
-            int32_t completionWindow);
+            int64_t completionDurationMillis);
     Return<void> getSystemSelectionChannels(int32_t serial);
 };
 
@@ -4474,12 +4474,12 @@ Return<void> RadioImpl_1_6::cancelHandover(int32_t serial, int32_t callId) {
 }
 
 
-Return<void> RadioImpl_1_6::setDataThrottling(int32_t serial, V1_6::DataThrottlingAction dataThrottlingAction, int32_t completionWindow) {
+Return<void> RadioImpl_1_6::setDataThrottling(int32_t serial, V1_6::DataThrottlingAction dataThrottlingAction, int64_t completionDurationMillis) {
    #if VDBG
        RLOGD("OemHookImpl::sendRequestRaw: serial %d", serial);
    #endif
        dispatchInts(serial, mSlotId, RIL_REQUEST_SET_DATA_THROTTLING, 2,
-          dataThrottlingAction, completionWindow);
+          dataThrottlingAction, completionDurationMillis);
        return Void();
 }
 
