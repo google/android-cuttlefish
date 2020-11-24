@@ -113,8 +113,10 @@ int main(int argc, char** argv) {
   // taking ownership.
   keymaster::KeymasterContext* keymaster_context;
   if (FLAGS_keymaster_impl == "software") {
+    // TODO: See if this is the right KM version.
     keymaster_context =
-        new keymaster::PureSoftKeymasterContext(KM_SECURITY_LEVEL_SOFTWARE);
+        new keymaster::PureSoftKeymasterContext(keymaster::KmVersion::KEYMASTER_4,
+                                                KM_SECURITY_LEVEL_SOFTWARE);
   } else if (FLAGS_keymaster_impl == "tpm") {
     keymaster_context =
         new TpmKeymasterContext(*resource_manager, *keymaster_enforcement);

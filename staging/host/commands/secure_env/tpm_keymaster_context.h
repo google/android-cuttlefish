@@ -21,6 +21,8 @@
 #include <keymaster/attestation_record.h>
 #include <keymaster/keymaster_context.h>
 
+#include "tpm_attestation_record.h"
+
 class TpmAttestationRecordContext;
 class TpmResourceManager;
 class TpmKeyBlobMaker;
