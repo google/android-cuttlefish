@@ -394,11 +394,16 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_cpus(FLAGS_cpus);
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
-  tmp_config_obj.set_dpi(FLAGS_dpi);
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
-  tmp_config_obj.set_x_res(FLAGS_x_res);
-  tmp_config_obj.set_y_res(FLAGS_y_res);
+
+  std::vector<cuttlefish::CuttlefishConfig::DisplayConfig> display_configs = {{
+    .width = FLAGS_x_res,
+    .height = FLAGS_y_res,
+  }};
+  tmp_config_obj.set_display_configs(display_configs);
+  tmp_config_obj.set_dpi(FLAGS_dpi);
   tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
+
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));

@@ -97,14 +97,16 @@ class CuttlefishConfig {
   int dpi() const;
   void set_dpi(int dpi);
 
-  int x_res() const;
-  void set_x_res(int x_res);
-
-  int y_res() const;
-  void set_y_res(int y_res);
-
   int refresh_rate_hz() const;
   void set_refresh_rate_hz(int refresh_rate_hz);
+
+  struct DisplayConfig {
+    int width;
+    int height;
+  };
+
+  std::vector<DisplayConfig> display_configs() const;
+  void set_display_configs(const std::vector<DisplayConfig>& display_configs);
 
   // Returns kernel image extracted from the boot image or the user-provided one
   // if given by command line to the launcher. This function should not be used

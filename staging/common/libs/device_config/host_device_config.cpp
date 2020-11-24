@@ -157,12 +157,15 @@ bool InitializeNetworkConfiguration(const CuttlefishConfig& cuttlefish_config,
 
 void InitializeScreenConfiguration(const CuttlefishConfig& cuttlefish_config,
                                    DeviceConfig* device_config) {
-  DeviceConfig::DisplayConfig* display_config =
-    device_config->add_display_config();
-  display_config->set_width(cuttlefish_config.x_res());
-  display_config->set_height(cuttlefish_config.y_res());
-  display_config->set_dpi(cuttlefish_config.dpi());
-  display_config->set_refresh_rate_hz(cuttlefish_config.refresh_rate_hz());
+  for (const auto& cuttlefish_display_config : cuttlefish_config.display_configs()) {
+    DeviceConfig::DisplayConfig* device_display_config =
+      device_config->add_display_config();
+
+    device_display_config->set_width(cuttlefish_display_config.width);
+    device_display_config->set_height(cuttlefish_display_config.height);
+    device_display_config->set_dpi(cuttlefish_config.dpi());
+    device_display_config->set_refresh_rate_hz(cuttlefish_config.refresh_rate_hz());
+  }
 }
 
 }  // namespace
