@@ -169,8 +169,8 @@ int main(int argc, char **argv) {
   CHECK(streamer) << "Could not create streamer";
 
   auto display_0 = streamer->AddDisplay(
-      "display_0", screen_connector->ScreenWidth(),
-      screen_connector->ScreenHeight(), cvd_config->dpi(), true);
+      "display_0", screen_connector->ScreenWidth(0),
+      screen_connector->ScreenHeight(0), cvd_config->dpi(), true);
   auto display_handler =
       std::make_shared<DisplayHandler>(display_0, screen_connector);
 
