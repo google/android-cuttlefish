@@ -74,29 +74,38 @@ void SimulatedHWComposer::EraseHalfOfElements(
 
 void SimulatedHWComposer::MakeStripes() {
   std::uint32_t previous_frame_number = 0;
-  auto screen_height = ScreenConnector::ScreenHeight();
+  const std::uint32_t display_number = 0;
+  const std::uint32_t display_w =
+      ScreenConnector::ScreenWidth(display_number);
+  const std::uint32_t display_h =
+      ScreenConnector::ScreenHeight(display_number);
+  const std::uint32_t display_stride_bytes =
+      ScreenConnector::ScreenStrideBytes(display_number);
+  const std::uint32_t display_bpp =
+      ScreenConnector::BytesPerPixel();
+  const std::uint32_t display_size_bytes =
+      ScreenConnector::ScreenSizeInBytes(display_number);
+
   Message raw_screen;
   std::uint64_t stripe_seq_num = 1;
 
   const FrameCallback frame_callback = [&](uint32_t frame_number,
                                            uint8_t* frame_pixels) {
     raw_screen.assign(frame_pixels,
-                      frame_pixels + ScreenConnector::ScreenSizeInBytes());
+                      frame_pixels + display_size_bytes);
 
     for (int i = 0; i < kNumStripes; ++i) {
       ++stripe_seq_num;
-      std::uint16_t y = (screen_height / kNumStripes) * i;
+      std::uint16_t y = (display_h / kNumStripes) * i;
 
       // Last frames on the right and/or bottom handle extra pixels
       // when a screen dimension is not evenly divisible by Frame::kNumSlots.
       std::uint16_t height =
-          screen_height / kNumStripes +
-          (i + 1 == kNumStripes ? screen_height % kNumStripes : 0);
-      const auto* raw_start = &raw_screen[y * ScreenConnector::ScreenWidth() *
-                                          ScreenConnector::BytesPerPixel()];
+          display_h / kNumStripes +
+          (i + 1 == kNumStripes ? display_h % kNumStripes : 0);
+      const auto* raw_start = &raw_screen[y * display_w * display_bpp];
       const auto* raw_end =
-          raw_start + (height * ScreenConnector::ScreenWidth() *
-                       ScreenConnector::BytesPerPixel());
+          raw_start + (height * display_w * display_bpp);
       // creating a named object and setting individual data members in order
       // to make klp happy
       // TODO (haining) construct this inside the call when not compiling
@@ -106,8 +115,8 @@ void SimulatedHWComposer::MakeStripes() {
       s.frame_id = frame_number;
       s.x = 0;
       s.y = y;
-      s.width = ScreenConnector::ScreenWidth();
-      s.stride = ScreenConnector::ScreenStride();
+      s.width = display_w;
+      s.stride = display_stride_bytes;
       s.height = height;
       s.raw_data.assign(raw_start, raw_end);
       s.seq_number = StripeSeqNumber{stripe_seq_num};

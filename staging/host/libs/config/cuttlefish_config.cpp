@@ -80,6 +80,7 @@ const char* kDpi = "dpi";
 const char* kXRes = "x_res";
 const char* kYRes = "y_res";
 const char* kRefreshRateHz = "refresh_rate_hz";
+const char* kDisplayConfigs = "display_configs";
 
 const char* kKernelImagePath = "kernel_image_path";
 const char* kUseUnpackedKernel = "use_unpacked_kernel";
@@ -216,11 +217,30 @@ void CuttlefishConfig::set_memory_mb(int memory_mb) {
 int CuttlefishConfig::dpi() const { return (*dictionary_)[kDpi].asInt(); }
 void CuttlefishConfig::set_dpi(int dpi) { (*dictionary_)[kDpi] = dpi; }
 
-int CuttlefishConfig::x_res() const { return (*dictionary_)[kXRes].asInt(); }
-void CuttlefishConfig::set_x_res(int x_res) { (*dictionary_)[kXRes] = x_res; }
+std::vector<CuttlefishConfig::DisplayConfig>
+CuttlefishConfig::display_configs() const {
+  std::vector<DisplayConfig> display_configs;
+  for (auto& display_config_json : (*dictionary_)[kDisplayConfigs]) {
+    DisplayConfig display_config = {};
+    display_config.width = display_config_json[kXRes].asInt();
+    display_config.height = display_config_json[kYRes].asInt();
+    display_configs.emplace_back(std::move(display_config));
+  }
+  return display_configs;
+}
+void CuttlefishConfig::set_display_configs(
+    const std::vector<DisplayConfig>& display_configs) {
+  Json::Value display_configs_json(Json::arrayValue);
 
-int CuttlefishConfig::y_res() const { return (*dictionary_)[kYRes].asInt(); }
-void CuttlefishConfig::set_y_res(int y_res) { (*dictionary_)[kYRes] = y_res; }
+  for (const DisplayConfig& display_configs : display_configs) {
+    Json::Value display_config_json(Json::objectValue);
+    display_config_json[kXRes] = display_configs.width;
+    display_config_json[kYRes] = display_configs.height;
+    display_configs_json.append(display_config_json);
+  }
+
+  (*dictionary_)[kDisplayConfigs] = display_configs_json;
+}
 
 int CuttlefishConfig::refresh_rate_hz() const {
   return (*dictionary_)[kRefreshRateHz].asInt();

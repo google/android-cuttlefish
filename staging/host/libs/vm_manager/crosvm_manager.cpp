@@ -156,17 +156,21 @@ std::vector<Command> CrosvmManager::StartCommands(
   });
   crosvm_cmd.AddParameter("run");
 
+  auto display_configs = config.display_configs();
+  CHECK_GE(display_configs.size(), 1);
+  auto display_config = display_configs[0];
+
   auto gpu_mode = config.gpu_mode();
 
   if (gpu_mode == kGpuModeGuestSwiftshader) {
     crosvm_cmd.AddParameter("--gpu=2D,",
-                            "width=", config.x_res(), ",",
-                            "height=", config.y_res());
+                            "width=", display_config.width, ",",
+                            "height=", display_config.height);
   } else if (gpu_mode == kGpuModeDrmVirgl || gpu_mode == kGpuModeGfxStream) {
     crosvm_cmd.AddParameter(gpu_mode == kGpuModeGfxStream ?
                                 "--gpu=gfxstream," : "--gpu=",
-                            "width=", config.x_res(), ",",
-                            "height=", config.y_res(), ",",
+                            "width=", display_config.width, ",",
+                            "height=", display_config.height, ",",
                             "egl=true,surfaceless=true,glx=false,gles=true");
     crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
@@ -184,7 +188,8 @@ std::vector<Command> CrosvmManager::StartCommands(
 
   if (config.enable_vnc_server() || config.enable_webrtc()) {
     crosvm_cmd.AddParameter("--single-touch=", instance.touch_socket_path(),
-                            ":", config.x_res(), ":", config.y_res());
+                            ":", display_config.width,
+                            ":", display_config.height);
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
 
