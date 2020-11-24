@@ -31,7 +31,6 @@ PRODUCT_COPY_FILES += \
     packages/services/Car/car_product/init/init.bootstat.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw//init.bootstat.rc \
     packages/services/Car/car_product/init/init.car.rc:$(TARGET_COPY_OUT_VENDOR)/etc/init/hw//init.car.rc
 
-
 ifneq ($(LOCAL_SENSOR_FILE_OVERRIDES),true)
     PRODUCT_COPY_FILES += \
         frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.accelerometer.xml \
