@@ -23,8 +23,11 @@
 namespace cuttlefish {
 
 SocketBasedScreenConnector::SocketBasedScreenConnector(int frames_fd) {
-screen_server_thread_ =
+  screen_server_thread_ =
     std::thread([this, frames_fd]() { ServerLoop(frames_fd); });
+
+  buffer_size_ = ScreenSizeInBytes(/*display_number=*/0);
+  buffer_.resize(kNumBuffersPerDisplay * buffer_size_);
 }
 
 bool SocketBasedScreenConnector::OnFrameAfter(
@@ -46,8 +49,8 @@ int SocketBasedScreenConnector::WaitForNewFrameSince(std::uint32_t* seq_num) {
 
 void* SocketBasedScreenConnector::GetBuffer(int buffer_idx) {
   if (buffer_idx < 0) return nullptr;
-  buffer_idx %= NUM_BUFFERS_;
-  return &buffer_[buffer_idx * ScreenSizeInBytes()];
+  buffer_idx %= kNumBuffersPerDisplay;
+  return &buffer_[buffer_idx * buffer_size_];
 }
 
 void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
@@ -90,7 +93,7 @@ void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
         buff += read;
       }
       BroadcastNewFrame(current_buffer);
-      current_buffer = (current_buffer + 1) % NUM_BUFFERS_;
+      current_buffer = (current_buffer + 1) % kNumBuffersPerDisplay;
     }
   }
 }
