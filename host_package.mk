@@ -1,17 +1,17 @@
-soong_host_out := $(SOONG_HOST_OUT)
+cvd_host_packages := $(SOONG_HOST_OUT)/cvd-host_package.tar.gz
 ifeq ($(HOST_CROSS_OS)_$(HOST_CROSS_ARCH),linux_bionic_arm64)
-  soong_host_out := $(SOONG_OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)
+  cvd_host_packages += $(SOONG_OUT_DIR)/host/$(HOST_CROSS_OS)-$(HOST_CROSS_ARCH)/cvd-host_package.tar.gz
 endif
-cvd_host_package_tar := $(soong_host_out)/cvd-host_package.tar.gz
 
 .PHONY: hosttar
-hosttar: $(cvd_host_package_tar)
+hosttar: $(cvd_host_packages)
 
 # Build this by default when a developer types make
-droidcore: $(cvd_host_package_tar)
+droidcore: $(cvd_host_packages)
 
 # Dist
-$(call dist-for-goals, dist_files,$(cvd_host_package_tar))
+# Note that only the last package is dist'ed. It would be from x86 in case of cf_x86_phone,
+# and from arm64 in case of cf_arm64_phone.
+$(call dist-for-goals, dist_files,$(word $(words $(cvd_host_packages)), $(cvd_host_packages)))
 
-cvd_host_package_tar :=
-soong_host_out :=
+cvd_host_packages :=
