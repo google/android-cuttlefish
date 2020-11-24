@@ -40,4 +40,37 @@ ScreenConnector* ScreenConnector::Get(int frames_fd) {
 // Ignore by default
 void ScreenConnector::ReportClientsConnected(bool /*have_clients*/) {}
 
+/*static*/
+std::uint32_t ScreenConnector::ScreenCount() {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto display_configs = config->display_configs();
+  return static_cast<std::uint32_t>(display_configs.size());
+}
+
+/*static*/
+std::uint32_t ScreenConnector::ScreenHeight(std::uint32_t display_number) {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto display_configs = config->display_configs();
+  CHECK_GE(display_configs.size(), display_number);
+  return display_configs[display_number].height;
+}
+
+/*static*/
+std::uint32_t ScreenConnector::ScreenWidth(std::uint32_t display_number) {
+  auto config = cuttlefish::CuttlefishConfig::Get();
+  auto display_configs = config->display_configs();
+  CHECK_GE(display_configs.size(), display_number);
+  return display_configs[display_number].width;
+}
+
+/*static*/
+std::uint32_t ScreenConnector::ScreenStrideBytes(std::uint32_t display_number) {
+    return AlignToPowerOf2(ScreenWidth(display_number) * BytesPerPixel(), 4);
+}
+
+/*static*/
+std::uint32_t ScreenConnector::ScreenSizeInBytes(std::uint32_t display_num) {
+    return ScreenStrideBytes(display_num) * ScreenHeight(display_num);
+}
+
 }  // namespace cuttlefish
