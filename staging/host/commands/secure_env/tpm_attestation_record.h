@@ -13,11 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#pragma once
+
 #include <keymaster/attestation_record.h>
 
 class TpmAttestationRecordContext : public keymaster::AttestationRecordContext {
 public:
-  TpmAttestationRecordContext() = default;
+  TpmAttestationRecordContext() : keymaster::AttestationRecordContext(
+      ::keymaster::KmVersion::KEYMASTER_4_1) {}
   ~TpmAttestationRecordContext() = default;
 
   keymaster_security_level_t GetSecurityLevel() const override;
