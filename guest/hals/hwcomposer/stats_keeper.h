@@ -165,14 +165,6 @@ class WrappedScreenView : public ScreenView {
     return screen_view_->GetBuffer(buffer_id);
   }
 
-  int32_t x_res() const override { return screen_view_->x_res(); }
-
-  int32_t y_res() const override { return screen_view_->y_res(); }
-
-  int32_t dpi() const override { return screen_view_->dpi(); }
-
-  int32_t refresh_rate() const override { return screen_view_->refresh_rate(); }
-
   int num_buffers() const override { return screen_view_->num_buffers(); }
 
  private:
