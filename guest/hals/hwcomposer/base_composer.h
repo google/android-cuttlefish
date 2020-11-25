@@ -37,8 +37,12 @@ class BaseComposer {
   virtual int SetLayers(size_t num_layers, hwc_layer_1_t* layers);
   virtual void Dump(char* buff, int buff_len);
 
+  int32_t x_res() { return screen_view_->x_res(); }
+  int32_t y_res() { return screen_view_->y_res(); }
+  int32_t dpi() { return screen_view_->dpi(); }
+  int32_t refresh_rate() { return screen_view_->refresh_rate(); }
+
  protected:
-  std::uint32_t screen_view_buffer_size_;
   std::unique_ptr<ScreenView> screen_view_;
   Gralloc gralloc_;
 

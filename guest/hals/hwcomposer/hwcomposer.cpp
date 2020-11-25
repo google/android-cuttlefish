@@ -455,34 +455,25 @@ static int cvd_hwc_get_display_configs(hwc_composer_device_1_t* /*dev*/, int dis
 }
 
 static int32_t cvd_hwc_attribute(struct cvd_hwc_composer_device_1_t* pdev,
-                                 const uint32_t display_number,
                                  const uint32_t attribute) {
-switch (attribute) {
-    case HWC_DISPLAY_VSYNC_PERIOD: {
+  switch (attribute) {
+    case HWC_DISPLAY_VSYNC_PERIOD:
       return pdev->vsync_data.vsync_period_ns;
-    }
-    case HWC_DISPLAY_WIDTH: {
-      return cuttlefish::ScreenView::ScreenWidth(display_number);
-    }
-    case HWC_DISPLAY_HEIGHT: {
-      return cuttlefish::ScreenView::ScreenHeight(display_number);
-    }
-    case HWC_DISPLAY_DPI_X: {
-      int32_t dpi = cuttlefish::ScreenView::ScreenDPI(display_number);
-      ALOGI("Reporting DPI_X of %d", dpi);
+    case HWC_DISPLAY_WIDTH:
+      return pdev->composer->x_res();
+    case HWC_DISPLAY_HEIGHT:
+      return pdev->composer->y_res();
+    case HWC_DISPLAY_DPI_X:
+      ALOGI("Reporting DPI_X of %d", pdev->composer->dpi());
       // The number of pixels per thousand inches
-      return dpi * 1000;
-    }
-    case HWC_DISPLAY_DPI_Y: {
-      int32_t dpi = cuttlefish::ScreenView::ScreenDPI(display_number);
-      ALOGI("Reporting DPI_Y of %d", dpi);
+      return pdev->composer->dpi() * 1000;
+    case HWC_DISPLAY_DPI_Y:
+      ALOGI("Reporting DPI_Y of %d", pdev->composer->dpi());
       // The number of pixels per thousand inches
-      return dpi * 1000;
-    }
-    default: {
+      return pdev->composer->dpi() * 1000;
+    default:
       ALOGE("unknown display attribute %u", attribute);
       return -EINVAL;
-    }
   }
 }
 
@@ -498,7 +489,7 @@ static int cvd_hwc_get_display_attributes(hwc_composer_device_1_t* dev, int disp
   }
 
   for (int i = 0; attributes[i] != HWC_DISPLAY_NO_ATTRIBUTE; i++) {
-    values[i] = cvd_hwc_attribute(pdev, disp, attributes[i]);
+    values[i] = cvd_hwc_attribute(pdev, attributes[i]);
   }
 
   return 0;
@@ -538,8 +529,7 @@ int cvd_hwc_open(std::unique_ptr<ScreenView> screen_view,
           strerror(errno));
   }
   dev->vsync_data.vsync_base_timestamp = int64_t(rt.tv_sec) * 1e9 + rt.tv_nsec;
-  dev->vsync_data.vsync_period_ns =
-      1e9 / cuttlefish::ScreenView::ScreenRefreshRateHz(0);
+  dev->vsync_data.vsync_period_ns = 1e9 / screen_view->refresh_rate();
 
   dev->base.common.tag = HARDWARE_DEVICE_TAG;
   dev->base.common.version = HWC_DEVICE_API_VERSION_1_1;
