@@ -24,8 +24,7 @@
 namespace cuttlefish {
 
 BaseComposer::BaseComposer(std::unique_ptr<ScreenView> screen_view)
-    : screen_view_buffer_size_(ScreenView::ScreenSizeBytes(0)),
-      screen_view_(std::move(screen_view)), gralloc_() {}
+    : screen_view_(std::move(screen_view)), gralloc_() {}
 
 void BaseComposer::Dump(char* buff __unused, int buff_len __unused) {}
 
@@ -54,7 +53,7 @@ int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
   }
 
   void* buffer = *buffer_opt;
-  memcpy(frame_buffer, buffer, screen_view_buffer_size_);
+  memcpy(frame_buffer, buffer, screen_view_->buffer_size());
 
   screen_view_->Broadcast(buffer_id);
   return 0;
