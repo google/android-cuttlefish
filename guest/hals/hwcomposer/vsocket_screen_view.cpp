@@ -31,8 +31,7 @@ VsocketScreenView::VsocketScreenView()
   GetScreenParameters();
   // inner_buffer needs to be initialized after the final values of the screen
   // parameters are set (either from the config server or default).
-  inner_buffer_size_ = ScreenSizeBytes(/*display_number=*/0);
-  inner_buffer_ = std::vector<char>(inner_buffer_size_ * 8);
+  inner_buffer_ = std::vector<char>(buffer_size() * 8);
 }
 
 VsocketScreenView::~VsocketScreenView() {
@@ -54,6 +53,17 @@ void VsocketScreenView::GetScreenParameters() {
     Broadcast(-1);
     return;
   }
+
+  const auto& device_config = device_config_helper->GetDeviceConfig();
+  CHECK_GE(device_config.display_config_size(), 1);
+  const auto& display_config = device_config.display_config(0);
+
+  x_res_ = display_config.width();
+  y_res_ = display_config.height();
+  dpi_ = display_config.dpi();
+  refresh_rate_ = display_config.refresh_rate_hz();
+  ALOGI("Received screen parameters: res=%dx%d, dpi=%d, freq=%d", x_res_,
+        y_res_, dpi_, refresh_rate_);
 }
 
 bool VsocketScreenView::ConnectToScreenServer() {
@@ -113,7 +123,7 @@ void VsocketScreenView::BroadcastLoop() {
 }
 
 bool VsocketScreenView::SendFrame(int offset) {
-  int32_t size = static_cast<int32_t>(inner_buffer_size_);
+  int32_t size = buffer_size();
   screen_server_->Write(&size, sizeof(size));
   auto buff = static_cast<char*>(GetBuffer(offset));
   while (size > 0) {
@@ -159,11 +169,16 @@ void VsocketScreenView::Broadcast(int offset, const CompositionStats*) {
 }
 
 void* VsocketScreenView::GetBuffer(int buffer_id) {
-  return &inner_buffer_[inner_buffer_size_ * buffer_id];
+  return &inner_buffer_[buffer_size() * buffer_id];
 }
 
+int32_t VsocketScreenView::x_res() const { return x_res_; }
+int32_t VsocketScreenView::y_res() const { return y_res_; }
+int32_t VsocketScreenView::dpi() const { return dpi_; }
+int32_t VsocketScreenView::refresh_rate() const { return refresh_rate_; }
+
 int VsocketScreenView::num_buffers() const {
-  return inner_buffer_.size() / inner_buffer_size_;
+  return inner_buffer_.size() / buffer_size();
 }
 
 }  // namespace cuttlefish
