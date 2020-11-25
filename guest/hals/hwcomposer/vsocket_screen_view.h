@@ -35,6 +35,11 @@ class VsocketScreenView : public ScreenView {
                  const CompositionStats* stats = nullptr) override;
   void* GetBuffer(int fb_index) override;
 
+  int32_t x_res() const override;
+  int32_t y_res() const override;
+  int32_t dpi() const override;
+  int32_t refresh_rate() const override;
+
   int num_buffers() const override;
 
  private:
@@ -44,7 +49,6 @@ class VsocketScreenView : public ScreenView {
   void ClientDetectorLoop();
   bool SendFrame(int offset);
 
-  std::uint32_t inner_buffer_size_;
   std::vector<char> inner_buffer_;
   cuttlefish::SharedFD screen_server_;
   std::thread broadcast_thread_;
@@ -54,6 +58,10 @@ class VsocketScreenView : public ScreenView {
   std::mutex mutex_;
   std::condition_variable cond_var_;
   bool running_ = true;
+  int32_t x_res_{720};
+  int32_t y_res_{1280};
+  int32_t dpi_{160};
+  int32_t refresh_rate_{60};
   bool send_frames_{false};
 };
 
