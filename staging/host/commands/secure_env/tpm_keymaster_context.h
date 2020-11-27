@@ -49,6 +49,10 @@ public:
   TpmKeymasterContext(TpmResourceManager&, keymaster::KeymasterEnforcement&);
   ~TpmKeymasterContext() = default;
 
+  keymaster::KmVersion GetKmVersion() const override {
+    return attestation_context_->GetKmVersion();
+  }
+
   keymaster_error_t SetSystemVersion(
       uint32_t os_version, uint32_t os_patchlevel) override;
   void GetSystemVersion(
