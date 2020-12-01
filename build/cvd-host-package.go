@@ -40,12 +40,15 @@ func cvdHostPackageFactory() android.Module {
 	return module
 }
 
-type dependencyTag struct{ blueprint.BaseDependencyTag }
+type dependencyTag struct {
+	blueprint.BaseDependencyTag
+	android.InstallAlwaysNeededDependencyTag // to force installation of the deps
+}
 
 var cvdHostPackageDependencyTag = dependencyTag{}
 
 func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
-	c.AddDeps(ctx)
+	c.AddDeps(ctx, cvdHostPackageDependencyTag)
 
 	// If cvd_custom_action_config is set, include custom action servers in the
 	// host package as specified by cvd_custom_action_servers.
