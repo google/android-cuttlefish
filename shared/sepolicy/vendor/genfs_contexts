@@ -1,64 +1,79 @@
-# arguments:
-# $1 = pci prefix
-pushdef(`cf_pci_gpu_device', `
-genfscon sysfs $1/device u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/subsystem_device u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/subsystem_vendor u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/uevent u:object_r:sysfs_gpu:s0
-genfscon sysfs $1/vendor u:object_r:sysfs_gpu:s0
-')
-
+dnl Run "m4 genfs_contexts" to test
+dnl # $1 = pci prefix
+dnl # $2 = pci ID start (hex)
+dnl # $3 = virtio ID start (decimal)
+pushdef(`cf_pci_block_device', `dnl
+genfscon sysfs $1/0000:00:eval($2 + 0, 16, 2).0/virtio`'eval($3 + 0)`'/block u:object_r:sysfs_devices_block:s0 # vda
+genfscon sysfs $1/0000:00:eval($2 + 1, 16, 2).0/virtio`'eval($3 + 1)`'/block u:object_r:sysfs_devices_block:s0 # vdb
+genfscon sysfs $1/0000:00:eval($2 + 2, 16, 2).0/virtio`'eval($3 + 2)`'/ndbus0 u:object_r:sysfs_devices_block:s0 # pmem0
+dnl')dnl
+dnl
+dnl # $1 = pci prefix
+dnl # $2 = pci ID start (hex)
+pushdef(`cf_pci_gpu_device', `dnl
+genfscon sysfs $1/0000:00:eval($2, 16, 2).0/device u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:eval($2, 16, 2).0/subsystem_device u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:eval($2, 16, 2).0/subsystem_vendor u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:eval($2, 16, 2).0/uevent u:object_r:sysfs_gpu:s0
+genfscon sysfs $1/0000:00:eval($2, 16, 2).0/vendor u:object_r:sysfs_gpu:s0
+dnl')dnl
+dnl
+dnl # $1 = rtc prefix
+dnl # $2 = rtc number (decimal)
+dnl # $3 = rtc wakeup offset (decimal)
+pushdef(`cf_rtc_wakeup_alarmtimer', `dnl
+genfscon sysfs $1/wakeup/wakeup$3 u:object_r:sysfs_wakeup:s0
+genfscon sysfs $1/rtc/rtc$2/wakeup`'eval($3 + 1)`' u:object_r:sysfs_wakeup:s0 # <= 5.5
+genfscon sysfs $1/rtc/rtc$2/alarmtimer.0.auto/wakeup/wakeup`'eval($3 + 1)`' u:object_r:sysfs_wakeup:s0 # >5.5
+dnl')dnl
+dnl
 # crosvm (x86)
-cf_pci_gpu_device(/devices/pci0000:00/0000:00:10.0)
-# crosvm (arm64)
-cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00/0000:00:10.0)
-# qemu (aarch64)
-cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00/0000:00:0e.0)
-# qemu (arm)
-cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00/0000:00:0e.0)
-
-popdef(`cf_pci_gpu_device')
-
-# crosvm (x86)
+cf_pci_block_device(/devices/pci0000:00, 0x6, 5)
+cf_pci_gpu_device(/devices/pci0000:00, 0x10)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/rtc_cmos/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
-genfscon sysfs /devices/platform/rtc_cmos/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/rtc_cmos/rtc/rtc0/wakeup1 u:object_r:sysfs_wakeup:s0 # <= 5.5
-genfscon sysfs /devices/platform/rtc_cmos/rtc/rtc0/alarmtimer.0.auto/wakeup/wakeup1 u:object_r:sysfs_wakeup:s0 # >5.5
+cf_rtc_wakeup_alarmtimer(/devices/platform/rtc_cmos, 0, 0)
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup3 u:object_r:sysfs_wakeup:s0
 
 # crosvm (arm64)
+cf_pci_block_device(/devices/platform/10000.pci, 0x6, 4)
+cf_pci_gpu_device(/devices/platform/10000.pci/pci0000:00, 0x10)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/2000.rtc/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
 ## arm64 2000.rtc on crosvm does not currently expose a wakeup node
-genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc2/wakeup1 u:object_r:sysfs_wakeup:s0 # <= 5.5
-genfscon sysfs /devices/platform/rtc-test.1/rtc/rtc2/alarmtimer.0.auto/wakeup/wakeup1 u:object_r:sysfs_wakeup:s0 # >5.5
+cf_rtc_wakeup_alarmtimer(/devices/platform/rtc-test.1, 2, 0)
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup2 u:object_r:sysfs_wakeup:s0
 
 # qemu (x86)
+cf_pci_block_device(/devices/pci0000:00, 0x7, 5)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/pnp0/00:04/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9][0-9]'
-genfscon sysfs /devices/pnp0/00:04/wakeup/wakeup19 u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/pnp0/00:04/rtc/rtc0/wakeup20 u:object_r:sysfs_wakeup:s0 # <= 5.5
-genfscon sysfs /devices/pnp0/00:04/rtc/rtc0/alarmtimer.0.auto/wakeup/wakeup20 u:object_r:sysfs_wakeup:s0 # >5.5
+cf_rtc_wakeup_alarmtimer(/devices/pnp0/00:04, 0, 19)
 genfscon sysfs /devices/platform/rtc-test.1/wakeup/wakeup21 u:object_r:sysfs_wakeup:s0
 genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup22 u:object_r:sysfs_wakeup:s0
 
 # qemu (arm64)
+cf_pci_block_device(/devices/platform/4010000000.pcie/pci0000:00, 0x6, 4)
+cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00, 0xe)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
-genfscon sysfs /devices/platform/9010000.pl031/wakeup/wakeup0 u:object_r:sysfs_wakeup:s0
-genfscon sysfs /devices/platform/9010000.pl031/rtc/rtc0/wakeup1 u:object_r:sysfs_wakeup:s0 # <= 5.5
-genfscon sysfs /devices/platform/9010000.pl031/rtc/rtc0/alarmtimer.0.auto/wakeup/wakeup1 u:object_r:sysfs_wakeup:s0 # >5.5
+cf_rtc_wakeup_alarmtimer(/devices/platform/9010000.pl031, 0, 0)
+
+# qemu (arm)
+cf_pci_block_device(/devices/platform/3f000000.pcie/pci0000:00, 0x6, 4)
+cf_pci_gpu_device(/devices/platform/3f000000.pcie/pci0000:00, 0xe)
 
 # common on all platforms / vm managers
 genfscon sysfs /devices/platform/rtc-test.0/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.1/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /devices/platform/rtc-test.2/rtc u:object_r:sysfs_rtc:s0
 genfscon sysfs /bus/iio/devices u:object_r:sysfs_iio_devices:s0
+dnl
+popdef(`cf_pci_block_device')dnl
+popdef(`cf_pci_gpu_device')dnl
+popdef(`cf_rtc_wakeup_alarmtimer')dnl
