@@ -3128,6 +3128,23 @@ static void requestExitEmergencyMode(void *data __unused, size_t datalen __unuse
     RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
+static uint64_t s_last_activity_info_query = 0;
+
+static void requestGetActivityInfo(void *data __unused, size_t datalen __unused, RIL_Token t)
+{
+    uint64_t curTime = ril_nano_time();
+    RIL_ActivityStatsInfo stats =
+    {
+        0, // sleep_mode_time_ms
+        ((curTime - s_last_activity_info_query) / 1000000) - 1, // idle_mode_time_ms
+        {0, 0, 0, 0, 0}, // tx_mode_time_ms
+        0 // rx_mode_time_ms
+    };
+    s_last_activity_info_query = curTime;
+
+    RIL_onRequestComplete(t, RIL_E_SUCCESS, &stats, sizeof(stats));
+}
+
 // TODO: Use all radio types
 static int techFromModemType(int mdmtype)
 {
@@ -4689,6 +4706,10 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
                 // VTS tests expect us to silently do nothing
                 RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             }
+            break;
+
+        case RIL_REQUEST_GET_ACTIVITY_INFO:
+            requestGetActivityInfo(data, datalen, t);
             break;
 
         case RIL_REQUEST_SCREEN_STATE:
