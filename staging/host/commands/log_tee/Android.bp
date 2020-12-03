@@ -24,7 +24,6 @@ cc_binary {
         "libbase",
         "libjsoncpp",
         "libnl",
-        "libxml2",
     ],
     static_libs: [
         "libgflags",

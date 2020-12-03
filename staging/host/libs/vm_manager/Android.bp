@@ -29,7 +29,6 @@ cc_library_static {
         "libcuttlefish_utils",
         "libbase",
         "libjsoncpp",
-        "libxml2",
     ],
     static_libs: [
         "libcuttlefish_host_config",
