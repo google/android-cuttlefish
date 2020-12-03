@@ -165,7 +165,6 @@
     {RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP, radio_1_6::setPreferredNetworkTypeBitmapResponse},
     {RIL_REQUEST_EMERGENCY_DIAL, radio_1_6::emergencyDialResponse},
     {RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS, radio_1_6::setSystemSelectionChannelsResponse},
-    {RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS, radio_1_6::getSystemSelectionChannelsResponse},
     {RIL_REQUEST_ENABLE_MODEM, radio_1_6::enableModemResponse},
     {RIL_REQUEST_SET_SIGNAL_STRENGTH_REPORTING_CRITERIA, radio_1_6::setSignalStrengthReportingCriteriaResponse},
     {RIL_REQUEST_SET_LINK_CAPACITY_REPORTING_CRITERIA, radio_1_6::setLinkCapacityReportingCriteriaResponse},
@@ -181,5 +180,5 @@
     {RIL_REQUEST_START_HANDOVER, radio_1_6::startHandoverResponse},
     {RIL_REQUEST_CANCEL_HANDOVER, radio_1_6::cancelHandoverResponse},
     {RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP, radio_1_6::setAllowedNetworkTypeBitmapResponse},
-    {RIL_REQUEST_SET_DATA_THROTTLING, radio_1_6::setDataThrottlingResponse}
-
+    {RIL_REQUEST_SET_DATA_THROTTLING, radio_1_6::setDataThrottlingResponse},
+    {RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS, radio_1_6::getSystemSelectionChannelsResponse}
