@@ -211,6 +211,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
 
     Return<void> getSignalStrength(int32_t serial);
 
+    Return<void> getSignalStrength_1_6(int32_t serial);
+
     Return<void> getVoiceRegistrationState(int32_t serial);
 
     Return<void> getDataRegistrationState(int32_t serial);
@@ -3817,6 +3819,14 @@ Return<void> RadioImpl_1_6::setAllowedNetworkTypeBitmap(
 Return<void> RadioImpl_1_6::getSignalStrength_1_4(int32_t serial) {
 #if VDBG
     RLOGD("getSignalStrength_1_4: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_SIGNAL_STRENGTH);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::getSignalStrength_1_6(int32_t serial) {
+#if VDBG
+    RLOGD("getSignalStrength_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_SIGNAL_STRENGTH);
     return Void();
