@@ -8,3 +8,7 @@ type gatekeeper_device, file_type;
 
 allow hal_gatekeeper_remote device:dir r_dir_perms;
 allow hal_gatekeeper_remote gatekeeper_device:chr_file rw_file_perms;
+
+# Write to kernel log (/dev/kmsg)
+allow hal_gatekeeper_remote kmsg_device:chr_file w_file_perms;
+allow hal_gatekeeper_remote kmsg_device:chr_file getattr;
