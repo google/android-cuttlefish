@@ -29,7 +29,7 @@
 const char device[] = "/dev/hvc3";
 
 int main(int argc, char** argv) {
-  ::android::base::InitLogging(argv);
+  ::android::base::InitLogging(argv, ::android::base::KernelLogger);
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   ::android::hardware::configureRpcThreadpool(1, true);
 
