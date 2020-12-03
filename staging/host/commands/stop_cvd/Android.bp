@@ -24,7 +24,6 @@ cc_binary {
         "libcuttlefish_utils",
         "libcuttlefish_allocd_utils",
         "libjsoncpp",
-        "libxml2",
     ],
     static_libs: [
         "libcuttlefish_host_config",
