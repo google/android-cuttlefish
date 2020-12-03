@@ -28,8 +28,10 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/files.h"
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
+#include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/streamer.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
@@ -39,6 +41,7 @@ DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
 DEFINE_int32(kernel_log_events_fd, -1, "An fd to listen on for kernel log events.");
+DEFINE_int32(command_fd, -1, "An fd to listen to for control messages");
 DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
@@ -47,6 +50,7 @@ DEFINE_bool(write_virtio_input, false,
 
 using cuttlefish::CfConnectionObserverFactory;
 using cuttlefish::DisplayHandler;
+using cuttlefish::webrtc_streaming::LocalRecorder;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
 
@@ -112,8 +116,10 @@ int main(int argc, char **argv) {
 
   input_sockets.touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
   input_sockets.keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
+  auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
   close(FLAGS_touch_fd);
   close(FLAGS_keyboard_fd);
+  close(FLAGS_command_fd);
   // Accepting on these sockets here means the device won't register with the
   // operator as soon as it could, but rather wait until crosvm's input display
   // devices have been initialized. That's OK though, because without those
@@ -141,12 +147,12 @@ int main(int argc, char **argv) {
   close(FLAGS_kernel_log_events_fd);
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
+  auto instance = cvd_config->ForDefaultInstance();
   auto screen_connector = cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd);
 
   StreamerConfig streamer_config;
 
-  streamer_config.device_id =
-      cvd_config->ForDefaultInstance().webrtc_device_id();
+  streamer_config.device_id = instance.webrtc_device_id();
   streamer_config.tcp_port_range = cvd_config->webrtc_tcp_port_range();
   streamer_config.udp_port_range = cvd_config->webrtc_udp_port_range();
   streamer_config.operator_server.addr = cvd_config->sig_server_address();
@@ -173,6 +179,23 @@ int main(int argc, char **argv) {
       screen_connector->ScreenHeight(0), cvd_config->dpi(), true);
   auto display_handler =
       std::make_shared<DisplayHandler>(display_0, screen_connector);
+
+  std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
+  if (cvd_config->record_screen()) {
+    int recording_num = 0;
+    std::string recording_path;
+    do {
+      recording_path = instance.PerInstancePath("recording/recording_");
+      recording_path += std::to_string(recording_num);
+      recording_path += ".webm";
+      recording_num++;
+    } while (cuttlefish::FileExists(recording_path));
+    local_recorder = LocalRecorder::Create(recording_path);
+    CHECK(local_recorder) << "Could not create local recorder";
+
+    streamer->RecordDisplays(*local_recorder);
+    display_handler->IncClientCount();
+  }
 
   observer_factory->SetDisplayHandler(display_handler);
 
@@ -235,6 +258,25 @@ int main(int argc, char **argv) {
   std::shared_ptr<cuttlefish::webrtc_streaming::OperatorObserver> operator_observer(
       new CfOperatorObserver());
   streamer->Register(operator_observer);
+
+  std::thread control_thread([control_socket, &local_recorder]() {
+    if (!local_recorder) {
+      return;
+    }
+    std::string message = "_";
+    int read_ret;
+    while ((read_ret = cuttlefish::ReadExact(control_socket, &message)) > 0) {
+      LOG(VERBOSE) << "received control message: " << message;
+      if (message[0] == 'C') {
+        LOG(DEBUG) << "Finalizing screen recording...";
+        local_recorder->Stop();
+        LOG(INFO) << "Finalized screen recording.";
+        message = "Y";
+        cuttlefish::WriteAll(control_socket, message);
+      }
+    }
+    LOG(DEBUG) << "control socket closed";
+  });
 
   display_handler->Loop();
 
