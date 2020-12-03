@@ -1322,6 +1322,12 @@ static char * adev_get_parameters(const struct audio_hw_device *dev,
     return strdup("");
 }
 
+static int adev_get_audio_port(struct audio_hw_device *dev,
+                               struct audio_port *port)
+{
+    return 0;
+}
+
 static int adev_init_check(const struct audio_hw_device *dev)
 {
     return 0;
@@ -1773,6 +1779,7 @@ static int adev_open(const hw_module_t* module, const char* name,
     adev->device.get_mic_mute = adev_get_mic_mute;
     adev->device.set_parameters = adev_set_parameters;       // no op
     adev->device.get_parameters = adev_get_parameters;       // no op
+    adev->device.get_audio_port = adev_get_audio_port;       // no op
     adev->device.get_input_buffer_size = adev_get_input_buffer_size;
     adev->device.open_output_stream = adev_open_output_stream;
     adev->device.close_output_stream = adev_close_output_stream;
