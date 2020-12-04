@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "host/frontend/webrtc/lib/connection_observer.h"
+#include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/video_sink.h"
 #include "host/frontend/webrtc/lib/ws_connection.h"
 
@@ -96,6 +97,8 @@ class Streamer {
   // Register with the operator.
   void Register(std::weak_ptr<OperatorObserver> operator_observer);
   void Unregister();
+
+  void RecordDisplays(LocalRecorder& recorder);
  private:
   /*
    * Private Implementation idiom.

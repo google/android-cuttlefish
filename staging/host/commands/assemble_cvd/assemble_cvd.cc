@@ -158,6 +158,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("gatekeeper_insecure");
       preserving.insert("modem_nvram.json");
       preserving.insert("disk_config.txt");
+      preserving.insert("recording");
       std::stringstream ss;
       for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
         ss.clear();
@@ -185,6 +186,8 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       CHECK(EnsureDirectoryExists(internal_dir));
       auto shared_dir = instance.instance_dir() + "/" + kSharedDirName;
       CHECK(EnsureDirectoryExists(shared_dir));
+      auto recording_dir = instance.instance_dir() + "/recording";
+      CHECK(EnsureDirectoryExists(recording_dir));
     }
     CHECK(SaveConfig(config)) << "Failed to initialize configuration";
   }

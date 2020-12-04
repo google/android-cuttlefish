@@ -43,7 +43,6 @@ class VideoTrackSourceImpl : public webrtc::VideoTrackSource {
   void RemoveEncodedSink(
       rtc::VideoSinkInterface<webrtc::RecordableEncodedFrame>* sink) override {}
 
- protected:
   rtc::VideoSourceInterface<webrtc::VideoFrame>* source() override;
 
  private:
