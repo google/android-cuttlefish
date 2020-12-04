@@ -54,4 +54,13 @@
   <string-array translatable="false" name="config_ethernet_interfaces">
     <item>eth2;11,12,14;;</item>
   </string-array>
+
+  <!-- List of biometric sensors on the device, in decreasing strength. Consumed by AuthService
+  when registering authenticators with BiometricService. Format must be ID:Modality:Strength,
+  where: IDs are unique per device, Modality as defined in BiometricAuthenticator.java,
+  and Strength as defined in Authenticators.java -->
+  <string-array name="config_biometric_sensors" translatable="false" >
+    <item>2:2:255</item> <!-- ID2:Fingerprint(HIDL):Weak -->
+    <item>3:8:255</item> <!-- ID3:Face(HIDL):Weak -->
+  </string-array>
 </resources>
