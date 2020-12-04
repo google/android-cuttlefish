@@ -18,6 +18,7 @@ cc_library_static {
     srcs: [
         "lib/client_handler.cpp",
         "lib/keyboard.cpp",
+        "lib/local_recorder.cpp",
         "lib/port_range_socket_factory.cpp",
         "lib/streamer.cpp",
         "lib/utils.cpp",
@@ -57,6 +58,7 @@ cc_library_static {
         "libbase",
         "libcuttlefish_fs",
         "libjsoncpp",
+        "libwebm_mkvmuxer",
     ],
     defaults: ["cuttlefish_host_only"],
 }
@@ -117,6 +119,7 @@ cc_binary_host {
         "libssl",
         "libvpx",
         "libyuv",
+        "libwebm_mkvmuxer",
     ],
     defaults: ["cuttlefish_host_only"],
 }
