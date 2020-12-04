@@ -651,11 +651,9 @@ int CpuComposer::PrepareLayers(size_t num_layers, hwc_layer_1_t* layers) {
 
 int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   int targetFbs = 0;
-  int buffer_idx = screen_view_->NextBuffer();
 
   const std::uint32_t display_number = 0;
-  std::uint8_t* dst_buffer =
-      reinterpret_cast<uint8_t*>(screen_view_->GetBuffer(buffer_idx));
+  std::uint8_t* dst_buffer = screen_view_->AcquireNextBuffer(display_number);
   std::uint32_t dst_width = ScreenView::ScreenWidth(display_number);
   std::uint32_t dst_height = ScreenView::ScreenHeight(display_number);
   std::uint32_t dst_stride_bytes = ScreenView::ScreenStrideBytes(display_number);
@@ -709,7 +707,7 @@ int CpuComposer::SetLayers(size_t num_layers, hwc_layer_1_t* layers) {
   if (targetFbs != 1) {
     ALOGW("Saw %zu layers, posted=%d", num_layers, targetFbs);
   }
-  screen_view_->Broadcast(buffer_idx);
+  screen_view_->PresentAcquiredBuffer(display_number);
   return 0;
 }
 
