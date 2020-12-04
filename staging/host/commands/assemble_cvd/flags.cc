@@ -245,6 +245,9 @@ DEFINE_bool(console, false, "Enable the serial console");
 
 DEFINE_bool(vhost_net, false, "Enable vhost acceleration of networking");
 
+DEFINE_bool(record_screen, false, "Enable screen recording. "
+                                  "Requires --start_webrtc");
+
 DEFINE_int32(vsock_guest_cid,
              cuttlefish::GetDefaultVsockCid(),
              "Override vsock cid with this option if vsock cid the instance should be"
@@ -572,6 +575,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_minimal_mode(FLAGS_enable_minimal_mode);
 
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
+  tmp_config_obj.set_record_screen(FLAGS_record_screen);
 
   tmp_config_obj.set_ethernet(FLAGS_ethernet);
 

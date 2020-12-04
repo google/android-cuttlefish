@@ -6,6 +6,7 @@
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
@@ -301,10 +302,36 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
   // mitigated slightly by doing some retrying and backoff in the webrtc process
   // when connecting to the websocket, so it shouldn't be an issue most of the
   // time.
+  cuttlefish::SharedFD client_socket;
+  cuttlefish::SharedFD host_socket;
+  CHECK(cuttlefish::SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0,
+                                         &client_socket, &host_socket))
+      << "Could not open command socket for webRTC";
 
-  Command webrtc(WebRtcBinary());
+  auto stopper = [host_socket = std::move(host_socket)](cuttlefish::Subprocess* proc) {
+    struct timeval timeout;
+    timeout.tv_sec = 3;
+    timeout.tv_usec = 0;
+    CHECK(host_socket->SetSockOpt(SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                                  sizeof(timeout)) == 0)
+        << "Could not set receive timeout";
+
+    cuttlefish::WriteAll(host_socket, "C");
+    char response[1];
+    int read_ret = host_socket->Read(response, sizeof(response));
+    if (read_ret != 0) {
+      LOG(ERROR) << "Failed to read response from webrtc";
+    }
+    cuttlefish::KillSubprocess(proc);
+    return true;
+  };
+
+  cuttlefish::Command webrtc(cuttlefish::WebRtcBinary(),
+                             cuttlefish::SubprocessStopper(stopper));
 
   CreateStreamerServers(&webrtc, config);
+
+  webrtc.AddParameter("--command_fd=", client_socket);
 
   webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe);
 
