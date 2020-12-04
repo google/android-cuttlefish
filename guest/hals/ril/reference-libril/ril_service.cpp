@@ -417,6 +417,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
 
     Return<void> getCellInfoList(int32_t serial);
 
+    Return<void> getCellInfoList_1_6(int32_t serial);
+
     Return<void> setCellInfoListRate(int32_t serial, int32_t rate);
 
     Return<void> setInitialAttachApn(int32_t serial, const DataProfileInfo& dataProfileInfo,
@@ -2300,6 +2302,14 @@ Return<void> RadioImpl_1_6::getVoiceRadioTechnology(int32_t serial) {
 Return<void> RadioImpl_1_6::getCellInfoList(int32_t serial) {
 #if VDBG
     RLOGD("getCellInfoList: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CELL_INFO_LIST);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::getCellInfoList_1_6(int32_t serial) {
+#if VDBG
+    RLOGD("getCellInfoList_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CELL_INFO_LIST);
     return Void();
