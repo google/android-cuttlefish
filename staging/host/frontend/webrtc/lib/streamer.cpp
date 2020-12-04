@@ -153,7 +153,7 @@ Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
 std::unique_ptr<Streamer> Streamer::Create(
     const StreamerConfig& cfg,
     std::shared_ptr<ConnectionObserverFactory> connection_observer_factory) {
-  std::unique_ptr<Streamer::Impl> impl(new Streamer::Impl);
+  std::unique_ptr<Streamer::Impl> impl(new Streamer::Impl());
   impl->config_ = cfg;
   impl->connection_observer_factory_ = connection_observer_factory;
 
@@ -255,6 +255,18 @@ void Streamer::Unregister() {
   // Usually called from an application thread.
   impl_->signal_thread_->PostTask(RTC_FROM_HERE,
                                   [this]() { impl_->server_connection_.reset(); });
+}
+
+void Streamer::RecordDisplays(LocalRecorder& recorder) {
+  for (auto& [key, display] : impl_->displays_) {
+    rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source = display.source;
+    auto deleter = [](webrtc::VideoTrackSourceInterface* source) {
+      source->Release();
+    };
+    std::shared_ptr<webrtc::VideoTrackSourceInterface> source_shared(
+        source.release(), deleter);
+    recorder.AddDisplay(display.width, display.height, source_shared);
+  }
 }
 
 void Streamer::Impl::OnOpen() {
