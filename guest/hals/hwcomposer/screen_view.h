@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <sys/time.h>
 
 namespace cuttlefish {
@@ -45,14 +45,14 @@ class ScreenView {
   virtual int NextBuffer();
   virtual void* GetBuffer(int buffer_id) = 0;
 
-  virtual int32_t x_res() const = 0;
-  virtual int32_t y_res() const = 0;
-  virtual int32_t dpi() const = 0;
-  virtual int32_t refresh_rate() const = 0;
-
-  size_t buffer_size() const;
-  size_t line_length() const;
-  int bytes_per_pixel() const;
+  static std::uint32_t ScreenCount();
+  static std::uint32_t ScreenWidth(std::uint32_t display_number);
+  static std::uint32_t ScreenHeight(std::uint32_t display_number);
+  static std::uint32_t ScreenDPI(std::uint32_t display_number);
+  static std::uint32_t ScreenRefreshRateHz(std::uint32_t display_number);
+  static std::uint32_t ScreenStrideBytes(std::uint32_t display_number);
+  static std::uint32_t ScreenSizeBytes(std::uint32_t display_number);
+  static constexpr std::uint32_t ScreenBytesPerPixel() { return 4; }
 
   virtual int num_buffers() const = 0;
 

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 #include <hardware/gralloc.h>
@@ -37,10 +38,16 @@ class CpuComposer : public BaseComposer {
 
  protected:
   static const int kNumTmpBufferPieces;
-  uint8_t* RotateTmpBuffer(unsigned int order);
+  uint8_t* GetRotatingTmpBuffer(std::size_t needed_size,
+                                std::uint32_t order);
   uint8_t* GetSpecialTmpBuffer(size_t needed_size);
   bool CanCompositeLayer(const hwc_layer_1_t& layer);
-  void CompositeLayer(hwc_layer_1_t* src_layer, int32_t fb_offset);
+  void CompositeLayer(hwc_layer_1_t* src_layer,
+                      std::uint8_t* dst_buffer,
+                      std::uint32_t dst_width,
+                      std::uint32_t dst_height,
+                      std::uint32_t dst_stride_bytes,
+                      std::uint32_t dst_bpp);
   std::vector<uint8_t> tmp_buffer_;
   std::vector<uint8_t> special_tmp_buffer_;
 };
