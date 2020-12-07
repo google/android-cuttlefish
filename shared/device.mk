@@ -62,6 +62,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.adb.tcp.port=5555 \
     ro.com.google.locationfeatures=1 \
+    persist.sys.fuse.passthrough.enable=true \
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
