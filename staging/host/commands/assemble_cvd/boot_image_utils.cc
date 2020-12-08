@@ -68,6 +68,7 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
 
   return true;
 }
+} // namespace
 
 void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                          const std::string& original_ramdisk_path,
@@ -106,7 +107,6 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
   std::ifstream ramdisk_b(kernel_modules_ramdisk_path, std::ios_base::binary);
   final_rd << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
 }
-} // namespace
 
 bool RepackBootImage(const std::string& new_kernel_path,
                      const std::string& boot_image_path,
