@@ -418,19 +418,33 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
                                    google::FlagSettingMode::SET_FLAGS_DEFAULT);
     }
-  } else if (!FLAGS_use_bootloader && (!foreign_kernel.size() || foreign_ramdisk.size())) {
+  } else if (!FLAGS_use_bootloader) {
     // This code path is taken when the virtual device kernel is launched
     // directly by the hypervisor instead of the bootloader.
     // This code path takes care of all the ramdisk processing that the
     // bootloader normally does.
-    const std::string& vendor_ramdisk_path =
-      config->initramfs_path().size() ? config->initramfs_path()
+    bool success;
+    if (!foreign_ramdisk.size()) {
+      const std::string& vendor_ramdisk_path =
+        config->initramfs_path().size() ? config->initramfs_path()
                                       : config->vendor_ramdisk_image_path();
-    bool success = ConcatRamdisks(
-        config->final_ramdisk_path(),
-        config->ramdisk_image_path(),
-        vendor_ramdisk_path);
-    CHECK(success) << "Failed to concatenate ramdisk and vendor ramdisk";
+      success = ConcatRamdisks(
+          config->final_ramdisk_path(),
+          config->ramdisk_image_path(),
+          vendor_ramdisk_path);
+    } else {
+      std::string vendor_ramdisk_repacked_path = config->AssemblyPath("vendor_ramdisk_repacked");
+      RepackVendorRamdisk(
+          config->initramfs_path(),
+          config->vendor_ramdisk_image_path(),
+          vendor_ramdisk_repacked_path,
+          config->assembly_dir());
+      success = ConcatRamdisks(
+          config->final_ramdisk_path(),
+          config->ramdisk_image_path(),
+          vendor_ramdisk_repacked_path);
+    }
+    CHECK(success) << "Failed to concatenate boot ramdisk and vendor ramdisk";
   }
 
   if (config->decompress_kernel()) {
