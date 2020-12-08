@@ -45,7 +45,4 @@ cc_library {
         "libril-modem-lib",
         "libutils",
     ],
-    static_libs: [
-        "libqemu_pipe",
-    ],
 }
