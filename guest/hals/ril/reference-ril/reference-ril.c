@@ -38,7 +38,6 @@
 #include <cutils/properties.h>
 #include <cutils/sockets.h>
 #include <termios.h>
-#include <qemu_pipe.h>
 #include <sys/wait.h>
 #include <stdbool.h>
 #include <net/if.h>
