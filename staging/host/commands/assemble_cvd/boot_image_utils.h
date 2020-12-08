@@ -30,4 +30,8 @@ bool RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
     const std::string& tmp_artifact_dir);
+void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
+                         const std::string& original_ramdisk_path,
+                         const std::string& new_ramdisk_path,
+                         const std::string& tmp_artifact_dir);
 }
