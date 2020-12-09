@@ -38,6 +38,11 @@
 namespace cuttlefish {
 namespace webrtc_streaming {
 
+constexpr double kRtpTicksPerSecond = 90000.;
+constexpr double kRtpTicksPerMs = kRtpTicksPerSecond / 1000.;
+constexpr double kRtpTicksPerUs = kRtpTicksPerMs / 1000.;
+constexpr double kRtpTicksPerNs = kRtpTicksPerUs / 1000.;
+
 class LocalRecorder::Display
     : public webrtc::EncodedImageCallback
     , public rtc::VideoSinkInterface<webrtc::VideoFrame> {
@@ -60,7 +65,6 @@ public:
   std::shared_ptr<webrtc::VideoTrackSourceInterface> source_;
   std::unique_ptr<webrtc::VideoEncoder> video_encoder_;
   uint64_t video_track_number_;
-  std::chrono::time_point<std::chrono::steady_clock> start_timestamp_;
 
   // TODO(schuffelen): Use a WebRTC task queue?
   std::thread encoder_thread_;
@@ -93,6 +97,9 @@ std::unique_ptr<LocalRecorder> LocalRecorder::Create(
     LOG(ERROR) << "Failed to initialize the mkvkmuxer segment";
     return {};
   }
+
+  impl->segment_.AccurateClusterDuration(true);
+  impl->segment_.set_estimate_file_duration(true);
 
   impl->encoder_factory_ = webrtc::CreateBuiltinVideoEncoderFactory();
   if (!impl->encoder_factory_) {
@@ -180,8 +187,7 @@ void LocalRecorder::Stop() {
   impl_->segment_.Finalize();
 }
 
-LocalRecorder::Display::Display(LocalRecorder::Impl& impl)
-    : impl_(impl), start_timestamp_(std::chrono::steady_clock::now()) {
+LocalRecorder::Display::Display(LocalRecorder::Impl& impl) : impl_(impl) {
 }
 
 void LocalRecorder::Display::OnFrame(const webrtc::VideoFrame& frame) {
@@ -196,6 +202,9 @@ void LocalRecorder::Display::OnFrame(const webrtc::VideoFrame& frame) {
 }
 
 void LocalRecorder::Display::EncoderLoop() {
+  int frames_since_keyframe = 0;
+  std::chrono::time_point<std::chrono::steady_clock> start_timestamp;
+  auto last_keyframe_time = std::chrono::steady_clock::now();
   while (encoder_running_) {
     std::unique_ptr<webrtc::VideoFrame> frame;
     {
@@ -210,8 +219,27 @@ void LocalRecorder::Display::EncoderLoop() {
           std::move(encode_queue_.front()));
       encode_queue_.pop_front();
     }
-    std::vector<webrtc::VideoFrameType> types{
-      webrtc::VideoFrameType::kVideoFrameDelta};
+
+    auto now = std::chrono::steady_clock::now();
+    if (start_timestamp.time_since_epoch().count() == 0) {
+      start_timestamp = now;
+    }
+    auto timestamp_diff =
+        std::chrono::duration_cast<std::chrono::microseconds>(
+              now - start_timestamp);
+    frame->set_timestamp_us(timestamp_diff.count());
+    frame->set_timestamp(timestamp_diff.count() * kRtpTicksPerUs);
+
+    std::vector<webrtc::VideoFrameType> types;
+    auto time_since_keyframe = now - last_keyframe_time;
+    const auto min_keyframe_time = std::chrono::seconds(10);
+    if (frames_since_keyframe > 60 || time_since_keyframe > min_keyframe_time) {
+      last_keyframe_time = now;
+      frames_since_keyframe = 0;
+      types.push_back(webrtc::VideoFrameType::kVideoFrameKey);
+    } else {
+      types.push_back(webrtc::VideoFrameType::kVideoFrameDelta);
+    }
     auto rc = video_encoder_->Encode(*frame, &types);
     if (rc != 0) {
       LOG(ERROR) << "Failed to encode frame";
@@ -231,18 +259,18 @@ webrtc::EncodedImageCallback::Result LocalRecorder::Display::OnEncodedImage(
     const webrtc::EncodedImage& encoded_image,
     const webrtc::CodecSpecificInfo* codec_specific_info,
     const webrtc::RTPFragmentationHeader* fragmentation) {
-  auto timestamp_diff =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::steady_clock::now() - start_timestamp_).count();
+  uint64_t timestamp = encoded_image.Timestamp() / kRtpTicksPerNs;
 
   std::lock_guard(impl_.mkv_mutex_);
 
+  bool is_key =
+      encoded_image._frameType == webrtc::VideoFrameType::kVideoFrameKey;
   bool success = impl_.segment_.AddFrame(
       encoded_image.data(),
       encoded_image.size(),
       video_track_number_,
-      timestamp_diff,
-      /* is_key */ false);
+      timestamp,
+      is_key);
 
   webrtc::EncodedImageCallback::Result result(
       success
