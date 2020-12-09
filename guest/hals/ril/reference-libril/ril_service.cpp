@@ -190,6 +190,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
 
     Return<void> getCurrentCalls(int32_t serial);
 
+    Return<void> getCurrentCalls_1_6(int32_t serial);
+
     Return<void> dial(int32_t serial, const Dial& dialInfo);
 
     Return<void> getImsiForApp(int32_t serial,
@@ -1119,6 +1121,14 @@ Return<void> RadioImpl_1_6::supplyNetworkDepersonalization(int32_t serial,
 Return<void> RadioImpl_1_6::getCurrentCalls(int32_t serial) {
 #if VDBG
     RLOGD("getCurrentCalls: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CURRENT_CALLS);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::getCurrentCalls_1_6(int32_t serial) {
+#if VDBG
+    RLOGD("getCurrentCalls_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_CURRENT_CALLS);
     return Void();
