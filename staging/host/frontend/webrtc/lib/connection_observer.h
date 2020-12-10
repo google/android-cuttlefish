@@ -32,8 +32,8 @@ class ConnectionObserver {
       std::function<void(const uint8_t*, size_t, bool)> ctrl_msg_sender) = 0;
   virtual void OnTouchEvent(const std::string& display_label, int x, int y,
                             bool down) = 0;
-  virtual void OnMultiTouchEvent(const std::string& label, int id, int slot,
-                                 int x, int y, bool initialDown) = 0;
+  virtual void OnMultiTouchEvent(const std::string& label, Json::Value id, Json::Value slot,
+                                 Json::Value x, Json::Value y, bool down, int size) = 0;
   virtual void OnKeyboardEvent(uint16_t keycode, bool down) = 0;
   virtual void OnAdbChannelOpen(
       std::function<bool(const uint8_t*, size_t)> adb_message_sender) = 0;

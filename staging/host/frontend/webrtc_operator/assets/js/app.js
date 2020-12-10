@@ -41,6 +41,8 @@ function ConnectToDevice(device_id) {
   let buttonsWaitingOnAdbConnection = [];
   let mouseIsDown = false;
   let deviceConnection;
+  let touchIdSlotMap = new Map();
+  let touchSlots = new Array();
 
   let rotation = 0;
   let screenHasBeenResized = false;
@@ -305,7 +307,7 @@ function ConnectToDevice(device_id) {
     // console.log("mousedown at " + e.pageX + " / " + e.pageY);
     mouseIsDown = true;
 
-    sendMouseUpdate(true, e);
+    sendEventUpdate(true, e);
   }
 
   function onEndDrag(e) {
@@ -314,7 +316,7 @@ function ConnectToDevice(device_id) {
     // console.log("mouseup at " + e.pageX + " / " + e.pageY);
     mouseIsDown = false;
 
-    sendMouseUpdate(false, e);
+    sendEventUpdate(false, e);
   }
 
   function onContinueDrag(e) {
@@ -323,29 +325,33 @@ function ConnectToDevice(device_id) {
     // console.log("mousemove at " + e.pageX + " / " + e.pageY + ", down=" +
     // mouseIsDown);
     if (mouseIsDown) {
-      sendMouseUpdate(true, e);
+      sendEventUpdate(true, e);
     }
   }
 
-  function sendMouseUpdate(down, e) {
+  function sendEventUpdate(down, e) {
     console.assert(deviceConnection, 'Can\'t send mouse update without device');
-    var x = e.offsetX;
-    var y = e.offsetY;
+    var eventType = e.type.substring(0, 5);
 
-    let elementWidth, elementHeight;
-    if (screenHasBeenResized) {
-      elementWidth = parseInt(deviceScreen.style.width, 10);
-      elementHeight = parseInt(deviceScreen.style.height, 10);
-    } else {
-      // Before the first video frame arrives there is no way to know width and
-      // height of the device's screen, so turn every click into a click at 0x0.
-      // A click at that position is not more dangerous than anywhere else since
-      // the user is clicking blind anyways.
-      elementWidth = deviceScreen.offsetWidth? deviceScreen.offsetWidth: 1;
-      elementHeight = deviceScreen.offsetHeight? deviceScreen.offsetHeight: 1;
-    }
+    // Before the first video frame arrives there is no way to know width and
+    // height of the device's screen, so turn every click into a click at 0x0.
+    // A click at that position is not more dangerous than anywhere else since
+    // the user is clicking blind anyways.
     const videoWidth = deviceScreen.videoWidth? deviceScreen.videoWidth: 1;
     const videoHeight = deviceScreen.videoHeight? deviceScreen.videoHeight: 1;
+    const elementWidth = deviceScreen.offsetWidth? deviceScreen.offsetWidth: 1;
+    const elementHeight = deviceScreen.offsetHeight? deviceScreen.offsetHeight: 1;
+
+    // vh*ew > eh*vw? then scale h instead of w
+    const scaleHeight = videoHeight * elementWidth > videoWidth * elementHeight;
+    var elementScaling = 0, videoScaling = 0;
+    if (scaleHeight) {
+      elementScaling = elementHeight;
+      videoScaling = videoHeight;
+    } else {
+      elementScaling = elementWidth;
+      videoScaling = videoWidth;
+    }
 
     // The screen uses the 'object-fit: cover' property in order to completely
     // fill the element while maintaining the screen content's aspect ratio.
@@ -372,23 +378,101 @@ function ConnectToDevice(device_id) {
     //       - The sent ABS_X and ABS_Y values need to be scaled based on the
     //         ratio between the max size (video size) and in-browser size.
     const scaling = scaleWidth ? videoWidth / elementWidth : videoHeight / elementHeight;
-    x = x * scaling;
-    y = y * scaling;
 
-    // Substract the offset produced by the difference in aspect ratio, if any.
-    if (scaleWidth) {
-      // Width was scaled, leaving excess content height, so subtract from y.
-      y -= (elementHeight * scaling - videoHeight) / 2;
-    } else {
-      // Height was scaled, leaving excess content width, so subtract from x.
-      x -= (elementWidth * scaling - videoWidth) / 2;
+    var xArr = [];
+    var yArr = [];
+    var idArr = [];
+    var slotArr = [];
+
+    console.log('e.type: ' + e.type);
+    if (eventType == "mouse" || eventType == "point") {
+      xArr.push(e.offsetX);
+      yArr.push(e.offsetY);
+
+      let thisId = -1;
+      if (eventType == "point") {
+        thisId = e.pointerId;
+      }
+
+      slotArr.push(0);
+      idArr.push(thisId);
+    } else if (eventType == "touch") {
+      // touchstart: list of touch points that became active
+      // touchmove: list of touch points that changed
+      // touchend: list of touch points that were removed
+      let changes = e.changedTouches;
+      let rect = e.target.getBoundingClientRect();
+      for (var i=0; i < changes.length; i++) {
+        xArr.push(changes[i].pageX - rect.left);
+        yArr.push(changes[i].pageY - rect.top);
+        idArr.push(changes[i].identifier);
+        if (touchIdSlotMap.has(changes[i].identifier)) {
+          let slot = touchIdSlotMap.get(changes[i].identifier);
+
+          slotArr.push(slot);
+          if (e.type == 'touchstart') {
+            // error
+            console.error('touchstart when already have slot');
+            return;
+          } else if (e.type == 'touchmove') {
+            idArr.push(changes[i].identifier);
+          } else if (e.type == 'touchend') {
+            touchSlots[slot] = false;
+            touchIdSlotMap.delete(changes[i].identifier);
+            idArr.push(-1);
+          }
+        } else {
+          if (e.type == 'touchstart') {
+            let slot = -1;
+            for (var j=0; j < touchSlots.length; j++) {
+              if (!touchSlots[j]) {
+                slot = j;
+                break;
+              }
+            }
+            if (slot == -1) {
+              slot = touchSlots.length;
+              touchSlots.push(true);
+            }
+            slotArr.push(slot);
+            touchSlots[slot] = true;
+            touchIdSlotMap.set(changes[i].identifier, slot);
+            idArr.push(changes[i].identifier);
+          } else if (e.type == 'touchmove') {
+            // error
+            console.error('touchmove when no slot');
+            return;
+          } else if (e.type == 'touchend') {
+            // error
+            console.error('touchend when no slot');
+            return;
+          }
+        }
+      }
+    }
+
+    for (var i=0; i < xArr.length; i++) {
+      xArr[i] = xArr[i] * scaling;
+      yArr[i] = yArr[i] * scaling;
+
+      // Substract the offset produced by the difference in aspect ratio, if any.
+      if (scaleWidth) {
+        // Width was scaled, leaving excess content height, so subtract from y.
+        yArr[i] -= (elementHeight * scaling - videoHeight) / 2;
+      } else {
+        // Height was scaled, leaving excess content width, so subtract from x.
+        xArr[i] -= (elementWidth * scaling - videoWidth) / 2;
+      }
+
+      xArr[i] = Math.trunc(xArr[i]);
+      yArr[i] = Math.trunc(yArr[i]);
     }
 
     // NOTE: Rotation is handled automatically because the CSS rotation through
     // transforms also rotates the coordinates of events on the object.
 
-    deviceConnection.sendMousePosition(
-        {x: Math.trunc(x), y: Math.trunc(y), down, display_label});
+    deviceConnection.sendMultiTouch(
+    {idArr, xArr, yArr, down, slotArr, display_label});
   }
 
   function onKeyEvent(e) {
