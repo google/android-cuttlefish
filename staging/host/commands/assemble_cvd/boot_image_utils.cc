@@ -141,6 +141,12 @@ bool RepackBootImage(const std::string& new_kernel_path,
     return false;
   }
 
+  auto fd = SharedFD::Open(tmp_boot_image_path, O_RDWR);
+  auto original_size = FileSize(boot_image_path);
+  CHECK(fd->Truncate(original_size) == 0)
+    << "`truncate --size=" << original_size << " " << tmp_boot_image_path << "` "
+    << "failed: " << fd->StrError();
+
   return DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path);
 }
 
@@ -199,6 +205,12 @@ bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
     LOG(ERROR) << "Unable to run mkbootimg. Exited with status " << success;
     return false;
   }
+
+  auto fd = SharedFD::Open(tmp_vendor_boot_image_path, O_RDWR);
+  auto original_size = FileSize(vendor_boot_image_path);
+  CHECK(fd->Truncate(original_size) == 0)
+    << "`truncate --size=" << original_size << " " << tmp_vendor_boot_image_path << "` "
+    << "failed: " << fd->StrError();
 
   return DeleteTmpFileIfNotChanged(tmp_vendor_boot_image_path, new_vendor_boot_image_path);
 }
