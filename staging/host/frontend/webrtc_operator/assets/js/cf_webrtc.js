@@ -154,15 +154,15 @@ class DeviceConnection {
 
   // TODO (b/124121375): This should probably be an array of pointer events and
   // have different properties.
-  sendMultiTouch({id, x, y, initialDown, slot, display_label}) {
+  sendMultiTouch({idArr, xArr, yArr, down, slotArr, display_label}) {
     this._sendJsonInput({
       type: 'multi-touch',
-      id,
-      x,
-      y,
-      initialDown: initialDown ? 1 : 0,
-      slot,
-      display_label,
+      id: idArr,
+      x: xArr,
+      y: yArr,
+      down: down ? 1 : 0,
+      slot: slotArr,
+      display_label: display_label,
     });
   }
 
