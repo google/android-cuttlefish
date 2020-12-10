@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+message LogRequest {
+  optional ClientInfo client_info = 1;
+  optional int32 log_source = 2;
+  optional int64 request_time_ms = 4;
+  repeated LogEvent log_event = 3;
+}
+
+message ClientInfo {
+  optional int32 client_type = 1;
+}
+
+message LogResponse {
+  optional int64 next_request_wait_millis = 1;
+}
+
+message LogEvent {
+  optional int64 event_time_ms = 1;
+  optional bytes source_extension = 6;
+}
