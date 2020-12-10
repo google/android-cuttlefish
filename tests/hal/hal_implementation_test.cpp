@@ -107,11 +107,6 @@ static const std::set<std::string> kKnownMissingAidl = {
     // b/170144267
     "android.system.keystore2.",
 
-    // The keymint service implementation is in progress but we cannot register
-    // the service by default til all essential features landed.
-    // b/171429297
-    "android.hardware.keymint.",
-
     // These KeyMaster types are in an AIDL types-only HAL because they're used
     // by the Identity Credential AIDL HAL. Remove this when fully porting
     // KeyMaster to AIDL.
