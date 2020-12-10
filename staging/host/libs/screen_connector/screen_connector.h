@@ -24,7 +24,7 @@
 
 namespace cuttlefish {
 
-using FrameCallback = std::function<void(std::uint32_t /*frame_number*/,
+using FrameCallback = std::function<void(std::uint32_t /*display_number*/,
                                          std::uint8_t* /*frame_pixels*/)>;
 
 class ScreenConnector {
@@ -33,10 +33,9 @@ class ScreenConnector {
 
   virtual ~ScreenConnector() = default;
 
-  // Runs the given callback on the next available frame after the given
-  // frame number and returns true if successful.
-  virtual bool OnFrameAfter(std::uint32_t frame_number,
-                            const FrameCallback& frame_callback) = 0;
+  // Runs the given callback on the next available frame and returns true if
+  // successful.
+  virtual bool OnNextFrame(const FrameCallback& frame_callback) = 0;
 
   // Let the screen connector know when there are clients connected
   virtual void ReportClientsConnected(bool have_clients);
