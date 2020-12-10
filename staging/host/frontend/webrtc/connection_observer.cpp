@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#define LOG_TAG "ConnectionObserver"
+
 #include "host/frontend/webrtc/connection_observer.h"
 
 #include <linux/input.h>
@@ -44,6 +46,13 @@ struct virtio_input_event {
   int32_t value;
 };
 
+struct multitouch_slot {
+  int32_t id;
+  int32_t slot;
+  int32_t x;
+  int32_t y;
+};
+
 struct InputEventBuffer {
   virtual ~InputEventBuffer() = default;
   virtual void AddEvent(uint16_t type, uint16_t code, int32_t value) = 0;
@@ -67,6 +76,7 @@ struct InputEventBufferImpl : public InputEventBuffer {
   std::vector<T> buffer_;
 };
 
+// TODO: we could add an arg here to specify whether we want the multitouch buffer?
 std::unique_ptr<InputEventBuffer> GetEventBuffer() {
   if (FLAGS_write_virtio_input) {
     return std::unique_ptr<InputEventBuffer>(
@@ -107,8 +117,10 @@ class ConnectionObserverImpl
       display_handler->SendLastFrame();
     }
   }
+
   void OnTouchEvent(const std::string & /*display_label*/, int x, int y,
                     bool down) override {
+
     auto buffer = GetEventBuffer();
     if (!buffer) {
       LOG(ERROR) << "Failed to allocate event buffer";
@@ -117,16 +129,62 @@ class ConnectionObserverImpl
     buffer->AddEvent(EV_ABS, ABS_X, x);
     buffer->AddEvent(EV_ABS, ABS_Y, y);
     buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
-    buffer->AddEvent(EV_SYN, 0, 0);
+    buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
     cuttlefish::WriteAll(input_sockets_.touch_client,
                          reinterpret_cast<const char *>(buffer->data()),
                          buffer->size());
   }
-  void OnMultiTouchEvent(const std::string &display_label, int /*id*/,
-                         int /*slot*/, int x, int y,
-                         bool initialDown) override {
-    OnTouchEvent(display_label, x, y, initialDown);
+
+  void OnMultiTouchEvent(const std::string & /*display_label*/, Json::Value id,
+                         Json::Value slot, Json::Value x, Json::Value y,
+                         bool down, int size) override {
+    static bool button_touch = false;
+    static bool finger = false;
+
+    auto buffer = GetEventBuffer();
+    if (!buffer) {
+      LOG(ERROR) << "Failed to allocate event buffer";
+      return;
+    }
+
+    if (!finger) {
+      buffer->AddEvent(EV_KEY, BTN_TOOL_FINGER, 1);
+      finger = true;
+    }
+
+    for (int i=0; i<size; i++) {
+      buffer->AddEvent(EV_ABS, ABS_MT_SLOT, slot[i].asInt());
+
+      auto thisId = id[i].asInt();
+      if (thisId < 0 || down) {
+        buffer->AddEvent(EV_ABS, ABS_MT_TRACKING_ID, thisId);
+      }
+
+      if (thisId >= 0) {
+        // ABS_MT_POSITION_X: Reports the X coordinate of the tool.
+        // ABS_MT_POSITION_Y: Reports the Y coordinate of the tool.
+        buffer->AddEvent(EV_ABS, ABS_MT_POSITION_X, x[i].asInt());
+        buffer->AddEvent(EV_ABS, ABS_MT_POSITION_Y, y[i].asInt());
+        // ABS_{X,Y} must be reported with the location of the touch.
+        buffer->AddEvent(EV_ABS, ABS_X, x[i].asInt());
+        buffer->AddEvent(EV_ABS, ABS_Y, y[i].asInt());
+      }
+
+      if ((!button_touch && down) || (button_touch && !down)) {
+        // BTN_TOUCH must be used to report when a touch is active on the screen.
+        // BTN_TOUCH: Indicates whether the tool is touching the device.
+        buffer->AddEvent(EV_KEY, BTN_TOUCH, down);
+        LOG(VERBOSE) << "BTN_TOUCH " << down;
+        button_touch = !button_touch;
+      }
+    }
+
+    buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
+    cuttlefish::WriteAll(input_sockets_.touch_client,
+    reinterpret_cast<const char *>(buffer->data()),
+    buffer->size());
   }
+
   void OnKeyboardEvent(uint16_t code, bool down) override {
     auto buffer = GetEventBuffer();
     if (!buffer) {
@@ -134,11 +192,12 @@ class ConnectionObserverImpl
       return;
     }
     buffer->AddEvent(EV_KEY, code, down);
-    buffer->AddEvent(EV_SYN, 0, 0);
+    buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
     cuttlefish::WriteAll(input_sockets_.keyboard_client,
                          reinterpret_cast<const char *>(buffer->data()),
                          buffer->size());
   }
+
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
                             adb_message_sender) override {
     LOG(VERBOSE) << "Adb Channel open";
