@@ -21,6 +21,7 @@
 #include <wayland-server-core.h>
 #include <wayland-server-protocol.h>
 
+#include "host/libs/wayland/wayland_surface.h"
 #include "host/libs/wayland/wayland_utils.h"
 
 namespace wayland {
@@ -190,7 +191,12 @@ void compositor_create_surface(wl_client* client,
                << " compositor=" << compositor
                << " id=" << id;
 
-  Surface* surface = GetUserData<Surface>(compositor);
+  // Wayland seems to use a single global id space for all objects.
+  static std::atomic<std::uint32_t> sNextDisplayId{0};
+  uint32_t display_id = sNextDisplayId++;
+
+  Surfaces* surfaces = GetUserData<Surfaces>(compositor);
+  Surface* surface = surfaces->GetOrCreateSurface(display_id);
 
   wl_resource* surface_resource = wl_resource_create(
       client, &wl_surface_interface, wl_resource_get_version(compositor), id);
@@ -239,9 +245,9 @@ void bind_compositor(wl_client* client,
 
 }  // namespace
 
-void BindCompositorInterface(wl_display* display, Surface* surface) {
+void BindCompositorInterface(wl_display* display, Surfaces* surfaces) {
   wl_global_create(display, &wl_compositor_interface, kCompositorVersion,
-                   surface, bind_compositor);
+                   surfaces, bind_compositor);
 }
 
 }  // namespace wayland
