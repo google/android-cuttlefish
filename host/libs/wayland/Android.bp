@@ -23,6 +23,7 @@ cc_library_static {
         "wayland_server.cpp",
         "wayland_subcompositor.cpp",
         "wayland_surface.cpp",
+        "wayland_surfaces.cpp",
     ],
     shared_libs: [
         "libbase",
