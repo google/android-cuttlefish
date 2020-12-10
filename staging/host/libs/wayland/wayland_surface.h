@@ -17,19 +17,19 @@
 
 #pragma once
 
-#include <optional>
+#include <mutex>
 #include <stdint.h>
-#include <thread>
-#include <future>
 
 #include <wayland-server-core.h>
 
 namespace wayland {
 
+class Surfaces;
+
 // Tracks the buffer associated with a Wayland surface.
 class Surface {
  public:
-  Surface() = default;
+  Surface(std::uint32_t display_number, Surfaces& surfaces);
   virtual ~Surface() = default;
 
   Surface(const Surface& rhs) = delete;
@@ -53,16 +53,10 @@ class Surface {
   // Commits the pending frame state.
   void Commit();
 
-  using FrameCallbackPackaged =
-    std::packaged_task<void(std::uint32_t /*frame_number*/,
-                            std::uint8_t* /*frame_pixels*/)>;
-
-  // Registers a callback that should be invoked on the first frame after
-  // the given frame number.
-  void OnFrameAfter(uint32_t frame_number,
-                    FrameCallbackPackaged frame_callback);
-
  private:
+  std::uint32_t display_number_;
+  Surfaces& surfaces_;
+
   struct State {
     uint32_t current_frame_number = 0;
 
@@ -78,15 +72,6 @@ class Surface {
 
   std::mutex state_mutex_;
   State state_;
-
-  struct PendingFrameCallback {
-    uint32_t frame_number;
-
-    FrameCallbackPackaged frame_callback;
-  };
-
-  std::mutex callback_mutex_;
-  std::optional<PendingFrameCallback> callback_;
 };
 
 }  // namespace wayland
