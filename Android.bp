@@ -15,14 +15,8 @@
 
 cc_library_headers {
     name: "cuttlefish_common_headers",
-    vendor: true,
-    export_include_dirs: ["."],
-    host_supported: true,
-}
-
-cc_library_headers {
-    name: "cuttlefish_common_headers_product",
-    product_specific: true,
+    vendor_available: true,
+    product_available: true,
     export_include_dirs: ["."],
     host_supported: true,
 }
@@ -45,37 +39,29 @@ cc_defaults {
         },
     },
     cflags: ["-Werror", "-Wall", "-D_FILE_OFFSET_BITS=64"],
-    vendor: true,
 }
 
 cc_defaults {
     name: "cuttlefish_guest_product_only",
     product_specific: true,
-    gnu_extensions: false,
-    header_libs: [
-        "cuttlefish_common_headers_product",
-    ],
-    target: {
-        host: {
-            host_ldlibs: ["-lrt"],
-            cflags: ["-DCUTTLEFISH_HOST"],
-            compile_multilib: "64",
-        },
-        // We don't need Darwin host-side builds
-        darwin: {
-            enabled: false,
-        },
-    },
-    cflags: ["-Werror", "-Wall"],
+    defaults: ["cuttlefish_base"],
+}
+
+cc_defaults {
+    name: "cuttlefish_guest_system_ext_only",
+    system_ext_specific: true,
+    defaults: ["cuttlefish_base"],
 }
 
 cc_defaults {
     name: "cuttlefish_guest_only",
+    vendor: true,
     defaults: ["cuttlefish_base"],
 }
 
 cc_defaults {
     name: "cuttlefish_host_only",
+    vendor: true,
     device_supported: false,
     host_supported: true,
     defaults: ["cuttlefish_base"],
@@ -83,6 +69,7 @@ cc_defaults {
 
 cc_defaults {
     name: "cuttlefish_host_and_guest",
+    vendor: true,
     host_supported: true,
     defaults: ["cuttlefish_base"],
 }

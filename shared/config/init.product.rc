@@ -6,9 +6,3 @@ service tombstone_transmit /product/bin/tombstone_transmit
     class late_start
     group system
     user root
-
-# TODO: disable this service once cuttlefish implements system suspend
-service suspend_blocker /product/bin/suspend_blocker
-    class early_hal # Star together with system_suspend HAL
-    group system
-    user root
