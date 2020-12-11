@@ -16,5 +16,5 @@ cc_binary {
     name: "suspend_blocker",
     srcs: ["suspend_blocker.cpp"],
     shared_libs: ["libpower"],
-    defaults: ["cuttlefish_guest_product_only"],
+    defaults: ["cuttlefish_guest_system_ext_only"],
 }

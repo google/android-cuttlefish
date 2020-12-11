@@ -1,0 +1,5 @@
+# TODO: disable this service once cuttlefish implements system suspend
+service suspend_blocker /system_ext/bin/suspend_blocker
+    class early_hal # Start together with system_suspend HAL
+    group system
+    user root
