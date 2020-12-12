@@ -464,6 +464,15 @@ PRODUCT_PACKAGES += \
     $(LOCAL_KEYMASTER_PRODUCT_PACKAGE)
 
 #
+# KeyMint HAL
+#
+ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),)
+       LOCAL_KEYMINT_PRODUCT_PACKAGE := android.hardware.security.keymint-service
+endif
+PRODUCT_PACKAGES += \
+    $(LOCAL_KEYMINT_PRODUCT_PACKAGE)
+
+#
 # Power HAL
 #
 PRODUCT_PACKAGES += \
