@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This script is intended to:
+#   build .deb packages for the host and/or for cuttlefish docker images
+#   build the cuttlefish docker images, using the .deb packages & Dockerfile
+
 # tell if the distro is Debian
 function is_debian_distro {
   if [[ -f /etc/debian_version ]]; then
@@ -20,6 +24,7 @@ DEFINE_boolean detect_gpu \
                "Attempt to detect the GPU vendor"
 DEFINE_boolean rebuild_debs true "Rebuild deb packages. If false, builds only when any .deb is missing in ./out/"
 DEFINE_boolean rebuild_debs_verbose false "When rebuilding deb packages, show the progress in stdin."
+DEFINE_boolean build_debs_only false "To build host .deb packages only, not the cuttlefish docker images"
 
 FLAGS "$@" || exit 1
 
@@ -158,7 +163,7 @@ function is_rebuild_debs() {
 
 function do_rebuild_debs() {
   echo "###"
-  echo "### Building ,deb Host packages"
+  echo "### Building .deb Host Packages"
   echo "###"
   local verbosity="--noverbose"
   if [[ ${FLAGS_rebuild_debs_verbose} -eq ${FLAGS_TRUE} ]]; then
@@ -170,4 +175,12 @@ function do_rebuild_debs() {
 if is_rebuild_debs; then
   do_rebuild_debs
 fi
+
+if [[ ${FLAGS_build_debs_only} -eq ${FLAGS_TRUE} ]]; then
+  echo "###"
+  echo "### Building .deb Host Packages"
+  echo "###"
+  exit 0
+fi
+
 build_docker_image "$*"
