@@ -148,7 +148,7 @@ int main(int argc, char **argv) {
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto instance = cvd_config->ForDefaultInstance();
-  auto screen_connector = cuttlefish::ScreenConnector::Get(FLAGS_frame_server_fd);
+  auto screen_connector = cuttlefish::DisplayHandler::ScreenConnector::Get(FLAGS_frame_server_fd);
 
   StreamerConfig streamer_config;
 
@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
       "display_0", screen_connector->ScreenWidth(0),
       screen_connector->ScreenHeight(0), cvd_config->dpi(), true);
   auto display_handler =
-      std::make_shared<DisplayHandler>(display_0, screen_connector);
+    std::make_shared<DisplayHandler>(display_0, std::move(screen_connector));
 
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
   if (cvd_config->record_screen()) {
