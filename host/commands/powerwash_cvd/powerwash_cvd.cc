@@ -49,7 +49,7 @@
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
              "Which instance to powerwash");
 
-DEFINE_int32(wait_for_launcher, 5,
+DEFINE_int32(wait_for_launcher, 30,
              "How many seconds to wait for the launcher to respond to the status "
              "command. A value of zero means wait indefinetly");
 
