@@ -29,7 +29,13 @@
       </section>
       <section id='device_connection'>
         <div id='device_view'>
+          <h3 id='device_status_message'></h3>
           <video id="deviceScreen" autoplay ></video>
+          <h3 id='webrtc_status_message'>
+            No connection to the guest device.<br><br>
+            Please ensure the WebRTC process on the host machine is active.<br><br>
+            Tip: <code>ps aux | grep -i webrtc</code>
+          </h3>
         </div>
         <div id='control_view'>
           <button id="keyboardCaptureBtn">Capture Keyboard</button>
