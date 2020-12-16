@@ -80,6 +80,25 @@ body {
     color: white;
 }
 
+#device_view h3 {
+    padding: 30px;
+    font-family: 'Open Sans', sans-serif;
+    color: white;
+}
+
+#device_status_message {
+    white-space: pre-line;
+    width: 400px;
+}
+
+#webrtc_status_message {
+    text-align: center;
+    /* White text on dark red background. */
+    background-color: #900000;
+    /* Hidden by default. */
+    display: none;
+}
+
 #control_panel button {
     height: 60px;
     min-width: 60px;
