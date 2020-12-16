@@ -193,6 +193,13 @@ class DeviceConnection {
   onControlMessage(cb) {
     this._onControlMessage = cb;
   }
+
+  // Provide a callback to receive connectionstatechange states.
+  onConnectionStateChange(cb) {
+    this._pc.addEventListener(
+      'connectionstatechange',
+      evt => cb(this._pc.connectionState));
+  }
 }
 
 
