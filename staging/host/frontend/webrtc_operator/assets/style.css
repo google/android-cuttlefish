@@ -114,6 +114,24 @@ body {
     background-color: #c9c9c9;
 }
 
+#adb_status_message {
+    padding: 10px;
+    font-family: 'Open Sans', sans-serif;
+    color: white;
+}
+#adb_status_message.connecting {
+    /* dark yellow */
+    background-color: #927836;
+}
+#adb_status_message.error {
+    /* dark red */
+    background-color: #900000;
+}
+#adb_status_message.connected {
+    /* dark green */
+    background-color: #007000;
+}
+
 #device_details {
     font-family: 'Open Sans', sans-serif;
     color: white;
