@@ -445,6 +445,8 @@ class CuttlefishConfig {
 
     // Wifi MAC address inside the guest
     std::array<unsigned char, 6> wifi_mac_address() const;
+
+    std::string factory_reset_protected_path() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
