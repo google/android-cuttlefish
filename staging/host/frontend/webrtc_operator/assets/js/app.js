@@ -25,6 +25,7 @@ function ConnectToDevice(device_id) {
   deviceScreen.addEventListener('click', onInitialClick);
   const deviceView = document.getElementById('device_view');
   const webrtcStatusMessage = document.getElementById('webrtc_status_message');
+  const adbStatusMessage = document.getElementById('adb_status_message');
 
   const deviceStatusMessage = document.getElementById('device_status_message');
   let connectionAttemptDuration = 0;
@@ -63,6 +64,30 @@ function ConnectToDevice(device_id) {
   let touchIdSlotMap = new Map();
   let touchSlots = new Array();
 
+  function initializeAdb() {
+    init_adb(deviceConnection, function() {
+      adbStatusMessage.className = 'connected';
+      adbStatusMessage.textContent = 'adb connection established successfully.';
+      setTimeout(function() {
+        adbStatusMessage.style.visibility = 'hidden';
+      }, 5000);
+      for (const [_, button] of Object.entries(buttons)) {
+        if (button.adb) {
+          button.button.disabled = false;
+        }
+      }
+    }, function() {
+      adbStatusMessage.className = 'error';
+      adbStatusMessage.textContent = 'adb connection failed.';
+      adbStatusMessage.style.visibility = 'visible';
+      for (const [_, button] of Object.entries(buttons)) {
+        if (button.adb) {
+          button.button.disabled = true;
+        }
+      }
+    });
+  }
+
   let rotation = 0;
   let screenHasBeenResized = false;
   function onControlMessage(message) {
@@ -73,12 +98,7 @@ function ConnectToDevice(device_id) {
       // Start the adb connection after receiving the BOOT_STARTED message.
       // (This is after the adbd start message. Attempting to connect
       // immediately after adbd starts causes issues.)
-      init_adb(deviceConnection);
-      for (const [_, button] of Object.entries(buttons)) {
-        if (button.adb) {
-          button.button.disabled = false;
-        }
-      }
+      initializeAdb();
     }
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
       if (metadata.rotation == rotation) {
@@ -289,7 +309,7 @@ function ConnectToDevice(device_id) {
   function onRotateButton(e) {
     // Attempt to init adb again, in case the initial connection failed.
     // This succeeds immediately if already connected.
-    init_adb(deviceConnection);
+    initializeAdb();
     if (e.type == 'mousedown') {
       adbShell('/vendor/bin/cuttlefish_rotate ' + (rotation == 0 ? 'landscape' : 'portrait'))
     }
@@ -297,7 +317,7 @@ function ConnectToDevice(device_id) {
   function onCustomShellButton(shell_command, e) {
     // Attempt to init adb again, in case the initial connection failed.
     // This succeeds immediately if already connected.
-    init_adb(deviceConnection);
+    initializeAdb();
     if (e.type == 'mousedown') {
       adbShell(shell_command);
     }
