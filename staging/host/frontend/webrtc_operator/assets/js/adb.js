@@ -82,6 +82,7 @@ function adbShell(command) {
 
     let arrayBuffer = createAdbMessage(A_OPEN, kLocalChannelId, 0, destination);
     adb_ws.send(arrayBuffer);
+    awaitConnection();
 }
 
 function adbSendOkay(remoteId) {
@@ -98,6 +99,29 @@ function JoinArrays(arr1, arr2) {
   arr.set(arr1, 0);
   arr.set(arr2, arr1.length);
   return arr;
+}
+
+// Simple lifecycle management that executes callbacks based on connection state.
+//
+// Any attempt to initiate a command (e.g. creating a connection, sending a message)
+// (re)starts a timer. Any response back from any command stops that timer.
+const timeoutMs = 3000;
+let connectedCb;
+let disconnectedCb;
+let disconnectedTimeout;
+function awaitConnection() {
+  clearTimeout(disconnectedTimeout);
+  if (disconnectedCb) {
+    disconnectedTimeout = setTimeout(disconnectedCb, timeoutMs);
+  }
+}
+function connected() {
+  if (disconnectedTimeout) {
+    clearTimeout(disconnectedTimeout);
+  }
+  if (connectedCb) {
+    connectedCb();
+  }
 }
 
 function adbOnMessage(arrayBuffer) {
@@ -139,6 +163,7 @@ function adbOnMessage(arrayBuffer) {
             case A_CNXN:
             {
                 console.log("WebRTC adb connected.");
+                connected();
                 break;
             }
 
@@ -146,6 +171,7 @@ function adbOnMessage(arrayBuffer) {
             {
                 let remoteId = getU32LE(array, 4);
                 console.log("WebRTC adb channel created w/ remoteId " + remoteId);
+                connected();
                 break;
             }
 
@@ -160,7 +186,7 @@ function adbOnMessage(arrayBuffer) {
     }
 }
 
-function init_adb(devConn) {
+function init_adb(devConn, ccb = connectedCb, dcb = disconnectedCb) {
     if (adb_ws) return;
 
     adb_ws = {
@@ -168,6 +194,9 @@ function init_adb(devConn) {
         devConn.sendAdbMessage(buffer);
       }
     };
+    connectedCb = ccb;
+    disconnectedCb = dcb;
+    awaitConnection();
 
     devConn.onAdbMessage(msg => adbOnMessage(msg));
 
