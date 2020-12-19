@@ -518,7 +518,11 @@ Error CfHWC2::registerCallback(Callback descriptor,
     if (!pendingHotplugs.empty()) {
         auto hotplug = reinterpret_cast<HWC2_PFN_HOTPLUG>(pointer);
         for (auto& pendingHotplug : pendingHotplugs) {
-            hotplug(callbackData, pendingHotplug.first, pendingHotplug.second);
+            auto displayId = pendingHotplug.first;
+            auto connected = pendingHotplug.second;
+            ALOGI("Hotplug %s display %" PRIu64 " on registerCallback",
+                  (connected == 0 ? "disconnecting" : "connecting"), displayId);
+            hotplug(callbackData, displayId, connected);
         }
     }
     return Error::None;
@@ -2737,7 +2741,7 @@ void CfHWC2::hwc1Vsync(int hwc1DisplayId, int64_t timestamp) {
 }
 
 void CfHWC2::hwc1Hotplug(int hwc1DisplayId, int connected) {
-    ALOGV("Received hwc1Hotplug(%d, %d)", hwc1DisplayId, connected);
+    ALOGI("Received hwc1Hotplug(%d, %d)", hwc1DisplayId, connected);
 
     if (hwc1DisplayId != HWC_DISPLAY_EXTERNAL) {
         ALOGE("hwc1Hotplug: Received hotplug for non-external display");
@@ -2789,6 +2793,9 @@ void CfHWC2::hwc1Hotplug(int hwc1DisplayId, int connected) {
     auto hotplug = reinterpret_cast<HWC2_PFN_HOTPLUG>(callbackInfo.pointer);
     auto hwc2Connected = (connected == 0) ?
             HWC2::Connection::Disconnected : HWC2::Connection::Connected;
+
+    ALOGI("Hotplug %s display %" PRIu64,
+          (connected == 0 ? "disconnecting" : "connecting"), displayId);
     hotplug(callbackInfo.data, displayId, static_cast<int32_t>(hwc2Connected));
 }
 
