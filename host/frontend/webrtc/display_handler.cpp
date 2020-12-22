@@ -31,16 +31,11 @@ DisplayHandler::DisplayHandler(
   const int display_w = screen_connector_->ScreenWidth(display_num);
   const int display_h = screen_connector_->ScreenHeight(display_num);
   const int display_stride_bytes = screen_connector_->ScreenStrideBytes(display_num);
-
+  std::uint32_t frame_num = 0;
   for (;;) {
-    auto have_frame = screen_connector_->OnNextFrame(
-        [&, this](
-            std::uint32_t display_number,
-            std::uint8_t* frame) {
-          // TODO(171305898): handle multiple displays.
-          if (display_number != 0) {
-            return;
-          }
+    auto have_frame = screen_connector_->OnFrameAfter(
+        frame_num, [&, this](std::uint32_t fn, std::uint8_t* frame) {
+          frame_num = fn;
           std::shared_ptr<CvdVideoFrameBuffer> buffer(
               new CvdVideoFrameBuffer(display_w, display_h));
           libyuv::ABGRToI420(frame, display_stride_bytes,
