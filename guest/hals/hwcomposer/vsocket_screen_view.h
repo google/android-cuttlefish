@@ -16,10 +16,8 @@
 #pragma once
 
 #include <condition_variable>
-#include <deque>
 #include <functional>
 #include <mutex>
-#include <optional>
 #include <thread>
 #include <vector>
 
@@ -33,63 +31,30 @@ class VsocketScreenView : public ScreenView {
   VsocketScreenView();
   virtual ~VsocketScreenView();
 
-  std::uint8_t* AcquireNextBuffer(std::uint32_t display_number) override;
+  void Broadcast(int buffer_id,
+                 const CompositionStats* stats = nullptr) override;
+  void* GetBuffer(int fb_index) override;
 
-  void PresentAcquiredBuffer(std::uint32_t display_number) override;
+  int num_buffers() const override;
 
  private:
   bool ConnectToScreenServer();
-
+  void GetScreenParameters();
   void BroadcastLoop();
-
   void ClientDetectorLoop();
+  bool SendFrame(int offset);
 
-  class DisplayHelper {
-   public:
-    DisplayHelper(std::uint32_t display_number);
-
-    DisplayHelper(const DisplayHelper&) = delete;
-    DisplayHelper& operator=(const DisplayHelper&) = delete;
-
-    DisplayHelper(DisplayHelper&&) = delete;
-    DisplayHelper& operator=(DisplayHelper&&) = delete;
-
-    std::uint8_t* AcquireNextBuffer();
-
-    void PresentAcquiredBuffer();
-
-    // Returns true if this display has a new frame ready to be sent.
-    bool HasPresentBuffer();
-
-    bool SendPresentBufferIfAvailable(cuttlefish::SharedFD* connection);
-
-   private:
-    std::uint8_t* GetBuffer(std::uint32_t index);
-
-    static constexpr std::uint32_t kNumBuffersPerDisplay = 8;
-
-    std::uint32_t display_number_ = 0;
-
-    std::size_t buffer_size_ = 0;
-    std::vector<std::uint8_t> buffers_;
-
-    std::mutex acquire_mutex_;
-    std::deque<std::uint32_t> acquirable_buffers_indexes_;
-    std::optional<std::uint32_t> acquired_buffer_index_;
-
-    std::mutex present_mutex_;
-    std::optional<std::uint32_t> present_buffer_index_;
-  };
-
-  std::vector<std::unique_ptr<DisplayHelper>> display_helpers_;
-
+  std::uint32_t inner_buffer_size_;
+  std::vector<char> inner_buffer_;
   cuttlefish::SharedFD screen_server_;
   std::thread broadcast_thread_;
   std::thread client_detector_thread_;
-  bool send_frames_ = false;
+  int current_offset_ = 0;
+  unsigned int current_seq_ = 0;
   std::mutex mutex_;
   std::condition_variable cond_var_;
   bool running_ = true;
+  bool send_frames_{false};
 };
 
 }  // namespace cuttlefish

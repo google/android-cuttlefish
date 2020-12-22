@@ -30,6 +30,9 @@ BaseComposer::BaseComposer(std::unique_ptr<ScreenView> screen_view)
 void BaseComposer::Dump(char* buff __unused, int buff_len __unused) {}
 
 int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
+  auto buffer_id = screen_view_->NextBuffer();
+  void* frame_buffer = screen_view_->GetBuffer(buffer_id);
+
   auto imported_buffer_opt = gralloc_.Import(buffer_handle);
   if (!imported_buffer_opt) {
     ALOGE("Failed to Import() framebuffer for post.");
@@ -49,15 +52,11 @@ int BaseComposer::PostFrameBufferTarget(buffer_handle_t buffer_handle) {
     ALOGE("Failed to get buffer from view for post.");
     return -1;
   }
-  void* gralloc_buffer = *buffer_opt;
 
-  // TODO(b/173523487): remove hard coded display number.
-  const std::uint32_t display_number = 0;
+  void* buffer = *buffer_opt;
+  memcpy(frame_buffer, buffer, screen_view_buffer_size_);
 
-  std::uint8_t* frame_buffer = screen_view_->AcquireNextBuffer(display_number);
-  std::size_t frame_buffer_size = ScreenView::ScreenSizeBytes(display_number);
-  memcpy(frame_buffer, gralloc_buffer, frame_buffer_size);
-  screen_view_->PresentAcquiredBuffer(display_number);
+  screen_view_->Broadcast(buffer_id);
   return 0;
 }  // namespace cuttlefish
 
