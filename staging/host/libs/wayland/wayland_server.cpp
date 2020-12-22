@@ -35,7 +35,7 @@ namespace internal {
 struct WaylandServerState {
   struct wl_display* display_ = nullptr;
 
-  Surfaces surfaces_;
+  Surface surface_;
 };
 
 }  // namespace internal
@@ -78,7 +78,7 @@ void WaylandServer::ServerLoop(int fd) {
 
   wl_display_init_shm(server_state_->display_);
 
-  BindCompositorInterface(server_state_->display_, &server_state_->surfaces_);
+  BindCompositorInterface(server_state_->display_, &server_state_->surface_);
   BindDmabufInterface(server_state_->display_);
   BindSubcompositorInterface(server_state_->display_);
   BindSeatInterface(server_state_->display_);
@@ -94,8 +94,20 @@ void WaylandServer::ServerLoop(int fd) {
   wl_display_destroy(server_state_->display_);
 }
 
-void WaylandServer::OnNextFrame(const Surfaces::FrameCallback& callback) {
-  server_state_->surfaces_.OnNextFrame(callback);
+std::future<void> WaylandServer::OnFrameAfter(
+    uint32_t frame_number,
+    const FrameCallback& frame_callback) {
+  // Wraps the given callback in a callback that can be waited on using
+  // std::future.
+  Surface::FrameCallbackPackaged packaged([&frame_callback](std::uint32_t frame_number,
+                                                   std::uint8_t* frame_pixels){
+    frame_callback(frame_number, frame_pixels);
+  });
+
+  std::future<void> frame_callback_complete = packaged.get_future();
+
+  server_state_->surface_.OnFrameAfter(frame_number, std::move(packaged));
+  return frame_callback_complete;
 }
 
 }  // namespace wayland
