@@ -33,55 +33,28 @@ class SocketBasedScreenConnector : public ScreenConnector {
  public:
   explicit SocketBasedScreenConnector(int frames_fd);
 
-  bool OnNextFrame(const FrameCallback& frame_callback) override;
+  bool OnFrameAfter(std::uint32_t frame_number,
+                    const FrameCallback& frame_callback) override;
 
   void ReportClientsConnected(bool have_clients) override;
 
  private:
+  static constexpr std::uint32_t kNumBuffersPerDisplay = 4;
+
+  int WaitForNewFrameSince(std::uint32_t* seq_num);
+  void* GetBuffer(int buffer_idx);
   void ServerLoop(int frames_fd);
+  void BroadcastNewFrame(int buffer_idx);
 
-  class DisplayHelper {
-   public:
-    DisplayHelper(std::uint32_t display_number);
-
-    DisplayHelper(const DisplayHelper&) = delete;
-    DisplayHelper& operator=(const DisplayHelper&) = delete;
-
-    DisplayHelper(DisplayHelper&&) = delete;
-    DisplayHelper& operator=(DisplayHelper&&) = delete;
-
-    std::uint8_t* AcquireNextBuffer();
-
-    void PresentAcquiredBuffer();
-
-    bool ConsumePresentBuffer(const FrameCallback& frame_callback);
-
-   private:
-    std::uint8_t* GetBuffer(std::uint32_t index);
-
-    static constexpr std::uint32_t kNumBuffersPerDisplay = 4;
-
-    std::uint32_t display_number_ = 0;
-
-    std::size_t buffer_size_ = 0;
-    std::vector<std::uint8_t> buffers_;
-
-    std::mutex acquire_mutex_;
-    std::deque<std::uint32_t> acquirable_buffers_indexes_;
-    std::optional<std::uint32_t> acquired_buffer_index_;
-
-    std::mutex present_mutex_;
-    std::optional<std::uint32_t> present_buffer_index_;
-  };
-
+  std::size_t buffer_size_ = 0;
+  std::vector<std::uint8_t> buffer_;
+  std::uint32_t seq_num_{0};
+  int newest_buffer_ = 0;
+  std::condition_variable new_frame_cond_var_;
+  std::mutex new_frame_mtx_;
   std::thread screen_server_thread_;
   cuttlefish::SharedFD client_connection_;
   bool have_clients_ = false;
-  std::vector<std::unique_ptr<DisplayHelper>> display_helpers_;
-
-  std::mutex frame_available_mutex_;
-  std::condition_variable frame_available_cond_var_;
-  std::size_t frame_available_display_index = 0;
 };
 
 } // namespace cuttlefish
