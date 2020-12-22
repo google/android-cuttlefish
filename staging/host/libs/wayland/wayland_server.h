@@ -24,13 +24,14 @@
 #include <string>
 #include <thread>
 
-#include "host/libs/wayland/wayland_surfaces.h"
-
 namespace wayland {
 
 namespace internal {
 struct WaylandServerState;
 }  // namespace internal
+
+using FrameCallback = std::function<void(std::uint32_t /*frame_number*/,
+                                         std::uint8_t* /*frame_pixels*/)>;
 
 // A Wayland compositing server that provides an interface for receiving frame
 // updates from a connected client.
@@ -48,8 +49,10 @@ class WaylandServer {
     WaylandServer(WaylandServer&& rhs) = delete;
     WaylandServer& operator=(WaylandServer&& rhs) = delete;
 
-    // Blocks until the given callback is run on the next frame available.
-    void OnNextFrame(const Surfaces::FrameCallback& callback);
+    // Registers a callback to run on the next frame available after the given
+    // frame number.
+    std::future<void> OnFrameAfter(std::uint32_t frame_number,
+                                   const FrameCallback& frame_callback);
 
   private:
     void ServerLoop(int wayland_socket_fd);

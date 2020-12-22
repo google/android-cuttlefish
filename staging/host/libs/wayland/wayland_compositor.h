@@ -21,11 +21,11 @@
 
 #include <wayland-server-core.h>
 
-#include "host/libs/wayland/wayland_surfaces.h"
+#include "host/libs/wayland/wayland_surface.h"
 
 namespace wayland {
 
 // Binds the compositor interface to the given wayland server.
-void BindCompositorInterface(wl_display* display, Surfaces* surfaces);
+void BindCompositorInterface(wl_display* display, Surface* surface);
 
 }  // namespace wayland
