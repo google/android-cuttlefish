@@ -86,4 +86,10 @@ const DeviceConfig& GetDeviceConfig() {
   return ScreenStrideBytes(display_num) * ScreenHeight(display_num) + kMysteriousSwiftShaderPadding;
 }
 
+int ScreenView::NextBuffer() {
+  int num_buffers = this->num_buffers();
+  last_buffer_ = num_buffers > 0 ? (last_buffer_ + 1) % num_buffers : -1;
+  return last_buffer_;
+}
+
 }  // namespace cuttlefish

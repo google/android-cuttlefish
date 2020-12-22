@@ -73,7 +73,7 @@ void SimulatedHWComposer::EraseHalfOfElements(
 }
 
 void SimulatedHWComposer::MakeStripes() {
-  std::uint32_t frame_number = 0;
+  std::uint32_t previous_frame_number = 0;
   const std::uint32_t display_number = 0;
   const std::uint32_t display_w =
       ScreenConnector::ScreenWidth(display_number);
@@ -89,13 +89,8 @@ void SimulatedHWComposer::MakeStripes() {
   Message raw_screen;
   std::uint64_t stripe_seq_num = 1;
 
-  const FrameCallback frame_callback = [&](uint32_t display_number,
+  const FrameCallback frame_callback = [&](uint32_t frame_number,
                                            uint8_t* frame_pixels) {
-    // TODO(171305898): handle multiple displays.
-    if (display_number != 0) {
-      return;
-    }
-
     raw_screen.assign(frame_pixels,
                       frame_pixels + display_size_bytes);
 
@@ -109,7 +104,8 @@ void SimulatedHWComposer::MakeStripes() {
           display_h / kNumStripes +
           (i + 1 == kNumStripes ? display_h % kNumStripes : 0);
       const auto* raw_start = &raw_screen[y * display_w * display_bpp];
-      const auto* raw_end = raw_start + (height * display_w * display_bpp);
+      const auto* raw_end =
+          raw_start + (height * display_w * display_bpp);
       // creating a named object and setting individual data members in order
       // to make klp happy
       // TODO (haining) construct this inside the call when not compiling
@@ -128,13 +124,13 @@ void SimulatedHWComposer::MakeStripes() {
       stripes_.Push(std::move(s));
     }
 
-    ++frame_number;
+    previous_frame_number = frame_number;
   };
 
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
 
-    screen_connector_->OnNextFrame(frame_callback);
+    screen_connector_->OnFrameAfter(previous_frame_number, frame_callback);
   }
 }
 
