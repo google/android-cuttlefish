@@ -81,10 +81,10 @@ public:
 
   keymaster::KeymasterEnforcement* enforcement_policy() override;
 
-  keymaster_error_t GenerateAttestation(
+  keymaster::CertificateChain GenerateAttestation(
       const keymaster::Key& key,
       const keymaster::AuthorizationSet& attest_params,
-      keymaster::CertChainPtr* cert_chain) const override;
+      keymaster_error_t* error) const override;
 
   keymaster_error_t UnwrapKey(
       const keymaster::KeymasterKeyBlob& wrapped_key_blob,

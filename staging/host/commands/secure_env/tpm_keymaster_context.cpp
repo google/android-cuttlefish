@@ -266,19 +266,20 @@ keymaster::KeymasterEnforcement* TpmKeymasterContext::enforcement_policy() {
 
 // Based on https://cs.android.com/android/platform/superproject/+/master:system/keymaster/contexts/pure_soft_keymaster_context.cpp;l=261;drc=8367d5351c4d417a11f49b12394b63a413faa02d
 
-keymaster_error_t TpmKeymasterContext::GenerateAttestation(
+keymaster::CertificateChain TpmKeymasterContext::GenerateAttestation(
     const keymaster::Key& key,
     const AuthorizationSet& attest_params,
-    keymaster::CertChainPtr* cert_chain) const {
+    keymaster_error_t* error) const {
   LOG(INFO) << "TODO(b/155697200): Link attestation back to the TPM";
-  keymaster_error_t error = KM_ERROR_OK;
   keymaster_algorithm_t key_algorithm;
   if (!key.authorizations().GetTagValue(keymaster::TAG_ALGORITHM, &key_algorithm)) {
-    return KM_ERROR_UNKNOWN_ERROR;
+    *error = KM_ERROR_UNKNOWN_ERROR;
+    return {};
   }
 
   if ((key_algorithm != KM_ALGORITHM_RSA && key_algorithm != KM_ALGORITHM_EC)) {
-    return KM_ERROR_INCOMPATIBLE_ALGORITHM;
+    *error = KM_ERROR_INCOMPATIBLE_ALGORITHM;
+    return {};
   }
 
   // We have established that the given key has the correct algorithm, and
@@ -287,22 +288,22 @@ keymaster_error_t TpmKeymasterContext::GenerateAttestation(
   const keymaster::AsymmetricKey& asymmetric_key =
       static_cast<const keymaster::AsymmetricKey&>(key);
 
-  auto attestation_chain = keymaster::getAttestationChain(key_algorithm, &error);
-  if (error != KM_ERROR_OK) {
-    return error;
+  auto attestation_chain = keymaster::getAttestationChain(key_algorithm, error);
+  if (*error != KM_ERROR_OK) {
+    return {};
   }
 
-  auto attestation_key = keymaster::getAttestationKey(key_algorithm, &error);
-  if (error != KM_ERROR_OK) {
-    return error;
+  auto attestation_key = keymaster::getAttestationKey(key_algorithm, error);
+  if (*error != KM_ERROR_OK) {
+    return {};
   }
 
   return keymaster::generate_attestation(
       asymmetric_key, attest_params,
-      *attestation_chain,
+      move(attestation_chain),
       *attestation_key,
       *attestation_context_,
-      cert_chain);
+      error);
 }
 
 keymaster_error_t TpmKeymasterContext::UnwrapKey(
