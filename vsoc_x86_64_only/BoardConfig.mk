@@ -32,4 +32,4 @@ TARGET_NATIVE_BRIDGE_ABI := arm64-v8a
 
 AUDIOSERVER_MULTILIB := first
 BUILD_BROKEN_DUP_RULES := true
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.10-x86_64/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-x86_64/*.ko)
