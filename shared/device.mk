@@ -516,6 +516,10 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.rebootescrow-service.default
 
+# Memtrack HAL
+PRODUCT_PACKAGES += \
+    android.hardware.memtrack-service.example
+
 # GKI APEX
 PRODUCT_PACKAGES += com.android.gki.kmi_5_10_android12_0
 
