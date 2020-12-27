@@ -128,6 +128,83 @@ function is_absolute_path {
 	return 1
 }
 
+#
+# if the path is not '/', remove the trailing / if there is
+#
+function remove_trailing_slash_from_non_root {
+  local path_name=$1
+  if ! [[ ${path_name} == "/" ]] && ! [[ ${ref_path_name: -1} != "/" ]]; then
+      echo ${path_name: : -1}
+  else
+      echo $path_name
+  fi
+}
+
+function is_readable {
+    if [[ -f $1 && -r $1 ]]; then
+        return 0
+    fi
+    if [[ -d $1 && -r $1 ]]; then
+        return 0
+    fi
+    return 1
+}
+
+#
+# Note that $ANDROID_HOST_OUT used to have the host package
+# but as of December 2020, it does not
+#
+# this function does nothing when $1, &cuttlefish is already set
+# if not set, which means the user did not specify it,
+# this function tries $1 := default value
+#
+# In order to do so, ANDROID_HOST_OUT or ANDROID_SOONG_HOST__OUT
+# variable should be defined. For backward compatibility it tries:
+#  1. ANDROID_SOONG_HOST_OUT
+#  2. sed in $ANDROID_HOST_OUT from host/out to soong/host/out
+#  3. $ANDROID_HOST_OUT
+#
+# If ANDROID_SOONG_HOST_OUT is defined, only the directory is tried.
+# If not, 2 & 3 are tried in order until the host package file is found
+#
+function locate_default_host_pkg {
+  local -n ref_cuttlefish=$1
+  if [[ ! -z ${ref_cuttlefish} ]]; then
+      return 0
+  fi
+  echo "Trying to search default paths for the host package file"
+  if [[ ! -v ANDROID_HOST_OUT && ! -v ANDROID_SOONG_HOST_OUT ]]; then
+    echo "  ANDROID_{SOONG_,}HOST_OUT is not set so no default path is given." 1>&2
+    return 1
+  fi
+  local soong_host_out="$(remove_trailing_slash_from_non_root ${ANDROID_SOONG_HOST_OUT})"
+  local legacy_host_out="$(remove_trailing_slash_from_non_root ${ANDROID_HOST_OUT})"
+  local new_host_out="${legacy_host_out%/out/host*}""/out/soong/host""${legacy_host_out##*/out/host}"
+  local host_pkg_file_suffix="cvd-host_package.tar.gz"
+  if [[ -v ANDROID_SOONG_HOST_OUT ]]; then
+      if is_readable "${soong_host_out}/${host_pkg_file_suffix}"; then
+          ref_cuttlefish="${soong_host_out}/${host_pkg_file_suffix}"
+          return 0
+      fi
+      echo "    Failed to find host package file in the default paths: " 1>&2
+      echo "        ANDROID_SOONG_HOST_OUT is defined but the host package file is missing." 1>&2
+      return 1
+  fi
+  if is_readable "${new_host_out}/${host_pkg_file_suffix}"; then
+    ref_cuttlefish="${new_host_out}/${host_pkg_file_suffix}"
+    return 0
+  fi
+  if is_readable "${legacy_host_out}/${host_pkg_file_suffix}"; then
+    ref_cuttlefish="${legacy_host_out}/${host_pkg_file_suffix}"
+    return 0
+  fi
+  echo "    Failed to find host package file in the default paths: " 1>&2
+  echo "        1. ${soong_host_out}" 1>&2
+  echo "        2. ${new_host_out}" 1>&2
+  echo "        3. ${legacy_host_out}" 1>&2
+  return 1
+}
+
 singleshot="false"
 
 function cvd_docker_create {
@@ -184,7 +261,7 @@ function cvd_docker_create {
 						  fi
 					  fi
 				  fi
-				  if [[ ! -r "${android}" || ! -d "${android}" ]]; then
+				  if ! is_readable "${android}"; then
 					  echo "Directory \"${android}\" does not exist." 1>&2
 					  need_help="true"
 				  fi
@@ -192,25 +269,16 @@ function cvd_docker_create {
 				  ;;
 			  -C|--cuttlefish)
 				  cuttlefish=$2
-				  if [[ -z "${cuttlefish}" ]]; then
-					  if [[ -v ANDROID_HOST_OUT ]]; then
-                          local new_host_out="$(echo $ANDROID_HOST_OUT  | sed 's/out\/host/out\/soong\/host/g')"
-                          local new_cuttlefish="${new_host_out}/cvd-host_package.tar.gz"
-                          cuttlefish="${new_cuttlefish}"
-                          if [[ ! -r "${cuttlefish}" ]]; then
-                              cuttlefish="${ANDROID_HOST_OUT}/cvd-host_package.tar.gz"
-                          fi
-						  echo "Defaulting Cuttlefish path to ${cuttlefish}"
-						  if [[ ! -r "${cuttlefish}" ]]; then
-							  echo "File ${cuttlefish} does not exist, can't use as default." 1>&2
-							  need_help="true"
-						  fi
-					  fi
-				  fi
-				  if [[ ! -r "${cuttlefish}" || ! -f "${cuttlefish}" ]]; then
-					  echo "File \"${cuttlefish}\" does not exist." 1>&2
-					  need_help="true"
-				  fi
+                  local is_cuttlefish_lookup_success="true"
+                  if ! locate_default_host_pkg cuttlefish; then
+                      need_help="true"
+                  fi
+                  if [[ -z ${cuttlefish} ]]; then
+    		          if ! is_readable ${cuttlefish}; then
+  					    echo "Host package file \"${cuttlefish}\" does not exist." 1>&2
+					    need_help="true"
+				      fi
+                  fi
 				  shift 2
 				  ;;
 			    -s|--singleshot)
