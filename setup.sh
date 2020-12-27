@@ -84,7 +84,8 @@ function help_on_container_create {
 	echo "                                        : requires -C to also be specified"
 	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
 	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
-	echo "       -C[/path] | --cuttlefish[=/path] : mount Cuttlefish host image from path (defaults to \$ANDROID_HOST_OUT/cvd-host_package.tar.gz)"
+	echo "       -C[/path] | --cuttlefish[=/path] : mount Cuttlefish host image from path"
+    echo "                                        : by default, \$ANDROID_PRODUCT_OUT is used to determine the location of the host pkg"
 	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
 	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
 	echo "       -v | --vsock_guest_cid           : facilitate the new vsock_guest_cid option"
@@ -193,13 +194,17 @@ function cvd_docker_create {
 				  cuttlefish=$2
 				  if [[ -z "${cuttlefish}" ]]; then
 					  if [[ -v ANDROID_HOST_OUT ]]; then
-						  cuttlefish="${ANDROID_HOST_OUT}/cvd-host_package.tar.gz"
+                          local new_host_out="$(echo $ANDROID_HOST_OUT  | sed 's/out\/host/out\/soong\/host/g')"
+                          local new_cuttlefish="${new_host_out}/cvd-host_package.tar.gz"
+                          cuttlefish="${new_cuttlefish}"
+                          if [[ ! -r "${cuttlefish}" ]]; then
+                              cuttlefish="${ANDROID_HOST_OUT}/cvd-host_package.tar.gz"
+                          fi
 						  echo "Defaulting Cuttlefish path to ${cuttlefish}"
 						  if [[ ! -r "${cuttlefish}" ]]; then
 							  echo "File ${cuttlefish} does not exist, can't use as default." 1>&2
 							  need_help="true"
 						  fi
-
 					  fi
 				  fi
 				  if [[ ! -r "${cuttlefish}" || ! -f "${cuttlefish}" ]]; then
