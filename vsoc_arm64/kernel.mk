@@ -13,4 +13,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PRODUCT_COPY_FILES += kernel/prebuilts/5.4/arm64/kernel-5.4:kernel
+PRODUCT_COPY_FILES += kernel/prebuilts/5.10/arm64/kernel-5.10:kernel
