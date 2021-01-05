@@ -25,4 +25,4 @@ TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
 TARGET_CPU_ABI := x86
 
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-i686/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.10-i686/*.ko)
