@@ -43,5 +43,5 @@ TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 BUILD_BROKEN_DUP_RULES := true
 
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.4-x86_64/*.ko)
+    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.10-x86_64/*.ko)
 endif
