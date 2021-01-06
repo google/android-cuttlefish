@@ -218,7 +218,7 @@ VerifyAuthorizationResponse TpmKeymasterEnforcement::VerifyAuthorization(
     uint64_t timestamp;
     keymaster_security_level_t security_level;
   };
-  VerifyAuthorizationResponse response;
+  VerifyAuthorizationResponse response(keymaster::kDefaultMessageVersion);
   response.error = KM_ERROR_UNKNOWN_ERROR;
   response.token.challenge = request.challenge;
   response.token.timestamp = get_current_time_ms();
