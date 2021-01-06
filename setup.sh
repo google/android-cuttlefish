@@ -89,7 +89,6 @@ function help_on_container_create {
 	echo "                                        : (Optional path argument must follow short-option name without intervening space;"
 	echo "                                        :  it must follow long-option name followed by an '=' without intervening space)"
 	echo "       -v | --vsock_guest_cid           : facilitate the new vsock_guest_cid option"
-	echo "       -w | --host_network              : --network host to docker run"
 	echo "       -h | --help                      : print this help message"
 }
 
@@ -218,7 +217,7 @@ function cvd_docker_create {
   local -a shared_dir_pairs=()
   local vsock_guest_cid="false"
   local n_cf_instances=1
-  local host_network="false"
+
   # m | --share_dir dir1:dir2
   # n | --n_cf_instances
   # A | --android[=/PATH]
@@ -226,13 +225,12 @@ function cvd_docker_create {
   # s | --singleshot
   # x | --with_host_x
   # v | --vsock_guest_cid
-  # w | --host_network
   # h | --help
 
   singleshot="false" # could've been updated to "true" by previous cvd_docker_create
 
   local params
-  if params=$(getopt -o 'm:n:A::C::svxwh' -l 'share_dir:,n_cf_instances:,android::,cuttlefish::,singleshot,vsock_guest_cid,with_host_x,host_network,help' --name "$0" -- "$@"); then
+  if params=$(getopt -o 'm:n:A::C::svxh' -l 'share_dir:,n_cf_instances:,android::,cuttlefish::,singleshot,vsock_guest_cid,with_host_x,help' --name "$0" -- "$@"); then
 	  eval set -- "${params}"
 	  while true; do
 		  case "$1" in
@@ -300,11 +298,6 @@ function cvd_docker_create {
 				  vsock_guest_cid="true"
 				  shift 1
 				  ;;
-                -w|--host_network)
-				  host_network="true"
-				  shift 1
-				  ;;
-
 			    -h|--help)
 				  need_help="true"
 				  shift
@@ -395,14 +388,8 @@ function cvd_docker_create {
 		    as_host_x+=("-v /tmp/.X11-unix:/tmp/.X11-unix")
 	    fi
 
-        local -a opts=()
-        if [[ $host_network == "true" ]]; then
-            opts+="--network=host"
-        fi
         echo "Starting container ${name} (id ${cf_instance}) from image cuttlefish.";
-	    docker run -d ${as_host_x[@]} ${opts[@]} \
-               -p 8443:8443 -p 15550-15557:15550-15557/udp -p 15550-15557:15550-15557/tcp \
-               -p 6520:6520 \
+	    docker run -d ${as_host_x[@]} \
 		        --name "${name}" -h "${name}" \
                 -l "cf_instance=${cf_instance}" \
                 -l "n_cf_instances=${n_cf_instances}" \
