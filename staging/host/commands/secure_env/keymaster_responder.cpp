@@ -35,12 +35,12 @@ bool KeymasterResponder::ProcessMessage() {
     using namespace keymaster;
 #define HANDLE_MESSAGE(ENUM_NAME, METHOD_NAME) \
     case ENUM_NAME: {\
-      METHOD_NAME##Request request; \
+      METHOD_NAME##Request request(keymaster_.message_version()); \
       if (!request.Deserialize(&buffer, end)) { \
         LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
         return false; \
       } \
-      METHOD_NAME##Response response; \
+      METHOD_NAME##Response response(keymaster_.message_version()); \
       keymaster_.METHOD_NAME(request, &response); \
       return channel_.SendResponse(ENUM_NAME, response); \
     }
@@ -66,9 +66,9 @@ bool KeymasterResponder::ProcessMessage() {
     HANDLE_MESSAGE(DELETE_ALL_KEYS, DeleteAllKeys)
     HANDLE_MESSAGE(IMPORT_WRAPPED_KEY, ImportWrappedKey)
 #undef HANDLE_MESSAGE
-#define HANDLE_MESSAGE(ENUM_NAME, METHOD_NAME) \
+#define HANDLE_MESSAGE_W_RETURN(ENUM_NAME, METHOD_NAME) \
     case ENUM_NAME: {\
-      METHOD_NAME##Request request; \
+    METHOD_NAME##Request request(keymaster_.message_version());     \
       if (!request.Deserialize(&buffer, end)) { \
         LOG(ERROR) << "Failed to deserialize " #METHOD_NAME "Request"; \
         return false; \
@@ -76,29 +76,31 @@ bool KeymasterResponder::ProcessMessage() {
       auto response = keymaster_.METHOD_NAME(request); \
       return channel_.SendResponse(ENUM_NAME, response); \
     }
-    HANDLE_MESSAGE(COMPUTE_SHARED_HMAC, ComputeSharedHmac)
-    HANDLE_MESSAGE(VERIFY_AUTHORIZATION, VerifyAuthorization)
-    HANDLE_MESSAGE(DEVICE_LOCKED, DeviceLocked)
+    HANDLE_MESSAGE_W_RETURN(COMPUTE_SHARED_HMAC, ComputeSharedHmac)
+    HANDLE_MESSAGE_W_RETURN(VERIFY_AUTHORIZATION, VerifyAuthorization)
+    HANDLE_MESSAGE_W_RETURN(DEVICE_LOCKED, DeviceLocked)
+    HANDLE_MESSAGE_W_RETURN(GET_VERSION_2, GetVersion2)
 #undef HANDLE_MESSAGE
-#define HANDLE_MESSAGE(ENUM_NAME, METHOD_NAME) \
+#define HANDLE_MESSAGE_W_RETURN_NO_ARG(ENUM_NAME, METHOD_NAME) \
     case ENUM_NAME: {\
       auto response = keymaster_.METHOD_NAME(); \
       return channel_.SendResponse(ENUM_NAME, response); \
     }
-    HANDLE_MESSAGE(GET_HMAC_SHARING_PARAMETERS, GetHmacSharingParameters)
-    HANDLE_MESSAGE(EARLY_BOOT_ENDED, EarlyBootEnded)
+    HANDLE_MESSAGE_W_RETURN_NO_ARG(GET_HMAC_SHARING_PARAMETERS, GetHmacSharingParameters)
+    HANDLE_MESSAGE_W_RETURN_NO_ARG(EARLY_BOOT_ENDED, EarlyBootEnded)
 #undef HANDLE_MESSAGE
     case ADD_RNG_ENTROPY: {
-      AddEntropyRequest request;
+      AddEntropyRequest request(keymaster_.message_version());
       if (!request.Deserialize(&buffer, end)) {
         LOG(ERROR) << "Failed to deserialize AddEntropyRequest";
         return false;
       }
-      AddEntropyResponse response;
+      AddEntropyResponse response(keymaster_.message_version());;
       keymaster_.AddRngEntropy(request, &response);
       return channel_.SendResponse(ADD_RNG_ENTROPY, response);
     }
-    case DESTROY_ATTESTATION_IDS: // Not defined in AndroidKeymaster?
+    case DESTROY_ATTESTATION_IDS:
+      // Cuttlefish doesn't support ID attestation.
       break;
   }
   LOG(ERROR) << "Unknown request type: " << request->cmd;
