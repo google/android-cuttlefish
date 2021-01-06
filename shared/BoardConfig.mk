@@ -182,6 +182,9 @@ BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 BOARD_KERNEL_CMDLINE += init=/init
 BOARD_KERNEL_CMDLINE += androidboot.hardware=cutf_cvm
 
+# TODO(b/176860479): Remove once goldfish and cuttlefish share a wifi implementation
+BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
+
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 
 ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
