@@ -51,13 +51,12 @@ void RemoteKeymaster::ForwardCommand(AndroidKeymasterCommand command, const Seri
 }
 
 bool RemoteKeymaster::Initialize() {
-    // We don't need to bother with GetVersion, because CF HAL and remote sides are always compiled
-    // together, so will never disagree about message versions.
-    ConfigureRequest req(message_version());
+
+    ConfigureRequest req;
     req.os_version = GetOsVersion();
     req.os_patchlevel = GetOsPatchlevel();
 
-    ConfigureResponse rsp(message_version());
+    ConfigureResponse rsp;
     Configure(req, &rsp);
 
     if (rsp.error != KM_ERROR_OK) {
@@ -181,28 +180,28 @@ void RemoteKeymaster::AbortOperation(const AbortOperationRequest& request,
 GetHmacSharingParametersResponse RemoteKeymaster::GetHmacSharingParameters() {
     // Unused empty buffer to allow ForwardCommand to have something to serialize
     Buffer request;
-    GetHmacSharingParametersResponse response(message_version());
+    GetHmacSharingParametersResponse response;
     ForwardCommand(GET_HMAC_SHARING_PARAMETERS, request, &response);
     return response;
 }
 
 ComputeSharedHmacResponse RemoteKeymaster::ComputeSharedHmac(
         const ComputeSharedHmacRequest& request) {
-    ComputeSharedHmacResponse response(message_version());
+    ComputeSharedHmacResponse response;
     ForwardCommand(COMPUTE_SHARED_HMAC, request, &response);
     return response;
 }
 
 VerifyAuthorizationResponse RemoteKeymaster::VerifyAuthorization(
         const VerifyAuthorizationRequest& request) {
-    VerifyAuthorizationResponse response(message_version());
+    VerifyAuthorizationResponse response;
     ForwardCommand(VERIFY_AUTHORIZATION, request, &response);
     return response;
 }
 
 DeviceLockedResponse RemoteKeymaster::DeviceLocked(
         const DeviceLockedRequest& request) {
-    DeviceLockedResponse response(message_version());
+    DeviceLockedResponse response;
     ForwardCommand(DEVICE_LOCKED, request, &response);
     return response;
 }
@@ -210,7 +209,7 @@ DeviceLockedResponse RemoteKeymaster::DeviceLocked(
 EarlyBootEndedResponse RemoteKeymaster::EarlyBootEnded() {
     // Unused empty buffer to allow ForwardCommand to have something to serialize
     Buffer request;
-    EarlyBootEndedResponse response(message_version());
+    EarlyBootEndedResponse response;
     ForwardCommand(EARLY_BOOT_ENDED, request, &response);
     return response;
 }

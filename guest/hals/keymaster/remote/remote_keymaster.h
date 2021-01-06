@@ -68,10 +68,6 @@ class RemoteKeymaster {
     VerifyAuthorizationResponse VerifyAuthorization(const VerifyAuthorizationRequest& request);
     DeviceLockedResponse DeviceLocked(const DeviceLockedRequest& request);
     EarlyBootEndedResponse EarlyBootEnded();
-
-    // CF HAL and remote sides are always compiled together, so will never disagree about message
-    // versions.
-    uint32_t message_version() { return kDefaultMessageVersion; }
 };
 
 }  // namespace keymaster
