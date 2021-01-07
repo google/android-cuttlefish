@@ -507,14 +507,9 @@ class CuttlefishConfig {
 // environment variable or the username.
 int GetInstance();
 
-// Returns default Vsock CID, which is
-// GetInstance() + 2
+// Returns default Vsock CID
+// by default, GetInstance() + 2
 int GetDefaultVsockCid();
-
-// Calculates vsock server port number
-// return base + (vsock_guest_cid - 3)
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid);
 
 // Returns a path where the launhcer puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use
