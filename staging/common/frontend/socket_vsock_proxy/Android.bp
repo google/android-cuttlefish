@@ -36,5 +36,9 @@ cc_binary {
             ],
         },
     },
-    defaults: ["cuttlefish_host_and_guest"]
+    // Don't inherit from cuttlefish_host because it is with `vendor_available: true` which isn't
+    // compatible with `vendor: true`.
+    defaults: ["cuttlefish_base"],
+    host_supported: true,
+    vendor: true,
 }

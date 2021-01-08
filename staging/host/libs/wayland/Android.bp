@@ -35,6 +35,6 @@ cc_library_static {
         "libwayland_server",
         "libwayland_extension_server_protocols",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 

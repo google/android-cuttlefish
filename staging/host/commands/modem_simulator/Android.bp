@@ -48,7 +48,7 @@ cc_defaults {
         "libtinyxml2",
     ],
     cflags: ["-Werror", "-Wall", "-fexceptions"],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 
 cc_binary {
@@ -56,7 +56,7 @@ cc_binary {
     srcs: [
         "main.cpp"
     ],
-    defaults: ["cuttlefish_host_and_guest", "modem_simulator_base"],
+    defaults: ["cuttlefish_host", "modem_simulator_base"],
 }
 
 prebuilt_etc {
@@ -115,7 +115,7 @@ cc_test_host {
     include_dirs: [
         "device/google/cuttlefish/host/commands",
     ],
-    defaults: ["cuttlefish_host_and_guest", "modem_simulator_base"],
+    defaults: ["cuttlefish_host", "modem_simulator_base"],
     test_suites: ["general-tests"],
     whole_static_libs: [
         "libc++fs"

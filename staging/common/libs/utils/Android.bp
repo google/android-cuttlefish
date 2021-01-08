@@ -43,5 +43,5 @@ cc_library {
           "libcrypto", // libcrypto_static is not accessible from all targets
         ],
     },
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
