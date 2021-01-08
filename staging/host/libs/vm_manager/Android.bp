@@ -33,5 +33,5 @@ cc_library_static {
     static_libs: [
         "libcuttlefish_host_config",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }
