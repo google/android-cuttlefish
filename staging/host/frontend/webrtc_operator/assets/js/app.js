@@ -45,6 +45,21 @@ function ConnectToDevice(device_id) {
     }
   }, intervalMs);
 
+  deviceScreen.addEventListener('loadeddata', (evt) => {
+    clearInterval(animateDeviceStatusMessage);
+    deviceStatusMessage.style.display = 'none';
+    resizeDeviceView();
+    deviceScreen.style.visibility = 'visible';
+    // Enable the buttons after the screen is visible.
+    for (const [_, button] of Object.entries(buttons)) {
+      if (!button.adb) {
+        button.button.disabled = false;
+      }
+    }
+    // Start the adb connection if it is not already started.
+    initializeAdb();
+  });
+
   function onInitialClick(e) {
     // This stupid thing makes sure that we disable controls after the first
     // click... Why not just disable controls altogether you ask? Because then
@@ -240,18 +255,17 @@ function ConnectToDevice(device_id) {
       deviceConnection.onControlMessage(msg => onControlMessage(msg));
       // Start the screen as hidden. Only show when data is ready.
       deviceScreen.style.visibility = 'hidden';
-      deviceScreen.addEventListener('loadeddata', (evt) => {
-        clearInterval(animateDeviceStatusMessage);
-        deviceStatusMessage.style.display = 'none';
-        resizeDeviceView();
-        deviceScreen.style.visibility = 'visible';
-        // Enable the buttons after the screen is visible.
-        for (const [_, button] of Object.entries(buttons)) {
-          if (!button.adb) {
-            button.button.disabled = false;
-          }
-        }
-      });
+      // Send an initial home button press when WebRTC connects. This is needed
+      // so that the device screen receives an initial frame even if WebRTC is
+      // connected long after the device boots up.
+      deviceConnection.sendControlMessage(JSON.stringify({
+        command: 'home',
+        state: 'down',
+      }));
+      deviceConnection.sendControlMessage(JSON.stringify({
+        command: 'home',
+        state: 'up',
+      }));
       // Show the error message and disable buttons when the WebRTC connection fails.
       deviceConnection.onConnectionStateChange(state => {
         if (state == 'disconnected' || state == 'failed') {
