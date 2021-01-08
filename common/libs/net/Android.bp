@@ -23,7 +23,7 @@ cc_library_shared {
         "libcuttlefish_fs",
         "libbase",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 
 cc_test {
@@ -40,6 +40,6 @@ cc_test {
         "libgmock",
         "libgtest",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
     test_suites: ["general-tests"],
 }

@@ -30,5 +30,5 @@ cc_binary {
         "libcuttlefish_utils",
         "liblog",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
