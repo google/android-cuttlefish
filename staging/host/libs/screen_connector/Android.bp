@@ -31,5 +31,5 @@ cc_library_static {
         "libcuttlefish_utils",
         "libcuttlefish_wayland_server",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }

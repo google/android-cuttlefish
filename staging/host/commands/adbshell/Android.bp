@@ -29,5 +29,5 @@ cc_binary_host {
         "libcuttlefish_host_config",
         "libjsoncpp",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_buildhost_only"],
 }
