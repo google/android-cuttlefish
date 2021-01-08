@@ -45,9 +45,23 @@
 
 <MediaCodecs>
     <Encoders>
+        <MediaCodec name="c2.android.h263.encoder" type="video/3gpp" update="true">
+            <!-- 3 runs, min 849 max 1008 gmean 943 -->
+            <Limit name="measured-frame-rate-176x144" range="849-1008" />
+        </MediaCodec>
         <MediaCodec name="OMX.google.h263.encoder" type="video/3gpp" update="true">
             <!-- 3 runs, min 849 max 1008 gmean 943 -->
             <Limit name="measured-frame-rate-176x144" range="849-1008" />
+        </MediaCodec>
+        <MediaCodec name="c2.android.avc.encoder" type="video/avc" update="true">
+            <!-- 3 runs, min 496 max 629 gmean 565 -->
+            <Limit name="measured-frame-rate-320x240" range="496-629" />
+            <!-- 2 runs, min 197 max 203 gmean 201 -->
+            <Limit name="measured-frame-rate-720x480" range="197-203" />
+            <!-- 2 runs, min 93 max 97 gmean 95 -->
+            <Limit name="measured-frame-rate-1280x720" range="93-97" />
+            <!-- 2 runs, min 45 max 47 gmean 46 -->
+            <Limit name="measured-frame-rate-1920x1080" range="45-47" />
         </MediaCodec>
         <MediaCodec name="OMX.google.h264.encoder" type="video/avc" update="true">
             <!-- 3 runs, min 496 max 629 gmean 565 -->
@@ -59,9 +73,23 @@
             <!-- 2 runs, min 45 max 47 gmean 46 -->
             <Limit name="measured-frame-rate-1920x1080" range="45-47" />
         </MediaCodec>
+        <MediaCodec name="c2.android.mpeg4.encoder" type="video/mp4v-es" update="true">
+            <!-- 3 runs, min 881 max 1142 gmean 994 -->
+            <Limit name="measured-frame-rate-176x144" range="881-1142" />
+        </MediaCodec>
         <MediaCodec name="OMX.google.mpeg4.encoder" type="video/mp4v-es" update="true">
             <!-- 3 runs, min 881 max 1142 gmean 994 -->
             <Limit name="measured-frame-rate-176x144" range="881-1142" />
+        </MediaCodec>
+        <MediaCodec name="c2.android.vp8.encoder" type="video/x-vnd.on2.vp8" update="true">
+            <!-- 3 runs, min 249 max 285 gmean 264 -->
+            <Limit name="measured-frame-rate-320x180" range="249-285" />
+            <!-- 3 runs, min 104 max 115 gmean 109 -->
+            <Limit name="measured-frame-rate-640x360" range="104-115" />
+            <!-- 3 runs, min 34 max 35 gmean 34 -->
+            <Limit name="measured-frame-rate-1280x720" range="34-35" />
+            <!-- 3 runs, min 26 max 29 gmean 27 -->
+            <Limit name="measured-frame-rate-1920x1080" range="26-29" />
         </MediaCodec>
         <MediaCodec name="OMX.google.vp8.encoder" type="video/x-vnd.on2.vp8" update="true">
             <!-- 3 runs, min 249 max 285 gmean 264 -->
