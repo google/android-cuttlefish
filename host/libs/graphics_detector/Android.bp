@@ -16,7 +16,7 @@
 cc_library_headers {
     name: "egl_headers",
     export_include_dirs: ["include"],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 
 cc_library_static {
@@ -32,7 +32,7 @@ cc_library_static {
         "libbase",
         "liblog",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 
 cc_binary {
@@ -48,5 +48,5 @@ cc_binary {
         "libcuttlefish_graphics_detector",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
