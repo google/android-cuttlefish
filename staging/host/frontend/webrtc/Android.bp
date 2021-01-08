@@ -60,7 +60,7 @@ cc_library_static {
         "libjsoncpp",
         "libwebm_mkvmuxer",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_buildhost_only"],
 }
 
 cc_binary_host {
@@ -121,5 +121,5 @@ cc_binary_host {
         "libyuv",
         "libwebm_mkvmuxer",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_buildhost_only"],
 }

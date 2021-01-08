@@ -40,7 +40,7 @@ cc_binary {
         "libcuttlefish_host_config",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
     include_dirs: [
         "external/grpc-grpc/include",
         "external/protobuf/src",
