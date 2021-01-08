@@ -34,5 +34,5 @@ cc_library_static {
         "libjsoncpp",
         "libz",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }

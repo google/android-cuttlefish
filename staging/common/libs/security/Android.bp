@@ -15,7 +15,7 @@
 
 cc_library {
     name: "libcuttlefish_security",
-    defaults: ["hidl_defaults", "cuttlefish_host_and_guest"],
+    defaults: ["hidl_defaults", "cuttlefish_host"],
     srcs: [
         "gatekeeper_channel.cpp",
         "keymaster_channel.cpp",

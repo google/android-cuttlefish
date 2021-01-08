@@ -25,7 +25,7 @@ cc_library {
             "external/protobuf/src",
         ],
     },
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 
 cc_binary {
@@ -69,5 +69,5 @@ cc_binary {
     required: [
         "lz4",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }

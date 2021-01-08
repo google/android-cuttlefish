@@ -29,5 +29,5 @@ cc_binary {
         "libcuttlefish_vm_manager",
         "libgflags",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }

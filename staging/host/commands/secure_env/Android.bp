@@ -66,7 +66,7 @@ cc_binary_host {
         "libgflags",
         "libscrypt_static",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_buildhost_only"],
     cflags: [
         "-fno-rtti", // Required for libkeymaster_portable
     ],

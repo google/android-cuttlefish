@@ -2,7 +2,7 @@ cc_binary_host {
     name: "cuttlefish_example_action_server",
     srcs: ["main.cpp"],
     defaults: [
-        "cuttlefish_host_only",
+        "cuttlefish_buildhost_only",
     ],
     shared_libs: [
         "libbase",

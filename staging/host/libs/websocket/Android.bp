@@ -29,5 +29,5 @@ cc_library_host_static {
         "libcap",
         "libwebsockets",
     ],
-    defaults: ["cuttlefish_host_only"],
+    defaults: ["cuttlefish_buildhost_only"],
 }

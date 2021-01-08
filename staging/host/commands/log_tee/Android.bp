@@ -30,5 +30,5 @@ cc_binary {
         "libcuttlefish_host_config",
         "libcuttlefish_vm_manager",
     ],
-    defaults: ["cuttlefish_host_and_guest", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
 }

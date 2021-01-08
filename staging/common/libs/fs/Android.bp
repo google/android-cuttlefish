@@ -39,7 +39,7 @@ cc_library {
             exclude_static_libs: ["liblog"],
         },
     },
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
 }
 
 cc_library_static {
@@ -70,6 +70,6 @@ cc_test {
         "libgmock",
         "libgtest",
     ],
-    defaults: ["cuttlefish_host_and_guest"],
+    defaults: ["cuttlefish_host"],
     test_suites: ["general-tests"],
 }
