@@ -547,6 +547,9 @@ endif
 
 ifdef TARGET_DEDICATED_RECOVERY
 PRODUCT_BUILD_RECOVERY_IMAGE := true
+PRODUCT_PACKAGES += linker.vendor_ramdisk shell_and_utilities_vendor_ramdisk
+else
+PRODUCT_PACKAGES += linker.recovery shell_and_utilities_recovery
 endif
 
 #
