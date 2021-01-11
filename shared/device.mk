@@ -298,6 +298,13 @@ endif
 PRODUCT_PACKAGES += \
     android.hardware.atrace@1.0-service
 
+
+#
+# OemLock aidl HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.oemlock-service.example
+
 #
 # Authsecret HAL
 #
