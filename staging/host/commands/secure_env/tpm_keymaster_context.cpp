@@ -44,21 +44,18 @@ TpmKeymasterContext::TpmKeymasterContext(
     , random_source_(new TpmRandomSource(resource_manager_.Esys()))
     , attestation_context_(new TpmAttestationRecordContext()) {
   key_factories_.emplace(
-      KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(key_blob_maker_.get()));
+      KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(*key_blob_maker_));
   key_factories_.emplace(
-      KM_ALGORITHM_EC, new keymaster::EcKeyFactory(key_blob_maker_.get()));
+      KM_ALGORITHM_EC, new keymaster::EcKeyFactory(*key_blob_maker_));
   key_factories_.emplace(
       KM_ALGORITHM_AES,
-      new keymaster::AesKeyFactory(
-          key_blob_maker_.get(), random_source_.get()));
+      new keymaster::AesKeyFactory(*key_blob_maker_, *random_source_));
   key_factories_.emplace(
       KM_ALGORITHM_TRIPLE_DES,
-      new keymaster::TripleDesKeyFactory(
-          key_blob_maker_.get(), random_source_.get()));
+      new keymaster::TripleDesKeyFactory(*key_blob_maker_, *random_source_));
   key_factories_.emplace(
       KM_ALGORITHM_HMAC,
-      new keymaster::HmacKeyFactory(
-          key_blob_maker_.get(), random_source_.get()));
+      new keymaster::HmacKeyFactory(*key_blob_maker_, *random_source_));
   for (const auto& it : key_factories_) {
     supported_algorithms_.push_back(it.first);
   }
