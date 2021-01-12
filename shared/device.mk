@@ -312,6 +312,11 @@ PRODUCT_PACKAGES += \
     android.hardware.authsecret@1.0-service
 
 #
+# Authsecret AIDL HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.authsecret-service.example
+#
 # Hardware Composer HAL
 #
 PRODUCT_PACKAGES += \
