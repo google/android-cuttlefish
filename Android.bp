@@ -19,6 +19,10 @@ cc_library_headers {
     product_available: true,
     export_include_dirs: ["."],
     host_supported: true,
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.virt",
+    ],
 }
 
 cc_defaults {
@@ -39,6 +43,10 @@ cc_defaults {
         },
     },
     cflags: ["-Werror", "-Wall", "-D_FILE_OFFSET_BITS=64"],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.virt",
+    ],
 }
 
 // Defaults for cuttlefish modules that are available only in the guest OS (i.e. cuttlefish running
