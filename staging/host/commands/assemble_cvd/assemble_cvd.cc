@@ -159,6 +159,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("modem_nvram.json");
       preserving.insert("disk_config.txt");
       preserving.insert("recording");
+      preserving.insert("factory_reset_protected.img");
       std::stringstream ss;
       for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
         ss.clear();
