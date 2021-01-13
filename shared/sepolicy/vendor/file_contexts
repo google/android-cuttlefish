@@ -12,6 +12,7 @@
 /dev/block/by-name/cache u:object_r:cache_block_device:s0
 /dev/block/by-name/metadata u:object_r:metadata_block_device:s0
 
+/dev/block/vdc  u:object_r:frp_block_device:s0
 /dev/block/pmem0  u:object_r:rebootescrow_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/dri u:object_r:gpu_device:s0
