@@ -15,6 +15,8 @@
 
 #include "host/commands/secure_env/tpm_attestation_record.h"
 
+#include <keymaster/contexts/soft_attestation_cert.h>
+
 #include <android-base/logging.h>
 
 using keymaster::AuthorizationSet;
@@ -35,29 +37,45 @@ keymaster_error_t TpmAttestationRecordContext::VerifyAndCopyDeviceIds(
   return KM_ERROR_OK;
 }
 
-keymaster_error_t TpmAttestationRecordContext::GenerateUniqueId(
-    uint64_t, const keymaster_blob_t&, bool, keymaster::Buffer*) const {
+keymaster::Buffer TpmAttestationRecordContext::GenerateUniqueId(
+    uint64_t, const keymaster_blob_t&, bool, keymaster_error_t* error) const {
   LOG(ERROR) << "TODO(schuffelen): Implement GenerateUniqueId";
-  return KM_ERROR_UNIMPLEMENTED;
+  *error = KM_ERROR_UNIMPLEMENTED;
+  return {};
 }
-keymaster_error_t TpmAttestationRecordContext::GetVerifiedBootParams(
-    keymaster_blob_t* verified_boot_key,
-    keymaster_blob_t* verified_boot_hash,
-    keymaster_verified_boot_t* verified_boot_state,
-    bool* device_locked) const {
+
+const keymaster::AttestationContext::VerifiedBootParams*
+TpmAttestationRecordContext::GetVerifiedBootParams(keymaster_error_t* error) const {
   LOG(DEBUG) << "TODO(schuffelen): Implement GetVerifiedBootParams";
-  // TODO(schuffelen): Get this data out of vbmeta
-  static uint8_t fake_vb_key[32];
-  static bool fake_vb_key_initialized = false;
-  if (!fake_vb_key_initialized) {
-    for (int i = 0; i < sizeof(fake_vb_key); i++) {
-      fake_vb_key[i] = rand();
-    }
-    fake_vb_key_initialized = true;
+  if (!vb_params_) {
+      vb_params_.reset(new VerifiedBootParams{});
+
+      // TODO(schuffelen): Get this data out of vbmeta
+      static uint8_t fake_vb_key[32];
+      static bool fake_vb_key_initialized = false;
+      if (!fake_vb_key_initialized) {
+        for (int i = 0; i < sizeof(fake_vb_key); i++) {
+          fake_vb_key[i] = rand();
+        }
+        fake_vb_key_initialized = true;
+      }
+      vb_params_->verified_boot_key = {fake_vb_key, sizeof(fake_vb_key)};
+      vb_params_->verified_boot_hash = {fake_vb_key, sizeof(fake_vb_key)};
+      vb_params_->verified_boot_state = KM_VERIFIED_BOOT_VERIFIED;
+      vb_params_->device_locked = true;
   }
-  *verified_boot_key = {fake_vb_key, sizeof(fake_vb_key)};
-  *verified_boot_hash = {fake_vb_key, sizeof(fake_vb_key)};
-  *verified_boot_state = KM_VERIFIED_BOOT_VERIFIED;
-  *device_locked = true;
-  return KM_ERROR_OK;
+  *error = KM_ERROR_OK;
+  return vb_params_.get();
+}
+
+keymaster::KeymasterKeyBlob
+TpmAttestationRecordContext::GetAttestationKey(keymaster_algorithm_t algorithm,
+                                               keymaster_error_t* error) const {
+  return keymaster::KeymasterKeyBlob(*keymaster::getAttestationKey(algorithm, error));
+}
+
+keymaster::CertificateChain
+TpmAttestationRecordContext::GetAttestationChain(keymaster_algorithm_t algorithm,
+                                                 keymaster_error_t* error) const {
+  return keymaster::getAttestationChain(algorithm, error);
 }
