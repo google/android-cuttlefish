@@ -483,6 +483,11 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       CreateBlankImage(instance.sdcard_path(),
                        FLAGS_blank_sdcard_image_mb, "sdcard");
     }
+
+    const auto frp = instance.factory_reset_protected_path();
+    if (!FileExists(frp)) {
+      CreateBlankImage(frp, 1 /* mb */, "none");
+    }
   }
 
   // libavb expects to be able to read the maximum vbmeta size, so we must
