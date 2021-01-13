@@ -412,6 +412,10 @@ std::array<unsigned char, 6> CuttlefishConfig::InstanceSpecific::wifi_mac_addres
   return mac_address;
 }
 
+std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() const {
+  return PerInstanceInternalPath("factory_reset_protected.img");
+}
+
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
     const char* file_name) const {
   return (instance_dir() + "/") + file_name;

@@ -646,6 +646,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_virtual_disk_paths({
       const_instance.PerInstancePath("overlay.img"),
       const_instance.sdcard_path(),
+      const_instance.factory_reset_protected_path(),
     });
 
     std::array<unsigned char, 6> mac_address;
