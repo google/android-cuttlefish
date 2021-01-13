@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <thread>
 
@@ -40,6 +41,8 @@ struct KernelLogEventsHandler {
   void ReadLoop();
 
   SharedFD kernel_log_fd_;
+  SharedFD eventfd_;
+  std::atomic<bool> running_;
   std::thread read_thread_;
 };
 
