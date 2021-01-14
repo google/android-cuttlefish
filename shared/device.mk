@@ -410,7 +410,7 @@ PRODUCT_PACKAGES += $(LOCAL_HEALTH_PRODUCT_PACKAGE)
 
 # Health Storage
 PRODUCT_PACKAGES += \
-    android.hardware.health.storage@1.0-service.cuttlefish
+    android.hardware.health.storage-service.cuttlefish
 
 # Identity Credential
 PRODUCT_PACKAGES += \

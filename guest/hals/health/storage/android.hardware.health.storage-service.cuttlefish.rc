@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-service vendor.health-storage-hal-1-0 /vendor/bin/hw/android.hardware.health.storage@1.0-service.cuttlefish
-    interface android.hardware.health.storage@1.0::IStorage default
+service vendor.health-storage-default /vendor/bin/hw/android.hardware.health.storage-service.cuttlefish
+    interface aidl android.hardware.health.storage.IStorage/default
     oneshot
     disabled
     class hal
