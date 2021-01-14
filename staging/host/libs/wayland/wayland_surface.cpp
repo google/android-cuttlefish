@@ -36,6 +36,10 @@ void Surface::Commit() {
   state_.current_buffer = state_.pending_buffer;
   state_.pending_buffer = nullptr;
 
+  if (state_.current_buffer == nullptr) {
+    return;
+  }
+
   {
     std::unique_lock<std::mutex> lock(callback_mutex_);
     if (callback_ && callback_->frame_number < state_.current_frame_number) {
