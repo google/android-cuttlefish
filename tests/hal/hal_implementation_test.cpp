@@ -109,6 +109,16 @@ static const std::set<std::string> kKnownMissingAidl = {
     // b/170144267
     "android.system.keystore2.",
 
+    // The default implementation is under construction. But we need this
+    // interface to implement keystore2.
+    // b/175136979
+    "android.hardware.security.secureclock.",
+
+    // The default implementation is under construction. But we need this
+    // interface to implement keystore2.
+    // b/175141176
+    "android.hardware.security.sharedsecret.",
+
     // These KeyMaster types are in an AIDL types-only HAL because they're used
     // by the Identity Credential AIDL HAL. Remove this when fully porting
     // KeyMaster to AIDL.
