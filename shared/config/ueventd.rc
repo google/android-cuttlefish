@@ -25,7 +25,7 @@
 # gatekeeper
 /dev/hvc4 0660 system system
 
-/dev/gnss0 0664 system system
+/dev/gnss0 0666 system system
 
 # Factory Reset Protection
 /dev/block/vdc 0660 system system
