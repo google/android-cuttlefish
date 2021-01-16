@@ -62,6 +62,7 @@ const char* kKeyboardServerPort = "keyboard_server_port";
 const char* kWifiMacAddress = "wifi_mac_address";
 
 const char* kGnssGrpcProxyServerPort = "gnss_grpc_proxy_server_port";
+const char* kGnssFilePath = "gnss_file_path";
 
 }  // namespace
 
@@ -145,6 +146,15 @@ int CuttlefishConfig::InstanceSpecific::gnss_grpc_proxy_server_port() const {
 void CuttlefishConfig::MutableInstanceSpecific::set_gnss_grpc_proxy_server_port(
     int gnss_grpc_proxy_server_port) {
   (*Dictionary())[kGnssGrpcProxyServerPort] = gnss_grpc_proxy_server_port;
+}
+
+std::string CuttlefishConfig::InstanceSpecific::gnss_file_path() const {
+  return (*Dictionary())[kGnssFilePath].asString();
+}
+
+void CuttlefishConfig::MutableInstanceSpecific::set_gnss_file_path(
+  const std::string& gnss_file_path) {
+  (*Dictionary())[kGnssFilePath] = gnss_file_path;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::logcat_pipe_name() const {

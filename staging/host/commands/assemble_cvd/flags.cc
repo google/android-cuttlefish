@@ -234,6 +234,9 @@ DEFINE_bool(kgdb, false, "Configure the virtual device for debugging the kernel 
 
 DEFINE_bool(start_gnss_proxy, false, "Whether to start the gnss proxy.");
 
+DEFINE_string(gnss_file_path, "",
+              "Local gnss file path for the gnss proxy");
+
 // by default, this modem-simulator is disabled
 DEFINE_bool(enable_modem_simulator, true,
             "Enable the modem simulator to process RILD AT commands");
@@ -583,6 +586,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   for (int i = 0; i < FLAGS_num_instances; i++) {
     num_instances.push_back(GetInstance() + i);
   }
+  std::vector<std::string> gnss_file_paths = android::base::Split(FLAGS_gnss_file_path, ",");
 
   bool is_first_instance = true;
   for (const auto& num : num_instances) {
@@ -640,6 +644,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     }
 
     instance.set_gnss_grpc_proxy_server_port(7200 + num -1);
+
+    if (num <= gnss_file_paths.size()) {
+      instance.set_gnss_file_path(gnss_file_paths[num-1]);
+    }
 
     instance.set_device_title(FLAGS_device_title);
 
