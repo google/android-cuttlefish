@@ -519,6 +519,10 @@ void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
     gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr);
     gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd);
     gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=", gnss_grpc_proxy_server_port);
+    if (!instance.gnss_file_path().empty()) {
+      // If path is provided, proxy will start as local mode.
+      gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=", instance.gnss_file_path());
+    }
     process_monitor->StartSubprocess(std::move(gnss_grpc_proxy_cmd),
                                      GetOnSubprocessExitCallback(config));
 }
