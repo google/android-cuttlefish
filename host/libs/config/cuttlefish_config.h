@@ -379,6 +379,7 @@ class CuttlefishConfig {
     std::string adb_ip_and_port() const;
     std::string adb_device_name() const;
     std::string device_title() const;
+    std::string gnss_file_path() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
@@ -492,6 +493,8 @@ class CuttlefishConfig {
     void set_wifi_mac_address(const std::array<unsigned char, 6>&);
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
+    // Gnss grpc proxy local file path
+    void set_gnss_file_path(const std::string &gnss_file_path);
   };
 
  private:
