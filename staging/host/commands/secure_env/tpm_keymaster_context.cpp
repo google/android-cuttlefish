@@ -20,6 +20,7 @@
 #include <keymaster/km_openssl/aes_key.h>
 #include <keymaster/km_openssl/attestation_utils.h>
 #include <keymaster/km_openssl/asymmetric_key.h>
+#include <keymaster/km_openssl/certificate_utils.h>
 #include <keymaster/km_openssl/ec_key_factory.h>
 #include <keymaster/km_openssl/hmac_key.h>
 #include <keymaster/km_openssl/rsa_key_factory.h>
@@ -301,6 +302,28 @@ keymaster::CertificateChain TpmKeymasterContext::GenerateAttestation(
       *attestation_key,
       *attestation_context_,
       error);
+}
+
+keymaster::CertificateChain TpmKeymasterContext::GenerateSelfSignedCertificate(
+    const keymaster::Key& key, const keymaster::AuthorizationSet& cert_params,
+    bool fake_signature, keymaster_error_t* error) const {
+  keymaster_algorithm_t key_algorithm;
+  if (!key.authorizations().GetTagValue(keymaster::TAG_ALGORITHM, &key_algorithm)) {
+      *error = KM_ERROR_UNKNOWN_ERROR;
+      return {};
+  }
+
+  if ((key_algorithm != KM_ALGORITHM_RSA && key_algorithm != KM_ALGORITHM_EC)) {
+      *error = KM_ERROR_INCOMPATIBLE_ALGORITHM;
+      return {};
+  }
+
+  // We have established that the given key has the correct algorithm, and because this is the
+  // SoftKeymasterContext we can assume that the Key is an AsymmetricKey. So we can downcast.
+  const keymaster::AsymmetricKey& asymmetric_key =
+      static_cast<const keymaster::AsymmetricKey&>(key);
+
+  return generate_self_signed_cert(asymmetric_key, cert_params, fake_signature, error);
 }
 
 keymaster_error_t TpmKeymasterContext::UnwrapKey(

@@ -86,6 +86,12 @@ public:
       const keymaster::AuthorizationSet& attest_params,
       keymaster_error_t* error) const override;
 
+  keymaster::CertificateChain GenerateSelfSignedCertificate(
+      const keymaster::Key& key,
+      const keymaster::AuthorizationSet& cert_params,
+      bool fake_signature,
+      keymaster_error_t* error) const override;
+
   keymaster_error_t UnwrapKey(
       const keymaster::KeymasterKeyBlob& wrapped_key_blob,
       const keymaster::KeymasterKeyBlob& wrapping_key_blob,
