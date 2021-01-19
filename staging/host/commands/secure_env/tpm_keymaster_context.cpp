@@ -44,9 +44,9 @@ TpmKeymasterContext::TpmKeymasterContext(
     , random_source_(new TpmRandomSource(resource_manager_.Esys()))
     , attestation_context_(new TpmAttestationRecordContext()) {
   key_factories_.emplace(
-      KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(*key_blob_maker_));
+      KM_ALGORITHM_RSA, new keymaster::RsaKeyFactory(*key_blob_maker_, *this));
   key_factories_.emplace(
-      KM_ALGORITHM_EC, new keymaster::EcKeyFactory(*key_blob_maker_));
+      KM_ALGORITHM_EC, new keymaster::EcKeyFactory(*key_blob_maker_, *this));
   key_factories_.emplace(
       KM_ALGORITHM_AES,
       new keymaster::AesKeyFactory(*key_blob_maker_, *random_source_));
