@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,24 @@
  * limitations under the License.
  */
 
-#include <hidl/HidlLazyUtils.h>
-#include <hidl/HidlTransportSupport.h>
+#include <android-base/logging.h>
+#include <android/binder_manager.h>
+#include <android/binder_process.h>
+
 #include "Storage.h"
 
-using android::OK;
-using android::sp;
-using android::status_t;
-using android::UNKNOWN_ERROR;
-using android::hardware::configureRpcThreadpool;
-using android::hardware::joinRpcThreadpool;
-using android::hardware::LazyServiceRegistrar;
-using android::hardware::health::storage::V1_0::IStorage;
-using android::hardware::health::storage::V1_0::implementation::Storage;
+using aidl::android::hardware::health::storage::Storage;
+using std::string_literals::operator""s;
 
 int main() {
-    configureRpcThreadpool(1, true);
+    ABinderProcess_setThreadPoolMaxThreadCount(0);
 
-    sp<IStorage> service = new Storage();
-    auto serviceRegistrar = LazyServiceRegistrar::getInstance();
-    status_t result = serviceRegistrar.registerService(service);
+    // make a default storage service
+    auto storage = ndk::SharedRefBase::make<Storage>();
+    const std::string name = Storage::descriptor + "/default"s;
+    CHECK_EQ(STATUS_OK, AServiceManager_registerLazyService(
+                            storage->asBinder().get(), name.c_str()));
 
-    if (result != OK) {
-        return result;
-    }
-
-    joinRpcThreadpool();
-    return UNKNOWN_ERROR;
+    ABinderProcess_joinThreadPool();
+    return EXIT_FAILURE;  // should not reach
 }

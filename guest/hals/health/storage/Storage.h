@@ -14,35 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_HARDWARE_HEALTH_FILESYSTEM_V1_0_FILESYSTEM_H
-#define ANDROID_HARDWARE_HEALTH_FILESYSTEM_V1_0_FILESYSTEM_H
+#pragma once
 
-#include <android/hardware/health/storage/1.0/IStorage.h>
-#include <hidl/Status.h>
+#include <aidl/android/hardware/health/storage/BnStorage.h>
 
-namespace android {
-namespace hardware {
-namespace health {
-namespace storage {
-namespace V1_0 {
-namespace implementation {
+namespace aidl::android::hardware::health::storage {
 
-using ::android::sp;
-using ::android::hardware::hidl_handle;
-using ::android::hardware::hidl_string;
-using ::android::hardware::hidl_vec;
-using ::android::hardware::Return;
-
-struct Storage : public IStorage {
-    Return<void> garbageCollect(uint64_t timeoutSeconds,
-                                const sp<IGarbageCollectCallback>& cb) override;
+class Storage : public BnStorage {
+  ndk::ScopedAStatus
+  garbageCollect(int64_t timeout_seconds,
+                 const std::shared_ptr<IGarbageCollectCallback> &cb) override;
 };
 
-}  // namespace implementation
-}  // namespace V1_0
-}  // namespace storage
-}  // namespace health
-}  // namespace hardware
-}  // namespace android
-
-#endif  // ANDROID_HARDWARE_HEALTH_FILESYSTEM_V1_0_FILESYSTEM_H
+} // namespace aidl::android::hardware::health::storage
