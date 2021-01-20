@@ -397,6 +397,14 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
                " does not work with vm_manager=" << FLAGS_vm_manager;
   }
 
+  // TODO (177926450) These lines are needed because the current uboot config
+  // assuming only one memory size for the arm config. Remove these lines once
+  // the memory size can be variable for arm.
+  // The default for the CF Arm guest RAM size is 3027 MB on rockpi
+  if (HostArch() == "aarch64") {
+    SetCommandLineOptionWithMode("memory_mb", "3027", SET_FLAGS_DEFAULT);
+  }
+
   tmp_config_obj.set_cpus(FLAGS_cpus);
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
