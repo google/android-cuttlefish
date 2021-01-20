@@ -163,6 +163,13 @@ PRODUCT_PACKAGES += \
 # Packages for the OpenGL implementation
 #
 
+# ANGLE provides an OpenGL implementation built on top of Vulkan.
+PRODUCT_PACKAGES += \
+    libEGL_angle \
+    libGLESv1_CM_angle \
+    libGLESv2_angle \
+    libfeature_support_angle.so
+
 # SwiftShader provides a software-only implementation that is not thread-safe
 PRODUCT_PACKAGES += \
     libEGL_swiftshader \
