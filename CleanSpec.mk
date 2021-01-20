@@ -62,3 +62,7 @@ $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.po
 
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.dumpstate@1.1-service.cuttlefish)
 $(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.dumpstate@1.1-service.cuttlefish.rc)
+
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/bin/hw/android.hardware.health.storage@1.0-service.cuttlefish)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/init/android.hardware.health.storage@1.0-service.cuttlefish.rc)
+$(call add-clean-step, rm -rf $(PRODUCT_OUT)/vendor/etc/vintf/manifest/manifest_android.hardware.health.storage@1.0.cuttlefish.xml)

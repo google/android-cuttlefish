@@ -14,13 +14,9 @@
      limitations under the License.
 -->
 <manifest version="1.0" type="device">
-    <hal>
+    <hal format="aidl">
         <name>android.hardware.health.storage</name>
-        <transport>hwbinder</transport>
-        <version>1.0</version>
-        <interface>
-            <name>IStorage</name>
-            <instance>default</instance>
-        </interface>
+        <version>1</version>
+        <fqname>IStorage/default</fqname>
     </hal>
 </manifest>

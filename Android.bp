@@ -126,9 +126,6 @@ cc_defaults {
 cc_defaults {
     name: "cuttlefish_health_storage",
     defaults: ["enabled_on_q_and_later"],
-    vintf_fragments: [
-        "manifest_android.hardware.health.storage@1.0.cuttlefish.xml",
-    ],
 }
 
 java_test_host {
