@@ -63,6 +63,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.graphics.mapper@2.1",
     "android.hardware.graphics.mapper@3.0",
     "android.hardware.health@1.0",
+    "android.hardware.health.storage@1.0", // converted to AIDL, see b/177470478
     "android.hardware.ir@1.0",
     "android.hardware.keymaster@3.0",
     "android.hardware.light@2.0",
