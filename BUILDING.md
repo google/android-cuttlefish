@@ -311,3 +311,5 @@ connect (on the same machine as the docker container) by pointing your browser
 at https://localhost:8443/
 
 WebRTC allows you to control cuttlefish inside the docker container without ssh tunnel.
+
+Using WebRTC requires installing `socat` binary to the host.
