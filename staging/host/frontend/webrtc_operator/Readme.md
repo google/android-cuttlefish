@@ -32,6 +32,8 @@ The server sends the device these types of messages:
 
 * {"message_type": "client_msg", "client_id": <Integer>, "payload": <Any>}
 
+* {"message_type": "client_disconnected", "client_id": <Integer>}
+
 * {"error": <String>}
 
 Clients connect to the *connect_client* endpoint and send these types of

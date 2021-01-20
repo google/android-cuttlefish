@@ -28,7 +28,12 @@ ClientHandler::ClientHandler(struct lws* wsi, DeviceRegistry* registry,
       device_handler_(),
       client_id_(0) {}
 
-void ClientHandler::OnClosed() {}  // do nothing
+void ClientHandler::OnClosed() {
+  auto device_handler = device_handler_.lock();
+  if (device_handler) {
+    device_handler->SendClientDisconnectMessage(client_id_);
+  }
+}
 
 void ClientHandler::SendDeviceMessage(const Json::Value& device_message) {
   Json::Value message;

@@ -36,6 +36,7 @@ constexpr auto kConfigType = "config";
 constexpr auto kConnectType = "connect";
 constexpr auto kDeviceInfoType = "device_info";
 constexpr auto kClientMessageType = "client_msg";
+constexpr auto kClientDisconnectType = "client_disconnected";
 constexpr auto kDeviceMessageType = "device_msg";
 
 }  // namespace webrtc_signaling
