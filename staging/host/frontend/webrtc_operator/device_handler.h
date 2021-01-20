@@ -40,6 +40,7 @@ class DeviceHandler : public SignalHandler,
 
   size_t RegisterClient(std::shared_ptr<ClientHandler> client_handler);
   void SendClientMessage(size_t client_id, const Json::Value& message);
+  void SendClientDisconnectMessage(size_t client_id);
 
   void OnClosed() override;
 

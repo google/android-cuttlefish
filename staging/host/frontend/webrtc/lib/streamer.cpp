@@ -406,7 +406,6 @@ void Streamer::Impl::HandleClientMessage(const Json::Value& server_message) {
     }
     clients_.emplace(client_id, client_handler);
   }
-
   auto client_handler = clients_[client_id];
 
   client_handler->HandleMessage(client_message);
@@ -440,6 +439,20 @@ void Streamer::Impl::OnReceive(
         server_message[cuttlefish::webrtc_signaling::kTypeField].asString();
     if (type == cuttlefish::webrtc_signaling::kConfigType) {
       HandleConfigMessage(server_message);
+    } else if (type == cuttlefish::webrtc_signaling::kClientDisconnectType) {
+      if (!server_message.isMember(
+              cuttlefish::webrtc_signaling::kClientIdField) ||
+          !server_message.isMember(
+              cuttlefish::webrtc_signaling::kClientIdField)) {
+        LOG(ERROR) << "Invalid disconnect message received from server";
+        // Notify the caller
+        OnError("Invalid disconnect message: client_id is required");
+        return;
+      }
+      auto client_id =
+          server_message[cuttlefish::webrtc_signaling::kClientIdField].asInt();
+      LOG(INFO) << "Client " << client_id << " has disconnected.";
+      DestroyClientHandler(client_id);
     } else if (type == cuttlefish::webrtc_signaling::kClientMessageType) {
       HandleClientMessage(server_message);
     } else {

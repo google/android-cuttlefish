@@ -96,8 +96,7 @@ void DeviceHandler::HandleForward(const Json::Value& message) {
   auto client_index = client_id - 1;
   auto client_handler = clients_[client_index].lock();
   if (!client_handler) {
-    LogAndReplyError("Forward failed: Client " + std::to_string(client_id) +
-                     " disconnected");
+    SendClientDisconnectMessage(client_id);
     return;
   }
   client_handler->SendDeviceMessage(message[webrtc_signaling::kPayloadField]);
@@ -110,6 +109,13 @@ void DeviceHandler::SendClientMessage(size_t client_id,
   msg[webrtc_signaling::kTypeField] = webrtc_signaling::kClientMessageType;
   msg[webrtc_signaling::kClientIdField] = static_cast<Json::UInt>(client_id);
   msg[webrtc_signaling::kPayloadField] = client_message;
+  Reply(msg);
+}
+
+void DeviceHandler::SendClientDisconnectMessage(size_t client_id) {
+  Json::Value msg;
+  msg[webrtc_signaling::kTypeField] = webrtc_signaling::kClientDisconnectType;
+  msg[webrtc_signaling::kClientIdField] = static_cast<Json::UInt>(client_id);
   Reply(msg);
 }
 
