@@ -424,4 +424,12 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
   return vsock;
 }
 
+SharedFD WeakFD::lock() const {
+  auto locked_file_instance = value_.lock();
+  if (locked_file_instance) {
+    return SharedFD(locked_file_instance);
+  }
+  return SharedFD();
+}
+
 }  // namespace cuttlefish
