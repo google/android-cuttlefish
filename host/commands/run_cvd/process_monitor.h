@@ -44,15 +44,15 @@ class ProcessMonitor {
   // lead to a deadlock. If the callback returns false the subprocess will no
   // longer be monitored.
   void StartSubprocess(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
-  // Monitors an already started subprocess
-  void MonitorExistingSubprocess(Command cmd, Subprocess sub_process,
-                                 OnSocketReadyCb on_control_socket_ready_cb);
   // Stops all monitored subprocesses.
   bool StopMonitoredProcesses();
   static bool RestartOnExitCb(MonitorEntry* entry);
   static bool DoNotMonitorCb(MonitorEntry* entry);
 
  private:
+  // Monitors an already started subprocess
+  void MonitorExistingSubprocess(Command cmd, Subprocess sub_process,
+                                 OnSocketReadyCb on_control_socket_ready_cb);
   void MonitorRoutine();
 
   std::vector<MonitorEntry> monitored_processes_;
