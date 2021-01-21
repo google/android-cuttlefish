@@ -379,7 +379,6 @@ class CuttlefishConfig {
     std::string adb_ip_and_port() const;
     std::string adb_device_name() const;
     std::string device_title() const;
-    std::string gnss_file_path() const;
     std::string mobile_bridge_name() const;
     std::string mobile_tap_name() const;
     std::string wifi_tap_name() const;
@@ -446,8 +445,6 @@ class CuttlefishConfig {
 
     // Wifi MAC address inside the guest
     std::array<unsigned char, 6> wifi_mac_address() const;
-
-    std::string factory_reset_protected_path() const;
   };
 
   // A view into an existing CuttlefishConfig object for a particular instance.
@@ -493,8 +490,6 @@ class CuttlefishConfig {
     void set_wifi_mac_address(const std::array<unsigned char, 6>&);
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
-    // Gnss grpc proxy local file path
-    void set_gnss_file_path(const std::string &gnss_file_path);
   };
 
  private:
@@ -512,9 +507,14 @@ class CuttlefishConfig {
 // environment variable or the username.
 int GetInstance();
 
-// Returns default Vsock CID
-// by default, GetInstance() + 2
+// Returns default Vsock CID, which is
+// GetInstance() + 2
 int GetDefaultVsockCid();
+
+// Calculates vsock server port number
+// return base + (vsock_guest_cid - 3)
+int GetVsockServerPort(const int base,
+                       const int vsock_guest_cid);
 
 // Returns a path where the launhcer puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use
