@@ -26,7 +26,7 @@ void LaunchModemSimulatorIfEnabled(const CuttlefishConfig& config,
 void LaunchVNCServer(
     const CuttlefishConfig& config,
     ProcessMonitor* process_monitor,
-    std::function<bool(MonitorEntry*)> callback);
+    OnSocketReadyCb callback);
 
 void LaunchTombstoneReceiver(const CuttlefishConfig& config,
                              ProcessMonitor* process_monitor);
