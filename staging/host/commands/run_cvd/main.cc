@@ -153,19 +153,27 @@ class CvdBootStateMachine {
   static const int kGuestBootFailed = 1 << 1;
 };
 
-// Abuse the process monitor to make it call us back when boot events are ready
-void SetUpHandlingOfBootEvents(
-    ProcessMonitor* process_monitor, SharedFD boot_events_pipe,
+std::thread SetUpHandlingOfBootEvents(
+    SharedFD boot_events_pipe,
     std::shared_ptr<CvdBootStateMachine> state_machine) {
-  process_monitor->MonitorExistingSubprocess(
-      // An unused command, so logs are desciptive
-      Command("boot_events_listener"),
-      // An unused subprocess, with the boot events pipe as control socket
-      Subprocess(-1, boot_events_pipe),
-      [boot_events_pipe, state_machine](MonitorEntry*) {
-        auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
-        return !sent_code;
-      });
+  return std::thread([boot_events_pipe, state_machine]() {
+    while (true) {
+      SharedFDSet fd_set;
+      fd_set.Set(boot_events_pipe);
+      int result = Select(&fd_set, nullptr, nullptr, nullptr);
+      if (result < 0) {
+        PLOG(FATAL) << "Failed to call Select";
+        return;
+      }
+      if (!fd_set.IsSet(boot_events_pipe)) {
+        continue;
+      }
+      auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
+      if (sent_code) {
+        break;
+      }
+    }
+  });
 }
 
 bool WriteCuttlefishEnvironment(const CuttlefishConfig& config) {
@@ -595,8 +603,8 @@ int RunCvdMain(int argc, char** argv) {
   SharedFD webrtc_events_pipe = event_pipes[2];
   event_pipes.clear();
 
-  SetUpHandlingOfBootEvents(&process_monitor, boot_events_pipe,
-                            boot_state_machine);
+  auto boot_events =
+      SetUpHandlingOfBootEvents(boot_events_pipe, boot_state_machine);
 
   LaunchLogcatReceiver(*config, &process_monitor);
   LaunchConfigServer(*config, &process_monitor);
@@ -633,6 +641,8 @@ int RunCvdMain(int argc, char** argv) {
 
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
+
+  boot_events.join();
   return RunnerExitCodes::kServerError;
 }
 
