@@ -245,7 +245,7 @@ void LaunchTombstoneReceiver(const CuttlefishConfig& config,
 
 void LaunchVNCServer(
     const CuttlefishConfig& config, ProcessMonitor* process_monitor,
-    std::function<bool(MonitorEntry*)> callback) {
+    OnSocketReadyCb callback) {
   auto instance = config.ForDefaultInstance();
   // Launch the vnc server, don't wait for it to complete
   auto port_options = "-port=" + std::to_string(instance.vnc_server_port());
