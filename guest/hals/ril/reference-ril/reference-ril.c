@@ -921,10 +921,10 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
             /* We are in the emulator - the dns servers are listed
                 * by the following system properties, setup in
                 * /system/etc/init.goldfish.sh:
-                *  - net.eth0.dns1
-                *  - net.eth0.dns2
-                *  - net.eth0.dns3
-                *  - net.eth0.dns4
+                *  - vendor.net.eth0.dns1
+                *  - vendor.net.eth0.dns2
+                *  - vendor.net.eth0.dns3
+                *  - vendor.net.eth0.dns4
                 */
             const int   dnslist_sz = 128;
             char*       dnslist = alloca(dnslist_sz);
@@ -933,11 +933,11 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
 
             dnslist[0] = 0;
             for (nn = 1; nn <= 4; nn++) {
-                /* Probe net.eth0.dns<n> */
+                /* Probe vendor.net.eth0.dns<n> */
                 char  propName[PROP_NAME_MAX];
                 char  propValue[PROP_VALUE_MAX];
 
-                snprintf(propName, sizeof propName, "net.eth0.dns%d", nn);
+                snprintf(propName, sizeof propName, "vendor.net.eth0.dns%d", nn);
 
                 /* Ignore if undefined */
                 if (property_get(propName, propValue, "") <= 0) {
@@ -956,7 +956,7 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
              * where the gateway is different. */
             if (hasWifi) {
                 responses[i].gateways = "192.168.200.1";
-            } else if (property_get("net.eth0.gw", propValue, "") > 0) {
+            } else if (property_get("vendor.net.eth0.gw", propValue, "") > 0) {
                 responses[i].gateways = propValue;
             } else {
                 responses[i].gateways = "";
