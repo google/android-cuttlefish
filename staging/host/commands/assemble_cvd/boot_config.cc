@@ -26,12 +26,18 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/vm_manager.h"
+
+using cuttlefish::vm_manager::CrosvmManager;
 
 DECLARE_bool(pause_in_bootloader);
+DECLARE_string(vm_manager);
 
 namespace cuttlefish {
 namespace {
@@ -55,7 +61,12 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
   }
 
   env << "bootcmd=boot_android virtio -" << '\0';
-  env << "fdtaddr=0x40000000" << '\0';
+  if (FLAGS_vm_manager == CrosvmManager::name() &&
+          HostArch() == "aarch64") {
+    env << "fdtaddr=0x80000000" << '\0';
+  } else {
+    env << "fdtaddr=0x40000000" << '\0';
+  }
   env << '\0';
   std::string env_str = env.str();
   std::ofstream file_out(env_path.c_str(), std::ios::binary);
