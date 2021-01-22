@@ -133,3 +133,9 @@ service bugreport /system/bin/dumpstate -d -p -z
     disabled
     oneshot
     keycodes 30 48
+
+# TODO: disable this service once cuttlefish implements system suspend
+service suspend_blocker /vendor/bin/suspend_blocker
+    class early_hal # Start together with system_suspend HAL
+    group system
+    user root
