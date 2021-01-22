@@ -64,13 +64,6 @@ cc_defaults {
     defaults: ["cuttlefish_base"],
 }
 
-// Same as cuttlefish_guest_only, but modules are placed in /system_ext partition.
-cc_defaults {
-    name: "cuttlefish_guest_system_ext_only",
-    system_ext_specific: true,
-    defaults: ["cuttlefish_base"],
-}
-
 // Defaults for cuttlefish modules that are available only in the host-side OS. Here "host" includes
 // both (1) non-Android OS like gLinux or Ubuntu, and (2) Android OS that is capable of running
 // guest VM(s) in it. Note that, in the context of the Android build systm - Soong - (1) is called
