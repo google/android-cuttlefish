@@ -308,6 +308,11 @@ endif
 PRODUCT_PACKAGES += \
     android.hardware.atrace@1.0-service
 
+#
+# Weaver aidl HAL
+#
+PRODUCT_PACKAGES += \
+    android.hardware.weaver-service.example
 
 #
 # OemLock aidl HAL
