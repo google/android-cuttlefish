@@ -735,16 +735,6 @@ void SetDefaultFlagsForCrosvm() {
                                (default_enable_sandbox ? "true" : "false"),
                                SET_FLAGS_DEFAULT);
 
-  // Crosvm requires a specific setting for kernel decompression; it must be
-  // on for aarch64 and off for x86, no other mode is supported.
-  bool decompress_kernel = false;
-  if (HostArch() == "aarch64") {
-    decompress_kernel = true;
-  }
-  SetCommandLineOptionWithMode("decompress_kernel",
-                               (decompress_kernel ? "true" : "false"),
-                               SET_FLAGS_DEFAULT);
-
   std::string default_bootloader = FLAGS_system_image_dir + "/bootloader";
   SetCommandLineOptionWithMode("bootloader", default_bootloader.c_str(),
                                SET_FLAGS_DEFAULT);
