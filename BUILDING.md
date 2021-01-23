@@ -233,19 +233,28 @@ variable $ip_cf1.
 
 # Connecting to Cuttlefish
 
+We recommend that each docker container should be assigned an ip address and that the users should access the contaienr via the ip. 
+
+If assigning a public IP is not feasible, we offer a environment variable, ```ip_${name}``` and a bash function, ```cvd_get_ip```.
+Those returns the internal IP valid on the docker host. 
+
+As the internal ip returned by ```cvd_get_ip``` and also stored in ```ip_${name}``` is not recognized outside the docker host, if
+remote access to the container is desired, extra steps are required. It is described in the [Port Forwarding](#port-forwarding) section.
+
 ## ADB
 
-To connect to Cuttlefish using ADB from outside the container:
+When the adb client is running outside the container either remotely or locally (on the docker host), the cuttlefish inside the container
+could be accessed as follows:
 
 ```bash
-adb connect localhost:6520
+adb connect $ip_cf1:6520
 adb shell
 ```
 
-Please note that --norun_adb_connector should have been given to the cvd_start_<name> command. 
+Please note that --norun_adb_connector should have been given to the cvd_start_<name> command. Also, ```$ip_cf1``` is the public or internal
+ip address of the container. 
 
-Or from the inside (assuming you had set up, provisioned, and booted a container
-called cf1):
+Alternatively, you could run adb inside the container, and use the adb client over ssh:
 
 ```bash
 ssh vsoc-01@$ip_cf1 -- ./bin/adb -e shell
@@ -260,15 +269,31 @@ to cvd_start_<name>:
 cvd_start_cf1 --nostart_webrtc --start_vnc_server --cpus 4 --memory_mb 4096
 ```
 
-For now, cuttlefish VNC server is listening on 127.0.0.1:6444 or 6444+i port. That being said, VNC
-server that runs in a container is currently not reached by a VNC client outside the container.
+Here are how vnc server is connected with the vnc client.
 
-These are being fixed. In the meantime, there are two ways to workaround: SSH tunneling and redirecting
-the VNC server to the host X server.
+### Vnc Client
+
+We believe that most vnc client should work. However, we have not verified it. 
+
+Internally, we use the VNC client described [here](https://android.googlesource.com/device/google/cuttlefish/#so-you-want-to-see-cuttlefish) as well. Follow the link to download the VNC viewer. Assuming you've saved it in your current working directory:
+
+```bash
+java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=<ip> -port=<port>
+```
+
+Going forward, we assume that you are running ```java -jar``` in the directory where ```tigervnc-jviewer.jar``` is located. 
+
+### Using Container's IP address
+
+We recommend that using the IP address assigned to the container:
+
+```
+java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no host=$ip_addr port=6444
+```
 
 ### SSH Tunneling
 
-One way to avoid this is ssh tunneling:
+An alternative way of using VNC is to use ssh tunnel:
 
 ```bash
 source setup.sh
@@ -277,10 +302,14 @@ ssh -L 7444:$ip_cf1:6444 vsoc-01@$ip_cf1
 
 Follwing that, open a new terminal. VNC server is effectively listening to localhost:7444. 
 
-You can see the display using [VNC](https://android.googlesource.com/device/google/cuttlefish/#so-you-want-to-see-cuttlefish) as well. Follow the link to download the VNC viewer. Assuming you've saved it in your current working directory:
+```bash
+java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=<the ip of docker host> -port=7444
+```
+
+If you are running the command in the docker host, it is:
 
 ```bash
-java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=localhost -port=7444
+java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=127.0.0.1 -port=7444
 ```
 
 ### Redirecting VNC Client Inside Container to Host X Server
@@ -300,14 +329,95 @@ source setup.sh
 cvd_login_cf1 vncviewer
 ```
 
-The client will ask the VNC server address to connect, and this is the value to be used:
+The client will ask the VNC server address to connect, and this is the host ip and port to be used:
+
 ```bash
 127.0.0.1:6444
 ```
+
 ## WebRTC
 
 As an alternative to VNC, you can connect cuttlefish via webRTC. you can
 connect (on the same machine as the docker container) by pointing your browser
-at https://localhost:8443/
+at ```https://$container_ip:8443/```
 
 WebRTC allows you to control cuttlefish inside the docker container without ssh tunnel.
+
+Please note that now WebRTC is the default. Also, please note that we have tested WebRTC with Google
+Chrome Browsers, not with Internet Explorers, Safari, Firefox, Opera, etc. 
+
+### Using the container's IP address
+
+Simply, from a web browser:
+
+```
+http://192.168.9.2:8443
+```
+
+Please note that you should replace ```192.168.9.2``` with the actual IP address of your container.
+
+### Redirecting Google Chrome Inside Container to Host X Server
+
+Alternatively, you can use the Google Chrome inside the container. Chrome will behave like an X application
+running directly on the docker host. The idea is that we forward all X requests from the Chrome to the host
+X server as opposed to the X server insied the container. Please note that you may have to close the Chrome 
+already running on the host.
+
+For that, the first step is to create the container with -x option:
+
+```bash
+cvd_docker_create -x -A -C $HOME/android-src cf1
+```
+
+
+Once cuttlefish is launched, the following command from another terminal will launch Google Chrome:
+
+```bash
+source setup.sh
+cvd_login_cf1 google-chrome-stable
+```
+
+This Google Chrome renders on the host but runs inside the container. Thus, use the following IP address and
+port to access to cuttlefish:
+
+```
+https://127.0.0.1:8443
+```
+
+Note that 127.0.0.1 is not meant to be the docker host.
+
+### SSH Tunneling
+
+We do not believe ssh tunneling works smoothly for WebRTC. WebRTC uses tcp and udp ports. Not sure if UDP ports are for 
+ssh tunneling. 
+
+## Port Forwarding
+
+The assumption here is an IP address cannot be assigned to the docker container. Likely, the container should be accessed
+remotely: from a client outside the docker host. Please let us remind the readers that it's not what we recommend.
+
+One way to do that is to use a bunch of -p options to expose the port. In ```setup.sh```, there is a single ```docker run```
+command. Feel free to add a bunch of -p options to exports host ports to the docker container. 
+
+Alternatively, we offer an optional, convenience function: ```cvd_publish_cf1``` where ```cf1``` is the name of the container.
+The function exposes a set of host ports to the docker container. Internally, it uses ```socat```. As an example, by default, 
+the adb port is 6520. Each container is automatically assigned a unique ```id``` when ```cvd_docker_create``` creates it. 
+```cvd_publish_cf1``` maps the host port, ```6520 + id```, to the docker container's adb port. 
+
+The ```cvd_get_instance_id``` bash function returns the ```id```:
+
+```bash
+$ cvd_get_instance_id "cf1"
+0
+```
+
+For WebRTC, this may not work well. WebRTC wants to make sure that the server IP address that the client sends the request to should
+match the IP the server is actually running. With this socat-based forwarding scheme, the client will sends the http(s) requests to the
+docker host IP. However, the WebRTC server is actually running inside the container. 
+
+The socat-based scheme works with adb and vnc. If you want to use this socat-based port forwarding, cannot assign an IP to the container, 
+and still want the container to be remotely accessible, we suggest that you should consider vnc, instead. 
+
+
+
+
