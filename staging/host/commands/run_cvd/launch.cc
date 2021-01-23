@@ -437,9 +437,24 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
                                      const CuttlefishConfig& config,
                                      SharedFD adbd_events_pipe) {
   auto instance = config.ForDefaultInstance();
+  auto append = [](const std::string& s, const int i) -> std::string {
+    return s + std::to_string(i);
+  };
   if (AdbVsockTunnelEnabled(config)) {
     Command adb_tunnel(SocketVsockProxyBinary());
     adb_tunnel.AddParameter("-adbd_events_fd=", adbd_events_pipe);
+    /**
+     * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host. It assumes that
+     * another sv proxy runs inside the guest. see: shared/config/init.vendor.rc
+     * The sv proxy in the guest exposes vsock:cid:6520 across the cuttlefish instances
+     * in multi-tenancy. cid is different per instance.
+     *
+     * This host sv proxy should cooperate with the guest sv proxy. Thus, one end of
+     * the tunnel is vsock:cid:6520 regardless of instance number. Another end faces
+     * the host adb daemon via tcp. Thus, the server type is tcp here. The tcp port
+     * differs from instance to instance, and is instance.host_port()
+     *
+     */
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter("--vsock_port=6520");
     adb_tunnel.AddParameter(std::string{"--tcp_port="} +
@@ -452,12 +467,20 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
   if (AdbVsockHalfTunnelEnabled(config)) {
     Command adb_tunnel(SocketVsockProxyBinary());
     adb_tunnel.AddParameter("-adbd_events_fd=", adbd_events_pipe);
+    /*
+     * This socket_vsock_proxy (a.k.a. sv proxy) runs on the host, and cooperates with
+     * the adbd inside the guest. See this file:
+     *  shared/device.mk, especially the line says "persist.adb.tcp.port="
+     *
+     * The guest adbd is listening on vsock:cid:5555 across cuttlefish instances.
+     * Sv proxy faces the host adb daemon via tcp. The server type should be therefore
+     * tcp, and the port should differ from instance to instance and be equal to
+     * instance.host_port()
+     */
     adb_tunnel.AddParameter("--server=tcp");
-    adb_tunnel.AddParameter("--vsock_port=5555");
-    adb_tunnel.AddParameter(std::string{"--tcp_port="} +
-                            std::to_string(instance.host_port()));
-    adb_tunnel.AddParameter(std::string{"--vsock_cid="} +
-                            std::to_string(instance.vsock_guest_cid()));
+    adb_tunnel.AddParameter(append("--vsock_port=", 5555));
+    adb_tunnel.AddParameter(append("--tcp_port=", instance.host_port()));
+    adb_tunnel.AddParameter(append("--vsock_cid=", instance.vsock_guest_cid()));
     process_monitor->StartSubprocess(std::move(adb_tunnel),
                                      GetOnSubprocessExitCallback(config));
   }
