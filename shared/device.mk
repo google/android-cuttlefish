@@ -127,6 +127,9 @@ AB_OTA_POSTINSTALL_CONFIG += \
 PRODUCT_PACKAGES += \
     checkpoint_gc
 
+# Enable CameraX extension sample
+PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
+
 # DRM service opt-in
 PRODUCT_PROPERTY_OVERRIDES += drm.service.enabled=true
 
