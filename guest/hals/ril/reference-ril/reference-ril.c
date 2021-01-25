@@ -325,7 +325,7 @@ static const struct RIL_Env *s_rilenv;
 
 static RIL_RadioState sState = RADIO_STATE_UNAVAILABLE;
 static bool isNrDualConnectivityEnabled = true;
-static unsigned int allowedNetworkTypeBitmap = UINT_MAX;
+static unsigned int allowedNetworkTypesBitmap = UINT_MAX;
 
 static pthread_mutex_t s_state_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t s_state_cond = PTHREAD_COND_INITIALIZER;
@@ -4817,17 +4817,17 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE_BITMAP:
             requestSetPreferredNetworkType(request, data, datalen, t);
             break;
-        case RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP:
+        case RIL_REQUEST_SET_ALLOWED_NETWORK_TYPES_BITMAP:
             if (data == NULL || datalen != sizeof(int)) {
               RIL_onRequestComplete(t, RIL_E_INTERNAL_ERR, NULL, 0);
               break;
             }
-            allowedNetworkTypeBitmap = *(int *)data;
+            allowedNetworkTypesBitmap = *(int *)data;
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
-        case RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP:
-            RIL_onRequestComplete(t, RIL_E_SUCCESS, &allowedNetworkTypeBitmap,
-                    sizeof(allowedNetworkTypeBitmap));
+        case RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, &allowedNetworkTypesBitmap,
+                    sizeof(allowedNetworkTypesBitmap));
             break;
         case RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY:
             if (data == NULL || datalen != sizeof(int)) {
