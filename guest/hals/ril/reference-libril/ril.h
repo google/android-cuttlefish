@@ -108,10 +108,10 @@ extern "C" {
  *                    RIL_REQUEST_RELEASE_PDU_SESSION_ID
  *                    RIL_REQUEST_START_HANDOVER
  *                    RIL_REQUEST_CANCEL_HANDOVER
- *                    RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
+ *                    RIL_REQUEST_SET_ALLOWED_NETWORK_TYPES_BITMAP
  *                    RIL_REQUEST_SET_DATA_THROTTLING
  *                    RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS
- *                    RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP
+ *                    RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP
  *                    RIL_REQUEST_GET_SLICING_CONFIG
  *                    Updated data structures: RIL_CarrierInfoForImsiEncryption_v16
  *                    New data structure: RIL_PublicKeyType
@@ -7446,7 +7446,7 @@ typedef enum {
 #define RIL_REQUEST_CANCEL_HANDOVER 164
 
 /**
- * RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP
+ * RIL_REQUEST_SET_ALLOWED_NETWORK_TYPES_BITMAP
  *
  * Instruct the radio to *only* accept the types of network provided. This
  * is stronger than setPreferredNetworkType which is a suggestion.
@@ -7465,7 +7465,7 @@ typedef enum {
  *  NO_RESOURCES
  *  CANCELLED
  */
-#define RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP 165
+#define RIL_REQUEST_SET_ALLOWED_NETWORK_TYPES_BITMAP 165
 
 /**
 * RIL_REQUEST_SET_DATA_THROTTLING
@@ -7495,7 +7495,7 @@ typedef enum {
 #define RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS 167
 
 /**
- * RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP
+ * RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP
  *
  * Request previously set allowed network types from the radio.
  *
@@ -7513,7 +7513,7 @@ typedef enum {
  *  NO_RESOURCES
  *  CANCELLED
  */
-#define RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP 168
+#define RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP 168
 
 /**
  * RIL_REQUEST_GET_SLICING_CONFIG
