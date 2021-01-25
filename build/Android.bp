@@ -92,6 +92,12 @@ cvd_host_model_simulator_files = [
     "numeric_operator.xml_host",
 ]
 
+cvd_configs = [
+    "cvd_config_phone.json",
+    "cvd_config_tablet.json",
+]
+
+
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
     "balloon_device.policy_x86_64",
@@ -141,7 +147,8 @@ cvd_host_package_customization {
     multilib: {
         common: {
             deps: cvd_host_webrtc_assets +
-                cvd_host_model_simulator_files,
+                cvd_host_model_simulator_files +
+                cvd_configs,
         },
     },
 
