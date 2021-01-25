@@ -35,6 +35,11 @@ using cuttlefish::StringFromEnv;
 using cuttlefish::vm_manager::CrosvmManager;
 using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 
+DEFINE_string(config, "phone",
+              "Config preset name. Will automatically set flag fields "
+              "using the values from this file of presets. Possible values: "
+              "phone,tablet");
+
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
             " Either 'use_existing', 'create_if_missing', 'resize_up_to', or "
@@ -46,9 +51,9 @@ DEFINE_string(blank_data_image_fmt, "f2fs",
 DEFINE_string(qemu_gdb, "",
               "Debug flag to pass to qemu. e.g. -qemu_gdb=tcp::1234");
 
-DEFINE_int32(x_res, 720, "Width of the screen in pixels");
-DEFINE_int32(y_res, 1280, "Height of the screen in pixels");
-DEFINE_int32(dpi, 160, "Pixels per inch for the screen");
+DEFINE_int32(x_res, 0, "Width of the screen in pixels");
+DEFINE_int32(y_res, 0, "Height of the screen in pixels");
+DEFINE_int32(dpi, 0, "Pixels per inch for the screen");
 DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
@@ -63,8 +68,7 @@ DEFINE_bool(guest_audit_security, true,
             "Whether to log security audits.");
 DEFINE_bool(guest_force_normal_boot, true,
             "Whether to force the boot sequence to skip recovery.");
-DEFINE_int32(memory_mb, 2048,
-             "Total amount of memory available for guest, MB.");
+DEFINE_int32(memory_mb, 0, "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, cuttlefish::ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
 DEFINE_bool(use_random_serial, false,
@@ -280,6 +284,10 @@ namespace {
 const std::string kKernelDefaultPath = "kernel";
 const std::string kInitramfsImg = "initramfs.img";
 const std::string kRamdiskConcatExt = ".concat";
+
+bool IsFlagSet(const std::string& flag) {
+  return !gflags::GetCommandLineFlagInfoOrDie(flag.c_str()).is_default;
+}
 
 std::pair<uint16_t, uint16_t> ParsePortRange(const std::string& flag) {
   static const std::regex rgx("[0-9]+:[0-9]+");
@@ -713,6 +721,64 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   return tmp_config_obj;
 }
 
+void SetDefaultFlagsFromConfigPreset() {
+  std::string config_preset = FLAGS_config;  // The name of the preset config.
+  std::string config_file_path;  // The path to the preset config JSON.
+  const std::set<std::string> allowed_config_presets = {
+      "phone",
+      "tablet",
+  };
+
+  // If the user specifies a --config name, then use that config
+  // preset option and save their choice to a file.
+  std::string config_preset_file_path =
+      StringFromEnv("HOME", ".") + "/.cuttlefish_config_preset";
+  if (IsFlagSet("config")) {
+    if (!allowed_config_presets.count(config_preset)) {
+      LOG(FATAL) << "Invalid --config option '" << config_preset
+                 << "'. Valid options: "
+                 << android::base::Join(allowed_config_presets, ",");
+    }
+    // Write the name of the config preset to a file. Only the name is
+    // written, not the contents of the config itself, in order to allow
+    // forwards compatibility if config fields change.
+    std::ofstream ofs(config_preset_file_path);
+    if (ofs.is_open()) {
+      ofs << config_preset;
+    }
+  } else if (FileExists(config_preset_file_path)) {
+    // Load the config preset option from the file if it exists.
+    std::ifstream ifs(config_preset_file_path);
+    if (ifs.is_open()) {
+      ifs >> config_preset;
+      if (!allowed_config_presets.count(config_preset)) {
+        LOG(WARNING) << config_preset_file_path
+                     << " contains invalid config preset: '" << config_preset
+                     << "'. Defaulting to 'phone'.";
+        config_preset = "phone";
+      }
+    }
+  }
+  LOG(INFO) << "Launching CVD using --config='" << config_preset << "'.";
+
+  config_file_path = DefaultHostArtifactsPath("etc/cvd_config/cvd_config_" +
+                                              config_preset + ".json");
+  Json::Value config;
+  Json::Reader config_reader;
+  std::ifstream ifs(config_file_path);
+  if (!config_reader.parse(ifs, config)) {
+    LOG(FATAL) << "Could not read config file " << config_file_path << ": "
+               << config_reader.getFormattedErrorMessages();
+  }
+  for (const std::string& flag : config.getMemberNames()) {
+    if (gflags::SetCommandLineOptionWithMode(
+            flag.c_str(), config[flag].asString().c_str(), SET_FLAGS_DEFAULT)
+            .empty()) {
+      LOG(FATAL) << "Error setting flag '" << flag << "'.";
+    }
+  }
+}
+
 void SetDefaultFlagsForQemu() {
   // for now, we don't set non-default options for QEMU
   if (FLAGS_gpu_mode == kGpuModeGuestSwiftshader && NumStreamers() == 0) {
@@ -758,6 +824,7 @@ void SetDefaultFlagsForCrosvm() {
 
 bool ParseCommandLineFlags(int* argc, char*** argv) {
   google::ParseCommandLineNonHelpFlags(argc, argv, true);
+  SetDefaultFlagsFromConfigPreset();
   bool invalid_manager = false;
   if (FLAGS_vm_manager == QemuManager::name()) {
     SetDefaultFlagsForQemu();
