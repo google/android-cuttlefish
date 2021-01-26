@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "host/libs/screen_connector/screen_connector_common.h"
 #include "host/libs/screen_connector/socket_based_screen_connector.h"
 
 #include <android-base/logging.h>
@@ -26,12 +27,12 @@ SocketBasedScreenConnector::SocketBasedScreenConnector(int frames_fd) {
   screen_server_thread_ =
     std::thread([this, frames_fd]() { ServerLoop(frames_fd); });
 
-  buffer_size_ = ScreenSizeInBytes(/*display_number=*/0);
+  buffer_size_ = ScreenConnectorInfo::ScreenSizeInBytes(/*display_number=*/0);
   buffer_.resize(kNumBuffersPerDisplay * buffer_size_);
 }
 
-bool SocketBasedScreenConnector::OnFrameAfter(
-    std::uint32_t frame_number, const FrameCallback& frame_callback) {
+bool SocketBasedScreenConnector::OnFrameAfter(std::uint32_t frame_number,
+                                              const GenerateProcessedFrameCallbackImpl& frame_callback) {
   int buffer_idx = WaitForNewFrameSince(&frame_number);
   void* buffer = GetBuffer(buffer_idx);
   frame_callback(frame_number, reinterpret_cast<uint8_t*>(buffer));

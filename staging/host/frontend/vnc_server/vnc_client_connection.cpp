@@ -504,7 +504,7 @@ void VncClientConnection::HandlePointerEvent() {
     std::lock_guard<std::mutex> guard(m_);
     if (current_orientation_ == ScreenOrientation::Landscape) {
       std::tie(x_pos, y_pos) =
-          std::make_pair(ScreenConnector::ScreenWidth(0) - y_pos, x_pos);
+          std::make_pair(ScreenConnectorInfo::ScreenWidth(0) - y_pos, x_pos);
     }
   }
   virtual_inputs_->HandlePointerEvent(button_mask, x_pos, y_pos);
@@ -534,14 +534,14 @@ VncClientConnection::Coordinates VncClientConnection::CoordinatesForOrientation(
 
 int VncClientConnection::ScreenWidth() const {
   return current_orientation_ == ScreenOrientation::Portrait
-             ? ScreenConnector::ScreenWidth(0)
-             : ScreenConnector::ScreenHeight(0);
+             ? ScreenConnectorInfo::ScreenWidth(0)
+             : ScreenConnectorInfo::ScreenHeight(0);
 }
 
 int VncClientConnection::ScreenHeight() const {
   return current_orientation_ == ScreenOrientation::Portrait
-             ? ScreenConnector::ScreenHeight(0)
-             : ScreenConnector::ScreenWidth(0);
+             ? ScreenConnectorInfo::ScreenHeight(0)
+             : ScreenConnectorInfo::ScreenWidth(0);
 }
 
 void VncClientConnection::SetScreenOrientation(ScreenOrientation orientation) {

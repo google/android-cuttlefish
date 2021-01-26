@@ -17,40 +17,57 @@
 #include "host/frontend/webrtc/display_handler.h"
 
 #include <chrono>
+#include <functional>
+#include <memory>
 
 #include <libyuv.h>
 
 namespace cuttlefish {
 DisplayHandler::DisplayHandler(
     std::shared_ptr<webrtc_streaming::VideoSink> display_sink,
-    ScreenConnector* screen_connector)
-    : display_sink_(display_sink), screen_connector_(screen_connector) {}
+    std::unique_ptr<ScreenConnector> screen_connector)
+    : display_sink_(display_sink), screen_connector_(std::move(screen_connector)) {
+  screen_connector_->SetCallback(std::move(GetScreenConnectorCallback()));
+}
+
+DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnectorCallback() {
+    // only to tell the producer how to create a ProcessedFrame to cache into the queue
+  DisplayHandler::GenerateProcessedFrameCallback callback =
+    [](std::uint32_t frame_number, std::uint8_t* frame,
+       WebRtcScProcessedFrame& processed_frame) {
+      // TODO(171305898): handle multiple displays.
+      const uint32_t display_number = 0;
+      if (display_number != 0) {
+        processed_frame.is_success_ = false;
+        return;
+      }
+      const int display_w = ScreenConnectorInfo::ScreenWidth(display_number);
+      const int display_h = ScreenConnectorInfo::ScreenHeight(display_number);
+      const int display_stride_bytes = ScreenConnectorInfo::ScreenStrideBytes(display_number);
+      processed_frame.frame_num_ = frame_number;
+      processed_frame.buf_ = std::make_unique<CvdVideoFrameBuffer>(display_w, display_h);
+      libyuv::ABGRToI420(frame, display_stride_bytes,
+                         processed_frame.buf_->DataY(), processed_frame.buf_->StrideY(),
+                         processed_frame.buf_->DataU(), processed_frame.buf_->StrideU(),
+                         processed_frame.buf_->DataV(), processed_frame.buf_->StrideV(),
+                         display_w,
+                         display_h);
+      processed_frame.is_success_ = true;
+    };
+  return callback;
+}
 
 [[noreturn]] void DisplayHandler::Loop() {
-  const std::uint32_t display_num = 0;
-  const int display_w = screen_connector_->ScreenWidth(display_num);
-  const int display_h = screen_connector_->ScreenHeight(display_num);
-  const int display_stride_bytes = screen_connector_->ScreenStrideBytes(display_num);
-  std::uint32_t frame_num = 0;
   for (;;) {
-    auto have_frame = screen_connector_->OnFrameAfter(
-        frame_num, [&, this](std::uint32_t fn, std::uint8_t* frame) {
-          frame_num = fn;
-          std::shared_ptr<CvdVideoFrameBuffer> buffer(
-              new CvdVideoFrameBuffer(display_w, display_h));
-          libyuv::ABGRToI420(frame, display_stride_bytes,
-                             buffer->DataY(), buffer->StrideY(),
-                             buffer->DataU(), buffer->StrideU(),
-                             buffer->DataV(), buffer->StrideV(),
-                             display_w,
-                             display_h);
-          {
-            std::lock_guard<std::mutex> lock(last_buffer_mutex_);
-            last_buffer_ =
-                std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buffer);
-          }
-        });
-    if (have_frame) {
+    auto processed_frame = screen_connector_->OnFrameAfter();
+    // processed_frame has display number from the guest
+    {
+      std::lock_guard<std::mutex> lock(last_buffer_mutex_);
+      std::shared_ptr<CvdVideoFrameBuffer> buffer = std::move(processed_frame.buf_);
+      last_buffer_ =
+          std::static_pointer_cast<webrtc_streaming::VideoFrameBuffer>(buffer);
+    }
+    if (processed_frame.is_success_) {
       SendLastFrame();
     }
   }
