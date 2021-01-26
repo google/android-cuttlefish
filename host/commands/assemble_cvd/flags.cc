@@ -374,6 +374,13 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   LOG(VERBOSE) << GetGraphicsAvailabilityString(graphics_availability);
 
   tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
+
+  if (tmp_config_obj.gpu_mode() != kGpuModeAuto &&
+      tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl &&
+      tmp_config_obj.gpu_mode() != kGpuModeGfxStream &&
+      tmp_config_obj.gpu_mode() != kGpuModeGuestSwiftshader) {
+    LOG(FATAL) << "Invalid gpu_mode: " << FLAGS_gpu_mode;
+  }
   if (tmp_config_obj.gpu_mode() == kGpuModeAuto) {
     if (ShouldEnableAcceleratedRendering(graphics_availability)) {
         LOG(INFO) << "GPU auto mode: detected prerequisites for accelerated "
