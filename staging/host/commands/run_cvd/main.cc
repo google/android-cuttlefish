@@ -18,8 +18,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
+#include <sys/prctl.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -631,13 +632,16 @@ int RunCvdMain(int argc, char** argv) {
   auto vmm_commands = vm_manager->StartCommands(
       *config, android::base::Join(kernel_args, " "));
   for (auto& vmm_cmd: vmm_commands) {
-    process_monitor.StartSubprocess(std::move(vmm_cmd),
-                                    GetOnSubprocessExitCallback(*config));
+    process_monitor.AddCommand(std::move(vmm_cmd),
+                               GetOnSubprocessExitCallback(*config));
   }
 
   // Start other host processes
   LaunchSocketVsockProxyIfEnabled(&process_monitor, *config, adbd_events_pipe);
   LaunchAdbConnectorIfEnabled(&process_monitor, *config);
+
+  CHECK(process_monitor.StartAndMonitorProcesses())
+      << "Could not start subprocesses";
 
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";

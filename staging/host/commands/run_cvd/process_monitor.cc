@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#include "host/commands/run_cvd/process_monitor.h"
+
+#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -22,199 +25,188 @@
 #include <signal.h>
 #include <stdio.h>
 
-#include <map>
+#include <algorithm>
+#include <thread>
 
 #include <android-base/logging.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_select.h"
-#include "host/commands/run_cvd/process_monitor.h"
 
 namespace cuttlefish {
 
-namespace {
+struct ParentToChildMessage {
+  bool stop;
+};
 
-void NotifyThread(SharedFD fd) {
-  // The restarter thread is (likely) blocked on a call to select, to make it
-  // wake up and do some work we write something (anything, the content is not
-  // important) into the main side of the socket pair so that the call to select
-  // returns and the notification fd (restarter side of the socket pair) is
-  // marked as ready to read.
-  char buffer = 'a';
-  fd->Write(&buffer, sizeof(buffer));
+ProcessMonitor::ProcessMonitor() : monitor_(-1) {
 }
 
-void ConsumeNotifications(SharedFD fd) {
-  // Once the starter thread is waken up due to a notification, the calls to
-  // select will continue to return immediately unless we read what was written
-  // on the main side of the socket pair. More than one notification can
-  // accumulate before the restarter thread consumes them, so we attempt to read
-  // more than it's written to consume them all at once. In the unlikely case of
-  // more than 8 notifications acummulating we simply read the first 8 and have
-  // another iteration on the restarter thread loop.
-  char buffer[8];
-  fd->Read(buffer, sizeof(buffer));
-}
+void ProcessMonitor::AddCommand(Command cmd, OnSocketReadyCb callback) {
+  CHECK(monitor_ == -1) << "The monitor process is already running.";
+  CHECK(!monitor_socket_->IsOpen()) << "The monitor socket is already open.";
 
-}  // namespace
-
-ProcessMonitor::ProcessMonitor() {
-  if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &thread_comm_main_,
-                            &thread_comm_monitor_)) {
-    LOG(ERROR) << "Unable to create restarter communication socket pair: "
-               << strerror(errno);
-    return;
-  }
-  monitor_thread_ = std::thread([this]() { MonitorRoutine(); });
-}
-
-void ProcessMonitor::StartSubprocess(Command cmd, OnSocketReadyCb callback) {
-  cuttlefish::SubprocessOptions options;
-  options.InGroup(true);
-  options.WithControlSocket(true);
-  auto proc = cmd.Start(options);
-  if (!proc.Started()) {
-    LOG(ERROR) << "Failed to start process";
-    return;
-  }
-  MonitorExistingSubprocess(std::move(cmd), std::move(proc), callback);
-}
-
-void ProcessMonitor::MonitorExistingSubprocess(Command cmd, Subprocess proc,
-                                               OnSocketReadyCb callback) {
-  {
-    std::lock_guard<std::mutex> lock(processes_mutex_);
-    monitored_processes_.push_back(MonitorEntry());
-    auto& entry = monitored_processes_.back();
-    entry.cmd.reset(new Command(std::move(cmd)));
-    entry.proc.reset(new Subprocess(std::move(proc)));
-    entry.on_control_socket_ready_cb = callback;
-  }
-  // Wake the restarter thread up so that it starts monitoring this subprocess
-  // Do this after releasing the lock so that the restarter thread is free to
-  // begin work as soon as select returns.
-  NotifyThread(thread_comm_main_);
+  monitored_processes_.push_back(MonitorEntry());
+  auto& entry = monitored_processes_.back();
+  entry.cmd.reset(new Command(std::move(cmd)));
+  entry.on_control_socket_ready_cb = callback;
 }
 
 bool ProcessMonitor::StopMonitoredProcesses() {
-  // Because the mutex is held while this function executes, the restarter
-  // thread is kept blocked and by the time it resumes execution there are no
-  // more processes to monitor
-  std::lock_guard<std::mutex> lock(processes_mutex_);
-  bool result = true;
-  // Processes were started in the order they appear in the vector, stop them in
-  // reverse order for symmetry.
-  for (auto entry_it = monitored_processes_.rbegin();
-       entry_it != monitored_processes_.rend(); ++entry_it) {
-    auto& entry = *entry_it;
-    result = result && entry.proc->Stop();
+  if (monitor_ == -1) {
+    LOG(ERROR) << "The monitor process is already dead.";
+    return false;
   }
-  // Wait for all processes to actually exit.
-  for (auto& entry : monitored_processes_) {
-    // Most processes are being killed by signals, calling Wait(void) would be
-    // too verbose on the logs.
-    int wstatus;
-    auto ret = entry.proc->Wait(&wstatus, 0);
-    if (ret < 0) {
-      LOG(WARNING) << "Failed to wait for process "
-                   << entry.cmd->GetShortName();
-    }
+  if (!monitor_socket_->IsOpen()) {
+    LOG(ERROR) << "The monitor socket is already closed.";
+    return false;
   }
-  // Clear the list to ensure they are not started again
-  monitored_processes_.clear();
-  return result;
+  ParentToChildMessage message;
+  message.stop = true;
+  if (WriteAllBinary(monitor_socket_, &message) != sizeof(message)) {
+    LOG(ERROR) << "Failed to communicate with monitor socket: "
+                << monitor_socket_->StrError();
+    return false;
+  }
+  pid_t last_monitor = monitor_;
+  monitor_ = -1;
+  monitor_socket_->Close();
+  int wstatus;
+  if (waitpid(last_monitor, &wstatus, 0) != last_monitor) {
+    LOG(ERROR) << "Failed to wait for monitor process";
+    return false;
+  }
+  if (WIFSIGNALED(wstatus)) {
+    LOG(ERROR) << "Monitor process exited due to a signal";
+    return false;
+  }
+  if (!WIFEXITED(wstatus)) {
+    LOG(ERROR) << "Monitor process exited for unknown reasons";
+    return false;
+  }
+  if (WEXITSTATUS(wstatus) != 0) {
+    LOG(ERROR) << "Monitor process exited with code " << WEXITSTATUS(wstatus);
+    return false;
+  }
+  return true;
 }
 
-bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry) {
-  // Make sure the process actually exited
-  char buffer[16];
-  auto bytes_read = entry->proc->control_socket()->Read(buffer, sizeof(buffer));
-  if (bytes_read > 0) {
-    LOG(WARNING) << "Subprocess " << entry->cmd->GetShortName() << " wrote "
-                 << bytes_read
-                 << " bytes on the control socket, this is unexpected";
-    // The process may not have exited, continue monitoring without restarting
+bool ProcessMonitor::StartAndMonitorProcesses() {
+  if (monitor_ != -1) {
+    LOG(ERROR) << "The monitor process was already started";
+    return false;
+  }
+  if (monitor_socket_->IsOpen()) {
+    LOG(ERROR) << "The monitor socket was already opened.";
+    return false;
+  }
+  SharedFD client_pipe, host_pipe;
+  if (!SharedFD::Pipe(&client_pipe, &host_pipe)) {
+    LOG(ERROR) << "Could not create the monitor socket.";
+    return false;
+  }
+  monitor_ = fork();
+  if (monitor_ == 0) {
+    monitor_socket_ = client_pipe;
+    host_pipe->Close();
+    std::exit(MonitorRoutine() ? 0 : 1);
+  } else {
+    client_pipe->Close();
+    monitor_socket_ = host_pipe;
     return true;
   }
+}
 
-  LOG(INFO) << "Detected exit of monitored subprocess";
-  // Make sure the subprocess isn't left in a zombie state, and that the
-  // pid is logged
-  int wstatus;
-  auto wait_ret = TEMP_FAILURE_RETRY(entry->proc->Wait(&wstatus, 0));
-  // None of the error conditions specified on waitpid(2) apply
-  assert(wait_ret > 0);
+static void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
+  LOG(INFO) << "Detected exit of monitored subprocess " << name;
   if (WIFEXITED(wstatus)) {
-    LOG(INFO) << "Subprocess " << entry->cmd->GetShortName() << " (" << wait_ret
+    LOG(INFO) << "Subprocess " << name << " (" << pid
               << ") has exited with exit code " << WEXITSTATUS(wstatus);
   } else if (WIFSIGNALED(wstatus)) {
-    LOG(ERROR) << "Subprocess " << entry->cmd->GetShortName() << " ("
-               << wait_ret
+    LOG(ERROR) << "Subprocess " << name << " (" << pid
                << ") was interrupted by a signal: " << WTERMSIG(wstatus);
   } else {
-    LOG(INFO) << "subprocess " << entry->cmd->GetShortName() << " (" << wait_ret
+    LOG(INFO) << "subprocess " << name << " (" << pid
               << ") has exited for unknown reasons";
   }
+}
+
+bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry, int wstatus) {
+  LogSubprocessExit(entry->cmd->GetShortName(), entry->proc->pid(), wstatus);
+
   cuttlefish::SubprocessOptions options;
-  options.WithControlSocket(true);
+    options.InGroup(true);
   entry->proc.reset(new Subprocess(entry->cmd->Start(options)));
   return true;
 }
 
-bool ProcessMonitor::DoNotMonitorCb(MonitorEntry*) { return false; }
+bool ProcessMonitor::DoNotMonitorCb(MonitorEntry*, int) { return false; }
 
-void ProcessMonitor::MonitorRoutine() {
-  LOG(DEBUG) << "Started monitoring subprocesses";
-  do {
-    SharedFDSet read_set;
-    read_set.Set(thread_comm_monitor_);
-    {
-      std::lock_guard<std::mutex> lock(processes_mutex_);
-      for (auto& monitored_process : monitored_processes_) {
-        auto control_socket = monitored_process.proc->control_socket();
-        if (!control_socket->IsOpen()) {
-          LOG(ERROR) << "The control socket for "
-                     << monitored_process.cmd->GetShortName()
-                     << " is closed, it's effectively NOT being monitored";
-        }
-        read_set.Set(control_socket);
-      }
-    }
-    // We can't call select while holding the lock as it would lead to a
-    // deadlock (restarter thread waiting for notifications from main thread,
-    // main thread waiting for the lock)
-    int num_fds = cuttlefish::Select(&read_set, nullptr, nullptr, nullptr);
-    if (num_fds < 0) {
-      LOG(ERROR) << "Select call returned error on restarter thread: "
-                 << strerror(errno);
-    }
-    if (num_fds > 0) {
-      // Try the communication fd, it's the most likely to be set
-      if (read_set.IsSet(thread_comm_monitor_)) {
-        --num_fds;
-        ConsumeNotifications(thread_comm_monitor_);
-      }
-    }
-    {
-      std::lock_guard<std::mutex> lock(processes_mutex_);
-      // Keep track of the number of file descriptors ready for read, chances
-      // are we don't need to go over the entire list of subprocesses
-      auto it = monitored_processes_.begin();
-      while (it != monitored_processes_.end()) {
-        auto control_socket = it->proc->control_socket();
-        bool keep_monitoring = true;
-        if (read_set.IsSet(control_socket)) {
-          --num_fds;
-          keep_monitoring = it->on_control_socket_ready_cb(&(*it));
-        }
-        if (keep_monitoring) {
-          ++it;
-        } else {
-          it = monitored_processes_.erase(it);
+bool ProcessMonitor::MonitorRoutine() {
+  // Make this process a subreaper to reliably catch subprocess exits.
+  // See https://man7.org/linux/man-pages/man2/prctl.2.html
+  prctl(PR_SET_CHILD_SUBREAPER, 1);
+  prctl(PR_SET_PDEATHSIG, SIGHUP); // Die when parent dies
+
+  LOG(DEBUG) << "Starting monitoring subprocesses";
+  for (auto& monitored : monitored_processes_) {
+    cuttlefish::SubprocessOptions options;
+    options.InGroup(true);
+    monitored.proc.reset(new Subprocess(monitored.cmd->Start(options)));
+    CHECK(monitored.proc->Started()) << "Failed to start process";
+  }
+
+  bool running = true;
+  std::thread parent_comms_thread([&running, this]() {
+    LOG(DEBUG) << "Waiting for a `stop` message from the parent.";
+    while (running) {
+      ParentToChildMessage message;
+      CHECK(ReadExactBinary(monitor_socket_, &message) == sizeof(message))
+          << "Could not read message from parent.";
+      if (message.stop) {
+        running = false;
+        // Wake up the wait() loop by giving it an exited child process
+        if (fork() == 0) {
+          std::exit(0);
         }
       }
     }
-    assert(num_fds == 0);
-  } while (true);
+  });
+
+  auto& monitored = monitored_processes_;
+
+  LOG(DEBUG) << "Monitoring subprocesses";
+  while(running) {
+    int wstatus;
+    pid_t pid = wait(&wstatus);
+    int error_num = errno;
+    CHECK(pid != -1) << "Wait failed: " << strerror(error_num);
+    if (!WIFSIGNALED(wstatus) && !WIFEXITED(wstatus)) {
+      LOG(DEBUG) << "Unexpected status from wait: " << wstatus
+                  << " for pid " << pid;
+      continue;
+    }
+    if (!running) { // Avoid extra restarts near the end
+      break;
+    }
+    auto matches = [pid](const auto& it) { return it.proc->pid() == pid; };
+    auto it = std::find_if(monitored.begin(), monitored.end(), matches);
+    if (it == monitored.end()) {
+      LogSubprocessExit("(unknown)", pid, wstatus);
+    } else {
+      if (!it->on_control_socket_ready_cb(&(*it), wstatus)) {
+        monitored_processes_.erase(it);
+      }
+    }
+  }
+
+  parent_comms_thread.join(); // Should have exited if `running` is false
+  // Processes were started in the order they appear in the vector, stop them in
+  // reverse order for symmetry.
+  auto stop = [](const auto& it) { return it.proc->Stop(); };
+  size_t stopped = std::count_if(monitored.rbegin(), monitored.rend(), stop);
+  LOG(DEBUG) << "Done monitoring subprocesses";
+  return stopped == monitored.size();
 }
 
 }  // namespace cuttlefish

@@ -25,7 +25,7 @@
 namespace cuttlefish {
 
 struct MonitorEntry;
-using OnSocketReadyCb = std::function<bool(MonitorEntry*)>;
+using OnSocketReadyCb = std::function<bool(MonitorEntry*, int)>;
 
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
@@ -37,29 +37,26 @@ struct MonitorEntry {
 class ProcessMonitor {
  public:
   ProcessMonitor();
-  // Starts a managed subprocess with a controlling socket.
-  // The on_control_socket_ready_cb callback will be called when data is ready
-  // to be read from the socket or the subprocess has ended. No member functions
-  // of the process monitor object should be called from the callback as it may
-  // lead to a deadlock. If the callback returns false the subprocess will no
-  // longer be monitored.
-  void StartSubprocess(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
+  // Adds a command to the list of commands to be run and monitored. The
+  // callback will be called when the subprocess has ended.  If the callback
+  // returns false the subprocess will no longer be monitored. Can only be
+  // called before StartAndMonitorProcesses is called. OnSocketReadyCb will be
+  // called inside a forked process.
+  void AddCommand(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
+
+  // Start all processes given by AddCommand.
+  bool StartAndMonitorProcesses();
   // Stops all monitored subprocesses.
   bool StopMonitoredProcesses();
-  static bool RestartOnExitCb(MonitorEntry* entry);
-  static bool DoNotMonitorCb(MonitorEntry* entry);
+
+  static bool RestartOnExitCb(MonitorEntry* entry, int wstatus);
+  static bool DoNotMonitorCb(MonitorEntry* entry, int wstatus);
 
  private:
-  // Monitors an already started subprocess
-  void MonitorExistingSubprocess(Command cmd, Subprocess sub_process,
-                                 OnSocketReadyCb on_control_socket_ready_cb);
-  void MonitorRoutine();
+  bool MonitorRoutine();
 
   std::vector<MonitorEntry> monitored_processes_;
-  // Used for communication with the restarter thread
-  cuttlefish::SharedFD thread_comm_main_, thread_comm_monitor_;
-  std::thread monitor_thread_;
-  // Protects access to the monitored_processes_
-  std::mutex processes_mutex_;
+  pid_t monitor_;
+  SharedFD monitor_socket_;
 };
 }  // namespace cuttlefish
