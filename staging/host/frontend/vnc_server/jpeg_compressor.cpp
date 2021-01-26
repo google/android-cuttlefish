@@ -32,7 +32,7 @@ void InitCinfo(jpeg_compress_struct* cinfo, jpeg_error_mgr* err,
 
   cinfo->image_width = width;
   cinfo->image_height = height;
-  cinfo->input_components = cuttlefish::ScreenConnector::BytesPerPixel();
+  cinfo->input_components = cuttlefish::ScreenConnectorInfo::BytesPerPixel();
   cinfo->in_color_space = JCS_EXT_RGBX;
 
   jpeg_set_defaults(cinfo);
@@ -58,7 +58,7 @@ cuttlefish::Message JpegCompressor::Compress(const Message& frame,
     auto row = static_cast<JSAMPROW>(const_cast<std::uint8_t*>(
         &frame[(y * stride) +
                (cinfo.next_scanline * stride) +
-               (x * cuttlefish::ScreenConnector::BytesPerPixel())]));
+               (x * cuttlefish::ScreenConnectorInfo::BytesPerPixel())]));
     jpeg_write_scanlines(&cinfo, &row, 1);
   }
   jpeg_finish_compress(&cinfo);
