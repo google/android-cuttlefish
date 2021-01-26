@@ -22,16 +22,36 @@
 #include <random>
 #endif
 #include <thread>
+#include <deque>
 
 #include "common/libs/thread_safe_queue/thread_safe_queue.h"
 #include "common/libs/threads/thread_annotations.h"
 #include "host/frontend/vnc_server/blackboard.h"
 #include "host/libs/screen_connector/screen_connector.h"
+#include "host/frontend/vnc_server/vnc_utils.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 namespace vnc {
+/**
+ * ScreenConnectorImpl will generate this, and enqueue
+ *
+ * It's basically a (processed) frame, so it:
+ *   must be efficiently std::move-able
+ * Also, for the sake of algorithm simplicity:
+ *   must be default-constructable & assignable
+ *
+ */
+struct VncScProcessedFrame : public ScreenConnectorFrameInfo {
+  Message raw_screen_;
+  std::deque<Stripe> stripes_;
+};
+
 class SimulatedHWComposer {
  public:
+  using ScreenConnector = ScreenConnector<VncScProcessedFrame>;
+  using GenerateProcessedFrameCallback = ScreenConnector::GenerateProcessedFrameCallback;
+
   SimulatedHWComposer(BlackBoard* bb);
   SimulatedHWComposer(const SimulatedHWComposer&) = delete;
   SimulatedHWComposer& operator=(const SimulatedHWComposer&) = delete;
@@ -49,6 +69,7 @@ class SimulatedHWComposer {
   void close();
   static void EraseHalfOfElements(ThreadSafeQueue<Stripe>::QueueImpl* q);
   void MakeStripes();
+  GenerateProcessedFrameCallback GetScreenConnectorCallback();
 
 #ifdef FUZZ_TEST_VNC
   std::default_random_engine engine_;
@@ -62,7 +83,7 @@ class SimulatedHWComposer {
   BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;
-  std::shared_ptr<ScreenConnector> screen_connector_;
+  std::unique_ptr<ScreenConnector> screen_connector_;
 };
 }  // namespace vnc
 }  // namespace cuttlefish

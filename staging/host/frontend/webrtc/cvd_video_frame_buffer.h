@@ -25,6 +25,12 @@ namespace cuttlefish {
 class CvdVideoFrameBuffer : public webrtc_streaming::VideoFrameBuffer {
  public:
   CvdVideoFrameBuffer(int width, int height);
+  CvdVideoFrameBuffer(CvdVideoFrameBuffer&& cvd_frame_buf) = default;
+  CvdVideoFrameBuffer(const CvdVideoFrameBuffer& cvd_frame_buf) = default;
+  CvdVideoFrameBuffer& operator=(CvdVideoFrameBuffer&& cvd_frame_buf) = default;
+  CvdVideoFrameBuffer& operator=(const CvdVideoFrameBuffer& cvd_frame_buf) = default;
+  CvdVideoFrameBuffer() = delete;
+
   ~CvdVideoFrameBuffer() override = default;
 
   int width() const override;

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "host/libs/screen_connector/screen_connector.h"
+#include "host/libs/screen_connector/screen_connector_common.h"
 
 #include <atomic>
 #include <cinttypes>
@@ -29,14 +29,14 @@
 
 namespace cuttlefish {
 
-class SocketBasedScreenConnector : public ScreenConnector {
+class SocketBasedScreenConnector : public ScreenConnectorSource {
  public:
   explicit SocketBasedScreenConnector(int frames_fd);
 
   bool OnFrameAfter(std::uint32_t frame_number,
-                    const FrameCallback& frame_callback) override;
+                    const GenerateProcessedFrameCallbackImpl& frame_callback) override;
 
-  void ReportClientsConnected(bool have_clients) override;
+  virtual void ReportClientsConnected(bool have_clients) override;
 
  private:
   static constexpr std::uint32_t kNumBuffersPerDisplay = 4;

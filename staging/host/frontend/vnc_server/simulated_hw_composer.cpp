@@ -34,6 +34,7 @@ SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements),
       screen_connector_(ScreenConnector::Get(FLAGS_frame_server_fd)) {
   stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
+  screen_connector_->SetCallback(std::move(GetScreenConnectorCallback()));
 }
 
 SimulatedHWComposer::~SimulatedHWComposer() {
@@ -72,65 +73,94 @@ void SimulatedHWComposer::EraseHalfOfElements(
   q->erase(q->begin(), std::next(q->begin(), kMaxQueueElements / 2));
 }
 
+SimulatedHWComposer::GenerateProcessedFrameCallback
+SimulatedHWComposer::GetScreenConnectorCallback() {
+  return
+    [](std::uint32_t frame_number, std::uint8_t* frame_pixels,
+       cuttlefish::vnc::VncScProcessedFrame& processed_frame) {
+      // TODO(171305898): handle multiple displays.
+      const std::uint32_t display_number = 0;
+      if (display_number != 0) {
+        processed_frame.is_success_ = false;
+        return;
+      }
+      const std::uint32_t display_w =
+        SimulatedHWComposer::ScreenConnector::ScreenWidth(display_number);
+      const std::uint32_t display_h =
+        SimulatedHWComposer::ScreenConnector::ScreenHeight(display_number);
+      const std::uint32_t display_stride_bytes =
+        SimulatedHWComposer::ScreenConnector::ScreenStrideBytes(display_number);
+      const std::uint32_t display_bpp =
+        SimulatedHWComposer::ScreenConnector::BytesPerPixel();
+      const std::uint32_t display_size_bytes =
+        SimulatedHWComposer::ScreenConnector::ScreenSizeInBytes(display_number);
+      processed_frame.frame_num_ = frame_number;
+
+      auto& raw_screen = processed_frame.raw_screen_;
+      raw_screen.assign(frame_pixels,
+                        frame_pixels + display_size_bytes);
+
+      const auto num_stripes = SimulatedHWComposer::kNumStripes;
+      for (int i = 0; i < num_stripes; ++i) {
+        std::uint16_t y = (display_h / num_stripes) * i;
+
+        // Last frames on the right and/or bottom handle extra pixels
+        // when a screen dimension is not evenly divisible by Frame::kNumSlots.
+        std::uint16_t height =
+          display_h / num_stripes +
+          (i + 1 == num_stripes ? display_h % num_stripes : 0);
+        const auto* raw_start = &raw_screen[y * display_w * display_bpp];
+        const auto* raw_end = raw_start + (height * display_w * display_bpp);
+        // creating a named object and setting individual data members in order
+        // to make klp happy
+        // TODO (haining) construct this inside the call when not compiling
+        // on klp
+        Stripe s{};
+        s.index = i;
+        s.x = 0;
+        s.y = y;
+        s.width = display_w;
+        s.stride = display_stride_bytes;
+        s.height = height;
+        s.frame_id = frame_number;
+        s.raw_data.assign(raw_start, raw_end);
+        s.orientation = ScreenOrientation::Portrait;
+        processed_frame.stripes_.push_back(std::move(s));
+      }
+      processed_frame.is_success_ = true;
+    };
+}
+
 void SimulatedHWComposer::MakeStripes() {
-  std::uint32_t previous_frame_number = 0;
-  const std::uint32_t display_number = 0;
-  const std::uint32_t display_w =
-      ScreenConnector::ScreenWidth(display_number);
-  const std::uint32_t display_h =
-      ScreenConnector::ScreenHeight(display_number);
-  const std::uint32_t display_stride_bytes =
-      ScreenConnector::ScreenStrideBytes(display_number);
-  const std::uint32_t display_bpp =
-      ScreenConnector::BytesPerPixel();
-  const std::uint32_t display_size_bytes =
-      ScreenConnector::ScreenSizeInBytes(display_number);
-
-  Message raw_screen;
   std::uint64_t stripe_seq_num = 1;
-
-  const FrameCallback frame_callback = [&](uint32_t frame_number,
-                                           uint8_t* frame_pixels) {
-    raw_screen.assign(frame_pixels,
-                      frame_pixels + display_size_bytes);
-
-    for (int i = 0; i < kNumStripes; ++i) {
-      ++stripe_seq_num;
-      std::uint16_t y = (display_h / kNumStripes) * i;
-
-      // Last frames on the right and/or bottom handle extra pixels
-      // when a screen dimension is not evenly divisible by Frame::kNumSlots.
-      std::uint16_t height =
-          display_h / kNumStripes +
-          (i + 1 == kNumStripes ? display_h % kNumStripes : 0);
-      const auto* raw_start = &raw_screen[y * display_w * display_bpp];
-      const auto* raw_end =
-          raw_start + (height * display_w * display_bpp);
-      // creating a named object and setting individual data members in order
-      // to make klp happy
-      // TODO (haining) construct this inside the call when not compiling
-      // on klp
-      Stripe s{};
-      s.index = i;
-      s.frame_id = frame_number;
-      s.x = 0;
-      s.y = y;
-      s.width = display_w;
-      s.stride = display_stride_bytes;
-      s.height = height;
-      s.raw_data.assign(raw_start, raw_end);
-      s.seq_number = StripeSeqNumber{stripe_seq_num};
-      s.orientation = ScreenOrientation::Portrait;
-      stripes_.Push(std::move(s));
-    }
-
-    previous_frame_number = frame_number;
-  };
-
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
-
-    screen_connector_->OnFrameAfter(previous_frame_number, frame_callback);
+    auto sim_hw_processed_frame = screen_connector_->OnFrameAfter();
+    // sim_hw_processed_frame has display number from the guest
+    if (!sim_hw_processed_frame.is_success_) {
+      continue;
+    }
+    while (!sim_hw_processed_frame.stripes_.empty()) {
+      /*
+       * ScreenConnector that supplies the frames into the queue
+       * cannot be aware of stripe_seq_num. The callback was set at the
+       * ScreenConnector creation time. ScreenConnector calls the callback
+       * function autonomously to make the processed frames to supply the
+       * queue with.
+       *
+       * Besides, ScreenConnector is not VNC specific. Thus, stripe_seq_num,
+       * a VNC specific information, is maintained here.
+       *
+       * OnFrameAfter returns a sim_hw_processed_frame, that contains N consecutive stripes.
+       * each stripe s has an invalid seq_number, default-initialzed
+       * We set the field properly, and push to the stripes_
+       */
+      auto& s = sim_hw_processed_frame.stripes_.front();
+      stripe_seq_num++;
+      s.seq_number = StripeSeqNumber{stripe_seq_num};
+      stripes_.Push(std::move(s));
+      sim_hw_processed_frame.stripes_.pop_front();
+    }
   }
 }
 
