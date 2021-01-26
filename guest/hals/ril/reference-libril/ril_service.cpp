@@ -621,7 +621,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> releasePduSessionId(int32_t serial, int32_t id);
     Return<void> startHandover(int32_t serial, int32_t callId);
     Return<void> cancelHandover(int32_t serial, int32_t callId);
-    Return<void> setAllowedNetworkTypeBitmap(uint32_t serial,
+    Return<void> setAllowedNetworkTypesBitmap(uint32_t serial,
             hidl_bitfield<::android::hardware::radio::V1_4::RadioAccessFamily> networkTypeBitmap);
     Return<void> setDataThrottling(int32_t serial,
             V1_6::DataThrottlingAction dataThrottlingAction,
@@ -629,7 +629,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> getSystemSelectionChannels(int32_t serial);
     Return<void> getVoiceRegistrationState_1_6(int32_t serial);
     Return<void> getDataRegistrationState_1_6(int32_t serial);
-    Return<void> getAllowedNetworkTypeBitmap(uint32_t serial);
+    Return<void> getAllowedNetworkTypesBitmap(uint32_t serial);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -3820,20 +3820,20 @@ Return<void> RadioImpl_1_6::setPreferredNetworkTypeBitmap(
     return Void();
 }
 
-Return<void> RadioImpl_1_6::setAllowedNetworkTypeBitmap(
+Return<void> RadioImpl_1_6::setAllowedNetworkTypesBitmap(
         uint32_t serial, hidl_bitfield<RadioAccessFamily> networkTypeBitmap) {
 #if VDBG
-    RLOGD("setAllowedNetworkTypeBitmap: serial %d", serial);
+    RLOGD("setAllowedNetworkTypesBitmap: serial %d", serial);
 #endif
-    dispatchInts(serial, mSlotId, RIL_REQUEST_SET_ALLOWED_NETWORK_TYPE_BITMAP, 1, networkTypeBitmap);
+    dispatchInts(serial, mSlotId, RIL_REQUEST_SET_ALLOWED_NETWORK_TYPES_BITMAP, 1, networkTypeBitmap);
     return Void();
 }
 
-Return<void> RadioImpl_1_6::getAllowedNetworkTypeBitmap(uint32_t serial) {
+Return<void> RadioImpl_1_6::getAllowedNetworkTypesBitmap(uint32_t serial) {
 #if VDBG
-    RLOGD("getAllowedNetworkTypeBitmap: serial %d", serial);
+    RLOGD("getAllowedNetworkTypesBitmap: serial %d", serial);
 #endif
-    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_ALLOWED_NETWORK_TYPE_BITMAP);
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP);
     return Void();
 }
 
@@ -7652,11 +7652,11 @@ int radio_1_6::setPreferredNetworkTypeResponse(int slotId,
     return 0;
 }
 
-int radio_1_6::setAllowedNetworkTypeBitmapResponse(int slotId,
+int radio_1_6::setAllowedNetworkTypesBitmapResponse(int slotId,
                                  int responseType, int serial, RIL_Errno e,
                                  void *response, size_t responseLen) {
 #if VDBG
-    RLOGD("setAllowedNetworkTypeBitmapResponse: serial %d", serial);
+    RLOGD("setAllowedNetworkTypesBitmapResponse: serial %d", serial);
 #endif
 
     V1_6::RadioResponseInfo responseInfo = {};
@@ -7669,30 +7669,30 @@ int radio_1_6::setAllowedNetworkTypeBitmapResponse(int slotId,
     }
 
     Return<void> retStatus =
-            radioService[slotId]->mRadioResponseV1_6->setAllowedNetworkTypeBitmapResponse(
+            radioService[slotId]->mRadioResponseV1_6->setAllowedNetworkTypesBitmapResponse(
             responseInfo);
     radioService[slotId]->checkReturnStatus(retStatus);
     return 0;
 }
 
-int radio_1_6::getAllowedNetworkTypeBitmapResponse(int slotId,
+int radio_1_6::getAllowedNetworkTypesBitmapResponse(int slotId,
                                           int responseType, int serial, RIL_Errno e,
                                           void *response, size_t responseLen) {
 #if VDBG
-    RLOGD("getAllowedNetworkTypeBitmapResponse: serial %d", serial);
+    RLOGD("getAllowedNetworkTypesBitmapResponse: serial %d", serial);
 #endif
 
     if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
       V1_6::RadioResponseInfo responseInfo = {};
         int ret = responseInt_1_6(responseInfo, serial, responseType, e, response, responseLen);
         Return<void> retStatus
-                = radioService[slotId]->mRadioResponseV1_6->getAllowedNetworkTypeBitmapResponse(
+                = radioService[slotId]->mRadioResponseV1_6->getAllowedNetworkTypesBitmapResponse(
                 responseInfo,
                 (const ::android::hardware::hidl_bitfield<
                 ::android::hardware::radio::V1_4::RadioAccessFamily>) ret);
         radioService[slotId]->checkReturnStatus(retStatus);
     } else {
-        RLOGE("getAllowedNetworkTypeBitmapResponse: radioService[%d]->mRadioResponseV1_6 == NULL",
+        RLOGE("getAllowedNetworkTypesBitmapResponse: radioService[%d]->mRadioResponseV1_6 == NULL",
                 slotId);
     }
 
