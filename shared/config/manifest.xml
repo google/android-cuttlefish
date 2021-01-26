@@ -106,15 +106,6 @@
         </interface>
     </hal>
     -->
-    <hal format="hidl">
-        <name>android.hardware.graphics.allocator</name>
-        <transport>hwbinder</transport>
-        <version>4.0</version>
-        <interface>
-            <name>IAllocator</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
     <!-- TODO (b/130079341): -->
     <hal format="hidl">
         <name>android.hardware.graphics.composer</name>
@@ -122,15 +113,6 @@
         <version>2.2</version>
         <interface>
             <name>IComposer</name>
-            <instance>default</instance>
-        </interface>
-    </hal>
-    <hal format="hidl">
-        <name>android.hardware.graphics.mapper</name>
-        <transport arch="32+64">passthrough</transport>
-        <version>4.0</version>
-        <interface>
-            <name>IMapper</name>
             <instance>default</instance>
         </interface>
     </hal>
