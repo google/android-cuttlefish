@@ -34,7 +34,7 @@ cc_binary {
     ],
 
     shared_libs: [
-        "android.hardware.health.storage-unstable-ndk_platform",
+        "android.hardware.health.storage-V1-ndk_platform",
         "libbase",
         "libbinder_ndk",
         "libutils",
