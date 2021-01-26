@@ -41,6 +41,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <android-base/cmsg.h>
+
 #include "vm_sockets.h"
 
 /**
@@ -110,6 +112,8 @@ class FileInstance;
  * reported with a new, closed FileInstance with the errno set.
  */
 class SharedFD {
+  // Give WeakFD access to the underlying shared_ptr.
+  friend class WeakFD;
  public:
   inline SharedFD();
   SharedFD(const std::shared_ptr<FileInstance>& in) : value_(in) {}
@@ -160,6 +164,23 @@ class SharedFD {
   static SharedFD ErrorFD(int error);
 
   std::shared_ptr<FileInstance> value_;
+};
+
+/**
+ * A non-owning reference to a FileInstance. The referenced FileInstance needs
+ * to be managed by a SharedFD. A WeakFD needs to be converted to a SharedFD to
+ * access the underlying FileInstance.
+ */
+class WeakFD {
+ public:
+  WeakFD(SharedFD shared_fd) : value_(shared_fd.value_) {}
+
+  // Creates a new SharedFD object that shares ownership of the underlying fd.
+  // Callers need to check that the returned SharedFD is open before using it.
+  SharedFD lock() const;
+
+ private:
+  std::weak_ptr<FileInstance> value_;
 };
 
 /**
@@ -335,6 +356,16 @@ class FileInstance {
     ssize_t rval = TEMP_FAILURE_RETRY(sendmsg(fd_, msg, flags));
     errno_ = errno;
     return rval;
+  }
+
+  template <typename... Args>
+  ssize_t SendFileDescriptors(const void* buf, size_t len, Args&&... sent_fds) {
+    std::vector<int> fds;
+    android::base::Append(fds, std::forward<int>(sent_fds->fd_)...);
+    errno = 0;
+    auto ret = android::base::SendFileDescriptorVector(fd_, buf, len, fds);
+    errno_ = errno;
+    return ret;
   }
 
   int Shutdown(int how) {
