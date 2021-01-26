@@ -327,7 +327,7 @@ SharedFD SharedFD::SocketLocalServer(int port, int type) {
     LOG(ERROR) << "Bind failed " << rval->StrError();
     return SharedFD::ErrorFD(rval->GetErrno());
   }
-  if (type == SOCK_STREAM) {
+  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     if (rval->Listen(4) < 0) {
       LOG(ERROR) << "Listen failed " << rval->StrError();
       return SharedFD::ErrorFD(rval->GetErrno());
@@ -362,9 +362,10 @@ SharedFD SharedFD::SocketLocalServer(const std::string& name, bool abstract,
 
   /* Only the bottom bits are really the socket type; there are flags too. */
   constexpr int SOCK_TYPE_MASK = 0xf;
+  auto socket_type = in_type & SOCK_TYPE_MASK;
 
   // Connection oriented sockets: start listening.
-  if ((in_type & SOCK_TYPE_MASK) == SOCK_STREAM) {
+  if (socket_type == SOCK_STREAM || socket_type == SOCK_SEQPACKET) {
     // Follows the default from socket_local_server
     if (rval->Listen(1) == -1) {
       LOG(ERROR) << "Listen failed: " << rval->StrError();
@@ -395,7 +396,7 @@ SharedFD SharedFD::VsockServer(unsigned int port, int type) {
     LOG(ERROR) << "Bind failed (" << vsock->StrError() << ")";
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
-  if (type == SOCK_STREAM) {
+  if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
     if (vsock->Listen(4) < 0) {
       LOG(ERROR) << "Listen failed (" << vsock->StrError() << ")";
       return SharedFD::ErrorFD(vsock->GetErrno());
@@ -422,6 +423,14 @@ SharedFD SharedFD::VsockClient(unsigned int cid, unsigned int port, int type) {
     return SharedFD::ErrorFD(vsock->GetErrno());
   }
   return vsock;
+}
+
+SharedFD WeakFD::lock() const {
+  auto locked_file_instance = value_.lock();
+  if (locked_file_instance) {
+    return SharedFD(locked_file_instance);
+  }
+  return SharedFD();
 }
 
 }  // namespace cuttlefish
