@@ -45,11 +45,10 @@
 #define PCM_CARD 0
 #define PCM_DEVICE 0
 
-
-#define OUT_PERIOD_MS 15
+#define OUT_PERIOD_MS 10
 #define OUT_PERIOD_COUNT 4
 
-#define IN_PERIOD_MS 15
+#define IN_PERIOD_MS 10
 #define IN_PERIOD_COUNT 4
 
 struct generic_audio_device {
