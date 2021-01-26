@@ -164,8 +164,8 @@ std::vector<SharedFD> LaunchKernelLogMonitor(
     param_builder.Build();
   }
 
-  process_monitor->StartSubprocess(std::move(command),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(command),
+                              GetOnSubprocessExitCallback(config));
 
   return ret;
 }
@@ -188,8 +188,8 @@ void LaunchLogcatReceiver(const CuttlefishConfig& config,
   Command command(LogcatReceiverBinary());
   command.AddParameter("-log_pipe_fd=", pipe);
 
-  process_monitor->StartSubprocess(std::move(command),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(command),
+                              GetOnSubprocessExitCallback(config));
   return;
 }
 
@@ -205,8 +205,8 @@ void LaunchConfigServer(const CuttlefishConfig& config,
   }
   Command cmd(ConfigServerBinary());
   cmd.AddParameter("-server_fd=", socket);
-  process_monitor->StartSubprocess(std::move(cmd),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(cmd),
+                              GetOnSubprocessExitCallback(config));
   return;
 }
 
@@ -238,8 +238,8 @@ void LaunchTombstoneReceiver(const CuttlefishConfig& config,
   cmd.AddParameter("-server_fd=", socket);
   cmd.AddParameter("-tombstone_dir=", tombstoneDir);
 
-  process_monitor->StartSubprocess(std::move(cmd),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(cmd),
+                              GetOnSubprocessExitCallback(config));
   return;
 }
 
@@ -254,7 +254,7 @@ void LaunchVNCServer(
 
   CreateStreamerServers(&vnc_server, config);
 
-  process_monitor->StartSubprocess(std::move(vnc_server), callback);
+  process_monitor->AddCommand(std::move(vnc_server), callback);
 }
 
 void LaunchAdbConnectorIfEnabled(ProcessMonitor* process_monitor,
@@ -276,8 +276,8 @@ void LaunchAdbConnectorIfEnabled(ProcessMonitor* process_monitor,
     }
     address_arg.pop_back();
     adb_connector.AddParameter(address_arg);
-    process_monitor->StartSubprocess(std::move(adb_connector),
-                                     GetOnSubprocessExitCallback(config));
+    process_monitor->AddCommand(std::move(adb_connector),
+                                GetOnSubprocessExitCallback(config));
   }
 }
 
@@ -291,8 +291,8 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
       sig_server.AddParameter("-certs_dir=", config.webrtc_certs_dir());
     }
     sig_server.AddParameter("-http_server_port=", config.sig_server_port());
-    process_monitor->StartSubprocess(std::move(sig_server),
-                                     GetOnSubprocessExitCallback(config));
+    process_monitor->AddCommand(std::move(sig_server),
+                                GetOnSubprocessExitCallback(config));
   }
 
   // Currently there is no way to ensure the signaling server will already have
@@ -338,8 +338,8 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
   LaunchCustomActionServers(webrtc, process_monitor, config);
 
   // TODO get from launcher params
-  process_monitor->StartSubprocess(std::move(webrtc),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(webrtc),
+                              GetOnSubprocessExitCallback(config));
 }
 
 bool StopModemSimulator() {
@@ -429,8 +429,8 @@ void LaunchModemSimulatorIfEnabled(
   }
   param_builder.Build();
 
-  process_monitor->StartSubprocess(std::move(cmd),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(cmd),
+                              GetOnSubprocessExitCallback(config));
 }
 
 void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
@@ -461,8 +461,8 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
                             std::to_string(instance.host_port()));
     adb_tunnel.AddParameter(std::string{"--vsock_cid="} +
                             std::to_string(instance.vsock_guest_cid()));
-    process_monitor->StartSubprocess(std::move(adb_tunnel),
-                                     GetOnSubprocessExitCallback(config));
+    process_monitor->AddCommand(std::move(adb_tunnel),
+                                GetOnSubprocessExitCallback(config));
   }
   if (AdbVsockHalfTunnelEnabled(config)) {
     Command adb_tunnel(SocketVsockProxyBinary());
@@ -481,8 +481,8 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
     adb_tunnel.AddParameter(append("--vsock_port=", 5555));
     adb_tunnel.AddParameter(append("--tcp_port=", instance.host_port()));
     adb_tunnel.AddParameter(append("--vsock_cid=", instance.vsock_guest_cid()));
-    process_monitor->StartSubprocess(std::move(adb_tunnel),
-                                     GetOnSubprocessExitCallback(config));
+    process_monitor->AddCommand(std::move(adb_tunnel),
+                                GetOnSubprocessExitCallback(config));
   }
 }
 
@@ -490,8 +490,8 @@ void LaunchMetrics(ProcessMonitor* process_monitor,
                    const CuttlefishConfig& config) {
   Command metrics(MetricsBinary());
 
-  process_monitor->StartSubprocess(std::move(metrics),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(metrics),
+                              GetOnSubprocessExitCallback(config));
 }
 
 void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
@@ -546,8 +546,8 @@ void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
       // If path is provided, proxy will start as local mode.
       gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=", instance.gnss_file_path());
     }
-    process_monitor->StartSubprocess(std::move(gnss_grpc_proxy_cmd),
-                                     GetOnSubprocessExitCallback(config));
+    process_monitor->AddCommand(std::move(gnss_grpc_proxy_cmd),
+                                GetOnSubprocessExitCallback(config));
 }
 
 void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
@@ -579,8 +579,8 @@ void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
   command.AddParameter("-keymaster_fd_in=", fifos[1]);
   command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
   command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
-  process_monitor->StartSubprocess(std::move(command),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(command),
+                              GetOnSubprocessExitCallback(config));
 }
 
 void LaunchCustomActionServers(Command& webrtc_cmd,
@@ -603,8 +603,8 @@ void LaunchCustomActionServers(Command& webrtc_cmd,
       std::string binary = "bin/" + *(custom_action.server);
       Command command(DefaultHostArtifactsPath(binary));
       command.AddParameter(action_server_socket);
-      process_monitor->StartSubprocess(std::move(command),
-                                       GetOnSubprocessExitCallback(config));
+      process_monitor->AddCommand(std::move(command),
+                                  GetOnSubprocessExitCallback(config));
 
       // Pass the WebRTC socket pair fd to WebRTC.
       if (first) {
@@ -638,8 +638,8 @@ void LaunchVehicleHalServerIfEnabled(const CuttlefishConfig& config,
   grpc_server.AddParameter("--server_port=", vhal_server_port);
   grpc_server.AddParameter("--power_state_file=", vhal_server_power_state_file);
   grpc_server.AddParameter("--power_state_socket=", vhal_server_power_state_socket);
-  process_monitor->StartSubprocess(std::move(grpc_server),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(grpc_server),
+                              GetOnSubprocessExitCallback(config));
 }
 
 void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
@@ -688,8 +688,8 @@ void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
 
   console_forwarder_cmd.AddParameter("--console_in_fd=", console_forwarder_in_wr);
   console_forwarder_cmd.AddParameter("--console_out_fd=", console_forwarder_out_rd);
-  process_monitor->StartSubprocess(std::move(console_forwarder_cmd),
-                                   GetOnSubprocessExitCallback(config));
+  process_monitor->AddCommand(std::move(console_forwarder_cmd),
+                              GetOnSubprocessExitCallback(config));
 
 }
 
