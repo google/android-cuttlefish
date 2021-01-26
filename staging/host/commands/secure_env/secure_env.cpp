@@ -56,7 +56,7 @@ DEFINE_string(keymaster_impl,
               "The keymaster implementation. \"tpm\" or \"software\"");
 
 DEFINE_string(gatekeeper_impl,
-              "software",
+              "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
 
 int main(int argc, char** argv) {
