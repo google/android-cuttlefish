@@ -23,10 +23,8 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
 void LaunchModemSimulatorIfEnabled(const CuttlefishConfig& config,
                                    ProcessMonitor* process_monitor);
 
-void LaunchVNCServer(
-    const CuttlefishConfig& config,
-    ProcessMonitor* process_monitor,
-    OnSocketReadyCb callback);
+void LaunchVNCServer(const CuttlefishConfig& config,
+                     ProcessMonitor* process_monitor);
 
 void LaunchTombstoneReceiver(const CuttlefishConfig& config,
                              ProcessMonitor* process_monitor);
@@ -39,8 +37,7 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
                   const CuttlefishConfig& config,
                   SharedFD kernel_log_events_pipe);
 
-void LaunchMetrics(ProcessMonitor* process_monitor,
-                   const CuttlefishConfig& config);
+void LaunchMetrics(ProcessMonitor* process_monitor);
 
 void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
                                         ProcessMonitor* process_monitor);
