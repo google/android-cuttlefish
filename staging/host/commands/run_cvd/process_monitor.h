@@ -30,31 +30,27 @@ using OnSocketReadyCb = std::function<bool(MonitorEntry*, int)>;
 struct MonitorEntry {
   std::unique_ptr<Command> cmd;
   std::unique_ptr<Subprocess> proc;
-  OnSocketReadyCb on_control_socket_ready_cb;
 };
 
 // Keeps track of launched subprocesses, restarts them if they unexpectedly exit
 class ProcessMonitor {
  public:
-  ProcessMonitor();
+  ProcessMonitor(bool restart_subprocesses);
   // Adds a command to the list of commands to be run and monitored. The
   // callback will be called when the subprocess has ended.  If the callback
   // returns false the subprocess will no longer be monitored. Can only be
   // called before StartAndMonitorProcesses is called. OnSocketReadyCb will be
   // called inside a forked process.
-  void AddCommand(Command cmd, OnSocketReadyCb on_control_socket_ready_cb);
+  void AddCommand(Command cmd);
 
   // Start all processes given by AddCommand.
   bool StartAndMonitorProcesses();
   // Stops all monitored subprocesses.
   bool StopMonitoredProcesses();
-
-  static bool RestartOnExitCb(MonitorEntry* entry, int wstatus);
-  static bool DoNotMonitorCb(MonitorEntry* entry, int wstatus);
-
  private:
   bool MonitorRoutine();
 
+  bool restart_subprocesses_;
   std::vector<MonitorEntry> monitored_processes_;
   pid_t monitor_;
   SharedFD monitor_socket_;
