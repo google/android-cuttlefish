@@ -183,6 +183,30 @@ class WeakFD {
   std::weak_ptr<FileInstance> value_;
 };
 
+// Provides RAII semantics for memory mappings, preventing memory leaks. It does
+// not however prevent use-after-free errors since the underlying pointer can be
+// extracted and could survive this object.
+class ScopedMMap {
+ public:
+  ScopedMMap();
+  ScopedMMap(void* ptr, size_t size);
+  ScopedMMap(const ScopedMMap& other) = delete;
+  ScopedMMap& operator=(const ScopedMMap& other) = delete;
+  ScopedMMap(ScopedMMap&& other);
+
+  ~ScopedMMap();
+
+  void* get() { return ptr_; }
+  const void* get() const { return ptr_; }
+  size_t len() const { return len_; }
+
+  operator bool() const { return ptr_ != MAP_FAILED; }
+
+ private:
+  void* ptr_ = MAP_FAILED;
+  size_t len_;
+};
+
 /**
  * Tracks the lifetime of a file descriptor and provides methods to allow
  * callers to use the file without knowledge of the underlying descriptor
@@ -421,11 +445,12 @@ class FileInstance {
     return strerror_buf_;
   }
 
-  void* MMap(void* addr, size_t length, int prot, int flags, off_t offset) {
+  ScopedMMap MMap(void* addr, size_t length, int prot, int flags,
+                  off_t offset) {
     errno = 0;
-    auto rval = mmap(addr, length, prot, flags, fd_, offset);
+    auto ptr = mmap(addr, length, prot, flags, fd_, offset);
     errno_ = errno;
-    return rval;
+    return ScopedMMap(ptr, length);
   }
 
   ssize_t Truncate(off_t length) {
