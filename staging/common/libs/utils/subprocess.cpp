@@ -79,23 +79,19 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
 Subprocess::Subprocess(Subprocess&& subprocess)
     : pid_(subprocess.pid_),
       started_(subprocess.started_),
-      control_socket_(subprocess.control_socket_),
       stopper_(subprocess.stopper_) {
   // Make sure the moved object no longer controls this subprocess
   subprocess.pid_ = -1;
   subprocess.started_ = false;
-  subprocess.control_socket_ = SharedFD();
 }
 
 Subprocess& Subprocess::operator=(Subprocess&& other) {
   pid_ = other.pid_;
   started_ = other.started_;
-  control_socket_ = other.control_socket_;
   stopper_ = other.stopper_;
 
   other.pid_ = -1;
   other.started_ = false;
-  other.control_socket_ = SharedFD();
   return *this;
 }
 
@@ -223,20 +219,6 @@ bool Command::RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
 
 Subprocess Command::Start(SubprocessOptions options) const {
   auto cmd = ToCharPointers(command_);
-  // The parent socket will get closed on the child on the call to exec, the
-  // child socket will be closed on the parent when this function returns and no
-  // references to the fd are left
-  SharedFD parent_socket, child_socket;
-  if (options.WithControlSocket()) {
-    if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &parent_socket,
-                              &child_socket)) {
-      LOG(ERROR) << "Unable to create control socket pair: " << strerror(errno);
-      return Subprocess(-1, {});
-    }
-    // Remove FD_CLOEXEC from the child socket, ensure the parent has it
-    child_socket->Fcntl(F_SETFD, 0);
-    parent_socket->Fcntl(F_SETFD, FD_CLOEXEC);
-  }
 
   if (!validate_redirects(redirects_, inherited_fds_)) {
     return Subprocess(-1, {});
@@ -292,7 +274,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
       LOG(VERBOSE) << cmd[i];
     }
   }
-  return Subprocess(pid, parent_socket, subprocess_stopper_);
+  return Subprocess(pid, subprocess_stopper_);
 }
 
 // A class that waits for threads to exit in its destructor.
