@@ -173,6 +173,21 @@ class CompositeDiskBuilder {
 private:
   std::vector<PartitionInfo> partitions_;
   std::uint64_t next_disk_offset_;
+
+  static const char *GetPartitionGUID(ImagePartition source) {
+    // Due to some endianness mismatch in e2fsprogs GUID vs GPT, the GUIDs are
+    // rearranged to make the right GUIDs appear in gdisk
+    switch (source.type) {
+      case kLinuxFilesystem:
+        // Technically 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+        return "AF3DC60F-8384-7247-8E79-3D69D8477DE4";
+      case kEfiSystemPartition:
+        // Technically C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+        return "28732AC1-1FF8-D211-BA4B-00A0C93EC93B";
+      default:
+        LOG(FATAL) << "Unknown partition type: " << (int) source.type;
+    }
+  }
 public:
   CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
 
@@ -257,12 +272,9 @@ public:
         .last_lba = (partition.offset + partition.size) / SECTOR_SIZE - 1,
       };
       uuid_generate(gpt.entries[i].unique_partition_guid);
-      // The right uuid is technically 0FC63DAF-8483-4772-8E79-3D69D8477DE4.
-      // Due to some endianness mismatch in e2fsprogs uuid vs GPT, this rearranged
-      // one makes the right uuid type appear in gdisk.
-      if (uuid_parse("AF3DC60F-8384-7247-8E79-3D69D8477DE4", // linux_fs
-                    gpt.entries[i].partition_type_guid)) {
-        LOG(FATAL) << "Could not parse linux_fs uuid";
+      if (uuid_parse(GetPartitionGUID(partition.source),
+                     gpt.entries[i].partition_type_guid)) {
+        LOG(FATAL) << "Could not parse partition guid";
       }
       std::u16string wide_name(partitions_[i].source.label.begin(),
                               partitions_[i].source.label.end());
