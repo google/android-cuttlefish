@@ -24,9 +24,15 @@
 
 namespace cuttlefish {
 
+enum ImagePartitionType {
+  kLinuxFilesystem = 0,
+  kEfiSystemPartition,
+};
+
 struct ImagePartition {
   std::string label;
   std::string image_file_path;
+  ImagePartitionType type;
 };
 
 /**
