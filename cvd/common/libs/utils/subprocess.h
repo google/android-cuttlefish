@@ -21,7 +21,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-#include <unordered_set>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -120,6 +119,25 @@ class Command {
   }
 
  public:
+  class ParameterBuilder {
+   public:
+    ParameterBuilder(Command* cmd) : cmd_(cmd){};
+    ParameterBuilder(ParameterBuilder&& builder) = default;
+    ~ParameterBuilder();
+
+    template <typename T>
+    ParameterBuilder& operator<<(T t) {
+      cmd_->BuildParameter(&stream_, t);
+      return *this;
+    }
+
+    void Build();
+
+   private:
+    Command* cmd_;
+    std::stringstream stream_;
+  };
+
   // Constructs a command object from the path to an executable binary and an
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
@@ -142,14 +160,6 @@ class Command {
     use_parent_env_ = false;
     env_ = env;
   }
-
-  // Specify environment variables to be unset from the parent's environment
-  // for the subprocesses to be started.
-  void UnsetFromEnvironment(const std::vector<std::string>& env) {
-    use_parent_env_ = true;
-    std::copy(env.cbegin(), env.cend(), std::inserter(unenv_, unenv_.end()));
-  }
-
   // Adds a single parameter to the command. All arguments are concatenated into
   // a single string to form a parameter. If one of those arguments is a
   // SharedFD a duplicate of it will be used and won't be closed until the
@@ -180,6 +190,8 @@ class Command {
     return false;
   }
 
+  ParameterBuilder GetParameterBuilder() { return ParameterBuilder(this); }
+
   // Redirects the standard IO of the command.
   bool RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);
   bool RedirectStdIO(Subprocess::StdIOChannel subprocess_channel,
@@ -201,7 +213,6 @@ class Command {
   std::map<Subprocess::StdIOChannel, int> redirects_{};
   bool use_parent_env_ = true;
   std::vector<std::string> env_{};
-  std::unordered_set<std::string> unenv_{};
   SubprocessStopper subprocess_stopper_;
 };
 
