@@ -74,12 +74,6 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   ret.push_back(NULL);
   return ret;
 }
-
-void UnsetEnvironment(const std::unordered_set<std::string>& unenv) {
-  for (auto it = unenv.cbegin(); it != unenv.cend(); ++it) {
-    unsetenv(it->c_str());
-  }
-}
 }  // namespace
 
 Subprocess::Subprocess(Subprocess&& subprocess)
@@ -162,6 +156,14 @@ bool KillSubprocess(Subprocess* subprocess) {
     }
   }
   return true;
+}
+Command::ParameterBuilder::~ParameterBuilder() { Build(); }
+void Command::ParameterBuilder::Build() {
+  auto param = stream_.str();
+  stream_ = std::stringstream();
+  if (param.size()) {
+    cmd_->AddParameter(param);
+  }
 }
 
 Command::~Command() {
@@ -247,11 +249,10 @@ Subprocess Command::Start(SubprocessOptions options) const {
     // the environment of the child process. To force an empty emvironment for
     // the child process pass the address of a pointer to NULL
     if (use_parent_env_) {
-      UnsetEnvironment(unenv_);
-      rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
+      rval = execv(cmd[0], const_cast<char* const*>(cmd.data()));
     } else {
       auto envp = ToCharPointers(env_);
-      rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+      rval = execve(cmd[0], const_cast<char* const*>(cmd.data()),
                     const_cast<char* const*>(envp.data()));
     }
     // No need for an if: if exec worked it wouldn't have returned
