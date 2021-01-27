@@ -129,14 +129,11 @@ class SharedFD {
   static bool Pipe(SharedFD* fd0, SharedFD* fd1);
   static SharedFD Event(int initval = 0, int flags = 0);
   static SharedFD MemfdCreate(const std::string& name, unsigned int flags = 0);
-  static SharedFD Mkstemp(std::string* path);
   static bool SocketPair(int domain, int type, int protocol, SharedFD* fd0,
                          SharedFD* fd1);
   static SharedFD Socket(int domain, int socket_type, int protocol);
   static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
                                     int in_type);
-  static SharedFD SocketLocalClient(const std::string& name, bool is_abstract,
-                                    int in_type, int timeout_seconds);
   static SharedFD SocketLocalClient(int port, int type);
   static SharedFD SocketLocalServer(const std::string& name, bool is_abstract,
                                     int in_type, mode_t mode);
@@ -248,9 +245,6 @@ class FileInstance {
     errno_ = errno;
     return rval;
   }
-
-  int ConnectWithTimeout(const struct sockaddr* addr, socklen_t addrlen,
-                         struct timeval* timeout);
 
   void Close();
 
