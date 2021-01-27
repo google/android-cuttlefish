@@ -39,17 +39,17 @@ struct ParentToChildMessage {
   bool stop;
 };
 
-ProcessMonitor::ProcessMonitor() : monitor_(-1) {
+ProcessMonitor::ProcessMonitor(bool restart_subprocesses)
+    : restart_subprocesses_(restart_subprocesses), monitor_(-1) {
 }
 
-void ProcessMonitor::AddCommand(Command cmd, OnSocketReadyCb callback) {
+void ProcessMonitor::AddCommand(Command cmd) {
   CHECK(monitor_ == -1) << "The monitor process is already running.";
   CHECK(!monitor_socket_->IsOpen()) << "The monitor socket is already open.";
 
   monitored_processes_.push_back(MonitorEntry());
   auto& entry = monitored_processes_.back();
   entry.cmd.reset(new Command(std::move(cmd)));
-  entry.on_control_socket_ready_cb = callback;
 }
 
 bool ProcessMonitor::StopMonitoredProcesses() {
@@ -131,17 +131,6 @@ static void LogSubprocessExit(const std::string& name, pid_t pid, int wstatus) {
   }
 }
 
-bool ProcessMonitor::RestartOnExitCb(MonitorEntry* entry, int wstatus) {
-  LogSubprocessExit(entry->cmd->GetShortName(), entry->proc->pid(), wstatus);
-
-  cuttlefish::SubprocessOptions options;
-    options.InGroup(true);
-  entry->proc.reset(new Subprocess(entry->cmd->Start(options)));
-  return true;
-}
-
-bool ProcessMonitor::DoNotMonitorCb(MonitorEntry*, int) { return false; }
-
 bool ProcessMonitor::MonitorRoutine() {
   // Make this process a subreaper to reliably catch subprocess exits.
   // See https://man7.org/linux/man-pages/man2/prctl.2.html
@@ -194,7 +183,12 @@ bool ProcessMonitor::MonitorRoutine() {
     if (it == monitored.end()) {
       LogSubprocessExit("(unknown)", pid, wstatus);
     } else {
-      if (!it->on_control_socket_ready_cb(&(*it), wstatus)) {
+      LogSubprocessExit(it->cmd->GetShortName(), it->proc->pid(), wstatus);
+      if (restart_subprocesses_) {
+        cuttlefish::SubprocessOptions options;
+        options.InGroup(true);
+        it->proc.reset(new Subprocess(it->cmd->Start(options)));
+      } else {
         monitored_processes_.erase(it);
       }
     }

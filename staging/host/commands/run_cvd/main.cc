@@ -75,14 +75,6 @@ namespace {
 constexpr char kGreenColor[] = "\033[1;32m";
 constexpr char kResetColor[] = "\033[0m";
 
-OnSocketReadyCb GetOnSubprocessExitCallback(const CuttlefishConfig& config) {
-  if (config.restart_subprocesses()) {
-    return ProcessMonitor::RestartOnExitCb;
-  } else {
-    return ProcessMonitor::DoNotMonitorCb;
-  }
-}
-
 // Maintains the state of the boot process, once a final state is reached
 // (success or failure) it sends the appropriate exit code to the foreground
 // launcher process
@@ -590,10 +582,10 @@ int RunCvdMain(int argc, char** argv) {
           foreground_launcher_pipe, powerwash_notification);
 
   // Monitor and restart host processes supporting the CVD
-  ProcessMonitor process_monitor;
+  ProcessMonitor process_monitor(config->restart_subprocesses());
 
   if (config->enable_metrics() == CuttlefishConfig::kYes) {
-    LaunchMetrics(&process_monitor, *config);
+    LaunchMetrics(&process_monitor);
   }
   LaunchModemSimulatorIfEnabled(*config, &process_monitor);
 
@@ -618,8 +610,7 @@ int RunCvdMain(int argc, char** argv) {
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
   if (config->enable_vnc_server()) {
-    LaunchVNCServer(
-        *config, &process_monitor, GetOnSubprocessExitCallback(*config));
+    LaunchVNCServer(*config, &process_monitor);
   }
   if (config->enable_webrtc()) {
     LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
@@ -632,8 +623,7 @@ int RunCvdMain(int argc, char** argv) {
   auto vmm_commands = vm_manager->StartCommands(
       *config, android::base::Join(kernel_args, " "));
   for (auto& vmm_cmd: vmm_commands) {
-    process_monitor.AddCommand(std::move(vmm_cmd),
-                               GetOnSubprocessExitCallback(*config));
+    process_monitor.AddCommand(std::move(vmm_cmd));
   }
 
   // Start other host processes
