@@ -60,6 +60,7 @@ DEFINE_string(vbmeta_image, "",
 DEFINE_string(vbmeta_system_image, "",
               "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
               "be vbmeta_system.img in the directory specified by -system_image_dir.");
+DEFINE_string(esp, "", "Path to ESP partition image (FAT formatted)");
 
 DEFINE_int32(blank_metadata_image_mb, 16,
              "The size of the blank metadata image to generate, MB.");
@@ -160,6 +161,13 @@ std::vector<ImagePartition> disk_config(
     partitions.push_back(ImagePartition {
       .label = "bootloader",
       .image_file_path = FLAGS_bootloader,
+    });
+  }
+  if (!FLAGS_esp.empty()) {
+    partitions.push_back(ImagePartition {
+      .label = "esp",
+      .image_file_path = FLAGS_esp,
+      .type = kEfiSystemPartition,
     });
   }
   partitions.push_back(ImagePartition {
@@ -504,6 +512,11 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   if (FLAGS_use_bootloader) {
     CHECK(FileHasContent(FLAGS_bootloader))
         << "File not found: " << FLAGS_bootloader;
+  }
+
+  if (!FLAGS_esp.empty()) {
+    CHECK(FileHasContent(FLAGS_esp))
+        << "File not found: " << FLAGS_esp;
   }
 
   if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
