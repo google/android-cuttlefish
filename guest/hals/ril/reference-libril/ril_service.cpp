@@ -609,7 +609,8 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
             bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason reason,
             const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& addresses,
             const hidl_vec<hidl_string>& dnses,
-            int32_t pduSessionId);
+            int32_t pduSessionId,
+            const ::android::hardware::radio::V1_6::OptionalSliceInfo& sliceInfo);
     Return<void> sendSms_1_6(int32_t serial, const GsmSmsMessage& message);
     Return<void> sendSMSExpectMore_1_6(int32_t serial, const GsmSmsMessage& message);
     Return<void> sendCdmaSms_1_6(int32_t serial, const CdmaSmsMessage& sms);
@@ -1415,7 +1416,8 @@ Return<void> RadioImpl_1_6::setupDataCall(int32_t serial, RadioTechnology radioT
             mvnoTypeStr,
             dataProfileInfo.mvnoMatchData.c_str(),
             roamingAllowed ? "1" : "0",
-            "-1");
+            "-1",
+            "");
     } else {
         RLOGE("Unsupported RIL version %d, min version expected 4", s_vendorFunctions->version);
         RequestInfo *pRI = android::addRequestToList(serial, mSlotId,
@@ -4303,7 +4305,8 @@ Return<void> RadioImpl_1_6::setupDataCall_1_6(int32_t serial ,
         bool roamingAllowed, ::android::hardware::radio::V1_2::DataRequestReason /* reason */,
         const hidl_vec<::android::hardware::radio::V1_5::LinkAddress>& /* addresses */,
         const hidl_vec<hidl_string>& /* dnses */,
-        int32_t /* pduSessionId */) {
+        int32_t /* pduSessionId */,
+        const ::android::hardware::radio::V1_6::OptionalSliceInfo& /* sliceInfo */) {
 
 #if VDBG
     RLOGD("setupDataCall_1_6: serial %d", serial);
