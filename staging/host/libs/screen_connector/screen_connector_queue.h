@@ -65,16 +65,16 @@ class ScreenConnectorQueue {
    * PushBack( std::move(src) );
    *
    * Note: this queue is suppoed to be used only by ScreenConnector-
-   * related components such as ScreenConnectorProxy
+   * related components such as ScreenConnectorSource
    *
    * The traditional assumption was that when webRTC or VNC calls
-   * OnNextFrame, the call should be block until it could return
+   * OnFrameAfter, the call should be block until it could return
    * one frame.
    *
    * Thus, the producers of this queue must not produce frames
    * much faster than the consumer, VNC or WebRTC consumes.
    * Therefore, when the small buffer is full -- which means
-   * VNC or WebRTC would not call OnNextFrame --, the producer
+   * VNC or WebRTC would not call OnFrameAfter --, the producer
    * should stop adding itmes to the queue.
    *
    */
