@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 DEFINE_int32(instance_num, cuttlefish::GetInstance(),
-             "Which instance to powerwash");
+             "Which instance to restart");
 
 DEFINE_int32(wait_for_launcher, 30,
              "How many seconds to wait for the launcher to respond to the status "
@@ -59,7 +59,7 @@ DEFINE_int32(boot_timeout, 1000, "How many seconds to wait for the device to "
 namespace cuttlefish {
 namespace {
 
-int PowerwashCvdMain(int argc, char** argv) {
+int RestartCvdMain(int argc, char** argv) {
   ::android::base::InitLogging(argv, android::base::StderrLogger);
   google::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -75,6 +75,7 @@ int PowerwashCvdMain(int argc, char** argv) {
     LOG(ERROR) << "No path to launcher monitor found";
     return 2;
   }
+  // This may hang if the server never picks up the connection.
   auto monitor_socket =
       SharedFD::SocketLocalClient(monitor_path.c_str(), false, SOCK_STREAM);
   if (!monitor_socket->IsOpen()) {
@@ -82,7 +83,7 @@ int PowerwashCvdMain(int argc, char** argv) {
                << ": " << monitor_socket->StrError();
     return 3;
   }
-  auto request = LauncherAction::kPowerwash;
+  auto request = LauncherAction::kRestart;
   auto bytes_sent = monitor_socket->Send(&request, sizeof(request), 0);
   if (bytes_sent < 0) {
     LOG(ERROR) << "Error sending launcher monitor the status command: "
@@ -111,10 +112,10 @@ int PowerwashCvdMain(int argc, char** argv) {
                << monitor_socket->StrError();
     return 7;
   }
-  LOG(INFO) << "Requesting powerwash";
+  LOG(INFO) << "Requesting restart";
   if (response != LauncherResponse::kSuccess) {
     LOG(ERROR) << "Received '" << static_cast<char>(response)
-               << "' response from launcher monitor for powerwash request";
+               << "' response from launcher monitor for restart request";
     return 8;
   }
   LOG(INFO) << "Waiting for device to boot up again";
@@ -151,7 +152,7 @@ int PowerwashCvdMain(int argc, char** argv) {
     LOG(ERROR) << "Unknown response: " << (int) exit_code;
     return 13;
   }
-  LOG(INFO) << "Powerwash successful";
+  LOG(INFO) << "Restart successful";
   return 0;
 }
 
@@ -159,5 +160,5 @@ int PowerwashCvdMain(int argc, char** argv) {
 } // namespace cuttlefish
 
 int main(int argc, char** argv) {
-  return cuttlefish::PowerwashCvdMain(argc, argv);
+  return cuttlefish::RestartCvdMain(argc, argv);
 }
