@@ -62,7 +62,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
-DEFINE_int32(powerwash_notification_fd, -1,
+DEFINE_int32(reboot_notification_fd, -1,
              "A file descriptor to notify when boot completes.");
 
 namespace cuttlefish {
@@ -81,9 +81,9 @@ constexpr char kResetColor[] = "\033[0m";
 class CvdBootStateMachine {
  public:
   CvdBootStateMachine(SharedFD fg_launcher_pipe,
-                      SharedFD powerwash_notification)
+                      SharedFD reboot_notification)
       : fg_launcher_pipe_(fg_launcher_pipe)
-      , powerwash_notification_(powerwash_notification)
+      , reboot_notification_(reboot_notification)
       , state_(kBootStarted) {}
 
   // Returns true if the machine is left in a final state
@@ -123,7 +123,7 @@ class CvdBootStateMachine {
     fd->Close();
   }
   bool MaybeWriteNotification() {
-    std::vector<SharedFD> fds = {powerwash_notification_, fg_launcher_pipe_};
+    std::vector<SharedFD> fds = {reboot_notification_, fg_launcher_pipe_};
     for (auto& fd : fds) {
       if (fd->IsOpen()) {
         if (BootCompleted()) {
@@ -139,7 +139,7 @@ class CvdBootStateMachine {
   }
 
   SharedFD fg_launcher_pipe_;
-  SharedFD powerwash_notification_;
+  SharedFD reboot_notification_;
   int state_;
   static const int kBootStarted = 0;
   static const int kGuestBootCompleted = 1 << 0;
@@ -270,15 +270,8 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
   return true;
 }
 
-bool PowerwashFiles() {
-  auto config = CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Could not load the config.";
-    return false;
-  }
-  auto instance = config->ForDefaultInstance();
-
-  // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
+void DeleteFifos(const CuttlefishConfig::InstanceSpecific& instance) {
+    // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
   std::vector<std::string> pipes = {
     instance.kernel_log_pipe_name(),
     instance.console_in_pipe_name(),
@@ -292,8 +285,19 @@ bool PowerwashFiles() {
   for (const auto& pipe : pipes) {
     unlink(pipe.c_str());
   }
+}
 
-// TODO(schuffelen): Clean up duplication with assemble_cvd
+bool PowerwashFiles() {
+  auto config = CuttlefishConfig::Get();
+  if (!config) {
+    LOG(ERROR) << "Could not load the config.";
+    return false;
+  }
+  auto instance = config->ForDefaultInstance();
+
+  DeleteFifos(instance);
+
+  // TODO(schuffelen): Clean up duplication with assemble_cvd
   auto kregistry_path = instance.access_kregistry_path();
   unlink(kregistry_path.c_str());
   CreateBlankImage(kregistry_path, 2 /* mb */, "none");
@@ -318,6 +322,29 @@ bool PowerwashFiles() {
     return false;
   }
   return true;
+}
+
+void RestartRunCvd(const CuttlefishConfig& config, int notification_fd) {
+  auto config_path = config.AssemblyPath("cuttlefish_config.json");
+  auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
+  WriteAll(followup_stdin, config_path + "\n");
+  followup_stdin->LSeek(0, SEEK_SET);
+  followup_stdin->UNMANAGED_Dup2(0);
+
+  auto argv_vec = gflags::GetArgvs();
+  char** argv = new char*[argv_vec.size() + 2];
+  for (size_t i = 0; i < argv_vec.size(); i++) {
+    argv[i] = argv_vec[i].data();
+  }
+  // Will take precedence over any earlier arguments.
+  std::string reboot_notification =
+      "-reboot_notification_fd=" + std::to_string(notification_fd);
+  argv[argv_vec.size()] = reboot_notification.data();
+  argv[argv_vec.size() + 1] = nullptr;
+
+  execv("/proc/self/exe", argv);
+  // execve should not return, so something went wrong.
+  PLOG(ERROR) << "execv returned: ";
 }
 
 void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
@@ -361,29 +388,35 @@ void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
           client->Write(&response, sizeof(response));
 
           auto config = CuttlefishConfig::Get();
-          auto config_path = config->AssemblyPath("cuttlefish_config.json");
-          auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
-          WriteAll(followup_stdin, config_path + "\n");
-          followup_stdin->LSeek(0, SEEK_SET);
-          followup_stdin->UNMANAGED_Dup2(0);
-
-          auto argv_vec = gflags::GetArgvs();
-          char** argv = new char*[argv_vec.size() + 2];
-          for (size_t i = 0; i < argv_vec.size(); i++) {
-            argv[i] = argv_vec[i].data();
-          }
-          int notification_fd = client->UNMANAGED_Dup();
-          // Will take precedence over any earlier arguments.
-          std::string powerwash_notification =
-              "-powerwash_notification_fd=" + std::to_string(notification_fd);
-          argv[argv_vec.size()] = powerwash_notification.data();
-          argv[argv_vec.size() + 1] = nullptr;
-
-          execv("/proc/self/exe", argv);
-          // execve should not return, so something went wrong.
-          PLOG(ERROR) << "execv returned: ";
+          CHECK(config) << "Could not load config";
+          RestartRunCvd(*config, client->UNMANAGED_Dup());
+          // RestartRunCvd should not return, so something went wrong.
           response = LauncherResponse::kError;
           client->Write(&response, sizeof(response));
+          LOG(FATAL) << "run_cvd in a bad state";
+          break;
+        }
+        case LauncherAction::kRestart: {
+          if (!process_monitor->StopMonitoredProcesses()) {
+            LOG(ERROR) << "Stopping processes failed.";
+            auto response = LauncherResponse::kError;
+            client->Write(&response, sizeof(response));
+            break;
+          }
+
+          auto config = CuttlefishConfig::Get();
+          CHECK(config) << "Could not load config";
+          auto instance = config->ForDefaultInstance();
+          DeleteFifos(instance);
+
+          auto response = LauncherResponse::kSuccess;
+          client->Write(&response, sizeof(response));
+          CHECK(config) << "Could not load config";
+          RestartRunCvd(*config, client->UNMANAGED_Dup());
+          // RestartRunCvd should not return, so something went wrong.
+          response = LauncherResponse::kError;
+          client->Write(&response, sizeof(response));
+          LOG(FATAL) << "run_cvd in a bad state";
           break;
         }
         default:
@@ -571,15 +604,15 @@ int RunCvdMain(int argc, char** argv) {
     }
   }
 
-  SharedFD powerwash_notification;
-  if (FLAGS_powerwash_notification_fd >= 0) {
-    powerwash_notification = SharedFD::Dup(FLAGS_powerwash_notification_fd);
-    close(FLAGS_powerwash_notification_fd);
+  SharedFD reboot_notification;
+  if (FLAGS_reboot_notification_fd >= 0) {
+    reboot_notification = SharedFD::Dup(FLAGS_reboot_notification_fd);
+    close(FLAGS_reboot_notification_fd);
   }
 
   auto boot_state_machine =
       std::make_shared<CvdBootStateMachine>(
-          foreground_launcher_pipe, powerwash_notification);
+          foreground_launcher_pipe, reboot_notification);
 
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
