@@ -57,6 +57,7 @@ cvd_host_tools = [
     "ms-tpm-20-ref",
     "newfs_msdos",
     "powerwash_cvd",
+    "restart_cvd",
     "run_cvd",
     "secure_env",
     "socket_vsock_proxy",
