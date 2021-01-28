@@ -103,6 +103,9 @@ DEVICE_MANIFEST_FILE += \
     device/google/cuttlefish/shared/config/android.hardware.media.omx@1.0.xml
 endif
 
+PRODUCT_PROPERTY_OVERRIDES += \
+    debug.stagefright.c2inputsurface=-1
+
 # Enforce privapp permissions control.
 PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
 
