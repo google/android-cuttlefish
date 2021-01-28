@@ -56,7 +56,6 @@ class ScreenConnector : public ScreenConnectorInfo {
    */
   using GenerateProcessedFrameCallback = std::function<void(std::uint32_t /*frame number*/,
                                                             std::uint8_t* /*frame_pixels*/,
-                                                            /* ScImpl enqueues this type into the Q */
                                                             ProcessedFrameType& msg)>;
 
   static std::unique_ptr<ScreenConnector<ProcessedFrameType>> Get(const int frames_fd) {
