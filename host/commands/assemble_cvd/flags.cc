@@ -4,6 +4,7 @@
 #include <android-base/strings.h>
 #include <gflags/gflags.h>
 #include <json/json.h>
+#include <json/writer.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -222,6 +223,12 @@ DEFINE_string(custom_action_config, "",
               "Path to a custom action config JSON. Defaults to the file provided by "
               "build variable CVD_CUSTOM_ACTION_CONFIG. If this build variable "
               "is empty then the custom action config will be empty as well.");
+DEFINE_string(
+    custom_actions, "",
+    "Serialized JSON of an array of custom action objects (in the same format as custom "
+    "action config JSON files). For use within --config preset config files; prefer "
+    "--custom_action_config to specify a custom config file on the command line. "
+    "--custom_action_config takes precedence over this flag if provided.");
 DEFINE_bool(use_bootloader, true, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -548,8 +555,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     std::string custom_action_config_dir =
         DefaultHostArtifactsPath("etc/cvd_custom_action_config");
     if (DirectoryExists(custom_action_config_dir)) {
-      auto custom_action_configs = DirectoryContents(
-          custom_action_config_dir);
+      auto custom_action_configs = DirectoryContents(custom_action_config_dir);
       // Two entries are always . and ..
       if (custom_action_configs.size() > 3) {
         LOG(ERROR) << "Expected at most one custom action config in "
@@ -563,21 +569,28 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       }
     }
   }
-  // Load the custom action config JSON.
+  Json::Reader reader;
+  Json::Value custom_action_array(Json::arrayValue);
   if (custom_action_config != "") {
-    Json::Reader reader;
+    // Load the custom action config JSON.
     std::ifstream ifs(custom_action_config);
-    Json::Value dictionary;
-    if (!reader.parse(ifs, dictionary)) {
-      LOG(ERROR) << "Could not read custom actions config file " << custom_action_config
-                 << ": " << reader.getFormattedErrorMessages();
+    if (!reader.parse(ifs, custom_action_array)) {
+      LOG(FATAL) << "Could not read custom actions config file "
+                 << custom_action_config << ": "
+                 << reader.getFormattedErrorMessages();
     }
-    std::vector<CustomActionConfig> custom_actions;
-    for (Json::Value custom_action : dictionary) {
-      custom_actions.push_back(CustomActionConfig(custom_action));
+  } else if (FLAGS_custom_actions != "") {
+    // Load the custom action from the --config preset file.
+    if (!reader.parse(FLAGS_custom_actions, custom_action_array)) {
+      LOG(FATAL) << "Could not read custom actions config flag: "
+                 << reader.getFormattedErrorMessages();
     }
-    tmp_config_obj.set_custom_actions(custom_actions);
   }
+  std::vector<CustomActionConfig> custom_actions;
+  for (Json::Value custom_action : custom_action_array) {
+    custom_actions.push_back(CustomActionConfig(custom_action));
+  }
+  tmp_config_obj.set_custom_actions(custom_actions);
 
   tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
@@ -780,8 +793,15 @@ void SetDefaultFlagsFromConfigPreset() {
                << config_reader.getFormattedErrorMessages();
   }
   for (const std::string& flag : config.getMemberNames()) {
-    if (gflags::SetCommandLineOptionWithMode(
-            flag.c_str(), config[flag].asString().c_str(), SET_FLAGS_DEFAULT)
+    std::string value;
+    if (flag == "custom_actions") {
+      Json::FastWriter writer;
+      value = writer.write(config[flag]);
+    } else {
+      value = config[flag].asString();
+    }
+    if (gflags::SetCommandLineOptionWithMode(flag.c_str(), value.c_str(),
+                                             SET_FLAGS_DEFAULT)
             .empty()) {
       LOG(FATAL) << "Error setting flag '" << flag << "'.";
     }
