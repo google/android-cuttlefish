@@ -38,7 +38,7 @@ using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 DEFINE_string(config, "phone",
               "Config preset name. Will automatically set flag fields "
               "using the values from this file of presets. Possible values: "
-              "phone,tablet");
+              "phone,tablet,auto,tv");
 
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -734,6 +734,8 @@ void SetDefaultFlagsFromConfigPreset() {
   const std::set<std::string> allowed_config_presets = {
       "phone",
       "tablet",
+      "tv",
+      "auto",
   };
 
   // If the user specifies a --config name, then use that config
