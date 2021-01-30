@@ -1,4 +1,10 @@
 prebuilt_etc_host {
+    name: "cvd_config_auto.json",
+    src: "config_auto.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
     name: "cvd_config_phone.json",
     src: "config_phone.json",
     sub_dir: "cvd_config",
@@ -7,5 +13,11 @@ prebuilt_etc_host {
 prebuilt_etc_host {
     name: "cvd_config_tablet.json",
     src: "config_tablet.json",
+    sub_dir: "cvd_config",
+}
+
+prebuilt_etc_host {
+    name: "cvd_config_tv.json",
+    src: "config_tv.json",
     sub_dir: "cvd_config",
 }
