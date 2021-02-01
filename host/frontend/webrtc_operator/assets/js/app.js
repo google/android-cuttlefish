@@ -22,7 +22,6 @@ function ConnectToDevice(device_id) {
   keyboardCaptureButton.addEventListener('click', onKeyboardCaptureClick);
 
   const deviceScreen = document.getElementById('deviceScreen');
-  deviceScreen.addEventListener('click', onInitialClick);
   const deviceView = document.getElementById('device_view');
   const webrtcStatusMessage = document.getElementById('webrtc_status_message');
   const adbStatusMessage = document.getElementById('adb_status_message');
@@ -59,17 +58,6 @@ function ConnectToDevice(device_id) {
     // Start the adb connection if it is not already started.
     initializeAdb();
   });
-
-  function onInitialClick(e) {
-    // This stupid thing makes sure that we disable controls after the first
-    // click... Why not just disable controls altogether you ask? Because then
-    // audio won't play because these days user-interaction is required to enable
-    // audio playback...
-    console.log('onInitialClick');
-
-    deviceScreen.controls = false;
-    deviceScreen.removeEventListener('click', onInitialClick);
-  }
 
   let videoStream;
   let display_label;
