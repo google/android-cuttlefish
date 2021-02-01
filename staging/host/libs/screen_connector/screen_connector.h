@@ -82,6 +82,22 @@ class ScreenConnector : public ScreenConnectorInfo {
   void SetCallback(GenerateProcessedFrameCallback&& frame_callback) {
     std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
     callback_from_streamer_ = std::move(frame_callback);
+    /*
+     * the first WaitForAtLeastOneClientConnection() call from VNC requires the
+     * Android-frame-processing thread starts beforehands (b/178504150)
+     */
+    if (!is_frame_fetching_thread_started_) {
+      is_frame_fetching_thread_started_ = true;
+      sc_android_impl_fetcher_ =
+          std::move(std::thread(&ScreenConnector::FrameFetchingLoop, this));
+    }
+  }
+
+  bool IsCallbackSet() const {
+    if (callback_from_streamer_) {
+      return true;
+    }
+    return false;
   }
 
   /* returns the processed frame that also includes meta-info such as success/fail
@@ -90,13 +106,6 @@ class ScreenConnector : public ScreenConnectorInfo {
    * NOTE THAT THIS IS THE ONLY CONSUMER OF THE TWO QUEUES
    */
   ProcessedFrameType OnFrameAfter() {
-    // make sure that SetCallback is called!
-    // lazy start of the sc_android_queue_ producing thread
-    if (!is_on_frame_after_called_) {
-      is_on_frame_after_called_ = true;
-      sc_android_impl_fetcher_ = std::move(std::thread(&ScreenConnector::FrameFetchingLoop, this));
-    }
-
     // sc_ctrl has a semaphore internally
     // passing beyond SemWait means either queue has an item
     sc_ctrl_.SemWaitItem();
@@ -144,18 +153,18 @@ class ScreenConnector : public ScreenConnectorInfo {
   }
 
  protected:
-  template<typename T,
-     typename = std::enable_if_t< std::is_base_of<ScreenConnectorSource, T>::value, void>>
-      ScreenConnector(std::unique_ptr<T>&& impl)
-          : sc_android_impl_ { std::move(impl) },
-            is_on_frame_after_called_(false),
-            sc_android_queue_(sc_ctrl_)
-  {}
+  template <typename T,
+            typename = std::enable_if_t<
+                std::is_base_of<ScreenConnectorSource, T>::value, void>>
+  ScreenConnector(std::unique_ptr<T>&& impl)
+      : sc_android_impl_{std::move(impl)},
+        is_frame_fetching_thread_started_(false),
+        sc_android_queue_(sc_ctrl_) {}
   ScreenConnector() = delete;
 
  private:
   std::unique_ptr<ScreenConnectorSource> sc_android_impl_; // either socket_based or wayland
-  bool is_on_frame_after_called_;
+  bool is_frame_fetching_thread_started_;
   ScreenConnectorCtrl sc_ctrl_;
   ScreenConnectorQueue<ProcessedFrameType> sc_android_queue_;
   GenerateProcessedFrameCallback callback_from_streamer_;
