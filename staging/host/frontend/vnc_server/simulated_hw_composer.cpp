@@ -133,6 +133,13 @@ SimulatedHWComposer::GetScreenConnectorCallback() {
 
 void SimulatedHWComposer::MakeStripes() {
   std::uint64_t stripe_seq_num = 1;
+  /*
+   * callback should be set before the first WaitForAtLeastOneClientConnection()
+   * (b/178504150) and the first OnFrameAfter().
+   */
+  if (!screen_connector_->IsCallbackSet()) {
+    LOG(FATAL) << "ScreenConnector callback hasn't been set before MakeStripes";
+  }
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
     auto sim_hw_processed_frame = screen_connector_->OnFrameAfter();
