@@ -190,6 +190,10 @@ BOARD_KERNEL_CMDLINE += snd-hda-intel.enable=0
 
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 
+# Reduce slab size usage from virtio vsock to reduce slab fragmentation
+BOARD_KERNEL_CMDLINE += \
+    vmw_vsock_virtio_transport_common.virtio_transport_max_vsock_pkt_buf_size=16384
+
 ifeq ($(TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE),f2fs)
 BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=f2fs
 endif
