@@ -46,21 +46,20 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
-#include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/size_utils.h"
+#include "common/libs/utils/subprocess.h"
 #include "common/libs/utils/tee_logging.h"
+#include "host/commands/run_cvd/boot_state_machine.h"
 #include "host/commands/run_cvd/launch.h"
-#include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/process_monitor.h"
+#include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/config/kernel_args.h"
-#include "host/commands/kernel_log_monitor/kernel_log_server.h"
-#include "host/commands/kernel_log_monitor/utils.h"
-#include <host/libs/vm_manager/crosvm_manager.h>
+#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/host_configuration.h"
-#include "host/libs/vm_manager/vm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
+#include "host/libs/vm_manager/vm_manager.h"
 
 DEFINE_int32(reboot_notification_fd, -1,
              "A file descriptor to notify when boot completes.");
@@ -74,100 +73,6 @@ namespace {
 
 constexpr char kGreenColor[] = "\033[1;32m";
 constexpr char kResetColor[] = "\033[0m";
-
-// Maintains the state of the boot process, once a final state is reached
-// (success or failure) it sends the appropriate exit code to the foreground
-// launcher process
-class CvdBootStateMachine {
- public:
-  CvdBootStateMachine(SharedFD fg_launcher_pipe,
-                      SharedFD reboot_notification)
-      : fg_launcher_pipe_(fg_launcher_pipe)
-      , reboot_notification_(reboot_notification)
-      , state_(kBootStarted) {}
-
-  // Returns true if the machine is left in a final state
-  bool OnBootEvtReceived(SharedFD boot_events_pipe) {
-    std::optional<monitor::ReadEventResult> read_result =
-        monitor::ReadEvent(boot_events_pipe);
-    if (!read_result) {
-      LOG(ERROR) << "Failed to read a complete kernel log boot event.";
-      state_ |= kGuestBootFailed;
-      return MaybeWriteNotification();
-    }
-
-    if (read_result->event == monitor::Event::BootCompleted) {
-      LOG(INFO) << "Virtual device booted successfully";
-      state_ |= kGuestBootCompleted;
-    } else if (read_result->event == monitor::Event::BootFailed) {
-      LOG(ERROR) << "Virtual device failed to boot";
-      state_ |= kGuestBootFailed;
-    }  // Ignore the other signals
-
-    return MaybeWriteNotification();
-  }
-
-  bool BootCompleted() const {
-    return state_ & kGuestBootCompleted;
-  }
-
-  bool BootFailed() const {
-    return state_ & kGuestBootFailed;
-  }
-
- private:
-  void SendExitCode(RunnerExitCodes exit_code, SharedFD fd) {
-    fd->Write(&exit_code, sizeof(exit_code));
-    // The foreground process will exit after receiving the exit code, if we try
-    // to write again we'll get a SIGPIPE
-    fd->Close();
-  }
-  bool MaybeWriteNotification() {
-    std::vector<SharedFD> fds = {reboot_notification_, fg_launcher_pipe_};
-    for (auto& fd : fds) {
-      if (fd->IsOpen()) {
-        if (BootCompleted()) {
-          SendExitCode(RunnerExitCodes::kSuccess, fd);
-        } else if (state_ & kGuestBootFailed) {
-          SendExitCode(RunnerExitCodes::kVirtualDeviceBootFailed, fd);
-        }
-      }
-    }
-    // Either we sent the code before or just sent it, in any case the state is
-    // final
-    return BootCompleted() || (state_ & kGuestBootFailed);
-  }
-
-  SharedFD fg_launcher_pipe_;
-  SharedFD reboot_notification_;
-  int state_;
-  static const int kBootStarted = 0;
-  static const int kGuestBootCompleted = 1 << 0;
-  static const int kGuestBootFailed = 1 << 1;
-};
-
-std::thread SetUpHandlingOfBootEvents(
-    SharedFD boot_events_pipe,
-    std::shared_ptr<CvdBootStateMachine> state_machine) {
-  return std::thread([boot_events_pipe, state_machine]() {
-    while (true) {
-      SharedFDSet fd_set;
-      fd_set.Set(boot_events_pipe);
-      int result = Select(&fd_set, nullptr, nullptr, nullptr);
-      if (result < 0) {
-        PLOG(FATAL) << "Failed to call Select";
-        return;
-      }
-      if (!fd_set.IsSet(boot_events_pipe)) {
-        continue;
-      }
-      auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
-      if (sent_code) {
-        break;
-      }
-    }
-  });
-}
 
 bool WriteCuttlefishEnvironment(const CuttlefishConfig& config) {
   auto env = SharedFD::Open(config.cuttlefish_env_path().c_str(),
@@ -610,10 +515,6 @@ int RunCvdMain(int argc, char** argv) {
     close(FLAGS_reboot_notification_fd);
   }
 
-  auto boot_state_machine =
-      std::make_shared<CvdBootStateMachine>(
-          foreground_launcher_pipe, reboot_notification);
-
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
@@ -629,8 +530,8 @@ int RunCvdMain(int argc, char** argv) {
   SharedFD webrtc_events_pipe = event_pipes[2];
   event_pipes.clear();
 
-  auto boot_events =
-      SetUpHandlingOfBootEvents(boot_events_pipe, boot_state_machine);
+  CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
+                                         reboot_notification, boot_events_pipe);
 
   LaunchLogcatReceiver(*config, &process_monitor);
   LaunchConfigServer(*config, &process_monitor);
@@ -669,7 +570,6 @@ int RunCvdMain(int argc, char** argv) {
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
 
-  boot_events.join();
   return RunnerExitCodes::kServerError;
 }
 
