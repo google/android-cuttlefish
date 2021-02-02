@@ -197,7 +197,19 @@ bool ProcessMonitor::MonitorRoutine() {
   parent_comms_thread.join(); // Should have exited if `running` is false
   // Processes were started in the order they appear in the vector, stop them in
   // reverse order for symmetry.
-  auto stop = [](const auto& it) { return it.proc->Stop(); };
+  auto stop = [](const auto& it) {
+    if (!it.proc->Stop()) {
+      LOG(WARNING) << "Error in stopping \"" << it.cmd->GetShortName() << "\"";
+      return false;
+    }
+    int wstatus = 0;
+    auto ret = it.proc->Wait(&wstatus, 0);
+    if (ret < 0) {
+      LOG(WARNING) << "Failed to wait for process " << it.cmd->GetShortName();
+      return false;
+    }
+    return true;
+  };
   size_t stopped = std::count_if(monitored.rbegin(), monitored.rend(), stop);
   LOG(DEBUG) << "Done monitoring subprocesses";
   return stopped == monitored.size();
