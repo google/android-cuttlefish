@@ -549,12 +549,6 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
             const hidl_vec<hidl_string>& urns,
             ::android::hardware::radio::V1_4::EmergencyCallRouting routing,
             bool fromEmergencyDialer, bool isTesting);
-    Return<void> emergencyDial_1_6(int32_t serial,
-            const ::android::hardware::radio::V1_0::Dial& dialInfo,
-            hidl_bitfield<android::hardware::radio::V1_4::EmergencyServiceCategory> categories,
-            const hidl_vec<hidl_string>& urns,
-            ::android::hardware::radio::V1_4::EmergencyCallRouting routing,
-            bool fromEmergencyDialer, bool isTesting);
     Return<void> startNetworkScan_1_4(int32_t serial,
             const ::android::hardware::radio::V1_2::NetworkScanRequest& request);
     Return<void> getPreferredNetworkTypeBitmap(int32_t serial);
@@ -1798,87 +1792,6 @@ Return<void> RadioImpl_1_6::getDataCallList_1_6(int32_t serial) {
     RLOGD("getDataCallList_1_6: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_DATA_CALL_LIST);
-    return Void();
-}
-
-Return<void> RadioImpl_1_6::emergencyDial_1_6(int32_t serial,
-        const ::android::hardware::radio::V1_0::Dial& dialInfo,
-        hidl_bitfield<android::hardware::radio::V1_4::EmergencyServiceCategory> categories,
-        const hidl_vec<hidl_string>&  urns ,
-        ::android::hardware::radio::V1_4::EmergencyCallRouting routing,
-        bool fromEmergencyDialer, bool /* isTesting */) {
-#if VDBG
-    RLOGD("emergencyDial: serial %d", serial);
-#endif
-
-    RequestInfo *pRI = android::addRequestToList(serial, mSlotId, RIL_REQUEST_EMERGENCY_DIAL);
-    if (pRI == NULL) {
-        return Void();
-    }
-
-    RIL_EmergencyDial eccDial = {};
-    RIL_Dial& dial = eccDial.dialInfo;
-    RIL_UUS_Info uusInfo = {};
-
-    if (!copyHidlStringToRil(&dial.address, dialInfo.address, pRI)) {
-        return Void();
-    }
-    dial.clir = (int) dialInfo.clir;
-
-    if (dialInfo.uusInfo.size() != 0) {
-        uusInfo.uusType = (RIL_UUS_Type) dialInfo.uusInfo[0].uusType;
-        uusInfo.uusDcs = (RIL_UUS_DCS) dialInfo.uusInfo[0].uusDcs;
-
-        if (dialInfo.uusInfo[0].uusData.size() == 0) {
-            uusInfo.uusData = NULL;
-            uusInfo.uusLength = 0;
-        } else {
-            if (!copyHidlStringToRil(&uusInfo.uusData, dialInfo.uusInfo[0].uusData, pRI)) {
-                memsetAndFreeStrings(1, dial.address);
-                return Void();
-            }
-            uusInfo.uusLength = dialInfo.uusInfo[0].uusData.size();
-        }
-
-        dial.uusInfo = &uusInfo;
-    }
-
-    eccDial.urnsNumber = urns.size();
-    if (eccDial.urnsNumber != 0) {
-        char **ppUrns = (char **)calloc(eccDial.urnsNumber, sizeof(char *));
-        if (ppUrns == NULL) {
-            RLOGE("Memory allocation failed for request %s",
-                    requestToString(pRI->pCI->requestNumber));
-            sendErrorResponse(pRI, RIL_E_NO_MEMORY);
-            memsetAndFreeStrings(2, dial.address, uusInfo.uusData);
-            return Void();
-        }
-        for (uint32_t i = 0; i < eccDial.urnsNumber; i++) {
-            if (!copyHidlStringToRil(&ppUrns[i], hidl_string(urns[i]), pRI)) {
-                for (uint32_t j = 0; j < i; j++) {
-                    memsetAndFreeStrings(1, ppUrns[j]);
-                }
-                memsetAndFreeStrings(2, dial.address, uusInfo.uusData);
-                free(ppUrns);
-                return Void();
-            }
-        }
-        eccDial.urns = ppUrns;
-    }
-
-    eccDial.categories = (RIL_EmergencyServiceCategory)categories;
-    eccDial.routing = (RIL_EmergencyCallRouting)routing;
-    eccDial.fromEmergencyDialer = fromEmergencyDialer;
-
-    CALL_ONREQUEST(RIL_REQUEST_EMERGENCY_DIAL, &eccDial, sizeof(RIL_EmergencyDial), pRI, mSlotId);
-
-    memsetAndFreeStrings(2, dial.address, uusInfo.uusData);
-    if (eccDial.urns != NULL) {
-        for (size_t i = 0; i < eccDial.urnsNumber; i++) {
-            memsetAndFreeStrings(1, eccDial.urns[i]);
-        }
-        free(eccDial.urns);
-    }
     return Void();
 }
 
