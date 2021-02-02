@@ -112,6 +112,7 @@ extern "C" {
  *                    RIL_REQUEST_SET_DATA_THROTTLING
  *                    RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS
  *                    RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP
+ *                    RIL_REQUEST_GET_SLICING_CONFIG
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -7488,7 +7489,17 @@ typedef enum {
  */
 #define RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP 168
 
-#define RIL_REQUEST_LAST RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP
+/**
+ * RIL_REQUEST_GET_SLICING_CONFIG
+ *
+ * Request to get the current slicing configuration including URSP rules and
+ * NSSAIs (configured, allowed and rejected).
+ *
+ * Response callback is IRadioResponse.getSlicingConfigResponse()
+ */
+#define RIL_REQUEST_GET_SLICING_CONFIG 169
+
+#define RIL_REQUEST_LAST RIL_REQUEST_GET_SLICING_CONFIG
 
 /***********************************************************************/
 
