@@ -16,6 +16,7 @@
 cc_binary {
     name: "run_cvd",
     srcs: [
+        "boot_state_machine.cc",
         "launch.cc",
         "main.cc",
         "process_monitor.cc",
