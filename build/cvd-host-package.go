@@ -72,18 +72,18 @@ func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
 var pctx = android.NewPackageContext("android/soong/cuttlefish")
 
 func (c *cvdHostPackage) GenerateAndroidBuildActions(ctx android.ModuleContext) {
-	zipFile := android.PathForModuleOut(ctx, "package.zip").OutputPath
+	zipFile := android.PathForModuleOut(ctx, "package.zip")
 	c.CopyDepsToZip(ctx, zipFile)
 
 	// Dir where to extract the zip file and construct the final tar.gz from
-	packageDir := android.PathForModuleOut(ctx, ".temp").OutputPath
+	packageDir := android.PathForModuleOut(ctx, ".temp")
 	builder := android.NewRuleBuilder(pctx, ctx)
 	builder.Command().
 		BuiltTool("zipsync").
 		FlagWithArg("-d ", packageDir.String()).
 		Input(zipFile)
 
-	output := android.PathForModuleOut(ctx, "package.tar.gz").OutputPath
+	output := android.PathForModuleOut(ctx, "package.tar.gz")
 	builder.Command().Text("tar Scfz").
 		Output(output).
 		FlagWithArg("-C ", packageDir.String()).
