@@ -28,17 +28,20 @@ namespace cuttlefish {
 // launcher process
 class CvdBootStateMachine {
  public:
-  CvdBootStateMachine(SharedFD fg_launcher_pipe, SharedFD reboot_notification);
+  CvdBootStateMachine(SharedFD fg_launcher_pipe, SharedFD reboot_notification,
+                      SharedFD boot_events_pipe);
+  ~CvdBootStateMachine();
 
+ private:
   // Returns true if the machine is left in a final state
   bool OnBootEvtReceived(SharedFD boot_events_pipe);
   bool BootCompleted() const;
   bool BootFailed() const;
 
- private:
   void SendExitCode(RunnerExitCodes exit_code, SharedFD fd);
   bool MaybeWriteNotification();
 
+  std::thread boot_event_handler_;
   SharedFD fg_launcher_pipe_;
   SharedFD reboot_notification_;
   int state_;
@@ -46,9 +49,5 @@ class CvdBootStateMachine {
   static const int kGuestBootCompleted = 1 << 0;
   static const int kGuestBootFailed = 1 << 1;
 };
-
-std::thread SetUpHandlingOfBootEvents(
-    SharedFD boot_events_pipe,
-    std::shared_ptr<CvdBootStateMachine> state_machine);
 
 }  // namespace cuttlefish

@@ -515,10 +515,6 @@ int RunCvdMain(int argc, char** argv) {
     close(FLAGS_reboot_notification_fd);
   }
 
-  auto boot_state_machine =
-      std::make_shared<CvdBootStateMachine>(
-          foreground_launcher_pipe, reboot_notification);
-
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
@@ -534,8 +530,8 @@ int RunCvdMain(int argc, char** argv) {
   SharedFD webrtc_events_pipe = event_pipes[2];
   event_pipes.clear();
 
-  auto boot_events =
-      SetUpHandlingOfBootEvents(boot_events_pipe, boot_state_machine);
+  CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
+                                         reboot_notification, boot_events_pipe);
 
   LaunchLogcatReceiver(*config, &process_monitor);
   LaunchConfigServer(*config, &process_monitor);
@@ -574,7 +570,6 @@ int RunCvdMain(int argc, char** argv) {
   ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
 
-  boot_events.join();
   return RunnerExitCodes::kServerError;
 }
 

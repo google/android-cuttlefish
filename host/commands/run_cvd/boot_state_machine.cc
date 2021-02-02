@@ -19,8 +19,7 @@
 #include <memory>
 #include <thread>
 
-#include <android-base/logging.h>
-
+#include "android-base/logging.h"
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/kernel_log_monitor/kernel_log_server.h"
 #include "host/commands/kernel_log_monitor/utils.h"
@@ -29,10 +28,32 @@
 namespace cuttlefish {
 
 CvdBootStateMachine::CvdBootStateMachine(SharedFD fg_launcher_pipe,
-                                         SharedFD reboot_notification)
+                                         SharedFD reboot_notification,
+                                         SharedFD boot_events_pipe)
     : fg_launcher_pipe_(fg_launcher_pipe),
       reboot_notification_(reboot_notification),
-      state_(kBootStarted) {}
+      state_(kBootStarted) {
+  boot_event_handler_ = std::thread([this, boot_events_pipe]() {
+    while (true) {
+      SharedFDSet fd_set;
+      fd_set.Set(boot_events_pipe);
+      int result = Select(&fd_set, nullptr, nullptr, nullptr);
+      if (result < 0) {
+        PLOG(FATAL) << "Failed to call Select";
+        return;
+      }
+      if (!fd_set.IsSet(boot_events_pipe)) {
+        continue;
+      }
+      auto sent_code = OnBootEvtReceived(boot_events_pipe);
+      if (sent_code) {
+        break;
+      }
+    }
+  });
+}
+
+CvdBootStateMachine::~CvdBootStateMachine() { boot_event_handler_.join(); }
 
 // Returns true if the machine is left in a final state
 bool CvdBootStateMachine::OnBootEvtReceived(SharedFD boot_events_pipe) {
@@ -84,29 +105,6 @@ bool CvdBootStateMachine::MaybeWriteNotification() {
   // Either we sent the code before or just sent it, in any case the state is
   // final
   return BootCompleted() || (state_ & kGuestBootFailed);
-}
-
-std::thread SetUpHandlingOfBootEvents(
-    SharedFD boot_events_pipe,
-    std::shared_ptr<CvdBootStateMachine> state_machine) {
-  return std::thread([boot_events_pipe, state_machine]() {
-    while (true) {
-      SharedFDSet fd_set;
-      fd_set.Set(boot_events_pipe);
-      int result = Select(&fd_set, nullptr, nullptr, nullptr);
-      if (result < 0) {
-        PLOG(FATAL) << "Failed to call Select";
-        return;
-      }
-      if (!fd_set.IsSet(boot_events_pipe)) {
-        continue;
-      }
-      auto sent_code = state_machine->OnBootEvtReceived(boot_events_pipe);
-      if (sent_code) {
-        break;
-      }
-    }
-  });
 }
 
 }  // namespace cuttlefish
