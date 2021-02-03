@@ -132,3 +132,8 @@ java_test_host {
 
     test_suites: ["general-tests"],
 }
+
+filegroup {
+    name: "cf_dtb",
+    srcs: ["dtb.img"],
+}
