@@ -81,7 +81,6 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.tetheroffload.control@1.1", // see b/170699770
     "android.hardware.thermal@1.1",
     "android.hardware.tv.cec@1.0",
-    "android.hardware.tv.cec@2.0",
     "android.hardware.tv.input@1.0",
     "android.hardware.tv.tuner@1.1",
     "android.hardware.usb@1.2",
