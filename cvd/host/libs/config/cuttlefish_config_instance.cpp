@@ -442,7 +442,7 @@ std::string CuttlefishConfig::InstanceSpecific::PerInstanceInternalPath(
 }
 
 std::string CuttlefishConfig::InstanceSpecific::instance_name() const {
-  return ForCurrentInstance("cvd-");
+  return "cvd-" + id_;
 }
 
 }  // namespace cuttlefish
