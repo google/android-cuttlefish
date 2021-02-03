@@ -16,6 +16,9 @@
     },
     {
       "name": "hal_implementation_test"
+    },
+    {
+      "name": "vts_ibase_test"
     }
   ]
 }
