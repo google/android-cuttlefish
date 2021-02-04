@@ -135,7 +135,7 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
   HmacSerializable sign_check(
       resource_manager_, signing_key_fn, TPM2_SHA256_DIGEST_SIZE, &encryption);
   auto generated_blob = SerializableToKeyBlob(sign_check);
-  LOG(DEBUG) << "Keymaster key size: " << generated_blob.key_material_size;
+  LOG(VERBOSE) << "Keymaster key size: " << generated_blob.key_material_size;
   if (generated_blob.key_material_size != 0) {
     *blob = generated_blob;
     return KM_ERROR_OK;

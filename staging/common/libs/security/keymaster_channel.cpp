@@ -59,8 +59,8 @@ bool KeymasterChannel::SendMessage(
     bool is_response,
     const keymaster::Serializable& message) {
   auto payload_size = message.SerializedSize();
-  LOG(DEBUG) << "Sending message with id: " << command
-             << " and size " << payload_size;
+  LOG(VERBOSE) << "Sending message with id: " << command << " and size "
+               << payload_size;
   auto to_send = CreateKeymasterMessage(command, is_response, payload_size);
   message.Serialize(to_send->payload, to_send->payload + payload_size);
   auto write_size = payload_size + sizeof(keymaster_message);
@@ -81,8 +81,8 @@ ManagedKeymasterMessage KeymasterChannel::ReceiveMessage() {
     LOG(ERROR) << "Could not read Keymaster Message: " << input_->StrError();
     return {};
   }
-  LOG(DEBUG) << "Received message with id: " << message_header.cmd
-             << " and size " << message_header.payload_size;
+  LOG(VERBOSE) << "Received message with id: " << message_header.cmd
+               << " and size " << message_header.payload_size;
   auto message = CreateKeymasterMessage(message_header.cmd,
                                         message_header.is_response,
                                         message_header.payload_size);
