@@ -70,6 +70,8 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   };
   RegistrationState GetVoiceRegistrationState() const;
 
+  bool isRadioOff() const { return radio_state_ == RADIO_STATE_OFF; }
+
  private:
   void InitializeServiceState();
   std::vector<CommandHandler> InitializeCommandHandlers();
