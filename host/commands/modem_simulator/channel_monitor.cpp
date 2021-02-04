@@ -78,9 +78,11 @@ void ChannelMonitor::SetRemoteClient(cuttlefish::SharedFD client, bool is_accept
     ReadCommand(*remote_client);
   }
 
-  remote_client->first_read_command_ = false;
-  remote_clients_.push_back(std::move(remote_client));
-  LOG(DEBUG) << "added one remote client";
+  if (remote_client->client_fd->IsOpen()) {
+    remote_client->first_read_command_ = false;
+    remote_clients_.push_back(std::move(remote_client));
+    LOG(DEBUG) << "added one remote client";
+  }
 
   // Trigger monitor loop
   if (write_pipe_->IsOpen()) {
@@ -115,7 +117,8 @@ void ChannelMonitor::ReadCommand(Client& client) {
           "no new data come.";
       return;
     }
-    LOG(ERROR) << "Error reading from client fd: " << client.client_fd->StrError();
+    LOG(DEBUG) << "Error reading from client fd: "
+               << client.client_fd->StrError();
     client.client_fd->Close();  // Ignore errors here
     // Erase client from the vector clients
     auto& clients = client.type == Client::REMOTE ? remote_clients_ : clients_;
