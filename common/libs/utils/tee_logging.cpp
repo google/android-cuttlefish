@@ -74,7 +74,7 @@ LogSeverity ConsoleSeverity() {
 }
 
 LogSeverity LogFileSeverity() {
-  return GuessSeverity("CF_FILE_SEVERITY", android::base::VERBOSE);
+  return GuessSeverity("CF_FILE_SEVERITY", android::base::DEBUG);
 }
 
 TeeLogger::TeeLogger(const std::vector<SeverityTarget>& destinations)
