@@ -690,6 +690,13 @@ void CallService::HandleRemoteCall(const Client& client,
       }
       break;
     case CallStatus::CALL_STATE_INCOMING: {
+      if (network_service_) {
+        if (network_service_->isRadioOff()) {
+          LOG(DEBUG) << " radio is off, reject incoming call from: " << number;
+          client.client_fd->Close();
+          return;
+        }
+      }
       CallStatus call_status(number);
       call_status.is_remote_call = true;
       call_status.is_voice_mode = mode;
