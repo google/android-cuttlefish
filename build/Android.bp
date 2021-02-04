@@ -36,6 +36,7 @@ cvd_host_tools = [
     "config_server",
     "console_forwarder",
     "crosvm",
+    "cvd_host_bugreport",
     "cvd_status",
     "detect_graphics",
     "extract-vmlinux",
