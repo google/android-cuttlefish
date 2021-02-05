@@ -4841,6 +4841,9 @@ onRequest (int request, void *data, size_t datalen, RIL_Token t)
         case RIL_REQUEST_SET_SYSTEM_SELECTION_CHANNELS:
             RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
             break;
+        case RIL_REQUEST_GET_SLICING_CONFIG:
+            RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
+            break;
 
         // Radio config requests
         case RIL_REQUEST_CONFIG_GET_SLOT_STATUS:
