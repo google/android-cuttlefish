@@ -818,6 +818,9 @@ int setDataThrottlingResponse(int slotId, int responseType, int serial,
 int getAllowedNetworkTypesBitmapResponse(int slotId, int responseType, int serial,
                                   RIL_Errno e, void *response, size_t responselen);
 
+int getSlicingConfigResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen);
+
 
 pthread_rwlock_t * getRadioServiceRwlock(int slotId);
 
