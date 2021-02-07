@@ -68,7 +68,6 @@ body {
 #deviceScreen {
     touch-action: none;
     transform-origin: top right;
-    transition: transform 1s;
     object-fit: cover;
 }
 
