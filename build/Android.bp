@@ -96,6 +96,7 @@ cvd_host_model_simulator_files = [
 
 cvd_configs = [
     "cvd_config_auto.json",
+    "cvd_config_foldable.json",
     "cvd_config_phone.json",
     "cvd_config_tablet.json",
     "cvd_config_tv.json",
