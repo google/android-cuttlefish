@@ -1,0 +1,16 @@
+{
+	"x_res" : 1768,
+	"y_res" : 2208,
+	"dpi" : 386,
+	"memory_mb" : 4096,
+	"custom_actions" : [
+		{
+			"shell_command":"wm size | grep '816' && wm size 1768x2208 || wm size 816x2260",
+			"button":{
+				"command":"fold",
+				"title":"Fold/Unfold",
+				"icon_name":"chrome_reader_mode"
+			}
+		}
+	]
+}
