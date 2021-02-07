@@ -28,15 +28,6 @@
         <ul id="device_list"></ul>
       </section>
       <section id='device_connection'>
-        <div id='device_view'>
-          <h3 id='device_status_message'></h3>
-          <video id="deviceScreen" autoplay ></video>
-          <h3 id='webrtc_status_message'>
-            No connection to the guest device.<br><br>
-            Please ensure the WebRTC process on the host machine is active.<br><br>
-            Tip: <code>ps aux | grep -i webrtc</code>
-          </h3>
-        </div>
         <div id='control_view'>
           <button id="keyboardCaptureBtn">Capture Keyboard</button>
           <hr>
@@ -46,12 +37,21 @@
             <h2 id='custom_controls_title'>Custom Controls</h2>
             <div id='control_panel_custom_buttons'></div>
           </div>
-          <h3 id='adb_status_message' class='connecting'>Establishing adb connection. Please wait...</h3>
+          <h3 id='adb_status_message' class='connecting'>Awaiting bootup and adb connection. Please wait...</h3>
           <div id='device_details'>
             <h2>Device Details</h2>
             <h3>Hardware Configuration</h3>
             <span id='device_details_hardware'>unknown</span>
           </div>
+        </div>
+        <div id='device_view'>
+          <h3 id='device_status_message'></h3>
+          <video id="deviceScreen" autoplay ></video>
+          <h3 id='webrtc_status_message'>
+            No connection to the guest device.<br><br>
+            Please ensure the WebRTC process on the host machine is active.<br><br>
+            Tip: <code>ps aux | grep -i webrtc</code>
+          </h3>
         </div>
       </section>
 
