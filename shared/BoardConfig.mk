@@ -188,6 +188,9 @@ BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
 # TODO(b/175151042): Remove once we are using virtio-snd on cuttlefish
 BOARD_KERNEL_CMDLINE += snd-hda-intel.enable=0
 
+# TODO(b/179489292): Remove once kfence is enabled everywhere
+BOARD_KERNEL_CMDLINE += kfence.sample_interval=500
+
 BOARD_KERNEL_CMDLINE += loop.max_part=7
 
 # Reduce slab size usage from virtio vsock to reduce slab fragmentation
