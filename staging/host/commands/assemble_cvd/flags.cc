@@ -39,7 +39,7 @@ using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 DEFINE_string(config, "phone",
               "Config preset name. Will automatically set flag fields "
               "using the values from this file of presets. Possible values: "
-              "phone,tablet,auto,tv");
+              "phone,tablet,foldable,auto,tv");
 
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -223,12 +223,13 @@ DEFINE_string(custom_action_config, "",
               "Path to a custom action config JSON. Defaults to the file provided by "
               "build variable CVD_CUSTOM_ACTION_CONFIG. If this build variable "
               "is empty then the custom action config will be empty as well.");
-DEFINE_string(
-    custom_actions, "",
-    "Serialized JSON of an array of custom action objects (in the same format as custom "
-    "action config JSON files). For use within --config preset config files; prefer "
-    "--custom_action_config to specify a custom config file on the command line. "
-    "--custom_action_config takes precedence over this flag if provided.");
+DEFINE_string(custom_actions, "",
+              "Serialized JSON of an array of custom action objects (in the "
+              "same format as custom action config JSON files). For use "
+              "within --config preset config files; prefer "
+              "--custom_action_config to specify a custom config file on the "
+              "command line. Actions in this flag are combined with actions "
+              "in --custom_action_config.");
 DEFINE_bool(use_bootloader, true, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
@@ -569,6 +570,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
       }
     }
   }
+  std::vector<CustomActionConfig> custom_actions;
   Json::Reader reader;
   Json::Value custom_action_array(Json::arrayValue);
   if (custom_action_config != "") {
@@ -579,16 +581,19 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
                  << custom_action_config << ": "
                  << reader.getFormattedErrorMessages();
     }
-  } else if (FLAGS_custom_actions != "") {
+    for (const auto& custom_action : custom_action_array) {
+      custom_actions.push_back(CustomActionConfig(custom_action));
+    }
+  }
+  if (FLAGS_custom_actions != "") {
     // Load the custom action from the --config preset file.
     if (!reader.parse(FLAGS_custom_actions, custom_action_array)) {
       LOG(FATAL) << "Could not read custom actions config flag: "
                  << reader.getFormattedErrorMessages();
     }
-  }
-  std::vector<CustomActionConfig> custom_actions;
-  for (Json::Value custom_action : custom_action_array) {
-    custom_actions.push_back(CustomActionConfig(custom_action));
+    for (const auto& custom_action : custom_action_array) {
+      custom_actions.push_back(CustomActionConfig(custom_action));
+    }
   }
   tmp_config_obj.set_custom_actions(custom_actions);
 
@@ -745,10 +750,7 @@ void SetDefaultFlagsFromConfigPreset() {
   std::string config_preset = FLAGS_config;  // The name of the preset config.
   std::string config_file_path;  // The path to the preset config JSON.
   const std::set<std::string> allowed_config_presets = {
-      "phone",
-      "tablet",
-      "tv",
-      "auto",
+      "phone", "tablet", "foldable", "tv", "auto",
   };
 
   // If the user specifies a --config name, then use that config
