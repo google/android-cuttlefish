@@ -85,6 +85,7 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
   void SetSignalStrengthValue(int& value, const std::pair<int, int>& range,
                               double percentd);
   std::string GetSignalStrength();
+  void applySignalPercentage(double percentd);
 
   MiscService* misc_service_ = nullptr;
   SimService* sim_service_ = nullptr;
@@ -229,31 +230,32 @@ class NetworkService : public ModemService, public std::enable_shared_from_this<
 
     // After radio power on, off, or set network mode, reset to invalid value
     void Reset() {
-      gsm_rssi = 99;
-      gsm_ber = 0;
-      cdma_dbm = 125;
-      cdma_ecio = 165;
-      evdo_dbm = 125;
-      evdo_ecio = 165;
-      evdo_snr = -1;
-      lte_rssi = 99;
-      lte_rsrp = -1;
-      lte_rsrq = -5;
-      lte_rssnr = -205;
-      lte_cqi = -1;
-      lte_ta = -1;
-      tdscdma_rscp = 99;
-      wcdma_rssi = 99;
-      wcdma_ber = 0;
-      nr_ss_rsrp = 0;
-      nr_ss_rsrq = 0;
-      nr_ss_sinr = 45;
-      nr_csi_rsrp = 0;
-      nr_csi_rsrq = 0;
-      nr_csi_sinr = 30;
+      gsm_rssi = INT_MAX;
+      gsm_ber = INT_MAX;
+      cdma_dbm = INT_MAX;
+      cdma_ecio = INT_MAX;
+      evdo_dbm = INT_MAX;
+      evdo_ecio = INT_MAX;
+      evdo_snr = INT_MAX;
+      lte_rssi = INT_MAX;
+      lte_rsrp = INT_MAX;
+      lte_rsrq = INT_MAX;
+      lte_rssnr = INT_MAX;
+      lte_cqi = INT_MAX;
+      lte_ta = INT_MAX;
+      tdscdma_rscp = INT_MAX;
+      wcdma_rssi = INT_MAX;
+      wcdma_ber = INT_MAX;
+      nr_ss_rsrp = INT_MAX;
+      nr_ss_rsrq = INT_MAX;
+      nr_ss_sinr = INT_MAX;
+      nr_csi_rsrp = INT_MAX;
+      nr_csi_rsrq = INT_MAX;
+      nr_csi_sinr = INT_MAX;
     }
   };
 
+  double percentd_{0.8};
   SignalStrength signal_strength_;
 
   /* Data / voice Registration State */
