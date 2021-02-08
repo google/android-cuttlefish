@@ -1169,6 +1169,69 @@ void NetworkService::HandleReceiveRemoteCTEC(const Client& client,
   }
 }
 
+void NetworkService::applySignalPercentage(double percentd) {
+  switch (current_network_mode_) {
+    case M_MODEM_TECH_GSM:
+      signal_strength_.gsm_rssi = 99;
+      signal_strength_.gsm_ber = 0;
+      SetSignalStrengthValue(signal_strength_.gsm_rssi, kGSMSignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_CDMA:
+      signal_strength_.cdma_dbm = 125;
+      signal_strength_.cdma_ecio = 165;
+      SetSignalStrengthValue(signal_strength_.cdma_dbm, kCDMASignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_EVDO:
+      signal_strength_.evdo_dbm = 125;
+      signal_strength_.evdo_ecio = 165;
+      signal_strength_.evdo_snr = -1;
+      SetSignalStrengthValue(signal_strength_.evdo_dbm, kEVDOSignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_LTE:
+      signal_strength_.lte_rssi = 99;
+      signal_strength_.lte_rsrp = -1;
+      signal_strength_.lte_rsrq = -5;
+      signal_strength_.lte_rssnr = -205;
+      signal_strength_.lte_cqi = -1;
+      signal_strength_.lte_ta = -1;
+      SetSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_WCDMA:
+      signal_strength_.tdscdma_rscp = 99;
+      signal_strength_.wcdma_rssi = 99;
+      signal_strength_.wcdma_ber = 0;
+      SetSignalStrengthValue(signal_strength_.wcdma_rssi, kWCDMASignalStrength,
+                             percentd);
+      break;
+    case M_MODEM_TECH_NR:
+      // special for NR: it uses LTE as primary, so LTE signal strength is
+      // needed as well
+      signal_strength_.lte_rssi = 99;
+      signal_strength_.lte_rsrp = -1;
+      signal_strength_.lte_rsrq = -5;
+      signal_strength_.lte_rssnr = -205;
+      signal_strength_.lte_cqi = -1;
+      signal_strength_.lte_ta = -1;
+      SetSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength,
+                             percentd);
+      signal_strength_.nr_ss_rsrp = 0;
+      signal_strength_.nr_ss_rsrq = 0;
+      signal_strength_.nr_ss_sinr = 45;
+      signal_strength_.nr_csi_rsrp = 0;
+      signal_strength_.nr_csi_rsrq = 0;
+      signal_strength_.nr_csi_sinr = 30;
+      SetSignalStrengthValue(signal_strength_.nr_ss_rsrp, kNRSignalStrength,
+                             percentd);
+      break;
+    default:
+      break;
+  }
+}
+
 /* AT+REMOTESIGNAL: percent */
 void NetworkService::HandleReceiveRemoteSignal(const Client& client,
                                                std::string& command) {
@@ -1177,40 +1240,18 @@ void NetworkService::HandleReceiveRemoteSignal(const Client& client,
   std::string percents = command.substr(std::string("AT+REMOTESIGNAL:").size());
   double percentd = std::stoi(percents, nullptr, 10) / 100.0;
 
-  switch (current_network_mode_) {
-    case M_MODEM_TECH_GSM:
-      SetSignalStrengthValue(signal_strength_.gsm_rssi, kGSMSignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_CDMA:
-      SetSignalStrengthValue(signal_strength_.cdma_dbm, kCDMASignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_EVDO:
-      SetSignalStrengthValue(signal_strength_.evdo_dbm, kEVDOSignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_LTE:
-      SetSignalStrengthValue(signal_strength_.lte_rssi, kLTESignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_WCDMA:
-      SetSignalStrengthValue(signal_strength_.wcdma_rssi, kWCDMASignalStrength,
-                             percentd);
-      break;
-    case M_MODEM_TECH_NR:
-      SetSignalStrengthValue(signal_strength_.nr_ss_rsrp, kNRSignalStrength,
-                             percentd);
-      break;
-    default:
-      break;
+  if (percentd >= 0 && percentd <= 1.0) {
+    percentd_ = percentd;
+  } else {
+    LOG(DEBUG) << "out of bound signal strength: " << percentd;
+    return;
   }
 
-  auto command2 = GetSignalStrength();
-  SendUnsolicitedCommand(command2);
+  OnSignalStrengthChanged();
 }
 
 void NetworkService::OnSignalStrengthChanged() {
+  applySignalPercentage(percentd_);
   auto command = GetSignalStrength();
   SendUnsolicitedCommand(command);
 }
