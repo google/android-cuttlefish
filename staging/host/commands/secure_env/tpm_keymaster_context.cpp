@@ -296,6 +296,18 @@ keymaster::CertificateChain TpmKeymasterContext::GenerateAttestation(
     return {};
   }
 
+  // DEVICE_UNIQUE_ATTESTATION is only allowed for strongbox devices. See
+  // hardware/interfaces/security/keymint/aidl/android/hardware/security/keymint/Tag.aidl:845
+  // at commit beefae4790ccd4f1ee75ea69603d4c9c2a45c0aa .
+  // While the specification says to return ErrorCode::INVALID_ARGUMENT , the
+  // relevant VTS test actually tests for ErrorCode::UNIMPLEMENTED . See
+  // hardware/interfaces/keymaster/4.1/vts/functional/DeviceUniqueAttestationTest.cpp:203
+  // at commit 36dcf1a404a9cf07ca5a2a6ad92371507194fe1b .
+  if (attest_params.find(keymaster::TAG_DEVICE_UNIQUE_ATTESTATION) != -1) {
+    *error = KM_ERROR_UNIMPLEMENTED;
+    return {};
+  }
+
   return keymaster::generate_attestation(
       asymmetric_key, attest_params,
       move(attestation_chain),
