@@ -51,12 +51,10 @@ DEFINE_string(tpm_impl,
               "in_memory",
               "The TPM implementation. \"in_memory\" or \"host_device\"");
 
-DEFINE_string(keymaster_impl,
-              "tpm",
+DEFINE_string(keymint_impl, "tpm",
               "The keymaster implementation. \"tpm\" or \"software\"");
 
-DEFINE_string(gatekeeper_impl,
-              "tpm",
+DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
 
 int main(int argc, char** argv) {
@@ -80,7 +78,7 @@ int main(int argc, char** argv) {
   std::unique_ptr<TpmResourceManager> resource_manager;
   std::unique_ptr<ESYS_CONTEXT, void(*)(ESYS_CONTEXT*)> esys(
       nullptr, [](ESYS_CONTEXT* esys) { Esys_Finalize(&esys); });
-  if (FLAGS_keymaster_impl == "tpm" || FLAGS_gatekeeper_impl == "tpm") {
+  if (FLAGS_keymint_impl == "tpm" || FLAGS_gatekeeper_impl == "tpm") {
     ESYS_CONTEXT* esys_ptr = nullptr;
     auto rc = Esys_Initialize(&esys_ptr, tpm->TctiContext(), nullptr);
     if (rc != TPM2_RC_SUCCESS) {
@@ -114,16 +112,16 @@ int main(int argc, char** argv) {
   // keymaster::AndroidKeymaster puts the given pointer into a UniquePtr,
   // taking ownership.
   keymaster::KeymasterContext* keymaster_context;
-  if (FLAGS_keymaster_impl == "software") {
+  if (FLAGS_keymint_impl == "software") {
     // TODO: See if this is the right KM version.
     keymaster_context =
         new keymaster::PureSoftKeymasterContext(keymaster::KmVersion::KEYMASTER_4,
                                                 KM_SECURITY_LEVEL_SOFTWARE);
-  } else if (FLAGS_keymaster_impl == "tpm") {
+  } else if (FLAGS_keymint_impl == "tpm") {
     keymaster_context =
         new TpmKeymasterContext(*resource_manager, *keymaster_enforcement);
   } else {
-    LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymaster_impl;
+    LOG(FATAL) << "Unknown keymaster implementation " << FLAGS_keymint_impl;
     return -1;
   }
   keymaster::AndroidKeymaster keymaster{
