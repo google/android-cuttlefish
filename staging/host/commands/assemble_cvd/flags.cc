@@ -281,6 +281,10 @@ DEFINE_int32(vsock_guest_cid,
              "The same formula holds when --vsock_guest_cid=C is given, for algorithm's sake."
              "Each vsock server port number is base + C - 3.");
 
+DEFINE_string(secure_hals, "keymint,gatekeeper",
+              "Which HALs to use enable host security features for. Supports "
+              "keymint and gatekeeper at the moment.");
+
 DECLARE_string(system_image_dir);
 
 namespace cuttlefish {
@@ -440,6 +444,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_display_configs(display_configs);
   tmp_config_obj.set_dpi(FLAGS_dpi);
   tmp_config_obj.set_refresh_rate_hz(FLAGS_refresh_rate_hz);
+
+  auto secure_hals = android::base::Split(FLAGS_secure_hals, ",");
+  tmp_config_obj.set_secure_hals(
+      std::set<std::string>(secure_hals.begin(), secure_hals.end()));
 
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
