@@ -42,7 +42,7 @@ bool isInEmulator(void) {
 
 int qemu_open_modem_port() {
     char propValue[PROP_VALUE_MAX];
-    if(__system_property_get("qemu.vport.modem", propValue) <= 0) {
+    if (__system_property_get("vendor.qemu.vport.modem", propValue) <= 0) {
         return -1;
     }
     int fd = open(propValue, O_RDWR);
