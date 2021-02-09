@@ -62,6 +62,12 @@ enum class AdbMode {
   Unknown,
 };
 
+enum class SecureHal {
+  Unknown,
+  Keymint,
+  Gatekeeper,
+};
+
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
  public:
@@ -156,6 +162,9 @@ class CuttlefishConfig {
 
   void set_adb_mode(const std::set<std::string>& modes);
   std::set<AdbMode> adb_mode() const;
+
+  void set_secure_hals(const std::set<std::string>& hals);
+  std::set<SecureHal> secure_hals() const;
 
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
