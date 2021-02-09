@@ -58,13 +58,20 @@ def stop_cvd(args):
       shell=True)
 
 
+def __get_default_hostdir():
+  soong_host_dir = os.environ.get('ANDROID_SOONG_HOST_OUT')
+  if soong_host_dir:
+    return soong_host_dir
+  return os.environ.get('ANDROID_HOST_OUT', '.')
+
+
 def main():
   parser = argparse.ArgumentParser(
       description='Upload a local build to Google Compute Engine and run it')
   parser.add_argument(
       '-host_dir',
       type=str,
-      default=os.environ.get('ANDROID_HOST_OUT', '.'),
+      default=__get_default_hostdir(),
       help='path to the dist directory')
   parser.add_argument(
       '-image_dir',
@@ -78,7 +85,7 @@ def main():
       '-zone', type=str, default=None,
       help='zone containing the instance')
   parser.add_argument(
-      '-user', type=str, default='vsoc-01',
+      '-user', type=str, default=os.environ.get('USER', 'vsoc-01'),
       help='user to update on the instance')
   parser.add_argument(
       '-data-image', type=str, default=None,
