@@ -557,6 +557,14 @@ void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
   command.AddParameter("-keymaster_fd_in=", fifos[1]);
   command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
   command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
+
+  const auto& secure_hals = config.secure_hals();
+  bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
+  command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
+  bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
+  auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
+  command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
+
   process_monitor->AddCommand(std::move(command));
 }
 
