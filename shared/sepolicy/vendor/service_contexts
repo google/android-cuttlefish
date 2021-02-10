@@ -1,2 +1,8 @@
+android.hardware.neuralnetworks.IDevice/nnapi-sample_all u:object_r:hal_neuralnetworks_service:s0
+android.hardware.neuralnetworks.IDevice/nnapi-sample_float_fast u:object_r:hal_neuralnetworks_service:s0
+android.hardware.neuralnetworks.IDevice/nnapi-sample_float_slow u:object_r:hal_neuralnetworks_service:s0
+android.hardware.neuralnetworks.IDevice/nnapi-sample_minimal    u:object_r:hal_neuralnetworks_service:s0
+android.hardware.neuralnetworks.IDevice/nnapi-sample_quant    u:object_r:hal_neuralnetworks_service:s0
+
 # Binder service mappings
 gce                                       u:object_r:gce_service:s0
