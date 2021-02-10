@@ -529,7 +529,12 @@ PRODUCT_PACKAGES += \
     android.hardware.neuralnetworks@1.3-service-sample-float-fast \
     android.hardware.neuralnetworks@1.3-service-sample-float-slow \
     android.hardware.neuralnetworks@1.3-service-sample-minimal \
-    android.hardware.neuralnetworks@1.3-service-sample-quant
+    android.hardware.neuralnetworks@1.3-service-sample-quant \
+    android.hardware.neuralnetworks-service-sample-all \
+    android.hardware.neuralnetworks-service-sample-float-fast \
+    android.hardware.neuralnetworks-service-sample-float-slow \
+    android.hardware.neuralnetworks-service-sample-minimal \
+    android.hardware.neuralnetworks-service-sample-quant
 
 #
 # USB
