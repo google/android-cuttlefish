@@ -60,7 +60,20 @@ int main(int argc, char** argv) {
   while ((chars_read = log_fd->Read(buf, sizeof(buf))) > 0) {
     auto trimmed = android::base::Trim(std::string(buf, chars_read));
     // Newlines inside `trimmed` are handled by the android logging code.
-    LOG(INFO) << trimmed;
+    // These checks attempt to determine the log severity coming from crosvm.
+    // There is no guarantee of success all the time since log line boundaries
+    // could be out sync with the reads, but that's ok.
+    if (android::base::StartsWith(trimmed, "[INFO")) {
+      LOG(INFO) << trimmed;
+    } else if (android::base::StartsWith(trimmed, "[ERROR")) {
+      LOG(ERROR) << trimmed;
+    } else if (android::base::StartsWith(trimmed, "[WARNING")) {
+      LOG(WARNING) << trimmed;
+    } else if (android::base::StartsWith(trimmed, "[VERBOSE")) {
+      LOG(VERBOSE) << trimmed;
+    } else {
+      LOG(DEBUG) << trimmed;
+    }
   }
 
   if (chars_read < 0) {
