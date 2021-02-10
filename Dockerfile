@@ -49,6 +49,7 @@ RUN if test $(uname -m) == aarch64; then \
 	    && apt-get install --no-install-recommends -y qemu qemu-user qemu-user-static binfmt-support; \
     fi
 
+# host packages and google-chrome (google-chrome*.deb)
 COPY ./out/*.deb ./android-cuttlefish/out/
 
 RUN cd /root/android-cuttlefish/out \
@@ -58,13 +59,14 @@ RUN cd /root/android-cuttlefish/out \
 
 # to share X with the local docker host
 RUN apt-get install -y xterm
-
 RUN apt-get install -y curl wget unzip
 
 # to run cuttlefish docker in foreground, and test via webrtc/VNC
 RUN apt-get install -y tigervnc-viewer
-RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb && rm -f ./google-chrome-stable_current_amd64.deb
+RUN cd /root/android-cuttlefish/out \
+    && apt-get install -y ./google-chrome*.deb \
+    && rm -f ./google-chrome-stable_current_amd64.deb \
+    && cd /root
 
 RUN apt-get clean
 

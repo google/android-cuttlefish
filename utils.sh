@@ -206,3 +206,26 @@ set -o errexit
     done
   done
 }
+
+# return if this is exactly Debian Linux
+function is_debian {
+  if [[ -f /etc/debian_version ]]; then
+      return 0
+  fi
+  if ls -1 /etc/*release | egrep -i "(debian)" > /dev/null 2>&1; then
+    return 0
+  fi
+  return 1
+}
+
+# tell if the distro is Debian series
+function is_debian_series {
+  if is_debian; then
+    return 0
+  fi
+  # if ever not Debian, use the whitelists
+  if ls -1 /etc/*release | egrep -i "(debian|buntu|mint)" > /dev/null 2>&1; then
+      return 0
+  fi
+  return 1
+}

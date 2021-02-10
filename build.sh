@@ -4,27 +4,25 @@
 #   build .deb packages for the host and/or for cuttlefish docker images
 #   build the cuttlefish docker images, using the .deb packages & Dockerfile
 
-# tell if the distro is Debian
-function is_debian_distro {
-  if [[ -f /etc/debian_version ]]; then
-      return 0
-  fi
-  # debian based distro mostly have /etc/debian_version
-  # if ever not, use the whitelists
-  if ls -1 /etc/*release | egrep "(debian|buntu|mint)" > /dev/null 2>&1; then
-      return 0
-  fi
-  return 1
+function get_script_dir {
+  echo "$(dirname ${BASH_SOURCE[0]})"
 }
 
 source "shflags"
+source $(get_script_dir)/utils.sh
 
+DEFINE_boolean verbose true "verbose mode" "v"
 DEFINE_boolean detect_gpu \
-               "$(is_debian_distro && echo true || echo false)" \
-               "Attempt to detect the GPU vendor"
-DEFINE_boolean rebuild_debs true "Rebuild deb packages. If false, builds only when any .deb is missing in ./out/"
+               "$(is_debian_series && echo true || echo false)" \
+               "Attempt to detect the GPU vendor" "g"
+DEFINE_boolean rebuild_debs true \
+               "Whether always rebuild .deb packages or reuse .deb files when available" \
+               "r"
 DEFINE_boolean rebuild_debs_verbose false "When rebuilding deb packages, show the progress in stdin."
-DEFINE_boolean build_debs_only false "To build host .deb packages only, not the cuttlefish docker images"
+DEFINE_boolean build_debs_only false \
+               "To build host .deb packages only, not the cuttlefish docker images" "p"
+DEFINE_boolean download_chrome true "download chrome to the ./out directory" "d"
+
 
 FLAGS "$@" || exit 1
 
@@ -45,25 +43,29 @@ function detect_gpu {
   done
 }
 
-OEM=
-if [[ ${FLAGS_detect_gpu} -eq ${FLAGS_TRUE} ]]; then
-  if is_debian_distro; then
-      OEM=$(detect_gpu)
-  else
+#1: OEM by reference
+function calc_oem() {
+  local -n ref_oem=$1
+  ref_oem=
+  if [[ ${FLAGS_detect_gpu} -eq ${FLAGS_TRUE} ]]; then
+    if is_debian_distro; then
+      ref_oem=$(detect_gpu)
+    else
       echo "Warning: --detect_gpu works only on Debian-based systems"
       echo
+    fi
   fi
-fi
 
-if [ -z "${OEM}" ]; then
-  echo "###"
-  echo "### Building without physical-GPU support"
-  echo "###"
-else
-  echo "###"
-  echo "### GPU is ${OEM}"
-  echo "###"
-fi
+  if [ -z "${ref_oem}" ]; then
+    echo "###"
+    echo "### Building without physical-GPU support"
+    echo "###"
+  else
+    echo "###"
+    echo "### GPU is ${ref_oem}"
+    echo "###"
+  fi
+}
 
 source utils.sh
 
@@ -85,7 +87,7 @@ function process_one {
   set +o errexit # apt download may fail
   echo "Extracting debian packages for ${stem}"
   cat deps.txt | while read -e pkg version; do
-    pushd gpu/"${OEM}"/driver-deps 1>/dev/null
+    pushd gpu/"${oem}"/driver-deps 1>/dev/null
     if [ -z "$(compgen -G "${pkg}"_"${version//:/%3a}"_\*.deb)" ]; then
       echo "Attempting to download debian package for ${pkg} version ${version}."
       if ! apt-get download "${pkg}"="${version}" 1>/dev/null; then
@@ -112,38 +114,55 @@ function process_one {
   ./parse-deps.sh "${stem}" "./gpu/${oem}/filter-out-deps.sh" "./write-equivs.sh"
 }
 
+#1: "true" or "false", "true" means "--no-cache"
+#2: x$OEM, note that $OEM could be empty
 function build_docker_image {
+  local no_cache=$1
+  local oem=${2:1} # cut 'x' from $2
+  shift 2
 
   local -a docker_targets=("cuttlefish-softgpu")
 
-  if [ -n "${OEM}" ]; then
+  if [ -n "${oem}" ]; then
       rm -f deps.txt equivs.txt ignore-depends-for-*.txt
-      rm -f gpu/"${OEM}"/driver.txt
-      mkdir -p "gpu/${OEM}/driver-deps"
-      gpu/"${OEM}"/driver.sh gpu/"${OEM}"/filter-in-deps.sh | while read -e stem version; do
+      rm -f gpu/"${oem}"/driver.txt
+      mkdir -p "gpu/${oem}/driver-deps"
+      gpu/"${oem}"/driver.sh gpu/"${oem}"/filter-in-deps.sh | while read -e stem version; do
         if [ -n "$(is_installed "${stem}")" ]; then
           echo '###'
           echo "### ${stem}"
           echo '###'
-          echo "${stem}" "${version}" >> gpu/"${OEM}"/driver.txt
-          process_one "${stem}" "${OEM}"
+          echo "${stem}" "${version}" >> gpu/"${oem}"/driver.txt
+          process_one "${stem}" "${oem}"
         fi
       done
-      mv -t gpu/"${OEM}"/driver-deps/ deps.txt equivs.txt ignore-depends-for-*.txt
+      mv -t gpu/"${oem}"/driver-deps/ deps.txt equivs.txt ignore-depends-for-*.txt
       docker_targets+=("cuttlefish-hwgpu")
+  fi
+
+  docker_build_opts=("-t" "cuttlefish")
+  if [[ ${no_cache} == "true" ]]; then
+    # when .debs were rebuilt, to be safe
+    # the intermediate image layers should be rebuilt as well
+    docker_build_opts+=("--no-cache")
+  fi
+
+  local uid=$UID
+  if [[ -z $uid ]]; then
+    uid=$(id -u)
   fi
 
   for target in "${docker_targets[@]}"; do
     docker build \
         --target "${target}" \
-         -t 'cuttlefish' \
+        ${docker_build_opts[@]} \
         "${PWD}" \
-        --build-arg UID="${UID}" \
-        --build-arg OEM="${OEM}"
+        --build-arg UID="${uid}" \
+        --build-arg OEM="${oem}"
   done
 
   # don't nuke the cache
-  # rm -fv gpu/${OEM}/driver-deps
+  # rm -fv gpu/${oem}/driver-deps
 }
 
 function is_rebuild_debs() {
@@ -172,15 +191,68 @@ function do_rebuild_debs() {
   ./debs-builder-docker/build-debs-with-docker.sh "${verbosity}"
 }
 
-if is_rebuild_debs; then
-  do_rebuild_debs
-fi
+function get_google_chrome_deb_name() {
+  echo "google-chrome-stable_current_amd64.deb"
+}
 
-if [[ ${FLAGS_build_debs_only} -eq ${FLAGS_TRUE} ]]; then
-  echo "###"
-  echo "### Building .deb Host Packages"
-  echo "###"
-  exit 0
-fi
+function is_download_chrome() {
+  local script_dir=$(get_script_dir)
+  if ! [[ -f $script_dir/out/"$(get_google_chrome_deb_name)" ]]; then
+    return 0
+  fi
+  if [[ ${FLAGS_download_chrome} -eq ${FLAGS_TRUE} ]]; then
+    return 0
+  fi
+  return 1
+}
 
-build_docker_image "$*"
+function download_chrome() {
+  local dest_dir=$(get_script_dir)/out
+  local deb_file_name="$(get_google_chrome_deb_name)"
+  # clean up $dest_dir
+  rm -f $dest_dir/google-chrome*.deb || /bin/true
+  if ! wget -P "$dest_dir"/ \
+       https://dl.google.com/linux/direct/$deb_file_name; then
+    >&2 echo "wget https://dl.google.com/linux/direct/$deb_file_name failed."
+    exit 6
+  fi
+  return 0
+}
+
+function build_main() {
+  local oem=""
+  calc_oem oem
+
+  # if .deb file(s) are rebuilt offline, the intermediate layers
+  # should be rebuilt to be safe.
+  #
+  # Docker build is not aware of the time stamp or any change in the
+  # .deb files we use to build the cuttlefish image.
+
+  local no_cache="false" # whether we give --no-cache to docker build
+  if is_rebuild_debs; then
+    if do_rebuild_debs; then
+      no_cache="true"
+    fi
+  fi
+
+  if [[ ${FLAGS_build_debs_only} -eq ${FLAGS_TRUE} ]]; then
+    echo "###"
+    echo "### Building .deb Host Packages"
+    echo "###"
+    exit 0
+  fi
+
+  if is_download_chrome; then
+    download_chrome
+    no_cache="true"
+  fi
+
+  build_docker_image "$no_cache" "x$oem""$*"
+}
+
+if [[ ${FLAGS_verbose} -eq ${FLAGS_TRUE} ]]; then
+  build_main
+else
+  build_main > /dev/null
+fi
