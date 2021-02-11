@@ -21,3 +21,4 @@
     {RIL_REQUEST_CONFIG_SET_PREFER_DATA_MODEM, radio_1_6::setPreferredDataModemResponse},
     {RIL_REQUEST_CONFIG_SET_MODEM_CONFIG, radio_1_6::setModemsConfigResponse},
     {RIL_REQUEST_CONFIG_GET_MODEM_CONFIG, radio_1_6::getModemsConfigResponse},
+    {RIL_REQUEST_CONFIG_GET_HAL_DEVICE_CAPABILITIES, radio_1_6::getHalDeviceCapabilitiesResponse},
