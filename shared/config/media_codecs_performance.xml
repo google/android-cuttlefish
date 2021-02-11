@@ -73,6 +73,10 @@
             <!-- 2 runs, min 45 max 47 gmean 46 -->
             <Limit name="measured-frame-rate-1920x1080" range="45-47" />
         </MediaCodec>
+        <MediaCodec name="c2.android.hevc.encoder" type="video/hevc" update="true">
+            <!-- MANUALLY ADJUSTED -->
+            <Limit name="measured-frame-rate-320x240" range="27-40" />
+        </MediaCodec>
         <MediaCodec name="c2.android.mpeg4.encoder" type="video/mp4v-es" update="true">
             <!-- 3 runs, min 881 max 1142 gmean 994 -->
             <Limit name="measured-frame-rate-176x144" range="881-1142" />
@@ -100,6 +104,14 @@
             <Limit name="measured-frame-rate-1280x720" range="34-35" />
             <!-- 3 runs, min 26 max 29 gmean 27 -->
             <Limit name="measured-frame-rate-1920x1080" range="26-29" />
+        </MediaCodec>
+        <MediaCodec name="c2.android.vp9.encoder" type="video/x-vnd.on2.vp9" update="true">
+            <!-- MANUALLY ADJUSTED -->
+            <Limit name="measured-frame-rate-320x180" range="158-281" />
+            <!-- MANUALLY ADJUSTED -->
+            <Limit name="measured-frame-rate-640x360" range="56-66" />
+            <!-- MANUALLY ADJUSTED -->
+            <Limit name="measured-frame-rate-1280x720" range="23-23" />
         </MediaCodec>
     </Encoders>
     <Decoders>
