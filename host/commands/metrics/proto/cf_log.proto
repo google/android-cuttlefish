@@ -1,0 +1,42 @@
+syntax = "proto2";
+
+package cuttlefish;
+
+import "common.proto";
+import "cf_metrics_event.proto";
+
+// Wrapper for Cuttlefish log events
+// Next index: 7
+message CuttlefishLogEvent {
+  // Defines the device class that this log was sourced from.
+  // This may not be the same device which uploaded the log event.
+  // Next index: 3
+  enum DeviceType {
+    // The log event was sourced from an unspecified device type.
+    CUTTLEFISH_DEVICE_TYPE_UNSPECIFIED = 0;
+
+    // A log event that was sourced from a Cuttlefish host device.
+    CUTTLEFISH_DEVICE_TYPE_HOST = 1;
+
+    // A log event that was sent by an Cuttlefish guest device.
+    CUTTLEFISH_DEVICE_TYPE_GUEST = 2;
+  }
+
+  // Local time on the event source device of when this event occurred.
+  optional Timestamp timestamp_ms = 1;
+
+  // The type of device this log event originated from.
+  optional DeviceType device_type = 2;
+
+  // The identifier for this device.
+  optional string device_id = 3;
+
+  // The identifier for this session.
+  optional string session_id = 6;
+
+  // The version of Cuttlefish that's sending the log event.
+  optional string cuttlefish_version = 4;
+
+  // An event encompassing metrics data
+  optional MetricsEvent metrics_event = 5;
+}
