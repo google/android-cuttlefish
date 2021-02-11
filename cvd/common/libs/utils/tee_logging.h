@@ -27,9 +27,15 @@ namespace cuttlefish {
 android::base::LogSeverity ConsoleSeverity();
 android::base::LogSeverity LogFileSeverity();
 
+enum class MetadataLevel {
+  FULL,
+  ONLY_MESSAGE,
+};
+
 struct SeverityTarget {
   android::base::LogSeverity severity;
   SharedFD target;
+  MetadataLevel metadata_level;
 };
 
 class TeeLogger {
