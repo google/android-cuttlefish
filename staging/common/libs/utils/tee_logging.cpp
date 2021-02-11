@@ -174,13 +174,17 @@ void TeeLogger::operator()(
     const char* file,
     unsigned int line,
     const char* message) {
-  struct tm now;
-  time_t t = time(nullptr);
-  localtime_r(&t, &now);
-  auto output_string =
-      StderrOutputGenerator(
-          now, getpid(), GetThreadId(), severity, tag, file, line, message);
   for (const auto& destination : destinations_) {
+    std::string output_string;
+    if (destination.metadata_level == MetadataLevel::ONLY_MESSAGE) {
+      output_string = message + std::string("\n");
+    } else {
+      struct tm now;
+      time_t t = time(nullptr);
+      localtime_r(&t, &now);
+      output_string = StderrOutputGenerator(now, getpid(), GetThreadId(),
+                                            severity, tag, file, line, message);
+    }
     if (severity >= destination.severity) {
       if (destination.target->IsATTY()) {
         WriteAll(destination.target, output_string);
@@ -203,7 +207,8 @@ static std::vector<SeverityTarget> SeverityTargetsForFiles(
     if (!log_file_fd->IsOpen()) {
       LOG(FATAL) << "Failed to create log file: " << log_file_fd->StrError();
     }
-    log_severities.push_back(SeverityTarget {LogFileSeverity(), log_file_fd});
+    log_severities.push_back(
+        SeverityTarget{LogFileSeverity(), log_file_fd, MetadataLevel::FULL});
   }
   return log_severities;
 }
@@ -214,8 +219,9 @@ TeeLogger LogToFiles(const std::vector<std::string>& files) {
 
 TeeLogger LogToStderrAndFiles(const std::vector<std::string>& files) {
   std::vector<SeverityTarget> log_severities = SeverityTargetsForFiles(files);
-  log_severities.push_back(
-      SeverityTarget {ConsoleSeverity(), SharedFD::Dup(/* stderr */ 2)});
+  log_severities.push_back(SeverityTarget{ConsoleSeverity(),
+                                          SharedFD::Dup(/* stderr */ 2),
+                                          MetadataLevel::ONLY_MESSAGE});
   return TeeLogger(log_severities);
 }
 
