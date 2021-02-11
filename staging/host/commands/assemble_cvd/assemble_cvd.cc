@@ -120,8 +120,8 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
                << log->StrError();
   } else {
     android::base::SetLogger(TeeLogger({
-      {ConsoleSeverity(), SharedFD::Dup(2)},
-      {LogFileSeverity(), log},
+        {ConsoleSeverity(), SharedFD::Dup(2), MetadataLevel::ONLY_MESSAGE},
+        {LogFileSeverity(), log, MetadataLevel::FULL},
     }));
   }
 
