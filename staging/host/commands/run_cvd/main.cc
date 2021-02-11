@@ -136,7 +136,8 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
       LOG(ERROR) << "Failed to create launcher log file: " << log->StrError();
       std::exit(RunnerExitCodes::kDaemonizationError);
     }
-    ::android::base::SetLogger(TeeLogger({{LogFileSeverity(), log}}));
+    ::android::base::SetLogger(
+        TeeLogger({{LogFileSeverity(), log, MetadataLevel::FULL}}));
     auto dev_null = SharedFD::Open("/dev/null", O_RDONLY);
     if (!dev_null->IsOpen()) {
       LOG(ERROR) << "Failed to open /dev/null: " << dev_null->StrError();
