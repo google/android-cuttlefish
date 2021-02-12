@@ -1,0 +1,143 @@
+syntax = "proto2";
+
+package cuttlefish;
+
+import "common.proto";
+
+// Wrapper for Cuttlefish Metrics log events.
+// Next index: 22
+message MetricsEvent {
+  // High level event types for this message. This is the broadest
+  // category identifier for MetricsEvent and should be used to indicate
+  // which other fields will be populated. Only used in field event_type.
+  // Next index: 6
+  enum EventType {
+    // An unspecified, unhandled event.
+    CUTTLEFISH_EVENT_TYPE_UNSPECIFIED = 0;
+
+    // The device experienced an error.
+    CUTTLEFISH_EVENT_TYPE_ERROR = 1;
+
+    // The event type is the time the VM instance is instantiated.
+    CUTTLEFISH_EVENT_TYPE_VM_INSTANTIATION = 2;
+
+    // The event type is the time the device boot process is started.
+    CUTTLEFISH_EVENT_TYPE_DEVICE_BOOT = 3;
+
+    // The event type is the time the device lock screen is available.
+    CUTTLEFISH_EVENT_TYPE_LOCK_SCREEN_AVAILABLE = 4;
+
+    // The event type is the time the virtual device was stopped.
+    CUTTLEFISH_EVENT_TYPE_VM_STOP = 5;
+  }
+
+  // Defines the OS that this log was sourced from.
+  // This may not be the same OS which uploaded the log event.
+  // Next index: 5
+  enum OsType {
+    // The log event was sourced from an unspecified os type.
+    CUTTLEFISH_OS_TYPE_UNSPECIFIED = 0;
+
+    // The log event was sourced from Linux x86 os type.
+    CUTTLEFISH_OS_TYPE_LINUX_X86 = 1;
+
+    // The log event was sourced from Linux x86_64 os type.
+    CUTTLEFISH_OS_TYPE_LINUX_X86_64 = 2;
+
+    // The log event was sourced from Linux aarch32 os type.
+    CUTTLEFISH_OS_TYPE_LINUX_AARCH32 = 3;
+
+    // The log event was sourced from Linux aarch64 os type.
+    CUTTLEFISH_OS_TYPE_LINUX_AARCH64 = 4;
+  }
+
+  // Defines the VMM that this log was sourced from.
+  // This may not be the same VMM which uploaded the log event.
+  // Next index: 3
+  enum VmmType {
+    // The log event was sourced from an unspecified vmm type.
+    CUTTLEFISH_VMM_TYPE_UNSPECIFIED = 0;
+
+    // The log event was sourced from a CrOS VM vmm type.
+    CUTTLEFISH_VMM_TYPE_CROSVM = 1;
+
+    // The log event was sourced from a QEMU vmm type.
+    CUTTLEFISH_VMM_TYPE_QEMU = 2;
+  }
+
+  // High level error types for this message. Defines the error
+  // the device received when it experienced an error. This field
+  // should only be present when event_type is ERROR.
+  // Next index: 1
+  enum ErrorType {
+    // An unspecified, unhandled error.
+    CUTTLEFISH_ERROR_TYPE_UNSPECIFIED = 0;
+  }
+
+  // Defines the type of device event contained in this message.
+  // This is the highest level identifier for MetricsEvent messages.
+  optional EventType event_type = 1;
+
+  // Defines the error the device received when it experienced an error.
+  // The field should only be present when event_type is ERROR.
+  optional ErrorType error_type = 2;
+
+  // Time the event occurred in milliseconds since Unix epoch.
+  optional Timestamp event_time_ms = 3;
+
+  // Elapsed time for the event in milliseconds.
+  optional Duration elapsed_time_ms = 4;
+
+  // The type of OS this log event originated from.
+  optional OsType os_type = 5;
+
+  // OS version for the host/guest operating system.
+  // Ex. Android version (9.x, 10.x, etc.) or `uname -r` output
+  optional string os_version = 6;
+
+  // Android guest API level
+  optional int32 api_level = 7;
+
+  // The type of VMM this log event originated from.
+  optional VmmType vmm_type = 8;
+
+  // The version of the VMM that's sending the log event.
+  optional string vmm_version = 9;
+
+  // The company that's sending the log event.
+  optional string company = 10;
+
+  // The allowlist of launch_cvd flags attached to the launch_cvd command
+  // associated with this instance
+  repeated string launch_cvd_flags = 11;
+
+  // Exists a -system_image_dir specified in launch_cvd
+  optional bool exists_system_image_spec = 12;
+
+  // Exists a -boot_image specified in launch_cvd
+  optional bool exists_boot_image_spec = 13;
+
+  // Exists a -bootloader specified in launch_cvd
+  optional bool exists_bootloader_spec = 14;
+
+  // Exists a -composite_disk specified in launch_cvd
+  optional bool exists_composite_disk_spec = 15;
+
+  // Exists a -data_image specified in launch_cvd
+  optional bool exists_data_image_spec = 16;
+
+  // Exists a -metadata_image specified in launch_cvd
+  optional bool exists_metadata_image_spec = 17;
+
+  // Exists a -misc_image specified in launch_cvd
+  optional bool exists_misc_image_spec = 18;
+
+  // Exists a -qemu_binary specified in launch_cvd
+  optional bool exists_qemu_binary_spec = 19;
+
+  // Exists a -super_image specified in launch_cvd
+  optional bool exists_super_image_spec = 20;
+
+  // Exists a -vendor_boot_image specified in launch_cvd
+  optional bool exists_vendor_boot_image_spec = 21;
+}
