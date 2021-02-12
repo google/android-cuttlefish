@@ -432,9 +432,9 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 # Camera
 #
 PRODUCT_PACKAGES += \
-    android.hardware.camera.provider@2.6-service-google \
+    android.hardware.camera.provider@2.7-service-google \
     libgooglecamerahwl_impl \
-    android.hardware.camera.provider@2.6-impl-google \
+    android.hardware.camera.provider@2.7-impl-google \
 
 #
 # Gatekeeper
