@@ -7606,6 +7606,7 @@ typedef enum {
 
 #define RIL_REQUEST_CONFIG_GET_HAL_DEVICE_CAPABILITIES 607
 
+/* Make sure to update ril_config_commands.h when changing this constant. */
 #define RIL_REQUEST_RADIO_CONFIG_LAST    RIL_REQUEST_CONFIG_GET_HAL_DEVICE_CAPABILITIES
 /* }@ */
 
