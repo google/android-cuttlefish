@@ -37,8 +37,7 @@
 namespace {
 
 const std::string DEFAULT_BRANCH = "aosp-master";
-const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_phone-userdebug";
-
+const std::string DEFAULT_BUILD_TARGET = "aosp_cf_x86_64_phone-userdebug";
 }
 
 using cuttlefish::CurrentDirectory;
