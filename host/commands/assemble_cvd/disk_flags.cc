@@ -316,7 +316,7 @@ static bool ConcatRamdisks(
   return true;
 }
 
-static off_t AvailableSpaceAtPath(const std::string& path) {
+static uint64_t AvailableSpaceAtPath(const std::string& path) {
   struct statvfs vfs;
   if (statvfs(path.c_str(), &vfs) != 0) {
     int error_num = errno;
@@ -324,7 +324,8 @@ static off_t AvailableSpaceAtPath(const std::string& path) {
                << strerror(error_num);
     return 0;
   }
-  return vfs.f_bsize * vfs.f_bavail; // block size * free blocks for unprivileged users
+  // f_frsize (block size) * f_bavail (free blocks) for unprivileged users.
+  return static_cast<uint64_t>(vfs.f_frsize) * vfs.f_bavail;
 }
 
 bool CreateCompositeDisk(const CuttlefishConfig& config,
