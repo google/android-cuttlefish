@@ -11,17 +11,18 @@ function get_script_dir {
 source "shflags"
 source $(get_script_dir)/utils.sh
 
-DEFINE_boolean verbose true "verbose mode" "v"
+DEFINE_boolean verbose true "verbose mode"
 DEFINE_boolean detect_gpu \
                "$(is_debian_series && echo true || echo false)" \
-               "Attempt to detect the GPU vendor" "g"
+               "Attempt to detect the GPU vendor"
 DEFINE_boolean rebuild_debs true \
-               "Whether always rebuild .deb packages or reuse .deb files when available" \
-               "r"
-DEFINE_boolean rebuild_debs_verbose false "When rebuilding deb packages, show the progress in stdin."
+               "Whether always rebuild .deb packages or reuse .deb files when available"
+DEFINE_boolean rebuild_debs_verbose false \
+               "When rebuilding deb packages, show the progress in stdin." "r"
 DEFINE_boolean build_debs_only false \
                "To build host .deb packages only, not the cuttlefish docker images" "p"
-DEFINE_boolean download_chrome true "download chrome to the ./out directory" "d"
+DEFINE_boolean download_chrome false \
+               "force to download chrome to the ./out directory" "d"
 
 
 FLAGS "$@" || exit 1
