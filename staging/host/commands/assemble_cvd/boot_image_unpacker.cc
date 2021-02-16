@@ -135,7 +135,7 @@ bool BootImageUnpacker::Unpack(const std::string& ramdisk_image_path,
   }
   if (HasVendorRamdiskImage()) {
     if (!ExtractVendorRamdiskImage(vendor_ramdisk_image_path)) {
-      LOG(ERROR) << "Error extracting vendor ramdisk from venodr boot image";
+      LOG(ERROR) << "Error extracting vendor ramdisk from vendor boot image";
       return false;
     }
   }
