@@ -70,14 +70,14 @@ PRODUCT_PRODUCT_PROPERTIES += \
     persist.sys.fuse.passthrough.enable=true \
 
 # Storage: for factory reset protection feature
-PRODUCT_PROPERTY_OVERRIDES += \
+PRODUCT_VENDOR_PROPERTIES += \
     ro.frp.pst=/dev/block/vdc
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138
 #   ro.opengles.version OpenGLES 3.0
 #   ro.hardware.keystore_desede=true needed for CtsKeystoreTestCases
-PRODUCT_PROPERTY_OVERRIDES += \
+PRODUCT_VENDOR_PROPERTIES += \
     tombstoned.max_tombstone_count=500 \
     vendor.bt.rootcanal_test_console=off \
     debug.hwui.swap_with_damage=0 \
@@ -94,7 +94,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     debug.c2.use_dmabufheaps=1 \
 
 # Below is a list of properties we probably should get rid of.
-PRODUCT_PROPERTY_OVERRIDES += \
+PRODUCT_VENDOR_PROPERTIES += \
     wlan.driver.status=ok
 
 ifneq ($(LOCAL_DISABLE_OMX),true)
@@ -103,17 +103,17 @@ DEVICE_MANIFEST_FILE += \
     device/google/cuttlefish/shared/config/android.hardware.media.omx@1.0.xml
 endif
 
-PRODUCT_PROPERTY_OVERRIDES += \
+PRODUCT_VENDOR_PROPERTIES += \
     debug.stagefright.c2inputsurface=-1
 
 # Enforce privapp permissions control.
-PRODUCT_PROPERTY_OVERRIDES += ro.control_privapp_permissions=enforce
+PRODUCT_VENDOR_PROPERTIES += ro.control_privapp_permissions=enforce
 
 # aes-256-heh default is not supported in standard kernels.
-PRODUCT_PROPERTY_OVERRIDES += ro.crypto.volume.filenames_mode=aes-256-cts
+PRODUCT_VENDOR_PROPERTIES += ro.crypto.volume.filenames_mode=aes-256-cts
 
 # Copy preopted files from system_b on first boot
-PRODUCT_PROPERTY_OVERRIDES += ro.cp_system_other_odex=1
+PRODUCT_VENDOR_PROPERTIES += ro.cp_system_other_odex=1
 
 AB_OTA_POSTINSTALL_CONFIG += \
     RUN_POSTINSTALL_system=true \
@@ -135,7 +135,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += androidx.camera.extensions.impl sample_camera_extensions.xml
 
 # DRM service opt-in
-PRODUCT_PROPERTY_OVERRIDES += drm.service.enabled=true
+PRODUCT_VENDOR_PROPERTIES += drm.service.enabled=true
 
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera
 PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
@@ -614,10 +614,11 @@ PRODUCT_SOONG_NAMESPACES += vendor/google_devices/common/proprietary/confirmatio
 
 # Need this so that the application's loop on reading input can be synchronized
 # with HW VSYNC
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += ro.surface_flinger.running_without_sync_framework=true
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.surface_flinger.running_without_sync_framework=true
 
 # Set support one-handed mode
- PRODUCT_PRODUCT_PROPERTIES += \
+PRODUCT_PRODUCT_PROPERTIES += \
     ro.support_one_handed_mode=true
 
 # Set one_handed_mode screen translate offset percentage
