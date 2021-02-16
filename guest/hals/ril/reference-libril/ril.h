@@ -113,6 +113,8 @@ extern "C" {
  *                    RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS
  *                    RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP
  *                    RIL_REQUEST_GET_SLICING_CONFIG
+ *                    Updated data structures: RIL_CarrierInfoForImsiEncryption_v16
+ *                    New data structure: RIL_PublicKeyType
  */
 #define RIL_VERSION 12
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
@@ -853,6 +855,30 @@ typedef struct {
   int64_t expirationTime;             /* Date-Time (in UTC) when the key will expire. */
 
 } RIL_CarrierInfoForImsiEncryption;
+
+/**
+ * Public key type from carrier certificate.
+ */
+typedef enum {
+    EPDG = 1, /* Key type to be used for ePDG */
+    WLAN = 2, /* Key type to be used for WLAN */
+} RIL_PublicKeyType;
+
+typedef struct {
+    char* mcc;                 /* MCC of the Carrier. */
+    char* mnc;                 /* MNC of the Carrier. */
+    uint8_t* carrierKey;       /* Public Key from the Carrier used to encrypt the
+                                * IMSI/IMPI.
+                                */
+    int32_t carrierKeyLength;  /* Length of the Public Key. */
+    char* keyIdentifier;       /* The keyIdentifier Attribute value pair that helps
+                                * a server locate the private key to decrypt the
+                                * permanent identity.
+                                */
+    int64_t expirationTime;    /* Date-Time (in UTC) when the key will expire. */
+    RIL_PublicKeyType keyType; /* Public key type */
+
+} RIL_CarrierInfoForImsiEncryption_v16;
 
 /* See RIL_REQUEST_LAST_CALL_FAIL_CAUSE */
 typedef enum {
