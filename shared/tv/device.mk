@@ -30,7 +30,7 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.sensor.compass.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.sensor.compass.xml \
 
 # HDMI CEC HAL
-PRODUCT_PACKAGES += android.hardware.tv.cec@1.0-service.mock
+PRODUCT_PACKAGES += android.hardware.tv.cec@1.1-service
 
 # Tuner HAL
 PRODUCT_PACKAGES += android.hardware.tv.tuner@1.1-service
