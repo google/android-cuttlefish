@@ -224,6 +224,8 @@ DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
              "the slot will be chosen based on the misc partition if using a "
              "bootloader. It will default to 'a' if empty and not using a "
              "bootloader.");
+DEFINE_bool(use_slot_suffix, true, "Whether to pass the slot_suffix kernel "
+            "parameter if not using a bootloader.");
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
@@ -564,6 +566,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   if (!FLAGS_boot_slot.empty()) {
       tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
   }
+  tmp_config_obj.set_use_slot_suffix(FLAGS_use_slot_suffix);
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 
