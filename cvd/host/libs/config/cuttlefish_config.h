@@ -62,12 +62,6 @@ enum class AdbMode {
   Unknown,
 };
 
-enum class SecureHal {
-  Unknown,
-  Keymint,
-  Gatekeeper,
-};
-
 // Holds the configuration of the cuttlefish instances.
 class CuttlefishConfig {
  public:
@@ -163,9 +157,6 @@ class CuttlefishConfig {
   void set_adb_mode(const std::set<std::string>& modes);
   std::set<AdbMode> adb_mode() const;
 
-  void set_secure_hals(const std::set<std::string>& hals);
-  std::set<SecureHal> secure_hals() const;
-
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
 
@@ -234,6 +225,9 @@ class CuttlefishConfig {
 
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
+
+  void set_use_slot_suffix(const bool use_slot_suffix);
+  bool use_slot_suffix() const;
 
   void set_guest_enforce_security(bool guest_enforce_security);
   bool guest_enforce_security() const;
@@ -521,14 +515,9 @@ class CuttlefishConfig {
 // environment variable or the username.
 int GetInstance();
 
-// Returns default Vsock CID, which is
-// GetInstance() + 2
+// Returns default Vsock CID
+// by default, GetInstance() + 2
 int GetDefaultVsockCid();
-
-// Calculates vsock server port number
-// return base + (vsock_guest_cid - 3)
-int GetVsockServerPort(const int base,
-                       const int vsock_guest_cid);
 
 // Returns a path where the launhcer puts a link to the config file which makes
 // it easily discoverable regardless of what vm manager is in use
