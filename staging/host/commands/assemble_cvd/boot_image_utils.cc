@@ -68,12 +68,24 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
 
   return true;
 }
+
+std::string FindCpio() {
+  for (const auto& path : {"/usr/bin/cpio", "/bin/cpio"}) {
+    if (FileExists(path)) {
+      return path;
+    }
+  }
+  LOG(FATAL) << "Could not find a cpio executable.";
+  return "";
+}
+
 } // namespace
 
 void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                          const std::string& original_ramdisk_path,
                          const std::string& new_ramdisk_path,
                          const std::string& build_dir) {
+  const auto& cpio_path = FindCpio();
   int success = execute({"/bin/bash", "-c", DefaultHostArtifactsPath("bin/lz4") + " -c -d -l " +
                         original_ramdisk_path + " > " + original_ramdisk_path + CPIO_EXT});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
@@ -81,9 +93,10 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
   success = mkdir((build_dir + "/" + TMP_RD_DIR).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
   CHECK(success == 0) << "Could not mkdir \"" << TMP_RD_DIR << "\", error was " << strerror(errno);
 
-  success = execute({"/bin/bash", "-c", "(cd " + build_dir + "/" + TMP_RD_DIR +
-                     " && (while /usr/bin/cpio -id ; do :; done) < " +
-                     original_ramdisk_path + CPIO_EXT + ")"});
+  success = execute({"/bin/bash", "-c",
+                     "(cd " + build_dir + "/" + TMP_RD_DIR + " && (while " +
+                         cpio_path + " -id ; do :; done) < " +
+                         original_ramdisk_path + CPIO_EXT + ")"});
   CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
 
   success = execute({"/bin/bash", "-c", "rm -rf " + build_dir + "/" + TMP_RD_DIR + "/lib/modules"});
@@ -91,9 +104,10 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                   << success;
 
   const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
-  success = execute({"/bin/bash", "-c", "(cd " + build_dir + "/" + TMP_RD_DIR +
-                     " && find . | /usr/bin/cpio -H newc -o --quiet > " +
-                     stripped_ramdisk_path + CPIO_EXT + ")"});
+  success = execute({"/bin/bash", "-c",
+                     "(cd " + build_dir + "/" + TMP_RD_DIR + " && find . | " +
+                         cpio_path + " -H newc -o --quiet > " +
+                         stripped_ramdisk_path + CPIO_EXT + ")"});
   CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
 
   success = execute({"/bin/bash", "-c", DefaultHostArtifactsPath("bin/lz4") +
