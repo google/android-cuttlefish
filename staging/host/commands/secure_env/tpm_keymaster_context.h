@@ -18,8 +18,8 @@
 #include <map>
 #include <vector>
 
-#include <keymaster/attestation_record.h>
 #include <keymaster/keymaster_context.h>
+#include <keymaster/km_openssl/attestation_record.h>
 
 #include "tpm_attestation_record.h"
 
@@ -84,6 +84,8 @@ public:
   keymaster::CertificateChain GenerateAttestation(
       const keymaster::Key& key,
       const keymaster::AuthorizationSet& attest_params,
+      keymaster::UniquePtr<keymaster::Key> attest_key,
+      const keymaster::KeymasterBlob& issuer_subject,
       keymaster_error_t* error) const override;
 
   keymaster::CertificateChain GenerateSelfSignedCertificate(
