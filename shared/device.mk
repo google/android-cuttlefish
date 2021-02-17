@@ -387,7 +387,7 @@ DEVICE_PACKAGE_OVERLAYS += $(LOCAL_AUDIO_DEVICE_PACKAGE_OVERLAYS)
 # BiometricsFace HAL (HIDL)
 #
 PRODUCT_PACKAGES += \
-    android.hardware.biometrics.face@1.1-service.example
+    android.hardware.biometrics.face@1.0-service.example
 
 #
 # BiometricsFingerprint HAL (HIDL)
