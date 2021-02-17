@@ -20,8 +20,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "android-base/logging.h"
+#include "android-base/strings.h"
 #include "gflags/gflags.h"
-#include <android-base/logging.h>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/archive.h"
@@ -213,13 +214,23 @@ std::vector<std::string> download_ota_tools(BuildApi* build_api,
 }
 
 void AddFilesToConfig(FileSource purpose, const Build& build,
-                      const std::vector<std::string>& paths, FetcherConfig* config,
+                      const std::vector<std::string>& paths,
+                      FetcherConfig* config,
+                      const std::string& directory_prefix,
                       bool override_entry = false) {
   for (const std::string& path : paths) {
+    std::string_view local_path(path);
+    if (!android::base::ConsumePrefix(&local_path, directory_prefix)) {
+      LOG(ERROR) << "Failed to remove prefix " << directory_prefix << " from "
+                 << local_path;
+    }
+    while (android::base::StartsWith(local_path, "/")) {
+      android::base::ConsumePrefix(&local_path, "/");
+    }
     // TODO(schuffelen): Do better for local builds here.
     auto id = std::visit([](auto&& arg) { return arg.id; }, build);
     auto target = std::visit([](auto&& arg) { return arg.target; }, build);
-    CvdFile file(purpose, id, target, path);
+    CvdFile file(purpose, id, target, std::string(local_path));
     bool added = config->add_cvd_file(file, override_entry);
     if (!added) {
       LOG(ERROR) << "Duplicate file " << file;
@@ -252,6 +263,7 @@ int FetchCvdMain(int argc, char** argv) {
   if (!DirectoryExists(target_dir) && mkdir(target_dir.c_str(), 0777) != 0) {
     LOG(FATAL) << "Could not create " << target_dir;
   }
+  std::string target_dir_slash = target_dir;
   std::chrono::seconds retry_period(std::stoi(FLAGS_wait_retry_period));
 
   curl_global_init(CURL_GLOBAL_DEFAULT);
@@ -273,7 +285,8 @@ int FetchCvdMain(int argc, char** argv) {
     if (host_package_files.empty()) {
       LOG(FATAL) << "Could not download host package for " << default_build;
     }
-    AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, host_package_files, &config);
+    AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
+                     host_package_files, &config, target_dir);
 
     if (FLAGS_system_build != "" || FLAGS_kernel_build != "" || FLAGS_otatools_build != "") {
       auto ota_build = default_build;
@@ -286,7 +299,8 @@ int FetchCvdMain(int argc, char** argv) {
       if (ota_tools_files.empty()) {
         LOG(FATAL) << "Could not download ota tools for " << ota_build;
       }
-      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, ota_tools_files, &config);
+      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build,
+                       ota_tools_files, &config, target_dir);
     }
     if (FLAGS_download_img_zip) {
       std::vector<std::string> image_files =
@@ -298,7 +312,8 @@ int FetchCvdMain(int argc, char** argv) {
       for (auto& file : image_files) {
         LOG(INFO) << file;
       }
-      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, image_files, &config);
+      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, image_files,
+                       &config, target_dir);
     }
     if (FLAGS_system_build != "" || FLAGS_download_target_files_zip) {
       std::string default_target_dir = target_dir + "/default";
@@ -311,7 +326,8 @@ int FetchCvdMain(int argc, char** argv) {
         LOG(FATAL) << "Could not download target files for " << default_build;
       }
       LOG(INFO) << "Adding target files for default build";
-      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, target_files, &config);
+      AddFilesToConfig(FileSource::DEFAULT_BUILD, default_build, target_files,
+                       &config, target_dir);
     }
 
     if (FLAGS_system_build != "") {
@@ -331,7 +347,7 @@ int FetchCvdMain(int argc, char** argv) {
         } else {
           LOG(INFO) << "Adding img-zip files for system build";
           AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build, image_files,
-                           &config, true);
+                           &config, target_dir, true);
         }
       }
       std::string system_target_dir = target_dir + "/system";
@@ -344,7 +360,8 @@ int FetchCvdMain(int argc, char** argv) {
         LOG(FATAL) << "Could not download target files for " << system_build;
         return -1;
       }
-      AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build, target_files, &config);
+      AddFilesToConfig(FileSource::SYSTEM_BUILD, system_build, target_files,
+                       &config, target_dir);
       if (!system_in_img_zip) {
         if (ExtractImages(target_files[0], target_dir, {"IMAGES/system.img"})
             != std::vector<std::string>{}) {
@@ -405,7 +422,8 @@ int FetchCvdMain(int argc, char** argv) {
 
       std::string local_path = target_dir + "/kernel";
       if (build_api.ArtifactToFile(kernel_build, "bzImage", local_path)) {
-        AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build, {local_path}, &config);
+        AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build, {local_path},
+                         &config, target_dir);
       } else {
         LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
             << local_path;
@@ -422,7 +440,7 @@ int FetchCvdMain(int argc, char** argv) {
                      << target_dir + "/initramfs.img";
         }
         AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build,
-                         {target_dir + "/initramfs.img"}, &config);
+                         {target_dir + "/initramfs.img"}, &config, target_dir);
       }
     }
 
@@ -434,7 +452,8 @@ int FetchCvdMain(int argc, char** argv) {
 
       std::string local_path = target_dir + "/bootloader";
       if (build_api.ArtifactToFile(bootloader_build, "u-boot.rom", local_path)) {
-        AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build, {local_path}, &config, true);
+        AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build,
+                         {local_path}, &config, target_dir, true);
       } else {
         LOG(FATAL) << "Could not download " << bootloader_build << ":u-boot.rom to "
             << local_path;
@@ -447,11 +466,12 @@ int FetchCvdMain(int argc, char** argv) {
   // their own build id. So it's unclear which build number fetch_cvd itself was built at.
   // https://android.googlesource.com/platform/build/+/979c9f3/Changes.md#build_number
   std::string fetcher_path = target_dir + "/fetcher_config.json";
-  AddFilesToConfig(GENERATED, DeviceBuild("", ""), {fetcher_path}, &config);
+  AddFilesToConfig(GENERATED, DeviceBuild("", ""), {fetcher_path}, &config,
+                   target_dir);
   config.SaveToFile(fetcher_path);
 
   for (const auto& file : config.get_cvd_files()) {
-    std::cout << file.second.file_path << "\n";
+    std::cout << target_dir << "/" << file.second.file_path << "\n";
   }
   std::cout << std::flush;
 
