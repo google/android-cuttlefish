@@ -161,7 +161,7 @@ std::vector<std::string> KernelCommandLineFromConfig(
   kernel_cmdline.push_back(concat("androidboot.lcd_density=", config.dpi()));
   kernel_cmdline.push_back(concat(
       "androidboot.setupwizard_mode=", config.setupwizard_mode()));
-  if (!config.use_bootloader()) {
+  if (!config.use_bootloader() && config.use_slot_suffix()) {
     std::string slot_suffix;
     if (config.boot_slot().empty()) {
       slot_suffix = "_a";
