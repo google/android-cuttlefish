@@ -19,11 +19,12 @@
 #include <sstream>
 #include <vector>
 
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <dlfcn.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
+#include <sys/wait.h>
 #include <vulkan/vulkan.h>
 
 namespace cuttlefish {
@@ -529,8 +530,6 @@ void PopulateVulkanAvailability(GraphicsAvailability* availability) {
   }
 }
 
-}  // namespace
-
 GraphicsAvailability GetGraphicsAvailability() {
   GraphicsAvailability availability;
 
@@ -541,6 +540,36 @@ GraphicsAvailability GetGraphicsAvailability() {
   PopulateVulkanAvailability(&availability);
 
   return availability;
+}
+
+}  // namespace
+
+bool ShouldEnableAcceleratedRendering(
+    const GraphicsAvailability& availability) {
+  return availability.has_egl && availability.has_egl_surfaceless_with_gles &&
+         availability.has_discrete_gpu;
+}
+
+// Runs GetGraphicsAvailability() inside of a subprocess first to ensure that
+// GetGraphicsAvailability() can complete successfully without crashing
+// assemble_cvd. Configurations such as GCE instances without a GPU but with GPU
+// drivers for example have seen crashes.
+GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
+  pid_t pid = fork();
+  if (pid == 0) {
+    GetGraphicsAvailability();
+    std::exit(0);
+  }
+  int status;
+  if (waitpid(pid, &status, 0) != pid) {
+    PLOG(ERROR) << "Failed to wait for graphics check subprocess";
+    return GraphicsAvailability{};
+  }
+  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+    return GetGraphicsAvailability();
+  }
+  LOG(VERBOSE) << "Subprocess for detect_graphics failed with " << status;
+  return GraphicsAvailability{};
 }
 
 std::ostream& operator<<(std::ostream& stream,
