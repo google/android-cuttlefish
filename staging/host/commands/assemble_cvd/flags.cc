@@ -383,7 +383,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   const GraphicsAvailability graphics_availability =
     GetGraphicsAvailabilityWithSubprocessCheck();
 
-  LOG(VERBOSE) << GetGraphicsAvailabilityString(graphics_availability);
+  LOG(VERBOSE) << graphics_availability;
 
   tmp_config_obj.set_gpu_mode(FLAGS_gpu_mode);
 
