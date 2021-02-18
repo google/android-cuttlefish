@@ -545,9 +545,8 @@ GraphicsAvailability GetGraphicsAvailability() {
   return availability;
 }
 
-std::string GetGraphicsAvailabilityString(
-    const GraphicsAvailability& availability) {
-  std::ostringstream stream;
+std::ostream& operator<<(std::ostream& stream,
+                         const GraphicsAvailability& availability) {
   stream << "Graphics Availability:"
          << std::endl;
   stream << "OpenGL available: "
@@ -594,7 +593,7 @@ std::string GetGraphicsAvailabilityString(
            << availability.discrete_gpu_device_extensions
            << std::endl;
   }
-  return stream.str();
+  return stream;
 }
 
 } // namespace cuttlefish
