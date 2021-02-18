@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include <ostream>
 #include <string>
 
 namespace cuttlefish {
@@ -38,6 +39,6 @@ struct GraphicsAvailability {
 
 GraphicsAvailability GetGraphicsAvailability();
 
-std::string GetGraphicsAvailabilityString(const GraphicsAvailability& info);
+std::ostream& operator<<(std::ostream& out, const GraphicsAvailability& info);
 
 }  // namespace cuttlefish

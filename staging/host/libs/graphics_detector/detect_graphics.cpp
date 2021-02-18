@@ -29,5 +29,5 @@ int main(int argc, char* argv[]) {
   const cuttlefish::GraphicsAvailability graphics_availability =
   	cuttlefish::GetGraphicsAvailability();
 
-  LOG(INFO) << GetGraphicsAvailabilityString(graphics_availability);
+  LOG(INFO) << graphics_availability;
 }
