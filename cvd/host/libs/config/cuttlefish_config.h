@@ -456,6 +456,8 @@ class CuttlefishConfig {
 
     std::string uboot_env_image_path() const;
 
+    std::string vendor_boot_image_path() const;
+
     // modem simulator related
     std::string modem_simulator_ports() const;
 
