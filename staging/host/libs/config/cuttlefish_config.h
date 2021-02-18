@@ -235,6 +235,9 @@ class CuttlefishConfig {
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
 
+  void set_use_slot_suffix(const bool use_slot_suffix);
+  bool use_slot_suffix() const;
+
   void set_guest_enforce_security(bool guest_enforce_security);
   bool guest_enforce_security() const;
 
