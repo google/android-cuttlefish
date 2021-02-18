@@ -529,8 +529,6 @@ void PopulateVulkanAvailability(GraphicsAvailability* availability) {
   }
 }
 
-inline std::string BoolString(bool val) { return val ? "true" : "false"; }
-
 }  // namespace
 
 GraphicsAvailability GetGraphicsAvailability() {
@@ -547,52 +545,32 @@ GraphicsAvailability GetGraphicsAvailability() {
 
 std::ostream& operator<<(std::ostream& stream,
                          const GraphicsAvailability& availability) {
-  stream << "Graphics Availability:"
-         << std::endl;
-  stream << "OpenGL available: "
-         << BoolString(availability.has_gl)
-         << std::endl;
-  stream << "OpenGL ES1 available: "
-         << BoolString(availability.has_gles1)
-         << std::endl;
-  stream << "OpenGL ES2 available: "
-         << BoolString(availability.has_gles2)
-         << std::endl;
-  stream << "EGL available: "
-         << BoolString(availability.has_egl)
-         << std::endl;
-  stream << "EGL client extensions: "
-         << availability.egl_client_extensions
-         << std::endl;
+  std::ios_base::fmtflags flags_backup(stream.flags());
+  stream << std::boolalpha;
+  stream << "Graphics Availability:\n";
+  stream << "OpenGL available: " << availability.has_gl << "\n";
+  stream << "OpenGL ES1 available: " << availability.has_gles1 << "\n";
+  stream << "OpenGL ES2 available: " << availability.has_gles2 << "\n";
+  stream << "EGL available: " << availability.has_egl << "\n";
+  stream << "EGL client extensions: " << availability.egl_client_extensions
+         << "\n";
   stream << "EGL default display available: "
-         << BoolString(availability.has_egl_default_display)
-         << std::endl;
-  stream << "EGL display vendor: "
-         << availability.egl_vendor
-         << std::endl;
-  stream << "EGL display version: "
-         << availability.egl_version
-         << std::endl;
-  stream << "EGL display extensions: "
-         << availability.egl_extensions
-         << std::endl;
+         << availability.has_egl_default_display << "\n";
+  stream << "EGL display vendor: " << availability.egl_vendor << "\n";
+  stream << "EGL display version: " << availability.egl_version << "\n";
+  stream << "EGL display extensions: " << availability.egl_extensions << "\n";
   stream << "EGL surfaceless display with GLES: "
-         << BoolString(availability.has_egl_surfaceless_with_gles)
-         << std::endl;
-  stream << "Vulkan available: "
-         << BoolString(availability.has_vulkan)
-         << std::endl;
-  stream << "Vulkan discrete GPU detected: "
-         << BoolString(availability.has_discrete_gpu)
-         << std::endl;
+         << availability.has_egl_surfaceless_with_gles << "\n";
+  stream << "Vulkan available: " << availability.has_vulkan << "\n";
+  stream << "Vulkan discrete GPU detected: " << availability.has_discrete_gpu
+         << "\n";
   if (availability.has_discrete_gpu) {
     stream << "Vulkan discrete GPU device name: "
-           << availability.discrete_gpu_device_name
-           << std::endl;
+           << availability.discrete_gpu_device_name << "\n";
     stream << "Vulkan discrete GPU device extensions: "
-           << availability.discrete_gpu_device_extensions
-           << std::endl;
+           << availability.discrete_gpu_device_extensions << "\n";
   }
+  stream.flags(flags_backup);
   return stream;
 }
 
