@@ -6,7 +6,6 @@
 #include <json/json.h>
 #include <json/writer.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -324,34 +323,6 @@ std::string StrForInstance(const std::string& prefix, int num) {
   std::ostringstream stream;
   stream << prefix << std::setfill('0') << std::setw(2) << num;
   return stream.str();
-}
-
-bool ShouldEnableAcceleratedRendering(const GraphicsAvailability& availability) {
-  return availability.has_egl &&
-         availability.has_egl_surfaceless_with_gles &&
-         availability.has_discrete_gpu;
-}
-
-// Runs GetGraphicsAvailability() inside of a subprocess first to ensure that
-// GetGraphicsAvailability() can complete successfully without crashing
-// assemble_cvd. Configurations such as GCE instances without a GPU but with GPU
-// drivers for example have seen crashes.
-GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
-  pid_t pid = fork();
-  if (pid == 0) {
-    GetGraphicsAvailability();
-    std::exit(0);
-  }
-  int status;
-  if (waitpid(pid, &status, 0) != pid) {
-    PLOG(ERROR) << "Failed to wait for graphics check subprocess";
-    return GraphicsAvailability{};
-  }
-  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
-    return GetGraphicsAvailability();
-  }
-  LOG(VERBOSE) << "Subprocess for detect_graphics failed with " << status;
-  return GraphicsAvailability{};
 }
 
 } // namespace
