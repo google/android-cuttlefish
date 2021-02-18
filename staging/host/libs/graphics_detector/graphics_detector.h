@@ -37,7 +37,8 @@ struct GraphicsAvailability {
   std::string discrete_gpu_device_extensions;
 };
 
-GraphicsAvailability GetGraphicsAvailability();
+bool ShouldEnableAcceleratedRendering(const GraphicsAvailability& availability);
+GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck();
 
 std::ostream& operator<<(std::ostream& out, const GraphicsAvailability& info);
 
