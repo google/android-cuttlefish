@@ -9922,9 +9922,12 @@ int radio_1_6::getSystemSelectionChannelsResponse(int slotId, int responseType, 
     populateResponseInfo_1_6(responseInfo, serial, responseType, e);
 
     if (radioService[slotId]->mRadioResponseV1_6 != NULL) {
-        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6
-                ->getSystemSelectionChannelsResponse(responseInfo);
-        radioService[slotId]->checkReturnStatus(retStatus);
+      hidl_vec<::android::hardware::radio::V1_5::RadioAccessSpecifier> ret;
+      Return<void> retStatus =
+          radioService[slotId]
+              ->mRadioResponseV1_6->getSystemSelectionChannelsResponse(
+                  responseInfo, ret);
+      radioService[slotId]->checkReturnStatus(retStatus);
     } else {
         RLOGE("getSystemSelectionChannelsResponse: radioService[%d]->mRadioResponse == NULL",
                 slotId);
