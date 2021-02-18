@@ -6,6 +6,7 @@
 #include <json/json.h>
 #include <json/writer.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -331,33 +332,25 @@ bool ShouldEnableAcceleratedRendering(const GraphicsAvailability& availability) 
          availability.has_discrete_gpu;
 }
 
-// Runs GetGraphicsAvailability() inside of a subprocess to ensure that
+// Runs GetGraphicsAvailability() inside of a subprocess first to ensure that
 // GetGraphicsAvailability() can complete successfully without crashing
 // assemble_cvd. Configurations such as GCE instances without a GPU but with GPU
 // drivers for example have seen crashes.
 GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
-  const std::string detect_graphics_bin =
-      DefaultHostArtifactsPath("bin/detect_graphics");
-
-  Command detect_graphics_cmd(detect_graphics_bin);
-
-  SubprocessOptions detect_graphics_options;
-  detect_graphics_options.Verbose(false);
-
-  std::string detect_graphics_output;
-  std::string detect_graphics_error;
-  int ret = RunWithManagedStdio(std::move(detect_graphics_cmd),
-                                nullptr,
-                                &detect_graphics_output,
-                                &detect_graphics_error,
-                                detect_graphics_options);
-  if (ret == 0) {
+  pid_t pid = fork();
+  if (pid == 0) {
+    GetGraphicsAvailability();
+    std::exit(0);
+  }
+  int status;
+  if (waitpid(pid, &status, 0) != pid) {
+    PLOG(ERROR) << "Failed to wait for graphics check subprocess";
+    return GraphicsAvailability{};
+  }
+  if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
     return GetGraphicsAvailability();
   }
-  LOG(VERBOSE) << "Subprocess for detect_graphics failed with "
-               << ret
-               << " : "
-               << detect_graphics_output;
+  LOG(VERBOSE) << "Subprocess for detect_graphics failed with " << status;
   return GraphicsAvailability{};
 }
 
