@@ -47,56 +47,55 @@ private:
   std::function<void()> on_close_;
 };
 
+struct LibraryCloser {
+ public:
+  void operator()(void* library) { dlclose(library); }
+};
+
+using ManagedLibrary = std::unique_ptr<void, LibraryCloser>;
+
 void PopulateGlAvailability(GraphicsAvailability* availability) {
-  void* gl_lib = dlopen(kGlLib, RTLD_NOW | RTLD_LOCAL);
-  if (gl_lib == nullptr) {
+  ManagedLibrary gl_lib(dlopen(kGlLib, RTLD_NOW | RTLD_LOCAL));
+  if (!gl_lib) {
     LOG(VERBOSE) << "Failed to dlopen " << kGlLib << ".";
     return;
   }
   LOG(VERBOSE) << "Loaded " << kGlLib << ".";
-  Closer gl_lib_closer([&]() { dlclose(gl_lib); });
-
   availability->has_gl = true;
 }
 
 void PopulateGles1Availability(GraphicsAvailability* availability) {
-  void* gles1_lib = dlopen(kGles1Lib, RTLD_NOW | RTLD_LOCAL);
-  if (gles1_lib == nullptr) {
+  ManagedLibrary gles1_lib(dlopen(kGles1Lib, RTLD_NOW | RTLD_LOCAL));
+  if (!gles1_lib) {
     LOG(VERBOSE) << "Failed to dlopen " << kGles1Lib << ".";
     return;
   }
   LOG(VERBOSE) << "Loaded " << kGles1Lib << ".";
-  Closer gles1_lib_closer([&]() { dlclose(gles1_lib); });
-
   availability->has_gles1 = true;
 }
 
 void PopulateGles2Availability(GraphicsAvailability* availability) {
-  void* gles2_lib = dlopen(kGles2Lib, RTLD_NOW | RTLD_LOCAL);
-  if (gles2_lib == nullptr) {
+  ManagedLibrary gles2_lib(dlopen(kGles2Lib, RTLD_NOW | RTLD_LOCAL));
+  if (!gles2_lib) {
     LOG(VERBOSE) << "Failed to dlopen " << kGles2Lib << ".";
     return;
   }
   LOG(VERBOSE) << "Loaded " << kGles2Lib << ".";
-  Closer gles2_lib_closer([&]() { dlclose(gles2_lib); });
-
   availability->has_gles2 = true;
 }
 
 void PopulateEglAvailability(GraphicsAvailability* availability) {
-  void* egllib = dlopen(kEglLib, RTLD_NOW | RTLD_LOCAL);
-  if (egllib == nullptr) {
+  ManagedLibrary egllib(dlopen(kEglLib, RTLD_NOW | RTLD_LOCAL));
+  if (!egllib) {
     LOG(VERBOSE) << "Failed to dlopen " << kEglLib << ".";
     return;
   }
   LOG(VERBOSE) << "Loaded " << kEglLib << ".";
-  Closer egllib_closer([&]() { dlclose(egllib); });
-
   availability->has_egl = true;
 
   PFNEGLGETPROCADDRESSPROC eglGetProcAddress =
-    reinterpret_cast<PFNEGLGETPROCADDRESSPROC>(
-      dlsym(egllib, "eglGetProcAddress"));
+      reinterpret_cast<PFNEGLGETPROCADDRESSPROC>(
+          dlsym(egllib.get(), "eglGetProcAddress"));
   if (eglGetProcAddress == nullptr) {
     LOG(VERBOSE) << "Failed to find function eglGetProcAddress.";
     return;
@@ -106,9 +105,9 @@ void PopulateEglAvailability(GraphicsAvailability* availability) {
   // Some implementations have it so that eglGetProcAddress is only for
   // loading EXT functions.
   auto EglLoadFunction = [&](const char* name) {
-    void* func =  dlsym(egllib, name);
+    void* func = dlsym(egllib.get(), name);
     if (func == NULL) {
-        func = reinterpret_cast<void*>(eglGetProcAddress(name));
+      func = reinterpret_cast<void*>(eglGetProcAddress(name));
     }
     return func;
   };
@@ -342,28 +341,27 @@ void PopulateEglAvailability(GraphicsAvailability* availability) {
 }
 
 void PopulateVulkanAvailability(GraphicsAvailability* availability) {
-  void* vklib = dlopen(kVulkanLib, RTLD_NOW | RTLD_LOCAL);
-  if (vklib == nullptr) {
+  ManagedLibrary vklib(dlopen(kVulkanLib, RTLD_NOW | RTLD_LOCAL));
+  if (!vklib) {
     LOG(VERBOSE) << "Failed to dlopen " << kVulkanLib << ".";
     return;
   }
   LOG(VERBOSE) << "Loaded " << kVulkanLib << ".";
-  Closer vklib_closer([&]() { dlclose(vklib); });
   availability->has_vulkan = true;
 
   uint32_t instance_version = 0;
 
   PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr =
-    reinterpret_cast<PFN_vkGetInstanceProcAddr>(
-      dlsym(vklib, "vkGetInstanceProcAddr"));
+      reinterpret_cast<PFN_vkGetInstanceProcAddr>(
+          dlsym(vklib.get(), "vkGetInstanceProcAddr"));
   if (vkGetInstanceProcAddr == nullptr) {
     LOG(VERBOSE) << "Failed to find symbol vkGetInstanceProcAddr.";
     return;
   }
 
   PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion =
-    reinterpret_cast<PFN_vkEnumerateInstanceVersion>(
-      dlsym(vklib, "vkEnumerateInstanceVersion"));
+      reinterpret_cast<PFN_vkEnumerateInstanceVersion>(
+          dlsym(vklib.get(), "vkEnumerateInstanceVersion"));
   if (vkEnumerateInstanceVersion == nullptr ||
       vkEnumerateInstanceVersion(&instance_version) != VK_SUCCESS) {
     instance_version = VK_API_VERSION_1_0;
