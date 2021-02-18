@@ -139,6 +139,7 @@ const char* kBootloader = "bootloader";
 const char* kUseBootloader = "use_bootloader";
 
 const char* kBootSlot = "boot_slot";
+const char* kUseSlotSuffix = "use_slot_suffix";
 
 const char* kEnableMetrics = "enable_metrics";
 const char* kMetricsBinary = "metrics_binary";
@@ -590,6 +591,14 @@ void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
 
 std::string CuttlefishConfig::boot_slot() const {
   return (*dictionary_)[kBootSlot].asString();
+}
+
+void CuttlefishConfig::set_use_slot_suffix(const bool use_slot_suffix) {
+  (*dictionary_)[kUseSlotSuffix] = use_slot_suffix;
+}
+
+bool CuttlefishConfig::use_slot_suffix() const {
+  return (*dictionary_)[kUseSlotSuffix].asBool();
 }
 
 void CuttlefishConfig::set_webrtc_certs_dir(const std::string& certs_dir) {
