@@ -93,6 +93,7 @@ const char* kDeprecatedBootCompleted = "deprecated_boot_completed";
 
 const char* kCuttlefishEnvPath = "cuttlefish_env_path";
 
+const char* kSecureHals = "secure_hals";
 const char* kAdbMode = "adb_mode";
 const char* kSetupWizardMode = "setupwizard_mode";
 const char* kTpmDevice = "tpm_device";
@@ -368,6 +369,33 @@ void CuttlefishConfig::set_adb_mode(const std::set<std::string>& mode) {
     mode_json_obj.append(arg);
   }
   (*dictionary_)[kAdbMode] = mode_json_obj;
+}
+
+static SecureHal StringToSecureHal(std::string mode) {
+  std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
+  if (mode == "keymint") {
+    return SecureHal::Keymint;
+  } else if (mode == "gatekeeper") {
+    return SecureHal::Gatekeeper;
+  } else {
+    return SecureHal::Unknown;
+  }
+}
+
+std::set<SecureHal> CuttlefishConfig::secure_hals() const {
+  std::set<SecureHal> args_set;
+  for (auto& hal : (*dictionary_)[kSecureHals]) {
+    args_set.insert(StringToSecureHal(hal.asString()));
+  }
+  return args_set;
+}
+
+void CuttlefishConfig::set_secure_hals(const std::set<std::string>& hals) {
+  Json::Value hals_json_obj(Json::arrayValue);
+  for (const auto& hal : hals) {
+    hals_json_obj.append(hal);
+  }
+  (*dictionary_)[kSecureHals] = hals_json_obj;
 }
 
 std::string CuttlefishConfig::setupwizard_mode() const {
@@ -924,6 +952,11 @@ int GetDefaultVsockCid() {
   // we assume that this function is used to configure CuttlefishConfig once
   static const int default_vsock_cid = 3 + GetInstance() - 1;
   return default_vsock_cid;
+}
+
+int GetVsockServerPort(const int base,
+                       const int vsock_guest_cid /**< per instance guest cid */) {
+    return base + (vsock_guest_cid - 3);
 }
 
 std::string GetGlobalConfigFileLink() {
