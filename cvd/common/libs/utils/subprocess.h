@@ -119,25 +119,6 @@ class Command {
   }
 
  public:
-  class ParameterBuilder {
-   public:
-    ParameterBuilder(Command* cmd) : cmd_(cmd){};
-    ParameterBuilder(ParameterBuilder&& builder) = default;
-    ~ParameterBuilder();
-
-    template <typename T>
-    ParameterBuilder& operator<<(T t) {
-      cmd_->BuildParameter(&stream_, t);
-      return *this;
-    }
-
-    void Build();
-
-   private:
-    Command* cmd_;
-    std::stringstream stream_;
-  };
-
   // Constructs a command object from the path to an executable binary and an
   // optional subprocess stopper. When not provided, stopper defaults to sending
   // SIGKILL to the subprocess.
@@ -189,8 +170,6 @@ class Command {
     }
     return false;
   }
-
-  ParameterBuilder GetParameterBuilder() { return ParameterBuilder(this); }
 
   // Redirects the standard IO of the command.
   bool RedirectStdIO(Subprocess::StdIOChannel channel, SharedFD shared_fd);

@@ -157,14 +157,6 @@ bool KillSubprocess(Subprocess* subprocess) {
   }
   return true;
 }
-Command::ParameterBuilder::~ParameterBuilder() { Build(); }
-void Command::ParameterBuilder::Build() {
-  auto param = stream_.str();
-  stream_ = std::stringstream();
-  if (param.size()) {
-    cmd_->AddParameter(param);
-  }
-}
 
 Command::~Command() {
   // Close all inherited file descriptors
@@ -249,10 +241,10 @@ Subprocess Command::Start(SubprocessOptions options) const {
     // the environment of the child process. To force an empty emvironment for
     // the child process pass the address of a pointer to NULL
     if (use_parent_env_) {
-      rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
+      rval = execv(cmd[0], const_cast<char* const*>(cmd.data()));
     } else {
       auto envp = ToCharPointers(env_);
-      rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
+      rval = execve(cmd[0], const_cast<char* const*>(cmd.data()),
                     const_cast<char* const*>(envp.data()));
     }
     // No need for an if: if exec worked it wouldn't have returned
