@@ -1,8 +1,0 @@
-{
-  "presubmit": [
-    {
-      "name": "cuttlefish_net_tests",
-      "host": true
-    }
-  ]
-}
