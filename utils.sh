@@ -212,7 +212,7 @@ function is_debian {
   if [[ -f /etc/debian_version ]]; then
       return 0
   fi
-  if ls -1 /etc/*release | egrep -i "(debian)" > /dev/null 2>&1; then
+  if ls -1 /etc/*release | egrep -i "debian" > /dev/null 2>&1; then
     return 0
   fi
   return 1
@@ -223,8 +223,9 @@ function is_debian_series {
   if is_debian; then
     return 0
   fi
-  # if ever not Debian, use the whitelists
-  if ls -1 /etc/*release | egrep -i "(debian|buntu|mint)" > /dev/null 2>&1; then
+  # if ever not Debian, use the list of distros known to be a variant of Debian
+  # So, extend this list if more distros should be supported
+  if ls -1 /etc/*release | egrep -i "(buntu|mint)" > /dev/null 2>&1; then
       return 0
   fi
   return 1
