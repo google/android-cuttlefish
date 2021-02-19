@@ -62,3 +62,7 @@ PRODUCT_NAME := aosp_cf_x86_64_only_phone
 PRODUCT_DEVICE := vsoc_x86_64_only
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86_64 phone (64-bit only)
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
+    ro.soc.model=$(PRODUCT_DEVICE)

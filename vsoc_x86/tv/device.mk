@@ -22,3 +22,7 @@ PRODUCT_NAME := aosp_cf_x86_tv
 PRODUCT_DEVICE := vsoc_x86
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86 tv
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
+    ro.soc.model=$(PRODUCT_DEVICE)
