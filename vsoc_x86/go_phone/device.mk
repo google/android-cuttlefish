@@ -22,3 +22,7 @@ PRODUCT_DEVICE := vsoc_x86
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86 Go phone
 PRODUCT_PACKAGE_OVERLAYS := device/google/cuttlefish/vsoc_x86/phone/overlay
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
+    ro.soc.model=$(PRODUCT_DEVICE)

@@ -23,3 +23,7 @@ PRODUCT_NAME := aosp_cf_x86_64_auto
 PRODUCT_DEVICE := vsoc_x86_64
 PRODUCT_MANUFACTURER := Google
 PRODUCT_MODEL := Cuttlefish x86_64 auto
+
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.soc.manufacturer=$(PRODUCT_MANUFACTURER) \
+    ro.soc.model=$(PRODUCT_DEVICE)
