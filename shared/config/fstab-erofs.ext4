@@ -1,4 +1,4 @@
-/dev/block/by-name/boot /boot emmc defaults recoveryonly,slotselect,first_stage_mount,avb=boot
+/dev/block/by-name/boot /boot emmc defaults recoveryonly,slotselect
 /dev/block/by-name/vendor_boot /vendor_boot emmc defaults recoveryonly,slotselect
 system /system erofs ro wait,logical,first_stage_mount,slotselect,avb=vbmeta_system
 # Add all non-dynamic partitions except system, after this comment
