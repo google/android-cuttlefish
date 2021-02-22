@@ -437,6 +437,7 @@ int RunCvdMain(int argc, char** argv) {
 
   auto vm_manager = GetVmManager(config->vm_manager());
 
+#ifndef __ANDROID__
   // Check host configuration
   std::vector<std::string> config_commands;
   if (!ValidateHostConfiguration(&config_commands)) {
@@ -449,6 +450,7 @@ int RunCvdMain(int argc, char** argv) {
               << std::endl;
     return RunnerExitCodes::kInvalidHostConfiguration;
   }
+#endif
 
   if (!WriteCuttlefishEnvironment(*config)) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
