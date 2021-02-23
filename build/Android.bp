@@ -58,6 +58,7 @@ cvd_host_tools = [
     "newfs_msdos",
     "powerwash_cvd",
     "restart_cvd",
+    "root-canal",
     "run_cvd",
     "secure_env",
     "socket_vsock_proxy",
