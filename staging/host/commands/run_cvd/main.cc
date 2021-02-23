@@ -534,6 +534,7 @@ int RunCvdMain(int argc, char** argv) {
   CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
                                          reboot_notification, boot_events_pipe);
 
+  LaunchRootCanal(*config, &process_monitor);
   LaunchLogcatReceiver(*config, &process_monitor);
   LaunchConfigServer(*config, &process_monitor);
   LaunchTombstoneReceiver(*config, &process_monitor);
