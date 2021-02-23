@@ -149,6 +149,7 @@ const char* kGuestAuditSecurity = "guest_audit_security";
 const char* kGuestForceNormalBoot = "guest_force_normal_boot";
 const char* kBootImageKernelCmdline = "boot_image_kernel_cmdline";
 const char* kExtraKernelCmdline = "extra_kernel_cmdline";
+const char* kEnableRootcanal = "enable_rootcanal";
 
 // modem simulator related
 const char* kRunModemSimulator = "enable_modem_simulator";
@@ -745,6 +746,13 @@ void CuttlefishConfig::set_guest_force_normal_boot(bool guest_force_normal_boot)
 }
 bool CuttlefishConfig::guest_force_normal_boot() const {
   return (*dictionary_)[kGuestForceNormalBoot].asBool();
+}
+
+void CuttlefishConfig::set_enable_rootcanal(bool enable_rootcanal) {
+  (*dictionary_)[kEnableRootcanal] = enable_rootcanal;
+}
+bool CuttlefishConfig::enable_rootcanal() const {
+  return (*dictionary_)[kEnableRootcanal].asBool();
 }
 
 void CuttlefishConfig::set_enable_metrics(std::string enable_metrics) {
