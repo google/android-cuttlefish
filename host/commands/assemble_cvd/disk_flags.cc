@@ -23,16 +23,17 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/data_image.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/data_image.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
 #define VBMETA_MAX_SIZE 65536ul
@@ -128,7 +129,7 @@ std::unique_ptr<BootImageUnpacker> CreateBootImageUnpacker() {
 static bool DecompressKernel(const std::string& src, const std::string& dst) {
   Command decomp_cmd(DefaultHostArtifactsPath("bin/extract-vmlinux"));
   decomp_cmd.AddParameter(src);
-  std::string current_path = getenv("PATH") == nullptr ? "" : getenv("PATH");
+  std::string current_path = StringFromEnv("PATH", "");
   std::string bin_folder = DefaultHostArtifactsPath("bin");
   decomp_cmd.SetEnvironment({"PATH=" + current_path + ":" + bin_folder});
   auto output_file = SharedFD::Creat(dst.c_str(), 0666);
