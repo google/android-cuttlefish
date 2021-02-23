@@ -23,6 +23,7 @@
 #include <android-base/threads.h>
 
 #include "common/libs/fs/shared_buf.h"
+#include "common/libs/utils/environment.h"
 
 using android::base::GetThreadId;
 using android::base::FATAL;
@@ -40,8 +41,7 @@ static LogSeverity GuessSeverity(
   using android::base::ERROR;
   using android::base::FATAL_WITHOUT_ABORT;
   using android::base::FATAL;
-  char* env_cstr = getenv(env_var.c_str());
-  std::string env_value(env_cstr == nullptr ? "" : env_cstr);
+  std::string env_value = StringFromEnv(env_var, "");
   using android::base::EqualsIgnoreCase;
   if (EqualsIgnoreCase(env_value, "VERBOSE")
       || env_value == std::to_string((int) VERBOSE)) {

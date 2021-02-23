@@ -26,6 +26,7 @@
 #include <android-base/strings.h>
 #include <android-base/logging.h>
 
+#include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 
 namespace cuttlefish {
@@ -76,7 +77,7 @@ std::ostream& operator<<(std::ostream& out, const Build& build) {
 DirectoryBuild::DirectoryBuild(const std::vector<std::string>& paths,
                                const std::string& target)
     : paths(paths), target(target), id("eng") {
-  product = getenv("TARGET_PRODUCT");
+  product = StringFromEnv("TARGET_PRODUCT", "");
 }
 
 BuildApi::BuildApi(std::unique_ptr<CredentialSource> credential_source)
