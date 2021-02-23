@@ -2,8 +2,5 @@ init system_lib_file dir b/133444385
 init system_lib_file file b/133444385
 kernel kernel capability b/179966921
 migrate_legacy_obb_data dalvikcache_data_file file b/152338071
-system_server aac_drc_prop file b/179967574
-system_server ab_update_gki_prop file b/179967574
-system_server adbd_config_prop file b/179967574
 system_server system_server process b/65201432
 gmscore_app hal_camera_prop file b/156287758
