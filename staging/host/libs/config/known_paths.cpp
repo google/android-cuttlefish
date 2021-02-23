@@ -52,6 +52,10 @@ std::string ModemSimulatorBinary() {
   return DefaultHostArtifactsPath("bin/modem_simulator");
 }
 
+std::string RootCanalBinary() {
+  return DefaultHostArtifactsPath("bin/root-canal");
+}
+
 std::string SocketVsockProxyBinary() {
   return DefaultHostArtifactsPath("bin/socket_vsock_proxy");
 }
