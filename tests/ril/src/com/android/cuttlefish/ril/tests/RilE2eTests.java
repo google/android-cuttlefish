@@ -22,6 +22,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.TelephonyManager;
@@ -29,7 +30,10 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -116,6 +120,10 @@ public class RilE2eTests {
      */
     @Test
     public void testBasicPhoneAttributes() throws Exception {
+        Assume.assumeFalse(
+                "Skip testing deprecated radio HAL from P or earlier vendor",
+                PropertyUtil.getFirstApiLevel() <= Build.VERSION_CODES.P);
+
         Assert.assertEquals("Android Virtual Operator", mTeleManager.getNetworkOperatorName());
         Assert.assertFalse(mTeleManager.isNetworkRoaming());
         Assert.assertTrue(mTeleManager.isSmsCapable());
