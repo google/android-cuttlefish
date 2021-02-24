@@ -276,7 +276,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   crosvm_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, log_out_wr);
   crosvm_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdErr, log_out_wr);
 
-  Command log_tee_cmd(DefaultHostArtifactsPath("bin/log_tee"));
+  Command log_tee_cmd(HostBinaryPath("log_tee"));
   log_tee_cmd.AddParameter("--process_name=crosvm");
   log_tee_cmd.AddParameter("--log_fd_in=", log_out_rd);
 

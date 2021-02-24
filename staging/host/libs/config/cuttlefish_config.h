@@ -560,6 +560,7 @@ std::string GetDefaultMempath();
 int GetDefaultPerInstanceVsockCid();
 
 std::string DefaultHostArtifactsPath(const std::string& file);
+std::string HostBinaryPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
 std::string DefaultEnvironmentPath(const char* environment_key,
                                    const char* default_value,

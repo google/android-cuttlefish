@@ -249,10 +249,10 @@ Subprocess Command::Start(SubprocessOptions options) const {
     // the environment of the child process. To force an empty emvironment for
     // the child process pass the address of a pointer to NULL
     if (use_parent_env_) {
-      rval = execv(cmd[0], const_cast<char* const*>(cmd.data()));
+      rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
     } else {
       auto envp = ToCharPointers(env_);
-      rval = execve(cmd[0], const_cast<char* const*>(cmd.data()),
+      rval = execvpe(cmd[0], const_cast<char* const*>(cmd.data()),
                     const_cast<char* const*>(envp.data()));
     }
     // No need for an if: if exec worked it wouldn't have returned
