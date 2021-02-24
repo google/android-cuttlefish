@@ -53,26 +53,32 @@ extern "C" {
  * Value of RIL_VERSION should not be changed in future. Here onwards,
  * when a new change is supposed to be introduced  which could involve new
  * schemes added like Wakelocks, data structures added/updated, etc, we would
- * just document RIL version associated with that change below. When OEM updates its
- * RIL with those changes, they would return that new RIL version during RIL_REGISTER.
- * We should make use of the returned version by vendor to identify appropriate scheme
- * or data structure version to use.
+ * just document RIL version associated with that change below. When OEM updates
+ * its RIL with those changes, they would return that new RIL version during
+ * RIL_REGISTER. We should make use of the returned version by vendor to
+ * identify appropriate scheme or data structure version to use.
  *
  * Documentation of RIL version and associated changes
- * RIL_VERSION = 12 : This version corresponds to updated data structures namely
- *                    RIL_Data_Call_Response_v11, RIL_SIM_IO_v6, RIL_CardStatus_v6,
+ * RIL_VERSION = 12 : Updated data structures: RIL_Data_Call_Response_v11,
+ *                    RIL_SIM_IO_v6, RIL_CardStatus_v6,
  *                    RIL_SimRefreshResponse_v7, RIL_CDMA_CallWaiting_v6,
- *                    RIL_LTE_SignalStrength_v8, RIL_SignalStrength_v10, RIL_CellIdentityGsm_v12
- *                    RIL_CellIdentityWcdma_v12, RIL_CellIdentityLte_v12,RIL_CellInfoGsm_v12,
- *                    RIL_CellInfoWcdma_v12, RIL_CellInfoLte_v12, RIL_CellInfo_v12.
+ *                    RIL_LTE_SignalStrength_v8, RIL_SignalStrength_v10,
+ *                    RIL_CellIdentityGsm_v12, RIL_CellIdentityWcdma_v12,
+ *                    RIL_CellIdentityLte_v12, RIL_CellInfoGsm_v12,
+ *                    RIL_CellInfoWcdma_v12, RIL_CellInfoLte_v12,
+ *                    RIL_CellInfo_v12
  *
- * RIL_VERSION = 13 : This version includes new wakelock semantics and as the first
- *                    strongly versioned version it enforces structure use.
+ * RIL_VERSION = 13 : This version includes new wakelock semantics and as the
+ *                    first strongly versioned version it enforces structure
+ *                    use.
  *
- * RIL_VERSION = 14 : New data structures are added, namely RIL_CarrierMatchType,
- *                    RIL_Carrier, RIL_CarrierRestrictions and RIL_PCO_Data.
- *                    New commands added: RIL_REQUEST_SET_CARRIER_RESTRICTIONS,
- *                    RIL_REQUEST_SET_CARRIER_RESTRICTIONS and RIL_UNSOL_PCO_DATA.
+ * RIL_VERSION = 14 : New commands added:
+ *                    RIL_REQUEST_SET_CARRIER_RESTRICTIONS,
+ *                    RIL_REQUEST_SET_CARRIER_RESTRICTIONS,
+ *                    RIL_UNSOL_PCO_DATA
+ *                    New data structures are added: RIL_CarrierMatchType,
+ *                    RIL_Carrier, RIL_CarrierRestrictions, RIL_PCO_Data
+ *
  *
  * RIL_VERSION = 15 : New commands added:
  *                    RIL_UNSOL_MODEM_RESTART,
@@ -94,12 +100,13 @@ extern "C" {
  *                    RIL_REQUEST_ARE_UICC_APPLICATIONS_ENABLED
  *                    RIL_REQUEST_ENTER_SIM_DEPERSONALIZATION
  *                    RIL_REQUEST_CDMA_SEND_SMS_EXPECT_MORE
- *                    The new parameters for RIL_REQUEST_SETUP_DATA_CALL,
- *                    Updated data structures: RIL_DataProfileInfo_v15, RIL_InitialAttachApn_v15,
- *                    RIL_Data_Call_Response_v12.
- *                    New data structure RIL_DataRegistrationStateResponse, RIL_OpenChannelParams,
- *                    RIL_VoiceRegistrationStateResponse same is
- *                    used in RIL_REQUEST_DATA_REGISTRATION_STATE and
+ *                    New parameters for RIL_REQUEST_SETUP_DATA_CALL
+ *                    Updated data structures: RIL_DataProfileInfo_v15,
+ *                    RIL_InitialAttachApn_v15, RIL_Data_Call_Response_v12
+ *                    New data structures: RIL_DataRegistrationStateResponse,
+ *                    RIL_OpenChannelParams,
+ *                    RIL_VoiceRegistrationStateResponse same is used in
+ *                    RIL_REQUEST_DATA_REGISTRATION_STATE and
  *                    RIL_REQUEST_VOICE_REGISTRATION_STATE respectively.
  * RIL_VERSION = 16 : New commands added:
  *                    RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY
@@ -113,10 +120,11 @@ extern "C" {
  *                    RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS
  *                    RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP
  *                    RIL_REQUEST_GET_SLICING_CONFIG
+ *                    New parameters for RIL_REQUEST_SETUP_DATA_CALL
  *                    Updated data structures: RIL_CarrierInfoForImsiEncryption_v16
  *                    New data structure: RIL_PublicKeyType
  */
-#define RIL_VERSION 12
+#define RIL_VERSION 16
 #define LAST_IMPRECISE_RIL_VERSION 12 // Better self-documented name
 #define RIL_VERSION_MIN 6 /* Minimum RIL_VERSION supported */
 
@@ -1002,21 +1010,21 @@ typedef enum {
        then it should return one of the following values,
        as the UI layer needs to distinguish these
        cases for error notification and potential retries. */
-    PDP_FAIL_OPERATOR_BARRED = 0x08,               /* no retry */
+    PDP_FAIL_OPERATOR_BARRED = 0x08, /* no retry */
     PDP_FAIL_NAS_SIGNALLING = 0x0E,
     PDP_FAIL_LLC_SNDCP = 0x19,
     PDP_FAIL_INSUFFICIENT_RESOURCES = 0x1A,
-    PDP_FAIL_MISSING_UKNOWN_APN = 0x1B,            /* no retry */
-    PDP_FAIL_UNKNOWN_PDP_ADDRESS_TYPE = 0x1C,      /* no retry */
-    PDP_FAIL_USER_AUTHENTICATION = 0x1D,           /* no retry */
-    PDP_FAIL_ACTIVATION_REJECT_GGSN = 0x1E,        /* no retry */
+    PDP_FAIL_MISSING_UNKNOWN_APN = 0x1B,      /* no retry */
+    PDP_FAIL_UNKNOWN_PDP_ADDRESS_TYPE = 0x1C, /* no retry */
+    PDP_FAIL_USER_AUTHENTICATION = 0x1D,      /* no retry */
+    PDP_FAIL_ACTIVATION_REJECT_GGSN = 0x1E,   /* no retry */
     PDP_FAIL_ACTIVATION_REJECT_UNSPECIFIED = 0x1F,
     PDP_FAIL_SERVICE_OPTION_NOT_SUPPORTED = 0x20,  /* no retry */
     PDP_FAIL_SERVICE_OPTION_NOT_SUBSCRIBED = 0x21, /* no retry */
     PDP_FAIL_SERVICE_OPTION_OUT_OF_ORDER = 0x22,
-    PDP_FAIL_NSAPI_IN_USE = 0x23,                  /* no retry */
-    PDP_FAIL_REGULAR_DEACTIVATION = 0x24,          /* possibly restart radio,
-                                                      based on framework config */
+    PDP_FAIL_NSAPI_IN_USE = 0x23,         /* no retry */
+    PDP_FAIL_REGULAR_DEACTIVATION = 0x24, /* possibly restart radio,
+                                             based on framework config */
     PDP_FAIL_QOS_NOT_ACCEPTED = 0x25,
     PDP_FAIL_NETWORK_FAILURE = 0x26,
     PDP_FAIL_UMTS_REACTIVATION_REQ = 0x27,
@@ -1027,8 +1035,8 @@ typedef enum {
     PDP_FAIL_FILTER_SEMANTIC_ERROR = 0x2C,
     PDP_FAIL_FILTER_SYTAX_ERROR = 0x2D,
     PDP_FAIL_PDP_WITHOUT_ACTIVE_TFT = 0x2E,
-    PDP_FAIL_ONLY_IPV4_ALLOWED = 0x32,             /* no retry */
-    PDP_FAIL_ONLY_IPV6_ALLOWED = 0x33,             /* no retry */
+    PDP_FAIL_ONLY_IPV4_ALLOWED = 0x32, /* no retry */
+    PDP_FAIL_ONLY_IPV6_ALLOWED = 0x33, /* no retry */
     PDP_FAIL_ONLY_SINGLE_BEARER_ALLOWED = 0x34,
     PDP_FAIL_ESM_INFO_NOT_RECEIVED = 0x35,
     PDP_FAIL_PDN_CONN_DOES_NOT_EXIST = 0x36,
@@ -1043,7 +1051,7 @@ typedef enum {
     PDP_FAIL_UNKNOWN_INFO_ELEMENT = 0x63,
     PDP_FAIL_CONDITIONAL_IE_ERROR = 0x64,
     PDP_FAIL_MSG_AND_PROTOCOL_STATE_UNCOMPATIBLE = 0x65,
-    PDP_FAIL_PROTOCOL_ERRORS = 0x6F,             /* no retry */
+    PDP_FAIL_PROTOCOL_ERRORS = 0x6F, /* no retry */
     PDP_FAIL_APN_TYPE_CONFLICT = 0x70,
     PDP_FAIL_INVALID_PCSCF_ADDR = 0x71,
     PDP_FAIL_INTERNAL_CALL_PREEMPT_BY_HIGH_PRIO_APN = 0x72,
@@ -1055,6 +1063,10 @@ typedef enum {
     PDP_FAIL_IFACE_AND_POL_FAMILY_MISMATCH = 0x78,
     PDP_FAIL_EMM_ACCESS_BARRED_INFINITE_RETRY = 0x79,
     PDP_FAIL_AUTH_FAILURE_ON_EMERGENCY_CALL = 0x7A,
+    // TODO: add new fail causes from IRadio 1.4 types.hal
+    PDP_FAIL_SLICE_REJECTED = 0x8CC,
+    PDP_FAIL_MATCH_ALL_RULE_NOT_ALLOWED = 0x8CD,
+    ALL_MATCHING_RULES_FAILED = 0x8CE,
 
     // OEM specific error codes. To be used by OEMs when they don't want to
     // reveal error code which would be replaced by PDP_FAIL_ERROR_UNSPECIFIED
@@ -1078,18 +1090,18 @@ typedef enum {
     PDP_FAIL_VOICE_REGISTRATION_FAIL = -1,
     PDP_FAIL_DATA_REGISTRATION_FAIL = -2,
 
-   /* reasons for data call drop - network/modem disconnect */
+    /* reasons for data call drop - network/modem disconnect */
     PDP_FAIL_SIGNAL_LOST = -3,
-    PDP_FAIL_PREF_RADIO_TECH_CHANGED = -4,/* preferred technology has changed, should retry
-                                             with parameters appropriate for new technology */
-    PDP_FAIL_RADIO_POWER_OFF = -5,        /* data call was disconnected because radio was resetting,
-                                             powered off - no retry */
-    PDP_FAIL_TETHERED_CALL_ACTIVE = -6,   /* data call was disconnected by modem because tethered
-                                             mode was up on same APN/data profile - no retry until
-                                             tethered call is off */
+    PDP_FAIL_PREF_RADIO_TECH_CHANGED = -4, /* preferred technology has changed, should retry
+                                              with parameters appropriate for new technology */
+    PDP_FAIL_RADIO_POWER_OFF = -5,      /* data call was disconnected because radio was resetting,
+                                           powered off - no retry */
+    PDP_FAIL_TETHERED_CALL_ACTIVE = -6, /* data call was disconnected by modem because tethered
+                                           mode was up on same APN/data profile - no retry until
+                                           tethered call is off */
 
-    PDP_FAIL_ERROR_UNSPECIFIED = 0xffff,  /* retry silently. Will be deprecated soon as
-                                             new error codes are added making this unnecessary */
+    PDP_FAIL_ERROR_UNSPECIFIED = 0xffff, /* retry silently. Will be deprecated soon as
+                                            new error codes are added making this unnecessary */
 } RIL_DataCallFailCause;
 
 /* See RIL_REQUEST_SETUP_DATA_CALL */
