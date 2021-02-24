@@ -998,6 +998,14 @@ std::string DefaultHostArtifactsPath(const std::string& file_name) {
          file_name;
 }
 
+std::string HostBinaryPath(const std::string& binary_name) {
+#ifdef __ANDROID__
+  return binary_name;
+#else
+  return DefaultHostArtifactsPath("bin/" + binary_name);
+#endif
+}
+
 std::string DefaultGuestImagePath(const std::string& file_name) {
   return (StringFromEnv("ANDROID_PRODUCT_OUT", StringFromEnv("HOME", "."))) +
          file_name;
