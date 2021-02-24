@@ -18,7 +18,10 @@
 #include <wakelock/wakelock.h>
 
 int main() {
-    android::wakelock::WakeLock wl{"suspend_blocker"};  // RAII object
+    auto wl = android::wakelock::WakeLock::tryGet("suspend_blocker");  // RAII object
+    if (!wl.has_value()) {
+        return EXIT_FAILURE;
+    }
 
     sigset_t mask;
     sigemptyset(&mask);
