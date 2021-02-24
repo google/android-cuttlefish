@@ -650,8 +650,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_audiocontrol_server_port(9410);  /* OK to use the same port number across instances */
     instance.set_config_server_port(calc_vsock_port(6800));
 
-    if (FLAGS_gpu_mode != kGpuModeDrmVirgl &&
-        FLAGS_gpu_mode != kGpuModeGfxStream) {
+    if (tmp_config_obj.gpu_mode() != kGpuModeDrmVirgl &&
+        tmp_config_obj.gpu_mode() != kGpuModeGfxStream) {
         instance.set_frames_server_port(calc_vsock_port(6900));
       if (FLAGS_vm_manager == QemuManager::name()) {
         instance.set_keyboard_server_port(calc_vsock_port(7000));
