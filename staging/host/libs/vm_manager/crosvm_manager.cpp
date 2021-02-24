@@ -93,7 +93,11 @@ bool Stop() {
 /* static */ std::string CrosvmManager::name() { return "crosvm"; }
 
 bool CrosvmManager::IsSupported() {
+#ifdef __ANDROID__
+  return true;
+#else
   return HostSupportsQemuCli();
+#endif
 }
 
 std::vector<std::string> CrosvmManager::ConfigureGpuMode(
