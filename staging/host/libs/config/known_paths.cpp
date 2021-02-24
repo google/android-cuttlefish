@@ -21,35 +21,35 @@
 namespace cuttlefish {
 
 std::string AdbConnectorBinary() {
-  return DefaultHostArtifactsPath("bin/adb_connector");
+  return HostBinaryPath("adb_connector");
 }
 
 std::string ConfigServerBinary() {
-  return DefaultHostArtifactsPath("bin/config_server");
+  return HostBinaryPath("config_server");
 }
 
 std::string ConsoleForwarderBinary() {
-  return DefaultHostArtifactsPath("bin/console_forwarder");
+  return HostBinaryPath("console_forwarder");
 }
 
 std::string GnssGrpcProxyBinary() {
-  return DefaultHostArtifactsPath("bin/gnss_grpc_proxy");
+  return HostBinaryPath("gnss_grpc_proxy");
 }
 
 std::string KernelLogMonitorBinary() {
-  return DefaultHostArtifactsPath("bin/kernel_log_monitor");
+  return HostBinaryPath("kernel_log_monitor");
 }
 
 std::string LogcatReceiverBinary() {
-  return DefaultHostArtifactsPath("bin/logcat_receiver");
+  return HostBinaryPath("logcat_receiver");
 }
 
 std::string MetricsBinary() {
-  return DefaultHostArtifactsPath("bin/metrics");
+  return HostBinaryPath("metrics");
 }
 
 std::string ModemSimulatorBinary() {
-  return DefaultHostArtifactsPath("bin/modem_simulator");
+  return HostBinaryPath("modem_simulator");
 }
 
 std::string RootCanalBinary() {
@@ -57,23 +57,23 @@ std::string RootCanalBinary() {
 }
 
 std::string SocketVsockProxyBinary() {
-  return DefaultHostArtifactsPath("bin/socket_vsock_proxy");
+  return HostBinaryPath("socket_vsock_proxy");
 }
 
 std::string TombstoneReceiverBinary() {
-  return DefaultHostArtifactsPath("bin/tombstone_receiver");
+  return HostBinaryPath("tombstone_receiver");
 }
 
 std::string WebRtcBinary() {
-  return DefaultHostArtifactsPath("bin/webRTC");
+  return HostBinaryPath("webRTC");
 }
 
 std::string WebRtcSigServerBinary() {
-  return DefaultHostArtifactsPath("bin/webrtc_operator");
+  return HostBinaryPath("webrtc_operator");
 }
 
 std::string VncServerBinary() {
-  return DefaultHostArtifactsPath("bin/vnc_server");
+  return HostBinaryPath("vnc_server");
 }
 
 } // namespace cuttlefish

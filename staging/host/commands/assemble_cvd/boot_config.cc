@@ -93,7 +93,7 @@ bool InitBootloaderEnvPartition(const CuttlefishConfig& config,
     return false;
   }
 
-  auto mkimage_path = DefaultHostArtifactsPath("bin/mkenvimage");
+  auto mkimage_path = HostBinaryPath("mkenvimage");
   Command cmd(mkimage_path);
   cmd.AddParameter("-s");
   cmd.AddParameter("4096");

@@ -572,7 +572,7 @@ void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
     fifos.push_back(fd);
   }
 
-  Command command(DefaultHostArtifactsPath("bin/secure_env"));
+  Command command(HostBinaryPath("secure_env"));
   command.AddParameter("-keymaster_fd_out=", fifos[0]);
   command.AddParameter("-keymaster_fd_in=", fifos[1]);
   command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
