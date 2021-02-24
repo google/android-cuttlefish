@@ -57,8 +57,8 @@ DEFINE_string(file_verbosity, "DEBUG",
 
 namespace {
 
-std::string kAssemblerBin = cuttlefish::DefaultHostArtifactsPath("bin/assemble_cvd");
-std::string kRunnerBin = cuttlefish::DefaultHostArtifactsPath("bin/run_cvd");
+std::string kAssemblerBin = cuttlefish::HostBinaryPath("assemble_cvd");
+std::string kRunnerBin = cuttlefish::HostBinaryPath("run_cvd");
 
 cuttlefish::Subprocess StartAssembler(cuttlefish::SharedFD assembler_stdin,
                                cuttlefish::SharedFD assembler_stdout,
