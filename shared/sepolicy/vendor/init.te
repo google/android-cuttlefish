@@ -24,5 +24,6 @@ allow init mnt_vendor_file:dir mounton;
 
 allow init keymaster_device:chr_file rw_file_perms;
 allow init gatekeeper_device:chr_file rw_file_perms;
+allow init bt_device:chr_file rw_file_perms;
 
 allow init frp_block_device:blk_file setattr;
