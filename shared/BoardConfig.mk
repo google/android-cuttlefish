@@ -221,7 +221,7 @@ BOARD_KERNEL_CMDLINE += androidboot.fstab_suffix=ext4
 endif
 
 BOARD_INCLUDE_DTB_IN_BOOTIMG := true
-BOARD_BOOT_HEADER_VERSION := 4
+BOARD_BOOT_HEADER_VERSION := 3
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 PRODUCT_COPY_FILES += \
     device/google/cuttlefish/dtb.img:dtb.img \
