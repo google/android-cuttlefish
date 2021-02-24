@@ -17,8 +17,8 @@
 #define LOG_TAG "RILC"
 
 #include <android/hardware/radio/1.6/IRadio.h>
-#include <android/hardware/radio/1.6/IRadioResponse.h>
 #include <android/hardware/radio/1.6/IRadioIndication.h>
+#include <android/hardware/radio/1.6/IRadioResponse.h>
 #include <android/hardware/radio/1.6/types.h>
 
 #include <android/hardware/radio/deprecated/1.0/IOemHook.h>
@@ -10757,7 +10757,7 @@ void convertRilDataCallToHal(RIL_Data_Call_Response_v12 *dcResponse,
 
     std::vector<::android::hardware::radio::V1_6::TrafficDescriptor> trafficDescriptors;
     ::android::hardware::radio::V1_6::TrafficDescriptor trafficDescriptor;
-    ::android::hardware::radio::V1_6::OSAppId osAppId;
+    ::android::hardware::radio::V1_6::OsAppId osAppId;
 
     osAppId.osAppId = 1;
     trafficDescriptor.osAppId.value(osAppId);
