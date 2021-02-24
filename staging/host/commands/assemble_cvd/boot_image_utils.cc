@@ -86,7 +86,7 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                          const std::string& new_ramdisk_path,
                          const std::string& build_dir) {
   const auto& cpio_path = FindCpio();
-  int success = execute({"/bin/bash", "-c", DefaultHostArtifactsPath("bin/lz4") + " -c -d -l " +
+  int success = execute({"/bin/bash", "-c", HostBinaryPath("lz4") + " -c -d -l " +
                         original_ramdisk_path + " > " + original_ramdisk_path + CPIO_EXT});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
 
@@ -110,7 +110,7 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                          stripped_ramdisk_path + CPIO_EXT + ")"});
   CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
 
-  success = execute({"/bin/bash", "-c", DefaultHostArtifactsPath("bin/lz4") +
+  success = execute({"/bin/bash", "-c", HostBinaryPath("lz4") +
                      " -c -l -12 --favor-decSpeed " + stripped_ramdisk_path + CPIO_EXT + " > " +
                      stripped_ramdisk_path});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
@@ -127,7 +127,7 @@ bool RepackBootImage(const std::string& new_kernel_path,
                      const std::string& new_boot_image_path,
                      const std::string& build_dir) {
   auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
-  auto unpack_path = DefaultHostArtifactsPath("bin/unpack_bootimg");
+  auto unpack_path = HostBinaryPath("unpack_bootimg");
   Command unpack_cmd(unpack_path);
   unpack_cmd.AddParameter("--boot_img");
   unpack_cmd.AddParameter(boot_image_path);
@@ -139,7 +139,7 @@ bool RepackBootImage(const std::string& new_kernel_path,
     return false;
   }
 
-  auto repack_path = DefaultHostArtifactsPath("bin/mkbootimg");
+  auto repack_path = HostBinaryPath("mkbootimg");
   Command repack_cmd(repack_path);
   repack_cmd.AddParameter("--kernel");
   repack_cmd.AddParameter(new_kernel_path);
@@ -169,7 +169,7 @@ bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& build_dir) {
   auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
-  auto unpack_path = DefaultHostArtifactsPath("bin/unpack_bootimg");
+  auto unpack_path = HostBinaryPath("unpack_bootimg");
   Command unpack_cmd(unpack_path);
   unpack_cmd.AddParameter("--boot_img");
   unpack_cmd.AddParameter(vendor_boot_image_path);
@@ -202,7 +202,7 @@ bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
   auto kernel_cmdline = "\"" + ExtractValue(vendor_boot_params, "vendor command line args: ") + "\"";
   LOG(DEBUG) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
-  auto repack_path = DefaultHostArtifactsPath("bin/mkbootimg");
+  auto repack_path = HostBinaryPath("mkbootimg");
   Command repack_cmd(repack_path);
   repack_cmd.AddParameter("--vendor_ramdisk");
   repack_cmd.AddParameter(new_ramdisk_path);

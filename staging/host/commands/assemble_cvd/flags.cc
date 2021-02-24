@@ -32,6 +32,7 @@
 #include "host/libs/vm_manager/vm_manager.h"
 
 using cuttlefish::DefaultHostArtifactsPath;
+using cuttlefish::HostBinaryPath;
 using cuttlefish::StringFromEnv;
 using cuttlefish::vm_manager::CrosvmManager;
 using google::FlagSettingMode::SET_FLAGS_DEFAULT;
@@ -214,7 +215,7 @@ DEFINE_string(setupwizard_mode, "DISABLED",
 DEFINE_string(qemu_binary,
               "/usr/bin/qemu-system-x86_64",
               "The qemu binary to use");
-DEFINE_string(crosvm_binary, DefaultHostArtifactsPath("bin/crosvm"),
+DEFINE_string(crosvm_binary, HostBinaryPath("crosvm"),
               "The Crosvm binary to use");
 DEFINE_string(tpm_device, "", "A host TPM device to pass through commands to.");
 DEFINE_bool(restart_subprocesses, true, "Restart any crashed host process");
@@ -522,7 +523,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_vehicle_hal_grpc_server(FLAGS_enable_vehicle_hal_grpc_server);
   tmp_config_obj.set_vehicle_hal_grpc_server_binary(
-      DefaultHostArtifactsPath("bin/android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"));
+      HostBinaryPath("android.hardware.automotive.vehicle@2.0-virtualization-grpc-server"));
 
   std::string custom_action_config;
   if (!FLAGS_custom_action_config.empty()) {

@@ -126,7 +126,7 @@ std::unique_ptr<BootImageUnpacker> CreateBootImageUnpacker() {
 }
 
 static bool DecompressKernel(const std::string& src, const std::string& dst) {
-  Command decomp_cmd(DefaultHostArtifactsPath("bin/extract-vmlinux"));
+  Command decomp_cmd(HostBinaryPath("extract-vmlinux"));
   decomp_cmd.AddParameter(src);
   std::string current_path = getenv("PATH") == nullptr ? "" : getenv("PATH");
   std::string bin_folder = DefaultHostArtifactsPath("bin");
