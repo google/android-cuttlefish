@@ -19,6 +19,7 @@ soong_config_module_type {
     module_type: "cvd_host_package",
     config_namespace: "cvd",
     value_variables: [
+        "launch_configs",
         "custom_action_config",
         "custom_action_servers",
     ],
@@ -93,15 +94,6 @@ cvd_host_model_simulator_files = [
     "numeric_operator.xml_host",
 ]
 
-cvd_configs = [
-    "cvd_config_auto.json",
-    "cvd_config_foldable.json",
-    "cvd_config_phone.json",
-    "cvd_config_tablet.json",
-    "cvd_config_tv.json",
-]
-
-
 cvd_host_seccomp_policy_x86_64 = [
     "9p_device.policy_x86_64",
     "balloon_device.policy_x86_64",
@@ -151,8 +143,7 @@ cvd_host_package_customization {
     multilib: {
         common: {
             deps: cvd_host_webrtc_assets +
-                cvd_host_model_simulator_files +
-                cvd_configs,
+                cvd_host_model_simulator_files,
         },
     },
 
