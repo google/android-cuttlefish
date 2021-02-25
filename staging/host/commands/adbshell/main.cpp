@@ -16,8 +16,6 @@
 
 /* Utility that uses an adb connection as the login shell. */
 
-#include "host/libs/config/cuttlefish_config.h"
-
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -28,6 +26,9 @@
 
 #include <errno.h>
 #include <unistd.h>
+
+#include "common/libs/utils/environment.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 // Many of our users interact with CVDs via ssh. They expect to be able to
 // get an Android shell (as opposed to the host shell) with a single command.
@@ -51,9 +52,8 @@
 
 namespace {
 std::string VsocUser() {
-  const char* user_cstring = std::getenv("USER");
-  assert(user_cstring != nullptr);
-  std::string user(user_cstring);
+  std::string user = cuttlefish::StringFromEnv("USER", "");
+  assert(!user_cstring.empty());
 
   std::string cvd_prefix = "cvd-";
   if (user.find(cvd_prefix) == 0) {
