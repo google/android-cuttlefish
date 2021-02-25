@@ -75,8 +75,8 @@ int PowerwashCvdMain(int argc, char** argv) {
     LOG(ERROR) << "No path to launcher monitor found";
     return 2;
   }
-  auto monitor_socket =
-      SharedFD::SocketLocalClient(monitor_path.c_str(), false, SOCK_STREAM);
+  auto monitor_socket = SharedFD::SocketLocalClient(
+      monitor_path.c_str(), false, SOCK_STREAM, FLAGS_wait_for_launcher);
   if (!monitor_socket->IsOpen()) {
     LOG(ERROR) << "Unable to connect to launcher monitor at " << monitor_path
                << ": " << monitor_socket->StrError();
