@@ -20,6 +20,9 @@
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 
+# GKI_VER is defined in kernel.mk, if not defined in the environment variable.
+BOARD_KERNEL_MODULE_INTERFACE_VERSIONS := $(GKI_VER)-android12-0
+
 TARGET_BOARD_PLATFORM := vsoc_arm64
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
@@ -33,7 +36,7 @@ TARGET_2ND_CPU_VARIANT := cortex-a53
 TARGET_TRANSLATE_2ND_ARCH := false
 
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/5.10/arm64/*.ko)
+    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/$(GKI_VER)/arm64/*.ko)
 endif
 
 HOST_CROSS_OS := linux_bionic
