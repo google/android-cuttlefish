@@ -44,25 +44,29 @@ int InstanceFromEnvironment() {
   static constexpr int kDefaultInstance = 1;
 
   // CUTTLEFISH_INSTANCE environment variable
-  const char* instance_str = std::getenv(kInstanceEnvironmentVariable);
-  if (!instance_str) {
+  std::string instance_str = StringFromEnv(kInstanceEnvironmentVariable, "");
+  if (instance_str.empty()) {
     // Try to get it from the user instead
-    instance_str = std::getenv("USER");
+    instance_str = StringFromEnv("USER", "");
 
-    if (!instance_str || std::strncmp(instance_str, kVsocUserPrefix,
-                                      sizeof(kVsocUserPrefix) - 1)) {
-      // No user or we don't recognize this user
-      LOG(DEBUG) << "No user or non-vsoc user, returning default config";
+    if (instance_str.empty()) {
+      LOG(DEBUG) << "CUTTLEFISH_INSTANCE and USER unset, using instance id "
+                 << kDefaultInstance;
       return kDefaultInstance;
     }
-    instance_str += sizeof(kVsocUserPrefix) - 1;
+    if (!android::base::StartsWith(instance_str, kVsocUserPrefix)) {
+      // No user or we don't recognize this user
+      LOG(DEBUG) << "Non-vsoc user, using instance id " << kDefaultInstance;
+      return kDefaultInstance;
+    }
+    instance_str = instance_str.substr(std::string(kVsocUserPrefix).size());
   }
-
-  int instance = std::atoi(instance_str);
+  int instance = std::stoi(instance_str);
   if (instance <= 0) {
-    instance = kDefaultInstance;
+    LOG(INFO) << "Failed to interpret \"" << instance_str << "\" as an id, "
+              << "using instance id " << kDefaultInstance;
+    return kDefaultInstance;
   }
-
   return instance;
 }
 
@@ -988,6 +992,14 @@ int GetDefaultPerInstanceVsockCid() {
 std::string DefaultHostArtifactsPath(const std::string& file_name) {
   return (StringFromEnv("ANDROID_SOONG_HOST_OUT", StringFromEnv("HOME", ".")) + "/") +
          file_name;
+}
+
+std::string HostBinaryPath(const std::string& binary_name) {
+#ifdef __ANDROID__
+  return binary_name;
+#else
+  return DefaultHostArtifactsPath("bin/" + binary_name);
+#endif
 }
 
 std::string DefaultGuestImagePath(const std::string& file_name) {
