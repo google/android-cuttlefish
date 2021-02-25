@@ -39,8 +39,9 @@ using google::FlagSettingMode::SET_FLAGS_DEFAULT;
 
 DEFINE_string(config, "phone",
               "Config preset name. Will automatically set flag fields "
-              "using the values from this file of presets. Possible values: "
-              "phone,tablet,foldable,auto,tv");
+              "using the values from this file of presets. See "
+              "device/google/cuttlefish/shared/config/config_*.json "
+              "for possible values.");
 
 DEFINE_int32(cpus, 2, "Virtual CPU count.");
 DEFINE_string(data_policy, "use_existing", "How to handle userdata partition."
@@ -732,9 +733,15 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 void SetDefaultFlagsFromConfigPreset() {
   std::string config_preset = FLAGS_config;  // The name of the preset config.
   std::string config_file_path;  // The path to the preset config JSON.
-  const std::set<std::string> allowed_config_presets = {
-      "phone", "tablet", "foldable", "tv", "auto",
-  };
+  std::set<std::string> allowed_config_presets;
+  for (const std::string& file :
+       DirectoryContents(DefaultHostArtifactsPath("etc/cvd_config"))) {
+    std::string_view local_file(file);
+    if (android::base::ConsumePrefix(&local_file, "cvd_config_") &&
+        android::base::ConsumeSuffix(&local_file, ".json")) {
+      allowed_config_presets.emplace(local_file);
+    }
+  }
 
   // If the user specifies a --config name, then use that config
   // preset option and save their choice to a file.
