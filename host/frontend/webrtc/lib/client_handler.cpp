@@ -175,9 +175,11 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   auto size = msg.size();
 
   Json::Value evt;
-  Json::Reader json_reader;
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
+  std::string errorMessage;
   auto str = msg.data.cdata<char>();
-  if (!json_reader.parse(str, str + size, evt) < 0) {
+  if (!json_reader->parse(str, str + size, &evt, &errorMessage) < 0) {
     LOG(ERROR) << "Received invalid JSON object over input channel";
     return;
   }
@@ -306,8 +308,8 @@ void ControlChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
 }
 
 void ControlChannelHandler::Send(const Json::Value& message) {
-  Json::FastWriter writer;
-  std::string message_string = writer.write(message);
+  Json::StreamWriterBuilder factory;
+  std::string message_string = Json::writeString(factory, message);
   Send(reinterpret_cast<const uint8_t*>(message_string.c_str()),
        message_string.size(), /*binary=*/false);
 }

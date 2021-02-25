@@ -554,15 +554,16 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     }
   }
   std::vector<CustomActionConfig> custom_actions;
-  Json::Reader reader;
+  Json::CharReaderBuilder builder;
   Json::Value custom_action_array(Json::arrayValue);
   if (custom_action_config != "") {
     // Load the custom action config JSON.
     std::ifstream ifs(custom_action_config);
-    if (!reader.parse(ifs, custom_action_array)) {
+    std::string errorMessage;
+    if (!Json::parseFromStream(builder, ifs, &custom_action_array, &errorMessage)) {
       LOG(FATAL) << "Could not read custom actions config file "
                  << custom_action_config << ": "
-                 << reader.getFormattedErrorMessages();
+                 << errorMessage;
     }
     for (const auto& custom_action : custom_action_array) {
       custom_actions.push_back(CustomActionConfig(custom_action));
@@ -570,9 +571,12 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
   if (FLAGS_custom_actions != "") {
     // Load the custom action from the --config preset file.
-    if (!reader.parse(FLAGS_custom_actions, custom_action_array)) {
+    std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+    std::string errorMessage;
+    if (!reader->parse(&*FLAGS_custom_actions.begin(), &*FLAGS_custom_actions.end(),
+                       &custom_action_array, &errorMessage)) {
       LOG(FATAL) << "Could not read custom actions config flag: "
-                 << reader.getFormattedErrorMessages();
+                 << errorMessage;
     }
     for (const auto& custom_action : custom_action_array) {
       custom_actions.push_back(CustomActionConfig(custom_action));
@@ -785,17 +789,18 @@ void SetDefaultFlagsFromConfigPreset() {
   config_file_path = DefaultHostArtifactsPath("etc/cvd_config/cvd_config_" +
                                               config_preset + ".json");
   Json::Value config;
-  Json::Reader config_reader;
+  Json::CharReaderBuilder builder;
   std::ifstream ifs(config_file_path);
-  if (!config_reader.parse(ifs, config)) {
+  std::string errorMessage;
+  if (!Json::parseFromStream(builder, ifs, &config, &errorMessage)) {
     LOG(FATAL) << "Could not read config file " << config_file_path << ": "
-               << config_reader.getFormattedErrorMessages();
+               << errorMessage;
   }
   for (const std::string& flag : config.getMemberNames()) {
     std::string value;
     if (flag == "custom_actions") {
-      Json::FastWriter writer;
-      value = writer.write(config[flag]);
+      Json::StreamWriterBuilder factory;
+      value = Json::writeString(factory, config[flag]);
     } else {
       value = config[flag].asString();
     }

@@ -42,12 +42,14 @@ private:
 JsonSerializable::JsonSerializable(Json::Value& json) : json_(json) {}
 
 size_t JsonSerializable::SerializedSize() const {
-  auto serialized = Json::FastWriter().write(json_);
+  Json::StreamWriterBuilder factory;
+  auto serialized = Json::writeString(factory, json_);
   return serialized.size() + sizeof(uint32_t);
 }
 
 uint8_t* JsonSerializable::Serialize(uint8_t* buf, const uint8_t* end) const {
-  auto serialized = Json::FastWriter().write(json_);
+  Json::StreamWriterBuilder factory;
+  auto serialized = Json::writeString(factory, json_);
   if (end - buf < serialized.size() + sizeof(uint32_t)) {
     LOG(ERROR) << "Not enough space to serialize json";
     return buf;
@@ -68,8 +70,10 @@ bool JsonSerializable::Deserialize(
   }
   auto doc_begin = reinterpret_cast<const char*>(json_bytes.get());
   auto doc_end = doc_begin + size;
-  success = Json::Reader().parse(doc_begin, doc_end, json_);
-  if (!success) {
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+  std::string errorMessage;
+  if (!reader->parse(doc_begin, doc_end, &json_, &errorMessage)) {
     LOG(ERROR) << "Failed to parse json";
     return false;
   }
