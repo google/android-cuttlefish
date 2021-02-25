@@ -122,6 +122,52 @@ void FileInstance::Close() {
   fd_ = -1;
 }
 
+int FileInstance::ConnectWithTimeout(const struct sockaddr* addr,
+                                     socklen_t addrlen,
+                                     struct timeval* timeout) {
+  int original_flags = Fcntl(F_GETFL, 0);
+  if (original_flags == -1) {
+    LOG(ERROR) << "Could not get current file descriptor flags: " << StrError();
+    return -1;
+  }
+  if (Fcntl(F_SETFL, original_flags | O_NONBLOCK) == -1) {
+    LOG(ERROR) << "Failed to set O_NONBLOCK: " << StrError();
+    return -1;
+  }
+  Connect(addr, addrlen);  // This will return immediately because of O_NONBLOCK
+
+  fd_set fdset;
+  FD_ZERO(&fdset);
+  FD_SET(fd_, &fdset);
+
+  int select_res = select(fd_ + 1, nullptr, &fdset, nullptr, timeout);
+
+  if (Fcntl(F_SETFL, original_flags) == -1) {
+    LOG(ERROR) << "Failed to restore original flags: " << StrError();
+    return -1;
+  }
+
+  if (select_res != 1) {
+    LOG(ERROR) << "Did not connect within the timeout";
+    return -1;
+  }
+
+  int so_error;
+  socklen_t len = sizeof(so_error);
+  if (GetSockOpt(SOL_SOCKET, SO_ERROR, &so_error, &len) == -1) {
+    LOG(ERROR) << "Failed to get socket options: " << StrError();
+    return -1;
+  }
+
+  if (so_error != 0) {
+    LOG(ERROR) << "Failure in opening socket: " << so_error;
+    errno_ = so_error;
+    return -1;
+  }
+  errno_ = 0;
+  return 0;
+}
+
 bool FileInstance::IsSet(fd_set* in) const {
   if (IsOpen() && FD_ISSET(fd_, in)) {
     return true;
@@ -279,6 +325,11 @@ SharedFD SharedFD::ErrorFD(int error) {
 
 SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
                                      int in_type) {
+  return SocketLocalClient(name, abstract, in_type, 0);
+}
+
+SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
+                                     int in_type, int timeout_seconds) {
   struct sockaddr_un addr;
   socklen_t addrlen;
   MakeAddress(name.c_str(), abstract, &addr, &addrlen);
@@ -286,7 +337,9 @@ SharedFD SharedFD::SocketLocalClient(const std::string& name, bool abstract,
   if (!rval->IsOpen()) {
     return rval;
   }
-  if (rval->Connect(reinterpret_cast<sockaddr*>(&addr), addrlen) == -1) {
+  struct timeval timeout = {timeout_seconds, 0};
+  auto casted_addr = reinterpret_cast<sockaddr*>(&addr);
+  if (rval->ConnectWithTimeout(casted_addr, addrlen, &timeout) == -1) {
     return SharedFD::ErrorFD(rval->GetErrno());
   }
   return rval;
