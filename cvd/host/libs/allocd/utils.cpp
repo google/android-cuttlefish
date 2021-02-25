@@ -84,8 +84,8 @@ const std::map<std::string, RequestStatus> StrToReqStatusMap = {
 
 bool SendJsonMsg(SharedFD client_socket, const Json::Value& resp) {
   LOG(INFO) << "Sending JSON message";
-  Json::FastWriter writer;
-  auto resp_str = writer.write(resp);
+  Json::StreamWriterBuilder factory;
+  auto resp_str = Json::writeString(factory, resp);
 
   std::string header_buff(sizeof(RequestHeader), 0);
 
