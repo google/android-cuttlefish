@@ -50,14 +50,21 @@ var cvdHostPackageDependencyTag = dependencyTag{}
 func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
 	c.AddDeps(ctx, cvdHostPackageDependencyTag)
 
+	variations := []blueprint.Variation{
+		{Mutator: "os", Variation: ctx.Target().Os.String()},
+		{Mutator: "arch", Variation: android.Common.String()},
+	}
+	for _, dep := range strings.Split(
+		ctx.Config().VendorConfig("cvd").String("launch_configs"), " ") {
+		if ctx.OtherModuleExists(dep) {
+			ctx.AddVariationDependencies(variations, cvdHostPackageDependencyTag, dep)
+		}
+	}
+
 	// If cvd_custom_action_config is set, include custom action servers in the
 	// host package as specified by cvd_custom_action_servers.
 	customActionConfig := ctx.Config().VendorConfig("cvd").String("custom_action_config")
 	if customActionConfig != "" && ctx.OtherModuleExists(customActionConfig) {
-		variations := []blueprint.Variation{
-			{Mutator: "os", Variation: ctx.Target().Os.String()},
-			{Mutator: "arch", Variation: android.Common.String()},
-		}
 		ctx.AddVariationDependencies(variations, cvdHostPackageDependencyTag,
 			customActionConfig)
 		for _, dep := range strings.Split(
