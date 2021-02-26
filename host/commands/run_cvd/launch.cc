@@ -161,6 +161,26 @@ std::vector<SharedFD> LaunchKernelLogMonitor(
   return ret;
 }
 
+void LaunchRootCanal(const CuttlefishConfig& config,
+                     ProcessMonitor* process_monitor) {
+  if (!config.enable_rootcanal()) {
+    return;
+  }
+
+  auto instance = config.ForDefaultInstance();
+  Command command(RootCanalBinary());
+
+  // Test port
+  command.AddParameter(instance.rootcanal_test_port());
+  // HCI server port
+  command.AddParameter(instance.rootcanal_hci_port());
+  // Link server port
+  command.AddParameter(instance.rootcanal_link_port());
+
+  process_monitor->AddCommand(std::move(command));
+  return;
+}
+
 void LaunchLogcatReceiver(const CuttlefishConfig& config,
                           ProcessMonitor* process_monitor) {
   auto instance = config.ForDefaultInstance();
