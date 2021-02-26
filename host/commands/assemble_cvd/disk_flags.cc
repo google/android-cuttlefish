@@ -27,7 +27,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
@@ -116,11 +115,6 @@ bool ResolveInstanceFiles() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   return true;
-}
-
-std::unique_ptr<BootImageUnpacker> CreateBootImageUnpacker() {
-  return BootImageUnpacker::FromImages(
-      FLAGS_boot_image, FLAGS_vendor_boot_image);
 }
 
 static bool DecompressKernel(const std::string& src, const std::string& dst) {
@@ -390,29 +384,18 @@ const std::string kInitramfsImg = "initramfs.img";
 const std::string kRamdiskConcatExt = ".concat";
 
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                            const CuttlefishConfig* config,
-                            BootImageUnpacker* boot_img_unpacker) {
+                            const CuttlefishConfig* config) {
   CHECK(FileHasContent(FLAGS_boot_image))
       << "File not found: " << FLAGS_boot_image;
 
   CHECK(FileHasContent(FLAGS_vendor_boot_image))
       << "File not found: " << FLAGS_vendor_boot_image;
 
-  if (!FLAGS_use_bootloader) {
-    auto success =
-        boot_img_unpacker->Unpack(
-            config->ramdisk_image_path(),
-            config->vendor_ramdisk_image_path(),
-            config->use_unpacked_kernel() ? config->kernel_image_path() : "");
-    CHECK(success) << "Failed to unpack boot image";
-  } else {
     // unpack the boot images into the assembly_dir
-    CHECK(UnpackBootImage(FLAGS_boot_image, config->assembly_dir()))
-        << "Failed to unpack boot image";
-    CHECK(
-        UnpackVendorBootImage(FLAGS_vendor_boot_image, config->assembly_dir()))
-        << "Failed to unpack vendor boot image";
-  }
+  CHECK(UnpackBootImage(FLAGS_boot_image, config->assembly_dir()))
+      << "Failed to unpack boot image";
+  CHECK(UnpackVendorBootImage(FLAGS_vendor_boot_image, config->assembly_dir()))
+      << "Failed to unpack vendor boot image";
 
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;

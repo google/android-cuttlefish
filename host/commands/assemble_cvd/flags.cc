@@ -21,7 +21,6 @@
 #include "common/libs/utils/files.h"
 #include "host/commands/assemble_cvd/alloc.h"
 #include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
 #include "host/libs/config/fetcher_config.h"
@@ -340,7 +339,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     const std::string& assembly_dir,
     const std::string& instance_dir,
     int modem_simulator_count,
-    const BootImageUnpacker& boot_image_unpacker,
     const FetcherConfig& fetcher_config) {
   // At most one streamer can be started.
   CHECK(NumStreamers() <= 1);
@@ -448,14 +446,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   auto ramdisk_path = tmp_config_obj.AssemblyPath("ramdisk.img");
   auto vendor_ramdisk_path = tmp_config_obj.AssemblyPath("vendor_ramdisk.img");
-  if (!boot_image_unpacker.HasRamdiskImage()) {
-    LOG(FATAL) << "A ramdisk is required, but the boot image did not have one.";
-  }
 
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
 
-  tmp_config_obj.set_boot_image_kernel_cmdline(boot_image_unpacker.kernel_cmdline());
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
   tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
