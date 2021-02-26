@@ -145,6 +145,7 @@ void populateResponseInfo_1_6(
 
 struct RadioImpl_1_6 : public V1_6::IRadio {
     int32_t mSlotId;
+    V1_1::CardPowerState mSimCardPowerState;
     sp<IRadioResponse> mRadioResponse;
     sp<IRadioIndication> mRadioIndication;
     sp<V1_1::IRadioResponse> mRadioResponseV1_1;
@@ -3124,6 +3125,7 @@ Return<void> RadioImpl_1_6::setSimCardPower_1_6(int32_t serial, const V1_1::Card
     RLOGD("setSimCardPower_1_6: serial %d state %d", serial, state);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_SET_SIM_CARD_POWER, 1, state);
+    mSimCardPowerState = state;
     return Void();
 }
 
@@ -4665,6 +4667,11 @@ int radio_1_6::getIccCardStatusResponse(int slotId,
                 cardStatusV1_5.applications[i].persoSubstate = (V1_5::PersoSubstate)rilAppStatus[i].perso_substate;
             }
 
+            // If POWER_DOWN then set applications to empty
+            if (radioService[slotId]->mSimCardPowerState == V1_1::CardPowerState::POWER_DOWN) {
+                RLOGD("getIccCardStatusResponse: state is POWER_DOWN so clearing apps");
+                cardStatusV1_5.applications = {};
+            }
             Return<void> retStatus = radioService[slotId]->mRadioResponseV1_5->
                     getIccCardStatusResponse_1_5(responseInfo, cardStatusV1_5);
             radioService[slotId]->checkReturnStatus(retStatus);
@@ -12066,6 +12073,8 @@ void radio_1_6::registerService(RIL_RadioFunctions *callbacks, CommandInfo *comm
 
         radioService[i] = new RadioImpl_1_6;
         radioService[i]->mSlotId = i;
+        RLOGD("registerService: initializing power state to POWER_UP");
+        radioService[i]->mSimCardPowerState = V1_1::CardPowerState::POWER_UP;
         RLOGD("registerService: starting android::hardware::radio::V1_6::IRadio %s for slot %d",
                 serviceNames[i], i);
         android::status_t status = radioService[i]->registerAsService(serviceNames[i]);
