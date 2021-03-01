@@ -5,7 +5,7 @@
 	"memory_mb" : 4096,
 	"custom_actions" : [
 		{
-			"shell_command":"wm size | grep '816' && wm size 1768x2208 || wm size 816x2260",
+			"shell_command":"cmd device_state state | grep 2 && cmd device_state state 0 || cmd device_state state 2",
 			"button":{
 				"command":"fold",
 				"title":"Fold/Unfold",

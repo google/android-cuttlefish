@@ -1,0 +1,21 @@
+<device-state-config>
+  <device-state>
+    <identifier>0</identifier>
+    <name>OPENED</name>
+    <conditions>
+      <lid-switch>
+        <open>false</open>
+      </lid-switch>
+    </conditions>
+  </device-state>
+  <!-- TODO(b/181583265): Add state 1 for HALF_OPENED using hinge sensor. -->
+  <device-state>
+    <identifier>2</identifier>
+    <name>CLOSED</name>
+    <conditions>
+      <lid-switch>
+        <open>true</open>
+      </lid-switch>
+    </conditions>
+  </device-state>
+</device-state-config>
