@@ -156,6 +156,15 @@ PRODUCT_PACKAGES += \
     vtpm_manager \
     wpa_supplicant.vsoc.conf \
 
+SOONG_CONFIG_NAMESPACES += cvd
+SOONG_CONFIG_cvd += launch_configs
+SOONG_CONFIG_cvd_launch_configs += \
+    cvd_config_auto.json \
+    cvd_config_foldable.json \
+    cvd_config_phone.json \
+    cvd_config_tablet.json \
+    cvd_config_tv.json \
+
 #
 # Packages for AOSP-available stuff we use from the framework
 #
