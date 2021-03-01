@@ -247,6 +247,9 @@ class CuttlefishConfig {
   void set_guest_force_normal_boot(bool guest_force_normal_boot);
   bool guest_force_normal_boot() const;
 
+  void set_enable_rootcanal(bool enable_rootcanal);
+  bool enable_rootcanal() const;
+
   enum Answer {
     kUnknown = 0,
     kYes,
@@ -389,6 +392,10 @@ class CuttlefishConfig {
     // Port number to connect to the gnss grpc proxy server on the host
     int gnss_grpc_proxy_server_port() const;
     std::string adb_ip_and_port() const;
+    // Port number to connect to the root-canal on the host
+    int rootcanal_hci_port() const;
+    int rootcanal_link_port() const;
+    int rootcanal_test_port() const;
     std::string adb_device_name() const;
     std::string device_title() const;
     std::string gnss_file_path() const;
@@ -486,6 +493,9 @@ class CuttlefishConfig {
     void set_audiocontrol_server_port(int audiocontrol_server_port);
     void set_host_port(int host_port);
     void set_adb_ip_and_port(const std::string& ip_port);
+    void set_rootcanal_hci_port(int rootcanal_hci_port);
+    void set_rootcanal_link_port(int rootcanal_link_port);
+    void set_rootcanal_test_port(int rootcanal_test_port);
     void set_device_title(const std::string& title);
     void set_mobile_bridge_name(const std::string& mobile_bridge_name);
     void set_mobile_tap_name(const std::string& mobile_tap_name);
