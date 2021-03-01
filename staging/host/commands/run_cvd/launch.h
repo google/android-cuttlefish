@@ -28,6 +28,8 @@ void LaunchVNCServer(const CuttlefishConfig& config,
 
 void LaunchTombstoneReceiver(const CuttlefishConfig& config,
                              ProcessMonitor* process_monitor);
+void LaunchRootCanal(const CuttlefishConfig& config,
+                     ProcessMonitor* process_monitor);
 void LaunchLogcatReceiver(const CuttlefishConfig& config,
                           ProcessMonitor* process_monitor);
 void LaunchConfigServer(const CuttlefishConfig& config,
