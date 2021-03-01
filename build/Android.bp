@@ -70,6 +70,11 @@ cvd_host_tools = [
     "webrtc_operator",
 ]
 
+// TODO(b/181203470): Support root-canal for arm64 Host
+cvd_host_tools_x86_64 = [
+    "root-canal",
+]
+
 cvd_host_tests = [
     "cuttlefish_net_tests",
     "modem_simulator_test",
@@ -163,6 +168,7 @@ cvd_host_package_customization {
                     deps: cvd_host_seccomp_policy_x86_64,
                 },
             },
+            deps: cvd_host_tools_x86_64,
         },
         arm64: {
             multilib: {
