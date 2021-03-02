@@ -175,6 +175,8 @@ const char* kRecordScreen = "record_screen";
 
 const char* kEthernet = "ethernet";
 
+const char* kSmt = "smt";
+
 }  // namespace
 
 const char* const kGpuModeAuto = "auto";
@@ -870,6 +872,13 @@ void CuttlefishConfig::set_record_screen(bool record_screen) {
 }
 bool CuttlefishConfig::record_screen() const {
   return (*dictionary_)[kRecordScreen].asBool();
+}
+
+void CuttlefishConfig::set_smt(bool smt) {
+  (*dictionary_)[kSmt] = smt;
+}
+bool CuttlefishConfig::smt() const {
+  return (*dictionary_)[kSmt].asBool();
 }
 
 // Creates the (initially empty) config object and populates it with values from
