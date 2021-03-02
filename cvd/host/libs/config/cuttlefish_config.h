@@ -343,6 +343,9 @@ class CuttlefishConfig {
 
   bool enable_audio() const;
 
+  void set_protected_vm(bool protected_vm);
+  bool protected_vm() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
