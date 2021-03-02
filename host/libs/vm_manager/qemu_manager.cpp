@@ -211,18 +211,20 @@ std::vector<Command> QemuManager::StartCommands(
 
   bool is_arm = android::base::EndsWith(config.qemu_binary(), "system-aarch64");
 
-  auto access_kregistry_size_bytes = FileSize(instance.access_kregistry_path());
-  if (access_kregistry_size_bytes & (1024 * 1024 - 1)) {
-      LOG(FATAL) << instance.access_kregistry_path() <<  " file size ("
-                 << access_kregistry_size_bytes << ") not a multiple of 1MB";
-      return {};
+  auto access_kregistry_size_bytes = 0;
+  if (FileExists(instance.access_kregistry_path())) {
+    access_kregistry_size_bytes = FileSize(instance.access_kregistry_path());
+    CHECK(access_kregistry_size_bytes & (1024 * 1024 - 1))
+        << instance.access_kregistry_path() <<  " file size ("
+        << access_kregistry_size_bytes << ") not a multiple of 1MB";
   }
 
-  auto pstore_size_bytes = FileSize(instance.pstore_path());
-  if (pstore_size_bytes & (1024 * 1024 - 1)) {
-      LOG(FATAL) << instance.pstore_path() <<  " file size ("
-                 << pstore_size_bytes << ") not a multiple of 1MB";
-      return {};
+  auto pstore_size_bytes = 0;
+  if (FileExists(instance.pstore_path())) {
+    pstore_size_bytes = FileSize(instance.pstore_path());
+    CHECK(pstore_size_bytes & (1024 * 1024 - 1))
+        << instance.pstore_path() <<  " file size ("
+        << pstore_size_bytes << ") not a multiple of 1MB";
   }
 
   qemu_cmd.AddParameter("-name");
@@ -378,7 +380,7 @@ std::vector<Command> QemuManager::StartCommands(
     qemu_cmd.AddParameter("none");
   }
 
-  if (!is_arm) {
+  if (!is_arm && FileExists(instance.pstore_path())) {
     // QEMU will assign the NVDIMM (ramoops pstore region) 100000000-1001fffff
     // As we will pass this to ramoops, define this region first so it is always
     // located at this address. This is currently x86 only.
@@ -392,7 +394,7 @@ std::vector<Command> QemuManager::StartCommands(
 
   // QEMU does not implement virtio-pmem-pci for ARM64 yet; restore this
   // when the device has been added
-  if (!is_arm) {
+  if (!is_arm && FileExists(instance.access_kregistry_path())) {
     qemu_cmd.AddParameter("-object");
     qemu_cmd.AddParameter("memory-backend-file,id=objpmem1,share,mem-path=",
                           instance.access_kregistry_path(), ",size=",
