@@ -38,4 +38,4 @@ PRODUCT_PACKAGES += android.hardware.tv.tuner@1.0-service
 # Enabling managed profiles
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/tv/overlay
 
-TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/tv/android-info.txt
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/tv/android-info.txt
