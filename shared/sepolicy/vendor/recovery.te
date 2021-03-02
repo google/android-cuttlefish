@@ -7,7 +7,6 @@ allow recovery vfat:dir r_dir_perms;
 allow recovery vfat:file r_file_perms;
 
 # Seen during 'Wipe data/factory reset'
-allow recovery cache_block_device:blk_file rw_file_perms;
 allow recovery devpts:chr_file rw_file_perms;
 allow recovery kmsg_device:chr_file { getattr w_file_perms };
 # Note: fsetid checks are triggered when creating a file in a directory with
