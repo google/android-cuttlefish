@@ -74,7 +74,7 @@ bool JsonSerializable::Deserialize(
   std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
   std::string errorMessage;
   if (!reader->parse(doc_begin, doc_end, &json_, &errorMessage)) {
-    LOG(ERROR) << "Failed to parse json";
+    LOG(ERROR) << "Failed to parse json: " << errorMessage;
     return false;
   }
   return true;

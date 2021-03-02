@@ -224,7 +224,7 @@ class ConnectionObserverImpl
     std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
     std::string errorMessage;
     if (!json_reader->parse(msg_str, msg_str + size, &evt, &errorMessage)) {
-      LOG(ERROR) << "Received invalid JSON object over control channel";
+      LOG(ERROR) << "Received invalid JSON object over control channel: " << errorMessage;
       return;
     }
     auto result =

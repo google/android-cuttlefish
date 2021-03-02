@@ -180,7 +180,8 @@ void InputChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
   std::string errorMessage;
   auto str = msg.data.cdata<char>();
   if (!json_reader->parse(str, str + size, &evt, &errorMessage) < 0) {
-    LOG(ERROR) << "Received invalid JSON object over input channel";
+    LOG(ERROR) << "Received invalid JSON object over input channel: "
+               << errorMessage;
     return;
   }
   if (!evt.isMember("type") || !evt["type"].isString()) {

@@ -75,7 +75,8 @@ class JsonRequestReader {
     std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
     std::string errorMessage;
     if (!reader->parse(&*msg.begin(), &*msg.end(), &ret, &errorMessage)) {
-      LOG(WARNING) << "Received invalid JSON object in input channel:";
+      LOG(WARNING) << "Received invalid JSON object in input channel: "
+                   << errorMessage;
       LOG(INFO) << "Invalid JSON: " << msg;
       return std::nullopt;
     }
