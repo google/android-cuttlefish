@@ -13,4 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PRODUCT_COPY_FILES += device/google/cuttlefish_prebuilts/kernel/5.10-i686/kernel-5.10:kernel
+GKI_VER ?= 5.10
+
+PRODUCT_COPY_FILES += device/google/cuttlefish_prebuilts/kernel/$(GKI_VER)-i686/kernel-$(GKI_VER):kernel
