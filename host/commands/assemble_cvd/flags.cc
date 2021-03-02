@@ -744,31 +744,28 @@ void SetDefaultFlagsFromConfigPreset() {
   }
 
   // If the user specifies a --config name, then use that config
-  // preset option and save their choice to a file.
-  std::string config_preset_file_path =
-      StringFromEnv("HOME", ".") + "/.cuttlefish_config_preset";
+  // preset option.
+  std::string android_info_path = DefaultGuestImagePath("/android-info.txt");
   if (IsFlagSet("config")) {
     if (!allowed_config_presets.count(config_preset)) {
       LOG(FATAL) << "Invalid --config option '" << config_preset
                  << "'. Valid options: "
                  << android::base::Join(allowed_config_presets, ",");
     }
-    // Write the name of the config preset to a file. Only the name is
-    // written, not the contents of the config itself, in order to allow
-    // forwards compatibility if config fields change.
-    std::ofstream ofs(config_preset_file_path);
-    if (ofs.is_open()) {
-      ofs << config_preset;
-    }
-  } else if (FileExists(config_preset_file_path)) {
-    // Load the config preset option from the file if it exists.
-    std::ifstream ifs(config_preset_file_path);
+  } else if (FileExists(android_info_path)) {
+    // Otherwise try to load the correct preset using android-info.txt.
+    std::ifstream ifs(android_info_path);
     if (ifs.is_open()) {
-      ifs >> config_preset;
+      std::string android_info;
+      ifs >> android_info;
+      std::string_view local_android_info(android_info);
+      if (android::base::ConsumePrefix(&local_android_info, "config=")) {
+        config_preset = local_android_info;
+      }
       if (!allowed_config_presets.count(config_preset)) {
-        LOG(WARNING) << config_preset_file_path
-                     << " contains invalid config preset: '" << config_preset
-                     << "'. Defaulting to 'phone'.";
+        LOG(WARNING) << android_info_path
+                     << " contains invalid config preset: '"
+                     << local_android_info << "'. Defaulting to 'phone'.";
         config_preset = "phone";
       }
     }
