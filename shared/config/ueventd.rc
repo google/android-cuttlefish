@@ -25,4 +25,4 @@
 /dev/gnss0 0666 system system
 
 # Factory Reset Protection
-/dev/block/vdc 0660 system system
+/dev/block/vdb 0660 system system
