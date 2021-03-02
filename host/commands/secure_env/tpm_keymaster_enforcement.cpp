@@ -32,8 +32,19 @@ using keymaster::KeymasterBlob;
 using keymaster::KeymasterEnforcement;
 using keymaster::VerifyAuthorizationRequest;
 using keymaster::VerifyAuthorizationResponse;
+namespace {
+inline bool operator==(const keymaster_blob_t& a, const keymaster_blob_t& b) {
+  if (!a.data_length && !b.data_length) return true;
+  if (!(a.data && b.data)) return a.data == b.data;
+  return (a.data_length == b.data_length &&
+          !memcmp(a.data, b.data, a.data_length));
+}
 
-
+bool operator==(const HmacSharingParameters& a,
+                const HmacSharingParameters& b) {
+  return a.seed == b.seed && !memcmp(a.nonce, b.nonce, sizeof(a.nonce));
+}
+}  // namespace
 class CompareHmacSharingParams {
 public:
   bool operator()(
@@ -158,6 +169,7 @@ keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
     const HmacSharingParametersArray& hmac_array,
     KeymasterBlob* sharingCheck) {
   std::set<HmacSharingParameters, CompareHmacSharingParams> sorted_hmac_inputs;
+  bool found_mine = false;
   for (int i = 0; i < hmac_array.num_params; i++) {
     HmacSharingParameters sharing_params;
     sharing_params.seed =
@@ -166,8 +178,11 @@ keymaster_error_t TpmKeymasterEnforcement::ComputeSharedHmac(
         sharing_params.nonce,
         hmac_array.params_array[i].nonce,
         sizeof(sharing_params.nonce));
+    found_mine = found_mine || (sharing_params == saved_params_);
     sorted_hmac_inputs.emplace(std::move(sharing_params));
   }
+
+  if (!found_mine) return KM_ERROR_INVALID_ARGUMENT;
 
   // unique data has a low maximum size, so combine the hmac parameters
   char unique_data[] = "\0\0\0\0\0\0\0\0\0\0";
