@@ -116,11 +116,11 @@ bool FetcherConfig::LoadFromFile(const std::string& file) {
     LOG(ERROR) << "Could not get real path for file " << file;
     return false;
   }
-  Json::Reader reader;
+  Json::CharReaderBuilder builder;
   std::ifstream ifs(real_file_path);
-  if (!reader.parse(ifs, *dictionary_)) {
-    LOG(ERROR) << "Could not read config file " << file << ": "
-               << reader.getFormattedErrorMessages();
+  std::string errorMessage;
+  if (!Json::parseFromStream(builder, ifs, dictionary_.get(), &errorMessage)) {
+    LOG(ERROR) << "Could not read config file " << file << ": " << errorMessage;
     return false;
   }
   return true;

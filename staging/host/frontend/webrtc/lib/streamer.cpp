@@ -58,16 +58,18 @@ constexpr auto kControlPanelButtonShellCommand = "shell_command";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 
 void SendJson(WsConnection* ws_conn, const Json::Value& data) {
-  Json::FastWriter json_writer;
-  auto data_str = json_writer.write(data);
+  Json::StreamWriterBuilder factory;
+  auto data_str = Json::writeString(factory, data);
   ws_conn->Send(reinterpret_cast<const uint8_t*>(data_str.c_str()),
                 data_str.size());
 }
 
 bool ParseMessage(const uint8_t* data, size_t length, Json::Value* msg_out) {
-  Json::Reader json_reader;
   auto str = reinterpret_cast<const char*>(data);
-  return json_reader.parse(str, str + length, *msg_out) >= 0;
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
+  std::string errorMessage;
+  return json_reader->parse(str, str + length, msg_out, &errorMessage);
 }
 
 std::unique_ptr<rtc::Thread> CreateAndStartThread(const std::string& name) {
