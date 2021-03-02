@@ -20,6 +20,9 @@
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 
+# GKI_VER is defined in kernel.mk, if not defined in the environment variable.
+BOARD_KERNEL_MODULE_INTERFACE_VERSIONS := $(GKI_VER)-android12-0
+
 TARGET_BOARD_PLATFORM := vsoc_x86_64
 TARGET_ARCH := x86_64
 TARGET_ARCH_VARIANT := silvermont
@@ -43,5 +46,5 @@ TARGET_NATIVE_BRIDGE_2ND_ABI := armeabi-v7a armeabi
 BUILD_BROKEN_DUP_RULES := true
 
 ifeq ($(BOARD_VENDOR_RAMDISK_KERNEL_MODULES),)
-    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/5.10/x86-64/*.ko)
+    BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard kernel/prebuilts/common-modules/virtual-device/$(GKI_VER)/x86-64/*.ko)
 endif
