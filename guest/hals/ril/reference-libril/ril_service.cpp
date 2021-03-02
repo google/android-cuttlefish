@@ -642,6 +642,7 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> getVoiceRegistrationState_1_6(int32_t serial);
     Return<void> getDataRegistrationState_1_6(int32_t serial);
     Return<void> getAllowedNetworkTypeBitmap(uint32_t serial);
+    Return<void> getSlicingConfig(int32_t serial);
     Return<void> setCarrierInfoForImsiEncryption_1_6(
             int32_t serial,
             const ::android::hardware::radio::V1_6::ImsiEncryptionInfo& imsiEncryptionInfo);
@@ -4648,6 +4649,14 @@ Return<void> RadioImpl_1_6::getSystemSelectionChannels(int32_t serial) {
     RLOGD("getSystemSelectionChannels: serial %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::getSlicingConfig(int32_t serial) {
+#if VDBG
+    RLOGD("getSlicingConfig: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_SLICING_CONFIG);
     return Void();
 }
 
@@ -10272,6 +10281,27 @@ int radio_1_6::setDataThrottlingResponse(int slotId, int responseType,
                     responseInfo);
    radioService[slotId]->checkReturnStatus(retstatus);
    return 0;
+}
+
+int radio_1_6::getSlicingConfigResponse(int slotId, int responseType, int serial,
+                                        RIL_Errno e, void* response, size_t responseLen) {
+#if VDBG
+    RLOGD("getSlicingConfigResponse: serial %d", serial);
+#endif
+
+    if (radioService[slotId]->mRadioResponse != NULL) {
+        V1_6::RadioResponseInfo responseInfo = {};
+        populateResponseInfo_1_6(responseInfo, serial, responseType, e);
+
+        V1_6::SlicingConfig slicingConfig = {};
+        Return<void> retStatus = radioService[slotId]->mRadioResponseV1_6->
+                getSlicingConfigResponse(responseInfo, slicingConfig);
+        radioService[slotId]->checkReturnStatus(retStatus);
+    } else {
+        RLOGE("getSlicingConfigResponse: radioService[%d]->mRadioResponse == NULL", slotId);
+    }
+
+    return 0;
 }
 /***************************************************************************************************
  * INDICATION FUNCTIONS
