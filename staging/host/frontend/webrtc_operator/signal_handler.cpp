@@ -37,9 +37,11 @@ void SignalHandler::OnReceive(const uint8_t* msg, size_t len, bool binary) {
     return;
   }
   Json::Value json_message;
-  Json::Reader json_reader;
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
+  std::string errorMessage;
   auto str = reinterpret_cast<const char*>(msg);
-  if (!json_reader.parse(str, str + len, json_message)) {
+  if (!json_reader->parse(str, str + len, &json_message, &errorMessage)) {
     LogAndReplyError("Received Invalid JSON");
     // Rate limiting would be a good idea here
     Close();
@@ -72,8 +74,8 @@ void SignalHandler::LogAndReplyError(const std::string& error_message) {
 }
 
 void SignalHandler::Reply(const Json::Value& json) {
-  Json::FastWriter json_writer;
-  auto replyAsString = json_writer.write(json);
+  Json::StreamWriterBuilder factory;
+  auto replyAsString = Json::writeString(factory, json);
   EnqueueMessage(replyAsString.c_str(), replyAsString.size());
 }
 
