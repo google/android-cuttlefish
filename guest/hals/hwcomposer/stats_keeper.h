@@ -153,19 +153,17 @@ class WrappedScreenView : public ScreenView {
       : screen_view_(std::move(screen_view)), stats_getter_(stats_getter) {}
   virtual ~WrappedScreenView() = default;
 
-  void Broadcast(int buffer_id, const CompositionStats*) override {
+  std::uint8_t* AcquireNextBuffer(std::uint32_t display_number) override {
+    return screen_view_->AcquireNextBuffer(display_number);
+  }
+
+  void PresentAcquiredBuffer(std::uint32_t display_number) override {
     // The composer object in stats_keeper produces null stats, use the ones
     // provided by the stats_keeper instead.
     CompositionStats stats;
     stats_getter_(&stats);
-    return screen_view_->Broadcast(buffer_id, &stats);
+    return screen_view_->PresentAcquiredBuffer(display_number);
   }
-
-  void* GetBuffer(int buffer_id) override {
-    return screen_view_->GetBuffer(buffer_id);
-  }
-
-  int num_buffers() const override { return screen_view_->num_buffers(); }
 
  private:
   std::unique_ptr<ScreenView> screen_view_;
