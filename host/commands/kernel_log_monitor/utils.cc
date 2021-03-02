@@ -36,10 +36,12 @@ std::optional<ReadEventResult> ReadEvent(cuttlefish::SharedFD fd) {
     return std::nullopt;
   }
 
-  Json::Reader reader;
+  Json::CharReaderBuilder builder;
+  std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+  std::string errorMessage;
   Json::Value message;
-  if (!reader.parse(buf, message)) {
-    LOG(ERROR) << "Unable to parse event JSON: " << reader.getFormatedErrorMessages();
+  if (!reader->parse(&*buf.begin(), &*buf.end(), &message, &errorMessage)) {
+    LOG(ERROR) << "Unable to parse event JSON: " << errorMessage;
     return std::nullopt;
   }
 
@@ -51,8 +53,8 @@ std::optional<ReadEventResult> ReadEvent(cuttlefish::SharedFD fd) {
 }
 
 bool WriteEvent(cuttlefish::SharedFD fd, const Json::Value& event_message) {
-  Json::FastWriter writer;
-  std::string message_string = writer.write(event_message);
+  Json::StreamWriterBuilder factory;
+  std::string message_string = Json::writeString(factory, event_message);
   size_t length = message_string.length();
   ssize_t retval = cuttlefish::WriteAllBinary(fd, &length);
   if (retval <= 0) {
