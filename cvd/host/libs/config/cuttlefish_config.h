@@ -341,6 +341,9 @@ class CuttlefishConfig {
   void set_record_screen(bool record_screen);
   bool record_screen() const;
 
+  void set_smt(bool smt);
+  bool smt() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
