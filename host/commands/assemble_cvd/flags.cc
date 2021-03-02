@@ -686,16 +686,20 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
     instance.set_device_title(FLAGS_device_title);
 
-    std::vector<std::string> virtual_disk_paths = {
-      const_instance.PerInstancePath("overlay.img"),
-    };
-    if (!FLAGS_protected_vm) {
-      virtual_disk_paths.push_back(const_instance.factory_reset_protected_path());
+    if (FLAGS_protected_vm) {
+      instance.set_virtual_disk_paths({
+        const_instance.PerInstancePath("composite.img")
+      });
+    } else {
+      std::vector<std::string> virtual_disk_paths = {
+        const_instance.PerInstancePath("overlay.img"),
+        const_instance.factory_reset_protected_path(),
+      };
       if (FLAGS_use_sdcard) {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
       }
+      instance.set_virtual_disk_paths(virtual_disk_paths);
     }
-    instance.set_virtual_disk_paths(virtual_disk_paths);
 
     std::array<unsigned char, 6> mac_address;
     mac_address[0] = 1 << 6; // locally administered

@@ -357,13 +357,14 @@ std::vector<Command> QemuManager::StartCommands(
   CHECK_GE(VmManager::kMaxDisks, disk_num)
       << "Provided too many disks (" << disk_num << "), maximum "
       << VmManager::kMaxDisks << "supported";
+  auto readonly = config.protected_vm() ? ",readonly" : "";
   for (size_t i = 0; i < disk_num; i++) {
     auto bootindex = i == 0 ? ",bootindex=1" : "";
     auto format = i == 0 ? "" : ",format=raw";
     auto disk = instance.virtual_disk_paths()[i];
     qemu_cmd.AddParameter("-drive");
     qemu_cmd.AddParameter("file=", disk, ",if=none,id=drive-virtio-disk", i,
-                          ",aio=threads", format);
+                          ",aio=threads", format, readonly);
     qemu_cmd.AddParameter("-device");
     qemu_cmd.AddParameter("virtio-blk-pci-non-transitional,scsi=off,drive=drive-virtio-disk", i,
                           ",id=virtio-disk", i, bootindex);

@@ -253,7 +253,8 @@ std::vector<Command> CrosvmManager::StartCommands(
       << "Provided too many disks (" << disk_num << "), maximum "
       << VmManager::kMaxDisks << "supported";
   for (const auto& disk : instance.virtual_disk_paths()) {
-    crosvm_cmd.AddParameter("--rwdisk=", disk);
+    crosvm_cmd.AddParameter(config.protected_vm() ? "--disk=" :
+                                                    "--rwdisk=", disk);
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config));
 
