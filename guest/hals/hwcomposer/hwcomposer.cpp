@@ -350,6 +350,12 @@ static int cvd_hwc_set(hwc_composer_device_1_t* dev, size_t numDisplays,
 
   int retval = -1;
   for (int disp = 0; disp < numDisplays; ++disp) {
+    // TODO(b/171305898): Remove the following condition after it supports
+    // multi-display properly.
+    if (disp > 0) {
+      // Skip the composition besides the default display.
+      break;
+    }
     hwc_display_contents_1_t* contents = displays[disp];
     if (!contents) return 0;
 
