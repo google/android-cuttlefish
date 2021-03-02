@@ -160,6 +160,10 @@ std::vector<Command> CrosvmManager::StartCommands(
   });
   crosvm_cmd.AddParameter("run");
 
+  if (!config.smt()) {
+    crosvm_cmd.AddParameter("--no-smt");
+  }
+
   if (config.vhost_net()) {
     crosvm_cmd.AddParameter("--vhost-net");
   }

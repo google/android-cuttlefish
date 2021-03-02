@@ -270,6 +270,8 @@ DEFINE_bool(record_screen, false, "Enable screen recording. "
 
 DEFINE_bool(ethernet, false, "Enable Ethernet network interface");
 
+DEFINE_bool(smt, false, "Enable simultaneous multithreading (SMT/HT)");
+
 DEFINE_int32(vsock_guest_cid,
              cuttlefish::GetDefaultVsockCid(),
              "vsock_guest_cid is used to determine the guest vsock cid as well as all the ports"
@@ -401,7 +403,11 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
                " does not work with vm_manager=" << FLAGS_vm_manager;
   }
 
+  CHECK(!FLAGS_smt || FLAGS_cpus % 2 == 0)
+      << "CPUs must be a multiple of 2 in SMT mode";
   tmp_config_obj.set_cpus(FLAGS_cpus);
+  tmp_config_obj.set_smt(FLAGS_smt);
+
   tmp_config_obj.set_memory_mb(FLAGS_memory_mb);
 
   tmp_config_obj.set_setupwizard_mode(FLAGS_setupwizard_mode);
@@ -591,6 +597,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_enable_minimal_mode(FLAGS_enable_minimal_mode);
 
   tmp_config_obj.set_vhost_net(FLAGS_vhost_net);
+
   tmp_config_obj.set_record_screen(FLAGS_record_screen);
 
   tmp_config_obj.set_ethernet(FLAGS_ethernet);
