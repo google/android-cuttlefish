@@ -31,3 +31,27 @@ cc_library {
         "liblog",
     ],
 }
+
+cc_test {
+    name: "libcuttlefish_security_tests",
+    srcs: [
+        "keymaster_channel_test.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcuttlefish_fs",
+        "libcuttlefish_security",
+        "libgatekeeper",
+        "libkeymaster_messages",
+        "liblog",
+    ],
+    static_libs: [
+        "libgmock",
+        "libgtest",
+    ],
+    defaults: ["cuttlefish_buildhost_only"],
+    test_suites: ["general-tests"],
+    test_options: {
+        unit_test: true,
+    },
+}
