@@ -44,7 +44,6 @@ DEFINE_string(system_image_dir, cuttlefish::DefaultGuestImagePath(""),
 DEFINE_string(boot_image, "",
               "Location of cuttlefish boot image. If empty it is assumed to be "
               "boot.img in the directory specified by -system_image_dir.");
-DEFINE_string(cache_image, "", "Location of the cache partition image.");
 DEFINE_string(data_image, "", "Location of the data partition image.");
 DEFINE_string(super_image, "", "Location of the super partition image.");
 DEFINE_string(misc_image, "",
@@ -89,9 +88,6 @@ bool ResolveInstanceFiles() {
   // be placed in --system_image_dir location.
   std::string default_boot_image = FLAGS_system_image_dir + "/boot.img";
   SetCommandLineOptionWithMode("boot_image", default_boot_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_cache_image = FLAGS_system_image_dir + "/cache.img";
-  SetCommandLineOptionWithMode("cache_image", default_cache_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_data_image = FLAGS_system_image_dir + "/userdata.img";
   SetCommandLineOptionWithMode("data_image", default_data_image.c_str(),
@@ -211,10 +207,6 @@ std::vector<ImagePartition> disk_config(
   partitions.push_back(ImagePartition {
     .label = "userdata",
     .image_file_path = FLAGS_data_image,
-  });
-  partitions.push_back(ImagePartition {
-    .label = "cache",
-    .image_file_path = FLAGS_cache_image,
   });
   partitions.push_back(ImagePartition {
     .label = "metadata",
