@@ -114,11 +114,12 @@ bool NvramConfig::LoadFromFile(const char* file) {
     return false;
   }
 
-  Json::Reader reader;
+  Json::CharReaderBuilder builder;
   std::ifstream ifs(real_file_path);
-  if (!reader.parse(ifs, *dictionary_)) {
+  std::string errorMessage;
+  if (!Json::parseFromStream(builder, ifs, dictionary_.get(), &errorMessage)) {
     LOG(ERROR) << "Could not read config file " << file << ": "
-               << reader.getFormattedErrorMessages();
+               << errorMessage;
     return false;
   }
   return true;

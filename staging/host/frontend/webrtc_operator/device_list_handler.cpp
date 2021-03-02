@@ -29,8 +29,8 @@ void DeviceListHandler::OnReceive(const uint8_t* /*msg*/, size_t /*len*/,
   for (const auto& id : registry_.ListDeviceIds()) {
     reply.append(id);
   }
-  Json::FastWriter json_writer;
-  auto replyAsString = json_writer.write(reply);
+  Json::StreamWriterBuilder json_factory;
+  auto replyAsString = Json::writeString(json_factory, reply);
   EnqueueMessage(replyAsString.c_str(), replyAsString.size());
   Close();
 }

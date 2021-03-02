@@ -219,11 +219,12 @@ class ConnectionObserverImpl
   }
   void OnControlMessage(const uint8_t* msg, size_t size) override {
     Json::Value evt;
-    Json::Reader json_reader;
-    if (!json_reader.parse(reinterpret_cast<const char*>(msg),
-                           reinterpret_cast<const char*>(msg + size),
-                           evt) < 0) {
-      LOG(ERROR) << "Received invalid JSON object over control channel";
+    const char* msg_str = reinterpret_cast<const char*>(msg);
+    Json::CharReaderBuilder builder;
+    std::unique_ptr<Json::CharReader> json_reader(builder.newCharReader());
+    std::string errorMessage;
+    if (!json_reader->parse(msg_str, msg_str + size, &evt, &errorMessage)) {
+      LOG(ERROR) << "Received invalid JSON object over control channel: " << errorMessage;
       return;
     }
     auto result =

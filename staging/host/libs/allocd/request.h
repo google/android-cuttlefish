@@ -72,8 +72,11 @@ class JsonRequestReader {
 
   std::optional<Json::Value> parse(std::string msg) {
     Json::Value ret;
-    if (!reader.parse(msg, ret)) {
-      LOG(WARNING) << "Received invalid JSON object in input channel:";
+    std::unique_ptr<Json::CharReader> reader(reader_builder.newCharReader());
+    std::string errorMessage;
+    if (!reader->parse(&*msg.begin(), &*msg.end(), &ret, &errorMessage)) {
+      LOG(WARNING) << "Received invalid JSON object in input channel: "
+                   << errorMessage;
       LOG(INFO) << "Invalid JSON: " << msg;
       return std::nullopt;
     }
@@ -81,7 +84,7 @@ class JsonRequestReader {
   }
 
  private:
-  Json::Reader reader;
+  Json::CharReaderBuilder reader_builder;
 };
 
 }  // namespace cuttlefish
