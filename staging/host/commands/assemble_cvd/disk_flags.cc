@@ -66,10 +66,11 @@ DEFINE_string(esp, "", "Path to ESP partition image (FAT formatted)");
 DEFINE_int32(blank_metadata_image_mb, 16,
              "The size of the blank metadata image to generate, MB.");
 DEFINE_int32(blank_sdcard_image_mb, 2048,
-             "The size of the blank sdcard image to generate, MB.");
+             "If enabled, the size of the blank sdcard image to generate, MB.");
 
 DECLARE_string(bootloader);
 DECLARE_bool(use_bootloader);
+DECLARE_bool(use_sdcard);
 DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
@@ -489,7 +490,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
     }
 
-    if (!FileExists(instance.sdcard_path())) {
+    if (FLAGS_use_sdcard && !FileExists(instance.sdcard_path())) {
       CreateBlankImage(instance.sdcard_path(),
                        FLAGS_blank_sdcard_image_mb, "sdcard");
     }
