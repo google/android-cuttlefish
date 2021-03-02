@@ -13,4 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PRODUCT_COPY_FILES += kernel/prebuilts/5.10/x86_64/kernel-5.10:kernel
+GKI_VER ?= 5.10
+
+PRODUCT_COPY_FILES += kernel/prebuilts/$(GKI_VER)/x86_64/kernel-$(GKI_VER):kernel
