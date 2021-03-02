@@ -175,9 +175,18 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-overcommit");
   qemu_cmd.AddParameter("mem-lock=off");
 
+  // Assume SMT is always 2 threads per core, which is how most hardware
+  // today is configured, and the way crosvm does it
   qemu_cmd.AddParameter("-smp");
-  qemu_cmd.AddParameter(config.cpus(), ",sockets=", config.cpus(),
-                        ",cores=1,threads=1");
+  if (config.smt()) {
+    CHECK(config.cpus() % 2 == 0)
+        << "CPUs must be a multiple of 2 in SMT mode";
+    qemu_cmd.AddParameter(config.cpus(), ",cores=",
+                          config.cpus() / 2, ",threads=2");
+  } else {
+    qemu_cmd.AddParameter(config.cpus(), ",cores=",
+                          config.cpus(), ",threads=1");
+  }
 
   qemu_cmd.AddParameter("-uuid");
   qemu_cmd.AddParameter(instance.uuid());
