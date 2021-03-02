@@ -20,9 +20,12 @@
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 
+# GKI_VER is defined in kernel.mk, if not defined in the environment variable.
+BOARD_KERNEL_MODULE_INTERFACE_VERSIONS := $(GKI_VER)-android12-0
+
 TARGET_BOARD_PLATFORM := vsoc_x86
 TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
 TARGET_CPU_ABI := x86
 
-BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/5.10-i686/*.ko)
+BOARD_VENDOR_RAMDISK_KERNEL_MODULES += $(wildcard device/google/cuttlefish_prebuilts/kernel/$(GKI_VER)-i686/*.ko)
