@@ -160,6 +160,10 @@ std::vector<Command> CrosvmManager::StartCommands(
   });
   crosvm_cmd.AddParameter("run");
 
+  if (config.vhost_net()) {
+    crosvm_cmd.AddParameter("--vhost-net");
+  }
+
   auto display_configs = config.display_configs();
   CHECK_GE(display_configs.size(), 1);
   auto display_config = display_configs[0];
@@ -313,10 +317,6 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--bios=", config.bootloader());
   } else {
     crosvm_cmd.AddParameter(config.GetKernelImageToUse());
-  }
-
-  if (config.vhost_net()) {
-    crosvm_cmd.AddParameter("--vhost-net");
   }
 
   // Only run the leases workaround if we are not using the new network
