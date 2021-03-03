@@ -199,7 +199,8 @@ int main(int argc, char **argv) {
 
   observer_factory->SetDisplayHandler(display_handler);
 
-  streamer->SetHardwareSpecs(cvd_config->cpus(), cvd_config->memory_mb());
+  streamer->SetHardwareSpec("CPUs", cvd_config->cpus());
+  streamer->SetHardwareSpec("RAM", std::to_string(cvd_config->memory_mb()) + " mb");
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
