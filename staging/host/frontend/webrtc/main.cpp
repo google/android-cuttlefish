@@ -202,6 +202,18 @@ int main(int argc, char **argv) {
   streamer->SetHardwareSpec("CPUs", cvd_config->cpus());
   streamer->SetHardwareSpec("RAM", std::to_string(cvd_config->memory_mb()) + " mb");
 
+  std::string user_friendly_gpu_mode;
+  if (cvd_config->gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
+    user_friendly_gpu_mode = "SwiftShader (Guest CPU Rendering)";
+  } else if (cvd_config->gpu_mode() == cuttlefish::kGpuModeDrmVirgl) {
+    user_friendly_gpu_mode = "VirglRenderer (Accelerated Host GPU Rendering)";
+  } else if (cvd_config->gpu_mode() == cuttlefish::kGpuModeGfxStream) {
+    user_friendly_gpu_mode = "Gfxstream (Accelerated Host GPU Rendering)";
+  } else {
+    user_friendly_gpu_mode = cvd_config->gpu_mode();
+  }
+  streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
+
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
   for (const std::string& action_server : android::base::Split(FLAGS_action_servers, ",")) {
