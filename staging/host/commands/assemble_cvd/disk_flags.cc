@@ -149,12 +149,6 @@ std::vector<ImagePartition> disk_config(
     .label = "misc",
     .image_file_path = FLAGS_misc_image,
   });
-  if (FLAGS_use_bootloader) {
-    partitions.push_back(ImagePartition {
-      .label = "bootloader",
-      .image_file_path = FLAGS_bootloader,
-    });
-  }
   if (!FLAGS_esp.empty()) {
     partitions.push_back(ImagePartition {
       .label = "esp",
