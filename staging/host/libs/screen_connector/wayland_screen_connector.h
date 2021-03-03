@@ -28,10 +28,10 @@ class WaylandScreenConnector : public ScreenConnectorSource {
  public:
   WaylandScreenConnector(int frames_fd);
 
-  bool OnFrameAfter(std::uint32_t frame_number,
-                    const GenerateProcessedFrameCallbackImpl& frame_callback) override;
+  bool OnNextFrame(
+      const GenerateProcessedFrameCallbackImpl& frame_callback) override;
 
-private:
+ private:
   std::unique_ptr<wayland::WaylandServer> server_;
 };
 

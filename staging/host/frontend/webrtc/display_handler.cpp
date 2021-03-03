@@ -32,34 +32,36 @@ DisplayHandler::DisplayHandler(
 
 DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnectorCallback() {
     // only to tell the producer how to create a ProcessedFrame to cache into the queue
-  DisplayHandler::GenerateProcessedFrameCallback callback =
-    [](std::uint32_t frame_number, std::uint8_t* frame,
-       WebRtcScProcessedFrame& processed_frame) {
-      // TODO(171305898): handle multiple displays.
-      const uint32_t display_number = 0;
-      if (display_number != 0) {
-        processed_frame.is_success_ = false;
-        return;
-      }
-      const int display_w = ScreenConnectorInfo::ScreenWidth(display_number);
-      const int display_h = ScreenConnectorInfo::ScreenHeight(display_number);
-      const int display_stride_bytes = ScreenConnectorInfo::ScreenStrideBytes(display_number);
-      processed_frame.frame_num_ = frame_number;
-      processed_frame.buf_ = std::make_unique<CvdVideoFrameBuffer>(display_w, display_h);
-      libyuv::ABGRToI420(frame, display_stride_bytes,
-                         processed_frame.buf_->DataY(), processed_frame.buf_->StrideY(),
-                         processed_frame.buf_->DataU(), processed_frame.buf_->StrideU(),
-                         processed_frame.buf_->DataV(), processed_frame.buf_->StrideV(),
-                         display_w,
-                         display_h);
-      processed_frame.is_success_ = true;
-    };
-  return callback;
+    DisplayHandler::GenerateProcessedFrameCallback callback =
+        [](std::uint32_t display_number, std::uint8_t* frame_pixels,
+           WebRtcScProcessedFrame& processed_frame) {
+          // TODO(171305898): handle multiple displays.
+          if (display_number != 0) {
+            processed_frame.is_success_ = false;
+            return;
+          }
+          const int display_w =
+              ScreenConnectorInfo::ScreenWidth(display_number);
+          const int display_h =
+              ScreenConnectorInfo::ScreenHeight(display_number);
+          const int display_stride_bytes =
+              ScreenConnectorInfo::ScreenStrideBytes(display_number);
+          processed_frame.display_number_ = display_number;
+          processed_frame.buf_ =
+              std::make_unique<CvdVideoFrameBuffer>(display_w, display_h);
+          libyuv::ABGRToI420(
+              frame_pixels, display_stride_bytes, processed_frame.buf_->DataY(),
+              processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
+              processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
+              processed_frame.buf_->StrideV(), display_w, display_h);
+          processed_frame.is_success_ = true;
+        };
+    return callback;
 }
 
 [[noreturn]] void DisplayHandler::Loop() {
   for (;;) {
-    auto processed_frame = screen_connector_->OnFrameAfter();
+    auto processed_frame = screen_connector_->OnNextFrame();
     // processed_frame has display number from the guest
     {
       std::lock_guard<std::mutex> lock(last_buffer_mutex_);

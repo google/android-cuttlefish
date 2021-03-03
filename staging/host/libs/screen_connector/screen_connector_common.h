@@ -42,8 +42,8 @@ class ScreenConnectorSource {
   virtual ~ScreenConnectorSource() = default;
   // Runs the given callback on the next available frame after the given
   // frame number and returns true if successful.
-  virtual bool OnFrameAfter(std::uint32_t frame_number,
-                            const GenerateProcessedFrameCallbackImpl& frame_callback) = 0;
+  virtual bool OnNextFrame(
+      const GenerateProcessedFrameCallbackImpl& frame_callback) = 0;
   virtual void ReportClientsConnected(bool /*have_clients*/) { /* ignore by default */ }
   ScreenConnectorSource() = default;
 };
@@ -85,9 +85,8 @@ struct ScreenConnectorInfo {
 // this is inherited by the data type that represents the processed frame
 // being moved around.
 struct ScreenConnectorFrameInfo {
-    // TODO: std::uint32_t display_num_;
-    std::uint32_t frame_num_;
-    bool is_success_;
+  std::uint32_t display_number_;
+  bool is_success_;
 };
 
 }  // namespace cuttlefish
