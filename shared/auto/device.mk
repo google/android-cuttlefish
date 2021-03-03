@@ -91,7 +91,7 @@ PRODUCT_BRAND := generic
 
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/auto/overlay
 
-TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/auto/android-info.txt
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/auto/android-info.txt
 
 PRODUCT_ENFORCE_RRO_TARGETS := framework-res
 
