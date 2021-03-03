@@ -35,15 +35,17 @@ struct CompositionStats {
 class ScreenView {
  public:
   ScreenView() = default;
-  ScreenView(const ScreenView&) = delete;
   virtual ~ScreenView() = default;
 
+  ScreenView(const ScreenView&) = delete;
   ScreenView& operator=(const ScreenView&) = delete;
 
-  virtual void Broadcast(int buffer_id,
-                         const CompositionStats* stats = nullptr) = 0;
-  virtual int NextBuffer();
-  virtual void* GetBuffer(int buffer_id) = 0;
+  // Gets the buffer for the next frame that should be sent to the host.
+  virtual std::uint8_t* AcquireNextBuffer(std::uint32_t display_number) = 0;
+
+  // Mark that the next buffer has been populated with the next frame and is
+  // ready to be sent to the host.
+  virtual void PresentAcquiredBuffer(std::uint32_t display_number) = 0;
 
   static std::uint32_t ScreenCount();
   static std::uint32_t ScreenWidth(std::uint32_t display_number);
@@ -53,10 +55,5 @@ class ScreenView {
   static std::uint32_t ScreenStrideBytes(std::uint32_t display_number);
   static std::uint32_t ScreenSizeBytes(std::uint32_t display_number);
   static constexpr std::uint32_t ScreenBytesPerPixel() { return 4; }
-
-  virtual int num_buffers() const = 0;
-
- private:
-  int last_buffer_ = 0;
 };
 }  // namespace cuttlefish
