@@ -20,7 +20,6 @@
 #include <memory>
 #include <vector>
 
-#include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
@@ -28,10 +27,8 @@
 namespace cuttlefish {
 
 bool ResolveInstanceFiles();
-std::unique_ptr<BootImageUnpacker> CreateBootImageUnpacker();
 bool ShouldCreateAllCompositeDisks(const CuttlefishConfig& config);
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                            const CuttlefishConfig* config,
-                            BootImageUnpacker* boot_img_unpacker);
+                            const CuttlefishConfig* config);
 
 } // namespace cuttlefish

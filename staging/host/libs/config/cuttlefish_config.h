@@ -262,9 +262,6 @@ class CuttlefishConfig {
   void set_metrics_binary(const std::string& metrics_binary);
   std::string metrics_binary() const;
 
-  void set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline);
-  std::vector<std::string> boot_image_kernel_cmdline() const;
-
   void set_extra_kernel_cmdline(std::string extra_cmdline);
   std::vector<std::string> extra_kernel_cmdline() const;
 
@@ -455,6 +452,8 @@ class CuttlefishConfig {
     std::string composite_disk_path() const;
 
     std::string uboot_env_image_path() const;
+
+    std::string vendor_boot_image_path() const;
 
     // modem simulator related
     std::string modem_simulator_ports() const;
