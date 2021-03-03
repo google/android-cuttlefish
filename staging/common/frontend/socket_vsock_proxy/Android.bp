@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_binary {
-    name: "socket_vsock_proxy",
+cc_defaults {
+    name: "socket_vsock_proxy_defaults",
     srcs: [
         "main.cpp",
     ],
@@ -39,6 +39,18 @@ cc_binary {
     // Don't inherit from cuttlefish_host because it is with `vendor_available: true` which isn't
     // compatible with `vendor: true`.
     defaults: ["cuttlefish_base"],
+}
+
+cc_binary {
+    name: "socket_vsock_proxy",
+    defaults: ["socket_vsock_proxy_defaults"],
     host_supported: true,
     vendor: true,
+}
+
+cc_binary {
+    name: "socket_vsock_proxy_microdroid",
+    defaults: ["socket_vsock_proxy_defaults"],
+    stem: "socket_vsock_proxy",
+    host_supported: false,
 }
