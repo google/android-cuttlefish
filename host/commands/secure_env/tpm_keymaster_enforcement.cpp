@@ -50,6 +50,27 @@ public:
   }
 };
 
+namespace {
+
+uint64_t timespec_to_ms(const struct timespec& tp) {
+  if (tp.tv_sec < 0) {
+    return 0;
+  }
+  return static_cast<uint64_t>(tp.tv_sec) * 1000 +
+         static_cast<uint64_t>(tp.tv_nsec) / 1000000;
+}
+
+uint64_t get_wall_clock_time_ms() {
+  struct timespec tp;
+  int err = clock_gettime(CLOCK_REALTIME, &tp);
+  if (err) {
+    return 0;
+  }
+  return timespec_to_ms(tp);
+}
+
+}  // namespace
+
 TpmKeymasterEnforcement::TpmKeymasterEnforcement(
     TpmResourceManager& resource_manager, TpmGatekeeper& gatekeeper)
     : KeymasterEnforcement(64, 64),
@@ -62,12 +83,12 @@ TpmKeymasterEnforcement::~TpmKeymasterEnforcement() {
 
 bool TpmKeymasterEnforcement::activation_date_valid(
     uint64_t activation_date) const {
-  return activation_date < get_current_time_ms();
+  return activation_date < get_wall_clock_time_ms();
 }
 
 bool TpmKeymasterEnforcement::expiration_date_passed(
     uint64_t expiration_date) const {
-  return expiration_date > get_current_time_ms();
+  return expiration_date > get_wall_clock_time_ms();
 }
 
 bool TpmKeymasterEnforcement::auth_token_timed_out(
@@ -80,12 +101,10 @@ bool TpmKeymasterEnforcement::auth_token_timed_out(
 uint64_t TpmKeymasterEnforcement::get_current_time_ms() const {
   struct timespec tp;
   int err = clock_gettime(CLOCK_BOOTTIME, &tp);
-  if (err || tp.tv_sec < 0) {
+  if (err) {
     return 0;
   }
-
-  return static_cast<uint64_t>(tp.tv_sec) * 1000
-      + static_cast<uint64_t>(tp.tv_nsec) / 1000000;
+  return timespec_to_ms(tp);
 }
 
 keymaster_security_level_t TpmKeymasterEnforcement::SecurityLevel() const {
