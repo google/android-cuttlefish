@@ -80,7 +80,12 @@ class Streamer {
                                         int height, int dpi,
                                         bool touch_enabled);
 
-  void SetHardwareSpecs(int cpus, int memory_mb);
+  void SetHardwareSpec(std::string key, std::string value);
+
+  template <typename V>
+  void SetHardwareSpec(std::string key, V value) {
+    SetHardwareSpec(key, std::to_string(value));
+  }
 
   // Add a custom button to the control panel.
   //   If this button should be handled by an action server, use nullopt (the
