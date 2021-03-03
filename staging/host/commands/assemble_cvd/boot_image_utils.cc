@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
@@ -122,23 +123,40 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
   final_rd << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
 }
 
-bool RepackBootImage(const std::string& new_kernel_path,
-                     const std::string& boot_image_path,
-                     const std::string& new_boot_image_path,
-                     const std::string& build_dir) {
-  auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
+bool UnpackBootImage(const std::string& boot_image_path,
+                     const std::string& unpack_dir) {
   auto unpack_path = HostBinaryPath("unpack_bootimg");
   Command unpack_cmd(unpack_path);
   unpack_cmd.AddParameter("--boot_img");
   unpack_cmd.AddParameter(boot_image_path);
   unpack_cmd.AddParameter("--out");
-  unpack_cmd.AddParameter(build_dir);
+  unpack_cmd.AddParameter(unpack_dir);
+
+  auto output_file = SharedFD::Creat(unpack_dir + "/boot_params", 0666);
+  if (!output_file->IsOpen()) {
+    LOG(ERROR) << "Unable to create intermediate boot params file: "
+               << output_file->StrError();
+    return false;
+  }
+  unpack_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
+
   int success = unpack_cmd.Start().Wait();
   if (success != 0) {
     LOG(ERROR) << "Unable to run unpack_bootimg. Exited with status " << success;
     return false;
   }
+  return true;
+}
 
+bool RepackBootImage(const std::string& new_kernel_path,
+                     const std::string& boot_image_path,
+                     const std::string& new_boot_image_path,
+                     const std::string& build_dir) {
+  std::string boot_params = ReadFile(build_dir + "/boot_params");
+  auto kernel_cmdline = ExtractValue(boot_params, "command line args: ");
+  LOG(DEBUG) << "Cmdline from boot image is " << kernel_cmdline;
+
+  auto tmp_boot_image_path = new_boot_image_path + TMP_EXTENSION;
   auto repack_path = HostBinaryPath("mkbootimg");
   Command repack_cmd(repack_path);
   repack_cmd.AddParameter("--kernel");
@@ -146,10 +164,12 @@ bool RepackBootImage(const std::string& new_kernel_path,
   repack_cmd.AddParameter("--ramdisk");
   repack_cmd.AddParameter(build_dir + "/ramdisk");
   repack_cmd.AddParameter("--header_version");
-  repack_cmd.AddParameter("3");
+  repack_cmd.AddParameter("4");
+  repack_cmd.AddParameter("--cmdline");
+  repack_cmd.AddParameter(kernel_cmdline);
   repack_cmd.AddParameter("-o");
   repack_cmd.AddParameter(tmp_boot_image_path);
-  success = repack_cmd.Start().Wait();
+  int success = repack_cmd.Start().Wait();
   if (success != 0) {
     LOG(ERROR) << "Unable to run mkbootimg. Exited with status " << success;
     return false;
@@ -164,20 +184,17 @@ bool RepackBootImage(const std::string& new_kernel_path,
   return DeleteTmpFileIfNotChanged(tmp_boot_image_path, new_boot_image_path);
 }
 
-bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
-                           const std::string& vendor_boot_image_path,
-                           const std::string& new_vendor_boot_image_path,
-                           const std::string& build_dir) {
-  auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
+bool UnpackVendorBootImage(const std::string& vendor_boot_image_path,
+                           const std::string& unpack_dir) {
   auto unpack_path = HostBinaryPath("unpack_bootimg");
   Command unpack_cmd(unpack_path);
   unpack_cmd.AddParameter("--boot_img");
   unpack_cmd.AddParameter(vendor_boot_image_path);
   unpack_cmd.AddParameter("--out");
-  unpack_cmd.AddParameter(build_dir);
-  auto output_file = SharedFD::Creat(build_dir + "/vendor_boot_params", 0666);
+  unpack_cmd.AddParameter(unpack_dir);
+  auto output_file = SharedFD::Creat(unpack_dir + "/vendor_boot_params", 0666);
   if (!output_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create intermediate params file: "
+    LOG(ERROR) << "Unable to create intermediate vendor boot params file: "
                << output_file->StrError();
     return false;
   }
@@ -187,34 +204,69 @@ bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
     LOG(ERROR) << "Unable to run unpack_bootimg. Exited with status " << success;
     return false;
   }
+  return true;
+}
 
+bool RepackVendorBootImage(const std::string& new_ramdisk,
+                           const std::string& vendor_boot_image_path,
+                           const std::string& new_vendor_boot_image_path,
+                           const std::string& build_dir,
+                           const std::string& instance_internal_dir,
+                           bool bootconfig_supported) {
   // TODO(b/173134558)
   // The vendor boot generation below isn't deterministic. i.e. running the same vendor boot
   // repack function twice with the same inputs will produce two differing vendor boot images.
   // This is because the vendor boot ramdisk contains a few symlinks. These symlinks affect the
   // ramdisk regeneration process and cause differing outputs each time (I still haven't figured
   // out why).
-  std::string new_ramdisk_path = build_dir + "/vendor_ramdisk_repacked";
-  RepackVendorRamdisk(kernel_modules_ramdisk_path, build_dir + "/vendor_ramdisk",
-                      new_ramdisk_path, build_dir);
+  std::string ramdisk_path;
+  if (new_ramdisk.size()) {
+    ramdisk_path = instance_internal_dir + "/vendor_ramdisk_repacked";
+    RepackVendorRamdisk(new_ramdisk, build_dir + "/vendor_ramdisk0",
+                        ramdisk_path, instance_internal_dir);
+  } else {
+    ramdisk_path = build_dir + "/vendor_ramdisk0";
+  }
+
+  auto bootconfig_fd =
+      SharedFD::Creat(instance_internal_dir + "/bootconfig", 0666);
+  if (!bootconfig_fd->IsOpen()) {
+    LOG(ERROR) << "Unable to create intermediate bootconfig file: "
+               << bootconfig_fd->StrError();
+    return false;
+  }
+  std::string bootconfig = ReadFile(build_dir + "/bootconfig");
+  bootconfig_fd->Write(bootconfig.c_str(), bootconfig.size());
+  LOG(DEBUG) << "Bootconfig parameters from vendor boot image is "
+             << ReadFile(instance_internal_dir + "/bootconfig");
 
   std::string vendor_boot_params = ReadFile(build_dir + "/vendor_boot_params");
-  auto kernel_cmdline = "\"" + ExtractValue(vendor_boot_params, "vendor command line args: ") + "\"";
+  auto kernel_cmdline =
+      ExtractValue(vendor_boot_params, "vendor command line args: ") +
+      (bootconfig_supported
+           ? ""
+           : " " + android::base::StringReplace(bootconfig, "\n", " ", true));
   LOG(DEBUG) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
+  auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
   auto repack_path = HostBinaryPath("mkbootimg");
   Command repack_cmd(repack_path);
   repack_cmd.AddParameter("--vendor_ramdisk");
-  repack_cmd.AddParameter(new_ramdisk_path);
+  repack_cmd.AddParameter(ramdisk_path);
   repack_cmd.AddParameter("--header_version");
-  repack_cmd.AddParameter("3");
-  repack_cmd.AddParameter("--cmdline");
+  repack_cmd.AddParameter("4");
+  repack_cmd.AddParameter("--vendor_cmdline");
   repack_cmd.AddParameter(kernel_cmdline);
   repack_cmd.AddParameter("--vendor_boot");
   repack_cmd.AddParameter(tmp_vendor_boot_image_path);
   repack_cmd.AddParameter("--dtb");
   repack_cmd.AddParameter(build_dir + "/dtb");
-  success = repack_cmd.Start().Wait();
+  if (bootconfig_supported) {
+    repack_cmd.AddParameter("--vendor_bootconfig");
+    repack_cmd.AddParameter(instance_internal_dir + "/bootconfig");
+  }
+
+  int success = repack_cmd.Start().Wait();
   if (success != 0) {
     LOG(ERROR) << "Unable to run mkbootimg. Exited with status " << success;
     return false;
@@ -231,10 +283,12 @@ bool RepackVendorBootImage(const std::string& kernel_modules_ramdisk_path,
 
 bool RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
-    const std::string& new_vendor_boot_image_path,
-    const std::string& build_dir) {
+    const std::string& new_vendor_boot_image_path, const std::string& build_dir,
+    const std::string& instance_internal_dir, bool bootconfig_supported) {
   auto empty_ramdisk_file = SharedFD::Creat(build_dir + "/empty_ramdisk", 0666);
-  return RepackVendorBootImage(build_dir + "/empty_ramdisk", vendor_boot_image_path,
-      new_vendor_boot_image_path, build_dir);
+  return RepackVendorBootImage(build_dir + "/empty_ramdisk",
+                               vendor_boot_image_path,
+                               new_vendor_boot_image_path, build_dir,
+                               instance_internal_dir, bootconfig_supported);
 }
 } // namespace cuttlefish

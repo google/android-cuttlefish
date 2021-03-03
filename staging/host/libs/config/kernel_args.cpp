@@ -146,7 +146,6 @@ std::vector<std::string> KernelCommandLineFromConfig(
   std::vector<std::string> kernel_cmdline;
 
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
-  AppendVector(&kernel_cmdline, config.boot_image_kernel_cmdline());
   auto vmm = vm_manager::GetVmManager(config.vm_manager());
   AppendVector(&kernel_cmdline, vmm->ConfigureGpuMode(config.gpu_mode()));
   AppendVector(&kernel_cmdline, vmm->ConfigureBootDevices());

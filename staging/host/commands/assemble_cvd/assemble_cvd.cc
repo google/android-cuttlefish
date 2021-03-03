@@ -125,7 +125,6 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
     }));
   }
 
-  auto boot_img_unpacker = CreateBootImageUnpacker();
   {
     // The config object is created here, but only exists in memory until the
     // SaveConfig line below. Don't launch cuttlefish subprocesses between these
@@ -135,7 +134,6 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
         FLAGS_assembly_dir,
         FLAGS_instance_dir,
         FLAGS_modem_simulator_count,
-        *boot_img_unpacker,
         fetcher_config);
     std::set<std::string> preserving;
     if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
@@ -203,7 +201,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
 
   ValidateAdbModeFlag(*config);
 
-  CreateDynamicDiskFiles(fetcher_config, config, boot_img_unpacker.get());
+  CreateDynamicDiskFiles(fetcher_config, config);
 
   return config;
 }
