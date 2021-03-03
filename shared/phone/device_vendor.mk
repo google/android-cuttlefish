@@ -51,4 +51,4 @@ PRODUCT_COPY_FILES += \
 
 DEVICE_PACKAGE_OVERLAYS += device/google/cuttlefish/shared/phone/overlay
 
-TARGET_BOARD_INFO_FILE := device/google/cuttlefish/shared/phone/android-info.txt
+TARGET_BOARD_INFO_FILE ?= device/google/cuttlefish/shared/phone/android-info.txt
