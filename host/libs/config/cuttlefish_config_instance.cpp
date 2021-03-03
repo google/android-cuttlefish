@@ -173,6 +173,10 @@ std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("uboot_env.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image_path() const {
+  return AbsolutePath(PerInstancePath("vendor_boot_repacked.img"));
+}
+
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
   return (*Dictionary())[kMobileBridgeName].asString();

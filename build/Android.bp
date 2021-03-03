@@ -39,6 +39,7 @@ cvd_host_tools = [
     "crosvm",
     "cvd_host_bugreport",
     "cvd_status",
+    "extract-ikconfig",
     "extract-vmlinux",
     "fsck.f2fs",
     "gnss_grpc_proxy",
