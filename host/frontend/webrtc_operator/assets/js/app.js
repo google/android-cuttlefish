@@ -285,9 +285,13 @@ function ConnectToDevice(device_id) {
     ].join('\n');
   }
   function updateDeviceHardwareDetails(hardware) {
-    let cpus = hardware.cpus;
-    let memory_mb = hardware.memory_mb;
-    hardwareDetailsText = `CPUs - ${cpus}\nDevice RAM - ${memory_mb}mb`;
+    let hardwareDetailsTextLines = [];
+    Object.keys(hardware).forEach(function(key) {
+      let value = hardware[key];
+      hardwareDetailsTextLines.push(`${key} - ${value}`);
+    });
+
+    hardwareDetailsText = hardwareDetailsTextLines.join('\n');
     updateDeviceDetailsText();
   }
   function updateDeviceDisplayDetails(display) {
