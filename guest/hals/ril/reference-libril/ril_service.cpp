@@ -3628,7 +3628,7 @@ Return<void> RadioImpl_1_6::setSystemSelectionChannels(int32_t serial, bool /* s
 
 Return<void> RadioImpl_1_6::enableModem(int32_t serial, bool /* on */) {
 #if VDBG
-    RLOGE("enableModem: serial = %d, enable = %s", serial, on);
+    RLOGE("enableModem: serial = %d", serial);
 #endif
     dispatchVoid(serial, mSlotId, RIL_REQUEST_ENABLE_MODEM);
     return Void();
@@ -4503,7 +4503,7 @@ Return<void> RadioImpl_1_6::setIndicationFilter_1_5(int32_t /* serial */,
         hidl_bitfield<::android::hardware::radio::V1_5::IndicationFilter> /* indicationFilter */) {
     // TODO implement
 #if VDBG
-    RLOGE("[%04d]< %s", serial, "Method is not implemented");
+    RLOGE("setIndicationFilter_1_5: Method is not implemented");
 #endif
     return Void();
 }
@@ -4587,7 +4587,7 @@ Return<void> RadioImpl_1_6::supplySimDepersonalization(int32_t serial,
 Return<void> RadioImpl_1_6::setNrDualConnectivityState(int32_t serial,
         V1_6::NrDualConnectivityState nrDualConnectivityState) {
 #if VDBG
-    RLOGD("setNrDualConnectivityState: serial %d enable %d", serial, enable);
+    RLOGD("setNrDualConnectivityState: serial %d", serial);
 #endif
     dispatchInts(serial, mSlotId, RIL_REQUEST_ENABLE_NR_DUAL_CONNECTIVITY, 1,
             nrDualConnectivityState);
