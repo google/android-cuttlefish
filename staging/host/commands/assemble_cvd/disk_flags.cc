@@ -27,7 +27,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
-#include "host/commands/assemble_cvd/boot_image_unpacker.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
@@ -118,11 +117,6 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-std::unique_ptr<BootImageUnpacker> CreateBootImageUnpacker() {
-  return BootImageUnpacker::FromImages(
-      FLAGS_boot_image, FLAGS_vendor_boot_image);
-}
-
 static bool DecompressKernel(const std::string& src, const std::string& dst) {
   Command decomp_cmd(HostBinaryPath("extract-vmlinux"));
   decomp_cmd.AddParameter(src);
@@ -176,13 +170,13 @@ std::vector<ImagePartition> disk_config(
     .label = "boot_b",
     .image_file_path = FLAGS_boot_image,
   });
-  partitions.push_back(ImagePartition {
-    .label = "vendor_boot_a",
-    .image_file_path = FLAGS_vendor_boot_image,
+  partitions.push_back(ImagePartition{
+      .label = "vendor_boot_a",
+      .image_file_path = instance.vendor_boot_image_path(),
   });
-  partitions.push_back(ImagePartition {
-    .label = "vendor_boot_b",
-    .image_file_path = FLAGS_vendor_boot_image,
+  partitions.push_back(ImagePartition{
+      .label = "vendor_boot_b",
+      .image_file_path = instance.vendor_boot_image_path(),
   });
   partitions.push_back(ImagePartition {
     .label = "vbmeta_a",
@@ -362,92 +356,124 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
   return true;
 }
 
+static bool IsBootconfigSupported(const std::string& kernel_image_path,
+                                  const std::string& build_dir) {
+  const std::string vmlinux_path = build_dir + "/vmlinux";
+  const std::string ikconfig_path = build_dir + "/ikconfig";
+
+  CHECK(DecompressKernel(kernel_image_path, vmlinux_path))
+      << "Failed to decompress kernel";
+
+  Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
+  ikconfig_cmd.AddParameter(vmlinux_path);
+
+  auto ikconfig_fd = SharedFD::Creat(ikconfig_path, 0666);
+  CHECK(ikconfig_fd->IsOpen())
+      << "Unable to create ikconfig file: " << ikconfig_fd->StrError();
+  ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, ikconfig_fd);
+
+  auto ikconfig_proc = ikconfig_cmd.Start();
+  CHECK(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0)
+      << "Failed to extract ikconfig from " << vmlinux_path;
+
+  return ReadFile(ikconfig_path).find("BOOT_CONFIG=y") != std::string::npos;
+}
+
 const std::string kKernelDefaultPath = "kernel";
 const std::string kInitramfsImg = "initramfs.img";
 const std::string kRamdiskConcatExt = ".concat";
 
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
-                            const CuttlefishConfig* config,
-                            BootImageUnpacker* boot_img_unpacker) {
+                            const CuttlefishConfig* config) {
   CHECK(FileHasContent(FLAGS_boot_image))
       << "File not found: " << FLAGS_boot_image;
 
   CHECK(FileHasContent(FLAGS_vendor_boot_image))
       << "File not found: " << FLAGS_vendor_boot_image;
 
-  if (!FLAGS_use_bootloader) {
-    auto success =
-        boot_img_unpacker->Unpack(
-            config->ramdisk_image_path(),
-            config->vendor_ramdisk_image_path(),
-            config->use_unpacked_kernel() ? config->kernel_image_path() : "");
-    CHECK(success) << "Failed to unpack boot image";
-  }
+    // unpack the boot images into the assembly_dir
+  CHECK(UnpackBootImage(FLAGS_boot_image, config->assembly_dir()))
+      << "Failed to unpack boot image";
+  CHECK(UnpackVendorBootImage(FLAGS_vendor_boot_image, config->assembly_dir()))
+      << "Failed to unpack vendor boot image";
 
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
-  std::string new_boot_image_path = config->AssemblyPath("boot_repacked.img");
-  std::string new_vendor_boot_image_path = config->AssemblyPath("vendor_boot_repacked.img");
-  if (FLAGS_use_bootloader && (foreign_kernel.size() || foreign_ramdisk.size())) {
-    // Repack the boot images if kernels and/or ramdisks are passed in.
-    if (foreign_kernel.size()) {
-      bool success = RepackBootImage(
-          foreign_kernel,
-          FLAGS_boot_image,
-          new_boot_image_path,
-          config->assembly_dir());
-      CHECK(success) << "Failed to regenerate the boot image with the new kernel";
-      SetCommandLineOptionWithMode("boot_image", new_boot_image_path.c_str(),
-                                    google::FlagSettingMode::SET_FLAGS_DEFAULT);
-    }
-    if (foreign_ramdisk.size()) {
+
+  // check for bootconfig support in whichever kernel we are using
+  const auto& kernel_path =
+      foreign_kernel.size() ? foreign_kernel : config->kernel_image_path();
+  bool bootconfig_supported =
+      IsBootconfigSupported(kernel_path, config->assembly_dir());
+  const std::string new_boot_image_path =
+      config->AssemblyPath("boot_repacked.img");
+  for (auto instance : config->Instances()) {
+    const std::string new_vendor_boot_image_path =
+        instance.vendor_boot_image_path();
+    if (FLAGS_use_bootloader &&
+        (foreign_kernel.size() || foreign_ramdisk.size())) {
+      // Repack the boot images if kernels and/or ramdisks are passed in.
+      if (foreign_kernel.size()) {
+        bool success =
+            RepackBootImage(foreign_kernel, FLAGS_boot_image,
+                            new_boot_image_path, config->assembly_dir());
+        CHECK(success)
+            << "Failed to regenerate the boot image with the new kernel";
+        SetCommandLineOptionWithMode(
+            "boot_image", new_boot_image_path.c_str(),
+            google::FlagSettingMode::SET_FLAGS_DEFAULT);
+      }
+      if (foreign_ramdisk.size()) {
+        bool success = RepackVendorBootImage(
+            foreign_ramdisk, FLAGS_vendor_boot_image,
+            new_vendor_boot_image_path, config->assembly_dir(),
+            instance.PerInstanceInternalPath(""), bootconfig_supported);
+        CHECK(success) << "Failed to regenerate the vendor boot image with the "
+                          "new ramdisk";
+      }
+      if (foreign_kernel.size() && !foreign_ramdisk.size()) {
+        bool success = RepackVendorBootImageWithEmptyRamdisk(
+            FLAGS_vendor_boot_image, new_vendor_boot_image_path,
+            config->assembly_dir(), instance.PerInstanceInternalPath(""),
+            bootconfig_supported);
+        CHECK(success)
+            << "Failed to regenerate the vendor boot image without a ramdisk";
+      }
+    } else if (FLAGS_use_bootloader) {
+      // Repack the vendor boot image to add the bootconfig parameters
       bool success = RepackVendorBootImage(
-          foreign_ramdisk,
-          FLAGS_vendor_boot_image,
-          new_vendor_boot_image_path,
-          config->assembly_dir());
-      CHECK(success) << "Failed to regenerate the vendor boot image with the new ramdisk";
-      SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
-                                   google::FlagSettingMode::SET_FLAGS_DEFAULT);
+          std::string(), FLAGS_vendor_boot_image, new_vendor_boot_image_path,
+          config->assembly_dir(), instance.PerInstanceInternalPath(""),
+          bootconfig_supported);
+      CHECK(success) << "Failed to regenerate the vendor boot image";
+    } else if (!FLAGS_use_bootloader) {
+      // This code path is taken when the virtual device kernel is launched
+      // directly by the hypervisor instead of the bootloader.
+      // This code path takes care of all the ramdisk processing that the
+      // bootloader normally does.
+      bool success;
+      if (!foreign_ramdisk.size()) {
+        const std::string& vendor_ramdisk_path =
+            config->initramfs_path().size()
+                ? config->initramfs_path()
+                : config->vendor_ramdisk_image_path();
+        success =
+            ConcatRamdisks(config->final_ramdisk_path(),
+                           config->ramdisk_image_path(), vendor_ramdisk_path);
+      } else {
+        std::string vendor_ramdisk_repacked_path =
+            config->AssemblyPath("vendor_ramdisk_repacked");
+        RepackVendorRamdisk(
+            config->initramfs_path(), config->vendor_ramdisk_image_path(),
+            vendor_ramdisk_repacked_path, instance.PerInstanceInternalPath(""));
+        success = ConcatRamdisks(config->final_ramdisk_path(),
+                                 config->ramdisk_image_path(),
+                                 vendor_ramdisk_repacked_path);
+      }
+      CHECK(success) << "Failed to concatenate boot ramdisk and vendor ramdisk";
     }
-    if (foreign_kernel.size() && !foreign_ramdisk.size()) {
-      bool success =  RepackVendorBootImageWithEmptyRamdisk(
-          FLAGS_vendor_boot_image,
-          new_vendor_boot_image_path,
-          config->assembly_dir());
-      CHECK(success) << "Failed to regenerate the vendor boot image without a ramdisk";
-      SetCommandLineOptionWithMode("vendor_boot_image", new_vendor_boot_image_path.c_str(),
-                                   google::FlagSettingMode::SET_FLAGS_DEFAULT);
-    }
-  } else if (!FLAGS_use_bootloader) {
-    // This code path is taken when the virtual device kernel is launched
-    // directly by the hypervisor instead of the bootloader.
-    // This code path takes care of all the ramdisk processing that the
-    // bootloader normally does.
-    bool success;
-    if (!foreign_ramdisk.size()) {
-      const std::string& vendor_ramdisk_path =
-        config->initramfs_path().size() ? config->initramfs_path()
-                                      : config->vendor_ramdisk_image_path();
-      success = ConcatRamdisks(
-          config->final_ramdisk_path(),
-          config->ramdisk_image_path(),
-          vendor_ramdisk_path);
-    } else {
-      std::string vendor_ramdisk_repacked_path = config->AssemblyPath("vendor_ramdisk_repacked");
-      RepackVendorRamdisk(
-          config->initramfs_path(),
-          config->vendor_ramdisk_image_path(),
-          vendor_ramdisk_repacked_path,
-          config->assembly_dir());
-      success = ConcatRamdisks(
-          config->final_ramdisk_path(),
-          config->ramdisk_image_path(),
-          vendor_ramdisk_repacked_path);
-    }
-    CHECK(success) << "Failed to concatenate boot ramdisk and vendor ramdisk";
   }
 
   if (config->decompress_kernel()) {
