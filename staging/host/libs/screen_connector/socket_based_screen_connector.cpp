@@ -24,34 +24,100 @@
 namespace cuttlefish {
 
 SocketBasedScreenConnector::SocketBasedScreenConnector(int frames_fd) {
+  for (std::uint32_t i = 0; i < ScreenConnectorInfo::ScreenCount(); i++) {
+    display_helpers_.emplace_back(new DisplayHelper(i));
+  }
+
   screen_server_thread_ =
     std::thread([this, frames_fd]() { ServerLoop(frames_fd); });
-
-  buffer_size_ = ScreenConnectorInfo::ScreenSizeInBytes(/*display_number=*/0);
-  buffer_.resize(kNumBuffersPerDisplay * buffer_size_);
 }
 
-bool SocketBasedScreenConnector::OnFrameAfter(std::uint32_t frame_number,
-                                              const GenerateProcessedFrameCallbackImpl& frame_callback) {
-  int buffer_idx = WaitForNewFrameSince(&frame_number);
-  void* buffer = GetBuffer(buffer_idx);
-  frame_callback(frame_number, reinterpret_cast<uint8_t*>(buffer));
-  return true;
-}
+SocketBasedScreenConnector::DisplayHelper::DisplayHelper(
+    std::uint32_t display_number)
+    : display_number_(display_number) {
+  buffer_size_ = ScreenConnectorInfo::ScreenSizeInBytes(display_number);
+  buffers_.resize(kNumBuffersPerDisplay * buffer_size_);
 
-int SocketBasedScreenConnector::WaitForNewFrameSince(std::uint32_t* seq_num) {
-  std::unique_lock<std::mutex> lock(new_frame_mtx_);
-  while (seq_num_ == *seq_num) {
-    new_frame_cond_var_.wait(lock);
+  for (std::uint32_t i = 0; i < kNumBuffersPerDisplay; i++) {
+    acquirable_buffers_indexes_.push_back(i);
   }
-  *seq_num = seq_num_;
-  return newest_buffer_;
 }
 
-void* SocketBasedScreenConnector::GetBuffer(int buffer_idx) {
-  if (buffer_idx < 0) return nullptr;
-  buffer_idx %= kNumBuffersPerDisplay;
-  return &buffer_[buffer_idx * buffer_size_];
+std::uint8_t* SocketBasedScreenConnector::DisplayHelper::AcquireNextBuffer() {
+  std::uint32_t acquired = 0;
+  {
+    std::lock_guard<std::mutex> lock(acquire_mutex_);
+
+    CHECK(!acquirable_buffers_indexes_.empty());
+    CHECK(!acquired_buffer_index_.has_value());
+
+    acquired = acquirable_buffers_indexes_.front();
+    acquirable_buffers_indexes_.pop_front();
+    acquired_buffer_index_ = acquired;
+  }
+
+  return GetBuffer(acquired);
+}
+
+void SocketBasedScreenConnector::DisplayHelper::PresentAcquiredBuffer() {
+  std::lock_guard<std::mutex> acquire_lock(acquire_mutex_);
+  CHECK(acquired_buffer_index_.has_value());
+
+  std::uint32_t prexisting_present_buffer_index =
+      present_buffer_index_.exchange(*acquired_buffer_index_);
+
+  if (prexisting_present_buffer_index != kInvalidBufferIndex) {
+    acquirable_buffers_indexes_.push_back(prexisting_present_buffer_index);
+  }
+
+  acquired_buffer_index_.reset();
+}
+
+bool SocketBasedScreenConnector::DisplayHelper::ConsumePresentBuffer(
+    const GenerateProcessedFrameCallbackImpl& frame_callback) {
+  std::uint32_t present_buffer_index =
+      present_buffer_index_.exchange(kInvalidBufferIndex);
+
+  if (present_buffer_index != kInvalidBufferIndex) {
+    std::uint8_t* present_buffer_bytes = GetBuffer(present_buffer_index);
+
+    frame_callback(display_number_, present_buffer_bytes);
+
+    {
+      std::lock_guard<std::mutex> acquire_lock(acquire_mutex_);
+      acquirable_buffers_indexes_.push_back(present_buffer_index);
+    }
+
+    return true;
+  } else {
+    return false;
+  }
+}
+
+std::uint8_t* SocketBasedScreenConnector::DisplayHelper::GetBuffer(
+    std::uint32_t buffer_index) {
+  return &buffers_[buffer_index * buffer_size_];
+}
+
+bool SocketBasedScreenConnector::OnNextFrame(
+    const GenerateProcessedFrameCallbackImpl& frame_callback) {
+  while (true) {
+    std::unique_lock<std::mutex> lock(frame_available_mutex_);
+
+    for (std::size_t i = 0; i < display_helpers_.size(); i++) {
+      auto& display_helper = display_helpers_[frame_available_display_index_];
+      if (display_helper->ConsumePresentBuffer(frame_callback)) {
+        return true;
+      }
+
+      frame_available_display_index_ =
+          (frame_available_display_index_ + 1) % display_helpers_.size();
+    }
+
+    frame_available_cond_var_.wait(lock);
+  }
+
+  return false;
 }
 
 void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
@@ -66,8 +132,6 @@ void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
     return;
   }
 
-  int current_buffer = 0;
-
   while (1) {
     LOG(DEBUG) << "Screen Connector accepting connections...";
     client_connection_ = SharedFD::Accept(*server);
@@ -77,12 +141,23 @@ void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
     }
     ReportClientsConnected(have_clients_);
     while (client_connection_->IsOpen()) {
+      uint32_t display_number = 0;
+      if (client_connection_->Read(&display_number, sizeof(display_number)) <
+          0) {
+        LOG(ERROR) << "Failed to read from hwcomposer: "
+                   << client_connection_->StrError();
+        break;
+      }
+
       int32_t size = 0;
       if (client_connection_->Read(&size, sizeof(size)) < 0) {
         LOG(ERROR) << "Failed to read from hwcomposer: " << client_connection_->StrError();
         break;
       }
-      auto buff = reinterpret_cast<uint8_t*>(GetBuffer(current_buffer));
+
+      auto& display_helper = display_helpers_[display_number];
+
+      std::uint8_t* buff = display_helper->AcquireNextBuffer();
       while (size > 0) {
         auto read = client_connection_->Read(buff, size);
         if (read < 0) {
@@ -93,8 +168,9 @@ void SocketBasedScreenConnector::ServerLoop(int frames_fd) {
         size -= read;
         buff += read;
       }
-      BroadcastNewFrame(current_buffer);
-      current_buffer = (current_buffer + 1) % kNumBuffersPerDisplay;
+
+      display_helper->PresentAcquiredBuffer();
+      frame_available_cond_var_.notify_all();
     }
   }
 }
@@ -105,12 +181,4 @@ void SocketBasedScreenConnector::ReportClientsConnected(bool have_clients) {
   (void)client_connection_->Write(&buffer, sizeof(buffer));
 }
 
-void SocketBasedScreenConnector::BroadcastNewFrame(int buffer_idx) {
-  {
-    std::lock_guard<std::mutex> lock(new_frame_mtx_);
-    seq_num_++;
-    newest_buffer_ = buffer_idx;
-  }
-  new_frame_cond_var_.notify_all();
-}
 } // namespace cuttlefish
