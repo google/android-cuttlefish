@@ -48,8 +48,6 @@ constexpr auto kYResField = "y_res";
 constexpr auto kDpiField = "dpi";
 constexpr auto kIsTouchField = "is_touch";
 constexpr auto kDisplaysField = "displays";
-constexpr auto kCpusField = "cpus";
-constexpr auto kMemoryMbField = "memory_mb";
 constexpr auto kHardwareField = "hardware";
 constexpr auto kControlPanelButtonCommand = "command";
 constexpr auto kControlPanelButtonTitle = "title";
@@ -92,11 +90,6 @@ struct DisplayDescriptor {
   int dpi;
   bool touch_enabled;
   rtc::scoped_refptr<webrtc::VideoTrackSourceInterface> source;
-};
-
-struct HardwareDescriptor {
-  int cpus;
-  int memory_mb;
 };
 
 struct ControlPanelButtonDescriptor {
@@ -143,7 +136,7 @@ public:
   std::map<std::string, DisplayDescriptor> displays_;
   std::map<int, std::shared_ptr<ClientHandler>> clients_;
   std::weak_ptr<OperatorObserver> operator_observer_;
-  HardwareDescriptor hardware_;
+  std::map<std::string, std::string> hardware_;
   std::vector<ControlPanelButtonDescriptor> custom_control_panel_buttons_;
 };
 
@@ -213,9 +206,8 @@ std::shared_ptr<VideoSink> Streamer::AddDisplay(const std::string& label,
       });
 }
 
-void Streamer::SetHardwareSpecs(int cpus, int memory_mb) {
-  impl_->hardware_.cpus = cpus;
-  impl_->hardware_.memory_mb = memory_mb;
+void Streamer::SetHardwareSpec(std::string key, std::string value) {
+  impl_->hardware_.emplace(key, value);
 }
 
 void Streamer::AddCustomControlPanelButton(
@@ -296,8 +288,9 @@ void Streamer::Impl::OnOpen() {
     }
     device_info[kDisplaysField] = displays;
     Json::Value hardware;
-    hardware[kCpusField] = hardware_.cpus;
-    hardware[kMemoryMbField] = hardware_.memory_mb;
+    for (const auto& [k, v] : hardware_) {
+      hardware[k] = v;
+    }
     device_info[kHardwareField] = hardware;
     Json::Value custom_control_panel_buttons(Json::arrayValue);
     for (const auto& button : custom_control_panel_buttons_) {
