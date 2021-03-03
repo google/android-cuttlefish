@@ -718,22 +718,6 @@ std::string CuttlefishConfig::metrics_binary() const {
   return (*dictionary_)[kMetricsBinary].asString();
 }
 
-static constexpr char kBootImageKernelCmdline[] = "boot_image_kernel_cmdline";
-void CuttlefishConfig::set_boot_image_kernel_cmdline(std::string boot_image_kernel_cmdline) {
-  Json::Value args_json_obj(Json::arrayValue);
-  for (const auto& arg : android::base::Split(boot_image_kernel_cmdline, " ")) {
-    args_json_obj.append(arg);
-  }
-  (*dictionary_)[kBootImageKernelCmdline] = args_json_obj;
-}
-std::vector<std::string> CuttlefishConfig::boot_image_kernel_cmdline() const {
-  std::vector<std::string> cmdline;
-  for (const Json::Value& arg : (*dictionary_)[kBootImageKernelCmdline]) {
-    cmdline.push_back(arg.asString());
-  }
-  return cmdline;
-}
-
 static constexpr char kExtraKernelCmdline[] = "extra_kernel_cmdline";
 void CuttlefishConfig::set_extra_kernel_cmdline(std::string extra_cmdline) {
   Json::Value args_json_obj(Json::arrayValue);
