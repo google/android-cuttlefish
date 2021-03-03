@@ -47,16 +47,18 @@ class ScreenConnector : public ScreenConnectorInfo {
    * This is the type of the callback function WebRTC/VNC is supposed to provide
    * ScreenConnector with.
    *
-   * The callback function should be defined so that the two parameters are given
-   * by the callback function caller (e.g. ScreenConnectorSource) and used to fill
-   * out the ProcessedFrameType object, msg.
+   * The callback function should be defined so that the two parameters are
+   * given by the callback function caller (e.g. ScreenConnectorSource) and used
+   * to fill out the ProcessedFrameType object, msg.
    *
-   * The ProcessedFrameType object is internally created by ScreenConnector, filled
-   * out by the ScreenConnectorSource, and returned via OnFrameAfter() call.
+   * The ProcessedFrameType object is internally created by ScreenConnector,
+   * filled out by the ScreenConnectorSource, and returned via OnNextFrame()
+   * call.
    */
-  using GenerateProcessedFrameCallback = std::function<void(std::uint32_t /*frame number*/,
-                                                            std::uint8_t* /*frame_pixels*/,
-                                                            ProcessedFrameType& msg)>;
+  using GenerateProcessedFrameCallback = std::function<void(
+      std::uint32_t /*display_number*/, std::uint8_t* /*frame_pixels*/,
+      /* ScImpl enqueues this type into the Q */
+      ProcessedFrameType& msg)>;
 
   static std::unique_ptr<ScreenConnector<ProcessedFrameType>> Get(const int frames_fd) {
     auto config = cuttlefish::CuttlefishConfig::Get();
@@ -105,7 +107,7 @@ class ScreenConnector : public ScreenConnectorInfo {
    *
    * NOTE THAT THIS IS THE ONLY CONSUMER OF THE TWO QUEUES
    */
-  ProcessedFrameType OnFrameAfter() {
+  ProcessedFrameType OnNextFrame() {
     // sc_ctrl has a semaphore internally
     // passing beyond SemWait means either queue has an item
     sc_ctrl_.SemWaitItem();
@@ -119,7 +121,6 @@ class ScreenConnector : public ScreenConnectorInfo {
   }
 
   [[noreturn]] void FrameFetchingLoop() {
-    std::uint32_t frame_num = 0;
     while (true) {
       sc_ctrl_.WaitAndroidMode( /* pass method to stop sc_android_impl_ */);
       /*
@@ -136,11 +137,10 @@ class ScreenConnector : public ScreenConnectorInfo {
           std::bind(cp_of_streamer_callback,
                     std::placeholders::_1, std::placeholders::_2,
                     std::ref(msg));
-      bool flag = sc_android_impl_->OnFrameAfter(frame_num, callback_for_sc_impl);
+      bool flag = sc_android_impl_->OnNextFrame(callback_for_sc_impl);
       msg.is_success_ = flag && msg.is_success_;
       auto result = ProcessedFrameType{std::move(msg)};
       sc_android_queue_.PushBack(std::move(result));
-      ++frame_num;
     }
   }
   // TODO: add ConfUIFetchingLoop
