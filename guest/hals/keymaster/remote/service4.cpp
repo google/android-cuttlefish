@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   ::android::hardware::configureRpcThreadpool(1, true);
 
-  LOG(ERROR) << "Starting keymaster service4";
+  LOG(INFO) << "Starting keymaster service4";
 
   auto fd = cuttlefish::SharedFD::Open(device, O_RDWR);
   if (!fd->IsOpen()) {
