@@ -118,6 +118,7 @@ cvd_host_seccomp_policy_x86_64 = [
     "vhost_net_device.policy_x86_64",
     "vhost_vsock_device.policy_x86_64",
     "video_device.policy_x86_64",
+    "vios_audio_device.policy_x86_64",
     "wl_device.policy_x86_64",
     "xhci.policy_x86_64",
 ]
@@ -138,6 +139,7 @@ cvd_host_seccomp_policy_arm64 = [
     "tpm_device.policy_aarch64",
     "vhost_net_device.policy_aarch64",
     "vhost_vsock_device.policy_aarch64",
+    "vios_audio_device.policy_aarch64",
     "wl_device.policy_aarch64",
     "xhci.policy_aarch64",
 ]
