@@ -113,6 +113,17 @@ void CreateStreamerServers(Command* cmd, const CuttlefishConfig& config) {
     return;
   }
   cmd->AddParameter("-frame_server_fd=", frames_server);
+
+  if (config.enable_audio()) {
+    auto path = config.ForDefaultInstance().audio_server_path();
+    auto audio_server =
+      SharedFD::SocketLocalServer(path.c_str(), false, SOCK_SEQPACKET, 0666);
+    if (!audio_server->IsOpen()) {
+      LOG(ERROR) << "Could not create audio server: " << audio_server->StrError();
+      return;
+    }
+    cmd->AddParameter("--audio_server_fd=", audio_server);
+  }
 }
 
 }  // namespace
