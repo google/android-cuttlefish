@@ -178,6 +178,11 @@ std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image_path() const {
 }
 
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
+
+std::string CuttlefishConfig::InstanceSpecific::audio_server_path() const {
+  return AbsolutePath(PerInstanceInternalPath("audio_server.sock"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::mobile_bridge_name() const {
   return (*Dictionary())[kMobileBridgeName].asString();
 }

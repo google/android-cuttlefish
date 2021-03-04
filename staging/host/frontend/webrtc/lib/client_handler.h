@@ -52,6 +52,9 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   bool AddDisplay(rtc::scoped_refptr<webrtc::VideoTrackInterface> track,
                   const std::string& label);
 
+  bool AddAudio(rtc::scoped_refptr<webrtc::AudioTrackInterface> track,
+                  const std::string& label);
+
   void HandleMessage(const Json::Value& client_message);
 
   // CreateSessionDescriptionObserver implementation
