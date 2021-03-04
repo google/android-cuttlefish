@@ -141,7 +141,7 @@ class ControlChannelHandler : public webrtc::DataChannelObserver {
   void OnStateChange() override;
   void OnMessage(const webrtc::DataBuffer &msg) override;
 
-  void Send(const Json::Value& message);
+  void Send(const Json::Value &message);
   void Send(const uint8_t *msg, size_t size, bool binary);
 
  private:
@@ -372,6 +372,19 @@ bool ClientHandler::AddDisplay(
   }
   // TODO (b/154138394): use the returned sender (err_or_sender.value()) to
   // remove the display from the connection.
+  return true;
+}
+
+bool ClientHandler::AddAudio(
+    rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track,
+    const std::string &label) {
+  // Send each track as part of a different stream with the label as id
+  auto err_or_sender =
+      peer_connection_->AddTrack(audio_track, {label} /* stream_id */);
+  if (!err_or_sender.ok()) {
+    LOG(ERROR) << "Failed to add video track to the peer connection";
+    return false;
+  }
   return true;
 }
 
