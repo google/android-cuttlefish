@@ -483,11 +483,15 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   DataImageResult dataImageResult = ApplyDataImagePolicy(*config, FLAGS_data_image);
   CHECK(dataImageResult != DataImageResult::Error) << "Failed to set up userdata";
 
-  // Create boot_config if necessary
+// Create boot_config if necessary
+// TODO(b/181812679) remove this block when we no longer need to create the
+// env partition.
+#if !defined(__ANDROID__)
   for (auto instance : config->Instances()) {
     CHECK(InitBootloaderEnvPartition(*config, instance))
         << "Failed to create bootloader environment partition";
   }
+#endif
 
   if (!FileExists(FLAGS_metadata_image)) {
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
