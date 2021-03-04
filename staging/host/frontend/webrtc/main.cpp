@@ -29,10 +29,12 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
+#include "host/frontend/webrtc/audio_handler.h"
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/streamer.h"
+#include "host/libs/audio_connector/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 #include "host/libs/screen_connector/screen_connector.h"
@@ -40,21 +42,25 @@
 DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
-DEFINE_int32(kernel_log_events_fd, -1, "An fd to listen on for kernel log events.");
+DEFINE_int32(kernel_log_events_fd, -1,
+             "An fd to listen on for kernel log events.");
 DEFINE_int32(command_fd, -1, "An fd to listen to for control messages");
 DEFINE_string(action_servers, "",
               "A comma-separated list of server_name:fd pairs, "
               "where each entry corresponds to one custom action server.");
 DEFINE_bool(write_virtio_input, false,
             "Whether to send input events in virtio format.");
+DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
 
+using cuttlefish::AudioHandler;
 using cuttlefish::CfConnectionObserverFactory;
 using cuttlefish::DisplayHandler;
 using cuttlefish::webrtc_streaming::LocalRecorder;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
 
-class CfOperatorObserver : public cuttlefish::webrtc_streaming::OperatorObserver {
+class CfOperatorObserver
+    : public cuttlefish::webrtc_streaming::OperatorObserver {
  public:
   virtual ~CfOperatorObserver() = default;
   virtual void OnRegistered() override {
@@ -108,7 +114,14 @@ static std::vector<std::pair<std::string, std::string>> ParseHttpHeaders(
   return headers;
 }
 
-int main(int argc, char **argv) {
+std::unique_ptr<cuttlefish::AudioServer> CreateAudioServer() {
+  cuttlefish::SharedFD audio_server_fd =
+      cuttlefish::SharedFD::Dup(FLAGS_audio_server_fd);
+  close(FLAGS_audio_server_fd);
+  return std::make_unique<cuttlefish::AudioServer>(audio_server_fd);
+}
+
+int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -130,25 +143,27 @@ int main(int argc, char **argv) {
   input_sockets.keyboard_client =
       cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
 
-  std::thread touch_accepter([&input_sockets](){
+  std::thread touch_accepter([&input_sockets]() {
     for (;;) {
       input_sockets.touch_client =
           cuttlefish::SharedFD::Accept(*input_sockets.touch_server);
     }
   });
-  std::thread keyboard_accepter([&input_sockets](){
+  std::thread keyboard_accepter([&input_sockets]() {
     for (;;) {
       input_sockets.keyboard_client =
           cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
     }
   });
 
-  auto kernel_log_events_client = cuttlefish::SharedFD::Dup(FLAGS_kernel_log_events_fd);
+  auto kernel_log_events_client =
+      cuttlefish::SharedFD::Dup(FLAGS_kernel_log_events_fd);
   close(FLAGS_kernel_log_events_fd);
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto instance = cvd_config->ForDefaultInstance();
-  auto screen_connector = cuttlefish::DisplayHandler::ScreenConnector::Get(FLAGS_frame_server_fd);
+  auto screen_connector =
+      cuttlefish::DisplayHandler::ScreenConnector::Get(FLAGS_frame_server_fd);
 
   StreamerConfig streamer_config;
 
@@ -214,14 +229,22 @@ int main(int argc, char **argv) {
   }
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
+  auto audio_stream = streamer->AddAudioStream("audio");
+  auto audio_server = CreateAudioServer();
+  auto audio_handler =
+      std::make_shared<AudioHandler>(audio_stream, std::move(audio_server));
+
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
-  for (const std::string& action_server : android::base::Split(FLAGS_action_servers, ",")) {
+  for (const std::string& action_server :
+       android::base::Split(FLAGS_action_servers, ",")) {
     if (action_server.empty()) {
       continue;
     }
-    const std::vector<std::string> server_and_fd = android::base::Split(action_server, ":");
-    CHECK(server_and_fd.size() == 2) << "Wrong format for action server flag: " << action_server;
+    const std::vector<std::string> server_and_fd =
+        android::base::Split(action_server, ":");
+    CHECK(server_and_fd.size() == 2)
+        << "Wrong format for action server flag: " << action_server;
     std::string server = server_and_fd[0];
     int fd = std::stoi(server_and_fd[1]);
     action_server_fds[server] = fd;
@@ -291,6 +314,7 @@ int main(int argc, char **argv) {
     LOG(DEBUG) << "control socket closed";
   });
 
+  audio_handler->Start();
   display_handler->Loop();
 
   return 0;

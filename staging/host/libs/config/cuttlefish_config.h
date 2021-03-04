@@ -341,6 +341,8 @@ class CuttlefishConfig {
   void set_smt(bool smt);
   bool smt() const;
 
+  bool enable_audio() const;
+
   class InstanceSpecific;
   class MutableInstanceSpecific;
 
@@ -454,6 +456,8 @@ class CuttlefishConfig {
     std::string uboot_env_image_path() const;
 
     std::string vendor_boot_image_path() const;
+
+    std::string audio_server_path() const;
 
     // modem simulator related
     std::string modem_simulator_ports() const;

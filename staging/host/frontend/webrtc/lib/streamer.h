@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 
+#include "host/frontend/webrtc/lib/audio_sink.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/video_sink.h"
@@ -87,6 +88,8 @@ class Streamer {
     SetHardwareSpec(key, std::to_string(value));
   }
 
+  std::shared_ptr<AudioSink> AddAudioStream(const std::string& label);
+
   // Add a custom button to the control panel.
   //   If this button should be handled by an action server, use nullopt (the
   //   default) for shell_command.
@@ -94,10 +97,6 @@ class Streamer {
       const std::string& command, const std::string& title,
       const std::string& icon_name,
       const std::optional<std::string>& shell_command = std::nullopt);
-
-  // TODO (b/128328845): Implement audio, return a shared_ptr to a class
-  // equivalent to webrtc::AudioSinkInterface.
-  void AddAudio(const std::string& label);
 
   // Register with the operator.
   void Register(std::weak_ptr<OperatorObserver> operator_observer);
