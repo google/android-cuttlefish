@@ -27,11 +27,32 @@ namespace vm_manager {
 // Superclass of every guest VM manager.
 class VmManager {
  public:
+  // This is the number of HVC virtual console ports that should be configured
+  // by the VmManager. Because crosvm currently allocates these ports as the
+  // first PCI devices, and it does not control the allocation of PCI ID
+  // assignments, the number of these ports affects the PCI paths for
+  // subsequent PCI devices, and these paths are hard-coded in SEPolicy.
+  // Fortunately, HVC virtual console ports can be set up to be "sink" devices,
+  // so even if they are disabled and the guest isn't using them, they don't
+  // need to consume host resources, except for the PCI ID. Use this trick to
+  // keep the number of PCI IDs assigned constant for all flags/vm manager
+  // combinations
+  static const int kDefaultNumHvcs = 5;
+
+  // This is the number of virtual disks (block devices) that should be
+  // configured by the VmManager. Related to the description above regarding
+  // HVC ports, this problem can also affect block devices (which are
+  // enumerated second) if not all of the block devices are available. Unlike
+  // HVC virtual console ports, block devices cannot be configured to be sinks,
+  // so we once again leverage HVC virtual console ports to "bump up" the last
+  // assigned virtual disk PCI ID (i.e. 2 disks = 7 hvcs, 1 disks = 8 hvcs)
+  static const int kMaxDisks = 3;
+
   virtual ~VmManager() = default;
 
   virtual bool IsSupported() = 0;
   virtual std::vector<std::string> ConfigureGpuMode(const std::string&) = 0;
-  virtual std::vector<std::string> ConfigureBootDevices() = 0;
+  virtual std::vector<std::string> ConfigureBootDevices(int num_disks) = 0;
 
   // Starts the VMM. It will usually build a command and pass it to the
   // command_starter function, although it may start more than one. The
