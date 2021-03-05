@@ -148,7 +148,8 @@ std::vector<std::string> KernelCommandLineFromConfig(
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
   auto vmm = vm_manager::GetVmManager(config.vm_manager());
   AppendVector(&kernel_cmdline, vmm->ConfigureGpuMode(config.gpu_mode()));
-  AppendVector(&kernel_cmdline, vmm->ConfigureBootDevices());
+  AppendVector(&kernel_cmdline,
+               vmm->ConfigureBootDevices(instance.virtual_disk_paths().size()));
 
   if (config.enable_gnss_grpc_proxy()) {
     kernel_cmdline.push_back("gnss_cmdline.serdev=serial8250/serial0/serial0-0");
