@@ -350,6 +350,12 @@ std::vector<Command> CrosvmManager::StartCommands(
   add_hvc(instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
           instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"));
 
+  if (config.enable_host_bluetooth()) {
+    add_hvc(instance.PerInstanceInternalPath("bt_fifo_vm.out"),
+            instance.PerInstanceInternalPath("bt_fifo_vm.in"));
+  } else {
+    add_hvc_sink();
+  }
   for (auto i = 0; i < VmManager::kMaxDisks - disk_num; i++) {
     add_hvc_sink();
   }

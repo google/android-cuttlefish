@@ -98,7 +98,8 @@ DEFINE_bool(enable_minimal_mode, false,
 DEFINE_bool(pause_in_bootloader, false,
             "Stop the bootflow in u-boot. You can continue the boot by connecting "
             "to the device console and typing in \"boot\".");
-DEFINE_bool(enable_rootcanal, false, "Enables the root-canal service");
+DEFINE_bool(enable_host_bluetooth, true,
+            "Enable the root-canal which is Bluetooth emulator in the host.");
 
 /**
  *
@@ -602,7 +603,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_ethernet(FLAGS_ethernet);
 
-  tmp_config_obj.set_enable_rootcanal(FLAGS_enable_rootcanal);
+  tmp_config_obj.set_enable_host_bluetooth(FLAGS_enable_host_bluetooth);
 
   std::vector<int> num_instances;
   for (int i = 0; i < FLAGS_num_instances; i++) {

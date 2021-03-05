@@ -677,16 +677,16 @@ bool CuttlefishConfig::guest_force_normal_boot() const {
   return (*dictionary_)[kGuestForceNormalBoot].asBool();
 }
 
-static constexpr char kEnableRootcanal[] = "enable_rootcanal";
-void CuttlefishConfig::set_enable_rootcanal(bool enable_rootcanal) {
-  (*dictionary_)[kEnableRootcanal] = enable_rootcanal;
+static constexpr char kenableHostBluetooth[] = "enable_host_bluetooth";
+void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
+  (*dictionary_)[kenableHostBluetooth] = enable_host_bluetooth;
 }
-bool CuttlefishConfig::enable_rootcanal() const {
+bool CuttlefishConfig::enable_host_bluetooth() const {
 // TODO(b/181203470): Support root-canal for arm64 Host
 #if defined(__BIONIC__)
   return false;
 #else
-  return (*dictionary_)[kEnableRootcanal].asBool();
+  return (*dictionary_)[kenableHostBluetooth].asBool();
 #endif
 }
 

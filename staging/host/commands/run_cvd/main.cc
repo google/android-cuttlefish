@@ -177,16 +177,18 @@ bool CreateQcowOverlay(const std::string& crosvm_path,
 }
 
 void DeleteFifos(const CuttlefishConfig::InstanceSpecific& instance) {
-    // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
+  // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
   std::vector<std::string> pipes = {
-    instance.kernel_log_pipe_name(),
-    instance.console_in_pipe_name(),
-    instance.console_out_pipe_name(),
-    instance.logcat_pipe_name(),
-    instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
-    instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
-    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
-    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+      instance.kernel_log_pipe_name(),
+      instance.console_in_pipe_name(),
+      instance.console_out_pipe_name(),
+      instance.logcat_pipe_name(),
+      instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
+      instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
+      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+      instance.PerInstanceInternalPath("bt_fifo_vm.in"),
+      instance.PerInstanceInternalPath("bt_fifo_vm.out"),
   };
   for (const auto& pipe : pipes) {
     unlink(pipe.c_str());
@@ -542,6 +544,9 @@ int RunCvdMain(int argc, char** argv) {
   LaunchTombstoneReceiver(*config, &process_monitor);
   LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
   LaunchSecureEnvironment(&process_monitor, *config);
+  if (config->enable_host_bluetooth()) {
+    LaunchBluetoothConnector(&process_monitor, *config);
+  }
   LaunchVehicleHalServerIfEnabled(*config, &process_monitor);
   LaunchConsoleForwarderIfEnabled(*config, &process_monitor);
 
