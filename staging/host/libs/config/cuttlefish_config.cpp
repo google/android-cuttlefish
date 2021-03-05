@@ -74,6 +74,8 @@ const char* kInstances = "instances";
 
 const char* kSmt = "smt";
 
+const char* kProtectedVm = "protected_vm";
+
 }  // namespace
 
 const char* const kGpuModeAuto = "auto";
@@ -798,6 +800,13 @@ bool CuttlefishConfig::smt() const {
 }
 
 bool CuttlefishConfig::enable_audio() const { return enable_webrtc(); }
+
+void CuttlefishConfig::set_protected_vm(bool protected_vm) {
+  (*dictionary_)[kProtectedVm] = protected_vm;
+}
+bool CuttlefishConfig::protected_vm() const {
+  return (*dictionary_)[kProtectedVm].asBool();
+}
 
 // Creates the (initially empty) config object and populates it with values from
 // the config file if the CUTTLEFISH_CONFIG_FILE env variable is present.
