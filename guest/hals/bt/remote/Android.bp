@@ -1,0 +1,28 @@
+cc_binary {
+    name: "android.hardware.bluetooth@1.1-service.remote",
+    defaults: ["cuttlefish_guest_only", "hidl_defaults"],
+    vendor: true,
+    relative_install_path: "hw",
+    srcs: [
+        "remote_bluetooth.cpp",
+        "service.cpp",
+    ],
+
+    shared_libs: [
+        "android.hardware.bluetooth@1.0",
+        "android.hardware.bluetooth@1.1",
+        "libcuttlefish_fs",
+        "libbase",
+        "libhidlbase",
+        "libutils",
+        "liblog",
+        "libcutils",
+        "libprotobuf-cpp-lite",
+    ],
+    static_libs: [
+        "libbt-rootcanal",
+        "libbt-rootcanal-types",
+        "async_fd_watcher",
+    ],
+    init_rc: ["android.hardware.bluetooth@1.1-service.remote.rc"],
+}
