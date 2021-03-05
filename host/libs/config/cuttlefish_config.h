@@ -247,8 +247,8 @@ class CuttlefishConfig {
   void set_guest_force_normal_boot(bool guest_force_normal_boot);
   bool guest_force_normal_boot() const;
 
-  void set_enable_rootcanal(bool enable_rootcanal);
-  bool enable_rootcanal() const;
+  void set_enable_host_bluetooth(bool enable_host_bluetooth);
+  bool enable_host_bluetooth() const;
 
   enum Answer {
     kUnknown = 0,

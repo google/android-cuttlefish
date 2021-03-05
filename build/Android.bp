@@ -33,6 +33,7 @@ cvd_host_tools = [
     "allocd",
     "allocd_client",
     "assemble_cvd",
+    "bt_connector",
     "common_crosvm",
     "config_server",
     "console_forwarder",
