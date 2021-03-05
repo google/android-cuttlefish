@@ -1,0 +1,8 @@
+type hal_bluetooth_remote, domain;
+type hal_bluetooth_remote_exec, exec_type, vendor_file_type, file_type;
+
+hal_server_domain(hal_bluetooth_remote, hal_bluetooth)
+
+init_daemon_domain(hal_bluetooth_remote)
+
+allow hal_bluetooth_remote bt_device:chr_file { open read write ioctl};
