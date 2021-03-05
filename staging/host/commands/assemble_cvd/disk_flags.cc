@@ -134,6 +134,14 @@ static bool DecompressKernel(const std::string& src, const std::string& dst) {
   return decomp_proc.Started() && decomp_proc.Wait() == 0;
 }
 
+// Repacking is not supported on Android. We can't run the unpacking python
+// script on Android.
+#if !defined(__ANDROID__)
+constexpr bool repack_supported = true;
+#else
+constexpr bool repack_supported = false;
+#endif
+
 std::vector<ImagePartition> disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
@@ -164,14 +172,25 @@ std::vector<ImagePartition> disk_config(
     .label = "boot_b",
     .image_file_path = FLAGS_boot_image,
   });
-  partitions.push_back(ImagePartition{
-      .label = "vendor_boot_a",
-      .image_file_path = instance.vendor_boot_image_path(),
-  });
-  partitions.push_back(ImagePartition{
-      .label = "vendor_boot_b",
-      .image_file_path = instance.vendor_boot_image_path(),
-  });
+  if (repack_supported) {
+    partitions.push_back(ImagePartition{
+        .label = "vendor_boot_a",
+        .image_file_path = instance.vendor_boot_image_path(),
+    });
+    partitions.push_back(ImagePartition{
+        .label = "vendor_boot_b",
+        .image_file_path = instance.vendor_boot_image_path(),
+    });
+  } else {
+    partitions.push_back(ImagePartition{
+        .label = "vendor_boot_a",
+        .image_file_path = FLAGS_vendor_boot_image,
+    });
+    partitions.push_back(ImagePartition{
+        .label = "vendor_boot_b",
+        .image_file_path = FLAGS_vendor_boot_image,
+    });
+  }
   partitions.push_back(ImagePartition {
     .label = "vbmeta_a",
     .image_file_path = FLAGS_vbmeta_image,
@@ -385,24 +404,34 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   CHECK(FileHasContent(FLAGS_vendor_boot_image))
       << "File not found: " << FLAGS_vendor_boot_image;
 
-    // unpack the boot images into the assembly_dir
-  CHECK(UnpackBootImage(FLAGS_boot_image, config->assembly_dir()))
-      << "Failed to unpack boot image";
-  CHECK(UnpackVendorBootImage(FLAGS_vendor_boot_image, config->assembly_dir()))
-      << "Failed to unpack vendor boot image";
 
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
 
-  // check for bootconfig support in whichever kernel we are using
+  // Check for bootconfig support in whichever kernel we are using. Checking
+  // that requires decompressing the kernel and look into it. So, do that only
+  // when the kernel exists.
   const auto& kernel_path =
       foreign_kernel.size() ? foreign_kernel : config->kernel_image_path();
-  bool bootconfig_supported =
+  const bool bootconfig_supported =
+      FileExists(kernel_path) &&
       IsBootconfigSupported(kernel_path, config->assembly_dir());
+
+  // If the kernel and/or ramdisk are passed in, repack is needed. Unpack now in
+  // preparation for the repack.
+  if (repack_supported) {
+    CHECK(UnpackBootImage(FLAGS_boot_image, config->assembly_dir()))
+        << "Failed to unpack boot image";
+    CHECK(
+        UnpackVendorBootImage(FLAGS_vendor_boot_image, config->assembly_dir()))
+        << "Failed to unpack vendor boot image";
+  }
+
   const std::string new_boot_image_path =
       config->AssemblyPath("boot_repacked.img");
+
   for (auto instance : config->Instances()) {
     const std::string new_vendor_boot_image_path =
         instance.vendor_boot_image_path();
@@ -410,6 +439,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         (foreign_kernel.size() || foreign_ramdisk.size())) {
       // Repack the boot images if kernels and/or ramdisks are passed in.
       if (foreign_kernel.size()) {
+        CHECK(repack_supported) << "Repacking not supported on Android";
         bool success =
             RepackBootImage(foreign_kernel, FLAGS_boot_image,
                             new_boot_image_path, config->assembly_dir());
@@ -420,6 +450,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
             google::FlagSettingMode::SET_FLAGS_DEFAULT);
       }
       if (foreign_ramdisk.size()) {
+        CHECK(repack_supported) << "Repacking not supported on Android";
         bool success = RepackVendorBootImage(
             foreign_ramdisk, FLAGS_vendor_boot_image,
             new_vendor_boot_image_path, config->assembly_dir(),
@@ -428,6 +459,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
                           "new ramdisk";
       }
       if (foreign_kernel.size() && !foreign_ramdisk.size()) {
+        CHECK(repack_supported) << "Repacking not supported on Android";
         bool success = RepackVendorBootImageWithEmptyRamdisk(
             FLAGS_vendor_boot_image, new_vendor_boot_image_path,
             config->assembly_dir(), instance.PerInstanceInternalPath(""),
@@ -436,12 +468,17 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
             << "Failed to regenerate the vendor boot image without a ramdisk";
       }
     } else if (FLAGS_use_bootloader) {
-      // Repack the vendor boot image to add the bootconfig parameters
-      bool success = RepackVendorBootImage(
-          std::string(), FLAGS_vendor_boot_image, new_vendor_boot_image_path,
-          config->assembly_dir(), instance.PerInstanceInternalPath(""),
-          bootconfig_supported);
-      CHECK(success) << "Failed to regenerate the vendor boot image";
+      // Convert the format of the vendor boot image to V4 by repacking it even
+      // when the kernel and/or ramdisk is not given. Right now, we do this only
+      // for the non-Android scenarios because we can't do the repack on Android
+      // due to the lack of tools that do the repacking.
+      if (repack_supported) {
+        bool success = RepackVendorBootImage(
+            std::string(), FLAGS_vendor_boot_image, new_vendor_boot_image_path,
+            config->assembly_dir(), instance.PerInstanceInternalPath(""),
+            bootconfig_supported);
+        CHECK(success) << "Failed to regenerate the vendor boot image";
+      }
     } else if (!FLAGS_use_bootloader) {
       // This code path is taken when the virtual device kernel is launched
       // directly by the hypervisor instead of the bootloader.
