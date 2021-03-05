@@ -28,6 +28,14 @@
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
 
+// Copied from net/bluetooth/hci.h
+#define HCI_MAX_ACL_SIZE 1024
+#define HCI_MAX_FRAME_SIZE (HCI_MAX_ACL_SIZE + 4)
+
+// Include H4 header byte, and reserve more buffer size in the case of excess
+// packet.
+constexpr const size_t kBufferSize = (HCI_MAX_FRAME_SIZE + 1) * 2;
+
 DEFINE_int32(bt_in, -1, "A pipe for bt communication");
 DEFINE_int32(bt_out, -1, "A pipe for bt communication");
 DEFINE_int32(hci_port, -1, "A port for bt hci command");
@@ -63,7 +71,7 @@ int main(int argc, char** argv) {
 
   auto guest_to_host = std::thread([&]() {
     while (true) {
-      char buf[1024];
+      char buf[kBufferSize];
       auto read = bt_in->Read(buf, sizeof(buf));
       if (cuttlefish::WriteAll(sock, buf, read) == -1) {
         openSocket(&sock, FLAGS_hci_port);
@@ -73,7 +81,7 @@ int main(int argc, char** argv) {
 
   auto host_to_guest = std::thread([&]() {
     while (true) {
-      char buf[1024];
+      char buf[kBufferSize];
       auto read = sock->Read(buf, sizeof(buf));
       if (read == -1) {
         openSocket(&sock, FLAGS_hci_port);
