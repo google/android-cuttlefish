@@ -218,6 +218,10 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--vhost-net");
   }
 
+  if (config.protected_vm()) {
+    crosvm_cmd.AddParameter("--protected-vm");
+  }
+
   auto display_configs = config.display_configs();
   CHECK_GE(display_configs.size(), 1);
   auto display_config = display_configs[0];
@@ -249,7 +253,8 @@ std::vector<Command> CrosvmManager::StartCommands(
       << "Provided too many disks (" << disk_num << "), maximum "
       << VmManager::kMaxDisks << "supported";
   for (const auto& disk : instance.virtual_disk_paths()) {
-    crosvm_cmd.AddParameter("--rwdisk=", disk);
+    crosvm_cmd.AddParameter(config.protected_vm() ? "--disk=" :
+                                                    "--rwdisk=", disk);
   }
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config));
 
@@ -263,9 +268,15 @@ std::vector<Command> CrosvmManager::StartCommands(
   auto wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
   AddTapFdParameter(&crosvm_cmd, instance.mobile_tap_name());
 
-  crosvm_cmd.AddParameter("--rw-pmem-device=", instance.access_kregistry_path());
-  crosvm_cmd.AddParameter("--pstore=path=", instance.pstore_path(), ",size=",
-                          FileSize(instance.pstore_path()));
+  if (FileExists(instance.access_kregistry_path())) {
+    crosvm_cmd.AddParameter("--rw-pmem-device=",
+                            instance.access_kregistry_path());
+  }
+
+  if (FileExists(instance.pstore_path())) {
+    crosvm_cmd.AddParameter("--pstore=path=", instance.pstore_path(),
+                            ",size=", FileSize(instance.pstore_path()));
+  }
 
   if (config.enable_sandbox()) {
     const bool seccomp_exists = DirectoryExists(config.seccomp_policy_dir());
