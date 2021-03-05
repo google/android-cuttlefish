@@ -47,6 +47,9 @@ void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
 void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
                              const CuttlefishConfig& config);
 
+void LaunchBluetoothConnector(ProcessMonitor* process_monitor,
+                              const CuttlefishConfig& config);
+
 void LaunchCustomActionServers(Command& webrtc_cmd,
                                ProcessMonitor* process_monitor,
                                const CuttlefishConfig& config);

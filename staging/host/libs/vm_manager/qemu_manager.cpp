@@ -335,6 +335,11 @@ std::vector<Command> QemuManager::StartCommands(
 
   add_hvc(instance.PerInstanceInternalPath("keymaster_fifo_vm"));
   add_hvc(instance.PerInstanceInternalPath("gatekeeper_fifo_vm"));
+  if (config.enable_host_bluetooth()) {
+    add_hvc(instance.PerInstanceInternalPath("bt_fifo_vm"));
+  } else {
+    add_hvc_sink();
+  }
 
   auto disk_num = instance.virtual_disk_paths().size();
 
