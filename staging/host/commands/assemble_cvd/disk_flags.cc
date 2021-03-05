@@ -72,6 +72,7 @@ DECLARE_bool(use_sdcard);
 DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
 DECLARE_bool(resume);
+DECLARE_bool(protected_vm);
 
 namespace cuttlefish {
 
@@ -534,23 +535,28 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     CreateBlankImage(FLAGS_metadata_image, FLAGS_blank_metadata_image_mb, "none");
   }
 
-  for (const auto& instance : config->Instances()) {
-    if (!FileExists(instance.access_kregistry_path())) {
-      CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
-    }
+  // If we are booting a protected VM, for now, assume we want a super minimal
+  // environment with no userdata encryption, limited debug, no FRP emulation,
+  // no SD-Card and no resume-on-reboot HAL support
+  if (!FLAGS_protected_vm) {
+    for (const auto& instance : config->Instances()) {
+      if (!FileExists(instance.access_kregistry_path())) {
+        CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
+      }
 
-    if (!FileExists(instance.pstore_path())) {
-      CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
-    }
+      if (!FileExists(instance.pstore_path())) {
+        CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
+      }
 
-    if (FLAGS_use_sdcard && !FileExists(instance.sdcard_path())) {
-      CreateBlankImage(instance.sdcard_path(),
-                       FLAGS_blank_sdcard_image_mb, "sdcard");
-    }
+      if (FLAGS_use_sdcard && !FileExists(instance.sdcard_path())) {
+        CreateBlankImage(instance.sdcard_path(),
+                         FLAGS_blank_sdcard_image_mb, "sdcard");
+      }
 
-    const auto frp = instance.factory_reset_protected_path();
-    if (!FileExists(frp)) {
-      CreateBlankImage(frp, 1 /* mb */, "none");
+      const auto frp = instance.factory_reset_protected_path();
+      if (!FileExists(frp)) {
+        CreateBlankImage(frp, 1 /* mb */, "none");
+      }
     }
   }
 
@@ -585,12 +591,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   for (auto instance : config->Instances()) {
     bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(instance);
     bool oldCompositeDisk = ShouldCreateCompositeDisk(instance);
-    auto overlay_path = instance.PerInstancePath("overlay.img");
-    bool missingOverlay = !FileExists(overlay_path);
-    bool newOverlay = FileModificationTime(overlay_path)
-        < FileModificationTime(instance.composite_disk_path());
-    if (!compositeMatchesDiskConfig || missingOverlay || oldCompositeDisk || !FLAGS_resume ||
-        newDataImage || newOverlay) {
+    if (!compositeMatchesDiskConfig || oldCompositeDisk || !FLAGS_resume || newDataImage) {
       if (FLAGS_resume) {
         LOG(INFO) << "Requested to continue an existing session, (the default) "
                   << "but the disk files have become out of date. Wiping the "
@@ -599,9 +600,24 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       }
       CHECK(CreateCompositeDisk(*config, instance))
           << "Failed to create composite disk";
-      CreateQcowOverlay(config->crosvm_binary(), instance.composite_disk_path(), overlay_path);
-      CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
-      CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
+      if (FileExists(instance.access_kregistry_path())) {
+        CreateBlankImage(instance.access_kregistry_path(), 2 /* mb */, "none");
+      }
+      if (FileExists(instance.pstore_path())) {
+        CreateBlankImage(instance.pstore_path(), 2 /* mb */, "none");
+      }
+    }
+  }
+
+  if (!FLAGS_protected_vm) {
+    for (auto instance : config->Instances()) {
+      auto overlay_path = instance.PerInstancePath("overlay.img");
+      bool missingOverlay = !FileExists(overlay_path);
+      bool newOverlay = FileModificationTime(overlay_path)
+          < FileModificationTime(instance.composite_disk_path());
+      if (!missingOverlay || !FLAGS_resume || newOverlay) {
+        CreateQcowOverlay(config->crosvm_binary(), instance.composite_disk_path(), overlay_path);
+      }
     }
   }
 
