@@ -405,20 +405,10 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   CHECK(FileHasContent(FLAGS_vendor_boot_image))
       << "File not found: " << FLAGS_vendor_boot_image;
 
-
   std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
-
-  // Check for bootconfig support in whichever kernel we are using. Checking
-  // that requires decompressing the kernel and look into it. So, do that only
-  // when the kernel exists.
-  const auto& kernel_path =
-      foreign_kernel.size() ? foreign_kernel : config->kernel_image_path();
-  const bool bootconfig_supported =
-      FileExists(kernel_path) &&
-      IsBootconfigSupported(kernel_path, config->assembly_dir());
 
   // If the kernel and/or ramdisk are passed in, repack is needed. Unpack now in
   // preparation for the repack.
@@ -429,6 +419,14 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         UnpackVendorBootImage(FLAGS_vendor_boot_image, config->assembly_dir()))
         << "Failed to unpack vendor boot image";
   }
+
+  // Check for bootconfig support in whichever kernel we are using. Checking
+  // that requires decompressing the kernel and looking into it.
+  const auto& kernel_path =
+      foreign_kernel.size() ? foreign_kernel : config->kernel_image_path();
+  const bool bootconfig_supported =
+      repack_supported &&
+      IsBootconfigSupported(kernel_path, config->assembly_dir());
 
   const std::string new_boot_image_path =
       config->AssemblyPath("boot_repacked.img");
