@@ -1659,14 +1659,26 @@ void SimService::HandleSimAuthentication(const Client& client,
   CommandParser cmd(command);
   cmd.SkipPrefix();
 
-  std::stringstream ss;
+  // Input format: ^MBAU=<RAND>[,<AUTN>]
   auto cmds = cmd.GetNextStr();
+  // Output format: ^MBAU: <STATUS>[,<KC>,<SRES>][,<CK>,<IK>,<RES/AUTS>]
+  std::stringstream ss;
 
-  // for cts
+  // Authentication challenges done in CTS.
   if (cmds == "2713AB0BA8E8E7D8F1D74545BA03F563") {
+    // CarrierApiTest#testGetIccAuthentication (base64Challenge)
     ss << "^MBAU: 0,8F2980FC3872FF89,E9620240";
   } else if (cmds == "C3718EC16B3C2A66F8A7200A64069F04") {
+    // CarrierApiTest#testGetIccAuthentication (base64Challenge2)
     ss << "^MBAU: 0,CFDA6C980502DA48,F7E53577";
+  } else if (cmds == "11111111111111111111111111111111") {
+    // CarrierApiTest#testEapSimAuthentication
+    ss << "^MBAU: 0,0000000000000000,00000000";
+  } else if (cmds == "11111111111111111111111111111111,12351417161900001130131215141716") {
+    // CarrierApiTest#testEapAkaAuthentication
+    // Note: the "DB" prefix gets appended where the RIL parses this response.
+    ss << "^MBAU: 0,111013121514171619181B1A1D1C1F1E,1013121514171619181B1A1D1C1F1E11,"
+          "13121514171619181B1A1D1C1F1E1110";
   }
 
   responses.push_back(ss.str());
