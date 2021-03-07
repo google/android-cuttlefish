@@ -114,7 +114,8 @@ void MiscService::TimeUpdate() {
   auto t_local_time = std::mktime(&local_time);
   auto t_gm_time = std::mktime(&gm_time);
 
-  auto tzdiff = (int)std::difftime(t_local_time, t_gm_time) / (60 * 60);
+  // Timezone offset is in number of quarter-hours
+  auto tzdiff = (int)std::difftime(t_local_time, t_gm_time) / (15 * 60);
 
   std::stringstream ss;
   ss << "%CTZV: \"" << std::setfill('0') << std::setw(2) << local_time.tm_year % 100 << "/"
