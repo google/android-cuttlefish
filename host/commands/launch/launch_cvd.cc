@@ -138,8 +138,12 @@ std::string ValidateMetricsConfirmation(std::string use_metrics) {
         FALLTHROUGH_INTENDED;
       case -1:
         std::cin.get(ch);
+        // if there's no tty the EOF flag is set, in which case default to 'n'
+        if (std::cin.eof()) {
+          ch = 'n';
+          std::cout << "n\n";  // for consistency with user input
+        }
         ch = tolower(ch);
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
   }
   return "";
