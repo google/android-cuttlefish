@@ -29,7 +29,7 @@ namespace vm_manager {
 // package to support the qemu-cli capability.
 class QemuManager : public VmManager {
  public:
-  static std::string name();
+  static std::string name() { return "qemu_cli"; }
 
   QemuManager() = default;
   virtual ~QemuManager() = default;

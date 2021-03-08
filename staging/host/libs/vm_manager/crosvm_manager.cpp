@@ -91,8 +91,6 @@ bool Stop() {
 
 }  // namespace
 
-/* static */ std::string CrosvmManager::name() { return "crosvm"; }
-
 bool CrosvmManager::IsSupported() {
 #ifdef __ANDROID__
   return true;

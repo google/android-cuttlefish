@@ -30,6 +30,7 @@
 #include "host/commands/assemble_cvd/boot_image_utils.h"
 #include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
+#include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -453,7 +454,8 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         bool success = RepackVendorBootImage(
             foreign_ramdisk, FLAGS_vendor_boot_image,
             new_vendor_boot_image_path, config->assembly_dir(),
-            instance.PerInstanceInternalPath(""), bootconfig_supported);
+            instance.PerInstanceInternalPath(""),
+            BootconfigArgsFromConfig(*config, instance), bootconfig_supported);
         CHECK(success) << "Failed to regenerate the vendor boot image with the "
                           "new ramdisk";
       }
@@ -462,7 +464,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         bool success = RepackVendorBootImageWithEmptyRamdisk(
             FLAGS_vendor_boot_image, new_vendor_boot_image_path,
             config->assembly_dir(), instance.PerInstanceInternalPath(""),
-            bootconfig_supported);
+            BootconfigArgsFromConfig(*config, instance), bootconfig_supported);
         CHECK(success)
             << "Failed to regenerate the vendor boot image without a ramdisk";
       }
@@ -472,10 +474,11 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       // for the non-Android scenarios because we can't do the repack on Android
       // due to the lack of tools that do the repacking.
       if (repack_supported) {
+        // Repack the vendor boot image to add the bootconfig parameters
         bool success = RepackVendorBootImage(
             std::string(), FLAGS_vendor_boot_image, new_vendor_boot_image_path,
             config->assembly_dir(), instance.PerInstanceInternalPath(""),
-            bootconfig_supported);
+            BootconfigArgsFromConfig(*config, instance), bootconfig_supported);
         CHECK(success) << "Failed to regenerate the vendor boot image";
       }
     } else if (!FLAGS_use_bootloader) {
