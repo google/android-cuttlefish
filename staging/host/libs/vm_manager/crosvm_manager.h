@@ -30,7 +30,7 @@ namespace vm_manager {
 // qemu-cli capability (for network only).
 class CrosvmManager : public VmManager {
  public:
-  static std::string name();
+  static std::string name() { return "crosvm"; }
   CrosvmManager() = default;
   virtual ~CrosvmManager() = default;
 
