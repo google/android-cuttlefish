@@ -212,6 +212,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& build_dir,
                            const std::string& instance_internal_dir,
+                           const std::vector<std::string>& bootconfig_args,
                            bool bootconfig_supported) {
   // TODO(b/173134558)
   // The vendor boot generation below isn't deterministic. i.e. running the same vendor boot
@@ -235,9 +236,10 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
                << bootconfig_fd->StrError();
     return false;
   }
-  std::string bootconfig = ReadFile(build_dir + "/bootconfig");
+  std::string bootconfig = ReadFile(build_dir + "/bootconfig") +
+                           android::base::Join(bootconfig_args, "\n") + "\n";
   bootconfig_fd->Write(bootconfig.c_str(), bootconfig.size());
-  LOG(DEBUG) << "Bootconfig parameters from vendor boot image is "
+  LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
              << ReadFile(instance_internal_dir + "/bootconfig");
 
   std::string vendor_boot_params = ReadFile(build_dir + "/vendor_boot_params");
@@ -284,11 +286,13 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
 bool RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path, const std::string& build_dir,
-    const std::string& instance_internal_dir, bool bootconfig_supported) {
+    const std::string& instance_internal_dir,
+    const std::vector<std::string>& bootconfig_args,
+    bool bootconfig_supported) {
   auto empty_ramdisk_file = SharedFD::Creat(build_dir + "/empty_ramdisk", 0666);
-  return RepackVendorBootImage(build_dir + "/empty_ramdisk",
-                               vendor_boot_image_path,
-                               new_vendor_boot_image_path, build_dir,
-                               instance_internal_dir, bootconfig_supported);
+  return RepackVendorBootImage(
+      build_dir + "/empty_ramdisk", vendor_boot_image_path,
+      new_vendor_boot_image_path, build_dir, instance_internal_dir,
+      bootconfig_args, bootconfig_supported);
 }
 } // namespace cuttlefish

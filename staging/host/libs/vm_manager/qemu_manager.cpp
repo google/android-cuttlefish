@@ -88,8 +88,6 @@ bool Stop() {
 
 }  // namespace
 
-/* static */ std::string QemuManager::name() { return "qemu_cli"; }
-
 bool QemuManager::IsSupported() {
   return HostSupportsQemuCli();
 }
