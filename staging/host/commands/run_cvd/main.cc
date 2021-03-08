@@ -559,8 +559,7 @@ int RunCvdMain(int argc, char** argv) {
     LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
   }
 
-  auto kernel_args =
-      KernelCommandLineFromConfig(*config, config->ForDefaultInstance());
+  auto kernel_args = KernelCommandLineFromConfig(*config);
 
   // Start the guest VM
   auto vmm_commands = vm_manager->StartCommands(
