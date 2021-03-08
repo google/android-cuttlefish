@@ -34,6 +34,7 @@
 
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
@@ -766,6 +767,25 @@ void CuttlefishConfig::set_console(bool console) {
 }
 bool CuttlefishConfig::console() const {
   return (*dictionary_)[kConsole].asBool();
+}
+std::string CuttlefishConfig::console_dev() const {
+  auto can_use_virtio_console = !kgdb() && !use_bootloader();
+  std::string console_dev;
+  if (can_use_virtio_console) {
+    // If kgdb and the bootloader are disabled, the Android serial console
+    // spawns on a virtio-console port. If the bootloader is enabled, virtio
+    // console can't be used since uboot doesn't support it.
+    console_dev = "hvc1";
+  } else {
+    // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
+    if (HostArch() == "aarch64" &&
+        vm_manager() != vm_manager::CrosvmManager::name()) {
+      console_dev = "ttyAMA0";
+    } else {
+      console_dev = "ttyS0";
+    }
+  }
+  return console_dev;
 }
 
 static constexpr char kVhostNet[] = "vhost_net";
