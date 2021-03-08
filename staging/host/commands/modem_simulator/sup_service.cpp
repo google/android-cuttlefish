@@ -249,7 +249,8 @@ void SupService::HandleCallForward(const Client& client, std::string& command) {
           cmd.SkipComma();
           cmd.SkipComma();
           cmd.SkipComma();
-          call_forward_infos_[reason].timeSeconds = cmd.GetNextInt();
+          int timeSeconds = cmd.GetNextInt();
+          call_forward_infos_[reason].timeSeconds = timeSeconds >= 0 ? timeSeconds : 0;
         }
       }
       break;
