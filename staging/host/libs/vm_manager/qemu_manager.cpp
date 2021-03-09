@@ -128,8 +128,7 @@ std::vector<std::string> QemuManager::ConfigureBootDevices(int num_disks) {
   return {"androidboot.boot_devices=pci0000:00/0000:00:" + stream.str() + ".0"};
 }
 
-std::vector<Command> QemuManager::StartCommands(
-    const CuttlefishConfig& config, const std::string& kernel_cmdline) {
+std::vector<Command> QemuManager::StartCommands(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
   auto stop = [](Subprocess* proc) {
@@ -268,17 +267,6 @@ std::vector<Command> QemuManager::StartCommands(
 
   qemu_cmd.AddParameter("-boot");
   qemu_cmd.AddParameter("strict=on");
-
-  if (!config.use_bootloader()) {
-    qemu_cmd.AddParameter("-kernel");
-    qemu_cmd.AddParameter(config.GetKernelImageToUse());
-
-    qemu_cmd.AddParameter("-initrd");
-    qemu_cmd.AddParameter(config.final_ramdisk_path());
-
-    qemu_cmd.AddParameter("-append");
-    qemu_cmd.AddParameter(kernel_cmdline);
-  }
 
   qemu_cmd.AddParameter("-chardev");
   qemu_cmd.AddParameter("socket,id=charmonitor,path=", GetMonitorPath(config),
@@ -465,10 +453,8 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-device");
   qemu_cmd.AddParameter("qemu-xhci,id=xhci");
 
-  if (config.use_bootloader()) {
-    qemu_cmd.AddParameter("-bios");
-    qemu_cmd.AddParameter(config.bootloader());
-  }
+  qemu_cmd.AddParameter("-bios");
+  qemu_cmd.AddParameter(config.bootloader());
 
   if (config.gdb_flag().size() > 0) {
     qemu_cmd.AddParameter("-gdb");

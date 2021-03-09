@@ -152,8 +152,7 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices(int num_disks) {
   }
 }
 
-std::vector<Command> CrosvmManager::StartCommands(
-    const CuttlefishConfig& config, const std::string& kernel_cmdline) {
+std::vector<Command> CrosvmManager::StartCommands(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
     auto stopped = Stop();
@@ -238,13 +237,9 @@ std::vector<Command> CrosvmManager::StartCommands(
                             "egl=true,surfaceless=true,glx=false,gles=true");
     crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
-  if (!config.use_bootloader() && !config.final_ramdisk_path().empty()) {
-    crosvm_cmd.AddParameter("--initrd=", config.final_ramdisk_path());
-  }
   // crosvm_cmd.AddParameter("--null-audio");
   crosvm_cmd.AddParameter("--mem=", config.memory_mb());
   crosvm_cmd.AddParameter("--cpus=", config.cpus());
-  crosvm_cmd.AddParameter("--params=", kernel_cmdline);
 
   auto disk_num = instance.virtual_disk_paths().size();
   CHECK_GE(VmManager::kMaxDisks, disk_num)
@@ -392,11 +387,7 @@ std::vector<Command> CrosvmManager::StartCommands(
   }
 
   // This needs to be the last parameter
-  if (config.use_bootloader()) {
-    crosvm_cmd.AddParameter("--bios=", config.bootloader());
-  } else {
-    crosvm_cmd.AddParameter(config.GetKernelImageToUse());
-  }
+  crosvm_cmd.AddParameter("--bios=", config.bootloader());
 
   // Only run the leases workaround if we are not using the new network
   // bridge architecture - in that case, we have a wider DHCP address

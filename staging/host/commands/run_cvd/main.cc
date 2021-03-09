@@ -559,11 +559,8 @@ int RunCvdMain(int argc, char** argv) {
     LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
   }
 
-  auto kernel_args = KernelCommandLineFromConfig(*config);
-
   // Start the guest VM
-  auto vmm_commands = vm_manager->StartCommands(
-      *config, android::base::Join(kernel_args, " "));
+  auto vmm_commands = vm_manager->StartCommands(*config);
   for (auto& vmm_cmd: vmm_commands) {
     process_monitor.AddCommand(std::move(vmm_cmd));
   }
