@@ -112,7 +112,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
         "androidboot.hardware.gralloc=minigbm",
         "androidboot.hardware.hwcomposer=cutf",
-        "androidboot.hardware.egl=angle",
+        "androidboot.hardware.egl=swiftshader",
         "androidboot.hardware.vulkan=pastel",
     };
   }
