@@ -182,32 +182,6 @@ void CuttlefishConfig::set_kernel_image_path(
   SetPath(kKernelImagePath, kernel_image_path);
 }
 
-static constexpr char kUseUnpackedKernel[] = "use_unpacked_kernel";
-bool CuttlefishConfig::use_unpacked_kernel() const {
-  return (*dictionary_)[kUseUnpackedKernel].asBool();
-}
-void CuttlefishConfig::set_use_unpacked_kernel(bool use_unpacked_kernel) {
-  (*dictionary_)[kUseUnpackedKernel] = use_unpacked_kernel;
-}
-
-static constexpr char kDecompressKernel[] = "decompress_kernel";
-bool CuttlefishConfig::decompress_kernel() const {
-  return (*dictionary_)[kDecompressKernel].asBool();
-}
-void CuttlefishConfig::set_decompress_kernel(bool decompress_kernel) {
-  (*dictionary_)[kDecompressKernel] = decompress_kernel;
-}
-
-static constexpr char kDecompressedKernelImagePath[] =
-    "decompressed_kernel_image_path";
-std::string CuttlefishConfig::decompressed_kernel_image_path() const {
-  return (*dictionary_)[kDecompressedKernelImagePath].asString();
-}
-void CuttlefishConfig::set_decompressed_kernel_image_path(
-    const std::string& path) {
-  SetPath(kDecompressedKernelImagePath, path);
-}
-
 static constexpr char kGdbFlag[] = "gdb_flag";
 std::string CuttlefishConfig::gdb_flag() const {
   return (*dictionary_)[kGdbFlag].asString();
@@ -216,39 +190,12 @@ void CuttlefishConfig::set_gdb_flag(const std::string& device) {
   (*dictionary_)[kGdbFlag] = device;
 }
 
-static constexpr char kRamdiskImagePath[] = "ramdisk_image_path";
-std::string CuttlefishConfig::ramdisk_image_path() const {
-  return (*dictionary_)[kRamdiskImagePath].asString();
-}
-void CuttlefishConfig::set_ramdisk_image_path(
-    const std::string& ramdisk_image_path) {
-  SetPath(kRamdiskImagePath, ramdisk_image_path);
-}
-
 static constexpr char kInitramfsPath[] = "initramfs_path";
 std::string CuttlefishConfig::initramfs_path() const {
   return (*dictionary_)[kInitramfsPath].asString();
 }
 void CuttlefishConfig::set_initramfs_path(const std::string& initramfs_path) {
   SetPath(kInitramfsPath, initramfs_path);
-}
-
-static constexpr char kFinalRamdiskPath[] = "final_ramdisk_path";
-std::string CuttlefishConfig::final_ramdisk_path() const {
-  return (*dictionary_)[kFinalRamdiskPath].asString();
-}
-void CuttlefishConfig::set_final_ramdisk_path(
-    const std::string& final_ramdisk_path) {
-  SetPath(kFinalRamdiskPath, final_ramdisk_path);
-}
-
-static constexpr char kVendorRamdiskImagePath[] = "vendor_ramdisk_image_path";
-std::string CuttlefishConfig::vendor_ramdisk_image_path() const {
-  return (*dictionary_)[kVendorRamdiskImagePath].asString();
-}
-void CuttlefishConfig::set_vendor_ramdisk_image_path(
-    const std::string& vendor_ramdisk_image_path) {
-  SetPath(kVendorRamdiskImagePath, vendor_ramdisk_image_path);
 }
 
 static constexpr char kDeprecatedBootCompleted[] = "deprecated_boot_completed";
@@ -497,14 +444,6 @@ void CuttlefishConfig::set_blank_data_image_fmt(const std::string& blank_data_im
   (*dictionary_)[kBlankDataImageFmt] = blank_data_image_fmt;
 }
 
-static constexpr char kUseBootloader[] = "use_bootloader";
-bool CuttlefishConfig::use_bootloader() const {
-  return (*dictionary_)[kUseBootloader].asBool();
-}
-void CuttlefishConfig::set_use_bootloader(bool use_bootloader) {
-  (*dictionary_)[kUseBootloader] = use_bootloader;
-}
-
 static constexpr char kBootloader[] = "bootloader";
 std::string CuttlefishConfig::bootloader() const {
   return (*dictionary_)[kBootloader].asString();
@@ -519,14 +458,6 @@ void CuttlefishConfig::set_boot_slot(const std::string& boot_slot) {
 }
 std::string CuttlefishConfig::boot_slot() const {
   return (*dictionary_)[kBootSlot].asString();
-}
-
-static constexpr char kUseSlotSuffix[] = "use_slot_suffix";
-void CuttlefishConfig::set_use_slot_suffix(const bool use_slot_suffix) {
-  (*dictionary_)[kUseSlotSuffix] = use_slot_suffix;
-}
-bool CuttlefishConfig::use_slot_suffix() const {
-  return (*dictionary_)[kUseSlotSuffix].asBool();
 }
 
 static constexpr char kWebRTCCertsDir[] = "webrtc_certs_dir";
@@ -670,14 +601,6 @@ void CuttlefishConfig::set_guest_audit_security(bool guest_audit_security) {
 }
 bool CuttlefishConfig::guest_audit_security() const {
   return (*dictionary_)[kGuestAuditSecurity].asBool();
-}
-
-static constexpr char kGuestForceNormalBoot[] = "guest_force_normal_boot";
-void CuttlefishConfig::set_guest_force_normal_boot(bool guest_force_normal_boot) {
-  (*dictionary_)[kGuestForceNormalBoot] = guest_force_normal_boot;
-}
-bool CuttlefishConfig::guest_force_normal_boot() const {
-  return (*dictionary_)[kGuestForceNormalBoot].asBool();
 }
 
 static constexpr char kenableHostBluetooth[] = "enable_host_bluetooth";
