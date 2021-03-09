@@ -60,16 +60,12 @@ DEFINE_int32(refresh_rate_hz, 60, "Screen refresh rate in Hertz");
 DEFINE_string(kernel_path, "",
               "Path to the kernel. Overrides the one from the boot image");
 DEFINE_string(initramfs_path, "", "Path to the initramfs");
-DEFINE_bool(decompress_kernel, false,
-            "Whether to decompress the kernel image.");
 DEFINE_string(extra_kernel_cmdline, "",
               "Additional flags to put on the kernel command line");
 DEFINE_bool(guest_enforce_security, true,
             "Whether to run in enforcing mode (non permissive).");
 DEFINE_bool(guest_audit_security, true,
             "Whether to log security audits.");
-DEFINE_bool(guest_force_normal_boot, true,
-            "Whether to force the boot sequence to skip recovery.");
 DEFINE_int32(memory_mb, 0, "Total amount of memory available for guest, MB.");
 DEFINE_string(serial_number, cuttlefish::ForCurrentInstance("CUTTLEFISHCVD"),
               "Serial number to use for the device");
@@ -233,14 +229,11 @@ DEFINE_string(custom_actions, "",
               "--custom_action_config to specify a custom config file on the "
               "command line. Actions in this flag are combined with actions "
               "in --custom_action_config.");
-DEFINE_bool(use_bootloader, true, "Boots the device using a bootloader");
 DEFINE_string(bootloader, "", "Bootloader binary path");
 DEFINE_string(boot_slot, "", "Force booting into the given slot. If empty, "
              "the slot will be chosen based on the misc partition if using a "
              "bootloader. It will default to 'a' if empty and not using a "
              "bootloader.");
-DEFINE_bool(use_slot_suffix, true, "Whether to pass the slot_suffix kernel "
-            "parameter if not using a bootloader.");
 DEFINE_int32(num_instances, 1, "Number of Android guests to launch");
 DEFINE_string(report_anonymous_usage_stats, "", "Report anonymous usage "
             "statistics for metrics collection and analysis.");
@@ -306,7 +299,6 @@ namespace {
 
 const std::string kKernelDefaultPath = "kernel";
 const std::string kInitramfsImg = "initramfs.img";
-const std::string kRamdiskConcatExt = ".concat";
 
 bool IsFlagSet(const std::string& flag) {
   return !gflags::GetCommandLineFlagInfoOrDie(flag.c_str()).is_default;
@@ -434,28 +426,16 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
   if (foreign_kernel.size()) {
     tmp_config_obj.set_kernel_image_path(foreign_kernel);
-    tmp_config_obj.set_use_unpacked_kernel(false);
   } else {
     tmp_config_obj.set_kernel_image_path(
         tmp_config_obj.AssemblyPath(kKernelDefaultPath.c_str()));
-    tmp_config_obj.set_use_unpacked_kernel(true);
   }
-
-  tmp_config_obj.set_decompress_kernel(FLAGS_decompress_kernel);
-  if (tmp_config_obj.decompress_kernel()) {
-    tmp_config_obj.set_decompressed_kernel_image_path(
-        tmp_config_obj.AssemblyPath("vmlinux"));
-  }
-
-  auto ramdisk_path = tmp_config_obj.AssemblyPath("ramdisk.img");
-  auto vendor_ramdisk_path = tmp_config_obj.AssemblyPath("vendor_ramdisk.img");
 
   std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
   std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
 
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
-  tmp_config_obj.set_guest_force_normal_boot(FLAGS_guest_force_normal_boot);
   tmp_config_obj.set_extra_kernel_cmdline(FLAGS_extra_kernel_cmdline);
 
   if (FLAGS_console) {
@@ -465,21 +445,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_console(FLAGS_console);
   tmp_config_obj.set_kgdb(FLAGS_console && FLAGS_kgdb);
 
-  tmp_config_obj.set_ramdisk_image_path(ramdisk_path);
-  tmp_config_obj.set_vendor_ramdisk_image_path(vendor_ramdisk_path);
-
-  if (foreign_kernel.size() && !foreign_ramdisk.size()) {
-    // If there's a kernel that's passed in without an initramfs, that implies
-    // user error or a kernel built with no modules. In either case, let's
-    // choose to avoid loading the modules from the vendor ramdisk which are
-    // built for the default cf kernel. Once boot occurs, user error will
-    // become obvious.
-    tmp_config_obj.set_final_ramdisk_path(ramdisk_path);
-  } else {
-    tmp_config_obj.set_final_ramdisk_path(ramdisk_path + kRamdiskConcatExt);
-    if(foreign_ramdisk.size()) {
-      tmp_config_obj.set_initramfs_path(foreign_ramdisk);
-    }
+  if(foreign_ramdisk.size()) {
+    tmp_config_obj.set_initramfs_path(foreign_ramdisk);
   }
 
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
@@ -583,7 +550,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   }
   tmp_config_obj.set_custom_actions(custom_actions);
 
-  tmp_config_obj.set_use_bootloader(FLAGS_use_bootloader);
   tmp_config_obj.set_bootloader(FLAGS_bootloader);
 
   tmp_config_obj.set_enable_metrics(FLAGS_report_anonymous_usage_stats);
@@ -591,7 +557,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   if (!FLAGS_boot_slot.empty()) {
       tmp_config_obj.set_boot_slot(FLAGS_boot_slot);
   }
-  tmp_config_obj.set_use_slot_suffix(FLAGS_use_slot_suffix);
 
   tmp_config_obj.set_cuttlefish_env_path(GetCuttlefishEnvPath());
 

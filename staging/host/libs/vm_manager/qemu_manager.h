@@ -39,8 +39,7 @@ class QemuManager : public VmManager {
   std::vector<std::string> ConfigureBootDevices(int num_disks) override;
 
   std::vector<cuttlefish::Command> StartCommands(
-      const CuttlefishConfig& config,
-      const std::string& kernel_cmdline) override;
+      const CuttlefishConfig& config) override;
 };
 
 } // namespace vm_manager
