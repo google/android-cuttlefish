@@ -8,10 +8,12 @@ Standards-Version: 4.5.0
 
 Package: cuttlefish-common
 Architecture: any
-Depends: binfmt-support [!amd64],
+Depends: binfmt-support [arm64],
          bridge-utils,
          dnsmasq-base,
          f2fs-tools,
+         grub-efi-arm64-bin [arm64],
+         grub-efi-ia32-bin [!arm64],
          iptables,
          libarchive-tools | bsdtar,
          libdrm2,
@@ -25,8 +27,8 @@ Depends: binfmt-support [!amd64],
          lsb-base,
          net-tools,
          python2.7,
-         qemu-user-static [!amd64],
-         libc6:amd64 [!amd64],
+         qemu-user-static [arm64],
+         libc6:amd64 [arm64],
          ${misc:Depends},
          ${shlibs:Depends}
 Pre-Depends: ${misc:Pre-Depends}
