@@ -1,3 +1,25 @@
+cuttlefish-common (0.9.18) UNRELEASED; urgency=medium
+
+  [ Kyoungwon Stephen Kim ]
+  * Added vsock_guest_cid option and separated port forwarding logic (#80)
+  * cvd_publish_${name} should be sourced in other terminals
+  * ./build.sh can build .deb packages only without building the docker image
+  * default lunch target on amd64 changed to aosp_cf_x86_64_phone-debug from corresponding x86_phone-debug
+  * default cuttlefish host package location changed for setup.sh
+  * Fix setup.sh to credibly find cvd-host_package.tar.gz from default paths
+  * Added -w/--host_network option to propagate --network host to docker run
+  * Revert "Added -w/--host_network option to propagate --network host to docker run"
+  * Update BUILDING.md
+  * Update README.md
+  * Added -v and an option to skip Google Chrome download in docker build
+  * Changed short options and default values for build.sh
+  * Changed comments in utils.sh
+
+  [ A. Cody Schuffelen ]
+  * Enable nested virtualization for cuttlefish-integration.
+
+ -- A. Cody Schuffelen <schuffelen@google.com>  Mon, 08 Mar 2021 18:00:53 -0800
+
 cuttlefish-common (0.9.17) stable; urgency=medium
 
   [ Alistair Delva ]
