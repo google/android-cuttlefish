@@ -93,20 +93,8 @@ std::vector<std::string> BootconfigArgsFromConfig(
   bootconfig_args.push_back(concat("androidboot.lcd_density=", config.dpi()));
   bootconfig_args.push_back(
       concat("androidboot.setupwizard_mode=", config.setupwizard_mode()));
-  if (!config.use_bootloader()) {
-    std::string slot_suffix;
-    if (config.boot_slot().empty()) {
-      slot_suffix = "_a";
-    } else {
-      slot_suffix = "_" + config.boot_slot();
-    }
-    bootconfig_args.push_back(concat("androidboot.slot_suffix=", slot_suffix));
-  }
   if (!config.guest_enforce_security()) {
     bootconfig_args.push_back("androidboot.selinux=permissive");
-  }
-  if (!config.use_bootloader() && config.guest_force_normal_boot()) {
-    bootconfig_args.push_back("androidboot.force_normal_boot=1");
   }
 
   if (instance.tombstone_receiver_port()) {

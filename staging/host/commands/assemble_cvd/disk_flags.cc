@@ -68,7 +68,6 @@ DEFINE_int32(blank_sdcard_image_mb, 2048,
              "If enabled, the size of the blank sdcard image to generate, MB.");
 
 DECLARE_string(bootloader);
-DECLARE_bool(use_bootloader);
 DECLARE_bool(use_sdcard);
 DECLARE_string(initramfs_path);
 DECLARE_string(kernel_path);
@@ -302,23 +301,6 @@ bool ShouldCreateCompositeDisk(const CuttlefishConfig::InstanceSpecific& instanc
   return composite_age < LastUpdatedInputDisk(instance);
 }
 
-static bool ConcatRamdisks(
-    const std::string& new_ramdisk_path,
-    const std::string& ramdisk_a_path,
-    const std::string& ramdisk_b_path) {
-  // clear out file of any pre-existing content
-  std::ofstream new_ramdisk(new_ramdisk_path, std::ios_base::binary | std::ios_base::trunc);
-  std::ifstream ramdisk_a(ramdisk_a_path, std::ios_base::binary);
-  std::ifstream ramdisk_b(ramdisk_b_path, std::ios_base::binary);
-
-  if (!new_ramdisk.is_open() || !ramdisk_a.is_open() || !ramdisk_b.is_open()) {
-    return false;
-  }
-
-  new_ramdisk << ramdisk_a.rdbuf() << ramdisk_b.rdbuf();
-  return true;
-}
-
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
   struct statvfs vfs;
   if (statvfs(path.c_str(), &vfs) != 0) {
@@ -435,8 +417,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   for (auto instance : config->Instances()) {
     const std::string new_vendor_boot_image_path =
         instance.vendor_boot_image_path();
-    if (FLAGS_use_bootloader &&
-        (foreign_kernel.size() || foreign_ramdisk.size())) {
+    if (foreign_kernel.size() || foreign_ramdisk.size()) {
       // Repack the boot images if kernels and/or ramdisks are passed in.
       if (foreign_kernel.size()) {
         CHECK(repack_supported) << "Repacking not supported on Android";
@@ -468,7 +449,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         CHECK(success)
             << "Failed to regenerate the vendor boot image without a ramdisk";
       }
-    } else if (FLAGS_use_bootloader) {
+    } else {
       // Convert the format of the vendor boot image to V4 by repacking it even
       // when the kernel and/or ramdisk is not given. Right now, we do this only
       // for the non-Android scenarios because we can't do the repack on Android
@@ -481,38 +462,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
             BootconfigArgsFromConfig(*config, instance), bootconfig_supported);
         CHECK(success) << "Failed to regenerate the vendor boot image";
       }
-    } else if (!FLAGS_use_bootloader) {
-      // This code path is taken when the virtual device kernel is launched
-      // directly by the hypervisor instead of the bootloader.
-      // This code path takes care of all the ramdisk processing that the
-      // bootloader normally does.
-      bool success;
-      if (!foreign_ramdisk.size()) {
-        const std::string& vendor_ramdisk_path =
-            config->initramfs_path().size()
-                ? config->initramfs_path()
-                : config->vendor_ramdisk_image_path();
-        success =
-            ConcatRamdisks(config->final_ramdisk_path(),
-                           config->ramdisk_image_path(), vendor_ramdisk_path);
-      } else {
-        std::string vendor_ramdisk_repacked_path =
-            config->AssemblyPath("vendor_ramdisk_repacked");
-        RepackVendorRamdisk(
-            config->initramfs_path(), config->vendor_ramdisk_image_path(),
-            vendor_ramdisk_repacked_path, instance.PerInstanceInternalPath(""));
-        success = ConcatRamdisks(config->final_ramdisk_path(),
-                                 config->ramdisk_image_path(),
-                                 vendor_ramdisk_repacked_path);
-      }
-      CHECK(success) << "Failed to concatenate boot ramdisk and vendor ramdisk";
     }
-  }
-
-  if (config->decompress_kernel()) {
-    bool success = DecompressKernel(
-        config->kernel_image_path(), config->decompressed_kernel_image_path());
-    CHECK(success) << "Failed to decompress kernel";
   }
 
   // Create misc if necessary
@@ -572,10 +522,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     }
   }
 
-  if (FLAGS_use_bootloader) {
-    CHECK(FileHasContent(FLAGS_bootloader))
-        << "File not found: " << FLAGS_bootloader;
-  }
+  CHECK(FileHasContent(FLAGS_bootloader)) << "File not found: " << FLAGS_bootloader;
 
   if (!FLAGS_esp.empty()) {
     CHECK(FileHasContent(FLAGS_esp))
