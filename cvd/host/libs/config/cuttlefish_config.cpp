@@ -608,7 +608,12 @@ void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
   (*dictionary_)[kenableHostBluetooth] = enable_host_bluetooth;
 }
 bool CuttlefishConfig::enable_host_bluetooth() const {
+// TODO(b/181203470): Support root-canal for arm64 Host
+#if defined(__BIONIC__)
+  return false;
+#else
   return (*dictionary_)[kenableHostBluetooth].asBool();
+#endif
 }
 
 static constexpr char kEnableMetrics[] = "enable_metrics";
@@ -737,7 +742,13 @@ bool CuttlefishConfig::smt() const {
   return (*dictionary_)[kSmt].asBool();
 }
 
-bool CuttlefishConfig::enable_audio() const { return enable_webrtc(); }
+static constexpr char kEnableAudio[] = "enable_audio";
+void CuttlefishConfig::set_enable_audio(bool enable) {
+  (*dictionary_)[kEnableAudio] = enable;
+}
+bool CuttlefishConfig::enable_audio() const {
+  return (*dictionary_)[kEnableAudio].asBool();
+}
 
 void CuttlefishConfig::set_protected_vm(bool protected_vm) {
   (*dictionary_)[kProtectedVm] = protected_vm;
