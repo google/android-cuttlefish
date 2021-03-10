@@ -42,7 +42,8 @@ func cvdHostPackageFactory() android.Module {
 
 type dependencyTag struct {
 	blueprint.BaseDependencyTag
-	android.InstallAlwaysNeededDependencyTag // to force installation of the deps
+	android.InstallAlwaysNeededDependencyTag // to force installation of both "deps" and manually added dependencies
+	android.PackagingItemAlwaysDepTag  // to force packaging of both "deps" and manually added dependencies
 }
 
 var cvdHostPackageDependencyTag = dependencyTag{}
