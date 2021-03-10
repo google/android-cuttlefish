@@ -18,7 +18,10 @@ cuttlefish-common (0.9.18) UNRELEASED; urgency=medium
   [ A. Cody Schuffelen ]
   * Enable nested virtualization for cuttlefish-integration.
 
- -- A. Cody Schuffelen <schuffelen@google.com>  Mon, 08 Mar 2021 18:00:53 -0800
+  [ Alistair Delva ]
+  * Add grub-efi dependency to cuttlefish-common
+
+ -- Alistair Delva <adelva@google.com>  Tue, 09 Mar 2021 08:01:20 -0800
 
 cuttlefish-common (0.9.17) stable; urgency=medium
 
