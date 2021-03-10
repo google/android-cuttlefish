@@ -65,7 +65,10 @@ int main(int argc, char** argv) {
     while (true) {
       char buf[1024];
       auto read = bt_in->Read(buf, sizeof(buf));
-      if (cuttlefish::WriteAll(sock, buf, read) == -1) {
+      while (cuttlefish::WriteAll(sock, buf, read) == -1) {
+        LOG(ERROR) << "failed to write to socket, retry.";
+        // Wait for the host process to be ready
+        sleep(1);
         openSocket(&sock, FLAGS_hci_port);
       }
     }
@@ -76,6 +79,9 @@ int main(int argc, char** argv) {
       char buf[1024];
       auto read = sock->Read(buf, sizeof(buf));
       if (read == -1) {
+        LOG(ERROR) << "failed to read from socket, retry.";
+        // Wait for the host process to be ready
+        sleep(1);
         openSocket(&sock, FLAGS_hci_port);
         continue;
       }
