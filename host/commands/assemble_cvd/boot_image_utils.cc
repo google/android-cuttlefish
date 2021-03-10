@@ -241,13 +241,19 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   bootconfig_fd->Write(bootconfig.c_str(), bootconfig.size());
   LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
              << ReadFile(instance_internal_dir + "/bootconfig");
-
   std::string vendor_boot_params = ReadFile(build_dir + "/vendor_boot_params");
   auto kernel_cmdline =
       ExtractValue(vendor_boot_params, "vendor command line args: ") +
       (bootconfig_supported
            ? ""
            : " " + android::base::StringReplace(bootconfig, "\n", " ", true));
+  if (!bootconfig_supported) {
+    // "androidboot.hardware" kernel parameter has changed to "hardware" in
+    // bootconfig and needs to be replaced before being used in the kernel
+    // cmdline.
+    kernel_cmdline = android::base::StringReplace(
+        kernel_cmdline, " hardware=", " androidboot.hardware=", true);
+  }
   LOG(DEBUG) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
   auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
