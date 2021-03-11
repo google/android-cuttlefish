@@ -355,11 +355,16 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
 
 static bool IsBootconfigSupported(const std::string& kernel_image_path,
                                   const std::string& build_dir) {
-  const std::string vmlinux_path = build_dir + "/vmlinux";
+  std::string vmlinux_path = build_dir + "/vmlinux";
   const std::string ikconfig_path = build_dir + "/ikconfig";
 
-  CHECK(DecompressKernel(kernel_image_path, vmlinux_path))
-      << "Failed to decompress kernel";
+  // Kernel is always uncompressed on aaarch64
+  if (HostArch() == "aarch64") {
+    vmlinux_path = kernel_image_path;
+  } else {
+    CHECK(DecompressKernel(kernel_image_path, vmlinux_path))
+        << "Failed to decompress kernel";
+  }
 
   Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
   ikconfig_cmd.AddParameter(vmlinux_path);
