@@ -1,0 +1,6 @@
+type bt_vhci_forwarder, domain;
+type bt_vhci_forwarder_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(bt_vhci_forwarder)
+
+allow bt_vhci_forwarder bt_device:chr_file { open read write ioctl};
