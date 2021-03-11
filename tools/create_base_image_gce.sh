@@ -109,6 +109,13 @@ sudo chroot /mnt/image /usr/bin/apt install -y libwayland-server0
 # Clean up the builder's version of resolv.conf
 sudo rm /mnt/image/etc/resolv.conf
 
+# Make sure the image has /var/empty, and allow unprivileged_userns_clone for
+# minijail process sandboxing
+sudo chroot /mnt/image /usr/bin/mkdir -p /var/empty
+sudo tee /mnt/image/etc/sysctl.d/80-nsjail.conf >/dev/null <<EOF
+kernel.unprivileged_userns_clone=1
+EOF
+
 # Skip unmounting:
 #  Sometimes systemd starts, making it hard to unmount
 #  In any case we'll unmount cleanly when the instance shuts down
