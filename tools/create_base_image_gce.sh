@@ -44,6 +44,7 @@ sudo mount /dev/sdb1 /mnt/image
 cp "${debs[@]}" /mnt/image/tmp
 sudo mount -t sysfs none /mnt/image/sys
 sudo mount -t proc none /mnt/image/proc
+sudo mount --bind /boot/efi /mnt/image/boot/efi
 sudo mount --bind /dev/ /mnt/image/dev
 sudo mount --bind /dev/pts /mnt/image/dev/pts
 sudo mount --bind /run /mnt/image/run
