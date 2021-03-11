@@ -1,0 +1,15 @@
+cc_binary {
+    name: "bt_vhci_forwarder",
+    srcs: [
+        "main.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+        "liblog",
+    ],
+    static_libs: [
+        "libgflags",
+    ],
+    defaults: ["cuttlefish_guest_only"]
+}
