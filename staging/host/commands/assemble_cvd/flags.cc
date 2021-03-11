@@ -731,7 +731,7 @@ void SetDefaultFlagsFromConfigPreset() {
 
   // If the user specifies a --config name, then use that config
   // preset option.
-  std::string android_info_path = DefaultGuestImagePath("/android-info.txt");
+  std::string android_info_path = FLAGS_system_image_dir + "/android-info.txt";
   if (IsFlagSet("config")) {
     if (!allowed_config_presets.count(config_preset)) {
       LOG(FATAL) << "Invalid --config option '" << config_preset
