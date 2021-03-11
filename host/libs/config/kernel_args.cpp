@@ -24,13 +24,11 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 namespace cuttlefish {
 
-using vm_manager::CrosvmManager;
 using vm_manager::QemuManager;
 
 namespace {
@@ -100,8 +98,6 @@ std::vector<std::string> KernelCommandLineFromConfig(
   std::vector<std::string> kernel_cmdline;
 
   AppendVector(&kernel_cmdline, VmManagerKernelCmdline(config));
-  auto vmm = vm_manager::GetVmManager(config.vm_manager());
-  AppendVector(&kernel_cmdline, vmm->ConfigureGpuMode(config.gpu_mode()));
 
   if (config.enable_gnss_grpc_proxy()) {
     kernel_cmdline.push_back("gnss_cmdline.serdev=serial8250/serial0/serial0-0");
