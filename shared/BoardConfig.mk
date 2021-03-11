@@ -214,7 +214,6 @@ BOARD_KERNEL_CMDLINE += snd-hda-intel.enable=0
 BOARD_KERNEL_CMDLINE += kfence.sample_interval=500
 
 BOARD_KERNEL_CMDLINE += loop.max_part=7
-BOARD_KERNEL_CMDLINE += bootconfig
 
 # Reduce slab size usage from virtio vsock to reduce slab fragmentation
 BOARD_KERNEL_CMDLINE += \
