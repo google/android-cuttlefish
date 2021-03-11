@@ -49,6 +49,8 @@ on fs
     # works around framework netiface enumeration issue
     start rename_eth1
 
+    start bt_vhci_forwarder
+
     # So GceBootReporter can print to kmsg
     chmod 622 /dev/kmsg
 
@@ -75,6 +77,10 @@ on boot
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_vsock_proxy
+
+service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=/dev/hvc5
+    user bluetooth
+    group bluetooth
 
 service setup_wifi /vendor/bin/setup_wifi
     oneshot

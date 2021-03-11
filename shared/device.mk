@@ -44,6 +44,7 @@ TARGET_VULKAN_SUPPORT ?= true
 # Depends on TARGET_PRODUCT because TARGET_ARCH is not available here.
 ifneq ($(findstring x86,$(TARGET_PRODUCT)),)
 TARGET_ENABLE_HOST_BLUETOOTH_EMULATION ?= true
+TARGET_USE_BTLINUX_HAL_IMPL ?= true
 endif
 
 AB_OTA_UPDATER := true
@@ -153,6 +154,7 @@ PRODUCT_PACKAGES += \
     cuttlefish_rotate \
     rename_netiface \
     setup_wifi \
+    bt_vhci_forwarder \
     socket_vsock_proxy \
     tombstone_transmit \
     tombstone_producer \
@@ -374,9 +376,13 @@ PRODUCT_PACKAGES += \
 #
 
 ifeq ($(TARGET_ENABLE_HOST_BLUETOOTH_EMULATION),true)
-PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.remote
+ifeq ($(TARGET_USE_BTLINUX_HAL_IMPL),true)
+    PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.btlinux
 else
-PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.sim
+    PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.remote
+endif
+else
+    PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.sim
 endif
 PRODUCT_PACKAGES += android.hardware.bluetooth.audio@2.1-impl
 
