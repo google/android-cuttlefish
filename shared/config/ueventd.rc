@@ -24,6 +24,7 @@
 
 # bluetooth
 /dev/hvc5 0660 bluetooth bluetooth
+/dev/vhci 0660 bluetooth bluetooth
 
 /dev/gnss0 0666 system system
 
