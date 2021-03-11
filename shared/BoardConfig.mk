@@ -202,7 +202,7 @@ BOARD_KERNEL_CMDLINE += printk.devkmsg=on
 BOARD_KERNEL_CMDLINE += firmware_class.path=/vendor/etc/
 
 BOARD_KERNEL_CMDLINE += init=/init
-BOARD_BOOTCONFIG += androidboot.hardware=cutf_cvm
+BOARD_BOOTCONFIG += hardware=cutf_cvm
 
 # TODO(b/176860479): Remove once goldfish and cuttlefish share a wifi implementation
 BOARD_KERNEL_CMDLINE += mac80211_hwsim.radios=0
