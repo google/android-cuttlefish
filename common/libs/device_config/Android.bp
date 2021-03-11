@@ -29,6 +29,7 @@ cc_library_shared {
     name: "libcuttlefish_device_config",
     srcs: [
         "device_config.cpp",
+        "device_config_shared.cpp",
     ],
     shared_libs: [
         "libbase",
@@ -59,5 +60,6 @@ cc_library_shared {
             ],
         },
     },
+    export_include_dirs: ["."],
     defaults: ["cuttlefish_host"],
 }
