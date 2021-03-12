@@ -73,9 +73,6 @@ int InstanceFromEnvironment() {
 
 const char* kInstances = "instances";
 
-const char* kSmt = "smt";
-
-const char* kProtectedVm = "protected_vm";
 
 }  // namespace
 
@@ -730,6 +727,7 @@ bool CuttlefishConfig::record_screen() const {
   return (*dictionary_)[kRecordScreen].asBool();
 }
 
+static constexpr char kSmt[] = "smt";
 void CuttlefishConfig::set_smt(bool smt) {
   (*dictionary_)[kSmt] = smt;
 }
@@ -739,6 +737,7 @@ bool CuttlefishConfig::smt() const {
 
 bool CuttlefishConfig::enable_audio() const { return enable_webrtc(); }
 
+static constexpr char kProtectedVm[] = "protected_vm";
 void CuttlefishConfig::set_protected_vm(bool protected_vm) {
   (*dictionary_)[kProtectedVm] = protected_vm;
 }
