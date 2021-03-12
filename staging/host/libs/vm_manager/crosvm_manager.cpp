@@ -252,9 +252,11 @@ std::vector<Command> CrosvmManager::StartCommands(const CuttlefishConfig& config
   crosvm_cmd.AddParameter("--socket=", GetControlSocketPath(config));
 
   if (config.enable_vnc_server() || config.enable_webrtc()) {
-    crosvm_cmd.AddParameter("--single-touch=", instance.touch_socket_path(),
-                            ":", display_config.width,
-                            ":", display_config.height);
+    auto touch_type_parameter =
+        config.enable_webrtc() ? "--multi-touch=" : "--single-touch=";
+    crosvm_cmd.AddParameter(touch_type_parameter, instance.touch_socket_path(),
+                            ":", display_config.width, ":",
+                            display_config.height);
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
   }
 
