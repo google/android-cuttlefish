@@ -1,3 +1,7 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 cc_binary {
     name: "android.hardware.bluetooth@1.1-service.remote",
     defaults: ["cuttlefish_guest_only", "hidl_defaults"],
