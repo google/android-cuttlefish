@@ -40,12 +40,8 @@ TARGET_USERDATAIMAGE_FILE_SYSTEM_TYPE ?= f2fs
 TARGET_USERDATAIMAGE_PARTITION_SIZE ?= 6442450944
 
 TARGET_VULKAN_SUPPORT ?= true
-# TODO(b/181203470) enable it for every target when rootcanal supports arm64 as well.
-# Depends on TARGET_PRODUCT because TARGET_ARCH is not available here.
-ifneq ($(findstring x86,$(TARGET_PRODUCT)),)
 TARGET_ENABLE_HOST_BLUETOOTH_EMULATION ?= true
 TARGET_USE_BTLINUX_HAL_IMPL ?= true
-endif
 
 AB_OTA_UPDATER := true
 AB_OTA_PARTITIONS += \
