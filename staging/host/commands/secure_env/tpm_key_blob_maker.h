@@ -39,6 +39,12 @@ public:
       keymaster::AuthorizationSet* hw_enforced,
       keymaster::AuthorizationSet* sw_enforced) const override;
 
+  keymaster_error_t UnvalidatedCreateKeyBlob(
+      const keymaster::KeymasterKeyBlob& key_material,
+      const keymaster::AuthorizationSet& hw_enforced,
+      const keymaster::AuthorizationSet& sw_enforced,
+      keymaster::KeymasterKeyBlob* blob) const;
+
   /**
    * Intermediate function between KeymasterContext::ParseKeyBlob and
    * KeyFactory::LoadKey, The inputs of this function match the outputs of
