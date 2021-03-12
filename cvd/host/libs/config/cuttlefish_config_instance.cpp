@@ -165,8 +165,8 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path() const {
-  return AbsolutePath(PerInstancePath("os_composite.img"));
+std::string CuttlefishConfig::InstanceSpecific::composite_disk_path() const {
+  return AbsolutePath(PerInstancePath("composite.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
@@ -379,6 +379,29 @@ void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_test_port(
   (*Dictionary())[kRootcanalTestPort] = rootcanal_test_port;
 }
 
+static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
+std::string CuttlefishConfig::InstanceSpecific::rootcanal_config_file() const {
+  return (*Dictionary())[kRootcanalConfigFile].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_config_file(
+    const std::string& rootcanal_config_file) {
+  (*Dictionary())[kRootcanalConfigFile] =
+      DefaultHostArtifactsPath(rootcanal_config_file);
+}
+
+static constexpr char kRootcanalDefaultCommandsFile[] =
+    "rootcanal_default_commands_file";
+std::string
+CuttlefishConfig::InstanceSpecific::rootcanal_default_commands_file() const {
+  return (*Dictionary())[kRootcanalDefaultCommandsFile].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_rootcanal_default_commands_file(
+        const std::string& rootcanal_default_commands_file) {
+  (*Dictionary())[kRootcanalDefaultCommandsFile] =
+      DefaultHostArtifactsPath(rootcanal_default_commands_file);
+}
+
 static constexpr char kWebrtcDeviceId[] = "webrtc_device_id";
 void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
     const std::string& id) {
@@ -402,10 +425,6 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
 
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
-}
-
-std::string CuttlefishConfig::InstanceSpecific::switches_socket_path() const {
-  return PerInstanceInternalPath("switches.sock");
 }
 
 std::string CuttlefishConfig::InstanceSpecific::frames_socket_path() const {
