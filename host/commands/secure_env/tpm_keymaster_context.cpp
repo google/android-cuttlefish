@@ -146,6 +146,7 @@ keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
   keymaster::UniquePtr<keymaster::Key> key;
   auto error = ParseKeyBlob(blob_to_upgrade, upgrade_params, &key);
   if (error != KM_ERROR_OK) {
+    LOG(ERROR) << "Failed to parse key blob";
     return error;
   }
 
@@ -156,30 +157,26 @@ keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
     // from proper numbered releases to unnumbered development and preview
     // releases.
 
-    int key_os_version_pos = key->sw_enforced().find(keymaster::TAG_OS_VERSION);
+    int key_os_version_pos = key->hw_enforced().find(keymaster::TAG_OS_VERSION);
     if (key_os_version_pos != -1) {
-      uint32_t key_os_version = key->sw_enforced()[key_os_version_pos].integer;
+      uint32_t key_os_version = key->hw_enforced()[key_os_version_pos].integer;
       if (key_os_version != 0) {
-        key->sw_enforced()[key_os_version_pos].integer = os_version_;
+        key->hw_enforced()[key_os_version_pos].integer = os_version_;
         set_changed = true;
       }
     }
   }
 
-  auto update_os = UpgradeIntegerTag(
-      keymaster::TAG_OS_VERSION,
-      os_version_,
-      &key->sw_enforced(),
-      &set_changed);
+  auto update_os = UpgradeIntegerTag(keymaster::TAG_OS_VERSION, os_version_,
+                                     &key->hw_enforced(), &set_changed);
 
-  auto update_patchlevel = UpgradeIntegerTag(
-      keymaster::TAG_OS_PATCHLEVEL,
-      os_patchlevel_,
-      &key->sw_enforced(),
-      &set_changed);
+  auto update_patchlevel =
+      UpgradeIntegerTag(keymaster::TAG_OS_PATCHLEVEL, os_patchlevel_,
+                        &key->hw_enforced(), &set_changed);
 
   if (!update_os || !update_patchlevel) {
-    // One of the version fields would have been a downgrade. Not allowed.
+    LOG(ERROR) << "One of the version fields would have been a downgrade. "
+               << "Not allowed.";
     return KM_ERROR_INVALID_ARGUMENT;
   }
 
@@ -188,25 +185,9 @@ keymaster_error_t TpmKeymasterContext::UpgradeKeyBlob(
     return KM_ERROR_OK;
   }
 
-  AuthorizationSet combined_authorization;
-  combined_authorization.Union(key->hw_enforced());
-  combined_authorization.Union(key->sw_enforced());
-
-  keymaster_key_origin_t origin = KM_ORIGIN_UNKNOWN;
-  if (!combined_authorization.GetTagValue(keymaster::TAG_ORIGIN, &origin)) {
-    LOG(WARNING) << "Key converted with unknown origin";
-  }
-
-  AuthorizationSet output_hw_enforced;
-  AuthorizationSet output_sw_enforced;
-
-  return key_blob_maker_->CreateKeyBlob(
-      combined_authorization,
-      origin,
-      key->key_material(),
-      upgraded_key,
-      &output_hw_enforced,
-      &output_sw_enforced);
+  return key_blob_maker_->UnvalidatedCreateKeyBlob(
+      key->key_material(), key->hw_enforced(), key->sw_enforced(),
+      upgraded_key);
 }
 
 keymaster_error_t TpmKeymasterContext::ParseKeyBlob(
