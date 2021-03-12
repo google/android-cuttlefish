@@ -61,6 +61,7 @@ cvd_host_tools = [
     "newfs_msdos",
     "powerwash_cvd",
     "restart_cvd",
+    "root-canal",
     "run_cvd",
     "secure_env",
     "socket_vsock_proxy",
@@ -71,11 +72,6 @@ cvd_host_tools = [
     "vnc_server",
     "webRTC",
     "webrtc_operator",
-]
-
-// TODO(b/181203470): Support root-canal for arm64 Host
-cvd_host_tools_x86_64 = [
-    "root-canal",
 ]
 
 cvd_host_tests = [
@@ -163,7 +159,6 @@ cvd_host_package_customization {
                     deps: cvd_host_seccomp_policy_x86_64,
                 },
             },
-            deps: cvd_host_tools_x86_64,
         },
         arm64: {
             multilib: {
