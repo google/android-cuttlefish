@@ -59,7 +59,7 @@ genfscon sysfs /devices/platform/rtc-test.2/wakeup/wakeup22 u:object_r:sysfs_wak
 
 # qemu (arm64)
 cf_pci_block_device(/devices/platform/4010000000.pcie/pci0000:00, 0x6, 4)
-cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00, 0xf)
+cf_pci_gpu_device(/devices/platform/4010000000.pcie/pci0000:00, 0x10)
 ## find /sys/devices/platform/* -type d -name 'rtc[0-9]' | sed 's,/rtc[0-9],,'
 genfscon sysfs /devices/platform/9010000.pl031/rtc u:object_r:sysfs_rtc:s0
 ## find /sys/devices/platform/* -type d -name 'wakeup[0-9]'
