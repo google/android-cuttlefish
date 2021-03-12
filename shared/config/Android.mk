@@ -22,6 +22,8 @@ include $(CLEAR_VARS)
 # model as that file requires such build target specific fields.
 
 LOCAL_MODULE := wpa_supplicant.vsoc.conf
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_VENDOR)/etc/wifi
