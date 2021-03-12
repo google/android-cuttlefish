@@ -608,12 +608,7 @@ void CuttlefishConfig::set_enable_host_bluetooth(bool enable_host_bluetooth) {
   (*dictionary_)[kenableHostBluetooth] = enable_host_bluetooth;
 }
 bool CuttlefishConfig::enable_host_bluetooth() const {
-// TODO(b/181203470): Support root-canal for arm64 Host
-#if defined(__BIONIC__)
-  return false;
-#else
   return (*dictionary_)[kenableHostBluetooth].asBool();
-#endif
 }
 
 static constexpr char kEnableMetrics[] = "enable_metrics";
