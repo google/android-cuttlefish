@@ -110,6 +110,7 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
   };
   for (auto tag : protected_tags) {
     if (key_description.Contains(tag)) {
+      LOG(ERROR) << "Invalid tag " << tag;
       return KM_ERROR_INVALID_TAG;
     }
   }
@@ -124,10 +125,19 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
   hw_enforced->push_back(keymaster::TAG_OS_VERSION, os_version_);
   hw_enforced->push_back(keymaster::TAG_OS_PATCHLEVEL, os_patchlevel_);
 
+  return UnvalidatedCreateKeyBlob(key_material, *hw_enforced, *sw_enforced,
+                                  blob);
+}
+
+keymaster_error_t TpmKeyBlobMaker::UnvalidatedCreateKeyBlob(
+    const KeymasterKeyBlob& key_material, const AuthorizationSet& hw_enforced,
+    const AuthorizationSet& sw_enforced, KeymasterKeyBlob* blob) const {
   keymaster::Buffer key_material_buffer(
       key_material.key_material, key_material.key_material_size);
+  AuthorizationSet hw_enforced_mutable = hw_enforced;
+  AuthorizationSet sw_enforced_mutable = sw_enforced;
   CompositeSerializable sensitive_material(
-      {&key_material_buffer, hw_enforced, sw_enforced});
+      {&key_material_buffer, &hw_enforced_mutable, &sw_enforced_mutable});
   auto parent_key_fn = ParentKeyCreator(kUniqueKey);
   EncryptedSerializable encryption(
       resource_manager_, parent_key_fn, sensitive_material);
