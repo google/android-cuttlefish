@@ -39,13 +39,7 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/aosp_product.mk)
 $(call inherit-product, device/google/cuttlefish/shared/phone/device_vendor.mk)
 
 # Nested virtualization support
-PRODUCT_PACKAGES += crosvm
-$(call inherit-product, external/crosvm/seccomp/crosvm_seccomp_policy_product_packages.mk)
-PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
-    system/bin/crosvm \
-    system/lib64/libfdt.so \
-    system/lib64/libgfxstream_backend.so \
-    system/lib64/%.dylib.so \
+$(call inherit-product, packages/modules/Virtualization/apex/product_packages.mk)
 
 #
 # Special settings for the target
