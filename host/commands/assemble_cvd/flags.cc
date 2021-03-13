@@ -291,6 +291,9 @@ DEFINE_bool(protected_vm, false, "Boot in Protected VM mode");
 
 DECLARE_string(system_image_dir);
 
+DEFINE_bool(enable_audio, cuttlefish::HostArch() != "aarch64",
+            "Whether to play or capture audio");
+
 namespace cuttlefish {
 using vm_manager::QemuManager;
 using vm_manager::GetVmManager;
@@ -712,6 +715,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   } // end of num_instances loop
 
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
+
+  tmp_config_obj.set_enable_audio(FLAGS_enable_audio);
 
   return tmp_config_obj;
 }
