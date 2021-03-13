@@ -14,6 +14,7 @@ cc_binary {
     ],
     static_libs: [
         "libgflags",
+        "libbt-rootcanal",
     ],
     defaults: ["cuttlefish_guest_only"]
 }
