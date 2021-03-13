@@ -118,23 +118,6 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-static bool DecompressKernel(const std::string& src, const std::string& dst) {
-  Command decomp_cmd(HostBinaryPath("extract-vmlinux"));
-  decomp_cmd.AddParameter(src);
-  std::string current_path = StringFromEnv("PATH", "");
-  std::string bin_folder = DefaultHostArtifactsPath("bin");
-  decomp_cmd.SetEnvironment({"PATH=" + current_path + ":" + bin_folder});
-  auto output_file = SharedFD::Creat(dst.c_str(), 0666);
-  if (!output_file->IsOpen()) {
-    LOG(ERROR) << "Unable to create decompressed image file: "
-               << output_file->StrError();
-    return false;
-  }
-  decomp_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, output_file);
-  auto decomp_proc = decomp_cmd.Start();
-  return decomp_proc.Started() && decomp_proc.Wait() == 0;
-}
-
 // Repacking is not supported on Android. We can't run the unpacking python
 // script on Android.
 #if !defined(__ANDROID__)
@@ -355,19 +338,14 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
 
 static bool IsBootconfigSupported(const std::string& kernel_image_path,
                                   const std::string& build_dir) {
-  std::string vmlinux_path = build_dir + "/vmlinux";
   const std::string ikconfig_path = build_dir + "/ikconfig";
 
-  // Kernel is always uncompressed on aaarch64
-  if (HostArch() == "aarch64") {
-    vmlinux_path = kernel_image_path;
-  } else {
-    CHECK(DecompressKernel(kernel_image_path, vmlinux_path))
-        << "Failed to decompress kernel";
-  }
-
   Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
-  ikconfig_cmd.AddParameter(vmlinux_path);
+  ikconfig_cmd.AddParameter(kernel_image_path);
+
+  std::string current_path = StringFromEnv("PATH", "");
+  std::string bin_folder = DefaultHostArtifactsPath("bin");
+  ikconfig_cmd.SetEnvironment({"PATH=" + current_path + ":" + bin_folder});
 
   auto ikconfig_fd = SharedFD::Creat(ikconfig_path, 0666);
   CHECK(ikconfig_fd->IsOpen())
@@ -376,7 +354,7 @@ static bool IsBootconfigSupported(const std::string& kernel_image_path,
 
   auto ikconfig_proc = ikconfig_cmd.Start();
   CHECK(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0)
-      << "Failed to extract ikconfig from " << vmlinux_path;
+      << "Failed to extract ikconfig from " << kernel_image_path;
 
   return ReadFile(ikconfig_path).find("BOOT_CONFIG=y") != std::string::npos;
 }
