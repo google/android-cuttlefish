@@ -15,6 +15,7 @@
 
 #include <fcntl.h>
 #include <sys/poll.h>
+#include <sys/uio.h>
 #include <termios.h>
 #include <unistd.h>
 #include <iomanip>
@@ -25,7 +26,13 @@
 
 #include "android-base/logging.h"
 
+#include "model/devices/h4_packetizer.h"
+
 // Copied from net/bluetooth/hci.h
+#define HCI_ACLDATA_PKT 0x02
+#define HCI_SCODATA_PKT 0x03
+#define HCI_EVENT_PKT 0x04
+#define HCI_ISODATA_PKT 0x05
 #define HCI_VENDOR_PKT 0xff
 #define HCI_MAX_ACL_SIZE 1024
 #define HCI_MAX_FRAME_SIZE (HCI_MAX_ACL_SIZE + 4)
@@ -36,6 +43,19 @@ constexpr const size_t kBufferSize = (HCI_MAX_FRAME_SIZE + 1) * 2;
 
 constexpr const char* kVhciDev = "/dev/vhci";
 DEFINE_string(virtio_console_dev, "", "virtio-console device path");
+
+ssize_t send(int fd_, uint8_t type, const uint8_t* data, size_t length) {
+  struct iovec iov[] = {{&type, sizeof(type)},
+                        {const_cast<uint8_t*>(data), length}};
+  ssize_t ret = 0;
+  do {
+    ret = TEMP_FAILURE_RETRY(writev(fd_, iov, sizeof(iov) / sizeof(iov[0])));
+  } while (-1 == ret && EAGAIN == errno);
+  if (ret == -1) {
+    PLOG(ERROR) << "virtio-console to vhci failed";
+  }
+  return ret;
+}
 
 ssize_t forward(int from, int to, std::optional<unsigned char> filter_out,
                 unsigned char* buf) {
@@ -89,6 +109,26 @@ int main(int argc, char** argv) {
   fds[1].events = POLLIN;
   unsigned char buf[kBufferSize];
 
+  auto h4 = test_vendor_lib::H4Packetizer(
+      virtio_fd,
+      [](const std::vector<uint8_t>& /* raw_command */) {
+        LOG(ERROR)
+            << "Unexpected command: command pkt shouldn't be sent as response.";
+      },
+      [vhci_fd](const std::vector<uint8_t>& raw_event) {
+        send(vhci_fd, HCI_EVENT_PKT, raw_event.data(), raw_event.size());
+      },
+      [vhci_fd](const std::vector<uint8_t>& raw_acl) {
+        send(vhci_fd, HCI_ACLDATA_PKT, raw_acl.data(), raw_acl.size());
+      },
+      [vhci_fd](const std::vector<uint8_t>& raw_sco) {
+        send(vhci_fd, HCI_SCODATA_PKT, raw_sco.data(), raw_sco.size());
+      },
+      [vhci_fd](const std::vector<uint8_t>& raw_iso) {
+        send(vhci_fd, HCI_ISODATA_PKT, raw_iso.data(), raw_iso.size());
+      },
+      []() { LOG(INFO) << "HCI socket device disconnected"; });
+
   while (true) {
     int ret = TEMP_FAILURE_RETRY(poll(fds, 2, -1));
     if (ret < 0) {
@@ -105,10 +145,9 @@ int main(int argc, char** argv) {
     }
 
     if (fds[1].revents & (POLLIN | POLLERR)) {
-      ssize_t c = forward(virtio_fd, vhci_fd, buf);
-      if (c < 0) {
-        PLOG(ERROR) << "virtio-console to vhci failed";
-      }
+      // 'virtio-console to vhci' depends on H4Packetizer because vhci expects
+      // full packet, but the data from virtio-console could be partial.
+      h4.OnDataReady(virtio_fd);
     }
   }
 }
