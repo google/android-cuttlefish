@@ -229,10 +229,13 @@ int main(int argc, char** argv) {
   }
   streamer->SetHardwareSpec("GPU Mode", user_friendly_gpu_mode);
 
-  auto audio_stream = streamer->AddAudioStream("audio");
-  auto audio_server = CreateAudioServer();
-  auto audio_handler =
-      std::make_shared<AudioHandler>(audio_stream, std::move(audio_server));
+  std::shared_ptr<AudioHandler> audio_handler;
+  if (cvd_config->enable_audio()) {
+    auto audio_stream = streamer->AddAudioStream("audio");
+    auto audio_server = CreateAudioServer();
+    audio_handler =
+        std::make_shared<AudioHandler>(audio_stream, std::move(audio_server));
+  }
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
   std::map<std::string, int> action_server_fds;
@@ -314,7 +317,9 @@ int main(int argc, char** argv) {
     LOG(DEBUG) << "control socket closed";
   });
 
-  audio_handler->Start();
+  if (audio_handler) {
+    audio_handler->Start();
+  }
   display_handler->Loop();
 
   return 0;
