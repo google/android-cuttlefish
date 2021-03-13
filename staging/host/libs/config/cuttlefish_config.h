@@ -307,6 +307,7 @@ class CuttlefishConfig {
   void set_smt(bool smt);
   bool smt() const;
 
+  void set_enable_audio(bool enable);
   bool enable_audio() const;
 
   void set_protected_vm(bool protected_vm);
