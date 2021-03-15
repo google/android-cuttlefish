@@ -735,7 +735,13 @@ bool CuttlefishConfig::smt() const {
   return (*dictionary_)[kSmt].asBool();
 }
 
-bool CuttlefishConfig::enable_audio() const { return enable_webrtc(); }
+static constexpr char kEnableAudio[] = "enable_audio";
+void CuttlefishConfig::set_enable_audio(bool enable) {
+  (*dictionary_)[kEnableAudio] = enable;
+}
+bool CuttlefishConfig::enable_audio() const {
+  return (*dictionary_)[kEnableAudio].asBool();
+}
 
 static constexpr char kProtectedVm[] = "protected_vm";
 void CuttlefishConfig::set_protected_vm(bool protected_vm) {
