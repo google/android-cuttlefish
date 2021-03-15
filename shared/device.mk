@@ -157,7 +157,6 @@ PRODUCT_PACKAGES += \
     suspend_blocker \
     vsoc_input_service \
     vtpm_manager \
-    wpa_supplicant.vsoc.conf \
 
 SOONG_CONFIG_NAMESPACES += cvd
 SOONG_CONFIG_cvd += launch_configs
@@ -589,6 +588,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 # WLAN driver configuration files
 PRODUCT_COPY_FILES += \
+    external/wpa_supplicant_8/wpa_supplicant/wpa_supplicant_template.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
     $(LOCAL_PATH)/config/wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf
 
 # Fastboot HAL & fastbootd
