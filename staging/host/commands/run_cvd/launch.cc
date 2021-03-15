@@ -100,14 +100,7 @@ void CreateStreamerServers(Command* cmd, const CuttlefishConfig& config) {
   }
   cmd->AddParameter("-keyboard_fd=", keyboard_server);
 
-  SharedFD frames_server;
-  if (config.gpu_mode() == kGpuModeDrmVirgl ||
-      config.gpu_mode() == kGpuModeGfxStream) {
-    frames_server = CreateUnixInputServer(instance.frames_socket_path());
-  } else {
-    frames_server = SharedFD::VsockServer(instance.frames_server_port(),
-                                          SOCK_STREAM);
-  }
+  SharedFD frames_server = CreateUnixInputServer(instance.frames_socket_path());
   if (!frames_server->IsOpen()) {
     LOG(ERROR) << "Could not open frames server: " << frames_server->StrError();
     return;

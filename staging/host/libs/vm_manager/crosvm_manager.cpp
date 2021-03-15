@@ -109,7 +109,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
     return {
         "androidboot.cpuvulkan.version=" + std::to_string(VK_API_VERSION_1_1),
         "androidboot.hardware.gralloc=minigbm",
-        "androidboot.hardware.hwcomposer=cutf",
+        "androidboot.hardware.hwcomposer=ranchu",
         "androidboot.hardware.egl=swiftshader",
         "androidboot.hardware.vulkan=pastel",
     };
@@ -235,8 +235,9 @@ std::vector<Command> CrosvmManager::StartCommands(const CuttlefishConfig& config
                             "width=", display_config.width, ",",
                             "height=", display_config.height, ",",
                             "egl=true,surfaceless=true,glx=false,gles=true");
-    crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
   }
+  crosvm_cmd.AddParameter("--wayland-sock=", instance.frames_socket_path());
+
   // crosvm_cmd.AddParameter("--null-audio");
   crosvm_cmd.AddParameter("--mem=", config.memory_mb());
   crosvm_cmd.AddParameter("--cpus=", config.cpus());
