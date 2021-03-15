@@ -716,6 +716,10 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_enable_sandbox(FLAGS_enable_sandbox);
 
+  // Audio is not available for VNC server
+  SetCommandLineOptionWithMode("enable_audio",
+                               FLAGS_start_vnc_server ? "false" : "true",
+                               SET_FLAGS_DEFAULT);
   tmp_config_obj.set_enable_audio(FLAGS_enable_audio);
 
   return tmp_config_obj;
