@@ -64,10 +64,10 @@ class ScreenConnector : public ScreenConnectorInfo {
     auto config = cuttlefish::CuttlefishConfig::Get();
     ScreenConnector<ProcessedFrameType>* raw_ptr = nullptr;
     if (config->gpu_mode() == cuttlefish::kGpuModeDrmVirgl ||
-        config->gpu_mode() == cuttlefish::kGpuModeGfxStream) {
-      raw_ptr = new ScreenConnector<ProcessedFrameType>(std::make_unique<WaylandScreenConnector>(frames_fd));
-    } else if (config->gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
-      raw_ptr = new ScreenConnector<ProcessedFrameType>(std::make_unique<SocketBasedScreenConnector>(frames_fd));
+        config->gpu_mode() == cuttlefish::kGpuModeGfxStream ||
+        config->gpu_mode() == cuttlefish::kGpuModeGuestSwiftshader) {
+      raw_ptr = new ScreenConnector<ProcessedFrameType>(
+          std::make_unique<WaylandScreenConnector>(frames_fd));
     } else {
       LOG(FATAL) << "Invalid gpu mode: " << config->gpu_mode();
     }
