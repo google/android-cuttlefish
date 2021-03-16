@@ -424,6 +424,12 @@ int FetchCvdMain(int argc, char** argv) {
       if (build_api.ArtifactToFile(kernel_build, "bzImage", local_path)) {
         AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build, {local_path},
                          &config, target_dir);
+      }
+      // If the kernel is from an arm/aarch64 build, the artifact will be called
+      // Image.
+      else if (build_api.ArtifactToFile(kernel_build, "Image", local_path)) {
+        AddFilesToConfig(FileSource::KERNEL_BUILD, kernel_build, {local_path},
+                         &config, target_dir);
       } else {
         LOG(FATAL) << "Could not download " << kernel_build << ":bzImage to "
             << local_path;
@@ -452,6 +458,13 @@ int FetchCvdMain(int argc, char** argv) {
 
       std::string local_path = target_dir + "/bootloader";
       if (build_api.ArtifactToFile(bootloader_build, "u-boot.rom", local_path)) {
+        AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build,
+                         {local_path}, &config, target_dir, true);
+      }
+      // If the bootloader is from an arm/aarch64 build, the artifact will be of
+      // filetype bin.
+      else if (build_api.ArtifactToFile(bootloader_build, "u-boot.bin",
+                                        local_path)) {
         AddFilesToConfig(FileSource::BOOTLOADER_BUILD, bootloader_build,
                          {local_path}, &config, target_dir, true);
       } else {
