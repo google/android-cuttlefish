@@ -152,7 +152,8 @@ std::vector<std::string> CrosvmManager::ConfigureBootDevices(int num_disks) {
   }
 }
 
-std::vector<Command> CrosvmManager::StartCommands(const CuttlefishConfig& config) {
+std::vector<Command> CrosvmManager::StartCommands(
+    const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   Command crosvm_cmd(config.crosvm_binary(), [](Subprocess* proc) {
     auto stopped = Stop();

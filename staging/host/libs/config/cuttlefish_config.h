@@ -114,14 +114,8 @@ class CuttlefishConfig {
   std::vector<DisplayConfig> display_configs() const;
   void set_display_configs(const std::vector<DisplayConfig>& display_configs);
 
-  std::string kernel_image_path() const;
-  void set_kernel_image_path(const std::string& kernel_image_path);
-
   std::string gdb_flag() const;
   void set_gdb_flag(const std::string& gdb);
-
-  std::string initramfs_path() const;
-  void set_initramfs_path(const std::string& initramfs_path);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);
@@ -198,10 +192,11 @@ class CuttlefishConfig {
   void set_bootloader(const std::string& bootloader_path);
   std::string bootloader() const;
 
-  // TODO (b/163575714) add virtio console support to the bootloader so the virtio
-  // console path for the console device can be taken again. When that happens, this
-  // function can be deleted along with all the code paths it forces.
-  bool use_bootloader() const {return true;};
+  // TODO (b/163575714) add virtio console support to the bootloader so the
+  // virtio console path for the console device can be taken again. When that
+  // happens, this function can be deleted along with all the code paths it
+  // forces.
+  bool use_bootloader() const { return true; };
 
   void set_boot_slot(const std::string& boot_slot);
   std::string boot_slot() const;
