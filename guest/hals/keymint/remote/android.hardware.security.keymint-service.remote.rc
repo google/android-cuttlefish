@@ -1,0 +1,3 @@
+service vendor.keymint-remote /vendor/bin/hw/android.hardware.security.keymint-service.remote
+    class early_hal
+    user nobody
