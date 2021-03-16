@@ -170,29 +170,12 @@ void CuttlefishConfig::SetPath(const std::string& key,
   }
 }
 
-static constexpr char kKernelImagePath[] = "kernel_image_path";
-std::string CuttlefishConfig::kernel_image_path() const {
-  return (*dictionary_)[kKernelImagePath].asString();
-}
-void CuttlefishConfig::set_kernel_image_path(
-    const std::string& kernel_image_path) {
-  SetPath(kKernelImagePath, kernel_image_path);
-}
-
 static constexpr char kGdbFlag[] = "gdb_flag";
 std::string CuttlefishConfig::gdb_flag() const {
   return (*dictionary_)[kGdbFlag].asString();
 }
 void CuttlefishConfig::set_gdb_flag(const std::string& device) {
   (*dictionary_)[kGdbFlag] = device;
-}
-
-static constexpr char kInitramfsPath[] = "initramfs_path";
-std::string CuttlefishConfig::initramfs_path() const {
-  return (*dictionary_)[kInitramfsPath].asString();
-}
-void CuttlefishConfig::set_initramfs_path(const std::string& initramfs_path) {
-  SetPath(kInitramfsPath, initramfs_path);
 }
 
 static constexpr char kDeprecatedBootCompleted[] = "deprecated_boot_completed";

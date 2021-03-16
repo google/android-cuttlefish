@@ -131,10 +131,7 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
     // two operations, as those will assume they can read the config object from
     // disk.
     auto config = InitializeCuttlefishConfiguration(
-        FLAGS_assembly_dir,
-        FLAGS_instance_dir,
-        FLAGS_modem_simulator_count,
-        fetcher_config);
+        FLAGS_assembly_dir, FLAGS_instance_dir, FLAGS_modem_simulator_count);
     std::set<std::string> preserving;
     if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
       LOG(INFO) << "Requested resuming a previous session (the default behavior) "
