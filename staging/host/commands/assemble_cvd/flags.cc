@@ -23,7 +23,6 @@
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/clean.h"
 #include "host/commands/assemble_cvd/disk_flags.h"
-#include "host/libs/config/fetcher_config.h"
 #include "host/libs/config/host_tools_version.h"
 #include "host/libs/graphics_detector/graphics_detector.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -334,10 +333,8 @@ std::string StrForInstance(const std::string& prefix, int num) {
 } // namespace
 
 CuttlefishConfig InitializeCuttlefishConfiguration(
-    const std::string& assembly_dir,
-    const std::string& instance_dir,
-    int modem_simulator_count,
-    const FetcherConfig& fetcher_config) {
+    const std::string& assembly_dir, const std::string& instance_dir,
+    int modem_simulator_count) {
   // At most one streamer can be started.
   CHECK(NumStreamers() <= 1);
 
@@ -425,17 +422,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
-  std::string discovered_kernel = fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
-  std::string foreign_kernel = FLAGS_kernel_path.size() ? FLAGS_kernel_path : discovered_kernel;
-  if (foreign_kernel.size()) {
-    tmp_config_obj.set_kernel_image_path(foreign_kernel);
-  } else {
-    tmp_config_obj.set_kernel_image_path(
-        tmp_config_obj.AssemblyPath(kKernelDefaultPath.c_str()));
-  }
-
-  std::string discovered_ramdisk = fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
-  std::string foreign_ramdisk = FLAGS_initramfs_path.size () ? FLAGS_initramfs_path : discovered_ramdisk;
 
   tmp_config_obj.set_guest_enforce_security(FLAGS_guest_enforce_security);
   tmp_config_obj.set_guest_audit_security(FLAGS_guest_audit_security);
@@ -447,10 +433,6 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
 
   tmp_config_obj.set_console(FLAGS_console);
   tmp_config_obj.set_kgdb(FLAGS_console && FLAGS_kgdb);
-
-  if(foreign_ramdisk.size()) {
-    tmp_config_obj.set_initramfs_path(foreign_ramdisk);
-  }
 
   tmp_config_obj.set_host_tools_version(HostToolsCrc());
 

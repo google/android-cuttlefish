@@ -128,7 +128,8 @@ std::vector<std::string> QemuManager::ConfigureBootDevices(int num_disks) {
   return {"androidboot.boot_devices=pci0000:00/0000:00:" + stream.str() + ".0"};
 }
 
-std::vector<Command> QemuManager::StartCommands(const CuttlefishConfig& config) {
+std::vector<Command> QemuManager::StartCommands(
+    const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
   auto stop = [](Subprocess* proc) {
