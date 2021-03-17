@@ -49,8 +49,10 @@ DEFINE_int32(blank_data_image_mb, 0,
              "The size of the blank data image to generate, MB.");
 DEFINE_string(blank_data_image_fmt, "f2fs",
               "The fs format for the blank data image. Used with mkfs.");
-DEFINE_string(qemu_gdb, "",
-              "Debug flag to pass to qemu. e.g. -qemu_gdb=tcp::1234");
+DEFINE_int32(gdb_port, 0,
+             "Port number to spawn kernel gdb on e.g. -gdb_port=1234. The"
+             "kernel must have been built with CONFIG_RANDOMIZE_BASE "
+             "disabled.");
 
 DEFINE_int32(x_res, 0, "Width of the screen in pixels");
 DEFINE_int32(y_res, 0, "Height of the screen in pixels");
@@ -419,7 +421,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
   tmp_config_obj.set_secure_hals(
       std::set<std::string>(secure_hals.begin(), secure_hals.end()));
 
-  tmp_config_obj.set_gdb_flag(FLAGS_qemu_gdb);
+  tmp_config_obj.set_gdb_port(FLAGS_gdb_port);
+
   std::vector<std::string> adb = android::base::Split(FLAGS_adb_mode, ",");
   tmp_config_obj.set_adb_mode(std::set<std::string>(adb.begin(), adb.end()));
 
