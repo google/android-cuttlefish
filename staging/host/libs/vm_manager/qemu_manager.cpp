@@ -457,9 +457,10 @@ std::vector<Command> QemuManager::StartCommands(
   qemu_cmd.AddParameter("-bios");
   qemu_cmd.AddParameter(config.bootloader());
 
-  if (config.gdb_flag().size() > 0) {
+  if (config.gdb_port() > 0) {
+    qemu_cmd.AddParameter("-S");
     qemu_cmd.AddParameter("-gdb");
-    qemu_cmd.AddParameter(config.gdb_flag());
+    qemu_cmd.AddParameter("tcp::", config.gdb_port());
   }
 
   LogAndSetEnv("QEMU_AUDIO_DRV", "none");
