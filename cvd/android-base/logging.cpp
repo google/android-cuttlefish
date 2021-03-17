@@ -255,10 +255,13 @@ static void KernelLogLine(const char* msg, int length, android::base::LogSeverit
 
   int level = kLogSeverityToKernelLogLevel[severity];
 
-  // The kernel's printk buffer is only 1024 bytes.
+  // The kernel's printk buffer is only |1024 - PREFIX_MAX| bytes, where
+  // PREFIX_MAX could be 48 or 32.
+  // Reference: kernel/printk/printk.c
   // TODO: should we automatically break up long lines into multiple lines?
   // Or we could log but with something like "..." at the end?
-  char buf[1024] __attribute__((__uninitialized__));
+  static constexpr int LOG_LINE_MAX = 1024 - 48;
+  char buf[LOG_LINE_MAX] __attribute__((__uninitialized__));
   size_t size = snprintf(buf, sizeof(buf), "<%d>%s: %.*s\n", level, tag, length, msg);
   if (size > sizeof(buf)) {
     size = snprintf(buf, sizeof(buf), "<%d>%s: %zu-byte message too long for printk\n",
