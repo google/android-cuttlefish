@@ -56,7 +56,7 @@ class VmManager {
 
   virtual bool IsSupported() = 0;
   virtual std::vector<std::string> ConfigureGpuMode(const std::string&) = 0;
-  virtual std::vector<std::string> ConfigureBootDevices(int num_disks) = 0;
+  virtual std::string ConfigureBootDevices(int num_disks) = 0;
 
   // Starts the VMM. It will usually build a command and pass it to the
   // command_starter function, although it may start more than one. The
