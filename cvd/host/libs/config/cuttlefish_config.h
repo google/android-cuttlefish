@@ -114,8 +114,8 @@ class CuttlefishConfig {
   std::vector<DisplayConfig> display_configs() const;
   void set_display_configs(const std::vector<DisplayConfig>& display_configs);
 
-  std::string gdb_flag() const;
-  void set_gdb_flag(const std::string& gdb);
+  int gdb_port() const;
+  void set_gdb_port(int gdb_port);
 
   bool deprecated_boot_completed() const;
   void set_deprecated_boot_completed(bool deprecated_boot_completed);

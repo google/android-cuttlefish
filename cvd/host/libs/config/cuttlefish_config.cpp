@@ -170,12 +170,12 @@ void CuttlefishConfig::SetPath(const std::string& key,
   }
 }
 
-static constexpr char kGdbFlag[] = "gdb_flag";
-std::string CuttlefishConfig::gdb_flag() const {
-  return (*dictionary_)[kGdbFlag].asString();
+static constexpr char kGdbPort[] = "gdb_port";
+int CuttlefishConfig::gdb_port() const {
+  return (*dictionary_)[kGdbPort].asInt();
 }
-void CuttlefishConfig::set_gdb_flag(const std::string& device) {
-  (*dictionary_)[kGdbFlag] = device;
+void CuttlefishConfig::set_gdb_port(int port) {
+  (*dictionary_)[kGdbPort] = port;
 }
 
 static constexpr char kDeprecatedBootCompleted[] = "deprecated_boot_completed";
