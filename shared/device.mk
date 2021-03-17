@@ -210,6 +210,7 @@ endif
 
 # GL/Vk implementation for gfxstream
 PRODUCT_PACKAGES += \
+    hwcomposer.ranchu \
     libandroidemu \
     libOpenglCodecCommon \
     libOpenglSystemCommon \
