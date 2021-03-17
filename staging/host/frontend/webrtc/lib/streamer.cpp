@@ -151,6 +151,9 @@ Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
 std::unique_ptr<Streamer> Streamer::Create(
     const StreamerConfig& cfg,
     std::shared_ptr<ConnectionObserverFactory> connection_observer_factory) {
+
+  rtc::LogMessage::LogToDebug(rtc::LS_ERROR);
+
   std::unique_ptr<Streamer::Impl> impl(new Streamer::Impl());
   impl->config_ = cfg;
   impl->connection_observer_factory_ = connection_observer_factory;
