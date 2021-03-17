@@ -220,6 +220,11 @@ std::vector<Command> CrosvmManager::StartCommands(
     crosvm_cmd.AddParameter("--protected-vm");
   }
 
+  if (config.gdb_port() > 0) {
+    CHECK(config.cpus() == 1) << "CPUs must be 1 for crosvm gdb mode";
+    crosvm_cmd.AddParameter("--gdb=", config.gdb_port());
+  }
+
   auto display_configs = config.display_configs();
   CHECK_GE(display_configs.size(), 1);
   auto display_config = display_configs[0];
