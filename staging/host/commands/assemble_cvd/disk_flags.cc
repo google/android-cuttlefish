@@ -330,32 +330,6 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
   return true;
 }
 
-static bool IsBootconfigSupported(const std::string& tmp_dir) {
-  const std::string kernel_image_path =
-      FLAGS_kernel_path.size()
-          ? FLAGS_kernel_path
-          : ExtractKernelFromBootImage(FLAGS_boot_image, tmp_dir);
-  const std::string ikconfig_path = tmp_dir + "/ikconfig";
-
-  Command ikconfig_cmd(HostBinaryPath("extract-ikconfig"));
-  ikconfig_cmd.AddParameter(kernel_image_path);
-
-  std::string current_path = StringFromEnv("PATH", "");
-  std::string bin_folder = DefaultHostArtifactsPath("bin");
-  ikconfig_cmd.SetEnvironment({"PATH=" + current_path + ":" + bin_folder});
-
-  auto ikconfig_fd = SharedFD::Creat(ikconfig_path, 0666);
-  CHECK(ikconfig_fd->IsOpen())
-      << "Unable to create ikconfig file: " << ikconfig_fd->StrError();
-  ikconfig_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, ikconfig_fd);
-
-  auto ikconfig_proc = ikconfig_cmd.Start();
-  CHECK(ikconfig_proc.Started() && ikconfig_proc.Wait() == 0)
-      << "Failed to extract ikconfig from " << kernel_image_path;
-
-  return ReadFile(ikconfig_path).find("BOOT_CONFIG=y") != std::string::npos;
-}
-
 const std::string kKernelDefaultPath = "kernel";
 const std::string kInitramfsImg = "initramfs.img";
 static void ExtractKernelParamsFromFetcherConfig(
@@ -391,8 +365,6 @@ static void RepackAllBootImages(const FetcherConfig& fetcher_config,
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
-  const bool bootconfig_supported =
-      IsBootconfigSupported(config->assembly_dir());
   for (auto instance : config->Instances()) {
     const std::string new_vendor_boot_image_path =
         instance.vendor_boot_image_path();
@@ -404,7 +376,8 @@ static void RepackAllBootImages(const FetcherConfig& fetcher_config,
         bool success = RepackVendorBootImage(
             FLAGS_initramfs_path, FLAGS_vendor_boot_image,
             new_vendor_boot_image_path, config->assembly_dir(),
-            instance.instance_dir(), boot_config_vector, bootconfig_supported);
+            instance.instance_dir(), boot_config_vector,
+            config->bootconfig_supported());
         CHECK(success) << "Failed to regenerate the vendor boot image with the "
                           "new ramdisk";
       } else {
@@ -414,7 +387,7 @@ static void RepackAllBootImages(const FetcherConfig& fetcher_config,
         bool success = RepackVendorBootImageWithEmptyRamdisk(
             FLAGS_vendor_boot_image, new_vendor_boot_image_path,
             config->assembly_dir(), instance.instance_dir(), boot_config_vector,
-            bootconfig_supported);
+            config->bootconfig_supported());
         CHECK(success)
             << "Failed to regenerate the vendor boot image without a ramdisk";
       }
@@ -424,7 +397,7 @@ static void RepackAllBootImages(const FetcherConfig& fetcher_config,
       bool success = RepackVendorBootImage(
           std::string(), FLAGS_vendor_boot_image, new_vendor_boot_image_path,
           config->assembly_dir(), instance.instance_dir(), boot_config_vector,
-          bootconfig_supported);
+          config->bootconfig_supported());
       CHECK(success) << "Failed to regenerate the vendor boot image";
     }
   }

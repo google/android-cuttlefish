@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <iostream>
 
+#include <android-base/logging.h>
+
 namespace cuttlefish {
 
 std::string StringFromEnv(const std::string& varname,
@@ -39,7 +41,7 @@ std::string StringFromEnv(const std::string& varname,
  *
  * @return arch string on success, "" on failure
  */
-std::string HostArch() {
+std::string HostArchStr() {
   static std::string arch;
   static bool cached = false;
 
@@ -81,6 +83,29 @@ std::string HostArch() {
   arch.erase(arch.find_last_not_of(whitespace) + 1); // r trim
   arch.erase(0, arch.find_first_not_of(whitespace)); // l trim
   return arch;
+}
+
+Arch HostArch() {
+  std::string arch_str = HostArchStr();
+  if (arch_str == "aarch64") {
+    return Arch::Arm64;
+  } else if (arch_str == "arm") {
+    return Arch::Arm;
+  } else if (arch_str == "x86_64") {
+    return Arch::X86_64;
+  } else if (arch_str.size() == 4 && arch_str[0] == 'i' && arch_str[2] == '8' &&
+             arch_str[3] == '6') {
+    return Arch::X86;
+  } else {
+    LOG(FATAL) << "Unknown host architecture: " << arch_str;
+    return Arch::X86;
+  }
+}
+
+bool IsHostCompatible(Arch arch) {
+  Arch host_arch = HostArch();
+  return arch == host_arch || (arch == Arch::Arm && host_arch == Arch::Arm64) ||
+         (arch == Arch::X86 && host_arch == Arch::X86_64);
 }
 
 static bool IsRunningInDocker() {

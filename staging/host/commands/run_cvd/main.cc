@@ -437,7 +437,7 @@ int RunCvdMain(int argc, char** argv) {
     LOG(ERROR) << "Ethernet TAP device already in use";
   }
 
-  auto vm_manager = GetVmManager(config->vm_manager());
+  auto vm_manager = GetVmManager(config->vm_manager(), config->target_arch());
 
 #ifndef __ANDROID__
   // Check host configuration
