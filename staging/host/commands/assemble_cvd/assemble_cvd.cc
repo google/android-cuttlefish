@@ -147,7 +147,6 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("boot_repacked.img");
       preserving.insert("vendor_boot_repacked.img");
       preserving.insert("access-kregistry");
-      preserving.insert("disk_hole");
       preserving.insert("NVChip");
       preserving.insert("gatekeeper_secure");
       preserving.insert("gatekeeper_insecure");
@@ -173,8 +172,6 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
                   << config.AssemblyPath("assemble_cvd.log")
                   << ": " << log->StrError();
     }
-    std::string disk_hole_dir = FLAGS_assembly_dir + "/disk_hole";
-    CHECK(EnsureDirectoryExists(disk_hole_dir));
     for (const auto& instance : config.Instances()) {
       // Create instance directory if it doesn't exist.
       CHECK(EnsureDirectoryExists(instance.instance_dir()));
