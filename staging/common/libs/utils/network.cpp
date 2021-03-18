@@ -96,7 +96,7 @@ SharedFD OpenTapInterface(const std::string& interface_name) {
     return tap_fd;
   }
 
-  if (HostArch() == "aarch64") {
+  if (HostArch() == Arch::Arm64) {
     auto tapsetiff_path = DefaultHostArtifactsPath("bin/tapsetiff");
     Command cmd(tapsetiff_path);
     cmd.AddParameter(tap_fd);
