@@ -55,9 +55,16 @@ ebtables=${ebtables:-ebtables}
 
 # Start DHCP server on an interface
 # $1 = interface to bind to
-# $2 = listen address (gateway IP)
+# $2 = listen address (IPv4 gateway)
 # $3 = dhcp_range ("a.b.c.d,w.x.y.z")
+# $4 = IPv6 address prefix ("a:b::")
+# $5 = IPv6 address prefix length
 start_dnsmasq() {
+    if [ -n "${4}" -a -n "${5}" ]; then
+        ipv6_args="--dhcp-range=${4},ra-stateless,${5} --enable-ra"
+    else
+        ipv6_args=""
+    fi
     dnsmasq \
       --port=0 \
       --strict-order \
@@ -71,7 +78,9 @@ start_dnsmasq() {
       --conf-file="" \
       --pid-file=/var/run/cuttlefish-dnsmasq-"${1}".pid \
       --dhcp-leasefile=/var/run/cuttlefish-dnsmasq-"${1}".leases \
-      --dhcp-no-override
+      --dhcp-no-override \
+      ${ipv6_args}
+
 }
 
 # Stop DHCP server on an interface
@@ -128,9 +137,11 @@ destroy_mobile_interface() {
 }
 
 # Create many tap devices on a single bridge (wifi or ethernet)
-# $1 = ip address base ("a.b.c")
+# $1 = IPv4 address base ("a.b.c")
 # $2 = bridge interface name
 # $3 = tap base name
+# $4 = IPv6 prefix ("a:b::")
+# $5 = IPv6 prefix length
 create_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         ip link add name "${2}" type bridge forward_delay 0 stp_state 0
@@ -156,8 +167,15 @@ create_bridged_interfaces() {
         netmask="/24"
         network="${1}.0${netmask}"
         dhcp_range="${1}.2,${1}.255"
+        ipv6_prefix="${4}"
+        ipv6_prefix_length="${5}"
         ip addr add "${gateway}${netmask}" broadcast + dev "${2}"
-        start_dnsmasq "${2}" "${gateway}" "${dhcp_range}"
+        if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+            ip -6 addr add "${ipv6_prefix}1/${ipv6_prefix_length}" dev "${2}"
+        fi
+        start_dnsmasq \
+          "${2}" "${gateway}" "${dhcp_range}" \
+          "${ipv6_prefix}" "${ipv6_prefix_length}"
         iptables -t nat -A POSTROUTING -s "${network}" -j MASQUERADE
     fi
 }
@@ -166,13 +184,20 @@ create_bridged_interfaces() {
 # $1 = ip address base ("a.b.c")
 # $2 = bridge interface name
 # $3 = tap base name
+# $4 = IPv6 prefix ("a:b::")
+# $5 = IPv6 prefix length
 destroy_bridged_interfaces() {
     if [ "${create_bridges}" = "1" ]; then
         gateway="${1}.1"
         netmask="/24"
         network="${1}.0${netmask}"
+        ipv6_prefix="${4}"
+        ipv6_prefix_length="${5}"
         iptables -t nat -D POSTROUTING -s "${network}" -j MASQUERADE
         stop_dnsmasq "${2}"
+        if [ -n "${ipv6_prefix}" -a -n "${ipv6_prefix_length}" ]; then
+            ip -6 addr del "${ipv6_prefix}1/${ipv6_prefix_len}" dev "${2}"
+        fi
         ip addr del "${gateway}${netmask}" dev "${2}"
     fi
     for i in $(seq ${num_cvd_accounts}); do
@@ -197,13 +222,18 @@ destroy_bridged_interfaces() {
 
 start() {
     # Enable ip forwarding
-    echo 1 >/proc/sys/net/ipv4/ip_forward
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    echo 1 > /proc/sys/net/ipv6/conf/all/forwarding
 
-    create_bridged_interfaces 192.168.96 ${wifi_bridge_interface} cvd-wtap
+    create_bridged_interfaces \
+      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
+      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
     for i in $(seq ${num_cvd_accounts}); do
         create_mobile_interface $i 192.168.97
     done
-    create_bridged_interfaces 192.168.98 ${ethernet_bridge_interface} cvd-etap
+    create_bridged_interfaces \
+      192.168.98 "${ethernet_bridge_interface}" cvd-etap \
+      "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
 
     # When running inside a privileged container, set the ownership and access
     # of these device nodes.
@@ -221,11 +251,16 @@ start() {
 }
 
 stop() {
-    destroy_bridged_interfaces 192.168.98 ${ethernet_bridge_interface} cvd-etap
+    destroy_bridged_interfaces \
+      192.168.98 "${ethernet_bridge_interface}" cvd-etap \
+      "${ethernet_ipv6_prefix}" "${ethernet_ipv6_prefix_length}"
+
     for i in $(seq ${num_cvd_accounts}); do
         destroy_mobile_interface $i 192.168.97
     done
-    destroy_bridged_interfaces 192.168.96 ${wifi_bridge_interface} cvd-wtap
+    destroy_bridged_interfaces \
+      192.168.96 "${wifi_bridge_interface}" cvd-wtap \
+      "${wifi_ipv6_prefix}" "${wifi_ipv6_prefix_length}"
 }
 
 usage() {
