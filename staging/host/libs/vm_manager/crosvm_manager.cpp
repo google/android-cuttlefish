@@ -138,7 +138,7 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
 
 std::vector<std::string> CrosvmManager::ConfigureBootDevices(int num_disks) {
   // TODO There is no way to control this assignment with crosvm (yet)
-  if (HostArch() == "x86_64") {
+  if (HostArch() == Arch::X86_64) {
     // crosvm has an additional PCI device for an ISA bridge
     std::stringstream stream;
     stream << std::setfill('0') << std::setw(2) << std::hex

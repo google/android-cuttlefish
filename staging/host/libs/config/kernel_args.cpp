@@ -46,7 +46,8 @@ std::vector<std::string> VmManagerKernelCmdline(const CuttlefishConfig& config) 
     // crosvm sets up the console= earlycon= panic= flags for us if booting straight to
     // the kernel, but QEMU and the bootloader via crosvm does not.
     AppendVector(&vm_manager_cmdline, {"console=hvc0", "panic=-1"});
-    if (HostArch() == "aarch64") {
+    Arch target_arch = config.target_arch();
+    if (target_arch == Arch::Arm64 || target_arch == Arch::Arm) {
       if (config.vm_manager() == QemuManager::name()) {
         // To update the pl011 address:
         // $ qemu-system-aarch64 -machine virt -cpu cortex-a57 -machine dumpdtb=virt.dtb
