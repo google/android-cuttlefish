@@ -319,6 +319,15 @@ SharedFD SharedFD::Socket(int domain, int socket_type, int protocol) {
   }
 }
 
+SharedFD SharedFD::Mkstemp(std::string* path) {
+  int fd = mkstemp(path->data());
+  if (fd == -1) {
+    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, errno)));
+  } else {
+    return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(fd, 0)));
+  }
+}
+
 SharedFD SharedFD::ErrorFD(int error) {
   return SharedFD(std::shared_ptr<FileInstance>(new FileInstance(-1, error)));
 }

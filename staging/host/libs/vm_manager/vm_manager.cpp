@@ -27,12 +27,12 @@
 namespace cuttlefish {
 namespace vm_manager {
 
-std::unique_ptr<VmManager> GetVmManager(const std::string& name) {
+std::unique_ptr<VmManager> GetVmManager(const std::string& name, Arch arch) {
   std::unique_ptr<VmManager> vmm;
   if (name == QemuManager::name()) {
-    vmm.reset(new QemuManager());
+    vmm.reset(new QemuManager(arch));
   } else if (name == CrosvmManager::name()) {
-    vmm.reset(new CrosvmManager());
+    vmm.reset(new CrosvmManager(arch));
   }
   if (!vmm) {
     LOG(ERROR) << "Invalid VM manager: " << name;

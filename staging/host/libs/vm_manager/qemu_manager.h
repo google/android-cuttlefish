@@ -31,7 +31,7 @@ class QemuManager : public VmManager {
  public:
   static std::string name() { return "qemu_cli"; }
 
-  QemuManager() = default;
+  QemuManager(Arch arch) : VmManager(arch) {}
   virtual ~QemuManager() = default;
 
   bool IsSupported() override;
