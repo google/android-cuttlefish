@@ -30,6 +30,8 @@ struct InputSockets {
   cuttlefish::SharedFD touch_client;
   cuttlefish::SharedFD keyboard_server;
   cuttlefish::SharedFD keyboard_client;
+  cuttlefish::SharedFD switches_server;
+  cuttlefish::SharedFD switches_client;
 };
 
 class CfConnectionObserverFactory
