@@ -179,14 +179,6 @@ bool UnpackVendorBootImageIfNotUnpacked(
 
 }  // namespace
 
-std::string ExtractKernelFromBootImage(const std::string& boot_image_path,
-                                       const std::string& unpack_dir) {
-  if (UnpackBootImage(boot_image_path, unpack_dir)) {
-    return unpack_dir + "/kernel";
-  } else {
-    return "";
-  }
-}
 bool RepackBootImage(const std::string& new_kernel_path,
                      const std::string& boot_image_path,
                      const std::string& new_boot_image_path,

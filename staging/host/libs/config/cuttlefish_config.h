@@ -25,6 +25,7 @@
 #include <set>
 #include <vector>
 
+#include "common/libs/utils/environment.h"
 #include "host/libs/config/custom_actions.h"
 
 namespace Json {
@@ -132,8 +133,8 @@ class CuttlefishConfig {
   void set_setupwizard_mode(const std::string& title);
   std::string setupwizard_mode() const;
 
-  void set_qemu_binary(const std::string& qemu_binary);
-  std::string qemu_binary() const;
+  void set_qemu_binary_dir(const std::string& qemu_binary_dir);
+  std::string qemu_binary_dir() const;
 
   void set_crosvm_binary(const std::string& crosvm_binary);
   std::string crosvm_binary() const;
@@ -307,6 +308,12 @@ class CuttlefishConfig {
 
   void set_protected_vm(bool protected_vm);
   bool protected_vm() const;
+
+  void set_target_arch(Arch target_arch);
+  Arch target_arch() const;
+
+  void set_bootconfig_supported(bool bootconfig_supported);
+  bool bootconfig_supported() const;
 
   class InstanceSpecific;
   class MutableInstanceSpecific;

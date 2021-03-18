@@ -62,7 +62,7 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
 
   env << "bootcmd=boot_android virtio -" << '\0';
   if (FLAGS_vm_manager == CrosvmManager::name() &&
-          HostArch() == "aarch64") {
+      config.target_arch() == Arch::Arm64) {
     env << "fdtaddr=0x80000000" << '\0';
   } else {
     env << "fdtaddr=0x40000000" << '\0';
