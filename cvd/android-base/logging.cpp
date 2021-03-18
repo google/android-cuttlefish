@@ -32,6 +32,10 @@
 #include <errno.h>
 #endif
 
+#if defined(__linux__)
+#include <sys/uio.h>
+#endif
+
 #include <atomic>
 #include <iostream>
 #include <limits>
@@ -254,19 +258,20 @@ static void KernelLogLine(const char* msg, int length, android::base::LogSeverit
   // The kernel's printk buffer is only |1024 - PREFIX_MAX| bytes, where
   // PREFIX_MAX could be 48 or 32.
   // Reference: kernel/printk/printk.c
+  // TODO: should we automatically break up long lines into multiple lines?
+  // Or we could log but with something like "..." at the end?
   static constexpr int LOG_LINE_MAX = 1024 - 48;
   char buf[LOG_LINE_MAX] __attribute__((__uninitialized__));
   size_t size = snprintf(buf, sizeof(buf), "<%d>%s: %.*s\n", level, tag, length, msg);
-  TEMP_FAILURE_RETRY(write(klog_fd, buf, std::min(size, sizeof(buf))));
-
   if (size > sizeof(buf)) {
-    size_t truncated = size - sizeof(buf);
-    size = snprintf(
-        buf, sizeof(buf),
-        "<%d>%s: **previous message missing %zu bytes** %zu-byte message too long for printk\n",
-        level, tag, truncated, size);
-    TEMP_FAILURE_RETRY(write(klog_fd, buf, std::min(size, sizeof(buf))));
+    size = snprintf(buf, sizeof(buf), "<%d>%s: %zu-byte message too long for printk\n",
+                    level, tag, size);
   }
+
+  iovec iov[1];
+  iov[0].iov_base = buf;
+  iov[0].iov_len = size;
+  TEMP_FAILURE_RETRY(writev(klog_fd, iov, 1));
 }
 
 void KernelLogger(android::base::LogId, android::base::LogSeverity severity, const char* tag,
