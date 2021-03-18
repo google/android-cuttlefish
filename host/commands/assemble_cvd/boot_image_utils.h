@@ -19,8 +19,6 @@
 #include <vector>
 
 namespace cuttlefish {
-std::string ExtractKernelFromBootImage(const std::string& boot_image_path,
-                                       const std::string& unpack_dir);
 bool RepackBootImage(const std::string& new_kernel_path,
                      const std::string& boot_image_path,
                      const std::string& new_boot_image_path,
