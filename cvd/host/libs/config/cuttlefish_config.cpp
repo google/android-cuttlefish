@@ -259,12 +259,12 @@ void CuttlefishConfig::set_setupwizard_mode(const std::string& mode) {
   (*dictionary_)[kSetupWizardMode] = mode;
 }
 
-static constexpr char kQemuBinary[] = "qemu_binary";
-std::string CuttlefishConfig::qemu_binary() const {
-  return (*dictionary_)[kQemuBinary].asString();
+static constexpr char kQemuBinaryDir[] = "qemu_binary_dir";
+std::string CuttlefishConfig::qemu_binary_dir() const {
+  return (*dictionary_)[kQemuBinaryDir].asString();
 }
-void CuttlefishConfig::set_qemu_binary(const std::string& qemu_binary) {
-  (*dictionary_)[kQemuBinary] = qemu_binary;
+void CuttlefishConfig::set_qemu_binary_dir(const std::string& qemu_binary_dir) {
+  (*dictionary_)[kQemuBinaryDir] = qemu_binary_dir;
 }
 
 static constexpr char kCrosvmBinary[] = "crosvm_binary";
@@ -676,7 +676,8 @@ std::string CuttlefishConfig::console_dev() const {
     console_dev = "hvc1";
   } else {
     // crosvm ARM does not support ttyAMA. ttyAMA is a part of ARM arch.
-    if (HostArch() == "aarch64" &&
+    Arch target = target_arch();
+    if ((target == Arch::Arm64 || target == Arch::Arm) &&
         vm_manager() != vm_manager::CrosvmManager::name()) {
       console_dev = "ttyAMA0";
     } else {
@@ -732,6 +733,22 @@ void CuttlefishConfig::set_protected_vm(bool protected_vm) {
 }
 bool CuttlefishConfig::protected_vm() const {
   return (*dictionary_)[kProtectedVm].asBool();
+}
+
+static constexpr char kTargetArch[] = "target_arch";
+void CuttlefishConfig::set_target_arch(Arch target_arch) {
+  (*dictionary_)[kTargetArch] = static_cast<int>(target_arch);
+}
+Arch CuttlefishConfig::target_arch() const {
+  return static_cast<Arch>((*dictionary_)[kTargetArch].asInt());
+}
+
+static constexpr char kBootconfigSupported[] = "bootconfig_supported";
+bool CuttlefishConfig::bootconfig_supported() const {
+  return (*dictionary_)[kBootconfigSupported].asBool();
+}
+void CuttlefishConfig::set_bootconfig_supported(bool bootconfig_supported) {
+  (*dictionary_)[kBootconfigSupported] = bootconfig_supported;
 }
 
 // Creates the (initially empty) config object and populates it with values from
