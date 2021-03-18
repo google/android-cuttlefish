@@ -50,9 +50,6 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
   if (!config.boot_slot().empty()) {
       env << "android_slot_suffix=_" << config.boot_slot() << '\0';
   }
-  // Points to the misc partition.
-  // Note that the 0 index points to the GPT table.
-  env << "bootdevice=0:2" << '\0';
 
   if(FLAGS_pause_in_bootloader) {
     env << "bootdelay=-1" << '\0';
@@ -60,7 +57,8 @@ size_t WriteEnvironment(const CuttlefishConfig& config,
     env << "bootdelay=0" << '\0';
   }
 
-  env << "bootcmd=boot_android virtio -" << '\0';
+  // Note that the 0 index points to the GPT table.
+  env << "bootcmd=boot_android virtio 0#misc" << '\0';
   if (FLAGS_vm_manager == CrosvmManager::name() &&
       config.target_arch() == Arch::Arm64) {
     env << "fdtaddr=0x80000000" << '\0';
