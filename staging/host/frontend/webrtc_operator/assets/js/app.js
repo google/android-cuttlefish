@@ -306,7 +306,8 @@ function ConnectToDevice(device_id) {
     let dpi = display.dpi;
     let x_res = display.x_res;
     let y_res = display.y_res;
-    displayDetailsText = `Display - ${x_res}x${y_res} (${dpi}DPI)`;
+    let rotated = currentRotation == 1 ? ' (Rotated)' : '';
+    displayDetailsText = `Display - ${x_res}x${y_res} (${dpi}DPI)${rotated}`;
     updateDeviceDetailsText();
   }
 
