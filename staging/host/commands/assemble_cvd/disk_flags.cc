@@ -118,7 +118,7 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-std::vector<ImagePartition> disk_config(
+std::vector<ImagePartition> os_composite_disk_config(
     const CuttlefishConfig::InstanceSpecific& instance) {
   std::vector<ImagePartition> partitions;
 
@@ -201,9 +201,9 @@ std::vector<ImagePartition> disk_config(
 }
 
 static std::chrono::system_clock::time_point LastUpdatedInputDisk(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+    const std::vector<ImagePartition>& partitions) {
   std::chrono::system_clock::time_point ret;
-  for (auto& partition : disk_config(instance)) {
+  for (auto& partition : partitions) {
     auto partition_mod_time = FileModificationTime(partition.image_file_path);
     if (partition_mod_time > ret) {
       ret = partition_mod_time;
@@ -214,7 +214,8 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk(
 
 bool ShouldCreateAllCompositeDisks(const CuttlefishConfig& config) {
   std::chrono::system_clock::time_point youngest_disk_img;
-  for (auto& partition : disk_config(config.ForDefaultInstance())) {
+  for (auto& partition :
+       os_composite_disk_config(config.ForDefaultInstance())) {
     if (partition.label == "uboot_env") {
       continue;
     }
@@ -228,10 +229,11 @@ bool ShouldCreateAllCompositeDisks(const CuttlefishConfig& config) {
   // If the youngest partition img is younger than any composite disk, this fact implies that
   // the composite disks are all out of date and need to be reinitialized.
   for (auto& instance : config.Instances()) {
-    if (!FileExists(instance.composite_disk_path())) {
+    if (!FileExists(instance.os_composite_disk_path())) {
       continue;
     }
-    if (youngest_disk_img > FileModificationTime(instance.composite_disk_path())) {
+    if (youngest_disk_img >
+        FileModificationTime(instance.os_composite_disk_path())) {
       return true;
     }
   }
@@ -240,11 +242,11 @@ bool ShouldCreateAllCompositeDisks(const CuttlefishConfig& config) {
 }
 
 bool DoesCompositeMatchCurrentDiskConfig(
-    const CuttlefishConfig::InstanceSpecific& instance) {
-  std::string prior_disk_config_path = instance.PerInstancePath("disk_config.txt");
-  std::string current_disk_config_path = instance.PerInstancePath("disk_config.txt.tmp");
+    const std::string& prior_disk_config_path,
+    const std::vector<ImagePartition>& partitions) {
+  std::string current_disk_config_path = prior_disk_config_path + ".tmp";
   std::ostringstream disk_conf;
-  for (auto& partition : disk_config(instance)) {
+  for (auto& partition : partitions) {
     disk_conf << partition.image_file_path << "\n";
   }
 
@@ -269,13 +271,14 @@ bool DoesCompositeMatchCurrentDiskConfig(
   }
 }
 
-bool ShouldCreateCompositeDisk(const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!FileExists(instance.composite_disk_path())) {
+bool ShouldCreateCompositeDisk(const std::string& composite_disk_path,
+                               const std::vector<ImagePartition>& partitions) {
+  if (!FileExists(composite_disk_path)) {
     return true;
   }
 
-  auto composite_age = FileModificationTime(instance.composite_disk_path());
-  return composite_age < LastUpdatedInputDisk(instance);
+  auto composite_age = FileModificationTime(composite_disk_path);
+  return composite_age < LastUpdatedInputDisk(partitions);
 }
 
 static uint64_t AvailableSpaceAtPath(const std::string& path) {
@@ -292,9 +295,11 @@ static uint64_t AvailableSpaceAtPath(const std::string& path) {
 
 bool CreateCompositeDisk(const CuttlefishConfig& config,
                          const CuttlefishConfig::InstanceSpecific& instance) {
-  if (!SharedFD::Open(instance.composite_disk_path().c_str(),
-                                  O_WRONLY | O_CREAT, 0644)->IsOpen()) {
-    LOG(ERROR) << "Could not ensure " << instance.composite_disk_path() << " exists";
+  if (!SharedFD::Open(instance.os_composite_disk_path().c_str(),
+                      O_WRONLY | O_CREAT, 0644)
+           ->IsOpen()) {
+    LOG(ERROR) << "Could not ensure " << instance.os_composite_disk_path()
+               << " exists";
     return false;
   }
   if (config.vm_manager() == CrosvmManager::name()) {
@@ -318,14 +323,17 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
       LOG(DEBUG) << "Disk size of \"" << FLAGS_data_image << "\": "
                  << existing_sizes.disk_size;
     }
-    std::string header_path = instance.PerInstancePath("gpt_header.img");
-    std::string footer_path = instance.PerInstancePath("gpt_footer.img");
-    CreateCompositeDisk(disk_config(instance), header_path, footer_path,
-                        instance.composite_disk_path());
+    std::string header_path =
+        instance.PerInstancePath("composite_gpt_header.img");
+    std::string footer_path =
+        instance.PerInstancePath("composite_gpt_footer.img");
+    CreateCompositeDisk(os_composite_disk_config(instance), header_path,
+                        footer_path, instance.os_composite_disk_path());
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(disk_config(instance), instance.composite_disk_path());
+    AggregateImage(os_composite_disk_config(instance),
+                   instance.os_composite_disk_path());
   }
   return true;
 }
@@ -479,8 +487,11 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   bool newDataImage = dataImageResult == DataImageResult::FileUpdated;
 
   for (auto instance : config->Instances()) {
-    bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(instance);
-    bool oldCompositeDisk = ShouldCreateCompositeDisk(instance);
+    bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
+        instance.PerInstancePath("os_composite_disk_config.txt"),
+        os_composite_disk_config(instance));
+    bool oldCompositeDisk = ShouldCreateCompositeDisk(
+        instance.os_composite_disk_path(), os_composite_disk_config(instance));
     if (!compositeMatchesDiskConfig || oldCompositeDisk || !FLAGS_resume || newDataImage) {
       if (FLAGS_resume) {
         LOG(INFO) << "Requested to continue an existing session, (the default) "
@@ -503,10 +514,11 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
     for (auto instance : config->Instances()) {
       auto overlay_path = instance.PerInstancePath("overlay.img");
       bool missingOverlay = !FileExists(overlay_path);
-      bool newOverlay = FileModificationTime(overlay_path)
-          < FileModificationTime(instance.composite_disk_path());
+      bool newOverlay = FileModificationTime(overlay_path) <
+                        FileModificationTime(instance.os_composite_disk_path());
       if (!missingOverlay || !FLAGS_resume || newOverlay) {
-        CreateQcowOverlay(config->crosvm_binary(), instance.composite_disk_path(), overlay_path);
+        CreateQcowOverlay(config->crosvm_binary(),
+                          instance.os_composite_disk_path(), overlay_path);
       }
     }
   }

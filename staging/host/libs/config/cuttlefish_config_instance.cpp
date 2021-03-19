@@ -165,8 +165,8 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::composite_disk_path() const {
-  return AbsolutePath(PerInstancePath("composite.img"));
+std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path() const {
+  return AbsolutePath(PerInstancePath("os_composite.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
