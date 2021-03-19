@@ -264,6 +264,7 @@ std::vector<Command> CrosvmManager::StartCommands(
                             ":", display_config.width, ":",
                             display_config.height);
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
+    crosvm_cmd.AddParameter("--switches=", instance.switches_socket_path());
   }
 
   auto wifi_tap = AddTapFdParameter(&crosvm_cmd, instance.wifi_tap_name());
