@@ -194,6 +194,19 @@ class ConnectionObserverImpl
                          buffer->size());
   }
 
+  void OnSwitchEvent(uint16_t code, bool state) override {
+    auto buffer = GetEventBuffer();
+    if (!buffer) {
+      LOG(ERROR) << "Failed to allocate event buffer";
+      return;
+    }
+    buffer->AddEvent(EV_SW, code, state);
+    buffer->AddEvent(EV_SYN, SYN_REPORT, 0);
+    cuttlefish::WriteAll(input_sockets_.switches_client,
+                         reinterpret_cast<const char *>(buffer->data()),
+                         buffer->size());
+  }
+
   void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
                             adb_message_sender) override {
     LOG(VERBOSE) << "Adb Channel open";
