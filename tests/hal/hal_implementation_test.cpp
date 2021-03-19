@@ -126,6 +126,7 @@ static const std::set<std::string> kKnownMissingAidl = {
     "android.automotive.computepipe.runner.",
     "android.automotive.watchdog.",
     "android.frameworks.automotive.powerpolicy.",
+    "android.frameworks.automotive.telemetry.",
     "android.hardware.automotive.audiocontrol.",
     "android.hardware.automotive.occupant_awareness.",
 };
