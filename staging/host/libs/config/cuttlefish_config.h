@@ -395,6 +395,7 @@ class CuttlefishConfig {
 
     std::string touch_socket_path() const;
     std::string keyboard_socket_path() const;
+    std::string switches_socket_path() const;
     std::string frames_socket_path() const;
 
     std::string access_kregistry_path() const;

@@ -41,6 +41,7 @@
 
 DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
 DEFINE_int32(keyboard_fd, -1, "An fd to listen on for keyboard connections.");
+DEFINE_int32(switches_fd, -1, "An fd to listen on for switch connections.");
 DEFINE_int32(frame_server_fd, -1, "An fd to listen on for frame updates");
 DEFINE_int32(kernel_log_events_fd, -1,
              "An fd to listen on for kernel log events.");
@@ -129,9 +130,11 @@ int main(int argc, char** argv) {
 
   input_sockets.touch_server = cuttlefish::SharedFD::Dup(FLAGS_touch_fd);
   input_sockets.keyboard_server = cuttlefish::SharedFD::Dup(FLAGS_keyboard_fd);
+  input_sockets.switches_server = cuttlefish::SharedFD::Dup(FLAGS_switches_fd);
   auto control_socket = cuttlefish::SharedFD::Dup(FLAGS_command_fd);
   close(FLAGS_touch_fd);
   close(FLAGS_keyboard_fd);
+  close(FLAGS_switches_fd);
   close(FLAGS_command_fd);
   // Accepting on these sockets here means the device won't register with the
   // operator as soon as it could, but rather wait until crosvm's input display
@@ -142,6 +145,8 @@ int main(int argc, char** argv) {
       cuttlefish::SharedFD::Accept(*input_sockets.touch_server);
   input_sockets.keyboard_client =
       cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
+  input_sockets.switches_client =
+      cuttlefish::SharedFD::Accept(*input_sockets.switches_server);
 
   std::thread touch_accepter([&input_sockets]() {
     for (;;) {
@@ -153,6 +158,12 @@ int main(int argc, char** argv) {
     for (;;) {
       input_sockets.keyboard_client =
           cuttlefish::SharedFD::Accept(*input_sockets.keyboard_server);
+    }
+  });
+  std::thread switches_accepter([&input_sockets]() {
+    for (;;) {
+      input_sockets.switches_client =
+          cuttlefish::SharedFD::Accept(*input_sockets.switches_server);
     }
   });
 
