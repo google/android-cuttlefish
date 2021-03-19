@@ -51,6 +51,7 @@ cvd_host_tools = [
     "kernel_log_monitor",
     "launch_cvd",
     "libgrpc++",
+    "libgrpc++_unsecure",
     "log_tee",
     "logcat_receiver",
     "lpmake",
