@@ -301,9 +301,6 @@ using vm_manager::GetVmManager;
 
 namespace {
 
-const std::string kKernelDefaultPath = "kernel";
-const std::string kInitramfsImg = "initramfs.img";
-
 bool IsFlagSet(const std::string& flag) {
   return !gflags::GetCommandLineFlagInfoOrDie(flag.c_str()).is_default;
 }
@@ -333,6 +330,10 @@ std::string StrForInstance(const std::string& prefix, int num) {
 }
 
 void ReadKernelConfig(KernelConfig* kernel_config) {
+  // extract-ikconfig can be called directly on the boot image since it looks
+  // for the ikconfig header in the image before extracting the config list.
+  // This code is liable to break if the boot image ever includes the
+  // ikconfig header outside the kernel.
   const std::string kernel_image_path =
       FLAGS_kernel_path.size() ? FLAGS_kernel_path : FLAGS_boot_image;
 
