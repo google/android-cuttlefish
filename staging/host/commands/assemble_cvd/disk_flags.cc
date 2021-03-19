@@ -516,7 +516,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       bool missingOverlay = !FileExists(overlay_path);
       bool newOverlay = FileModificationTime(overlay_path) <
                         FileModificationTime(instance.os_composite_disk_path());
-      if (!missingOverlay || !FLAGS_resume || newOverlay) {
+      if (missingOverlay || !FLAGS_resume || newOverlay) {
         CreateQcowOverlay(config->crosvm_binary(),
                           instance.os_composite_disk_path(), overlay_path);
       }
