@@ -120,7 +120,7 @@ std::vector<std::string> QemuManager::ConfigureGpuMode(
   return {};
 }
 
-std::vector<std::string> QemuManager::ConfigureBootDevices(int num_disks) {
+std::string QemuManager::ConfigureBootDevices(int num_disks) {
   switch (arch_) {
     case Arch::X86:
     case Arch::X86_64: {
@@ -129,13 +129,13 @@ std::vector<std::string> QemuManager::ConfigureBootDevices(int num_disks) {
       stream << std::setfill('0') << std::setw(2) << std::hex
              << 2 + VmManager::kDefaultNumHvcs + VmManager::kMaxDisks -
                     num_disks;
-      return {"androidboot.boot_devices=pci0000:00/0000:00:" + stream.str() +
-              ".0"};
+      return "androidboot.boot_devices=pci0000:00/0000:00:" + stream.str() +
+             ".0";
     }
     case Arch::Arm:
-      return {"androidboot.boot_devices=3f000000.pcie"};
+      return "androidboot.boot_devices=3f000000.pcie";
     case Arch::Arm64:
-      return {"androidboot.boot_devices=4010000000.pcie"};
+      return "androidboot.boot_devices=4010000000.pcie";
   }
 }
 
