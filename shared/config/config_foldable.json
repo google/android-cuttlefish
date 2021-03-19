@@ -5,7 +5,7 @@
 	"memory_mb" : 4096,
 	"custom_actions" : [
 		{
-			"shell_command":"cmd device_state state | grep 2 && cmd device_state state 0 || cmd device_state state 2",
+			"shell_command":"dumpsys device_state | grep mCommittedState | grep OPENED && cmd device_state state 0 || cmd device_state state 2",
 			"button":{
 				"command":"fold",
 				"title":"Fold/Unfold",

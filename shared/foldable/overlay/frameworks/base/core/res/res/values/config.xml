@@ -23,7 +23,7 @@
   <!-- The device states (supplied by DeviceStateManager) that should be treated as folded by the
        display fold controller. -->
   <integer-array name="config_foldedDeviceStates" translatable="false">
-    <item>2</item> <!-- CLOSED -->
+    <item>0</item> <!-- CLOSED -->
   </integer-array>
   <!-- Controls whether the device support multi window modes like split-screen. -->
   <bool name="config_supportsMultiWindow">true</bool>
