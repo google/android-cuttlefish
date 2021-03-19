@@ -74,6 +74,7 @@ SharedFD CreateUnixInputServer(const std::string& path) {
 void CreateStreamerServers(Command* cmd, const CuttlefishConfig& config) {
   SharedFD touch_server;
   SharedFD keyboard_server;
+  SharedFD switches_server;
 
   auto instance = config.ForDefaultInstance();
   if (config.vm_manager() == QemuManager::name()) {
@@ -99,6 +100,17 @@ void CreateStreamerServers(Command* cmd, const CuttlefishConfig& config) {
     return;
   }
   cmd->AddParameter("-keyboard_fd=", keyboard_server);
+
+  if (config.vm_manager() == vm_manager::CrosvmManager::name()) {
+    SharedFD switches_server =
+        CreateUnixInputServer(instance.switches_socket_path());
+    if (!switches_server->IsOpen()) {
+      LOG(ERROR) << "Could not open switches server: "
+                 << switches_server->StrError();
+      return;
+    }
+    cmd->AddParameter("-switches_fd=", switches_server);
+  }
 
   SharedFD frames_server = CreateUnixInputServer(instance.frames_socket_path());
   if (!frames_server->IsOpen()) {
