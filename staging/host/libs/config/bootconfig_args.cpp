@@ -84,8 +84,8 @@ std::vector<std::string> BootconfigArgsFromConfig(
 
   AppendVector(&bootconfig_args, VmManagerBootconfig(config));
   auto vmm = vm_manager::GetVmManager(config.vm_manager(), config.target_arch());
-  AppendVector(&bootconfig_args,
-               vmm->ConfigureBootDevices(instance.virtual_disk_paths().size()));
+  bootconfig_args.push_back(
+      vmm->ConfigureBootDevices(instance.virtual_disk_paths().size()));
   AppendVector(&bootconfig_args, vmm->ConfigureGpuMode(config.gpu_mode()));
 
   bootconfig_args.push_back(

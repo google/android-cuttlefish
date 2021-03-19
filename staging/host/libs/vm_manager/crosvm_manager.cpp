@@ -136,19 +136,18 @@ std::vector<std::string> CrosvmManager::ConfigureGpuMode(
   return {};
 }
 
-std::vector<std::string> CrosvmManager::ConfigureBootDevices(int num_disks) {
+std::string CrosvmManager::ConfigureBootDevices(int num_disks) {
   // TODO There is no way to control this assignment with crosvm (yet)
   if (HostArch() == Arch::X86_64) {
     // crosvm has an additional PCI device for an ISA bridge
     std::stringstream stream;
     stream << std::setfill('0') << std::setw(2) << std::hex
            << 1 + VmManager::kDefaultNumHvcs + VmManager::kMaxDisks - num_disks;
-    return {"androidboot.boot_devices=pci0000:00/0000:00:" + stream.str() +
-            ".0"};
+    return "androidboot.boot_devices=pci0000:00/0000:00:" + stream.str() + ".0";
   } else {
     // On ARM64 crosvm, block devices are on their own bridge, so we don't
     // need to calculate it, and the path is always the same
-    return { "androidboot.boot_devices=10000.pci" };
+    return "androidboot.boot_devices=10000.pci";
   }
 }
 
