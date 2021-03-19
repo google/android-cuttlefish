@@ -324,9 +324,9 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
                  << existing_sizes.disk_size;
     }
     std::string header_path =
-        instance.PerInstancePath("composite_gpt_header.img");
+        instance.PerInstancePath("os_composite_gpt_header.img");
     std::string footer_path =
-        instance.PerInstancePath("composite_gpt_footer.img");
+        instance.PerInstancePath("os_composite_gpt_footer.img");
     CreateCompositeDisk(os_composite_disk_config(instance), header_path,
                         footer_path, instance.os_composite_disk_path());
   } else {
