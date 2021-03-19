@@ -424,7 +424,7 @@ class CuttlefishConfig {
 
     std::string sdcard_path() const;
 
-    std::string composite_disk_path() const;
+    std::string os_composite_disk_path() const;
 
     std::string uboot_env_image_path() const;
 
