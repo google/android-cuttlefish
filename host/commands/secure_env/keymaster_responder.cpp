@@ -101,8 +101,8 @@ bool KeymasterResponder::ProcessMessage() {
     }
     case DESTROY_ATTESTATION_IDS:
       // Cuttlefish doesn't support ID attestation.
-      break;
+    default:
+      LOG(ERROR) << "Unknown request type: " << request->cmd;
+      return false;
   }
-  LOG(ERROR) << "Unknown request type: " << request->cmd;
-  return false;
 }
