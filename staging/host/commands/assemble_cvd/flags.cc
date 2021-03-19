@@ -332,6 +332,13 @@ std::string StrForInstance(const std::string& prefix, int num) {
   return stream.str();
 }
 
+#ifdef __ANDROID__
+void ReadKernelConfig(KernelConfig* kernel_config) {
+  // QEMU isn't on Android, so always follow host arch
+  kernel_config->target_arch = HostArch();
+  kernel_config->bootconfig_supported = true;
+}
+#else
 void ReadKernelConfig(KernelConfig* kernel_config) {
   const std::string kernel_image_path =
       FLAGS_kernel_path.size() ? FLAGS_kernel_path : FLAGS_boot_image;
@@ -372,6 +379,7 @@ void ReadKernelConfig(KernelConfig* kernel_config) {
 
   unlink(ikconfig_path.c_str());
 }
+#endif  // #ifdef __ANDROID__
 
 } // namespace
 
