@@ -192,6 +192,12 @@ void LaunchRootCanal(const CuttlefishConfig& config,
   command.AddParameter(instance.rootcanal_hci_port());
   // Link server port
   command.AddParameter(instance.rootcanal_link_port());
+  // Bluetooth controller properties file
+  command.AddParameter("--controller_properties_file=",
+                       instance.rootcanal_config_file());
+  // Default commands file
+  command.AddParameter("--default_commands_file=",
+                       instance.rootcanal_default_commands_file());
 
   process_monitor->AddCommand(std::move(command));
   return;
