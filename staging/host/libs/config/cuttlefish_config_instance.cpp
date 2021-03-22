@@ -379,6 +379,29 @@ void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_test_port(
   (*Dictionary())[kRootcanalTestPort] = rootcanal_test_port;
 }
 
+static constexpr char kRootcanalConfigFile[] = "rootcanal_config_file";
+std::string CuttlefishConfig::InstanceSpecific::rootcanal_config_file() const {
+  return (*Dictionary())[kRootcanalConfigFile].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::set_rootcanal_config_file(
+    const std::string& rootcanal_config_file) {
+  (*Dictionary())[kRootcanalConfigFile] =
+      DefaultHostArtifactsPath(rootcanal_config_file);
+}
+
+static constexpr char kRootcanalDefaultCommandsFile[] =
+    "rootcanal_default_commands_file";
+std::string
+CuttlefishConfig::InstanceSpecific::rootcanal_default_commands_file() const {
+  return (*Dictionary())[kRootcanalDefaultCommandsFile].asString();
+}
+void CuttlefishConfig::MutableInstanceSpecific::
+    set_rootcanal_default_commands_file(
+        const std::string& rootcanal_default_commands_file) {
+  (*Dictionary())[kRootcanalDefaultCommandsFile] =
+      DefaultHostArtifactsPath(rootcanal_default_commands_file);
+}
+
 static constexpr char kWebrtcDeviceId[] = "webrtc_device_id";
 void CuttlefishConfig::MutableInstanceSpecific::set_webrtc_device_id(
     const std::string& id) {
