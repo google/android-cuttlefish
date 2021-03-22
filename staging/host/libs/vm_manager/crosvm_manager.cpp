@@ -264,6 +264,8 @@ std::vector<Command> CrosvmManager::StartCommands(
                             ":", display_config.width, ":",
                             display_config.height);
     crosvm_cmd.AddParameter("--keyboard=", instance.keyboard_socket_path());
+  }
+  if (config.enable_webrtc()) {
     crosvm_cmd.AddParameter("--switches=", instance.switches_socket_path());
   }
 
