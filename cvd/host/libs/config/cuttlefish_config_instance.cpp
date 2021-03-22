@@ -165,8 +165,8 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
-std::string CuttlefishConfig::InstanceSpecific::composite_disk_path() const {
-  return AbsolutePath(PerInstancePath("composite.img"));
+std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path() const {
+  return AbsolutePath(PerInstancePath("os_composite.img"));
 }
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
@@ -425,6 +425,10 @@ std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
 
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
   return PerInstanceInternalPath("keyboard.sock");
+}
+
+std::string CuttlefishConfig::InstanceSpecific::switches_socket_path() const {
+  return PerInstanceInternalPath("switches.sock");
 }
 
 std::string CuttlefishConfig::InstanceSpecific::frames_socket_path() const {
