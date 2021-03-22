@@ -1,0 +1,5 @@
+prebuilt_etc_host {
+    name: "default_commands",
+    src: "default_commands",
+    sub_dir: "rootcanal/data",
+}
