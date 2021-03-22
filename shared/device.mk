@@ -367,16 +367,21 @@ PRODUCT_PACKAGES += \
 #
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
 #
-
+ifeq ($(LOCAL_BLUETOOTH_PRODUCT_PACKAGE),)
 ifeq ($(TARGET_ENABLE_HOST_BLUETOOTH_EMULATION),true)
 ifeq ($(TARGET_USE_BTLINUX_HAL_IMPL),true)
-    PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.btlinux
+    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := android.hardware.bluetooth@1.1-service.btlinux
 else
-    PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.remote
+    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := android.hardware.bluetooth@1.1-service.remote
 endif
 else
-    PRODUCT_PACKAGES += android.hardware.bluetooth@1.1-service.sim
+    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := android.hardware.bluetooth@1.1-service.sim
 endif
+    DEVICE_MANIFEST_FILE += device/google/cuttlefish/shared/config/manifest_android.hardware.bluetooth@1.1-service.xml
+endif
+
+PRODUCT_PACKAGES += $(LOCAL_BLUETOOTH_PRODUCT_PACKAGE)
+
 PRODUCT_PACKAGES += android.hardware.bluetooth.audio@2.1-impl
 
 #
