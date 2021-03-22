@@ -79,6 +79,11 @@ cvd_host_tools = [
     "webrtc_operator",
 ]
 
+cvd_bluetooth_config_files = [
+    "controller_properties.json",
+    "default_commands",
+]
+
 cvd_host_tests = [
     "cuttlefish_net_tests",
     "modem_simulator_test",
@@ -153,7 +158,8 @@ cvd_host_package_customization {
     multilib: {
         common: {
             deps: cvd_host_webrtc_assets +
-                cvd_host_model_simulator_files,
+                cvd_host_model_simulator_files +
+                cvd_bluetooth_config_files,
         },
     },
 
