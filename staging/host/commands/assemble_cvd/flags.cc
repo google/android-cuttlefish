@@ -891,6 +891,7 @@ void SetDefaultFlagsForCrosvm() {
 bool ParseCommandLineFlags(int* argc, char*** argv, KernelConfig* kernel_config) {
   google::ParseCommandLineNonHelpFlags(argc, argv, true);
   SetDefaultFlagsFromConfigPreset();
+  google::HandleCommandLineHelpFlags();
   bool invalid_manager = false;
 
   if (!ResolveInstanceFiles()) {
@@ -920,7 +921,6 @@ bool ParseCommandLineFlags(int* argc, char*** argv, KernelConfig* kernel_config)
   SetCommandLineOptionWithMode("start_webrtc_sig_server",
                                FLAGS_start_webrtc ? "true" : "false",
                                SET_FLAGS_DEFAULT);
-  google::HandleCommandLineHelpFlags();
   if (invalid_manager) {
     return false;
   }
