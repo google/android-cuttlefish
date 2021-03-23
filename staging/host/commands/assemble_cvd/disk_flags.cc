@@ -338,25 +338,7 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
   return true;
 }
 
-const std::string kKernelDefaultPath = "kernel";
-const std::string kInitramfsImg = "initramfs.img";
-static void ExtractKernelParamsFromFetcherConfig(
-    const FetcherConfig& fetcher_config) {
-  std::string discovered_kernel =
-      fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
-  std::string discovered_ramdisk =
-      fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
-
-  SetCommandLineOptionWithMode("kernel_path", discovered_kernel.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-
-  SetCommandLineOptionWithMode("initramfs_path", discovered_ramdisk.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-}
-
-static void RepackAllBootImages(const FetcherConfig& fetcher_config,
-                                const CuttlefishConfig* config) {
-  ExtractKernelParamsFromFetcherConfig(fetcher_config);
+static void RepackAllBootImages(const CuttlefishConfig* config) {
   CHECK(FileHasContent(FLAGS_boot_image))
       << "File not found: " << FLAGS_boot_image;
 
@@ -430,7 +412,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // support. We can also assume that image repacking isn't trusted. Repacking
   // requires resigning the image and keys from an android host aren't trusted.
   if (!FLAGS_protected_vm) {
-    RepackAllBootImages(fetcher_config, config);
+    RepackAllBootImages(config);
 
     // TODO(b/181812679) remove this block when we no longer need to create the
     // env partition.
