@@ -116,6 +116,11 @@ static const std::set<std::string> kKnownMissingAidl = {
     "android.hardware.security.secureclock.",
     "android.hardware.security.sharedsecret.",
 
+    // Sound trigger doesn't have a default implementation.
+    "android.hardware.soundtrigger3.",
+    "android.media.soundtrigger.",
+    "android.media.audio.common.",
+
     // These types are only used in Automotive.
     "android.automotive.computepipe.registry.",
     "android.automotive.computepipe.runner.",
