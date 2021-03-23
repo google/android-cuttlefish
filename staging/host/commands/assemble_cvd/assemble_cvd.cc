@@ -200,6 +200,21 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
   return config;
 }
 
+const std::string kKernelDefaultPath = "kernel";
+const std::string kInitramfsImg = "initramfs.img";
+static void ExtractKernelParamsFromFetcherConfig(
+    const FetcherConfig& fetcher_config) {
+  std::string discovered_kernel =
+      fetcher_config.FindCvdFileWithSuffix(kKernelDefaultPath);
+  std::string discovered_ramdisk =
+      fetcher_config.FindCvdFileWithSuffix(kInitramfsImg);
+
+  SetCommandLineOptionWithMode("kernel_path", discovered_kernel.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+
+  SetCommandLineOptionWithMode("initramfs_path", discovered_ramdisk.c_str(),
+                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
+}
 } // namespace
 
 int AssembleCvdMain(int argc, char** argv) {
@@ -224,10 +239,15 @@ int AssembleCvdMain(int argc, char** argv) {
   }
   std::vector<std::string> input_files = android::base::Split(input_files_str, "\n");
 
+  FetcherConfig fetcher_config = FindFetcherConfig(input_files);
+  // set gflags defaults to point to kernel/RD from fetcher config
+  ExtractKernelParamsFromFetcherConfig(fetcher_config);
+
   KernelConfig kernel_config;
   CHECK(ParseCommandLineFlags(&argc, &argv, &kernel_config)) << "Failed to parse arguments";
 
-  auto config = InitFilesystemAndCreateConfig(FindFetcherConfig(input_files), kernel_config);
+  auto config =
+      InitFilesystemAndCreateConfig(std::move(fetcher_config), kernel_config);
 
   std::cout << GetConfigFilePath(*config) << "\n";
   std::cout << std::flush;
