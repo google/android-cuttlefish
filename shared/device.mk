@@ -450,7 +450,7 @@ PRODUCT_PACKAGES += \
 # Gatekeeper
 #
 ifeq ($(LOCAL_GATEKEEPER_PRODUCT_PACKAGE),)
-       LOCAL_GATEKEEPER_PRODUCT_PACKAGE := android.hardware.gatekeeper@1.0-service.remote
+       LOCAL_GATEKEEPER_PRODUCT_PACKAGE := android.hardware.gatekeeper@1.0-service.software
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_GATEKEEPER_PRODUCT_PACKAGE)
@@ -505,7 +505,7 @@ PRODUCT_PACKAGES += \
 # Keymaster HAL
 #
 ifeq ($(LOCAL_KEYMASTER_PRODUCT_PACKAGE),)
-       LOCAL_KEYMASTER_PRODUCT_PACKAGE := android.hardware.keymaster@4.1-service.remote
+       LOCAL_KEYMASTER_PRODUCT_PACKAGE := android.hardware.keymaster@4.1-service
 endif
 PRODUCT_PACKAGES += \
     $(LOCAL_KEYMASTER_PRODUCT_PACKAGE)
