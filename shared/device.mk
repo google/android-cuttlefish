@@ -272,9 +272,15 @@ PRODUCT_PACKAGES += \
 #
 # Bluetooth HAL and Compatibility Bluetooth library (for older revs).
 #
-PRODUCT_PACKAGES += \
-    android.hardware.bluetooth@1.1-service.sim \
-    android.hardware.bluetooth.audio@2.0-impl
+ifeq ($(LOCAL_BLUETOOTH_PRODUCT_PACKAGE),)
+    LOCAL_BLUETOOTH_PRODUCT_PACKAGE := \
+        android.hardware.bluetooth@1.1-service.sim
+    DEVICE_MANIFEST_FILE +=  device/google/cuttlefish/shared/config/manifest_android.hardware.bluetooth@1.1-service.xml
+endif
+
+PRODUCT_PACKAGES += $(LOCAL_BLUETOOTH_PRODUCT_PACKAGE)
+
+PRODUCT_PACKAGES += android.hardware.bluetooth.audio@2.0-impl
 
 #
 # Audio HAL
