@@ -183,5 +183,7 @@
     {RIL_REQUEST_SET_DATA_THROTTLING, radio_1_6::setDataThrottlingResponse},
     {RIL_REQUEST_GET_SYSTEM_SELECTION_CHANNELS, radio_1_6::getSystemSelectionChannelsResponse},
     {RIL_REQUEST_GET_ALLOWED_NETWORK_TYPES_BITMAP, radio_1_6::getAllowedNetworkTypesBitmapResponse},
-    {RIL_REQUEST_GET_SLICING_CONFIG, radio_1_6::getSlicingConfigResponse}
-
+    {RIL_REQUEST_GET_SLICING_CONFIG, radio_1_6::getSlicingConfigResponse},
+    {RIL_REQUEST_GET_SIM_PHONEBOOK_RECORDS, radio_1_6::getSimPhonebookRecordsResponse},
+    {RIL_REQUEST_GET_SIM_PHONEBOOK_CAPACITY, radio_1_6::getSimPhonebookCapacityResponse},
+    {RIL_REQUEST_UPDATE_SIM_PHONEBOOK_RECORDS, radio_1_6::updateSimPhonebookRecordsResponse}
