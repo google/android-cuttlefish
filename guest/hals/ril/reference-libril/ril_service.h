@@ -821,6 +821,15 @@ int getAllowedNetworkTypesBitmapResponse(int slotId, int responseType, int seria
 int getSlicingConfigResponse(int slotId, int responseType, int serial,
                              RIL_Errno e, void *response, size_t responseLen);
 
+int getSimPhonebookRecordsResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen);
+
+int getSimPhonebookCapacityResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen);
+
+int updateSimPhonebookRecordsResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen);
+
 
 pthread_rwlock_t * getRadioServiceRwlock(int slotId);
 

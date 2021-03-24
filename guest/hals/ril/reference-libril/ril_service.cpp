@@ -646,6 +646,11 @@ struct RadioImpl_1_6 : public V1_6::IRadio {
     Return<void> setCarrierInfoForImsiEncryption_1_6(
             int32_t serial,
             const ::android::hardware::radio::V1_6::ImsiEncryptionInfo& imsiEncryptionInfo);
+    Return<void> getSimPhonebookRecords(int32_t serial);
+    Return<void> getSimPhonebookCapacity(int32_t serial);
+    Return<void> updateSimPhonebookRecords(
+            int32_t serial,
+            const ::android::hardware::radio::V1_6::PhonebookRecordInfo& recordInfo);
 };
 
 struct OemHookImpl : public IOemHook {
@@ -4695,6 +4700,34 @@ Return<void> RadioImpl_1_6::setCarrierInfoForImsiEncryption_1_6(
     delete (imsiEncryption.carrierKey);
     return Void();
 }
+
+
+Return<void> RadioImpl_1_6::getSimPhonebookRecords(int32_t serial) {
+#if VDBG
+    RLOGD("getSimPhonebookRecords: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_SIM_PHONEBOOK_RECORDS);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::getSimPhonebookCapacity(int32_t serial) {
+#if VDBG
+    RLOGD("getSimPhonebookCapacity: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_GET_SIM_PHONEBOOK_CAPACITY);
+    return Void();
+}
+
+Return<void> RadioImpl_1_6::updateSimPhonebookRecords(
+    int32_t serial,
+    const ::android::hardware::radio::V1_6::PhonebookRecordInfo& recordInfo) {
+#if VDBG
+    RLOGD("updateSimPhonebookRecords: serial %d", serial);
+#endif
+    dispatchVoid(serial, mSlotId, RIL_REQUEST_UPDATE_SIM_PHONEBOOK_RECORDS);
+    return Void();
+}
+
 
 // OEM hook methods:
 Return<void> OemHookImpl::setResponseFunctions(
@@ -10303,6 +10336,31 @@ int radio_1_6::getSlicingConfigResponse(int slotId, int responseType, int serial
 
     return 0;
 }
+
+int radio_1_6::getSimPhonebookRecordsResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("getSimPhonebookRecordsResponse: serial %d", serial);
+#endif
+    return 0;
+}
+
+int radio_1_6::getSimPhonebookCapacityResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("getSimPhonebookRecordsResponse: serial %d", serial);
+#endif
+    return 0;
+}
+
+int radio_1_6::updateSimPhonebookRecordsResponse(int slotId, int responseType, int serial,
+                             RIL_Errno e, void *response, size_t responseLen) {
+#if VDBG
+    RLOGD("getSimPhonebookRecordsResponse: serial %d", serial);
+#endif
+    return 0;
+}
+
 /***************************************************************************************************
  * INDICATION FUNCTIONS
  * The below function handle unsolicited messages coming from the Radio
