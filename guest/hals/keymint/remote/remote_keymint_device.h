@@ -73,6 +73,10 @@ class RemoteKeyMintDevice : public BnKeyMintDevice {
       const optional<TimeStampToken>& timestampToken) override;
   ScopedAStatus earlyBootEnded() override;
 
+  ScopedAStatus convertStorageKeyToEphemeral(
+      const std::vector<uint8_t>& storageKeyBlob,
+      std::vector<uint8_t>* ephemeralKeyBlob) override;
+
   ScopedAStatus performOperation(const vector<uint8_t>& request,
                                  vector<uint8_t>* response) override;
 
