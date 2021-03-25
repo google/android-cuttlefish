@@ -704,9 +704,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_device_title(FLAGS_device_title);
 
     if (FLAGS_protected_vm) {
-      instance.set_virtual_disk_paths({
-        const_instance.PerInstancePath("composite.img")
-      });
+      instance.set_virtual_disk_paths(
+          {const_instance.PerInstancePath("os_composite.img")});
     } else {
       std::vector<std::string> virtual_disk_paths = {
         const_instance.PerInstancePath("overlay.img"),
