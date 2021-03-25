@@ -12,7 +12,7 @@ def upload_artifacts(args):
   dir = os.getcwd()
   try:
     os.chdir(args.image_dir)
-    images = glob.glob('*.img')
+    images = glob.glob('*.img') + ["bootloader"]
     if len(images) == 0:
       raise OSError('File not found: ' + args.image_dir + '/*.img')
     subprocess.check_call(
