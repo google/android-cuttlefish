@@ -20,6 +20,14 @@
   <!-- Indicate the display area rect for foldable devices in folded state. -->
   <!-- left and right bounds come from:  (open_width/2) +/- (folded_width)/2 -->
   <string name="config_foldedArea">476 0 1292 2208</string>
+  <!-- WindowsManager JetPack display features -->
+  <string name="config_display_features" translatable="false">fold-[884,0,884,2208]</string>
+  <!-- Map of System DeviceState supplied by DeviceStateManager to WM Jetpack posture. -->
+  <string-array name="config_device_state_postures" translatable="false">
+      <item>0:1</item> <!-- CLOSED : STATE_FLAT -->
+      <item>3:2</item> <!-- HALF_OPENED : STATE_HALF_OPENED -->
+      <item>2:3</item> <!-- OPENED : STATE_FLIPPED -->
+  </string-array>
   <!-- The device states (supplied by DeviceStateManager) that should be treated as folded by the
        display fold controller. -->
   <integer-array name="config_foldedDeviceStates" translatable="false">

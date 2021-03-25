@@ -8,7 +8,15 @@
       </lid-switch>
     </conditions>
   </device-state>
-  <!-- TODO(b/181583265): Add state 1 for HALF_OPENED using hinge sensor. -->
+  <device-state>
+    <!-- TODO(b/181583265): Use the hinge sensor for HALF_OPENED state.
+      Currently using an identifier of 3 so that this state never takes
+      precedence over the lower-identifier-value CLOSED and OPENED states,
+      until a hinge sensor is available. -->
+    <identifier>3</identifier>
+    <name>HALF_OPENED</name>
+    <conditions></conditions>
+  </device-state>
   <device-state>
     <identifier>2</identifier>
     <name>OPENED</name>
