@@ -29,6 +29,11 @@ struct ControlPanelButton {
   std::string icon_name;
 };
 
+struct DeviceState {
+  std::optional<bool> lid_switch_open;
+  std::optional<int> hinge_angle_value;
+};
+
 struct CustomActionConfig {
   CustomActionConfig(const Json::Value&);
   Json::Value ToJson() const;
@@ -36,6 +41,7 @@ struct CustomActionConfig {
   std::vector<ControlPanelButton> buttons;
   std::optional<std::string> shell_command;
   std::optional<std::string> server;
+  std::vector<DeviceState> device_states;
 };
 
 }  // namespace cuttlefish
