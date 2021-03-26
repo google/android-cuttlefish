@@ -271,11 +271,10 @@ int main(int argc, char** argv) {
                    << *(custom_action.shell_command);
       }
       const auto button = custom_action.buttons[0];
-      streamer->AddCustomControlPanelButton(button.command, button.title,
-                                            button.icon_name,
-                                            custom_action.shell_command);
-    }
-    if (custom_action.server) {
+      streamer->AddCustomControlPanelButtonWithShellCommand(
+          button.command, button.title, button.icon_name,
+          *(custom_action.shell_command));
+    } else if (custom_action.server) {
       if (action_server_fds.find(*(custom_action.server)) !=
           action_server_fds.end()) {
         LOG(INFO) << "Connecting to custom action server "
@@ -302,6 +301,15 @@ int main(int argc, char** argv) {
         LOG(ERROR) << "Custom action server not provided as command line flag: "
                    << *(custom_action.server);
       }
+    } else if (!custom_action.device_states.empty()) {
+      if (custom_action.buttons.size() != 1) {
+        LOG(FATAL)
+            << "Expected exactly one button for custom action device states.";
+      }
+      const auto button = custom_action.buttons[0];
+      streamer->AddCustomControlPanelButtonWithDeviceStates(
+          button.command, button.title, button.icon_name,
+          custom_action.device_states);
     }
   }
 
