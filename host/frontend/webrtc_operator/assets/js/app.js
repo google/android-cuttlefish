@@ -251,6 +251,11 @@ function ConnectToDevice(device_id) {
                 e => onCustomShellButton(button.shell_command, e),
                 'control_panel_custom_buttons');
             buttons[button.command].adb = true;
+          } else if (button.device_states) {
+            // This button corresponds to variable hardware device state(s).
+            createControlPanelButton(button.command, button.title, button.icon_name,
+                getCustomDeviceStateButtonCb(button.device_states),
+                'control_panel_custom_buttons');
           } else {
             // This button's command is handled by custom action server.
             createControlPanelButton(button.command, button.title, button.icon_name,
@@ -267,11 +272,11 @@ function ConnectToDevice(device_id) {
       // connected long after the device boots up.
       deviceConnection.sendControlMessage(JSON.stringify({
         command: 'home',
-        state: 'down',
+        button_state: 'down',
       }));
       deviceConnection.sendControlMessage(JSON.stringify({
         command: 'home',
-        state: 'up',
+        button_state: 'up',
       }));
       // Show the error message and disable buttons when the WebRTC connection fails.
       deviceConnection.onConnectionStateChange(state => {
@@ -329,7 +334,7 @@ function ConnectToDevice(device_id) {
     }
     deviceConnection.sendControlMessage(JSON.stringify({
       command: e.target.dataset.command,
-      state: e.type == 'mousedown' ? "down" : "up",
+      button_state: e.type == 'mousedown' ? "down" : "up",
     }));
   }
 
@@ -343,12 +348,33 @@ function ConnectToDevice(device_id) {
           (currentRotation == 0 ? 'landscape' : 'portrait'))
     }
   }
+
   function onCustomShellButton(shell_command, e) {
     // Attempt to init adb again, in case the initial connection failed.
     // This succeeds immediately if already connected.
     initializeAdb();
     if (e.type == 'mousedown') {
       adbShell(shell_command);
+    }
+  }
+
+  function getCustomDeviceStateButtonCb(device_states) {
+    let states = device_states;
+    let index = 0;
+    return e => {
+      if (e.type == 'mousedown') {
+        // Reset any overridden device state.
+        adbShell('cmd device_state state reset');
+        // Send a device_state message for the current state.
+        let message = {
+          command: 'device_state',
+          ...states[index],
+        };
+        deviceConnection.sendControlMessage(JSON.stringify(message));
+        console.log(JSON.stringify(message));
+        // Cycle to the next state.
+        index = (index + 1) % states.length;
+      }
     }
   }
 

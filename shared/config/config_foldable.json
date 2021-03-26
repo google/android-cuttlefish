@@ -4,13 +4,29 @@
 	"dpi" : 386,
 	"memory_mb" : 4096,
 	"custom_actions" : [
-		{
-			"shell_command":"dumpsys device_state | grep mCommittedState | grep OPENED && cmd device_state state 0 || cmd device_state state 2",
-			"button":{
-				"command":"fold",
-				"title":"Fold/Unfold",
-				"icon_name":"chrome_reader_mode"
-			}
-		}
+                {
+                        "device_states": [
+                                {
+                                        "lid_switch_open": false
+                                }
+                        ],
+                        "button":{
+                                "command":"device_state_closed",
+                                "title":"Device State Closed",
+                                "icon_name":"smartphone"
+                        }
+                },
+                {
+                        "device_states": [
+                                {
+                                        "lid_switch_open": true
+                                }
+                        ],
+                        "button":{
+                                "command":"device_state_opened",
+                                "title":"Device State Opened",
+                                "icon_name":"tablet"
+                        }
+                }
 	]
 }
