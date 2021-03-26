@@ -236,42 +236,62 @@ class ConnectionObserverImpl
       LOG(ERROR) << "Received invalid JSON object over control channel: " << errorMessage;
       return;
     }
-    auto result =
-        webrtc_streaming::ValidationResult::ValidateJsonObject(evt, "command",
-                           {{"command", Json::ValueType::stringValue},
-                            {"state", Json::ValueType::stringValue}});
+
+    auto result = webrtc_streaming::ValidationResult::ValidateJsonObject(
+        evt, "command",
+        /*required_fields=*/{{"command", Json::ValueType::stringValue}},
+        /*optional_fields=*/
+        {
+            {"button_state", Json::ValueType::stringValue},
+            {"lid_switch_open", Json::ValueType::booleanValue},
+            {"hinge_angle_value", Json::ValueType::intValue},
+        });
     if (!result.ok()) {
       LOG(ERROR) << result.error();
       return;
     }
     auto command = evt["command"].asString();
-    auto state = evt["state"].asString();
 
-    LOG(VERBOSE) << "Control command: " << command << " (" << state << ")";
+    if (command == "device_state") {
+      if (evt.isMember("lid_switch_open")) {
+        // InputManagerService treats a value of 0 as open and 1 as closed, so
+        // invert the lid_switch_open value that is sent to the input device.
+        OnSwitchEvent(SW_LID, !evt["lid_switch_open"].asBool());
+      }
+      // TODO(b/181157794) Propagate hinge angle sensor data.
+      if (evt.isMember("hinge_angle_value")) {
+        LOG(WARNING) << "Hinge angle sensor is not yet implemented.";
+      }
+      return;
+    }
+
+    auto button_state = evt["button_state"].asString();
+    LOG(VERBOSE) << "Control command: " << command << " (" << button_state
+                 << ")";
     if (command == "power") {
-      OnKeyboardEvent(KEY_POWER, state == "down");
+      OnKeyboardEvent(KEY_POWER, button_state == "down");
     } else if (command == "home") {
-      OnKeyboardEvent(KEY_HOMEPAGE, state == "down");
+      OnKeyboardEvent(KEY_HOMEPAGE, button_state == "down");
     } else if (command == "menu") {
-      OnKeyboardEvent(KEY_MENU, state == "down");
+      OnKeyboardEvent(KEY_MENU, button_state == "down");
     } else if (command == "volumemute") {
-      OnKeyboardEvent(KEY_MUTE, state == "down");
+      OnKeyboardEvent(KEY_MUTE, button_state == "down");
     } else if (command == "volumedown") {
-      OnKeyboardEvent(KEY_VOLUMEDOWN, state == "down");
+      OnKeyboardEvent(KEY_VOLUMEDOWN, button_state == "down");
     } else if (command == "volumeup") {
-      OnKeyboardEvent(KEY_VOLUMEUP, state == "down");
+      OnKeyboardEvent(KEY_VOLUMEUP, button_state == "down");
     } else if (commands_to_custom_action_servers_.find(command) !=
                commands_to_custom_action_servers_.end()) {
       // Simple protocol for commands forwarded to action servers:
       //   - Always 128 bytes
-      //   - Format:   command:state
+      //   - Format:   command:button_state
       //   - Example:  my_button:down
-      std::string action_server_message = command + ":" + state;
+      std::string action_server_message = command + ":" + button_state;
       cuttlefish::WriteAll(commands_to_custom_action_servers_[command],
                            action_server_message.c_str(), 128);
     } else {
-      LOG(WARNING) << "Unsupported control command: " << command << " (" << state << ")";
-      // TODO(b/163081337): Handle custom commands.
+      LOG(WARNING) << "Unsupported control command: " << command << " ("
+                   << button_state << ")";
     }
   }
 
