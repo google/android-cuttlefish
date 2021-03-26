@@ -29,6 +29,9 @@ namespace {
 
 const char* kCustomActionShellCommand = "shell_command";
 const char* kCustomActionServer = "server";
+const char* kCustomActionDeviceStates = "device_states";
+const char* kCustomActionDeviceStateLidSwitchOpen = "lid_switch_open";
+const char* kCustomActionDeviceStateHingeAngleValue = "hinge_angle_value";
 const char* kCustomActionButton = "button";
 const char* kCustomActionButtons = "buttons";
 const char* kCustomActionButtonCommand = "command";
@@ -39,11 +42,15 @@ const char* kCustomActionButtonIconName = "icon_name";
 
 
 CustomActionConfig::CustomActionConfig(const Json::Value& dictionary) {
+  if (dictionary.isMember(kCustomActionShellCommand) +
+          dictionary.isMember(kCustomActionServer) +
+          dictionary.isMember(kCustomActionDeviceStates) !=
+      1) {
+    LOG(FATAL) << "Custom action must contain exactly one of shell_command, "
+               << "server, or device_states";
+    return;
+  }
   if (dictionary.isMember(kCustomActionShellCommand)) {
-    if (dictionary.isMember(kCustomActionServer)) {
-      LOG(ERROR) << "Custom action contains both shell command and action server.";
-      return;
-    }
     // Shell command with one button.
     Json::Value button_entry = dictionary[kCustomActionButton];
     buttons = {{button_entry[kCustomActionButtonCommand].asString(),
@@ -60,8 +67,29 @@ CustomActionConfig::CustomActionConfig(const Json::Value& dictionary) {
       buttons.push_back(button);
     }
     server = dictionary[kCustomActionServer].asString();
+  } else if (dictionary.isMember(kCustomActionDeviceStates)) {
+    // Device state(s) with one button.
+    // Each button press cycles to the next state, then repeats to the first.
+    Json::Value button_entry = dictionary[kCustomActionButton];
+    buttons = {{button_entry[kCustomActionButtonCommand].asString(),
+                button_entry[kCustomActionButtonTitle].asString(),
+                button_entry[kCustomActionButtonIconName].asString()}};
+    for (const Json::Value& device_state_entry :
+         dictionary[kCustomActionDeviceStates]) {
+      DeviceState state;
+      if (device_state_entry.isMember(kCustomActionDeviceStateLidSwitchOpen)) {
+        state.lid_switch_open =
+            device_state_entry[kCustomActionDeviceStateLidSwitchOpen].asBool();
+      }
+      if (device_state_entry.isMember(
+              kCustomActionDeviceStateHingeAngleValue)) {
+        state.hinge_angle_value =
+            device_state_entry[kCustomActionDeviceStateHingeAngleValue].asInt();
+      }
+      device_states.push_back(state);
+    }
   } else {
-    LOG(ERROR) << "Unknown custom action format.";
+    LOG(FATAL) << "Unknown custom action type.";
   }
 }
 
@@ -88,8 +116,30 @@ Json::Value CustomActionConfig::ToJson() const {
       button_entry[kCustomActionButtonIconName] = button.icon_name;
       custom_action[kCustomActionButtons].append(button_entry);
     }
+  } else if (!device_states.empty()) {
+    // Device state(s) with one button.
+    custom_action[kCustomActionDeviceStates] = Json::Value(Json::arrayValue);
+    for (const auto& device_state : device_states) {
+      Json::Value device_state_entry;
+      if (device_state.lid_switch_open) {
+        device_state_entry[kCustomActionDeviceStateLidSwitchOpen] =
+            *device_state.lid_switch_open;
+      }
+      if (device_state.hinge_angle_value) {
+        device_state_entry[kCustomActionDeviceStateHingeAngleValue] =
+            *device_state.hinge_angle_value;
+      }
+      custom_action[kCustomActionDeviceStates].append(device_state_entry);
+    }
+    custom_action[kCustomActionButton] = Json::Value();
+    custom_action[kCustomActionButton][kCustomActionButtonCommand] =
+        buttons[0].command;
+    custom_action[kCustomActionButton][kCustomActionButtonTitle] =
+        buttons[0].title;
+    custom_action[kCustomActionButton][kCustomActionButtonIconName] =
+        buttons[0].icon_name;
   } else {
-    LOG(ERROR) << "Unknown custom action type.";
+    LOG(FATAL) << "Unknown custom action type.";
   }
   return custom_action;
 }

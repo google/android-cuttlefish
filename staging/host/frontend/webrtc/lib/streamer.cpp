@@ -55,6 +55,9 @@ constexpr auto kControlPanelButtonCommand = "command";
 constexpr auto kControlPanelButtonTitle = "title";
 constexpr auto kControlPanelButtonIconName = "icon_name";
 constexpr auto kControlPanelButtonShellCommand = "shell_command";
+constexpr auto kControlPanelButtonDeviceStates = "device_states";
+constexpr auto kControlPanelButtonLidSwitchOpen = "lid_switch_open";
+constexpr auto kControlPanelButtonHingeAngleValue = "hinge_angle_value";
 constexpr auto kCustomControlPanelButtonsField = "custom_control_panel_buttons";
 
 void SendJson(WsConnection* ws_conn, const Json::Value& data) {
@@ -99,6 +102,7 @@ struct ControlPanelButtonDescriptor {
   std::string title;
   std::string icon_name;
   std::optional<std::string> shell_command;
+  std::vector<DeviceState> device_states;
 };
 
 // TODO (jemoreira): move to a place in common with the signaling server
@@ -231,12 +235,30 @@ void Streamer::SetHardwareSpec(std::string key, std::string value) {
   impl_->hardware_.emplace(key, value);
 }
 
-void Streamer::AddCustomControlPanelButton(
+void Streamer::AddCustomControlPanelButton(const std::string& command,
+                                           const std::string& title,
+                                           const std::string& icon_name) {
+  ControlPanelButtonDescriptor button = {
+      .command = command, .title = title, .icon_name = icon_name};
+  impl_->custom_control_panel_buttons_.push_back(button);
+}
+
+void Streamer::AddCustomControlPanelButtonWithShellCommand(
+    const std::string& command, const std::string& title,
+    const std::string& icon_name, const std::string& shell_command) {
+  ControlPanelButtonDescriptor button = {
+      .command = command, .title = title, .icon_name = icon_name};
+  button.shell_command = shell_command;
+  impl_->custom_control_panel_buttons_.push_back(button);
+}
+
+void Streamer::AddCustomControlPanelButtonWithDeviceStates(
     const std::string& command, const std::string& title,
     const std::string& icon_name,
-    const std::optional<std::string>& shell_command) {
-  ControlPanelButtonDescriptor button = {command, title, icon_name,
-                                         shell_command};
+    const std::vector<DeviceState>& device_states) {
+  ControlPanelButtonDescriptor button = {
+      .command = command, .title = title, .icon_name = icon_name};
+  button.device_states = device_states;
   impl_->custom_control_panel_buttons_.push_back(button);
 }
 
@@ -327,6 +349,21 @@ void Streamer::Impl::OnOpen() {
       button_entry[kControlPanelButtonIconName] = button.icon_name;
       if (button.shell_command) {
         button_entry[kControlPanelButtonShellCommand] = *(button.shell_command);
+      } else if (!button.device_states.empty()) {
+        Json::Value device_states(Json::arrayValue);
+        for (const DeviceState& device_state : button.device_states) {
+          Json::Value device_state_entry;
+          if (device_state.lid_switch_open) {
+            device_state_entry[kControlPanelButtonLidSwitchOpen] =
+                *device_state.lid_switch_open;
+          }
+          if (device_state.hinge_angle_value) {
+            device_state_entry[kControlPanelButtonHingeAngleValue] =
+                *device_state.hinge_angle_value;
+          }
+          device_states.append(device_state_entry);
+        }
+        button_entry[kControlPanelButtonDeviceStates] = device_states;
       }
       custom_control_panel_buttons.append(button_entry);
     }
