@@ -13,7 +13,7 @@ on early-init
     setprop ro.hw_timeout_multiplier ${ro.boot.hw_timeout_multiplier}
 
     # start module load in the background
-    start vendor.insmod_sh
+    start vendor.dlkm_loader
 
 on init
     # ZRAM setup
@@ -100,7 +100,7 @@ on property:sys.boot_completed=1
 on sys-boot-completed-set && property:persist.sys.zram_enabled=1
     swapon_all
 
-service vendor.insmod_sh /vendor/bin/init.insmod.sh
+service vendor.dlkm_loader /vendor/bin/dlkm_loader
     class main
     user root
     group root system
