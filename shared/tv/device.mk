@@ -32,6 +32,9 @@ PRODUCT_COPY_FILES += \
 # HDMI CEC HAL
 PRODUCT_PACKAGES += android.hardware.tv.cec@1.1-service
 
+# Setup HDMI CEC as Playback Device
+PRODUCT_PROPERTY_OVERRIDES += ro.hdmi.device_type=4
+
 # Tuner HAL
 PRODUCT_PACKAGES += android.hardware.tv.tuner@1.1-service
 
