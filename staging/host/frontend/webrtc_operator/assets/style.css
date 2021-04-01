@@ -39,12 +39,6 @@ body {
     visibility: hidden;
 }
 
-#device_connection button.selected {
-    background-color: #aaaaaa;
-    border-style: solid;
-    border-color: #aaaaaa;
-}
-
 #device_view {
     transition: width 1s;
 }
@@ -71,12 +65,18 @@ body {
     object-fit: cover;
 }
 
-#control_panel {
+body {
     font-family: 'Open Sans', sans-serif;
 }
 
-#control_panel h2 {
+h2.section-title {
     color: white;
+}
+
+#app_controls > div {
+    display: inline-block;
+    position: relative;
+    margin-right: 6px;
 }
 
 #device_view h3 {
@@ -98,7 +98,7 @@ body {
     display: none;
 }
 
-#control_panel button {
+#device_connection button {
     height: 60px;
     min-width: 60px;
     display: inline-block;
