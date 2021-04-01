@@ -27,6 +27,7 @@
 #include "host/libs/config/custom_actions.h"
 
 #include "host/frontend/webrtc/lib/audio_sink.h"
+#include "host/frontend/webrtc/lib/audio_source.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/video_sink.h"
@@ -91,6 +92,11 @@ class Streamer {
   }
 
   std::shared_ptr<AudioSink> AddAudioStream(const std::string& label);
+  // Grants access to streams originating on the client side. If there are
+  // multiple streams (either because one client sends more than one or there
+  // are several clients) the audio will be mixed and provided as a single
+  // stream here.
+  std::shared_ptr<AudioSource> GetAudioSource();
 
   // Add a custom button to the control panel.
   void AddCustomControlPanelButton(const std::string& command,

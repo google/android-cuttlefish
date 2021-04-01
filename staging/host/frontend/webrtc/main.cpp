@@ -244,8 +244,9 @@ int main(int argc, char** argv) {
   if (cvd_config->enable_audio()) {
     auto audio_stream = streamer->AddAudioStream("audio");
     auto audio_server = CreateAudioServer();
-    audio_handler =
-        std::make_shared<AudioHandler>(audio_stream, std::move(audio_server));
+    auto audio_source = streamer->GetAudioSource();
+    audio_handler = std::make_shared<AudioHandler>(std::move(audio_server),
+                                                   audio_stream, audio_source);
   }
 
   // Parse the -action_servers flag, storing a map of action server name -> fd
