@@ -19,9 +19,8 @@
 
 namespace cuttlefish {
 
-TxBuffer::TxBuffer(TxBuffer&& other)
+ShmBuffer::ShmBuffer(ShmBuffer&& other)
     : header_(std::move(other.header_)),
-      buffer_(std::move(other.buffer_)),
       len_(std::move(other.len_)),
       on_consumed_(std::move(other.on_consumed_)),
       status_sent_(other.status_sent_) {
@@ -29,13 +28,13 @@ TxBuffer::TxBuffer(TxBuffer&& other)
   other.status_sent_ = true;
 }
 
-TxBuffer::~TxBuffer() {
-  CHECK(status_sent_) << "Disposing of TxBuffer before setting status";
+ShmBuffer::~ShmBuffer() {
+  CHECK(status_sent_) << "Disposing of ShmBuffer before setting status";
 }
 
-uint32_t TxBuffer::stream_id() const { return header_.stream_id.as_uint32_t(); }
+uint32_t ShmBuffer::stream_id() const { return header_.stream_id.as_uint32_t(); }
 
-void TxBuffer::SendStatus(AudioStatus status, uint32_t latency_bytes,
+void ShmBuffer::SendStatus(AudioStatus status, uint32_t latency_bytes,
                           uint32_t consumed_len) {
   on_consumed_(status, latency_bytes, consumed_len);
   status_sent_ = true;

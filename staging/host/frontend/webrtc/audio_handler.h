@@ -17,21 +17,18 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <vector>
 
 #include "host/frontend/webrtc/lib/audio_sink.h"
+#include "host/frontend/webrtc/lib/audio_source.h"
 #include "host/libs/audio_connector/server.h"
 
 namespace cuttlefish {
 class AudioHandler : public AudioServerExecutor {
-  struct StreamParameters {
-    int bits_per_sample = -1;
-    int sample_rate = -1;
-    int channels = -1;
-    bool active = false;
-    bool capture = false;
-  };
+  // TODO(jemoreira): This can probably be avoided if playback goes through the
+  // audio device instead.
   struct HoldingBuffer {
     std::vector<uint8_t> buffer;
     size_t count;
@@ -42,10 +39,19 @@ class AudioHandler : public AudioServerExecutor {
     bool full() const;
     uint8_t* data();
   };
+  struct StreamDesc {
+    std::mutex mtx;
+    int bits_per_sample = -1;
+    int sample_rate = -1;
+    int channels = -1;
+    bool active = false;
+    HoldingBuffer buffer;
+  };
 
  public:
-  AudioHandler(std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
-               std::unique_ptr<AudioServer> audio_server);
+  AudioHandler(std::unique_ptr<AudioServer> audio_server,
+               std::shared_ptr<webrtc_streaming::AudioSink> audio_sink,
+               std::shared_ptr<webrtc_streaming::AudioSource> audio_source);
   ~AudioHandler() override = default;
 
   void Start();
@@ -58,7 +64,8 @@ class AudioHandler : public AudioServerExecutor {
   void StartStream(StreamControlCommand& cmd) override;
   void StopStream(StreamControlCommand& cmd) override;
 
-  void OnBuffer(TxBuffer buffer) override;
+  void OnPlaybackBuffer(TxBuffer buffer) override;
+  void OnCaptureBuffer(RxBuffer buffer) override;
 
  private:
   [[noreturn]] void Loop();
@@ -66,7 +73,7 @@ class AudioHandler : public AudioServerExecutor {
   std::shared_ptr<webrtc_streaming::AudioSink> audio_sink_;
   std::unique_ptr<AudioServer> audio_server_;
   std::thread server_thread_;
-  std::vector<StreamParameters> stream_parameters_;
-  std::vector<HoldingBuffer> stream_buffers_;
+  std::vector<StreamDesc> stream_descs_ = {};
+  std::shared_ptr<webrtc_streaming::AudioSource> audio_source_;
 };
 }  // namespace cuttlefish
