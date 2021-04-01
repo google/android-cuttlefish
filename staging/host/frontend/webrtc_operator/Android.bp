@@ -74,6 +74,13 @@ prebuilt_usr_share_host {
 }
 
 prebuilt_usr_share_host {
+    name: "webrtc_controls.css",
+    src: "assets/controls.css",
+    filename: "controls.css",
+    sub_dir: "webrtc/assets",
+}
+
+prebuilt_usr_share_host {
     name: "webrtc_adb.js",
     src: "assets/js/adb.js",
     filename: "adb.js",
@@ -91,6 +98,13 @@ prebuilt_usr_share_host {
     name: "webrtc_app.js",
     src: "assets/js/app.js",
     filename: "app.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
+    name: "webrtc_controls.js",
+    src: "assets/js/controls.js",
+    filename: "controls.js",
     sub_dir: "webrtc/assets/js",
 }
 
