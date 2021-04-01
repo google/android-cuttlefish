@@ -18,8 +18,8 @@
 
 function ConnectToDevice(device_id) {
   console.log('ConnectToDevice ', device_id);
-  const keyboardCaptureButton = document.getElementById('keyboardCaptureBtn');
-  keyboardCaptureButton.addEventListener('click', onKeyboardCaptureClick);
+  const keyboardCaptureCtrl = document.getElementById('keyboardCaptureCtrl');
+  createToggleControl(keyboardCaptureCtrl, "keyboard", onKeyboardCaptureToggle);
 
   const deviceScreen = document.getElementById('deviceScreen');
   const deviceAudio = document.getElementById('deviceAudio');
@@ -285,6 +285,7 @@ function ConnectToDevice(device_id) {
         }
       });
   }, rejection => {
+      console.error('Unable to connect: ', rejection);
       showWebrtcError();
   });
 
@@ -316,14 +317,11 @@ function ConnectToDevice(device_id) {
     updateDeviceDetailsText();
   }
 
-  function onKeyboardCaptureClick(e) {
-    const selectedClass = 'selected';
-    if (keyboardCaptureButton.classList.contains(selectedClass)) {
-      stopKeyboardTracking();
-      keyboardCaptureButton.classList.remove(selectedClass);
-    } else {
+  function onKeyboardCaptureToggle(enabled) {
+    if (enabled) {
       startKeyboardTracking();
-      keyboardCaptureButton.classList.add(selectedClass);
+    } else {
+      stopKeyboardTracking();
     }
   }
 
