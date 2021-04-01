@@ -19,6 +19,8 @@
         <title>My Virtual Device Playground</title>
 
         <link rel="stylesheet" type="text/css" href="style.css" >
+        <link rel="stylesheet" type="text/css" href="controls.css" >
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined">
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
     </head>
 
@@ -29,21 +31,27 @@
       </section>
       <section id='device_connection'>
         <div id='control_view'>
-          <button id="keyboardCaptureBtn">Capture Keyboard</button>
+          <div id='app_controls'>
+            <h2 class="section-title">App Controls</h2>
+            <div id="keyboardCaptureCtrl" title="Capture Keyboard"></div>
+          </div>
           <hr>
           <div id='control_panel'>
-            <h2>Device Controls</h2>
+            <h2 class="section-title">Device Controls</h2>
             <div id='control_panel_default_buttons'></div>
-            <h2 id='custom_controls_title'>Custom Controls</h2>
+            <h2 class="section-title" id='custom_controls_title'>Custom Controls</h2>
             <div id='control_panel_custom_buttons'></div>
           </div>
           <h3 id='adb_status_message' class='connecting'>Awaiting bootup and adb connection. Please wait...</h3>
           <div id='device_details'>
-            <h2>Device Details</h2>
+            <h2 class="section-title">Device Details</h2>
             <h3>Hardware Configuration</h3>
             <span id='device_details_hardware'>unknown</span>
           </div>
-          <audio autoplay controls id="deviceAudio"></audio>
+          <div id='device_speakers'>
+            <h2 class="section-title">Device Speakers</h2>
+            <audio autoplay controls id="deviceAudio"></audio>
+          </div>
         </div>
         <div id='device_view'>
           <h3 id='device_status_message'></h3>
@@ -58,6 +66,7 @@
 
        <script src="js/adb.js"></script>
        <script src="js/cf_webrtc.js" type="module"></script>
+       <script src="js/controls.js"></script>
        <script src="js/app.js"></script>
     </body>
 </html>
