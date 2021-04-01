@@ -385,6 +385,7 @@ export async function Connect(deviceId, options) {
     try {
       await pc.setRemoteDescription(offer);
       let answer = await pc.createAnswer();
+      console.log('Answer: ', answer);
       await pc.setLocalDescription(answer);
       await control.sendClientDescription(answer);
     } catch (e) {
