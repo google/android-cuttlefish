@@ -35,8 +35,9 @@
 
 namespace cuttlefish {
 
-template<typename ProcessedFrameType>
-class ScreenConnector : public ScreenConnectorInfo {
+template <typename ProcessedFrameType>
+class ScreenConnector : public ScreenConnectorInfo,
+                        public ScreenConnectorFrameRenderer {
  public:
   static_assert(cuttlefish::is_movable<ProcessedFrameType>::value,
                 "ProcessedFrameType should be std::move-able.");
@@ -74,7 +75,7 @@ class ScreenConnector : public ScreenConnectorInfo {
     return std::unique_ptr<ScreenConnector<ProcessedFrameType>>(raw_ptr);
   }
 
-  ~ScreenConnector() = default;
+  virtual ~ScreenConnector() = default;
 
   /**
    * set the callback function to be eventually used by Wayland/Socket-Based Connectors
@@ -95,7 +96,7 @@ class ScreenConnector : public ScreenConnectorInfo {
     }
   }
 
-  bool IsCallbackSet() const {
+  bool IsCallbackSet() const override {
     if (callback_from_streamer_) {
       return true;
     }
@@ -143,7 +144,17 @@ class ScreenConnector : public ScreenConnectorInfo {
       sc_android_queue_.PushBack(std::move(result));
     }
   }
-  // TODO: add ConfUIFetchingLoop
+
+  /**
+   * ConfUi calls this when it has frames to render
+   *
+   * This won't be called if not by Confirmation UI. This won't affect rendering
+   * Android guest frames if Confirmation UI HAL is not active.
+   *
+   */
+  bool RenderConfirmationUi(const std::uint32_t, std::uint8_t*) override {
+    return true;
+  }
 
   // Let the screen connector know when there are clients connected
   void ReportClientsConnected(bool have_clients) {
