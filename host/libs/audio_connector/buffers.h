@@ -35,22 +35,18 @@ using OnConsumedCb = std::function<void(AudioStatus, uint32_t /*latency*/,
 // Objects of this class can only be moved, not copied. Destroying a buffer
 // without sending the status to the client is a bug so the program aborts in
 // those cases.
-class TxBuffer {
+class ShmBuffer {
  public:
-  TxBuffer(const virtio_snd_pcm_xfer& header, const volatile uint8_t* buffer,
-           uint32_t len, OnConsumedCb on_consumed)
-      : header_(header),
-        buffer_(buffer),
-        len_(len),
-        on_consumed_(on_consumed) {}
-  TxBuffer(const TxBuffer& other) = delete;
-  TxBuffer(TxBuffer&& other);
-  TxBuffer& operator=(const TxBuffer& other) = delete;
+  ShmBuffer(const virtio_snd_pcm_xfer& header, uint32_t len,
+            OnConsumedCb on_consumed)
+      : header_(header), len_(len), on_consumed_(on_consumed) {}
+  ShmBuffer(const ShmBuffer& other) = delete;
+  ShmBuffer(ShmBuffer&& other);
+  ShmBuffer& operator=(const ShmBuffer& other) = delete;
 
-  ~TxBuffer();
+  ~ShmBuffer();
 
   uint32_t stream_id() const;
-  const volatile uint8_t* get() const { return buffer_; }
   uint32_t len() const { return len_; }
 
   void SendStatus(AudioStatus status, uint32_t latency_bytes,
@@ -58,10 +54,39 @@ class TxBuffer {
 
  private:
   const virtio_snd_pcm_xfer header_;
-  const volatile uint8_t* const buffer_;
   const uint32_t len_;
   OnConsumedCb on_consumed_;
   bool status_sent_ = false;
+};
+
+class TxBuffer : public ShmBuffer {
+ public:
+  TxBuffer(const virtio_snd_pcm_xfer& header, const volatile uint8_t* buffer,
+           uint32_t len, OnConsumedCb on_consumed)
+      : ShmBuffer(header, len, on_consumed), buffer_(buffer) {}
+  TxBuffer(const TxBuffer& other) = delete;
+  TxBuffer(TxBuffer&& other) = default;
+  TxBuffer& operator=(const TxBuffer& other) = delete;
+
+  const volatile uint8_t* get() const { return buffer_; }
+
+ private:
+  const volatile uint8_t* const buffer_;
+};
+
+class RxBuffer : public ShmBuffer {
+ public:
+  RxBuffer(const virtio_snd_pcm_xfer& header, volatile uint8_t* buffer,
+           uint32_t len, OnConsumedCb on_consumed)
+      : ShmBuffer(header, len, on_consumed), buffer_(buffer) {}
+  RxBuffer(const RxBuffer& other) = delete;
+  RxBuffer(RxBuffer&& other) = default;
+  RxBuffer& operator=(const RxBuffer& other) = delete;
+
+  volatile uint8_t* get() const { return buffer_; }
+
+ private:
+  volatile uint8_t* const buffer_;
 };
 
 }  // namespace cuttlefish
