@@ -20,6 +20,8 @@ function ConnectToDevice(device_id) {
   console.log('ConnectToDevice ', device_id);
   const keyboardCaptureCtrl = document.getElementById('keyboardCaptureCtrl');
   createToggleControl(keyboardCaptureCtrl, "keyboard", onKeyboardCaptureToggle);
+  const micCaptureCtrl = document.getElementById('micCaptureCtrl');
+  createToggleControl(micCaptureCtrl, "mic", onMicCaptureToggle);
 
   const deviceScreen = document.getElementById('deviceScreen');
   const deviceAudio = document.getElementById('deviceAudio');
@@ -323,6 +325,10 @@ function ConnectToDevice(device_id) {
     } else {
       stopKeyboardTracking();
     }
+  }
+
+  function onMicCaptureToggle(enabled) {
+    deviceConnection.useMic(enabled);
   }
 
   function onControlPanelButton(e) {
