@@ -30,7 +30,6 @@
 #include "host/libs/screen_connector/screen_connector_common.h"
 #include "host/libs/screen_connector/screen_connector_queue.h"
 #include "host/libs/screen_connector/screen_connector_ctrl.h"
-#include "host/libs/screen_connector/socket_based_screen_connector.h"
 #include "host/libs/screen_connector/wayland_screen_connector.h"
 
 namespace cuttlefish {
