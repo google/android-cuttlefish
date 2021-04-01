@@ -45,7 +45,8 @@ class AudioServerExecutor {
   // Implementations must call buffer.SendStatus() before destroying the buffer
   // to notify the other side of the release of the buffer. Failure to do so
   // will cause the program to abort.
-  virtual void OnBuffer(TxBuffer buffer) = 0;
+  virtual void OnPlaybackBuffer(TxBuffer buffer) = 0;
+  virtual void OnCaptureBuffer(RxBuffer buffer) = 0;
 };
 
 class AudioClientConnection {
@@ -59,10 +60,12 @@ class AudioClientConnection {
 
   AudioClientConnection& operator=(const AudioClientConnection&) = delete;
 
-  // Allows the caller to react to commands/IO buffers sent by the client.
-  bool ReceivePending(AudioServerExecutor& executor);
+  // Allows the caller to react to commands sent by the client.
+  bool ReceiveCommands(AudioServerExecutor& executor);
+  // Allows the caller to react to IO buffers sent by the client.
+  bool ReceivePlayback(AudioServerExecutor& executor);
+  bool ReceiveCapture(AudioServerExecutor& executor);
 
-  bool SendRxBuffer(/*TODO*/);
   bool SendEvent(/*TODO*/);
 
  private:
@@ -80,11 +83,10 @@ class AudioClientConnection {
                 size_t size = 0);
   bool WithCommand(const virtio_snd_hdr* msg, size_t msg_len,
                    AudioServerExecutor& executor);
-  bool WithIOBuffer(const IoTransferMsg& msg, size_t msg_len,
-                    AudioServerExecutor& executor);
 
   ssize_t ReceiveMsg(SharedFD socket, void* buffer, size_t size);
   const volatile uint8_t* TxBufferAt(size_t offset, size_t len) const;
+  volatile uint8_t* RxBufferAt(size_t offset, size_t len);
 
   const ScopedMMap tx_shm_;
   ScopedMMap rx_shm_;

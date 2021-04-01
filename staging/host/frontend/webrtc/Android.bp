@@ -20,6 +20,7 @@ package {
 cc_library_static {
     name: "libcuttlefish_webrtc",
     srcs: [
+        "lib/audio_device.cpp",
         "lib/audio_track_source_impl.cpp",
         "lib/client_handler.cpp",
         "lib/keyboard.cpp",
