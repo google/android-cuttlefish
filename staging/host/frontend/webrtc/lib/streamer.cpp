@@ -32,6 +32,7 @@
 #include <media/base/video_broadcaster.h>
 #include <pc/video_track_source.h>
 
+#include "host/frontend/webrtc/lib/audio_device.h"
 #include "host/frontend/webrtc/lib/audio_track_source_impl.h"
 #include "host/frontend/webrtc/lib/client_handler.h"
 #include "host/frontend/webrtc/lib/port_range_socket_factory.h"
@@ -110,6 +111,28 @@ struct OperatorServerConfig {
   std::vector<webrtc::PeerConnectionInterface::IceServer> servers;
 };
 
+// Wraps a scoped_refptr pointer to an audio device module
+class AudioDeviceModuleWrapper : public AudioSource {
+ public:
+  AudioDeviceModuleWrapper(
+      rtc::scoped_refptr<CfAudioDeviceModule> device_module)
+      : device_module_(device_module) {}
+  int GetMoreAudioData(void* data, int bytes_per_sample,
+                       int samples_per_channel, int num_channels,
+                       int sample_rate, bool& muted) override {
+    return device_module_->GetMoreAudioData(data, bytes_per_sample,
+                                            samples_per_channel, num_channels,
+                                            sample_rate, muted);
+  }
+
+  rtc::scoped_refptr<CfAudioDeviceModule> device_module() {
+    return device_module_;
+  }
+
+ private:
+  rtc::scoped_refptr<CfAudioDeviceModule> device_module_;
+};
+
 }  // namespace
 
 class Streamer::Impl : public WsConnectionObserver {
@@ -146,6 +169,7 @@ class Streamer::Impl : public WsConnectionObserver {
   std::weak_ptr<OperatorObserver> operator_observer_;
   std::map<std::string, std::string> hardware_;
   std::vector<ControlPanelButtonDescriptor> custom_control_panel_buttons_;
+  std::shared_ptr<AudioDeviceModuleWrapper> audio_device_module_;
 };
 
 Streamer::Streamer(std::unique_ptr<Streamer::Impl> impl)
@@ -170,9 +194,13 @@ std::unique_ptr<Streamer> Streamer::Create(
     return nullptr;
   }
 
+  impl->audio_device_module_ = std::make_shared<AudioDeviceModuleWrapper>(
+      rtc::scoped_refptr<CfAudioDeviceModule>(
+          new rtc::RefCountedObject<CfAudioDeviceModule>()));
+
   impl->peer_connection_factory_ = webrtc::CreatePeerConnectionFactory(
       impl->network_thread_.get(), impl->worker_thread_.get(),
-      impl->signal_thread_.get(), nullptr /* default_adm */,
+      impl->signal_thread_.get(), impl->audio_device_module_->device_module(),
       webrtc::CreateBuiltinAudioEncoderFactory(),
       webrtc::CreateBuiltinAudioDecoderFactory(),
       std::make_unique<VP8OnlyEncoderFactory>(
@@ -229,6 +257,10 @@ std::shared_ptr<AudioSink> Streamer::AddAudioStream(const std::string& label) {
         return std::shared_ptr<AudioSink>(
             new AudioTrackSourceImplSinkWrapper(source));
       });
+}
+
+std::shared_ptr<AudioSource> Streamer::GetAudioSource() {
+  return impl_->audio_device_module_;
 }
 
 void Streamer::SetHardwareSpec(std::string key, std::string value) {
