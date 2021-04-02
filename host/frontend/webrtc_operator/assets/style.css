@@ -142,3 +142,9 @@ h2.section-title {
 #device_details span {
     white-space: pre;
 }
+
+/* This effectively disables the microphone control. It should be enabled again
+ * when the audio stream is injected into the guest */
+div#micCaptureCtrl {
+  display: none;
+}
