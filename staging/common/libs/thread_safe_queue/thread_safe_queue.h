@@ -72,6 +72,16 @@ class ThreadSafeQueue {
     new_item_.notify_one();
   }
 
+  bool IsEmpty() {
+    std::lock_guard<std::mutex> guard(m_);
+    return items_.empty();
+  }
+
+  bool IsFull() {
+    std::lock_guard<std::mutex> guard(m_);
+    return items_.size() == max_elements_;
+  }
+
  private:
   void DropItemsIfAtCapacity() {
     if (max_elements_ && max_elements_ == items_.size()) {
