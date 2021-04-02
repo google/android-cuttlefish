@@ -16,13 +16,13 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <type_traits>
-#include <cassert>
-#include <thread>
 #include <mutex>
+#include <thread>
+#include <type_traits>
 
 #include <android-base/logging.h>
 #include "common/libs/utils/size_utils.h"
