@@ -82,6 +82,13 @@ struct ScreenConnectorInfo {
   }
 };
 
+struct ScreenConnectorFrameRenderer {
+  virtual bool RenderConfirmationUi(const std::uint32_t display,
+                                    std::uint8_t* raw_frame) = 0;
+  virtual bool IsCallbackSet() const = 0;
+  virtual ~ScreenConnectorFrameRenderer() = default;
+};
+
 // this is inherited by the data type that represents the processed frame
 // being moved around.
 struct ScreenConnectorFrameInfo {
