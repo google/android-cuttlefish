@@ -28,10 +28,12 @@ cc_library_headers {
 cc_library_static {
     name: "libcuttlefish_confui_host",
     srcs: [
+        "host_renderer.cc",
         "host_server.cc",
         "host_utils.cc",
         "server_common.cc",
         "session.cc",
+        "fonts.S",
     ],
     shared_libs: [
         "libcuttlefish_fs",
