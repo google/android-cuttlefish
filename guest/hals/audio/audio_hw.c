@@ -1445,9 +1445,12 @@ static int adev_open_input_stream(struct audio_hw_device *dev,
     struct generic_audio_device *adev = (struct generic_audio_device *)dev;
     struct generic_stream_in *in;
     int ret = 0;
+    uint32_t orig_sample_rate = config->sample_rate;
+    audio_format_t orig_audio_format = config->format;
+    audio_channel_mask_t orig_channel_mask = config->channel_mask;
     if (refine_input_parameters(&config->sample_rate, &config->format, &config->channel_mask)) {
         ALOGE("Error opening input stream format %d, channel_mask %04x, sample_rate %u",
-              config->format, config->channel_mask, config->sample_rate);
+              orig_audio_format, orig_channel_mask, orig_sample_rate);
         ret = -EINVAL;
         goto error;
     }
