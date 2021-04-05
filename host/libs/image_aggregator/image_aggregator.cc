@@ -18,7 +18,7 @@
  * GUID Partition Table and Composite Disk generation code.
  */
 
-#include "host/commands/assemble_cvd/image_aggregator.h"
+#include "host/libs/image_aggregator/image_aggregator.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,6 +31,7 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <cdisk_spec.pb.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>
 #include <uuid.h>
@@ -42,7 +43,6 @@
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/mbr.h"
-#include "device/google/cuttlefish/host/commands/assemble_cvd/cdisk_spec.pb.h"
 
 namespace cuttlefish {
 namespace {
