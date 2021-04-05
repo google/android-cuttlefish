@@ -738,8 +738,7 @@ static int refine_output_parameters(uint32_t *sample_rate, audio_format_t *forma
 
 static int refine_input_parameters(uint32_t *sample_rate, audio_format_t *format, audio_channel_mask_t *channel_mask)
 {
-    // Crosvm only supports 48kHz streams for input
-    static const uint32_t sample_rates [] = {48000};
+    static const uint32_t sample_rates [] = {8000, 11025, 16000, 22050, 44100, 48000};
     static const int sample_rates_count = sizeof(sample_rates)/sizeof(uint32_t);
     bool inval = false;
     // Only PCM_16_bit is supported. If this is changed, stereo to mono drop
