@@ -33,6 +33,7 @@ const char TMP_EXTENSION[] = ".tmp";
 const char CPIO_EXT[] = ".cpio";
 const char TMP_RD_DIR[] = "stripped_ramdisk_dir";
 const char STRIPPED_RD[] = "stripped_ramdisk";
+const char CONCATENATED_VENDOR_RAMDISK[] = "concatenated_vendor_ramdisk";
 namespace cuttlefish {
 namespace {
 std::string ExtractValue(const std::string& dictionary, const std::string& key) {
@@ -174,6 +175,24 @@ bool UnpackVendorBootImageIfNotUnpacked(
     LOG(ERROR) << "Unable to run unpack_bootimg. Exited with status " << success;
     return false;
   }
+
+  // Concatenates all vendor ramdisk into one single ramdisk.
+  Command concat_cmd("/bin/bash");
+  concat_cmd.AddParameter("-c");
+  concat_cmd.AddParameter("cat " + unpack_dir + "/vendor_ramdisk*");
+  auto concat_file =
+      SharedFD::Creat(unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK, 0666);
+  if (!concat_file->IsOpen()) {
+    LOG(ERROR) << "Unable to create concatenated vendor ramdisk file: "
+               << concat_file->StrError();
+    return false;
+  }
+  concat_cmd.RedirectStdIO(Subprocess::StdIOChannel::kStdOut, concat_file);
+  success = concat_cmd.Start().Wait();
+  if (success != 0) {
+    LOG(ERROR) << "Unable to run cat. Exited with status " << success;
+    return false;
+  }
   return true;
 }
 
@@ -241,11 +260,12 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   if (new_ramdisk.size()) {
     ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
     if (!FileExists(ramdisk_path)) {
-      RepackVendorRamdisk(new_ramdisk, unpack_dir + "/vendor_ramdisk0",
+      RepackVendorRamdisk(new_ramdisk,
+                          unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK,
                           ramdisk_path, unpack_dir);
     }
   } else {
-    ramdisk_path = unpack_dir + "/vendor_ramdisk0";
+    ramdisk_path = unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK;
   }
 
   auto bootconfig_fd = SharedFD::Creat(repack_dir + "/bootconfig", 0666);
