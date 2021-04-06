@@ -193,7 +193,9 @@ class DeviceConnection {
   }
 
   useMic(in_use) {
-    this._audio_stream.getTracks().forEach(track => track.enabled = in_use);
+    if (this._audio_stream) {
+      this._audio_stream.getTracks().forEach(track => track.enabled = in_use);
+    }
   }
 
   // Provide a callback to receive control-related comms from the device
@@ -387,13 +389,18 @@ export async function Connect(deviceId, options) {
   }
   let pc = createPeerConnection(infraConfig, control);
 
-  const audioStream =
-      await navigator.mediaDevices.getUserMedia({video: false, audio: true});
-  const audioTracks = audioStream.getAudioTracks();
-  if (audioTracks.length > 0) {
-    console.log(`Using Audio device: ${audioTracks[0].label}, with ${
+  let audioStream;
+  try {
+    audioStream =
+        await navigator.mediaDevices.getUserMedia({video: false, audio: true});
+    const audioTracks = audioStream.getAudioTracks();
+    if (audioTracks.length > 0) {
+      console.log(`Using Audio device: ${audioTracks[0].label}, with ${
         audioTracks.length} tracks`);
-    audioTracks.forEach(track => pc.addTrack(track, audioStream));
+      audioTracks.forEach(track => pc.addTrack(track, audioStream));
+    }
+  } catch (e) {
+    console.error("Failed to open audio device: ", e);
   }
 
   let deviceConnection = new DeviceConnection(pc, control, audioStream);
