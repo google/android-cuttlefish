@@ -163,14 +163,6 @@ bool KillSubprocess(Subprocess* subprocess) {
   }
   return true;
 }
-Command::ParameterBuilder::~ParameterBuilder() { Build(); }
-void Command::ParameterBuilder::Build() {
-  auto param = stream_.str();
-  stream_ = std::stringstream();
-  if (param.size()) {
-    cmd_->AddParameter(param);
-  }
-}
 
 Command::~Command() {
   // Close all inherited file descriptors
