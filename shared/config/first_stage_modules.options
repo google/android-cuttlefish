@@ -1,0 +1,4 @@
+# Reduce slab size usage from virtio vsock to reduce slab fragmentation
+options vmw_vsock_virtio_transport_common virtio_transport_max_vsock_pkt_buf_size=16384
+# TODO(b/176860479): Remove once goldfish and cuttlefish share a wifi implementation
+options mac80211_hwsim radios=0
