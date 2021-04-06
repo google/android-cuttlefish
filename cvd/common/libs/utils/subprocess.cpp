@@ -74,6 +74,12 @@ std::vector<const char*> ToCharPointers(const std::vector<std::string>& vect) {
   ret.push_back(NULL);
   return ret;
 }
+
+void UnsetEnvironment(const std::unordered_set<std::string>& unenv) {
+  for (auto it = unenv.cbegin(); it != unenv.cend(); ++it) {
+    unsetenv(it->c_str());
+  }
+}
 }  // namespace
 
 Subprocess::Subprocess(Subprocess&& subprocess)
@@ -241,6 +247,7 @@ Subprocess Command::Start(SubprocessOptions options) const {
     // the environment of the child process. To force an empty emvironment for
     // the child process pass the address of a pointer to NULL
     if (use_parent_env_) {
+      UnsetEnvironment(unenv_);
       rval = execvp(cmd[0], const_cast<char* const*>(cmd.data()));
     } else {
       auto envp = ToCharPointers(env_);
