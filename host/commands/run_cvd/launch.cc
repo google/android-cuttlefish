@@ -354,6 +354,8 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
   cuttlefish::Command webrtc(cuttlefish::WebRtcBinary(),
                              cuttlefish::SubprocessStopper(stopper));
 
+  webrtc.UnsetFromEnvironment({"http_proxy"});
+
   CreateStreamerServers(&webrtc, config);
 
   webrtc.AddParameter("--command_fd=", client_socket);
