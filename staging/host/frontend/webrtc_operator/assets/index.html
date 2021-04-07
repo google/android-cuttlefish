@@ -25,45 +25,42 @@
     </head>
 
     <body>
-      <section id='device_selector'>
-        <h1>Available devices <span id='refresh_list'>&#8635;</span></h1>
-        <ul id="device_list"></ul>
+      <section id='device-selector'>
+        <h1>Available devices <span id='refresh-list'>&#8635;</span></h1>
+        <ul id="device-list"></ul>
       </section>
-      <section id='device_connection'>
-        <div id='control_view'>
-          <div id='app_controls'>
-            <h2 class="section-title">App Controls</h2>
-            <div id="keyboardCaptureCtrl" title="Capture Keyboard"></div>
-            <div id="micCaptureCtrl" title="Capture Microphone"></div>
+      <section id='device-connection'>
+        <div id='header'>
+          <div id='app-controls'>
+            <div id="keyboard-capture-control" title="Capture Keyboard"></div>
+            <div id="mic-capture-control" title="Capture Microphone"></div>
+            <audio autoplay controls id="device-audio"></audio>
           </div>
-          <hr>
-          <div id='control_panel'>
-            <h2 class="section-title">Device Controls</h2>
-            <div id='control_panel_default_buttons'></div>
-            <h2 class="section-title" id='custom_controls_title'>Custom Controls</h2>
-            <div id='control_panel_custom_buttons'></div>
-          </div>
-          <h3 id='adb_status_message' class='connecting'>Awaiting bootup and adb connection. Please wait...</h3>
-          <div id='device_details'>
-            <h2 class="section-title">Device Details</h2>
-            <h3>Hardware Configuration</h3>
-            <span id='device_details_hardware'>unknown</span>
-          </div>
-          <div id='device_speakers'>
-            <h2 class="section-title">Device Speakers</h2>
-            <audio autoplay controls id="deviceAudio"></audio>
+          <div id='status-div'>
+            <h3 id='status-message' class='connecting'>Connecting to device</h3>
           </div>
         </div>
-        <div id='device_view'>
-          <h3 id='device_status_message'></h3>
-          <video id="deviceScreen" autoplay ></video>
-          <h3 id='webrtc_status_message'>
-            No connection to the guest device.<br><br>
-            Please ensure the WebRTC process on the host machine is active.<br><br>
-            Tip: <code>ps aux | grep -i webrtc</code>
-          </h3>
+        <div id='controls-and-screens'>
+          <div id='control-panel-default-buttons' class='control-panel-column'>
+            <button id='device-details-button' title='Device Details' class='material-icons'>
+              settings
+            </button>
+          </div>
+          <div id='control-panel-custom-buttons' class='control-panel-column'></div>
+          <div id='screens'>
+            <video id="device-screen" autoplay ></video>
+          </div>
         </div>
       </section>
+      <div id='device-details-modal'>
+        <div id='device-details-modal-header'>
+          <h2>Device Details</h2>
+          <button id='device-details-close' title='Close' class='material-icons'>close</button>
+        </div>
+        <hr>
+        <h3>Hardware Configuration</h3>
+        <span id='device-details-hardware'>unknown</span>
+      </div>
 
        <script src="js/adb.js"></script>
        <script src="js/cf_webrtc.js" type="module"></script>
