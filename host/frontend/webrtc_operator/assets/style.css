@@ -15,136 +15,160 @@
  */
 
 body {
-    background-color:black;
-    margin: 0;
+  background-color:black;
+  margin: 0;
 }
 
-#device_selector {
-    color: whitesmoke;
+#device-selector {
+  color: whitesmoke;
 }
-#device_selector li.device_entry {
-    cursor: pointer;
-}
-
-#refresh_list {
-    cursor: pointer;
+#device-selector li.device-entry {
+  cursor: pointer;
 }
 
-#device_list .device_entry button {
-    margin-left: 10px;
+#refresh-list {
+  cursor: pointer;
+}
+
+#device-list .device-entry button {
+  margin-left: 10px;
+}
+
+#device-connection {
+  visibility: hidden;
+  max-height: 100vh;
 }
 
 
-#device_connection {
-    visibility: hidden;
+/* Top header row. */
+
+#header {
+  height: 64px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+  align-items: center;
 }
 
-#device_view {
-    transition: width 1s;
+#app-controls {
+  margin-left: 10px;
 }
-#control_view {
-    text-align: left;
-    padding: 10px;
-    min-width: 450px;
+#app-controls > div {
+  display: inline-block;
+  position: relative;
+  margin-right: 6px;
 }
-/* Screens >1000px place the device view on the left and the control
- * view on the right. Other screens have deview view on top and control
- * view on bottom. */
-@media screen and (min-width: 1000px) {
-    #device_view {
-        float: left;
-    }
-    #control_view {
-        float: left;
-    }
+#device-audio {
+  margin-bottom: 5px;
 }
 
-#deviceScreen {
-    touch-action: none;
-    transform-origin: top right;
-    object-fit: cover;
+#status-div {
+  flex-grow: 1;
+}
+#status-message {
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+  padding: 10px;
+  margin: 10px;
+}
+#status-message.connecting {
+  /* dark yellow */
+  background-color: #927836;
+}
+#status-message.error {
+  /* dark red */
+  background-color: #900000;
+}
+#status-message.connected {
+  /* dark green */
+  background-color: #007000;
 }
 
-body {
-    font-family: 'Open Sans', sans-serif;
+/* Control panel buttons and device screen(s). */
+
+#controls-and-screens {
+  height: calc(100% - 84px);
+
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+}
+#controls-and-screens div {
+  margin-left: 10px;
+  margin-right: 10px;
 }
 
-h2.section-title {
-    color: white;
-}
-
-#app_controls > div {
-    display: inline-block;
-    position: relative;
-    margin-right: 6px;
-}
-
-#device_view h3 {
-    padding: 30px;
-    font-family: 'Open Sans', sans-serif;
-    color: white;
-}
-
-#device_status_message {
-    white-space: pre-line;
-    width: 400px;
-}
-
-#webrtc_status_message {
-    text-align: center;
-    /* White text on dark red background. */
-    background-color: #900000;
-    /* Hidden by default. */
-    display: none;
-}
-
-#device_connection button {
-    height: 60px;
-    min-width: 60px;
-    display: inline-block;
-    margin: 10px 10px;
-    font-size: 48px;
-    border-radius: 8px;
-    border: none;
-    background-color: #dbdbdb;
-    transition-duration: 0.2s;
-}
-#control_panel button:hover {
-    background-color: #c9c9c9;
-}
-
-#adb_status_message {
-    padding: 10px;
-    font-family: 'Open Sans', sans-serif;
-    color: white;
-}
-#adb_status_message.connecting {
-    /* dark yellow */
-    background-color: #927836;
-}
-#adb_status_message.error {
-    /* dark red */
-    background-color: #900000;
-}
-#adb_status_message.connected {
-    /* dark green */
-    background-color: #007000;
-}
-
-#device_details {
-    font-family: 'Open Sans', sans-serif;
-    color: white;
-    background-color: #383838;
-    margin-top: 20px;
-    padding: 20px;
-    padding-top: 1px;
-}
-#device_details span {
-    white-space: pre;
-}
-
-/* This effectively disables the microphone control. It should be enabled again
- * when the audio stream is injected into the guest */
-div#micCaptureCtrl {
+#device-details-modal {
+  /* Start out hidden, and use absolute positioning. */
   display: none;
+  position: absolute;
+
+  border-radius: 16px;
+  padding: 20px;
+  padding-top: 1px;
+
+  background-color: #5f6368ea; /* Semi-transparent Google grey 500 */
+  color: white;
+  font-family: 'Open Sans', sans-serif;
+}
+#device-details-modal-header {
+  /* Items inside this use a row Flexbox.*/
+  display: flex;
+  justify-content: space-between;
+}
+#device-details-close {
+  color: white;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+#device-details-modal span {
+  white-space: pre;
+}
+
+.control-panel-column {
+  width: 80px;
+  /* Items inside this use a column Flexbox.*/
+  display: flex;
+  flex-direction: column;
+}
+#control-panel-custom-buttons {
+  display: none;
+  /* Give the custom buttons column a blue background. */
+  background-color: #1c4587ff;
+  height: fit-content;
+  border-radius: 16px;
+}
+
+.control-panel-column button {
+  margin: 10px;
+  height: 60px;
+  font-size: 48px;
+
+  color: #e8eaed; /* Google grey 200 */
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+.control-panel-column button:disabled {
+  color: #9aa0a6; /* Google grey 500 */
+}
+#device-details-button {
+  margin: 0px;
+  height: 80px;
+  border-radius: 16px;
+  background-color: #5f6368; /* Google grey 700 */
+}
+
+#screens {
+  /* Take up the remaining width of the window.*/
+  flex-grow: 1;
+  /* Don't grow taller than the window.*/
+  max-height: 100vh;
+}
+
+#device-screen {
+  touch-action: none;
+  transform-origin: top right;
+  object-fit: cover;
 }
