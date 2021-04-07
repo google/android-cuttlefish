@@ -40,7 +40,7 @@
     {RIL_REQUEST_RADIO_POWER, radio_1_6::setRadioPowerResponse},
     {RIL_REQUEST_DTMF, radio_1_6::sendDtmfResponse},
     {RIL_REQUEST_SEND_SMS, radio_1_6::sendSmsResponse},
-    {RIL_REQUEST_SEND_SMS_EXPECT_MORE, radio_1_6::sendSMSExpectMoreResponse},
+    {RIL_REQUEST_SEND_SMS_EXPECT_MORE, radio_1_6::sendSmsExpectMoreResponse},
     {RIL_REQUEST_SETUP_DATA_CALL, radio_1_6::setupDataCallResponse},
     {RIL_REQUEST_SIM_IO, radio_1_6::iccIOForAppResponse},
     {RIL_REQUEST_SEND_USSD, radio_1_6::sendUssdResponse},
