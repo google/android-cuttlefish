@@ -20,7 +20,6 @@ package {
 cc_library_static {
     name: "libcuttlefish_screen_connector",
     srcs: [
-        "socket_based_screen_connector.cpp",
         "wayland_screen_connector.cpp",
     ],
     shared_libs: [
