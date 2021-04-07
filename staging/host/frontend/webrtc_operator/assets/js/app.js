@@ -18,38 +18,41 @@
 
 function ConnectToDevice(device_id) {
   console.log('ConnectToDevice ', device_id);
-  const keyboardCaptureCtrl = document.getElementById('keyboardCaptureCtrl');
+  const keyboardCaptureCtrl = document.getElementById('keyboard-capture-control');
   createToggleControl(keyboardCaptureCtrl, "keyboard", onKeyboardCaptureToggle);
-  const micCaptureCtrl = document.getElementById('micCaptureCtrl');
+  const micCaptureCtrl = document.getElementById('mic-capture-control');
   createToggleControl(micCaptureCtrl, "mic", onMicCaptureToggle);
+  // TODO(b/163867676): Enable the microphone control when the audio stream is
+  // injected into the guest. Until then, control is disabled.
+  micCaptureCtrl.style.display = 'none';
 
-  const deviceScreen = document.getElementById('deviceScreen');
-  const deviceAudio = document.getElementById('deviceAudio');
-  const deviceView = document.getElementById('device_view');
-  const webrtcStatusMessage = document.getElementById('webrtc_status_message');
-  const adbStatusMessage = document.getElementById('adb_status_message');
+  const deviceScreen = document.getElementById('device-screen');
+  const deviceAudio = document.getElementById('device-audio');
+  const statusMessage = document.getElementById('status-message');
 
-  const deviceStatusMessage = document.getElementById('device_status_message');
   let connectionAttemptDuration = 0;
   const intervalMs = 500;
   let deviceStatusEllipsisCount = 0;
   let animateDeviceStatusMessage = setInterval(function() {
-    deviceStatusEllipsisCount = (deviceStatusEllipsisCount + 1) % 4;
-    deviceStatusMessage.textContent = 'Connecting to device'
-        + '.'.repeat(deviceStatusEllipsisCount);
-
     connectionAttemptDuration += intervalMs;
     if (connectionAttemptDuration > 30000) {
-      deviceStatusMessage.textContent += '\r\n\r\nConnection should have occurred by now.'
-          + '\r\nPlease attempt to restart the guest device.'
-    } else if (connectionAttemptDuration > 15000) {
-      deviceStatusMessage.textContent += '\r\n\r\nConnection is taking longer than expected...'
+      statusMessage.className = 'error';
+      statusMessage.textContent = 'Connection should have occurred by now. ' +
+          'Please attempt to restart the guest device.';
+    } else {
+      if (connectionAttemptDuration > 15000) {
+        statusMessage.textContent = 'Connection is taking longer than expected';
+      } else {
+        statusMessage.textContent = 'Connecting to device';
+      }
+      deviceStatusEllipsisCount = (deviceStatusEllipsisCount + 1) % 4;
+      statusMessage.textContent += '.'.repeat(deviceStatusEllipsisCount);
     }
   }, intervalMs);
 
   deviceScreen.addEventListener('loadeddata', (evt) => {
     clearInterval(animateDeviceStatusMessage);
-    deviceStatusMessage.style.display = 'none';
+    statusMessage.textContent = 'Awaiting bootup and adb connection. Please wait...';
     resizeDeviceView();
     deviceScreen.style.visibility = 'visible';
     // Enable the buttons after the screen is visible.
@@ -77,11 +80,11 @@ function ConnectToDevice(device_id) {
     // Certain default adb buttons change screen state, so wait for boot
     // completion before enabling these buttons.
     if (adbConnected && bootCompleted) {
-      adbStatusMessage.className = 'connected';
-      adbStatusMessage.textContent =
+      statusMessage.className = 'connected';
+      statusMessage.textContent =
           'bootup and adb connection established successfully.';
       setTimeout(function() {
-        adbStatusMessage.style.visibility = 'hidden';
+        statusMessage.style.visibility = 'hidden';
       }, 5000);
       for (const [_, button] of Object.entries(buttons)) {
         if (button.adb) {
@@ -99,9 +102,9 @@ function ConnectToDevice(device_id) {
           showBootCompletion();
         },
         function() {
-          adbStatusMessage.className = 'error';
-          adbStatusMessage.textContent = 'adb connection failed.';
-          adbStatusMessage.style.visibility = 'visible';
+          statusMessage.className = 'error';
+          statusMessage.textContent = 'adb connection failed.';
+          statusMessage.style.visibility = 'visible';
           for (const [_, button] of Object.entries(buttons)) {
             if (button.adb) {
               button.button.disabled = true;
@@ -147,11 +150,12 @@ function ConnectToDevice(device_id) {
     }
   }
 
+  const screensDiv = document.getElementById('screens');
   function resizeDeviceView() {
     // Auto-scale the screen based on window size.
     // Max window width of 70%, allowing space for the control panel.
-    let ww = window.innerWidth * 0.7;
-    let wh = window.innerHeight;
+    let ww = screensDiv.offsetWidth * 0.7;
+    let wh = screensDiv.offsetHeight;
     let vw = currentDisplayDetails.x_res;
     let vh = currentDisplayDetails.y_res;
     let scaling = vw * wh > vh * ww ? ww / vw : wh / vh;
@@ -166,19 +170,12 @@ function ConnectToDevice(device_id) {
       deviceScreen.style.width = vh * scaling;
       deviceScreen.style.height = vw * scaling;
     }
-
-    // Set the deviceView size so that the control panel positions itself next
-    // to the screen correctly.
-    deviceView.style.width = currentRotation == 0 ? deviceScreen.style.width :
-                                                    deviceScreen.style.height;
-    deviceView.style.height = currentRotation == 0 ? deviceScreen.style.height :
-                                                     deviceScreen.style.width;
   }
   window.onresize = resizeDeviceView;
 
   function createControlPanelButton(command, title, icon_name,
       listener=onControlPanelButton,
-      parent_id='control_panel_default_buttons') {
+      parent_id='control-panel-default-buttons') {
     let button = document.createElement('button');
     document.getElementById(parent_id).appendChild(button);
     button.title = title;
@@ -207,14 +204,36 @@ function ConnectToDevice(device_id) {
   createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
   createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
 
+  const deviceDetailsModal = document.getElementById('device-details-modal');
+  const deviceDetailsButton = document.getElementById('device-details-button');
+  const deviceDetailsClose = document.getElementById('device-details-close');
+  function showHideDeviceDetailsModal(show) {
+    // Position the modal to the right of the device details button.
+    deviceDetailsModal.style.top = deviceDetailsButton.offsetTop;
+    deviceDetailsModal.style.left = deviceDetailsButton.offsetWidth + 30;
+    if (show) {
+      deviceDetailsModal.style.display = 'block';
+    } else {
+      deviceDetailsModal.style.display = 'none';
+    }
+  }
+  // Allow the device details button to toggle the modal,
+  deviceDetailsButton.addEventListener('click',
+      evt => showHideDeviceDetailsModal(deviceDetailsModal.style.display != 'block'));
+  // but the close button always closes.
+  deviceDetailsClose.addEventListener('click',
+      evt => showHideDeviceDetailsModal(false));
+
   let options = {
     wsUrl: ((location.protocol == 'http:') ? 'ws://' : 'wss://') +
       location.host + '/connect_client',
   };
 
   function showWebrtcError() {
-    webrtcStatusMessage.style.display = 'block';
-    deviceStatusMessage.style.display = 'none';
+    statusMessage.className = 'error';
+    statusMessage.textContent = 'No connection to the guest device. ' +
+        'Please ensure the WebRTC process on the host machine is active.';
+    statusMessage.style.visibility = 'visible';
     deviceScreen.style.display = 'none';
     for (const [_, button] of Object.entries(buttons)) {
       button.button.disabled = true;
@@ -243,15 +262,14 @@ function ConnectToDevice(device_id) {
       startMouseTracking();  // TODO stopMouseTracking() when disconnected
       updateDeviceHardwareDetails(deviceConnection.description.hardware);
       updateDeviceDisplayDetails(deviceConnection.description.displays[0]);
-      if (deviceConnection.description.custom_control_panel_buttons.length == 0) {
-        document.getElementById('custom_controls_title').style.visibility = 'hidden';
-      } else {
+      if (deviceConnection.description.custom_control_panel_buttons.length > 0) {
+        document.getElementById('control-panel-custom-buttons').style.display = 'flex';
         for (const button of deviceConnection.description.custom_control_panel_buttons) {
           if (button.shell_command) {
             // This button's command is handled by sending an ADB shell command.
             createControlPanelButton(button.command, button.title, button.icon_name,
                 e => onCustomShellButton(button.shell_command, e),
-                'control_panel_custom_buttons');
+                'control-panel-custom-buttons');
             buttons[button.command].adb = true;
           } else if (button.device_states) {
             // This button corresponds to variable hardware device state(s).
@@ -262,7 +280,7 @@ function ConnectToDevice(device_id) {
             // This button's command is handled by custom action server.
             createControlPanelButton(button.command, button.title, button.icon_name,
                 onControlPanelButton,
-                'control_panel_custom_buttons');
+                'control-panel-custom-buttons');
           }
         }
       }
@@ -294,7 +312,7 @@ function ConnectToDevice(device_id) {
   let hardwareDetailsText = '';
   let displayDetailsText = '';
   function updateDeviceDetailsText() {
-    document.getElementById('device_details_hardware').textContent = [
+    document.getElementById('device-details-hardware').textContent = [
       hardwareDetailsText,
       displayDetailsText,
     ].join('\n');
@@ -608,14 +626,14 @@ function ConnectToDevice(device_id) {
 function ConnectDeviceCb(dev_id) {
   console.log('Connect: ' + dev_id);
   // Hide the device selection screen
-  document.getElementById('device_selector').style.display = 'none';
+  document.getElementById('device-selector').style.display = 'none';
   // Show the device control screen
-  document.getElementById('device_connection').style.visibility = 'visible';
+  document.getElementById('device-connection').style.visibility = 'visible';
   ConnectToDevice(dev_id);
 }
 
 function ShowNewDeviceList(device_ids) {
-  let ul = document.getElementById('device_list');
+  let ul = document.getElementById('device-list');
   ul.innerHTML = "";
   let count = 1;
   let device_to_button_map = {};
@@ -649,5 +667,5 @@ function UpdateDeviceList() {
 // Get any devices that are already connected
 UpdateDeviceList();
 // Update the list at the user's request
-document.getElementById('refresh_list')
+document.getElementById('refresh-list')
     .addEventListener('click', evt => UpdateDeviceList());
