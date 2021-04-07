@@ -56,6 +56,13 @@ public class RilE2eTests {
 
     @Before
     public void setUp() throws Exception {
+        // Ideally this should be done in the @BeforeClass hook, but that would
+        // make tradefed unhappy with a bunch "test did not run due to
+        // instrumentation issue. See run level error for reason." errors.
+        Assume.assumeFalse(
+                "Skip testing deprecated radio HAL from Q or earlier vendor",
+                PropertyUtil.getFirstApiLevel() <= Build.VERSION_CODES.Q);
+
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mWifiManager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
         mConnManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -120,10 +127,6 @@ public class RilE2eTests {
      */
     @Test
     public void testBasicPhoneAttributes() throws Exception {
-        Assume.assumeFalse(
-                "Skip testing deprecated radio HAL from P or earlier vendor",
-                PropertyUtil.getFirstApiLevel() <= Build.VERSION_CODES.P);
-
         Assert.assertEquals("Android Virtual Operator", mTeleManager.getNetworkOperatorName());
         Assert.assertFalse(mTeleManager.isNetworkRoaming());
         Assert.assertTrue(mTeleManager.isSmsCapable());
