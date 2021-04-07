@@ -16,6 +16,7 @@
 #include "host/commands/modem_simulator/misc_service.h"
 
 #include <ctime>
+#include <fstream>
 #include <iomanip>
 
 namespace cuttlefish {
@@ -23,7 +24,36 @@ namespace cuttlefish {
 MiscService::MiscService(int32_t service_id, ChannelMonitor* channel_monitor,
                          ThreadLooper* thread_looper)
     : ModemService(service_id, this->InitializeCommandHandlers(),
-                   channel_monitor, thread_looper) {}
+                   channel_monitor, thread_looper) {
+  ParseTimeZone();
+}
+
+void MiscService::ParseTimeZone() {
+#if defined(__linux__)
+  constexpr char TIMEZONE_FILENAME[] = "/etc/timezone";
+  std::ifstream ifs(TIMEZONE_FILENAME);
+  if (ifs.is_open()) {
+    std::string line;
+    if (std::getline(ifs, line)) {
+      FixTimeZone(line);
+      timezone_ = line;
+    }
+  }
+#endif
+}
+
+void MiscService::FixTimeZone(std::string& line) {
+  auto slashpos = line.find("/");
+  // "/" will be treated as separator, change it !
+  if (slashpos != std::string::npos) {
+    line.replace(slashpos, 1, "!");
+  }
+}
+
+void MiscService::SetTimeZone(std::string timezone) {
+  FixTimeZone(timezone);
+  timezone_ = timezone;
+}
 
 std::vector<CommandHandler> MiscService::InitializeCommandHandlers() {
   std::vector<CommandHandler> command_handlers = {
@@ -118,15 +148,18 @@ void MiscService::TimeUpdate() {
   auto tzdiff = (int)std::difftime(t_local_time, t_gm_time) / (15 * 60);
 
   std::stringstream ss;
-  ss << "%CTZV: \"" << std::setfill('0') << std::setw(2) << local_time.tm_year % 100 << "/"
-                    << std::setfill('0') << std::setw(2) << local_time.tm_mon + 1 << "/"
-                    << std::setfill('0') << std::setw(2) << local_time.tm_mday << ","
-                    << std::setfill('0') << std::setw(2) << local_time.tm_hour << ":"
-                    << std::setfill('0') << std::setw(2) << local_time.tm_min << ":"
-                    << std::setfill('0') << std::setw(2) << local_time.tm_sec
-                    << (tzdiff >= 0 ? '+' : '-')
-                    << (tzdiff >= 0 ? tzdiff : -tzdiff) << ":"
-                    << local_time.tm_isdst << "\"";
+  ss << "%CTZV: \"" << std::setfill('0') << std::setw(2)
+     << local_time.tm_year % 100 << "/" << std::setfill('0') << std::setw(2)
+     << local_time.tm_mon + 1 << "/" << std::setfill('0') << std::setw(2)
+     << local_time.tm_mday << "," << std::setfill('0') << std::setw(2)
+     << local_time.tm_hour << ":" << std::setfill('0') << std::setw(2)
+     << local_time.tm_min << ":" << std::setfill('0') << std::setw(2)
+     << local_time.tm_sec << (tzdiff >= 0 ? '+' : '-')
+     << (tzdiff >= 0 ? tzdiff : -tzdiff) << ":" << local_time.tm_isdst;
+  if (!timezone_.empty()) {
+    ss << ":" << timezone_;
+  }
+  ss << "\"";
 
   SendUnsolicitedCommand(ss.str());
 }
