@@ -45,6 +45,8 @@ class ModemSimulator {
     channel_monitor_->SetRemoteClient(client, is_accepted);
   }
 
+  void SetTimeZone(std::string timezone);
+
  private:
   int32_t modem_id_;
   std::unique_ptr<ChannelMonitor> channel_monitor_;
