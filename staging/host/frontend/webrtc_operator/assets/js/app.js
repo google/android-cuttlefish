@@ -275,7 +275,7 @@ function ConnectToDevice(device_id) {
             // This button corresponds to variable hardware device state(s).
             createControlPanelButton(button.command, button.title, button.icon_name,
                 getCustomDeviceStateButtonCb(button.device_states),
-                'control_panel_custom_buttons');
+                'control-panel-custom-buttons');
           } else {
             // This button's command is handled by custom action server.
             createControlPanelButton(button.command, button.title, button.icon_name,
