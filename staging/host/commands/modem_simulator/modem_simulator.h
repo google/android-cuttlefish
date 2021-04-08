@@ -41,6 +41,7 @@ class ModemSimulator {
   void OnFirstClientConnected();
   void SaveModemState();
   bool IsWaitingSmsPdu();
+  bool IsRadioOn() const;
   void SetRemoteClient(cuttlefish::SharedFD client, bool is_accepted) {
     channel_monitor_->SetRemoteClient(client, is_accepted);
   }
