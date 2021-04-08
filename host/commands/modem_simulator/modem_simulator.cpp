@@ -137,6 +137,13 @@ void ModemSimulator::SaveModemState() {
   }
 }
 
+bool ModemSimulator::IsRadioOn() const {
+  if (network_service_) {
+    return !network_service_->isRadioOff();
+  }
+  return false;
+}
+
 bool ModemSimulator::IsWaitingSmsPdu() {
   if (sms_service_) {
     return (sms_service_->IsWaitingSmsPdu() |
