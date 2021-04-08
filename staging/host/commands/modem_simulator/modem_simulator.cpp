@@ -145,4 +145,10 @@ bool ModemSimulator::IsWaitingSmsPdu() {
   return false;
 }
 
+void ModemSimulator::SetTimeZone(std::string timezone) {
+  if (misc_service_) {
+    misc_service_->SetTimeZone(timezone);
+  }
+}
+
 }  // namespace cuttlefish
