@@ -32,7 +32,12 @@ class MiscService : public ModemService, public std::enable_shared_from_this<Mis
 
   void TimeUpdate();
 
+  void SetTimeZone(std::string timezone);
+
  private:
+  void ParseTimeZone();
+  void FixTimeZone(std::string& line);
+  std::string timezone_;
   std::vector<CommandHandler> InitializeCommandHandlers();
 };
 
