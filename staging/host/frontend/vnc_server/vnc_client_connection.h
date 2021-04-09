@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
+#include "common/libs/concurrency/thread_annotations.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/threads/thread_annotations.h"
 
 #include <cstdint>
 #include <memory>

@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-#include "common/libs/threads/thread_annotations.h"
+#include "common/libs/concurrency/thread_annotations.h"
 #include "host/frontend/vnc_server/blackboard.h"
 #include "host/frontend/vnc_server/jpeg_compressor.h"
 #include "host/frontend/vnc_server/simulated_hw_composer.h"

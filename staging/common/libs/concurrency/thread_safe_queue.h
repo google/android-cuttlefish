@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-#include <mutex>
 #include <condition_variable>
 #include <deque>
-#include <utility>
 #include <iterator>
+#include <mutex>
+#include <utility>
 
 namespace cuttlefish {
 // Simple queue with Push and Pop capabilities.

@@ -24,12 +24,12 @@
 #include <thread>
 #include <deque>
 
-#include "common/libs/thread_safe_queue/thread_safe_queue.h"
-#include "common/libs/threads/thread_annotations.h"
+#include "common/libs/concurrency/thread_annotations.h"
+#include "common/libs/concurrency/thread_safe_queue.h"
 #include "host/frontend/vnc_server/blackboard.h"
-#include "host/libs/screen_connector/screen_connector.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/screen_connector/screen_connector.h"
 
 namespace cuttlefish {
 namespace vnc {
