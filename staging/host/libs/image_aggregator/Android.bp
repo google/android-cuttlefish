@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,45 +17,37 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-cc_binary {
-    name: "assemble_cvd",
+cc_library {
+    name: "libcdisk_spec",
     srcs: [
-        "alloc.cc",
-        "assemble_cvd.cc",
-        "boot_config.cc",
-        "boot_image_utils.cc",
-        "clean.cc",
-        "disk_flags.cc",
-        "flags.cc",
-        "misc_info.cc",
-        "super_image_mixer.cc",
+        "cdisk_spec.proto",
     ],
-    header_libs: [
-        "bootimg_headers",
+    proto: {
+        type: "full",
+        export_proto_headers: true,
+        include_dirs: [
+            "external/protobuf/src",
+        ],
+    },
+    defaults: ["cuttlefish_host"],
+}
+
+cc_library_static {
+    name: "libimage_aggregator",
+    srcs: [
+        "image_aggregator.cc",
     ],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
-        "libjsoncpp",
-        "libnl",
         "libprotobuf-cpp-full",
-        "libziparchive",
         "libz",
-        "libcuttlefish_allocd_utils",
     ],
     static_libs: [
         "libcdisk_spec",
         "libext2_uuid",
-        "libimage_aggregator",
         "libsparse",
-        "libcuttlefish_graphics_detector",
-        "libcuttlefish_host_config",
-        "libcuttlefish_vm_manager",
-        "libgflags",
     ],
-    required: [
-        "lz4",
-    ],
-    defaults: ["cuttlefish_host", "cuttlefish_libicuuc"],
+    defaults: ["cuttlefish_host"],
 }
