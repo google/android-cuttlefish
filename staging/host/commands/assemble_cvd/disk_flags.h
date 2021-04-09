@@ -20,7 +20,6 @@
 #include <memory>
 #include <vector>
 
-#include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/fetcher_config.h"
 

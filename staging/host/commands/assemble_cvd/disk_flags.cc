@@ -28,11 +28,11 @@
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
-#include "host/commands/assemble_cvd/image_aggregator.h"
 #include "host/commands/assemble_cvd/super_image_mixer.h"
 #include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
+#include "host/libs/image_aggregator/image_aggregator.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
 
 // Taken from external/avb/libavb/avb_slot_verify.c; this define is not in the headers
