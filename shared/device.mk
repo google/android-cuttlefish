@@ -147,7 +147,7 @@ PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
 #
 PRODUCT_PACKAGES += \
     CuttlefishService \
-    cuttlefish_rotate \
+    cuttlefish_sensor_injection \
     rename_netiface \
     setup_wifi \
     bt_vhci_forwarder \

@@ -9,13 +9,21 @@
     </conditions>
   </device-state>
   <device-state>
-    <!-- TODO(b/181583265): Use the hinge sensor for HALF_OPENED state.
-      Currently using an identifier of 3 so that this state never takes
-      precedence over the lower-identifier-value CLOSED and OPENED states,
-      until a hinge sensor is available. -->
-    <identifier>3</identifier>
+    <identifier>1</identifier>
     <name>HALF_OPENED</name>
-    <conditions></conditions>
+    <conditions>
+      <lid-switch>
+        <open>true</open>
+      </lid-switch>
+      <sensor>
+        <type>android.sensor.hinge_angle</type>
+        <name>Hinge Angle Sensor</name>
+        <value>
+          <min>0</min>
+          <max>180</max>
+        </value>
+      </sensor>
+    </conditions>
   </device-state>
   <device-state>
     <identifier>2</identifier>
