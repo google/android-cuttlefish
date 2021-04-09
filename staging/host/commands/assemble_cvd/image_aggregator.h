@@ -33,6 +33,7 @@ struct ImagePartition {
   std::string label;
   std::string image_file_path;
   ImagePartitionType type;
+  bool read_only;
 };
 
 /**
