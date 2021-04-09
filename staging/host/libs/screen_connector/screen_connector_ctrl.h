@@ -23,7 +23,7 @@
 #include <mutex>
 #include <thread>
 
-#include "common/libs/semaphore/semaphore.h"
+#include "common/libs/concurrency/semaphore.h"
 
 namespace cuttlefish {
 /**
