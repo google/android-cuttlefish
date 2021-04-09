@@ -1,0 +1,15 @@
+type cuttlefish_sensor_injection, domain;
+type cuttlefish_sensor_injection_exec, exec_type, vendor_file_type, file_type;
+
+# Switch to cuttlefish_sensor_injection domain when executing from shell.
+domain_auto_trans(shell, cuttlefish_sensor_injection_exec, cuttlefish_sensor_injection)
+allow cuttlefish_sensor_injection shell:fd use;
+
+# Allow cuttlefish_sensor_injection to communicate over adb connection.
+allow cuttlefish_sensor_injection adbd:fd use;
+allow cuttlefish_sensor_injection adbd:unix_stream_socket { read write };
+# Needed to run the binary directly via adb socket.
+allow cuttlefish_sensor_injection devpts:chr_file { read write };
+
+# Grant cuttlefish_sensor_injection access to the ISensors HAL.
+hal_client_domain(cuttlefish_sensor_injection, hal_sensors)
