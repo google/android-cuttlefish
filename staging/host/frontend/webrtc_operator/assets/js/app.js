@@ -276,6 +276,13 @@ function ConnectToDevice(device_id) {
             createControlPanelButton(button.command, button.title, button.icon_name,
                 getCustomDeviceStateButtonCb(button.device_states),
                 'control-panel-custom-buttons');
+            for (const device_state of button.device_states) {
+              // hinge_angle is currently injected via an adb shell command that
+              // triggers a guest binary.
+              if ('hinge_angle_value' in device_state) {
+                buttons[button.command].adb = true;
+              }
+            }
           } else {
             // This button's command is handled by custom action server.
             createControlPanelButton(button.command, button.title, button.icon_name,
@@ -366,7 +373,7 @@ function ConnectToDevice(device_id) {
     initializeAdb();
     if (e.type == 'mousedown') {
       adbShell(
-          '/vendor/bin/cuttlefish_rotate ' +
+          '/vendor/bin/cuttlefish_sensor_injection rotate ' +
           (currentRotation == 0 ? 'landscape' : 'portrait'))
     }
   }
@@ -394,6 +401,13 @@ function ConnectToDevice(device_id) {
         };
         deviceConnection.sendControlMessage(JSON.stringify(message));
         console.log(JSON.stringify(message));
+        // TODO(b/181157794): Use a custom Sensor HAL for hinge_angle injection
+        // instead of this guest binary.
+        if ('hinge_angle_value' in states[index]) {
+          adbShell(
+              '/vendor/bin/cuttlefish_sensor_injection hinge_angle ' +
+              states[index].hinge_angle_value);
+        }
         // Cycle to the next state.
         index = (index + 1) % states.length;
       }
