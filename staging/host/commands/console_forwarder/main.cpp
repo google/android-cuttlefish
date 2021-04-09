@@ -68,52 +68,37 @@ class ConsoleForwarder {
   SharedFD OpenPTY() {
     // Remove any stale symlink to a pts device
     auto ret = unlink(console_path_.c_str());
-    if (ret < 0 && errno != ENOENT) {
-      LOG(ERROR) << "Failed to unlink " << console_path_.c_str()
-                 << ": " << strerror(errno);
-      std::exit(-5);
-    }
+    CHECK(!(ret < 0 && errno != ENOENT))
+        << "Failed to unlink " << console_path_ << ": " << strerror(errno);
 
     auto pty = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK);
-    if (pty < 0) {
-      LOG(ERROR) << "Failed to open a PTY: " << strerror(errno);
-      std::exit(-6);
-    }
+    CHECK(pty >= 0) << "Failed to open a PTY: " << strerror(errno);
+
     grantpt(pty);
     unlockpt(pty);
 
     // Disable all echo modes on the PTY
     struct termios termios;
-    if (tcgetattr(pty, &termios) < 0) {
-      LOG(ERROR) << "Failed to get terminal control: " << strerror(errno);
-      std::exit(-7);
-    }
+    CHECK(tcgetattr(pty, &termios) >= 0)
+        << "Failed to get terminal control: " << strerror(errno);
+
     termios.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
     termios.c_oflag &= ~(ONLCR);
-    if (tcsetattr(pty, TCSANOW, &termios) < 0) {
-      LOG(ERROR) << "Failed to set terminal control: " << strerror(errno);
-      std::exit(-8);
-    }
+    CHECK(tcsetattr(pty, TCSANOW, &termios) >= 0)
+        << "Failed to set terminal control: " << strerror(errno);
 
     auto pty_dev_name = ptsname(pty);
-    if (pty_dev_name == nullptr) {
-      LOG(ERROR) << "Failed to obtain PTY device name: " << strerror(errno);
-      std::exit(-9);
-    }
+    CHECK(pty_dev_name != nullptr)
+        << "Failed to obtain PTY device name: " << strerror(errno);
 
-    if (symlink(pty_dev_name, console_path_.c_str()) < 0) {
-      LOG(ERROR) << "Failed to create symlink to " << pty_dev_name << " at "
-                 << console_path_.c_str() << ": " << strerror(errno);
-      std::exit(-10);
-    }
+    CHECK(symlink(pty_dev_name, console_path_.c_str()) >= 0)
+        << "Failed to create symlink to " << pty_dev_name << " at "
+        << console_path_ << ": " << strerror(errno);
 
     auto pty_shared_fd = SharedFD::Dup(pty);
     close(pty);
-    if (!pty_shared_fd->IsOpen()) {
-      LOG(ERROR) << "Error dupping fd " << pty << ": "
-                 << pty_shared_fd->StrError();
-      std::exit(-11);
-    }
+    CHECK(pty_shared_fd->IsOpen())
+        << "Error dupping fd " << pty << ": " << pty_shared_fd->StrError();
 
     return pty_shared_fd;
   }
@@ -183,12 +168,9 @@ class ConsoleForwarder {
       if (read_set.IsSet(console_out_)) {
         std::shared_ptr<std::vector<char>> buf_ptr = std::make_shared<std::vector<char>>(4096);
         auto bytes_read = console_out_->Read(buf_ptr->data(), buf_ptr->size());
-        if (bytes_read <= 0) {
-          LOG(ERROR) << "Error reading from console output: "
-                     << console_out_->StrError();
-          // This is likely unrecoverable, so exit here
-          std::exit(-12);
-        }
+        // This is likely unrecoverable, so exit here
+        CHECK(bytes_read > 0) << "Error reading from console output: "
+                              << console_out_->StrError();
         buf_ptr->resize(bytes_read);
         EnqueueWrite(buf_ptr, console_log_);
         if (client_fd->IsOpen()) {
@@ -228,34 +210,22 @@ int ConsoleForwarderMain(int argc, char** argv) {
   DefaultSubprocessLogging(argv);
   ::gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  if (FLAGS_console_in_fd < 0 || FLAGS_console_out_fd < 0) {
-    LOG(ERROR) << "Invalid file descriptors: " << FLAGS_console_in_fd << ", "
-               << FLAGS_console_out_fd;
-    return -1;
-  }
+  CHECK(!(FLAGS_console_in_fd < 0 || FLAGS_console_out_fd < 0))
+      << "Invalid file descriptors: " << FLAGS_console_in_fd << ", "
+      << FLAGS_console_out_fd;
 
   auto console_in = SharedFD::Dup(FLAGS_console_in_fd);
-  close(FLAGS_console_in_fd);
-  if (!console_in->IsOpen()) {
-    LOG(ERROR) << "Error dupping fd " << FLAGS_console_in_fd << ": "
-               << console_in->StrError();
-    return -2;
-  }
+  CHECK(console_in->IsOpen()) << "Error dupping fd " << FLAGS_console_in_fd
+                              << ": " << console_in->StrError();
   close(FLAGS_console_in_fd);
 
   auto console_out = SharedFD::Dup(FLAGS_console_out_fd);
+  CHECK(console_out->IsOpen()) << "Error dupping fd " << FLAGS_console_out_fd
+                               << ": " << console_out->StrError();
   close(FLAGS_console_out_fd);
-  if (!console_out->IsOpen()) {
-    LOG(ERROR) << "Error dupping fd " << FLAGS_console_out_fd << ": "
-               << console_out->StrError();
-    return -3;
-  }
 
   auto config = CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Unable to get config object";
-    return -4;
-  }
+  CHECK(config) << "Unable to get config object";
 
   auto instance = config->ForDefaultInstance();
   auto console_path = instance.console_path();
@@ -265,10 +235,8 @@ int ConsoleForwarderMain(int argc, char** argv) {
   ConsoleForwarder console_forwarder(console_path, console_in, console_out, console_log_fd);
 
   // Don't get a SIGPIPE from the clients
-  if (sigaction(SIGPIPE, nullptr, nullptr) != 0) {
-    LOG(FATAL) << "Failed to set SIGPIPE to be ignored: " << strerror(errno);
-    return -13;
-  }
+  CHECK(sigaction(SIGPIPE, nullptr, nullptr) == 0)
+      << "Failed to set SIGPIPE to be ignored: " << strerror(errno);
 
   console_forwarder.StartServer();
 }
