@@ -258,9 +258,9 @@ class ConnectionObserverImpl
         // invert the lid_switch_open value that is sent to the input device.
         OnSwitchEvent(SW_LID, !evt["lid_switch_open"].asBool());
       }
-      // TODO(b/181157794) Propagate hinge angle sensor data.
       if (evt.isMember("hinge_angle_value")) {
-        LOG(WARNING) << "Hinge angle sensor is not yet implemented.";
+        // TODO(b/181157794) Propagate hinge angle sensor data using a custom
+        // Sensor HAL.
       }
       return;
     }
