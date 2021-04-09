@@ -1532,7 +1532,7 @@ static int adev_get_microphones(const audio_hw_device_t *dev,
     }
 
     if (*mic_count == 0) {
-        *mic_count = 1;
+        *mic_count = 0;
         return 0;
     }
 
@@ -1561,7 +1561,7 @@ static int adev_get_microphones(const audio_hw_device_t *dev,
     mic_array->orientation.y = AUDIO_MICROPHONE_COORDINATE_UNKNOWN;
     mic_array->orientation.z = AUDIO_MICROPHONE_COORDINATE_UNKNOWN;
 
-    *mic_count = 1;
+    *mic_count = 0;
     return 0;
 }
 
