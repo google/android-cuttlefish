@@ -29,8 +29,8 @@
 #include <string>
 #include <vector>
 
+#include <android-base/file.h>
 #include <android-base/logging.h>
-#include <json/json.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>
 #include <uuid.h>
@@ -41,7 +41,6 @@
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/mbr.h"
 #include "device/google/cuttlefish/host/commands/assemble_cvd/cdisk_spec.pb.h"
 
@@ -220,12 +219,12 @@ public:
     disk.set_length(DiskSize());
 
     ComponentDisk* header = disk.add_component_disks();
-    header->set_file_path(header_file);
+    header->set_file_path(AbsolutePath(header_file));
     header->set_offset(0);
 
     for (auto& partition : partitions_) {
       ComponentDisk* component = disk.add_component_disks();
-      component->set_file_path(partition.source.image_file_path);
+      component->set_file_path(AbsolutePath(partition.source.image_file_path));
       component->set_offset(partition.offset);
       component->set_read_write_capability(
           partition.source.read_only ? ReadWriteCapability::READ_ONLY
@@ -233,7 +232,7 @@ public:
     }
 
     ComponentDisk* footer = disk.add_component_disks();
-    footer->set_file_path(footer_file);
+    footer->set_file_path(AbsolutePath(footer_file));
     footer->set_offset(next_disk_offset_);
 
     return disk;
