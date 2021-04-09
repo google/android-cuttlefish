@@ -783,8 +783,7 @@ static void requestCallSelection(
 static bool hasWifiCapability()
 {
     char propValue[PROP_VALUE_MAX];
-    return property_get("ro.kernel.qemu.wifi", propValue, "") > 0 &&
-           strcmp("1", propValue) == 0;
+    return property_get("ro.boot.qemu.wifi", propValue, "") > 0 && strcmp("1", propValue) == 0;
 }
 
 static const char* getRadioInterfaceName(bool hasWifi)
