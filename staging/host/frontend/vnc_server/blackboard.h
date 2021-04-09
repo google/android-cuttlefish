@@ -22,7 +22,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "common/libs/threads/thread_annotations.h"
+#include "common/libs/concurrency/thread_annotations.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 
 namespace cuttlefish {

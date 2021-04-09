@@ -22,8 +22,8 @@
 #include <mutex>
 #include <thread>
 
-#include "common/libs/semaphore/semaphore.h"
-#include "common/libs/thread_safe_queue/thread_safe_queue.h"
+#include "common/libs/concurrency/semaphore.h"
+#include "common/libs/concurrency/thread_safe_queue.h"
 
 namespace cuttlefish {
 namespace confui {
