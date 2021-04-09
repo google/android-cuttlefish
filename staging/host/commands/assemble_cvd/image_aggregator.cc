@@ -227,7 +227,9 @@ public:
       ComponentDisk* component = disk.add_component_disks();
       component->set_file_path(partition.source.image_file_path);
       component->set_offset(partition.offset);
-      component->set_read_write_capability(ReadWriteCapability::READ_WRITE);
+      component->set_read_write_capability(
+          partition.source.read_only ? ReadWriteCapability::READ_ONLY
+                                     : ReadWriteCapability::READ_WRITE);
     }
 
     ComponentDisk* footer = disk.add_component_disks();
