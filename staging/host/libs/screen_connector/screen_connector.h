@@ -25,6 +25,7 @@
 #include <type_traits>
 
 #include <android-base/logging.h>
+
 #include "common/libs/utils/size_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/screen_connector/screen_connector_common.h"

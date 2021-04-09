@@ -28,9 +28,9 @@
 #include <android-base/logging.h>
 #include <teeui/utils.h>
 
+#include "common/libs/concurrency/semaphore.h"
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/semaphore/semaphore.h"
 #include "host/commands/kernel_log_monitor/utils.h"
 #include "host/libs/config/logging.h"
 #include "host/libs/confui/host_mode_ctrl.h"
