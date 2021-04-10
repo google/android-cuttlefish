@@ -111,7 +111,7 @@ class ScreenConnector : public ScreenConnectorInfo,
   ProcessedFrameType OnNextFrame() {
     // sc_ctrl has a semaphore internally
     // passing beyond SemWait means either queue has an item
-    sc_ctrl_.SemWaitItem();
+    sc_ctrl_.SemWait();
     return sc_android_queue_.PopFront();
 
     // TODO: add confirmation ui
