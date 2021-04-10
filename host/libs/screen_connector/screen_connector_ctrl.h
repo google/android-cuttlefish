@@ -42,9 +42,7 @@ class ScreenConnectorCtrl {
     kConfUI_Mode
   };
 
-  ScreenConnectorCtrl()
-      : atomic_mode_(ModeType::kAndroidMode)
-  {}
+  ScreenConnectorCtrl() : atomic_mode_(ModeType::kAndroidMode) {}
 
   /**
    * The thread that enqueues Android frames will call this to wait until
@@ -89,14 +87,10 @@ class ScreenConnectorCtrl {
     return ret_val;
   }
 
-  void SemWaitItem() {
-    sem_.SemWait();
-  }
+  void SemWait() { sem_.SemWait(); }
 
   // Only called by the producers
-  void SemPostItem() {
-    sem_.SemPost();
-  }
+  void SemPost() { sem_.SemPost(); }
 
  private:
   std::mutex mode_mtx_;
