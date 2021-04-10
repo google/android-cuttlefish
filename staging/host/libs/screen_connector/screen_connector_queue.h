@@ -93,7 +93,7 @@ class ScreenConnectorQueue {
      * This IS intended to awake the screen_connector consumer thread
      * when one or more items are available at least in one queue
      */
-    global_item_tracker_.SemPostItem();
+    global_item_tracker_.SemPost();
   }
   void PushBack(T& item) = delete;
   void PushBack(const T& item) = delete;
