@@ -22,37 +22,31 @@
 #include <mutex>
 
 namespace cuttlefish {
-/**
- * An ad-hoc semaphore used to track the number of items in all queue
- */
 class Semaphore {
  public:
-  Semaphore(const int init_val = 0) : count_{init_val} {}
+  Semaphore(const unsigned int init_val = 0, const unsigned int cap = 30000)
+      : count_{init_val}, capacity_{cap} {}
 
-  // called by the threads that consumes all of the multiple queues
   void SemWait() {
     std::unique_lock<std::mutex> lock(mtx_);
-    cv_.wait(lock, [this]() -> bool { return this->count_ > 0; });
+    resoure_cv_.wait(lock, [this]() -> bool { return count_ > 0; });
     --count_;
+    room_cv_.notify_one();
   }
 
-  // called by each producer thread effectively, whenever an item is added
   void SemPost() {
     std::unique_lock<std::mutex> lock(mtx_);
-    if (++count_ > 0) {
-      cv_.notify_all();
-    }
+    room_cv_.wait(lock, [this]() -> bool { return count_ <= capacity_; });
+    ++count_;
+    resoure_cv_.notify_one();
   }
-
-  void SemWaitItem() { SemWait(); }
-
-  // Only called by the producers
-  void SemPostItem() { SemPost(); }
 
  private:
   std::mutex mtx_;
-  std::condition_variable cv_;
-  int count_;
+  std::condition_variable resoure_cv_;
+  std::condition_variable room_cv_;
+  unsigned int count_;
+  const unsigned int capacity_;  // inclusive upper limit
 };
 
 }  // namespace cuttlefish
