@@ -27,6 +27,8 @@
 //   LOG(INFO) << "Some text; " << some_value;
 //
 // Replace `INFO` with any severity from `enum LogSeverity`.
+// Most devices filter out VERBOSE logs by default, run
+// `adb shell setprop log.tag.<TAG> V` to see them in adb logcat.
 //
 // To log the result of a failed function and include the string
 // representation of `errno` at the end:
