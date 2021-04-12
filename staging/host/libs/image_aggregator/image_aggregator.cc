@@ -123,7 +123,8 @@ static_assert(sizeof(GptEnd) == SECTOR_SIZE * 33);
 
 struct PartitionInfo {
   ImagePartition source;
-  std::uint64_t size;
+  std::uint64_t guest_size;
+  std::uint64_t host_size;
   std::uint64_t offset;
 };
 
@@ -191,15 +192,19 @@ public:
   CompositeDiskBuilder() : next_disk_offset_(sizeof(GptBeginning)) {}
 
   void AppendDisk(ImagePartition source) {
-    auto size = AlignToPowerOf2(UnsparsedSize(source.image_file_path),
-                                PARTITION_SIZE_SHIFT);
-    partitions_.push_back(PartitionInfo {
-      .source = source,
-      .size = size,
-      .offset = next_disk_offset_,
+    auto host_size = UnsparsedSize(source.image_file_path);
+    auto guest_size = AlignToPowerOf2(host_size, PARTITION_SIZE_SHIFT);
+    CHECK(host_size == guest_size || source.read_only)
+        << "read-write file " << source.image_file_path
+        << " is not aligned to the size of " << (1 << PARTITION_SIZE_SHIFT);
+    partitions_.push_back(PartitionInfo{
+        .source = source,
+        .guest_size = guest_size,
+        .host_size = host_size,
+        .offset = next_disk_offset_,
     });
-    next_disk_offset_ = AlignToPowerOf2(next_disk_offset_ + size,
-                                        PARTITION_SIZE_SHIFT);
+    next_disk_offset_ =
+        AlignToPowerOf2(next_disk_offset_ + guest_size, PARTITION_SIZE_SHIFT);
   }
 
   std::uint64_t DiskSize() const {
@@ -229,6 +234,18 @@ public:
       component->set_read_write_capability(
           partition.source.read_only ? ReadWriteCapability::READ_ONLY
                                      : ReadWriteCapability::READ_WRITE);
+      // When partition's size differs from its size on the host
+      // reading the disk within the guest os would fail due to the gap.
+      // Putting any disk bigger than 4K can fill this gap.
+      // Here we reuse the header which is always > 4K.
+      // We don't fill the "writable" disk's hole and it should be an error
+      // because writes in the guest of can't be reflected to the backing file.
+      if (partition.guest_size != partition.host_size) {
+        ComponentDisk* component = disk.add_component_disks();
+        component->set_file_path(AbsolutePath(header_file));
+        component->set_offset(partition.offset + partition.host_size);
+        component->set_read_write_capability(ReadWriteCapability::READ_ONLY);
+      }
     }
 
     ComponentDisk* footer = disk.add_component_disks();
@@ -268,9 +285,10 @@ public:
     uuid_generate(gpt.header.disk_guid);
     for (std::size_t i = 0; i < partitions_.size(); i++) {
       const auto& partition = partitions_[i];
-      gpt.entries[i] = GptPartitionEntry {
-        .first_lba = partition.offset / SECTOR_SIZE,
-        .last_lba = (partition.offset + partition.size) / SECTOR_SIZE - 1,
+      gpt.entries[i] = GptPartitionEntry{
+          .first_lba = partition.offset / SECTOR_SIZE,
+          .last_lba =
+              (partition.offset + partition.guest_size) / SECTOR_SIZE - 1,
       };
       uuid_generate(gpt.entries[i].unique_partition_guid);
       if (uuid_parse(GetPartitionGUID(partition.source),
