@@ -56,12 +56,6 @@ func (c *cvdHostPackage) DepsMutator(ctx android.BottomUpMutatorContext) {
 		{Mutator: "arch", Variation: android.Common.String()},
 	}
 	for _, dep := range strings.Split(
-		ctx.Config().VendorConfig("cvd").String("grub_config"), " ") {
-		if ctx.OtherModuleExists(dep) {
-			ctx.AddVariationDependencies(variations, cvdHostPackageDependencyTag, dep)
-		}
-	}
-	for _, dep := range strings.Split(
 		ctx.Config().VendorConfig("cvd").String("launch_configs"), " ") {
 		if ctx.OtherModuleExists(dep) {
 			ctx.AddVariationDependencies(variations, cvdHostPackageDependencyTag, dep)
