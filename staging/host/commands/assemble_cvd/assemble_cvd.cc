@@ -144,7 +144,6 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("os_composite_gpt_footer.img");
       preserving.insert("os_composite.img");
       preserving.insert("sdcard.img");
-      preserving.insert("uboot_env.img");
       preserving.insert("boot_repacked.img");
       preserving.insert("vendor_boot_repacked.img");
       preserving.insert("access-kregistry");
@@ -153,6 +152,11 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
       preserving.insert("gatekeeper_insecure");
       preserving.insert("modem_nvram.json");
       preserving.insert("recording");
+      preserving.insert("persistent_composite_disk_config.txt");
+      preserving.insert("persistent_composite_gpt_header.img");
+      preserving.insert("persistent_composite_gpt_footer.img");
+      preserving.insert("persistent_composite.img");
+      preserving.insert("uboot_env.img");
       preserving.insert("factory_reset_protected.img");
       std::stringstream ss;
       for (int i = 0; i < FLAGS_modem_simulator_count; i++) {
