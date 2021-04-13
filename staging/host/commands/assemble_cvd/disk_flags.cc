@@ -60,16 +60,7 @@ DEFINE_string(vbmeta_image, "",
 DEFINE_string(vbmeta_system_image, "",
               "Location of cuttlefish vbmeta_system image. If empty it is assumed to "
               "be vbmeta_system.img in the directory specified by -system_image_dir.");
-DEFINE_string(otheros_esp_image, "",
-              "Location of cuttlefish esp image. If the image does not exist, "
-              "and --otheros_root_image is specified, an esp partition image "
-              "is created with default bootloaders.");
-DEFINE_string(otheros_kernel_path, "",
-              "Location of cuttlefish otheros kernel.");
-DEFINE_string(otheros_initramfs_path, "",
-              "Location of cuttlefish otheros initramfs.img.");
-DEFINE_string(otheros_root_image, "",
-              "Location of cuttlefish otheros root filesystem image.");
+DEFINE_string(esp, "", "Path to ESP partition image (FAT formatted)");
 
 DEFINE_int32(blank_metadata_image_mb, 16,
              "The size of the blank metadata image to generate, MB.");
@@ -110,9 +101,6 @@ bool ResolveInstanceFiles() {
   std::string default_misc_image = FLAGS_system_image_dir + "/misc.img";
   SetCommandLineOptionWithMode("misc_image", default_misc_image.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
-  std::string default_esp_image = FLAGS_system_image_dir + "/esp.img";
-  SetCommandLineOptionWithMode("otheros_esp_image", default_esp_image.c_str(),
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
   std::string default_vendor_boot_image = FLAGS_system_image_dir
                                         + "/vendor_boot.img";
   SetCommandLineOptionWithMode("vendor_boot_image",
@@ -137,6 +125,13 @@ std::vector<ImagePartition> os_composite_disk_config(
     .label = "misc",
     .image_file_path = FLAGS_misc_image,
   });
+  if (!FLAGS_esp.empty()) {
+    partitions.push_back(ImagePartition {
+      .label = "esp",
+      .image_file_path = FLAGS_esp,
+      .type = kEfiSystemPartition,
+    });
+  }
   partitions.push_back(ImagePartition {
     .label = "boot_a",
     .image_file_path = FLAGS_boot_image,
@@ -194,17 +189,6 @@ std::vector<ImagePartition> os_composite_disk_config(
     .label = "metadata",
     .image_file_path = FLAGS_metadata_image,
   });
-  if (!FLAGS_otheros_root_image.empty()) {
-    partitions.push_back(ImagePartition{
-        .label = "otheros_esp",
-        .image_file_path = FLAGS_otheros_esp_image,
-        .type = kEfiSystemPartition,
-    });
-    partitions.push_back(ImagePartition{
-        .label = "otheros_root",
-        .image_file_path = FLAGS_otheros_root_image,
-    });
-  }
   return partitions;
 }
 
@@ -450,13 +434,6 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   // Create misc if necessary
   CHECK(InitializeMiscImage(FLAGS_misc_image)) << "Failed to create misc image";
 
-  // Create esp if necessary
-  if (!FLAGS_otheros_root_image.empty()) {
-    CHECK(InitializeEspImage(FLAGS_otheros_esp_image, FLAGS_otheros_kernel_path,
-                             FLAGS_otheros_initramfs_path))
-        << "Failed to create esp image";
-  }
-
   // Create data if necessary
   DataImageResult dataImageResult = ApplyDataImagePolicy(*config, FLAGS_data_image);
   CHECK(dataImageResult != DataImageResult::Error) << "Failed to set up userdata";
@@ -524,6 +501,11 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
 
   CHECK(FileHasContent(FLAGS_bootloader))
       << "File not found: " << FLAGS_bootloader;
+
+  if (!FLAGS_esp.empty()) {
+    CHECK(FileHasContent(FLAGS_esp))
+        << "File not found: " << FLAGS_esp;
+  }
 
   if (SuperImageNeedsRebuilding(fetcher_config, *config)) {
     bool success = RebuildSuperImage(fetcher_config, *config, FLAGS_super_image);
