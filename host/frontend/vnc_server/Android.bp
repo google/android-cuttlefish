@@ -36,10 +36,18 @@ cc_binary {
         "libjsoncpp",
         "liblog",
     ],
+    header_libs: [
+        "libcuttlefish_confui_host_headers",
+    ],
     static_libs: [
         "libcuttlefish_host_config",
         "libcuttlefish_screen_connector",
         "libcuttlefish_wayland_server",
+        "libcuttlefish_confui",
+        "libcuttlefish_confui_host",
+        "libft2.nodep",
+        "libteeui",
+        "libteeui_localization",
         "libffi",
         "libjpeg",
         "libgflags",

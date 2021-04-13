@@ -33,26 +33,11 @@
 
 namespace cuttlefish {
 namespace vnc {
-/**
- * ScreenConnectorImpl will generate this, and enqueue
- *
- * It's basically a (processed) frame, so it:
- *   must be efficiently std::move-able
- * Also, for the sake of algorithm simplicity:
- *   must be default-constructable & assignable
- *
- */
-struct VncScProcessedFrame : public ScreenConnectorFrameInfo {
-  Message raw_screen_;
-  std::deque<Stripe> stripes_;
-};
-
 class SimulatedHWComposer {
  public:
-  using ScreenConnector = ScreenConnector<VncScProcessedFrame>;
   using GenerateProcessedFrameCallback = ScreenConnector::GenerateProcessedFrameCallback;
 
-  SimulatedHWComposer(BlackBoard* bb);
+  SimulatedHWComposer(BlackBoard* bb, ScreenConnector& screen_connector);
   SimulatedHWComposer(const SimulatedHWComposer&) = delete;
   SimulatedHWComposer& operator=(const SimulatedHWComposer&) = delete;
   ~SimulatedHWComposer();
@@ -83,7 +68,7 @@ class SimulatedHWComposer {
   BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;
-  std::unique_ptr<ScreenConnector> screen_connector_;
+  ScreenConnector& screen_connector_;
 };
 }  // namespace vnc
 }  // namespace cuttlefish
