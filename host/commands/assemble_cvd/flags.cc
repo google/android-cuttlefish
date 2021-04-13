@@ -708,8 +708,8 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
           {const_instance.PerInstancePath("os_composite.img")});
     } else {
       std::vector<std::string> virtual_disk_paths = {
-        const_instance.PerInstancePath("overlay.img"),
-        const_instance.factory_reset_protected_path(),
+          const_instance.PerInstancePath("overlay.img"),
+          const_instance.PerInstancePath("persistent_composite.img"),
       };
       if (FLAGS_use_sdcard) {
         virtual_disk_paths.push_back(const_instance.sdcard_path());
