@@ -75,7 +75,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 
 # Storage: for factory reset protection feature
 PRODUCT_VENDOR_PROPERTIES += \
-    ro.frp.pst=/dev/block/vdb
+    ro.frp.pst=/dev/block/by-name/frp
 
 # Explanation of specific properties:
 #   debug.hwui.swap_with_damage avoids boot failure on M http://b/25152138

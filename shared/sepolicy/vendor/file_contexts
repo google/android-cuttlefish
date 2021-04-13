@@ -11,7 +11,8 @@
 /dev/block/by-name/userdata u:object_r:userdata_block_device:s0
 /dev/block/by-name/metadata u:object_r:metadata_block_device:s0
 
-/dev/block/vdb  u:object_r:frp_block_device:s0
+/dev/block/by-name/frp  u:object_r:frp_block_device:s0
+
 /dev/block/pmem0  u:object_r:rebootescrow_device:s0
 /dev/block/zram0  u:object_r:swap_block_device:s0
 /dev/dri u:object_r:gpu_device:s0
