@@ -51,6 +51,13 @@ class VmManager {
   // assigned virtual disk PCI ID (i.e. 2 disks = 7 hvcs, 1 disks = 8 hvcs)
   static const int kMaxDisks = 3;
 
+  // This is the number of virtual disks that contribute to the named partition
+  // list (/dev/block/by-name/*) under Android. The partitions names from
+  // multiple disks *must not* collide. Normally we have one set of partitions
+  // from the powerwashed disk (operating system disk) and another set from
+  // the persistent disk
+  static const int kDefaultNumBootDevices = 2;
+
   VmManager(Arch arch) : arch_(arch) {}
   virtual ~VmManager() = default;
 
@@ -67,6 +74,9 @@ class VmManager {
 };
 
 std::unique_ptr<VmManager> GetVmManager(const std::string&, Arch arch);
+
+std::string ConfigureMultipleBootDevices(const std::string& pci_path, int pci_offset,
+                                         int num_disks);
 
 } // namespace vm_manager
 } // namespace cuttlefish

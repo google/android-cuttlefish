@@ -16,13 +16,14 @@
 
 #include "host/libs/vm_manager/vm_manager.h"
 
-#include <memory>
-
 #include <android-base/logging.h>
 
+#include <iomanip>
+#include <memory>
+
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
+#include "host/libs/vm_manager/qemu_manager.h"
 
 namespace cuttlefish {
 namespace vm_manager {
@@ -43,6 +44,21 @@ std::unique_ptr<VmManager> GetVmManager(const std::string& name, Arch arch) {
     return {};
   }
   return vmm;
+}
+
+std::string ConfigureMultipleBootDevices(const std::string& pci_path,
+                                         int pci_offset, int num_disks) {
+  int num_boot_devices =
+      (num_disks < VmManager::kDefaultNumBootDevices) ? num_disks : VmManager::kDefaultNumBootDevices;
+  std::string boot_devices_prop = "androidboot.boot_devices=";
+  for (int i = 0; i < num_boot_devices; i++) {
+    std::stringstream stream;
+    stream << std::setfill('0') << std::setw(2) << std::hex
+           << pci_offset + i + VmManager::kDefaultNumHvcs + VmManager::kMaxDisks - num_disks;
+    boot_devices_prop += pci_path + stream.str() + ".0,";
+  }
+  boot_devices_prop.pop_back();
+  return {boot_devices_prop};
 }
 
 } // namespace vm_manager
