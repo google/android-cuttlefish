@@ -25,9 +25,9 @@
 namespace cuttlefish {
 DisplayHandler::DisplayHandler(
     std::shared_ptr<webrtc_streaming::VideoSink> display_sink,
-    std::unique_ptr<ScreenConnector> screen_connector)
-    : display_sink_(display_sink), screen_connector_(std::move(screen_connector)) {
-  screen_connector_->SetCallback(std::move(GetScreenConnectorCallback()));
+    ScreenConnector& screen_connector)
+    : display_sink_(display_sink), screen_connector_(screen_connector) {
+  screen_connector_.SetCallback(std::move(GetScreenConnectorCallback()));
 }
 
 DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnectorCallback() {
@@ -35,6 +35,7 @@ DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnecto
     DisplayHandler::GenerateProcessedFrameCallback callback =
         [](std::uint32_t display_number, std::uint8_t* frame_pixels,
            WebRtcScProcessedFrame& processed_frame) {
+          processed_frame.display_number_ = display_number;
           // TODO(171305898): handle multiple displays.
           if (display_number != 0) {
             processed_frame.is_success_ = false;
@@ -61,7 +62,7 @@ DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnecto
 
 [[noreturn]] void DisplayHandler::Loop() {
   for (;;) {
-    auto processed_frame = screen_connector_->OnNextFrame();
+    auto processed_frame = screen_connector_.OnNextFrame();
     // processed_frame has display number from the guest
     {
       std::lock_guard<std::mutex> lock(last_buffer_mutex_);
@@ -101,14 +102,14 @@ void DisplayHandler::SendLastFrame() {
 void DisplayHandler::IncClientCount() {
   client_count_++;
   if (client_count_ == 1) {
-    screen_connector_->ReportClientsConnected(true);
+    screen_connector_.ReportClientsConnected(true);
   }
 }
 
 void DisplayHandler::DecClientCount() {
   client_count_--;
   if (client_count_ == 0) {
-    screen_connector_->ReportClientsConnected(false);
+    screen_connector_.ReportClientsConnected(false);
   }
 }
 

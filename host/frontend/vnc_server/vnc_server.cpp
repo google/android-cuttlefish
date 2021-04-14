@@ -16,6 +16,8 @@
 
 #include "host/frontend/vnc_server/vnc_server.h"
 
+#include <memory>
+
 #include <android-base/logging.h>
 #include "common/libs/utils/tcp_socket.h"
 #include "host/frontend/vnc_server/blackboard.h"
@@ -27,11 +29,13 @@
 
 using cuttlefish::vnc::VncServer;
 
-VncServer::VncServer(int port, bool aggressive)
+VncServer::VncServer(int port, bool aggressive,
+                     cuttlefish::vnc::ScreenConnector& screen_connector,
+                     cuttlefish::confui::HostVirtualInput& confui_input)
     : server_(port),
-    virtual_inputs_(VirtualInputs::Get()),
-    frame_buffer_watcher_{&bb_},
-    aggressive_{aggressive} {}
+      virtual_inputs_(VirtualInputs::Get(confui_input)),
+      frame_buffer_watcher_{&bb_, screen_connector},
+      aggressive_{aggressive} {}
 
 void VncServer::MainLoop() {
   while (true) {
