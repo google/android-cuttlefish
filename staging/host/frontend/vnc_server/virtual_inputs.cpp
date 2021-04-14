@@ -15,6 +15,7 @@
  */
 
 #include "host/frontend/vnc_server/virtual_inputs.h"
+
 #include <gflags/gflags.h>
 #include <android-base/logging.h>
 #include <linux/input.h>
@@ -25,8 +26,10 @@
 #include <thread>
 #include "keysyms.h"
 
-#include <common/libs/fs/shared_select.h>
-#include <host/libs/config/cuttlefish_config.h>
+#include "common/libs/confui/confui.h"
+#include "common/libs/fs/shared_select.h"
+#include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/logging.h"
 
 using cuttlefish::vnc::VirtualInputs;
 
@@ -347,6 +350,61 @@ class SocketVirtualInputs : public VirtualInputs {
 
 VirtualInputs::VirtualInputs() { AddKeyMappings(&keymapping_); }
 
-VirtualInputs* VirtualInputs::Get() {
-  return new SocketVirtualInputs();
+/**
+ * Depending on the host mode (e.g. android, confirmation ui(tee), etc)
+ * deliver the inputs to the right input implementation
+ * e.g. ConfUI's input or regular socket based input
+ */
+class VirtualInputDemux : public VirtualInputs {
+ public:
+  VirtualInputDemux(cuttlefish::confui::HostVirtualInput& confui_input)
+      : confui_input_{confui_input} {}
+  virtual ~VirtualInputDemux() = default;
+
+  virtual void GenerateKeyPressEvent(int code, bool down) override;
+  virtual void PressPowerButton(bool down) override;
+  virtual void HandlePointerEvent(bool touch_down, int x, int y) override;
+
+ private:
+  SocketVirtualInputs socket_virtual_input_;
+  cuttlefish::confui::HostVirtualInput& confui_input_;
+};
+
+void VirtualInputDemux::GenerateKeyPressEvent(int code, bool down) {
+  using cuttlefish::confui::DebugLog;
+  // confui input is active only in the confirmation UI
+  // also, socket virtual input should be inactive in the confirmation
+  // UI session
+  if (confui_input_.IsConfUiActive()) {
+    if (code == cuttlefish::xk::Menu) {
+      // release menu button in confirmation UI means for now cancel
+      confui_input_.PressCancelButton(down);
+    }
+    DebugLog("the key", code, "ignored.",
+             "currently confirmation UI handles menu and power only.");
+    return;
+  }
+  socket_virtual_input_.GenerateKeyPressEvent(code, down);
+}
+
+void VirtualInputDemux::PressPowerButton(bool down) {
+  if (confui_input_.IsConfUiActive()) {
+    confui_input_.PressConfirmButton(down);
+    return;
+  }
+  socket_virtual_input_.PressPowerButton(down);
+}
+
+void VirtualInputDemux::HandlePointerEvent(bool touch_down, int x, int y) {
+  using cuttlefish::confui::DebugLog;
+  if (confui_input_.IsConfUiActive()) {
+    DebugLog("currently confirmation UI ignores pointer events at", x, y);
+    return;
+  }
+  socket_virtual_input_.HandlePointerEvent(touch_down, x, y);
+}
+
+std::shared_ptr<VirtualInputs> VirtualInputs::Get(
+    cuttlefish::confui::HostVirtualInput& confui_input) {
+  return std::make_shared<VirtualInputDemux>(confui_input);
 }

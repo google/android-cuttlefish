@@ -27,12 +27,12 @@
 
 #include <android-base/logging.h>
 #include "host/frontend/vnc_server/vnc_utils.h"
-#include "host/libs/screen_connector/screen_connector.h"
 
 using cuttlefish::vnc::FrameBufferWatcher;
 
-FrameBufferWatcher::FrameBufferWatcher(BlackBoard* bb)
-    : bb_{bb}, hwcomposer{bb_} {
+FrameBufferWatcher::FrameBufferWatcher(BlackBoard* bb,
+                                       ScreenConnector& screen_connector)
+    : bb_{bb}, hwcomposer{bb_, screen_connector} {
   for (auto& stripes_vec : stripes_) {
     std::generate_n(std::back_inserter(stripes_vec),
                     SimulatedHWComposer::NumberOfStripes(),

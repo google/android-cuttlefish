@@ -33,9 +33,17 @@ namespace cuttlefish {
  *   must be default-constructable & assignable
  *
  */
-struct WebRtcScProcessedFrame : ScreenConnectorFrameInfo {
+struct WebRtcScProcessedFrame : public ScreenConnectorFrameInfo {
   // must support move semantic
   std::unique_ptr<CvdVideoFrameBuffer> buf_;
+  std::unique_ptr<WebRtcScProcessedFrame> Clone() {
+    // copy internal buffer, not move
+    CvdVideoFrameBuffer* new_buffer = new CvdVideoFrameBuffer(*(buf_.get()));
+    auto cloned_frame = std::make_unique<WebRtcScProcessedFrame>();
+    cloned_frame->buf_ =
+        std::move(std::unique_ptr<CvdVideoFrameBuffer>(new_buffer));
+    return std::move(cloned_frame);
+  }
 };
 
 class DisplayHandler {
@@ -43,9 +51,8 @@ class DisplayHandler {
   using ScreenConnector = cuttlefish::ScreenConnector<WebRtcScProcessedFrame>;
   using GenerateProcessedFrameCallback = ScreenConnector::GenerateProcessedFrameCallback;
 
-  DisplayHandler(
-      std::shared_ptr<webrtc_streaming::VideoSink> display_sink,
-      std::unique_ptr<ScreenConnector> screen_connector);
+  DisplayHandler(std::shared_ptr<webrtc_streaming::VideoSink> display_sink,
+                 ScreenConnector& screen_connector);
   ~DisplayHandler() = default;
 
   [[noreturn]] void Loop();
@@ -57,7 +64,7 @@ class DisplayHandler {
  private:
   GenerateProcessedFrameCallback GetScreenConnectorCallback();
   std::shared_ptr<webrtc_streaming::VideoSink> display_sink_;
-  std::unique_ptr<ScreenConnector> screen_connector_;
+  ScreenConnector& screen_connector_;
   std::shared_ptr<webrtc_streaming::VideoFrameBuffer> last_buffer_;
   std::mutex last_buffer_mutex_;
   std::mutex next_frame_mutex_;

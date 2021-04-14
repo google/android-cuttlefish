@@ -37,6 +37,8 @@
 #include "host/libs/audio_connector/server.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/logging.h"
+#include "host/libs/confui/host_mode_ctrl.h"
+#include "host/libs/confui/host_server.h"
 #include "host/libs/screen_connector/screen_connector.h"
 
 DEFINE_int32(touch_fd, -1, "An fd to listen on for touch connections.");
@@ -173,8 +175,16 @@ int main(int argc, char** argv) {
 
   auto cvd_config = cuttlefish::CuttlefishConfig::Get();
   auto instance = cvd_config->ForDefaultInstance();
-  auto screen_connector =
-      cuttlefish::DisplayHandler::ScreenConnector::Get(FLAGS_frame_server_fd);
+  auto& host_mode_ctrl = cuttlefish::HostModeCtrl::Get();
+  auto screen_connector_ptr = cuttlefish::DisplayHandler::ScreenConnector::Get(
+      FLAGS_frame_server_fd, host_mode_ctrl);
+  auto& screen_connector = *(screen_connector_ptr.get());
+
+  // create confirmation UI service, giving host_mode_ctrl and
+  // screen_connector
+  // keep this singleton object alive until the webRTC process ends
+  static auto& host_confui_server =
+      cuttlefish::confui::HostServer::Get(host_mode_ctrl, screen_connector);
 
   StreamerConfig streamer_config;
 
@@ -195,16 +205,16 @@ int main(int argc, char** argv) {
   }
 
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      input_sockets, kernel_log_events_client);
+      input_sockets, kernel_log_events_client, host_confui_server);
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";
 
   auto display_0 = streamer->AddDisplay(
-      "display_0", screen_connector->ScreenWidth(0),
-      screen_connector->ScreenHeight(0), cvd_config->dpi(), true);
-  auto display_handler =
-    std::make_shared<DisplayHandler>(display_0, std::move(screen_connector));
+      "display_0", screen_connector.ScreenWidth(0),
+      screen_connector.ScreenHeight(0), cvd_config->dpi(), true);
+  auto display_handler = std::shared_ptr<DisplayHandler>(
+      new DisplayHandler(display_0, screen_connector));
 
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
   if (cvd_config->record_screen()) {
@@ -340,6 +350,7 @@ int main(int argc, char** argv) {
   if (audio_handler) {
     audio_handler->Start();
   }
+  host_confui_server.Start();
   display_handler->Loop();
 
   return 0;

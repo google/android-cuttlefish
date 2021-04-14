@@ -22,6 +22,7 @@
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
+#include "host/libs/confui/host_virtual_input.h"
 
 namespace cuttlefish {
 
@@ -37,8 +38,10 @@ struct InputSockets {
 class CfConnectionObserverFactory
     : public cuttlefish::webrtc_streaming::ConnectionObserverFactory {
  public:
-  CfConnectionObserverFactory(cuttlefish::InputSockets& input_sockets,
-                              cuttlefish::SharedFD kernel_log_events_fd);
+  CfConnectionObserverFactory(
+      cuttlefish::InputSockets& input_sockets,
+      cuttlefish::SharedFD kernel_log_events_fd,
+      cuttlefish::confui::HostVirtualInput& confui_input);
   ~CfConnectionObserverFactory() override = default;
 
   std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver> CreateObserver()
@@ -55,6 +58,7 @@ class CfConnectionObserverFactory
   std::map<std::string, cuttlefish::SharedFD>
       commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
+  cuttlefish::confui::HostVirtualInput& confui_input_;
 };
 
 }  // namespace cuttlefish

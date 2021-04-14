@@ -23,7 +23,7 @@
 #include <condition_variable>
 #include <chrono>
 
-#include "host/libs/screen_connector/screen_connector_ctrl.h"
+#include "common/libs/concurrency/semaphore.h"
 
 namespace cuttlefish {
 // move-based concurrent queue
@@ -36,10 +36,8 @@ class ScreenConnectorQueue {
   static_assert( is_movable<T>::value,
                  "Items in ScreenConnectorQueue should be std::mov-able");
 
-  ScreenConnectorQueue(ScreenConnectorCtrl& sc_ctrl_)
-      : q_mutex_(std::make_unique<std::mutex>()),
-        global_item_tracker_(sc_ctrl_)
-  {}
+  ScreenConnectorQueue(Semaphore& sc_sem)
+      : q_mutex_(std::make_unique<std::mutex>()), sc_semaphore_(sc_sem) {}
   ScreenConnectorQueue(ScreenConnectorQueue&& cq) = delete;
   ScreenConnectorQueue(const ScreenConnectorQueue& cq) = delete;
   ScreenConnectorQueue& operator=(const ScreenConnectorQueue& cq) = delete;
@@ -93,13 +91,13 @@ class ScreenConnectorQueue {
      * This IS intended to awake the screen_connector consumer thread
      * when one or more items are available at least in one queue
      */
-    global_item_tracker_.SemPost();
+    sc_semaphore_.SemPost();
   }
   void PushBack(T& item) = delete;
   void PushBack(const T& item) = delete;
 
   /*
-   * PopFront must be preceded by global_item_tracker_.SemWaitItem()
+   * PopFront must be preceded by sc_semaphore_.SemWaitItem()
    *
    */
   T PopFront() {
@@ -121,7 +119,7 @@ class ScreenConnectorQueue {
   std::deque<T> buffer_;
   std::unique_ptr<std::mutex> q_mutex_;
   std::condition_variable q_empty_;
-  ScreenConnectorCtrl& global_item_tracker_;
+  Semaphore& sc_semaphore_;
 };
 
 } // namespace cuttlefish
