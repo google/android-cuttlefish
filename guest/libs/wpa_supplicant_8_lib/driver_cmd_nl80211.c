@@ -23,21 +23,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if VSOC_PLATFORM_SDK_AFTER(L_MR1)
-// Android M exposes headers more directly.
 #include <netinet/in.h>
 #include <linux/if.h>
 #include <linux/if_ether.h>
 #include "driver_nl80211.h"
-#elif VSOC_PLATFORM_SDK_AFTER(J_MR2)
-// Android versions K and L put structures in hardware_legacy
-#include "hardware_legacy/driver_nl80211.h"
-#else
-// Android version J does not expose structures directly. These structures are
-// manually defined later.
-#include <netinet/in.h>
-#include <linux/if.h>
-#endif
 
 #include "common.h"
 #include "wpa_supplicant_i.h"
