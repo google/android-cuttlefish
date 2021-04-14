@@ -30,6 +30,7 @@
 #include <android-base/logging.h>
 #include <gflags/gflags.h>
 
+#include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_buf.h"
 #include "host/frontend/webrtc/adb_handler.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
@@ -37,6 +38,10 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 DECLARE_bool(write_virtio_input);
+
+// LOG(DEBUG) for confirmation UI debugging
+// that stands for LOG(DEBUG) << "ConfUI: " << ...
+using cuttlefish::confui::DebugLog;
 
 namespace cuttlefish {
 
@@ -88,19 +93,24 @@ std::unique_ptr<InputEventBuffer> GetEventBuffer() {
   }
 }
 
-class ConnectionObserverImpl
+/**
+ * connection observer implementation for regular android mode.
+ * i.e. when it is not in the confirmation UI mode (or TEE),
+ * the control flow will fall back to this ConnectionObserverForAndroid
+ */
+class ConnectionObserverForAndroid
     : public cuttlefish::webrtc_streaming::ConnectionObserver {
  public:
-  ConnectionObserverImpl(cuttlefish::InputSockets& input_sockets,
-                         cuttlefish::SharedFD kernel_log_events_fd,
-                         std::map<std::string, cuttlefish::SharedFD>
-                             commands_to_custom_action_servers,
-                         std::weak_ptr<DisplayHandler> display_handler)
+  ConnectionObserverForAndroid(cuttlefish::InputSockets &input_sockets,
+                               cuttlefish::SharedFD kernel_log_events_fd,
+                               std::map<std::string, cuttlefish::SharedFD>
+                                   commands_to_custom_action_servers,
+                               std::weak_ptr<DisplayHandler> display_handler)
       : input_sockets_(input_sockets),
         kernel_log_events_client_(kernel_log_events_fd),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler) {}
-  virtual ~ConnectionObserverImpl() {
+  virtual ~ConnectionObserverForAndroid() {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
       display_handler->DecClientCount();
@@ -305,19 +315,106 @@ class ConnectionObserverImpl
   std::set<int32_t> active_touch_slots_;
 };
 
+class ConnectionObserverDemuxer
+    : public cuttlefish::webrtc_streaming::ConnectionObserver {
+ public:
+  ConnectionObserverDemuxer(
+      /* params for the base class */
+      cuttlefish::InputSockets &input_sockets,
+      cuttlefish::SharedFD kernel_log_events_fd,
+      std::map<std::string, cuttlefish::SharedFD>
+          commands_to_custom_action_servers,
+      std::weak_ptr<DisplayHandler> display_handler,
+      /* params for this class */
+      cuttlefish::confui::HostVirtualInput &confui_input)
+      : android_input_(input_sockets, kernel_log_events_fd,
+                       commands_to_custom_action_servers, display_handler),
+        confui_input_{confui_input} {}
+  virtual ~ConnectionObserverDemuxer() = default;
+
+  void OnConnected(std::function<void(const uint8_t *, size_t, bool)>
+                       ctrl_msg_sender) override {
+    android_input_.OnConnected(ctrl_msg_sender);
+  }
+
+  void OnTouchEvent(const std::string &label, int x, int y,
+                    bool down) override {
+    if (confui_input_.IsConfUiActive()) {
+      DebugLog("touch event ignored in confirmation UI mode");
+      return;
+    }
+    android_input_.OnTouchEvent(label, x, y, down);
+  }
+
+  void OnMultiTouchEvent(const std::string &label, Json::Value id,
+                         Json::Value slot, Json::Value x, Json::Value y,
+                         bool down, int size) override {
+    if (confui_input_.IsConfUiActive()) {
+      DebugLog("multi-touch event ignored in confirmation UI mode");
+      return;
+    }
+    android_input_.OnMultiTouchEvent(label, id, slot, x, y, down, size);
+  }
+
+  void OnKeyboardEvent(uint16_t code, bool down) override {
+    if (confui_input_.IsConfUiActive()) {
+      switch (code) {
+        case KEY_POWER:
+          confui_input_.PressConfirmButton(down);
+          break;
+        case KEY_MENU:
+          confui_input_.PressCancelButton(down);
+          break;
+        default:
+          DebugLog("key ", code, " is ignored in confirmation UI mode");
+          break;
+      }
+      return;
+    }
+    android_input_.OnKeyboardEvent(code, down);
+  }
+
+  void OnSwitchEvent(uint16_t code, bool state) override {
+    android_input_.OnSwitchEvent(code, state);
+  }
+
+  void OnAdbChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                            adb_message_sender) override {
+    android_input_.OnAdbChannelOpen(adb_message_sender);
+  }
+
+  void OnAdbMessage(const uint8_t *msg, size_t size) override {
+    android_input_.OnAdbMessage(msg, size);
+  }
+
+  void OnControlChannelOpen(
+      std::function<bool(const Json::Value)> control_message_sender) override {
+    android_input_.OnControlChannelOpen(control_message_sender);
+  }
+
+  void OnControlMessage(const uint8_t *msg, size_t size) override {
+    android_input_.OnControlMessage(msg, size);
+  }
+
+ private:
+  ConnectionObserverForAndroid android_input_;
+  cuttlefish::confui::HostVirtualInput &confui_input_;
+};
+
 CfConnectionObserverFactory::CfConnectionObserverFactory(
-    cuttlefish::InputSockets& input_sockets,
-    cuttlefish::SharedFD kernel_log_events_fd)
+    cuttlefish::InputSockets &input_sockets,
+    cuttlefish::SharedFD kernel_log_events_fd,
+    cuttlefish::confui::HostVirtualInput &confui_input)
     : input_sockets_(input_sockets),
-      kernel_log_events_fd_(kernel_log_events_fd) {}
+      kernel_log_events_fd_(kernel_log_events_fd),
+      confui_input_{confui_input} {}
 
 std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverImpl(input_sockets_,
-                                 kernel_log_events_fd_,
-                                 commands_to_custom_action_servers_,
-                                 weak_display_handler_));
+      new ConnectionObserverDemuxer(input_sockets_, kernel_log_events_fd_,
+                                    commands_to_custom_action_servers_,
+                                    weak_display_handler_, confui_input_));
 }
 
 void CfConnectionObserverFactory::AddCustomActionServer(
