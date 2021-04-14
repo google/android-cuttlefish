@@ -50,7 +50,7 @@ std::string AppendFileName(const std::string& filename,
 //     {
 //       "label": string,
 //       "path": string,
-//       (opt) "read_only": bool
+//       "writable": bool, // optional. defaults to false.
 //     }
 //   ]
 // }
@@ -67,14 +67,14 @@ Result<std::vector<ImagePartition>> LoadConfig(std::istream& in) {
   for (const Json::Value& part : root["partitions"]) {
     const std::string label = part["label"].asString();
     const std::string path = part["path"].asString();
-    const bool read_only =
-        part["read_only"].asBool();  // default: false (if null)
+    const bool writable =
+        part["writable"].asBool();  // default: false (if null)
 
     if (!FileExists(path)) {
       return Error() << "bad config: Can't find \'" << path << '\'';
     }
     partitions.push_back(
-        ImagePartition{label, path, kLinuxFilesystem, read_only});
+        ImagePartition{label, path, kLinuxFilesystem, .read_only = !writable});
   }
 
   if (partitions.empty()) {
