@@ -16,25 +16,23 @@
 
 #include "host/frontend/vnc_server/simulated_hw_composer.h"
 
-#include <gflags/gflags.h>
-
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
-DEFINE_int32(frame_server_fd, -1, "");
-
 using cuttlefish::vnc::SimulatedHWComposer;
+using ScreenConnector = cuttlefish::vnc::ScreenConnector;
 
-SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb)
+SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb,
+                                         ScreenConnector& screen_connector)
     :
 #ifdef FUZZ_TEST_VNC
       engine_{std::random_device{}()},
 #endif
       bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements),
-      screen_connector_(ScreenConnector::Get(FLAGS_frame_server_fd)) {
+      screen_connector_(screen_connector) {
   stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
-  screen_connector_->SetCallback(std::move(GetScreenConnectorCallback()));
+  screen_connector_.SetCallback(std::move(GetScreenConnectorCallback()));
 }
 
 SimulatedHWComposer::~SimulatedHWComposer() {
@@ -77,21 +75,21 @@ SimulatedHWComposer::GenerateProcessedFrameCallback
 SimulatedHWComposer::GetScreenConnectorCallback() {
   return [](std::uint32_t display_number, std::uint8_t* frame_pixels,
             cuttlefish::vnc::VncScProcessedFrame& processed_frame) {
+    processed_frame.display_number_ = display_number;
     // TODO(171305898): handle multiple displays.
     if (display_number != 0) {
       processed_frame.is_success_ = false;
       return;
     }
     const std::uint32_t display_w =
-        SimulatedHWComposer::ScreenConnector::ScreenWidth(display_number);
+        ScreenConnector::ScreenWidth(display_number);
     const std::uint32_t display_h =
-        SimulatedHWComposer::ScreenConnector::ScreenHeight(display_number);
+        ScreenConnector::ScreenHeight(display_number);
     const std::uint32_t display_stride_bytes =
-        SimulatedHWComposer::ScreenConnector::ScreenStrideBytes(display_number);
-    const std::uint32_t display_bpp =
-        SimulatedHWComposer::ScreenConnector::BytesPerPixel();
+        ScreenConnector::ScreenStrideBytes(display_number);
+    const std::uint32_t display_bpp = ScreenConnector::BytesPerPixel();
     const std::uint32_t display_size_bytes =
-        SimulatedHWComposer::ScreenConnector::ScreenSizeInBytes(display_number);
+        ScreenConnector::ScreenSizeInBytes(display_number);
 
     auto& raw_screen = processed_frame.raw_screen_;
     raw_screen.assign(frame_pixels, frame_pixels + display_size_bytes);
@@ -137,12 +135,12 @@ void SimulatedHWComposer::MakeStripes() {
    * callback should be set before the first WaitForAtLeastOneClientConnection()
    * (b/178504150) and the first OnFrameAfter().
    */
-  if (!screen_connector_->IsCallbackSet()) {
+  if (!screen_connector_.IsCallbackSet()) {
     LOG(FATAL) << "ScreenConnector callback hasn't been set before MakeStripes";
   }
   while (!closed()) {
     bb_->WaitForAtLeastOneClientConnection();
-    auto sim_hw_processed_frame = screen_connector_->OnNextFrame();
+    auto sim_hw_processed_frame = screen_connector_.OnNextFrame();
     // sim_hw_processed_frame has display number from the guest
     if (!sim_hw_processed_frame.is_success_) {
       continue;
@@ -174,5 +172,5 @@ void SimulatedHWComposer::MakeStripes() {
 int SimulatedHWComposer::NumberOfStripes() { return kNumStripes; }
 
 void SimulatedHWComposer::ReportClientsConnected() {
-  screen_connector_->ReportClientsConnected(true);
+  screen_connector_.ReportClientsConnected(true);
 }

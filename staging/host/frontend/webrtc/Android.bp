@@ -83,6 +83,7 @@ cc_binary_host {
     header_libs: [
         "webrtc_signaling_headers",
         "libwebrtc_absl_headers",
+        "libcuttlefish_confui_host_headers",
     ],
     static_libs: [
         "libwebrtc_absl_base",
@@ -103,6 +104,11 @@ cc_binary_host {
         "libcuttlefish_screen_connector",
         "libcuttlefish_utils",
         "libcuttlefish_wayland_server",
+        "libcuttlefish_confui",
+        "libcuttlefish_confui_host",
+        "libft2.nodep",
+        "libteeui",
+        "libteeui_localization",
         "libdrm",
         "libevent",
         "libffi",
