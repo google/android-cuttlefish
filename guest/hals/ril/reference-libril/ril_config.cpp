@@ -23,8 +23,6 @@
 #include <android/hardware/radio/config/1.3/IRadioConfig.h>
 #include <android/hardware/radio/config/1.2/IRadioConfigIndication.h>
 #include <android/hardware/radio/1.1/types.h>
-#include <android/hardware/radio/1.3/types.h>
-
 
 #include <ril.h>
 #include <guest/hals/ril/reference-libril/ril_service.h>
@@ -499,9 +497,15 @@ int radio_1_6::getHalDeviceCapabilitiesResponse(int slotId, int responseType, in
         ::android::hardware::radio::V1_6::RadioResponseInfo responseInfo = {};
         populateResponseInfo_1_6(responseInfo, serial, responseType, e);
 
-        V1_3::HalDeviceCapabilities halCap = {};
+        bool modemReducedFeatureSet1 = false;
+        if (response == NULL || responseLen != sizeof(bool)) {
+            RLOGE("getHalDeviceCapabilitiesResponse Invalid response.");
+        } else {
+            modemReducedFeatureSet1 = (*((bool *) response));
+        }
+
         Return<void> retStatus = radioConfigService->mRadioConfigResponseV1_3->getHalDeviceCapabilitiesResponse(
-                responseInfo, halCap);
+                responseInfo, modemReducedFeatureSet1);
         radioConfigService->checkReturnStatus_config(retStatus);
     } else {
         RLOGE("getHalDeviceCapabilitiesResponse: radioConfigService->getHalDeviceCapabilities == NULL");
