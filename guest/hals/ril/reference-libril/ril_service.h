@@ -117,7 +117,7 @@ int sendSmsResponse(int slotId,
                    int responseType, int serial, RIL_Errno e, void *response,
                    size_t responselen);
 
-int sendSmsExpectMoreResponse(int slotId,
+int sendSMSExpectMoreResponse(int slotId,
                              int responseType, int serial, RIL_Errno e, void *response,
                              size_t responselen);
 
