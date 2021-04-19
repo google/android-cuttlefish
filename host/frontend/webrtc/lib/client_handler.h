@@ -36,6 +36,7 @@ namespace webrtc_streaming {
 class InputChannelHandler;
 class AdbChannelHandler;
 class ControlChannelHandler;
+class BluetoothChannelHandler;
 
 class ClientHandler : public webrtc::PeerConnectionObserver,
                       public std::enable_shared_from_this<ClientHandler> {
@@ -123,6 +124,7 @@ class ClientHandler : public webrtc::PeerConnectionObserver,
   std::unique_ptr<InputChannelHandler> input_handler_;
   std::unique_ptr<AdbChannelHandler> adb_handler_;
   std::unique_ptr<ControlChannelHandler> control_handler_;
+  std::unique_ptr<BluetoothChannelHandler> bluetooth_handler_;
 };
 
 }  // namespace webrtc_streaming
