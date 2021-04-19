@@ -57,6 +57,10 @@ std::vector<CommandHandler> NetworkService::InitializeCommandHandlers() {
                      [this](const Client& client, std::string& cmd) {
                        this->HandleRadioPower(client, cmd);
                      }),
+      CommandHandler("+REMOTECFUN=",
+                     [this](const Client& client, std::string& cmd) {
+                       this->HandleRadioPower(client, cmd);
+                     }),
       CommandHandler(
           "+CSQ",
           [this](const Client& client) { this->HandleSignalStrength(client); }),
