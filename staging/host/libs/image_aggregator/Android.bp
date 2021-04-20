@@ -23,7 +23,7 @@ cc_library {
         "cdisk_spec.proto",
     ],
     proto: {
-        type: "full",
+        type: "lite",
         export_proto_headers: true,
         include_dirs: [
             "external/protobuf/src",
@@ -37,11 +37,12 @@ cc_library_static {
     srcs: [
         "image_aggregator.cc",
     ],
+    export_include_dirs: ["."],
     shared_libs: [
         "libcuttlefish_fs",
         "libcuttlefish_utils",
         "libbase",
-        "libprotobuf-cpp-full",
+        "libprotobuf-cpp-lite",
         "libz",
     ],
     static_libs: [
