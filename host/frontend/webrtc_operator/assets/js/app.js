@@ -271,6 +271,18 @@ function ConnectToDevice(device_id) {
                 e => onCustomShellButton(button.shell_command, e),
                 'control-panel-custom-buttons');
             buttons[button.command].adb = true;
+          } else if (button.device_states) {
+            // This button corresponds to variable hardware device state(s).
+            createControlPanelButton(button.command, button.title, button.icon_name,
+                getCustomDeviceStateButtonCb(button.device_states),
+                'control-panel-custom-buttons');
+            for (const device_state of button.device_states) {
+              // hinge_angle is currently injected via an adb shell command that
+              // triggers a guest binary.
+              if ('hinge_angle_value' in device_state) {
+                buttons[button.command].adb = true;
+              }
+            }
           } else {
             // This button's command is handled by custom action server.
             createControlPanelButton(button.command, button.title, button.icon_name,
@@ -340,7 +352,7 @@ function ConnectToDevice(device_id) {
     }
     deviceConnection.sendControlMessage(JSON.stringify({
       command: e.target.dataset.command,
-      state: e.type == 'mousedown' ? "down" : "up",
+      button_state: e.type == 'mousedown' ? "down" : "up",
     }));
   }
 
@@ -350,16 +362,44 @@ function ConnectToDevice(device_id) {
     initializeAdb();
     if (e.type == 'mousedown') {
       adbShell(
-          '/vendor/bin/cuttlefish_rotate ' +
+          '/vendor/bin/cuttlefish_sensor_injection rotate ' +
           (currentRotation == 0 ? 'landscape' : 'portrait'))
     }
   }
+
   function onCustomShellButton(shell_command, e) {
     // Attempt to init adb again, in case the initial connection failed.
     // This succeeds immediately if already connected.
     initializeAdb();
     if (e.type == 'mousedown') {
       adbShell(shell_command);
+    }
+  }
+
+  function getCustomDeviceStateButtonCb(device_states) {
+    let states = device_states;
+    let index = 0;
+    return e => {
+      if (e.type == 'mousedown') {
+        // Reset any overridden device state.
+        adbShell('cmd device_state state reset');
+        // Send a device_state message for the current state.
+        let message = {
+          command: 'device_state',
+          ...states[index],
+        };
+        deviceConnection.sendControlMessage(JSON.stringify(message));
+        console.log(JSON.stringify(message));
+        // TODO(b/181157794): Use a custom Sensor HAL for hinge_angle injection
+        // instead of this guest binary.
+        if ('hinge_angle_value' in states[index]) {
+          adbShell(
+              '/vendor/bin/cuttlefish_sensor_injection hinge_angle ' +
+              states[index].hinge_angle_value);
+        }
+        // Cycle to the next state.
+        index = (index + 1) % states.length;
+      }
     }
   }
 
