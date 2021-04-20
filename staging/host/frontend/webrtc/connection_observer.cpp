@@ -20,6 +20,7 @@
 
 #include <linux/input.h>
 
+#include <chrono>
 #include <map>
 #include <set>
 #include <thread>
@@ -122,12 +123,23 @@ class ConnectionObserverForAndroid
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
       display_handler->IncClientCount();
-      // A long time may pass before the next frame comes up from the guest.
-      // Send the last one to avoid showing a black screen to the user during
-      // that time.
-      display_handler->SendLastFrame();
+      std::thread th([this]() {
+        // The encoder in libwebrtc won't drop 5 consecutive frames due to frame
+        // size, so we make sure at least 5 frames are sent every time a client
+        // connects to ensure they receive at least one.
+        constexpr int kNumFrames = 5;
+        constexpr int kMillisPerFrame = 16;
+        for (int i = 0; i < kNumFrames; ++i) {
+          auto display_handler = weak_display_handler_.lock();
+          display_handler->SendLastFrame();
+          if (i < kNumFrames - 1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(kMillisPerFrame));
+          }
+        }
+      });
+      th.detach();
     }
-  }
+    }
 
   void OnTouchEvent(const std::string & /*display_label*/, int x, int y,
                     bool down) override {
