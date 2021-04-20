@@ -65,6 +65,7 @@ bool KeymasterResponder::ProcessMessage() {
     HANDLE_MESSAGE(DELETE_KEY, DeleteKey)
     HANDLE_MESSAGE(DELETE_ALL_KEYS, DeleteAllKeys)
     HANDLE_MESSAGE(IMPORT_WRAPPED_KEY, ImportWrappedKey)
+    HANDLE_MESSAGE(GENERATE_TIMESTAMP_TOKEN, GenerateTimestampToken)
 #undef HANDLE_MESSAGE
 #define HANDLE_MESSAGE_W_RETURN(ENUM_NAME, METHOD_NAME) \
     case ENUM_NAME: {\
