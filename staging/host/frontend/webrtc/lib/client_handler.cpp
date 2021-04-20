@@ -347,6 +347,13 @@ bool ClientHandler::SetPeerConnection(
     rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection) {
   peer_connection_ = peer_connection;
 
+  // libwebrtc configures the video encoder with a start bitrate of just 300kbs
+  // which causes it to drop the first 4 frames it receives. Any value over 2Mbs
+  // will be capped at 2Mbs when passed to the encoder by the peer_connection
+  // object, so we pass the maximum possible value here.
+  webrtc::BitrateSettings bitrate_settings;
+  bitrate_settings.start_bitrate_bps = 2000000; // 2Mbs
+  peer_connection_->SetBitrate(bitrate_settings);
   // At least one data channel needs to be created on the side that makes the
   // SDP offer (the device) for data channels to be enabled at all.
   // This channel is meant to carry control commands from the client.
