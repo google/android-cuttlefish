@@ -159,7 +159,7 @@ BOARD_VENDOR_SEPOLICY_DIRS += device/google/cuttlefish/shared/sepolicy/vendor/go
 BOARD_SEPOLICY_DIRS += system/bt/vendor_libs/linux/sepolicy
 
 # Avoid multiple includes of sepolicy already included by Pixel experience.
-ifneq ($(filter aosp_% %_auto %_tv,$(PRODUCT_NAME)),)
+ifneq ($(filter aosp_% %_auto %_go_phone trout_% %_tv,$(PRODUCT_NAME)),)
 
 SYSTEM_EXT_PRIVATE_SEPOLICY_DIRS += hardware/google/pixel-sepolicy/flipendo
 
