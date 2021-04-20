@@ -294,17 +294,6 @@ function ConnectToDevice(device_id) {
       deviceConnection.onControlMessage(msg => onControlMessage(msg));
       // Start the screen as hidden. Only show when data is ready.
       deviceScreen.style.visibility = 'hidden';
-      // Send an initial home button press when WebRTC connects. This is needed
-      // so that the device screen receives an initial frame even if WebRTC is
-      // connected long after the device boots up.
-      deviceConnection.sendControlMessage(JSON.stringify({
-        command: 'home',
-        button_state: 'down',
-      }));
-      deviceConnection.sendControlMessage(JSON.stringify({
-        command: 'home',
-        button_state: 'up',
-      }));
       // Show the error message and disable buttons when the WebRTC connection fails.
       deviceConnection.onConnectionStateChange(state => {
         if (state == 'disconnected' || state == 'failed') {
