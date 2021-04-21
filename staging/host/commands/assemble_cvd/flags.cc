@@ -865,18 +865,8 @@ void SetDefaultFlagsForCrosvm() {
     SetCommandLineOptionWithMode("start_webrtc", "true", SET_FLAGS_DEFAULT);
   }
 
-  // for now, we support only x86_64 by default
+  // TODO(b/182484563): Re-enable autodetection when we fix the crosvm crashes
   bool default_enable_sandbox = false;
-  std::set<Arch> supported_archs{Arch::X86_64};
-  if (supported_archs.find(HostArch()) != supported_archs.end()) {
-    if (DirectoryExists(kCrosvmVarEmptyDir)) {
-      default_enable_sandbox = IsDirectoryEmpty(kCrosvmVarEmptyDir);
-    } else if (FileExists(kCrosvmVarEmptyDir)) {
-      default_enable_sandbox = false;
-    } else {
-      default_enable_sandbox = EnsureDirectoryExists(kCrosvmVarEmptyDir);
-    }
-  }
 
   SetCommandLineOptionWithMode("enable_sandbox",
                                (default_enable_sandbox ? "true" : "false"),
