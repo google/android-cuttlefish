@@ -26,13 +26,10 @@
 using namespace android;
 
 namespace cuttlefish {
-namespace webrtc_streaming {
 
 KernelLogEventsHandler::KernelLogEventsHandler(
-    SharedFD kernel_log_fd,
-    std::function<void(const Json::Value&)> send_to_client)
-    : send_to_client_(send_to_client),
-      kernel_log_fd_(kernel_log_fd),
+    SharedFD kernel_log_fd)
+    : kernel_log_fd_(kernel_log_fd),
       eventfd_(SharedFD::Event()),
       running_(true),
       read_thread_([this]() { ReadLoop(); }) {}
@@ -76,22 +73,40 @@ void KernelLogEventsHandler::ReadLoop() {
       if (read_result->event == monitor::Event::BootStarted) {
         Json::Value message;
         message["event"] = kBootStartedMessage;
-        send_to_client_(message);
+        DeliverEvent(message);
       }
       if (read_result->event == monitor::Event::BootCompleted) {
         Json::Value message;
         message["event"] = kBootCompletedMessage;
-        send_to_client_(message);
+        DeliverEvent(message);
       }
       if (read_result->event == monitor::Event::ScreenChanged) {
         Json::Value message;
         message["event"] = kScreenChangedMessage;
         message["metadata"] = read_result->metadata;
-        send_to_client_(message);
+        DeliverEvent(message);
       }
     }
   }
 }
 
-}  // namespace webrtc_streaming
+int KernelLogEventsHandler::AddSubscriber(
+    std::function<void(const Json::Value&)> subscriber) {
+  std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  subscribers_[++last_subscriber_id_] = subscriber;
+  return last_subscriber_id_;
+}
+
+void KernelLogEventsHandler::Unsubscribe(int subscriber_id) {
+  std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  subscribers_.erase(subscriber_id);
+}
+
+void KernelLogEventsHandler::DeliverEvent(const Json::Value& event) {
+  std::lock_guard<std::mutex> lock(subscribers_mtx_);
+  for (const auto& entry : subscribers_) {
+    entry.second(event);
+  }
+}
+
 }  // namespace cuttlefish
