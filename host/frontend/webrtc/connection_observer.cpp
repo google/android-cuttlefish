@@ -34,7 +34,6 @@
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_buf.h"
 #include "host/frontend/webrtc/adb_handler.h"
-#include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/lib/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -102,19 +101,23 @@ std::unique_ptr<InputEventBuffer> GetEventBuffer() {
 class ConnectionObserverForAndroid
     : public cuttlefish::webrtc_streaming::ConnectionObserver {
  public:
-  ConnectionObserverForAndroid(cuttlefish::InputSockets &input_sockets,
-                               cuttlefish::SharedFD kernel_log_events_fd,
-                               std::map<std::string, cuttlefish::SharedFD>
-                                   commands_to_custom_action_servers,
-                               std::weak_ptr<DisplayHandler> display_handler)
+  ConnectionObserverForAndroid(
+      cuttlefish::InputSockets &input_sockets,
+      cuttlefish::KernelLogEventsHandler *kernel_log_events_handler,
+      std::map<std::string, cuttlefish::SharedFD>
+          commands_to_custom_action_servers,
+      std::weak_ptr<DisplayHandler> display_handler)
       : input_sockets_(input_sockets),
-        kernel_log_events_client_(kernel_log_events_fd),
+        kernel_log_events_handler_(kernel_log_events_handler),
         commands_to_custom_action_servers_(commands_to_custom_action_servers),
         weak_display_handler_(display_handler) {}
   virtual ~ConnectionObserverForAndroid() {
     auto display_handler = weak_display_handler_.lock();
     if (display_handler) {
       display_handler->DecClientCount();
+    }
+    if (kernel_log_subscription_id_ != -1) {
+      kernel_log_events_handler_->Unsubscribe(kernel_log_subscription_id_);
     }
   }
 
@@ -244,9 +247,8 @@ class ConnectionObserverForAndroid
   void OnControlChannelOpen(std::function<bool(const Json::Value)>
                             control_message_sender) override {
     LOG(VERBOSE) << "Control Channel open";
-    kernel_log_events_handler_.reset(new cuttlefish::webrtc_streaming::KernelLogEventsHandler(
-        kernel_log_events_client_,
-        control_message_sender));
+    kernel_log_subscription_id_ =
+        kernel_log_events_handler_->AddSubscriber(control_message_sender);
   }
   void OnControlMessage(const uint8_t* msg, size_t size) override {
     Json::Value evt;
@@ -319,9 +321,9 @@ class ConnectionObserverForAndroid
 
  private:
   cuttlefish::InputSockets& input_sockets_;
-  cuttlefish::SharedFD kernel_log_events_client_;
+  cuttlefish::KernelLogEventsHandler* kernel_log_events_handler_;
+  int kernel_log_subscription_id_ = -1;
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
-  std::shared_ptr<cuttlefish::webrtc_streaming::KernelLogEventsHandler> kernel_log_events_handler_;
   std::map<std::string, cuttlefish::SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   std::set<int32_t> active_touch_slots_;
@@ -333,13 +335,13 @@ class ConnectionObserverDemuxer
   ConnectionObserverDemuxer(
       /* params for the base class */
       cuttlefish::InputSockets &input_sockets,
-      cuttlefish::SharedFD kernel_log_events_fd,
+      cuttlefish::KernelLogEventsHandler *kernel_log_events_handler,
       std::map<std::string, cuttlefish::SharedFD>
           commands_to_custom_action_servers,
       std::weak_ptr<DisplayHandler> display_handler,
       /* params for this class */
       cuttlefish::confui::HostVirtualInput &confui_input)
-      : android_input_(input_sockets, kernel_log_events_fd,
+      : android_input_(input_sockets, kernel_log_events_handler,
                        commands_to_custom_action_servers, display_handler),
         confui_input_{confui_input} {}
   virtual ~ConnectionObserverDemuxer() = default;
@@ -415,16 +417,16 @@ class ConnectionObserverDemuxer
 
 CfConnectionObserverFactory::CfConnectionObserverFactory(
     cuttlefish::InputSockets &input_sockets,
-    cuttlefish::SharedFD kernel_log_events_fd,
+    cuttlefish::KernelLogEventsHandler* kernel_log_events_handler,
     cuttlefish::confui::HostVirtualInput &confui_input)
     : input_sockets_(input_sockets),
-      kernel_log_events_fd_(kernel_log_events_fd),
+      kernel_log_events_handler_(kernel_log_events_handler),
       confui_input_{confui_input} {}
 
 std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>
 CfConnectionObserverFactory::CreateObserver() {
   return std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver>(
-      new ConnectionObserverDemuxer(input_sockets_, kernel_log_events_fd_,
+      new ConnectionObserverDemuxer(input_sockets_, kernel_log_events_handler_,
                                     commands_to_custom_action_servers_,
                                     weak_display_handler_, confui_input_));
 }
