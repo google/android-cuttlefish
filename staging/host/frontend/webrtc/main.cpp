@@ -32,6 +32,7 @@
 #include "host/frontend/webrtc/audio_handler.h"
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
+#include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/streamer.h"
 #include "host/libs/audio_connector/server.h"
@@ -58,6 +59,7 @@ DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
 using cuttlefish::AudioHandler;
 using cuttlefish::CfConnectionObserverFactory;
 using cuttlefish::DisplayHandler;
+using cuttlefish::KernelLogEventsHandler;
 using cuttlefish::webrtc_streaming::LocalRecorder;
 using cuttlefish::webrtc_streaming::Streamer;
 using cuttlefish::webrtc_streaming::StreamerConfig;
@@ -204,8 +206,9 @@ int main(int argc, char** argv) {
         ParseHttpHeaders(cvd_config->sig_server_headers_path());
   }
 
+  KernelLogEventsHandler kernel_logs_event_handler(kernel_log_events_client);
   auto observer_factory = std::make_shared<CfConnectionObserverFactory>(
-      input_sockets, kernel_log_events_client, host_confui_server);
+      input_sockets, &kernel_logs_event_handler, host_confui_server);
 
   auto streamer = Streamer::Create(streamer_config, observer_factory);
   CHECK(streamer) << "Could not create streamer";

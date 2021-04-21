@@ -21,41 +21,42 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "host/frontend/webrtc/display_handler.h"
+#include "host/frontend/webrtc/kernel_log_events_handler.h"
 #include "host/frontend/webrtc/lib/connection_observer.h"
 #include "host/libs/confui/host_virtual_input.h"
 
 namespace cuttlefish {
 
 struct InputSockets {
-  cuttlefish::SharedFD touch_server;
-  cuttlefish::SharedFD touch_client;
-  cuttlefish::SharedFD keyboard_server;
-  cuttlefish::SharedFD keyboard_client;
-  cuttlefish::SharedFD switches_server;
-  cuttlefish::SharedFD switches_client;
+  SharedFD touch_server;
+  SharedFD touch_client;
+  SharedFD keyboard_server;
+  SharedFD keyboard_client;
+  SharedFD switches_server;
+  SharedFD switches_client;
 };
 
 class CfConnectionObserverFactory
-    : public cuttlefish::webrtc_streaming::ConnectionObserverFactory {
+    : public webrtc_streaming::ConnectionObserverFactory {
  public:
   CfConnectionObserverFactory(
       cuttlefish::InputSockets& input_sockets,
-      cuttlefish::SharedFD kernel_log_events_fd,
+      KernelLogEventsHandler* kernel_log_events_handler,
       cuttlefish::confui::HostVirtualInput& confui_input);
   ~CfConnectionObserverFactory() override = default;
 
-  std::shared_ptr<cuttlefish::webrtc_streaming::ConnectionObserver> CreateObserver()
+  std::shared_ptr<webrtc_streaming::ConnectionObserver> CreateObserver()
       override;
 
-  void AddCustomActionServer(cuttlefish::SharedFD custom_action_server_fd,
+  void AddCustomActionServer(SharedFD custom_action_server_fd,
                              const std::vector<std::string>& commands);
 
   void SetDisplayHandler(std::weak_ptr<DisplayHandler> display_handler);
 
  private:
-  cuttlefish::InputSockets& input_sockets_;
-  cuttlefish::SharedFD kernel_log_events_fd_;
-  std::map<std::string, cuttlefish::SharedFD>
+  InputSockets& input_sockets_;
+  KernelLogEventsHandler* kernel_log_events_handler_;
+  std::map<std::string, SharedFD>
       commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   cuttlefish::confui::HostVirtualInput& confui_input_;
