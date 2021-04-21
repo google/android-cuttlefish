@@ -18,33 +18,35 @@
 
 #include <atomic>
 #include <memory>
+#include <mutex>
 #include <thread>
+#include <map>
 
 #include <json/json.h>
 
 #include "common/libs/fs/shared_fd.h"
 
 namespace cuttlefish {
-namespace webrtc_streaming {
 
 // Listen to kernel log events and report them to clients.
 struct KernelLogEventsHandler {
-  explicit KernelLogEventsHandler(SharedFD kernel_log_fd,
-      std::function<void(const Json::Value&)> send_to_client);
+  explicit KernelLogEventsHandler(SharedFD kernel_log_fd);
 
   ~KernelLogEventsHandler();
 
+  int AddSubscriber(std::function<void(const Json::Value&)> subscriber);
+  void Unsubscribe(int subscriber_id);
  private:
-
-  std::function<void(const Json::Value&)> send_to_client_;
-
   void ReadLoop();
+  void DeliverEvent(const Json::Value& event);
 
   SharedFD kernel_log_fd_;
   SharedFD eventfd_;
   std::atomic<bool> running_;
   std::thread read_thread_;
+  std::map<int, std::function<void(const Json::Value&)>> subscribers_;
+  int last_subscriber_id_ = 0;
+  std::mutex subscribers_mtx_;
 };
 
-}  // namespace webrtc_streaming
 }  // namespace cuttlefish
