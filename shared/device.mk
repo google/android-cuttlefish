@@ -112,7 +112,7 @@ PRODUCT_VENDOR_PROPERTIES += \
     debug.stagefright.c2inputsurface=-1
 
 # Enforce privapp permissions control.
-PRODUCT_VENDOR_PROPERTIES += ro.control_privapp_permissions=enforce
+PRODUCT_VENDOR_PROPERTIES += ro.control_privapp_permissions?=enforce
 
 # aes-256-heh default is not supported in standard kernels.
 PRODUCT_VENDOR_PROPERTIES += ro.crypto.volume.filenames_mode=aes-256-cts
