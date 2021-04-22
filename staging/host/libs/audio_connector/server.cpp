@@ -341,7 +341,7 @@ bool AudioClientConnection::SendEvent(/*TODO*/) { return false; }
 ssize_t AudioClientConnection::ReceiveMsg(SharedFD socket, void* buffer,
                                           size_t size) {
   auto read = socket->Recv(buffer, size, MSG_TRUNC);
-  CHECK(read <= size)
+  CHECK(read < 0 || read <= size)
       << "Received a msg bigger than the buffer, msg was truncated: " << read
       << " vs " << size;
   if (read == 0) {
