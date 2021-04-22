@@ -23,7 +23,6 @@ soong_config_module_type {
     module_type: "cvd_host_package",
     config_namespace: "cvd",
     value_variables: [
-        "grub_config",
         "launch_configs",
         "custom_action_config",
         "custom_action_servers",
@@ -64,9 +63,6 @@ cvd_host_tools = [
     "mkenvimage",
     "modem_simulator",
     "ms-tpm-20-ref",
-    "mcopy",
-    "mmd",
-    "mtools",
     "newfs_msdos",
     "powerwash_cvd",
     "restart_cvd",
