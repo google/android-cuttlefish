@@ -230,10 +230,11 @@ EarlyBootEndedResponse RemoteKeymaster::EarlyBootEnded() {
   return response;
 }
 
-void RemoteKeymaster::GenerateTimestampToken(GenerateTimestampTokenRequest&,
-                                             GenerateTimestampTokenResponse*) {
+void RemoteKeymaster::GenerateTimestampToken(
+    GenerateTimestampTokenRequest& request,
+    GenerateTimestampTokenResponse* response) {
   // TODO(aosp/1641315): Send a message to the host.
-  // ForwardCommand(GENERATE_TIMESTAMP_TOKEN, request, response);
+  ForwardCommand(GENERATE_TIMESTAMP_TOKEN, request, response);
 }
 
 }  // namespace keymaster
