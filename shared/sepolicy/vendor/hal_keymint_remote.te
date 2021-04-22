@@ -1,0 +1,12 @@
+type hal_keymint_remote, domain;
+hal_server_domain(hal_keymint_remote, hal_keymint)
+
+type hal_keymint_remote_exec, exec_type, vendor_file_type, file_type;
+init_daemon_domain(hal_keymint_remote)
+
+allow hal_keymint_remote device:dir r_dir_perms;
+allow hal_keymint_remote keymaster_device:chr_file rw_file_perms;
+
+# Write to kernel log (/dev/kmsg)
+allow hal_keymint_remote kmsg_device:chr_file w_file_perms;
+allow hal_keymint_remote kmsg_device:chr_file getattr;
