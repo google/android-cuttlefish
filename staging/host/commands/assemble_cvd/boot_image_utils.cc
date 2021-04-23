@@ -71,16 +71,6 @@ bool DeleteTmpFileIfNotChanged(const std::string& tmp_file, const std::string& c
   return true;
 }
 
-std::string FindCpio() {
-  for (const auto& path : {"/usr/bin/cpio", "/bin/cpio"}) {
-    if (FileExists(path)) {
-      return path;
-    }
-  }
-  LOG(FATAL) << "Could not find a cpio executable.";
-  return "";
-}
-
 bool UnpackBootImage(const std::string& boot_image_path,
                      const std::string& unpack_dir) {
   auto unpack_path = HostBinaryPath("unpack_bootimg");
@@ -111,30 +101,33 @@ void RepackVendorRamdisk(const std::string& kernel_modules_ramdisk_path,
                          const std::string& original_ramdisk_path,
                          const std::string& new_ramdisk_path,
                          const std::string& build_dir) {
-  const auto& cpio_path = FindCpio();
   int success = execute({"/bin/bash", "-c", HostBinaryPath("lz4") + " -c -d -l " +
                         original_ramdisk_path + " > " + original_ramdisk_path + CPIO_EXT});
   CHECK(success == 0) << "Unable to run lz4. Exited with status " << success;
 
-  success = mkdir((build_dir + "/" + TMP_RD_DIR).c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-  CHECK(success == 0) << "Could not mkdir \"" << TMP_RD_DIR << "\", error was " << strerror(errno);
+  const std::string ramdisk_stage_dir = build_dir + "/" + TMP_RD_DIR;
+  success =
+      mkdir(ramdisk_stage_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  CHECK(success == 0) << "Could not mkdir \"" << ramdisk_stage_dir
+                      << "\", error was " << strerror(errno);
 
-  success = execute({"/bin/bash", "-c",
-                     "(cd " + build_dir + "/" + TMP_RD_DIR + " && (while " +
-                         cpio_path + " -id ; do :; done) < " +
-                         original_ramdisk_path + CPIO_EXT + ")"});
-  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
+  success = execute(
+      {"/bin/bash", "-c",
+       "(cd " + ramdisk_stage_dir + " && while " + HostBinaryPath("toybox") +
+           " cpio -idu; do :; done) < " + original_ramdisk_path + CPIO_EXT});
+  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
+                      << success;
 
-  success = execute({"/bin/bash", "-c", "rm -rf " + build_dir + "/" + TMP_RD_DIR + "/lib/modules"});
-  CHECK(success == 0) << "Could not rmdir \"lib/modules\" in TMP_RD_DIR. Exited with status "
-                  << success;
+  success = execute({"rm", "-rf", ramdisk_stage_dir + "/lib/modules"});
+  CHECK(success == 0) << "Could not rmdir \"lib/modules\" in TMP_RD_DIR. "
+                      << "Exited with status " << success;
 
   const std::string stripped_ramdisk_path = build_dir + "/" + STRIPPED_RD;
   success = execute({"/bin/bash", "-c",
-                     "(cd " + build_dir + "/" + TMP_RD_DIR + " && find . | " +
-                         cpio_path + " -H newc -o --quiet > " +
-                         stripped_ramdisk_path + CPIO_EXT + ")"});
-  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status " << success;
+                     HostBinaryPath("mkbootfs") + " " + ramdisk_stage_dir +
+                         " > " + stripped_ramdisk_path + CPIO_EXT});
+  CHECK(success == 0) << "Unable to run cd or cpio. Exited with status "
+                      << success;
 
   success = execute({"/bin/bash", "-c", HostBinaryPath("lz4") +
                      " -c -l -12 --favor-decSpeed " + stripped_ramdisk_path + CPIO_EXT + " > " +
