@@ -52,6 +52,7 @@ cc_binary {
         "remote_keymint_operation.cpp",
         "remote_keymaster.cpp",
         "remote_secure_clock.cpp",
+        "remote_shared_secret.cpp",
         "service.cpp",
     ],
     defaults: [

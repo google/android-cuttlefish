@@ -17,7 +17,7 @@
 /dev/hvc2 0660 system logd
 
 # keymaster
-/dev/hvc3 0660 system system
+/dev/hvc3 0666 system system
 
 # gatekeeper
 /dev/hvc4 0660 system system
