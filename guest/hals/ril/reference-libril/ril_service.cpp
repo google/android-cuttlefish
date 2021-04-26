@@ -6347,15 +6347,15 @@ int radio_1_6::getVoiceRegistrationStateResponse(int slotId,
                     regResponse.accessTechnologySpecificInfo.cdmaInfo(cdmaInfo);
                 } else if (rat == RADIO_TECH_NR) {
                     // rat is NR only for NR SA
-                    V1_6::RegStateResult::AccessTechnologySpecificInfo accessTechnologySpecificInfo;
-                    accessTechnologySpecificInfo.ngranNrVopsInfo().vopsSupported =
+                    V1_6::NrVopsInfo nrVopsInfo;
+                    nrVopsInfo.vopsSupported =
                             ::android::hardware::radio::V1_6::VopsIndicator::VOPS_NOT_SUPPORTED;
-                    accessTechnologySpecificInfo.ngranNrVopsInfo().emcSupported =
+                    nrVopsInfo.emcSupported =
                             ::android::hardware::radio::V1_6::EmcIndicator::EMC_NOT_SUPPORTED;
-                    accessTechnologySpecificInfo.ngranNrVopsInfo().emfSupported =
+                    nrVopsInfo.emfSupported =
                             ::android::hardware::radio::V1_6::EmfIndicator::EMF_NOT_SUPPORTED;
-                    regResponse.accessTechnologySpecificInfo.ngranNrVopsInfo(
-                            accessTechnologySpecificInfo.ngranNrVopsInfo());
+                    regResponse.accessTechnologySpecificInfo.ngranNrVopsInfo(nrVopsInfo);
+
                 } else {
                     V1_5::RegStateResult::AccessTechnologySpecificInfo::
                         EutranRegistrationInfo eutranInfo;
@@ -6524,15 +6524,15 @@ int radio_1_6::getDataRegistrationStateResponse(int slotId,
                         numStrings, resp);
                 if (rat == RADIO_TECH_NR) {
                     // rat is NR only for NR SA
-                    V1_6::RegStateResult::AccessTechnologySpecificInfo accessTechnologySpecificInfo;
-                    accessTechnologySpecificInfo.ngranNrVopsInfo().vopsSupported =
+                    V1_6::NrVopsInfo nrVopsInfo;
+                    nrVopsInfo.vopsSupported =
                             ::android::hardware::radio::V1_6::VopsIndicator::VOPS_NOT_SUPPORTED;
-                    accessTechnologySpecificInfo.ngranNrVopsInfo().emcSupported =
+                    nrVopsInfo.emcSupported =
                             ::android::hardware::radio::V1_6::EmcIndicator::EMC_NOT_SUPPORTED;
-                    accessTechnologySpecificInfo.ngranNrVopsInfo().emfSupported =
+                    nrVopsInfo.emfSupported =
                             ::android::hardware::radio::V1_6::EmfIndicator::EMF_NOT_SUPPORTED;
-                    regResponse.accessTechnologySpecificInfo.ngranNrVopsInfo(
-                            accessTechnologySpecificInfo.ngranNrVopsInfo());
+                    regResponse.accessTechnologySpecificInfo.ngranNrVopsInfo(nrVopsInfo);
+
                 } else {
                     V1_5::RegStateResult::AccessTechnologySpecificInfo::
                             EutranRegistrationInfo eutranInfo;
