@@ -85,7 +85,7 @@ struct DefaultCloser {
 };
 
 template <typename Closer>
-class unique_fd_impl final {
+class unique_fd_impl {
  public:
   unique_fd_impl() {}
 
@@ -175,7 +175,9 @@ class unique_fd_impl final {
   }
 };
 
-using unique_fd = unique_fd_impl<DefaultCloser>;
+class unique_fd final : public unique_fd_impl<DefaultCloser> {
+  using unique_fd_impl::unique_fd_impl;
+};
 
 #if !defined(_WIN32)
 
