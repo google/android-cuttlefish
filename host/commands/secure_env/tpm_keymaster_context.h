@@ -102,4 +102,7 @@ public:
       keymaster::AuthorizationSet* wrapped_key_params,
       keymaster_key_format_t* wrapped_key_format,
       keymaster::KeymasterKeyBlob* wrapped_key_material) const override;
+
+  keymaster::RemoteProvisioningContext* GetRemoteProvisioningContext()
+      const override;
 };

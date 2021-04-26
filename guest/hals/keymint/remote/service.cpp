@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.security.keymint-service"
+#define LOG_TAG "android.hardware.security.keymint-service.remote"
 
 #include <android-base/logging.h>
 #include <android/binder_manager.h>
@@ -27,6 +27,7 @@
 #include <aidl/android/hardware/security/keymint/SecurityLevel.h>
 #include <guest/hals/keymint/remote/remote_keymaster.h>
 #include <guest/hals/keymint/remote/remote_keymint_device.h>
+#include <guest/hals/keymint/remote/remote_remotely_provisioned_component.h>
 #include <guest/hals/keymint/remote/remote_secure_clock.h>
 #include <guest/hals/keymint/remote/remote_shared_secret.h>
 #include "common/libs/fs/shared_fd.h"
@@ -37,6 +38,8 @@ namespace {
 const char device[] = "/dev/hvc3";
 
 using aidl::android::hardware::security::keymint::RemoteKeyMintDevice;
+using aidl::android::hardware::security::keymint::
+    RemoteRemotelyProvisionedComponent;
 using aidl::android::hardware::security::keymint::SecurityLevel;
 using aidl::android::hardware::security::secureclock::RemoteSecureClock;
 using aidl::android::hardware::security::sharedsecret::RemoteSharedSecret;
@@ -100,6 +103,7 @@ int main(int, char** argv) {
                                   getSecurityLevel(remote_keymaster));
   addService<RemoteSecureClock>(remote_keymaster);
   addService<RemoteSharedSecret>(remote_keymaster);
+  addService<RemoteRemotelyProvisionedComponent>(remote_keymaster);
 
   ABinderProcess_joinThreadPool();
   return EXIT_FAILURE;  // should not reach

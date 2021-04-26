@@ -133,6 +133,16 @@ void RemoteKeymaster::GenerateKey(const GenerateKeyRequest& request,
   ForwardCommand(GENERATE_KEY, datedRequest, response);
 }
 
+void RemoteKeymaster::GenerateRkpKey(const GenerateRkpKeyRequest& request,
+                                     GenerateRkpKeyResponse* response) {
+  ForwardCommand(GENERATE_RKP_KEY, request, response);
+}
+
+void RemoteKeymaster::GenerateCsr(const GenerateCsrRequest& request,
+                                  GenerateCsrResponse* response) {
+  ForwardCommand(GENERATE_CSR, request, response);
+}
+
 void RemoteKeymaster::GetKeyCharacteristics(
     const GetKeyCharacteristicsRequest& request,
     GetKeyCharacteristicsResponse* response) {

@@ -319,3 +319,8 @@ keymaster_error_t TpmKeymasterContext::UnwrapKey(
   LOG(ERROR) << "TODO(b/155697375): Implement UnwrapKey";
   return KM_ERROR_UNIMPLEMENTED;
 }
+
+keymaster::RemoteProvisioningContext*
+TpmKeymasterContext::GetRemoteProvisioningContext() const {
+  return nullptr;
+}
