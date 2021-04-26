@@ -243,12 +243,6 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     return false;
   }
 
-  // TODO(b/173134558)
-  // The vendor boot generation below isn't deterministic. i.e. running the same vendor boot
-  // repack function twice with the same inputs will produce two differing vendor boot images.
-  // This is because the vendor boot ramdisk contains a few symlinks. These symlinks affect the
-  // ramdisk regeneration process and cause differing outputs each time (I still haven't figured
-  // out why).
   std::string ramdisk_path;
   if (new_ramdisk.size()) {
     ramdisk_path = unpack_dir + "/vendor_ramdisk_repacked";
