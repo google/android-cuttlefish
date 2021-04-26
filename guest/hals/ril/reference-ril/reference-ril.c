@@ -63,8 +63,8 @@ static void *noopRemoveWarning( void *a ) { return a; }
 #else
 #define PPP_TTY_PATH_ETH0 "eth0"
 #endif
-// This is used if Wifi is supported to separate radio and wifi interface
-#define PPP_TTY_PATH_RADIO0 "radio0"
+// This is used for emulator
+#define EMULATOR_RADIO_INTERFACE "eth0"
 
 // for sim
 #define AUTH_CONTEXT_EAP_SIM                    128
@@ -542,9 +542,9 @@ static int parseSimResponseLine(char* line, RIL_SIM_IO_Response* response) {
 }
 
 #ifdef CUTTLEFISH_ENABLE
-static void set_Ip_Addr(const char *addr) {
+static void set_Ip_Addr(const char *addr, const char* radioInterfaceName) {
   RLOGD("%s %d setting ip addr %s on interface %s", __func__, __LINE__, addr,
-        PPP_TTY_PATH_ETH0);
+        radioInterfaceName);
   struct ifreq request;
   int status = 0;
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
@@ -554,7 +554,7 @@ static void set_Ip_Addr(const char *addr) {
   }
 
   memset(&request, 0, sizeof(request));
-  strncpy(request.ifr_name, PPP_TTY_PATH_ETH0, sizeof(request.ifr_name));
+  strncpy(request.ifr_name, radioInterfaceName, sizeof(request.ifr_name));
   request.ifr_name[sizeof(request.ifr_name) - 1] = '\0';
 
   char *myaddr = strdup(addr);
@@ -780,15 +780,12 @@ static void requestCallSelection(
     RIL_onRequestComplete(t, RIL_E_SUCCESS, NULL, 0);
 }
 
-static bool hasWifiCapability()
+static const char* getRadioInterfaceName()
 {
-    char propValue[PROP_VALUE_MAX];
-    return property_get("ro.boot.qemu.wifi", propValue, "") > 0 && strcmp("1", propValue) == 0;
-}
-
-static const char* getRadioInterfaceName(bool hasWifi)
-{
-    return hasWifi ? PPP_TTY_PATH_RADIO0 : PPP_TTY_PATH_ETH0;
+    if (isInEmulator()) {
+        return EMULATOR_RADIO_INTERFACE;
+    }
+    return PPP_TTY_PATH_ETH0;
 }
 
 static void requestOrSendDataCallList(int cid, RIL_Token *t)
@@ -799,8 +796,7 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
     int n = 0;
     char *out = NULL;
     char propValue[PROP_VALUE_MAX] = {0};
-    bool hasWifi = hasWifiCapability();
-    const char* radioInterfaceName = getRadioInterfaceName(hasWifi);
+    const char* radioInterfaceName = getRadioInterfaceName();
 
     err = at_send_command_multiline ("AT+CGACT?", "+CGACT:", &p_response);
     if (err != 0 || p_response->success == 0) {
@@ -912,7 +908,7 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
         responses[i].addresses = alloca(addresses_size);
         strlcpy(responses[i].addresses, out, addresses_size);
 #ifdef CUTTLEFISH_ENABLE
-        set_Ip_Addr(responses[i].addresses);
+        set_Ip_Addr(responses[i].addresses, radioInterfaceName);
 #endif
 
         if (isInEmulator()) {
@@ -949,12 +945,7 @@ static void requestOrSendDataCallList(int cid, RIL_Token *t)
             }
             responses[i].dnses = dnslist;
 
-            /* There is only one gateway in the emulator. If WiFi is
-             * configured the interface visible to RIL will be behind a NAT
-             * where the gateway is different. */
-            if (hasWifi) {
-                responses[i].gateways = "192.168.200.1";
-            } else if (property_get("vendor.net.eth0.gw", propValue, "") > 0) {
+            if (property_get("vendor.net.eth0.gw", propValue, "") > 0) {
                 responses[i].gateways = propValue;
             } else {
                 responses[i].gateways = "";
@@ -2778,8 +2769,7 @@ static void requestSetupDataCall(void *data, size_t datalen, RIL_Token t)
         if (qmistatus < 0) goto error;
 
     } else {
-        bool hasWifi = hasWifiCapability();
-        const char* radioInterfaceName = getRadioInterfaceName(hasWifi);
+        const char* radioInterfaceName = getRadioInterfaceName();
         if (setInterfaceState(radioInterfaceName, kInterfaceUp) != RIL_E_SUCCESS) {
             goto error;
         }
@@ -2838,8 +2828,7 @@ static void requestDeactivateDataCall(void *data, RIL_Token t)
         return;
     }
 
-    bool hasWifi = hasWifiCapability();
-    const char* radioInterfaceName = getRadioInterfaceName(hasWifi);
+    const char* radioInterfaceName = getRadioInterfaceName();
     rilErrno = setInterfaceState(radioInterfaceName, kInterfaceDown);
     RIL_onRequestComplete(t, rilErrno, NULL, 0);
     putPDP(cid);
