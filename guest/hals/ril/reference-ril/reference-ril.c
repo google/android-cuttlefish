@@ -3240,7 +3240,7 @@ static void requestGetCellInfoList(void *data __unused, size_t datalen __unused,
                         s_lac, // lac
                         s_cid, // cid
                         0, //arfcn unknown
-                        0xFF, // bsic unknown
+                        0x1, // Base Station Identity Code set to arbitrarily 1
                     },
                     {  // gsm.signalStrengthGsm
                         10, // signalStrength
