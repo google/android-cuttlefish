@@ -463,6 +463,12 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
   auto append = [](const std::string& s, const int i) -> std::string {
     return s + std::to_string(i);
   };
+  auto tcp_server = SharedFD::SocketLocalServer(instance.host_port(), SOCK_STREAM);
+  if (!tcp_server->IsOpen()) {
+    LOG(ERROR) << "Unable to create socket_vsock_proxy server socket: "
+               << tcp_server->StrError();
+    std::exit(RunnerExitCodes::kSocketProxyServerError);
+  }
   if (AdbVsockTunnelEnabled(config)) {
     Command adb_tunnel(SocketVsockProxyBinary());
     adb_tunnel.AddParameter("-adbd_events_fd=", adbd_events_pipe);
@@ -480,8 +486,7 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
      */
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter("--vsock_port=6520");
-    adb_tunnel.AddParameter(std::string{"--tcp_port="} +
-                            std::to_string(instance.host_port()));
+    adb_tunnel.AddParameter(std::string{"--server_fd="}, tcp_server);
     adb_tunnel.AddParameter(std::string{"--vsock_cid="} +
                             std::to_string(instance.vsock_guest_cid()));
     process_monitor->AddCommand(std::move(adb_tunnel));
@@ -501,7 +506,7 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
      */
     adb_tunnel.AddParameter("--server=tcp");
     adb_tunnel.AddParameter(append("--vsock_port=", 5555));
-    adb_tunnel.AddParameter(append("--tcp_port=", instance.host_port()));
+    adb_tunnel.AddParameter(std::string{"--server_fd="}, tcp_server);
     adb_tunnel.AddParameter(append("--vsock_cid=", instance.vsock_guest_cid()));
     process_monitor->AddCommand(std::move(adb_tunnel));
   }
