@@ -44,6 +44,7 @@ enum RunnerExitCodes : int {
   kTapDeviceInUse = 23,
   kTpmPassthroughError = 24,
   kModemSimulatorServerError = 25,
+  kSocketProxyServerError = 26,
 };
 
 // Actions supported by the launcher server
