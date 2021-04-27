@@ -65,7 +65,7 @@ class RemoteKeyMintDevice : public BnKeyMintDevice {
 
   ScopedAStatus begin(KeyPurpose purpose, const vector<uint8_t>& keyBlob,
                       const vector<KeyParameter>& params,
-                      const HardwareAuthToken& authToken,
+                      const optional<HardwareAuthToken>& authToken,
                       BeginResult* result) override;
 
   ScopedAStatus deviceLocked(
@@ -76,9 +76,6 @@ class RemoteKeyMintDevice : public BnKeyMintDevice {
   ScopedAStatus convertStorageKeyToEphemeral(
       const std::vector<uint8_t>& storageKeyBlob,
       std::vector<uint8_t>* ephemeralKeyBlob) override;
-
-  ScopedAStatus performOperation(const vector<uint8_t>& request,
-                                 vector<uint8_t>* response) override;
 
  protected:
   ::keymaster::RemoteKeymaster& impl_;
