@@ -194,7 +194,9 @@ static std::set<std::string> allAidlManifestInterfaces() {
 
 TEST(Hal, AllHidlInterfacesAreInAosp) {
     for (const FQName& name : allHidlManifestInterfaces()) {
-        EXPECT_TRUE(isAospHidlInterface(name)) << name.string();
+      EXPECT_TRUE(isAospHidlInterface(name))
+          << "This device should only have AOSP interfaces, not: "
+          << name.string();
     }
 }
 
@@ -252,7 +254,8 @@ TEST(Hal, HidlInterfacesImplemented) {
 
 TEST(Hal, AllAidlInterfacesAreInAosp) {
     for (const std::string& name : allAidlManifestInterfaces()) {
-        EXPECT_TRUE(isAospAidlInterface(name)) << name;
+      EXPECT_TRUE(isAospAidlInterface(name))
+          << "This device should only have AOSP interfaces, not: " << name;
     }
 }
 
