@@ -40,6 +40,10 @@ DEFINE_int32(adbd_events_fd, -1, "A file descriptor. If set it will wait for "
                                  "monitor before creating a tcp-vsock tunnel."
                                  "This option is used by --server=tcp only "
                                  "when socket_vsock_proxy runs as a host service");
+DEFINE_int32(
+    server_fd, -1,
+    "A file descriptor. If set the passed file descriptor will be used as the "
+    "server and the corresponding port flag will be ignored");
 
 namespace {
 // Sends packets, Shutdown(SHUT_WR) on destruction
@@ -169,7 +173,14 @@ void WaitForAdbdToBeStarted(int events_fd) {
 [[noreturn]] void TcpServer() {
   LOG(DEBUG) << "starting TCP server on " << FLAGS_tcp_port
              << " for vsock port " << FLAGS_vsock_port;
-  auto server = cuttlefish::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
+  cuttlefish::SharedFD server;
+  if (FLAGS_server_fd < 0) {
+    server =
+        cuttlefish::SharedFD::SocketLocalServer(FLAGS_tcp_port, SOCK_STREAM);
+  } else {
+    server = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
+    close(FLAGS_server_fd);
+  }
   CHECK(server->IsOpen()) << "Could not start server on " << FLAGS_tcp_port;
   LOG(DEBUG) << "Accepting client connections";
   int last_failure_reason = 0;
@@ -224,13 +235,18 @@ bool socketErrorIsRecoverable(int error) {
 [[noreturn]] void VsockServer() {
   LOG(DEBUG) << "Starting vsock server on " << FLAGS_vsock_port;
   cuttlefish::SharedFD vsock;
-  do {
-    vsock = cuttlefish::SharedFD::VsockServer(FLAGS_vsock_port, SOCK_STREAM);
-    if (!vsock->IsOpen() && !socketErrorIsRecoverable(vsock->GetErrno())) {
-      LOG(ERROR) << "Could not open vsock socket: " << vsock->StrError();
-      SleepForever();
-    }
-  } while (!vsock->IsOpen());
+  if (FLAGS_server_fd < 0) {
+    do {
+      vsock = cuttlefish::SharedFD::VsockServer(FLAGS_vsock_port, SOCK_STREAM);
+      if (!vsock->IsOpen() && !socketErrorIsRecoverable(vsock->GetErrno())) {
+        LOG(ERROR) << "Could not open vsock socket: " << vsock->StrError();
+        SleepForever();
+      }
+    } while (!vsock->IsOpen());
+  } else {
+    vsock = cuttlefish::SharedFD::Dup(FLAGS_server_fd);
+    close(FLAGS_server_fd);
+  }
   CHECK(vsock->IsOpen()) << "Could not start server on " << FLAGS_vsock_port;
   while (true) {
     LOG(DEBUG) << "waiting for vsock connection";
@@ -255,8 +271,11 @@ int main(int argc, char* argv[]) {
 #endif
   google::ParseCommandLineFlags(&argc, &argv, true);
 
-  CHECK(FLAGS_tcp_port != 0) << "Must specify -tcp_port flag";
-  CHECK(FLAGS_vsock_port != 0) << "Must specify -vsock_port flag";
+  CHECK((FLAGS_server == "tcp" && FLAGS_server_fd >= 0) || FLAGS_tcp_port != 0)
+      << "Must specify -tcp_port or -server_fd (with -server=tcp) flag";
+  CHECK((FLAGS_server == "vsock" && FLAGS_server_fd >= 0) ||
+        FLAGS_vsock_port != 0)
+      << "Must specify -vsock_port or -server_fd (with -server=vsock) flag";
 
   if (FLAGS_adbd_events_fd >= 0) {
     LOG(DEBUG) << "Wating AdbdStarted boot event from the kernel log";

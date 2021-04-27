@@ -43,7 +43,9 @@ SharedFD SetupAdbSocket(const std::string &adb_host_and_port) {
     return SharedFD();
   }
 
-  return SharedFD::SocketLocalClient(port, SOCK_STREAM);
+  auto local_client = SharedFD::SocketLocalClient(port, SOCK_STREAM);
+  CHECK(local_client->IsOpen()) << "Failed to connect to adb socket: " << local_client->StrError();
+  return local_client;
 }
 
 }  // namespace
