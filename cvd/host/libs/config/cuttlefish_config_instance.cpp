@@ -165,6 +165,10 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path() const {
+  return AbsolutePath(PerInstancePath("os_composite.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
@@ -172,6 +176,10 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("uboot_env.img"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image_path() const {
+  return AbsolutePath(PerInstancePath("vendor_boot_repacked.img"));
 }
 
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";
@@ -255,21 +263,12 @@ void CuttlefishConfig::MutableInstanceSpecific::set_uuid(const std::string& uuid
   (*Dictionary())[kUuid] = uuid;
 }
 
-static constexpr char kHostPort[] = "adb_host_port";
-int CuttlefishConfig::InstanceSpecific::adb_host_port() const {
+static constexpr char kHostPort[] = "host_port";
+int CuttlefishConfig::InstanceSpecific::host_port() const {
   return (*Dictionary())[kHostPort].asInt();
 }
-void CuttlefishConfig::MutableInstanceSpecific::set_adb_host_port(int port) {
-  (*Dictionary())[kHostPort] = port;
-}
-
-static constexpr char kModemSimulatorId[] = "modem_simulator_host_id";
-int CuttlefishConfig::InstanceSpecific::modem_simulator_host_id() const {
-  return (*Dictionary())[kModemSimulatorId].asInt();
-}
-void CuttlefishConfig::MutableInstanceSpecific::set_modem_simulator_host_id(
-    int id) {
-  (*Dictionary())[kModemSimulatorId] = id;
+void CuttlefishConfig::MutableInstanceSpecific::set_host_port(int host_port) {
+  (*Dictionary())[kHostPort] = host_port;
 }
 
 static constexpr char kAdbIPAndPort[] = "adb_ip_and_port";
