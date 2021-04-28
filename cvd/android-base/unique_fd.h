@@ -20,24 +20,18 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-// DO NOT INCLUDE OTHER LIBBASE HEADERS HERE!
-// This file gets used in libbinder, and libbinder is used everywhere.
-// Including other headers from libbase frequently results in inclusion of
-// android-base/macros.h, which causes macro collisions.
-
-#if defined(__BIONIC__)
-#include <android/fdsan.h>
-#endif
 #if !defined(_WIN32)
 #include <sys/socket.h>
 #endif
 
-namespace android {
-namespace base {
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+// DO NOT INCLUDE OTHER LIBBASE HEADERS!
+// This file gets used in libbinder, and libbinder is used everywhere.
+// Including other headers from libbase frequently results in inclusion of
+// android-base/macros.h, which causes macro collisions.
 
 // Container for a file descriptor that automatically closes the descriptor as
 // it goes out of scope.
@@ -49,16 +43,49 @@ namespace base {
 //
 //      return 0; // Descriptor is closed for you.
 //
-// See also the Pipe()/Socketpair()/Fdopen()/Fdopendir() functions in this file
-// that provide interoperability with the libc functions with the same (but
-// lowercase) names.
-//
 // unique_fd is also known as ScopedFd/ScopedFD/scoped_fd; mentioned here to help
 // you find this class if you're searching for one of those names.
-//
-// unique_fd itself is a specialization of unique_fd_impl with a default closer.
+
+#if defined(__BIONIC__)
+#include <android/fdsan.h>
+#endif
+
+namespace android {
+namespace base {
+
+struct DefaultCloser {
+#if defined(__BIONIC__)
+  static void Tag(int fd, void* old_addr, void* new_addr) {
+    if (android_fdsan_exchange_owner_tag) {
+      uint64_t old_tag = android_fdsan_create_owner_tag(ANDROID_FDSAN_OWNER_TYPE_UNIQUE_FD,
+                                                        reinterpret_cast<uint64_t>(old_addr));
+      uint64_t new_tag = android_fdsan_create_owner_tag(ANDROID_FDSAN_OWNER_TYPE_UNIQUE_FD,
+                                                        reinterpret_cast<uint64_t>(new_addr));
+      android_fdsan_exchange_owner_tag(fd, old_tag, new_tag);
+    }
+  }
+  static void Close(int fd, void* addr) {
+    if (android_fdsan_close_with_tag) {
+      uint64_t tag = android_fdsan_create_owner_tag(ANDROID_FDSAN_OWNER_TYPE_UNIQUE_FD,
+                                                    reinterpret_cast<uint64_t>(addr));
+      android_fdsan_close_with_tag(fd, tag);
+    } else {
+      close(fd);
+    }
+  }
+#else
+  static void Close(int fd) {
+    // Even if close(2) fails with EINTR, the fd will have been closed.
+    // Using TEMP_FAILURE_RETRY will either lead to EBADF or closing someone
+    // else's fd.
+    // http://lkml.indiana.edu/hypermail/linux/kernel/0509.1/0877.html
+    ::close(fd);
+  }
+#endif
+};
+
 template <typename Closer>
-class unique_fd_impl final {
+class unique_fd_impl {
  public:
   unique_fd_impl() {}
 
@@ -148,48 +175,13 @@ class unique_fd_impl final {
   }
 };
 
-// The actual details of closing are factored out to support unusual cases.
-// Almost everyone will want this DefaultCloser, which handles fdsan on bionic.
-struct DefaultCloser {
-#if defined(__BIONIC__)
-  static void Tag(int fd, void* old_addr, void* new_addr) {
-    if (android_fdsan_exchange_owner_tag) {
-      uint64_t old_tag = android_fdsan_create_owner_tag(ANDROID_FDSAN_OWNER_TYPE_UNIQUE_FD,
-                                                        reinterpret_cast<uint64_t>(old_addr));
-      uint64_t new_tag = android_fdsan_create_owner_tag(ANDROID_FDSAN_OWNER_TYPE_UNIQUE_FD,
-                                                        reinterpret_cast<uint64_t>(new_addr));
-      android_fdsan_exchange_owner_tag(fd, old_tag, new_tag);
-    }
-  }
-  static void Close(int fd, void* addr) {
-    if (android_fdsan_close_with_tag) {
-      uint64_t tag = android_fdsan_create_owner_tag(ANDROID_FDSAN_OWNER_TYPE_UNIQUE_FD,
-                                                    reinterpret_cast<uint64_t>(addr));
-      android_fdsan_close_with_tag(fd, tag);
-    } else {
-      close(fd);
-    }
-  }
-#else
-  static void Close(int fd) {
-    // Even if close(2) fails with EINTR, the fd will have been closed.
-    // Using TEMP_FAILURE_RETRY will either lead to EBADF or closing someone
-    // else's fd.
-    // http://lkml.indiana.edu/hypermail/linux/kernel/0509.1/0877.html
-    ::close(fd);
-  }
-#endif
+class unique_fd final : public unique_fd_impl<DefaultCloser> {
+  using unique_fd_impl::unique_fd_impl;
 };
-
-using unique_fd = unique_fd_impl<DefaultCloser>;
 
 #if !defined(_WIN32)
 
 // Inline functions, so that they can be used header-only.
-
-// See pipe(2).
-// This helper hides the details of converting to unique_fd, and also hides the
-// fact that macOS doesn't support O_CLOEXEC or O_NONBLOCK directly.
 template <typename Closer>
 inline bool Pipe(unique_fd_impl<Closer>* read, unique_fd_impl<Closer>* write,
                  int flags = O_CLOEXEC) {
@@ -228,8 +220,6 @@ inline bool Pipe(unique_fd_impl<Closer>* read, unique_fd_impl<Closer>* write,
   return true;
 }
 
-// See socketpair(2).
-// This helper hides the details of converting to unique_fd.
 template <typename Closer>
 inline bool Socketpair(int domain, int type, int protocol, unique_fd_impl<Closer>* left,
                        unique_fd_impl<Closer>* right) {
@@ -242,14 +232,11 @@ inline bool Socketpair(int domain, int type, int protocol, unique_fd_impl<Closer
   return true;
 }
 
-// See socketpair(2).
-// This helper hides the details of converting to unique_fd.
 template <typename Closer>
 inline bool Socketpair(int type, unique_fd_impl<Closer>* left, unique_fd_impl<Closer>* right) {
   return Socketpair(AF_UNIX, type, 0, left, right);
 }
 
-// See fdopen(3).
 // Using fdopen with unique_fd correctly is more annoying than it should be,
 // because fdopen doesn't close the file descriptor received upon failure.
 inline FILE* Fdopen(unique_fd&& ufd, const char* mode) {
@@ -261,7 +248,6 @@ inline FILE* Fdopen(unique_fd&& ufd, const char* mode) {
   return file;
 }
 
-// See fdopendir(3).
 // Using fdopendir with unique_fd correctly is more annoying than it should be,
 // because fdopen doesn't close the file descriptor received upon failure.
 inline DIR* Fdopendir(unique_fd&& ufd) {
@@ -275,20 +261,7 @@ inline DIR* Fdopendir(unique_fd&& ufd) {
 
 #endif  // !defined(_WIN32)
 
-// A wrapper type that can be implicitly constructed from either int or
-// unique_fd. This supports cases where you don't actually own the file
-// descriptor, and can't take ownership, but are temporarily acting as if
-// you're the owner.
-//
-// One example would be a function that needs to also allow
-// STDERR_FILENO, not just a newly-opened fd. Another example would be JNI code
-// that's using a file descriptor that's actually owned by a
-// ParcelFileDescriptor or whatever on the Java side, but where the JNI code
-// would like to enforce this weaker sense of "temporary ownership".
-//
-// If you think of unique_fd as being like std::string in that represents
-// ownership, borrowed_fd is like std::string_view (and int is like const
-// char*).
+// A wrapper type that can be implicitly constructed from either int or unique_fd.
 struct borrowed_fd {
   /* implicit */ borrowed_fd(int fd) : fd_(fd) {}  // NOLINT
   template <typename T>
