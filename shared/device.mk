@@ -297,7 +297,10 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.verified_boot.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.verified_boot.xml \
     system/bt/vendor_libs/test_vendor_lib/data/controller_properties.json:vendor/etc/bluetooth/controller_properties.json \
     device/google/cuttlefish/shared/config/task_profiles.json:$(TARGET_COPY_OUT_VENDOR)/etc/task_profiles.json \
-    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen.idc
+    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_0.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_0.idc \
+    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_1.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_1.idc \
+    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_2.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_2.idc \
+    device/google/cuttlefish/shared/config/input/Crosvm_Virtio_Multitouch_Touchscreen_3.idc:$(TARGET_COPY_OUT_VENDOR)/usr/idc/Crosvm_Virtio_Multitouch_Touchscreen_3.idc
 
 ifeq ($(TARGET_RO_FILE_SYSTEM_TYPE),ext4)
 PRODUCT_COPY_FILES += \

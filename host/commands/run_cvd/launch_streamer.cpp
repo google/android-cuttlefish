@@ -44,26 +44,37 @@ SharedFD CreateUnixInputServer(const std::string& path) {
 // Creates the frame and input sockets and add the relevant arguments to the vnc
 // server and webrtc commands
 void CreateStreamerServers(Command* cmd, const CuttlefishConfig& config) {
-  SharedFD touch_server;
+  std::vector<SharedFD> touch_servers;
   SharedFD keyboard_server;
 
   auto instance = config.ForDefaultInstance();
-  if (config.vm_manager() == vm_manager::QemuManager::name()) {
+  auto use_vsockets = config.vm_manager() == vm_manager::QemuManager::name();
+  for (int i = 0; i < config.display_configs().size(); ++i) {
+    touch_servers.push_back(
+        use_vsockets
+            ? SharedFD::VsockServer(instance.touch_server_port(), SOCK_STREAM)
+            : CreateUnixInputServer(instance.touch_socket_path(i)));
+    if (!touch_servers.back()->IsOpen()) {
+      LOG(ERROR) << "Could not open touch server: "
+                 << touch_servers.back()->StrError();
+      return;
+    }
+  }
+  if (!touch_servers.empty()) {
+    cmd->AddParameter("-touch_fds=", touch_servers[0]);
+    for (int i = 1; i < touch_servers.size(); ++i) {
+      cmd->AppendToLastParameter(",", touch_servers[i]);
+    }
+  }
+
+  if (use_vsockets) {
     cmd->AddParameter("-write_virtio_input");
 
-    touch_server =
-        SharedFD::VsockServer(instance.touch_server_port(), SOCK_STREAM);
     keyboard_server =
         SharedFD::VsockServer(instance.keyboard_server_port(), SOCK_STREAM);
   } else {
-    touch_server = CreateUnixInputServer(instance.touch_socket_path());
     keyboard_server = CreateUnixInputServer(instance.keyboard_socket_path());
   }
-  if (!touch_server->IsOpen()) {
-    LOG(ERROR) << "Could not open touch server: " << touch_server->StrError();
-    return;
-  }
-  cmd->AddParameter("-touch_fd=", touch_server);
 
   if (!keyboard_server->IsOpen()) {
     LOG(ERROR) << "Could not open keyboard server: "
