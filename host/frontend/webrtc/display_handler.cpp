@@ -33,16 +33,18 @@ DisplayHandler::DisplayHandler(
 DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnectorCallback() {
     // only to tell the producer how to create a ProcessedFrame to cache into the queue
     DisplayHandler::GenerateProcessedFrameCallback callback =
-        [](std::uint32_t display_number, std::uint8_t* frame_pixels,
+        [](std::uint32_t display_number, std::uint32_t frame_width,
+           std::uint32_t frame_height, std::uint32_t frame_stride_bytes,
+           std::uint8_t* frame_pixels,
            WebRtcScProcessedFrame& processed_frame) {
           processed_frame.display_number_ = display_number;
           processed_frame.buf_ =
-              std::make_unique<CvdVideoFrameBuffer>(display_w, display_h);
+              std::make_unique<CvdVideoFrameBuffer>(frame_width, frame_height);
           libyuv::ABGRToI420(
-              frame_pixels, display_stride_bytes, processed_frame.buf_->DataY(),
+              frame_pixels, frame_stride_bytes, processed_frame.buf_->DataY(),
               processed_frame.buf_->StrideY(), processed_frame.buf_->DataU(),
               processed_frame.buf_->StrideU(), processed_frame.buf_->DataV(),
-              processed_frame.buf_->StrideV(), display_w, display_h);
+              processed_frame.buf_->StrideV(), frame_width, frame_height);
           processed_frame.is_success_ = true;
         };
     return callback;
