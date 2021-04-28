@@ -22,9 +22,6 @@ function ConnectToDevice(device_id) {
   createToggleControl(keyboardCaptureCtrl, "keyboard", onKeyboardCaptureToggle);
   const micCaptureCtrl = document.getElementById('mic-capture-control');
   createToggleControl(micCaptureCtrl, "mic", onMicCaptureToggle);
-  // TODO(b/163867676): Enable the microphone control when the audio stream is
-  // injected into the guest. Until then, control is disabled.
-  micCaptureCtrl.style.display = 'none';
 
   const deviceScreen = document.getElementById('device-screen');
   const deviceAudio = document.getElementById('device-audio');
