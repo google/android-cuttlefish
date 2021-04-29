@@ -109,6 +109,13 @@ prebuilt_usr_share_host {
 }
 
 prebuilt_usr_share_host {
+    name: "webrtc_rootcanal.js",
+    src: "assets/js/rootcanal.js",
+    filename: "rootcanal.js",
+    sub_dir: "webrtc/assets/js",
+}
+
+prebuilt_usr_share_host {
     name: "webrtc_server.crt",
     src: "certs/server.crt",
     filename: "server.crt",
