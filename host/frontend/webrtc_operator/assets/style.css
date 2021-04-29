@@ -98,7 +98,7 @@ body {
   margin-right: 10px;
 }
 
-#device-details-modal {
+.modal {
   /* Start out hidden, and use absolute positioning. */
   display: none;
   position: absolute;
@@ -111,12 +111,12 @@ body {
   color: white;
   font-family: 'Open Sans', sans-serif;
 }
-#device-details-modal-header {
+.modal-header {
   /* Items inside this use a row Flexbox.*/
   display: flex;
   justify-content: space-between;
 }
-#device-details-close {
+.modal-close {
   color: white;
   border: none;
   outline: none;
@@ -124,6 +124,12 @@ body {
 }
 #device-details-modal span {
   white-space: pre;
+}
+#bluetooth-console-input {
+  width: 100%;
+}
+#bluetooth-console-cmd-label {
+  color: white;
 }
 
 .control-panel-column {
@@ -141,8 +147,8 @@ body {
 }
 
 .control-panel-column button {
-  margin: 10px;
-  height: 60px;
+  margin: 0px 0px 5px 0px;
+  height: 80px;
   font-size: 48px;
 
   color: #e8eaed; /* Google grey 200 */
@@ -153,9 +159,7 @@ body {
 .control-panel-column button:disabled {
   color: #9aa0a6; /* Google grey 500 */
 }
-#device-details-button {
-  margin: 0px;
-  height: 80px;
+.control-panel-column button.modal-button-opened {
   border-radius: 16px;
   background-color: #5f6368; /* Google grey 700 */
 }
