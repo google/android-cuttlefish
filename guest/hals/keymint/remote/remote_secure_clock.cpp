@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.security.secureclock-impl"
+#define LOG_TAG "android.hardware.security.secureclock-impl.remote"
 #include <log/log.h>
 
 #include "guest/hals/keymint/remote/remote_secure_clock.h"
