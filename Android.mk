@@ -20,4 +20,7 @@ include $(LOCAL_PATH)/fetcher.mk
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/host_package.mk
 
+include $(CLEAR_VARS)
+include $(TOPDIR)device/generic/goldfish/wifi/wpa_supplicant_8_lib/Android.mk
+
 endif
