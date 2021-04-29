@@ -125,7 +125,9 @@ int main(int argc, char** argv) {
     return -1;
   }
   keymaster::AndroidKeymaster keymaster{
-      keymaster_context, kOperationTableSize};
+      keymaster_context, kOperationTableSize,
+      keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_1,
+                                0 /* km_date */)};
 
   CHECK(FLAGS_keymaster_fd_in != -1);
   auto keymaster_in = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd_in);
