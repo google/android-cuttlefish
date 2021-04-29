@@ -74,6 +74,7 @@ cc_binary_host {
     srcs: [
         "adb_handler.cpp",
         "audio_handler.cpp",
+        "bluetooth_handler.cpp",
         "connection_observer.cpp",
         "cvd_video_frame_buffer.cpp",
         "display_handler.cpp",
