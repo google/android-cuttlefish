@@ -97,6 +97,7 @@ cvd_host_webrtc_assets = [
     "webrtc_controls.js",
     "webrtc_cf.js",
     "webrtc_index.html",
+    "webrtc_rootcanal.js",
     "webrtc_server.crt",
     "webrtc_server.key",
     "webrtc_server.p12",
