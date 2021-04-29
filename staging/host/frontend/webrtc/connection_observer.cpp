@@ -34,6 +34,7 @@
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_buf.h"
 #include "host/frontend/webrtc/adb_handler.h"
+#include "host/frontend/webrtc/bluetooth_handler.h"
 #include "host/frontend/webrtc/lib/utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 
@@ -319,11 +320,27 @@ class ConnectionObserverForAndroid
     }
   }
 
+  void OnBluetoothChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                                  bluetooth_message_sender) override {
+    LOG(VERBOSE) << "Bluetooth channel open";
+    bluetooth_handler_.reset(new cuttlefish::webrtc_streaming::BluetoothHandler(
+        cuttlefish::CuttlefishConfig::Get()
+            ->ForDefaultInstance()
+            .rootcanal_test_port(),
+        bluetooth_message_sender));
+  }
+
+  void OnBluetoothMessage(const uint8_t *msg, size_t size) override {
+    bluetooth_handler_->handleMessage(msg, size);
+  }
+
  private:
   cuttlefish::InputSockets& input_sockets_;
   cuttlefish::KernelLogEventsHandler* kernel_log_events_handler_;
   int kernel_log_subscription_id_ = -1;
   std::shared_ptr<cuttlefish::webrtc_streaming::AdbHandler> adb_handler_;
+  std::shared_ptr<cuttlefish::webrtc_streaming::BluetoothHandler>
+      bluetooth_handler_;
   std::map<std::string, cuttlefish::SharedFD> commands_to_custom_action_servers_;
   std::weak_ptr<DisplayHandler> weak_display_handler_;
   std::set<int32_t> active_touch_slots_;
@@ -408,6 +425,15 @@ class ConnectionObserverDemuxer
 
   void OnControlMessage(const uint8_t *msg, size_t size) override {
     android_input_.OnControlMessage(msg, size);
+  }
+
+  void OnBluetoothChannelOpen(std::function<bool(const uint8_t *, size_t)>
+                                  bluetooth_message_sender) override {
+    android_input_.OnBluetoothChannelOpen(bluetooth_message_sender);
+  }
+
+  void OnBluetoothMessage(const uint8_t *msg, size_t size) override {
+    android_input_.OnBluetoothMessage(msg, size);
   }
 
  private:
