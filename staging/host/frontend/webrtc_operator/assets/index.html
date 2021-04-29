@@ -45,6 +45,9 @@
             <button id='device-details-button' title='Device Details' class='material-icons'>
               settings
             </button>
+            <button id='bluetooth-console-button' title='Bluetooth console' class='material-icons'>
+              settings_bluetooth
+            </button>
           </div>
           <div id='control-panel-custom-buttons' class='control-panel-column'></div>
           <div id='screens'>
@@ -52,17 +55,29 @@
           </div>
         </div>
       </section>
-      <div id='device-details-modal'>
-        <div id='device-details-modal-header'>
+      <div id='device-details-modal' class='modal'>
+        <div id='device-details-modal-header' class='modal-header'>
           <h2>Device Details</h2>
-          <button id='device-details-close' title='Close' class='material-icons'>close</button>
+          <button id='device-details-close' title='Close' class='material-icons modal-close'>close</button>
         </div>
         <hr>
         <h3>Hardware Configuration</h3>
         <span id='device-details-hardware'>unknown</span>
       </div>
-
+      <div id='bluetooth-console-modal' class='modal'>
+        <div id='bluetooth-console-modal-header' class='modal-header'>
+          <h2>Bluetooth Console</h2>
+          <button id='bluetooth-console-close' title='Close' class='material-icons modal-close'>close</button>
+        </div>
+        <div>
+          <table>
+            <tr><td colspan='2'><textarea id='bluetooth-console-view' readonly rows='10' cols='60'></textarea></td></tr>
+            <tr><td width='1'><p id='bluetooth-console-cmd-label'>Command:</p></td><td width='100'><input id='bluetooth-console-input' type='text'></input></td></tr>
+          </table>
+        </div>
+      </div>
        <script src="js/adb.js"></script>
+       <script src="js/rootcanal.js"></script>
        <script src="js/cf_webrtc.js" type="module"></script>
        <script src="js/controls.js"></script>
        <script src="js/app.js"></script>
