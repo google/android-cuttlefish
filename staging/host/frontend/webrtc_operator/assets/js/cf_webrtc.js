@@ -103,6 +103,13 @@ class DeviceConnection {
         console.error('Received unexpected Control message');
       }
     });
+    this._bluetoothChannel = createDataChannel(pc, 'bluetooth-channel', (msg) => {
+      if (this._onBluetoothMessage) {
+        this._onBluetoothMessage(msg.data);
+      } else {
+        console.error('Received unexpected Bluetooth message');
+      }
+    });
     this._streams = {};
     this._streamPromiseResolvers = {};
 
@@ -201,6 +208,14 @@ class DeviceConnection {
   // Provide a callback to receive control-related comms from the device
   onControlMessage(cb) {
     this._onControlMessage = cb;
+  }
+
+  sendBluetoothMessage(msg) {
+    this._bluetoothChannel.send(msg);
+  }
+
+  onBluetoothMessage(cb) {
+    this._onBluetoothMessage = cb;
   }
 
   // Provide a callback to receive connectionstatechange states.

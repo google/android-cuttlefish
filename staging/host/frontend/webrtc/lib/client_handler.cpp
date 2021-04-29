@@ -38,6 +38,7 @@ namespace {
 
 static constexpr auto kInputChannelLabel = "input-channel";
 static constexpr auto kAdbChannelLabel = "adb-channel";
+static constexpr auto kBluetoothChannelLabel = "bluetooth-channel";
 
 class CvdCreateSessionDescriptionObserver
     : public webrtc::CreateSessionDescriptionObserver {
@@ -147,6 +148,22 @@ class ControlChannelHandler : public webrtc::DataChannelObserver {
  private:
   rtc::scoped_refptr<webrtc::DataChannelInterface> control_channel_;
   std::shared_ptr<ConnectionObserver> observer_;
+};
+
+class BluetoothChannelHandler : public webrtc::DataChannelObserver {
+ public:
+  BluetoothChannelHandler(
+      rtc::scoped_refptr<webrtc::DataChannelInterface> bluetooth_channel,
+      std::shared_ptr<ConnectionObserver> observer);
+  ~BluetoothChannelHandler() override;
+
+  void OnStateChange() override;
+  void OnMessage(const webrtc::DataBuffer &msg) override;
+
+ private:
+  rtc::scoped_refptr<webrtc::DataChannelInterface> bluetooth_channel_;
+  std::shared_ptr<ConnectionObserver> observer_;
+  bool channel_open_reported_ = false;
 };
 
 InputChannelHandler::InputChannelHandler(
@@ -271,7 +288,7 @@ void AdbChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
     observer_->OnAdbChannelOpen([this](const uint8_t *msg, size_t size) {
       webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size),
                                 true /*binary*/);
-      // TODO (jemoreira): When the SCTP channel is congested data channel
+      // TODO (b/185832105): When the SCTP channel is congested data channel
       // messages are buffered up to 16MB, when the buffer is full the channel
       // is abruptly closed. Keep track of the buffered data to avoid losing the
       // adb data channel.
@@ -318,6 +335,44 @@ void ControlChannelHandler::Send(const Json::Value& message) {
 void ControlChannelHandler::Send(const uint8_t *msg, size_t size, bool binary) {
   webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size), binary);
   control_channel_->Send(buffer);
+}
+
+BluetoothChannelHandler::BluetoothChannelHandler(
+    rtc::scoped_refptr<webrtc::DataChannelInterface> bluetooth_channel,
+    std::shared_ptr<ConnectionObserver> observer)
+    : bluetooth_channel_(bluetooth_channel), observer_(observer) {
+  bluetooth_channel_->RegisterObserver(this);
+}
+
+BluetoothChannelHandler::~BluetoothChannelHandler() {
+  bluetooth_channel_->UnregisterObserver();
+}
+
+void BluetoothChannelHandler::OnStateChange() {
+  LOG(VERBOSE) << "Bluetooth channel state changed to "
+               << webrtc::DataChannelInterface::DataStateString(
+                      bluetooth_channel_->state());
+}
+
+void BluetoothChannelHandler::OnMessage(const webrtc::DataBuffer &msg) {
+  // Notify bluetooth channel opening when actually using the channel,
+  // it has the same reason with AdbChannelHandler::OnMessage,
+  // to avoid unnecessarily connection for Rootcanal.
+  if (channel_open_reported_ == false) {
+    channel_open_reported_ = true;
+    observer_->OnBluetoothChannelOpen([this](const uint8_t *msg, size_t size) {
+      webrtc::DataBuffer buffer(rtc::CopyOnWriteBuffer(msg, size),
+                                true /*binary*/);
+      // TODO (b/185832105): When the SCTP channel is congested data channel
+      // messages are buffered up to 16MB, when the buffer is full the channel
+      // is abruptly closed. Keep track of the buffered data to avoid losing the
+      // adb data channel.
+      bluetooth_channel_->Send(buffer);
+      return true;
+    });
+  }
+
+  observer_->OnBluetoothMessage(msg.data.cdata(), msg.size());
 }
 
 std::shared_ptr<ClientHandler> ClientHandler::Create(
@@ -609,6 +664,9 @@ void ClientHandler::OnDataChannel(
     input_handler_.reset(new InputChannelHandler(data_channel, observer_));
   } else if (label == kAdbChannelLabel) {
     adb_handler_.reset(new AdbChannelHandler(data_channel, observer_));
+  } else if (label == kBluetoothChannelLabel) {
+    bluetooth_handler_.reset(
+        new BluetoothChannelHandler(data_channel, observer_));
   } else {
     LOG(VERBOSE) << "Data channel connected: " << label;
     data_channels_.push_back(data_channel);

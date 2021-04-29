@@ -42,6 +42,9 @@ class ConnectionObserver {
   virtual void OnControlChannelOpen(
       std::function<bool(const Json::Value)> control_message_sender) = 0;
   virtual void OnControlMessage(const uint8_t* msg, size_t size) = 0;
+  virtual void OnBluetoothChannelOpen(
+      std::function<bool(const uint8_t*, size_t)> bluetooth_message_sender) = 0;
+  virtual void OnBluetoothMessage(const uint8_t* msg, size_t size) = 0;
 };
 
 class ConnectionObserverFactory {
