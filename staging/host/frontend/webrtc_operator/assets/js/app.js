@@ -203,15 +203,18 @@ function ConnectToDevice(device_id) {
   createControlPanelButton('volumedown', 'Volume Down', 'volume_down');
   createControlPanelButton('volumeup', 'Volume Up', 'volume_up');
 
+  let modalOffsets = {}
   function createModalButton(button_id, modal_id, close_id) {
     const modalButton = document.getElementById(button_id);
     const modalDiv = document.getElementById(modal_id);
+    const modalHeader = modalDiv.querySelector('.modal-header');
     const modalClose = document.getElementById(close_id);
 
+    // Position the modal to the right of the show modal button.
+    modalDiv.style.top = modalButton.offsetTop;
+    modalDiv.style.left = modalButton.offsetWidth + 30;
+
     function showHideModal(show) {
-      // Position the modal to the right of the show modal button.
-      modalDiv.style.top = modalButton.offsetTop;
-      modalDiv.style.left = modalButton.offsetWidth + 30;
       if (show) {
         modalButton.classList.add('modal-button-opened')
         modalDiv.style.display = 'block';
@@ -226,6 +229,39 @@ function ConnectToDevice(device_id) {
     // but the close button always closes.
     modalClose.addEventListener('click',
         evt => showHideModal(false));
+
+    // Allow the modal to be dragged by the header.
+    modalOffsets[modal_id] = {
+      midDrag: false,
+      mouseDownOffsetX: null,
+      mouseDownOffsetY: null,
+    }
+    modalHeader.addEventListener('mousedown',
+        evt => {
+            modalOffsets[modal_id].midDrag = true;
+            // Store the offset of the mouse location from the
+            // modal's current location.
+            modalOffsets[modal_id].mouseDownOffsetX =
+                parseInt(modalDiv.style.left) - evt.clientX;
+            modalOffsets[modal_id].mouseDownOffsetY =
+                parseInt(modalDiv.style.top) - evt.clientY;
+        });
+    modalHeader.addEventListener('mousemove',
+        evt => {
+            let offsets = modalOffsets[modal_id];
+            if (offsets.midDrag) {
+              // Move the modal to the mouse location plus the
+              // offset calculated on the initial mouse-down.
+              modalDiv.style.left =
+                  evt.clientX + offsets.mouseDownOffsetX;
+              modalDiv.style.top =
+                  evt.clientY + offsets.mouseDownOffsetY;
+            }
+        });
+    document.addEventListener('mouseup',
+        evt => {
+          modalOffsets[modal_id].midDrag = false;
+        });
   }
 
   createModalButton(

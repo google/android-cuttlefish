@@ -112,6 +112,7 @@ body {
   font-family: 'Open Sans', sans-serif;
 }
 .modal-header {
+  cursor: move;
   /* Items inside this use a row Flexbox.*/
   display: flex;
   justify-content: space-between;
