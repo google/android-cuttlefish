@@ -77,6 +77,11 @@ class RemoteKeyMintDevice : public BnKeyMintDevice {
       const std::vector<uint8_t>& storageKeyBlob,
       std::vector<uint8_t>* ephemeralKeyBlob) override;
 
+  ScopedAStatus getKeyCharacteristics(
+      const std::vector<uint8_t>& storageKeyBlob,
+      const std::vector<uint8_t>& appId, const std::vector<uint8_t>& appData,
+      std::vector<KeyCharacteristics>* keyCharacteristics) override;
+
  protected:
   ::keymaster::RemoteKeymaster& impl_;
   SecurityLevel securityLevel_;
