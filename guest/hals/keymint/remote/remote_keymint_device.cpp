@@ -412,4 +412,11 @@ ScopedAStatus RemoteKeyMintDevice::convertStorageKeyToEphemeral(
   return kmError2ScopedAStatus(KM_ERROR_UNIMPLEMENTED);
 }
 
+ScopedAStatus RemoteKeyMintDevice::getKeyCharacteristics(
+    const std::vector<uint8_t>& /* storageKeyBlob */,
+    const std::vector<uint8_t>& /* appId */,
+    const std::vector<uint8_t>& /* appData */,
+    std::vector<KeyCharacteristics>* /* keyCharacteristics */) {
+  return kmError2ScopedAStatus(KM_ERROR_UNIMPLEMENTED);
+}
 }  // namespace aidl::android::hardware::security::keymint
