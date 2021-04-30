@@ -22,6 +22,9 @@ cc_binary {
     srcs: [
         "boot_state_machine.cc",
         "launch.cc",
+        "launch_adb.cpp",
+        "launch_modem.cpp",
+        "launch_streamer.cpp",
         "main.cc",
         "process_monitor.cc",
     ],
