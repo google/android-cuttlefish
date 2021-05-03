@@ -20,6 +20,8 @@
 #include <android/binder_manager.h>
 #include <android/binder_process.h>
 
+#include <keymaster/android_keymaster_messages.h>
+#include <keymaster/km_version.h>
 #include <keymaster/soft_keymaster_logger.h>
 #include "guest/hals/keymint/remote/remote_keymint_device.h"
 
@@ -67,7 +69,9 @@ int main(int, char** argv) {
 
   cuttlefish::KeymasterChannel keymasterChannel(fd, fd);
 
-  keymaster::RemoteKeymaster remote_keymaster(&keymasterChannel);
+  keymaster::RemoteKeymaster remote_keymaster(
+      &keymasterChannel, keymaster::MessageVersion(
+                             keymaster::KmVersion::KEYMINT_1, 0 /* km_date */));
 
   addService<RemoteKeyMintDevice>(remote_keymaster,
                                   SecurityLevel::TRUSTED_ENVIRONMENT);
