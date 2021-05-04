@@ -911,9 +911,16 @@ void SimService::HandleSIM_IO(const Client& client,
     return;
   }
 
+  SimFileSystem::EFId fileid = (SimFileSystem::EFId)std::stoi(id, nullptr, 16);
   if (path == "") {
-    SimFileSystem::EFId fileid = (SimFileSystem::EFId)std::stoi(id, nullptr, 16);
     path = SimFileSystem::GetUsimEFPath(fileid);
+  }
+  // EF_ADN under DF_PHONEBOOK is mapped to EF_ADN under DF_TELECOM per
+  // 3GPP TS 31.102 4.4.2
+  if (fileid == SimFileSystem::EF_ADN &&
+      path == SimFileSystem::GetUsimEFPath(fileid)) {
+    id = "4F3A";
+    path = MF_SIM + DF_TELECOM + DF_PHONEBOOK;
   }
 
   size_t pos = 0;
