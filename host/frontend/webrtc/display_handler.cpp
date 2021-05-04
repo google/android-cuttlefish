@@ -38,8 +38,13 @@ DisplayHandler::GenerateProcessedFrameCallback DisplayHandler::GetScreenConnecto
           processed_frame.display_number_ = display_number;
           // TODO(171305898): handle multiple displays.
           if (display_number != 0) {
-            processed_frame.is_success_ = false;
-            return;
+            // BUG 186580833: display_number comes from surface_id in crosvm
+            // create_surface from virtio_gpu.rs set_scanout.  We cannot use it as
+            // the display number. Either crosvm virtio-gpu is incorrectly ignoring
+            // scanout id and instead using a monotonically increasing surface id
+            // number as the scanout resource is replaced over time, or frontend code
+            // here is incorrectly assuming  surface id == display id.
+            display_number = 0;
           }
           const int display_w =
               ScreenConnectorInfo::ScreenWidth(display_number);
