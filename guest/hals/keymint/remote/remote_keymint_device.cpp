@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#define LOG_TAG "android.hardware.security.keymint-impl"
+#define LOG_TAG "android.hardware.security.keymint-impl.remote"
 #include <android-base/logging.h>
 
 #include "guest/hals/keymint/remote/remote_keymint_device.h"
