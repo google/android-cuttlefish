@@ -73,6 +73,8 @@ LOCAL_C_INCLUDES := \
   device/google/cuttlefish_common \
   $(WPA_SUPPL_DIR_INCLUDE)\
 
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(BUILD_STATIC_LIBRARY)
 
 ########################
