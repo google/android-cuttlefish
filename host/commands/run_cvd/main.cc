@@ -176,6 +176,7 @@ configComponent() {
 fruit::Component<> runCvdComponent() {
   return fruit::createComponent()
       .install(launchComponent)
+      .install(launchModemComponent)
       .install(configComponent);
 }
 
@@ -353,7 +354,6 @@ int RunCvdMain(int argc, char** argv) {
   if (config->enable_metrics() == CuttlefishConfig::kYes) {
     process_monitor.AddCommands(LaunchMetrics());
   }
-  process_monitor.AddCommands(LaunchModemSimulatorIfEnabled(*config));
 
   auto kernel_log_monitor = LaunchKernelLogMonitor(*config, 3);
   SharedFD boot_events_pipe = kernel_log_monitor.pipes[0];
