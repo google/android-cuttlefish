@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include <fruit/fruit.h>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,16 @@
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
+
+class CommandSource {
+ public:
+  virtual ~CommandSource();
+  virtual std::vector<Command> Commands() = 0;
+};
+
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>>
+launchComponent();
 
 struct KernelLogMonitorData {
   std::vector<SharedFD> pipes;
@@ -53,13 +64,6 @@ std::vector<Command> LaunchMetrics();
 std::vector<Command> LaunchGnssGrpcProxyServerIfEnabled(
     const CuttlefishConfig& config);
 
-std::vector<Command> LaunchSecureEnvironment(const CuttlefishConfig& config);
-
 std::vector<Command> LaunchBluetoothConnector(const CuttlefishConfig& config);
-std::vector<Command> LaunchVehicleHalServerIfEnabled(
-    const CuttlefishConfig& config);
-
-std::vector<Command> LaunchConsoleForwarderIfEnabled(
-    const CuttlefishConfig& config);
 
 } // namespace cuttlefish
