@@ -546,9 +546,6 @@ int ForCurrentInstance(int base);
 // Returns a random serial number appeneded to a given prefix.
 std::string RandomSerialNumber(const std::string& prefix);
 
-std::string GetDefaultMempath();
-int GetDefaultPerInstanceVsockCid();
-
 std::string DefaultHostArtifactsPath(const std::string& file);
 std::string HostBinaryPath(const std::string& file);
 std::string DefaultGuestImagePath(const std::string& file);
@@ -558,7 +555,6 @@ std::string DefaultEnvironmentPath(const char* environment_key,
 
 // Whether the host supports qemu
 bool HostSupportsQemuCli();
-bool HostSupportsVsock();
 
 // GPU modes
 extern const char* const kGpuModeAuto;
