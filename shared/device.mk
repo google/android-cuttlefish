@@ -596,7 +596,7 @@ PRODUCT_PACKAGES += \
     android.hardware.memtrack-service.example
 
 # GKI APEX
-PRODUCT_PACKAGES += com.android.gki.kmi_5_10_android12_0
+PRODUCT_PACKAGES += com.android.gki.kmi_5_10_android12_1
 
 # Prevent GKI and boot image downgrades
 PRODUCT_PRODUCT_PROPERTIES += \
