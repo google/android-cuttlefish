@@ -88,8 +88,8 @@ void CreateBlankImage(
     execute({"/sbin/mkfs.ext4", image});
   } else if (image_fmt == "f2fs") {
     auto make_f2fs_path = cuttlefish::HostBinaryPath("make_f2fs");
-    execute({make_f2fs_path, "-t", image_fmt, image, "-C", "utf8",
-            "-O", "compression,extra_attr", "-g", "android"});
+    execute({make_f2fs_path, "-t", image_fmt, image, "-C", "utf8", "-O",
+             "compression,extra_attr,prjquota", "-g", "android"});
   } else if (image_fmt == "sdcard") {
     // Reserve 1MB in the image for the MBR and padding, to simulate what
     // other OSes do by default when partitioning a drive
