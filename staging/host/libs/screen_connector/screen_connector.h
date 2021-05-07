@@ -43,6 +43,7 @@
 using cuttlefish::confui::DebugLog;
 using cuttlefish::confui::ErrorLog;
 using cuttlefish::confui::FatalLog;
+using cuttlefish::confui::VerboseLog;
 
 namespace cuttlefish {
 
@@ -123,33 +124,33 @@ class ScreenConnector : public ScreenConnectorInfo,
   ProcessedFrameType OnNextFrame() {
     on_next_frame_cnt_++;
     while (true) {
-      DebugLog("Streamer waiting Semaphore with host ctrl mode = ",
-               static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
-               " and cnd = #", on_next_frame_cnt_);
+      VerboseLog("Streamer waiting Semaphore with host ctrl mode = ",
+                 static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
+                 " and cnd = #", on_next_frame_cnt_);
       sc_sem_.SemWait();
-      DebugLog("Streamer got Semaphore'ed resources with host ctrl mode = ",
-               static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
-               " and cnd = #", on_next_frame_cnt_);
+      VerboseLog("Streamer got Semaphore'ed resources with host ctrl mode = ",
+                 static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
+                 " and cnd = #", on_next_frame_cnt_);
       // do something
       if (!sc_android_queue_.Empty()) {
         auto mode = host_mode_ctrl_.GetMode();
         if (mode == HostModeCtrl::ModeType::kAndroidMode) {
-          DebugLog("Streamer gets Android frame with host ctrl mode = ",
-                   static_cast<std::uint32_t>(mode), " and cnd = #",
-                   on_next_frame_cnt_);
+          VerboseLog("Streamer gets Android frame with host ctrl mode = ",
+                     static_cast<std::uint32_t>(mode), " and cnd = #",
+                     on_next_frame_cnt_);
           return sc_android_queue_.PopFront();
         }
         // AndroidFrameFetchingLoop could have added 1 or 2 frames
         // before it becomes Conf UI mode.
-        DebugLog("Streamer ignores Android frame with host ctrl mode = ",
-                 static_cast<std::uint32_t>(mode), " and cnd = #",
-                 on_next_frame_cnt_);
+        VerboseLog("Streamer ignores Android frame with host ctrl mode = ",
+                   static_cast<std::uint32_t>(mode), " and cnd = #",
+                   on_next_frame_cnt_);
         sc_android_queue_.PopFront();
         continue;
       }
-      DebugLog("Streamer gets Conf UI frame with host ctrl mode = ",
-               static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
-               " and cnd = #", on_next_frame_cnt_);
+      VerboseLog("Streamer gets Conf UI frame with host ctrl mode = ",
+                 static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
+                 " and cnd = #", on_next_frame_cnt_);
       return sc_confui_queue_.PopFront();
     }
   }
@@ -169,20 +170,22 @@ class ScreenConnector : public ScreenConnectorInfo,
       GenerateProcessedFrameCallbackImpl callback_for_sc_impl =
           std::bind(cp_of_streamer_callback, std::placeholders::_1,
                     std::placeholders::_2, std::ref(processed_frame));
-      DebugLog(cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
-               " calling Android OnNextFrame. ", " at loop #", loop_cnt);
+      VerboseLog(
+          cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
+          " calling Android OnNextFrame. ", " at loop #", loop_cnt);
       bool flag = sc_android_src_->OnNextFrame(callback_for_sc_impl);
       processed_frame.is_success_ = flag && processed_frame.is_success_;
       const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
       if (!is_confui_mode) {
-        DebugLog(
+        VerboseLog(
             cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
             " is sending an Android Frame at loop_cnt #", loop_cnt);
         sc_android_queue_.PushBack(std::move(processed_frame));
         continue;
       }
-      DebugLog(cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
-               " is skipping an Android Frame at loop_cnt #", loop_cnt);
+      VerboseLog(
+          cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
+          " is skipping an Android Frame at loop_cnt #", loop_cnt);
     }
   }
 
