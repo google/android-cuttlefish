@@ -156,8 +156,10 @@ int WebSocketServer::ServerCallback(struct lws* wsi, enum lws_callback_reasons r
     case LWS_CALLBACK_RECEIVE: {
       auto handler = handlers_[wsi];
       if (handler) {
+        bool is_final = (lws_remaining_packet_payload(wsi) == 0) &&
+                        lws_is_final_fragment(wsi);
         handler->OnReceive(reinterpret_cast<const uint8_t*>(in), len,
-                           lws_frame_is_binary(wsi));
+                           lws_frame_is_binary(wsi), is_final);
       } else {
         LOG(WARNING) << "Unkwnown wsi sent data";
       }

@@ -28,6 +28,10 @@ class WebSocketHandler {
   virtual ~WebSocketHandler() = default;
 
   virtual void OnReceive(const uint8_t* msg, size_t len, bool binary) = 0;
+  virtual void OnReceive(const uint8_t* msg, size_t len, bool binary,
+                         [[maybe_unused]] bool is_final) {
+    OnReceive(msg, len, binary);
+  }
   virtual void OnConnected() = 0;
   virtual void OnClosed() = 0;
 
