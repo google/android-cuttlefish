@@ -60,6 +60,24 @@ void SignalHandler::OnReceive(const uint8_t* msg, size_t len, bool binary) {
   handleMessage(type, json_message);
 }
 
+void SignalHandler::OnReceive(const uint8_t* msg, size_t len, bool binary,
+                              bool is_final) {
+  if (is_final) {
+    if (receive_buffer_.empty()) {
+      // no previous data - receive as-is
+      OnReceive(msg, len, binary);
+    } else {
+      // concatenate to previous data and receive
+      receive_buffer_.insert(receive_buffer_.end(), msg, msg + len);
+      OnReceive(receive_buffer_.data(), receive_buffer_.size(), binary);
+      receive_buffer_.clear();
+    }
+  } else {
+    // buffer up incomplete messages
+    receive_buffer_.insert(receive_buffer_.end(), msg, msg + len);
+  }
+}
+
 void SignalHandler::SendServerConfig() {
   // Call every time to allow config changes?
   auto reply = server_config_.ToJson();
