@@ -22,7 +22,6 @@
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -105,10 +104,46 @@ void CreateStreamerServers(Command* cmd, const CuttlefishConfig& config) {
   }
 }
 
+std::vector<Command> LaunchCustomActionServers(Command& webrtc_cmd,
+                                               const CuttlefishConfig& config) {
+  bool first = true;
+  std::vector<Command> commands;
+  for (const auto& custom_action : config.custom_actions()) {
+    if (custom_action.server) {
+      // Create a socket pair that will be used for communication between
+      // WebRTC and the action server.
+      SharedFD webrtc_socket, action_server_socket;
+      if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0, &webrtc_socket,
+                                &action_server_socket)) {
+        LOG(ERROR) << "Unable to create custom action server socket pair: "
+                   << strerror(errno);
+        continue;
+      }
+
+      // Launch the action server, providing its socket pair fd as the only
+      // argument.
+      std::string binary = "bin/" + *(custom_action.server);
+      Command command(DefaultHostArtifactsPath(binary));
+      command.AddParameter(action_server_socket);
+      commands.emplace_back(std::move(command));
+
+      // Pass the WebRTC socket pair fd to WebRTC.
+      if (first) {
+        first = false;
+        webrtc_cmd.AddParameter("-action_servers=", *custom_action.server, ":",
+                                webrtc_socket);
+      } else {
+        webrtc_cmd.AppendToLastParameter(",", *custom_action.server, ":",
+                                         webrtc_socket);
+      }
+    }
+  }
+  return commands;
+}
+
 }  // namespace
 
-void LaunchVNCServer(const CuttlefishConfig& config,
-                     ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchVNCServer(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   // Launch the vnc server, don't wait for it to complete
   auto port_options = "-port=" + std::to_string(instance.vnc_server_port());
@@ -117,12 +152,14 @@ void LaunchVNCServer(const CuttlefishConfig& config,
 
   CreateStreamerServers(&vnc_server, config);
 
-  process_monitor->AddCommand(std::move(vnc_server));
+  std::vector<Command> commands;
+  commands.emplace_back(std::move(vnc_server));
+  return std::move(commands);
 }
 
-void LaunchWebRTC(ProcessMonitor* process_monitor,
-                  const CuttlefishConfig& config,
-                  SharedFD kernel_log_events_pipe) {
+std::vector<Command> LaunchWebRTC(const CuttlefishConfig& config,
+                                  SharedFD kernel_log_events_pipe) {
+  std::vector<Command> commands;
   if (config.ForDefaultInstance().start_webrtc_sig_server()) {
     Command sig_server(WebRtcSigServerBinary());
     sig_server.AddParameter("-assets_dir=", config.webrtc_assets_dir());
@@ -130,7 +167,7 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
       sig_server.AddParameter("-certs_dir=", config.webrtc_certs_dir());
     }
     sig_server.AddParameter("-http_server_port=", config.sig_server_port());
-    process_monitor->AddCommand(std::move(sig_server));
+    commands.emplace_back(std::move(sig_server));
   }
 
   // Currently there is no way to ensure the signaling server will already have
@@ -171,13 +208,17 @@ void LaunchWebRTC(ProcessMonitor* process_monitor,
   CreateStreamerServers(&webrtc, config);
 
   webrtc.AddParameter("--command_fd=", client_socket);
-
   webrtc.AddParameter("-kernel_log_events_fd=", kernel_log_events_pipe);
 
-  LaunchCustomActionServers(webrtc, process_monitor, config);
+  auto actions = LaunchCustomActionServers(webrtc, config);
 
   // TODO get from launcher params
-  process_monitor->AddCommand(std::move(webrtc));
+  commands.emplace_back(std::move(webrtc));
+  for (auto& action : actions) {
+    commands.emplace_back(std::move(action));
+  }
+
+  return commands;
 }
 
 }  // namespace cuttlefish
