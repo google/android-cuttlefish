@@ -28,6 +28,7 @@
 #include <android-base/logging.h>
 #include <teeui/utils.h>
 
+#include "common/libs/concurrency/multiplexer.h"
 #include "common/libs/concurrency/semaphore.h"
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
@@ -36,7 +37,6 @@
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_renderer.h"
 #include "host/libs/confui/host_virtual_input.h"
-#include "host/libs/confui/multiplexer.h"
 #include "host/libs/confui/server_common.h"
 #include "host/libs/confui/session.h"
 #include "host/libs/screen_connector/screen_connector.h"

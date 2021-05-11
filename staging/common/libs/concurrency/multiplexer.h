@@ -17,10 +17,8 @@
 #pragma once
 
 #include <condition_variable>
-#include <deque>
 #include <memory>
-#include <mutex>
-#include <thread>
+#include <vector>
 
 #include "common/libs/concurrency/semaphore.h"
 #include "common/libs/concurrency/thread_safe_queue.h"
