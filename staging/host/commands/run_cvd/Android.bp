@@ -27,6 +27,7 @@ cc_binary {
         "launch_streamer.cpp",
         "main.cc",
         "process_monitor.cc",
+        "server_loop.cpp",
     ],
     shared_libs: [
         "libcuttlefish_fs",
