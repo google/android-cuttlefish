@@ -23,7 +23,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -64,18 +63,18 @@ static bool StopModemSimulator() {
   return true;
 }
 
-void LaunchModemSimulatorIfEnabled(const CuttlefishConfig& config,
-                                   ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchModemSimulatorIfEnabled(
+    const CuttlefishConfig& config) {
   if (!config.enable_modem_simulator()) {
     LOG(DEBUG) << "Modem simulator not enabled";
-    return;
+    return {};
   }
 
   int instance_number = config.modem_simulator_instance_number();
   if (instance_number > 3 /* max value */ || instance_number < 0) {
     LOG(ERROR)
         << "Modem simulator instance number should range between 1 and 3";
-    return;
+    return {};
   }
 
   Command cmd(ModemSimulatorBinary(), [](Subprocess* proc) {
@@ -110,7 +109,9 @@ void LaunchModemSimulatorIfEnabled(const CuttlefishConfig& config,
     cmd.AppendToLastParameter(socket);
   }
 
-  process_monitor->AddCommand(std::move(cmd));
+  std::vector<Command> commands;
+  commands.emplace_back(std::move(cmd));
+  return commands;
 }
 
 }  // namespace cuttlefish
