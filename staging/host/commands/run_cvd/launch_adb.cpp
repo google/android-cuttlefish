@@ -22,7 +22,6 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/known_paths.h"
 
@@ -70,8 +69,8 @@ bool AdbVsockConnectorEnabled(const CuttlefishConfig& config) {
 
 }  // namespace
 
-void LaunchAdbConnectorIfEnabled(ProcessMonitor* process_monitor,
-                                 const CuttlefishConfig& config) {
+std::vector<Command> LaunchAdbConnectorIfEnabled(
+    const CuttlefishConfig& config) {
   Command adb_connector(AdbConnectorBinary());
   std::set<std::string> addresses;
 
@@ -82,20 +81,22 @@ void LaunchAdbConnectorIfEnabled(ProcessMonitor* process_monitor,
     addresses.insert(GetAdbConnectorVsockArg(config));
   }
 
-  if (addresses.size() > 0) {
-    std::string address_arg = "--addresses=";
-    for (auto& arg : addresses) {
-      address_arg += arg + ",";
-    }
-    address_arg.pop_back();
-    adb_connector.AddParameter(address_arg);
-    process_monitor->AddCommand(std::move(adb_connector));
+  if (addresses.size() == 0) {
+    return {};
   }
+  std::string address_arg = "--addresses=";
+  for (auto& arg : addresses) {
+    address_arg += arg + ",";
+  }
+  address_arg.pop_back();
+  adb_connector.AddParameter(address_arg);
+  std::vector<Command> commands;
+  commands.emplace_back(std::move(adb_connector));
+  return std::move(commands);
 }
 
-void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
-                                     const CuttlefishConfig& config,
-                                     SharedFD adbd_events_pipe) {
+std::vector<Command> LaunchSocketVsockProxyIfEnabled(
+    const CuttlefishConfig& config, SharedFD adbd_events_pipe) {
   auto instance = config.ForDefaultInstance();
   auto append = [](const std::string& s, const int i) -> std::string {
     return s + std::to_string(i);
@@ -105,6 +106,7 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
   CHECK(tcp_server->IsOpen())
       << "Unable to create socket_vsock_proxy server socket: "
       << tcp_server->StrError();
+  std::vector<Command> commands;
   if (AdbVsockTunnelEnabled(config)) {
     Command adb_tunnel(SocketVsockProxyBinary());
     adb_tunnel.AddParameter("-adbd_events_fd=", adbd_events_pipe);
@@ -127,7 +129,7 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
     adb_tunnel.AddParameter(std::string{"--server_fd="}, tcp_server);
     adb_tunnel.AddParameter(std::string{"--vsock_cid="} +
                             std::to_string(instance.vsock_guest_cid()));
-    process_monitor->AddCommand(std::move(adb_tunnel));
+    commands.emplace_back(std::move(adb_tunnel));
   }
   if (AdbVsockHalfTunnelEnabled(config)) {
     Command adb_tunnel(SocketVsockProxyBinary());
@@ -146,8 +148,9 @@ void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
     adb_tunnel.AddParameter(append("--vsock_port=", 5555));
     adb_tunnel.AddParameter(std::string{"--server_fd="}, tcp_server);
     adb_tunnel.AddParameter(append("--vsock_cid=", instance.vsock_guest_cid()));
-    process_monitor->AddCommand(std::move(adb_tunnel));
+    commands.emplace_back(std::move(adb_tunnel));
   }
+  return commands;
 }
 
 }  // namespace cuttlefish

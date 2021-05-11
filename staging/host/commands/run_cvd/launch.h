@@ -20,58 +20,46 @@
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
-#include "host/commands/run_cvd/process_monitor.h"
 #include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-std::vector<SharedFD> LaunchKernelLogMonitor(
-    const CuttlefishConfig& config,
-    ProcessMonitor* process_monitor,
-    unsigned int number_of_event_pipes);
-void LaunchAdbConnectorIfEnabled(ProcessMonitor* process_monitor,
-                                 const CuttlefishConfig& config);
-void LaunchSocketVsockProxyIfEnabled(ProcessMonitor* process_monitor,
-                                     const CuttlefishConfig& config,
-                                     SharedFD adbd_events_pipe);
-void LaunchModemSimulatorIfEnabled(const CuttlefishConfig& config,
-                                   ProcessMonitor* process_monitor);
+struct KernelLogMonitorData {
+  std::vector<SharedFD> pipes;
+  std::vector<Command> commands;
+};
 
-void LaunchVNCServer(const CuttlefishConfig& config,
-                     ProcessMonitor* process_monitor);
+KernelLogMonitorData LaunchKernelLogMonitor(const CuttlefishConfig& config,
+                                            unsigned int number_of_event_pipes);
+std::vector<Command> LaunchAdbConnectorIfEnabled(
+    const CuttlefishConfig& config);
+std::vector<Command> LaunchSocketVsockProxyIfEnabled(
+    const CuttlefishConfig& config, SharedFD adbd_events_pipe);
+std::vector<Command> LaunchModemSimulatorIfEnabled(
+    const CuttlefishConfig& config);
 
-void LaunchTombstoneReceiver(const CuttlefishConfig& config,
-                             ProcessMonitor* process_monitor);
-void LaunchRootCanal(const CuttlefishConfig& config,
-                     ProcessMonitor* process_monitor);
-void LaunchLogcatReceiver(const CuttlefishConfig& config,
-                          ProcessMonitor* process_monitor);
-void LaunchConfigServer(const CuttlefishConfig& config,
-                        ProcessMonitor* process_monitor);
+std::vector<Command> LaunchVNCServer(const CuttlefishConfig& config);
 
-void LaunchWebRTC(ProcessMonitor* process_monitor,
-                  const CuttlefishConfig& config,
-                  SharedFD kernel_log_events_pipe);
+std::vector<Command> LaunchTombstoneReceiver(const CuttlefishConfig& config);
+std::vector<Command> LaunchRootCanal(const CuttlefishConfig& config);
+std::vector<Command> LaunchLogcatReceiver(const CuttlefishConfig& config);
+std::vector<Command> LaunchConfigServer(const CuttlefishConfig& config);
 
-void LaunchMetrics(ProcessMonitor* process_monitor);
+std::vector<Command> LaunchWebRTC(const CuttlefishConfig& config,
+                                  SharedFD kernel_log_events_pipe);
 
-void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
-                                        ProcessMonitor* process_monitor);
+std::vector<Command> LaunchMetrics();
 
-void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
-                             const CuttlefishConfig& config);
+std::vector<Command> LaunchGnssGrpcProxyServerIfEnabled(
+    const CuttlefishConfig& config);
 
-void LaunchBluetoothConnector(ProcessMonitor* process_monitor,
-                              const CuttlefishConfig& config);
+std::vector<Command> LaunchSecureEnvironment(const CuttlefishConfig& config);
 
-void LaunchCustomActionServers(Command& webrtc_cmd,
-                               ProcessMonitor* process_monitor,
-                               const CuttlefishConfig& config);
+std::vector<Command> LaunchBluetoothConnector(const CuttlefishConfig& config);
+std::vector<Command> LaunchVehicleHalServerIfEnabled(
+    const CuttlefishConfig& config);
 
-void LaunchVehicleHalServerIfEnabled(const CuttlefishConfig& config,
-                                     ProcessMonitor* process_monitor);
-
-void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
-                                     ProcessMonitor* process_monitor);
+std::vector<Command> LaunchConsoleForwarderIfEnabled(
+    const CuttlefishConfig& config);
 
 } // namespace cuttlefish
