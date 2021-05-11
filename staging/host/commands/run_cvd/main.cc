@@ -524,50 +524,48 @@ int RunCvdMain(int argc, char** argv) {
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
   if (config->enable_metrics() == CuttlefishConfig::kYes) {
-    LaunchMetrics(&process_monitor);
+    process_monitor.AddCommands(LaunchMetrics());
   }
-  LaunchModemSimulatorIfEnabled(*config, &process_monitor);
+  process_monitor.AddCommands(LaunchModemSimulatorIfEnabled(*config));
 
-  auto event_pipes =
-      LaunchKernelLogMonitor(*config, &process_monitor, 3);
-  SharedFD boot_events_pipe = event_pipes[0];
-  SharedFD adbd_events_pipe = event_pipes[1];
-  SharedFD webrtc_events_pipe = event_pipes[2];
-  event_pipes.clear();
+  auto kernel_log_monitor = LaunchKernelLogMonitor(*config, 3);
+  SharedFD boot_events_pipe = kernel_log_monitor.pipes[0];
+  SharedFD adbd_events_pipe = kernel_log_monitor.pipes[1];
+  SharedFD webrtc_events_pipe = kernel_log_monitor.pipes[2];
+  kernel_log_monitor.pipes.clear();
+  process_monitor.AddCommands(std::move(kernel_log_monitor.commands));
 
   CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
                                          reboot_notification, boot_events_pipe);
 
-  LaunchRootCanal(*config, &process_monitor);
-  LaunchLogcatReceiver(*config, &process_monitor);
-  LaunchConfigServer(*config, &process_monitor);
-  LaunchTombstoneReceiver(*config, &process_monitor);
-  LaunchGnssGrpcProxyServerIfEnabled(*config, &process_monitor);
-  LaunchSecureEnvironment(&process_monitor, *config);
+  process_monitor.AddCommands(LaunchRootCanal(*config));
+  process_monitor.AddCommands(LaunchLogcatReceiver(*config));
+  process_monitor.AddCommands(LaunchConfigServer(*config));
+  process_monitor.AddCommands(LaunchTombstoneReceiver(*config));
+  process_monitor.AddCommands(LaunchGnssGrpcProxyServerIfEnabled(*config));
+  process_monitor.AddCommands(LaunchSecureEnvironment(*config));
   if (config->enable_host_bluetooth()) {
-    LaunchBluetoothConnector(&process_monitor, *config);
+    process_monitor.AddCommands(LaunchBluetoothConnector(*config));
   }
-  LaunchVehicleHalServerIfEnabled(*config, &process_monitor);
-  LaunchConsoleForwarderIfEnabled(*config, &process_monitor);
+  process_monitor.AddCommands(LaunchVehicleHalServerIfEnabled(*config));
+  process_monitor.AddCommands(LaunchConsoleForwarderIfEnabled(*config));
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
   if (config->enable_vnc_server()) {
-    LaunchVNCServer(*config, &process_monitor);
+    process_monitor.AddCommands(LaunchVNCServer(*config));
   }
   if (config->enable_webrtc()) {
-    LaunchWebRTC(&process_monitor, *config, webrtc_events_pipe);
+    process_monitor.AddCommands(LaunchWebRTC(*config, webrtc_events_pipe));
   }
 
   // Start the guest VM
-  auto vmm_commands = vm_manager->StartCommands(*config);
-  for (auto& vmm_cmd: vmm_commands) {
-    process_monitor.AddCommand(std::move(vmm_cmd));
-  }
+  process_monitor.AddCommands(vm_manager->StartCommands(*config));
 
   // Start other host processes
-  LaunchSocketVsockProxyIfEnabled(&process_monitor, *config, adbd_events_pipe);
-  LaunchAdbConnectorIfEnabled(&process_monitor, *config);
+  process_monitor.AddCommands(
+      LaunchSocketVsockProxyIfEnabled(*config, adbd_events_pipe));
+  process_monitor.AddCommands(LaunchAdbConnectorIfEnabled(*config));
 
   CHECK(process_monitor.StartAndMonitorProcesses())
       << "Could not start subprocesses";
