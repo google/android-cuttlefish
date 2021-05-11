@@ -72,10 +72,10 @@ class CfOperatorObserver
     LOG(VERBOSE) << "Registered with Operator";
   }
   virtual void OnClose() override {
-    LOG(FATAL) << "Connection with Operator unexpectedly closed";
+    LOG(ERROR) << "Connection with Operator unexpectedly closed";
   }
   virtual void OnError() override {
-    LOG(FATAL) << "Error encountered in connection with Operator";
+    LOG(ERROR) << "Error encountered in connection with Operator";
   }
 };
 
