@@ -42,6 +42,12 @@ class ProcessMonitor {
   // called before StartAndMonitorProcesses is called. OnSocketReadyCb will be
   // called inside a forked process.
   void AddCommand(Command cmd);
+  template <typename T>
+  void AddCommands(T&& commands) {
+    for (auto& command : commands) {
+      AddCommand(std::move(command));
+    }
+  }
 
   // Start all processes given by AddCommand.
   bool StartAndMonitorProcesses();
