@@ -16,6 +16,7 @@
 #include "host/commands/run_cvd/launch.h"
 
 #include <android-base/logging.h>
+#include <utility>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
@@ -27,9 +28,19 @@
 
 namespace cuttlefish {
 
-std::vector<SharedFD> LaunchKernelLogMonitor(
-    const CuttlefishConfig& config, ProcessMonitor* process_monitor,
-    unsigned int number_of_event_pipes) {
+namespace {
+
+template <typename T>
+std::vector<T> single_element_emplace(T&& element) {
+  std::vector<T> vec;
+  vec.emplace_back(std::move(element));
+  return vec;
+}
+
+}  // namespace
+
+KernelLogMonitorData LaunchKernelLogMonitor(
+    const CuttlefishConfig& config, unsigned int number_of_event_pipes) {
   auto instance = config.ForDefaultInstance();
   auto log_name = instance.kernel_log_pipe_name();
   if (mkfifo(log_name.c_str(), 0600) != 0) {
@@ -46,7 +57,7 @@ std::vector<SharedFD> LaunchKernelLogMonitor(
   Command command(KernelLogMonitorBinary());
   command.AddParameter("-log_pipe_fd=", pipe);
 
-  std::vector<SharedFD> ret;
+  KernelLogMonitorData ret;
 
   if (number_of_event_pipes > 0) {
     command.AddParameter("-subscriber_fds=");
@@ -60,19 +71,18 @@ std::vector<SharedFD> LaunchKernelLogMonitor(
         command.AppendToLastParameter(",");
       }
       command.AppendToLastParameter(event_pipe_write_end);
-      ret.push_back(event_pipe_read_end);
+      ret.pipes.push_back(event_pipe_read_end);
     }
   }
 
-  process_monitor->AddCommand(std::move(command));
+  ret.commands.emplace_back(std::move(command));
 
   return ret;
 }
 
-void LaunchRootCanal(const CuttlefishConfig& config,
-                     ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchRootCanal(const CuttlefishConfig& config) {
   if (!config.enable_host_bluetooth()) {
-    return;
+    return {};
   }
 
   auto instance = config.ForDefaultInstance();
@@ -91,18 +101,16 @@ void LaunchRootCanal(const CuttlefishConfig& config,
   command.AddParameter("--default_commands_file=",
                        instance.rootcanal_default_commands_file());
 
-  process_monitor->AddCommand(std::move(command));
-  return;
+  return single_element_emplace(std::move(command));
 }
 
-void LaunchLogcatReceiver(const CuttlefishConfig& config,
-                          ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchLogcatReceiver(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   auto log_name = instance.logcat_pipe_name();
   if (mkfifo(log_name.c_str(), 0600) != 0) {
     LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
                << strerror(errno);
-    return;
+    return {};
   }
 
   SharedFD pipe;
@@ -113,12 +121,10 @@ void LaunchLogcatReceiver(const CuttlefishConfig& config,
   Command command(LogcatReceiverBinary());
   command.AddParameter("-log_pipe_fd=", pipe);
 
-  process_monitor->AddCommand(std::move(command));
-  return;
+  return single_element_emplace(std::move(command));
 }
 
-void LaunchConfigServer(const CuttlefishConfig& config,
-                        ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchConfigServer(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   auto port = instance.config_server_port();
   auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
@@ -129,12 +135,10 @@ void LaunchConfigServer(const CuttlefishConfig& config,
   }
   Command cmd(ConfigServerBinary());
   cmd.AddParameter("-server_fd=", socket);
-  process_monitor->AddCommand(std::move(cmd));
-  return;
+  return single_element_emplace(std::move(cmd));
 }
 
-void LaunchTombstoneReceiver(const CuttlefishConfig& config,
-                             ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchTombstoneReceiver(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
 
   std::string tombstoneDir = instance.PerInstancePath("tombstones");
@@ -145,7 +149,7 @@ void LaunchTombstoneReceiver(const CuttlefishConfig& config,
       LOG(ERROR) << "Failed to create tombstone directory: " << tombstoneDir
                  << ". Error: " << errno;
       exit(RunnerExitCodes::kTombstoneDirCreationError);
-      return;
+      return {};
     }
   }
 
@@ -155,79 +159,77 @@ void LaunchTombstoneReceiver(const CuttlefishConfig& config,
     LOG(ERROR) << "Unable to create tombstone server socket: "
                << socket->StrError();
     std::exit(RunnerExitCodes::kTombstoneServerError);
-    return;
+    return {};
   }
   Command cmd(TombstoneReceiverBinary());
   cmd.AddParameter("-server_fd=", socket);
   cmd.AddParameter("-tombstone_dir=", tombstoneDir);
 
-  process_monitor->AddCommand(std::move(cmd));
-  return;
+  return single_element_emplace(std::move(cmd));
 }
 
-void LaunchMetrics(ProcessMonitor* process_monitor) {
-  Command metrics(MetricsBinary());
-
-  process_monitor->AddCommand(std::move(metrics));
+std::vector<Command> LaunchMetrics() {
+  return single_element_emplace(Command(MetricsBinary()));
 }
 
-void LaunchGnssGrpcProxyServerIfEnabled(const CuttlefishConfig& config,
-                                        ProcessMonitor* process_monitor) {
-    if (!config.enable_gnss_grpc_proxy() ||
-        !FileExists(GnssGrpcProxyBinary())) {
-        return;
-    }
+std::vector<Command> LaunchGnssGrpcProxyServerIfEnabled(
+    const CuttlefishConfig& config) {
+  if (!config.enable_gnss_grpc_proxy() || !FileExists(GnssGrpcProxyBinary())) {
+    return {};
+  }
 
-    Command gnss_grpc_proxy_cmd(GnssGrpcProxyBinary());
-    auto instance = config.ForDefaultInstance();
+  Command gnss_grpc_proxy_cmd(GnssGrpcProxyBinary());
+  auto instance = config.ForDefaultInstance();
 
-    auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
-    if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
-                << strerror(error);
-      return;
-    }
+  auto gnss_in_pipe_name = instance.gnss_in_pipe_name();
+  if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
+    auto error = errno;
+    LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
+               << strerror(error);
+    return {};
+  }
 
-    auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
-    if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
-                << strerror(error);
-      return;
-    }
+  auto gnss_out_pipe_name = instance.gnss_out_pipe_name();
+  if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
+    auto error = errno;
+    LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
+               << strerror(error);
+    return {};
+  }
 
-    // These fds will only be read from or written to, but open them with
-    // read and write access to keep them open in case the subprocesses exit
-    SharedFD gnss_grpc_proxy_in_wr =
-        SharedFD::Open(gnss_in_pipe_name.c_str(), O_RDWR);
-    if (!gnss_grpc_proxy_in_wr->IsOpen()) {
-      LOG(ERROR) << "Failed to open gnss_grpc_proxy input fifo for writes: "
-                << gnss_grpc_proxy_in_wr->StrError();
-      return;
-    }
+  // These fds will only be read from or written to, but open them with
+  // read and write access to keep them open in case the subprocesses exit
+  SharedFD gnss_grpc_proxy_in_wr =
+      SharedFD::Open(gnss_in_pipe_name.c_str(), O_RDWR);
+  if (!gnss_grpc_proxy_in_wr->IsOpen()) {
+    LOG(ERROR) << "Failed to open gnss_grpc_proxy input fifo for writes: "
+               << gnss_grpc_proxy_in_wr->StrError();
+    return {};
+  }
 
-    SharedFD gnss_grpc_proxy_out_rd =
-        SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
-    if (!gnss_grpc_proxy_out_rd->IsOpen()) {
-      LOG(ERROR) << "Failed to open gnss_grpc_proxy output fifo for reads: "
-                << gnss_grpc_proxy_out_rd->StrError();
-      return;
-    }
+  SharedFD gnss_grpc_proxy_out_rd =
+      SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
+  if (!gnss_grpc_proxy_out_rd->IsOpen()) {
+    LOG(ERROR) << "Failed to open gnss_grpc_proxy output fifo for reads: "
+               << gnss_grpc_proxy_out_rd->StrError();
+    return {};
+  }
 
-    const unsigned gnss_grpc_proxy_server_port = instance.gnss_grpc_proxy_server_port();
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr);
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd);
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=", gnss_grpc_proxy_server_port);
-    if (!instance.gnss_file_path().empty()) {
-      // If path is provided, proxy will start as local mode.
-      gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=", instance.gnss_file_path());
-    }
-    process_monitor->AddCommand(std::move(gnss_grpc_proxy_cmd));
+  const unsigned gnss_grpc_proxy_server_port =
+      instance.gnss_grpc_proxy_server_port();
+  gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr);
+  gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd);
+  gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=",
+                                   gnss_grpc_proxy_server_port);
+  if (!instance.gnss_file_path().empty()) {
+    // If path is provided, proxy will start as local mode.
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_file_path=",
+                                     instance.gnss_file_path());
+  }
+  return single_element_emplace(std::move(gnss_grpc_proxy_cmd));
 }
 
-void LaunchBluetoothConnector(ProcessMonitor* process_monitor,
-                              const CuttlefishConfig& config) {
+std::vector<Command> LaunchBluetoothConnector(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   std::vector<std::string> fifo_paths = {
       instance.PerInstanceInternalPath("bt_fifo_vm.in"),
@@ -238,12 +240,12 @@ void LaunchBluetoothConnector(ProcessMonitor* process_monitor,
     unlink(path.c_str());
     if (mkfifo(path.c_str(), 0660) < 0) {
       PLOG(ERROR) << "Could not create " << path;
-      return;
+      return {};
     }
     auto fd = SharedFD::Open(path, O_RDWR);
     if (!fd->IsOpen()) {
       LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-      return;
+      return {};
     }
     fifos.push_back(fd);
   }
@@ -254,11 +256,10 @@ void LaunchBluetoothConnector(ProcessMonitor* process_monitor,
   command.AddParameter("-hci_port=", instance.rootcanal_hci_port());
   command.AddParameter("-link_port=", instance.rootcanal_link_port());
   command.AddParameter("-test_port=", instance.rootcanal_test_port());
-  process_monitor->AddCommand(std::move(command));
+  return single_element_emplace(std::move(command));
 }
 
-void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
-                             const CuttlefishConfig& config) {
+std::vector<Command> LaunchSecureEnvironment(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   std::vector<std::string> fifo_paths = {
     instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
@@ -271,12 +272,12 @@ void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
     unlink(path.c_str());
     if (mkfifo(path.c_str(), 0600) < 0) {
       PLOG(ERROR) << "Could not create " << path;
-      return;
+      return {};
     }
     auto fd = SharedFD::Open(path, O_RDWR);
     if (!fd->IsOpen()) {
       LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-      return;
+      return {};
     }
     fifos.push_back(fd);
   }
@@ -294,47 +295,14 @@ void LaunchSecureEnvironment(ProcessMonitor* process_monitor,
   auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
   command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
 
-  process_monitor->AddCommand(std::move(command));
+  return single_element_emplace(std::move(command));
 }
 
-void LaunchCustomActionServers(Command& webrtc_cmd,
-                               ProcessMonitor* process_monitor,
-                               const CuttlefishConfig& config) {
-  bool first = true;
-  for (const auto& custom_action : config.custom_actions()) {
-    if (custom_action.server) {
-      // Create a socket pair that will be used for communication between
-      // WebRTC and the action server.
-      SharedFD webrtc_socket, action_server_socket;
-      if (!SharedFD::SocketPair(AF_LOCAL, SOCK_STREAM, 0,
-                                &webrtc_socket, &action_server_socket)) {
-        LOG(ERROR) << "Unable to create custom action server socket pair: "
-                   << strerror(errno);
-        continue;
-      }
-
-      // Launch the action server, providing its socket pair fd as the only argument.
-      std::string binary = "bin/" + *(custom_action.server);
-      Command command(DefaultHostArtifactsPath(binary));
-      command.AddParameter(action_server_socket);
-      process_monitor->AddCommand(std::move(command));
-
-      // Pass the WebRTC socket pair fd to WebRTC.
-      if (first) {
-        first = false;
-        webrtc_cmd.AddParameter("-action_servers=", *custom_action.server, ":", webrtc_socket);
-      } else {
-        webrtc_cmd.AppendToLastParameter(",", *custom_action.server, ":", webrtc_socket);
-      }
-    }
-  }
-}
-
-void LaunchVehicleHalServerIfEnabled(const CuttlefishConfig& config,
-                                      ProcessMonitor* process_monitor) {
+std::vector<Command> LaunchVehicleHalServerIfEnabled(
+    const CuttlefishConfig& config) {
   if (!config.enable_vehicle_hal_grpc_server() ||
     !FileExists(config.vehicle_hal_grpc_server_binary())) {
-    return;
+    return {};
   }
 
   Command grpc_server(config.vehicle_hal_grpc_server_binary());
@@ -351,14 +319,13 @@ void LaunchVehicleHalServerIfEnabled(const CuttlefishConfig& config,
   grpc_server.AddParameter("--server_port=", vhal_server_port);
   grpc_server.AddParameter("--power_state_file=", vhal_server_power_state_file);
   grpc_server.AddParameter("--power_state_socket=", vhal_server_power_state_socket);
-  process_monitor->AddCommand(std::move(grpc_server));
+  return single_element_emplace(std::move(grpc_server));
 }
 
-void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
-                                     ProcessMonitor* process_monitor)
-{
+std::vector<Command> LaunchConsoleForwarderIfEnabled(
+    const CuttlefishConfig& config) {
   if (!config.console()) {
-    return;
+    return {};
   }
 
   Command console_forwarder_cmd(ConsoleForwarderBinary());
@@ -369,7 +336,7 @@ void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
     auto error = errno;
     LOG(ERROR) << "Failed to create console input fifo for crosvm: "
                << strerror(error);
-    return;
+    return {};
   }
 
   auto console_out_pipe_name = instance.console_out_pipe_name();
@@ -377,7 +344,7 @@ void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
     auto error = errno;
     LOG(ERROR) << "Failed to create console output fifo for crosvm: "
                << strerror(error);
-    return;
+    return {};
   }
 
   // These fds will only be read from or written to, but open them with
@@ -387,7 +354,7 @@ void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
   if (!console_forwarder_in_wr->IsOpen()) {
     LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
                << console_forwarder_in_wr->StrError();
-    return;
+    return {};
   }
 
   SharedFD console_forwarder_out_rd =
@@ -395,12 +362,12 @@ void LaunchConsoleForwarderIfEnabled(const CuttlefishConfig& config,
   if (!console_forwarder_out_rd->IsOpen()) {
     LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
                << console_forwarder_out_rd->StrError();
-    return;
+    return {};
   }
 
   console_forwarder_cmd.AddParameter("--console_in_fd=", console_forwarder_in_wr);
   console_forwarder_cmd.AddParameter("--console_out_fd=", console_forwarder_out_rd);
-  process_monitor->AddCommand(std::move(console_forwarder_cmd));
+  return single_element_emplace(std::move(console_forwarder_cmd));
 }
 
 } // namespace cuttlefish
