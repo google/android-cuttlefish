@@ -14,26 +14,12 @@
  * limitations under the License.
  */
 
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/prctl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <fcntl.h>
 #include <unistd.h>
-
-#include <algorithm>
-#include <functional>
-#include <iostream>
 #include <fstream>
-#include <iomanip>
+#include <iostream>
 #include <memory>
-#include <sstream>
 #include <string>
-#include <thread>
+#include <utility>
 #include <vector>
 
 #include <android-base/logging.h>
@@ -42,7 +28,6 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
-#include "common/libs/fs/shared_select.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/network.h"
@@ -53,12 +38,9 @@
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/process_monitor.h"
 #include "host/commands/run_cvd/runner_defs.h"
+#include "host/commands/run_cvd/server_loop.h"
 #include "host/libs/config/cuttlefish_config.h"
-#include "host/libs/config/data_image.h"
-#include "host/libs/config/kernel_args.h"
-#include "host/libs/vm_manager/crosvm_manager.h"
 #include "host/libs/vm_manager/host_configuration.h"
-#include "host/libs/vm_manager/qemu_manager.h"
 #include "host/libs/vm_manager/vm_manager.h"
 
 DEFINE_int32(reboot_notification_fd, -1,
@@ -158,182 +140,6 @@ SharedFD DaemonizeLauncher(const CuttlefishConfig& config) {
 
     read_end->Close();
     return write_end;
-  }
-}
-
-bool CreateQcowOverlay(const std::string& crosvm_path,
-                       const std::string& backing_file,
-                       const std::string& output_overlay_path) {
-  Command crosvm_qcow2_cmd(crosvm_path);
-  crosvm_qcow2_cmd.AddParameter("create_qcow2");
-  crosvm_qcow2_cmd.AddParameter("--backing_file=", backing_file);
-  crosvm_qcow2_cmd.AddParameter(output_overlay_path);
-  int success = crosvm_qcow2_cmd.Start().Wait();
-  if (success != 0) {
-    LOG(ERROR) << "Unable to run crosvm create_qcow2. Exited with status " << success;
-    return false;
-  }
-  return true;
-}
-
-void DeleteFifos(const CuttlefishConfig::InstanceSpecific& instance) {
-  // TODO(schuffelen): Create these FIFOs in assemble_cvd instead of run_cvd.
-  std::vector<std::string> pipes = {
-      instance.kernel_log_pipe_name(),
-      instance.console_in_pipe_name(),
-      instance.console_out_pipe_name(),
-      instance.logcat_pipe_name(),
-      instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
-      instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
-      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
-      instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
-      instance.PerInstanceInternalPath("bt_fifo_vm.in"),
-      instance.PerInstanceInternalPath("bt_fifo_vm.out"),
-  };
-  for (const auto& pipe : pipes) {
-    unlink(pipe.c_str());
-  }
-}
-
-bool PowerwashFiles() {
-  auto config = CuttlefishConfig::Get();
-  if (!config) {
-    LOG(ERROR) << "Could not load the config.";
-    return false;
-  }
-  auto instance = config->ForDefaultInstance();
-
-  DeleteFifos(instance);
-
-  // TODO(schuffelen): Clean up duplication with assemble_cvd
-  auto kregistry_path = instance.access_kregistry_path();
-  unlink(kregistry_path.c_str());
-  CreateBlankImage(kregistry_path, 2 /* mb */, "none");
-
-  auto pstore_path = instance.pstore_path();
-  unlink(pstore_path.c_str());
-  CreateBlankImage(pstore_path, 2 /* mb */, "none");
-
-  auto sdcard_path = instance.sdcard_path();
-  auto sdcard_size = FileSize(sdcard_path);
-  unlink(sdcard_path.c_str());
-  // round up
-  auto sdcard_mb_size = (sdcard_size + (1 << 20) - 1) / (1 << 20);
-  LOG(DEBUG) << "Size in mb is " << sdcard_mb_size;
-  CreateBlankImage(sdcard_path, sdcard_mb_size, "sdcard");
-
-  auto overlay_path = instance.PerInstancePath("overlay.img");
-  unlink(overlay_path.c_str());
-  if (!CreateQcowOverlay(config->crosvm_binary(),
-                         instance.os_composite_disk_path(), overlay_path)) {
-    LOG(ERROR) << "CreateQcowOverlay failed";
-    return false;
-  }
-  return true;
-}
-
-void RestartRunCvd(const CuttlefishConfig& config, int notification_fd) {
-  auto config_path = config.AssemblyPath("cuttlefish_config.json");
-  auto followup_stdin = SharedFD::MemfdCreate("pseudo_stdin");
-  WriteAll(followup_stdin, config_path + "\n");
-  followup_stdin->LSeek(0, SEEK_SET);
-  followup_stdin->UNMANAGED_Dup2(0);
-
-  auto argv_vec = gflags::GetArgvs();
-  char** argv = new char*[argv_vec.size() + 2];
-  for (size_t i = 0; i < argv_vec.size(); i++) {
-    argv[i] = argv_vec[i].data();
-  }
-  // Will take precedence over any earlier arguments.
-  std::string reboot_notification =
-      "-reboot_notification_fd=" + std::to_string(notification_fd);
-  argv[argv_vec.size()] = reboot_notification.data();
-  argv[argv_vec.size() + 1] = nullptr;
-
-  execv("/proc/self/exe", argv);
-  // execve should not return, so something went wrong.
-  PLOG(ERROR) << "execv returned: ";
-}
-
-void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
-  while (true) {
-    // TODO: use select to handle simultaneous connections.
-    auto client = SharedFD::Accept(*server);
-    LauncherAction action;
-    while (client->IsOpen() && client->Read(&action, sizeof(action)) > 0) {
-      switch (action) {
-        case LauncherAction::kStop:
-          if (process_monitor->StopMonitoredProcesses()) {
-            auto response = LauncherResponse::kSuccess;
-            client->Write(&response, sizeof(response));
-            std::exit(0);
-          } else {
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-          }
-          break;
-        case LauncherAction::kStatus: {
-          // TODO(schuffelen): Return more information on a side channel
-          auto response = LauncherResponse::kSuccess;
-          client->Write(&response, sizeof(response));
-          break;
-        }
-        case LauncherAction::kPowerwash: {
-          LOG(INFO) << "Received a Powerwash request from the monitor socket";
-          if (!process_monitor->StopMonitoredProcesses()) {
-            LOG(ERROR) << "Stopping processes failed.";
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-            break;
-          }
-          if (!PowerwashFiles()) {
-            LOG(ERROR) << "Powerwashing files failed.";
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-            break;
-          }
-          auto response = LauncherResponse::kSuccess;
-          client->Write(&response, sizeof(response));
-
-          auto config = CuttlefishConfig::Get();
-          CHECK(config) << "Could not load config";
-          RestartRunCvd(*config, client->UNMANAGED_Dup());
-          // RestartRunCvd should not return, so something went wrong.
-          response = LauncherResponse::kError;
-          client->Write(&response, sizeof(response));
-          LOG(FATAL) << "run_cvd in a bad state";
-          break;
-        }
-        case LauncherAction::kRestart: {
-          if (!process_monitor->StopMonitoredProcesses()) {
-            LOG(ERROR) << "Stopping processes failed.";
-            auto response = LauncherResponse::kError;
-            client->Write(&response, sizeof(response));
-            break;
-          }
-
-          auto config = CuttlefishConfig::Get();
-          CHECK(config) << "Could not load config";
-          auto instance = config->ForDefaultInstance();
-          DeleteFifos(instance);
-
-          auto response = LauncherResponse::kSuccess;
-          client->Write(&response, sizeof(response));
-          CHECK(config) << "Could not load config";
-          RestartRunCvd(*config, client->UNMANAGED_Dup());
-          // RestartRunCvd should not return, so something went wrong.
-          response = LauncherResponse::kError;
-          client->Write(&response, sizeof(response));
-          LOG(FATAL) << "run_cvd in a bad state";
-          break;
-        }
-        default:
-          LOG(ERROR) << "Unrecognized launcher action: "
-                     << static_cast<char>(action);
-          auto response = LauncherResponse::kError;
-          client->Write(&response, sizeof(response));
-      }
-    }
   }
 }
 
