@@ -20,9 +20,6 @@
 
 -include device/google/cuttlefish/shared/BoardConfig.mk
 
-# TARGET_KERNEL_USE is defined in kernel.mk, if not defined in the environment variable.
-BOARD_KERNEL_MODULE_INTERFACE_VERSIONS := $(TARGET_KERNEL_USE)-android12-0
-
 TARGET_BOARD_PLATFORM := vsoc_x86
 TARGET_ARCH := x86
 TARGET_ARCH_VARIANT := x86
