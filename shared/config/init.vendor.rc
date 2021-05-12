@@ -5,6 +5,7 @@ on early-init
 
     setprop ro.sf.lcd_density ${ro.boot.lcd_density}
     setprop ro.hardware.egl ${ro.boot.hardware.egl}
+    setprop debug.sf.vsync_reactor_ignore_present_fences true
     setprop ro.hardware.gralloc ${ro.boot.hardware.gralloc}
     setprop ro.hardware.hwcomposer ${ro.boot.hardware.hwcomposer}
     setprop ro.hardware.vulkan ${ro.boot.hardware.vulkan}
