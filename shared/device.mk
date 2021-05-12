@@ -596,14 +596,7 @@ PRODUCT_PACKAGES += \
     android.hardware.memtrack-service.example
 
 # GKI APEX
-# Keep in sync with BOARD_KERNEL_MODULE_INTERFACE_VERSIONS
-ifneq (,$(TARGET_KERNEL_USE))
-  ifneq (,$(filter 5.4, $(TARGET_KERNEL_USE)))
-    PRODUCT_PACKAGES += com.android.gki.kmi_5_4_android12_unstable
-  else
-    PRODUCT_PACKAGES += com.android.gki.kmi_$(subst .,_,$(TARGET_KERNEL_USE))_android12_unstable
-  endif
-endif
+PRODUCT_PACKAGES += com.android.gki.kmi_5_10_android12_1
 
 # Prevent GKI and boot image downgrades
 PRODUCT_PRODUCT_PROPERTIES += \
