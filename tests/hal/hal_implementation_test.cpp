@@ -64,6 +64,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.hardware.health.storage@1.0", // converted to AIDL, see b/177470478
     "android.hardware.ir@1.0",
     "android.hardware.keymaster@3.0",
+    "android.hardware.keymaster@4.1", // Replaced by KeyMint
     "android.hardware.light@2.0",
     "android.hardware.media.bufferpool@1.0",
     "android.hardware.media.bufferpool@2.0",
