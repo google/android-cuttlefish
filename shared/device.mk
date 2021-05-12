@@ -526,15 +526,6 @@ PRODUCT_PACKAGES += \
     android.hardware.lights-service.example \
 
 #
-# Keymaster HAL
-#
-ifeq ($(LOCAL_KEYMASTER_PRODUCT_PACKAGE),)
-       LOCAL_KEYMASTER_PRODUCT_PACKAGE := android.hardware.keymaster@4.1-service
-endif
-PRODUCT_PACKAGES += \
-    $(LOCAL_KEYMASTER_PRODUCT_PACKAGE)
-
-#
 # KeyMint HAL
 #
 ifeq ($(LOCAL_KEYMINT_PRODUCT_PACKAGE),)
