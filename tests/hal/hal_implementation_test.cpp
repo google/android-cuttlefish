@@ -30,6 +30,7 @@ static const std::set<std::string> kKnownMissingHidl = {
     "android.frameworks.vr.composer@1.0",
     "android.frameworks.vr.composer@2.0",
     "android.frameworks.automotive.display@1.0",
+    "android.frameworks.stats@1.0",  // converted to AIDL, see b/177667419
     "android.hardware.audio@2.0",
     "android.hardware.audio@4.0",
     "android.hardware.audio@5.0",
