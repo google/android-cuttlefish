@@ -60,10 +60,18 @@ You can use `adb` to debug it, just like a physical device:
 
    `$ ./bin/adb -e shell`
 
-## Launch Viewer
+## Launch Viewer (WebRTC)
 
-You can use the [TightVNC JViewer](https://www.tightvnc.com/download.php). Once
-you have downloaded the *TightVNC Java Viewer JAR in a ZIP archive*, run it with
+When launching with `---start_webrtc` (the default), you can see a list of all
+available devices at `https://localhost:8443` . For more information, see the
+WebRTC on Cuttlefish
+[documentation](https://source.android.com/setup/create/cuttlefish-ref-webrtc).
+
+## Launch Viewer (VNC)
+
+When launching with `--start_vnc_server=true` , You can use the
+[TightVNC JViewer](https://www.tightvnc.com/download.php). Once you have
+downloaded the *TightVNC Java Viewer JAR in a ZIP archive*, run it with
 
    `$ java -jar tightvnc-jviewer.jar -ScalingFactor=50 -Tunneling=no -host=localhost -port=6444`
 
