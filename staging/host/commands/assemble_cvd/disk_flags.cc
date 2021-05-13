@@ -21,10 +21,13 @@
 #include <fstream>
 
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <gflags/gflags.h>
 
+#include "common/libs/fs/shared_buf.h"
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
+#include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/commands/assemble_cvd/boot_config.h"
 #include "host/commands/assemble_cvd/boot_image_utils.h"
@@ -209,6 +212,10 @@ std::vector<ImagePartition> persistent_composite_disk_config(
         .image_file_path = instance.factory_reset_protected_path(),
     });
   }
+  partitions.push_back(ImagePartition{
+      .label = "bootconfig",
+      .image_file_path = instance.persistent_bootconfig_path(),
+  });
   return partitions;
 }
 
@@ -471,6 +478,31 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
       if (!FileExists(frp)) {
         CreateBlankImage(frp, 1 /* mb */, "none");
       }
+
+      const auto bootconfig_path = instance.persistent_bootconfig_path();
+      if (!FileExists(bootconfig_path)) {
+        CreateBlankImage(bootconfig_path, 1 /* mb */, "none");
+      }
+
+      auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
+      CHECK(bootconfig_fd->IsOpen())
+          << "Unable to open bootconfig file: " << bootconfig_fd->StrError();
+
+      const std::string bootconfig =
+          android::base::Join(BootconfigArgsFromConfig(*config, instance),
+                              "\n") +
+          "\n";
+      ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
+      CHECK(bytesWritten == bootconfig.size());
+      LOG(DEBUG)
+          << "Bootconfig parameters from vendor boot image and config are "
+          << ReadFile(bootconfig_path);
+
+      const off_t bootconfig_size_bytes =
+          AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
+      CHECK(bootconfig_fd->Truncate(bootconfig_size_bytes) == 0)
+          << "`truncate --size=" << bootconfig_size_bytes << " bytes "
+          << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
     }
   }
 
