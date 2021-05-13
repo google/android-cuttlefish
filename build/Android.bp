@@ -68,6 +68,9 @@ cvd_host_tools = [
     "powerwash_cvd",
     "restart_cvd",
     "root-canal",
+    // TODO(b/186487510): remove libchrome and libbacktrace when ASan-related dependency issue is resolved.
+    "libchrome",
+    "libbacktrace",
     "run_cvd",
     "secure_env",
     "socket_vsock_proxy",
