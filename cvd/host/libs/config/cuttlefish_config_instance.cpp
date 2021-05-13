@@ -471,6 +471,11 @@ std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() c
   return PerInstanceInternalPath("factory_reset_protected.img");
 }
 
+std::string CuttlefishConfig::InstanceSpecific::persistent_bootconfig_path()
+    const {
+  return PerInstanceInternalPath("bootconfig");
+}
+
 std::string CuttlefishConfig::InstanceSpecific::PerInstancePath(
     const char* file_name) const {
   return (instance_dir() + "/") + file_name;
