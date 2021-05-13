@@ -30,8 +30,9 @@ namespace confui {
 namespace packet {
 ConfUiMessage PayloadToConfUiMessage(const std::string& str_to_parse) {
   auto tokens = android::base::Split(str_to_parse, ":");
-  PassOrDie(tokens.size() >= 3, "PayloadToConfUiMessage takes \"", str_to_parse,
-            "\" and does not have 3 tokens");
+  ConfUiCheck(tokens.size() >= 3)
+      << "PayloadToConfUiMessage takes \"" + str_to_parse + "\""
+      << "and does not have 3 tokens";
   std::string msg;
   std::for_each(tokens.begin() + 2, tokens.end() - 1,
                 [&msg](auto& token) { msg.append(token + ":"); });
