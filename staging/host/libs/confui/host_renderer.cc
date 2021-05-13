@@ -105,7 +105,7 @@ bool ConfUiRenderer::InitLayout(const std::string& lang_id) {
   layout_ = teeui::instantiateLayout(teeui::ConfUILayout(), ctx_);
   SetLangId(lang_id);
   if (auto error = UpdateTranslations()) {
-    ErrorLog("Update Translation Error");
+    ConfUiLog(ERROR) << "Update Translation Error";
     return false;
   }
   UpdateColorScheme(&ctx_);
@@ -120,7 +120,7 @@ teeui::Error ConfUiRenderer::UpdatePixels(TeeUiFrame& raw_frame,
   const auto width = ScreenConnectorInfo::ScreenWidth(display_num_);
   auto pos = width * y + x;
   if (pos >= (height * width)) {
-    ErrorLog("Rendering Out of Bound");
+    ConfUiLog(ERROR) << "Rendering Out of Bound";
     return teeui::Error::OutOfBoundsDrawing;
   }
   const double alfa = ((color & 0xff000000) >> 24) / 255.0;
@@ -202,7 +202,7 @@ std::optional<TeeUiFrame> ConfUiRenderer::RepaintRawFrame(
   // render all components
   const auto error = drawElements(layout_, draw_pixel);
   if (error) {
-    ErrorLog("Painting failed: ", error.code());
+    ConfUiLog(ERROR) << "Painting failed: " << error.code();
     return std::nullopt;
   }
 
@@ -232,9 +232,10 @@ teeui::Error ConfUiRenderer::RenderConfirmationMsgOnly(
   }
 
   SetConfUiMessage(confirmation_msg);
-  DebugLog("Repaint Confirmation Msg with : ", prompt_);
+  ConfUiLog(DEBUG) << "Repaint Confirmation Msg with :" << prompt_;
   if (auto error = std::get<LabelConfMsg>(layout_).draw(draw_pixel)) {
-    ErrorLog("Repainting Confirmation Message Label failed: ", error.code());
+    ConfUiLog(ERROR) << "Repainting Confirmation Message Label failed:"
+                     << error.code();
     return error;
   }
   return teeui::Error::OK;

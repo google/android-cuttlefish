@@ -44,29 +44,11 @@ std::string ArgsToString(Args&&... args) {
   return ArgsToStringWithDelim("", std::forward<Args>(args)...);
 }
 
-template <typename... Args>
-std::string ToConLog(Args&&... args) {
-  return ArgsToStringWithDelim(" ", "ConfUI: ", std::forward<Args>(args)...);
-}
+// note that no () surrounding LOG(level) << "ConfUI:" is crucial
+#define ConfUiLog(LOG_LEVEL) LOG(LOG_LEVEL) << "ConfUI: "
 
 // TODO(kwstephenkim@google.com): make these look more like LOG(level)
-#define DEFINE_CONFUI_LOG_FUNC(NAME, LOG_LEVEL)              \
-  template <typename... Args>                                \
-  void NAME##Log(Args&&... args) {                           \
-    LOG(LOG_LEVEL) << ToConLog(std::forward<Args>(args)...); \
-  }
-
-DEFINE_CONFUI_LOG_FUNC(Fatal, FATAL)
-DEFINE_CONFUI_LOG_FUNC(Error, ERROR)
-DEFINE_CONFUI_LOG_FUNC(Warning, WARNING)
-DEFINE_CONFUI_LOG_FUNC(Debug, DEBUG)
-DEFINE_CONFUI_LOG_FUNC(Info, INFO)
-DEFINE_CONFUI_LOG_FUNC(Verbose, VERBOSE)
-
-template <typename... Args>
-void PassOrDie(bool cond, Args&&... args) {
-  CHECK(cond) << ToConLog(std::forward<Args>(args)...);
-}
+#define ConfUiCheck(cond) CHECK(cond) << "ConfUI: "
 
 }  // end of namespace confui
 }  // end of namespace cuttlefish
