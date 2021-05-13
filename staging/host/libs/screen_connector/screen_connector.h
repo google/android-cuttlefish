@@ -23,6 +23,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <thread>
 #include <type_traits>
 
@@ -38,12 +39,6 @@
 #include "host/libs/screen_connector/screen_connector_common.h"
 #include "host/libs/screen_connector/screen_connector_queue.h"
 #include "host/libs/screen_connector/wayland_screen_connector.h"
-
-// LOG(X) for confirmation UI debugging
-using cuttlefish::confui::DebugLog;
-using cuttlefish::confui::ErrorLog;
-using cuttlefish::confui::FatalLog;
-using cuttlefish::confui::VerboseLog;
 
 namespace cuttlefish {
 
@@ -124,33 +119,38 @@ class ScreenConnector : public ScreenConnectorInfo,
   ProcessedFrameType OnNextFrame() {
     on_next_frame_cnt_++;
     while (true) {
-      VerboseLog("Streamer waiting Semaphore with host ctrl mode = ",
-                 static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
-                 " and cnd = #", on_next_frame_cnt_);
+      ConfUiLog(VERBOSE) << "Streamer waiting Semaphore with host ctrl mode ="
+                         << static_cast<std::uint32_t>(
+                                host_mode_ctrl_.GetMode())
+                         << " and cnd = #" << on_next_frame_cnt_;
       sc_sem_.SemWait();
-      VerboseLog("Streamer got Semaphore'ed resources with host ctrl mode = ",
-                 static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
-                 " and cnd = #", on_next_frame_cnt_);
+      ConfUiLog(VERBOSE)
+          << "Streamer got Semaphore'ed resources with host ctrl mode ="
+          << static_cast<std::uint32_t>(host_mode_ctrl_.GetMode())
+          << "and cnd = #" << on_next_frame_cnt_;
       // do something
       if (!sc_android_queue_.Empty()) {
         auto mode = host_mode_ctrl_.GetMode();
         if (mode == HostModeCtrl::ModeType::kAndroidMode) {
-          VerboseLog("Streamer gets Android frame with host ctrl mode = ",
-                     static_cast<std::uint32_t>(mode), " and cnd = #",
-                     on_next_frame_cnt_);
+          ConfUiLog(VERBOSE)
+              << "Streamer gets Android frame with host ctrl mode ="
+              << static_cast<std::uint32_t>(mode) << "and cnd = #"
+              << on_next_frame_cnt_;
           return sc_android_queue_.PopFront();
         }
         // AndroidFrameFetchingLoop could have added 1 or 2 frames
         // before it becomes Conf UI mode.
-        VerboseLog("Streamer ignores Android frame with host ctrl mode = ",
-                   static_cast<std::uint32_t>(mode), " and cnd = #",
-                   on_next_frame_cnt_);
+        ConfUiLog(VERBOSE)
+            << "Streamer ignores Android frame with host ctrl mode ="
+            << static_cast<std::uint32_t>(mode) << "and cnd = #"
+            << on_next_frame_cnt_;
         sc_android_queue_.PopFront();
         continue;
       }
-      VerboseLog("Streamer gets Conf UI frame with host ctrl mode = ",
-                 static_cast<std::uint32_t>(host_mode_ctrl_.GetMode()),
-                 " and cnd = #", on_next_frame_cnt_);
+      ConfUiLog(VERBOSE) << "Streamer gets Conf UI frame with host ctrl mode = "
+                         << static_cast<std::uint32_t>(
+                                host_mode_ctrl_.GetMode())
+                         << " and cnd = #" << on_next_frame_cnt_;
       return sc_confui_queue_.PopFront();
     }
   }
@@ -170,22 +170,25 @@ class ScreenConnector : public ScreenConnectorInfo,
       GenerateProcessedFrameCallbackImpl callback_for_sc_impl =
           std::bind(cp_of_streamer_callback, std::placeholders::_1,
                     std::placeholders::_2, std::ref(processed_frame));
-      VerboseLog(
-          cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
-          " calling Android OnNextFrame. ", " at loop #", loop_cnt);
+      ConfUiLog(VERBOSE) << cuttlefish::confui::thread::GetName(
+                                std::this_thread::get_id())
+                         << " calling Android OnNextFrame. "
+                         << " at loop #" << loop_cnt;
       bool flag = sc_android_src_->OnNextFrame(callback_for_sc_impl);
       processed_frame.is_success_ = flag && processed_frame.is_success_;
       const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
       if (!is_confui_mode) {
-        VerboseLog(
-            cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
-            " is sending an Android Frame at loop_cnt #", loop_cnt);
+        ConfUiLog(VERBOSE) << cuttlefish::confui::thread::GetName(
+                                  std::this_thread::get_id())
+                           << "is sending an Android Frame at loop_cnt #"
+                           << loop_cnt;
         sc_android_queue_.PushBack(std::move(processed_frame));
         continue;
       }
-      VerboseLog(
-          cuttlefish::confui::thread::GetName(std::this_thread::get_id()),
-          " is skipping an Android Frame at loop_cnt #", loop_cnt);
+      ConfUiLog(VERBOSE) << cuttlefish::confui::thread::GetName(
+                                std::this_thread::get_id())
+                         << "is skipping an Android Frame at loop_cnt #"
+                         << loop_cnt;
     }
   }
 
@@ -202,13 +205,14 @@ class ScreenConnector : public ScreenConnectorInfo,
     // wait callback is not set, the streamer is not ready
     // return with LOG(ERROR)
     if (!IsCallbackSet()) {
-      ErrorLog("callback function to process frames is not yet set");
+      ConfUiLog(ERROR) << "callback function to process frames is not yet set";
       return false;
     }
     ProcessedFrameType processed_frame;
     auto this_thread_name = cuttlefish::confui::thread::GetName();
-    DebugLog(this_thread_name, " is sending a #", render_confui_cnt_,
-             " Conf UI frame");
+    ConfUiLog(DEBUG) << this_thread_name
+                     << "is sending a #" + std::to_string(render_confui_cnt_)
+                     << "Conf UI frame";
     callback_from_streamer_(display, raw_frame, processed_frame);
     // now add processed_frame to the queue
     sc_confui_queue_.PushBack(std::move(processed_frame));
