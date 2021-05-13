@@ -69,11 +69,11 @@ class ThreadTracer {
   std::thread RunThread(const std::string& name, F&& f, Args&&... args) {
     auto th = std::thread(std::forward<F>(f), std::forward<Args>(args)...);
     if (name2id_.find(name) != name2id_.end()) {
-      FatalLog("Thread name duplicated");
+      ConfUiLog(FATAL) << "Thread name is duplicated";
     }
     name2id_[name] = th.get_id();
     id2name_[th.get_id()] = name;
-    DebugLog(name, " thread started.");
+    ConfUiLog(DEBUG) << name << "thread started.";
     return th;
   }
   std::string Get(const std::thread::id id = std::this_thread::get_id());
