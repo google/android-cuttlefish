@@ -34,7 +34,7 @@ void ThreadTracer::Set(const std::string& name, const std::thread::id tid) {
   if (name2id_.find(name) != name2id_.end()) {
     // has the name already
     if (name2id_[name] != tid) {  // used for another thread
-      FatalLog("Thread name is duplicated.");
+      ConfUiLog(FATAL) << "Thread name is duplicated.";
     }
     // name and id are already set correctly
     return;
