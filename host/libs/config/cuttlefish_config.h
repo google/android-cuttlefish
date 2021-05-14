@@ -89,6 +89,8 @@ class CuttlefishConfig {
 
   std::string AssemblyPath(const std::string&) const;
 
+  std::string os_composite_disk_path() const;
+
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
 
@@ -429,8 +431,6 @@ class CuttlefishConfig {
     std::string launcher_monitor_socket_path() const;
 
     std::string sdcard_path() const;
-
-    std::string os_composite_disk_path() const;
 
     std::string persistent_composite_disk_path() const;
 
