@@ -36,6 +36,15 @@ struct ImagePartition {
   bool read_only;
 };
 
+struct MultipleImagePartition {
+  std::string label;
+  std::vector<std::string> image_file_paths;
+  ImagePartitionType type;
+  bool read_only;
+};
+
+uint64_t AlignToPartitionSize(uint64_t size);
+
 /**
  * Combine the files in `partition` into a single raw disk file and write it to
  * `output_path`. The raw disk file will have a GUID Partition Table and copy in
@@ -61,6 +70,14 @@ void CreateCompositeDisk(std::vector<ImagePartition> partitions,
                          const std::string& footer_file,
                          const std::string& output_composite_path);
 
+/**
+ * Overloaded function to generate a composite disk with multiple images for a
+ * single partition.
+ */
+void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
+                         const std::string& header_file,
+                         const std::string& footer_file,
+                         const std::string& output_composite_path);
 /**
  * Generate a qcow overlay backed by a given implementation file.
  *
