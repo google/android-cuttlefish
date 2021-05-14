@@ -35,6 +35,9 @@ class Value;
 namespace cuttlefish {
 constexpr char kLogcatSerialMode[] = "serial";
 constexpr char kLogcatVsockMode[] = "vsock";
+}
+
+namespace cuttlefish {
 
 constexpr char kDefaultUuidPrefix[] = "699acfc4-c8c4-11e7-882b-5065f31dc1";
 constexpr char kCuttlefishConfigEnvVarName[] = "CUTTLEFISH_CONFIG_FILE";
@@ -52,7 +55,6 @@ constexpr char kScreenChangedMessage[] = "VIRTUAL_DEVICE_SCREEN_CHANGED";
 constexpr char kInternalDirName[] = "internal";
 constexpr char kSharedDirName[] = "shared";
 constexpr char kCrosvmVarEmptyDir[] = "/var/empty";
-constexpr char kKernelLoadedMessage[] = "] Linux version";
 
 enum class AdbMode {
   VsockTunnel,
@@ -86,6 +88,8 @@ class CuttlefishConfig {
   void set_assembly_dir(const std::string& assembly_dir);
 
   std::string AssemblyPath(const std::string&) const;
+
+  std::string os_composite_disk_path() const;
 
   std::string vm_manager() const;
   void set_vm_manager(const std::string& name);
@@ -427,8 +431,6 @@ class CuttlefishConfig {
     std::string launcher_monitor_socket_path() const;
 
     std::string sdcard_path() const;
-
-    std::string os_composite_disk_path() const;
 
     std::string persistent_composite_disk_path() const;
 
