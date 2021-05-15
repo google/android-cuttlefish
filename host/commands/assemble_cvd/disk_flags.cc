@@ -121,8 +121,7 @@ bool ResolveInstanceFiles() {
   return true;
 }
 
-std::vector<ImagePartition> os_composite_disk_config(
-    const CuttlefishConfig::InstanceSpecific& instance) {
+std::vector<ImagePartition> os_composite_disk_config() {
   std::vector<ImagePartition> partitions;
   partitions.push_back(ImagePartition {
     .label = "misc",
@@ -143,27 +142,14 @@ std::vector<ImagePartition> os_composite_disk_config(
     .label = "boot_b",
     .image_file_path = FLAGS_boot_image,
   });
-  // Boot image repacking is not supported on protected VMs. Repacking requires
-  // resigning the image and keys on android hosts aren't trusted.
-  if (!FLAGS_protected_vm) {
-    partitions.push_back(ImagePartition{
-        .label = "vendor_boot_a",
-        .image_file_path = instance.vendor_boot_image_path(),
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vendor_boot_b",
-        .image_file_path = instance.vendor_boot_image_path(),
-    });
-  } else {
-    partitions.push_back(ImagePartition{
-        .label = "vendor_boot_a",
-        .image_file_path = FLAGS_vendor_boot_image,
-    });
-    partitions.push_back(ImagePartition{
-        .label = "vendor_boot_b",
-        .image_file_path = FLAGS_vendor_boot_image,
-    });
-  }
+  partitions.push_back(ImagePartition{
+      .label = "vendor_boot_a",
+      .image_file_path = FLAGS_vendor_boot_image,
+  });
+  partitions.push_back(ImagePartition{
+      .label = "vendor_boot_b",
+      .image_file_path = FLAGS_vendor_boot_image,
+  });
   partitions.push_back(ImagePartition {
     .label = "vbmeta_a",
     .image_file_path = FLAGS_vbmeta_image,
@@ -237,8 +223,7 @@ static std::chrono::system_clock::time_point LastUpdatedInputDisk(
 
 bool ShouldCreateAllCompositeDisks(const CuttlefishConfig& config) {
   std::chrono::system_clock::time_point youngest_disk_img;
-  for (auto& partition :
-       os_composite_disk_config(config.ForDefaultInstance())) {
+  for (auto& partition : os_composite_disk_config()) {
     auto partition_mod_time = FileModificationTime(partition.image_file_path);
     if (partition_mod_time > youngest_disk_img) {
       youngest_disk_img = partition_mod_time;
@@ -346,12 +331,12 @@ bool CreateCompositeDisk(const CuttlefishConfig& config,
         instance.PerInstancePath("os_composite_gpt_header.img");
     std::string footer_path =
         instance.PerInstancePath("os_composite_gpt_footer.img");
-    CreateCompositeDisk(os_composite_disk_config(instance), header_path,
-                        footer_path, instance.os_composite_disk_path());
+    CreateCompositeDisk(os_composite_disk_config(), header_path, footer_path,
+                        instance.os_composite_disk_path());
   } else {
     // If this doesn't fit into the disk, it will fail while aggregating. The
     // aggregator doesn't maintain any sparse attributes.
-    AggregateImage(os_composite_disk_config(instance),
+    AggregateImage(os_composite_disk_config(),
                    instance.os_composite_disk_path());
   }
   return true;
@@ -398,42 +383,67 @@ static void RepackAllBootImages(const CuttlefishConfig* config) {
                                  google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
 
-  for (auto instance : config->Instances()) {
+  if (FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
     const std::string new_vendor_boot_image_path =
-        instance.vendor_boot_image_path();
-    const std::vector<std::string> boot_config_vector =
-        BootconfigArgsFromConfig(*config, instance);
-    if (FLAGS_kernel_path.size() || FLAGS_initramfs_path.size()) {
-      // Repack the vendor boot images if kernels and/or ramdisks are passed in.
-      if (FLAGS_initramfs_path.size()) {
-        bool success = RepackVendorBootImage(
-            FLAGS_initramfs_path, FLAGS_vendor_boot_image,
-            new_vendor_boot_image_path, config->assembly_dir(),
-            instance.instance_dir(), boot_config_vector,
-            config->bootconfig_supported());
-        CHECK(success) << "Failed to regenerate the vendor boot image with the "
-                          "new ramdisk";
-      } else {
-        // This control flow implies a kernel with all configs built in.
-        // If it's just the kernel, repack the vendor boot image without a
-        // ramdisk.
-        bool success = RepackVendorBootImageWithEmptyRamdisk(
-            FLAGS_vendor_boot_image, new_vendor_boot_image_path,
-            config->assembly_dir(), instance.instance_dir(), boot_config_vector,
-            config->bootconfig_supported());
-        CHECK(success)
-            << "Failed to regenerate the vendor boot image without a ramdisk";
-      }
-    } else {
-      // Repack the vendor boot image to add the instance specific bootconfig
-      // parameters
+        config->AssemblyPath("vendor_boot_repacked.img");
+    // Repack the vendor boot images if kernels and/or ramdisks are passed in.
+    if (FLAGS_initramfs_path.size()) {
       bool success = RepackVendorBootImage(
-          std::string(), FLAGS_vendor_boot_image, new_vendor_boot_image_path,
-          config->assembly_dir(), instance.instance_dir(), boot_config_vector,
+          FLAGS_initramfs_path, FLAGS_vendor_boot_image,
+          new_vendor_boot_image_path, config->assembly_dir(),
           config->bootconfig_supported());
-      CHECK(success) << "Failed to regenerate the vendor boot image";
+      CHECK(success) << "Failed to regenerate the vendor boot image with the "
+                        "new ramdisk";
+    } else {
+      // This control flow implies a kernel with all configs built in.
+      // If it's just the kernel, repack the vendor boot image without a
+      // ramdisk.
+      bool success = RepackVendorBootImageWithEmptyRamdisk(
+          FLAGS_vendor_boot_image, new_vendor_boot_image_path,
+          config->assembly_dir(), config->bootconfig_supported());
+      CHECK(success)
+          << "Failed to regenerate the vendor boot image without a ramdisk";
     }
+    SetCommandLineOptionWithMode("vendor_boot_image",
+                                 new_vendor_boot_image_path.c_str(),
+                                 google::FlagSettingMode::SET_FLAGS_DEFAULT);
   }
+}
+
+static void GeneratePersistentBootconfig(
+    const CuttlefishConfig* config,
+    const CuttlefishConfig::InstanceSpecific& instance) {
+  const auto bootconfig_path = instance.persistent_bootconfig_path();
+  if (!FileExists(bootconfig_path)) {
+    CreateBlankImage(bootconfig_path, 1 /* mb */, "none");
+  }
+
+  auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
+  CHECK(bootconfig_fd->IsOpen())
+      << "Unable to open bootconfig file: " << bootconfig_fd->StrError();
+
+  //  Cuttlefish for the time being won't be able to support OTA from a
+  //  non-bootconfig kernel to a bootconfig-kernel (or vice versa) IF the device
+  //  is stopped (via stop_cvd). This is rarely an issue since OTA testing run
+  //  on cuttlefish is done within one launch cycle of the device. If this ever
+  //  becomes an issue, this code will have to be rewritten.
+  if (!config->bootconfig_supported()) {
+    return;
+  }
+
+  const std::string bootconfig =
+      android::base::Join(BootconfigArgsFromConfig(*config, instance), "\n") +
+      "\n";
+  ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
+  CHECK(bytesWritten == bootconfig.size());
+  LOG(DEBUG) << "Bootconfig parameters from vendor boot image and config are "
+             << ReadFile(bootconfig_path);
+
+  const off_t bootconfig_size_bytes =
+      AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
+  CHECK(bootconfig_fd->Truncate(bootconfig_size_bytes) == 0)
+      << "`truncate --size=" << bootconfig_size_bytes << " bytes "
+      << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
 }
 
 void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
@@ -479,30 +489,7 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
         CreateBlankImage(frp, 1 /* mb */, "none");
       }
 
-      const auto bootconfig_path = instance.persistent_bootconfig_path();
-      if (!FileExists(bootconfig_path)) {
-        CreateBlankImage(bootconfig_path, 1 /* mb */, "none");
-      }
-
-      auto bootconfig_fd = SharedFD::Open(bootconfig_path, O_RDWR);
-      CHECK(bootconfig_fd->IsOpen())
-          << "Unable to open bootconfig file: " << bootconfig_fd->StrError();
-
-      const std::string bootconfig =
-          android::base::Join(BootconfigArgsFromConfig(*config, instance),
-                              "\n") +
-          "\n";
-      ssize_t bytesWritten = WriteAll(bootconfig_fd, bootconfig);
-      CHECK(bytesWritten == bootconfig.size());
-      LOG(DEBUG)
-          << "Bootconfig parameters from vendor boot image and config are "
-          << ReadFile(bootconfig_path);
-
-      const off_t bootconfig_size_bytes =
-          AlignToPowerOf2(bootconfig.size(), PARTITION_SIZE_SHIFT);
-      CHECK(bootconfig_fd->Truncate(bootconfig_size_bytes) == 0)
-          << "`truncate --size=" << bootconfig_size_bytes << " bytes "
-          << bootconfig_path << "` failed:" << bootconfig_fd->StrError();
+      GeneratePersistentBootconfig(config, instance);
     }
   }
 
@@ -549,9 +536,9 @@ void CreateDynamicDiskFiles(const FetcherConfig& fetcher_config,
   for (auto instance : config->Instances()) {
     bool compositeMatchesDiskConfig = DoesCompositeMatchCurrentDiskConfig(
         instance.PerInstancePath("os_composite_disk_config.txt"),
-        os_composite_disk_config(instance));
+        os_composite_disk_config());
     bool oldCompositeDisk = ShouldCreateCompositeDisk(
-        instance.os_composite_disk_path(), os_composite_disk_config(instance));
+        instance.os_composite_disk_path(), os_composite_disk_config());
     if (!compositeMatchesDiskConfig || oldCompositeDisk || !FLAGS_resume || newDataImage) {
       if (FLAGS_resume) {
         LOG(INFO) << "Requested to continue an existing session, (the default) "
