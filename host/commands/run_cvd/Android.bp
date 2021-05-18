@@ -34,6 +34,7 @@ cc_binary {
         "libcuttlefish_utils",
         "libcuttlefish_kernel_log_monitor_utils",
         "libbase",
+        "libfruit",
         "libjsoncpp",
         "libnl",
     ],
