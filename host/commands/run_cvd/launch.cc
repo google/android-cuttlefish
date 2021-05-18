@@ -43,46 +43,85 @@ std::vector<T> single_element_emplace(T&& element) {
 
 CommandSource::~CommandSource() = default;
 
-KernelLogMonitorData LaunchKernelLogMonitor(
-    const CuttlefishConfig& config, unsigned int number_of_event_pipes) {
-  auto instance = config.ForDefaultInstance();
-  auto log_name = instance.kernel_log_pipe_name();
-  if (mkfifo(log_name.c_str(), 0600) != 0) {
-    LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
-               << strerror(errno);
-    return {};
-  }
+KernelLogPipeProvider::~KernelLogPipeProvider() = default;
 
-  SharedFD pipe;
-  // Open the pipe here (from the launcher) to ensure the pipe is not deleted
-  // due to the usage counters in the kernel reaching zero. If this is not done
-  // and the kernel_log_monitor crashes for some reason the VMM may get SIGPIPE.
-  pipe = SharedFD::Open(log_name.c_str(), O_RDWR);
-  Command command(KernelLogMonitorBinary());
-  command.AddParameter("-log_pipe_fd=", pipe);
+class KernelLogMonitor : public CommandSource, public KernelLogPipeProvider {
+ public:
+  INJECT(KernelLogMonitor(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
-  KernelLogMonitorData ret;
+  // CommandSource
+  std::vector<Command> Commands() override {
+    Command command(KernelLogMonitorBinary());
+    command.AddParameter("-log_pipe_fd=", fifo_);
 
-  if (number_of_event_pipes > 0) {
-    command.AddParameter("-subscriber_fds=");
-    for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
-      SharedFD event_pipe_write_end, event_pipe_read_end;
-      if (!SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
-        LOG(ERROR) << "Unable to create kernel log events pipe: " << strerror(errno);
-        std::exit(RunnerExitCodes::kPipeIOError);
+    if (!event_pipe_write_ends_.empty()) {
+      command.AddParameter("-subscriber_fds=");
+      for (size_t i = 0; i < event_pipe_write_ends_.size(); i++) {
+        if (i > 0) {
+          command.AppendToLastParameter(",");
+        }
+        command.AppendToLastParameter(event_pipe_write_ends_[i]);
       }
-      if (i > 0) {
-        command.AppendToLastParameter(",");
-      }
-      command.AppendToLastParameter(event_pipe_write_end);
-      ret.pipes.push_back(event_pipe_read_end);
     }
+
+    return single_element_emplace(std::move(command));
   }
 
-  ret.commands.emplace_back(std::move(command));
+  // KernelLogPipeProvider
+  SharedFD KernelLogPipe() override {
+    CHECK(!event_pipe_read_ends_.empty()) << "No more kernel pipes left";
+    SharedFD ret = event_pipe_read_ends_.back();
+    event_pipe_read_ends_.pop_back();
+    return ret;
+  }
 
-  return ret;
-}
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "KernelLogMonitor"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    auto log_name = instance_.kernel_log_pipe_name();
+    if (mkfifo(log_name.c_str(), 0600) != 0) {
+      LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
+                 << strerror(errno);
+      return false;
+    }
+
+    // Open the pipe here (from the launcher) to ensure the pipe is not deleted
+    // due to the usage counters in the kernel reaching zero. If this is not
+    // done and the kernel_log_monitor crashes for some reason the VMM may get
+    // SIGPIPE.
+    fifo_ = SharedFD::Open(log_name, O_RDWR);
+    if (!fifo_->IsOpen()) {
+      LOG(ERROR) << "Unable to open \"" << log_name << "\"";
+      return false;
+    }
+
+    // TODO(schuffelen): Find a way to calculate this dynamically.
+    int number_of_event_pipes = 3;
+    if (number_of_event_pipes > 0) {
+      for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
+        SharedFD event_pipe_write_end, event_pipe_read_end;
+        if (!SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
+          PLOG(ERROR) << "Unable to create kernel log events pipe: ";
+          return false;
+        }
+        event_pipe_write_ends_.push_back(event_pipe_write_end);
+        event_pipe_read_ends_.push_back(event_pipe_read_end);
+      }
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD fifo_;
+  std::vector<SharedFD> event_pipe_write_ends_;
+  std::vector<SharedFD> event_pipe_read_ends_;
+};
 
 class RootCanal : public CommandSource {
  public:
@@ -570,23 +609,27 @@ class ConsoleForwarder : public CommandSource {
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 KernelLogPipeProvider>
 launchComponent() {
   return fruit::createComponent()
+      .bind<KernelLogPipeProvider, KernelLogMonitor>()
+      .addMultibinding<CommandSource, BluetoothConnector>()
       .addMultibinding<CommandSource, ConfigServer>()
       .addMultibinding<CommandSource, ConsoleForwarder>()
-      .addMultibinding<CommandSource, BluetoothConnector>()
       .addMultibinding<CommandSource, GnssGrpcProxyServer>()
+      .addMultibinding<CommandSource, KernelLogMonitor>()
       .addMultibinding<CommandSource, LogcatReceiver>()
       .addMultibinding<CommandSource, MetricsService>()
       .addMultibinding<CommandSource, RootCanal>()
       .addMultibinding<CommandSource, SecureEnvironment>()
       .addMultibinding<CommandSource, TombstoneReceiver>()
       .addMultibinding<CommandSource, VehicleHalServer>()
+      .addMultibinding<Feature, BluetoothConnector>()
       .addMultibinding<Feature, ConfigServer>()
       .addMultibinding<Feature, ConsoleForwarder>()
-      .addMultibinding<Feature, BluetoothConnector>()
       .addMultibinding<Feature, GnssGrpcProxyServer>()
+      .addMultibinding<Feature, KernelLogMonitor>()
       .addMultibinding<Feature, LogcatReceiver>()
       .addMultibinding<Feature, MetricsService>()
       .addMultibinding<Feature, RootCanal>()

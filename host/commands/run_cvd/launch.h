@@ -32,21 +32,21 @@ class CommandSource : public virtual Feature {
   virtual std::vector<Command> Commands() = 0;
 };
 
+class KernelLogPipeProvider : public virtual Feature {
+ public:
+  virtual ~KernelLogPipeProvider();
+  virtual SharedFD KernelLogPipe() = 0;
+};
+
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 KernelLogPipeProvider>
 launchComponent();
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 launchModemComponent();
 
-struct KernelLogMonitorData {
-  std::vector<SharedFD> pipes;
-  std::vector<Command> commands;
-};
-
-KernelLogMonitorData LaunchKernelLogMonitor(const CuttlefishConfig& config,
-                                            unsigned int number_of_event_pipes);
 std::vector<Command> LaunchAdbConnectorIfEnabled(
     const CuttlefishConfig& config);
 std::vector<Command> LaunchSocketVsockProxyIfEnabled(
