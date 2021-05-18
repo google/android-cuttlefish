@@ -22,10 +22,11 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/subprocess.h"
 #include "host/libs/config/cuttlefish_config.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
-class CommandSource {
+class CommandSource : public virtual Feature {
  public:
   virtual ~CommandSource();
   virtual std::vector<Command> Commands() = 0;

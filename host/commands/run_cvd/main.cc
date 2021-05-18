@@ -347,8 +347,13 @@ int RunCvdMain(int argc, char** argv) {
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
   fruit::Injector<> injector(runCvdComponent);
+  const auto& features = injector.getMultibindings<Feature>();
+  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
+
   for (auto& command_source : injector.getMultibindings<CommandSource>()) {
-    process_monitor.AddCommands(command_source->Commands());
+    if (command_source->Enabled()) {
+      process_monitor.AddCommands(command_source->Commands());
+    }
   }
 
   auto kernel_log_monitor = LaunchKernelLogMonitor(*config, 3);
