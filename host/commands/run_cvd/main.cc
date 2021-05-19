@@ -177,6 +177,7 @@ fruit::Component<KernelLogPipeProvider> runCvdComponent() {
   return fruit::createComponent()
       .install(launchComponent)
       .install(launchModemComponent)
+      .install(launchAdbComponent)
       .install(configComponent);
 }
 
@@ -358,7 +359,6 @@ int RunCvdMain(int argc, char** argv) {
 
   auto kernel_log_monitor = injector.get<KernelLogPipeProvider*>();
   SharedFD boot_events_pipe = kernel_log_monitor->KernelLogPipe();
-  SharedFD adbd_events_pipe = kernel_log_monitor->KernelLogPipe();
   SharedFD webrtc_events_pipe = kernel_log_monitor->KernelLogPipe();
 
   CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
@@ -375,11 +375,6 @@ int RunCvdMain(int argc, char** argv) {
 
   // Start the guest VM
   process_monitor.AddCommands(vm_manager->StartCommands(*config));
-
-  // Start other host processes
-  process_monitor.AddCommands(
-      LaunchSocketVsockProxyIfEnabled(*config, adbd_events_pipe));
-  process_monitor.AddCommands(LaunchAdbConnectorIfEnabled(*config));
 
   CHECK(process_monitor.StartAndMonitorProcesses())
       << "Could not start subprocesses";

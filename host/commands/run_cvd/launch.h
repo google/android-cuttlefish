@@ -47,10 +47,9 @@ fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 launchModemComponent();
 
-std::vector<Command> LaunchAdbConnectorIfEnabled(
-    const CuttlefishConfig& config);
-std::vector<Command> LaunchSocketVsockProxyIfEnabled(
-    const CuttlefishConfig& config, SharedFD adbd_events_pipe);
+fruit::Component<fruit::Required<const CuttlefishConfig, KernelLogPipeProvider,
+                                 const CuttlefishConfig::InstanceSpecific>>
+launchAdbComponent();
 
 std::vector<Command> LaunchVNCServer(const CuttlefishConfig& config);
 
