@@ -48,8 +48,9 @@ class WaylandServer {
     WaylandServer(WaylandServer&& rhs) = delete;
     WaylandServer& operator=(WaylandServer&& rhs) = delete;
 
-    // Blocks until the given callback is run on the next frame available.
-    void OnNextFrame(const Surfaces::FrameCallback& callback);
+    // Registers the callback that will be run whenever a new frame is
+    // available.
+    void SetFrameCallback(Surfaces::FrameCallback callback);
 
    private:
     void ServerLoop(int wayland_socket_fd);

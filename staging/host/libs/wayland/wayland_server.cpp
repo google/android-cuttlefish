@@ -94,8 +94,8 @@ void WaylandServer::ServerLoop(int fd) {
   wl_display_destroy(server_state_->display_);
 }
 
-void WaylandServer::OnNextFrame(const Surfaces::FrameCallback& callback) {
-  server_state_->surfaces_.OnNextFrame(callback);
+void WaylandServer::SetFrameCallback(Surfaces::FrameCallback callback) {
+  server_state_->surfaces_.SetFrameCallback(std::move(callback));
 }
 
 }  // namespace wayland
