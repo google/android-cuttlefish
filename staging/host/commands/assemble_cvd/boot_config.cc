@@ -29,6 +29,7 @@
 #include "common/libs/utils/environment.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/subprocess.h"
+#include "host/libs/config/bootconfig_args.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/kernel_args.h"
 #include "host/libs/vm_manager/crosvm_manager.h"
@@ -43,10 +44,10 @@ namespace cuttlefish {
 namespace {
 
 size_t WriteEnvironment(const CuttlefishConfig& config,
-                        const std::vector<std::string>& kernel_args,
+                        const std::string& kernel_args,
                         const std::string& env_path) {
   std::ostringstream env;
-  env << "bootargs=" << android::base::Join(kernel_args, " ") << '\0';
+  env << "bootargs=" << kernel_args << '\0';
   if (!config.boot_slot().empty()) {
       env << "android_slot_suffix=_" << config.boot_slot() << '\0';
   }
@@ -85,8 +86,29 @@ bool InitBootloaderEnvPartition(const CuttlefishConfig& config,
   auto boot_env_image_path = instance.uboot_env_image_path();
   auto tmp_boot_env_image_path = boot_env_image_path + ".tmp";
   auto uboot_env_path = instance.PerInstancePath("mkenvimg_input");
-  auto kernel_args = KernelCommandLineFromConfig(config);
-  if(!WriteEnvironment(config, kernel_args, uboot_env_path)) {
+  auto kernel_cmdline =
+      android::base::Join(KernelCommandLineFromConfig(config), " ");
+  // If the bootconfig isn't supported in the guest kernel, the bootconfig args
+  // need to be passed in via the uboot env. This won't be an issue for protect
+  // kvm which is running a kernel with bootconfig support.
+  if (!config.bootconfig_supported()) {
+    auto bootconfig_args =
+        android::base::Join(BootconfigArgsFromConfig(config, instance), " ");
+    // "androidboot.hardware" kernel parameter has changed to "hardware" in
+    // bootconfig and needs to be replaced before being used in the kernel
+    // cmdline.
+    bootconfig_args = android::base::StringReplace(
+        bootconfig_args, " hardware=", " androidboot.hardware=", true);
+    // TODO(b/182417593): Until we pass the module parameters through
+    // modules.options, we pass them through bootconfig using
+    // 'kernel.<key>=<value>' But if we don't support bootconfig, we need to
+    // rename them back to the old cmdline version
+    bootconfig_args =
+        android::base::StringReplace(bootconfig_args, " kernel.", " ", true);
+    kernel_cmdline += " ";
+    kernel_cmdline += bootconfig_args;
+  }
+  if (!WriteEnvironment(config, kernel_cmdline, uboot_env_path)) {
     LOG(ERROR) << "Unable to write out plaintext env '" << uboot_env_path << ".'";
     return false;
   }
