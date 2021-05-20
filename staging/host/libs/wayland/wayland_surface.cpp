@@ -54,11 +54,13 @@ void Surface::Commit() {
   CHECK(buffer_w == state_.region.w);
   const int32_t buffer_h = wl_shm_buffer_get_height(shm_buffer);
   CHECK(buffer_h == state_.region.h);
+  const int32_t buffer_stride_bytes = wl_shm_buffer_get_stride(shm_buffer);
 
   uint8_t* buffer_pixels =
       reinterpret_cast<uint8_t*>(wl_shm_buffer_get_data(shm_buffer));
 
-  surfaces_.HandleSurfaceFrame(display_number_, buffer_pixels);
+  surfaces_.HandleSurfaceFrame(display_number_, buffer_w, buffer_h,
+                               buffer_stride_bytes, buffer_pixels);
 
   wl_shm_buffer_end_access(shm_buffer);
 

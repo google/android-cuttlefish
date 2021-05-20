@@ -33,10 +33,9 @@ WaylandScreenConnector::WaylandScreenConnector(int frames_fd) {
   server_.reset(new wayland::WaylandServer(wayland_fd));
 }
 
-bool WaylandScreenConnector::OnNextFrame(
-    const GenerateProcessedFrameCallbackImpl& frame_callback) {
-  server_->OnNextFrame(frame_callback);
-  return true;
+void WaylandScreenConnector::SetFrameCallback(
+    GenerateProcessedFrameCallbackImpl frame_callback) {
+  server_->SetFrameCallback(std::move(frame_callback));
 }
 
 }  // namespace cuttlefish
