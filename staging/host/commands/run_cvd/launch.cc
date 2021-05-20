@@ -39,6 +39,8 @@ std::vector<T> single_element_emplace(T&& element) {
 
 }  // namespace
 
+CommandSource::~CommandSource() = default;
+
 KernelLogMonitorData LaunchKernelLogMonitor(
     const CuttlefishConfig& config, unsigned int number_of_event_pipes) {
   auto instance = config.ForDefaultInstance();
@@ -259,115 +261,155 @@ std::vector<Command> LaunchBluetoothConnector(const CuttlefishConfig& config) {
   return single_element_emplace(std::move(command));
 }
 
-std::vector<Command> LaunchSecureEnvironment(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  std::vector<std::string> fifo_paths = {
-    instance.PerInstanceInternalPath("keymaster_fifo_vm.in"),
-    instance.PerInstanceInternalPath("keymaster_fifo_vm.out"),
-    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
-    instance.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
-  };
-  std::vector<SharedFD> fifos;
-  for (const auto& path : fifo_paths) {
-    unlink(path.c_str());
-    if (mkfifo(path.c_str(), 0600) < 0) {
-      PLOG(ERROR) << "Could not create " << path;
+class SecureEnvironment : public CommandSource {
+ public:
+  INJECT(SecureEnvironment(const CuttlefishConfig& config,
+                           const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  std::vector<Command> Commands() override {
+    std::vector<std::string> fifo_paths = {
+        instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
+        instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("gatekeeper_fifo_vm.out"),
+    };
+    std::vector<SharedFD> fifos;
+    for (const auto& path : fifo_paths) {
+      unlink(path.c_str());
+      if (mkfifo(path.c_str(), 0600) < 0) {
+        PLOG(ERROR) << "Could not create " << path;
+        return {};
+      }
+      auto fd = SharedFD::Open(path, O_RDWR);
+      if (!fd->IsOpen()) {
+        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
+        return {};
+      }
+      fifos.push_back(fd);
+    }
+
+    Command command(HostBinaryPath("secure_env"));
+    command.AddParameter("-keymaster_fd_out=", fifos[0]);
+    command.AddParameter("-keymaster_fd_in=", fifos[1]);
+    command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
+    command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
+
+    const auto& secure_hals = config_.secure_hals();
+    bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
+    command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
+    bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
+    auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
+    command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
+
+    return single_element_emplace(std::move(command));
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
+class VehicleHalServer : public CommandSource {
+ public:
+  INJECT(VehicleHalServer(const CuttlefishConfig& config,
+                          const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  std::vector<Command> Commands() override {
+    if (!config_.enable_vehicle_hal_grpc_server() ||
+        !FileExists(config_.vehicle_hal_grpc_server_binary())) {
       return {};
     }
-    auto fd = SharedFD::Open(path, O_RDWR);
-    if (!fd->IsOpen()) {
-      LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
+
+    Command grpc_server(config_.vehicle_hal_grpc_server_binary());
+
+    const unsigned vhal_server_cid = 2;
+    const unsigned vhal_server_port = instance_.vehicle_hal_server_port();
+    const std::string vhal_server_power_state_file =
+        AbsolutePath(instance_.PerInstancePath("power_state"));
+    const std::string vhal_server_power_state_socket =
+        AbsolutePath(instance_.PerInstancePath("power_state_socket"));
+
+    grpc_server.AddParameter("--server_cid=", vhal_server_cid);
+    grpc_server.AddParameter("--server_port=", vhal_server_port);
+    grpc_server.AddParameter("--power_state_file=",
+                             vhal_server_power_state_file);
+    grpc_server.AddParameter("--power_state_socket=",
+                             vhal_server_power_state_socket);
+    return single_element_emplace(std::move(grpc_server));
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
+
+class ConsoleForwarder : public CommandSource {
+ public:
+  INJECT(ConsoleForwarder(const CuttlefishConfig& config,
+                          const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
+
+  std::vector<Command> Commands() override {
+    if (!config_.console()) {
       return {};
     }
-    fifos.push_back(fd);
+    Command console_forwarder_cmd(ConsoleForwarderBinary());
+
+    auto console_in_pipe_name = instance_.console_in_pipe_name();
+    if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create console input fifo for crosvm: "
+                 << strerror(error);
+      return {};
+    }
+
+    auto console_out_pipe_name = instance_.console_out_pipe_name();
+    if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create console output fifo for crosvm: "
+                 << strerror(error);
+      return {};
+    }
+
+    // These fds will only be read from or written to, but open them with
+    // read and write access to keep them open in case the subprocesses exit
+    SharedFD console_forwarder_in_wr =
+        SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
+    if (!console_forwarder_in_wr->IsOpen()) {
+      LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
+                 << console_forwarder_in_wr->StrError();
+      return {};
+    }
+
+    SharedFD console_forwarder_out_rd =
+        SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
+    if (!console_forwarder_out_rd->IsOpen()) {
+      LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
+                 << console_forwarder_out_rd->StrError();
+      return {};
+    }
+
+    console_forwarder_cmd.AddParameter("--console_in_fd=",
+                                       console_forwarder_in_wr);
+    console_forwarder_cmd.AddParameter("--console_out_fd=",
+                                       console_forwarder_out_rd);
+    return single_element_emplace(std::move(console_forwarder_cmd));
   }
 
-  Command command(HostBinaryPath("secure_env"));
-  command.AddParameter("-keymaster_fd_out=", fifos[0]);
-  command.AddParameter("-keymaster_fd_in=", fifos[1]);
-  command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
-  command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
 
-  const auto& secure_hals = config.secure_hals();
-  bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
-  command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
-  bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
-  auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
-  command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
-
-  return single_element_emplace(std::move(command));
-}
-
-std::vector<Command> LaunchVehicleHalServerIfEnabled(
-    const CuttlefishConfig& config) {
-  if (!config.enable_vehicle_hal_grpc_server() ||
-    !FileExists(config.vehicle_hal_grpc_server_binary())) {
-    return {};
-  }
-
-  Command grpc_server(config.vehicle_hal_grpc_server_binary());
-  auto instance = config.ForDefaultInstance();
-
-  const unsigned vhal_server_cid = 2;
-  const unsigned vhal_server_port = instance.vehicle_hal_server_port();
-  const std::string vhal_server_power_state_file =
-      AbsolutePath(instance.PerInstancePath("power_state"));
-  const std::string vhal_server_power_state_socket =
-      AbsolutePath(instance.PerInstancePath("power_state_socket"));
-
-  grpc_server.AddParameter("--server_cid=", vhal_server_cid);
-  grpc_server.AddParameter("--server_port=", vhal_server_port);
-  grpc_server.AddParameter("--power_state_file=", vhal_server_power_state_file);
-  grpc_server.AddParameter("--power_state_socket=", vhal_server_power_state_socket);
-  return single_element_emplace(std::move(grpc_server));
-}
-
-std::vector<Command> LaunchConsoleForwarderIfEnabled(
-    const CuttlefishConfig& config) {
-  if (!config.console()) {
-    return {};
-  }
-
-  Command console_forwarder_cmd(ConsoleForwarderBinary());
-  auto instance = config.ForDefaultInstance();
-
-  auto console_in_pipe_name = instance.console_in_pipe_name();
-  if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
-    auto error = errno;
-    LOG(ERROR) << "Failed to create console input fifo for crosvm: "
-               << strerror(error);
-    return {};
-  }
-
-  auto console_out_pipe_name = instance.console_out_pipe_name();
-  if (mkfifo(console_out_pipe_name.c_str(), 0660) != 0) {
-    auto error = errno;
-    LOG(ERROR) << "Failed to create console output fifo for crosvm: "
-               << strerror(error);
-    return {};
-  }
-
-  // These fds will only be read from or written to, but open them with
-  // read and write access to keep them open in case the subprocesses exit
-  SharedFD console_forwarder_in_wr =
-      SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-  if (!console_forwarder_in_wr->IsOpen()) {
-    LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
-               << console_forwarder_in_wr->StrError();
-    return {};
-  }
-
-  SharedFD console_forwarder_out_rd =
-      SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-  if (!console_forwarder_out_rd->IsOpen()) {
-    LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
-               << console_forwarder_out_rd->StrError();
-    return {};
-  }
-
-  console_forwarder_cmd.AddParameter("--console_in_fd=", console_forwarder_in_wr);
-  console_forwarder_cmd.AddParameter("--console_out_fd=", console_forwarder_out_rd);
-  return single_element_emplace(std::move(console_forwarder_cmd));
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>>
+launchComponent() {
+  return fruit::createComponent()
+      .addMultibinding<CommandSource, ConsoleForwarder>()
+      .addMultibinding<CommandSource, SecureEnvironment>()
+      .addMultibinding<CommandSource, VehicleHalServer>();
 }
 
 } // namespace cuttlefish

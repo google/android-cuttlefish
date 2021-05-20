@@ -24,6 +24,7 @@
 
 #include <android-base/logging.h>
 #include <android-base/strings.h>
+#include <fruit/fruit.h>
 #include <gflags/gflags.h>
 
 #include "common/libs/fs/shared_buf.h"
@@ -161,6 +162,22 @@ void PrintStreamingInformation(const CuttlefishConfig& config) {
   // When WebRTC is enabled but an operator other than the one launched by
   // run_cvd is used there is no way to know the url to which to point the
   // browser to.
+}
+
+fruit::Component<const CuttlefishConfig,
+                 const CuttlefishConfig::InstanceSpecific>
+configComponent() {
+  static auto config = CuttlefishConfig::Get();
+  CHECK(config) << "Could not load config.";
+  static auto instance = config->ForDefaultInstance();
+  return fruit::createComponent().bindInstance(*config).bindInstance(instance);
+}
+
+fruit::Component<> runCvdComponent() {
+  return fruit::createComponent()
+      .install(launchComponent)
+      .install(launchModemComponent)
+      .install(configComponent);
 }
 
 }  // namespace
@@ -329,10 +346,14 @@ int RunCvdMain(int argc, char** argv) {
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
+  fruit::Injector<> injector(runCvdComponent);
+  for (auto& command_source : injector.getMultibindings<CommandSource>()) {
+    process_monitor.AddCommands(command_source->Commands());
+  }
+
   if (config->enable_metrics() == CuttlefishConfig::kYes) {
     process_monitor.AddCommands(LaunchMetrics());
   }
-  process_monitor.AddCommands(LaunchModemSimulatorIfEnabled(*config));
 
   auto kernel_log_monitor = LaunchKernelLogMonitor(*config, 3);
   SharedFD boot_events_pipe = kernel_log_monitor.pipes[0];
@@ -349,12 +370,9 @@ int RunCvdMain(int argc, char** argv) {
   process_monitor.AddCommands(LaunchConfigServer(*config));
   process_monitor.AddCommands(LaunchTombstoneReceiver(*config));
   process_monitor.AddCommands(LaunchGnssGrpcProxyServerIfEnabled(*config));
-  process_monitor.AddCommands(LaunchSecureEnvironment(*config));
   if (config->enable_host_bluetooth()) {
     process_monitor.AddCommands(LaunchBluetoothConnector(*config));
   }
-  process_monitor.AddCommands(LaunchVehicleHalServerIfEnabled(*config));
-  process_monitor.AddCommands(LaunchConsoleForwarderIfEnabled(*config));
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
