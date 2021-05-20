@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Copyright (C) 2020 The Android Open Source Project
 #
@@ -26,5 +26,5 @@ IFF_VNET_HDR = 0x4000
 tun_fd = int(sys.argv[1])
 tap_name = sys.argv[2]
 
-ifr = struct.pack('16sH', tap_name, IFF_TAP | IFF_NO_PI | IFF_VNET_HDR)
+ifr = struct.pack('16sH', tap_name.encode('utf-8'), IFF_TAP | IFF_NO_PI | IFF_VNET_HDR)
 fcntl.ioctl(tun_fd, TUNSETIFF, ifr)
