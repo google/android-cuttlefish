@@ -235,8 +235,6 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
                            const std::string& vendor_boot_image_path,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& unpack_dir,
-                           const std::string& repack_dir,
-                           const std::vector<std::string>& bootconfig_args,
                            bool bootconfig_supported) {
   if (UnpackVendorBootImageIfNotUnpacked(vendor_boot_image_path, unpack_dir) ==
       false) {
@@ -255,23 +253,15 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     ramdisk_path = unpack_dir + "/" + CONCATENATED_VENDOR_RAMDISK;
   }
 
-  auto bootconfig_fd = SharedFD::Creat(repack_dir + "/bootconfig", 0666);
-  if (!bootconfig_fd->IsOpen()) {
-    LOG(ERROR) << "Unable to create intermediate bootconfig file: "
-               << bootconfig_fd->StrError();
-    return false;
-  }
   std::string bootconfig = ReadFile(unpack_dir + "/bootconfig");
-  bootconfig_fd->Write(bootconfig.c_str(), bootconfig.size());
   LOG(DEBUG) << "Bootconfig parameters from vendor boot image are "
-             << ReadFile(repack_dir + "/bootconfig");
+             << bootconfig;
   std::string vendor_boot_params = ReadFile(unpack_dir + "/vendor_boot_params");
   auto kernel_cmdline =
       ExtractValue(vendor_boot_params, "vendor command line args: ") +
       (bootconfig_supported
            ? ""
-           : " " + android::base::StringReplace(bootconfig, "\n", " ", true) +
-                 " " + android::base::Join(bootconfig_args, " "));
+           : " " + android::base::StringReplace(bootconfig, "\n", " ", true));
   if (!bootconfig_supported) {
     // "androidboot.hardware" kernel parameter has changed to "hardware" in
     // bootconfig and needs to be replaced before being used in the kernel
@@ -285,8 +275,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
     kernel_cmdline = android::base::StringReplace(
         kernel_cmdline, " kernel.", " ", true);
   }
-  LOG(DEBUG) << "Cmdline from vendor boot image and config is "
-             << kernel_cmdline;
+  LOG(DEBUG) << "Cmdline from vendor boot image is " << kernel_cmdline;
 
   auto tmp_vendor_boot_image_path = new_vendor_boot_image_path + TMP_EXTENSION;
   auto repack_path = HostBinaryPath("mkbootimg");
@@ -303,7 +292,7 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
   repack_cmd.AddParameter(unpack_dir + "/dtb");
   if (bootconfig_supported) {
     repack_cmd.AddParameter("--vendor_bootconfig");
-    repack_cmd.AddParameter(repack_dir + "/bootconfig");
+    repack_cmd.AddParameter(unpack_dir + "/bootconfig");
   }
 
   int success = repack_cmd.Start().Wait();
@@ -324,14 +313,11 @@ bool RepackVendorBootImage(const std::string& new_ramdisk,
 bool RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
-    const std::string& unpack_dir, const std::string& repack_dir,
-    const std::vector<std::string>& bootconfig_args,
-    bool bootconfig_supported) {
+    const std::string& unpack_dir, bool bootconfig_supported) {
   auto empty_ramdisk_file =
       SharedFD::Creat(unpack_dir + "/empty_ramdisk", 0666);
   return RepackVendorBootImage(
       unpack_dir + "/empty_ramdisk", vendor_boot_image_path,
-      new_vendor_boot_image_path, unpack_dir, repack_dir, bootconfig_args,
-      bootconfig_supported);
+      new_vendor_boot_image_path, unpack_dir, bootconfig_supported);
 }
 } // namespace cuttlefish

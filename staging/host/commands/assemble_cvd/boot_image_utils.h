@@ -27,12 +27,9 @@ bool RepackVendorBootImage(const std::string& new_ramdisk_path,
                            const std::string& vendor_boot_image_path,
                            const std::string& new_vendor_boot_image_path,
                            const std::string& unpack_dir,
-                           const std::string& repack_dir,
-                           const std::vector<std::string>& bootconfig_args,
                            bool bootconfig_supported);
 bool RepackVendorBootImageWithEmptyRamdisk(
     const std::string& vendor_boot_image_path,
     const std::string& new_vendor_boot_image_path,
-    const std::string& unpack_dir, const std::string& repack_dir,
-    const std::vector<std::string>& bootconfig_args, bool bootconfig_supported);
+    const std::string& unpack_dir, bool bootconfig_supported);
 }
