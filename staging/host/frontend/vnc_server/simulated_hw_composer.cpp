@@ -73,7 +73,9 @@ void SimulatedHWComposer::EraseHalfOfElements(
 
 SimulatedHWComposer::GenerateProcessedFrameCallback
 SimulatedHWComposer::GetScreenConnectorCallback() {
-  return [](std::uint32_t display_number, std::uint8_t* frame_pixels,
+  return [](std::uint32_t display_number, std::uint32_t frame_w,
+            std::uint32_t frame_h, std::uint32_t frame_stride_bytes,
+            std::uint8_t* frame_bytes,
             cuttlefish::vnc::VncScProcessedFrame& processed_frame) {
     processed_frame.display_number_ = display_number;
     // TODO(171305898): handle multiple displays.
@@ -86,32 +88,25 @@ SimulatedHWComposer::GetScreenConnectorCallback() {
       // here is incorrectly assuming  surface id == display id.
       display_number = 0;
     }
-    const std::uint32_t display_w =
-        ScreenConnector::ScreenWidth(display_number);
-    const std::uint32_t display_h =
-        ScreenConnector::ScreenHeight(display_number);
-    const std::uint32_t display_stride_bytes =
-        ScreenConnector::ScreenStrideBytes(display_number);
-    const std::uint32_t display_bpp = ScreenConnector::BytesPerPixel();
-    const std::uint32_t display_size_bytes =
-        ScreenConnector::ScreenSizeInBytes(display_number);
+
+    const std::uint32_t frame_bpp = 4;
+    const std::uint32_t frame_size_bytes = frame_h * frame_stride_bytes;
 
     auto& raw_screen = processed_frame.raw_screen_;
-    raw_screen.assign(frame_pixels, frame_pixels + display_size_bytes);
+    raw_screen.assign(frame_bytes, frame_bytes + frame_size_bytes);
 
     static std::uint32_t next_frame_number = 0;
 
     const auto num_stripes = SimulatedHWComposer::kNumStripes;
     for (int i = 0; i < num_stripes; ++i) {
-      std::uint16_t y = (display_h / num_stripes) * i;
+      std::uint16_t y = (frame_h / num_stripes) * i;
 
       // Last frames on the right and/or bottom handle extra pixels
       // when a screen dimension is not evenly divisible by Frame::kNumSlots.
-      std::uint16_t height =
-          display_h / num_stripes +
-          (i + 1 == num_stripes ? display_h % num_stripes : 0);
-      const auto* raw_start = &raw_screen[y * display_w * display_bpp];
-      const auto* raw_end = raw_start + (height * display_w * display_bpp);
+      std::uint16_t height = frame_h / num_stripes +
+                             (i + 1 == num_stripes ? frame_h % num_stripes : 0);
+      const auto* raw_start = &raw_screen[y * frame_w * frame_bpp];
+      const auto* raw_end = raw_start + (height * frame_w * frame_bpp);
       // creating a named object and setting individual data members in order
       // to make klp happy
       // TODO (haining) construct this inside the call when not compiling
@@ -120,8 +115,8 @@ SimulatedHWComposer::GetScreenConnectorCallback() {
       s.index = i;
       s.x = 0;
       s.y = y;
-      s.width = display_w;
-      s.stride = display_stride_bytes;
+      s.width = frame_w;
+      s.stride = frame_stride_bytes;
       s.height = height;
       s.frame_id = next_frame_number++;
       s.raw_data.assign(raw_start, raw_end);

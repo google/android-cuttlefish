@@ -50,8 +50,13 @@ bool Session::RenderDialog(const std::string& msg, const std::string& locale) {
 
   ConfUiLog(DEBUG) << "actually trying to render the frame"
                    << thread::GetName();
-  auto raw_frame = reinterpret_cast<std::uint8_t*>(teeui_frame.data());
-  return screen_connector_.RenderConfirmationUi(display_num_, raw_frame);
+  auto frame_width = ScreenConnectorInfo::ScreenWidth(display_num_);
+  auto frame_height = ScreenConnectorInfo::ScreenHeight(display_num_);
+  auto frame_stride_bytes =
+      ScreenConnectorInfo::ScreenStrideBytes(display_num_);
+  auto frame_bytes = reinterpret_cast<std::uint8_t*>(teeui_frame.data());
+  return screen_connector_.RenderConfirmationUi(
+      display_num_, frame_width, frame_height, frame_stride_bytes, frame_bytes);
 }
 
 bool Session::IsSuspended() const {
