@@ -64,7 +64,9 @@ class ScreenConnector : public ScreenConnectorInfo,
    * call.
    */
   using GenerateProcessedFrameCallback = std::function<void(
-      std::uint32_t /*display_number*/, std::uint8_t* /*frame_pixels*/,
+      std::uint32_t /*display_number*/, std::uint32_t /*frame_width*/,
+      std::uint32_t /*frame_height*/, std::uint32_t /*frame_stride_bytes*/,
+      std::uint8_t* /*frame_bytes*/,
       /* ScImpl enqueues this type into the Q */
       ProcessedFrameType& msg)>;
 
@@ -94,14 +96,27 @@ class ScreenConnector : public ScreenConnectorInfo,
     std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
     callback_from_streamer_ = std::move(frame_callback);
     streamer_callback_set_cv_.notify_all();
-    /*
-     * the first WaitForAtLeastOneClientConnection() call from VNC requires the
-     * Android-frame-processing thread starts beforehands (b/178504150)
-     */
-    if (!sc_android_frame_fetching_thread_.joinable()) {
-      sc_android_frame_fetching_thread_ = cuttlefish::confui::thread::RunThread(
-          "AndroidFetcher", &ScreenConnector::AndroidFrameFetchingLoop, this);
-    }
+
+    sc_android_src_->SetFrameCallback(
+        [this](std::uint32_t display_number, std::uint32_t frame_w,
+               std::uint32_t frame_h, std::uint32_t frame_stride_bytes,
+               std::uint8_t* frame_bytes) {
+          const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
+          if (is_confui_mode) {
+            return;
+          }
+
+          ProcessedFrameType processed_frame;
+
+          {
+            std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
+            callback_from_streamer_(display_number, frame_w, frame_h,
+                                    frame_stride_bytes, frame_bytes,
+                                    processed_frame);
+          }
+
+          sc_android_queue_.PushBack(std::move(processed_frame));
+        });
   }
 
   bool IsCallbackSet() const override {
@@ -155,43 +170,6 @@ class ScreenConnector : public ScreenConnectorInfo,
     }
   }
 
-  [[noreturn]] void AndroidFrameFetchingLoop() {
-    unsigned long long int loop_cnt = 0;
-    cuttlefish::confui::thread::Set("AndroidFrameFetcher",
-                                    std::this_thread::get_id());
-    while (true) {
-      loop_cnt++;
-      ProcessedFrameType processed_frame;
-      decltype(callback_from_streamer_) cp_of_streamer_callback;
-      {
-        std::lock_guard<std::mutex> lock(streamer_callback_mutex_);
-        cp_of_streamer_callback = callback_from_streamer_;
-      }
-      GenerateProcessedFrameCallbackImpl callback_for_sc_impl =
-          std::bind(cp_of_streamer_callback, std::placeholders::_1,
-                    std::placeholders::_2, std::ref(processed_frame));
-      ConfUiLog(VERBOSE) << cuttlefish::confui::thread::GetName(
-                                std::this_thread::get_id())
-                         << " calling Android OnNextFrame. "
-                         << " at loop #" << loop_cnt;
-      bool flag = sc_android_src_->OnNextFrame(callback_for_sc_impl);
-      processed_frame.is_success_ = flag && processed_frame.is_success_;
-      const bool is_confui_mode = host_mode_ctrl_.IsConfirmatioUiMode();
-      if (!is_confui_mode) {
-        ConfUiLog(VERBOSE) << cuttlefish::confui::thread::GetName(
-                                  std::this_thread::get_id())
-                           << "is sending an Android Frame at loop_cnt #"
-                           << loop_cnt;
-        sc_android_queue_.PushBack(std::move(processed_frame));
-        continue;
-      }
-      ConfUiLog(VERBOSE) << cuttlefish::confui::thread::GetName(
-                                std::this_thread::get_id())
-                         << "is skipping an Android Frame at loop_cnt #"
-                         << loop_cnt;
-    }
-  }
-
   /**
    * ConfUi calls this when it has frames to render
    *
@@ -199,8 +177,11 @@ class ScreenConnector : public ScreenConnectorInfo,
    * Android guest frames if Confirmation UI HAL is not active.
    *
    */
-  bool RenderConfirmationUi(const std::uint32_t display,
-                            std::uint8_t* raw_frame) override {
+  bool RenderConfirmationUi(std::uint32_t display_number,
+                            std::uint32_t frame_width,
+                            std::uint32_t frame_height,
+                            std::uint32_t frame_stride_bytes,
+                            std::uint8_t* frame_bytes) override {
     render_confui_cnt_++;
     // wait callback is not set, the streamer is not ready
     // return with LOG(ERROR)
@@ -213,7 +194,8 @@ class ScreenConnector : public ScreenConnectorInfo,
     ConfUiLog(DEBUG) << this_thread_name
                      << "is sending a #" + std::to_string(render_confui_cnt_)
                      << "Conf UI frame";
-    callback_from_streamer_(display, raw_frame, processed_frame);
+    callback_from_streamer_(display_number, frame_width, frame_height,
+                            frame_stride_bytes, frame_bytes, processed_frame);
     // now add processed_frame to the queue
     sc_confui_queue_.PushBack(std::move(processed_frame));
     return true;
@@ -249,7 +231,6 @@ class ScreenConnector : public ScreenConnectorInfo,
   ScreenConnectorQueue<ProcessedFrameType> sc_android_queue_;
   ScreenConnectorQueue<ProcessedFrameType> sc_confui_queue_;
   GenerateProcessedFrameCallback callback_from_streamer_;
-  std::thread sc_android_frame_fetching_thread_;
   std::mutex streamer_callback_mutex_; // mutex to set & read callback_from_streamer_
   std::condition_variable streamer_callback_set_cv_;
 };
