@@ -560,7 +560,6 @@ PRODUCT_PACKAGES += \
     android.hardware.neuralnetworks-service-sample-float-slow \
     android.hardware.neuralnetworks-service-sample-minimal \
     android.hardware.neuralnetworks-service-sample-quant \
-    android.hardware.neuralnetworks-shell-service-sample \
     android.hardware.neuralnetworks-shim-service-sample
 
 #
