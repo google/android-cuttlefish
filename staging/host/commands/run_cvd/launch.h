@@ -53,19 +53,7 @@ std::vector<Command> LaunchSocketVsockProxyIfEnabled(
 
 std::vector<Command> LaunchVNCServer(const CuttlefishConfig& config);
 
-std::vector<Command> LaunchTombstoneReceiver(const CuttlefishConfig& config);
-std::vector<Command> LaunchRootCanal(const CuttlefishConfig& config);
-std::vector<Command> LaunchLogcatReceiver(const CuttlefishConfig& config);
-std::vector<Command> LaunchConfigServer(const CuttlefishConfig& config);
-
 std::vector<Command> LaunchWebRTC(const CuttlefishConfig& config,
                                   SharedFD kernel_log_events_pipe);
-
-std::vector<Command> LaunchMetrics();
-
-std::vector<Command> LaunchGnssGrpcProxyServerIfEnabled(
-    const CuttlefishConfig& config);
-
-std::vector<Command> LaunchBluetoothConnector(const CuttlefishConfig& config);
 
 } // namespace cuttlefish
