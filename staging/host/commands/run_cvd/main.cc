@@ -351,10 +351,6 @@ int RunCvdMain(int argc, char** argv) {
     process_monitor.AddCommands(command_source->Commands());
   }
 
-  if (config->enable_metrics() == CuttlefishConfig::kYes) {
-    process_monitor.AddCommands(LaunchMetrics());
-  }
-
   auto kernel_log_monitor = LaunchKernelLogMonitor(*config, 3);
   SharedFD boot_events_pipe = kernel_log_monitor.pipes[0];
   SharedFD adbd_events_pipe = kernel_log_monitor.pipes[1];
@@ -364,15 +360,6 @@ int RunCvdMain(int argc, char** argv) {
 
   CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
                                          reboot_notification, boot_events_pipe);
-
-  process_monitor.AddCommands(LaunchRootCanal(*config));
-  process_monitor.AddCommands(LaunchLogcatReceiver(*config));
-  process_monitor.AddCommands(LaunchConfigServer(*config));
-  process_monitor.AddCommands(LaunchTombstoneReceiver(*config));
-  process_monitor.AddCommands(LaunchGnssGrpcProxyServerIfEnabled(*config));
-  if (config->enable_host_bluetooth()) {
-    process_monitor.AddCommands(LaunchBluetoothConnector(*config));
-  }
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
