@@ -210,6 +210,7 @@ using Result = android::base::expected<T, ResultError>;
 
 // Macros for testing the results of functions that return android::base::Result.
 // These also work with base::android::expected.
+// For advanced matchers and customized error messages, see result-gtest.h.
 
 #define CHECK_RESULT_OK(stmt)       \
   do {                              \
