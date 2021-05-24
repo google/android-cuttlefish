@@ -51,10 +51,16 @@ HostServer::HostServer(
       host_mode_ctrl_(host_mode_ctrl),
       screen_connector_{screen_connector},
       renderer_(display_num_),
-      hal_socket_path_(HalGuestSocketPath()),
-      input_multiplexer_{/* max n_elems */ 20, /* n_Qs */ 2} {
-  hal_cmd_q_id_ = input_multiplexer_.GetNewQueueId();         // return 0
-  user_input_evt_q_id_ = input_multiplexer_.GetNewQueueId();  // return 1
+      hal_socket_path_(HalGuestSocketPath()) {
+  const size_t max_elements = 20;
+  auto ignore_new = [](ThreadSafeQueue<ConfUiMessage>::QueueImpl*) {
+    // no op, so the queue is still full, and the new item will be discarded
+    return;
+  };
+  hal_cmd_q_id_ = input_multiplexer_.RegisterQueue(
+      HostServer::Multiplexer::CreateQueue(max_elements, ignore_new));
+  user_input_evt_q_id_ = input_multiplexer_.RegisterQueue(
+      HostServer::Multiplexer::CreateQueue(max_elements, ignore_new));
 }
 
 void HostServer::Start() {
