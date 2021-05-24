@@ -25,23 +25,21 @@
 
 namespace cuttlefish {
 namespace confui {
-template <typename T>
+template <typename T, typename Queue>
 class Multiplexer {
  public:
-  Multiplexer(int n_qs, int max_elements) : sem_items_{0}, next_{0} {
-    auto drop_new = [](typename ThreadSafeQueue<T>::QueueImpl* internal_q) {
-      internal_q->pop_front();
-    };
-    for (int i = 0; i < n_qs; i++) {
-      auto queue = std::make_unique<ThreadSafeQueue<T>>(max_elements, drop_new);
-      queues_.push_back(std::move(queue));
-    }
+  template <typename... Args>
+  static std::unique_ptr<Queue> CreateQueue(Args&&... args) {
+    auto raw_ptr = new Queue(std::forward<Args>(args)...);
+    return std::unique_ptr<Queue>(raw_ptr);
   }
 
-  int GetNewQueueId() {
-    CHECK(next_ < queues_.size())
-        << "can't get more queues than " << queues_.size();
-    return next_++;
+  Multiplexer() : sem_items_{0} {}
+
+  int RegisterQueue(std::unique_ptr<Queue>&& queue) {
+    const int id_to_return = queues_.size();
+    queues_.push_back(std::move(queue));
+    return id_to_return;
   }
 
   void Push(const int idx, T&& t) {
@@ -53,7 +51,7 @@ class Multiplexer {
   T Pop() {
     // the idx must have an item!
     // no waiting in fn()!
-    sem_items_.SemWait();
+    SemWait();
     for (auto& q : queues_) {
       if (q->IsEmpty()) {
         continue;
@@ -66,13 +64,14 @@ class Multiplexer {
   }
 
  private:
+  void SemWait() { sem_items_.SemWait(); }
   void CheckIdx(const int idx) {
     CHECK(idx >= 0 && idx < queues_.size()) << "queues_ array out of bound";
   }
+
   // total items across the queues
   Semaphore sem_items_;
-  std::vector<std::unique_ptr<ThreadSafeQueue<T>>> queues_;
-  int next_;
+  std::vector<std::unique_ptr<Queue>> queues_;
 };
 }  // end of namespace confui
 }  // end of namespace cuttlefish
