@@ -20,6 +20,7 @@
 #include <deque>
 #include <iterator>
 #include <mutex>
+#include <type_traits>
 #include <utility>
 
 namespace cuttlefish {
@@ -34,9 +35,11 @@ template <typename T>
 class ThreadSafeQueue {
  public:
   using QueueImpl = std::deque<T>;
+  using QueueFullHandler = std::function<void(QueueImpl*)>;
+
   ThreadSafeQueue() = default;
   explicit ThreadSafeQueue(std::size_t max_elements,
-                           std::function<void(QueueImpl*)> max_elements_handler)
+                           QueueFullHandler max_elements_handler)
       : max_elements_{max_elements},
         max_elements_handler_{std::move(max_elements_handler)} {}
 
@@ -58,18 +61,17 @@ class ThreadSafeQueue {
     return std::move(items_);
   }
 
-  void Push(T&& t) {
+  template <typename U>
+  bool Push(U&& u) {
+    static_assert(std::is_assignable_v<T, decltype(u)>);
     std::lock_guard<std::mutex> guard(m_);
-    DropItemsIfAtCapacity();
-    items_.push_back(std::move(t));
+    const bool has_room = DropItemsIfAtCapacity();
+    if (!has_room) {
+      return false;
+    }
+    items_.push_back(std::forward<U>(u));
     new_item_.notify_one();
-  }
-
-  void Push(const T& t) {
-    std::lock_guard<std::mutex> guard(m_);
-    DropItemsIfAtCapacity();
-    items_.push_back(t);
-    new_item_.notify_one();
+    return true;
   }
 
   bool IsEmpty() {
@@ -83,15 +85,22 @@ class ThreadSafeQueue {
   }
 
  private:
-  void DropItemsIfAtCapacity() {
+  // return whether there's room to push
+  bool DropItemsIfAtCapacity() {
     if (max_elements_ && max_elements_ == items_.size()) {
       max_elements_handler_(&items_);
     }
+    if (max_elements_ && max_elements_ == items_.size()) {
+      // handler intends to ignore the newly coming element or
+      // did not empty the room for whatever reason
+      return false;
+    }
+    return true;
   }
 
   std::mutex m_;
   std::size_t max_elements_{};
-  std::function<void(QueueImpl*)> max_elements_handler_{};
+  QueueFullHandler max_elements_handler_{};
   std::condition_variable new_item_;
   QueueImpl items_;
 };
