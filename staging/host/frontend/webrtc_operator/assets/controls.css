@@ -19,15 +19,15 @@
   padding-right: 7px;
   border-radius: 10px;
   background-color: #5f6368; /* Google grey 700 */
-  width: 117px;
-  height: 64px;
+  width: 80px;
+  height: 44px;
 }
 
 .toggle-control .toggle-control-icon {
   position: relative;
   display: inline-block;
   float: left;
-  font-size: 64px;
+  font-size: 44px;
   color: #e8eaed;
 }
 
@@ -35,9 +35,9 @@
   position: relative;
   display: inline-block;
   float:left;
-  width: 52px;
-  height: 30px;
-  top: 17px;
+  width: 36px;
+  height: 21px;
+  top: 11px;
 }
 
 .toggle-control .toggle-control-switch input {
@@ -55,16 +55,16 @@
   bottom: 0;
   -webkit-transition: .4s;
   transition: .4s;
-  border-radius: 30px;
-  border: solid 5px;
+  border-radius: 21px;
+  border: solid 4px;
   border-color: #e8eaed;
 }
 
 .toggle-control .toggle-control-slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 12px;
+  width: 12px;
   left: 1px;
   bottom: 1px;
   background-color: #e8eaed;
@@ -82,7 +82,7 @@
 }
 
 .toggle-control input:checked + .toggle-control-slider:before {
-  -webkit-transform: translateX(22px);
-  -ms-transform: translateX(22px);
-  transform: translateX(22px);
+  -webkit-transform: translateX(15px);
+  -ms-transform: translateX(15px);
+  transform: translateX(15px);
 }
