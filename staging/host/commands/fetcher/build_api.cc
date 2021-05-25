@@ -164,21 +164,16 @@ std::vector<Artifact> BuildApi::Artifacts(const DirectoryBuild& build) {
 bool BuildApi::ArtifactToFile(const DeviceBuild& build,
                               const std::string& artifact,
                               const std::string& path) {
-  std::string url;
-  if (credential_source) {
-    url = BUILD_API + "/builds/" + build.id + "/" + build.target +
-          "/attempts/latest/artifacts/" + artifact + "?alt=media";
-  } else {
-    std::string download_url_endpoint =
-        BUILD_API + "/builds/" + build.id + "/" + build.target +
-        "/attempts/latest/artifacts/" + artifact + "/url";
-    auto download_url_json = curl.DownloadToJson(download_url_endpoint);
-    if (!download_url_json.isMember("signedUrl")) {
-      LOG(ERROR) << "URL endpoint did not have json path";
-      return false;
-    }
-    url = download_url_json["signedUrl"].asString();
+  std::string download_url_endpoint =
+      BUILD_API + "/builds/" + build.id + "/" + build.target +
+      "/attempts/latest/artifacts/" + artifact + "/url";
+  auto download_url_json =
+      curl.DownloadToJson(download_url_endpoint, Headers());
+  if (!download_url_json.isMember("signedUrl")) {
+    LOG(ERROR) << "URL endpoint did not have json path: " << download_url_json;
+    return false;
   }
+  std::string url = download_url_json["signedUrl"].asString();
   return curl.DownloadToFile(url, path, Headers());
 }
 
