@@ -44,8 +44,6 @@ body {
 
 #header {
   height: 64px;
-  margin-top: 10px;
-  margin-bottom: 10px;
   /* Items inside this use a row Flexbox.*/
   display: flex;
   align-items: center;
@@ -60,7 +58,7 @@ body {
   margin-right: 6px;
 }
 #device-audio {
-  margin-bottom: 5px;
+  height: 44px;
 }
 
 #status-div {
@@ -94,8 +92,8 @@ body {
   display: flex;
 }
 #controls-and-screens div {
-  margin-left: 10px;
-  margin-right: 10px;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .modal {
@@ -103,7 +101,7 @@ body {
   display: none;
   position: absolute;
 
-  border-radius: 16px;
+  border-radius: 10px;
   padding: 20px;
   padding-top: 1px;
 
@@ -134,7 +132,7 @@ body {
 }
 
 .control-panel-column {
-  width: 80px;
+  width: 50px;
   /* Items inside this use a column Flexbox.*/
   display: flex;
   flex-direction: column;
@@ -144,13 +142,13 @@ body {
   /* Give the custom buttons column a blue background. */
   background-color: #1c4587ff;
   height: fit-content;
-  border-radius: 16px;
+  border-radius: 10px;
 }
 
 .control-panel-column button {
   margin: 0px 0px 5px 0px;
-  height: 80px;
-  font-size: 48px;
+  height: 50px;
+  font-size: 32px;
 
   color: #e8eaed; /* Google grey 200 */
   border: none;
@@ -161,7 +159,7 @@ body {
   color: #9aa0a6; /* Google grey 500 */
 }
 .control-panel-column button.modal-button-opened {
-  border-radius: 16px;
+  border-radius: 10px;
   background-color: #5f6368; /* Google grey 700 */
 }
 
