@@ -25,13 +25,20 @@ struct GraphicsAvailability {
   bool has_gles1 = false;
   bool has_gles2 = false;
   bool has_egl = false;
-  bool has_egl_default_display = false;
+  bool has_vulkan = false;
+
   std::string egl_client_extensions;
+
   std::string egl_version;
   std::string egl_vendor;
   std::string egl_extensions;
-  bool has_egl_surfaceless_with_gles = false;
-  bool has_vulkan = false;
+
+  bool can_init_gles2_on_egl_surfaceless = false;
+  std::string gles2_vendor;
+  std::string gles2_version;
+  std::string gles2_renderer;
+  std::string gles2_extensions;
+
   bool has_discrete_gpu = false;
   std::string discrete_gpu_device_name;
   std::string discrete_gpu_device_extensions;
