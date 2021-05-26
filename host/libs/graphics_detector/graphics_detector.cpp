@@ -21,6 +21,7 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <GLES2/gl2.h>
 #include <android-base/logging.h>
 #include <android-base/strings.h>
 #include <dlfcn.h>
@@ -134,7 +135,6 @@ void PopulateEglAvailability(GraphicsAvailability* availability) {
     return;
   }
   LOG(VERBOSE) << "Found default display.";
-  availability->has_egl_default_display = true;
 
   PFNEGLINITIALIZEPROC eglInitialize =
     reinterpret_cast<PFNEGLINITIALIZEPROC>(EglLoadFunction("eglInitialize"));
@@ -337,7 +337,46 @@ void PopulateEglAvailability(GraphicsAvailability* availability) {
     return;
   }
   LOG(VERBOSE) << "Make EGL context current.";
-  availability->has_egl_surfaceless_with_gles = true;
+  availability->can_init_gles2_on_egl_surfaceless = true;
+
+  PFNGLGETSTRINGPROC glGetString =
+      reinterpret_cast<PFNGLGETSTRINGPROC>(eglGetProcAddress("glGetString"));
+
+  const GLubyte* gles2_vendor = glGetString(GL_VENDOR);
+  if (gles2_vendor == nullptr) {
+    LOG(VERBOSE) << "Failed to query GLES2 vendor.";
+    return;
+  }
+  const std::string gles2_vendor_string((const char*)gles2_vendor);
+  LOG(VERBOSE) << "Found GLES2 vendor: " << gles2_vendor_string;
+  availability->gles2_vendor = gles2_vendor_string;
+
+  const GLubyte* gles2_version = glGetString(GL_VERSION);
+  if (gles2_version == nullptr) {
+    LOG(VERBOSE) << "Failed to query GLES2 vendor.";
+    return;
+  }
+  const std::string gles2_version_string((const char*)gles2_version);
+  LOG(VERBOSE) << "Found GLES2 version: " << gles2_version_string;
+  availability->gles2_version = gles2_version_string;
+
+  const GLubyte* gles2_renderer = glGetString(GL_RENDERER);
+  if (gles2_renderer == nullptr) {
+    LOG(VERBOSE) << "Failed to query GLES2 renderer.";
+    return;
+  }
+  const std::string gles2_renderer_string((const char*)gles2_renderer);
+  LOG(VERBOSE) << "Found GLES2 renderer: " << gles2_renderer_string;
+  availability->gles2_renderer = gles2_renderer_string;
+
+  const GLubyte* gles2_extensions = glGetString(GL_EXTENSIONS);
+  if (gles2_extensions == nullptr) {
+    LOG(VERBOSE) << "Failed to query GLES2 extensions.";
+    return;
+  }
+  const std::string gles2_extensions_string((const char*)gles2_extensions);
+  LOG(VERBOSE) << "Found GLES2 extensions: " << gles2_extensions_string;
+  availability->gles2_extensions = gles2_extensions_string;
 }
 
 void PopulateVulkanAvailability(GraphicsAvailability* availability) {
@@ -497,6 +536,8 @@ void PopulateVulkanAvailability(GraphicsAvailability* availability) {
     VkPhysicalDeviceProperties device_properties = {};
     vkGetPhysicalDeviceProperties(device, &device_properties);
 
+    LOG(VERBOSE) << "Found physical device: " << device_properties.deviceName;
+
     uint32_t device_extensions_count = 0;
     vkEnumerateDeviceExtensionProperties(device,
                                          nullptr,
@@ -519,6 +560,9 @@ void PopulateVulkanAvailability(GraphicsAvailability* availability) {
     std::string device_extensions_string =
       android::base::Join(device_extensions_strings, ' ');
 
+    LOG(VERBOSE) << "Found physical device extensions: "
+                 << device_extensions_string;
+
     if (device_properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
       availability->has_discrete_gpu = true;
       availability->discrete_gpu_device_name = device_properties.deviceName;
@@ -526,6 +570,18 @@ void PopulateVulkanAvailability(GraphicsAvailability* availability) {
       break;
     }
   }
+}
+
+std::string ToLower(const std::string& v) {
+  std::string result = v;
+  std::transform(result.begin(), result.end(), result.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
+  return result;
+}
+
+bool IsLikelyAccelerated(const std::string& vendor) {
+  const std::string lower_vendor = ToLower(vendor);
+  return lower_vendor.find("mesa") == std::string::npos;
 }
 
 GraphicsAvailability GetGraphicsAvailability() {
@@ -544,7 +600,8 @@ GraphicsAvailability GetGraphicsAvailability() {
 
 bool ShouldEnableAcceleratedRendering(
     const GraphicsAvailability& availability) {
-  return availability.has_egl && availability.has_egl_surfaceless_with_gles &&
+  return availability.can_init_gles2_on_egl_surfaceless &&
+         IsLikelyAccelerated(availability.gles2_vendor) &&
          availability.has_discrete_gpu;
 }
 
@@ -560,7 +617,7 @@ GraphicsAvailability GetGraphicsAvailabilityWithSubprocessCheck() {
   }
   int status;
   if (waitpid(pid, &status, 0) != pid) {
-    PLOG(ERROR) << "Failed to wait for graphics check subprocess";
+    PLOG(VERBOSE) << "Failed to wait for graphics check subprocess";
     return GraphicsAvailability{};
   }
   if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
@@ -575,20 +632,32 @@ std::ostream& operator<<(std::ostream& stream,
   std::ios_base::fmtflags flags_backup(stream.flags());
   stream << std::boolalpha;
   stream << "Graphics Availability:\n";
-  stream << "OpenGL available: " << availability.has_gl << "\n";
-  stream << "OpenGL ES1 available: " << availability.has_gles1 << "\n";
-  stream << "OpenGL ES2 available: " << availability.has_gles2 << "\n";
-  stream << "EGL available: " << availability.has_egl << "\n";
+
+  stream << "\n";
+  stream << "OpenGL lib available: " << availability.has_gl << "\n";
+  stream << "OpenGL ES1 lib available: " << availability.has_gles1 << "\n";
+  stream << "OpenGL ES2 lib available: " << availability.has_gles2 << "\n";
+  stream << "EGL lib available: " << availability.has_egl << "\n";
+  stream << "Vulkan libavailable: " << availability.has_vulkan << "\n";
+
+  stream << "\n";
   stream << "EGL client extensions: " << availability.egl_client_extensions
          << "\n";
-  stream << "EGL default display available: "
-         << availability.has_egl_default_display << "\n";
+
+  stream << "\n";
   stream << "EGL display vendor: " << availability.egl_vendor << "\n";
   stream << "EGL display version: " << availability.egl_version << "\n";
   stream << "EGL display extensions: " << availability.egl_extensions << "\n";
-  stream << "EGL surfaceless display with GLES: "
-         << availability.has_egl_surfaceless_with_gles << "\n";
-  stream << "Vulkan available: " << availability.has_vulkan << "\n";
+
+  stream << "GLES2 can init on surfaceless display: "
+         << availability.can_init_gles2_on_egl_surfaceless << "\n";
+  stream << "\n";
+  stream << "GLES2 vendor: " << availability.gles2_vendor << "\n";
+  stream << "GLES2 version: " << availability.gles2_version << "\n";
+  stream << "GLES2 renderer: " << availability.gles2_renderer << "\n";
+  stream << "GLES2 extensions: " << availability.gles2_extensions << "\n";
+
+  stream << "\n";
   stream << "Vulkan discrete GPU detected: " << availability.has_discrete_gpu
          << "\n";
   if (availability.has_discrete_gpu) {
