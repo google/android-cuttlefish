@@ -36,11 +36,28 @@ cc_library_static {
     ],
     header_libs: [
         "egl_headers",
+        "gl_headers",
         "vulkan_headers",
     ],
     shared_libs: [
         "libbase",
         "liblog",
+    ],
+    defaults: ["cuttlefish_host"],
+}
+
+cc_binary {
+    name: "detect_graphics",
+    srcs: [
+        "detect_graphics.cpp",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+    static_libs: [
+        "libcuttlefish_graphics_detector",
+        "libgflags",
     ],
     defaults: ["cuttlefish_host"],
 }
