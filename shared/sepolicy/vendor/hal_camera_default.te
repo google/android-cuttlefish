@@ -10,3 +10,6 @@ binder_call(sensor_service_server, hal_camera_default)
 hal_client_domain(hal_camera_default, hal_thermal)
 
 gpu_access(hal_camera_default)
+
+# Vsocket camera
+allow hal_camera_default self:vsock_socket { accept bind create getopt listen read write };

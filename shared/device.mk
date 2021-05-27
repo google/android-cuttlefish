@@ -445,11 +445,19 @@ PRODUCT_PACKAGES += $(LOCAL_DUMPSTATE_PRODUCT_PACKAGE)
 #
 # Camera
 #
+ifeq ($(TARGET_USE_VSOCK_CAMERA_HAL_IMPL),true)
+PRODUCT_PACKAGES += \
+    android.hardware.camera.provider@2.6-external-vsock-service \
+    android.hardware.camera.provider@2.6-impl-cuttlefish
+DEVICE_MANIFEST_FILE += \
+    device/google/cuttlefish/guest/hals/camera/manifest.xml
+else
 PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.6-service-google \
     libgooglecamerahwl_impl \
     android.hardware.camera.provider@2.6-impl-google \
 
+endif
 #
 # Gatekeeper
 #
