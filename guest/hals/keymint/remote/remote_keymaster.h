@@ -55,6 +55,10 @@ class RemoteKeymaster {
   void Configure(const ConfigureRequest& request, ConfigureResponse* response);
   void GenerateKey(const GenerateKeyRequest& request,
                    GenerateKeyResponse* response);
+  void GenerateRkpKey(const GenerateRkpKeyRequest& request,
+                      GenerateRkpKeyResponse* response);
+  void GenerateCsr(const GenerateCsrRequest& request,
+                   GenerateCsrResponse* response);
   void GetKeyCharacteristics(const GetKeyCharacteristicsRequest& request,
                              GetKeyCharacteristicsResponse* response);
   void ImportKey(const ImportKeyRequest& request, ImportKeyResponse* response);

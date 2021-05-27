@@ -37,8 +37,8 @@ using secureclock::TimeStampToken;
 namespace {
 
 vector<KeyCharacteristics> convertKeyCharacteristics(
-    SecurityLevel keyMintSecurityLevel, const AuthorizationSet& sw_enforced,
-    const AuthorizationSet& hw_enforced) {
+    const vector<KeyParameter>& keyParams, SecurityLevel keyMintSecurityLevel,
+    const AuthorizationSet& sw_enforced, const AuthorizationSet& hw_enforced) {
   KeyCharacteristics keyMintEnforced{keyMintSecurityLevel, {}};
 
   if (keyMintSecurityLevel != SecurityLevel::SOFTWARE) {
@@ -80,6 +80,11 @@ vector<KeyCharacteristics> convertKeyCharacteristics(
 
       /* Unenforceable */
       case KM_TAG_CREATION_DATETIME:
+        for (const auto& p : keyParams) {
+          if (p.tag == Tag::CREATION_DATETIME) {
+            keystoreEnforced.authorizations.push_back(kmParam2Aidl(entry));
+          }
+        }
         break;
 
       /* Disallowed in KeyCharacteristics */
@@ -245,7 +250,7 @@ ScopedAStatus RemoteKeyMintDevice::generateKey(
 
   creationResult->keyBlob = kmBlob2vector(response.key_blob);
   creationResult->keyCharacteristics = convertKeyCharacteristics(
-      securityLevel_, response.unenforced, response.enforced);
+      keyParams, securityLevel_, response.unenforced, response.enforced);
   creationResult->certificateChain =
       convertCertificateChain(response.certificate_chain);
   return ScopedAStatus::ok();
@@ -279,7 +284,7 @@ ScopedAStatus RemoteKeyMintDevice::importKey(
 
   creationResult->keyBlob = kmBlob2vector(response.key_blob);
   creationResult->keyCharacteristics = convertKeyCharacteristics(
-      securityLevel_, response.unenforced, response.enforced);
+      keyParams, securityLevel_, response.unenforced, response.enforced);
   creationResult->certificateChain =
       convertCertificateChain(response.certificate_chain);
 
@@ -310,7 +315,7 @@ ScopedAStatus RemoteKeyMintDevice::importWrappedKey(
 
   creationResult->keyBlob = kmBlob2vector(response.key_blob);
   creationResult->keyCharacteristics = convertKeyCharacteristics(
-      securityLevel_, response.unenforced, response.enforced);
+      unwrappingParams, securityLevel_, response.unenforced, response.enforced);
   creationResult->certificateChain =
       convertCertificateChain(response.certificate_chain);
 
