@@ -295,7 +295,7 @@ class FileInstance {
   int SetSockOpt(int level, int optname, const void* optval, socklen_t optlen);
   int GetSockOpt(int level, int optname, void* optval, socklen_t* optlen);
   int SetTerminalRaw();
-  const char* StrError() const;
+  std::string StrError() const;
   ScopedMMap MMap(void* addr, size_t length, int prot, int flags, off_t offset);
   ssize_t Truncate(off_t length);
   ssize_t Write(const void* buf, size_t count);
@@ -309,7 +309,6 @@ class FileInstance {
   int fd_;
   int errno_;
   std::string identity_;
-  char strerror_buf_[160];
 };
 
 /* Methods that need both a fully defined SharedFD and a fully defined

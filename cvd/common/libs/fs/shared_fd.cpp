@@ -676,20 +676,9 @@ int FileInstance::SetTerminalRaw() {
   return rval;
 }
 
-const char* FileInstance::StrError() const {
+std::string FileInstance::StrError() const {
   errno = 0;
-  FileInstance* s = const_cast<FileInstance*>(this);
-  char* out = strerror_r(errno_, s->strerror_buf_, sizeof(strerror_buf_));
-
-  // From man page:
-  //  strerror_r() returns a pointer to a string containing the error message.
-  //  This may be either a pointer to a string that the function stores in
-  //  buf, or a pointer to some (immutable) static string (in which case buf
-  //  is unused).
-  if (out != s->strerror_buf_) {
-    strncpy(s->strerror_buf_, out, sizeof(strerror_buf_));
-  }
-  return strerror_buf_;
+  return std::string(strerror(errno_));
 }
 
 ScopedMMap FileInstance::MMap(void* addr, size_t length, int prot, int flags,
