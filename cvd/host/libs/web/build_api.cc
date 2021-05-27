@@ -128,27 +128,16 @@ std::string BuildApi::ProductName(const DeviceBuild& build) {
 }
 
 std::vector<Artifact> BuildApi::Artifacts(const DeviceBuild& build) {
-  std::string page_token = "";
+  std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target
+      + "/attempts/latest/artifacts?maxResults=1000";
+  auto artifacts_json = curl.DownloadToJson(url, Headers());
+  CHECK(!artifacts_json.isMember("error")) << "Error fetching the artifacts of "
+      << build << ". Response was " << artifacts_json;
+
   std::vector<Artifact> artifacts;
-  do {
-    std::string url = BUILD_API + "/builds/" + build.id + "/" + build.target +
-                      "/attempts/latest/artifacts?maxResults=1000";
-    if (page_token != "") {
-      url += "&pageToken=" + page_token;
-    }
-    auto artifacts_json = curl.DownloadToJson(url, Headers());
-    CHECK(!artifacts_json.isMember("error"))
-        << "Error fetching the artifacts of " << build << ". Response was "
-        << artifacts_json;
-    if (artifacts_json.isMember("nextPageToken")) {
-      page_token = artifacts_json["nextPageToken"].asString();
-    } else {
-      page_token = "";
-    }
-    for (const auto& artifact_json : artifacts_json["artifacts"]) {
-      artifacts.emplace_back(artifact_json);
-    }
-  } while (page_token != "");
+  for (const auto& artifact_json : artifacts_json["artifacts"]) {
+    artifacts.emplace_back(artifact_json);
+  }
   return artifacts;
 }
 
@@ -185,7 +174,7 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
     return false;
   }
   std::string url = download_url_json["signedUrl"].asString();
-  return curl.DownloadToFile(url, path, Headers());
+  return curl.DownloadToFile(url, path);
 }
 
 bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
