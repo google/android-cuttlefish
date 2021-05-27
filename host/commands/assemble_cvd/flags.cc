@@ -315,6 +315,8 @@ DEFINE_bool(protected_vm, false, "Boot in Protected VM mode");
 DEFINE_bool(enable_audio, cuttlefish::HostArch() != cuttlefish::Arch::Arm64,
             "Whether to play or capture audio");
 
+DEFINE_uint32(camera_server_port, 0, "camera vsock port");
+
 DECLARE_string(assembly_dir);
 DECLARE_string(boot_image);
 DECLARE_string(system_image_dir);
@@ -786,6 +788,7 @@ CuttlefishConfig InitializeCuttlefishConfiguration(
     instance.set_rootcanal_default_commands_file(
         FLAGS_bluetooth_default_commands_file);
 
+    instance.set_camera_server_port(FLAGS_camera_server_port);
     instance.set_device_title(FLAGS_device_title);
 
     if (FLAGS_protected_vm) {

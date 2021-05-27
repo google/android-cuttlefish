@@ -82,12 +82,22 @@ function awaitDataChannel(pc, label, onMessage) {
 }
 
 class DeviceConnection {
-  constructor(pc, control, audio_stream) {
+  constructor(pc, control, media_stream) {
     this._pc = pc;
     this._control = control;
-    this._audio_stream = audio_stream;
+    this._media_stream = media_stream;
     // Disable the microphone by default
     this.useMic(false);
+    this.useVideo(false);
+    this._cameraDataChannel = pc.createDataChannel('camera-data-channel');
+    this._cameraDataChannel.binaryType = 'arraybuffer'
+    this._cameraInputQueue = new Array();
+    var self = this;
+    this._cameraDataChannel.onbufferedamountlow = () => {
+      if (self._cameraInputQueue.length > 0) {
+        self.sendCameraData(self._cameraInputQueue.shift());
+      }
+    }
     this._inputChannel = createDataChannel(pc, 'input-channel');
     this._adbChannel = createDataChannel(pc, 'adb-channel', (msg) => {
       if (this._onAdbMessage) {
@@ -110,6 +120,7 @@ class DeviceConnection {
         console.error('Received unexpected Bluetooth message');
       }
     });
+    this.sendCameraResolution();
     this._streams = {};
     this._streamPromiseResolvers = {};
 
@@ -133,6 +144,28 @@ class DeviceConnection {
 
   get description() {
     return this._description;
+  }
+
+  get imageCapture() {
+    if (this._media_stream) {
+      const track = this._media_stream.getVideoTracks()[0]
+      return new ImageCapture(track);
+    }
+    return undefined;
+  }
+
+  get cameraWidth() {
+    return this._x_res;
+  }
+
+  get cameraHeight() {
+    return this._y_res;
+  }
+
+  get cameraEnabled() {
+    if (this._media_stream) {
+      return this._media_stream.getVideoTracks().some(track => track.enabled);
+    }
   }
 
   getStream(stream_id) {
@@ -200,9 +233,51 @@ class DeviceConnection {
   }
 
   useMic(in_use) {
-    if (this._audio_stream) {
-      this._audio_stream.getTracks().forEach(track => track.enabled = in_use);
+    if (this._media_stream) {
+      this._media_stream.getAudioTracks().forEach(track => track.enabled = in_use);
     }
+  }
+
+  useVideo(in_use) {
+    if (this._media_stream) {
+      this._media_stream.getVideoTracks().forEach(track => track.enabled = in_use);
+    }
+  }
+
+  sendCameraResolution() {
+    if (this._media_stream) {
+      const cameraTracks = this._media_stream.getVideoTracks();
+      if (cameraTracks.length > 0) {
+        const settings = cameraTracks[0].getSettings();
+        this._x_res = settings.width;
+        this._y_res = settings.height;
+        this.sendControlMessage(JSON.stringify({
+          command: 'camera_settings',
+          width: settings.width,
+          height: settings.height,
+          frame_rate: settings.frameRate,
+          facing: settings.facingMode
+        }));
+      }
+    }
+  }
+
+  sendOrQueueCameraData(data) {
+    if (this._cameraDataChannel.bufferedAmount > 0 || this._cameraInputQueue.length > 0) {
+      this._cameraInputQueue.push(data);
+    } else {
+      this.sendCameraData(data);
+    }
+  }
+
+  sendCameraData(data) {
+    const MAX_SIZE = 65535;
+    const END_MARKER = 'EOF';
+    for (let i = 0; i < data.byteLength; i += MAX_SIZE) {
+      // range is clamped to the valid index range
+      this._cameraDataChannel.send(data.slice(i, i + MAX_SIZE));
+    }
+    this._cameraDataChannel.send(END_MARKER);
   }
 
   // Provide a callback to receive control-related comms from the device
@@ -404,21 +479,20 @@ export async function Connect(deviceId, options) {
   }
   let pc = createPeerConnection(infraConfig, control);
 
-  let audioStream;
+  let mediaStream;
   try {
-    audioStream =
-        await navigator.mediaDevices.getUserMedia({video: false, audio: true});
-    const audioTracks = audioStream.getAudioTracks();
-    if (audioTracks.length > 0) {
-      console.log(`Using Audio device: ${audioTracks[0].label}, with ${
-        audioTracks.length} tracks`);
-      audioTracks.forEach(track => pc.addTrack(track, audioStream));
-    }
+    mediaStream =
+        await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    const tracks = mediaStream.getTracks();
+    tracks.forEach(track => {
+      console.log(`Using ${track.kind} device: ${track.label}`);
+      pc.addTrack(track, mediaStream);
+    });
   } catch (e) {
     console.error("Failed to open audio device: ", e);
   }
 
-  let deviceConnection = new DeviceConnection(pc, control, audioStream);
+  let deviceConnection = new DeviceConnection(pc, control, mediaStream);
   deviceConnection.description = deviceInfo;
   async function acceptOfferAndReplyAnswer(offer) {
     try {

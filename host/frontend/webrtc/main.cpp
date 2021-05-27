@@ -33,6 +33,7 @@
 #include "host/frontend/webrtc/connection_observer.h"
 #include "host/frontend/webrtc/display_handler.h"
 #include "host/frontend/webrtc/kernel_log_events_handler.h"
+#include "host/frontend/webrtc/lib/camera_controller.h"
 #include "host/frontend/webrtc/lib/local_recorder.h"
 #include "host/frontend/webrtc/lib/streamer.h"
 #include "host/frontend/webrtc/lib/video_sink.h"
@@ -57,6 +58,7 @@ DEFINE_string(action_servers, "",
 DEFINE_bool(write_virtio_input, true,
             "Whether to send input events in virtio format.");
 DEFINE_int32(audio_server_fd, -1, "An fd to listen on for audio frames");
+DEFINE_int32(camera_streamer_fd, -1, "An fd to send client camera frames");
 
 using cuttlefish::AudioHandler;
 using cuttlefish::CfConnectionObserverFactory;
@@ -242,6 +244,12 @@ int main(int argc, char** argv) {
 
   auto display_handler =
       std::make_shared<DisplayHandler>(std::move(displays), screen_connector);
+
+  if (instance.camera_server_port()) {
+    auto camera_controller = streamer->AddCamera(instance.camera_server_port(),
+                                                 instance.vsock_guest_cid());
+    observer_factory->SetCameraHandler(camera_controller);
+  }
 
   std::unique_ptr<cuttlefish::webrtc_streaming::LocalRecorder> local_recorder;
   if (cvd_config->record_screen()) {

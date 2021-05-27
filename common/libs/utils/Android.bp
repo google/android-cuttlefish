@@ -30,22 +30,34 @@ cc_library {
         "base64.cpp",
         "tcp_socket.cpp",
         "tee_logging.cpp",
+        "vsock_connection.cpp",
     ],
     shared: {
         shared_libs: [
             "libbase",
             "libcuttlefish_fs",
             "libcrypto",
+            "libjsoncpp",
         ],
     },
     static: {
         static_libs: [
             "libbase",
             "libcuttlefish_fs",
+            "libjsoncpp",
         ],
         shared_libs: [
           "libcrypto", // libcrypto_static is not accessible from all targets
         ],
     },
     defaults: ["cuttlefish_host"],
+}
+
+cc_library {
+    name: "libvsock_utils",
+    srcs: ["vsock_connection.cpp"],
+    shared_libs: ["libbase", "libcuttlefish_fs", "liblog", "libjsoncpp"],
+    defaults: ["cuttlefish_guest_only"],
+    include_dirs: ["device/google/cuttlefish"],
+    export_include_dirs: ["."],
 }

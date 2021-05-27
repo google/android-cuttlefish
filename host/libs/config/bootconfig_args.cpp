@@ -143,6 +143,13 @@ std::vector<std::string> BootconfigArgsFromConfig(
                                      instance.frames_server_port()));
   }
 
+  if (instance.camera_server_port()) {
+    bootconfig_args.push_back(concat("androidboot.vsock_camera_port=",
+                                     instance.camera_server_port()));
+    bootconfig_args.push_back(
+        concat("androidboot.vsock_camera_cid=", instance.vsock_guest_cid()));
+  }
+
   if (config.enable_modem_simulator() &&
       instance.modem_simulator_ports() != "") {
     bootconfig_args.push_back(concat("androidboot.modem_simulator_ports=",
