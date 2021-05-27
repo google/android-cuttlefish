@@ -98,11 +98,15 @@ class CuttlefishConfig {
   int memory_mb() const;
   void set_memory_mb(int memory_mb);
 
+  int dpi() const;
+  void set_dpi(int dpi);
+
+  int refresh_rate_hz() const;
+  void set_refresh_rate_hz(int refresh_rate_hz);
+
   struct DisplayConfig {
     int width;
     int height;
-    int dpi;
-    int refresh_rate_hz;
   };
 
   std::vector<DisplayConfig> display_configs() const;
@@ -286,12 +290,6 @@ class CuttlefishConfig {
   void set_vhost_user_mac80211_hwsim(const std::string& path);
   std::string vhost_user_mac80211_hwsim() const;
 
-  void set_ap_rootfs_image(const std::string& path);
-  std::string ap_rootfs_image() const;
-
-  void set_ap_kernel_image(const std::string& path);
-  std::string ap_kernel_image() const;
-
   void set_ethernet(bool ethernet);
   bool ethernet() const;
 
@@ -370,6 +368,8 @@ class CuttlefishConfig {
     int rootcanal_hci_port() const;
     int rootcanal_link_port() const;
     int rootcanal_test_port() const;
+    // Port number to connect to the camera hal on the guest
+    int camera_server_port() const;
     std::string rootcanal_config_file() const;
     std::string rootcanal_default_commands_file() const;
 
@@ -482,6 +482,7 @@ class CuttlefishConfig {
     void set_rootcanal_hci_port(int rootcanal_hci_port);
     void set_rootcanal_link_port(int rootcanal_link_port);
     void set_rootcanal_test_port(int rootcanal_test_port);
+    void set_camera_server_port(int camera_server_port);
     void set_rootcanal_config_file(const std::string& rootcanal_config_file);
     void set_rootcanal_default_commands_file(
         const std::string& rootcanal_default_commands_file);
