@@ -122,15 +122,25 @@ void RemoteKeymaster::Configure(const ConfigureRequest& request,
 
 void RemoteKeymaster::GenerateKey(const GenerateKeyRequest& request,
                                   GenerateKeyResponse* response) {
-  GenerateKeyRequest datedRequest(request.message_version);
-  datedRequest.key_description = request.key_description;
-
-  if (!request.key_description.Contains(TAG_CREATION_DATETIME)) {
+  if (message_version_ < MessageVersion(KmVersion::KEYMINT_1) &&
+      !request.key_description.Contains(TAG_CREATION_DATETIME)) {
+    GenerateKeyRequest datedRequest(request.message_version);
     datedRequest.key_description.push_back(TAG_CREATION_DATETIME,
                                            java_time(time(NULL)));
+    ForwardCommand(GENERATE_KEY, datedRequest, response);
+  } else {
+    ForwardCommand(GENERATE_KEY, request, response);
   }
+}
 
-  ForwardCommand(GENERATE_KEY, datedRequest, response);
+void RemoteKeymaster::GenerateRkpKey(const GenerateRkpKeyRequest& request,
+                                     GenerateRkpKeyResponse* response) {
+  ForwardCommand(GENERATE_RKP_KEY, request, response);
+}
+
+void RemoteKeymaster::GenerateCsr(const GenerateCsrRequest& request,
+                                  GenerateCsrResponse* response) {
+  ForwardCommand(GENERATE_CSR, request, response);
 }
 
 void RemoteKeymaster::GetKeyCharacteristics(
