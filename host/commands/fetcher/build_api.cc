@@ -185,7 +185,7 @@ bool BuildApi::ArtifactToFile(const DeviceBuild& build,
     return false;
   }
   std::string url = download_url_json["signedUrl"].asString();
-  return curl.DownloadToFile(url, path, Headers());
+  return curl.DownloadToFile(url, path);
 }
 
 bool BuildApi::ArtifactToFile(const DirectoryBuild& build,
