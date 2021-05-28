@@ -19,6 +19,7 @@
 #include <string.h>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 #include "common/libs/fs/shared_fd.h"
@@ -63,19 +64,8 @@ class ModemSimulator : public CommandSource {
                         const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (!config_.enable_modem_simulator()) {
-      LOG(DEBUG) << "Modem simulator not enabled";
-      return {};
-    }
-
-    int instance_number = config_.modem_simulator_instance_number();
-    if (instance_number > 3 /* max value */ || instance_number < 0) {
-      LOG(ERROR)
-          << "Modem simulator instance number should range between 1 and 3";
-      return {};
-    }
-
     Command cmd(ModemSimulatorBinary(), [this](Subprocess* proc) {
       auto stopped = StopModemSimulator(instance_.host_port());
       if (stopped) {
@@ -88,9 +78,40 @@ class ModemSimulator : public CommandSource {
 
     auto sim_type = config_.modem_simulator_sim_type();
     cmd.AddParameter(std::string{"-sim_type="} + std::to_string(sim_type));
-
-    auto ports = instance_.modem_simulator_ports();
     cmd.AddParameter("-server_fds=");
+    bool first_socket = true;
+    for (const auto& socket : sockets_) {
+      if (!first_socket) {
+        cmd.AppendToLastParameter(",");
+      }
+      cmd.AppendToLastParameter(socket);
+      first_socket = false;
+    }
+
+    std::vector<Command> commands;
+    commands.emplace_back(std::move(cmd));
+    return commands;
+  }
+
+  // Feature
+  bool Enabled() const override {
+    if (!config_.enable_modem_simulator()) {
+      LOG(DEBUG) << "Modem simulator not enabled";
+    }
+    return config_.enable_modem_simulator();
+  }
+  std::string Name() const override { return "ModemSimulator"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    int instance_number = config_.modem_simulator_instance_number();
+    if (instance_number > 3 /* max value */ || instance_number < 0) {
+      LOG(ERROR)
+          << "Modem simulator instance number should range between 1 and 3";
+      return false;
+    }
+    auto ports = instance_.modem_simulator_ports();
     for (int i = 0; i < instance_number; ++i) {
       auto pos = ports.find(',');
       auto temp = (pos != std::string::npos) ? ports.substr(0, pos - 1) : ports;
@@ -101,27 +122,23 @@ class ModemSimulator : public CommandSource {
       CHECK(socket->IsOpen())
           << "Unable to create modem simulator server socket: "
           << socket->StrError();
-      if (i > 0) {
-        cmd.AppendToLastParameter(",");
-      }
-      cmd.AppendToLastParameter(socket);
+      sockets_.push_back(socket);
     }
-
-    std::vector<Command> commands;
-    commands.emplace_back(std::move(cmd));
-    return commands;
+    return true;
   }
 
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  std::vector<SharedFD> sockets_;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
                                  const CuttlefishConfig::InstanceSpecific>>
 launchModemComponent() {
   return fruit::createComponent()
-      .addMultibinding<CommandSource, ModemSimulator>();
+      .addMultibinding<CommandSource, ModemSimulator>()
+      .addMultibinding<Feature, ModemSimulator>();
 }
 
 }  // namespace cuttlefish
