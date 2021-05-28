@@ -173,7 +173,7 @@ configComponent() {
   return fruit::createComponent().bindInstance(*config).bindInstance(instance);
 }
 
-fruit::Component<> runCvdComponent() {
+fruit::Component<KernelLogPipeProvider> runCvdComponent() {
   return fruit::createComponent()
       .install(launchComponent)
       .install(launchModemComponent)
@@ -346,17 +346,20 @@ int RunCvdMain(int argc, char** argv) {
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
-  fruit::Injector<> injector(runCvdComponent);
+  fruit::Injector<KernelLogPipeProvider> injector(runCvdComponent);
+  const auto& features = injector.getMultibindings<Feature>();
+  CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
+
   for (auto& command_source : injector.getMultibindings<CommandSource>()) {
-    process_monitor.AddCommands(command_source->Commands());
+    if (command_source->Enabled()) {
+      process_monitor.AddCommands(command_source->Commands());
+    }
   }
 
-  auto kernel_log_monitor = LaunchKernelLogMonitor(*config, 3);
-  SharedFD boot_events_pipe = kernel_log_monitor.pipes[0];
-  SharedFD adbd_events_pipe = kernel_log_monitor.pipes[1];
-  SharedFD webrtc_events_pipe = kernel_log_monitor.pipes[2];
-  kernel_log_monitor.pipes.clear();
-  process_monitor.AddCommands(std::move(kernel_log_monitor.commands));
+  auto kernel_log_monitor = injector.get<KernelLogPipeProvider*>();
+  SharedFD boot_events_pipe = kernel_log_monitor->KernelLogPipe();
+  SharedFD adbd_events_pipe = kernel_log_monitor->KernelLogPipe();
+  SharedFD webrtc_events_pipe = kernel_log_monitor->KernelLogPipe();
 
   CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
                                          reboot_notification, boot_events_pipe);
