@@ -16,7 +16,9 @@
 #include "host/commands/run_cvd/launch.h"
 
 #include <android-base/logging.h>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/files.h"
@@ -41,46 +43,85 @@ std::vector<T> single_element_emplace(T&& element) {
 
 CommandSource::~CommandSource() = default;
 
-KernelLogMonitorData LaunchKernelLogMonitor(
-    const CuttlefishConfig& config, unsigned int number_of_event_pipes) {
-  auto instance = config.ForDefaultInstance();
-  auto log_name = instance.kernel_log_pipe_name();
-  if (mkfifo(log_name.c_str(), 0600) != 0) {
-    LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
-               << strerror(errno);
-    return {};
-  }
+KernelLogPipeProvider::~KernelLogPipeProvider() = default;
 
-  SharedFD pipe;
-  // Open the pipe here (from the launcher) to ensure the pipe is not deleted
-  // due to the usage counters in the kernel reaching zero. If this is not done
-  // and the kernel_log_monitor crashes for some reason the VMM may get SIGPIPE.
-  pipe = SharedFD::Open(log_name.c_str(), O_RDWR);
-  Command command(KernelLogMonitorBinary());
-  command.AddParameter("-log_pipe_fd=", pipe);
+class KernelLogMonitor : public CommandSource, public KernelLogPipeProvider {
+ public:
+  INJECT(KernelLogMonitor(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
 
-  KernelLogMonitorData ret;
+  // CommandSource
+  std::vector<Command> Commands() override {
+    Command command(KernelLogMonitorBinary());
+    command.AddParameter("-log_pipe_fd=", fifo_);
 
-  if (number_of_event_pipes > 0) {
-    command.AddParameter("-subscriber_fds=");
-    for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
-      SharedFD event_pipe_write_end, event_pipe_read_end;
-      if (!SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
-        LOG(ERROR) << "Unable to create kernel log events pipe: " << strerror(errno);
-        std::exit(RunnerExitCodes::kPipeIOError);
+    if (!event_pipe_write_ends_.empty()) {
+      command.AddParameter("-subscriber_fds=");
+      for (size_t i = 0; i < event_pipe_write_ends_.size(); i++) {
+        if (i > 0) {
+          command.AppendToLastParameter(",");
+        }
+        command.AppendToLastParameter(event_pipe_write_ends_[i]);
       }
-      if (i > 0) {
-        command.AppendToLastParameter(",");
-      }
-      command.AppendToLastParameter(event_pipe_write_end);
-      ret.pipes.push_back(event_pipe_read_end);
     }
+
+    return single_element_emplace(std::move(command));
   }
 
-  ret.commands.emplace_back(std::move(command));
+  // KernelLogPipeProvider
+  SharedFD KernelLogPipe() override {
+    CHECK(!event_pipe_read_ends_.empty()) << "No more kernel pipes left";
+    SharedFD ret = event_pipe_read_ends_.back();
+    event_pipe_read_ends_.pop_back();
+    return ret;
+  }
 
-  return ret;
-}
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "KernelLogMonitor"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    auto log_name = instance_.kernel_log_pipe_name();
+    if (mkfifo(log_name.c_str(), 0600) != 0) {
+      LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
+                 << strerror(errno);
+      return false;
+    }
+
+    // Open the pipe here (from the launcher) to ensure the pipe is not deleted
+    // due to the usage counters in the kernel reaching zero. If this is not
+    // done and the kernel_log_monitor crashes for some reason the VMM may get
+    // SIGPIPE.
+    fifo_ = SharedFD::Open(log_name, O_RDWR);
+    if (!fifo_->IsOpen()) {
+      LOG(ERROR) << "Unable to open \"" << log_name << "\"";
+      return false;
+    }
+
+    // TODO(schuffelen): Find a way to calculate this dynamically.
+    int number_of_event_pipes = 3;
+    if (number_of_event_pipes > 0) {
+      for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
+        SharedFD event_pipe_write_end, event_pipe_read_end;
+        if (!SharedFD::Pipe(&event_pipe_read_end, &event_pipe_write_end)) {
+          PLOG(ERROR) << "Unable to create kernel log events pipe: ";
+          return false;
+        }
+        event_pipe_write_ends_.push_back(event_pipe_write_end);
+        event_pipe_read_ends_.push_back(event_pipe_read_end);
+      }
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD fifo_;
+  std::vector<SharedFD> event_pipe_write_ends_;
+  std::vector<SharedFD> event_pipe_read_ends_;
+};
 
 class RootCanal : public CommandSource {
  public:
@@ -88,8 +129,9 @@ class RootCanal : public CommandSource {
                    const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (!config_.enable_host_bluetooth()) {
+    if (!Enabled()) {
       return {};
     }
     Command command(RootCanalBinary());
@@ -110,6 +152,14 @@ class RootCanal : public CommandSource {
     return single_element_emplace(std::move(command));
   }
 
+  // Feature
+  bool Enabled() const override { return config_.enable_host_bluetooth(); }
+  std::string Name() const override { return "RootCanal"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override { return true; }
+
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
@@ -120,28 +170,41 @@ class LogcatReceiver : public CommandSource {
   INJECT(LogcatReceiver(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
+    Command command(LogcatReceiverBinary());
+    command.AddParameter("-log_pipe_fd=", pipe_);
+    return single_element_emplace(std::move(command));
+  }
+
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "LogcatReceiver"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
     auto log_name = instance_.logcat_pipe_name();
     if (mkfifo(log_name.c_str(), 0600) != 0) {
       LOG(ERROR) << "Unable to create named pipe at " << log_name << ": "
                  << strerror(errno);
-      return {};
+      return false;
     }
-
-    SharedFD pipe;
     // Open the pipe here (from the launcher) to ensure the pipe is not deleted
     // due to the usage counters in the kernel reaching zero. If this is not
     // done and the logcat_receiver crashes for some reason the VMM may get
     // SIGPIPE.
-    pipe = SharedFD::Open(log_name.c_str(), O_RDWR);
-    Command command(LogcatReceiverBinary());
-    command.AddParameter("-log_pipe_fd=", pipe);
-
-    return single_element_emplace(std::move(command));
+    pipe_ = SharedFD::Open(log_name.c_str(), O_RDWR);
+    if (!pipe_->IsOpen()) {
+      LOG(ERROR) << "Can't open \"" << log_name << "\": " << pipe_->StrError();
+      return false;
+    }
+    return true;
   }
 
  private:
   const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD pipe_;
 };
 
 class ConfigServer : public CommandSource {
@@ -149,21 +212,33 @@ class ConfigServer : public CommandSource {
   INJECT(ConfigServer(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    auto port = instance_.config_server_port();
-    auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
-    if (!socket->IsOpen()) {
-      LOG(ERROR) << "Unable to create configuration server socket: "
-                 << socket->StrError();
-      std::exit(RunnerExitCodes::kConfigServerError);
-    }
     Command cmd(ConfigServerBinary());
-    cmd.AddParameter("-server_fd=", socket);
+    cmd.AddParameter("-server_fd=", socket_);
     return single_element_emplace(std::move(cmd));
+  }
+
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "ConfigServer"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    auto port = instance_.config_server_port();
+    socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
+    if (!socket_->IsOpen()) {
+      LOG(ERROR) << "Unable to create configuration server socket: "
+                 << socket_->StrError();
+      return false;
+    }
+    return true;
   }
 
  private:
   const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD socket_;
 };
 
 class TombstoneReceiver : public CommandSource {
@@ -171,48 +246,66 @@ class TombstoneReceiver : public CommandSource {
   INJECT(TombstoneReceiver(const CuttlefishConfig::InstanceSpecific& instance))
       : instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    std::string tombstoneDir = instance_.PerInstancePath("tombstones");
-    if (!DirectoryExists(tombstoneDir.c_str())) {
-      LOG(DEBUG) << "Setting up " << tombstoneDir;
-      if (mkdir(tombstoneDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
+    Command cmd(TombstoneReceiverBinary());
+    cmd.AddParameter("-server_fd=", socket_);
+    cmd.AddParameter("-tombstone_dir=", tombstone_dir_);
+    return single_element_emplace(std::move(cmd));
+  }
+
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "TombstoneReceiver"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    std::string tombstone_dir_ = instance_.PerInstancePath("tombstones");
+    if (!DirectoryExists(tombstone_dir_.c_str())) {
+      LOG(DEBUG) << "Setting up " << tombstone_dir_;
+      if (mkdir(tombstone_dir_.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) <
           0) {
-        LOG(ERROR) << "Failed to create tombstone directory: " << tombstoneDir
+        LOG(ERROR) << "Failed to create tombstone directory: " << tombstone_dir_
                    << ". Error: " << errno;
-        exit(RunnerExitCodes::kTombstoneDirCreationError);
-        return {};
+        return false;
       }
     }
 
     auto port = instance_.tombstone_receiver_port();
-    auto socket = SharedFD::VsockServer(port, SOCK_STREAM);
-    if (!socket->IsOpen()) {
+    socket_ = SharedFD::VsockServer(port, SOCK_STREAM);
+    if (!socket_->IsOpen()) {
       LOG(ERROR) << "Unable to create tombstone server socket: "
-                 << socket->StrError();
-      std::exit(RunnerExitCodes::kTombstoneServerError);
-      return {};
+                 << socket_->StrError();
+      return false;
     }
-    Command cmd(TombstoneReceiverBinary());
-    cmd.AddParameter("-server_fd=", socket);
-    cmd.AddParameter("-tombstone_dir=", tombstoneDir);
-
-    return single_element_emplace(std::move(cmd));
+    return true;
   }
 
  private:
   const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD socket_;
+  std::string tombstone_dir_;
 };
 
 class MetricsService : public CommandSource {
  public:
   INJECT(MetricsService(const CuttlefishConfig& config)) : config_(config) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (config_.enable_metrics() != CuttlefishConfig::kYes) {
-      return {};
-    }
     return single_element_emplace(Command(MetricsBinary()));
   }
+
+  // Feature
+  bool Enabled() const override {
+    return config_.enable_metrics() == CuttlefishConfig::kYes;
+  }
+  std::string Name() const override { return "MetricsService"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override { return true; }
 
  private:
   const CuttlefishConfig& config_;
@@ -225,52 +318,13 @@ class GnssGrpcProxyServer : public CommandSource {
                           const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (!config_.enable_gnss_grpc_proxy() ||
-        !FileExists(GnssGrpcProxyBinary())) {
-      return {};
-    }
-
     Command gnss_grpc_proxy_cmd(GnssGrpcProxyBinary());
-
-    auto gnss_in_pipe_name = instance_.gnss_in_pipe_name();
-    if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
-                 << strerror(error);
-      return {};
-    }
-
-    auto gnss_out_pipe_name = instance_.gnss_out_pipe_name();
-    if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
-      auto error = errno;
-      LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
-                 << strerror(error);
-      return {};
-    }
-
-    // These fds will only be read from or written to, but open them with
-    // read and write access to keep them open in case the subprocesses exit
-    SharedFD gnss_grpc_proxy_in_wr =
-        SharedFD::Open(gnss_in_pipe_name.c_str(), O_RDWR);
-    if (!gnss_grpc_proxy_in_wr->IsOpen()) {
-      LOG(ERROR) << "Failed to open gnss_grpc_proxy input fifo for writes: "
-                 << gnss_grpc_proxy_in_wr->StrError();
-      return {};
-    }
-
-    SharedFD gnss_grpc_proxy_out_rd =
-        SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
-    if (!gnss_grpc_proxy_out_rd->IsOpen()) {
-      LOG(ERROR) << "Failed to open gnss_grpc_proxy output fifo for reads: "
-                 << gnss_grpc_proxy_out_rd->StrError();
-      return {};
-    }
-
     const unsigned gnss_grpc_proxy_server_port =
         instance_.gnss_grpc_proxy_server_port();
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr);
-    gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd);
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_in_fd=", gnss_grpc_proxy_in_wr_);
+    gnss_grpc_proxy_cmd.AddParameter("--gnss_out_fd=", gnss_grpc_proxy_out_rd_);
     gnss_grpc_proxy_cmd.AddParameter("--gnss_grpc_port=",
                                      gnss_grpc_proxy_server_port);
     if (!instance_.gnss_file_path().empty()) {
@@ -281,9 +335,57 @@ class GnssGrpcProxyServer : public CommandSource {
     return single_element_emplace(std::move(gnss_grpc_proxy_cmd));
   }
 
+  // Feature
+  bool Enabled() const override {
+    return config_.enable_gnss_grpc_proxy() &&
+           FileExists(GnssGrpcProxyBinary());
+  }
+
+  std::string Name() const override { return "GnssGrpcProxyServer"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    auto gnss_in_pipe_name = instance_.gnss_in_pipe_name();
+    if (mkfifo(gnss_in_pipe_name.c_str(), 0600) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create gnss input fifo for crosvm: "
+                 << strerror(error);
+      return false;
+    }
+
+    auto gnss_out_pipe_name = instance_.gnss_out_pipe_name();
+    if (mkfifo(gnss_out_pipe_name.c_str(), 0660) != 0) {
+      auto error = errno;
+      LOG(ERROR) << "Failed to create gnss output fifo for crosvm: "
+                 << strerror(error);
+      return false;
+    }
+
+    // These fds will only be read from or written to, but open them with
+    // read and write access to keep them open in case the subprocesses exit
+    gnss_grpc_proxy_in_wr_ = SharedFD::Open(gnss_in_pipe_name.c_str(), O_RDWR);
+    if (!gnss_grpc_proxy_in_wr_->IsOpen()) {
+      LOG(ERROR) << "Failed to open gnss_grpc_proxy input fifo for writes: "
+                 << gnss_grpc_proxy_in_wr_->StrError();
+      return false;
+    }
+
+    gnss_grpc_proxy_out_rd_ =
+        SharedFD::Open(gnss_out_pipe_name.c_str(), O_RDWR);
+    if (!gnss_grpc_proxy_out_rd_->IsOpen()) {
+      LOG(ERROR) << "Failed to open gnss_grpc_proxy output fifo for reads: "
+                 << gnss_grpc_proxy_out_rd_->StrError();
+      return false;
+    }
+    return true;
+  }
+
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD gnss_grpc_proxy_in_wr_;
+  SharedFD gnss_grpc_proxy_out_rd_;
 };
 
 class BluetoothConnector : public CommandSource {
@@ -292,41 +394,49 @@ class BluetoothConnector : public CommandSource {
                             const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (!config_.enable_host_bluetooth()) {
-      return {};
-    }
-    std::vector<std::string> fifo_paths = {
-        instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
-        instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
-    };
-    std::vector<SharedFD> fifos;
-    for (const auto& path : fifo_paths) {
-      unlink(path.c_str());
-      if (mkfifo(path.c_str(), 0660) < 0) {
-        PLOG(ERROR) << "Could not create " << path;
-        return {};
-      }
-      auto fd = SharedFD::Open(path, O_RDWR);
-      if (!fd->IsOpen()) {
-        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-        return {};
-      }
-      fifos.push_back(fd);
-    }
-
     Command command(DefaultHostArtifactsPath("bin/bt_connector"));
-    command.AddParameter("-bt_out=", fifos[0]);
-    command.AddParameter("-bt_in=", fifos[1]);
+    command.AddParameter("-bt_out=", fifos_[0]);
+    command.AddParameter("-bt_in=", fifos_[1]);
     command.AddParameter("-hci_port=", instance_.rootcanal_hci_port());
     command.AddParameter("-link_port=", instance_.rootcanal_link_port());
     command.AddParameter("-test_port=", instance_.rootcanal_test_port());
     return single_element_emplace(std::move(command));
   }
 
+  // Feature
+  bool Enabled() const override { return config_.enable_host_bluetooth(); }
+
+  std::string Name() const override { return "BluetoothConnector"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    std::vector<std::string> fifo_paths = {
+        instance_.PerInstanceInternalPath("bt_fifo_vm.in"),
+        instance_.PerInstanceInternalPath("bt_fifo_vm.out"),
+    };
+    for (const auto& path : fifo_paths) {
+      unlink(path.c_str());
+      if (mkfifo(path.c_str(), 0660) < 0) {
+        PLOG(ERROR) << "Could not create " << path;
+        return false;
+      }
+      auto fd = SharedFD::Open(path, O_RDWR);
+      if (!fd->IsOpen()) {
+        LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
+        return false;
+      }
+      fifos_.push_back(fd);
+    }
+    return true;
+  }
+
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  std::vector<SharedFD> fifos_;
 };
 
 class SecureEnvironment : public CommandSource {
@@ -335,7 +445,31 @@ class SecureEnvironment : public CommandSource {
                            const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
+    Command command(HostBinaryPath("secure_env"));
+    command.AddParameter("-keymaster_fd_out=", fifos_[0]);
+    command.AddParameter("-keymaster_fd_in=", fifos_[1]);
+    command.AddParameter("-gatekeeper_fd_out=", fifos_[2]);
+    command.AddParameter("-gatekeeper_fd_in=", fifos_[3]);
+
+    const auto& secure_hals = config_.secure_hals();
+    bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
+    command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
+    bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
+    auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
+    command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
+
+    return single_element_emplace(std::move(command));
+  }
+
+  // Feature
+  bool Enabled() const override { return config_.enable_host_bluetooth(); }
+  std::string Name() const override { return "SecureEnvironment"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
     std::vector<std::string> fifo_paths = {
         instance_.PerInstanceInternalPath("keymaster_fifo_vm.in"),
         instance_.PerInstanceInternalPath("keymaster_fifo_vm.out"),
@@ -347,34 +481,22 @@ class SecureEnvironment : public CommandSource {
       unlink(path.c_str());
       if (mkfifo(path.c_str(), 0600) < 0) {
         PLOG(ERROR) << "Could not create " << path;
-        return {};
+        return false;
       }
       auto fd = SharedFD::Open(path, O_RDWR);
       if (!fd->IsOpen()) {
         LOG(ERROR) << "Could not open " << path << ": " << fd->StrError();
-        return {};
+        return false;
       }
-      fifos.push_back(fd);
+      fifos_.push_back(fd);
     }
-
-    Command command(HostBinaryPath("secure_env"));
-    command.AddParameter("-keymaster_fd_out=", fifos[0]);
-    command.AddParameter("-keymaster_fd_in=", fifos[1]);
-    command.AddParameter("-gatekeeper_fd_out=", fifos[2]);
-    command.AddParameter("-gatekeeper_fd_in=", fifos[3]);
-
-    const auto& secure_hals = config_.secure_hals();
-    bool secure_keymint = secure_hals.count(SecureHal::Keymint) > 0;
-    command.AddParameter("-keymint_impl=", secure_keymint ? "tpm" : "software");
-    bool secure_gatekeeper = secure_hals.count(SecureHal::Gatekeeper) > 0;
-    auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
-    command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
-
-    return single_element_emplace(std::move(command));
+    return true;
   }
+
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  std::vector<SharedFD> fifos_;
 };
 
 class VehicleHalServer : public CommandSource {
@@ -383,12 +505,8 @@ class VehicleHalServer : public CommandSource {
                           const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (!config_.enable_vehicle_hal_grpc_server() ||
-        !FileExists(config_.vehicle_hal_grpc_server_binary())) {
-      return {};
-    }
-
     Command grpc_server(config_.vehicle_hal_grpc_server_binary());
 
     const unsigned vhal_server_cid = 2;
@@ -407,6 +525,17 @@ class VehicleHalServer : public CommandSource {
     return single_element_emplace(std::move(grpc_server));
   }
 
+  // Feature
+  bool Enabled() const override {
+    return config_.enable_vehicle_hal_grpc_server() &&
+           FileExists(config_.vehicle_hal_grpc_server_binary());
+  }
+  std::string Name() const override { return "VehicleHalServer"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override { return true; }
+
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
@@ -418,18 +547,30 @@ class ConsoleForwarder : public CommandSource {
                           const CuttlefishConfig::InstanceSpecific& instance))
       : config_(config), instance_(instance) {}
 
+  // CommandSource
   std::vector<Command> Commands() override {
-    if (!config_.console()) {
-      return {};
-    }
     Command console_forwarder_cmd(ConsoleForwarderBinary());
 
+    console_forwarder_cmd.AddParameter("--console_in_fd=",
+                                       console_forwarder_in_wr_);
+    console_forwarder_cmd.AddParameter("--console_out_fd=",
+                                       console_forwarder_out_rd_);
+    return single_element_emplace(std::move(console_forwarder_cmd));
+  }
+
+  // Feature
+  bool Enabled() const override { return config_.console(); }
+  std::string Name() const override { return "ConsoleForwarder"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
     auto console_in_pipe_name = instance_.console_in_pipe_name();
     if (mkfifo(console_in_pipe_name.c_str(), 0600) != 0) {
       auto error = errno;
       LOG(ERROR) << "Failed to create console input fifo for crosvm: "
                  << strerror(error);
-      return {};
+      return false;
     }
 
     auto console_out_pipe_name = instance_.console_out_pipe_name();
@@ -437,53 +578,64 @@ class ConsoleForwarder : public CommandSource {
       auto error = errno;
       LOG(ERROR) << "Failed to create console output fifo for crosvm: "
                  << strerror(error);
-      return {};
+      return false;
     }
 
     // These fds will only be read from or written to, but open them with
     // read and write access to keep them open in case the subprocesses exit
-    SharedFD console_forwarder_in_wr =
+    console_forwarder_in_wr_ =
         SharedFD::Open(console_in_pipe_name.c_str(), O_RDWR);
-    if (!console_forwarder_in_wr->IsOpen()) {
+    if (!console_forwarder_in_wr_->IsOpen()) {
       LOG(ERROR) << "Failed to open console_forwarder input fifo for writes: "
-                 << console_forwarder_in_wr->StrError();
-      return {};
+                 << console_forwarder_in_wr_->StrError();
+      return false;
     }
 
-    SharedFD console_forwarder_out_rd =
+    console_forwarder_out_rd_ =
         SharedFD::Open(console_out_pipe_name.c_str(), O_RDWR);
-    if (!console_forwarder_out_rd->IsOpen()) {
+    if (!console_forwarder_out_rd_->IsOpen()) {
       LOG(ERROR) << "Failed to open console_forwarder output fifo for reads: "
-                 << console_forwarder_out_rd->StrError();
-      return {};
+                 << console_forwarder_out_rd_->StrError();
+      return false;
     }
-
-    console_forwarder_cmd.AddParameter("--console_in_fd=",
-                                       console_forwarder_in_wr);
-    console_forwarder_cmd.AddParameter("--console_out_fd=",
-                                       console_forwarder_out_rd);
-    return single_element_emplace(std::move(console_forwarder_cmd));
+    return true;
   }
 
  private:
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD console_forwarder_in_wr_;
+  SharedFD console_forwarder_out_rd_;
 };
 
 fruit::Component<fruit::Required<const CuttlefishConfig,
-                                 const CuttlefishConfig::InstanceSpecific>>
+                                 const CuttlefishConfig::InstanceSpecific>,
+                 KernelLogPipeProvider>
 launchComponent() {
   return fruit::createComponent()
+      .bind<KernelLogPipeProvider, KernelLogMonitor>()
+      .addMultibinding<CommandSource, BluetoothConnector>()
       .addMultibinding<CommandSource, ConfigServer>()
       .addMultibinding<CommandSource, ConsoleForwarder>()
-      .addMultibinding<CommandSource, BluetoothConnector>()
       .addMultibinding<CommandSource, GnssGrpcProxyServer>()
+      .addMultibinding<CommandSource, KernelLogMonitor>()
       .addMultibinding<CommandSource, LogcatReceiver>()
       .addMultibinding<CommandSource, MetricsService>()
       .addMultibinding<CommandSource, RootCanal>()
       .addMultibinding<CommandSource, SecureEnvironment>()
       .addMultibinding<CommandSource, TombstoneReceiver>()
-      .addMultibinding<CommandSource, VehicleHalServer>();
+      .addMultibinding<CommandSource, VehicleHalServer>()
+      .addMultibinding<Feature, BluetoothConnector>()
+      .addMultibinding<Feature, ConfigServer>()
+      .addMultibinding<Feature, ConsoleForwarder>()
+      .addMultibinding<Feature, GnssGrpcProxyServer>()
+      .addMultibinding<Feature, KernelLogMonitor>()
+      .addMultibinding<Feature, LogcatReceiver>()
+      .addMultibinding<Feature, MetricsService>()
+      .addMultibinding<Feature, RootCanal>()
+      .addMultibinding<Feature, SecureEnvironment>()
+      .addMultibinding<Feature, TombstoneReceiver>()
+      .addMultibinding<Feature, VehicleHalServer>();
 }
 
 } // namespace cuttlefish
