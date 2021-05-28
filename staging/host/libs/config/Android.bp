@@ -25,6 +25,7 @@ cc_library_static {
         "cuttlefish_config.cpp",
         "cuttlefish_config_instance.cpp",
         "data_image.cpp",
+        "feature.cpp",
         "fetcher_config.cpp",
         "host_tools_version.cpp",
         "kernel_args.cpp",
