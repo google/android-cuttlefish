@@ -114,9 +114,8 @@ int main(int argc, char** argv) {
   keymaster::KeymasterContext* keymaster_context;
   if (FLAGS_keymint_impl == "software") {
     // TODO: See if this is the right KM version.
-    keymaster_context =
-        new keymaster::PureSoftKeymasterContext(keymaster::KmVersion::KEYMASTER_4,
-                                                KM_SECURITY_LEVEL_SOFTWARE);
+    keymaster_context = new keymaster::PureSoftKeymasterContext(
+        keymaster::KmVersion::KEYMINT_1, KM_SECURITY_LEVEL_SOFTWARE);
   } else if (FLAGS_keymint_impl == "tpm") {
     keymaster_context =
         new TpmKeymasterContext(*resource_manager, *keymaster_enforcement);
