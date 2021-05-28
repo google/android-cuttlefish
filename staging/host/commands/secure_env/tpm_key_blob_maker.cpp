@@ -44,6 +44,62 @@ static keymaster_error_t SplitEnforcedProperties(
     keymaster::AuthorizationSet* sw_enforced) {
   for (auto& entry : key_description) {
     switch (entry.tag) {
+      // These cannot be specified by the client.
+      case KM_TAG_BOOT_PATCHLEVEL:
+      case KM_TAG_ORIGIN:
+      case KM_TAG_OS_PATCHLEVEL:
+      case KM_TAG_OS_VERSION:
+      case KM_TAG_ROOT_OF_TRUST:
+      case KM_TAG_VENDOR_PATCHLEVEL:
+        LOG(ERROR) << "Root of trust and origin tags may not be specified";
+        return KM_ERROR_INVALID_TAG;
+
+      // These are hidden
+      case KM_TAG_APPLICATION_DATA:
+      case KM_TAG_APPLICATION_ID:
+        break;
+
+      // These should not be in key descriptions because they're for operation
+      // parameters.
+      case KM_TAG_ASSOCIATED_DATA:
+      case KM_TAG_AUTH_TOKEN:
+      case KM_TAG_CONFIRMATION_TOKEN:
+      case KM_TAG_INVALID:
+      case KM_TAG_MAC_LENGTH:
+      case KM_TAG_NONCE:
+        LOG(ERROR) << "Tag " << entry.tag
+                   << " not allowed in key generation/import";
+        break;
+
+      // These are provided to support attestation key generation, but should
+      // not be included in the key characteristics.
+      case KM_TAG_ATTESTATION_APPLICATION_ID:
+      case KM_TAG_ATTESTATION_CHALLENGE:
+      case KM_TAG_ATTESTATION_ID_BRAND:
+      case KM_TAG_ATTESTATION_ID_DEVICE:
+      case KM_TAG_ATTESTATION_ID_IMEI:
+      case KM_TAG_ATTESTATION_ID_MANUFACTURER:
+      case KM_TAG_ATTESTATION_ID_MEID:
+      case KM_TAG_ATTESTATION_ID_MODEL:
+      case KM_TAG_ATTESTATION_ID_PRODUCT:
+      case KM_TAG_ATTESTATION_ID_SERIAL:
+      case KM_TAG_CERTIFICATE_SERIAL:
+      case KM_TAG_CERTIFICATE_SUBJECT:
+      case KM_TAG_CERTIFICATE_NOT_BEFORE:
+      case KM_TAG_CERTIFICATE_NOT_AFTER:
+      case KM_TAG_RESET_SINCE_ID_ROTATION:
+        break;
+
+      // These are nominally HW tags, but we don't actually support HW key
+      // attestation yet.
+      case KM_TAG_ROLLBACK_RESISTANCE:
+      case KM_TAG_ROLLBACK_RESISTANT:
+      case KM_TAG_ALLOW_WHILE_ON_BODY:
+      case KM_TAG_DEVICE_UNIQUE_ATTESTATION:
+      case KM_TAG_EXPORTABLE:
+      case KM_TAG_IDENTITY_CREDENTIAL_KEY:
+      case KM_TAG_STORAGE_KEY:
+
       case KM_TAG_PURPOSE:
       case KM_TAG_ALGORITHM:
       case KM_TAG_KEY_SIZE:
@@ -63,17 +119,32 @@ static keymaster_error_t SplitEnforcedProperties(
       case KM_TAG_EC_CURVE:
       case KM_TAG_ECIES_SINGLE_HASH_MODE:
       case KM_TAG_USER_AUTH_TYPE:
-      case KM_TAG_ORIGIN:
-      case KM_TAG_OS_VERSION:
-      case KM_TAG_OS_PATCHLEVEL:
       case KM_TAG_EARLY_BOOT_ONLY:
       case KM_TAG_UNLOCKED_DEVICE_REQUIRED:
         hw_enforced->push_back(entry);
         break;
-      default:
+
+      // The remaining tags are all software.
+      case KM_TAG_ACTIVE_DATETIME:
+      case KM_TAG_ALL_APPLICATIONS:
+      case KM_TAG_ALL_USERS:
+      case KM_TAG_BOOTLOADER_ONLY:
+      case KM_TAG_CREATION_DATETIME:
+      case KM_TAG_INCLUDE_UNIQUE_ID:
+      case KM_TAG_MAX_BOOT_LEVEL:
+      case KM_TAG_ORIGINATION_EXPIRE_DATETIME:
+      case KM_TAG_RSA_OAEP_MGF_DIGEST:
+      case KM_TAG_TRUSTED_CONFIRMATION_REQUIRED:
+      case KM_TAG_TRUSTED_USER_PRESENCE_REQUIRED:
+      case KM_TAG_UNIQUE_ID:
+      case KM_TAG_USAGE_COUNT_LIMIT:
+      case KM_TAG_USAGE_EXPIRE_DATETIME:
+      case KM_TAG_USER_ID:
         sw_enforced->push_back(entry);
+        break;
     }
   }
+
   return KM_ERROR_OK;
 }
 
@@ -102,18 +173,6 @@ keymaster_error_t TpmKeyBlobMaker::CreateKeyBlob(
     KeymasterKeyBlob* blob,
     AuthorizationSet* hw_enforced,
     AuthorizationSet* sw_enforced) const {
-  std::set<keymaster_tag_t> protected_tags = {
-    KM_TAG_ROOT_OF_TRUST,
-    KM_TAG_ORIGIN,
-    KM_TAG_OS_VERSION,
-    KM_TAG_OS_PATCHLEVEL,
-  };
-  for (auto tag : protected_tags) {
-    if (key_description.Contains(tag)) {
-      LOG(ERROR) << "Invalid tag " << tag;
-      return KM_ERROR_INVALID_TAG;
-    }
-  }
   auto rc =
       SplitEnforcedProperties(key_description, hw_enforced, sw_enforced);
   if (rc != KM_ERROR_OK) {

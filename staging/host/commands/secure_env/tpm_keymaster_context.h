@@ -27,6 +27,7 @@ class TpmAttestationRecordContext;
 class TpmResourceManager;
 class TpmKeyBlobMaker;
 class TpmRandomSource;
+class TpmRemoteProvisioningContext;
 
 /**
  * Implementation of KeymasterContext that wraps its keys with a TPM.
@@ -41,6 +42,7 @@ private:
   std::unique_ptr<TpmKeyBlobMaker> key_blob_maker_;
   std::unique_ptr<TpmRandomSource> random_source_;
   std::unique_ptr<TpmAttestationRecordContext> attestation_context_;
+  std::unique_ptr<TpmRemoteProvisioningContext> remote_provisioning_context_;
   std::map<keymaster_algorithm_t, std::unique_ptr<keymaster::KeyFactory>> key_factories_;
   std::vector<keymaster_algorithm_t> supported_algorithms_;
   uint32_t os_version_;
@@ -102,4 +104,7 @@ public:
       keymaster::AuthorizationSet* wrapped_key_params,
       keymaster_key_format_t* wrapped_key_format,
       keymaster::KeymasterKeyBlob* wrapped_key_material) const override;
+
+  keymaster::RemoteProvisioningContext* GetRemoteProvisioningContext()
+      const override;
 };

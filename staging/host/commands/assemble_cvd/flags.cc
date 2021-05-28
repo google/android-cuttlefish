@@ -288,7 +288,7 @@ DEFINE_int32(vsock_guest_cid,
              "The same formula holds when --vsock_guest_cid=C is given, for algorithm's sake."
              "Each vsock server port number is base + C - 3.");
 
-DEFINE_string(secure_hals, "keymint,gatekeeper",
+DEFINE_string(secure_hals, "",
               "Which HALs to use enable host security features for. Supports "
               "keymint and gatekeeper at the moment.");
 
