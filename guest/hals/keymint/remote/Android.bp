@@ -60,4 +60,7 @@ cc_binary {
     defaults: [
         "cuttlefish_guest_only",
     ],
+    required: [
+        "RemoteProvisioner",
+    ],
 }
