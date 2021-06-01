@@ -1,0 +1,16 @@
+type dlkm_loader, domain;
+type dlkm_loader_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(dlkm_loader)
+
+# Allow insmod on vendor and system partitions
+allow dlkm_loader self:capability sys_module;
+allow dlkm_loader system_file:system module_load;
+allow dlkm_loader vendor_file:system module_load;
+
+# needed for libmodprobe to read kernel commandline
+allow dlkm_loader proc_cmdline:file r_file_perms;
+
+# dlkm_loader searches tracefs while looking for modules
+dontaudit dlkm_loader debugfs_bootreceiver_tracing:dir search;
+dontaudit dlkm_loader debugfs_mm_events_tracing:dir search;
