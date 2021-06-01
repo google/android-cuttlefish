@@ -123,8 +123,9 @@ int main(int argc, char** argv) {
     }
 
     if (!log_fd->IsOpen()) {
+      auto error = log_fd->StrError();
       ALOGE("Unable to connect to vsock:%u:%u: %s", FLAGS_cid, FLAGS_port,
-        log_fd->StrError());
+            error.c_str());
     } else if (!ifs.is_open()) {
       ALOGE("%s closed in the middle of readout.", ts_path.c_str());
     } else {
