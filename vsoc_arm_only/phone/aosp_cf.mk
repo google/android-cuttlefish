@@ -40,6 +40,7 @@ PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS := false
 $(call inherit-product, $(SRC_TARGET_DIR)/product/go_defaults_512.mk)
 PRODUCT_ARTIFACT_PATH_REQUIREMENT_ALLOWED_LIST += \
     system/apex/com.android.tethering.inprocess.apex \
+    system/apex/com.android.tethering.inprocess.capex \
     system/app/PlatformCaptivePortalLogin/PlatformCaptivePortalLogin.apk \
     system/priv-app/CellBroadcastServiceModulePlatform/CellBroadcastServiceModulePlatform.apk \
     system/priv-app/InProcessNetworkStack/InProcessNetworkStack.apk \
