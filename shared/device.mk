@@ -622,12 +622,6 @@ else
 PRODUCT_PACKAGES += linker.recovery shell_and_utilities_recovery
 endif
 
-#
-# Shell script Vendor Module Loading
-#
-PRODUCT_COPY_FILES += \
-   $(LOCAL_PATH)/config/init.insmod.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.insmod.sh \
-
 # Host packages to install
 PRODUCT_HOST_PACKAGES += socket_vsock_proxy
 
@@ -654,3 +648,7 @@ PRODUCT_PRODUCT_PROPERTIES += \
 # Set one_handed_mode translate animation duration milliseconds
 PRODUCT_PRODUCT_PROPERTIES += \
     persist.debug.one_handed_translate_animation_duration=300
+
+# Vendor Dlkm Locader
+PRODUCT_PACKAGES += \
+   dlkm_loader
