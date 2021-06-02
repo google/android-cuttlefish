@@ -44,15 +44,13 @@ class WebSocketHandler {
 
  private:
   struct WsBuffer {
-    static const size_t kLwsPre;
     WsBuffer(std::vector<uint8_t> data, bool binary)
         : data(std::move(data)), binary(binary) {}
     std::vector<uint8_t> data;
     bool binary;
-    size_t start = kLwsPre;
   };
 
-  bool WriteWsBuffer(WsBuffer& ws_buffer);
+  void WriteWsBuffer(WsBuffer& ws_buffer);
 
   struct lws* wsi_;
   bool close_ = false;
