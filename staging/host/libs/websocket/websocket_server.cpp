@@ -109,6 +109,11 @@ std::string WebSocketServer::GetPath(struct lws* wsi) {
   auto len = lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI);
   std::string path(len + 1, '\0');
   auto ret = lws_hdr_copy(wsi, path.data(), path.size(), WSI_TOKEN_GET_URI);
+  if (ret <= 0) {
+      len = lws_hdr_total_length(wsi, WSI_TOKEN_HTTP_COLON_PATH);
+      path.resize(len + 1, '\0');
+      ret = lws_hdr_copy(wsi, path.data(), path.size(), WSI_TOKEN_HTTP_COLON_PATH);
+  }
   if (ret < 0) {
     LOG(FATAL) << "Something went wrong getting the path";
   }
