@@ -31,7 +31,9 @@ DEFINE_int32(http_server_port, 8443, "The port for the http server.");
 DEFINE_bool(use_secure_http, true, "Whether to use HTTPS or HTTP.");
 DEFINE_string(assets_dir, "webrtc",
               "Directory with location of webpage assets.");
-DEFINE_string(certs_dir, "webrtc/certs", "Directory to certificates.");
+DEFINE_string(certs_dir, "webrtc/certs",
+              "Directory to certificates. It must contain a server.crt file, a "
+              "server.key file and (optionally) a CA.crt file.");
 DEFINE_string(stun_server, "stun.l.google.com:19302",
               "host:port of STUN server to use for public address resolution");
 
