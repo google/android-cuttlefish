@@ -26,11 +26,13 @@
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/security/gatekeeper_channel.h"
 #include "common/libs/security/keymaster_channel.h"
+#include "host/commands/kernel_log_monitor/kernel_log_server.h"
+#include "host/commands/kernel_log_monitor/utils.h"
 #include "host/commands/secure_env/device_tpm.h"
 #include "host/commands/secure_env/fragile_tpm_storage.h"
 #include "host/commands/secure_env/gatekeeper_responder.h"
-#include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/in_process_tpm.h"
+#include "host/commands/secure_env/insecure_fallback_storage.h"
 #include "host/commands/secure_env/keymaster_responder.h"
 #include "host/commands/secure_env/soft_gatekeeper.h"
 #include "host/commands/secure_env/tpm_gatekeeper.h"
@@ -46,6 +48,11 @@ DEFINE_int32(keymaster_fd_in, -1, "A pipe for keymaster communication");
 DEFINE_int32(keymaster_fd_out, -1, "A pipe for keymaster communication");
 DEFINE_int32(gatekeeper_fd_in, -1, "A pipe for gatekeeper communication");
 DEFINE_int32(gatekeeper_fd_out, -1, "A pipe for gatekeeper communication");
+DEFINE_int32(kernel_events_fd, -1,
+             "A pipe for monitoring events based on "
+             "messages written to the kernel log. This "
+             "is used by secure_env to monitor for "
+             "device reboots.");
 
 DEFINE_string(tpm_impl,
               "in_memory",
@@ -56,6 +63,51 @@ DEFINE_string(keymint_impl, "tpm",
 
 DEFINE_string(gatekeeper_impl, "tpm",
               "The gatekeeper implementation. \"tpm\" or \"software\"");
+
+namespace {
+
+// Dup a command line file descriptor into a SharedFD.
+cuttlefish::SharedFD DupFdFlag(gflags::int32 fd) {
+  CHECK(fd != -1);
+  cuttlefish::SharedFD duped = cuttlefish::SharedFD::Dup(fd);
+  CHECK(duped->IsOpen()) << "Could not dup output fd: " << duped->StrError();
+  // The original FD is intentionally kept open so that we can re-exec this
+  // process without having to do a bunch of argv book-keeping.
+  return duped;
+}
+
+// Re-launch this process with all the same flags it was originallys started
+// with.
+[[noreturn]] void ReExecSelf() {
+  // Allocate +1 entry for terminating nullptr.
+  std::vector<char*> argv(gflags::GetArgvs().size() + 1, nullptr);
+  for (size_t i = 0; i < gflags::GetArgvs().size(); ++i) {
+    argv[i] = strdup(gflags::GetArgvs()[i].c_str());
+    CHECK(argv[i] != nullptr) << "OOM";
+  }
+  execv("/proc/self/exe", argv.data());
+  char buf[128];
+  LOG(FATAL) << "Exec failed, secure_env is out of sync with the guest: "
+             << errno << "(" << strerror_r(errno, buf, sizeof(buf)) << ")";
+  abort();  // LOG(FATAL) isn't marked as noreturn
+}
+
+// Spin up a thread that monitors for a kernel loaded event, then re-execs
+// this process. This way, secure_env's boot tracking matches up with the guest.
+std::thread StartKernelEventMonitor(cuttlefish::SharedFD kernel_events_fd) {
+  return std::thread([kernel_events_fd]() {
+    while (kernel_events_fd->IsOpen()) {
+      auto read_result = monitor::ReadEvent(kernel_events_fd);
+      CHECK(read_result.has_value()) << kernel_events_fd->StrError();
+      if (read_result->event == monitor::Event::KernelLoaded) {
+        LOG(DEBUG) << "secure_env detected guest reboot, restarting.";
+        ReExecSelf();
+      }
+    }
+  });
+}
+
+}  // namespace
 
 int main(int argc, char** argv) {
   cuttlefish::DefaultSubprocessLogging(argv);
@@ -128,31 +180,15 @@ int main(int argc, char** argv) {
       keymaster::MessageVersion(keymaster::KmVersion::KEYMINT_1,
                                 0 /* km_date */)};
 
-  CHECK(FLAGS_keymaster_fd_in != -1);
-  auto keymaster_in = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd_in);
-  CHECK(keymaster_in->IsOpen()) << "Could not dup input fd: "
-                                << keymaster_in->StrError();
-  close(FLAGS_keymaster_fd_in);
+  auto keymaster_in = DupFdFlag(FLAGS_keymaster_fd_in);
+  auto keymaster_out = DupFdFlag(FLAGS_keymaster_fd_out);
+  auto gatekeeper_in = DupFdFlag(FLAGS_gatekeeper_fd_in);
+  auto gatekeeper_out = DupFdFlag(FLAGS_gatekeeper_fd_out);
+  auto kernel_events_fd = DupFdFlag(FLAGS_kernel_events_fd);
 
-  CHECK(FLAGS_keymaster_fd_out != -1);
-  auto keymaster_out = cuttlefish::SharedFD::Dup(FLAGS_keymaster_fd_out);
-  CHECK(keymaster_out->IsOpen()) << "Could not dup output fd: "
-                                 << keymaster_out->StrError();
-  close(FLAGS_keymaster_fd_out);
+  std::vector<std::thread> threads;
 
-  CHECK(FLAGS_gatekeeper_fd_in != -1);
-  auto gatekeeper_in = cuttlefish::SharedFD::Dup(FLAGS_gatekeeper_fd_in);
-  CHECK(gatekeeper_in->IsOpen()) << "Could not dup input fd: "
-                                << gatekeeper_in->StrError();
-  close(FLAGS_gatekeeper_fd_in);
-
-  CHECK(FLAGS_gatekeeper_fd_out != -1);
-  auto gatekeeper_out = cuttlefish::SharedFD::Dup(FLAGS_gatekeeper_fd_out);
-  CHECK(gatekeeper_out->IsOpen()) << "Could not dup output fd: "
-                                  << keymaster_out->StrError();
-  close(FLAGS_gatekeeper_fd_out);
-
-  std::thread keymaster_thread([keymaster_in, keymaster_out, &keymaster]() {
+  threads.emplace_back([keymaster_in, keymaster_out, &keymaster]() {
     while (true) {
       cuttlefish::KeymasterChannel keymaster_channel(
           keymaster_in, keymaster_out);
@@ -164,7 +200,7 @@ int main(int argc, char** argv) {
     }
   });
 
-  std::thread gatekeeper_thread([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
+  threads.emplace_back([gatekeeper_in, gatekeeper_out, &gatekeeper]() {
     while (true) {
       cuttlefish::GatekeeperChannel gatekeeper_channel(
           gatekeeper_in, gatekeeper_out);
@@ -176,6 +212,9 @@ int main(int argc, char** argv) {
     }
   });
 
-  keymaster_thread.join();
-  gatekeeper_thread.join();
+  threads.emplace_back(StartKernelEventMonitor(kernel_events_fd));
+
+  for (auto& t : threads) {
+    t.join();
+  }
 }
