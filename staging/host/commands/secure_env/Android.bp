@@ -51,6 +51,7 @@ cc_binary_host {
         "libcppbor_external",
         "libcppcose_rkp",
         "libcuttlefish_fs",
+        "libcuttlefish_kernel_log_monitor_utils",
         "libcuttlefish_security",
         "libcuttlefish_utils",
         "libgatekeeper",
