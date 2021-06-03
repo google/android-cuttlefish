@@ -37,6 +37,9 @@ enum Event : int32_t {
   AdbdStarted = 5,
   ScreenChanged = 6,
   EthernetNetworkConnected = 7,
+  KernelLoaded = 8,  // BootStarted actually comes quite late in the boot.
+                     // KernelLoaded is the earliest possible indicator
+                     // that we're booting a device.
 };
 
 enum class SubscriptionAction {
