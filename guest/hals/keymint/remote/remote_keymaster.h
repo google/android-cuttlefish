@@ -86,6 +86,10 @@ class RemoteKeymaster {
       const VerifyAuthorizationRequest& request);
   DeviceLockedResponse DeviceLocked(const DeviceLockedRequest& request);
   EarlyBootEndedResponse EarlyBootEnded();
+  ConfigureVendorPatchlevelResponse ConfigureVendorPatchlevel(
+      const ConfigureVendorPatchlevelRequest& request);
+  ConfigureBootPatchlevelResponse ConfigureBootPatchlevel(
+      const ConfigureBootPatchlevelRequest& request);
   void GenerateTimestampToken(GenerateTimestampTokenRequest& request,
                               GenerateTimestampTokenResponse* response);
 

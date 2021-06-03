@@ -26,6 +26,12 @@ $(call inherit-product, $(SRC_TARGET_DIR)/product/userspace_reboot.mk)
 # Enforce generic ramdisk allow list
 $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_ramdisk.mk)
 
+# Set Vendor SPL to match platform
+VENDOR_SECURITY_PATCH = $(PLATFORM_SECURITY_PATCH)
+
+# Set boot SPL
+BOOT_SECURITY_PATCH = $(PLATFORM_SECURITY_PATCH)
+
 PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
 
 PRODUCT_SHIPPING_API_LEVEL := 32
