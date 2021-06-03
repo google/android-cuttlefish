@@ -22,6 +22,7 @@
 #include <android-base/logging.h>
 #include <libwebsockets.h>
 
+#include <common/libs/utils/files.h>
 #include <host/libs/websocket/websocket_handler.h>
 
 namespace cuttlefish {
@@ -32,6 +33,7 @@ WebSocketServer::WebSocketServer(
     int server_port) {
   std::string cert_file = certs_dir + "/server.crt";
   std::string key_file = certs_dir + "/server.key";
+  std::string ca_file = certs_dir + "/CA.crt";
 
   retry_ = {
       .secs_since_valid_ping = 3,
@@ -78,6 +80,9 @@ WebSocketServer::WebSocketServer(
   info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
   info.ssl_cert_filepath = cert_file.c_str();
   info.ssl_private_key_filepath = key_file.c_str();
+  if (FileExists(ca_file)) {
+    info.ssl_ca_filepath = ca_file.c_str();
+  }
   info.retry_and_idle_policy = &retry_;
 
   context_ = lws_create_context(&info);
