@@ -20,8 +20,6 @@
 
 namespace cuttlefish {
 
-const size_t WebSocketHandler::WsBuffer::kLwsPre = LWS_PRE;
-
 WebSocketHandler::WebSocketHandler(struct lws* wsi) : wsi_(wsi) {}
 
 void WebSocketHandler::EnqueueMessage(const uint8_t* data, size_t len,
@@ -34,32 +32,29 @@ void WebSocketHandler::EnqueueMessage(const uint8_t* data, size_t len,
 
 // Attempts to write what's left on a websocket buffer to the websocket,
 // updating the buffer.
-// Returns true if the entire buffer was successfully written.
-bool WebSocketHandler::WriteWsBuffer(WebSocketHandler::WsBuffer& ws_buffer) {
-  auto len = ws_buffer.data.size() - ws_buffer.start;
+void WebSocketHandler::WriteWsBuffer(WebSocketHandler::WsBuffer& ws_buffer) {
+  auto len = ws_buffer.data.size() - LWS_PRE;
   auto flags = lws_write_ws_flags(
       ws_buffer.binary ? LWS_WRITE_BINARY : LWS_WRITE_TEXT, true, true);
-  auto res = lws_write(wsi_, &ws_buffer.data[ws_buffer.start], len,
+  auto res = lws_write(wsi_, &ws_buffer.data[LWS_PRE], len,
                        static_cast<enum lws_write_protocol>(flags));
+  // lws_write will write all bytes of the provided buffer or enqueue the ones
+  // it couldn't write for later, but it guarantees it will consume the entire
+  // buffer, so we only need to check for error.
   if (res < 0) {
     // This shouldn't happen since this function is called in response to a
     // LWS_CALLBACK_SERVER_WRITEABLE call.
     LOG(FATAL) << "Failed to write data on the websocket";
-    // Close
-    return true;
   }
-  ws_buffer.start += res;
-  return ws_buffer.start == ws_buffer.data.size();
 }
 
 bool WebSocketHandler::OnWritable() {
   if (buffer_queue_.empty()) {
     return close_;
   }
-  auto wrote_full_buffer = WriteWsBuffer(buffer_queue_.back());
-  if (wrote_full_buffer) {
-    buffer_queue_.pop_back();
-  }
+  WriteWsBuffer(buffer_queue_.back());
+  buffer_queue_.pop_back();
+
   if (!buffer_queue_.empty()) {
     lws_callback_on_writable(wsi_);
   }
