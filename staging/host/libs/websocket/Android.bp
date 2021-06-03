@@ -28,6 +28,7 @@ cc_library_host_static {
         "liblog",
         "libssl",
         "libcrypto",
+        "libcuttlefish_utils",
     ],
     static_libs: [
         "libcap",
