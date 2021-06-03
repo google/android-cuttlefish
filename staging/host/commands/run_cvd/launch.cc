@@ -101,7 +101,7 @@ class KernelLogMonitor : public CommandSource, public KernelLogPipeProvider {
     }
 
     // TODO(schuffelen): Find a way to calculate this dynamically.
-    int number_of_event_pipes = 3;
+    int number_of_event_pipes = 4;
     if (number_of_event_pipes > 0) {
       for (unsigned int i = 0; i < number_of_event_pipes; ++i) {
         SharedFD event_pipe_write_end, event_pipe_read_end;
@@ -442,8 +442,11 @@ class BluetoothConnector : public CommandSource {
 class SecureEnvironment : public CommandSource {
  public:
   INJECT(SecureEnvironment(const CuttlefishConfig& config,
-                           const CuttlefishConfig::InstanceSpecific& instance))
-      : config_(config), instance_(instance) {}
+                           const CuttlefishConfig::InstanceSpecific& instance,
+                           KernelLogPipeProvider& kernel_log_pipe_provider))
+      : config_(config),
+        instance_(instance),
+        kernel_log_pipe_provider_(kernel_log_pipe_provider) {}
 
   // CommandSource
   std::vector<Command> Commands() override {
@@ -460,13 +463,17 @@ class SecureEnvironment : public CommandSource {
     auto gatekeeper_impl = secure_gatekeeper ? "tpm" : "software";
     command.AddParameter("-gatekeeper_impl=", gatekeeper_impl);
 
+    command.AddParameter("-kernel_events_fd=", kernel_log_pipe_);
+
     return single_element_emplace(std::move(command));
   }
 
   // Feature
   bool Enabled() const override { return config_.enable_host_bluetooth(); }
   std::string Name() const override { return "SecureEnvironment"; }
-  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+  std::unordered_set<Feature*> Dependencies() const override {
+    return {&kernel_log_pipe_provider_};
+  }
 
  protected:
   bool Setup() override {
@@ -490,6 +497,9 @@ class SecureEnvironment : public CommandSource {
       }
       fifos_.push_back(fd);
     }
+
+    kernel_log_pipe_ = kernel_log_pipe_provider_.KernelLogPipe();
+
     return true;
   }
 
@@ -497,6 +507,8 @@ class SecureEnvironment : public CommandSource {
   const CuttlefishConfig& config_;
   const CuttlefishConfig::InstanceSpecific& instance_;
   std::vector<SharedFD> fifos_;
+  KernelLogPipeProvider& kernel_log_pipe_provider_;
+  SharedFD kernel_log_pipe_;
 };
 
 class VehicleHalServer : public CommandSource {
