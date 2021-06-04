@@ -65,4 +65,7 @@
     <item>2:2:255</item> <!-- ID2:Fingerprint(HIDL):Weak -->
     <item>3:8:255</item> <!-- ID3:Face(HIDL):Weak -->
   </string-array>
+
+  <!-- Enable Night display, which requires HWC 2.0. -->
+  <bool name="config_nightDisplayAvailable">true</bool>
 </resources>
