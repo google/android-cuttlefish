@@ -51,8 +51,8 @@ public class GceService extends Service {
     private final JobExecutor mExecutor = new JobExecutor();
     private final EventReporter mEventReporter = new EventReporter();
     private final GceBroadcastReceiver mBroadcastReceiver = new GceBroadcastReceiver();
-    private final BluetoothChecker mBluetoothChecker = new BluetoothChecker();
 
+    private BluetoothChecker mBluetoothChecker = null;
     private ConnectivityChecker mConnChecker;
     private GceWifiManager mWifiManager = null;
     private String mMostRecentAction = null;
@@ -76,6 +76,7 @@ public class GceService extends Service {
             mWindowManager = getSystemService(WindowManager.class);
             mConnChecker = new ConnectivityChecker(this, mEventReporter);
             mWifiManager = new GceWifiManager(this, mEventReporter, mExecutor);
+            mBluetoothChecker = new BluetoothChecker(this);
 
             mPreviousRotation = getRotation();
             mPreviousScreenBounds = getScreenBounds();
