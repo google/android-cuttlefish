@@ -31,7 +31,7 @@
 namespace cuttlefish {
 namespace {
 
-constexpr const char kEglLib[] = "libEGL.so.1";
+constexpr const char kEglLib[] = "libEGL.so";
 constexpr const char kGlLib[] = "libOpenGL.so.0";
 constexpr const char kGles1Lib[] = "libGLESv1_CM.so.1";
 constexpr const char kGles2Lib[] = "libGLESv2.so.2";
@@ -129,30 +129,6 @@ void PopulateEglAvailability(GraphicsAvailability* availability) {
   }
   LOG(VERBOSE) << "Loaded eglGetDisplay.";
 
-  EGLDisplay default_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  if (default_display == EGL_NO_DISPLAY) {
-    LOG(VERBOSE) << "Failed to get default display. " << eglGetError();
-    return;
-  }
-  LOG(VERBOSE) << "Found default display.";
-
-  PFNEGLINITIALIZEPROC eglInitialize =
-    reinterpret_cast<PFNEGLINITIALIZEPROC>(EglLoadFunction("eglInitialize"));
-  if (eglInitialize == nullptr) {
-    LOG(VERBOSE) << "Failed to find function eglQueryString";
-    return;
-  }
-
-  EGLint client_version_major = 0;
-  EGLint client_version_minor = 0;
-  if (eglInitialize(default_display,
-                    &client_version_major,
-                    &client_version_minor) != EGL_TRUE) {
-    LOG(VERBOSE) << "Failed to initialize default display.";
-    return;
-  }
-  LOG(VERBOSE) << "Initialized default display.";
-
   PFNEGLQUERYSTRINGPROC eglQueryString =
     reinterpret_cast<PFNEGLQUERYSTRINGPROC>(EglLoadFunction("eglQueryString"));
   if (eglQueryString == nullptr) {
@@ -161,49 +137,46 @@ void PopulateEglAvailability(GraphicsAvailability* availability) {
   }
   LOG(VERBOSE) << "Loaded eglQueryString.";
 
-  std::string client_extensions;
-  if (client_version_major >= 1 && client_version_minor >= 5) {
-    client_extensions = eglQueryString(EGL_NO_DISPLAY, EGL_EXTENSIONS);
-  }
-  availability->egl_client_extensions = client_extensions;
-
-  EGLDisplay display = EGL_NO_DISPLAY;
-
-  if (client_extensions.find("EGL_EXT_platform_base") != std::string::npos) {
-    LOG(VERBOSE) << "Client extension EGL_EXT_platform_base is supported.";
+  EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  if (display != EGL_NO_DISPLAY) {
+    LOG(VERBOSE) << "Found default display.";
+  } else {
+    LOG(VERBOSE) << "Failed to get default display. " << eglGetError()
+                 << ". Attempting to get surfaceless display via "
+                 << "eglGetPlatformDisplayEXT(EGL_PLATFORM_SURFACELESS_MESA)";
 
     PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT =
       reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
         EglLoadFunction("eglGetPlatformDisplayEXT"));
     if (eglGetPlatformDisplayEXT == nullptr) {
       LOG(VERBOSE) << "Failed to find function eglGetPlatformDisplayEXT";
-      return;
+    } else {
+      display = eglGetPlatformDisplayEXT(EGL_PLATFORM_SURFACELESS_MESA,
+                                         EGL_DEFAULT_DISPLAY, NULL);
     }
+  }
 
-    display =
-      eglGetPlatformDisplayEXT(EGL_PLATFORM_SURFACELESS_MESA,
-                               EGL_DEFAULT_DISPLAY,
-                               NULL);
-  } else {
-    LOG(VERBOSE) << "Failed to find client extension EGL_EXT_platform_base.";
-  }
-  if (display == EGL_NO_DISPLAY) {
-    LOG(VERBOSE) << "Failed to get EGL_PLATFORM_SURFACELESS_MESA display..."
-                 << "failing back to EGL_DEFAULT_DISPLAY display.";
-    display = default_display;
-  }
   if (display == EGL_NO_DISPLAY) {
     LOG(VERBOSE) << "Failed to find display.";
     return;
   }
 
+  PFNEGLINITIALIZEPROC eglInitialize =
+      reinterpret_cast<PFNEGLINITIALIZEPROC>(EglLoadFunction("eglInitialize"));
+  if (eglInitialize == nullptr) {
+    LOG(VERBOSE) << "Failed to find function eglQueryString";
+    return;
+  }
+
+  EGLint client_version_major = 0;
+  EGLint client_version_minor = 0;
   if (eglInitialize(display,
                     &client_version_major,
                     &client_version_minor) != EGL_TRUE) {
-    LOG(VERBOSE) << "Failed to initialize surfaceless display.";
+    LOG(VERBOSE) << "Failed to initialize display.";
     return;
   }
-  LOG(VERBOSE) << "Initialized surfaceless display.";
+  LOG(VERBOSE) << "Initialized display.";
 
   const std::string version_string = eglQueryString(display, EGL_VERSION);
   if (version_string.empty()) {
