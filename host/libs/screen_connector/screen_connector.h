@@ -26,7 +26,6 @@
 #include <type_traits>
 
 #include <android-base/logging.h>
-#include "common/libs/concurrency/semaphore.h"
 #include "common/libs/confui/confui.h"
 #include "common/libs/fs/shared_fd.h"
 #include "common/libs/utils/size_utils.h"
@@ -35,6 +34,7 @@
 #include "host/libs/confui/host_mode_ctrl.h"
 #include "host/libs/confui/host_utils.h"
 #include "host/libs/screen_connector/screen_connector_common.h"
+#include "host/libs/screen_connector/screen_connector_multiplexer.h"
 #include "host/libs/screen_connector/screen_connector_queue.h"
 #include "host/libs/screen_connector/wayland_screen_connector.h"
 
@@ -48,6 +48,8 @@ class ScreenConnector : public ScreenConnectorInfo,
                 "ProcessedFrameType should be std::move-able.");
   static_assert(std::is_base_of<ScreenConnectorFrameInfo, ProcessedFrameType>::value,
                 "ProcessedFrameType should inherit ScreenConnectorFrameInfo");
+
+  using FrameMultiplexer = ScreenConnectorInputMultiplexer<ProcessedFrameType>;
 
   /**
    * This is the type of the callback function WebRTC/VNC is supposed to provide
@@ -113,7 +115,7 @@ class ScreenConnector : public ScreenConnectorInfo,
                                     processed_frame);
           }
 
-          sc_android_queue_.PushBack(std::move(processed_frame));
+          sc_frame_multiplexer_.PushToAndroidQueue(std::move(processed_frame));
         });
   }
 
@@ -129,44 +131,7 @@ class ScreenConnector : public ScreenConnectorInfo,
    *
    * NOTE THAT THIS IS THE ONLY CONSUMER OF THE TWO QUEUES
    */
-  ProcessedFrameType OnNextFrame() {
-    on_next_frame_cnt_++;
-    while (true) {
-      ConfUiLog(VERBOSE) << "Streamer waiting Semaphore with host ctrl mode ="
-                         << static_cast<std::uint32_t>(
-                                host_mode_ctrl_.GetMode())
-                         << " and cnd = #" << on_next_frame_cnt_;
-      sc_sem_.SemWait();
-      ConfUiLog(VERBOSE)
-          << "Streamer got Semaphore'ed resources with host ctrl mode ="
-          << static_cast<std::uint32_t>(host_mode_ctrl_.GetMode())
-          << "and cnd = #" << on_next_frame_cnt_;
-      // do something
-      if (!sc_android_queue_.Empty()) {
-        auto mode = host_mode_ctrl_.GetMode();
-        if (mode == HostModeCtrl::ModeType::kAndroidMode) {
-          ConfUiLog(VERBOSE)
-              << "Streamer gets Android frame with host ctrl mode ="
-              << static_cast<std::uint32_t>(mode) << "and cnd = #"
-              << on_next_frame_cnt_;
-          return sc_android_queue_.PopFront();
-        }
-        // AndroidFrameFetchingLoop could have added 1 or 2 frames
-        // before it becomes Conf UI mode.
-        ConfUiLog(VERBOSE)
-            << "Streamer ignores Android frame with host ctrl mode ="
-            << static_cast<std::uint32_t>(mode) << "and cnd = #"
-            << on_next_frame_cnt_;
-        sc_android_queue_.PopFront();
-        continue;
-      }
-      ConfUiLog(VERBOSE) << "Streamer gets Conf UI frame with host ctrl mode = "
-                         << static_cast<std::uint32_t>(
-                                host_mode_ctrl_.GetMode())
-                         << " and cnd = #" << on_next_frame_cnt_;
-      return sc_confui_queue_.PopFront();
-    }
-  }
+  ProcessedFrameType OnNextFrame() { return sc_frame_multiplexer_.Pop(); }
 
   /**
    * ConfUi calls this when it has frames to render
@@ -195,7 +160,7 @@ class ScreenConnector : public ScreenConnectorInfo,
     callback_from_streamer_(display_number, frame_width, frame_height,
                             frame_stride_bytes, frame_bytes, processed_frame);
     // now add processed_frame to the queue
-    sc_confui_queue_.PushBack(std::move(processed_frame));
+    sc_frame_multiplexer_.PushToConfUiQueue(std::move(processed_frame));
     return true;
   }
 
@@ -215,8 +180,7 @@ class ScreenConnector : public ScreenConnectorInfo,
         host_mode_ctrl_{host_mode_ctrl},
         on_next_frame_cnt_{0},
         render_confui_cnt_{0},
-        sc_android_queue_{sc_sem_},
-        sc_confui_queue_{sc_sem_} {}
+        sc_frame_multiplexer_{host_mode_ctrl_} {}
   ScreenConnector() = delete;
 
  private:
@@ -225,9 +189,13 @@ class ScreenConnector : public ScreenConnectorInfo,
   HostModeCtrl& host_mode_ctrl_;
   unsigned long long int on_next_frame_cnt_;
   unsigned long long int render_confui_cnt_;
-  Semaphore sc_sem_;
-  ScreenConnectorQueue<ProcessedFrameType> sc_android_queue_;
-  ScreenConnectorQueue<ProcessedFrameType> sc_confui_queue_;
+  /**
+   * internally has conf ui & android queues.
+   *
+   * multiplexting the two input queues, so the consumer gets one input
+   * at a time from the right queue
+   */
+  FrameMultiplexer sc_frame_multiplexer_;
   GenerateProcessedFrameCallback callback_from_streamer_;
   std::mutex streamer_callback_mutex_; // mutex to set & read callback_from_streamer_
   std::condition_variable streamer_callback_set_cv_;
