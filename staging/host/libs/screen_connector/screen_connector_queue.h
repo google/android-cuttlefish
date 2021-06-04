@@ -16,12 +16,11 @@
 
 #pragma once
 
+#include <condition_variable>
 #include <deque>
 #include <memory>
-#include <thread>
 #include <mutex>
-#include <condition_variable>
-#include <chrono>
+#include <thread>
 
 #include "common/libs/concurrency/semaphore.h"
 
@@ -31,19 +30,17 @@ template<typename T>
 class ScreenConnectorQueue {
 
  public:
-  static const int kQSize = 2;
-
   static_assert( is_movable<T>::value,
                  "Items in ScreenConnectorQueue should be std::mov-able");
 
-  ScreenConnectorQueue(Semaphore& sc_sem)
-      : q_mutex_(std::make_unique<std::mutex>()), sc_semaphore_(sc_sem) {}
+  ScreenConnectorQueue(const int q_max_size = 2)
+      : q_mutex_(std::make_unique<std::mutex>()), q_max_size_{q_max_size} {}
   ScreenConnectorQueue(ScreenConnectorQueue&& cq) = delete;
   ScreenConnectorQueue(const ScreenConnectorQueue& cq) = delete;
   ScreenConnectorQueue& operator=(const ScreenConnectorQueue& cq) = delete;
   ScreenConnectorQueue& operator=(ScreenConnectorQueue&& cq) = delete;
 
-  bool Empty() const {
+  bool IsEmpty() const {
     const std::lock_guard<std::mutex> lock(*q_mutex_);
     return buffer_.empty();
   }
@@ -60,7 +57,7 @@ class ScreenConnectorQueue {
   }
 
   /*
-   * PushBack( std::move(src) );
+   * Push( std::move(src) );
    *
    * Note: this queue is suppoed to be used only by ScreenConnector-
    * related components such as ScreenConnectorSource
@@ -76,7 +73,7 @@ class ScreenConnectorQueue {
    * should stop adding itmes to the queue.
    *
    */
-  void PushBack(T&& item) {
+  void Push(T&& item) {
     std::unique_lock<std::mutex> lock(*q_mutex_);
     if (Full()) {
       auto is_empty =
@@ -84,23 +81,11 @@ class ScreenConnectorQueue {
       q_empty_.wait(lock, is_empty);
     }
     buffer_.push_back(std::move(item));
-    /* Whether the total number of items in ALL queus is 0 or not
-     * is tracked via a semaphore shared by all queues
-     *
-     * This is NOT intended to block queue from pushing an item
-     * This IS intended to awake the screen_connector consumer thread
-     * when one or more items are available at least in one queue
-     */
-    sc_semaphore_.SemPost();
   }
-  void PushBack(T& item) = delete;
-  void PushBack(const T& item) = delete;
+  void Push(T& item) = delete;
+  void Push(const T& item) = delete;
 
-  /*
-   * PopFront must be preceded by sc_semaphore_.SemWaitItem()
-   *
-   */
-  T PopFront() {
+  T Pop() {
     const std::lock_guard<std::mutex> lock(*q_mutex_);
     auto item = std::move(buffer_.front());
     buffer_.pop_front();
@@ -114,12 +99,12 @@ class ScreenConnectorQueue {
   bool Full() const {
     // call this in a critical section
     // after acquiring q_mutex_
-    return kQSize == buffer_.size();
+    return q_max_size_ == buffer_.size();
   }
   std::deque<T> buffer_;
   std::unique_ptr<std::mutex> q_mutex_;
   std::condition_variable q_empty_;
-  Semaphore& sc_semaphore_;
+  const int q_max_size_;
 };
 
 } // namespace cuttlefish
