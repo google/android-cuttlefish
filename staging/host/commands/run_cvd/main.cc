@@ -177,6 +177,8 @@ fruit::Component<KernelLogPipeProvider> runCvdComponent() {
   return fruit::createComponent()
       .install(launchComponent)
       .install(launchModemComponent)
+      .install(launchAdbComponent)
+      .install(launchStreamerComponent)
       .install(configComponent);
 }
 
@@ -358,28 +360,15 @@ int RunCvdMain(int argc, char** argv) {
 
   auto kernel_log_monitor = injector.get<KernelLogPipeProvider*>();
   SharedFD boot_events_pipe = kernel_log_monitor->KernelLogPipe();
-  SharedFD adbd_events_pipe = kernel_log_monitor->KernelLogPipe();
-  SharedFD webrtc_events_pipe = kernel_log_monitor->KernelLogPipe();
 
   CvdBootStateMachine boot_state_machine(foreground_launcher_pipe,
                                          reboot_notification, boot_events_pipe);
 
   // The streamer needs to launch before the VMM because it serves on several
   // sockets (input devices, vsock frame server) when using crosvm.
-  if (config->enable_vnc_server()) {
-    process_monitor.AddCommands(LaunchVNCServer(*config));
-  }
-  if (config->enable_webrtc()) {
-    process_monitor.AddCommands(LaunchWebRTC(*config, webrtc_events_pipe));
-  }
 
   // Start the guest VM
   process_monitor.AddCommands(vm_manager->StartCommands(*config));
-
-  // Start other host processes
-  process_monitor.AddCommands(
-      LaunchSocketVsockProxyIfEnabled(*config, adbd_events_pipe));
-  process_monitor.AddCommands(LaunchAdbConnectorIfEnabled(*config));
 
   CHECK(process_monitor.StartAndMonitorProcesses())
       << "Could not start subprocesses";
