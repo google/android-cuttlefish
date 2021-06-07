@@ -133,11 +133,12 @@ const CuttlefishConfig* InitFilesystemAndCreateConfig(
     auto config = InitializeCuttlefishConfiguration(
         FLAGS_instance_dir, FLAGS_modem_simulator_count, kernel_config);
     std::set<std::string> preserving;
-    if (FLAGS_resume && ShouldCreateAllCompositeDisks(config)) {
+    bool create_os_composite_disk = ShouldCreateOsCompositeDisk(config);
+    if (FLAGS_resume && create_os_composite_disk) {
       LOG(INFO) << "Requested resuming a previous session (the default behavior) "
                 << "but the base images have changed under the overlay, making the "
                 << "overlay incompatible. Wiping the overlay files.";
-    } else if (FLAGS_resume && !ShouldCreateAllCompositeDisks(config)) {
+    } else if (FLAGS_resume && !create_os_composite_disk) {
       preserving.insert("overlay.img");
       preserving.insert("os_composite_disk_config.txt");
       preserving.insert("os_composite_gpt_header.img");
