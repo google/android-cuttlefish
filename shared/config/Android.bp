@@ -31,9 +31,3 @@ prebuilt_etc_host {
     src: "config_tv.json",
     sub_dir: "cvd_config",
 }
-
-prebuilt_etc_host {
-    name: "grub.cfg",
-    src: "grub.cfg",
-    sub_dir: "grub",
-}
