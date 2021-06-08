@@ -818,10 +818,6 @@ std::string CuttlefishConfig::AssemblyPath(
   return AbsolutePath(assembly_dir() + "/" + file_name);
 }
 
-std::string CuttlefishConfig::os_composite_disk_path() const {
-  return AssemblyPath("os_composite.img");
-}
-
 CuttlefishConfig::MutableInstanceSpecific CuttlefishConfig::ForInstance(int num) {
   return MutableInstanceSpecific(this, std::to_string(num));
 }
