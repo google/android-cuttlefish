@@ -169,10 +169,6 @@ SOONG_CONFIG_cvd_launch_configs += \
     cvd_config_tablet.json \
     cvd_config_tv.json \
 
-SOONG_CONFIG_cvd += grub_config
-SOONG_CONFIG_cvd_grub_config += \
-    grub.cfg \
-
 #
 # Packages for AOSP-available stuff we use from the framework
 #
