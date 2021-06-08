@@ -165,6 +165,10 @@ std::string CuttlefishConfig::InstanceSpecific::sdcard_path() const {
   return AbsolutePath(PerInstancePath("sdcard.img"));
 }
 
+std::string CuttlefishConfig::InstanceSpecific::os_composite_disk_path() const {
+  return AbsolutePath(PerInstancePath("os_composite.img"));
+}
+
 std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
     const {
   return AbsolutePath(PerInstancePath("persistent_composite.img"));
@@ -172,6 +176,10 @@ std::string CuttlefishConfig::InstanceSpecific::persistent_composite_disk_path()
 
 std::string CuttlefishConfig::InstanceSpecific::uboot_env_image_path() const {
   return AbsolutePath(PerInstancePath("uboot_env.img"));
+}
+
+std::string CuttlefishConfig::InstanceSpecific::vendor_boot_image_path() const {
+  return AbsolutePath(PerInstancePath("vendor_boot_repacked.img"));
 }
 
 static constexpr char kMobileBridgeName[] = "mobile_bridge_name";

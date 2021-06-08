@@ -28,7 +28,7 @@
 
 #include "common/libs/utils/files.h"
 
-namespace cvd {
+namespace cuttlefish {
 
 namespace {
 
@@ -111,16 +111,16 @@ bool FetcherConfig::SaveToFile(const std::string& file) const {
 }
 
 bool FetcherConfig::LoadFromFile(const std::string& file) {
-  auto real_file_path = cvd::AbsolutePath(file);
+  auto real_file_path = AbsolutePath(file);
   if (real_file_path.empty()) {
     LOG(ERROR) << "Could not get real path for file " << file;
     return false;
   }
-  Json::Reader reader;
+  Json::CharReaderBuilder builder;
   std::ifstream ifs(real_file_path);
-  if (!reader.parse(ifs, *dictionary_)) {
-    LOG(ERROR) << "Could not read config file " << file << ": "
-               << reader.getFormattedErrorMessages();
+  std::string errorMessage;
+  if (!Json::parseFromStream(builder, ifs, dictionary_.get(), &errorMessage)) {
+    LOG(ERROR) << "Could not read config file " << file << ": " << errorMessage;
     return false;
   }
   return true;
@@ -209,8 +209,8 @@ std::string FetcherConfig::FindCvdFileWithSuffix(const std::string& suffix) cons
       return file;
     }
   }
-  LOG(ERROR) << "Could not find file ending in " << suffix;
+  LOG(DEBUG) << "Could not find file ending in " << suffix;
   return "";
 }
 
-} // namespace cvd
+} // namespace cuttlefish
