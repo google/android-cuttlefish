@@ -276,7 +276,7 @@ TEST(Hal, AidlInterfacesImplemented) {
         bool knownMissing = false;
         for (const std::string& type : iface.types) {
             if (manifest.erase(type) > 0) hasRegistration = true;
-            if (thoughtMissing.erase(getAidlPackage(type)) > 0) knownMissing = true;
+            if (thoughtMissing.erase(getAidlPackage(type)) > 0)  knownMissing = true;
         }
 
         if (knownMissing) {
