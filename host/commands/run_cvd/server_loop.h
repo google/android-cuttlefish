@@ -16,11 +16,21 @@
 
 #pragma once
 
+#include <fruit/fruit.h>
+
 #include "common/libs/fs/shared_fd.h"
 #include "host/commands/run_cvd/process_monitor.h"
+#include "host/libs/config/cuttlefish_config.h"
 
 namespace cuttlefish {
 
-void ServerLoop(SharedFD server, ProcessMonitor* process_monitor);
+class ServerLoop {
+ public:
+  virtual ~ServerLoop();
+  virtual void Run(ProcessMonitor& process_monitor) = 0;
+};
 
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 ServerLoop>
+serverLoopComponent();
 }

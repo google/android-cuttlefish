@@ -16,6 +16,7 @@
 
 #include "host/commands/run_cvd/server_loop.h"
 
+#include <fruit/fruit.h>
 #include <gflags/gflags.h>
 #include <unistd.h>
 #include <string>
@@ -26,6 +27,7 @@
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/config/data_image.h"
+#include "host/libs/config/feature.h"
 
 namespace cuttlefish {
 
@@ -126,9 +128,7 @@ void RestartRunCvd(const CuttlefishConfig& config, int notification_fd) {
   PLOG(ERROR) << "execv returned: ";
 }
 
-}  // namespace
-
-void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
+void RunServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
   while (true) {
     // TODO: use select to handle simultaneous connections.
     auto client = SharedFD::Accept(*server);
@@ -208,6 +208,51 @@ void ServerLoop(SharedFD server, ProcessMonitor* process_monitor) {
       }
     }
   }
+}
+
+class ServerLoopImpl : public ServerLoop, public Feature {
+ public:
+  INJECT(ServerLoopImpl(const CuttlefishConfig::InstanceSpecific& instance))
+      : instance_(instance) {}
+
+  // ServerLoop
+  void Run(ProcessMonitor& process_monitor) override {
+    RunServerLoop(server_, &process_monitor);
+  }
+
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "ServerLoop"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() {
+    auto launcher_monitor_path = instance_.launcher_monitor_socket_path();
+    server_ = SharedFD::SocketLocalServer(launcher_monitor_path.c_str(), false,
+                                          SOCK_STREAM, 0666);
+    if (!server_->IsOpen()) {
+      LOG(ERROR) << "Error when opening launcher server: "
+                 << server_->StrError();
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig::InstanceSpecific& instance_;
+  SharedFD server_;
+};
+
+}  // namespace
+
+ServerLoop::~ServerLoop() = default;
+
+fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+                 ServerLoop>
+serverLoopComponent() {
+  return fruit::createComponent()
+      .bind<ServerLoop, ServerLoopImpl>()
+      .addMultibinding<Feature, ServerLoopImpl>();
 }
 
 }  // namespace cuttlefish

@@ -95,7 +95,7 @@ configComponent() {
   return fruit::createComponent().bindInstance(*config).bindInstance(instance);
 }
 
-fruit::Component<> runCvdComponent() {
+fruit::Component<ServerLoop> runCvdComponent() {
   return fruit::createComponent()
       .install(bootStateMachineComponent)
       .install(configComponent)
@@ -103,6 +103,7 @@ fruit::Component<> runCvdComponent() {
       .install(launchComponent)
       .install(launchModemComponent)
       .install(launchStreamerComponent)
+      .install(serverLoopComponent)
       .install(validationComponent);
 }
 
@@ -210,19 +211,10 @@ int RunCvdMain(int argc, char** argv) {
             << "  Instance environment: " << config->cuttlefish_env_path()
             << kResetColor;
 
-  auto launcher_monitor_path = instance.launcher_monitor_socket_path();
-  auto launcher_monitor_socket = SharedFD::SocketLocalServer(
-      launcher_monitor_path.c_str(), false, SOCK_STREAM, 0666);
-  if (!launcher_monitor_socket->IsOpen()) {
-    LOG(ERROR) << "Error when opening launcher server: "
-               << launcher_monitor_socket->StrError();
-    return RunnerExitCodes::kMonitorCreationFailed;
-  }
-
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
-  fruit::Injector<> injector(runCvdComponent);
+  fruit::Injector<ServerLoop> injector(runCvdComponent);
   const auto& features = injector.getMultibindings<Feature>();
   CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
 
@@ -241,7 +233,7 @@ int RunCvdMain(int argc, char** argv) {
   CHECK(process_monitor.StartAndMonitorProcesses())
       << "Could not start subprocesses";
 
-  ServerLoop(launcher_monitor_socket, &process_monitor); // Should not return
+  injector.get<ServerLoop&>().Run(process_monitor);  // Should not return
   LOG(ERROR) << "The server loop returned, it should never happen!!";
 
   return RunnerExitCodes::kServerError;
