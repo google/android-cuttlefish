@@ -30,7 +30,8 @@ class ServerLoop {
   virtual void Run(ProcessMonitor& process_monitor) = 0;
 };
 
-fruit::Component<fruit::Required<const CuttlefishConfig::InstanceSpecific>,
+fruit::Component<fruit::Required<const CuttlefishConfig,
+                                 const CuttlefishConfig::InstanceSpecific>,
                  ServerLoop>
 serverLoopComponent();
 }
