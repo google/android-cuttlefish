@@ -164,6 +164,45 @@ void PrintStreamingInformation(const CuttlefishConfig& config) {
   // browser to.
 }
 
+class ProcessLeader : public Feature {
+ public:
+  INJECT(ProcessLeader(const CuttlefishConfig& config)) : config_(config) {}
+
+  SharedFD ForegroundLauncherPipe() { return foreground_launcher_pipe_; }
+
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "ProcessLeader"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    /* These two paths result in pretty different process state, but both
+     * achieve the same goal of making the current process the leader of a
+     * process group, and are therefore grouped together. */
+    if (config_.run_as_daemon()) {
+      foreground_launcher_pipe_ = DaemonizeLauncher(config_);
+      if (!foreground_launcher_pipe_->IsOpen()) {
+        return false;
+      }
+    } else {
+      // Make sure the launcher runs in its own process group even when running
+      // in the foreground
+      if (getsid(0) != getpid()) {
+        int retval = setpgid(0, 0);
+        if (retval) {
+          PLOG(ERROR) << "Failed to create new process group: ";
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  SharedFD foreground_launcher_pipe_;
+};
+
 fruit::Component<const CuttlefishConfig,
                  const CuttlefishConfig::InstanceSpecific>
 configComponent() {
@@ -173,8 +212,9 @@ configComponent() {
   return fruit::createComponent().bindInstance(*config).bindInstance(instance);
 }
 
-fruit::Component<KernelLogPipeProvider> runCvdComponent() {
+fruit::Component<KernelLogPipeProvider, ProcessLeader> runCvdComponent() {
   return fruit::createComponent()
+      .addMultibinding<Feature, ProcessLeader>()
       .install(launchComponent)
       .install(launchModemComponent)
       .install(launchAdbComponent)
@@ -321,23 +361,6 @@ int RunCvdMain(int argc, char** argv) {
                << launcher_monitor_socket->StrError();
     return RunnerExitCodes::kMonitorCreationFailed;
   }
-  SharedFD foreground_launcher_pipe;
-  if (config->run_as_daemon()) {
-    foreground_launcher_pipe = DaemonizeLauncher(*config);
-    if (!foreground_launcher_pipe->IsOpen()) {
-      return RunnerExitCodes::kDaemonizationError;
-    }
-  } else {
-    // Make sure the launcher runs in its own process group even when running in
-    // foreground
-    if (getsid(0) != getpid()) {
-      int retval = setpgid(0, 0);
-      if (retval) {
-        LOG(ERROR) << "Failed to create new process group: " << strerror(errno);
-        std::exit(RunnerExitCodes::kProcessGroupError);
-      }
-    }
-  }
 
   SharedFD reboot_notification;
   if (FLAGS_reboot_notification_fd >= 0) {
@@ -348,7 +371,8 @@ int RunCvdMain(int argc, char** argv) {
   // Monitor and restart host processes supporting the CVD
   ProcessMonitor process_monitor(config->restart_subprocesses());
 
-  fruit::Injector<KernelLogPipeProvider> injector(runCvdComponent);
+  fruit::Injector<KernelLogPipeProvider, ProcessLeader> injector(
+      runCvdComponent);
   const auto& features = injector.getMultibindings<Feature>();
   CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
 
@@ -358,6 +382,8 @@ int RunCvdMain(int argc, char** argv) {
     }
   }
 
+  auto process_leader = injector.get<ProcessLeader*>();
+  SharedFD foreground_launcher_pipe = process_leader->ForegroundLauncherPipe();
   auto kernel_log_monitor = injector.get<KernelLogPipeProvider*>();
   SharedFD boot_events_pipe = kernel_log_monitor->KernelLogPipe();
 
