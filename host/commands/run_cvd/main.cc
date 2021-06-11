@@ -36,6 +36,7 @@
 #include "host/commands/run_cvd/boot_state_machine.h"
 #include "host/commands/run_cvd/launch.h"
 #include "host/commands/run_cvd/process_monitor.h"
+#include "host/commands/run_cvd/reporting.h"
 #include "host/commands/run_cvd/runner_defs.h"
 #include "host/commands/run_cvd/server_loop.h"
 #include "host/commands/run_cvd/validate.h"
@@ -69,21 +70,6 @@ bool WriteCuttlefishEnvironment(const CuttlefishConfig& config) {
 std::string GetConfigFilePath(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
   return instance.PerInstancePath("cuttlefish_config.json");
-}
-
-void PrintStreamingInformation(const CuttlefishConfig& config) {
-  if (config.ForDefaultInstance().start_webrtc_sig_server()) {
-    // TODO (jemoreira): Change this when webrtc is moved to the debian package.
-    LOG(INFO) << kGreenColor << "Point your browser to https://"
-              << config.sig_server_address() << ":" << config.sig_server_port()
-              << " to interact with the device." << kResetColor;
-  } else if (config.enable_vnc_server()) {
-    LOG(INFO) << kGreenColor << "VNC server started on port "
-              << config.ForDefaultInstance().vnc_server_port() << kResetColor;
-  }
-  // When WebRTC is enabled but an operator other than the one launched by
-  // run_cvd is used there is no way to know the url to which to point the
-  // browser to.
 }
 
 fruit::Component<const CuttlefishConfig,
@@ -175,34 +161,18 @@ int RunCvdMain(int argc, char** argv) {
     return RunnerExitCodes::kInstanceDirCreationError;
   }
 
-  auto vm_manager = GetVmManager(config->vm_manager(), config->target_arch());
-
   if (!WriteCuttlefishEnvironment(*config)) {
     LOG(ERROR) << "Unable to write cuttlefish environment file";
   }
 
-  PrintStreamingInformation(*config);
+  fruit::Injector<ServerLoop> injector(runCvdComponent);
 
-  if (config->console()) {
-    LOG(INFO) << kGreenColor << "To access the console run: screen "
-              << instance.console_path() << kResetColor;
-  } else {
-    LOG(INFO) << kGreenColor
-              << "Serial console is disabled; use -console=true to enable it"
-              << kResetColor;
-  }
+  // One of the setup features can consume most output, so print this early.
+  DiagnosticInformation::PrintAll(
+      injector.getMultibindings<DiagnosticInformation>());
 
-  LOG(INFO) << kGreenColor
-            << "The following files contain useful debugging information:"
-            << kResetColor;
   LOG(INFO) << kGreenColor
             << "  Launcher log: " << instance.launcher_log_path()
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Android's logcat output: " << instance.logcat_path()
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Kernel log: " << instance.PerInstancePath("kernel.log")
             << kResetColor;
   LOG(INFO) << kGreenColor
             << "  Instance configuration: " << GetConfigFilePath(*config)
@@ -211,12 +181,11 @@ int RunCvdMain(int argc, char** argv) {
             << "  Instance environment: " << config->cuttlefish_env_path()
             << kResetColor;
 
-  // Monitor and restart host processes supporting the CVD
-  ProcessMonitor process_monitor(config->restart_subprocesses());
-
-  fruit::Injector<ServerLoop> injector(runCvdComponent);
   const auto& features = injector.getMultibindings<Feature>();
   CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
+
+  // Monitor and restart host processes supporting the CVD
+  ProcessMonitor process_monitor(config->restart_subprocesses());
 
   for (auto& command_source : injector.getMultibindings<CommandSource>()) {
     if (command_source->Enabled()) {
@@ -228,6 +197,7 @@ int RunCvdMain(int argc, char** argv) {
   // sockets (input devices, vsock frame server) when using crosvm.
 
   // Start the guest VM
+  auto vm_manager = GetVmManager(config->vm_manager(), config->target_arch());
   process_monitor.AddCommands(vm_manager->StartCommands(*config));
 
   CHECK(process_monitor.StartAndMonitorProcesses())
