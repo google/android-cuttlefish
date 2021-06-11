@@ -49,28 +49,53 @@ using vm_manager::GetVmManager;
 
 namespace {
 
-constexpr char kGreenColor[] = "\033[1;32m";
-constexpr char kResetColor[] = "\033[0m";
+class CuttlefishEnvironment : public Feature, public DiagnosticInformation {
+ public:
+  INJECT(
+      CuttlefishEnvironment(const CuttlefishConfig& config,
+                            const CuttlefishConfig::InstanceSpecific& instance))
+      : config_(config), instance_(instance) {}
 
-bool WriteCuttlefishEnvironment(const CuttlefishConfig& config) {
-  auto env = SharedFD::Open(config.cuttlefish_env_path().c_str(),
-                            O_CREAT | O_RDWR, 0755);
-  if (!env->IsOpen()) {
-    LOG(ERROR) << "Unable to create cuttlefish.env file";
-    return false;
+  // DiagnosticInformation
+  std::vector<std::string> Diagnostics() const override {
+    auto config_path = instance_.PerInstancePath("cuttlefish_config.json");
+    return {
+        "Launcher log: " + instance_.launcher_log_path(),
+        "Instance configuration: " + config_path,
+        "Instance environment: " + config_.cuttlefish_env_path(),
+    };
   }
-  auto instance = config.ForDefaultInstance();
-  std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
-                           instance.PerInstancePath(".") + "\"\n";
-  config_env += "export ANDROID_SERIAL=" + instance.adb_ip_and_port() + "\n";
-  env->Write(config_env.c_str(), config_env.size());
-  return true;
-}
 
-std::string GetConfigFilePath(const CuttlefishConfig& config) {
-  auto instance = config.ForDefaultInstance();
-  return instance.PerInstancePath("cuttlefish_config.json");
-}
+  // Feature
+  bool Enabled() const override { return true; }
+  std::string Name() const override { return "CuttlefishEnvironment"; }
+  std::unordered_set<Feature*> Dependencies() const override { return {}; }
+
+ protected:
+  bool Setup() override {
+    auto env =
+        SharedFD::Open(config_.cuttlefish_env_path(), O_CREAT | O_RDWR, 0755);
+    if (!env->IsOpen()) {
+      LOG(ERROR) << "Unable to create cuttlefish.env file";
+      return false;
+    }
+    std::string config_env = "export CUTTLEFISH_PER_INSTANCE_PATH=\"" +
+                             instance_.PerInstancePath(".") + "\"\n";
+    config_env += "export ANDROID_SERIAL=" + instance_.adb_ip_and_port() + "\n";
+    auto written = WriteAll(env, config_env);
+    if (written != config_env.size()) {
+      LOG(ERROR) << "Failed to write all of \"" << config_env << "\", "
+                 << "only wrote " << written << " bytes. Error was "
+                 << env->StrError();
+      return false;
+    }
+    return true;
+  }
+
+ private:
+  const CuttlefishConfig& config_;
+  const CuttlefishConfig::InstanceSpecific& instance_;
+};
 
 fruit::Component<const CuttlefishConfig,
                  const CuttlefishConfig::InstanceSpecific>
@@ -83,6 +108,8 @@ configComponent() {
 
 fruit::Component<ServerLoop> runCvdComponent() {
   return fruit::createComponent()
+      .addMultibinding<DiagnosticInformation, CuttlefishEnvironment>()
+      .addMultibinding<Feature, CuttlefishEnvironment>()
       .install(bootStateMachineComponent)
       .install(configComponent)
       .install(launchAdbComponent)
@@ -176,25 +203,11 @@ int RunCvdMain(int argc, char** argv) {
   ConfigureLogs(*config, instance);
   CHECK(ChdirIntoRuntimeDir(instance)) << "Could not enter runtime dir";
 
-  if (!WriteCuttlefishEnvironment(*config)) {
-    LOG(ERROR) << "Unable to write cuttlefish environment file";
-  }
-
   fruit::Injector<ServerLoop> injector(runCvdComponent);
 
   // One of the setup features can consume most output, so print this early.
   DiagnosticInformation::PrintAll(
       injector.getMultibindings<DiagnosticInformation>());
-
-  LOG(INFO) << kGreenColor
-            << "  Launcher log: " << instance.launcher_log_path()
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Instance configuration: " << GetConfigFilePath(*config)
-            << kResetColor;
-  LOG(INFO) << kGreenColor
-            << "  Instance environment: " << config->cuttlefish_env_path()
-            << kResetColor;
 
   const auto& features = injector.getMultibindings<Feature>();
   CHECK(Feature::RunSetup(features)) << "Failed to run feature setup.";
