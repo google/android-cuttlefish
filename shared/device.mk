@@ -191,12 +191,6 @@ PRODUCT_PACKAGES += \
     libGLESv2_angle \
     libfeature_support_angle.so
 
-# SwiftShader provides a software-only implementation that is not thread-safe
-PRODUCT_PACKAGES += \
-    libEGL_swiftshader \
-    libGLESv1_CM_swiftshader \
-    libGLESv2_swiftshader
-
 # GL implementation for virgl
 PRODUCT_PACKAGES += \
     libGLES_mesa \
