@@ -1,0 +1,24 @@
+# Network namespace transitions
+type execns, domain;
+type execns_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(execns)
+
+allow execns varrun_file:dir search;
+allow execns varrun_file:file r_file_perms;
+allow execns self:capability { sys_admin setuid setgid };
+allow execns nsfs:file { open read };
+
+#Allow execns itself to be run by init in its own domain
+domain_auto_trans(init, execns_exec, execns);
+
+# Allow hostapd_nohidl to be run by execns in its own domain
+domain_auto_trans(execns, hostapd_nohidl_exec, hostapd_nohidl);
+
+# Allow netmgr to be run by execns in its own domain
+domain_auto_trans(execns, netmgr_exec, netmgr);
+
+# Allow execns to read createns proc file to get the namespace file
+allow execns createns:file read;
+allow execns createns:dir search;
+allow execns createns:lnk_file read;
