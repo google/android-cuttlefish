@@ -168,7 +168,7 @@ std::uint64_t ExpandedStorageSize(const std::string& file_path) {
 
   // Try to read the disk in a nicely-aligned block size unless the whole file
   // is smaller.
-  constexpr size_t MAGIC_BLOCK_SIZE = 4096;
+  constexpr uint64_t MAGIC_BLOCK_SIZE = 4096;
   std::string magic(std::min(file_size, MAGIC_BLOCK_SIZE), '\0');
   if (!android::base::ReadFully(fd, magic.data(), magic.size())) {
     PLOG(FATAL) << "Fail to read: " << file_path;
