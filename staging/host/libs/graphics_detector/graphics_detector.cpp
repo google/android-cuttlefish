@@ -552,9 +552,9 @@ std::string ToLower(const std::string& v) {
   return result;
 }
 
-bool IsLikelyAccelerated(const std::string& vendor) {
-  const std::string lower_vendor = ToLower(vendor);
-  return lower_vendor.find("mesa") == std::string::npos;
+bool IsLikelySoftwareRenderer(const std::string& renderer) {
+  const std::string lower_renderer = ToLower(renderer);
+  return lower_renderer.find("llvmpipe") != std::string::npos;
 }
 
 GraphicsAvailability GetGraphicsAvailability() {
@@ -574,7 +574,7 @@ GraphicsAvailability GetGraphicsAvailability() {
 bool ShouldEnableAcceleratedRendering(
     const GraphicsAvailability& availability) {
   return availability.can_init_gles2_on_egl_surfaceless &&
-         IsLikelyAccelerated(availability.gles2_vendor) &&
+         !IsLikelySoftwareRenderer(availability.gles2_renderer) &&
          availability.has_discrete_gpu;
 }
 
@@ -611,7 +611,7 @@ std::ostream& operator<<(std::ostream& stream,
   stream << "OpenGL ES1 lib available: " << availability.has_gles1 << "\n";
   stream << "OpenGL ES2 lib available: " << availability.has_gles2 << "\n";
   stream << "EGL lib available: " << availability.has_egl << "\n";
-  stream << "Vulkan libavailable: " << availability.has_vulkan << "\n";
+  stream << "Vulkan lib available: " << availability.has_vulkan << "\n";
 
   stream << "\n";
   stream << "EGL client extensions: " << availability.egl_client_extensions
@@ -639,6 +639,11 @@ std::ostream& operator<<(std::ostream& stream,
     stream << "Vulkan discrete GPU device extensions: "
            << availability.discrete_gpu_device_extensions << "\n";
   }
+
+  stream << "\n";
+  stream << "Accelerated rendering supported: "
+         << ShouldEnableAcceleratedRendering(availability);
+
   stream.flags(flags_backup);
   return stream;
 }
