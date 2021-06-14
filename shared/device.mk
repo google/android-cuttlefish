@@ -152,7 +152,6 @@ PRODUCT_PACKAGES += \
     CuttlefishService \
     cuttlefish_sensor_injection \
     rename_netiface \
-    setup_wifi \
     bt_vhci_forwarder \
     socket_vsock_proxy \
     tombstone_transmit \
@@ -614,6 +613,30 @@ PRODUCT_BUILD_RECOVERY_IMAGE := true
 PRODUCT_PACKAGES += linker.vendor_ramdisk shell_and_utilities_vendor_ramdisk
 else
 PRODUCT_PACKAGES += linker.recovery shell_and_utilities_recovery
+endif
+
+# wifi
+ifeq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
+PRODUCT_PACKAGES += \
+    sh_vendor \
+    emulatorip \
+    iw_vendor \
+    execns \
+    hostapd_nohidl \
+    netmgr \
+    wifi_forwarder \
+    createns
+
+PRODUCT_COPY_FILES += \
+    device/generic/goldfish/wifi/init.wifi.sh:$(TARGET_COPY_OUT_VENDOR)/bin/init.wifi.sh \
+    device/generic/goldfish/wifi/simulated_hostapd.conf:$(TARGET_COPY_OUT_VENDOR)/etc/simulated_hostapd.conf
+
+PRODUCT_SOONG_NAMESPACES += device/generic/goldfish
+
+PRODUCT_PRODUCT_PROPERTIES += ro.boot.wifi_impl=mac8011_hwsim_virtio
+else
+PRODUCT_PACKAGES += setup_wifi
+PRODUCT_PRODUCT_PROPERTIES += ro.boot.wifi_impl=virt_wifi
 endif
 
 # Host packages to install

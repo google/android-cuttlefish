@@ -47,7 +47,6 @@ on fs
     mount_all --early
     restorecon_recursive /vendor
 
-    start setup_wifi
     # works around framework netiface enumeration issue
     start rename_eth1
 
@@ -55,6 +54,9 @@ on fs
 
     # So GceBootReporter can print to kmsg
     chmod 622 /dev/kmsg
+
+on fs && property:ro.boot.wifi_impl=virt_wifi
+    start setup_wifi
 
 on post-fs
     # set RLIMIT_MEMLOCK to 64MB
@@ -73,12 +75,32 @@ on late-fs
 
     write /dev/kmsg "GUEST_BUILD_FINGERPRINT: ${ro.build.fingerprint}"
 
+on post-fs-data && property:ro.boot.wifi_impl=mac8011_hwsim_virtio
+    setprop vold.post_fs_data_done 1
+    mkdir /data/vendor/var 0755 root root
+    mkdir /data/vendor/var/run 0755 root root
+    mkdir /data/vendor/var/run/netns 0755 root root
+    mkdir /data/vendor/wifi 0770 wifi wifi
+    mkdir /data/vendor/wifi/hostapd 0770 wifi wifi
+    mkdir /data/vendor/wifi/hostapd/sockets 0770 wifi wifi
+    start create_router_ns
+
+on property:vendor.qemu.networknamespace=ready
+    start wifi-net-sh
+
 on boot
     chmod 0660 /dev/cpuctl
     mkdir /data/vendor/wifi 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa 0770 wifi wifi
     mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
     start socket_vsock_proxy
+
+service wifi-net-sh /vendor/bin/init.wifi.sh
+    class late_start
+    user root
+    group root wakelock wifi
+    oneshot
+    disabled    # Started on post-fs-data
 
 service bt_vhci_forwarder /vendor/bin/bt_vhci_forwarder -virtio_console_dev=/dev/hvc5
     user bluetooth
@@ -136,6 +158,27 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant -g@android:wpa_wlan0
     group system wifi inet
     disabled
     oneshot
+
+service emu_hostapd /vendor/bin/execns router /vendor/bin/hostapd_nohidl /data/vendor/wifi/hostapd/hostapd.conf
+    user root
+    group root wifi net_raw net_admin
+    disabled
+
+service netmgr /vendor/bin/execns router /vendor/bin/netmgr --if-prefix wlan1 --bridge eth0,radio0-peer
+    user root
+    group root wifi
+    disabled
+
+service create_router_ns /vendor/bin/createns router
+    user root
+    group root
+    disabled
+    oneshot
+
+service wifi_forwarder /vendor/bin/wifi_forwarder
+    user root
+    group root wifi
+    disabled
 
 service bugreport /system/bin/dumpstate -d -p -z
     class main
