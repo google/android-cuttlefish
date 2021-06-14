@@ -31,6 +31,7 @@
 
 #include <android-base/file.h>
 #include <android-base/logging.h>
+#include <android-base/strings.h>
 #include <cdisk_spec.pb.h>
 #include <google/protobuf/text_format.h>
 #include <sparse/sparse.h>
@@ -39,6 +40,7 @@
 
 #include "common/libs/fs/shared_buf.h"
 #include "common/libs/fs/shared_fd.h"
+#include "common/libs/utils/cf_endian.h"
 #include "common/libs/utils/files.h"
 #include "common/libs/utils/size_utils.h"
 #include "common/libs/utils/subprocess.h"
@@ -48,6 +50,8 @@ namespace cuttlefish {
 namespace {
 
 constexpr int GPT_NUM_PARTITIONS = 128;
+static const std::string CDISK_MAGIC = "composite_disk\x1d";
+static const std::string QCOW2_MAGIC = "QFI\xfb";
 
 /**
  * Creates a "Protective" MBR Partition Table header. The GUID
@@ -117,15 +121,37 @@ static_assert(sizeof(GptEnd) == SECTOR_SIZE * 33);
 
 struct PartitionInfo {
   MultipleImagePartition source;
-  std::uint64_t guest_size;
-  std::uint64_t host_size;
+  std::uint64_t size;
   std::uint64_t offset;
+
+  std::uint64_t AlignedSize() const {
+    return AlignToPowerOf2(size, PARTITION_SIZE_SHIFT);
+  }
 };
 
+struct __attribute__((packed)) QCowHeader {
+  Be32 magic;
+  Be32 version;
+  Be64 backing_file_offset;
+  Be32 backing_file_size;
+  Be32 cluster_bits;
+  Be64 size;
+  Be32 crypt_method;
+  Be32 l1_size;
+  Be64 l1_table_offset;
+  Be64 refcount_table_offset;
+  Be32 refcount_table_clusters;
+  Be32 nb_snapshots;
+  Be64 snapshots_offset;
+};
+
+static_assert(sizeof(QCowHeader) == 72);
+
 /*
- * Returns the file size of `file_path`. If `file_path` is an Android-Sparse
- * file, returns the file size it would have after being converted to a raw
- * file.
+ * Returns the expanded file size of `file_path`. Note that the raw size of
+ * files doesn't match how large they may appear inside a VM.
+ *
+ * Supported types: Composite disk image, Qcows2, Android-Sparse, Raw
  *
  * Android-Sparse is a file format invented by Android that optimizes for
  * chunks of zeroes or repeated data. The Android build system can produce
@@ -133,15 +159,63 @@ struct PartitionInfo {
  * disk file, as the imag eflashing process also can handle Android-Sparse
  * images.
  */
-std::uint64_t UnsparsedSize(const std::string& file_path) {
-  auto fd = open(file_path.c_str(), O_RDONLY);
-  CHECK(fd >= 0) << "Could not open \"" << file_path << "\""
-                 << strerror(errno);
-  auto sparse = sparse_file_import(fd, /* verbose */ false, /* crc */ false);
-  auto size =
-      sparse ? sparse_file_len(sparse, false, true) : FileSize(file_path);
-  close(fd);
-  return size;
+std::uint64_t ExpandedStorageSize(const std::string& file_path) {
+  android::base::unique_fd fd(open(file_path.c_str(), O_RDONLY));
+  CHECK(fd.get() >= 0) << "Could not open \"" << file_path << "\""
+                       << strerror(errno);
+
+  std::uint64_t file_size = FileSize(file_path);
+
+  // Try to read the disk in a nicely-aligned block size unless the whole file
+  // is smaller.
+  constexpr size_t MAGIC_BLOCK_SIZE = 4096;
+  std::string magic(std::min(file_size, MAGIC_BLOCK_SIZE), '\0');
+  if (!android::base::ReadFully(fd, magic.data(), magic.size())) {
+    PLOG(FATAL) << "Fail to read: " << file_path;
+    return 0;
+  }
+  CHECK(lseek(fd, 0, SEEK_SET) != -1)
+      << "Fail to seek(\"" << file_path << "\")" << strerror(errno);
+
+  // Composite disk image
+  if (android::base::StartsWith(magic, CDISK_MAGIC)) {
+    // seek to the beginning of proto message
+    CHECK(lseek(fd, CDISK_MAGIC.size(), SEEK_SET) != -1)
+        << "Fail to seek(\"" << file_path << "\")" << strerror(errno);
+    std::string message;
+    if (!android::base::ReadFdToString(fd, &message)) {
+      PLOG(FATAL) << "Fail to read(cdisk): " << file_path;
+      return 0;
+    }
+    CompositeDisk cdisk;
+    if (!cdisk.ParseFromString(message)) {
+      PLOG(FATAL) << "Fail to parse(cdisk): " << file_path;
+      return 0;
+    }
+    return cdisk.length();
+  }
+
+  // Qcow2 image
+  if (android::base::StartsWith(magic, QCOW2_MAGIC)) {
+    QCowHeader header;
+    if (!android::base::ReadFully(fd, &header, sizeof(QCowHeader))) {
+      PLOG(FATAL) << "Fail to read(qcow2 header): " << file_path;
+      return 0;
+    }
+    return header.size.as_uint64_t();
+  }
+
+  // Android-Sparse
+  if (auto sparse =
+          sparse_file_import(fd, /* verbose */ false, /* crc */ false);
+      sparse) {
+    auto size = sparse_file_len(sparse, false, true);
+    sparse_file_destroy(sparse);
+    return size;
+  }
+
+  // raw image file
+  return file_size;
 }
 
 /*
@@ -200,22 +274,20 @@ public:
   }
 
   void AppendPartition(MultipleImagePartition source) {
-    uint64_t host_size = 0;
+    uint64_t size = 0;
     for (const auto& path : source.image_file_paths) {
-      host_size += UnsparsedSize(path);
+      size += ExpandedStorageSize(path);
     }
-    auto guest_size = AlignToPowerOf2(host_size, PARTITION_SIZE_SHIFT);
-    CHECK(host_size == guest_size || source.read_only)
+    auto aligned_size = AlignToPowerOf2(size, PARTITION_SIZE_SHIFT);
+    CHECK(size == aligned_size || source.read_only)
         << "read-write partition " << source.label
         << " is not aligned to the size of " << (1 << PARTITION_SIZE_SHIFT);
     partitions_.push_back(PartitionInfo{
         .source = source,
-        .guest_size = guest_size,
-        .host_size = host_size,
+        .size = size,
         .offset = next_disk_offset_,
     });
-    next_disk_offset_ =
-        AlignToPowerOf2(next_disk_offset_ + guest_size, PARTITION_SIZE_SHIFT);
+    next_disk_offset_ = next_disk_offset_ + aligned_size;
   }
 
   std::uint64_t DiskSize() const {
@@ -239,27 +311,27 @@ public:
     header->set_offset(0);
 
     for (auto& partition : partitions_) {
-      uint64_t host_size = 0;
+      uint64_t size = 0;
       for (const auto& path : partition.source.image_file_paths) {
         ComponentDisk* component = disk.add_component_disks();
         component->set_file_path(AbsolutePath(path));
-        component->set_offset(partition.offset + host_size);
+        component->set_offset(partition.offset + size);
         component->set_read_write_capability(
             partition.source.read_only ? ReadWriteCapability::READ_ONLY
                                        : ReadWriteCapability::READ_WRITE);
-        host_size += UnsparsedSize(path);
+        size += ExpandedStorageSize(path);
       }
-      CHECK(partition.host_size == host_size);
-      // When partition's size differs from its size on the host
+      CHECK(partition.size == size);
+      // When partition's aligned size differs from its (unaligned) size
       // reading the disk within the guest os would fail due to the gap.
       // Putting any disk bigger than 4K can fill this gap.
       // Here we reuse the header which is always > 4K.
       // We don't fill the "writable" disk's hole and it should be an error
       // because writes in the guest of can't be reflected to the backing file.
-      if (partition.guest_size != partition.host_size) {
+      if (partition.AlignedSize() != partition.size) {
         ComponentDisk* component = disk.add_component_disks();
         component->set_file_path(AbsolutePath(header_file));
-        component->set_offset(partition.offset + partition.host_size);
+        component->set_offset(partition.offset + partition.size);
         component->set_read_write_capability(ReadWriteCapability::READ_ONLY);
       }
     }
@@ -304,7 +376,7 @@ public:
       gpt.entries[i] = GptPartitionEntry{
           .first_lba = partition.offset / SECTOR_SIZE,
           .last_lba =
-              (partition.offset + partition.guest_size) / SECTOR_SIZE - 1,
+              (partition.offset + partition.AlignedSize()) / SECTOR_SIZE - 1,
       };
       uuid_generate(gpt.entries[i].unique_partition_guid);
       if (uuid_parse(GetPartitionGUID(partition.source),
@@ -488,7 +560,7 @@ void CreateCompositeDisk(std::vector<MultipleImagePartition> partitions,
   auto composite_proto = builder.MakeCompositeDiskSpec(header_file, footer_file);
   std::ofstream composite(output_composite_path.c_str(),
                           std::ios::binary | std::ios::trunc);
-  composite << "composite_disk\x1d";
+  composite << CDISK_MAGIC;
   composite_proto.SerializeToOstream(&composite);
   composite.flush();
 }
