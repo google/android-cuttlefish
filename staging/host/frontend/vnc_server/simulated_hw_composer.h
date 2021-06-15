@@ -26,7 +26,6 @@
 
 #include "common/libs/concurrency/thread_annotations.h"
 #include "common/libs/concurrency/thread_safe_queue.h"
-#include "host/frontend/vnc_server/blackboard.h"
 #include "host/frontend/vnc_server/vnc_utils.h"
 #include "host/libs/config/cuttlefish_config.h"
 #include "host/libs/screen_connector/screen_connector.h"
@@ -37,7 +36,7 @@ class SimulatedHWComposer {
  public:
   using GenerateProcessedFrameCallback = ScreenConnector::GenerateProcessedFrameCallback;
 
-  SimulatedHWComposer(BlackBoard* bb, ScreenConnector& screen_connector);
+  SimulatedHWComposer(ScreenConnector& screen_connector);
   SimulatedHWComposer(const SimulatedHWComposer&) = delete;
   SimulatedHWComposer& operator=(const SimulatedHWComposer&) = delete;
   ~SimulatedHWComposer();
@@ -65,7 +64,6 @@ class SimulatedHWComposer {
   constexpr static std::size_t kMaxQueueElements = 64;
   bool closed_ GUARDED_BY(m_){};
   std::mutex m_;
-  BlackBoard* bb_{};
   ThreadSafeQueue<Stripe> stripes_;
   std::thread stripe_maker_;
   ScreenConnector& screen_connector_;
