@@ -37,7 +37,6 @@
 #############################
 # data files
 /data/vendor/mediadrm(/.*)?  u:object_r:mediadrm_vendor_data_file:s0
-/data/vendor/var/run(/.*)?   u:object_r:varrun_file:s0
 
 #############################
 # var files
@@ -57,18 +56,11 @@
 #############################
 # Vendor files
 #
-/vendor/bin/createns         u:object_r:createns_exec:s0
 /vendor/bin/cuttlefish_sensor_injection   u:object_r:cuttlefish_sensor_injection_exec:s0
-/vendor/bin/execns           u:object_r:execns_exec:s0
-/vendor/bin/hostapd_nohidl   u:object_r:hostapd_nohidl_exec:s0
-/vendor/bin/ip               u:object_r:cuttlefish_ip_exec:s0
-/vendor/bin/iw               u:object_r:cuttlefish_iw_exec:s0
-/vendor/bin/netmgr           u:object_r:netmgr_exec:s0
 /vendor/bin/socket_vsock_proxy  u:object_r:socket_vsock_proxy_exec:s0
 /vendor/bin/vsoc_input_service  u:object_r:vsoc_input_service_exec:s0
 /vendor/bin/rename_netiface  u:object_r:rename_netiface_exec:s0
 /vendor/bin/suspend_blocker  u:object_r:suspend_blocker_exec:s0
-/vendor/bin/wifi_forwarder   u:object_r:wifi_forwarder_exec:s0
 /vendor/bin/hw/libcuttlefish-rild  u:object_r:libcuttlefish_rild_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google u:object_r:hal_camera_default_exec:s0
 /vendor/bin/hw/android\.hardware\.camera\.provider@2\.7-service-google-lazy u:object_r:hal_camera_default_exec:s0
@@ -103,7 +95,6 @@
 /vendor/bin/hw/android\.hardware\.authsecret-service.example u:object_r:hal_authsecret_default_exec:s0
 /vendor/bin/hw/android\.hardware\.rebootescrow-service\.default  u:object_r:hal_rebootescrow_default_exec:s0
 /vendor/bin/dlkm_loader  u:object_r:dlkm_loader_exec:s0
-/vendor/bin/init\.wifi\.sh    u:object_r:init_wifi_sh_exec:s0
 
 /vendor/lib(64)?/libdrm.so  u:object_r:same_process_hal_file:s0
 /vendor/lib(64)?/libglapi.so  u:object_r:same_process_hal_file:s0
