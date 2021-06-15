@@ -32,7 +32,7 @@ using cuttlefish::vnc::FrameBufferWatcher;
 
 FrameBufferWatcher::FrameBufferWatcher(BlackBoard* bb,
                                        ScreenConnector& screen_connector)
-    : bb_{bb}, hwcomposer{bb_, screen_connector} {
+    : bb_{bb}, hwcomposer{screen_connector} {
   for (auto& stripes_vec : stripes_) {
     std::generate_n(std::back_inserter(stripes_vec),
                     SimulatedHWComposer::NumberOfStripes(),

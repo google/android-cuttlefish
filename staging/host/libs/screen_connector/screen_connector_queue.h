@@ -59,7 +59,7 @@ class ScreenConnectorQueue {
   /*
    * Push( std::move(src) );
    *
-   * Note: this queue is suppoed to be used only by ScreenConnector-
+   * Note: this queue is supposed to be used only by ScreenConnector-
    * related components such as ScreenConnectorSource
    *
    * The traditional assumption was that when webRTC or VNC calls
