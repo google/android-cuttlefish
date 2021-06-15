@@ -22,13 +22,11 @@
 using cuttlefish::vnc::SimulatedHWComposer;
 using ScreenConnector = cuttlefish::vnc::ScreenConnector;
 
-SimulatedHWComposer::SimulatedHWComposer(BlackBoard* bb,
-                                         ScreenConnector& screen_connector)
+SimulatedHWComposer::SimulatedHWComposer(ScreenConnector& screen_connector)
     :
 #ifdef FUZZ_TEST_VNC
       engine_{std::random_device{}()},
 #endif
-      bb_{bb},
       stripes_(kMaxQueueElements, &SimulatedHWComposer::EraseHalfOfElements),
       screen_connector_(screen_connector) {
   stripe_maker_ = std::thread(&SimulatedHWComposer::MakeStripes, this);
@@ -139,7 +137,6 @@ void SimulatedHWComposer::MakeStripes() {
     LOG(FATAL) << "ScreenConnector callback hasn't been set before MakeStripes";
   }
   while (!closed()) {
-    bb_->WaitForAtLeastOneClientConnection();
     auto sim_hw_processed_frame = screen_connector_.OnNextFrame();
     // sim_hw_processed_frame has display number from the guest
     if (!sim_hw_processed_frame.is_success_) {
