@@ -219,7 +219,11 @@ BOARD_KERNEL_CMDLINE += loop.max_part=7
 
 # TODO(b/182417593): Move all of these module options to modules.options
 # TODO(b/176860479): Remove once goldfish and cuttlefish share a wifi implementation
+ifneq ($(PRODUCT_ENFORCE_MAC80211_HWSIM),true)
 BOARD_BOOTCONFIG += kernel.mac80211_hwsim.radios=0
+else
+BOARD_BOOTCONFIG += kernel.mac80211_hwsim.mac_prefix=5554
+endif
 # TODO(b/175151042): Remove once we are using virtio-snd on cuttlefish
 BOARD_BOOTCONFIG += kernel.snd-hda-intel.enable=0
 # Reduce slab size usage from virtio vsock to reduce slab fragmentation
