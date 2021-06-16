@@ -1,11 +1,7 @@
-# TODO(b/65201432): Switch into enforcing mode once execmem issue due to OpenGL is resolved. Also
-# remove the corresponding dontaudit.
-# The current (at the time of writing) implementation of OpenGL needs to create executable memory.
-# Unfortunately, we cannot grant execmem power using an allow rule because global policy
-# (system/sepolicy) contains a corresponding neverallow which would cause build-time errors if the
-# allow execmem rule were added here.
-permissive system_server;
 gpu_access(system_server)
 
 # Cuttlefish is still using the legacy wifi HAL (pre-HIDL)
 get_prop(system_server, wifi_hal_prop)
+
+# TODO(b/65201432): Swiftshader needs to create executable memory.
+allow system_server self:process execmem;
