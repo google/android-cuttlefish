@@ -7,3 +7,6 @@ allow vendor_init {
 set_prop(vendor_init, vendor_bt_rootcanal_prop)
 
 get_prop(vendor_init, vendor_graphics_config_prop)
+
+vendor_internal_prop(vendor_wifi_impl)
+set_prop(vendor_init, vendor_wifi_impl)
