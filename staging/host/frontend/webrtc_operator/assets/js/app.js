@@ -49,7 +49,7 @@ function ConnectToDevice(device_id) {
 
   deviceScreen.addEventListener('loadeddata', (evt) => {
     clearInterval(animateDeviceStatusMessage);
-    statusMessage.textContent = 'Awaiting bootup and adb connection. Please wait...';
+    statusMessage.textContent = 'Awaiting adb connection...';
     resizeDeviceView();
     deviceScreen.style.visibility = 'visible';
     // Enable the buttons after the screen is visible.
@@ -72,23 +72,19 @@ function ConnectToDevice(device_id) {
   let deviceStateLidSwitchOpen = null;
   let deviceStateHingeAngleValue = null;
 
-  let bootCompleted = false;
-  let adbConnected = false;
-  function showBootCompletion() {
+  function showAdbConnected() {
     // Screen changed messages are not reported until after boot has completed.
     // Certain default adb buttons change screen state, so wait for boot
     // completion before enabling these buttons.
-    if (adbConnected && bootCompleted) {
-      statusMessage.className = 'connected';
-      statusMessage.textContent =
-          'bootup and adb connection established successfully.';
-      setTimeout(function() {
-        statusMessage.style.visibility = 'hidden';
-      }, 5000);
-      for (const [_, button] of Object.entries(buttons)) {
-        if (button.adb) {
-          button.button.disabled = false;
-        }
+    statusMessage.className = 'connected';
+    statusMessage.textContent =
+        'adb connection established successfully.';
+    setTimeout(function() {
+      statusMessage.style.visibility = 'hidden';
+    }, 5000);
+    for (const [_, button] of Object.entries(buttons)) {
+      if (button.adb) {
+        button.button.disabled = false;
       }
     }
   }
@@ -96,10 +92,7 @@ function ConnectToDevice(device_id) {
   function initializeAdb() {
     init_adb(
         deviceConnection,
-        function() {
-          adbConnected = true;
-          showBootCompletion();
-        },
+        showAdbConnected,
         function() {
           statusMessage.className = 'error';
           statusMessage.textContent = 'adb connection failed.';
@@ -123,10 +116,6 @@ function ConnectToDevice(device_id) {
       // (This is after the adbd start message. Attempting to connect
       // immediately after adbd starts causes issues.)
       initializeAdb();
-    }
-    if (message_data.event == 'VIRTUAL_DEVICE_BOOT_COMPLETED') {
-      bootCompleted = true;
-      showBootCompletion();
     }
     if (message_data.event == 'VIRTUAL_DEVICE_SCREEN_CHANGED') {
       if (metadata.rotation != currentRotation) {
