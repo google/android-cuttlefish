@@ -1,0 +1,11 @@
+# Wifi forwarder
+type wifi_forwarder, domain;
+type wifi_forwarder_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(wifi_forwarder)
+net_domain(wifi_forwarder)
+
+allow wifi_forwarder self:capability { net_admin };
+# Generic netlink socket for wifi forwarding
+allow wifi_forwarder self:netlink_generic_socket { bind create getattr setopt read write };
+allow wifi_forwarder self:vsock_socket create_socket_perms_no_ioctl;
