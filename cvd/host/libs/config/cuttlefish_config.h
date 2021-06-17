@@ -157,6 +157,9 @@ class CuttlefishConfig {
   void set_enable_vehicle_hal_grpc_server(bool enable_vhal_server);
   bool enable_vehicle_hal_grpc_server() const;
 
+  void set_vehicle_hal_grpc_server_binary(const std::string& vhal_server_binary);
+  std::string vehicle_hal_grpc_server_binary() const;
+
   void set_custom_actions(const std::vector<CustomActionConfig>& actions);
   std::vector<CustomActionConfig> custom_actions() const;
 
@@ -386,7 +389,7 @@ class CuttlefishConfig {
 
     std::string instance_internal_dir() const;
 
-    std::string touch_socket_path(int screen_idx) const;
+    std::string touch_socket_path() const;
     std::string keyboard_socket_path() const;
     std::string switches_socket_path() const;
     std::string frames_socket_path() const;
@@ -437,7 +440,7 @@ class CuttlefishConfig {
     bool start_webrtc_sig_server() const;
 
     // Wifi MAC address inside the guest
-    std::array<unsigned char, 6> wifi_mac_address() const;
+    int wifi_mac_prefix() const;
 
     std::string factory_reset_protected_path() const;
 
@@ -491,7 +494,7 @@ class CuttlefishConfig {
     void set_webrtc_device_id(const std::string& id);
     void set_start_webrtc_signaling_server(bool start);
     // Wifi MAC address inside the guest
-    void set_wifi_mac_address(const std::array<unsigned char, 6>&);
+    void set_wifi_mac_prefix(const int wifi_mac_prefix);
     // Gnss grpc proxy server port inside the host
     void set_gnss_grpc_proxy_server_port(int gnss_grpc_proxy_server_port);
     // Gnss grpc proxy local file path
