@@ -430,10 +430,8 @@ bool CuttlefishConfig::InstanceSpecific::start_webrtc_sig_server() const {
   return (*Dictionary())[kStartSigServer].asBool();
 }
 
-std::string CuttlefishConfig::InstanceSpecific::touch_socket_path(
-    int screen_idx) const {
-  return PerInstanceInternalPath(
-      ("touch_" + std::to_string(screen_idx) + ".sock").c_str());
+std::string CuttlefishConfig::InstanceSpecific::touch_socket_path() const {
+  return PerInstanceInternalPath("touch.sock");
 }
 
 std::string CuttlefishConfig::InstanceSpecific::keyboard_socket_path() const {
@@ -448,26 +446,13 @@ std::string CuttlefishConfig::InstanceSpecific::frames_socket_path() const {
   return PerInstanceInternalPath("frames.sock");
 }
 
-static constexpr char kWifiMacAddress[] = "wifi_mac_address";
-void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_address(
-    const std::array<unsigned char, 6>& mac_address) {
-  Json::Value mac_address_obj(Json::arrayValue);
-  for (const auto& num : mac_address) {
-    mac_address_obj.append(num);
-  }
-  (*Dictionary())[kWifiMacAddress] = mac_address_obj;
+static constexpr char kWifiMacPrefix[] = "wifi_mac_prefix";
+int CuttlefishConfig::InstanceSpecific::wifi_mac_prefix() const {
+  return (*Dictionary())[kWifiMacPrefix].asInt();
 }
-std::array<unsigned char, 6> CuttlefishConfig::InstanceSpecific::wifi_mac_address() const {
-  std::array<unsigned char, 6> mac_address{0, 0, 0, 0, 0, 0};
-  auto mac_address_obj = (*Dictionary())[kWifiMacAddress];
-  if (mac_address_obj.size() != 6) {
-    LOG(ERROR) << kWifiMacAddress << " entry had wrong size";
-    return {};
-  }
-  for (int i = 0; i < 6; i++) {
-    mac_address[i] = mac_address_obj[i].asInt();
-  }
-  return mac_address;
+void CuttlefishConfig::MutableInstanceSpecific::set_wifi_mac_prefix(
+    int wifi_mac_prefix) {
+  (*Dictionary())[kWifiMacPrefix] = wifi_mac_prefix;
 }
 
 std::string CuttlefishConfig::InstanceSpecific::factory_reset_protected_path() const {
