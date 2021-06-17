@@ -1,0 +1,6 @@
+type cuttlefish_iw, domain;
+type cuttlefish_iw_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(cuttlefish_iw)
+net_domain(cuttlefish_iw)
+

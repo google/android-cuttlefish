@@ -1,0 +1,17 @@
+type hostapd_nohidl, domain;
+type hostapd_nohidl_exec, exec_type, vendor_file_type, file_type;
+
+init_daemon_domain(hostapd_nohidl)
+net_domain(hostapd_nohidl)
+
+allow hostapd_nohidl execns:fd use;
+allow hostapd_nohidl hostapd_data_file:file r_file_perms;
+allow hostapd_nohidl hostapd_data_file:dir r_dir_perms;
+allow hostapd_nohidl self:capability { net_admin net_raw setgid setuid };
+allow hostapd_nohidl self:netlink_generic_socket { bind create getattr read setopt write };
+allow hostapd_nohidl self:netlink_route_socket nlmsg_write;
+allow hostapd_nohidl self:packet_socket { create setopt read write };
+allowxperm hostapd_nohidl self:udp_socket ioctl priv_sock_ioctls;
+
+# hostapd will attempt to search sysfs but it's not needed and will spam the log
+dontaudit hostapd_nohidl sysfs_net:dir search;
