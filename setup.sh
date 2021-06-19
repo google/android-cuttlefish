@@ -14,7 +14,7 @@ function cvd_get_id {
 
 function cvd_container_exists {
 	local name="$(cvd_get_id $1)"
-	[[ $(docker ps --filter "name=^/${name}$" --format '{{.Names}}') == "${name}" ]] && echo "${name}";
+	[[ $(docker ps -a --filter "name=^/${name}$" --format '{{.Names}}') == "${name}" ]] && echo "${name}";
 }
 
 function cvd_container_running {
