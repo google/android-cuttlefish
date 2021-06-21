@@ -31,7 +31,7 @@ namespace {
 
 std::string GetAdbConnectorTcpArg(const CuttlefishConfig& config) {
   auto instance = config.ForDefaultInstance();
-  return std::string{"0.0.0.0:"} + std::to_string(instance.host_port());
+  return std::string{"0.0.0.0:"} + std::to_string(instance.adb_host_port());
 }
 
 std::string GetAdbConnectorVsockArg(const CuttlefishConfig& config) {
@@ -138,7 +138,7 @@ class SocketVsockProxy : public CommandSource {
        * end of the tunnel is vsock:cid:6520 regardless of instance number.
        * Another end faces the host adb daemon via tcp. Thus, the server type is
        * tcp here. The tcp port differs from instance to instance, and is
-       * instance.host_port()
+       * instance.adb_host_port()
        *
        */
       adb_tunnel.AddParameter("--server=tcp");
@@ -158,7 +158,7 @@ class SocketVsockProxy : public CommandSource {
        * The guest adbd is listening on vsock:cid:5555 across cuttlefish
        * instances. Sv proxy faces the host adb daemon via tcp. The server type
        * should be therefore tcp, and the port should differ from instance to
-       * instance and be equal to instance.host_port()
+       * instance and be equal to instance.adb_host_port()
        */
       adb_tunnel.AddParameter("--server=tcp");
       adb_tunnel.AddParameter("--vsock_port=", 5555);
@@ -181,7 +181,7 @@ class SocketVsockProxy : public CommandSource {
  protected:
   bool Setup() override {
     tcp_server_ =
-        SharedFD::SocketLocalServer(instance_.host_port(), SOCK_STREAM);
+        SharedFD::SocketLocalServer(instance_.adb_host_port(), SOCK_STREAM);
     if (!tcp_server_->IsOpen()) {
       LOG(ERROR) << "Unable to create socket_vsock_proxy server socket: "
                  << tcp_server_->StrError();
